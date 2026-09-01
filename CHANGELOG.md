@@ -2308,6 +2308,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.524-dev — 2026-09-01 — Feat: automação "Notificar todos" + indicador "🤖 pensando..." do Agente Ágil
+
+Duas ideias sugeridas e escolhidas pelo usuário, emendando em features
+recentes da mesma sessão.
+
+**📣 Notificar todos (nova ação de Automação)** — mesmo padrão de
+"Notificar Agente Ágil" (posta um comentário automático, autoria "⚙
+Automação"), mas usando `@todos` (v8.30.521-dev) em vez de
+`@Agente Ágil` — e sem squad-gate nenhum, já que `@todos` não depende de
+nenhuma Cloud Function ouvindo. Chama `parseMentions()` manualmente
+depois de postar o comentário (é ela que faz o fan-out de verdade pra
+todo mundo do squad). Disponível em qualquer squad, sem pré-requisito.
+
+**🤖 Indicador "pensando..." enquanto o Agente Ágil responde uma
+@menção** — hoje, entre mencionar o agente e a resposta chegar
+(~1min via Cloud Function assíncrona), não existia NENHUM sinal visual
+— nem no card aberto, nem no board — e a resposta só aparecia de
+verdade se a pessoa reabrisse o card (`loadComments()` é uma leitura
+pontual). Reusa a mesma técnica que `_attachAgenteHotlineCommentsListener()`
+já usa pro card hotline (listener ao vivo em `card_comments`), mas
+TEMPORÁRIO — só liga quando uma @menção real acaba de ser enviada
+(sintética via `_dispatchAgenteAgilComment()`, ou digitada à mão e
+detectada por `_textMencionaAgenteAgil()`, mesmo critério de substring
+sem acento que o backend usa) e se desliga sozinho ao ver a resposta do
+agente (`uid==='agente-agil'`) ou por timeout de 120s (rede de
+segurança). Aparece como um banner pulsante dentro do modal e como um
+chip "🤖 pensando…" no card do board, mesmo sem o modal aberto.
+
+Checks de rotina: `node --check` OK, diff balanceado (+38/+38 chaves,
++94/+94 parênteses).
+
 ### v8.30.523-dev — 2026-09-01 — Fix: 3 checagens de papel esquecidas de adm/organizador (/monitorarbugs)
 
 Achado auditando pontos críticos de uso (comentários, checklist, acesso,

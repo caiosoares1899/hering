@@ -290,7 +290,10 @@ detalhe dos 4 call sites.
 ### Automações (Butler-style)
 - `AUTO_TRIGGERS` — L25273 (21 triggers — `agendado_created` adicionado
   2026-08-30, par de `recorrente_created` que faltava)
-- `AUTO_ACTIONS` — L25348 (14 ações)
+- `AUTO_ACTIONS` — L25642 (15 ações — `notify_all` ["Notificar todos"]
+  adicionada 2026-09-01, posta comentário `@todos` + `parseMentions()`
+  manual pro fan-out de verdade, mesmo padrão de `notify_agent` mas sem
+  squad-gate)
 - `runAutoRules()` — L25777 — só decide QUAIS regras batem (síncrono);
   `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
   de verdade depois de ~1.2s (pedido direto: dar um respiro visual antes do
@@ -427,6 +430,19 @@ pra trás de um comportamento que os outros já tinham.
   - Caminho "WIP excedido" (`tab==='auto'`, dentro de `runAutoRules()`) —
     mesma coisa, fora do loop por-card porque WIP é agregado do board
     inteiro
+- **Indicador "🤖 pensando..."** (2026-09-01) — `_startAgenteAgilThinking()`/
+  `_stopAgenteAgilThinking()` — L6516/L6536 — estado efêmero client-side
+  (`window._agenteAgilThinking`, não persistido) enquanto uma @menção real
+  aguarda resposta; abre um listener TEMPORÁRIO em `card_comments`
+  (mesma técnica de `_attachAgenteHotlineCommentsListener`, sem duplicar
+  pro card hotline) que se auto-encerra ao ver um comentário
+  `uid==='agente-agil'`, ou por timeout de 120s. `_updateAgenteThinkingBanner()`
+  — L6543 — atualiza o banner `#m-agente-thinking` no modal;
+  `_textMencionaAgenteAgil()` — L6553 — detecta @menção real (mesmo
+  critério do backend) num comentário digitado à mão em `submitComment()`
+  (chamada síncrona de `_dispatchAgenteAgilComment()` não precisa dessa
+  detecção — todo call site dela já posta `@Agente Ágil` literal). Chip
+  correspondente em `makeCardEl()` (board) e banner dentro do modal.
 - `insightsCard()` — L14285 — botão "🤖 Insights" no rodapé do card
 - `ctxInsights()` — L26172 — opção "Insights" no menu de contexto do card
 - `_pedirResumoMeuDia()` — L17637 — botão "🤖 Resumo do Agente Ágil"
