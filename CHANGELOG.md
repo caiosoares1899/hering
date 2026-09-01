@@ -2242,6 +2242,90 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.518-dev — 2026-09-01 — Fix: comentário digitado num card novo ia parar no card errado
+
+Relato direto de usuária (e reproduzido também pelo usuário): "criei um
+card do zero e trouxe um comentário de um último card aleatório".
+
+Causa: o painel de comentários do modal é controlado por uma variável
+própria, `_commentCardId` (separada de `editingId`), só atualizada
+dentro de `loadComments(id)` — chamada por `openCard()` (abrir um card
+já existente), mas NUNCA por `openNewCard()` ("+ Novo card"), já que um
+card ainda não salvo não tem id pra buscar comentários. Resultado: ao
+fechar um card existente com comentários e clicar em "+ Novo card",
+`_commentCardId` (e o HTML já renderizado em `#m-comment-list`)
+continuavam com o valor do ÚLTIMO card aberto — o card novo em branco
+mostrava o comentário de um card aleatório (o anterior), exatamente
+como relatado. Mais grave que a aparência: `submitComment()` escreve em
+`card_comments/{_commentCardId}/...` — um comentário digitado no card
+"novo" era salvo de verdade no card ANTIGO, silenciosamente, sumindo de
+vista assim que o card novo ganhasse seu próprio id. `attachSave()`/
+`attachRemove()` (anexos e links) já resolviam pelo padrão certo
+(`editingId`, com guarda `if(!card) return`) — nunca tiveram este bug.
+
+Fix: `openNewCard()` agora reseta `_commentCardId=null` e o HTML de
+`#m-comment-list` pra "Salve o card para poder comentar."; `submitComment()`
+ganhou uma guarda contra `_commentCardId` vazio (mostra toast e não
+escreve nada) como rede de segurança adicional.
+
+Checks de rotina: `node --check` OK, diff balanceado (+2/+2 chaves,
++19/+19 parênteses).
+
+### v8.30.517-dev — 2026-09-01 — Fix: re-sync periódico de cards não recuperava um card NOVO invisível (/monitorarbugs)
+
+Achado ao auditar o próprio fix anterior (v8.30.515-dev, o polling de
+re-sync criado pro incidente ao vivo de "prioridade não propagou por
+~20min"): a rede de segurança cobria um card já conhecido ficar com
+CONTEÚDO desatualizado, mas não cobria um card totalmente NOVO ficar
+invisível pra sempre. `_liveCardsIndexById` (que resolve "onde no
+array esse id de card está") só é preenchido pela carga inicial ou
+pelos listeners ao vivo de `/cards_index`. Se o evento `child_added`
+desses listeners se perder pra um card novo — a MESMA classe de falha
+que motivou o fix anterior (evento de Realtime Database perdido
+silenciosamente, sem `.info/connected` cair) — o polling periódico
+simplesmente pulava esse id (`if(key==null) continue`), contando com um
+comentário que dizia "`_reconcileCardsIndexOnce` cuida disso". Só que
+essa reconciliação roda UMA ÚNICA VEZ, 500ms depois da carga inicial —
+nunca mais reprocessa pelo resto da sessão. Cenário concreto: colega A
+cria um card novo enquanto o board de colega B está numa aba em
+segundo plano/videochamada; se o evento se perder nessa janela, o card
+de A nunca aparece no board de B pelo resto da sessão dele — sem
+nenhum aviso, F5 é o único jeito de recuperar. Pior que o bug original
+(card inteiro sumido, não só um campo), e contradizia o próprio
+propósito do fix que o introduziu.
+
+Fix: o polling periódico (`_reconcileCardsUpdatedAtPeriodic`) agora
+busca `/cards_index` em paralelo com `/cards_updated_at` (mesmo dado
+que `_reconcileCardsIndexOnce` já lê 1x) e faz o backfill de
+`_liveCardsIndexById` na hora, em vez de pular o id — os listeners ao
+vivo seguem normalmente dali em diante.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(delta do diff: +2/+2 chaves, +13/+13 parênteses — balanceado).
+
+### v8.30.516-dev — 2026-09-01 — Fix: ícone do PWA agora suporta "ícones temáticos" do Android (Material You)
+
+Achado direto de uma usuária: no Android 13+, quando a pessoa ativa
+"ícones temáticos" (retinta os ícones dos apps pra combinar com o papel
+de parede), o ícone do Maré Digital (adicionado à tela inicial via PWA)
+não mudava de cor como os outros apps — "tá estragando a estética".
+
+Causa: o manifest do PWA (`initPWA()`) só declarava uma variante do
+ícone (`purpose:'any maskable'`), sem a variante `monochrome` que o
+Android exige pra saber COMO retintar (uma silhueta branca em fundo
+transparente — o sistema aplica a cor por cima). Sem ela, o Android não
+tem como decidir o que é "o desenho" vs. "o fundo" e mantém as cores
+originais.
+
+Fix: `favicon-monochrome.png` (novo, gerado a partir do `favicon.png`
+existente — como ele já é bicolor, fundo escuro sólido + glifo branco,
+cada pixel virou alpha proporcional à "brancura" dele, sobrando só a
+silhueta do glifo em fundo transparente) adicionado ao manifest com
+`purpose:'monochrome'`, ao lado do ícone colorido de sempre.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(-1/0).
+
 ### v8.30.515-dev — 2026-08-31 — Fix: re-sync periódico de cards (rede de segurança contra listener travado)
 
 Achado ao vivo numa reunião com o board espelhado: um card teve a
