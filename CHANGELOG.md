@@ -2308,6 +2308,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.528-dev — 2026-09-01 — Novo: "🤖 Ponto de vista do Agente Ágil" em Dados do Board e Controle de Criativos
+
+Pedido direto do usuário: "ali em dados do board, dentro de insights, traz
+um botao para o agente agil tb ler esses dados e trazer o ponto de vista
+dele! pode por dentro de controle de criativos tb". Botão novo em dois
+painéis (squads `dev`/`dados` — `AGENTE_AGIL_ANALISE_DADOS_SQUADS`):
+
+- **📊 Dados do Board → aba Insights** (`renderBoardDataInsights()`):
+  botão logo abaixo do bloco "Por submarca" (ou do de OKR, se o squad não
+  usar submarca).
+- **🎨 Controle de Criativos** (`renderCriativosDashboard()`): botão no
+  fim do painel, depois dos gráficos de canal/plataforma/formato/lista.
+
+O agente NÃO recalcula nada — cada painel já computa os próprios números
+pra desenhar a tela (total, prioridade, carga por responsável, riscos,
+OKR, cards parados / concluídos, atrasados, composição, top canal etc.);
+o clique só empacota esses números já prontos (`window._bdInsightsResumoCache`/
+`window._criativosResumoCache`) e manda pro backend. Mesmo padrão do
+"🤖 Resumo do Agente Ágil" em Meu Dia: botão desabilita durante o pedido,
+caixa de resultado aparece abaixo, erros (`agente_desligado`,
+`rate_limited`, `domain_not_allowed`, `squad_nao_habilitado`) viram
+mensagem amigável.
+
+Backend novo: `functions/agente-agil-orquestrador/analiseDados.js`, Cloud
+Function `agenteAgilAnaliseDados` (onRequest + Bearer idToken, mesmo
+padrão de `resumoMeuDia.js`) — kill switch dinâmico, rate limit de 2min
+por pessoa, **sem nenhuma ferramenta de escrita** (`tools: []`), e NÃO lê
+cards do Firebase: recebe o resumo já agregado que o cliente mandou,
+valida formato/tamanho (máx. 12.000 caracteres de JSON) e o squad contra
+`ANALISE_DADOS_SQUADS`, escolhe o system prompt certo pelo campo
+`contexto` (`board_insights` ou `criativos`) e chama o LLM. Constante
+nova `ANALISE_DADOS_SQUADS` em `squadScope.js` (`['dev','dados']`, mesma
+convenção de "um nome por capacidade" já usada pelas outras 4 listas
+daquele arquivo). Testes novos em `__tests__/analiseDados.test.js` (6
+casos) — suíte completa de `functions/` em 382/382.
+
+**Requer redeploy manual**: `firebase deploy --only functions:agenteAgilAnaliseDados`
+(ver nota no topo do `CLAUDE.md` sobre resincronizar o clone local antes).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1 — ver nota na
+entrada anterior).
+
 ### v8.30.527-dev — 2026-09-01 — Fix: indicador "🤖 pensando..." e automação "Notificar todos" (/monitorarbugs)
 
 Auditoria da própria feature mais fresca da sessão (indicador de @menção
@@ -10344,6 +10387,30 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-01 · Novo: `analiseDados.js` — "🤖 Ponto de vista do Agente Ágil" (Dados do Board + Controle de Criativos)
+
+Pedido direto do usuário, mesmo dia dos fixes de `criar_card` abaixo:
+"ali em dados do board, dentro de insights, traz um botao para o agente
+agil tb ler esses dados e trazer o ponto de vista dele! pode por dentro
+de controle de criativos tb".
+
+Arquivo novo `analiseDados.js`, mesmo desenho de `resumoMeuDia.js`
+(onRequest + Bearer idToken, kill switch dinâmico, rate limit de 2min
+por pessoa, `tools: []` — nenhuma escrita no board possível), com duas
+diferenças: (1) um endpoint só atende os dois painéis, `contexto`
+(`'board_insights'`|`'criativos'`) escolhe o system prompt certo em
+`CONTEXTOS`; (2) não lê cards via Admin SDK — o cliente já calculou os
+números pra desenhar o próprio painel (`renderBoardDataInsights()`/
+`renderCriativosDashboard()` em `kanban-dev.html`), então o handler só
+valida o `resumo` recebido (objeto, até 12.000 caracteres de JSON) e o
+`squadId` contra a nova `ANALISE_DADOS_SQUADS` (`squadScope.js`,
+`['dev','dados']` — mesma convenção de constante própria por
+capacidade). 6 testes novos em `__tests__/analiseDados.test.js`, suíte
+`functions/` inteira: 382/382 passando.
+
+**Requer deploy próprio** (função nova, não compartilha handler com as
+outras 3): `firebase deploy --only functions:agenteAgilAnaliseDados`
 
 ### 2026-09-01 · Novo: `criar_card` ganha campos `tags` e `riscos`
 

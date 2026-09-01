@@ -47,4 +47,19 @@ const RESUMO_MEUDIA_SQUADS = Object.freeze(['dev', 'dados']);
 // que o próprio ADM configurou", não escrever no board.
 const NOTIFICAR_ESPECIALISTA_SQUADS = Object.freeze(['dev']);
 
-module.exports = { MENTION_SQUADS, DUE_SCAN_SQUADS, RESUMO_MEUDIA_SQUADS, NOTIFICAR_ESPECIALISTA_SQUADS };
+// Squads onde analiseDados.js responde ao botão "🤖 Ponto de vista do
+// Agente Ágil" dentro dos painéis "Dados do Board" (Insights) e "Controle
+// de Criativos". Mesmo valor que RESUMO_MEUDIA_SQUADS hoje, mas como
+// constante própria — convenção deste arquivo (ver comentário no topo):
+// cada capacidade tem seu próprio nome, mesmo quando o valor atual
+// coincide, porque já houve caso de duas listas divergirem depois
+// (NOTIFICAR_ESPECIALISTA_SQUADS acima).
+const ANALISE_DADOS_SQUADS = Object.freeze(['dev', 'dados']);
+
+module.exports = {
+  MENTION_SQUADS,
+  DUE_SCAN_SQUADS,
+  RESUMO_MEUDIA_SQUADS,
+  NOTIFICAR_ESPECIALISTA_SQUADS,
+  ANALISE_DADOS_SQUADS,
+};

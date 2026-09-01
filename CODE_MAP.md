@@ -451,6 +451,18 @@ pra trás de um comportamento que os outros já tinham.
   `agente-agil-orquestrador/` abaixo) com `Bearer <idToken>`, mostra o
   texto retornado numa caixinha (`#meudia-resumo-box`). Único ponto do
   Agente Ágil que NÃO escreve nada no board — só lê e mostra texto
+- `_pedirAnaliseDados(contexto, resumo, btnId, boxId)` (2026-09-01) —
+  botão "🤖 Ponto de vista do Agente Ágil" — mesmo padrão de
+  `_pedirResumoMeuDia()` acima, mas compartilhado por DOIS painéis:
+  `renderBoardDataInsights()` (aba Insights de "📊 Dados do Board",
+  `window._bdInsightsResumoCache`) e `renderCriativosDashboard()`
+  (`window._criativosResumoCache`) — cada um monta o próprio resumo a
+  partir dos números que já calcula pra desenhar a tela (não recalcula
+  nada à parte) e passa `contexto` (`'board_insights'`|`'criativos'`)
+  pra escolher o prompt certo no backend (`agenteAgilAnaliseDados`, ver
+  `analiseDados.js` na seção `agente-agil-orquestrador/` abaixo). Gate
+  de squad: `AGENTE_AGIL_ANALISE_DADOS_SQUADS` (`dev`+`dados`, constante
+  própria mesmo tendo o mesmo valor de `AGENTE_AGIL_MENTION_SQUADS`)
 - Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) — os 2
   botões de entrada (FAB, nav mobile) foram removidos de vez (2026-08-25,
   pedido direto do usuário — "já morreu"), já que dependia de um Worker
@@ -625,13 +637,17 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   deploy até essa decisão) — 2º gatilho automático do orquestrador, escuta
   `agente_intake_pending/{id}` (ver `agente-agil/http.js` abaixo pro
   porquê de existir)
+- `agenteAgilAnaliseDados` — L~247 → `agente-agil-orquestrador/analiseDados.js`,
+  `onRequest` (não gatilho por evento) — "🤖 Ponto de vista do Agente
+  Ágil" dentro dos painéis "Dados do Board"/"Controle de Criativos",
+  2026-09-01, ver seção abaixo
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `squadScope.js` (2026-08-31, revisão arquitetural) — fonte única das
   listas "em quais squads o Agente Ágil está ativo, pra qual capacidade":
   `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/`RESUMO_MEUDIA_SQUADS`/
-  `NOTIFICAR_ESPECIALISTA_SQUADS` (esta última adicionada no mesmo dia,
-  ver `tools/notificarEspecialistaExterno.js` abaixo). Antes,
+  `NOTIFICAR_ESPECIALISTA_SQUADS`/`ANALISE_DADOS_SQUADS` (esta última
+  adicionada 2026-09-01, ver `analiseDados.js` abaixo). Antes,
   `dueOverdueTrigger.js`/`resumoMeuDia.js` hardcodavam `['dev','dados']`
   cada um por conta própria (já tinham comentário cruzado avisando
   "mesma lista que o outro arquivo", nunca chegaram a compartilhar de
@@ -845,6 +861,18 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   zero). Auth via `Bearer <idToken>` verificado manualmente (mesmo
   padrão de `spotify/disconnect.js`), kill switch dinâmico do resto do
   orquestrador respeitado, rate limit de 2min/pessoa
+- `analiseDados.js` — "🤖 Ponto de vista do Agente Ágil" (2026-09-01),
+  mesmo padrão de `resumoMeuDia.js` acima (`onRequest`, `tools: []`, kill
+  switch, rate limit 2min/pessoa), mas UM endpoint pra DOIS painéis
+  (`kanban-dev.html`: "Dados do Board" → Insights e "Controle de
+  Criativos") — `contexto` (`'board_insights'`|`'criativos'`) escolhe o
+  system prompt certo em `CONTEXTOS`. NÃO lê cards via Admin SDK — o
+  `resumo` (números já agregados) vem pronto no corpo do POST, calculado
+  client-side pelos próprios painéis que já mostram esses números na
+  tela (`renderBoardDataInsights()`/`renderCriativosDashboard()`); o
+  handler só valida formato/tamanho (`resumo` objeto, máx. 12.000
+  caracteres de JSON) e `squadId` contra `ANALISE_DADOS_SQUADS`.
+  `gerarAnaliseDados()` — lógica pura testável (llmClient injetado)
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`
