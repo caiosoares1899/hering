@@ -2401,6 +2401,57 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.538-dev — 2026-09-01 — Menu de contexto: "Mover para"/"Prioridade" viram flyout, "🔗 Copiar link" novo, + fix de um 3º link "abrir card" que falhava em silêncio
+
+Pedido direto do usuário, revisando o menu de contexto do card logo depois
+do fix do pin: "mudar prioridade e mudar coluna, dentro do menu de
+contexto, deveria ser tipo [o submenu do Explorer do Windows], abrir a
+lista pro lado pra n ficar mt grande".
+
+**Flyout de submenu.** "Mover para" (1 item por coluna) e "Prioridade" (5
+níveis) viravam quase metade da altura do menu sozinhos. Agora são 2
+linhas com "▸", que abrem um painel pro lado ao clicar — mesmo padrão de
+submenu de sistema operacional (Explorer/Finder). Achado curioso ao
+implementar: já existia CSS órfã pra isso (`.ctx-sub`/`.ctx-submenu`,
+nunca usada em nenhum HTML/JS do arquivo — sinal de um começo de feature
+abandonado) — reaproveitada e completada. 2ª iteração corrigiu um bug
+introduzido na 1ª: a submenu nascia ANINHADA dentro do item do menu
+principal, mas `.ctx-menu` tem `overflow-x:hidden` (pro scroll vertical
+não ganhar barra horizontal) — um filho `position:absolute` que "vaza"
+pra fora da caixa do pai é cortado por esse overflow, mesmo com z-index
+mais alto. A classe `.open` aplicava certinho e os testes via propriedade
+JS passavam, mas o flyout nunca aparecia na tela de verdade — só um
+screenshot real pegou isso. Corrigido virando um elemento ÚNICO e
+INDEPENDENTE (`#ctx-submenu-fly`, irmão de `#ctx-menu`, não filho),
+reposicionado via JS (`position:fixed`) a cada clique, com flip pra
+esquerda quando não cabe à direita (mesma lógica que o menu principal já
+usa pro seu próprio posicionamento).
+
+**"🔗 Copiar link do card" novo** — mesma ação que já existia dentro do
+modal (botão de compartilhar), nunca tinha entrado no menu de contexto.
+`_cardShareUrl()` ganhou um parâmetro `cardId` opcional (antes só
+funcionava com o card aberto no modal, via `editingId`) — `ctxCopyLink()`
+usa isso pra gerar o link sem precisar abrir o card primeiro.
+
+**3º achado do mesmo bug de link "abrir card" falhando em silêncio**
+(já corrigido 2x nesta sessão em `_openCardFromUrl()`/`openNotif()`, ver
+entrada v8.30.536-dev): ao mexer em `_cardShareUrl()`, achado um TERCEIRO
+mecanismo de abrir card via URL — `?opencard=` (usado por
+`shareCardLink()`/`ctxCopyLink()` e pelo multi-squad de campanhas),
+independente do `?card=` já corrigido. Mesma classe de bug: esgotar as 8
+tentativas sem achar o card desistia em silêncio. Corrigido com o mesmo
+toast das outras duas.
+
+Testado via Playwright headless com screenshot real (não só propriedades
+JS, depois do bug do overflow ter escapado dos testes de propriedade):
+flyout abre alinhado à direita do item, troca de "Mover para" pra
+"Prioridade" fecha o anterior, clique num item de verdade move o card/
+muda a prioridade e fecha tudo (inclusive o flyout), flip-left funciona
+perto da borda direita da tela.
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/+1 (mesmo
+baseline conhecido da sessão).
+
 ### v8.30.537-dev — 2026-09-01 — Fix (/monitorarbugs): pin do card não tinha jeito de usar no celular/tablet
 
 Revisão dedicada ao pin (fixar card no topo da coluna) pedida direto pelo
