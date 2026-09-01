@@ -45,7 +45,11 @@ completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
   L19322/L19332 — abre/preenche/fecha o form inline (mesmo padrão de
   "+ Adicionar externo", não é modal separado)
 - `salvarAgente()` — L19440 — valida nome/iniciais e colisão antes de
-  gravar; `excluirAgente(id, nome)` — L19356
+  gravar; `excluirAgente(id, nome)` — L19356 — usa `window._set()` direto
+  (não `fbSet()`, que é fire-and-forget e engole erro em silêncio) pra
+  aguardar a escrita e só avisar sucesso depois de confirmada — fix
+  2026-09-01, reporte direto do usuário (linha nunca sumia quando a
+  escrita falhava, sem nenhum aviso)
 - Ligado ao Agente Ágil de verdade: ver `agenteMarcador.js` e
   `cards_por_agente` na seção `functions/` abaixo — quando o
   orquestrador muda algo num card cujo responsável/participante é um

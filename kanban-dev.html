@@ -5639,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.529-dev</div>
+<div class="version">v8.30.530-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19945,8 +19945,21 @@ function excluirAgente(id, nome){
   const a=agentes.find(x=>x.id===id);
   uiConfirm('Excluir o agente "'+nome+'"? Cards que já tinham "'+(a?.init||'')+'" como responsável/participante mantêm a inicial guardada — só some da lista de seleção pra escolher em cards novos.', {title:'Excluir agente', danger:true, okText:'Excluir'}).then(ok=>{
     if(!ok) return;
-    fbSet(FB+'/agentes/'+id, null);
-    showToast('🗑 Agente removido.');
+    // Achado (2026-09-01, reporte direto do usuário: "nao ta funcionando
+    // esse ponto de excluir o agente"): fbSet() é fire-and-forget e engole
+    // qualquer erro em silêncio (`.catch(()=>{})`, ver comentário na
+    // declaração — deliberado pra evitar loop com logError na maioria dos
+    // usos), então essa função disparava "🗑 Agente removido." incondicional
+    // mesmo quando a escrita falhasse de verdade — a linha nunca sumia da
+    // lista e não havia NENHUM jeito de saber por quê. Usa window._set()
+    // direto (não fbSet()) pra poder aguardar/capturar erro de verdade.
+    if(!window._fbReady){ showToast('❌ Sem conexão com o Firebase agora — tenta de novo em instantes.'); return; }
+    window._set(fb(FB+'/agentes/'+id), null).then(()=>{
+      showToast('🗑 Agente removido.');
+    }).catch(e=>{
+      console.error('[excluirAgente] falha ao excluir:', e);
+      showToast('❌ Não consegui excluir o agente — verifique sua conexão/permissão e tenta de novo.');
+    });
   });
 }
 // ── Reatribuir cards de uma pessoa/inicial para outra ──
