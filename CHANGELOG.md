@@ -2277,6 +2277,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.520-dev — 2026-09-01 — Ajuste: ícone de pin move pro canto superior DIREITO
+
+Feedback direto do usuário testando a v8.30.519-dev: com o pin no canto
+superior ESQUERDO, ele colidia visualmente com a primeira tag do card
+(que também nasce ali) — "tem que ser do outro lado, que tá vazio".
+`.card-pin-btn` passa a usar o MESMO canto que `.card-selbox` (o
+checkbox de seleção em massa, `top:7px;right:7px`) — nunca colidem de
+verdade porque um só existe fora do modo de seleção e o outro só
+dentro dele (`makeCardEl()`).
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
 ### v8.30.519-dev — 2026-09-01 — Feat: pin — fixar 1 card no topo da coluna, em qualquer modo de visualização
 
 Pedido direto do usuário ("me pediram uma feature aqui que achei bacana"):

@@ -658,8 +658,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Pin: fixar 1 card no topo da coluna (ver togglePinCard()/_sortCards()) —
    ícone só aparece no hover do card quando NÃO fixado (convite discreto,
    não polui o board todo); card já fixado mostra sempre, destacado, pra
-   dar pra desafixar sem precisar "descobrir" passando o mouse. */
-.card-pin-btn{position:absolute;top:7px;left:7px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;}
+   dar pra desafixar sem precisar "descobrir" passando o mouse. Mesmo
+   canto que .card-selbox de propósito (pedido direto: "do lado que tá
+   vazio") — nunca colidem de verdade, porque pinBtn só é gerado quando
+   NÃO está em selectMode e selBox só quando ESTÁ (ver makeCardEl()). */
+.card-pin-btn{position:absolute;top:7px;right:7px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;}
 .card:hover .card-pin-btn{opacity:1;}
 .card-pinned .card-pin-btn{opacity:1;background:rgba(255,209,102,.18);border-color:rgba(255,209,102,.5);color:var(--warn);}
 .col-selectall{font-size:9px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);color:var(--cyan);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;}
@@ -5627,7 +5630,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.519-dev</div>
+<div class="version">v8.30.520-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
