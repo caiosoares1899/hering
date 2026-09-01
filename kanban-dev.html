@@ -5637,7 +5637,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.527-dev</div>
+<div class="version">v8.30.528-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6456,6 +6456,12 @@ const AGENTE_AGIL_ASSIGNEE_ENTRY = {
   isAgent: true, cor: '#a78bfa', avatarEmoji: '🤖',
 };
 const AGENTE_AGIL_ASSIGNEE_SQUADS = new Set(['dev', 'dados']);
+// Squads onde o botão "🤖 Ponto de vista do Agente Ágil" aparece nos
+// painéis "Dados do Board" (Insights) e "Controle de Criativos" — mesmo
+// valor de ANALISE_DADOS_SQUADS em functions/agente-agil-orquestrador/
+// squadScope.js, como constante própria (mesma convenção dos outros Sets
+// acima: um nome por capacidade, mesmo quando o valor atual coincide).
+const AGENTE_AGIL_ANALISE_DADOS_SQUADS = new Set(['dev', 'dados']);
 // ── Dispatcher único: "postar comentário sintético @Agente Ágil" (revisão
 // arquitetural 2026-08-31) ───────────────────────────────────────────────
 // Até aqui esse padrão (escrever um comentário com "@Agente Ágil" em
@@ -13973,6 +13979,28 @@ function renderCriativosDashboard(){
       +'</div>';
   };
 
+  // ── Resumo agregado pro botão "🤖 Ponto de vista do Agente Ágil" ──
+  // Mesmos números já calculados acima pra desenhar o painel (ver
+  // _pedirAnaliseDados()/analiseDados.js).
+  window._criativosResumoCache = {
+    totalPedidos: total,
+    concluidos, atrasados, emAndamento, pctConclusao: pctConcl,
+    totalVariacoes,
+    composicao: {cards:compos.cards, supercards:compos.supercards, cardsFilhos:compos.superChildren},
+    porPrioridade: prioCounts,
+    semPrioridade: semPrio,
+    topLista: byLista.map(([label,qtd])=>({label,qtd})),
+    topCanal: byCanal.map(([label,qtd])=>({label,qtd})),
+    topPlataforma: byPlataforma.map(([label,qtd])=>({label,qtd})),
+    topFormato: byFormato.map(([label,qtd])=>({label,qtd})),
+  };
+  const botaoAgente = AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)
+    ? '<div style="margin-top:16px;">'
+      +'<button class="btn btn-sm" id="crv-dash-agente-btn" onclick="_pedirAnaliseDados(\'criativos\', window._criativosResumoCache, \'crv-dash-agente-btn\', \'crv-dash-agente-box\')" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
+      +'<div id="crv-dash-agente-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>'
+      +'</div>'
+    : '';
+
   body.innerHTML =
     '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
       +statCard('📦','Total de pedidos',total,'var(--txt)')
@@ -13996,7 +14024,8 @@ function renderCriativosDashboard(){
       +barsBlock('📡 Por canal',byCanal)
       +barsBlock('🎯 Por plataforma',byPlataforma)
       +barsBlock('🖼 Por formato',byFormato)
-    +'</div>';
+    +'</div>'
+    +botaoAgente;
 }
 function _crvClearFilters(){
   ['crv-fh-canal','crv-fh-objetivo','crv-fh-plataforma','crv-fh-formato','crv-fh-qtd'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
@@ -16757,6 +16786,24 @@ function renderBoardDataInsights(){
     html += '<div style="margin-bottom:16px;">' + donutBlock('🎯','OKR por coluna (onde as entregas estratégicas estão)',okrPorCol) + '</div>';
   }
 
+  // ── Resumo agregado pro botão "🤖 Ponto de vista do Agente Ágil" ──
+  // Mesmos números já calculados acima pra desenhar o painel — não lê
+  // cards de novo, só empacota o que já está pronto (ver
+  // _pedirAnaliseDados()/analiseDados.js).
+  window._bdInsightsResumoCache = {
+    totalCardsAtivos: total,
+    porPrioridade: prioCounts,
+    semPrioridade: semPrio,
+    comRiscoMapeado: comRisco.length,
+    marcadosOKR: okrCards.length,
+    okrPorColuna: okrPorCol.map(s=>({coluna:s.label,qtd:s.count})),
+    paradosUmSprintOuMais: parados.length,
+    sprintDias: sprintLen,
+    cargaPorResponsavel: donoRows.map(([init,n])=>({responsavel:init==='__sem__'?'(sem responsável)':init,qtd:n})),
+    topRiscos: riscoTop.map(c=>({titulo:c.title||'(sem título)',qtdRiscos:(c.riscos||[]).length})),
+    topParados: parados.map(({c,ageDays})=>({titulo:c.title||'(sem título)',diasParado:ageDays})),
+  };
+
   // ── Por submarca (só se o squad usa o campo) ──
   if(submarcaAtivo){
     // Cores próprias, não reaproveita getPal(st) — todas as 10 entradas de
@@ -16777,6 +16824,14 @@ function renderBoardDataInsights(){
       .sort((a,b)=>b.count-a.count);
     if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
     html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+    window._bdInsightsResumoCache.porSubmarca = smSegs.map(s=>({submarca:s.label,qtd:s.count}));
+  }
+
+  if(AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)){
+    html += '<div style="margin-top:4px;">'
+      +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseDados(\'board_insights\', window._bdInsightsResumoCache, \'bd-insights-agente-btn\', \'bd-insights-agente-box\')" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
+      +'<div id="bd-insights-agente-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>'
+      +'</div>';
   }
 
   body.innerHTML=html;
@@ -17940,6 +17995,59 @@ async function _pedirResumoMeuDia(){
     box.textContent = '⚠️ Não consegui falar com o Agente Ágil agora — tenta de novo em instantes.';
   }finally{
     _resumoMeuDiaEmVoo = false;
+    btn.disabled = false;
+    btn.textContent = origLabel;
+  }
+}
+
+// "🤖 Ponto de vista do Agente Ágil" nos painéis "Dados do Board"
+// (Insights) e "Controle de Criativos" — pedido direto: "ali em dados do
+// board, dentro de insights, traz um botao para o agente agil tb ler
+// esses dados e trazer o ponto de vista dele! pode por dentro de controle
+// de criativos tb". Mesmo padrão de _pedirResumoMeuDia() acima, um
+// endpoint só pros dois painéis (functions/agente-agil-orquestrador/
+// analiseDados.js escolhe o prompt certo pelo `contexto`). NÃO recalcula
+// nada aqui — `resumo` é o objeto já montado por quem chamou
+// (renderBoardDataInsights()/renderCriativosDashboard(), a partir dos
+// mesmos números que o painel já mostra na tela).
+const AGENTE_AGIL_ANALISE_DADOS_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/agenteAgilAnaliseDados';
+let _analiseDadosEmVoo = false;
+async function _pedirAnaliseDados(contexto, resumo, btnId, boxId){
+  if(_analiseDadosEmVoo) return;
+  const cu = window._currentUser; if(!cu) return;
+  const btn = document.getElementById(btnId);
+  const box = document.getElementById(boxId);
+  if(!btn || !box || !resumo) return;
+  _analiseDadosEmVoo = true;
+  const origLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Analisando...';
+  box.style.display = 'block';
+  box.textContent = '⏳ O Agente Ágil está olhando os dados...';
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(AGENTE_AGIL_ANALISE_DADOS_URL, {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({ contexto, squadId: ACTIVE_SQUAD, resumo }),
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || data.ok===false){
+      const msgs = {
+        agente_desligado: 'O Agente Ágil está desligado no momento.',
+        rate_limited: 'Calma aí! Espera um pouquinho antes de pedir de novo.',
+        domain_not_allowed: 'Sem permissão pra usar essa função.',
+        squad_nao_habilitado: 'Esse squad ainda não tem essa função habilitada.',
+      };
+      box.textContent = '⚠️ '+(msgs[data.error]||'Não consegui gerar a análise agora — tenta de novo em instantes.');
+    } else {
+      box.textContent = data.analise;
+    }
+  }catch(e){
+    console.warn('[agente-agil] análise de dados falhou:', e);
+    box.textContent = '⚠️ Não consegui falar com o Agente Ágil agora — tenta de novo em instantes.';
+  }finally{
+    _analiseDadosEmVoo = false;
     btn.disabled = false;
     btn.textContent = origLabel;
   }

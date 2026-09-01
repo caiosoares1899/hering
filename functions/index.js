@@ -243,3 +243,16 @@ exports.agenteAgilResumoMeuDia = require('./agente-agil-orquestrador/resumoMeuDi
 // módulo.
 // Deploy isolado: firebase deploy --only functions:agenteAgilIntake
 exports.agenteAgilIntake = require('./agente-agil-orquestrador/intakeTrigger').agenteAgilIntake;
+
+// "🤖 Ponto de vista do Agente Ágil" dentro dos painéis "Dados do Board"
+// (Insights) e "Controle de Criativos" (kanban.html/kanban-dev.html),
+// 2026-09-01 — pedido direto do usuário. Sob demanda (só quando a pessoa
+// clica), mesmo escopo de squad que resumoMeuDia.js (dev + dados, via
+// ANALISE_DADOS_SQUADS em squadScope.js) — NÃO escreve nada no board, só
+// recebe o resumo agregado que o painel já calculou client-side e devolve
+// um ponto de vista priorizado (ver comentário completo no topo de
+// analiseDados.js pro desenho: onRequest + Bearer idToken, mesmo padrão de
+// resumoMeuDia.js; kill switch dinâmico respeitado; rate limit de 2min por
+// pessoa; um endpoint só, contexto escolhe o system prompt certo).
+// Deploy isolado: firebase deploy --only functions:agenteAgilAnaliseDados
+exports.agenteAgilAnaliseDados = require('./agente-agil-orquestrador/analiseDados').agenteAgilAnaliseDados;
