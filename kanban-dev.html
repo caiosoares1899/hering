@@ -5620,7 +5620,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.515-dev</div>
+<div class="version">v8.30.516-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -21750,7 +21750,17 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'}
+      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
+      // 'monochrome' (silhueta branca em fundo transparente, o sistema
+      // aplica a própria cor por cima), o Android não consegue retintar o
+      // ícone junto com o resto do sistema e mantém as cores originais —
+      // achado direto de uma usuária ("no Android... o do marola n mudou,
+      // tá estragando a estética"). Gerada a partir do favicon.png
+      // existente (fundo escuro sólido + glifo branco): cada pixel vira
+      // alpha proporcional à "brancura" dele, então o glifo sobra como
+      // silhueta e o fundo escuro vira transparente.
+      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});

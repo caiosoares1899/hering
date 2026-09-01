@@ -2242,6 +2242,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.516-dev — 2026-09-01 — Fix: ícone do PWA agora suporta "ícones temáticos" do Android (Material You)
+
+Achado direto de uma usuária: no Android 13+, quando a pessoa ativa
+"ícones temáticos" (retinta os ícones dos apps pra combinar com o papel
+de parede), o ícone do Maré Digital (adicionado à tela inicial via PWA)
+não mudava de cor como os outros apps — "tá estragando a estética".
+
+Causa: o manifest do PWA (`initPWA()`) só declarava uma variante do
+ícone (`purpose:'any maskable'`), sem a variante `monochrome` que o
+Android exige pra saber COMO retintar (uma silhueta branca em fundo
+transparente — o sistema aplica a cor por cima). Sem ela, o Android não
+tem como decidir o que é "o desenho" vs. "o fundo" e mantém as cores
+originais.
+
+Fix: `favicon-monochrome.png` (novo, gerado a partir do `favicon.png`
+existente — como ele já é bicolor, fundo escuro sólido + glifo branco,
+cada pixel virou alpha proporcional à "brancura" dele, sobrando só a
+silhueta do glifo em fundo transparente) adicionado ao manifest com
+`purpose:'monochrome'`, ao lado do ícone colorido de sempre.
+
+Checks de rotina: `node --check` OK, brace/paren balance inalterado
+(-1/0).
+
 ### v8.30.515-dev — 2026-08-31 — Fix: re-sync periódico de cards (rede de segurança contra listener travado)
 
 Achado ao vivo numa reunião com o board espelhado: um card teve a
