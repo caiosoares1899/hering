@@ -3888,7 +3888,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <!-- Peça vinculada no Milanote (campo dedicado, separado dos links genéricos) -->
     <div class="attach-wrap" id="m-milanote-wrap" style="border-color:rgba(232,70,70,.25);">
       <div class="attach-hd">
-        <span class="attach-lbl">📌 Peça no Milanote</span>
+        <span class="attach-lbl">🎨 Peça no Milanote</span>
       </div>
       <div id="m-milanote-view" style="display:none;padding:8px 0;flex-direction:column;align-items:flex-start;">
         <div style="display:flex;align-items:center;flex-wrap:wrap;gap:8px;">
@@ -5639,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.534</div>
+<div class="version">v8.30.535</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6329,7 +6329,7 @@ const CARD_SECTIONS=[
   {key:'checklist', id:'m-checklist-sec', label:'☑ Checklist'},
   {key:'riscos', id:'m-riscos-sec', label:'⚠ Riscos'},
   {key:'criativo', id:'m-criativo-sec', label:'🎬 Campos de produção criativa'},
-  {key:'milanote', id:'m-milanote-wrap', label:'📌 Peça no Milanote'},
+  {key:'milanote', id:'m-milanote-wrap', label:'🎨 Peça no Milanote'},
   {key:'anexos', id:'m-attach-wrap', label:'🔗 Anexos e links'},
   {key:'notasVinculadas', id:'m-notas-vinc-attach-wrap', label:'📝 Notas vinculadas'},
   {key:'comentarios', id:'m-comments-wrap', label:'💬 Comentários e atividade'},
@@ -9900,7 +9900,11 @@ function makeCardEl(card){
   const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
-  const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
+  // Ícone próprio (🎨), não mais 📌 — pedido direto do usuário: colidia
+  // visualmente/conceitualmente com o 📌 do pin de fixar card no topo da
+  // coluna (feature nova, ver togglePinCard()). Mesmo emoji que o botão
+  // "Abrir peça no Milanote" já usava, agora consistente com o selo.
+  const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">🎨</span>`:'';
   const _anexosInd=(card.links&&card.links.length)?`<span class="ci" title="${card.links.length} anexo${card.links.length>1?'s':''}/link${card.links.length>1?'s':''}">📎</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
@@ -21854,7 +21858,7 @@ const HELP_CONTENT = {
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
-    { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n📌 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 📌 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
+    { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
@@ -29112,7 +29116,7 @@ function saveMilanoteLink(){
   fbSaveCard(card);
   renderMilanoteLink(card);
   renderBoard(); // atualiza o badge no card da lista
-  showToast('📌 Peça do Milanote vinculada!');
+  showToast('🎨 Peça do Milanote vinculada!');
 }
 
 function removeMilanoteLink(){

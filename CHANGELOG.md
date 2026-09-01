@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.535 — 2026-09-01 · Fix: selo do Milanote no card usava o mesmo emoji do novo pin de fixar coluna
+
+Pedido direto do usuário, vendo os dois emojis próximos num card real:
+"vamos mudar o simbolo do milanote aqui! pra n confundir com o pin de
+fixar card!". Confirmado como baixo risco o bastante pra subir em dev e
+prod juntos, sem esperar validação separada.
+
+O selo que aparece no card quando ele tem uma peça vinculada no
+Milanote (`_milanoteInd`) usava 📌 — o MESMO emoji que o pin de fixar
+card no topo da coluna (`card-pin-btn`, v8.30.519-dev) passou a usar
+poucos dias depois, sem ninguém notar a colisão na hora. Trocado pra
+🎨 — mesmo emoji que o botão "Abrir peça no Milanote" já usava, então o
+selo e o botão ficam consistentes entre si. Atualizado em todo lugar
+que mencionava o selo/label com 📌 especificamente pro Milanote: label
+do campo no modal, label no seletor de campos visíveis, toast de "peça
+vinculada", e a entrada correspondente na Central de Ajuda
+("Compartilhar card"). **Não mexido de propósito**: a entrada de
+Milanote em `KNOWN_SERVICES` (ícone genérico pra links de
+Anexos/Links reconhecidos automaticamente) continua 📌 — trocar pra 🎨
+ali colidiria com o Figma, que já usa 🎨 nessa lista específica; é um
+contexto totalmente separado do selo do card, fora do escopo do pedido.
+
+Checks de rotina: `node --check` OK em `kanban.html` e
+`kanban-dev.html`, diff entre os dois restrito às 2 linhas de ambiente
+(promovidos juntos, pedido explícito do usuário), balanço de chaves/
+parênteses igual ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.534 — 2026-09-01 · promove pra prod — sincroniza Central de Ajuda (documentação, sem mudança de comportamento)
 
 Promove o acumulado de `kanban-dev.html` v8.30.533-dev — puramente
@@ -2373,6 +2400,16 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.534-dev — 2026-09-01 — Fix: selo do Milanote no card colidia com o emoji do pin de fixar coluna
+
+Ver entrada completa em `## kanban.html (produção)` v8.30.535 — mesmo
+fix, promovido junto (pedido explícito do usuário, sem esperar
+validação separada em dev). Selo `_milanoteInd` trocado de 📌 pra 🎨
+(mesmo emoji que o botão "Abrir peça no Milanote" já usava), em todo
+lugar que mencionava esse selo especificamente — não em
+`KNOWN_SERVICES` (ícone genérico de link do Milanote), que colidiria
+com o Figma se virasse 🎨 também.
 
 ### v8.30.533-dev — 2026-09-01 — Sincroniza Central de Ajuda (`/atualizarhelpcontent`) — pin nunca documentado + 4 features novas sem entrada
 
