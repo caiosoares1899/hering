@@ -5639,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.530-dev</div>
+<div class="version">v8.30.531-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8127,7 +8127,20 @@ function fbLoadAll(){
   });
   // Agentes de IA (piloto híbrido humano+agente) — identidades selecionáveis como responsável/participante/@menção
   fbListen(FB+'/agentes',val=>{
-    agentes = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
+    // Achado 2026-09-01 (reporte direto: "não tá funcionando esse ponto de
+    // excluir o agente"): `Object.values(val)` descarta a CHAVE real do
+    // Firebase de cada entrada — pra dado cadastrado antes do CRUD existir
+    // (2026-08-31), a chave do nó podia divergir do campo `.id` gravado
+    // dentro do objeto (ex.: entrada seed manual com chave "0" mas
+    // `.id:"algumOutroValor"`). `excluirAgente()`/`editarAgente()` usavam
+    // `a.id` como caminho de escrita — pra essas entradas legadas, isso
+    // apontava pra um caminho que NUNCA existiu no Firebase: a exclusão
+    // "funcionava" (escrita bem-sucedida, sem erro) mas era um no-op, e a
+    // linha nunca sumia. `_fbKey` guarda a chave de verdade, usada agora em
+    // toda leitura/escrita de agente (editarAgente/excluirAgente/dupInit);
+    // `salvarAgente()` já regrava `id` igual à chave usada — reeditar uma
+    // entrada legada agora também corrige o campo `.id` dela pra sempre.
+    agentes = val ? Object.entries(val).filter(([,v])=>v).map(([k,v])=>({...v, _fbKey:k})) : [];
     agentes.sort((a,b)=>(a.nome||a.id||'').localeCompare(b.nome||b.id||'','pt-BR',{sensitivity:'base'}));
     updateHybridViewUI();
     if(document.getElementById('cfg-ov')?.classList.contains('open')) renderAgentesList();
@@ -19885,12 +19898,12 @@ function renderAgentesList(){
     // agente×humano e agente×agente, não só humano×humano.
     const initUp=(a.init||a.id||'').toUpperCase();
     const dupInit = members.some(m=>(m.init||'').toUpperCase()===initUp) ||
-      agentes.some(b=>b.id!==a.id && (b.init||b.id||'').toUpperCase()===initUp);
+      agentes.some(b=>b._fbKey!==a._fbKey && (b.init||b.id||'').toUpperCase()===initUp);
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
       <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
       <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
-      <button onclick="editarAgente('${a.id}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
-      <button onclick="excluirAgente('${a.id}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
+      <button onclick="editarAgente('${a._fbKey}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
+      <button onclick="excluirAgente('${a._fbKey}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
     </div>`;
   }).join('');
 }
@@ -19904,7 +19917,7 @@ function abrirAddAgente(){
   if(row){ row.style.display='flex'; document.getElementById('agente-nome-inp').focus(); }
 }
 function editarAgente(id){
-  const a=agentes.find(x=>x.id===id); if(!a) return;
+  const a=agentes.find(x=>x._fbKey===id); if(!a) return;
   _agenteEditId=id;
   document.getElementById('agente-nome-inp').value=a.nome||'';
   document.getElementById('agente-init-inp').value=a.init||'';
@@ -19929,7 +19942,7 @@ function salvarAgente(){
   // mesma inicial apontando pra gente/agentes diferentes, ambíguo pra quem
   // escolhe e pra qualquer automação que resolva por inicial).
   const colideComMembro=members.some(m=>(m.init||'').toUpperCase()===init);
-  const colideComAgente=agentes.some(a=>a.id!==_agenteEditId && (a.init||a.id||'').toUpperCase()===init);
+  const colideComAgente=agentes.some(a=>a._fbKey!==_agenteEditId && (a.init||a.id||'').toUpperCase()===init);
   // Colide com o Agente Ágil de verdade (AGENTE_AGIL_ASSIGNEE_ENTRY, ver
   // declaração) só onde ele é selecionável — mesma disciplina de
   // colisão acima, agora incluindo a identidade real, não só cadastros.
@@ -19942,7 +19955,7 @@ function salvarAgente(){
   showToast((eraEdicao?'✅ Agente atualizado: ':'✅ Agente criado: ')+nome);
 }
 function excluirAgente(id, nome){
-  const a=agentes.find(x=>x.id===id);
+  const a=agentes.find(x=>x._fbKey===id);
   uiConfirm('Excluir o agente "'+nome+'"? Cards que já tinham "'+(a?.init||'')+'" como responsável/participante mantêm a inicial guardada — só some da lista de seleção pra escolher em cards novos.', {title:'Excluir agente', danger:true, okText:'Excluir'}).then(ok=>{
     if(!ok) return;
     // Achado (2026-09-01, reporte direto do usuário: "nao ta funcionando
