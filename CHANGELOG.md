@@ -2242,6 +2242,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.518-dev — 2026-09-01 — Fix: comentário digitado num card novo ia parar no card errado
+
+Relato direto de usuária (e reproduzido também pelo usuário): "criei um
+card do zero e trouxe um comentário de um último card aleatório".
+
+Causa: o painel de comentários do modal é controlado por uma variável
+própria, `_commentCardId` (separada de `editingId`), só atualizada
+dentro de `loadComments(id)` — chamada por `openCard()` (abrir um card
+já existente), mas NUNCA por `openNewCard()` ("+ Novo card"), já que um
+card ainda não salvo não tem id pra buscar comentários. Resultado: ao
+fechar um card existente com comentários e clicar em "+ Novo card",
+`_commentCardId` (e o HTML já renderizado em `#m-comment-list`)
+continuavam com o valor do ÚLTIMO card aberto — o card novo em branco
+mostrava o comentário de um card aleatório (o anterior), exatamente
+como relatado. Mais grave que a aparência: `submitComment()` escreve em
+`card_comments/{_commentCardId}/...` — um comentário digitado no card
+"novo" era salvo de verdade no card ANTIGO, silenciosamente, sumindo de
+vista assim que o card novo ganhasse seu próprio id. `attachSave()`/
+`attachRemove()` (anexos e links) já resolviam pelo padrão certo
+(`editingId`, com guarda `if(!card) return`) — nunca tiveram este bug.
+
+Fix: `openNewCard()` agora reseta `_commentCardId=null` e o HTML de
+`#m-comment-list` pra "Salve o card para poder comentar."; `submitComment()`
+ganhou uma guarda contra `_commentCardId` vazio (mostra toast e não
+escreve nada) como rede de segurança adicional.
+
+Checks de rotina: `node --check` OK, diff balanceado (+2/+2 chaves,
++19/+19 parênteses).
+
 ### v8.30.517-dev — 2026-09-01 — Fix: re-sync periódico de cards não recuperava um card NOVO invisível (/monitorarbugs)
 
 Achado ao auditar o próprio fix anterior (v8.30.515-dev, o polling de
