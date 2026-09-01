@@ -2213,10 +2213,29 @@ input[type="date"]{-moz-appearance:textfield;}
 .ctx-item-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0;}
 .ctx-sep{height:1px;background:var(--glass-b);margin:4px 5px;}
 .ctx-label{font-size:9px;color:var(--txt3);padding:6px 12px 2px;text-transform:uppercase;letter-spacing:.06em;font-weight:700;}
-.ctx-sub{position:relative;}
-
-
-.ctx-sub:hover .ctx-submenu{display:block;}
+.ctx-arrow{margin-left:auto;font-size:10px;color:var(--txt3);flex-shrink:0;}
+/* Flyout de submenu (Mover para/Prioridade) — elemento ÚNICO e INDEPENDENTE
+   (não aninhado dentro de .ctx-menu), reposicionado via JS a cada abertura
+   (ver toggleCtxSubmenu()). Precisa ser irmão do menu principal, não filho:
+   .ctx-menu tem overflow-x:hidden (pro scroll vertical não ganhar barra
+   horizontal) — um filho position:absolute que "vaza" pra fora da caixa
+   do pai É cortado por esse overflow, mesmo com z-index mais alto (achado
+   ao vivo testando visualmente: a classe .open aplicava certinho, mas o
+   flyout nunca aparecia na tela). position:fixed + coordenadas absolutas
+   da viewport evita o problema de vez, mesmo padrão de posicionamento que
+   o próprio .ctx-menu já usa. */
+.ctx-submenu{
+  display:none;position:fixed;
+  min-width:190px;max-height:60vh;overflow-y:auto;
+  background:rgba(var(--surface-rgb),.98);
+  border:1px solid var(--glass-b);
+  border-radius:var(--r2);
+  padding:5px;
+  box-shadow:0 8px 32px rgba(0,0,0,.5);
+  backdrop-filter:blur(16px);
+  z-index:501;
+}
+.ctx-submenu.open{display:block;}
 
 
 /* ── MOBILE ──────────────────────────────────────────── */
@@ -5639,7 +5658,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.535</div>
+<div class="version">v8.30.538</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -21857,7 +21876,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
-    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
+    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
@@ -23327,7 +23346,14 @@ function openNotif(notifId, cardId, squad, commentId, type){
       openCard(cardId);
       return;
     }
-    if(tentativas < 15) setTimeout(tentar, 400);
+    if(tentativas < 15){ setTimeout(tentar, 400); return; }
+    // Card nunca apareceu em `cards` depois de ~6s de tentativas — foi
+    // arquivado/excluído desde que a notificação foi gerada. Antes desistia
+    // em silêncio; agora avisa e limpa a notificação órfã, mesmo padrão já
+    // usado acima pro caso de comentário excluído (achado via
+    // /monitorarbugs, 2026-09-01).
+    showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
+    window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId),null).catch(()=>{});
   };
   tentar();
 }
@@ -26632,6 +26658,7 @@ function doUndo(){
 // CONTEXT MENU
 // ═══════════════════════════════════════════════════════
 let _ctxCardId = null;
+let _ctxSubmenus = {}; // {mover, prioridade} — ver toggleCtxSubmenu()
 
 function showCtxMenu(e, cardId){
   e.preventDefault();
@@ -26653,24 +26680,12 @@ function showCtxMenu(e, cardId){
   const isProg = card.col==='progress';
   const isBlocker = _cardIsBlocked(card);
 
-  menu.innerHTML = `
-    <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
-    <div class="ctx-sep"></div>
-
-    <div class="ctx-label">Mover para</div>
-    ${colOptions}
-    <div class="ctx-sep"></div>
-
-    ${!isBlocker && blockerMode==='col' ? `<div class="ctx-item warn" onclick="ctxBlock()">
-      <span class="ctx-item-icon">🚧</span> Mover para Impedimentos
-    </div>` : ''}
-    ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
-      <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
-    </div>` : ''}
-
-    <div class="ctx-sep"></div>
-
-    <div class="ctx-label">Prioridade</div>
+  // Conteúdo dos flyouts — guardado à parte (não fica aninhado no HTML do
+  // menu principal, ver comentário em .ctx-submenu/toggleCtxSubmenu() sobre
+  // o corte de overflow-x). Preenchido no elemento único #ctx-submenu-fly
+  // só na hora de abrir.
+  _ctxSubmenus.mover = colOptions;
+  _ctxSubmenus.prioridade = `
     <div class="ctx-item" onclick="ctxSetPriority('critical')">
       <span class="ctx-item-icon">🔥</span> Crítica
     </div>
@@ -26685,6 +26700,25 @@ function showCtxMenu(e, cardId){
     </div>
     <div class="ctx-item" onclick="ctxSetPriority('')">
       <span class="ctx-item-icon">⬜</span> Remover
+    </div>`;
+
+  menu.innerHTML = `
+    <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
+    <div class="ctx-sep"></div>
+
+    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'mover')">
+      <span class="ctx-item-icon">↦</span> Mover para <span class="ctx-arrow">▸</span>
+    </div>
+
+    ${!isBlocker && blockerMode==='col' ? `<div class="ctx-item warn" onclick="ctxBlock()">
+      <span class="ctx-item-icon">🚧</span> Mover para Impedimentos
+    </div>` : ''}
+    ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
+      <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
+    </div>` : ''}
+
+    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'prioridade')">
+      <span class="ctx-item-icon">🚩</span> Prioridade <span class="ctx-arrow">▸</span>
     </div>
 
     <div class="ctx-sep"></div>
@@ -26695,11 +26729,17 @@ function showCtxMenu(e, cardId){
     <div class="ctx-item" onclick="ctxToggleOKR()">
       <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
     </div>
+    <div class="ctx-item" onclick="togglePinCard('${cardId}')">
+      <span class="ctx-item-icon">📌</span> ${card.pinned ? 'Desafixar do topo da coluna' : 'Fixar no topo da coluna'}
+    </div>
     <div class="ctx-item" onclick="openCard('${cardId}')">
       <span class="ctx-item-icon">✏️</span> Editar card
     </div>
     <div class="ctx-item" onclick="ctxInsights()">
       <span class="ctx-item-icon">🤖</span> Insights do Agente Ágil
+    </div>
+    <div class="ctx-item" onclick="ctxCopyLink('${cardId}')">
+      <span class="ctx-item-icon">🔗</span> Copiar link do card
     </div>
 
     <div class="ctx-sep"></div>
@@ -26734,9 +26774,46 @@ function showCtxMenu(e, cardId){
   menu.style.top  = y + 'px';
 }
 
+// Abre/fecha o flyout do menu de contexto (ex.: "Mover para", "Prioridade")
+// pro lado, mesmo padrão de submenu de SO (Explorer/Finder) — pedido direto:
+// "mudar prioridade e mudar coluna... deveria abrir a lista pro lado pra n
+// ficar mt grande". Um elemento ÚNICO (#ctx-submenu-fly, fora de #ctx-menu —
+// ver comentário na declaração CSS de .ctx-submenu sobre por que não pode
+// ser filho) é reaproveitado e reposicionado a cada clique, preenchido com
+// _ctxSubmenus[key] (guardado por showCtxMenu()). stopPropagation() evita
+// que o clique feche o menu inteiro (document tem um listener global de
+// click que chama hideCtxMenu()); clicar num item DENTRO do flyout ainda
+// fecha tudo normalmente — a ação escolhida chama hideCtxMenu() no fim
+// (ctxMove()/ctxSetPriority()), que agora também esconde o flyout.
+function toggleCtxSubmenu(ev, key){
+  ev.stopPropagation();
+  const fly = document.getElementById('ctx-submenu-fly');
+  if(!fly) return;
+  const trigger = ev.currentTarget;
+  const jaAbertoAqui = fly.classList.contains('open') && fly._ctxOwner===trigger;
+  fly.classList.remove('open');
+  fly._ctxOwner = null;
+  if(jaAbertoAqui) return;
+  fly.innerHTML = _ctxSubmenus[key] || '';
+  fly._ctxOwner = trigger;
+  // Alinha o topo do flyout com o topo do item clicado, encostado na borda
+  // direita dele — mesma lógica de "evitar vazar pra fora da tela" que o
+  // menu principal já usa, mas medida na hora (a lista de colunas pode
+  // variar bastante de altura de squad pra squad).
+  const r = trigger.getBoundingClientRect();
+  fly.style.left = r.right + 'px'; fly.style.right = '';
+  fly.style.top = r.top + 'px'; fly.style.bottom = '';
+  fly.classList.add('open');
+  const fr = fly.getBoundingClientRect();
+  if(fr.right > window.innerWidth - 8){ fly.style.left = ''; fly.style.right = (window.innerWidth - r.left) + 'px'; }
+  if(fr.bottom > window.innerHeight - 8){ fly.style.top = ''; fly.style.bottom = '8px'; }
+}
+
 function hideCtxMenu(){
   const m = document.getElementById('ctx-menu');
   if(m) m.style.display = 'none';
+  const fly = document.getElementById('ctx-submenu-fly');
+  if(fly){ fly.classList.remove('open'); fly._ctxOwner = null; }
   _ctxCardId = null;
 }
 
@@ -26839,6 +26916,15 @@ function ctxInsights(){
   hideCtxMenu();
   const pergunta=`Dá insights ágeis sobre este card${card.po?' — PO: '+card.po.substring(0,100):''}`;
   _askAgenteAgilNoCard(card, pergunta);
+}
+// Mesmo link de shareCardLink() (botão 🔗 dentro do modal), só que sem
+// precisar abrir o card primeiro — pedido pertinente ao revisar o menu de
+// contexto: "copiar link" é uma ação rápida de card único que já existia
+// em outro lugar do app, mas nunca tinha entrado aqui.
+async function ctxCopyLink(cardId){
+  const url = _cardShareUrl(cardId);
+  if(!url) return;
+  await _copyToClipboard(url, '🔗 Link do card copiado! Já pode colar (Ctrl+V).');
 }
 
 function openCardFnModal(){
@@ -27065,11 +27151,15 @@ function aplicarModeloNoCard(idx){
 }
 // Gera a URL direta pra este card (mesmo mecanismo do ?opencard= usado pelo
 // multi-squad de campanhas) — reaproveitada por shareCardLink e exportToMilanote.
-function _cardShareUrl(){
-  if(!editingId) return null;
+// cardId opcional — sem ele, usa o card aberto no modal (editingId), como
+// sempre foi (chamada de shareCardLink()); com ele, gera o link pra
+// QUALQUER card sem precisar abrir o modal primeiro (ver ctxCopyLink()).
+function _cardShareUrl(cardId){
+  const id = cardId || editingId;
+  if(!id) return null;
   return window.location.origin + window.location.pathname
     + '?squad=' + encodeURIComponent(ACTIVE_SQUAD)
-    + '&opencard=' + encodeURIComponent(editingId);
+    + '&opencard=' + encodeURIComponent(id);
 }
 
 // Copia texto pro clipboard com fallback pra contextos sem permissão
@@ -27529,14 +27619,20 @@ _onFbReady(()=>{
   setTimeout(()=>{ try{ processAgendamentos(); }catch(e){ console.warn('Agendamento:', e); } }, 3700);
   // Relembrete: avisa sobre cards automáticos não vistos (até 3 dias)
   setTimeout(()=>{ try{ processRelembreteAuto(); }catch(e){ console.warn('Relembrete:', e); } }, 4000);
-  // Abrir card específico via URL param ?opencard= (usado pelo multi-squad de campanhas)
+  // Abrir card específico via URL param ?opencard= (usado pelo multi-squad de
+  // campanhas, por shareCardLink()/ctxCopyLink() — "Copiar link do card" — e
+  // pelo link "Abrir Board" com card mirado). Mesma classe de bug já corrigida
+  // em _openCardFromUrl()/openNotif() (?card=, achado via /monitorarbugs,
+  // 2026-09-01): esgotar as tentativas sem achar o card (arquivado/excluído
+  // desde que o link foi gerado) desistia em silêncio.
   const _openCardParam = _urlParams.get('opencard');
   if(_openCardParam){
     // Aguarda os cards carregarem do Firebase antes de abrir
     const _tryOpenCard = (attempts) => {
       const _oc = cards.find(x=>x.id===_openCardParam);
-      if(_oc){ openCard(_oc.id); }
-      else if(attempts>0){ setTimeout(()=>_tryOpenCard(attempts-1), 600); }
+      if(_oc){ openCard(_oc.id); return; }
+      if(attempts>0){ setTimeout(()=>_tryOpenCard(attempts-1), 600); return; }
+      showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
     };
     setTimeout(()=>_tryOpenCard(8), 1000);
   }
@@ -30216,7 +30312,12 @@ renderBoard();
     tentativas++;
     const existe = cards.find(c=>c.id===cardId);
     if(existe){ openCard(cardId); return; }
-    if(tentativas < 15) setTimeout(tentar, 400);
+    if(tentativas < 15){ setTimeout(tentar, 400); return; }
+    // 15 tentativas (~6s) sem achar o card: provavelmente foi arquivado/
+    // excluído depois do link ter sido gerado (ex.: link "abrir card ↗" no
+    // Histórico do Agente Ágil, no painel). Antes desistia em silêncio —
+    // achado via /monitorarbugs, 2026-09-01.
+    showToast('⚠ Esse card não foi encontrado — pode ter sido excluído ou arquivado.');
   };
   setTimeout(tentar, 600);
 })();
@@ -30262,6 +30363,7 @@ renderBoard();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
+<div id="ctx-submenu-fly" class="ctx-submenu"></div>
 
 <!-- BUSCA GLOBAL Ctrl+K -->
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">

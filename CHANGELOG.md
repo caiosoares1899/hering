@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.538 — 2026-09-01 · Promove pra prod — pin no menu de contexto + flyout de Mover/Prioridade + Copiar link do card + 3 fixes de link "abrir card" silencioso
+
+Promove pra produção o lote v8.30.536-dev → v8.30.538-dev de `kanban-dev.html`
+(validado pelo usuário: "testei, funcionou certinho, pode subir tudo pro
+prod"). Resumo pra quem usa o board:
+
+- **📌 Pin no menu de contexto** — quem usa celular/tablet (sem hover)
+  agora consegue fixar/desafixar um card no topo da coluna pelo
+  toque-longo, não só pelo ícone que só aparecia passando o mouse.
+- **"Mover para" e "Prioridade" viraram flyout** no menu de contexto —
+  abrem um painel pro lado ao clicar, em vez de listar tudo direto
+  (menu bem mais compacto).
+- **"🔗 Copiar link do card" novo** no menu de contexto — mesma ação que
+  já existia dentro do card, agora também disponível sem precisar abrir
+  o card primeiro.
+- **3 correções de "clicar num link de card não faz nada"** — links
+  "abrir card" (Histórico do Agente Ágil no painel, notificações de
+  menção em outro squad, "Copiar link do card") agora avisam quando o
+  card foi excluído/arquivado, em vez de ficar mudos.
+
+Diff restrito ao conteúdo da promoção — só as 2 linhas de ambiente
+(versão, `VERSION_KEY`) continuam divergentes de `kanban-dev.html` por
+natureza. Checks de rotina: `node --check` OK, brace/paren balance
+-1/+1 (mesmo baseline conhecido da sessão).
+
 ### v8.30.535 — 2026-09-01 · Fix: selo do Milanote no card usava o mesmo emoji do novo pin de fixar coluna
 
 Pedido direto do usuário, vendo os dois emojis próximos num card real:
