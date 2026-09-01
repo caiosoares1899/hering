@@ -2308,6 +2308,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.530-dev — 2026-09-01 — Fix: excluir agente de IA não avisava quando a escrita falhava de verdade
+
+Reporte direto do usuário testando o painel "🤖 Agentes de IA" (Config →
+Usuários): clicava em excluir, confirmava, via o toast "🗑 Agente
+removido." aparecer — mas a linha continuava na lista. "não tá
+funcionando esse ponto de excluir o agente!"
+
+Causa: `excluirAgente()` chamava `fbSet(FB+'/agentes/'+id, null)` (que é
+fire-and-forget por design — engole qualquer erro em silêncio,
+`.catch(()=>{})`, pra evitar um loop com o log de erro na maioria dos
+usos) e disparava o toast de sucesso **incondicionalmente**, logo depois,
+sem esperar a escrita terminar nem checar se ela realmente aconteceu. Se
+a escrita falhasse por qualquer motivo (perda de conexão no momento do
+clique, sessão expirada etc.), a pessoa via uma mensagem de sucesso
+mentirosa e a linha nunca sumia — sem nenhum jeito de saber por quê.
+
+Fix: `excluirAgente()` agora usa `window._set()` direto (não `fbSet()`),
+aguarda a escrita de verdade e só mostra "🗑 Agente removido." depois que
+ela é confirmada — se falhar, mostra um erro real (❌) em vez do sucesso
+falso, e loga o erro no console pra investigação futura. Checa
+`window._fbReady` antes de tentar, mesma guarda que `fbSet()` já fazia,
+mas agora com aviso visível em vez de silêncio total.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.529-dev — 2026-09-01 — Novo: "🤖 Análise do board (PO)" em Meu Dia
 
 Pedido direto do usuário: "no meu dia, acho que podia ter um botao para o
