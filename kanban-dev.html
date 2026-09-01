@@ -3993,6 +3993,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="comments-hd">
         <span class="comments-hd-lbl">💬 Comentários e atividade</span>
       </div>
+      <div id="m-agente-thinking" style="display:none;align-items:center;gap:6px;font-size:11px;color:#c4b5fd;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:6px 10px;margin-bottom:6px;">
+        <span style="animation:pulse 1.4s ease-in-out infinite;">🤖</span>
+        <span>O Agente Ágil está processando sua pergunta — a resposta chega aqui em instantes, sem precisar reabrir o card.</span>
+      </div>
       <div class="comment-list" id="m-comment-list"></div>
       <div class="comment-inp-wrap">
         <div class="comment-inp-avatar" id="m-comment-avatar">?</div>
@@ -5633,7 +5637,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.523-dev</div>
+<div class="version">v8.30.524-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6492,7 +6496,62 @@ function _dispatchAgenteAgilComment(cardId, text, opts){
     ? { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'', text, ts:new Date().toISOString() }
     : { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:user.uid||'', author:user.displayName||user.email||'?', init:window._currentUserInit||'?', foto:user.photoURL||'', text, ts:new Date().toISOString() };
   _pushCardComment(cardId, comment);
+  _startAgenteAgilThinking(cardId); // todo call site aqui posta "@Agente Ágil ..." — ver declaração
   return true;
+}
+// ── Indicador "🤖 pensando..." enquanto o Agente Ágil processa uma @menção
+// (pedido direto, 2026-09-01) ────────────────────────────────────────────
+// Achado real: entre mencionar o agente e a resposta chegar (~1min via
+// Cloud Function assíncrona), não existia NENHUM sinal — nem no card
+// aberto, nem no board — e a resposta só aparecia de verdade se a pessoa
+// reabrisse o card (loadComments() é uma leitura pontual, window._get).
+// Reusa a MESMA técnica que _attachAgenteHotlineCommentsListener já usa
+// pro card hotline (listener ao vivo em card_comments), mas TEMPORÁRIO e
+// só pro card onde uma @menção real acabou de ser enviada — manter um
+// listener ao vivo em TODO card aberto custaria banda à toa (mesmo motivo
+// que fbLoadAll() evita onValue no /cards inteiro). Card hotline já tem
+// listener permanente próprio, então não duplica aqui.
+window._agenteAgilThinking = window._agenteAgilThinking || {}; // cardId -> true, enquanto espera resposta
+let _agenteAgilThinkingUnsubs = {}; // cardId -> unsub do listener temporário
+function _startAgenteAgilThinking(cardId){
+  if(!cardId || window._agenteAgilThinking[cardId]) return; // já esperando esta resposta
+  window._agenteAgilThinking[cardId] = true;
+  _updateAgenteThinkingBanner();
+  renderBoard();
+  if(!window._fbReady) return;
+  const card = cards.find(c=>c.id===cardId);
+  if(!(card && card.agenteHotline)){
+    _agenteAgilThinkingUnsubs[cardId] = window._onValue(window._ref(window._db, FB+'/card_comments/'+cardId), snap=>{
+      const val = snap.val()||{};
+      _commentsCache[cardId] = val;
+      if(_commentCardId===cardId) renderCommentList(_sortedComments(val));
+      if(Object.values(val).some(c=>c && c.uid==='agente-agil')) _stopAgenteAgilThinking(cardId);
+    });
+  }
+  // Rede de segurança: nunca fica "pensando" pra sempre se a Cloud Function
+  // falhar silenciosamente ou nunca rodar (kill switch, erro, squad fora
+  // de escopo mudou no meio do caminho etc.).
+  setTimeout(()=>{ if(window._agenteAgilThinking[cardId]) _stopAgenteAgilThinking(cardId); }, 120000);
+}
+function _stopAgenteAgilThinking(cardId){
+  if(!window._agenteAgilThinking[cardId]) return;
+  delete window._agenteAgilThinking[cardId];
+  if(_agenteAgilThinkingUnsubs[cardId]){ _agenteAgilThinkingUnsubs[cardId](); delete _agenteAgilThinkingUnsubs[cardId]; }
+  _updateAgenteThinkingBanner();
+  renderBoard();
+}
+function _updateAgenteThinkingBanner(){
+  const el=document.getElementById('m-agente-thinking');
+  if(el) el.style.display = (editingId && window._agenteAgilThinking[editingId]) ? 'flex' : 'none';
+}
+// Mesmo critério (substring, sem acento — reusa o _norm() já usado pra
+// busca/@menção no resto do arquivo) que
+// functions/agente-agil-orquestrador/detectaMencao.js usa no backend pra
+// decidir se um comentário é uma @menção de verdade — replicado aqui só
+// pra decidir se mostra o indicador "pensando...", nunca pra nenhuma
+// decisão de disparo/segurança real (isso continua 100% do backend).
+function _textMencionaAgenteAgil(text){
+  return !!text && _norm(text).includes('@agente agil');
 }
 // Posta um comentário sintético "@Agente Ágil" (autoria de QUEM FEZ a
 // atribuição, nunca do próprio agente) — reusa 100% do pipeline de
@@ -9740,6 +9799,14 @@ function makeCardEl(card){
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
     execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
   }
+  // "🤖 pensando..." (ver _startAgenteAgilThinking) — diferente do execChip
+  // acima (card ATRIBUÍDO a um Agente de IA cadastrado, campo persistido),
+  // isto é um estado EFÊMERO client-side: alguém acabou de @mencionar o
+  // Agente Ágil de verdade neste card e ainda não chegou resposta. Mesmo
+  // conceito, contextos diferentes — os dois podem aparecer juntos.
+  const agenteThinkingChip = window._agenteAgilThinking?.[card.id]
+    ? `<span class="exec-chip" style="display:inline-block;font-size:9px;background:rgba(167,139,250,.14);color:#c4b5fd;border:1px solid rgba(167,139,250,.35);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;animation:pulse 1.4s ease-in-out infinite;" title="O Agente Ágil está processando uma @menção enviada neste card">🤖 pensando…</span>`
+    : '';
   // Aging por COLUNA (Fase 5.2) — diferente do aging por edição acima
   // (aged-1/aged-2, esmaece o card inteiro): este é sobre quanto tempo o
   // card está parado na MESMA coluna (card.flow.enteredAt[card.col], já
@@ -9793,7 +9860,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -11671,6 +11738,7 @@ function openCard(id){
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
+  _updateAgenteThinkingBanner(); // reflete na hora se este card já estava "pensando" (ver _startAgenteAgilThinking)
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
   _checkCardLock(id);
@@ -12041,6 +12109,7 @@ function openNewCard(col){
   _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
+  _updateAgenteThinkingBanner(); // editingId já foi zerado acima — força esconder o banner do card anterior
   // BUGFIX (relato real, 2026-09-01: "criei um card do zero e trouxe um
   // comentário de um último card aleatório"): faltava aqui — openCard()
   // chama loadComments(id), que atualiza _commentCardId E o DOM de
@@ -21530,7 +21599,7 @@ const HELP_CONTENT = {
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
   agente: [
-    { icon:'🤖', title:'O que é o Agente Ágil', text:'Uma IA que lê e age sobre um card específico quando alguém o menciona. Pra chamar: mencione "@Agente Ágil" (ou selecione ele no autocomplete de @) num comentário do card — só disponível nos squads dev e dados por enquanto. A resposta chega como um novo comentário no mesmo card, geralmente em menos de 1 minuto, com notificação 🔔 pra quem perguntou.\n\nAtalhos que fazem a mesma coisa sem precisar digitar a menção: o botão "🤖 Insights" no rodapé do card, ou "Insights" no menu de contexto (botão direito) de um card no board.\n\nAntes de responder, ele sempre lê o card de verdade (descrição, checklist, comentários, coluna, tags, responsável) — nunca responde só com base no que foi perguntado, sem olhar o estado real.' },
+    { icon:'🤖', title:'O que é o Agente Ágil', text:'Uma IA que lê e age sobre um card específico quando alguém o menciona. Pra chamar: mencione "@Agente Ágil" (ou selecione ele no autocomplete de @) num comentário do card — só disponível nos squads dev e dados por enquanto. A resposta chega como um novo comentário no mesmo card, geralmente em menos de 1 minuto, com notificação 🔔 pra quem perguntou.\n\nEnquanto a resposta não chega, um aviso "🤖 pensando..." aparece no card (dentro do modal e como um chip no board) — a resposta some sozinha assim que ela chega, sem precisar fechar e reabrir o card.\n\nAtalhos que fazem a mesma coisa sem precisar digitar a menção: o botão "🤖 Insights" no rodapé do card, ou "Insights" no menu de contexto (botão direito) de um card no board.\n\nAntes de responder, ele sempre lê o card de verdade (descrição, checklist, comentários, coluna, tags, responsável) — nunca responde só com base no que foi perguntado, sem olhar o estado real.' },
     { icon:'✏️', title:'Ações que o agente pode executar', text:'Sempre no card que foi mencionado (o agente não exclui cards nem atribui responsável — ver limitações abaixo): comentar, adicionar um link real (nunca inventa URL), marcar/desmarcar item de checklist, mover de coluna, editar descrição/prioridade/tags, adicionar um risco ao card, e gerar um relatório HTML quando pedido claramente. Exemplos: "Move esse card pra Concluído." "Marca o item do checklist sobre testes." "Adiciona um risco sobre atraso do fornecedor." "Por que esse card tá parado?"\n\n📝 Pedido não tem nada a ver com o card mencionado? Ele pode criar um RASCUNHO em 📥 Pedidos de Intake (nunca direto no board) pra um humano revisar e confirmar — não é a mesma coisa que "criar card de verdade" sozinho.\n\n🔍 Antes de agir, ele pode consultar: uma visão agregada do board inteiro (WIP, throughput, gargalo por coluna, bloqueios) pra dar contexto de gestão, quais cards já são "de" um agente de IA cadastrado (responsável ou participante), e uma base de conceitos ágeis + como as funcionalidades do Maré Digital funcionam (recorrência, ficha técnica, dependências...).\n\n🔌 Card com comentário de um especialista externo (ex.: Databricks)? Nos squads onde essa capacidade está ligada (hoje só dev), ele pode encaminhar uma mensagem de volta pra esse especialista — chama o webhook cadastrado em Painel → Agentes Externos quando algo relevante mudar (card concluído, alguém validou, pediu ajuste). Fora desses squads, essa opção nem aparece pra ele.\n\n⚠️ Julgamento: age direto em ações de baixo risco (comentar, marcar checklist); em mover coluna/editar campos, só se o pedido for razoavelmente óbvio — senão pausa e pergunta antes de arriscar. Perguntas abertas ("esse card parece pronto?") sempre viram uma recomendação + confirmação, nunca uma ação direta.\n\n🚫 Não faz (diferente do painel de chat antigo): excluir card, atribuir responsável, salvar como modelo/recorrente, editar prazo/Submarca/Ficha Técnica.' },
     { icon:'🤖', title:'Card especial "Converse com o Agente Ágil"', text:'Botão 🤖 no canto inferior direito (ao lado de ⚙ Configurações), visível nos squads onde o agente já responde de verdade. Abre um card fixo — que nunca aparece em nenhuma coluna do board — só pra falar com o agente sobre algo que não precisa virar uma tarefa de verdade (dúvida, ideia, pedido solto). Funciona igual a qualquer card: o comentário já abre com a menção pronta, e a resposta aparece sozinha, sem precisar sair e voltar do card.\n\n🔄 Limpar conversa: como esse card é compartilhado entre todo mundo, tem um botão pra apagar o histórico inteiro e começar do zero — irreversível, apaga de todo mundo, não só de quem clicou.\n\n💰 Cada mensagem processada custa tokens de verdade, pagos pela empresa — use com moderação, evite repetir a mesma pergunta ou testar à toa.' },
     { icon:'📜', title:'Histórico do Agente', text:'Aba "🤖 Histórico do Agente" em ⚙ Configurações (só aparece nos squads onde o agente já responde de verdade) — lista, em ordem, tudo que o Agente Ágil mudou em cards desse squad: card, quando, e as ações em português simples (ex.: "moveu para Concluído", "marcou item do checklist"). Cada entrada mostra também a ORIGEM da ação: se veio de alguém mencionando "@Agente Ágil" na mão, de uma Automação disparando sozinha, ou de um sistema externo plugado no board. Chamadas que só leram o card (sem mudar nada) não entram na lista — só o que teve efeito real.' },
@@ -21542,7 +21611,7 @@ const HELP_CONTENT = {
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
-    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), ou notificar o Agente Ágil.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.' },
+    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, ou notificar todo mundo do squad.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
@@ -21649,6 +21718,7 @@ Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer p
 <div>🎯 <b>Marcar como OKR</b></div>
 <div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"</span></div>
 <div>🤖 <b>Notificar Agente Ágil</b> <span style="font-size:10px;color:var(--txt3);">— só aparece nos squads onde o Agente Ágil já responde de verdade (dev e dados hoje)</span></div>
+<div>📣 <b>Notificar todos</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— posta um comentário "@todos" no card e avisa todo mundo do squad no sino 🔔, disponível em qualquer squad</span></div>
 </div>
 
 Todas as ações marcadas "só aparece se..." ficam escondidas do dropdown pra quem não usa aquele recurso — não polui a lista de quem não precisa. Se o recurso for ativado depois, a ação aparece sozinha, sem precisar recriar nada.` },
@@ -25616,6 +25686,28 @@ const AUTO_ACTIONS = [
       _dispatchAgenteAgilComment(card.id, '@Agente Ágil — [Automação] Card "'+card.title+'" acionou a regra "'+rule.label+'". Dá uma olhada e vê se alguma ação é recomendada.', {squads: AGENTE_AGIL_MENTION_SQUADS, asAutomacao:true});
       return false; // não altera o card em si, só dispara o agente
     } },
+  // "Notificar todos" (pedido direto, 2026-09-01) — mesmo padrão de
+  // "Notificar Agente Ágil" acima (posta um comentário automático,
+  // autoria "⚙ Automação"), mas SEM squad-gate nenhum: @todos (ver
+  // TODOS_MENTION_ENTRY/parseMentions) funciona em qualquer squad, não
+  // depende de nenhuma Cloud Function ouvindo — diferente do Agente
+  // Ágil. Chama parseMentions() manualmente depois de postar — aqui
+  // (diferente de notify_agent) É o parseMentions() que faz o trabalho
+  // de verdade, o fan-out real de notificação pra todo mundo do squad;
+  // sem essa chamada, o comentário apareceria no card, mas ninguém
+  // seria notificado de nada.
+  { key:'notify_all', label:'Notificar todos', valueType:'none',
+    run:(rule,card)=>{
+      const comment={
+        id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+        uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+        text:'@todos [Automação] a regra "'+rule.label+'" disparou no card "'+card.title+'".',
+        ts:new Date().toISOString(),
+      };
+      _pushCardComment(card.id, comment);
+      parseMentions(comment.text, card.id, comment.id);
+      return false; // não altera o card em si, só notifica
+    } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
     run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
@@ -27696,6 +27788,13 @@ function submitComment(){
   renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // Fire @mention notifications from comment
   parseMentions(text, _commentCardId, comment.id);
+  // "🤖 pensando..." — diferente de _dispatchAgenteAgilComment() (só usado
+  // pelos atalhos sintéticos), aqui a pessoa digitou a @menção na mão, no
+  // comentário normal — precisa da mesma detecção (ver _textMencionaAgenteAgil)
+  // pra saber se isso é mesmo uma @menção real, e só se o squad tiver a
+  // Cloud Function de verdade ouvindo (senão o indicador nunca resolveria
+  // sozinho, só pelo timeout de segurança).
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(text)) _startAgenteAgilThinking(_commentCardId);
 }
 
 function deleteComment(cid){
