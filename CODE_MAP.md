@@ -463,6 +463,16 @@ pra trás de um comportamento que os outros já tinham.
   `analiseDados.js` na seção `agente-agil-orquestrador/` abaixo). Gate
   de squad: `AGENTE_AGIL_ANALISE_DADOS_SQUADS` (`dev`+`dados`, constante
   própria mesmo tendo o mesmo valor de `AGENTE_AGIL_MENTION_SQUADS`)
+- `_pedirAnalisePO()` (2026-09-01) — botão "🤖 Análise do board (PO)"
+  dentro do painel "🌅 Meu Dia" (`#meudia-po-btn`/`#meudia-po-box`) —
+  chama `agenteAgilAnalisePO` (ver `analisePO.js` na seção
+  `agente-agil-orquestrador/` abaixo) só com `{squadId: ACTIVE_SQUAD}`,
+  sem mandar nenhum resumo (backend lê tudo sozinho). Visibilidade
+  gatilhada em `openMeuDia()`:
+  `AGENTE_AGIL_ANALISE_PO_SQUADS.has(ACTIVE_SQUAD) && _isPOorOrg()` —
+  único dos botões de análise restrito por papel (PO/Organizador/ADM),
+  os outros dois (`_pedirResumoMeuDia()`/`_pedirAnaliseDados()`) são
+  abertos a qualquer membro do squad
 - Painel de chat antigo (`openAgent()`/`qa()`, `AGENTE_AGIL_ATIVO`) — os 2
   botões de entrada (FAB, nav mobile) foram removidos de vez (2026-08-25,
   pedido direto do usuário — "já morreu"), já que dependia de um Worker
@@ -641,13 +651,17 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   `onRequest` (não gatilho por evento) — "🤖 Ponto de vista do Agente
   Ágil" dentro dos painéis "Dados do Board"/"Controle de Criativos",
   2026-09-01, ver seção abaixo
+- `agenteAgilAnalisePO` — L~259 → `agente-agil-orquestrador/analisePO.js`,
+  `onRequest` (não gatilho por evento) — "🤖 Análise do board (PO)"
+  dentro de "Meu Dia", 2026-09-01, ver seção abaixo
 
 ### agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
 - `squadScope.js` (2026-08-31, revisão arquitetural) — fonte única das
   listas "em quais squads o Agente Ágil está ativo, pra qual capacidade":
   `MENTION_SQUADS`/`DUE_SCAN_SQUADS`/`RESUMO_MEUDIA_SQUADS`/
-  `NOTIFICAR_ESPECIALISTA_SQUADS`/`ANALISE_DADOS_SQUADS` (esta última
-  adicionada 2026-09-01, ver `analiseDados.js` abaixo). Antes,
+  `NOTIFICAR_ESPECIALISTA_SQUADS`/`ANALISE_DADOS_SQUADS`/
+  `ANALISE_PO_SQUADS` (as 2 últimas adicionadas 2026-09-01, ver
+  `analiseDados.js`/`analisePO.js` abaixo). Antes,
   `dueOverdueTrigger.js`/`resumoMeuDia.js` hardcodavam `['dev','dados']`
   cada um por conta própria (já tinham comentário cruzado avisando
   "mesma lista que o outro arquivo", nunca chegaram a compartilhar de
@@ -873,6 +887,23 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   handler só valida formato/tamanho (`resumo` objeto, máx. 12.000
   caracteres de JSON) e `squadId` contra `ANALISE_DADOS_SQUADS`.
   `gerarAnaliseDados()` — lógica pura testável (llmClient injetado)
+- `analisePO.js` — "🤖 Análise do board (PO)" (2026-09-01), dentro de
+  "Meu Dia", só pra PO/Organizador/ADM (gate no client, ver
+  `AGENTE_AGIL_ANALISE_PO_SQUADS` abaixo). Mesmo padrão de
+  `resumoMeuDia.js` (`onRequest`, `tools: []`, kill switch, rate limit),
+  mas lê cards/campanhas direto via Admin SDK (não recebe resumo do
+  cliente) — precisa comparar tags dos cards ativos contra
+  `kanban/campanhas` (nó GLOBAL, não por squad). Reaproveita
+  `summarizeBoard()` de `tools/visaoBoard.js` (WIP/throughput/cycle/
+  lead/gargalo/bloqueios). `buildBoardPOPayload()` — lógica pura,
+  calcula listas de atrasados/bloqueados/incompletos (cap 8, exclui
+  cards em coluna de fim) e `tagsSemCampanha` — tags com ≥3 cards ativos
+  que AINDA NÃO pertencem a nenhuma campanha `ativa`/`planejamento`
+  (`campanhasRelevantes()`) — só essa lista já filtrada chega ao LLM, que
+  decide SE vale sugerir uma campanha nova, nunca inventa a comparação
+  sozinho. `collectBoardPOData()` — I/O, chama `buildBoardPOPayload()`
+  com os dados lidos. Escopo só do squad atual (`ANALISE_PO_SQUADS`),
+  não cross-squad como o resto de Meu Dia (confirmado com o usuário)
 
 ### agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
 - `http.js`, `schema.js`, `board.js`, `flow.js`, `members.js`, `notifications.js`, `resolver.js`, `storage.js`

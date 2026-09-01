@@ -56,10 +56,21 @@ const NOTIFICAR_ESPECIALISTA_SQUADS = Object.freeze(['dev']);
 // (NOTIFICAR_ESPECIALISTA_SQUADS acima).
 const ANALISE_DADOS_SQUADS = Object.freeze(['dev', 'dados']);
 
+// Squads onde analisePO.js responde ao botão "🤖 Análise do board (PO)"
+// dentro de "Meu Dia" — visível só pra PO/Organizador/ADM no client
+// (mesmo threat model de ANALISE_DADOS_SQUADS: o dado já é visível a
+// qualquer membro do squad via outros painéis — Dados do Board, Controle
+// de Criativos, lista de Campanhas —, então o botão é restrito por
+// decisão de produto, não por exposição de dado novo). Mesmo valor de
+// ANALISE_DADOS_SQUADS hoje, constante própria pela mesma convenção do
+// resto deste arquivo.
+const ANALISE_PO_SQUADS = Object.freeze(['dev', 'dados']);
+
 module.exports = {
   MENTION_SQUADS,
   DUE_SCAN_SQUADS,
   RESUMO_MEUDIA_SQUADS,
   NOTIFICAR_ESPECIALISTA_SQUADS,
   ANALISE_DADOS_SQUADS,
+  ANALISE_PO_SQUADS,
 };

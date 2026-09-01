@@ -2308,6 +2308,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.529-dev — 2026-09-01 — Novo: "🤖 Análise do board (PO)" em Meu Dia
+
+Pedido direto do usuário: "no meu dia, acho que podia ter um botao para o
+PO/Org/ADM receber uma analise do board pelo Agente Ágil, como um PO!
+Trazer analise rapida de como ta o board, cards impedidos, cards
+atrasados, cards incompletos... e ai eu quero pedir para quando isso
+acontecer, se ele notar algum padrão nos cards, solicitar/sugerir que o
+PO crie campanhas/coleções! ai ele tem q ja ter acesso a essas
+campanhas/coleções e ir comparando com o fluxo do board para n sugerir
+coisas q n façam sentido ou ja estão sendo executadas".
+
+Botão novo "🤖 Análise do board (PO)" dentro do painel "🌅 Meu Dia",
+visível só pra PO/Organizador/ADM (`_isPOorOrg()`, checado em
+`openMeuDia()`) — escopo confirmado com o usuário: só o squad atual
+(igual "Dados do Board"/"Controle de Criativos"), não cross-squad como o
+resto de Meu Dia. O texto cobre dois pontos: (1) leitura rápida do board
+— WIP vs. limite, throughput/cycle/lead time, gargalo por coluna,
+bloqueios, cards atrasados/incompletos; (2) **se fizer sentido pelos
+dados**, sugestão de campanha/coleção nova — o agente já recebe as
+campanhas ATIVAS/EM PLANEJAMENTO (`kanban/campanhas`) e as tags mais
+frequentes no board que AINDA NÃO pertencem a nenhuma delas, calculado em
+código (não pelo LLM) — a lista de "tags sem campanha" já exclui por
+definição qualquer coisa que já esteja sendo executada, então o agente
+nunca sugere duplicata.
+
+Backend novo `functions/agente-agil-orquestrador/analisePO.js`
+(`agenteAgilAnalisePO`) — mesmo padrão de `resumoMeuDia.js`/
+`analiseDados.js` (onRequest + Bearer idToken, kill switch, rate limit
+2min/pessoa, `tools: []`), mas lê cards/campanhas direto via Admin SDK
+(não recebe resumo pronto do cliente) e reaproveita `summarizeBoard()`
+de `tools/visaoBoard.js` pras métricas fixas. Constante nova
+`ANALISE_PO_SQUADS` em `squadScope.js`. 8 testes novos
+(`__tests__/analisePO.test.js`), suíte `functions/` inteira: 390/390
+passando.
+
+**Requer deploy próprio**: `firebase deploy --only functions:agenteAgilAnalisePO`
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.528-dev — 2026-09-01 — Novo: "🤖 Ponto de vista do Agente Ágil" em Dados do Board e Controle de Criativos
 
 Pedido direto do usuário: "ali em dados do board, dentro de insights, traz
@@ -10387,6 +10427,45 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-01 · Novo: `analisePO.js` — "🤖 Análise do board (PO)" em Meu Dia
+
+Pedido direto do usuário, mesmo dia de `analiseDados.js` abaixo: um
+botão em "Meu Dia", só pra PO/Organizador/ADM, com uma leitura do board
+"como um PO" (WIP, atrasados, bloqueados, incompletos) que também
+compara o board com as Campanhas & Coleções já cadastradas pra sugerir
+uma campanha nova SE detectar um padrão de tags relevante ainda não
+coberto — sem nunca sugerir algo que já esteja ativo/planejado.
+
+Mesmo desenho base de `resumoMeuDia.js`/`analiseDados.js` (onRequest +
+Bearer idToken, kill switch, rate limit 2min/pessoa, `tools: []`), mas
+diferente de `analiseDados.js`: lê cards/campanhas direto via Admin SDK
+(não recebe resumo pronto do cliente), porque precisa de dado bruto —
+título dos cards, tags, comparação com `kanban/campanhas` (nó global) —
+que os painéis client-side não calculam prontos. Reaproveita
+`summarizeBoard()` de `tools/visaoBoard.js` (WIP/throughput/cycle
+time/lead time/gargalo/bloqueios) em vez de recalcular. A parte de
+"detectar padrão → sugerir campanha" é DETERMINÍSTICA em código: agrupa
+cards ativos por tag, exclui as tags que já pertencem a uma campanha com
+status `ativa`/`planejamento` (`encerrada` não conta — pode fazer
+sentido relançar), aplica um piso de 3 cards por tag pra não sugerir em
+cima de ruído — só o que sobra desse filtro chega ao LLM, que decide SE
+vale a pena sugerir (nunca inventa a lista de tags/campanhas sozinho).
+
+Escopo confirmado com o usuário antes de implementar: só o squad atual
+(`ANALISE_PO_SQUADS` em `squadScope.js`, mesmo valor de
+`ANALISE_DADOS_SQUADS`), não cross-squad como o resto de "Meu Dia".
+Botão restrito a PO/Organizador/ADM só no client (`_isPOorOrg()`) — o
+backend não checa papel, só domínio (mesmo padrão das outras 2
+functions deste lote): os dados do payload (métricas do board, cards
+atrasados/bloqueados/incompletos, lista de campanhas ativas) já são
+visíveis a qualquer membro do squad via outros painéis, então restringir
+o botão é curadoria de "pra quem a sugestão é relevante", não controle
+de acesso a dado novo — ver comentário completo no topo de
+`analisePO.js`. 8 testes novos em `__tests__/analisePO.test.js`, suíte
+`functions/` inteira: 390/390 passando.
+
+**Requer deploy próprio**: `firebase deploy --only functions:agenteAgilAnalisePO`
 
 ### 2026-09-01 · Novo: `analiseDados.js` — "🤖 Ponto de vista do Agente Ágil" (Dados do Board + Controle de Criativos)
 

@@ -256,3 +256,16 @@ exports.agenteAgilIntake = require('./agente-agil-orquestrador/intakeTrigger').a
 // pessoa; um endpoint só, contexto escolhe o system prompt certo).
 // Deploy isolado: firebase deploy --only functions:agenteAgilAnaliseDados
 exports.agenteAgilAnaliseDados = require('./agente-agil-orquestrador/analiseDados').agenteAgilAnaliseDados;
+
+// "🤖 Análise do board (PO)" dentro de "Meu Dia" (kanban.html/
+// kanban-dev.html), 2026-09-01 — pedido direto do usuário, botão visível
+// só pra PO/Organizador/ADM. Diferente de agenteAgilAnaliseDados: lê os
+// cards/campanhas direto via Admin SDK (não recebe resumo pronto do
+// cliente) — precisa comparar tags dos cards ativos contra as campanhas
+// já ativas/em planejamento (kanban/campanhas, global) pra só sugerir
+// campanha/coleção nova quando o padrão detectado ainda não estiver
+// coberto (ver comentário completo no topo de analisePO.js). Mesmo
+// escopo de squad que analiseDados.js (só o squad atual, não cross-squad
+// como o resto de "Meu Dia"), NÃO escreve nada no board.
+// Deploy isolado: firebase deploy --only functions:agenteAgilAnalisePO
+exports.agenteAgilAnalisePO = require('./agente-agil-orquestrador/analisePO').agenteAgilAnalisePO;

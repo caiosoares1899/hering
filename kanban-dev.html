@@ -5144,6 +5144,8 @@ input[type="date"]{-moz-appearance:textfield;}
   <div style="padding:10px 18px 0;flex-shrink:0;">
     <button class="btn btn-sm" onclick="_pedirResumoMeuDia()" id="meudia-resumo-btn" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Resumo do Agente Ágil</button>
     <div id="meudia-resumo-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>
+    <button class="btn btn-sm" onclick="_pedirAnalisePO()" id="meudia-po-btn" style="display:none;margin-top:8px;color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Análise do board (PO)</button>
+    <div id="meudia-po-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>
   </div>
   <div id="meudia-body" style="padding:14px 18px 20px;overflow-y:auto;flex:1;"></div>
 </div>
@@ -5637,7 +5639,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.528-dev</div>
+<div class="version">v8.30.529-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6462,6 +6464,12 @@ const AGENTE_AGIL_ASSIGNEE_SQUADS = new Set(['dev', 'dados']);
 // squadScope.js, como constante própria (mesma convenção dos outros Sets
 // acima: um nome por capacidade, mesmo quando o valor atual coincide).
 const AGENTE_AGIL_ANALISE_DADOS_SQUADS = new Set(['dev', 'dados']);
+// Squads onde o botão "🤖 Análise do board (PO)" aparece dentro de "Meu
+// Dia" — mesmo valor de ANALISE_PO_SQUADS em squadScope.js, constante
+// própria (mesma convenção). Visível só pra PO/Organizador/ADM
+// (_isPOorOrg(), checado em openMeuDia()) — ver comentário de design em
+// functions/agente-agil-orquestrador/analisePO.js.
+const AGENTE_AGIL_ANALISE_PO_SQUADS = new Set(['dev', 'dados']);
 // ── Dispatcher único: "postar comentário sintético @Agente Ágil" (revisão
 // arquitetural 2026-08-31) ───────────────────────────────────────────────
 // Até aqui esse padrão (escrever um comentário com "@Agente Ágil" em
@@ -17869,6 +17877,10 @@ async function openMeuDia(){
   ov.classList.add('open');
   const resumoBox=document.getElementById('meudia-resumo-box');
   if(resumoBox){ resumoBox.style.display='none'; resumoBox.textContent=''; } // não mostra resumo de uma sessão anterior
+  const poBtn=document.getElementById('meudia-po-btn');
+  const poBox=document.getElementById('meudia-po-box');
+  if(poBtn) poBtn.style.display = (AGENTE_AGIL_ANALISE_PO_SQUADS.has(ACTIVE_SQUAD) && _isPOorOrg()) ? 'inline-flex' : 'none';
+  if(poBox){ poBox.style.display='none'; poBox.textContent=''; }
   const body=document.getElementById('meudia-body');
   if(body) body.innerHTML='<div style="padding:24px 0;text-align:center;color:var(--txt3);font-size:12px;">⏳ Carregando seus cards de todos os squads...</div>';
   await _loadMeuDiaCrossSquads();
@@ -18048,6 +18060,59 @@ async function _pedirAnaliseDados(contexto, resumo, btnId, boxId){
     box.textContent = '⚠️ Não consegui falar com o Agente Ágil agora — tenta de novo em instantes.';
   }finally{
     _analiseDadosEmVoo = false;
+    btn.disabled = false;
+    btn.textContent = origLabel;
+  }
+}
+
+// "🤖 Análise do board (PO)" dentro de "Meu Dia" — pedido direto: "no meu
+// dia, acho que podia ter um botao para o PO/Org/ADM receber uma analise
+// do board pelo Agente Ágil, como um PO! ... cards impedidos, atrasados,
+// incompletos... se ele notar algum padrão nos cards, solicitar/sugerir
+// que o PO crie campanhas/coleções". Botão visível só pra PO/Organizador/
+// ADM (gate em openMeuDia()), escopo só do squad atual (ACTIVE_SQUAD, não
+// cross-squad como o resto de Meu Dia — confirmado com o usuário).
+// Diferente de _pedirAnaliseDados(): não manda nenhum resumo — o backend
+// (agenteAgilAnalisePO, ver analisePO.js) lê os cards/campanhas direto,
+// só precisa do squadId.
+const AGENTE_AGIL_ANALISE_PO_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/agenteAgilAnalisePO';
+let _analisePOEmVoo = false;
+async function _pedirAnalisePO(){
+  if(_analisePOEmVoo) return;
+  const cu = window._currentUser; if(!cu) return;
+  const btn = document.getElementById('meudia-po-btn');
+  const box = document.getElementById('meudia-po-box');
+  if(!btn || !box) return;
+  _analisePOEmVoo = true;
+  const origLabel = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = '⏳ Analisando...';
+  box.style.display = 'block';
+  box.textContent = '⏳ O Agente Ágil está olhando o board como um PO...';
+  try{
+    const token = await cu.getIdToken();
+    const res = await fetch(AGENTE_AGIL_ANALISE_PO_URL, {
+      method:'POST',
+      headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+      body: JSON.stringify({ squadId: ACTIVE_SQUAD }),
+    });
+    const data = await res.json().catch(()=>({}));
+    if(!res.ok || data.ok===false){
+      const msgs = {
+        agente_desligado: 'O Agente Ágil está desligado no momento.',
+        rate_limited: 'Calma aí! Espera um pouquinho antes de pedir de novo.',
+        domain_not_allowed: 'Sem permissão pra usar essa função.',
+        squad_nao_habilitado: 'Esse squad ainda não tem essa função habilitada.',
+      };
+      box.textContent = '⚠️ '+(msgs[data.error]||'Não consegui gerar a análise agora — tenta de novo em instantes.');
+    } else {
+      box.textContent = data.analise;
+    }
+  }catch(e){
+    console.warn('[agente-agil] análise do board (PO) falhou:', e);
+    box.textContent = '⚠️ Não consegui falar com o Agente Ágil agora — tenta de novo em instantes.';
+  }finally{
+    _analisePOEmVoo = false;
     btn.disabled = false;
     btn.textContent = origLabel;
   }
