@@ -10244,6 +10244,56 @@ baseline de `painel-dev.html`). Testado via Playwright headless com
 Firebase mockado (troca de aba, modal de ajuda, `loadAgentesTabData()`
 end-to-end) antes de promover — sem exceptions.
 
+### painel-dev.html v3.07 · painel-dev — 2026-09-01 · fix (/monitorarbugs): CRUD de Agentes Externos falhava em silêncio + perdia edição não salva
+
+Achado numa 2ª rodada de `/monitorarbugs` pedida direto pelo usuário
+("nessa parte de agentes"), revisando o CRUD que eu só tinha *movido* de
+lugar na rodada anterior (`criarAgenteExternoPainel()`/
+`salvarAgenteExternoPainel()`/`toggleAgenteExternoSquad()`/
+`renderAgentesExternosPainel()`), sem auditar a lógica de verdade. 2
+achados reais, ambos implementados:
+
+**1. Falha em silêncio quando o registro já não existe mais.**
+`salvarAgenteExternoPainel()` e `toggleAgenteExternoSquad()` liam fresco
+do Firebase antes de escrever (`if(!a) return;`) — correto pra evitar
+reverter uma mudança concorrente, mas se o agente tinha sido excluído
+nesse meio-tempo (2 ADMs mexendo ao mesmo tempo), o `return` era mudo:
+sem toast, sem erro, o clique simplesmente não fazia nada visível. Pior:
+`criarAgenteExternoPainel()` faz update OTIMISTA do cache local antes da
+escrita confirmar — se o identificador digitado tivesse um caractere
+inválido pra chave do Firebase (ex.: um ponto, plausível já que o campo é
+pra IDs de sistemas externos), a escrita falhava mas a entrada "fantasma"
+ficava na lista local pra sempre, nunca persistida, e qualquer ação nela
+caía nesse mesmo retorno silencioso. Fix: toast avisando "agente não
+existe mais" nas duas funções (+ re-render, que também corrige o
+checkbox de squad que o navegador já tinha marcado visualmente antes da
+escrita falhar); `criarAgenteExternoPainel()` reverte o cache local se a
+escrita falhar de verdade.
+
+**2. Re-render destrutivo apagava edição em andamento.** O listener de
+`kanban/config/agentesExternos` dispara pra QUALQUER mudança no nó — um
+ADM editando o Agente Y reconstrói a lista inteira, inclusive a linha do
+Agente X que outra pessoa (ou a mesma, em outra aba) estava com o
+formulário aberto e ainda não tinha salvado. Sem nenhum aviso, o texto
+digitado sumia. Não era um bug introduzido pela aba "🤖 Agentes" — o
+mesmo padrão (`renderAgentesList()`, Agentes de IA em `kanban.html`)
+existia antes; a aba nova só ficou mais exposta por ser mais visível/
+persistente. Fix (escopo pedido explicitamente pelo usuário, mesmo
+sendo mais que "correção pontual"): `renderAgentesExternosPainel()`
+agora captura os valores atuais dos campos da linha aberta antes de
+reconstruir o HTML, e restaura depois — preserva o que a pessoa
+estiver digitando através de qualquer re-render disparado por uma
+mudança em OUTRO agente. `renderAgentesList()` (kanban.html) não foi
+tocado — fora do escopo desta rodada, que foi só "aba agentes" (painel).
+
+Testado via Playwright headless com Firebase mockado: 4 cenários
+(preserva digitação em re-render; toast ao salvar agente já excluído;
+toast ao marcar squad de agente já excluído; reverte entrada fantasma
+quando a criação falha) — todos passaram como esperado.
+
+painel-dev.html v3.06 → v3.07. Checks de rotina: `node --check` OK,
+brace/paren balance -1/-11 (mesmo baseline conhecido).
+
 ### painel-dev.html v3.06 · painel-dev — 2026-09-01 · fix: "Permission denied" ao clicar 🔄 Atualizar na aba Agentes
 
 Achado ao vivo pelo usuário logo após testar a v3.05: `loadAgentesTabData()`

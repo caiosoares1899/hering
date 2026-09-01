@@ -2304,7 +2304,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.06 · painel-dev</div>
+<div class="version">v3.07 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6820,6 +6820,19 @@ function renderAgentesExternosPainel(){
     box.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">Nenhum agente externo cadastrado ainda.</div>';
     return;
   }
+  // Este listener dispara pra QUALQUER mudança em kanban/config/agentesExternos
+  // — inclusive um ADM editando um agente DIFERENTE do que está aberto aqui.
+  // Sem preservar os campos, reconstruir a lista inteira apagava texto ainda
+  // não salvo na linha em edição (achado via /monitorarbugs, 2026-09-01).
+  const abertoId=_agentesExtPainelAberto;
+  const preservado=abertoId?{
+    descricao: document.getElementById('agentext-p-desc-'+abertoId)?.value,
+    webhookUrl: document.getElementById('agentext-p-webhook-'+abertoId)?.value,
+    nome: document.getElementById('agentext-p-nome-'+abertoId)?.value,
+    init: document.getElementById('agentext-p-init-'+abertoId)?.value,
+    cor: document.getElementById('agentext-p-cor-'+abertoId)?.value,
+    avatarEmoji: document.getElementById('agentext-p-emoji-'+abertoId)?.value,
+  }:null;
   box.innerHTML=ids.map(id=>{
     const a=agentesExternosCfg[id]||{};
     const aberto=_agentesExtPainelAberto===id;
@@ -6855,6 +6868,15 @@ function renderAgentesExternosPainel(){
       </div>`:''}
     </div>`;
   }).join('');
+  if(preservado){
+    const restaura=(campo,elId)=>{ const el=document.getElementById(elId); if(el && preservado[campo]!==undefined) el.value=preservado[campo]; };
+    restaura('descricao','agentext-p-desc-'+abertoId);
+    restaura('webhookUrl','agentext-p-webhook-'+abertoId);
+    restaura('nome','agentext-p-nome-'+abertoId);
+    restaura('init','agentext-p-init-'+abertoId);
+    restaura('cor','agentext-p-cor-'+abertoId);
+    restaura('avatarEmoji','agentext-p-emoji-'+abertoId);
+  }
 }
 
 function _agenteExternoAutor(){ return window._currentUser?.displayName || window._currentUser?.email || '?'; }
@@ -6871,7 +6893,19 @@ function criarAgenteExternoPainel(){
   _agentesExtPainelAberto=id;
   renderAgentesExternosPainel();
   window._set(window._ref(window._db,'kanban/config/agentesExternos/'+id), entry)
-    .catch(e=>showToast('❌ '+e.message));
+    .catch(e=>{
+      // Reverte o update otimista se a escrita falhar de verdade (ex.:
+      // identificador com caractere inválido pra chave do Firebase, como um
+      // ponto) — sem isso, ficava uma entrada "fantasma" só no cache local,
+      // nunca persistida, e qualquer ação nela (Salvar, marcar squad) caía
+      // em silêncio no "agente não existe mais" abaixo (achado via
+      // /monitorarbugs, 2026-09-01).
+      const {[id]:_, ...resto} = agentesExternosCfg;
+      agentesExternosCfg = resto;
+      if(_agentesExtPainelAberto===id) _agentesExtPainelAberto=null;
+      renderAgentesExternosPainel();
+      showToast('❌ '+e.message);
+    });
 }
 
 // As duas funções abaixo leem fresco do Firebase antes de escrever (em vez
@@ -6896,7 +6930,8 @@ async function salvarAgenteExternoPainel(id){
   const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
   try{
     const snap=await window._get(ref);
-    const a=snap.val(); if(!a) return;
+    const a=snap.val();
+    if(!a){ showToast('⚠ Esse agente não existe mais — pode ter sido excluído. Atualizando a lista...'); renderAgentesExternosPainel(); return; }
     const entry={...a, descricao:ta.value.trim(), webhookUrl, nome, init, cor, avatarEmoji, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
     await window._set(ref, entry);
     showToast('✅ Agente externo salvo.');
@@ -6908,7 +6943,8 @@ async function toggleAgenteExternoSquad(id, squadId, checked){
   const ref=window._ref(window._db,'kanban/config/agentesExternos/'+id);
   try{
     const snap=await window._get(ref);
-    const a=snap.val(); if(!a) return;
+    const a=snap.val();
+    if(!a){ showToast('⚠ Esse agente não existe mais — pode ter sido excluído. Atualizando a lista...'); renderAgentesExternosPainel(); return; }
     const squads={...(a.squads||{})};
     if(checked) squads[squadId]=true; else delete squads[squadId];
     const entry={...a, squads, atualizadoEm:new Date().toISOString(), atualizadoPor:_agenteExternoAutor()};
