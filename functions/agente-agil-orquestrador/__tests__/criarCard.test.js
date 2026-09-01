@@ -143,3 +143,39 @@ test('checklist: ausente vira array vazio, não undefined (rascunho sempre com o
   const entry = await db.ref(`kanban/squads/dev/dados/intake_pending/${result.pendingId}`).get();
   assert.deepEqual(entry.val().checklist, []);
 });
+
+test('tags/riscos (2026-09-01): schema aceita até 10 itens cada, rejeita 11', () => {
+  const ate10 = Array.from({ length: 10 }, (_, i) => 'Item ' + i);
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', tags: ate10 }).success, true);
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', riscos: ate10 }).success, true);
+  const com11 = [...ate10, 'Item 10'];
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', tags: com11 }).success, false);
+  assert.equal(criarCardSchema.safeParse({ titulo: 'X', riscos: com11 }).success, false);
+});
+
+test('tags/riscos: gravados no rascunho quando informados', async () => {
+  const db = seedDb();
+  const handler = makeRealCriarCardHandler({ db, squadId: 'dev', dryRun: false });
+
+  const result = await handler({
+    titulo: 'Card com tags e riscos',
+    tags: ['Urgente', 'Marketing'],
+    riscos: ['Prazo apertado'],
+  });
+
+  assert.equal(result.ok, true);
+  const entry = await db.ref(`kanban/squads/dev/dados/intake_pending/${result.pendingId}`).get();
+  assert.deepEqual(entry.val().tags, ['Urgente', 'Marketing']);
+  assert.deepEqual(entry.val().riscos, ['Prazo apertado']);
+});
+
+test('tags/riscos: ausentes viram array vazio, não undefined', async () => {
+  const db = seedDb();
+  const handler = makeRealCriarCardHandler({ db, squadId: 'dev', dryRun: false });
+
+  const result = await handler({ titulo: 'Card sem tags nem riscos' });
+
+  const entry = await db.ref(`kanban/squads/dev/dados/intake_pending/${result.pendingId}`).get();
+  assert.deepEqual(entry.val().tags, []);
+  assert.deepEqual(entry.val().riscos, []);
+});

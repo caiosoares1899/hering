@@ -679,10 +679,13 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   seção "Intake" abaixo). Replica as regras obrigatórias do `criar_card`
   client-side (Ficha Técnica recusa, Submarca exige opção válida —
   `SUBMARCA_LABELS`, cópia fixa de `SUBMARCA_TAGS` do kanban-dev.html).
-  Campo `checklist` opcional (2026-09-01, testado na prática — o agente
-  recebeu um processo em etapas e não tinha onde colocar além de texto
-  corrido na descrição): array de até 20 strings, itens sempre nascem
-  desmarcados; `_intakeCriarCard()` os aplica ao confirmar o rascunho.
+  Campos opcionais adicionados 2026-09-01, testado na prática — o agente
+  recebeu um processo em etapas e um pedido de tags/riscos e não tinha
+  onde colocar nada disso além de texto corrido na descrição:
+  `checklist` (até 20 strings, itens sempre desmarcados), `tags` (até 10
+  NOMES — nunca ids, casados por label no cliente) e `riscos` (até 10
+  strings soltas, mesmo formato de `card.riscos` no board).
+  `_intakeCriarCard()` aplica os 3 ao confirmar o rascunho.
 - `pendingAuto.js` — `enqueuePendingAuto()`/`enqueuePendingAutoFromDiff()`
   (2026-08-29, achado real `/monitorarbugs`: Automações client-side nunca
   disparavam pra mutação do orquestrador). Chamado de dentro de

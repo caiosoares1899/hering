@@ -54,6 +54,16 @@ const criarCardSchema = z.object({
   // já aplicados em outras ferramentas, ex. checklist_item) — evita um
   // rascunho gigante que ninguém revisa de verdade.
   checklist: z.array(z.string().min(1)).max(20).optional(),
+  // tags: LABELS de texto livre (nunca IDs — o modelo não tem como saber o
+  // esquema de ids do squad), casados por label no cliente ao confirmar
+  // (_intakeCriarCard(), mesmo padrão que squad_solicitante/submarca já
+  // usam — silenciosamente ignora o que não achar correspondência exata,
+  // não trava a criação do rascunho por causa disso). riscos: mesmo
+  // formato que card.riscos já usa no board (array de strings puras, sem
+  // metadado — ver outputs/risco.js/getRiscos()). Cap de 10 nos dois,
+  // consistente com o resto do vocabulário de ferramentas.
+  tags: z.array(z.string().min(1)).max(10).optional(),
+  riscos: z.array(z.string().min(1)).max(10).optional(),
 });
 
 // Mesma lista fixa de kanban-dev.html (const SUBMARCA_TAGS, só os labels —
@@ -124,6 +134,13 @@ function makeRealCriarCardHandler({ db, squadId, especialista, dryRun = true }) 
       // caminho de criação de checklist já segue (ver _criarCardRecorrente()
       // etc.) — não faz sentido um card nascer com item já concluído.
       checklist: Array.isArray(input.checklist) ? input.checklist : [],
+      // tags/riscos (2026-09-01) — mesmo espírito do checklist acima:
+      // sempre presentes no rascunho ([] quando não informado), aplicados
+      // pelo humano ao confirmar. tags ficam como LABELS crus aqui — o
+      // casamento por id só faz sentido do lado do cliente, que é quem
+      // conhece o esquema de tags do squad (ver _intakeCriarCard()).
+      tags: Array.isArray(input.tags) ? input.tags : [],
+      riscos: Array.isArray(input.riscos) ? input.riscos : [],
       origem: 'agente-agil',
       createdAt: new Date().toISOString(),
       status: 'pending',

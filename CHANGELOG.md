@@ -2308,6 +2308,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.526-dev — 2026-09-01 — Feat: `criar_card` do Agente Ágil ganha tags e riscos
+
+Continuação direta da v8.30.525-dev (checklist) — pedido direto do
+usuário assim que viu o resultado do checklist: "outra coisa q faz
+falta são as tags e risco!".
+
+`_intakeCriarCard()` agora também aplica, ao confirmar o rascunho:
+- **riscos**: `card.riscos` já é array de strings puras no board — só
+  passa direto pro `renderRiscos()`, sem transformação nenhuma.
+- **tags**: o modelo manda NOMES de tag (nunca sabe o esquema de ids do
+  squad) — casamento por label (case/acento-insensitive), mesmo padrão
+  que `squadDemandante`/`submarca` já usam logo abaixo; nome sem
+  correspondência é ignorado em silêncio, não trava a criação do card.
+
+Metade backend (schema `tags`/`riscos`, até 10 itens cada, e o handler
+gravando os arrays no rascunho) na entrada correspondente em "Agente
+Ágil Orquestrador" abaixo — precisa do MESMO redeploy manual já pendente
+da v8.30.525-dev (uma função só cobre as duas mudanças).
+
+Checks de rotina: `node --check` OK, diff balanceado.
+
 ### v8.30.525-dev — 2026-09-01 — Feat: `criar_card` do Agente Ágil ganha checklist
 
 Achado testando na prática (mesma sessão): pedimos pro Agente Ágil criar
@@ -10280,6 +10301,30 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-01 · Novo: `criar_card` ganha campos `tags` e `riscos`
+
+Continuação direta do fix de `checklist` logo abaixo — pedido direto do
+usuário assim que viu o resultado na prática: "outra coisa q faz falta
+são as tags e risco!".
+
+`criarCardSchema` ganhou `tags` (até 10 NOMES de tag — nunca ids, o
+modelo não conhece o esquema do squad) e `riscos` (até 10 textos
+curtos, mesmo formato solto que `card.riscos` já usa no board — sem
+metadado, só strings). Handler grava os dois arrays no rascunho, sempre
+presentes (`[]` quando ausentes). Client-side: `_intakeCriarCard()`
+aplica `riscos` direto (`renderRiscos()`, sem transformação) e casa
+`tags` por label (case/acento-insensitive, mesmo padrão que
+`squad_solicitante`/`submarca` já usavam) — nome sem correspondência no
+squad é ignorado, não trava a criação do rascunho.
+
+7 testes novos (3 do checklist + 4 destes), suíte `functions/` inteira:
+376/376 passando.
+
+**Requer o MESMO redeploy manual já pendente da entrada de `checklist`
+abaixo** — as duas mudanças ficam na mesma função, um único
+`firebase deploy` cobre as duas:
+`firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
 
 ### 2026-09-01 · Novo: `criar_card` ganha campo `checklist`
 
