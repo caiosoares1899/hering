@@ -607,17 +607,19 @@ painel de configuração desses agentes plugados! listar todos eles...
 setar em quais squads ele vai ficar"). Lido pelo backend em
 `kanban/config/agentesExternos/{especialista}` — ver
 `lerDescricaoEspecialista()` na seção "Cloud Functions" abaixo.
-- `loadAgentesExternosPainel()` — L6714 — registra o listener em
+- `loadAgentesExternosPainel()` — L6804 — registra o listener em
   `kanban/config/agentesExternos`, chamado no boot (`fb-ready`).
-- `renderAgentesExternosPainel()` — L6721 — lista expansível na aba
-  "🔌 Agentes Externos" de `openCfg()`; cada item mostra descrição
-  (textarea) + chips de squad (`SQUADS`, checkbox por squad). Ganhou
-  também um campo "🔗 Webhook de retorno" (`webhookUrl`, 2026-08-31 —
-  ver entrada própria abaixo).
-- `criarAgenteExternoPainel()` — L6760 / `salvarAgenteExternoPainel(id)`
-  — L6783 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6799
+- `renderAgentesExternosPainel()` — L6816 — lista expansível, agora
+  dentro da aba própria "🤖 Agentes" (`ppane-agentes`, ver seção "Aba
+  Agentes" abaixo — MOVIDA de dentro de `openCfg()`/`#cfg-ov` em
+  2026-09-01, era dado GLOBAL vivendo dentro de um modal por squad);
+  cada item mostra descrição (textarea) + chips de squad (`SQUADS`,
+  checkbox por squad). Ganhou também um campo "🔗 Webhook de retorno"
+  (`webhookUrl`, 2026-08-31 — ver entrada própria abaixo).
+- `criarAgenteExternoPainel()` — L6862 / `salvarAgenteExternoPainel(id)`
+  — L6885 / `toggleAgenteExternoSquad(id,squadId,checked)` — L6906
   (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
-  — L6812. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
+  — L6919. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
   meio leem fresco do Firebase (`window._get`) antes de mesclar/escrever
   — achado real `/monitorarbugs` (2026-08-29): sem isso, marcar 2 squads
   em sequência rápida no mesmo agente podia apagar a 1ª marcação
@@ -645,6 +647,35 @@ setar em quais squads ele vai ficar"). Lido pelo backend em
   quando o agente é responsável por um card é do lado do orquestrador —
   ver `agenteMarcador.js` na seção `functions/` abaixo, NÃO depende de
   nada configurado aqui além de `init`+`webhookUrl`.
+
+### Aba "🤖 Agentes" (2026-09-01)
+Aba própria na barra principal (`ptab-agentes`/`ppane-agentes`, ao lado
+de Visão/Fluxo/Pessoas/Monitor/Status/Dados) — pedido direto: "isso
+merece uma aba sozinha, nao ficar dentro de outras". Consolida tudo que
+antes vivia espalhado: Agentes Externos (ver seção acima, movida pra cá),
+visão cross-squad de quem está representado no board, e o Histórico do
+Agente Ágil (que só existia por squad, dentro do próprio kanban).
+- `_fillAgentesLogSquadFilter()` — L6937 — popula o `<select>` de filtro
+  por squad a partir de `SQUADS` (client-side, sem leitura de Firebase),
+  chamado toda vez que a aba abre (`swPtab()`).
+- `loadAgentesTabData()` — L6944 — SOB DEMANDA (botão "🔄 Atualizar", não
+  listener sempre ligado — são N squads × 2 leituras: `kanban/squads/
+  {squadId}/agentes` + `kanban/squads/{squadId}/dados/agente_log`).
+  Guarda o resultado em `_agentesTabCache` e chama os 2 renders abaixo.
+- `renderAgentesAtivosGrid(results)` — L6968 — grid por squad cruzando
+  Agentes de IA do board com Agentes Externos que têm `init` (mesma
+  condição que os torna selecionáveis em `kanban-dev.html`); os sem
+  `init` aparecem separados como "📡 só contexto".
+- `renderAgentesLogCross()` — L6993 — mesma lógica de `renderAgenteLog()`
+  (kanban.html/kanban-dev.html) mas agregando `_agentesTabCache` de
+  TODOS os squads numa lista só, filtrável pelo select acima; link
+  "abrir card ↗" usa `squadBoardUrl(squadId,cardId)` (já existente) pra
+  abrir o board certo em nova aba.
+- `openAgentesHelp()`/`closeAgentesHelp()` — L7026 — modal estático
+  (`agentes-help-ov`) explicando a diferença entre Agente Ágil/Agentes de
+  IA no board/Agentes Externos (e os 2 sentidos de fluxo destes últimos)
+  — primeiro help_content próprio do painel (não tem Central de Ajuda
+  tipo `HELP_CONTENT`/Ctrl+K do kanban).
 
 ### Dashboard consolidado
 - `loadAll()` — L8518 / `renderAll()` — L8539

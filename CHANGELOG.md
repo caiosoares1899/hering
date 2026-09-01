@@ -10184,6 +10184,67 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.05 · painel-dev — 2026-09-01 · nova aba "🤖 Agentes" — consolida tudo relacionado a Agente Ágil/agentes num só lugar
+
+Pedido direto do usuário: "isso merece uma aba sozinha, nao ficar dentro de
+outras... coloca tudo lá! logs do agente agil, configuração de agentes
+externos, um modo visual para ver os agentes q estao funcionando no board
+hj, um help_content exclusivo para agentes". Antes, tudo relacionado a
+agente vivia espalhado — pior ainda, o cadastro de Agentes Externos (dado
+GLOBAL) ficava dentro do modal "Configurar — Squad X" (que é conceitualmente
+por squad), uma localização confusa que já tinha sido sinalizada quando o
+registro migrou pra global (v3.03).
+
+Nova aba `🤖 Agentes` na barra principal (ao lado de 👁Visão/🌊Fluxo/
+🧑‍🤝‍🧑Pessoas/🐛Monitor/🔋Status/📊Dados), com 3 seções + ajuda:
+
+1. **🟢 Quem está representado no board hoje** — grid visual por squad,
+   cruzando Agentes de IA cadastrados direto no board (`kanban/squads/
+   {squadId}/agentes`) com Agentes Externos que têm `init` preenchido
+   (`kanban/config/agentesExternos`, filtrado por `squads[squadId]===true`).
+   Agentes externos SEM `init` aparecem separados, como "📡 só contexto" —
+   deixa visualmente óbvio quem está de fato selecionável num card vs. quem
+   é só contexto pro LLM (a mesma distinção que gerou o bug corrigido em
+   `painel.html` v3.04 mais cedo hoje).
+2. **🧾 Histórico do Agente Ágil (cross-squad)** — mesma fonte de dados de
+   `renderAgenteLog()` (kanban.html/kanban-dev.html), mas agregando TODOS os
+   squads numa lista só, com filtro por squad e link direto pra abrir o card
+   no board certo. Antes só existia por squad, dentro do próprio kanban —
+   sem visão consolidada nenhuma no painel.
+3. **🔌 Agentes Externos** — a mesma aba de configuração que existia dentro
+   do modal "Configurar" (CRUD completo: criar/editar nome/iniciais/cor/
+   emoji/webhook/squads/excluir), só que MOVIDA pra cá — removida de dentro
+   de `#cfg-ov` (`setPcfgTab()` não trata mais `'agentesext'`). Comportamento
+   e funções (`renderAgentesExternosPainel()`, `criarAgenteExternoPainel()`,
+   etc.) idênticos, só a localização no DOM mudou.
+4. **❓ Ajuda** — modal novo (`agentes-help-ov`/`openAgentesHelp()`)
+   explicando em linguagem simples o que é cada peça (Agente Ágil, Agentes
+   de IA no board, Agentes Externos e seus 2 sentidos de fluxo — saindo via
+   webhook, chegando via API — e o Histórico), primeiro help_content próprio
+   do painel (que não tem Central de Ajuda tipo `HELP_CONTENT`/Ctrl+K do
+   kanban).
+
+Os dados cross-squad (Agentes de IA + Histórico) são buscados sob demanda
+(`loadAgentesTabData()`, botão "🔄 Atualizar"), não um listener sempre ligado
+— mesmo espírito de outras seções lazy do painel (Histórico de pushes,
+etc.), já que aqui são N squads × 2 leituras.
+
+Testado sem login real (sandbox sem credencial Firebase): troca de aba,
+abertura/fechamento do modal de ajuda, e as 3 funções de render
+(`renderAgentesExternosPainel()`, `renderAgentesAtivosGrid()`,
+`renderAgentesLogCross()`) exercitadas via Playwright headless com
+`window._get`/`window._ref` mockados — sem exceptions, HTML gerado
+conferido manualmente (badge de iniciais, seção "só contexto", link "abrir
+card ↗" apontando pro squad certo, origem mencao/especialista formatada
+igual ao kanban).
+
+Checks de rotina: `node --check` OK, brace/paren balance -1/-11 (shift de
++1 parên em relação ao baseline -1/-12 — esperado, texto novo em português
+com parênteses nos comentários/help; sem impacto de sintaxe, `node --check`
+passou limpo).
+
+Aguardando validação antes de promover pra `painel.html` (prod).
+
 ### painel.html — 2026-09-01 · rascunho de Mural sobre a promoção do kanban.html v8.30.533
 
 Entrada nova em `COMUNICADO_RASCUNHOS_SEED` (`seed_todos_agenteagil_insights_2026_09_01`),
