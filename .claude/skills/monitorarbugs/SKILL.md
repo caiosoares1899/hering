@@ -541,6 +541,32 @@ Mesma disciplina de sempre neste repo:
      `organizador`, que não conseguia apagar entrada de outra pessoa.
   Fix: as 3 passam a usar `_isPOorOrg()` (dev v8.30.523-dev).
 
+- **2026-09-01, pedido genérico — área escolhida por prioridade 1
+  (`git log --oneline -20 -- kanban-dev.html`)**: indicador "🤖
+  pensando..." (v8.30.524-dev) — a feature mais fresca da sessão, nunca
+  auditada, e a de maior risco (estado assíncrono com listener/timeout).
+  3 achados reais: (1) técnica 1 (caminhos paralelos) — o card hotline
+  tem seu PRÓPRIO listener permanente de comentários
+  (`_attachAgenteHotlineCommentsListener`), diferente do listener
+  temporário que `_startAgenteAgilThinking()` cria pra qualquer outro
+  card; o permanente nunca checava se a resposta tinha chegado, então
+  "pensando..." ficava preso 120s (timeout de segurança) até em vez de
+  sumir na hora, justamente no card feito pra conversar com o agente.
+  (2) técnica 4 (checagem incompleta) — tanto o listener temporário
+  quanto o hook do achado #1 checavam só "existe algum comentário do
+  agente?" em vez de "existe uma resposta NOVA?" — reabrir qualquer
+  conversa já respondida (o normal) fazia o indicador aparecer e sumir
+  instantaneamente. Fix: `window._agenteAgilThinking[cardId]` virou
+  timestamp de início (não boolean), `_agenteAgilRespondeuDesde()`
+  compara `ts`. (3) `notify_all` (a ação "Notificar todos" da mesma
+  sessão) reusa `parseMentions()`, que sempre exclui
+  `window._currentUser?.uid` — pra @menção humana faz sentido, pra
+  automação não (é só quem por acaso processa o disparo, não quem
+  deveria ficar de fora de um "todos"). Reportado como pergunta de
+  produto (Passo 3) — usuário confirmou "todos deveria ser literal".
+  Fix: `parseMentions()` ganhou `opts.includeSelf`, só `notify_all` usa
+  (dev v8.30.527-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

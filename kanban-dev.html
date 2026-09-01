@@ -5637,7 +5637,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.526-dev</div>
+<div class="version">v8.30.527-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6511,11 +6511,24 @@ function _dispatchAgenteAgilComment(cardId, text, opts){
 // listener ao vivo em TODO card aberto custaria banda à toa (mesmo motivo
 // que fbLoadAll() evita onValue no /cards inteiro). Card hotline já tem
 // listener permanente próprio, então não duplica aqui.
-window._agenteAgilThinking = window._agenteAgilThinking || {}; // cardId -> true, enquanto espera resposta
+// cardId -> ISO timestamp de quando começou a esperar (NÃO um boolean —
+// achado real /monitorarbugs 2026-09-01: um card que já teve QUALQUER
+// conversa anterior com o agente (comum, é o modelo normal de uso) fazia
+// o indicador "pensando..." aparecer e sumir na hora — tanto o listener
+// temporário quanto o hook do card hotline checavam só "existe algum
+// comentário com uid==='agente-agil'?", que já era verdade por causa da
+// resposta ANTIGA, sem esperar uma resposta de verdade pra ESTA pergunta.
+// Guardar o timestamp de início permite exigir uma resposta com `ts` mais
+// recente que ele — ver _agenteAgilRespondeuDesde() abaixo.
+window._agenteAgilThinking = window._agenteAgilThinking || {};
 let _agenteAgilThinkingUnsubs = {}; // cardId -> unsub do listener temporário
+function _agenteAgilRespondeuDesde(val, startedAt){
+  return Object.values(val||{}).some(c=>c && c.uid==='agente-agil' && c.ts>startedAt);
+}
 function _startAgenteAgilThinking(cardId){
   if(!cardId || window._agenteAgilThinking[cardId]) return; // já esperando esta resposta
-  window._agenteAgilThinking[cardId] = true;
+  const startedAt = new Date().toISOString();
+  window._agenteAgilThinking[cardId] = startedAt;
   _updateAgenteThinkingBanner();
   renderBoard();
   if(!window._fbReady) return;
@@ -6525,7 +6538,7 @@ function _startAgenteAgilThinking(cardId){
       const val = snap.val()||{};
       _commentsCache[cardId] = val;
       if(_commentCardId===cardId) renderCommentList(_sortedComments(val));
-      if(Object.values(val).some(c=>c && c.uid==='agente-agil')) _stopAgenteAgilThinking(cardId);
+      if(_agenteAgilRespondeuDesde(val, startedAt)) _stopAgenteAgilThinking(cardId);
     });
   }
   // Rede de segurança: nunca fica "pensando" pra sempre se a Cloud Function
@@ -11649,8 +11662,25 @@ function _attachAgenteHotlineCommentsListener(card){
   if(!card || !card.agenteHotline || !window._fbReady) return;
   const cardId=card.id;
   _agenteHotlineCommentsUnsub = window._onValue(window._ref(window._db, FB+'/card_comments/'+cardId), snap=>{
-    _commentsCache[cardId] = snap.val()||{};
+    const val = snap.val()||{};
+    _commentsCache[cardId] = val;
     if(editingId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
+    // Achado real (/monitorarbugs 2026-09-01): _startAgenteAgilThinking()
+    // deliberadamente NÃO abre um listener próprio pro card hotline (evita
+    // duplicar — este aqui já é permanente e ao vivo), mas esse listener
+    // nunca chamava _stopAgenteAgilThinking() quando a resposta chegava —
+    // o card mais "óbvio" pra conversar com o agente era justamente o único
+    // onde o indicador "🤖 pensando..." NUNCA desaparecia sozinho, ficando
+    // preso até o timeout de segurança de 120s mesmo com a resposta já
+    // visível na tela. window._agenteAgilThinking[cardId] guarda o
+    // timestamp de início (ver _startAgenteAgilThinking/_agenteAgilRespondeuDesde)
+    // — checar só "existe algum comentário do agente" (sem comparar `ts`)
+    // tinha o MESMO bug do listener temporário: um card hotline SEMPRE tem
+    // conversa anterior, então qualquer mudança nos comentários (mesmo sem
+    // relação com a pergunta atual) já dispararia um _stopAgenteAgilThinking
+    // prematuro.
+    const _startedAt = window._agenteAgilThinking[cardId];
+    if(_startedAt && _agenteAgilRespondeuDesde(val, _startedAt)) _stopAgenteAgilThinking(cardId);
   });
 }
 function _detachAgenteHotlineCommentsListener(){
@@ -23080,8 +23110,9 @@ function timeAgo(ts){
 // iniciais maiúsculas — o regex antigo (@[A-Z]{2,3}) nunca dava match nesse formato e por
 // isso nenhuma menção real notificava ninguém. Aceita os dois formatos (handle novo e
 // iniciais legadas) para não quebrar cards antigos.
-function parseMentions(text, cardId, commentId){
+function parseMentions(text, cardId, commentId, opts){
   if(!text) return;
+  opts = opts || {};
   const re=/@([a-zA-Z][a-zA-Z0-9._-]{1,40})/g; let m;
   const notified=new Set();
   while((m=re.exec(text))!==null){
@@ -23090,9 +23121,18 @@ function parseMentions(text, cardId, commentId){
     // membros do squad de uma vez, não 1 pessoa específica. Checado ANTES
     // do lookup normal por handle/init: "todos" é uma palavra reservada,
     // nunca deve tentar casar com um membro de verdade por coincidência.
+    // opts.includeSelf (achado real /monitorarbugs 2026-09-01, confirmado
+    // com o usuário): a ação de Automação "Notificar todos" (notify_all,
+    // ver AUTO_ACTIONS) reusa esta função, mas "não notifica a si mesmo"
+    // não faz sentido pra ela — "self" ali é só quem por acaso está com o
+    // board aberto processando o disparo da regra, não necessariamente
+    // quem deveria ficar de fora de um "todos" literal. @todos digitado à
+    // mão por uma pessoa de verdade (submitComment()) continua excluindo
+    // quem escreveu, comportamento normal de @menção.
     if(token.toLowerCase()==='todos'){
       members.forEach(mem=>{
-        if(!mem.uid || notified.has(mem.uid) || mem.uid===window._currentUser?.uid) return;
+        if(!mem.uid || notified.has(mem.uid)) return;
+        if(!opts.includeSelf && mem.uid===window._currentUser?.uid) return;
         notified.add(mem.uid);
         createNotif(mem.uid,'mention',
           '@todos — você foi mencionado',
@@ -25732,7 +25772,13 @@ const AUTO_ACTIONS = [
         ts:new Date().toISOString(),
       };
       _pushCardComment(card.id, comment);
-      parseMentions(comment.text, card.id, comment.id);
+      // includeSelf:true (achado real /monitorarbugs 2026-09-01, confirmado
+      // com o usuário): sem isso, quem por acaso estivesse com o board
+      // aberto no momento do disparo (não necessariamente quem "causou" o
+      // evento) ficava de fora do "todos" — parseMentions() por padrão
+      // exclui window._currentUser?.uid (correto pra @menção humana, não
+      // pra esta automação).
+      parseMentions(comment.text, card.id, comment.id, {includeSelf:true});
       return false; // não altera o card em si, só notifica
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
