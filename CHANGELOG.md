@@ -10184,6 +10184,20 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.06 · painel-dev — 2026-09-01 · fix: "Permission denied" ao clicar 🔄 Atualizar na aba Agentes
+
+Achado ao vivo pelo usuário logo após testar a v3.05: `loadAgentesTabData()`
+lia Agentes de IA em `kanban/squads/{squadId}/agentes`, mas o dado de
+verdade vive em `kanban/squads/{squadId}/dados/agentes` (mesmo `dados/`
+que `FB` já usa em kanban.html/kanban-dev.html — `const FB =
+'kanban/squads/'+ACTIVE_SQUAD+'/dados'`). O path sem `/dados/` não bate
+com nenhuma regra de `database.rules.json` (só o subnó `dados` tem
+`.read` liberado por squad), então caía no deny-all padrão do Firebase →
+"⚠ Erro ao carregar: Permission denied". Corrigido acrescentando o
+`/dados/` que faltava; `agente_log` já estava correto desde a v3.05.
+
+Checks de rotina: `node --check` OK.
+
 ### painel-dev.html v3.05 · painel-dev — 2026-09-01 · nova aba "🤖 Agentes" — consolida tudo relacionado a Agente Ágil/agentes num só lugar
 
 Pedido direto do usuário: "isso merece uma aba sozinha, nao ficar dentro de

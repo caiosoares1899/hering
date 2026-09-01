@@ -2304,7 +2304,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.05 · painel-dev</div>
+<div class="version">v3.06 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6950,7 +6950,7 @@ async function loadAgentesTabData(){
   try{
     const results=await Promise.all(SQUADS.map(async sq=>{
       const [agentesSnap, logSnap]=await Promise.all([
-        window._get(window._ref(window._db,'kanban/squads/'+sq.id+'/agentes')),
+        window._get(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/agentes')),
         window._get(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/agente_log')),
       ]);
       const log=Object.entries(logSnap.val()||{}).map(([id,e])=>({...e,id,squadId:sq.id}));
