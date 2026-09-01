@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.517 — 2026-09-01 · promove pra prod — Pin no topo da coluna, ícone PWA temático (Android), re-sync periódico mais robusto
+
+Promove pra produção o acumulado de `kanban-dev.html` desde a última
+promoção (v8.30.516-dev a v8.30.520-dev) — entradas correspondentes em
+"kanban-dev.html" logo abaixo:
+
+- **Feat: pin — fixar 1 card no topo da coluna** (v8.30.519-dev,
+  ajustado em v8.30.520-dev). Pedido direto do usuário: ícone 📌 no
+  canto superior direito do card (hover-only quando não fixado, sempre
+  visível e destacado quando fixado), pra manter um card-aviso/guia
+  sempre no topo da coluna — funciona em QUALQUER modo de ordenação
+  (prioridade, criação, manual, alfabética...) e em QUALQUER
+  visualização (quadro normal + raias por responsável/tag/subtime). Só
+  1 card fixado por coluna — fixar outro desafixa o anterior
+  automaticamente.
+- **Fix: ícone do PWA agora suporta "ícones temáticos" do Android**
+  (v8.30.516-dev). No Android 13+ com Material You ativado, o ícone do
+  Maré Digital na tela inicial não retintava junto com o resto do
+  sistema — faltava a variante `monochrome` do ícone no manifest.
+- **Fix: re-sync periódico de cards não recuperava um card NOVO
+  invisível** (v8.30.517-dev, achado via `/monitorarbugs` auditando o
+  próprio fix anterior desta sessão). Se o evento de `/cards_index` de
+  um card novo se perdesse (mesma classe de falha do incidente ao vivo
+  que motivou o polling de 4min), o card ficava invisível pro resto da
+  sessão da pessoa — agora o polling busca `/cards_index` em paralelo
+  e resolve a posição na hora.
+
+Checks de rotina: `node --check` OK, diff restrito às 2 linhas de
+ambiente (versão/`VERSION_KEY`) + as 3 mudanças acima — sem divergência
+de chaves/parênteses.
+
 ### v8.30.516 — 2026-09-01 · promove pra prod — Fix: comentário digitado num card novo ia parar no card errado
 
 Promoção cirúrgica, fora do lote normal — bug de integridade de dado

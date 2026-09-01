@@ -655,6 +655,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card-selected{border-color:var(--accent)!important;box-shadow:0 0 0 1px var(--accent), 0 0 14px rgba(56,182,255,.3);background:rgba(56,182,255,.08);}
 .card-selbox{position:absolute;top:7px;right:7px;width:19px;height:19px;border-radius:5px;border:1.5px solid var(--accent);background:rgba(var(--surface2-rgb),.85);color:var(--accent);font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;z-index:3;}
 .card-selected .card-selbox{background:var(--accent);color:#021018;}
+/* Pin: fixar 1 card no topo da coluna (ver togglePinCard()/_sortCards()) —
+   ícone só aparece no hover do card quando NÃO fixado (convite discreto,
+   não polui o board todo); card já fixado mostra sempre, destacado, pra
+   dar pra desafixar sem precisar "descobrir" passando o mouse. Mesmo
+   canto que .card-selbox de propósito (pedido direto: "do lado que tá
+   vazio") — nunca colidem de verdade, porque pinBtn só é gerado quando
+   NÃO está em selectMode e selBox só quando ESTÁ (ver makeCardEl()). */
+.card-pin-btn{position:absolute;top:7px;right:7px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;}
+.card:hover .card-pin-btn{opacity:1;}
+.card-pinned .card-pin-btn{opacity:1;background:rgba(255,209,102,.18);border-color:rgba(255,209,102,.5);color:var(--warn);}
 .col-selectall{font-size:9px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);color:var(--cyan);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;}
 .col-selectall:hover{background:rgba(56,182,255,.2);color:var(--txt);}
 .bulk-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:12px;background:rgba(4,22,39,.96);border:1px solid var(--accent);border-radius:999px;padding:10px 18px;backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:bulkIn .25s ease;}
@@ -5620,7 +5630,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.516</div>
+<div class="version">v8.30.517</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8547,13 +8557,35 @@ let _cardsSyncDebounce = null;
       window._reconcileCardsUpdatedAtPeriodic = async function _reconcileCardsUpdatedAtPeriodic(){
         if(!window._fbReady) return;
         try{
-          const snap = await fbGet(FB+'/cards_updated_at');
+          // cards_index vem junto (não só cards_updated_at) -- achado real
+          // (/monitorarbugs 2026-09-01): antes, um id sem posição resolvida
+          // localmente (_liveCardsIndexById[id]==null) era simplesmente
+          // pulado, contando com "_reconcileCardsIndexOnce cuida disso" --
+          // só que essa reconciliação roda 1x só, 500ms após a carga
+          // inicial (_cardsIndexReconciled trava reruns pro resto da
+          // sessão). Se o child_added de /cards_index de um card NOVO se
+          // perder (mesma classe de evento perdido que esta função inteira
+          // existe pra cobrir), o card ficava invisível pro resto da sessão
+          // dessa pessoa -- pior que o bug original (card inteiro sumido,
+          // não só um campo desatualizado), sem nenhum aviso. Buscar
+          // cards_index aqui também (mesmo dado que _reconcileCardsIndexOnce
+          // já lê 1x) permite resolver a posição na hora, na própria
+          // reconciliação periódica.
+          const [snap, idxSnap] = await Promise.all([
+            fbGet(FB+'/cards_updated_at'),
+            fbGet(FB+'/cards_index'),
+          ]);
           const remote = snap.val() || {};
+          const remoteIndex = idxSnap.val() || {};
           const staleKeys = [];
           for(const id in remote){
             if(_liveArchivedIds.has(id)) continue; // arquivado -- não força rebaixar
-            const key = _liveCardsIndexById[id];
-            if(key==null) continue; // sem posição resolvível -- _reconcileCardsIndexOnce cuida disso
+            let key = _liveCardsIndexById[id];
+            if(key==null){
+              key = remoteIndex[id];
+              if(key==null) continue; // nem no índice remoto -- nada a fazer ainda
+              _liveCardsIndexById[id] = key; // backfill -- listeners live seguem daqui em diante
+            }
             if(!_cardsByKey[key] || _cardsByKey[key].updatedAt !== remote[id]) staleKeys.push(key);
           }
           if(!staleKeys.length) return { corrigidos:0 };
@@ -9617,7 +9649,7 @@ function makeCardEl(card){
   // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
   const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
   const isSuper_=_superChildren.length>0;
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -9697,6 +9729,11 @@ function makeCardEl(card){
     }
   }
   const selBox=selectMode?`<div class="card-selbox">${selectedCards.has(card.id)?'✓':''}</div>`:'';
+  // Pedido direto: "coloca um pin pra fixar um card no topo da coluna
+  // independente do modo de visualização" — some durante seleção em massa
+  // (o card inteiro já muda de semântica de clique nesse modo, ver
+  // div.onclick acima).
+  const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">📌</span>`:'';
@@ -9727,7 +9764,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -9742,7 +9779,53 @@ function _cardSizeLevel(card){
 // Ordena os cards de uma coluna conforme colSortMode — usado em renderNormal
 // e em todas as visões de raia (owner/tag/subteam), pra manter consistência
 // independente do modo de visualização escolhido.
+// Pin (fixar no topo, ver togglePinCard()) é uma camada ACIMA de qualquer
+// modo de ordenação — pedido direto: fixar deve valer "independente do
+// modo de visualização". Como _sortCards() já é o único ponto usado por
+// renderNormal E por todas as raias (owner/tag/subteam), resolver o pin
+// aqui cobre todo mundo de graça, sem precisar duplicar a lógica em cada
+// view. Desempate por pinnedAt (mais recente primeiro) é só defensivo:
+// togglePinCard() garante 1 fixado por coluna na hora de fixar, mas não
+// há um choke point único pra "a coluna do card mudou" (drag, dropdown,
+// automação, orquestrador...) do jeito que há pra ordenação — se um card
+// fixado for movido pra uma coluna que já tinha outro fixado, os dois
+// aparecem fixados (ambos genuinamente têm pinned:true) em vez de um
+// sumir silenciosamente; a pessoa desafixa o que não quiser mais.
 function _sortCards(arr, colId){
+  const pinned=arr.filter(c=>c.pinned);
+  const rest=arr.filter(c=>!c.pinned);
+  const sortedRest=_sortCardsByMode(rest, colId);
+  if(!pinned.length) return sortedRest;
+  const pinnedSorted=pinned.length>1
+    ? pinned.slice().sort((a,b)=>String(b.pinnedAt||'').localeCompare(String(a.pinnedAt||'')))
+    : pinned;
+  return [...pinnedSorted, ...sortedRest];
+}
+function togglePinCard(cardId){
+  if(!checkEditPermission()) return;
+  const c=cards.find(x=>x.id===cardId); if(!c) return;
+  if(c.pinned){
+    c.pinned=false; delete c.pinnedAt;
+    recordHistory(c,'desafixou o card do topo da coluna');
+    fbSaveCard(c);
+    showToast('📌 Card desafixado.');
+  } else {
+    // Só 1 fixado por coluna — desafixa qualquer outro que já estivesse
+    // (ver comentário na declaração de _sortCards sobre o caso de mover
+    // um card já fixado pra cá, que este caminho não cobre).
+    cards.filter(x=>!x.archived && x.col===c.col && x.pinned && x.id!==c.id).forEach(x=>{
+      x.pinned=false; delete x.pinnedAt;
+      recordHistory(x,'desafixou o card do topo da coluna (outro card foi fixado no lugar)');
+      fbSaveCard(x);
+    });
+    c.pinned=true; c.pinnedAt=new Date().toISOString();
+    recordHistory(c,'fixou o card no topo da coluna');
+    fbSaveCard(c);
+    showToast('📌 Card fixado no topo da coluna.');
+  }
+  renderBoard();
+}
+function _sortCardsByMode(arr, colId){
   const mode = (colId && colSortOverrides[colId]) || colSortMode;
   if(mode==='size'){
     return arr.slice().sort((a,b)=>{
@@ -12303,6 +12386,10 @@ function _duplicarCardObj(card, opts){
   // em _cardIsSuperChild()) — a cópia de um card filho automaticamente
   // nasce avulsa, porque nenhum childCardIds por aí lista o id dela ainda.
   novo.childCardIds=[];
+  // Pin (ver togglePinCard()) nunca sobrevive à duplicação — mesmo motivo
+  // do childCardIds acima: sem isso, a cópia "herdaria" pinned:true e
+  // ficariam 2 cards fixados na mesma coluna, violando a regra de só 1.
+  novo.pinned=false; delete novo.pinnedAt;
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -21765,7 +21852,17 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'}
+      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
+      // 'monochrome' (silhueta branca em fundo transparente, o sistema
+      // aplica a própria cor por cima), o Android não consegue retintar o
+      // ícone junto com o resto do sistema e mantém as cores originais —
+      // achado direto de uma usuária ("no Android... o do marola n mudou,
+      // tá estragando a estética"). Gerada a partir do favicon.png
+      // existente (fundo escuro sólido + glifo branco): cada pixel vira
+      // alpha proporcional à "brancura" dele, então o glifo sobra como
+      // silhueta e o fundo escuro vira transparente.
+      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
