@@ -445,6 +445,41 @@
   box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
+/* ── 🌴 VICE CITY (easter egg) ──────────────────────────────────────
+   Piada interna com o trailer de GTA 6 (Vice City, estética Miami Vice
+   — rosa neon, ciano, pôr do sol roxo/laranja). Só entra segurando o
+   botão de tema por ~1.2s (ver VICE_LONGPRESS_MS/toggleViceCity() no
+   <script>) — de propósito NÃO é uma opção visível igual claro/escuro,
+   fica pra quem achar sozinho.
+   Diferente do modo claro (que precisou de ~15 overrides pontuais pra
+   corrigir contraste — ele inverte a luminância, fundo escuro→claro),
+   o Vice City continua um tema ESCURO por baixo (só troca a paleta de
+   cor, mantém o fundo escuro que o resto do CSS já foi calibrado pra
+   usar) — por isso basta trocar os tokens de cor aqui + o gradiente do
+   .ocean; todo o resto (var(--txt)/var(--glass)/var(--surface-rgb)...)
+   já herda automaticamente, sem precisar caçar regra por regra. */
+:root[data-theme="vice"]{
+  --deep:#170826;
+  --deep-rgb:23,8,38;
+  --surface-rgb:46,15,66;
+  --surface2-rgb:28,9,46;
+  --glass-rgb:64,20,92;
+  --glass:rgba(64,20,92,0.6);
+  --glass-b:rgba(255,45,149,0.32);
+  --glass-h:rgba(255,45,149,0.16);
+  --blue:#c026d3;--accent:#ff2d95;--cyan:#26e0d9;--teal:#00c2a8;
+  --txt:#fdeeff;--txt2:rgba(253,238,255,0.72);--txt3:rgba(253,238,255,0.46);
+  --warn:#ff9f1c;--danger:#ff3860;
+  --ocean-op:1; --fish-op:1;
+  --pulse-rgb:255,45,149;
+}
+[data-theme="vice"] .ocean{
+  background:
+    radial-gradient(ellipse at 15% 85%,rgba(255,45,149,.35) 0%,transparent 60%),
+    radial-gradient(ellipse at 85% 10%,rgba(38,224,217,.30) 0%,transparent 55%),
+    radial-gradient(ellipse at 50% 100%,rgba(255,159,28,.22) 0%,transparent 50%),
+    linear-gradient(175deg,#2d0b52 0%,#170826 55%,#0a0316 100%);
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -3097,7 +3132,9 @@ input[type="date"]{-moz-appearance:textfield;}
 // pode bloquear localStorage).
 (function(){
   try{
-    if(localStorage.getItem('mare_theme')==='light') document.documentElement.setAttribute('data-theme','light');
+    const t=localStorage.getItem('mare_theme');
+    if(t==='light') document.documentElement.setAttribute('data-theme','light');
+    else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
     if(localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
@@ -3165,7 +3202,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -5771,7 +5808,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.548-dev</div>
+<div class="version">v8.30.549-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6179,7 +6216,7 @@ function renderHdMoreDD(){
       </span>
     </div>`:''}
     <div class="sm-dd-sep"></div>
-    <div class="squad-switcher-item" onclick="closeHdMore();toggleTheme();">${_currentTheme()==='light'?'☀️':'🌙'} Alternar tema</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="doSignOut();" style="color:#ff8fa3;">🚪 Sair</div>
@@ -27754,10 +27791,16 @@ function toggleFishBackground(){
 // </style> no <head> (ver lá) — direto no localStorage, pra evitar o flash
 // de escuro→claro antes do JS principal (este arquivo) carregar. Aqui só
 // mantemos o estado em sincronia com o botão (ícone) e com o toggle.
-function _currentTheme(){ return document.documentElement.getAttribute('data-theme')==='light' ? 'light' : 'dark'; }
+function _currentTheme(){
+  const t=document.documentElement.getAttribute('data-theme');
+  if(t==='vice') return 'vice';
+  return t==='light' ? 'light' : 'dark';
+}
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
-  if(btn) btn.textContent = _currentTheme()==='light' ? '☀️' : '🌙';
+  if(!btn) return;
+  const t=_currentTheme();
+  btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
 }
 function toggleTheme(){
   const next = _currentTheme()==='light' ? 'dark' : 'light';
@@ -27784,6 +27827,53 @@ function toggleThemeVariant(){
   else{ document.documentElement.setAttribute('data-theme-variant','b'); safeLS.setItem('mare_theme_variant','b'); }
   showToast(isB ? '☀️ Lençóis Maranhenses — padrão' : '☀️ Lençóis Maranhenses — mais escuro');
 }
+// 🌴 Vice City — easter egg interno (piada com o trailer de GTA 6, visual
+// Miami Vice: rosa neon, ciano, pôr do sol roxo/laranja — ver
+// [data-theme="vice"] no CSS). Só entra segurando o botão de tema
+// (pointerdown) por VICE_LONGPRESS_MS sem soltar — de propósito NÃO é um
+// clique/duplo-clique normal, pra não competir com toggleTheme()/
+// toggleThemeVariant() nem aparecer sozinho pra quem não souber que
+// existe. Guarda o tema (e a variante do claro, se houver) de antes de
+// entrar, pra devolver exatamente o que a pessoa tinha ao sair — sair é
+// sempre 1 clique normal (ou duplo-clique), de propósito fácil, só
+// entrar que é escondido.
+const VICE_LONGPRESS_MS = 1200;
+let _viceLongPressTimer=null;
+let _viceLongPressFired=false;
+function _themeBtnPointerDown(){
+  _viceLongPressFired=false;
+  if(_viceLongPressTimer) clearTimeout(_viceLongPressTimer);
+  _viceLongPressTimer=setTimeout(()=>{
+    _viceLongPressTimer=null;
+    _viceLongPressFired=true;
+    toggleViceCity();
+  }, VICE_LONGPRESS_MS);
+}
+function _themeBtnPointerUp(){
+  if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
+}
+function toggleViceCity(){
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
+  document.documentElement.setAttribute('data-theme','vice');
+  document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme','vice');
+  _applyThemeButtonIcon();
+  showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
+}
+function exitViceCity(){
+  const prevTheme = safeLS.getItem('mare_theme_before_vice') || '';
+  const prevVariant = safeLS.getItem('mare_theme_variant_before_vice') || '';
+  if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  if(prevVariant==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme', prevTheme==='light' ? 'light' : 'dark');
+  safeLS.setItem('mare_theme_variant', prevVariant);
+  _applyThemeButtonIcon();
+  showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
+}
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
@@ -27792,15 +27882,32 @@ function toggleThemeVariant(){
 // flash visível no meio) antes de finalmente trocar a variante. Em vez
 // disso, atrasa a ação do clique único — se um 2º clique chegar dentro da
 // janela (virando duplo-clique), cancela a ação pendente do 1º e roda só
-// a troca de variante.
+// a troca de variante. Dentro do Vice City, tanto o clique único quanto o
+// duplo-clique só SAEM do modo (mais fácil sair do que entrar, de
+// propósito) — e o clique que dispara logo depois de um long-press bem
+// sucedido (_viceLongPressFired) é ignorado, senão entrar em Vice City já
+// sairia de novo no mesmo gesto.
 let _themeClickTimer=null;
 function onThemeBtnClick(){
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){
+    if(_themeClickTimer) return;
+    _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
+    return;
+  }
   if(_themeClickTimer) return; // 2º clique de um duplo — o dblclick cuida disso
   _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; toggleTheme(); }, 260);
 }
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
   toggleThemeVariant();
+}
+function _mobileThemeRowClick(){
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
 // Fish & Bubbles

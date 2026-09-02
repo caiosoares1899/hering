@@ -2451,6 +2451,62 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.549-dev — 2026-09-02 — 🌴 Vice City (easter egg interno, ideia do usuário)
+
+Pedido direto, tom de brincadeira interna/ação de marketing: "e se a
+gente fizesse o modo 'gta 6'? [...] pode tá como terceira opção ali do
+modo claro e escuro". Implementado como um 3º tema completo (paleta +
+gradiente próprios), mas com ativação escondida (easter egg) em vez de
+uma 3ª opção visível de cara no botão de tema — decisão tomada em
+conjunto com o usuário via pergunta direta (visível no ciclo vs.
+escondido → escolhido escondido; nome → 🌴 Vice City).
+
+**O tema**: `[data-theme="vice"]` no CSS — paleta rosa neon (`--accent:
+#ff2d95`), ciano/turquesa (`--cyan:#26e0d9`, `--teal:#00c2a8`) e roxo
+elétrico (`--blue:#c026d3`) sobre um fundo roxo bem escuro quase preto
+(`--deep:#170826`), com `.ocean` ganhando um gradiente próprio de "pôr
+do sol" (rosa + turquesa + laranja sobre roxo profundo). Diferente do
+modo claro (`[data-theme="light"]`), que precisou de ~15 overrides
+pontuais espalhados pelo arquivo pra corrigir contraste (ele inverte a
+luminância, fundo escuro→claro quebra cores pensadas pro escuro), o
+Vice City continua um tema ESCURO por baixo — só troca a paleta de cor,
+mantendo o fundo escuro que o resto do CSS já foi calibrado pra usar.
+Por isso bastou o bloco de variáveis + o gradiente do `.ocean`: tudo que
+já usa `var(--txt)`/`var(--glass)`/`var(--surface-rgb)`/etc. herda
+automaticamente, sem precisar caçar regra por regra (confirmado num
+screenshot real do board com cards/tags/fish&bubbles — tudo legível,
+sem ajuste extra necessário).
+
+**Como ativa**: segurar (pointerdown, sem soltar) o botão de tema 🌙/☀️
+por ~1.2s — não é clique nem duplo-clique (esses continuam 100% iguais:
+clique alterna escuro/claro, duplo-clique no claro alterna a variante
+mais escura). Sair do Vice City é sempre 1 clique normal (ou
+duplo-clique) — de propósito mais fácil sair do que entrar — e volta
+exatamente pro tema (e variante do claro, se houver) que a pessoa tinha
+antes de entrar, persistido em `localStorage` (`mare_theme`,
+'vice' como 3º valor possível ao lado de 'light'/ausente-é-dark).
+Funciona tanto no botão do header quanto no item duplicado do menu "⋯"
+mobile (mesmo gesto). Ícone do botão vira 🌴 enquanto ativo.
+
+**Testado com Playwright** (simulando os eventos de pointer reais, não
+só chamando a função direto): clique curto no botão não ativa o Vice
+City, só alterna escuro/claro normalmente; segurar 1.3s ativa e o clique
+que o navegador sempre dispara ao soltar (mesmo após um press longo) é
+corretamente ignorado (senão o gesto de entrar já sairia de novo
+sozinho); 1 clique normal dentro do Vice City sai e restaura o tema
+anterior corretamente nos dois casos (entrando do escuro → volta pro
+escuro; entrando do claro → volta pro claro, não pro escuro); soltar
+antes de 1.2s não ativa nada e o toggle normal continua funcionando.
+Lógica de persistência (script de anti-flash no `<head>`, que roda antes
+do resto do JS carregar) verificada isoladamente para os 3 valores
+possíveis de `mare_theme` (vice/light/dark).
+
+De propósito **não documentado no `HELP_CONTENT`** nem no
+`MARINE_GLASS.md` — é um easter egg, documentar a ativação ali
+estragaria a graça de quem for descobrir sozinho; fica registrado aqui
+no CHANGELOG (histórico interno da equipe) pra quem precisar entender a
+implementação depois.
+
 ### v8.30.548-dev — 2026-09-02 — Cascata de conclusão automática de Supercard sem proteção contra ciclo corrompido nos dados (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "ali na área de
