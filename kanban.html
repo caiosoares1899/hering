@@ -512,6 +512,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .sm-dd-row-sub{padding-left:26px;}
 .sm-dd-sep{border-top:1px solid var(--glass-b);margin:5px 4px 4px;}
 .hd-btns{display:flex;gap:7px;align-items:center;flex-wrap:wrap;min-width:0;}
+/* Menu "⋯" (ver HTML/JS toggleHdMore) — só aparece no mobile, ver @media(max-width:768px) */
+.hd-more-wrap{display:none;position:relative;}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;font-size:12px;font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
 .btn:hover{background:var(--glass-h);border-color:var(--accent);}
 .btn-p{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
@@ -1512,6 +1514,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .modal-ft-row{display:flex;align-items:center;gap:6px;padding:10px 16px;
   border-top:1px solid var(--glass-b);background:rgba(var(--surface-rgb),.97);
   position:sticky;bottom:0;z-index:2;border-radius:0 0 var(--r2) var(--r2);}
+/* Sub-grupo Insights/Cancelar/Salvar dentro do rodapé — no desktop é só um
+   agrupamento neutro (mesmo visual de sempre); no mobile vira sua própria
+   barra fixa, ver @media(max-width:768px). */
+#modal-ft-primary{display:flex;align-items:center;gap:6px;}
 .btn-unsaved{background:rgba(255,209,102,.22)!important;border-color:var(--warn)!important;
   color:var(--warn)!important;animation:btnUnsavedPulse 1.6s ease-in-out infinite;}
 @keyframes btnUnsavedPulse{
@@ -2242,21 +2248,42 @@ input[type="date"]{-moz-appearance:textfield;}
 @media(max-width:768px){
 
   /* ── GLOBAL ───────────────────────────────────────────── */
-  .hd-badge,.tb-sep,#online-bar{display:none;}
+  /* !important pq #online-bar tem display:flex inline (JS/HTML) — uma regra
+     comum aqui perdia pra especificidade do atributo style e o online-bar
+     ficava visível mesmo "escondido" (bug real, visto em screenshot: 2
+     avatares sobrepostos estourando a fileira do topo no mobile). */
+  .hd-badge,.tb-sep,#online-bar{display:none!important;}
   .app{padding:.5rem .6rem 74px;}
   *{-webkit-tap-highlight-color:transparent;}
 
-  /* ── HEADER ──────────────────────────────────────────── */
+  /* ── HEADER: redesenho tipo Trello (2026-09-02) ──────────────────────
+     A fileira de ícones do topo (tema, modo de visualização, avatares de
+     quem tá online, seu badge com nome, busca) não cabia numa linha só e
+     quebrava pra uma 2ª linha malfeita (.hd-btns nem tinha scroll horizontal
+     como .toolbar/#filter-bar já tinham). Em vez de só adicionar scroll,
+     move tudo que não é essencial pro menu "⋯" (#hd-more-dd, ver
+     toggleHdMore() no JS) — sobra só: título, notificações (🔔📢🎉) e o
+     "⋯". Os elementos originais (#theme-toggle-btn etc.) continuam existindo
+     e funcionando normalmente no desktop; aqui só ficam escondidos, o menu
+     "⋯" tem cópias dos mesmos controles chamando as mesmas funções. ── */
+  #theme-toggle-btn,#hybrid-view-switch,#user-badge,#header-search-btn{display:none!important;}
+  .hd-more-wrap{display:inline-flex;}
+  #hd-more-btn{
+    min-width:40px;min-height:40px;font-size:20px;font-weight:700;
+    line-height:1;padding:5px 11px;
+  }
+  #hd-more-dd{min-width:230px;max-width:88vw;}
+
   .hd{margin-bottom:.4rem;gap:6px;}
   .hd-title{font-size:15px;}
   #user-badge span#user-name{
     max-width:100px;overflow:hidden;
     text-overflow:ellipsis;white-space:nowrap;display:block;
   }
-  /* +Card e Busca já estão na bottom-nav / são acessíveis por atalho —
-     esconder do header libera espaço pros botões de notificação (🔔📢🎉) */
+  /* +Card já está na bottom-nav — esconder do header libera espaço pros
+     botões de notificação (🔔📢🎉); Busca e o resto agora vivem no "⋯" acima. */
   .hd-btns > .btn-p.btn-sm{display:none;}
-  .hd-btns{gap:5px;justify-content:flex-end;}
+  .hd-btns{gap:5px;justify-content:flex-end;flex-wrap:nowrap;}
 
   /* ── TOOLBAR: scroll horizontal ──────────────────────── */
   .toolbar{
@@ -2346,6 +2373,67 @@ input[type="date"]{-moz-appearance:textfield;}
   .ql-panel{max-height:88vh;}
   .modal-body{padding:10px 12px;gap:9px;}
 
+  /* ── Redesenho do modal do card no mobile (2026-09-02), a pedido direto do
+     usuário com benchmark do Trello: "quero que tudo caiba no formato
+     mobile, sem precisar scroll lateral e com mais estabilidade". Troca o
+     fix de emergência de ontem (título clampado dentro da mesma fileira
+     dos ícones, rodapé com scroll horizontal) por uma estrutura que não
+     depende de nenhum scroll lateral em lugar nenhum. ── */
+
+  /* Header do card (.panel-hd): o rótulo "Compartilhar este card" (texto
+     por extenso, só decorativo — o botão já tem esse título via tooltip)
+     some, e os ícones (🎨/compartilhar/⇕/⬇️/✕) ficam travados com
+     flex-shrink:0 numa fileira só — sem título disputando espaço com eles
+     (ver abaixo), essa fileira sozinha cabe tranquila. */
+  #m-share-label{display:none;}
+  #m-cover-wrap,.panel-hd>.x-btn{flex-shrink:0;}
+  #card-ov .panel-hd{flex-wrap:wrap;} /* escopado ao modal do card — .panel-hd é reusado por vários outros modais (Config, Links, Campanhas...) que não têm esse problema */
+
+  /* #m-title-disp vira um bloco PRÓPRIO, numa linha só dele, abaixo da
+     fileira de ícones — mesmo padrão do Trello (não é mais item "espremido"
+     ao lado de ícone nenhum). order:99 garante que ele vem por último
+     visualmente (depois de todos os ícones, que ficam em order:0 padrão);
+     flex:1 1 100% faz esse item pedir 100% da largura da linha, o que — num
+     container com flex-wrap:wrap — força ele pra sua própria linha nova,
+     automaticamente, sem precisar mover nada no HTML/JS. Sem concorrência
+     de espaço, o título pode voltar a quebrar livremente, sem clamp. */
+  #m-title-disp{
+    /* !important necessário: o elemento tem flex:1;min-width:0 inline no
+       HTML (style="..."), que vence uma regra externa sem !important —
+       mesma pegadinha do #online-bar no cabeçalho (ver fix de ontem). */
+    order:99!important;flex:1 1 100%!important;max-width:100%!important;margin-top:4px;
+  }
+
+  /* Rodapé do card (Excluir/Duplicar/Modelo/Usar modelo/Arquivar/
+     Dependência/Milanote — os secundários) — em vez de scroll horizontal
+     (fix de ontem), agora quebra linha (flex-wrap:wrap) e deixa de ser
+     sticky: passa a rolar junto com o resto do conteúdo, como qualquer
+     outra seção — permanecer fixo ocuparia uma fatia enorme e permanente
+     da tela numa fileira de 3-4 linhas de botão. */
+  .modal-ft-row{
+    flex-wrap:wrap;position:static;border-radius:0;
+  }
+  .modal-ft-row>*{flex-shrink:0;}
+  .modal-ft-spacer{display:none;} /* só fazia sentido separando "esquerda/direita" numa fileira única */
+
+  /* #modal-ft-primary (Insights/Cancelar/Salvar): tentativa inicial deixava
+     essa barra "sticky" própria, sempre grudada embaixo da tela — mas
+     position:sticky só gruda DENTRO da caixa do próprio pai
+     (.modal-ft-row), que num card grande (muito comentário/checklist/
+     histórico) só começa perto do fim de qualquer jeito; testando de
+     verdade, a barra só "aparecia" quando já se tinha rolado quase até lá
+     mesmo — não ficava de fato visível o tempo todo, só complexidade a
+     mais sem o benefício. Como o Trello também não fixa um botão salvar
+     (foco maior aqui era tirar o scroll lateral, não inventar um recurso
+     novo), simplificado: quebra linha igual ao resto do rodapé, rola
+     junto com o conteúdo, com só uma linha separadora acima pra destacar
+     que são as ações finais. */
+  #modal-ft-primary{
+    width:100%;justify-content:flex-end;
+    padding-top:10px;margin-top:4px;
+    border-top:1px solid var(--glass-b);
+  }
+
   /* ── Card modal como bottom-sheet (Fase 3.1) — só #card-ov, os demais
      modais continuam como dialog centralizado acima. Sobe de baixo, cantos
      superiores arredondados, alça de arrastar (swipe-down fecha — ver JS
@@ -2375,10 +2463,6 @@ input[type="date"]{-moz-appearance:textfield;}
     gap:8px;
   }
 
-  /* frow 2 colunas → manter 2 mas menores */
-  .frow{gap:6px;}
-  .frow .field{min-width:0;}
-
   /* Campos: 16px em inputs editáveis evita o zoom automático do iOS ao focar */
   .fi,.fi-ta{font-size:16px;padding:9px 11px;}
   select.fi{font-size:16px;}
@@ -2386,8 +2470,20 @@ input[type="date"]{-moz-appearance:textfield;}
   /* Labels menores */
   .fl{font-size:9px;}
 
-  /* card-attr-row: empilha em 2x2 */
-  .card-attr-row{grid-template-columns:1fr 1fr;gap:6px;}
+  /* .card-attr-row: é a classe de verdade por trás de TODOS os campos de
+     2 colunas do modal do card (Tags/Coluna, Responsável/Prazo,
+     Prioridade/Tamanho, Submarca/Executor, e os campos da Ficha Técnica/
+     Supercard — Funil/Etapa, Tipo/Formato) — 2 colunas → 1 só (empilhado),
+     igual ao Trello. NÃO é ".frow" (nome parecido, classe de fato
+     diferente, usada só em telas de admin/Configurações) — reportado pelo
+     usuário como "ainda tá com scroll lateral" depois da 1ª tentativa de
+     redesenho, que mexeu em .frow por engano (achado ao ler o HTML de
+     verdade, não só grepar pelo nome "2 colunas" no CSS). Mesma causa
+     raiz de sempre: 2 colunas que não cabem fazem o .card-panel inteiro
+     ganhar scroll horizontal. #colcfg-ov (Configurar coluna) também usa
+     .card-attr-row, mas só com Cor+WIP (cabe tranquilo) — fora do escopo
+     do pedido, por isso o seletor é escopado a #card-ov. */
+  #card-ov .card-attr-row{grid-template-columns:1fr;gap:6px;}
 
   /* Dependência button no header */
   #m-depends-lbl{display:none;}
@@ -3096,8 +3192,19 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="notif-btn kudos-hdr-btn" id="kudos-hdr-btn" onclick="openKudos()" title="Estrelas do Mar — reconhecimento do time">
     🎉<span class="notif-badge" id="kudos-badge" style="background:#ffd166;color:#1a1208;display:none;">0</span>
   </button>
-  <button class="btn btn-sm" onclick="openSearch()" title="Buscar cards (Ctrl+K)" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
+  <button id="header-search-btn" class="btn btn-sm" onclick="openSearch()" title="Buscar cards (Ctrl+K)" style="background:var(--glass);border:1px solid var(--glass-b);">🔍</button>
   <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Card</button>
+  <!-- Menu "⋯" — só existe visualmente no mobile (≤768px, ver @media). Agrupa ali
+       tudo que no mobile some da fileira de ícones do topo pra não estourar a tela
+       (tema, modo de visualização, equipe online, meu status/sair, busca): mesmo
+       espírito do menu de "mais opções" do Trello. No desktop essa fileira continua
+       exatamente como sempre foi — os botões originais (tema, hybrid-view, online-bar,
+       user-badge) seguem visíveis do jeito de sempre, o conteúdo do dropdown é só uma
+       cópia que chama as mesmas funções globais. -->
+  <div class="hd-more-wrap">
+    <button id="hd-more-btn" class="btn btn-sm" onclick="toggleHdMore(event)" title="Mais opções">⋯</button>
+    <div id="hd-more-dd" class="squad-switcher-dd" style="left:auto;right:0;"></div>
+  </div>
   </div>
 </div>
 
@@ -4144,10 +4251,16 @@ input[type="date"]{-moz-appearance:textfield;}
         </button>
       </div>
     </div>
-    <div style="flex:1;"></div>
-    <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
-    <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
-    <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
+    <div style="flex:1;" class="modal-ft-spacer"></div>
+    <!-- Cancelar/Salvar num wrapper próprio (#modal-ft-primary): no mobile ele
+         ganha uma linha separadora acima, destacando que são as ações finais
+         do card — ver @media(max-width:768px). No desktop o wrapper não muda
+         nada (segue no mesmo lugar/fileira de sempre). -->
+    <div id="modal-ft-primary">
+      <button class="btn btn-teal btn-sm" onclick="insightsCard()">🤖 Insights</button>
+      <button class="btn btn-sm" onclick="closeOv('card-ov')">Cancelar</button>
+      <button class="btn btn-p btn-sm" id="btn-save-card" onclick="saveCard()">💾 Salvar</button>
+    </div>
   </div>
 
 </div>
@@ -5658,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.538</div>
+<div class="version">v8.30.542</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6005,7 +6118,10 @@ function toggleSquadSwitcher(e){
   loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
 }
 document.addEventListener('keydown', e=>{
-  if(e.key==='Escape'){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+  if(e.key==='Escape'){
+    document.getElementById('squad-switcher-dd')?.classList.remove('open');
+    closeHdMore();
+  }
 });
 
 // Fecha qualquer picker de reação ao clicar fora
@@ -6013,8 +6129,64 @@ document.addEventListener('click', (e)=>{
   if(!e.target.closest('.cmt-react')){ document.querySelectorAll('.rx-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
   if(!e.target.closest('.squad-switcher-wrap')){ document.getElementById('squad-switcher-dd')?.classList.remove('open'); }
+  if(!e.target.closest('.hd-more-wrap')){ closeHdMore(); }
 });
 // ── FIM SQUAD ────────────────────────────────────────────────────
+
+// ── MENU "⋯" DO HEADER (mobile) ─────────────────────────────────────
+// Ver comentário no HTML (perto de #hd-more-btn) e no CSS (@media max-width:768px,
+// seção "HEADER: redesenho tipo Trello") — junta num só menu tudo que não coube
+// na fileira de ícones do topo no mobile. Reconstrói o conteúdo a cada abertura
+// (mesmo padrão do toggleSquadSwitcher acima) pra sempre refletir o usuário/tema/
+// status atuais na hora, sem precisar manter um 2º ponto de sincronização vivo.
+function toggleHdMore(e){
+  e.stopPropagation();
+  const dd = document.getElementById('hd-more-dd');
+  if(!dd) return;
+  if(dd.classList.contains('open')){ dd.classList.remove('open'); return; }
+  renderHdMoreDD();
+  dd.classList.add('open');
+}
+function closeHdMore(){
+  document.getElementById('hd-more-dd')?.classList.remove('open');
+}
+function renderHdMoreDD(){
+  const dd = document.getElementById('hd-more-dd');
+  if(!dd) return;
+  const user = window._currentUser;
+  const nome = esc(user?.displayName || user?.email || '?');
+  const foto = safeUrl(user?.photoURL || '');
+  const inicial = esc((user?.displayName || user?.email || '?')[0] || '?');
+  const st = STATUS_MAP[window._myStatus||''];
+  const showHybrid = agentes.length>0;
+  dd.innerHTML = `
+    <div class="squad-switcher-item" onclick="closeHdMore();openStatusMenu();" style="cursor:pointer;">
+      <span style="width:22px;height:22px;border-radius:50%;overflow:hidden;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:rgba(37,99,201,.85);font-size:10px;color:#fff;">${foto?`<img src="${foto}" style="width:100%;height:100%;object-fit:cover;">`:inicial}</span>
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${nome}${st?(' '+st.emoji):''}</span>
+      <span style="font-size:10px;color:var(--txt3);">status ›</span>
+    </div>
+    <div class="sm-dd-sep"></div>
+    <div class="squad-switcher-item" onclick="closeHdMore();openSearch();">🔍 Buscar cards</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();openTeamList();">👥 Equipe do quadro</div>
+    ${showHybrid?`
+    <div class="sm-dd-sep"></div>
+    <div class="squad-switcher-item" style="justify-content:space-between;cursor:default;">
+      <span>Modo de visualização</span>
+      <span style="display:flex;gap:2px;">
+        <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
+        <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
+        <button class="hvs-btn" data-mode="agent" onclick="setHybridView('agent')" title="Só cards com agente envolvido">🤖</button>
+      </span>
+    </div>`:''}
+    <div class="sm-dd-sep"></div>
+    <div class="squad-switcher-item" onclick="closeHdMore();toggleTheme();">${_currentTheme()==='light'?'☀️':'🌙'} Alternar tema</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
+    <div class="sm-dd-sep"></div>
+    <div class="squad-switcher-item" onclick="doSignOut();" style="color:#ff8fa3;">🚪 Sair</div>
+  `;
+  updateHybridViewUI(); // sincroniza o estado 'active' dos .hvs-btn recém-criados acima
+}
+// ── FIM MENU "⋯" ─────────────────────────────────────────────────
 const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
