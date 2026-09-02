@@ -2502,6 +2502,16 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.556-dev — 2026-09-02 — Selo "Direcional" trocou de 📌 pra 🧭 (colidia com o ícone do pin de card)
+
+Pedido direto do usuário, com print do selo no card: o selo "Direcional
+de Mídia" (Ficha Técnica) usava 📌 — mesmo emoji que o recurso de
+"fixar card no topo da coluna" (pin) passou a usar nesta mesma sessão.
+Os dois lugares que usavam 📌 pra Direcional trocados pra 🧭 (bússola,
+mesma família semântica de "direção"; livre — `🎯` já é o selo de OKR,
+não podia reusar): o rótulo do campo "Direcional de Mídia" na Ficha
+Técnica e o selo no card (`direcionalBadge`, o que aparece na captura).
+
 ### v8.30.555-dev — 2026-09-02 — Corte de bytes: comunicados baixando a árvore inteira em vez de só os ativos
 
 Investigação pedida direto pelo usuário em cima de um print real do

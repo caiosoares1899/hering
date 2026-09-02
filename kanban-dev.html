@@ -4020,7 +4020,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
 
       <div class="field crv-own-fld" style="grid-column:1/-1;">
-        <label class="fl">📌 Direcional de Mídia <span style="font-size:9px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
+        <label class="fl">🧭 Direcional de Mídia <span style="font-size:9px;color:var(--txt3);font-weight:400;">(opcional)</span></label>
         <textarea class="fi" id="m-crv-direcional" rows="2" oninput="scheduleAutoSave()" placeholder="Instrução importante pra quem for produzir/mídia — se preencher, aparece com destaque pra quem pegar o card." style="background:rgba(255,209,102,.08);border-color:rgba(255,209,102,.4);"></textarea>
       </div>
 
@@ -5856,7 +5856,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.555-dev</div>
+<div class="version">v8.30.556-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10154,7 +10154,7 @@ function makeCardEl(card){
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
   // visual pra quem for pegar o card ver fácil, sem precisar abrir.
-  const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">📌 Direcional</span>`:'';
+  const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">🧭 Direcional</span>`:'';
   // Pedido direto: identificar de relance, sem abrir o card, quais vieram do
   // formulário público de intake (ver intakeId em saveCard() e o funil de
   // métricas em renderBoardDataGrid()).
