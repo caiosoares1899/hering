@@ -2426,6 +2426,63 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.539-dev — 2026-09-02 — Cabeçalho mobile redesenhado: menu "⋯" (tipo Trello) + fix de avatares de presença sobrepondo a fileira de ícones
+
+Feedback direto do usuário com screenshot no celular: a fileira de ícones
+do topo (tema, modo de visualização 👤🤝🤖, avatares de quem tá online,
+seu nome+avatar, 🔔📢🎉) não cabia numa linha só e quebrava pra uma 2ª
+linha malformada, estourando a tela — "acho que o mobile pode ser melhor
+trabalhado a nível de layout... talvez valha vc verificar como o Trello
+executa".
+
+**Causa raiz nº1 (o que aparecia estourando no print):** `#online-bar`
+(os avatares de quem está online) tinha `style="display:flex"` **inline**
+no HTML, e a regra que deveria escondê-lo no mobile
+(`@media(max-width:768px){ #online-bar{display:none} }`) nunca vencia —
+estilo inline sempre tem prioridade sobre uma regra externa de mesma
+especificidade, `!important` ausente. Resultado: os 2 avatares
+sobrepostos do print apareciam mesmo o código "pensando" que estavam
+escondidos. Corrigido com `!important` na regra do media query.
+
+**Causa raiz nº2:** diferente de `.toolbar`/`#filter-bar` (que já viram
+scroll horizontal no mobile), `.hd-btns` nunca ganhou esse tratamento —
+sem `overflow-x:auto`/`flex-wrap:nowrap`, ele simplesmente quebra pra uma
+2ª linha quando os ícones não cabem, causando o layout partido do print
+(🔔📢🎉 "sobrando" numa linha própria).
+
+**Redesenho, não só o fix.** Em vez de só adicionar scroll horizontal
+(empurra o problema, ainda fica "ícone demais numa fileira"), a fileira
+do topo no mobile virou: título + **🔔 📢 🎉 ⋯**. Tudo que não é
+essencial no dia a dia (tema, modo de visualização, avatares de quem tá
+online, seu perfil/status/sair, busca) foi pro menu "⋯" — mesmo padrão
+que Trello usa pro menu de "mais opções" no board mobile. No desktop
+nada muda: os elementos originais (`#theme-toggle-btn`,
+`#hybrid-view-switch`, `#online-bar`, `#user-badge`,
+`#header-search-btn`) continuam do jeito de sempre; o conteúdo do "⋯" é
+só uma cópia que chama as mesmas funções globais (`toggleTheme()`,
+`setHybridView()`, `openTeamList()`, `openStatusMenu()`, `doSignOut()`,
+`openSearch()`), reconstruída a cada abertura (`renderHdMoreDD()`, mesmo
+padrão do `toggleSquadSwitcher()` já existente) — sem precisar manter
+2 pontos de sincronização vivos. Os botões de "Modo de visualização"
+dentro do "⋯" reusam a classe `.hvs-btn` dos originais, então
+`updateHybridViewUI()` já sincroniza os dois conjuntos automaticamente,
+de graça.
+
+Também corrigido de brinde: `#header-search-btn` (🔍) tinha um comentário
+dizendo que ficava escondido no mobile "pra abrir espaço", mas o seletor
+CSS (`.hd-btns > .btn-p.btn-sm`) só batia com o "+Card" — a lupa
+continuava ocupando espaço ali sem ninguém perceber. Agora some de
+verdade do topo e ganha uma entrada "🔍 Buscar cards" dentro do "⋯",
+ficando de fato acessível no mobile pela 1ª vez (antes dependia só do
+atalho Ctrl+K, que não existe em teclado de celular).
+
+Testado com Playwright em viewport mobile (375×812): fileira do topo
+ficou numa linha só (antes: 2, estourando a tela), menu abre/fecha
+corretamente (clique no botão, clique fora, Esc), seção "Modo de
+visualização" só aparece quando o squad tem agentes de IA cadastrados
+(mesma condição do original), e o modo ativo fica sincronizado entre os
+2 conjuntos de botões.
+
 ### v8.30.538-dev — 2026-09-01 — Menu de contexto: "Mover para"/"Prioridade" viram flyout, "🔗 Copiar link" novo, + fix de um 3º link "abrir card" que falhava em silêncio
 
 Pedido direto do usuário, revisando o menu de contexto do card logo depois
