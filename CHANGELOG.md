@@ -2451,6 +2451,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.546-dev — 2026-09-02 — Contagem de cards vinculados divergia entre a lista de campanhas e o detalhe (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali em campanhas/
+coleções" (o mesmo módulo — "Coleção" é só um `tipo` de campanha, não
+uma área separada).
+
+**Achado**: a lista de Campanhas & Coleções conta cards vinculados com
+o helper canônico `getCardTags(card).includes(t)` — que só cai no
+campo legado `card.tag` quando `card.tags` nem existe como array. Já
+`_filterCards()` (dentro do detalhe da campanha, alimenta a sidebar
+"Cards vinculados" e a grade) reimplementava a checagem na mão:
+`(card.tags||[]).includes(t)||(card.tag===t)` — sempre olha os dois
+campos, incondicionalmente. Um card com `tags:[]` válido (sem a tag da
+campanha) mas ainda com um `card.tag` legado igual à tag da campanha
+(resquício de antes da migração pra tags múltiplas) ficava de fora da
+badge da lista, mas aparecia no detalhe/grade da mesma campanha — os
+dois números nunca batiam. Achado via técnica 2 (comparar contra um
+padrão já resolvido em outro lugar do arquivo).
+
+Fix: `_filterCards()` passa a usar o mesmo `getCardTags()` que
+`renderCampList()` já usa. Testado com chamada real de
+`renderCampDetalhe()`: card com tag legada divergente antes contava 2
+cards no detalhe (vs. 1 na lista) — agora bate 1/1, igual à lista.
+
 ### v8.30.545-dev — 2026-09-02 — Tag em massa deixava marcar 2 tamanhos ou 2 submarcas no mesmo card (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "em áreas sensíveis

@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.545-dev</div>
+<div class="version">v8.30.546-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17767,7 +17767,14 @@ function renderCampDetalhe(c){
   const _filterCards = (sqId, cardsArr) => {
     return (cardsArr||[]).filter(card=>{
       if(!mostrarArq && card.archived) return false;
-      return campTags.length ? campTags.some(t=>(card.tags||[]).includes(t)||(card.tag===t)) : false;
+      // getCardTags() (não a checagem manual "tags[] ou tag" — achado via
+      // /monitorarbugs) é o mesmo helper que renderCampList() já usa pra
+      // contar cards vinculados na badge da lista de campanhas; sem isso
+      // aqui, um card com tags:[] válido (mesmo sem a tag da campanha) MAS
+      // ainda com um campo legado card.tag igual à tag da campanha entrava
+      // na contagem do detalhe/grade e ficava de fora da badge da lista —
+      // os dois números nunca batiam pra mesma campanha.
+      return campTags.length ? campTags.some(t=>getCardTags(card).includes(t)) : false;
     });
   };
   // Cards: modo squad = só board atual; modo multi = cards locais + cache pontual dos outros squads

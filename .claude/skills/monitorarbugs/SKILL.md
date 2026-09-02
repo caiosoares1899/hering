@@ -728,6 +728,36 @@ Mesma disciplina de sempre neste repo:
   `tag_removed`/`submarca_set` no autosave (`scheduleAutoSave()`) já
   batem exatamente com o que o bulk dispara.
 
+- **2026-09-02, área nomeada explicitamente — "ali em campanhas/
+  coleções"**: primeira revisão dedicada do módulo Campanhas
+  (`openCamp()`/`renderCampList()`/`openCampDetalhe()`/
+  `renderCampDetalhe()`/`_renderEntrada()`/`openCampEdit()`/
+  `openCampCardsGrid()`) — CODE_MAP.md só tinha 1 anchor nessa área
+  (`renderCampDashboard()`), o resto nunca tinha entrada própria.
+  "Coleção" não é área separada — é só um `tipo` de campanha
+  (`c.tipo==='colecao'`), mesmo módulo. 1 achado real, técnica 2
+  (comparar contra padrão já resolvido em outro lugar do arquivo):
+  `renderCampList()` conta cards vinculados com o helper canônico
+  `getCardTags(card).includes(t)` (só cai no campo legado `card.tag`
+  quando `card.tags` nem existe como array); `_filterCards()` dentro de
+  `renderCampDetalhe()` (alimenta a sidebar + a grade de cards da MESMA
+  campanha) reimplementava a checagem na mão —
+  `(card.tags||[]).includes(t)||(card.tag===t)`, sempre olhando os dois
+  campos incondicionalmente. Card com `tags:[]` válido (sem a tag da
+  campanha) + `card.tag` legado ainda igual à tag da campanha (resquício
+  de antes da migração pra tags múltiplas) ficava fora da badge da
+  lista mas aparecia no detalhe da mesma campanha — os 2 números nunca
+  batiam. Fix: `_filterCards()` passa a usar `getCardTags()` (dev
+  v8.30.546-dev). Testado com chamada real de `renderCampDetalhe()`
+  (não só a expressão isolada) — confirmado 2→1 card no detalhe após o
+  fix, batendo com a badge da lista. Demais funções lidas
+  (`_renderEntrada`/`delCampEntrada`/`editEntradaData`/
+  `openCampCardsGrid`) sem achados novos — `_renderEntrada` já reflete
+  o fix de permissão (`_isPOorOrg()`) de uma rodada anterior
+  (2026-09-01), e a exclusão/edição de entrada segue o mesmo modelo de
+  confiança client-side-only já estabelecido no resto do app (não é uma
+  inconsistência local).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
