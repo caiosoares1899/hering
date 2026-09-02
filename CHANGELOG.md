@@ -2451,6 +2451,169 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.549-dev — 2026-09-02 — 🌴 Vice City (easter egg interno, ideia do usuário)
+
+Pedido direto, tom de brincadeira interna/ação de marketing: "e se a
+gente fizesse o modo 'gta 6'? [...] pode tá como terceira opção ali do
+modo claro e escuro". Implementado como um 3º tema completo (paleta +
+gradiente próprios), mas com ativação escondida (easter egg) em vez de
+uma 3ª opção visível de cara no botão de tema — decisão tomada em
+conjunto com o usuário via pergunta direta (visível no ciclo vs.
+escondido → escolhido escondido; nome → 🌴 Vice City).
+
+**O tema**: `[data-theme="vice"]` no CSS — paleta rosa neon (`--accent:
+#ff2d95`), ciano/turquesa (`--cyan:#26e0d9`, `--teal:#00c2a8`) e roxo
+elétrico (`--blue:#c026d3`) sobre um fundo roxo bem escuro quase preto
+(`--deep:#170826`), com `.ocean` ganhando um gradiente próprio de "pôr
+do sol" (rosa + turquesa + laranja sobre roxo profundo). Diferente do
+modo claro (`[data-theme="light"]`), que precisou de ~15 overrides
+pontuais espalhados pelo arquivo pra corrigir contraste (ele inverte a
+luminância, fundo escuro→claro quebra cores pensadas pro escuro), o
+Vice City continua um tema ESCURO por baixo — só troca a paleta de cor,
+mantendo o fundo escuro que o resto do CSS já foi calibrado pra usar.
+Por isso bastou o bloco de variáveis + o gradiente do `.ocean`: tudo que
+já usa `var(--txt)`/`var(--glass)`/`var(--surface-rgb)`/etc. herda
+automaticamente, sem precisar caçar regra por regra (confirmado num
+screenshot real do board com cards/tags/fish&bubbles — tudo legível,
+sem ajuste extra necessário).
+
+**Como ativa**: segurar (pointerdown, sem soltar) o botão de tema 🌙/☀️
+por ~1.2s — não é clique nem duplo-clique (esses continuam 100% iguais:
+clique alterna escuro/claro, duplo-clique no claro alterna a variante
+mais escura). Sair do Vice City é sempre 1 clique normal (ou
+duplo-clique) — de propósito mais fácil sair do que entrar — e volta
+exatamente pro tema (e variante do claro, se houver) que a pessoa tinha
+antes de entrar, persistido em `localStorage` (`mare_theme`,
+'vice' como 3º valor possível ao lado de 'light'/ausente-é-dark).
+Funciona tanto no botão do header quanto no item duplicado do menu "⋯"
+mobile (mesmo gesto). Ícone do botão vira 🌴 enquanto ativo.
+
+**Testado com Playwright** (simulando os eventos de pointer reais, não
+só chamando a função direto): clique curto no botão não ativa o Vice
+City, só alterna escuro/claro normalmente; segurar 1.3s ativa e o clique
+que o navegador sempre dispara ao soltar (mesmo após um press longo) é
+corretamente ignorado (senão o gesto de entrar já sairia de novo
+sozinho); 1 clique normal dentro do Vice City sai e restaura o tema
+anterior corretamente nos dois casos (entrando do escuro → volta pro
+escuro; entrando do claro → volta pro claro, não pro escuro); soltar
+antes de 1.2s não ativa nada e o toggle normal continua funcionando.
+Lógica de persistência (script de anti-flash no `<head>`, que roda antes
+do resto do JS carregar) verificada isoladamente para os 3 valores
+possíveis de `mare_theme` (vice/light/dark).
+
+De propósito **não documentado no `HELP_CONTENT`** nem no
+`MARINE_GLASS.md` — é um easter egg, documentar a ativação ali
+estragaria a graça de quem for descobrir sozinho; fica registrado aqui
+no CHANGELOG (histórico interno da equipe) pra quem precisar entender a
+implementação depois.
+
+### v8.30.548-dev — 2026-09-02 — Cascata de conclusão automática de Supercard sem proteção contra ciclo corrompido nos dados (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali na área de
+supercards e filhos" — mesma área que deu origem à skill (2026-08-21),
+revisitada agora que muita coisa mudou desde então (2 níveis, pin,
+duplicar com filhos, card hotline...).
+
+**Achado**: `_checkSupercardAutoComplete()` (conclui o pai sozinho
+quando todos os filhos ativos chegam numa coluna de fim, cascateando
+filho→pai→avô recursivamente) nunca ganhou proteção contra ciclo
+corrompido nos dados — diferente de `_duplicarComFilhos()` (mesmo
+grafo `childCardIds`), que já tem um `visited` explícito, com
+comentário próprio no CODE_MAP sobre o motivo. A única coisa que hoje
+impede um ciclo (card A listando B como filho, e B listando A) é uma
+checagem client-side na hora de ADICIONAR um filho pela UI
+(`searchSuperChildren` só oferece candidato que ainda não é filho de
+ninguém) — não protege se o dado chegar corrompido por outro caminho
+(edição direta no Firebase/console, corrida entre abas). Se
+`childCardIds` alguma vez formar um ciclo, completar um dos dois
+dispara recursão infinita — trava a aba. Achado via técnica 5 (rastrear
+recursão/cascata por ciclo e profundidade — teto aplicado só na UI, não
+no código) + técnica 2 (padrão já resolvido numa função irmã, mesma
+área).
+
+**Cuidado na correção**: um `Set` COMPARTILHADO entre chamadas-irmãs
+(cópia exata do padrão de `_duplicarComFilhos()`) quebraria um caso
+LEGÍTIMO que o próprio comentário da função já prevê — um card pode ter
+mais de um pai (avô compartilhado). Fix: cada chamada recebe sua
+PRÓPRIA cópia do caminho de ancestrais (raiz→...→atual), não um Set
+global — só bloqueia um ciclo de verdade (mesmo id reaparecendo no
+MESMO caminho), preservando a cascata legítima entre irmãos.
+
+Testado com Playwright: (1) ciclo corrompido (A↔B) — antes travaria a
+aba, agora termina em 0ms sem estourar a pilha; (2) cascata legítima
+(card X com 2 pais A e B, ambos filhos do mesmo avô C) — os 3 níveis
+concluem corretamente, confirmando que a proteção não quebrou esse
+caso.
+
+Achado descartado (checado, ambíguo — não é bug claro, não implementado
+sem confirmação): `initSuperChildren()` acha o pai do card aberto sem
+excluir pai arquivado (`cards.find(c=>c.id!==card.id && ...)`, sem
+`!c.archived`), enquanto `_cardIsSuperChild()` (helper canônico usado
+em outros lugares, ex. contagem de "Total/Cards/Supercards") exclui pai
+arquivado. Pode ser intencional (mostrar "este card é filho de X" e
+aplicar o teto de 2 níveis mesmo com o pai arquivado é uma leitura
+razoável) ou pode ser um gap — não óbvio pela leitura do código, fica
+registrado pra confirmar com o usuário numa rodada futura, se relevante.
+
+### v8.30.547-dev — 2026-09-02 — Selo de tag em branco/errado em Arquivados, Cards antigos e Modelos/Recorrentes/Agendamentos (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali em funções de
+card" (o menu "⚡ Funções de card": Automações, Recorrentes,
+Agendamentos, Modelos, Arquivados, Cards antigos). Automações/criação
+de card já tinham histórico extenso — foco nos 3 itens menos
+auditados: Arquivados, Cards antigos e a lista Modelos/Recorrentes/
+Agendamentos.
+
+**Achado**: mesma classe de bug em 3 lugares — `_renderArquivadosBody()`
+("📦 Arquivados"), `renderCleanupList()` ("🧹 Cards antigos") e
+`renderQLBody()` (Modelos/Recorrentes/Agendamentos) montavam o selo de
+tag exibido em cada linha lendo `card.tag`/`item.tag` (campo legado,
+singular) direto, em vez do helper `getCardTags()` — que corretamente
+prioriza o array `tags[]` multi-tag e só cai no campo legado quando
+`tags` nem existe. Nas 3 funções, o FILTRO por tag (dropdown +
+aplicação) já usava a lógica certa (multi-tag-aware) — só o selo
+visual de cada linha ficava pra trás. Em `renderQLBody()` isso é
+particularmente evidente: a mesma função já resolve a checagem certo
+2x, poucas linhas acima, sem reaproveitar pro selo. Resultado: um
+card/item com `tags:['X']` mas sem `tag` (ou com `tag` desatualizado)
+aparecia certinho quando filtrado pela tag real, mas mostrava selo em
+branco na lista. Achado via técnica 2 (comparar contra um padrão já
+resolvido na MESMA função).
+
+Fix: as 3 passam a usar `getTag(getCardTags(x)[0])` em vez de
+`getTag(x.tag)`. Testado com card/item tendo `tags:['realTag']` e
+`tag:''` (exatamente o cenário do bug) nas 3 telas — selo aparece
+corretamente nas 3 depois do fix.
+
+Achado de passagem, fora do escopo pedido: `openSearch()` (busca
+Ctrl+K, ~L28105) tem o mesmo padrão (`getTag(c.tag)`) — não corrigido
+aqui (Busca não é "Funções de card"), fica registrado pra uma rodada
+futura.
+
+### v8.30.546-dev — 2026-09-02 — Contagem de cards vinculados divergia entre a lista de campanhas e o detalhe (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali em campanhas/
+coleções" (o mesmo módulo — "Coleção" é só um `tipo` de campanha, não
+uma área separada).
+
+**Achado**: a lista de Campanhas & Coleções conta cards vinculados com
+o helper canônico `getCardTags(card).includes(t)` — que só cai no
+campo legado `card.tag` quando `card.tags` nem existe como array. Já
+`_filterCards()` (dentro do detalhe da campanha, alimenta a sidebar
+"Cards vinculados" e a grade) reimplementava a checagem na mão:
+`(card.tags||[]).includes(t)||(card.tag===t)` — sempre olha os dois
+campos, incondicionalmente. Um card com `tags:[]` válido (sem a tag da
+campanha) mas ainda com um `card.tag` legado igual à tag da campanha
+(resquício de antes da migração pra tags múltiplas) ficava de fora da
+badge da lista, mas aparecia no detalhe/grade da mesma campanha — os
+dois números nunca batiam. Achado via técnica 2 (comparar contra um
+padrão já resolvido em outro lugar do arquivo).
+
+Fix: `_filterCards()` passa a usar o mesmo `getCardTags()` que
+`renderCampList()` já usa. Testado com chamada real de
+`renderCampDetalhe()`: card com tag legada divergente antes contava 2
+cards no detalhe (vs. 1 na lista) — agora bate 1/1, igual à lista.
+
 ### v8.30.545-dev — 2026-09-02 — Tag em massa deixava marcar 2 tamanhos ou 2 submarcas no mesmo card (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "em áreas sensíveis
