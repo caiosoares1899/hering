@@ -2451,6 +2451,67 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.544-dev — 2026-09-02 — Pin do card vira 1 por coluna E por submarca (squads com Submarca ativa)
+
+Ideia do usuário: "pensando naquela ideia de que o board com submarcas é
+como se fosse vários boards dentro de um... o pin de fixar precisa ser
+um por submarca! pq se n, só uma submarca vai acabar podendo fixar um
+card naquela coluna toda".
+
+Confirmado no código: `togglePinCard()` só comparava `x.col===c.col` na
+hora de desafixar o card anterior, nunca a submarca — em squads com
+`submarcaAtivo` (hoje só `site`), a 1ª submarca a fixar um card numa
+coluna "trancava" a coluna inteira pras outras. `_sortCards()` (quem
+decide o que aparece fixado) já suportava vários pins numa mesma
+coluna de graça (empilha por `pinnedAt`, contanto que os cards
+cheguem até ela já filtrados por submarca, que é o caso normal do
+board) — só o "desafixa o anterior" enxergava a coluna inteira,
+cross-submarca.
+
+Fix: em squads com submarca ativa, o "desafixa outro" agora só
+desliga o pin de quem for da MESMA submarca do card recém-fixado (ou
+também sem submarca — tratado como seu próprio grupo). Em squads sem
+submarca ativa, comportamento 100% igual a antes (1 fixado por coluna).
+Central de Ajuda atualizada com a nova regra.
+
+Testado com 4 cenários (submarca desligada → comportamento antigo
+preservado; submarcas diferentes → os dois ficam fixados; mesma
+submarca → desafixa o anterior; ambos sem submarca → tratados como
+grupo único, desafixa o anterior) — todos passaram.
+
+### v8.30.543-dev — 2026-09-02 — Card lock impedia a 2ª pessoa de comentar no card hotline "Converse com o Agente Ágil" (/monitorarbugs)
+
+Rodada genérica de `/monitorarbugs` — auditada a área mais recente
+(redesenho mobile do cabeçalho/modal do card, sem novos achados além do
+já corrigido) e estendida pra "Card lock / Pedir o card", nunca coberta
+antes pela skill.
+
+**Achado**: o card hotline "🤖 Converse com o Agente Ágil" foi desenhado
+de propósito pra ser usado por qualquer pessoa a qualquer momento
+(comentário no próprio código: "compartilhado entre QUALQUER pessoa que
+queira falar com o Agente Ágil"). Mas `openAgenteHotline()` abre esse
+card chamando o mesmo `openCard(id)` de qualquer card normal — que
+sempre chama `_checkCardLock(id)`. Cenário concreto: pessoa A abre o
+card hotline e mantém o modal aberto (lendo uma resposta, por exemplo)
+→ vira "dona" do lock. Pessoa B abre o MESMO card hotline logo depois
+→ `.locked-ro` aplica `pointer-events:none` no `.modal-body` inteiro, e
+`#m-comment-inp` (a caixa de comentário) não está na lista de exceções
+que continuam clicáveis (só anexos/links) → B fica impedida de
+digitar/enviar comentário, ou seja, impedida de falar com o agente —
+justo o cenário que a feature foi desenhada pra suportar.
+
+Como os campos que o lock protege (título, tags, coluna...) já ficam
+todos escondidos no card hotline mesmo, não havia nada ali pra
+proteger — bug claro, corrigido direto sem ambiguidade. Fix:
+`_checkCardLock()` ganha um early-return pra cards `agenteHotline` —
+ainda limpa timers/listener/UI de um card anterior (evita estado
+travado sobrando), só não tenta adquirir/checar lock nenhum. Testado
+com Playwright: simulado um `.locked-ro` deixado por um card normal
+travado, chamado `_checkCardLock()` num card hotline — `.locked-ro`
+sai, `#m-lock-row` some, `pointer-events` volta a `auto`; card normal
+sem Firebase pronto continua resetando a UI do jeito de sempre (sem
+regressão).
+
 ### v8.30.542-dev — 2026-09-02 — Modal do card no mobile: achado o real culpado do scroll lateral que sobrou (classe errada corrigida na rodada anterior)
 
 Usuário testou o redesenho da v8.30.541-dev no celular e reportou:

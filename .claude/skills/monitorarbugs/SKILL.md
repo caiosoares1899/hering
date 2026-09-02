@@ -662,6 +662,36 @@ Mesma disciplina de sempre neste repo:
   item aparece com label certo, clique chama `togglePinCard()` de
   verdade, menu reflete o novo estado ao reabrir.
 
+- **2026-09-02, pedido genérico — prioridade 1 (redesenho mobile do
+  cabeçalho/modal do card, 3 commits mais recentes) sem novos achados,
+  estendida pra "Card lock / Pedir o card" (nunca coberta antes)**:
+  releitura completa de `_checkCardLock()`/`_handleLockRequest()`/
+  `_renderLockRequestUI()`/`_releaseCardLock()`/`_setCardLockUI()` —
+  mecanismo já muito bem documentado, com vários bugs anteriores citados
+  inline nos próprios comentários (corrida de duas abas, editar em cima
+  de dado velho ao herdar lock). 1 achado real, técnica 1 (comparar
+  caminhos paralelos): `openAgenteHotline()` abre o card hotline
+  chamando o MESMO `openCard(id)` de qualquer card normal — que sempre
+  chama `_checkCardLock(id)` — mesmo o próprio comentário do código
+  dizendo que esse card é "compartilhado entre QUALQUER pessoa que
+  queira falar com o Agente Ágil" ao mesmo tempo. Pessoa A abre e
+  mantém o modal aberto → vira dona do lock; pessoa B abre o MESMO card
+  hotline → `.locked-ro` (`pointer-events:none` no `.modal-body`
+  inteiro) trava até a caixa de comentário (`#m-comment-inp` não está
+  na lista de exceções que continuam clicáveis, só anexos/links) — B
+  fica impedida de falar com o agente, justo o cenário que a feature
+  foi desenhada pra suportar. Como os campos que o lock protege
+  (título/tags/coluna) já ficam todos escondidos nesse card, não havia
+  nada ali pra proteger — fix: early-return em `_checkCardLock()` pra
+  cards `agenteHotline` (ainda limpa timers/listener/UI de um card
+  anterior, só não adquire/checa lock nenhum) (dev v8.30.543-dev).
+  Lição: ao auditar uma feature "compartilhada por design" (comentário
+  explícito no código dizendo isso), vale checar se ela herda algum
+  mecanismo de outro fluxo (aqui: `openCard()`) pensado pra uso
+  exclusivo de 1 pessoa por vez — a inconsistência não estava na
+  feature nova em si, mas em reusar demais um caminho já existente sem
+  considerar a premissa diferente.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
