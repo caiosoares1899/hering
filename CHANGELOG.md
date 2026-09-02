@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.554 — 2026-09-02 · Promove pra prod — favicon próprio do dev + registro de temas + favicon do Vice City
+
+Promove pra produção o lote v8.30.552-dev → v8.30.553-dev de
+`kanban-dev.html`. Resumo pra quem usa o board:
+
+- **🌴 Vice City ganhou um ícone próprio** — enquanto o easter egg
+  escondido no botão de tema está ativo, o ícone da aba do navegador
+  também muda, combinando com o tema.
+- **Registro de "já descobriu" cada tema** (dark/light/vice) — só
+  bastidor, não muda nada visível; existe pra dar pra consultar quantas
+  pessoas já usaram cada modo.
+- **Ícone próprio pro ambiente de dev** (`kanban-dev.html`) — não afeta
+  quem usa `kanban.html` (aqui), é só pra diferenciar os dois ícones
+  quando instalados lado a lado no celular.
+
+Diff restrito ao conteúdo da promoção — além das 2 linhas de ambiente
+de sempre (versão, `VERSION_KEY`), o favicon próprio do dev usa nomes
+de arquivo diferentes em cada ambiente (`favicon-dev.png`/
+`favicon-dev-monochrome.png` só em `kanban-dev.html`; aqui continua
+`favicon.png`/`favicon-monochrome.png`) — divergência intencional, não
+um erro de diff. Checks de rotina: `node --check` OK, balanço de
+chaves/parênteses igual ao baseline conhecido (braces -1, parens +1).
+
 ### v8.30.552 — 2026-09-02 · Promove pra prod — pin por submarca, 5 correções de bug (/monitorarbugs) e 🌴 Vice City
 
 Promove pra produção o lote v8.30.544-dev → v8.30.551-dev de

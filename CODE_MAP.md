@@ -240,6 +240,19 @@ detalhe dos 4 call sites.
   `_currentTheme()==='vice'` primeiro). Persistido em `localStorage`
   (`mare_theme==='vice'`), replicado no menu mobile via
   `_mobileThemeRowClick()`.
+- `_applyFavicon()` (2026-09-02) — troca o `<link id="favicon-link">`
+  pro `favicon-vice.png` só enquanto o Vice City está ativo, restaura
+  `_faviconDefaultHref` (capturado 1x no load — `favicon.png` em
+  `kanban.html`, `favicon-dev.png` em `kanban-dev.html`, arte própria
+  de cada ambiente pra diferenciar no ícone instalado do celular) ao
+  sair. Chamada de dentro de `_applyThemeButtonIcon()`, mesmos pontos
+  que já sincronizam o ícone 🌙/☀️/🌴 do botão.
+- `_recordThemeDiscovered(theme)` (2026-09-02) — grava
+  `kanban/usuarios/{uid}/temasDescobertos/{dark|light|vice}:true` na
+  1ª vez que a pessoa usa cada tema (guard em `localStorage`,
+  `mare_theme_seen_{tema}`), consultável via console. Chamada em
+  `toggleTheme()`/`toggleViceCity()` + listener de `auth-change` (cobre
+  quem nunca troca de tema).
 
 ### Cabeçalho mobile — menu "⋯" (2026-09-02)
 - `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6063/L6071/L6074
