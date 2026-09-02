@@ -816,6 +816,38 @@ Mesma disciplina de sempre neste repo:
   óbvio pela leitura do código, fica registrado pra confirmar numa
   rodada futura se ficar relevante.
 
+- **2026-09-02, área nomeada explicitamente — "área de colocar capa no
+  card"**: primeira revisão dedicada da feature de capa (cor + imagem,
+  mutuamente exclusivas — `CARD_COVER_COLORS`/`setCardCover()`/
+  `setCardCoverImage()`/ação de Automação `set_cover`). Mapeados TODOS
+  os pontos de escrita em `coverColor`/`coverImageUrl` do arquivo
+  (técnica 1) — só 3 existem, e 2 tinham problema. 2 achados reais:
+  1. `setCardCoverImage()` (card existente) zera `card.coverColor`
+     silenciosamente ao escolher uma imagem, mas nunca chamava
+     `runAutoRules('cover_set', ...)` — diferente de `setCardCover()`,
+     que dispara sempre que a cor muda (inclusive indo pra "sem capa").
+     Uma automação escutando "capa de cor → sem capa" nunca disparava
+     se a remoção viesse por esse caminho. Fix: mesmo guard
+     antes/depois que `setCardCover()` já usa.
+  2. Ação de Automação `set_cover` ("Definir capa de cor") setava
+     `card.coverColor` sem limpar `card.coverImageUrl` — quebra a
+     exclusividade mútua documentada no próprio código
+     ("escolher uma limpa a outra") e respeitada pelos 2 caminhos
+     manuais. Card com capa de imagem + automação "Definir capa de
+     cor": a cor muda nos bastidores mas a imagem (que tem prioridade
+     no render) continua aparecendo — automação "sem efeito nenhum" até
+     alguém trocar a capa manualmente depois e a cor fantasma aparecer.
+     Fix: ação também limpa `coverImageUrl`.
+  Testado com Playwright exercitando as funções reais (não só a
+  expressão isolada): achado 1 dispara `cover_set` com valor vazio
+  quando havia cor prévia, e corretamente NÃO dispara quando não havia
+  (evita falso-positivo); achado 2 confirma `coverImageUrl` limpo após
+  rodar a ação (dev v8.30.554-dev). Duplicação (`_duplicarCardObj()`) e
+  a construção do `_newCard` (branch de criação de `saveCard()`)
+  checados e **sem achados** — ambos herdam corretamente o estado já
+  exclusivo de `_pendingCoverColor`/`_pendingCoverImageUrl` ou do card
+  original, sem nenhuma escrita direta própria nos 2 campos.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

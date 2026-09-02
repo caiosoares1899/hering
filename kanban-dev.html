@@ -5856,7 +5856,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.553-dev</div>
+<div class="version">v8.30.554-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6519,11 +6519,21 @@ function setCardCoverImage(url){
   }
   const card=cards.find(c=>c.id===editingId); if(!card) return;
   card.coverImageUrl = url||null;
+  // Achado real (/monitorarbugs, 2026-09-02): definir uma capa de imagem
+  // num card que já tinha capa de COR limpa card.coverColor aqui embaixo,
+  // mas até agora essa mudança nunca disparava runAutoRules('cover_set', ...)
+  // — diferente de setCardCover(), que dispara sempre que a cor muda
+  // (inclusive indo de uma cor pra "sem capa", com o botão ⊘ explícito).
+  // Uma automação configurada pra "capa de cor definida como — sem capa —"
+  // (opção real no dropdown, ver _autoRenderValueOptions) nunca disparava
+  // se a cor fosse removida por ESTE caminho, só pelo botão dedicado.
+  const _prevCover=card.coverColor||'';
   if(url) card.coverColor = null; // exclusivo com cor
   fbSaveCard(card);
   _applyCoverStripToModal(url?null:card.coverColor, url);
   renderCoverSwatches();
   renderBoard();
+  if((card.coverColor||'')!==_prevCover) runAutoRules('cover_set', card.id, card.coverColor||'');
 }
 function _useFirstLinkAsCover(){
   const card = editingId ? cards.find(c=>c.id===editingId) : null;
@@ -26435,7 +26445,15 @@ const AUTO_ACTIONS = [
   { key:'set_padrao', label:'Definir padrão de card', valueType:'padrao', visible:()=>Object.keys(cardPatterns||{}).length>0,
     run:(rule,card)=>{ card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
   { key:'set_cover', label:'Definir capa de cor', valueType:'cover',
-    run:(rule,card)=>{ card.coverColor=rule.actionVal||null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-02): faltava limpar coverImageUrl
+    // aqui — os 2 caminhos manuais (setCardCover()/setCardCoverImage()) já
+    // garantem a exclusividade mútua documentada ("escolher uma limpa a
+    // outra"), mas esta ação de Automação só setava coverColor. Num card
+    // com capa de imagem, a cor mudava nos bastidores sem efeito visível
+    // nenhum (imagem tem prioridade no render — ver coverStripHtml em
+    // makeCardEl()), até alguém trocar a capa manualmente depois e a
+    // mudança "fantasma" aparecer do nada.
+    run:(rule,card)=>{ card.coverColor=rule.actionVal||null; card.coverImageUrl=null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
   { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
     run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
   { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
