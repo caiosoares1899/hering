@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.557 — 2026-09-02 · Promove pra prod — capa de card, corte de bytes em comunicados, selo Direcional trocado
+
+Promove pra produção o lote v8.30.554-dev → v8.30.556-dev de
+`kanban-dev.html` (validado pelo usuário: "testei, funcionou, pode
+subir"). Resumo pra quem usa o board:
+
+- **🎨 Capa de card mais confiável com Automações** — 2 correções: uma
+  automação configurada pra reagir quando a capa de cor é removida
+  agora dispara também quando isso acontece ao trocar pra uma capa de
+  imagem (antes só disparava pelo botão "Sem capa"); e a automação
+  "Definir capa de cor" agora limpa a capa de imagem antiga do card, em
+  vez de deixar a cor mudada nos bastidores sem efeito visível.
+- **📉 Menos consumo de dados** — os avisos do Mural (📢) agora são
+  buscados a cada 12 minutos em vez de 3, e o app parou de baixar o
+  histórico inteiro de avisos à toa — só o que está realmente ativo.
+  Sem mudança visível, só menos dados trafegados no celular/computador
+  de quem usa o board.
+- **🧭 Selo "Direcional" mudou de ícone** — de 📌 pra 🧭, pra não
+  confundir com o novo recurso de fixar card no topo da coluna (que
+  também usa 📌).
+
+Diff restrito ao conteúdo da promoção — além das 2 linhas de ambiente
+de sempre (versão, `VERSION_KEY`), o favicon próprio do dev usa nomes
+de arquivo diferentes por ambiente (`favicon-dev.png`/
+`favicon-dev-monochrome.png` só em `kanban-dev.html`; aqui continua
+`favicon.png`/`favicon-monochrome.png`) — divergência intencional, já
+promovida numa rodada anterior. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido (braces -1,
+parens +1). `CODE_MAP.md` atualizado (nova seção "Comunicados /
+Mural").
+
 ### v8.30.554 — 2026-09-02 · Promove pra prod — favicon próprio do dev + registro de temas + favicon do Vice City
 
 Promove pra produção o lote v8.30.552-dev → v8.30.553-dev de
