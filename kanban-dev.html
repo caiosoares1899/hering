@@ -491,6 +491,39 @@
     radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
     linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
 }
+/* Feedback direto (print real do board): "as colunas tem q escurecer um
+   pouco mais para dar destaque! pouca coisa, só o suficiente para
+   diferenciar do fundo" — .col usa var(--glass) (mesmo token do resto
+   do app), mas o .ocean do Vice City tem faixas médias/claras (rosa,
+   laranja) bem perto do tom do --glass-rgb daqui, então a coluna quase
+   some contra o fundo em certas posições da tela. Sobe só a opacidade
+   (.55→.78, mesma cor, sem inventar tom novo) — pouco, só o suficiente
+   pra recriar a distinção que o token já dá de sobra nos outros temas
+   (onde o fundo é bem mais escuro/uniforme que o glass por cima). */
+[data-theme="vice"] .col{
+  background:rgba(var(--glass-rgb),.78);
+}
+/* Mesmo feedback (print real do board): nome da squad, número de cards
+   por coluna e o texto de alguns botões da toolbar (Dependências,
+   Calendários, Dados do Board...) ficavam com leitura ruim — "coloca no
+   branco que aí dá leitura 100%". Botões da toolbar: mesmo problema que
+   o modo claro já resolveu (ver [data-theme="light"] .toolbar > button
+   acima) — cores pastel fixas (`style="color:..."` inline: roxo, teal,
+   ciano, dourado) pensadas pra saltar contra um fundo escuro NEUTRO;
+   contra o fundo colorido/saturado do Vice City, competem em vez de se
+   destacar. Mesma técnica: força var(--txt) com !important (só assim
+   vence o inline), mesma exceção do badge de pendência do Google
+   Calendar (sinalização de estado, não só estética). .hd-badge (nome da
+   squad) e .col-cnt (contador "X cards" no topo da coluna) usam
+   var(--cyan) fixo — no Vice City isso é o rosa-poeira #B36B6E, tom
+   médio que também perde força contra o fundo; branco puro (var(--txt))
+   resolve os dois sem precisar !important (nenhum dos dois tem estilo
+   inline por cima). */
+[data-theme="vice"] .toolbar > button.btn:not(#gcal-pending-badge-btn){
+  color:var(--txt)!important;
+}
+[data-theme="vice"] .hd-badge{color:var(--txt);}
+[data-theme="vice"] .col-cnt{color:var(--txt);}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -5819,7 +5852,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.550-dev</div>
+<div class="version">v8.30.551-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
