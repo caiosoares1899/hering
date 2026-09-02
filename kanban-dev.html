@@ -5856,7 +5856,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.554-dev</div>
+<div class="version">v8.30.555-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30530,7 +30530,17 @@ const COMUNICADO_TIPOS = {
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
-const COMUNICADOS_POLL_MS = 3*60000; // 3 minutos
+// Otimização de bytes (achado 2026-09-02, consumo real medido no _dbg):
+// o path 'comunicados' sozinho respondia por >1/3 do download diário de
+// uma squad, com uma média de ~72KB por chamada — quase idêntico ao
+// tamanho da árvore INTEIRA (ativos+inativos+rascunhos descartados),
+// enquanto o que este arquivo realmente usa (ver _refreshComunicados()
+// logo abaixo) é só uns 3KB de comunicados ativos. Forte indício de que
+// o fallback "sem filtro server-side" documentado ali (nunca confirmado
+// antes) estava disparando sistematicamente. Subir o intervalo de 3 pra
+// 12min corta o volume proporcionalmente (~1/4) mesmo no pior caso, sem
+// depender de resolver a causa raiz do fallback.
+const COMUNICADOS_POLL_MS = 12*60000; // 12 minutos (era 3 — avisos não são tempo-real)
 let _lastComunicadosRefresh = 0;
 
 function _initComunicados(){
@@ -30570,16 +30580,26 @@ function _refreshComunicados(){
   // no servidor) se o filtro falhar — o filtro de "ativo" logo abaixo já
   // roda no cliente de qualquer forma, então o fallback continua
   // funcionalmente correto, só sem a economia de banda.
-  let _comunicadosPromise;
+  //
+  // Instrumentação (2026-09-02): a teoria acima nunca foi confirmada nem
+  // descartada de verdade — o consumo real (ver comentário em
+  // COMUNICADOS_POLL_MS) bate exatamente com o fallback disparando quase
+  // sempre, mas isso é inferência, não prova. _dbgTrack('comunicados_fallback', ...)
+  // só acumula quando o catch roda — próxima vez que alguém puxar o
+  // relatório de bytes, dá pra confirmar direto pela presença (ou
+  // ausência) dessa chave, em vez de inferir pelo tamanho.
+  let _comunicadosPromise, _comunicadosFellBack=false;
   try{
     const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
     _comunicadosPromise = window._get(_comunicadosQuery);
   }catch(e){
     console.warn('[comunicados] query() falhou, caindo pro fallback sem filtro server-side:', e);
+    _comunicadosFellBack = true;
     _comunicadosPromise = window._get(fb('kanban/comunicados'));
   }
   _comunicadosPromise.then(snap=>{
     _dbgTrack('comunicados', snap.val());
+    if(_comunicadosFellBack) _dbgTrack('comunicados_fallback', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
     _comunicadosAtivos = Object.entries(val)
@@ -30595,9 +30615,16 @@ function _refreshComunicados(){
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _talvezMostrarComunicado();
 
-    // Mural — histórico completo (antes era o listener separado de _initMural)
+    // Mural (antes era o listener separado de _initMural). "Histórico
+    // completo" é só o nome — renderMuralLista() já filtra c.ativo antes
+    // de desenhar qualquer coisa (nenhuma tela deste arquivo mostra
+    // comunicado inativo/arquivado — isso é feature só do painel.html,
+    // pra ADM revisar). Filtra ativo aqui na origem, igual
+    // _comunicadosAtivos acima, em vez de guardar peso morto em memória
+    // que todo consumidor já ia descartar de qualquer jeito.
     _muralTodos = Object.entries(val)
       .map(([id,c])=>({...c, id}))
+      .filter(c=>c.ativo)
       .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
       .filter(c=>c.publico!=='po' || _isPOOuMais())
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
