@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.547-dev</div>
+<div class="version">v8.30.548-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26615,8 +26615,24 @@ function _isColCancelLike(colId){
 // nenhum filho ativo, não decide sozinho. Exceção: se TODOS os filhos
 // ativos terminaram cancelados (nenhum de fato concluído), o pai fica onde
 // está — ver _isColCancelLike() acima.
-function _checkSupercardAutoComplete(childCard){
+function _checkSupercardAutoComplete(childCard, ancestry){
   if(!childCard) return;
+  // Guard contra ciclo corrompido nos dados (achado via /monitorarbugs,
+  // mesma classe de risco que já motivou o `visited` de _duplicarComFilhos()
+  // — mesmo grafo childCardIds, sem guard equivalente aqui até agora). Não
+  // dá pra usar um Set COMPARTILHADO entre chamadas-irmãs como lá: o
+  // comentário abaixo já prevê que um card pode ter mais de um pai (avô
+  // compartilhado), e um Set global bloquearia a 2ª cascata legítima
+  // (ex.: A e B são filhos de C; A completa e cascateia até C, ainda
+  // incompleto por causa de B — quando B completa depois, precisa
+  // re-checar C, que um Set global já teria marcado "visitado" na
+  // passagem de A). Por isso cada chamada carrega sua PRÓPRIA cópia do
+  // caminho de ancestrais (raiz→...→atual) — só bloqueia um ciclo de
+  // verdade (o mesmo id reaparecendo no MESMO caminho), não a cascata
+  // legítima entre irmãos.
+  ancestry = ancestry ? new Set(ancestry) : new Set();
+  if(ancestry.has(childCard.id)) return;
+  ancestry.add(childCard.id);
   // Não há parentId no filho — mesmo padrão de busca reversa de
   // _cardIsSuperChild(): o pai é quem lista, em childCardIds, o id de quem
   // acabou de mover (ver comentário em _cardIsSuperChild acima). Um card
@@ -26642,7 +26658,7 @@ function _checkSupercardAutoComplete(childCard){
     // coisa (ex.: uma campanha), acabou de concluir pode ser exatamente o
     // que faltava pro AVÔ também concluir sozinho — reaproveita a mesma
     // função em vez de duplicar a lógica pra "quantos níveis existem".
-    _checkSupercardAutoComplete(parent);
+    _checkSupercardAutoComplete(parent, ancestry);
   });
   if(any) renderBoard();
 }

@@ -780,6 +780,42 @@ Mesma disciplina de sempre neste repo:
   ~L28105) tem o mesmo padrão (`getTag(c.tag)`) — Busca não é "Funções
   de card", registrado aqui pra não esquecer numa rodada futura.
 
+- **2026-09-02, área nomeada explicitamente — "ali na área de
+  supercards e filhos" (revisita a área que deu origem à skill,
+  2026-08-21)**: releitura completa de `_cardIsSupercard`/
+  `_cardIsSuperChild`/`initSuperChildren`/`searchSuperChildren`/
+  `addSuperChild`/`_blankSuperChildCard`/`quickCreateSuperChild`/
+  `persistSuperChildren`/`_checkSupercardAutoComplete`/
+  `_isColCancelLike` — muita coisa mudou desde a origem (2 níveis, pin,
+  duplicar com filhos, card hotline), nunca revisitada como um todo. 1
+  achado real, técnica 5 (recursão/cascata: teto só na UI, não no
+  código) + técnica 2 (padrão já resolvido numa função irmã):
+  `_checkSupercardAutoComplete()` (cascata filho→pai→avô de conclusão
+  automática) nunca ganhou proteção contra ciclo corrompido nos dados —
+  `_duplicarComFilhos()` (mesmo grafo `childCardIds`) já tem um
+  `visited` explícito, com o próprio CODE_MAP documentando o motivo. A
+  única barreira contra ciclo hoje é client-side, na hora de ADICIONAR
+  um filho (`searchSuperChildren` só oferece candidato sem pai ainda) —
+  não protege dado corrompido chegando por outro caminho (Firebase/
+  console direto, corrida entre abas). Ciclo de verdade nos dados
+  travaria a aba (recursão infinita). Cuidado na correção: um `Set`
+  COMPARTILHADO entre chamadas-irmãs (cópia exata do padrão de
+  `_duplicarComFilhos()`) quebraria um caso legítimo que o comentário da
+  própria função já prevê — card com 2 pais (avô compartilhado). Fix:
+  cada chamada recebe sua PRÓPRIA cópia do caminho de ancestrais, não
+  um Set global — só bloqueia ciclo de verdade, preserva cascata
+  legítima entre irmãos (dev v8.30.548-dev). Testado com Playwright: (1)
+  ciclo corrompido A↔B — antes travaria, agora 0ms sem estourar pilha;
+  (2) card com 2 pais compartilhando avô — os 3 níveis concluem
+  corretamente, confirmando que a proteção não quebrou o caso legítimo.
+  Achado descartado (checado, ambíguo, não implementado):
+  `initSuperChildren()` acha o pai do card aberto sem excluir pai
+  arquivado, enquanto `_cardIsSuperChild()` (helper canônico usado em
+  outros lugares) exclui — pode ser intencional (mostrar "filho de X"
+  mesmo com X arquivado é uma leitura razoável) ou pode ser gap; não
+  óbvio pela leitura do código, fica registrado pra confirmar numa
+  rodada futura se ficar relevante.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

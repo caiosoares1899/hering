@@ -2451,6 +2451,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.548-dev — 2026-09-02 — Cascata de conclusão automática de Supercard sem proteção contra ciclo corrompido nos dados (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali na área de
+supercards e filhos" — mesma área que deu origem à skill (2026-08-21),
+revisitada agora que muita coisa mudou desde então (2 níveis, pin,
+duplicar com filhos, card hotline...).
+
+**Achado**: `_checkSupercardAutoComplete()` (conclui o pai sozinho
+quando todos os filhos ativos chegam numa coluna de fim, cascateando
+filho→pai→avô recursivamente) nunca ganhou proteção contra ciclo
+corrompido nos dados — diferente de `_duplicarComFilhos()` (mesmo
+grafo `childCardIds`), que já tem um `visited` explícito, com
+comentário próprio no CODE_MAP sobre o motivo. A única coisa que hoje
+impede um ciclo (card A listando B como filho, e B listando A) é uma
+checagem client-side na hora de ADICIONAR um filho pela UI
+(`searchSuperChildren` só oferece candidato que ainda não é filho de
+ninguém) — não protege se o dado chegar corrompido por outro caminho
+(edição direta no Firebase/console, corrida entre abas). Se
+`childCardIds` alguma vez formar um ciclo, completar um dos dois
+dispara recursão infinita — trava a aba. Achado via técnica 5 (rastrear
+recursão/cascata por ciclo e profundidade — teto aplicado só na UI, não
+no código) + técnica 2 (padrão já resolvido numa função irmã, mesma
+área).
+
+**Cuidado na correção**: um `Set` COMPARTILHADO entre chamadas-irmãs
+(cópia exata do padrão de `_duplicarComFilhos()`) quebraria um caso
+LEGÍTIMO que o próprio comentário da função já prevê — um card pode ter
+mais de um pai (avô compartilhado). Fix: cada chamada recebe sua
+PRÓPRIA cópia do caminho de ancestrais (raiz→...→atual), não um Set
+global — só bloqueia um ciclo de verdade (mesmo id reaparecendo no
+MESMO caminho), preservando a cascata legítima entre irmãos.
+
+Testado com Playwright: (1) ciclo corrompido (A↔B) — antes travaria a
+aba, agora termina em 0ms sem estourar a pilha; (2) cascata legítima
+(card X com 2 pais A e B, ambos filhos do mesmo avô C) — os 3 níveis
+concluem corretamente, confirmando que a proteção não quebrou esse
+caso.
+
+Achado descartado (checado, ambíguo — não é bug claro, não implementado
+sem confirmação): `initSuperChildren()` acha o pai do card aberto sem
+excluir pai arquivado (`cards.find(c=>c.id!==card.id && ...)`, sem
+`!c.archived`), enquanto `_cardIsSuperChild()` (helper canônico usado
+em outros lugares, ex. contagem de "Total/Cards/Supercards") exclui pai
+arquivado. Pode ser intencional (mostrar "este card é filho de X" e
+aplicar o teto de 2 níveis mesmo com o pai arquivado é uma leitura
+razoável) ou pode ser um gap — não óbvio pela leitura do código, fica
+registrado pra confirmar com o usuário numa rodada futura, se relevante.
+
 ### v8.30.547-dev — 2026-09-02 — Selo de tag em branco/errado em Arquivados, Cards antigos e Modelos/Recorrentes/Agendamentos (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "ali em funções de
