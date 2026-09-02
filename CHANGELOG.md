@@ -2479,6 +2479,59 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.552-dev — 2026-09-02 — Registro de "já descobriu" os 3 temas (dark/light/vice), consultável via console
+
+Pedido direto do usuário: "a gente consegue ver quantas pessoas tao
+usando o modo vice city?" → topou implementar só o "já descobriu"
+(sem rastrear "ativo agora", que custaria mais escritas) — e pediu pra
+estender pros 3 modos (não só o Vice City), pra dar pra comparar quantas
+pessoas usam cada tema, consultável direto pelo console (mesmo padrão já
+usado nesta sessão pros scripts de log de card).
+
+**`_recordThemeDiscovered(theme)`** — grava
+`kanban/usuarios/{uid}/temasDescobertos/{dark|light|vice}: true` na
+PRIMEIRA vez que a pessoa usa aquele tema, e nunca mais escreve de novo
+pro mesmo tema neste navegador (guard em `localStorage`,
+`mare_theme_seen_{tema}`) — write único por pessoa por tema, não um
+contador nem um listener. Chamado em 3 pontos: `toggleTheme()` (troca
+manual dark↔light), `toggleViceCity()` (entrar no easter egg), e um
+listener em `auth-change` que roda com o tema JÁ resolvido assim que a
+sessão carrega — cobre quem nunca clicou no botão (fica no escuro
+padrão) sem precisar de um write a cada carregamento: se a auth ainda
+não tiver resolvido no momento em que o script de tema roda (corrida
+comum, `onAuthStateChanged` é assíncrono), a função NÃO marca o guard
+local antes de confirmar que deu pra escrever — só marca depois de
+achar `window._currentUser`, então a tentativa seguinte (via
+`auth-change`) ainda funciona em vez de ficar permanentemente pulada.
+
+Sem mudança em `database.rules.json` — `kanban/usuarios/$uid` já
+permite `auth.uid === $uid` escrever em qualquer subcampo próprio, e o
+`.read` do nó `usuarios` já é `auth != null` (qualquer pessoa logada
+consegue consultar via console, sem precisar ser PO/ADM).
+
+Testado com Playwright: sem usuário autenticado não escreve nem marca o
+guard local (fica pronto pra tentar de novo); `auth-change` com usuário
+já resolvido escreve certinho (`temasDescobertos/dark: true`); chamada
+repetida pro mesmo tema não escreve 2x; `toggleTheme()` grava `light`;
+`toggleViceCity()` grava `vice` — os 3 registros com o path e o valor
+esperados.
+
+Script de consulta (console, qualquer pessoa logada):
+```js
+window._get(window._ref(window._db, 'kanban/usuarios')).then(snap => {
+  const data = snap.val() || {};
+  const counts = { dark: 0, light: 0, vice: 0, total: 0 };
+  Object.values(data).forEach(u => {
+    counts.total++;
+    const t = u.temasDescobertos || {};
+    if (t.dark) counts.dark++;
+    if (t.light) counts.light++;
+    if (t.vice) counts.vice++;
+  });
+  console.log('🎨 Temas descobertos:', counts);
+});
+```
+
 ### v8.30.551-dev — 2026-09-02 — 🌴 Vice City — colunas mais escuras + textos de baixo contraste corrigidos (feedback do usuário)
 
 Mais um round de feedback direto, em cima de um print real do board

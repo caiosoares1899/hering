@@ -5852,7 +5852,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.551-dev</div>
+<div class="version">v8.30.552-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -27846,12 +27846,33 @@ function _applyThemeButtonIcon(){
   const t=_currentTheme();
   btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
 }
+// Registro (só "já descobriu alguma vez", sem tracking de "ativo agora")
+// de qual(is) dos 3 temas (dark/light/vice) cada pessoa já usou — pedido
+// direto do usuário, pra dar pra consultar via console quantas pessoas
+// usam cada modo (incluindo quantas acharam o Vice City). Guard duplo:
+// 1 flag por tema no localStorage (nunca reescreve o mesmo tema 2x deste
+// navegador — write só acontece de verdade na 1ª vez) + só grava se já
+// tiver auth resolvida (window._currentUser); se ainda não tiver, o
+// listener 'auth-change' (ver mais abaixo) tenta de novo assim que a
+// sessão carregar, sem marcar o flag local antes de confirmar que deu
+// pra escrever. Campo don't-care pra privacidade: é só "já usou", não
+// grava timestamp nem histórico de troca de tema.
+function _recordThemeDiscovered(theme){
+  const key='mare_theme_seen_'+theme;
+  if(safeLS.getItem(key)==='1') return;
+  const u=window._currentUser;
+  if(!u || !u.uid) return;
+  safeLS.setItem(key,'1');
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {['temasDescobertos/'+theme]:true}).catch(()=>{});
+}
+window.addEventListener('auth-change', ()=>{ _recordThemeDiscovered(_currentTheme()); });
 function toggleTheme(){
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
   safeLS.setItem('mare_theme', next);
   _applyThemeButtonIcon();
+  _recordThemeDiscovered(next);
   showToast(next==='light' ? '☀️ Lençóis Maranhenses' : '🌙 Abrolhos');
 }
 // Variante "mais escura" do tema claro (ver [data-theme="light"]
@@ -27904,6 +27925,7 @@ function toggleViceCity(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','vice');
   _applyThemeButtonIcon();
+  _recordThemeDiscovered('vice');
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){
