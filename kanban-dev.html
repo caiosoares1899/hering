@@ -694,7 +694,15 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    alinha o -9px exatamente com o padding-left do supercard, sem mexer no resto
    (top/right/bottom continuam -10px/-10px/8px, herdados da regra acima). */
 .card.supercard .card-cover-strip{margin-left:-9px;}
-.card-cover-strip.card-cover-img{height:64px;background-size:cover;background-position:center;background-repeat:no-repeat;}
+.card-cover-strip.card-cover-img{height:64px;background-size:cover;background-position:center;background-repeat:no-repeat;overflow:hidden;}
+/* 2026-09-02: capa vira <img loading="lazy"> em vez de background-image inline —
+   CSS background-image não tem lazy loading nativo, então no load/hard-refresh o
+   navegador disparava o fetch de TODAS as capas de imagem do board de uma vez,
+   mesmo as de colunas fora da tela, competindo por banda entre si (relatado:
+   "demora pra aparecer, escala com a quantidade"). O <img> com loading="lazy"
+   só baixa quando o card está perto do viewport. object-fit:cover reproduz o
+   mesmo enquadramento que background-size:cover fazia. */
+.card-cover-strip.card-cover-img img{width:100%;height:100%;object-fit:cover;object-position:center;display:block;}
 .cover-swatches{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
 .cover-swatch{width:28px;height:28px;border-radius:7px;cursor:pointer;border:2px solid transparent;padding:0;transition:transform .12s,border-color .12s;}
 .cover-swatch:hover{transform:scale(1.08);}
@@ -5856,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.556-dev</div>
+<div class="version">v8.30.558-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10223,12 +10231,17 @@ function makeCardEl(card){
   const _anexosInd=(card.links&&card.links.length)?`<span class="ci" title="${card.links.length} anexo${card.links.length>1?'s':''}/link${card.links.length>1?'s':''}">📎</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
-  // exclusivas na escrita, mas por segurança na leitura também). Usa
-  // background-image (não <img>) de propósito: se o link não carregar
-  // (imagem removida, link quebrado), o CSS simplesmente não desenha nada
-  // — sem o ícone de imagem quebrada que um <img> mostraria.
+  // exclusivas na escrita, mas por segurança na leitura também). Era
+  // background-image (não <img>) de propósito, pra se o link não carregar
+  // (imagem removida, link quebrado) o CSS simplesmente não desenhar nada —
+  // sem o ícone de imagem quebrada que um <img> mostraria. 2026-09-02: virou
+  // <img loading="lazy"> pra ganhar lazy loading nativo (ver comentário no
+  // CSS .card-cover-strip.card-cover-img acima — board com muitas capas
+  // disparava o fetch de todas simultaneamente, mesmo fora da tela). O
+  // comportamento de link quebrado é preservado via onerror escondendo o
+  // <img> (a div mantém a altura de 64px reservada, igual ao caso antigo).
   const coverStripHtml = card.coverImageUrl
-    ? `<div class="card-cover-strip card-cover-img" style="background-image:url('${esc(card.coverImageUrl)}');"></div>`
+    ? `<div class="card-cover-strip card-cover-img"><img src="${esc(card.coverImageUrl)}" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';"></div>`
     : (_coverCol?`<div class="card-cover-strip" style="background:${_coverCol.hex};"></div>`:'');
   // Rollup do supercard — lista compacta dos filhos (título + bolinha da
   // coluna deles), até 6 visíveis + contador do resto. Clique num filho abre
