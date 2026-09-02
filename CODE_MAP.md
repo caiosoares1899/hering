@@ -223,6 +223,24 @@ detalhe dos 4 call sites.
   tinham essa rede apesar de mudarem bem mais. Exposta em `window` pra
   testar/disparar manualmente sem esperar o intervalo.
 
+### Tema (claro/escuro + 🌴 Vice City)
+- `_currentTheme()` — L27838 — lê `data-theme` do `<html>`, retorna
+  `'light'`/`'dark'`/`'vice'`.
+- `toggleTheme()` — L27849 — alterna claro/escuro (clique no botão de
+  tema). `toggleThemeVariant()` — logo abaixo — variante mais escura do
+  claro (duplo-clique, só faz sentido dentro do claro).
+- `toggleViceCity()` / `exitViceCity()` — L27899/próximas linhas —
+  easter egg (2026-09-02, piada interna com GTA 6/Vice City): 3º tema
+  escondido, ativado segurando o botão de tema por
+  `VICE_LONGPRESS_MS` (`_themeBtnPointerDown()`/`_themeBtnPointerUp()`,
+  logo acima) — de propósito NÃO listado como opção visível. Paleta em
+  `[data-theme="vice"]` no `<style>` (perto da L448, logo depois do
+  bloco `[data-theme="light"]`). Sair é sempre 1 clique/duplo-clique
+  normal (`onThemeBtnClick()`/`onThemeBtnDblClick()` tratam o caso
+  `_currentTheme()==='vice'` primeiro). Persistido em `localStorage`
+  (`mare_theme==='vice'`), replicado no menu mobile via
+  `_mobileThemeRowClick()`.
+
 ### Cabeçalho mobile — menu "⋯" (2026-09-02)
 - `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6063/L6071/L6074
   — no mobile (≤768px), tudo que não é essencial no topo (tema, modo de
@@ -252,7 +270,9 @@ detalhe dos 4 call sites.
   (a lógica de ordenação de verdade — prioridade/criação/manual/etc.),
   num único ponto usado por `renderNormal()` E todas as raias.
 - `togglePinCard()` — L9801 — fixa/desafixa 1 card no topo da coluna
-  (2026-09-01); só 1 fixado por coluna.
+  (2026-09-01); 1 fixado por coluna — ou 1 por coluna+submarca em squads
+  com `submarcaAtivo` (2026-09-02, cada submarca fixa o seu sem
+  atrapalhar as outras).
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
@@ -287,11 +307,15 @@ detalhe dos 4 call sites.
   aberto já seria uma "versão" (teto real do 2º nível)
 - `_crvOwnSummary()` — L22014 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- `_checkSupercardAutoComplete()` — L25676 — conclui o supercard sozinho
-  quando todos os filhos ativos chegam numa coluna de fim; cascateia
-  filho→pai→avô recursivamente. `_isColCancelLike()` — L25662, logo acima —
-  se TODOS os filhos ativos terminaram cancelados, o pai NÃO conclui
-  sozinho, fica onde está
+- `_checkSupercardAutoComplete(childCard, ancestry)` — L25676 — conclui o
+  supercard sozinho quando todos os filhos ativos chegam numa coluna de
+  fim; cascateia filho→pai→avô recursivamente. `_isColCancelLike()` —
+  L25662, logo acima — se TODOS os filhos ativos terminaram cancelados,
+  o pai NÃO conclui sozinho, fica onde está. `ancestry` (2026-09-02) —
+  guard contra ciclo corrompido em `childCardIds`; Set copiado por
+  chamada (não compartilhado entre irmãos, ao contrário do `visited` de
+  `_duplicarComFilhos()` abaixo) — um Set global quebraria a cascata
+  legítima de um card com 2 pais/avô compartilhado.
 - `_duplicarComFilhos()` — L12293 — duplicar um supercard com opção de
   duplicar os filhos junto (checkbox opt-in no modal de duplicar, só
   aparece se `_cardIsSupercard()`). Recursivo (cobre netos, 3 níveis

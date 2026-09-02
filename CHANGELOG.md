@@ -18,6 +18,34 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.552 — 2026-09-02 · Promove pra prod — pin por submarca, 5 correções de bug (/monitorarbugs) e 🌴 Vice City
+
+Promove pra produção o lote v8.30.544-dev → v8.30.551-dev de
+`kanban-dev.html` (validado ao vivo pelo usuário, inclusive com
+screenshots reais do board durante os ajustes de Vice City — "pode
+seguir"). Resumo pra quem usa o board:
+
+- **📌 Pin agora também respeita Submarca** — em squads com Submarca
+  ativa, cada submarca pode ter seu próprio card fixado no topo da
+  mesma coluna, sem uma bloquear o pin da outra (antes, só a 1ª
+  submarca a fixar um card na coluna conseguia).
+- **5 correções de bug** encontradas numa varredura de revisão de
+  código (seleção múltipla de tags, contagem de cards em Campanhas,
+  selo de tag em Arquivados/Cards antigos/Modelos, e uma proteção
+  contra trava em Supercards com dado corrompido) — nenhuma delas
+  visível no uso normal do dia a dia, só em cenários específicos onde
+  os números/selos ficavam errados ou desatualizados. Detalhes técnicos
+  completos nas entradas de dev abaixo.
+- **🌴 Easter egg novo** — tem uma brincadeira escondida em algum lugar
+  do botão de tema. Quem achar, achou. 😉
+
+Diff restrito ao conteúdo da promoção — só as 2 linhas de ambiente
+(versão, `VERSION_KEY`) continuam divergentes de `kanban-dev.html` por
+natureza. Checks de rotina: `node --check` OK, balanço de chaves/
+parênteses igual ao baseline conhecido da sessão (braces -1, parens
++1). `CODE_MAP.md` atualizado (pin por submarca, guard de ciclo do
+supercard, seção nova pra Tema/Vice City).
+
 ### v8.30.542 — 2026-09-02 · Promove pra prod — cabeçalho e modal do card redesenhados pra mobile (menu "⋯" + sem scroll lateral em lugar nenhum)
 
 Promove pra produção o lote v8.30.539-dev → v8.30.542-dev de
