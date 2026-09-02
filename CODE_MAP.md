@@ -254,6 +254,18 @@ detalhe dos 4 call sites.
   `toggleTheme()`/`toggleViceCity()` + listener de `auth-change` (cobre
   quem nunca troca de tema).
 
+### Comunicados / Mural (popup + badge + Mural)
+- `_refreshComunicados()` — L30582 — busca `kanban/comunicados`
+  filtrado `ativo:true` no servidor (`query(...)`), com fallback pra
+  árvore inteira se a query falhar (`_dbgTrack('comunicados_fallback', ...)`
+  registra quando isso acontece de verdade — ver otimização de bytes
+  2026-09-02). `_comunicadosAtivos` (popup) e `_muralTodos` (badge +
+  Mural) saem os dois já filtrados por `c.ativo` na origem — nenhuma
+  tela de `kanban-dev.html` mostra comunicado inativo/arquivado (isso é
+  feature só do `painel.html`, pra ADM revisar).
+- `COMUNICADOS_POLL_MS` — L30533 — 12min (era 3min até 2026-09-02,
+  corte de bytes).
+
 ### Cabeçalho mobile — menu "⋯" (2026-09-02)
 - `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6063/L6071/L6074
   — no mobile (≤768px), tudo que não é essencial no topo (tema, modo de
