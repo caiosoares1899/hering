@@ -446,11 +446,22 @@
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
 /* ── 🌴 VICE CITY (easter egg) ──────────────────────────────────────
-   Piada interna com o trailer de GTA 6 (Vice City, estética Miami Vice
-   — rosa neon, ciano, pôr do sol roxo/laranja). Só entra segurando o
-   botão de tema por ~1.2s (ver VICE_LONGPRESS_MS/toggleViceCity() no
-   <script>) — de propósito NÃO é uma opção visível igual claro/escuro,
-   fica pra quem achar sozinho.
+   Piada interna com o trailer de GTA 6 (Vice City), estética do
+   material oficial (poster/trailer): céu lavanda no topo, transição
+   rosa/malva, horizonte pêssego/laranja, água e sombras (palmeiras,
+   prédios) num roxo-vinho escuro — NUNCA azul-preto genérico. Só entra
+   segurando o botão de tema por ~1.2s (ver VICE_LONGPRESS_MS/
+   toggleViceCity() no <script>) — de propósito NÃO é uma opção visível
+   igual claro/escuro, fica pra quem achar sozinho.
+   Paleta baseada na referência mandada direto pelo usuário (print de 5
+   tons + o key art oficial de Lucia/Jason no pôr do sol): terracota
+   #C5615F, pêssego #E59F7C, lavanda #A084B0, laranja queimado #C9743F,
+   rosa-poeira #B36B6E. 1ª versão usava rosa neon/ciano puro (Miami Vice
+   clássico) — feedback direto: "o lado direito do degradê parece muito
+   com o modo escuro" (o gradiente ia até um roxo-azulado quase preto,
+   igual o :root padrão) — trocado pra terminar num vinho/roxo mais
+   quente (--deep abaixo), nunca azul, e o .ocean mantém tom quente do
+   topo ao fundo em vez de escurecer pro genérico.
    Diferente do modo claro (que precisou de ~15 overrides pontuais pra
    corrigir contraste — ele inverte a luminância, fundo escuro→claro),
    o Vice City continua um tema ESCURO por baixo (só troca a paleta de
@@ -459,26 +470,26 @@
    .ocean; todo o resto (var(--txt)/var(--glass)/var(--surface-rgb)...)
    já herda automaticamente, sem precisar caçar regra por regra. */
 :root[data-theme="vice"]{
-  --deep:#170826;
-  --deep-rgb:23,8,38;
-  --surface-rgb:46,15,66;
-  --surface2-rgb:28,9,46;
-  --glass-rgb:64,20,92;
-  --glass:rgba(64,20,92,0.6);
-  --glass-b:rgba(255,45,149,0.32);
-  --glass-h:rgba(255,45,149,0.16);
-  --blue:#c026d3;--accent:#ff2d95;--cyan:#26e0d9;--teal:#00c2a8;
-  --txt:#fdeeff;--txt2:rgba(253,238,255,0.72);--txt3:rgba(253,238,255,0.46);
-  --warn:#ff9f1c;--danger:#ff3860;
+  --deep:#2f1930;
+  --deep-rgb:47,25,48;
+  --surface-rgb:69,42,66;
+  --surface2-rgb:36,21,33;
+  --glass-rgb:122,74,99;
+  --glass:rgba(122,74,99,0.55);
+  --glass-b:rgba(197,97,95,0.35);
+  --glass-h:rgba(197,97,95,0.18);
+  --blue:#A084B0;--accent:#E59F7C;--cyan:#B36B6E;--teal:#9c6f8a;
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.72);--txt3:rgba(247,232,236,0.46);
+  --warn:#C9743F;--danger:#C5615F;
   --ocean-op:1; --fish-op:1;
-  --pulse-rgb:255,45,149;
+  --pulse-rgb:229,159,124;
 }
 [data-theme="vice"] .ocean{
   background:
-    radial-gradient(ellipse at 15% 85%,rgba(255,45,149,.35) 0%,transparent 60%),
-    radial-gradient(ellipse at 85% 10%,rgba(38,224,217,.30) 0%,transparent 55%),
-    radial-gradient(ellipse at 50% 100%,rgba(255,159,28,.22) 0%,transparent 50%),
-    linear-gradient(175deg,#2d0b52 0%,#170826 55%,#0a0316 100%);
+    radial-gradient(ellipse at 50% 55%,rgba(229,159,124,.35) 0%,transparent 55%),
+    radial-gradient(ellipse at 20% 12%,rgba(160,132,176,.30) 0%,transparent 55%),
+    radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
+    linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -5808,7 +5819,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.549-dev</div>
+<div class="version">v8.30.550-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

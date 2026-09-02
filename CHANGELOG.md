@@ -2451,6 +2451,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.550-dev — 2026-09-02 — 🌴 Vice City — paleta trocada pra tons dessaturados/poeirentos (feedback do usuário)
+
+Ajuste direto em cima da v8.30.549-dev, mesmo dia: feedback do usuário
+com print da paleta ("mandei aqui a paleta do gta 6 q achei" — 5 tons:
+terracota `#C5615F`, pêssego `#E59F7C`, lavanda `#A084B0`, laranja
+queimado `#C9743F`, rosa-poeira `#B36B6E`) e o key art oficial de
+Lucia/Jason no pôr do sol, junto da observação "esse lado direito do
+degradê parece muito com o modo escuro".
+
+A 1ª versão usava rosa neon + ciano puro (Miami Vice clássico dos anos
+80) e o `.ocean` terminava num roxo-azulado quase preto
+(`#0a0316`) — visualmente indistinguível do `:root` padrão (escuro) na
+parte de baixo do gradiente, exatamente o problema apontado.
+
+**Fix**: todos os tokens de cor de `:root[data-theme="vice"]` trocados
+pelos 5 tons da paleta mandada (terracota→`--danger`,
+pêssego→`--accent`, lavanda→`--blue`, laranja→`--warn`,
+rosa-poeira→`--cyan`, mais um `--teal` derivado pra variedade nas tags).
+`--deep`/`--surface-rgb`/`--glass-rgb` saíram do roxo-azulado frio
+(`#170826`) pra um vinho/roxo quente (`#2f1930`) — mesma "escuridão"
+necessária pro resto do CSS (calibrado pra fundo escuro) continuar
+funcionando sem overrides extras, mas sem ler como o tema escuro comum.
+O gradiente do `.ocean` foi reescrito pra seguir a composição do key
+art (céu lavanda no topo → transição rosa/malva → brilho
+pêssego/laranja de "horizonte" → vinho escuro embaixo), com glows
+radiais nas 3 cores quentes em vez de só 1 tom de acento repetido.
+
+Mesma ativação/lógica de antes (segurar o botão por ~1.2s, sem opção
+visível) — só a paleta mudou. Reverificado visualmente com Playwright
+(screenshot do board com cards/tags/fish reais sobre a nova paleta,
+comparado lado a lado com a referência) antes de subir.
+
 ### v8.30.549-dev — 2026-09-02 — 🌴 Vice City (easter egg interno, ideia do usuário)
 
 Pedido direto, tom de brincadeira interna/ação de marketing: "e se a
