@@ -2451,6 +2451,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.543-dev — 2026-09-02 — Card lock impedia a 2ª pessoa de comentar no card hotline "Converse com o Agente Ágil" (/monitorarbugs)
+
+Rodada genérica de `/monitorarbugs` — auditada a área mais recente
+(redesenho mobile do cabeçalho/modal do card, sem novos achados além do
+já corrigido) e estendida pra "Card lock / Pedir o card", nunca coberta
+antes pela skill.
+
+**Achado**: o card hotline "🤖 Converse com o Agente Ágil" foi desenhado
+de propósito pra ser usado por qualquer pessoa a qualquer momento
+(comentário no próprio código: "compartilhado entre QUALQUER pessoa que
+queira falar com o Agente Ágil"). Mas `openAgenteHotline()` abre esse
+card chamando o mesmo `openCard(id)` de qualquer card normal — que
+sempre chama `_checkCardLock(id)`. Cenário concreto: pessoa A abre o
+card hotline e mantém o modal aberto (lendo uma resposta, por exemplo)
+→ vira "dona" do lock. Pessoa B abre o MESMO card hotline logo depois
+→ `.locked-ro` aplica `pointer-events:none` no `.modal-body` inteiro, e
+`#m-comment-inp` (a caixa de comentário) não está na lista de exceções
+que continuam clicáveis (só anexos/links) → B fica impedida de
+digitar/enviar comentário, ou seja, impedida de falar com o agente —
+justo o cenário que a feature foi desenhada pra suportar.
+
+Como os campos que o lock protege (título, tags, coluna...) já ficam
+todos escondidos no card hotline mesmo, não havia nada ali pra
+proteger — bug claro, corrigido direto sem ambiguidade. Fix:
+`_checkCardLock()` ganha um early-return pra cards `agenteHotline` —
+ainda limpa timers/listener/UI de um card anterior (evita estado
+travado sobrando), só não tenta adquirir/checar lock nenhum. Testado
+com Playwright: simulado um `.locked-ro` deixado por um card normal
+travado, chamado `_checkCardLock()` num card hotline — `.locked-ro`
+sai, `#m-lock-row` some, `pointer-events` volta a `auto`; card normal
+sem Firebase pronto continua resetando a UI do jeito de sempre (sem
+regressão).
+
 ### v8.30.542-dev — 2026-09-02 — Modal do card no mobile: achado o real culpado do scroll lateral que sobrou (classe errada corrigida na rodada anterior)
 
 Usuário testou o redesenho da v8.30.541-dev no celular e reportou:

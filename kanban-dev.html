@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.542-dev</div>
+<div class="version">v8.30.543-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11482,6 +11482,19 @@ function _checkCardLock(cardId){
   _stopCardLockHeartbeat();
   _stopCardLockRequestTimers();
   _cardLockOwnedId=null;
+  // Card hotline é compartilhado por QUALQUER pessoa que queira falar com o
+  // Agente Ágil ao mesmo tempo (ver comentário em openAgenteHotline()) — os
+  // campos que o lock protege (título, tags, coluna...) já ficam todos
+  // escondidos nesse card (_applyCardSectionsVisibility()), então não há
+  // nada ali pra travar. Sem este early-return, a 2ª pessoa a abrir o
+  // mesmo card hotline enquanto a 1ª ainda tinha o modal aberto virava
+  // "somente leitura" (.locked-ro é pointer-events:none no .modal-body
+  // inteiro, e #m-comment-inp não está na lista de exceções que continuam
+  // clicáveis) — ficava impedida de comentar, ou seja, impedida de falar
+  // com o agente, justamente o cenário que a feature foi desenhada pra
+  // suportar (achado via /monitorarbugs).
+  const _lockCard = cards.find(x=>x.id===cardId);
+  if(_lockCard && _lockCard.agenteHotline){ _setCardLockUI(false); return; }
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
