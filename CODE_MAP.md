@@ -223,6 +223,19 @@ detalhe dos 4 call sites.
   tinham essa rede apesar de mudarem bem mais. Exposta em `window` pra
   testar/disparar manualmente sem esperar o intervalo.
 
+### Cabeçalho mobile — menu "⋯" (2026-09-02)
+- `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6063/L6071/L6074
+  — no mobile (≤768px), tudo que não é essencial no topo (tema, modo de
+  visualização, avatares de quem tá online, perfil/status/sair, busca) some
+  da fileira de ícones e vai pro menu "⋯" (`#hd-more-btn`/`#hd-more-dd`,
+  perto de `#user-badge` no HTML) — mesmo padrão de "mais opções" do
+  Trello. `renderHdMoreDD()` reconstrói o conteúdo a cada abertura (mesmo
+  padrão do `toggleSquadSwitcher()` logo abaixo dele no arquivo) chamando
+  as MESMAS funções globais dos botões originais (`toggleTheme()`,
+  `setHybridView()`, `openTeamList()`, `openStatusMenu()`, `doSignOut()`,
+  `openSearch()`) — no desktop os originais continuam 100% inalterados,
+  só ficam escondidos no `@media(max-width:768px)` do mobile.
+
 ### Board & render
 - `renderNormal()` — L9874
 - `renderRaiaOwner()` — L9932
