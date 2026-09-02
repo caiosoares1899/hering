@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.542 — 2026-09-02 · Promove pra prod — cabeçalho e modal do card redesenhados pra mobile (menu "⋯" + sem scroll lateral em lugar nenhum)
+
+Promove pra produção o lote v8.30.539-dev → v8.30.542-dev de
+`kanban-dev.html` (validado pelo usuário: "Testei, funcionou, pode
+subir"). Resumo pra quem usa o board:
+
+- **Cabeçalho do board no mobile reorganizado** — a fileira de ícones do
+  topo (tema, modo de visualização, avatares de quem tá online, seu
+  perfil, notificações) não cabia numa linha só e quebrava a tela.
+  Agora só fica visível o essencial (🔔📢🎉) + um novo botão **"⋯"** que
+  reúne tudo o resto — tema, modo de visualização, equipe do quadro,
+  seu status/sair e busca — num menu único, mesmo padrão do "mais
+  opções" do Trello.
+- **Modal do card redesenhado pra mobile, sem nenhum scroll lateral** —
+  o título ganhou uma linha própria (não compete mais com os ícones do
+  header), os campos (Tags/Coluna, Responsável/Prazo, Prioridade/
+  Tamanho...) passaram a empilhar 1 por linha em vez de 2 colunas
+  espremidas cortando na borda da tela, e os botões do rodapé (Excluir/
+  Duplicar/Modelo/Arquivar...) passaram a quebrar linha em vez de rolar
+  de lado — nada mais escondido fora da tela.
+
+Diff restrito ao conteúdo da promoção — só as 2 linhas de ambiente
+(versão, `VERSION_KEY`) continuam divergentes de `kanban-dev.html` por
+natureza. Checks de rotina: `node --check` OK.
+
 ### v8.30.538 — 2026-09-01 · Promove pra prod — pin no menu de contexto + flyout de Mover/Prioridade + Copiar link do card + 3 fixes de link "abrir card" silencioso
 
 Promove pra produção o lote v8.30.536-dev → v8.30.538-dev de `kanban-dev.html`
