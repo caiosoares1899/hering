@@ -2502,6 +2502,45 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.554-dev — 2026-09-02 — Capa de card: 2 automações inconsistentes com o comportamento manual (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "área de colocar capa
+no card" — primeira revisão dedicada dessa feature (capa de cor +
+capa de imagem, mutuamente exclusivas). 2 achados reais, técnica 1
+(comparar caminhos paralelos) e técnica 2 (comparar contra um padrão já
+documentado no código), ambos classificados como bug claro:
+
+1. **`setCardCoverImage()`** (card já existente) — ao escolher uma capa
+   de imagem num card que já tinha capa de COR, `card.coverColor` era
+   silenciosamente zerado, mas `runAutoRules('cover_set', ...)` nunca
+   era chamado — diferente de `setCardCover()`, que dispara sempre que
+   a cor muda, inclusive indo de uma cor pra "sem capa" (opção real no
+   dropdown de valor da automação, `— sem capa —`). Uma automação
+   configurada como "capa de cor definida como — sem capa —" nunca
+   disparava se a cor fosse removida por esse caminho, só pelo botão
+   dedicado "⊘ Sem capa". Fix: mesmo guard de mudança que
+   `setCardCover()` já usa (`_prevCover` antes/depois), disparando
+   `cover_set` com o valor vazio quando a cor realmente muda.
+2. **Ação de Automação `set_cover`** ("Definir capa de cor") — setava
+   `card.coverColor` sem nunca limpar `card.coverImageUrl`, quebrando a
+   exclusividade mútua que o próprio código documenta há tempos
+   ("Mutuamente exclusiva com a capa de cor: escolher uma limpa a
+   outra") e que os 2 caminhos manuais (`setCardCover()`/
+   `setCardCoverImage()`) sempre respeitaram. Cenário concreto: card
+   com capa de imagem + uma automação "Definir capa de cor" dispara —
+   a cor muda nos bastidores, mas a imagem antiga continua sendo
+   exibida (tem prioridade no render), a automação parece não fazer
+   nada, até alguém trocar a capa manualmente depois e a mudança de cor
+   "fantasma" aparecer do nada. Fix: a ação agora limpa
+   `card.coverImageUrl` também, mesmo padrão dos 2 caminhos manuais.
+
+Testado com Playwright exercitando as funções reais: (1) capa de
+imagem num card com cor prévia dispara `cover_set` com valor vazio
+corretamente; controle — capa de imagem num card SEM cor prévia não
+dispara nada (evita falso-positivo/disparo à toa); (2) ação `set_cover`
+num card com capa de imagem limpa `coverImageUrl` corretamente ao
+definir a nova cor.
+
 ### v8.30.553-dev — 2026-09-02 — Favicon próprio do dev + favicon do 🌴 Vice City
 
 Pedido direto do usuário, com 2 artes próprias criadas por ele: "bota
