@@ -2451,6 +2451,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.551-dev — 2026-09-02 — 🌴 Vice City — colunas mais escuras + textos de baixo contraste corrigidos (feedback do usuário)
+
+Mais um round de feedback direto, em cima de um print real do board
+(squad `dev`, dados reais): "as colunas tem q escurecer um pouco mais
+pra dar destaque! pouca coisa, só o suficiente para diferenciar do
+fundo" — e, no mesmo print, "tambem alguns textos ali (nome da squad,
+dependencias, calendario, o numero de cards de uma coluna, dados do
+board...) tudo isso coloca no branco q ai da leitura 100%".
+
+**Colunas**: `.col` usa `var(--glass)` (mesmo token do resto do app),
+mas o `.ocean` do Vice City tem faixas médias/claras (rosa, laranja)
+perto do tom do `--glass-rgb` — a coluna quase somia contra o fundo em
+certas posições da tela. Sobe só a opacidade (`.55`→`.78`, mesma cor,
+sem inventar tom novo).
+
+**Textos de baixo contraste**: mesma causa raiz em 3 lugares diferentes
+— cores pensadas pra saltar contra um fundo escuro NEUTRO (dos outros
+temas) perdem força contra o fundo colorido/saturado do Vice City:
+- Botões da toolbar (Dependências, Calendários, Dados do Board, Links,
+  Ajuda...) usam `style="color:..."` inline com tons pastel fixos
+  (roxo, teal, ciano, dourado) — mesmo problema que o modo claro já
+  resolveu (`[data-theme="light"] .toolbar > button.btn`). Reaproveitada
+  a mesma técnica: `color:var(--txt)!important`, mesma exceção do badge
+  de pendência do Google Calendar.
+- `.hd-badge` (nome da squad no header) e `.col-cnt` (contador de cards
+  no topo da coluna) usam `var(--cyan)` fixo — no Vice City isso é
+  #B36B6E (rosa-poeira), tom médio que também não tinha força
+  suficiente. Trocado pra `var(--txt)` nos dois, sem precisar
+  `!important` (nenhum dos dois tinha estilo inline por cima).
+
+Reverificado com screenshot Playwright do board real antes de subir —
+squad badge, contadores de coluna e os 3 botões da toolbar citados
+ficaram legíveis, colunas com contraste visível contra o `.ocean` sem
+perder a leitura de "glass" translúcido.
+
 ### v8.30.550-dev — 2026-09-02 — 🌴 Vice City — paleta trocada pra tons dessaturados/poeirentos (feedback do usuário)
 
 Ajuste direto em cima da v8.30.549-dev, mesmo dia: feedback do usuário
