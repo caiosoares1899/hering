@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">🐟 Maré Digital</title>
-  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" type="image/png" id="favicon-link" href="favicon.png">
   <!-- PWA -->
   <meta name="theme-color" content="#030d1a">
   <meta name="mobile-web-app-capable" content="yes">
@@ -5852,7 +5852,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.552</div>
+<div class="version">v8.30.554</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -22653,6 +22653,11 @@ function initPWA(){
       // menos 2x com proporções diferentes entre os peixes e a moldura).
       // Mesmo recorte aplicado ao favicon.png colorido (acima) pros dois
       // continuarem enquadrados igual.
+      // 2026-09-02: kanban-dev.html passou a usar favicon-dev.png/
+      // favicon-dev-monochrome.png (arte própria, "peixes sobre linhas de
+      // código") pra diferenciar dev de prod no ícone instalado do celular
+      // — kanban.html (aqui) continua com favicon.png/favicon-monochrome.png
+      // normalmente, sem mudança nenhuma.
       {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
@@ -27842,16 +27847,52 @@ function _currentTheme(){
 }
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
-  if(!btn) return;
-  const t=_currentTheme();
-  btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
+  if(btn){
+    const t=_currentTheme();
+    btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
+  }
+  _applyFavicon();
 }
+// Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
+// estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
+// ORIGINAL do <link rel="icon"> (favicon.png aqui; favicon-dev.png em
+// kanban-dev.html) uma única vez, na carga do script — antes de qualquer
+// troca acontecer — pra sempre saber pra onde voltar ao sair do Vice
+// City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
+// nomes diferentes desde a troca acima).
+const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
+function _applyFavicon(){
+  const link=document.getElementById('favicon-link');
+  if(!link) return;
+  link.href = _currentTheme()==='vice' ? 'favicon-vice.png' : _faviconDefaultHref;
+}
+// Registro (só "já descobriu alguma vez", sem tracking de "ativo agora")
+// de qual(is) dos 3 temas (dark/light/vice) cada pessoa já usou — pedido
+// direto do usuário, pra dar pra consultar via console quantas pessoas
+// usam cada modo (incluindo quantas acharam o Vice City). Guard duplo:
+// 1 flag por tema no localStorage (nunca reescreve o mesmo tema 2x deste
+// navegador — write só acontece de verdade na 1ª vez) + só grava se já
+// tiver auth resolvida (window._currentUser); se ainda não tiver, o
+// listener 'auth-change' (ver mais abaixo) tenta de novo assim que a
+// sessão carregar, sem marcar o flag local antes de confirmar que deu
+// pra escrever. Campo don't-care pra privacidade: é só "já usou", não
+// grava timestamp nem histórico de troca de tema.
+function _recordThemeDiscovered(theme){
+  const key='mare_theme_seen_'+theme;
+  if(safeLS.getItem(key)==='1') return;
+  const u=window._currentUser;
+  if(!u || !u.uid) return;
+  safeLS.setItem(key,'1');
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {['temasDescobertos/'+theme]:true}).catch(()=>{});
+}
+window.addEventListener('auth-change', ()=>{ _recordThemeDiscovered(_currentTheme()); });
 function toggleTheme(){
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
   safeLS.setItem('mare_theme', next);
   _applyThemeButtonIcon();
+  _recordThemeDiscovered(next);
   showToast(next==='light' ? '☀️ Lençóis Maranhenses' : '🌙 Abrolhos');
 }
 // Variante "mais escura" do tema claro (ver [data-theme="light"]
@@ -27904,6 +27945,7 @@ function toggleViceCity(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','vice');
   _applyThemeButtonIcon();
+  _recordThemeDiscovered('vice');
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){
