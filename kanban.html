@@ -445,6 +445,85 @@
   box-shadow:inset 0 0 0 20px color-mix(in srgb, currentColor 22%, transparent);
   filter:brightness(.48) saturate(1.55) drop-shadow(0 0 2px currentColor);
 }
+/* ── 🌴 VICE CITY (easter egg) ──────────────────────────────────────
+   Piada interna com o trailer de GTA 6 (Vice City), estética do
+   material oficial (poster/trailer): céu lavanda no topo, transição
+   rosa/malva, horizonte pêssego/laranja, água e sombras (palmeiras,
+   prédios) num roxo-vinho escuro — NUNCA azul-preto genérico. Só entra
+   segurando o botão de tema por ~1.2s (ver VICE_LONGPRESS_MS/
+   toggleViceCity() no <script>) — de propósito NÃO é uma opção visível
+   igual claro/escuro, fica pra quem achar sozinho.
+   Paleta baseada na referência mandada direto pelo usuário (print de 5
+   tons + o key art oficial de Lucia/Jason no pôr do sol): terracota
+   #C5615F, pêssego #E59F7C, lavanda #A084B0, laranja queimado #C9743F,
+   rosa-poeira #B36B6E. 1ª versão usava rosa neon/ciano puro (Miami Vice
+   clássico) — feedback direto: "o lado direito do degradê parece muito
+   com o modo escuro" (o gradiente ia até um roxo-azulado quase preto,
+   igual o :root padrão) — trocado pra terminar num vinho/roxo mais
+   quente (--deep abaixo), nunca azul, e o .ocean mantém tom quente do
+   topo ao fundo em vez de escurecer pro genérico.
+   Diferente do modo claro (que precisou de ~15 overrides pontuais pra
+   corrigir contraste — ele inverte a luminância, fundo escuro→claro),
+   o Vice City continua um tema ESCURO por baixo (só troca a paleta de
+   cor, mantém o fundo escuro que o resto do CSS já foi calibrado pra
+   usar) — por isso basta trocar os tokens de cor aqui + o gradiente do
+   .ocean; todo o resto (var(--txt)/var(--glass)/var(--surface-rgb)...)
+   já herda automaticamente, sem precisar caçar regra por regra. */
+:root[data-theme="vice"]{
+  --deep:#2f1930;
+  --deep-rgb:47,25,48;
+  --surface-rgb:69,42,66;
+  --surface2-rgb:36,21,33;
+  --glass-rgb:122,74,99;
+  --glass:rgba(122,74,99,0.55);
+  --glass-b:rgba(197,97,95,0.35);
+  --glass-h:rgba(197,97,95,0.18);
+  --blue:#A084B0;--accent:#E59F7C;--cyan:#B36B6E;--teal:#9c6f8a;
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.72);--txt3:rgba(247,232,236,0.46);
+  --warn:#C9743F;--danger:#C5615F;
+  --ocean-op:1; --fish-op:1;
+  --pulse-rgb:229,159,124;
+}
+[data-theme="vice"] .ocean{
+  background:
+    radial-gradient(ellipse at 50% 55%,rgba(229,159,124,.35) 0%,transparent 55%),
+    radial-gradient(ellipse at 20% 12%,rgba(160,132,176,.30) 0%,transparent 55%),
+    radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
+    linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
+}
+/* Feedback direto (print real do board): "as colunas tem q escurecer um
+   pouco mais para dar destaque! pouca coisa, só o suficiente para
+   diferenciar do fundo" — .col usa var(--glass) (mesmo token do resto
+   do app), mas o .ocean do Vice City tem faixas médias/claras (rosa,
+   laranja) bem perto do tom do --glass-rgb daqui, então a coluna quase
+   some contra o fundo em certas posições da tela. Sobe só a opacidade
+   (.55→.78, mesma cor, sem inventar tom novo) — pouco, só o suficiente
+   pra recriar a distinção que o token já dá de sobra nos outros temas
+   (onde o fundo é bem mais escuro/uniforme que o glass por cima). */
+[data-theme="vice"] .col{
+  background:rgba(var(--glass-rgb),.78);
+}
+/* Mesmo feedback (print real do board): nome da squad, número de cards
+   por coluna e o texto de alguns botões da toolbar (Dependências,
+   Calendários, Dados do Board...) ficavam com leitura ruim — "coloca no
+   branco que aí dá leitura 100%". Botões da toolbar: mesmo problema que
+   o modo claro já resolveu (ver [data-theme="light"] .toolbar > button
+   acima) — cores pastel fixas (`style="color:..."` inline: roxo, teal,
+   ciano, dourado) pensadas pra saltar contra um fundo escuro NEUTRO;
+   contra o fundo colorido/saturado do Vice City, competem em vez de se
+   destacar. Mesma técnica: força var(--txt) com !important (só assim
+   vence o inline), mesma exceção do badge de pendência do Google
+   Calendar (sinalização de estado, não só estética). .hd-badge (nome da
+   squad) e .col-cnt (contador "X cards" no topo da coluna) usam
+   var(--cyan) fixo — no Vice City isso é o rosa-poeira #B36B6E, tom
+   médio que também perde força contra o fundo; branco puro (var(--txt))
+   resolve os dois sem precisar !important (nenhum dos dois tem estilo
+   inline por cima). */
+[data-theme="vice"] .toolbar > button.btn:not(#gcal-pending-badge-btn){
+  color:var(--txt)!important;
+}
+[data-theme="vice"] .hd-badge{color:var(--txt);}
+[data-theme="vice"] .col-cnt{color:var(--txt);}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -3097,7 +3176,9 @@ input[type="date"]{-moz-appearance:textfield;}
 // pode bloquear localStorage).
 (function(){
   try{
-    if(localStorage.getItem('mare_theme')==='light') document.documentElement.setAttribute('data-theme','light');
+    const t=localStorage.getItem('mare_theme');
+    if(t==='light') document.documentElement.setAttribute('data-theme','light');
+    else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
     if(localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
@@ -3165,7 +3246,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -5771,7 +5852,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.542</div>
+<div class="version">v8.30.552</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6179,7 +6260,7 @@ function renderHdMoreDD(){
       </span>
     </div>`:''}
     <div class="sm-dd-sep"></div>
-    <div class="squad-switcher-item" onclick="closeHdMore();toggleTheme();">${_currentTheme()==='light'?'☀️':'🌙'} Alternar tema</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="doSignOut();" style="color:#ff8fa3;">🚪 Sair</div>
@@ -7083,8 +7164,24 @@ function _renderBulkTagPicker(){
   
   window._bulkToggleTag = (id) => {
     const idx = window._bulkSelectedTags.indexOf(id);
-    if(idx>=0) window._bulkSelectedTags.splice(idx,1);
-    else window._bulkSelectedTags.push(id);
+    if(idx>=0){
+      window._bulkSelectedTags.splice(idx,1);
+    } else {
+      // Tamanho (SIZE_TAGS) e Submarca (SUBMARCA_TAGS) são mutuamente
+      // exclusivas no card individual (setCardTamanho()/setCardSubmarca()
+      // sempre tiram qualquer tag antiga do MESMO grupo antes de adicionar a
+      // nova) — ao marcar uma tag desses grupos aqui, desmarca qualquer
+      // outra do mesmo grupo já selecionada, pra este picker nunca sugerir
+      // uma combinação que _doBulkTagMulti() abaixo vai desfazer sozinho
+      // (achado via /monitorarbugs: sem isso dava pra marcar "👕 P" + "👕 G"
+      // e clicar Adicionar, deixando os cards com 2 tamanhos ao mesmo tempo —
+      // estado impossível de alcançar pela tela do card).
+      [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+        const groupIds=group.map(t=>t.id);
+        if(groupIds.includes(id)) window._bulkSelectedTags=window._bulkSelectedTags.filter(t=>!groupIds.includes(t));
+      });
+      window._bulkSelectedTags.push(id);
+    }
     renderInternal();
   };
   
@@ -7106,6 +7203,19 @@ function _doBulkTagMulti(mode){
       // add
       selectedTags.forEach(t => { if(!current.includes(t)) current.push(t); });
     }
+    // Tamanho (SIZE_TAGS) e Submarca (SUBMARCA_TAGS) são mutuamente
+    // exclusivas no card individual (setCardTamanho()/setCardSubmarca()
+    // sempre tiram qualquer tag antiga do MESMO grupo antes de adicionar a
+    // nova). O picker acima (_bulkToggleTag) já impede marcar 2 do mesmo
+    // grupo NESTA sessão do popover, mas um card que já tinha uma tag do
+    // grupo de ANTES + "Adicionar" uma nova do mesmo grupo ainda somava as
+    // duas em vez de substituir — checagem própria aqui, mantendo a última
+    // (a recém-aplicada), mesmo critério das duas funções citadas.
+    [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+      const groupIds=group.map(t=>t.id);
+      const chosen=current.filter(id=>groupIds.includes(id));
+      if(chosen.length>1) current=current.filter(id=>!groupIds.includes(id)||id===chosen[chosen.length-1]);
+    });
     c.tags = current;
     c.tag = current[0] || '';
     recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));
@@ -10171,8 +10281,24 @@ function togglePinCard(cardId){
   } else {
     // Só 1 fixado por coluna — desafixa qualquer outro que já estivesse
     // (ver comentário na declaração de _sortCards sobre o caso de mover
-    // um card já fixado pra cá, que este caminho não cobre).
-    cards.filter(x=>!x.archived && x.col===c.col && x.pinned && x.id!==c.id).forEach(x=>{
+    // um card já fixado pra cá, que este caminho não cobre). Em squads
+    // com submarca ativa (board funciona como vários boards dentro de
+    // um só, ver submarcaAtivo), "por coluna" sozinho travava demais:
+    // só a 1ª submarca a fixar um card na coluna conseguia, as outras
+    // ficavam sem jeito — pedido direto do usuário pra virar 1 fixado
+    // por coluna+submarca em vez de só por coluna. _sortCards() já
+    // aceita vários pins na mesma coluna de graça (empilha por
+    // pinnedAt) contanto que os cards cheguem até ela já filtrados por
+    // submarca, que é o caso normal do board — só o "desafixa outro"
+    // aqui embaixo enxergava a coluna inteira, cross-submarca.
+    const _pinSmIds = submarcaAtivo ? SUBMARCA_TAGS.map(t=>t.id) : null;
+    const _cSubmarca = _pinSmIds ? (getCardTags(c).find(id=>_pinSmIds.includes(id))||'') : null;
+    cards.filter(x=>{
+      if(x.archived || x.col!==c.col || !x.pinned || x.id===c.id) return false;
+      if(!_pinSmIds) return true; // squad sem submarca: comportamento de sempre, 1 por coluna
+      const _xSubmarca=getCardTags(x).find(id=>_pinSmIds.includes(id))||'';
+      return _xSubmarca===_cSubmarca; // só desafixa quem é da MESMA submarca (ou também sem submarca)
+    }).forEach(x=>{
       x.pinned=false; delete x.pinnedAt;
       recordHistory(x,'desafixou o card do topo da coluna (outro card foi fixado no lugar)');
       fbSaveCard(x);
@@ -11482,6 +11608,19 @@ function _checkCardLock(cardId){
   _stopCardLockHeartbeat();
   _stopCardLockRequestTimers();
   _cardLockOwnedId=null;
+  // Card hotline é compartilhado por QUALQUER pessoa que queira falar com o
+  // Agente Ágil ao mesmo tempo (ver comentário em openAgenteHotline()) — os
+  // campos que o lock protege (título, tags, coluna...) já ficam todos
+  // escondidos nesse card (_applyCardSectionsVisibility()), então não há
+  // nada ali pra travar. Sem este early-return, a 2ª pessoa a abrir o
+  // mesmo card hotline enquanto a 1ª ainda tinha o modal aberto virava
+  // "somente leitura" (.locked-ro é pointer-events:none no .modal-body
+  // inteiro, e #m-comment-inp não está na lista de exceções que continuam
+  // clicáveis) — ficava impedida de comentar, ou seja, impedida de falar
+  // com o agente, justamente o cenário que a feature foi desenhada pra
+  // suportar (achado via /monitorarbugs).
+  const _lockCard = cards.find(x=>x.id===cardId);
+  if(_lockCard && _lockCard.agenteHotline){ _setCardLockUI(false); return; }
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
@@ -17709,7 +17848,14 @@ function renderCampDetalhe(c){
   const _filterCards = (sqId, cardsArr) => {
     return (cardsArr||[]).filter(card=>{
       if(!mostrarArq && card.archived) return false;
-      return campTags.length ? campTags.some(t=>(card.tags||[]).includes(t)||(card.tag===t)) : false;
+      // getCardTags() (não a checagem manual "tags[] ou tag" — achado via
+      // /monitorarbugs) é o mesmo helper que renderCampList() já usa pra
+      // contar cards vinculados na badge da lista de campanhas; sem isso
+      // aqui, um card com tags:[] válido (mesmo sem a tag da campanha) MAS
+      // ainda com um campo legado card.tag igual à tag da campanha entrava
+      // na contagem do detalhe/grade e ficava de fora da badge da lista —
+      // os dois números nunca batiam pra mesma campanha.
+      return campTags.length ? campTags.some(t=>getCardTags(card).includes(t)) : false;
     });
   };
   // Cards: modo squad = só board atual; modo multi = cards locais + cache pontual dos outros squads
@@ -18992,7 +19138,12 @@ function _renderArquivadosBody(){
   if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
   if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
-    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(c)[0] (não c.tag cru) — achado via /monitorarbugs: o
+    // filtro por tag desta mesma função (linhas acima) já usa getCardTags(),
+    // multi-tag-aware; c.tag é só o campo legado (1ª tag, nem sempre em
+    // dia com tags[]) — card filtrado certinho podia mostrar selo em
+    // branco/errado na lista.
+    const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
     row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
@@ -19068,7 +19219,9 @@ function renderCleanupList(){
   const summary=document.getElementById('cleanup-summary');
   if(summary) summary.textContent = old.length ? old.length+' card(s) ativo(s) há mais de '+days+' dias.' : 'Nenhum card ativo passou de '+days+' dias ainda. 🎉';
   body.innerHTML = old.map(c=>{
-    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(c)[0] em vez de c.tag cru — mesmo achado/motivo do
+    // _renderArquivadosBody() (ver comentário lá).
+    const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const age=_cardAgeDays(c);
     const anos=Math.floor(age/365), meses=Math.floor((age%365)/30);
     const ageLabel = anos>0 ? (anos+'a '+meses+'m') : meses+'m';
@@ -19180,7 +19333,14 @@ function renderQLBody(){
   if(!indexed.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item com esse filtro.</div>'; return; }
   const canCfg = ['adm','po','organizador'].includes(window._currentUserRole);
   indexed.forEach(({item,i})=>{
-    const t=getTag(item.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(item)[0] em vez de item.tag cru — achado via
+    // /monitorarbugs: esta MESMA função já resolve isso certo 2x, poucas
+    // linhas acima (filtro de tag + aplicação do filtro), com
+    // Array.isArray(item.tags)?item.tags:(item.tag?[item.tag]:[]) — que é
+    // exatamente o que getCardTags() já faz; o selo de cada item não
+    // reaproveitava, então um item com tags[] só (sem o campo legado tag
+    // em dia) achava certinho no filtro mas mostrava selo em branco.
+    const t=getTag(getCardTags(item)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
     const nReq=(item.requiredFields||[]).length;
     // Só modelos têm campos obrigatórios (não recorrentes)
@@ -22048,7 +22208,7 @@ const HELP_CONTENT = {
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
-    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
+    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
@@ -26536,8 +26696,24 @@ function _isColCancelLike(colId){
 // nenhum filho ativo, não decide sozinho. Exceção: se TODOS os filhos
 // ativos terminaram cancelados (nenhum de fato concluído), o pai fica onde
 // está — ver _isColCancelLike() acima.
-function _checkSupercardAutoComplete(childCard){
+function _checkSupercardAutoComplete(childCard, ancestry){
   if(!childCard) return;
+  // Guard contra ciclo corrompido nos dados (achado via /monitorarbugs,
+  // mesma classe de risco que já motivou o `visited` de _duplicarComFilhos()
+  // — mesmo grafo childCardIds, sem guard equivalente aqui até agora). Não
+  // dá pra usar um Set COMPARTILHADO entre chamadas-irmãs como lá: o
+  // comentário abaixo já prevê que um card pode ter mais de um pai (avô
+  // compartilhado), e um Set global bloquearia a 2ª cascata legítima
+  // (ex.: A e B são filhos de C; A completa e cascateia até C, ainda
+  // incompleto por causa de B — quando B completa depois, precisa
+  // re-checar C, que um Set global já teria marcado "visitado" na
+  // passagem de A). Por isso cada chamada carrega sua PRÓPRIA cópia do
+  // caminho de ancestrais (raiz→...→atual) — só bloqueia um ciclo de
+  // verdade (o mesmo id reaparecendo no MESMO caminho), não a cascata
+  // legítima entre irmãos.
+  ancestry = ancestry ? new Set(ancestry) : new Set();
+  if(ancestry.has(childCard.id)) return;
+  ancestry.add(childCard.id);
   // Não há parentId no filho — mesmo padrão de busca reversa de
   // _cardIsSuperChild(): o pai é quem lista, em childCardIds, o id de quem
   // acabou de mover (ver comentário em _cardIsSuperChild acima). Um card
@@ -26563,7 +26739,7 @@ function _checkSupercardAutoComplete(childCard){
     // coisa (ex.: uma campanha), acabou de concluir pode ser exatamente o
     // que faltava pro AVÔ também concluir sozinho — reaproveita a mesma
     // função em vez de duplicar a lógica pra "quantos níveis existem".
-    _checkSupercardAutoComplete(parent);
+    _checkSupercardAutoComplete(parent, ancestry);
   });
   if(any) renderBoard();
 }
@@ -27659,10 +27835,16 @@ function toggleFishBackground(){
 // </style> no <head> (ver lá) — direto no localStorage, pra evitar o flash
 // de escuro→claro antes do JS principal (este arquivo) carregar. Aqui só
 // mantemos o estado em sincronia com o botão (ícone) e com o toggle.
-function _currentTheme(){ return document.documentElement.getAttribute('data-theme')==='light' ? 'light' : 'dark'; }
+function _currentTheme(){
+  const t=document.documentElement.getAttribute('data-theme');
+  if(t==='vice') return 'vice';
+  return t==='light' ? 'light' : 'dark';
+}
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
-  if(btn) btn.textContent = _currentTheme()==='light' ? '☀️' : '🌙';
+  if(!btn) return;
+  const t=_currentTheme();
+  btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
 }
 function toggleTheme(){
   const next = _currentTheme()==='light' ? 'dark' : 'light';
@@ -27689,6 +27871,53 @@ function toggleThemeVariant(){
   else{ document.documentElement.setAttribute('data-theme-variant','b'); safeLS.setItem('mare_theme_variant','b'); }
   showToast(isB ? '☀️ Lençóis Maranhenses — padrão' : '☀️ Lençóis Maranhenses — mais escuro');
 }
+// 🌴 Vice City — easter egg interno (piada com o trailer de GTA 6, visual
+// Miami Vice: rosa neon, ciano, pôr do sol roxo/laranja — ver
+// [data-theme="vice"] no CSS). Só entra segurando o botão de tema
+// (pointerdown) por VICE_LONGPRESS_MS sem soltar — de propósito NÃO é um
+// clique/duplo-clique normal, pra não competir com toggleTheme()/
+// toggleThemeVariant() nem aparecer sozinho pra quem não souber que
+// existe. Guarda o tema (e a variante do claro, se houver) de antes de
+// entrar, pra devolver exatamente o que a pessoa tinha ao sair — sair é
+// sempre 1 clique normal (ou duplo-clique), de propósito fácil, só
+// entrar que é escondido.
+const VICE_LONGPRESS_MS = 1200;
+let _viceLongPressTimer=null;
+let _viceLongPressFired=false;
+function _themeBtnPointerDown(){
+  _viceLongPressFired=false;
+  if(_viceLongPressTimer) clearTimeout(_viceLongPressTimer);
+  _viceLongPressTimer=setTimeout(()=>{
+    _viceLongPressTimer=null;
+    _viceLongPressFired=true;
+    toggleViceCity();
+  }, VICE_LONGPRESS_MS);
+}
+function _themeBtnPointerUp(){
+  if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
+}
+function toggleViceCity(){
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
+  document.documentElement.setAttribute('data-theme','vice');
+  document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme','vice');
+  _applyThemeButtonIcon();
+  showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
+}
+function exitViceCity(){
+  const prevTheme = safeLS.getItem('mare_theme_before_vice') || '';
+  const prevVariant = safeLS.getItem('mare_theme_variant_before_vice') || '';
+  if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  if(prevVariant==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme', prevTheme==='light' ? 'light' : 'dark');
+  safeLS.setItem('mare_theme_variant', prevVariant);
+  _applyThemeButtonIcon();
+  showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
+}
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
@@ -27697,15 +27926,32 @@ function toggleThemeVariant(){
 // flash visível no meio) antes de finalmente trocar a variante. Em vez
 // disso, atrasa a ação do clique único — se um 2º clique chegar dentro da
 // janela (virando duplo-clique), cancela a ação pendente do 1º e roda só
-// a troca de variante.
+// a troca de variante. Dentro do Vice City, tanto o clique único quanto o
+// duplo-clique só SAEM do modo (mais fácil sair do que entrar, de
+// propósito) — e o clique que dispara logo depois de um long-press bem
+// sucedido (_viceLongPressFired) é ignorado, senão entrar em Vice City já
+// sairia de novo no mesmo gesto.
 let _themeClickTimer=null;
 function onThemeBtnClick(){
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){
+    if(_themeClickTimer) return;
+    _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
+    return;
+  }
   if(_themeClickTimer) return; // 2º clique de um duplo — o dblclick cuida disso
   _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; toggleTheme(); }, 260);
 }
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
   toggleThemeVariant();
+}
+function _mobileThemeRowClick(){
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
 // Fish & Bubbles
