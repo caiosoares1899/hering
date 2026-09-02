@@ -2479,6 +2479,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.553-dev — 2026-09-02 — Favicon próprio do dev + favicon do 🌴 Vice City
+
+Pedido direto do usuário, com 2 artes próprias criadas por ele: "bota
+esse aqui como o padrão do kanban-dev! q ai eu consigo diferenciar no
+meu celular" (peixes sobre "linhas de código", tons azuis) e, antes
+disso, um favicon rosa/roxo pro Vice City ("da pra gente mudar o
+favicon quando a pessoa usar o modo vice city? criei aqui um nesse
+estilo haha").
+
+**Favicon próprio do `kanban-dev.html`** — `favicon-dev.png` (+
+`favicon-dev-monochrome.png` pro ícone temático do Android 13+/Material
+You, mesma técnica de threshold+rampa em cima do canal mínimo já usada
+pro `favicon-monochrome.png` original) substituem `favicon.png`/
+`favicon-monochrome.png` só neste arquivo — `<link rel="icon">`,
+`<link rel="apple-touch-icon">`, o logo da tela de login e os ícones do
+manifest da PWA (`initPWA()`) todos apontam pro arquivo novo agora.
+`kanban.html` (prod) continua com o favicon normal — resolve o problema
+de dev e prod ficarem com o MESMO ícone instalado no celular (mesmo
+nome "Maré Digital" nos dois), sem dar pra diferenciar de relance qual
+é qual.
+
+**Favicon do Vice City** — `favicon-vice.png`, trocado dinamicamente
+via `<link rel="icon" id="favicon-link">` só enquanto o tema Vice City
+está ativo (`_applyFavicon()`, chamado nos mesmos pontos que já
+sincronizam o ícone 🌙/☀️/🌴 do botão — `toggleTheme()`,
+`toggleViceCity()`/`exitViceCity()`, e a sincronização inicial na carga
+da página). Guarda o href original do link (`favicon-dev.png` aqui) uma
+única vez no carregamento do script, então sair do Vice City sempre
+volta pro favicon certo do ambiente — não hardcoda "favicon.png", já
+nasce compatível com uma eventual promoção pra prod. Só troca o ícone
+da aba do navegador — não mexe no ícone instalado da PWA (manifest é
+gerado uma vez, não reage a troca de tema; trocar isso também seria
+sobre-engenharia pra um easter egg).
+
+Ambas as artes (2000×2000, fornecidas pelo usuário) recortadas com a
+MESMA técnica documentada em `initPWA()` pro favicon original — bounding
+box dos pixels próximos de branco puro (canal mínimo > 86%), padding de
+~12%, redimensionado pra 512×512.
+
+Testado com Playwright: favicon fica em `favicon-dev.png` tanto no
+escuro quanto no claro, troca pra `favicon-vice.png` só dentro do Vice
+City, e volta pro `favicon-dev.png` ao sair — sem erros de página.
+Confirmado por HTTP que os 3 arquivos novos são servidos corretamente.
+
 ### v8.30.552-dev — 2026-09-02 — Registro de "já descobriu" os 3 temas (dark/light/vice), consultável via console
 
 Pedido direto do usuário: "a gente consegue ver quantas pessoas tao
