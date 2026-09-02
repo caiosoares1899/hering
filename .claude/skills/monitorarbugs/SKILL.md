@@ -692,6 +692,42 @@ Mesma disciplina de sempre neste repo:
   feature nova em si, mas em reusar demais um caminho já existente sem
   considerar a premissa diferente.
 
+- **2026-09-02, área nomeada explicitamente — "áreas sensíveis (cards,
+  automações, multiselects...)"**: cards e automações já com histórico
+  extenso de rodadas anteriores; foco em Multiselects (seleção
+  múltipla/ações em massa) — nunca auditada como área própria antes
+  (rodadas passadas só tinham revisado se os bulk actions disparavam
+  Automação, não a lógica de dados dos próprios bulk actions). Leitura
+  completa de `toggleSelectMode`/`toggleCardSelection`/
+  `selectAllInColumn`/`updateBulkBar`/`_bulkFinish` + todas as ações
+  (`bulkMove`/`bulkAssign`/`bulkDueDate`/`bulkTag`/`bulkBlocker`/
+  `bulkDuplicate`/`bulkArchive`/`bulkDeleteSelected`). 1 achado real,
+  técnica 2 (comparar contra padrão já resolvido em outro lugar do
+  arquivo): `setCardTamanho()`/`setCardSubmarca()` (card individual)
+  sempre removem qualquer tag antiga do MESMO grupo (👕 Tamanho: P/M/G/
+  GG; Submarca: Adulto/Kids/Sports...) antes de adicionar a nova —
+  impossível um card ter 2 tamanhos ou 2 submarcas ao mesmo tempo pela
+  tela do card. Mas o picker de "🏷 Tag" da seleção múltipla
+  (`_renderBulkTagPicker`) lista todas as tags do squad sem distinguir
+  grupo — dava pra marcar "👕 P" e "👕 G" juntas e clicar "Adicionar"/
+  "Substituir", deixando os cards com 2 tags do mesmo grupo ao mesmo
+  tempo (acabava de ficar mais relevante ainda: o pin-por-submarca
+  implementado nesta mesma sessão depende de um card ter só 1
+  submarca). Fix em 2 pontos: o picker (`_bulkToggleTag`) desmarca a
+  tag conflitante do mesmo grupo na hora do clique; `_doBulkTagMulti()`
+  também garante isso no resultado final (defesa em profundidade, pro
+  caso de o card já ter uma tag do grupo de antes) (dev v8.30.545-dev).
+  Descartado (checado, sem achado): permissão de entrada
+  (`toggleSelectMode`/`canBulkDelete` — mesma trava usada em todos os
+  pontos, sem checagem feita na mão que pudesse divergir);
+  `checkEditPermission()` não é chamado em NENHUM bulk action, mas é um
+  stub documentado que sempre retorna `true` (não uma trava real hoje),
+  então não é uma inconsistência entre bulk e single-card; disparo de
+  Automação em cada bulk action já tinha sido coberto em rodadas
+  anteriores (2026-08-27/29), sem achado novo aqui; `tag_added`/
+  `tag_removed`/`submarca_set` no autosave (`scheduleAutoSave()`) já
+  batem exatamente com o que o bulk dispara.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

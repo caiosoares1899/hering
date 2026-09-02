@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.544-dev</div>
+<div class="version">v8.30.545-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7083,8 +7083,24 @@ function _renderBulkTagPicker(){
   
   window._bulkToggleTag = (id) => {
     const idx = window._bulkSelectedTags.indexOf(id);
-    if(idx>=0) window._bulkSelectedTags.splice(idx,1);
-    else window._bulkSelectedTags.push(id);
+    if(idx>=0){
+      window._bulkSelectedTags.splice(idx,1);
+    } else {
+      // Tamanho (SIZE_TAGS) e Submarca (SUBMARCA_TAGS) são mutuamente
+      // exclusivas no card individual (setCardTamanho()/setCardSubmarca()
+      // sempre tiram qualquer tag antiga do MESMO grupo antes de adicionar a
+      // nova) — ao marcar uma tag desses grupos aqui, desmarca qualquer
+      // outra do mesmo grupo já selecionada, pra este picker nunca sugerir
+      // uma combinação que _doBulkTagMulti() abaixo vai desfazer sozinho
+      // (achado via /monitorarbugs: sem isso dava pra marcar "👕 P" + "👕 G"
+      // e clicar Adicionar, deixando os cards com 2 tamanhos ao mesmo tempo —
+      // estado impossível de alcançar pela tela do card).
+      [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+        const groupIds=group.map(t=>t.id);
+        if(groupIds.includes(id)) window._bulkSelectedTags=window._bulkSelectedTags.filter(t=>!groupIds.includes(t));
+      });
+      window._bulkSelectedTags.push(id);
+    }
     renderInternal();
   };
   
@@ -7106,6 +7122,19 @@ function _doBulkTagMulti(mode){
       // add
       selectedTags.forEach(t => { if(!current.includes(t)) current.push(t); });
     }
+    // Tamanho (SIZE_TAGS) e Submarca (SUBMARCA_TAGS) são mutuamente
+    // exclusivas no card individual (setCardTamanho()/setCardSubmarca()
+    // sempre tiram qualquer tag antiga do MESMO grupo antes de adicionar a
+    // nova). O picker acima (_bulkToggleTag) já impede marcar 2 do mesmo
+    // grupo NESTA sessão do popover, mas um card que já tinha uma tag do
+    // grupo de ANTES + "Adicionar" uma nova do mesmo grupo ainda somava as
+    // duas em vez de substituir — checagem própria aqui, mantendo a última
+    // (a recém-aplicada), mesmo critério das duas funções citadas.
+    [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+      const groupIds=group.map(t=>t.id);
+      const chosen=current.filter(id=>groupIds.includes(id));
+      if(chosen.length>1) current=current.filter(id=>!groupIds.includes(id)||id===chosen[chosen.length-1]);
+    });
     c.tags = current;
     c.tag = current[0] || '';
     recordHistory(c, (mode==='set'?'substituiu tags por: ':'adicionou tags: ') + selectedTags.map(id=>getTag(id)?.label).join(', '));

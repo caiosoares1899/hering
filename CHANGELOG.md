@@ -2451,6 +2451,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.545-dev — 2026-09-02 — Tag em massa deixava marcar 2 tamanhos ou 2 submarcas no mesmo card (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "em áreas sensíveis
+(cards, automações, multiselects...)". Prioridade 1 (redesenho mobile)
+e "Card lock" já cobertos em rodadas recentes — foco em Multiselects
+(seleção múltipla/ações em massa), nunca auditada como área própria
+antes (só o disparo de Automação dos bulk actions já tinha sido
+revisado, não a lógica de dados em si).
+
+**Achado**: no card individual, `setCardTamanho()`/`setCardSubmarca()`
+sempre removem qualquer tag antiga do MESMO grupo (👕 Tamanho: P/M/G/GG;
+Submarca: Adulto/Kids/Sports...) antes de adicionar a nova — impossível
+um card ter 2 tamanhos ou 2 submarcas ao mesmo tempo pela tela do card.
+Mas o picker de "🏷 Tag" da seleção múltipla (`_renderBulkTagPicker`)
+lista todas as tags do squad sem distinguir grupo nenhum — dava pra
+marcar "👕 P" e "👕 G" juntas (ou 2 submarcas, em squads com Submarca
+ativa) e clicar "Adicionar"/"Substituir", deixando os cards
+selecionados com 2 tags do mesmo grupo simultaneamente. Achado via
+técnica 2 (comparação com padrão já resolvido em outro lugar do
+arquivo).
+
+Fix em 2 pontos: (1) o próprio picker (`_bulkToggleTag`) agora desmarca
+qualquer outra tag do mesmo grupo ao marcar uma nova, pra nunca sugerir
+uma combinação impossível; (2) `_doBulkTagMulti()` também garante isso
+no resultado final antes de gravar — defesa em profundidade pro caso
+de um card já ter uma tag do grupo de antes (bulk "Adicionar" ainda
+somava com a antiga, mesmo com o picker corrigido). Tags normais
+(não-exclusivas) continuam aplicando todas juntas, sem mudança.
+
+Testado com 4 cenários: picker desmarca P ao marcar G; card com P de
+antes + "Adicionar" G fica só com G; mesmo com seleção conflitante
+simulada (P+G juntos) o resultado final fica só com 1; tags normais
+não-exclusivas continuam aplicando as duas juntas normalmente.
+
 ### v8.30.544-dev — 2026-09-02 — Pin do card vira 1 por coluna E por submarca (squads com Submarca ativa)
 
 Ideia do usuário: "pensando naquela ideia de que o board com submarcas é
