@@ -2369,6 +2369,61 @@ input[type="date"]{-moz-appearance:textfield;}
   .ql-panel{max-height:88vh;}
   .modal-body{padding:10px 12px;gap:9px;}
 
+  /* Header do card (.panel-hd): o rótulo "Compartilhar este card" (texto
+     por extenso, só decorativo — o botão já tem esse título via tooltip)
+     mais os 5 ícones (🎨/compartilhar/⇕/⬇️/✕) sem flex-shrink:0 já
+     ocupavam sozinhos mais espaço que a tela toda no mobile — nesse caso,
+     o algoritmo de flexbox entra no ramo de ENCOLHER (não CRESCER), e como
+     #m-title-disp começa com flex-basis:0%, a fatia dele nesse encolhimento
+     também é 0% → título fica com largura calculada ZERO de verdade
+     (confirmado medindo, não só visualmente). Escondendo o rótulo e
+     travando os ícones com flex-shrink:0, sobra espaço positivo de verdade
+     pro título crescer (flex-grow:1) em vez de zerar. */
+  #m-share-label{display:none;}
+  #m-cover-wrap,.panel-hd>.x-btn{flex-shrink:0;}
+
+  /* #m-title-disp: sem isso, um título comprido quebra em várias linhas e a
+     altura do .panel-hd cresce junto — como os ícones são irmãos flex com
+     align-items:center, eles ficam centralizados na altura TOTAL do título
+     quebrado, "flutuando" por cima do meio do texto (visto em screenshot:
+     ícones cortando a palavra "Diário" ao meio). O campo de edição de
+     verdade é o "TÍTULO" mais abaixo no modal — este aqui é só o preview
+     do header, então dá pra limitar a altura sem perder nada. */
+  #m-title-disp{
+    display:block;max-height:calc(1.3em * 2);line-height:1.3;overflow:hidden;
+    /* display:block (em vez do flex herdado de .panel-title): com
+       align-items:center do flex, o texto que ultrapassa max-height fica
+       centralizado verticalmente DENTRO da caixa — corta a 1ª E a última
+       linha ao mesmo tempo, começando o clamp no meio da frase (achado
+       testando visualmente: "Atualização" — a 1ª palavra de verdade —
+       sumia, sobrando só o meio). Em display:block o corte fica só no
+       fim, como esperado.
+       Clampa por altura (2 linhas), não por -webkit-line-clamp: esse
+       elemento é item flex do .panel-hd (flex:1, flex-basis:0%) e,
+       testando de verdade (não só via propriedade CSS),
+       display:-webkit-box nessa combinação fazia o navegador zerar a
+       largura calculada — o título sumia da tela por completo. max-height
+       evita os dois bugs e resolve o mesmo problema (altura crescendo sem
+       limite), só sem reticências "…"
+       no fim — troca aceitável aqui, o título de verdade fica editável
+       logo abaixo, no campo "TÍTULO". */
+  }
+
+  /* Barra de ações do rodapé do card (Excluir/Duplicar/Modelo/Usar modelo/
+     Arquivar/Dependência/Milanote/Insights/Cancelar/Salvar) — mais de 10
+     controles, nunca cabem numa linha só no mobile. Sem overflow-x próprio
+     aqui, o overflow "vazava" pro .card-panel inteiro (overflow-y:auto num
+     eixo + overflow-x:visible no outro vira auto pelos dois eixos, por
+     spec) — o modal inteiro virava arrastável de lado, mostrando um vão
+     em branco enorme no meio (visto em screenshot). Mesmo padrão de
+     scroll horizontal que .toolbar/#filter-bar já usam. */
+  .modal-ft-row{
+    overflow-x:auto;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+  }
+  .modal-ft-row::-webkit-scrollbar{display:none;}
+  .modal-ft-row > *{flex-shrink:0;}
+
   /* ── Card modal como bottom-sheet (Fase 3.1) — só #card-ov, os demais
      modais continuam como dialog centralizado acima. Sobe de baixo, cantos
      superiores arredondados, alça de arrastar (swipe-down fecha — ver JS
@@ -5692,7 +5747,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.539-dev</div>
+<div class="version">v8.30.540-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

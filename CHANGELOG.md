@@ -2426,6 +2426,67 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.540-dev — 2026-09-02 — Modal do card no mobile: título some/some por baixo dos ícones + modal inteiro virava arrastável de lado
+
+Sequência direta do fix do cabeçalho (v8.30.539-dev): "resolveu o topo!
+pode ir pro modal do card! olha como tá hj" — 2 screenshots mostrando o
+título do card colidindo com os ícones do header e o modal inteiro
+aparentemente "vazio" no meio, com os botões de rodapé cortados na
+borda da tela.
+
+**Bug 1 — título por baixo dos ícones.** `#m-title-disp` (preview do
+título no header do modal) é item flex (`flex:1;min-width:0`) ao lado de
+5 ícones (🎨 capa, compartilhar + rótulo "Compartilhar este card" por
+extenso, ⇕ expandir/recolher, ⬇️ ir pra descrição, ✕ fechar) — juntos,
+sem `flex-shrink:0`, esses ícones+rótulo sozinhos já são mais largos que
+uma tela de celular. Nesse cenário o algoritmo de flexbox roda o ramo de
+ENCOLHER (não crescer) pra tentar caber tudo — e como o título começa
+com `flex-basis:0%`, a fatia dele nesse encolhimento também é 0%: a
+largura calculada do título fica **zero de verdade** (confirmado
+medindo em teste automatizado, não só olhando print). O texto ainda
+aparecia no print original porque `overflow:visible` deixava ele vazar
+pra fora da caixa de largura zero, pousando por cima dos ícones — dava
+a impressão de estar "quebrando estranho" quando na verdade a caixa dele
+nem tinha espaço nenhum.
+
+Corrigido escondendo o rótulo "Compartilhar este card" (o ícone já tem
+esse texto como tooltip) e travando os ícones com `flex-shrink:0` — com
+isso sobra espaço POSITIVO de verdade pro título crescer em vez de
+zerar. Por cima disso, o preview do título ganhou um limite de altura
+(2 linhas, `display:block` — tentativa inicial com
+`-webkit-line-clamp`/`-webkit-box` reproduziu o MESMO bug de largura
+zero nessa combinação específica com flex, e uma 2ª tentativa com
+`align-items:center` herdado do flex cortava a frase pelo MEIO em vez do
+fim; as duas só apareceram testando de verdade, com screenshot, não só
+inspecionando a propriedade CSS). O campo editável de verdade continua
+sendo "TÍTULO", logo abaixo no corpo do modal — este é só o preview do
+header.
+
+**Bug 2 — modal inteiro arrastável de lado (o "vão vazio" no 2º
+print).** `.modal-ft-row` (rodapé: Excluir/Duplicar/Modelo/Usar
+modelo/Arquivar/Dependência/Milanote/Insights/Cancelar/Salvar — mais de
+10 controles) não tinha `overflow-x`/scroll próprio. `.card-panel` já
+tem `overflow-y:auto` no mobile; por spec CSS, quando um eixo tem
+overflow diferente de `visible` e o outro não é especificado, o eixo
+não especificado também vira `auto` — ou seja, o `.card-panel` inteiro
+ganhava scroll horizontal por tabela, só porque o rodapé (um filho dele)
+não cabia. Resultado: o modal inteiro virava arrastável de lado, e um
+swipe lateral (por engano ou tentando rolar pra baixo) deixava a tela
+"meio scrollada", com campos cortados nas duas bordas e um vão em
+branco no meio — exatamente o que aparecia no 2º screenshot (seção
+"🔗 Vínculos & anexos", com "Vincular"/"+Adicionar"/"+Vincular nota"
+visíveis só nas bordas, e nada no centro).
+
+Corrigido dando ao `.modal-ft-row` scroll horizontal PRÓPRIO (mesmo
+padrão que `.toolbar`/`#filter-bar` já usam) — contém o overflow do
+rodapé nele mesmo, sem vazar pro modal inteiro. Testado com Playwright:
+`card-panel.scrollWidth` agora bate exatamente com `clientWidth` (sem
+overflow nenhum), rolar o rodapé até o fim não move mais o resto do
+modal (`card-panel.scrollLeft` continua 0), e os campos que apareciam
+cortados no 1º print (TAGS/COLUNA, RESPONSÁVEL/PRAZO, PRIORIDADE/
+TAMANHO) voltam a caber inteiros na tela — eram sintoma do mesmo bug 2,
+não um problema à parte.
+
 ### v8.30.539-dev — 2026-09-02 — Cabeçalho mobile redesenhado: menu "⋯" (tipo Trello) + fix de avatares de presença sobrepondo a fileira de ícones
 
 Feedback direto do usuário com screenshot no celular: a fileira de ícones
