@@ -2451,6 +2451,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.544-dev — 2026-09-02 — Pin do card vira 1 por coluna E por submarca (squads com Submarca ativa)
+
+Ideia do usuário: "pensando naquela ideia de que o board com submarcas é
+como se fosse vários boards dentro de um... o pin de fixar precisa ser
+um por submarca! pq se n, só uma submarca vai acabar podendo fixar um
+card naquela coluna toda".
+
+Confirmado no código: `togglePinCard()` só comparava `x.col===c.col` na
+hora de desafixar o card anterior, nunca a submarca — em squads com
+`submarcaAtivo` (hoje só `site`), a 1ª submarca a fixar um card numa
+coluna "trancava" a coluna inteira pras outras. `_sortCards()` (quem
+decide o que aparece fixado) já suportava vários pins numa mesma
+coluna de graça (empilha por `pinnedAt`, contanto que os cards
+cheguem até ela já filtrados por submarca, que é o caso normal do
+board) — só o "desafixa o anterior" enxergava a coluna inteira,
+cross-submarca.
+
+Fix: em squads com submarca ativa, o "desafixa outro" agora só
+desliga o pin de quem for da MESMA submarca do card recém-fixado (ou
+também sem submarca — tratado como seu próprio grupo). Em squads sem
+submarca ativa, comportamento 100% igual a antes (1 fixado por coluna).
+Central de Ajuda atualizada com a nova regra.
+
+Testado com 4 cenários (submarca desligada → comportamento antigo
+preservado; submarcas diferentes → os dois ficam fixados; mesma
+submarca → desafixa o anterior; ambos sem submarca → tratados como
+grupo único, desafixa o anterior) — todos passaram.
+
 ### v8.30.543-dev — 2026-09-02 — Card lock impedia a 2ª pessoa de comentar no card hotline "Converse com o Agente Ágil" (/monitorarbugs)
 
 Rodada genérica de `/monitorarbugs` — auditada a área mais recente
