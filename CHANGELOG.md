@@ -2426,6 +2426,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.542-dev — 2026-09-02 — Modal do card no mobile: achado o real culpado do scroll lateral que sobrou (classe errada corrigida na rodada anterior)
+
+Usuário testou o redesenho da v8.30.541-dev no celular e reportou:
+"Ainda tá com scroll lateral" — com 2 screenshots mostrando o modal
+inteiro deslocado de lado, cortando `FORMATO`/checkboxes de um lado e
+`COLUNA`/`PRAZO` do outro.
+
+**Causa raiz: a v8.30.541-dev corrigiu a classe ERRADA.** `.frow` (a
+classe que virou 1 coluna na rodada anterior) só é usada em telas de
+admin/Configurações (Sprint, "+ Adicionar externo", "+ Novo agente",
+Lembretes) — **nenhuma ocorrência dentro do modal do card**. A classe de
+verdade por trás de Tags/Coluna, Responsável/Prazo, Prioridade/Tamanho,
+Submarca/Executor e dos campos da Ficha Técnica/Supercard (Funil/Etapa,
+Tipo/Formato) sempre foi `.card-attr-row` — nome parecido (as duas
+falam de "2 colunas"), classe diferente. A rodada anterior nunca tocou
+nela, então continuava `grid-template-columns:1fr 1fr` no mobile (regra
+antiga, comentário dizia "empilha em 2x2" — mas 2x2 ainda é 2 colunas
+lado a lado, não empilhado de verdade) — voltando a estourar a tela e
+arrastar o `.card-panel` inteiro de lado, mesmo mecanismo de sempre.
+
+**Por que passou pelos meus testes anteriores**: os testes automatizados
+da rodada passada usavam um card praticamente vazio (sem coluna
+selecionada, sem tag) — com conteúdo vazio, 2 colunas estreitas cabem
+sem cortar nada visualmente, escondendo o bug. Só com dado realista
+(nome de coluna de verdade tipo "Criação", tag de verdade) o
+`.card-attr-row` de 2 colunas realmente estoura a largura da tela —
+exatamente a diferença entre os meus testes e os screenshots reais do
+usuário. Lição: encontrar a classe certa lendo o HTML de verdade (não só
+grepar por nome parecido no CSS) e testar com dado populado, não só
+campo vazio.
+
+Corrigido: `#card-ov .card-attr-row{grid-template-columns:1fr}` — mesmo
+padrão da rodada anterior, agora na classe certa. A regra `.frow`
+adicionada por engano foi removida (não tinha efeito nenhum dentro do
+modal do card, ficaria como código morto). Testado com Playwright
+populando COLUNA/TAGS/RESPONSÁVEL com dado realista: `.card-panel` sem
+overflow horizontal (`scrollWidth === clientWidth`), todos os 7
+`.card-attr-row` do modal (incluindo os da Ficha Técnica) confirmados
+com 1 coluna só via `getComputedStyle`. Desktop revalidado sem nenhuma
+mudança visual.
+
 ### v8.30.541-dev — 2026-09-02 — Modal do card no mobile: redesenho completo estilo Trello (sem nenhum scroll lateral)
 
 Sequência direta do fix de ontem (v8.30.540-dev): usuário mandou 2

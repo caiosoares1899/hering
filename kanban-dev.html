@@ -2463,18 +2463,6 @@ input[type="date"]{-moz-appearance:textfield;}
     gap:8px;
   }
 
-  /* frow DENTRO DO MODAL DO CARD: 2 colunas → 1 só (empilhado), igual ao
-     Trello — decisão revista 2026-09-02 a pedido do usuário ("tudo caiba...
-     sem scroll lateral"); antes só ficava 1 coluna em telas <380px (ver
-     @media(max-width:380px) mais abaixo), então em telas comuns tipo
-     iPhone (375-393px) o campo da direita (COLUNA/PRAZO/TAMANHO) ficava
-     espremido/cortado na borda. Escopado a #card-ov de propósito — .frow
-     também é reusada em telas de admin (ex.: form de "+ Adicionar
-     externo"/"+ Novo agente" em Configurações), que continuam com o
-     layout de sempre, fora do pedido desta rodada. */
-  #card-ov .frow{grid-template-columns:1fr;gap:6px;}
-  #card-ov .frow .field{min-width:0;}
-
   /* Campos: 16px em inputs editáveis evita o zoom automático do iOS ao focar */
   .fi,.fi-ta{font-size:16px;padding:9px 11px;}
   select.fi{font-size:16px;}
@@ -2482,8 +2470,20 @@ input[type="date"]{-moz-appearance:textfield;}
   /* Labels menores */
   .fl{font-size:9px;}
 
-  /* card-attr-row: empilha em 2x2 */
-  .card-attr-row{grid-template-columns:1fr 1fr;gap:6px;}
+  /* .card-attr-row: é a classe de verdade por trás de TODOS os campos de
+     2 colunas do modal do card (Tags/Coluna, Responsável/Prazo,
+     Prioridade/Tamanho, Submarca/Executor, e os campos da Ficha Técnica/
+     Supercard — Funil/Etapa, Tipo/Formato) — 2 colunas → 1 só (empilhado),
+     igual ao Trello. NÃO é ".frow" (nome parecido, classe de fato
+     diferente, usada só em telas de admin/Configurações) — reportado pelo
+     usuário como "ainda tá com scroll lateral" depois da 1ª tentativa de
+     redesenho, que mexeu em .frow por engano (achado ao ler o HTML de
+     verdade, não só grepar pelo nome "2 colunas" no CSS). Mesma causa
+     raiz de sempre: 2 colunas que não cabem fazem o .card-panel inteiro
+     ganhar scroll horizontal. #colcfg-ov (Configurar coluna) também usa
+     .card-attr-row, mas só com Cor+WIP (cabe tranquilo) — fora do escopo
+     do pedido, por isso o seletor é escopado a #card-ov. */
+  #card-ov .card-attr-row{grid-template-columns:1fr;gap:6px;}
 
   /* Dependência button no header */
   #m-depends-lbl{display:none;}
@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.541-dev</div>
+<div class="version">v8.30.542-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
