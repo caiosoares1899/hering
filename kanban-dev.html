@@ -5771,7 +5771,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.546-dev</div>
+<div class="version">v8.30.547-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19057,7 +19057,12 @@ function _renderArquivadosBody(){
   if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
   if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
-    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(c)[0] (não c.tag cru) — achado via /monitorarbugs: o
+    // filtro por tag desta mesma função (linhas acima) já usa getCardTags(),
+    // multi-tag-aware; c.tag é só o campo legado (1ª tag, nem sempre em
+    // dia com tags[]) — card filtrado certinho podia mostrar selo em
+    // branco/errado na lista.
+    const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
     row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
@@ -19133,7 +19138,9 @@ function renderCleanupList(){
   const summary=document.getElementById('cleanup-summary');
   if(summary) summary.textContent = old.length ? old.length+' card(s) ativo(s) há mais de '+days+' dias.' : 'Nenhum card ativo passou de '+days+' dias ainda. 🎉';
   body.innerHTML = old.map(c=>{
-    const t=getTag(c.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(c)[0] em vez de c.tag cru — mesmo achado/motivo do
+    // _renderArquivadosBody() (ver comentário lá).
+    const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const age=_cardAgeDays(c);
     const anos=Math.floor(age/365), meses=Math.floor((age%365)/30);
     const ageLabel = anos>0 ? (anos+'a '+meses+'m') : meses+'m';
@@ -19245,7 +19252,14 @@ function renderQLBody(){
   if(!indexed.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum item com esse filtro.</div>'; return; }
   const canCfg = ['adm','po','organizador'].includes(window._currentUserRole);
   indexed.forEach(({item,i})=>{
-    const t=getTag(item.tag)||{label:'',pi:0}; const p=getPal(t);
+    // getCardTags(item)[0] em vez de item.tag cru — achado via
+    // /monitorarbugs: esta MESMA função já resolve isso certo 2x, poucas
+    // linhas acima (filtro de tag + aplicação do filtro), com
+    // Array.isArray(item.tags)?item.tags:(item.tag?[item.tag]:[]) — que é
+    // exatamente o que getCardTags() já faz; o selo de cada item não
+    // reaproveitava, então um item com tags[] só (sem o campo legado tag
+    // em dia) achava certinho no filtro mas mostrava selo em branco.
+    const t=getTag(getCardTags(item)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
     const nReq=(item.requiredFields||[]).length;
     // Só modelos têm campos obrigatórios (não recorrentes)

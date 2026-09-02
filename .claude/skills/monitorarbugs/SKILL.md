@@ -758,6 +758,28 @@ Mesma disciplina de sempre neste repo:
   confiança client-side-only já estabelecido no resto do app (não é uma
   inconsistência local).
 
+- **2026-09-02, área nomeada explicitamente — "ali em funções de
+  card"**: menu "⚡ Funções de card" (Automações/Recorrentes/
+  Agendamentos/Modelos/Arquivados/Cards antigos) — Automações e a
+  criação de card (Recorrentes/Agendamentos/Modelos) já tinham
+  histórico extenso de rodadas anteriores; foco nos 3 itens menos
+  auditados: Arquivados, Cards antigos, e a lista compartilhada
+  Modelos/Recorrentes/Agendamentos (`renderQLBody()`). 1 achado real
+  (mesma causa raiz em 3 lugares), técnica 2 (comparar contra padrão já
+  resolvido — no caso de `renderQLBody()`, resolvido na MESMA função,
+  poucas linhas acima): `_renderArquivadosBody()`/`renderCleanupList()`/
+  `renderQLBody()` montavam o selo de tag de cada linha lendo
+  `card.tag`/`item.tag` (campo legado) direto, enquanto o FILTRO por
+  tag da mesma função já usava `getCardTags()` (multi-tag-aware) —
+  card/item com `tags:['X']` mas `tag` vazio/desatualizado era achado
+  certinho pelo filtro mas mostrava selo em branco na lista. Fix: as 3
+  passam a usar `getTag(getCardTags(x)[0])` (dev v8.30.547-dev).
+  Testado com card/item tendo `tags` populado e `tag` vazio nas 3
+  telas — selo correto nas 3 depois do fix. Achado de passagem, FORA
+  do escopo pedido (não implementado): `openSearch()` (Busca Ctrl+K,
+  ~L28105) tem o mesmo padrão (`getTag(c.tag)`) — Busca não é "Funções
+  de card", registrado aqui pra não esquecer numa rodada futura.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

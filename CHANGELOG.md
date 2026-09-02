@@ -2451,6 +2451,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.547-dev — 2026-09-02 — Selo de tag em branco/errado em Arquivados, Cards antigos e Modelos/Recorrentes/Agendamentos (/monitorarbugs)
+
+Rodada de `/monitorarbugs` escopada pelo usuário: "ali em funções de
+card" (o menu "⚡ Funções de card": Automações, Recorrentes,
+Agendamentos, Modelos, Arquivados, Cards antigos). Automações/criação
+de card já tinham histórico extenso — foco nos 3 itens menos
+auditados: Arquivados, Cards antigos e a lista Modelos/Recorrentes/
+Agendamentos.
+
+**Achado**: mesma classe de bug em 3 lugares — `_renderArquivadosBody()`
+("📦 Arquivados"), `renderCleanupList()` ("🧹 Cards antigos") e
+`renderQLBody()` (Modelos/Recorrentes/Agendamentos) montavam o selo de
+tag exibido em cada linha lendo `card.tag`/`item.tag` (campo legado,
+singular) direto, em vez do helper `getCardTags()` — que corretamente
+prioriza o array `tags[]` multi-tag e só cai no campo legado quando
+`tags` nem existe. Nas 3 funções, o FILTRO por tag (dropdown +
+aplicação) já usava a lógica certa (multi-tag-aware) — só o selo
+visual de cada linha ficava pra trás. Em `renderQLBody()` isso é
+particularmente evidente: a mesma função já resolve a checagem certo
+2x, poucas linhas acima, sem reaproveitar pro selo. Resultado: um
+card/item com `tags:['X']` mas sem `tag` (ou com `tag` desatualizado)
+aparecia certinho quando filtrado pela tag real, mas mostrava selo em
+branco na lista. Achado via técnica 2 (comparar contra um padrão já
+resolvido na MESMA função).
+
+Fix: as 3 passam a usar `getTag(getCardTags(x)[0])` em vez de
+`getTag(x.tag)`. Testado com card/item tendo `tags:['realTag']` e
+`tag:''` (exatamente o cenário do bug) nas 3 telas — selo aparece
+corretamente nas 3 depois do fix.
+
+Achado de passagem, fora do escopo pedido: `openSearch()` (busca
+Ctrl+K, ~L28105) tem o mesmo padrão (`getTag(c.tag)`) — não corrigido
+aqui (Busca não é "Funções de card"), fica registrado pra uma rodada
+futura.
+
 ### v8.30.546-dev — 2026-09-02 — Contagem de cards vinculados divergia entre a lista de campanhas e o detalhe (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "ali em campanhas/
