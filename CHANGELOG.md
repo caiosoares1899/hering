@@ -2502,6 +2502,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.555-dev — 2026-09-02 — Corte de bytes: comunicados baixando a árvore inteira em vez de só os ativos
+
+Investigação pedida direto pelo usuário em cima de um print real do
+`_dbg` (relatório de bytes por path, últimas 24h): o path `comunicados`
+sozinho respondia por 2737.5 KB — mais de 1/3 do download do dia
+inteiro de uma squad — numa média de ~72 KB por chamada.
+
+**Causa raiz (inferida, não 100% confirmada — ver instrumentação
+abaixo)**: `_refreshComunicados()` já tenta filtrar `ativo:true` no
+servidor via `query(...)`, com um fallback documentado (mas nunca
+confirmado) pra buscar a árvore inteira sem filtro se `query()` lançar
+por qualquer motivo. Diagnóstico ao vivo (script rodado pelo usuário)
+mostrou: comunicados **ativos** somam só ~3.5 KB (3 itens); a árvore
+**inteira** (ativos + inativos + ~32 rascunhos descartados nunca
+purgados, histórico desde julho) soma 69.9 KB — quase idêntico à média
+observada de 72 KB/chamada. Forte indício de que o fallback estava
+disparando sistematicamente. Nenhum comunicado tem imagem em base64
+(hipótese inicial descartada pelo diagnóstico).
+
+**Achado adicional**: mesmo se o fallback nunca disparasse, nada em
+`kanban-dev.html` usa comunicados inativos — `renderMuralLista()` já
+filtra `c.ativo` antes de desenhar qualquer coisa, igual o popup e o
+badge. `_muralTodos` guardava a árvore inteira em memória sem nenhum
+consumidor precisar disso.
+
+**3 cortes implementados**:
+1. `COMUNICADOS_POLL_MS`: 3min → 12min — avisos não são tempo-real;
+   corta o volume proporcionalmente (~1/4) mesmo no pior caso, sem
+   depender de resolver a causa raiz do fallback.
+2. Instrumentação: `_dbgTrack('comunicados_fallback', ...)` novo,
+   disparado só quando o catch roda de verdade — próxima leitura do
+   relatório de bytes confirma (ou descarta) a teoria acima com dado
+   real, não inferência.
+3. `_muralTodos` agora filtra `c.ativo` na origem (mesmo padrão de
+   `_comunicadosAtivos`, logo acima) — para de guardar peso morto que
+   todo consumidor já descartava de qualquer jeito.
+
+Testado com Playwright: `COMUNICADOS_POLL_MS` confirmado em 12min;
+`_muralTodos` sai corretamente filtrado a só itens `ativo:true`;
+`comunicados_fallback` dispara quando o branch de catch roda.
+
 ### v8.30.554-dev — 2026-09-02 — Capa de card: 2 automações inconsistentes com o comportamento manual (/monitorarbugs)
 
 Rodada de `/monitorarbugs` escopada pelo usuário: "área de colocar capa
