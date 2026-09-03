@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.564-dev</div>
+<div class="version">v8.30.565-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11703,6 +11703,24 @@ function _checkCardLock(cardId){
   // suportar (achado via /monitorarbugs).
   const _lockCard = cards.find(x=>x.id===cardId);
   if(_lockCard && _lockCard.agenteHotline){ _setCardLockUI(false); return; }
+  // Achado real (/monitorarbugs 2026-09-03, "no modal do card"): o card
+  // temporário de edição de Modelo/Recorrente/Agendamento (openQLEdit(),
+  // `_isQLTemp:true`, id tipo `__qltmp__1788447372045`) nunca existe de
+  // verdade em cards_index/Firebase — é 100% client-side, sempre 1 pessoa
+  // editando por vez (cada abertura gera um id novo via Date.now(), nunca
+  // reaproveitado), então "quem mais está editando isso?" não faz sentido
+  // aqui. Sem este early-return, _apply(null) tratava o id fantasma como um
+  // card "livre" pra travar de verdade: escrevia em card_locks/{tempId} (nó
+  // órfão que nunca mais é lido por ninguém) e armava um heartbeat de 60s
+  // reescrevendo ali. Caminho de CANCELAR ainda liberava certinho
+  // (_finishCloseOv() via closeOv() roda com editingId===tempId, chama
+  // _releaseCardLock()); caminho de SALVAR não — saveCard() já zera
+  // editingId=null ANTES de fechar o modal (branch `_editingQLItem`), então
+  // o `if(editingId) _releaseCardLock(editingId);` de _finishCloseOv() nunca
+  // disparava, deixando o heartbeat escrevendo lixo sozinho em segundo
+  // plano até a pessoa abrir outro card de verdade (que aí sim limpa,
+  // mas só no início da PRÓXIMA chamada de _checkCardLock()).
+  if(_lockCard && _lockCard._isQLTemp){ _setCardLockUI(false); return; }
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));

@@ -952,6 +952,54 @@ Mesma disciplina de sempre neste repo:
   puramente local (pilha de navegação), mais fácil de passar batido
   porque não parece uma "escrita" no sentido óbvio da palavra.
 
+- **2026-09-03, área nomeada explicitamente — "no modal do card" (2ª
+  rodada seguida na mesma área, mesmo dia)**: técnica 1 (caminhos
+  paralelos) aplicada a uma parte do modal ainda não coberta — o lock de
+  edição concorrente (`_checkCardLock()`/`_releaseCardLock()`, banner
+  "🔒 Alguém está editando este card agora"). Esse mecanismo já tinha 1
+  guard (card hotline, 2026-09-02) pra um tipo especial de card que
+  passa pelo mesmo `openCard()`; nunca tinha sido comparado contra o
+  OUTRO tipo especial — o card `_isQLTemp` de `openQLEdit()`
+  (temporário/client-only, id `__qltmp__<timestamp>` nunca se repete,
+  usado pra reaproveitar o modal na edição de Modelo/Recorrente/
+  Agendamento). 1 achado real: sem um guard equivalente,
+  `_checkCardLock()` tratava esse card fantasma como um card "livre"
+  pra travar de verdade — escrevia em `card_locks/{tempId}` (nó órfão,
+  nunca mais lido por ninguém) e armava um heartbeat de 60s reescrevendo
+  ali. Os 2 caminhos de fechar esse modal liberavam esse lock de forma
+  DIFERENTE: **cancelar** passa por `_finishCloseOv()` com
+  `editingId` ainda igual ao `tempId`, libera certinho; **salvar**
+  (branch `_editingQLItem` de `saveCard()`) já zera `editingId=null`
+  ANTES de fechar o modal, então o `if(editingId) _releaseCardLock(...)`
+  de `_finishCloseOv()` nunca disparava — o heartbeat ficava escrevendo
+  lixo sozinho em segundo plano até a pessoa abrir outro card de
+  verdade. Mesma classe de "lixo permanente no Firebase" já corrigida
+  HOJE MAIS CEDO pro nó `cards`/`cards_index` (guard `_isQLTemp` nas 3
+  primitivas de escrita, dev v8.30.561-dev), só que dessa vez no nó
+  `card_locks` e por um caminho totalmente diferente (mecanismo de
+  lock, não as primitivas de salvar) — mostra que um guard de card
+  temporário resolvido numa CAMADA (a de salvar) não cobre
+  automaticamente outra camada (a de lock) que também usa `cards[]`
+  como fonte de verdade sobre "isso é um card de verdade?". Fix: mesmo
+  padrão do guard do hotline — early-return em `_checkCardLock()` pra
+  `_isQLTemp===true`, ANTES de qualquer leitura/escrita/listener no
+  Firebase (nunca chega a criar o lock, então não tem nada pra liberar
+  depois — mais robusto que só consertar o timing da liberação no
+  branch de salvar). Testado com harness Node isolado
+  (`_checkCardLock()` real extraída do arquivo, Firebase stubado
+  contando chamadas) comparando old vs. new em 3 cenários: card
+  `_isQLTemp` (a versão antiga fazia 1 leitura + abria 1 listener ao
+  vivo — reproduz o bug; a nova faz 0), card normal e card hotline (sem
+  regressão nos dois, idênticos nas duas versões) (dev v8.30.565-dev).
+  **Lição**: ao revisitar uma área na MESMA sessão em que ela já foi
+  parcialmente corrigida, vale perguntar "o fix de mais cedo cobriu
+  SÓ a camada onde o bug apareceu, ou existem camadas irmãs que
+  compartilham a mesma pergunta de fundo (aqui: 'isso é um card de
+  verdade?') e que ainda não foram auditadas?" — o guard `_isQLTemp` já
+  existia em 3 lugares (fbSaveCard/fbCreateCard/fbSaveAll) antes desta
+  rodada, mas o lock é uma 4ª pergunta sobre o mesmo card fantasma que
+  ninguém tinha feito ainda.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

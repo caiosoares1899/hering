@@ -2593,6 +2593,66 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.565-dev — 2026-09-03 — /monitorarbugs (2ª rodada, área: modal do card): card temporário de Modelo/Recorrente/Agendamento acionava o lock de edição concorrente e vazava escrita no Firebase
+
+Continuação da rodada anterior na mesma área ("no modal do card"),
+técnica 1 (comparar caminhos paralelos pra mesma operação) aplicada
+desta vez ao mecanismo de **lock de edição concorrente**
+(`_checkCardLock()`/`_releaseCardLock()`, "🔒 Alguém está editando este
+card agora"). Esse mecanismo já tinha um guard pra um caso especial (o
+card hotline "Converse com o Agente Ágil" — fix de 2026-09-02, dev
+v8.30.543-dev), mas nunca tinha sido comparado contra o OUTRO tipo de
+card especial que passa pelo mesmo `openCard()`: o card temporário
+`_isQLTemp` que `openQLEdit()` cria em memória (id `__qltmp__<timestamp>`)
+pra reaproveitar o modal na edição de um Modelo/Recorrente/Agendamento.
+
+**1 achado real**: esse card temporário nunca existe de verdade em
+`cards_index`/Firebase — é 100% client-side, sempre 1 pessoa editando
+por vez (cada abertura gera um id novo via `Date.now()`, nunca
+reaproveitado) — então "quem mais está editando isso?" não faz sentido
+nenhum ali. Sem um guard equivalente ao do card hotline,
+`_checkCardLock()` tratava qualquer `__qltmp__...` como um card "livre"
+pra travar de verdade: escrevia em `card_locks/{tempId}` (nó órfão que
+nunca mais é lido por ninguém, já que o id nunca se repete) e armava um
+heartbeat de 60s reescrevendo ali. Os dois caminhos de fechar esse modal
+tratavam a liberação do lock de forma DIFERENTE:
+- **Cancelar** (✕/Cancelar/fora): `editingId` ainda é o `tempId` na hora
+  em que `_finishCloseOv()` roda `if(editingId) _releaseCardLock(editingId);`
+  — libera certinho.
+- **Salvar**: `saveCard()`, no branch `_editingQLItem`, já zera
+  `editingId = null` ANTES de chamar `closeOv('card-ov')` — quando
+  `_finishCloseOv()` roda o mesmo `if(editingId)`, a condição já é falsa
+  e `_releaseCardLock()` NUNCA é chamado. O heartbeat de 60s ficava
+  rodando sozinho em segundo plano, escrevendo lixo no Firebase a cada
+  minuto, até a pessoa abrir outro card de verdade (que aí sim limpa,
+  mas só no início da PRÓXIMA chamada de `_checkCardLock()` — que zera
+  qualquer timer/listener anterior no topo da função, incondicionalmente).
+
+Como editar Modelo/Recorrente/Agendamento (✏️) é uma ação frequente
+(citada em vários fixes desta mesma sessão), o nó `card_locks/` de cada
+squad provavelmente já acumula vários desses ids órfãos de sessões
+passadas — mesma classe de "lixo permanente no Firebase" já corrigida
+hoje pro nó `cards`/`cards_index` (guard `_isQLTemp` nas 3 primitivas de
+escrita, dev v8.30.561-dev), só que num nó diferente (`card_locks`) e
+por um caminho diferente (o mecanismo de lock, não as primitivas de
+salvar card).
+
+Fix: mesmo padrão do guard do card hotline — early-return em
+`_checkCardLock()` pra qualquer card com `_isQLTemp===true`, ANTES de
+qualquer leitura/escrita/listener no Firebase (nunca chega a criar o
+lock, então não tem nada pra liberar depois — mais simples e mais
+robusto que tentar consertar só o timing da liberação no branch de
+salvar).
+
+Testado com harness Node isolado (`_checkCardLock()` real extraída do
+arquivo, `window._get`/`fbSet`/`fbUpdate`/`window._onValue`/
+`_startCardLockHeartbeat` stubados contando chamadas) em 3 cenários:
+card `_isQLTemp` (0 leituras/escritas/listeners na versão nova; a
+versão antiga fazia 1 leitura + abria 1 listener ao vivo — reproduz o
+bug), card normal (sem regressão — continua lendo/assinando o lock
+normalmente nas duas versões) e card hotline (sem regressão — continua
+sem tocar o Firebase nas duas versões, fix anterior intacto).
+
 ### v8.30.564-dev — 2026-09-03 — /monitorarbugs (área: modal dos cards): "← Voltar" perdia/duplicava histórico ao cancelar "alterações não salvas"
 
 Pedido direto do usuário, área "no modal dos cards" — releitura completa

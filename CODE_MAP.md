@@ -411,6 +411,17 @@ detalhe dos 4 call sites.
 - `liberarCardAgora()` — L10872
 - `_renderLockRequestUI()` — L10876
 - `_handleLockRequest()` — L10911
+- `_checkCardLock(cardId)` — perto de L11688 — chamada de dentro de
+  `openCard()`; lê/assina `card_locks/{cardId}` e decide travar em
+  leitura ou assumir. 2 early-returns ANTES de tocar o Firebase, os dois
+  achados via `/monitorarbugs` comparando o card hotline contra outros
+  tipos especiais que passam pelo mesmo `openCard()`: card
+  `agenteHotline` (2026-09-02, dev v8.30.543-dev — compartilhado por
+  design, lock não faz sentido) e card `_isQLTemp` (2026-09-03, dev
+  v8.30.565-dev — temporário/client-only de `openQLEdit()`, id nunca se
+  repete, também não faz sentido travar). `_releaseCardLock(cardId)` —
+  perto de L11773 — chamada por `_finishCloseOv()` (`if(editingId)`) e
+  no `beforeunload`.
 
 ### Notificações in-app
 - `createNotif()` — L22303
