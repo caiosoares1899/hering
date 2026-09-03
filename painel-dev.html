@@ -105,6 +105,29 @@
              radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),
              linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 }
+/* 🌴 Vice City — easter egg, mesma paleta/mecanismo do kanban-dev.html
+   (piada com o trailer de GTA 6: céu lavanda, rosa/malva, horizonte
+   pêssego/laranja, sombras em roxo-vinho — nunca azul-preto genérico).
+   Só entra segurando o botão de tema por VICE_LONGPRESS_MS (ver
+   toggleViceCity() no <script>). Continua um tema ESCURO por baixo (só
+   troca a paleta de cor) — por isso basta trocar os tokens aqui + o
+   gradiente do .ocean; --ink-rgb/--slate-rgb (ver comentário na seção
+   claro acima) também ganham versão vice, senão os ~80 lugares que os
+   usam ficariam com o azul-marinho do tema escuro, destoando do resto. */
+:root[data-theme="vice"]{
+  --deep:#2f1930;--deep-rgb:47,25,48;--glass:rgba(122,74,99,0.55);--glass-b:rgba(197,97,95,0.35);
+  --blue:#A084B0;--accent:#E59F7C;--cyan:#B36B6E;--teal:#9c6f8a;
+  --txt:#f7e8ec;--txt2:rgba(247,232,236,0.72);--txt3:rgba(247,232,236,0.46);
+  --warn:#C9743F;--danger:#C5615F;
+  --ink-rgb:36,21,33;--slate-rgb:69,42,66;
+}
+[data-theme="vice"] .ocean{
+  background:
+    radial-gradient(ellipse at 50% 55%,rgba(229,159,124,.35) 0%,transparent 55%),
+    radial-gradient(ellipse at 20% 12%,rgba(160,132,176,.30) 0%,transparent 55%),
+    radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
+    linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
+}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 /* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
@@ -1162,7 +1185,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 // Safari pode bloquear localStorage).
 (function(){
   try{
-    if(localStorage.getItem('mare_theme')==='light') document.documentElement.setAttribute('data-theme','light');
+    const t=localStorage.getItem('mare_theme');
+    if(t==='light') document.documentElement.setAttribute('data-theme','light');
+    else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
   }catch(e){}
 })();
 </script>
@@ -1219,7 +1244,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
       </div>
       <button class="btn" onclick="loadAll()" title="Atualizar dados">🔄</button>
-      <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
+      <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn hd-btn-adm" onclick="openGlobalBackup()" title="Backup" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾</button>
       <button class="btn hd-btn-adm" onclick="openBoardSetup()" title="Novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙</button>
@@ -2357,7 +2382,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.09 · painel-dev</div>
+<div class="version">v3.10 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2416,25 +2441,76 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-// 🌙☀️ Tema claro/escuro — mesma mecânica do kanban-dev.html (ver
-// _currentTheme()/toggleTheme() lá), porta reduzida só a
-// escuro/claro por enquanto (sem 🌴 Vice City ainda — próxima rodada).
-// Mesma chave de localStorage (mare_theme) que o kanban usa — as duas
-// páginas ficam no mesmo domínio, então o tema já escolhido no board
-// também já vale aqui na primeira visita ao painel.
+// 🌙☀️🌴 Tema claro/escuro/Vice City — mesma mecânica do
+// kanban-dev.html (ver _currentTheme()/toggleTheme()/toggleViceCity()
+// lá). Mesma chave de localStorage (mare_theme) que o kanban usa — as
+// duas páginas ficam no mesmo domínio, então o tema já escolhido no
+// board também já vale aqui na primeira visita ao painel. Porta
+// reduzida: sem a variante B do claro (duplo-clique) do kanban — o
+// painel não tem esse recurso, então não precisa da lógica de
+// diferenciar clique único de duplo-clique no botão.
 function _currentTheme(){
-  return document.documentElement.getAttribute('data-theme')==='light' ? 'light' : 'dark';
+  const t=document.documentElement.getAttribute('data-theme');
+  if(t==='vice') return 'vice';
+  return t==='light' ? 'light' : 'dark';
 }
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
-  if(btn) btn.textContent = _currentTheme()==='light' ? '☀️' : '🌙';
+  if(btn){
+    const t=_currentTheme();
+    btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
+  }
 }
 function toggleTheme(){
+  // Guard: o clique que o navegador dispara logo após soltar um
+  // long-press bem-sucedido (ver _themeBtnPointerDown) seria lido como
+  // um clique normal e sairia do Vice City no mesmo gesto que acabou de
+  // entrar — ignora esse clique específico.
+  if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
   try{ localStorage.setItem('mare_theme', next); }catch(e){}
   _applyThemeButtonIcon();
+}
+// 🌴 Vice City — easter egg interno, mesmo mecanismo/paleta do
+// kanban-dev.html (ver comentário no CSS [data-theme="vice"] pra
+// contexto/referência visual). Só entra segurando o botão de tema por
+// VICE_LONGPRESS_MS sem soltar — de propósito não é clique normal, pra
+// não competir com toggleTheme() nem aparecer sozinho pra quem não
+// souber que existe. Sair é sempre 1 clique normal.
+const VICE_LONGPRESS_MS = 1200;
+let _viceLongPressTimer=null;
+let _viceLongPressFired=false;
+function _themeBtnPointerDown(){
+  _viceLongPressFired=false;
+  if(_viceLongPressTimer) clearTimeout(_viceLongPressTimer);
+  _viceLongPressTimer=setTimeout(()=>{
+    _viceLongPressTimer=null;
+    _viceLongPressFired=true;
+    toggleViceCity();
+  }, VICE_LONGPRESS_MS);
+}
+function _themeBtnPointerUp(){
+  if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
+}
+function toggleViceCity(){
+  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  try{ localStorage.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || ''); }catch(e){}
+  document.documentElement.setAttribute('data-theme','vice');
+  try{ localStorage.setItem('mare_theme','vice'); }catch(e){}
+  _applyThemeButtonIcon();
+  showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
+}
+function exitViceCity(){
+  let prevTheme='';
+  try{ prevTheme = localStorage.getItem('mare_theme_before_vice') || ''; }catch(e){}
+  if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  try{ localStorage.setItem('mare_theme', prevTheme==='light' ? 'light' : 'dark'); }catch(e){}
+  _applyThemeButtonIcon();
+  showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
 }
 _applyThemeButtonIcon();
 // ═══════════════════════════════════════════════════════════════════
