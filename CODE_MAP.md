@@ -396,6 +396,30 @@ detalhe dos 4 call sites.
   escopo de propósito — exigiriam buscar `card_comments` por fora).
   `_marcosDoDia()` NÃO filtra `c.archived` — é retrospecto do que
   aconteceu, um card arquivado depois do marco continua aparecendo.
+- `_timelineCardRow()`/`timelineOnlyMine()`/`_hasActiveFilters()`
+  (2026-09-03, pedido direto do usuário: "falta filtros... comunique
+  mais com o resto do board") — 2ª rodada de UX na Timeline. Linha de
+  card ganhou avatar/prioridade/🚧/🧩/tags (mesma linguagem visual de
+  `makeCardEl()`, antes só título+coluna+texto); `data-id` no
+  `.meudia-row` pra `highlightMyCards()` ("💡 Meus cards" da toolbar)
+  também achar linhas da Timeline (antes era no-op ali — só buscava
+  `.card[data-id]`). `.timeline-toolbar` (topo de `#timeline-view`):
+  contagem rápida + chip "💡 Só eu" (`timelineOnlyMine()`, alterna
+  `activeFilters.owner` pro usuário atual) + atalho "🔭 Filtros" que
+  abre o MESMO painel `#filter-bar` do board normal — Timeline sempre
+  respeitou `passesFilter()`/`activeFilters` (nada novo aí), só faltava
+  um jeito óbvio de acessar/ajustar isso estando na aba. Populate dos
+  `<select>` de `#filter-bar` foi extraído de `toggleFilters()` pra
+  `_populateFilterSelects()` (reuso: `timelineOnlyMine()` precisa
+  popular `#f-owner` ANTES de setar `.value`, senão a option ainda não
+  existe e o valor não gruda). **Achado real, testado com Playwright**:
+  1ª versão usava `position:sticky` no `.timeline-toolbar` pra ficar
+  fixo ao rolar — não funciona neste layout (`<body>` E `<html>` têm
+  `overflow-y:auto` nos dois; quem rola de verdade é `<html>`, mas
+  sticky gruda no ancestral mais PRÓXIMO com overflow≠visible, que é
+  `<body>` — que nunca rola de fato, então a barra sobe junto com o
+  resto do conteúdo como se sticky nem existisse). Removido — `.toolbar`
+  do board normal também não é sticky, mantém consistência.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062

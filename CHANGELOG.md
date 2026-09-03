@@ -2686,6 +2686,63 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.571-dev — 2026-09-03 — UX: Timeline ganha filtros, contagem e visual em linha com o resto do board
+
+Pedido direto do usuário, pensando como quem usa: "falta filtros...
+desenvolva mais essa parte, comunique mais com o resto do board e com o
+jeito que atuamos". A Timeline (v8.30.566-dev) já ia pra prod respeitando
+os filtros de `#filter-bar`/`activeFilters` por baixo dos panos, mas não
+tinha nenhum jeito próprio de acessar isso de dentro da aba, e as linhas
+eram bem mais pobres visualmente que o card real no board.
+
+**Linha de card mais rica** (`_timelineCardRow()`): ganhou avatar do
+responsável (foto/iniciais, igual ao board), 🔥🔴🟡🟢 prioridade, 🚧
+impedimento, 🧩 indicador de supercard e as tags do card — mesma
+linguagem visual de `makeCardEl()` (o card real nas colunas), que antes a
+Timeline não usava nada disso (só título + coluna + texto do
+responsável).
+
+**Barra de filtros/contagem no topo de `#timeline-view`**
+(`.timeline-toolbar`): mostra de cara quantos cards ativos/atrasados/sem
+prazo estão na tela, mais 2 atalhos — "💡 Só eu" filtra na hora pelos
+cards em que você é responsável ou participante (`timelineOnlyMine()`,
+clique de novo tira o filtro), e "🔭 Filtros" abre o MESMO painel de
+Filtros do board de colunas (`toggleFilters()`) — não é um filtro
+paralelo/duplicado: é o `activeFilters` de sempre, então o que se filtra
+na Timeline continua filtrado ao voltar pro board normal, e vice-versa.
+Populate dos `<select>` de `#filter-bar` foi extraído pra
+`_populateFilterSelects()` (reuso — "Só eu" precisa popular `#f-owner`
+antes de setar o valor, senão a option ainda não existe).
+
+**Bug encontrado de brinde**: "💡 Meus cards" da toolbar
+(`highlightMyCards()`, faz os cards piscarem e rola até eles) virava
+no-op silencioso com a Timeline aberta — buscava só `.card[data-id]`, e a
+Timeline usa `.meudia-row`, não `.card`. `_timelineCardRow()` ganhou
+`data-id` e o seletor de `highlightMyCards()` passou a cobrir os dois
+(`.card[data-id], .meudia-row[data-id]`).
+
+**Achado real, testado com Playwright**: a 1ª versão da barra usava
+`position:sticky` pra ficar fixa ao rolar a lista. Não funciona neste
+layout — `<body>` E `<html>` têm `overflow-y:auto` nos dois (checado via
+`getComputedStyle` na cadeia de ancestrais), mas quem rola de verdade é
+`<html>` (`html.scrollTop` mexe, `body.scrollTop` fica sempre 0) — sticky
+gruda no ancestral mais PRÓXIMO com overflow diferente de `visible`, que
+é `<body>`, e como `<body>` nunca rola de fato, a barra sobe junto com o
+resto do conteúdo como se sticky nem existisse (confirmado: `getBoundingClientRect().top`
+foi a -697px depois de rolar 800px). Removido — a `.toolbar` do board
+normal também não é sticky (`position:relative`), então isso mantém a
+Timeline consistente com o resto do app em vez de uma tentativa de "fixo
+ao rolar" que não funcionava de verdade.
+
+Testado com Playwright: avatar/tag/prioridade/🚧 renderizando certo,
+"💡 Só eu" ligando/desligando o filtro de responsável corretamente (3→2→3
+cards), "🔭 Filtros" abrindo/fechando `#filter-bar`, e `highlightMyCards()`
+agora pulsando linhas da Timeline (antes 0 matches, depois do fix
+encontrou as 2 linhas certas). `HELP_CONTENT` (entrada "Timeline")
+atualizado com os novos recursos. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline da sessão (braces -1,
+parens +1).
+
 ### v8.30.570-dev — 2026-09-03 — UX: emoji e posição do botão "Timeline" na toolbar
 
 Pedido direto do usuário depois de validar o Feed de marcos: "coloca esse
