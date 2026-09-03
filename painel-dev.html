@@ -60,10 +60,36 @@
 /* ── FIM SCROLLBARS ─────────────────────────────────────────────── */
 
 :root{
-  --deep:#030d1a;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --deep:#030d1a;--deep-rgb:3,13,26;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
   --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
+}
+/* ☀️ Lençóis Maranhenses — tema claro, mesma paleta final do kanban.html
+   (ver MARINE_GLASS.md §3 "Paleta de cores"). Ativado via
+   [data-theme="light"] no <html>, alternado por toggleTheme() (ver
+   <script>), persistido em localStorage sob a MESMA chave que o kanban
+   usa (mare_theme) — como as duas páginas ficam no mesmo domínio
+   (GitHub Pages), a preferência de tema já escolhida no board também
+   já vale aqui, sem precisar escolher de novo.
+   2026-09-03: 1ª rodada (fundação) — cobre as variáveis de :root e o
+   fundo .ocean, que é o que a maior parte da UI (.btn/.badge/.card...)
+   já usa via var(...). Vários painéis/modais/dropdowns do painel ainda
+   têm cor de superfície ESCURA hardcoded (não usam var(--glass)) —
+   ficam incorretos (escuros) no tema claro até uma rodada de contraste
+   dedicada, mesmo processo iterativo que o kanban.html precisou (2+
+   rodadas de ajuste fino de contraste antes de fechar a paleta). Não é
+   regressão, é o próximo passo natural desta feature. */
+:root[data-theme="light"]{
+  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
+  --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#33D6D0;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
+  --warn:#F6B73C;--danger:#F15B6C;
+}
+[data-theme="light"] .ocean{
+  background:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),
+             radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),
+             linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 }
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
@@ -263,7 +289,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
 /* Login */
-.login-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.97);
+.login-ov{position:fixed;inset:0;z-index:200;background:rgba(var(--deep-rgb),.97);
   backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;
   flex-direction:column;gap:20px;}
 
@@ -1114,6 +1140,18 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   background:var(--sqbg,rgba(56,182,255,.08));flex-shrink:0;
 }
 </style>
+<script>
+// Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
+// escuro (padrão) seguido de troca pro claro assim que o JS principal
+// carregasse lá embaixo. Mesma técnica/mesma chave (mare_theme) do
+// kanban-dev.html — try/catch de segurança (modo privado antigo do
+// Safari pode bloquear localStorage).
+(function(){
+  try{
+    if(localStorage.getItem('mare_theme')==='light') document.documentElement.setAttribute('data-theme','light');
+  }catch(e){}
+})();
+</script>
 </head>
 <body>
 <div style="position:fixed;top:0;left:0;right:0;z-index:99999;background:rgba(249,115,22,.12);border-bottom:1px solid rgba(249,115,22,.4);padding:4px 12px;font-size:10px;font-weight:700;color:#f97316;letter-spacing:.06em;text-align:center;pointer-events:none;">🧪 PAINEL DEV — dados fictícios (dev + omnichannel) · não reflete produção</div>
@@ -1167,6 +1205,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
       </div>
       <button class="btn" onclick="loadAll()" title="Atualizar dados">🔄</button>
+      <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn hd-btn-adm" onclick="openGlobalBackup()" title="Backup" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾</button>
       <button class="btn hd-btn-adm" onclick="openBoardSetup()" title="Novo board" style="color:var(--warn);border-color:rgba(255,209,102,.35);">⚙</button>
@@ -2304,7 +2343,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.07 · painel-dev</div>
+<div class="version">v3.08 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2362,6 +2401,28 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 </script>
 
 <script>
+// ═══════════════════════════════════════════════════════════════════
+// 🌙☀️ Tema claro/escuro — mesma mecânica do kanban-dev.html (ver
+// _currentTheme()/toggleTheme() lá), porta reduzida só a
+// escuro/claro por enquanto (sem 🌴 Vice City ainda — próxima rodada).
+// Mesma chave de localStorage (mare_theme) que o kanban usa — as duas
+// páginas ficam no mesmo domínio, então o tema já escolhido no board
+// também já vale aqui na primeira visita ao painel.
+function _currentTheme(){
+  return document.documentElement.getAttribute('data-theme')==='light' ? 'light' : 'dark';
+}
+function _applyThemeButtonIcon(){
+  const btn=document.getElementById('theme-toggle-btn');
+  if(btn) btn.textContent = _currentTheme()==='light' ? '☀️' : '🌙';
+}
+function toggleTheme(){
+  const next = _currentTheme()==='light' ? 'dark' : 'light';
+  if(next==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  try{ localStorage.setItem('mare_theme', next); }catch(e){}
+  _applyThemeButtonIcon();
+}
+_applyThemeButtonIcon();
 // ═══════════════════════════════════════════════════════════════════
 // 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
 // ───────────────────────────────────────────────────────────────────

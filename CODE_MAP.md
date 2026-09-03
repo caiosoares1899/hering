@@ -652,6 +652,19 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
+### Tema claro/escuro (2026-09-03, só painel-dev.html por enquanto — ainda não promovido)
+Porta do mecanismo de tema do `kanban-dev.html`, reduzida a claro/escuro
+(sem 🌴 Vice City ainda). `toggleTheme()`/`_currentTheme()`/
+`_applyThemeButtonIcon()` — perto do início do `<script>` principal,
+logo antes do bloco `🔬 DEBUG: medidor de bytes`. Botão `#theme-toggle-btn`
+no cabeçalho, ao lado do "🔄 Atualizar". CSS: `:root[data-theme="light"]`
++ `[data-theme="light"] .ocean` logo após o `:root{}` base. Mesma chave
+de localStorage (`mare_theme`) que o `kanban-dev.html` usa — preferência
+compartilhada entre as duas páginas no mesmo domínio. Nova variável
+`--deep-rgb` (mesmo padrão do `.login-ov` do kanban) pra permitir que
+superfícies com cor hardcoded virem theme-aware sem precisar de uma
+regra `[data-theme="light"]` dedicada pra cada uma.
+
 ### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
   listener `auth-change` (perto de `doSignIn()`/`isAdmUser()`) — pedido

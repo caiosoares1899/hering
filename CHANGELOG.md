@@ -11211,6 +11211,51 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.08 · painel-dev — 2026-09-03 · Novo: tema claro/escuro (🌙 Abrolhos / ☀️ Lençóis Maranhenses) — fundação
+
+Pedido direto do usuário: "falta a gente criar modo claro/escuro/vice lá
+nos painéis tb!" — o `kanban.html`/`kanban-dev.html` já tinham os 3 temas
+(dark, light, 🌴 Vice City) há um tempo; `painel.html`/`painel-dev.html`
+nunca tiveram nenhum, 100% fixo no tema escuro. Escopo combinado antes de
+implementar: claro/escuro primeiro (o par "sério"), Vice City fica pra
+uma rodada separada depois; fila normal (dev-first, sem prioridade).
+
+- **Botão de tema novo no cabeçalho** (🌙/☀️, ao lado do "🔄 Atualizar"):
+  `toggleTheme()`/`_currentTheme()`/`_applyThemeButtonIcon()`, mesmo
+  mecanismo do `kanban-dev.html` (porta reduzida — sem a variante B do
+  claro nem o Vice City ainda, só isso mesmo por enquanto).
+- **Mesma chave de localStorage** (`mare_theme`) que o kanban já usa —
+  como as duas páginas vivem no mesmo domínio (GitHub Pages), quem já
+  escolheu "claro" no board abre o painel e já vê claro também, sem
+  escolher de novo. Script inline antes do `<body>` aplica o tema salvo
+  cedo, evitando o flash de escuro→claro.
+- **Paleta idêntica à do `kanban.html`** (`:root[data-theme="light"]`,
+  mesmos valores documentados em `MARINE_GLASS.md` §3) + `.ocean` com
+  gradiente próprio do claro.
+- **Tela de login corrigida** (`.login-ov`, o overlay que cobre a tela
+  inteira até logar) — usava um azul-marinho hardcoded
+  (`rgba(1,8,16,.97)`), não uma variável de tema, então continuava escura
+  mesmo com o toggle em claro. Nova variável `--deep-rgb` (mesmo padrão
+  que o kanban já usa em `.login-ov`) resolve esse caso e fica disponível
+  pra próximas correções do mesmo tipo.
+
+**Escopo conhecido, não fechado nesta rodada**: a maior parte da UI que
+já usa `var(--glass)`/`var(--txt)`/etc (botões, abas, badges, cabeçalho)
+já se adapta automaticamente — confirmado com Playwright, print do
+cabeçalho em claro sem nenhum elemento quebrado. Mas dezenas de modais/
+dropdowns/painéis do arquivo ainda têm cor de superfície ESCURA
+hardcoded (`rgba(3,13,26,...)` e variações — não usam variável), que
+ficam incorretos no tema claro até uma rodada de contraste dedicada —
+mesmo processo iterativo que o `kanban.html` precisou (2+ rodadas de
+ajuste fino antes de fechar a paleta do claro). Não é regressão desta
+entrega, é o próximo passo natural.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright: toggle aplica `data-theme="light"`/remove corretamente, 0
+erros de console, prints comparando escuro/claro na tela de login e no
+cabeçalho pós-login.
+
 ### painel.html v3.07 · painel — 2026-09-01 · promove pra prod — CRUD de Agentes Externos: fim das falhas silenciosas + preserva edição não salva
 
 Promove pra produção o fix v3.06→v3.07 de `painel-dev.html` (validado
