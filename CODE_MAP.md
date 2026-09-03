@@ -361,7 +361,17 @@ detalhe dos 4 call sites.
   por `passesFilter()`) do board normal. `#timeline-view` fica FORA de
   `#board-wrap` de propósito (esse tem `overflow-y:hidden`, pensado só
   pro scroll horizontal das colunas). Reusa as classes `.meudia-sec`/
-  `.meudia-row` de "🌅 Meu Dia" (mesmo visual).
+  `.meudia-row` de "🌅 Meu Dia" (mesmo visual). **Achado real (2026-09-03,
+  relato do usuário — Timeline em branco)**: esconder `#board` exige a
+  classe `board-hidden` (`.board.board-hidden{display:none!important;}`,
+  perto de L2180), NUNCA `style.display` direto — `.board{display:flex
+  !important}` do mobile (`@media max-width:768px`, ativo também com
+  DevTools ocupando metade da tela) vence qualquer inline style. E
+  `.board-wrap.mode-expanded-wrap` tem `height:calc(100vh - ...)` (perto
+  de L627) que reserva altura pela VIEWPORT, não pelo conteúdo — precisa
+  do mesmo escape hatch `:has()` que `raia-mode` já usa (`:has(.board
+  .board-hidden){display:none;}`), senão a Timeline renderiza certinho
+  mas fica empurrada pra baixo de um vão vazio do tamanho de uma tela.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062

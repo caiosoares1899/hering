@@ -2654,6 +2654,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.567-dev — 2026-09-03 — fix crítico: 📅 Timeline aparecia em branco no mobile (e em janela estreita com DevTools aberto)
+
+Reportado direto pelo usuário logo depois da v8.30.566-dev ir ao ar
+("timeline ta assim" + screenshot em branco). Investigação por scripts de
+console (o usuário rodou 3 rodadas até isolar o estado exato) achou 2
+causas em cadeia, as duas em CSS pré-existente que a Timeline nova nunca
+tinha passado por baixo:
+
+1. `.board{display:flex!important;...}`, dentro de `@media(max-width:768px)`
+   (ativo em qualquer viewport ≤768px — celular, ou desktop com DevTools
+   aberto ocupando metade da tela, como no caso reportado) — um
+   `style.display='none'` setado via JS NUNCA vence um `!important` de
+   fora. `#board` continuava visível, mas *vazio* (`board.innerHTML=''`
+   já tinha rodado antes do desvio pra Timeline), um retângulo fantasma
+   sem conteúdo.
+2. Mesmo corrigindo #1, `.board-wrap.mode-expanded-wrap{height:calc(100vh
+   - var(--board-top,150px) - 10px);...}` — altura calculada pela
+   viewport, não pelo conteúdo — continuava reservando ~480px mesmo com
+   `#board` escondido, empurrando a Timeline pra baixo da dobra (o
+   conteúdo real ESTAVA lá — confirmado via `innerHTML.length` nos
+   scripts de diagnóstico — só começava depois de uma faixa vazia do
+   tamanho de uma tela inteira).
+
+Fix nos dois pontos, reaproveitando um padrão que o próprio arquivo já
+usava pro caso irmão (raia): `#board` ganha uma classe (`board-hidden`,
+substituindo o `style.display` direto) com uma regra CSS de
+especificidade maior (`.board.board-hidden{display:none!important;}`)
+que vence o `!important` mobile incondicionalmente; `.board-wrap` ganha
+o mesmo escape hatch que já existia pra `raia-mode` — `:has(.board.board-
+hidden){display:none;}` — some com a reserva de altura calculada por
+viewport quando a Timeline está ativa.
+
+Testado com Playwright em viewport estreito (390×607, reproduzindo o
+cenário exato do relato — DevTools ocupando metade da tela): antes do
+fix, `#board` computava `display:flex` mesmo com a classe/inline-style
+de esconder aplicada, e a Timeline começava a 596px do topo (embaixo de
+um board vazio); depois do fix, `#board`/`#board-wrap` computam
+`display:none` de verdade e a Timeline começa a 116px (logo abaixo da
+toolbar, sem gap nenhum). Regressão checada: viewport desktop largo
+segue funcionando igual (testes da v8.30.566-dev, incluindo Pausar,
+re-rodados sem mudança), e voltar pro board normal (`boardView='kanban'`)
+remove a classe/mostra as colunas certinho nos dois viewports. Checks de
+rotina: `node --check` OK, balanço de chaves/parênteses igual ao
+baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.566-dev — 2026-09-03 — Novo: 📅 Timeline (view cronológica por prazo) + ⏸ Pausar card (métricas sem impedimento público)
 
 Pedido direto do usuário, inspirado em funcionalidades do Trello — pedido
