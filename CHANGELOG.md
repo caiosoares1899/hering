@@ -2593,6 +2593,65 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.561-dev — 2026-09-03 — /monitorarbugs (área: edição de Modelo/Recorrente/Agendamento): guard centralizado — o fix da v8.30.560-dev cobria só 1 dos ~7 caminhos que escreviam o card fantasma
+
+Continuação direta da investigação da v8.30.560-dev (fix crítico do
+alerta "[card sumiu inesperadamente]"). Aquele fix cobriu só o
+`scheduleAutoSave()`. Rodada de `/monitorarbugs` na mesma área (técnica
+1: mapear TODOS os call sites que usam `cards.find(x=>x.id===editingId)`
+seguido de escrita no Firebase) achou que o mesmo bug era alcançável por
+outros **6 caminhos**, cada um faltando o mesmo guard que só
+`saveCard()`/`scheduleAutoSave()` (agora) tinham:
+
+1. `setCardCover()`/`setCardCoverImage()` (clicar numa cor/definir
+   imagem de capa no modal) — escrita IMEDIATA, nem precisa esperar o
+   debounce do autosave.
+2. `setCardPattern()` (escolher um Padrão de card no modal) — mesma
+   escrita imediata.
+3. `removeBlockerTag()` (remover impedimento pelo modal).
+4. `persistSuperChildren()` (vincular um card filho de supercard ao
+   "pai" sendo editado) — **pior que os outros**: `quickCreateSuperChild()`
+   cria o FILHO como card de verdade via `fbCreateCard()` incondicional
+   (correto, o filho não é temporário) e só o vínculo com o pai fantasma
+   falharia — resultado, com o fix anterior isolado, seria um card real
+   ÓRFÃO, sem pai, sem ninguém saber que existe.
+5. Qualquer uma das ~50 chamadas de `fbSaveAll()` espalhadas pelo
+   arquivo (bulk actions, import, drag-and-drop, reordenar...) — a mais
+   insidiosa: **arquivamento automático por idade roda sozinho em
+   background** (`if(n>0){ fbSaveAll(...) }`, sem nenhum clique da
+   pessoa editando o modelo) e reescreve `/cards` inteiro a partir do
+   array local — se o fantasma ainda estivesse ali (modal aberto), ia
+   junto pro Firebase de verdade, mesmo sem ninguém tocar em nenhum
+   botão do modal.
+
+**Decisão de fix**: em vez de blindar os 6 call sites um por um (frágil
+— qualquer botão novo no modal reabriria o mesmo buraco), o guard foi
+pra dentro das PRIMITIVAS de escrita que todos eles (e qualquer código
+futuro) obrigatoriamente passam:
+- `fbSaveCard(card)` e `fbCreateCard(card)` — recusam salvar/criar se
+  `card._isQLTemp` for verdadeiro.
+- `fbSaveAll()` — filtra `_isQLTemp` do array `cards` ANTES de montar
+  `cardsIndex`/`cardsUpdatedAt`/`cardsArchived` e antes do
+  `window._update()` final — protege todos os call sites de uma vez,
+  não só os que alguém lembrar de revisar.
+- `quickCreateSuperChild()` ganhou um guard próprio (`if(_editingQLItem)`)
+  pra bloquear a ação inteira na origem, evitando o card órfão real do
+  achado #4 — os outros 3 (cover/padrão/impedimento) ficam
+  silenciosamente sem efeito nenhum no Firebase (mesmo tom "silencioso
+  como sempre foi" que o resto do modo de edição de item já tinha), sem
+  precisar de guard próprio.
+
+Testado com Playwright contra as funções reais: os 6 caminhos, num
+card `_isQLTemp`, resultam em 0 chamadas de escrita
+(`window._update`/`window._runTransaction`) — incluindo `fbSaveAll()`
+simulando um save estrutural não relacionado (arquivamento) enquanto o
+fantasma ainda está em `cards[]`, confirmando que o payload final nem
+inclui o id fantasma em `cards` nem em `cards_index`. Regressão
+checada: um card normal (`_isQLTemp` ausente) continua salvando
+normalmente pelos 2 caminhos (`fbSaveCard` direto e `fbSaveAll`).
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.560-dev — 2026-09-03 — Fix crítico: editar Modelo/Recorrente/Agendamento podia criar um card fantasma no Firebase (causa real do alerta "[card sumiu inesperadamente]")
 
 Investigado a partir de um log real de produção, colado pelo usuário:

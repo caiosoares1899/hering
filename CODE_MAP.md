@@ -191,6 +191,15 @@ detalhe dos 4 call sites.
   de supercard, fan-out)
 - `fbSaveCard()` — L7800 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
+- **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
+  `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
+  todas recusam operar sobre um card com `card._isQLTemp===true` (o
+  card temporário que `openQLEdit()` empurra em `cards[]` pra
+  reaproveitar o modal na edição de Modelo/Recorrente/Agendamento — ver
+  seção "Modal reaproveitado..." abaixo). Ponto único de defesa contra
+  qualquer call site, presente ou futuro, que tente persistir esse
+  objeto por engano — não precisa (e não deve) ser reproduzido call
+  site por call site.
 
 ### Rede de segurança — detecção ao vivo de card sumido inesperadamente
 - `_reportUnexpectedCardDisappearance()` — L7787 — dispara toast +

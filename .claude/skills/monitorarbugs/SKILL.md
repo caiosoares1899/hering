@@ -848,6 +848,40 @@ Mesma disciplina de sempre neste repo:
   exclusivo de `_pendingCoverColor`/`_pendingCoverImageUrl` ou do card
   original, sem nenhuma escrita direta própria nos 2 campos.
 
+- **2026-09-03, pedido direto do usuário — "nessa linha ai" (continuação
+  da investigação de um alerta real de produção "[card sumiu
+  inesperadamente]")**: não veio de escolha de área por prioridade — o
+  usuário colou um log de erro real de produção numa conversa normal
+  (fora do fluxo desta skill), a investigação achou a causa raiz
+  (`scheduleAutoSave()` sem o mesmo guard `_editingQLItem` que
+  `saveCard()` já tinha, escrevendo um card fantasma ao editar Modelo/
+  Recorrente/Agendamento) e corrigiu na hora — só DEPOIS o usuário
+  invocou `/monitorarbugs "nessa linha ai"` pra varrer a mesma área
+  atrás de irmãos do mesmo bug. Técnica 1 (mapear TODOS os call sites
+  de `cards.find(x=>x.id===editingId)` seguidos de escrita no Firebase)
+  achou **6 caminhos adicionais** com o mesmo gap: `setCardCover()`/
+  `setCardCoverImage()` (capa), `setCardPattern()` (Padrão), 
+  `removeBlockerTag()` (impedimento), `persistSuperChildren()` (vincular
+  filho de supercard — o pior caso, criava um card filho REAL órfão), e
+  qualquer uma das ~50 chamadas de `fbSaveAll()` do arquivo (a mais
+  insidiosa: arquivamento automático por idade roda em BACKGROUND, sem
+  clique nenhum da pessoa editando o modelo). Decisão de fix: em vez de
+  blindar os 6 call sites um por um (frágil — call site novo reabre o
+  buraco), o guard foi pra dentro das 3 PRIMITIVAS de escrita que todo
+  código, presente e futuro, obrigatoriamente passa —
+  `fbSaveCard()`/`fbCreateCard()` recusam `card._isQLTemp`; `fbSaveAll()`
+  filtra `_isQLTemp` do array antes de montar o índice/escrever. Mais 1
+  guard pontual em `quickCreateSuperChild()` (bloqueia a ação inteira,
+  evita o card órfão real). Testado com Playwright contra as funções
+  reais: os 6 caminhos resultam em 0 escritas com um card `_isQLTemp`;
+  card normal continua salvando normalmente nos 2 primitivos (dev
+  v8.30.561-dev). **Lição pra próxima vez que um fix pontual for feito
+  fora do fluxo desta skill** (ex.: resolvendo um relato ao vivo, como
+  aqui): vale considerar já varrer os call sites irmãos na mesma hora,
+  em vez de esperar um `/monitorarbugs` explícito depois — neste caso
+  o fix inicial (só `scheduleAutoSave()`) tinha sido promovido pra prod
+  ANTES da varredura achar os outros 6, exigindo uma 2ª promoção.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

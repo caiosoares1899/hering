@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.560-dev</div>
+<div class="version">v8.30.561-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8107,12 +8107,27 @@ async function fbSaveAll(extra, touchedIds){
   // já é o caminho "caro" (reservado pra essas operações estruturais), então
   // recalcular o índice inteiro junto não muda a ordem de grandeza do
   // custo, e garante que este caminho nunca deixa o índice desatualizado.
+  //
+  // Achado real (investigação de "[card sumiu inesperadamente]",
+  // 2026-09-03 — ver fbSaveCard()/fbCreateCard() logo abaixo pro mesmo
+  // guard): cards temporários de edição de Modelo/Recorrente/Agendamento
+  // (`_isQLTemp`, ver openQLEdit()) ficam em `cards[]` enquanto o modal
+  // está aberto. fbSaveAll() reescreve /cards INTEIRO a partir deste array
+  // local — se QUALQUER operação estrutural disparar fbSaveAll() nesse
+  // meio-tempo (arquivamento automático por idade rodando em background é
+  // o caso mais insidioso: não precisa de nenhum clique da pessoa editando
+  // o modelo), o fantasma seria gravado de verdade, sem passar por nenhum
+  // guard pontual de call site específico. Filtra na fonte, antes de
+  // qualquer coisa usar `cards` — protege TODOS os ~50 call sites de
+  // fbSaveAll() do arquivo de uma vez, não só os que alguém lembrar de
+  // revisar um por um.
+  const cardsToSave = cards.filter(c=>c && !c._isQLTemp);
   const _nowIso = new Date().toISOString();
   const cardsIndex = {};
   const cardsUpdatedAt = {};
   const cardsArchived = {};
   const _touched = touchedIds ? new Set(touchedIds) : null;
-  cards.forEach((c,i)=>{
+  cardsToSave.forEach((c,i)=>{
     if(!c || !c.id) return;
     cardsIndex[c.id] = String(i);
     // cards_updated_at/{cardId}->timestamp: índice PARALELO ao cards_index,
@@ -8166,7 +8181,7 @@ async function fbSaveAll(extra, touchedIds){
   // só confirmam o que já está certo, sem risco de faltar nada no meio.
   if(window._cardsByKey){
     const freshByKey={};
-    cards.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
+    cardsToSave.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
     Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]);
     Object.assign(window._cardsByKey, freshByKey);
   }
@@ -8175,7 +8190,7 @@ async function fbSaveAll(extra, touchedIds){
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
+    window._update(fb(FB), { cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -8205,6 +8220,12 @@ async function fbSaveAll(extra, touchedIds){
 // excluídos deixam a posição livre pra reuso, mesmo comportamento que
 // fbSaveAll() já tinha ao recompactar o array do zero a cada save).
 async function fbCreateCard(card){
+  // _isQLTemp: nunca cria de verdade um card temporário de edição de
+  // Modelo/Recorrente/Agendamento (ver fbSaveAll()/fbSaveCard() logo
+  // acima/abaixo pro mesmo guard, e o comentário completo em
+  // openQLEdit()) — mesma defesa em profundidade, pro caso de algum call
+  // site novo tentar criar um card a partir desse objeto por engano.
+  if(card && card._isQLTemp) return Promise.resolve();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady) return Promise.resolve();
@@ -8265,6 +8286,17 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // classico de "last write wins" num array unico compartilhado.
       // fbSaveAll() continua existindo p/ operacoes que mudam o array
       // inteiro (criar/excluir/reordenar cards).
+      // _isQLTemp: nunca salva de verdade um card temporário de edição de
+      // Modelo/Recorrente/Agendamento (openQLEdit()) — achado real
+      // (2026-09-03, "[card sumiu inesperadamente]"): vários botões do
+      // modal (capa, padrão, impedimento, vincular filho de supercard...)
+      // chamam fbSaveCard()/persistSuperChildren() direto pelo `editingId`
+      // atual, sem saber que ele pode ser um id temporário — cada um
+      // escreveria um card fantasma de verdade no Firebase se clicado
+      // durante essa edição. Em vez de caçar e blindar cada botão um por
+      // um (frágil — qualquer botão novo reabre o mesmo buraco), o guard
+      // fica aqui, no ponto único por onde toda escrita pontual passa.
+      if(card && card._isQLTemp) return Promise.resolve();
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
       if(!window._fbReady) return Promise.resolve();
@@ -23228,6 +23260,16 @@ function _blankSuperChildCard(parentCard, title, {idx=0, modelo=null, user=null}
 function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
+  // Achado real (/monitorarbugs, 2026-09-03, mesma investigação do card
+  // fantasma): o modal reaproveitado pra editar Modelo/Recorrente/
+  // Agendamento (openQLEdit()) não esconde a UI de supercard — sem este
+  // guard, criar um "filho" aqui criava um card REAL de verdade no
+  // Firebase (fbCreateCard não sabe que o "pai" é só um objeto
+  // temporário), mas o vínculo com o pai nunca se completava
+  // (persistSuperChildren() agora bloqueia escrita em card _isQLTemp, ver
+  // fbSaveCard) — resultado: um card órfão de verdade, sem pai, sem
+  // ninguém saber que existe. Bloqueia a ação inteira aqui, na origem.
+  if(_editingQLItem){ showToast('⚠ Não dá pra adicionar card filho enquanto edita um Modelo/Recorrente/Agendamento — salve primeiro.'); return; }
   if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const parent=_superParentBasics();
   const novo=_blankSuperChildCard(parent, title);
