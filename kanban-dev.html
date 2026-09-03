@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.563-dev</div>
+<div class="version">v8.30.564-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12043,21 +12043,39 @@ function updateAgentStatusVisibility(){
 // voltarCardAnterior quem chamou (via a flag _cardNavSkipReset).
 let _cardNavStack = [];
 let _cardNavSkipReset = false;
+// Achado real (/monitorarbugs 2026-09-03, "no modal dos cards"): as duas
+// funções abaixo mexiam em _cardNavStack/_cardNavSkipReset ANTES de chamar
+// closeOv() — que, com o card dirty, abre uma confirmação assíncrona
+// ("Fechar mesmo assim?") que a pessoa pode CANCELAR. Cancelar não desfazia
+// nada: _navigateToCard já tinha empurrado o card atual na pilha (duplicata
+// — o botão "← Voltar" passava a reabrir o mesmo card 2x antes de sumir de
+// verdade) e voltarCardAnterior já tinha tirado o card anterior da pilha
+// PRA SEMPRE (perda silenciosa de um nível de histórico — "voltar" de novo
+// pulava direto pro card anterior a esse, sem avisar). Pior: como
+// _cardNavSkipReset ficava travado em `true` mesmo cancelando, o PRÓXIMO
+// card aberto por QUALQUER caminho normal (clique no board, busca,
+// notificação) herdava a pilha de navegação errada em vez de resetar do
+// zero. Fix: toda mutação de estado só acontece dentro do afterClose, que
+// só roda de verdade se o fechamento for confirmado (ou não havia nada pra
+// confirmar) — cancelar deixa a pilha exatamente como estava.
 function _navigateToCard(cardId){
-  if(editingId) _cardNavStack.push(editingId);
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(cardId));
+  const fromId = editingId;
+  closeOv('card-ov', ()=>{
+    if(fromId) _cardNavStack.push(fromId);
+    _cardNavSkipReset = true;
+    openCard(cardId);
+  });
 }
 function voltarCardAnterior(){
-  let prevId;
-  while(_cardNavStack.length){
-    prevId = _cardNavStack.pop();
-    if(cards.find(c=>c.id===prevId)) break; // pula id de card que não existe mais (excluído nesse meio-tempo)
-    prevId = null;
-  }
-  if(!prevId) return;
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(prevId));
+  let idx = _cardNavStack.length - 1;
+  while(idx>=0 && !cards.find(c=>c.id===_cardNavStack[idx])) idx--; // pula id de card que não existe mais (excluído nesse meio-tempo)
+  if(idx<0) return;
+  closeOv('card-ov', ()=>{
+    const prevId = _cardNavStack[idx];
+    _cardNavStack.length = idx; // descarta o candidato usado + qualquer id inválido pulado depois dele
+    _cardNavSkipReset = true;
+    openCard(prevId);
+  });
 }
 function _updateCardBackBtn(){
   const btn=document.getElementById('m-card-back-btn');

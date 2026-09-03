@@ -913,6 +913,45 @@ Mesma disciplina de sempre neste repo:
   nunca aparecia) e os 2 corrigidos na nova, sem regressão no caso
   legítimo sem relação nenhuma (dev v8.30.563-dev).
 
+- **2026-09-03, área nomeada explicitamente — "no modal dos cards"**:
+  releitura completa de `openCard()`/`openNewCard()`/`saveCard()`/
+  `closeOv()`/`_finishCloseOv()` (todo o "esqueleto" do modal — não as
+  sub-features já auditadas em rodadas anteriores: comentários,
+  checklist, tags, capa, dependências, lock, pin, supercards). 1
+  achado real, técnica 4 estendida (mutação de estado ANTES de um gate
+  assíncrono CANCELÁVEL — mesma classe já vista em Agentes Externos,
+  painel-dev v3.07, mas lá era escrita otimista no Firebase; aqui é
+  estado 100% client-side): `_navigateToCard()`/`voltarCardAnterior()`
+  (pilha do botão "← Voltar", usado ao clicar num pai de supercard, um
+  vínculo, ou uma dependência de dentro do modal) mutavam
+  `_cardNavStack`/`_cardNavSkipReset` ANTES de chamar `closeOv()` — que,
+  com o card sujo, dispara uma confirmação assíncrona que a pessoa pode
+  CANCELAR ("Continuar editando"). Cancelar não desfazia a mutação já
+  feita: `_navigateToCard` deixava uma entrada duplicada na pilha (o
+  card reabria 2x antes do botão "← Voltar" sumir de verdade);
+  `voltarCardAnterior` já tinha tirado o card anterior da pilha PRA
+  SEMPRE (perda silenciosa de 1 nível de histórico — "voltar" de novo
+  pulava direto pro card anterior a esse, sem aviso). Pior: como
+  `_cardNavSkipReset` ficava travado em `true` mesmo cancelando, o
+  PRÓXIMO card aberto por QUALQUER caminho normal (board, busca,
+  notificação) herdava a pilha errada em vez de resetar do zero — um
+  sintoma solto, sem relação óbvia com a ação que o causou, do tipo
+  mais difícil de depurar reativamente. Fix: toda mutação passa a
+  acontecer só dentro do `afterClose` de `closeOv()`, que só roda se o
+  fechamento for realmente confirmado — cancelar deixa a pilha
+  intocada. Testado com harness Node isolado (as duas funções reais
+  extraídas do arquivo, `closeOv`/`openCard` stubados simulando
+  confirmar/cancelar) em 5 cenários: a versão antiga falha nos 2
+  cenários de cancelamento exatamente como descrito acima, a nova passa
+  nos 5 sem regressão no caminho normal (dev v8.30.564-dev). **Lição**:
+  ao ler uma função que chama algo assíncrono-cancelável (`closeOv()`,
+  `uiConfirm()`, qualquer `.then()`), vale perguntar especificamente "o
+  que já mudou de estado ANTES dessa chamada, que um cancelamento não
+  desfaz?" — é uma variação do padrão de "mutação otimista sem
+  reversão" já visto em escrita no Firebase, só que aqui em estado
+  puramente local (pilha de navegação), mais fácil de passar batido
+  porque não parece uma "escrita" no sentido óbvio da palavra.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

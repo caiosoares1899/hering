@@ -176,6 +176,20 @@ detalhe dos 4 call sites.
   aviso nos 2 pontos em que o fechamento é legítimo mesmo com
   `editingId` ainda null (sucesso de `saveCard()`, e o fechamento do
   modal reaproveitado pra editar item de Recorrente/Modelo/Agendamento)
+- `_navigateToCard(cardId)`/`voltarCardAnterior()` — perto de L12061/
+  L12069 — pilha `_cardNavStack` pro botão "← Voltar" (pai de supercard,
+  vínculo, dependência clicados de dentro do modal já aberto). Passam
+  pelo mesmo `closeOv()` acima (ganham de graça a confirmação de
+  "alterações não salvas" se o card estiver sujo). **Achado real
+  (2026-09-03, `/monitorarbugs` "no modal dos cards")**: toda mutação
+  da pilha/flag (`_cardNavStack.push`/`.pop`, `_cardNavSkipReset=true`)
+  só acontece dentro do `afterClose` passado a `closeOv()` — nunca
+  antes de chamar `closeOv()` — porque `afterClose` só roda se o
+  fechamento for de fato confirmado; mutar antes e a pessoa cancelar
+  ("Continuar editando") deixava a pilha corrompida (entrada duplicada
+  em `_navigateToCard`, nível de histórico perdido pra sempre em
+  `voltarCardAnterior`) e `_cardNavSkipReset` travado em `true`, vazando
+  pro PRÓXIMO card aberto por qualquer caminho normal.
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
 - `fbSaveAll()` — L7615 — reescreve `/cards` INTEIRO (só pra operações

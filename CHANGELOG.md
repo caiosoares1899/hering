@@ -2593,6 +2593,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.564-dev — 2026-09-03 — /monitorarbugs (área: modal dos cards): "← Voltar" perdia/duplicava histórico ao cancelar "alterações não salvas"
+
+Pedido direto do usuário, área "no modal dos cards" — releitura completa
+de `openCard()`/`openNewCard()`/`saveCard()`/`closeOv()`/
+`_finishCloseOv()` e do mecanismo de navegação "← Voltar" entre cards
+relacionados (`_navigateToCard()`/`voltarCardAnterior()`, usado ao clicar
+num card pai de supercard, num vínculo, ou numa dependência a partir de
+dentro do modal já aberto). 1 achado real, técnica 4 (mutação de estado
+compartilhado antes de um gate assíncrono que pode ser cancelado — mesma
+classe de bug já corrigida em Agentes Externos, `painel-dev.html` v3.07):
+`_navigateToCard()`/`voltarCardAnterior()` empurravam/tiravam da pilha
+`_cardNavStack` (e travavam `_cardNavSkipReset=true`) **antes** de chamar
+`closeOv()` — que, com o card aberto "sujo" (prioridade/story
+points/impedimento/OKR/comentário digitado sem enviar), dispara uma
+confirmação assíncrona ("Alterações não salvas... Fechar mesmo assim?")
+que a pessoa pode cancelar ("Continuar editando"). Cancelar não desfazia
+nada:
+
+- `_navigateToCard()`: o card atual já tinha sido empurrado na pilha.
+  Cenário: clicar num link, cancelar, continuar editando, terminar e
+  salvar (fecha o modal) — o botão "← Voltar" do PRÓXIMO card aberto
+  herdava essa entrada fantasma, reabrindo o mesmo card 2x antes de
+  sumir de verdade.
+- `voltarCardAnterior()`: o card anterior já tinha sido tirado da pilha
+  PRA SEMPRE. Cenário: A → B → C (pilha `[A,B]`), em C com algo sujo,
+  clicar "← Voltar", cancelar — B já sumiu da pilha; clicar "← Voltar"
+  de novo pula direto pra A, sem passar por B e sem nenhum aviso de que
+  um nível do histórico foi perdido.
+- Pior: como `_cardNavSkipReset` ficava travado em `true` mesmo
+  cancelando, o PRÓXIMO card aberto por QUALQUER caminho normal (clique
+  no board, busca, notificação) herdava a pilha de navegação errada em
+  vez de resetar do zero — sintoma solto, sem relação óbvia com a ação
+  que o causou.
+
+Fix: toda mutação de `_cardNavStack`/`_cardNavSkipReset` passa a
+acontecer só dentro do `afterClose` de `closeOv()` — que só roda de
+verdade se o fechamento for confirmado (ou não havia nada pra
+confirmar). Cancelar agora deixa a pilha exatamente como estava antes do
+clique. Testado com harness Node isolado (funções reais extraídas do
+arquivo, `closeOv`/`openCard` stubados) comparando a versão antiga
+contra a nova em 5 cenários (navegar cancelando/confirmando, voltar
+cancelando/confirmando, pular id de card excluído no meio da pilha): a
+versão antiga falha nos 2 cenários de cancelamento exatamente como
+descrito acima; a nova passa nos 5, sem regressão no caminho normal
+(confirmar navegação, voltar de verdade, pular card excluído).
+
 ### v8.30.563-dev — 2026-09-03 — /monitorarbugs (área: ⛓ Dependências entre cards): ciclo nunca era bloqueado de verdade + badge "pai atual" nunca aparecia
 
 Rodada genérica de `/monitorarbugs` — prioridade 1 (áreas mudadas
