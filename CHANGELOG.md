@@ -12603,6 +12603,46 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-09-03 · fix: `notificar_especialista_externo` não respeitava o toggle por squad (`/monitorarbugs`)
+
+Rodada de `/monitorarbugs` na área "agente ágil orquestrador" — técnica 1
+(comparar caminhos paralelos pra mesma operação): a ferramenta
+`notificar_especialista_externo` (chamada pelo LLM, o modelo identifica o
+especialista pelo histórico de comentários do card) e o gatilho
+determinístico `agenteMarcador.js` ("📎 cc", ver entrada logo abaixo) fazem
+a MESMA chamada de webhook — mas só o segundo respeitava o toggle
+`squads[squadId]===true` que o ADM configura em painel.html → ⚙
+Configurações → 🔌 Agentes Externos (`agentesExternosDoSquad()`).
+
+`makeRealNotificarEspecialistaExternoHandler` (`tools/notificarEspecialistaExterno.js`)
+só checava se existia `webhookUrl` cadastrado pro `especialista` — nunca
+se esse especialista estava HABILITADO no squad atual. `kanban/config/
+agentesExternos/{id}` é um registro GLOBAL (não por squad); um
+especialista com webhook cadastrado mas habilitado só em outro squad (ex.:
+`dados`) ainda recebia o POST de verdade se o modelo, rodando em `dev`
+(único squad em `NOTIFICAR_ESPECIALISTA_SQUADS` hoje), identificasse o id
+certo no histórico de comentários do card — o `uid` `especialista:{id}` de
+um comentário não é validado contra o registro na hora de ser escrito, só
+na hora de notificar. O toggle por squad deixava de ser um limite de
+segurança de verdade nesse caminho específico.
+
+Fix: mesma checagem que `agentesExternosDoSquad()` já faz —
+`config.squads && config.squads[squadId] === true` — antes de considerar
+o webhook usável, com uma mensagem de erro clara (`especialista_nao_habilitado_neste_squad`)
+que o modelo pode repassar num comentário se fizer sentido.
+
+2 testes novos em `__tests__/notificarEspecialistaExterno.test.js` (total
+do arquivo: 12) + fixtures dos testes existentes ajustadas pra incluir
+`squads: { dev: true }` onde o teste espera que o webhook dispare de
+verdade (senão passariam a falhar no novo guard, não no que estavam
+testando). Suíte `agente-agil-orquestrador/` inteira: 284/284 passando.
+Confirmado com um teste isolado que a versão antiga chamava `fetch` de
+verdade no cenário do bug (especialista habilitado só em `dados`,
+`squadId:'dev'`) — a nova não chama.
+
+**Requer redeploy manual** (a função em si não muda, mas o código que ela
+roda mudou): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
 ### 2026-09-01 · `agenteMarcador.js` passa a notificar Agentes Externos de verdade (webhook), não só marcar com "📎 cc"
 
 Pedido direto do usuário, unificando os dois cadastros de "agente" do

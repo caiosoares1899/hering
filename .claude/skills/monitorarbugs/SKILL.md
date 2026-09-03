@@ -1000,6 +1000,54 @@ Mesma disciplina de sempre neste repo:
   rodada, mas o lock é uma 4ª pergunta sobre o mesmo card fantasma que
   ninguém tinha feito ainda.
 
+- **2026-09-03, área nomeada explicitamente — "no agente ágil
+  orquestrador"**: primeira vez que a skill varre `functions/agente-agil-
+  orquestrador/` como área própria de ponta a ponta (rodadas anteriores só
+  tinham tocado nele de passagem: o achado arquitetural de 2026-08-29
+  sobre Automações não disparando pra mutação do orquestrador). Leitura de
+  `squadScope.js` (só constantes, sem lógica — sem achado possível ali),
+  `agenteMarcador.js` (gatilho determinístico "📎 cc" + webhook, achado via
+  comparação com o client — `allIdentities()`/`agentesExternos` listener
+  em kanban-dev.html — **sem divergência**, os dois filtram
+  `squads[ACTIVE_SQUAD]===true && init` de forma idêntica), e
+  `tools/criarCard.js` (checklist/tags/riscos adicionados 2026-09-01,
+  comparado contra `_intakeCriarCard()` no cliente — **sem achados**, os
+  dois lados implementam exatamente o que os comentários prometem,
+  inclusive o casamento por label case/acento-insensitive e o guard
+  `submarcaAtivo` de uma rodada anterior).
+  1 achado real, técnica 1 (comparar caminhos paralelos pra mesma
+  operação): `tools/notificarEspecialistaExterno.js` (a ferramenta que o
+  LLM chama) e `agenteMarcador.js` (o gatilho determinístico "📎 cc", que
+  reaproveita o MESMO handler HTTP) fazem exatamente a mesma chamada de
+  webhook pro especialista externo — mas só `agenteMarcador.js` checava o
+  toggle por squad (`config.squads[squadId]===true`, o campo que o ADM
+  marca em painel.html pra dizer "esse especialista vale NESTE squad").
+  A ferramenta só checava se existia `webhookUrl` cadastrado — como o
+  registro em `kanban/config/agentesExternos/{id}` é GLOBAL (não por
+  squad), um especialista habilitado só em `dados` ainda recebia o POST
+  de verdade se o modelo, rodando em `dev` (squad com a ferramenta REAL
+  ligada), identificasse o id certo no histórico de comentários do card —
+  o `uid` `especialista:{id}` de um comentário nunca é validado contra o
+  registro na hora de ser escrito, só na hora de notificar. O toggle por
+  squad deixava de ser um limite de segurança de verdade nesse caminho
+  específico (mesmo squad-gate documentado/testado em `agenteMarcador.js`
+  não protegia o caminho gêmeo). Fix: mesma checagem que
+  `agentesExternosDoSquad()` já fazia, replicada no handler da ferramenta,
+  com mensagem de erro clara o suficiente pro modelo repassar num
+  comentário se fizer sentido. 2 testes novos + fixtures existentes
+  ajustadas pra incluir `squads` (senão passariam a falhar no novo guard,
+  não no que estavam testando de verdade) — suíte inteira 284/284.
+  Confirmado com teste isolado que a versão antiga chamava `fetch` de
+  verdade no cenário do bug, a nova não chama. **Lição**: quando a MESMA
+  capacidade (aqui: notificar um especialista externo por webhook) tem
+  dois gatilhos — um determinístico em código e um que o LLM decide
+  chamar — os dois precisam passar pelas MESMAS checagens de autorização/
+  escopo; um guard implementado só no caminho determinístico (por ter
+  sido o primeiro a existir, ou por parecer "mais crítico" de proteger)
+  não protege o caminho irmão só porque os dois reaproveitam o mesmo
+  handler de baixo nível — o handler reaproveitado tem que ser o lugar
+  onde o guard mora, não cada chamador.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

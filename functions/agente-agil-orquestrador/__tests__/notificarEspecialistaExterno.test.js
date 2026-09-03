@@ -68,7 +68,7 @@ test('especialista inexistente no cadastro — mesmo erro de webhook não config
 });
 
 test('URL cadastrada não é http(s) — recusa, não chama fetch', async () => {
-  const db = seedDb({ databricks: { webhookUrl: 'ftp://exemplo.com/x' } });
+  const db = seedDb({ databricks: { webhookUrl: 'ftp://exemplo.com/x', squads: { dev: true } } });
   const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
 
   const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
@@ -77,8 +77,33 @@ test('URL cadastrada não é http(s) — recusa, não chama fetch', async () => 
   assert.equal(result.error, 'webhook_url_invalida');
 });
 
-test('dryRun (default): monta o payload mas não chama fetch de verdade', async () => {
+// Achado real (/monitorarbugs 2026-09-03, "no agente ágil orquestrador"):
+// o toggle por squad (mesmo campo que agenteMarcador.js/agentesExternosDoSquad()
+// já respeitava no gatilho determinístico "📎 cc") nunca era checado aqui —
+// um especialista com webhook cadastrado mas habilitado só em OUTRO squad
+// ainda recebia o POST de verdade.
+test('especialista com webhook mas desabilitado NESTE squad — recusa, não chama fetch', async () => {
+  const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dados: true } } });
+  const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
+
+  const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'especialista_nao_habilitado_neste_squad');
+});
+
+test('especialista com webhook mas sem nenhum squad habilitado — recusa, não chama fetch', async () => {
   const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook' } });
+  const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
+
+  const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'especialista_nao_habilitado_neste_squad');
+});
+
+test('dryRun (default): monta o payload mas não chama fetch de verdade', async () => {
+  const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
   const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9' });
 
   const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
@@ -105,7 +130,7 @@ test(
       return { ok: true, status: 200 };
     },
     async () => {
-      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook' } });
+      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
       const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
 
       const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
@@ -121,7 +146,7 @@ test(
   withMockFetch(
     async () => ({ ok: false, status: 500 }),
     async () => {
-      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook' } });
+      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
       const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
 
       const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
@@ -140,7 +165,7 @@ test(
       throw new Error('network down');
     },
     async () => {
-      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook' } });
+      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
       const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
 
       const result = await handler({ especialista: 'databricks', mensagem: 'card concluído' });
@@ -164,7 +189,7 @@ test(
       });
     },
     async () => {
-      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook' } });
+      const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
       const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
       // Aborta na hora (não espera os 8s de verdade) — dispara o abort
       // manualmente pra não deixar o teste lento.
