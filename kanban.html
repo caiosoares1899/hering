@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title id="page-title">🐟 Maré Digital</title>
+  <!-- Ícone próprio pro ambiente de dev (peixes sobre "linhas de código",
+       pedido direto do usuário: "bota esse aqui como o padrão do
+       kanban-dev! q ai eu consigo diferenciar no meu celular" — kanban.html
+       (prod) continua com favicon.png normal, só o dev muda). -->
   <link rel="icon" type="image/png" id="favicon-link" href="favicon.png">
   <!-- PWA -->
   <meta name="theme-color" content="#030d1a">
@@ -5860,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.560</div>
+<div class="version">v8.30.565</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8103,12 +8107,27 @@ async function fbSaveAll(extra, touchedIds){
   // já é o caminho "caro" (reservado pra essas operações estruturais), então
   // recalcular o índice inteiro junto não muda a ordem de grandeza do
   // custo, e garante que este caminho nunca deixa o índice desatualizado.
+  //
+  // Achado real (investigação de "[card sumiu inesperadamente]",
+  // 2026-09-03 — ver fbSaveCard()/fbCreateCard() logo abaixo pro mesmo
+  // guard): cards temporários de edição de Modelo/Recorrente/Agendamento
+  // (`_isQLTemp`, ver openQLEdit()) ficam em `cards[]` enquanto o modal
+  // está aberto. fbSaveAll() reescreve /cards INTEIRO a partir deste array
+  // local — se QUALQUER operação estrutural disparar fbSaveAll() nesse
+  // meio-tempo (arquivamento automático por idade rodando em background é
+  // o caso mais insidioso: não precisa de nenhum clique da pessoa editando
+  // o modelo), o fantasma seria gravado de verdade, sem passar por nenhum
+  // guard pontual de call site específico. Filtra na fonte, antes de
+  // qualquer coisa usar `cards` — protege TODOS os ~50 call sites de
+  // fbSaveAll() do arquivo de uma vez, não só os que alguém lembrar de
+  // revisar um por um.
+  const cardsToSave = cards.filter(c=>c && !c._isQLTemp);
   const _nowIso = new Date().toISOString();
   const cardsIndex = {};
   const cardsUpdatedAt = {};
   const cardsArchived = {};
   const _touched = touchedIds ? new Set(touchedIds) : null;
-  cards.forEach((c,i)=>{
+  cardsToSave.forEach((c,i)=>{
     if(!c || !c.id) return;
     cardsIndex[c.id] = String(i);
     // cards_updated_at/{cardId}->timestamp: índice PARALELO ao cards_index,
@@ -8162,7 +8181,7 @@ async function fbSaveAll(extra, touchedIds){
   // só confirmam o que já está certo, sem risco de faltar nada no meio.
   if(window._cardsByKey){
     const freshByKey={};
-    cards.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
+    cardsToSave.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
     Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]);
     Object.assign(window._cardsByKey, freshByKey);
   }
@@ -8171,7 +8190,7 @@ async function fbSaveAll(extra, touchedIds){
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), { cards, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
+    window._update(fb(FB), { cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -8201,6 +8220,12 @@ async function fbSaveAll(extra, touchedIds){
 // excluídos deixam a posição livre pra reuso, mesmo comportamento que
 // fbSaveAll() já tinha ao recompactar o array do zero a cada save).
 async function fbCreateCard(card){
+  // _isQLTemp: nunca cria de verdade um card temporário de edição de
+  // Modelo/Recorrente/Agendamento (ver fbSaveAll()/fbSaveCard() logo
+  // acima/abaixo pro mesmo guard, e o comentário completo em
+  // openQLEdit()) — mesma defesa em profundidade, pro caso de algum call
+  // site novo tentar criar um card a partir desse objeto por engano.
+  if(card && card._isQLTemp) return Promise.resolve();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady) return Promise.resolve();
@@ -8261,6 +8286,17 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // classico de "last write wins" num array unico compartilhado.
       // fbSaveAll() continua existindo p/ operacoes que mudam o array
       // inteiro (criar/excluir/reordenar cards).
+      // _isQLTemp: nunca salva de verdade um card temporário de edição de
+      // Modelo/Recorrente/Agendamento (openQLEdit()) — achado real
+      // (2026-09-03, "[card sumiu inesperadamente]"): vários botões do
+      // modal (capa, padrão, impedimento, vincular filho de supercard...)
+      // chamam fbSaveCard()/persistSuperChildren() direto pelo `editingId`
+      // atual, sem saber que ele pode ser um id temporário — cada um
+      // escreveria um card fantasma de verdade no Firebase se clicado
+      // durante essa edição. Em vez de caçar e blindar cada botão um por
+      // um (frágil — qualquer botão novo reabre o mesmo buraco), o guard
+      // fica aqui, no ponto único por onde toda escrita pontual passa.
+      if(card && card._isQLTemp) return Promise.resolve();
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
       if(!window._fbReady) return Promise.resolve();
@@ -11667,6 +11703,24 @@ function _checkCardLock(cardId){
   // suportar (achado via /monitorarbugs).
   const _lockCard = cards.find(x=>x.id===cardId);
   if(_lockCard && _lockCard.agenteHotline){ _setCardLockUI(false); return; }
+  // Achado real (/monitorarbugs 2026-09-03, "no modal do card"): o card
+  // temporário de edição de Modelo/Recorrente/Agendamento (openQLEdit(),
+  // `_isQLTemp:true`, id tipo `__qltmp__1788447372045`) nunca existe de
+  // verdade em cards_index/Firebase — é 100% client-side, sempre 1 pessoa
+  // editando por vez (cada abertura gera um id novo via Date.now(), nunca
+  // reaproveitado), então "quem mais está editando isso?" não faz sentido
+  // aqui. Sem este early-return, _apply(null) tratava o id fantasma como um
+  // card "livre" pra travar de verdade: escrevia em card_locks/{tempId} (nó
+  // órfão que nunca mais é lido por ninguém) e armava um heartbeat de 60s
+  // reescrevendo ali. Caminho de CANCELAR ainda liberava certinho
+  // (_finishCloseOv() via closeOv() roda com editingId===tempId, chama
+  // _releaseCardLock()); caminho de SALVAR não — saveCard() já zera
+  // editingId=null ANTES de fechar o modal (branch `_editingQLItem`), então
+  // o `if(editingId) _releaseCardLock(editingId);` de _finishCloseOv() nunca
+  // disparava, deixando o heartbeat escrevendo lixo sozinho em segundo
+  // plano até a pessoa abrir outro card de verdade (que aí sim limpa,
+  // mas só no início da PRÓXIMA chamada de _checkCardLock()).
+  if(_lockCard && _lockCard._isQLTemp){ _setCardLockUI(false); return; }
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
@@ -12007,21 +12061,39 @@ function updateAgentStatusVisibility(){
 // voltarCardAnterior quem chamou (via a flag _cardNavSkipReset).
 let _cardNavStack = [];
 let _cardNavSkipReset = false;
+// Achado real (/monitorarbugs 2026-09-03, "no modal dos cards"): as duas
+// funções abaixo mexiam em _cardNavStack/_cardNavSkipReset ANTES de chamar
+// closeOv() — que, com o card dirty, abre uma confirmação assíncrona
+// ("Fechar mesmo assim?") que a pessoa pode CANCELAR. Cancelar não desfazia
+// nada: _navigateToCard já tinha empurrado o card atual na pilha (duplicata
+// — o botão "← Voltar" passava a reabrir o mesmo card 2x antes de sumir de
+// verdade) e voltarCardAnterior já tinha tirado o card anterior da pilha
+// PRA SEMPRE (perda silenciosa de um nível de histórico — "voltar" de novo
+// pulava direto pro card anterior a esse, sem avisar). Pior: como
+// _cardNavSkipReset ficava travado em `true` mesmo cancelando, o PRÓXIMO
+// card aberto por QUALQUER caminho normal (clique no board, busca,
+// notificação) herdava a pilha de navegação errada em vez de resetar do
+// zero. Fix: toda mutação de estado só acontece dentro do afterClose, que
+// só roda de verdade se o fechamento for confirmado (ou não havia nada pra
+// confirmar) — cancelar deixa a pilha exatamente como estava.
 function _navigateToCard(cardId){
-  if(editingId) _cardNavStack.push(editingId);
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(cardId));
+  const fromId = editingId;
+  closeOv('card-ov', ()=>{
+    if(fromId) _cardNavStack.push(fromId);
+    _cardNavSkipReset = true;
+    openCard(cardId);
+  });
 }
 function voltarCardAnterior(){
-  let prevId;
-  while(_cardNavStack.length){
-    prevId = _cardNavStack.pop();
-    if(cards.find(c=>c.id===prevId)) break; // pula id de card que não existe mais (excluído nesse meio-tempo)
-    prevId = null;
-  }
-  if(!prevId) return;
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(prevId));
+  let idx = _cardNavStack.length - 1;
+  while(idx>=0 && !cards.find(c=>c.id===_cardNavStack[idx])) idx--; // pula id de card que não existe mais (excluído nesse meio-tempo)
+  if(idx<0) return;
+  closeOv('card-ov', ()=>{
+    const prevId = _cardNavStack[idx];
+    _cardNavStack.length = idx; // descarta o candidato usado + qualquer id inválido pulado depois dele
+    _cardNavSkipReset = true;
+    openCard(prevId);
+  });
 }
 function _updateCardBackBtn(){
   const btn=document.getElementById('m-card-back-btn');
@@ -22668,7 +22740,7 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      {src:new URL('favicon-dev.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
       // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
       // 'monochrome' (silhueta branca em fundo transparente, o sistema
       // aplica a própria cor por cima), o Android não consegue retintar o
@@ -22700,11 +22772,13 @@ function initPWA(){
       // Mesmo recorte aplicado ao favicon.png colorido (acima) pros dois
       // continuarem enquadrados igual.
       // 2026-09-02: kanban-dev.html passou a usar favicon-dev.png/
-      // favicon-dev-monochrome.png (arte própria, "peixes sobre linhas de
-      // código") pra diferenciar dev de prod no ícone instalado do celular
-      // — kanban.html (aqui) continua com favicon.png/favicon-monochrome.png
-      // normalmente, sem mudança nenhuma.
-      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
+      // favicon-dev-monochrome.png em vez de favicon.png/favicon-monochrome.png
+      // — arte própria (peixes sobre "linhas de código"), pedido direto do
+      // usuário pra diferenciar dev de prod no ícone instalado do celular
+      // (mesmo nome "Maré Digital" nos dois, sem isso ficavam idênticos).
+      // Mesma técnica de recorte/monocromia aplicada, só a fonte mudou.
+      // kanban.html (prod) continua com favicon.png/favicon-monochrome.png.
+      {src:new URL('favicon-dev-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
@@ -23222,6 +23296,16 @@ function _blankSuperChildCard(parentCard, title, {idx=0, modelo=null, user=null}
 function quickCreateSuperChild(title){
   title=(title||'').trim(); if(!title) return;
   if(!checkEditPermission()) return;
+  // Achado real (/monitorarbugs, 2026-09-03, mesma investigação do card
+  // fantasma): o modal reaproveitado pra editar Modelo/Recorrente/
+  // Agendamento (openQLEdit()) não esconde a UI de supercard — sem este
+  // guard, criar um "filho" aqui criava um card REAL de verdade no
+  // Firebase (fbCreateCard não sabe que o "pai" é só um objeto
+  // temporário), mas o vínculo com o pai nunca se completava
+  // (persistSuperChildren() agora bloqueia escrita em card _isQLTemp, ver
+  // fbSaveCard) — resultado: um card órfão de verdade, sem pai, sem
+  // ninguém saber que existe. Bloqueia a ação inteira aqui, na origem.
+  if(_editingQLItem){ showToast('⚠ Não dá pra adicionar card filho enquanto edita um Modelo/Recorrente/Agendamento — salve primeiro.'); return; }
   if(editingSuperParentIsChild){ showToast('⚠ Este card já é uma versão — supercard vai até 2 níveis só.'); return; }
   const parent=_superParentBasics();
   const novo=_blankSuperChildCard(parent, title);
@@ -27916,12 +28000,12 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon.png aqui; favicon-dev.png em
-// kanban-dev.html) uma única vez, na carga do script — antes de qualquer
-// troca acontecer — pra sempre saber pra onde voltar ao sair do Vice
-// City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
-// nomes diferentes desde a troca acima).
-const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
+// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
+// se/quando este trecho for promovido pra kanban.html) uma única vez, na
+// carga do script — antes de qualquer troca acontecer — pra sempre saber
+// pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
+// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
+const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon-dev.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
   if(!link) return;
@@ -28481,6 +28565,29 @@ function verNoBoardFromSearch(){
 // ═══════════════════════════════════════════════════════
 // PARENT / CHILD CARD
 // ═══════════════════════════════════════════════════════
+// Achado real (/monitorarbugs, 2026-09-03): searchDependsCards() já tinha
+// o comentário "Also exclude cards that have this card as parent (prevent
+// cycles)", mas o código NUNCA implementava essa parte — só excluía o
+// próprio card (`exclude = new Set([editingId])`), nunca os descendentes.
+// `dependsOn` é single-valued (1 pai só por card, mesmo shape do
+// supercard), então qualquer card já dependente de `cardId` (direto ou em
+// cascata) vira ciclo de verdade se escolhido como o NOVO "depende de"
+// dele. buildDepChains()/chainContains() já sobrevivem a um ciclo sem
+// travar (têm `visited`), mas o resultado fica errado — a cadeia
+// silenciosamente esconde metade do ciclo (mesma classe do bug de
+// cascata do supercard, corrigido nesta mesma sessão: proteção só na UI
+// de ADICIONAR, nunca na função que persiste). Helper reaproveitável nos
+// 2 pontos.
+function _dependsDescendants(cardId){
+  const seen = new Set();
+  const stack = [cardId];
+  while(stack.length){
+    const id = stack.pop();
+    const c = cards.find(x=>x.id===id);
+    (c?.dependents||[]).forEach(did=>{ if(!seen.has(did)){ seen.add(did); stack.push(did); } });
+  }
+  return seen;
+}
 function openDependsPicker(){
   document.getElementById('depends-search-inp').value='';
   searchDependsCards('');
@@ -28490,8 +28597,10 @@ function openDependsPicker(){
 function searchDependsCards(q){
   const res = document.getElementById('depends-search-results'); if(!res) return;
   const lower = q.trim().toLowerCase();
-  const exclude = new Set([editingId]);
-  // Also exclude cards that have this card as parent (prevent cycles)
+  // Exclui o próprio card E qualquer descendente dele (direto ou em
+  // cascata) — escolher um desses como "depende de" fecharia um ciclo
+  // de verdade (ver comentário completo em _dependsDescendants()).
+  const exclude = new Set([editingId, ..._dependsDescendants(editingId)]);
   const currentCard = cards.find(c=>c.id===editingId);
   const results = cards.filter(c=>
     !c.archived && !exclude.has(c.id) &&
@@ -28506,7 +28615,12 @@ function searchDependsCards(q){
     const col=columns.find(c=>c.id===card.col);
     const div=document.createElement('div');
     div.className='minicard';
-    const isCurrentParent = currentCard?.parentId===card.id;
+    // Achado real (/monitorarbugs, 2026-09-03): usava currentCard.parentId,
+    // campo que só existe em blocos de Nota (nota.blocos[x].parentId) —
+    // em card é sempre undefined, então este badge nunca aparecia, pra
+    // nenhum card, mesmo quando era de fato o pai atual. Campo certo do
+    // card é dependsOn (ver setDependsOn()/unlinkDependsOn() abaixo).
+    const isCurrentParent = currentCard?.dependsOn===card.id;
     div.innerHTML=
       '<div class="minicard-left" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
       '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
@@ -28519,6 +28633,14 @@ function searchDependsCards(q){
 
 function setDependsOn(parentId){
   const card = cards.find(c=>c.id===editingId); if(!card) return;
+  // Defesa em profundidade: searchDependsCards() já filtra descendentes
+  // da lista mostrada, mas a proteção de verdade fica aqui — mesma lição
+  // do fix de cascata do supercard nesta sessão (checagem só na tela de
+  // ADICIONAR não protege contra ciclo chegando por outro caminho).
+  if(parentId===editingId || _dependsDescendants(editingId).has(parentId)){
+    showToast('⚠ Não dá pra vincular — criaria um ciclo de dependência.');
+    return;
+  }
   card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);
@@ -30296,6 +30418,32 @@ function compararComBackup(){
   _renderComparacaoBackup();
 }
 
+// Achado real (pedido direto do usuário, 2026-09-03): a comparação com
+// backup não distinguia "sumiu por bug" de "foi excluído de propósito"
+// — mostrava tudo junto com o mesmo aviso ⚠, obrigando conferir card por
+// card pra saber qual é qual. O dado pra fazer essa distinção já existe
+// no cliente (_intentionalDeleteIds, populado ao vivo por
+// window._onChildAdded em /cards_deleted_intentionally — ver o comentário
+// completo perto da declaração/listener, "existe só pra alimentar
+// _intentionalDeleteIds... nunca é lido fora disso" — até agora; esta é
+// a 1ª leitura de fora do próprio listener), só nunca tinha sido cruzado
+// aqui. Os 2 helpers abaixo separam a lista em 2 grupos.
+function _backupMissingUnexplained(){
+  return _backupMissingCards.filter(c=>!_intentionalDeleteIds.has(c.id));
+}
+function _backupMissingIntentional(){
+  return _backupMissingCards.filter(c=>_intentionalDeleteIds.has(c.id));
+}
+function _renderBackupMissingRow(c, payloadCols){
+  const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
+  return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
+    '<div style="flex:1;min-width:0;">'+
+      '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
+      '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
+    '</div>'+
+    '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
+  '</div>';
+}
 function _renderComparacaoBackup(){
   const el = document.getElementById('restore-compare');
   if(!el) return;
@@ -30305,20 +30453,21 @@ function _renderComparacaoBackup(){
     return;
   }
   const payloadCols = _restoreParsedPayload?.board?.columns||[];
-  const linhas = _backupMissingCards.map(c=>{
-    const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
-      '<div style="flex:1;min-width:0;">'+
-        '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
-        '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
-      '</div>'+
-      '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
-    '</div>';
-  }).join('');
-  el.innerHTML =
-    '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+_backupMissingCards.length+' card(s) estão no backup mas não existem mais no board atual (nem ativos, nem arquivados). Podem ter sumido por bug, ou terem sido excluídos de propósito — confira um por um antes de restaurar.</div>'+
-    '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+_backupMissingCards.length+')</button>'+
-    linhas;
+  const semExplicacao = _backupMissingUnexplained();
+  const excluidos = _backupMissingIntentional();
+  let html = '';
+  if(semExplicacao.length){
+    html += '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+semExplicacao.length+' card(s) sumiram sem explicação — estão no backup, mas não existem mais no board atual (nem ativos, nem arquivados) e ninguém excluiu de propósito. Pode ser bug — confira antes de restaurar.</div>'+
+      '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+semExplicacao.length+')</button>'+
+      semExplicacao.map(c=>_renderBackupMissingRow(c, payloadCols)).join('');
+  }
+  if(excluidos.length){
+    html += '<details style="margin-top:'+(semExplicacao.length?'14px':'0')+';">'+
+      '<summary style="font-size:11px;color:var(--txt3);cursor:pointer;margin-bottom:8px;">🗑 '+excluidos.length+' card(s) excluído(s) de propósito por alguém — esperado, não é bug (clique pra ver/restaurar)</summary>'+
+      excluidos.map(c=>_renderBackupMissingRow(c, payloadCols)).join('')+
+    '</details>';
+  }
+  el.innerHTML = html;
 }
 
 // Repõe os cards no array local `cards`, remapeando pra uma coluna válida
@@ -30355,9 +30504,15 @@ async function restaurarCardPerdido(cardId){
 
 async function restaurarTodosCardsPerdidos(){
   if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
-  if(!_backupMissingCards.length) return;
-  if(!await uiConfirm('Restaurar TODOS os '+_backupMissingCards.length+' card(s) perdidos de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
-  const lista = _backupMissingCards.slice();
+  // Só o grupo "sumiu sem explicação" — os excluídos de propósito (ver
+  // _backupMissingIntentional()) ficam de fora do botão em massa de
+  // propósito: são exclusões deliberadas de alguém, restaurar em lote
+  // seria desfazer a ação de outra pessoa sem confirmação individual.
+  // Quem quiser desfazer uma dessas específica ainda pode, um por um,
+  // no bloco recolhido "🗑 excluído de propósito".
+  const lista = _backupMissingUnexplained();
+  if(!lista.length) return;
+  if(!await uiConfirm('Restaurar TODOS os '+lista.length+' card(s) que sumiram sem explicação de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
   const ids = lista.map(c=>c.id);
   _inserirCardsRestaurados(lista);
   try{
@@ -30367,7 +30522,7 @@ async function restaurarTodosCardsPerdidos(){
     showToast('❌ Erro ao restaurar — tenta de novo.');
     return;
   }
-  _backupMissingCards = [];
+  _backupMissingCards = _backupMissingCards.filter(c=>!ids.includes(c.id));
   renderBoard();
   _renderComparacaoBackup();
   showToast('✅ '+ids.length+' card(s) restaurados.');

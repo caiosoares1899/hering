@@ -18,6 +18,67 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.565 — 2026-09-03 · Promove pra prod — guard completo contra card fantasma, comparação com backup, e 3 correções na área de dependências/modal do card
+
+Promove pra produção o lote v8.30.561-dev → v8.30.565-dev de
+`kanban-dev.html` — dois deles (v8.30.561-dev, v8.30.562-dev) já
+estavam validados e acumulados pra promoção posterior ("testei,
+funcionou, pode acumular para subir mais tarde"); os três seguintes
+(v8.30.563/564/565-dev) são correções de bug validadas hoje e promovem
+na hora, seguindo junto porque `kanban.html`/`kanban-dev.html` têm que
+ficar em lockstep (não dá pra promover só um subconjunto). Resumo pra
+quem usa o board:
+
+- **🐛 Corrigido, de vez: editar Modelo/Recorrente/Agendamento não cria
+  mais card fantasma nos bastidores, por NENHUM caminho.** O fix
+  anterior (v8.30.560, já em produção) cobriu só 1 dos 7 caminhos
+  possíveis — capa (cor/imagem), Padrão de card, remover impedimento,
+  vincular filho de supercard, e qualquer ação de card em massa
+  (arquivamento automático por idade incluído, que roda sozinho em
+  segundo plano) ainda podiam gravar o fantasma. Agora a proteção fica
+  nas 3 rotinas internas que TODO salvamento de card obrigatoriamente
+  passa, cobrindo qualquer caminho — presente ou futuro.
+- **📊 Comparação com backup agora distingue "sumiu sem explicação" de
+  "excluído de propósito"** (⚙ Configurações → Backup → comparar com
+  backup) — antes, todo card ausente do board mas presente no backup
+  entrava na mesma lista com o mesmo aviso. Agora fica separado em dois
+  grupos: um destacado, com "Restaurar todos" em lote, pra sumiços sem
+  explicação; outro recolhido, discreto, pra exclusões deliberadas
+  (ainda dá pra restaurar 1 por 1 se precisar).
+- **🐛 Corrigido: vincular dependência entre cards podia fechar um
+  ciclo** (⛓ Dependências) — escolher um card que já depende do card
+  atual como o novo "depende de" criava um loop, sem nenhum aviso.
+  Também corrigido: o selo "✓ pai atual" no seletor de dependência nunca
+  aparecia, mesmo quando era de fato o pai já vinculado.
+- **🐛 Corrigido: o botão "← Voltar" do modal do card (ao navegar entre
+  pai/filho de supercard, vínculos, dependências) podia perder ou
+  duplicar um passo do histórico** se você cancelasse o aviso de
+  "alterações não salvas" no meio do caminho.
+- **🐛 Corrigido: editar um Modelo/Recorrente/Agendamento não trava mais
+  ninguém em "modo leitura" por engano** — o aviso "🔒 Alguém está
+  editando este card agora" (pra evitar duas pessoas sobrescreverem o
+  mesmo card ao mesmo tempo) não deveria nunca ter se aplicado a esses
+  itens (cada edição é isolada, sem conflito possível entre pessoas
+  diferentes) — corrigido, sem efeito colateral visível pra quem usa.
+
+Diff restrito ao conteúdo da promoção — além das 2 linhas de ambiente
+de sempre (versão, `VERSION_KEY`), o favicon próprio do dev usa nomes
+de arquivo diferentes por ambiente, divergência intencional já
+promovida numa rodada anterior. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido (braces -1,
+parens +1). `CODE_MAP.md` já tinha sido atualizado nos commits de dev
+correspondentes (anchors de `⛓ Dependências`, `_navigateToCard()`/
+`voltarCardAnterior()`, e o guard `_isQLTemp` em `_checkCardLock()`) —
+sem pendência adicional nesta promoção.
+
+Validado em produção-espelhada via scripts de console (rodados
+diretamente pelo usuário, contra as funções reais da página): os 3
+achados de `/monitorarbugs` desta promoção (ciclo de dependência
+bloqueado + reparenting legítimo continua liberado + badge "✓ pai
+atual" aparecendo; navegação "← Voltar" preservando a pilha ao
+cancelar; nenhuma escrita no Firebase pro lock de um card temporário)
+confirmados "✅✅ TUDO OK" / "✅ passou nos outros dois".
+
 ### v8.30.560 — 2026-09-03 · Promove pra prod — fix crítico de card fantasma + alvo maior pra trocar de squad no mobile
 
 Promove pra produção o lote v8.30.559-dev → v8.30.560-dev de
