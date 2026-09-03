@@ -636,6 +636,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   height:auto;
   overflow-y:visible;
 }
+/* 📅 Timeline (achado real — relato do usuário, board "vazio" empurrando a
+   timeline pra baixo da dobra): a altura calc(100vh - ...) acima não depende
+   do conteúdo de #board, só da viewport — reservava ~480px mesmo com #board
+   escondido (.board-hidden, ver renderBoard()). Some com o wrapper inteiro
+   nesse caso, mesmo padrão :has() já usado pra raia-mode logo acima. */
+.board-wrap.mode-expanded-wrap:has(.board.board-hidden){
+  display:none;
+}
 .board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
 /* Tamanho de fonte do board — pedido direto (dificuldade de leitura). `zoom`
    em vez de `transform:scale()`: escala tudo (fonte, padding, cards)
@@ -2172,6 +2180,13 @@ input[type="date"]{-moz-appearance:textfield;}
    container próprio (lista vertical centralizada, diferente do scroll
    horizontal de colunas do board normal). */
 #timeline-view{display:none;flex-direction:column;padding:16px 18px 60px;max-width:760px;margin:0 auto;width:100%;box-sizing:border-box;}
+/* Achado real (relato do usuário — Timeline aparecia em branco): o mobile
+   (@media max-width:768px, também ativo em janela estreita com DevTools
+   aberto do lado) tem ".board{display:flex!important;...}" — um style.display
+   inline setado via JS nunca vence um !important de fora. #board.board-hidden
+   (2 classes = especificidade maior que ".board" sozinho) resolve isso
+   incondicionalmente, sem precisar tocar na regra mobile original. */
+.board.board-hidden{display:none!important;}
 .timeline-semprazo{margin-top:6px;}
 .timeline-semprazo summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
 .timeline-semprazo summary::-webkit-details-marker{display:none;}
@@ -5878,7 +5893,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.566-dev</div>
+<div class="version">v8.30.567-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10512,11 +10527,18 @@ function renderBoard(){
   // mobile) faz sentido fora do board de colunas.
   const timelineEl = document.getElementById('timeline-view');
   if(boardView==='timeline'){
-    board.style.display='none';
+    // Achado real (relato do usuário, board "sumindo" em branco): no mobile
+    // (ou janela estreita com DevTools aberto), ".board{display:flex!important;}"
+    // (@media max-width:768px) vence qualquer style.display inline setado
+    // aqui — o board ficava visível, porém VAZIO (o innerHTML='' já rodou
+    // acima), empurrando a timeline pra baixo da dobra. .board-hidden (CSS,
+    // 2 classes = especificidade maior) resolve isso de vez.
+    board.classList.add('board-hidden');
     if(timelineEl){ timelineEl.style.display='flex'; renderTimelineView(activeCards); }
     updateMetrics();
     return;
   }
+  board.classList.remove('board-hidden');
   board.style.display='';
   if(timelineEl) timelineEl.style.display='none';
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
