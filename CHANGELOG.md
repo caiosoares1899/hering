@@ -2558,6 +2558,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.559-dev — 2026-09-03 — Alvo de toque maior pra trocar de squad no mobile: título "Maré Digital" inteiro fica clicável
+
+Pedido direto do usuário: "lá no mobile, a setinha para mudar de squad
+ta mt pequena, ai fica ruim de clicar... sugiro que clicar no 'maré
+digital' como um todo já faça a lista de squads descer".
+
+O trocador de squad (`toggleSquadSwitcher()`) já respondia a clique no
+nome do squad atual (`#sprint-badge`) e na setinha `▾`
+(`.squad-switcher-caret`, 9px) — os dois pequenos, especialmente a
+setinha, difíceis de acertar no touch. `.hd-title` (o "🐟 Maré Digital"
+ao lado, bem maior) não fazia nada ao tocar.
+
+Fix: `.hd-title` ganhou o mesmo `onclick="toggleSquadSwitcher(event)"`,
+virando um alvo de toque bem maior — clicar em qualquer parte do texto
+"Maré Digital" agora também abre a lista de squads, sem precisar acertar
+a setinha. Cuidado necessário: o emoji 🐟 dentro do próprio `.hd-title`
+já tem sua própria ação (`toggleFishBackground()`, liga/desliga os
+peixinhos do fundo) — sem tratamento, clicar nele acionaria as duas
+coisas ao mesmo tempo (o clique no 🐟 borbulha pro `.hd-title` pai).
+`toggleFishBackground()` passou a receber o evento e chamar
+`e?.stopPropagation()`, isolando as duas ações: tocar no 🐟 só mexe nos
+peixinhos, tocar em qualquer outro ponto do título abre o trocador de
+squad.
+
+Testado com Playwright: clique na borda direita do texto do título
+(longe do 🐟) abre o dropdown; clique no 🐟 alterna os peixinhos e NÃO
+abre o dropdown. Checks de rotina: `node --check` OK, balanço de
+chaves/parênteses igual ao baseline conhecido da sessão (braces -1,
+parens +1).
+
 ### v8.30.558-dev — 2026-09-02 — Capa de imagem no card: lazy loading (corrige demora escalando com a quantidade de capas)
 
 Reportado direto pelo usuário logo depois da promoção anterior: "as

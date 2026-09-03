@@ -3248,7 +3248,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="app" id="app-root" style="display:none;">
 <div class="hd">
   <div class="hd-l">
-    <div class="hd-title"><span id="fish-toggle-btn" onclick="toggleFishBackground()" style="cursor:pointer;" title="Clique pra mostrar/esconder os peixinhos do fundo">🐟</span> Maré Digital</div>
+    <div class="hd-title" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad"><span id="fish-toggle-btn" onclick="toggleFishBackground(event)" style="cursor:pointer;" title="Clique pra mostrar/esconder os peixinhos do fundo">🐟</span> Maré Digital</div>
     <span class="squad-switcher-wrap">
       <span class="hd-badge" id="sprint-badge" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad">Carregando...</span>
       <span class="squad-switcher-caret" onclick="toggleSquadSwitcher(event)">▾</span>
@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.558-dev</div>
+<div class="version">v8.30.559-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -27858,7 +27858,14 @@ function _applyFishBgVisibility(){
   if(fw) fw.style.display = _fishBgOn ? '' : 'none';
   if(bw) bw.style.display = _fishBgOn ? '' : 'none';
 }
-function toggleFishBackground(){
+function toggleFishBackground(e){
+  // e?.stopPropagation() — o 🐟 vive dentro de .hd-title, que agora também
+  // abre o trocador de squad (pedido direto: "a setinha pra mudar de squad
+  // ta mt pequena... clicar no 'maré digital' como um todo já faça a lista
+  // de squads descer"). Sem isso, clicar no peixinho junto do peixinho
+  // ligava/desligava os peixinhos E abria o trocador de squad no mesmo
+  // toque — os dois cliques bloqueados fica cada um só na sua ação.
+  e?.stopPropagation();
   _fishBgOn = !_fishBgOn;
   safeLS.setItem('fish_bg_off', _fishBgOn ? '0' : '1');
   _applyFishBgVisibility();
