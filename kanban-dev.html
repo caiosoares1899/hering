@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.561-dev</div>
+<div class="version">v8.30.562-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30344,6 +30344,32 @@ function compararComBackup(){
   _renderComparacaoBackup();
 }
 
+// Achado real (pedido direto do usuário, 2026-09-03): a comparação com
+// backup não distinguia "sumiu por bug" de "foi excluído de propósito"
+// — mostrava tudo junto com o mesmo aviso ⚠, obrigando conferir card por
+// card pra saber qual é qual. O dado pra fazer essa distinção já existe
+// no cliente (_intentionalDeleteIds, populado ao vivo por
+// window._onChildAdded em /cards_deleted_intentionally — ver o comentário
+// completo perto da declaração/listener, "existe só pra alimentar
+// _intentionalDeleteIds... nunca é lido fora disso" — até agora; esta é
+// a 1ª leitura de fora do próprio listener), só nunca tinha sido cruzado
+// aqui. Os 2 helpers abaixo separam a lista em 2 grupos.
+function _backupMissingUnexplained(){
+  return _backupMissingCards.filter(c=>!_intentionalDeleteIds.has(c.id));
+}
+function _backupMissingIntentional(){
+  return _backupMissingCards.filter(c=>_intentionalDeleteIds.has(c.id));
+}
+function _renderBackupMissingRow(c, payloadCols){
+  const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
+  return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
+    '<div style="flex:1;min-width:0;">'+
+      '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
+      '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
+    '</div>'+
+    '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
+  '</div>';
+}
 function _renderComparacaoBackup(){
   const el = document.getElementById('restore-compare');
   if(!el) return;
@@ -30353,20 +30379,21 @@ function _renderComparacaoBackup(){
     return;
   }
   const payloadCols = _restoreParsedPayload?.board?.columns||[];
-  const linhas = _backupMissingCards.map(c=>{
-    const colNome = payloadCols.find(col=>col.id===c.col)?.name || c.col || '?';
-    return '<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;">'+
-      '<div style="flex:1;min-width:0;">'+
-        '<div style="font-size:11px;font-weight:600;color:#e8f4fd;">'+esc(c.title||'(sem título)')+'</div>'+
-        '<div style="font-size:10px;color:rgba(150,200,240,.6);">coluna no backup: '+esc(colNome)+(c.archived?' · estava arquivado':'')+' · id: '+esc(c.id)+'</div>'+
-      '</div>'+
-      '<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.35);flex-shrink:0;" onclick="restaurarCardPerdido(\''+c.id.replace(/'/g,"\\'")+'\')">↩ Restaurar</button>'+
-    '</div>';
-  }).join('');
-  el.innerHTML =
-    '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+_backupMissingCards.length+' card(s) estão no backup mas não existem mais no board atual (nem ativos, nem arquivados). Podem ter sumido por bug, ou terem sido excluídos de propósito — confira um por um antes de restaurar.</div>'+
-    '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+_backupMissingCards.length+')</button>'+
-    linhas;
+  const semExplicacao = _backupMissingUnexplained();
+  const excluidos = _backupMissingIntentional();
+  let html = '';
+  if(semExplicacao.length){
+    html += '<div style="font-size:11px;color:var(--warn);font-weight:700;margin-bottom:8px;">⚠ '+semExplicacao.length+' card(s) sumiram sem explicação — estão no backup, mas não existem mais no board atual (nem ativos, nem arquivados) e ninguém excluiu de propósito. Pode ser bug — confira antes de restaurar.</div>'+
+      '<button class="btn btn-sm" style="margin-bottom:8px;color:var(--teal);border-color:rgba(29,233,182,.35);" onclick="restaurarTodosCardsPerdidos()">↩ Restaurar todos ('+semExplicacao.length+')</button>'+
+      semExplicacao.map(c=>_renderBackupMissingRow(c, payloadCols)).join('');
+  }
+  if(excluidos.length){
+    html += '<details style="margin-top:'+(semExplicacao.length?'14px':'0')+';">'+
+      '<summary style="font-size:11px;color:var(--txt3);cursor:pointer;margin-bottom:8px;">🗑 '+excluidos.length+' card(s) excluído(s) de propósito por alguém — esperado, não é bug (clique pra ver/restaurar)</summary>'+
+      excluidos.map(c=>_renderBackupMissingRow(c, payloadCols)).join('')+
+    '</details>';
+  }
+  el.innerHTML = html;
 }
 
 // Repõe os cards no array local `cards`, remapeando pra uma coluna válida
@@ -30403,9 +30430,15 @@ async function restaurarCardPerdido(cardId){
 
 async function restaurarTodosCardsPerdidos(){
   if(typeof canBulkDelete==='function' && !canBulkDelete()){ showToast('🔒 Só ADM/PO/Organizador pode restaurar cards de um backup.'); return; }
-  if(!_backupMissingCards.length) return;
-  if(!await uiConfirm('Restaurar TODOS os '+_backupMissingCards.length+' card(s) perdidos de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
-  const lista = _backupMissingCards.slice();
+  // Só o grupo "sumiu sem explicação" — os excluídos de propósito (ver
+  // _backupMissingIntentional()) ficam de fora do botão em massa de
+  // propósito: são exclusões deliberadas de alguém, restaurar em lote
+  // seria desfazer a ação de outra pessoa sem confirmação individual.
+  // Quem quiser desfazer uma dessas específica ainda pode, um por um,
+  // no bloco recolhido "🗑 excluído de propósito".
+  const lista = _backupMissingUnexplained();
+  if(!lista.length) return;
+  if(!await uiConfirm('Restaurar TODOS os '+lista.length+' card(s) que sumiram sem explicação de volta pro board? Cada um volta exatamente como estava no backup.', {title:'↩ Restaurar todos', okText:'Restaurar todos'})) return;
   const ids = lista.map(c=>c.id);
   _inserirCardsRestaurados(lista);
   try{
@@ -30415,7 +30448,7 @@ async function restaurarTodosCardsPerdidos(){
     showToast('❌ Erro ao restaurar — tenta de novo.');
     return;
   }
-  _backupMissingCards = [];
+  _backupMissingCards = _backupMissingCards.filter(c=>!ids.includes(c.id));
   renderBoard();
   _renderComparacaoBackup();
   showToast('✅ '+ids.length+' card(s) restaurados.');

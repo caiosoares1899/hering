@@ -2593,6 +2593,44 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.562-dev — 2026-09-03 — Comparação com backup agora distingue "sumiu sem explicação" de "excluído de propósito"
+
+Pedido direto do usuário: "quando eu comparo um backup com os cards
+existentes, ele não consegue fazer distinção do que foi excluído
+daquilo que sumiu, acho que pode ser legal". A tela de restauração
+(⚙ Configurações → Backup → comparar com backup) listava TODO card
+presente no backup mas ausente do board atual (nem ativo, nem
+arquivado) na mesma lista, com o mesmo aviso ⚠ genérico — "podem ter
+sumido por bug, ou terem sido excluídos de propósito — confira um por
+um antes de restaurar".
+
+O dado pra fazer essa distinção já existia no cliente:
+`_intentionalDeleteIds`, um `Set` populado ao vivo (`_onChildAdded` em
+`/cards_deleted_intentionally`, o mesmo índice que a rede de segurança
+"[card sumiu inesperadamente]" já usa há tempos pra saber quando NÃO
+disparar o alerta) — só nunca tinha sido cruzado aqui. O comentário
+original desse listener até dizia "nunca é lido fora disso" — esta é a
+1ª vez que algo além da própria rede de segurança consulta esse índice.
+
+Fix: `compararComBackup()` continua achando os cards ausentes do jeito
+que já fazia; `_renderComparacaoBackup()` agora separa o resultado em 2
+grupos, usando `_intentionalDeleteIds`:
+- **⚠ Sumiram sem explicação** — continua em destaque, com "Restaurar
+  todos" em lote (só este grupo agora, não mais tudo junto).
+- **🗑 Excluídos de propósito** — bloco recolhido (`<details>`),
+  discreto, sem botão de restaurar em massa de propósito (é uma
+  exclusão deliberada de alguém; desfazer em lote sem confirmação
+  individual pareceu arriscado demais) — ainda dá pra restaurar 1 por 1
+  se for o caso.
+
+Testado com Playwright contra as funções reais: card em
+`cards_deleted_intentionally` cai no grupo certo, HTML renderiza as 2
+seções, "Restaurar todos" só mexe no grupo "sem explicação" (o
+intencional continua na lista, disponível pra restaurar individualmente
+depois), e restaurar 1 card do grupo intencional funciona normalmente.
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.561-dev — 2026-09-03 — /monitorarbugs (área: edição de Modelo/Recorrente/Agendamento): guard centralizado — o fix da v8.30.560-dev cobria só 1 dos ~7 caminhos que escreviam o card fantasma
 
 Continuação direta da investigação da v8.30.560-dev (fix crítico do
