@@ -2654,6 +2654,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.570-dev — 2026-09-03 — UX: emoji e posição do botão "Timeline" na toolbar
+
+Pedido direto do usuário depois de validar o Feed de marcos: "coloca esse
+timeline com outro emoji, esse já é do calendários; coloca ele ao lado
+de calendários". O botão nascia com 📅, o mesmo emoji já usado por "📅
+Calendários" logo ali na toolbar — troca pra 🛤️ (trilho, remete à ideia
+de linha do tempo) pra não duplicar. Botão também movido: saiu de logo
+após "⇔ Raia" e passou a ficar imediatamente ao lado de "📅 Calendários".
+
+`HELP_CONTENT` (entrada "Timeline") atualizado em conjunto: ícone trocado
+pra 🛤️, as 3 menções a "📅 Timeline" no texto viraram "🛤️ Timeline", e a
+frase de abertura ganhou "na toolbar, ao lado de '📅 Calendários'" pra
+refletir a nova posição. Puramente cosmético — nenhum comportamento da
+Timeline (agrupamento, filtros, duplo clique pro feed) muda. Checks de
+rotina: `node --check` OK, balanço de chaves/parênteses igual ao
+baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.569-dev — 2026-09-03 — Novo: 📰 Feed de marcos na Timeline (duplo clique num dia)
 
 Pedido direto do usuário, depois de validar os fixes anteriores da
