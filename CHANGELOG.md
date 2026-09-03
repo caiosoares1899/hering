@@ -18,6 +18,38 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.570 — 2026-09-03 · Promove pra prod — 📅 Timeline, ⏸ Pausar card, 📰 Feed de marcos
+
+Promove pra produção o lote v8.30.566-dev → v8.30.570-dev de
+`kanban-dev.html`:
+
+- **📅 Timeline**: novo botão na toolbar (🛤️, ao lado de "📅
+  Calendários") troca o board de colunas por uma lista cronológica dos
+  cards ativos, agrupados por prazo (🔴 Atrasado, depois um grupo por
+  dia — Hoje, Amanhã, datas seguintes — e por último "🗂 Sem prazo
+  definido", recolhido). Respeita os filtros já ativos.
+- **⏸ Pausar card**: botão novo no rodapé do modal do card. Para a
+  contagem de tempo/métricas (cycle time e lead time) sem marcar o card
+  como impedimento público (diferente do 🚧 Impedimento existente) —
+  útil pra pausas que não são bloqueio de ninguém (férias do
+  responsável, prioridade temporariamente trocada, etc.).
+- **📰 Feed de marcos**: duplo clique no cabeçalho de um dia específico
+  na Timeline abre um feed estilo rede social do que foi executado no
+  board naquele dia (cards criados 🆕, movidos 🔀, concluídos 🏁), mais
+  recente primeiro — construído 100% a partir de dados já carregados,
+  sem nenhuma leitura nova no Firebase.
+- 2 correções de exibição da Timeline encontradas logo após o lançamento
+  em dev (tela em branco no mobile/janela estreita; layout em colunas
+  horizontais em vez de lista vertical) e um ajuste de emoji/posição do
+  botão na toolbar (evitava duplicar o 📅 já usado por Calendários).
+
+Central de Ajuda (`HELP_CONTENT`) atualizada em conjunto com cada
+entrega. Checks de rotina: `node --check` OK em todo o lote, balanço de
+chaves/parênteses do arquivo igual ao baseline da sessão (braces -1,
+parens +1) — ver as entradas de dev correspondentes (v8.30.566-dev a
+v8.30.570-dev) pro detalhamento técnico completo, incluindo os
+Playwright tests de cada etapa.
+
 ### v8.30.565 — 2026-09-03 · Promove pra prod — guard completo contra card fantasma, comparação com backup, e 3 correções na área de dependências/modal do card
 
 Promove pra produção o lote v8.30.561-dev → v8.30.565-dev de
