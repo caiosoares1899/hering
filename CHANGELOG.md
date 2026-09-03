@@ -11211,6 +11211,39 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.10 · painel-dev — 2026-09-03 · 🌴 Vice City chega ao painel
+
+Pedido direto do usuário, depois de validar o par claro/escuro (v3.08/
+v3.09): "aprovado! pode fazer o vice agora". Porta o easter egg do
+`kanban-dev.html` (ver `CHANGELOG.md` de lá, v8.30.549-dev a 551-dev,
+pra todo o histórico de calibração da paleta) — mesmo mecanismo, mesma
+paleta final já calibrada (terracota/pêssego/lavanda/laranja
+queimado/rosa-poeira, nunca azul-preto genérico).
+
+- Segurar o botão de tema (🌙/☀️) por 1,2s entra no Vice City; sair é
+  sempre 1 clique normal. Mesma chave de localStorage (`mare_theme`)
+  que o kanban usa — ainda compartilhada entre as duas páginas.
+- `:root[data-theme="vice"]` com a paleta final do kanban + `.ocean`
+  com o mesmo gradiente (céu lavanda → pôr do sol laranja → vinho
+  escuro). Continua um tema ESCURO por baixo (só troca a cor), então a
+  maior parte da UI herda automaticamente via `var(--glass)`/
+  `var(--txt)`/etc. — igual já valia pro claro/escuro.
+- `--ink-rgb`/`--slate-rgb` (as variáveis criadas na v3.09 pro fix de
+  contraste do claro) ganharam versão vice também — sem isso, os ~80
+  lugares que as usam ficariam com o azul-marinho do escuro, destoando
+  do resto da paleta rosa/roxa.
+- Sem favicon próprio do Vice City aqui (o `painel.html` usa um favicon
+  de emoji embutido via data-URI, não um arquivo `.png` como o
+  `kanban.html`) — fora do escopo deste pedido, não implementado.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright: long-press real (pointer down/up simulado, 1,4s) entra no
+Vice City; um clique normal depois sai corretamente pro tema anterior
+(dark), sem ficar preso nem re-entrar no mesmo gesto. Print da tela de
+login e da aba Status em Vice City, cores e contraste corretos (herdado
+do fix da v3.09).
+
 ### painel-dev.html v3.09 · painel-dev — 2026-09-03 · Fix de contraste do tema claro: superfícies escuras hardcoded viram theme-aware (~80 ocorrências)
 
 Reportado direto pelo usuário, com prints reais das abas "🔋 Status" e

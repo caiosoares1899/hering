@@ -652,18 +652,22 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Tema claro/escuro (2026-09-03, só painel-dev.html por enquanto — ainda não promovido)
-Porta do mecanismo de tema do `kanban-dev.html`, reduzida a claro/escuro
-(sem 🌴 Vice City ainda). `toggleTheme()`/`_currentTheme()`/
-`_applyThemeButtonIcon()` — perto do início do `<script>` principal,
-logo antes do bloco `🔬 DEBUG: medidor de bytes`. Botão `#theme-toggle-btn`
-no cabeçalho, ao lado do "🔄 Atualizar". CSS: `:root[data-theme="light"]`
-+ `[data-theme="light"] .ocean` logo após o `:root{}` base. Mesma chave
-de localStorage (`mare_theme`) que o `kanban-dev.html` usa — preferência
+### Tema claro/escuro/🌴 Vice City (2026-09-03, só painel-dev.html por enquanto — ainda não promovido)
+Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
+variante B do claro (duplo-clique) do kanban, que o painel não tem.
+`toggleTheme()`/`_currentTheme()`/`_applyThemeButtonIcon()`/
+`toggleViceCity()`/`exitViceCity()`/`_themeBtnPointerDown()`/
+`_themeBtnPointerUp()` — perto do início do `<script>` principal, logo
+antes do bloco `🔬 DEBUG: medidor de bytes`. Botão `#theme-toggle-btn`
+no cabeçalho, ao lado do "🔄 Atualizar" — clique alterna claro/escuro,
+segurar por `VICE_LONGPRESS_MS` (1,2s) entra no Vice City. CSS:
+`:root[data-theme="light"]`/`:root[data-theme="vice"]` +
+`[data-theme="X"] .ocean` logo após o `:root{}` base. Mesma chave de
+localStorage (`mare_theme`) que o `kanban-dev.html` usa — preferência
 compartilhada entre as duas páginas no mesmo domínio. Variáveis novas,
 todas mesmo padrão `--surface-rgb`/`--surface2-rgb` do kanban (RGB puro,
 combinado com `rgba(var(--x-rgb),alpha)` no lugar de um valor fixo, pra
-não precisar de uma regra `[data-theme="light"]` dedicada por seletor):
+não precisar de uma regra `[data-theme="X"]` dedicada por seletor):
 `--deep-rgb` (usada por `.login-ov`), `--ink-rgb` (era `rgba(3,13,26,...)`
 hardcoded, ~80 lugares — inputs/selects/chips/linhas de lista/
 `.err-log-item`) e `--slate-rgb` (era `rgba(10,30,55,...)`, ~20 lugares —
@@ -672,7 +676,8 @@ hardcoded, ~80 lugares — inputs/selects/chips/linhas de lista/
 leitura") — cobrem a maioria da UI, mas não as cores de overlay/modal
 flutuante (`rgba(6,26,46,...)`/`rgba(8,22,42,...)`/`rgba(1,8,16,...)` e
 variações), que continuam hardcoded — próxima rodada de contraste, se
-necessário.
+necessário. Sem favicon próprio do Vice City (painel usa favicon de
+emoji via data-URI, não arquivo `.png` como o kanban) — fora de escopo.
 
 ### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
