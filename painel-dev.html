@@ -64,6 +64,19 @@
   --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
   --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
   --warn:#ffd166;--danger:#ff6b6b;--r:10px;--r2:14px;
+  /* --ink-rgb/--slate-rgb: as 2 cores de "superfície escura" reutilizadas
+     em ~80 lugares do arquivo (inputs, selects, chips, cards de painel,
+     linhas de lista...), cada uma com dezenas de valores de alpha
+     diferentes. Antes eram valores de cor fixos (RGB literal), incorretos
+     no tema claro (texto escuro sobre superfície ainda escura = baixo
+     contraste, achado real do usuário: "esse azul acinzentado ficou
+     ruim, pouca leitura"). 2026-09-03: os dois RGBs viraram estas
+     variáveis (troca mecânica em todo o arquivo, preservando o alpha
+     original de cada ocorrência). Em escuro os valores são os mesmos de
+     antes (idêntico visualmente); em claro viram quase-branco (mesmo par
+     --surface-rgb/--surface2-rgb do kanban.html), e a superfície vira
+     clara com o texto escuro voltando a ter contraste normal. */
+  --ink-rgb:3,13,26;--slate-rgb:10,30,55;
 }
 /* ☀️ Lençóis Maranhenses — tema claro, mesma paleta final do kanban.html
    (ver MARINE_GLASS.md §3 "Paleta de cores"). Ativado via
@@ -85,6 +98,7 @@
   --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#33D6D0;
   --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
   --warn:#F6B73C;--danger:#F15B6C;
+  --ink-rgb:251,253,255;--slate-rgb:235,245,250;
 }
 [data-theme="light"] .ocean{
   background:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),
@@ -147,7 +161,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .squad-link{font-size:11px;color:var(--accent);text-decoration:none;padding:4px 10px;border:1px solid rgba(56,182,255,.3);border-radius:999px;}
 .squad-link:hover{background:rgba(56,182,255,.1);}
 /* Metric */
-.met{padding:10px;background:rgba(3,13,26,.6);border:1px solid var(--glass-b);border-radius:var(--r);}
+.met{padding:10px;background:rgba(var(--ink-rgb),.6);border:1px solid var(--glass-b);border-radius:var(--r);}
 .met-lbl{font-size:10px;color:var(--txt2);margin-bottom:2px;}
 .met-val{font-size:22px;font-weight:600;font-family:"DM Sans",sans-serif;}
 .met-sub{font-size:9px;color:var(--txt3);}
@@ -325,7 +339,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .cfg-field{display:flex;flex-direction:column;gap:3px;}
 .cfg-label{font-size:10px;color:var(--txt2);font-weight:500;}
 .cfg-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
-  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
+  background:rgba(var(--ink-rgb),.7);color:var(--txt);font-family:'DM Sans',sans-serif;}
 .cfg-input:focus{outline:none;border-color:var(--accent);}
 .cfg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .cfg-ft{padding:10px 16px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;}
@@ -365,7 +379,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pev-field{display:flex;flex-direction:column;gap:3px;}
 .pev-label{font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;}
 .pev-input{padding:7px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:10px;
-  background:rgba(3,13,26,.7);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
+  background:rgba(var(--ink-rgb),.7);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;box-sizing:border-box;}
 .pev-input:focus{outline:none;border-color:var(--accent);}
 .pev-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 .pev-colors{display:flex;gap:6px;flex-wrap:wrap;margin-top:2px;}
@@ -395,10 +409,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   text-transform:uppercase;letter-spacing:.05em;padding:4px 0;}
 .pcal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
 .pcal-day{min-height:80px;padding:5px;border-radius:var(--r);
-  background:rgba(3,13,26,.35);border:1px solid rgba(56,182,255,.07);
+  background:rgba(var(--ink-rgb),.35);border:1px solid rgba(56,182,255,.07);
   cursor:pointer;transition:border-color .15s,background .15s;position:relative;
   min-width:0;overflow:hidden;}
-.pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(3,13,26,.8);}
+.pcal-day:hover{border-color:rgba(56,182,255,.25);background:rgba(var(--ink-rgb),.8);}
 .pcal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
 .pcal-day.other-month{opacity:.35;pointer-events:none;}
 .pcal-day.has-events{border-color:rgba(29,233,182,.2);}
@@ -472,7 +486,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pc-chip-col{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.1);color:var(--txt3);}
 .pc-chip-prio{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);}
 .pc-section{
-  background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);
+  background:rgba(var(--ink-rgb),.6);border:1px solid rgba(56,182,255,.1);
   border-radius:10px;padding:10px 12px;
 }
 .pc-section-lbl{
@@ -520,7 +534,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Monitor de erros — layout limpo */
 .err-log-item{
   padding:10px 12px;
-  background:rgba(3,13,26,.6);
+  background:rgba(var(--ink-rgb),.6);
   border:1px solid var(--glass-b);
   border-radius:10px;
   margin-bottom:6px;
@@ -625,7 +639,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .bs-body{padding:20px;overflow-y:auto;flex:1;}
 .bs-field{margin-bottom:14px;}
 .bs-label{font-size:11px;color:rgba(200,230,255,.6);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;display:block;}
-.bs-inp{width:100%;background:rgba(3,13,26,.8);border:1px solid rgba(56,182,255,.2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:"DM Sans",sans-serif;outline:none;box-sizing:border-box;}
+.bs-inp{width:100%;background:rgba(var(--ink-rgb),.8);border:1px solid rgba(56,182,255,.2);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:"DM Sans",sans-serif;outline:none;box-sizing:border-box;}
 .bs-inp:focus{border-color:var(--accent);}
 .bs-emoji-grid{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
 .bs-emoji-opt{width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border-radius:8px;border:1px solid rgba(56,182,255,.15);background:rgba(56,182,255,.06);cursor:pointer;transition:all .12s;}
@@ -651,7 +665,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pcamp-group-hd:hover { background:rgba(255,209,102,.1); }
 .pcamp-group-nome { font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;flex:1; }
 .pcamp-group-body { padding:12px 16px;display:flex;flex-direction:column;gap:6px;border-top:1px solid rgba(255,209,102,.15); }
-.pcamp-sq-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(3,13,26,.4); }
+.pcamp-sq-row { display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:rgba(var(--ink-rgb),.4); }
 .pcamp-sq-dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
 .pcamp-sq-name { font-size:11px;font-weight:600;flex-shrink:0;min-width:90px; }
 .pcamp-sq-pills { display:flex;gap:4px;flex-wrap:wrap;flex:1; }
@@ -862,13 +876,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 .camp-list-wrap { flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px; }
 .camp-filter-bar { display:flex; gap:8px; flex-wrap:wrap; padding:12px 20px; border-bottom:1px solid var(--glass-b); flex-shrink:0; }
 .camp-filter-sel { padding:5px 10px; font-size:11px; border:1px solid var(--glass-b); border-radius:8px;
-  background:rgba(3,13,26,.8); color:var(--txt); font-family:"DM Sans",sans-serif; cursor:pointer; }
+  background:rgba(var(--ink-rgb),.8); color:var(--txt); font-family:"DM Sans",sans-serif; cursor:pointer; }
 .camp-card {
   border:1px solid var(--glass-b); border-radius:12px; padding:14px 16px;
-  background:rgba(10,30,55,.5); cursor:pointer; transition:all .18s;
+  background:rgba(var(--slate-rgb),.5); cursor:pointer; transition:all .18s;
   display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center;
 }
-.camp-card:hover { border-color:var(--ct2,var(--accent)); background:rgba(10,30,55,.8); transform:translateY(-1px); }
+.camp-card:hover { border-color:var(--ct2,var(--accent)); background:rgba(var(--slate-rgb),.8); transform:translateY(-1px); }
 .camp-card-icon  { font-size:26px; line-height:1; }
 .camp-card-name  { font-family:"DM Sans",sans-serif; font-size:14px; font-weight:600; color:var(--txt); letter-spacing:-.01em; }
 .camp-card-mote  { font-size:11px; color:var(--txt3); margin-top:2px; font-style:italic; }
@@ -977,10 +991,10 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 
 .camp-grid-card {
   border:1px solid var(--glass-b); border-radius:11px; padding:13px; cursor:pointer;
-  background:rgba(10,30,55,.4); transition:all .15s; display:flex; flex-direction:column; gap:8px;
+  background:rgba(var(--slate-rgb),.4); transition:all .15s; display:flex; flex-direction:column; gap:8px;
   min-height:110px;
 }
-.camp-grid-card:hover { border-color:var(--accent); background:rgba(10,30,55,.75); transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.3); }
+.camp-grid-card:hover { border-color:var(--accent); background:rgba(var(--slate-rgb),.75); transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,.3); }
 .camp-grid-card-top { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
 .camp-grid-card-title { font-family:'DM Sans',sans-serif; font-size:12px; font-weight:500; color:var(--txt); line-height:1.4; flex:1; }
 .camp-grid-card-foot { display:flex; align-items:center; justify-content:space-between; margin-top:auto; padding-top:8px; border-top:1px solid rgba(255,255,255,.05); }
@@ -994,7 +1008,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 .camp-entry {
   position:relative; padding:12px 14px 12px 36px; margin-bottom:12px;
   border-radius:10px; border:1px solid rgba(56,182,255,.1);
-  background:rgba(3,13,26,.4);
+  background:rgba(var(--ink-rgb),.4);
 }
 .camp-entry::before {
   content:attr(data-icon); position:absolute; left:10px; top:13px; font-size:14px; line-height:1;
@@ -1026,9 +1040,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 .camp-entry-del:hover { color:var(--danger); }
 .camp-timeline-empty { text-align:center; color:var(--txt3); font-size:11px; padding:32px 0; line-height:1.8; }
 .camp-tl-filter-bar { display:flex;gap:6px;align-items:center;padding:8px 16px;border-bottom:1px solid var(--glass-b);flex-shrink:0;background:rgba(0,0,0,.1); }
-.camp-tl-search { flex:1;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif; }
+.camp-tl-search { flex:1;background:rgba(var(--ink-rgb),.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 10px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif; }
 .camp-tl-search:focus { outline:none;border-color:var(--accent); }
-.camp-tl-tipo-sel { background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif;cursor:pointer; }
+.camp-tl-tipo-sel { background:rgba(var(--ink-rgb),.8);border:1px solid var(--glass-b);border-radius:7px;padding:5px 8px;font-size:11px;color:var(--txt);font-family:'DM Sans',sans-serif;cursor:pointer; }
 .camp-tl-count { font-size:10px;color:var(--txt3);white-space:nowrap; }
 
 /* Composer de entrada */
@@ -1060,14 +1074,14 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 .camp-fixed-add-btn:hover { border-color:var(--ct2,var(--accent)); }
 .camp-composer-row { display:flex; gap:8px; align-items:center; }
 .camp-composer select, .camp-composer input[type=text] {
-  background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+  background:rgba(var(--ink-rgb),.8); border:1px solid var(--glass-b); border-radius:8px;
   padding:7px 10px; font-size:12px; color:var(--txt); font-family:"DM Sans",sans-serif;
 }
 .camp-composer select:focus, .camp-composer input:focus, .camp-composer textarea:focus {
   outline:none; border-color:var(--ct2,var(--accent));
 }
 .camp-composer textarea {
-  width:100%; background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+  width:100%; background:rgba(var(--ink-rgb),.8); border:1px solid var(--glass-b); border-radius:8px;
   padding:8px 10px; font-size:12px; color:var(--txt); font-family:"DM Sans",sans-serif;
   resize:none; min-height:60px; max-height:120px; box-sizing:border-box; transition:border-color .15s;
 }
@@ -1095,12 +1109,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 .camp-edit-ft  { padding:12px 20px; border-top:1px solid var(--glass-b); display:flex; gap:8px; justify-content:flex-end; flex-shrink:0; }
 .camp-field    { display:flex; flex-direction:column; gap:4px; }
 .camp-label    { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--txt3); }
-.camp-inp      { background:rgba(3,13,26,.8); border:1px solid var(--glass-b); border-radius:8px;
+.camp-inp      { background:rgba(var(--ink-rgb),.8); border:1px solid var(--glass-b); border-radius:8px;
   padding:8px 12px; font-size:13px; color:var(--txt); font-family:"DM Sans",sans-serif; }
 .camp-inp:focus{ outline:none; border-color:var(--accent); }
 .camp-tema-grid{ display:flex; gap:8px; flex-wrap:wrap; }
 .camp-tema-opt { padding:7px 14px; border-radius:10px; border:2px solid transparent; cursor:pointer;
-  font-size:13px; transition:all .15s; background:rgba(3,13,26,.6); }
+  font-size:13px; transition:all .15s; background:rgba(var(--ink-rgb),.6); }
 .camp-tema-opt.sel { border-color:white; transform:scale(1.05); }
 .camp-squad-checks { display:flex; gap:8px; flex-wrap:wrap; }
 .camp-squad-chk { display:flex; align-items:center; gap:5px; font-size:12px; cursor:pointer; }
@@ -1297,12 +1311,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
         <span>📣 Campanhas & Coleções</span>
         <div style="display:flex;gap:6px;align-items:center;">
-          <select id="painel-camp-f-tipo" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
+          <select id="painel-camp-f-tipo" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
             <option value="all">Todos</option>
             <option value="campanha">📣 Campanhas</option>
             <option value="colecao">👗 Coleções</option>
           </select>
-          <select id="painel-camp-f-status" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
+          <select id="painel-camp-f-status" onchange="renderPainelCamp()" style="padding:3px 8px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;">
             <option value="all">Todos status</option>
             <option value="ativa">✅ Ativas</option>
             <option value="planejamento">📋 Planejamento</option>
@@ -1426,7 +1440,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div class="ptab-pane" id="ppane-pessoas">
 
     <!-- ═══ COMUNICADOS (ADM → boards) ═══ -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:20px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📢 Comunicados</div>
         <button onclick="openComunicadoCompose()" style="padding:5px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:8px;cursor:pointer;">+ Novo comunicado</button>
@@ -1477,15 +1491,15 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           </div>
         </div>
         <div id="pcal-squad-filter-bar" style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
-        <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;">
+        <div id="pcal-agendas-cfg" style="display:none;margin-bottom:14px;padding:12px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;">
           <div style="font-size:11px;font-weight:600;color:var(--txt);margin-bottom:4px;">🌐 Agendas conectadas para todos os squads</div>
           <div style="font-size:10px;color:var(--txt3);line-height:1.5;margin-bottom:10px;">Feriados nacionais, eventos do Digital ou qualquer agenda pública do Google — aparecem no calendário de todos os squads, não só um.</div>
           <div id="pcal-gcal-auth-status" style="font-size:10.5px;color:var(--txt3);margin-bottom:4px;"></div>
           <div id="pcal-gcal-cache-info" style="font-size:10px;color:var(--txt3);margin-bottom:8px;display:flex;align-items:center;gap:8px;"></div>
           <div id="pcal-agendas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;max-height:160px;overflow-y:auto;"></div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            <input id="pcal-agenda-label" placeholder="Nome (Ex: Feriados Nacionais)" style="flex:1;min-width:140px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(3,13,26,.8);color:var(--txt);">
-            <input id="pcal-agenda-id" type="email" placeholder="ID da agenda (e-mail longo...)" style="flex:2;min-width:200px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(3,13,26,.8);color:var(--txt);">
+            <input id="pcal-agenda-label" placeholder="Nome (Ex: Feriados Nacionais)" style="flex:1;min-width:140px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(var(--ink-rgb),.8);color:var(--txt);">
+            <input id="pcal-agenda-id" type="email" placeholder="ID da agenda (e-mail longo...)" style="flex:2;min-width:200px;padding:6px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:7px;background:rgba(var(--ink-rgb),.8);color:var(--txt);">
             <button onclick="addPcalAgenda()" style="padding:6px 14px;font-size:11px;background:rgba(29,233,182,.15);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:7px;cursor:pointer;">+ Adicionar</button>
           </div>
           <div id="pcal-gcal-restore-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-b);">
@@ -1606,7 +1620,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
 
     <!-- ═══ MENSAGENS DOS BOARDS (Fale com o ADM) ═══ -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-top:20px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-top:20px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">📨 Mensagens dos Boards</div>
         <span class="badge" id="fb-open-count" style="background:rgba(56,182,255,.2);color:var(--blue);border:1px solid rgba(56,182,255,.3);">0 novas</span>
@@ -1635,7 +1649,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
 
     <!-- Config de logout por inatividade -->
-    <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
+    <div class="status-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
       <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;margin-bottom:8px;">😴 Logout automático por inatividade</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Controla quando o kanban desloga sozinho quem ficar parado sem mexer no quadro. Não afeta quem estiver com um card aberto ou editando algo.</div>
       <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
@@ -1645,7 +1659,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </label>
         <label style="display:flex;align-items:center;gap:6px;font-size:12px;">
           Minutos até deslogar:
-          <input type="number" id="cfg-idle-minutos" value="180" min="5" style="width:70px;background:rgba(10,30,55,.7);border:1px solid var(--glass-b);border-radius:6px;color:var(--txt);padding:4px 8px;font-size:12px;">
+          <input type="number" id="cfg-idle-minutos" value="180" min="5" style="width:70px;background:rgba(var(--slate-rgb),.7);border:1px solid var(--glass-b);border-radius:6px;color:var(--txt);padding:4px 8px;font-size:12px;">
         </label>
         <button class="btn btn-sm" onclick="salvarConfigInatividade()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">💾 Salvar</button>
       </div>
@@ -1653,22 +1667,22 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 
     <!-- Cards de resumo -->
     <div class="status-grid" id="status-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px;">
-      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+      <div class="status-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
         <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Peso total</div>
         <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-peso-total">—</div>
         <div style="font-size:10px;color:var(--txt3);" id="st-peso-sub">medindo...</div>
       </div>
-      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+      <div class="status-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
         <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Cards totais</div>
         <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-cards-total">—</div>
         <div style="font-size:10px;color:var(--txt3);" id="st-cards-sub">em todos os squads</div>
       </div>
-      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+      <div class="status-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
         <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Latência de leitura</div>
         <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-latencia">—</div>
         <div style="font-size:10px;color:var(--txt3);" id="st-latencia-sub">ping ao banco</div>
       </div>
-      <div class="status-card" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
+      <div class="status-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;">
         <div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;">Online agora</div>
         <div style="font-size:24px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-online">—</div>
         <div style="font-size:10px;color:var(--txt3);">usuários ativos</div>
@@ -1676,25 +1690,25 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
 
     <!-- Barra de saúde geral -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
         <span style="font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;">Indicador de saúde</span>
         <span style="font-size:13px;font-weight:600;" id="st-saude-lbl">—</span>
       </div>
-      <div style="height:10px;background:rgba(3,13,26,.8);border-radius:999px;overflow:hidden;">
+      <div style="height:10px;background:rgba(var(--ink-rgb),.8);border-radius:999px;overflow:hidden;">
         <div id="st-saude-bar" style="height:100%;width:0%;border-radius:999px;transition:width .5s,background .5s;background:var(--teal);"></div>
       </div>
       <div style="font-size:10px;color:var(--txt3);margin-top:8px;line-height:1.5;" id="st-saude-txt">Calculado a partir do peso total dos dados. Bancos do RTDB no plano Spark têm 1 GB de armazenamento e 10 GB/mês de download como referência.</div>
     </div>
 
     <!-- Detalhamento por squad -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="font-size:12px;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:12px;">Peso por squad</div>
       <div id="st-squad-list"><div style="font-size:11px;color:var(--txt3);">Clique em 🔄 Atualizar para medir.</div></div>
     </div>
 
     <!-- Adoção & Atividade (Engajamento Real) -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">👥 Engajamento & Uso Efetivo</div>
         <select id="st-uso-periodo" class="camp-filter-sel" onchange="loadUsoData()" style="font-size:11px;">
@@ -1711,22 +1725,22 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 
       <!-- Métricas Principais -->
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px;">
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--teal);">
+        <div style="background:rgba(var(--ink-rgb),.5);border-radius:9px;padding:11px;border-left:3px solid var(--teal);">
           <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Taxa de Atividade</div>
           <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-taxa-atividade">—</div>
           <div style="font-size:9px;color:var(--txt3);">usuários ativos/total</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--accent);">
+        <div style="background:rgba(var(--ink-rgb),.5);border-radius:9px;padding:11px;border-left:3px solid var(--accent);">
           <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Stickiness (Hábito)</div>
           <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-stickiness">—</div>
           <div style="font-size:9px;color:var(--txt3);">frequência de retorno</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--warn);">
+        <div style="background:rgba(var(--ink-rgb),.5);border-radius:9px;padding:11px;border-left:3px solid var(--warn);">
           <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Ações por Usuário</div>
           <div style="font-size:20px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-acoes-media">—</div>
           <div style="font-size:9px;color:var(--txt3);">média de edições</div>
         </div>
-        <div style="background:rgba(3,13,26,.5);border-radius:9px;padding:11px;border-left:3px solid var(--cyan);">
+        <div style="background:rgba(var(--ink-rgb),.5);border-radius:9px;padding:11px;border-left:3px solid var(--cyan);">
           <div style="font-size:9px;color:var(--txt3);text-transform:uppercase;">Saúde do Board</div>
           <div style="font-size:16px;font-weight:600;font-family:'DM Sans',sans-serif;" id="st-uso-saude">—</div>
           <div style="font-size:9px;color:var(--txt3);" id="st-uso-saude-sub">calculando...</div>
@@ -1765,7 +1779,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 
     <div id="dados-lock-msg" style="display:none;font-size:11px;color:var(--txt3);background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.15);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5;">🔒 Você tem acesso de leitura aqui. Só quem tem permissão de publicação (veja a lista abaixo) edita os números do dia.</div>
 
-    <div id="dados-form-wrap" style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
+    <div id="dados-form-wrap" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
       <div class="cfg-sec">Publicar resultado do dia</div>
       <div class="cfg-row">
         <div class="cfg-field"><label class="cfg-label">Data</label><div style="display:flex;gap:6px;"><input class="cfg-input" id="dd-date" type="date" onchange="dadosSelDate=this.value;loadDadosFormForDate(this.value);" style="flex:1;"> <button type="button" class="dp-btn" onclick="_dpOpen('dd-date',this)" title="Escolher no calendário">📅</button></div></div>
@@ -1839,7 +1853,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
 
     <!-- Ativos hoje (visual, por squad) -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;margin-bottom:4px;">🟢 Quem está representado no board hoje</div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:12px;">Por squad: Agentes de IA cadastrados direto no board + Agentes Externos que viraram selecionáveis (têm "iniciais" preenchidas, ver 🔌 Agentes Externos abaixo).</div>
       <div id="agentes-ativos-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
@@ -1848,7 +1862,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
 
     <!-- Histórico do Agente Ágil (cross-squad) -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;flex-wrap:wrap;gap:8px;">
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🧾 Histórico do Agente Ágil</div>
         <select id="agentelog-squad-filter" class="camp-filter-sel" onchange="renderAgentesLogCross()" style="font-size:11px;">
@@ -1865,7 +1879,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
          O backend (intakeTrigger.js, lerDescricaoEspecialista()) lê daqui e
          só injeta a descrição como contexto se o squad da mensagem estiver
          marcado em `squads`. -->
-    <div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
+    <div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:16px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;">
         <div style="font-size:13px;font-weight:600;font-family:'DM Sans',sans-serif;">🔌 Agentes Externos</div>
         <button class="save-btn" onclick="criarAgenteExternoPainel()">+ Novo agente</button>
@@ -1922,11 +1936,11 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <div class="pev-field">
           <label class="pev-label">Mensagem</label>
           <div id="cc-corpo-toolbar" style="display:flex;gap:4px;margin-bottom:4px;">
-            <button type="button" onclick="_ccFormat('bold')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;font-weight:700;">B</button>
-            <button type="button" onclick="_ccFormat('italic')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;font-style:italic;">I</button>
-            <button type="button" onclick="_ccFormat('createLink')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(3,13,26,.6);color:var(--txt);border-radius:5px;cursor:pointer;">🔗</button>
+            <button type="button" onclick="_ccFormat('bold')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.6);color:var(--txt);border-radius:5px;cursor:pointer;font-weight:700;">B</button>
+            <button type="button" onclick="_ccFormat('italic')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.6);color:var(--txt);border-radius:5px;cursor:pointer;font-style:italic;">I</button>
+            <button type="button" onclick="_ccFormat('createLink')" style="width:28px;height:26px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.6);color:var(--txt);border-radius:5px;cursor:pointer;">🔗</button>
           </div>
-          <div id="cc-corpo" contenteditable="true" style="min-height:80px;padding:8px 10px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-size:13px;line-height:1.5;overflow-y:auto;max-height:200px;"></div>
+          <div id="cc-corpo" contenteditable="true" style="min-height:80px;padding:8px 10px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-size:13px;line-height:1.5;overflow-y:auto;max-height:200px;"></div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
@@ -1969,7 +1983,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
             </label>
           </div>
         </div>
-        <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(3,13,26,.4);border-radius:7px;padding:8px 10px;">
+        <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(var(--ink-rgb),.4);border-radius:7px;padding:8px 10px;">
           💡 <b>Popup</b> interrompe ao abrir/recarregar o board — depois que a pessoa clica "Entendi" some do popup, mas continua disponível no mural pra reconsulta. <b>Só no mural</b> nunca interrompe ninguém — fica direto no botão 📢 pra quem quiser ler. <b>Insistente</b> só se aplica ao popup: reaparece a cada abertura até expirar ou você desativar.
         </div>
       </div>
@@ -2073,7 +2087,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
     <div class="camp-field">
       <label class="camp-label">Tags vinculadas (cards com qualquer uma dessas tags entram automaticamente)</label>
-      <div id="camp-edit-tags-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:8px;min-height:38px;"></div>
+      <div id="camp-edit-tags-wrap" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px;background:rgba(var(--ink-rgb),.8);border:1px solid var(--glass-b);border-radius:8px;min-height:38px;"></div>
       <div style="font-size:9px;color:var(--txt3);margin-top:3px;">Clique nas tags para selecionar/deselecionar</div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
@@ -2343,7 +2357,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.08 · painel-dev</div>
+<div class="version">v3.09 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2933,7 +2947,7 @@ function _uiModalPainel({message, kind, defaultValue, placeholder, okText, dange
     const isConfirm = kind==='confirm';
     ov.innerHTML = `<div style="background:rgba(6,18,36,.99);border:1px solid var(--glass-b);border-radius:14px;width:min(420px,95vw);padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6);">
       <div style="font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:16px;white-space:pre-wrap;">${esc(message||'')}</div>
-      ${isPrompt?`<input id="_uimp-inp" type="text" value="${esc(defaultValue||'')}" placeholder="${esc(placeholder||'')}" style="width:100%;box-sizing:border-box;background:rgba(3,13,26,.8);border:1px solid var(--glass-b);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:'DM Sans',sans-serif;margin-bottom:16px;">`:''}
+      ${isPrompt?`<input id="_uimp-inp" type="text" value="${esc(defaultValue||'')}" placeholder="${esc(placeholder||'')}" style="width:100%;box-sizing:border-box;background:rgba(var(--ink-rgb),.8);border:1px solid var(--glass-b);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--txt);font-family:'DM Sans',sans-serif;margin-bottom:16px;">`:''}
       <div style="display:flex;gap:8px;justify-content:flex-end;">
         ${(isConfirm||isPrompt)?`<button id="_uimp-cancel" style="padding:7px 16px;font-size:12px;border-radius:8px;border:1px solid var(--glass-b);background:none;color:var(--txt2);cursor:pointer;font-family:'DM Sans',sans-serif;">Cancelar</button>`:''}
         <button id="_uimp-ok" style="padding:7px 16px;font-size:12px;border-radius:8px;border:1px solid ${danger?'rgba(255,107,107,.4)':'rgba(29,233,182,.4)'};background:${danger?'rgba(255,107,107,.15)':'rgba(29,233,182,.15)'};color:${danger?'#ff6b6b':'#1de9b6'};cursor:pointer;font-weight:600;font-family:'DM Sans',sans-serif;">${esc(okText||'OK')}</button>
@@ -3531,7 +3545,7 @@ function _renderCampTagPicker(){
   const p = _pals[_pi%_pals.length]||_pals[0];
     return `<span onclick="campToggleTag('${esc(t.id)}')" style="
       padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
-      background:${sel?p.bg:'rgba(3,13,26,.6)'};
+      background:${sel?p.bg:'rgba(var(--ink-rgb),.6)'};
       border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
       color:${sel?p.c:'var(--txt3)'};
       transition:all .15s;
@@ -4843,7 +4857,7 @@ function renderPcalSquadFilterBar(){
   el.innerHTML = items.map(sq=>{
     const col = _squadColorFor(sq.id);
     const on = pcalSquadFilter.has(sq.id);
-    return `<button onclick="togglePcalSquadFilter('${sq.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(3,13,26,.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
+    return `<button onclick="togglePcalSquadFilter('${sq.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(var(--ink-rgb),.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
       ${sq.icon} ${esc(sq.label)}
     </button>`;
   }).join('');
@@ -5470,7 +5484,7 @@ function renderPcalAgendasList(){
   container.innerHTML=list.map(cal=>{
     const col=_gcalColorFor(cal.id);
     const err=errs[cal.id];
-    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.6);border:1px solid ${err?'rgba(255,107,107,.35)':'var(--glass-b)'};border-radius:7px;">
+    return `<div style="display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(var(--ink-rgb),.6);border:1px solid ${err?'rgba(255,107,107,.35)':'var(--glass-b)'};border-radius:7px;">
       <div style="width:9px;height:9px;border-radius:3px;background:${col.bg};flex-shrink:0;"></div>
       <div style="flex:1;min-width:0;">
         <div style="font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cal.label)}</div>
@@ -5954,7 +5968,7 @@ async function loadStatusData(){
           <span style="color:${sc.text};font-weight:600;">${esc(_sqLabel(r.sq))}</span>
           <span style="color:var(--txt3);">${_fmtBytes(r.bytes)} · ${r.nCards} cards${r.err?' ⚠️':''}</span>
         </div>
-        <div style="height:7px;background:rgba(3,13,26,.8);border-radius:999px;overflow:hidden;">
+        <div style="height:7px;background:rgba(var(--ink-rgb),.8);border-radius:999px;overflow:hidden;">
           <div style="height:100%;width:${w}%;background:${sc.text};border-radius:999px;"></div>
         </div>
       </div>`;
@@ -6116,7 +6130,7 @@ function renderPainelNotifs(){
     const openAttr = n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}swPtab('${n.link}');togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
-    return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(10,30,55,.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(10,30,55,.4)\'"':''}>
+    return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(var(--slate-rgb),.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:11px;color:var(--txt);line-height:1.4;">${esc(n.title)}</div>
@@ -6279,7 +6293,7 @@ function renderComunicadosLista(){
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
     const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
         <span style="font-size:15px;">${tipo.icon}</span>
         <div style="flex:1;min-width:0;">
@@ -6316,7 +6330,7 @@ function renderArquivadosComunicado(arquivados){
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
     const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
-    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(3,13,26,.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
         <span style="font-size:15px;filter:grayscale(1);">${tipo.icon}</span>
         <div style="flex:1;min-width:0;">
@@ -6563,7 +6577,7 @@ function renderFbLista(){
     const icone = FB_TIPOS[f.tipo]||'💬';
     const isNovo = f.status==='novo';
     const quando = f.criadoEm ? new Date(f.criadoEm).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-    return `<div style="padding:11px 12px;margin-bottom:8px;border-radius:9px;background:rgba(3,13,26,.5);border:1px solid ${isNovo?'rgba(56,182,255,.3)':'var(--glass-b)'};">
+    return `<div style="padding:11px 12px;margin-bottom:8px;border-radius:9px;background:rgba(var(--ink-rgb),.5);border:1px solid ${isNovo?'rgba(56,182,255,.3)':'var(--glass-b)'};">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;flex-wrap:wrap;">
         <span>${icone}</span>
         <span style="font-size:11.5px;font-weight:600;color:var(--txt);">${esc(f.nome||'Anônimo')}</span>
@@ -6792,7 +6806,7 @@ function renderAdmList(){
   list.innerHTML='';
   ADM_EMAILS.forEach(email=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
     const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=email;
     const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(255,209,102,.15);color:var(--warn);border:1px solid rgba(255,209,102,.3);'; badge.textContent='ADM';
     const rm=document.createElement('button');
@@ -6900,11 +6914,11 @@ function renderAgentesExternosPainel(){
     const squadsSel=a.squads||{};
     const squadsChips=SQUADS.map(sq=>{
       const on=squadsSel[sq.id]===true;
-      return `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid ${on?'rgba(56,182,255,.4)':'var(--glass-b)'};background:${on?'rgba(56,182,255,.12)':'rgba(3,13,26,.4)'};color:${on?'var(--accent)':'var(--txt3)'};cursor:pointer;">
+      return `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid ${on?'rgba(56,182,255,.4)':'var(--glass-b)'};background:${on?'rgba(56,182,255,.12)':'rgba(var(--ink-rgb),.4)'};color:${on?'var(--accent)':'var(--txt3)'};cursor:pointer;">
         <input type="checkbox" ${on?'checked':''} onchange="toggleAgenteExternoSquad('${id}','${sq.id}',this.checked)" style="accent-color:var(--accent);"> ${sq.icon||''} ${esc(sq.label||sq.id)}
       </label>`;
     }).join('');
-    return `<div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;overflow:hidden;">
+    return `<div style="background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;overflow:hidden;">
       <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;" onclick="_agentesExtPainelAberto=_agentesExtPainelAberto==='${id}'?null:'${id}';renderAgentesExternosPainel();">
         <span style="flex:1;font-size:12px;font-weight:600;">${esc(a.avatarEmoji||'🔌')} ${esc(a.nome||id)} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${esc(id)})</span>${a.init?` <span title="Selecionável como Responsável/Participante de card nos squads marcados" style="display:inline-flex;font-size:9.5px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:1px 7px;border-radius:999px;margin-left:2px;">${esc(a.init)}</span>`:''}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
         <button onclick="event.stopPropagation();excluirAgenteExternoPainel('${id}')" title="Excluir" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">🗑</button>
@@ -7079,7 +7093,7 @@ function renderAgentesAtivosGrid(results){
     const ctxHtml=soContexto.length
       ? `<div style="font-size:9.5px;color:var(--txt3);margin-top:8px;border-top:1px solid var(--glass-b);padding-top:8px;">📡 Só contexto (sem representar no board): ${soContexto.map(([id,a])=>esc(a.nome||id)).join(', ')}</div>`
       : '';
-    return `<div style="background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px;">
+    return `<div style="background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px;">
       <div style="font-size:12px;font-weight:600;margin-bottom:8px;">${sq.icon||''} ${esc(sq.label||sq.id)}</div>
       ${selHtml}
       ${ctxHtml}
@@ -7141,7 +7155,7 @@ function renderPainelViewers(){
     list.innerHTML='';
     entries.forEach(([key,v])=>{
       const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
       const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=(v.nome?v.nome+' — ':'')+(v.email||key);
       const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent='👁 leitura';
       const rm=document.createElement('button');
@@ -7271,7 +7285,7 @@ function renderDadosApresList(){
     return;
   }
   const editor = isDadosEditor(window._currentUser);
-  list.innerHTML = dadosApresentacoes.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;">
+  list.innerHTML = dadosApresentacoes.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;">
     <span style="font-size:14px;">🖥️</span>
     <a href="${esc(a.url)}" target="_blank" rel="noopener" style="flex:1;font-size:11px;color:#e8f4fd;text-decoration:none;font-weight:600;" title="${esc(a.url)}">${esc(a.title||'Apresentação')}</a>
     ${editor?`<button onclick="removeDadosApresentacao('${a.id}')" title="Remover" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;">✕</button>`:''}
@@ -7349,7 +7363,7 @@ function renderDadosHistorico(){
     const pct = (d.capDia!=null && d.metaDia) ? Math.round(d.capDia/d.metaDia*100) : null;
     const pctAcum = (d.capAcum!=null && d.metaAcum) ? Math.round(d.capAcum/d.metaAcum*100) : null;
     const ok = pct!=null && pct>=100;
-    return `<div style="background:rgba(10,30,55,.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+    return `<div style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <div style="font-weight:600;font-size:12.5px;">${esc(_fmtDateBR(date))}</div>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
@@ -7374,7 +7388,7 @@ function renderDadosEditorList(){
   list.innerHTML='';
   DADOS_EDITORS.forEach(email=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;';
+    row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
     const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=email;
     const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(126,200,227,.15);color:var(--cyan);border:1px solid rgba(126,200,227,.3);'; badge.textContent='Dados';
     row.appendChild(lbl); row.appendChild(badge);
@@ -7441,7 +7455,7 @@ function loadPcfgUsers(){
     list.innerHTML='';
     membersArr.forEach(([uid,u])=>{
       const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:4px;';
+      row.style.cssText='display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:4px;';
       // Avatar
       const av=document.createElement(u.foto?'img':'div');
       if(u.foto){ av.src=u.foto; av.style.cssText='width:28px;height:28px;border-radius:50%;object-fit:cover;'; }
@@ -7453,7 +7467,7 @@ function loadPcfgUsers(){
       info.appendChild(nome); info.appendChild(email);
       // Select
       const sel=document.createElement('select');
-      sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(3,13,26,.8);color:var(--txt);cursor:pointer;';
+      sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(var(--ink-rgb),.8);color:var(--txt);cursor:pointer;';
       ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(u.role===r) opt.selected=true; sel.appendChild(opt); });
       sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
       row.appendChild(av); row.appendChild(info); row.appendChild(sel);
@@ -7908,7 +7922,7 @@ function renderGlobalUsers(){
   list.innerHTML = '';
   entries.forEach(([uid, u])=>{
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(3,13,26,.5);border:1px solid var(--glass-b);border-radius:10px;flex-wrap:wrap;';
+    row.style.cssText = 'display:flex;align-items:flex-start;gap:10px;padding:8px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;flex-wrap:wrap;';
 
     // Avatar
     const av = document.createElement(u.foto?'img':'div');
@@ -7956,7 +7970,7 @@ function renderGlobalUsers(){
       // afeta o papel dela em nenhum outro squad (mesma lógica usada no board).
       if(inSquad){
         const roleSel = document.createElement('select');
-        roleSel.style.cssText = 'padding:1px 4px;font-size:9px;border:1px solid var(--glass-b);border-radius:5px;background:rgba(3,13,26,.9);color:var(--txt);cursor:pointer;margin-left:2px;';
+        roleSel.style.cssText = 'padding:1px 4px;font-size:9px;border:1px solid var(--glass-b);border-radius:5px;background:rgba(var(--ink-rgb),.9);color:var(--txt);cursor:pointer;margin-left:2px;';
         roleSel.onclick = (e)=>e.stopPropagation();
         const squadRole = (u.squads_roles && u.squads_roles[sq.id]) || u.role || 'membro';
         SQUAD_ROLES.forEach(r=>{
@@ -9084,7 +9098,7 @@ function renderGlobalBackupStats(){
     const bloqueios = ativos.filter(c=>c.col==='blocker').length;
     const done      = ativos.filter(c=>c.col==='done').length;
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;
-      background:rgba(3,13,26,.6);border:1px solid rgba(56,182,255,.1);border-radius:10px;">
+      background:rgba(var(--ink-rgb),.6);border:1px solid rgba(56,182,255,.1);border-radius:10px;">
       <span style="font-size:18px;">${sq.icon}</span>
       <div style="flex:1;min-width:0;">
         <div style="font-size:12px;font-weight:700;color:#e8f4fd;">${sq.label}</div>
@@ -9335,27 +9349,27 @@ window.addEventListener('auth-change', e=>{
           <div style="display:flex;flex-direction:column;gap:3px;">
             <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Email destinatário</label>
             <input id="gb-email" type="email" placeholder="caio.soares@ciahering.com.br"
-              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(var(--ink-rgb),.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
               oninput="saveGlobalBackupCfg()">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
             <div style="display:flex;flex-direction:column;gap:3px;">
               <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">EmailJS Service ID</label>
               <input id="gb-service" placeholder="service_xxxxxxx"
-                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(var(--ink-rgb),.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
                 oninput="saveGlobalBackupCfg()">
             </div>
             <div style="display:flex;flex-direction:column;gap:3px;">
               <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Template ID</label>
               <input id="gb-template" placeholder="template_xxxxxxx"
-                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+                style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(var(--ink-rgb),.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
                 oninput="saveGlobalBackupCfg()">
             </div>
           </div>
           <div style="display:flex;flex-direction:column;gap:3px;">
             <label style="font-size:10px;color:var(--cyan);font-weight:700;text-transform:uppercase;letter-spacing:.06em;">Public Key</label>
             <input id="gb-pubkey" placeholder="xxxxxxxxxxxxxxx"
-              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(3,13,26,.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
+              style="padding:7px 10px;font-size:12px;border:1px solid rgba(56,182,255,.2);border-radius:8px;background:rgba(var(--ink-rgb),.7);color:#e8f4fd;font-family:DM Sans,sans-serif;"
               oninput="saveGlobalBackupCfg()">
           </div>
         </div>
@@ -9470,7 +9484,7 @@ window.addEventListener('auth-change', e=>{
       <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
         <div class="cfg-hd-title">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></div>
         <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
-          style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(3,13,26,.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
+          style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
       </div>
       <button class="x-btn" onclick="closeGlobalUsersModal()">✕</button>
     </div>

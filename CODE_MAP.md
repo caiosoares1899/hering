@@ -660,10 +660,19 @@ logo antes do bloco `🔬 DEBUG: medidor de bytes`. Botão `#theme-toggle-btn`
 no cabeçalho, ao lado do "🔄 Atualizar". CSS: `:root[data-theme="light"]`
 + `[data-theme="light"] .ocean` logo após o `:root{}` base. Mesma chave
 de localStorage (`mare_theme`) que o `kanban-dev.html` usa — preferência
-compartilhada entre as duas páginas no mesmo domínio. Nova variável
-`--deep-rgb` (mesmo padrão do `.login-ov` do kanban) pra permitir que
-superfícies com cor hardcoded virem theme-aware sem precisar de uma
-regra `[data-theme="light"]` dedicada pra cada uma.
+compartilhada entre as duas páginas no mesmo domínio. Variáveis novas,
+todas mesmo padrão `--surface-rgb`/`--surface2-rgb` do kanban (RGB puro,
+combinado com `rgba(var(--x-rgb),alpha)` no lugar de um valor fixo, pra
+não precisar de uma regra `[data-theme="light"]` dedicada por seletor):
+`--deep-rgb` (usada por `.login-ov`), `--ink-rgb` (era `rgba(3,13,26,...)`
+hardcoded, ~80 lugares — inputs/selects/chips/linhas de lista/
+`.err-log-item`) e `--slate-rgb` (era `rgba(10,30,55,...)`, ~20 lugares —
+`.status-card` e painéis maiores). As duas últimas foram achado real de
+2026-09-03 (print do usuário: "esse azul acinzentado ficou ruim! pouca
+leitura") — cobrem a maioria da UI, mas não as cores de overlay/modal
+flutuante (`rgba(6,26,46,...)`/`rgba(8,22,42,...)`/`rgba(1,8,16,...)` e
+variações), que continuam hardcoded — próxima rodada de contraste, se
+necessário.
 
 ### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
