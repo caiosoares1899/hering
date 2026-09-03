@@ -2654,6 +2654,58 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.566-dev — 2026-09-03 — Novo: 📅 Timeline (view cronológica por prazo) + ⏸ Pausar card (métricas sem impedimento público)
+
+Pedido direto do usuário, inspirado em funcionalidades do Trello — pedido
+original citava também uma view de Gantt, descartada de propósito (exigiria
+um campo de data de INÍCIO por card, que não existe hoje — só há prazo
+final; ficaria como possível trabalho futuro, não incluído aqui).
+
+**📅 Timeline** — botão novo na toolbar, ao lado de "⇔ Raia". Troca o board
+de colunas por uma lista vertical cronológica dos cards ATIVOS (não
+arquivados, fora de coluna de Concluído — mesmo critério `_isColDone()` já
+usado em Meu Dia/relatórios de aging), agrupados pelo prazo: 🔴 Atrasado
+(todos juntos), um grupo por dia com cards a vencer (Hoje, Amanhã, datas
+seguintes em ordem crescente), e "🗂 Sem prazo definido" por último,
+recolhido (`<details>`). Reusa o MESMO `activeCards` (já filtrado pelos
+filtros/busca ativos) que o board normal calcula em `renderBoard()` — nunca
+diverge do que os filtros mostrariam nas colunas. Reusa também as classes
+CSS `.meudia-sec`/`.meudia-row` já existentes de "🌅 Meu Dia" (mesmo
+visual, view "irmã" pro board inteiro em vez de só os cards da pessoa
+logada). Clique num card abre ele normalmente; clique de novo no botão
+volta pro board de colunas.
+
+**⏸ Pausar card** — botão novo no rodapé do modal do card (ao lado de "📦
+Arquivar"). Para a contagem de cycle time/lead time do card SEM marcar
+impedimento público — diferente de 🚧 Impedimento (tag vermelha, coluna
+própria, aviso automático pra todo mundo), pausar é discreto: só o botão
+(que vira "▶ Retomar") e o 📜 Histórico do card revelam que aconteceu.
+Modelo de dado: `card.paused` (bool) + `card.pausedAt` (ISO, início da
+pausa atual) + `card.pausedMs` (acumulado de pausas já encerradas).
+`_cardPausedMs()` soma os dois (incluindo a pausa em andamento, se houver)
+e `_cardTempos()` (cycle/lead time, usado no ⏱ Relatório de Tempo por Tag)
+passa a subtrair esse total do tempo decorrido, com clamp em 0 (nunca fica
+negativo). Réplica do mesmo cálculo em `functions/agente-agil-
+orquestrador/tools/visaoBoard.js` (`cardPausedMs()`/`cardTempos()`) — mesma
+duplicação deliberada já documentada nesse arquivo (kanban.html sem
+`<script src>` externo, Cloud Function em CommonJS) — sem essa réplica, o
+Agente Ágil (via `visao_board`) continuaria vendo o card "correndo" mesmo
+pausado, divergindo do relatório client-side.
+
+Testado com Playwright contra as funções reais: Timeline exclui
+corretamente card em coluna "concluído" e card arquivado, agrupa Atrasado/
+Hoje/Sem prazo certinho; Pausar/Retomar alterna o rótulo do botão
+corretamente, `_cardTempos().lead` cai na hora exata do tempo pausado
+simulado (~2h a menos), e o acumulado (`pausedMs`) fica correto depois de
+retomar. Testes novos no backend (`__tests__/visaoBoard.test.js`, 4 casos:
+soma de pausas encerradas + em andamento, subtração em lead/cycle,
+consideração da pausa ainda em andamento, clamp em 0) — suíte
+`agente-agil-orquestrador/` inteira: 288/288 passando. Checks de rotina:
+`node --check` OK, balanço de chaves/parênteses igual ao baseline
+conhecido da sessão (braces -1, parens +1). `HELP_CONTENT` ganhou entradas
+novas nas duas features (categorias `board`/`cards`), já nascendo
+documentadas.
+
 ### v8.30.565-dev — 2026-09-03 — /monitorarbugs (2ª rodada, área: modal do card): card temporário de Modelo/Recorrente/Agendamento acionava o lock de edição concorrente e vazava escrita no Firebase
 
 Continuação da rodada anterior na mesma área ("no modal do card"),
@@ -12602,6 +12654,23 @@ squad `omnichannel` (que faltava mesmo no HTML fixo do dev) já é visível
 como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
+
+### 2026-09-03 · `tools/visaoBoard.js` passa a descontar o tempo pausado (⏸ Pausar card) de cycle/lead time
+
+Acompanha a feature nova ⏸ Pausar card em `kanban-dev.html` (ver entrada
+v8.30.566-dev) — `cardTempos()` aqui é RÉPLICA deliberada de `_cardTempos()`
+do cliente (documentado no topo do próprio arquivo), então precisa da mesma
+mudança: `cardPausedMs(card)` nova (soma `card.pausedMs` acumulado + a
+pausa em andamento, se `card.paused && card.pausedAt`) subtraída de
+lead/cycle, com o mesmo clamp em 0. Sem essa réplica, `visao_board` (usado
+por `analisePO.js` via `summarizeBoard()`, e pelo próprio orquestrador ao
+ler o board) continuaria contando tempo de um card pausado como se
+estivesse correndo normalmente — divergindo do relatório que a pessoa vê
+no client. 4 testes novos em `__tests__/visaoBoard.test.js`, suíte inteira:
+19/19 nesse arquivo, 288/288 em `agente-agil-orquestrador/`.
+
+**Requer redeploy manual** de qualquer função que usa o toolset completo
+(inclui `visao_board`): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO`
 
 ### 2026-09-03 · fix: `notificar_especialista_externo` não respeitava o toggle por squad (`/monitorarbugs`)
 

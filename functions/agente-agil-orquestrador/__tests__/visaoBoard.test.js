@@ -7,6 +7,7 @@ const {
   summarizeBoard,
   cardTempos,
   cardTempoPorColuna,
+  cardPausedMs,
   colWipLimit,
   makeFakeVisaoBoardHandler,
   makeRealVisaoBoardHandler,
@@ -43,6 +44,50 @@ test('cardTempos devolve cycle/lead null quando não tem firstStartAt/createdAt'
   assert.equal(t.lead, null);
   assert.equal(t.cycle, null);
   assert.equal(t.done, false);
+});
+
+// ⏸ Pausar (2026-09-03) — tempo pausado não deve contar em cycle/lead time.
+test('cardPausedMs soma pausas encerradas + a pausa em andamento, se houver', () => {
+  assert.equal(cardPausedMs({}), 0);
+  assert.equal(cardPausedMs({ pausedMs: 3 * H }), 3 * H);
+  const c = { pausedMs: 2 * H, paused: true, pausedAt: ago(1 * H) };
+  assert.ok(Math.abs(cardPausedMs(c) - 3 * H) < 2000, `esperado ~3h em ms, veio ${cardPausedMs(c)}`);
+  // paused:true sem pausedAt (estado inconsistente) não deve quebrar nem contar a pausa em andamento
+  assert.equal(cardPausedMs({ pausedMs: H, paused: true, pausedAt: null }), H);
+});
+
+test('cardTempos subtrai o tempo pausado (pausedMs) de lead e cycle', () => {
+  const card = {
+    createdAt: ago(5 * D),
+    flow: { firstStartAt: ago(4 * D), doneAt: ago(1 * D) },
+    pausedMs: 24 * H, // 1 dia pausado, já encerrado
+  };
+  const t = cardTempos(card);
+  assert.ok(Math.abs(t.lead - 72) < 2, `lead esperado ~72h (96h - 24h pausado), veio ${t.lead}`);
+  assert.ok(Math.abs(t.cycle - 48) < 2, `cycle esperado ~48h (72h - 24h pausado), veio ${t.cycle}`);
+});
+
+test('cardTempos considera a pausa EM ANDAMENTO (paused:true) até agora, não só pausas já encerradas', () => {
+  const card = {
+    createdAt: ago(5 * D),
+    flow: { firstStartAt: ago(4 * D), doneAt: null }, // ainda não concluído -> endMs = now
+    paused: true,
+    pausedAt: ago(2 * D), // pausado há 2 dias, ainda pausado agora
+  };
+  const t = cardTempos(card);
+  // lead sem pausa seria ~5 dias (120h); com ~2 dias (48h) pausados até agora, sobra ~72h
+  assert.ok(Math.abs(t.lead - 72) < 2, `lead esperado ~72h, veio ${t.lead}`);
+});
+
+test('cardTempos nunca fica negativo se o tempo pausado ultrapassar o elapsed (clamp em 0)', () => {
+  const card = {
+    createdAt: ago(1 * D),
+    flow: { firstStartAt: ago(1 * D), doneAt: null },
+    pausedMs: 10 * D, // absurdamente maior que o próprio lead — não deveria acontecer na prática, mas não pode virar tempo negativo
+  };
+  const t = cardTempos(card);
+  assert.equal(t.lead, 0);
+  assert.equal(t.cycle, 0);
 });
 
 test('cardTempoPorColuna soma o tempo entre transições consecutivas, atribuído à coluna de destino', () => {
