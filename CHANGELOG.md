@@ -2654,6 +2654,53 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.568-dev — 2026-09-03 — fix: 📅 Timeline renderizava em colunas horizontais em vez de lista vertical (comentário CSS mal-formado)
+
+Reportado direto pelo usuário logo depois da v8.30.567-dev (fix do "board
+em branco") ir ao ar — dessa vez com screenshot mostrando os grupos da
+Timeline (Atrasado/Hoje/Amanhã/cada data) lado a lado, estilo colunas de
+board, em vez da lista vertical pretendida ("olha como ta bagunçado e
+ruim de visualizar").
+
+**Causa raiz, achado real e bem específico**: o comentário CSS logo antes
+da regra `#timeline-view{...}` (v8.30.566-dev) continha a sequência
+`.meudia-sec*/.meudia-row*` — um jeito informal de escrever "as classes
+.meudia-sec e .meudia-row", mas `*/` é o TOKEN que fecha um comentário
+CSS. O comentário fechava ali no meio da frase, e o resto do texto
+(`.meudia-row* acima, só o container próprio...`) virava CSS de verdade
+— lixo sintático que o parser do navegador descarta junto com a regra
+seguinte. Resultado: `#timeline-view{display:none;flex-direction:column;
+...}` **nunca existiu de verdade pro navegador** — confirmado escaneando
+`document.styleSheets` em runtime (a regra simplesmente não aparecia na
+lista, only `.timeline-semprazo` e as regras seguintes, que conseguiam
+re-sincronizar o parser depois do estrago). Sem `flex-direction:column`
+nenhum aplicado, o `display:flex` (esse sim setado via JS,
+inline) caía no default do CSS — `flex-direction:row` — cada `.meudia-
+sec` (Atrasado, Hoje, Amanhã, cada data) virava uma "coluna" lado a
+lado, estreita, exatamente como reportado.
+
+Fix: reescreve o comentário sem a sequência `*/` no meio do texto
+(`.meudia-sec / .meudia-row`, com espaços). Nenhuma mudança de lógica —
+só o comentário. Confirmado com Playwright: antes do fix,
+`document.styleSheets` não tinha NENHUMA regra pra `#timeline-view` e o
+`flexDirection` computado era `row`; depois do fix, a regra aparece
+certinha e `flexDirection` computa `column`, com os grupos empilhados
+verticalmente (mesma coordenada X, Y crescente) em vez de lado a lado.
+Screenshot conferido visualmente. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido da sessão
+(braces -1, parens +1).
+
+**Lição**: comentários CSS informais que citam múltiplos seletores/
+nomes de classe separados por `/` merecem cuidado redobrado com
+qualquer sequência de caracteres que contenha `*/` sem querer — inclui
+não só `.classe*/.outra` (asterisco de propósito, tipo "todas as
+variantes de .classe"), mas também combinações mais sutis. Nenhuma
+ferramenta de lint de CSS roda neste repo (sem build step) pra pegar
+isso automaticamente — o único jeito de detectar de verdade é inspecionar
+`document.styleSheets` em runtime quando um comportamento de CSS não
+bate com o que a regra escrita deveria fazer, não só reler o texto da
+regra (que "parece" certo à primeira vista).
+
 ### v8.30.567-dev — 2026-09-03 — fix crítico: 📅 Timeline aparecia em branco no mobile (e em janela estreita com DevTools aberto)
 
 Reportado direto pelo usuário logo depois da v8.30.566-dev ir ao ar
