@@ -652,7 +652,7 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Tema claro/escuro/🌴 Vice City (2026-09-03, só painel-dev.html por enquanto — ainda não promovido)
+### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
 `toggleTheme()`/`_currentTheme()`/`_applyThemeButtonIcon()`/
@@ -678,6 +678,18 @@ flutuante (`rgba(6,26,46,...)`/`rgba(8,22,42,...)`/`rgba(1,8,16,...)` e
 variações), que continuam hardcoded — próxima rodada de contraste, se
 necessário. Sem favicon próprio do Vice City (painel usa favicon de
 emoji via data-URI, não arquivo `.png` como o kanban) — fora de escopo.
+
+**Achados incidentais da promoção pra prod (v3.08 · painel, 2026-09-03)**,
+divergência real e pré-existente entre os 2 arquivos (não causada por
+esta feature, só descoberta ao promovê-la): `painel.html` tem
+`_pushHistReenviar()`/"🔔 Enviar push manual" e
+`VISIBILITY_REFRESH_COOLDOWN_MS` (cooldown de 3min pro refresh ao voltar
+a aba) que `painel-dev.html` nunca recebeu; `painel-dev.html` tem o
+banner de auto-update por polling de `version.json` (`_auCheckVersion()`)
+que `painel.html` **nunca teve** — diferente do que o "Release process"
+do `CLAUDE.md` descreve como padrão. Nenhum dos 3 foi tocado nesta
+promoção (fora de escopo do pedido) — sinalizado aqui pra quem for
+reconciliar o painel algum dia.
 
 ### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do

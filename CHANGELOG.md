@@ -11211,6 +11211,51 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.08 · painel — 2026-09-03 · promove pra prod — tema claro/escuro/🌴 Vice City
+
+Promove pra produção o lote v3.08-dev → v3.10-dev de `painel-dev.html`
+(validado pelo usuário: "testei, funcionou, pode subir sem avisos! subir
+painel so no caso, nao kanban"). Resumo pra quem usa o painel:
+
+- **🌙☀️🌴 3 temas, mesmos do `kanban.html`** — botão novo no cabeçalho
+  (ao lado do "🔄 Atualizar"): clique alterna entre 🌙 Abrolhos (escuro,
+  padrão) e ☀️ Lençóis Maranhenses (claro); segurar por 1,2s desbloqueia
+  o 🌴 Vice City (easter egg). Mesma preferência salva no navegador que o
+  board já usa — quem já tinha escolhido um tema no `kanban.html` já
+  abre o painel no mesmo tema, sem escolher de novo.
+- **Contraste corrigido em toda a UI** — fundo de inputs/cards/painéis
+  (antes fixo em azul-marinho escuro) passou a acompanhar o tema.
+
+**Nota de promoção não-padrão**: diferente do par `kanban.html`/
+`kanban-dev.html` (que ficam em lockstep, só 2 linhas de ambiente
+divergentes), `painel.html`/`painel-dev.html` já tinham divergência
+pré-existente e real antes desta promoção — `painel.html` tem 2 recursos
+que `painel-dev.html` nunca recebeu (`_pushHistReenviar`/"🔔 Enviar push
+manual" e o cooldown `VISIBILITY_REFRESH_COOLDOWN_MS`), e
+`painel-dev.html` tem 1 recurso que `painel.html` nunca teve (o banner
+de auto-update por polling de `version.json` — achado incidental desta
+promoção: `painel.html` hoje **não tem nenhum mecanismo de auto-update**,
+diferente do que o "Release process" do `CLAUDE.md` descreve como padrão
+pras páginas versionadas; não corrigido aqui, fora do escopo deste
+pedido, sinalizado pra decisão futura). Por causa disso, esta promoção
+**não foi um `cp` direto** — cada mudança de tema (variáveis de CSS,
+funções JS, botão no cabeçalho, troca mecânica de ~80 ocorrências de
+`rgba(3,13,26,...)`/`rgba(10,30,55,...)` por `rgba(var(--ink-rgb),...)`/
+`rgba(var(--slate-rgb),...)`) foi aplicada uma a uma em `painel.html`,
+preservando os 2 recursos exclusivos de prod e sem importar nada
+exclusivo de dev. Conferido depois: os valores das variáveis de tema
+(`--deep-rgb`/`--ink-rgb`/`--slate-rgb`, nos 3 temas) batem
+exatamente entre os dois arquivos.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright direto em `painel.html`: toggle de claro/escuro OK, long-press
+real (pointer down/up, 1,4s) entra no Vice City, aba Status com contraste
+correto nos 3 temas, 0 erros de console.
+
+**Sem avisos de Mural/WhatsApp** — pedido explícito do usuário nesta
+promoção.
+
 ### painel-dev.html v3.10 · painel-dev — 2026-09-03 · 🌴 Vice City chega ao painel
 
 Pedido direto do usuário, depois de validar o par claro/escuro (v3.08/
