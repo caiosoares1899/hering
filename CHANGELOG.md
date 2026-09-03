@@ -18,6 +18,41 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.560 — 2026-09-03 · Promove pra prod — fix crítico de card fantasma + alvo maior pra trocar de squad no mobile
+
+Promove pra produção o lote v8.30.559-dev → v8.30.560-dev de
+`kanban-dev.html`. O fix crítico (v8.30.560-dev) foi promovido na hora
+assim que confirmado ("sobe já, esse é crítico"), seguindo junto o item
+já validado que estava acumulado pro lote do fim do dia
+(v8.30.559-dev, "testei, funcionou, acumula pra subirmos no fim do
+dia") — não dá pra promover só um dos dois nesta dupla de arquivos.
+Resumo pra quem usa o board:
+
+- **🐛 Corrigido: editar Modelo/Recorrente/Agendamento podia criar um
+  card fantasma nos bastidores.** Achado investigando um alerta real de
+  produção ("um card sumiu do quadro sem ninguém ter excluído"). Editar
+  um desses itens pelo ✏️ e parar de digitar por um instante (sem
+  clicar em "Salvar") podia gravar, por engano, um card de verdade no
+  Firebase com um id temporário — sem aparecer no quadro de ninguém,
+  mas ocupando espaço e podendo disparar esse alerta mais tarde. Agora
+  só o clique explícito em "💾 Salvar" persiste a edição, como sempre
+  foi a intenção.
+- **📱 Trocar de squad no celular ficou mais fácil** — antes só a
+  setinha "▾" (bem pequena) abria a lista de squads; agora o título
+  "🐟 Maré Digital" inteiro também abre, um alvo de toque bem maior. O
+  peixinho 🐟 continua com sua função de sempre (ligar/desligar os
+  peixinhos do fundo), sem conflito.
+
+Diff restrito ao conteúdo da promoção — além das 2 linhas de ambiente
+de sempre (versão, `VERSION_KEY`), o favicon próprio do dev usa nomes
+de arquivo diferentes por ambiente (`favicon-dev.png`/
+`favicon-dev-monochrome.png` só em `kanban-dev.html`; aqui continua
+`favicon.png`/`favicon-monochrome.png`) — divergência intencional, já
+promovida numa rodada anterior. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido (braces -1,
+parens +1). Sem mudança de área funcional nova — `CODE_MAP.md` não
+precisou de atualização.
+
 ### v8.30.558 — 2026-09-02 · Promove pra prod — capa de imagem no card com carregamento mais rápido
 
 Promove pra produção o v8.30.558-dev de `kanban-dev.html` (validado

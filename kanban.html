@@ -3244,7 +3244,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="app" id="app-root" style="display:none;">
 <div class="hd">
   <div class="hd-l">
-    <div class="hd-title"><span id="fish-toggle-btn" onclick="toggleFishBackground()" style="cursor:pointer;" title="Clique pra mostrar/esconder os peixinhos do fundo">🐟</span> Maré Digital</div>
+    <div class="hd-title" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad"><span id="fish-toggle-btn" onclick="toggleFishBackground(event)" style="cursor:pointer;" title="Clique pra mostrar/esconder os peixinhos do fundo">🐟</span> Maré Digital</div>
     <span class="squad-switcher-wrap">
       <span class="hd-badge" id="sprint-badge" onclick="toggleSquadSwitcher(event)" style="cursor:pointer;" title="Clique para trocar de squad">Carregando...</span>
       <span class="squad-switcher-caret" onclick="toggleSquadSwitcher(event)">▾</span>
@@ -5860,7 +5860,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.558</div>
+<div class="version">v8.30.560</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11234,6 +11234,29 @@ function initSquadUI(){ /* squad fixo, nada a inicializar */ }
 let _autoSaveTimer = null;
 function scheduleAutoSave(){
   if(!editingId) return; // só auto-salva cards existentes
+  // Achado real (investigação de "[card sumiu inesperadamente]" reportado
+  // em produção, __qltmp__..., squad midiacriativa): editar um Modelo/
+  // Recorrente/Agendamento (openQLEdit()) abre um card TEMPORÁRIO em
+  // memória (id '__qltmp__'+timestamp, _isQLTemp:true) só pra reaproveitar
+  // o modal — saveCard() já sabe disso (bloco if(_editingQLItem) logo no
+  // topo, grava em ql_items/{tipo} e NUNCA em cards/cards_index de
+  // verdade), mas scheduleAutoSave() não tinha o mesmo guard: se a pessoa
+  // parasse de digitar por um instante (o caso comum — quase ninguém
+  // clica em "Salvar" de propósito), o autosave disparava pra esse card
+  // temporário como se fosse um card real. fbSaveCard() não achava esse id
+  // em _cardsByKey (nunca existiu no Firebase) e caía no fallback por
+  // POSIÇÃO local (cards.indexOf) — que sempre "acha" o card ali (é o
+  // próprio objeto do array), escrevendo um card fantasma de verdade em
+  // /cards + /cards_index/__qltmp__... Ao fechar/salvar o modal,
+  // cards=cards.filter(c=>!c._isQLTemp) só limpa a cópia LOCAL — o
+  // fantasma fica órfão no Firebase até algum fbSaveAll() de outra sessão
+  // reconstruir cards_index a partir do array local dela (que nunca teve
+  // esse id) e derrubar a entrada — isso é o child_removed sem
+  // _intentionalDeleteIds que o alerta "card sumiu inesperadamente" pegou.
+  // Fix: autosave nunca roda em modo de edição de item (mesma exceção que
+  // saveCard() já aplica) — a explícita "💾 Salvar" continua sendo o único
+  // jeito de persistir a edição, como sempre foi o comportamento real.
+  if(_editingQLItem) return;
   clearTimeout(_autoSaveTimer);
   _autoSaveTimer = setTimeout(()=>{
     const title=document.getElementById('m-title').value.trim();
@@ -27852,7 +27875,14 @@ function _applyFishBgVisibility(){
   if(fw) fw.style.display = _fishBgOn ? '' : 'none';
   if(bw) bw.style.display = _fishBgOn ? '' : 'none';
 }
-function toggleFishBackground(){
+function toggleFishBackground(e){
+  // e?.stopPropagation() — o 🐟 vive dentro de .hd-title, que agora também
+  // abre o trocador de squad (pedido direto: "a setinha pra mudar de squad
+  // ta mt pequena... clicar no 'maré digital' como um todo já faça a lista
+  // de squads descer"). Sem isso, clicar no peixinho junto do peixinho
+  // ligava/desligava os peixinhos E abria o trocador de squad no mesmo
+  // toque — os dois cliques bloqueados fica cada um só na sua ação.
+  e?.stopPropagation();
   _fishBgOn = !_fishBgOn;
   safeLS.setItem('fish_bg_off', _fishBgOn ? '0' : '1');
   _applyFishBgVisibility();
