@@ -372,6 +372,18 @@ detalhe dos 4 call sites.
   do mesmo escape hatch `:has()` que `raia-mode` já usa (`:has(.board
   .board-hidden){display:none;}`), senão a Timeline renderiza certinho
   mas fica empurrada pra baixo de um vão vazio do tamanho de uma tela.
+  **2º achado real (2026-09-03, mesmo dia, relato seguinte — grupos
+  lado a lado em vez de empilhados)**: a regra `#timeline-view{...}`
+  (`flex-direction:column`) tinha sumido de verdade do parser — o
+  comentário logo acima usava `.meudia-sec*/.meudia-row*` como forma
+  informal de citar as duas classes, mas `*/` fecha comentário CSS no
+  meio da frase, virando o resto em CSS-lixo que derruba a regra
+  seguinte junto. Sem `flex-direction:column`, o `display:flex` (JS)
+  caía no default `row` — cada grupo (Atrasado/Hoje/cada data) virava
+  uma coluna lado a lado. Só detectável escaneando
+  `document.styleSheets` em runtime (a regra "parecia" certa lendo o
+  texto). Cuidado ao escrever comentário CSS citando 2+ seletores
+  separados por `/` — nunca deixar `*/` se formar sem querer no meio.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
