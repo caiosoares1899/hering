@@ -239,6 +239,31 @@ detalhe dos 4 call sites.
   tinham essa rede apesar de mudarem bem mais. Exposta em `window` pra
   testar/disparar manualmente sem esperar o intervalo.
 
+### ⛓ Dependências entre cards (bloqueio/ordem, não hierarquia — diferente de supercard)
+- Modelo de dado: `card.dependsOn` (id de 1 card só, o "pai"/bloqueador)
+  + `card.dependents` (array de ids que dependem deste) — out-degree 1,
+  in-degree N, mesmo shape de árvore do supercard (`childCardIds`), só
+  com nomes/direção diferentes.
+- `setDependsOn(parentId)`/`unlinkDependsOn()` — perto de L28591/L28615
+  — vincula/desvincula, sempre a partir do card `editingId` aberto no
+  modal. `searchDependsCards(q)` — L28561 — alimenta o picker
+  (`openDependsPicker()`).
+- **Guard de ciclo** (2026-09-03, `/monitorarbugs`) — `_dependsDescendants(cardId)`
+  (logo antes de `openDependsPicker()`) — Set com todo descendente de
+  `cardId` (BFS por `dependents`). Usado em 2 pontos: `searchDependsCards()`
+  tira os descendentes da lista de candidatos mostrada;
+  `setDependsOn()` recusa e avisa com toast se `parentId` estiver nesse
+  Set (defesa em profundidade — mesma lição do fix de cascata do
+  supercard, checagem só na UI de adicionar não basta).
+- `buildDepChains()`/`renderDepMap()`/`chainContains()` — perto de
+  L28953+ — monta e renderiza a árvore completa (⛓ Dependências na
+  toolbar); já tinham `visited` contra ciclo corrompido nos dados (não
+  trava), mas o resultado ficava truncado/errado sem o guard acima.
+- Diferente de 🧩 Supercard (`childCardIds`): supercard é COMPOSIÇÃO
+  (nenhum filho bloqueia o outro, teto de 2 níveis); Dependências é
+  BLOQUEIO/ORDEM (um card não deveria "poder" antes do outro), sem teto
+  de profundidade — só o guard de ciclo acima.
+
 ### Tema (claro/escuro + 🌴 Vice City)
 - `_currentTheme()` — L27838 — lê `data-theme` do `<html>`, retorna
   `'light'`/`'dark'`/`'vice'`.

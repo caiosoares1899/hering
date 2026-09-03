@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.562-dev</div>
+<div class="version">v8.30.563-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28529,6 +28529,29 @@ function verNoBoardFromSearch(){
 // ═══════════════════════════════════════════════════════
 // PARENT / CHILD CARD
 // ═══════════════════════════════════════════════════════
+// Achado real (/monitorarbugs, 2026-09-03): searchDependsCards() já tinha
+// o comentário "Also exclude cards that have this card as parent (prevent
+// cycles)", mas o código NUNCA implementava essa parte — só excluía o
+// próprio card (`exclude = new Set([editingId])`), nunca os descendentes.
+// `dependsOn` é single-valued (1 pai só por card, mesmo shape do
+// supercard), então qualquer card já dependente de `cardId` (direto ou em
+// cascata) vira ciclo de verdade se escolhido como o NOVO "depende de"
+// dele. buildDepChains()/chainContains() já sobrevivem a um ciclo sem
+// travar (têm `visited`), mas o resultado fica errado — a cadeia
+// silenciosamente esconde metade do ciclo (mesma classe do bug de
+// cascata do supercard, corrigido nesta mesma sessão: proteção só na UI
+// de ADICIONAR, nunca na função que persiste). Helper reaproveitável nos
+// 2 pontos.
+function _dependsDescendants(cardId){
+  const seen = new Set();
+  const stack = [cardId];
+  while(stack.length){
+    const id = stack.pop();
+    const c = cards.find(x=>x.id===id);
+    (c?.dependents||[]).forEach(did=>{ if(!seen.has(did)){ seen.add(did); stack.push(did); } });
+  }
+  return seen;
+}
 function openDependsPicker(){
   document.getElementById('depends-search-inp').value='';
   searchDependsCards('');
@@ -28538,8 +28561,10 @@ function openDependsPicker(){
 function searchDependsCards(q){
   const res = document.getElementById('depends-search-results'); if(!res) return;
   const lower = q.trim().toLowerCase();
-  const exclude = new Set([editingId]);
-  // Also exclude cards that have this card as parent (prevent cycles)
+  // Exclui o próprio card E qualquer descendente dele (direto ou em
+  // cascata) — escolher um desses como "depende de" fecharia um ciclo
+  // de verdade (ver comentário completo em _dependsDescendants()).
+  const exclude = new Set([editingId, ..._dependsDescendants(editingId)]);
   const currentCard = cards.find(c=>c.id===editingId);
   const results = cards.filter(c=>
     !c.archived && !exclude.has(c.id) &&
@@ -28554,7 +28579,12 @@ function searchDependsCards(q){
     const col=columns.find(c=>c.id===card.col);
     const div=document.createElement('div');
     div.className='minicard';
-    const isCurrentParent = currentCard?.parentId===card.id;
+    // Achado real (/monitorarbugs, 2026-09-03): usava currentCard.parentId,
+    // campo que só existe em blocos de Nota (nota.blocos[x].parentId) —
+    // em card é sempre undefined, então este badge nunca aparecia, pra
+    // nenhum card, mesmo quando era de fato o pai atual. Campo certo do
+    // card é dependsOn (ver setDependsOn()/unlinkDependsOn() abaixo).
+    const isCurrentParent = currentCard?.dependsOn===card.id;
     div.innerHTML=
       '<div class="minicard-left" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
       '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
@@ -28567,6 +28597,14 @@ function searchDependsCards(q){
 
 function setDependsOn(parentId){
   const card = cards.find(c=>c.id===editingId); if(!card) return;
+  // Defesa em profundidade: searchDependsCards() já filtra descendentes
+  // da lista mostrada, mas a proteção de verdade fica aqui — mesma lição
+  // do fix de cascata do supercard nesta sessão (checagem só na tela de
+  // ADICIONAR não protege contra ciclo chegando por outro caminho).
+  if(parentId===editingId || _dependsDescendants(editingId).has(parentId)){
+    showToast('⚠ Não dá pra vincular — criaria um ciclo de dependência.');
+    return;
+  }
   card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);

@@ -2593,6 +2593,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.563-dev — 2026-09-03 — /monitorarbugs (área: ⛓ Dependências entre cards): ciclo nunca era bloqueado de verdade + badge "pai atual" nunca aparecia
+
+Rodada genérica de `/monitorarbugs` — prioridade 1 (áreas mudadas
+recentemente) já toda coberta pela investigação do card fantasma desta
+mesma sessão; escolhida a prioridade 2, uma área nunca auditada:
+"⛓ Dependências" (`setDependsOn()`/`unlinkDependsOn()`/
+`searchDependsCards()`, botão "⛓ Dependência" no card, "bloqueio/ordem
+entre cards" — texto da própria Central de Ajuda). 2 achados reais, os
+dois na mesma função (`searchDependsCards()`).
+
+1. **Ciclo de dependência nunca era bloqueado de verdade** (técnica 3:
+   comentário vs. código). A função já tinha o comentário `// Also
+   exclude cards that have this card as parent (prevent cycles)`, mas
+   o código nunca implementava essa parte — `exclude` só continha o
+   próprio card (`new Set([editingId])`), nunca os descendentes.
+   `dependsOn` é single-valued (1 "pai" só por card, mesmo shape do
+   supercard) — qualquer card já dependente do atual (direto ou em
+   cascata) vira ciclo de verdade se escolhido como o NOVO "depende
+   de". `buildDepChains()`/`chainContains()` sobrevivem a um ciclo sem
+   travar (já têm `visited`), mas o resultado fica errado — a cadeia
+   esconde silenciosamente metade do ciclo, sem nenhum aviso. Mesma
+   classe do bug de cascata do supercard corrigido nesta mesma sessão:
+   proteção só na tela de ADICIONAR nunca é suficiente — fix aplicado
+   nos 2 níveis (helper `_dependsDescendants()` reaproveitado):
+   `searchDependsCards()` some com os descendentes da lista mostrada
+   (nem aparecem como opção), e `setDependsOn()` também recusa e avisa
+   com toast, defesa em profundidade contra qualquer chamada que não
+   passe pela lista filtrada.
+2. **Badge "✓ pai atual" nunca aparecia, pra nenhum card.**
+   `isCurrentParent = currentCard?.parentId===card.id` — `parentId` é
+   um campo que só existe em blocos de Nota (`nota.blocos[x].parentId`,
+   feature completamente diferente); em card é sempre `undefined`, e a
+   comparação nunca batia. Campo certo é `card.dependsOn`. Corrigido.
+
+Testado com Playwright contra as funções reais, com uma cadeia real
+A→B→C (A depende de B, B depende de C): comparação antes/depois do
+fix confirma os 2 bugs na versão antiga (picker de C mostrava A e B
+como opções válidas; `setDependsOn('B')` chamado com C editando
+completava o ciclo sem aviso; badge nunca aparecia) e os 2 corrigidos
+na nova (picker de C exclui A/B mas mostra card não relacionado
+normalmente; tentativa de ciclo bloqueada com toast, `dependsOn`
+inalterado; caso legítimo sem relação nenhuma continua funcionando
+normalmente; badge aparece certo). Checks de rotina: `node --check`
+OK, balanço de chaves/parênteses igual ao baseline conhecido da sessão
+(braces -1, parens +1).
+
 ### v8.30.562-dev — 2026-09-03 — Comparação com backup agora distingue "sumiu sem explicação" de "excluído de propósito"
 
 Pedido direto do usuário: "quando eu comparo um backup com os cards

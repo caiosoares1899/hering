@@ -882,6 +882,37 @@ Mesma disciplina de sempre neste repo:
   o fix inicial (só `scheduleAutoSave()`) tinha sido promovido pra prod
   ANTES da varredura achar os outros 6, exigindo uma 2ª promoção.
 
+- **2026-09-03, pedido genérico — prioridade 1 já toda coberta pela
+  própria investigação desta sessão (card fantasma + comparação com
+  backup), escolhida a prioridade 2**: "⛓ Dependências entre cards"
+  (`setDependsOn()`/`unlinkDependsOn()`/`searchDependsCards()`) —
+  nunca tinha entrada no `CODE_MAP.md`, cruzada só de passagem na
+  investigação anterior. 2 achados reais, os dois na mesma função
+  (`searchDependsCards()`):
+  1. Técnica 3 (comentário vs. código) — o comentário `// Also exclude
+     cards that have this card as parent (prevent cycles)` nunca foi
+     implementado de verdade: `exclude` só continha o próprio card,
+     nunca os descendentes. `dependsOn` é single-valued (mesmo shape
+     do supercard, 1 pai só), então qualquer descendente escolhido como
+     novo "pai" fecha um ciclo de verdade. `buildDepChains()` já tinha
+     `visited` (não trava com ciclo corrompido), mas o resultado ficava
+     truncado/errado, escondendo metade do ciclo sem aviso nenhum. Fix:
+     helper `_dependsDescendants()` (BFS por `dependents`), aplicado em
+     2 níveis — `searchDependsCards()` tira os descendentes da lista
+     mostrada, `setDependsOn()` também recusa com toast (defesa em
+     profundidade — mesma lição do fix de cascata do supercard, dev
+     v8.30.548-dev: proteção só na UI de adicionar nunca é suficiente
+     sozinha).
+  2. `isCurrentParent = currentCard?.parentId===card.id` — `parentId`
+     é campo exclusivo de blocos de Nota (`nota.blocos[x].parentId`),
+     nunca existe em card (campo certo é `dependsOn`) — o badge "✓ pai
+     atual" no picker nunca aparecia, pra nenhum card, desde sempre.
+  Testado com Playwright, cadeia real A→B→C: comparação antes/depois
+  do fix confirma os 2 bugs na versão antiga (picker de C mostrava A e
+  B como opção válida; completar o ciclo funcionava sem aviso; badge
+  nunca aparecia) e os 2 corrigidos na nova, sem regressão no caso
+  legítimo sem relação nenhuma (dev v8.30.563-dev).
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.
