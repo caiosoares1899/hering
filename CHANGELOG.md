@@ -2558,6 +2558,53 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.560-dev — 2026-09-03 — Fix crítico: editar Modelo/Recorrente/Agendamento podia criar um card fantasma no Firebase (causa real do alerta "[card sumiu inesperadamente]")
+
+Investigado a partir de um log real de produção, colado pelo usuário:
+`kanban.html?squad=midiacriativa:8246 [card sumiu inesperadamente]
+__qltmp__1788447372045 [CRIATIVA] OOH - Empena 040 Blumenau...`. Esse
+alerta é a rede de segurança do incidente de 2026-08-24 (ver
+`_reportUnexpectedCardDisappearance()`), que dispara quando um id some
+de `/cards_index` sem passar por exclusão intencional.
+
+**Causa raiz**: `openQLEdit()` (editar um Modelo/📋, Recorrente/🔁 ou
+Agendamento/📅 pelo lápis ✏️) abre um card TEMPORÁRIO só em memória (id
+`__qltmp__`+timestamp, `_isQLTemp:true`) reaproveitando o modal normal
+de card. `saveCard()` (botão "💾 Salvar") já tratava esse modo
+corretamente — grava só em `ql_items/{tipo}`, nunca em `cards`/
+`cards_index` de verdade — mas `scheduleAutoSave()` (o autosave que
+dispara sozinho enquanto a pessoa digita, sem precisar clicar em
+Salvar) não tinha o mesmo tratamento. Resultado: parar de digitar por
+um instante (o caminho mais comum — quase ninguém clica em Salvar de
+propósito) disparava o autosave pro card temporário como se fosse real.
+`fbSaveCard()` não achava esse id no espelho `_cardsByKey` (nunca
+existiu no Firebase) e caía no fallback por posição LOCAL
+(`cards.indexOf`) — que sempre "acha" o card (é o próprio objeto do
+array) — escrevendo um **card fantasma de verdade** em `/cards` +
+`/cards_index/__qltmp__...`. Fechar ou salvar o modal só limpa a cópia
+LOCAL (`cards.filter(c=>!c._isQLTemp)`); o fantasma fica órfão no
+Firebase até algum `fbSaveAll()` de outra sessão reconstruir
+`cards_index` a partir do array local dela (que nunca teve esse id) e
+derrubar a entrada — esse é o `child_removed` sem
+`_intentionalDeleteIds` que o alerta "card sumiu inesperadamente"
+capturou. Não é perda de dado real (o "card" nunca foi um card de
+verdade pra ninguém), mas é um alarme falso genuíno, com uma escrita
+espúria real acontecendo por trás.
+
+**Fix**: `scheduleAutoSave()` ganhou o mesmo guard que `saveCard()` já
+tinha — `if(_editingQLItem) return;` logo no topo. Editar um Modelo/
+Recorrente/Agendamento volta a exigir o clique em "💾 Salvar" pra
+persistir (mesmo comportamento que o código já documentava como
+esperado — "fora do fluxo de campos obrigatórios... segue silencioso
+como sempre foi"), sem nenhuma escrita de autosave no meio do caminho.
+
+Confirmado com Playwright, comparando a função real ANTES/DEPOIS do
+fix: simulação de `openQLEdit()` + digitação + `scheduleAutoSave()` —
+antes do fix, `fbSaveCard()` era chamado (bug reproduzido); depois do
+fix, não é chamado nenhuma vez. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido da sessão
+(braces -1, parens +1).
+
 ### v8.30.559-dev — 2026-09-03 — Alvo de toque maior pra trocar de squad no mobile: título "Maré Digital" inteiro fica clicável
 
 Pedido direto do usuário: "lá no mobile, a setinha para mudar de squad
