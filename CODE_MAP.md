@@ -384,6 +384,18 @@ detalhe dos 4 call sites.
   `document.styleSheets` em runtime (a regra "parecia" certa lendo o
   texto). Cuidado ao escrever comentário CSS citando 2+ seletores
   separados por `/` — nunca deixar `*/` se formar sem querer no meio.
+- `openTimelineFeed()`/`_marcosDoDia()`/`_timelineFeedRow()` (2026-09-03)
+  — "📰 Feed de marcos", duplo-clique num `.meudia-sec-hd` de UM dia
+  exato da Timeline (não em "Atrasado") abre `#timeline-feed-ov` com um
+  feed cronológico (mais recente primeiro) do que foi executado no
+  board NAQUELE DIA — cobre o board inteiro, não só o grupo clicado.
+  Marcos: 🆕 criado (`card.createdAt`), 🔀 movido / 🏁 concluído (ambos de
+  `card.flow.log[]`, via `_isColDone(entry.to)` pra distinguir) — mesma
+  fonte de dado que já alimenta `recordMove()`/relatório de tempo,
+  ZERO leitura nova no Firebase (comentários ficaram de fora do
+  escopo de propósito — exigiriam buscar `card_comments` por fora).
+  `_marcosDoDia()` NÃO filtra `c.archived` — é retrospecto do que
+  aconteceu, um card arquivado depois do marco continua aparecendo.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062

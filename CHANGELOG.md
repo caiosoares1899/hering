@@ -2654,6 +2654,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.569-dev — 2026-09-03 — Novo: 📰 Feed de marcos na Timeline (duplo clique num dia)
+
+Pedido direto do usuário, depois de validar os fixes anteriores da
+Timeline: "eu tive outra ideia... realmente uma timeline como se fosse
+uma rede social, que agrupa marcos que foram executados no board naquela
+data, pegando as informações que já registramos". Escopo combinado antes
+de implementar: marcos = criação + conclusão + movimentação de coluna,
+sem comentários (exigiria buscar cada card por fora — `card_comments`
+não vem carregado junto com o card, custo de leitura real que o projeto
+historicamente evita).
+
+Duplo clique no cabeçalho de qualquer grupo de UM dia exato (Hoje,
+Amanhã, ou uma data futura específica — não em "Atrasado", que espalha
+por vários dias, duplo clique nele não abre nada) abre um modal "📰
+Marcos do dia" com um feed cronológico (mais recente primeiro, estilo
+rede social) do que foi executado no board NAQUELE DIA — cobrindo o
+board inteiro, não só os cards do grupo clicado. Cada marco: 🆕 card
+criado (com quem criou, se disponível), 🔀 card movido de coluna → coluna,
+🏁 card concluído (entrou numa coluna de "concluído"), todos com o
+horário. Clique num marco abre o card correspondente.
+
+Fonte 100% do que já está carregado em memória — `card.createdAt` e
+`card.flow.log[]` (o mesmo log que já alimenta `recordMove()`/relatório
+de tempo por tag) — **zero leitura nova no Firebase**. Cards arquivados
+DEPOIS de terem um marco naquele dia continuam aparecendo no feed
+(`_marcosDoDia()` não filtra `archived` de propósito — é um retrospecto
+do que aconteceu, arquivar depois não apaga o fato).
+
+Testado com Playwright: 5 cards sintéticos (criado hoje, movido hoje,
+concluído hoje, concluído hoje MAS arquivado, e um card com marco de
+outro dia) — duplo clique em "Hoje" abre o feed com exatamente os 4
+marcos de hoje esperados (incluindo o arquivado), excluindo o de outro
+dia; textos/ícones/horário conferidos, screenshot visual confirmado.
+`HELP_CONTENT` (entrada "Timeline") ganhou um parágrafo novo explicando
+o recurso. Checks de rotina: `node --check` OK, balanço de chaves/
+parênteses igual ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.568-dev — 2026-09-03 — fix: 📅 Timeline renderizava em colunas horizontais em vez de lista vertical (comentário CSS mal-formado)
 
 Reportado direto pelo usuário logo depois da v8.30.567-dev (fix do "board
