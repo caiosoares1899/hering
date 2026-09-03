@@ -11211,6 +11211,56 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.09 · painel-dev — 2026-09-03 · Fix de contraste do tema claro: superfícies escuras hardcoded viram theme-aware (~80 ocorrências)
+
+Reportado direto pelo usuário, com prints reais das abas "🔋 Status" e
+"🐛 Monitor" em tema claro: "esse azul acinzentado ficou ruim! pouca
+leitura". Confirma exatamente a limitação já sinalizada na entrada
+v3.08 logo abaixo ("dezenas de modais/dropdowns/painéis ainda têm cor
+de superfície ESCURA hardcoded").
+
+**Causa raiz**: dois tons de azul-marinho translúcido — `rgba(3,13,26,
+alpha)` (58 ocorrências, todas em `background:`) e `rgba(10,30,55,
+alpha)` (22 ocorrências) — usados como cor de fundo de praticamente
+todo painel/input/card/linha de lista do arquivo, em dezenas de valores
+de alpha diferentes cada. Pensados só pro tema escuro (translúcido
+sobre o fundo quase-preto = sutil, com texto claro por cima). No tema
+claro, o texto vira escuro (`var(--txt)`/`var(--txt3)`), mas essas
+superfícies continuavam escuras (translúcido sobre o fundo azul-céu do
+claro = um azul acinzentado médio) — texto escuro sobre fundo
+médio-escuro, contraste baixo. Exatamente o padrão dos 2 prints: os
+cards de "🔋 Status" (`rgba(10,30,55,.5)`) e as linhas de erro de
+"🐛 Monitor" (`.err-log-item`, `rgba(3,13,26,.6)`).
+
+**Fix**: as duas cores viraram variáveis de tema (`--ink-rgb`/
+`--slate-rgb`, mesmo padrão `--surface-rgb`/`--surface2-rgb` que o
+`kanban.html` já usa) — troca mecânica em todo o arquivo, cada
+`rgba(3,13,26,` virando `rgba(var(--ink-rgb),` e cada `rgba(10,30,55,`
+virando `rgba(var(--slate-rgb),`, preservando o alpha original de cada
+ocorrência. Em escuro os valores continuam os mesmos de sempre
+(idêntico visualmente, confirmado com print comparando antes/depois).
+Em claro viram quase-branco — a superfície fica clara e o texto escuro
+volta a ter contraste normal.
+
+**Escopo desta rodada**: cobre as duas cores de superfície mais usadas
+do arquivo (praticamente todo input, select, chip, card de painel e
+linha de lista) — resolve os 2 casos reportados e a esmagadora maioria
+da UI. Não cobre as cores de OVERLAY/modal flutuante (`rgba(6,26,46,
+alpha)`, `rgba(8,22,42,alpha)`, `rgba(1,8,16,alpha)` e variações — usadas
+em dropdowns/modais que ficam por cima de tudo), que são uma família de
+cor separada e menos numerosa — próxima rodada, se algum modal
+específico for reportado com o mesmo problema.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11) — a 1ª medição
+pós-fix baixou 4 (parens -7) por causa de fragmentos de código
+propositalmente incompletos escritos no COMENTÁRIO explicando a troca
+(não no código de verdade); reescrito sem esses fragmentos, balanço
+confirmado igual ao original. Testado com Playwright: mock dos 2 prints
+originais (cards de Status + linhas de erro de Monitor) renderizados em
+claro e em escuro, print comparando os dois — claro fica legível, escuro
+idêntico ao original.
+
 ### painel-dev.html v3.08 · painel-dev — 2026-09-03 · Novo: tema claro/escuro (🌙 Abrolhos / ☀️ Lençóis Maranhenses) — fundação
 
 Pedido direto do usuário: "falta a gente criar modo claro/escuro/vice lá
