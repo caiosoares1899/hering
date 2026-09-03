@@ -191,6 +191,15 @@ detalhe dos 4 call sites.
   de supercard, fan-out)
 - `fbSaveCard()` — L7800 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
+- **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
+  `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
+  todas recusam operar sobre um card com `card._isQLTemp===true` (o
+  card temporário que `openQLEdit()` empurra em `cards[]` pra
+  reaproveitar o modal na edição de Modelo/Recorrente/Agendamento — ver
+  seção "Modal reaproveitado..." abaixo). Ponto único de defesa contra
+  qualquer call site, presente ou futuro, que tente persistir esse
+  objeto por engano — não precisa (e não deve) ser reproduzido call
+  site por call site.
 
 ### Rede de segurança — detecção ao vivo de card sumido inesperadamente
 - `_reportUnexpectedCardDisappearance()` — L7787 — dispara toast +
@@ -212,6 +221,13 @@ detalhe dos 4 call sites.
   nome da função + `cards_deleted_intentionally` pra achar a linha atual
   de cada um — não repetido aqui pra não ficar obsoleto a cada edição
   nessas funções.
+- **2º consumidor de `_intentionalDeleteIds`** (2026-09-03, pedido
+  direto do usuário): `compararComBackup()`/`_renderComparacaoBackup()`
+  (comparação com backup, ⚙ Config → Backup) passam a cruzar os cards
+  ausentes do board contra esse Set — separa "sumiu sem explicação"
+  (⚠, destaque, restaurar em lote) de "excluído de propósito" (🗑,
+  bloco recolhido `<details>`, só restaurar 1 por 1). Helpers
+  `_backupMissingUnexplained()`/`_backupMissingIntentional()`.
 - `window._reconcileCardsUpdatedAtPeriodic` — L8547 — poll de 4min (rede
   de segurança contra listener ao vivo que perde um evento
   silenciosamente — achado real 2026-08-31, reunião com board espelhado:

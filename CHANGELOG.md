@@ -2593,6 +2593,103 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.562-dev — 2026-09-03 — Comparação com backup agora distingue "sumiu sem explicação" de "excluído de propósito"
+
+Pedido direto do usuário: "quando eu comparo um backup com os cards
+existentes, ele não consegue fazer distinção do que foi excluído
+daquilo que sumiu, acho que pode ser legal". A tela de restauração
+(⚙ Configurações → Backup → comparar com backup) listava TODO card
+presente no backup mas ausente do board atual (nem ativo, nem
+arquivado) na mesma lista, com o mesmo aviso ⚠ genérico — "podem ter
+sumido por bug, ou terem sido excluídos de propósito — confira um por
+um antes de restaurar".
+
+O dado pra fazer essa distinção já existia no cliente:
+`_intentionalDeleteIds`, um `Set` populado ao vivo (`_onChildAdded` em
+`/cards_deleted_intentionally`, o mesmo índice que a rede de segurança
+"[card sumiu inesperadamente]" já usa há tempos pra saber quando NÃO
+disparar o alerta) — só nunca tinha sido cruzado aqui. O comentário
+original desse listener até dizia "nunca é lido fora disso" — esta é a
+1ª vez que algo além da própria rede de segurança consulta esse índice.
+
+Fix: `compararComBackup()` continua achando os cards ausentes do jeito
+que já fazia; `_renderComparacaoBackup()` agora separa o resultado em 2
+grupos, usando `_intentionalDeleteIds`:
+- **⚠ Sumiram sem explicação** — continua em destaque, com "Restaurar
+  todos" em lote (só este grupo agora, não mais tudo junto).
+- **🗑 Excluídos de propósito** — bloco recolhido (`<details>`),
+  discreto, sem botão de restaurar em massa de propósito (é uma
+  exclusão deliberada de alguém; desfazer em lote sem confirmação
+  individual pareceu arriscado demais) — ainda dá pra restaurar 1 por 1
+  se for o caso.
+
+Testado com Playwright contra as funções reais: card em
+`cards_deleted_intentionally` cai no grupo certo, HTML renderiza as 2
+seções, "Restaurar todos" só mexe no grupo "sem explicação" (o
+intencional continua na lista, disponível pra restaurar individualmente
+depois), e restaurar 1 card do grupo intencional funciona normalmente.
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
+### v8.30.561-dev — 2026-09-03 — /monitorarbugs (área: edição de Modelo/Recorrente/Agendamento): guard centralizado — o fix da v8.30.560-dev cobria só 1 dos ~7 caminhos que escreviam o card fantasma
+
+Continuação direta da investigação da v8.30.560-dev (fix crítico do
+alerta "[card sumiu inesperadamente]"). Aquele fix cobriu só o
+`scheduleAutoSave()`. Rodada de `/monitorarbugs` na mesma área (técnica
+1: mapear TODOS os call sites que usam `cards.find(x=>x.id===editingId)`
+seguido de escrita no Firebase) achou que o mesmo bug era alcançável por
+outros **6 caminhos**, cada um faltando o mesmo guard que só
+`saveCard()`/`scheduleAutoSave()` (agora) tinham:
+
+1. `setCardCover()`/`setCardCoverImage()` (clicar numa cor/definir
+   imagem de capa no modal) — escrita IMEDIATA, nem precisa esperar o
+   debounce do autosave.
+2. `setCardPattern()` (escolher um Padrão de card no modal) — mesma
+   escrita imediata.
+3. `removeBlockerTag()` (remover impedimento pelo modal).
+4. `persistSuperChildren()` (vincular um card filho de supercard ao
+   "pai" sendo editado) — **pior que os outros**: `quickCreateSuperChild()`
+   cria o FILHO como card de verdade via `fbCreateCard()` incondicional
+   (correto, o filho não é temporário) e só o vínculo com o pai fantasma
+   falharia — resultado, com o fix anterior isolado, seria um card real
+   ÓRFÃO, sem pai, sem ninguém saber que existe.
+5. Qualquer uma das ~50 chamadas de `fbSaveAll()` espalhadas pelo
+   arquivo (bulk actions, import, drag-and-drop, reordenar...) — a mais
+   insidiosa: **arquivamento automático por idade roda sozinho em
+   background** (`if(n>0){ fbSaveAll(...) }`, sem nenhum clique da
+   pessoa editando o modelo) e reescreve `/cards` inteiro a partir do
+   array local — se o fantasma ainda estivesse ali (modal aberto), ia
+   junto pro Firebase de verdade, mesmo sem ninguém tocar em nenhum
+   botão do modal.
+
+**Decisão de fix**: em vez de blindar os 6 call sites um por um (frágil
+— qualquer botão novo no modal reabriria o mesmo buraco), o guard foi
+pra dentro das PRIMITIVAS de escrita que todos eles (e qualquer código
+futuro) obrigatoriamente passam:
+- `fbSaveCard(card)` e `fbCreateCard(card)` — recusam salvar/criar se
+  `card._isQLTemp` for verdadeiro.
+- `fbSaveAll()` — filtra `_isQLTemp` do array `cards` ANTES de montar
+  `cardsIndex`/`cardsUpdatedAt`/`cardsArchived` e antes do
+  `window._update()` final — protege todos os call sites de uma vez,
+  não só os que alguém lembrar de revisar.
+- `quickCreateSuperChild()` ganhou um guard próprio (`if(_editingQLItem)`)
+  pra bloquear a ação inteira na origem, evitando o card órfão real do
+  achado #4 — os outros 3 (cover/padrão/impedimento) ficam
+  silenciosamente sem efeito nenhum no Firebase (mesmo tom "silencioso
+  como sempre foi" que o resto do modo de edição de item já tinha), sem
+  precisar de guard próprio.
+
+Testado com Playwright contra as funções reais: os 6 caminhos, num
+card `_isQLTemp`, resultam em 0 chamadas de escrita
+(`window._update`/`window._runTransaction`) — incluindo `fbSaveAll()`
+simulando um save estrutural não relacionado (arquivamento) enquanto o
+fantasma ainda está em `cards[]`, confirmando que o payload final nem
+inclui o id fantasma em `cards` nem em `cards_index`. Regressão
+checada: um card normal (`_isQLTemp` ausente) continua salvando
+normalmente pelos 2 caminhos (`fbSaveCard` direto e `fbSaveAll`).
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido da sessão (braces -1, parens +1).
+
 ### v8.30.560-dev — 2026-09-03 — Fix crítico: editar Modelo/Recorrente/Agendamento podia criar um card fantasma no Firebase (causa real do alerta "[card sumiu inesperadamente]")
 
 Investigado a partir de um log real de produção, colado pelo usuário:
