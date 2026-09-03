@@ -176,6 +176,20 @@ detalhe dos 4 call sites.
   aviso nos 2 pontos em que o fechamento é legítimo mesmo com
   `editingId` ainda null (sucesso de `saveCard()`, e o fechamento do
   modal reaproveitado pra editar item de Recorrente/Modelo/Agendamento)
+- `_navigateToCard(cardId)`/`voltarCardAnterior()` — perto de L12061/
+  L12069 — pilha `_cardNavStack` pro botão "← Voltar" (pai de supercard,
+  vínculo, dependência clicados de dentro do modal já aberto). Passam
+  pelo mesmo `closeOv()` acima (ganham de graça a confirmação de
+  "alterações não salvas" se o card estiver sujo). **Achado real
+  (2026-09-03, `/monitorarbugs` "no modal dos cards")**: toda mutação
+  da pilha/flag (`_cardNavStack.push`/`.pop`, `_cardNavSkipReset=true`)
+  só acontece dentro do `afterClose` passado a `closeOv()` — nunca
+  antes de chamar `closeOv()` — porque `afterClose` só roda se o
+  fechamento for de fato confirmado; mutar antes e a pessoa cancelar
+  ("Continuar editando") deixava a pilha corrompida (entrada duplicada
+  em `_navigateToCard`, nível de histórico perdido pra sempre em
+  `voltarCardAnterior`) e `_cardNavSkipReset` travado em `true`, vazando
+  pro PRÓXIMO card aberto por qualquer caminho normal.
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
 - `fbSaveAll()` — L7615 — reescreve `/cards` INTEIRO (só pra operações
@@ -238,6 +252,31 @@ detalhe dos 4 call sites.
   `_colTagPoll` (poll de 60s pra columns/tags) já usava; cards não
   tinham essa rede apesar de mudarem bem mais. Exposta em `window` pra
   testar/disparar manualmente sem esperar o intervalo.
+
+### ⛓ Dependências entre cards (bloqueio/ordem, não hierarquia — diferente de supercard)
+- Modelo de dado: `card.dependsOn` (id de 1 card só, o "pai"/bloqueador)
+  + `card.dependents` (array de ids que dependem deste) — out-degree 1,
+  in-degree N, mesmo shape de árvore do supercard (`childCardIds`), só
+  com nomes/direção diferentes.
+- `setDependsOn(parentId)`/`unlinkDependsOn()` — perto de L28591/L28615
+  — vincula/desvincula, sempre a partir do card `editingId` aberto no
+  modal. `searchDependsCards(q)` — L28561 — alimenta o picker
+  (`openDependsPicker()`).
+- **Guard de ciclo** (2026-09-03, `/monitorarbugs`) — `_dependsDescendants(cardId)`
+  (logo antes de `openDependsPicker()`) — Set com todo descendente de
+  `cardId` (BFS por `dependents`). Usado em 2 pontos: `searchDependsCards()`
+  tira os descendentes da lista de candidatos mostrada;
+  `setDependsOn()` recusa e avisa com toast se `parentId` estiver nesse
+  Set (defesa em profundidade — mesma lição do fix de cascata do
+  supercard, checagem só na UI de adicionar não basta).
+- `buildDepChains()`/`renderDepMap()`/`chainContains()` — perto de
+  L28953+ — monta e renderiza a árvore completa (⛓ Dependências na
+  toolbar); já tinham `visited` contra ciclo corrompido nos dados (não
+  trava), mas o resultado ficava truncado/errado sem o guard acima.
+- Diferente de 🧩 Supercard (`childCardIds`): supercard é COMPOSIÇÃO
+  (nenhum filho bloqueia o outro, teto de 2 níveis); Dependências é
+  BLOQUEIO/ORDEM (um card não deveria "poder" antes do outro), sem teto
+  de profundidade — só o guard de ciclo acima.
 
 ### Tema (claro/escuro + 🌴 Vice City)
 - `_currentTheme()` — L27838 — lê `data-theme` do `<html>`, retorna
@@ -372,6 +411,17 @@ detalhe dos 4 call sites.
 - `liberarCardAgora()` — L10872
 - `_renderLockRequestUI()` — L10876
 - `_handleLockRequest()` — L10911
+- `_checkCardLock(cardId)` — perto de L11688 — chamada de dentro de
+  `openCard()`; lê/assina `card_locks/{cardId}` e decide travar em
+  leitura ou assumir. 2 early-returns ANTES de tocar o Firebase, os dois
+  achados via `/monitorarbugs` comparando o card hotline contra outros
+  tipos especiais que passam pelo mesmo `openCard()`: card
+  `agenteHotline` (2026-09-02, dev v8.30.543-dev — compartilhado por
+  design, lock não faz sentido) e card `_isQLTemp` (2026-09-03, dev
+  v8.30.565-dev — temporário/client-only de `openQLEdit()`, id nunca se
+  repete, também não faz sentido travar). `_releaseCardLock(cardId)` —
+  perto de L11773 — chamada por `_finishCloseOv()` (`if(editingId)`) e
+  no `beforeunload`.
 
 ### Notificações in-app
 - `createNotif()` — L22303

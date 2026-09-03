@@ -882,6 +882,124 @@ Mesma disciplina de sempre neste repo:
   o fix inicial (só `scheduleAutoSave()`) tinha sido promovido pra prod
   ANTES da varredura achar os outros 6, exigindo uma 2ª promoção.
 
+- **2026-09-03, pedido genérico — prioridade 1 já toda coberta pela
+  própria investigação desta sessão (card fantasma + comparação com
+  backup), escolhida a prioridade 2**: "⛓ Dependências entre cards"
+  (`setDependsOn()`/`unlinkDependsOn()`/`searchDependsCards()`) —
+  nunca tinha entrada no `CODE_MAP.md`, cruzada só de passagem na
+  investigação anterior. 2 achados reais, os dois na mesma função
+  (`searchDependsCards()`):
+  1. Técnica 3 (comentário vs. código) — o comentário `// Also exclude
+     cards that have this card as parent (prevent cycles)` nunca foi
+     implementado de verdade: `exclude` só continha o próprio card,
+     nunca os descendentes. `dependsOn` é single-valued (mesmo shape
+     do supercard, 1 pai só), então qualquer descendente escolhido como
+     novo "pai" fecha um ciclo de verdade. `buildDepChains()` já tinha
+     `visited` (não trava com ciclo corrompido), mas o resultado ficava
+     truncado/errado, escondendo metade do ciclo sem aviso nenhum. Fix:
+     helper `_dependsDescendants()` (BFS por `dependents`), aplicado em
+     2 níveis — `searchDependsCards()` tira os descendentes da lista
+     mostrada, `setDependsOn()` também recusa com toast (defesa em
+     profundidade — mesma lição do fix de cascata do supercard, dev
+     v8.30.548-dev: proteção só na UI de adicionar nunca é suficiente
+     sozinha).
+  2. `isCurrentParent = currentCard?.parentId===card.id` — `parentId`
+     é campo exclusivo de blocos de Nota (`nota.blocos[x].parentId`),
+     nunca existe em card (campo certo é `dependsOn`) — o badge "✓ pai
+     atual" no picker nunca aparecia, pra nenhum card, desde sempre.
+  Testado com Playwright, cadeia real A→B→C: comparação antes/depois
+  do fix confirma os 2 bugs na versão antiga (picker de C mostrava A e
+  B como opção válida; completar o ciclo funcionava sem aviso; badge
+  nunca aparecia) e os 2 corrigidos na nova, sem regressão no caso
+  legítimo sem relação nenhuma (dev v8.30.563-dev).
+
+- **2026-09-03, área nomeada explicitamente — "no modal dos cards"**:
+  releitura completa de `openCard()`/`openNewCard()`/`saveCard()`/
+  `closeOv()`/`_finishCloseOv()` (todo o "esqueleto" do modal — não as
+  sub-features já auditadas em rodadas anteriores: comentários,
+  checklist, tags, capa, dependências, lock, pin, supercards). 1
+  achado real, técnica 4 estendida (mutação de estado ANTES de um gate
+  assíncrono CANCELÁVEL — mesma classe já vista em Agentes Externos,
+  painel-dev v3.07, mas lá era escrita otimista no Firebase; aqui é
+  estado 100% client-side): `_navigateToCard()`/`voltarCardAnterior()`
+  (pilha do botão "← Voltar", usado ao clicar num pai de supercard, um
+  vínculo, ou uma dependência de dentro do modal) mutavam
+  `_cardNavStack`/`_cardNavSkipReset` ANTES de chamar `closeOv()` — que,
+  com o card sujo, dispara uma confirmação assíncrona que a pessoa pode
+  CANCELAR ("Continuar editando"). Cancelar não desfazia a mutação já
+  feita: `_navigateToCard` deixava uma entrada duplicada na pilha (o
+  card reabria 2x antes do botão "← Voltar" sumir de verdade);
+  `voltarCardAnterior` já tinha tirado o card anterior da pilha PRA
+  SEMPRE (perda silenciosa de 1 nível de histórico — "voltar" de novo
+  pulava direto pro card anterior a esse, sem aviso). Pior: como
+  `_cardNavSkipReset` ficava travado em `true` mesmo cancelando, o
+  PRÓXIMO card aberto por QUALQUER caminho normal (board, busca,
+  notificação) herdava a pilha errada em vez de resetar do zero — um
+  sintoma solto, sem relação óbvia com a ação que o causou, do tipo
+  mais difícil de depurar reativamente. Fix: toda mutação passa a
+  acontecer só dentro do `afterClose` de `closeOv()`, que só roda se o
+  fechamento for realmente confirmado — cancelar deixa a pilha
+  intocada. Testado com harness Node isolado (as duas funções reais
+  extraídas do arquivo, `closeOv`/`openCard` stubados simulando
+  confirmar/cancelar) em 5 cenários: a versão antiga falha nos 2
+  cenários de cancelamento exatamente como descrito acima, a nova passa
+  nos 5 sem regressão no caminho normal (dev v8.30.564-dev). **Lição**:
+  ao ler uma função que chama algo assíncrono-cancelável (`closeOv()`,
+  `uiConfirm()`, qualquer `.then()`), vale perguntar especificamente "o
+  que já mudou de estado ANTES dessa chamada, que um cancelamento não
+  desfaz?" — é uma variação do padrão de "mutação otimista sem
+  reversão" já visto em escrita no Firebase, só que aqui em estado
+  puramente local (pilha de navegação), mais fácil de passar batido
+  porque não parece uma "escrita" no sentido óbvio da palavra.
+
+- **2026-09-03, área nomeada explicitamente — "no modal do card" (2ª
+  rodada seguida na mesma área, mesmo dia)**: técnica 1 (caminhos
+  paralelos) aplicada a uma parte do modal ainda não coberta — o lock de
+  edição concorrente (`_checkCardLock()`/`_releaseCardLock()`, banner
+  "🔒 Alguém está editando este card agora"). Esse mecanismo já tinha 1
+  guard (card hotline, 2026-09-02) pra um tipo especial de card que
+  passa pelo mesmo `openCard()`; nunca tinha sido comparado contra o
+  OUTRO tipo especial — o card `_isQLTemp` de `openQLEdit()`
+  (temporário/client-only, id `__qltmp__<timestamp>` nunca se repete,
+  usado pra reaproveitar o modal na edição de Modelo/Recorrente/
+  Agendamento). 1 achado real: sem um guard equivalente,
+  `_checkCardLock()` tratava esse card fantasma como um card "livre"
+  pra travar de verdade — escrevia em `card_locks/{tempId}` (nó órfão,
+  nunca mais lido por ninguém) e armava um heartbeat de 60s reescrevendo
+  ali. Os 2 caminhos de fechar esse modal liberavam esse lock de forma
+  DIFERENTE: **cancelar** passa por `_finishCloseOv()` com
+  `editingId` ainda igual ao `tempId`, libera certinho; **salvar**
+  (branch `_editingQLItem` de `saveCard()`) já zera `editingId=null`
+  ANTES de fechar o modal, então o `if(editingId) _releaseCardLock(...)`
+  de `_finishCloseOv()` nunca disparava — o heartbeat ficava escrevendo
+  lixo sozinho em segundo plano até a pessoa abrir outro card de
+  verdade. Mesma classe de "lixo permanente no Firebase" já corrigida
+  HOJE MAIS CEDO pro nó `cards`/`cards_index` (guard `_isQLTemp` nas 3
+  primitivas de escrita, dev v8.30.561-dev), só que dessa vez no nó
+  `card_locks` e por um caminho totalmente diferente (mecanismo de
+  lock, não as primitivas de salvar) — mostra que um guard de card
+  temporário resolvido numa CAMADA (a de salvar) não cobre
+  automaticamente outra camada (a de lock) que também usa `cards[]`
+  como fonte de verdade sobre "isso é um card de verdade?". Fix: mesmo
+  padrão do guard do hotline — early-return em `_checkCardLock()` pra
+  `_isQLTemp===true`, ANTES de qualquer leitura/escrita/listener no
+  Firebase (nunca chega a criar o lock, então não tem nada pra liberar
+  depois — mais robusto que só consertar o timing da liberação no
+  branch de salvar). Testado com harness Node isolado
+  (`_checkCardLock()` real extraída do arquivo, Firebase stubado
+  contando chamadas) comparando old vs. new em 3 cenários: card
+  `_isQLTemp` (a versão antiga fazia 1 leitura + abria 1 listener ao
+  vivo — reproduz o bug; a nova faz 0), card normal e card hotline (sem
+  regressão nos dois, idênticos nas duas versões) (dev v8.30.565-dev).
+  **Lição**: ao revisitar uma área na MESMA sessão em que ela já foi
+  parcialmente corrigida, vale perguntar "o fix de mais cedo cobriu
+  SÓ a camada onde o bug apareceu, ou existem camadas irmãs que
+  compartilham a mesma pergunta de fundo (aqui: 'isso é um card de
+  verdade?') e que ainda não foram auditadas?" — o guard `_isQLTemp` já
+  existia em 3 lugares (fbSaveCard/fbCreateCard/fbSaveAll) antes desta
+  rodada, mas o lock é uma 4ª pergunta sobre o mesmo card fantasma que
+  ninguém tinha feito ainda.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

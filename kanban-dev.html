@@ -5864,7 +5864,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.562-dev</div>
+<div class="version">v8.30.565-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11703,6 +11703,24 @@ function _checkCardLock(cardId){
   // suportar (achado via /monitorarbugs).
   const _lockCard = cards.find(x=>x.id===cardId);
   if(_lockCard && _lockCard.agenteHotline){ _setCardLockUI(false); return; }
+  // Achado real (/monitorarbugs 2026-09-03, "no modal do card"): o card
+  // temporário de edição de Modelo/Recorrente/Agendamento (openQLEdit(),
+  // `_isQLTemp:true`, id tipo `__qltmp__1788447372045`) nunca existe de
+  // verdade em cards_index/Firebase — é 100% client-side, sempre 1 pessoa
+  // editando por vez (cada abertura gera um id novo via Date.now(), nunca
+  // reaproveitado), então "quem mais está editando isso?" não faz sentido
+  // aqui. Sem este early-return, _apply(null) tratava o id fantasma como um
+  // card "livre" pra travar de verdade: escrevia em card_locks/{tempId} (nó
+  // órfão que nunca mais é lido por ninguém) e armava um heartbeat de 60s
+  // reescrevendo ali. Caminho de CANCELAR ainda liberava certinho
+  // (_finishCloseOv() via closeOv() roda com editingId===tempId, chama
+  // _releaseCardLock()); caminho de SALVAR não — saveCard() já zera
+  // editingId=null ANTES de fechar o modal (branch `_editingQLItem`), então
+  // o `if(editingId) _releaseCardLock(editingId);` de _finishCloseOv() nunca
+  // disparava, deixando o heartbeat escrevendo lixo sozinho em segundo
+  // plano até a pessoa abrir outro card de verdade (que aí sim limpa,
+  // mas só no início da PRÓXIMA chamada de _checkCardLock()).
+  if(_lockCard && _lockCard._isQLTemp){ _setCardLockUI(false); return; }
   if(!window._fbReady){ _setCardLockUI(false); return; }
   const myUid=window._currentUser?.uid;
   const ref=window._ref(window._db, _cardLockPath(cardId));
@@ -12043,21 +12061,39 @@ function updateAgentStatusVisibility(){
 // voltarCardAnterior quem chamou (via a flag _cardNavSkipReset).
 let _cardNavStack = [];
 let _cardNavSkipReset = false;
+// Achado real (/monitorarbugs 2026-09-03, "no modal dos cards"): as duas
+// funções abaixo mexiam em _cardNavStack/_cardNavSkipReset ANTES de chamar
+// closeOv() — que, com o card dirty, abre uma confirmação assíncrona
+// ("Fechar mesmo assim?") que a pessoa pode CANCELAR. Cancelar não desfazia
+// nada: _navigateToCard já tinha empurrado o card atual na pilha (duplicata
+// — o botão "← Voltar" passava a reabrir o mesmo card 2x antes de sumir de
+// verdade) e voltarCardAnterior já tinha tirado o card anterior da pilha
+// PRA SEMPRE (perda silenciosa de um nível de histórico — "voltar" de novo
+// pulava direto pro card anterior a esse, sem avisar). Pior: como
+// _cardNavSkipReset ficava travado em `true` mesmo cancelando, o PRÓXIMO
+// card aberto por QUALQUER caminho normal (clique no board, busca,
+// notificação) herdava a pilha de navegação errada em vez de resetar do
+// zero. Fix: toda mutação de estado só acontece dentro do afterClose, que
+// só roda de verdade se o fechamento for confirmado (ou não havia nada pra
+// confirmar) — cancelar deixa a pilha exatamente como estava.
 function _navigateToCard(cardId){
-  if(editingId) _cardNavStack.push(editingId);
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(cardId));
+  const fromId = editingId;
+  closeOv('card-ov', ()=>{
+    if(fromId) _cardNavStack.push(fromId);
+    _cardNavSkipReset = true;
+    openCard(cardId);
+  });
 }
 function voltarCardAnterior(){
-  let prevId;
-  while(_cardNavStack.length){
-    prevId = _cardNavStack.pop();
-    if(cards.find(c=>c.id===prevId)) break; // pula id de card que não existe mais (excluído nesse meio-tempo)
-    prevId = null;
-  }
-  if(!prevId) return;
-  _cardNavSkipReset = true;
-  closeOv('card-ov', ()=>openCard(prevId));
+  let idx = _cardNavStack.length - 1;
+  while(idx>=0 && !cards.find(c=>c.id===_cardNavStack[idx])) idx--; // pula id de card que não existe mais (excluído nesse meio-tempo)
+  if(idx<0) return;
+  closeOv('card-ov', ()=>{
+    const prevId = _cardNavStack[idx];
+    _cardNavStack.length = idx; // descarta o candidato usado + qualquer id inválido pulado depois dele
+    _cardNavSkipReset = true;
+    openCard(prevId);
+  });
 }
 function _updateCardBackBtn(){
   const btn=document.getElementById('m-card-back-btn');
@@ -28529,6 +28565,29 @@ function verNoBoardFromSearch(){
 // ═══════════════════════════════════════════════════════
 // PARENT / CHILD CARD
 // ═══════════════════════════════════════════════════════
+// Achado real (/monitorarbugs, 2026-09-03): searchDependsCards() já tinha
+// o comentário "Also exclude cards that have this card as parent (prevent
+// cycles)", mas o código NUNCA implementava essa parte — só excluía o
+// próprio card (`exclude = new Set([editingId])`), nunca os descendentes.
+// `dependsOn` é single-valued (1 pai só por card, mesmo shape do
+// supercard), então qualquer card já dependente de `cardId` (direto ou em
+// cascata) vira ciclo de verdade se escolhido como o NOVO "depende de"
+// dele. buildDepChains()/chainContains() já sobrevivem a um ciclo sem
+// travar (têm `visited`), mas o resultado fica errado — a cadeia
+// silenciosamente esconde metade do ciclo (mesma classe do bug de
+// cascata do supercard, corrigido nesta mesma sessão: proteção só na UI
+// de ADICIONAR, nunca na função que persiste). Helper reaproveitável nos
+// 2 pontos.
+function _dependsDescendants(cardId){
+  const seen = new Set();
+  const stack = [cardId];
+  while(stack.length){
+    const id = stack.pop();
+    const c = cards.find(x=>x.id===id);
+    (c?.dependents||[]).forEach(did=>{ if(!seen.has(did)){ seen.add(did); stack.push(did); } });
+  }
+  return seen;
+}
 function openDependsPicker(){
   document.getElementById('depends-search-inp').value='';
   searchDependsCards('');
@@ -28538,8 +28597,10 @@ function openDependsPicker(){
 function searchDependsCards(q){
   const res = document.getElementById('depends-search-results'); if(!res) return;
   const lower = q.trim().toLowerCase();
-  const exclude = new Set([editingId]);
-  // Also exclude cards that have this card as parent (prevent cycles)
+  // Exclui o próprio card E qualquer descendente dele (direto ou em
+  // cascata) — escolher um desses como "depende de" fecharia um ciclo
+  // de verdade (ver comentário completo em _dependsDescendants()).
+  const exclude = new Set([editingId, ..._dependsDescendants(editingId)]);
   const currentCard = cards.find(c=>c.id===editingId);
   const results = cards.filter(c=>
     !c.archived && !exclude.has(c.id) &&
@@ -28554,7 +28615,12 @@ function searchDependsCards(q){
     const col=columns.find(c=>c.id===card.col);
     const div=document.createElement('div');
     div.className='minicard';
-    const isCurrentParent = currentCard?.parentId===card.id;
+    // Achado real (/monitorarbugs, 2026-09-03): usava currentCard.parentId,
+    // campo que só existe em blocos de Nota (nota.blocos[x].parentId) —
+    // em card é sempre undefined, então este badge nunca aparecia, pra
+    // nenhum card, mesmo quando era de fato o pai atual. Campo certo do
+    // card é dependsOn (ver setDependsOn()/unlinkDependsOn() abaixo).
+    const isCurrentParent = currentCard?.dependsOn===card.id;
     div.innerHTML=
       '<div class="minicard-left" style="background:'+(col?.color||'var(--glass-b)')+'"></div>'+
       '<div class="minicard-body"><div class="minicard-title">'+esc(card.title)+'</div>'+
@@ -28567,6 +28633,14 @@ function searchDependsCards(q){
 
 function setDependsOn(parentId){
   const card = cards.find(c=>c.id===editingId); if(!card) return;
+  // Defesa em profundidade: searchDependsCards() já filtra descendentes
+  // da lista mostrada, mas a proteção de verdade fica aqui — mesma lição
+  // do fix de cascata do supercard nesta sessão (checagem só na tela de
+  // ADICIONAR não protege contra ciclo chegando por outro caminho).
+  if(parentId===editingId || _dependsDescendants(editingId).has(parentId)){
+    showToast('⚠ Não dá pra vincular — criaria um ciclo de dependência.');
+    return;
+  }
   card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);
