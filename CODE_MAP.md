@@ -353,6 +353,15 @@ detalhe dos 4 call sites.
   (2026-09-01); 1 fixado por coluna — ou 1 por coluna+submarca em squads
   com `submarcaAtivo` (2026-09-02, cada submarca fixa o seu sem
   atrapalhar as outras).
+- `toggleTimelineView()`/`renderTimelineView()` (2026-09-03) — view
+  alternativa ao board de colunas: lista vertical cronológica dos cards
+  ATIVOS agrupados por prazo (🔴 Atrasado, um grupo por dia, 🗂 Sem prazo
+  recolhido) — `boardView` (`'kanban'`|`'timeline'`) controla qual das
+  duas `renderBoard()` desenha; reusa o MESMO `activeCards` (já filtrado
+  por `passesFilter()`) do board normal. `#timeline-view` fica FORA de
+  `#board-wrap` de propósito (esse tem `overflow-y:hidden`, pensado só
+  pro scroll horizontal das colunas). Reusa as classes `.meudia-sec`/
+  `.meudia-row` de "🌅 Meu Dia" (mesmo visual).
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
@@ -550,6 +559,25 @@ detalhe dos 4 call sites.
   `blockerMode` live; cruzado via `_meuDiaCrossData[sq].blockerMode`, que
   vem de graça do mesmo fetch de `/dados` que já trazia `doneCols`) —
   mesmo padrão de `_cardIsBlocked()`/`_meuDiaIsDone()`
+
+### ⏸ Pausar card (tempo/métricas — 2026-09-03)
+- `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de
+  L13106 — botão "⏸ Pausar"/"▶ Retomar" no rodapé do modal (`#btn-pause-
+  card`). Diferente de 🚧 Impedimento (visível pra todo mundo, tag/coluna
+  própria): pausar é discreto, só o botão e o 📜 Histórico revelam.
+- Modelo de dado: `card.paused` (bool) + `card.pausedAt` (ISO, pausa
+  ATUAL em andamento) + `card.pausedMs` (acumulado de pausas já
+  encerradas). `_cardPausedMs(c)` soma os dois.
+- `_cardTempos()` (relatório de tempo/cycle/lead, perto de L17101)
+  subtrai `_cardPausedMs(c)` do tempo decorrido (lead E cycle), com
+  clamp em 0. Réplica deliberada em `functions/agente-agil-orquestrador/
+  tools/visaoBoard.js` (`cardPausedMs()`/`cardTempos()`) — mesma
+  duplicação já documentada nesse arquivo (kanban.html sem `<script
+  src>` externo, Cloud Function CommonJS) — sem essa réplica, `visao_
+  board` (usado pelo orquestrador e por `analisePO.js`) ficaria
+  divergente do relatório client-side pra um card pausado.
+- Visibilidade do botão: escondido em `openNewCard()` (pausar só faz
+  sentido pra card já existente, com cycle/lead já em andamento).
 
 ### Padrões de card (cardPatterns) — never indexado antes desta rodada
 Presets de campos/seções (`config/cardPatterns`, editor em ⚙ Configurações)

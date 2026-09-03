@@ -47,6 +47,17 @@ const visaoBoardSchema = z.object({
   periodo_dias: z.number().int().positive().optional(),
 });
 
+// ── Réplica de _cardPausedMs() (kanban.html, ver togglePauseCard()) ──
+// ⏸ Pausar (2026-09-03, pedido direto): tempo pausado não conta em cycle/
+// lead time — soma o acumulado de pausas já encerradas (card.pausedMs) com
+// a pausa em andamento, se houver (card.paused && card.pausedAt).
+function cardPausedMs(card) {
+  if (!card) return 0;
+  let ms = card.pausedMs || 0;
+  if (card.paused && card.pausedAt) ms += Math.max(0, Date.now() - new Date(card.pausedAt).getTime());
+  return ms;
+}
+
 // ── Réplica de _cardTempos() (kanban.html ~14904) ──
 function cardTempos(card) {
   const now = Date.now();
@@ -59,9 +70,10 @@ function cardTempos(card) {
   }
   const doneMs = card.flow?.doneAt ? new Date(card.flow.doneAt).getTime() : null;
   const endMs = doneMs || now;
-  const lead = createdMs != null ? Math.max(0, (endMs - createdMs) / 3600000) : null;
+  const pausedMs = cardPausedMs(card);
+  const lead = createdMs != null ? Math.max(0, (endMs - createdMs - pausedMs) / 3600000) : null;
   const startMs = card.flow?.firstStartAt ? new Date(card.flow.firstStartAt).getTime() : null;
-  const cycle = startMs != null ? Math.max(0, (endMs - startMs) / 3600000) : null;
+  const cycle = startMs != null ? Math.max(0, (endMs - startMs - pausedMs) / 3600000) : null;
   return { lead, cycle, done: !!doneMs };
 }
 
@@ -206,6 +218,7 @@ module.exports = {
   summarizeBoard,
   cardTempos,
   cardTempoPorColuna,
+  cardPausedMs,
   colWipLimit,
   makeFakeVisaoBoardHandler,
   makeRealVisaoBoardHandler,
