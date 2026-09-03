@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.558 — 2026-09-02 · Promove pra prod — capa de imagem no card com carregamento mais rápido
+
+Promove pra produção o v8.30.558-dev de `kanban-dev.html` (validado
+pelo usuário: "testado, pode subir sem avisos"). Resumo pra quem usa o
+board:
+
+- **🖼️ Capas de imagem carregando mais rápido** — corrige o board
+  demorando pra mostrar as capas de imagem dos cards logo depois de
+  abrir/atualizar a página, principalmente em colunas com muitos cards
+  com capa. Antes, todas as capas de imagem do board eram baixadas ao
+  mesmo tempo, competindo entre si; agora só carregam as que estão
+  próximas da tela, então aparecem mais rápido. Sem mudança visual —
+  capas continuam aparecendo do mesmo jeito, inclusive o comportamento
+  já existente de não mostrar nada quando o link da imagem está quebrado.
+
+Diff restrito ao conteúdo da promoção — além das 2 linhas de ambiente
+de sempre (versão, `VERSION_KEY`), o favicon próprio do dev usa nomes
+de arquivo diferentes por ambiente (`favicon-dev.png`/
+`favicon-dev-monochrome.png` só em `kanban-dev.html`; aqui continua
+`favicon.png`/`favicon-monochrome.png`) — divergência intencional, já
+promovida numa rodada anterior. Checks de rotina: `node --check` OK,
+balanço de chaves/parênteses igual ao baseline conhecido (braces -1,
+parens +1). Sem mudança de área funcional nova — `CODE_MAP.md` não
+precisou de atualização.
+
 ### v8.30.557 — 2026-09-02 · Promove pra prod — capa de card, corte de bytes em comunicados, selo Direcional trocado
 
 Promove pra produção o lote v8.30.554-dev → v8.30.556-dev de
