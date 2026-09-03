@@ -636,6 +636,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   height:auto;
   overflow-y:visible;
 }
+/* 📅 Timeline (achado real — relato do usuário, board "vazio" empurrando a
+   timeline pra baixo da dobra): a altura calc(100vh - ...) acima não depende
+   do conteúdo de #board, só da viewport — reservava ~480px mesmo com #board
+   escondido (.board-hidden, ver renderBoard()). Some com o wrapper inteiro
+   nesse caso, mesmo padrão :has() já usado pra raia-mode logo acima. */
+.board-wrap.mode-expanded-wrap:has(.board.board-hidden){
+  display:none;
+}
 .board{display:flex;flex-wrap:nowrap;gap:10px;align-items:flex-start;min-width:max-content;}
 /* Tamanho de fonte do board — pedido direto (dificuldade de leitura). `zoom`
    em vez de `transform:scale()`: escala tudo (fonte, padding, cards)
@@ -2167,6 +2175,21 @@ input[type="date"]{-moz-appearance:textfield;}
    (.72) — ainda bem mais legível que a var(--txt2) original (.65 de um tom
    mais escuro que var(--txt)), sem o efeito de brilho/negrito. */
 .meudia-row-meta{font-size:12.5px;font-weight:400;color:var(--txt);opacity:.72;margin-top:4px;line-height:1.35;}
+
+/* 📅 Timeline — mesmas classes .meudia-sec / .meudia-row acima, só o
+   container próprio (lista vertical centralizada, diferente do scroll
+   horizontal de colunas do board normal). */
+#timeline-view{display:none;flex-direction:column;padding:16px 18px 60px;max-width:760px;margin:0 auto;width:100%;box-sizing:border-box;}
+/* Achado real (relato do usuário — Timeline aparecia em branco): o mobile
+   (@media max-width:768px, também ativo em janela estreita com DevTools
+   aberto do lado) tem ".board{display:flex!important;...}" — um style.display
+   inline setado via JS nunca vence um !important de fora. #board.board-hidden
+   (2 classes = especificidade maior que ".board" sozinho) resolve isso
+   incondicionalmente, sem precisar tocar na regra mobile original. */
+.board.board-hidden{display:none!important;}
+.timeline-semprazo{margin-top:6px;}
+.timeline-semprazo summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
+.timeline-semprazo summary::-webkit-details-marker{display:none;}
 .notif-ft{padding:8px 14px;border-top:1px solid var(--glass-b);
   display:flex;justify-content:flex-end;}
 .notif-mark-all{font-size:10px;color:var(--accent);background:none;border:none;
@@ -3451,6 +3474,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
   <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
   <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
+  <button class="btn btn-sm" onclick="toggleTimelineView()" id="btn-timeline" title="Cards ativos agrupados por prazo, em ordem cronológica">🛤️ Timeline</button>
   <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
   <!-- ⏱ Relatórios de Tempo saiu daqui e foi pra dentro de 📊 Dados do Board (botão de
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
@@ -3466,7 +3490,22 @@ input[type="date"]{-moz-appearance:textfield;}
 <div class="board-wrap" id="board-wrap">
   <div class="board" id="board"></div>
 </div>
+<!-- 📅 Timeline: view alternativa ao board de colunas, fora de #board-wrap
+     de propósito (esse tem overflow-y:hidden, pensado pro scroll horizontal
+     das colunas — clipparia a lista vertical da timeline). -->
+<div class="timeline-view" id="timeline-view" style="display:none;"></div>
 <div class="mobile-col-indicator" id="mobile-col-indicator" style="display:none;"></div>
+</div>
+
+<!-- 📰 Feed de marcos do dia (duplo-clique num grupo de data da Timeline) -->
+<div class="ov" id="timeline-feed-ov">
+<div class="panel" style="width:min(560px,94vw);max-height:88vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title" id="timeline-feed-title">📰 Marcos do dia</div>
+    <button class="x-btn" onclick="closeOv('timeline-feed-ov')">✕</button>
+  </div>
+  <div id="timeline-feed-body" style="padding:14px 18px 20px;overflow-y:auto;flex:1;"></div>
+</div>
 </div>
 
 <!-- NOTIFICAÇÕES -->
@@ -4300,6 +4339,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </div>
     </div>
     <button class="btn btn-sm" onclick="archiveCard()">📦 Arquivar</button>
+    <button class="btn btn-sm" id="btn-pause-card" onclick="togglePauseCard()" title="Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.">⏸ Pausar</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
@@ -5864,7 +5904,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.565</div>
+<div class="version">v8.30.570</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6670,6 +6710,7 @@ function _applyCardSectionsVisibility(){
   });
 }
 let raiaMode='';   // '' (off) | 'owner' (pessoa) | 'tag' (tipo) | 'subteam' (subtime)
+let boardView='kanban'; // 'kanban' (colunas, padrão) | 'timeline' (lista cronológica por prazo, ver renderTimelineView())
 // Ordenação dos cards dentro de cada coluna — preferência pessoal por squad,
 // não é dado do board (cada pessoa pode preferir ver diferente).
 let colSortMode = safeLS.getItem('col_sort_'+ACTIVE_SQUAD) || 'priority';
@@ -10483,9 +10524,34 @@ function renderBoard(){
   // nenhum dos dois (bug corrigido: antes ignorava os DOIS também nesse modo,
   // fazendo o filtro de tag/owner parecer "não pegar" cards enquanto essa
   // raia estava ativa).
-  const ignoreOwner = raiaMode==='owner';
-  const ignoreTag = raiaMode==='tag';
+  // Raia não existe na Timeline (lista cronológica, não organizada por
+  // pessoa/tag) — se boardView já mudou pra 'timeline' com uma raia ainda
+  // "ligada" de antes, os filtros de owner/tag continuam valendo aqui,
+  // não seguem a exceção que só faz sentido dentro das colunas por raia.
+  const ignoreOwner = raiaMode==='owner' && boardView!=='timeline';
+  const ignoreTag = raiaMode==='tag' && boardView!=='timeline';
   const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag));
+  // 📅 Timeline: substitui o board de colunas por uma lista cronológica por
+  // prazo — reusa o MESMO activeCards (já filtrado) do board normal, pra
+  // nunca divergir do que os filtros ativos mostrariam. Sai cedo: nada do
+  // resto desta função (raia, restauração de scroll de coluna, indicador
+  // mobile) faz sentido fora do board de colunas.
+  const timelineEl = document.getElementById('timeline-view');
+  if(boardView==='timeline'){
+    // Achado real (relato do usuário, board "sumindo" em branco): no mobile
+    // (ou janela estreita com DevTools aberto), ".board{display:flex!important;}"
+    // (@media max-width:768px) vence qualquer style.display inline setado
+    // aqui — o board ficava visível, porém VAZIO (o innerHTML='' já rodou
+    // acima), empurrando a timeline pra baixo da dobra. .board-hidden (CSS,
+    // 2 classes = especificidade maior) resolve isso de vez.
+    board.classList.add('board-hidden');
+    if(timelineEl){ timelineEl.style.display='flex'; renderTimelineView(activeCards); }
+    updateMetrics();
+    return;
+  }
+  board.classList.remove('board-hidden');
+  board.style.display='';
+  if(timelineEl) timelineEl.style.display='none';
   if(raiaMode==='owner') renderRaiaOwner(board,activeCards);
   else if(raiaMode==='tag') renderRaiaTag(board,activeCards);
   else if(raiaMode==='subteam') renderRaiaSubteam(board,activeCards);
@@ -10502,6 +10568,132 @@ function renderBoard(){
   Object.keys(_scrollColY).forEach(elId=>{ const elx=document.getElementById(elId); if(elx) elx.scrollTop=_scrollColY[elId]; });
   if(_scrollWinY) window.scrollTo(0,_scrollWinY);
   _scheduleColIndicator();
+}
+
+// ═══ 📅 TIMELINE ════════════════════════════════════════════════════════
+// View alternativa ao board de colunas — pedido direto do usuário (inspirado
+// no Trello). Descartada de propósito a versão "Gantt" (exigiria data de
+// INÍCIO por card, campo que não existe hoje — só há prazo final) em favor
+// de algo mais simples: lista cronológica agrupada por prazo, mesmo espírito
+// de "🌅 Meu Dia" (reusa as classes .meudia-sec*/.meudia-row* de lá), só que
+// pro board INTEIRO (respeitando os filtros ativos), não só os cards da
+// pessoa logada.
+function toggleTimelineView(){
+  boardView = boardView==='timeline' ? 'kanban' : 'timeline';
+  const btn=document.getElementById('btn-timeline');
+  if(btn){ btn.style.borderColor = boardView==='timeline'?'var(--teal)':''; btn.style.color = boardView==='timeline'?'var(--teal)':''; }
+  renderBoard();
+}
+// Cards elegíveis pra Timeline excluem coluna "concluído" (mesmo critério de
+// _isColDone() já usado em Meu Dia/relatórios de aging) — é uma view de
+// planejamento pra frente, não um histórico do que já foi entregue.
+function renderTimelineView(activeCards){
+  const wrap=document.getElementById('timeline-view'); if(!wrap) return;
+  const hojeStr=_localDateStrBoard(new Date());
+  const elegiveis=activeCards.filter(c=>!_isColDone(c.col));
+  const atrasados=elegiveis.filter(c=>c.due && c.due<hojeStr);
+  const semPrazo=elegiveis.filter(c=>!c.due);
+  const porData={};
+  elegiveis.filter(c=>c.due && c.due>=hojeStr).forEach(c=>{ (porData[c.due]=porData[c.due]||[]).push(c); });
+  const datasOrdenadas=Object.keys(porData).sort();
+  const ordenaGrupo=lista=>lista.slice().sort((a,b)=>(a.title||'').localeCompare(b.title||''));
+  // dateStr (opcional): só passado pra grupos de 1 dia exato (Hoje/Amanhã/datas
+  // futuras) — "Atrasado" espalha por vários dias, não faz sentido duplo-clique
+  // nele abrir o feed de "um dia só". Pedido direto do usuário: duplo-clique no
+  // cabeçalho do grupo abre o feed de marcos (📰, ver openTimelineFeed()) —
+  // "uma timeline como rede social" do que aconteceu no board naquele dia.
+  const secao=(titulo,icone,lista,corBorda,dateStr)=>{
+    if(!lista.length) return '';
+    const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
+    const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
+    return `<div class="meudia-sec">
+    <div class="meudia-sec-hd" style="${hdStyle}"${dbl}>${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
+    ${ordenaGrupo(lista).map(_timelineCardRow).join('')}
+  </div>`;
+  };
+  let html='';
+  html += secao('Atrasado','🔴',atrasados,'#ff6b6b');
+  datasOrdenadas.forEach(d=>{ html += secao(_timelineLabelForDate(d,hojeStr),'📅',porData[d],'#38b6ff',d); });
+  if(!atrasados.length && !datasOrdenadas.length){
+    html += `<div style="font-size:12px;color:var(--txt3);padding:10px 0 20px;">Nenhum card com prazo definido${semPrazo.length?' (fora "Sem prazo" abaixo)':' nesta squad'}.</div>`;
+  }
+  if(semPrazo.length){
+    html += `<details class="timeline-semprazo">
+      <summary>🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
+      ${ordenaGrupo(semPrazo).map(_timelineCardRow).join('')}
+    </details>`;
+  }
+  wrap.innerHTML = html || `<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum card ativo pra mostrar (confira os filtros).</div>`;
+}
+function _timelineLabelForDate(dateStr, hojeStr){
+  if(dateStr===hojeStr) return 'Hoje';
+  const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
+  if(dateStr===_localDateStrBoard(amanha)) return 'Amanhã';
+  return new Date(dateStr+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});
+}
+function _timelineCardRow(card){
+  const col=columns.find(c=>c.id===card.col);
+  const ownerLbl=card.owner?' · '+esc(card.owner):'';
+  return `<div class="meudia-row" onclick="openCard('${esc(card.id)}')">
+    <div class="meudia-row-main">
+      <div class="meudia-row-title">${esc(card.title)}</div>
+      <div class="meudia-row-meta">${esc(col?.name||card.col)}${ownerLbl}</div>
+    </div>
+  </div>`;
+}
+
+// ── 📰 Feed de marcos (duplo-clique num dia da Timeline) ────────────────────
+// Pedido direto do usuário: "uma timeline como se fosse uma rede social, que
+// agrupa marcos que foram executados no board naquela data, pegando as
+// informações que já registramos" — v1 com escopo combinado: criação +
+// conclusão + movimentação de coluna, SEM comentários (exigiria buscar cada
+// card por fora, custo de leitura real; card_comments não vem carregado
+// junto com o card). Fonte 100% do que já está em memória — `card.createdAt`
+// e `card.flow.log[]` (ver recordMove()) — zero leitura nova no Firebase.
+function _dateOnlyLocalStr(s){
+  if(!s) return '';
+  return s.length<=10 ? s : _localDateStrBoard(new Date(s));
+}
+function _marcosDoDia(dateStr){
+  const marcos=[];
+  // Sem !c.archived de propósito: isto é um retrospecto do que ACONTECEU —
+  // um card concluído nesse dia e arquivado depois continua sendo um marco
+  // real daquele dia, não devia sumir do feed só por ter sido arquivado.
+  cards.filter(c=>c && !c.agenteHotline).forEach(c=>{
+    if(c.createdAt && _dateOnlyLocalStr(c.createdAt)===dateStr){
+      marcos.push({at:c.createdAt.length<=10?c.createdAt+'T12:00:00.000Z':c.createdAt, tipo:'criado', card:c});
+    }
+    const log=c.flow?.log||[];
+    log.forEach((entry,i)=>{
+      if(i===0 && (!entry.from||entry.from==='—')) return; // é a entrada de criação, já coberta acima
+      if(_dateOnlyLocalStr(entry.at)!==dateStr) return;
+      marcos.push({at:entry.at, tipo:_isColDone(entry.to)?'concluido':'movido', card:c, from:entry.from, to:entry.to});
+    });
+  });
+  return marcos.sort((a,b)=>b.at.localeCompare(a.at)); // mais recente primeiro, estilo feed
+}
+function _timelineFeedRow(m){
+  const nomeCol=id=>columns.find(x=>x.id===id)?.name||id||'—';
+  const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let icone, texto;
+  if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:''); }
+  else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b> foi concluído — ${esc(nomeCol(m.to))}`; }
+  else { icone='🔀'; texto=`<b>${esc(m.card.title)}</b> moveu de ${esc(nomeCol(m.from))} → ${esc(nomeCol(m.to))}`; }
+  return `<div class="meudia-row" onclick="closeOv('timeline-feed-ov');openCard('${esc(m.card.id)}')">
+    <div class="meudia-row-main">
+      <div class="meudia-row-title">${icone} ${texto}</div>
+      <div class="meudia-row-meta">🕐 ${hora}</div>
+    </div>
+  </div>`;
+}
+function openTimelineFeed(dateStr, labelStr){
+  const marcos=_marcosDoDia(dateStr);
+  const titleEl=document.getElementById('timeline-feed-title');
+  if(titleEl) titleEl.textContent='📰 '+(labelStr||dateStr);
+  const body=document.getElementById('timeline-feed-body'); if(!body) return;
+  body.innerHTML = marcos.length ? marcos.map(_timelineFeedRow).join('')
+    : '<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum marco registrado neste dia (criação, conclusão ou movimentação de coluna).</div>';
+  document.getElementById('timeline-feed-ov')?.classList.add('open');
 }
 
 // ── Fase 3.2 (mobile): indicador de coluna atual + scroll-snap ─────────────
@@ -12262,6 +12454,8 @@ function openCard(id){
   document.getElementById('m-meta-e').textContent='Editado por '+(c.edited||'—')+' · '+_fmtDataCriacao(c.editedAt);
   renderHistory(c); // 📜 popula o histórico do card
   document.getElementById('btn-del-card').style.visibility='visible';
+  const pauseBtn=document.getElementById('btn-pause-card'); if(pauseBtn) pauseBtn.style.visibility='visible';
+  _renderPauseBtn(c);
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
@@ -12636,6 +12830,7 @@ function openNewCard(col){
   renderSubPrioRow();
   renderParticipants([]);
   document.getElementById('btn-del-card').style.visibility='hidden';
+  const pauseBtnNew=document.getElementById('btn-pause-card'); if(pauseBtnNew) pauseBtnNew.style.visibility='hidden';
   const bRow=document.getElementById('m-blocker-row');
   if(bRow) bRow.style.display='none';
   _clGroupsInit(null);
@@ -13005,6 +13200,63 @@ async function deleteCard(){
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
   c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveCard(c); renderBoard(); closeOv('card-ov');
+}
+
+// ═══ ⏸ PAUSAR CARD ═══════════════════════════════════════════════════════
+// Pedido direto do usuário (inspirado no Trello): parar a contagem de
+// tempo/métricas (cycle time, lead time) de um card, SEM marcar como
+// impedimento público — diferente de 🚧 Impedimento, que é visível pra todo
+// mundo (tag vermelha/coluna própria) e pensado pra sinalizar bloqueio real.
+// Pausar é privado/discreto: só o botão do modal (rótulo muda) e o 📜
+// Histórico revelam que aconteceu.
+//
+// Modelo de dado: card.paused (bool) + card.pausedAt (ISO, início da pausa
+// ATUAL) + card.pausedMs (soma acumulada, em ms, de pausas JÁ ENCERRADAS —
+// não conta a que está em andamento). _cardPausedMs() calcula o total
+// "efetivo até agora" somando as duas partes — usado por _cardTempos()
+// abaixo (cycle/lead time) pra subtrair o tempo pausado do tempo decorrido.
+// Réplica do MESMO cálculo em functions/agente-agil-orquestrador/tools/
+// visaoBoard.js (cardTempos()) — mesmo padrão de duplicação documentado lá
+// (kanban.html não tem <script src> externo, Cloud Function é CommonJS).
+function togglePauseCard(){
+  if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
+  const nowISO=new Date().toISOString();
+  if(c.paused){
+    const elapsedMs = c.pausedAt ? Math.max(0, Date.now()-new Date(c.pausedAt).getTime()) : 0;
+    c.pausedMs = (c.pausedMs||0) + elapsedMs;
+    c.paused = false;
+    c.pausedAt = null;
+    recordHistory(c, 'retomou a contagem de tempo do card (⏸ Pausar)');
+    showToast('▶ Card retomado — a contagem de tempo/métricas voltou a rodar.');
+  } else {
+    c.paused = true;
+    c.pausedAt = nowISO;
+    recordHistory(c, 'pausou a contagem de tempo do card (⏸ Pausar)');
+    showToast('⏸ Card pausado — tempo parado de contar nas métricas (cycle/lead time), sem virar impedimento público.');
+  }
+  fbSaveCard(c);
+  _renderPauseBtn(c);
+  renderBoard();
+}
+function _cardPausedMs(c){
+  if(!c) return 0;
+  let ms = c.pausedMs||0;
+  if(c.paused && c.pausedAt) ms += Math.max(0, Date.now()-new Date(c.pausedAt).getTime());
+  return ms;
+}
+function _renderPauseBtn(c){
+  const btn=document.getElementById('btn-pause-card'); if(!btn) return;
+  if(c && c.paused){
+    btn.textContent='▶ Retomar';
+    btn.style.color='var(--warn)';
+    btn.style.borderColor='rgba(255,209,102,.4)';
+    btn.title='A contagem de tempo/métricas deste card está pausada — clique pra retomar.';
+  } else {
+    btn.textContent='⏸ Pausar';
+    btn.style.color='';
+    btn.style.borderColor='';
+    btn.title='Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.';
+  }
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
 // opts: quais campos entram na cópia, além dos sempre-copiados (título com
@@ -16950,9 +17202,13 @@ function _cardTempos(c){
   else if(c.flow?.log?.length){ createdMs=new Date(c.flow.log[0].at).getTime(); }
   const doneMs = c.flow?.doneAt ? new Date(c.flow.doneAt).getTime() : null;
   const endMs = doneMs || now;
-  const lead = (createdMs!=null) ? Math.max(0,(endMs-createdMs)/3600000) : null;
+  // ⏸ Pausar (ver togglePauseCard()) — tempo pausado não conta nem em lead
+  // nem em cycle time. Réplica em functions/agente-agil-orquestrador/tools/
+  // visaoBoard.js:cardTempos() — mesma fórmula, mesma razão de duplicação.
+  const pausedMs=_cardPausedMs(c);
+  const lead = (createdMs!=null) ? Math.max(0,(endMs-createdMs-pausedMs)/3600000) : null;
   const startMs = c.flow?.firstStartAt ? new Date(c.flow.firstStartAt).getTime() : null;
-  const cycle = (startMs!=null) ? Math.max(0,(endMs-startMs)/3600000) : null;
+  const cycle = (startMs!=null) ? Math.max(0,(endMs-startMs-pausedMs)/3600000) : null;
   return { lead, cycle, done: !!doneMs };
 }
 // Tempo (horas) que um card passou em cada coluna, a partir do flow.log
@@ -22318,6 +22574,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
+    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em: 🔴 Atrasado (todos juntos, sem separar por data), depois um grupo por dia com cards a vencer (Hoje, Amanhã, e datas seguintes em ordem), e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Respeita os filtros de Filtros/Busca que já estiverem ativos — desliga sozinha se você trocar de squad. Clique em qualquer card da lista pra abrir ele, igual no board normal. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
@@ -22375,6 +22632,7 @@ const HELP_CONTENT = {
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.' },
+    { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: só o botão do modal (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
@@ -22740,7 +22998,7 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon-dev.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
       // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
       // 'monochrome' (silhueta branca em fundo transparente, o sistema
       // aplica a própria cor por cima), o Android não consegue retintar o
@@ -22778,7 +23036,7 @@ function initPWA(){
       // (mesmo nome "Maré Digital" nos dois, sem isso ficavam idênticos).
       // Mesma técnica de recorte/monocromia aplicada, só a fonte mudou.
       // kanban.html (prod) continua com favicon.png/favicon-monochrome.png.
-      {src:new URL('favicon-dev-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
+      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
@@ -28000,12 +28258,12 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
-// se/quando este trecho for promovido pra kanban.html) uma única vez, na
-// carga do script — antes de qualquer troca acontecer — pra sempre saber
-// pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
-// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
-const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon-dev.png';
+// ORIGINAL do <link rel="icon"> (favicon.png aqui; favicon-dev.png em
+// kanban-dev.html) uma única vez, na carga do script — antes de qualquer
+// troca acontecer — pra sempre saber pra onde voltar ao sair do Vice
+// City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
+// nomes diferentes desde a troca acima).
+const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
   if(!link) return;
