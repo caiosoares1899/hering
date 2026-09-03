@@ -2533,6 +2533,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.558-dev — 2026-09-02 — Capa de imagem no card: lazy loading (corrige demora escalando com a quantidade de capas)
+
+Reportado direto pelo usuário logo depois da promoção anterior: "as
+capas de card demoraram a aparecer", com prints mostrando cards indo
+carregando a imagem aos poucos. Investigação (Playwright, medindo o
+código real de `setCardCoverImage()`/automações introduzidas na
+promoção anterior) descartou regressão nesse código — 0 diferença de
+tempo síncrono medida. Teste pedido ao usuário confirmou a causa real:
+"escala com a quantidade" de capas visíveis na tela.
+
+**Causa raiz**: a capa de imagem era desenhada via `background-image`
+inline (`makeCardEl()`), dentro do `innerHTML` que `renderBoard()`
+escreve de uma vez para todos os cards. `background-image` não tem
+lazy loading nativo — no load/hard-refresh o navegador dispara o fetch
+de **todas** as capas de imagem do board de uma vez, mesmo as de
+colunas fora da tela, todas competindo pela mesma banda.
+
+**Fix**: capa de imagem virou `<img loading="lazy" decoding="async">`
+dentro da mesma div (`object-fit:cover` reproduz o mesmo enquadramento
+que `background-size:cover` fazia) — `loading="lazy"` é nativo do
+navegador, só baixa quando o card está perto de entrar na tela.
+Preservado o comportamento já documentado de link quebrado (imagem
+removida/URL inválida não mostra ícone de imagem quebrada): `onerror`
+esconde o `<img>`, a div mantém a altura de 64px reservada, igual ao
+comportamento antigo. Testado com Playwright contra `makeCardEl()`
+real: capa de imagem, capa de cor e "sem capa" continuam corretas;
+cenário de URL 404 confirmado escondendo o `<img>` e preservando a
+altura da tira.
+
 ### v8.30.556-dev — 2026-09-02 — Selo "Direcional" trocou de 📌 pra 🧭 (colidia com o ícone do pin de card)
 
 Pedido direto do usuário, com print do selo no card: o selo "Direcional
