@@ -59,6 +59,27 @@ function makeRealNotificarEspecialistaExternoHandler({ db, squadId, cardId, dryR
       };
     }
 
+    // Achado real (/monitorarbugs 2026-09-03, "no agente ágil orquestrador"):
+    // `kanban/config/agentesExternos/{id}` é um registro GLOBAL, compartilhado
+    // por todos os squads — o campo `squads[squadId]===true` é o toggle que o
+    // ADM usa em painel.html pra dizer "esse especialista vale NESTE squad"
+    // (mesmo campo que agenteMarcador.js já respeita via agentesExternosDoSquad()
+    // no gatilho determinístico "📎 cc"). Esta ferramenta, chamada pelo LLM,
+    // nunca checava esse campo — só existência de webhookUrl — então um
+    // especialista com webhook cadastrado mas desabilitado NESTE squad (ex.:
+    // habilitado só em 'dados') ainda recebia o POST de verdade se o modelo,
+    // rodando em 'dev', identificasse o id certo no histórico de comentários
+    // do card (uid `especialista:{id}` não é validado contra o registro na
+    // hora de escrever o comentário — só na hora de notificar). O toggle por
+    // squad deixava de ser um limite de segurança de verdade nesse caminho.
+    if (!config.squads || config.squads[squadId] !== true) {
+      return {
+        ok: false,
+        error: 'especialista_nao_habilitado_neste_squad',
+        message: `O especialista "${input.especialista}" não está habilitado neste squad — peça pra um ADM marcar o squad em Painel → Configurações → 🔌 Agentes Externos, se fizer sentido avisar ele daqui.`,
+      };
+    }
+
     // Mesma validação de esquema que painel-dev.html já faz ao salvar —
     // defesa em profundidade (o campo já devia estar bem-formado, mas
     // nunca fazer uma requisição de saída pra um esquema que não seja
