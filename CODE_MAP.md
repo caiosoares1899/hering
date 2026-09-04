@@ -1308,7 +1308,7 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
 - "🎯 Cards do board com badge OKR" (`renderOKR()`) mudou de casa: antes
   na aba Visão, agora dentro desta aba nova, junto do resto do assunto.
 
-#### Extensão (2026-09-04, v3.19 · painel-dev — SÓ em painel-dev.html ainda, não promovida): Histórico, vínculo de cards, tags, notificações
+#### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
 v3.19 · painel-dev pro racional completo.
 - **Histórico**: `OKR_HIST_CAP`/`OKR_OBJ_HIST_FIELDS`/`OKR_MARCO_HIST_FIELDS`,
