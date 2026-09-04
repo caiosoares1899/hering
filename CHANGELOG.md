@@ -12614,6 +12614,50 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.20 · painel-dev — 2026-09-04 — 🎯 OKR: 4 achados reais testando em prod (z-index, multi-trimestre, arquivados, histórico rico)
+
+Feedback direto do usuário testando a rodada anterior (v3.19) já em
+produção:
+
+- **Bug real: card vinculado abria "atrás" do modal do OKR.**
+  `#pc-modal-ov`/`#pt-feed-ov`/`#okr-obj-ov`/`#okr-marco-ov` compartilham
+  a classe `.pc-modal-ov` com o MESMO `z-index:200` — a ordem de
+  empilhamento virava ordem no DOM, e `#pc-modal-ov` (visualizador de
+  card) é declarado ANTES dos modais de OKR no HTML, então sempre
+  pintava por baixo quando os dois ficavam abertos ao mesmo tempo. Fix:
+  `#pc-modal-ov{z-index:210;}` — sempre por cima de qualquer modal que o
+  abriu (Timeline, Histórico geral, OKR).
+- **Trimestre virou lista** (`objetivo.trimestres: []`, antes
+  `trimestre` string única) — pedido direto: "tem que ser possível
+  acumular trimestres, já que às vezes o projeto é grande". Reusa o
+  mesmo padrão de lista editável já usado em Indicadores/Progressos/etc.
+  Compatibilidade com objetivo já criado (campo singular antigo) via
+  `_okrTrimestresOf(o)`, sem precisar de migração de dado — normaliza
+  pra lista assim que o objetivo é aberto pra edição.
+- **"Ver arquivados"** — pedido direto: "tem que ser possível arquivar
+  OKRs e depois acessar eles por essa guia". Botão de toggle na aba
+  inverte a lista inteira entre ativos/arquivados (não mistura os dois
+  numa lista só); modal de um objetivo arquivado troca "Arquivar" por
+  "Desarquivar".
+- **Histórico reescrito com visual rico** — pedido direto, em resposta a
+  "o histórico, o q q ta salvando?": "ele salva igual os cards tipo
+  'fulano editou' ou ele cria tipo a timeline bonitinha de rede social
+  (é isso que eu quero)?". Cada entrada agora tem ícone por tipo (🎯
+  criado, 📝 campo, 👤 responsável, 📋 lista, 🏷️ tag, 🔗 vínculo, 🏁
+  marco, 📊 status, 💯 checklist, 📦 arquivado), avatar de quem editou
+  (reusa `_okrAvatarHtml()` da Fase 1) e borda colorida por tipo — mesmo
+  espírito visual do Feed de marcos do board. Cobertura expandida: antes
+  só rastreava campos principais + responsável; agora também Indicadores/
+  Progressos/Próximos Passos/Riscos/Planos de Ação (item por item,
+  adicionado/removido), tags aplicadas/removidas, cards vinculados/
+  desvinculados, participantes de marco, e arquivar/desarquivar.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses no
+baseline (`braces -1, parens -12`). 26 cenários novos + 31 (rodada
+anterior) + 45 (Fase 1) + 10 (badge/avatar) reexecutados via Playwright
+— todos passando, sem regressão. Confirmado visualmente por screenshot:
+card abre por cima do modal do OKR, histórico com avatar/ícone/cor.
+
 ### painel.html v3.19 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR: Histórico, vínculo de cards, tags gerenciáveis e notificações
 
 Promove pra produção o lote v3.18 → v3.19 de `painel-dev.html`, validado
