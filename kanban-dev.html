@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.580-dev</div>
+<div class="version">v8.30.581-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7978,10 +7978,17 @@ function recordMove(card, toCol, atISO){
   card.flow.log.push({ from: from||'—', to: toCol, at });
   if(card.flow.log.length>40) card.flow.log = card.flow.log.slice(-40);
   const startIds = _flowStartColIds();
-  const doneId = _flowDoneColId();
   if(startIds.includes(toCol) && !card.flow.firstStartAt) card.flow.firstStartAt = at;
-  if(toCol===doneId){ card.flow.doneAt = at; }
-  else if(card.flow.doneAt && from===doneId){ card.flow.doneAt = null; }
+  // Achado real (/monitorarbugs 2026-09-04, área Timeline): antes comparava
+  // toCol/from só contra _flowDoneColId() (a 1ª coluna de fim configurada) —
+  // em squad com 2+ colunas de fim (ex.: "Concluído"+"Cancelado", cenário
+  // real via ⚙ Config → Fluxo), um card terminado na 2ª coluna nunca ganhava
+  // doneAt, sumindo do bucket "✅ Concluído recente" da Timeline (e de todo
+  // resto que lê flow.doneAt: cycle time, throughput, CFD, "🧹 Cards
+  // antigos") mesmo _isColDone() (usada 2 linhas abaixo, no mesmo if de
+  // auto-desimpedimento) já considerando ele concluído de verdade.
+  if(_isColDone(toCol)){ card.flow.doneAt = at; }
+  else if(card.flow.doneAt && _isColDone(from)){ card.flow.doneAt = null; }
   card._lastFlowCol = toCol;
   // Regra geral pedida pelo usuário (2026-09-04): "se o card está
   // concluído, automaticamente ele é desimpedido" — vale pra TODOS os
@@ -8007,8 +8014,9 @@ function backfillFlow(card){
   card.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, imported:true };
   card.flow.enteredAt[card.col] = created;
   card._lastFlowCol = card.col;
-  const doneId = _flowDoneColId();
-  if(card.col===doneId){
+  // Mesmo achado do recordMove() logo acima — _isColDone() em vez de
+  // comparar só contra a 1ª coluna de fim configurada.
+  if(_isColDone(card.col)){
     const fin = card.doneAt || (card.editedAt? card.editedAt+(card.editedAt.length<=10?'T12:00:00.000Z':''):created);
     card.flow.firstStartAt = created;
     card.flow.doneAt = fin;
@@ -10680,6 +10688,19 @@ function _timelineEventMarkerHtml(ev){
   const lbl=new Date(ev.start+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
   return `<div class="timeline-event-marker" onclick="openCal();" title="${esc(ev.desc||'Ver no Calendário')}">── ${esc(lbl)} · ${esc(ev.title)} ──</div>`;
 }
+// Achado real (/monitorarbugs 2026-09-04): os 2 <details> de baixo ("Sem
+// prazo definido"/"Concluído recente") nunca guardavam o `open` — como
+// renderBoard() reconstrói #timeline-view do zero (mesma função que já
+// preserva scroll via _scrollColY/_scrollBoardX logo no topo), e a própria
+// "ação no lugar" (_timelineSetPrazoInline()/_timelineAdiarCard()) termina
+// chamando renderBoard(), definir um prazo ou adiar um card DE DENTRO de
+// "Sem prazo definido" fechava a seção na hora — o oposto do que a feature
+// promete ("sem isso a pessoa tem que abrir 12 modais pra limpar a raia
+// Sem prazo", comentário original de _timelineCardRow()).
+let _timelineCollapseOpen = { semPrazo:false, concluidoRecente:false };
+function _timelineSetCollapseOpen(key, isOpen){
+  _timelineCollapseOpen[key]=isOpen;
+}
 function renderTimelineView(activeCards){
   const wrap=document.getElementById('timeline-view'); if(!wrap) return;
   const hojeDate=new Date(); hojeDate.setHours(0,0,0,0);
@@ -10782,13 +10803,13 @@ function renderTimelineView(activeCards){
     html += `<div style="font-size:12px;color:var(--txt3);padding:10px 0 20px;">Nenhum card com prazo definido${semPrazo.length?' (fora "Sem prazo" abaixo)':' nesta squad'}.</div>`;
   }
   if(semPrazo.length){
-    html += `<details class="timeline-collapse">
+    html += `<details class="timeline-collapse" ${_timelineCollapseOpen.semPrazo?'open':''} ontoggle="_timelineSetCollapseOpen('semPrazo', this.open)">
       <summary>🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
       ${ordenaCronologico(semPrazo).map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
   if(concluidosRecentes.length){
-    html += `<details class="timeline-collapse">
+    html += `<details class="timeline-collapse" ${_timelineCollapseOpen.concluidoRecente?'open':''} ontoggle="_timelineSetCollapseOpen('concluidoRecente', this.open)">
       <summary>✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
       ${concluidosRecentes.map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
@@ -10956,7 +10977,11 @@ function _marcosNoPeriodo(deStr, ateStr){
       if(!h || !h.what || !h.at) return;
       const d=_dateOnlyLocalStr(h.at);
       if(d<deStr || d>ateStr) return;
-      if(/^(alterou|definiu) prioridade/.test(h.what)){
+      // Achado real (/monitorarbugs 2026-09-04): _histDiff() gera "removeu
+      // prioridade" quando alguém volta o dropdown pra "— sem prioridade —"
+      // (b==='' no diff genérico) — regex antigo só cobria "alterou"/
+      // "definiu", perdendo esse caso.
+      if(/^(alterou|definiu|removeu) prioridade/.test(h.what)){
         marcos.push({at:h.at, tipo:'prioridade', card:c, texto:h.what});
       } else if(/^marcou como impedido/.test(h.what)){
         marcos.push({at:h.at, tipo:'impedido', card:c, texto:h.what});

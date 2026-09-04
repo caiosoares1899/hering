@@ -2727,6 +2727,57 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.581-dev — 2026-09-04 — /monitorarbugs na Timeline: 3 achados reais
+
+Revisão dedicada pedida pelo usuário ("roda /monitorarbugs nessa parte da
+timeline lá no kanban") — primeira vez que a área inteira (buckets
+progressivos, ação no lugar, marcos de contexto, Concluído recente, 📜
+Histórico, 📰 Feed de marcos) é varrida como um todo. 3 achados reais:
+
+1. **`recordMove()`/`backfillFlow()` — "✅ Concluído recente" perdia
+   cards em squads com múltiplas colunas de fim configuradas.**
+   `card.flow.doneAt` (usado pelo bucket "Concluído recente" da Timeline
+   e por cycle time/throughput/CFD/"🧹 Cards antigos") só era gravado
+   comparando `toCol`/`from` contra `_flowDoneColId()` — a 1ª coluna de
+   fim configurada em `flowConfig.doneCols`, não TODAS. Squad com 2+
+   colunas de fim (ex.: "Concluído"+"Cancelado", configurável de verdade
+   em ⚙ Config → Fluxo): card terminado na 2ª coluna nunca ganhava
+   `doneAt`, mesmo `_isColDone()` (usada 2 linhas abaixo, no mesmo
+   `if` da regra de auto-desimpedimento, e em `_marcosNoPeriodo()`) já
+   considerando ele concluído de verdade — inconsistência dentro da
+   MESMA função. Fix: as duas comparações passam a usar `_isColDone()`
+   (qualquer coluna da lista, não só a 1ª) — corrigido também em
+   `backfillFlow()` (mesmo padrão, pra cards importados/legados).
+2. **Feed de marcos perdia "removeu prioridade".** `_histDiff()` gera 3
+   frases diferentes conforme a transição — "alterou prioridade: X → Y",
+   "definiu prioridade: X" (de vazio) e "removeu prioridade" (de volta
+   pra "— sem prioridade —", opção real do dropdown) — mas o regex do
+   Feed só cobria as 2 primeiras. Fix: regex agora inclui "removeu".
+3. **"Sem prazo definido"/"Concluído recente" fechavam sozinhos ao usar
+   a própria "ação no lugar".** Os 2 `<details>` nunca guardavam o
+   `open` entre renders — como `_timelineSetPrazoInline()`/
+   `_timelineAdiarCard()` terminam chamando `renderBoard()` (que
+   reconstrói `#timeline-view` do zero), definir um prazo ou adiar um
+   card DE DENTRO de "Sem prazo definido" fechava a seção na hora — o
+   oposto do que a feature promete ("sem isso a pessoa tem que abrir 12
+   modais pra limpar a raia Sem prazo", comentário original da feature).
+   `renderBoard()` já preserva scroll nesse mesmo re-render, mas não o
+   estado dessas 2 seções. Fix: `_timelineCollapseOpen` (objeto em
+   memória, mesmo padrão do `_painelTimelineOpen` do painel) guarda o
+   aberto/fechado de cada uma, `ontoggle` persiste o clique manual.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline da sessão (braces -1, parens +1). Testado com Playwright:
+achado 1 confirmado com 2 colunas de fim configuradas (`doneAt` setado
+corretamente ao entrar na 2ª coluna, resetado ao reabrir, re-setado ao
+voltar pra 1ª — inclusive `backfillFlow()` num card legado direto na 2ª
+coluna); achado 2 confirmado com um card cujo único histórico é "removeu
+prioridade" (aparece no Feed); achado 3 confirmado abrindo manualmente
+"Sem prazo definido" e chamando `renderTimelineView()` de novo (mesma
+chamada que `renderBoard()` faz) — continua aberto. Smoke test geral
+(Atrasado + Sem prazo + Concluído recente juntos) sem regressão, 0 erros
+de console em todos os testes.
+
 ### v8.30.580-dev — 2026-09-04 — Feed de marcos: fix na contagem dos chips + calendário temático no seletor de período
 
 2 achados reais do usuário testando o 📜 Histórico/📰 Feed de marcos:

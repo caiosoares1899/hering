@@ -537,6 +537,31 @@ detalhe dos 4 call sites.
     `archived:true` sozinho (arquivamento normal/automático) NUNCA
     remove do array, só esconde do board ativo — `_marcosNoPeriodo()` já
     não filtra `archived` de propósito (herdado de `_marcosDoDia`).
+- **`/monitorarbugs` na Timeline (2026-09-04)** — 1ª revisão dedicada da
+  área inteira, 3 achados reais:
+  1. `recordMove()`/`backfillFlow()` (~L7956/~L8011) comparavam
+     `toCol`/`from`/`card.col` só contra `_flowDoneColId()` (a 1ª coluna
+     de fim configurada) pra gravar `card.flow.doneAt` — squad com 2+
+     colunas de fim (`flowConfig.doneCols`, ex.: "Concluído"+
+     "Cancelado") perdia `doneAt` pra card terminado na 2ª coluna, e por
+     tabela sumia do bucket "✅ Concluído recente" (e de cycle time/
+     throughput/CFD/"🧹 Cards antigos", tudo que lê `flow.doneAt`) —
+     mesmo `_isColDone()` (2 linhas abaixo, na mesma função, pra
+     auto-desimpedimento) já considerando concluído. Fix: as 2 funções
+     passam a usar `_isColDone()` em vez de comparar contra a coluna
+     única.
+  2. Feed de marcos (`_marcosNoPeriodo()`) perdia o marco 🎚️ quando a
+     prioridade era REMOVIDA (dropdown "— sem prioridade —") —
+     `_histDiff()` gera "removeu prioridade" nesse caso (diferente de
+     "alterou"/"definiu"), regex não cobria.
+  3. `<details class="timeline-collapse">` de "Sem prazo definido"/
+     "Concluído recente" nunca guardava `open` entre renders — como
+     `_timelineSetPrazoInline()`/`_timelineAdiarCard()` (ação no lugar)
+     terminam chamando `renderBoard()`, usar a própria ação DENTRO de
+     "Sem prazo definido" fechava a seção na hora. Fix:
+     `_timelineCollapseOpen`/`_timelineSetCollapseOpen()` (mesmo padrão
+     do `_painelTimelineOpen` do painel — ver seção do painel.html)
+     persistem o aberto/fechado entre renders.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
