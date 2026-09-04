@@ -18,6 +18,60 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.586 — 2026-09-04 · Promove pra prod — 📜 Histórico de período, 4 tipos de marco novos, 12 bugs reais corrigidos
+
+Promove pra produção o lote v8.30.575-dev → v8.30.586-dev de
+`kanban-dev.html` — o Feed de marcos vira um "Histórico" de verdade
+(qualquer dia ou período do passado, não só o dia clicado na Timeline) e
+duas rodadas seguidas de `/monitorarbugs` acharam e corrigiram 12 bugs
+reais, alguns silenciosos há bastante tempo:
+
+- **📜 Histórico com seletor de período** (v8.30.575-dev): o Feed de
+  marcos (antes só acessível via duplo clique num dia da Timeline) ganha
+  botão próprio "📜 Histórico" na barra de topo, com 2 campos de data —
+  dá pra investigar qualquer dia ou período do passado, não só os que a
+  Timeline mostra hoje ("o que a gente fez na semana do cliente de
+  2024?").
+- **Card concluído se desimpede sozinho** (v8.30.576-dev): regra geral
+  pedida direto — mover um card impedido pra uma coluna de fim remove o
+  impedimento automaticamente (modo tag), com o mesmo texto de histórico
+  de uma remoção manual.
+- **2 fixes seguidos de "moveu de X → X"** (v8.30.577/578-dev): todo card
+  novo criado gravava uma entrada self-referencial no histórico
+  ("moveu de A Fazer → A Fazer") — corrigido na criação, e depois
+  filtrado defensivamente no Feed pros cards antigos que já tinham o
+  dado errado gravado (fix não retroativo no Firebase).
+- **4 tipos de marco novos no Feed** (v8.30.579-dev): 🎚️ prioridade,
+  🚧 impedido, 🔓 desimpedido e 💯 checklist 100% — além de 🆕
+  criado/🔀 movido/🏁 concluído que já existiam, pedido direto do
+  usuário.
+- **Fix na contagem dos chips + calendário temático** (v8.30.580-dev).
+- **3 achados reais de `/monitorarbugs` na Timeline** (v8.30.581-dev).
+- **`/monitorarbugs` 2ª rodada — coluna "concluído" hardcoded em 9
+  funções** (v8.30.582-dev): achado grande — qualquer squad que já
+  recriou a coluna "Concluído" ou tem 2+ colunas de fim configuradas
+  tinha, silenciosamente: Throughput sempre 0, "Cards ativos"/"Prazo
+  vencido" inflados, snapshot histórico diário errado (sem correção
+  retroativa possível), notificação "card concluído" que nunca disparava
+  em 4 caminhos diferentes, contagem errada no prompt do Agente Ágil, e
+  "✅ Resolvido" de Meu Dia que nunca disparava pra card nenhum desde
+  que a feature existe. Todos os 9 pontos passam a usar o helper
+  canônico `_isColDone()`.
+- **Feed de marcos: contraste nome do card vs. ação** (v8.30.583-dev).
+- **Central de Ajuda sincronizada** (v8.30.584-dev, `/atualizarhelpcontent`).
+- **Card sem `createdAt` (dado legado) sumia do CFD e do Burndown**
+  (v8.30.585-dev): mesmo bug de sempre (checagem de campo ausente
+  resolvida certo num lugar do arquivo, errada em outros dois) —
+  `_cardColunaEmDia()`/`_renderBurndown()` ganham o mesmo fallback que
+  `_cardTempos()` já tinha.
+- **Histórico com período de vários dias mostrava só a hora**
+  (v8.30.586-dev): cada marco agora mostra `DD/MM HH:mm` quando o
+  período aberto tem mais de 1 dia, sem redundância quando é um dia só.
+
+Ver `CHANGELOG.md` (entradas de `kanban-dev.html`) pro detalhe técnico
+completo de cada uma. Checks de rotina em dia em todas as rodadas
+(`node --check`, balanço de chaves/parênteses, testes via Playwright).
+
 ### v8.30.574 — 2026-09-04 · Promove pra prod — Timeline: filtros, avatar/tags, buckets progressivos, ação no lugar e marcos de contexto
 
 Promove pra produção o lote v8.30.571-dev → v8.30.574-dev de
