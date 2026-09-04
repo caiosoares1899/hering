@@ -6267,32 +6267,32 @@ function loadComunicados(){
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
   {
-    id: 'seed_timeline_evolucao_2026_09_04',
-    titulo: '🛤️ Timeline evoluiu: filtros, prazo direto na lista e mais',
-    corpo: `<p>A <b>🛤️ Timeline</b> (lançada semana passada) ganhou uma leva de melhorias, quase todas a partir do que vocês testaram e comentaram — obrigado pelo feedback! 🙌</p>
+    id: 'seed_timeline_completo_2026_09_04',
+    titulo: '🛤️ Chegou a Timeline: um jeito novo de ver seus prazos',
+    corpo: `<p>Tem novidade grande no Maré Digital: a <b>🛤️ Timeline</b> — um jeito de ver o board organizado por PRAZO em vez de por coluna. Encontra na toolbar, o botão fica ao lado de "📅 Calendários". Explicando tudo por aqui, porque tem bastante coisa útil pra aproveitar. 👇</p>
 
-<p><b>📆 Agrupamento mais inteligente:</b> agora é 🔴 Atrasado · 📅 Hoje · 📅 Amanhã · 🗓️ Resto da semana · 🗓️ Próxima semana · ⏳ Depois · 🗂 Sem prazo — em vez de um grupo por dia exato (que virava uma lista enorme de cabeçalhos). Dentro de "Atrasado", os cards mais antigos aparecem primeiro, com o número de dias de atraso na frente.</p>
+<p><b>📆 Como ela organiza os cards:</b> em vez das colunas de sempre, a Timeline agrupa os cards ativos em: 🔴 <b>Atrasado</b> (o mais antigo primeiro, com o número de dias de atraso na frente — o mais velho é a dívida real), 📅 <b>Hoje</b>, 📅 <b>Amanhã</b>, 🗓️ <b>Resto da semana</b>, 🗓️ <b>Próxima semana</b>, ⏳ <b>Depois</b>, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Cada card mostra avatar do responsável, prioridade, tags e impedimento, igual no board normal — dá pra entender o card sem precisar abrir ele.</p>
 
-<p><b>⚡ Prazo direto na lista:</b> card sem prazo ganhou um campo de data na própria linha — dá pra definir sem abrir o card. Card atrasado ganhou os atalhos "+1d" e "+1 sem" pra adiar com 1 clique.</p>
+<p><b>⚡ Resolve o prazo ali mesmo:</b> card sem prazo ganha um campo de data direto na linha — define sem abrir o card. Card atrasado ganha os atalhos "+1d" e "+1 sem" pra adiar com 1 clique só.</p>
 
-<p><b>🎯 Marcos de contexto:</b> eventos do "📅 Calendários" (campanhas, reuniões importantes) agora aparecem como uma linha fina entre os cards, na data certa — dá pra ver de relance se algum prazo cai depois que uma campanha já começou.</p>
+<p><b>🎯 Cruza com o Calendário:</b> os eventos do "📅 Calendários" (campanhas, reuniões, marcos importantes) aparecem como uma linha fina entre os cards, bem na data certa — dá pra enxergar de relance se algum prazo cai depois que uma campanha já começou.</p>
 
-<p><b>✅ Concluído recente:</b> um grupo novo (recolhido) no fim da lista, mostrando o que já foi entregue essa semana.</p>
+<p><b>✅ Concluído recente:</b> um grupo recolhido no fim da lista, mostrando o que já foi entregue desde domingo — pra não ficar só olhando pendência.</p>
 
-<p><b>🔎 Filtros e mais informação:</b> a Timeline ganhou uma barra de contagem + atalhos "💡 Só eu" e "🔭 Filtros" (os mesmos filtros do board de colunas). Cada card agora mostra avatar, prioridade, tags e impedimento, igual no board normal. O 📰 Feed de marcos (duplo clique num dia) ganhou os mesmos detalhes, com faixa colorida por tipo de marco, e um filtro próprio (responsável/subtime/tag).</p>
+<p><b>📰 Feed de marcos:</b> dê um duplo clique no cabeçalho de qualquer dia (Hoje, Amanhã, ou uma data futura específica) pra abrir um feed estilo rede social do que aconteceu no board naquele dia — cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, do mais recente pro mais antigo. O Feed tem filtro próprio (responsável, subtime, tag, tipo de marco) e mostra avatar/tags/prioridade também.</p>
 
-<p>Testem à vontade e mandem mais feedback pelo <b>Fale com o ADM</b> no Mural! 🐟</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_timeline_pausar_feed_2026_09_03',
-    titulo: '🛤️ Nova view Timeline + ⏸ Pausar card + 📰 Feed de marcos',
-    corpo: `<p><b>🛤️ Timeline:</b> um jeito novo de ver o board — clique no botão "🛤️ Timeline" na toolbar (ao lado de "📅 Calendários") e troque a visão de colunas por uma lista cronológica dos seus cards ativos, agrupados por prazo: 🔴 Atrasado primeiro, depois Hoje/Amanhã/próximos dias em ordem, e por último os "🗂 Sem prazo definido" (recolhido, clique pra abrir). Respeita os filtros que já estiverem ativos.</p>
+<p><b>🔎 Filtros:</b> uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) + atalhos "💡 Só eu" (filtra pelos seus cards na hora) e "🔭 Filtros" — os MESMOS filtros do board de colunas, então o que você filtra aqui continua filtrado se voltar pro board normal.</p>
 
-<p><b>⏸ Pausar card:</b> novo botão no rodapé do modal do card. Ele para a contagem de tempo/métricas (cycle time e lead time) sem marcar o card como impedimento público — útil pra quando o card está parado por um motivo que não é bem um "bloqueio" (férias do responsável, prioridade temporariamente trocada), mas você não quer que isso pese nas métricas.</p>
+<p><b>⏸ Pausar card</b> (chegou junto, no rodapé do modal do card): para a contagem de tempo/métricas (cycle time e lead time) sem marcar o card como impedimento público — útil quando o card está parado por um motivo que não é bem um "bloqueio" (férias do responsável, prioridade trocada), mas você não quer que isso pese nas métricas do time.</p>
 
-<p><b>📰 Feed de marcos:</b> dentro da Timeline, dê um duplo clique no cabeçalho de qualquer dia (Hoje, Amanhã, ou uma data específica) pra abrir um feed estilo rede social do que aconteceu no board naquele dia — cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, do mais recente pro mais antigo. Clique em qualquer item pra abrir o card direto.</p>`,
+<p><b>💡 Pra que serve na prática — alguns insumos que dá pra tirar:</b></p>
+<p>• <b>Abertura do dia/daily:</b> em segundos, veja o que está atrasado (e resolva ali — adia ou abre), o que vence hoje e amanhã, sem precisar catar card por card nas colunas.<br>
+• <b>Planejamento da semana:</b> "Resto da semana" e "Próxima semana" já mostram a carga que vem — dá pra antecipar gargalo antes dele virar atraso.<br>
+• <b>Checagem de risco de campanha:</b> os marcos de contexto mostram se algum prazo cai depois que uma campanha/evento importante já começou — dá pra agir antes, não depois.<br>
+• <b>Retrospecto rápido:</b> voltou de férias, faltou uma daily, ou só quer saber "o que rolou ontem"? O Feed de marcos conta a história do dia sem precisar abrir card por card.<br>
+• <b>Sensação de progresso:</b> "Concluído recente" mostra o que o time já entregou essa semana — bom pra fechar sprint ou só pra ver que o trabalho está andando.</p>
+
+<p>Testem à vontade e mandem feedback pelo <b>Fale com o ADM</b> no Mural! 🐟</p>`,
     tipo: 'novidade',
     squad: '*',
   },
