@@ -145,6 +145,47 @@ Mesma disciplina de sempre neste repo:
 6. Promoção pra prod é etapa separada (`/subirproprod`), só depois de
    validação explícita de quem pediu a revisão.
 
+## Passo 6 — Sempre entregar um teste de console em português
+
+**Regra fixa, todo pedido, mesmo sem pedir explicitamente**: ao final de
+CADA rodada (mesmo corrigindo um achado só), entregue um script pronto
+pra colar no console do navegador (`kanban-dev.html` aberto, DevTools →
+Console) — **em português**, testando cada achado corrigido. Isso não é
+opcional nem depende do usuário pedir de novo a cada vez.
+
+Regras pro script (aprendidas ao vivo nesta sessão, não repetir os
+mesmos erros):
+- **Chame as funções DE VERDADE da página**, nunca uma cópia/
+  reimplementação da lógica dentro do próprio script de teste — se o
+  teste reimplementa a função, ele testa a cópia, e pode "passar" mesmo
+  que o arquivo real ainda tenha o bug (ou o contrário: acusar bug que
+  já foi corrigido, por a cópia ter ficado desatualizada).
+- `kanban-dev.html`/`kanban.html` são `<script>` clássico (sem
+  `type="module"`). Uma `function nome(){}` de nível superior vira
+  propriedade de `window` sozinha — chamável direto do console. Já
+  `let`/`const` de nível superior (ex.: `let _ctxCardId`) fica só no
+  escopo do script, e o console do DevTools avalia no MESMO escopo
+  compartilhado — pra reatribuir um desses a partir do console usa uma
+  instrução simples (`_ctxCardId = 'x';`), **nunca**
+  `window._ctxCardId = 'x'` (cria uma propriedade solta e desconectada
+  que o app nunca lê) nem `let _ctxCardId = 'x'` (redeclaração, dá erro
+  ou silenciosamente não afeta o app).
+- **Nunca crie elemento DOM com o MESMO id de um elemento que já existe
+  na página real** (ex.: `#met-grid`) só pro teste —
+  `document.getElementById()` acha o elemento REAL primeiro, e o teste
+  lê/escreve na cópia solta, nunca no que a função de verdade
+  atualizou. Leia do elemento já existente na página.
+- **Guarde os resultados numa variável que sobrevive fora do script**
+  (ex.: `window._resultadosTeste = linhas`, não só `let resultados`
+  dentro de uma IIFE) — se ficar preso num escopo de função, some assim
+  que o script termina e ninguém consegue inspecionar depois.
+- **Sempre entregue o script COMPLETO e visível na resposta do chat**
+  (bloco de código), pronto pra copiar/colar — nunca só como caminho de
+  arquivo salvo em disco.
+- `console.table(linhas)` no final, cada linha com nome do teste em
+  português + ✅/❌ + detalhe do resultado; se algum falhar, resuma
+  quantos falharam logo depois da tabela.
+
 ## Histórico de achados (não repetir análise já feita)
 
 - **2026-08-21, área Supercards (2 níveis) — origem desta skill**:
@@ -1150,6 +1191,13 @@ Mesma disciplina de sempre neste repo:
   (`_cardTempos()`/`_cardIsBlocked()`/`_colWipLimit()`), fórmulas idênticas
   nos 3; `_bdHiddenCols` (toggle de coluna de 📊 Dados do Board) aplicado
   de forma consistente nas 6 funções que o usam, incluindo CFD/Burndown.
+  **Mudança de processo desta rodada**: usuário pediu explicitamente
+  ("sempre no final me manda testes de console") que TODA rodada
+  entregue um script de teste de console em português, mesmo sem pedir
+  de novo a cada vez — virou o Passo 6 desta skill, com as lições já
+  aprendidas ao vivo nesta sessão sobre esse tipo de script (funções
+  reais vs. reimplementadas, `let` vs. `window.X`, colisão de id de
+  elemento DOM, resultado precisa sobreviver fora da IIFE).
 
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
