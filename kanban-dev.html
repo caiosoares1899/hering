@@ -2187,9 +2187,16 @@ input[type="date"]{-moz-appearance:textfield;}
    (2 classes = especificidade maior que ".board" sozinho) resolve isso
    incondicionalmente, sem precisar tocar na regra mobile original. */
 .board.board-hidden{display:none!important;}
-.timeline-semprazo{margin-top:6px;}
-.timeline-semprazo summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
-.timeline-semprazo summary::-webkit-details-marker{display:none;}
+/* Seção recolhida da Timeline — usada tanto por "🗂 Sem prazo definido"
+   quanto por "✅ Concluído recente" (renomeado de .timeline-semprazo pra
+   nome genérico quando passou a servir aos dois). */
+.timeline-collapse{margin-top:6px;}
+.timeline-collapse summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
+.timeline-collapse summary::-webkit-details-marker{display:none;}
+/* Divisor "🎯 marco de contexto" (evento do Calendário) entre cards da
+   Timeline — ver _timelineEventMarkerHtml(). */
+.timeline-event-marker{font-size:10.5px;color:var(--txt3);text-align:center;padding:4px 0;margin:2px 0;cursor:pointer;opacity:.75;}
+.timeline-event-marker:hover{opacity:1;color:var(--accent);}
 /* Barra de topo da Timeline (contagem + atalhos de filtro) — pedido direto
    do usuário ("falta filtros... desenvolva mais essa parte"): os filtros de
    #filter-bar já valiam pra Timeline (passesFilter() é o mesmo pro board
@@ -5924,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.573-dev</div>
+<div class="version">v8.30.574-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10626,28 +10633,93 @@ function timelineOnlyMine(){
 // Cards elegíveis pra Timeline excluem coluna "concluído" (mesmo critério de
 // _isColDone() já usado em Meu Dia/relatórios de aging) — é uma view de
 // planejamento pra frente, não um histórico do que já foi entregue.
+// Fim desta semana (sábado), convenção Domingo→Sábado — mesma do Calendário
+// (ver "Dom"/"Seg"/"Ter"... em #cal-ov, linha ~5147). Usado pelos buckets
+// progressivos da Timeline (Resto da semana / Próxima semana).
+function _timelineFimSemana(baseDate){
+  const d=new Date(baseDate);
+  d.setDate(d.getDate()+(6-d.getDay()));
+  return _localDateStrBoard(d);
+}
+// Divisor "🎯 marco de contexto" (evento do Calendário) entre cards da
+// Timeline — consultoria externa (2026-09-04): "campanhas com data e
+// eventos do calendário aparecendo como uma linha fina entre os grupos...
+// dá pra ver X cards vencem depois que a campanha já começou, sem cruzar
+// duas telas". `calEvents` já vem carregado em memória (mesma fonte do "📅
+// Calendários"), zero leitura nova. Clique abre o Calendário de verdade.
+function _timelineEventMarkerHtml(ev){
+  const lbl=new Date(ev.start+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  return `<div class="timeline-event-marker" onclick="openCal();" title="${esc(ev.desc||'Ver no Calendário')}">── ${esc(lbl)} · ${esc(ev.title)} ──</div>`;
+}
 function renderTimelineView(activeCards){
   const wrap=document.getElementById('timeline-view'); if(!wrap) return;
-  const hojeStr=_localDateStrBoard(new Date());
+  const hojeDate=new Date(); hojeDate.setHours(0,0,0,0);
+  const hojeStr=_localDateStrBoard(hojeDate);
   const elegiveis=activeCards.filter(c=>!_isColDone(c.col));
+
+  // Buckets progressivos (consultoria externa, 2026-09-04: "agrupar por dia
+  // é granular demais pro futuro — '23 de setembro' com 1 card vira lista de
+  // cabeçalhos. Buckets: Atrasado · Hoje · Amanhã · Resto da semana ·
+  // Próxima semana · Depois · Sem prazo — 'Resto da semana (7)' já é um
+  // insight sozinho"). Semana no padrão Domingo→Sábado, igual ao Calendário.
+  const amanhaDate=new Date(hojeDate); amanhaDate.setDate(amanhaDate.getDate()+1);
+  const amanhaStr=_localDateStrBoard(amanhaDate);
+  const fimSemanaStr=_timelineFimSemana(hojeDate);
+  const fimProxSemanaDate=new Date(hojeDate); fimProxSemanaDate.setDate(fimProxSemanaDate.getDate()+(6-hojeDate.getDay())+7);
+  const fimProxSemanaStr=_localDateStrBoard(fimProxSemanaDate);
+
   const atrasados=elegiveis.filter(c=>c.due && c.due<hojeStr);
   const semPrazo=elegiveis.filter(c=>!c.due);
-  const porData={};
-  elegiveis.filter(c=>c.due && c.due>=hojeStr).forEach(c=>{ (porData[c.due]=porData[c.due]||[]).push(c); });
-  const datasOrdenadas=Object.keys(porData).sort();
-  const ordenaGrupo=lista=>lista.slice().sort((a,b)=>(a.title||'').localeCompare(b.title||''));
-  // dateStr (opcional): só passado pra grupos de 1 dia exato (Hoje/Amanhã/datas
-  // futuras) — "Atrasado" espalha por vários dias, não faz sentido duplo-clique
-  // nele abrir o feed de "um dia só". Pedido direto do usuário: duplo-clique no
-  // cabeçalho do grupo abre o feed de marcos (📰, ver openTimelineFeed()) —
-  // "uma timeline como rede social" do que aconteceu no board naquele dia.
-  const secao=(titulo,icone,lista,corBorda,dateStr)=>{
-    if(!lista.length) return '';
+  const hojeGrupo=elegiveis.filter(c=>c.due===hojeStr);
+  const amanhaGrupo=elegiveis.filter(c=>c.due===amanhaStr);
+  const restoSemana=elegiveis.filter(c=>c.due && c.due>amanhaStr && c.due<=fimSemanaStr);
+  const proxSemana=elegiveis.filter(c=>c.due && c.due>fimSemanaStr && c.due<=fimProxSemanaStr);
+  const depois=elegiveis.filter(c=>c.due && c.due>fimProxSemanaStr);
+
+  // "✅ Concluído recente" — consultoria: "o Feed olha só pro passado, a
+  // Timeline só pro futuro... um grupo de concluídos no fim (colapsado)
+  // fecha o loop e dá sensação de progresso que uma lista só de pendências
+  // nunca dá". Cards concluídos desde o início desta semana (domingo).
+  const inicioSemanaDate=new Date(hojeDate); inicioSemanaDate.setDate(inicioSemanaDate.getDate()-hojeDate.getDay());
+  const inicioSemanaStr=_localDateStrBoard(inicioSemanaDate);
+  const concluidosRecentes=activeCards.filter(c=>_isColDone(c.col) && c.flow?.doneAt && _dateOnlyLocalStr(c.flow.doneAt)>=inicioSemanaStr)
+    .sort((a,b)=>(b.flow.doneAt||'').localeCompare(a.flow.doneAt||''));
+
+  // Cronológico por prazo (mais antigo primeiro), título como desempate —
+  // consultoria: "dentro de Atrasado, ordenar do mais antigo pro mais
+  // recente — o mais antigo é a dívida real". Extendido aos outros buckets
+  // multi-dia (Resto da semana/Próxima semana/Depois) pela mesma razão: um
+  // grupo que cobre vários dias precisa de ordem cronológica, não alfabética.
+  const ordenaCronologico=lista=>lista.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')||(a.title||'').localeCompare(b.title||''));
+
+  const eventosContexto=(typeof calEvents!=='undefined'?calEvents:[]).filter(ev=>ev && ev.start && !ev._gcal);
+  // deExclusive: card/evento só entra se a data for MAIOR que este limite
+  // (não igual) — os buckets já são definidos com ">" pro limite inferior.
+  const eventosEntre=(deExclusive,ateInclusive)=>eventosContexto.filter(ev=>ev.start>deExclusive && ev.start<=ateInclusive).sort((a,b)=>a.start.localeCompare(b.start));
+  const eventosNoDia=dateStr=>eventosContexto.filter(ev=>ev.start===dateStr);
+  // Intercala os cards (já ordenados por prazo) com os marcos de contexto
+  // cuja data cai dentro do grupo, na ordem cronológica certa entre os dois.
+  const comMarcos=(lista,eventos)=>{
+    if(!eventos||!eventos.length) return ordenaCronologico(lista).map(c=>_timelineCardRow(c,hojeStr)).join('');
+    const itens=[...ordenaCronologico(lista).map(c=>({data:c.due,html:_timelineCardRow(c,hojeStr)})),
+                 ...eventos.map(ev=>({data:ev.start,html:_timelineEventMarkerHtml(ev)}))];
+    itens.sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    return itens.map(i=>i.html).join('');
+  };
+
+  // dateStr (opcional): só passado pra grupos de 1 dia exato (Hoje/Amanhã) —
+  // "Atrasado"/"Resto da semana"/"Próxima semana"/"Depois" espalham por
+  // vários dias, não faz sentido duplo-clique neles abrir o feed de "um dia
+  // só". Duplo clique no cabeçalho do grupo abre o feed de marcos (📰, ver
+  // openTimelineFeed()) — "uma timeline como rede social" do que aconteceu
+  // no board naquele dia.
+  const secao=(titulo,icone,lista,corBorda,dateStr,eventos)=>{
+    if(!lista.length && !(eventos&&eventos.length)) return '';
     const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
     const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
     return `<div class="meudia-sec">
     <div class="meudia-sec-hd" style="${hdStyle}"${dbl}>${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
-    ${ordenaGrupo(lista).map(_timelineCardRow).join('')}
+    ${comMarcos(lista,eventos)}
   </div>`;
   };
   // Barra de topo: contagem rápida (orientação de relance) + entrada pros
@@ -10671,23 +10743,27 @@ function renderTimelineView(activeCards){
   </div>`;
   let html=statsHtml;
   html += secao('Atrasado','🔴',atrasados,'#ff6b6b');
-  datasOrdenadas.forEach(d=>{ html += secao(_timelineLabelForDate(d,hojeStr),'📅',porData[d],'#38b6ff',d); });
-  if(!atrasados.length && !datasOrdenadas.length){
+  html += secao('Hoje','📅',hojeGrupo,'#38b6ff',hojeStr,eventosNoDia(hojeStr));
+  html += secao('Amanhã','📅',amanhaGrupo,'#38b6ff',amanhaStr,eventosNoDia(amanhaStr));
+  html += secao('Resto da semana','🗓️',restoSemana,'#7ec8e3',null,eventosEntre(amanhaStr,fimSemanaStr));
+  html += secao('Próxima semana','🗓️',proxSemana,'#a78bfa',null,eventosEntre(fimSemanaStr,fimProxSemanaStr));
+  html += secao('Depois','⏳',depois,'#8899aa',null,eventosEntre(fimProxSemanaStr,'9999-12-31'));
+  if(!atrasados.length && !hojeGrupo.length && !amanhaGrupo.length && !restoSemana.length && !proxSemana.length && !depois.length){
     html += `<div style="font-size:12px;color:var(--txt3);padding:10px 0 20px;">Nenhum card com prazo definido${semPrazo.length?' (fora "Sem prazo" abaixo)':' nesta squad'}.</div>`;
   }
   if(semPrazo.length){
-    html += `<details class="timeline-semprazo">
+    html += `<details class="timeline-collapse">
       <summary>🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
-      ${ordenaGrupo(semPrazo).map(_timelineCardRow).join('')}
+      ${ordenaCronologico(semPrazo).map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
-  wrap.innerHTML = elegiveis.length ? html : statsHtml+`<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum card ativo pra mostrar${temFiltro?' com os filtros atuais':''}.</div>`;
-}
-function _timelineLabelForDate(dateStr, hojeStr){
-  if(dateStr===hojeStr) return 'Hoje';
-  const amanha=new Date(); amanha.setDate(amanha.getDate()+1);
-  if(dateStr===_localDateStrBoard(amanha)) return 'Amanhã';
-  return new Date(dateStr+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'});
+  if(concluidosRecentes.length){
+    html += `<details class="timeline-collapse">
+      <summary>✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
+      ${concluidosRecentes.map(c=>_timelineCardRow(c,hojeStr)).join('')}
+    </details>`;
+  }
+  wrap.innerHTML = (elegiveis.length||concluidosRecentes.length) ? html : statsHtml+`<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum card ativo pra mostrar${temFiltro?' com os filtros atuais':''}.</div>`;
 }
 // Linha de card da Timeline — mesma linguagem visual do card no board normal
 // (avatar do responsável, prioridade, 🚧 impedimento, tags, 🧩 supercard),
@@ -10709,7 +10785,10 @@ function _ownerAvatarHtml(ownerInit){
   if(safeUrl(m?.foto)) return `<div class="avatar" style="flex-shrink:0;"><img src="${safeUrl(m.foto)}"></div>`;
   return `<div class="avatar" style="flex-shrink:0;" title="${esc(ownerInit)}">${esc(ownerInit)}</div>`;
 }
-function _timelineCardRow(card){
+// hojeStr: data local de hoje (YYYY-MM-DD), sempre passada por
+// renderTimelineView() — usada pra "custo do atraso" (dias atrasado) e pra
+// decidir se mostra ação no lugar (definir prazo / adiar).
+function _timelineCardRow(card, hojeStr){
   const col=columns.find(c=>c.id===card.col);
   const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
   const prioBadge=card.priority?`<span style="font-size:10px;margin-left:4px;" title="Prioridade">${prioMap[card.priority]||''}</span>`:'';
@@ -10717,16 +10796,75 @@ function _timelineCardRow(card){
   const superN=(card.childCardIds||[]).filter(id=>cards.find(c=>c.id===id&&!c.archived)).length;
   const superBadge=superN?`<span style="font-size:10px;margin-left:4px;" title="Supercard — ${superN} card${superN>1?'s':''} filho${superN>1?'s':''}">🧩</span>`:'';
   const tagsRow=tagsHtml(card);
+  // Custo do atraso / data explícita — consultoria externa (2026-09-04):
+  // "card atrasado com '3 dias' ou '2 semanas' ao lado muda a leitura". Com
+  // os buckets progressivos (ver renderTimelineView()) um grupo agora cobre
+  // VÁRIOS dias (ex.: "Resto da semana"), então o nome do grupo sozinho não
+  // basta mais pra saber QUANDO exatamente.
+  let prazoMeta='';
+  if(card.due){
+    if(card.due<hojeStr){
+      const dias=Math.round((new Date(hojeStr+'T12:00:00')-new Date(card.due+'T12:00:00'))/86400000);
+      prazoMeta=` · <span style="color:#ff6b6b;font-weight:700;">${dias}d atrasado</span>`;
+    } else if(card.due!==hojeStr){
+      const lbl=new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+      prazoMeta=` · ${esc(lbl)}`;
+    }
+  }
+  // Ação no lugar — consultoria: "sem isso a Timeline diagnostica mas não
+  // trata, e a pessoa tem que abrir 12 modais pra limpar a raia 'Sem
+  // prazo'". Card sem prazo ganha um <input type=date> direto na linha;
+  // card atrasado ganha atalhos de +1 dia / +1 semana. Cards já concluídos
+  // (_isColDone) não ganham ação nenhuma — não faz sentido reagendar um
+  // card que já terminou (aparecem só no bucket "✅ Concluído recente").
+  let acaoHtml='';
+  if(!_isColDone(card.col)){
+    if(!card.due){
+      acaoHtml=`<div style="margin-top:6px;" onclick="event.stopPropagation();">
+        <input type="date" onchange="_timelineSetPrazoInline('${esc(card.id)}', this.value)" title="Definir prazo" style="padding:3px 6px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+      </div>`;
+    } else if(card.due<hojeStr){
+      acaoHtml=`<div style="margin-top:6px;display:flex;gap:6px;" onclick="event.stopPropagation();">
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',1)" title="Adiar o prazo em 1 dia">+1d</button>
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',7)" title="Adiar o prazo em 1 semana">+1 sem</button>
+      </div>`;
+    }
+  }
   return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard('${esc(card.id)}')">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
         <div class="meudia-row-title">${esc(card.title)}${prioBadge}${blockedBadge}${superBadge}</div>
-        <div class="meudia-row-meta">${esc(col?.name||card.col)}${card.owner?' · '+esc(card.owner):''}</div>
+        <div class="meudia-row-meta">${esc(col?.name||card.col)}${card.owner?' · '+esc(card.owner):''}${prazoMeta}</div>
         ${tagsRow?`<div style="margin-top:5px;">${tagsRow}</div>`:''}
+        ${acaoHtml}
       </div>
     </div>
   </div>`;
+}
+// Mutação direta de prazo pela Timeline (definir/adiar) — mesmo padrão de
+// checkEditPermission()+recordHistory()+fbSaveCard() já usado em
+// togglePinCard()/togglePauseCard(), sem passar pelo modal do card.
+function _timelineSetPrazoInline(cardId, novoPrazo){
+  if(!checkEditPermission()) return;
+  if(!novoPrazo) return; // <input type=date> limpo sem querer — não grava prazo vazio por engano
+  const c=cards.find(x=>x.id===cardId); if(!c) return;
+  c.due=novoPrazo;
+  recordHistory(c,'definiu prazo pela Timeline: '+novoPrazo);
+  fbSaveCard(c);
+  showToast('📅 Prazo definido: '+new Date(novoPrazo+'T12:00:00').toLocaleDateString('pt-BR'));
+  renderBoard();
+}
+function _timelineAdiarCard(cardId, dias){
+  if(!checkEditPermission()) return;
+  const c=cards.find(x=>x.id===cardId); if(!c || !c.due) return;
+  const d=new Date(c.due+'T12:00:00');
+  d.setDate(d.getDate()+dias);
+  c.due=_localDateStrBoard(d);
+  recordHistory(c,'adiou o prazo em '+dias+' dia'+(dias>1?'s':'')+' pela Timeline');
+  fbSaveCard(c);
+  showToast('📅 Prazo adiado pra '+d.toLocaleDateString('pt-BR')+'.');
+  renderBoard();
 }
 
 // ── 📰 Feed de marcos (duplo-clique num dia da Timeline) ────────────────────
@@ -22787,7 +22925,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em: 🔴 Atrasado (todos juntos, sem separar por data), depois um grupo por dia com cards a vencer (Hoje, Amanhã, e datas seguintes em ordem), e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral (dourado=criado, azul=movido, verde=concluído) pra diferenciar o tipo de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips "🆕 N criados"/"🔀 N movidos"/"🏁 N concluídos" no topo ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia novo.' },
+    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral (dourado=criado, azul=movido, verde=concluído) pra diferenciar o tipo de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips "🆕 N criados"/"🔀 N movidos"/"🏁 N concluídos" no topo ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia novo.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
