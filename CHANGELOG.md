@@ -12307,6 +12307,42 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.11 · painel-dev — 2026-09-04 · nova aba 🛤️ Timeline (agregada, todas as squads)
+
+Pedido direto do usuário depois de validar a Timeline do `kanban-dev.html`
+(buckets progressivos, ação no lugar, marcos de contexto, 📜 Histórico,
+📰 Feed de marcos — ver `CHANGELOG.md` de lá, v8.30.574-dev a 579-dev):
+"precisamos evoluir esse bicho... fazer essa timeline geral la no
+painel! agrupando as squads e criando filtros (lembra daquele filtro por
+gerência tb)", com a clarificação "pode criar uma aba nova timeline".
+
+- **Nova aba "🛤️ Timeline"**, ao lado de Fluxo — mostra os cards ativos
+  (não concluídos) de **todas as squads juntas**, organizados nos mesmos
+  buckets progressivos do board individual: 🔴 Atrasado, 📅 Hoje, 📅
+  Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e 🗂 Sem
+  prazo definido (recolhido por padrão).
+- **Reaproveita o filtro de squad/gerência já existente** na aba 👁
+  Visão — não duplica uma barra de filtro nova; trocar o filtro lá já
+  reflete na Timeline (mesmo padrão que Fluxo/Dados/Bloqueios já seguem).
+  Cada card mostra squad, coluna, responsável, prioridade e impedimento
+  (🚧) como chips, mais o prazo/atraso em dias.
+- **Clique no card abre o modal de info já existente** (`openPcModal`),
+  com link pra editar no board de origem — sem edição inline nesta v1.
+- **Zero leitura nova no Firebase** — reaproveita 100% o `squadData` já
+  carregado pelo polling de 60s que todo o painel usa.
+
+v1 com escopo deliberadamente reduzido em relação à Timeline do board
+individual: sem "ação no lugar" (editar prazo direto no card), sem
+marcos de contexto (eventos de calendário) e sem 📰 Feed de marcos —
+possíveis evoluções futuras, não pedidas ainda.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright: agregação cross-squad excluindo cards concluídos e o card
+hotline do Agente Ágil, categorização correta nos buckets, filtro por
+squad restringindo corretamente, clique abrindo o modal certo — 0 erros
+de console.
+
 ### painel.html v3.08 · painel — 2026-09-03 · promove pra prod — tema claro/escuro/🌴 Vice City
 
 Promove pra produção o lote v3.08-dev → v3.10-dev de `painel-dev.html`
