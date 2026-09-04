@@ -2727,6 +2727,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.586-dev — 2026-09-04 — 📜 Histórico: marco de período com vários dias mostrava só a hora, sem dizer QUAL dia
+
+Achado real do usuário, com print de um período "01/09/26 a 04/09/26":
+cada linha do Feed de marcos mostrava só `🕐 09:01` — quando o período
+aberto é um dia só (o caso mais comum, inclusive o duplo-clique num dia
+da Timeline), isso é suficiente; mas o 📜 Histórico aceita qualquer
+período do passado, e com vários dias abertos ao mesmo tempo a hora
+sozinha não diz qual dos dias aquele marco aconteceu.
+
+Fix em `_timelineFeedRow()`: quando `_timelineFeedState.deStr !==
+_timelineFeedState.ateStr` (período de mais de 1 dia), a hora vira
+`DD/MM HH:mm`; período de 1 dia só continua mostrando só a hora, sem
+redundância. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html
+(ver entrada correspondente no CHANGELOG de painel-dev.html), já que o
+Histórico de lá também aceita período de vários dias.
+
 ### v8.30.585-dev — 2026-09-04 — `/monitorarbugs`: card sem `createdAt` (dado legado) sumia pra sempre do CFD e do Burndown
 
 Continuação natural da rodada anterior (coluna "concluído" hardcoded em 9
@@ -12543,6 +12559,47 @@ lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.16 · painel-dev — 2026-09-04 — 3 achados reais testando o redesenho da Timeline em produção
+
+3 problemas reportados pelo usuário logo depois de validar o redesenho
+anterior (v3.15-dev/v3.11 · painel), todos com print/relato concreto:
+
+1. **Número do badge (ex.: "🔴 Atrasado 293") ilegível no tema 🌴 Vice
+   City** — `.badge` usa `color:var(--cyan)`, que no Vice City é o
+   rosa-poeira `#B36B6E`, quase a MESMA cor do fundo `var(--glass)`
+   (também um rosa/mauve translúcido) — número praticamente invisível.
+   Mesmo diagnóstico e mesma correção já aplicados a `.hd-badge`/
+   `.col-cnt` no kanban-dev.html: `[data-theme="vice"] .badge{color:
+   var(--txt);}` (branco), sem precisar `!important` (badge não tem
+   estilo inline por cima). Temas claro/escuro não tinham esse problema
+   (contraste já era bom nos dois) — sem regressão.
+2. **Timeline sem foto das pessoas, só iniciais** — achado bem mais
+   sério: `squadData[sqId].members` (de onde `resolveOwnerName()`/
+   avatares leem nome/foto) **nunca era preenchido** pra squad fixa
+   nenhuma (`dev`/`omnichannel` aqui, `dados`/`prf`/`midiacriativa` em
+   prod) — só `loadSquadData()` preenchia, e essa função só roda pra
+   squad NOVA criada em runtime via Board Setup. `_applySquadDados()` (o
+   caminho de verdade, via `loadAll()`) nunca incluía `members` no objeto
+   que monta — bug pré-existente, não introduzido pelo redesenho, só
+   ficou mais visível com os avatares maiores/mais presentes na Timeline
+   nova. Fix: `_squadMembersFromGlobalCache(sqId)` deriva members (com
+   `foto`) do `_globalUsersCache` já carregado por `loadGlobalUsers()`
+   (chamada junto de `loadAll()` na inicialização, zero leitura nova) —
+   usado tanto em `_applySquadDados()` quanto re-derivado toda vez que o
+   cache global atualiza (corrige sozinho a corrida em que a squad
+   carrega antes do cache global chegar). `_painelOwnerAvatarHtml()`
+   ganhou um 2º parâmetro (`sqId`) e passa a renderizar `<img>` de
+   verdade quando a pessoa tem foto cadastrada, caindo nas iniciais como
+   antes quando não tem.
+3. **📜 Histórico com período de vários dias mostrava só a hora** — ver
+   entrada correspondente no CHANGELOG de kanban-dev.html (v8.30.586-dev,
+   mesmo achado, mesmo fix espelhado nos dois arquivos).
+
+Testado com Playwright: contraste do badge nos 3 temas (computa a cor
+real via `getComputedStyle`), avatar com/sem foto/sem responsável, a
+corrida do cache global chegando depois, e o formato de data/hora do
+Histórico nos dois cenários (1 dia / vários dias) — todos passaram.
 
 ### painel-dev.html v3.15 · painel-dev — 2026-09-04 — Timeline: redesenho (filtros compostos + Histórico/Feed de marcos)
 

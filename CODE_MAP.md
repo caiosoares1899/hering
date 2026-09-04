@@ -606,6 +606,14 @@ pontos corretos, `ctxMove()` disparando `notifDone()` (não `notifMoved()`)
 pro id customizado; regressão zero confirmada pro caso padrão (id `'done'`
 literal, sem `flowConfig.doneCols`).
 
+### 📜 Histórico: data em período de vários dias (2026-09-04)
+Achado real do usuário (print de um período "01/09/26 a 04/09/26"):
+`_timelineFeedRow()` mostrava só a hora (`🕐 09:01`) em toda linha do
+Feed — não diz qual dia quando o período aberto tem mais de 1 dia. Fix:
+se `_timelineFeedState.deStr!==_timelineFeedState.ateStr`, a hora vira
+`DD/MM HH:mm`; período de 1 dia (o caso mais comum) continua só com a
+hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
+
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
 - `renderSearchResults()` — L27074
@@ -1229,6 +1237,27 @@ limitações que a seção acima registrava como "possível evolução futura".
   tanto pelo filtro da Timeline quanto pelo do Feed.
 - Testado com Playwright (25 cenários) — ver `CHANGELOG.md` v3.15 ·
   painel-dev pro detalhamento.
+
+**3 achados reais testando em produção (2026-09-04, só em
+`painel-dev.html` por enquanto)** — ver `CHANGELOG.md` v3.16 ·
+painel-dev pro detalhamento completo. Resumo:
+- `[data-theme="vice"] .badge{color:var(--txt);}` — número do badge
+  (ex.: contagem do bucket "Atrasado") ilegível no tema Vice City (mesmo
+  tom rosa-poeira do texto e do fundo). Mesmo padrão já usado em
+  `.hd-badge`/`.col-cnt` no kanban-dev.html.
+- `_squadMembersFromGlobalCache(sqId)` (perto de `_globalUsersCache`,
+  L~8091) — bug real e pré-existente: `_applySquadDados()` (caminho de
+  squad FIXA via `loadAll()`) nunca preenchia `squadData[sqId].members`,
+  então `resolveOwnerName()`/avatares nunca tinham foto (só iniciais),
+  pra nenhuma squad fixa. Deriva members do `_globalUsersCache` já
+  carregado (zero leitura nova); usado em `_applySquadDados()` e
+  re-derivado dentro de `loadGlobalUsers()` (corrige a corrida de a
+  squad carregar antes do cache global). `_painelOwnerAvatarHtml()`
+  ganhou 2º parâmetro `sqId` e renderiza `<img>` quando a pessoa tem
+  foto.
+- `_ptFeedRow()`: quando o período do Histórico tem mais de 1 dia, a
+  hora vira `DD/MM HH:mm` (mesmo fix espelhado em `_timelineFeedRow()`
+  do kanban-dev.html).
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
