@@ -2167,6 +2167,17 @@ input[type="date"]{-moz-appearance:textfield;}
 .meudia-row{padding:10px 12px;border-radius:9px;cursor:pointer;transition:background .15s;margin-bottom:5px;background:rgba(var(--surface2-rgb),.4);}
 .meudia-row:hover{background:rgba(56,182,255,.1);}
 .meudia-row-title{font-size:14px;font-weight:600;color:var(--txt);line-height:1.4;}
+/* 📰 Feed de marcos: dentro de .meudia-row-title, o texto da AÇÃO (depois
+   do <b>título do card</b> — "moveu de X → Y", "foi concluído", etc.)
+   precisa se distinguir do título (achado real, relato do usuário com
+   print: linha inteira na mesma cor/peso, difícil escanear onde o título
+   acaba e a ação começa). Mesma receita já calibrada pra .meudia-row-meta
+   logo abaixo (var(--txt) + opacity reduzida + peso normal, não
+   var(--txt2) puro) — evita repetir o mesmo problema de contraste "opaco
+   demais" que a 2ª rodada daquela regra já encontrou e corrigiu. Só usada
+   em _timelineFeedRow() — não afeta .meudia-row-title de Meu Dia/Timeline
+   normal, que não tem essa divisão título+ação. */
+.tf-feed-action{font-weight:400;color:var(--txt);opacity:.72;}
 /* Terceira rodada: a 2ª passada (var(--txt) + peso 500 + opacity .85) tinha
    contraste bom mas ficou "neon"/parecendo negrito — texto quase branco tão
    brilhante quanto o título, no mesmo peso quase-bold, contra o fundo bem
@@ -5931,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.582-dev</div>
+<div class="version">v8.30.583-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11014,14 +11025,22 @@ const TIMELINE_FEED_COR={criado:'#ffd166', movido:'#38b6ff', concluido:'var(--te
 function _timelineFeedRow(m){
   const nomeCol=id=>columns.find(x=>x.id===id)?.name||id||'—';
   const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  // Achado real (relato do usuário com print, 2026-09-04): título do card e
+  // o texto da ação (movido/concluído/etc.) tinham a MESMA cor/peso —
+  // difícil escanear onde um termina e o outro começa, principalmente em
+  // linhas longas ("[google] DemandGen Saldos... moveu de MÍDIA |
+  // Implementado → MÍDIA | Pedidos..."). A ação agora vai dentro de
+  // <span class="tf-feed-action"> (cor/peso mais discretos — ver CSS perto
+  // de .meudia-row) — usa var(--txt2), que já é o tom "secundário" nos 3
+  // temas (claro/escuro/vice), então não precisa de cor por tema aqui.
   let icone, texto;
-  if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:''); }
-  else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b> foi concluído — ${esc(nomeCol(m.to))}`; }
-  else if(m.tipo==='movido'){ icone='🔀'; texto=`<b>${esc(m.card.title)}</b> moveu de ${esc(nomeCol(m.from))} → ${esc(nomeCol(m.to))}`; }
-  else if(m.tipo==='prioridade'){ icone='🎚️'; texto=`<b>${esc(m.card.title)}</b> ${esc(m.texto)}`; }
-  else if(m.tipo==='impedido'){ icone='🚧'; texto=`<b>${esc(m.card.title)}</b> ${esc(m.texto)}`; }
-  else if(m.tipo==='desimpedido'){ icone='🔓'; texto=`<b>${esc(m.card.title)}</b> ${esc(m.texto)}`; }
-  else { icone='💯'; texto=`<b>${esc(m.card.title)}</b> ${esc(m.texto)}`; } // checklist
+  if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:'')+`</span>`; }
+  else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> foi concluído — ${esc(nomeCol(m.to))}</span>`; }
+  else if(m.tipo==='movido'){ icone='🔀'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> moveu de ${esc(nomeCol(m.from))} → ${esc(nomeCol(m.to))}</span>`; }
+  else if(m.tipo==='prioridade'){ icone='🎚️'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> ${esc(m.texto)}</span>`; }
+  else if(m.tipo==='impedido'){ icone='🚧'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> ${esc(m.texto)}</span>`; }
+  else if(m.tipo==='desimpedido'){ icone='🔓'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> ${esc(m.texto)}</span>`; }
+  else { icone='💯'; texto=`<b>${esc(m.card.title)}</b><span class="tf-feed-action"> ${esc(m.texto)}</span>`; } // checklist
   const card=m.card;
   const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
   const prioBadge=card.priority?`<span style="font-size:10px;margin-left:4px;" title="Prioridade">${prioMap[card.priority]||''}</span>`:'';

@@ -2727,6 +2727,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.583-dev — 2026-09-04 — 📰 Feed de marcos: distingue nome do card da ação (contraste, 3 temas)
+
+Pedido direto do usuário, com print real: numa linha longa do Feed
+("[google] DemandGen Saldos – PRF/ECM (Saldos até 60% + 25% extra) moveu
+de MÍDIA | Implementado → MÍDIA | Pedidos Hering SITE e APP"), o título
+do card e o texto da ação ("moveu de X → Y") ficavam na mesma cor/peso —
+difícil escanear onde um termina e o outro começa.
+
+`_timelineFeedRow()`: o trecho de ação (tudo depois do `<b>título do
+card</b>`, nos 7 tipos de marco) passa a ficar dentro de `<span
+class="tf-feed-action">`. CSS nova (perto de `.meudia-row-title`) reusa a
+MESMA receita já calibrada pra `.meudia-row-meta` na linha de baixo
+(`var(--txt)` + peso normal + opacity reduzida, não `var(--txt2)` puro) —
+o comentário daquela regra já registra que `var(--txt2)` sozinho tinha
+ficado "opaco demais" numa rodada anterior, então reusar a mesma receita
+evita repetir o mesmo problema. Como `--txt` já é o token que se adapta
+sozinho aos 3 temas (Abrolhos/Lençóis Maranhenses/Vice City), a mudança
+vale nos três sem precisar de cor por tema.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline da sessão (braces -1, parens +1). Testado com Playwright nos
+3 temas (dark/light/vice) com o texto exato do print do usuário —
+título continua em destaque (branco/escuro forte conforme o tema), ação
+visivelmente mais discreta nos três — 0 erros de console.
+
 ### v8.30.582-dev — 2026-09-04 — /monitorarbugs (2ª rodada): coluna "concluído" hardcoded em 9 funções
 
 Continuação da rodada anterior (pedido genérico "roda outro
