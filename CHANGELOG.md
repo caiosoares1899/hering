@@ -12614,6 +12614,33 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.19 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR: Histórico, vínculo de cards, tags gerenciáveis e notificações
+
+Promove pra produção o lote v3.18 → v3.19 de `painel-dev.html`, validado
+explicitamente pelo usuário. Mesma disciplina de sempre pro par painel
+(divergem de verdade — Mural/Push manual/debug só existem em prod):
+replicação manual de cada edição, não cópia do arquivo. Ver a entrada de
+dev logo abaixo pro detalhe técnico completo (mesmo texto, já
+documentava a v3.19-dev).
+
+Resumo pro público de prod: o modal de Objetivo/Marco ganhou um
+Histórico (cada edição fica registrada, incluindo o que mudou em cada
+Marco resumido no Objetivo pai), dá pra vincular cards do board que já
+têm a badge 🎯 OKR direto num Objetivo, uma paleta de tags própria pra
+organizar os Objetivos, e notificações — no sininho e por push — quando
+um OKR que você acompanha é editado, quando o prazo de um marco está
+chegando, e (vinculando com o Google Agenda já sincronizado) no seu
+período de atualizar o objetivo e na véspera da reunião.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses no
+baseline (`braces -1, parens -12`). 29 (extensão) + 44 (Fase 1) + 10
+(badge/avatar) cenários reexecutados via Playwright direto contra
+`painel.html` — todos passando, sem regressão.
+
+**Cloud Function `okrDailyScan`**: já deployada e rodando (confirmado
+pelo usuário) — os 3 gatilhos "ambientais" (prazo/período/reunião)
+já estão ativos desde a promoção desta versão.
+
 ### painel-dev.html v3.19 · painel-dev — 2026-09-04 — 🎯 OKR: Histórico, vínculo de cards, tags gerenciáveis e notificações (extensão da Fase 1)
 
 Pedido direto do usuário depois de testar a Fase 1: "deveria ter um
