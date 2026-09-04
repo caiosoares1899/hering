@@ -1311,14 +1311,18 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
 v3.19 · painel-dev pro racional completo.
-- **Histórico**: `OKR_HIST_CAP`/`OKR_OBJ_HIST_FIELDS`/`OKR_MARCO_HIST_FIELDS`,
-  `_okrRecordHistory(entity,what)`, `_okrHistDiffObj(draft,before)`/
-  `_okrHistDiffMarco(draft,before)`, `renderOkrHistory(entity)` — mesmo
+- **Histórico**: `OKR_HIST_CAP`/`OKR_OBJ_HIST_FIELDS`/`OKR_MARCO_HIST_FIELDS`/
+  `OKR_OBJ_LIST_FIELDS`/`OKR_HIST_TIPOS`, `_okrRecordHistory(entity,what,tipo)`,
+  `_okrHistDiffObj(draft,before)`/`_okrHistDiffMarco(draft,before)`,
+  `_okrDiffStringArray()` (diff genérico Set-based, usado por
+  trimestres/indicadores/tags/etc.), `renderOkrHistory(entity)` — mesmo
   padrão de `recordHistory()`/`_histDiff()`/`renderHistory()` do
   kanban-dev.html (`card.history[]`), portado pra `objetivo.history[]`/
   `marco.history[]`. `saveOkrMarco()` também empurra um RESUMO pro
   `history[]` do Objetivo pai (via `window._update`, não sobrescreve o
-  resto do objetivo) — "evolução do OKR inteiro" num lugar só.
+  resto do objetivo) — "evolução do OKR inteiro" num lugar só. Ver
+  achado real da rodada seguinte (visual rico) logo abaixo — este bloco
+  descreve a versão original (texto simples), já superada.
 - **Vínculo de cards** (tipo campanha/coleção, mesmo padrão de
   `notaSearchCards()`/`notaAddCardLink()` do kanban-dev.html, adaptado
   multi-squad): `objetivo.cardLinks:[{squadId,cardId}]`,
@@ -1345,6 +1349,34 @@ v3.19 · painel-dev pro racional completo.
   também re-renderizam o modal inteiro — todas as novas mutações
   (tag/vínculo) chamam `_okrSyncObjDraftFromDom()` primeiro, mesma
   disciplina já estabelecida.
+
+#### 4 achados reais testando em prod (2026-09-04, v3.20 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+Feedback direto do usuário depois de testar a extensão acima já em
+produção. Ver `CHANGELOG.md` v3.20 · painel-dev pro racional completo.
+- **Bug real: z-index** — `#pc-modal-ov{z-index:210;}` (CSS, perto de
+  L593) — antes empatado em 200 com `#okr-obj-ov`/`#okr-marco-ov`
+  (mesma classe `.pc-modal-ov`), ordem de empilhamento virava ordem no
+  DOM e o visualizador de card pintava por baixo do modal de OKR.
+- **Multi-trimestre**: `objetivo.trimestres:[]` (lista, reusa
+  `_okrListEditorHtml()`) no lugar do antigo `objetivo.trimestre`
+  (string única). `_okrTrimestresOf(o)` — helper de compatibilidade,
+  lê `trimestres` com fallback pro campo antigo, sem migração de dado;
+  chamado em toda leitura (filtro, badge do card, modal readonly,
+  normalização do draft em `openOkrObjetivo()`).
+- **"Ver arquivados"**: `_okrShowArquivados` (bool) +
+  `_okrToggleArquivados()` — inverte a lista inteira entre ativos/
+  arquivados. `_okrDesarquivarObjetivo(id)` (par de
+  `_okrArquivarObjetivo()`) — botão no modal troca "Arquivar" por
+  "Desarquivar" quando `d.arquivado===true`.
+- **Histórico com visual rico** ("timeline bonitinha de rede social",
+  pedido literal do usuário): `OKR_HIST_TIPOS` (ícone+cor por tipo —
+  🎯 criado/📝 campo/👤 responsável/📋 lista/🏷️ tag/🔗 vínculo/🏁 marco/
+  📊 status/💯 checklist/📦 arquivado), entradas ganham `uid` (renderiza
+  `_okrAvatarHtml()`, mesmo componente da Fase 1) e `tipo` (borda
+  colorida). Cobertura expandida: `_okrDiffStringArray()` cobre
+  trimestres/Indicadores/Progressos/Próximos Passos/Riscos/Planos de
+  Ação/tags do objetivo, mais diff de `cardLinks`/`tagIds`/
+  `participantes` do marco — antes só campos principais + responsável.
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
