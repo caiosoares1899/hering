@@ -2686,6 +2686,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.572-dev — 2026-09-04 — UX: Feed de marcos (📰) ganha avatar, tags, prioridade e cor por tipo
+
+Pedido direto do usuário depois de testar a v8.30.571-dev, olhando um
+print do próprio feed em uso: "testei, ficou muito bom! falta mexer aqui
+no 'dia'" — o Feed de marcos (duplo clique num dia da Timeline) ainda
+estava com linhas pobres (só ícone + texto + horário), enquanto a
+Timeline principal já tinha ganhado avatar/tags/prioridade na v anterior.
+
+**Linhas do feed mais ricas** (`_timelineFeedRow()`): ganharam avatar do
+responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags —
+mesmo padrão de `_timelineCardRow()`. O avatar foi extraído pra
+`_ownerAvatarHtml()` (reusável entre as duas views; não mexeu no `avHtml`
+de `makeCardEl()`, código maduro/sensível do card real nas colunas).
+
+**Faixa colorida por tipo de marco** (`TIMELINE_FEED_COR`): dourado para
+🆕 criado, azul para 🔀 movido, verde/teal para 🏁 concluído. Motivo
+direto do print que o usuário mandou: o ícone 🏁 (bandeira quadriculada)
+rendeiza como uma bandeira genérica em alguns ambientes/fontes, sem o
+padrão xadrez — fácil de confundir com aviso/pendência em vez de
+"terminado". A cor na lateral é um canal redundante que não depende do
+emoji renderizar certo em cada navegador/SO.
+
+**Resumo por tipo no topo do feed** (`openTimelineFeed()`): mostra
+"🆕 N criados · 🔀 N movidos · 🏁 N concluídos" antes da lista — mesma
+lógica da contagem já existente no topo da Timeline principal (v8.30.571-dev),
+orientação de relance antes de rolar um dia mais movimentado.
+
+Testado com Playwright: 3 marcos sintéticos (criado/movido/concluído) —
+avatar presente nas 3 linhas, tag e badge de prioridade aparecendo na
+linha certa, cores da faixa lateral batendo com o tipo de cada marco
+(`#ffd166`/`#38b6ff`/`var(--teal)`), resumo do topo contando 1/1/1
+corretamente. `HELP_CONTENT` (entrada "Timeline") atualizado com os
+detalhes do feed. Checks de rotina: `node --check` OK, balanço de
+chaves/parênteses igual ao baseline da sessão (braces -1, parens +1).
+
 ### v8.30.571-dev — 2026-09-03 — UX: Timeline ganha filtros, contagem e visual em linha com o resto do board
 
 Pedido direto do usuário, pensando como quem usa: "falta filtros...

@@ -420,6 +420,21 @@ detalhe dos 4 call sites.
   `<body>` — que nunca rola de fato, então a barra sobe junto com o
   resto do conteúdo como se sticky nem existisse). Removido — `.toolbar`
   do board normal também não é sticky, mantém consistência.
+- `_ownerAvatarHtml()` (2026-09-04) — avatar do responsável extraído de
+  dentro de `_timelineCardRow()` pra virar reusável, quando o Feed de
+  marcos (`_timelineFeedRow()`) passou a precisar do mesmo avatar.
+  NÃO tocou no `avHtml` de `makeCardEl()` (card real nas colunas) de
+  propósito — lógica idêntica, mas aquele é código maduro/sensível.
+  `_timelineFeedRow()` ganhou avatar/prioridade/🚧/🧩/tags (mesmo padrão
+  de `_timelineCardRow()`) e uma faixa colorida na lateral por tipo de
+  marco (`TIMELINE_FEED_COR`: dourado=criado, azul=movido, verde/teal=
+  concluído) — pedido do usuário depois de testar a v1 ("falta mexer
+  aqui no 'dia'"): o ícone 🏁 (concluído) rendeiza como bandeira
+  genérica em alguns ambientes/fontes (sem o padrão xadrez), fácil de
+  confundir com aviso — a cor é um canal redundante que não depende do
+  emoji renderizar certo. `openTimelineFeed()` ganhou um resumo por tipo
+  no topo do feed (🆕 N criados · 🔀 N movidos · 🏁 N concluídos), mesma
+  ideia da contagem no topo da Timeline.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
