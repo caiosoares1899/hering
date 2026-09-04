@@ -462,6 +462,49 @@ detalhe dos 4 call sites.
   string) — 1ª versão tentou marcar `selected` direto na string HTML e
   o `<select>` de responsável ficava sempre mostrando o placeholder,
   mesmo com filtro ativo (a option certa nunca ganhava o atributo).
+- **Buckets progressivos, ação no lugar e marcos de contexto** (2026-09-04,
+  a partir de consultoria técnica externa pedida pelo usuário sobre a
+  feature Timeline) — 3ª rodada de evolução da Timeline, escolhida entre
+  ~10 sugestões ("os 3 que eu faria agora: buckets progressivos, ação no
+  lugar, marcos de contexto"):
+  - `renderTimelineView()` reescrita: em vez de 1 grupo por DIA exato a
+    partir de amanhã (virava lista de cabeçalhos com 1 card cada, achado
+    real do consultor), agora agrupa em faixas fixas — 🔴 Atrasado · 📅
+    Hoje · 📅 Amanhã · 🗓️ Resto da semana · 🗓️ Próxima semana · ⏳ Depois ·
+    🗂 Sem prazo. Semana no padrão Domingo→Sábado, igual ao Calendário
+    (`_timelineFimSemana()`, nova). `_timelineLabelForDate()` (que gerava
+    o rótulo por-dia) foi REMOVIDA — não sobrou call site depois da
+    reescrita.
+  - **Ordenação cronológica** (`ordenaCronologico`, dentro de
+    `renderTimelineView()`) substitui a alfabética em todo bucket
+    multi-dia — Atrasado ordena do mais antigo pro mais recente (é a
+    "dívida real"), os outros por prazo crescente.
+  - **Custo do atraso**: `_timelineCardRow(card, hojeStr)` ganhou o 2º
+    parâmetro (breaking change no único call site, dentro da própria
+    Timeline) — mostra "Nd atrasado" (vermelho) pra cards vencidos, ou a
+    data explícita (ex. "23 de set.") pros buckets que cobrem vários dias.
+  - **Ação no lugar** (`_timelineSetPrazoInline()`/`_timelineAdiarCard()`,
+    mesmo padrão checkEditPermission+recordHistory+fbSaveCard de
+    `togglePinCard()`): card sem prazo ganha `<input type=date>` inline;
+    card atrasado ganha "+1d"/"+1 sem". Cards concluídos (`_isColDone`)
+    não ganham ação nenhuma.
+  - **✅ Concluído recente** (bucket novo, recolhido, no fim da lista):
+    cards concluídos desde domingo desta semana — pedido do consultor pra
+    "fechar o loop", já que Timeline só olhava pra frente (pendências) e
+    o Feed de marcos só pro passado (um dia específico).
+  - **🎯 Marcos de contexto** (`_timelineEventMarkerHtml()`,
+    `eventosEntre()`/`eventosNoDia()` dentro de `renderTimelineView()`):
+    eventos de `calEvents` (mesma fonte do "📅 Calendários", já em
+    memória — zero leitura nova) aparecem como divisor fino
+    (`── DD/MM · Título ──`) intercalado cronologicamente entre os cards
+    de cada bucket, via `comMarcos()`. `_gcal` (espelho do Google Agenda
+    PESSOAL) fica de fora de propósito — evento pessoal de alguém não é
+    marco do squad, e mostrar o título pra todo mundo seria vazamento de
+    agenda privada.
+  - CSS: `.timeline-semprazo` renomeada pra `.timeline-collapse`
+    (genérica) quando passou a servir tanto "Sem prazo" quanto "Concluído
+    recente"; `.timeline-event-marker` nova (divisor de marco de
+    contexto), perto de L2196.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062

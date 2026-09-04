@@ -2686,6 +2686,67 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.574-dev — 2026-09-04 — Timeline: buckets progressivos, ação no lugar (prazo/adiar) e marcos de contexto
+
+A partir de uma consultoria técnica externa pedida pelo usuário sobre a
+arquitetura da feature Timeline (prompt com contexto do projeto + mapa de
+função/linha, ver conversa) — a consultoria trouxe ~10 sugestões
+organizadas em "mudaria"/"acrescentaria"; o usuário escolheu as 3
+recomendadas como prioridade: **buckets progressivos**, **ação no
+lugar** e **marcos de contexto**.
+
+**Buckets progressivos** (`renderTimelineView()` reescrita): agrupar por
+DIA exato a partir de amanhã virava "lista de cabeçalhos" assim que
+passava de 1-2 dias no futuro ("23 de setembro" com 1 card sozinho).
+Agora agrupa em faixas fixas — 🔴 Atrasado · 📅 Hoje · 📅 Amanhã · 🗓️
+Resto da semana · 🗓️ Próxima semana · ⏳ Depois · 🗂 Sem prazo — semana no
+padrão Domingo→Sábado, igual ao "📅 Calendários" (`_timelineFimSemana()`,
+nova). `_timelineLabelForDate()` (gerava o rótulo por-dia) foi removida —
+sem call site depois da reescrita. Dentro do "Atrasado", ordena do mais
+antigo pro mais recente ("o mais antigo é a dívida real") em vez de
+alfabética — estendido aos outros buckets multi-dia também, já que um
+grupo com vários dias precisa de ordem cronológica.
+
+**Custo do atraso**: cada card atrasado mostra "Nd atrasado" (vermelho)
+na linha, em vez de só a etiqueta do grupo; cards em buckets multi-dia
+(Resto da semana/Próxima semana/Depois) mostram a data exata.
+
+**Ação no lugar** (`_timelineSetPrazoInline()`/`_timelineAdiarCard()`,
+mesmo padrão `checkEditPermission`+`recordHistory`+`fbSaveCard` já usado
+em `togglePinCard()`/`togglePauseCard()`): card sem prazo ganha um campo
+de data direto na linha; card atrasado ganha atalhos "+1d"/"+1 sem".
+Sem isso a Timeline só diagnosticava, não tratava — a pessoa tinha que
+abrir card por card pra limpar a raia "Sem prazo". Cards já concluídos
+não ganham ação nenhuma (não faz sentido reagendar um card que terminou).
+
+**✅ Concluído recente** (bucket novo, recolhido, no fim da lista): cards
+concluídos desde domingo desta semana. Fecha um buraco identificado na
+consultoria — a Timeline só olhava pra frente (pendências) e o Feed de
+marcos só pra um dia específico do passado; sem esse bucket, "o que a
+gente já entregou essa semana" não tinha lugar nenhum na Timeline.
+
+**🎯 Marcos de contexto** (`_timelineEventMarkerHtml()`): eventos do
+Calendário (`calEvents`, mesma fonte já carregada em memória — zero
+leitura nova) aparecem como um divisor fino (`── DD/MM · Título ──`)
+intercalado cronologicamente entre os cards de cada bucket — dá pra ver
+"esses 3 cards vencem depois que a campanha X já começou" sem abrir o
+Calendário numa aba separada. Eventos pessoais espelhados do Google
+Agenda (`_gcal`) ficam de fora de propósito (não são marco do squad, e
+mostrar o título pra todo mundo seria vazar agenda privada de alguém).
+
+Testado com Playwright: cards sintéticos cobrindo os 6 buckets +
+edge case real (dia do teste caiu numa sexta-feira, "Resto da semana"
+ficou corretamente vazio já que amanhã já é sábado — confirma que o
+bucket não quebra quando a janela é vazia). Ordenação cronológica do
+Atrasado confirmada (mais antigo primeiro), badge "Nd atrasado"
+conferido, marco de contexto renderizando na posição certa dentro do
+bucket, ação no lugar testada ponta a ponta (definir prazo via
+`<input type=date>` e adiar +7 dias, ambos persistindo via `fbSaveCard`
+stubado e re-renderizando o card no bucket certo depois). `HELP_CONTENT`
+(entrada "Timeline") e `CODE_MAP.md` atualizados. Checks de rotina:
+`node --check` OK, balanço de chaves/parênteses igual ao baseline da
+sessão (braces -1, parens +1).
+
 ### v8.30.573-dev — 2026-09-04 — Feed de marcos ganha filtro próprio (responsável/subtime/tag/tipo)
 
 Pedido direto do usuário depois de testar a v8.30.572-dev: "testei,
