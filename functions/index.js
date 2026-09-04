@@ -20,7 +20,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_periodo', 'okr_reuniao']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -171,6 +171,13 @@ exports.intakeSubmit = require('./intake/submit').intakeSubmit;
 // functions/backup/weeklyBackup.js) — roda sozinho, sem depender de
 // ninguém abrir o board. Deploy isolado: firebase deploy --only functions:weeklyBackup
 exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
+
+// 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
+// de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
+// de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo
+// cache que painel.html já mantém) pra período/reunião — zero chamada nova
+// à API do Google. Deploy isolado: firebase deploy --only functions:okrDailyScan
+exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
 
 // Agente Ágil Orquestrador — @menção v1 (item 3/4 do plano de acionamento
 // sem supervisão direta, ver functions/agente-agil-orquestrador/README.md).

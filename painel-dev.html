@@ -353,6 +353,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-status-select{display:flex;flex-wrap:wrap;gap:5px;}
 .okr-status-opt{display:flex;align-items:center;gap:5px;padding:5px 10px;font-size:11px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.5);color:var(--txt2);cursor:pointer;}
 .okr-status-opt.active{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.12);}
+/* ═══ OKR — extensão (Histórico/Vínculos/Tags), 2026-09-04 ═══ */
+.okr-hist-item{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--glass-b);font-size:11.5px;}
+.okr-hist-item:last-child{border-bottom:none;}
+.okr-hist-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);margin-top:5px;flex-shrink:0;}
+.okr-hist-body{flex:1;color:var(--txt2);min-width:0;}
+.okr-hist-who{font-weight:700;color:var(--txt);}
+.okr-hist-when{font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;}
+.okr-hist-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
+.okr-tag-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap;cursor:pointer;}
+.okr-tag-swatch{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
+.okr-tag-swatch span{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
+.okr-tag-swatch span.active{border-color:var(--txt);}
 /* ═══ LEMBRETES (painel) ═══ */
 .lemp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 @media(max-width:760px){.lemp-wrap{grid-template-columns:1fr;}}
@@ -2644,7 +2656,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.18 · painel-dev</div>
+<div class="version">v3.19 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4566,6 +4578,66 @@ function loadOkr(){
       renderOkrObjBody(_okrEditingObjId);
     }
   });
+  loadOkrTags();
+}
+
+// ── Tags gerenciáveis do OKR (só nível Objetivo — Marco continua com texto
+// livre, decisão do usuário: escalas diferentes, poucos objetivos vs.
+// muitos marcos). Nó próprio kanban/okr/tags/{id} = {label, colorIdx},
+// colorIdx indexa PT_PALETTE (mesma paleta já usada nas tags da Timeline). ──
+let okrTags = {};
+function loadOkrTags(){
+  window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{
+    okrTags = snap.val() || {};
+    if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+  });
+}
+function _okrTagChipHtml(tagId, removable, onRemove){
+  const t = okrTags[tagId]; if(!t) return '';
+  const p = PT_PALETTE[t.colorIdx % PT_PALETTE.length] || PT_PALETTE[0];
+  return `<span class="okr-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c};" ${removable?`onclick="${onRemove}"`:''}>${esc(t.label)}${removable?' ✕':''}</span>`;
+}
+async function _okrTagCriar(){
+  const label = (prompt('Nome da tag nova:')||'').trim();
+  if(!label) return;
+  const id = 'tag_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
+  const colorIdx = Object.keys(okrTags).length % PT_PALETTE.length;
+  await window._set(window._ref(window._db,'kanban/okr/tags/'+id), {id, label, colorIdx});
+  _okrSyncObjDraftFromDom();
+  (_okrObjDraft.tagIds = _okrObjDraft.tagIds||[]).push(id);
+  renderOkrObjBody(_okrEditingObjId);
+}
+async function _okrTagApagar(tagId){
+  if(!await uiConfirm('Apagar essa tag? Ela some de todos os objetivos que a usam.', {danger:true, okText:'Apagar'})) return;
+  await window._set(window._ref(window._db,'kanban/okr/tags/'+tagId), null);
+}
+function _okrTagAddToObj(tagId){
+  if(!tagId) return;
+  _okrSyncObjDraftFromDom();
+  const sel=_okrObjDraft.tagIds=_okrObjDraft.tagIds||[];
+  if(!sel.includes(tagId)) sel.push(tagId);
+  renderOkrObjBody(_okrEditingObjId);
+}
+function _okrTagRemoveFromObj(tagId){
+  _okrSyncObjDraftFromDom();
+  _okrObjDraft.tagIds = (_okrObjDraft.tagIds||[]).filter(x=>x!==tagId);
+  renderOkrObjBody(_okrEditingObjId);
+}
+function _okrTagPickerHtml(){
+  const sel = _okrObjDraft.tagIds||[];
+  const opts = Object.keys(okrTags).filter(id=>!sel.includes(id));
+  return `
+    <div class="okr-field-label">Tags</div>
+    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
+      ${sel.map(id=>_okrTagChipHtml(id, true, `_okrTagRemoveFromObj('${id}')`)).join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
+    </div>
+    <div style="display:flex;gap:6px;">
+      <select class="okr-select" onchange="_okrTagAddToObj(this.value);this.value='';">
+        <option value="">+ Adicionar tag existente…</option>
+        ${opts.map(id=>`<option value="${id}">${esc(okrTags[id].label)}</option>`).join('')}
+      </select>
+      <button type="button" class="btn btn-sm" style="white-space:nowrap;" onclick="_okrTagCriar()" title="Cria uma tag nova e já aplica nesse objetivo">+ Nova</button>
+    </div>`;
 }
 
 // ── Permissão: só responsável(is) do objetivo + ADM editam ──────────
@@ -4684,6 +4756,172 @@ function _okrObjCardHtml(o){
   </div>`;
 }
 
+// ── Histórico (evolução do Objetivo/Marco a cada edição) — mesmo padrão de
+// recordHistory()/_histDiff() do kanban-dev.html (card.history[]), só que
+// pra Objetivo/Marco. Marco também empurra um resumo pro history[] do
+// Objetivo pai, pra "evolução do OKR inteiro" aparecer num lugar só. ──
+const OKR_HIST_CAP = 50;
+const OKR_OBJ_HIST_FIELDS = {titulo:'título', areaId:'gerência', pilar:'pilar estratégico', trimestre:'trimestre', descricao:'descrição'};
+const OKR_MARCO_HIST_FIELDS = {nome:'nome', responsavel:'responsável', prazo:'prazo', progresso:'progresso', descricao:'descrição'};
+function _okrHistWho(){ return window._currentUser?.displayName || window._currentUser?.email || 'Usuário'; }
+function _okrHistValObj(field, val){
+  if(val==null||val==='') return '—';
+  if(field==='areaId') return okrGerenciaLabel(val);
+  if(typeof val==='string' && val.length>40) return val.substring(0,40)+'…';
+  return String(val);
+}
+function _okrHistValMarco(field, val){
+  if(val==null||val==='') return '—';
+  if(field==='responsavel') return _okrPessoaInfo(val).nome;
+  if(field==='progresso') return okrStatusInfo(val).label;
+  if(typeof val==='string' && val.length>40) return val.substring(0,40)+'…';
+  return String(val);
+}
+function _okrRecordHistory(entity, what){
+  if(!entity||!what) return;
+  if(!Array.isArray(entity.history)) entity.history=[];
+  entity.history.push({who:_okrHistWho(), what, at:new Date().toISOString()});
+  if(entity.history.length>OKR_HIST_CAP) entity.history=entity.history.slice(-OKR_HIST_CAP);
+}
+function _okrHistDiffObj(draft, before){
+  Object.keys(OKR_OBJ_HIST_FIELDS).forEach(f=>{
+    const a=(before[f]==null)?'':before[f], b=(draft[f]==null)?'':draft[f];
+    if(String(a)!==String(b)){
+      const label=OKR_OBJ_HIST_FIELDS[f];
+      if(b==='') _okrRecordHistory(draft, `removeu ${label}`);
+      else if(a==='') _okrRecordHistory(draft, `definiu ${label}: ${_okrHistValObj(f,b)}`);
+      else _okrRecordHistory(draft, `alterou ${label}: ${_okrHistValObj(f,a)} → ${_okrHistValObj(f,b)}`);
+    }
+  });
+  const beforeResp=new Set(before.responsaveis||[]), afterResp=new Set(draft.responsaveis||[]);
+  (draft.responsaveis||[]).forEach(uid=>{ if(!beforeResp.has(uid)) _okrRecordHistory(draft, `adicionou ${_okrPessoaInfo(uid).nome} como responsável`); });
+  (before.responsaveis||[]).forEach(uid=>{ if(!afterResp.has(uid)) _okrRecordHistory(draft, `removeu ${_okrPessoaInfo(uid).nome} dos responsáveis`); });
+}
+function _okrHistDiffMarco(draft, before){
+  Object.keys(OKR_MARCO_HIST_FIELDS).forEach(f=>{
+    const a=(before[f]==null)?'':before[f], b=(draft[f]==null)?'':draft[f];
+    if(String(a)!==String(b)){
+      const label=OKR_MARCO_HIST_FIELDS[f];
+      if(b==='') _okrRecordHistory(draft, `removeu ${label}`);
+      else if(a==='') _okrRecordHistory(draft, `definiu ${label}: ${_okrHistValMarco(f,b)}`);
+      else _okrRecordHistory(draft, `alterou ${label}: ${_okrHistValMarco(f,a)} → ${_okrHistValMarco(f,b)}`);
+    }
+  });
+  const nd=(draft.checklist||[]).filter(i=>i&&i.done).length, nt=(draft.checklist||[]).length;
+  const bnd=(before.checklist||[]).filter(i=>i&&i.done).length, bnt=(before.checklist||[]).length;
+  if(nt!==bnt) _okrRecordHistory(draft, `atualizou o checklist (${nd}/${nt})`);
+  else if(nd!==bnd) _okrRecordHistory(draft, `checklist: ${nd}/${nt} concluídos`);
+}
+function _okrHistRelTime(iso){
+  const d=new Date(iso), diff=(Date.now()-d.getTime())/1000;
+  if(diff<60) return 'agora';
+  if(diff<3600) return Math.floor(diff/60)+'min';
+  if(diff<86400) return Math.floor(diff/3600)+'h';
+  if(diff<604800) return Math.floor(diff/86400)+'d';
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+}
+function renderOkrHistory(entity){
+  const hist = Array.isArray(entity?.history) ? entity.history : [];
+  if(!hist.length) return '<div class="okr-hist-empty">Sem alterações registradas ainda.</div>';
+  return hist.slice().reverse().map(h=>{
+    const when = h.at ? _okrHistRelTime(h.at) : '';
+    const full = h.at ? new Date(h.at).toLocaleString('pt-BR') : '';
+    return `<div class="okr-hist-item" title="${esc(full)}">
+      <span class="okr-hist-dot"></span>
+      <div class="okr-hist-body"><span class="okr-hist-who">${esc(h.who||'?')}</span> ${esc(h.what||'')}</div>
+      <span class="okr-hist-when">${esc(when)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── Vínculo de cards com badge OKR (tipo campanha/coleção — mesmo padrão de
+// notaSearchCards()/notaAddCardLink() do kanban-dev.html, adaptado pra
+// multi-squad). objetivo.cardLinks: [{squadId, cardId}]. ──
+function _okrCardSearchResults(query){
+  const q=(query||'').toLowerCase().trim();
+  if(q.length<2) return [];
+  const results=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d||!d.cards) return;
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived && (c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
+      .filter(c=>(c.title||'').toLowerCase().includes(q))
+      .forEach(c=>results.push({squadId:sq.id, squadIcon:sq.icon, cardId:c.id, title:c.title}));
+  });
+  return results.slice(0,20);
+}
+function _okrCardLinkAdd(squadId, cardId){
+  _okrSyncObjDraftFromDom();
+  const links=_okrObjDraft.cardLinks=_okrObjDraft.cardLinks||[];
+  if(!links.some(l=>l.squadId===squadId&&l.cardId===cardId)) links.push({squadId,cardId});
+  renderOkrObjBody(_okrEditingObjId);
+}
+function _okrCardLinkRemove(i){
+  _okrSyncObjDraftFromDom();
+  _okrObjDraft.cardLinks.splice(i,1);
+  renderOkrObjBody(_okrEditingObjId);
+}
+function _okrRenderCardSearch(q){
+  const el=document.getElementById('okr-card-search-results');
+  if(!el) return;
+  const linked=_okrObjDraft.cardLinks||[];
+  const results=_okrCardSearchResults(q).filter(r=>!linked.some(l=>l.squadId===r.squadId&&l.cardId===r.cardId));
+  el.innerHTML = results.length
+    ? results.map(r=>`<div class="okr-list-item" style="cursor:pointer;" onclick="_okrCardLinkAdd('${r.squadId}','${esc(r.cardId)}')"><span>${r.squadIcon} ${esc(r.title)}</span></div>`).join('')
+    : (q.trim().length>=2 ? '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum card com badge OKR encontrado.</div>' : '');
+}
+function _okrCardLinksHtml(podeEditar){
+  const links=_okrObjDraft.cardLinks||[];
+  return `
+    <div class="okr-field-label">🔗 Cards vinculados (badge 🎯 OKR no board)</div>
+    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px;">
+      ${links.map((l,i)=>{
+        const sq=SQUADS.find(s=>s.id===l.squadId);
+        const card=(squadData[l.squadId]?.cards||[]).find(c=>c.id===l.cardId);
+        const titulo=card?card.title:'(card não encontrado)';
+        return `<div class="okr-list-item"><span style="cursor:pointer;" onclick="openPcModal('${l.squadId}','${esc(l.cardId)}')">${sq?sq.icon:''} ${esc(titulo)}</span>${podeEditar?`<button type="button" onclick="_okrCardLinkRemove(${i})" title="Desvincular">✕</button>`:''}</div>`;
+      }).join('') || '<div style="font-size:11px;color:var(--txt3);">Nenhum ainda.</div>'}
+    </div>
+    ${podeEditar?`<input type="text" class="okr-input" id="okr-card-search" placeholder="🔎 Buscar card com badge OKR pra vincular…" oninput="_okrRenderCardSearch(this.value)">
+    <div id="okr-card-search-results"></div>`:''}`;
+}
+
+// ── Notificação "OKR editado" — Responsáveis + Participantes de qualquer
+// Marco (decisão do usuário), síncrono no momento do save. Mesmo path/
+// formato que createNotif() (kanban-dev.html) já usa em
+// kanban/usuarios/{uid}/notificacoes — aparece no sininho de qualquer
+// board sem mudar nada lá. Push: precisa de 'okr_editado' em PUSH_TYPES
+// (functions/index.js) + redeploy — ver CHANGELOG/README. ──
+async function _okrNotifyEditado(objId){
+  const obj = okrObjetivos[objId]; if(!obj) return;
+  const autorUid = window._currentUser?.uid;
+  const autor = window._currentUser?.displayName || window._currentUser?.email || '?';
+  const alvos = new Set(obj.responsaveis||[]);
+  _okrObjMarcos(objId).forEach(m=>(m.participantes||[]).forEach(uid=>alvos.add(uid)));
+  alvos.delete(autorUid);
+  const writes = [...alvos].map(uid=>{
+    const id='n'+Date.now()+Math.random().toString(36).slice(2,6);
+    return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+id), {
+      id, type:'okr_editado',
+      title:`🎯 "${obj.titulo}" foi editado`,
+      sub:`Por ${autor}`,
+      okrObjId: objId,
+      read:false,
+      ts:new Date().toISOString(),
+    }).catch(()=>{});
+  });
+  await Promise.all(writes);
+}
+
+// ── Picker de evento do Google Agenda (período de editar / reunião) — lê o
+// mesmo cache que o painel já sincroniza (pcalGcalEvents), zero chamada
+// nova à API do Google. O scan diário (functions/okr/dailyScan.js) lê o
+// MESMO cache no Firebase (kanban/painel/config/gcal_cache) pra disparar
+// as notificações no dia certo. ──
+function _okrGcalOptionsHtml(selectedId){
+  const evs = (typeof pcalGcalEvents!=='undefined' ? pcalGcalEvents : []).slice().sort((a,b)=>(a.start||'').localeCompare(b.start||''));
+  return '<option value="">Nenhum</option>' + evs.map(ev=>`<option value="${esc(ev.id)}"${ev.id===selectedId?' selected':''}>${esc(ev.title)} — ${ev.start?new Date(ev.start+'T00:00:00').toLocaleDateString('pt-BR'):''}</option>`).join('');
+}
+
 // ── Modal de Objetivo ─────────────────────────────────────────────────
 let _okrEditingObjId = null;   // id do objetivo aberto, null = criando novo
 let _okrObjDraft = null;       // rascunho em edição (só grava no Salvar)
@@ -4694,6 +4932,7 @@ function openOkrObjetivo(id){
   _okrObjDraft = id ? JSON.parse(JSON.stringify(okrObjetivos[id])) : {
     titulo:'', areaId:'geral', pilar:'', trimestre:'', descricao:'',
     responsaveis:[], indicadores:[], progressos:[], proximosPassos:[], riscos:[], planosAcao:[],
+    tagIds:[], cardLinks:[], gcalPeriodoEventId:'', gcalReuniaoEventId:'', history:[],
   };
   document.getElementById('okr-obj-title').textContent = id ? '🎯 Editar Objetivo' : '🎯 Novo Objetivo';
   renderOkrObjBody(id);
@@ -4717,6 +4956,8 @@ function _okrSyncObjDraftFromDom(){
   if(g('okr-f-trimestre')) _okrObjDraft.trimestre = g('okr-f-trimestre').value;
   if(g('okr-f-pilar')) _okrObjDraft.pilar = g('okr-f-pilar').value;
   if(g('okr-f-descricao')) _okrObjDraft.descricao = g('okr-f-descricao').value;
+  if(g('okr-f-gcal-periodo')) _okrObjDraft.gcalPeriodoEventId = g('okr-f-gcal-periodo').value;
+  if(g('okr-f-gcal-reuniao')) _okrObjDraft.gcalReuniaoEventId = g('okr-f-gcal-reuniao').value;
 }
 
 function _okrListEditorHtml(campo, label, placeholder){
@@ -4787,6 +5028,7 @@ function renderOkrObjBody(id){
       ${d.pilar?`<div class="okr-field-label">Pilar Estratégico</div><div style="font-size:12px;color:var(--txt2);">${esc(d.pilar)}</div>`:''}
       <div class="okr-field-label">Objetivo</div>
       <div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;">${esc(d.descricao||'—')}</div>
+      ${(d.tagIds||[]).length?`<div class="okr-field-label">Tags</div><div style="display:flex;flex-wrap:wrap;gap:5px;">${(d.tagIds||[]).map(tid=>_okrTagChipHtml(tid,false)).join('')}</div>`:''}
       ${_okrReadonlyList('Responsável(is)', (d.responsaveis||[]).map(uid=>_okrPessoaInfo(uid).nome))}
       ${_okrReadonlyList('Indicadores de Entrega', d.indicadores)}
       ${_okrReadonlyList('Progressos', d.progressos)}
@@ -4794,7 +5036,10 @@ function renderOkrObjBody(id){
       ${_okrReadonlyList('Riscos', d.riscos)}
       ${_okrReadonlyList('Planos de Ação', d.planosAcao)}
       <div class="okr-field-label">Marcos</div>
-      ${_okrMarcosListHtml(id)}`;
+      ${_okrMarcosListHtml(id)}
+      ${_okrCardLinksHtml(false)}
+      <div class="okr-field-label">📜 Histórico</div>
+      ${renderOkrHistory(d)}`;
     footer.innerHTML = `<button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -4814,6 +5059,7 @@ function renderOkrObjBody(id){
     <input type="text" class="okr-input" id="okr-f-pilar" value="${esc(d.pilar||'')}" placeholder="Nome do pilar (opcional)">
     <div class="okr-field-label">Objetivo</div>
     <textarea class="okr-textarea" id="okr-f-descricao" placeholder="Descreva o objetivo...">${esc(d.descricao||'')}</textarea>
+    ${_okrTagPickerHtml()}
     ${_okrPessoaPickerHtml('responsaveis','Responsável(is)')}
     ${_okrListEditorHtml('indicadores','Indicadores de Entrega','Descrever indicador…')}
     ${_okrListEditorHtml('progressos','Progressos','O que já avançou…')}
@@ -4824,7 +5070,19 @@ function renderOkrObjBody(id){
       <span>Marcos</span>
       ${id?`<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;" onclick="openOkrMarco(null,'${id}')">+ Novo marco</button>`:''}
     </div>
-    ${id ? _okrMarcosListHtml(id) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}`;
+    ${id ? _okrMarcosListHtml(id) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
+    ${_okrCardLinksHtml(true)}
+    <div class="okr-field-label">📅 Notificações — Google Agenda</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+      <div><div class="okr-field-label" style="margin-top:0;">Período de editar</div>
+        <select class="okr-select" id="okr-f-gcal-periodo" title="No dia desse evento, os responsáveis são notificados que é o período de atualizar esse objetivo">${_okrGcalOptionsHtml(d.gcalPeriodoEventId)}</select>
+      </div>
+      <div><div class="okr-field-label" style="margin-top:0;">Reunião</div>
+        <select class="okr-select" id="okr-f-gcal-reuniao" title="1 dia antes desse evento, os responsáveis são avisados">${_okrGcalOptionsHtml(d.gcalReuniaoEventId)}</select>
+      </div>
+    </div>
+    <div class="okr-field-label">📜 Histórico</div>
+    ${renderOkrHistory(d)}`;
   footer.innerHTML = `
     <button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${(id && _isAdmPainel())?`<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
@@ -4839,13 +5097,18 @@ async function saveOkrObjetivo(){
   d.trimestre = document.getElementById('okr-f-trimestre').value.trim();
   d.pilar = document.getElementById('okr-f-pilar').value.trim();
   d.descricao = document.getElementById('okr-f-descricao').value.trim();
+  d.gcalPeriodoEventId = document.getElementById('okr-f-gcal-periodo')?.value||'';
+  d.gcalReuniaoEventId = document.getElementById('okr-f-gcal-reuniao')?.value||'';
 
   const isNovo = !_okrEditingObjId;
   const id = _okrEditingObjId || ('obj_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
   const user = window._currentUser;
+  if(!isNovo) _okrHistDiffObj(d, okrObjetivos[id]||{});
+  else _okrRecordHistory(d, 'criou o Objetivo');
   const payload = { ...d, id, atualizadoEm: new Date().toISOString(), atualizadoPor: user?.displayName||user?.email||'?' };
   if(isNovo){ payload.criadoEm = payload.atualizadoEm; payload.criadoPor = payload.atualizadoPor; }
   await window._set(window._ref(window._db,'kanban/okr/objetivos/'+id), payload);
+  if(!isNovo){ okrObjetivos[id]=payload; await _okrNotifyEditado(id); } // notifica ANTES de fechar — precisa do objetivo já no cache local
   showToast(isNovo ? '🎯 Objetivo criado.' : '💾 Objetivo salvo.');
   closeOkrObjetivo();
 }
@@ -4868,7 +5131,7 @@ function openOkrMarco(id, objId){
   _okrEditingMarcoObjId = objId;
   _okrMarcoDraft = id ? JSON.parse(JSON.stringify(okrMarcos[id])) : {
     objetivoId: objId, nome:'', responsavel:'', prazo:'', progresso:'nao_iniciado',
-    checklist:[], tags:[], participantes:[], descricao:'',
+    checklist:[], tags:[], participantes:[], descricao:'', history:[],
   };
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : '🏁 Novo Marco';
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
@@ -5017,7 +5280,9 @@ function renderOkrMarcoBody(){
       ${_okrTagsHtml()}
       ${_okrParticipantesHtml()}
       <div class="okr-field-label">Comentários</div>
-      ${_okrCommentsHtml()}`;
+      ${_okrCommentsHtml()}
+      <div class="okr-field-label">📜 Histórico</div>
+      ${renderOkrHistory(d)}`;
     footer.innerHTML = `<button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -5041,7 +5306,9 @@ function renderOkrMarcoBody(){
     ${_okrTagsHtml()}
     ${_okrParticipantesHtml()}
     <div class="okr-field-label">Comentários</div>
-    ${_okrCommentsHtml()}`;
+    ${_okrCommentsHtml()}
+    <div class="okr-field-label">📜 Histórico</div>
+    ${renderOkrHistory(d)}`;
   footer.innerHTML = `
     <button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
@@ -5059,9 +5326,32 @@ async function saveOkrMarco(){
   const isNovo = !_okrEditingMarcoId;
   const id = _okrEditingMarcoId || ('marco_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
   const user = window._currentUser;
+  let resumoObj;
+  if(isNovo){ _okrRecordHistory(d, 'criou o marco'); resumoObj = `criou o marco "${d.nome}"`; }
+  else {
+    const before = okrMarcos[id]||{};
+    _okrHistDiffMarco(d, before);
+    resumoObj = (before.progresso!==d.progresso)
+      ? `marco "${d.nome}": progresso mudou de ${okrStatusInfo(before.progresso||'nao_iniciado').label} para ${okrStatusInfo(d.progresso).label}`
+      : `atualizou o marco "${d.nome}"`;
+  }
   const payload = { ...d, id, atualizadoEm: new Date().toISOString(), atualizadoPor: user?.displayName||user?.email||'?' };
   if(isNovo){ payload.criadoEm = payload.atualizadoEm; payload.criadoPor = payload.atualizadoPor; }
   await window._set(window._ref(window._db,'kanban/okr/marcos/'+id), payload);
+  okrMarcos[id]=payload;
+  // Empurra um resumo pro history[] do Objetivo pai — "evolução do OKR
+  // inteiro" (pedido direto do usuário) aparece num lugar só, sem precisar
+  // abrir cada marco pra reconstruir o que mudou.
+  const objId = payload.objetivoId;
+  const obj = okrObjetivos[objId];
+  if(obj){
+    const objHistory = Array.isArray(obj.history) ? obj.history.slice() : [];
+    objHistory.push({who:_okrHistWho(), what:resumoObj, at:new Date().toISOString()});
+    if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
+    await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
+    okrObjetivos[objId] = {...obj, history:objHistory};
+    await _okrNotifyEditado(objId);
+  }
   showToast(isNovo ? '🏁 Marco criado.' : '💾 Marco salvo.');
   closeOkrMarco();
 }

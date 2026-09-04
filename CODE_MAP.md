@@ -1284,7 +1284,7 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   próprio); comentários em `kanban/okr/marco_comments/{marcoId}/
   {commentId}`, mesmo formato de `card_comments`. Regra nova em
   `database.rules.json` (`kanban.okr`, espelha `kanban.painel`) —
-  **pendente `firebase deploy --only database` local** pra valer em prod.
+  deploy (`firebase deploy --only database`) já feito (2026-09-04).
 - `loadOkr()` — `_onValue` nos dois nós, populam `okrObjetivos`/
   `okrMarcos`. Chamado no boot junto de `loadGlobalUsers()`.
 - Permissão: `_okrCanEdit(obj)`/`_okrCanCreate()` — só responsável(is) do
@@ -1307,6 +1307,44 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   participante/status antes de re-renderizar.
 - "🎯 Cards do board com badge OKR" (`renderOKR()`) mudou de casa: antes
   na aba Visão, agora dentro desta aba nova, junto do resto do assunto.
+
+#### Extensão (2026-09-04, v3.19 · painel-dev — SÓ em painel-dev.html ainda, não promovida): Histórico, vínculo de cards, tags, notificações
+Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
+v3.19 · painel-dev pro racional completo.
+- **Histórico**: `OKR_HIST_CAP`/`OKR_OBJ_HIST_FIELDS`/`OKR_MARCO_HIST_FIELDS`,
+  `_okrRecordHistory(entity,what)`, `_okrHistDiffObj(draft,before)`/
+  `_okrHistDiffMarco(draft,before)`, `renderOkrHistory(entity)` — mesmo
+  padrão de `recordHistory()`/`_histDiff()`/`renderHistory()` do
+  kanban-dev.html (`card.history[]`), portado pra `objetivo.history[]`/
+  `marco.history[]`. `saveOkrMarco()` também empurra um RESUMO pro
+  `history[]` do Objetivo pai (via `window._update`, não sobrescreve o
+  resto do objetivo) — "evolução do OKR inteiro" num lugar só.
+- **Vínculo de cards** (tipo campanha/coleção, mesmo padrão de
+  `notaSearchCards()`/`notaAddCardLink()` do kanban-dev.html, adaptado
+  multi-squad): `objetivo.cardLinks:[{squadId,cardId}]`,
+  `_okrCardSearchResults(query)` (só cards `isOKR===true`),
+  `_okrCardLinkAdd/Remove()`, `_okrCardLinksHtml(podeEditar)` — modo
+  leitura esconde busca/botão de desvincular.
+- **Tags gerenciáveis** — só nível Objetivo (decisão do usuário: Marco
+  continua com texto livre, escalas diferentes). Nó novo
+  `kanban/okr/tags/{id}={label,colorIdx}` (`colorIdx` indexa
+  `PT_PALETTE`, mesma paleta da Timeline), cache `okrTags`/
+  `loadOkrTags()`. `_okrTagCriar()`/`_okrTagApagar()`/`_okrTagAddToObj()`/
+  `_okrTagRemoveFromObj()`/`_okrTagPickerHtml()`/`_okrTagChipHtml()`.
+- **Notificações** — `_okrNotifyEditado(objId)` (síncrono no save, avisa
+  Responsáveis do Objetivo + Participantes de qualquer Marco, decisão do
+  usuário; exclui o autor da edição), escreve no MESMO path que
+  `createNotif()` (kanban-dev.html) usa (`kanban/usuarios/{uid}/
+  notificacoes`) — aparece no sininho de qualquer board sem mudar nada
+  lá. `_okrGcalOptionsHtml(selectedId)` — picker de evento do Google
+  Agenda (`pcalGcalEvents`, já sincronizado) pra `gcalPeriodoEventId`/
+  `gcalReuniaoEventId` do Objetivo. Prazo de marco/período/reunião
+  precisam de scan diário — ver `functions/okr/dailyScan.js` abaixo.
+- Achado (mesma classe do já documentado acima pra
+  `_okrSyncObjDraftFromDom()`): `_okrTagCriar()` e as novas seções
+  também re-renderizam o modal inteiro — todas as novas mutações
+  (tag/vínculo) chamam `_okrSyncObjDraftFromDom()` primeiro, mesma
+  disciplina já estabelecida.
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
@@ -1492,12 +1530,14 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 
 ### index.js — registro de exports
 - `PUSH_TYPES` (allow-list de push, hoje: assigned/mention/unblocked/risk/
-  recorrente/painel_broadcast/intake) — L23
+  recorrente/painel_broadcast/intake/okr_editado/okr_prazo/okr_periodo/
+  okr_reuniao — os 4 últimos 2026-09-04, ver `okr/dailyScan.js` abaixo) — L23
 - `sendPushOnNotification` — L25
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
 - `intakeSubmit` — L168 → `intake/submit.js`
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
+- `okrDailyScan` — L~179 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
@@ -1823,6 +1863,22 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   (`backups/{squadId}/{data}.json`), independente de alguém abrir o board.
   Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
   semanais mantidos por squad).
+
+### okr/ — 2026-09-04, novo
+- `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
+  (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`
+  (roda sozinho, sem depender de ninguém abrir o painel). 3 gatilhos:
+  prazo de marco chegando (3 e 1 dia antes, `diasAte()`), "período de
+  editar" (no dia do evento em `objetivo.gcalPeriodoEventId`) e véspera
+  de reunião (1 dia antes do evento em `objetivo.gcalReuniaoEventId`).
+  Lê `kanban/painel/config/gcal_cache` (mesmo cache que `painel.html` já
+  sincroniza) — zero chamada nova à API do Google. Escreve em
+  `kanban/usuarios/{uid}/notificacoes`, mesmo path/formato de
+  `createNotif()` (kanban-dev.html). `runOkrDailyScan(db)`/`diasAte()`/
+  `todaySP()` exportados pra teste (mesmo padrão de
+  `dueOverdueTrigger.js`) — `okr/__tests__/dailyScan.test.js`, 14 casos
+  (fake DB, sem emulador). Deploy isolado:
+  `firebase deploy --only functions:okrDailyScan`.
 
 ### spotify/ — PAUSADO (2026-08-04)
 "Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist

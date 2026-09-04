@@ -12614,6 +12614,74 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.19 · painel-dev — 2026-09-04 — 🎯 OKR: Histórico, vínculo de cards, tags gerenciáveis e notificações (extensão da Fase 1)
+
+Pedido direto do usuário depois de testar a Fase 1: "deveria ter um
+histórico... vincular os cards que tao com badge de okr... um sistema de
+tags... um sistema de notificações". 4 capacidades novas, todas
+decididas via `AskUserQuestion` antes de implementar:
+
+- **📜 Histórico dentro do modal** — `objetivo.history[]`/`marco.history[]`,
+  mesmo padrão de `recordHistory()`/`_histDiff()` do kanban-dev.html
+  (`card.history[]`): cada save relevante (criação, campo alterado,
+  responsável adicionado/removido, status de marco mudou, checklist
+  progrediu) empilha uma entrada `{who, what, at}`. Marco também empurra
+  um RESUMO pro `history[]` do Objetivo pai a cada save — "evolução do
+  OKR inteiro" aparece num lugar só, sem precisar abrir marco por marco.
+- **🔗 Vínculo de cards com badge OKR** — `objetivo.cardLinks:
+  [{squadId,cardId}]`, mesmo padrão de `notaSearchCards()`/
+  `notaAddCardLink()` do kanban-dev.html (Notas), adaptado pra
+  multi-squad. Busca só entre cards `isOKR===true`; card vinculado abre
+  direto no board (`openPcModal()`).
+- **🏷️ Tags gerenciáveis, só nível Objetivo** — decisão do usuário:
+  paleta separada das tags livres que Marco já tinha (escalas
+  diferentes — poucos objetivos vs. muitos marcos). Nó novo
+  `kanban/okr/tags/{id}` = `{label, colorIdx}`, `colorIdx` indexa
+  `PT_PALETTE` (mesma paleta da Timeline). Criar/apagar/aplicar direto
+  no picker do modal, sem tela de config separada.
+- **🔔 Notificações** — 4 gatilhos, todos decididos com o usuário:
+  - **Editado**: síncrono no save, reusa `createNotif()` (mesmo path/
+    formato de `kanban/usuarios/{uid}/notificacoes`) — avisa
+    Responsáveis do Objetivo + Participantes de qualquer Marco dele
+    (decisão do usuário: mais gente avisada que só Responsáveis),
+    excluindo quem fez a edição.
+  - **Prazo de marco chegando, período de editar, véspera de reunião**:
+    precisam rodar sozinhos (tempo passando, não uma edição) — nova
+    Cloud Function `functions/okr/dailyScan.js` (`onSchedule`, 07:00
+    Brasília), mesmo padrão de `agenteAgilDueOverdueScan`/
+    `weeklyBackup`. Período/reunião vinculam a um evento específico do
+    Google Agenda ESCOLHIDO POR OBJETIVO (`gcalPeriodoEventId`/
+    `gcalReuniaoEventId`, decisão do usuário) — lê o MESMO cache que
+    `painel.html` já sincroniza (`kanban/painel/config/gcal_cache`),
+    zero chamada nova à API do Google.
+  - Canal: sininho + push (decisão do usuário) — `okr_editado`/
+    `okr_prazo`/`okr_periodo`/`okr_reuniao` adicionados a `PUSH_TYPES`
+    (`functions/index.js`); `sendPushOnNotification` já escuta esse
+    path pra qualquer tipo, só decide mandar push pela allow-list.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -12`). 29 cenários novos testados via
+Playwright/console (histórico acumula sem substituir, diff de campos
+gera a mensagem certa, resumo do marco chega no Objetivo pai, busca de
+vínculo só acha card com badge OKR, modo leitura esconde os controles de
+edição de vínculo, notificação exclui o autor da edição e inclui
+participantes de marco, payload de notificação com `ts` ISO) — todos
+passando, sem regressão nos 44 cenários da Fase 1. `functions/okr/
+dailyScan.js` cobrido por 14 testes próprios (`node --test`, fake DB —
+prazo em 3/1 dias, fallback pro responsável do Objetivo quando o marco
+não tem um, marco concluído/arquivado nunca notifica, período no dia
+certo, reunião só na véspera, formato da notificação) — suite completa
+de `functions/` (417 testes) sem regressão.
+
+**Pendências de deploy**: `functions/okr/dailyScan.js` é uma Cloud
+Function NOVA — precisa de `firebase deploy --only functions:okrDailyScan`
+rodado localmente (resync do clone primeiro, ver `CLAUDE.md`) pra
+começar a rodar. `PUSH_TYPES` mudou em `functions/index.js` — mesmo
+deploy de `okrDailyScan` já cobre isso (é o mesmo arquivo `index.js`
+que registra as duas coisas), mas SE outra function for deployada
+separadamente antes dessa, os pushes de OKR ficam sem efeito até o
+deploy do `index.js` acontecer.
+
 ### painel.html v3.18 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR (Fase 1), avatares com foto, contraste Vice City, data multi-dia no Histórico
 
 Promove pra produção o lote acumulado v3.11 → v3.18 de `painel-dev.html`
