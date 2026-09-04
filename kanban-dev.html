@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.576-dev</div>
+<div class="version">v8.30.577-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7956,10 +7956,23 @@ function _flowDoneColIds(){
 function recordMove(card, toCol, atISO){
   if(!card) return;
   const at = atISO || new Date().toISOString();
+  // Achado real (2026-09-04, relato do usuário vendo o Feed de marcos:
+  // "moveu de A Fazer → A Fazer" — kkkk): TODA criação de card chama
+  // recordMove(novo, novo.col) — passando a PRÓPRIA coluna do card recém-
+  // montado como destino, com `novo.col` já setado no literal do objeto
+  // ANTES desta chamada. `card._lastFlowCol` também não existe ainda
+  // (card acabou de nascer), então o fallback `card.col||null` de baixo
+  // pegava esse MESMO valor já mutado — from acabava igual a toCol pra
+  // TODO card novo, sempre, silenciosamente, desde que essa função existe.
+  // `isNewFlow` (card.flow não existia ANTES desta chamada — únio jeito
+  // confiável de saber "isto é criação de verdade", já que card.col não
+  // é confiável nesse momento) força from=null (→ '—', o sentinel de
+  // criação) em vez de adivinhar errado a partir de card.col.
+  const isNewFlow = !card.flow;
   if(!card.flow) card.flow = { enteredAt:{}, log:[] };
   if(!card.flow.enteredAt) card.flow.enteredAt = {};
   if(!card.flow.log) card.flow.log = [];
-  const from = card._lastFlowCol!=null ? card._lastFlowCol : (card.col||null);
+  const from = isNewFlow ? null : (card._lastFlowCol!=null ? card._lastFlowCol : (card.col||null));
   if(from === toCol && card.flow.enteredAt[toCol]) { card._lastFlowCol = toCol; return; }
   card.flow.enteredAt[toCol] = at;
   card.flow.log.push({ from: from||'—', to: toCol, at });
@@ -27167,7 +27180,14 @@ const AUTO_ACTIONS = [
     // da coluna escolhida na hora de configurar; se essa coluna for
     // excluída depois, a automação continuava mandando o card pra um id
     // órfão em silêncio, toda vez que disparasse.
-    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
+    // Achado real (2026-09-04, investigando o bug "moveu de A Fazer → A
+    // Fazer" no Feed de marcos): esta ação mudava card.col DIRETO, sem
+    // passar por recordMove() — card.flow (a fonte da Timeline/Feed de
+    // marcos/relatório de tempo por coluna) nunca sabia que o card tinha
+    // se mexido. O movimento acontecia de verdade (visível no board),
+    // só ficava invisível pra tudo que lê flow.log — sem erro, sem aviso,
+    // simplesmente não existia pra essas telas.
+    run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordMove(card,rule.actionVal); recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',

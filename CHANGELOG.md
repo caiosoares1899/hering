@@ -2727,6 +2727,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.577-dev — 2026-09-04 — fix: cards novos apareciam como "moveu de X → X" no Feed de marcos
+
+Reportado direto pelo usuário testando o próprio Feed de marcos (lançado
+nesta mesma semana): print mostrando "Banner – Jaquetas e Blusões...
+moveu de A Fazer → A Fazer", seguido de "como é isso foi movido dentro
+da propria coluna? kkkk".
+
+**Causa raiz**: TODA criação de card chama `recordMove(novo, novo.col)`
+— `novo.col` já vem setado no literal do objeto ANTES dessa chamada, e
+`card._lastFlowCol` também não existe ainda (card acabou de nascer). O
+cálculo antigo de `from` (`card._lastFlowCol!=null ? ... :
+(card.col||null)`) caía no fallback `card.col` — que já tinha sido
+mutado pro MESMO valor do destino — fazendo `from===toCol` sempre, pra
+TODO card novo, desde que essa função existe. Como
+`card.flow.enteredAt[toCol]` também não existia ainda, o guard de "sem
+transição real" não disparava, e o código empurrava `{from:toCol,
+to:toCol}` no log em vez do esperado `{from:'—', to:toCol}` (sentinel de
+criação). **Bug antigo, sempre existiu** — só ficou visível agora porque
+o Feed de marcos é a primeira tela que expõe `flow.log` direto pra um
+humano.
+
+**Fix**: `isNewFlow = !card.flow` (checado ANTES de inicializar
+`card.flow` — único jeito confiável de saber "isto é criação de
+verdade", já que `card.col` não é confiável nesse momento específico)
+força `from=null` (→ `'—'`) em vez de adivinhar a partir de `card.col`.
+
+**Achado irmão, corrigido no mesmo commit**: a ação de Automação "Mover
+card para coluna" mudava `card.col` DIRETO, sem NUNCA chamar
+`recordMove()` — movimentos feitos por essa automação eram invisíveis
+pro Timeline/Feed de marcos/relatório de tempo por coluna (sem erro, sem
+aviso). Agora chama `recordMove(card, rule.actionVal)` antes de
+`recordHistory()`, igual todo outro caminho de mover card já faz.
+
+Testado com Playwright: reproduzido o padrão exato de criação de card
+(objeto literal com `.col` já setado + `recordMove(novo, novo.col)`) —
+`flow.log[0]` agora sai `{from:'—', to:'backlog'}`, e o Feed de marcos
+não mostra mais isso como "movido" (array vazio pro card recém-criado,
+sem createdAt setado no teste). Movimento real subsequente continua
+gerando entrada correta. Automação "Mover card para coluna" testada
+isoladamente — `card.flow` agora existe e tem a entrada certa depois de
+rodar. Reconferidos TODOS os testes anteriores desta sessão (Timeline,
+Feed, Histórico, desimpede sozinho) — nenhuma regressão. `CODE_MAP.md`
+atualizado. Checks de rotina: `node --check` OK, balanço de
+chaves/parênteses igual ao baseline da sessão (braces -1, parens +1).
+
 ### v8.30.576-dev — 2026-09-04 — Regra geral: card concluído desimpede sozinho
 
 Pedido direto do usuário: "podemos criar uma regra geral, para todos os

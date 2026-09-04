@@ -760,6 +760,35 @@ detalhe dos 4 call sites.
   lógica equivalente — confirmado grepando `blocker` nesse arquivo (zero
   ocorrências). Uma movimentação feita pelo Agente Ágil pra uma coluna de
   Concluído não desimpede o card sozinha ainda.
+- **`recordMove()` — bug real do `from` em card recém-criado** (achado
+  2026-09-04, relato do usuário vendo o próprio Feed de marcos que saiu
+  nesta mesma sessão: "como é isso foi movido dentro da propria coluna?
+  kkkk", print mostrando "moveu de A Fazer → A Fazer"). Causa raiz: TODA
+  criação de card chama `recordMove(novo, novo.col)` — `novo.col` já
+  vem setado no literal do objeto, ANTES dessa chamada, e `card.
+  _lastFlowCol` também não existe ainda (card acabou de nascer) — o
+  fallback antigo `card._lastFlowCol!=null ? ... : (card.col||null)`
+  pegava esse MESMO valor já mutado como "coluna de origem", fazendo
+  `from===toCol` sempre, pra TODO card novo, desde que a função existe.
+  Como `card.flow.enteredAt[toCol]` também não existia ainda (flow
+  acabou de ser inicializado 2 linhas acima), o guard de "sem transição
+  real" (`if(from===toCol && enteredAt[toCol]) return;`) não disparava,
+  e o código caía na criação do log — empurrando `{from:toCol, to:toCol}`
+  em vez do esperado `{from:'—', to:toCol}` (o sentinel de criação).
+  Bug **antigo, sempre existiu** — só ficou visível agora porque o Feed
+  de marcos (lançado nesta mesma semana) é a primeira tela que expõe
+  `flow.log` direto pra um humano; ninguém tinha como notar antes.
+  **Fix**: `isNewFlow = !card.flow` (checado ANTES de inicializar
+  `card.flow` — único jeito confiável de saber "isto é criação de
+  verdade", já que `card.col` não é confiável nesse momento específico)
+  força `from=null` (→ `'—'`) em vez de adivinhar a partir de `card.col`.
+  **Achado irmão no mesmo mergulho**: a ação de Automação "Mover card
+  para coluna" (`AUTO_ACTIONS`, `key:'move_card'`, ~L27178) mudava
+  `card.col` DIRETO, sem NUNCA chamar `recordMove()` — movimentos feitos
+  por essa automação eram invisíveis pro Timeline/Feed/relatório de
+  tempo por coluna (sem erro, sem aviso, o card simplesmente não
+  aparecia nessas telas). Corrigido no mesmo commit — a ação agora chama
+  `recordMove(card, rule.actionVal)` antes de `recordHistory()`.
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de
