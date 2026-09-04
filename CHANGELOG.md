@@ -2727,6 +2727,66 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.582-dev — 2026-09-04 — /monitorarbugs (2ª rodada): coluna "concluído" hardcoded em 9 funções
+
+Continuação da rodada anterior (pedido genérico "roda outro
+/monitorarbugs") — a Timeline (área alterada mais recentemente) já tinha
+sido varrida 2x sem código novo desde então, então a escolha foi pra
+"Relatório de Tempo/Cycle Time/Throughput/CFD" (nunca auditada como área
+própria, e maior consumidora direta do `flow.doneAt` corrigido na rodada
+anterior). Achado muito maior do que o esperado: o padrão `c.col==='done'`
+(string fixa, ignora `flowConfig.doneCols` — a config manual do PO pra
+coluna(s) de conclusão) estava reimplementado em **9 funções diferentes**,
+espalhadas desde antes de `_isColDone()` existir como helper canônico.
+
+Squad que já recriou a coluna "Concluído" (`addColumn()` gera id
+`col_`+timestamp, nunca `'done'` literal) ou tem 2+ colunas de fim
+configuradas (ex.: "Concluído"+"Cancelado") tinha, silenciosamente:
+
+- **Throughput sempre 0/errado** no widget do toolbar (`updateMetrics()`)
+  e em "📊 Dados do Board" → Visão Geral (`renderBoardDataGrid()`).
+- **"Cards ativos"/"Sem responsável"/"Prazo vencido" inflados** — cards
+  já concluídos contavam como ainda ativos (`c.col!=='done'` era `true`
+  pra eles).
+- **"✅ Intake concluído" sempre 0** (mesma função).
+- **Snapshot histórico diário** (`maybeSnapshot()`, grava permanente em
+  `kanban/squads/{squad}/snapshots/{date}`) com `done`/`sp_done` errados
+  — sem correção retroativa possível, só os snapshots de hoje em diante
+  saem certos.
+- **"💡 Insights" (Dados do Board)** contando cards concluídos como
+  ativos (`renderBoardDataInsights()`).
+- **Notificação "card concluído" nunca disparava** (virava sempre "card
+  movido") em 4 caminhos que reimplementavam a MESMA heurística local
+  (regex de nome, sem checar `flowConfig.doneCols`) cada um por conta
+  própria: modal-save, autosave (`scheduleAutoSave()`), arrastar
+  (`handleDrop()`) e menu de contexto (`ctxMove()`).
+- **Agente Ágil recebia contagem "Concluídos" errada** no próprio prompt
+  de sistema (`agCtx()`), e a omissão de cards concluídos há +7 dias do
+  snapshot enviado à IA nunca funcionava — 2º bug na mesma função:
+  `c.doneAt` (campo raso) nunca é escrito em lugar nenhum do app, o
+  campo real é `card.flow.doneAt` (ver `recordMove()`).
+- **"✅ Resolvido: X" (avisos rápidos de "🌅 Meu Dia")** — mesmo bug do
+  campo raso `c.doneAt`, nunca disparava pra card NENHUM, em squad
+  nenhuma, desde que a feature existe.
+
+Fix: todos os 9 pontos passam a usar `_isColDone()` (o helper canônico já
+usado corretamente em `_marcosNoPeriodo()`/`_checkSupercardAutoComplete()`/
+Timeline) em vez de comparar contra a string `'done'` ou reimplementar a
+heurística de nome na mão; os 2 pontos com o bug do campo raso passam a
+ler `card.flow?.doneAt`.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline da sessão (braces -1, parens +1). Testado com Playwright,
+squad fictícia com coluna de conclusão de id customizado (`col_999`) +
+2ª coluna de fim (`col_888`, "Cancelado"): Throughput/Cards ativos/
+Intake concluído corretos em `updateMetrics()`/`renderBoardDataGrid()`,
+snapshot correto (`fbSet` interceptado), `agCtx()` com contagem e
+omissão corretas, "✅ Resolvido" disparando pro card certo, `ctxMove()`
+chamando `notifDone()` (não `notifMoved()`) pra coluna de id customizado
+— e regressão zero confirmada pro caso padrão (id `'done'` literal,
+config automática, sem `flowConfig.doneCols`), 0 erros de console em
+todos os testes.
+
 ### v8.30.581-dev — 2026-09-04 — /monitorarbugs na Timeline: 3 achados reais
 
 Revisão dedicada pedida pelo usuário ("roda /monitorarbugs nessa parte da

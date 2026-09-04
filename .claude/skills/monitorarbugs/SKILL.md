@@ -1048,6 +1048,82 @@ Mesma disciplina de sempre neste repo:
   handler de baixo nível — o handler reaproveitado tem que ser o lugar
   onde o guard mora, não cada chamador.
 
+- **2026-09-04, área nomeada explicitamente — "Timeline"**: usuário pediu
+  revisão dedicada logo depois de promover pra prod o lote de UI/UX da
+  Timeline (buckets progressivos, ação no lugar, marcos de contexto,
+  Concluído recente, 📜 Histórico, 📰 Feed de marcos) — 1ª vez que a área
+  inteira é varrida como um todo, não só bugs pontuais achados durante a
+  própria implementação. 3 achados reais:
+  1. Técnica 2 (comparar contra padrão já resolvido na MESMA função):
+     `recordMove()`/`backfillFlow()` gravavam `card.flow.doneAt`
+     comparando só contra `_flowDoneColId()` (a 1ª coluna de fim
+     configurada) — squad com 2+ colunas de fim
+     (`flowConfig.doneCols`, config real via ⚙ Config → Fluxo) perdia
+     `doneAt` pro card terminado na 2ª coluna, mesmo `_isColDone()` (2
+     linhas abaixo, na MESMA função, pro auto-desimpedimento) já
+     considerando concluído — e por tabela sumia do bucket "✅ Concluído
+     recente" (e de tudo que lê `flow.doneAt`: cycle time, throughput,
+     CFD, "🧹 Cards antigos"). Fix: as 2 funções passam a usar
+     `_isColDone()`.
+  2. Feed de marcos (`_marcosNoPeriodo()`) perdia o marco 🎚️ quando a
+     prioridade era REMOVIDA (dropdown "— sem prioridade —") —
+     `_histDiff()` gera "removeu prioridade" nesse caso (diferente de
+     "alterou"/"definiu"), regex só cobria os 2 primeiros.
+  3. `<details class="timeline-collapse">` de "Sem prazo definido"/
+     "Concluído recente" nunca guardava `open` entre renders — como a
+     própria "ação no lugar" (`_timelineSetPrazoInline()`/
+     `_timelineAdiarCard()`) termina chamando `renderBoard()`, usá-la
+     DENTRO de "Sem prazo definido" fechava a seção na hora — o oposto
+     do que a feature promete. Fix: `_timelineCollapseOpen`/
+     `_timelineSetCollapseOpen()` (mesmo padrão adotado depois no
+     painel, `_painelTimelineOpen`).
+  Testado com Playwright: os 3 confirmados com dados reais (2 colunas de
+  fim configuradas, histórico "removeu prioridade", toggle manual
+  sobrevivendo a um re-render simulado) — sem regressão no caso padrão
+  (dev v8.30.581-dev, PR #723). Usuário validou com um script de console
+  próprio (rodado fora do fluxo desta skill) antes de pedir a rodada
+  seguinte.
+
+- **2026-09-04, pedido genérico — "roda outro /monitorarbugs" (2ª rodada
+  seguida no mesmo dia)**: prioridade 1 (Timeline) já tinha sido coberta
+  2x sem código novo desde então — baixo retorno numa 3ª passada
+  imediata. Escolhida prioridade 2: "Relatório de Tempo/Cycle Time/
+  Throughput/CFD" (nunca auditada como área própria, e maior consumidora
+  direta do `flow.doneAt` corrigido na rodada anterior — continuidade
+  natural). Achado MUITO maior do que o esperado, técnica 1 aplicada em
+  escala: mapeado todo `col==='done'`/`col!=='done'`/`doneCol` do
+  arquivo (`grep -na "'done'"`) — o padrão de comparar contra a string
+  fixa `'done'` (ignorando `flowConfig.doneCols`, a config manual do PO)
+  estava reimplementado em **9 funções diferentes**, de antes de
+  `_isColDone()` existir como helper canônico:
+  `updateMetrics()`/`renderBoardDataGrid()`/`renderBoardDataInsights()`
+  (Throughput/Cards ativos/Intake concluído — toolbar + 📊 Dados do
+  Board), `maybeSnapshot()` (snapshot histórico diário, sem correção
+  retroativa possível), `agCtx()` (contagem "Concluídos" no prompt de
+  sistema do Agente Ágil), e 4 caminhos que reimplementavam sozinhos a
+  MESMA heurística local de "achar a coluna de fim" pra decidir
+  `notifDone()` vs. `notifMoved()` (modal-save/`scheduleAutoSave()`/
+  `handleDrop()`/`ctxMove()`) — igual ao padrão já visto nesta skill
+  (2026-08-26/27/29) de "mutação com N caminhos, cada um reimplementando
+  a mesma checagem por conta própria". **2º bug achado de carona**, técnica
+  4 (checagem de campo errado): `agCtx()` e `computeAvisosQuadro()` (aviso
+  "✅ Resolvido: X" de 🌅 Meu Dia) liam `c.doneAt` (campo RASO) — nunca
+  escrito em lugar nenhum do app, o campo real é `card.flow.doneAt` — o
+  aviso "Resolvido" nunca tinha disparado, pra card nenhum, desde que a
+  feature existe. Fix: todos os 9 pontos passam a usar `_isColDone()`;
+  os 2 com o campo errado passam a ler `card.flow?.doneAt`. Testado com
+  Playwright, squad fictícia com coluna de conclusão de ID CUSTOMIZADO
+  (`col_999` — o caso real de qualquer squad que já recriou a coluna via
+  `addColumn()`, que gera `col_`+timestamp, nunca `'done'` literal) + 2ª
+  coluna de fim (`col_888`): todos os 9 pontos corretos, `ctxMove()`
+  confirmado chamando `notifDone()` (não `notifMoved()`) pro id
+  customizado — regressão zero pro caso padrão (dev v8.30.582-dev).
+  **Lição**: uma investigação que começa com "quem consome o dado que eu
+  acabei de corrigir" (aqui: `flow.doneAt`) pode acabar achando um
+  problema bem mais amplo do que a área original — vale seguir o rastro
+  de TODO grep de um valor/padrão relacionado (`'done'` como string, não
+  só `flow.doneAt`), não só os call sites óbvios da função recém-mexida.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

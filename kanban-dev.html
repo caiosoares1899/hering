@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.581-dev</div>
+<div class="version">v8.30.582-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11761,7 +11761,11 @@ function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
   const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
   const bl=cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length;
-  const done=cards.filter(c=>c.col==='done'&&!c.archived).length;
+  // Achado real (/monitorarbugs 2026-09-04): comparava contra a string fixa
+  // 'done' — squad que já recriou a coluna de conclusão (addColumn() gera
+  // id 'col_'+timestamp, nunca 'done') ou tem 2+ colunas de fim
+  // (flowConfig.doneCols) ficava com Throughput sempre 0/errado.
+  const done=cards.filter(c=>_isColDone(c.col)&&!c.archived).length;
   const wipLimit=parseInt(agilCfg.wip||3);
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
   g.innerHTML=`<div class="met"><div class="met-lbl">WIP</div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">limite ${wipLimit}</div></div>
@@ -11783,10 +11787,12 @@ function renderBoardDataGrid(){
   const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
   const wip=activeCards.filter(c=>c.col==='progress').length;
   const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
-  const done=activeCards.filter(c=>c.col==='done').length;
+  // Mesmo achado do updateMetrics() acima — _isColDone() em vez da string
+  // fixa 'done' (achado real, /monitorarbugs 2026-09-04).
+  const done=activeCards.filter(c=>_isColDone(c.col)).length;
   const wipLimit=parseInt(agilCfg.wip||3);
   const wipColor=wip>wipLimit?'var(--danger)':'var(--txt)';
-  const naoConcluidos=activeCards.filter(c=>c.col!=='done');
+  const naoConcluidos=activeCards.filter(c=>!_isColDone(c.col));
   const totalAtivos=naoConcluidos.length;
   // Supercards são só a junção dos filhos (não têm "vida própria" como
   // demanda independente — pedido direto), então "Cards ativos" continua
@@ -11811,7 +11817,7 @@ function renderBoardDataGrid(){
   const intakeAprovados=intakeVals.filter(v=>v.status==='done').length;
   const intakeDescartados=intakeVals.filter(v=>v.status==='discarded').length;
   const intakePendentesN=intakeVals.filter(v=>v.status==='pending').length;
-  const intakeConcluidos=activeCards.filter(c=>c.intakeId&&c.col==='done').length;
+  const intakeConcluidos=activeCards.filter(c=>c.intakeId&&_isColDone(c.col)).length;
   g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
 }
 
@@ -11909,17 +11915,22 @@ function maybeSnapshot(){
   const key='snapshot_'+ACTIVE_SQUAD+'_'+today;
   const lastSnap=safeLS.getItem(key);
   if(lastSnap) return; // já fez snapshot hoje
+  // done/sp_done: _isColDone() em vez da string fixa 'done' (achado real,
+  // /monitorarbugs 2026-09-04, mesma classe do updateMetrics()/
+  // renderBoardDataGrid() acima) — snapshot é gravado PERMANENTE no
+  // Firebase 1x/dia, então snapshots já gravados com o bug antigo não são
+  // corrigidos retroativamente, só os de hoje em diante.
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
     total:cards.filter(c=>!c.archived).length,
     wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
-    done:cards.filter(c=>c.col==='done'&&!c.archived).length,
+    done:cards.filter(c=>_isColDone(c.col)&&!c.archived).length,
     blockers:cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
       acc[col.id]=cards.filter(c=>c.col===col.id&&!c.archived).length;
       return acc;
     },{}),
-    sp_done:cards.filter(c=>c.col==='done'&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0),
+    sp_done:cards.filter(c=>_isColDone(c.col)&&!c.archived).reduce((s,c)=>s+parseInt(c.sp||0),0),
   };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/snapshots/'+today, snapshot);
   safeLS.setItem(key,'1');
@@ -12105,9 +12116,13 @@ function scheduleAutoSave(){
     _reagirSeAgenteAgilAtribuido(c, _prevOwner, _prevParticipants);
     if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
     else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
-    const _doneCol = columns.find(cc=>cc.id==='done'||cc.name?.toLowerCase().includes('conclu')||cc.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
     if(_prevCol!==c.col){
-      if(c.col===_doneCol?.id) notifDone(c);
+      // Achado real (/monitorarbugs 2026-09-04): heurística local própria
+      // (regex de nome, sem checar flowConfig.doneCols) reimplementada em
+      // 4 lugares do arquivo (aqui, scheduleAutoSave/handleDrop/ctxMove) —
+      // trocada por _isColDone(), o helper canônico que já respeita a
+      // config do PO e qualquer nº de colunas de fim.
+      if(_isColDone(c.col)) notifDone(c);
       else notifMoved(c, columns.find(cc=>cc.id===c.col)?.name);
       // Achado real 2026-08-26 (skill /monitorarbugs): trocar a coluna pelo
       // dropdown do modal nunca disparava o trigger "Card movido para
@@ -16021,9 +16036,13 @@ function computeAvisosQuadro(){
       else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
       else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
     }
-    if(_isColDone(c.col) && c.doneAt){
-      const dd=new Date(c.doneAt); const ageH=(Date.now()-dd.getTime())/3600000;
-      if(ageH<=48) out.push({tipo:'quadro', urgent:false, text:`✅ Resolvido: "${titulo}"`, cardId:c.id, sub:'concluído recentemente', ts:c.doneAt});
+    // Achado real (/monitorarbugs 2026-09-04): lia c.doneAt (raso), campo
+    // que nunca é escrito em lugar nenhum do app — o real é
+    // card.flow.doneAt (ver recordMove()). "✅ Resolvido" nunca disparava
+    // pra card nenhum, desde sempre.
+    if(_isColDone(c.col) && c.flow?.doneAt){
+      const dd=new Date(c.flow.doneAt); const ageH=(Date.now()-dd.getTime())/3600000;
+      if(ageH<=48) out.push({tipo:'quadro', urgent:false, text:`✅ Resolvido: "${titulo}"`, cardId:c.id, sub:'concluído recentemente', ts:c.flow.doneAt});
     }
   });
   return out.sort((a,b)=> (b.urgent?1:0)-(a.urgent?1:0) || String(b.ts).localeCompare(String(a.ts)));
@@ -17971,7 +17990,9 @@ function _renderInsightsFilterBar(){
 function renderBoardDataInsights(){
   const body=document.getElementById('boarddata-insights-body'); if(!body) return;
   _renderInsightsFilterBar();
-  let activeCards=cards.filter(c=>!c.archived && !c.agenteHotline && c.col!=='done' && !_bdHiddenCols.has(c.col));
+  // c.col!=='done' → !_isColDone(c.col): mesmo achado do updateMetrics()
+  // (/monitorarbugs 2026-09-04) — string fixa ignorava flowConfig.doneCols.
+  let activeCards=cards.filter(c=>!c.archived && !c.agenteHotline && !_isColDone(c.col) && !_bdHiddenCols.has(c.col));
   if(_insightsPeriodDays>0){
     const cutoffMs=_insightsPeriodDays*86400000;
     activeCards=activeCards.filter(c=>c.createdAt && (Date.now()-new Date(c.createdAt+'T00:00:00').getTime())<=cutoffMs);
@@ -22014,13 +22035,18 @@ function executeTool(name,input){
 
 function agCtx(){
   const cutoff = Date.now() - 7*24*60*60*1000; // 7 dias atrás
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))||{id:'done'};
+  // Achado real (/monitorarbugs 2026-09-04), 2 bugs na mesma linha:
+  // (1) heurística local de "coluna de fim" ignorava flowConfig.doneCols,
+  // mesma classe corrigida em updateMetrics()/scheduleAutoSave()/etc.;
+  // (2) `c.doneAt` (raso) nunca é escrito em lugar nenhum do app — o campo
+  // real é `card.flow.doneAt` (ver recordMove()) — então a omissão de
+  // cards concluídos há +7 dias do snapshot da IA NUNCA disparava, pra
+  // squad nenhuma. _isColDone()+card.flow?.doneAt corrigem os dois juntos.
   const activeSnap = cards.filter(c=>!c.archived).filter(c=>{
-    // Exclui do snapshot cards em "done" sem timestamp de conclusão recente
-    if(c.col === doneCol.id && c.doneAt && new Date(c.doneAt).getTime() < cutoff) return false;
+    if(_isColDone(c.col) && c.flow?.doneAt && new Date(c.flow.doneAt).getTime() < cutoff) return false;
     return true;
   });
-  const oldDoneCount = cards.filter(c=>!c.archived && c.col===doneCol.id && c.doneAt && new Date(c.doneAt).getTime()<cutoff).length;
+  const oldDoneCount = cards.filter(c=>!c.archived && _isColDone(c.col) && c.flow?.doneAt && new Date(c.flow.doneAt).getTime()<cutoff).length;
   const snap=activeSnap.map(c=>{
     const cp=clProg(c.checklist);
     return `[ID:${c.id}][COL:${c.col}] "${c.title}" owner:${c.owner||'?'}${c.demandante?' demandante:'+c.demandante:''}${c.participants?.length?' participantes:'+c.participants.join(','): ''} prazo:${c.due||'s/prazo'}${cp?' checklist:'+cp.d+'/'+cp.t:''} tag:${c.tag}${c.po?' PO:"'+c.po.substring(0,60)+'"':''}${c.riscos?.length?' riscos:'+c.riscos.length:''}`;
@@ -22072,7 +22098,7 @@ BOARD (${new Date().toLocaleDateString('pt-BR')}):
 ${snap}${doneNote}
 
 Colunas válidas para mover_card: ${columns.map(col=>col.id+' ('+col.name+')').join(', ')}
-WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length} | Concluídos:${cards.filter(c=>c.col==='done'&&!c.archived).length}
+WIP:${cards.filter(c=>c.col==='progress'&&!c.archived).length}/${agilCfg.wip||3} | Bloqueios:${cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length} | Concluídos:${cards.filter(c=>_isColDone(c.col)&&!c.archived).length}
 Sprint:${agilCfg.sprintNum||'?'} | Capacidade:${agilCfg.capacity||'??'}% | Objetivo:${agilCfg.goal||'não definido'}
 Membros:${members.map(m=>m.init+':'+m.name).join(', ')||'nenhum inscrito ainda'}
 Usuários do Firebase disponíveis para atribuição (use APENAS estas iniciais): ${members.map(m=>m.init).join(', ')||'nenhum'}
@@ -24976,10 +25002,11 @@ saveCard = function(){
     runAutoRules('unblocked', card.id);
   } else if(!prevBlocker && card.blocker) runAutoRules('blocked', card.id);
 
-  // Movido para feito (ou pra qualquer outra coluna)
-  const doneCol = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))||columns[columns.length-1];
+  // Movido para feito (ou pra qualquer outra coluna) — _isColDone() em vez
+  // da heurística local (achado real, /monitorarbugs 2026-09-04, mesma
+  // classe corrigida em updateMetrics()/agCtx()/handleDrop()/ctxMove()).
   if(prevCol!==card.col){
-    if(card.col===doneCol?.id) notifDone(card);
+    if(_isColDone(card.col)) notifDone(card);
     else notifMoved(card, columns.find(c=>c.id===card.col)?.name);
     // Achado real 2026-08-26 (skill /monitorarbugs): mesmo gap do 'assigned'
     // — trocar a coluna pelo dropdown do modal e clicar Salvar nunca
@@ -26677,10 +26704,12 @@ function handleDrop(e, colId){
   fbSaveCard(card)
     .then(()=>{
       card._savePending = false;
-      // Notificações só depois de confirmado pelo Firebase
-      const _doneColId = columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
+      // Notificações só depois de confirmado pelo Firebase — _isColDone()
+      // em vez da heurística local (achado real, /monitorarbugs
+      // 2026-09-04, mesma classe corrigida em updateMetrics()/agCtx()/
+      // scheduleAutoSave()/ctxMove()).
       if(prevColDrop!==colId){
-        if(colId===_doneColId) notifDone(card);
+        if(_isColDone(colId)) notifDone(card);
         else notifMoved(card, columns.find(c=>c.id===colId)?.name);
       }
       if(prevBlockerDrop && !card.blocker) notifUnblocked(card);
@@ -28161,10 +28190,11 @@ function ctxMove(colId){
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
   renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
-  // Notificações
-  const _doneColId=columns.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu')||c.name?.toLowerCase().includes('feito'))?.id||'done';
+  // Notificações — _isColDone() em vez da heurística local (achado real,
+  // /monitorarbugs 2026-09-04, mesma classe corrigida em updateMetrics()/
+  // agCtx()/scheduleAutoSave()/handleDrop()).
   if(ant!==colId){
-    if(colId===_doneColId) notifDone(card);
+    if(_isColDone(colId)) notifDone(card);
     else notifMoved(card, colName);
   }
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
