@@ -1034,8 +1034,8 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
 ### Aba "🛤️ Timeline" (criada 2026-09-04, promovida pra prod v3.09 · painel;
-revisão de UI/UX 2026-09-04 só em painel-dev.html v3.13-dev por enquanto
-— NÃO promovida ainda)
+revisão de UI/UX + visual "glass" 2026-09-04 só em painel-dev.html
+v3.14-dev por enquanto — NÃO promovida ainda)
 Timeline agregada cross-squad, versão do painel da Timeline que já existe
 em `kanban.html` (ver seção correspondente no `CODE_MAP.md` de lá) —
 mesmos buckets progressivos, mas somando cards de TODAS as squads visíveis
@@ -1084,6 +1084,27 @@ forma de expor... talvez um botao que colapse logo em cima".
   tudo" dentro de `#pt-stats` (rótulo dinâmico: oferece expandir se menos
   da metade dos buckets estiver aberta, senão oferece recolher); seta
   todas as chaves de `_painelTimelineOpen` pro mesmo valor e re-renderiza.
+
+**Visual "glass" portado do kanban.html (2026-09-04, painel-dev.html
+v3.14-dev)** — pedido direto, comparando prints: "quero esse layout
+bonito de glass no painel tb" (referência: `.meudia-row`/`tagsHtml()` da
+Timeline de `kanban-dev.html`). `_painelTimelineRow()` reescrita —
+trocou `.panel-card`/`.pc-chip` (chips cinza empilhados, mesmo visual de
+Bloqueios/OKR/Risco) por classes novas e exclusivas da Timeline:
+`.pt-row`/`.pt-row-title`/`.pt-row-meta`/`.pt-tag`/`.pt-avatar` (perto
+de `.pt-bucket`, CSS) — prefixo `pt-` pra nunca colidir com
+`.panel-card`/`.pc-chip`, que continuam do jeito de sempre nas outras
+abas. Avatar com iniciais (`_painelOwnerAvatarHtml()`), título+prioridade
++impedimento numa linha (emoji pequeno, não mais chip), meta compacta
+"squad · coluna · responsável · prazo" numa linha só, e tags com cor de
+verdade — `_ptTagsHtml()`/`_ptCardTags()`/`PT_PALETTE`/`_ptHexA()`, mesmo
+padrão de paleta+`.hex` customizado que `tagHtml()`/`getPal()`/`PALETTE`
+já usam no board, só que a definição da tag vem de
+`squadData[sqId].tags` (por squad) em vez de um array global `tags`.
+`secao()` também trocou o container de `.grid-2` (2 colunas) pra lista de
+1 coluna, mais compacta. Achado incidental: `c.title` estava sendo
+injetado sem `esc()` (única string de card não escapada nessa função) —
+corrigido junto.
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a

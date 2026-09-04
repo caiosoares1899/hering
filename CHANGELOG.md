@@ -12343,6 +12343,41 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.14 · painel-dev — 2026-09-04 · Timeline: visual "glass" portado do kanban.html
+
+Pedido direto do usuário, comparando um print da Timeline no painel
+(v3.13-dev) com um print da Timeline do board individual (`kanban.html`):
+"quero esse layout bonito de glass no painel tb".
+
+Os cards trocaram de `.panel-card`/`.pc-chip` (mesmo visual de
+Bloqueios/OKR/Risco — vários chips cinza empilhados) pro visual da
+Timeline do board (`.meudia-row`/`tagsHtml()`), portado com classes
+próprias (`.pt-row`/`.pt-row-title`/`.pt-row-meta`/`.pt-tag`/`.pt-avatar`
+— prefixo `pt-` pra não colidir com `.panel-card`/`.pc-chip`, que
+continuam intocados nas outras abas):
+
+- **Avatar circular com iniciais** do responsável, à esquerda da linha.
+- **Título + prioridade + impedimento** numa linha só (emoji pequeno ao
+  lado do título, não mais um chip grande "🚧 Impedido").
+- **Linha de meta compacta**: squad · coluna · responsável · prazo/atraso,
+  tudo junto separado por "·", em vez de vários chips separados.
+- **Tags do card com a cor de verdade** (mesma paleta de 6 cores +
+  suporte a `.hex` customizado que `tagHtml()` já usa no board — antes a
+  Timeline do painel não mostrava tag nenhuma).
+- Lista passou de grid 2 colunas pra lista de 1 coluna (`.pt-row`, como
+  o board) — mais compacta, lê mais rápido pra baixo.
+- Corrigido de passagem: `c.title` estava sendo injetado sem `esc()` (a
+  única string de card não escapada nessa função) — título de card é
+  escrito por qualquer pessoa autenticada, então HTML/script num título
+  seria executado ao renderizar a Timeline. Sem exploração conhecida,
+  mas corrigido junto por ser a mesma função sendo reescrita.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright: linha renderiza avatar/título/meta/tags corretos com dados
+de teste (incluindo tag com `.pi` e prioridade/impedimento juntos no
+título) — 0 erros de console.
+
 ### painel-dev.html v3.13 · painel-dev — 2026-09-04 · Timeline: revisão de UI/UX (filtro local + buckets colapsáveis)
 
 Pedido direto do usuário testando a v3.09 (prod): "a timeline no painel
