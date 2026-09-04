@@ -1268,6 +1268,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div class="ptabs">
     <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')"><span class="ptab-icon">👁</span><span class="ptab-lbl">Visão</span></button>
     <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
+    <button class="ptab"     id="ptab-timeline" onclick="swPtab('timeline')"><span class="ptab-icon">🛤️</span><span class="ptab-lbl">Timeline</span></button>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
@@ -1460,6 +1461,23 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
 
   </div><!-- /ppane-fluxo -->
+
+  <!-- ═══ ABA: TIMELINE ═══ -->
+  <!-- Timeline geral, agregando todas as squads — pedido direto do usuário:
+       "evoluir esse bicho... fazer essa timeline geral la no painel!
+       agrupando as squads e criando filtros (lembra daquele filtro por
+       gerência tb)". Respeita o MESMO activeFilter/squadVisible() das
+       outras abas (Fluxo/Dados/etc. já seguem esse padrão — o filtro de
+       squad/gerência mora só na aba Visão, as outras só o RESPEITAM, não
+       duplicam a barra) — trocar o filtro na Visão já reflete aqui. -->
+  <div class="ptab-pane" id="ppane-timeline">
+    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+      <span>🛤️ Timeline geral (todas as squads)</span>
+      <span style="font-size:10px;color:var(--txt3);font-weight:400;">Filtro de squad/gerência: aba 👁 Visão</span>
+    </div>
+    <div id="pt-stats" style="display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--txt2);margin-bottom:16px;padding:10px 14px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;"></div>
+    <div id="pt-buckets"></div>
+  </div><!-- /ppane-timeline -->
 
   <!-- ═══ ABA: PESSOAS ═══ -->
   <div class="ptab-pane" id="ppane-pessoas">
@@ -2382,7 +2400,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.10 · painel-dev</div>
+<div class="version">v3.11 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4864,6 +4882,7 @@ function swPtab(tab){
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
+  if(tab==='timeline'){ renderPainelTimeline(); }
   if(tab==='agentes'){ _fillAgentesLogSquadFilter(); }
   // salvar aba ativa
   try{ localStorage.setItem('_painel_tab', tab); } catch(e){}
@@ -8237,6 +8256,7 @@ function renderAll(){
   renderComparison();
   renderBlockers();
   renderColDist();
+  renderPainelTimeline();
   renderOKR();
   renderRiscos();
   renderPainelInsights();
@@ -8818,6 +8838,110 @@ function renderBlockers(){
       ${c.due?`<div class="pc-card-footer"><span>📅 ${new Date(c.due+'T00:00:00').toLocaleDateString('pt-BR')}</span></div>`:''}
     </div>`;
   }).join('');
+}
+
+// ── TIMELINE GERAL (TODAS AS SQUADS) ──────────────────────────────
+// Agregação cross-squad da Timeline já existente em kanban-dev.html
+// (buckets progressivos: Atrasado/Hoje/Amanhã/Resto da semana/Próxima
+// semana/Depois/Sem prazo). v1, escopo deliberadamente reduzido:
+// - Reaproveita 100% o filtro de squad/gerência já global (activeFilter/
+//   squadVisible(), aba 👁 Visão) — não duplica UI de filtro aqui, só
+//   respeita o estado já existente, mesmo padrão que renderBlockers()
+//   já segue.
+// - Reaproveita squadData já carregado via polling de 60s — zero leitura
+//   nova no Firebase.
+// - Clique no card abre openPcModal() (mesmo padrão read-only + link pra
+//   editar em kanban.html que o resto do painel já usa) — sem "ação no
+//   lugar" (editar prazo inline) nem marcos de contexto/Feed de marcos
+//   do kanban-dev.html nesta v1; ambos ficam como possível evolução.
+// - "Concluído" usa a mesma simplificação c.col==='done' que o resto do
+//   painel já usa (renderSquadCards/renderColDist/etc.) — o painel nunca
+//   busca flowConfig por squad, então não introduz um 2º conceito de
+//   "done" só pra esta aba.
+function _painelTimelineFimSemana(baseDate){
+  const d=new Date(baseDate);
+  d.setDate(d.getDate()+(6-d.getDay()));
+  return _localDateStr(d);
+}
+function _painelTimelineRow(c, sq, hojeStr){
+  const d=squadData[sq.id];
+  const colName=d?.columns?.find(col=>col.id===c.col)?.name||c.col;
+  const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
+  const prioBadge=c.priority?`<span class="pc-chip pc-chip-prio">${prioMap[c.priority]||''}</span>`:'';
+  const bmode=d?.blockerMode||'col';
+  const isBlocked=bmode==='col' ? c.col==='blocker' : !!c.blocker;
+  let prazoMeta='';
+  if(c.due){
+    if(c.due<hojeStr){
+      const dias=Math.round((new Date(hojeStr+'T12:00:00')-new Date(c.due+'T12:00:00'))/86400000);
+      prazoMeta=`<span style="color:var(--danger);font-weight:700;">🔴 ${dias}d atrasado</span>`;
+    } else if(c.due!==hojeStr){
+      prazoMeta=`<span>📅 ${new Date(c.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})}</span>`;
+    }
+  }
+  return `<div class="panel-card${isBlocked?' blocker':''}" onclick="openPcModal('${sq.id}','${c.id}')">
+    <div class="pc-card-chips">
+      <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
+      <span class="pc-col-badge">${colName}</span>
+      ${c.owner?`<span class="pc-chip" style="background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.08);color:var(--txt3);">👤 ${resolveOwnerName(c.owner,sq.id)}</span>`:''}
+      ${prioBadge}
+      ${isBlocked?'<span class="pc-chip" style="background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.3);color:var(--danger);">🚧 Impedido</span>':''}
+    </div>
+    <p class="pc-card-title">${c.title}</p>
+    ${prazoMeta?`<div class="pc-card-footer">${prazoMeta}</div>`:''}
+  </div>`;
+}
+function renderPainelTimeline(){
+  const statsEl=document.getElementById('pt-stats');
+  const bucketsEl=document.getElementById('pt-buckets');
+  if(!statsEl || !bucketsEl) return;
+  const hojeDate=new Date(); hojeDate.setHours(0,0,0,0);
+  const hojeStr=_localDateStr(hojeDate);
+  const amanhaDate=new Date(hojeDate); amanhaDate.setDate(amanhaDate.getDate()+1);
+  const amanhaStr=_localDateStr(amanhaDate);
+  const fimSemanaStr=_painelTimelineFimSemana(hojeDate);
+  const fimProxSemanaDate=new Date(hojeDate); fimProxSemanaDate.setDate(fimProxSemanaDate.getDate()+(6-hojeDate.getDay())+7);
+  const fimProxSemanaStr=_localDateStr(fimProxSemanaDate);
+  let elegiveis=[];
+  SQUADS.forEach(sq=>{
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
+    if(!squadVisible(sq.id)) return;
+    (Array.isArray(d.cards)?d.cards:[])
+      .filter(c=>c && !c.archived && !c.agenteHotline && c.col!=='done' && isColVisible(sq.id,c.col))
+      .forEach(c=>elegiveis.push({...c, _squad:sq}));
+  });
+  const atrasados=elegiveis.filter(c=>c.due && c.due<hojeStr);
+  const semPrazo=elegiveis.filter(c=>!c.due);
+  const hojeGrupo=elegiveis.filter(c=>c.due===hojeStr);
+  const amanhaGrupo=elegiveis.filter(c=>c.due===amanhaStr);
+  const restoSemana=elegiveis.filter(c=>c.due && c.due>amanhaStr && c.due<=fimSemanaStr);
+  const proxSemana=elegiveis.filter(c=>c.due && c.due>fimSemanaStr && c.due<=fimProxSemanaStr);
+  const depois=elegiveis.filter(c=>c.due && c.due>fimProxSemanaStr);
+  statsEl.innerHTML=`
+    <span>📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}</span>
+    ${atrasados.length?`<span style="color:var(--danger);">🔴 <b>${atrasados.length}</b> atrasado${atrasados.length!==1?'s':''}</span>`:''}
+    ${semPrazo.length?`<span style="color:var(--txt3);">🗂 <b>${semPrazo.length}</b> sem prazo</span>`:''}
+  `;
+  const ordenaCronologico=lista=>lista.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')||(a.title||'').localeCompare(b.title||''));
+  const secao=(titulo,icone,corBorda,lista)=>{
+    if(!lista.length) return '';
+    return `<div class="sec-title" style="border-left:3px solid ${corBorda};padding-left:8px;margin-top:14px;">${icone} ${titulo} <span class="badge">${lista.length}</span></div>
+    <div class="grid-2" style="margin-bottom:10px;">${ordenaCronologico(lista).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>`;
+  };
+  let html='';
+  html+=secao('Atrasado','🔴','#ff6b6b',atrasados);
+  html+=secao('Hoje','📅','#38b6ff',hojeGrupo);
+  html+=secao('Amanhã','📅','#38b6ff',amanhaGrupo);
+  html+=secao('Resto da semana','🗓️','#7ec8e3',restoSemana);
+  html+=secao('Próxima semana','🗓️','#a78bfa',proxSemana);
+  html+=secao('Depois','⏳','#8899aa',depois);
+  if(semPrazo.length){
+    html+=`<details style="margin-top:14px;">
+      <summary class="sec-title" style="cursor:pointer;list-style:none;">🗂 Sem prazo definido <span class="badge">${semPrazo.length}</span></summary>
+      <div class="grid-2" style="margin-top:8px;">${ordenaCronologico(semPrazo).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
+    </details>`;
+  }
+  bucketsEl.innerHTML = html || '<div style="font-size:11px;color:var(--txt3);padding:16px 0;">Nenhum card ativo pra mostrar com o filtro atual.</div>';
 }
 
 // ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────

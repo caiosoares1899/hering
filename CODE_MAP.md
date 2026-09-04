@@ -1018,6 +1018,31 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
+### Aba "🛤️ Timeline" (2026-09-04, só painel-dev.html v3.11-dev por enquanto — não promovida pra prod)
+Timeline agregada cross-squad, versão do painel da Timeline que já existe
+em `kanban.html` (ver seção correspondente no `CODE_MAP.md` de lá) —
+mesmos buckets progressivos, mas somando cards de TODAS as squads visíveis
+de uma vez. `renderPainelTimeline()`/`_painelTimelineRow()`/
+`_painelTimelineFimSemana()`, logo antes de `renderTrend()`. Chamada em
+2 lugares: `swPtab()` (troca pra aba `timeline`) e `renderAll()` (a cada
+poll de 60s). Tab `#ptab-timeline`/pane `#ppane-timeline` (entre Fluxo e
+Pessoas), stats em `#pt-stats`, buckets em `#pt-buckets`.
+- **Reaproveita 100% o filtro de squad/gerência já global** (`activeFilter`/
+  `squadVisible()`, aba 👁 Visão) — não duplica UI de filtro, mesmo padrão
+  que `renderBlockers()` já segue nas outras abas.
+- **Zero leitura nova** — usa o `squadData` já carregado pelo polling de
+  60s (`POLL_MS`/`_applySquadDados()`).
+- Clique no card chama `openPcModal(squadId,cardId)` (o modal read-only +
+  link-out já existente) — sem edição inline.
+- "Concluído" usa a mesma simplificação `c.col==='done'` que o resto do
+  painel usa (`renderSquadCards`/`renderColDist`/etc.) — painel nunca
+  busca `flowConfig` por squad, não introduz um 2º conceito de "done" só
+  pra esta aba.
+- v1 deliberadamente sem "ação no lugar" (editar prazo inline), sem
+  marcos de contexto (eventos de calendário) e sem 📰 Feed de marcos —
+  todos presentes na Timeline do `kanban-dev.html`, possíveis evoluções
+  futuras desta aba.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
