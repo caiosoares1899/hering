@@ -1350,7 +1350,7 @@ v3.19 · painel-dev pro racional completo.
   (tag/vínculo) chamam `_okrSyncObjDraftFromDom()` primeiro, mesma
   disciplina já estabelecida.
 
-#### 4 achados reais testando em prod (2026-09-04, v3.20 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+#### 4 achados reais testando em prod (2026-09-04, v3.20 · painel-dev — presente nos dois arquivos, promovido pra prod v3.20)
 Feedback direto do usuário depois de testar a extensão acima já em
 produção. Ver `CHANGELOG.md` v3.20 · painel-dev pro racional completo.
 - **Bug real: z-index** — `#pc-modal-ov{z-index:210;}` (CSS, perto de
