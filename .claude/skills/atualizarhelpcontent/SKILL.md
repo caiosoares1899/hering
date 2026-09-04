@@ -260,6 +260,34 @@ outra mudança na página:
   junto com a feature" está pegando, pelo menos quando a mesma sessão
   faz a feature inteira.
 
+- **v8.30.514-dev → v8.30.584-dev (2026-09-04)**: invocação genérica,
+  backlog maior desde a criação da skill — ~50 commits. **Achado de
+  processo, não de conteúdo**: o baseline logo acima ("v8.30.508-dev →
+  v8.30.514-dev") estava desatualizado — a última sincronização real
+  tinha sido o commit `3d605b6` (v8.30.533-dev, 2026-09-01), quase 20
+  commits depois do que esta seção registrava. Descoberto cruzando
+  `git log --oneline -- kanban-dev.html` com `git show
+  3d605b6:version.json`, mesma disciplina de "sempre re-verificar,
+  retrato não é live" que o `CODE_MAP.md`/`CLAUDE.md` já exigem pra
+  número de linha — aplica igual a esta seção de histórico. Baseline
+  real usado pra esta rodada: `3d605b6` (v8.30.533-dev).
+  **1 gap real**: atalho novo "🔗 Copiar link do card" no menu de
+  contexto (`ctxCopyLink()`, commit `edb4f3f`) sem nenhuma menção na
+  Central de Ajuda — acrescentado como sub-parágrafo na entrada já
+  existente "🔗 Compartilhar card" (mesma capacidade, caminho novo pra
+  chegar nela; não virou entrada própria). **Sem gap** (checado e já em
+  dia): "🛤️ Timeline" (buckets progressivos + Feed de marcos completo +
+  filtro/histórico), "⏸ Pausar card", "📌 Fixar card no topo da coluna
+  (pin)" (já cobre submarca + mobile) e "🚧 Badge de impedimento no
+  card" (já cobre "concluído desimpede sozinho") — todas escritas/
+  atualizadas na mesma sessão que implementou a feature, sem esperar
+  por uma rodada de sync depois. Trocas de emoji (Direcional 📌→🧭,
+  Milanote 📌→🎨) não geraram gap porque a Central de Ajuda nunca citava
+  o emoji específico desses 2 campos. Vice City segue de propósito fora
+  da Central de Ajuda (easter egg, não feature — confirmado no
+  comentário do próprio código). Redesenhos de layout mobile (modal do
+  card, header) são puramente visuais, sem claim textual pra atualizar.
+
 Atualize esta seção a cada rodada nova, com a versão e o que foi
 encontrado/corrigido — isso evita re-analisar do zero algo que já foi
 checado e está em dia.

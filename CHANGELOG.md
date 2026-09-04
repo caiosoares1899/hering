@@ -2727,6 +2727,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.584-dev — 2026-09-04 — `/atualizarhelpcontent`: sincroniza Central de Ajuda com o backlog de features desde a v8.30.533-dev
+
+Rodada de sincronização (puramente documentação, sem mudança de
+comportamento) — a última sincronização de verdade tinha ficado no
+commit `3d605b6` (v8.30.533-dev), não na v8.30.514-dev que o histórico
+da skill registrava (achado retroativo, já corrigido no próprio arquivo
+da skill). Revisado o backlog de ~50 commits desde então (Timeline
+completa, Feed de marcos, Pausar card, Pin por coluna/submarca,
+impedimento que desimpede sozinho, trocas de emoji Direcional/Milanote,
+redesenho mobile do modal/header, dentre outros).
+
+**1 gap real encontrado**: o atalho novo "🔗 Copiar link do card" no
+menu de contexto (`ctxCopyLink()`, commit `edb4f3f`) — mesmo link que o
+botão de compartilhar do modal já gera (`_cardShareUrl()`), só que
+acessível sem abrir o card primeiro — não tinha nenhuma menção na
+Central de Ajuda. Acrescentado como sub-parágrafo na entrada já
+existente "🔗 Compartilhar card" (`HELP_CONTENT.cards`), em vez de criar
+uma entrada nova pra mesma capacidade.
+
+**Sem gap** (checado e confirmado já em dia): as entradas "🛤️ Timeline",
+"⏸ Pausar card (tempo/métricas)", "📌 Fixar card no topo da coluna
+(pin)" e "🚧 Badge de impedimento no card" já descrevem corretamente
+toda a evolução recente (buckets progressivos, Feed de marcos com
+filtro/histórico próprio, Pausar sem impedimento público, pin por
+submarca, "concluído desimpede sozinho") — foram escritas/atualizadas
+junto com cada feature, na mesma sessão que as implementou. As trocas de
+emoji (Direcional 📌→🧭, Milanote 📌→🎨) não deixaram rastro desatualizado
+porque a Central de Ajuda nunca citava o emoji específico desses campos,
+só o nome. Vice City (🌴, 3º tema escondido) segue de propósito fora da
+Central de Ajuda — é easter egg, não feature documentável (confirmado no
+próprio comentário do código). Redesenhos de layout mobile (modal do
+card, header) são puramente visuais, sem claim textual desatualizada na
+Central de Ajuda pra corrigir.
+
 ### v8.30.583-dev — 2026-09-04 — 📰 Feed de marcos: distingue nome do card da ação (contraste, 3 temas)
 
 Pedido direto do usuário, com print real: numa linha longa do Feed
