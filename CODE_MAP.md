@@ -800,6 +800,37 @@ detalhe dos 4 call sites.
   deveria aparecer no feed, seja qual for a origem do dado. Resolve o
   sintoma pra dados JÁ existentes sem precisar de migração/varredura no
   Firebase — o `recordMove()` mais robusto evita que o problema cresça.
+- **📰 Feed de marcos — 4 tipos novos: prioridade/impedido/desimpedido/
+  checklist completo** (2026-09-04, pedido direto do usuário: "tem nesse
+  historico tb a alteração de prioridade? colocaria isso! colocaria tb
+  cards marcado/desmarcado como impedimentos; cards com checklist 100%
+  concluido"). `_marcosNoPeriodo()` ganhou uma 2ª fonte, além de
+  `createdAt`/`flow.log`: varre `card.history[]` (já carregado com o
+  card, `recordHistory()`/`_histDiff()`, zero leitura nova) procurando 3
+  padrões de texto:
+  - `/^(alterou|definiu) prioridade/` → tipo `prioridade` (🎚️, `#ff9800`)
+  - `/^marcou como impedido/` → tipo `impedido` (🚧, `#ff6b6b`, mesma cor
+    do badge de impedimento no card)
+  - `/^removeu (o )?impedimento/` OU `/^impedimento removido
+    automaticamente/` → tipo `desimpedido` (🔓, `#4ade80`) — cobre tanto a
+    remoção manual quanto a automática (ver "Desimpede sozinho ao
+    concluir" acima, mesmo dia/sessão)
+  - regex `/checklist.*?(\d+)\/(\d+)/` extrai nd/nt de
+    `"atualizou o checklist (nd/nt)"`/`"checklist: nd/nt concluídos"`
+    (as 2 únicas frases que `_histDiff()`/Agente Ágil geram pra
+    checklist) — `nd===nt>0` → tipo `checklist` (💯, `#a78bfa`). Como
+    `_histDiff()` só grava entrada de checklist quando o progresso
+    MUDOU (não a cada render), todo "nd===nt" achado aqui já é uma
+    transição de verdade pra 100%, não precisa comparar com o estado
+    anterior separadamente.
+  - `m.texto` guarda o `h.what` ORIGINAL (já pronto, gerado por quem
+    disparou o `recordHistory()`) — `_timelineFeedRow()` só prefixa com
+    o título do card, sem reconstruir a frase.
+  `_timelineFeedFilter.tipos`/`TIMELINE_FEED_COR`/chips de
+  `_renderTimelineFeed()` (declarados em 2 lugares — `let
+  _timelineFeedFilter=...` e `_timelineFeedResetFilter()`) expandidos
+  pros 4 tipos novos, mesmo padrão dos 3 já existentes (criado/movido/
+  concluido) — nenhuma lógica de filtro/toggle nova, só mais chaves.
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de

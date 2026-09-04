@@ -2727,6 +2727,45 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.579-dev — 2026-09-04 — Feed de marcos: 4 tipos novos (prioridade, impedido, desimpedido, checklist 100%)
+
+Pedido direto do usuário: "tem nesse historico tb a alteração de
+prioridade? colocaria isso! colocaria tb cards marcado/desmarcado como
+impedimentos; cards com checklist 100% concluido".
+
+`_marcosNoPeriodo()` ganhou uma 2ª fonte de dados, além de
+`createdAt`/`flow.log`: passa a varrer `card.history[]` também (já
+carregado com o card via `recordHistory()`/`_histDiff()` — zero leitura
+nova no Firebase, mesmo espírito de todo o resto do Feed), procurando 3
+padrões de texto já gerados nas frases padronizadas que o resto do app
+já escreve:
+
+- 🎚️ **Prioridade alterada** — qualquer entrada que comece com "alterou
+  prioridade"/"definiu prioridade".
+- 🚧 **Marcado como impedido** / 🔓 **Desimpedido** — cobre tanto a
+  remoção manual quanto a automática ("impedimento removido
+  automaticamente (card concluído)", da regra geral da v8.30.576-dev).
+- 💯 **Checklist chegou a 100%** — extrai os números de "atualizou o
+  checklist (nd/nt)"/"checklist: nd/nt concluídos" via regex; nd===nt>0
+  vira o marco. Como `_histDiff()` só grava entrada de checklist quando
+  o progresso realmente mudou, todo "nd===nt" encontrado já é uma
+  transição de verdade pra completo (testado: checklist parcial tipo
+  "3/5" corretamente NÃO vira marco).
+
+Cada tipo ganhou chip próprio no topo do Feed (contagem + toggle,
+mesmo padrão dos 3 já existentes), cor própria na faixa lateral
+(`TIMELINE_FEED_COR`), e entrada no filtro (`_timelineFeedFilter.tipos`)
+— tudo reaproveitando a MESMA infraestrutura de filtro/toggle já
+construída, sem lógica nova, só mais chaves.
+
+Testado com Playwright: os 4 tipos novos detectados e renderizados
+corretamente a partir de entradas sintéticas de `card.history[]`
+(incluindo a variante "removido automaticamente" da regra de
+desimpedir sozinho), checklist parcial corretamente excluído, toggle de
+chip novo funcionando. `HELP_CONTENT` (entrada "Timeline") e
+`CODE_MAP.md` atualizados. Checks de rotina: `node --check` OK, balanço
+de chaves/parênteses igual ao baseline da sessão (braces -1, parens +1).
+
 ### v8.30.578-dev — 2026-09-04 — fix: "moveu de X → X" ainda aparecia pra cards criados ANTES do fix anterior
 
 Usuário testou o fix da v8.30.577-dev em dev, com force refresh, e ainda
