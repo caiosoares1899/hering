@@ -1184,8 +1184,9 @@ injetado sem `esc()` (única string de card não escapada nessa função) —
 corrigido junto.
 
 **Redesenho — filtros compostos + Histórico/Feed de marcos (2026-09-04,
-só em `painel-dev.html`, ainda não promovido)** — pedido direto: "sao
-muitooooos cards!... mais filtros e filtros q se conversem... historico
+presente nos dois arquivos — promovido pra prod v3.11 · painel)** —
+pedido direto: "sao muitooooos cards!... mais filtros e filtros q se
+conversem... historico
 e as definições (criado, movido, concluido)". Substitui as duas
 limitações que a seção acima registrava como "possível evolução futura".
 - **Filtros compostos** (`_painelTimelineFilter`, objeto
