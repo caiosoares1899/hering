@@ -12583,6 +12583,34 @@ inicial, filtro de tag cruzando squads pelo nome, "filtros que se
 conversam" ao trocar squad, reset automático de filtro morto, os 7 tipos
 de marco no Feed, filtro de tipo/squad dentro do Feed) — todos passaram.
 
+### painel.html v3.11 · painel — 2026-09-04 · promove pra prod — Timeline: redesenho (filtros compostos + Histórico/Feed de marcos)
+
+Promove pra produção o lote v3.15-dev de `painel-dev.html` (validado pelo
+usuário: "testei, ficou bom! sobe pro prod só painel"). Resumo pra quem
+usa o painel:
+
+- **Mais filtros na aba 🛤️ Timeline, e eles se conversam** — além do
+  filtro de squad/gerência, agora dá pra filtrar por Responsável, Tag,
+  Prioridade e buscar por texto no título, todos ao mesmo tempo. Trocar
+  de squad já estreita quem aparece pra escolher como responsável/tag —
+  não lista mais gente/tag de squad nenhuma a ver com o que está
+  selecionado.
+- **Bucket com muitos cards mostra só os 15 primeiros**, com um botão
+  "Mostrar mais" pra ver o resto — evita que "Sem prazo definido" (somando
+  todas as squads) vire uma parede de cards.
+- **Botão novo "📜 Histórico"** no topo da aba — abre qualquer dia ou
+  período do passado, em qualquer squad, mostrando tudo que aconteceu:
+  card criado, movido, concluído, prioridade alterada, marcado/
+  desmarcado como impedido, checklist chegou a 100%. Tem filtro próprio
+  (squad/responsável/tag) dentro do modal.
+
+Promoção aplicada manualmente (não `cp` — `painel.html`/`painel-dev.html`
+divergem de verdade: banner de dev, título, comentários de rodadas
+anteriores) — verificado com `diff painel.html painel-dev.html` que
+sobrou só a divergência de ambiente já conhecida. Testado de novo com os
+mesmos 25 cenários Playwright direto contra `painel.html` promovido —
+todos passaram.
+
 ### painel.html v3.10 · painel — 2026-09-04 · promove pra prod — Timeline: UI/UX + visual "glass"
 
 Promove pra produção o lote v3.13-dev/v3.14-dev de `painel-dev.html`

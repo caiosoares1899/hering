@@ -284,6 +284,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pt-row-meta{font-size:11.5px;font-weight:400;color:var(--txt2);margin-top:3px;line-height:1.35;}
 .pt-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-right:3px;margin-top:2px;font-weight:700;border:1px solid transparent;}
 .pt-avatar{width:18px;height:18px;border-radius:50%;background:rgba(37,99,201,.85);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+/* Ação (movido/concluído/...) dentro de uma linha de feed — mesma receita já
+   calibrada em .pt-row-meta/.meudia-row-meta (kanban-dev.html), reusada de
+   propósito: var(--txt) + peso normal + opacity reduzida funciona nos 3
+   temas sem picker por tema, e var(--txt2) puro sozinho já foi tentado antes
+   (kanban-dev) e ficou "opaco demais". */
+.pt-feed-action{font-weight:400;color:var(--txt);opacity:.72;}
+/* Filtros da Timeline (redesenho 2026-09) — 1 classe pros 4 controles novos
+   (responsável/tag/prioridade/texto) + o select de squad já existente, pra
+   não repetir a mesma string de estilo 4x. */
+.pt-filter-input{padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;}
 /* ═══ LEMBRETES (painel) ═══ */
 .lemp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 @media(max-width:760px){.lemp-wrap{grid-template-columns:1fr;}}
@@ -1491,19 +1501,71 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <!-- Timeline geral, agregando todas as squads — pedido direto do usuário:
        "evoluir esse bicho... fazer essa timeline geral la no painel!
        agrupando as squads e criando filtros (lembra daquele filtro por
-       gerência tb)". 2ª rodada (UI/UX), pedido direto: "a timeline no
-       painel ta mt ruim de ui/ux!... acho ruim o filtro ficar em outra
-       aba... como sao muitas informações, tem q ter uma outra forma de
-       expor... talvez um botao que colapse logo em cima". Agora tem
-       filtro PRÓPRIO (#pt-filter-select, sincronizado com o mesmo
-       activeFilter/setFilter() global — não é um filtro paralelo, só
-       outro controle pro MESMO estado, pra não precisar trocar de aba) e
-       buckets colapsáveis (estado lembrado entre renders, ver
-       _painelTimelineOpen em renderPainelTimeline()). -->
+       gerência tb)". 2ª rodada (UI/UX): "a timeline no painel ta mt ruim
+       de ui/ux!... acho ruim o filtro ficar em outra aba... como sao
+       muitas informações, tem q ter uma outra forma de expor... talvez um
+       botao que colapse logo em cima" — buckets colapsáveis (estado
+       lembrado entre renders, _painelTimelineOpen). 3ª rodada
+       (redesenho 2026-09), pedido direto: "sao muitooooos cards!... mais
+       filtros e filtros q se conversem... histórico e as definições
+       (criado, movido, concluido)". Mudou:
+       1) Filtros compostos (#pt-filters) — squad/gerência (mesmo
+          activeFilter/setFilter() global de sempre, não um filtro
+          paralelo) + responsável + tag + prioridade + busca por texto,
+          todos combinam (AND). "Se conversam": as opções de responsável e
+          tag são recalculadas a cada render a partir do conjunto JÁ
+          filtrado por squad/gerência (_painelTimelineOwnerOptions()/
+          _painelTimelineTagOptions() em renderPainelTimeline()) — trocar
+          de squad já estreita quem aparece pra escolher como responsável/
+          tag, em vez de listar gente/tag de squad nenhuma a ver com o que
+          está selecionado. Responsável usa chave `squadId::init` (não só
+          `init`) porque iniciais SÃO reaproveitadas entre squads
+          diferentes (CS de uma squad não é o mesmo CS de outra) — um
+          filtro só por init misturaria pessoas de squads diferentes sem
+          ninguém perceber.
+       2) Buckets com teto de exibição (PT_BUCKET_CAP) + "Mostrar mais N"
+          por bucket (_painelTimelineExpanded) — bucket como "Sem prazo"
+          cruzando todas as squads pode ter dezenas de cards; mostrar tudo
+          de cara de novo vira exatamente o problema que motivou a 2ª
+          rodada (muita informação pra escanear).
+       3) "📜 Histórico" (openPainelHistorico()) — mesmo conceito do Feed
+          de marcos do kanban.html (📜 Histórico + 📰 Feed), portado pra
+          multi-squad: modal com período (de/até, qualquer dia ou período
+          do passado) + os 7 tipos de marco (🆕 criado, 🔀 movido, 🏁
+          concluído, 🎚️ prioridade, 🚧 impedido, 🔓 desimpedido, 💯
+          checklist) + filtro PRÓPRIO (squad/responsável/tag), independente
+          do filtro da Timeline principal — mesmo motivo do kanban.html:
+          um filtro deixado ligado no board principal não pode encolher o
+          retrospecto do Histórico sem avisar. Ver _ptMarcosNoPeriodo()/
+          _renderPtFeed() mais abaixo. "Concluído" aqui usa col==='done'
+          (mesma simplificação que o resto desta aba já usa — painel não
+          busca flowConfig por squad, ver comentário em
+          renderPainelTimeline()). -->
   <div class="ptab-pane" id="ppane-timeline">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span>🛤️ Timeline geral (todas as squads)</span>
-      <select id="pt-filter-select" onchange="setFilter(this.value)" title="Filtra por squad ou gerência — mesmo filtro da aba 👁 Visão" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;"></select>
+      <button type="button" class="btn btn-sm" style="font-size:11px;padding:5px 12px;" onclick="openPainelHistorico()" title="Ver o que aconteceu em qualquer dia ou período do passado, em qualquer squad — criação, movimentação, prioridade, impedimento, checklist">📜 Histórico</button>
+    </div>
+    <!-- Filtros compostos — ver comentário grande acima da aba. Ficam
+         estáticos no HTML (não são reconstruídos por inteiro a cada
+         render) só pra #pt-filter-texto nunca perder foco/cursor
+         enquanto a pessoa digita; os 3 selects (squad/responsável/tag)
+         têm as OPÇÕES recalculadas a cada renderPainelTimeline(), o que é
+         seguro (select não perde "o que a pessoa estava digitando" do
+         jeito que um <input> perde). -->
+    <div id="pt-filters" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px;">
+      <select id="pt-filter-select" class="pt-filter-input" onchange="setFilter(this.value)" title="Filtra por squad ou gerência — mesmo filtro da aba 👁 Visão"></select>
+      <select id="pt-filter-owner" class="pt-filter-input" onchange="_painelTimelineSetFilter('owner', this.value)" title="Filtra por responsável — as opções mudam conforme a squad/gerência escolhida ao lado"></select>
+      <select id="pt-filter-tag" class="pt-filter-input" onchange="_painelTimelineSetFilter('tagLabel', this.value)" title="Filtra por tag (pelo nome — a mesma tag em squads diferentes conta como uma só aqui)"></select>
+      <select id="pt-filter-prio" class="pt-filter-input" onchange="_painelTimelineSetFilter('prio', this.value)">
+        <option value="">Todas as prioridades</option>
+        <option value="critical">🔥 Crítica</option>
+        <option value="high">🔴 Alta</option>
+        <option value="medium">🟡 Média</option>
+        <option value="low">🟢 Baixa</option>
+      </select>
+      <input type="text" id="pt-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar por título…" oninput="_painelTimelineSetFilterTexto(this.value)" style="min-width:170px;flex:1;">
+      <button type="button" class="btn btn-sm" id="pt-filter-clear" style="font-size:11px;padding:5px 10px;color:var(--danger);border-color:rgba(255,107,107,.3);display:none;" onclick="_painelTimelineClearFilters()">✕ Limpar filtros</button>
     </div>
     <div id="pt-stats" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:11px;color:var(--txt2);margin-bottom:16px;padding:10px 14px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;"></div>
     <div id="pt-buckets"></div>
@@ -2472,7 +2534,21 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.10 · painel</div>
+<!-- 📜 Histórico / Feed de marcos (multi-squad) — botão "📜 Histórico" na
+     aba Timeline, ver openPainelHistorico()/_renderPtFeed(). Reusa o mesmo
+     padrão visual .pc-modal-ov/.pc-modal do modal de card acima, id próprio
+     pra não colidir. -->
+<div class="pc-modal-ov" id="pt-feed-ov">
+  <div class="pc-modal" style="width:min(620px,94vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title" id="pt-feed-title">📜 Histórico</div>
+      <button class="x-btn" onclick="closePainelFeed()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="pt-feed-body"></div>
+  </div>
+</div>
+
+<div class="version">v3.11 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4802,6 +4878,7 @@ document.addEventListener('click', function(e){
 });
 
 document.addEventListener('click',e=>{if(e.target.id==='pc-modal-ov')closePcModal();});
+document.addEventListener('click',e=>{if(e.target.id==='pt-feed-ov')closePainelFeed();});
 
 // ── HELPER ───────────────────────────────────────────────────────
 function checklistPct(c){
@@ -9747,19 +9824,92 @@ function renderBlockers(){
 //   nova no Firebase.
 // - Clique no card abre openPcModal() (mesmo padrão read-only + link pra
 //   editar em kanban.html que o resto do painel já usa) — sem "ação no
-//   lugar" (editar prazo inline) nem marcos de contexto/Feed de marcos
-//   do kanban-dev.html; ambos ficam como possível evolução.
+//   lugar" (editar prazo inline) do kanban-dev.html; fica como possível
+//   evolução futura (o Histórico/Feed de marcos, que o board individual
+//   também tem, já foi portado — ver mais abaixo).
 // - "Concluído" usa a mesma simplificação c.col==='done' que o resto do
 //   painel já usa (renderSquadCards/renderColDist/etc.) — o painel nunca
 //   busca flowConfig por squad, então não introduz um 2º conceito de
 //   "done" só pra esta aba.
 //
-// Filtro: usa o MESMO activeFilter/setFilter()/squadVisible() global de
-// sempre (não é um filtro paralelo) — só ganhou um 2º controle
-// (#pt-filter-select, dentro desta própria aba) além dos botões da aba
-// Visão, porque trocar de aba toda vez só pra filtrar era ruim (pedido
-// direto do usuário). Os dois ficam sincronizados: mudar um reflete no
-// outro, porque ambos só leem/escrevem a mesma variável `activeFilter`.
+// Filtro de squad/gerência: usa o MESMO activeFilter/setFilter()/
+// squadVisible() global de sempre (não é um filtro paralelo) — só ganhou
+// um 2º controle (#pt-filter-select, dentro desta própria aba) além dos
+// botões da aba Visão, porque trocar de aba toda vez só pra filtrar era
+// ruim (pedido direto do usuário). Os dois ficam sincronizados: mudar um
+// reflete no outro, porque ambos só leem/escrevem a mesma variável
+// `activeFilter`.
+//
+// Filtros compostos (responsável/tag/prioridade/texto) — 3ª rodada,
+// pedido direto: "mais filtros e filtros q se conversem". Estado próprio
+// (`_painelTimelineFilter`), combinam em AND com o filtro de squad/
+// gerência acima. "Se conversam": as opções de responsável e tag
+// (_painelTimelineOwnerOptions()/_painelTimelineTagOptions(), chamadas
+// dentro de renderPainelTimeline()) são recalculadas a cada render a
+// partir do conjunto JÁ filtrado por squad/gerência — trocar de squad
+// estreita quem aparece pra escolher, em vez de listar gente/tag de uma
+// squad que nem está mais visível. Responsável usa chave `squadId::init`
+// (não só `init` puro): iniciais são reaproveitadas entre squads
+// diferentes (CS da squad A não é necessariamente o mesmo CS da squad
+// B) — filtrar só por init misturaria pessoas sem ninguém perceber.
+// Se a squad/gerência mudar e o responsável/tag escolhido não existir
+// mais nas novas opções, o filtro correspondente é resetado sozinho
+// (mesma cautela já usada no Feed de marcos do kanban.html ao trocar de
+// período — nunca deixar um filtro "morto" fazendo a lista parecer vazia
+// sem nenhuma pista do motivo).
+let _painelTimelineFilter = { owner:'', tagLabel:'', prio:'', texto:'' };
+let _painelTimelineTextoTimer = null;
+function _painelTimelineSetFilter(campo, valor){
+  _painelTimelineFilter[campo]=valor;
+  renderPainelTimeline();
+}
+// Debounce leve (180ms) só por desempenho com "muitos cards" — NÃO existe
+// pra proteger o foco do campo de texto (isso já é garantido por
+// #pt-filters nunca ser reconstruído por inteiro, ver comentário no HTML);
+// sem o debounce o filtro já funcionaria certo, só recalcularia os buckets
+// a cada tecla.
+function _painelTimelineSetFilterTexto(valor){
+  clearTimeout(_painelTimelineTextoTimer);
+  _painelTimelineTextoTimer=setTimeout(()=>{ _painelTimelineFilter.texto=valor; renderPainelTimeline(); }, 180);
+}
+function _painelTimelineClearFilters(){
+  _painelTimelineFilter = { owner:'', tagLabel:'', prio:'', texto:'' };
+  const txt=document.getElementById('pt-filter-texto'); if(txt) txt.value='';
+  renderPainelTimeline();
+}
+// Opções de Responsável/Tag calculadas a partir do POOL já filtrado por
+// squad/gerência (ver comentário grande acima) — não de todos os cards de
+// todas as squads sempre. `pool` = array de cards com `_squad` anexado
+// (mesmo formato que `elegiveis` monta em renderPainelTimeline()).
+function _painelTimelineOwnerOptions(pool){
+  const vistos=new Map();
+  pool.forEach(c=>{
+    if(!c.owner) return;
+    const key=c._squad.id+'::'+c.owner;
+    if(!vistos.has(key)) vistos.set(key, {key, squad:c._squad, init:c.owner, name:resolveOwnerName(c.owner, c._squad.id)});
+  });
+  return Array.from(vistos.values()).sort((a,b)=>a.name.localeCompare(b.name));
+}
+function _ptCardHasTagLabel(c, sqId, label){
+  const tagDefs=squadData[sqId]?.tags||[];
+  return _ptCardTags(c).some(id=>{ const t=tagDefs.find(x=>x.id===id); return t && t.label===label; });
+}
+function _painelTimelineTagOptions(pool){
+  const vistos=new Set();
+  pool.forEach(c=>{
+    const tagDefs=squadData[c._squad.id]?.tags||[];
+    _ptCardTags(c).forEach(id=>{ const t=tagDefs.find(x=>x.id===id); if(t && t.label) vistos.add(t.label); });
+  });
+  return Array.from(vistos).sort((a,b)=>a.localeCompare(b));
+}
+function _painelTimelinePassesLocalFilter(c){
+  const f=_painelTimelineFilter;
+  if(f.owner && (c._squad.id+'::'+c.owner)!==f.owner) return false;
+  if(f.tagLabel && !_ptCardHasTagLabel(c, c._squad.id, f.tagLabel)) return false;
+  if(f.prio && c.priority!==f.prio) return false;
+  if(f.texto && !(c.title||'').toLowerCase().includes(f.texto.toLowerCase())) return false;
+  return true;
+}
 //
 // Buckets colapsáveis: `_painelTimelineOpen` guarda o estado aberto/
 // fechado de cada bucket entre renders (a poll de 60s reconstrói todo o
@@ -9778,6 +9928,19 @@ function _painelTimelineToggleAll(){
   const maioriaAberta = Object.values(_painelTimelineOpen).filter(Boolean).length >= Object.keys(_painelTimelineOpen).length/2;
   const novoEstado = !maioriaAberta;
   Object.keys(_painelTimelineOpen).forEach(k=>_painelTimelineOpen[k]=novoEstado);
+  renderPainelTimeline();
+}
+// Teto de linhas mostradas por bucket + "Mostrar mais N" — 3ª rodada,
+// mesmo pedido ("sao muitooooos cards"): agregando todas as squads, um
+// bucket como "Sem prazo" pode ter dezenas de cards; abrir o bucket já
+// mostrando tudo de cara reproduz o problema que motivou a 2ª rodada
+// (buckets colapsáveis). `_painelTimelineExpanded` guarda quais buckets já
+// foram expandidos manualmente, pelo mesmo motivo de `_painelTimelineOpen`
+// (sobrevive a re-render).
+const PT_BUCKET_CAP = 15;
+let _painelTimelineExpanded = {};
+function _painelTimelineExpandBucket(key){
+  _painelTimelineExpanded[key]=true;
   renderPainelTimeline();
 }
 function _painelTimelineFimSemana(baseDate){
@@ -9860,14 +10023,27 @@ function renderPainelTimeline(){
   const fimSemanaStr=_painelTimelineFimSemana(hojeDate);
   const fimProxSemanaDate=new Date(hojeDate); fimProxSemanaDate.setDate(fimProxSemanaDate.getDate()+(6-hojeDate.getDay())+7);
   const fimProxSemanaStr=_localDateStr(fimProxSemanaDate);
-  let elegiveis=[];
+  // poolSquad = já filtrado por squad/gerência (activeFilter), ANTES dos
+  // filtros locais (responsável/tag/prioridade/texto) — é o pool que
+  // alimenta as opções de Responsável/Tag (ver comentário grande acima da
+  // seção, "filtros que se conversam"). `elegiveis` (com os filtros locais
+  // aplicados por cima) é quem realmente vira os buckets.
+  let poolSquad=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d || !d.cards) return;
     if(!squadVisible(sq.id)) return;
     (Array.isArray(d.cards)?d.cards:[])
       .filter(c=>c && !c.archived && !c.agenteHotline && c.col!=='done' && isColVisible(sq.id,c.col))
-      .forEach(c=>elegiveis.push({...c, _squad:sq}));
+      .forEach(c=>poolSquad.push({...c, _squad:sq}));
   });
+  // Se o responsável/tag escolhido não existir mais nas opções desta squad/
+  // gerência, reseta sozinho — evita a lista parecer vazia sem nenhuma
+  // pista do motivo (mesma cautela do Feed de marcos ao trocar de período).
+  const ownerOpts=_painelTimelineOwnerOptions(poolSquad);
+  const tagOpts=_painelTimelineTagOptions(poolSquad);
+  if(_painelTimelineFilter.owner && !ownerOpts.some(o=>o.key===_painelTimelineFilter.owner)) _painelTimelineFilter.owner='';
+  if(_painelTimelineFilter.tagLabel && !tagOpts.includes(_painelTimelineFilter.tagLabel)) _painelTimelineFilter.tagLabel='';
+  const elegiveis=poolSquad.filter(_painelTimelinePassesLocalFilter);
   const atrasados=elegiveis.filter(c=>c.due && c.due<hojeStr);
   const semPrazo=elegiveis.filter(c=>!c.due);
   const hojeGrupo=elegiveis.filter(c=>c.due===hojeStr);
@@ -9878,39 +10054,60 @@ function renderPainelTimeline(){
   const totalAbertos=Object.values(_painelTimelineOpen).filter(Boolean).length;
   const totalBuckets=Object.keys(_painelTimelineOpen).length;
   const vaiExpandir = totalAbertos < totalBuckets/2;
+  const filtroLocalAtivo=_painelTimelineFilter.owner||_painelTimelineFilter.tagLabel||_painelTimelineFilter.prio||_painelTimelineFilter.texto;
   statsEl.innerHTML=`
-    <span>📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}</span>
+    <span>📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}${filtroLocalAtivo&&poolSquad.length!==elegiveis.length?` <span style="color:var(--txt3);">(${poolSquad.length} sem esses filtros)</span>`:''}</span>
     ${atrasados.length?`<span style="color:var(--danger);">🔴 <b>${atrasados.length}</b> atrasado${atrasados.length!==1?'s':''}</span>`:''}
     ${semPrazo.length?`<span style="color:var(--txt3);">🗂 <b>${semPrazo.length}</b> sem prazo</span>`:''}
     <button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 10px;margin-left:auto;" onclick="_painelTimelineToggleAll()">${vaiExpandir?'🔽 Expandir tudo':'🔼 Recolher tudo'}</button>
   `;
-  // Filtro local (#pt-filter-select) — mesmo activeFilter/setFilter() global
-  // da aba Visão, só outro controle pro mesmo estado (ver comentário acima
-  // da seção). Reconstruído a cada render pra sempre refletir SQUADS/
-  // GERENCIAS atuais (squad nova criada em runtime já aparece aqui) e o
-  // valor sincronizado com activeFilter, inclusive quando ele mudou pela
-  // aba Visão.
-  const selEl=document.getElementById('pt-filter-select');
-  if(selEl){
-    selEl.innerHTML = `<option value="all">🏠 Todos</option>`
+  // Selects de squad/responsável/tag — reconstruídos a cada render (ver
+  // comentário no HTML sobre por que isso é seguro pra select, diferente
+  // de #pt-filter-texto). Squad continua sincronizado com activeFilter
+  // global; responsável/tag usam as opções cascateadas calculadas acima.
+  const selSquad=document.getElementById('pt-filter-select');
+  if(selSquad){
+    selSquad.innerHTML = `<option value="all">🏠 Todos</option>`
       + SQUADS.map(sq=>`<option value="${esc(sq.id)}">${sq.icon} ${esc(sq.label)}</option>`).join('')
       + GERENCIAS.map(g=>`<option value="${esc(g.id)}">${g.icon} ${esc(g.label)}</option>`).join('');
-    selEl.value = activeFilter;
+    selSquad.value = activeFilter;
   }
+  const selOwner=document.getElementById('pt-filter-owner');
+  if(selOwner){
+    selOwner.innerHTML = `<option value="">Todos os responsáveis</option>`
+      + ownerOpts.map(o=>`<option value="${esc(o.key)}">${o.squad.icon} ${esc(o.name)}</option>`).join('');
+    selOwner.value = _painelTimelineFilter.owner;
+  }
+  const selTag=document.getElementById('pt-filter-tag');
+  if(selTag){
+    selTag.innerHTML = `<option value="">Todas as tags</option>`
+      + tagOpts.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('');
+    selTag.value = _painelTimelineFilter.tagLabel;
+  }
+  const selPrio=document.getElementById('pt-filter-prio'); if(selPrio) selPrio.value=_painelTimelineFilter.prio;
+  const clearBtn=document.getElementById('pt-filter-clear'); if(clearBtn) clearBtn.style.display=filtroLocalAtivo?'':'none';
   const ordenaCronologico=lista=>lista.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')||(a.title||'').localeCompare(b.title||''));
   // Buckets viram <details> colapsáveis, estado lembrado em
   // _painelTimelineOpen (ver comentário acima da seção) — `key` identifica
   // cada bucket nesse objeto; ontoggle atualiza o estado quando a pessoa
   // clica manualmente (inclusive o clique que o próprio render acabou de
-  // aplicar via o atributo `open`, idempotente).
+  // aplicar via o atributo `open`, idempotente). Dentro de cada bucket, um
+  // teto de PT_BUCKET_CAP linhas + "Mostrar mais N" (_painelTimelineExpanded)
+  // evita um bucket cross-squad com dezenas de cards virar uma parede de
+  // texto só por estar aberto.
   const secao=(key,titulo,icone,corBorda,lista)=>{
     if(!lista.length) return '';
     const aberto=_painelTimelineOpen[key];
+    const ordenados=ordenaCronologico(lista);
+    const expandido=_painelTimelineExpanded[key];
+    const mostrar=expandido?ordenados:ordenados.slice(0,PT_BUCKET_CAP);
+    const restante=ordenados.length-mostrar.length;
     return `<details class="pt-bucket" style="margin-top:10px;" ${aberto?'open':''} ontoggle="_painelTimelineSetOpen('${key}', this.open)">
       <summary class="sec-title" style="border-left:3px solid ${corBorda};padding-left:8px;">
         <span class="pt-chevron">▸</span> ${icone} ${titulo} <span class="badge">${lista.length}</span>
       </summary>
-      <div style="margin-top:8px;">${ordenaCronologico(lista).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
+      <div style="margin-top:8px;">${mostrar.map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
+      ${restante>0?`<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 12px;margin-top:6px;width:100%;justify-content:center;" onclick="_painelTimelineExpandBucket('${key}')">Mostrar mais ${restante}</button>`:''}
     </details>`;
   };
   let html='';
@@ -9921,7 +10118,204 @@ function renderPainelTimeline(){
   html+=secao('prox','Próxima semana','🗓️','#a78bfa',proxSemana);
   html+=secao('depois','Depois','⏳','#8899aa',depois);
   html+=secao('semPrazo','Sem prazo definido','🗂','#8899aa',semPrazo);
-  bucketsEl.innerHTML = html || '<div style="font-size:11px;color:var(--txt3);padding:16px 0;">Nenhum card ativo pra mostrar com o filtro atual.</div>';
+  bucketsEl.innerHTML = html || `<div style="font-size:11px;color:var(--txt3);padding:16px 0;">Nenhum card ativo pra mostrar com o filtro atual.${filtroLocalAtivo?' <a href="#" onclick="_painelTimelineClearFilters();return false;" style="color:var(--accent);">Limpar filtros</a>':''}</div>`;
+}
+
+// ── 📜 HISTÓRICO / FEED DE MARCOS (multi-squad) ─────────────────────
+// Porta o Feed de marcos + botão "📜 Histórico" do kanban-dev.html pra cá,
+// cruzando TODAS as squads visíveis — pedido direto do usuário: "coloca tb
+// a opção de historico la e aquelas definições q vc fez (criado, movido,
+// concluido...)". Fonte 100% do que já está em squadData[sqId].cards
+// (createdAt, flow.log[], history[]) — mesmo dado que _pollSquadDados() já
+// busca pra tudo mais na aba, zero leitura nova no Firebase.
+//
+// Filtro PRÓPRIO (_ptFeedFilter), independente do filtro da Timeline
+// principal (_painelTimelineFilter/activeFilter) — mesmo motivo do
+// kanban.html: o Histórico é um retrospecto de qualquer período, não devia
+// encolher silenciosamente só porque um filtro ficou ligado no board por
+// outro motivo. Reseta sozinho toda vez que o modal abre ou o período
+// muda, pelo mesmo motivo.
+//
+// "Concluído" usa col==='done' — mesma simplificação que o resto desta aba
+// já usa (ver comentário no topo de renderPainelTimeline(): painel não
+// busca flowConfig por squad).
+const PT_TIMELINE_FEED_COR={criado:'#ffd166', movido:'#38b6ff', concluido:'var(--teal)', prioridade:'#ff9800', impedido:'#ff6b6b', desimpedido:'#4ade80', checklist:'#a78bfa'};
+function _ptDateOnlyLocalStr(s){
+  if(!s) return '';
+  return s.length<=10 ? s : _localDateStr(new Date(s));
+}
+function _ptMarcosNoPeriodo(deStr, ateStr){
+  const marcos=[];
+  SQUADS.forEach(sq=>{
+    if(!squadVisible(sq.id)) return;
+    const d=squadData[sq.id]; if(!d || !d.cards) return;
+    (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+      if(!c || c.agenteHotline) return;
+      if(c.createdAt){
+        const dd=_ptDateOnlyLocalStr(c.createdAt);
+        if(dd>=deStr && dd<=ateStr) marcos.push({at:c.createdAt.length<=10?c.createdAt+'T12:00:00.000Z':c.createdAt, tipo:'criado', card:c, squad:sq});
+      }
+      const log=c.flow?.log||[];
+      log.forEach((entry,i)=>{
+        if(i===0 && (!entry.from||entry.from==='—')) return; // entrada de criação, já coberta acima
+        if(entry.from===entry.to) return; // "moveu de X → X" nunca é marco real (mesmo achado do kanban.html)
+        const dd=_ptDateOnlyLocalStr(entry.at);
+        if(dd<deStr || dd>ateStr) return;
+        marcos.push({at:entry.at, tipo: entry.to==='done'?'concluido':'movido', card:c, from:entry.from, to:entry.to, squad:sq});
+      });
+      (c.history||[]).forEach(h=>{
+        if(!h || !h.what || !h.at) return;
+        const dd=_ptDateOnlyLocalStr(h.at);
+        if(dd<deStr || dd>ateStr) return;
+        if(/^(alterou|definiu|removeu) prioridade/.test(h.what)) marcos.push({at:h.at, tipo:'prioridade', card:c, texto:h.what, squad:sq});
+        else if(/^marcou como impedido/.test(h.what)) marcos.push({at:h.at, tipo:'impedido', card:c, texto:h.what, squad:sq});
+        else if(/^removeu (o )?impedimento/.test(h.what) || /^impedimento removido automaticamente/.test(h.what)) marcos.push({at:h.at, tipo:'desimpedido', card:c, texto:h.what, squad:sq});
+        else {
+          const clm=/checklist.*?(\d+)\/(\d+)/.exec(h.what);
+          if(clm){ const nd=parseInt(clm[1],10), nt=parseInt(clm[2],10); if(nt>0 && nd===nt) marcos.push({at:h.at, tipo:'checklist', card:c, texto:h.what, squad:sq}); }
+        }
+      });
+    });
+  });
+  return marcos.sort((a,b)=>b.at.localeCompare(a.at)); // mais recente primeiro
+}
+function _ptFeedRow(m){
+  const sq=m.squad, d=squadData[sq.id];
+  const nomeCol=id=>d?.columns?.find(x=>x.id===id)?.name||id||'—';
+  const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let icone, texto;
+  if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:'')+`</span>`; }
+  else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> foi concluído — ${esc(nomeCol(m.to))}</span>`; }
+  else if(m.tipo==='movido'){ icone='🔀'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> moveu de ${esc(nomeCol(m.from))} → ${esc(nomeCol(m.to))}</span>`; }
+  else if(m.tipo==='prioridade'){ icone='🎚️'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> ${esc(m.texto)}</span>`; }
+  else if(m.tipo==='impedido'){ icone='🚧'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> ${esc(m.texto)}</span>`; }
+  else if(m.tipo==='desimpedido'){ icone='🔓'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> ${esc(m.texto)}</span>`; }
+  else { icone='💯'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> ${esc(m.texto)}</span>`; } // checklist
+  const card=m.card;
+  const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
+  const prioBadge=card.priority?`<span style="font-size:10px;margin-left:4px;" title="Prioridade">${prioMap[card.priority]||''}</span>`:'';
+  const bmode=d?.blockerMode||'col';
+  const isBlocked=bmode==='col' ? card.col==='blocker' : !!card.blocker;
+  const blockedBadge=isBlocked?'<span style="font-size:10px;margin-left:4px;" title="Impedido">🚧</span>':'';
+  const tagsRow=_ptTagsHtml(sq.id, card);
+  return `<div class="pt-row" style="border-left:3px solid ${PT_TIMELINE_FEED_COR[m.tipo]};" onclick="closePainelFeed();openPcModal('${sq.id}','${esc(card.id)}')">
+    <div style="display:flex;gap:9px;align-items:flex-start;">
+      ${_painelOwnerAvatarHtml(card.owner)}
+      <div style="flex:1;min-width:0;">
+        <div class="pt-row-title">${icone} ${texto}${prioBadge}${blockedBadge}</div>
+        <div class="pt-row-meta">🕐 ${hora} · ${sq.icon} ${esc(sq.label.replace('Squad ',''))}${card.owner?' · '+esc(resolveOwnerName(card.owner,sq.id)):''}</div>
+        ${tagsRow?`<div style="margin-top:5px;">${tagsRow}</div>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+let _ptFeedState = null; // {deStr, ateStr, labelStr} do período aberto agora
+let _ptFeedFilter = { squad:'', owner:'', tagLabel:'', tipos:{criado:true,movido:true,concluido:true,prioridade:true,impedido:true,desimpedido:true,checklist:true} };
+function _ptFeedResetFilter(){
+  _ptFeedFilter = { squad:'', owner:'', tagLabel:'', tipos:{criado:true,movido:true,concluido:true,prioridade:true,impedido:true,desimpedido:true,checklist:true} };
+}
+function _ptFeedMatchesBase(m){
+  const f=_ptFeedFilter;
+  if(f.squad && m.squad.id!==f.squad) return false;
+  if(f.owner && (m.squad.id+'::'+m.card.owner)!==f.owner) return false;
+  if(f.tagLabel && !_ptCardHasTagLabel(m.card, m.squad.id, f.tagLabel)) return false;
+  return true;
+}
+function _ptFeedMatches(m){
+  if(!_ptFeedFilter.tipos[m.tipo]) return false;
+  return _ptFeedMatchesBase(m);
+}
+function ptFeedToggleTipo(tipo){ _ptFeedFilter.tipos[tipo]=!_ptFeedFilter.tipos[tipo]; _renderPtFeed(); }
+function ptFeedSetFilter(campo, valor){ _ptFeedFilter[campo]=valor; _renderPtFeed(); }
+function ptFeedClearFilter(){ _ptFeedResetFilter(); _renderPtFeed(); }
+function _ptFeedPeriodoLabel(deStr, ateStr){
+  const fmt=s=>new Date(s+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit',year:'2-digit'});
+  if(deStr===ateStr){
+    if(deStr===_localDateStr(new Date())) return 'Hoje';
+    return fmt(deStr);
+  }
+  return fmt(deStr)+' a '+fmt(ateStr);
+}
+function openPainelHistorico(){
+  const hoje=_localDateStr(new Date());
+  _ptFeedState={deStr:hoje, ateStr:hoje, labelStr:'Hoje'};
+  _ptFeedResetFilter();
+  _renderPtFeed();
+  document.getElementById('pt-feed-ov')?.classList.add('open');
+}
+function closePainelFeed(){
+  document.getElementById('pt-feed-ov')?.classList.remove('open');
+}
+function _ptFeedBuscarPeriodo(){
+  const de=document.getElementById('ptf-de')?.value;
+  const ate=document.getElementById('ptf-ate')?.value;
+  if(!de || !ate){ showToast('Escolha as duas datas.'); return; }
+  if(de>ate){ showToast('A data inicial precisa ser antes (ou igual) da final.'); return; }
+  _ptFeedState.deStr=de; _ptFeedState.ateStr=ate; _ptFeedState.labelStr=null;
+  _ptFeedResetFilter();
+  _renderPtFeed();
+}
+function _renderPtFeed(){
+  if(!_ptFeedState) return;
+  const {deStr, ateStr, labelStr}=_ptFeedState;
+  const titleEl=document.getElementById('pt-feed-title');
+  if(titleEl) titleEl.textContent='📜 '+(labelStr||_ptFeedPeriodoLabel(deStr,ateStr));
+  const body=document.getElementById('pt-feed-body'); if(!body) return;
+  const periodoHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;">
+    <input type="date" id="ptf-de" value="${esc(deStr)}" class="pt-filter-input">
+    <span style="font-size:11px;color:var(--txt3);">até</span>
+    <input type="date" id="ptf-ate" value="${esc(ateStr)}" class="pt-filter-input">
+    <button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_ptFeedBuscarPeriodo()" title="Dá pra ir bem pro passado — cards antigos só somem daqui se alguém excluir de vez em 🧹 Cards antigos">🔍 Buscar</button>
+  </div>`;
+  const todos=_ptMarcosNoPeriodo(deStr, ateStr);
+  if(!todos.length){
+    body.innerHTML = periodoHtml+'<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum marco registrado nesse período, em nenhuma squad visível (criação, movimentação, prioridade, impedimento ou checklist completo).</div>';
+    return;
+  }
+  const f=_ptFeedFilter;
+  const paraContagem=todos.filter(_ptFeedMatchesBase);
+  const chip=(tipo,icone,label)=>{
+    const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
+    const ativo=f.tipos[tipo];
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+  };
+  // Opções de responsável/tag também cascateiam com o squad já escolhido NO
+  // PRÓPRIO filtro do Feed (não com o da Timeline principal — filtro
+  // independente, ver comentário grande no topo desta seção).
+  const poolFeed=todos.filter(m=>!f.squad||m.squad.id===f.squad).map(m=>({...m.card, _squad:m.squad}));
+  const ownerOpts=_painelTimelineOwnerOptions(poolFeed);
+  const tagOpts=_painelTimelineTagOptions(poolFeed);
+  const temFiltro = f.squad||f.owner||f.tagLabel||Object.values(f.tipos).some(v=>!v);
+  const filtrosHtml=`<div style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">
+      ${chip('criado','🆕','criado')}
+      ${chip('movido','🔀','movido')}
+      ${chip('concluido','🏁','concluído')}
+      ${chip('prioridade','🎚️','prioridade alterada')}
+      ${chip('impedido','🚧','marcado como impedido')}
+      ${chip('desimpedido','🔓','desimpedido')}
+      ${chip('checklist','💯','checklist completo')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:8px;">
+      <select id="ptf-squad" class="pt-filter-input" onchange="ptFeedSetFilter('squad', this.value)">
+        <option value="">🏠 Todas as squads</option>${SQUADS.filter(sq=>squadVisible(sq.id)).map(sq=>`<option value="${esc(sq.id)}">${sq.icon} ${esc(sq.label)}</option>`).join('')}
+      </select>
+      <select id="ptf-owner" class="pt-filter-input" onchange="ptFeedSetFilter('owner', this.value)">
+        <option value="">Todos os responsáveis</option>${ownerOpts.map(o=>`<option value="${esc(o.key)}">${o.squad.icon} ${esc(o.name)}</option>`).join('')}
+      </select>
+      <select id="ptf-tag" class="pt-filter-input" onchange="ptFeedSetFilter('tagLabel', this.value)">
+        <option value="">Todas as tags</option>${tagOpts.map(l=>`<option value="${esc(l)}">${esc(l)}</option>`).join('')}
+      </select>
+      ${temFiltro?`<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="ptFeedClearFilter()">✕ Limpar</button>`:''}
+    </div>
+  </div>`;
+  const marcos=todos.filter(_ptFeedMatches);
+  const listaHtml = marcos.length ? marcos.map(_ptFeedRow).join('')
+    : `<div style="font-size:12px;color:var(--txt3);padding:14px 0;">Nenhum marco com esse filtro (${todos.length} no total nesse período).</div>`;
+  body.innerHTML = periodoHtml + filtrosHtml + listaHtml;
+  const selSquad=document.getElementById('ptf-squad'); if(selSquad) selSquad.value=f.squad;
+  const selOwner=document.getElementById('ptf-owner'); if(selOwner) selOwner.value=f.owner;
+  const selTag=document.getElementById('ptf-tag'); if(selTag) selTag.value=f.tagLabel;
 }
 
 // ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────
