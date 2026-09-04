@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.585-dev</div>
+<div class="version">v8.30.586-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11024,7 +11024,16 @@ function _marcosNoPeriodo(deStr, ateStr){
 const TIMELINE_FEED_COR={criado:'#ffd166', movido:'#38b6ff', concluido:'var(--teal)', prioridade:'#ff9800', impedido:'#ff6b6b', desimpedido:'#4ade80', checklist:'#a78bfa'};
 function _timelineFeedRow(m){
   const nomeCol=id=>columns.find(x=>x.id===id)?.name||id||'—';
-  const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  // Achado real (usuário, print de um período de vários dias): só a hora
+  // ("🕐 09:01") não diz QUAL dia — com "de"/"até" diferentes (📜
+  // Histórico aceita qualquer período passado, não só "hoje"), cada
+  // marco precisa da data também. Período de 1 dia só (o caso mais
+  // comum, inclusive o duplo-clique num dia da Timeline) continua só com
+  // a hora, sem redundância.
+  const multiDia = _timelineFeedState && _timelineFeedState.deStr!==_timelineFeedState.ateStr;
+  const hora = multiDia
+    ? new Date(m.at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    : new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   // Achado real (relato do usuário com print, 2026-09-04): título do card e
   // o texto da ação (movido/concluído/etc.) tinham a MESMA cor/peso —
   // difícil escanear onde um termina e o outro começa, principalmente em

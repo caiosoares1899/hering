@@ -177,6 +177,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-title{font-family:"DM Sans",sans-serif;font-size:20px;font-weight:600;}
 .hd-sub{font-size:11px;color:var(--txt3);}
 .badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+/* 🌴 Vice City: var(--cyan) vira o rosa-poeira #B36B6E nesse tema — tom
+   médio que perde força contra o fundo também rosa/mauve (var(--glass)),
+   número/contagem ilegível dentro do badge (achado real, print do
+   usuário). Mesmo diagnóstico e mesma correção já aplicados a
+   .hd-badge/.col-cnt no kanban-dev.html: var(--txt) (branco) resolve sem
+   precisar !important (badge não tem estilo inline por cima). */
+[data-theme="vice"] .badge{color:var(--txt);}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;font-size:12px;
   font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);
   background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);}
@@ -291,7 +298,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pt-row-title{font-size:13px;font-weight:600;color:var(--txt);line-height:1.4;}
 .pt-row-meta{font-size:11.5px;font-weight:400;color:var(--txt2);margin-top:3px;line-height:1.35;}
 .pt-tag{display:inline-block;font-size:9px;padding:2px 7px;border-radius:999px;margin-right:3px;margin-top:2px;font-weight:700;border:1px solid transparent;}
-.pt-avatar{width:18px;height:18px;border-radius:50%;background:rgba(37,99,201,.85);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;}
+.pt-avatar{width:18px;height:18px;border-radius:50%;background:rgba(37,99,201,.85);border:1px solid rgba(56,182,255,.3);display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:700;color:#fff;flex-shrink:0;overflow:hidden;}
+.pt-avatar img{width:100%;height:100%;object-fit:cover;}
 /* Ação (movido/concluído/...) dentro de uma linha de feed — mesma receita já
    calibrada em .pt-row-meta/.meudia-row-meta (kanban-dev.html), reusada de
    propósito: var(--txt) + peso normal + opacity reduzida funciona nos 3
@@ -2516,7 +2524,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.15 · painel-dev</div>
+<div class="version">v3.16 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8086,6 +8094,25 @@ const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
 // próprio board) -- não inclui 'adm' (vem só da whitelist ADM_EMAILS) nem
 // 'convidado' (definido automaticamente pelo domínio do email).
 const SQUAD_ROLES = ['membro','organizador','po'];
+// Deriva members (init/nome/email/foto) de UM squad a partir de
+// _globalUsersCache — achado real (usuário: "timeline em painel ta sem
+// foto das pessoas"): _applySquadDados() (o caminho de verdade pra
+// squads fixas via loadAll()/60s poll) NUNCA preenchia
+// squadData[sqId].members — só loadSquadData() (usada só pra squad NOVA
+// criada em runtime) preenchia, com um fetch próprio que também não
+// trazia foto. Resultado: pra toda squad fixa (dev/omnichannel aqui,
+// dados/prf/midiacriativa em prod), resolveOwnerName()/
+// _painelOwnerAvatarHtml() nunca tinham member nenhum pra consultar —
+// sempre caíam no fallback (iniciais cruas, nunca foto). Reusa
+// _globalUsersCache (já carregado sem custo extra por loadGlobalUsers(),
+// chamado junto com loadAll() na inicialização) em vez de mais um fetch
+// por squad — mesmo filtro de "pertence a este squad" que
+// loadSquadData() já usa.
+function _squadMembersFromGlobalCache(sqId){
+  return Object.values(_globalUsersCache).filter(u=>
+    u.inscrito||u.squads?.[sqId]||u.role==='adm'
+  ).map(u=>({init:u.init||'', name:u.nome||u.email||'', email:u.email||'', foto:u.foto||''}));
+}
 
 function openGlobalUsersModal(){
   if(_blockIfPainelViewer()) return;
@@ -8100,8 +8127,18 @@ function loadGlobalUsers(){
   window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
     _dbgTrack('usuarios', snap.val());
     _globalUsersCache = snap.val() || {};
+    // Re-deriva members (init/nome/foto) de toda squad já carregada — ver
+    // comentário de _squadMembersFromGlobalCache() acima. Cobre a corrida
+    // em que _applySquadDados() roda ANTES deste listener popular o cache
+    // pela 1ª vez (a squad já apareceu com members vazio; assim que o
+    // cache chega, os avatares corrigem sozinhos, sem esperar o próximo
+    // poll manual).
+    Object.keys(squadData).forEach(sqId=>{
+      if(squadData[sqId]) squadData[sqId].members=_squadMembersFromGlobalCache(sqId);
+    });
     renderGlobalUsers();
     if(typeof renderKudosPainel==='function') renderKudosPainel();
+    renderAll();
   });
 }
 
@@ -8320,6 +8357,13 @@ function _applySquadDados(sqId, val){
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
+    // Achado real (usuário: "timeline em painel ta sem foto das pessoas")
+    // — este é o caminho de verdade pra squads fixas (via loadAll(),
+    // diferente de loadSquadData(), só pra squad nova criada em runtime),
+    // e nunca preenchia members antes — ver _squadMembersFromGlobalCache().
+    // Se o cache global ainda não chegou na 1ª chamada, fica vazio por
+    // enquanto; loadGlobalUsers() corrige assim que o cache popular.
+    members: _squadMembersFromGlobalCache(sqId),
   };
   renderAll();
   if(cfgSquadId===sqId) updateFlowBaselineLabel();
@@ -9121,8 +9165,13 @@ function _ptTagsHtml(sqId, c){
     return `<span class="pt-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span>`;
   }).join('');
 }
-function _painelOwnerAvatarHtml(ownerInit){
+function _painelOwnerAvatarHtml(ownerInit, sqId){
   if(!ownerInit) return `<div class="pt-avatar" style="opacity:.25;">?</div>`;
+  // Foto de verdade quando existe (mesmo padrão de _ownerAvatarHtml() no
+  // kanban-dev.html) — precisa do sqId porque members é POR squad; sem
+  // membro achado (ou sem foto cadastrada), cai nas iniciais como sempre.
+  const m=(squadData[sqId]?.members||[]).find(x=>x.init===ownerInit);
+  if(safeUrl(m?.foto)) return `<div class="pt-avatar"><img src="${safeUrl(m.foto)}"></div>`;
   return `<div class="pt-avatar" title="${esc(ownerInit)}">${esc(ownerInit)}</div>`;
 }
 function _painelTimelineRow(c, sq, hojeStr){
@@ -9145,7 +9194,7 @@ function _painelTimelineRow(c, sq, hojeStr){
   const tagsRow=_ptTagsHtml(sq.id, c);
   return `<div class="pt-row" onclick="openPcModal('${sq.id}','${c.id}')">
     <div style="display:flex;gap:9px;align-items:flex-start;">
-      ${_painelOwnerAvatarHtml(c.owner)}
+      ${_painelOwnerAvatarHtml(c.owner, sq.id)}
       <div style="flex:1;min-width:0;">
         <div class="pt-row-title">${esc(c.title)}${prioBadge}${blockedBadge}</div>
         <div class="pt-row-meta">${sq.icon} ${esc(sq.label.replace('Squad ',''))} · ${esc(colName)}${c.owner?' · '+esc(resolveOwnerName(c.owner,sq.id)):''}${prazoMeta}</div>
@@ -9324,7 +9373,15 @@ function _ptMarcosNoPeriodo(deStr, ateStr){
 function _ptFeedRow(m){
   const sq=m.squad, d=squadData[sq.id];
   const nomeCol=id=>d?.columns?.find(x=>x.id===id)?.name||id||'—';
-  const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  // Achado real (usuário, print de um período de vários dias): só a hora
+  // ("🕐 09:01") não diz QUAL dia — com "de"/"até" diferentes (qualquer
+  // período passado, não só "hoje"), cada marco precisa da data também.
+  // Período de 1 dia só (o caso mais comum, inclusive o antigo duplo-
+  // clique num dia da Timeline) continua só com a hora, sem redundância.
+  const multiDia = _ptFeedState && _ptFeedState.deStr!==_ptFeedState.ateStr;
+  const hora = multiDia
+    ? new Date(m.at).toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})
+    : new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
   let icone, texto;
   if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:'')+`</span>`; }
   else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b><span class="pt-feed-action"> foi concluído — ${esc(nomeCol(m.to))}</span>`; }
@@ -9342,7 +9399,7 @@ function _ptFeedRow(m){
   const tagsRow=_ptTagsHtml(sq.id, card);
   return `<div class="pt-row" style="border-left:3px solid ${PT_TIMELINE_FEED_COR[m.tipo]};" onclick="closePainelFeed();openPcModal('${sq.id}','${esc(card.id)}')">
     <div style="display:flex;gap:9px;align-items:flex-start;">
-      ${_painelOwnerAvatarHtml(card.owner)}
+      ${_painelOwnerAvatarHtml(card.owner, sq.id)}
       <div style="flex:1;min-width:0;">
         <div class="pt-row-title">${icone} ${texto}${prioBadge}${blockedBadge}</div>
         <div class="pt-row-meta">🕐 ${hora} · ${sq.icon} ${esc(sq.label.replace('Squad ',''))}${card.owner?' · '+esc(resolveOwnerName(card.owner,sq.id)):''}</div>
@@ -9691,7 +9748,7 @@ function loadSquadData(sqId){
       const usVal=us.val()||{};
       squadData[sqId].members=Object.values(usVal).filter(u=>
         u.inscrito||u.squads?.[sqId]||u.role==='adm'
-      ).map(u=>({init:u.init||'',name:u.nome||u.email||'',email:u.email||''}));
+      ).map(u=>({init:u.init||'',name:u.nome||u.email||'',email:u.email||'',foto:u.foto||''}));
     }).catch(()=>{});
     renderAll();
   });
