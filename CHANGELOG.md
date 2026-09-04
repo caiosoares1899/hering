@@ -2727,6 +2727,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.575-dev — 2026-09-04 — 📜 Histórico: Feed de marcos agora aceita qualquer dia OU período do passado
+
+Pedido direto do usuário: "uma coisa q eu acho q faltou! ter uma opção de
+a pessoa setar a data (um dia ou um período) e conseguir visualizar as
+movimentações do dia! mt pensando em histórico 'oq sera q a gente fez no
+dia da básica de 2025?'; 'o q será q a gente fez na semana do cliente de
+2024?'".
+
+O Feed de marcos só era alcançável via duplo clique num dia da Timeline
+(Hoje/Amanhã/buckets futuros) — não dava pra investigar um dia ou
+período qualquer do passado. Generalizado:
+
+- `_marcosDoDia(dateStr)` → `_marcosNoPeriodo(deStr, ateStr)` (de/ate
+  inclusive nos dois lados; de===ate é o caso de 1 dia só de sempre).
+- `_timelineFeedState` mudou de `{dateStr,labelStr}` pra
+  `{deStr,ateStr,labelStr}`; `openTimelineFeed()` mudou de assinatura —
+  agora recebe `(deStr, ateStr, labelStr)`.
+- **Novo botão "📜 Histórico"** na barra de topo da Timeline: abre o Feed
+  já no modo período (começa hoje/hoje).
+- **Seletor de datas sempre visível** dentro do próprio Feed (`#tf-de`/
+  `#tf-ate` + "🔍 Buscar") — dá pra alargar/trocar o período sem fechar o
+  modal, inclusive depois de um duplo-clique num dia específico da
+  Timeline. Troca de período reseta o filtro do Feed (responsável/
+  subtime/tag/tipo/só eu), mesma razão de sempre: evita achar que "não
+  teve nada" quando na verdade um filtro antigo é que não bate mais.
+
+**Confirmado antes de prometer no HELP_CONTENT** (lendo `purgeOldArchived()`/
+`deleteSelectedOldCards()` em vez de assumir): não tem limite de quão pra
+trás dá pra buscar. Cards só saem de `cards` se alguém excluir de vez em
+"🧹 Cards antigos" — ação MANUAL, exige digitar "EXCLUIR" pra confirmar,
+threshold padrão de 2 ANOS. Arquivamento normal (`archived:true`, manual
+ou automático por idade) nunca remove do array, só esconde do board
+ativo — então "o que a gente fez há 1 ano" normalmente ainda está tudo
+ali, mesmo se os cards já tiverem sido arquivados havia muito tempo.
+
+Testado com Playwright: card sintético com marco de exatamente 1 ano
+atrás (simulando "o dia da Básica de 2025") — botão "📜 Histórico" abre
+com hoje/hoje, busca do período de 1 ano atrás encontra o card
+corretamente (2 marcos: criado + concluído), duplo-clique em "Hoje" na
+Timeline continua funcionando no modo de 1 dia só, e busca com data
+inicial depois da final é rejeitada com um toast (sem quebrar o modal).
+`HELP_CONTENT` (entrada "Timeline") e `CODE_MAP.md` atualizados. Checks
+de rotina: `node --check` OK, balanço de chaves/parênteses igual ao
+baseline da sessão (braces -1, parens +1).
+
 ### v8.30.574-dev — 2026-09-04 — Timeline: buckets progressivos, ação no lugar (prazo/adiar) e marcos de contexto
 
 A partir de uma consultoria técnica externa pedida pelo usuário sobre a
