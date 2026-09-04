@@ -505,6 +505,38 @@ detalhe dos 4 call sites.
     (genérica) quando passou a servir tanto "Sem prazo" quanto "Concluído
     recente"; `.timeline-event-marker` nova (divisor de marco de
     contexto), perto de L2196.
+- **📜 Histórico (dia ou período qualquer, inclusive bem no passado)**
+  (2026-09-04, pedido direto do usuário: "faltou... ter uma opção de a
+  pessoa setar a data (um dia ou um período)... 'o que será que a gente
+  fez no dia da Básica de 2025?'") — generaliza o Feed de marcos pra
+  aceitar um INTERVALO de datas, não só 1 dia exato:
+  - `_marcosDoDia(dateStr)` virou `_marcosNoPeriodo(deStr, ateStr)` (de/ate
+    inclusive nos dois lados; de===ate é o caso de sempre de 1 dia só).
+  - `_timelineFeedState` mudou de `{dateStr,labelStr}` pra
+    `{deStr,ateStr,labelStr}`; `openTimelineFeed()` mudou de assinatura
+    — agora `openTimelineFeed(deStr, ateStr, labelStr)` — único call site
+    (duplo-clique num dia da Timeline, dentro de `secao()` em
+    `renderTimelineView()`) atualizado pra passar a mesma data duas vezes.
+  - `abrirHistoricoPeriodo()` — botão novo "📜 Histórico" na barra de topo
+    da Timeline (`.timeline-actions`), abre o Feed já em modo período
+    (começa hoje/hoje). `_timelineFeedBuscarPeriodo()` lê `#tf-de`/`#tf-ate`
+    (validando de<=ate) e re-renderiza; reseta o filtro do Feed ao trocar
+    de período (mesma razão de `openTimelineFeed()` já resetar: evita
+    achar que "não teve nada" quando na verdade um filtro antigo não bate
+    com o período novo). `_timelinePeriodoLabel(deStr,ateStr)` calcula o
+    título quando não veio um `labelStr` explícito (Hoje/Amanhã/data
+    única formatada/"DD/MM a DD/MM").
+  - Seletor de datas (`#tf-de`/`#tf-ate` + "🔍 Buscar") fica SEMPRE visível
+    dentro de `_renderTimelineFeed()`, mesmo com 0 marcos no período atual
+    — pra dar pra trocar a data e tentar de novo sem fechar o modal.
+  - **Sem limite de quão pra trás dá pra buscar** — cards só saem de
+    `cards` se alguém excluir de vez via "🧹 Cards antigos" →
+    `purgeOldArchived()` (ação MANUAL, confirmação digitando "EXCLUIR",
+    threshold padrão de 2 ANOS) ou `deleteSelectedOldCards()` — confirmado
+    lendo o código antes de prometer isso no HELP_CONTENT, não assumido.
+    `archived:true` sozinho (arquivamento normal/automático) NUNCA
+    remove do array, só esconde do board ativo — `_marcosNoPeriodo()` já
+    não filtra `archived` de propósito (herdado de `_marcosDoDia`).
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
