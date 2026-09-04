@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.575-dev</div>
+<div class="version">v8.30.576-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7970,6 +7970,22 @@ function recordMove(card, toCol, atISO){
   if(toCol===doneId){ card.flow.doneAt = at; }
   else if(card.flow.doneAt && from===doneId){ card.flow.doneAt = null; }
   card._lastFlowCol = toCol;
+  // Regra geral pedida pelo usuário (2026-09-04): "se o card está
+  // concluído, automaticamente ele é desimpedido" — vale pra TODOS os
+  // squads, já que recordMove() é o único ponto por onde toda
+  // movimentação de coluna passa (drag, menu de contexto, modal, ações em
+  // massa, criação de card). Só se aplica no modo "tag": no modo "col"
+  // isso já é automático de graça — um card só fica numa coluna por vez,
+  // então entrar em Concluído já significa ter saído de Impedimentos.
+  // from!==toCol evita disparar na CRIAÇÃO do card (recordMove(novo,
+  // novo.col) chega aqui com from===toCol, sem transição de verdade).
+  // Mesmos campos/mensagem de história que _doBulkUnblockTag() já usa,
+  // pra ficar indistinguível de uma remoção manual no histórico do card.
+  if(blockerMode==='tag' && card.blocker && from!==toCol && _isColDone(toCol)){
+    card.blocker=false;
+    card.blockerReason='';
+    recordHistory(card,'impedimento removido automaticamente (card concluído)');
+  }
 }
 // Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
 function backfillFlow(card){
@@ -23043,7 +23059,7 @@ const HELP_CONTENT = {
     { icon:'📱', title:'Reordenar colunas no celular', text:'Mesmo gesto dos cards: segure o dedo no cabeçalho da coluna até ela "levantar" e então arraste pra esquerda ou direita, soltando na metade da coluna vizinha onde quer posicioná-la.' },
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
-    { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.' },
+    { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: só o botão do modal (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
