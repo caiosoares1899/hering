@@ -12307,6 +12307,46 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.09 · painel — 2026-09-04 · promove pra prod — 🛤️ Timeline agregada + fix de contraste no Vice City
+
+Promove pra produção o lote v3.11-dev/v3.12-dev de `painel-dev.html`
+(validado pelo usuário: "pode subir painel prod! nao subir kanban
+prod ainda"). Resumo pra quem usa o painel:
+
+- **🛤️ Nova aba "Timeline"** — mostra os cards ativos de **todas as
+  squads juntas**, organizados por prazo nos mesmos buckets progressivos
+  do board individual (🔴 Atrasado, 📅 Hoje/Amanhã, 🗓️ Resto/Próxima
+  semana, ⏳ Depois, 🗂 Sem prazo). Respeita o mesmo filtro de squad/
+  gerência da aba 👁 Visão; clique no card abre o mesmo modal de info já
+  usado em Bloqueios, com link pra editar no board de origem.
+- **Contraste corrigido no tema 🌴 Vice City** — as abas Monitor/Dados/
+  Agentes e os 3 botões de admin do cabeçalho (Backup/Novo board/
+  Usuários) estavam ilegíveis nesse tema (cor de destaque muito próxima
+  do tom do próprio fundo); agora usam o texto quase-branco padrão do
+  tema, igual ao resto da UI.
+
+**Nota de promoção não-padrão** (mesmo padrão da v3.08 — `painel.html`/
+`painel-dev.html` não ficam em lockstep, ver `CODE_MAP.md`): a promoção
+não foi um `cp` direto. Aplicadas manualmente em `painel.html` apenas as
+2 mudanças validadas (tab/pane + funções `renderPainelTimeline()`/
+`_painelTimelineRow()`/`_painelTimelineFimSemana()`, e o override CSS
+`[data-theme="vice"]`), preservando os recursos exclusivos de prod
+(`_pushHistReenviar`/"🔔 Enviar push manual",
+`VISIBILITY_REFRESH_COOLDOWN_MS`) e sem importar nada exclusivo de dev
+(banner "PAINEL DEV", paths `_dev`, squads fictícias `dev`/
+`omnichannel`, seeds de Mural de teste). Conferido depois: `diff
+painel.html painel-dev.html` não mostra nenhuma linha relacionada a
+`ptab-timeline`/`ppane-timeline`/`renderPainelTimeline`/
+`#ptab-monitor`/`.hd-btn-adm` — as duas cópias batem nesse ponto.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright direto em `painel.html`, com o SQUADS/squadData reais de prod
+(dados/prf/midiacriativa): agregação cross-squad, categorização nos
+buckets, filtro por squad, clique abrindo o modal certo, e as cores do
+Vice City resolvendo pro texto quase-branco esperado — 0 erros de
+console.
+
 ### painel-dev.html v3.12 · painel-dev — 2026-09-04 · fix: contraste no 🌴 Vice City (Monitor/Dados/Agentes/botões do header)
 
 Achado real do usuário testando a v3.11-dev: "monitor, dados e agentes n

@@ -1018,7 +1018,7 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Aba "🛤️ Timeline" (2026-09-04, só painel-dev.html v3.11-dev por enquanto — não promovida pra prod)
+### Aba "🛤️ Timeline" (2026-09-04, presente nos dois arquivos — promovido pra prod v3.09 · painel)
 Timeline agregada cross-squad, versão do painel da Timeline que já existe
 em `kanban.html` (ver seção correspondente no `CODE_MAP.md` de lá) —
 mesmos buckets progressivos, mas somando cards de TODAS as squads visíveis
@@ -1069,6 +1069,16 @@ flutuante (`rgba(6,26,46,...)`/`rgba(8,22,42,...)`/`rgba(1,8,16,...)` e
 variações), que continuam hardcoded — próxima rodada de contraste, se
 necessário. Sem favicon próprio do Vice City (painel usa favicon de
 emoji via data-URI, não arquivo `.png` como o kanban) — fora de escopo.
+
+**Fix de contraste no Vice City (2026-09-04, presente nos dois arquivos —
+promovido pra prod v3.09)**: achado real do usuário ("monitor, dados e
+agentes n da pra ler... backup tb n da pra ler") — as abas `#ptab-monitor`/
+`#ptab-dados`/`#ptab-agentes` e os 3 botões `.hd-btn-adm` do cabeçalho
+(Backup/Novo board/Usuários) fixam cor de destaque via `style` inline
+(`--danger`/`--cyan`/`--accent`/`--teal`/`--warn`), que no Vice City é da
+mesma família de tom do fundo `.ocean` — sem contraste. Override
+`[data-theme="vice"] #ptab-monitor, ..., .hd-btn-adm { color:var(--txt)
+!important; }`, logo após o bloco `[data-theme="vice"] .ocean{}` acima.
 
 **Achados incidentais da promoção pra prod (v3.08 · painel, 2026-09-03)**,
 divergência real e pré-existente entre os 2 arquivos (não causada por
