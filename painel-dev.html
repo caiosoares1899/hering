@@ -527,20 +527,28 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 .err-filters::-webkit-scrollbar{display:none;}
 
-.pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(1,8,16,.88);
+/* Achado real (usuário, print em modo claro E Vice City: "vc esqueceu de
+   mexer nessa tela do histórico"): fundo/borda hardcoded (rgba fixo, não
+   var(...)) — mesma classe de bug já documentada no topo do arquivo pra
+   "vários painéis/modais/dropdowns do painel" (rodada de contraste do
+   tema claro ainda incompleta). .pc-modal-ov/.pc-modal são usados tanto
+   pelo modal de card quanto pelo 📜 Histórico (mesmas classes) — corrige
+   os dois de uma vez. .login-ov (acima) já fazia certo
+   (rgba(var(--deep-rgb),...)), usado aqui de referência. */
+.pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(var(--deep-rgb),.88);
   backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .pc-modal-ov.open{display:flex;}
 
 /* ── PANEL CARDS (OKR, Bloqueios, Riscos) ──────────────────────── */
 .pc-modal{
-  background:rgba(8,28,52,.98);border:1px solid rgba(56,182,255,.18);
+  background:rgba(var(--ink-rgb),.95);border:1px solid var(--glass-b);
   border-radius:16px;width:min(560px,92vw);max-height:85vh;
   display:flex;flex-direction:column;
   box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;
 }
 .pc-modal-hd{
   display:flex;align-items:flex-start;gap:10px;
-  padding:16px 20px 14px;border-bottom:1px solid rgba(56,182,255,.1);
+  padding:16px 20px 14px;border-bottom:1px solid var(--glass-b);
   flex-shrink:0;
 }
 .pc-modal-hd-title{
@@ -584,7 +592,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .pc-cl-fill{height:100%;background:var(--teal);border-radius:999px;}
 .pc-cl-item{font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:2px 0;}
 .pc-cl-item.done{color:var(--teal);}
-.pc-footer{padding:12px 20px;border-top:1px solid rgba(56,182,255,.1);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
+.pc-footer{padding:12px 20px;border-top:1px solid var(--glass-b);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0;}
 
 /* ── OKR / BLOQUEIO / RISCO TILE CARDS ────────────────────────── */
 .panel-card{
@@ -2524,7 +2532,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.16 · painel-dev</div>
+<div class="version">v3.17 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

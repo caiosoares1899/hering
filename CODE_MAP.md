@@ -1258,6 +1258,11 @@ painel-dev pro detalhamento completo. Resumo:
 - `_ptFeedRow()`: quando o período do Histórico tem mais de 1 dia, a
   hora vira `DD/MM HH:mm` (mesmo fix espelhado em `_timelineFeedRow()`
   do kanban-dev.html).
+- `.pc-modal-ov`/`.pc-modal`/`.pc-modal-hd`/`.pc-footer` (perto de L530)
+  — fundo/borda hardcoded (não `var(...)`) ficavam incoerentes nos temas
+  claro/Vice City; passam a usar `rgba(var(--deep-rgb),...)`/
+  `rgba(var(--ink-rgb),...)`/`var(--glass-b)`. Afeta os DOIS modais que
+  usam essas classes (card + 📜 Histórico).
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
