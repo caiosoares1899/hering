@@ -271,6 +271,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin-bottom:12px;
   display:flex;align-items:center;gap:8px;}
 .sec-title .badge{font-size:9px;}
+/* ═══ TIMELINE (painel): buckets colapsáveis ═══ — pedido direto do
+   usuário: "acho ruim o filtro ficar em outra aba... como sao muitas
+   informações, tem q ter uma outra forma de expor... talvez um botao que
+   colapse logo em cima". Marcador nativo do <summary> escondido, chevron
+   próprio (gira 90° quando aberto) — mais confiável entre navegadores que
+   o marcador default (que em alguns fica quase invisível). */
+.pt-bucket summary{list-style:none;cursor:pointer;}
+.pt-bucket summary::-webkit-details-marker{display:none;}
+.pt-chevron{display:inline-block;font-size:10px;color:var(--txt3);transition:transform .15s;}
+.pt-bucket[open] .pt-chevron{transform:rotate(90deg);}
 /* ═══ LEMBRETES (painel) ═══ */
 .lemp-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;}
 @media(max-width:760px){.lemp-wrap{grid-template-columns:1fr;}}
@@ -1480,16 +1490,21 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <!-- Timeline geral, agregando todas as squads — pedido direto do usuário:
        "evoluir esse bicho... fazer essa timeline geral la no painel!
        agrupando as squads e criando filtros (lembra daquele filtro por
-       gerência tb)". Respeita o MESMO activeFilter/squadVisible() das
-       outras abas (Fluxo/Dados/etc. já seguem esse padrão — o filtro de
-       squad/gerência mora só na aba Visão, as outras só o RESPEITAM, não
-       duplicam a barra) — trocar o filtro na Visão já reflete aqui. -->
+       gerência tb)". 2ª rodada (UI/UX), pedido direto: "a timeline no
+       painel ta mt ruim de ui/ux!... acho ruim o filtro ficar em outra
+       aba... como sao muitas informações, tem q ter uma outra forma de
+       expor... talvez um botao que colapse logo em cima". Agora tem
+       filtro PRÓPRIO (#pt-filter-select, sincronizado com o mesmo
+       activeFilter/setFilter() global — não é um filtro paralelo, só
+       outro controle pro MESMO estado, pra não precisar trocar de aba) e
+       buckets colapsáveis (estado lembrado entre renders, ver
+       _painelTimelineOpen em renderPainelTimeline()). -->
   <div class="ptab-pane" id="ppane-timeline">
-    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
+    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span>🛤️ Timeline geral (todas as squads)</span>
-      <span style="font-size:10px;color:var(--txt3);font-weight:400;">Filtro de squad/gerência: aba 👁 Visão</span>
+      <select id="pt-filter-select" onchange="setFilter(this.value)" title="Filtra por squad ou gerência — mesmo filtro da aba 👁 Visão" style="padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;"></select>
     </div>
-    <div id="pt-stats" style="display:flex;flex-wrap:wrap;gap:14px;font-size:11px;color:var(--txt2);margin-bottom:16px;padding:10px 14px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;"></div>
+    <div id="pt-stats" style="display:flex;flex-wrap:wrap;gap:14px;align-items:center;font-size:11px;color:var(--txt2);margin-bottom:16px;padding:10px 14px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;"></div>
     <div id="pt-buckets"></div>
   </div><!-- /ppane-timeline -->
 
@@ -2414,7 +2429,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.12 · painel-dev</div>
+<div class="version">v3.13 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8857,21 +8872,45 @@ function renderBlockers(){
 // ── TIMELINE GERAL (TODAS AS SQUADS) ──────────────────────────────
 // Agregação cross-squad da Timeline já existente em kanban-dev.html
 // (buckets progressivos: Atrasado/Hoje/Amanhã/Resto da semana/Próxima
-// semana/Depois/Sem prazo). v1, escopo deliberadamente reduzido:
-// - Reaproveita 100% o filtro de squad/gerência já global (activeFilter/
-//   squadVisible(), aba 👁 Visão) — não duplica UI de filtro aqui, só
-//   respeita o estado já existente, mesmo padrão que renderBlockers()
-//   já segue.
+// semana/Depois/Sem prazo). Escopo ainda reduzido em relação à Timeline
+// do board individual:
 // - Reaproveita squadData já carregado via polling de 60s — zero leitura
 //   nova no Firebase.
 // - Clique no card abre openPcModal() (mesmo padrão read-only + link pra
 //   editar em kanban.html que o resto do painel já usa) — sem "ação no
 //   lugar" (editar prazo inline) nem marcos de contexto/Feed de marcos
-//   do kanban-dev.html nesta v1; ambos ficam como possível evolução.
+//   do kanban-dev.html; ambos ficam como possível evolução.
 // - "Concluído" usa a mesma simplificação c.col==='done' que o resto do
 //   painel já usa (renderSquadCards/renderColDist/etc.) — o painel nunca
 //   busca flowConfig por squad, então não introduz um 2º conceito de
 //   "done" só pra esta aba.
+//
+// Filtro: usa o MESMO activeFilter/setFilter()/squadVisible() global de
+// sempre (não é um filtro paralelo) — só ganhou um 2º controle
+// (#pt-filter-select, dentro desta própria aba) além dos botões da aba
+// Visão, porque trocar de aba toda vez só pra filtrar era ruim (pedido
+// direto do usuário). Os dois ficam sincronizados: mudar um reflete no
+// outro, porque ambos só leem/escrevem a mesma variável `activeFilter`.
+//
+// Buckets colapsáveis: `_painelTimelineOpen` guarda o estado aberto/
+// fechado de cada bucket entre renders (a poll de 60s reconstrói todo o
+// innerHTML de #pt-buckets, então sem esse estado a pessoa perderia
+// qualquer bucket que tivesse aberto manualmente a cada atualização).
+// Atrasado/Hoje começam abertos (o que mais precisa de atenção agora);
+// o resto começa fechado, pra reduzir a quantidade de informação exposta
+// de cara — pedido direto: "como sao muitas informações, tem q ter uma
+// outra forma de expor, se n vc demora muito para ler e se achar". Botão
+// "Recolher/Expandir tudo" (dentro de #pt-stats) alterna todos de uma vez.
+let _painelTimelineOpen = { atrasado:true, hoje:true, amanha:false, resto:false, prox:false, depois:false, semPrazo:false };
+function _painelTimelineSetOpen(key, isOpen){
+  _painelTimelineOpen[key]=isOpen;
+}
+function _painelTimelineToggleAll(){
+  const maioriaAberta = Object.values(_painelTimelineOpen).filter(Boolean).length >= Object.keys(_painelTimelineOpen).length/2;
+  const novoEstado = !maioriaAberta;
+  Object.keys(_painelTimelineOpen).forEach(k=>_painelTimelineOpen[k]=novoEstado);
+  renderPainelTimeline();
+}
 function _painelTimelineFimSemana(baseDate){
   const d=new Date(baseDate);
   d.setDate(d.getDate()+(6-d.getDay()));
@@ -8931,30 +8970,52 @@ function renderPainelTimeline(){
   const restoSemana=elegiveis.filter(c=>c.due && c.due>amanhaStr && c.due<=fimSemanaStr);
   const proxSemana=elegiveis.filter(c=>c.due && c.due>fimSemanaStr && c.due<=fimProxSemanaStr);
   const depois=elegiveis.filter(c=>c.due && c.due>fimProxSemanaStr);
+  const totalAbertos=Object.values(_painelTimelineOpen).filter(Boolean).length;
+  const totalBuckets=Object.keys(_painelTimelineOpen).length;
+  const vaiExpandir = totalAbertos < totalBuckets/2;
   statsEl.innerHTML=`
     <span>📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}</span>
     ${atrasados.length?`<span style="color:var(--danger);">🔴 <b>${atrasados.length}</b> atrasado${atrasados.length!==1?'s':''}</span>`:''}
     ${semPrazo.length?`<span style="color:var(--txt3);">🗂 <b>${semPrazo.length}</b> sem prazo</span>`:''}
+    <button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 10px;margin-left:auto;" onclick="_painelTimelineToggleAll()">${vaiExpandir?'🔽 Expandir tudo':'🔼 Recolher tudo'}</button>
   `;
+  // Filtro local (#pt-filter-select) — mesmo activeFilter/setFilter() global
+  // da aba Visão, só outro controle pro mesmo estado (ver comentário acima
+  // da seção). Reconstruído a cada render pra sempre refletir SQUADS/
+  // GERENCIAS atuais (squad nova criada em runtime já aparece aqui) e o
+  // valor sincronizado com activeFilter, inclusive quando ele mudou pela
+  // aba Visão.
+  const selEl=document.getElementById('pt-filter-select');
+  if(selEl){
+    selEl.innerHTML = `<option value="all">🏠 Todos</option>`
+      + SQUADS.map(sq=>`<option value="${esc(sq.id)}">${sq.icon} ${esc(sq.label)}</option>`).join('')
+      + GERENCIAS.map(g=>`<option value="${esc(g.id)}">${g.icon} ${esc(g.label)}</option>`).join('');
+    selEl.value = activeFilter;
+  }
   const ordenaCronologico=lista=>lista.slice().sort((a,b)=>(a.due||'').localeCompare(b.due||'')||(a.title||'').localeCompare(b.title||''));
-  const secao=(titulo,icone,corBorda,lista)=>{
+  // Buckets viram <details> colapsáveis, estado lembrado em
+  // _painelTimelineOpen (ver comentário acima da seção) — `key` identifica
+  // cada bucket nesse objeto; ontoggle atualiza o estado quando a pessoa
+  // clica manualmente (inclusive o clique que o próprio render acabou de
+  // aplicar via o atributo `open`, idempotente).
+  const secao=(key,titulo,icone,corBorda,lista)=>{
     if(!lista.length) return '';
-    return `<div class="sec-title" style="border-left:3px solid ${corBorda};padding-left:8px;margin-top:14px;">${icone} ${titulo} <span class="badge">${lista.length}</span></div>
-    <div class="grid-2" style="margin-bottom:10px;">${ordenaCronologico(lista).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>`;
+    const aberto=_painelTimelineOpen[key];
+    return `<details class="pt-bucket" style="margin-top:10px;" ${aberto?'open':''} ontoggle="_painelTimelineSetOpen('${key}', this.open)">
+      <summary class="sec-title" style="border-left:3px solid ${corBorda};padding-left:8px;">
+        <span class="pt-chevron">▸</span> ${icone} ${titulo} <span class="badge">${lista.length}</span>
+      </summary>
+      <div class="grid-2" style="margin-top:8px;margin-bottom:4px;">${ordenaCronologico(lista).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
+    </details>`;
   };
   let html='';
-  html+=secao('Atrasado','🔴','#ff6b6b',atrasados);
-  html+=secao('Hoje','📅','#38b6ff',hojeGrupo);
-  html+=secao('Amanhã','📅','#38b6ff',amanhaGrupo);
-  html+=secao('Resto da semana','🗓️','#7ec8e3',restoSemana);
-  html+=secao('Próxima semana','🗓️','#a78bfa',proxSemana);
-  html+=secao('Depois','⏳','#8899aa',depois);
-  if(semPrazo.length){
-    html+=`<details style="margin-top:14px;">
-      <summary class="sec-title" style="cursor:pointer;list-style:none;">🗂 Sem prazo definido <span class="badge">${semPrazo.length}</span></summary>
-      <div class="grid-2" style="margin-top:8px;">${ordenaCronologico(semPrazo).map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
-    </details>`;
-  }
+  html+=secao('atrasado','Atrasado','🔴','#ff6b6b',atrasados);
+  html+=secao('hoje','Hoje','📅','#38b6ff',hojeGrupo);
+  html+=secao('amanha','Amanhã','📅','#38b6ff',amanhaGrupo);
+  html+=secao('resto','Resto da semana','🗓️','#7ec8e3',restoSemana);
+  html+=secao('prox','Próxima semana','🗓️','#a78bfa',proxSemana);
+  html+=secao('depois','Depois','⏳','#8899aa',depois);
+  html+=secao('semPrazo','Sem prazo definido','🗂','#8899aa',semPrazo);
   bucketsEl.innerHTML = html || '<div style="font-size:11px;color:var(--txt3);padding:16px 0;">Nenhum card ativo pra mostrar com o filtro atual.</div>';
 }
 

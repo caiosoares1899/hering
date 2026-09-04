@@ -12343,6 +12343,44 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.13 · painel-dev — 2026-09-04 · Timeline: revisão de UI/UX (filtro local + buckets colapsáveis)
+
+Pedido direto do usuário testando a v3.09 (prod): "a timeline no painel
+ta mt ruim de ui/ux! revisa bem isso! acho ruim o filtro ficar em outra
+aba... alem disso, como sao muitas informações, tem q ter uma outra
+forma de expor, se n vc demora muito para ler e se achar nas
+informações! talvez um botao que colapse logo em cima, q ai vc consegue
+navegar melhor".
+
+- **Filtro de squad/gerência agora tem um controle NA PRÓPRIA aba
+  Timeline** (`#pt-filter-select`, canto superior direito do cabeçalho)
+  — não precisa mais trocar pra aba 👁 Visão pra filtrar. Não é um filtro
+  paralelo: lê e escreve a mesma variável `activeFilter`/`setFilter()`
+  global de sempre, então os dois controles (o da Visão e o da Timeline)
+  ficam sempre sincronizados — mudar um reflete no outro.
+- **Buckets viraram seções colapsáveis** (`<details>` com chevron
+  próprio, `▸`/rotação 90° quando aberto) — só "Atrasado" e "Hoje" (o
+  que mais precisa de atenção agora) começam abertos; Amanhã/Resto da
+  semana/Próxima semana/Depois/Sem prazo começam fechados, reduzindo de
+  cara a quantidade de informação exposta. Clicar em qualquer cabeçalho
+  abre/fecha só aquele bucket.
+- **Botão "🔼 Recolher tudo" / "🔽 Expandir tudo"** no canto direito da
+  barra de estatísticas — alterna todos os buckets de uma vez; o rótulo
+  já reflete a próxima ação (se a maioria estiver fechada, oferece
+  "Expandir tudo", e vice-versa).
+- **Estado de cada bucket é lembrado entre atualizações** (`_painelTimelineOpen`,
+  variável em memória) — sem isso, a poll de 60s (que reconstrói toda a
+  lista) fecharia de volta qualquer bucket que a pessoa tivesse aberto
+  manualmente, tornando o recurso frustrante de usar.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright: estado inicial correto (Atrasado/Hoje abertos, resto
+fechado), filtro local funcionando e sincronizado com `activeFilter`,
+toggle manual de um bucket sobrevivendo a um re-render simulado (poll),
+botão "Recolher/Expandir tudo" alternando todos e atualizando o próprio
+rótulo — 0 erros de console.
+
 ### painel.html v3.09 · painel — 2026-09-04 · promove pra prod — 🛤️ Timeline agregada + fix de contraste no Vice City
 
 Promove pra produção o lote v3.11-dev/v3.12-dev de `painel-dev.html`
