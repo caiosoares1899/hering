@@ -12560,6 +12560,28 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.17 · painel-dev — 2026-09-04 — 📜 Histórico: fundo/borda hardcoded ficavam errados nos temas claro e Vice City
+
+Achado real do usuário, com print dos dois temas: "vc esqueceu de mexer
+nessa tela do histórico nos modo claro e vice city!". `.pc-modal-ov`
+(fundo do backdrop) e `.pc-modal`/`.pc-modal-hd`/`.pc-footer` (o modal em
+si) usavam cor fixa (`rgba(1,8,16,.88)`/`rgba(8,28,52,.98)`/
+`rgba(56,182,255,...)`) em vez de `var(...)` — no tema claro o modal
+continuava escuro por baixo enquanto o CONTEÚDO (badges, filtros, linhas)
+já usa tokens de tema, criando uma mistura sem coerência (texto/fundo
+claro sobre casca escura); no Vice City o modal ficava um azul-marinho
+genérico, destoando da paleta rosa/mauve do resto do tema. Mesma classe
+de bug já registrada no topo do arquivo pra "vários painéis/modais/
+dropdowns do painel" (rodada de contraste do tema claro ainda
+incompleta) — `.login-ov` já fazia certo, usado de referência.
+
+`.pc-modal-ov`/`.pc-modal`/`.pc-modal-hd`/`.pc-footer` passam a usar
+`rgba(var(--deep-rgb),...)`/`rgba(var(--ink-rgb),...)`/`var(--glass-b)` —
+mesmas classes usadas tanto pelo modal de card quanto pelo 📜 Histórico
+(portado nesta sessão), corrige os dois de uma vez. Conferido visualmente
+por screenshot nos 3 temas (claro/escuro/Vice City) — escuro sem
+regressão, claro e Vice City agora coerentes com o resto de cada tema.
+
 ### painel-dev.html v3.16 · painel-dev — 2026-09-04 — 3 achados reais testando o redesenho da Timeline em produção
 
 3 problemas reportados pelo usuário logo depois de validar o redesenho
