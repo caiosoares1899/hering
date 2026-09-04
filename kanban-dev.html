@@ -5924,7 +5924,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.571-dev</div>
+<div class="version">v8.30.572-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10696,13 +10696,21 @@ function _timelineLabelForDate(dateStr, hojeStr){
 // o card na coluna. data-id fica no elemento pra highlightMyCards() ("💡 Meus
 // cards" da toolbar) também conseguir achar e pulsar linhas da Timeline, não
 // só cards do board de colunas.
+// Avatar do responsável, versão compacta reusável — extraído de dentro de
+// _timelineCardRow() quando o Feed de marcos (_timelineFeedRow(), logo
+// abaixo) passou a precisar do MESMO avatar. Não mexe no avHtml de
+// makeCardEl() (card real nas colunas) de propósito — lógica idêntica, mas
+// aquele é código maduro/sensível, mantido como está pra não arriscar
+// regressão numa refatoração que só serve às 2 views novas da Timeline.
+function _ownerAvatarHtml(ownerInit){
+  if(!ownerInit) return `<div class="avatar" style="opacity:.25;flex-shrink:0;">?</div>`;
+  const m=allIdentities().find(x=>x.init===ownerInit);
+  if(m?.isAgent) return `<div class="avatar agent-avatar" style="background:${_hexA(m.cor,.25)};border-color:${_hexA(m.cor,.5)};flex-shrink:0;" title="🤖 ${esc(m.name)}">${esc(m.avatarEmoji)}</div>`;
+  if(safeUrl(m?.foto)) return `<div class="avatar" style="flex-shrink:0;"><img src="${safeUrl(m.foto)}"></div>`;
+  return `<div class="avatar" style="flex-shrink:0;" title="${esc(ownerInit)}">${esc(ownerInit)}</div>`;
+}
 function _timelineCardRow(card){
   const col=columns.find(c=>c.id===card.col);
-  const m=allIdentities().find(m=>m.init===card.owner);
-  const avHtml=card.owner
-    ?(m?.isAgent?`<div class="avatar agent-avatar" style="background:${_hexA(m.cor,.25)};border-color:${_hexA(m.cor,.5)};flex-shrink:0;" title="🤖 ${esc(m.name)}">${esc(m.avatarEmoji)}</div>`
-      :safeUrl(m?.foto)?`<div class="avatar" style="flex-shrink:0;"><img src="${safeUrl(m.foto)}"></div>`:`<div class="avatar" style="flex-shrink:0;" title="${esc(card.owner)}">${esc(card.owner)}</div>`)
-    :`<div class="avatar" style="opacity:.25;flex-shrink:0;">?</div>`;
   const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
   const prioBadge=card.priority?`<span style="font-size:10px;margin-left:4px;" title="Prioridade">${prioMap[card.priority]||''}</span>`:'';
   const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-left:4px;" title="Impedido">🚧</span>':'';
@@ -10711,7 +10719,7 @@ function _timelineCardRow(card){
   const tagsRow=tagsHtml(card);
   return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard('${esc(card.id)}')">
     <div style="display:flex;gap:9px;align-items:flex-start;">
-      ${avHtml}
+      ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
         <div class="meudia-row-title">${esc(card.title)}${prioBadge}${blockedBadge}${superBadge}</div>
         <div class="meudia-row-meta">${esc(col?.name||card.col)}${card.owner?' · '+esc(card.owner):''}</div>
@@ -10751,6 +10759,13 @@ function _marcosDoDia(dateStr){
   });
   return marcos.sort((a,b)=>b.at.localeCompare(a.at)); // mais recente primeiro, estilo feed
 }
+// Cor por tipo de marco — canal redundante ao ícone (🆕/🔀/🏁), pedido
+// direto do usuário depois de testar a v1 ("falta mexer aqui no 'dia'"):
+// olhando o print real, o ícone de 🏁 concluído rendeiza como uma bandeirinha
+// genérica em alguns ambientes (sem o padrão xadrez), fácil de confundir com
+// aviso/pendência em vez de "terminado" — a borda colorida deixa o tipo
+// escaneável de relance mesmo se o emoji específico não render bem.
+const TIMELINE_FEED_COR={criado:'#ffd166', movido:'#38b6ff', concluido:'var(--teal)'};
 function _timelineFeedRow(m){
   const nomeCol=id=>columns.find(x=>x.id===id)?.name||id||'—';
   const hora=new Date(m.at).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -10758,10 +10773,21 @@ function _timelineFeedRow(m){
   if(m.tipo==='criado'){ icone='🆕'; texto=`<b>${esc(m.card.title)}</b> foi criado`+(m.card.created?` por ${esc(m.card.created)}`:''); }
   else if(m.tipo==='concluido'){ icone='🏁'; texto=`<b>${esc(m.card.title)}</b> foi concluído — ${esc(nomeCol(m.to))}`; }
   else { icone='🔀'; texto=`<b>${esc(m.card.title)}</b> moveu de ${esc(nomeCol(m.from))} → ${esc(nomeCol(m.to))}`; }
-  return `<div class="meudia-row" onclick="closeOv('timeline-feed-ov');openCard('${esc(m.card.id)}')">
-    <div class="meudia-row-main">
-      <div class="meudia-row-title">${icone} ${texto}</div>
-      <div class="meudia-row-meta">🕐 ${hora}</div>
+  const card=m.card;
+  const prioMap={low:'🟢',medium:'🟡',high:'🔴',critical:'🔥'};
+  const prioBadge=card.priority?`<span style="font-size:10px;margin-left:4px;" title="Prioridade">${prioMap[card.priority]||''}</span>`:'';
+  const blockedBadge=_cardIsBlocked(card)?'<span style="font-size:10px;margin-left:4px;" title="Impedido">🚧</span>':'';
+  const superN=(card.childCardIds||[]).filter(id=>cards.find(c=>c.id===id&&!c.archived)).length;
+  const superBadge=superN?`<span style="font-size:10px;margin-left:4px;" title="Supercard — ${superN} card${superN>1?'s':''} filho${superN>1?'s':''}">🧩</span>`:'';
+  const tagsRow=tagsHtml(card);
+  return `<div class="meudia-row" style="border-left:3px solid ${TIMELINE_FEED_COR[m.tipo]};padding-left:9px;" onclick="closeOv('timeline-feed-ov');openCard('${esc(card.id)}')">
+    <div style="display:flex;gap:9px;align-items:flex-start;">
+      ${_ownerAvatarHtml(card.owner)}
+      <div class="meudia-row-main" style="flex:1;min-width:0;">
+        <div class="meudia-row-title">${icone} ${texto}${prioBadge}${blockedBadge}${superBadge}</div>
+        <div class="meudia-row-meta">🕐 ${hora}${card.owner?' · '+esc(card.owner):''}</div>
+        ${tagsRow?`<div style="margin-top:5px;">${tagsRow}</div>`:''}
+      </div>
     </div>
   </div>`;
 }
@@ -10770,8 +10796,22 @@ function openTimelineFeed(dateStr, labelStr){
   const titleEl=document.getElementById('timeline-feed-title');
   if(titleEl) titleEl.textContent='📰 '+(labelStr||dateStr);
   const body=document.getElementById('timeline-feed-body'); if(!body) return;
-  body.innerHTML = marcos.length ? marcos.map(_timelineFeedRow).join('')
-    : '<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum marco registrado neste dia (criação, conclusão ou movimentação de coluna).</div>';
+  // Resumo por tipo (🆕/🔀/🏁), mesma ideia da contagem no topo da Timeline —
+  // orientação de relance antes de rolar a lista inteira, útil sobretudo num
+  // dia movimentado (dezenas de marcos misturados).
+  if(marcos.length){
+    const nCriado=marcos.filter(m=>m.tipo==='criado').length;
+    const nMovido=marcos.filter(m=>m.tipo==='movido').length;
+    const nConcluido=marcos.filter(m=>m.tipo==='concluido').length;
+    const partes=[];
+    if(nCriado) partes.push(`<span>🆕 <b>${nCriado}</b> criado${nCriado>1?'s':''}</span>`);
+    if(nMovido) partes.push(`<span>🔀 <b>${nMovido}</b> movido${nMovido>1?'s':''}</span>`);
+    if(nConcluido) partes.push(`<span>🏁 <b>${nConcluido}</b> concluído${nConcluido>1?'s':''}</span>`);
+    body.innerHTML = `<div style="font-size:12px;color:var(--txt2);display:flex;gap:12px;flex-wrap:wrap;padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">${partes.join('')}</div>`
+      + marcos.map(_timelineFeedRow).join('');
+  } else {
+    body.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:20px 0;">Nenhum marco registrado neste dia (criação, conclusão ou movimentação de coluna).</div>';
+  }
   document.getElementById('timeline-feed-ov')?.classList.add('open');
 }
 
@@ -22665,7 +22705,7 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.' },
-    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em: 🔴 Atrasado (todos juntos, sem separar por data), depois um grupo por dia com cards a vencer (Hoje, Amanhã, e datas seguintes em ordem), e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois.' },
+    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em: 🔴 Atrasado (todos juntos, sem separar por data), depois um grupo por dia com cards a vencer (Hoje, Amanhã, e datas seguintes em ordem), e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Um resumo no topo mostra quantos marcos de cada tipo aconteceram naquele dia, e cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral (dourado=criado, azul=movido, verde=concluído) pra diferenciar o tipo de relance, mesmo se o emoji específico não renderizar bem no seu navegador.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
