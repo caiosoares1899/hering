@@ -2727,6 +2727,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.578-dev — 2026-09-04 — fix: "moveu de X → X" ainda aparecia pra cards criados ANTES do fix anterior
+
+Usuário testou o fix da v8.30.577-dev em dev, com force refresh, e ainda
+via 3 casos do mesmo bug ("Mais Vendidos Teen moveu de A Fazer → A
+Fazer", "Refresh Primeiros Passos moveu de A Fazer → A Fazer", "SPT e
+INT – Semana do Cliente moveu de Em Progresso → Em Progresso").
+
+**Não era regressão** — o fix da v8.30.577-dev corrige `recordMove()`
+pra não gravar MAIS esse tipo de entrada, mas não reescreve o que já
+estava salvo no Firebase. Cards criados antes do fix já carregavam a
+entrada `{from:X, to:X}` pra sempre em `card.flow.log` — sem uma
+migração de dados, continuariam aparecendo assim indefinidamente.
+
+**Fix**: filtro defensivo direto em `_marcosNoPeriodo()`
+(`if(entry.from===entry.to) return;`, independente do índice da entrada
+— cobre tanto a de criação quanto qualquer outra). "Moveu de X pra X"
+nunca é um marco real de verdade, então nunca deveria aparecer no feed,
+não importa a origem do dado (correção manual em massa no Firebase não
+é necessária). O `recordMove()` mais robusto (v8.30.577-dev) segue
+valendo pra não deixar o problema crescer com cards novos.
+
+Testado com Playwright: reproduzidos os 3 casos exatos do relato (self-
+loop na entrada de criação, self-loop numa entrada NÃO inicial do log)
+— todos filtrados corretamente do feed, sem afetar o marco "criado" nem
+movimentos reais legítimos do mesmo card. `CODE_MAP.md` atualizado.
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline da sessão (braces -1, parens +1).
+
 ### v8.30.577-dev — 2026-09-04 — fix: cards novos apareciam como "moveu de X → X" no Feed de marcos
 
 Reportado direto pelo usuário testando o próprio Feed de marcos (lançado

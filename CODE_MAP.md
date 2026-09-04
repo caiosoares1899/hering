@@ -789,6 +789,17 @@ detalhe dos 4 call sites.
   tempo por coluna (sem erro, sem aviso, o card simplesmente não
   aparecia nessas telas). Corrigido no mesmo commit — a ação agora chama
   `recordMove(card, rule.actionVal)` antes de `recordHistory()`.
+  **2ª rodada (mesmo dia, usuário testou em dev e ainda via o bug, com
+  force refresh)**: o fix acima em `recordMove()` só evita entradas NOVAS
+  — não reescreve o que já estava salvo no Firebase (cards criados ANTES
+  do fix já carregavam a entrada `{from:X, to:X}` pra sempre em
+  `flow.log`). Filtro defensivo adicionado direto em `_marcosNoPeriodo()`
+  (`if(entry.from===entry.to) return;`, independente do índice — cobre
+  tanto a entrada de criação quanto qualquer outra que porventura tenha o
+  mesmo problema): "moveu de X pra X" nunca é um marco real, então nunca
+  deveria aparecer no feed, seja qual for a origem do dado. Resolve o
+  sintoma pra dados JÁ existentes sem precisar de migração/varredura no
+  Firebase — o `recordMove()` mais robusto evita que o problema cresça.
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de

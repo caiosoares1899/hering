@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.577-dev</div>
+<div class="version">v8.30.578-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10931,6 +10931,16 @@ function _marcosNoPeriodo(deStr, ateStr){
     const log=c.flow?.log||[];
     log.forEach((entry,i)=>{
       if(i===0 && (!entry.from||entry.from==='—')) return; // é a entrada de criação, já coberta acima
+      // Achado real 2026-09-04 (relato do usuário: "moveu de A Fazer →
+      // A Fazer", kkkk): bug antigo em recordMove() gravava esse tipo de
+      // entrada self-referencial em card.flow.log na CRIAÇÃO de qualquer
+      // card (corrigido — ver CHANGELOG v8.30.577-dev), mas o fix NÃO é
+      // retroativo: não reescreve o que já está salvo no Firebase. Filtro
+      // defensivo aqui, independente do índice — "moveu de X pra X" nunca
+      // é um marco real de verdade, então nunca deveria aparecer no feed,
+      // seja qual for a origem do dado (dados antigos já gravados, ou
+      // qualquer bypass futuro que ainda não tenha sido encontrado).
+      if(entry.from===entry.to) return;
       const d=_dateOnlyLocalStr(entry.at);
       if(d<deStr || d>ateStr) return;
       marcos.push({at:entry.at, tipo:_isColDone(entry.to)?'concluido':'movido', card:c, from:entry.from, to:entry.to});
