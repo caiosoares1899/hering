@@ -563,6 +563,42 @@ detalhe dos 4 call sites.
      do `_painelTimelineOpen` do painel — ver seção do painel.html)
      persistem o aberto/fechado entre renders.
 
+### `/monitorarbugs`: coluna "concluído" hardcoded em 9 funções (2026-09-04)
+2ª rodada seguida, continuação da Timeline acima — escolhida "Relatório de
+Tempo/Cycle Time/Throughput/CFD" (nunca auditada, maior consumidora de
+`flow.doneAt`) e achou um padrão bem mais amplo: `c.col==='done'` (string
+fixa, ignora `flowConfig.doneCols` — a config manual do PO) reimplementado
+em 9 lugares, de antes de `_isColDone()` existir como helper canônico.
+Todos passam a usar `_isColDone(colId)`:
+- `updateMetrics()` — L11760 — Throughput do toolbar.
+- `renderBoardDataGrid()` — L11774 — Throughput/Cards ativos/Intake
+  concluído (📊 Dados do Board → Visão Geral).
+- `renderBoardDataInsights()` — L~17971 — mesma exclusão, aba Insights.
+- `maybeSnapshot()` — L11907 — `done`/`sp_done` do snapshot histórico
+  diário (`kanban/squads/{squad}/snapshots/{date}`) — sem correção
+  retroativa nos snapshots já gravados, só os de hoje em diante.
+- `agCtx()` — L~22032 — contagem "Concluídos" no prompt de sistema do
+  Agente Ágil + a heurística local `doneCol` (regex de nome, sem checar
+  `flowConfig.doneCols`) removida. **2º bug na mesma função**: lia
+  `c.doneAt` (campo raso, NUNCA escrito em lugar nenhum do app — o real é
+  `card.flow.doneAt`, ver `recordMove()`) — a omissão de cards concluídos
+  há +7 dias do snapshot enviado à IA nunca funcionava.
+- `computeAvisosQuadro()` — L16017 — mesmo bug do campo raso `c.doneAt`
+  no aviso "✅ Resolvido: X" (🌅 Meu Dia) — nunca disparava, pra card
+  nenhum, desde que a feature existe.
+- 4 caminhos de notificação "card concluído" vs. "card movido" — cada um
+  reimplementava a MESMA heurística local (regex de nome) por conta
+  própria: modal-save (~L12108), `scheduleAutoSave()` (~L25006),
+  `handleDrop()` (~L26708), `ctxMove()` (~L28194) — todos trocados por
+  `if(_isColDone(colId)) notifDone(...); else notifMoved(...)`, sem
+  variável local nenhuma.
+Testado com Playwright, squad fictícia com coluna de conclusão de id
+customizado (`col_999`, nunca `'done'` literal — o caso real de qualquer
+squad que recriou a coluna) + 2ª coluna de fim (`col_888`) — todos os 9
+pontos corretos, `ctxMove()` disparando `notifDone()` (não `notifMoved()`)
+pro id customizado; regressão zero confirmada pro caso padrão (id `'done'`
+literal, sem `flowConfig.doneCols`).
+
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
 - `renderSearchResults()` — L27074
