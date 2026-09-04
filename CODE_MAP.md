@@ -1033,7 +1033,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Aba "🛤️ Timeline" (2026-09-04, presente nos dois arquivos — promovido pra prod v3.09 · painel)
+### Aba "🛤️ Timeline" (criada 2026-09-04, promovida pra prod v3.09 · painel;
+revisão de UI/UX 2026-09-04 só em painel-dev.html v3.13-dev por enquanto
+— NÃO promovida ainda)
 Timeline agregada cross-squad, versão do painel da Timeline que já existe
 em `kanban.html` (ver seção correspondente no `CODE_MAP.md` de lá) —
 mesmos buckets progressivos, mas somando cards de TODAS as squads visíveis
@@ -1042,9 +1044,6 @@ de uma vez. `renderPainelTimeline()`/`_painelTimelineRow()`/
 2 lugares: `swPtab()` (troca pra aba `timeline`) e `renderAll()` (a cada
 poll de 60s). Tab `#ptab-timeline`/pane `#ppane-timeline` (entre Fluxo e
 Pessoas), stats em `#pt-stats`, buckets em `#pt-buckets`.
-- **Reaproveita 100% o filtro de squad/gerência já global** (`activeFilter`/
-  `squadVisible()`, aba 👁 Visão) — não duplica UI de filtro, mesmo padrão
-  que `renderBlockers()` já segue nas outras abas.
 - **Zero leitura nova** — usa o `squadData` já carregado pelo polling de
   60s (`POLL_MS`/`_applySquadDados()`).
 - Clique no card chama `openPcModal(squadId,cardId)` (o modal read-only +
@@ -1053,10 +1052,38 @@ Pessoas), stats em `#pt-stats`, buckets em `#pt-buckets`.
   painel usa (`renderSquadCards`/`renderColDist`/etc.) — painel nunca
   busca `flowConfig` por squad, não introduz um 2º conceito de "done" só
   pra esta aba.
-- v1 deliberadamente sem "ação no lugar" (editar prazo inline), sem
-  marcos de contexto (eventos de calendário) e sem 📰 Feed de marcos —
-  todos presentes na Timeline do `kanban-dev.html`, possíveis evoluções
+- Deliberadamente sem "ação no lugar" (editar prazo inline), sem marcos
+  de contexto (eventos de calendário) e sem 📰 Feed de marcos — todos
+  presentes na Timeline do `kanban-dev.html`, possíveis evoluções
   futuras desta aba.
+
+**Revisão de UI/UX (2026-09-04, painel-dev.html v3.13-dev)** — pedido
+direto: "a timeline no painel ta mt ruim de ui/ux!... acho ruim o filtro
+ficar em outra aba... como sao muitas informações, tem q ter uma outra
+forma de expor... talvez um botao que colapse logo em cima".
+- **Filtro local** (`#pt-filter-select`, no cabeçalho da própria aba) —
+  reconstruído a cada render com `<option>` de `SQUADS`+`GERENCIAS`,
+  `onchange="setFilter(this.value)"`. NÃO é um filtro paralelo: lê/escreve
+  a MESMA `activeFilter` global que os botões da aba Visão — os dois
+  ficam sincronizados nos dois sentidos (`renderPainelTimeline()` faz
+  `selEl.value=activeFilter` a cada render, então mudar pela Visão também
+  atualiza o select daqui).
+- **Buckets colapsáveis** — cada `secao()` virou um `<details
+  class="pt-bucket">`/`<summary>` com chevron próprio (`.pt-chevron`,
+  CSS rotaciona 90° via `.pt-bucket[open] .pt-chevron`, marcador nativo
+  do `<summary>` escondido). "Sem prazo" (antes um caso especial fora de
+  `secao()`) foi unificado no mesmo helper.
+- **`_painelTimelineOpen`** (objeto em memória, chaves
+  `atrasado`/`hoje`/`amanha`/`resto`/`prox`/`depois`/`semPrazo`) guarda
+  o aberto/fechado de cada bucket ENTRE renders — sem isso a poll de 60s
+  (que reconstrói `#pt-buckets.innerHTML` do zero) fecharia de volta
+  qualquer bucket aberto manualmente. `atrasado`/`hoje` começam `true`
+  (mais urgente), resto `false`. `ontoggle` em cada `<details>` chama
+  `_painelTimelineSetOpen(key, this.open)` pra persistir o clique manual.
+- **`_painelTimelineToggleAll()`** — botão "🔼 Recolher tudo"/"🔽 Expandir
+  tudo" dentro de `#pt-stats` (rótulo dinâmico: oferece expandir se menos
+  da metade dos buckets estiver aberta, senão oferece recolher); seta
+  todas as chaves de `_painelTimelineOpen` pro mesmo valor e re-renderiza.
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
