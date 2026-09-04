@@ -435,6 +435,13 @@ detalhe dos 4 call sites.
   emoji renderizar certo. `openTimelineFeed()` ganhou um resumo por tipo
   no topo do feed (🆕 N criados · 🔀 N movidos · 🏁 N concluídos), mesma
   ideia da contagem no topo da Timeline.
+  **2026-09-04**: `.tf-feed-action` (CSS perto de `.meudia-row-title`) —
+  o texto da ação (tudo depois do `<b>título</b>`, nos 7 tipos) ganhou
+  cor/peso mais discretos (mesma receita já calibrada pra
+  `.meudia-row-meta` logo abaixo: `var(--txt)`+opacity reduzida, não
+  `var(--txt2)` puro) — achado real (print do usuário) de que título e
+  ação ficavam indistinguíveis em linhas longas. Vale nos 3 temas de
+  graça, `var(--txt)` já se adapta sozinho.
 - `_renderTimelineFeed()`/`_timelineFeedFilter`/`timelineFeedSetFilter()`/
   `timelineFeedToggleTipo()`/`timelineFeedToggleMine()`/
   `timelineFeedClearFilter()` (2026-09-04, pedido direto do usuário
