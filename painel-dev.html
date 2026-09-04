@@ -128,6 +128,20 @@
     radial-gradient(ellipse at 82% 18%,rgba(179,107,110,.25) 0%,transparent 55%),
     linear-gradient(180deg,#6f4a80 0%,#9c5f74 30%,#c9743f 55%,#5c2f42 80%,#2f1930 100%);
 }
+/* Vice City: alguns rótulos usam cor de destaque (--danger/--cyan/--accent/
+   --teal/--warn) fixada via style inline — nesse tema, essas cores são da
+   MESMA família de tom do próprio fundo (.ocean acima: pêssego/lavanda/
+   rosa/laranja), então ficam sem contraste e ilegíveis (achado real do
+   usuário, 2026-09-04: "monitor, dados e agentes n da pra ler... backup tb
+   n da pra ler"). !important pra vencer o style inline sem precisar tirá-lo
+   do HTML (ele continua correto nos temas escuro/claro). Força a cor de
+   texto padrão do tema (--txt, quase branco) só nesses pontos, só no vice. */
+[data-theme="vice"] #ptab-monitor,
+[data-theme="vice"] #ptab-dados,
+[data-theme="vice"] #ptab-agentes,
+[data-theme="vice"] .hd-btn-adm{
+  color:var(--txt) !important;
+}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 /* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
@@ -2400,7 +2414,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.11 · painel-dev</div>
+<div class="version">v3.12 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

@@ -12307,6 +12307,27 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.12 · painel-dev — 2026-09-04 · fix: contraste no 🌴 Vice City (Monitor/Dados/Agentes/botões do header)
+
+Achado real do usuário testando a v3.11-dev: "monitor, dados e agentes n
+da pra ler, coloca na fonte branca! backup tb n da pra ler". Causa: as
+abas "Monitor" (`--danger`), "Dados" (`--cyan`) e "Agentes" (`--accent`),
+mais os 3 botões de admin do cabeçalho (💾 Backup `--teal`, ⚙ Novo board
+`--warn`, 🗂 Usuários `--accent`), usam cor de destaque fixada via `style`
+inline — no tema 🌴 Vice City essas cores são da MESMA família de tom do
+próprio fundo (`.ocean`: pêssego/lavanda/rosa/laranja), então ficam sem
+contraste nenhum contra o gradiente. Corrigido com override
+`[data-theme="vice"] #ptab-monitor, ... , .hd-btn-adm { color:var(--txt)
+!important; }` — força o texto quase-branco padrão do tema só nesses
+pontos, só no Vice City (temas escuro/claro não têm esse problema,
+intocados). "Novo board" e "Usuários" não foram citados pelo usuário mas
+têm exatamente o mesmo padrão (`--warn`/`--accent` inline) — corrigidos
+junto, mesma causa raiz.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (braces -1, parens -11). Confirmado com Playwright: todos os
+elementos citados computam `rgb(247,232,236)` (`--txt`) no Vice City.
+
 ### painel-dev.html v3.11 · painel-dev — 2026-09-04 · nova aba 🛤️ Timeline (agregada, todas as squads)
 
 Pedido direto do usuário depois de validar a Timeline do `kanban-dev.html`
