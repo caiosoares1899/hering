@@ -2727,6 +2727,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.585-dev — 2026-09-04 — `/monitorarbugs`: card sem `createdAt` (dado legado) sumia pra sempre do CFD e do Burndown
+
+Continuação natural da rodada anterior (coluna "concluído" hardcoded em 9
+funções, que tinha `maybeSnapshot()`/`_isColDone()` como foco) — desta vez
+auditando quem CONSOME esse dado: os gráficos de "🌊 Relatório de Tempo →
+Fluxo" (`_renderCFD()`/`_renderBurndown()`), nunca varridos como área
+própria.
+
+`_cardTempos()` (usado no Relatório de Tempo por Tag) já tinha o fallback
+certo pra `card.createdAt` ausente — dado legado, de cards criados antes do
+campo existir, ainda vivo no Firebase (confirmado por outros 2 guards do
+próprio arquivo pro mesmo cenário: `_cardAgeDays()` e o filtro de
+"🧹 Cards antigos") — caindo pra `card.flow.log[0].at` quando falta.
+
+`_cardColunaEmDia()` (usada pelo CFD) e o filtro de escopo dentro de
+`_renderBurndown()` liam `card.createdAt` puro, sem esse fallback: um card
+sem o campo virava `criadoEm===''`, e a checagem `diaStr < criadoEm`/
+`criado>endStr` descartava ele em TODO dia, sempre — não "faltou 1 dia",
+sumia inteiro dos dois gráficos, pra sempre, sem nenhum aviso. Mesma classe
+de bug que deu origem a esta skill: a mesma checagem ("card sem
+`createdAt`?") resolvida certo num lugar do arquivo (`_cardTempos()`) e sem
+solução em outros dois.
+
+Fix: helper novo `_cardDataCriacaoStr(c)`, com o mesmo fallback de
+`_cardTempos()`, reusado nos 2 pontos (em vez de duplicar o fallback duas
+vezes a mais). Testado com harness Node isolado comparando a função antiga
+(sempre `undefined` pro card sem `createdAt`) contra a nova (usa a data do
+1º evento do `flow.log`) em 6 cenários — sem regressão no card normal (com
+`createdAt`) nem no caso extremo (sem `createdAt` E sem `flow.log`, que
+continua descartado por falta de qualquer dado pra ancorar).
+
 ### v8.30.584-dev — 2026-09-04 — `/atualizarhelpcontent`: sincroniza Central de Ajuda com o backlog de features desde a v8.30.533-dev
 
 Rodada de sincronização (puramente documentação, sem mudança de

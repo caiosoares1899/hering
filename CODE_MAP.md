@@ -923,7 +923,7 @@ literal, sem `flowConfig.doneCols`).
 - Modelo de dado: `card.paused` (bool) + `card.pausedAt` (ISO, pausa
   ATUAL em andamento) + `card.pausedMs` (acumulado de pausas já
   encerradas). `_cardPausedMs(c)` soma os dois.
-- `_cardTempos()` (relatório de tempo/cycle/lead, perto de L17101)
+- `_cardTempos()` (relatório de tempo/cycle/lead, perto de L17782)
   subtrai `_cardPausedMs(c)` do tempo decorrido (lead E cycle), com
   clamp em 0. Réplica deliberada em `functions/agente-agil-orquestrador/
   tools/visaoBoard.js` (`cardPausedMs()`/`cardTempos()`) — mesma
@@ -931,6 +931,13 @@ literal, sem `flowConfig.doneCols`).
   src>` externo, Cloud Function CommonJS) — sem essa réplica, `visao_
   board` (usado pelo orquestrador e por `analisePO.js`) ficaria
   divergente do relatório client-side pra um card pausado.
+- `_cardDataCriacaoStr()` — L17777, logo acima de `_cardTempos()` — data
+  de criação (YYYY-MM-DD) com fallback pra `card.flow.log[0].at` quando
+  `card.createdAt` falta (dado legado). Usada por `_cardColunaEmDia()`
+  (CFD, ~L18264) e pelo filtro de escopo de `_renderBurndown()`
+  (~L18331) — achado `/monitorarbugs` 2026-09-04: os dois liam
+  `card.createdAt` puro e descartavam pra sempre um card sem o campo,
+  em vez de cair no mesmo fallback que `_cardTempos()` já tinha.
 - Visibilidade do botão: escondido em `openNewCard()` (pausar só faz
   sentido pra card já existente, com cycle/lead já em andamento).
 

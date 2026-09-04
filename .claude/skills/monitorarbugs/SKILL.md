@@ -1124,6 +1124,33 @@ Mesma disciplina de sempre neste repo:
   de TODO grep de um valor/padrão relacionado (`'done'` como string, não
   só `flow.doneAt`), não só os call sites óbvios da função recém-mexida.
 
+- **2026-09-04, pedido genérico — "roda /monitorarbugs" (3ª rodada seguida
+  no mesmo dia)**: prioridade 1 sem código novo desde a rodada anterior (só
+  o fix cosmético do Feed de marcos e uma rodada de `/atualizarhelpcontent`,
+  nenhum dos dois logic); escolhida prioridade 2, continuando o rastro
+  literal da rodada anterior — "quem mais consome dado da mesma área
+  (`flow.doneAt`/CFD/Burndown)?" — dessa vez os gráficos de "🌊 Relatório
+  de Tempo → Fluxo" (`_renderCFD()`/`_renderBurndown()`), nunca auditados
+  como área própria. 1 achado real (2 ocorrências, mesma causa raiz),
+  técnica 2 (checagem já resolvida certo numa função irmã do MESMO
+  arquivo): `_cardTempos()` já tinha fallback pra `card.createdAt`
+  ausente (dado legado, confirmado real por 2 outros guards do arquivo
+  pro mesmo campo — `_cardAgeDays()`, "🧹 Cards antigos") — caindo pra
+  `card.flow.log[0].at`. `_cardColunaEmDia()` (CFD) e o filtro de escopo
+  dentro de `_renderBurndown()` liam `card.createdAt` puro, sem esse
+  fallback — um card sem o campo virava invisível em TODO dia, sumindo
+  pra sempre dos 2 gráficos, sem aviso. Fix: helper `_cardDataCriacaoStr()`
+  com o mesmo fallback de `_cardTempos()`, reusado nos 2 pontos. Testado
+  com harness Node isolado, 6 cenários — bug reproduzido na versão antiga,
+  corrigido na nova, sem regressão no card com `createdAt` presente nem no
+  caso sem `createdAt` E sem `flow.log` (continua descartado, por falta de
+  qualquer dado pra ancorar) (dev v8.30.585-dev). Descartado (checado, sem
+  achado): a réplica do backend (`visaoBoard.js`) — `cardTempos()`/
+  `isBlocked`/`colWipLimit()` — comparada contra os originais client-side
+  (`_cardTempos()`/`_cardIsBlocked()`/`_colWipLimit()`), fórmulas idênticas
+  nos 3; `_bdHiddenCols` (toggle de coluna de 📊 Dados do Board) aplicado
+  de forma consistente nas 6 funções que o usam, incluindo CFD/Burndown.
+
 Atualize esta seção a cada rodada nova (área coberta, achados, PRs) —
 isso evita reanalisar do zero uma área que já foi varrida e está limpa,
 e documenta o "por quê" de cada correção pra quem ler depois.

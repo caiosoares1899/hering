@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.584-dev</div>
+<div class="version">v8.30.585-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17768,6 +17768,17 @@ async function zerarBoard(){
 // RELATÓRIO DE TEMPO POR TAG
 // ═══════════════════════════════════════════════════════
 let _tempoData=null;
+// Data de criação (YYYY-MM-DD) com o mesmo fallback que _cardTempos() já usa
+// pra card.createdAt ausente (dado legado, de antes do campo existir) —
+// achado real (/monitorarbugs): _cardColunaEmDia() (CFD) e o filtro de
+// escopo do burndown liam card.createdAt puro, sem fallback, então um card
+// sem esse campo sumia de vez desses 2 gráficos (nunca contado em nenhum
+// dia), em vez de cair no mesmo fallback que _cardTempos() já resolve certo.
+function _cardDataCriacaoStr(c){
+  if(c.createdAt) return c.createdAt.slice(0,10);
+  if(c.flow?.log?.length) return (c.flow.log[0].at||'').slice(0,10);
+  return '';
+}
 function _cardTempos(c){
   const now=Date.now();
   let createdMs=null;
@@ -18251,7 +18262,7 @@ const CFD_DIAS = 21;
 // Em qual coluna um card estava no FIM de um dia `diaStr` (YYYY-MM-DD).
 // undefined = card ainda não existia nesse dia.
 function _cardColunaEmDia(card, diaStr){
-  const criadoEm = (card.createdAt||'').slice(0,10);
+  const criadoEm = _cardDataCriacaoStr(card);
   if(!criadoEm || diaStr < criadoEm) return undefined;
   const log = card.flow?.log || [];
   let colunaAtual = log.length ? (log[0].from||card.col) : card.col;
@@ -18340,7 +18351,7 @@ function _renderBurndown(){
   // aplicado na Visão Geral, pedido direto pra valer aqui também.
   const escopo = cards.filter(c=>{
     if(c.archived || _bdHiddenCols.has(c.col)) return false;
-    const criado=(c.createdAt||'').slice(0,10);
+    const criado=_cardDataCriacaoStr(c);
     if(!criado || criado>endStr) return false;
     const doneAt=(c.flow?.doneAt||'').slice(0,10);
     return !doneAt || doneAt>=startStr;
