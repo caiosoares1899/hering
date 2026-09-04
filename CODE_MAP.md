@@ -1264,7 +1264,7 @@ painel-dev pro detalhamento completo. Resumo:
   `rgba(var(--ink-rgb),...)`/`var(--glass-b)`. Afeta os DOIS modais que
   usam essas classes (card + 📜 Histórico).
 
-### Aba "🎯 OKR" (Objetivos/Marcos, Fase 1 — 2026-09-04, SÓ em painel-dev.html ainda, não promovida)
+### Aba "🎯 OKR" (Objetivos/Marcos, Fase 1 — 2026-09-04, presente nos dois arquivos — promovido pra prod v3.18)
 Internalização do PDF trimestral "Iniciativas Estratégicas" (Azzas/Hering)
 direto no painel — pedido do chefe do usuário depois de ver o Supercard,
 mas com estrutura e nomes PRÓPRIOS (não é supercard: não usa

@@ -12614,6 +12614,42 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.18 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR (Fase 1), avatares com foto, contraste Vice City, data multi-dia no Histórico
+
+Promove pra produção o lote acumulado v3.11 → v3.18 de `painel-dev.html`
+(3 rodadas nunca antes promovidas + a Fase 1 do OKR), validado
+explicitamente pelo usuário. Como `painel.html`/`painel-dev.html`
+divergem de verdade (rascunhos de Mural, instrumentação de debug e a
+feature "🔔 Push manual" só existem em prod), a promoção replicou
+manualmente cada edição — não foi uma cópia direta do arquivo.
+
+- **🎯 OKR (Fase 1)**: nova aba "🎯 OKR" — Objetivos e Marcos
+  estratégicos, permissão por responsável+ADM, Gerências = as 7 capas do
+  PDF-fonte (Geral/Comercial/Marketing de Performance/Dados e IA/CX/
+  Tech/CRM). Ver a entrada completa logo abaixo (mesmo texto que já
+  documentava a v3.18-dev).
+- **Avatares com foto na Timeline/Histórico** — `_squadMembersFromGlobalCache()`
+  corrige `squadData[sqId].members` nunca populado pra squads fixas
+  (`_applySquadDados()`), responsável real pelas iniciais "cruas" em vez
+  de foto que qualquer squad de produção tinha até agora.
+- **Contraste no tema 🌴 Vice City**: números dentro de badges (ex. "🔴
+  Atrasado 293") ilegíveis — `var(--cyan)` quase idêntico ao fundo
+  `var(--glass)` nesse tema; corrigido pra `var(--txt)`.
+- **📜 Histórico com período de vários dias mostrava só a hora** — cada
+  marco agora mostra `DD/MM HH:mm` quando o período tem mais de 1 dia.
+- **Modal do card/Histórico com fundo hardcoded** nos temas claro/Vice
+  City — `.pc-modal-ov`/`.pc-modal`/`.pc-modal-hd`/`.pc-footer` passam a
+  usar `var(...)` em vez de cor fixa.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -12`, mesmo de `painel-dev.html`), 44 +
+10 cenários de teste (Playwright/console) reexecutados direto contra
+`painel.html` — todos passando, sem regressão.
+
+**Pendência de deploy**: `database.rules.json` ganhou o node `kanban.okr`
+— precisa de `firebase deploy --only database` rodado localmente pra
+`kanban/okr/*` funcionar de verdade em produção.
+
 ### painel-dev.html v3.18 · painel-dev — 2026-09-04 — 🎯 OKR (Fase 1): Objetivos e Marcos estratégicos, nova aba no painel
 
 Primeira fase da internalização do acompanhamento de Iniciativas
