@@ -18,6 +18,47 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.574 — 2026-09-04 · Promove pra prod — Timeline: filtros, avatar/tags, buckets progressivos, ação no lugar e marcos de contexto
+
+Promove pra produção o lote v8.30.571-dev → v8.30.574-dev de
+`kanban-dev.html`, evoluindo a Timeline lançada na promoção anterior
+(v8.30.570) com 3 rodadas de refinamento, cada uma motivada por
+validação/feedback real testando no navegador:
+
+- **Filtros e visual em linha com o board** (v8.30.571-dev): linha de
+  card ganhou avatar do responsável, prioridade, 🚧 impedimento, 🧩
+  supercard e tags. Barra de topo nova com contagem rápida + "💡 Só eu" +
+  "🔭 Filtros" (abre o mesmo painel de Filtros do board de colunas — não
+  duplica, é o mesmo `activeFilters` dos dois lados). De brinde: corrigido
+  "💡 Meus cards" da toolbar, que era um no-op silencioso com a Timeline
+  aberta.
+- **Feed de marcos mais rico** (v8.30.572-dev): o modal "📰" (duplo clique
+  num dia) ganhou o mesmo tanto de informação — avatar, tags, prioridade
+  — e uma faixa colorida por tipo de marco (dourado=criado, azul=movido,
+  verde=concluído), já que o ícone 🏁 rendeiza como bandeira genérica em
+  alguns navegadores/fontes.
+- **Filtro próprio do Feed** (v8.30.573-dev): responsável/subtime/tag/tipo,
+  deliberadamente separado do filtro global do board — o feed é um
+  retrospecto do dia inteiro, não deveria encolher escondido por causa de
+  um filtro esquecido ligado em outro lugar.
+- **Consultoria técnica + 3 evoluções priorizadas** (v8.30.574-dev): a
+  partir de uma consultoria externa sobre a arquitetura da feature, 3
+  mudanças escolhidas como prioridade — **buckets progressivos**
+  (Atrasado/Hoje/Amanhã/Resto da semana/Próxima semana/Depois/Sem prazo,
+  em vez de 1 grupo por dia exato, que virava lista de cabeçalhos com 1
+  card cada; Atrasado ordena do mais antigo pro mais recente e mostra
+  "Nd atrasado"), **ação no lugar** (definir prazo ou adiar +1d/+1 sem
+  direto na linha, sem abrir o card) e **marcos de contexto** (eventos do
+  Calendário aparecem como divisor cronológico entre os cards). De
+  brinde: bucket "✅ Concluído recente" fecha o loop que a Timeline (só
+  pra frente) e o Feed (só um dia do passado) deixavam em aberto.
+
+Checks de rotina: `node --check` OK em todo o lote, balanço de
+chaves/parênteses do arquivo igual ao baseline da sessão (braces -1,
+parens +1) — ver as entradas de dev correspondentes (v8.30.571-dev a
+v8.30.574-dev) pro detalhamento técnico completo, incluindo os testes
+Playwright de cada etapa.
+
 ### v8.30.570 — 2026-09-03 · Promove pra prod — 📅 Timeline, ⏸ Pausar card, 📰 Feed de marcos
 
 Promove pra produção o lote v8.30.566-dev → v8.30.570-dev de
