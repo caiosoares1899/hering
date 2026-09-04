@@ -5931,7 +5931,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.579-dev</div>
+<div class="version">v8.30.580-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11044,9 +11044,13 @@ function _timelinePeriodoLabel(deStr, ateStr){
   }
   return fmt(deStr)+' a '+fmt(ateStr);
 }
-function _timelineFeedMatchesFilter(m){
+// Separado de _timelineFeedMatchesFilter() pra poder contar os chips de tipo
+// (🆕/🔀/🏁/...) considerando SÓ os outros filtros (usuário/subtime/tag/só
+// eu), não o próprio conjunto de tipos ligados — senão desligar um chip
+// também zeraria o número escrito nele. Usado tanto pra contar os chips
+// quanto, com o check de tipo por cima, pra filtrar a lista final.
+function _timelineFeedMatchesFilterBase(m){
   const f=_timelineFeedFilter, card=m.card;
-  if(!f.tipos[m.tipo]) return false;
   if(f.onlyMine && !_euEstouNoCard(card)) return false;
   if(f.owner){
     const participants=card.participants||card.participantes||[];
@@ -11055,6 +11059,10 @@ function _timelineFeedMatchesFilter(m){
   if(f.subteam && !cardInSubteam(card, f.subteam)) return false;
   if(f.tag && !cardHasTag(card, f.tag)) return false;
   return true;
+}
+function _timelineFeedMatchesFilter(m){
+  if(!_timelineFeedFilter.tipos[m.tipo]) return false;
+  return _timelineFeedMatchesFilterBase(m);
 }
 function timelineFeedToggleTipo(tipo){
   _timelineFeedFilter.tipos[tipo]=!_timelineFeedFilter.tipos[tipo];
@@ -11115,8 +11123,10 @@ function _renderTimelineFeed(){
   // atual), pra dar pra trocar a data e tentar de novo sem fechar o modal.
   const periodoHtml=`<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;">
     <input type="date" id="tf-de" value="${esc(deStr)}" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <button type="button" class="dp-btn" onclick="_dpOpen('tf-de',this)" title="Escolher no calendário">📅</button>
     <span style="font-size:11px;color:var(--txt3);">até</span>
     <input type="date" id="tf-ate" value="${esc(ateStr)}" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <button type="button" class="dp-btn" onclick="_dpOpen('tf-ate',this)" title="Escolher no calendário">📅</button>
     <button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;" onclick="_timelineFeedBuscarPeriodo()" title="Buscar movimentações nesse período (dá pra ir bem pro passado — cards antigos só somem daqui se alguém excluir de vez em 🧹 Cards antigos)">🔍 Buscar</button>
   </div>`;
   const todos=_marcosNoPeriodo(deStr, ateStr);
@@ -11125,19 +11135,22 @@ function _renderTimelineFeed(){
     return;
   }
   const f=_timelineFeedFilter;
-  // Contagem por tipo SEMPRE sobre `todos` (não sobre o já filtrado) — os
-  // chips mostram quantos marcos de cada tipo existem no período inteiro,
-  // número estável que não muda conforme outros filtros são ligados.
-  const nCriado=todos.filter(m=>m.tipo==='criado').length;
-  const nMovido=todos.filter(m=>m.tipo==='movido').length;
-  const nConcluido=todos.filter(m=>m.tipo==='concluido').length;
+  // Contagem por tipo sobre o que já passa nos OUTROS filtros (usuário/
+  // subtime/tag/só eu) — pedido direto do usuário: "a contagem ali de
+  // 'criados; movidos...' deveria refletir os outros filtros aplicados".
+  // Usa _timelineFeedMatchesFilterBase (sem o check de tipo) pra não fazer
+  // o número do próprio chip sumir quando ele é desligado.
+  const paraContagem=todos.filter(_timelineFeedMatchesFilterBase);
+  const nCriado=paraContagem.filter(m=>m.tipo==='criado').length;
+  const nMovido=paraContagem.filter(m=>m.tipo==='movido').length;
+  const nConcluido=paraContagem.filter(m=>m.tipo==='concluido').length;
   // 4 tipos novos — pedido direto do usuário: "tem nesse historico tb a
   // alteração de prioridade? colocaria isso! colocaria tb cards marcado/
   // desmarcado como impedimentos; cards com checklist 100% concluido".
-  const nPrioridade=todos.filter(m=>m.tipo==='prioridade').length;
-  const nImpedido=todos.filter(m=>m.tipo==='impedido').length;
-  const nDesimpedido=todos.filter(m=>m.tipo==='desimpedido').length;
-  const nChecklist=todos.filter(m=>m.tipo==='checklist').length;
+  const nPrioridade=paraContagem.filter(m=>m.tipo==='prioridade').length;
+  const nImpedido=paraContagem.filter(m=>m.tipo==='impedido').length;
+  const nDesimpedido=paraContagem.filter(m=>m.tipo==='desimpedido').length;
+  const nChecklist=paraContagem.filter(m=>m.tipo==='checklist').length;
   const chip=(tipo,icone,n,label)=>{
     if(!n) return '';
     const ativo=f.tipos[tipo];
