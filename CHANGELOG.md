@@ -12343,6 +12343,44 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.10 · painel — 2026-09-04 · promove pra prod — Timeline: UI/UX + visual "glass"
+
+Promove pra produção o lote v3.13-dev/v3.14-dev de `painel-dev.html`
+(validado pelo usuário: "testei, ficou bonito! sobe pro prod"). Resumo
+pra quem usa o painel:
+
+- **Filtro de squad/gerência agora tem um controle direto na própria aba
+  🛤️ Timeline** — não precisa mais trocar pra aba 👁 Visão pra filtrar.
+- **Buckets colapsáveis** — só "Atrasado" e "Hoje" começam abertos; o
+  resto começa fechado, reduzindo a quantidade de informação exposta de
+  cara. Botão "Recolher/Expandir tudo" alterna todos de uma vez, e o
+  estado de cada bucket é lembrado entre atualizações automáticas.
+- **Visual "glass"** — os cards da Timeline ganharam o mesmo visual
+  compacto da Timeline do board (`kanban.html`): avatar com iniciais,
+  tags com cor de verdade, e uma linha de meta enxuta em vez de vários
+  chips cinza empilhados.
+
+**Nota de promoção não-padrão** (mesmo padrão das promoções anteriores
+desta aba — ver v3.09 acima): não foi um `cp` direto.
+`painel.html`/`painel-dev.html` divergem de verdade (push manual, paths
+`_dev`, banner de dev, squads fictícias) — aplicadas manualmente só as
+mudanças validadas (CSS `.pt-bucket`/`.pt-row`/`.pt-tag`/`.pt-avatar`,
+HTML do cabeçalho da aba com `#pt-filter-select`, e a reescrita completa
+de `renderPainelTimeline()`/`_painelTimelineRow()` + os novos helpers
+`_ptTagsHtml()`/`_ptHexA()`/`_painelOwnerAvatarHtml()`/
+`_painelTimelineToggleAll()`), preservando os recursos exclusivos de
+prod. Conferido depois: `diff painel.html painel-dev.html` filtrado por
+todo identificador novo (`pt-row`, `pt-tag`, `pt-avatar`, `pt-bucket`,
+`pt-filter-select`, `_painelTimelineOpen`, `PT_PALETTE`, etc.) não
+retornou nenhuma linha — as duas cópias batem nesse ponto.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido do arquivo (braces -1, parens -11). Testado com
+Playwright direto em `painel.html`, com `SQUADS`/`squadData`/`GERENCIAS`
+reais de prod (dados/prf/midiacriativa): linha renderiza avatar/título/
+meta/tags corretos, filtro local lista as squads e gerências reais,
+buckets colapsáveis funcionando — 0 erros de console.
+
 ### painel-dev.html v3.14 · painel-dev — 2026-09-04 · Timeline: visual "glass" portado do kanban.html
 
 Pedido direto do usuário, comparando um print da Timeline no painel

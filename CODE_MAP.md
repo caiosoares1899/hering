@@ -1033,9 +1033,9 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
-### Aba "🛤️ Timeline" (criada 2026-09-04, promovida pra prod v3.09 · painel;
-revisão de UI/UX + visual "glass" 2026-09-04 só em painel-dev.html
-v3.14-dev por enquanto — NÃO promovida ainda)
+### Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
+promovida pra prod v3.09 · painel; revisão de UI/UX + visual "glass"
+promovida pra prod v3.10 · painel)
 Timeline agregada cross-squad, versão do painel da Timeline que já existe
 em `kanban.html` (ver seção correspondente no `CODE_MAP.md` de lá) —
 mesmos buckets progressivos, mas somando cards de TODAS as squads visíveis
@@ -1057,7 +1057,8 @@ Pessoas), stats em `#pt-stats`, buckets em `#pt-buckets`.
   presentes na Timeline do `kanban-dev.html`, possíveis evoluções
   futuras desta aba.
 
-**Revisão de UI/UX (2026-09-04, painel-dev.html v3.13-dev)** — pedido
+**Revisão de UI/UX (2026-09-04, presente nos dois arquivos — promovida
+pra prod v3.10 · painel)** — pedido
 direto: "a timeline no painel ta mt ruim de ui/ux!... acho ruim o filtro
 ficar em outra aba... como sao muitas informações, tem q ter uma outra
 forma de expor... talvez um botao que colapse logo em cima".
@@ -1085,9 +1086,10 @@ forma de expor... talvez um botao que colapse logo em cima".
   da metade dos buckets estiver aberta, senão oferece recolher); seta
   todas as chaves de `_painelTimelineOpen` pro mesmo valor e re-renderiza.
 
-**Visual "glass" portado do kanban.html (2026-09-04, painel-dev.html
-v3.14-dev)** — pedido direto, comparando prints: "quero esse layout
-bonito de glass no painel tb" (referência: `.meudia-row`/`tagsHtml()` da
+**Visual "glass" portado do kanban.html (2026-09-04, presente nos dois
+arquivos — promovido pra prod v3.10 · painel)** — pedido direto,
+comparando prints: "quero esse layout bonito de glass no painel tb"
+(referência: `.meudia-row`/`tagsHtml()` da
 Timeline de `kanban-dev.html`). `_painelTimelineRow()` reescrita —
 trocou `.panel-card`/`.pc-chip` (chips cinza empilhados, mesmo visual de
 Bloqueios/OKR/Risco) por classes novas e exclusivas da Timeline:
