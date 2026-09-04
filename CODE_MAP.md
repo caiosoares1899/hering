@@ -435,6 +435,33 @@ detalhe dos 4 call sites.
   emoji renderizar certo. `openTimelineFeed()` ganhou um resumo por tipo
   no topo do feed (🆕 N criados · 🔀 N movidos · 🏁 N concluídos), mesma
   ideia da contagem no topo da Timeline.
+- `_renderTimelineFeed()`/`_timelineFeedFilter`/`timelineFeedSetFilter()`/
+  `timelineFeedToggleTipo()`/`timelineFeedToggleMine()`/
+  `timelineFeedClearFilter()` (2026-09-04, pedido direto do usuário
+  depois de testar a v2: "faltou na vdd colocar filtros aqui tb" →
+  "subtime, usuario, tag...") — Feed de marcos ganhou filtro PRÓPRIO
+  (responsável/subtime/tag/💡 só eu/tipo de marco), deliberadamente
+  DESACOPLADO do `activeFilters` global do board (`_timelineFeedFilter`,
+  var própria) — o feed é retrospecto do dia inteiro por design (ver
+  HELP_CONTENT), reusar o filtro global faria ele encolher escondido só
+  porque um filtro ficou ligado no board por outro motivo, sem aviso
+  dentro do próprio modal. Reseta sozinho em todo `openTimelineFeed()`
+  novo (nunca herda filtro de uma investigação anterior). Chips de tipo
+  (`timelineFeedToggleTipo()`) contam sobre `todos` (não sobre o já
+  filtrado) — número fica estável, só os OUTROS filtros mudam o que
+  aparece embaixo. `openTimelineFeed()` virou casca fina que só guarda
+  `{dateStr,labelStr}` em `_timelineFeedState` e chama
+  `_renderTimelineFeed()` — necessário pra qualquer toggle de filtro
+  poder re-renderizar sem precisar reabrir o modal do zero.
+  `_ownerOptionsHtml(placeholder)` extraído de dentro de
+  `_populateFilterSelects()` (a lógica de "junta member cadastrado +
+  init solto sem cadastro") pra reusar no `<select>` de responsável
+  local do feed, sem duplicar. **Cuidado se mexer nos 3 `<select>`
+  (`#tf-owner`/`#tf-subteam`/`#tf-tag`)**: a opção certa é marcada via
+  `.value=` DEPOIS de inserir no DOM (não via atributo `selected` na
+  string) — 1ª versão tentou marcar `selected` direto na string HTML e
+  o `<select>` de responsável ficava sempre mostrando o placeholder,
+  mesmo com filtro ativo (a option certa nunca ganhava o atributo).
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L27062
