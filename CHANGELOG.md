@@ -2727,6 +2727,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.576-dev — 2026-09-04 — Regra geral: card concluído desimpede sozinho
+
+Pedido direto do usuário: "podemos criar uma regra geral, para todos os
+boards, que é: se o card está concluido, automaticamente ele é
+desimpedido!".
+
+Implementado dentro de `recordMove()` — não em cada função que move card
+(`handleDrop()`/`ctxMove()`/modal/`_doBulkMove()`/criação de card) — é o
+ÚNICO ponto por onde toda movimentação de coluna passa, então corrige 1
+vez só, vale pra todo squad automaticamente. Só se aplica no modo `tag`
+de Impedimentos (`blockerMode==='tag'`): no modo `col`, um card só fica
+numa coluna por vez, então entrar em Concluído já significa ter saído de
+Impedimentos sozinho, sem precisar de fix nenhum.
+
+Ao mover um card impedido (modo tag) pra qualquer coluna de Concluído:
+`blocker=false`, `blockerReason=''`, e fica registrado no 📜 Histórico
+("impedimento removido automaticamente (card concluído)") — mesmos
+campos/mensagem que a remoção manual em massa (`_doBulkUnblockTag()`) já
+usa, fica indistinguível de uma remoção manual no histórico do card.
+Guard `from!==toCol` evita disparar na CRIAÇÃO do card (`recordMove(novo,
+novo.col)` chega com from===toCol, sem transição de verdade).
+
+**2 limitações conhecidas, documentadas e não resolvidas nesta rodada**
+(reportadas ao usuário, não escondidas):
+1. **Não é retroativo** — um card que JÁ estava Concluído+impedido antes
+   dessa mudança só se corrige na próxima vez que for movido de coluna de
+   verdade, não numa varredura automática do board existente.
+2. **O Agente Ágil não está coberto** — ele move cards via Cloud Function
+   (`functions/agente-agil/board.js` → `mover_coluna`), um caminho
+   server-side que não passa pelo `recordMove()` do cliente nem tem
+   lógica equivalente (confirmado grepando `blocker` nesse arquivo — zero
+   ocorrências). Uma movimentação feita pelo Agente Ágil pra Concluído
+   não desimpede o card sozinha ainda.
+
+Testado com Playwright (chamando `recordMove()` diretamente, já que é
+puro/sem I/O): card impedido movido pra "done" → desimpede + grava
+histórico; movido pra coluna não-done → continua impedido; modo `col` →
+`recordMove()` não mexe em `card.blocker` (a regra de coluna já resolve
+sozinha); card já em "done" chamando `recordMove()` de novo pra "done"
+(sem transição real) → não reprocessa; card criado direto numa coluna
+done → não dispara nada, sem crash. `HELP_CONTENT` (entrada "Badge de
+impedimento no card") e `CODE_MAP.md` atualizados. Checks de rotina:
+`node --check` OK, balanço de chaves/parênteses igual ao baseline da
+sessão (braces -1, parens +1).
+
 ### v8.30.575-dev — 2026-09-04 — 📜 Histórico: Feed de marcos agora aceita qualquer dia OU período do passado
 
 Pedido direto do usuário: "uma coisa q eu acho q faltou! ter uma opção de

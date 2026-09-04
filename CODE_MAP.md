@@ -734,6 +734,32 @@ detalhe dos 4 call sites.
   `blockerMode` live; cruzado via `_meuDiaCrossData[sq].blockerMode`, que
   vem de graça do mesmo fetch de `/dados` que já trazia `doneCols`) —
   mesmo padrão de `_cardIsBlocked()`/`_meuDiaIsDone()`
+- **Desimpede sozinho ao concluir** (`recordMove()`, ver Board & render —
+  2026-09-04, pedido direto do usuário: "regra geral, para todos os
+  boards... se o card está concluido, automaticamente ele é
+  desimpedido!"). Só modo `tag` (modo `col` já resolve isso sozinho — 1
+  card, 1 coluna por vez). Implementado DENTRO de `recordMove()`, não em
+  cada função de mover card — é o único ponto por onde toda movimentação
+  passa (drag `handleDrop()`, `ctxMove()`, dropdown do modal, ações em
+  massa `_doBulkMove()`, criação de card), então corrige 1 vez, não N.
+  Guard `from!==toCol` evita disparar na criação do card (`recordMove(novo,
+  novo.col)` chega com from===toCol, sem transição de verdade) — sem esse
+  guard, todo card novo criado direto numa coluna de Concluído (raro, mas
+  possível via duplicar/recorrente) apagaria um `blocker:true` que nunca
+  chegou a significar nada real. Mesmos campos/mensagem que
+  `_doBulkUnblockTag()` já usa (`blocker=false`, `blockerReason=''`,
+  `recordHistory('impedimento removido automaticamente (card
+  concluído)')`) — fica indistinguível de uma remoção manual no histórico.
+  **Limitações conhecidas, não resolvidas nesta rodada**: (1) NÃO
+  retroativo — um card que já estava Concluído+impedido ANTES desta
+  mudança só se corrige na PRÓXIMA vez que for movido de coluna de
+  verdade (recordMove() com `from!==toCol`), não numa varredura automática
+  do board existente; (2) o Agente Ágil move cards via Cloud Function
+  (`functions/agente-agil/board.js` → `mover_coluna`), um caminho
+  server-side que NÃO passa por este `recordMove()` do cliente nem tem
+  lógica equivalente — confirmado grepando `blocker` nesse arquivo (zero
+  ocorrências). Uma movimentação feita pelo Agente Ágil pra uma coluna de
+  Concluído não desimpede o card sozinha ainda.
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de
