@@ -12544,6 +12544,45 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.15 · painel-dev — 2026-09-04 — Timeline: redesenho (filtros compostos + Histórico/Feed de marcos)
+
+Pedido direto do usuário depois de validar o lote anterior em prod: "ainda
+acho q a forma como timeline ta desenvolvido no painel nao ta ideal...
+principalmente pensando que sao muitoooooooooos cards! coloque mais
+filtros e filtros q se conversem! coloca tb a opção de historico la e
+aquelas definições q vc fez (criado, movido, concluido...)". 3 mudanças:
+
+1. **Filtros compostos, que se conversam** — além do filtro de squad/
+   gerência já existente, a aba 🛤️ Timeline ganhou Responsável, Tag,
+   Prioridade e busca por texto, todos combináveis (E lógico). "Se
+   conversam": trocar de squad/gerência já estreita quem aparece nos
+   selects de Responsável e Tag, em vez de listar gente/tag de squads que
+   nem estão mais visíveis. Responsável nunca mistura pessoas de squads
+   diferentes que por acaso têm as mesmas iniciais (chave interna
+   `squadId::init`, não só `init`). Trocar de squad reseta sozinho um
+   filtro de Responsável/Tag que não existe mais nessa squad, em vez de
+   deixar a lista parecer vazia sem explicação.
+2. **Teto de exibição por bucket + "Mostrar mais N"** — com todas as
+   squads juntas, um bucket como "Sem prazo definido" pode ter dezenas de
+   cards; agora só os 15 primeiros aparecem de cara, com um botão pra
+   expandir o resto sob demanda.
+3. **"📜 Histórico" (Feed de marcos, multi-squad)** — botão novo no
+   cabeçalho da aba abre um modal com qualquer dia ou período do passado,
+   cruzando todas as squads visíveis, com os mesmos 7 tipos de marco que
+   o kanban.html já tem: 🆕 criado, 🔀 movido, 🏁 concluído, 🎚️
+   prioridade alterada, 🚧 impedido, 🔓 desimpedido, 💯 checklist 100%.
+   Filtro próprio (squad/responsável/tag), independente do filtro da
+   Timeline principal — mesmo motivo do kanban.html: um filtro deixado
+   ligado no board não pode encolher o retrospecto sem avisar. Zero
+   leitura nova no Firebase — usa o mesmo `squadData` que a aba já busca
+   a cada 60s.
+
+Testado com Playwright (25 cenários automatizados: bucketing, teto/
+expandir, filtro de responsável não misturando squads com a mesma
+inicial, filtro de tag cruzando squads pelo nome, "filtros que se
+conversam" ao trocar squad, reset automático de filtro morto, os 7 tipos
+de marco no Feed, filtro de tipo/squad dentro do Feed) — todos passaram.
+
 ### painel.html v3.10 · painel — 2026-09-04 · promove pra prod — Timeline: UI/UX + visual "glass"
 
 Promove pra produção o lote v3.13-dev/v3.14-dev de `painel-dev.html`

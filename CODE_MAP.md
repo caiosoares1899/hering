@@ -1183,6 +1183,52 @@ já usam no board, só que a definição da tag vem de
 injetado sem `esc()` (única string de card não escapada nessa função) —
 corrigido junto.
 
+**Redesenho — filtros compostos + Histórico/Feed de marcos (2026-09-04,
+só em `painel-dev.html`, ainda não promovido)** — pedido direto: "sao
+muitooooos cards!... mais filtros e filtros q se conversem... historico
+e as definições (criado, movido, concluido)". Substitui as duas
+limitações que a seção acima registrava como "possível evolução futura".
+- **Filtros compostos** (`_painelTimelineFilter`, objeto
+  `{owner,tagLabel,prio,texto}`) — combinam em AND com o filtro de squad/
+  gerência já existente (`activeFilter`). Selects novos
+  `#pt-filter-owner`/`#pt-filter-tag`/`#pt-filter-prio` + input
+  `#pt-filter-texto` (debounce 180ms via `_painelTimelineSetFilterTexto()`,
+  só por desempenho — o campo nunca perde foco porque `#pt-filters` NUNCA
+  é reconstruído por inteiro, só o `.innerHTML` dos 3 `<select>` a cada
+  render). "Se conversam":
+  `_painelTimelineOwnerOptions()`/`_painelTimelineTagOptions()` recebem o
+  pool JÁ filtrado por squad/gerência (`poolSquad`, dentro de
+  `renderPainelTimeline()`) — trocar de squad estreita as opções de
+  Responsável/Tag. Responsável usa chave composta `squadId::init` (não só
+  `init`) — iniciais são reaproveitadas entre squads diferentes, um
+  filtro só por init misturaria pessoas sem ninguém perceber. Se o
+  responsável/tag escolhido não existir mais nas novas opções ao trocar
+  de squad, reseta sozinho (~L9186 de `renderPainelTimeline()`).
+- **Teto de exibição + "Mostrar mais N"** (`PT_BUCKET_CAP=15`,
+  `_painelTimelineExpanded`, `_painelTimelineExpandBucket()`) — dentro de
+  `secao()`, cada bucket só renderiza os 15 primeiros cards (ordenados)
+  até a pessoa clicar em "Mostrar mais".
+- **"📜 Histórico" / Feed de marcos multi-squad** — botão no cabeçalho da
+  aba (`openPainelHistorico()`) abre `#pt-feed-ov` (reusa o mesmo CSS
+  `.pc-modal-ov`/`.pc-modal` do modal de card, id próprio). Geração de
+  marcos: `_ptMarcosNoPeriodo(deStr,ateStr)` — porta
+  `_marcosNoPeriodo()` de `kanban-dev.html` pra cruzar todas as squads
+  visíveis (`squadVisible()`), lendo `card.createdAt`/`card.flow.log`/
+  `card.history` que `squadData` já carrega (zero leitura nova no
+  Firebase). 7 tipos, mesmas regras do kanban.html (`_ptFeedRow()`,
+  cores em `PT_TIMELINE_FEED_COR`). "Concluído" usa `col==='done'` (mesma
+  simplificação do resto da aba — sem `flowConfig` por squad). Filtro
+  PRÓPRIO do Feed (`_ptFeedFilter`: `squad`/`owner`/`tagLabel`/`tipos`),
+  independente de `_painelTimelineFilter` da Timeline principal — mesmo
+  motivo do kanban.html (retrospecto não pode encolher só porque um
+  filtro ficou ligado no board por outro motivo); reseta a cada abertura
+  (`openPainelHistorico()`) ou busca de novo período
+  (`_ptFeedBuscarPeriodo()`).
+- Helper compartilhado novo: `_ptCardHasTagLabel(c,sqId,label)` — usado
+  tanto pelo filtro da Timeline quanto pelo do Feed.
+- Testado com Playwright (25 cenários) — ver `CHANGELOG.md` v3.15 ·
+  painel-dev pro detalhamento.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
