@@ -12560,6 +12560,79 @@ essa informação de novo no futuro.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.18 · painel-dev — 2026-09-04 — 🎯 OKR (Fase 1): Objetivos e Marcos estratégicos, nova aba no painel
+
+Primeira fase da internalização do acompanhamento de Iniciativas
+Estratégicas (planilha/PDF trimestral da Azzas) direto no Maré Digital,
+pedido direto do chefe do usuário depois de ver o Supercard. Estrutura
+própria — Objetivo (nível 1) e Marco (nível 2) — inspirada no par
+supercard/card filho mas com nome e dados independentes (não é supercard
+de verdade, não usa `childCardIds`): dados globais em
+`kanban/okr/objetivos` e `kanban/okr/marcos` (fora de squad, mesmo padrão
+de `kanban/painel`/`kanban/config` — regra nova em `database.rules.json`,
+espelhando a de `painel`).
+
+**Objetivo**: título, Gerência (área), pilar estratégico, trimestre/
+período, descrição, responsável(is) (multi-pessoa, picker global via
+`_globalUsersCache`, não amarrado a squad), indicadores de entrega, e os
+4 blocos do PDF-fonte (Progressos / Próximos Passos / Riscos / Planos de
+Ação), cada um uma lista de bullets editável.
+
+**Marco**: nome, responsável, prazo, checklist, tags, participantes,
+descrição, comentários (mesmo padrão de `card_comments`, `ts` sempre ISO
+string) e progresso — 5 estados: o semáforo original do PDF (🟢 No
+prazo / 🟡 Risco identificado / 🔴 Atrasado-impacto / vazio→⚪ Não
+iniciado) mais um ✅ Concluído explícito, decisão do usuário ("seria a
+coluna do card filho"). O status do Objetivo é sempre DERIVADO do pior
+status entre os marcos ativos — nunca setado manualmente, pra não
+divergir da realidade dos marcos.
+
+**Gerências = as capas do PDF**, lista própria `OKR_GERENCIAS` (Geral,
+Comercial, Marketing de Performance, Dados e IA, CX, Tech, CRM) —
+deliberadamente NÃO reaproveita a `GERENCIAS` do Dashboard existente,
+porque aquela é amarrada a `squadIds` reais (usa `squadIds:null` como
+catch-all de Comercial pra "Insights por Gerência") e Tech/CX/CRM/Geral
+não têm squad nenhum no board; misturar as duas listas quebraria o
+catch-all.
+
+**Permissão**: só responsável(is) do objetivo + ADM editam/criam
+(decisão do usuário) — check client-side (`_okrCanEdit()`/
+`_okrCanCreate()`), mesmo padrão de gating de UI já usado no resto do
+app (não há ACL granular por documento no Realtime Database). Quem não
+pode editar vê o objetivo/marco em modo leitura, sem inputs.
+
+**"Cards do board com badge OKR"** — o grid que já existia
+(`renderOKR()`, antes na aba Visão) mudou de casa pra dentro da aba OKR
+nova, ficando junto do resto do assunto.
+
+Achado real durante o teste (não em produção — pego antes de sair):
+qualquer clique em "+ Add" de lista/pessoa/checklist/tag/participante
+re-renderiza o modal inteiro a partir do rascunho em memória
+(`_okrObjDraft`/`_okrMarcoDraft`) — sem sincronizar os campos de texto
+(título, descrição...) de volta pro rascunho ANTES desse re-render, o
+que já tinha sido digitado no `<input>` sumia. Corrigido com
+`_okrSyncObjDraftFromDom()`/`_okrSyncMarcoDraftFromDom()`, chamados no
+início de toda função de lista/checklist/tag/participante/status antes
+de re-renderizar.
+
+44 cenários testados via console (nav, as 7 Gerências, permissão nos 3
+papéis, status agregado do objetivo, fluxo completo de criar
+Objetivo→Marco→comentário com payloads conferidos, modo leitura,
+filtros, sobrevivência aos 3 temas) — todos passando. `ts` de comentário
+sempre `new Date().toISOString()`, nunca `Date.now()` (regra do
+`subirproprod`).
+
+**Fases seguintes** (não implementadas ainda): apresentação HTML em
+Marine Glass gerada a partir dos dados; snapshot automático toda sexta
+06:00 salvo no Firebase como histórico; chat do Agente Ágil ajudando a
+montar/atualizar (toolset novo no orquestrador).
+
+**Pendências de deploy**: `database.rules.json` ganhou o node
+`kanban/okr` (mesma regra de `painel`) — precisa de
+`firebase deploy --only database` rodado localmente (ver `CLAUDE.md`)
+pra valer em produção; sem isso, leitura/escrita em `kanban/okr/*`
+fica bloqueada pelas regras atuais do projeto.
+
 ### painel-dev.html v3.17 · painel-dev — 2026-09-04 — 📜 Histórico: fundo/borda hardcoded ficavam errados nos temas claro e Vice City
 
 Achado real do usuário, com print dos dois temas: "vc esqueceu de mexer
