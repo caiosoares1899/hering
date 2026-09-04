@@ -12658,6 +12658,31 @@ anterior) + 45 (Fase 1) + 10 (badge/avatar) reexecutados via Playwright
 — todos passando, sem regressão. Confirmado visualmente por screenshot:
 card abre por cima do modal do OKR, histórico com avatar/ícone/cor.
 
+### painel.html v3.20 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR: 4 achados reais testando em prod (z-index, multi-trimestre, arquivados, histórico rico)
+
+Promove pra produção o lote v3.19 → v3.20 de `painel-dev.html`, validado
+explicitamente pelo usuário ("testei, ficou bom, pode subir"). Mesma
+disciplina de sempre pro par painel: replicação manual de cada edição,
+não cópia do arquivo. Ver a entrada de dev logo acima pro detalhe
+técnico completo (mesmo texto, já documentava a v3.20-dev).
+
+Resumo pro público de prod: corrigido o card que abria "atrás" do modal
+do OKR ao vincular; um Objetivo agora pode acumular vários trimestres/
+períodos em vez de só um (projetos grandes costumam atravessar mais de
+um); ganhou um botão "📦 Ver arquivados" pra acessar de novo um OKR
+arquivado; e o Histórico dentro do modal foi reescrito num visual mais
+rico — ícone por tipo de mudança, avatar de quem editou, cores — e passou
+a registrar também mudanças em listas (Indicadores/Progressos/etc.),
+tags aplicadas, cards vinculados/desvinculados e participantes de marco,
+não só os campos principais.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+(`braces -1, parens -14` — mesmo baseline já confirmado em
+`painel-dev.html`). 26 (rodada 4) + 31 (extensão) + 45 (Fase 1) + 10
+(badge/avatar) = 112 cenários reexecutados via Playwright direto contra
+`painel.html` — todos passando, sem regressão. Aviso: Mural/WhatsApp
+pulados nesta promoção a pedido do usuário ("sem avisos").
+
 ### painel.html v3.19 · painel — 2026-09-04 · Promove pra prod — 🎯 OKR: Histórico, vínculo de cards, tags gerenciáveis e notificações
 
 Promove pra produção o lote v3.18 → v3.19 de `painel-dev.html`, validado
