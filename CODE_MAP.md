@@ -831,6 +831,21 @@ detalhe dos 4 call sites.
   _timelineFeedFilter=...` e `_timelineFeedResetFilter()`) expandidos
   pros 4 tipos novos, mesmo padrão dos 3 já existentes (criado/movido/
   concluido) — nenhuma lógica de filtro/toggle nova, só mais chaves.
+- **📰 Feed de marcos — fix na contagem dos chips + calendário temático**
+  (2026-09-04, pedido direto do usuário: "a contagem ali de 'criados;
+  movidos...' deveria refletir os outros filtros aplicados"; "nesse de
+  setar a data, coloca o calendario com nosso layout"). Contagem:
+  `_timelineFeedMatchesFilter()` dividida em `_timelineFeedMatchesFilterBase()`
+  (usuário/subtime/tag/só eu, sem o check de tipo) + o check de tipo por
+  cima — `_renderTimelineFeed()` agora conta `nCriado`/`nMovido`/etc.
+  sobre `todos.filter(_timelineFeedMatchesFilterBase)` em vez de `todos`
+  puro, refletindo os outros filtros sem zerar o número do próprio chip
+  ao desligá-lo (mesma garantia de antes, base diferente). Calendário:
+  `#tf-de`/`#tf-ate` ganharam o botão `📅` (`class="dp-btn"`,
+  `onclick="_dpOpen('tf-de',this)"`) que todo campo de data do app já usa
+  (`_dpOpen()`/`_dpPick()`/`_dpRender()`, ~linha 17735) — antes só o
+  input nativo (ícone do navegador já ficava escondido via CSS, mas sem
+  o botão temático de abrir o popover).
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de

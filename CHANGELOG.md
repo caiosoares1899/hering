@@ -2727,6 +2727,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.580-dev — 2026-09-04 — Feed de marcos: fix na contagem dos chips + calendário temático no seletor de período
+
+2 achados reais do usuário testando o 📜 Histórico/📰 Feed de marcos:
+
+1. **Contagem dos chips (🆕/🔀/🏁/🎚️/🚧/🔓/💯) não refletia os outros
+   filtros aplicados** — "a contagem ali de 'criados; movidos...' deveria
+   refletir os outros filtros aplicados, nesse exemplo usuario". Os
+   números eram calculados sempre sobre `todos` (o período inteiro,
+   decisão deliberada documentada no código pra evitar o número do
+   próprio chip sumir ao desligá-lo) — mas isso também fazia o número
+   ficar parado ao trocar responsável/subtime/tag/"Só eu", que é
+   justamente quando a pessoa mais quer ver o recorte atualizado. Fix:
+   `_timelineFeedMatchesFilter()` foi dividida em
+   `_timelineFeedMatchesFilterBase()` (só usuário/subtime/tag/só eu, sem
+   o check de tipo) + o check de tipo por cima; os chips agora contam
+   sobre `todos.filter(_timelineFeedMatchesFilterBase)` — reflete os
+   outros filtros, mas continua sem zerar o próprio número ao desligar o
+   chip dele mesmo (mantém a garantia original, só que sobre a base
+   certa).
+2. **Seletor de período (de/até) usava o calendário nativo do
+   navegador** — "nesse de setar a data, coloca o calendario com nosso
+   layout". Os campos `#tf-de`/`#tf-ate` ganharam o botão `📅`
+   (`class="dp-btn"`, `onclick="_dpOpen('tf-de',this)"`/`'tf-ate'`) que
+   todo campo de data do app já usa (ver `_dpOpen()`/`_dpPick()`/
+   `_dpRender()`, o mini-calendário temático reaproveitado de
+   `m-due`/`cfg-sprint-start`/etc.) — o ícone nativo do input já ficava
+   escondido via CSS (`input[type="date"]::-webkit-calendar-picker-indicator`),
+   só faltava o botão de abrir o popover certo.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline da sessão (braces -1, parens +1). Testado com Playwright:
+contagem dos chips muda ao aplicar filtro de usuário (2→1 em ambos os
+tipos testados), número do chip continua o mesmo ao desligá-lo e religá-lo,
+botão `📅` abre o `.dp-pop` temático e escolher um dia preenche o input
+corretamente — 0 erros de console.
+
 ### v8.30.579-dev — 2026-09-04 — Feed de marcos: 4 tipos novos (prioridade, impedido, desimpedido, checklist 100%)
 
 Pedido direto do usuário: "tem nesse historico tb a alteração de
