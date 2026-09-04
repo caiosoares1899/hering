@@ -2686,6 +2686,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.573-dev — 2026-09-04 — Feed de marcos ganha filtro próprio (responsável/subtime/tag/tipo)
+
+Pedido direto do usuário depois de testar a v8.30.572-dev: "testei,
+ficou top! faltou na vdd colcoar filtros aqui tb" — seguido, quando
+perguntado o quê especificamente, de "subtime, usuario, tag...".
+
+**Filtro PRÓPRIO do Feed de marcos** (`_timelineFeedFilter`),
+deliberadamente separado do `activeFilters` global do board: o feed é um
+retrospecto do dia inteiro por design ("cobre o board inteiro, não só os
+cards daquele grupo" — já documentado no HELP_CONTENT), então reusar o
+filtro global faria ele encolher escondido só porque alguém deixou um
+filtro ligado no board por outro motivo, sem nenhum aviso dentro do
+próprio modal. Reseta sozinho toda vez que um dia novo é aberto — nunca
+herda filtro de uma investigação anterior sem querer.
+
+- **Chips de tipo** (🆕/🔀/🏁): clicáveis, ligam/desligam cada tipo de
+  marco. Número mostrado sempre conta sobre o total do dia (não sobre o
+  já filtrado por outros critérios) — fica estável como referência.
+- **Selects de Responsável/Subtime/Tag**: mesma semântica do filtro
+  global (`cardInSubteam()` — participação por owner/participantes nos
+  `members` do subtime, não um campo direto no card).
+- **"💡 Só eu"**: cards em que você é responsável ou participante.
+- **"🧹 Limpar"**: só aparece quando algum filtro está de fato ativo.
+
+`openTimelineFeed()` virou casca fina — só guarda `{dateStr,labelStr}`
+em `_timelineFeedState` e chama `_renderTimelineFeed()`, necessário pra
+qualquer toggle de filtro re-renderizar sem reabrir o modal do zero.
+`_ownerOptionsHtml(placeholder)` extraído de `_populateFilterSelects()`
+pra reusar no select de responsável local (evita duplicar a lógica de
+"junta member cadastrado + init solto sem cadastro").
+
+**Achado real durante o próprio desenvolvimento** (pego antes de subir,
+não reportado pelo usuário): a 1ª tentativa marcava a `<option>`
+selecionada via atributo `selected` direto na string HTML — o select de
+Responsável ficava sempre mostrando "Todos os usuários" mesmo com um
+filtro ativo, porque a lógica de montar a string não conseguia marcar a
+option certa de forma confiável. Corrigido setando `.value=` nos 3
+`<select>` (`#tf-owner`/`#tf-subteam`/`#tf-tag`) DEPOIS de inserir no DOM.
+
+Testado com Playwright: "Só eu" filtrando 3→1→3 cards corretamente,
+toggle de tipo escondendo/mostrando marcos certos, filtro de subtime
+(via `members` do subtime, não campo direto) retornando o card certo,
+"Limpar" resetando tudo, e reabrir o feed (`openTimelineFeed()`)
+confirmado resetando o filtro sozinho. `HELP_CONTENT` (entrada
+"Timeline") e `CODE_MAP.md` atualizados. Checks de rotina: `node --check`
+OK, balanço de chaves/parênteses igual ao baseline da sessão (braces -1,
+parens +1).
+
 ### v8.30.572-dev — 2026-09-04 — UX: Feed de marcos (📰) ganha avatar, tags, prioridade e cor por tipo
 
 Pedido direto do usuário depois de testar a v8.30.571-dev, olhando um
