@@ -1264,6 +1264,50 @@ painel-dev pro detalhamento completo. Resumo:
   `rgba(var(--ink-rgb),...)`/`var(--glass-b)`. Afeta os DOIS modais que
   usam essas classes (card + 📜 Histórico).
 
+### Aba "🎯 OKR" (Objetivos/Marcos, Fase 1 — 2026-09-04, SÓ em painel-dev.html ainda, não promovida)
+Internalização do PDF trimestral "Iniciativas Estratégicas" (Azzas/Hering)
+direto no painel — pedido do chefe do usuário depois de ver o Supercard,
+mas com estrutura e nomes PRÓPRIOS (não é supercard: não usa
+`childCardIds`, dados globais fora de squad). Ver `CHANGELOG.md`
+v3.18 · painel-dev pro racional completo das decisões de produto.
+- `OKR_GERENCIAS` — 7 entradas (Geral/Comercial/Marketing de Performance/
+  Dados e IA/CX/Tech/CRM, as capas do PDF-fonte). Lista PRÓPRIA, não
+  reaproveita a `GERENCIAS` do Dashboard (aquela é squad-bound, usa
+  `squadIds:null` como catch-all de Comercial — Tech/CX/CRM/Geral não
+  têm squad, quebraria o catch-all).
+- `OKR_STATUS` — 5 estados (⚪ Não iniciado/🟢 No prazo/🟡 Risco/🔴
+  Atrasado/✅ Concluído — semáforo do PDF + Concluído explícito, pedido
+  direto). `_okrObjStatus(objId)` deriva o status do OBJETIVO a partir do
+  pior status entre os marcos ativos — nunca setado manualmente.
+- Dados: `kanban/okr/objetivos/{id}` e `kanban/okr/marcos/{id}` (marco
+  tem `objetivoId`, mesmo padrão flat de `childCardIds` mas em nó
+  próprio); comentários em `kanban/okr/marco_comments/{marcoId}/
+  {commentId}`, mesmo formato de `card_comments`. Regra nova em
+  `database.rules.json` (`kanban.okr`, espelha `kanban.painel`) —
+  **pendente `firebase deploy --only database` local** pra valer em prod.
+- `loadOkr()` — `_onValue` nos dois nós, populam `okrObjetivos`/
+  `okrMarcos`. Chamado no boot junto de `loadGlobalUsers()`.
+- Permissão: `_okrCanEdit(obj)`/`_okrCanCreate()` — só responsável(is) do
+  objetivo + ADM, check client-side (mesmo padrão de gating de UI do
+  resto do app, sem ACL granular no Realtime Database).
+- Pessoas (responsável/participantes) via picker GLOBAL
+  (`_okrPessoaOptions()`/`_okrPessoaInfo()`), fonte é `_globalUsersCache`
+  — não amarrado a squad, ao contrário do resto do painel.
+- `openOkrObjetivo(id)`/`openOkrMarco(id,objId)` — modais reaproveitam
+  `.pc-modal-ov`/`.pc-modal` (já theme-safe, ver seção Histórico acima).
+  1 modal por vez: abrir um Marco fecha visualmente o Objetivo, `closeOkrMarco()`
+  reabre o pai atualizado.
+- **Achado real (testado antes de sair, não chegou a produção)**:
+  qualquer "+ Add" de lista/checklist/tag/participante/status
+  re-renderiza o modal inteiro a partir do rascunho em memória
+  (`_okrObjDraft`/`_okrMarcoDraft`) — sem sincronizar os campos de texto
+  de volta pro rascunho antes, o que já tinha sido digitado sumia.
+  `_okrSyncObjDraftFromDom()`/`_okrSyncMarcoDraftFromDom()` corrigem,
+  chamados no início de toda função de lista/pessoa/checklist/tag/
+  participante/status antes de re-renderizar.
+- "🎯 Cards do board com badge OKR" (`renderOKR()`) mudou de casa: antes
+  na aba Visão, agora dentro desta aba nova, junto do resto do assunto.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
