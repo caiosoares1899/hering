@@ -12642,7 +12642,87 @@ alguém pedir).
   functions:okrWeeklySnapshot` (resync do clone primeiro, ver
   `CLAUDE.md`).
 
+## Cloud Function — `okrAgenteChat` (`functions/okr/agenteChat.js`, sem versão própria em `version.json`)
+
+### 2026-09-05 — Nova function: chat dedicado com o Agente Ágil pra ajudar a preencher OKRs
+
+Pedido direto ("usar o agente ágil para ajudar o pessoal a preencher, igual
+ele faz com os cards! ai coloca um chat ali nessa página, tipo aquele q ta
+no kanban-dev/dados"), escopo confirmado via `AskUserQuestion`: central
+geral (não presa a um Objetivo específico, fiel ao modelo do card
+"hotline" do kanban), escrevendo direto nos campos via ferramentas — não
+só sugerindo texto.
+
+- **Trigger novo**: `onValueCreated` em `/kanban/okr/agente_chat/{msgId}` —
+  como o nó é dedicado só a essa conversa, toda mensagem de humano já é,
+  por definição, um pedido pro agente (sem @menção pra detectar, diferente
+  do card hotline). Mesmas 3 travas de sempre: anti-auto-disparo, kill
+  switch global (`kanban/config/agente_agil_orquestrador/enabled`, o
+  MESMO switch do resto do Agente Ágil) e idempotência
+  (`kanban/okr/agente_chat_processed/{msgId}`).
+- **7 ferramentas novas** (`functions/okr/agenteTools.js`), vocabulário
+  100% novo — o orquestrador de card não tem nenhuma noção de
+  Objetivo/Marco, só o motor genérico (`loop.js`/`llmClient.js`) foi
+  reaproveitado: `listar_objetivos`, `ler_objetivo` (leitura livre),
+  `criar_objetivo` (só ADM), `editar_campos_okr`/`criar_marco`/
+  `editar_marco` (ADM ou Responsável do Objetivo — mesma regra
+  client-side de `_okrCanEdit()`/`_okrCanCreate()` já usada em
+  `painel.html`, replicada servidor-side em `agenteHelpers.js`) e
+  `responder` (posta a resposta no próprio chat — sempre a última
+  ferramenta chamada).
+- **Campos de lista só SOMAM** (Indicadores/Progressos/Próximos Passos/
+  Riscos/Planos de Ação) — nunca substituem o que já tinha, decisão
+  deliberada pra "ajudar a preencher" nunca virar "apagar sem querer".
+- **"Acesso aos pedidos feitos aqui"** (2º pedido do usuário): sem viewer
+  de log separado — o próprio nó `kanban/okr/agente_chat` é permanente e
+  compartilhado, a conversa inteira (pedidos + respostas) já fica visível
+  pra qualquer um que abrir a Central no painel.
+- **Rede de segurança**: se o modelo terminar só com texto, sem chamar
+  `responder` (não-determinismo do LLM, mesmo achado real já visto no
+  orquestrador de card em 2026-08-18), o texto final é postado como
+  fallback — a pessoa sempre recebe alguma resposta.
+- **`okr_agente`** adicionado ao `PUSH_TYPES` (allow-list de push do
+  `sendPushOnNotification`) — quem manda a mensagem é notificado quando o
+  agente responde.
+- **Escrita real desde o 1º deploy** (`DRY_RUN_OKR_CHAT = false`, no topo
+  de `agenteChat.js`) — decisão explícita do usuário via
+  `AskUserQuestion` ("Já libera escrita real"), sem a etapa de modo
+  sombra que o `mentionTrigger.js` usou pra squad `dados`.
+- `kanban/okr/agente_chat`/`agente_chat_processed` já ficam cobertos pela
+  regra existente de `kanban.okr` no `database.rules.json` — nenhuma
+  mudança de regra necessária.
+- 33 testes novos (`node --test`, fake DB — permissão ADM/Responsável,
+  listas só somando, rede de segurança, idempotência, kill switch,
+  notificação) — suite completa de `functions/` (463 testes) sem
+  regressão.
+- **Requer deploy manual**: `firebase deploy --only
+  functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
+
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.22 · painel-dev — 2026-09-05 — 🎯 OKR: 💬 Central Agente Ágil (chat pra ajudar a preencher)
+
+Client-side da function `okrAgenteChat` acima — botão "💬 Central Agente
+Ágil" na aba OKR, mesmo espírito do card "hotline" do kanban (@kanban-dev/
+dados), mas como painel de chat de verdade, não um card disfarçado.
+
+- Alterna com a lista de Objetivos e com o 📈 Histórico (nunca duas vistas
+  juntas — mesmo padrão de `_okrToggleHistorico()`/`_okrToggleArquivados()`).
+- Lista de mensagens em tempo real (`kanban/okr/agente_chat`, `onValue`),
+  distinguindo visualmente humano de agente (acento na borda esquerda —
+  azul pra humano, teal pra agente).
+- Campo de texto livre — "conte a situação com suas palavras" — Enter ou
+  botão "Enviar" grava a mensagem com autoria de quem está logado
+  (`window._currentUser`), `ts` sempre como string ISO.
+- A conversa inteira (pedidos + respostas do agente) fica visível ali
+  mesmo, permanente — é o que responde ao 2º pedido do usuário ("preciso
+  ter acesso tb aos pedidos feitos aqui"), sem precisar de log separado.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`. 21 cenários
+novos via Playwright (toggle mostrando/escondendo as seções certas,
+exclusão mútua com Histórico, render de mensagem humana vs. agente, envio
+grava no path certo com autoria certa, não envia mensagem vazia, `ts`
+sempre string) — todos passando.
 
 ### painel-dev.html v3.21 · painel-dev — 2026-09-05 — 🎯 OKR: 📈 Histórico semanal (Fase 3)
 

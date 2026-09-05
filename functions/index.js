@@ -20,7 +20,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_periodo', 'okr_reuniao']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_periodo', 'okr_reuniao', 'okr_agente']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -185,6 +185,14 @@ exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
 // kanban/okr/snapshots/{data}, pra permitir comparar semana a semana mais
 // pra frente. Deploy isolado: firebase deploy --only functions:okrWeeklySnapshot
 exports.okrWeeklySnapshot = require('./okr/weeklySnapshot').okrWeeklySnapshot;
+
+// 🎯 OKR — chat dedicado com o Agente Ágil (ver functions/okr/agenteChat.js).
+// Central geral (não presa a um Objetivo), escreve direto nos campos via
+// ferramentas (functions/okr/agenteTools.js) — MODO SOMBRA no 1º deploy
+// (DRY_RUN_OKR_CHAT=true no próprio arquivo: valida o mecanismo antes de
+// destravar escrita real, mesma disciplina do mentionTrigger.js pra squad
+// `dados`). Deploy isolado: firebase deploy --only functions:okrAgenteChat
+exports.okrAgenteChat = require('./okr/agenteChat').okrAgenteChat;
 
 // Agente Ágil Orquestrador — @menção v1 (item 3/4 do plano de acionamento
 // sem supervisão direta, ver functions/agente-agil-orquestrador/README.md).
