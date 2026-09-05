@@ -190,7 +190,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>Estrutura Firebase</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.574</div>
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.586</div>
     <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>Autenticação & papéis</a>
     <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>Board & visualizações</a>
     <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>Sistema de cards</a>
@@ -203,15 +203,16 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('backup')"><span class="nd" style="background:var(--orange)"></span>Backup & snapshots</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.584-dev</div>
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.586-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">painel.html · v3.10</div>
+  <div class="ng"><div class="ng-lbl">painel.html · v3.24</div>
     <a class="nl" onclick="goTo('painel-overview')"><span class="nd" style="background:var(--teal)"></span>Visão geral</a>
     <a class="nl" onclick="goTo('painel-sections')"><span class="nd" style="background:var(--cyan)"></span>Seções & métricas</a>
     <a class="nl" onclick="goTo('painel-setup')"><span class="nd" style="background:var(--purple)"></span>Board Setup</a>
     <a class="nl" onclick="goTo('painel-users')"><span class="nd" style="background:var(--accent)"></span>Gestão de usuários</a>
+    <a class="nl" onclick="goTo('okr')"><span class="nd" style="background:var(--warn)"></span>🎯 OKR (Objetivos & Marcos) <span class="nb nb-t">novo</span></a>
   </div>
 
   <div class="ng"><div class="ng-lbl">Segurança</div>
@@ -231,9 +232,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
   <p class="hdesc">Sistema Kanban desenvolvido internamente. Páginas HTML autocontidas (sem build, sem servidor próprio), sincronização em tempo real via Firebase, um orquestrador de IA rodando em Cloud Functions e suporte a múltiplos squads.</p>
   <div class="pills">
-    <span class="pill pb">kanban.html · v8.30.574</span>
-    <span class="pill pp">kanban-dev.html · v8.30.584-dev</span>
-    <span class="pill pt">painel.html · v3.10</span>
+    <span class="pill pb">kanban.html · v8.30.586</span>
+    <span class="pill pp">kanban-dev.html · v8.30.586-dev</span>
+    <span class="pill pt">painel.html · v3.24</span>
     <span class="pill pw">🤖 Agente Ágil · Claude</span>
     <span class="pill po">☁ Firebase RTDB + Functions</span>
   </div>
@@ -315,9 +316,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
-      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.574 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
-      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.584-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
-      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.10</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.586 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.586-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
+      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.24</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads, incluindo a aba 🎯 OKR. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>okr-apresentacao.slide.html</td><td>sem versão própria</td><td>acesso direto</td><td>Apresentação em slides dos Objetivos estratégicos (1 Objetivo = 1 slide) — ver seção "🎯 OKR"</td></tr>
       <tr><td>firebase-messaging-sw.js</td><td>sem versão própria</td><td>raiz do domínio</td><td>Service Worker — cache offline + exibição de push com a aba fechada</td></tr>
       <tr><td>maredigital.html</td><td>sem versão própria</td><td>acesso direto</td><td>Esta página — documentação técnica, fora do ciclo de release versionado</td></tr>
     </tbody>
@@ -394,6 +396,11 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 │   ├── notificacoes/{id}       <span class="n">← notificações in-app (type gera push se elegível)</span>
 │   └── notif_prefs/dnd         <span class="n">← janela "Não Perturbe"</span>
 ├── <span class="sh2">notas/{squadId ou uid}/{notaId}</span> <span class="n">← Notas pessoais/de squad, com cardIds vinculados</span>
+├── <span class="sh2">okr/</span>                       <span class="n">← Objetivos/Marcos estratégicos, ver seção "🎯 OKR"</span>
+│   ├── <span class="p">objetivos/{id}</span>             <span class="n">← título, gerência, listas, responsáveis</span>
+│   ├── <span class="p">marcos/{id}</span>                <span class="n">← status/prazo, objetivoId aponta pro pai</span>
+│   ├── <span class="p">snapshots/{data}</span>           <span class="n">← foto semanal (okrWeeklySnapshot)</span>
+│   └── <span class="p">agente_chat</span>                <span class="n">← chat dedicado com o Agente Ágil</span>
 ├── <span class="sh2">squads_meta/</span>               <span class="n">← squads criados dinamicamente via Painel</span>
 └── <span class="sh2">presence/{uid}</span>             <span class="n">← presença global (usada pelo Painel)</span>
   </div>
@@ -478,7 +485,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <span class="k">created</span>:<span class="v">"Caio"</span>, <span class="k">edited</span>:<span class="v">"Caio"</span>, <span class="k">createdAt</span>:<span class="v">"2026-08-01"</span>, <span class="k">editedAt</span>:<span class="v">"2026-08-20"</span> }</div>
   <div class="grid" style="margin-top:1rem;">
     <div class="card"><div class="ci">🎯</div><div class="ct">Insights do PO</div><div class="cd">Campo exclusivo para objetivo, contexto e critério de aceite SMART. Isolado da descrição técnica.</div></div>
-    <div class="card"><div class="ci">🏆</div><div class="ct">Flag de OKR</div><div class="cd">Card marcado como OKR da sprint. Painel agrega OKRs de todos os squads em uma visão consolidada.</div></div>
+    <div class="card"><div class="ci">🏆</div><div class="ct">Flag de OKR (card)</div><div class="cd">Card marcado como OKR da sprint. Painel agrega esses cards de todos os squads numa visão leve — diferente do sistema de Objetivos/Marcos estratégicos, mais estruturado, ver seção "🎯 OKR".</div></div>
     <div class="card"><div class="ci">📎</div><div class="ct">Anexos de links</div><div class="cd">Links dentro do card com detecção automática do serviço (Jira, Figma, GitHub, Drive, Vimeo etc.), favicon e preview embutido para Vimeo.</div></div>
     <div class="card"><div class="ci">💾</div><div class="ct">Auto-save</div><div class="cd">Debounce 800ms: sem nova edição no modal, salva automaticamente no Firebase.</div></div>
     <div class="card"><div class="ci">🚥</div><div class="ct">Semáforo de prazo</div><div class="cd">Verde/amarelo/vermelho. Cards em "Concluído" congelam o badge com ✓ — nunca ficam vermelhos.</div></div>
@@ -719,7 +726,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <thead><tr><th>Seção</th><th>O que mostra</th></tr></thead>
     <tbody>
       <tr><td>Cards por squad</td><td>Cards de todos os squads. Filtro por squad. Abre card em modal sem sair do painel.</td></tr>
-      <tr><td>OKRs — renderOKR()</td><td>Todos os cards flagados como OKR de qualquer squad, agrupados com progresso de checklist.</td></tr>
+      <tr><td>OKRs (cards) — renderOKR()</td><td>Todos os cards flagados como OKR de qualquer squad, agrupados com progresso de checklist — leve, embutido no card. Diferente da aba "🎯 OKR" (Objetivos/Marcos estruturados), ver seção própria.</td></tr>
       <tr><td>Blockers — renderBlockers()</td><td>Cards na coluna blocker de todos os squads. resolveAllBlockers() move todos de volta para "Em Progresso".</td></tr>
       <tr><td>Riscos — renderRiscos()</td><td>Todos os cards com riscos mapeados, de todos os squads.</td></tr>
       <tr><td>Throughput — renderTrend()</td><td>Gráfico de barras de cards concluídos por dia nos últimos 14 dias.</td></tr>
@@ -768,11 +775,45 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
+<!-- 21 OKR -->
+<section class="section" id="okr">
+  <div class="sh"><div class="sn">21</div><div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>painel.html</div>
+    <h2>🎯 OKR — Objetivos e Marcos estratégicos</h2>
+    <p class="slead">Aba dedicada em painel.html/painel-dev.html — modelo estruturado de metas estratégicas por gerência, diferente (e mais completo) do que a flag <code class="hl">card.isOKR</code> embutida no card (seção 08/18) resolve sozinha.</p>
+  </div></div>
+
+  <div class="cl">estrutura de um Objetivo</div>
+  <div class="code">{ <span class="k">id</span>:<span class="v">"obj_..."</span>, <span class="k">titulo</span>:<span class="v">"Reduzir custo Firebase"</span>, <span class="k">areaId</span>:<span class="v">"dadosia"</span>, <span class="k">pilar</span>:<span class="v">"..."</span>,
+  <span class="k">trimestres</span>:<span class="v">["2026-Q3"]</span>, <span class="k">descricao</span>:<span class="v">"..."</span>, <span class="k">responsaveis</span>:<span class="v">["uid1"]</span>, <span class="k">tagIds</span>:<span class="v">[]</span>,
+  <span class="k">indicadores</span>:<span class="v">[...]</span>, <span class="k">progressos</span>:<span class="v">[...]</span>, <span class="k">proximosPassos</span>:<span class="v">[...]</span>, <span class="cm">// listas, só somam item</span>
+  <span class="k">riscos</span>:<span class="v">[...]</span>, <span class="k">planosAcao</span>:<span class="v">[...]</span>, <span class="k">cardLinks</span>:<span class="v">[{squadId,cardId}]</span>,
+  <span class="k">arquivado</span>:<span class="v">false</span>, <span class="k">history</span>:<span class="v">[{who,uid,what,tipo,at}]</span> }</div>
+
+  <div class="grid">
+    <div class="card"><div class="ci">🏁</div><div class="ct">Marcos</div><div class="cd">Atividade macro dentro de um Objetivo, com prazo e status: ⚪ Não iniciado · 🟢 No prazo · 🟡 Risco · 🔴 Atrasado · ✅ Concluído. O status do Objetivo é sempre o <strong>pior status entre os Marcos ativos</strong>.</div></div>
+    <div class="card"><div class="ci">✏️</div><div class="ct">Permissão</div><div class="cd">Só <strong>ADM</strong> cria um Objetivo novo. Editar Objetivo/Marco exige ser <strong>ADM ou Responsável</strong> daquele Objetivo — mesma regra replicada no Agente Ágil (ver abaixo).</div></div>
+    <div class="card"><div class="ci">📦</div><div class="ct">Arquivar × 🗑 Excluir</div><div class="cd">Arquivar esconde da lista de ativos (reversível, "📦 Ver arquivados"). Excluir (só ADM) é definitivo — apaga o Objetivo e todos os Marcos dele, sem desfazer.</div></div>
+    <div class="card"><div class="ci">🏷️</div><div class="ct">Tags & cards vinculados</div><div class="cd">Tags próprias do Objetivo, e vínculo com cards do board (<code class="hl">cardLinks</code>) — o card ganha um badge 🎯 e aparece na lista "Cards com badge OKR".</div></div>
+    <div class="card"><div class="ci">📈</div><div class="ct">Histórico semanal</div><div class="cd">Toda sexta 17h, <code class="hl">okrWeeklySnapshot</code> grava o status/progresso de cada Objetivo ativo. Aba "📈 Histórico": gráfico de tendência + evolução por Objetivo.</div></div>
+    <div class="card"><div class="ci">🖥️</div><div class="ct">Apresentação em slides</div><div class="cd"><code class="hl">okr-apresentacao.slide.html</code> — 1 slide por Objetivo (nunca 2 telas), visual Marine Glass. <code class="hl">F</code> tela cheia, setas/espaço navega, <code class="hl">Backspace</code>/<code class="hl">Esc</code> fecha o detalhe.</div></div>
+  </div>
+
+  <div class="wc" style="margin-top:8px;border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
+    <div class="wch"><div class="wci">💬</div><div class="wct">Central Agente Ágil — chat dedicado</div></div>
+    <div class="wcb">Botão "💬 Central Agente Ágil" na aba OKR — chat central (não preso a 1 Objetivo), sem @menção: toda mensagem já é um pedido pro agente. Conta a situação em texto corrido ("já validamos a viabilidade do OMNI, falta apresentar pro conselho") e o agente identifica o Objetivo certo, separa <strong>Progresso/Próximo Passo/Risco</strong> e escreve direto nos campos (só soma item, nunca substitui) — ou cria/atualiza Marco. Respeita a mesma regra de permissão de edição manual (ADM/Responsável), explicando em vez de fingir que funcionou quando não tem acesso. Cloud Function <code class="hl">okrAgenteChat</code>, escrita real desde o 1º deploy. A própria conversa, permanente, já é o histórico de pedidos — sem log separado.</div>
+  </div>
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">❓</div><div class="wct">Ajuda in-app</div></div>
+    <div class="wcb">Botão "❓ Ajuda" no cabeçalho da aba explica todo o modelo (Objetivo/Marco/status, permissão, Arquivar×Excluir, Tags, Histórico, apresentação e a Central Agente Ágil) — mesmo padrão do help já existente na aba Agentes.</div>
+  </div>
+</section>
+
 <div class="div"></div>
 
-<!-- 21 SEGURANÇA -->
+<!-- 22 SEGURANÇA -->
 <section class="section" id="security">
-  <div class="sh"><div class="sn">21</div><div>
+  <div class="sh"><div class="sn">22</div><div>
     <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Segurança</div>
     <h2>Camadas de segurança</h2>
     <p class="slead">Camadas independentes. Se uma falhar, as outras continuam de pé.</p>
@@ -787,9 +828,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 22 FIREBASE RULES -->
+<!-- 23 FIREBASE RULES -->
 <section class="section" id="firebase-rules">
-  <div class="sh"><div class="sn">22</div><div>
+  <div class="sh"><div class="sn">23</div><div>
     <div class="stag" style="color:var(--danger)"><span style="background:var(--danger)"></span>Firebase</div>
     <h2>Firebase Database Rules</h2>
     <p class="slead">Aplicadas no servidor — não há como contornar pelo browser. Mirror manual de <code class="hl">database.rules.json</code>.</p>
@@ -827,9 +868,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 }}</div>
 </section>
 
-<!-- 23 CLOUD FUNCTIONS & SECRETS -->
+<!-- 24 CLOUD FUNCTIONS & SECRETS -->
 <section class="section" id="functions-sec">
-  <div class="sh"><div class="sn">23</div><div>
+  <div class="sh"><div class="sn">24</div><div>
     <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>Cloud Functions</div>
     <h2>Cloud Functions & Secrets</h2>
     <p class="slead">Funções deployadas em <code class="hl">functions/</code>, rodando com credenciais próprias do Firebase — nada de proxy externo.</p>
@@ -848,6 +889,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>agenteAgil</td><td>HTTP público, autenticado por chave</td><td>Geração mais antiga (v0-v3) — hoje só o ponto de entrada que especialistas externos usam pra enfileirar informação; não decide mais ação nenhuma sozinha (ver "Agente Ágil").</td></tr>
       <tr><td>intakeSubmit</td><td>HTTP público, sem login</td><td>Único ponto de escrita anônima do sistema — formulário de intake por squad grava em <code class="hl">intake_pending</code> (nunca direto em <code class="hl">/cards</code>); alguém do squad confirma e cria o card de verdade. Protegido por honeypot + rate limit por IP.</td></tr>
       <tr><td>weeklyBackup</td><td><code class="hl">onSchedule</code> todo domingo 04:00 (Brasília)</td><td>Backup automático de cada squad pro Cloud Storage, sem depender de ninguém abrir o board — mesmo formato do "Baixar JSON agora", restaurável direto pela UI. Retenção de 60 dias (~8-9 backups semanais por squad).</td></tr>
+      <tr><td>okrDailyScan</td><td><code class="hl">onSchedule</code> diário 07:00 (Brasília)</td><td>Prazo de Marco chegando (3/1 dia antes), período de editar e véspera de reunião de um Objetivo — lê o mesmo cache de Google Agenda que o painel já sincroniza, zero chamada nova à API.</td></tr>
+      <tr><td>okrWeeklySnapshot</td><td><code class="hl">onSchedule</code> toda sexta 17:00 (Brasília)</td><td>Grava o status/progresso agregado de cada Objetivo ativo em <code class="hl">kanban/okr/snapshots/{data}</code> — só arquivo histórico, não notifica ninguém. Alimenta o "📈 Histórico" da aba OKR.</td></tr>
+      <tr><td>okrAgenteChat</td><td><code class="hl">onValueCreated</code> em <code class="hl">kanban/okr/agente_chat</code></td><td>Chat dedicado com o Agente Ágil pra ajudar a preencher OKRs (ver seção "🎯 OKR") — vocabulário de 7 ferramentas próprio, sem @menção (nó é dedicado). Escrita real desde o 1º deploy.</td></tr>
       <tr><td>Integração Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausada</span></td><td><code class="hl">onSchedule</code> a cada minuto (comentado, não deployado)</td><td>"Ouvindo agora" (presença ao vivo por squad) + "Rádio do Maré" (playlist colaborativa). O sync periódico era a única function agendada rodando 24h/dia e custou mais do que o esperado — pausado em 2026-08-04, painel escondido no board (<code class="hl">#spotify-tab</code>). As demais functions da integração (conectar/desconectar, sync sob demanda, playback, rádio) continuam deployadas, só sem o sync alimentando dado fresco.</td></tr>
     </tbody>
   </table>
