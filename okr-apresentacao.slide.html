@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🎯 Maré Digital · Apresentação OKR</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap');
+
+:root{
+  --deep:#030d1a; --deep-rgb:3,13,26;
+  --glass:rgba(10,37,64,0.6); --glass-b:rgba(56,182,255,0.18); --glass-hover:rgba(56,182,255,.12);
+  --blue:#2563c9; --accent:#38b6ff; --cyan:#7ec8e3; --teal:#1de9b6;
+  --txt:#e8f4fd; --txt2:rgba(200,230,255,0.65); --txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166; --danger:#ff6b6b;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;overflow:hidden;font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);}
+h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
+
+.ocean{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),
+             radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
+
+/* ── Login ── */
+#login-ov{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;}
+#login-ov[hidden]{display:none;}
+.login-card{position:relative;z-index:2;background:var(--glass);border:1px solid var(--glass-b);border-radius:18px;
+  backdrop-filter:blur(18px);padding:40px 44px;text-align:center;max-width:360px;}
+.login-card .ico{font-size:40px;margin-bottom:10px;}
+.login-card h1{font-size:20px;margin-bottom:6px;}
+.login-card p{font-size:12px;color:var(--txt2);margin-bottom:20px;line-height:1.5;}
+.g-btn{display:inline-flex;align-items:center;gap:10px;background:#fff;color:#1f1f1f;border:none;border-radius:10px;
+  padding:11px 22px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.g-btn:hover{background:#f3f3f3;}
+.login-err{margin-top:16px;font-size:11px;color:var(--danger);line-height:1.5;}
+.login-out{margin-top:14px;background:none;border:1px solid var(--glass-b);color:var(--txt2);border-radius:8px;
+  padding:6px 14px;font-size:11px;cursor:pointer;}
+
+/* ── App shell ── */
+#app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
+#app[hidden]{display:none;}
+
+#topbar{display:flex;align-items:center;gap:16px;padding:0 22px;height:58px;flex-shrink:0;
+  background:rgba(3,13,26,.75);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);}
+.tb-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:.02em;flex-shrink:0;}
+.tb-live{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--teal);letter-spacing:.06em;text-transform:uppercase;font-weight:700;flex-shrink:0;}
+.tb-live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.8s infinite;}
+@keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(29,233,182,.5);}50%{opacity:.4;box-shadow:0 0 0 5px rgba(29,233,182,0);}}
+.tb-clock{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--txt2);letter-spacing:.05em;flex-shrink:0;}
+.tb-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
+.tb-title{font-size:12px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+.tb-bar{width:min(280px,40vw);height:3px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.tb-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent));transition:width .35s ease;}
+.tb-nav{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tb-btn{background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);
+  padding:7px 12px;font-size:14px;cursor:pointer;line-height:1;font-family:inherit;}
+.tb-btn:hover{background:var(--glass-hover);}
+.tb-btn:disabled{opacity:.3;cursor:default;}
+.tb-user{display:flex;align-items:center;gap:8px;flex-shrink:0;padding-left:10px;border-left:1px solid var(--glass-b);}
+.tb-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid var(--glass-b);}
+
+#slides{position:relative;flex:1;overflow:hidden;}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:34px 48px;opacity:0;pointer-events:none;
+  transform:translateX(50px);transition:opacity .35s ease,transform .35s ease;overflow-y:auto;}
+.slide.active{opacity:1;pointer-events:all;transform:translateX(0);}
+.slide.prev{transform:translateX(-50px);}
+.slide-inner{max-width:1200px;margin:0 auto;width:100%;}
+
+#bottombar{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;height:40px;flex-shrink:0;
+  background:rgba(3,13,26,.75);backdrop-filter:blur(12px);border-top:1px solid var(--glass-b);}
+.dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:all .25s;}
+.dot.active{background:var(--accent);transform:scale(1.4);}
+.dot:hover{background:var(--txt2);}
+
+/* ── Cover ── */
+.cover-wrap{margin:auto;text-align:center;}
+.cover-ico{font-size:52px;margin-bottom:6px;}
+.cover-title{font-size:clamp(1.8rem,4vw,3rem);font-weight:800;letter-spacing:-.02em;margin-bottom:8px;}
+.cover-sub{font-size:14px;color:var(--txt2);margin-bottom:30px;}
+.stat-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;}
+.stat-chip{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:16px 22px;min-width:110px;
+  backdrop-filter:blur(12px);}
+.stat-chip b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;margin-bottom:4px;}
+.stat-chip span{font-size:11px;color:var(--txt2);}
+.cover-updated{margin-top:26px;font-size:11px;color:var(--txt3);}
+
+/* ── Gerência slide ── */
+.ger-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-shrink:0;}
+.ger-header .ico{font-size:30px;}
+.ger-header h2{font-size:clamp(1.3rem,2.4vw,1.9rem);font-weight:800;}
+.ger-count{font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:3px 12px;color:var(--cyan);}
+.obj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px;}
+.obj-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:18px 20px;
+  backdrop-filter:blur(14px);cursor:pointer;transition:transform .15s,background .15s;border-left-width:4px;border-left-style:solid;}
+.obj-card:hover{transform:translateY(-3px);background:var(--glass-hover);}
+.obj-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;}
+.status-chip{display:inline-flex;align-items:center;gap:5px;font-size:10px;font-weight:700;letter-spacing:.03em;
+  text-transform:uppercase;color:var(--txt2);}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.obj-trims{display:flex;gap:4px;flex-wrap:wrap;}
+.pill{font-size:10px;background:rgba(255,255,255,.06);border:1px solid var(--glass-b);border-radius:999px;padding:2px 8px;color:var(--txt2);}
+.obj-title{font-family:'Syne',sans-serif;font-weight:700;font-size:16px;line-height:1.3;margin-bottom:4px;}
+.obj-pilar{font-size:11px;color:var(--txt3);font-style:italic;margin-bottom:10px;}
+.prog-bar{height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:6px;}
+.prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--accent));}
+.prog-label{font-size:10px;color:var(--txt3);margin-bottom:10px;}
+.obj-tags{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}
+.tag-chip{font-size:10px;border-radius:999px;padding:2px 9px;border:1px solid;}
+.obj-bottom{display:flex;justify-content:flex-end;gap:-6px;}
+.avatar{width:26px;height:26px;border-radius:50%;border:1px solid var(--glass-b);background:var(--blue);
+  display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;margin-left:-6px;overflow:hidden;}
+.avatar:first-child{margin-left:0;}
+.avatar img{width:100%;height:100%;object-fit:cover;}
+
+/* ── Summary ── */
+.sum-title{font-size:clamp(1.3rem,2.4vw,1.9rem);font-weight:800;margin-bottom:22px;}
+.sum-bars{display:flex;flex-direction:column;gap:12px;margin-bottom:30px;max-width:720px;}
+.sum-bar-row{display:flex;align-items:center;gap:12px;}
+.sum-bar-label{width:150px;font-size:12px;color:var(--txt2);flex-shrink:0;display:flex;align-items:center;gap:6px;}
+.sum-bar-track{flex:1;height:16px;border-radius:8px;background:rgba(255,255,255,.06);overflow:hidden;}
+.sum-bar-fill{height:100%;border-radius:8px;transition:width .4s ease;}
+.sum-bar-count{width:34px;text-align:right;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;flex-shrink:0;}
+.sum-table{width:100%;max-width:900px;border-collapse:collapse;font-size:12px;}
+.sum-table th{text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;
+  letter-spacing:.04em;padding:6px 10px;border-bottom:1px solid var(--glass-b);}
+.sum-table td{padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.05);}
+.sum-table tr:last-child td{border-bottom:none;}
+
+/* ── Empty state ── */
+.empty-state{margin:auto;text-align:center;color:var(--txt2);}
+.empty-state .ico{font-size:42px;margin-bottom:12px;}
+
+/* ── Detail modal ── */
+#detail-ov{position:fixed;inset:0;z-index:400;display:none;align-items:center;justify-content:center;
+  background:rgba(1,4,10,.6);backdrop-filter:blur(4px);padding:24px;}
+#detail-ov.open{display:flex;}
+.detail-modal{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;backdrop-filter:blur(18px);
+  max-width:640px;width:100%;max-height:86vh;overflow-y:auto;padding:26px 30px;position:relative;}
+.detail-close{position:absolute;top:16px;right:18px;background:none;border:none;color:var(--txt2);font-size:20px;cursor:pointer;}
+.detail-title{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;margin-bottom:4px;padding-right:24px;}
+.detail-sub{font-size:11px;color:var(--txt3);margin-bottom:16px;}
+.detail-label{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;
+  margin:16px 0 6px;}
+.detail-desc{font-size:13px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;}
+.detail-list{list-style:none;font-size:12.5px;color:var(--txt2);line-height:1.8;}
+.detail-list li{padding-left:14px;position:relative;}
+.detail-list li::before{content:'—';position:absolute;left:0;color:var(--txt3);}
+.marco-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;}
+.marco-row:last-child{border-bottom:none;}
+.marco-row .status-dot{flex-shrink:0;}
+.marco-name{flex:1;color:var(--txt);}
+.marco-prazo{font-size:10px;color:var(--txt3);flex-shrink:0;}
+
+::-webkit-scrollbar{width:8px;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px;}
+</style>
+</head>
+<body>
+
+<div class="ocean"></div>
+
+<div id="login-ov">
+  <div class="login-card">
+    <div class="ico">🎯</div>
+    <h1>Apresentação OKR</h1>
+    <p>Painel ao vivo dos Objetivos estratégicos, agrupado por gerência. Entre com sua conta @ciahering.com.br pra ver os dados.</p>
+    <button class="g-btn" id="login-btn" onclick="window._doLogin()">
+      <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.3-.1-2.7-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.1 18.9 12 24 12c3.1 0 5.8 1.1 8 3l6-6C34.6 5.1 29.6 3 24 3 16.3 3 9.7 7.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 45c5.5 0 10.4-1.9 14.3-5.1l-6.6-5.4C29.7 36.3 27 37 24 37c-5.2 0-9.6-3.3-11.3-8l-6.6 5.1C9.6 40.5 16.3 45 24 45z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.2 4.3-4.1 5.8l6.6 5.4C41.4 36 45 30.5 45 24c0-1.3-.1-2.7-.4-3.5z"/></svg>
+      Entrar com Google
+    </button>
+    <div class="login-err" id="login-err" hidden></div>
+    <button class="login-out" id="login-out-btn" onclick="window._doLogout()" hidden>Sair e tentar outra conta</button>
+  </div>
+</div>
+
+<div id="app" hidden>
+  <div id="topbar">
+    <div class="tb-logo">🎯 OKR</div>
+    <div class="tb-live"><span class="tb-live-dot"></span>Ao vivo</div>
+    <div class="tb-clock" id="tb-clock">--:--</div>
+    <div class="tb-mid">
+      <div class="tb-title" id="tb-title">—</div>
+      <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:0%;"></div></div>
+    </div>
+    <div class="tb-nav">
+      <button class="tb-btn" id="btn-prev" onclick="window._okrPrev()" title="Anterior (←)">◀</button>
+      <button class="tb-btn" id="btn-next" onclick="window._okrNext()" title="Próximo (→)">▶</button>
+      <button class="tb-btn" onclick="window._okrFullscreen()" title="Tela cheia (F)">⛶</button>
+    </div>
+    <div class="tb-user">
+      <img class="tb-avatar" id="tb-avatar" src="" alt="">
+      <button class="tb-btn" onclick="window._doLogout()" title="Sair">⏻</button>
+    </div>
+  </div>
+  <div id="slides"></div>
+  <div id="bottombar"></div>
+</div>
+
+<div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
+  <div class="detail-modal" id="detail-modal"></div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  apiKey: 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain: 'hering-onboarding.firebaseapp.com',
+  databaseURL: 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId: 'hering-onboarding',
+  storageBucket: 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: '122502391131',
+  appId: '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+// Mesmo padrão de exposição de kanban.html/painel.html (window._db/_ref/_onValue/...)
+// — deixa a página testável com o mesmo mock de Firebase já usado nos testes
+// Playwright do resto do repo, em vez de import direto do SDK espalhado pelo código.
+window._db = db; window._ref = ref; window._onValue = onValue;
+
+window._doLogin = () => {
+  document.getElementById('login-err').hidden = true;
+  signInWithPopup(auth, provider).catch(err => {
+    const el = document.getElementById('login-err');
+    el.textContent = '⚠️ Não deu pra entrar: ' + (err.message||err.code||'erro desconhecido');
+    el.hidden = false;
+  });
+};
+window._doLogout = () => signOut(auth);
+// Repassa pro escopo global (script clássico abaixo) — só a inicialização do
+// Firebase/auth propriamente dita fica dentro do módulo (mesma separação que
+// painel.html/kanban.html usam: módulo pequeno só pra import+plumbing, resto
+// do app em <script> comum, acessível a partir do console/testes).
+onAuthStateChanged(auth, user => window._okrHandleAuth(user));
+</script>
+
+<script>
+// esc()/safeUrl(): redefinidos aqui porque a versão do <script type="module">
+// acima fica encapsulada no escopo do módulo e não é visível neste script
+// clássico — mesmo padrão/mesmo comentário já usado em painel.html.
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
+
+// ── Mesmo modelo de dados/constantes de painel.html (kanban/okr/*) ──
+const OKR_GERENCIAS = [
+  {id:'geral',       label:'Geral',                     icon:'🧭'},
+  {id:'comercial',   label:'Comercial',                 icon:'🏢'},
+  {id:'performance', label:'Marketing de Performance',  icon:'📱'},
+  {id:'dadosia',     label:'Dados e IA',                icon:'📊'},
+  {id:'cx',          label:'CX',                        icon:'💬'},
+  {id:'tech',        label:'Tech',                      icon:'💻'},
+  {id:'crm',         label:'CRM',                       icon:'✉️'},
+];
+const OKR_STATUS = [
+  {id:'nao_iniciado', label:'Não iniciado',       dot:'var(--txt3)'},
+  {id:'no_prazo',     label:'No prazo',           dot:'var(--teal)'},
+  {id:'risco',        label:'Risco identificado', dot:'var(--warn)'},
+  {id:'atrasado',     label:'Atrasado / impacto', dot:'var(--danger)'},
+  {id:'concluido',    label:'Concluído',          dot:'var(--accent)'},
+];
+const OKR_SEVERIDADE = ['atrasado','risco','no_prazo','nao_iniciado'];
+function okrStatusInfo(id){ return OKR_STATUS.find(s=>s.id===id) || OKR_STATUS[0]; }
+function okrGerenciaLabel(id){ return OKR_GERENCIAS.find(g=>g.id===id)?.label || id || '—'; }
+function _okrTrimestresOf(o){
+  if(!o) return [];
+  if(Array.isArray(o.trimestres) && o.trimestres.length) return o.trimestres;
+  return o.trimestre ? [o.trimestre] : [];
+}
+const PT_PALETTE=[
+  {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.35)',c:'#38b6ff'},
+  {bg:'rgba(29,233,182,.12)',b:'rgba(29,233,182,.3)',c:'#1de9b6'},
+  {bg:'rgba(255,209,102,.12)',b:'rgba(255,209,102,.3)',c:'#ffd166'},
+  {bg:'rgba(255,107,107,.12)',b:'rgba(255,107,107,.3)',c:'#ff6b6b'},
+  {bg:'rgba(37,99,201,.2)',b:'rgba(37,99,201,.4)',c:'#7eb3ff'},
+  {bg:'rgba(200,100,255,.12)',b:'rgba(200,100,255,.3)',c:'#d67fff'},
+];
+
+let okrObjetivos = {}, okrMarcos = {}, okrTags = {}, usersCache = {};
+let _loaded = {obj:false, marco:false, tag:false, users:false};
+let _lastUpdate = null;
+
+function pessoaInfo(uid){
+  const u = usersCache[uid] || {};
+  return {uid, nome:u.nome||u.email||uid, init:u.init||'', foto:u.foto||''};
+}
+function avatarHtml(uid){
+  const p = pessoaInfo(uid);
+  const img = safeUrl(p.foto) ? `<img src="${safeUrl(p.foto)}" alt="">` : esc((p.init||p.nome.slice(0,2)).toUpperCase());
+  return `<span class="avatar" title="${esc(p.nome)}">${img}</span>`;
+}
+function objMarcos(objId){ return Object.values(okrMarcos).filter(m=>m && m.objetivoId===objId && !m.arquivado); }
+function objStatus(objId){
+  const marcos = objMarcos(objId);
+  if(!marcos.length) return 'nao_iniciado';
+  const ativos = marcos.filter(m=>m.progresso!=='concluido');
+  if(!ativos.length) return 'concluido';
+  for(const sev of OKR_SEVERIDADE){ if(ativos.some(m=>(m.progresso||'nao_iniciado')===sev)) return sev; }
+  return 'nao_iniciado';
+}
+function objProgressoPct(objId){
+  const marcos = objMarcos(objId);
+  if(!marcos.length) return 0;
+  return Math.round(marcos.filter(m=>m.progresso==='concluido').length / marcos.length * 100);
+}
+
+// ── Slides: construídas a partir dos dados atuais, reconstruídas a cada mudança ──
+let slides = [];
+let currentIdx = 0;
+
+function objCardHtml(o){
+  const st = okrStatusInfo(objStatus(o.id));
+  const marcos = objMarcos(o.id);
+  const pct = objProgressoPct(o.id);
+  return `<div class="obj-card" style="border-left-color:${st.dot};" onclick="window._okrOpenDetail('${o.id}')">
+    <div class="obj-top">
+      <span class="status-chip"><span class="status-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
+      <div class="obj-trims">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
+    </div>
+    <div class="obj-title">${esc(o.titulo||'—')}</div>
+    ${o.pilar?`<div class="obj-pilar">${esc(o.pilar)}</div>`:''}
+    <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;"></div></div>
+    <div class="prog-label">${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%</div>
+    ${(o.tagIds||[]).length?`<div class="obj-tags">${(o.tagIds||[]).map(tid=>{
+      const t=okrTags[tid]; if(!t) return '';
+      const p=PT_PALETTE[t.colorIdx % PT_PALETTE.length]||PT_PALETTE[0];
+      return `<span class="tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c};">${esc(t.label)}</span>`;
+    }).join('')}</div>`:''}
+    <div class="obj-bottom">${(o.responsaveis||[]).slice(0,4).map(uid=>avatarHtml(uid)).join('')}</div>
+  </div>`;
+}
+
+function buildSlides(){
+  const ativos = Object.values(okrObjetivos).filter(o=>o && !o.arquivado);
+  const porArea = {};
+  ativos.forEach(o=>{ (porArea[o.areaId||'geral']=porArea[o.areaId||'geral']||[]).push(o); });
+
+  const list = [];
+
+  // Cover
+  const counts = {nao_iniciado:0,no_prazo:0,risco:0,atrasado:0,concluido:0};
+  ativos.forEach(o=>{ counts[objStatus(o.id)] = (counts[objStatus(o.id)]||0)+1; });
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
+  list.push({key:'cover', title:'Visão geral', html:`
+    <div class="cover-wrap">
+      <div class="cover-ico">🎯</div>
+      <div class="cover-title">OKRs — Maré Digital</div>
+      <div class="cover-sub">Panorama por gerência · ${esc(hoje)}</div>
+      <div class="stat-row">
+        <div class="stat-chip"><b>${ativos.length}</b><span>Objetivos ativos</span></div>
+        <div class="stat-chip"><b style="color:var(--teal);">${counts.no_prazo}</b><span>No prazo</span></div>
+        <div class="stat-chip"><b style="color:var(--warn);">${counts.risco}</b><span>Em risco</span></div>
+        <div class="stat-chip"><b style="color:var(--danger);">${counts.atrasado}</b><span>Atrasados</span></div>
+        <div class="stat-chip"><b style="color:var(--accent);">${counts.concluido}</b><span>Concluídos</span></div>
+      </div>
+      <div class="cover-updated" id="cover-updated"></div>
+    </div>`});
+
+  if(!ativos.length){
+    list.push({key:'empty', title:'Sem objetivos', html:`
+      <div class="empty-state"><div class="ico">🌊</div>
+      <div>Nenhum Objetivo ativo cadastrado ainda no painel.</div></div>`});
+  } else {
+    OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).forEach(g=>{
+      const lista = porArea[g.id].sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+      list.push({key:'ger:'+g.id, title:g.label, html:`
+        <div class="slide-inner">
+          <div class="ger-header"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
+          <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
+        </div>`});
+    });
+
+    // Summary
+    const total = ativos.length || 1;
+    const barsHtml = OKR_STATUS.map(s=>{
+      const n = counts[s.id]||0, pct = Math.round(n/total*100);
+      return `<div class="sum-bar-row">
+        <div class="sum-bar-label"><span class="status-dot" style="background:${s.dot};"></span>${esc(s.label)}</div>
+        <div class="sum-bar-track"><div class="sum-bar-fill" style="width:${pct}%;background:${s.dot};"></div></div>
+        <div class="sum-bar-count">${n}</div>
+      </div>`;
+    }).join('');
+    const tableRows = OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).map(g=>{
+      const lista = porArea[g.id];
+      const c = {nao_iniciado:0,no_prazo:0,risco:0,atrasado:0,concluido:0};
+      lista.forEach(o=>{ c[objStatus(o.id)]=(c[objStatus(o.id)]||0)+1; });
+      return `<tr><td>${g.icon} ${esc(g.label)}</td><td>${lista.length}</td>
+        <td style="color:var(--teal);">${c.no_prazo}</td><td style="color:var(--warn);">${c.risco}</td>
+        <td style="color:var(--danger);">${c.atrasado}</td><td style="color:var(--accent);">${c.concluido}</td></tr>`;
+    }).join('');
+    list.push({key:'summary', title:'Panorama geral', html:`
+      <div class="slide-inner">
+        <div class="sum-title">📊 Panorama geral</div>
+        <div class="sum-bars">${barsHtml}</div>
+        <table class="sum-table"><thead><tr><th>Gerência</th><th>Ativos</th><th>No prazo</th><th>Risco</th><th>Atrasado</th><th>Concluído</th></tr></thead>
+        <tbody>${tableRows}</tbody></table>
+      </div>`});
+  }
+
+  return list;
+}
+
+function scheduleRebuild(){
+  clearTimeout(scheduleRebuild._t);
+  scheduleRebuild._t = setTimeout(rebuild, 150);
+}
+function rebuild(){
+  if(!Object.values(_loaded).every(Boolean)) return;
+  const prevKey = slides[currentIdx]?.key;
+  slides = buildSlides();
+  _lastUpdate = new Date();
+  let idx = slides.findIndex(s=>s.key===prevKey);
+  currentIdx = idx>=0 ? idx : 0;
+  render();
+}
+
+function render(){
+  const wrap = document.getElementById('slides');
+  wrap.innerHTML = slides.map((s,i)=>`<div class="slide${i===currentIdx?' active':(i<currentIdx?' prev':'')}" data-idx="${i}">${s.html}</div>`).join('');
+  document.getElementById('bottombar').innerHTML = slides.map((s,i)=>
+    `<span class="dot${i===currentIdx?' active':''}" onclick="window._okrGoTo(${i})" title="${esc(s.title)}"></span>`).join('');
+  document.getElementById('tb-title').textContent = slides[currentIdx]?.title || '—';
+  document.getElementById('tb-bar-fill').style.width = slides.length ? ((currentIdx+1)/slides.length*100)+'%' : '0%';
+  document.getElementById('btn-prev').disabled = currentIdx<=0;
+  document.getElementById('btn-next').disabled = currentIdx>=slides.length-1;
+  const upd = document.getElementById('cover-updated');
+  if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
+}
+
+window._okrGoTo = i => { if(i>=0 && i<slides.length){ currentIdx=i; render(); } };
+window._okrNext = () => window._okrGoTo(currentIdx+1);
+window._okrPrev = () => window._okrGoTo(currentIdx-1);
+window._okrFullscreen = () => {
+  if(!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+  else document.exitFullscreen?.();
+};
+
+document.addEventListener('keydown', e=>{
+  if(document.getElementById('detail-ov').classList.contains('open')){
+    if(e.key==='Escape') window._okrCloseDetail();
+    return;
+  }
+  if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
+  else if(e.key==='ArrowLeft') window._okrPrev();
+  else if(e.key.toLowerCase()==='f') window._okrFullscreen();
+});
+
+// ── Modal de detalhe (drill-down de um Objetivo) ──
+window._okrOpenDetail = id => {
+  const o = okrObjetivos[id]; if(!o) return;
+  const st = okrStatusInfo(objStatus(id));
+  const marcos = objMarcos(id).sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
+  const listBlock = (label, arr) => (arr&&arr.length) ? `<div class="detail-label">${label}</div><ul class="detail-list">${arr.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>` : '';
+  document.getElementById('detail-modal').innerHTML = `
+    <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
+    <div class="detail-title">${esc(o.titulo||'—')}</div>
+    <div class="detail-sub">${okrGerenciaLabel(o.areaId)} ${_okrTrimestresOf(o).length?'· '+_okrTrimestresOf(o).map(esc).join(', '):''} ${o.pilar?'· '+esc(o.pilar):''}</div>
+    <span class="status-chip"><span class="status-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
+    ${o.descricao?`<div class="detail-label">Objetivo</div><div class="detail-desc">${esc(o.descricao)}</div>`:''}
+    ${listBlock('Indicadores de Entrega', o.indicadores)}
+    ${listBlock('Progressos', o.progressos)}
+    ${listBlock('Próximos Passos', o.proximosPassos)}
+    ${listBlock('Riscos', o.riscos)}
+    ${listBlock('Planos de Ação', o.planosAcao)}
+    ${marcos.length?`<div class="detail-label">Marcos</div>${marcos.map(m=>{
+      const ms=okrStatusInfo(m.progresso);
+      return `<div class="marco-row"><span class="status-dot" style="background:${ms.dot};"></span><span class="marco-name">${esc(m.nome||'—')}</span><span class="marco-prazo">${m.prazo?esc(m.prazo):''}</span></div>`;
+    }).join('')}`:''}
+    ${(o.responsaveis||[]).length?`<div class="detail-label">Responsável(is)</div><div style="display:flex;gap:6px;flex-wrap:wrap;">${o.responsaveis.map(uid=>avatarHtml(uid)).join('')}</div>`:''}
+  `;
+  document.getElementById('detail-ov').classList.add('open');
+};
+window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
+
+// ── Clock ──
+setInterval(()=>{
+  document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}, 1000);
+
+// ── Auth / data lifecycle ──
+let listenersStarted = false;
+function startListeners(){
+  if(listenersStarted) return;
+  listenersStarted = true;
+  const onErr = err => {
+    document.getElementById('login-ov').hidden = false;
+    document.getElementById('app').hidden = true;
+    const el = document.getElementById('login-err');
+    el.textContent = '⚠️ Sua conta entrou, mas não tem permissão pra ver os dados de OKR (precisa ser @ciahering.com.br ou ter acesso liberado no painel).';
+    el.hidden = false;
+    document.getElementById('login-out-btn').hidden = false;
+  };
+  window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{ okrObjetivos = snap.val()||{}; _loaded.obj=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
+}
+
+window._okrHandleAuth = user => {
+  window._currentUser = user||null;
+  document.getElementById('login-btn').textContent = 'Entrar com Google';
+  if(user){
+    document.getElementById('login-ov').hidden = true;
+    document.getElementById('app').hidden = false;
+    document.getElementById('login-err').hidden = true;
+    document.getElementById('login-out-btn').hidden = true;
+    if(safeUrl(user.photoURL)) document.getElementById('tb-avatar').src = user.photoURL;
+    startListeners();
+  } else {
+    document.getElementById('login-ov').hidden = false;
+    document.getElementById('app').hidden = true;
+  }
+};
+</script>
+</body>
+</html>
