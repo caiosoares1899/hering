@@ -235,171 +235,32 @@ não faz parte desta rotina por padrão, a menos que peçam.
 
 ## Resumo do que já foi encontrado (histórico, pra não repetir trabalho)
 
-- **v8.30.332-dev**: favicon/logo/ícone PWA embutidos 4x como base64
-  (~75KB redundantes) — extraído pra `favicon.png`. `<link
-  rel="preconnect">` adicionado pros domínios de fonte/Firebase. Import
-  do Firebase já era modular (nada a fazer). `setInterval`/`clearInterval`
-  já pareciam bem pareados na auditoria manual. Split do script principal
-  em arquivo externo foi sinalizado como oportunidade futura, não
-  implementado (contraria a arquitetura self-contained).
+Rodada limpa = todos os 9 checks (asset duplicado, tamanho dos blocos,
+setInterval/clearInterval pareados, backdrop-filter, preconnect,
+import modular do Firebase, asset fora do favicon, viewport/touch,
+sintaxe+brace balance) conferidos sem achado, só registrando o
+baseline atual pra próxima rodada comparar.
 
-- **v8.30.354-dev / v8.30.236 (prod)**: rodada limpa, nada pra corrigir.
-  kanban.html e kanban-dev.html tinham acabado de sincronizar (mesma
-  base de código, só a versão diverge) depois de um lote grande de
-  trabalho no supercard/fan-out — nenhum asset novo, nenhum vazamento
-  novo. Conferido em detalhe:
-  - `data:image` embutido: 0 ocorrências nos dois arquivos (fix da
-    v8.30.332-dev continua valendo).
-  - Blocos reais do arquivo (por linha, não regex ingênuo): CSS
-    principal ~174KB, script módulo Firebase ~7KB, script principal
-    ~1.13MB (`kanban-dev.html`, 24961 linhas, 1.49MB total).
-  - `setInterval`/`clearInterval`: 14/14 nos dois arquivos. Rastreado
-    caso a caso — 9 timers com clear pareado (alguns com guard
-    "clear antes de re-setar" + o stop de verdade, por isso mais
-    clears que sets em alguns) e 5 timers intencionalmente "vida
-    inteira da sessão" (poll de versão/kudos/presença/lembrete de
-    reunião/sino) sem clear — bate exatamente com o padrão esperado,
-    zero vazamento novo.
-  - `backdrop-filter`: 29 ocorrências (novo baseline pra próxima
-    rodada comparar — informativo, não é problema).
-  - Preconnect (fonts.googleapis/fonts.gstatic/www.gstatic) e
-    `display=swap`: presentes. Import do Firebase: modular (app/
-    database/auth/messaging, sem Firestore/Storage/Analytics).
-  - Imagem referenciada fora do favicon: só `marinheiro.png` (ícone de
-    notificação do browser, carregado sob demanda — já é o
-    comportamento correto, sem ação).
-  - Viewport meta + `addTouchDnD` (drag por toque no celular):
-    intactos, sem sinal de regressão.
+- **v8.30.332-dev (origem)**: achado real — favicon/logo/ícone PWA
+  embutidos 4x como base64 (~75KB redundantes), extraído pra
+  `favicon.png`. Preconnect adicionado. Import do Firebase já modular.
+- **v8.30.354-dev**: limpa. Baseline: CSS ~174KB, script ~1.13MB
+  (24961 linhas), 14/14 timers, 29 `backdrop-filter`.
+- **v8.30.426-dev (2026-08-14)**: achado real — preconnect pro
+  `www.gstatic.com` ficou órfão depois do SDK do Firebase ser
+  vendorizado localmente; removido + comentário corrigido. Baseline:
+  script ~1.28MB (27500 linhas), 14/12 timers, 31 `backdrop-filter`.
+- **v8.30.439-dev (2026-08-20)**: limpa. Baseline: script ~1.30MB
+  (27888 linhas), 14/12 timers, 31 `backdrop-filter`.
+- **v8.30.458-dev (2026-08-24)**: achado informativo (não bug) — novo
+  timer `window._colTagPoll` (re-sync de columns/tags a cada 60s, com
+  guard contra polling duplicado) subiu a contagem pra 15/14, dentro
+  do padrão esperado (vida inteira da sessão). Baseline: script
+  ~1.34MB (28442 linhas), 31 `backdrop-filter`.
+- **v8.30.492-dev (2026-08-27)**: limpa. Baseline: script ~1.39MB
+  (29303 linhas), 15/14 timers, 31 `backdrop-filter`.
+- **v8.30.504-dev (2026-08-29)**: limpa. Baseline: script ~1.40MB
+  (29486 linhas), 15/14 timers, 31 `backdrop-filter`.
 
-- **v8.30.426-dev (2026-08-14)**: achado real — `<link rel="preconnect"
-  href="https://www.gstatic.com">` ficou órfão desde que o SDK do
-  Firebase foi vendorizado localmente (`./vendor/firebase-10.14.1/`, fix
-  do "query is not defined" na v8.30.412-dev); o comentário do `<head>`
-  ainda dizia que o SDK vinha de lá. Removida a linha + corrigido o
-  comentário. Resto da rodada limpo: `data:image` embutido continua em 0;
-  blocos reais (por linha) — CSS ~187KB, script módulo Firebase ~7KB,
-  script principal ~1.28MB (27500 linhas, ~1.67MB total, cresceu desde a
-  última rodada por causa de Ficha Técnica/Supercard/Notas/etc.);
-  `setInterval`/`clearInterval` — 14 setInterval reais (uma 15ª ocorrência
-  do grep era só menção em comentário) / 12 clearInterval, todos
-  rastreados par a par (8 timers escopados com clear, 6 "vida inteira da
-  sessão" sem clear — cresceu de 5 pra 6 por causa do poll de
-  comunicados/mural, esperado) — zero vazamento novo; `backdrop-filter`
-  em 31 (baseline anterior 29, crescimento proporcional às novas
-  features, não desproporcional); import do Firebase modular; único
-  asset fora do favicon continua `marinheiro.png` (sob demanda); viewport
-  + `addTouchDnD` intactos.
-
-- **v8.30.439-dev / v8.30.255 (prod) (2026-08-20)**: rodada limpa, nada
-  pra corrigir. `kanban.html`/`kanban-dev.html` sincronizados (diff só nas
-  2 linhas de ambiente) — nenhum trabalho pendente de promoção. Conferido:
-  - `data:image` embutido: continua em 0 nos dois arquivos.
-  - Blocos reais (por linha): CSS ~187KB, script módulo Firebase ~7KB,
-    script principal ~1,30MB (`kanban-dev.html`, 27888 linhas, ~1,70MB
-    total — cresceu desde a v8.30.426-dev por causa do lote de Ficha
-    Técnica compartilhada em supercards + Modelo salvando Ficha Técnica).
-  - `setInterval`/`clearInterval`: 14 reais / 12 (15ª ocorrência do grep
-    segue sendo só a menção em comentário já documentada) — mesmo padrão
-    da v8.30.426-dev (8 escopados com clear, 6 "vida inteira da sessão"),
-    zero vazamento novo.
-  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
-    crescimento (nenhuma feature nova de "glass" no período).
-  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
-    presentes; `www.gstatic.com` segue ausente corretamente (SDK
-    vendorizado). Import do Firebase: modular, todos os 4 módulos do
-    vendor local.
-  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
-  - Viewport meta + `addTouchDnD` intactos.
-  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
-    (1434/1434) OK.
-
-- **v8.30.458-dev / v8.30.456 (prod) (2026-08-24)**: rodada limpa, nada
-  pra corrigir. `kanban.html`/`kanban-dev.html` estavam divergindo no
-  momento (dev com squad `dados` no Agente Ágil, ainda não promovido —
-  ver `CODE_MAP.md`), auditoria feita em `kanban-dev.html` (superset).
-  Conferido:
-  - `data:image` embutido: continua em 0 nos dois arquivos.
-  - Blocos reais (por linha): CSS ~188KB, script módulo Firebase ~7KB,
-    script principal ~1,34MB (`kanban-dev.html`, 28442 linhas, ~1,74MB
-    total — cresceu desde a v8.30.439-dev por causa do supercard de 2
-    níveis, reativação do Agente Ágil client-side e roteamento de modelo).
-  - `setInterval`/`clearInterval`: **15 reais / 14** (subiu de 14/12) —
-    novo: `window._colTagPoll` (L8217, re-sync periódico de columns/tags
-    a cada 60s, rede de segurança contra `onValue` perder update de
-    coluna criada por outra sessão) com guard `clearInterval` logo antes
-    do `setInterval` (evita 2 pollings simultâneos se `fbLoadAll()` rodar
-    2x na sessão, ex. "🌱 Re-popular" no dev) — mesmo padrão "guard antes
-    de re-setar" já esperado pela skill, sem stop de verdade em lugar
-    nenhum (é "vida inteira da sessão" por natureza, só com proteção
-    contra duplicação). Resto idêntico ao padrão anterior (8 escopados
-    com clear real, 6 "vida inteira" sem clear) — zero vazamento novo.
-  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
-    crescimento.
-  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
-    presentes; `www.gstatic.com` segue ausente corretamente (SDK
-    vendorizado). Import do Firebase: modular, todos os 4 módulos do
-    vendor local.
-  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
-  - Viewport meta + `addTouchDnD` intactos.
-  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
-    (1440/1440) OK.
-
-- **v8.30.492-dev / v8.30.492 (prod) (2026-08-27)**: rodada limpa, nada
-  pra corrigir. `kanban.html`/`kanban-dev.html` sincronizados (diff só
-  nas 2 linhas de ambiente) — lote grande da sessão (Histórico do
-  Agente Ágil, correção de arquitetura do orquestrador + intake
-  automático + `criar_card`, submarca/origem em Pedidos de Intake, fixes
-  de Automações em massa e recorrências) já promovido, nada pendente.
-  Conferido:
-  - `data:image` embutido: continua em 0 nos dois arquivos.
-  - Blocos reais (por linha): CSS ~193KB, script módulo Firebase ~7.2KB,
-    script principal ~1,39MB (`kanban-dev.html`, 29303 linhas, ~1,80MB
-    total — cresceu desde a v8.30.458-dev por causa do lote grande
-    acima, principalmente a aba Histórico do Agente e a Central de
-    Pedidos de Intake).
-  - `setInterval`/`clearInterval`: **15 reais / 14** — idêntico ao
-    baseline da v8.30.458-dev, zero timer novo (as features desta
-    sessão usam leitura pontual — `window._get()` — não polling
-    contínuo, então não mexeram nessa contagem).
-  - `backdrop-filter`: 31 — idêntico ao baseline anterior, sem
-    crescimento (nenhuma feature nova de "glass" no período).
-  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
-    presentes; `www.gstatic.com` segue ausente corretamente (SDK
-    vendorizado). Import do Firebase: modular, todos os 4 módulos do
-    vendor local.
-  - Único asset fora do favicon continua `marinheiro.png` (sob demanda).
-  - Viewport meta + `addTouchDnD` intactos.
-  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
-    (1468/1468) OK.
-
-- **v8.30.504-dev / v8.30.503 (prod) (2026-08-29)**: rodada limpa, nada
-  pra corrigir. `kanban.html`/`kanban-dev.html` divergindo só no fix
-  ainda não promovido do `/monitorarbugs` mais recente (Padrões de
-  card) + as 2 linhas de ambiente — auditoria feita em
-  `kanban-dev.html` (superset). Lote grande do dia (registro de
-  Agentes Externos migrado pro painel, fila `agente_pending_auto` pra
-  Automações do Agente Ágil, fixes de Automação na criação/Padrões de
-  card) não mexeu em nenhum asset nem introduziu timer novo. Conferido:
-  - `data:image` embutido: continua em 0 nos dois arquivos.
-  - Blocos reais (por linha): CSS ~194KB, script módulo Firebase
-    ~7.2KB, script principal ~1,40MB (`kanban-dev.html`, 29486 linhas,
-    ~1,82MB total — cresceu pouco desde a v8.30.492-dev, ~20KB, o
-    esperado pro tamanho do lote do dia).
-  - `setInterval`/`clearInterval`: **15 reais / 14** — idêntico ao
-    baseline da v8.30.458-dev/v8.30.492-dev, zero timer novo (o
-    mecanismo novo de fila do Agente Ágil usa `onChildAdded` +
-    `transaction()`, não polling).
-  - `backdrop-filter`: 31 — idêntico ao baseline anterior.
-  - Preconnect (fonts.googleapis/fonts.gstatic) e `display=swap`:
-    presentes; `www.gstatic.com` segue ausente corretamente (SDK
-    vendorizado). Import do Firebase: modular, todos os 4 módulos do
-    vendor local.
-  - Único asset fora do favicon continua `marinheiro.png` (sob
-    demanda) — `favicon.png` também presente e único.
-  - Viewport meta + `addTouchDnD` intactos.
-  - Sintaxe (`node --check` nos blocos 1/2) e brace balance do CSS
-    (1468/1468, idêntico ao baseline anterior) OK.
-
-Atualize esta seção a cada rodada nova, com a versão e o que foi
-encontrado/corrigido — isso evita re-analisar do zero algo que já foi
-checado e está limpo.
+Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
+"limpa", baseline atual) — evita re-analisar do zero algo já checado.
