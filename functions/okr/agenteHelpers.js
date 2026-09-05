@@ -65,4 +65,48 @@ async function pushHistory(db, path, { what, tipo }) {
   await db.ref(path + '/history').set(capped);
 }
 
-module.exports = { AGENTE_UID, AGENTE_NOME, DEFAULT_ADM_EMAILS, isAdmUid, canEditObjetivo, resolveObjetivo, pushHistory };
+// Achado real de /monitorarbugs (2026-09-05, técnica 1 — comparar caminhos
+// paralelos pra mesma mutação): no painel, saveOkrObjetivo()/saveOkrMarco()
+// SEMPRE chamam _okrNotifyEditado() depois de gravar — notifica
+// responsaveis do Objetivo + participantes de qualquer Marco dele
+// (type:'okr_editado', no PUSH_TYPES). Os 3 handlers de escrita do Agente
+// Ágil (editar_campos_okr/criar_marco/editar_marco, ver agenteTools.js)
+// nunca chamavam nada equivalente — a Responsável de um Objetivo nunca
+// ficava sabendo que ele mudou, se a mudança viesse via chat em vez da
+// tela. `actingUid` é excluído dos alvos, mesmo comportamento do painel
+// (quem editou não precisa ser notificado da própria edição).
+async function notifyObjetivoEditado(db, objetivoId, actingUid) {
+  const [objSnap, marcosSnap] = await Promise.all([
+    db.ref('kanban/okr/objetivos/' + objetivoId).get(),
+    db.ref('kanban/okr/marcos').get(),
+  ]);
+  const obj = objSnap.val();
+  if (!obj) return;
+  const alvos = new Set(Array.isArray(obj.responsaveis) ? obj.responsaveis : []);
+  const marcos = marcosSnap.val() || {};
+  Object.values(marcos).forEach((m) => {
+    if (m && m.objetivoId === objetivoId && Array.isArray(m.participantes)) {
+      m.participantes.forEach((uid) => alvos.add(uid));
+    }
+  });
+  alvos.delete(actingUid);
+  await Promise.all(
+    [...alvos].map((uid) => {
+      const id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+      return db
+        .ref('kanban/usuarios/' + uid + '/notificacoes/' + id)
+        .set({
+          id,
+          type: 'okr_editado',
+          title: `🎯 "${obj.titulo}" foi editado`,
+          sub: 'Pedido via chat do Agente Ágil',
+          okrObjId: objetivoId,
+          read: false,
+          ts: new Date().toISOString(),
+        })
+        .catch(() => {});
+    })
+  );
+}
+
+module.exports = { AGENTE_UID, AGENTE_NOME, DEFAULT_ADM_EMAILS, isAdmUid, canEditObjetivo, resolveObjetivo, pushHistory, notifyObjetivoEditado };

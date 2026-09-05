@@ -21,7 +21,7 @@
 
 const { z } = require('zod');
 const { zodToJsonSchema } = require('zod-to-json-schema');
-const { resolveObjetivo, canEditObjetivo, isAdmUid, pushHistory } = require('./agenteHelpers');
+const { resolveObjetivo, canEditObjetivo, isAdmUid, pushHistory, notifyObjetivoEditado } = require('./agenteHelpers');
 
 const OKR_GERENCIA_IDS = ['geral', 'comercial', 'performance', 'dadosia', 'cx', 'tech', 'crm'];
 const OKR_STATUS_IDS = ['nao_iniciado', 'no_prazo', 'risco', 'atrasado', 'concluido'];
@@ -218,6 +218,7 @@ function makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) {
     patch.atualizadoPor = '🤖 Agente Ágil';
     await db.ref('kanban/okr/objetivos/' + id).update(patch);
     for (const h of historicos) await pushHistory(db, 'kanban/okr/objetivos/' + id, h);
+    await notifyObjetivoEditado(db, id, requestingUid);
     return { ok: true, dryRun: false, tool: 'editar_campos_okr', objetivo_id: id, campos_alterados: Object.keys(patch), message: `Objetivo "${objetivo.titulo}" atualizado.` };
   };
 }
@@ -252,6 +253,7 @@ function makeCriarMarcoHandler({ db, requestingUid, dryRun }) {
     };
     await db.ref('kanban/okr/marcos/' + marcoId).set(payload);
     await pushHistory(db, 'kanban/okr/objetivos/' + objetivoId, { what: `criou o marco "${input.nome}" (via chat)`, tipo: 'marco' });
+    await notifyObjetivoEditado(db, objetivoId, requestingUid);
     return { ok: true, dryRun: false, tool: 'criar_marco', marco_id: marcoId, objetivo_id: objetivoId, message: `Marco "${input.nome}" criado em "${objetivo.titulo}".` };
   };
 }
@@ -303,6 +305,7 @@ function makeEditarMarcoHandler({ db, requestingUid, dryRun }) {
     await db.ref('kanban/okr/marcos/' + marcoId).update(patch);
     for (const h of historicos) await pushHistory(db, 'kanban/okr/marcos/' + marcoId, h);
     await pushHistory(db, 'kanban/okr/objetivos/' + objetivoId, { what: `atualizou o marco "${marco.nome}" (via chat)`, tipo: 'marco' });
+    await notifyObjetivoEditado(db, objetivoId, requestingUid);
     return { ok: true, dryRun: false, tool: 'editar_marco', marco_id: marcoId, objetivo_id: objetivoId, campos_alterados: Object.keys(patch), message: `Marco "${marco.nome}" atualizado.` };
   };
 }

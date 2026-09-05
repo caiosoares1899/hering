@@ -184,6 +184,57 @@ test('editar_campos_okr: registra Histórico com autoria do agente', async () =>
   assert.match(hist[0].what, /Atraso do fornecedor/);
 });
 
+// ── Achado real de /monitorarbugs (2026-09-05): edição via chat nunca
+// notificava o Responsável do Objetivo — só notifica_editado()) do painel
+// (saveOkrObjetivo()/saveOkrMarco()) disparava. Os 3 handlers de escrita
+// agora chamam notifyObjetivoEditado() no mesmo espírito. ──────────────
+
+test('editar_campos_okr: notifica o Responsável do Objetivo (que não é quem editou)', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+  await toolByName(tools, 'editar_campos_okr').handler({ objetivo_id: 'o1', riscos_adicionar: ['Atraso do fornecedor'] });
+  const notifsResp = Object.values((await db.ref('kanban/usuarios/' + RESP_UID + '/notificacoes').get()).val() || {});
+  assert.equal(notifsResp.length, 1);
+  assert.equal(notifsResp[0].type, 'okr_editado');
+  assert.equal(notifsResp[0].okrObjId, 'o1');
+});
+
+test('editar_campos_okr: NÃO notifica quem fez a própria edição, mesmo sendo Responsável', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: RESP_UID, dryRun: false });
+  await toolByName(tools, 'editar_campos_okr').handler({ objetivo_id: 'o1', riscos_adicionar: ['Atraso do fornecedor'] });
+  const notifsResp = await db.ref('kanban/usuarios/' + RESP_UID + '/notificacoes').get();
+  assert.equal(notifsResp.val(), null);
+});
+
+test('criar_marco: também notifica o Responsável do Objetivo', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+  await toolByName(tools, 'criar_marco').handler({ objetivo_id: 'o1', nome: 'Marco novo' });
+  const notifsResp = Object.values((await db.ref('kanban/usuarios/' + RESP_UID + '/notificacoes').get()).val() || {});
+  assert.equal(notifsResp.length, 1);
+  assert.equal(notifsResp[0].type, 'okr_editado');
+});
+
+test('editar_marco: também notifica o Responsável do Objetivo pai', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+  await toolByName(tools, 'editar_marco').handler({ objetivo_id: 'o1', nome_marco: 'Marco A', progresso: 'concluido' });
+  const notifsResp = Object.values((await db.ref('kanban/usuarios/' + RESP_UID + '/notificacoes').get()).val() || {});
+  assert.equal(notifsResp.length, 1);
+  assert.equal(notifsResp[0].type, 'okr_editado');
+});
+
+test('editar_campos_okr: notifica também os participantes de qualquer Marco do Objetivo', async () => {
+  const db = seedDb();
+  await db.ref('kanban/okr/marcos/m1/participantes').set([OUTRO_UID]);
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+  await toolByName(tools, 'editar_campos_okr').handler({ objetivo_id: 'o1', riscos_adicionar: ['Atraso do fornecedor'] });
+  const notifsParticipante = Object.values((await db.ref('kanban/usuarios/' + OUTRO_UID + '/notificacoes').get()).val() || {});
+  assert.equal(notifsParticipante.length, 1);
+  assert.equal(notifsParticipante[0].type, 'okr_editado');
+});
+
 // ── criar_marco / editar_marco — mesma regra de permissão do Objetivo pai ─
 
 test('criar_marco: Responsável do Objetivo consegue criar', async () => {
