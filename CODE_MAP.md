@@ -1361,10 +1361,20 @@ v3.19 · painel-dev pro racional completo.
   usuário; exclui o autor da edição), escreve no MESMO path que
   `createNotif()` (kanban-dev.html) usa (`kanban/usuarios/{uid}/
   notificacoes`) — aparece no sininho de qualquer board sem mudar nada
-  lá. `_okrGcalOptionsHtml(selectedId)` — picker de evento do Google
-  Agenda (`pcalGcalEvents`, já sincronizado) pra `gcalPeriodoEventId`/
-  `gcalReuniaoEventId` do Objetivo. Prazo de marco/período/reunião
-  precisam de scan diário — ver `functions/okr/dailyScan.js` abaixo.
+  lá. Prazo de marco/véspera de reunião precisam de scan diário — ver
+  `functions/okr/dailyScan.js` abaixo.
+- **Bloco quinzenal** (substitui os antigos pickers de Google Agenda
+  `gcalPeriodoEventId`/`gcalReuniaoEventId`, removidos em 2026-09-05 —
+  cada ocorrência de reunião recorrente tinha um ID de evento diferente,
+  então um campo único nunca representava "essa reunião se repete a
+  cada 2 semanas"): `OKR_BLOCO_AREAS`/`OKR_BLOCO_ANCHOR` (constantes),
+  `_okrBlocoDaArea(areaId)`, `_okrBlocoNaData(dataStr)`,
+  `_okrProximaReuniaoDoBloco(bloco, hojeStr)`, `_okrBlocoInfoHtml(areaId)`
+  — mostra bloco/gerências/próxima reunião no lugar dos pickers antigos,
+  em `renderOkrObjBody()`. Fórmula espelhada em
+  `functions/okr/dailyScan.js` (`OKR_BLOCO_AREAS`/`blocoDaArea`/
+  `ehDiaDeReuniao`) — mudar a fórmula aqui exige mudar lá também
+  (comentário cruzado nos dois arquivos).
 - Achado (mesma classe do já documentado acima pra
   `_okrSyncObjDraftFromDom()`): `_okrTagCriar()` e as novas seções
   também re-renderizam o modal inteiro — todas as novas mutações
@@ -1635,9 +1645,10 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 
 ### index.js — registro de exports
 - `PUSH_TYPES` (allow-list de push, hoje: assigned/mention/unblocked/risk/
-  recorrente/painel_broadcast/intake/okr_editado/okr_prazo/okr_periodo/
-  okr_reuniao/okr_agente — os 4 do meio 2026-09-04 (`okr/dailyScan.js`),
-  o último 2026-09-05 (`okr/agenteChat.js`)) — L23
+  recorrente/painel_broadcast/intake/okr_editado/okr_prazo/okr_reuniao/
+  okr_agente — os 3 do meio 2026-09-04 (`okr/dailyScan.js`; `okr_periodo`
+  removido em 2026-09-05 junto com o gatilho "período de editar"), o
+  último 2026-09-05 (`okr/agenteChat.js`)) — L23
 - `sendPushOnNotification` — L25
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
@@ -1975,17 +1986,29 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 ### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
 - `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
   (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`
-  (roda sozinho, sem depender de ninguém abrir o painel). 3 gatilhos:
-  prazo de marco chegando (3 e 1 dia antes, `diasAte()`), "período de
-  editar" (no dia do evento em `objetivo.gcalPeriodoEventId`) e véspera
-  de reunião (1 dia antes do evento em `objetivo.gcalReuniaoEventId`).
-  Lê `kanban/painel/config/gcal_cache` (mesmo cache que `painel.html` já
-  sincroniza) — zero chamada nova à API do Google. Escreve em
-  `kanban/usuarios/{uid}/notificacoes`, mesmo path/formato de
-  `createNotif()` (kanban-dev.html). `runOkrDailyScan(db)`/`diasAte()`/
-  `todaySP()` exportados pra teste (mesmo padrão de
-  `dueOverdueTrigger.js`) — `okr/__tests__/dailyScan.test.js`, 14 casos
-  (fake DB, sem emulador). Deploy isolado:
+  (roda sozinho, sem depender de ninguém abrir o painel). 2 gatilhos
+  (redesenhado em 2026-09-05 — ver abaixo): prazo de marco chegando (3 e
+  1 dia antes, `diasAte()`) e véspera de reunião de **bloco quinzenal**
+  (1 dia antes da quinta de check-in OKR do bloco da gerência do
+  Objetivo — `blocoDaArea(areaId)`/`ehDiaDeReuniao(dataStr, bloco)`,
+  constantes `OKR_BLOCO_AREAS`/`OKR_BLOCO_ANCHOR`). Substitui o antigo
+  mecanismo de `objetivo.gcalPeriodoEventId`/`gcalReuniaoEventId` (1
+  evento específico do Google Agenda por Objetivo) — quebrava porque
+  cada ocorrência de uma reunião recorrente tem um ID de evento
+  diferente, então nunca representava "essa reunião se repete a cada 2
+  semanas"; o bloco agora é 100% derivado de `areaId` (mapeamento 1:1
+  com `OKR_GERENCIAS`), zero input manual. Fórmula espelhada em
+  `painel-dev.html` (`OKR_BLOCO_AREAS`/`_okrBlocoDaArea`/
+  `_okrBlocoNaData`/`_okrBlocoInfoHtml`, ver seção OKR acima) — mudar
+  aqui exige mudar lá também (comentário cruzado nos dois arquivos).
+  Escreve em `kanban/usuarios/{uid}/notificacoes`, mesmo path/formato de
+  `createNotif()` (kanban-dev.html), reusando o tipo `okr_reuniao`
+  (nenhuma mudança em `PUSH_TYPES` foi necessária). `runOkrDailyScan(db,
+  hojeOverride)`/`diasAte()`/`todaySP()`/`blocoDaArea()`/
+  `ehDiaDeReuniao()` exportados pra teste (mesmo padrão de
+  `dueOverdueTrigger.js`; `hojeOverride` existe só pra determinismo do
+  teste do gatilho de bloco) — `okr/__tests__/dailyScan.test.js`, 21
+  casos (fake DB, sem emulador). Deploy isolado:
   `firebase deploy --only functions:okrDailyScan`.
 - `okr/weeklySnapshot.js` — `okrWeeklySnapshot`, `onSchedule` toda
   sexta-feira 17:00 (Brasília) — Fase 3 do OKR: NÃO notifica ninguém

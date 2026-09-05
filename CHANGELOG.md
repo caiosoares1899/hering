@@ -12739,6 +12739,63 @@ ao baseline conhecido (`braces -1, parens -14`). Os 49 cenários
 Playwright das 3 features (19 + 21 + 9) reexecutados direto contra
 `painel.html` — todos passando.
 
+### painel-dev.html v3.25 · painel-dev — 2026-09-05 — 🎯 OKR: 🗓️ Bloco quinzenal substitui o picker de Google Agenda quebrado
+
+O mecanismo antigo (`objetivo.gcalPeriodoEventId`/`gcalReuniaoEventId`, um
+picker apontando pra 1 evento específico do Google Agenda) não funcionava
+de verdade: a reunião real de check-in OKR ("[DIGITAL] Check in OKR's e
+Iniciativas") é recorrente e alterna toda quinta-feira entre 2 blocos
+fixos de gerência — mas cada ocorrência semanal é um EVENTO DIFERENTE no
+Google Agenda, então um campo apontando pra 1 evento nunca conseguia
+representar "essa reunião se repete a cada 2 semanas". O picker nunca
+agrupou as instâncias, e quem tentou usar viu uma lista enorme de eventos
+avulsos repetidos (ver print que motivou o pedido).
+
+A correção não foi consertar a integração com o Agenda — foi eliminar a
+necessidade dela: os 2 blocos batem 1:1 com as 7 gerências já cadastradas
+(`OKR_GERENCIAS`) — **Bloco 1**: Geral, Comercial, Mkt Performance, Dados
+e IA; **Bloco 2**: CX, Tech, CRM — então o bloco de um Objetivo é 100%
+derivável do seu campo `areaId` já existente, sem escolha manual nenhuma
+e sem chance de ficar dessincronizado.
+
+- **Removidos os 2 pickers** de Google Agenda ("Período de editar" /
+  "Reunião") do modal de edição do Objetivo, junto com
+  `_okrGcalOptionsHtml()`, os campos `gcalPeriodoEventId`/
+  `gcalReuniaoEventId` e toda leitura/gravação deles.
+- **Novo indicador informativo**, tanto no modo leitura quanto edição do
+  modal: `_okrBlocoInfoHtml(areaId)` mostra "Bloco N — [gerências desse
+  bloco] · próxima reunião: quinta, DD/MM", atualizado ao vivo se a
+  Gerência for trocada no `<select>` (`onchange` reexecuta
+  `renderOkrObjBody`). `OKR_BLOCO_ANCHOR = '2026-09-03'` (quinta
+  confirmada como semana do Bloco 1) ancora a paridade quinzenal;
+  `_okrBlocoDaArea()`/`_okrBlocoNaData()`/`_okrProximaReuniaoDoBloco()`
+  fazem a conta.
+- **Nova notificação automática** ("está na semana de apresentar seu
+  OKR, atualize antes da reunião"): `functions/okr/dailyScan.js` teve seu
+  gatilho de "véspera de reunião" reescrito pra usar a mesma fórmula de
+  bloco (mantida em sincronia manualmente com o cliente, comentário
+  cruzado nos dois arquivos) em vez de ler `gcal_cache` — dispara na
+  véspera (quarta) da quinta de reunião do bloco de cada Objetivo, pros
+  seus `responsaveis[]`, reusando o tipo `okr_reuniao` já existente
+  (nenhuma mudança em `PUSH_TYPES` necessária). O gatilho antigo "seu
+  período de editar" (tipo `okr_periodo`) foi removido — não tinha
+  equivalente na nova lógica de bloco (era o outro lado do mesmo picker
+  quebrado) e o tipo saiu de `PUSH_TYPES` por não ser mais emitido.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>` de
+`painel-dev.html` e em `functions/okr/dailyScan.js`. Fórmula de bloco
+verificada contra as 8 datas da agenda real do usuário (todas batem,
+alternando corretamente). Suite de testes do backend: 475 casos, todos
+passando (21 em `okr/__tests__/dailyScan.test.js`, reescritos do zero —
+os 7 testes do mecanismo antigo removidos). 10 cenários novos via
+Playwright no cliente (bloco calculado certo pras 7 gerências, HTML do
+indicador mostra bloco/gerências/próxima data, picker antigo
+definitivamente removido do DOM/JS).
+
+**Deploy pendente**: `firebase deploy --only functions:okrDailyScan`
+(local, na máquina do usuário — resincronizar o clone antes, ver
+`CLAUDE.md`).
+
 ### painel-dev.html v3.24 · painel-dev — 2026-09-05 — 🎯 OKR: ❓ Ajuda (help content), inclusive sobre o Agente Ágil
 
 Pedido direto ("cria um help content lá no okr explicando para o

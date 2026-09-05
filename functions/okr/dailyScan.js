@@ -2,12 +2,11 @@
 //
 // Scan diário do módulo OKR (Objetivos/Marcos, painel.html/painel-dev.html)
 // — mesmo motivo do agenteAgilDueOverdueScan/weeklyBackup: os gatilhos
-// "ambientais" (prazo chegando, dia do período de atualização, véspera de
-// reunião) nascem do TEMPO passando, não de alguém editar algo — sem um
-// scan que roda sozinho, dependeria de alguém ter o painel aberto no dia
-// exato (não é garantido).
+// "ambientais" (prazo chegando, véspera de reunião) nascem do TEMPO
+// passando, não de alguém editar algo — sem um scan que roda sozinho,
+// dependeria de alguém ter o painel aberto no dia exato (não é garantido).
 //
-// 3 gatilhos, decisão explícita do usuário (ver CHANGELOG.md):
+// 2 gatilhos, decisão explícita do usuário (ver CHANGELOG.md):
 //  1. Prazo de marco chegando — 3 dias antes e 1 dia antes (vencendo
 //     amanhã). Cada janela dispara exatamente 1x por marco, pela mesma
 //     razão que due_today/due_overdue (dueOverdueTrigger.js) não precisam
@@ -15,29 +14,58 @@
 //     rodando 1x/dia — um marco só bate "faltam 3 dias" num único dia.
 //     Alvo: marco.responsavel; sem responsável no marco, cai pros
 //     responsaveis[] do Objetivo.
-//  2. "Seu período de editar" — no dia do evento do Google Agenda
-//     escolhido pelo responsável em objetivo.gcalPeriodoEventId.
-//  3. Véspera da reunião — 1 dia antes do evento em
-//     objetivo.gcalReuniaoEventId.
-//
-// Fonte dos eventos de agenda: kanban/painel/config/gcal_cache — o MESMO
-// cache que painel.html (prod) já mantém, sincronizado por quem tem o
-// Google Agenda conectado (ver painel.html renderPcal()/_syncGcalEvents()).
-// Zero chamada nova à API do Google aqui, só lê o que já está salvo — só o
-// path de PRODUÇÃO (sem sufixo _dev): Cloud Functions não têm um "ambiente
-// dev" próprio, e kanban/okr/objetivos|marcos já são compartilhados entre
-// painel.html/painel-dev.html (Fase 1 não separou por _dev, decisão já
-// tomada ali).
+//  2. Véspera da reunião de bloco quinzenal — 1 dia antes (quarta) da
+//     quinta-feira de check-in OKR do bloco da gerência do Objetivo.
+//     Substitui o antigo mecanismo de gcalReuniaoEventId/gcalPeriodoEventId
+//     (evento específico do Google Agenda escolhido manualmente): cada
+//     ocorrência semanal de uma reunião recorrente tem um ID de evento
+//     DIFERENTE, então um campo único nunca conseguia representar "essa
+//     reunião se repete a cada 2 semanas" — o picker nunca agrupou as
+//     instâncias. A reunião real "[DIGITAL] Check in OKR's e Iniciativas"
+//     alterna toda quinta entre 2 blocos fixos de gerência, e essa divisão
+//     mapeia 1:1 em OKR_GERENCIAS (nenhuma sobra/ambiguidade) — então o
+//     bloco é 100% derivável de objetivo.areaId, sem input manual nenhum.
+//     Mesma fórmula (mantida em sincronia manualmente, ver comentário
+//     espelho em painel-dev.html: OKR_BLOCO_AREAS/_okrBlocoDaArea/
+//     _okrBlocoNaData) usada pra também mostrar o indicador de bloco no
+//     painel — se a fórmula mudar aqui, mudar lá também.
 //
 // Notificações escritas em kanban/usuarios/{uid}/notificacoes/{id} — MESMO
 // path/formato que createNotif() (kanban-dev.html) já usa, então aparecem
 // no sininho de qualquer board sem nenhuma mudança lá. Push: precisa dos
-// tipos okr_editado/okr_prazo/okr_periodo/okr_reuniao em PUSH_TYPES
+// tipos okr_editado/okr_prazo/okr_reuniao em PUSH_TYPES
 // (functions/index.js) — sendPushOnNotification já escuta esse path pra
 // QUALQUER tipo, só decide mandar push ou não pela allow-list.
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
+
+// ── Bloco quinzenal — mesma fórmula de painel-dev.html (OKR_BLOCO_AREAS/
+// _okrBlocoDaArea/_okrBlocoNaData). 2026-09-03 é uma quinta confirmada
+// como semana do bloco 1 pelo usuário.
+const OKR_BLOCO_AREAS = {
+  1: ['geral', 'comercial', 'performance', 'dadosia'],
+  2: ['cx', 'tech', 'crm'],
+};
+const OKR_BLOCO_ANCHOR = '2026-09-03';
+
+function blocoDaArea(areaId) {
+  return OKR_BLOCO_AREAS[1].includes(areaId) ? 1 : 2;
+}
+
+// true se `dataStr` (YYYY-MM-DD) cai numa quinta de reunião do `bloco`
+// dado. Checagem por múltiplo exato de 7 dias a partir do anchor (uma
+// quinta) em vez de getDay()===4: qualquer múltiplo exato de 7 dias a
+// partir de uma quinta é, por construção, também uma quinta.
+function ehDiaDeReuniao(dataStr, bloco) {
+  const anchor = new Date(OKR_BLOCO_ANCHOR + 'T00:00:00');
+  const alvo = new Date(String(dataStr).slice(0, 10) + 'T00:00:00');
+  const diasDesde = Math.round((alvo - anchor) / 86400000);
+  if (diasDesde % 7 !== 0) return false;
+  const periodo = diasDesde / 7;
+  const paridade = ((periodo % 2) + 2) % 2;
+  return (paridade === 0 ? 1 : 2) === bloco;
+}
 
 // Data no calendário de São Paulo, independente do timezone do processo do
 // Cloud Function — mesmo formato (YYYY-MM-DD) que dueOverdueTrigger.js já usa.
@@ -66,15 +94,17 @@ async function writeNotif(db, uid, type, title, sub, okrObjId) {
   });
 }
 
-async function runOkrDailyScan(db) {
-  const [objSnap, marcoSnap, gcalSnap] = await Promise.all([
+// `hojeOverride` (YYYY-MM-DD) existe só pra teste determinístico do
+// gatilho de bloco quinzenal (ver dailyScan.test.js) — em produção o
+// scheduler nunca passa esse argumento, então `hoje` vem sempre de
+// todaySP() (data real).
+async function runOkrDailyScan(db, hojeOverride) {
+  const [objSnap, marcoSnap] = await Promise.all([
     db.ref('kanban/okr/objetivos').get(),
     db.ref('kanban/okr/marcos').get(),
-    db.ref('kanban/painel/config/gcal_cache').get(),
   ]);
   const objetivos = objSnap.val() || {};
   const marcos = marcoSnap.val() || {};
-  const gcalEvents = gcalSnap.val() || {};
 
   // 1) Prazo de marco chegando (3 dias antes / 1 dia antes)
   for (const marcoId of Object.keys(marcos)) {
@@ -97,42 +127,31 @@ async function runOkrDailyScan(db) {
     }
   }
 
-  // 2) "Seu período de editar" (no dia do evento) + 3) véspera da reunião (1 dia antes)
+  // 2) Véspera da reunião de bloco quinzenal — amanhã é quinta do bloco
+  //    da gerência do Objetivo.
+  const hoje = hojeOverride || todaySP();
+  const amanha = new Date(hoje + 'T00:00:00');
+  amanha.setDate(amanha.getDate() + 1);
+  const amanhaStr = amanha.toLocaleDateString('en-CA');
+
   for (const objId of Object.keys(objetivos)) {
     const o = objetivos[objId];
     if (!o || o.arquivado) continue;
     const alvos = o.responsaveis || [];
     if (!alvos.length) continue;
 
-    if (o.gcalPeriodoEventId) {
-      const ev = gcalEvents[o.gcalPeriodoEventId];
-      if (ev && diasAte(ev.start) === 0) {
-        for (const uid of alvos) {
-          try {
-            await writeNotif(
-              db, uid, 'okr_periodo',
-              `🎯 Hoje é seu período de atualizar "${o.titulo}"`,
-              'Aproveita pra revisar progresso, próximos passos e riscos.',
-              objId
-            );
-          } catch (e) { console.error('[okrDailyScan] periodo falhou:', objId, e); }
-        }
-      }
-    }
-    if (o.gcalReuniaoEventId) {
-      const ev = gcalEvents[o.gcalReuniaoEventId];
-      if (ev && diasAte(ev.start) === 1) {
-        for (const uid of alvos) {
-          try {
-            await writeNotif(
-              db, uid, 'okr_reuniao',
-              `🎯 Reunião de "${o.titulo}" é amanhã`,
-              ev.title || '',
-              objId
-            );
-          } catch (e) { console.error('[okrDailyScan] reuniao falhou:', objId, e); }
-        }
-      }
+    const bloco = blocoDaArea(o.areaId);
+    if (!ehDiaDeReuniao(amanhaStr, bloco)) continue;
+
+    for (const uid of alvos) {
+      try {
+        await writeNotif(
+          db, uid, 'okr_reuniao',
+          `🎯 Reunião de "${o.titulo}" é amanhã`,
+          'Seu OKR está na pauta — aproveita pra atualizar antes da reunião.',
+          objId
+        );
+      } catch (e) { console.error('[okrDailyScan] reuniao falhou:', objId, e); }
     }
   }
 }
@@ -155,3 +174,7 @@ exports.okrDailyScan = onSchedule(
 exports.diasAte = diasAte;
 exports.todaySP = todaySP;
 exports.runOkrDailyScan = runOkrDailyScan;
+exports.blocoDaArea = blocoDaArea;
+exports.ehDiaDeReuniao = ehDiaDeReuniao;
+exports.OKR_BLOCO_AREAS = OKR_BLOCO_AREAS;
+exports.OKR_BLOCO_ANCHOR = OKR_BLOCO_ANCHOR;
