@@ -301,6 +301,52 @@ normal do repo:
   teve seção própria no mapa, não justifica criar uma agora só por essa
   adição.
 
+- **2026-09-05 — 6ª rodada** (rodapé anterior: `68e233d`, 2026-08-31 →
+  novo: `7d22d03`, 2026-09-05). Rodada delegada a um agente em background
+  (tarefa longa: ~184 chamadas de ferramenta, ~18min). `kanban.html`/
+  `kanban-dev.html` ganharam uma 2ª divergência PERMANENTE além da
+  versão/`VERSION_KEY`: favicon próprio pro dev desde o commit `ff759f8`
+  (`favicon.png` prod / `favicon-dev.png` dev — ícone da aba, apple-
+  touch-icon, splash e 2 entradas do manifest) — nunca vai ser promovido
+  como está, cabeçalho do `CODE_MAP.md` atualizado pra deixar isso
+  explícito ao lado da nota de versão. ~150 âncoras revalidadas na seção
+  `kanban.html`/`kanban-dev.html` (drift de +300 a +2500 linhas,
+  dependendo da posição — a maior rodada de drift desta skill até agora,
+  reflexo do volume de features landadas desde 2026-08-31: Timeline,
+  todo o projeto de OKR, Vice City, cardPatterns) — nenhuma removida ou
+  renomeada, só linha andou. Achado incidental: par
+  `loadSquadsFromFirebase()`/`SQUAD_META_LIVE` já estava com os números
+  TROCADOS entre si de uma rodada anterior — corrigido. `functions/
+  index.js` (registro de exports): todos os exports batem 1:1 contra
+  `grep -n "^exports\."` (nenhum faltando/sobrando, `spotifySync`
+  seguindo comentado como já documentado), mas os NÚMEROS de linha de
+  quase todo o bloco (do `okrDailyScan` em diante) estavam desatualizados
+  em 15-22 linhas cada, alguns ainda marcados `L~` (aproximado) de uma
+  rodada anterior que não tinha certeza — todos corrigidos e confirmados
+  exatos (`L~179`→`L180`, etc.). 1 seção nova: "Modal do card no mobile —
+  redesenho estilo Trello" (2026-09-02, 3 commits CSS-only no mesmo dia,
+  motivados por 2 rodadas seguidas de nomes de classe parecidos
+  enganando o Playwright — `.card-attr-row` vs `.frow`) — sem anchor de
+  função (CSS puro), documentada por linha de regra CSS. `painel.html`/
+  `painel-dev.html` reconfirmado que divergem de verdade — e a entrada
+  "❓ Ajuda (help content) da aba OKR" corrigida de "não promovida" pra
+  "promovida pra prod v3.24" (promoção aconteceu nesta mesma sessão,
+  depois do briefing do agente ter sido escrito). **Nota operacional**:
+  esta rodada rodou concorrente com outro trabalho de sessão no mesmo
+  working directory (promoção de prod + um `/monitorarbugs`) — o agente
+  em background e o trabalho em primeiro plano colidiram achando
+  `CODE_MAP.md` em estados diferentes várias vezes (edits do agente
+  sendo pisados por checkouts de branch, e vice-versa). Resolvido
+  fazendo o merge em checkpoints pequenos e verificando cada linha
+  numérica reportada contra `grep -na` real antes de aceitar — nenhuma
+  linha errada chegou a ser commitada, mas custou 4 PRs de checkpoint
+  intermediário em vez de 1 PR final só. **Lição pra próxima vez**: não
+  rodar esta skill em background enquanto outro trabalho no mesmo
+  repositório está ativo na mesma sessão — ou pelo menos evitar
+  alternar de branch no meio (`git checkout`) enquanto o agente ainda
+  não sinalizou conclusão, já que os dois compartilham o mesmo working
+  directory independentemente de qual branch está "logicamente" ativa.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
