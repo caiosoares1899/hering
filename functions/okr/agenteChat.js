@@ -22,11 +22,11 @@
 // nada a mais. Diferente do 🧾 Histórico do Agente Ágil existente (que é
 // por squad+card, não serviria pro domínio global de OKR).
 //
-// MODO SOMBRA no 1º deploy (dryRun:true) — mesma disciplina que
-// mentionTrigger.js já seguiu pra squad `dados`: valida o MECANISMO (dispara
-// certo, ignora msg própria, respeita kill switch, idempotente) antes de
-// destravar escrita real. Trocar pra false é uma decisão separada, deliberada,
-// depois de ver rodar OK.
+// ESCRITA REAL desde o 1º deploy (dryRun:false) — decisão explícita do
+// usuário via AskUserQuestion (2026-09-05): "Já libera escrita real",
+// escolhida no lugar do modo sombra que mentionTrigger.js usou pra squad
+// `dados` no início. Sem etapa intermediária de validar só o mecanismo —
+// o agente já responde e edita os OKRs de verdade desde o primeiro deploy.
 
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { defineSecret } = require('firebase-functions/params');
@@ -121,8 +121,8 @@ function resumirResultadoParaLog(result) {
   return `status=${result.status} | ferramentas: ${ferramentas}`;
 }
 
-// dryRun:true (modo sombra) — ver comentário no topo do arquivo.
-const DRY_RUN_OKR_CHAT = true;
+// dryRun:false (escrita real desde o 1º deploy) — ver comentário no topo do arquivo.
+const DRY_RUN_OKR_CHAT = false;
 
 const okrAgenteChat = onValueCreated(
   {

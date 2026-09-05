@@ -12684,12 +12684,10 @@ só sugerindo texto.
 - **`okr_agente`** adicionado ao `PUSH_TYPES` (allow-list de push do
   `sendPushOnNotification`) — quem manda a mensagem é notificado quando o
   agente responde.
-- **MODO SOMBRA no 1º deploy** (`DRY_RUN_OKR_CHAT = true`, no topo de
-  `agenteChat.js`) — mesma disciplina do `mentionTrigger.js` pra squad
-  `dados`: valida o MECANISMO (dispara certo, ignora mensagem própria,
-  respeita kill switch, idempotente) antes de destravar escrita real.
-  Trocar pra `false` é uma decisão separada e deliberada, só depois de
-  ver rodar OK em produção.
+- **Escrita real desde o 1º deploy** (`DRY_RUN_OKR_CHAT = false`, no topo
+  de `agenteChat.js`) — decisão explícita do usuário via
+  `AskUserQuestion` ("Já libera escrita real"), sem a etapa de modo
+  sombra que o `mentionTrigger.js` usou pra squad `dados`.
 - `kanban/okr/agente_chat`/`agente_chat_processed` já ficam cobertos pela
   regra existente de `kanban.okr` no `database.rules.json` — nenhuma
   mudança de regra necessária.

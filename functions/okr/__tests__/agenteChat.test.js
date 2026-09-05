@@ -239,12 +239,12 @@ test('resumirResultadoParaLog: mostra as ferramentas chamadas na ordem', () => {
   assert.match(resumo, /ferramentas: editar_campos_okr -> responder/);
 });
 
-// ── Flag de modo sombra — trava o valor atual de propósito ─────────────
+// ── Flag de escrita real — trava o valor atual de propósito ────────────
 // Mesmo raciocínio do teste equivalente em mentionTrigger.test.js: se isso
 // divergir do esperado, é sinal de mudança acidental do flag, não decisão
-// nova. DRY_RUN_OKR_CHAT começa true (modo sombra) — ver comentário no
-// topo de agenteChat.js. Atualizar este assert só junto de uma decisão
-// deliberada e comunicada de trocar pra escrita real.
-test('agenteChat.js exporta DRY_RUN_OKR_CHAT=true (modo sombra no 1º deploy)', () => {
-  assert.equal(DRY_RUN_OKR_CHAT, true);
+// nova. DRY_RUN_OKR_CHAT=false desde o 1º deploy — decisão explícita do
+// usuário via AskUserQuestion (2026-09-05, "Já libera escrita real"),
+// sem modo sombra intermediário. Ver comentário no topo de agenteChat.js.
+test('agenteChat.js exporta DRY_RUN_OKR_CHAT=false (escrita real desde o 1º deploy)', () => {
+  assert.equal(DRY_RUN_OKR_CHAT, false);
 });

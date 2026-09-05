@@ -1603,7 +1603,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
 - `okrDailyScan` — L~179 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
 - `okrWeeklySnapshot` — L~187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
-- `okrAgenteChat` — L~195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=true`, ver seção `okr/` abaixo)
+- `okrAgenteChat` — L~195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
@@ -1966,9 +1966,9 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   exportado pra teste, mesmo padrão de `processarMencao()`. Rede de
   segurança: sem chamada de `responder`, posta o `finalText` como
   fallback. Notifica quem mandou a mensagem (`type:'okr_agente'`, no
-  `PUSH_TYPES`). **`DRY_RUN_OKR_CHAT=true`** (modo sombra no 1º deploy,
-  const no topo do arquivo — trocar pra `false` é decisão separada,
-  depois de validar em produção). `okr/__tests__/agenteChat.test.js`, 13
+  `PUSH_TYPES`). **`DRY_RUN_OKR_CHAT=false`** desde o 1º deploy (const no
+  topo do arquivo — decisão explícita do usuário via `AskUserQuestion`,
+  sem modo sombra intermediário). `okr/__tests__/agenteChat.test.js`, 13
   casos (fake DB + `llmClient` scriptado). Deploy isolado:
   `firebase deploy --only functions:okrAgenteChat`.
 - `okr/agenteTools.js` — `buildOkrTools({mode,db,requestingUid,dryRun})`
