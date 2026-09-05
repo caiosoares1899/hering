@@ -328,6 +328,20 @@ detalhe dos 4 call sites.
 - `COMUNICADOS_POLL_MS` — L31604 — 12min (era 3min até 2026-09-02,
   corte de bytes).
 
+### Modal do card no mobile — redesenho estilo Trello (2026-09-02, CSS puro, sem função nova)
+3 commits em sequência no mesmo dia, cada um corrigindo o que o
+Playwright anterior não pegou com dado real (`card-attr-row`/`.frow`
+parecidas de nome, cards de teste vazios escondendo overflow). Nenhum
+anchor JS novo — puro CSS escopado a `#card-ov`, perto de `.card-attr-
+row{}` (L1604) e do bloco de comentário `/* .card-attr-row: é a classe
+de verdade... */` (L2625): título vira bloco próprio (`order:99` no
+`.panel-hd`), rodapé quebra linha em vez de scroll lateral, e
+`#card-ov .card-attr-row{grid-template-columns:1fr}` empilha os campos
+1 por linha (2 colunas espremidas era o que estourava a tela). Fica
+registrado aqui só pelo padrão de bug (nome de classe parecido
+enganando 2 rodadas seguidas) — não precisa de anchors próprios porque
+não introduziu função nenhuma.
+
 ### Cabeçalho mobile — menu "⋯" (2026-09-02)
 - `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6313/L6321/L6324
   — no mobile (≤768px), tudo que não é essencial no topo (tema, modo de
@@ -1629,30 +1643,30 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
 - `intakeSubmit` — L168 → `intake/submit.js`
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
-- `okrDailyScan` — L~179 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
-- `okrWeeklySnapshot` — L~187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
-- `okrAgenteChat` — L~195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
-- `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
-- `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
+- `okrDailyScan` — L180 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
+- `okrWeeklySnapshot` — L187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
+- `okrAgenteChat` — L195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
+- `agenteAgilMencao` — L209 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
+- `agenteAgilMencaoDados` — L220 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
-- `agenteAgilDueOverdueScan` — L217 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
+- `agenteAgilDueOverdueScan` — L239 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
   scan diário (`onSchedule`), item 5 do roadmap — squads `dev` **e**
   `dados` (dados adicionado 2026-08-25), cobre `due_overdue` **e**
   `due_today` (nome ficou de v1, só due_overdue/squad dev — ver seção
   abaixo)
-- `agenteAgilResumoMeuDia` — L228 → `agente-agil-orquestrador/resumoMeuDia.js`,
+- `agenteAgilResumoMeuDia` — L250 → `agente-agil-orquestrador/resumoMeuDia.js`,
   `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
   dentro de "Meu Dia", 2026-08-25, ver seção abaixo
-- `agenteAgilIntake` — L245 → `agente-agil-orquestrador/intakeTrigger.js`,
+- `agenteAgilIntake` — L267 → `agente-agil-orquestrador/intakeTrigger.js`,
   squad `dev`, escrita real desde 2026-08-27 (rodou em modo sombra do 1º
   deploy até essa decisão) — 2º gatilho automático do orquestrador, escuta
   `agente_intake_pending/{id}` (ver `agente-agil/http.js` abaixo pro
   porquê de existir)
-- `agenteAgilAnaliseDados` — L~247 → `agente-agil-orquestrador/analiseDados.js`,
+- `agenteAgilAnaliseDados` — L280 → `agente-agil-orquestrador/analiseDados.js`,
   `onRequest` (não gatilho por evento) — "🤖 Ponto de vista do Agente
   Ágil" dentro dos painéis "Dados do Board"/"Controle de Criativos",
   2026-09-01, ver seção abaixo
-- `agenteAgilAnalisePO` — L~259 → `agente-agil-orquestrador/analisePO.js`,
+- `agenteAgilAnalisePO` — L293 → `agente-agil-orquestrador/analisePO.js`,
   `onRequest` (não gatilho por evento) — "🤖 Análise do board (PO)"
   dentro de "Meu Dia", 2026-09-01, ver seção abaixo
 
@@ -2046,4 +2060,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `e25e584` (2026-09-05).*
+*Retrato do commit `7d22d03` (2026-09-05).*
