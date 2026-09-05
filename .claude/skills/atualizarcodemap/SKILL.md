@@ -129,225 +129,53 @@ normal do repo:
 
 ## Histórico de rodadas (não repetir trabalho já feito)
 
-- **2026-08-24 — 1ª rodada usando esta skill** (rodapé anterior:
-  `49bd2c1`, 2026-08-21 → novo: `0b97e99`). `kanban.html`/`kanban-dev.html`
-  divergiam no momento da rodada (dev com squad `dados` no autocomplete/
-  atalhos do Agente Ágil, ainda não promovido) — cabeçalho atualizado
-  pra deixar isso explícito, números agora são de `kanban-dev.html`
-  (superset). ~60 âncoras revalidadas (todas ainda existiam, só linha
-  andou — nenhuma removida/renomeada, drift de +11 a +33 linhas
-  dependendo da posição, por conta dos commits do Agente Ágil client-side
-  desde a última rodada). 2 seções novas em `functions/`: export
-  `agenteAgilMencaoDados` (L198, squad `dados`) e dentro de
-  `agente-agil-orquestrador/` — `escolheClienteParaTarefa.js` (roteamento
-  de modelo, Item 7) e a fábrica `createMentionTrigger()` em
-  `mentionTrigger.js` (multi-squad, substituiu a descrição de
-  squad único). `tools/lerCard.js` ganhou entrada própria
-  (`colunas_disponiveis`). Marcadores `// --- X ---` revalidados
-  (mesmo drift). `painel.html`/`painel-dev.html` reconfirmado que
-  divergem de verdade.
+Formato: data — rodapé anterior → novo — sync kanban/painel — âncoras
+revalidadas — seções novas — achados incidentais notáveis.
 
-- **2026-08-25 — 2ª rodada** (rodapé anterior: `0b97e99`, 2026-08-24 →
-  novo: `61d2d4a`, 2026-08-25). `kanban.html`/`kanban-dev.html`
-  confirmados byte-idênticos de novo (promoção da v8.30.460 já
-  mergeada) — cabeçalho voltou a dizer "promoção da vX.Y.Z confirmada"
-  em vez do aviso de divergência da rodada anterior. ~65 âncoras
-  revalidadas nas 3 seções (`kanban.html`/`kanban-dev.html`,
-  `painel.html`, `functions/`) — todas ainda existiam, só linha andou
-  (nenhuma removida/renomeada). Drift bem maior que o normal na seção
-  `kanban.html` (+150 a +270 linhas dependendo da posição no arquivo,
-  vs. +11 a +33 na rodada anterior) por causa do lote grande desta
-  sessão: extração do overlay `#auto-ov` (~80 linhas), `fbCreateCard()`
-  + rede de segurança de card sumido, tags/filtro em receitas, guarda
-  de card novo não salvo. Painel só teve drift pequeno (~35 linhas).
-  4 seções novas/reescritas:
-  - `kanban.html`: `_newCardHasContent()`/`_newCardGuardOff` (guarda
-    "sair sem salvar" pra card em criação — antes só cobria edição de
-    card existente).
-  - `kanban.html`: bullet "Acesso à tela de Automações" dentro de
-    Automações (achado: só chegava lá via Config, escondido de quem
-    não é PO/Organizador/ADM, mesmo sem trava nenhuma nas ações —
-    `openAutoOv()` extraiu pra overlay próprio, acessível também via
-    ⚡ Funções de card) + campo `tags`/filtro em receitas de fan-out.
-  - `functions/agente-agil-orquestrador/dueOverdueTrigger.js`: entrada
-    estava desatualizada dizendo "só due_overdue" — corrigido, cobre
-    due_today também desde o mesmo dia (2026-08-24), só não foi
-    atualizada na rodada anterior por ter sido commitada num lote
-    diferente.
-  - `functions/agente-agil-orquestrador/mentionTrigger.js`: 2 fixes
-    reais achados validando o item 5 em produção (disparo por
-    Automação não notificava ninguém; `idOverride` colidindo com
-    histórico antigo) — nenhum dos dois tinha entrada, adicionados.
-  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
-  (diff rodado de novo, 1287 linhas de diferença).
-
-- **2026-08-26 — 3ª rodada** (rodapé anterior: `61d2d4a`, 2026-08-25 →
-  novo: `307e6d9`, 2026-08-26). `kanban.html`/`kanban-dev.html`
-  confirmados byte-idênticos de novo (promoção da v8.30.487 já
-  mergeada) — cabeçalho atualizado. ~85 âncoras revalidadas nas 3
-  seções (`kanban.html`/`kanban-dev.html`, `painel.html`, `functions/`)
-  — todas ainda existiam, só linha andou (nenhuma removida/renomeada;
-  só `fbSaveCard()` exigiu regex mais solto pro grep, já que a
-  declaração está indentada — não é sinal de problema, só de estilo).
-  Drift bem maior que as rodadas anteriores (+68 a +475 linhas
-  dependendo da posição no arquivo, crescente da parte de cima pro
-  fim), por causa do volume desta sessão: card hotline "Converse com o
-  Agente Ágil" (6 rodadas de feedback, ~250 linhas), fix do bug de
-  cards de impedimento sumindo do board (2 rodadas), sync geral de
-  HELP_CONTENT, checkbox de Campanhas, e a rodada de `/monitorarbugs`
-  que motivou parte desta auditoria. `functions/index.js` (registro de
-  exports) e os arquivos internos do orquestrador tocados desde a
-  rodada anterior (`dueOverdueTrigger.js`, `resumoMeuDia.js`,
-  `mentionTrigger.js`, `escolheClienteParaTarefa.js`) já estavam
-  corretos — as entradas desses arquivos tinham sido escritas
-  corretamente na hora de cada mudança, sem esperar por esta rodada.
-  2 seções novas:
-  - `kanban.html`: **Impedimentos (modo coluna vs. tag)** — seção nova
-    inteira (`blockerMode`, `_cardIsBlocked()`, `saveBlockerMode()`,
-    `ctxMove()`/`ctxBlock()`, `_doBulkBlockCol()`/`_doBulkUnblockCol()`,
-    `delColumn()`), motivada por um incidente real em produção (squad
-    `midiacriativa`, 64 cards sumidos do board por coluna excluída) que
-    NUNCA tinha tido nenhuma âncora própria neste mapa, apesar de ter
-    lógica não-trivial há tempos.
-  - `kanban.html`: bullet novo dentro de `openAgenteHotline()`
-    documentando os achados do `/monitorarbugs` desta sessão (card
-    hotline vazando em métricas de "Dados do Board" e em 3 buscas de
-    card) — junta tudo que precisa lembrar de excluir `agenteHotline`
-    ao escrever uma futura agregação "todos os cards".
-  - `functions/agente-agil/board.js`: bullet aditivo (não seção nova)
-    sobre `SQUAD_ID` default trocado de `'ecomm'` (descontinuado) pra
-    `'dev'` (2026-08-25) — achado ao varrer `git log` do período, sem
-    entrada nenhuma até esta rodada.
-  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade.
-
-- **2026-08-30 — 4ª rodada** (rodapé anterior: `307e6d9`, 2026-08-26 →
-  novo: `b5e99ae`, 2026-08-30). `kanban.html`/`kanban-dev.html`
-  confirmados byte-idênticos de novo (promoção da v8.30.504 já
-  mergeada) — cabeçalho atualizado. Rodada com volume grande de trabalho
-  acumulado (~55 commits desde a rodada anterior: Agentes Externos no
-  painel, mutações do orquestrador disparando Automações via
-  `agente_pending_auto`, ferramenta `risco`, intake com escrita real,
-  vários `/monitorarbugs`). ~110 âncoras revalidadas nas 3 seções
-  (`kanban.html`/`kanban-dev.html`, `painel.html`/`painel-dev.html`,
-  `functions/`) — todas ainda existiam, só linha andou (nenhuma
-  removida/renomeada). Drift crescente da parte de cima pro fim do
-  arquivo, mesmo padrão de sempre (+15 a +46 no topo, +62 em ~9-10k,
-  +100 em ~12-15k, +243 a +311 em ~21-26k, +284 em ~26-28k). Achado
-  incidental relevante: o script de auto-substituição usado nesta rodada
-  tinha um bug de pareamento em linhas com múltiplos nomes/números
-  (`nomeA()/nomeB() — LX/LY`) que colava o MESMO número novo nos dois —
-  motivo pra sempre rodar uma checagem de "L(\d+)/L\1" (número repetido
-  colado por engano) depois de qualquer substituição em lote, não só
-  confiar no diff visual. 1 seção nova:
-  - `kanban.html`: **Padrões de card (cardPatterns)** — nunca tinha tido
-    seção própria apesar de já ter causado 3 bugs reais em dias recentes
-    (#589/#590/#600/#605, todos `/monitorarbugs`) — mesma classe de bug
-    toda vez: 1 de N pontos que mexem no padrão ficando pra trás de um
-    comportamento que os outros já tinham (`runAutoRules()` não disparado
-    na criação, card aberto não atualizado na hora).
-  Também corrigida 1 inconsistência interna real (não drift de linha):
-  o resumo de `agenteAgilIntake` em "index.js — registro de exports"
-  ainda dizia "MODO SOMBRA (nunca validado em produção)", mas a entrada
-  detalhada da própria seção `intakeTrigger.js`, mais abaixo no mesmo
-  arquivo, já documentava escrita real desde 2026-08-27 — o próprio
-  `functions/index.js` confirma (comentário + `dryRun:false` na
-  instância `dev`). Corrigido pra não contradizer a si mesmo.
-  `painel.html`/`painel-dev.html` reconfirmado que divergem de verdade
-  (diff, 1451 linhas de diferença).
-
-- **2026-08-31 — 5ª rodada** (rodapé anterior: `b5e99ae`, 2026-08-30 →
-  novo: `68e233d`, 2026-08-31). `kanban.html`/`kanban-dev.html`
-  **divergem no momento desta rodada** (374 linhas de diff — lote grande
-  do dia ainda não promovido: cadastro de Agentes de IA, Agente Ágil
-  como Responsável/Participante, revisão arquitetural dos disparos de
-  `@Agente Ágil`, squad `dev` habilitado) — cabeçalho do `CODE_MAP.md`
-  atualizado explicitando isso, números agora são de `kanban-dev.html`
-  (superset), mesmo padrão da 1ª rodada quando isso já tinha acontecido
-  antes. Script Python (`grep -E`, não BRE — achado de bug no processo:
-  a 1ª tentativa usou `subprocess` sem `-E`, todas as 104 âncoras
-  testadas vieram "MISSING" por causa disso, não porque sumiram de
-  verdade — sempre confirmar 1 caso manualmente antes de confiar num
-  resultado de "tudo sumiu") revalidou as 86 âncoras da seção
-  `kanban.html`/`kanban-dev.html` (nenhuma removida/renomeada — todas só
-  andaram de linha, drift de -7 a +284, crescente da parte de cima pro
-  fim do arquivo, mesmo padrão de sempre) e as 18 da seção `painel.html`
-  (15 com drift 0 — arquivo não mudou nessas partes —, 3 da subseção
-  "Agentes Externos" com drift real, corrigidas usando os números de
-  `painel-dev.html`, não `painel.html`, porque essa subseção específica
-  já tinha uma nota própria dizendo "linhas abaixo são de
-  painel-dev.html", diferente da convenção do resto da seção painel —
-  quase pisei nisso substituindo pelos números de `painel.html` por
-  engano, ver texto atualizado explicando o porquê). Seção
-  `functions/agente-agil-orquestrador/` usa citação por FILE NAME na
-  maioria das entradas (não por linha) — só 5 tinham `— LNNNN` explícito
-  (`processarMencao`, `classificaComplexidade`, `MODEL_BY_TIER`,
-  `sinaisDoCard`, `gerarResumoMeuDia`); 2 tinham drift real (`sinaisDoCard`
-  L111→L87, `gerarResumoMeuDia` L174→L178), corrigidas; `processarMencao`
-  L133→L134 corrigido por completude (drift de 1 linha). `functions/
-  index.js` (registro de exports) conferido linha por linha contra
-  `grep -n "^exports\."` — bate 100%, nenhuma divergência. Arquivos
-  citados só por nome em `agente-agil/`/`intake/`/`backup/`/`spotify/`
-  todos confirmados existentes (`ls`), nenhum removido.
-  4 seções/entradas novas (todas já escritas corretamente na hora de
-  cada mudança durante a sessão, não descobertas só agora nesta rodada —
-  diferente das rodadas anteriores onde o gap só aparecia na auditoria):
-  `squadScope.js`, `tools/notificarEspecialistaExterno.js`,
-  `AGENTE_AGIL_ASSIGNEE_ENTRY`/`_dispatchAgenteAgilComment()` em
-  `kanban.html`, e o bullet "Webhook de retorno" na subseção "Agentes
-  Externos" do painel. `painel.html`/`painel-dev.html` reconfirmado que
-  divergem de verdade (diff, 1466 linhas de diferença). Não indexada de
-  propósito (curadoria, não esquecimento): opção "Dias úteis (seg-sex)"
-  em recorrência automática — adição pequena a uma feature que nunca
-  teve seção própria no mapa, não justifica criar uma agora só por essa
-  adição.
-
-- **2026-09-05 — 6ª rodada** (rodapé anterior: `68e233d`, 2026-08-31 →
-  novo: `7d22d03`, 2026-09-05). Rodada delegada a um agente em background
-  (tarefa longa: ~184 chamadas de ferramenta, ~18min). `kanban.html`/
-  `kanban-dev.html` ganharam uma 2ª divergência PERMANENTE além da
-  versão/`VERSION_KEY`: favicon próprio pro dev desde o commit `ff759f8`
-  (`favicon.png` prod / `favicon-dev.png` dev — ícone da aba, apple-
-  touch-icon, splash e 2 entradas do manifest) — nunca vai ser promovido
-  como está, cabeçalho do `CODE_MAP.md` atualizado pra deixar isso
-  explícito ao lado da nota de versão. ~150 âncoras revalidadas na seção
-  `kanban.html`/`kanban-dev.html` (drift de +300 a +2500 linhas,
-  dependendo da posição — a maior rodada de drift desta skill até agora,
-  reflexo do volume de features landadas desde 2026-08-31: Timeline,
-  todo o projeto de OKR, Vice City, cardPatterns) — nenhuma removida ou
-  renomeada, só linha andou. Achado incidental: par
-  `loadSquadsFromFirebase()`/`SQUAD_META_LIVE` já estava com os números
-  TROCADOS entre si de uma rodada anterior — corrigido. `functions/
-  index.js` (registro de exports): todos os exports batem 1:1 contra
-  `grep -n "^exports\."` (nenhum faltando/sobrando, `spotifySync`
-  seguindo comentado como já documentado), mas os NÚMEROS de linha de
-  quase todo o bloco (do `okrDailyScan` em diante) estavam desatualizados
-  em 15-22 linhas cada, alguns ainda marcados `L~` (aproximado) de uma
-  rodada anterior que não tinha certeza — todos corrigidos e confirmados
-  exatos (`L~179`→`L180`, etc.). 1 seção nova: "Modal do card no mobile —
-  redesenho estilo Trello" (2026-09-02, 3 commits CSS-only no mesmo dia,
-  motivados por 2 rodadas seguidas de nomes de classe parecidos
-  enganando o Playwright — `.card-attr-row` vs `.frow`) — sem anchor de
-  função (CSS puro), documentada por linha de regra CSS. `painel.html`/
-  `painel-dev.html` reconfirmado que divergem de verdade — e a entrada
-  "❓ Ajuda (help content) da aba OKR" corrigida de "não promovida" pra
-  "promovida pra prod v3.24" (promoção aconteceu nesta mesma sessão,
-  depois do briefing do agente ter sido escrito). **Nota operacional**:
-  esta rodada rodou concorrente com outro trabalho de sessão no mesmo
-  working directory (promoção de prod + um `/monitorarbugs`) — o agente
-  em background e o trabalho em primeiro plano colidiram achando
-  `CODE_MAP.md` em estados diferentes várias vezes (edits do agente
-  sendo pisados por checkouts de branch, e vice-versa). Resolvido
-  fazendo o merge em checkpoints pequenos e verificando cada linha
-  numérica reportada contra `grep -na` real antes de aceitar — nenhuma
-  linha errada chegou a ser commitada, mas custou 4 PRs de checkpoint
-  intermediário em vez de 1 PR final só. **Lição pra próxima vez**: não
+- **2026-08-24 (1ª)**: `49bd2c1`→`0b97e99`. kanban/kanban-dev divergiam
+  (squad `dados` não promovido). ~60 âncoras, sem remoção/renome. 2
+  seções novas em `functions/` (`agenteAgilMencaoDados`,
+  `escolheClienteParaTarefa.js`, fábrica `createMentionTrigger()`).
+- **2026-08-25 (2ª)**: `0b97e99`→`61d2d4a`. kanban/kanban-dev
+  sincronizados de novo. ~65 âncoras. 4 seções novas/reescritas
+  (`_newCardHasContent()`, acesso à tela de Automações,
+  `dueOverdueTrigger.js` desatualizado, 2 fixes de `mentionTrigger.js`
+  sem entrada).
+- **2026-08-26 (3ª)**: `61d2d4a`→`307e6d9`. Sincronizados. ~85 âncoras,
+  drift crescente (+68 a +475 linhas). 2 seções novas: **Impedimentos
+  (modo coluna vs. tag)** — nunca tinha âncora própria apesar de lógica
+  não-trivial — e bullet sobre `agenteHotline` vazando em agregações.
+- **2026-08-30 (4ª)**: `307e6d9`→`b5e99ae`. Sincronizados. ~110 âncoras.
+  **Achado de processo**: script de auto-substituição colava o MESMO
+  número em linhas com 2 nomes (`nomeA()/nomeB() — LX/LY` virava
+  `LX/LX`) — sempre rodar `grep -E "L(\d+)/L\1"` depois de substituição
+  em lote, não confiar só no diff visual. 1 seção nova: **Padrões de
+  card** (já tinha causado 3 bugs reais, nunca teve âncora). 1
+  inconsistência interna corrigida (`agenteAgilIntake` contradizia a si
+  mesmo sobre modo sombra vs. escrita real).
+- **2026-08-31 (5ª)**: `b5e99ae`→`68e233d`. kanban/kanban-dev divergiam
+  (lote do dia não promovido) — números viraram os de `kanban-dev.html`.
+  **Achado de processo**: script Python usou `grep` sem `-E`, todas as
+  104 âncoras testadas vieram "MISSING" por engano — sempre confirmar 1
+  caso manualmente antes de aceitar um resultado de "tudo sumiu". ~104
+  âncoras revalidadas. 4 seções/entradas novas.
+- **2026-09-05 (6ª)**: `68e233d`→`7d22d03`. Rodada delegada a um agente
+  em background (~184 chamadas, ~18min). kanban/kanban-dev ganharam
+  divergência PERMANENTE nova (favicon próprio pro dev, `ff759f8`) —
+  cabeçalho atualizado. ~150 âncoras (maior drift já visto, +300 a
+  +2500 linhas). 1 seção nova (Modal mobile estilo Trello, CSS puro). 1
+  seção do painel corrigida pra refletir promoção que aconteceu no meio
+  da rodada. **Lição operacional**: esta rodada rodou concorrente com
+  outro trabalho na mesma sessão (promoção de prod + `/monitorarbugs`)
+  — o agente em background e o trabalho em primeiro plano colidiram no
+  mesmo `CODE_MAP.md` várias vezes (git checkout pisando em edits do
+  agente e vice-versa), custando 4 PRs de checkpoint em vez de 1. Não
   rodar esta skill em background enquanto outro trabalho no mesmo
-  repositório está ativo na mesma sessão — ou pelo menos evitar
-  alternar de branch no meio (`git checkout`) enquanto o agente ainda
-  não sinalizou conclusão, já que os dois compartilham o mesmo working
-  directory independentemente de qual branch está "logicamente" ativa.
+  repositório está ativo na mesma sessão — os dois compartilham o
+  working directory independente de qual branch está "logicamente"
+  ativa.
 
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
-novas adicionadas. Isso evita reler o arquivo inteiro do zero numa
-rodada futura sem saber o que já foi conferido recentemente.
+novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir
+trabalho já feito, não preservar a narrativa completa.
