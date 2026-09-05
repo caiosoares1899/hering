@@ -540,7 +540,7 @@ window._okrFullscreen = () => {
 
 document.addEventListener('keydown', e=>{
   if(document.getElementById('detail-ov').classList.contains('open')){
-    if(e.key==='Escape') window._okrCloseDetail();
+    if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
     return;
   }
   if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
