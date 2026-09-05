@@ -12644,6 +12644,38 @@ alguém pedir).
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.21 · painel-dev — 2026-09-05 — 🎯 OKR: 📈 Histórico semanal (Fase 3)
+
+Pedido direto ("podemos partir para fase 3" → "como eles podem acessar
+isso? esse histórico semanal? temos que construir isso"), escopo
+confirmado via `AskUserQuestion`: uma tela nova dentro da aba OKR pra
+visualizar os snapshots que `okrWeeklySnapshot` (Cloud Function, toda
+sexta 17h) já vem gravando em `kanban/okr/snapshots/{data}`.
+
+- **Botão "📈 Histórico"** na aba OKR alterna a tela inteira entre a
+  lista de Objetivos e a visão de histórico (nunca as duas juntas —
+  mesmo espírito de "📦 Ver arquivados", 1 estado só, não um "mostrar
+  também").
+- **Gráfico de tendência** — barras empilhadas por semana (uma barra =
+  1 snapshot), cada segmento colorido pelo status agregado (mesma
+  paleta de sempre: cinza/teal/amarelo/vermelho/azul), reusando o
+  mesmo mecanismo de SVG já usado no gráfico de throughput da aba
+  Fluxo (`.tp-bar`/`.tp-grid-line`/`.tp-axis-lbl`). Sem snapshot nenhum
+  ainda, mostra uma mensagem amigável explicando quando o primeiro sai
+  (não um gráfico vazio/quebrado).
+- **Consulta por Objetivo** — um `<select>` (só Objetivos ativos,
+  nunca arquivado) mostra uma tabela com a evolução daquele Objetivo
+  específico semana a semana: status, % de progresso, marcos
+  concluídos/total — mais recente primeiro.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses no
+baseline (`braces -1, parens -14`). 19 cenários novos via Playwright
+(toggle escondendo/mostrando as seções certas, gráfico sem dado vs.
+com dado, objetivo arquivado nunca aparece no seletor, tabela por
+objetivo ordenada e com os campos certos, objetivo sem snapshot mostra
+mensagem amigável) + 45 (Fase 1) + 31 (extensão) + 26 (rodada 4) + 10
+(badge/avatar) reexecutados — todos passando, sem regressão.
+
 ### painel-dev.html v3.20 · painel-dev — 2026-09-04 — 🎯 OKR: 4 achados reais testando em prod (z-index, multi-trimestre, arquivados, histórico rico)
 
 Feedback direto do usuário testando a rodada anterior (v3.19) já em

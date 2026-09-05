@@ -1378,6 +1378,21 @@ produção. Ver `CHANGELOG.md` v3.20 · painel-dev pro racional completo.
   Ação/tags do objetivo, mais diff de `cardLinks`/`tagIds`/
   `participantes` do marco — antes só campos principais + responsável.
 
+#### 📈 Histórico semanal — Fase 3 (2026-09-05, v3.21 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+Visualização de `kanban/okr/snapshots/{data}`, gravado toda sexta pela
+Cloud Function `okrWeeklySnapshot` (ver seção `okr/` em Cloud
+Functions). `okrSnapshots` (estado local, `loadOkrSnapshots()`),
+`_okrShowHistorico`/`_okrToggleHistorico()` — mesmo padrão de
+`_okrShowArquivados`, alterna a aba OKR inteira entre lista de
+Objetivos e histórico (esconde `#okr-toolbar`/`#okr-objetivos-wrap`/
+`#okr-section-title`/`#okr-list`, mostra `#okr-historico-wrap`).
+`renderOkrHistorico()` popula o `<select>` de Objetivo (só ativos) e
+chama `renderOkrHistoricoChart()` — gráfico de barras empilhadas por
+status (SVG, mesmo padrão de `renderThroughputChart()`/`.tp-bar` já
+usado na aba Fluxo), últimas ~12 semanas. `_okrHistoricoSelectObj(id)`
+— tabela de evolução de 1 Objetivo (status/%/marcos por semana, mais
+recente primeiro).
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
