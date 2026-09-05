@@ -33,14 +33,14 @@ instrumentação extra) — os números da seção painel abaixo são de
 ### Papéis & autenticação
 - `ADM_EMAILS` (let) — L5777
 - `getEffectiveRole()` — L6137 — papel efetivo, ADMs hardcoded não são rebaixáveis
-- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6190 / L5844
+- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6221 / L6190
 - `resolveSquadAndShow()` — L9822 — resolve squad da URL, decide o que mostrar
 - `autoRegistrar()` — L9975 — cria/atualiza o doc do usuário no login
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
 aparecem lado a lado com pessoas nos seletores de Responsável/
-Participante — `agentes` (let) — L6368 / `allIdentities()` — L6772
+Participante — `agentes` (let) — L6760 / `allIdentities()` — L6772
 (combina `members`+`agentes` só pra exibição/seleção, NUNCA pra checagem
 de permissão). Até 2026-08-31 só existia o listener (leitura) — pedido
 direto do usuário ("quero que isso fique mais claro o cadastro"): CRUD
@@ -2046,4 +2046,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `68e233d` (2026-08-31).*
+*Retrato do commit `e25e584` (2026-09-05).*
