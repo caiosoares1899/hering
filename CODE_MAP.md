@@ -1570,6 +1570,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 - `intakeSubmit` — L168 → `intake/submit.js`
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
 - `okrDailyScan` — L~179 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
+- `okrWeeklySnapshot` — L~187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
@@ -1896,7 +1897,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
   semanais mantidos por squad).
 
-### okr/ — 2026-09-04, novo
+### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` em 2026-09-05)
 - `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
   (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`
   (roda sozinho, sem depender de ninguém abrir o painel). 3 gatilhos:
@@ -1911,6 +1912,17 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `dueOverdueTrigger.js`) — `okr/__tests__/dailyScan.test.js`, 14 casos
   (fake DB, sem emulador). Deploy isolado:
   `firebase deploy --only functions:okrDailyScan`.
+- `okr/weeklySnapshot.js` — `okrWeeklySnapshot`, `onSchedule` toda
+  sexta-feira 17:00 (Brasília) — Fase 3 do OKR: NÃO notifica ninguém
+  (isso é `dailyScan.js`), só grava uma foto do status agregado/% de
+  progresso de cada Objetivo ATIVO em `kanban/okr/snapshots/{data}`
+  (sobrescreve se rodar 2x no mesmo dia). `objStatus()`/
+  `objProgressoPct()` replicam a mesma lógica de `_okrObjStatus()`/
+  `_okrObjProgressoPct()` do painel/apresentação (pior status entre
+  marcos ativos). `runOkrWeeklySnapshot(db)`/`todaySP()`/`objStatus()`/
+  `objProgressoPct()` exportados pra teste —
+  `okr/__tests__/weeklySnapshot.test.js`, 13 casos (fake DB). Deploy
+  isolado: `firebase deploy --only functions:okrWeeklySnapshot`.
 
 ### spotify/ — PAUSADO (2026-08-04)
 "Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist
