@@ -179,6 +179,13 @@ exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 // à API do Google. Deploy isolado: firebase deploy --only functions:okrDailyScan
 exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
 
+// 🎯 OKR — Fase 3: snapshot semanal (toda sexta 17h, ver
+// functions/okr/weeklySnapshot.js). NÃO notifica ninguém — só grava uma
+// foto do status/progresso de cada Objetivo ativo em
+// kanban/okr/snapshots/{data}, pra permitir comparar semana a semana mais
+// pra frente. Deploy isolado: firebase deploy --only functions:okrWeeklySnapshot
+exports.okrWeeklySnapshot = require('./okr/weeklySnapshot').okrWeeklySnapshot;
+
 // Agente Ágil Orquestrador — @menção v1 (item 3/4 do plano de acionamento
 // sem supervisão direta, ver functions/agente-agil-orquestrador/README.md).
 // Dispara quando um comentário novo em kanban/squads/dev/dados/

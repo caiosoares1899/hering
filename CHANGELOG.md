@@ -12612,6 +12612,36 @@ aplicável) ou endpoints escopados por playlist/faixa diretamente, nunca
 lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
+## Cloud Function — `okrWeeklySnapshot` (`functions/okr/weeklySnapshot.js`, sem versão própria em `version.json`)
+
+### 2026-09-05 — Nova function: snapshot semanal dos OKRs (Fase 3)
+Pedido direto ("podemos partir para fase 3"), decisão explícita via
+`AskUserQuestion`: NÃO é um sistema de notificação novo (isso já existe,
+`okr/dailyScan.js`) — é só uma foto do estado de cada Objetivo ativo,
+gravada toda sexta, pra permitir comparar "essa semana vs. semana
+passada" mais pra frente (sem viewer/gráfico ainda — fica pra quando
+alguém pedir).
+
+- `onSchedule`, toda sexta-feira 17:00 (horário de Brasília, cron
+  `0 17 * * 5`) — mesmo padrão de `okrDailyScan`/`weeklyBackup`.
+- Lê `kanban/okr/objetivos` e `kanban/okr/marcos`, recalcula o status
+  agregado e o % de progresso de cada Objetivo ATIVO (mesma lógica de
+  `_okrObjStatus()`/`_okrObjProgressoPct()` do painel/apresentação —
+  pior status entre os marcos não-concluídos, ou "concluído" se todos
+  já terminaram) e grava em `kanban/okr/snapshots/{data}` — um snapshot
+  por dia da rodada (sobrescreve se rodar 2x no mesmo dia, não duplica).
+  Objetivo arquivado nunca entra no snapshot.
+- `kanban/okr/snapshots` já fica coberto pela regra existente de
+  `kanban.okr` no `database.rules.json` (`.read`/`.write` no nó `okr`
+  inteiro) — nenhuma mudança de regra necessária.
+- 13 testes novos (`node --test`, fake DB — status agregado, %
+  progresso, objetivo arquivado excluído, resumo geral por status, zero
+  notificação escrita, idempotência no mesmo dia) — suite completa de
+  `functions/` (430 testes) sem regressão.
+- **Requer deploy manual**: `firebase deploy --only
+  functions:okrWeeklySnapshot` (resync do clone primeiro, ver
+  `CLAUDE.md`).
+
 ## painel.html / painel-dev.html
 
 ### painel-dev.html v3.20 · painel-dev — 2026-09-04 — 🎯 OKR: 4 achados reais testando em prod (z-index, multi-trimestre, arquivados, histórico rico)
