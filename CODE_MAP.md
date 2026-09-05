@@ -1393,6 +1393,17 @@ usado na aba Fluxo), últimas ~12 semanas. `_okrHistoricoSelectObj(id)`
 — tabela de evolução de 1 Objetivo (status/%/marcos por semana, mais
 recente primeiro).
 
+#### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+`_okrExcluirObjetivo(id)` — botão "🗑 Excluir" no rodapé do modal
+(`renderOkrObjBody()`), só ADM (`_isAdmPainel()`). Diferente de
+`_okrArquivarObjetivo()` (reversível, só esconde da lista de ativos):
+exclusão definitiva, sem desfazer — disponível direto no modal,
+independente de o Objetivo estar arquivado (mesmo espírito de
+`deleteCard()` no kanban.html). Cascade: apaga também todo Marco
+filho (`objetivoId===id` em `kanban/okr/marcos`) e os comentários dele
+(`kanban/okr/marco_comments`) — escrita atômica multi-path com
+`window._update(window._ref(window._db,'kanban/okr'), {'objetivos/'+id:null, ...})`.
+
 #### 💬 Central Agente Ágil — chat pra ajudar a preencher (2026-09-05, v3.22 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
 Client-side da Cloud Function `okrAgenteChat` (ver seção `okr/` em Cloud
 Functions). Botão `#okr-agente-btn` na aba OKR, `_okrShowAgenteChat`/

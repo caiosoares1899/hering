@@ -12700,6 +12700,33 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.23 · painel-dev — 2026-09-05 — 🎯 OKR: 🗑 Excluir Objetivo
+
+Pedido direto ("faltou a opção de poder excluir um objetivo!") — até
+aqui só existia "Arquivar" (esconde da lista de ativos, mas mantém tudo
+acessível em "📦 Ver arquivados"). Excluir é definitivo, sem desfazer.
+
+- **Botão "🗑 Excluir"** no rodapé do modal de Objetivo, só pra ADM
+  (`_isAdmPainel()`, mesma trava de Arquivar/Desarquivar/+ Novo
+  Objetivo). Disponível direto no modal, independente do Objetivo estar
+  arquivado ou não — mesmo espírito de `deleteCard()` no kanban.html
+  (exclusão acessível direto, não só a partir de uma lista de
+  arquivados).
+- **Cascade nos Marcos**: apaga também todos os Marcos daquele Objetivo
+  (`kanban/okr/marcos`) e os comentários deles
+  (`kanban/okr/marco_comments`) — um Marco órfão (sem o Objetivo pai)
+  não aparece em NENHUMA tela, ficaria só ocupando espaço no Firebase
+  pra sempre. Aviso de confirmação avisa quantos Marcos serão apagados
+  junto.
+- Escrita atômica com `window._update()` num único objeto multi-path
+  (base `kanban/okr`), mesmo padrão de `fbSaveAll()` no kanban.html.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`. 9
+cenários novos via Playwright (botão só aparece pra ADM, exclusão apaga
+Objetivo + Marcos + comentários em cascade, estado local atualizado,
+modal fecha) + 19 (Histórico) + 21 (Central Agente Ágil) reexecutados —
+todos passando, sem regressão.
+
 ### painel-dev.html v3.22 · painel-dev — 2026-09-05 — 🎯 OKR: 💬 Central Agente Ágil (chat pra ajudar a preencher)
 
 Client-side da function `okrAgenteChat` acima — botão "💬 Central Agente
