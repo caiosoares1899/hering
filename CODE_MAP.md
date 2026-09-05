@@ -2015,7 +2015,13 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   replicada servidor-side), `resolveObjetivo()` (por id ou título, só
   aceita título ambíguo se achar exatamente 1 match — exato antes de
   parcial), `pushHistory()` (mesmo formato `{who,uid,what,tipo,at}` que
-  `painel.html` já grava pra edição humana, cap de 80 entradas).
+  `painel.html` já grava pra edição humana, cap de 80 entradas),
+  `notifyObjetivoEditado()` (achado real de `/monitorarbugs`,
+  2026-09-05: notifica `responsaveis`/participantes de Marco quando o
+  chat edita um Objetivo — mesma coisa que `_okrNotifyEditado()` no
+  painel já fazia pra edição manual, `type:'okr_editado'`, exclui quem
+  editou). Chamada pelos 3 handlers de escrita de `agenteTools.js`
+  (`editar_campos_okr`/`criar_marco`/`editar_marco`).
 - `okr/agentePrompt.js` — `SYSTEM_PROMPT_OKR_V1`, separado do prompt do
   orquestrador de card (`agente-agil-orquestrador/systemPrompt.js`). Foco
   em TRADUZIR texto corrido pra Progresso/Próximo Passo/Risco, não só
