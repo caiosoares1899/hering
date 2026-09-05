@@ -12700,6 +12700,31 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.23 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: 📈 Histórico semanal, 💬 Central Agente Ágil, 🗑 Excluir Objetivo
+
+Promove pra produção o lote acumulado v3.20 → v3.23 de `painel-dev.html`
+— três entregas do projeto de OKR, testadas em dev e/ou validadas ao
+vivo em produção antes desta promoção:
+
+- **📈 Histórico semanal** (v3.21): visualização dos snapshots que a
+  Cloud Function `okrWeeklySnapshot` grava toda sexta — gráfico de
+  tendência (status agregado por semana) e consulta por Objetivo.
+- **💬 Central Agente Ágil** (v3.22): chat dedicado na aba OKR pra
+  ajudar o time a preencher Objetivos/Marcos, mesma ideia do card
+  "hotline" do kanban — conta a situação com suas palavras, o agente
+  organiza em Progresso/Próximo Passo/Risco e escreve direto nos campos
+  (respeitando quem pode editar cada Objetivo). Validado ao vivo em
+  produção: criar Objetivo, editar descrição, criar Marco, atualizar
+  status — 4/4 cenários OK.
+- **🗑 Excluir Objetivo** (v3.23): opção de exclusão definitiva (ADM),
+  diferente de Arquivar — com cascade nos Marcos e comentários do
+  Objetivo excluído.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido (`braces -1, parens -14`). Os 49 cenários
+Playwright das 3 features (19 + 21 + 9) reexecutados direto contra
+`painel.html` — todos passando.
+
 ### painel-dev.html v3.23 · painel-dev — 2026-09-05 — 🎯 OKR: 🗑 Excluir Objetivo
 
 Pedido direto ("faltou a opção de poder excluir um objetivo!") — até

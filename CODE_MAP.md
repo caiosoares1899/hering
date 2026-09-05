@@ -1378,7 +1378,7 @@ produção. Ver `CHANGELOG.md` v3.20 · painel-dev pro racional completo.
   Ação/tags do objetivo, mais diff de `cardLinks`/`tagIds`/
   `participantes` do marco — antes só campos principais + responsável.
 
-#### 📈 Histórico semanal — Fase 3 (2026-09-05, v3.21 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+#### 📈 Histórico semanal — Fase 3 (2026-09-05, v3.21 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 Visualização de `kanban/okr/snapshots/{data}`, gravado toda sexta pela
 Cloud Function `okrWeeklySnapshot` (ver seção `okr/` em Cloud
 Functions). `okrSnapshots` (estado local, `loadOkrSnapshots()`),
@@ -1393,7 +1393,7 @@ usado na aba Fluxo), últimas ~12 semanas. `_okrHistoricoSelectObj(id)`
 — tabela de evolução de 1 Objetivo (status/%/marcos por semana, mais
 recente primeiro).
 
-#### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+#### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 `_okrExcluirObjetivo(id)` — botão "🗑 Excluir" no rodapé do modal
 (`renderOkrObjBody()`), só ADM (`_isAdmPainel()`). Diferente de
 `_okrArquivarObjetivo()` (reversível, só esconde da lista de ativos):
@@ -1404,7 +1404,7 @@ filho (`objetivoId===id` em `kanban/okr/marcos`) e os comentários dele
 (`kanban/okr/marco_comments`) — escrita atômica multi-path com
 `window._update(window._ref(window._db,'kanban/okr'), {'objetivos/'+id:null, ...})`.
 
-#### 💬 Central Agente Ágil — chat pra ajudar a preencher (2026-09-05, v3.22 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+#### 💬 Central Agente Ágil — chat pra ajudar a preencher (2026-09-05, v3.22 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 Client-side da Cloud Function `okrAgenteChat` (ver seção `okr/` em Cloud
 Functions). Botão `#okr-agente-btn` na aba OKR, `_okrShowAgenteChat`/
 `_okrToggleAgenteChat()` — mesmo padrão de toggle de
