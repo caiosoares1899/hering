@@ -2713,7 +2713,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.22 · painel-dev</div>
+<div class="version">v3.23 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5383,6 +5383,7 @@ function renderOkrObjBody(id){
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
     <button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
       : `<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
@@ -5428,6 +5429,31 @@ async function _okrDesarquivarObjetivo(id){
   await window._update(window._ref(window._db,'kanban/okr/objetivos/'+id), {arquivado:false, history:hist});
   if(okrObjetivos[id]){ okrObjetivos[id].arquivado = false; okrObjetivos[id].history = hist; }
   showToast('✅ Objetivo desarquivado — já está de volta na lista de ativos.');
+  closeOkrObjetivo();
+}
+// Exclusão DEFINITIVA (pedido direto do usuário: "faltou a opção de poder
+// excluir um objetivo") — diferente de Arquivar (que só esconde da lista
+// de ativos, mantendo tudo acessível em "📦 Ver arquivados"). Mesmo
+// espírito de deleteCard() no kanban.html: disponível direto no modal
+// (não precisa arquivar antes), 1 confirmação forte, sem desfazer. Faz
+// cascade nos Marcos do Objetivo (e nos comentários deles) — órfãos em
+// kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
+// espaço no Firebase pra sempre.
+async function _okrExcluirObjetivo(id){
+  const obj = okrObjetivos[id];
+  if(!obj) return;
+  const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
+  const aviso = marcosDoObjetivo.length
+    ? `Excluir "${obj.titulo}" definitivamente? Isso também apaga ${marcosDoObjetivo.length} marco(s) dele. Diferente de arquivar — não dá pra desfazer.`
+    : `Excluir "${obj.titulo}" definitivamente? Diferente de arquivar — não dá pra desfazer.`;
+  if(!await uiConfirm(aviso, {title:'Excluir Objetivo', danger:true, okText:'Excluir'})) return;
+  const updates = {};
+  updates['objetivos/'+id] = null;
+  marcosDoObjetivo.forEach(mid=>{ updates['marcos/'+mid] = null; updates['marco_comments/'+mid] = null; });
+  await window._update(window._ref(window._db,'kanban/okr'), updates);
+  delete okrObjetivos[id];
+  marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
+  showToast('🗑 Objetivo excluído.');
   closeOkrObjetivo();
 }
 
