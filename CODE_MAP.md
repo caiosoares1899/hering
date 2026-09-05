@@ -184,7 +184,7 @@ detalhe dos 4 call sites.
   `editingId` ainda null (sucesso de `saveCard()`, e o fechamento do
   modal reaproveitado pra editar item de Recorrente/Modelo/Agendamento)
 - `_navigateToCard(cardId)`/`voltarCardAnterior()` — perto de L12844/
-  L12069 — pilha `_cardNavStack` pro botão "← Voltar" (pai de supercard,
+  L12852 — pilha `_cardNavStack` pro botão "← Voltar" (pai de supercard,
   vínculo, dependência clicados de dentro do modal já aberto). Passam
   pelo mesmo `closeOv()` acima (ganham de graça a confirmação de
   "alterações não salvas" se o card estiver sujo). **Achado real
@@ -296,7 +296,7 @@ detalhe dos 4 call sites.
   escondido, ativado segurando o botão de tema por
   `VICE_LONGPRESS_MS` (`_themeBtnPointerDown()`/`_themeBtnPointerUp()`,
   logo acima) — de propósito NÃO listado como opção visível. Paleta em
-  `[data-theme="vice"]` no `<style>` (perto da L448, logo depois do
+  `[data-theme="vice"]` no `<style>` (perto da L476, logo depois do
   bloco `[data-theme="light"]`). Sair é sempre 1 clique/duplo-clique
   normal (`onThemeBtnClick()`/`onThemeBtnDblClick()` tratam o caso
   `_currentTheme()==='vice'` primeiro). Persistido em `localStorage`
@@ -371,7 +371,7 @@ detalhe dos 4 call sites.
   `.meudia-row` de "🌅 Meu Dia" (mesmo visual). **Achado real (2026-09-03,
   relato do usuário — Timeline em branco)**: esconder `#board` exige a
   classe `board-hidden` (`.board.board-hidden{display:none!important;}`,
-  perto de L2180), NUNCA `style.display` direto — `.board{display:flex
+  perto de L2200), NUNCA `style.display` direto — `.board{display:flex
   !important}` do mobile (`@media max-width:768px`, ativo também com
   DevTools ocupando metade da tela) vence qualquer inline style. E
   `.board-wrap.mode-expanded-wrap` tem `height:calc(100vh - ...)` (perto
@@ -518,7 +518,7 @@ detalhe dos 4 call sites.
   - CSS: `.timeline-semprazo` renomeada pra `.timeline-collapse`
     (genérica) quando passou a servir tanto "Sem prazo" quanto "Concluído
     recente"; `.timeline-event-marker` nova (divisor de marco de
-    contexto), perto de L2196.
+    contexto), perto de L2209.
 - **📜 Histórico (dia ou período qualquer, inclusive bem no passado)**
   (2026-09-04, pedido direto do usuário: "faltou... ter uma opção de a
   pessoa setar a data (um dia ou um período)... 'o que será que a gente
@@ -553,7 +553,7 @@ detalhe dos 4 call sites.
     não filtra `archived` de propósito (herdado de `_marcosDoDia`).
 - **`/monitorarbugs` na Timeline (2026-09-04)** — 1ª revisão dedicada da
   área inteira, 3 achados reais:
-  1. `recordMove()`/`backfillFlow()` (~L7956/~L8011) comparavam
+  1. `recordMove()`/`backfillFlow()` (~L7967/~L8022) comparavam
      `toCol`/`from`/`card.col` só contra `_flowDoneColId()` (a 1ª coluna
      de fim configurada) pra gravar `card.flow.doneAt` — squad com 2+
      colunas de fim (`flowConfig.doneCols`, ex.: "Concluído"+
@@ -602,8 +602,8 @@ Todos passam a usar `_isColDone(colId)`:
   nenhum, desde que a feature existe.
 - 4 caminhos de notificação "card concluído" vs. "card movido" — cada um
   reimplementava a MESMA heurística local (regex de nome) por conta
-  própria: modal-save (~L12108), `scheduleAutoSave()` (~L25006),
-  `handleDrop()` (~L26708), `ctxMove()` (~L28194) — todos trocados por
+  própria: modal-save (~L12153), `scheduleAutoSave()` (~L25048),
+  `handleDrop()` (~L26751), `ctxMove()` (~L28236) — todos trocados por
   `if(_isColDone(colId)) notifDone(...); else notifMoved(...)`, sem
   variável local nenhuma.
 Testado com Playwright, squad fictícia com coluna de conclusão de id
@@ -866,7 +866,7 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
   verdade", já que `card.col` não é confiável nesse momento específico)
   força `from=null` (→ `'—'`) em vez de adivinhar a partir de `card.col`.
   **Achado irmão no mesmo mergulho**: a ação de Automação "Mover card
-  para coluna" (`AUTO_ACTIONS`, `key:'move_card'`, ~L27178) mudava
+  para coluna" (`AUTO_ACTIONS`, `key:'move_card'`, ~L27340) mudava
   `card.col` DIRETO, sem NUNCA chamar `recordMove()` — movimentos feitos
   por essa automação eram invisíveis pro Timeline/Feed/relatório de
   tempo por coluna (sem erro, sem aviso, o card simplesmente não
@@ -926,19 +926,19 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
   ao desligá-lo (mesma garantia de antes, base diferente). Calendário:
   `#tf-de`/`#tf-ate` ganharam o botão `📅` (`class="dp-btn"`,
   `onclick="_dpOpen('tf-de',this)"`) que todo campo de data do app já usa
-  (`_dpOpen()`/`_dpPick()`/`_dpRender()`, ~linha 17735) — antes só o
+  (`_dpOpen()`/`_dpPick()`/`_dpRender()`, ~linha 17833) — antes só o
   input nativo (ícone do navegador já ficava escondido via CSS, mas sem
   o botão temático de abrir o popover).
 
 ### ⏸ Pausar card (tempo/métricas — 2026-09-03)
 - `togglePauseCard()`/`_renderPauseBtn()`/`_cardPausedMs()` — perto de
-  L13106 — botão "⏸ Pausar"/"▶ Retomar" no rodapé do modal (`#btn-pause-
+  L13794 — botão "⏸ Pausar"/"▶ Retomar" no rodapé do modal (`#btn-pause-
   card`). Diferente de 🚧 Impedimento (visível pra todo mundo, tag/coluna
   própria): pausar é discreto, só o botão e o 📜 Histórico revelam.
 - Modelo de dado: `card.paused` (bool) + `card.pausedAt` (ISO, pausa
   ATUAL em andamento) + `card.pausedMs` (acumulado de pausas já
   encerradas). `_cardPausedMs(c)` soma os dois.
-- `_cardTempos()` (relatório de tempo/cycle/lead, perto de L17782)
+- `_cardTempos()` (relatório de tempo/cycle/lead, perto de L17791)
   subtrai `_cardPausedMs(c)` do tempo decorrido (lead E cycle), com
   clamp em 0. Réplica deliberada em `functions/agente-agil-orquestrador/
   tools/visaoBoard.js` (`cardPausedMs()`/`cardTempos()`) — mesma
@@ -949,8 +949,8 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 - `_cardDataCriacaoStr()` — L17786, logo acima de `_cardTempos()` — data
   de criação (YYYY-MM-DD) com fallback pra `card.flow.log[0].at` quando
   `card.createdAt` falta (dado legado). Usada por `_cardColunaEmDia()`
-  (CFD, ~L18264) e pelo filtro de escopo de `_renderBurndown()`
-  (~L18331) — achado `/monitorarbugs` 2026-09-04: os dois liam
+  (CFD, ~L18273) e pelo filtro de escopo de `_renderBurndown()`
+  (~L18340) — achado `/monitorarbugs` 2026-09-04: os dois liam
   `card.createdAt` puro e descartavam pra sempre um card sem o campo,
   em vez de cair no mesmo fallback que `_cardTempos()` já tinha.
 - Visibilidade do botão: escondido em `openNewCard()` (pausar só faz
@@ -978,7 +978,7 @@ pra trás de um comportamento que os outros já tinham.
   corrigia (alcançável de verdade: `mnavGo('cfg')` no nav mobile abre
   Configurações sem fechar um card já aberto)
 - `_applyCardSectionsVisibility()` — L6741 / `populateCardPatternSelect()`
-  — L19649
+  — L21778
 - `setCardCover(colorId)` — L6631 (achado 2026-08-29, PR #600): branch de
   card NOVO (`!editingId`) não disparava `runAutoRules('cover_set', ...)`
   — só o branch de card existente chamava; mesma classe de bug em
@@ -1013,13 +1013,13 @@ pra trás de um comportamento que os outros já tinham.
     mesma coisa, fora do loop por-card porque WIP é agregado do board
     inteiro
 - **Indicador "🤖 pensando..."** (2026-09-01) — `_startAgenteAgilThinking()`/
-  `_stopAgenteAgilThinking()` — L6516/L6948 — estado efêmero client-side
+  `_stopAgenteAgilThinking()` — L6927/L6948 — estado efêmero client-side
   (`window._agenteAgilThinking`, não persistido) enquanto uma @menção real
   aguarda resposta; abre um listener TEMPORÁRIO em `card_comments`
   (mesma técnica de `_attachAgenteHotlineCommentsListener`, sem duplicar
   pro card hotline) que se auto-encerra ao ver um comentário
   `uid==='agente-agil'`, ou por timeout de 120s. `_updateAgenteThinkingBanner()`
-  — L6543 — atualiza o banner `#m-agente-thinking` no modal;
+  — L6955 — atualiza o banner `#m-agente-thinking` no modal;
   `_textMencionaAgenteAgil()` — L6965 — detecta @menção real (mesmo
   critério do backend) num comentário digitado à mão em `submitComment()`
   (chamada síncrona de `_dispatchAgenteAgilComment()` não precisa dessa
@@ -1029,7 +1029,7 @@ pra trás de um comportamento que os outros já tinham.
 - `ctxInsights()` — L28274 — opção "Insights" no menu de contexto do card
 - `_pedirResumoMeuDia()` — L19345 — botão "🤖 Resumo do Agente Ágil"
   dentro do painel "🌅 Meu Dia" (`openMeuDia()` L19241/`renderMeuDia()`
-  L17416) — chama `agenteAgilResumoMeuDia` (onRequest, ver seção
+  L19271) — chama `agenteAgilResumoMeuDia` (onRequest, ver seção
   `agente-agil-orquestrador/` abaixo) com `Bearer <idToken>`, mostra o
   texto retornado numa caixinha (`#meudia-resumo-box`). Único ponto do
   Agente Ágil que NÃO escreve nada no board — só lê e mostra texto
@@ -1115,11 +1115,11 @@ pra trás de um comportamento que os outros já tinham.
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção
 aplicada no arquivo inteiro, não confie neles como única forma de navegar:
-- L19011 Ágil, L19096 Col editor, L19154 Usuários, L19339 Tags,
-  L19738 "Worker / Firebase" (nome do comentário é antigo — hoje é
+- L21039 Ágil, L21124 Col editor, L21182 Usuários, L21468 Tags,
+  L21867 "Worker / Firebase" (nome do comentário é antigo — hoje é
   config/legado de Firebase, **não** tem relação com o Cloudflare Worker,
   que não existe mais na arquitetura atual)
-- L24290 D&D das colunas, L24359 D&D dos cards
+- L26531 D&D das colunas, L26600 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
