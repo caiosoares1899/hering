@@ -12700,6 +12700,27 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.25 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: 🗓️ Bloco quinzenal substitui o picker de Google Agenda quebrado
+
+Promove pra produção o `painel-dev.html` v3.25 — o picker de evento único
+do Google Agenda pro Objetivo (`gcalPeriodoEventId`/`gcalReuniaoEventId`)
+não funcionava de verdade porque a reunião real de check-in OKR é
+recorrente (cada ocorrência semanal vira um evento diferente no Agenda),
+então nunca representava "essa reunião se repete a cada 2 semanas". No
+lugar, um indicador de **bloco quinzenal** — Bloco 1 (Geral, Comercial,
+Mkt Performance, Dados e IA) e Bloco 2 (CX, Tech, CRM), que se alternam
+toda quinta-feira — derivado automaticamente da Gerência já escolhida no
+Objetivo, sem seleção manual: mostra o bloco, as gerências que
+participam dele e a data da próxima reunião, direto no modal do
+Objetivo (leitura e edição). Junto, o backend (`okrDailyScan`) passa a
+avisar os responsáveis na véspera (quarta-feira) da reunião do bloco da
+própria gerência — antes disso dependia do picker que não funcionava.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -14`). 10 cenários Playwright
+reexecutados direto contra `painel.html` — todos passando. Cloud
+Function `okrDailyScan` já redeployada.
+
 ### painel.html v3.24 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: ❓ Ajuda (help content), inclusive sobre o Agente Ágil
 
 Promove pra produção o `painel-dev.html` v3.24 — modal "❓ Ajuda" novo no

@@ -2782,7 +2782,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.24 · painel</div>
+<div class="version">v3.25 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4591,6 +4591,59 @@ const OKR_GERENCIAS = [
 ];
 function okrGerenciaLabel(id){ return OKR_GERENCIAS.find(g=>g.id===id)?.label || id || '—'; }
 function okrGerenciaIcon(id){ return OKR_GERENCIAS.find(g=>g.id===id)?.icon || '🎯'; }
+
+// ── 🗓️ Bloco quinzenal de apresentação — substitui os antigos pickers de
+// Google Agenda (gcalPeriodoEventId/gcalReuniaoEventId). Pedido direto do
+// usuário: a reunião "[DIGITAL] Check in OKR's e Iniciativas" tem 2 blocos
+// que se ALTERNAM toda quinta-feira — Bloco 1 (Geral/Comercial/Mkt
+// Performance/Dados e IA) numa semana, Bloco 2 (CX/Tech/CRM) na seguinte.
+// O picker de evento avulso não funcionava porque cada ocorrência semanal
+// é um evento diferente no Google Agenda — não agrupa. Como toda gerência
+// já pertence a um bloco fixo, dá pra derivar isso 100% da própria
+// gerência do Objetivo, sem escolha manual nenhuma. Mesma lógica
+// replicada em functions/okr/dailyScan.js (runOkrDailyScan) pra disparar
+// a notificação de véspera — mantenha as duas em sincronia se o mapa de
+// blocos ou o dia de reunião mudar.
+const OKR_BLOCO_AREAS = { 1: ['geral','comercial','performance','dadosia'], 2: ['cx','tech','crm'] };
+// Âncora: 2026-09-03 (quinta) é Bloco 1, confirmado pelo usuário — a
+// partir daí os blocos alternam a cada 7 dias.
+const OKR_BLOCO_ANCHOR = '2026-09-03';
+function _okrBlocoDaArea(areaId){ return OKR_BLOCO_AREAS[1].includes(areaId) ? 1 : 2; }
+function _okrBlocoNaData(dataStr){
+  const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
+  const alvo = new Date(String(dataStr).slice(0,10)+'T00:00:00');
+  const diasDesde = Math.floor((alvo-anchor)/86400000);
+  const periodo = Math.floor(diasDesde/7);
+  const paridade = ((periodo%2)+2)%2; // normaliza resto negativo (datas antes do anchor)
+  return paridade===0 ? 1 : 2;
+}
+// Próxima quinta-feira (>= hoje) em que o bloco informado se reúne.
+function _okrProximaReuniaoDoBloco(bloco, hojeStr){
+  const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
+  const hoje = new Date(String(hojeStr).slice(0,10)+'T00:00:00');
+  let periodo = Math.floor((hoje-anchor)/86400000/7);
+  for(let i=0;i<4;i++){
+    const quinta = new Date(anchor.getTime() + periodo*7*86400000);
+    const paridade = ((periodo%2)+2)%2;
+    if((paridade===0?1:2)===bloco && quinta>=hoje) return quinta;
+    periodo++;
+  }
+  return null;
+}
+function _okrBlocoInfoHtml(areaId){
+  const bloco = _okrBlocoDaArea(areaId);
+  const areasDoBloco = OKR_BLOCO_AREAS[bloco].map(okrGerenciaLabel).join(', ');
+  const proxima = _okrProximaReuniaoDoBloco(bloco, todaySPStr());
+  const dataFmt = proxima ? proxima.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
+  return `<div class="okr-field-label">🗓️ Bloco quinzenal de apresentação</div>
+    <div style="font-size:12px;color:var(--txt2);background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:9px;padding:10px 12px;">
+      <b style="color:var(--txt);">Bloco ${bloco}</b> — ${esc(areasDoBloco)} · próxima reunião: quinta, ${dataFmt}
+    </div>`;
+}
+// Data de hoje no formato YYYY-MM-DD, mesmo padrão de todaySP() no backend
+// (functions/okr/dailyScan.js) — usa o fuso de quem está com o painel
+// aberto (cliente), suficiente aqui pois é só exibição informativa.
+function todaySPStr(){ return new Date().toLocaleDateString('en-CA'); }
 // Trimestre virou lista (pedido direto: "tem que ser possível acumular
 // trimestres, já que às vezes o projeto é grande") — objetivo.trimestres:
 // []. Fallback pro campo antigo (objetivo.trimestre, string única) nos
@@ -5204,16 +5257,6 @@ async function _okrNotifyEditado(objId){
   await Promise.all(writes);
 }
 
-// ── Picker de evento do Google Agenda (período de editar / reunião) — lê o
-// mesmo cache que o painel já sincroniza (pcalGcalEvents), zero chamada
-// nova à API do Google. O scan diário (functions/okr/dailyScan.js) lê o
-// MESMO cache no Firebase (kanban/painel/config/gcal_cache) pra disparar
-// as notificações no dia certo. ──
-function _okrGcalOptionsHtml(selectedId){
-  const evs = (typeof pcalGcalEvents!=='undefined' ? pcalGcalEvents : []).slice().sort((a,b)=>(a.start||'').localeCompare(b.start||''));
-  return '<option value="">Nenhum</option>' + evs.map(ev=>`<option value="${esc(ev.id)}"${ev.id===selectedId?' selected':''}>${esc(ev.title)} — ${ev.start?new Date(ev.start+'T00:00:00').toLocaleDateString('pt-BR'):''}</option>`).join('');
-}
-
 // ── Modal de Objetivo ─────────────────────────────────────────────────
 let _okrEditingObjId = null;   // id do objetivo aberto, null = criando novo
 let _okrObjDraft = null;       // rascunho em edição (só grava no Salvar)
@@ -5224,7 +5267,7 @@ function openOkrObjetivo(id){
   _okrObjDraft = id ? JSON.parse(JSON.stringify(okrObjetivos[id])) : {
     titulo:'', areaId:'geral', pilar:'', trimestres:[], descricao:'',
     responsaveis:[], indicadores:[], progressos:[], proximosPassos:[], riscos:[], planosAcao:[],
-    tagIds:[], cardLinks:[], gcalPeriodoEventId:'', gcalReuniaoEventId:'', history:[],
+    tagIds:[], cardLinks:[], history:[],
   };
   // Normaliza objetivo antigo (campo trimestre singular, pré-lista) — ver
   // _okrTrimestresOf(). Não regrava sozinho no Firebase, só no rascunho em
@@ -5251,8 +5294,6 @@ function _okrSyncObjDraftFromDom(){
   if(g('okr-f-area')) _okrObjDraft.areaId = g('okr-f-area').value;
   if(g('okr-f-pilar')) _okrObjDraft.pilar = g('okr-f-pilar').value;
   if(g('okr-f-descricao')) _okrObjDraft.descricao = g('okr-f-descricao').value;
-  if(g('okr-f-gcal-periodo')) _okrObjDraft.gcalPeriodoEventId = g('okr-f-gcal-periodo').value;
-  if(g('okr-f-gcal-reuniao')) _okrObjDraft.gcalReuniaoEventId = g('okr-f-gcal-reuniao').value;
 }
 
 function _okrListEditorHtml(campo, label, placeholder){
@@ -5320,6 +5361,7 @@ function renderOkrObjBody(id){
     body.innerHTML = `
       <div class="okr-field-label">Gerência / Trimestre</div>
       <div style="font-size:12px;color:var(--txt2);">${okrGerenciaIcon(d.areaId)} ${esc(okrGerenciaLabel(d.areaId))} ${_okrTrimestresOf(d).length?'· '+_okrTrimestresOf(d).map(esc).join(', '):''}</div>
+      ${_okrBlocoInfoHtml(d.areaId)}
       ${d.pilar?`<div class="okr-field-label">Pilar Estratégico</div><div style="font-size:12px;color:var(--txt2);">${esc(d.pilar)}</div>`:''}
       <div class="okr-field-label">Objetivo</div>
       <div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;">${esc(d.descricao||'—')}</div>
@@ -5343,7 +5385,8 @@ function renderOkrObjBody(id){
     <div class="okr-field-label">Título do Objetivo</div>
     <input type="text" class="okr-input" id="okr-f-titulo" value="${esc(d.titulo||'')}" placeholder="Ex.: Definir o modelo e viabilidade do OMNI Hering">
     <div class="okr-field-label">Gerência</div>
-    <select class="okr-select" id="okr-f-area">${OKR_GERENCIAS.map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>
+    <select class="okr-select" id="okr-f-area" onchange="_okrSyncObjDraftFromDom();renderOkrObjBody(_okrEditingObjId);">${OKR_GERENCIAS.map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>
+    ${_okrBlocoInfoHtml(d.areaId)}
     ${_okrListEditorHtml('trimestres','Trimestre(s) / Período(s)','Ex.: 2T, 3T, 1S27…')}
     <div class="okr-field-label">Pilar Estratégico</div>
     <input type="text" class="okr-input" id="okr-f-pilar" value="${esc(d.pilar||'')}" placeholder="Nome do pilar (opcional)">
@@ -5362,15 +5405,6 @@ function renderOkrObjBody(id){
     </div>
     ${id ? _okrMarcosListHtml(id) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
-    <div class="okr-field-label">📅 Notificações — Google Agenda</div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-      <div><div class="okr-field-label" style="margin-top:0;">Período de editar</div>
-        <select class="okr-select" id="okr-f-gcal-periodo" title="No dia desse evento, os responsáveis são notificados que é o período de atualizar esse objetivo">${_okrGcalOptionsHtml(d.gcalPeriodoEventId)}</select>
-      </div>
-      <div><div class="okr-field-label" style="margin-top:0;">Reunião</div>
-        <select class="okr-select" id="okr-f-gcal-reuniao" title="1 dia antes desse evento, os responsáveis são avisados">${_okrGcalOptionsHtml(d.gcalReuniaoEventId)}</select>
-      </div>
-    </div>
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
@@ -5391,8 +5425,6 @@ async function saveOkrObjetivo(){
   delete d.trimestre; // campo antigo (singular) — trimestres[] já é a fonte de verdade a partir daqui
   d.pilar = document.getElementById('okr-f-pilar').value.trim();
   d.descricao = document.getElementById('okr-f-descricao').value.trim();
-  d.gcalPeriodoEventId = document.getElementById('okr-f-gcal-periodo')?.value||'';
-  d.gcalReuniaoEventId = document.getElementById('okr-f-gcal-reuniao')?.value||'';
 
   const isNovo = !_okrEditingObjId;
   const id = _okrEditingObjId || ('obj_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
