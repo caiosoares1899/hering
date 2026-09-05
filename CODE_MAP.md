@@ -1427,7 +1427,7 @@ sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
 pedidos, sem viewer de log separado.
 
-#### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+#### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — promovida pra prod v3.24 em 2026-09-05)
 Modal estático `#okr-help-ov` (`openOkrHelp()`/`closeOkrHelp()`), mesmo
 padrão de `#agentes-help-ov`/`openAgentesHelp()` (reusa as classes
 `pev-modal-ov`/`pev-modal`/`pev-hd`/`pev-body`, sem CSS novo). Botão

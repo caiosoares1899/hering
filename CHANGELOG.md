@@ -12700,6 +12700,20 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.24 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: ❓ Ajuda (help content), inclusive sobre o Agente Ágil
+
+Promove pra produção o `painel-dev.html` v3.24 — modal "❓ Ajuda" novo no
+cabeçalho da aba OKR, mesmo padrão do help já existente na aba Agentes.
+Explica Objetivo/Marco/status, quem pode editar, Arquivar × Excluir,
+Tags/vínculo de cards, 📈 Histórico semanal, a apresentação em slides,
+e — o pedido central — a 💬 Central Agente Ágil (como pedir em texto
+corrido, o que ela faz, e que respeita a mesma regra de permissão de
+edição manual).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -14`). 13 cenários Playwright
+reexecutados direto contra `painel.html` — todos passando.
+
 ### painel.html v3.23 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: 📈 Histórico semanal, 💬 Central Agente Ágil, 🗑 Excluir Objetivo
 
 Promove pra produção o lote acumulado v3.20 → v3.23 de `painel-dev.html`

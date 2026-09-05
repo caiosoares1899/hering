@@ -1665,6 +1665,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
       <div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
         <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
         <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
         <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
@@ -2253,6 +2254,59 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     </div>
   </div>
 
+  <!-- Modal de ajuda da aba OKR — mesmo padrão do modal de ajuda de
+       Agentes acima (pev-modal-ov/pev-modal/pev-hd/pev-body), pedido
+       direto do usuário: "cria um help content lá no okr explicando pro
+       pessoal como usar - inclusive o agente ágil lá". -->
+  <div class="pev-modal-ov" id="okr-help-ov">
+    <div class="pev-modal" style="max-width:560px;">
+      <div class="pev-hd">
+        <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;">❓ OKR — como funciona</div>
+        <button class="x-btn" onclick="closeOkrHelp()">✕</button>
+      </div>
+      <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
+        <div>
+          <b style="color:var(--txt);">🎯 O que é um Objetivo</b><br>
+          Uma meta estratégica de uma gerência/área. Tem gerência, trimestre(s)/período(s), pilar estratégico, descrição, e listas de Indicadores de Entrega, Progressos, Próximos Passos, Riscos e Planos de Ação — sempre "somando" itens conforme o Objetivo avança, sem apagar o histórico do que já foi registrado.
+        </div>
+        <div>
+          <b style="color:var(--txt);">🏁 Marcos e status</b><br>
+          Um Marco é uma atividade macro dentro de um Objetivo, com prazo e status: ⚪ Não iniciado, 🟢 No prazo, 🟡 Risco identificado, 🔴 Atrasado/impacto, ✅ Concluído. O status mostrado pro Objetivo na lista é sempre o <b>pior status entre os Marcos ainda não concluídos</b> — ou "Concluído" quando todos já terminaram.
+        </div>
+        <div>
+          <b style="color:var(--txt);">✏️ Quem pode editar</b><br>
+          Só <b>ADM</b> pode criar um Objetivo novo. Pra editar um Objetivo já existente (ou criar/editar um Marco dele) — precisa ser <b>ADM ou estar marcado como Responsável</b> daquele Objetivo.
+        </div>
+        <div>
+          <b style="color:var(--txt);">📦 Arquivar × 🗑 Excluir</b><br>
+          <b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.
+        </div>
+        <div>
+          <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
+          Dá pra marcar Tags num Objetivo e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba.
+        </div>
+        <div>
+          <b style="color:var(--txt);">📈 Histórico semanal</b><br>
+          Toda sexta-feira um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo. O botão "📈 Histórico" mostra a evolução — gráfico de tendência geral e uma tabela de evolução por Objetivo.
+        </div>
+        <div>
+          <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
+          Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, setas/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.
+        </div>
+        <div>
+          <b style="color:var(--txt);">💬 Central Agente Ágil</b><br>
+          Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs — não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
+          <ul style="margin:6px 0 0;padding-left:18px;">
+            <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
+            <li>Também cria Objetivo novo (só se você for ADM) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído").</li>
+            <li>Respeita a mesma regra de permissão de cima: se você não for Responsável nem ADM daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou.</li>
+            <li>A conversa fica salva ali, pra sempre — dá pra rolar pra cima e ver os pedidos e respostas anteriores, de qualquer pessoa.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ═══ MODAL: COMPOR COMUNICADO ═══ -->
   <div class="pev-modal-ov" id="comunicado-compose-ov">
     <div class="pev-modal" style="max-width:520px;">
@@ -2728,7 +2782,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.23 · painel</div>
+<div class="version">v3.24 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9376,6 +9430,8 @@ function renderAgentesLogCross(){
 
 function openAgentesHelp(){ document.getElementById('agentes-help-ov')?.classList.add('open'); }
 function closeAgentesHelp(){ document.getElementById('agentes-help-ov')?.classList.remove('open'); }
+function openOkrHelp(){ document.getElementById('okr-help-ov')?.classList.add('open'); }
+function closeOkrHelp(){ document.getElementById('okr-help-ov')?.classList.remove('open'); }
 // ── FIM ABA AGENTES ─────────────────────────────────────────────────
 
 // ── VISUALIZADORES EXTERNOS DO PAINEL (2026-08-27) ─────────────────
