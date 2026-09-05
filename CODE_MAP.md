@@ -1393,6 +1393,22 @@ usado na aba Fluxo), últimas ~12 semanas. `_okrHistoricoSelectObj(id)`
 — tabela de evolução de 1 Objetivo (status/%/marcos por semana, mais
 recente primeiro).
 
+#### 💬 Central Agente Ágil — chat pra ajudar a preencher (2026-09-05, v3.22 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+Client-side da Cloud Function `okrAgenteChat` (ver seção `okr/` em Cloud
+Functions). Botão `#okr-agente-btn` na aba OKR, `_okrShowAgenteChat`/
+`_okrToggleAgenteChat()` — mesmo padrão de toggle de
+`_okrShowArquivados`/`_okrShowHistorico`, agora unificado em
+`_okrSetView('objetivos'|'historico'|'agente')` (único ponto que decide
+qual das 3 vistas mutuamente exclusivas fica visível — `_okrToggleHistorico()`
+e `_okrToggleAgenteChat()` só chamam ela). `okrAgenteChatMsgs` (estado
+local, `loadOkrAgenteChat()`, `onValue` em `kanban/okr/agente_chat`),
+`renderOkrAgenteChat()` (lista de bolhas `.okr-comment.okr-agente-msg`,
+acento azul pra humano/teal pra agente via `.okr-agente-msg-humano`),
+`_okrAgenteChatSend()` (grava `{id,uid,author,init,foto,text,ts}`, `ts`
+sempre `new Date().toISOString()`). Central geral, não presa a um
+Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
+pedidos, sem viewer de log separado.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
@@ -1578,7 +1594,8 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 ### index.js — registro de exports
 - `PUSH_TYPES` (allow-list de push, hoje: assigned/mention/unblocked/risk/
   recorrente/painel_broadcast/intake/okr_editado/okr_prazo/okr_periodo/
-  okr_reuniao — os 4 últimos 2026-09-04, ver `okr/dailyScan.js` abaixo) — L23
+  okr_reuniao/okr_agente — os 4 do meio 2026-09-04 (`okr/dailyScan.js`),
+  o último 2026-09-05 (`okr/agenteChat.js`)) — L23
 - `sendPushOnNotification` — L25
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
@@ -1586,6 +1603,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 - `weeklyBackup` — L173 → `backup/weeklyBackup.js`
 - `okrDailyScan` — L~179 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
 - `okrWeeklySnapshot` — L~187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
+- `okrAgenteChat` — L~195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=true`, ver seção `okr/` abaixo)
 - `agenteAgilMencao` — L187 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
 - `agenteAgilMencaoDados` — L198 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
@@ -1912,7 +1930,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
   semanais mantidos por squad).
 
-### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` em 2026-09-05)
+### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
 - `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
   (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`
   (roda sozinho, sem depender de ninguém abrir o painel). 3 gatilhos:
@@ -1938,6 +1956,42 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `objProgressoPct()` exportados pra teste —
   `okr/__tests__/weeklySnapshot.test.js`, 13 casos (fake DB). Deploy
   isolado: `firebase deploy --only functions:okrWeeklySnapshot`.
+- `okr/agenteChat.js` — `okrAgenteChat`, `onValueCreated` em
+  `/kanban/okr/agente_chat/{msgId}` — chat dedicado com o Agente Ágil
+  (central geral, não presa a Objetivo, ver painel-dev.html v3.22).
+  Diferente de `mentionTrigger.js`: sem @menção pra detectar (o nó é só
+  pra isso). Mesmas 3 travas: anti-auto-disparo (`message.uid===AGENTE_UID`),
+  kill switch global (`kanban/config/agente_agil_orquestrador/enabled`),
+  idempotência (`kanban/okr/agente_chat_processed/{msgId}`). `processarMensagem(db,{msgId,message,llmClient,dryRun})`
+  exportado pra teste, mesmo padrão de `processarMencao()`. Rede de
+  segurança: sem chamada de `responder`, posta o `finalText` como
+  fallback. Notifica quem mandou a mensagem (`type:'okr_agente'`, no
+  `PUSH_TYPES`). **`DRY_RUN_OKR_CHAT=true`** (modo sombra no 1º deploy,
+  const no topo do arquivo — trocar pra `false` é decisão separada,
+  depois de validar em produção). `okr/__tests__/agenteChat.test.js`, 13
+  casos (fake DB + `llmClient` scriptado). Deploy isolado:
+  `firebase deploy --only functions:okrAgenteChat`.
+- `okr/agenteTools.js` — `buildOkrTools({mode,db,requestingUid,dryRun})`
+  — vocabulário 100% novo (orquestrador de card não tem noção de
+  Objetivo/Marco, só o motor `loop.js`/`llmClient.js` é reaproveitado):
+  `listar_objetivos`/`ler_objetivo` (leitura), `criar_objetivo` (só ADM),
+  `editar_campos_okr`/`criar_marco`/`editar_marco` (ADM ou Responsável do
+  Objetivo, via `agenteHelpers.canEditObjetivo()`), `responder` (sempre a
+  última ferramenta chamada). Campos de lista (Indicadores/Progressos/
+  Próximos Passos/Riscos/Planos de Ação) só SOMAM, nunca substituem.
+  `resolveMarco()` exportado (resolve por id ou nome dentro do Objetivo,
+  erro `marco_ambiguo` se mais de 1 bater). `okr/__tests__/agenteTools.test.js`,
+  20 casos.
+- `okr/agenteHelpers.js` — `isAdmUid()`/`canEditObjetivo()` (mesma regra
+  client-side de `_okrCanEdit()`/`_okrCanCreate()` em `painel.html`,
+  replicada servidor-side), `resolveObjetivo()` (por id ou título, só
+  aceita título ambíguo se achar exatamente 1 match — exato antes de
+  parcial), `pushHistory()` (mesmo formato `{who,uid,what,tipo,at}` que
+  `painel.html` já grava pra edição humana, cap de 80 entradas).
+- `okr/agentePrompt.js` — `SYSTEM_PROMPT_OKR_V1`, separado do prompt do
+  orquestrador de card (`agente-agil-orquestrador/systemPrompt.js`). Foco
+  em TRADUZIR texto corrido pra Progresso/Próximo Passo/Risco, não só
+  repetir — e sempre terminar chamando `responder`.
 
 ### spotify/ — PAUSADO (2026-08-04)
 "Ouvindo agora" (presença ao vivo, opt-in) + "Rádio do Maré" (playlist
