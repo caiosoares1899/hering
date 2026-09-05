@@ -1420,6 +1420,16 @@ sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
 pedidos, sem viewer de log separado.
 
+#### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — SÓ em painel-dev.html ainda, não promovida)
+Modal estático `#okr-help-ov` (`openOkrHelp()`/`closeOkrHelp()`), mesmo
+padrão de `#agentes-help-ov`/`openAgentesHelp()` (reusa as classes
+`pev-modal-ov`/`pev-modal`/`pev-hd`/`pev-body`, sem CSS novo). Botão
+"❓ Ajuda" no cabeçalho da aba OKR. Conteúdo cobre Objetivo/Marco/status,
+permissão (ADM/Responsável), Arquivar×Excluir, Tags/vínculo de cards,
+📈 Histórico semanal, a apresentação em slides, e a 💬 Central Agente
+Ágil (como pedir, o que ela faz, que respeita a mesma permissão de
+edição manual) — pedido direto do usuário.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.

@@ -12725,6 +12725,36 @@ ao baseline conhecido (`braces -1, parens -14`). Os 49 cenários
 Playwright das 3 features (19 + 21 + 9) reexecutados direto contra
 `painel.html` — todos passando.
 
+### painel-dev.html v3.24 · painel-dev — 2026-09-05 — 🎯 OKR: ❓ Ajuda (help content), inclusive sobre o Agente Ágil
+
+Pedido direto ("cria um help content lá no okr explicando para o
+pessoal como usar - inclusive o agente ágil lá") — aba OKR ganha um
+modal de ajuda estático, mesmo padrão do "❓ Ajuda" que já existe na
+aba Agentes (`agentes-help-ov`/`openAgentesHelp()`), sem reinventar
+componente.
+
+- **Botão "❓ Ajuda"** no cabeçalho da aba OKR, junto dos outros botões
+  (💬 Central Agente Ágil / 📈 Histórico / 📦 Ver arquivados /
+  + Novo Objetivo).
+- **Conteúdo cobre tudo que já existe na aba**: o que é um Objetivo, os
+  5 status de Marco e a regra de "pior status entre os ativos", quem
+  pode criar/editar (ADM ou Responsável), a diferença entre Arquivar
+  (reversível) e Excluir (definitivo), Tags/vínculo de cards, o
+  📈 Histórico semanal, a tela de Apresentação em slides, e — o pedido
+  central — a **💬 Central Agente Ágil**: como pedir em texto corrido,
+  que ela identifica o Objetivo certo sozinha (ou pergunta), separa
+  Progresso/Próximo Passo/Risco, cria/atualiza Marco, e respeita a
+  mesma regra de permissão de quem edita manualmente (explica em vez de
+  fingir que funcionou quando não tem permissão).
+- `openOkrHelp()`/`closeOkrHelp()` — toggle simples de classe `.open`,
+  mesmo padrão de `openAgentesHelp()`/`closeAgentesHelp()`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`. 13
+cenários novos via Playwright (botão presente, modal abre/fecha,
+conteúdo cobre as 8 seções esperadas incluindo o Agente Ágil) + 19
+(Histórico) + 21 (Central Agente Ágil) + 9 (Excluir) reexecutados —
+todos passando, sem regressão.
+
 ### painel-dev.html v3.23 · painel-dev — 2026-09-05 — 🎯 OKR: 🗑 Excluir Objetivo
 
 Pedido direto ("faltou a opção de poder excluir um objetivo!") — até
