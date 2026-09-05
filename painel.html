@@ -336,6 +336,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-comment{background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:9px;padding:8px 10px;margin-bottom:7px;font-size:12px;color:var(--txt2);}
 .okr-comment b{color:var(--txt);font-size:11.5px;}
 .okr-comment .okr-comment-ts{font-size:9.5px;color:var(--txt3);float:right;}
+/* 💬 Central Agente Ágil (aba OKR) — mesma bolha .okr-comment, só com um
+   acento na borda esquerda pra distinguir humano de agente à primeira
+   vista, sem inventar um componente novo. */
+.okr-agente-msg{border-left:3px solid var(--teal);}
+.okr-agente-msg b{color:var(--teal);}
+.okr-agente-msg.okr-agente-msg-humano{border-left-color:var(--accent);}
+.okr-agente-msg.okr-agente-msg-humano b{color:var(--accent);}
 .okr-status-select{display:flex;flex-wrap:wrap;gap:5px;}
 .okr-status-opt{display:flex;align-items:center;gap:5px;padding:5px 10px;font-size:11px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.5);color:var(--txt2);cursor:pointer;}
 .okr-status-opt.active{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.12);}
@@ -1658,11 +1665,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
       <div style="display:flex;gap:6px;">
+        <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
+        <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
         <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
         <button type="button" class="btn btn-sm" id="okr-novo-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
       </div>
     </div>
-    <div class="okr-toolbar">
+    <div class="okr-toolbar" id="okr-toolbar">
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
       <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
@@ -1676,6 +1685,42 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="min-width:170px;flex:1;">
     </div>
     <div id="okr-objetivos-wrap"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
+
+    <!-- 💬 Central Agente Ágil — chat dedicado (kanban/okr/agente_chat),
+         mesmo espírito do card "hotline" do kanban (@kanban-dev/dados),
+         mas SEM @menção: aqui é dedicado, toda mensagem já é um pedido pro
+         agente. Central geral (não presa a um Objetivo) — pedido direto
+         do usuário: "coloca um chat ali nessa página, tipo aquele q ta no
+         kanban-dev/dados". O histórico de pedidos É o próprio chat
+         (permanente e compartilhado) — não existe log separado, ver
+         functions/okr/agenteChat.js. Alterna com a lista de Objetivos
+         (nunca os dois juntos), mesmo padrão de _okrToggleHistorico. -->
+    <div id="okr-agente-wrap" style="display:none;">
+      <div class="sec-title" style="margin-top:4px;">💬 Central Agente Ágil</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px;">Conte a situação com suas palavras — o Agente Ágil separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b> e já escreve direto no Objetivo certo. Ele só edita o que você é Responsável (ou se você for ADM).</div>
+      <div id="okr-agente-chat-list" style="max-height:440px;overflow-y:auto;margin-bottom:10px;padding-right:2px;"></div>
+      <div class="okr-list-add">
+        <input type="text" class="okr-input" id="okr-agente-inp" placeholder="Ex.: já validamos a viabilidade do OMNI, falta apresentar pro conselho…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrAgenteChatSend();}">
+        <button type="button" class="btn btn-sm" id="okr-agente-send-btn" onclick="_okrAgenteChatSend()">Enviar</button>
+      </div>
+    </div>
+
+    <!-- 📈 Histórico — Fase 3: lê kanban/okr/snapshots/{data} (gravado toda
+         sexta pela Cloud Function okrWeeklySnapshot, ver CODE_MAP.md). Gráfico
+         de tendência (contagem por status ao longo das semanas) + consulta
+         por Objetivo. Escondido por padrão, mesmo padrão de toggle de
+         _okrShowArquivados (nunca junto com a lista de objetivos). -->
+    <div id="okr-historico-wrap" style="display:none;">
+      <div class="sec-title" style="margin-top:4px;">📈 Tendência semanal (status agregado dos Objetivos ativos)</div>
+      <div id="okr-hist-chart-legend" style="display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--txt2);margin-bottom:8px;"></div>
+      <div class="tp-chart-wrap" id="okr-hist-chart" style="margin-bottom:20px;"></div>
+
+      <div class="sec-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <span>Por Objetivo</span>
+        <select id="okr-hist-obj-select" class="pt-filter-input" onchange="_okrHistoricoSelectObj(this.value)" style="max-width:340px;"><option value="">Escolha um objetivo…</option></select>
+      </div>
+      <div id="okr-hist-obj-wrap"><div style="font-size:11px;color:var(--txt3);">Escolha um Objetivo acima pra ver a evolução dele.</div></div>
+    </div>
 
     <div class="sec-title" id="okr-section-title" style="margin-top:26px;">🎯 Cards do board com badge OKR <span class="badge" id="okr-count">0</span></div>
     <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
@@ -2683,7 +2728,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.20 · painel</div>
+<div class="version">v3.23 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4536,6 +4581,7 @@ function loadOkr(){
     okrObjetivos = snap.val() || {};
     _okrLoaded = true;
     renderOkrObjetivos();
+    if(_okrShowHistorico) renderOkrHistorico();
   });
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{
     okrMarcos = snap.val() || {};
@@ -4547,6 +4593,179 @@ function loadOkr(){
     }
   });
   loadOkrTags();
+  loadOkrSnapshots();
+  loadOkrAgenteChat();
+}
+
+// ── 📈 Histórico — Fase 3: kanban/okr/snapshots/{data}, gravado toda sexta
+// pela Cloud Function okrWeeklySnapshot (functions/okr/weeklySnapshot.js).
+// Alterna com a lista de Objetivos (nunca os dois juntos), mesmo espírito
+// de _okrToggleArquivados — 1 estado, não um "mostrar também". ──
+let okrSnapshots = {};    // {data: {date, generatedAt, resumoGeral, objetivos:{id:{...}}}}
+let _okrShowHistorico = false;
+let _okrHistoricoObjId = '';
+function loadOkrSnapshots(){
+  window._onValue(window._ref(window._db,'kanban/okr/snapshots'), snap=>{
+    okrSnapshots = snap.val() || {};
+    if(_okrShowHistorico) renderOkrHistorico();
+  });
+}
+
+// ── 💬 Central Agente Ágil — chat dedicado (kanban/okr/agente_chat), ver
+// functions/okr/agenteChat.js. Central geral (não presa a um Objetivo,
+// pedido direto do usuário) — toda mensagem de humano já é um pedido pro
+// agente, sem @menção. O nó é permanente e compartilhado: a lista de
+// mensagens JÁ É o histórico de pedidos (2º pedido do usuário —
+// "preciso ter acesso tb aos pedidos feitos aqui"), sem log separado. ──
+let okrAgenteChatMsgs = {};  // {msgId: {id,uid,author,init,foto,text,ts}}
+let _okrShowAgenteChat = false;
+function loadOkrAgenteChat(){
+  window._onValue(window._ref(window._db,'kanban/okr/agente_chat'), snap=>{
+    okrAgenteChatMsgs = snap.val() || {};
+    if(_okrShowAgenteChat) renderOkrAgenteChat();
+  });
+}
+function renderOkrAgenteChat(){
+  const list = document.getElementById('okr-agente-chat-list');
+  if(!list) return;
+  const msgs = Object.values(okrAgenteChatMsgs).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+  const wasNearBottom = (list.scrollHeight - list.scrollTop - list.clientHeight) < 60;
+  if(!msgs.length){
+    list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhuma conversa ainda. Conte uma situação real — ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho" — e o agente ajuda a organizar isso nos campos certos.</div>';
+    return;
+  }
+  list.innerHTML = msgs.map(m=>{
+    const isAgente = m.uid==='agente-agil';
+    const cls = 'okr-comment okr-agente-msg' + (isAgente ? '' : ' okr-agente-msg-humano');
+    const dt = m.ts ? new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+    const autor = isAgente ? '🤖 Agente Ágil' : esc(m.author||m.init||'?');
+    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${esc(m.text||'').replace(/\n/g,'<br>')}</div>`;
+  }).join('');
+  if(wasNearBottom) list.scrollTop = list.scrollHeight;
+}
+async function _okrAgenteChatSend(){
+  const inp = document.getElementById('okr-agente-inp');
+  const text = (inp?.value||'').trim();
+  if(!text) return;
+  const user = window._currentUser;
+  const msg = {
+    id: 'm'+Date.now()+Math.random().toString(36).slice(2,7),
+    uid: user?.uid||'',
+    author: user?.displayName||user?.email||'?',
+    init: window._currentUserInit||'?',
+    foto: user?.photoURL||'',
+    text,
+    ts: new Date().toISOString(),
+  };
+  inp.value='';
+  await window._set(window._ref(window._db,'kanban/okr/agente_chat/'+msg.id), msg);
+}
+
+// 3 vistas mutuamente exclusivas na aba OKR (lista de Objetivos / Histórico
+// / Central Agente Ágil) — nunca duas juntas. _okrSetView() é o único ponto
+// que decide isso; os toggles individuais só chamam ela.
+function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente'
+  _okrShowHistorico = view==='historico';
+  _okrShowAgenteChat = view==='agente';
+  const histBtn = document.getElementById('okr-historico-btn');
+  if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📈 Histórico';
+  const agBtn = document.getElementById('okr-agente-btn');
+  if(agBtn) agBtn.textContent = _okrShowAgenteChat ? '◀ Ver Objetivos' : '💬 Central Agente Ágil';
+  document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
+  document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
+  ['okr-toolbar','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
+  });
+  const arqBtn = document.getElementById('okr-arquivados-btn'); if(arqBtn) arqBtn.style.display = view==='objetivos' ? '' : 'none';
+  const novoBtn = document.getElementById('okr-novo-btn'); if(novoBtn) novoBtn.style.display = view==='objetivos' ? (_okrCanCreate() ? 'inline-flex' : 'none') : 'none';
+  if(_okrShowHistorico) renderOkrHistorico();
+  if(_okrShowAgenteChat) renderOkrAgenteChat();
+}
+function _okrToggleHistorico(){ _okrSetView(_okrShowHistorico ? 'objetivos' : 'historico'); }
+function _okrToggleAgenteChat(){ _okrSetView(_okrShowAgenteChat ? 'objetivos' : 'agente'); }
+function renderOkrHistorico(){
+  const sel = document.getElementById('okr-hist-obj-select');
+  if(sel){
+    const ativos = Object.values(okrObjetivos).filter(o=>o && !o.arquivado).sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">Escolha um objetivo…</option>'
+      + ativos.map(o=>`<option value="${o.id}"${o.id===cur?' selected':''}>${okrGerenciaIcon(o.areaId)} ${esc(o.titulo||'—')}</option>`).join('');
+  }
+  renderOkrHistoricoChart();
+  if(_okrHistoricoObjId) _okrHistoricoSelectObj(_okrHistoricoObjId);
+}
+function renderOkrHistoricoChart(){
+  const legend = document.getElementById('okr-hist-chart-legend');
+  const wrap = document.getElementById('okr-hist-chart');
+  if(!wrap) return;
+  if(legend){
+    legend.innerHTML = OKR_STATUS.map(s=>`<span style="display:flex;align-items:center;gap:5px;"><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('');
+  }
+  const dates = Object.keys(okrSnapshots).sort().slice(-12); // últimas ~12 semanas
+  if(!dates.length){
+    wrap.innerHTML = '<div class="bar-empty">Ainda sem snapshot registrado — o primeiro sai na próxima sexta-feira (okrWeeklySnapshot roda 1x por semana).</div>';
+    return;
+  }
+  const buckets = dates.map(d=>{
+    const rg = okrSnapshots[d]?.resumoGeral || {};
+    const dt = new Date(d+'T00:00:00');
+    return { lbl:dt.getDate()+'/'+(dt.getMonth()+1), total:rg.total||0, rg };
+  });
+  const max = Math.max(1, ...buckets.map(b=>b.total));
+  const W=760,H=140,padL=8,padR=8,padT=18,padB=22;
+  const chartW=W-padL-padR, chartH=H-padT-padB;
+  const bw=Math.floor(chartW/buckets.length);
+  const gap=Math.max(3,Math.floor(bw*0.28));
+  const barW=bw-gap;
+  const gridLines=[0.5,1].map(f=>Math.round(max*f)).filter((v,i,a)=>a.indexOf(v)===i&&v>0);
+  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+  gridLines.forEach(v=>{
+    const y=padT+chartH-Math.round((v/max)*chartH);
+    svg+=`<line class="tp-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
+    svg+=`<text class="tp-axis-lbl" x="${padL}" y="${y-3}" text-anchor="start">${v}</text>`;
+  });
+  buckets.forEach((b,i)=>{
+    const x=padL+i*bw+gap/2;
+    let yCursor=padT+chartH;
+    OKR_STATUS.forEach(s=>{
+      const n=b.rg[s.id]||0; if(!n) return;
+      const segH=Math.max(2,Math.round((n/max)*chartH));
+      yCursor-=segH;
+      svg+=`<rect class="tp-bar" x="${x}" y="${yCursor}" width="${barW}" height="${segH}" fill="${s.dot}"><title>${esc(s.label)}: ${n}</title></rect>`;
+    });
+    if(b.total>0) svg+=`<text class="tp-bar-lbl" x="${x+barW/2}" y="${padT+chartH-Math.round((b.total/max)*chartH)-4}" text-anchor="middle" fill="var(--txt2)">${b.total}</text>`;
+    svg+=`<text class="tp-axis-lbl" x="${x+barW/2}" y="${H-4}" text-anchor="middle">${esc(b.lbl)}</text>`;
+  });
+  svg+='</svg>';
+  wrap.innerHTML=svg;
+}
+function _okrHistoricoSelectObj(objId){
+  _okrHistoricoObjId = objId||'';
+  const wrap = document.getElementById('okr-hist-obj-wrap');
+  if(!wrap) return;
+  if(!objId){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Escolha um Objetivo acima pra ver a evolução dele.</div>'; return; }
+  const linhas = Object.keys(okrSnapshots).sort().reverse()
+    .map(d=>({d, o:okrSnapshots[d]?.objetivos?.[objId]}))
+    .filter(x=>x.o);
+  if(!linhas.length){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Esse Objetivo ainda não apareceu em nenhum snapshot.</div>'; return; }
+  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
+    <thead><tr>
+      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Semana</th>
+      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Status</th>
+      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Progresso</th>
+      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Marcos</th>
+    </tr></thead>
+    <tbody>${linhas.map(({d,o})=>{
+      const st = okrStatusInfo(o.status);
+      const dt = new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+      return `<tr>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${esc(dt)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);"><span class="okr-dot" style="background:${st.dot};"></span> ${esc(st.label)}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${o.progressoPct||0}%</td>
+        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${o.marcosConcluidos||0}/${o.totalMarcos||0}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
 }
 
 // ── Tags gerenciáveis do OKR (só nível Objetivo — Marco continua com texto
@@ -5102,6 +5321,7 @@ function renderOkrObjBody(id){
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
     <button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
       : `<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
@@ -5187,6 +5407,31 @@ function _okrSyncMarcoDraftFromDom(){
   if(g('okr-m-resp')) _okrMarcoDraft.responsavel = g('okr-m-resp').value;
   if(g('okr-m-prazo')) _okrMarcoDraft.prazo = g('okr-m-prazo').value;
   if(g('okr-m-descricao')) _okrMarcoDraft.descricao = g('okr-m-descricao').value;
+}
+// Exclusão DEFINITIVA (pedido direto do usuário: "faltou a opção de poder
+// excluir um objetivo") — diferente de Arquivar (que só esconde da lista
+// de ativos, mantendo tudo acessível em "📦 Ver arquivados"). Mesmo
+// espírito de deleteCard() no kanban.html: disponível direto no modal
+// (não precisa arquivar antes), 1 confirmação forte, sem desfazer. Faz
+// cascade nos Marcos do Objetivo (e nos comentários deles) — órfãos em
+// kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
+// espaço no Firebase pra sempre.
+async function _okrExcluirObjetivo(id){
+  const obj = okrObjetivos[id];
+  if(!obj) return;
+  const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
+  const aviso = marcosDoObjetivo.length
+    ? `Excluir "${obj.titulo}" definitivamente? Isso também apaga ${marcosDoObjetivo.length} marco(s) dele. Diferente de arquivar — não dá pra desfazer.`
+    : `Excluir "${obj.titulo}" definitivamente? Diferente de arquivar — não dá pra desfazer.`;
+  if(!await uiConfirm(aviso, {title:'Excluir Objetivo', danger:true, okText:'Excluir'})) return;
+  const updates = {};
+  updates['objetivos/'+id] = null;
+  marcosDoObjetivo.forEach(mid=>{ updates['marcos/'+mid] = null; updates['marco_comments/'+mid] = null; });
+  await window._update(window._ref(window._db,'kanban/okr'), updates);
+  delete okrObjetivos[id];
+  marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
+  showToast('🗑 Objetivo excluído.');
+  closeOkrObjetivo();
 }
 
 function _okrChecklistHtml(){
