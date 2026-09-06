@@ -231,6 +231,32 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
 - **2026-09-05, OKR — chat do Agente Ágil**: 1 bug — edição via chat
   nunca notificava o Responsável do Objetivo (só a edição manual
   disparava). PR #756, suíte 468/468.
+- **2026-09-06, OKR bloco quinzenal (rodada 1) + todas as notificações
+  (rodada 2, pedido explícito "faz um /monitorarbugs em todas
+  notificações")**: 6 achados reais, todos mesma classe — clicar numa
+  notificação não navegava a lugar nenhum, porque só `cardId`/`intake`
+  tinham tratamento em `openNotif()`. PR #763: (1) 4 tipos `okr_*`
+  sem navegação → redirecionam pra `painel(-dev).html?okr=<id>`; (2)
+  `_okrBlocoNaData()` código morto removida + `Math.floor`→`Math.round`;
+  (3) **mais severo** — sino PRÓPRIO do painel (`renderPainelNotifs()`,
+  nunca auditado antes, UI separada do sino do kanban) tinha `n.link`
+  descartado no mapeamento de `loadPainelNotifs()` — "rascunho
+  aguardando revisão" nunca navegou desde que a feature existe, apesar
+  do código já prometer isso (comentário + toast); (4) "🎥 Reunião em X
+  min" não abria o link (só a notificação nativa abria) —
+  `createNotif()` ganhou parâmetro `extra` opcional; (5) "📅 agenda
+  pendente" não processava a fila ao clicar; (6) feedback do Mural pro
+  ADM não navegava — novo deep-link genérico `?tab=<id>`
+  (`_painelTryOpenTabFromUrl()`, complementar ao `?okr=<id>`). Achado
+  incidental documentado, não corrigido: `_restoreTab()` também é
+  código morto (painel sempre abre na aba Visão). PR #764: promoção
+  isolada do achado 3 pra prod (só 1 linha, resto do lote de dev ainda
+  não validado). Suíte de backend 475/475, 21 cenários Playwright.
+  **Lição pra próxima vez**: antes de assumir "não existe X", grep pelo
+  NOME GENÉRICO do conceito (`notif`, `link`) em vez de só pelos nomes
+  já conhecidos de uma tela (`openNotif`/`NOTIF_ICONS` são do kanban;
+  o painel tem seu próprio `loadPainelNotifs`/`renderPainelNotifs`,
+  quase invisível na 1ª rodada por causa disso).
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
