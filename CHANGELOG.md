@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.595 — 2026-09-06 · Promove pra prod — ⏱️ Tempo em atraso/bloqueado arquivado, e mais 2 rodadas de /monitorarbugs (menu de contexto e avatar do fan-out)
+
+Promove pra produção o lote v8.30.593-dev → v8.30.595-dev de
+`kanban-dev.html`:
+
+- **⏱️ Tempo em atraso e bloqueado agora é arquivado** (v8.30.593-dev):
+  pedido direto do usuário — quando um card fica atrasado ou bloqueado,
+  esse período agora é somado e guardado (múltiplos episódios se
+  acumulam), mesmo depois do card ser concluído. Aparece em 📊 Dados do
+  Board → Insights, 🎬 Controle de Criativos (inclui cards já
+  concluídos) e direto no modal do card, perto do Prazo e do
+  Impedimento.
+- **`/monitorarbugs` no menu de contexto** (v8.30.594-dev): mover um
+  card pelo menu de contexto ("↦ Mover para") nunca disparava
+  `recordMove()`, ao contrário de arrastar/ação em massa/modal — deixava
+  cycle/lead time, CFD, Timeline e Throughput cegos pra esse caminho, e
+  o auto-desimpedimento não disparava. Corrigido.
+- **`/monitorarbugs` no 📜 Histórico visual rico** (v8.30.595-dev): 2
+  achados — aplicar uma receita de fan-out na mão ("🧩 Aplicar receita")
+  sempre mostrava iniciais genéricas no histórico, nunca a foto de quem
+  fez; e "impedimento removido automaticamente" (card concluído
+  enquanto bloqueado) mostrava o ícone de BLOQUEIO em vez de
+  desbloqueio. Mais 10 frases automáticas (recorrência, agendamento,
+  arquivamento por idade) que caíam no ícone genérico agora têm o ícone
+  certo.
+
 ### v8.30.592 — 2026-09-06 · Promove pra prod — 📜 Histórico do card com avatar/foto, navegação de notificações corrigida (OKR/reunião/agenda/feedback), tags no histórico e Mural sem loop
 
 Promove pra produção o lote v8.30.587-dev → v8.30.592-dev de
