@@ -1826,10 +1826,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
 /* 📜 Histórico de mudanças */
-.hist-item{display:flex;gap:9px;padding:6px 8px;border-radius:7px;font-size:11px;line-height:1.45;}
+.hist-item{display:flex;align-items:flex-start;gap:8px;padding:6px 9px;border-radius:7px;font-size:11px;line-height:1.45;}
 .hist-item:nth-child(odd){background:rgba(56,182,255,.03);}
-.hist-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;opacity:.6;}
 .hist-body{flex:1;min-width:0;}
+.hist-icon{margin-right:1px;}
 .hist-who{color:var(--txt);font-weight:600;}
 .hist-what{color:var(--txt2);}
 .hist-when{font-size:9px;color:var(--txt3);white-space:nowrap;flex-shrink:0;margin-top:1px;}
@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.590-dev</div>
+<div class="version">v8.30.591-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8069,7 +8069,13 @@ function _histVal(field, val){
 function recordHistory(card, what, whoOverride){
   if(!card||!what) return;
   if(!Array.isArray(card.history)) card.history=[];
-  card.history.push({ who: whoOverride||_histWho(), what, at: new Date().toISOString() });
+  card.history.push({
+    who: whoOverride||_histWho(), what, at: new Date().toISOString(),
+    // init: pra avatar com foto real (ver _histAvatarHtml()) — só quando é
+    // edição de verdade da pessoa logada (sem whoOverride); Automação/Agente
+    // Ágil/Supercard não têm "pessoa" nenhuma, ficam com ícone próprio.
+    init: whoOverride ? '' : (window._currentUserInit||''),
+  });
   if(card.history.length>HIST_CAP) card.history = card.history.slice(-HIST_CAP);
 }
 // Captura um snapshot dos campos rastreados (antes de editar)
@@ -8134,6 +8140,68 @@ function _histRelTime(iso){
   if(diff<604800) return Math.floor(diff/86400)+'d';
   return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 }
+// Visual "timeline de rede social" (pedido direto — "aquele histórico que
+// você criou pro OKR, com a fotinha da pessoa, dá pra fazer isso no
+// kanban também?") — mesmo espírito visual de OKR_HIST_TIPOS/
+// _okrAvatarHtml() (painel-dev.html): ícone+cor por tipo (borda colorida)
+// + avatar de quem fez. Classificação por regex no texto de `what` (não
+// exige tocar nos ~50 call sites de recordHistory()/_histDiff() —
+// mesma técnica que TIMELINE_FEED_COR já usa, só com mais tipos cobertos).
+const CARD_HIST_TIPOS = {
+  criado:      {icon:'🎯', cor:'var(--accent)'},
+  titulo:      {icon:'📝', cor:'#38b6ff'},
+  movido:      {icon:'➡️', cor:'#38b6ff'},
+  impedido:    {icon:'🚧', cor:'#ff6b6b'},
+  desimpedido: {icon:'✅', cor:'#4ade80'},
+  arquivado:   {icon:'📦', cor:'#ff6b6b'},
+  tag:         {icon:'🏷️', cor:'#ffd166'},
+  checklist:   {icon:'💯', cor:'#a78bfa'},
+  prioridade:  {icon:'🔥', cor:'#ff9800'},
+  responsavel: {icon:'👤', cor:'#a78bfa'},
+  prazo:       {icon:'📅', cor:'#38b6ff'},
+  duplicado:   {icon:'📄', cor:'#1de9b6'},
+  tempo:       {icon:'⏸️', cor:'#38b6ff'},
+  pin:         {icon:'📌', cor:'#ffd700'},
+  campo:       {icon:'✏️', cor:'#38b6ff'},
+};
+function _histTipo(what){
+  what=what||'';
+  if(/^criou o card/.test(what)) return 'criado';
+  if(/^duplicou o card/.test(what)) return 'duplicado';
+  if(/^renomeou o card/.test(what)) return 'titulo';
+  if(/^moveu para/.test(what)) return 'movido';
+  if(/^(marcou como impedido|impedimento removido automaticamente)/.test(what)) return 'impedido';
+  if(/^removeu (o )?impedimento/.test(what)) return 'desimpedido';
+  if(/^(arquivou|desarquivou) o card/.test(what)) return 'arquivado';
+  if(/^(adicionou|removeu) tags?:/.test(what)) return 'tag';
+  if(/^(atualizou o checklist|checklist:)/.test(what)) return 'checklist';
+  if(/^(alterou|definiu|removeu) prioridade/.test(what)) return 'prioridade';
+  if(/^(atribuiu para|removeu responsável|definiu responsável)/.test(what)) return 'responsavel';
+  if(/^(alterou prazo|removeu prazo|definiu prazo)/.test(what)) return 'prazo';
+  if(/^(pausou|retomou) a contagem/.test(what)) return 'tempo';
+  if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
+  return 'campo';
+}
+// Ícone/cor pra quem não é uma pessoa de verdade — Automação/Agente Ágil/
+// Supercard nunca têm init (ver recordHistory()), então nunca teriam foto;
+// em vez de cair no fallback genérico de iniciais (ficaria "⚙"/"🤖" cortado
+// feio), ganham um avatar dedicado, mesmo racional do agente/agente externo
+// em allIdentities().
+const HIST_BOT_AVATARS = {
+  '⚙ Automação': {emoji:'⚙️', cor:'#a78bfa'},
+  '🤖 Agente Ágil': {emoji:'🤖', cor:'#38b6ff'},
+  '⚙ Supercard': {emoji:'⚙️', cor:'#a78bfa'},
+};
+function _histAvatarHtml(h){
+  const bot=HIST_BOT_AVATARS[h.who];
+  if(bot) return `<div class="avatar" style="background:${_hexA(bot.cor,.25)};border-color:${_hexA(bot.cor,.5)};" title="${esc(h.who)}">${bot.emoji}</div>`;
+  if(h.init) return _ownerAvatarHtml(h.init);
+  // Sem init (whoOverride com nome de pessoa real, ou entrada antiga
+  // gravada antes desta mudança) — cai nas iniciais do nome, mesmo
+  // fallback de sempre quando não há foto.
+  const iniciais=(h.who||'?').split(' ').map(w=>w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+  return `<div class="avatar" title="${esc(h.who||'')}">${esc(iniciais||'?')}</div>`;
+}
 function renderHistory(card){
   const list=document.getElementById('m-history-list');
   const count=document.getElementById('m-history-count');
@@ -8148,9 +8216,10 @@ function renderHistory(card){
   list.innerHTML=hist.slice().reverse().map(h=>{
     const when=h.at?_histRelTime(h.at):'';
     const full=h.at?new Date(h.at).toLocaleString('pt-BR'):'';
-    return `<div class="hist-item" title="${esc(full)}">
-      <span class="hist-dot"></span>
-      <div class="hist-body"><span class="hist-who">${esc(h.who||'?')}</span> <span class="hist-what">${esc(h.what||'')}</span></div>
+    const info=CARD_HIST_TIPOS[_histTipo(h.what)]||CARD_HIST_TIPOS.campo;
+    return `<div class="hist-item" style="border-left:3px solid ${info.cor};" title="${esc(full)}">
+      ${_histAvatarHtml(h)}
+      <div class="hist-body"><span class="hist-icon">${info.icon}</span> <span class="hist-who">${esc(h.who||'?')}</span> <span class="hist-what">${esc(h.what||'')}</span></div>
       <span class="hist-when">${esc(when)}</span>
     </div>`;
   }).join('');

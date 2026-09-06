@@ -2781,6 +2781,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.591-dev — 2026-09-06 — 📜 Histórico do card ganha visual rico (avatar com foto, ícone e cor por tipo)
+
+Pedido direto do usuário depois de ver o histórico do OKR: "aquele
+histórico que você criou pro OKR, com a fotinha da pessoa, dá pra fazer
+isso no kanban também?". Porta o visual "timeline de rede social" (ver
+`painel-dev.html` v3.20 · painel-dev, `OKR_HIST_TIPOS`/
+`_okrAvatarHtml()`) pro 📜 Histórico do card, sem precisar tocar nos
+~50 pontos do arquivo que já chamam `recordHistory()`:
+
+- **Avatar com foto real** — `recordHistory()` passa a gravar `init`
+  (iniciais de quem editou, `window._currentUserInit`) em cada entrada,
+  só quando é edição de uma pessoa de verdade (sem `whoOverride`).
+  `_histAvatarHtml()` resolve a foto via `_ownerAvatarHtml()` (mesmo
+  componente já usado no badge de responsável do card) — sem foto
+  cadastrada, cai nas iniciais, mesmo fallback de sempre.
+- **Ícone e borda colorida por tipo** — `CARD_HIST_TIPOS`/`_histTipo()`
+  classificam cada entrada (criado/movido/tag/prioridade/prazo/
+  impedimento/checklist/etc.) por regex em cima do texto já gerado por
+  `_histDiff()`, sem precisar de um campo `tipo` explícito por entrada
+  nem tocar nos call sites existentes.
+- **Automação/Agente Ágil/Supercard** (que nunca têm uma pessoa de
+  verdade por trás) ganham um avatar dedicado — ⚙️/🤖 — em vez de
+  tentar (e falhar) mostrar uma foto.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline
+(`braces -1, parens +1`). 27 cenários Playwright novos (captura de
+`init`, classificação de tipo pros ~16 padrões de texto conhecidos,
+avatar com foto/iniciais/bot/fallback, `renderHistory()` sem quebrar e
+com a estrutura nova). Reexecutadas as suites das rodadas anteriores
+(Mural, OKR arquivar Marco, histórico de tags) — sem regressão.
+
 ### v8.30.590-dev — 2026-09-06 — /monitorarbugs no histórico de cards: adicionar/remover tag (fora a 1ª) nunca gerava entrada
 
 Pedido explícito, escopo nomeado — "no histórico de cards". Lido por
