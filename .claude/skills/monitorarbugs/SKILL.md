@@ -272,6 +272,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   desmarcava o checkbox Insistente ao trocar pra mural sem restaurar ao
   voltar pra popup, perdendo o valor original em silêncio — corrigido
   pra só desabilitar. 8 cenários Playwright.
+- **2026-09-06, históricos (pedido explícito, escopo nomeado)**: 1
+  achado, comparando os 2 sistemas de histórico paralelos do repo
+  (card no kanban-dev.html vs. OKR no painel-dev.html, este último
+  documentado no `CODE_MAP.md` como "porta" de propósito do primeiro).
+  PR #768: `_okrArquivarMarco()` não registrava NENHUM histórico — nem
+  no próprio Marco, nem o resumo no Objetivo pai que `saveOkrMarco()`
+  sempre empurra em toda outra edição — diferente de
+  `_okrArquivarObjetivo()`, que já grava `"arquivou o Objetivo"`.
+  Achado via técnica 2 (comparar contra `_okrArquivarObjetivo()`/
+  `saveOkrMarco()` no mesmo arquivo), confirmado com o usuário antes de
+  implementar. Checado e sem achado: formato do Agente Ágil server-side
+  (`pushHistory()`) bate exatamente com o do cliente. Achado incidental
+  documentado, não corrigido (decisão do usuário — escopo menor):
+  arquivar Marco continua irreversível pela UI, sem
+  `_okrDesarquivarMarco()`/tela "Ver arquivados" pra Marcos (diferente
+  de Objetivo, que tem os dois). 5 cenários Playwright.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
