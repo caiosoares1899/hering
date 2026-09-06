@@ -3915,6 +3915,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="field"><label class="fl">Prazo</label>
             <input class="fi" id="m-due" type="date" onchange="_onDueDateChange()"> <button type="button" class="dp-btn" onclick="_dpOpen('m-due',this)" title="Escolher no calendário">📅</button>
             <div><button type="button" id="m-nodue-btn" class="no-due-btn" onclick="toggleNoDue()">🚫 Sem prazo definido</button></div>
+            <div id="m-atraso-info" style="display:none;font-size:9.5px;color:var(--danger);margin-top:4px;"></div>
           </div>
         </div>
         <div class="card-attr-row">
@@ -4340,6 +4341,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="removeBlockerTag()">✕ Remover impedimento</button>
         <span style="font-size:10px;color:var(--txt3);">Ctrl+Enter salva</span>
       </div>
+      <div id="m-blocked-info" style="display:none;font-size:9.5px;color:var(--txt3);margin-top:6px;"></div>
     </div>
 
     <!-- OKR hidden input (mantido para salvar) -->
@@ -5942,7 +5944,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.592-dev</div>
+<div class="version">v8.30.593-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7417,6 +7419,7 @@ function _doBulkBlockTag(reason){
   list.forEach(c=>{
     c.blocker=true;
     c.blockerReason=reason||'';
+    _settleBlockedTag(c, false); // ⏱️ list já filtrou !_cardIsBlocked(c) — abre o episódio
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'marcou como impedido'+(reason?': '+reason:''));
@@ -7433,6 +7436,7 @@ function _doBulkUnblockTag(){
   list.forEach(c=>{
     c.blocker=false;
     c.blockerReason='';
+    _settleBlockedTag(c, true); // ⏱️ list já filtrou _cardIsBlocked(c) — fecha o episódio
     c.updatedAt=new Date().toISOString();
     c.updatedBy=window._currentUser?.displayName||window._currentUser?.email||'Usuário';
     recordHistory(c,'removeu impedimento');
@@ -8012,10 +8016,47 @@ function recordMove(card, toCol, atISO){
   // novo.col) chega aqui com from===toCol, sem transição de verdade).
   // Mesmos campos/mensagem de história que _doBulkUnblockTag() já usa,
   // pra ficar indistinguível de uma remoção manual no histórico do card.
+  const _wasBlockedTagBeforeAutoUnblock = card.blocker;
   if(blockerMode==='tag' && card.blocker && from!==toCol && _isColDone(toCol)){
     card.blocker=false;
     card.blockerReason='';
     recordHistory(card,'impedimento removido automaticamente (card concluído)');
+  }
+  // ⏱️ Fecha o episódio de bloqueio de propósito criado pelo auto-
+  // desimpedimento acima (modo tag) — sem isto, essa transição específica
+  // (concluir um card impedido) nunca passaria por nenhum dos outros
+  // pontos que chamam _settleBlockedTag(), perdendo o tempo bloqueado em
+  // silêncio bem no momento mais comum de "resolver" um impedimento.
+  if(_wasBlockedTagBeforeAutoUnblock !== card.blocker) _settleBlockedTag(card, _wasBlockedTagBeforeAutoUnblock);
+  // ⏱️ Bloqueado (modo COLUNA) + atrasado — settle feito AQUI (não só de
+  // forma preguiçosa em fbSaveCard()/fbSaveAll(), ver
+  // _settleCardTimeTrackingLazy()) porque recordMove() é o único ponto
+  // que resolve `from` de forma confiável mesmo quando quem chamou já
+  // mutou card.col ANTES de invocar esta função (ver comentário grande no
+  // topo desta função) — sem isso, um card arrastado direto de
+  // Impedimentos pra Concluído (ou já atrasado indo pra Concluído), numa
+  // tacada só sem nenhum save intermediário, perderia o período inteiro
+  // em silêncio (o settle preguiçoso só enxergaria o estado JÁ resolvido).
+  if(blockerMode==='col'){
+    if(toCol==='blocker' && from!=='blocker' && !card.blockedAt){
+      card.blockedAt = at;
+    } else if(from==='blocker' && toCol!=='blocker' && card.blockedAt){
+      card.blockedMs = (card.blockedMs||0) + Math.max(0, new Date(at).getTime()-new Date(card.blockedAt).getTime());
+      card.blockedAt = null;
+    }
+  }
+  // `due` não muda numa movimentação de coluna, então continua confiável
+  // pra calcular o início do atraso mesmo quando o desfecho é o próprio
+  // movimento pra uma coluna de conclusão.
+  if(_isColDone(toCol) && !_isColDone(from)){
+    const hojeStr = at.slice(0,10);
+    const estavaAtrasado = card.atrasadoDesde || (card.due && card.due<hojeStr);
+    if(estavaAtrasado){
+      const startStr = card.atrasadoDesde || card.due;
+      const start = new Date(startStr+'T00:00:00').getTime();
+      card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, new Date(at).getTime()-start);
+    }
+    card.atrasadoDesde = null;
   }
 }
 // Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
@@ -8345,6 +8386,10 @@ async function fbSaveAll(extra, touchedIds){
   const _touched = touchedIds ? new Set(touchedIds) : null;
   cardsToSave.forEach((c,i)=>{
     if(!c || !c.id) return;
+    // ⏱️ rede de segurança — só nos cards que este save realmente tocou
+    // (ou em todos, se touchedIds não foi informado — mesmo critério que
+    // cardsUpdatedAt usa logo abaixo). Ver _settleCardTimeTrackingLazy().
+    if(!_touched || _touched.has(c.id)) _settleCardTimeTrackingLazy(c);
     cardsIndex[c.id] = String(i);
     // cards_updated_at/{cardId}->timestamp: índice PARALELO ao cards_index,
     // nunca muda o formato dele (o Agente Ágil lê cards_index esperando uma
@@ -8513,6 +8558,7 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // um (frágil — qualquer botão novo reabre o mesmo buraco), o guard
       // fica aqui, no ponto único por onde toda escrita pontual passa.
       if(card && card._isQLTemp) return Promise.resolve();
+      _settleCardTimeTrackingLazy(card); // ⏱️ rede de segurança — ver comentário na declaração
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
       if(!window._fbReady) return Promise.resolve();
@@ -12244,6 +12290,7 @@ function scheduleAutoSave(){
     _reagirSeAgenteAgilAtribuido(c, _prevOwner, _prevParticipants);
     if(_prevBlocker && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
     else if(!_prevBlocker && c.blocker) runAutoRules('blocked', c.id);
+    _settleBlockedTag(c, _prevBlocker); // ⏱️ ver comentário na declaração
     if(_prevCol!==c.col){
       // Achado real (/monitorarbugs 2026-09-04): heurística local própria
       // (regex de nome, sem checar flowConfig.doneCols) reimplementada em
@@ -13138,6 +13185,7 @@ function openCard(id){
     blockerRow.style.display=(_cardIsBlocked(c)||c.blockerReason)?'block':'none';
     document.getElementById('m-blocker-reason').value=c.blockerReason||'';
   }
+  _renderCardTimeInfo(c); // ⏱️ tempo acumulado atrasado/bloqueado
   _clGroupsInit(c);
   renderCL(c.checklist||[]);
   renderRiscos(c.riscos||[]);
@@ -13718,6 +13766,7 @@ function saveCard(){
     const _histBefore=_histSnapshot(c); // 📜 snapshot antes da edição
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
+    const _prevBlockerSave=c.blocker||false; // ⏱️ ver _settleBlockedTag()
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
@@ -13743,6 +13792,7 @@ function saveCard(){
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
+    _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
@@ -15367,6 +15417,20 @@ function renderCriativosDashboard(){
   // card com Variações:"sim" — não conta quem marcou "não" (sem campo de
   // quantidade pra somar) nem quem deixou em branco.
   const totalVariacoes=rows.reduce((s,c)=>s+(c.criativo?.variacoes==='sim'?(parseInt(c.criativo.variacoesQtd)||0):0),0);
+  // ⏱️ Tempo em atraso/bloqueado (arquivado, mesmo depois de concluído) —
+  // pedido direto do usuário: "esse espaço de tempo que ficou atrasado
+  // precisa ser contado e arquivado, assim como os bloqueados (inclusive
+  // criativo)". `rows` já inclui pedidos concluídos (não tem filtro de
+  // "ainda ativo" nesta tela — ver `atrasados`/`concluidos` acima, que já
+  // convivem no mesmo total), então o total abaixo já cobre o histórico
+  // completo, não só o que está atrasado/bloqueado agora.
+  const totalAtrasoCrvH=rows.reduce((s,c)=>s+_cardAtrasadoMs(c),0)/3600000;
+  const totalBlockCrvH=rows.reduce((s,c)=>s+_cardBlockedMs(c),0)/3600000;
+  const atrasoTopCrv=rows.filter(c=>_cardAtrasadoMs(c)>0).slice().sort((a,b)=>_cardAtrasadoMs(b)-_cardAtrasadoMs(a)).slice(0,5);
+  const blockTopCrv=rows.filter(c=>_cardBlockedMs(c)>0).slice().sort((a,b)=>_cardBlockedMs(b)-_cardBlockedMs(a)).slice(0,5);
+  const crvCardRow=(c,ms)=>'<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+    +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
+    +'<span style="flex-shrink:0;color:var(--txt3);">'+_fmtHoras(ms/3600000)+'</span></div>';
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -15434,6 +15498,10 @@ function renderCriativosDashboard(){
     topCanal: byCanal.map(([label,qtd])=>({label,qtd})),
     topPlataforma: byPlataforma.map(([label,qtd])=>({label,qtd})),
     topFormato: byFormato.map(([label,qtd])=>({label,qtd})),
+    tempoTotalAtrasoHoras: Math.round(totalAtrasoCrvH),
+    tempoTotalBloqueadoHoras: Math.round(totalBlockCrvH),
+    topAtraso: atrasoTopCrv.map(c=>({titulo:c.title||'(sem título)',horasAtrasado:Math.round(_cardAtrasadoMs(c)/3600000)})),
+    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000)})),
   };
   const botaoAgente = AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)
     ? '<div style="margin-top:16px;">'
@@ -15460,12 +15528,28 @@ function renderCriativosDashboard(){
         +'</div>'
       +'</div>'
     +'</div>'
-    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">'
       +barsBlock('📋 Por lista',byLista)
       +barsBlock('📡 Por canal',byCanal)
       +barsBlock('🎯 Por plataforma',byPlataforma)
       +barsBlock('🖼 Por formato',byFormato)
     +'</div>'
+    +((totalAtrasoCrvH>0||totalBlockCrvH>0) ?
+      '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+        +statCard('⏱️','Tempo total em atraso',_fmtHoras(totalAtrasoCrvH),totalAtrasoCrvH?'#ff6b6b':'var(--txt)')
+        +statCard('⏱️','Tempo total bloqueado',_fmtHoras(totalBlockCrvH),totalBlockCrvH?'#ffd54f':'var(--txt)')
+      +'</div>'
+      +'<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">'
+        +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+          +'<div class="cfg-sec-title" style="margin-bottom:12px;">⏱️ Mais tempo em atraso (acumulado, mesmo já concluídos)</div>'
+          + (atrasoTopCrv.length ? atrasoTopCrv.map(c=>crvCardRow(c,_cardAtrasadoMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou atraso.</div>')
+        +'</div>'
+        +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+          +'<div class="cfg-sec-title" style="margin-bottom:12px;">⏱️ Mais tempo bloqueado (acumulado, mesmo já concluídos)</div>'
+          + (blockTopCrv.length ? blockTopCrv.map(c=>crvCardRow(c,_cardBlockedMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou bloqueio.</div>')
+        +'</div>'
+      +'</div>'
+      : '')
     +botaoAgente;
 }
 function _crvClearFilters(){
@@ -18228,6 +18312,21 @@ function renderBoardDataInsights(){
   }).filter(x=>x.ageDays>=sprintLen).sort((a,b)=>b.ageDays-a.ageDays).slice(0,5);
   parados.forEach(({c,ageDays})=>c._insightSub=ageDays+'d parado');
 
+  // ── Tempo em atraso/bloqueado (arquivado, mesmo depois de concluído) ──
+  // Pedido direto do usuário: "esse espaço de tempo que ficou atrasado
+  // precisa ser contado e arquivado, assim como os bloqueados". Diferente
+  // das seções acima (só activeCards, ainda não concluídos), aqui entra
+  // TODO card não-arquivado com algum tempo acumulado — inclusive já
+  // concluído, que é o cenário mais comum (o período fecha justamente
+  // quando o card é resolvido, ver recordMove()/_settleCardTimeTrackingLazy()).
+  const cardsComTempo=cards.filter(c=>!c.archived && !c.agenteHotline && (_cardAtrasadoMs(c)>0 || _cardBlockedMs(c)>0));
+  const atrasoTop=cardsComTempo.filter(c=>_cardAtrasadoMs(c)>0).slice().sort((a,b)=>_cardAtrasadoMs(b)-_cardAtrasadoMs(a)).slice(0,5);
+  atrasoTop.forEach(c=>c._insightSub=_fmtHoras(_cardAtrasadoMs(c)/3600000)+(c.atrasadoDesde?' · em aberto':''));
+  const blockTop=cardsComTempo.filter(c=>_cardBlockedMs(c)>0).slice().sort((a,b)=>_cardBlockedMs(b)-_cardBlockedMs(a)).slice(0,5);
+  blockTop.forEach(c=>c._insightSub=_fmtHoras(_cardBlockedMs(c)/3600000)+(c.blockedAt?' · em aberto':''));
+  const totalAtrasoH=cardsComTempo.reduce((s,c)=>s+_cardAtrasadoMs(c),0)/3600000;
+  const totalBlockH=cardsComTempo.reduce((s,c)=>s+_cardBlockedMs(c),0)/3600000;
+
   let html='';
 
   html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
@@ -18249,6 +18348,19 @@ function renderBoardDataInsights(){
     parados.length ? parados.map(({c})=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum card parado há mais de 1 sprint — fluxo saudável.</div>');
   html += '</div>';
 
+  if(cardsComTempo.length){
+    html += '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
+      + statCard('⏱️','Tempo total em atraso',_fmtHoras(totalAtrasoH),totalAtrasoH?'#ff6b6b':'var(--txt)')
+      + statCard('⏱️','Tempo total bloqueado',_fmtHoras(totalBlockH),totalBlockH?'#ffd54f':'var(--txt)')
+      + '</div>';
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">';
+    html += box('⏱️ Cards com mais tempo em atraso (acumulado, mesmo já concluídos)',
+      atrasoTop.length ? atrasoTop.map(c=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum card acumulou atraso.</div>');
+    html += box('⏱️ Cards com mais tempo bloqueado (acumulado, mesmo já concluídos)',
+      blockTop.length ? blockTop.map(c=>cardRow(c)).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum card acumulou bloqueio.</div>');
+    html += '</div>';
+  }
+
   if(okrCards.length){
     html += '<div style="margin-bottom:16px;">' + donutBlock('🎯','OKR por coluna (onde as entregas estratégicas estão)',okrPorCol) + '</div>';
   }
@@ -18269,6 +18381,10 @@ function renderBoardDataInsights(){
     cargaPorResponsavel: donoRows.map(([init,n])=>({responsavel:init==='__sem__'?'(sem responsável)':init,qtd:n})),
     topRiscos: riscoTop.map(c=>({titulo:c.title||'(sem título)',qtdRiscos:(c.riscos||[]).length})),
     topParados: parados.map(({c,ageDays})=>({titulo:c.title||'(sem título)',diasParado:ageDays})),
+    tempoTotalAtrasoHoras: Math.round(totalAtrasoH),
+    tempoTotalBloqueadoHoras: Math.round(totalBlockH),
+    topAtraso: atrasoTop.map(c=>({titulo:c.title||'(sem título)',horasAtrasado:Math.round(_cardAtrasadoMs(c)/3600000)})),
+    topBloqueado: blockTop.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000)})),
   };
 
   // ── Por submarca (só se o squad usa o campo) ──
@@ -23333,6 +23449,7 @@ const HELP_CONTENT = {
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: só o botão do modal (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.' },
+    { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
@@ -28042,6 +28159,129 @@ let blockerMode = 'col'; // carregado do Firebase
 function _cardIsBlocked(card){
   if(!card) return false;
   return blockerMode==='col' ? card.col==='blocker' : !!card.blocker;
+}
+
+// ⏱️ Tempo acumulado bloqueado/atrasado (pedido direto do usuário: "esse
+// espaço de tempo que ficou atrasado precisa ser contado e arquivado,
+// assim como os bloqueados") — mesmo espírito de card.pausedMs/pausedAt
+// (⏸ Pausar card, ver togglePauseCard()/_cardPausedMs() perto de L13914),
+// mas 100% automático: nenhum clique dispara isso, só o estado derivado
+// do card (bloqueado/atrasado) mudando. Sobrevive à conclusão do card —
+// diferente das contagens ao vivo de "Bloqueios"/"Prazo vencido" em
+// Dados do Board (só o AGORA), isto arquiva quanto tempo cada card já
+// ficou nesses estados, mesmo depois de resolvido.
+//
+// Modelo: card.blockedMs/card.blockedAt (mesmo par pausedMs/pausedAt) +
+// card.atrasadoMs/card.atrasadoDesde (mesma ideia, mas guarda a DATA de
+// início — não a hora — porque `due` já é uma data conhecida de antemão,
+// não precisa capturar o instante exato em que "virou atrasado"). Os
+// dois somam múltiplos episódios (pedido direto: se o prazo for adiado
+// enquanto o card ainda está atrasado, ou se ele for desbloqueado e
+// bloqueado de novo depois, cada período conta e se acumula no total).
+//
+// Fonte única de verdade pro "está com o prazo vencido" — mesmo critério
+// que "Prazo vencido" em Dados do Board já usa (naoConcluidos.filter):
+// due no passado (devido HOJE não conta, só depois de vencer de
+// verdade), card ativo (não arquivado) e não numa coluna de conclusão.
+function _cardIsOverdue(card){
+  if(!card || card.archived || !card.due) return false;
+  if(_isColDone(card.col)) return false;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const d=new Date(card.due+'T00:00:00'); d.setHours(0,0,0,0);
+  return d<hoje;
+}
+// Fecha/abre o episódio de bloqueio em modo TAG (card.blocker) — chamado
+// nos pontos que já fazem esse toggle de propósito (_doBulkBlockTag()/
+// _doBulkUnblockTag(), e o par _prevBlocker de scheduleAutoSave()/
+// saveCard()), reaproveitando o "antes"/"depois" que essas funções já
+// comparam pra disparar runAutoRules('blocked'/'unblocked', ...). Modo
+// COLUNA é tratado à parte, dentro de recordMove() (ver comentário lá) —
+// mover PRA/DE 'blocker' já passa por lá em toda movimentação, com um
+// `from` mais confiável do que reler card.col aqui.
+function _settleBlockedTag(card, wasBlocked){
+  if(!card) return;
+  const isBlocked = !!card.blocker;
+  if(isBlocked === wasBlocked) return;
+  if(isBlocked){
+    card.blockedAt = new Date().toISOString();
+  } else if(card.blockedAt){
+    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedAt = null;
+  }
+}
+// Rede de segurança genérica — chamada em todo save pontual (fbSaveCard())
+// e em todo save estrutural (fbSaveAll(), 1x por card tocado), idempotente
+// (só mexe se o estado atual não bate com o que já estava sendo
+// rastreado). Cobre: abrir o episódio de atraso na 1ª vez que algo toca
+// o card depois do prazo vencer; fechar se o prazo for adiado (com pelo
+// menos 1 save no meio — ver limitação abaixo); reabrir atraso/bloqueio
+// se o card voltar de uma coluna de fim; e qualquer transição de
+// card.blocker que não passe pelos pontos dedicados acima. A transição
+// mais comum de todas — card concluído enquanto atrasado/bloqueado (modo
+// coluna) — já é fechada de forma mais robusta dentro de recordMove(),
+// que não depende de nenhum save intermediário ter acontecido no meio.
+//
+// Limitação conhecida (documentada, não implementada): um card que fique
+// atrasado e SEM NENHUM save no meio (nenhum comentário, edição, nada) até
+// alguém editar o `due` direto pra uma data futura (sem completar o card)
+// perde esse período específico — não tem como recuperar a data antiga
+// de `due` depois que ela já foi sobrescrita, e recordMove() só entra em
+// cena numa mudança de COLUNA, não de prazo. Cenário raro (exige o card
+// intocado o tempo todo até a renegociação do prazo); se aparecer na
+// prática, dá pra fechar depois com um `_prevDue` explícito no modal,
+// mesmo padrão de `_prevBlocker`/`_prevCol`.
+function _settleCardTimeTrackingLazy(card){
+  if(!card) return;
+  const isBlocked = _cardIsBlocked(card);
+  if(isBlocked && !card.blockedAt){
+    card.blockedAt = new Date().toISOString();
+  } else if(!isBlocked && card.blockedAt){
+    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedAt = null;
+  }
+  const isOverdue = _cardIsOverdue(card);
+  if(isOverdue && !card.atrasadoDesde){
+    card.atrasadoDesde = card.due;
+  } else if(!isOverdue && card.atrasadoDesde){
+    const start = new Date(card.atrasadoDesde+'T00:00:00').getTime();
+    card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, Date.now()-start);
+    card.atrasadoDesde = null;
+  }
+}
+// Total "efetivo até agora" (fechado + episódio aberto, se houver) —
+// mesmo padrão de _cardPausedMs(). Ler o total não precisa settle antes:
+// soma o acumulado com o episódio em aberto calculado na hora.
+function _cardBlockedMs(c){
+  const acc=c?.blockedMs||0;
+  return c?.blockedAt ? acc+Math.max(0, Date.now()-new Date(c.blockedAt).getTime()) : acc;
+}
+function _cardAtrasadoMs(c){
+  const acc=c?.atrasadoMs||0;
+  if(!c?.atrasadoDesde) return acc;
+  const start=new Date(c.atrasadoDesde+'T00:00:00').getTime();
+  return acc+Math.max(0, Date.now()-start);
+}
+// Mostra o total acumulado (⏱️) direto no modal do card — perto do Prazo
+// (atrasado) e do bloco de Impedimento (bloqueado), só quando há algo pra
+// mostrar (card nunca ficou atrasado/bloqueado = nenhum dos dois aparece).
+// Chamado toda vez que o modal abre/re-renderiza um card (openCard()).
+function _renderCardTimeInfo(c){
+  const atrasoEl=document.getElementById('m-atraso-info');
+  if(atrasoEl){
+    const ms=_cardAtrasadoMs(c);
+    if(ms>0){
+      atrasoEl.style.display='block';
+      atrasoEl.textContent='⏱️ Já ficou atrasado por '+_fmtHoras(ms/3600000)+' no total'+(c.atrasadoDesde?' (em aberto agora)':'');
+    } else atrasoEl.style.display='none';
+  }
+  const blockEl=document.getElementById('m-blocked-info');
+  if(blockEl){
+    const ms=_cardBlockedMs(c);
+    if(ms>0){
+      blockEl.style.display='block';
+      blockEl.textContent='⏱️ Já ficou impedido por '+_fmtHoras(ms/3600000)+' no total'+(c.blockedAt?' (em aberto agora)':'');
+    } else blockEl.style.display='none';
+  }
 }
 
 function saveBlockerMode(mode){

@@ -1076,6 +1076,64 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 - Visibilidade do botão: escondido em `openNewCard()` (pausar só faz
   sentido pra card já existente, com cycle/lead já em andamento).
 
+### ⏱️ Tempo em atraso/bloqueado (arquivado — 2026-09-06)
+Pedido direto do usuário: "esse espaço de tempo que ficou atrasado
+precisa ser contado e arquivado, assim como os bloqueados". Diferente
+de "Bloqueios"/"Prazo vencido" em Dados do Board (contagens AO VIVO, só
+o agora), isto acumula quanto tempo cada card já passou nesses estados,
+sobrevivendo à conclusão — mesmo espírito de `card.pausedMs` (seção
+acima), mas 100% automático (nenhum clique dispara, só o estado
+derivado do card mudando).
+- `_cardIsOverdue(card)`/`_cardIsBlocked(card)` — perto de L28185/L28158
+  — fonte única de verdade pros 2 estados (o 2º já existia antes desta
+  rodada). `_cardIsOverdue` usa o mesmo critério de "Prazo vencido"
+  (`due` no passado — due=hoje NÃO conta —, card ativo, não numa coluna
+  de conclusão via `_isColDone()`).
+- Modelo: `card.blockedMs`/`card.blockedAt` (mesmo par `pausedMs`/
+  `pausedAt`) + `card.atrasadoMs`/`card.atrasadoDesde` (guarda a DATA de
+  início, não a hora — `due` já é conhecido de antemão). Múltiplos
+  episódios se somam.
+- `_settleBlockedTag(card, wasBlocked)` — L28200 — fecha/abre o
+  episódio em modo TAG, chamado nos pontos que já fazem esse toggle de
+  propósito: `_doBulkBlockTag()`/`_doBulkUnblockTag()` (~L7414/7430),
+  `scheduleAutoSave()` (par `_prevBlocker`, ~L12284) e `saveCard()`
+  manual (`_prevBlockerSave`, ~L13785).
+- `recordMove()` (~L7971, ver comentário grande no topo da função sobre
+  `from` ser mais confiável que reler `card.col`) — trata modo COLUNA
+  (transição pra/de `'blocker'`) E fecha atrasado quando o destino é
+  coluna de conclusão, usando `due`/`from`/`toCol` que a função já
+  resolve — é o ÚNICO ponto que fecha essas transições de forma robusta
+  mesmo numa tacada só (card arrastado direto de Impedimentos/atrasado
+  pra Concluído, sem nenhum save intermediário — settle preguiçoso
+  sozinho perderia esse período, ver comentário em
+  `_settleCardTimeTrackingLazy()`).
+- `_settleCardTimeTrackingLazy(card)` — L28232 — rede de segurança
+  genérica, chamada em `fbSaveCard()` (~L8555) e no loop por card de
+  `fbSaveAll()` (~L8390, só nos `touchedIds`). Idempotente.
+- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)` — L28253/28257 — total
+  "efetivo até agora" (fechado + episódio aberto), mesmo padrão de
+  `_cardPausedMs()`.
+- `_renderCardTimeInfo(c)` — L28268 — mostra o total no modal do card
+  (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
+  bloco de Impedimento), chamado no `openCard()` (~L13188).
+- Dashboards: `renderBoardDataInsights()` (~L18280, seção "Tempo em
+  atraso/bloqueado") e `renderCriativosDashboard()` (~L15420, mesma
+  seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
+  contrário do resto dessas telas), de propósito — é o ponto principal
+  do pedido ("mesmo que depois ele seja concluído").
+- **Limitação conhecida, documentada no código** (`_settleCardTimeTrackingLazy`):
+  card atrasado sem NENHUM save no meio até o prazo ser adiado direto
+  pro futuro (sem completar) perde esse período — `due` antigo já foi
+  sobrescrito, sem `_prevDue` explícito pra recuperar.
+- **Gap arquitetural conhecido, não implementado**: o orquestrador do
+  Agente Ágil (`functions/agente-agil-orquestrador/tools/
+  moverColuna.js`) escreve direto no Firebase via Admin SDK, sem passar
+  por `recordMove()`/`fbSaveCard()` — se ele mover um card pra/de
+  Impedimentos, essa transição específica ainda não é rastreada. Mesma
+  classe de gap já documentada pra Automações vs. orquestrador (ver
+  seção "Agente Ágil (client-side...)" mais abaixo, fila
+  `agente_pending_auto`) — reportado, não implementado nesta rodada.
+
 ### Padrões de card (cardPatterns) — never indexado antes desta rodada
 Presets de campos/seções (`config/cardPatterns`, editor em ⚙ Configurações)
 aplicáveis a um card via `setCardPattern()`; 3 bugs reais achados aqui em
