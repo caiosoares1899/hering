@@ -1613,7 +1613,10 @@ v3.19 · painel-dev pro racional completo.
   mesma lógica copiada. Fix: os 4 usam `_pGetCardTags(card)` (L3275,
   já existia, equivalente ao `getCardTags()` do kanban) pra checar
   TODAS as tags, não só a 1ª. 7 casos testados isoladamente contra a
-  lógica de detecção, todos corretos. PR #779.
+  lógica de detecção, todos corretos. PR #779. Promovido pra prod
+  (`painel.html`) no mesmo dia — patch aplicado cirurgicamente nos 4
+  pontos equivalentes (`painel.html`/`painel-dev.html` divergem
+  estruturalmente, não são cópia um do outro), não um copy do arquivo.
 - **Tags gerenciáveis** — só nível Objetivo (decisão do usuário: Marco
   continua com texto livre, escalas diferentes). Nó novo
   `kanban/okr/tags/{id}={label,colorIdx}` (`colorIdx` indexa
