@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.588-dev</div>
+<div class="version">v8.30.589-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31641,6 +31641,15 @@ const COMUNICADO_TIPOS = {
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
+// Comunicados "insistente" ignoram comunicado_visto_ de propósito (reaparecem
+// em aberturas futuras do board até expirar/o ADM desativar) — mas sem esse
+// Set, _talvezMostrarComunicado() achava o mesmo comunicado pendente de novo
+// 400ms depois do dismiss, na MESMA sessão: clicar "Entendi"/"✕" reabria o
+// popup em loop, sem jeito nenhum de sair dele (achado via /monitorarbugs,
+// 2026-09-06 — #comunicado-ov só fecha via dismissComunicado()). Vive só em
+// memória (não localStorage) de propósito: reseta a cada carregamento da
+// página, que é exatamente o "reaparece" que a opção promete.
+let _comunicadoDismissedSession = new Set();
 // Otimização de bytes (achado 2026-09-02, consumo real medido no _dbg):
 // o path 'comunicados' sozinho respondia por >1/3 do download diário de
 // uma squad, com uma média de ~72KB por chamada — quase idêntico ao
@@ -31753,7 +31762,7 @@ function _talvezMostrarComunicado(){
   if(!window._currentUser) return;
   if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
   const pendente = _comunicadosAtivos.find(c=>{
-    if(c.insistente) return true;
+    if(c.insistente) return !_comunicadoDismissedSession.has(c.id);
     return !_lsGet('comunicado_visto_'+c.id);
   });
   if(pendente) _mostrarComunicado(pendente);
@@ -31790,6 +31799,7 @@ function _mostrarComunicado(c){
 function dismissComunicado(){
   if(_comunicadoNaTela){
     _lsSet('comunicado_visto_'+_comunicadoNaTela.id, '1');
+    if(_comunicadoNaTela.insistente) _comunicadoDismissedSession.add(_comunicadoNaTela.id);
     _comunicadoNaTela = null;
   }
   document.getElementById('comunicado-ov').classList.remove('open');

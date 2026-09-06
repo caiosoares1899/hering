@@ -327,6 +327,26 @@ detalhe dos 4 call sites.
   feature só do `painel.html`, pra ADM revisar).
 - `COMUNICADOS_POLL_MS` — L31604 — 12min (era 3min até 2026-09-02,
   corte de bytes).
+- **`insistente`** (opção "reaparece até expirar" na composição,
+  `painel-dev.html`) — `_talvezMostrarComunicado()`/`dismissComunicado()`
+  (`kanban-dev.html`). **Bug corrigido em 2026-09-06**
+  (`/monitorarbugs`, escopo "avisos do mural"): antes, um comunicado
+  insistente reabria ~400ms depois de fechado (`dismissComunicado()` →
+  `setTimeout(_talvezMostrarComunicado, 400)`), em loop, pelo resto da
+  sessão — `#comunicado-ov` só fecha via `dismissComunicado()` (sem
+  clique-fora), então a pessoa ficava travada. `_comunicadoDismissedSession`
+  (novo `Set`, só em memória — reseta a cada load da página, que é
+  exatamente o "reaparece" prometido) guarda os ids já dispensados NA
+  sessão atual; `_talvezMostrarComunicado()` checa esse Set pros
+  insistente, em vez de ignorá-lo incondicionalmente.
+- `_ccTogglePrioridadeUI()` (painel-dev.html) — desabilita o checkbox
+  "Insistente" quando "Onde aparece" muda pra mural (insistente só faz
+  sentido pra popup). Até 2026-09-06 também DESMARCAVA o checkbox — se
+  o ADM trocasse pra mural e voltasse pra popup na mesma edição, sem
+  salvar no meio, perdia o `insistente:true` original em silêncio.
+  Corrigido: só desabilita, não desmarca — `saveComunicado()` já força
+  `insistente:false` fora de popup na hora de salvar, então manter o
+  checkbox marcado-mas-desabilitado é seguro.
 
 ### Modal do card no mobile — redesenho estilo Trello (2026-09-02, CSS puro, sem função nova)
 3 commits em sequência no mesmo dia, cada um corrigindo o que o

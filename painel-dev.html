@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.27 · painel-dev</div>
+<div class="version">v3.28 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8116,13 +8116,21 @@ function openComunicadoCompose(id){
   _ccTogglePrioridadeUI();
   document.getElementById('comunicado-compose-ov').classList.add('open');
 }
-// Insistente só faz sentido pra popup — desabilita quando for só mural
+// Insistente só faz sentido pra popup — desabilita quando for só mural. NÃO
+// desmarca o checkbox (só isso, achado via /monitorarbugs 2026-09-06): trocar
+// "Onde aparece" pra mural e voltar pra popup, na mesma edição, sem salvar no
+// meio, perdia silenciosamente o insistente:true original — o checkbox virava
+// desabilitado E desmarcado, e nada restaurava o valor de volta. saveComunicado()
+// já força insistente:false quando a prioridade não é popup na hora de salvar
+// (`prioridade==='popup' ? checkbox.checked : false`), então manter o
+// checkbox marcado-mas-desabilitado enquanto mural está selecionado é seguro —
+// não tem como isso vazar um insistente:true indevido pro Firebase.
 function _ccTogglePrioridadeUI(){
   const isMural = document.getElementById('cc-prioridade').value === 'mural';
   const wrap = document.getElementById('cc-insistente-wrap');
   const chk = document.getElementById('cc-insistente');
   if(!wrap || !chk) return;
-  if(isMural){ chk.checked = false; chk.disabled = true; wrap.style.opacity = '.45'; }
+  if(isMural){ chk.disabled = true; wrap.style.opacity = '.45'; }
   else { chk.disabled = false; wrap.style.opacity = '1'; }
 }
 function closeComunicadoCompose(){
