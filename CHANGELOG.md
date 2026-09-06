@@ -2826,6 +2826,56 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.593-dev — 2026-09-06 — ⏱️ Novo: tempo em atraso e bloqueado agora é arquivado (contado nos dashboards, inclusive Criativos)
+
+Pedido direto do usuário: "quando um card ficar como atrasado, mesmo que
+depois ele seja concluído, esse espaço de tempo que ficou atrasado
+precisa ser contado e arquivado, assim como os bloqueados". Até aqui,
+"Bloqueios"/"Prazo vencido" (Dados do Board) eram só contagens AO VIVO —
+nenhum dos dois tinha uma duração acumulada sobrevivendo à conclusão do
+card (checado antes de implementar: `_cardIsBlocked()` é um booleano
+puro, sem timestamp nenhum).
+
+- **Modelo novo**: `card.blockedMs`/`card.blockedAt` (mesmo par
+  `pausedMs`/`pausedAt` do ⏸ Pausar card) + `card.atrasadoMs`/
+  `card.atrasadoDesde` (mesma ideia, guardando a DATA de início — `due`
+  já é conhecido de antemão, não precisa capturar o instante exato).
+  Múltiplos episódios se somam (prazo adiado enquanto ainda atrasado, ou
+  desbloqueado e bloqueado de novo depois — cada período conta).
+- **Onde o settle acontece**: a transição mais comum — card concluído
+  enquanto atrasado/bloqueado — é fechada dentro de `recordMove()`
+  (único ponto por onde toda movimentação de coluna passa), usando
+  `due`/`from` que a função já resolve de forma confiável mesmo numa
+  tacada só (arrastar direto de Impedimentos pra Concluído, sem nenhum
+  save no meio). O resto (abrir o episódio na 1ª vez que algo toca um
+  card atrasado, fechar/tag mode) é uma rede de segurança genérica
+  chamada em `fbSaveCard()`/`fbSaveAll()` — ver comentários em
+  `_settleCardTimeTrackingLazy()`/`_settleBlockedTag()`.
+- **Onde aparece**: 📊 Dados do Board → Insights e 🎬 Controle de
+  Criativos ganham 2 stat cards (tempo total em atraso/bloqueado) + os 5
+  cards com mais tempo acumulado em cada categoria (inclusive já
+  concluídos). O modal do card também mostra o total acumulado, perto do
+  campo Prazo e do bloco de Impedimento, só quando há algo a mostrar.
+- **Limitação conhecida, documentada no código**: um card que fique
+  atrasado sem NENHUM save no meio até o prazo ser adiado direto pra uma
+  data futura (sem completar o card) perde esse período específico — não
+  dá pra recuperar o `due` antigo depois que ele já foi sobrescrito, e
+  `recordMove()` só entra em cena numa mudança de coluna, não de prazo.
+  Cenário raro; documentado em `_settleCardTimeTrackingLazy()` caso
+  precise ser fechado depois com um `_prevDue` explícito no modal.
+- Escopo desta rodada: só client-side (`kanban-dev.html`). O orquestrador
+  do Agente Ágil (`functions/agente-agil-orquestrador/tools/
+  moverColuna.js`) escreve direto no Firebase via Admin SDK, sem passar
+  por `recordMove()`/`fbSaveCard()` — se ele mover um card pra/de
+  Impedimentos, essa transição específica ainda não fica registrada.
+  Reportado como limitação conhecida, não implementado nesta rodada.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -1`). 15 cenários testados isoladamente
+(episódio único/múltiplo, resolução numa tacada só sem save
+intermediário, due=hoje não conta, card arquivado não conta, tag mode
+somando episódios) — todos passando.
+
 ### v8.30.592-dev — 2026-09-06 — Fix: avatar do Agente Ágil no histórico do card virava iniciais garbled ("AÁ")
 
 Achado por print do usuário logo depois da v8.30.591-dev (avatar com
