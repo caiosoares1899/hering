@@ -1418,6 +1418,15 @@ v3.19 · painel-dev pro racional completo.
   resto do objetivo) — "evolução do OKR inteiro" num lugar só. Ver
   achado real da rodada seguinte (visual rico) logo abaixo — este bloco
   descreve a versão original (texto simples), já superada.
+  **Achado real (2026-09-06, `/monitorarbugs`, técnica 2 — comparar
+  contra `_okrArquivarObjetivo()`/`saveOkrMarco()` no mesmo arquivo)**:
+  `_okrArquivarMarco()` não registrava NENHUM histórico (nem no próprio
+  Marco, nem o resumo no Objetivo pai que toda outra edição de Marco
+  sempre empurra) — corrigido pro mesmo padrão. Server-side, o Agente
+  Ágil grava história via `pushHistory()`
+  (`functions/okr/agenteHelpers.js`), mesmo formato
+  `{who,uid,what,tipo,at}` — sem duplicação de bug entre client/server
+  aqui (checado nesta rodada).
 - **Vínculo de cards** (tipo campanha/coleção, mesmo padrão de
   `notaSearchCards()`/`notaAddCardLink()` do kanban-dev.html, adaptado
   multi-squad): `objetivo.cardLinks:[{squadId,cardId}]`,

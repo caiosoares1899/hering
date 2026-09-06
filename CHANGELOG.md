@@ -12803,6 +12803,46 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.29 · painel-dev — 2026-09-06 — /monitorarbugs nos históricos: arquivar um Marco não deixava rastro nenhum
+
+Pedido explícito, escopo nomeado — "nos históricos". Comparados os 2
+sistemas de histórico explicitamente paralelos do repositório: o do
+card (`recordHistory()`/`_histDiff()`/`renderHistory()`,
+`kanban-dev.html`) e o do OKR (`_okrRecordHistory()`/
+`_okrHistDiffObj()`/`_okrHistDiffMarco()`/`renderOkrHistory()`,
+portado de propósito do primeiro — ver `CODE_MAP.md`), mais o espelho
+server-side do Agente Ágil (`pushHistory()`,
+`functions/okr/agenteHelpers.js`).
+
+1. **`_okrArquivarMarco()` não registrava nenhum histórico.** Toda
+   outra mutação de Marco passa por `_okrHistDiffMarco()` (edição) ou
+   grava a própria entrada (`saveOkrMarco()` na criação) — e
+   `saveOkrMarco()` SEMPRE empurra um resumo pro `history[]` do
+   Objetivo pai a cada edição de Marco ("evolução do OKR inteiro num
+   lugar só", pedido direto do usuário na Fase 1). Arquivar um Objetivo
+   já grava `"arquivou o Objetivo"` — mas arquivar um Marco só fazia
+   `window._update(...,{arquivado:true})`, sem tocar `history[]` nem do
+   próprio Marco nem do Objetivo pai. Quem olhasse o 📜 Histórico do
+   Objetivo depois via um Marco simplesmente sumir da lista, sem
+   nenhuma linha explicando o quê/quem/quando. Achado via técnica 2
+   (comparar contra `_okrArquivarObjetivo()`/`saveOkrMarco()`, no mesmo
+   arquivo). Fix: `_okrArquivarMarco()` agora grava `"arquivou o
+   marco"` no `history[]` do próprio Marco + um resumo
+   `"arquivou o marco \"X\""` no `history[]` do Objetivo pai, mesmo
+   padrão dos dois já existentes.
+2. Checado e sem achado: o formato gravado pelo Agente Ágil
+   (`pushHistory()`, server-side) bate exatamente com o que o cliente
+   grava (`{who,uid,what,tipo,at}`) — sem risco de `renderOkrHistory()`
+   quebrar ou mostrar campo faltando pra entradas escritas via chat.
+
+Fora do escopo desta correção (decisão do usuário): arquivar um Marco
+continua irreversível pela UI — não existe `_okrDesarquivarMarco()` nem
+uma tela "Ver arquivados" pra Marcos (diferente de Objetivo, que tem os
+dois). Registrado como achado conhecido, não implementado agora.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline (`braces
+-1, parens -14`). 5 cenários Playwright novos.
+
 ### painel-dev.html v3.28 · painel-dev — 2026-09-06 — /monitorarbugs nos avisos do Mural: checkbox "Insistente" perdia valor ao alternar prioridade
 
 Continuação da rodada de avisos do Mural (ver entrada espelho em
