@@ -13112,6 +13112,19 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.30 · painel — 2026-09-06 · Promove pra prod — /monitorarbugs no vínculo de cards do OKR: badge sumia quando a tag OKR não era a 1ª do card
+
+Promove pra produção o fix da rodada v3.30 · painel-dev (ver entrada
+logo abaixo pro racional completo): `_okrCardSearchResults()`,
+`renderOKR()`, o agregador "OKR por coluna" dos Insights, e
+`openPcModal()` detectavam "card é OKR" olhando só `card.tag` (1ª tag),
+nunca `card.tags[]` inteiro — um card com a tag OKR fora da 1ª posição
+sumia da busca de vínculo, da própria lista "🎯 Cards do board com
+badge OKR", subcontava nos Insights, e abria sem o badge no modal de
+"🔗 Cards vinculados". Fix aplicado cirurgicamente nos 4 pontos
+equivalentes (`painel.html`/`painel-dev.html` divergem estruturalmente
+— ver `CLAUDE.md` — não é uma cópia direta do arquivo).
+
 ### painel-dev.html v3.30 · painel-dev — 2026-09-06 — /monitorarbugs no vínculo de cards do OKR: badge sumia quando a tag OKR não era a 1ª do card
 
 Pedido genérico — "roda mais um /monitorarbugs". Escolhida a "Vínculo
