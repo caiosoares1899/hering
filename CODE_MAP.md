@@ -176,6 +176,37 @@ detalhe dos 4 call sites.
   que o servidor possa gerar. Entradas gravadas ANTES desse fix
   continuam sem `init` (dado que nunca existiu) — caem no fallback de
   iniciais pra sempre, sem jeito de corrigir retroativamente.
+  **Achados reais (2026-09-06, `/monitorarbugs`, "nas construções de
+  hj")**: 2 bugs na mesma área, encontrados mapeando os textos de TODOS
+  os ~50 call sites de `recordHistory()` contra os dois classificadores
+  novos (`_histAvatarHtml()`/`_histTipo()`). (1) **mais severo, técnica
+  3 — comportamento contradizia o próprio comentário da chamada**:
+  `_applyFanoutTemplate()` (fan-out, botão "🧩 Aplicar receita") passava
+  `whoLabel=_histWho()` (nome de pessoa de verdade) como `whoOverride`
+  pro `recordHistory()` — mas o comentário de `recordHistory()` já
+  documentava que `whoOverride` truthy significa "não é pessoa, é
+  Automação/Agente Ágil/Supercard", zerando `init` (sem avatar com
+  foto). Resultado: aplicar uma receita manualmente sempre mostrava
+  iniciais genéricas no histórico, nunca a foto de quem fez — mesmo a
+  pessoa sendo conhecida. Fix: `_applyFanoutTemplate()` só passa
+  `whoOverride` de verdade quando o ator é o robô (`user==='⚙
+  Automação'`); pra pessoa real, omite o override e deixa
+  `recordHistory()` usar seu próprio default (mesmo texto + `init`
+  correto). (2) `_histTipo(what)` — 11 frases de caminhos automáticos/
+  bulk (recorrência, agendamento, arquivamento por idade/limpeza,
+  reatribuir responsável, ações de Automação) não batiam com nenhum
+  regex e caíam no ícone genérico ✏️ em vez do ícone próprio do tipo —
+  e 1 delas, "impedimento removido automaticamente (card concluído)"
+  (auto-desbloqueio em `recordMove()`), caía por engano no grupo
+  **impedido** (🚧 vermelho) só por compartilhar a palavra
+  "impedimento", mostrando o ícone de BLOQUEIO pro evento oposto
+  (desbloqueio) — essa é a mais visível, o comentário da própria
+  chamada já dizia "pra ficar indistinguível de uma remoção manual" e o
+  código fazia o contrário. Fix: regexes de `_histTipo()` expandidos
+  pra cobrir as variações automáticas, e "impedimento removido
+  automaticamente" movido pro grupo `desimpedido`. 48 padrões de texto
+  testados isoladamente contra os regexes novos, todos corretos. PR
+  #778.
 - `openCard()` — L12986
 - `openAgenteHotline()` — L12895 — card especial fixo por squad "🤖 Converse
   com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/

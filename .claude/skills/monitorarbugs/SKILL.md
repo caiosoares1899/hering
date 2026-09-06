@@ -314,6 +314,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   de segurança do tempo em atraso/bloqueado ficava sem cobertura. Fix:
   `recordMove(card, colId)` adicionado, mesmo padrão de
   `_doBulkMove()`. PR #776 (mesmo PR da feature, ainda não mergeado).
+- **2026-09-06, 📜 Histórico do card visual rico (pedido genérico, "nas
+  construções de hj" — área escolhida por ser a mais recente ainda não
+  auditada)**: 2 achados, mapeando todos os ~50 call sites de
+  `recordHistory()` e testando 48 padrões de texto contra
+  `_histAvatarHtml()`/`_histTipo()`. PR #778: (1) `_applyFanoutTemplate()`
+  (fan-out manual "🧩 Aplicar receita" E automação) passava o nome de
+  uma pessoa real como `whoOverride` pro `recordHistory()` — mas
+  `whoOverride` truthy é o próprio sinal que zera `init` (sem avatar
+  com foto), documentado pra Automação/Agente Ágil/Supercard "que não
+  têm pessoa nenhuma". Aplicar receita na mão sempre mostrava iniciais
+  genéricas, nunca a foto de quem fez. Fix: só passa o override quando
+  o ator é o robô; pra pessoa real, omite e deixa o default (mesmo
+  texto + `init` certo); (2) **mais severo, técnica 3** — "impedimento
+  removido automaticamente" (auto-desbloqueio em `recordMove()`) caía
+  no grupo `impedido` (🚧 vermelho) só por compartilhar a palavra com
+  "marcou como impedido" — ícone de BLOQUEIO pro evento oposto
+  (desbloqueio), contradizendo o comentário da própria chamada
+  ("indistinguível de uma remoção manual"). Achado incidental corrigido
+  junto (mesma causa raiz): 10 frases de recorrência/agendamento/
+  arquivamento automático/reatribuição de responsável/ações de
+  Automação sem regex próprio, caindo no ícone genérico ✏️.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
