@@ -2781,6 +2781,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.589-dev — 2026-09-06 — /monitorarbugs nos avisos do Mural: comunicado "insistente" travava a pessoa num loop de popup
+
+Pedido explícito, escopo nomeado — "nos avisos do mural". Lidas por
+inteiro `_talvezMostrarComunicado()`/`_mostrarComunicado()`/
+`dismissComunicado()`/`_refreshComunicados()` (kanban-dev.html) e todo
+o fluxo de composição em `painel-dev.html`. 1 achado severo:
+
+1. **Comunicado marcado "Insistente (reaparece até expirar)" reabria
+   sozinho ~400ms depois de ser dispensado, em loop, pelo resto da
+   sessão.** `_talvezMostrarComunicado()` tratava `c.insistente` como
+   "sempre pendente", ignorando completamente se a pessoa já tinha
+   acabado de fechar — e `dismissComunicado()` reagenda
+   `_talvezMostrarComunicado()` em 400ms (pra reabrir o PRÓXIMO
+   comunicado da fila, se houver). Combinados: fechar um insistente
+   fazia ele mesmo virar "o próximo da fila" de novo, imediatamente.
+   `#comunicado-ov` só fecha via `dismissComunicado()` (sem clique-fora)
+   — quem fosse atingido ficava literalmente sem conseguir dispensar o
+   aviso pro resto da sessão, só clicando "Entendi"/"✕" repetidamente a
+   cada fração de segundo. Achado via técnica 3 (confrontar o
+   comportamento com o que a própria opção promete na tela de
+   composição — "reaparece até EXPIRAR" é bem diferente de "reaparece
+   400ms depois de eu já ter fechado").
+   Fix: `_comunicadoDismissedSession` (`Set`, só em memória — reseta a
+   cada carregamento de página, que é o "reaparece" de verdade
+   pretendido) guarda os ids já dispensados na sessão atual;
+   `_talvezMostrarComunicado()` passa a checar esse Set pros
+   insistente, em vez de tratá-los como sempre pendentes.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline
+(`braces -1, parens +1`). 5 cenários Playwright novos (insistente não
+reabre sozinho após dismiss, mas volta numa "sessão nova"; comunicado
+normal continua funcionando como antes).
+
 ### v8.30.588-dev — 2026-09-06 — /monitorarbugs em TODAS as notificações: 3 achados reais (reunião, agenda pendente, feedback)
 
 Pedido explícito do usuário — "faz um /monitorarbugs em todas
@@ -12769,6 +12802,29 @@ só sugerindo texto.
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.28 · painel-dev — 2026-09-06 — /monitorarbugs nos avisos do Mural: checkbox "Insistente" perdia valor ao alternar prioridade
+
+Continuação da rodada de avisos do Mural (ver entrada espelho em
+`kanban-dev.html` v8.30.589-dev pro achado principal, o loop de
+reabertura do popup insistente). Achado 2, menor, do lado da
+composição:
+
+`_ccTogglePrioridadeUI()` desmarcava o checkbox "Insistente" ao trocar
+"Onde aparece" pra mural (além de desabilitar) — mas nunca restaurava
+ao voltar pra popup. Editar um comunicado popup+insistente já
+publicado, trocar a prioridade pra mural e voltar pra popup na MESMA
+edição (sem salvar no meio) perdia o `insistente:true` original em
+silêncio — o checkbox ficava desmarcado e nada indicava que o valor
+original era outro. Fix: só desabilita, não desmarca —
+`saveComunicado()` já força `insistente:false` quando a prioridade não
+é popup na hora de salvar, então manter o checkbox marcado-mas-
+desabilitado enquanto mural está selecionado é seguro (não tem como
+vazar um `insistente:true` indevido pro Firebase) e preserva o valor
+original se a pessoa voltar pra popup.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline
+(`braces -1, parens -14`). 3 cenários Playwright novos.
 
 ### painel.html v3.26 · painel — 2026-09-06 · Promove pra prod (fix pontual) — sino do painel: clicar em "rascunho aguardando revisão" nunca navegava
 
