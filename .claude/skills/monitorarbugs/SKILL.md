@@ -288,6 +288,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   arquivar Marco continua irreversível pela UI, sem
   `_okrDesarquivarMarco()`/tela "Ver arquivados" pra Marcos (diferente
   de Objetivo, que tem os dois). 5 cenários Playwright.
+- **2026-09-06, histórico de cards (pedido explícito, escopo nomeado)**:
+  1 achado, mapeando os ~50 call sites de `recordHistory()`/
+  `_histDiff()` no arquivo. PR #770: `_histDiff()` só rastreava
+  `card.tag` (campo legado, 1ª tag do array — mantido só por
+  compatibilidade), nunca `card.tags[]` inteiro — adicionar uma 2ª/3ª
+  tag ou remover uma tag que não fosse a 1ª nunca gerava entrada de
+  histórico, nem via autosave nem via Salvar manual (os 2 caminhos mais
+  comuns de edição, ambos chamando a mesma `_histDiff()`). Ações em
+  massa nunca tiveram o bug, porque já chamavam `recordHistory()` com
+  mensagem própria, sem depender do diff genérico. Achado via técnica 4
+  (campo "proxy" tratado como se refletisse o array inteiro, quando só
+  reflete o 1º elemento). Fix: diff dedicado Set-based pra `tags[]`,
+  fora do loop genérico de `HIST_FIELDS`. 4 cenários Playwright.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
