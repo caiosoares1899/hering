@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.589-dev</div>
+<div class="version">v8.30.590-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8079,12 +8079,20 @@ function _histSnapshot(card){
   // checklist: guarda contagem de concluídos p/ detectar progresso
   s._clDone = (card.checklist||[]).filter(i=>i&&i.done).length;
   s._clTotal = (card.checklist||[]).length;
+  // tags[]: achado /monitorarbugs 2026-09-06, ver _histDiff() — precisa do
+  // array inteiro, não só card.tag (1ª tag, campo legado que HIST_FIELDS
+  // ainda rastreia por compatibilidade com telas antigas).
+  s.tags = (card.tags||[]).slice();
   return s;
 }
 // Compara snapshot antigo com o card atual e registra cada mudança
 function _histDiff(card, before, whoOverride){
   if(!card||!before) return;
   Object.keys(HIST_FIELDS).forEach(f=>{
+    // 'tag' (singular, só a 1ª tag) é campo legado mantido por
+    // compatibilidade — o diff de verdade é o de tags[] logo abaixo,
+    // baseado em Set (pega qualquer tag entrando/saindo, não só a 1ª).
+    if(f==='tag') return;
     const oldV=before[f], newV=card[f];
     // normaliza booleanos/strings vazias
     const a = (oldV===undefined||oldV===null)?'':oldV;
@@ -8100,6 +8108,18 @@ function _histDiff(card, before, whoOverride){
       else recordHistory(card, `alterou ${label}: ${_histVal(f,oldV)} → ${_histVal(f,newV)}`, whoOverride);
     }
   });
+  // tags[] — achado real (/monitorarbugs 2026-09-06, técnica 4 — o diff
+  // genérico acima comparava só HIST_FIELDS.tag, a 1ª tag do array,
+  // campo legado mantido só por compatibilidade com telas antigas):
+  // adicionar uma 2ª/3ª tag ou remover uma tag que não fosse a 1ª nunca
+  // gerava entrada de histórico nenhuma — nem via autosave nem via
+  // Salvar manual (os dois chamam esta mesma função). Mesma técnica
+  // Set-based já usada em _doBulkTagMulti()/_okrDiffStringArray() (OKR).
+  const beforeTagsSet=new Set(before.tags||[]), afterTagsSet=new Set(card.tags||[]);
+  const addedTags=(card.tags||[]).filter(t=>!beforeTagsSet.has(t));
+  const removedTags=(before.tags||[]).filter(t=>!afterTagsSet.has(t));
+  if(addedTags.length) recordHistory(card, `adicionou tag${addedTags.length>1?'s':''}: `+addedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
+  if(removedTags.length) recordHistory(card, `removeu tag${removedTags.length>1?'s':''}: `+removedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
   // checklist
   const nd=(card.checklist||[]).filter(i=>i&&i.done).length, nt=(card.checklist||[]).length;
   if(nt!==before._clTotal) recordHistory(card, `atualizou o checklist (${nd}/${nt})`, whoOverride);
