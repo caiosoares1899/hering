@@ -705,18 +705,32 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
   no `beforeunload`.
 
 ### Notificações in-app
-- `createNotif()` — L24244
+- `createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra)` —
+  L24244. `extra` (2026-09-06, opcional) — objeto mesclado no registro,
+  pra campo específico de 1 tipo só (ex.: `{meetingLink}` em `reuniao`)
+  sem virar campo fixo de todo notif.
 - `loadNotifs()` — L24505
 - `NOTIF_ICONS` — ícone por `type`; ganhou `okr_editado`/`okr_prazo`/
-  `okr_reuniao` (🎯) e `okr_agente` (🤖) em 2026-09-06.
-- `openNotif(notifId, cardId, squad, commentId, type, okrObjId)` —
-  navegação ao clicar. `type==='intake'` abre o painel de Intake;
-  `cardId` presente abre o card (mesmo squad ou redireciona `?squad=`);
-  4 tipos `okr_*` (2026-09-06, `/monitorarbugs` — antes só marcava como
-  lida e fechava o painel, sem navegar a lugar nenhum) redirecionam pra
-  `painel(-dev).html?okr=<okrObjId>` (`?okr=chat` pro `okr_agente`,
-  central não presa a 1 Objetivo) — ver `_okrTryOpenFromUrl()` na seção
-  OKR (painel-dev.html) acima.
+  `okr_reuniao` (🎯), `okr_agente` (🤖) em 2026-09-06, e
+  `recorrente`/`reuniao`/`gcal_pending`/`gcal_approved`/`reacao`/
+  `feedback`/`painel_broadcast` na mesma data (caíam no 🔔 genérico).
+  `due_soon` continua no mapa mas nenhum código emite esse tipo —
+  código morto inofensivo.
+- `openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLinkEnc)` —
+  navegação ao clicar. `type==='intake'` abre o painel de Intake; 4
+  tipos `okr_*` redirecionam pra `painel(-dev).html?okr=<okrObjId>`
+  (`?okr=chat` pro `okr_agente`) — ver `_okrTryOpenFromUrl()` na seção
+  OKR (painel-dev.html); `type==='feedback'` redireciona pra
+  `painel(-dev).html?tab=monitor` (ver `_painelTryOpenTabFromUrl()`,
+  seção Sino do painel); `type==='reuniao'` abre `meetingLink`
+  (`decodeURIComponent`, vem via `extra` do `createNotif()`) em nova
+  aba; `type==='gcal_pending'` chama `processGcalQueueForAdmin()`
+  direto (mesma ação do botão da toolbar). Todos os 3 últimos + os 4
+  `okr_*`: achados via `/monitorarbugs` em 2026-09-06 — antes só
+  marcavam como lida e fechavam o painel, sem navegar a lugar nenhum
+  (nenhum desses tipos tem `cardId`, e só `intake` tinha tratamento
+  especial pra isso). `cardId` presente (todo o resto): abre o card
+  (mesmo squad ou redireciona `?squad=`).
 - `checkDueNotifs()` — L24931 — due_today/due_overdue, 1x/dia
 - `parseMentions()` — L24739 — @menção em descrição/PO/checklist/comentário;
   `@todos` (`TODOS_MENTION_ENTRY`, 2026-09-01) notifica todos os membros do
@@ -1146,6 +1160,36 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 - L26531 D&D das colunas, L26600 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
+
+### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
+UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
+`CODE_MAP.md` de `kanban-dev.html`) — mesmo Firebase
+(`kanban/usuarios/{uid}/notificacoes`), visível só pro ADM
+(`_isAdmPainel()`), unifica notificações + lembretes próprios de squad
+(`_kind:'notif'`/`'lembrete'`). `loadPainelNotifs()` registra os
+listeners 1x; `_mergePainelNotifs(groupKey, items)` reconcilia por
+grupo (1 grupo por squad de lembretes + 1 de notificações) em
+`_painelNotifs`. Navegação ao clicar: `n.link` (existe, ex.:
+`type:'rascunho'`→`link:'pessoas'`) → `swPtab(n.link)`; senão
+`n.cardId && n.squad` → abre o card no board (`kanban(-dev).html?
+squad=...&opencard=...`). **`n.link` era descartado no mapeamento de
+`loadPainelNotifs()` até 2026-09-06** (`/monitorarbugs` — clicar em
+"rascunho aguardando revisão" nunca navegava, apesar do código já
+prometer isso nos dois lados) — corrigido incluindo `link:n.link||''`
+no `.map()`.
+- `_painelTryOpenTabFromUrl()` (2026-09-06) — deep-link genérico
+  `?tab=<id>`, chamado direto no `fb-ready` (não depende de nenhum
+  listener carregar dados antes — diferente de `_okrTryOpenFromUrl()`,
+  que espera `okrObjetivos`). Troca de aba só, sem abrir um registro
+  específico — usado pelo redirect de `openNotif()` (kanban-dev.html)
+  pra notificação de feedback (`?tab=monitor`).
+- `_restoreTab()` — **código morto** (achado incidental,
+  `/monitorarbugs` 2026-09-06): lê `localStorage('_painel_tab')` e
+  chamaria `swPtab()`, mas nunca é invocada em lugar nenhum — o painel
+  sempre abre na aba "Visão" (única com `.on` fixo no HTML), mesmo
+  `swPtab()` continuando a salvar a aba ativa a cada troca. Não
+  corrigido ainda (fora do escopo daquela rodada — era sobre clique não
+  navegar, isso é falta de persistência entre sessões).
 
 ### Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
 promovida pra prod v3.09 · painel; revisão de UI/UX + visual "glass"

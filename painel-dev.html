@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.26 · painel-dev</div>
+<div class="version">v3.27 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7686,7 +7686,7 @@ function loadPainelNotifs(){
     const val = snap.val()||{};
     const notifs = Object.values(val).filter(Boolean).map(n=>({
       _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
@@ -9350,9 +9350,21 @@ function _blockIfPainelViewer(){
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
 });
+// Deep-link genérico `?tab=<id>` — troca de aba ao carregar, usado pelo
+// redirect de kanban(-dev).html quando uma notificação sem registro
+// específico pra abrir (ex.: feedback do Mural) só precisa apontar pra
+// aba certa do painel — diferente de `?okr=<id>`, que abre um Objetivo
+// preciso (ver _okrTryOpenFromUrl()). Não depende de nenhum listener
+// carregar dados antes, então roda direto no fb-ready.
+function _painelTryOpenTabFromUrl(){
+  const tab = new URLSearchParams(location.search).get('tab');
+  if(tab && document.getElementById('ptab-'+tab)) swPtab(tab);
+}
+
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
   loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
+  _painelTryOpenTabFromUrl();
   loadOkr();
   loadPresence();
   loadAgentUsage();

@@ -2781,6 +2781,48 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.588-dev — 2026-09-06 — /monitorarbugs em TODAS as notificações: 3 achados reais (reunião, agenda pendente, feedback)
+
+Pedido explícito do usuário — "faz um /monitorarbugs em todas
+notificações" — depois da rodada anterior (só OKR). Mapeados TODOS os
+pontos de escrita em `kanban/usuarios/{uid}/notificacoes` (client e
+Cloud Functions) e cruzados contra `NOTIF_ICONS`/`openNotif()`. 3
+achados reais, mesma classe da rodada anterior (clicar não navega a
+lugar nenhum), todos confirmados com o usuário antes de implementar:
+
+1. **"🎥 Reunião em X min" não abria o link da reunião ao clicar no
+   sino.** A notificação NATIVA do navegador (`new Notification(...)`,
+   em `checkUpcomingMeetings()`) já tinha `n.onclick` abrindo
+   `ev.meetingLink` — mas a notificação IN-APP (sino) gravada em
+   paralelo nunca guardava esse link, e `openNotif()` não tinha branch
+   pra `type==='reuniao'`. Quem perdesse/dispensasse a notificação
+   nativa não tinha como reabrir o link a partir do sino. Fix:
+   `createNotif()` ganha um 8º parâmetro opcional `extra` (objeto,
+   mesclado no registro — usado aqui só pra `meetingLink`, sem virar
+   campo fixo pra todo mundo); `openNotif()` abre o link em nova aba.
+2. **"📅 Nova agenda aguardando aprovação" não fazia nada ao clicar.**
+   Só o botão da toolbar (badge `🔔 N agendas pendentes`) processava a
+   fila (`processGcalQueueForAdmin()`). Fix: clicar na notificação
+   dispara a mesma ação.
+3. **Notificação de feedback pro ADM (🐛/💡/❓, do Mural) não navegava
+   pra lugar nenhum.** O feedback vive na aba Monitor do painel
+   (`loadFeedback()`/`renderErrors()`), sem `cardId`. Fix: mesmo padrão
+   cross-page do OKR (PR anterior), mas com um contrato novo e mais
+   genérico — `?tab=<id>` (troca só de aba, sem abrir um registro
+   específico) — em vez de reusar `?okr=`, que é específico pra abrir 1
+   Objetivo.
+
+Achados menores, corrigidos de passagem: `NOTIF_ICONS` ganhou entradas
+pra `recorrente`/`reuniao`/`gcal_pending`/`gcal_approved`/`reacao`/
+`feedback`/`painel_broadcast` (caíam todos no 🔔 genérico antes).
+`due_soon` continua no mapa mas nunca é emitida por nenhum código —
+código morto inofensivo, não removido nesta rodada (fora do escopo
+"navegação", ver entrada de `painel-dev.html`).
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline (`braces
+-1, parens +1`). 15 cenários Playwright novos (6 de navegação + 9 de
+ícones), suite de backend 475/475 sem regressão.
+
 ### v8.30.587-dev — 2026-09-06 — /monitorarbugs no OKR bloco quinzenal: clicar numa notificação de OKR não levava a lugar nenhum
 
 Revisão dedicada da feature mais recente (`painel-dev.html` v3.25, bloco
@@ -12727,6 +12769,55 @@ só sugerindo texto.
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.27 · painel-dev — 2026-09-06 — /monitorarbugs em TODAS as notificações: sino do painel nunca navegava (bug desde que a feature nasceu) + deep-link genérico de aba
+
+Continuação da revisão de "todas as notificações" (ver entrada espelho
+em `kanban-dev.html` v8.30.588-dev pro lado que dispara redirect de
+reunião/agenda pendente/feedback). Achado principal deste lado —
+**mais sério que o do OKR na rodada anterior, porque não era uma
+lacuna, era uma feature JÁ IMPLEMENTADA que nunca funcionou**:
+
+1. **O sino PRÓPRIO do painel (`renderPainelNotifs()`, visível só pro
+   ADM — diferente do sino do kanban, são 2 UIs separadas lendo o MESMO
+   Firebase) nunca navegava pra lugar nenhum ao clicar numa notificação
+   de "rascunho aguardando revisão".** O código pra isso já existe dos
+   dois lados: quem cria a notificação grava `link:'pessoas'`
+   (`_seedComunicadoRascunhos`, com um comentário dizendo
+   "Notificações de rascunho navegam pra aba correta do painel" e um
+   toast que promete "→ aba Pessoas"), e `renderPainelNotifs()` já tem
+   o `onclick` certo (`swPtab(n.link)`) — mas o mapeamento em
+   `loadPainelNotifs()` (`.map(n=>({...}))`) descartava o campo `link`
+   ao transformar o registro cru do Firebase, então `n.link` chegava
+   sempre `undefined` no render. Resultado: desde que a feature de
+   rascunho existe, clicar na notificação no sino do painel nunca fez
+   nada — achado via técnica 3 (confrontar o comentário do código
+   contra o comportamento real). Fix: 1 linha, adiciona `link:n.link||''`
+   no mapeamento.
+2. **`?tab=<id>` — novo deep-link genérico** pro redirect
+   kanban→painel quando a notificação só precisa apontar pra uma ABA
+   (não um registro específico, diferente de `?okr=<id>`) —
+   `_painelTryOpenTabFromUrl()`, chamado direto no `fb-ready` (não
+   depende de nenhum listener carregar dados antes, diferente de
+   `_okrTryOpenFromUrl()`). Usado pela notificação de feedback (ver
+   entrada de `kanban-dev.html`).
+3. Achado incidental, fora do escopo desta rodada (documentado, não
+   corrigido): `_restoreTab()` — a função que restauraria a última aba
+   aberta via `localStorage` — está declarada mas **nunca é chamada em
+   lugar nenhum**; o painel sempre abre na aba "Visão" (a única com
+   classe `.on` fixa no HTML), mesmo o `swPtab()` continuando a salvar
+   a aba ativa a cada troca. Não mexido agora porque é um
+   comportamento diferente (falta de persistência entre sessões, não
+   "clique não navega") — registrado aqui pra não se perder.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline (`braces
+-1, parens -14`). 6 cenários Playwright novos (link do rascunho +
+deep-link de aba), suite de backend 475/475 sem regressão (nenhuma
+mudança em `functions/` nesta rodada).
+
+**O mesmo bug do achado 1 existe em `painel.html` (prod) — mesmo
+código, nunca foi corrigido lá. Promoção do fix pontual (só essa 1
+linha) tratada separadamente, ver entrada abaixo.**
 
 ### painel-dev.html v3.26 · painel-dev — 2026-09-06 — /monitorarbugs: notificação de OKR abre o Objetivo certo + limpeza de código morto
 
