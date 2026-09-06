@@ -140,6 +140,24 @@ detalhe dos 4 call sites.
   (mesma técnica de `_doBulkTagMulti()`/`_okrDiffStringArray()`), fora
   do loop genérico de `HIST_FIELDS` (que agora pula `'tag'`
   explicitamente).
+  **Visual rico com avatar (2026-09-06, pedido direto — "aquele
+  histórico que você criou pro OKR, com a fotinha da pessoa, dá pra
+  fazer isso no kanban também?")**: `recordHistory()` passa a gravar
+  `init` (de `window._currentUserInit`) em cada entrada — só quando é
+  edição humana de verdade (sem `whoOverride`; Automação/Agente Ágil
+  não têm pessoa nenhuma). `CARD_HIST_TIPOS`/`_histTipo(what)` — mesmo
+  espírito de `OKR_HIST_TIPOS` (ícone+cor por tipo, borda colorida),
+  mas classificado por regex em cima do texto de `what` em vez de um
+  campo `tipo` explícito por entrada (evita ter que tocar nos ~50 call
+  sites de `recordHistory()` — mesma técnica que `TIMELINE_FEED_COR`
+  já usava, só com mais tipos cobertos: criado/titulo/movido/impedido/
+  desimpedido/arquivado/tag/checklist/prioridade/responsavel/prazo/
+  duplicado/tempo/pin/campo). `_histAvatarHtml(h)` — foto real via
+  `init` → `_ownerAvatarHtml()` (mesmo componente do badge de
+  responsável); `HIST_BOT_AVATARS` dá um emoji dedicado (⚙️/🤖) pras
+  entradas de Automação/Agente Ágil/Supercard, que nunca têm `init`;
+  sem nenhum dos dois, cai nas iniciais do nome (mesmo fallback de
+  sempre). `.hist-dot` (CSS) removido — substituído pelo avatar.
 - `openCard()` — L12986
 - `openAgenteHotline()` — L12895 — card especial fixo por squad "🤖 Converse
   com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/
