@@ -257,6 +257,21 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   já conhecidos de uma tela (`openNotif`/`NOTIF_ICONS` são do kanban;
   o painel tem seu próprio `loadPainelNotifs`/`renderPainelNotifs`,
   quase invisível na 1ª rodada por causa disso).
+- **2026-09-06, avisos do Mural (pedido explícito, escopo nomeado)**: 2
+  achados. PR #766: (1) **severo** — comunicado "Insistente (reaparece
+  até expirar)" reabria sozinho ~400ms depois de dispensado, em loop,
+  pelo resto da sessão — `dismissComunicado()` reagenda
+  `_talvezMostrarComunicado()` em 400ms pra checar a fila, e o próprio
+  insistente sempre contava como "pendente" de novo mesmo recém-fechado
+  (`#comunicado-ov` só fecha via `dismissComunicado()`, sem
+  clique-fora — sem saída pra quem fosse atingido). Achado via técnica
+  3 (o que a opção promete na tela — "até EXPIRAR" — vs. o que o código
+  fazia — reabre 400ms depois de fechar). Fix: `_comunicadoDismissedSession`
+  (`Set` em memória, reseta a cada load de página) guarda ids
+  dispensados NA SESSÃO; (2) menor — `_ccTogglePrioridadeUI()`
+  desmarcava o checkbox Insistente ao trocar pra mural sem restaurar ao
+  voltar pra popup, perdendo o valor original em silêncio — corrigido
+  pra só desabilitar. 8 cenários Playwright.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
