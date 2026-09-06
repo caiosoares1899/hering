@@ -2782,7 +2782,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.25 · painel</div>
+<div class="version">v3.26 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7612,7 +7612,7 @@ function loadPainelNotifs(){
     const val = snap.val()||{};
     const notifs = Object.values(val).filter(Boolean).map(n=>({
       _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
