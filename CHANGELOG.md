@@ -13086,6 +13086,34 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.30 · painel-dev — 2026-09-06 — /monitorarbugs no vínculo de cards do OKR: badge sumia quando a tag OKR não era a 1ª do card
+
+Pedido genérico — "roda mais um /monitorarbugs". Escolhida a "Vínculo
+de cards" do OKR (`_okrCardSearchResults()`/`_okrCardLinkAdd/Remove()`)
+por ser explicitamente modelada num padrão já existente (comentário do
+código: "mesmo padrão de `notaSearchCards()`/`notaAddCardLink()` do
+kanban-dev.html") e nunca ter tido uma rodada própria da skill —
+comparação direta contra o original, técnica 2.
+
+1. **Detecção de "card é OKR" olhava só `card.tag` (1ª tag, campo
+   legado), nunca `card.tags[]` inteiro** — mesma classe de bug do PR
+   #770 (`_histDiff()` no kanban-dev.html), desta vez em 4 lugares de
+   `painel-dev.html`, todos com a mesma lógica copiada:
+   - `_okrCardSearchResults()`: um card com a tag OKR na 2ª/3ª posição
+     NUNCA aparecia na busca pra vincular a um Objetivo, mesmo já
+     mostrando o 🎯 no board (kanban usa `getCardTags()`, array
+     completo, na L10432).
+   - `renderOKR()`: a própria lista "🎯 Cards do board com badge OKR"
+     da aba OKR sumia com esses cards.
+   - Agregador "OKR por coluna" dos Insights: subcontava.
+   - `openPcModal()` (o modal que "🔗 Cards vinculados" abre ao
+     clicar num card já linkado): abria SEM o badge 🎯, mesmo o card
+     já estando vinculado ao Objetivo — o caso mais visível, porque
+     acontece bem dentro do próprio fluxo de vínculo.
+   Fix: os 4 usam `_pGetCardTags(card)` (helper que já existia,
+   L3275 — equivalente ao `getCardTags()` do kanban) pra checar TODAS
+   as tags do card, não só a 1ª.
+
 ### painel-dev.html v3.29 · painel-dev — 2026-09-06 — /monitorarbugs nos históricos: arquivar um Marco não deixava rastro nenhum
 
 Pedido explícito, escopo nomeado — "nos históricos". Comparados os 2

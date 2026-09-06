@@ -335,6 +335,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   junto (mesma causa raiz): 10 frases de recorrência/agendamento/
   arquivamento automático/reatribuição de responsável/ações de
   Automação sem regex próprio, caindo no ícone genérico ✏️.
+- **2026-09-06, OKR — vínculo de cards (pedido genérico, "roda mais um
+  /monitorarbugs" — área escolhida por ser explicitamente modelada num
+  padrão já existente e nunca ter tido rodada própria)**: 1 achado, 4
+  call sites. PR #779. `_okrCardSearchResults()`, `renderOKR()`
+  (lista "🎯 Cards do board com badge OKR"), o agregador "OKR por
+  coluna" dos Insights, e o badge dentro de `openPcModal()` (o modal
+  que "🔗 Cards vinculados" abre) detectavam "card é OKR" olhando só
+  `card.tag` (1ª tag, campo legado), nunca `card.tags[]` inteiro —
+  mesma classe de bug do PR #770 (`_histDiff()`, kanban-dev.html),
+  copiada 4 vezes em painel-dev.html. Achado via técnica 2 (comparado
+  contra `getCardTags()`/`isOKR_` do kanban-dev.html, a fonte de
+  verdade — o próprio comentário do código já dizia "mesmo padrão de
+  notaSearchCards()/notaAddCardLink() do kanban-dev.html", mas o
+  padrão copiado usava a versão ANTIGA/legada da checagem de tag).
+  Fix: os 4 usam `_pGetCardTags()` (helper que já existia em
+  painel-dev.html, equivalente ao `getCardTags()` do kanban). 7 casos
+  testados isoladamente contra a lógica de detecção.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

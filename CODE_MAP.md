@@ -1595,6 +1595,25 @@ v3.19 · painel-dev pro racional completo.
   `_okrCardSearchResults(query)` (só cards `isOKR===true`),
   `_okrCardLinkAdd/Remove()`, `_okrCardLinksHtml(podeEditar)` — modo
   leitura esconde busca/botão de desvincular.
+  **Achado real (2026-09-06, `/monitorarbugs`, técnica 2 — comparar
+  contra `getCardTags()`/`isOKR_` do kanban-dev.html, L10373/L10432,
+  a fonte de verdade de "esse card tem badge 🎯 OKR no board")**: 4
+  lugares em painel-dev.html detectavam "card é OKR" olhando só
+  `card.tag` (campo legado, só a 1ª tag) — nunca `card.tags[]`
+  inteiro. Um card com a tag OKR na 2ª/3ª posição mostrava o 🎯 no
+  board (kanban usa `getCardTags()`, array completo) mas sumia dos 4
+  lugares: `_okrCardSearchResults()` (busca pra vincular — o card nem
+  aparecia pra ser linkado), `renderOKR()` (a própria lista "🎯 Cards
+  do board com badge OKR" da aba), o agregador "OKR por coluna" dos
+  Insights (subcontava), e o badge dentro de `openPcModal()` (modal
+  aberto direto de "🔗 Cards vinculados" de um Objetivo — o card
+  abria sem o badge 🎯, mesmo já vinculado). Mesma classe de bug do
+  PR #770 (`_histDiff()` só rastreava `card.tag`, kanban-dev.html),
+  desta vez espalhada em 4 call sites de outro arquivo, todos com a
+  mesma lógica copiada. Fix: os 4 usam `_pGetCardTags(card)` (L3275,
+  já existia, equivalente ao `getCardTags()` do kanban) pra checar
+  TODAS as tags, não só a 1ª. 7 casos testados isoladamente contra a
+  lógica de detecção, todos corretos. PR #779.
 - **Tags gerenciáveis** — só nível Objetivo (decisão do usuário: Marco
   continua com texto livre, escalas diferentes). Nó novo
   `kanban/okr/tags/{id}={label,colorIdx}` (`colorIdx` indexa
