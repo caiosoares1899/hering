@@ -18,6 +18,51 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.592 — 2026-09-06 · Promove pra prod — 📜 Histórico do card com avatar/foto, navegação de notificações corrigida (OKR/reunião/agenda/feedback), tags no histórico e Mural sem loop
+
+Promove pra produção o lote v8.30.587-dev → v8.30.592-dev de
+`kanban-dev.html` — seis rodadas de `/monitorarbugs` seguidas, cada uma
+com escopo próprio, mais a feature de visual rico no 📜 Histórico:
+
+- **📜 Histórico do card com avatar real, ícone e cor por tipo**
+  (v8.30.591-dev): mesmo visual "timeline de rede social" que já existia
+  no OKR (`painel-dev.html`) — quem editou aparece com a foto de
+  verdade (ou iniciais, sem foto), e cada entrada ganha um ícone + borda
+  colorida conforme o tipo de mudança (movido, tag, prioridade, prazo,
+  impedimento, checklist...). Automação/Agente Ágil/Supercard ganham
+  avatar próprio (⚙️/🤖) em vez de tentar mostrar uma foto que não existe.
+- **Fix: avatar do Agente Ágil virava iniciais garbled ("AÁ")**
+  (v8.30.592-dev): achado por print do usuário logo depois do item
+  acima ir ao ar — o Agente Ágil mais antigo (que grava histórico direto
+  pelo servidor) não estava enviando a informação que o avatar novo
+  precisa; corrigido nos 5 pontos que gravam histórico do lado do
+  servidor. Entradas gravadas antes deste fix continuam com iniciais
+  (não dá pra corrigir retroativamente); só as novas mostram o ícone certo.
+- **Fix: adicionar/remover uma 2ª ou 3ª tag não aparecia no Histórico**
+  (v8.30.590-dev): só a troca da 1ª tag do card gerava entrada — mudar
+  qualquer outra tag (adicionar, remover, seja pelo autosave ou pelo
+  botão Salvar) ficava silenciosa. Corrigido pra rastrear a lista de
+  tags inteira, não só a primeira.
+- **Fix: comunicado "Insistente" do Mural travava num loop de popup**
+  (v8.30.589-dev): um comunicado marcado pra reaparecer até expirar
+  reabria sozinho ~400ms depois de fechado, repetidamente, sem jeito de
+  dispensar pelo resto da sessão. Corrigido — agora só reaparece numa
+  sessão nova, como a opção sempre prometeu.
+- **Fix: notificações de reunião, agenda pendente e feedback não levavam
+  a lugar nenhum ao clicar** (v8.30.588-dev): clicar em "🎥 Reunião em X
+  min" agora abre o link da reunião; "📅 Nova agenda aguardando
+  aprovação" processa a fila; feedback do Mural pro ADM abre a aba
+  Monitor do painel certa.
+- **Fix: notificação de OKR não navegava pra lugar nenhum** (v8.30.587-dev):
+  clicar numa notificação de Objetivo/Marco do OKR agora abre o
+  Objetivo certo no painel, em vez de só marcar como lida.
+
+Checks de rotina em todo o lote: `node --check` OK, balanço de
+chaves/parênteses do arquivo inteiro consistente com `kanban-dev.html`
+(fonte já validada). Suites de backend e Playwright das 6 rodadas sem
+regressão — ver as entradas de dev correspondentes acima pra detalhe
+por rodada.
+
 ### v8.30.586 — 2026-09-04 · Promove pra prod — 📜 Histórico de período, 4 tipos de marco novos, 12 bugs reais corrigidos
 
 Promove pra produção o lote v8.30.575-dev → v8.30.586-dev de
