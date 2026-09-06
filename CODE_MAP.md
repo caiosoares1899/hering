@@ -705,8 +705,32 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
   no `beforeunload`.
 
 ### Notificações in-app
-- `createNotif()` — L24244
+- `createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra)` —
+  L24244. `extra` (2026-09-06, opcional) — objeto mesclado no registro,
+  pra campo específico de 1 tipo só (ex.: `{meetingLink}` em `reuniao`)
+  sem virar campo fixo de todo notif.
 - `loadNotifs()` — L24505
+- `NOTIF_ICONS` — ícone por `type`; ganhou `okr_editado`/`okr_prazo`/
+  `okr_reuniao` (🎯), `okr_agente` (🤖) em 2026-09-06, e
+  `recorrente`/`reuniao`/`gcal_pending`/`gcal_approved`/`reacao`/
+  `feedback`/`painel_broadcast` na mesma data (caíam no 🔔 genérico).
+  `due_soon` continua no mapa mas nenhum código emite esse tipo —
+  código morto inofensivo.
+- `openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLinkEnc)` —
+  navegação ao clicar. `type==='intake'` abre o painel de Intake; 4
+  tipos `okr_*` redirecionam pra `painel(-dev).html?okr=<okrObjId>`
+  (`?okr=chat` pro `okr_agente`) — ver `_okrTryOpenFromUrl()` na seção
+  OKR (painel-dev.html); `type==='feedback'` redireciona pra
+  `painel(-dev).html?tab=monitor` (ver `_painelTryOpenTabFromUrl()`,
+  seção Sino do painel); `type==='reuniao'` abre `meetingLink`
+  (`decodeURIComponent`, vem via `extra` do `createNotif()`) em nova
+  aba; `type==='gcal_pending'` chama `processGcalQueueForAdmin()`
+  direto (mesma ação do botão da toolbar). Todos os 3 últimos + os 4
+  `okr_*`: achados via `/monitorarbugs` em 2026-09-06 — antes só
+  marcavam como lida e fechavam o painel, sem navegar a lugar nenhum
+  (nenhum desses tipos tem `cardId`, e só `intake` tinha tratamento
+  especial pra isso). `cardId` presente (todo o resto): abre o card
+  (mesmo squad ou redireciona `?squad=`).
 - `checkDueNotifs()` — L24931 — due_today/due_overdue, 1x/dia
 - `parseMentions()` — L24739 — @menção em descrição/PO/checklist/comentário;
   `@todos` (`TODOS_MENTION_ENTRY`, 2026-09-01) notifica todos os membros do
@@ -1137,6 +1161,36 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
+### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
+UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
+`CODE_MAP.md` de `kanban-dev.html`) — mesmo Firebase
+(`kanban/usuarios/{uid}/notificacoes`), visível só pro ADM
+(`_isAdmPainel()`), unifica notificações + lembretes próprios de squad
+(`_kind:'notif'`/`'lembrete'`). `loadPainelNotifs()` registra os
+listeners 1x; `_mergePainelNotifs(groupKey, items)` reconcilia por
+grupo (1 grupo por squad de lembretes + 1 de notificações) em
+`_painelNotifs`. Navegação ao clicar: `n.link` (existe, ex.:
+`type:'rascunho'`→`link:'pessoas'`) → `swPtab(n.link)`; senão
+`n.cardId && n.squad` → abre o card no board (`kanban(-dev).html?
+squad=...&opencard=...`). **`n.link` era descartado no mapeamento de
+`loadPainelNotifs()` até 2026-09-06** (`/monitorarbugs` — clicar em
+"rascunho aguardando revisão" nunca navegava, apesar do código já
+prometer isso nos dois lados) — corrigido incluindo `link:n.link||''`
+no `.map()`.
+- `_painelTryOpenTabFromUrl()` (2026-09-06) — deep-link genérico
+  `?tab=<id>`, chamado direto no `fb-ready` (não depende de nenhum
+  listener carregar dados antes — diferente de `_okrTryOpenFromUrl()`,
+  que espera `okrObjetivos`). Troca de aba só, sem abrir um registro
+  específico — usado pelo redirect de `openNotif()` (kanban-dev.html)
+  pra notificação de feedback (`?tab=monitor`).
+- `_restoreTab()` — **código morto** (achado incidental,
+  `/monitorarbugs` 2026-09-06): lê `localStorage('_painel_tab')` e
+  chamaria `swPtab()`, mas nunca é invocada em lugar nenhum — o painel
+  sempre abre na aba "Visão" (única com `.on` fixo no HTML), mesmo
+  `swPtab()` continuando a salvar a aba ativa a cada troca. Não
+  corrigido ainda (fora do escopo daquela rodada — era sobre clique não
+  navegar, isso é falta de persistência entre sessões).
+
 ### Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
 promovida pra prod v3.09 · painel; revisão de UI/UX + visual "glass"
 promovida pra prod v3.10 · painel)
@@ -1362,19 +1416,33 @@ v3.19 · painel-dev pro racional completo.
   `createNotif()` (kanban-dev.html) usa (`kanban/usuarios/{uid}/
   notificacoes`) — aparece no sininho de qualquer board sem mudar nada
   lá. Prazo de marco/véspera de reunião precisam de scan diário — ver
-  `functions/okr/dailyScan.js` abaixo.
+  `functions/okr/dailyScan.js` abaixo. **Clicar numa notificação de OKR
+  no sino do kanban** navega pra cá via `?okr=<id>`/`?okr=chat` — ver
+  `_okrTryOpenFromUrl()` logo abaixo e `openNotif()` em kanban-dev.html
+  (seção Notificações in-app).
 - **Bloco quinzenal** (substitui os antigos pickers de Google Agenda
   `gcalPeriodoEventId`/`gcalReuniaoEventId`, removidos em 2026-09-05 —
   cada ocorrência de reunião recorrente tinha um ID de evento diferente,
   então um campo único nunca representava "essa reunião se repete a
   cada 2 semanas"): `OKR_BLOCO_AREAS`/`OKR_BLOCO_ANCHOR` (constantes),
-  `_okrBlocoDaArea(areaId)`, `_okrBlocoNaData(dataStr)`,
-  `_okrProximaReuniaoDoBloco(bloco, hojeStr)`, `_okrBlocoInfoHtml(areaId)`
-  — mostra bloco/gerências/próxima reunião no lugar dos pickers antigos,
-  em `renderOkrObjBody()`. Fórmula espelhada em
-  `functions/okr/dailyScan.js` (`OKR_BLOCO_AREAS`/`blocoDaArea`/
-  `ehDiaDeReuniao`) — mudar a fórmula aqui exige mudar lá também
-  (comentário cruzado nos dois arquivos).
+  `_okrBlocoDaArea(areaId)`, `_okrProximaReuniaoDoBloco(bloco, hojeStr)`,
+  `_okrBlocoInfoHtml(areaId)` — mostra bloco/gerências/próxima reunião
+  no lugar dos pickers antigos, em `renderOkrObjBody()`. Fórmula
+  espelhada em `functions/okr/dailyScan.js` (`OKR_BLOCO_AREAS`/
+  `blocoDaArea`/`ehDiaDeReuniao`) — mudar a fórmula aqui exige mudar lá
+  também (comentário cruzado nos dois arquivos). (`_okrBlocoNaData()`,
+  mirror não usado por nenhuma tela, removido em 2026-09-06 —
+  `/monitorarbugs`, código morto.)
+- **`_okrTryOpenFromUrl()`** (2026-09-06, `/monitorarbugs`) — deep-link
+  `?okr=<id>`/`?okr=chat`, chamado dentro do `onValue` de
+  `kanban/okr/objetivos` (`loadOkr()`) assim que `okrObjetivos` tem o
+  1º snapshot completo. Troca pra aba OKR (`swPtab('okr')`) e abre o
+  Objetivo (`openOkrObjetivo(id)`) ou a Central Agente Ágil
+  (`_okrToggleAgenteChat()`); Objetivo não encontrado → toast, mesmo
+  padrão do card não encontrado. Guard `_okrUrlOpenAttempted` evita
+  reabrir a cada mudança subsequente no nó. Existe porque antes disso
+  clicar numa notificação de OKR não levava a lugar nenhum —
+  `openNotif()` (kanban-dev.html) só sabia navegar por `cardId`.
 - Achado (mesma classe do já documentado acima pra
   `_okrSyncObjDraftFromDom()`): `_okrTagCriar()` e as novas seções
   também re-renderizam o modal inteiro — todas as novas mutações
@@ -1999,8 +2067,8 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   semanas"; o bloco agora é 100% derivado de `areaId` (mapeamento 1:1
   com `OKR_GERENCIAS`), zero input manual. Fórmula espelhada em
   `painel-dev.html` (`OKR_BLOCO_AREAS`/`_okrBlocoDaArea`/
-  `_okrBlocoNaData`/`_okrBlocoInfoHtml`, ver seção OKR acima) — mudar
-  aqui exige mudar lá também (comentário cruzado nos dois arquivos).
+  `_okrProximaReuniaoDoBloco`/`_okrBlocoInfoHtml`, ver seção OKR acima) —
+  mudar aqui exige mudar lá também (comentário cruzado nos dois arquivos).
   Escreve em `kanban/usuarios/{uid}/notificacoes`, mesmo path/formato de
   `createNotif()` (kanban-dev.html), reusando o tipo `okr_reuniao`
   (nenhuma mudança em `PUSH_TYPES` foi necessária). `runOkrDailyScan(db,

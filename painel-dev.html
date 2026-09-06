@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.25 · painel-dev</div>
+<div class="version">v3.27 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4671,19 +4671,19 @@ const OKR_BLOCO_AREAS = { 1: ['geral','comercial','performance','dadosia'], 2: [
 // partir daí os blocos alternam a cada 7 dias.
 const OKR_BLOCO_ANCHOR = '2026-09-03';
 function _okrBlocoDaArea(areaId){ return OKR_BLOCO_AREAS[1].includes(areaId) ? 1 : 2; }
-function _okrBlocoNaData(dataStr){
-  const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
-  const alvo = new Date(String(dataStr).slice(0,10)+'T00:00:00');
-  const diasDesde = Math.floor((alvo-anchor)/86400000);
-  const periodo = Math.floor(diasDesde/7);
-  const paridade = ((periodo%2)+2)%2; // normaliza resto negativo (datas antes do anchor)
-  return paridade===0 ? 1 : 2;
-}
 // Próxima quinta-feira (>= hoje) em que o bloco informado se reúne.
 function _okrProximaReuniaoDoBloco(bloco, hojeStr){
   const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
   const hoje = new Date(String(hojeStr).slice(0,10)+'T00:00:00');
-  let periodo = Math.floor((hoje-anchor)/86400000/7);
+  // Math.round na contagem de DIAS (não no /7 direto) — mesmo padrão do
+  // resto do app (ver kanban-dev.html/dailyScan.js) — guarda contra o
+  // diff de ms não ser múltiplo exato de 1 dia num horário de verão do
+  // fuso do dispositivo (Brasil não tem DST desde 2019, mas o navegador
+  // pode estar configurado noutro fuso). Floor só depois, na divisão por
+  // 7: precisa continuar arredondando pra BAIXO (nunca pra cima) pra não
+  // pular o período de `hoje` — o loop abaixo só varre pra frente.
+  const diasDesdeAnchor = Math.round((hoje-anchor)/86400000);
+  let periodo = Math.floor(diasDesdeAnchor/7);
   for(let i=0;i<4;i++){
     const quinta = new Date(anchor.getTime() + periodo*7*86400000);
     const paridade = ((periodo%2)+2)%2;
@@ -4745,12 +4745,39 @@ function _okrToggleArquivados(){
 }
 let _okrLoaded = false;
 
+// Deep-link `?okr=<id>` (Objetivo) ou `?okr=chat` (Central Agente Ágil) —
+// usado pelo redirect de kanban.html/kanban-dev.html quando alguém clica
+// numa notificação de OKR (okr_editado/okr_prazo/okr_reuniao/okr_agente).
+// Antes disso, clicar numa dessas notificações só marcava como lida e
+// fechava o painel de notificações sem levar a pessoa a lugar nenhum —
+// achado via /monitorarbugs, 2026-09-06 (openNotif() só sabia navegar por
+// cardId, que notificação de OKR nunca tem). Roda dentro do onValue de
+// kanban/okr/objetivos porque essa é a 1ª vez que okrObjetivos tem o
+// snapshot completo — diferente do card (múltiplos listeners populando
+// progressivamente, por isso o retry lá), aqui 1 disparo já basta.
+// `_okrUrlOpenAttempted` evita reabrir a cada mudança subsequente no nó.
+let _okrUrlOpenAttempted = false;
+function _okrTryOpenFromUrl(){
+  if(_okrUrlOpenAttempted) return;
+  const alvo = new URLSearchParams(location.search).get('okr');
+  if(!alvo) return;
+  _okrUrlOpenAttempted = true;
+  swPtab('okr');
+  if(alvo==='chat'){
+    if(!_okrShowAgenteChat) _okrToggleAgenteChat();
+    return;
+  }
+  if(okrObjetivos[alvo]) openOkrObjetivo(alvo);
+  else showToast('⚠ Esse Objetivo não foi encontrado — pode ter sido excluído ou arquivado.');
+}
+
 function loadOkr(){
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{
     okrObjetivos = snap.val() || {};
     _okrLoaded = true;
     renderOkrObjetivos();
     if(_okrShowHistorico) renderOkrHistorico();
+    _okrTryOpenFromUrl();
   });
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{
     okrMarcos = snap.val() || {};
@@ -7659,7 +7686,7 @@ function loadPainelNotifs(){
     const val = snap.val()||{};
     const notifs = Object.values(val).filter(Boolean).map(n=>({
       _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
@@ -9323,9 +9350,21 @@ function _blockIfPainelViewer(){
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
 });
+// Deep-link genérico `?tab=<id>` — troca de aba ao carregar, usado pelo
+// redirect de kanban(-dev).html quando uma notificação sem registro
+// específico pra abrir (ex.: feedback do Mural) só precisa apontar pra
+// aba certa do painel — diferente de `?okr=<id>`, que abre um Objetivo
+// preciso (ver _okrTryOpenFromUrl()). Não depende de nenhum listener
+// carregar dados antes, então roda direto no fb-ready.
+function _painelTryOpenTabFromUrl(){
+  const tab = new URLSearchParams(location.search).get('tab');
+  if(tab && document.getElementById('ptab-'+tab)) swPtab(tab);
+}
+
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
   loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
+  _painelTryOpenTabFromUrl();
   loadOkr();
   loadPresence();
   loadAgentUsage();
