@@ -84,7 +84,15 @@
    <script>), persistido em localStorage sob a MESMA chave que o kanban
    usa (mare_theme) — como as duas páginas ficam no mesmo domínio
    (GitHub Pages), a preferência de tema já escolhida no board também
-   já vale aqui, sem precisar escolher de novo. */
+   já vale aqui, sem precisar escolher de novo.
+   2026-09-03: 1ª rodada (fundação) — cobre as variáveis de :root e o
+   fundo .ocean, que é o que a maior parte da UI (.btn/.badge/.card...)
+   já usa via var(...). Vários painéis/modais/dropdowns do painel ainda
+   têm cor de superfície ESCURA hardcoded (não usam var(--glass)) —
+   ficam incorretos (escuros) no tema claro até uma rodada de contraste
+   dedicada, mesmo processo iterativo que o kanban.html precisou (2+
+   rodadas de ajuste fino de contraste antes de fechar a paleta). Não é
+   regressão, é o próximo passo natural desta feature. */
 :root[data-theme="light"]{
   --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
   --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#33D6D0;
@@ -97,7 +105,7 @@
              radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),
              linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
 }
-/* 🌴 Vice City — easter egg, mesma paleta/mecanismo do kanban.html
+/* 🌴 Vice City — easter egg, mesma paleta/mecanismo do kanban-dev.html
    (piada com o trailer de GTA 6: céu lavanda, rosa/malva, horizonte
    pêssego/laranja, sombras em roxo-vinho — nunca azul-preto genérico).
    Só entra segurando o botão de tema por VICE_LONGPRESS_MS (ver
@@ -169,6 +177,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .hd-title{font-family:"DM Sans",sans-serif;font-size:20px;font-weight:600;}
 .hd-sub{font-size:11px;color:var(--txt3);}
 .badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
+/* 🌴 Vice City: var(--cyan) vira o rosa-poeira #B36B6E nesse tema — tom
+   médio que perde força contra o fundo também rosa/mauve (var(--glass)),
+   número/contagem ilegível dentro do badge (achado real, print do
+   usuário). Mesmo diagnóstico e mesma correção já aplicados a
+   .hd-badge/.col-cnt no kanban-dev.html: var(--txt) (branco) resolve sem
+   precisar !important (badge não tem estilo inline por cima). */
 [data-theme="vice"] .badge{color:var(--txt);}
 .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;font-size:12px;
   font-family:"DM Sans",sans-serif;border:1px solid var(--glass-b);border-radius:var(--r);
@@ -574,6 +588,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 .err-filters::-webkit-scrollbar{display:none;}
 
+/* Achado real (usuário, print em modo claro E Vice City: "vc esqueceu de
+   mexer nessa tela do histórico"): fundo/borda hardcoded (rgba fixo, não
+   var(...)) — mesma classe de bug já documentada no topo do arquivo pra
+   "vários painéis/modais/dropdowns do painel" (rodada de contraste do
+   tema claro ainda incompleta). .pc-modal-ov/.pc-modal são usados tanto
+   pelo modal de card quanto pelo 📜 Histórico (mesmas classes) — corrige
+   os dois de uma vez. .login-ov (acima) já fazia certo
+   (rgba(var(--deep-rgb),...)), usado aqui de referência. */
 .pc-modal-ov{position:fixed;inset:0;z-index:200;background:rgba(var(--deep-rgb),.88);
   backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .pc-modal-ov.open{display:flex;}
@@ -1289,10 +1311,10 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </style>
 <script>
 // Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
-// escuro (padrão) seguido de troca pro claro/vice assim que o JS
-// principal carregasse lá embaixo. Mesma técnica/mesma chave (mare_theme)
-// do kanban.html — try/catch de segurança (modo privado antigo do Safari
-// pode bloquear localStorage).
+// escuro (padrão) seguido de troca pro claro assim que o JS principal
+// carregasse lá embaixo. Mesma técnica/mesma chave (mare_theme) do
+// kanban-dev.html — try/catch de segurança (modo privado antigo do
+// Safari pode bloquear localStorage).
 (function(){
   try{
     const t=localStorage.getItem('mare_theme');
@@ -1430,9 +1452,11 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="sec-title">⚠️ Cards com risco <span class="badge" id="risco-count">0</span></div>
     <div id="risco-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Sem cards com riscos.</div></div>
 
-    <!-- 🎯 Cards OKR (badge no board) — mudou de casa: virou uma seção
-         dentro da aba própria "🎯 OKR" (ver ppane-okr abaixo), junto com a
-         estrutura nova de Objetivos/Marcos. -->
+    <!-- 🎯 Cards OKR (badge no board) — mudou de casa 2026-09-04: virou uma
+         seção dentro da aba própria "🎯 OKR" (ver ppane-okr abaixo), junto
+         com a estrutura nova de Objetivos/Marcos. renderOKR() continua a
+         mesma função, só o container #okr-list/#okr-count/#okr-section-title
+         que mudou de pane. -->
 
     <!-- INSIGHTS AGREGADOS — respeita o mesmo filtro de squad/gerência das seções
          acima (squadVisible()), então um gerente vendo só sua gerência enxerga
@@ -2758,7 +2782,8 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 <!-- 🎯 Modal de Objetivo (OKR) — reusa .pc-modal-ov/.pc-modal (já theme-safe
-     nos 3 temas), conteúdo montado por renderOkrObjBody() em #okr-obj-body. -->
+     nos 3 temas, ver PR #733), conteúdo montado por renderOkrObjBody() em
+     #okr-obj-body. -->
 <div class="pc-modal-ov" id="okr-obj-ov">
   <div class="pc-modal" style="width:min(680px,94vw);">
     <div class="pc-modal-hd">
@@ -2782,7 +2807,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.26 · painel</div>
+<div class="version">v3.29 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2842,13 +2867,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 <script>
 // ═══════════════════════════════════════════════════════════════════
 // 🌙☀️🌴 Tema claro/escuro/Vice City — mesma mecânica do
-// kanban.html (ver _currentTheme()/toggleTheme()/toggleViceCity() lá).
-// Mesma chave de localStorage (mare_theme) que o kanban usa — as duas
-// páginas ficam no mesmo domínio, então o tema já escolhido no board
-// também já vale aqui na primeira visita ao painel. Porta reduzida: sem
-// a variante B do claro (duplo-clique) do kanban — o painel não tem
-// esse recurso, então não precisa da lógica de diferenciar clique único
-// de duplo-clique no botão.
+// kanban-dev.html (ver _currentTheme()/toggleTheme()/toggleViceCity()
+// lá). Mesma chave de localStorage (mare_theme) que o kanban usa — as
+// duas páginas ficam no mesmo domínio, então o tema já escolhido no
+// board também já vale aqui na primeira visita ao painel. Porta
+// reduzida: sem a variante B do claro (duplo-clique) do kanban — o
+// painel não tem esse recurso, então não precisa da lógica de
+// diferenciar clique único de duplo-clique no botão.
 function _currentTheme(){
   const t=document.documentElement.getAttribute('data-theme');
   if(t==='vice') return 'vice';
@@ -2875,7 +2900,7 @@ function toggleTheme(){
   _applyThemeButtonIcon();
 }
 // 🌴 Vice City — easter egg interno, mesmo mecanismo/paleta do
-// kanban.html (ver comentário no CSS [data-theme="vice"] pra
+// kanban-dev.html (ver comentário no CSS [data-theme="vice"] pra
 // contexto/referência visual). Só entra segurando o botão de tema por
 // VICE_LONGPRESS_MS sem soltar — de propósito não é clique normal, pra
 // não competir com toggleTheme() nem aparecer sozinho pra quem não
@@ -2914,20 +2939,27 @@ function exitViceCity(){
 }
 _applyThemeButtonIcon();
 // ═══════════════════════════════════════════════════════════════════
-// 🔬 DEBUG: medidor de bytes por fetch (diagnóstico de download do Painel)
+// 🔬 DEBUG: medidor de bytes por listener (diagnóstico de download)
 // ───────────────────────────────────────────────────────────────────
 // SEMPRE LIGADO, automaticamente. Mede o tamanho (via Blob) de CADA
-// payload recebido pelo Painel — tanto onValue (listeners em tempo
-// real) quanto get() (buscas avulsas de _pollSquadDados/loadAll) — e
-// acumula por "path". A cada 5 minutos escreve um resumo pequeno em
-// kanban/painel/_debug_bytes_log/{hora} (permitido pelas regras atuais,
-// que já liberam leitura/escrita de kanban/painel pra @ciahering.com.br).
+// payload recebido — onValue (listeners em tempo real) e get() (buscas
+// avulsas) — e acumula por "path". A cada 5 minutos escreve um resumo
+// pequeno em kanban/painel/_debug_bytes_log/{hora}. Além do log
+// horário (fino, vida de 7 dias, auto-limpo), mantém também um rollup
+// DIÁRIO (grosso, retido por 90 dias) em kanban/painel/_debug_bytes_daily —
+// sem ele não dava pra comparar "esse mês" com "mês passado". painel-dev.html
+// usa um log próprio (sufixo _dev), pra sessão de dev/teste nunca inflar
+// essas métricas de produção.
 // Uso no console (F12), a qualquer momento:
-//   debugBytesReport()      → tabela do que ESTA aba recebeu até agora
-//   debugBytesRemote()      → agregado de todas as sessões nas últimas 24h
-//   debugBytesRemote(72)    → agregado das últimas 72h, por path e por hora
-//   debugBytesOff()         → desliga só nesta aba
+//   debugBytesReport()        → tabela do que ESTA aba recebeu até agora
+//   debugBytesRemote()        → agregado de todas as sessões nas últimas 24h
+//   debugBytesRemote(72)      → agregado das últimas 72h, por path e por hora
+//   debugBytesHistory(30)     → rollup diário dos últimos 30 dias, por path e por dia
+//   debugBytesExportCSV(30)   → mesmos dados de debugBytesHistory(), em CSV pra colar numa planilha
+//   debugBytesOff()           → desliga só nesta aba
 const _dbg = { on:true, stats:{}, flushTimer:null, cleaned:false };
+const _DBG_LOG_PATH = 'kanban/painel/_debug_bytes_log';
+const _DBG_DAILY_PATH = 'kanban/painel/_debug_bytes_daily';
 function _dbgSize(val){
   try{ return val==null ? 0 : new Blob([JSON.stringify(val)]).size; }
   catch(e){ try{ return JSON.stringify(val||'').length; }catch(e2){ return 0; } }
@@ -2938,37 +2970,55 @@ function _dbgTrack(pathKey, val){
   const s=_dbg.stats[pathKey]||(_dbg.stats[pathKey]={count:0,bytes:0,lastAt:0,lastBytes:0});
   s.count++; s.bytes+=bytes; s.lastAt=Date.now(); s.lastBytes=bytes;
 }
-function _dbgFlush(){
-  if(!_dbg.on || !window._fbReady) return;
-  const entries=Object.entries(_dbg.stats);
-  if(!entries.length) return;
-  const d=new Date();
-  const hourKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'-'+String(d.getHours()).padStart(2,'0');
-  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
-  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
-  const nodeKey=hourKey+'_'+uidShort;
-  const path='kanban/painel/_debug_bytes_log/'+nodeKey;
-  window._get(window._ref(window._db,path)).then(snap=>{
-    const _localTs=hourKey.slice(0,10)+'T'+hourKey.slice(11,13)+':00:00';
-    const prev=snap.val()||{ts:_localTs,who,byPath:{}};
+// Mescla `entries` (path -> {count,bytes}) no nó já existente em `path` (sem
+// sobrescrever o que outras flushes/abas já gravaram nesse mesmo bucket).
+function _dbgMerge(path, entries, extra){
+  return window._get(window._ref(window._db,path)).then(snap=>{
+    const existing=snap.val()||{};
+    const prev=Object.assign({}, existing, extra, {byPath:Object.assign({}, existing.byPath)});
     entries.forEach(([k,s])=>{
       const key=k.replace(/[.#$/\[\]]/g,'_');
       const acc=prev.byPath[key]||{count:0,bytes:0};
       acc.count+=s.count; acc.bytes+=s.bytes;
       prev.byPath[key]=acc;
     });
-    prev.ts=_localTs; prev.who=who;
     window._set(window._ref(window._db,path), prev).catch(()=>{});
   }).catch(()=>{});
+}
+function _dbgFlush(){
+  if(!_dbg.on || !window._fbReady) return;
+  // Snapshot em objetos NOVOS (não referências pras stats vivas) — _dbgMerge
+  // é assíncrono, e o reset de _dbg.stats logo abaixo é síncrono; sem esse
+  // snapshot, quando o .then() rodasse já ia encontrar count/bytes zerados.
+  const entries=Object.entries(_dbg.stats).map(([k,s])=>[k,{count:s.count,bytes:s.bytes}]);
+  if(!entries.length) return;
+  const d=new Date();
+  const dateKey=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+  const hourKey=dateKey+'-'+String(d.getHours()).padStart(2,'0');
+  const uidShort=(window._currentUser?.uid||'anon').slice(0,8);
+  const who=(window._currentUser?.displayName||window._currentUser?.email||'?').split(' ')[0];
+  const hourLocalTs=dateKey+'T'+String(d.getHours()).padStart(2,'0')+':00:00';
+  _dbgMerge(_DBG_LOG_PATH+'/'+hourKey+'_'+uidShort, entries, {ts:hourLocalTs, who});
+  _dbgMerge(_DBG_DAILY_PATH+'/'+dateKey, entries, {date:dateKey});
   Object.values(_dbg.stats).forEach(s=>{ s.count=0; s.bytes=0; });
+  // Limpeza leve: 1x por sessão. Log horário (fino) só vive 7 dias; o
+  // rollup diário (grosso) vive 90.
   if(!_dbg.cleaned){
     _dbg.cleaned=true;
-    window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
+    window._get(window._ref(window._db,_DBG_LOG_PATH)).then(snap=>{
       const val=snap.val(); if(!val) return;
       const cutoff=Date.now()-7*86400000;
       Object.entries(val).forEach(([key,entry])=>{
         const t=entry?.ts?new Date(entry.ts).getTime():0;
-        if(t && t<cutoff) window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log/'+key), null).catch(()=>{});
+        if(t && t<cutoff) window._set(window._ref(window._db,_DBG_LOG_PATH+'/'+key), null).catch(()=>{});
+      });
+    }).catch(()=>{});
+    window._get(window._ref(window._db,_DBG_DAILY_PATH)).then(snap=>{
+      const val=snap.val(); if(!val) return;
+      const cutoff=Date.now()-90*86400000;
+      Object.entries(val).forEach(([key,entry])=>{
+        const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
+        if(t && t<cutoff) window._set(window._ref(window._db,_DBG_DAILY_PATH+'/'+key), null).catch(()=>{});
       });
     }).catch(()=>{});
   }
@@ -2995,7 +3045,7 @@ window.debugBytesReport=function(){
 };
 window.debugBytesRemote=function(hoursBack){
   hoursBack = hoursBack || 24;
-  return window._get(window._ref(window._db,'kanban/painel/_debug_bytes_log')).then(snap=>{
+  return window._get(window._ref(window._db,_DBG_LOG_PATH)).then(snap=>{
     const val=snap.val()||{};
     const cutoff=Date.now()-hoursBack*3600000;
     const agg={}; const byHour={};
@@ -3022,7 +3072,45 @@ window.debugBytesRemote=function(hoursBack){
   });
 };
 window.debugBytesClearRemote=function(){
-  return window._set(window._ref(window._db,'kanban/painel/_debug_bytes_log'), null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+  return window._set(window._ref(window._db,_DBG_LOG_PATH), null).then(()=>console.log('🔬 Log remoto de bytes limpo.'));
+};
+function _dbgDailyRows(daysBack){
+  return window._get(window._ref(window._db,_DBG_DAILY_PATH)).then(snap=>{
+    const val=snap.val()||{};
+    const cutoff=Date.now()-daysBack*86400000;
+    const rows=[]; const totalsByDate={};
+    Object.values(val).forEach(entry=>{
+      const t=entry?.date?new Date(entry.date+'T00:00:00').getTime():0;
+      if(!t || t<cutoff) return;
+      Object.entries(entry.byPath||{}).forEach(([path,s])=>{
+        rows.push({data:entry.date, path, chamadas:s.count||0, bytes:s.bytes||0});
+        const acc=totalsByDate[entry.date]||(totalsByDate[entry.date]={count:0,bytes:0});
+        acc.count+=s.count||0; acc.bytes+=s.bytes||0;
+      });
+    });
+    rows.sort((a,b)=> a.data===b.data ? b.bytes-a.bytes : a.data.localeCompare(b.data));
+    return {rows, totalsByDate};
+  });
+}
+window.debugBytesHistory=function(daysBack){
+  daysBack = daysBack || 30;
+  return _dbgDailyRows(daysBack).then(({rows, totalsByDate})=>{
+    console.log('%c🔬 Histórico diário — últimos '+daysBack+' dias, por path:','color:#38b6ff;font-weight:bold;');
+    console.table(rows.map(r=>({data:r.data, path:r.path, chamadas:r.chamadas, 'KB':(r.bytes/1024).toFixed(1)})));
+    const totalRows=Object.entries(totalsByDate).map(([data,s])=>({data, chamadas:s.count, 'KB total':(s.bytes/1024).toFixed(1)})).sort((a,b)=>a.data.localeCompare(b.data));
+    console.log('%c🔬 Total por dia (todos os paths somados):','color:#38b6ff;font-weight:bold;');
+    console.table(totalRows);
+    return {rows, totalRows};
+  });
+};
+window.debugBytesExportCSV=function(daysBack){
+  daysBack = daysBack || 30;
+  return _dbgDailyRows(daysBack).then(({rows})=>{
+    const csv=['data,path,chamadas,bytes'].concat(rows.map(r=>[r.data,r.path,r.chamadas,r.bytes].join(','))).join('\n');
+    console.log('%c🔬 CSV (últimos '+daysBack+' dias) — copie o texto abaixo pra colar numa planilha:','color:#38b6ff;font-weight:bold;');
+    console.log(csv);
+    return csv;
+  });
 };
 // ═══════════════════════════════════════════════════════════════════
 
@@ -4560,6 +4648,16 @@ async function _pmsSalvarGrupo(gid, nome){
   };
   try{
     await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+id), grupo);
+    // Grava o grupoId em cada campanha vinculada — o board de cada squad (kanban.html) lê isso
+    // direto do próprio registro da campanha pra saber que ela faz parte de um grupo multi-squad,
+    // sem precisar conhecer o node grupos_campanha do painel. Limpa dos que saíram do grupo
+    // nesta edição. NUNCA mexe no campo `nome` — cada squad continua vendo o nome que criou.
+    const idsAnteriores = _gruposCamp[id]?.campanhaIds||[];
+    const removidos = idsAnteriores.filter(cid=>!ids.includes(cid));
+    await Promise.all([
+      ...ids.map(cid=>window._set(_campRef(cid+'/grupoId'), id).catch(()=>{})),
+      ...removidos.map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})),
+    ]);
     showToast('✅ Grupo salvo!');
     _pmsSwitchTab('manual');
   } catch(e){ uiAlert('Erro: '+e.message); }
@@ -4568,6 +4666,7 @@ async function _pmsSalvarGrupo(gid, nome){
 async function _pmsDelGrupo(gid){
   const g = _gruposCamp[gid];
   if(!await uiConfirm('Desagrupar "'+esc(g?.nome||gid)+'"? As campanhas voltam a aparecer separadas.',{danger:true,okText:'Desagrupar'})) return;
+  await Promise.all((g?.campanhaIds||[]).map(cid=>window._set(_campRef(cid+'/grupoId'), null).catch(()=>{})));
   await window._set(window._ref(window._db,'kanban/painel/grupos_campanha/'+gid), null).catch(e=>uiAlert(e.message));
   showToast('🗑 Grupo desagrupado.');
 }
@@ -4609,19 +4708,19 @@ const OKR_BLOCO_AREAS = { 1: ['geral','comercial','performance','dadosia'], 2: [
 // partir daí os blocos alternam a cada 7 dias.
 const OKR_BLOCO_ANCHOR = '2026-09-03';
 function _okrBlocoDaArea(areaId){ return OKR_BLOCO_AREAS[1].includes(areaId) ? 1 : 2; }
-function _okrBlocoNaData(dataStr){
-  const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
-  const alvo = new Date(String(dataStr).slice(0,10)+'T00:00:00');
-  const diasDesde = Math.floor((alvo-anchor)/86400000);
-  const periodo = Math.floor(diasDesde/7);
-  const paridade = ((periodo%2)+2)%2; // normaliza resto negativo (datas antes do anchor)
-  return paridade===0 ? 1 : 2;
-}
 // Próxima quinta-feira (>= hoje) em que o bloco informado se reúne.
 function _okrProximaReuniaoDoBloco(bloco, hojeStr){
   const anchor = new Date(OKR_BLOCO_ANCHOR+'T00:00:00');
   const hoje = new Date(String(hojeStr).slice(0,10)+'T00:00:00');
-  let periodo = Math.floor((hoje-anchor)/86400000/7);
+  // Math.round na contagem de DIAS (não no /7 direto) — mesmo padrão do
+  // resto do app (ver kanban-dev.html/dailyScan.js) — guarda contra o
+  // diff de ms não ser múltiplo exato de 1 dia num horário de verão do
+  // fuso do dispositivo (Brasil não tem DST desde 2019, mas o navegador
+  // pode estar configurado noutro fuso). Floor só depois, na divisão por
+  // 7: precisa continuar arredondando pra BAIXO (nunca pra cima) pra não
+  // pular o período de `hoje` — o loop abaixo só varre pra frente.
+  const diasDesdeAnchor = Math.round((hoje-anchor)/86400000);
+  let periodo = Math.floor(diasDesdeAnchor/7);
   for(let i=0;i<4;i++){
     const quinta = new Date(anchor.getTime() + periodo*7*86400000);
     const paridade = ((periodo%2)+2)%2;
@@ -4683,12 +4782,39 @@ function _okrToggleArquivados(){
 }
 let _okrLoaded = false;
 
+// Deep-link `?okr=<id>` (Objetivo) ou `?okr=chat` (Central Agente Ágil) —
+// usado pelo redirect de kanban.html/kanban-dev.html quando alguém clica
+// numa notificação de OKR (okr_editado/okr_prazo/okr_reuniao/okr_agente).
+// Antes disso, clicar numa dessas notificações só marcava como lida e
+// fechava o painel de notificações sem levar a pessoa a lugar nenhum —
+// achado via /monitorarbugs, 2026-09-06 (openNotif() só sabia navegar por
+// cardId, que notificação de OKR nunca tem). Roda dentro do onValue de
+// kanban/okr/objetivos porque essa é a 1ª vez que okrObjetivos tem o
+// snapshot completo — diferente do card (múltiplos listeners populando
+// progressivamente, por isso o retry lá), aqui 1 disparo já basta.
+// `_okrUrlOpenAttempted` evita reabrir a cada mudança subsequente no nó.
+let _okrUrlOpenAttempted = false;
+function _okrTryOpenFromUrl(){
+  if(_okrUrlOpenAttempted) return;
+  const alvo = new URLSearchParams(location.search).get('okr');
+  if(!alvo) return;
+  _okrUrlOpenAttempted = true;
+  swPtab('okr');
+  if(alvo==='chat'){
+    if(!_okrShowAgenteChat) _okrToggleAgenteChat();
+    return;
+  }
+  if(okrObjetivos[alvo]) openOkrObjetivo(alvo);
+  else showToast('⚠ Esse Objetivo não foi encontrado — pode ter sido excluído ou arquivado.');
+}
+
 function loadOkr(){
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{
     okrObjetivos = snap.val() || {};
     _okrLoaded = true;
     renderOkrObjetivos();
     if(_okrShowHistorico) renderOkrHistorico();
+    _okrTryOpenFromUrl();
   });
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{
     okrMarcos = snap.val() || {};
@@ -5235,7 +5361,7 @@ function _okrCardLinksHtml(podeEditar){
 // formato que createNotif() (kanban-dev.html) já usa em
 // kanban/usuarios/{uid}/notificacoes — aparece no sininho de qualquer
 // board sem mudar nada lá. Push: precisa de 'okr_editado' em PUSH_TYPES
-// (functions/index.js) + redeploy. ──
+// (functions/index.js) + redeploy — ver CHANGELOG/README. ──
 async function _okrNotifyEditado(objId){
   const obj = okrObjetivos[objId]; if(!obj) return;
   const autorUid = window._currentUser?.uid;
@@ -5455,6 +5581,32 @@ async function _okrDesarquivarObjetivo(id){
   showToast('✅ Objetivo desarquivado — já está de volta na lista de ativos.');
   closeOkrObjetivo();
 }
+// Exclusão DEFINITIVA (pedido direto do usuário: "faltou a opção de poder
+// excluir um objetivo") — diferente de Arquivar (que só esconde da lista
+// de ativos, mantendo tudo acessível em "📦 Ver arquivados"). Mesmo
+// espírito de deleteCard() no kanban.html: disponível direto no modal
+// (não precisa arquivar antes), 1 confirmação forte, sem desfazer. Faz
+// cascade nos Marcos do Objetivo (e nos comentários deles) — órfãos em
+// kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
+// espaço no Firebase pra sempre.
+async function _okrExcluirObjetivo(id){
+  const obj = okrObjetivos[id];
+  if(!obj) return;
+  const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
+  const aviso = marcosDoObjetivo.length
+    ? `Excluir "${obj.titulo}" definitivamente? Isso também apaga ${marcosDoObjetivo.length} marco(s) dele. Diferente de arquivar — não dá pra desfazer.`
+    : `Excluir "${obj.titulo}" definitivamente? Diferente de arquivar — não dá pra desfazer.`;
+  if(!await uiConfirm(aviso, {title:'Excluir Objetivo', danger:true, okText:'Excluir'})) return;
+  const updates = {};
+  updates['objetivos/'+id] = null;
+  marcosDoObjetivo.forEach(mid=>{ updates['marcos/'+mid] = null; updates['marco_comments/'+mid] = null; });
+  await window._update(window._ref(window._db,'kanban/okr'), updates);
+  delete okrObjetivos[id];
+  marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
+  showToast('🗑 Objetivo excluído.');
+  closeOkrObjetivo();
+}
+
 // ── Modal de Marco (dentro de um Objetivo) ────────────────────────────
 let _okrEditingMarcoId = null;
 let _okrEditingMarcoObjId = null;
@@ -5493,31 +5645,6 @@ function _okrSyncMarcoDraftFromDom(){
   if(g('okr-m-resp')) _okrMarcoDraft.responsavel = g('okr-m-resp').value;
   if(g('okr-m-prazo')) _okrMarcoDraft.prazo = g('okr-m-prazo').value;
   if(g('okr-m-descricao')) _okrMarcoDraft.descricao = g('okr-m-descricao').value;
-}
-// Exclusão DEFINITIVA (pedido direto do usuário: "faltou a opção de poder
-// excluir um objetivo") — diferente de Arquivar (que só esconde da lista
-// de ativos, mantendo tudo acessível em "📦 Ver arquivados"). Mesmo
-// espírito de deleteCard() no kanban.html: disponível direto no modal
-// (não precisa arquivar antes), 1 confirmação forte, sem desfazer. Faz
-// cascade nos Marcos do Objetivo (e nos comentários deles) — órfãos em
-// kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
-// espaço no Firebase pra sempre.
-async function _okrExcluirObjetivo(id){
-  const obj = okrObjetivos[id];
-  if(!obj) return;
-  const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
-  const aviso = marcosDoObjetivo.length
-    ? `Excluir "${obj.titulo}" definitivamente? Isso também apaga ${marcosDoObjetivo.length} marco(s) dele. Diferente de arquivar — não dá pra desfazer.`
-    : `Excluir "${obj.titulo}" definitivamente? Diferente de arquivar — não dá pra desfazer.`;
-  if(!await uiConfirm(aviso, {title:'Excluir Objetivo', danger:true, okText:'Excluir'})) return;
-  const updates = {};
-  updates['objetivos/'+id] = null;
-  marcosDoObjetivo.forEach(mid=>{ updates['marcos/'+mid] = null; updates['marco_comments/'+mid] = null; });
-  await window._update(window._ref(window._db,'kanban/okr'), updates);
-  delete okrObjetivos[id];
-  marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
-  showToast('🗑 Objetivo excluído.');
-  closeOkrObjetivo();
 }
 
 function _okrChecklistHtml(){
@@ -5716,14 +5843,32 @@ async function saveOkrMarco(){
   showToast(isNovo ? '🏁 Marco criado.' : '💾 Marco salvo.');
   closeOkrMarco();
 }
+// Achado via /monitorarbugs (2026-09-06, técnica 2 — comparar contra
+// _okrArquivarObjetivo()/saveOkrMarco() no mesmo arquivo): arquivar um
+// Marco não registrava NENHUM histórico — nem no próprio Marco, nem o
+// resumo no Objetivo pai que toda outra edição de Marco sempre empurra
+// (ver saveOkrMarco() logo acima). Diferente de arquivar um Objetivo, que
+// já grava "arquivou o Objetivo". Corrigido pro mesmo padrão dos dois.
 async function _okrArquivarMarco(){
   if(!_okrEditingMarcoId) return;
   if(!await uiConfirm('Arquivar este marco?', {danger:true, okText:'Arquivar'})) return;
-  await window._update(window._ref(window._db,'kanban/okr/marcos/'+_okrEditingMarcoId), {arquivado:true});
+  const m = okrMarcos[_okrEditingMarcoId] || {};
+  const hist = Array.isArray(m.history) ? m.history.slice() : [];
+  hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'arquivou o marco', tipo:'arquivado', at:new Date().toISOString()});
+  await window._update(window._ref(window._db,'kanban/okr/marcos/'+_okrEditingMarcoId), {arquivado:true, history:hist});
+  if(okrMarcos[_okrEditingMarcoId]){ okrMarcos[_okrEditingMarcoId].arquivado = true; okrMarcos[_okrEditingMarcoId].history = hist; }
+  const objId = m.objetivoId;
+  const obj = okrObjetivos[objId];
+  if(obj){
+    const objHistory = Array.isArray(obj.history) ? obj.history.slice() : [];
+    objHistory.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:`arquivou o marco "${m.nome||'?'}"`, tipo:'marco', at:new Date().toISOString()});
+    if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
+    await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
+    okrObjetivos[objId] = {...obj, history:objHistory};
+  }
   showToast('🗑 Marco arquivado.');
   closeOkrMarco();
 }
-
 
 function renderOKR(){
   const el=document.getElementById('okr-list'); if(!el) return;
@@ -6141,13 +6286,9 @@ function delLembretePainel(sqId, id){
     return;
   }
   const d=squadData[sqId]; if(!d) return;
-  // Apaga só o item (chave = id), não o node inteiro — kanban-dev.html
-  // passou a gravar cada lembrete como filho individual (ver Fase 1.3);
-  // reescrever o array inteiro aqui apagaria de volta qualquer lembrete
-  // adicionado depois do snapshot local de squadData. Só não funciona pra
-  // itens legados (gravados como array antes desse fix, cuja chave real no
-  // Firebase é o índice antigo, não o id) — caso raro, some sozinho na
-  // próxima vez que alguém mexer nesse lembrete específico.
+  // Apaga só o item (chave = id), não o node inteiro — mesmo ajuste do
+  // painel.html (ver comentário lá), pra bater com o modelo de filhos
+  // individuais que kanban-dev.html passou a usar pra lembretes.
   window._set(window._ref(window._db,'kanban/squads/'+sqId+'/dados/lembretes/'+id), null)
     .then(()=>{ d.lembretes=(d.lembretes||[]).filter(l=>l.id!==id); renderLembretesPainel(); })
     .catch(e=>showToast('❌ Erro: '+e.message));
@@ -6960,7 +7101,8 @@ function deletePevEvent(){
 
 function loadPcalEvents(){
   // Eventos do painel (gestão + geral)
-  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{ _dbgTrack('painel_cal_events', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/cal_events'),snap=>{
+    _dbgTrack('painel_cal_events', snap.val());
     const val=snap.val();
     pcalEvents=val?(Array.isArray(val)?val:Object.values(val)):[];
     if(_isPtab('pessoas')){ renderPcal(); renderPcalGestao(); }
@@ -7449,51 +7591,6 @@ function _fmtBytes(b){
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   return (b/1048576).toFixed(2)+' MB';
 }
-
-// Escreve um timestamp global que todo cliente conectado (kanban-dev.html/kanban.html)
-// escuta -- quem logou antes desse timestamp se desloga sozinho. Pensado pra economizar
-// consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
-async function deslogarTodos(){
-  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
-  try{
-    await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
-    showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
-  }catch(e){
-    uiAlert('Erro ao deslogar todos: '+e.message);
-  }
-}
-
-async function carregarConfigInatividade(){
-  const elMin = document.getElementById('cfg-idle-minutos');
-  const elOn = document.getElementById('cfg-idle-enabled');
-  if(!elMin || !elOn) return;
-  try{
-    const snap = await window._get(window._ref(window._db,'kanban/global/idle_logout_config'));
-    const val = snap.val();
-    if(val && typeof val === 'object'){
-      elMin.value = Number(val.minutes) > 0 ? Number(val.minutes) : 180;
-      elOn.checked = val.enabled !== false;
-    } else {
-      elMin.value = 180;
-      elOn.checked = true;
-    }
-  }catch(e){ /* mantem os defaults do HTML se der erro (ex: regra ainda nao publicada) */ }
-}
-async function salvarConfigInatividade(){
-  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  const elMin = document.getElementById('cfg-idle-minutos');
-  const elOn = document.getElementById('cfg-idle-enabled');
-  const minutos = parseInt(elMin.value, 10);
-  if(!minutos || minutos < 5){ uiAlert('Coloque um número de minutos válido (mínimo 5).'); return; }
-  try{
-    await window._set(window._ref(window._db,'kanban/global/idle_logout_config'), { enabled: !!elOn.checked, minutes: minutos });
-    showToast('⚙️ Configuração salva.');
-  }catch(e){
-    uiAlert('Erro ao salvar: '+e.message);
-  }
-}
-
 async function loadStatusData(){
   carregarConfigInatividade();
   const listEl = document.getElementById('st-squad-list');
@@ -7589,6 +7686,50 @@ async function loadStatusData(){
         </div>
       </div>`;
     }).join('') + (campBytes? `<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--glass-b);font-size:11px;color:var(--txt3);">📣 Campanhas: ${_fmtBytes(campBytes)}</div>`:'');
+  }
+}
+
+// Escreve um timestamp global que todo cliente conectado (kanban-dev.html/kanban.html)
+// escuta -- quem logou antes desse timestamp se desloga sozinho. Pensado pra economizar
+// consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
+async function deslogarTodos(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
+  try{
+    await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
+    showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
+  }catch(e){
+    uiAlert('Erro ao deslogar todos: '+e.message);
+  }
+}
+
+async function carregarConfigInatividade(){
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  if(!elMin || !elOn) return;
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/global/idle_logout_config'));
+    const val = snap.val();
+    if(val && typeof val === 'object'){
+      elMin.value = Number(val.minutes) > 0 ? Number(val.minutes) : 180;
+      elOn.checked = val.enabled !== false;
+    } else {
+      elMin.value = 180;
+      elOn.checked = true;
+    }
+  }catch(e){ /* mantem os defaults do HTML se der erro (ex: regra ainda nao publicada) */ }
+}
+async function salvarConfigInatividade(){
+  if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
+  const elMin = document.getElementById('cfg-idle-minutos');
+  const elOn = document.getElementById('cfg-idle-enabled');
+  const minutos = parseInt(elMin.value, 10);
+  if(!minutos || minutos < 5){ uiAlert('Coloque um número de minutos válido (mínimo 5).'); return; }
+  try{
+    await window._set(window._ref(window._db,'kanban/global/idle_logout_config'), { enabled: !!elOn.checked, minutes: minutos });
+    showToast('⚙️ Configuração salva.');
+  }catch(e){
+    uiAlert('Erro ao salvar: '+e.message);
   }
 }
 
@@ -7776,7 +7917,8 @@ let _editingComunicadoId = null;
 function loadComunicados(){
   if(window._comunicadosListenerOn) return; // evita registrar o listener de novo a cada troca de aba
   window._comunicadosListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{ _dbgTrack('comunicados', snap.val());
+  window._onValue(window._ref(window._db,'kanban/comunicados'), snap=>{
+    _dbgTrack('comunicados', snap.val());
     _comunicadosCache = snap.val() || {};
     renderComunicadosLista();
   });
@@ -7792,6 +7934,23 @@ function loadComunicados(){
 // revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_historico_avatar_notif_autoupdate_2026_09_06',
+    titulo: '📜 Histórico do card com carinha nova + notificações que agora te levam a algum lugar',
+    corpo: `<p>Foi ao ar um lote de melhorias no board e no painel:</p>
+
+<p><b>📜 Histórico do card com carinha nova:</b> agora cada entrada do 📜 Histórico mostra a foto de quem editou (ou as iniciais, sem foto) e um ícone colorido pelo tipo de mudança — mesmo visual "linha do tempo" que já existia no 🎯 OKR do painel.</p>
+
+<p><b>🔔 Notificações que agora levam a algum lugar:</b> clicar numa notificação de reunião abre o link direto; agenda pendente já processa a fila; e notificações de OKR e de feedback do Mural levam pro lugar certo — antes, essas só marcavam como lida sem fazer nada.</p>
+
+<p><b>🏷️ Corrigido:</b> adicionar ou remover uma 2ª/3ª tag de um card agora aparece certinho no Histórico (antes só a 1ª tag era rastreada); e um comunicado marcado "Insistente" no Mural não trava mais num loop de popup.</p>
+
+<p><b>🔄 Painel agora avisa quando tem versão nova:</b> quem fica com o painel aberto o dia inteiro vai ver um aviso "Atualizar agora" no canto, em vez de precisar recarregar manualmente pra ver as novidades.</p>
+
+<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_painel_timeline_uiux_glass_2026_09_04',
     titulo: '🛤️ Timeline do Painel ficou mais fácil de usar (e mais bonita)',
@@ -8811,13 +8970,21 @@ function openComunicadoCompose(id){
   _ccTogglePrioridadeUI();
   document.getElementById('comunicado-compose-ov').classList.add('open');
 }
-// Insistente só faz sentido pra popup — desabilita quando for só mural
+// Insistente só faz sentido pra popup — desabilita quando for só mural. NÃO
+// desmarca o checkbox (só isso, achado via /monitorarbugs 2026-09-06): trocar
+// "Onde aparece" pra mural e voltar pra popup, na mesma edição, sem salvar no
+// meio, perdia silenciosamente o insistente:true original — o checkbox virava
+// desabilitado E desmarcado, e nada restaurava o valor de volta. saveComunicado()
+// já força insistente:false quando a prioridade não é popup na hora de salvar
+// (`prioridade==='popup' ? checkbox.checked : false`), então manter o
+// checkbox marcado-mas-desabilitado enquanto mural está selecionado é seguro —
+// não tem como isso vazar um insistente:true indevido pro Firebase.
 function _ccTogglePrioridadeUI(){
   const isMural = document.getElementById('cc-prioridade').value === 'mural';
   const wrap = document.getElementById('cc-insistente-wrap');
   const chk = document.getElementById('cc-insistente');
   if(!wrap || !chk) return;
-  if(isMural){ chk.checked = false; chk.disabled = true; wrap.style.opacity = '.45'; }
+  if(isMural){ chk.disabled = true; wrap.style.opacity = '.45'; }
   else { chk.disabled = false; wrap.style.opacity = '1'; }
 }
 function closeComunicadoCompose(){
@@ -8884,7 +9051,8 @@ let _fbFilter = 'all';
 function loadFeedback(){
   if(window._fbListenerOn) return; // evita listener duplicado a cada troca de aba
   window._fbListenerOn = true;
-  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{ _dbgTrack('feedback', snap.val());
+  window._onValue(window._ref(window._db,'kanban/feedback'), snap=>{
+    _dbgTrack('feedback', snap.val());
     _fbCache = snap.val() || {};
     renderFbLista();
   });
@@ -8943,12 +9111,9 @@ async function _fbDelete(id){
 }
 
 async function loadUsoData(){
-  // Reativado (Fase 1.5 do plano de otimização): a versão antiga lia
-  // access_log (bruto, um registro por acesso) de TODOS os squads toda vez
-  // que a aba Status abria ou o período mudava. Agora lê access_stats
-  // (agregado por dia+uid, escrito com increment atômico — ver kanban-dev.html
-  // _logAccess) — mesmo formato de leitura (dia -> {uid: {...}}), bem mais
-  // barato de escrever e do mesmo tamanho de ler.
+  // Reativado (Fase 1.5 do plano de otimização) — ver painel.html pro mesmo
+  // ajuste: agora lê access_stats (agregado, increment atômico) em vez do
+  // access_log bruto antigo.
   const elErro = document.getElementById('st-uso-erro-permissao');
   if(elErro) elErro.style.display = 'none';
   const dias = parseInt(document.getElementById('st-uso-periodo')?.value||'30');
@@ -9199,6 +9364,23 @@ function saveAdmEmails(){
 // lido por lerDescricaoEspecialista() (intakeTrigger.js) pra injetar
 // contexto na tarefa do LLM. `squads` decide em quais squads a descrição
 // vale; sem squad marcado, o backend não injeta nada pra ninguém.
+//
+// 2026-09-01 — pedido direto do usuário: "o agente de VM da Vtex tem q
+// ter um ID e ser responsável pelo card... tudo de importante q acontecer
+// ali, o agente agil vai pegar essas informações e levar pro agente de vm
+// externo". Ganhou 4 campos NOVOS, todos opcionais, mesmo shape de
+// dados/agentes (kanban-dev.html): `nome` (exibição, separado do
+// identificador técnico — cai pro próprio `id` se em branco), `init`
+// (iniciais — É o que faz o agente externo virar selecionável como
+// Responsável/Participante de card em QUALQUER squad marcado abaixo, ver
+// allIdentities() em kanban-dev.html), `cor` e `avatarEmoji` (só
+// estética, mesmo padrão visual dos agentes de IA decorativos). Sem
+// `init`, o cadastro continua se comportando exatamente como antes desta
+// mudança (só contexto pro LLM, nunca aparece no board). O ENVIO de
+// verdade pro webhook quando o agente é responsável por um card é
+// determinístico, do lado do orquestrador — ver agenteMarcador.js — não
+// depende de nada configurado aqui além do `init` + `webhookUrl` já
+// existente.
 let agentesExternosCfg = {};
 let _agentesExtPainelAberto = null;
 
@@ -10027,9 +10209,21 @@ function _blockIfPainelViewer(){
 document.addEventListener('click', (e)=>{
   if(!e.target.closest('.kr-add')){ document.querySelectorAll('.kr-picker.open').forEach(p=>p.classList.remove('open')); }
 });
+// Deep-link genérico `?tab=<id>` — troca de aba ao carregar, usado pelo
+// redirect de kanban(-dev).html quando uma notificação sem registro
+// específico pra abrir (ex.: feedback do Mural) só precisa apontar pra
+// aba certa do painel — diferente de `?okr=<id>`, que abre um Objetivo
+// preciso (ver _okrTryOpenFromUrl()). Não depende de nenhum listener
+// carregar dados antes, então roda direto no fb-ready.
+function _painelTryOpenTabFromUrl(){
+  const tab = new URLSearchParams(location.search).get('tab');
+  if(tab && document.getElementById('ptab-'+tab)) swPtab(tab);
+}
+
 window.addEventListener('fb-ready',()=>{
   initHiddenCols();
   loadExtraSquads(()=>{ loadAll(); renderSquadLinks(); loadGlobalUsers(); });
+  _painelTryOpenTabFromUrl();
   loadOkr();
   loadPresence();
   loadAgentUsage();
@@ -10051,7 +10245,8 @@ window.addEventListener('fb-ready',()=>{
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
-  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{ _dbgTrack('lembretes_gestao', snap.val());
+  window._onValue(window._ref(window._db,'kanban/painel/lembretes_gestao'),snap=>{
+    _dbgTrack('lembretes_gestao', snap.val());
     const val=snap.val();
     lembretesGestao = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     if(typeof renderLembretesPainel==='function') renderLembretesPainel();
@@ -10065,9 +10260,8 @@ let kudosGeral = [];
 const KUDOS_GERAL_POLL_MS = 3*60000; // 3 minutos
 let _lastKudosGeralRefresh = 0;
 function loadKudosGeral(){
-  // ⚡ kudos_geral é GLOBAL e sem limpeza (só cresce) — antes era onValue,
-  // reenviando a lista inteira pra TODO painel/board aberto a cada kudos dado
-  // em QUALQUER squad. Trocado por poll periódico (aba em primeiro plano).
+  // ⚡ Mesmo padrão do path global do prod — convertido pra poll periódico
+  // (aba em primeiro plano) em vez de onValue em tempo real.
   _refreshKudosGeral();
   setInterval(()=>{ if(!document.hidden) _refreshKudosGeral(); }, KUDOS_GERAL_POLL_MS);
   document.addEventListener('visibilitychange', ()=>{
@@ -10078,7 +10272,6 @@ function loadKudosGeral(){
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
   window._get(window._ref(window._db,'kanban/painel/kudos_geral')).then(snap=>{
-    _dbgTrack('kudos_geral', snap.val());
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
@@ -10197,14 +10390,24 @@ function toggleKudospReaction(id, emoji){
 
 let _globalUsersCache = {}; // { uid: userObj }
 const GLOBAL_ROLES = ['adm','po','organizador','membro','convidado'];
+// Papéis atribuíveis POR SQUAD (mesmas 3 opções do dropdown de papel dentro do
+// próprio board) -- não inclui 'adm' (vem só da whitelist ADM_EMAILS) nem
+// 'convidado' (definido automaticamente pelo domínio do email).
 const SQUAD_ROLES = ['membro','organizador','po'];
 // Deriva members (init/nome/email/foto) de UM squad a partir de
 // _globalUsersCache — achado real (usuário: "timeline em painel ta sem
 // foto das pessoas"): _applySquadDados() (o caminho de verdade pra
-// squads fixas via loadAll()/60s poll) nunca preenchia
-// squadData[sqId].members. Reusa _globalUsersCache (já carregado sem
-// custo extra por loadGlobalUsers(), chamado junto com loadAll() na
-// inicialização) em vez de mais um fetch por squad.
+// squads fixas via loadAll()/60s poll) NUNCA preenchia
+// squadData[sqId].members — só loadSquadData() (usada só pra squad NOVA
+// criada em runtime) preenchia, com um fetch próprio que também não
+// trazia foto. Resultado: pra toda squad fixa (dev/omnichannel aqui,
+// dados/prf/midiacriativa em prod), resolveOwnerName()/
+// _painelOwnerAvatarHtml() nunca tinham member nenhum pra consultar —
+// sempre caíam no fallback (iniciais cruas, nunca foto). Reusa
+// _globalUsersCache (já carregado sem custo extra por loadGlobalUsers(),
+// chamado junto com loadAll() na inicialização) em vez de mais um fetch
+// por squad — mesmo filtro de "pertence a este squad" que
+// loadSquadData() já usa.
 function _squadMembersFromGlobalCache(sqId){
   return Object.values(_globalUsersCache).filter(u=>
     u.inscrito||u.squads?.[sqId]||u.role==='adm'
@@ -10221,12 +10424,15 @@ function closeGlobalUsersModal(){
 }
 
 function loadGlobalUsers(){
-  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ _dbgTrack('usuarios', snap.val());
+  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
+    _dbgTrack('usuarios', snap.val());
     _globalUsersCache = snap.val() || {};
     // Re-deriva members (init/nome/foto) de toda squad já carregada — ver
     // comentário de _squadMembersFromGlobalCache() acima. Cobre a corrida
     // em que _applySquadDados() roda ANTES deste listener popular o cache
-    // pela 1ª vez.
+    // pela 1ª vez (a squad já apareceu com members vazio; assim que o
+    // cache chega, os avatares corrigem sozinhos, sem esperar o próximo
+    // poll manual).
     Object.keys(squadData).forEach(sqId=>{
       if(squadData[sqId]) squadData[sqId].members=_squadMembersFromGlobalCache(sqId);
     });
@@ -10234,6 +10440,7 @@ function loadGlobalUsers(){
     if(typeof renderKudosPainel==='function') renderKudosPainel();
     if(typeof renderPushmUsers==='function') renderPushmUsers();
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
+    renderAll();
   });
 }
 
@@ -10442,6 +10649,9 @@ function renderGlobalUsers(){
       chip.appendChild(cb);
       chip.appendChild(lbl);
 
+      // Papel DESTA pessoa NESTE squad especificamente -- squads_roles/{squadId}.
+      // Cada squad guarda seu próprio papel, então promover alguém aqui não
+      // afeta o papel dela em nenhum outro squad (mesma lógica usada no board).
       if(inSquad){
         const roleSel = document.createElement('select');
         roleSel.style.cssText = 'padding:1px 4px;font-size:9px;border:1px solid var(--glass-b);border-radius:5px;background:rgba(var(--ink-rgb),.9);color:var(--txt);cursor:pointer;margin-left:2px;';
@@ -10514,6 +10724,8 @@ function toggleUserSquad(uid, squadId, checked){
 }
 
 function updateSquadUserRole(uid, squadId, role){
+  // Grava só o papel PARA ESTE SQUAD (squads_roles/{squadId}) -- nunca mexe no
+  // campo global 'role', pra não vazar o papel de um squad pra outros da pessoa.
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+squadId), role)
     .then(()=>showToast('✅ Papel em '+squadId+' atualizado para '+role))
     .catch(e=>showToast('❌ '+e.message));
@@ -10580,6 +10792,12 @@ function _applySquadDados(sqId, val){
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
+    // Achado real (usuário: "timeline em painel ta sem foto das pessoas")
+    // — este é o caminho de verdade pra squads fixas (via loadAll(),
+    // diferente de loadSquadData(), só pra squad nova criada em runtime),
+    // e nunca preenchia members antes — ver _squadMembersFromGlobalCache().
+    // Se o cache global ainda não chegou na 1ª chamada, fica vazio por
+    // enquanto; loadGlobalUsers() corrige assim que o cache popular.
     members: _squadMembersFromGlobalCache(sqId),
   };
   renderAll();
@@ -12246,6 +12464,70 @@ window.addEventListener('auth-change', e=>{
 }, {once:true});
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
+
+// ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
+(function(){
+  const VERSION_KEY = 'painel';
+  const CHECK_INTERVAL_MS = 5*60*1000; // reconsulta a cada 5 min
+  const FIRST_CHECK_DELAY_MS = 20000;  // espera a app estabilizar antes da 1ª checagem
+  const IDLE_TIMEOUT_MS = 45*1000;     // precisa estar parado 45s pra recarregar sozinho
+  const IDLE_RECHECK_MS = 15*1000;
+  let lastActivity = Date.now();
+  ['mousedown','mousemove','keydown','touchstart','scroll','click'].forEach(evt=>{
+    document.addEventListener(evt, ()=>{ lastActivity = Date.now(); }, {passive:true});
+  });
+  function _auGetCurrentVersion(){
+    const el = document.querySelector('.version');
+    return el ? el.textContent.trim() : '';
+  }
+  function _auModalOpen(){
+    if(document.querySelector('.ov.open, .cfg-ov.open, .pev-modal-ov.open, .pc-modal-ov.open, #board-setup-ov.open')) return true;
+    if(document.getElementById('global-backup-ov')?.style.display==='flex') return true;
+    return false;
+  }
+  function _auTyping(){
+    const a = document.activeElement;
+    if(!a) return false;
+    if(['INPUT','TEXTAREA','SELECT'].includes(a.tagName)) return true;
+    if(a.isContentEditable) return true;
+    return false;
+  }
+  let _auPollTimer=null, _auIdleTimer=null, _auBannerShown=false;
+  function _auShowBanner(){
+    if(_auBannerShown) return;
+    _auBannerShown = true;
+    const b = document.createElement('div');
+    b.id='_au-banner';
+    b.style.cssText='position:fixed;bottom:20px;right:20px;z-index:99999;background:rgba(4,22,39,.97);border:1px solid var(--accent);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 8px 24px rgba(0,0,0,.5);backdrop-filter:blur(14px);font-family:"DM Sans",sans-serif;font-size:12px;color:var(--txt,#e8f4fd);';
+    b.innerHTML = '<span>🔄 Nova versão disponível</span><button id="_au-banner-btn" style="background:rgba(56,182,255,.18);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:600;font-family:inherit;">Atualizar agora</button>';
+    document.body.appendChild(b);
+    document.getElementById('_au-banner-btn').onclick=()=>location.reload();
+    _auIdleTimer = setInterval(_auTryIdleReload, IDLE_RECHECK_MS);
+  }
+  function _auTryIdleReload(){
+    const idleFor = Date.now()-lastActivity;
+    if(idleFor >= IDLE_TIMEOUT_MS && !_auModalOpen() && !_auTyping()){
+      location.reload();
+    }
+  }
+  async function _auCheckVersion(){
+    try{
+      const res = await fetch('version.json?_='+Date.now(), {cache:'no-store'});
+      if(!res.ok) return;
+      const data = await res.json();
+      const remote = data[VERSION_KEY];
+      const current = _auGetCurrentVersion();
+      if(remote && current && remote!==current){
+        if(_auPollTimer){ clearInterval(_auPollTimer); _auPollTimer=null; }
+        _auShowBanner();
+      }
+    }catch(e){ /* offline ou erro de rede — ignora silenciosamente */ }
+  }
+  setTimeout(_auCheckVersion, FIRST_CHECK_DELAY_MS);
+  _auPollTimer = setInterval(_auCheckVersion, CHECK_INTERVAL_MS);
+})();
+// ══ FIM AUTO-UPDATE ══
+
 
 </script>
 

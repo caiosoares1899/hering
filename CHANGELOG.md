@@ -12970,6 +12970,58 @@ original se a pessoa voltar pra popup.
 Checks de rotina: `node --check` OK, balanço igual ao baseline
 (`braces -1, parens -14`). 3 cenários Playwright novos.
 
+### painel.html v3.29 · painel — 2026-09-06 · Promove pra prod — 🔄 Auto-update, deep-link de notificações, fixes de OKR/Mural e grupos de campanha vinculados aos cards
+
+Promove pra produção o lote v3.26-dev → v3.29-dev de `painel-dev.html`
+(o mesmo código que já roda em dev há alguns dias, agora replicado pra
+`painel.html` com os paths de Firebase e squads revertidos pros nós
+reais de produção):
+
+- **🔄 Auto-update**: `painel.html` ganha o mesmo mecanismo que
+  `kanban.html`/`kanban-dev.html` já tinham — detecta uma versão nova
+  publicada (`version.json`) e mostra um banner "Atualizar agora" no
+  canto da tela, recarregando sozinho depois de 45s parado (sem digitar
+  nem modal aberto). Até aqui, quem deixasse o painel aberto só via a
+  versão nova ao recarregar manualmente.
+- **🔬 Medidor de bytes ganha rollup diário**: além do log horário já
+  existente (fino, 7 dias), agora também grava um resumo diário
+  (grosso, 90 dias) em `_debug_bytes_daily` — dá pra comparar "esse mês"
+  com "mês passado" (`debugBytesHistory(30)`/`debugBytesExportCSV(30)`
+  no console).
+- **Deep-link `?tab=<id>` genérico**: o sino do painel (e o redirect
+  vindo do `kanban.html` — ex.: notificação de feedback do Mural) agora
+  sabe abrir a aba certa direto, sem precisar clicar manualmente depois
+  de cair no painel.
+- **Fix: notificação de OKR não abria o Objetivo certo** —
+  `?okr=<id>`/`?okr=chat` agora navegam de verdade pro Objetivo (ou pra
+  Central do Agente Ágil) a partir de uma notificação, em vez de só
+  marcar como lida.
+- **Fix: arquivar um Marco do OKR não deixava nenhum rastro no 📜
+  Histórico** — nem do próprio Marco, nem o resumo que toda outra
+  edição de Marco sempre empurra pro Objetivo pai. Corrigido pro mesmo
+  padrão já usado ao arquivar um Objetivo.
+- **Fix: checkbox "Insistente" (Mural) perdia o valor ao alternar
+  "Onde aparece"** — trocar pra mural e voltar pra popup, na mesma
+  edição, perdia o `insistente:true` original em silêncio.
+- **Grupos de campanha multi-squad agora gravam `grupoId` em cada
+  campanha vinculada** — o board de cada squad passa a saber que uma
+  campanha faz parte de um grupo, sem precisar consultar o node de
+  grupos do painel.
+- **Fix: contagem de reunião do bloco quinzenal do OKR** — troca de
+  `Math.floor` direto por `Math.round` na contagem de dias antes de
+  dividir por 7, protegendo contra fuso horário com horário de verão.
+  Código morto (`_okrBlocoNaData`, sem nenhum call site) removido.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses do
+arquivo inteiro consistente com o baseline já existente de
+`painel.html` (`braces -1, parens -14`). Diff revisado hunk a hunk
+contra `painel-dev.html` — os únicos pontos mantidos deliberadamente
+diferentes de dev são os paths `_dev`-sufixados (isolamento de dados de
+teste), a lista real de squads/gerências, e 2 features que só existem
+em prod e nunca foram portadas pra dev (🔔 Enviar push manual,
+`deslogarTodos()`/config de logout por inatividade — confirmadas
+intactas nesta promoção).
+
 ### painel.html v3.26 · painel — 2026-09-06 · Promove pra prod (fix pontual) — sino do painel: clicar em "rascunho aguardando revisão" nunca navegava
 
 Promoção isolada de 1 achado da rodada `/monitorarbugs` em todas as

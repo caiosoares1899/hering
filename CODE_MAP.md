@@ -1659,15 +1659,19 @@ mesma família de tom do fundo `.ocean` — sem contraste. Override
 
 **Achados incidentais da promoção pra prod (v3.08 · painel, 2026-09-03)**,
 divergência real e pré-existente entre os 2 arquivos (não causada por
-esta feature, só descoberta ao promovê-la): `painel.html` tem
+esta feature, só descoberta ao promovê-la): `painel.html` tinha
 `_pushHistReenviar()`/"🔔 Enviar push manual" e
 `VISIBILITY_REFRESH_COOLDOWN_MS` (cooldown de 3min pro refresh ao voltar
-a aba) que `painel-dev.html` nunca recebeu; `painel-dev.html` tem o
+a aba) que `painel-dev.html` nunca recebeu; `painel-dev.html` tinha o
 banner de auto-update por polling de `version.json` (`_auCheckVersion()`)
-que `painel.html` **nunca teve** — diferente do que o "Release process"
-do `CLAUDE.md` descreve como padrão. Nenhum dos 3 foi tocado nesta
-promoção (fora de escopo do pedido) — sinalizado aqui pra quem for
-reconciliar o painel algum dia.
+que `painel.html` nunca teve. **Reconciliado na promoção pra prod (v3.29 ·
+painel, 2026-09-06)**: os 3 pontos agora existem nos dois arquivos —
+Push Manual e o cooldown de visibilidade foram preservados na promoção
+(não fazem parte do diff normal dev→prod, então precisam continuar
+sendo copiados manualmente toda vez que `painel-dev.html` for promovido,
+até algum dia entrarem em paridade real com dev), e o banner de
+auto-update passou a existir em `painel.html` também (`VERSION_KEY =
+'painel'`, mesma mecânica de `kanban.html`/`kanban-dev.html`).
 
 ### Visualizador externo (2026-08-27, promovido pra prod 2026-08-28 — presente nos dois arquivos)
 - `_finishPainelLogin(user)`/`_painelViewerKey(email)` — dentro do
