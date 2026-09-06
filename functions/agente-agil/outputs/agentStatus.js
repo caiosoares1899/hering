@@ -56,7 +56,7 @@ async function build(out, ctx) {
           path: `${ctx.cardPath}/history`,
           transform(current) {
             const history = Array.isArray(current) ? current.slice() : [];
-            entries.forEach((what) => history.push({ who: ctx.actor.who, what, at: nowISO }));
+            entries.forEach((what) => history.push({ who: ctx.actor.who, what, at: nowISO, init: ctx.actor.init }));
             return history.length > HIST_CAP ? history.slice(-HIST_CAP) : history;
           },
         },

@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.591-dev</div>
+<div class="version">v8.30.592-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8182,19 +8182,30 @@ function _histTipo(what){
   if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
   return 'campo';
 }
-// Ícone/cor pra quem não é uma pessoa de verdade — Automação/Agente Ágil/
-// Supercard nunca têm init (ver recordHistory()), então nunca teriam foto;
-// em vez de cair no fallback genérico de iniciais (ficaria "⚙"/"🤖" cortado
-// feio), ganham um avatar dedicado, mesmo racional do agente/agente externo
-// em allIdentities().
+// Ícone/cor pra quem não é uma pessoa de verdade. 2 origens diferentes,
+// 2 formas de reconhecer:
+// 1) Automação/Supercard (client-side, kanban-dev.html) — nunca têm init,
+//    só um whoOverride com texto fixo. Reconhecido pelo texto de `who`.
+// 2) Agente Ágil/especialista externo (server-side, escrita direta do
+//    Cloud Function — functions/agente-agil/board.js resolveActor()) —
+//    `who` vem em português puro ("Agente Ágil", sem emoji) mas `init` já
+//    vem como emoji sentinela (🤖 padrão, 🔌 especialista), justamente pra
+//    não precisar adivinhar toda variação de texto que o servidor possa
+//    gerar. Achado real (2026-09-06, print do usuário): faltava só
+//    PROPAGAR ctx.actor.init pro history.push() lá — resolveActor() já
+//    calculava esse emoji havia tempos, só não estava sendo salvo.
 const HIST_BOT_AVATARS = {
   '⚙ Automação': {emoji:'⚙️', cor:'#a78bfa'},
   '🤖 Agente Ágil': {emoji:'🤖', cor:'#38b6ff'},
   '⚙ Supercard': {emoji:'⚙️', cor:'#a78bfa'},
 };
+const HIST_INIT_AVATARS = {
+  '🤖': {emoji:'🤖', cor:'#38b6ff'},
+  '🔌': {emoji:'🔌', cor:'#ffd166'},
+};
 function _histAvatarHtml(h){
-  const bot=HIST_BOT_AVATARS[h.who];
-  if(bot) return `<div class="avatar" style="background:${_hexA(bot.cor,.25)};border-color:${_hexA(bot.cor,.5)};" title="${esc(h.who)}">${bot.emoji}</div>`;
+  const bot=HIST_BOT_AVATARS[h.who]||HIST_INIT_AVATARS[h.init];
+  if(bot) return `<div class="avatar" style="background:${_hexA(bot.cor,.25)};border-color:${_hexA(bot.cor,.5)};" title="${esc(h.who||'')}">${bot.emoji}</div>`;
   if(h.init) return _ownerAvatarHtml(h.init);
   // Sem init (whoOverride com nome de pessoa real, ou entrada antiga
   // gravada antes desta mudança) — cai nas iniciais do nome, mesmo

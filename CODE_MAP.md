@@ -155,9 +155,27 @@ detalhe dos 4 call sites.
   duplicado/tempo/pin/campo). `_histAvatarHtml(h)` — foto real via
   `init` → `_ownerAvatarHtml()` (mesmo componente do badge de
   responsável); `HIST_BOT_AVATARS` dá um emoji dedicado (⚙️/🤖) pras
-  entradas de Automação/Agente Ágil/Supercard, que nunca têm `init`;
-  sem nenhum dos dois, cai nas iniciais do nome (mesmo fallback de
-  sempre). `.hist-dot` (CSS) removido — substituído pelo avatar.
+  entradas de Automação/Supercard (client-side, só texto de `who`, sem
+  `init`); `HIST_INIT_AVATARS` cobre Agente Ágil/especialista externo
+  (server-side — ver abaixo); sem nenhum dos três, cai nas iniciais do
+  nome (mesmo fallback de sempre). `.hist-dot` (CSS) removido —
+  substituído pelo avatar.
+  **Bug corrigido no mesmo dia, achado por print do usuário**: entradas
+  de histórico escritas pelo Agente Ágil ANTIGO server-side
+  (`functions/agente-agil/outputs/{agentStatus,checklistItem,
+  editarCampos,moverColuna}.js` — 5 call sites, todos
+  `history.push({who: ctx.actor.who, what, at})`) nunca propagavam
+  `ctx.actor.init` (`resolveActor()`, `board.js` — já calculava `🤖`
+  padrão/`🔌` especialista externo havia tempos, só não salvava). Sem
+  `init` e com `who:'Agente Ágil'` (sem o emoji que o client usa como
+  chave de `HIST_BOT_AVATARS`), o avatar caía no fallback de iniciais
+  do nome — "Agente Ágil" virava "AÁ" na tela. Fix: os 5 call sites
+  passam a incluir `init: ctx.actor.init` no push; `_histAvatarHtml()`
+  ganhou `HIST_INIT_AVATARS` (lookup por `init`, não só por `who`) pra
+  reconhecer esses casos sem precisar adivinhar toda variação de texto
+  que o servidor possa gerar. Entradas gravadas ANTES desse fix
+  continuam sem `init` (dado que nunca existiu) — caem no fallback de
+  iniciais pra sempre, sem jeito de corrigir retroativamente.
 - `openCard()` — L12986
 - `openAgenteHotline()` — L12895 — card especial fixo por squad "🤖 Converse
   com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/
@@ -2098,7 +2116,12 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `output` (vocabulário de ações antigo) ficam só como contrato legado,
   não lidos mais aqui.
 - `board.js` — `resolveActor(especialistaId)`/`ctx.actor` (2026-08-25): identidade
-  (`uid`/`author`/`who`/`init`) creditada em todo output — achado real: antes,
+  (`uid`/`author`/`who`/`init`) creditada em todo output. `init` (🤖 padrão/🔌
+  especialista) só passou a ser PROPAGADO nos pushes de `card.history[]`
+  (`outputs/agentStatus.js`/`checklistItem.js`/`editarCampos.js`/
+  `moverColuna.js`) em 2026-09-06 — ver seção "Card — estrutura & modal"
+  acima (avatar do histórico do card) pro achado que motivou isso. Achado
+  real: antes,
   todo output (especialista externo via `http.js` OU o próprio orquestrador via
   `agente-agil-orquestrador/tools/realHandlers.js`, que reusa os MESMOS
   builders) gravava sempre `uid:'agente-agil'`, o mesmo ator, tornando
