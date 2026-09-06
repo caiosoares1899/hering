@@ -2781,6 +2781,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.587-dev — 2026-09-06 — /monitorarbugs no OKR bloco quinzenal: clicar numa notificação de OKR não levava a lugar nenhum
+
+Revisão dedicada da feature mais recente (`painel-dev.html` v3.25, bloco
+quinzenal do OKR, PR #761/#762) — 1 achado real, severo:
+
+1. **`openNotif()` não sabia navegar pra nenhuma notificação de OKR.**
+   As notificações `okr_editado`/`okr_prazo`/`okr_reuniao` (e
+   `okr_agente`) são gravadas com `okrObjId`, não `cardId` — mas
+   `openNotif()` só sabe abrir card (`if(!cardId) return;`), então
+   clicar numa dessas notificações no sino do board só marcava como lida
+   e fechava o painel, sem levar a pessoa a lugar nenhum. Mesma classe de
+   bug já corrigida antes pro caso "notificação de outro squad" ("antes
+   isso não fazia NADA além de marcar como lida"), nunca estendida pro
+   OKR porque o board não tem UI de Objetivo — ela vive só no painel.
+   Fix: `openNotif()` ganha um branch pros 4 tipos `okr_*` que redireciona
+   pra `painel-dev.html?okr=<id>` (ou `?okr=chat` pro `okr_agente`, que
+   não é preso a 1 Objetivo) — arquivo certo derivado do próprio
+   `location.pathname` (`kanban-dev.html`→`painel-dev.html`,
+   `kanban.html`→`painel.html`). `NOTIF_ICONS` também ganhou entradas
+   pros 4 tipos (estavam caindo no 🔔 genérico).
+
+Ver entrada correspondente em `painel-dev.html` v3.26 (o lado que recebe
+o `?okr=`) e achado 2 (código morto) no mesmo commit.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens +1`). 8 cenários Playwright novos
+cobrindo os 4 tipos de notificação + os ícones.
+
 ### v8.30.586-dev — 2026-09-04 — 📜 Histórico: marco de período com vários dias mostrava só a hora, sem dizer QUAL dia
 
 Achado real do usuário, com print de um período "01/09/26 a 04/09/26":
@@ -12699,6 +12727,41 @@ só sugerindo texto.
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.26 · painel-dev — 2026-09-06 — /monitorarbugs: notificação de OKR abre o Objetivo certo + limpeza de código morto
+
+Revisão dedicada (`/monitorarbugs`) do bloco quinzenal do OKR
+(`painel-dev.html` v3.25, PR #761/#762), a feature mais recente do
+repositório. 2 achados:
+
+1. **Clicar numa notificação de OKR não abria o Objetivo** (severo — ver
+   entrada espelho em `kanban-dev.html` v8.30.587-dev pro lado que
+   dispara o redirect). Fix deste lado: `_okrTryOpenFromUrl()`, nova —
+   lê `?okr=<id>`/`?okr=chat` da URL, troca pra aba OKR
+   (`swPtab('okr')`) e abre o Objetivo (`openOkrObjetivo(id)`) ou a
+   Central Agente Ágil (`_okrToggleAgenteChat()`), rodando dentro do
+   `onValue` de `kanban/okr/objetivos` (1ª vez que `okrObjetivos` tem o
+   snapshot completo — sem precisar do retry de 15 tentativas que o
+   card usa, porque aqui é 1 nó só, não múltiplos listeners
+   progressivos). Objetivo não encontrado (excluído/arquivado por
+   engano no link): mostra toast, mesmo padrão já usado pro card não
+   encontrado, em vez de falhar em silêncio.
+2. **`_okrBlocoNaData()` era código morto** — declarada, nunca chamada
+   (a UI só usa `_okrBlocoDaArea()`+`_okrProximaReuniaoDoBloco()`).
+   Removida. De passagem, `_okrProximaReuniaoDoBloco()` usava
+   `Math.floor()` na conta de dias-desde-o-anchor, divergindo do padrão
+   já estabelecido no resto do app (`Math.round`, usado justamente pra
+   não quebrar se o diff de milissegundos não for múltiplo exato de 1
+   dia num horário de verão do fuso do dispositivo — Brasil não tem DST
+   desde 2019, mas o navegador pode estar configurado noutro fuso).
+   Corrigido pra `Math.round` na contagem de dias, floor só depois na
+   divisão por 7 (mesmo padrão de 2 passos do `dailyScan.js`).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -14`). 15 cenários Playwright — 8 novos
+(navegação kanban→painel, achado 1) + 2 substituindo os que usavam a
+função removida (achado 2) + 5 reexecutados da rodada anterior (bloco
+quinzenal), todos passando.
 
 ### painel.html v3.25 · painel — 2026-09-05 · Promove pra prod — 🎯 OKR: 🗓️ Bloco quinzenal substitui o picker de Google Agenda quebrado
 

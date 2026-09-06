@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.586-dev</div>
+<div class="version">v8.30.587-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24219,6 +24219,10 @@ const NOTIF_ICONS = {
   checklist:  '☑️',
   moved:      '➡️',
   intake:     '📥',
+  okr_editado: '🎯',
+  okr_prazo:   '🎯',
+  okr_reuniao: '🎯',
+  okr_agente:  '🤖',
 };
 
 function toggleNotifPanel(){
@@ -24610,7 +24614,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}','${n.okrObjId||''}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -24621,7 +24625,7 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad, commentId, type){
+function openNotif(notifId, cardId, squad, commentId, type, okrObjId){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
@@ -24632,6 +24636,18 @@ function openNotif(notifId, cardId, squad, commentId, type){
   if(type==='intake'){
     if(squad && squad!==ACTIVE_SQUAD){ window.location.href = window.location.pathname+'?squad='+encodeURIComponent(squad); return; }
     openIntakePanel();
+    return;
+  }
+  // Notificações de OKR (Objetivos/Marcos) vivem no painel, não no board —
+  // nunca têm cardId. Sem isso, clicar só marcava como lida e fechava o
+  // painel de notificações sem levar a pessoa a lugar nenhum (achado via
+  // /monitorarbugs, 2026-09-06, mesma classe do gap de squad diferente já
+  // corrigido acima). painel-dev.html trata `?okr=<id>`/`?okr=chat` — ver
+  // _okrTryOpenFromUrl().
+  if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente'){
+    const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
+    const alvo = type==='okr_agente' ? 'chat' : okrObjId;
+    window.location.href = painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : '');
     return;
   }
   if(!cardId) return;
