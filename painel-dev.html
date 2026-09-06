@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.29 · painel-dev</div>
+<div class="version">v3.30 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5277,7 +5277,20 @@ function _okrCardSearchResults(query){
   const results=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!d.cards) return;
-    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived && (c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
+    // Achado real (/monitorarbugs, 2026-09-06, técnica 2 — comparar contra
+    // getCardTags()/isOKR_ do kanban-dev.html, L10431-10432, a fonte de
+    // verdade de "esse card tem badge OKR no board"): esta função só
+    // olhava c.tag (campo legado, só a 1ª tag), nunca c.tags[] inteiro —
+    // um card com a tag OKR na 2ª/3ª posição mostrava o 🎯 no board mas
+    // NUNCA aparecia aqui pra ser vinculado a um Objetivo. Mesma classe
+    // de bug do PR #770 (_histDiff() só rastreava card.tag), em outro
+    // arquivo. _pGetCardTags() (L3275) já existe pra isso.
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>{
+      if(!c || c.archived) return false;
+      if(c.isOKR) return true;
+      const tagIds=_pGetCardTags(c);
+      return tagIds.some(tid=>tid==='okr' || d.tags?.find(t=>t.id===tid)?.isOKR);
+    })
       .filter(c=>(c.title||'').toLowerCase().includes(q))
       .forEach(c=>results.push({squadId:sq.id, squadIcon:sq.icon, cardId:c.id, title:c.title}));
   });
@@ -5841,7 +5854,16 @@ function renderOKR(){
   SQUADS.forEach(sq=>{
     if(!squadVisible(sq.id)) return;
     const d=squadData[sq.id]; if(!d || !d.cards) return;
-    (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && !c.archived&&(c.isOKR||c.tag==='okr'||d.tags?.find(t=>t.id===c.tag)?.isOKR))
+    // Achado real (/monitorarbugs, 2026-09-06) — mesmo bug de
+    // _okrCardSearchResults(), ver comentário lá: só olhava c.tag (1ª tag),
+    // não c.tags[] inteiro. Aqui é mais sério — É a própria lista "🎯
+    // Cards do board com badge OKR" da aba, não só a busca pra vincular.
+    (Array.isArray(d.cards)?d.cards:[]).filter(c=>{
+      if(!c || c.archived) return false;
+      if(c.isOKR) return true;
+      const tagIds=_pGetCardTags(c);
+      return tagIds.some(tid=>tid==='okr' || d.tags?.find(t=>t.id===tid)?.isOKR);
+    })
       .forEach(c=>okrs.push({...c,_squad:sq}));
   });
   if(cnt) cnt.textContent=okrs.length;
@@ -6035,7 +6057,14 @@ function renderPainelInsights(){
 
   // ── OKR (agrupado por NOME de coluna — squads diferentes têm ids de
   // coluna próprios, então agregar por id misturaria coisas diferentes) ──
-  const okrCards=activeCards.filter(c=>c.isOKR||c.tag==='okr'||squadData[c._squad.id]?.tags?.find(t=>t.id===c.tag)?.isOKR);
+  // Achado real (/monitorarbugs, 2026-09-06) — mesmo bug de
+  // _okrCardSearchResults()/renderOKR(): só olhava c.tag (1ª tag), não
+  // c.tags[] inteiro — subcontava o breakdown de OKR por coluna.
+  const okrCards=activeCards.filter(c=>{
+    if(c.isOKR) return true;
+    const tagIds=_pGetCardTags(c);
+    return tagIds.some(tid=>tid==='okr' || squadData[c._squad.id]?.tags?.find(t=>t.id===tid)?.isOKR);
+  });
   const okrPorColMap={};
   okrCards.forEach(c=>{
     const colObj=squadData[c._squad.id]?.columns?.find(col=>col.id===c.col);
@@ -6306,7 +6335,16 @@ function openPcModal(squadId, cardId){
   if(!card){ console.warn('openPcModal: card não encontrado',cardId,'em',squadId); return; }
   const colName=d.columns?.find(col=>col.id===card.col)?.name||card.col;
   const tag=d.tags?.find(t=>t.id===card.tag);
-  
+  // Achado real (/monitorarbugs, 2026-09-06) — mesmo bug de
+  // _okrCardSearchResults()/renderOKR(): `tag` acima só olha card.tag
+  // (1ª tag, campo legado — mantido só pro chip único deste modal
+  // compacto, não é o bug). O bug é o badge "🎯 OKR" abaixo depender
+  // SÓ desse `tag`/`card.isOKR` — card com a tag OKR na 2ª/3ª posição
+  // (não capturada por `tag`) nunca mostrava o badge aqui, mesmo
+  // mostrando no board (kanban usa getCardTags(), tags[] inteiro).
+  // Esse modal é aberto direto de "🔗 Cards vinculados" do Objetivo.
+  const cardIsOkrTagged = card.isOKR || _pGetCardTags(card).some(tid=>tid==='okr' || d.tags?.find(t=>t.id===tid)?.isOKR);
+
   document.getElementById('pc-modal-title').textContent=card.title;
   document.getElementById('pc-modal-link').href=squadBoardUrl(squadId, card.id);
   
@@ -6317,7 +6355,7 @@ function openPcModal(squadId, cardId){
   document.getElementById('pc-modal-body').innerHTML=`
     <div class="pc-chips">
       ${tag?`<span class="pc-chip ${tag.isOKR?'pc-chip-okr':'pc-chip-tag'}">${tag.label}</span>`:''}
-      ${card.isOKR&&!tag?.isOKR?'<span class="pc-chip pc-chip-okr">🎯 OKR</span>':''}
+      ${cardIsOkrTagged&&!tag?.isOKR?'<span class="pc-chip pc-chip-okr">🎯 OKR</span>':''}
       <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label}</span>
       <span class="pc-chip pc-chip-col">${colName}</span>
       ${card.priority?`<span class="pc-chip pc-chip-prio">${prioEmoji[card.priority]||card.priority}</span>`:''}
