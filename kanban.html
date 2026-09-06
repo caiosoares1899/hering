@@ -1826,10 +1826,10 @@ input[type="date"]{-moz-appearance:textfield;}
 .comments-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
 .comments-hd-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt2);}
 /* 📜 Histórico de mudanças */
-.hist-item{display:flex;gap:9px;padding:6px 8px;border-radius:7px;font-size:11px;line-height:1.45;}
+.hist-item{display:flex;align-items:flex-start;gap:8px;padding:6px 9px;border-radius:7px;font-size:11px;line-height:1.45;}
 .hist-item:nth-child(odd){background:rgba(56,182,255,.03);}
-.hist-dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex-shrink:0;margin-top:5px;opacity:.6;}
 .hist-body{flex:1;min-width:0;}
+.hist-icon{margin-right:1px;}
 .hist-who{color:var(--txt);font-weight:600;}
 .hist-what{color:var(--txt2);}
 .hist-when{font-size:9px;color:var(--txt3);white-space:nowrap;flex-shrink:0;margin-top:1px;}
@@ -5942,7 +5942,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.586</div>
+<div class="version">v8.30.592</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8069,7 +8069,13 @@ function _histVal(field, val){
 function recordHistory(card, what, whoOverride){
   if(!card||!what) return;
   if(!Array.isArray(card.history)) card.history=[];
-  card.history.push({ who: whoOverride||_histWho(), what, at: new Date().toISOString() });
+  card.history.push({
+    who: whoOverride||_histWho(), what, at: new Date().toISOString(),
+    // init: pra avatar com foto real (ver _histAvatarHtml()) — só quando é
+    // edição de verdade da pessoa logada (sem whoOverride); Automação/Agente
+    // Ágil/Supercard não têm "pessoa" nenhuma, ficam com ícone próprio.
+    init: whoOverride ? '' : (window._currentUserInit||''),
+  });
   if(card.history.length>HIST_CAP) card.history = card.history.slice(-HIST_CAP);
 }
 // Captura um snapshot dos campos rastreados (antes de editar)
@@ -8079,12 +8085,20 @@ function _histSnapshot(card){
   // checklist: guarda contagem de concluídos p/ detectar progresso
   s._clDone = (card.checklist||[]).filter(i=>i&&i.done).length;
   s._clTotal = (card.checklist||[]).length;
+  // tags[]: achado /monitorarbugs 2026-09-06, ver _histDiff() — precisa do
+  // array inteiro, não só card.tag (1ª tag, campo legado que HIST_FIELDS
+  // ainda rastreia por compatibilidade com telas antigas).
+  s.tags = (card.tags||[]).slice();
   return s;
 }
 // Compara snapshot antigo com o card atual e registra cada mudança
 function _histDiff(card, before, whoOverride){
   if(!card||!before) return;
   Object.keys(HIST_FIELDS).forEach(f=>{
+    // 'tag' (singular, só a 1ª tag) é campo legado mantido por
+    // compatibilidade — o diff de verdade é o de tags[] logo abaixo,
+    // baseado em Set (pega qualquer tag entrando/saindo, não só a 1ª).
+    if(f==='tag') return;
     const oldV=before[f], newV=card[f];
     // normaliza booleanos/strings vazias
     const a = (oldV===undefined||oldV===null)?'':oldV;
@@ -8100,6 +8114,18 @@ function _histDiff(card, before, whoOverride){
       else recordHistory(card, `alterou ${label}: ${_histVal(f,oldV)} → ${_histVal(f,newV)}`, whoOverride);
     }
   });
+  // tags[] — achado real (/monitorarbugs 2026-09-06, técnica 4 — o diff
+  // genérico acima comparava só HIST_FIELDS.tag, a 1ª tag do array,
+  // campo legado mantido só por compatibilidade com telas antigas):
+  // adicionar uma 2ª/3ª tag ou remover uma tag que não fosse a 1ª nunca
+  // gerava entrada de histórico nenhuma — nem via autosave nem via
+  // Salvar manual (os dois chamam esta mesma função). Mesma técnica
+  // Set-based já usada em _doBulkTagMulti()/_okrDiffStringArray() (OKR).
+  const beforeTagsSet=new Set(before.tags||[]), afterTagsSet=new Set(card.tags||[]);
+  const addedTags=(card.tags||[]).filter(t=>!beforeTagsSet.has(t));
+  const removedTags=(before.tags||[]).filter(t=>!afterTagsSet.has(t));
+  if(addedTags.length) recordHistory(card, `adicionou tag${addedTags.length>1?'s':''}: `+addedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
+  if(removedTags.length) recordHistory(card, `removeu tag${removedTags.length>1?'s':''}: `+removedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
   // checklist
   const nd=(card.checklist||[]).filter(i=>i&&i.done).length, nt=(card.checklist||[]).length;
   if(nt!==before._clTotal) recordHistory(card, `atualizou o checklist (${nd}/${nt})`, whoOverride);
@@ -8113,6 +8139,79 @@ function _histRelTime(iso){
   if(diff<86400) return Math.floor(diff/3600)+'h';
   if(diff<604800) return Math.floor(diff/86400)+'d';
   return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+}
+// Visual "timeline de rede social" (pedido direto — "aquele histórico que
+// você criou pro OKR, com a fotinha da pessoa, dá pra fazer isso no
+// kanban também?") — mesmo espírito visual de OKR_HIST_TIPOS/
+// _okrAvatarHtml() (painel-dev.html): ícone+cor por tipo (borda colorida)
+// + avatar de quem fez. Classificação por regex no texto de `what` (não
+// exige tocar nos ~50 call sites de recordHistory()/_histDiff() —
+// mesma técnica que TIMELINE_FEED_COR já usa, só com mais tipos cobertos).
+const CARD_HIST_TIPOS = {
+  criado:      {icon:'🎯', cor:'var(--accent)'},
+  titulo:      {icon:'📝', cor:'#38b6ff'},
+  movido:      {icon:'➡️', cor:'#38b6ff'},
+  impedido:    {icon:'🚧', cor:'#ff6b6b'},
+  desimpedido: {icon:'✅', cor:'#4ade80'},
+  arquivado:   {icon:'📦', cor:'#ff6b6b'},
+  tag:         {icon:'🏷️', cor:'#ffd166'},
+  checklist:   {icon:'💯', cor:'#a78bfa'},
+  prioridade:  {icon:'🔥', cor:'#ff9800'},
+  responsavel: {icon:'👤', cor:'#a78bfa'},
+  prazo:       {icon:'📅', cor:'#38b6ff'},
+  duplicado:   {icon:'📄', cor:'#1de9b6'},
+  tempo:       {icon:'⏸️', cor:'#38b6ff'},
+  pin:         {icon:'📌', cor:'#ffd700'},
+  campo:       {icon:'✏️', cor:'#38b6ff'},
+};
+function _histTipo(what){
+  what=what||'';
+  if(/^criou o card/.test(what)) return 'criado';
+  if(/^duplicou o card/.test(what)) return 'duplicado';
+  if(/^renomeou o card/.test(what)) return 'titulo';
+  if(/^moveu para/.test(what)) return 'movido';
+  if(/^(marcou como impedido|impedimento removido automaticamente)/.test(what)) return 'impedido';
+  if(/^removeu (o )?impedimento/.test(what)) return 'desimpedido';
+  if(/^(arquivou|desarquivou) o card/.test(what)) return 'arquivado';
+  if(/^(adicionou|removeu) tags?:/.test(what)) return 'tag';
+  if(/^(atualizou o checklist|checklist:)/.test(what)) return 'checklist';
+  if(/^(alterou|definiu|removeu) prioridade/.test(what)) return 'prioridade';
+  if(/^(atribuiu para|removeu responsável|definiu responsável)/.test(what)) return 'responsavel';
+  if(/^(alterou prazo|removeu prazo|definiu prazo)/.test(what)) return 'prazo';
+  if(/^(pausou|retomou) a contagem/.test(what)) return 'tempo';
+  if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
+  return 'campo';
+}
+// Ícone/cor pra quem não é uma pessoa de verdade. 2 origens diferentes,
+// 2 formas de reconhecer:
+// 1) Automação/Supercard (client-side, kanban-dev.html) — nunca têm init,
+//    só um whoOverride com texto fixo. Reconhecido pelo texto de `who`.
+// 2) Agente Ágil/especialista externo (server-side, escrita direta do
+//    Cloud Function — functions/agente-agil/board.js resolveActor()) —
+//    `who` vem em português puro ("Agente Ágil", sem emoji) mas `init` já
+//    vem como emoji sentinela (🤖 padrão, 🔌 especialista), justamente pra
+//    não precisar adivinhar toda variação de texto que o servidor possa
+//    gerar. Achado real (2026-09-06, print do usuário): faltava só
+//    PROPAGAR ctx.actor.init pro history.push() lá — resolveActor() já
+//    calculava esse emoji havia tempos, só não estava sendo salvo.
+const HIST_BOT_AVATARS = {
+  '⚙ Automação': {emoji:'⚙️', cor:'#a78bfa'},
+  '🤖 Agente Ágil': {emoji:'🤖', cor:'#38b6ff'},
+  '⚙ Supercard': {emoji:'⚙️', cor:'#a78bfa'},
+};
+const HIST_INIT_AVATARS = {
+  '🤖': {emoji:'🤖', cor:'#38b6ff'},
+  '🔌': {emoji:'🔌', cor:'#ffd166'},
+};
+function _histAvatarHtml(h){
+  const bot=HIST_BOT_AVATARS[h.who]||HIST_INIT_AVATARS[h.init];
+  if(bot) return `<div class="avatar" style="background:${_hexA(bot.cor,.25)};border-color:${_hexA(bot.cor,.5)};" title="${esc(h.who||'')}">${bot.emoji}</div>`;
+  if(h.init) return _ownerAvatarHtml(h.init);
+  // Sem init (whoOverride com nome de pessoa real, ou entrada antiga
+  // gravada antes desta mudança) — cai nas iniciais do nome, mesmo
+  // fallback de sempre quando não há foto.
+  const iniciais=(h.who||'?').split(' ').map(w=>w[0]).filter(Boolean).slice(0,2).join('').toUpperCase();
+  return `<div class="avatar" title="${esc(h.who||'')}">${esc(iniciais||'?')}</div>`;
 }
 function renderHistory(card){
   const list=document.getElementById('m-history-list');
@@ -8128,9 +8227,10 @@ function renderHistory(card){
   list.innerHTML=hist.slice().reverse().map(h=>{
     const when=h.at?_histRelTime(h.at):'';
     const full=h.at?new Date(h.at).toLocaleString('pt-BR'):'';
-    return `<div class="hist-item" title="${esc(full)}">
-      <span class="hist-dot"></span>
-      <div class="hist-body"><span class="hist-who">${esc(h.who||'?')}</span> <span class="hist-what">${esc(h.what||'')}</span></div>
+    const info=CARD_HIST_TIPOS[_histTipo(h.what)]||CARD_HIST_TIPOS.campo;
+    return `<div class="hist-item" style="border-left:3px solid ${info.cor};" title="${esc(full)}">
+      ${_histAvatarHtml(h)}
+      <div class="hist-body"><span class="hist-icon">${info.icon}</span> <span class="hist-who">${esc(h.who||'?')}</span> <span class="hist-what">${esc(h.what||'')}</span></div>
       <span class="hist-when">${esc(when)}</span>
     </div>`;
   }).join('');
@@ -24219,6 +24319,17 @@ const NOTIF_ICONS = {
   checklist:  '☑️',
   moved:      '➡️',
   intake:     '📥',
+  okr_editado: '🎯',
+  okr_prazo:   '🎯',
+  okr_reuniao: '🎯',
+  okr_agente:  '🤖',
+  recorrente:  '🔁',
+  reuniao:     '🎥',
+  gcal_pending: '📅',
+  gcal_approved: '✅',
+  reacao:      '💬',
+  feedback:    '💬',
+  painel_broadcast: '📢',
 };
 
 function toggleNotifPanel(){
@@ -24241,7 +24352,7 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId){
+function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra){
   if(!window._fbReady || !targetUid) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
@@ -24256,6 +24367,7 @@ function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId)
     read: false,
     ts: new Date().toISOString(),
     squad: ACTIVE_SQUAD,
+    ...(extra||{}), // campos extras específicos de 1 tipo (ex.: meetingLink em 'reuniao') — não vira um campo fixo pra todo mundo
   };
   // commentId: só setado quando a menção veio de um comentário (ver
   // parseMentions/submitComment/saveEditComment). Usado em openNotif() pra
@@ -24610,7 +24722,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}','${n.okrObjId||''}','${encodeURIComponent(n.meetingLink||'')}')">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -24621,7 +24733,7 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
-function openNotif(notifId, cardId, squad, commentId, type){
+function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLinkEnc){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+notifId+'/read'),true).catch(()=>{});
@@ -24632,6 +24744,44 @@ function openNotif(notifId, cardId, squad, commentId, type){
   if(type==='intake'){
     if(squad && squad!==ACTIVE_SQUAD){ window.location.href = window.location.pathname+'?squad='+encodeURIComponent(squad); return; }
     openIntakePanel();
+    return;
+  }
+  // Notificações de OKR (Objetivos/Marcos) vivem no painel, não no board —
+  // nunca têm cardId. Sem isso, clicar só marcava como lida e fechava o
+  // painel de notificações sem levar a pessoa a lugar nenhum (achado via
+  // /monitorarbugs, 2026-09-06, mesma classe do gap de squad diferente já
+  // corrigido acima). painel-dev.html trata `?okr=<id>`/`?okr=chat` — ver
+  // _okrTryOpenFromUrl().
+  if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente'){
+    const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
+    const alvo = type==='okr_agente' ? 'chat' : okrObjId;
+    window.location.href = painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : '');
+    return;
+  }
+  // Feedback do Mural (🐛/💡/❓) pro ADM não tem card — vive na aba Monitor
+  // do painel (loadFeedback()/renderErrors()). Mesma classe de achado acima
+  // (/monitorarbugs, 2026-09-06) — antes só marcava como lida e não navegava.
+  if(type==='feedback'){
+    const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
+    window.location.href = painelFile + '?tab=monitor';
+    return;
+  }
+  // "🎥 Reunião em X min" também não tem card — abre o link da reunião
+  // (Meet/Zoom/Teams), mesmo comportamento que a notificação NATIVA do
+  // navegador já tem (n.onclick em checkUpcomingMeetings()); sem isso, quem
+  // perdesse/dispensasse a notificação nativa não tinha como reabrir o link
+  // a partir do sino (achado via /monitorarbugs, 2026-09-06).
+  if(type==='reuniao'){
+    const link = decodeURIComponent(meetingLinkEnc||'');
+    if(link) window.open(link, '_blank');
+    return;
+  }
+  // "📅 Nova agenda aguardando aprovação" — mesma ação do botão da toolbar
+  // (🔔 N agendas pendentes): processa a fila inteira. Sem isso, a
+  // notificação só existia pra avisar, sem nenhum jeito de agir a partir
+  // dela (achado via /monitorarbugs, 2026-09-06).
+  if(type==='gcal_pending'){
+    if(typeof processGcalQueueForAdmin==='function') processGcalQueueForAdmin();
     return;
   }
   if(!cardId) return;
@@ -26364,7 +26514,7 @@ function checkUpcomingMeetings(){
       if (window._currentUser?.uid) {
         const _reuniaoSlug = tituloLimpo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,50);
         const _reuniaoId = 'reuniao-'+inicioMs+'-'+_reuniaoSlug;
-        createNotif(window._currentUser.uid, 'reuniao', '🎥 Reunião em '+minutosRestantes+' min', tituloLimpo, null, _reuniaoId);
+        createNotif(window._currentUser.uid, 'reuniao', '🎥 Reunião em '+minutosRestantes+' min', tituloLimpo, null, _reuniaoId, null, {meetingLink: ev.meetingLink});
       }
     }
 
@@ -31591,6 +31741,15 @@ const COMUNICADO_TIPOS = {
 };
 let _comunicadosAtivos = [];
 let _comunicadoNaTela = null;
+// Comunicados "insistente" ignoram comunicado_visto_ de propósito (reaparecem
+// em aberturas futuras do board até expirar/o ADM desativar) — mas sem esse
+// Set, _talvezMostrarComunicado() achava o mesmo comunicado pendente de novo
+// 400ms depois do dismiss, na MESMA sessão: clicar "Entendi"/"✕" reabria o
+// popup em loop, sem jeito nenhum de sair dele (achado via /monitorarbugs,
+// 2026-09-06 — #comunicado-ov só fecha via dismissComunicado()). Vive só em
+// memória (não localStorage) de propósito: reseta a cada carregamento da
+// página, que é exatamente o "reaparece" que a opção promete.
+let _comunicadoDismissedSession = new Set();
 // Otimização de bytes (achado 2026-09-02, consumo real medido no _dbg):
 // o path 'comunicados' sozinho respondia por >1/3 do download diário de
 // uma squad, com uma média de ~72KB por chamada — quase idêntico ao
@@ -31703,7 +31862,7 @@ function _talvezMostrarComunicado(){
   if(!window._currentUser) return;
   if(_algumOverlayCriticoAberto()){ setTimeout(_talvezMostrarComunicado, 2500); return; }
   const pendente = _comunicadosAtivos.find(c=>{
-    if(c.insistente) return true;
+    if(c.insistente) return !_comunicadoDismissedSession.has(c.id);
     return !_lsGet('comunicado_visto_'+c.id);
   });
   if(pendente) _mostrarComunicado(pendente);
@@ -31740,6 +31899,7 @@ function _mostrarComunicado(c){
 function dismissComunicado(){
   if(_comunicadoNaTela){
     _lsSet('comunicado_visto_'+_comunicadoNaTela.id, '1');
+    if(_comunicadoNaTela.insistente) _comunicadoDismissedSession.add(_comunicadoNaTela.id);
     _comunicadoNaTela = null;
   }
   document.getElementById('comunicado-ov').classList.remove('open');
