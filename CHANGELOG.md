@@ -2781,6 +2781,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.592-dev — 2026-09-06 — Fix: avatar do Agente Ágil no histórico do card virava iniciais garbled ("AÁ")
+
+Achado por print do usuário logo depois da v8.30.591-dev (avatar com
+foto no 📜 Histórico) ir ao ar: entradas escritas pelo Agente Ágil
+ANTIGO (`functions/agente-agil/`, não o orquestrador) apareciam com um
+avatar de iniciais estranho ("AÁ") em vez do ícone de robô 🤖.
+
+Causa: esse agente grava histórico direto no Firebase, do lado do
+servidor (`outputs/agentStatus.js`/`checklistItem.js`/`editarCampos.js`/
+`moverColuna.js`, 5 pontos) — `who:'Agente Ágil'` (texto em português
+puro, sem o emoji `'🤖 Agente Ágil'` que o cliente usa como chave em
+`HIST_BOT_AVATARS`) e sem NENHUM campo de identidade além disso.
+`resolveActor()` (`board.js`) já calculava um `init` (`🤖` padrão, `🔌`
+especialista externo) fazia tempo — só nunca era propagado pro
+`history.push()`.
+
+Fix: os 5 call sites passam a incluir `init: ctx.actor.init` no push;
+`_histAvatarHtml()` (kanban-dev.html) ganha `HIST_INIT_AVATARS` —
+reconhece o avatar certo pelo `init` (emoji sentinela), não só pelo
+texto exato de `who`, cobrindo qualquer variação de frase que o
+servidor gere sem precisar adivinhar cada uma. Entradas gravadas ANTES
+deste fix continuam sem `init` (dado que nunca existiu) — ficam com
+iniciais pra sempre, sem jeito de corrigir retroativamente; só
+entradas novas, a partir de agora, mostram o ícone certo.
+
+Checks de rotina: `node --check` OK nos 5 arquivos (`kanban-dev.html` +
+4 em `functions/agente-agil/outputs/`). Suite de backend: 475/475
+passando (sem regressão — os testes existentes não travam no formato
+exato do objeto de história, só no conteúdo relevante). 6 cenários
+Playwright novos cobrindo o cenário exato do print (Agente Ágil
+server-side sem emoji + init novo) e confirmando ausência de
+regressão nos casos já existentes (Automação, pessoa real, entrada
+antiga sem init).
+
 ### v8.30.591-dev — 2026-09-06 — 📜 Histórico do card ganha visual rico (avatar com foto, ícone e cor por tipo)
 
 Pedido direto do usuário depois de ver o histórico do OKR: "aquele
