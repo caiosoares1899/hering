@@ -261,6 +261,13 @@ baseline atual pra próxima rodada comparar.
   (29303 linhas), 15/14 timers, 31 `backdrop-filter`.
 - **v8.30.504-dev (2026-08-29)**: limpa. Baseline: script ~1.40MB
   (29486 linhas), 15/14 timers, 31 `backdrop-filter`.
+- **v8.30.594-dev (2026-09-06)**: limpa. Crescimento de timers (15/14→
+  17/15) e `backdrop-filter` (31→33) proporcional a features legítimas
+  do período (Timeline, OKR, orquestrador do Agente Ágil, tempo em
+  atraso/bloqueado) — nenhum leak/órfão real encontrado nos 2 novos
+  timers checados individualmente. Baseline: HTML total 2.033.748 bytes
+  (32508 linhas), CSS ~212.5KB, script principal ~1.595MB, 17/15
+  timers, 33 `backdrop-filter`, zero `data:image` embutido.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.

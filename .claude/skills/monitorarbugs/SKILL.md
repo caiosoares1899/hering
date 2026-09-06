@@ -301,6 +301,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (campo "proxy" tratado como se refletisse o array inteiro, quando só
   reflete o 1º elemento). Fix: diff dedicado Set-based pra `tags[]`,
   fora do loop genérico de `HIST_FIELDS`. 4 cenários Playwright.
+- **2026-09-06, ⏱️ tempo em atraso/bloqueado (pedido explícito, "nessas
+  áreas implementadas hj")**: 1 achado, mapeando todos os call sites de
+  `recordMove()`/`_settleBlockedTag()`/`card.blocker=`. `ctxMove()`
+  (menu de contexto — submenu "↦ Mover para" e `ctxBlock()`) era o
+  ÚNICO caminho de movimentação que nunca chamava `recordMove()` —
+  `handleDrop()`/`_doBulkMove()`/`saveCard()` sempre chamavam. Gap
+  PRÉ-EXISTENTE (não introduzido pela feature do dia), só ficou visível
+  porque a feature nova depende de `recordMove()` rodar em toda
+  movimentação — deixava cycle/lead time, CFD, Timeline e Throughput
+  cegos pra esse caminho, o auto-desimpedimento não disparava, e a rede
+  de segurança do tempo em atraso/bloqueado ficava sem cobertura. Fix:
+  `recordMove(card, colId)` adicionado, mesmo padrão de
+  `_doBulkMove()`. PR #776 (mesmo PR da feature, ainda não mergeado).
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

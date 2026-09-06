@@ -2826,6 +2826,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.594-dev — 2026-09-06 — /monitorarbugs no ⏱️ tempo em atraso/bloqueado: menu de contexto nunca chamava recordMove()
+
+Pedido explícito, escopo nomeado — "nessas áreas implementadas hj" (a
+feature de ⏱️ tempo em atraso/bloqueado, v8.30.593-dev). Mapeados TODOS
+os call sites de `recordMove()`/`_settleBlockedTag()`/`card.blocker=`
+no arquivo (técnica 1 — comparar caminhos paralelos pra mesma
+operação). 1 achado real, mais amplo que a feature em si:
+
+1. **`ctxMove()` (usado tanto pelo submenu "↦ Mover para" do menu de
+   contexto quanto por `ctxBlock()`) era o ÚNICO caminho de
+   movimentação de card que nunca chamava `recordMove()`** —
+   `handleDrop()` (drag), `_doBulkMove()` (ação em massa) e a mudança de
+   coluna via modal (`saveCard()`) sempre chamavam; só o menu de
+   contexto ficava de fora. Consequência: mover 1 card por ali deixava
+   `flow.log`/`flow.doneAt`/`flow.firstStartAt` intocados — cycle time,
+   lead time, CFD, Timeline e Throughput todos ficavam cegos pra essa
+   movimentação específica —, o auto-desimpedimento automático (modo
+   tag, "card concluído = desimpedido sozinho") não disparava, e a rede
+   de segurança mais robusta do ⏱️ tempo atrasado/bloqueado (a que
+   sobrevive a um card resolvido numa tacada só, sem nenhum save
+   intermediário — ver v8.30.593-dev) ficava sem cobertura nesse
+   caminho. Achado incidental: isso é uma lacuna PRÉ-EXISTENTE (não
+   introduzida pela feature de hoje), só exposta com mais clareza porque
+   a nova feature depende de `recordMove()` ser chamado de forma
+   confiável em toda movimentação. Fix: `recordMove(card, colId)`
+   adicionado antes de mutar `card.col`, mesmo padrão de
+   `_doBulkMove()`.
+
+Checado e sem achado: interação entre `_settleBlockedTag()` (chamado em
+`saveCard()`/`scheduleAutoSave()`) e o auto-desimpedimento dentro de
+`recordMove()` — o design é idempotente (sempre confere `card.blockedAt`
+antes de creditar), então mesmo as duas chamadas acontecendo em
+sequência pra uma mesma transição não geram dupla contagem.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (`braces -1, parens -1`).
+
 ### v8.30.593-dev — 2026-09-06 — ⏱️ Novo: tempo em atraso e bloqueado agora é arquivado (contado nos dashboards, inclusive Criativos)
 
 Pedido direto do usuário: "quando um card ficar como atrasado, mesmo que

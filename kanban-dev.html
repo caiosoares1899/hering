@@ -5944,7 +5944,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.593-dev</div>
+<div class="version">v8.30.594-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28613,7 +28613,21 @@ function ctxMove(colId){
   if(!colTarget){ showToast('⚠ Essa coluna não existe mais — peça pra um ADM checar ⚙ Configurações → Colunas.'); hideCtxMenu(); return; }
   const colName=colTarget.name;
   saveUndo('mover para '+colName);
-  const ant=card.col; card.col=colId;
+  const ant=card.col;
+  // Achado real (/monitorarbugs 2026-09-06, técnica 1 — comparar caminhos
+  // paralelos pra mesma operação): handleDrop()/_doBulkMove()/saveCard()
+  // (mudança de coluna via modal) sempre chamam recordMove() antes de
+  // mutar card.col — só ctxMove() (menu de contexto, usado tanto pelo
+  // submenu "↦ Mover para" quanto por ctxBlock()) nunca chamava. Sem
+  // isso, mover 1 card por aqui deixava flow.log/flow.doneAt/
+  // flow.firstStartAt intocados (cycle/lead time, CFD, Timeline,
+  // Throughput todos ficavam cegos pra essa movimentação específica), o
+  // auto-desimpedimento em modo tag (ver comentário em recordMove()) não
+  // disparava, e o settle de ⏱️ tempo atrasado/bloqueado (PR #776) perdia
+  // a rede de segurança mais robusta que só recordMove() tem (usa `due`/
+  // `from` confiáveis mesmo numa tacada só, sem save intermediário).
+  recordMove(card, colId);
+  card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();

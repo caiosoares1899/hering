@@ -890,13 +890,24 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
   pra `'col'` se existe uma coluna com id `blocker`; se não existir,
   bloqueia a troca com aviso em vez de deixar a squad num estado onde
   cards já impedidos ficam invisíveis
-- `ctxMove(colId)`/`ctxBlock()` — L28214/L28242 — `ctxBlock()` é só
+- `ctxMove(colId)`/`ctxBlock()` — L28611/L28639 — `ctxBlock()` é só
   `ctxMove('blocker')`. Mesmo incidente:
   `ctxMove()` agora aborta com aviso se `colId` não bater com nenhuma
   coluna existente, em vez de gravar um `card.col` órfão —
   `renderNormal()` só mostra um card na coluna cujo id bate exatamente
   com `card.col`, então um id órfão faz o card sumir do board inteiro,
-  intacto mas invisível (achável só via painel)
+  intacto mas invisível (achável só via painel). **Achado real
+  (`/monitorarbugs` 2026-09-06, técnica 1 — comparar caminhos paralelos):
+  `ctxMove()` era o ÚNICO caminho de movimentação (drag `handleDrop()`/
+  `_doBulkMove()`/mudança de coluna via modal `saveCard()` já chamavam)
+  que nunca chamava `recordMove()`** — mover 1 card pelo submenu "↦
+  Mover para" (ou pelo atalho `ctxBlock()`) deixava `flow.log`/
+  `flow.doneAt`/`flow.firstStartAt` intocados (cycle/lead time, CFD,
+  Timeline, Throughput cegos pra essa movimentação específica), o
+  auto-desimpedimento em modo tag não disparava, e a rede de segurança
+  mais robusta do ⏱️ tempo atrasado/bloqueado (ver seção própria acima)
+  ficava sem cobertura. Corrigido: `recordMove(card, colId)` adicionado
+  antes de mutar `card.col`, mesmo padrão de `_doBulkMove()`.
 - Menu de contexto do card (`showCtxMenu()` — L28022) — 2026-09-01,
   pedido direto ("mudar prioridade e mudar coluna... deveria abrir a
   lista pro lado pra n ficar mt grande", comparando com o submenu do
