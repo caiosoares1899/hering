@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.28 · painel-dev</div>
+<div class="version">v3.29 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5806,10 +5806,29 @@ async function saveOkrMarco(){
   showToast(isNovo ? '🏁 Marco criado.' : '💾 Marco salvo.');
   closeOkrMarco();
 }
+// Achado via /monitorarbugs (2026-09-06, técnica 2 — comparar contra
+// _okrArquivarObjetivo()/saveOkrMarco() no mesmo arquivo): arquivar um
+// Marco não registrava NENHUM histórico — nem no próprio Marco, nem o
+// resumo no Objetivo pai que toda outra edição de Marco sempre empurra
+// (ver saveOkrMarco() logo acima). Diferente de arquivar um Objetivo, que
+// já grava "arquivou o Objetivo". Corrigido pro mesmo padrão dos dois.
 async function _okrArquivarMarco(){
   if(!_okrEditingMarcoId) return;
   if(!await uiConfirm('Arquivar este marco?', {danger:true, okText:'Arquivar'})) return;
-  await window._update(window._ref(window._db,'kanban/okr/marcos/'+_okrEditingMarcoId), {arquivado:true});
+  const m = okrMarcos[_okrEditingMarcoId] || {};
+  const hist = Array.isArray(m.history) ? m.history.slice() : [];
+  hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'arquivou o marco', tipo:'arquivado', at:new Date().toISOString()});
+  await window._update(window._ref(window._db,'kanban/okr/marcos/'+_okrEditingMarcoId), {arquivado:true, history:hist});
+  if(okrMarcos[_okrEditingMarcoId]){ okrMarcos[_okrEditingMarcoId].arquivado = true; okrMarcos[_okrEditingMarcoId].history = hist; }
+  const objId = m.objetivoId;
+  const obj = okrObjetivos[objId];
+  if(obj){
+    const objHistory = Array.isArray(obj.history) ? obj.history.slice() : [];
+    objHistory.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:`arquivou o marco "${m.nome||'?'}"`, tipo:'marco', at:new Date().toISOString()});
+    if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
+    await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
+    okrObjetivos[objId] = {...obj, history:objHistory};
+  }
   showToast('🗑 Marco arquivado.');
   closeOkrMarco();
 }
