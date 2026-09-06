@@ -114,6 +114,32 @@ detalhe dos 4 call sites.
 
 ### Card — estrutura & modal
 - `CARD_SECTIONS` — L6696 — seções do modal (Conteúdo, Vínculos, Colaboração...)
+- **📜 Histórico do card** (`card.history[]`) — `HIST_CAP`/`HIST_FIELDS`
+  (rótulos legíveis), `_histSnapshot(card)` (antes de editar) →
+  `_histDiff(card, before, whoOverride)` (compara e grava cada mudança)
+  → `recordHistory(card, what, whoOverride)` (push + cap) →
+  `renderHistory(card)`/`toggleHistory()` (UI). Mesmo padrão portado pro
+  OKR (`_okrRecordHistory()`/`renderOkrHistory()`, painel-dev.html, ver
+  seção OKR — comparados numa rodada de `/monitorarbugs` sem achado
+  cruzado). Chamado por praticamente toda mutação de card — ações em
+  massa, Automações, Agente Ágil orquestrador, recorrente/agendado,
+  fan-out, pin, pausar — sempre passando `whoOverride` quando quem
+  mudou não é o usuário logado (`'⚙ Automação'`/`'🤖 Agente Ágil'`).
+  **Achado real (2026-09-06, `/monitorarbugs`, técnica 4 — pegadinha de
+  vazio/falsy num diff genérico)**: `HIST_FIELDS.tag` rastreia só
+  `card.tag` (campo legado, a 1ª tag do array — mantido só por
+  compatibilidade com telas antigas), não `card.tags[]` de verdade.
+  Adicionar uma 2ª/3ª tag ou remover uma tag que não fosse a 1ª nunca
+  gerava entrada de histórico — nem via autosave (`scheduleAutoSave()`)
+  nem via Salvar manual (`saveCard()`), os dois únicos caminhos de
+  edição de tag via modal (os caminhos de ação em massa —
+  `_doBulkTagMulti()`/`_doBulkTagClear()` — já tinham sua própria
+  chamada explícita a `recordHistory()`, por isso nunca bateram nesse
+  bug). Corrigido: `_histSnapshot()` agora também guarda `tags[]`
+  inteiro, e `_histDiff()` tem um diff Set-based dedicado pra tags
+  (mesma técnica de `_doBulkTagMulti()`/`_okrDiffStringArray()`), fora
+  do loop genérico de `HIST_FIELDS` (que agora pula `'tag'`
+  explicitamente).
 - `openCard()` — L12986
 - `openAgenteHotline()` — L12895 — card especial fixo por squad "🤖 Converse
   com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/

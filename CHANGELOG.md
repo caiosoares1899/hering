@@ -2781,6 +2781,45 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.590-dev — 2026-09-06 — /monitorarbugs no histórico de cards: adicionar/remover tag (fora a 1ª) nunca gerava entrada
+
+Pedido explícito, escopo nomeado — "no histórico de cards". Lido por
+inteiro o mecanismo central (`HIST_CAP`/`HIST_FIELDS`,
+`_histSnapshot()`, `_histDiff()`, `recordHistory()`, `renderHistory()`)
+e mapeados todos os ~50 call sites de `recordHistory()`/`_histDiff()`
+espalhados pelo arquivo (ações em massa, Automações, Agente Ágil
+orquestrador, recorrente/agendado, fan-out, pin, pausar). 1 achado
+real, sério por afetar os 2 caminhos mais comuns de edição:
+
+1. **`_histDiff()` só rastreava a 1ª tag do card, não o array inteiro.**
+   `HIST_FIELDS.tag` aponta pra `card.tag` — campo legado (a 1ª tag,
+   mantido só por compatibilidade com telas antigas) que `saveCard()`/
+   `scheduleAutoSave()` recalculam a cada save (`tag: tags[0]||''`),
+   mas que `_histDiff()` ainda usava como ÚNICA fonte pra saber se as
+   tags do card mudaram. Resultado: adicionar uma 2ª/3ª tag a um card
+   que já tinha 1, ou remover uma tag que não fosse a 1ª (ex.: remover
+   a 2ª de 3), nunca gerava NENHUMA entrada no 📜 Histórico — nem via
+   autosave (o caminho mais comum, "a maioria das edições passa pelo
+   autosave, não pelo botão Salvar") nem via Salvar manual, já que os
+   dois chamam a mesma `_histDiff()`. As ações em massa (`_doBulkTagMulti()`/
+   `_doBulkTagClear()`) nunca tiveram esse bug — sempre chamaram
+   `recordHistory()` com sua própria mensagem, sem depender do diff
+   genérico. Achado via técnica 4 (pegadinha de vazio/falsy — aqui não
+   é bem `[]`/`0`, mas o mesmo princípio: um campo "proxy" `card.tag`
+   sendo tratado como se refletisse fielmente o array `card.tags[]`
+   inteiro, quando só reflete o primeiro elemento).
+   Fix: `_histSnapshot()` agora também guarda `tags[]` completo (não só
+   `tag`); `_histDiff()` ganha um diff dedicado, baseado em Set (mesma
+   técnica já usada em `_doBulkTagMulti()`/`_okrDiffStringArray()` do
+   OKR), fora do loop genérico — que agora pula `'tag'` de propósito,
+   já coberto pelo diff novo.
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline
+(`braces -1, parens +1`). 4 cenários Playwright novos (adicionar 2ª
+tag, remover tag do meio, remover a única tag — caso que já
+funcionava, controle de não-regressão — e nenhuma mudança de tag não
+gera entrada à toa).
+
 ### v8.30.589-dev — 2026-09-06 — /monitorarbugs nos avisos do Mural: comunicado "insistente" travava a pessoa num loop de popup
 
 Pedido explícito, escopo nomeado — "nos avisos do mural". Lidas por
