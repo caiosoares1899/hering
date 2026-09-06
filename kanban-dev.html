@@ -5944,7 +5944,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.594-dev</div>
+<div class="version">v8.30.595-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8207,18 +8207,30 @@ const CARD_HIST_TIPOS = {
 };
 function _histTipo(what){
   what=what||'';
-  if(/^criou o card/.test(what)) return 'criado';
+  // Achado real (/monitorarbugs, 2026-09-06): as regras abaixo foram
+  // escritas olhando só pras frases do caminho manual (modal/_histDiff) —
+  // os caminhos automáticos (recorrência, agendamento, arquivamento por
+  // idade/limpeza, ações de Automação) usam verbos/frases um pouco
+  // diferentes pro MESMO tipo de evento e caíam todos no fallback
+  // genérico 'campo' (✏️) por não bater com nenhum regex. Achado mais
+  // sério: "impedimento removido automaticamente (card concluído)"
+  // (auto-desbloqueio em recordMove()) caía no grupo 'impedido' (🚧
+  // vermelho) por só compartilhar a palavra "impedimento" com "marcou
+  // como impedido" — mostrava o ícone de BLOQUEIO pra um evento que é o
+  // oposto (desbloqueio), contradizendo o próprio comentário da chamada
+  // ("pra ficar indistinguível de uma remoção manual"). Corrigido.
+  if(/^(criou o card|criado automaticamente)/.test(what)) return 'criado';
   if(/^duplicou o card/.test(what)) return 'duplicado';
   if(/^renomeou o card/.test(what)) return 'titulo';
   if(/^moveu para/.test(what)) return 'movido';
-  if(/^(marcou como impedido|impedimento removido automaticamente)/.test(what)) return 'impedido';
-  if(/^removeu (o )?impedimento/.test(what)) return 'desimpedido';
-  if(/^(arquivou|desarquivou) o card/.test(what)) return 'arquivado';
-  if(/^(adicionou|removeu) tags?:/.test(what)) return 'tag';
-  if(/^(atualizou o checklist|checklist:)/.test(what)) return 'checklist';
+  if(/^marcou como impedido/.test(what)) return 'impedido';
+  if(/^(removeu (o )?impedimento|impedimento removido automaticamente)/.test(what)) return 'desimpedido';
+  if(/^(arquivou o card|desarquivou o card|arquivado (automaticamente|\())/.test(what)) return 'arquivado';
+  if(/^(adicionou tags?\b|removeu tags?\b|substituiu tags?\b|removeu todas as tags)/.test(what)) return 'tag';
+  if(/^(atualizou o checklist|checklist:|adicionou item de checklist)/.test(what)) return 'checklist';
   if(/^(alterou|definiu|removeu) prioridade/.test(what)) return 'prioridade';
-  if(/^(atribuiu para|removeu responsável|definiu responsável)/.test(what)) return 'responsavel';
-  if(/^(alterou prazo|removeu prazo|definiu prazo)/.test(what)) return 'prazo';
+  if(/^(atribuiu para|removeu responsável|definiu responsável|alterou responsável)/.test(what)) return 'responsavel';
+  if(/^(alterou prazo|removeu prazo|definiu prazo|adiou o prazo)/.test(what)) return 'prazo';
   if(/^(pausou|retomou) a contagem/.test(what)) return 'tempo';
   if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
   return 'campo';
@@ -27385,6 +27397,21 @@ function setFanoutTags(id, selectEl){
 function _applyFanoutTemplate(parentCard, tpl, whoLabel){
   if(!parentCard || !tpl || !tpl.filhos?.length) return [];
   const user=whoLabel||'⚙ Automação';
+  // Achado real (/monitorarbugs, 2026-09-06): recordHistory() só anexa
+  // init (avatar com foto real) quando NÃO recebe whoOverride — o
+  // comentário da própria função documenta que whoOverride é só pra
+  // Automação/Agente Ágil/Supercard, que "não têm pessoa nenhuma". Mas
+  // o botão manual "🧩 Aplicar receita" (ver chamadas abaixo) passa
+  // _histWho() — o nome de uma pessoa de verdade — como whoLabel, e esse
+  // valor virava whoOverride pra TODO recordHistory() aqui dentro,
+  // inclusive na origem manual. Resultado: aplicar uma receita na mão
+  // sempre mostrava as iniciais genéricas no histórico, nunca a foto de
+  // quem fez, mesmo a pessoa sendo conhecida. Só quando o ator é mesmo
+  // o robô (`user==='⚙ Automação'`) faz sentido sobrescrever quem/sem
+  // init — pra pessoa real, deixa recordHistory() usar seu próprio
+  // default (_histWho() + window._currentUserInit), que já é o mesmo
+  // texto e ainda ganha a foto.
+  const isBotActor = user==='⚙ Automação';
   const novos=tpl.filhos.map((filho,i)=>{
     // Filho vinculado a um Modelo (📋 Modelos) fica bem mais estruturado:
     // descrição/checklist/tags/riscos/PO vêm do modelo, em vez de nascer
@@ -27394,14 +27421,14 @@ function _applyFanoutTemplate(parentCard, tpl, whoLabel){
     // aplica), em vez de inventar um editor novo só pra isso.
     const modelo = (filho.modeloIdx!=null) ? (qlItems.modelos||[])[filho.modeloIdx] : null;
     const novo=_blankSuperChildCard(parentCard, parentCard.title+' — '+filho.sufixo, {idx:i, modelo, user});
-    recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'"'+(modelo?' + modelo "'+modelo.title+'"':'')+')',user);
+    recordHistory(novo,'criou o card (fan-out "'+tpl.nome+'"'+(modelo?' + modelo "'+modelo.title+'"':'')+')',isBotActor?user:undefined);
     recordMove(novo,novo.col);
     cards.push(novo);
     fbCreateCard(novo).catch(err=>console.error('[fanout] falha ao salvar card filho:', err));
     return novo.id;
   });
   parentCard.childCardIds=[...(parentCard.childCardIds||[]), ...novos];
-  recordHistory(parentCard,'aplicou fan-out "'+tpl.nome+'" ('+novos.length+' card(s) filho(s))',user);
+  recordHistory(parentCard,'aplicou fan-out "'+tpl.nome+'" ('+novos.length+' card(s) filho(s))',isBotActor?user:undefined);
   return novos;
 }
 // Fonte única da regra de "aplicar um Modelo sem sobrescrever o que já

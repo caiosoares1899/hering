@@ -2826,6 +2826,53 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.595-dev — 2026-09-06 — /monitorarbugs no 📜 Histórico do card visual rico: avatar sumia no fan-out manual, ícone errado no auto-desbloqueio
+
+Pedido explícito, escopo genérico — "nas construções de hj". Área
+escolhida por ser a mais recente ainda não auditada (📜 Histórico do
+card ganha visual rico, v8.30.591-dev/#772, já tinha 1 fix pontual de
+avatar em #773 mas nunca uma rodada completa da skill). Mapeados todos
+os ~50 call sites de `recordHistory()` e testados 48 padrões de texto
+contra os dois classificadores (`_histAvatarHtml()`/`_histTipo()`). 2
+achados reais:
+
+1. **Fan-out manual perdia a foto de quem aplicou a receita** —
+   `_applyFanoutTemplate()` (chamada tanto pelo botão manual "🧩
+   Aplicar receita" quanto pela ação de Automação "Aplicar fan-out")
+   passava o nome da pessoa real (`_histWho()`) como `whoOverride` pro
+   `recordHistory()`. Mas `recordHistory()` só anexa `init` (a chave
+   que dá o avatar com foto de verdade) quando NÃO recebe
+   `whoOverride` — o próprio comentário da função documenta que
+   `whoOverride` truthy significa "não é pessoa, é Automação/Agente
+   Ágil/Supercard". Resultado: aplicar uma receita na mão sempre
+   mostrava as iniciais genéricas no histórico ("criou o card
+   (fan-out...)"/"aplicou fan-out..."), nunca a foto de quem fez —
+   mesmo a pessoa sendo perfeitamente conhecida. Fix: `_applyFanoutTemplate()`
+   só passa o override de verdade quando o ator é o robô
+   (`user==='⚙ Automação'`); pra pessoa real, omite o override e deixa
+   `recordHistory()` usar seu próprio default, que já é o mesmo texto
+   + o `init` certo.
+2. **"impedimento removido automaticamente" mostrava o ícone de
+   BLOQUEIO, não de desbloqueio** — quando um card é concluído
+   enquanto ainda impedido (modo tag), `recordMove()` auto-remove o
+   impedimento e grava essa frase no histórico; o comentário da própria
+   chamada já dizia que a intenção é "ficar indistinguível de uma
+   remoção manual" (mesmo ícone que "removeu impedimento"). Mas
+   `_histTipo()` classificava essa frase no grupo `impedido` (🚧
+   vermelho) por só compartilhar a palavra "impedimento" com "marcou
+   como impedido" — mostrando o ícone errado (bloqueio) pro evento
+   oposto (desbloqueio). Fix: movida pro grupo `desimpedido` (✅
+   verde), junto com "removeu impedimento". Achado incidental na mesma
+   varredura, corrigido junto (mesma causa raiz — regex do classificador
+   nunca testado contra as frases dos caminhos automáticos/bulk, só
+   contra as do modal manual): 10 outras frases de recorrência/
+   agendamento/arquivamento automático/reatribuição de responsável/
+   ações de Automação caíam no ícone genérico ✏️ em vez do ícone
+   próprio do tipo (ex.: "criado automaticamente (recorrência)" não
+   ganhava o 🎯 de criação, "arquivado automaticamente (Nd de idade...)"
+   não ganhava o 📦 de arquivamento) — regexes de `_histTipo()`
+   expandidos pra cobrir essas variações.
+
 ### v8.30.594-dev — 2026-09-06 — /monitorarbugs no ⏱️ tempo em atraso/bloqueado: menu de contexto nunca chamava recordMove()
 
 Pedido explícito, escopo nomeado — "nessas áreas implementadas hj" (a
