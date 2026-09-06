@@ -12770,6 +12770,22 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.26 · painel — 2026-09-06 · Promove pra prod (fix pontual) — sino do painel: clicar em "rascunho aguardando revisão" nunca navegava
+
+Promoção isolada de 1 achado da rodada `/monitorarbugs` em todas as
+notificações (ver `painel-dev.html` v3.27 pra rodada completa — o
+resto do lote ainda não foi validado em dev, não faz parte desta
+promoção). `loadPainelNotifs()` descartava o campo `link` da
+notificação ao mapear o registro cru do Firebase — desde que a
+feature de "rascunho de comunicado aguardando revisão" existe, clicar
+nela no sino do painel nunca navegava pra aba Pessoas, apesar do
+código já prometer isso (comentário + toast). Fix: 1 linha
+(`link:n.link||''` no `.map()`).
+
+Checks de rotina: `node --check` OK, balanço igual ao baseline
+(`braces -1, parens -14`). Mesmo cenário de teste da versão de dev
+(Playwright) reexecutado direto contra `painel.html`.
+
 ### painel-dev.html v3.27 · painel-dev — 2026-09-06 — /monitorarbugs em TODAS as notificações: sino do painel nunca navegava (bug desde que a feature nasceu) + deep-link genérico de aba
 
 Continuação da revisão de "todas as notificações" (ver entrada espelho
