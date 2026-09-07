@@ -884,20 +884,34 @@ listener-ao-vivo + cache local de sempre.
   `?squad=`, ver `ACTIVE_SQUAD` ~L6244, que nesse caso cai no
   `'dados'` hardcoded) — um link/seletor com `?squad=X` explícito
   sempre respeita a escolha, nunca é sobrescrito.
-  - `_resolveSquadPadrao(user)` (~L10088) — lê `board_prefs_global`
+  - `_resolveSquadPadrao(user)` (~L10093) — lê `board_prefs_global`
     (`pinned_squad || last_squad`), só quando `semSquadNaUrl`; usado
-    por `resolveSquadAndShow()` (~L10096, virou `async` — só os 2
+    por `resolveSquadAndShow()` (~L10101, virou `async` — só os 2
     call sites relevantes, `onAuthStateChanged`/criação de usuário
     novo, ambos fire-and-forget, sem `await`) pra decidir se redireciona
     ANTES de mostrar o board (ADM: sempre pode ir pro squad padrão;
     multi-squad: só redireciona se `squadPadrao` for um squad de
     verdade da pessoa; squad único: ignora `squadPadrao`, sempre vai
     pro único squad que a pessoa tem, como já era).
-  - `showApp(user)` (~L10152) — grava `last_squad = ACTIVE_SQUAD` toda
+  - `showApp(user)` (~L10157) — grava `last_squad = ACTIVE_SQUAD` toda
     vez que a pessoa efetivamente entra num squad (não sobrescreve
     `pinned_squad`).
-  - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6382/L6385) — UI
-    é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6351,
+  - **Achado real (mesmo dia, testando a rodada)**: quando não redireciona
+    (squad resolvido já era o certo — ex.: `squadPadrao` coincide com o
+    `'dados'` hardcoded que a URL cai por padrão), nada desligava o
+    seletor PRÉ-AUTH (`initSquadSelector()`, ~L30585 — mostra
+    `#squad-selector` no `DOMContentLoaded`, antes até do login
+    resolver, sempre que a URL não tem `?squad=`) — ele ficava por
+    cima do board carregado por baixo, dando a impressão de squad
+    padrão "não funcionar". Gap pré-existente (mecanismo já morava aqui
+    antes desta rodada), só ficou visível porque a feature nova
+    incentiva acessar a URL sem squad de propósito. Fix:
+    `showApp(user)` — único ponto que sabe com certeza que o board de
+    verdade vai aparecer — sempre roda
+    `document.getElementById('squad-selector')?.classList.remove('active')`
+    antes de mostrar o app.
+  - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6387/L6390) — UI
+    é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6356,
     clique no nome do squad atual no cabeçalho): "📌 Fixar este squad
     como padrão" / "📌 ...remover", acima da lista de squads.
 - **Rodada 5 (última das 5)**: presets de filtro nomeados — feature
