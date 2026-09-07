@@ -2902,6 +2902,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.606-dev — 2026-09-07 — Fix: squad padrão fixado não aparecia (seletor pré-auth ficava por cima do board)
+
+Achado testando a Rodada 4 (squad padrão): o usuário fixou um squad
+como padrão, acessou a URL sem `?squad=` e continuou vendo a tela
+"Selecione o board do seu squad" com todos os squads — parecia que a
+fixação não tinha funcionado.
+
+Causa real: quando a URL não tem `?squad=`, um mecanismo PRÉ-AUTH já
+existente (`initSquadSelector()`) mostra esse seletor assim que a
+página carrega — antes até do login resolver, pra não deixar a pessoa
+olhando uma tela em branco. Quando o squad resolvido depois (via
+`resolveSquadAndShow()`) já era o certo (ex.: o squad padrão coincide
+com o `'dados'` hardcoded que a URL cai por padrão), nunca havia
+motivo de redirecionar — mas nada nunca desligava esse seletor
+pré-auth, então ele continuava por cima do board de verdade carregado
+por baixo, dando a impressão de nada ter acontecido. Gap pré-existente
+(não introduzido pela Rodada 4), só ficou visível agora porque a
+feature nova incentiva acessar a URL sem squad de propósito.
+
+Fix: `showApp()` — o único ponto que sabe com certeza que o board de
+verdade vai aparecer — sempre desliga o seletor pré-auth
+(`#squad-selector.classList.remove('active')`) antes de mostrar o app.
+
 ### v8.30.605-dev — 2026-09-07 — 💾 Rodada 5 (última) de personalização: presets de filtro nomeados
 
 5ª e última rodada da linha de personalização de hoje (Atalhos, Esc

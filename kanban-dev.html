@@ -6029,7 +6029,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.605-dev</div>
+<div class="version">v8.30.606-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10155,6 +10155,17 @@ async function resolveSquadAndShow(user, userSquads) {
 }
 
 function showApp(user) {
+  // Achado real (rodada 4 de personalização, "squad padrão não
+  // funcionou"): quando a URL não tem ?squad=, o seletor pré-auth
+  // (initSquadSelector(), ~L30585) já ganha .active OUTRO PONTO no
+  // DOMContentLoaded, antes até da autenticação resolver — igual antes
+  // de squad padrão existir, se o squad resolvido (ACTIVE_SQUAD, que
+  // cai no 'dados' hardcoded sem ?squad=) já era o certo, showApp()
+  // nunca precisava redirecionar, mas também nunca desligava esse
+  // seletor — ele ficava por cima do board carregado por baixo, dando
+  // a impressão de nada ter acontecido. Sempre desliga aqui, no único
+  // lugar que sabe com certeza que o board de verdade vai aparecer.
+  document.getElementById('squad-selector')?.classList.remove('active');
   document.getElementById('login-ov').style.display = 'none';
   document.getElementById('app-root').style.display = 'block';
   document.getElementById('fab').style.display = 'flex';
