@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.613-dev</div>
+<div class="version">v8.30.614-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12590,6 +12590,17 @@ function scheduleAutoSave(){
       // do impedimento deixada pro autosave salvar sozinho se perdia
       // silenciosamente (o card ficava com o texto antigo/vazio no Firebase).
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
+      // Achado real (/monitorarbugs 2026-09-07, escopo "salvar card"):
+      // executorType/agentStatus faltavam aqui — os <select> m-exectype/
+      // m-agentstatus têm onchange="scheduleAutoSave()" (o próprio código já
+      // assumia que autosalvavam), mas o Object.assign nunca gravava os 2
+      // campos — só saveCard() manual fazia isso. Trocar "Tipo de executor"/
+      // status do agente sem clicar Salvar (ou sem usar um dos botões de
+      // simulação, que têm o próprio _agentCommitState()) mostrava "✓ Salvo"
+      // mas a mudança nunca chegava ao Firebase, e _manualFieldsNow() também
+      // não cobria esses 2 campos pra avisar de alteração não salva.
+      executorType:document.getElementById('m-exectype')?.value||'human',
+      agentStatus:document.getElementById('m-agentstatus')?.value||'',
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
