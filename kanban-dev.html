@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.612-dev</div>
+<div class="version">v8.30.613-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12058,6 +12058,13 @@ function applyFilterPreset(id){
   setVal('f-owner', f.owner); setVal('f-demandante', f.demandante); setVal('f-criador', f.criador);
   setVal('f-tag', f.tag); setVal('f-tamanho', f.tamanho); setVal('f-due', f.due);
   setVal('f-priority', f.priority); setVal('f-subteam', f.subteam);
+  // Submarca é multi-seleção — o <select> do drawer só representa 0 ou 1
+  // valor (mesmo padrão de toggleSubmarcaDropdownItem()); com 2+ volta pro
+  // "Qualquer submarca" (achado real de /monitorarbugs 2026-09-07: esse
+  // <select> era o único dos campos do preset que nunca era sincronizado
+  // aqui, ficando com o valor antigo depois de aplicar um preset).
+  const fSm=document.getElementById('f-submarca');
+  if(fSm) fSm.value = Array.isArray(f.submarca)&&f.submarca.length===1 ? f.submarca[0] : '';
   const fTx=document.getElementById('f-texto'); if(fTx) fTx.value=f.texto||'';
   const fBl=document.getElementById('f-blocker'); if(fBl) fBl.checked=!!f.blocker;
   const fRi=document.getElementById('f-risco'); if(fRi) fRi.checked=!!f.risco;

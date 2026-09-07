@@ -456,6 +456,17 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   divergência entre os 3. Limitação conhecida, não é bug: hover não
   tem equivalente por toque (mobile), fora de escopo de correção de
   comportamento (seria feature nova, não um "errado/inconsistente").
+- **2026-09-07, filtros do board (pedido explícito, escopo nomeado)**: 1
+  achado. `applyFilterPreset()` nunca sincronizava `<select
+  id="f-submarca">` (campo de Submarca do painel de Filtros) com o
+  preset aplicado — os outros 3 pontos que mudam
+  `activeFilters.submarca` (`clearFilters()`,
+  `toggleSubmarcaDropdownItem()`, `setSubmarcaFromDrawer()`) sempre
+  sincronizavam. O filtro por baixo aplicava certo; só o campo do
+  drawer ficava com o valor de uma seleção manual anterior. Achado via
+  técnica 1. Checado e sem achado: os 13 campos de
+  `FILTER_PRESET_CAMPOS` batem exatamente com `_hasActiveFilters()` e
+  `passesFilter()`, nenhum campo esquecido em nenhuma das 3 listas.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

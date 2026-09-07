@@ -2943,6 +2943,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.613-dev — 2026-09-07 — /monitorarbugs nos filtros do board: preset não sincronizava o campo de Submarca do drawer
+
+Pedido explícito, escopo nomeado: "roda /monitorarbugs nos filtros do
+board".
+
+1. **`applyFilterPreset()` nunca sincronizava `<select id="f-submarca">`
+   (o campo de Submarca dentro do painel de Filtros) com o preset
+   aplicado.** Comparando os 4 pontos que mudam
+   `activeFilters.submarca` (técnica 1) — `clearFilters()`,
+   `toggleSubmarcaDropdownItem()` e `setSubmarcaFromDrawer()` sempre
+   sincronizam esse `<select>`; só `applyFilterPreset()` ficava de
+   fora, apesar de também mudar `activeFilters.submarca` a partir do
+   preset. Resultado: aplicar um preset sem submarca (ou com outra)
+   filtrava certo por baixo (`activeFilters`/board/chip da toolbar
+   "🏷️ Submarcas" todos corretos), mas o `<select>` do drawer continuava
+   mostrando a submarca de uma seleção manual anterior — campo
+   desatualizado se o usuário abrisse o painel de Filtros depois. Fix:
+   mesma sincronização adicionada em `applyFilterPreset()`, seguindo o
+   padrão de `toggleSubmarcaDropdownItem()` (0 ou 1 submarca representa
+   no `<select>`; 2+ volta pro "Qualquer submarca", limitação já
+   existente do controle single-value).
+
+Checado e sem achado (cross-check campo a campo): os 13 campos de
+`FILTER_PRESET_CAMPOS` batem exatamente com os checados em
+`_hasActiveFilters()` e em `passesFilter()` — nenhum campo esquecido em
+nenhuma das 3 listas.
+
+Validado com Playwright (8 cenários: preset sem submarca limpa o
+`<select>`, preset com 1 submarca reflete nele, preset com 2+ volta pro
+"Qualquer submarca" mantendo o filtro real ativo — os 3 casos
+confirmados FALHANDO antes do fix e passando depois).
+
 ### v8.30.612-dev — 2026-09-07 — /monitorarbugs no board_prefs: filtrar só por Submarca não acendia o botão Filtros
 
 Pedido genérico — "roda um /monitorarbugs geral". Escolhido o lote de
