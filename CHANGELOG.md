@@ -2943,6 +2943,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.612-dev — 2026-09-07 — /monitorarbugs no board_prefs: filtrar só por Submarca não acendia o botão Filtros
+
+Pedido genérico — "roda um /monitorarbugs geral". Escolhido o lote de
+personalização de board_prefs (5 rodadas + 3 fixes + brilho neon, tudo
+desde a última promoção pra prod) por ser a área alterada mais
+recentemente e nunca ter tido rodada própria da skill.
+
+1. **`toggleSubmarcaDropdownItem()`, `setSubmarcaDropdownTodos()` e
+   `setSubmarcaFromDrawer()` nunca chamavam `_applyFiltrosBtnUI()`.**
+   O PR #800 já tinha corrigido exatamente esse tipo de susto ("todos
+   os cards sumiram") pra `applyFilters()`/`clearFilters()`/
+   `applyFilterPreset()` — mas esqueceu os 3 pontos que mudam
+   `activeFilters.submarca` fora desses três (o menu "🏷️ Submarcas" da
+   toolbar e o `<select>` de Submarca dentro do próprio painel de
+   Filtros). Como `_hasActiveFilters()` já considera `submarca` um
+   filtro ativo, escolher uma submarca por qualquer um desses 3
+   caminhos filtrava o board de verdade (a maioria dos cards some) sem
+   o botão "🔭 Filtros" acender — nem o brilho neon do PR #802. Achado
+   via técnica 1 (grep em todos os call sites de `_applyFiltrosBtnUI()`
+   — só 5 apareciam, nenhum nesses 3 pontos que também mutam o mesmo
+   estado que os 5 já cobertos). Fix: mesma chamada adicionada nos 3.
+
+Checado e sem achado: caminhos de raia/colunas colapsadas/col_sort/
+view_mode/densidade/squad padrão — cada um com um único ponto de
+mutação, sem caminho paralelo divergente; presets de filtro
+(`saveFilterPresetPrompt()`/`applyFilterPreset()`/`removeFilterPreset()`)
+consistentes com `applyFilters()`/`clearFilters()`.
+
+(Reaberto como PR novo — o PR #807 original ficou desatualizado depois
+que o PR #808, aberto em paralelo, foi mergeado primeiro.)
+
 ### v8.30.611-dev — 2026-09-07 — 📊 CFD ganha crosshair + tooltip ao passar o mouse
 
 Pedido direto do usuário, olhando o gráfico "📊 Cumulative Flow Diagram —
