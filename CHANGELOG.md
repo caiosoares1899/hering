@@ -2943,6 +2943,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.611-dev — 2026-09-07 — 📊 CFD ganha crosshair + tooltip ao passar o mouse
+
+Pedido direto do usuário, olhando o gráfico "📊 Cumulative Flow Diagram —
+últimos 21 dias" (aba "📈 CFD & Burndown" de "📊 Dados do Board"): "aqui
+podia ter aquelas linhas q quando vc vai passando o mouse no grafico ele
+vai mostrando os numeros e a data".
+
+`_renderCFD()` ganha uma linha vertical tracejada que acompanha o mouse
+(`#cfd-crosshair`), um marcador em cada faixa empilhada na posição
+exata do dia (`#cfd-dots`) e uma tooltip flutuante (`#cfd-tooltip`, com
+o visual "glass" padrão do app) mostrando a data e a contagem de cada
+coluna naquele dia, mais o total — tudo calculado a partir do mesmo
+`serie`/`cumTop` já usados pra desenhar as áreas, sem reprocessar nada.
+Novas funções `_cfdHover(evt)`/`_cfdHoverOut()`, com o estado do
+gráfico guardado em `window._cfdChartState` a cada render (pra não
+precisar reconstruir nada a cada movimento do mouse).
+
+A posição é calculada via `getScreenCTM()`/`createSVGPoint()` do
+próprio SVG (não por conta manual de escala), então continua certa
+mesmo com o `preserveAspectRatio` esticando/centralizando o viewBox
+pra caber na largura do container. A tooltip nunca vaza pra fora do
+gráfico — clampada nos dois lados usando a largura real do wrapper.
+
+Validado com Playwright (18 cenários: crosshair/tooltip aparecem no
+hover e somem no mouseleave, texto da tooltip com data + as 3 colunas +
+total, tooltip não vaza nem à esquerda nem à direita do wrapper).
+
 ### v8.30.609-dev — 2026-09-07 — ✨ Botão "🔭 Filtros" ganha brilho neon quando algum filtro está ativo
 
 Pedido direto do usuário, na sequência do achado de contraste: "acho
