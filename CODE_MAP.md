@@ -761,31 +761,45 @@ do board... obviamente não substituir as que criamos e as mais óbvias
 "❓ Ajuda", visível pra TODO papel — diferente de "⚙ Configurações",
 que `_applyRoleVisibility()` esconde pra quem não é PO/Organizador/ADM)
 abre `#atalhos-ov`.
-- `ATALHO_ACOES` (const, ~L24609) — 6 ações customizáveis (Dados do
-  Board, Timeline, Controle de Criativos, Central de Ajuda, Alternar
-  tema, Copiar link do card). "Copiar link do card" tem `tipo:'card'`
-  (só dispara com o modal do card aberto); "criativos" só aparece na
-  tela pra configurar quando `criativosAtivo` (mesmo critério que já
-  esconde o botão da toolbar). As 5 combinações FIXAS de sempre
-  (Ctrl+K/D/S/Z, Esc) continuam hardcoded no handler principal de
-  `keydown`, não entram nesta lista.
-- `ATALHO_RESERVADOS` (~L24622) — combinações que a UI de captura nunca
+- `ATALHO_ACOES` (const, ~L24623) — 24 ações customizáveis, mapeadas a
+  partir dos botões DE VERDADE da toolbar e do modal do card (não uma
+  lista inventada), divididas por `tipo` em 2 abas: `'global'` = 🗂️
+  Board (Dados do Board, Timeline, Controle de Criativos, Central de
+  Ajuda, Alternar tema, Recarregar colunas/tags, Raia, Filtros,
+  Selecionar, Funções de card, Links, Mapa de dependências,
+  Calendários, Campanhas, Intake) e `'card'` = 📇 Modal do card
+  (Copiar link, Duplicar, Salvar como modelo, Arquivar, Excluir —
+  já tem `uiConfirm()` própria, Pausar/retomar, Menu de capa,
+  Expandir/recolher seções, Histórico) — `tipo:'card'` só dispara com
+  o modal do card aberto (mesmo espírito do Ctrl+S). Achado por pedido
+  direto (2026-09-07, "acho que vc pode mapear as ações mais usadas...
+  pode ter uma aba 'modal do card' tb"), depois da 1ª versão (só 6
+  ações) ter sido validada. Ação com `visivel:()=>...` (ex.:
+  "criativos"→`criativosAtivo`, "intake"→visibilidade real do botão
+  `#btn-intake` na toolbar) só aparece na tela de configurar quando a
+  funcionalidade correspondente está ativa/visível pro squad atual. As
+  5 combinações FIXAS de sempre (Ctrl+K/D/S/Z, Esc) continuam
+  hardcoded no handler principal de `keydown`, não entram nesta lista.
+- `ATALHO_RESERVADOS` (~L24656) — combinações que a UI de captura nunca
   deixa reatribuir: as 5 fixas acima (com `'mod'` cobrindo Ctrl E Cmd,
   mesmo critério que o handler principal já usa via
   `e.ctrlKey||e.metaKey`) + clássicos do navegador (Ctrl+C/V/X/A/F...).
 - Preferência 100% pessoal, mesmo padrão de `notif_prefs`/DND:
   `kanban/usuarios/{uid}/atalhos_custom` (`{acaoId: 'mod+shift+d', ...}`),
-  `loadAtalhosCustom()` (~L24625, listener ao vivo, chamado junto de
+  `loadAtalhosCustom()` (~L24660, listener ao vivo, chamado junto de
   `loadNotifPrefs()` no boot) → cache local `_atalhosCustom`.
-- `openAtalhos()`/`renderAtalhosBody()` (~L24632/24650) — UI: cada
-  linha mostra a ação + combinação atual (formatada por
-  `_atalhoComboLabel()`, Cmd/Option em Mac) + botões Definir/✕.
-- `_atalhoCapturaKeydown(e,id)` (~L24676) — captura a próxima tecla
+- `openAtalhos()`/`swAtalhosTab()`/`renderAtalhosBody()`
+  (~L24667/24672/24691) — UI com 2 abas (`_atalhosTab`, sempre reseta
+  pra `'global'` ao abrir o modal); cada linha mostra a ação +
+  combinação atual (formatada por `_atalhoComboLabel()`, Cmd/Option em
+  Mac) + botões Definir/✕. Trocar de aba com uma captura "armada"
+  cancela ela (senão a tecla capturaria numa ação que já saiu de vista).
+- `_atalhoCapturaKeydown(e,id)` (~L24715) — captura a próxima tecla
   real depois de clicar "Definir" (ignora teclas de modificador puro,
-  Esc cancela) → `_atalhoValidarESalvar()` (~L24689): rejeita sem
+  Esc cancela) → `_atalhoValidarESalvar()` (~L24728): rejeita sem
   Ctrl/Cmd/Alt, rejeita `ATALHO_RESERVADOS`, rejeita conflito com outra
   ação já configurada (não conta como conflito consigo mesma).
-- `_matchAtalhoCombo(e,combo)` (~L24709) — usado tanto pra validar
+- `_matchAtalhoCombo(e,combo)` (~L24748) — usado tanto pra validar
   quanto pelo handler principal de `keydown` (mesmo bloco onde já mora
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.

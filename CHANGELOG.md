@@ -2852,6 +2852,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.597-dev — 2026-09-07 — ⌨️ Atalhos de teclado: 24 ações (18 novas), divididas em abas 🗂️ Board / 📇 Modal do card
+
+Feedback do usuário logo depois de testar a v8.30.596-dev: "achei q ia
+ter mais opções! acho que vc pode mapear as ações mais usadas e listar
+elas. pode ter uma aba 'modal do card' tb pra coisas de dentro do
+modal" — com o botão "🔄 Recarregar dados do Firebase" como exemplo
+concreto do que estava faltando.
+
+A tela ganhou 2 abas (🗂️ Board / 📇 Modal do card, sempre abre na de
+Board). Lista completa mapeada direto dos botões de verdade da toolbar
+e do modal do card — não inventada:
+
+- **🗂️ Board** (9 ações novas, além das 5 já existentes): 🔄 Recarregar
+  colunas/tags (o pedido explícito do usuário), ⇔ Raia, 🔭 Filtros,
+  ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências,
+  📅 Calendários, 📣 Campanhas, 📥 Intake (só aparece se o squad aceita
+  pedidos externos).
+- **📇 Modal do card** (8 ações novas, além da "Copiar link" que já
+  existia): ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir
+  (já pede confirmação própria, então continua seguro por atalho),
+  ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher
+  seções, 📜 Mostrar/esconder Histórico.
+
+Mesma validação de sempre (Ctrl/Cmd/Alt obrigatório, sem conflito com
+as 5 fixas nem com os clássicos do navegador nem com outra ação já
+configurada) — nada mudou no mecanismo de captura/gravação em si, só
+a lista de ações e a divisão em abas.
+
 ### v8.30.596-dev — 2026-09-07 — ⌨️ Novo: atalhos de teclado personalizáveis
 
 Pedido direto do usuário: "personalizar atalhos do teclado pra ações
