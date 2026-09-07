@@ -320,6 +320,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px;}
 .okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;}
 .okr-card:hover{border-color:rgba(56,182,255,.4);transform:translateY(-1px);}
+/* "👤 você é responsável" — mesmo tratamento visual de .card-mine no
+   kanban(-dev).html (tingimento azul + borda mais forte), pedido direto
+   do usuário ("no OKR, faz que nem nos cards"). Mesmas cores exatas do
+   kanban pros 2 temas com override dedicado (mesma família visual, ver
+   MARINE_GLASS.md). 🌴 Vice City sem override próprio — mesma decisão
+   do kanban: herda o tingimento azul do escuro, que já contrasta bem
+   contra a paleta pêssego/lavanda do tema em vez de tentar competir com
+   ela. */
+.okr-card.okr-mine{background:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),var(--glass);border-color:rgba(56,182,255,.7);box-shadow:0 0 12px rgba(56,182,255,.2);}
+[data-theme="light"] .okr-card.okr-mine{background:linear-gradient(rgba(0,120,175,.38),rgba(0,120,175,.38)),var(--glass);border-color:rgba(0,120,175,.9);box-shadow:0 2px 10px rgba(0,120,175,.3),0 1px 3px rgba(0,50,80,.18);}
 .okr-card-title{font-size:13px;font-weight:600;color:var(--txt);line-height:1.4;margin:0 0 6px;}
 .okr-card-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:10px;color:var(--txt3);margin-bottom:8px;}
 .okr-progress-track{width:100%;height:5px;border-radius:99px;background:rgba(var(--ink-rgb),.6);overflow:hidden;margin-top:8px;}
@@ -2807,7 +2817,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.30 · painel</div>
+<div class="version">v3.32 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5166,8 +5176,9 @@ function _okrObjCardHtml(o){
   const marcos = _okrObjMarcos(o.id);
   const pct = _okrObjProgressoPct(o.id);
   const resp = (o.responsaveis||[]).slice(0,4);
+  const souResponsavel = _okrIsResponsavel(o);
   return `
-  <div class="okr-card" onclick="openOkrObjetivo('${o.id}')">
+  <div class="okr-card${souResponsavel?' okr-mine':''}" onclick="openOkrObjetivo('${o.id}')">
     <p class="okr-card-title">${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${okrStatusDot(status)} <span>${esc(okrStatusInfo(status).label)}</span>
@@ -11996,18 +12007,32 @@ function _renderPtFeed(){
     return;
   }
   const f=_ptFeedFilter;
-  const paraContagem=todos.filter(_ptFeedMatchesBase);
-  const chip=(tipo,icone,label)=>{
-    const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
-    const ativo=f.tipos[tipo];
-    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
-  };
   // Opções de responsável/tag também cascateiam com o squad já escolhido NO
   // PRÓPRIO filtro do Feed (não com o da Timeline principal — filtro
   // independente, ver comentário grande no topo desta seção).
   const poolFeed=todos.filter(m=>!f.squad||m.squad.id===f.squad).map(m=>({...m.card, _squad:m.squad}));
   const ownerOpts=_painelTimelineOwnerOptions(poolFeed);
   const tagOpts=_painelTimelineTagOptions(poolFeed);
+  // Achado real (/monitorarbugs, 2026-09-07) — mesma cautela que
+  // renderPainelTimeline() já aplica (comentário dela cita textualmente
+  // "o Feed de marcos do kanban.html" como o precedente disso), mas
+  // faltava exatamente AQUI, no Feed do painel: trocar o squad deste
+  // filtro (não confundir com o squad do filtro principal da Timeline)
+  // deixava `f.owner`/`f.tagLabel` presos num valor da squad ANTERIOR —
+  // `_ptFeedMatchesBase()` continuava comparando contra esse valor
+  // morto, zerando a lista inteira pra squad nova, com o <select>
+  // mostrando "Todos os responsáveis" (a option antiga nem existe mais
+  // na lista recalculada) — nenhuma pista visual de que um filtro
+  // ainda estava ativo. Precisa rodar ANTES de `paraContagem` (senão os
+  // chips de contagem também ficariam presos ao valor morto).
+  if(f.owner && !ownerOpts.some(o=>o.key===f.owner)) f.owner='';
+  if(f.tagLabel && !tagOpts.includes(f.tagLabel)) f.tagLabel='';
+  const paraContagem=todos.filter(_ptFeedMatchesBase);
+  const chip=(tipo,icone,label)=>{
+    const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
+    const ativo=f.tipos[tipo];
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+  };
   const temFiltro = f.squad||f.owner||f.tagLabel||Object.values(f.tipos).some(v=>!v);
   const filtrosHtml=`<div style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
