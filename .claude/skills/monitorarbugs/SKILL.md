@@ -373,6 +373,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   painel é simplificação já documentada, não bug; ausência de badge de
   supercard no Feed do painel é consistente com o resto do arquivo
   (conceito não existe em painel-dev.html em lugar nenhum).
+- **2026-09-07, implementações do dia — Atalhos de teclado/Esc fecha
+  tela/Reorganizar barra (pedido explícito, "roda um /monitorarbugs
+  nessas implementações" — ANTES de promover pro prod)**: 3 achados,
+  auditando o próprio código escrito nesta sessão. Mapeados TODOS os
+  handlers de `Escape` do arquivo (técnica 1) e confrontado o
+  comportamento contra as promessas de design das features novas
+  (técnica 3). (1) a 1ª leva de `stopPropagation()` (feita junto com o
+  "Esc fecha tela") cobriu só os handlers já conhecidos, esquecendo 6
+  DENTRO do `card-ov` (Descrição, anexo, busca de Notas, busca de
+  Supercard, comentário novo, comentário em edição) — cancelar
+  qualquer um deles com Esc fechava o card inteiro; (2) o modo "🔀
+  Reorganizar barra" nunca ganhou o bloqueador de clique que o próprio
+  desenho combinado com o usuário prometia — clique rápido sem
+  arrastar abria o painel do botão no meio da reorganização; (3) Esc
+  não cancelava o modo de reorganizar, inconsistente com a PRÓPRIA
+  feature de Esc lançada no mesmo lote. **Lição pra próxima vez**: ao
+  adicionar um handler global novo que interage com padrões já
+  espalhados pelo arquivo (aqui, Esc), grep pelo evento/tecla INTEIRO
+  (`key==='Escape'`) antes de assumir que já mapeou todos os pontos de
+  contato — não só os que a memória da sessão lembra de ter tocado.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
