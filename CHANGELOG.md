@@ -2902,6 +2902,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.609-dev — 2026-09-07 — ✨ Botão "🔭 Filtros" ganha brilho neon quando algum filtro está ativo
+
+Pedido direto do usuário, na sequência do achado de contraste: "acho
+que quero esse filtro mais aceso! tipo como se tivesse em neon".
+
+`#btn-filters.filtros-ativo` — `box-shadow` duplo (glow perto + glow
+longe) em `var(--accent)`, com uma animação de pulso suave (2s) que só
+varia a INTENSIDADE do brilho, nunca a opacidade do texto/borda (fica
+sempre legível, diferente de um pulso por opacidade). Cor já é
+tema-aware (`--accent` muda sozinho por tema), sem precisar de override
+por `[data-theme]`. `_applyFiltrosBtnUI()` (mesma função do fix
+anterior) agora só alterna a classe `.filtros-ativo`, em vez de setar
+`style.borderColor`/`style.color` na mão.
+
 ### v8.30.608-dev — 2026-09-07 — Fix: chip de preset e botão "💾 Salvar preset" ilegíveis no tema claro e no 🌴 Vice City
 
 Achado do usuário testando presets de filtro, nos dois temas não-escuros
