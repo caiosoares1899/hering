@@ -754,6 +754,42 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 - `verNoBoardFromSearch()` — L29376
 - `_scheduleTextFilterApply()` — L11594 — debounce do filtro `#f-texto`
 
+### ⌨️ Atalhos de teclado personalizáveis (2026-09-07)
+Pedido direto do usuário — "personalizar atalhos do teclado pra ações
+do board... obviamente não substituir as que criamos e as mais óbvias
+(ctrl+c, ctrl+k, ctrl+v)". Botão "⌨️ Atalhos" na toolbar (ao lado de
+"❓ Ajuda", visível pra TODO papel — diferente de "⚙ Configurações",
+que `_applyRoleVisibility()` esconde pra quem não é PO/Organizador/ADM)
+abre `#atalhos-ov`.
+- `ATALHO_ACOES` (const, ~L24609) — 6 ações customizáveis (Dados do
+  Board, Timeline, Controle de Criativos, Central de Ajuda, Alternar
+  tema, Copiar link do card). "Copiar link do card" tem `tipo:'card'`
+  (só dispara com o modal do card aberto); "criativos" só aparece na
+  tela pra configurar quando `criativosAtivo` (mesmo critério que já
+  esconde o botão da toolbar). As 5 combinações FIXAS de sempre
+  (Ctrl+K/D/S/Z, Esc) continuam hardcoded no handler principal de
+  `keydown`, não entram nesta lista.
+- `ATALHO_RESERVADOS` (~L24622) — combinações que a UI de captura nunca
+  deixa reatribuir: as 5 fixas acima (com `'mod'` cobrindo Ctrl E Cmd,
+  mesmo critério que o handler principal já usa via
+  `e.ctrlKey||e.metaKey`) + clássicos do navegador (Ctrl+C/V/X/A/F...).
+- Preferência 100% pessoal, mesmo padrão de `notif_prefs`/DND:
+  `kanban/usuarios/{uid}/atalhos_custom` (`{acaoId: 'mod+shift+d', ...}`),
+  `loadAtalhosCustom()` (~L24625, listener ao vivo, chamado junto de
+  `loadNotifPrefs()` no boot) → cache local `_atalhosCustom`.
+- `openAtalhos()`/`renderAtalhosBody()` (~L24632/24650) — UI: cada
+  linha mostra a ação + combinação atual (formatada por
+  `_atalhoComboLabel()`, Cmd/Option em Mac) + botões Definir/✕.
+- `_atalhoCapturaKeydown(e,id)` (~L24676) — captura a próxima tecla
+  real depois de clicar "Definir" (ignora teclas de modificador puro,
+  Esc cancela) → `_atalhoValidarESalvar()` (~L24689): rejeita sem
+  Ctrl/Cmd/Alt, rejeita `ATALHO_RESERVADOS`, rejeita conflito com outra
+  ação já configurada (não conta como conflito consigo mesma).
+- `_matchAtalhoCombo(e,combo)` (~L24709) — usado tanto pra validar
+  quanto pelo handler principal de `keydown` (mesmo bloco onde já mora
+  o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
+  texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
+
 ### Checklist (com grupos colapsáveis)
 - `renderCL()` — L14038
 - `_clGroupsInit()` — L14003

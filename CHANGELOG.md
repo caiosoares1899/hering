@@ -2852,6 +2852,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.596-dev — 2026-09-07 — ⌨️ Novo: atalhos de teclado personalizáveis
+
+Pedido direto do usuário: "personalizar atalhos do teclado pra ações
+do board (abrir dashboard, abrir meu dia, copiar link do card...)...
+tudo isso obviamente no q é possivel, não substituir as q criamos e as
+mais obvias (ctrl+c; ctrl+k; ctrl+v)". Desenho discutido em chat antes
+de implementar (versão sem o Agente Ágil configurar via conversa —
+descartada por complexidade sem ganho real: um campo "aperte a tecla"
+já é mais rápido que digitar pro agente).
+
+Botão novo "⌨️ Atalhos" na toolbar, ao lado de "❓ Ajuda" — visível pra
+QUALQUER papel (diferente de "⚙ Configurações", só PO/Organizador/ADM).
+Abre uma tela pra escolher a combinação de teclas de 6 ações: 📊 Dados
+do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad
+tiver Ficha Técnica ativa), ❓ Central de Ajuda, 🌙 Alternar tema, e 🔗
+Copiar link do card (só funciona com um card aberto).
+
+Como funciona: clique em "Definir" e aperte a combinação (precisa ter
+Ctrl/Cmd ou Alt junto — não dá pra usar uma tecla sozinha, senão
+atrapalharia digitação normal em qualquer campo de texto). O app
+recusa e avisa se a combinação escolhida for uma das 5 fixas de sempre
+(Ctrl+K busca, Ctrl+D Meu Dia, Ctrl+S salvar card, Ctrl+Z desfazer —
+essas continuam intocáveis), um clássico do navegador (Ctrl+C/V/X/A/F,
+etc.), ou já estiver em uso por outra ação personalizada.
+
+Preferência 100% pessoal — grava em `kanban/usuarios/{uid}/
+atalhos_custom` (mesmo padrão de "Não Perturbe"), sincroniza sozinha
+entre qualquer computador que você entrar, sem afetar ninguém mais.
+
 ### v8.30.595-dev — 2026-09-06 — /monitorarbugs no 📜 Histórico do card visual rico: avatar sumia no fan-out manual, ícone errado no auto-desbloqueio
 
 Pedido explícito, escopo genérico — "nas construções de hj". Área

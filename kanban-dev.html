@@ -3507,6 +3507,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
+  <button class="btn btn-sm" onclick="openAtalhos()" title="Personalizar atalhos de teclado (preferência sua, sincroniza com sua conta)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">⌨️ Atalhos</button>
   <div class="tb-sep"></div>
   <button class="btn btn-sm" onclick="openCardFnModal()" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
   <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
@@ -5112,6 +5113,23 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 
+<!-- ⌨️ ATALHOS DE TECLADO PERSONALIZÁVEIS — preferência pessoal (kanban/usuarios/{uid}/
+     atalhos_custom), mesmo padrão de notif_prefs/DND. Acessível a QUALQUER papel (ao
+     contrário de ⚙ Configurações, que é só PO/Organizador/ADM) — ver openAtalhos() e
+     ATALHO_ACOES logo acima de loadNotifPrefs(). -->
+<div class="ov" id="atalhos-ov">
+<div class="panel" style="max-width:480px;width:92vw;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">⌨️ Atalhos de teclado</div>
+    <button class="x-btn" onclick="closeOv('atalhos-ov')">✕</button>
+  </div>
+  <div style="padding:12px 16px;font-size:11px;color:var(--txt3);border-bottom:1px solid var(--glass-b);">
+    <b>Ctrl+K</b> (busca), <b>Ctrl+D</b> (Meu Dia), <b>Ctrl+S</b> (salvar card), <b>Ctrl+Z</b> (desfazer) e <b>Esc</b> continuam fixos. Personalize os atalhos abaixo — preferência sua, salva na sua conta (funciona em qualquer aparelho que você entrar).
+  </div>
+  <div style="padding:8px 16px 16px;overflow-y:auto;flex:1;" id="atalhos-body"></div>
+</div>
+</div>
+
 
 <!-- CALENDÁRIO -->
 <div class="cal-ov" id="cal-ov">
@@ -5944,7 +5962,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.595-dev</div>
+<div class="version">v8.30.596-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23408,6 +23426,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
+    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela pra você escolher SUA própria combinação de teclas pra 6 ações: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos, ❓ Central de Ajuda, 🌙 Alternar tema e 🔗 Copiar link do card (essa última só funciona com um card aberto — não faz sentido sem um card pra copiar o link).\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma tecla sozinha, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer) e os clássicos do navegador (Ctrl+C/V/X/A/F...) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
@@ -24562,6 +24581,140 @@ function getUidByInit(init){
   if(globalMatches.length===1) return globalMatches[0][0];
   console.warn('[getUidByInit] nenhum usuário encontrado com a inicial:', init, '— notificação não enviada (a pessoa pode ter saído do squad, ou a inicial no card está desatualizada).');
   return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// ⌨️ ATALHOS DE TECLADO PERSONALIZÁVEIS
+// ───────────────────────────────────────────────────────────────────
+// Pedido direto do usuário — "personalizar atalhos do teclado pra ações
+// do board (abrir dashboard, abrir meu dia, copiar link do card...)".
+// Só as combinações FIXAS de sempre (Ctrl+K busca, Ctrl+D Meu Dia,
+// Ctrl+S salvar card, Ctrl+Z desfazer, Esc) continuam hardcoded no
+// handler principal de keydown — as ações abaixo são as customizáveis,
+// somando por cima sem tocar naquelas.
+// Preferência 100% pessoal (mesmo padrão de notif_prefs/DND, ver
+// loadNotifPrefs() logo abaixo): kanban/usuarios/{uid}/atalhos_custom
+// ({ acaoId: 'mod+shift+d', ... }), listener ao vivo + cache local
+// (_atalhosCustom) — sincroniza entre abas/dispositivos de graça, ao
+// contrário de localStorage. Acessível a QUALQUER papel (abre pelo
+// botão "⌨️ Atalhos" na toolbar, sempre visível — diferente de ⚙
+// Configurações, escondido pra quem não é PO/Organizador/ADM via
+// _applyRoleVisibility()).
+// `tipo:'card'` = ação só faz sentido com o modal do card aberto (mesmo
+// espírito do Ctrl+S, que já só age dentro dele) — o handler ignora o
+// atalho se não houver card aberto, em vez de chamar a função no vazio.
+// "criativos" só aparece na lista pra configurar quando o squad atual
+// tem a Ficha Técnica ativa (`criativosAtivo`) — mesmo critério que já
+// esconde o botão "🎬 Controle de Criativos" da toolbar.
+const ATALHO_ACOES = {
+  dashboard:  { label:'📊 Dados do Board',        tipo:'global', run:()=>openBoardData() },
+  timeline:   { label:'🛤️ Timeline',              tipo:'global', run:()=>toggleTimelineView() },
+  criativos:  { label:'🎬 Controle de Criativos',  tipo:'global', run:()=>openCriativos() },
+  ajuda:      { label:'❓ Central de Ajuda',        tipo:'global', run:()=>openHelp() },
+  tema:       { label:'🌙 Alternar tema',          tipo:'global', run:()=>onThemeBtnClick() },
+  copiarLink: { label:'🔗 Copiar link do card',    tipo:'card',   run:()=>shareCardLink() },
+};
+// Combinações que o atalho personalizável NUNCA pode assumir — as 5
+// fixas acima (com "mod" cobrindo tanto Ctrl quanto Cmd, mesmo critério
+// que o handler principal já usa via e.ctrlKey||e.metaKey) + os
+// clássicos do navegador que o usuário pediu explicitamente pra não
+// mexer ("obviamente não substituir... ctrl+c, ctrl+k, ctrl+v").
+const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n']);
+let _atalhosCustom = {};
+let _atalhoCapturando = null; // id da ação em modo "aperte a tecla" agora, ou null
+function loadAtalhosCustom(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/atalhos_custom'), snap=>{
+    _atalhosCustom = snap.val() || {};
+    renderAtalhosBody();
+  });
+}
+function openAtalhos(){
+  document.getElementById('atalhos-ov')?.classList.add('open');
+  _atalhoCapturando = null;
+  renderAtalhosBody();
+}
+// "mod" vira Cmd só em Mac (⌘ de verdade confunde menos gente que "Cmd"
+// escrito, mas o app não tem ícone dedicado pra isso em nenhum outro
+// lugar — texto já resolve).
+function _atalhoComboLabel(combo){
+  if(!combo) return '—';
+  const isMac = /Mac|iPhone|iPad/.test(navigator.platform||navigator.userAgent||'');
+  return combo.split('+').map(p=>{
+    if(p==='mod') return isMac?'Cmd':'Ctrl';
+    if(p==='alt') return isMac?'Option':'Alt';
+    if(p==='shift') return 'Shift';
+    return p.length===1 ? p.toUpperCase() : (p.charAt(0).toUpperCase()+p.slice(1));
+  }).join('+');
+}
+function renderAtalhosBody(){
+  const body=document.getElementById('atalhos-body'); if(!body) return;
+  const rows=Object.entries(ATALHO_ACOES).filter(([id])=>id!=='criativos'||criativosAtivo).map(([id,def])=>{
+    const combo=_atalhosCustom[id];
+    const capturando=_atalhoCapturando===id;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--glass-b);">
+      <div>
+        <div style="font-size:12.5px;color:var(--txt);">${def.label}</div>
+        ${def.tipo==='card'?'<div style="font-size:10px;color:var(--txt3);">Só funciona com um card aberto</div>':''}
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+        <span style="font-size:11px;font-family:monospace;background:rgba(var(--surface2-rgb),.8);padding:3px 8px;border-radius:6px;color:${combo?'var(--txt)':'var(--txt3)'};min-width:34px;text-align:center;">${capturando?'…':_atalhoComboLabel(combo)}</span>
+        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura('${id}')" onkeydown="_atalhoCapturaKeydown(event,'${id}')" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
+        ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar('${id}')" title="Remover este atalho">✕</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+  body.innerHTML = rows || '<div style="font-size:11px;color:var(--txt3);">Nenhuma ação disponível pra personalizar neste squad.</div>';
+  if(_atalhoCapturando){
+    document.querySelector(`[onclick="_atalhoIniciarCaptura('${_atalhoCapturando}')"]`)?.focus();
+  }
+}
+function _atalhoIniciarCaptura(id){
+  _atalhoCapturando = _atalhoCapturando===id ? null : id;
+  renderAtalhosBody();
+}
+function _atalhoCapturaKeydown(e, id){
+  if(_atalhoCapturando!==id) return; // botão só escuta captura quando é ele que está "armado"
+  e.preventDefault(); e.stopPropagation();
+  if(e.key==='Escape'){ _atalhoCapturando=null; renderAtalhosBody(); return; }
+  if(['Control','Shift','Alt','Meta'].includes(e.key)) return; // espera a tecla de verdade, não só o modificador
+  const parts=[];
+  if(e.ctrlKey||e.metaKey) parts.push('mod');
+  if(e.altKey) parts.push('alt');
+  if(e.shiftKey) parts.push('shift');
+  parts.push(e.key.length===1 ? e.key.toLowerCase() : e.key.toLowerCase());
+  _atalhoCapturando=null;
+  _atalhoValidarESalvar(id, parts.join('+'));
+}
+function _atalhoValidarESalvar(id, combo){
+  const semModificador = !combo.includes('mod') && !combo.includes('alt');
+  if(semModificador){ showToast('⚠ Escolha uma combinação com Ctrl/Cmd ou Alt junto — não dá pra usar uma tecla sozinha.'); renderAtalhosBody(); return; }
+  if(ATALHO_RESERVADOS.has(combo)){ showToast('⚠ Essa combinação já é um atalho fixo do sistema — escolha outra.'); renderAtalhosBody(); return; }
+  const conflito=Object.entries(_atalhosCustom).find(([outroId,outroCombo])=>outroId!==id && outroCombo===combo);
+  if(conflito){ showToast('⚠ Essa combinação já está em uso em "'+(ATALHO_ACOES[conflito[0]]?.label||conflito[0])+'".'); renderAtalhosBody(); return; }
+  const user=window._currentUser; if(!user) return;
+  _atalhosCustom={..._atalhosCustom, [id]:combo};
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/atalhos_custom/'+id), combo).catch(()=>{});
+  renderAtalhosBody();
+}
+function _atalhoLimpar(id){
+  const user=window._currentUser; if(!user) return;
+  const novo={..._atalhosCustom}; delete novo[id];
+  _atalhosCustom=novo;
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/atalhos_custom/'+id), null).catch(()=>{});
+  renderAtalhosBody();
+}
+// Confere se um KeyboardEvent bate com uma combinação salva (mesmo
+// formato que _atalhoCapturaKeydown() gera ao capturar).
+function _matchAtalhoCombo(e, combo){
+  if(!combo) return false;
+  const parts=combo.split('+');
+  const tecla=parts[parts.length-1];
+  const querMod=parts.includes('mod'), querAlt=parts.includes('alt'), querShift=parts.includes('shift');
+  if(querMod!==!!(e.ctrlKey||e.metaKey)) return false;
+  if(querAlt!==!!e.altKey) return false;
+  if(querShift!==!!e.shiftKey) return false;
+  return (e.key||'').toLowerCase()===tecla;
 }
 
 // ── Escuta notificações do usuário atual ──────────────────────────
@@ -28615,6 +28768,26 @@ document.addEventListener('keydown', e=>{
     const isEditing=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.contentEditable==='true';
     if(!isEditing){ e.preventDefault(); doUndo(); }
   }
+  // ⌨️ Atalhos personalizáveis (ver ATALHO_ACOES/_atalhosCustom, perto de
+  // loadNotifPrefs()) — mesma cautela do Ctrl+Z acima, não intercepta
+  // dentro de campo de texto (a combinação exige Ctrl/Cmd ou Alt, então o
+  // risco de atrapalhar digitação normal já é baixo, mas mantém o padrão).
+  if(_atalhosCustom && Object.keys(_atalhosCustom).length){
+    const tag=document.activeElement?.tagName;
+    const isEditing=tag==='INPUT'||tag==='TEXTAREA'||document.activeElement?.contentEditable==='true';
+    if(!isEditing){
+      for(const [id,combo] of Object.entries(_atalhosCustom)){
+        if(!_matchAtalhoCombo(e, combo)) continue;
+        const def=ATALHO_ACOES[id]; if(!def) continue;
+        // Ação contextual (ex.: copiar link do card) sem card aberto — ignora
+        // em silêncio, em vez de chamar a função no vazio.
+        if(def.tipo==='card' && !document.getElementById('card-ov')?.classList.contains('open')) continue;
+        e.preventDefault();
+        def.run();
+        break;
+      }
+    }
+  }
 });
 document.addEventListener('contextmenu', e=>{
   // Se não clicou num card, mostra o menu padrão do browser
@@ -29502,11 +29675,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
