@@ -1490,6 +1490,23 @@ limitações que a seção acima registrava como "possível evolução futura".
   filtro ficou ligado no board por outro motivo); reseta a cada abertura
   (`openPainelHistorico()`) ou busca de novo período
   (`_ptFeedBuscarPeriodo()`).
+  **Achado real (2026-09-07, `/monitorarbugs`, técnica 2 — comparar
+  contra o mesmo padrão já aplicado em `renderPainelTimeline()`, cujo
+  próprio comentário cita "o Feed de marcos do kanban.html" como
+  precedente)**: trocar o squad DESTE filtro (`ptFeedSetFilter('squad',
+  ...)` — não confundir com o squad da Timeline principal) deixava
+  `f.owner`/`f.tagLabel` presos num valor da squad anterior —
+  `_ptFeedMatchesBase()` continuava comparando contra esse valor morto,
+  zerando a lista inteira pra squad nova, com o `<select>` mostrando
+  "Todos os responsáveis" (a option antiga já nem existe mais na lista
+  recalculada) — nenhuma pista visual de que um filtro ainda estava
+  ativo. `renderPainelTimeline()` já tinha essa proteção (reseta
+  `_painelTimelineFilter.owner/tagLabel` se a opção some ao trocar de
+  squad/gerência) e o Feed já tinha a mesma cautela pra troca de
+  PERÍODO — só faltava pra troca de squad. Fix: mesmo check de 2 linhas
+  (`ownerOpts.some()`/`tagOpts.includes()`) adicionado em
+  `_renderPtFeed()`, ANTES de `paraContagem` (senão os chips de
+  contagem também ficariam presos ao valor morto).
 - Helper compartilhado novo: `_ptCardHasTagLabel(c,sqId,label)` — usado
   tanto pelo filtro da Timeline quanto pelo do Feed.
 - Testado com Playwright (25 cenários) — ver `CHANGELOG.md` v3.15 ·

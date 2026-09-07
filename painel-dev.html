@@ -2767,7 +2767,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.30 · painel-dev</div>
+<div class="version">v3.31 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10979,18 +10979,32 @@ function _renderPtFeed(){
     return;
   }
   const f=_ptFeedFilter;
-  const paraContagem=todos.filter(_ptFeedMatchesBase);
-  const chip=(tipo,icone,label)=>{
-    const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
-    const ativo=f.tipos[tipo];
-    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
-  };
   // Opções de responsável/tag também cascateiam com o squad já escolhido NO
   // PRÓPRIO filtro do Feed (não com o da Timeline principal — filtro
   // independente, ver comentário grande no topo desta seção).
   const poolFeed=todos.filter(m=>!f.squad||m.squad.id===f.squad).map(m=>({...m.card, _squad:m.squad}));
   const ownerOpts=_painelTimelineOwnerOptions(poolFeed);
   const tagOpts=_painelTimelineTagOptions(poolFeed);
+  // Achado real (/monitorarbugs, 2026-09-07) — mesma cautela que
+  // renderPainelTimeline() já aplica (comentário dela cita textualmente
+  // "o Feed de marcos do kanban.html" como o precedente disso), mas
+  // faltava exatamente AQUI, no Feed do painel: trocar o squad deste
+  // filtro (não confundir com o squad do filtro principal da Timeline)
+  // deixava `f.owner`/`f.tagLabel` presos num valor da squad ANTERIOR —
+  // `_ptFeedMatchesBase()` continuava comparando contra esse valor
+  // morto, zerando a lista inteira pra squad nova, com o <select>
+  // mostrando "Todos os responsáveis" (a option antiga nem existe mais
+  // na lista recalculada) — nenhuma pista visual de que um filtro
+  // ainda estava ativo. Precisa rodar ANTES de `paraContagem` (senão os
+  // chips de contagem também ficariam presos ao valor morto).
+  if(f.owner && !ownerOpts.some(o=>o.key===f.owner)) f.owner='';
+  if(f.tagLabel && !tagOpts.includes(f.tagLabel)) f.tagLabel='';
+  const paraContagem=todos.filter(_ptFeedMatchesBase);
+  const chip=(tipo,icone,label)=>{
+    const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
+    const ativo=f.tipos[tipo];
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+  };
   const temFiltro = f.squad||f.owner||f.tagLabel||Object.values(f.tipos).some(v=>!v);
   const filtrosHtml=`<div style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
     <div style="display:flex;flex-wrap:wrap;gap:6px;">
