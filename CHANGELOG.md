@@ -13536,6 +13536,29 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.32 · painel — 2026-09-07 · Promove pra prod — Feed de marcos: fix de filtro morto ao trocar de squad + 🎯 OKR: card do Objetivo destaca quando você é responsável
+
+Promove pra produção as duas últimas rodadas validadas em
+`painel-dev.html` (ver as 2 entradas logo abaixo pro racional completo
+de cada uma):
+
+- **v3.31 · painel-dev** — `_renderPtFeed()` (Feed de marcos, aba
+  Timeline) ganhou o mesmo guard de "filtro morto" que
+  `renderPainelTimeline()` já tinha pra troca de PERÍODO, agora também
+  pra troca de SQUAD: escolher um responsável/tag numa squad e depois
+  trocar de squad não deixa mais o filtro apontando pra uma opção que
+  não existe mais na lista nova.
+- **v3.32 · painel-dev** — o card de Objetivo (`_okrObjCardHtml()`, grid
+  "🎯 OKR — Objetivos estratégicos") ganha destaque visual (classe
+  `.okr-mine`) quando o usuário logado está entre os responsáveis do
+  Objetivo — mesmo tratamento de `.card-mine` do kanban(-dev).html
+  (tingimento azul + borda mais forte), pedido direto do usuário.
+
+Aplicado via patches cirúrgicos (`painel.html`/`painel-dev.html`
+divergem estruturalmente — Push Manual, nomeação de debug-bytes-log e
+os rascunhos de Mural existem só em prod — ver `CLAUDE.md`), não uma
+cópia direta do arquivo.
+
 ### painel-dev.html v3.32 · painel-dev — 2026-09-07 — 🎯 OKR: card do Objetivo destaca quando você é responsável
 
 Pedido direto do usuário: "no OKR, no painel, faz que nem nos cards!
