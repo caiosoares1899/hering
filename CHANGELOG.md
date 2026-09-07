@@ -2902,6 +2902,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.601-dev — 2026-09-07 — 🎛️ Rodada 1 de personalização: Raia e colunas colapsadas passam a salvar (sincronizado por conta)
+
+Pedido direto do usuário, na sequência das personalizações de hoje
+(Atalhos de teclado, Esc fecha tela, Reorganizar barra): "leva Raia,
+ordenação, fonte etc. pro mesmo padrão" — 1ª de 5 rodadas planejadas.
+
+Até agora, o modo de **⇔ Raia** (agrupar por pessoa/tag/subtime) não
+salvava em lugar NENHUM — voltava sempre pro padrão a cada F5, mesmo no
+mesmo navegador. **Colunas colapsadas** tinham o mesmo problema.
+
+- `kanban/usuarios/{uid}/board_prefs/{squadId}` — node novo, mesmo
+  padrão de `atalhos_custom`/`toolbar_order` (listener ao vivo +
+  escrita otimista): guarda `raia` e `collapsed_cols` por squad. Não
+  precisa de migração de um valor local anterior (esses 2 nunca tinham
+  persistido nada, nem localStorage).
+- `_saveBoardPref(campo, valor)`/`loadBoardPrefs()`/
+  `_applyBoardPrefsSquad()` — funções compartilhadas; as próximas 4
+  rodadas (ordenação, tamanho de fonte, modo de visualização, filtro
+  padrão de Submarca, colunas escondidas do Dashboard) vão usar a mesma
+  base, sem precisar reinventar o mecanismo de sync.
+- Central de Ajuda ("⇔ Raia por usuário ou tipo") ganhou uma linha
+  avisando que a escolha agora é preferência salva na conta.
+
 ### v8.30.600-dev — 2026-09-07 — /monitorarbugs nas implementações de hoje: Esc fechava o card inteiro sem querer, modo de reorganizar sem bloqueio de clique nem Esc pra sair
 
 Pedido explícito do usuário — "roda um /monitorarbugs nessas

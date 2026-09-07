@@ -818,6 +818,37 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
+### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodada 1 de 5)
+Pedido direto do usuário, mesma linha de personalização de hoje: levar
+Raia/ordenação/fonte/modo de visualização/filtro de Submarca/colunas
+escondidas do Dashboard pro mesmo padrão de `atalhos_custom`/
+`toolbar_order` (hoje Raia e colunas colapsadas não salvam NADA — nem
+localStorage; os outros 5 salvam só no navegador via `safeLS`, presos
+ao aparelho). `kanban/usuarios/{uid}/board_prefs/{squadId}` (por squad)
++ `board_prefs_global` (o que não depende de squad — fonte, densidade
+do card, squad padrão — rodadas futuras), mesmo listener-ao-vivo +
+cache local de sempre.
+- `_saveBoardPref(campo,valor)` (~L24720) — escrita otimista (atualiza
+  `_boardPrefsSquad` local + `window._set()`), `loadBoardPrefs()`
+  (~L24725) — listener, `_applyBoardPrefsSquad()` (~L24732) — aplica o
+  snapshot nas variáveis de runtime já existentes (`raiaMode`,
+  `collapsedCols`) e re-renderiza. Chamado no boot junto de
+  `loadNotifPrefs()`/`loadAtalhosCustom()`/`loadToolbarOrder()`.
+- **Rodada 1 (esta)**: `raia` e `collapsed_cols`. `toggleRaia()`
+  (~L11902, UI extraída pra `_applyRaiaBtnUI()`), `toggleRaiaCol(id)`/
+  `toggleCol(id)` (~L11992/L11998) — os dois fazem a mesma coisa em
+  `collapsedCols` (duplicação pré-existente, não tocada aqui) — ambos
+  chamam `_saveBoardPref('collapsed_cols',...)`.
+- **Rodadas seguintes (planejadas, não implementadas ainda)**: migrar
+  `colSortMode`/`boardFontSize`/`hybridViewMode`/
+  `activeFilters.submarca`/`_bdHiddenCols` (hoje só em `safeLS`,
+  `col_sort_`/`board_font_size`/`hybrid_view_`/`sm_filtro_`/
+  `bd_hcols_`) pro mesmo mecanismo, com migração do valor local
+  existente na 1ª carga (não resetar quem já configurou); depois
+  densidade do card e squad padrão (`board_prefs_global`, features
+  novas); por último, presets de filtro nomeados (`filter_presets/
+  {squadId}/{presetId}`, feature maior, própria tela).
+
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
 menu header? ex.: puxar o calendario para perto de fonte". 3ª aba do
