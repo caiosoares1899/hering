@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.609-dev</div>
+<div class="version">v8.30.610-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11937,7 +11937,12 @@ function _populateFilterSelects(){
 // dela) — o board de colunas nunca ganhou o mesmo tratamento.
 // _applyFiltrosBtnUI() agora é a fonte única do destaque do botão,
 // chamada tanto ao abrir/fechar o painel quanto toda vez que o filtro
-// muda (applyFilters()/clearFilters()/applyFilterPreset()) — fica aceso
+// muda (applyFilters()/clearFilters()/applyFilterPreset(), e os 3 pontos
+// que mudam só a Submarca — setSubmarcaDropdownTodos()/
+// toggleSubmarcaDropdownItem()/setSubmarcaFromDrawer(), achado real de
+// /monitorarbugs 2026-09-07: a 1ª correção cobriu applyFilters/
+// clearFilters/applyFilterPreset mas esqueceu esses 3, que também mudam
+// activeFilters.submarca sem passar por applyFilters()) — fica aceso
 // sempre que HOUVER filtro ativo, painel aberto ou não.
 function _applyFiltrosBtnUI(){
   const btn=document.getElementById('btn-filters'); if(!btn) return;
@@ -15464,6 +15469,7 @@ function setSubmarcaDropdownTodos(){
   const f=document.getElementById('f-submarca'); if(f) f.value='';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Marcar/desmarcar uma submarca no menu — multi-seleção (marca quantas
@@ -15481,6 +15487,7 @@ function toggleSubmarcaDropdownItem(tagId){
   if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Select do drawer de Filtros: escolha única, substitui a seleção inteira
@@ -15492,6 +15499,7 @@ function setSubmarcaFromDrawer(){
   _saveSubmarcaFiltroPadrao();
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Lista de checkboxes (Configurações > Tags) — uma por submarca, ligada por
