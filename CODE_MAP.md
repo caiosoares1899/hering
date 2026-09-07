@@ -816,6 +816,72 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
+### 🔀 Reorganizar barra de ferramentas (2026-09-07)
+Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
+menu header? ex.: puxar o calendario para perto de fonte". 3ª aba do
+mesmo modal "⌨️ Atalhos" (aba "🔀 Barra"). Mesmo esqueleto de
+drag-and-drop já usado pra reordenar colunas
+(`handleColDragStart`/`Over`/`Drop`, ~L27025) — aqui aplicado nos 25
+filhos diretos de `#main-toolbar` (20 botões/menus + 5 divisores
+`.tb-sep`, todos com `data-tb-id` — os divisores também são
+arrastáveis, de propósito). Não compete com o clique-e-arraste de
+rolagem horizontal que a toolbar já tinha
+(`_initToolbarDragScroll`/`.crv-dragging`, ~L32600) — aquele já ignora
+`mousedown` em cima de `<button>`/`<select>`/etc, então os dois
+mecanismos nunca disputam o mesmo gesto.
+- Preferência 100% pessoal, mesmo padrão de `atalhos_custom`/
+  `notif_prefs`: `kanban/usuarios/{uid}/toolbar_order` (array de
+  tb-ids). `_toolbarDefaultOrder` (~L24826, capturada 1x a partir do
+  HTML original) + `loadToolbarOrder()` (~L24835, listener ao vivo,
+  chamado junto de `loadAtalhosCustom()` no boot) → `_applyToolbarOrder()`
+  (~L24844) reconcilia: id salvo que sumiu (feature removida) é
+  ignorado; tb-id que existe na barra mas não está salvo (botão novo)
+  entra no fim, na posição original — nunca some um botão sem avisar.
+- `iniciarReorganizarToolbar()`/`finalizarReorganizarToolbar()`
+  (~L24854/24867) — liga/desliga `_toolbarReorderMode`, fecha o modal
+  de Atalhos e ativa `draggable` nos 25 itens + a pill flutuante
+  `#tb-reorder-pill` ("✅ Pronto"). Ao finalizar, lê a ordem final DIRETO
+  DO DOM (já reorganizado pelos drops) e persiste.
+  `restaurarOrdemToolbarPadrao()` (~L24884) zera a customização.
+- `_tbHandleDragStart/DragOver/DragEnd/Drop` (~L24900+) — mesmo padrão
+  visual de `.col-drag-left`/`.col-drag-right` (`.tb-drag-before`/
+  `.tb-drag-after`, calculado pelo `clientX` vs. o meio do elemento sob
+  o cursor). `_wireToolbarDrag()` (~L24935) liga os 5 handlers via JS
+  (não inline HTML, pra não repetir 5 atributos × 25 itens) — chamada 1x
+  no boot; os próprios handlers só agem de verdade quando
+  `_toolbarReorderMode` está ligado.
+
+### ⎋ Esc fecha a tela aberta (2026-09-07)
+Pedido direto do usuário — "quando o board abre outras telas, tipo
+dashboard ou help content, o esc tem q funcionar como um fechar". O
+handler principal de `keydown` (mesmo bloco do Ctrl+K/D/S/Z e dos
+Atalhos personalizáveis, ~L28983) ganhou
+`document.querySelector('.ov.open')` → `closeOv(id)` — a MESMA função
+que o clique-fora-do-backdrop já chama pra CADA overlay `.ov` (ver
+`document.querySelectorAll('.ov').forEach(...)` perto de
+`_finishCloseOv()`), não uma cópia — ganha de graça qualquer trava de
+confirmação (ex.: `card-ov` com alteração não salva). Guard:
+`if(!document.getElementById('ui-modal-ov'))` — não faz nada se um
+`uiConfirm()`/`uiAlert()`/`uiPrompt()` estiver aberto (`#ui-modal-ov`,
+sempre por cima, `z-index:99999`, criado dinamicamente por `_uiModal()`)
+— sem esse guard, Esc fecharia os DOIS ao mesmo tempo (o modal de
+confirmação E a tela por trás dele), quando a intenção normal é só
+cancelar a confirmação.
+**Ajustes de propagação feitos junto** (campos com seu próprio uso de
+Esc, que agora precisam de `stopPropagation()` pra não fechar a tela
+inteira sem querer): busca da Central de Ajuda (`#help-search`, só
+propaga se já não tinha texto pra limpar), edição inline de item de
+checklist (`finishEdit(false)`), dropdown de `@menção`
+(`handleMentionKey`), e as 3 edições inline da Ficha Técnica
+(`_crvDeleteRow` etc., campos due/qtd/texto livre).
+**Achado incidental, não corrigido**: `document.querySelector('.ov.open')`
+pega o PRIMEIRO `.ov.open` na ordem do DOM, não necessariamente o mais
+recentemente aberto — na prática só importa se dois `.ov` abrirem
+simultaneamente, o que hoje só pode acontecer via um atalho `tipo:'global'`
+(ver seção Atalhos acima) disparado enquanto `card-ov` já está aberto
+(`.ov` não bloqueia atalhos de teclado do resto da página, só cliques).
+Cenário raro, não reproduzido nem corrigido nesta rodada.
+
 ### Checklist (com grupos colapsáveis)
 - `renderCL()` — L14038
 - `_clGroupsInit()` — L14003
