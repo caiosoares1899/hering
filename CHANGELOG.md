@@ -2852,6 +2852,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.600-dev — 2026-09-07 — /monitorarbugs nas implementações de hoje: Esc fechava o card inteiro sem querer, modo de reorganizar sem bloqueio de clique nem Esc pra sair
+
+Pedido explícito do usuário — "roda um /monitorarbugs nessas
+implementações" — antes de promover pro prod o lote de hoje (Atalhos
+de teclado, Esc fecha tela, Reorganizar barra). Mapeados TODOS os
+handlers de `Escape` do arquivo (técnica 1) e confrontado o código
+contra as promessas de design das 2 features novas (técnica 3). 3
+achados reais:
+
+1. **6 campos dentro do modal do card fechavam o card inteiro ao
+   cancelar Esc.** A 1ª leva de ajustes de propagação (pro Esc-fecha-tela
+   não interferir com usos locais de Esc) cobriu só os handlers que já
+   eram conhecidos — faltaram 6: editar a Descrição, o formulário de
+   anexo, a busca de Notas vinculadas, a busca de card filho
+   (Supercard), um comentário novo e um comentário já existente em
+   edição. Cancelar qualquer um desses com Esc fechava o card inteiro
+   junto, perdendo o contexto do que estava sendo feito. Corrigido:
+   `stopPropagation()` nos 6.
+2. **Modo "🔀 Reorganizar barra" sem o bloqueio de clique que o próprio
+   desenho prometia** — um clique rápido (sem arrastar) num botão
+   durante o modo abria o painel dele normalmente (ex.: clicar em
+   "Controle de Criativos" tentando pegar pra arrastar abria o Controle
+   de Criativos no meio da reorganização). Corrigido.
+3. **Esc não cancelava o modo de reorganizar** — inconsistente com a
+   PRÓPRIA feature de Esc lançada no mesmo lote. Corrigido: Esc agora
+   sai do modo (salvando o que já foi arrastado, mesmo caminho do botão
+   "✅ Pronto").
+
+Achado incidental documentado, não corrigido: os drawers (Notas/Kudos/
+Spotify/Lembretes) não são fechados pelo Esc — mecanismo de UI
+diferente dos modais `.ov`, fora do escopo do pedido original.
+
 ### v8.30.599-dev — 2026-09-07 — ⎋ Esc fecha a tela aberta + 🔀 Reorganizar a barra de ferramentas (drag-and-drop)
 
 Dois pedidos diretos do usuário na mesma mensagem:

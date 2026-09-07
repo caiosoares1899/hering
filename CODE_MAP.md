@@ -881,6 +881,43 @@ simultaneamente, o que hoje só pode acontecer via um atalho `tipo:'global'`
 (ver seção Atalhos acima) disparado enquanto `card-ov` já está aberto
 (`.ov` não bloqueia atalhos de teclado do resto da página, só cliques).
 Cenário raro, não reproduzido nem corrigido nesta rodada.
+**Achados reais (2026-09-07, `/monitorarbugs`, pedido explícito "roda um
+/monitorarbugs nessas implementações" — antes de promover pra prod)**:
+3 achados na própria rodada de features do dia (Atalhos + Esc + 🔀
+Reorganizar barra), técnica 1 (comparar TODOS os call sites de um
+padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
+(confrontar o código contra o que a própria feature promete).
+1. **6 handlers locais de Esc dentro do `card-ov` nunca ganharam
+   `stopPropagation()`** na 1ª leva de ajustes — passei por cima deles
+   ao mapear só os handlers que eu já lembrava, não TODOS os
+   `key==='Escape'` do arquivo. Apertar Esc pra cancelar a edição da
+   Descrição, do formulário de anexo, da busca de Notas vinculadas, da
+   busca de card filho (Supercard), de um comentário novo, ou de um
+   comentário já existente em edição — todos fechavam o CARD INTEIRO
+   junto, mesmo só querendo cancelar aquele campo. Fix: `event.stopPropagation()`
+   nos 6 (`m-desc`, `m-attach-url`, `m-notas-link-search-inp`,
+   `m-super-search-inp`, `m-comment-inp`, `cedit-ta-{cid}`). Achado
+   incidental, não corrigido: os drawers (Notas/Kudos/Spotify/Lembretes,
+   `.lem-drawer`) não são `.ov` e Esc não fecha eles — fora do escopo do
+   pedido original ("dashboard ou help content"), mecanismo de
+   fechamento diferente o suficiente pra merecer pedido explícito antes
+   de mexer.
+2. **Modo "🔀 Reorganizar barra" nunca ganhou o bloqueador de clique
+   prometido no desenho** ("Um bloqueador de clique... evita que um
+   arrasto vire sem querer um clique que abre o painel do botão" — a
+   implementação real nunca chegou a adicionar isso). Um clique rápido
+   (sem arrastar de verdade) num botão durante o modo abria o painel
+   dele normalmente — ex.: clicar querendo pegar "🎬 Controle de
+   Criativos" pra arrastar abria o Controle de Criativos no meio da
+   reorganização. Fix: listener de `click` em fase de CAPTURA em
+   `#main-toolbar` (`_wireToolbarDrag()`), só intercepta enquanto
+   `_toolbarReorderMode` está ligado.
+3. **Esc não cancelava o modo de reorganizar** — contradizia a
+   expectativa que a PRÓPRIA feature #1 (Esc fecha a tela aberta) acabou
+   de criar no mesmo PR. Fix: handler principal de `keydown` checa
+   `_toolbarReorderMode` ANTES do fechamento genérico de `.ov` (o modo
+   não tem classe `.ov`) — Esc agora chama `finalizarReorganizarToolbar()`
+   (mesmo caminho do botão "✅ Pronto", salva o que já foi arrastado).
 
 ### Checklist (com grupos colapsáveis)
 - `renderCL()` — L14038

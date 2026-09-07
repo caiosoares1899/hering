@@ -4175,7 +4175,7 @@ input[type="date"]{-moz-appearance:textfield;}
         </div>
         <textarea class="eoc-textarea" id="m-desc" rows="12"
           oninput="scheduleAutoSave()" onpaste="_eocPasteHandler(event)"
-          onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('desc-eoc');}"></textarea>
+          onkeydown="if(event.key==='Escape'){event.preventDefault();event.stopPropagation();eocCancel('desc-eoc');}"></textarea>
         <div class="eoc-actions">
           <button class="eoc-save" onclick="eocSave('desc-eoc')">Salvar</button>
           <button class="eoc-cancel" onclick="eocCancel('desc-eoc')">Cancelar</button>
@@ -4238,7 +4238,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="m-attach-inp-row" style="display:none;" class="attach-inp-row">
         <input class="attach-inp" id="m-attach-url" type="url" placeholder="Cole a URL (Drive, Notion, Figma...)"
           onkeydown="if(event.key==='Enter'){event.preventDefault();attachSave();}
-            else if(event.key==='Escape'){attachToggleAdd();}">
+            else if(event.key==='Escape'){event.stopPropagation();attachToggleAdd();}">
         <button class="attach-save-btn" onclick="attachSave()">Salvar</button>
       </div>
     </div>
@@ -4252,7 +4252,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="m-notas-link-search-wrap" style="display:none;margin-bottom:8px;">
         <div class="link-search notas-card-link-search">
           <input id="m-notas-link-search-inp" class="link-search-input" placeholder="Buscar nota pelo título (suas e da squad)..."
-            oninput="cardSearchNotas(this.value)" onkeydown="if(event.key==='Escape'){this.value='';hideCardNotaLinkDropdown();}">
+            oninput="cardSearchNotas(this.value)" onkeydown="if(event.key==='Escape'){event.stopPropagation();this.value='';hideCardNotaLinkDropdown();}">
           <div class="link-dropdown" id="m-notas-link-dropdown"></div>
         </div>
       </div>
@@ -4292,7 +4292,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div class="link-search">
           <input id="m-super-search-inp" class="link-search-input" placeholder="Buscar card existente pelo título..."
             oninput="searchSuperChildren(this.value)"
-            onkeydown="if(event.key==='Escape'){this.value='';hideSuperChildDropdown();} else if(event.key==='Enter'){event.preventDefault();quickCreateSuperChild(this.value);}">
+            onkeydown="if(event.key==='Escape'){event.stopPropagation();this.value='';hideSuperChildDropdown();} else if(event.key==='Enter'){event.preventDefault();quickCreateSuperChild(this.value);}">
           <div class="link-dropdown" id="m-super-link-dropdown"></div>
         </div>
         <div style="font-size:9.5px;color:var(--txt3);margin-top:4px;">Digite um título que ainda não existe e aperte Enter pra criar um card novo já como filho.</div>
@@ -4341,7 +4341,7 @@ input[type="date"]{-moz-appearance:textfield;}
             <div style="position:relative;">
               <textarea class="eoc-textarea" id="m-comment-inp"
                 oninput="autoResizeCommentInp(this)" onpaste="_eocPasteHandler(event)"
-                onkeydown="if(event.key==='Escape'){event.preventDefault();eocCancel('comment-eoc');}
+                onkeydown="if(event.key==='Escape'){event.preventDefault();event.stopPropagation();eocCancel('comment-eoc');}
                   else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();submitComment();}"></textarea>
             </div>
             <div class="eoc-actions">
@@ -5997,7 +5997,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.599-dev</div>
+<div class="version">v8.30.600-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24941,6 +24941,19 @@ function _wireToolbarDrag(){
     el.ondragover = e=>_tbHandleDragOver(e,id);
     el.ondrop = e=>_tbHandleDrop(e,id);
   });
+  // Achado real (/monitorarbugs, 2026-09-07): o desenho combinado com o
+  // usuário prometia um "bloqueador de clique... evita que um arrasto
+  // vire sem querer um clique que abre o painel do botão", mas a
+  // implementação original nunca chegou a adicionar isso — um clique
+  // rápido (sem arrastar de verdade) num botão durante o modo de
+  // reorganizar disparava o onclick normal (abria Ajuda/Criativos/etc.
+  // NO MEIO da reorganização). Captura em fase de captura (roda ANTES
+  // do onclick do próprio botão) — só intercepta enquanto
+  // _toolbarReorderMode está ligado; fora desse modo, clique funciona
+  // 100% normal.
+  tb.addEventListener('click', e=>{
+    if(_toolbarReorderMode){ e.preventDefault(); e.stopPropagation(); }
+  }, true);
 }
 _toolbarCaptureDefaultOrder();
 _wireToolbarDrag();
@@ -28994,8 +29007,19 @@ document.addEventListener('keydown', e=>{
     // os DOIS ao mesmo tempo (o modal de confirmação E a tela por trás
     // dele), quando a intenção normal é só cancelar a confirmação.
     if(!document.getElementById('ui-modal-ov')){
-      const abertoOv=document.querySelector('.ov.open');
-      if(abertoOv) closeOv(abertoOv.id);
+      // Achado real (/monitorarbugs, 2026-09-07): o modo "🔀 Reorganizar
+      // barra" (iniciarReorganizarToolbar()) não tem classe .ov — Esc não
+      // fechava nada nele, contradizendo a própria expectativa que esta
+      // mesma feature acabou de criar ("Esc fecha a tela aberta"). Checa
+      // ANTES do fechamento genérico de .ov: sai do modo de reorganizar
+      // (salva o que já foi arrastado, mesmo caminho do botão "✅ Pronto")
+      // em vez de tentar fechar algum .ov por trás.
+      if(_toolbarReorderMode){
+        finalizarReorganizarToolbar();
+      } else {
+        const abertoOv=document.querySelector('.ov.open');
+        if(abertoOv) closeOv(abertoOv.id);
+      }
     }
   }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
@@ -30638,7 +30662,7 @@ function startEditComment(cid){
       <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('cedit-ta-${cid}','link')" title="Link">🔗</button>
     </div>
     <textarea id="cedit-ta-${cid}" class="cmt-edit-textarea" style="border-radius:0 0 8px 8px;"
-      onkeydown="if(event.key==='Escape'){event.preventDefault();cancelEditComment('${cid}');}
+      onkeydown="if(event.key==='Escape'){event.preventDefault();event.stopPropagation();cancelEditComment('${cid}');}
         else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
