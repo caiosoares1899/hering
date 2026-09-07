@@ -2943,6 +2943,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.615-dev — 2026-09-07 — /monitorarbugs em openCard(): impedimento marcado pelo menu de contexto podia vazar pro card errado
+
+Pedido explícito, escopo nomeado: "roda /monitorarbugs na função
+openCard".
+
+1. **`addBlockerTag(cardId)` (atalho "🚧 Marcar impedimento" do menu de
+   contexto, via `ctxBlockTag()`) chama `openCard(cardId)` e agenda seu
+   próprio `setTimeout(...,100)` pra terminar de configurar a linha de
+   impedimento — sem o mesmo guard de corrida que o `setTimeout` INTERNO
+   do próprio `openCard()` já tem.** O comentário do guard original de
+   `openCard()` já documentava o motivo: "se o usuário fechou este card
+   e abriu outro... dentro desses 100ms, editingId já mudou — sem essa
+   checagem, os dados do card ANTIGO vazavam pro formulário do card
+   ATUAL". `addBlockerTag()` nunca ganhou essa mesma proteção. Cenário:
+   marcar impedimento num card pelo menu de contexto e, dentro desses
+   100ms, abrir outro card por qualquer caminho normal (board, busca,
+   notificação) — o callback de `addBlockerTag()` ainda roda e escreve o
+   `isOKR`/cards vinculados/motivo do impedimento do card ANTIGO (via
+   closure da variável `card`) por cima do card NOVO exibido. Achado via
+   técnica 3 (comparar contra o guard já resolvido dentro do próprio
+   `openCard()`). Fix: mesmo `if(editingId !== cardId) return;`
+   adicionado no topo do callback.
+
+Checado e sem achado: os ~40 outros call sites de `openCard()` (busca,
+Timeline, Meu Dia, notificações, navegação "← Voltar", card hotline,
+menções, dependências...) não agendam nenhum `setTimeout` de
+acompanhamento próprio — só `addBlockerTag()` tinha esse padrão.
+Cross-check campo a campo entre o que `saveCard()`/`scheduleAutoSave()`
+persistem e o que `openCard()` lê de volta pro DOM: sem gap — todo campo
+editável no modal (título, tags, coluna, responsável, prazo, descrição,
+checklist, riscos, SP, prioridade, executorType/agentStatus,
+participantes, Ficha Técnica, OKR, impedimento/motivo) tem round-trip
+completo write→read.
+
+Validado com Playwright: simulada a corrida real (abre card A via
+`addBlockerTag()`, abre card B 20ms depois, confere o estado do modal
+250ms depois — depois que o timeout de 100ms do card A já teria
+disparado) — confirmado FALHANDO antes do fix (motivo do card A vazava
+pro campo do card B) e passando depois.
+
 ### v8.30.614-dev — 2026-09-07 — /monitorarbugs em salvar card: autosave descartava mudanças de Tipo de executor/Status do agente
 
 Pedido explícito, escopo nomeado: "roda /monitorarbugs em salvar card".
