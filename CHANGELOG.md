@@ -13112,6 +13112,46 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.31 · painel-dev — 2026-09-07 — /monitorarbugs no Feed de marcos do painel: trocar de squad deixava filtro de responsável/tag "morto"
+
+Pedido genérico — "roda um /monitorarbugs geral". Escolhido o Feed de
+marcos multi-squad (`_ptMarcosNoPeriodo()`/`_ptFeedRow()`/
+`_ptFeedFilter`, botão "📜 Histórico" da aba Timeline do painel) por
+ter várias iterações de features desde 2026-09-03 sem nunca ter tido
+uma rodada própria da skill — comparado ponto a ponto contra o Feed de
+marcos original (`kanban-dev.html`), do qual foi explicitamente
+portado.
+
+1. **Trocar o squad do próprio filtro do Feed deixava o filtro de
+   responsável/tag "morto".** `renderPainelTimeline()` (a Timeline
+   principal do painel) já tem uma proteção documentada: se a squad/
+   gerência mudar e o responsável/tag escolhido não existir mais nas
+   novas opções, o filtro reseta sozinho — o comentário dela cita
+   literalmente "o Feed de marcos do kanban.html" como o precedente
+   dessa cautela (nunca deixar um filtro morto fazendo a lista parecer
+   vazia sem pista do motivo). O Feed do painel até tinha essa mesma
+   proteção pra troca de PERÍODO (reseta o filtro ao buscar um novo
+   intervalo de datas) — só faltava pra troca de SQUAD dentro do
+   próprio Feed. Resultado: escolher squad A + um responsável, depois
+   trocar pra squad B, mantinha o filtro de responsável apontando pra
+   alguém da squad A (que não existe mais na lista) — a lista de
+   marcos da squad B vinha vazia, o `<select>` de responsável voltava a
+   mostrar "Todos os responsáveis" (a opção antiga sumiu), e não havia
+   nenhum sinal visual de que um filtro ainda estava ativo. Achado via
+   técnica 2 (comparar contra o mesmo padrão já resolvido em
+   `renderPainelTimeline()`). Fix: mesmo check de 2 linhas adicionado em
+   `_renderPtFeed()`, rodando antes da contagem dos chips (senão os
+   números dos chips também ficariam presos ao filtro morto).
+
+Checado e sem achado: comparação ponto a ponto de `_marcosNoPeriodo()`
+(kanban) vs. `_ptMarcosNoPeriodo()` (painel) — mesmas regras de
+classificação, incluindo o fix de "removeu prioridade" (2026-09-04) já
+portado corretamente pros dois lados; `col==='done'` (painel) em vez de
+`_isColDone()` (kanban) é simplificação já documentada, não bug; ausência
+de badge de supercard (🧩) no Feed do painel é consistente com o resto
+do arquivo (supercards não são conceito surfaced em painel.html/
+painel-dev.html em lugar nenhum).
+
 ### painel.html v3.30 · painel — 2026-09-06 · Promove pra prod — /monitorarbugs no vínculo de cards do OKR: badge sumia quando a tag OKR não era a 1ª do card
 
 Promove pra produção o fix da rodada v3.30 · painel-dev (ver entrada
