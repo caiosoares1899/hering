@@ -6029,7 +6029,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.606-dev</div>
+<div class="version">v8.30.607-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11893,6 +11893,23 @@ function _populateFilterSelects(){
   const fSub=document.getElementById('f-subteam');
   if(fSub) fSub.innerHTML='<option value="">Todos os subtimes</option>'+subteams.map(st=>`<option value="${esc(st.id)}">${esc(st.name)}</option>`).join('');
 }
+// Achado real (usuário, "todos os cards da squad dados sumiram" — susto
+// de verdade, não perda de dado): um filtro/preset aplicado com a barra
+// de Filtros FECHADA não deixava nenhuma pista visual — o botão só
+// destacava enquanto o painel estava aberto (`show`), não enquanto
+// algum filtro estava de fato ativo. A Timeline já resolvia isso certo
+// há tempos (_hasActiveFilters(), ~L10976, usado no botão de Filtros
+// dela) — o board de colunas nunca ganhou o mesmo tratamento.
+// _applyFiltrosBtnUI() agora é a fonte única do destaque do botão,
+// chamada tanto ao abrir/fechar o painel quanto toda vez que o filtro
+// muda (applyFilters()/clearFilters()/applyFilterPreset()) — fica aceso
+// sempre que HOUVER filtro ativo, painel aberto ou não.
+function _applyFiltrosBtnUI(){
+  const btn=document.getElementById('btn-filters'); if(!btn) return;
+  const ativo=_hasActiveFilters();
+  btn.style.borderColor=ativo?'var(--accent)':'';
+  btn.style.color=ativo?'var(--accent)':'';
+}
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
   const show=bar.style.display==='none'||bar.style.display==='';
@@ -11900,8 +11917,7 @@ function toggleFilters(){
   // Recalcula --board-top pra evitar que o board encolhe ao abrir/fechar Filtros
   setViewMode(viewMode);
   _populateFilterSelects();
-  document.getElementById('btn-filters').style.borderColor=show?'var(--accent)':'';
-  document.getElementById('btn-filters').style.color=show?'var(--accent)':'';
+  _applyFiltrosBtnUI();
 }
 let _textFilterDebounce=null;
 // Digitar em #f-texto não pode re-renderizar o board a cada tecla (boards
@@ -11933,6 +11949,7 @@ function applyFilters(){
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderSubmarcaQuickFilters(); // realça o botão certo se o filtro mudou pelo drawer, não só pelo botão rápido
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 function clearFilters(){
@@ -11952,6 +11969,7 @@ function clearFilters(){
   activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // ── 💾 Presets de filtro nomeados (rodada 5/5 de personalização, pedido
@@ -12014,6 +12032,7 @@ function applyFilterPreset(id){
   _colRenderLimit={};
   _saveSubmarcaFiltroPadrao(); // preset também vira o novo padrão de submarca, mesmo espírito de clearFilters()
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
   showToast('💾 Preset "'+preset.nome+'" aplicado.');
 }
@@ -24963,6 +24982,7 @@ function _applyBoardPrefsSquad(){
   activeFilters.submarca = _boardPrefLoadOrMigrate('submarca_filtro', 'sm_filtro_'+ACTIVE_SQUAD, [], JSON.parse);
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca));
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
 
   renderBoard();
 }

@@ -931,6 +931,20 @@ listener-ao-vivo + cache local de sempre.
   "💾 Salvar preset" + `#filter-presets-list` (chips), dentro do
   `#filter-bar` (barra de "🔭 Filtros"), depois do grupo "💡 Meus
   cards"/"Limpar".
+  **Achado real (mesmo dia, usuário testando)**: "todos os cards da
+  squad dados sumiram!" — susto sem perda de dado. Um filtro/preset
+  ativo com a barra de Filtros FECHADA não dava nenhuma pista visual —
+  `toggleFilters()` só destacava o botão `#btn-filters` enquanto o
+  PAINEL estava aberto, não enquanto havia filtro de fato ATIVO
+  (`activeFilters`). A Timeline já resolvia isso certo com
+  `_hasActiveFilters()` (~L10976, existente antes de hoje) alimentando
+  o próprio botão de Filtros dela — o board de colunas nunca ganhou o
+  mesmo tratamento (achado via técnica 2, comparar contra padrão já
+  resolvido). Fix: `_applyFiltrosBtnUI()` (nova, perto de
+  `toggleFilters()`) vira a fonte única do destaque, chamada em
+  `toggleFilters()`, `applyFilters()`, `clearFilters()`,
+  `applyFilterPreset()` e `_applyBoardPrefsSquad()` (esta última cobre
+  o filtro de Submarca já vindo ativo do boot).
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
