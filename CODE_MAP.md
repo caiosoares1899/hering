@@ -818,7 +818,7 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
-### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-3 de 5)
+### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-4 de 5)
 Pedido direto do usuário, mesma linha de personalização de hoje: levar
 Raia/ordenação/fonte/modo de visualização/filtro de Submarca/colunas
 escondidas do Dashboard pro mesmo padrão de `atalhos_custom`/
@@ -860,7 +860,7 @@ listener-ao-vivo + cache local de sempre.
   (~L12002-12015) — vai direto pro `board_prefs_global` (sem
   localStorage/migração, mesmo espírito da Rodada 1). UI: 2ª seção do
   mesmo menu "🔍 Fonte" (depois de uma divisória) — "🗐 Detalhado"
-  (padrão) / "📐 Compacto" (esconde capa, indicadores de descrição/
+  (padrão) / "🤏 Compacto" (esconde capa, indicadores de descrição/
   Milanote/anexos, barra de checklist, avatares de participantes além
   do responsável, badges de risco/direcional/aging — CSS `.card-compact`
   ~L671, aplicado em `#board`; independente do `.fontsize-*`, que só dá
@@ -870,16 +870,37 @@ listener-ao-vivo + cache local de sempre.
   citavam `colSortMode`/tamanho de fonte como "só salva no navegador"
   — desatualizado desde a Rodada 2.
 - **Tamanho de fonte** (`board_font_size`, `setBoardFontSize()`
-  ~L11985) é o único de todos esses que NÃO é por squad — vai pro node
+  ~L12041) é o único desses que NÃO é por squad — vai pro node
   irmão `board_prefs_global` (`_saveBoardPrefGlobal()`/
-  `loadBoardPrefsGlobal()`/`_applyBoardPrefsGlobal()`, ~L24831-24846),
+  `loadBoardPrefsGlobal()`/`_applyBoardPrefsGlobal()`, ~L24887-24902),
   mesmo mecanismo, com listener PRÓPRIO (`loadBoardPrefsGlobal()`,
   node diferente de `loadBoardPrefs()`) — chamado no mesmo boot, só não
   é o mesmo listener.
-- **Rodadas seguintes (planejadas, não implementadas ainda)**: squad
-  padrão ao abrir o board (`board_prefs_global`, feature nova); por
-  último, presets de filtro nomeados (`filter_presets/{squadId}/
-  {presetId}`, feature maior, própria tela).
+- **Rodada 4**: squad padrão ao abrir o board — `last_squad`/
+  `pinned_squad` em `board_prefs_global` (feature nova). Só entra em
+  jogo quando a URL NÃO pede um squad específico (`_urlParams` sem
+  `?squad=`, ver `ACTIVE_SQUAD` ~L6244, que nesse caso cai no
+  `'dados'` hardcoded) — um link/seletor com `?squad=X` explícito
+  sempre respeita a escolha, nunca é sobrescrito.
+  - `_resolveSquadPadrao(user)` (~L10088) — lê `board_prefs_global`
+    (`pinned_squad || last_squad`), só quando `semSquadNaUrl`; usado
+    por `resolveSquadAndShow()` (~L10096, virou `async` — só os 2
+    call sites relevantes, `onAuthStateChanged`/criação de usuário
+    novo, ambos fire-and-forget, sem `await`) pra decidir se redireciona
+    ANTES de mostrar o board (ADM: sempre pode ir pro squad padrão;
+    multi-squad: só redireciona se `squadPadrao` for um squad de
+    verdade da pessoa; squad único: ignora `squadPadrao`, sempre vai
+    pro único squad que a pessoa tem, como já era).
+  - `showApp(user)` (~L10152) — grava `last_squad = ACTIVE_SQUAD` toda
+    vez que a pessoa efetivamente entra num squad (não sobrescreve
+    `pinned_squad`).
+  - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6382/L6385) — UI
+    é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6351,
+    clique no nome do squad atual no cabeçalho): "📌 Fixar este squad
+    como padrão" / "📌 ...remover", acima da lista de squads.
+- **Rodadas seguintes (planejadas, não implementadas ainda)**: presets
+  de filtro nomeados (`filter_presets/{squadId}/{presetId}`, a última
+  das 5, feature maior, própria tela).
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o

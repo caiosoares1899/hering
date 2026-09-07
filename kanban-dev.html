@@ -3529,7 +3529,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
       <button onclick="setBoardCardDensity('compact')" style="display:flex;align-items:center;gap:8px;width:100%;padding:10px 14px;background:none;border:none;color:var(--txt2);font-size:12px;cursor:pointer;text-align:left;"
         onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='none'">
-        📐 Compacto — cabe mais cards na tela
+        🤏 Compacto — cabe mais cards na tela
       </button>
     </div>
   </div>
@@ -6024,7 +6024,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.603-dev</div>
+<div class="version">v8.30.604-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6357,7 +6357,11 @@ function toggleSquadSwitcher(e){
   // (isso causava squads sumirem do menu) — lista só os nomes de todos os squads
   // conhecidos (SQUAD_META_LIVE), igual à tela inicial de seleção.
   const render = () => {
-    dd.innerHTML = Object.keys(SQUAD_META_LIVE).map(id=>{
+    const fixado = _isPinnedSquad();
+    const pinRow = '<a href="javascript:void(0)" onclick="toggleFixarSquadPadrao()" class="squad-switcher-item" style="color:var(--teal);border-bottom:1px solid rgba(56,182,255,.15);margin-bottom:2px;padding-bottom:8px;" title="'+(fixado?'Esse squad já é seu padrão — clique pra remover a fixação':'O board abre aqui direto, sem precisar escolher, mesmo se você usar outro squad depois')+'">'
+      + (fixado ? '📌 Squad padrão fixado aqui — remover' : '📌 Fixar este squad como padrão')
+      + '</a>';
+    dd.innerHTML = pinRow + Object.keys(SQUAD_META_LIVE).map(id=>{
       const meta = SQUAD_META_LIVE[id];
       const isActive = id === ACTIVE_SQUAD;
       return '<a href="'+window.location.pathname+'?squad='+encodeURIComponent(id)+'" class="squad-switcher-item'+(isActive?' active':'')+'">'
@@ -6369,6 +6373,22 @@ function toggleSquadSwitcher(e){
   render();
   dd.classList.add('open');
   loadSquadsFromFirebase(render); // atualiza se tiver squad novo do painel
+}
+// 📌 Fixar squad padrão (rodada 4 de personalização, pedido direto: "squad
+// padrão ao abrir o board") — escape hatch pra quem não quer depender só
+// do "lembra o último squad" automático (ver _resolveSquadPadrao() acima
+// de resolveSquadAndShow()). Só entra em jogo quando a URL não pede um
+// squad específico; ganha de last_squad quando os dois estão setados.
+function _isPinnedSquad(){
+  return _boardPrefsGlobal.pinned_squad === ACTIVE_SQUAD;
+}
+function toggleFixarSquadPadrao(){
+  const novo = _isPinnedSquad() ? '' : ACTIVE_SQUAD;
+  _saveBoardPrefGlobal('pinned_squad', novo);
+  document.getElementById('squad-switcher-dd')?.classList.remove('open');
+  showToast(novo
+    ? '📌 '+esc(SQUAD_META_LIVE[ACTIVE_SQUAD]?.label||ACTIVE_SQUAD)+' fixado como squad padrão.'
+    : '📌 Squad padrão removido — volta a abrir no último squad que você usou.');
 }
 document.addEventListener('keydown', e=>{
   if(e.key==='Escape'){
@@ -10058,11 +10078,34 @@ function doSignOut(){
 // Se o usuário tem só 1 squad inscrito → entra direto.
 // Se tem mais de 1 → mostra seletor filtrado pros squads dele.
 // Se não tem nenhum → comportamento original (convidado / inscrição).
-function resolveSquadAndShow(user, userSquads) {
+// Rodada 4 de personalização (board_prefs_global, pedido direto: "squad
+// padrão ao abrir o board") — só entra em jogo quando a URL NÃO pede um
+// squad específico (_urlParams sem ?squad=, ver ACTIVE_SQUAD acima, que
+// nesse caso cai no hardcoded 'dados'). Clicar num link/seletor que já
+// tem ?squad=X sempre respeita a escolha explícita, nunca é sobrescrito.
+// pinned_squad (📌 fixado na mão) ganha de last_squad (última vez que a
+// pessoa esteve em algum squad, atualizado sozinho em showApp()).
+async function _resolveSquadPadrao(user){
+  if(_urlParams.get('squad')) return null; // URL já pediu um squad — não mexe
+  try{
+    const snap = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/board_prefs_global'));
+    const prefs = snap.val() || {};
+    return prefs.pinned_squad || prefs.last_squad || null;
+  }catch(e){ return null; }
+}
+async function resolveSquadAndShow(user, userSquads) {
   const inscritosNosBoards = Object.keys(userSquads || {}).filter(k => userSquads[k] === true);
+  const squadPadrao = await _resolveSquadPadrao(user);
 
-  // ADMs entram direto no squad atual (têm acesso a tudo)
+  // ADMs entram direto no squad atual (têm acesso a tudo) — exceto se
+  // tiverem um squad padrão configurado e a URL não pedir nenhum em
+  // específico, aí respeita a preferência.
   if (isAdmUser(user)) {
+    if (squadPadrao && squadPadrao !== ACTIVE_SQUAD) {
+      const _currentFile = location.pathname.split('/').pop() || 'kanban.html';
+      window.location.replace(_currentFile + '?squad=' + squadPadrao);
+      return;
+    }
     showApp(user);
     return;
   }
@@ -10087,7 +10130,15 @@ function resolveSquadAndShow(user, userSquads) {
     return;
   }
 
-  // Múltiplos squads: mostra seletor filtrado pelos squads do usuário
+  // Múltiplos squads: preferência salva manda, se apontar pra um squad
+  // que a pessoa realmente participa.
+  if (squadPadrao && squadPadrao !== ACTIVE_SQUAD && inscritosNosBoards.includes(squadPadrao)) {
+    const _currentFile = location.pathname.split('/').pop() || 'kanban.html';
+    window.location.replace(_currentFile + '?squad=' + squadPadrao);
+    return;
+  }
+
+  // Sem preferência aplicável: mostra seletor filtrado pelos squads do usuário
   if (!inscritosNosBoards.includes(ACTIVE_SQUAD)) {
     // Está no board errado — mostra seletor apenas com os squads dele
     showSquadSelectorFiltered(inscritosNosBoards);
@@ -10111,6 +10162,11 @@ function showApp(user) {
     safeLS.setItem(bvKey, '1');
     setTimeout(()=>_showBoasVindas(user), 1500);
   }
+  // Lembra o squad onde a pessoa realmente ficou, pra próxima vez que
+  // abrir o board sem pedir um squad específico na URL (ver
+  // _resolveSquadPadrao()/resolveSquadAndShow()) — não sobrescreve
+  // pinned_squad, só last_squad.
+  _saveBoardPrefGlobal('last_squad', ACTIVE_SQUAD);
 }
 
 function _showBoasVindas(user){
@@ -23540,7 +23596,7 @@ const HELP_CONTENT = {
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
-    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.' },
+    { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
