@@ -2852,6 +2852,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.598-dev — 2026-09-07 — ⌨️ Atalhos de teclado: teclas de função (F2/F4/F8/F9/F10) liberadas sem Ctrl, dica de teclas já usadas pelo navegador
+
+Pergunta direta do usuário testando a v8.30.597-dev: "o F8, por
+exemplo, no chrome n faz nada... n posso usar ele como atalho?" — e o
+pedido junto: "acho q vc precisa tb falar sobre os atalhos ja usados
+pelo navegador, pra facilitar na escolha".
+
+Resposta: sim, dava pra usar, mas a validação anterior bloqueava
+QUALQUER combinação sem Ctrl/Cmd/Alt, mesmo teclas de função — que,
+diferente de uma letra, não digitam nada num campo de texto, então não
+tinham o mesmo motivo pra exigir modificador.
+
+- `_atalhoValidarESalvar()` passa a aceitar F1-F12 sozinhas (sem
+  Ctrl/Cmd/Alt). `ATALHO_RESERVADOS` ganha as que o Chrome já usa
+  (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de
+  endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) —
+  F2/F4/F8/F9/F10 ficam livres pra usar direto.
+- Tela de Atalhos ganha um bloco de dica fixo, antes das abas,
+  explicando o que já é do navegador e quais teclas de função dá pra
+  usar sozinhas — ajuda a escolher sem precisar tentar e ser recusado.
+
 ### v8.30.597-dev — 2026-09-07 — ⌨️ Atalhos de teclado: 24 ações (18 novas), divididas em abas 🗂️ Board / 📇 Modal do card
 
 Feedback do usuário logo depois de testar a v8.30.596-dev: "achei q ia
