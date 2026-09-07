@@ -955,6 +955,21 @@ listener-ao-vivo + cache local de sempre.
   definição de `.auto-action-chip`) forçam `color:var(--txt)` nesses 2
   temas — chip, botão ✕ dele (com `:not(:hover)` pra preservar o hover
   vermelho de "remover") e `#btn-save-preset`.
+  **Achado real 3 (/monitorarbugs, 2026-09-07, PR #809)**: a correção do
+  achado 1 acima cobriu `applyFilters()`/`clearFilters()`/
+  `applyFilterPreset()`, mas esqueceu os 3 pontos que mudam
+  `activeFilters.submarca` fora desses três —
+  `setSubmarcaDropdownTodos()`/`toggleSubmarcaDropdownItem()`/
+  `setSubmarcaFromDrawer()` (~L15461-15505). Filtrar só por submarca
+  (menu "🏷️ Submarcas" da toolbar, ou o `<select>` de Submarca do
+  drawer) escondia cards sem o botão "🔭 Filtros" acender. Fix: mesma
+  chamada de `_applyFiltrosBtnUI()` adicionada nos 3.
+  **Achado real 4 (/monitorarbugs, 2026-09-07, escopo nomeado "filtros
+  do board")**: `applyFilterPreset()` (~L12053) nunca sincronizava
+  `<select id="f-submarca">` com o `submarca` do preset aplicado —
+  único dos 4 pontos que mudam `activeFilters.submarca` que não fazia
+  isso. O filtro por baixo aplicava certo; só o campo do drawer ficava
+  com o valor de uma seleção manual anterior.
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
