@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.614-dev</div>
+<div class="version">v8.30.615-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29189,6 +29189,13 @@ function addBlockerTag(cardId){
   const card = cards.find(x=>x.id===cardId); if(!card) return;
   openCard(cardId);
   setTimeout(()=>{
+    // Achado real (/monitorarbugs 2026-09-07, escopo "openCard"): faltava o
+    // mesmo guard de corrida que o setTimeout(...,100) DENTRO de openCard()
+    // já tem (ver comentário lá) — se o usuário fechar este card e abrir
+    // outro dentro desses 100ms, editingId já mudou, e sem essa checagem os
+    // dados do card ANTIGO (closure de `card`, acima) vazavam pro formulário
+    // do card ATUAL.
+    if(editingId !== cardId) return;
     const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
     initLinkedCards(card);
     document.getElementById('m-blocker-row').style.display='block';

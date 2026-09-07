@@ -481,6 +481,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   todo o mecanismo antigo `editingLinkedCards`/`addLinkedCard()`/
   `searchLinkedCards()` depende de elementos que não existem no HTML
   estático — `searchLinkedCards(` só aparece 1x no arquivo (técnica 6).
+- **2026-09-07, `openCard()` (pedido explícito, escopo nomeado)**: 1
+  achado. `addBlockerTag(cardId)` (atalho "🚧 Marcar impedimento" do
+  menu de contexto) chama `openCard(cardId)` e agenda seu próprio
+  `setTimeout(...,100)` de acompanhamento sem o guard de corrida
+  `editingId !== cardId` que o `setTimeout` INTERNO do próprio
+  `openCard()` já tem (e documenta o motivo: card antigo vazando pro
+  formulário do card novo se a pessoa abrir outro card dentro da
+  janela). Achado via técnica 3 (comparar contra o guard já resolvido
+  no mesmo arquivo). Fix: mesmo guard adicionado. Checado e sem achado:
+  os ~40 outros call sites de `openCard()` não agendam setTimeout
+  próprio; cross-check campo a campo write→read entre
+  `saveCard()`/`scheduleAutoSave()` e o que `openCard()` lê de volta —
+  sem gap.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
