@@ -818,25 +818,25 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
-### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-2 de 5)
+### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-3 de 5)
 Pedido direto do usuário, mesma linha de personalização de hoje: levar
 Raia/ordenação/fonte/modo de visualização/filtro de Submarca/colunas
 escondidas do Dashboard pro mesmo padrão de `atalhos_custom`/
-`toolbar_order`. `kanban/usuarios/{uid}/board_prefs/{squadId}` (por
-squad) + `board_prefs_global` (o que não depende de squad — fonte,
-densidade do card, squad padrão), mesmo listener-ao-vivo + cache local
-de sempre.
-- `_saveBoardPref(campo,valor)` (~L24725) — escrita otimista (atualiza
+`toolbar_order`, mais densidade do card (feature nova). `kanban/usuarios/
+{uid}/board_prefs/{squadId}` (por squad) + `board_prefs_global` (o que
+não depende de squad — fonte, densidade do card, squad padrão), mesmo
+listener-ao-vivo + cache local de sempre.
+- `_saveBoardPref(campo,valor)` (~L24780) — escrita otimista (atualiza
   `_boardPrefsSquad` local + `window._set()`), `loadBoardPrefs()`
-  (~L24730) — listener, `_applyBoardPrefsSquad()` (~L24753) — aplica o
+  (~L24785) — listener, `_applyBoardPrefsSquad()` (~L24808) — aplica o
   snapshot nas variáveis de runtime já existentes e re-renderiza.
   Chamado no boot junto de `loadNotifPrefs()`/`loadAtalhosCustom()`/
   `loadToolbarOrder()`.
 - **Rodada 1**: `raia` e `collapsed_cols` — nenhum dos dois salvava
   NADA antes disso, nem localStorage (voltavam ao padrão a cada F5,
-  mesmo no mesmo navegador). `toggleRaia()` (~L11904, UI extraída pra
+  mesmo no mesmo navegador). `toggleRaia()` (~L11935, UI extraída pra
   `_applyRaiaBtnUI()`), `toggleRaiaCol(id)`/`toggleCol(id)`
-  (~L11997/L12003) — os dois fazem a mesma coisa em `collapsedCols`
+  (~L12052/L12058) — os dois fazem a mesma coisa em `collapsedCols`
   (duplicação pré-existente, não tocada aqui) — ambos chamam
   `_saveBoardPref('collapsed_cols',...)`.
 - **Rodada 2**: `col_sort`, `view_mode`, `submarca_filtro`,
@@ -844,26 +844,42 @@ de sempre.
   navegador (`safeLS`/`localStorage`, chave por squad:
   `col_sort_`/`hybrid_view_`/`sm_filtro_`/`bd_hcols_`). Precisou de
   **migração** (diferente da Rodada 1): `_boardPrefLoadOrMigrate(campo,
-  legacyKey, padrao, parse)` (~L24745) — se a conta já tem valor
+  legacyKey, padrao, parse)` (~L24800) — se a conta já tem valor
   sincronizado usa ele; senão herda o que já tava salvo localmente (se
   tiver) e sobe pro Firebase na hora, sem resetar quem já tinha
-  configurado. `setColSortMode()` (~L11988, UI extraída pra
-  `_applyColSortBtnUI()` ~L11981), `setHybridView()` (~L7087),
-  `_saveSubmarcaFiltroPadrao()` (~L11753), `_bdLoadHiddenCols()`/
-  `_bdToggleCol()` (~L18187/L18190) — todos continuam gravando em
+  configurado. `setColSortMode()` (~L12043, UI extraída pra
+  `_applyColSortBtnUI()` ~L12036), `setHybridView()` (~L7114),
+  `_saveSubmarcaFiltroPadrao()` (~L11784), `_bdLoadHiddenCols()`/
+  `_bdToggleCol()` (~L18242/L18245) — todos continuam gravando em
   `safeLS`/`localStorage` também (cache rápido pra 1ª pintura antes do
   Firebase responder), só ADICIONARAM a chamada a `_saveBoardPref()`.
-  **Tamanho de fonte** (`board_font_size`, `setBoardFontSize()`
-  ~L11952) é o único desses 5 que NÃO é por squad — vai pro node irmão
-  `board_prefs_global` (`_saveBoardPrefGlobal()`/
-  `loadBoardPrefsGlobal()`/`_applyBoardPrefsGlobal()`, ~L24776-24788),
+- **Rodada 3**: densidade do card (`card_density`) — feature NOVA, não
+  existia antes (diferente das rodadas 1-2, que só levavam algo já
+  existente pro mecanismo sincronizado). `DENSITY_LABELS`/
+  `boardCardDensity`/`_applyBoardCardDensity()`/`setBoardCardDensity()`
+  (~L12002-12015) — vai direto pro `board_prefs_global` (sem
+  localStorage/migração, mesmo espírito da Rodada 1). UI: 2ª seção do
+  mesmo menu "🔍 Fonte" (depois de uma divisória) — "🗐 Detalhado"
+  (padrão) / "📐 Compacto" (esconde capa, indicadores de descrição/
+  Milanote/anexos, barra de checklist, avatares de participantes além
+  do responsável, badges de risco/direcional/aging — CSS `.card-compact`
+  ~L671, aplicado em `#board`; independente do `.fontsize-*`, que só dá
+  `zoom`). Título/prioridade/prazo/impedimento/OKR/avatar do responsável
+  continuam sempre visíveis (nenhum dos 3 tem classe própria no card
+  pra esconder). Aproveitado pra corrigir 3 comentários/tooltips que
+  citavam `colSortMode`/tamanho de fonte como "só salva no navegador"
+  — desatualizado desde a Rodada 2.
+- **Tamanho de fonte** (`board_font_size`, `setBoardFontSize()`
+  ~L11985) é o único de todos esses que NÃO é por squad — vai pro node
+  irmão `board_prefs_global` (`_saveBoardPrefGlobal()`/
+  `loadBoardPrefsGlobal()`/`_applyBoardPrefsGlobal()`, ~L24831-24846),
   mesmo mecanismo, com listener PRÓPRIO (`loadBoardPrefsGlobal()`,
   node diferente de `loadBoardPrefs()`) — chamado no mesmo boot, só não
   é o mesmo listener.
-- **Rodadas seguintes (planejadas, não implementadas ainda)**: densidade
-  do card e squad padrão (`board_prefs_global`, features
-  novas); por último, presets de filtro nomeados (`filter_presets/
-  {squadId}/{presetId}`, feature maior, própria tela).
+- **Rodadas seguintes (planejadas, não implementadas ainda)**: squad
+  padrão ao abrir o board (`board_prefs_global`, feature nova); por
+  último, presets de filtro nomeados (`filter_presets/{squadId}/
+  {presetId}`, feature maior, própria tela).
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o

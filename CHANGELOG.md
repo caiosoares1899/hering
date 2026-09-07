@@ -2902,6 +2902,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.603-dev — 2026-09-07 — 📐 Rodada 3 de personalização: densidade dos cards (Detalhado/Compacto)
+
+3ª de 5 rodadas planejadas. Diferente das rodadas 1-2 (que levaram
+preferências já existentes pro padrão sincronizado por conta), esta é
+uma **feature nova** — não existia antes.
+
+- Botão "🔍 Fonte" na toolbar ganha uma 2ª seção no menu, depois de uma
+  divisória: "🗐 Detalhado" (padrão, mostra tudo) e "📐 Compacto".
+- Compacto esconde o que é decorativo/secundário no card — capa,
+  indicadores de descrição/Milanote/anexos, barra de progresso do
+  checklist, avatares de participantes além do responsável, badges de
+  risco/direcional/aging — pra caber mais cards na tela de uma vez.
+  Título, prioridade, prazo, impedimento/OKR e avatar do responsável
+  continuam sempre visíveis.
+- Eixo independente do tamanho de fonte (que só dá zoom no board
+  inteiro) — os dois combinam sem conflito.
+- `board_prefs_global/card_density` — preferência nova, direto no
+  mecanismo sincronizado por conta (sem precisar de migração de
+  localStorage, já que nunca existiu antes).
+- Aproveitado pra corrigir 3 comentários/tooltips que ficaram
+  desatualizados depois da Rodada 2 (diziam que fonte/ordenação "salvam
+  só no navegador", o que não é mais verdade).
+
 ### v8.30.602-dev — 2026-09-07 — 🎛️ Rodada 2 de personalização: ordenação, modo de visualização, filtro de Submarca e colunas do Dashboard passam a acompanhar a conta
 
 2ª de 5 rodadas planejadas. Diferente da Rodada 1 (Raia/colunas
