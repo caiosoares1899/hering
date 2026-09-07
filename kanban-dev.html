@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.616-dev</div>
+<div class="version">v8.30.617-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14290,8 +14290,13 @@ function archiveCard(){
 // Réplica do MESMO cálculo em functions/agente-agil-orquestrador/tools/
 // visaoBoard.js (cardTempos()) — mesmo padrão de duplicação documentado lá
 // (kanban.html não tem <script src> externo, Cloud Function é CommonJS).
-function togglePauseCard(){
-  if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
+// cardId opcional — sem ele, cai no card aberto no modal (mesmo
+// comportamento de sempre, usado pelo botão do modal e pelo atalho de
+// teclado). Passar um cardId direto (menu de contexto do board, card
+// fechado) é o mesmo padrão já usado por togglePinCard().
+function togglePauseCard(cardId){
+  const id = cardId || editingId;
+  if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   const nowISO=new Date().toISOString();
   if(c.paused){
     const elapsedMs = c.pausedAt ? Math.max(0, Date.now()-new Date(c.pausedAt).getTime()) : 0;
@@ -14307,7 +14312,7 @@ function togglePauseCard(){
     showToast('⏸ Card pausado — tempo parado de contar nas métricas (cycle/lead time), sem virar impedimento público.');
   }
   fbSaveCard(c);
-  _renderPauseBtn(c);
+  if(editingId===id) _renderPauseBtn(c); // só mexe no botão do modal se for o card que está aberto nele
   renderBoard();
 }
 function _cardPausedMs(c){
@@ -23875,7 +23880,7 @@ const HELP_CONTENT = {
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
-    { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: só o botão do modal (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.' },
+    { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
@@ -29307,7 +29312,6 @@ function showCtxMenu(e, cardId){
       Mover para ${esc(col.name)}
     </div>`).join('');
 
-  const isProg = card.col==='progress';
   const isBlocker = _cardIsBlocked(card);
 
   // Conteúdo dos flyouts — guardado à parte (não fica aninhado no HTML do
@@ -29346,6 +29350,9 @@ function showCtxMenu(e, cardId){
     ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
       <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
     </div>` : ''}
+    <div class="ctx-item" onclick="togglePauseCard('${cardId}')">
+      <span class="ctx-item-icon">${card.paused?'▶':'⏸'}</span> ${card.paused?'Retomar contagem de tempo':'Pausar contagem de tempo'}
+    </div>
 
     <div class="ctx-item" onclick="toggleCtxSubmenu(event,'prioridade')">
       <span class="ctx-item-icon">🚩</span> Prioridade <span class="ctx-arrow">▸</span>

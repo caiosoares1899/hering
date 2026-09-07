@@ -2943,6 +2943,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.617-dev — 2026-09-07 — Menu de contexto do board ganha "⏸ Pausar/Retomar contagem de tempo"
+
+Pedido direto do usuário: depois de pedir uma auditoria do menu de
+contexto do card ("vê se precisa de atualização ou implementação"),
+achado real reportado e confirmado — ⏸ Pausar/Retomar (parar a
+contagem de cycle/lead time sem virar impedimento público) só era
+alcançável abrindo o card inteiro, diferente do seu irmão conceitual
+🚧 Impedimento, que já tinha item próprio no menu.
+
+`togglePauseCard()` ganha um `cardId` opcional (mesmo padrão de
+`togglePinCard()`) — sem ele, continua caindo no card aberto no modal
+(botão do rodapé, atalho de teclado); passado explicitamente, funciona
+com o card fechado, chamado pelo novo item do menu de contexto (⏸
+Pausar / ▶ Retomar, rótulo e ícone já refletindo o estado atual do
+card, ao lado de "🚧 Marcar como impedido"). `_renderPauseBtn()` só é
+chamado se o card pausado/retomado for o mesmo que está aberto no
+modal no momento — evita mexer no botão de um card errado se as duas
+coisas acontecerem em paralelo.
+
+Aproveitado o mesmo commit pra tirar `isProg` (linha morta,
+`card.col==='progress'` calculado e nunca usado em nenhum lugar de
+`showCtxMenu()` — resquício de algo removido).
+
+`HELP_CONTENT` (dica "Pausar card (tempo/métricas)") atualizado:
+corrigida a frase que dizia "só o botão do modal... mostram que
+aconteceu" (agora tem 2 entradas) + parágrafo novo mencionando o atalho
+pelo menu de contexto.
+
 ### v8.30.616-dev — 2026-09-07 — /monitorarbugs no autosave: completar checklist pela simulação do Agente Ágil nunca notificava
 
 Pedido explícito, escopo nomeado: "roda /monitorarbugs no autosave".
