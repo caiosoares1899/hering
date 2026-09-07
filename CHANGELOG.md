@@ -18,6 +18,47 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.609 — 2026-09-07 · Promove pra prod — 🎛️ board_prefs: Raia/ordenação/visualização/Submarca/Dashboard sincronizados, densidade do card, squad padrão, presets de filtro
+
+Promove pra produção o lote v8.30.601-dev → v8.30.609-dev de
+`kanban-dev.html` — as 5 rodadas da linha de personalização de hoje
+que ainda não tinham ido pra prod (a primeira leva, Atalhos/Esc/
+Reorganizar barra, já tinha subido na v8.30.600), mais 3 fixes achados
+testando essas rodadas e 1 melhoria de UX pedida direto pelo usuário:
+
+- **🎛️ Raia e colunas colapsadas agora salvam** (v8.30.601-dev): antes
+  não persistiam em lugar NENHUM, nem localStorage — voltavam ao padrão
+  a cada F5. Agora sincronizam por conta.
+- **🎛️ Ordenação, modo de visualização, filtro de Submarca e colunas
+  escondidas do 📊 Dados do Board** (v8.30.602-dev): já salvavam algo,
+  mas só no navegador — agora acompanham a conta em qualquer
+  computador, com migração automática do que já estava configurado
+  localmente.
+- **📐 Densidade dos cards** (v8.30.603-dev): botão "🔍 Fonte" na
+  toolbar ganha a opção "🤏 Compacto" — esconde capa, indicadores de
+  descrição/Milanote/anexos, barra de checklist e badges secundários
+  pra caber mais cards na tela. Título, prioridade, prazo, impedimento/
+  OKR e avatar do responsável continuam sempre visíveis.
+- **🎯 Squad padrão ao abrir o board** (v8.30.604-dev, fix v8.30.606-dev):
+  acessar o board sem `?squad=` na URL abre sozinho no último squad
+  usado, ou no squad que você fixar manualmente ("📌 Fixar este squad
+  como padrão", no seletor de squad). Um link explícito com `?squad=X`
+  sempre respeita a escolha.
+- **💾 Presets de filtro nomeados** (v8.30.605-dev, fix de contraste
+  v8.30.608-dev): salva a combinação inteira de filtros com um nome,
+  reaplica com 1 clique. Chips ao lado do botão "💾 Salvar preset" na
+  barra de "🔭 Filtros".
+- **Fix: botão "🔭 Filtros" sem aviso visual de filtro ativo**
+  (v8.30.607-dev): um filtro ligado com o painel fechado não dava
+  nenhuma pista visual do porquê o board tinha ficado vazio (achado
+  real do usuário testando — "todos os cards da squad dados sumiram!").
+  Corrigido, e depois aprimorado a pedido direto: o botão agora pulsa
+  com um brilho neon (`var(--accent)`) sempre que houver filtro ativo
+  (v8.30.609-dev).
+
+Todas as features validadas pelo usuário via testes na UI ao longo da
+sessão.
+
 ### v8.30.600 — 2026-09-07 · Promove pra prod — ⌨️ Atalhos de teclado personalizáveis, ⎋ Esc fecha a tela aberta, 🔀 Reorganizar a barra de ferramentas
 
 Promove pra produção o lote v8.30.596-dev → v8.30.600-dev de
