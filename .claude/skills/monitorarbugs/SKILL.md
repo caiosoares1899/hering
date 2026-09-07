@@ -352,6 +352,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   Fix: os 4 usam `_pGetCardTags()` (helper que já existia em
   painel-dev.html, equivalente ao `getCardTags()` do kanban). 7 casos
   testados isoladamente contra a lógica de detecção.
+- **2026-09-07, Feed de marcos do painel (pedido genérico, "roda um
+  /monitorarbugs geral" — área escolhida por ter várias iterações de
+  feature desde 2026-09-03 sem nunca ter tido rodada própria, e por ser
+  explicitamente portada do Feed de marcos do kanban)**: 1 achado,
+  comparando `_ptMarcosNoPeriodo()`/`_ptFeedRow()`/`_ptFeedFilter`
+  ponto a ponto contra `_marcosNoPeriodo()`/`_timelineFeedRow()`/
+  `_timelineFeedFilter` (kanban-dev.html, o original de que foi
+  portado). `renderPainelTimeline()` já tinha uma proteção documentada
+  (reseta filtro de responsável/tag se a opção some ao trocar de
+  squad/gerência — comentário dela cita literalmente "o Feed de marcos
+  do kanban.html" como precedente) e o Feed do painel já tinha essa
+  mesma cautela pra troca de PERÍODO — só faltava pra troca de SQUAD
+  dentro do próprio filtro do Feed, deixando `f.owner`/`f.tagLabel`
+  presos num valor morto da squad anterior, zerando a lista sem
+  nenhuma pista visual do motivo. Achado via técnica 2. Fix: mesmo
+  check de 2 linhas em `_renderPtFeed()`. Checado e sem achado:
+  classificação de tipo idêntica nos dois arquivos (incluindo o fix de
+  "removeu prioridade" de 2026-09-04, já portado); `col==='done'` no
+  painel é simplificação já documentada, não bug; ausência de badge de
+  supercard no Feed do painel é consistente com o resto do arquivo
+  (conceito não existe em painel-dev.html em lugar nenhum).
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
