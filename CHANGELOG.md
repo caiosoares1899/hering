@@ -2902,6 +2902,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.604-dev — 2026-09-07 — 🎯 Rodada 4 de personalização: squad padrão ao abrir o board
+
+4ª de 5 rodadas planejadas. Feature nova, na linha das rodadas
+anteriores (Atalhos, Esc fecha tela, Reorganizar barra, Raia/colunas
+colapsadas, ordenação/visualização/Submarca/Dashboard, densidade do
+card).
+
+- **Automático, sem precisar configurar nada**: acessando o board sem
+  um `?squad=` na URL (favorito salvo, digitou o endereço direto), abre
+  sozinho no ÚLTIMO squad que a pessoa usou — sem precisar escolher de
+  novo toda vez. `showApp()` grava `board_prefs_global/last_squad`
+  toda vez que alguém efetivamente entra num squad.
+- **Escape hatch opcional**: "📌 Fixar este squad como padrão" — 1ª
+  opção do seletor de squad (clique no nome do squad atual, no
+  cabeçalho). Sempre ganha do "último squad usado" quando os dois estão
+  setados. Clique de novo pra remover a fixação.
+- Um link com `?squad=X` explícito SEMPRE respeita o squad pedido —
+  a preferência nunca sobrescreve uma escolha explícita na URL.
+- `resolveSquadAndShow()` virou `async` (lê `board_prefs_global` antes
+  de decidir onde abrir) — só paga esse round-trip extra quando a URL
+  não tem `?squad=` (o caso raro; navegação normal via links/seletor já
+  sempre inclui o squad, sem custo extra).
+- Central de Ajuda ("Multi-squad") atualizada.
+
 ### v8.30.603-dev — 2026-09-07 — 📐 Rodada 3 de personalização: densidade dos cards (Detalhado/Compacto)
 
 3ª de 5 rodadas planejadas. Diferente das rodadas 1-2 (que levaram
