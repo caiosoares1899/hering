@@ -427,6 +427,35 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   por edições recentes). Limitação já conhecida e documentada no
   `CODE_MAP.md` (não é achado novo): `openPevModal` sempre abre editável
   mesmo só pra ver um evento existente.
+- **2026-09-07, board_prefs (pedido genérico — área mais recentemente
+  alterada, lote de 5 rodadas + 3 fixes + brilho neon, nunca tinha tido
+  rodada própria)**: 1 achado. PR #809. `toggleSubmarcaDropdownItem()`,
+  `setSubmarcaDropdownTodos()` e `setSubmarcaFromDrawer()` mudavam
+  `activeFilters.submarca` (que `_hasActiveFilters()` já considera
+  filtro ativo) sem chamar `_applyFiltrosBtnUI()` — o fix do PR #800
+  cobriu `applyFilters()`/`clearFilters()`/`applyFilterPreset()`, mas
+  esqueceu esses 3 pontos que mudam o mesmo estado por fora. Filtrar só
+  por submarca escondia a maioria dos cards sem o botão "🔭 Filtros"
+  acender. Achado via técnica 1 (grep em todos os call sites de
+  `_applyFiltrosBtnUI()`). Checado e sem achado: raia/colunas
+  colapsadas/col_sort/view_mode/densidade/squad padrão (único ponto de
+  mutação cada); presets de filtro.
+- **2026-09-07, CFD — crosshair/tooltip do hover (pedido genérico — área
+  mais recentemente alterada, feature nova do mesmo dia, PR #808)**:
+  **sem achados**. Investigado `_renderCFD()`/`_cfdHover()`/
+  `_cfdHoverOut()`/`window._cfdChartState` de ponta a ponta: guard
+  contra divisão por zero (`stepX||1`), índice sempre clampado dentro
+  de `dias.length`, `getScreenCTM()`/`createSVGPoint()` cobre a
+  transformação de coordenada tanto pra dentro (posição do hover)
+  quanto pra fora (posição da tooltip) sem depender de cálculo manual
+  de escala, `pointer-events:none` na linha/marcadores evita que eles
+  interceptem o próprio `mousemove` do SVG, tooltip clampada nos 2
+  lados. `_bdToggleCol()` (achado real de rodadas anteriores, único
+  ponto de mutação de `_bdHiddenCols`) já re-renderiza Fluxo/Insights/
+  Visão Geral de forma consistente quando cada uma está visível — sem
+  divergência entre os 3. Limitação conhecida, não é bug: hover não
+  tem equivalente por toque (mobile), fora de escopo de correção de
+  comportamento (seria feature nova, não um "errado/inconsistente").
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
