@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.609-dev</div>
+<div class="version">v8.30.611-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18865,10 +18865,12 @@ function _renderCFD(){
   // Áreas empilhadas na ordem das colunas do board (a "de trás" acumula por
   // baixo das seguintes — visual clássico de CFD).
   let acumulado = dias.map(()=>0);
+  const cumTop = {}; // topo de cada faixa empilhada por dia — reusado pelos marcadores do hover abaixo
   const areas = colIds.map(id=>{
     const baseline = acumulado.slice();
     acumulado = acumulado.map((v,i)=>v+serie[id][i]);
     const top = acumulado;
+    cumTop[id] = top;
     const pathTop = top.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' L ');
     const pathBottom = baseline.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).reverse().join(' L ');
     return `<path d="M ${pathTop} L ${pathBottom} Z" fill="${colInfo[id]?.color||'#38b6ff'}" opacity=".72" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`;
@@ -18876,8 +18878,70 @@ function _renderCFD(){
   const everyN = Math.max(1, Math.ceil(dias.length/7));
   const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
   const legenda = visibleCols.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;">${areas}${labels}</svg>
+  // Crosshair + tooltip ao passar o mouse (pedido direto: "ver os números e
+  // a data" ao passear pelo gráfico) — estado guardado em window._cfdChartState
+  // pra _cfdHover()/_cfdHoverOut() lerem sem precisar reconstruir nada a cada
+  // movimento do mouse. Posição calculada via SVG getScreenCTM() (não por
+  // cálculo manual de escala) pra funcionar certo mesmo com o
+  // preserveAspectRatio esticando/centralizando o viewBox.
+  window._cfdChartState = {dias, stepX, padL, padT, padB, H, colIds, colInfo, serie, cumTop, toY};
+  el.innerHTML = `<div id="cfd-chart-wrap" style="position:relative;">
+    <svg id="cfd-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;cursor:crosshair;" onmousemove="_cfdHover(event)" onmouseleave="_cfdHoverOut()">${areas}${labels}<line id="cfd-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/><g id="cfd-dots" style="opacity:0;pointer-events:none;"></g></svg>
+    <div id="cfd-tooltip" style="position:absolute;display:none;top:4px;min-width:120px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;font-size:10.5px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+  </div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
+}
+function _cfdHover(evt){
+  const st = window._cfdChartState; if(!st) return;
+  const svg = document.getElementById('cfd-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  let idx = Math.round((svgP.x - st.padL) / (st.stepX || 1));
+  idx = Math.max(0, Math.min(st.dias.length-1, idx));
+  const xUser = st.padL + idx*st.stepX;
+
+  const line = document.getElementById('cfd-crosshair');
+  if(line){ line.setAttribute('x1', xUser); line.setAttribute('x2', xUser); line.style.opacity = 1; }
+
+  const dots = document.getElementById('cfd-dots');
+  if(dots){
+    dots.innerHTML = st.colIds.map(id=>
+      `<circle cx="${xUser.toFixed(1)}" cy="${st.toY(st.cumTop[id][idx]).toFixed(1)}" r="2.5" fill="${st.colInfo[id]?.color||'#38b6ff'}" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`
+    ).join('');
+    dots.style.opacity = 1;
+  }
+
+  const tip = document.getElementById('cfd-tooltip');
+  const wrap = document.getElementById('cfd-chart-wrap');
+  if(tip && wrap){
+    const diaStr = st.dias[idx];
+    const dataFmt = diaStr.slice(8,10)+'/'+diaStr.slice(5,7);
+    const linhas = st.colIds.map(id=>
+      `<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">`
+      +`<span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:${st.colInfo[id]?.color||'#38b6ff'};flex-shrink:0;"></span>${esc(st.colInfo[id]?.name||id)}</span>`
+      +`<b style="color:var(--txt);">${st.serie[id][idx]}</b></div>`
+    ).join('');
+    const total = st.colIds.reduce((s,id)=>s+st.serie[id][idx],0);
+    tip.innerHTML = `<div style="font-weight:700;color:var(--txt);margin-bottom:4px;">${dataFmt}</div>${linhas}`
+      +`<div style="display:flex;justify-content:space-between;gap:14px;margin-top:4px;padding-top:4px;border-top:1px solid var(--glass-b);color:var(--txt2);"><span>Total</span><b>${total}</b></div>`;
+    tip.style.display = 'block';
+    // Posiciona a tooltip alinhada com a linha (transforma o ponto de volta
+    // pra client-space) sem deixar vazar pra fora do wrapper.
+    const topPt = svg.createSVGPoint(); topPt.x = xUser; topPt.y = st.padT;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 130;
+    let left = (screenTop.x - wrapRect.left) + 10;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _cfdHoverOut(){
+  const line = document.getElementById('cfd-crosshair'); if(line) line.style.opacity = 0;
+  const dots = document.getElementById('cfd-dots'); if(dots) dots.style.opacity = 0;
+  const tip = document.getElementById('cfd-tooltip'); if(tip) tip.style.display = 'none';
 }
 function _renderBurndown(){
   const el = document.getElementById('boarddata-burndown'); if(!el) return;
