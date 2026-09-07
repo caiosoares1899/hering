@@ -2943,6 +2943,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.614-dev — 2026-09-07 — /monitorarbugs em salvar card: autosave descartava mudanças de Tipo de executor/Status do agente
+
+Pedido explícito, escopo nomeado: "roda /monitorarbugs em salvar card".
+
+1. **`scheduleAutoSave()` (autosave) nunca persistia `executorType`/
+   `agentStatus`, apesar dos `<select>` correspondentes (`m-exectype`/
+   `m-agentstatus`) já terem `onchange="scheduleAutoSave()"` — o próprio
+   código já assumia que essas mudanças autosalvavam.** Comparando
+   `saveCard()` (Salvar manual) com `scheduleAutoSave()` campo a campo
+   (técnica 1) — `saveCard()` sempre gravava os 2 campos; o `Object.assign`
+   do autosave nunca os incluía. Trocar "Tipo de executor" (humano ↔
+   agente) ou o status do agente direto no dropdown, sem clicar "💾
+   Salvar" nem usar um dos 3 botões de simulação do agente (que já têm
+   seu próprio `_agentCommitState()`), mostrava o feedback genérico "✓
+   Salvo" do autosave, mas a mudança nunca chegava ao Firebase.
+   `_manualFieldsNow()` (a lista de campos "sem autosave, avisa se não
+   salvo") também não cobria os 2 campos, então nem o aviso de
+   "alterações não salvas" disparava — perda 100% silenciosa. Fix:
+   `executorType`/`agentStatus` adicionados ao `Object.assign()` do
+   autosave, mesmo padrão da correção anterior de `blockerReason`.
+
+Achado incidental, não corrigido — código morto, decisão de produto:
+todo o mecanismo antigo de "🔗 Cards vinculados"
+(`editingLinkedCards`/`initLinkedCards()`/`renderLinkedChips()`/
+`searchLinkedCards()`/`addLinkedCard()`/`removeLinkedCard()`) depende
+de elementos (`#linked-cards-list`, `#link-search-inp`, `#link-dropdown`,
+`#cs-links-ind`) que não existem em lugar nenhum do HTML estático —
+`searchLinkedCards(` aparece só 1 vez no arquivo inteiro (só a
+declaração, técnica 6 — código nunca chamado). `saveCard()` continua
+gravando `linkedCards:editingLinkedCards.map(l=>l.id)` a cada save, mas
+como nada mais consegue mutar `editingLinkedCards`, isso hoje só
+round-tripa valor legado sem risco de perda. Provável resquício de
+refactor incompleto, possivelmente superado pelo sistema de
+dependências (`dependsOn`/`dependents`) mais recente — não mexido,
+decisão de remover ou reconectar cabe a quem pediu.
+
+Validado com Playwright: `scheduleAutoSave()` chamado com `executorType`/
+`agentStatus` trocados no DOM, objeto em memória (`cards[]`) checado
+depois do debounce de 800ms — confirmado FALHANDO antes do fix
+(valores ficavam nos antigos) e passando depois.
+
 ### v8.30.613-dev — 2026-09-07 — /monitorarbugs nos filtros do board: preset não sincronizava o campo de Submarca do drawer
 
 Pedido explícito, escopo nomeado: "roda /monitorarbugs nos filtros do

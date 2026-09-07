@@ -467,6 +467,20 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   técnica 1. Checado e sem achado: os 13 campos de
   `FILTER_PRESET_CAMPOS` batem exatamente com `_hasActiveFilters()` e
   `passesFilter()`, nenhum campo esquecido em nenhuma das 3 listas.
+- **2026-09-07, salvar card (pedido explícito, escopo nomeado)**: 1
+  achado real + 1 código morto. Comparando `saveCard()` (manual) com
+  `scheduleAutoSave()` campo a campo (técnica 1): `executorType`/
+  `agentStatus` disparavam autosave (`onchange="scheduleAutoSave()"`
+  nos `<select>` correspondentes) mas nunca eram persistidos por ele —
+  só `saveCard()` gravava os 2. Trocar o dropdown sem clicar Salvar (ou
+  sem usar um dos 3 botões de simulação do agente, que já commitam
+  sozinhos) mostrava "✓ Salvo" mas a mudança se perdia; `_manualFieldsNow()`
+  também não cobria os 2 campos, então nem o aviso de "não salvo"
+  disparava. Fix: mesmo padrão da correção anterior de `blockerReason`.
+  Achado incidental, não corrigido (código morto, decisão de produto):
+  todo o mecanismo antigo `editingLinkedCards`/`addLinkedCard()`/
+  `searchLinkedCards()` depende de elementos que não existem no HTML
+  estático — `searchLinkedCards(` só aparece 1x no arquivo (técnica 6).
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
