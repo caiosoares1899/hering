@@ -2902,6 +2902,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.607-dev — 2026-09-07 — Fix: botão "🔭 Filtros" não avisava quando havia filtro ativo com o painel fechado
+
+Achado do usuário testando a Rodada 5 (presets de filtro): "todos os
+cards da squad dados sumiram!" — susto real, sem nenhuma perda de
+dado. Causa: um filtro (aplicado via preset ou manualmente) continuava
+ativo mesmo com a barra de "🔭 Filtros" fechada, e o botão só ficava
+destacado enquanto o painel estava ABERTO (`toggleFilters()`), não
+enquanto algum filtro estava de fato ATIVO — fechar o painel apagava a
+única pista visual de por que o board tinha ficado vazio. "✕🗑️ Limpar"
+resolveu na hora, confirmando que era só filtro.
+
+A Timeline já resolvia isso certo há tempos, com `_hasActiveFilters()`
+(~L10976) alimentando o próprio botão de Filtros dela — o board de
+colunas nunca ganhou o mesmo tratamento. Achado via técnica 2
+(comparar contra um padrão já resolvido em outro lugar do arquivo).
+
+Fix: `_applyFiltrosBtnUI()` — fonte única do destaque do botão a partir
+de agora, chamada em `toggleFilters()` (abrir/fechar) e toda vez que o
+filtro muda (`applyFilters()`/`clearFilters()`/`applyFilterPreset()`/
+`_applyBoardPrefsSquad()`, esta última cobrindo o caso do filtro de
+Submarca já vir ativo no boot). Fica aceso sempre que houver filtro
+ativo, painel aberto ou não.
+
 ### v8.30.606-dev — 2026-09-07 — Fix: squad padrão fixado não aparecia (seletor pré-auth ficava por cima do board)
 
 Achado testando a Rodada 4 (squad padrão): o usuário fixou um squad
