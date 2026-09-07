@@ -494,6 +494,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   próprio; cross-check campo a campo write→read entre
   `saveCard()`/`scheduleAutoSave()` e o que `openCard()` lê de volta —
   sem gap.
+- **2026-09-07, autosave (pedido explícito, escopo nomeado)**: 1 achado.
+  Dos 3 caminhos que levam um checklist a 100% (autosave, botão
+  "💾 Salvar", e "▶ Avançar etapa" da simulação client-side do Agente
+  Ágil), só a simulação nunca disparava `notifChecklistDone()`/
+  `runAutoRules('checklist_complete', ...)` — `_agentAdvanceStep()`
+  detecta a transição pra "checklist zerado" (`remaining===0`) mas nunca
+  chamava os 2. Achado via técnica 1. Fix: mesma chamada adicionada no
+  ponto exato da transição. Checado e sem achado (mecanismo do
+  `_autoSaveTimer` em si): sempre limpo antes de escrita concorrente
+  (wrapper de `saveCard`); callback do `setTimeout` sempre relê
+  `editingId`/`cards.find()` fresco (não usa closure stale, diferente
+  do padrão que causou o bug de `addBlockerTag()` da rodada anterior);
+  `_saveCardWithRetry()` consistente nos 3 call sites.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
