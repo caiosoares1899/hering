@@ -2884,6 +2884,23 @@ input[type="date"]{-moz-appearance:textfield;}
 .auto-action-chip{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;padding:3px 4px 3px 9px;border-radius:999px;background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);}
 .auto-action-chip button{background:none;border:none;color:var(--teal);cursor:pointer;font-size:11px;line-height:1;padding:2px;}
 .auto-action-chip button:hover{color:var(--danger);}
+/* Achado real (usuário, presets de filtro): var(--teal) contra o fundo
+   translúcido do próprio chip perde contraste em ☀️ Lençóis Maranhenses
+   (#33D6D0, ciano claro, dilui num fundo já claro) E em 🌴 Vice City
+   (#9c6f8a, tom parecido com o fundo rosa/malva do tema) — funciona só
+   no escuro padrão, onde nasceu. Mesmo diagnóstico já feito outras vezes
+   nesse arquivo pra outros usos de --teal/--cyan sobre fundo translúcido
+   (ver .badge/.hd-btn-adm). Força var(--txt) (sempre contraste alto por
+   design) nesses 2 temas, só a cor do texto — fundo/borda continuam
+   com o mesmo tom, ainda reconhecível como "chip de ação". #btn-save-preset
+   (botão "💾 Salvar preset" da barra de Filtros, mesmo var(--teal) inline)
+   tem o mesmo problema, mesmo fix. */
+[data-theme="light"] .auto-action-chip,
+[data-theme="vice"] .auto-action-chip,
+[data-theme="light"] .auto-action-chip button:not(:hover),
+[data-theme="vice"] .auto-action-chip button:not(:hover),
+[data-theme="light"] #btn-save-preset,
+[data-theme="vice"] #btn-save-preset{color:var(--txt);}
 
 
 /* Card aging */
@@ -3459,7 +3476,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="tb-sep"></div>
   <div class="fb-group" style="align-items:center;">
-    <button class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="saveFilterPresetPrompt()" title="Salva a combinação de filtros atual com um nome, pra aplicar de novo depois com 1 clique — preferência sua, sincroniza com a conta">💾 Salvar preset</button>
+    <button id="btn-save-preset" class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="saveFilterPresetPrompt()" title="Salva a combinação de filtros atual com um nome, pra aplicar de novo depois com 1 clique — preferência sua, sincroniza com a conta">💾 Salvar preset</button>
     <div id="filter-presets-list" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
   </div>
 </div>
@@ -6029,7 +6046,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.607-dev</div>
+<div class="version">v8.30.608-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

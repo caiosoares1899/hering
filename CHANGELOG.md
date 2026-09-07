@@ -2902,6 +2902,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.608-dev — 2026-09-07 — Fix: chip de preset e botão "💾 Salvar preset" ilegíveis no tema claro e no 🌴 Vice City
+
+Achado do usuário testando presets de filtro, nos dois temas não-escuros
+("no modo claro tb"). `var(--teal)` usado no texto do chip
+(`.auto-action-chip`, reaproveitado dos chips de ação pendente de
+Automação) e no botão "💾 Salvar preset" só tem contraste bom no tema
+escuro padrão, onde nasceu:
+- ☀️ Lençóis Maranhenses: `--teal:#33D6D0` é um ciano claro, dilui contra
+  o fundo já claro do próprio chip.
+- 🌴 Vice City: `--teal:#9c6f8a` é um tom bem parecido com o fundo
+  rosa/malva do tema inteiro.
+
+Mesma classe de achado já feita outras vezes neste arquivo pra outros
+usos de `--teal`/`--cyan` sobre fundo translúcido (`.badge`,
+`.hd-btn-adm`). Fix: `[data-theme="light"]`/`[data-theme="vice"]`
+forçam `color:var(--txt)` (sempre alto contraste por design) no texto
+do chip, no botão ✕ dele (preservando o hover vermelho de
+"remover", via `:not(:hover)`) e no botão "💾 Salvar preset" — só a cor
+do texto, fundo/borda continuam iguais.
+
 ### v8.30.607-dev — 2026-09-07 — Fix: botão "🔭 Filtros" não avisava quando havia filtro ativo com o painel fechado
 
 Achado do usuário testando a Rodada 5 (presets de filtro): "todos os

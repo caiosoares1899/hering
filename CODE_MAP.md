@@ -945,6 +945,16 @@ listener-ao-vivo + cache local de sempre.
   `toggleFilters()`, `applyFilters()`, `clearFilters()`,
   `applyFilterPreset()` e `_applyBoardPrefsSquad()` (esta última cobre
   o filtro de Submarca já vindo ativo do boot).
+  **Achado real 2 (mesmo dia, testando nos temas claro/vice)**: `.auto-
+  action-chip` (reaproveitado pro chip de preset) e `#btn-save-preset`
+  usam `var(--teal)` no texto — contraste ruim em ☀️ Lençóis Maranhenses
+  (`#33D6D0`, ciano claro diluindo no fundo já claro) e em 🌴 Vice City
+  (`#9c6f8a`, tom parecido com o fundo rosa/malva do tema). Mesma classe
+  de achado já feita antes pra `.badge`/`.hd-btn-adm`. Fix:
+  `[data-theme="light"]`/`[data-theme="vice"]` (~L2887, logo abaixo da
+  definição de `.auto-action-chip`) forçam `color:var(--txt)` nesses 2
+  temas — chip, botão ✕ dele (com `:not(:hover)` pra preservar o hover
+  vermelho de "remover") e `#btn-save-preset`.
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
