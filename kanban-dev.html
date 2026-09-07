@@ -1203,6 +1203,24 @@ input[type="date"]{-moz-appearance:textfield;}
 .dots span{animation:blink 1.2s infinite;}.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
 @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+/* ⚡ "🔭 Filtros" em neon quando algum filtro está ativo — pedido direto
+   do usuário, depois do achado de que o botão sem destaque nenhum com o
+   painel fechado escondia por completo o motivo do board estar filtrado
+   (ver _applyFiltrosBtnUI()/_hasActiveFilters()). Cor sempre var(--accent)
+   (tema-aware — não precisa de override por tema, já é a cor de
+   destaque/marca de cada um) — só o brilho pulsa, texto/borda continuam
+   sólidos e legíveis o tempo todo (diferente de animar opacity, que
+   apagaria o texto no vale do pulso). */
+#btn-filters.filtros-ativo{
+  color:var(--accent);
+  border-color:var(--accent);
+  box-shadow:0 0 6px var(--accent),0 0 14px var(--accent);
+  animation:filtrosNeonPulse 2s ease-in-out infinite;
+}
+@keyframes filtrosNeonPulse{
+  0%,100%{box-shadow:0 0 5px var(--accent),0 0 12px var(--accent);}
+  50%{box-shadow:0 0 9px var(--accent),0 0 22px var(--accent);}
+}
 /* ═══ QUADRO DE LEMBRETES (drawer lateral direito) ═══ */
 .lem-tab{position:fixed;top:50%;right:0;transform:translateY(-50%);z-index:55;
   background:rgba(37,99,201,.92);border:1px solid rgba(56,182,255,.45);border-right:none;
@@ -6046,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.608-dev</div>
+<div class="version">v8.30.609-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11924,8 +11942,7 @@ function _populateFilterSelects(){
 function _applyFiltrosBtnUI(){
   const btn=document.getElementById('btn-filters'); if(!btn) return;
   const ativo=_hasActiveFilters();
-  btn.style.borderColor=ativo?'var(--accent)':'';
-  btn.style.color=ativo?'var(--accent)':'';
+  btn.classList.toggle('filtros-ativo', ativo);
 }
 function toggleFilters(){
   const bar=document.getElementById('filter-bar');
