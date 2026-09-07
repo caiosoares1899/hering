@@ -13298,6 +13298,22 @@ só sugerindo texto.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.32 · painel-dev — 2026-09-07 — 🎯 OKR: card do Objetivo destaca quando você é responsável
+
+Pedido direto do usuário: "no OKR, no painel, faz que nem nos cards!
+coloca os OKRs que a pessoa é responsável com uma cor diferente".
+
+O card de Objetivo (`_okrObjCardHtml()`, grid "🎯 OKR — Objetivos
+estratégicos") ganha a classe `.okr-mine` quando o usuário logado está
+em `objetivo.responsaveis[]` (`_okrIsResponsavel()`, mesma checagem já
+usada pra liberar edição) — mesmo tratamento visual de `.card-mine` do
+kanban(-dev).html: tingimento azul + borda mais forte + glow leve,
+cores exatas iguais às do kanban pros temas ☀️ Lençóis Maranhenses e
+🌑 escuro padrão (mesma família visual, ver `MARINE_GLASS.md`). 🌴 Vice
+City sem override próprio, mesma decisão já tomada pro kanban — herda
+o tingimento azul do escuro, que contrasta bem contra a paleta
+pêssego/lavanda do tema em vez de competir com ela.
+
 ### painel-dev.html v3.31 · painel-dev — 2026-09-07 — /monitorarbugs no Feed de marcos do painel: trocar de squad deixava filtro de responsável/tag "morto"
 
 Pedido genérico — "roda um /monitorarbugs geral". Escolhido o Feed de
