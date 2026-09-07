@@ -5997,7 +5997,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.601-dev</div>
+<div class="version">v8.30.602-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7087,6 +7087,7 @@ let hybridViewMode = safeLS.getItem('hybrid_view_'+ACTIVE_SQUAD) || 'hybrid';
 function setHybridView(mode){
   hybridViewMode = mode;
   safeLS.setItem('hybrid_view_'+ACTIVE_SQUAD, mode);
+  _saveBoardPref('view_mode', mode);
   updateHybridViewUI();
   renderBoard();
 }
@@ -11751,6 +11752,7 @@ function _crvCardCountBreakdown(rows){
 }
 function _saveSubmarcaFiltroPadrao(){
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
+  _saveBoardPref('submarca_filtro', activeFilters.submarca||[]);
 }
 // Popula os <select> da barra de Filtros (#f-owner/#f-demandante/#f-criador/
 // #f-tag/#f-subteam). Extraído de toggleFilters() pra poder ser chamado
@@ -11951,6 +11953,7 @@ function setBoardFontSize(size){
   if(!FONTSIZE_LABELS[size]) return;
   boardFontSize = size;
   safeLS.setItem('board_font_size', size);
+  _saveBoardPrefGlobal('font_size', size);
   _applyBoardFontSize();
   closeFontSizeMenu();
 }
@@ -11975,16 +11978,18 @@ document.addEventListener('click', e=>{
   if(!e.target.closest('#fontsize-menu-wrap')) closeFontSizeMenu();
 });
 
+function _applyColSortBtnUI(){
+  // Rótulo do botão é fixo ("Ordenação") — só a cor/borda indica que um modo
+  // não-padrão está ativo (mesmo padrão de Filtros/Raia na toolbar).
+  const btn = document.getElementById('btn-sort'); if(!btn) return;
+  btn.style.borderColor = colSortMode!=='priority' ? 'var(--teal)' : '';
+  btn.style.color = colSortMode!=='priority' ? 'var(--teal)' : '';
+}
 function setColSortMode(mode){
   colSortMode = mode;
   safeLS.setItem('col_sort_'+ACTIVE_SQUAD, mode);
-  // Rótulo do botão é fixo ("Ordenação") — só a cor/borda indica que um modo
-  // não-padrão está ativo (mesmo padrão de Filtros/Raia na toolbar).
-  const btn = document.getElementById('btn-sort');
-  if(btn){
-    btn.style.borderColor = mode!=='priority' ? 'var(--teal)' : '';
-    btn.style.color = mode!=='priority' ? 'var(--teal)' : '';
-  }
+  _saveBoardPref('col_sort', mode);
+  _applyColSortBtnUI();
   closeSortMenu();
   renderBoard();
 }
@@ -18180,12 +18185,12 @@ function openTempoReport(){
 // gráfico — pedido direto: "tirar uma coluna da conta e refazê-la".
 let _bdHiddenCols = new Set();
 function _bdLoadHiddenCols(){
-  const saved = localStorage.getItem('bd_hcols_'+ACTIVE_SQUAD);
-  _bdHiddenCols = new Set(saved ? JSON.parse(saved) : []);
+  _bdHiddenCols = new Set(_boardPrefLoadOrMigrate('dashboard_hidden_cols', 'bd_hcols_'+ACTIVE_SQUAD, [], JSON.parse));
 }
 function _bdToggleCol(colId){
   if(_bdHiddenCols.has(colId)) _bdHiddenCols.delete(colId); else _bdHiddenCols.add(colId);
   localStorage.setItem('bd_hcols_'+ACTIVE_SQUAD, JSON.stringify([..._bdHiddenCols]));
+  _saveBoardPref('dashboard_hidden_cols', [..._bdHiddenCols]);
   renderBoardDataGrid();
   _boardDataBarChart();
   // Pedido direto: o mesmo toggle passa a valer também nas abas Insights e
@@ -24729,11 +24734,66 @@ function loadBoardPrefs(){
     _applyBoardPrefsSquad();
   });
 }
+// Rodada 2: ordenação de coluna, modo de visualização, filtro padrão de
+// Submarca e colunas escondidas do Dashboard — os 4 já salvavam algo,
+// só que presos ao navegador (safeLS/localStorage, chave por squad).
+// _boardPrefLoadOrMigrate() decide o valor: se a conta JÁ tem algo
+// sincronizado pra esse campo, usa ele (fonte de verdade, dali em
+// diante); senão, herda o valor que já estava salvo localmente nesse
+// navegador (se tiver) e sobe ele pro Firebase na hora — ninguém perde
+// a preferência que já tinha configurado só por causa dessa migração.
+function _boardPrefLoadOrMigrate(campo, legacyKey, padrao, parse){
+  if(_boardPrefsSquad[campo] !== undefined) return _boardPrefsSquad[campo];
+  const legado = safeLS.getItem(legacyKey);
+  if(legado === null || legado === undefined) return padrao;
+  const valor = parse ? parse(legado) : legado;
+  _saveBoardPref(campo, valor); // migração: só escreve na 1ª vez que a conta ainda não tinha nada
+  return valor;
+}
 function _applyBoardPrefsSquad(){
   raiaMode = _boardPrefsSquad.raia || '';
   _applyRaiaBtnUI();
   collapsedCols = new Set(_boardPrefsSquad.collapsed_cols || []);
+
+  colSortMode = _boardPrefLoadOrMigrate('col_sort', 'col_sort_'+ACTIVE_SQUAD, 'priority');
+  safeLS.setItem('col_sort_'+ACTIVE_SQUAD, colSortMode); // mantém o cache local em dia (1ª pintura do próximo boot)
+  _applyColSortBtnUI();
+
+  hybridViewMode = _boardPrefLoadOrMigrate('view_mode', 'hybrid_view_'+ACTIVE_SQUAD, 'hybrid');
+  safeLS.setItem('hybrid_view_'+ACTIVE_SQUAD, hybridViewMode);
+  updateHybridViewUI();
+
+  activeFilters.submarca = _boardPrefLoadOrMigrate('submarca_filtro', 'sm_filtro_'+ACTIVE_SQUAD, [], JSON.parse);
+  safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca));
+  renderSubmarcaQuickFilters();
+
   renderBoard();
+}
+// ── Preferências globais (não dependem de squad — tamanho de fonte,
+// densidade do card, squad padrão) — mesmo mecanismo, node irmão sem o
+// sufixo de squad. ──
+let _boardPrefsGlobal = {};
+function _saveBoardPrefGlobal(campo, valor){
+  const user = window._currentUser; if(!user) return;
+  _boardPrefsGlobal = {..._boardPrefsGlobal, [campo]:valor};
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/board_prefs_global/'+campo), valor).catch(()=>{});
+}
+function loadBoardPrefsGlobal(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/board_prefs_global'), snap=>{
+    _boardPrefsGlobal = snap.val() || {};
+    _applyBoardPrefsGlobal();
+  });
+}
+function _applyBoardPrefsGlobal(){
+  if(_boardPrefsGlobal.font_size !== undefined){
+    boardFontSize = _boardPrefsGlobal.font_size;
+  } else {
+    const legado = safeLS.getItem('board_font_size');
+    if(legado !== null){ boardFontSize = legado; _saveBoardPrefGlobal('font_size', legado); }
+  }
+  safeLS.setItem('board_font_size', boardFontSize);
+  _applyBoardFontSize();
 }
 const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n','f1','f3','f5','f6','f7','f11','f12']);
 let _atalhosCustom = {};
@@ -29987,11 +30047,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
