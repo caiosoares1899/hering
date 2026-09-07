@@ -818,11 +818,13 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
-### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-4 de 5)
+### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-5 de 5 — completo)
 Pedido direto do usuário, mesma linha de personalização de hoje: levar
 Raia/ordenação/fonte/modo de visualização/filtro de Submarca/colunas
 escondidas do Dashboard pro mesmo padrão de `atalhos_custom`/
-`toolbar_order`, mais densidade do card (feature nova). `kanban/usuarios/
+`toolbar_order`, mais 3 features novas (densidade do card, squad
+padrão, presets de filtro — este último em `filter_presets`, node
+irmão, não `board_prefs`, ver Rodada 5 abaixo). `kanban/usuarios/
 {uid}/board_prefs/{squadId}` (por squad) + `board_prefs_global` (o que
 não depende de squad — fonte, densidade do card, squad padrão), mesmo
 listener-ao-vivo + cache local de sempre.
@@ -898,9 +900,23 @@ listener-ao-vivo + cache local de sempre.
     é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6351,
     clique no nome do squad atual no cabeçalho): "📌 Fixar este squad
     como padrão" / "📌 ...remover", acima da lista de squads.
-- **Rodadas seguintes (planejadas, não implementadas ainda)**: presets
-  de filtro nomeados (`filter_presets/{squadId}/{presetId}`, a última
-  das 5, feature maior, própria tela).
+- **Rodada 5 (última das 5)**: presets de filtro nomeados — feature
+  NOVA, própria tela, a maior das 5. `kanban/usuarios/{uid}/
+  filter_presets/{squadId}/{presetId}` = `{id, nome, filtros}` (os 13
+  campos de `activeFilters`, `FILTER_PRESET_CAMPOS`). Diferente de
+  `board_prefs`, não mantém um cache de runtime pra "aplicar" — aplicar
+  um preset é só popular os mesmos campos/DOM que `applyFilters()` já
+  usa. `loadFilterPresets()` (~L11959, listener) → `_filterPresets`
+  (array, ordenado por nome) → `renderFilterPresets()` (~L11967, chips
+  reusando `.auto-action-chip`, mesmo estilo do chip de ação pendente
+  de Automação). `saveFilterPresetPrompt()` (~L11973, `uiPrompt()` pro
+  nome, `FILTER_PRESET_LIMITE=10` por squad) / `applyFilterPreset(id)`
+  (~L11985, popula DOM + `activeFilters` + `_saveSubmarcaFiltroPadrao()`
+  + `renderBoard()`, mesmo padrão de `clearFilters()`) /
+  `removeFilterPreset(id)` (~L12009, `uiConfirm()` antes). UI: botão
+  "💾 Salvar preset" + `#filter-presets-list` (chips), dentro do
+  `#filter-bar` (barra de "🔭 Filtros"), depois do grupo "💡 Meus
+  cards"/"Limpar".
 
 ### 🔀 Reorganizar barra de ferramentas (2026-09-07)
 Pedido direto do usuário — "tem como deixar a pessoa reorganizar o

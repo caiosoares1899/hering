@@ -2902,6 +2902,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.605-dev — 2026-09-07 — 💾 Rodada 5 (última) de personalização: presets de filtro nomeados
+
+5ª e última rodada da linha de personalização de hoje (Atalhos, Esc
+fecha tela, Reorganizar barra, OKR destaca responsável, Raia/colunas
+colapsadas, ordenação/visualização/Submarca/Dashboard, densidade do
+card, squad padrão). A maior das 5 — feature nova, própria tela.
+
+- Barra de "🔭 Filtros" ganha o botão "💾 Salvar preset": pega a
+  combinação INTEIRA de filtros preenchida na hora (responsável,
+  demandante, criador, tag, tamanho, submarca, prazo, prioridade,
+  impedido, risco, subtime, supercard, texto) e salva com um nome que
+  você escolhe.
+- Presets salvos aparecem como chips clicáveis ao lado do botão — 1
+  clique aplica a combinação inteira de uma vez (substitui o filtro
+  atual, mesmo espírito de "Limpar filtros"), ✕ no chip remove.
+  Exemplos reais: "🔥 Meus atrasados" (responsável + prazo atrasado),
+  "🚧 Bloqueados do time" (impedido + subtime).
+- `kanban/usuarios/{uid}/filter_presets/{squadId}/{presetId}` — mesmo
+  listener-ao-vivo dos outros mecanismos de hoje. Limite de 10 presets
+  por squad por pessoa.
+- Central de Ajuda ("Filtros") atualizada.
+
 ### v8.30.604-dev — 2026-09-07 — 🎯 Rodada 4 de personalização: squad padrão ao abrir o board
 
 4ª de 5 rodadas planejadas. Feature nova, na linha das rodadas
