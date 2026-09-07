@@ -18,6 +18,56 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.600 — 2026-09-07 · Promove pra prod — ⌨️ Atalhos de teclado personalizáveis, ⎋ Esc fecha a tela aberta, 🔀 Reorganizar a barra de ferramentas
+
+Promove pra produção o lote v8.30.596-dev → v8.30.600-dev de
+`kanban-dev.html` — três personalizações novas, pedidas direto pelo
+usuário, mais a rodada de `/monitorarbugs` que fechou os achados antes
+da promoção:
+
+- **⌨️ Atalhos de teclado personalizáveis** (v8.30.596-dev a
+  v8.30.599-dev): tela nova (botão "⌨️ Atalhos" na toolbar) pra
+  configurar combinações de teclado pra 24 ações do board — 15 globais
+  (📊 Dados do Board, 🌅 Meu Dia, 🔄 Recarregar colunas/tags, ⇔ Raia,
+  🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de
+  dependências, 📅 Calendários, 📣 Campanhas, 📥 Intake, 🎬 Controle de
+  Criativos, ❓ Ajuda, 🌙 Alternar tema) e 9 do modal do card aberto
+  (🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar,
+  🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/
+  recolher seções, 📜 Mostrar/esconder Histórico) — divididas em abas
+  🗂️ Board / 📇 Modal do card. Preferência 100% pessoal, sincroniza com
+  a conta (não é local só do navegador). Validação impede reusar as
+  combinações fixas do sistema (Ctrl+K, Ctrl+D, Ctrl+S, Ctrl+Z...) e os
+  clássicos do navegador (Ctrl+C/V/X/A/F/P, F1/F3/F5/F6/F7/F11/F12) —
+  mas agora aceita teclas de função sozinhas (F2/F4/F8/F9/F10), já que
+  essas não digitam nada num campo de texto e o Chrome não usa a
+  maioria delas. Tela ganhou um bloco de dica fixo explicando o que já
+  é reservado do navegador, pra facilitar a escolha.
+- **⎋ Esc fecha a tela aberta** (v8.30.599-dev): antes, Esc só fechava
+  o menu de contexto e a busca — qualquer outro modal (Dados do Board,
+  Central de Ajuda, Controle de Criativos, o modal do card...) exigia
+  clicar no ✕ ou fora dele. Agora Esc fecha a tela aberta no momento,
+  reaproveitando a mesma confirmação de "alteração não salva" que já
+  existia no clique-fora do card. Campos com seu próprio uso de Esc
+  (limpar busca, cancelar edição de item, fechar @menção...) continuam
+  funcionando normalmente — só fecham a tela inteira numa 2ª tecla.
+- **🔀 Reorganizar a barra de ferramentas** (v8.30.599-dev): 3ª aba do
+  modal "⌨️ Atalhos" ("🔀 Barra"). Arraste qualquer botão da toolbar
+  (inclusive os divisores) pra qualquer posição — mesmo mecanismo já
+  usado pra reordenar colunas do board. Preferência pessoal, sincroniza
+  com a conta; um botão novo que a Hering adicionar depois de alguém
+  personalizar entra sozinho no fim, sem sumir. "↩️ Restaurar padrão"
+  desfaz tudo.
+- **`/monitorarbugs` nas 2 features acima** (v8.30.600-dev), pedido
+  explícito antes de promover: 3 achados corrigidos — 6 campos dentro
+  do modal do card (Descrição, anexo, busca de Notas, busca de
+  Supercard, comentário novo, comentário em edição) fechavam o card
+  inteiro ao cancelar com Esc, em vez de só cancelar o campo; o modo de
+  reorganizar a barra não bloqueava um clique rápido (sem arrastar) de
+  abrir o painel do botão por engano; e Esc não cancelava o modo de
+  reorganizar, inconsistente com a própria feature de Esc lançada no
+  mesmo lote.
+
 ### v8.30.595 — 2026-09-06 · Promove pra prod — ⏱️ Tempo em atraso/bloqueado arquivado, e mais 2 rodadas de /monitorarbugs (menu de contexto e avatar do fan-out)
 
 Promove pra produção o lote v8.30.593-dev → v8.30.595-dev de
