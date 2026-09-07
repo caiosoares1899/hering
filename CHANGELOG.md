@@ -2902,6 +2902,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.602-dev — 2026-09-07 — 🎛️ Rodada 2 de personalização: ordenação, modo de visualização, filtro de Submarca e colunas do Dashboard passam a acompanhar a conta
+
+2ª de 5 rodadas planejadas. Diferente da Rodada 1 (Raia/colunas
+colapsadas, que não salvavam nada), estes 4 já salvavam algo — só que
+presos ao navegador (`safeLS`/`localStorage`, chave por squad): trocar
+de computador perdia a ordenação escolhida, o modo Kanban/Lista/
+Híbrido, o filtro padrão de Submarca e quais colunas você tinha tirado
+da conta no 📊 Dados do Board.
+
+- `_boardPrefLoadOrMigrate(campo, legacyKey, padrao, parse)` — decide o
+  valor: se a conta já tem algo sincronizado, usa ele; senão, herda o
+  que já estava salvo nesse navegador (se tiver) e sobe pro Firebase na
+  hora — ninguém perde a preferência que já tinha configurado só por
+  causa da migração.
+- `setColSortMode()`/`setHybridView()`/`_saveSubmarcaFiltroPadrao()`/
+  `_bdToggleCol()` passam a gravar em `board_prefs/{squadId}` (além de
+  continuar gravando em `safeLS`/`localStorage`, que segue como cache
+  rápido pra 1ª pintura antes do Firebase responder).
+- **Tamanho de fonte** (`board_font_size`) é o único dos 5 que não é
+  por squad (preferência de leitura não muda dependendo do squad que
+  você tá olhando) — vai pro node irmão `board_prefs_global`, mesmo
+  mecanismo (`_saveBoardPrefGlobal()`/`loadBoardPrefsGlobal()`/
+  `_applyBoardPrefsGlobal()`), já preparado pra receber densidade do
+  card e squad padrão nas próximas rodadas.
+
 ### v8.30.601-dev — 2026-09-07 — 🎛️ Rodada 1 de personalização: Raia e colunas colapsadas passam a salvar (sincronizado por conta)
 
 Pedido direto do usuário, na sequência das personalizações de hoje

@@ -818,34 +818,50 @@ abre `#atalhos-ov`.
   o Ctrl+Z, mesma cautela de não interceptar dentro de campo de
   texto/`contentEditable`) pra disparar `def.run()` da ação que bateu.
 
-### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodada 1 de 5)
+### 🎛️ board_prefs — preferências pessoais do board sincronizadas por conta (2026-09-07, rodadas 1-2 de 5)
 Pedido direto do usuário, mesma linha de personalização de hoje: levar
 Raia/ordenação/fonte/modo de visualização/filtro de Submarca/colunas
 escondidas do Dashboard pro mesmo padrão de `atalhos_custom`/
-`toolbar_order` (hoje Raia e colunas colapsadas não salvam NADA — nem
-localStorage; os outros 5 salvam só no navegador via `safeLS`, presos
-ao aparelho). `kanban/usuarios/{uid}/board_prefs/{squadId}` (por squad)
-+ `board_prefs_global` (o que não depende de squad — fonte, densidade
-do card, squad padrão — rodadas futuras), mesmo listener-ao-vivo +
-cache local de sempre.
-- `_saveBoardPref(campo,valor)` (~L24720) — escrita otimista (atualiza
+`toolbar_order`. `kanban/usuarios/{uid}/board_prefs/{squadId}` (por
+squad) + `board_prefs_global` (o que não depende de squad — fonte,
+densidade do card, squad padrão), mesmo listener-ao-vivo + cache local
+de sempre.
+- `_saveBoardPref(campo,valor)` (~L24725) — escrita otimista (atualiza
   `_boardPrefsSquad` local + `window._set()`), `loadBoardPrefs()`
-  (~L24725) — listener, `_applyBoardPrefsSquad()` (~L24732) — aplica o
-  snapshot nas variáveis de runtime já existentes (`raiaMode`,
-  `collapsedCols`) e re-renderiza. Chamado no boot junto de
-  `loadNotifPrefs()`/`loadAtalhosCustom()`/`loadToolbarOrder()`.
-- **Rodada 1 (esta)**: `raia` e `collapsed_cols`. `toggleRaia()`
-  (~L11902, UI extraída pra `_applyRaiaBtnUI()`), `toggleRaiaCol(id)`/
-  `toggleCol(id)` (~L11992/L11998) — os dois fazem a mesma coisa em
-  `collapsedCols` (duplicação pré-existente, não tocada aqui) — ambos
-  chamam `_saveBoardPref('collapsed_cols',...)`.
-- **Rodadas seguintes (planejadas, não implementadas ainda)**: migrar
-  `colSortMode`/`boardFontSize`/`hybridViewMode`/
-  `activeFilters.submarca`/`_bdHiddenCols` (hoje só em `safeLS`,
-  `col_sort_`/`board_font_size`/`hybrid_view_`/`sm_filtro_`/
-  `bd_hcols_`) pro mesmo mecanismo, com migração do valor local
-  existente na 1ª carga (não resetar quem já configurou); depois
-  densidade do card e squad padrão (`board_prefs_global`, features
+  (~L24730) — listener, `_applyBoardPrefsSquad()` (~L24753) — aplica o
+  snapshot nas variáveis de runtime já existentes e re-renderiza.
+  Chamado no boot junto de `loadNotifPrefs()`/`loadAtalhosCustom()`/
+  `loadToolbarOrder()`.
+- **Rodada 1**: `raia` e `collapsed_cols` — nenhum dos dois salvava
+  NADA antes disso, nem localStorage (voltavam ao padrão a cada F5,
+  mesmo no mesmo navegador). `toggleRaia()` (~L11904, UI extraída pra
+  `_applyRaiaBtnUI()`), `toggleRaiaCol(id)`/`toggleCol(id)`
+  (~L11997/L12003) — os dois fazem a mesma coisa em `collapsedCols`
+  (duplicação pré-existente, não tocada aqui) — ambos chamam
+  `_saveBoardPref('collapsed_cols',...)`.
+- **Rodada 2**: `col_sort`, `view_mode`, `submarca_filtro`,
+  `dashboard_hidden_cols` — estes 4 já salvavam algo, só que preso ao
+  navegador (`safeLS`/`localStorage`, chave por squad:
+  `col_sort_`/`hybrid_view_`/`sm_filtro_`/`bd_hcols_`). Precisou de
+  **migração** (diferente da Rodada 1): `_boardPrefLoadOrMigrate(campo,
+  legacyKey, padrao, parse)` (~L24745) — se a conta já tem valor
+  sincronizado usa ele; senão herda o que já tava salvo localmente (se
+  tiver) e sobe pro Firebase na hora, sem resetar quem já tinha
+  configurado. `setColSortMode()` (~L11988, UI extraída pra
+  `_applyColSortBtnUI()` ~L11981), `setHybridView()` (~L7087),
+  `_saveSubmarcaFiltroPadrao()` (~L11753), `_bdLoadHiddenCols()`/
+  `_bdToggleCol()` (~L18187/L18190) — todos continuam gravando em
+  `safeLS`/`localStorage` também (cache rápido pra 1ª pintura antes do
+  Firebase responder), só ADICIONARAM a chamada a `_saveBoardPref()`.
+  **Tamanho de fonte** (`board_font_size`, `setBoardFontSize()`
+  ~L11952) é o único desses 5 que NÃO é por squad — vai pro node irmão
+  `board_prefs_global` (`_saveBoardPrefGlobal()`/
+  `loadBoardPrefsGlobal()`/`_applyBoardPrefsGlobal()`, ~L24776-24788),
+  mesmo mecanismo, com listener PRÓPRIO (`loadBoardPrefsGlobal()`,
+  node diferente de `loadBoardPrefs()`) — chamado no mesmo boot, só não
+  é o mesmo listener.
+- **Rodadas seguintes (planejadas, não implementadas ainda)**: densidade
+  do card e squad padrão (`board_prefs_global`, features
   novas); por último, presets de filtro nomeados (`filter_presets/
   {squadId}/{presetId}`, feature maior, própria tela).
 
