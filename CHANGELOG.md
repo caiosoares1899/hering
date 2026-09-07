@@ -2852,7 +2852,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
-### v8.30.598-dev — 2026-09-07 — ⌨️ Atalhos de teclado: teclas de função (F2/F4/F8/F9/F10) liberadas sem Ctrl, dica de teclas já usadas pelo navegador
+### v8.30.599-dev — 2026-09-07 — ⎋ Esc fecha a tela aberta + 🔀 Reorganizar a barra de ferramentas (drag-and-drop)
+
+Dois pedidos diretos do usuário na mesma mensagem:
+
+**⎋ Esc fecha a tela aberta.** "quando o board abre outras telas, tipo
+dashboard ou help content, o esc tem q funcionar como um fechar" —
+antes, Esc só fechava o menu de contexto e a busca; qualquer outro
+modal (Dados do Board, Central de Ajuda, Controle de Criativos, o
+modal do card...) precisava do ✕ ou clique fora. Agora Esc fecha a
+tela `.ov` aberta no momento, reusando `closeOv()` (a mesma função do
+clique-fora — ganha de graça a confirmação de "alteração não salva" do
+card). Não interfere com um `uiConfirm()`/`uiAlert()` aberto por cima
+(cancelar a confirmação não fecha também a tela por trás dela). Campos
+com seu próprio uso de Esc (limpar busca da Central de Ajuda, cancelar
+edição de item de checklist, fechar dropdown de @menção, cancelar
+edição inline da Ficha Técnica) continuam funcionando do jeito de
+sempre — só fecham a tela inteira numa 2ª tecla, se ainda fizer
+sentido.
+
+**🔀 Reorganizar a barra de ferramentas.** "tem como deixar a pessoa
+reorganizar o menu header? ex.: puxar o calendario para perto de
+fonte" — 3ª aba do modal "⌨️ Atalhos" ("🔀 Barra"). Arraste qualquer
+botão da toolbar (inclusive os divisores) pra qualquer posição — mesmo
+mecanismo de drag-and-drop já usado pra reordenar colunas. Preferência
+100% pessoal, sincroniza com a conta; botão novo que a Hering
+adicionar depois de alguém personalizar entra sozinho no fim, sem
+sumir. "↩️ Restaurar padrão" desfaz tudo.
 
 Pergunta direta do usuário testando a v8.30.597-dev: "o F8, por
 exemplo, no chrome n faz nada... n posso usar ele como atalho?" — e o

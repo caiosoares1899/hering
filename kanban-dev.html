@@ -607,6 +607,21 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* toolbar */
 .toolbar{display:flex;gap:7px;margin-bottom:.8rem;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;scrollbar-width:none;align-items:center;position:relative;z-index:2;}.toolbar::-webkit-scrollbar{display:none;}.toolbar>*{flex-shrink:0;}.toolbar{cursor:grab;}.toolbar.crv-dragging{cursor:grabbing;user-select:none;}
 .tb-sep{width:1px;height:20px;background:var(--glass-b);margin:0 2px;}
+/* ── 🔀 Reorganizar barra de ferramentas (pedido direto do usuário) —
+   mesmo esqueleto visual do drag de colunas (.col-dragging/.col-drag-left/
+   .col-drag-right acima), aplicado nos itens [data-tb-id] da .toolbar. Só
+   ativo com .tb-reorder-mode na .toolbar (ver iniciarReorganizarToolbar()),
+   não interfere no clique-e-arraste de rolagem horizontal já existente
+   (._initToolbarDragScroll ignora mousedown em cima de <button>, então os
+   dois mecanismos nunca competem pelo mesmo gesto). */
+.toolbar.tb-reorder-mode [data-tb-id]{outline:2px dashed rgba(56,182,255,.45);outline-offset:2px;border-radius:7px;cursor:grab;}
+.toolbar.tb-reorder-mode [data-tb-id][draggable="true"]:active{cursor:grabbing;}
+.tb-sep.tb-reorder-sep{width:10px;background:rgba(56,182,255,.25);border-radius:3px;}
+.tb-dragging{opacity:.4;transform:scale(.96);transition:transform .15s;}
+.tb-drag-before{box-shadow:-4px 0 0 0 var(--accent) !important;}
+.tb-drag-after{box-shadow:4px 0 0 0 var(--accent) !important;}
+#tb-reorder-pill{display:none;position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:600;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.3);border-radius:999px;padding:8px 14px;font-size:12px;color:var(--txt2);box-shadow:0 8px 32px rgba(0,0,0,.5);align-items:center;gap:10px;}
+#tb-reorder-pill.open{display:flex;}
 /* Painel da barra de Filtros — antes os selects/checkboxes ficavam soltos
    direto em cima do fundo do board (translúcido, com peixinhos atrás),
    sem nenhuma superfície própria. Feedback direto: "essas duas linhas do
@@ -3425,11 +3440,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar filtros">✕🗑️</button>
   </div>
 </div>
-<div class="toolbar">
-  <button class="btn btn-sm" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
-  <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
-  <div style="position:relative;" id="sort-menu-wrap">
+<div class="toolbar" id="main-toolbar">
+  <button class="btn btn-sm" data-tb-id="meudia" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
+  <div class="tb-sep" data-tb-id="sep1"></div>
+  <button class="btn btn-sm" data-tb-id="raia" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
+  <div style="position:relative;" id="sort-menu-wrap" data-tb-id="ordenacao">
     <button class="btn btn-sm" onclick="toggleSortMenu()" id="btn-sort" title="Ordenar cards dentro de cada coluna">↕ <span id="btn-sort-lbl">Ordenação</span></button>
     <div id="sort-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
       background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
@@ -3468,7 +3483,7 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
     </div>
   </div>
-  <div style="position:relative;" id="fontsize-menu-wrap">
+  <div style="position:relative;" id="fontsize-menu-wrap" data-tb-id="fonte">
     <button class="btn btn-sm" onclick="toggleFontSizeMenu()" id="btn-fontsize" title="Tamanho da fonte do board (cards, tags, títulos) — preferência salva só neste navegador">🔍 <span id="btn-fontsize-lbl">Fonte</span></button>
     <div id="fontsize-menu" style="display:none;position:absolute;top:calc(100% + 6px);left:0;
       background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;
@@ -3491,8 +3506,8 @@ input[type="date"]{-moz-appearance:textfield;}
       </button>
     </div>
   </div>
-  <button class="btn btn-sm" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
-  <button class="btn btn-sm" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
+  <button class="btn btn-sm" data-tb-id="recarregar" onclick="resyncColumnsAndTags()" title="Recarrega colunas e tags do servidor (use se uma coluna não estiver aparecendo)">🔄</button>
+  <button class="btn btn-sm" data-tb-id="filtros" onclick="toggleFilters()" id="btn-filters">🔭 Filtros</button>
   <!-- Menu suspenso de Submarcas — só aparece com submarcaAtivo (squad "site"), pedido
        direto pra ficar na toolbar, logo depois de Filtros (não mais no header — lá com
        10 opções não coube nem como fileira de botões nem como dropdown ancorado por
@@ -3500,30 +3515,37 @@ input[type="date"]{-moz-appearance:textfield;}
        MESMO padrão do menu de Ordenação (position:fixed calculado por
        getBoundingClientRect(), não relative/absolute) — evita esse tipo de corte por
        qualquer ancestral com overflow, e é um padrão já testado nesta mesma toolbar. -->
-  <div style="position:relative;display:inline-block;" id="submarca-dd-wrap">
+  <div style="position:relative;display:inline-block;" id="submarca-dd-wrap" data-tb-id="submarcas">
     <button class="btn btn-sm" onclick="toggleSubmarcaDropdown()" id="submarca-dd-trigger" style="display:none;">🏷️ Submarcas ▾</button>
     <div id="submarca-dd-panel" style="display:none;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;max-width:300px;max-height:360px;overflow-y:auto;z-index:500;padding:6px;"></div>
   </div>
-  <button class="btn btn-sm" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
-  <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
-  <button class="btn btn-sm" onclick="openAtalhos()" title="Personalizar atalhos de teclado (preferência sua, sincroniza com sua conta)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">⌨️ Atalhos</button>
-  <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openCardFnModal()" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
-  <button class="btn btn-sm" onclick="openLinks()">🔗 Links</button>
-  <button class="btn btn-sm" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
-  <button class="btn btn-sm" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
-  <button class="btn btn-sm" onclick="toggleTimelineView()" id="btn-timeline" title="Cards ativos agrupados por prazo, em ordem cronológica">🛤️ Timeline</button>
-  <button class="btn btn-sm" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
+  <button class="btn btn-sm" data-tb-id="selecionar" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
+  <div class="tb-sep" data-tb-id="sep2"></div>
+  <button class="btn btn-sm" data-tb-id="ajuda" onclick="openHelp()" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">❓ Ajuda</button>
+  <button class="btn btn-sm" data-tb-id="atalhos" onclick="openAtalhos()" title="Personalizar atalhos de teclado (preferência sua, sincroniza com sua conta)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">⌨️ Atalhos</button>
+  <div class="tb-sep" data-tb-id="sep3"></div>
+  <button class="btn btn-sm" data-tb-id="funcoes" onclick="openCardFnModal()" title="Funções de card" id="card-fn-btn">⚡ Funções de card ▾</button>
+  <button class="btn btn-sm" data-tb-id="links" onclick="openLinks()">🔗 Links</button>
+  <button class="btn btn-sm" data-tb-id="dependencias" onclick="openDepMap()" title="Mapa de dependências" style="color:rgba(167,139,250,.9);border-color:rgba(167,139,250,.3);">⛓ Dependências</button>
+  <button class="btn btn-sm" data-tb-id="calendarios" onclick="openCal()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">📅 Calendários</button>
+  <button class="btn btn-sm" data-tb-id="timeline" onclick="toggleTimelineView()" id="btn-timeline" title="Cards ativos agrupados por prazo, em ordem cronológica">🛤️ Timeline</button>
+  <button class="btn btn-sm" data-tb-id="gcalbadge" id="gcal-pending-badge-btn" onclick="processGcalQueueForAdmin()" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.08);"></button>
   <!-- ⏱ Relatórios de Tempo saiu daqui e foi pra dentro de 📊 Dados do Board (botão de
        entrada no topo do modal) — abria espaço na toolbar, pedido direto junto com o
        menu suspenso de Submarcas no header. -->
-  <button class="btn btn-sm" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
-  <button class="btn btn-sm" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
-  <div class="tb-sep"></div>
-  <button class="btn btn-sm" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
-  <button class="btn btn-sm" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
-  <div class="tb-sep"></div>
+  <button class="btn btn-sm" data-tb-id="dashboard" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
+  <button class="btn btn-sm" data-tb-id="intake" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
+  <div class="tb-sep" data-tb-id="sep4"></div>
+  <button class="btn btn-sm" data-tb-id="campanhas" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
+  <button class="btn btn-sm" data-tb-id="criativos" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
+  <div class="tb-sep" data-tb-id="sep5"></div>
+</div>
+
+<!-- 🔀 Pill flutuante do modo "Reorganizar barra" — ver iniciarReorganizarToolbar()
+     perto de loadAtalhosCustom(). Fica escondido (display:none) o resto do tempo. -->
+<div id="tb-reorder-pill">
+  <span>🔀 Arraste os botões da barra pra reorganizar</span>
+  <button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 10px;" onclick="finalizarReorganizarToolbar()">✅ Pronto</button>
 </div>
 
 <div class="board-wrap" id="board-wrap">
@@ -5090,7 +5112,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="position:relative;">
       <input id="help-search" type="text" placeholder="🔍 Buscar… (Ctrl+K)" autocomplete="off"
         oninput="renderHelp()"
-        onkeydown="if(event.key==='Escape'){document.getElementById('help-search').value='';renderHelp();}"
+        onkeydown="if(event.key==='Escape'){ if(this.value){ this.value=''; renderHelp(); event.stopPropagation(); } }"
         style="width:100%;padding:8px 32px 8px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;">
       <button onclick="document.getElementById('help-search').value='';renderHelp();" id="help-search-clear"
         style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0;line-height:1;">✕</button>
@@ -5136,6 +5158,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="ag-tabs" id="atalhos-tabs" style="flex-shrink:0;margin:10px 16px 0;">
     <div class="ag-tab on" data-tab="global" onclick="swAtalhosTab('global')">🗂️ Board</div>
     <div class="ag-tab" data-tab="card" onclick="swAtalhosTab('card')">📇 Modal do card</div>
+    <div class="ag-tab" data-tab="barra" onclick="swAtalhosTab('barra')">🔀 Barra</div>
   </div>
   <div id="atalhos-tab-card-aviso" style="display:none;margin:8px 16px 0;padding:7px 10px;font-size:10.5px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;">⚠ Estas ações só funcionam com um card aberto — apertar a combinação com o modal fechado não faz nada.</div>
   <div style="padding:8px 16px 16px;overflow-y:auto;flex:1;" id="atalhos-body"></div>
@@ -5974,7 +5997,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.598-dev</div>
+<div class="version">v8.30.599-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14336,7 +14359,7 @@ function renderCL(cl){
           const dd=document.getElementById(clEditId+'-mention-dd');
           const ddOpen = dd && dd.classList.contains('open');
           if(e.key==='Enter' && !ddOpen){ e.preventDefault(); ta.blur(); }
-          else if(e.key==='Escape'){ e.preventDefault(); if(dd) dd.classList.remove('open'); finishEdit(false); }
+          else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); if(dd) dd.classList.remove('open'); finishEdit(false); }
         });
       });
       const del=document.createElement('button'); del.className='cl-del'; del.textContent='✕';
@@ -15776,14 +15799,14 @@ function _crvEditCell(td, cardId, field){
     td.innerHTML=''; td.appendChild(inp); inp.focus();
     inp.onchange=()=>finish(true,inp.value);
     inp.onblur=()=>finish(true,inp.value);
-    inp.onkeydown=e=>{ if(e.key==='Escape') finish(false); };
+    inp.onkeydown=e=>{ if(e.key==='Escape'){ e.stopPropagation(); finish(false); } };
     return;
   }
   if(field==='qtd'){
     const inp=document.createElement('input');
     inp.type='number'; inp.min='0'; inp.className='fi crv-edit-input'; inp.style.width='70px'; inp.value=crv.qtd||'';
     td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
-    inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value); else if(e.key==='Escape') finish(false); };
+    inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value); else if(e.key==='Escape'){ e.stopPropagation(); finish(false); } };
     inp.onblur=()=>finish(true,inp.value);
     return;
   }
@@ -15803,7 +15826,7 @@ function _crvEditCell(td, cardId, field){
   inp.type='text'; inp.className='fi crv-edit-input'; inp.style.width='100%';
   inp.value=crv[field]||'';
   td.innerHTML=''; td.appendChild(inp); inp.focus(); inp.select();
-  inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value.trim()); else if(e.key==='Escape') finish(false); };
+  inp.onkeydown=e=>{ if(e.key==='Enter') finish(true,inp.value.trim()); else if(e.key==='Escape'){ e.stopPropagation(); finish(false); } };
   inp.onblur=()=>finish(true,inp.value.trim());
 }
 async function _crvDeleteRow(cardId){
@@ -23438,7 +23461,9 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
-    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela pra você escolher SUA própria combinação de teclas pra várias ações, divididas em 2 abas:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
+    { icon:'⎋', title:'Esc fecha a tela aberta', text:'Aperte Esc pra fechar rapidinho qualquer tela aberta no momento — 📊 Dados do Board, ❓ Central de Ajuda, 🎬 Controle de Criativos, o modal do card, e por aí vai — sem precisar procurar o ✕ ou clicar fora. Mesma trava de segurança de sempre: se o card tiver alteração não salva, Esc pede confirmação antes de fechar, igual clicar no ✕ já fazia.\n\nDentro de um campo com seu próprio uso pro Esc (ex.: limpar o texto de uma busca, cancelar a edição de um item, fechar um dropdown de @menção), o Esc cuida disso primeiro — só fecha a tela inteira se apertar de novo (ou se aquele campo não tiver mais nada pra "desfazer" com Esc).' },
+    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
+    { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
@@ -24708,6 +24733,7 @@ function _atalhoComboLabel(combo){
 function renderAtalhosBody(){
   const body=document.getElementById('atalhos-body'); if(!body) return;
   const aviso=document.getElementById('atalhos-tab-card-aviso'); if(aviso) aviso.style.display=_atalhosTab==='card'?'block':'none';
+  if(_atalhosTab==='barra'){ body.innerHTML=_renderAtalhosBarraTab(); return; }
   const rows=Object.entries(ATALHO_ACOES).filter(([,def])=>def.tipo===_atalhosTab && (!def.visivel||def.visivel())).map(([id,def])=>{
     const combo=_atalhosCustom[id];
     const capturando=_atalhoCapturando===id;
@@ -24775,6 +24801,149 @@ function _matchAtalhoCombo(e, combo){
   if(querShift!==!!e.shiftKey) return false;
   return (e.key||'').toLowerCase()===tecla;
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// 🔀 REORGANIZAR BARRA DE FERRAMENTAS
+// ───────────────────────────────────────────────────────────────────
+// Pedido direto do usuário: "tem como deixar a pessoa reorganizar o
+// menu header? ex.: puxar o calendario para perto de fonte". Mesmo
+// esqueleto de drag-and-drop já usado pra reordenar colunas
+// (handleColDragStart/Over/Drop, ~L27025) — aplicado aqui nos 25
+// filhos diretos de #main-toolbar (20 botões/menus + 5 divisores
+// .tb-sep, todos com data-tb-id — os divisores TAMBÉM são arrastáveis,
+// de propósito: deixa quem quiser reagrupar visualmente os botões,
+// sem forçar isso). NÃO compete com o clique-e-arraste de rolagem
+// horizontal que a toolbar já tinha (_initToolbarDragScroll, perto de
+// L32600) — aquele já ignora mousedown em cima de <button>/<select>/
+// etc., então os dois mecanismos nunca disputam o mesmo gesto.
+// Preferência 100% pessoal (mesmo padrão de atalhos_custom/
+// notif_prefs): kanban/usuarios/{uid}/toolbar_order (array de tb-ids,
+// na ordem escolhida). Id salvo que sumiu (feature removida) é
+// ignorado ao aplicar; tb-id que existe na barra mas não está salvo
+// (botão novo que a Hering adicionou depois de alguém personalizar)
+// entra automaticamente no fim, na posição original — nunca some um
+// botão sem avisar.
+let _toolbarDefaultOrder = null; // ordem original (do HTML), capturada 1x
+let _toolbarOrderCustom = null;  // null = nunca personalizou (usa a padrão)
+let _toolbarReorderMode = false;
+let _tbDragId = null; // tb-id sendo arrastado agora, ou null
+function _toolbarCaptureDefaultOrder(){
+  if(_toolbarDefaultOrder) return; // só a 1ª vez — depois disso o DOM já pode estar reordenado
+  const tb=document.getElementById('main-toolbar'); if(!tb) return;
+  _toolbarDefaultOrder = [...tb.querySelectorAll(':scope > [data-tb-id]')].map(el=>el.dataset.tbId);
+}
+function loadToolbarOrder(){
+  _toolbarCaptureDefaultOrder();
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/toolbar_order'), snap=>{
+    const salvo = snap.val();
+    _toolbarOrderCustom = Array.isArray(salvo) ? salvo : null;
+    _applyToolbarOrder();
+  });
+}
+function _applyToolbarOrder(){
+  const tb=document.getElementById('main-toolbar'); if(!tb || !_toolbarDefaultOrder) return;
+  const ordem = _toolbarOrderCustom || _toolbarDefaultOrder;
+  const validos = ordem.filter(id=>_toolbarDefaultOrder.includes(id));
+  const faltando = _toolbarDefaultOrder.filter(id=>!validos.includes(id));
+  [...validos, ...faltando].forEach(id=>{
+    const el=tb.querySelector(`[data-tb-id="${id}"]`);
+    if(el) tb.appendChild(el); // appendChild num nó JÁ existente MOVE, não clona — preserva listeners/filhos (menus suspensos etc.)
+  });
+}
+function iniciarReorganizarToolbar(){
+  closeOv('atalhos-ov');
+  _toolbarReorderMode = true;
+  const tb=document.getElementById('main-toolbar');
+  if(tb){
+    tb.classList.add('tb-reorder-mode');
+    tb.querySelectorAll(':scope > [data-tb-id]').forEach(el=>{
+      el.draggable = true;
+      if(el.classList.contains('tb-sep')) el.classList.add('tb-reorder-sep'); // divisor fica maior/visível só nesse modo, pra dar pra pegar
+    });
+  }
+  document.getElementById('tb-reorder-pill')?.classList.add('open');
+}
+function finalizarReorganizarToolbar(){
+  _toolbarReorderMode = false;
+  _tbDragId = null;
+  const tb=document.getElementById('main-toolbar');
+  if(tb){
+    tb.classList.remove('tb-reorder-mode');
+    tb.querySelectorAll(':scope > [data-tb-id]').forEach(el=>{
+      el.draggable = false;
+      el.classList.remove('tb-reorder-sep','tb-dragging','tb-drag-before','tb-drag-after');
+    });
+    // Persiste a ordem final, lida direto do DOM (já reorganizado pelos drops durante o modo)
+    _toolbarOrderCustom = [...tb.querySelectorAll(':scope > [data-tb-id]')].map(el=>el.dataset.tbId);
+    const user=window._currentUser;
+    if(user) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/toolbar_order'), _toolbarOrderCustom).catch(()=>{});
+  }
+  document.getElementById('tb-reorder-pill')?.classList.remove('open');
+}
+function restaurarOrdemToolbarPadrao(){
+  _toolbarOrderCustom = null;
+  _applyToolbarOrder();
+  const user=window._currentUser;
+  if(user) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/toolbar_order'), null).catch(()=>{});
+  showToast('↩️ Barra de ferramentas restaurada pro padrão.');
+}
+function _renderAtalhosBarraTab(){
+  return `<div style="font-size:11.5px;line-height:1.6;color:var(--txt2);">
+    <p>Arraste os botões da barra de ferramentas (Meu Dia, Filtros, Calendários...) pra qualquer posição — inclusive os divisores, se quiser reagrupar visualmente. Preferência sua, salva na sua conta (funciona em qualquer aparelho que você entrar).</p>
+    <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;">
+      <button type="button" class="btn btn-sm" onclick="iniciarReorganizarToolbar()">🔀 Iniciar reorganização</button>
+      <button type="button" class="btn btn-sm" style="color:var(--txt3);" onclick="restaurarOrdemToolbarPadrao()">↩️ Restaurar padrão</button>
+    </div>
+  </div>`;
+}
+function _tbHandleDragStart(e, tbId){
+  if(!_toolbarReorderMode) return;
+  _tbDragId = tbId;
+  e.dataTransfer.effectAllowed = 'move';
+  requestAnimationFrame(()=>e.target.classList.add('tb-dragging'));
+}
+function _tbHandleDragEnd(e){
+  e.target.classList.remove('tb-dragging');
+  document.querySelectorAll('#main-toolbar [data-tb-id]').forEach(el=>el.classList.remove('tb-drag-before','tb-drag-after'));
+  _tbDragId = null;
+}
+function _tbHandleDragOver(e, tbId){
+  if(!_toolbarReorderMode || !_tbDragId || _tbDragId===tbId) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const target=e.currentTarget;
+  const rect=target.getBoundingClientRect();
+  const mid=rect.left+rect.width/2;
+  document.querySelectorAll('#main-toolbar [data-tb-id]').forEach(el=>el.classList.remove('tb-drag-before','tb-drag-after'));
+  target.classList.add(e.clientX<mid ? 'tb-drag-before' : 'tb-drag-after');
+}
+function _tbHandleDrop(e, targetTbId){
+  if(!_toolbarReorderMode || !_tbDragId) return;
+  e.preventDefault();
+  if(_tbDragId===targetTbId) return;
+  const tb=document.getElementById('main-toolbar'); if(!tb) return;
+  const draggedEl=tb.querySelector(`[data-tb-id="${_tbDragId}"]`);
+  const targetEl=e.currentTarget;
+  if(!draggedEl || !targetEl) return;
+  const rect=targetEl.getBoundingClientRect();
+  const before = e.clientX < rect.left+rect.width/2;
+  targetEl.classList.remove('tb-drag-before','tb-drag-after');
+  if(before) tb.insertBefore(draggedEl, targetEl);
+  else tb.insertBefore(draggedEl, targetEl.nextSibling);
+}
+function _wireToolbarDrag(){
+  const tb=document.getElementById('main-toolbar'); if(!tb) return;
+  tb.querySelectorAll(':scope > [data-tb-id]').forEach(el=>{
+    const id=el.dataset.tbId;
+    el.ondragstart = e=>_tbHandleDragStart(e,id);
+    el.ondragend = e=>_tbHandleDragEnd(e);
+    el.ondragover = e=>_tbHandleDragOver(e,id);
+    el.ondrop = e=>_tbHandleDrop(e,id);
+  });
+}
+_toolbarCaptureDefaultOrder();
+_wireToolbarDrag();
 
 // ── Escuta notificações do usuário atual ──────────────────────────
 // ═══════════════════════════════════════════════════════════════════
@@ -25748,6 +25917,7 @@ function handleMentionKey(e, ta, dd){
       insertMention(ta, _mentionActive?.atPos??0, pos, activeOpt.dataset.mentionInit);
     }
   } else if(e.key==='Escape'){
+    e.stopPropagation(); // só fecha o dropdown de @menção, não o modal do card por trás
     dd.classList.remove('open');
   }
 }
@@ -28808,7 +28978,26 @@ function hideCtxMenu(){
 // Fecha ao clicar fora ou pressionar Esc
 document.addEventListener('click', hideCtxMenu);
 document.addEventListener('keydown', e=>{ 
-  if(e.key==='Escape'){ hideCtxMenu(); closeSearch(); }
+  if(e.key==='Escape'){
+    hideCtxMenu(); closeSearch();
+    // Fecha a tela aberta no momento (Dados do Board, Central de Ajuda,
+    // Controle de Criativos...) — pedido direto do usuário: "quando o
+    // board abre outras telas... o esc tem q funcionar como um fechar".
+    // Reusa closeOv() — a MESMA função que o clique-fora-do-backdrop já
+    // chama pra cada overlay .ov (ver o document.querySelectorAll('.ov')
+    // perto de _finishCloseOv()), não uma cópia — ganha de graça
+    // qualquer trava de confirmação (ex.: card-ov com alteração não
+    // salva pede confirmação antes de fechar, igual clicar no ✕ já faz).
+    // Não faz nada se um uiConfirm()/uiAlert()/uiPrompt() estiver aberto
+    // (#ui-modal-ov, sempre por cima — z-index:99999) — esse já tem seu
+    // próprio handler de Esc (_uiModal()); sem este guard, Esc fecharia
+    // os DOIS ao mesmo tempo (o modal de confirmação E a tela por trás
+    // dele), quando a intenção normal é só cancelar a confirmação.
+    if(!document.getElementById('ui-modal-ov')){
+      const abertoOv=document.querySelector('.ov.open');
+      if(abertoOv) closeOv(abertoOv.id);
+    }
+  }
   if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
   if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
   // Ctrl+S salva o card aberto na hora (mesmo botão 💾 Salvar), sem esperar
@@ -29734,11 +29923,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
