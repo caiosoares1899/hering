@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.617 — 2026-09-07 · Promove pra prod — 📊 Crosshair no CFD, fixes de filtros/salvar/menu de contexto, ⏸ Pausar no menu de contexto
+
+Promove pra produção o lote v8.30.610-dev → v8.30.617-dev de
+`kanban-dev.html`:
+
+- **📊 CFD ganha crosshair + tooltip ao passar o mouse**: linha vertical
+  que acompanha o cursor no gráfico "Cumulative Flow Diagram", marcador
+  em cada faixa e uma tooltip com a data + contagem de cada coluna + o
+  total naquele dia.
+- **3 achados reais do `/monitorarbugs`, testando as rodadas de
+  personalização e o dia a dia do card**:
+  - filtrar só por Submarca (menu da toolbar ou drawer de Filtros) não
+    acendia o botão "🔭 Filtros";
+  - aplicar um preset de filtro salvo não atualizava o campo de
+    Submarca do próprio drawer de Filtros;
+  - trocar "Tipo de executor"/status do agente sem clicar "💾 Salvar"
+    mostrava "✓ Salvo" mas a mudança se perdia (autosave não gravava
+    esses 2 campos);
+  - marcar impedimento pelo menu de contexto e abrir outro card rápido
+    (dentro de 100ms) podia misturar dados de um card no outro;
+  - completar o checklist pela simulação do Agente Ágil ("▶ Avançar
+    etapa") não notificava nem disparava Automações — diferente de
+    completar o mesmo checklist na mão.
+- **⏸ Pausar/Retomar contagem de tempo ganha atalho no menu de
+  contexto do board** (clique direito num card) — antes só dava pra
+  fazer abrindo o card inteiro.
+
 ### v8.30.609 — 2026-09-07 · Promove pra prod — 🎛️ board_prefs: Raia/ordenação/visualização/Submarca/Dashboard sincronizados, densidade do card, squad padrão, presets de filtro
 
 Promove pra produção o lote v8.30.601-dev → v8.30.609-dev de
