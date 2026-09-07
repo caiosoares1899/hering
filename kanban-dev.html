@@ -3457,6 +3457,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <button id="btn-meus-cards" class="btn btn-sm" style="color:var(--warn);border-color:rgba(255,209,102,.35);" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante">💡 Meus cards</button>
     <button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar filtros">✕🗑️</button>
   </div>
+  <div class="tb-sep"></div>
+  <div class="fb-group" style="align-items:center;">
+    <button class="btn btn-sm" style="color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="saveFilterPresetPrompt()" title="Salva a combinação de filtros atual com um nome, pra aplicar de novo depois com 1 clique — preferência sua, sincroniza com a conta">💾 Salvar preset</button>
+    <div id="filter-presets-list" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+  </div>
 </div>
 <div class="toolbar" id="main-toolbar">
   <button class="btn btn-sm" data-tb-id="meudia" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
@@ -6024,7 +6029,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.604-dev</div>
+<div class="version">v8.30.605-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11937,6 +11942,76 @@ function clearFilters(){
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
   renderSubmarcaQuickFilters();
   renderBoard();
+}
+// ── 💾 Presets de filtro nomeados (rodada 5/5 de personalização, pedido
+// direto do usuário — a última e maior das 5) — salva a combinação
+// INTEIRA de `activeFilters` com um nome, pra reaplicar de novo com 1
+// clique, em vez de remontar campo por campo toda vez (algo que só
+// Submarca já fazia sozinha, via _saveSubmarcaFiltroPadrao()).
+// kanban/usuarios/{uid}/filter_presets/{squadId}/{presetId} — mesmo
+// listener-ao-vivo dos outros mecanismos de hoje, mas sem cache
+// "de runtime" próprio pra aplicar (diferente de board_prefs): aplicar
+// um preset já É popular os mesmos campos/DOM que applyFilters() usa,
+// não tem estado intermediário pra manter em sincronia.
+const FILTER_PRESET_CAMPOS = ['owner','demandante','criador','tag','tamanho','submarca','due','priority','blocker','risco','subteam','supercard','texto'];
+const FILTER_PRESET_LIMITE = 10;
+let _filterPresets = [];
+function loadFilterPresets(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/filter_presets/'+ACTIVE_SQUAD), snap=>{
+    const val = snap.val() || {};
+    _filterPresets = Object.values(val).sort((a,b)=>(a.nome||'').localeCompare(b.nome||''));
+    renderFilterPresets();
+  });
+}
+function renderFilterPresets(){
+  const wrap = document.getElementById('filter-presets-list'); if(!wrap) return;
+  wrap.innerHTML = _filterPresets.map(p=>
+    `<span class="auto-action-chip" style="cursor:pointer;" onclick="applyFilterPreset('${esc(p.id)}')" title="Aplicar o preset &quot;${esc(p.nome)}&quot;">${esc(p.nome)}<button onclick="event.stopPropagation();removeFilterPreset('${esc(p.id)}')" title="Remover este preset">✕</button></span>`
+  ).join('');
+}
+async function saveFilterPresetPrompt(){
+  if(_filterPresets.length>=FILTER_PRESET_LIMITE){ showToast('⚠ Limite de '+FILTER_PRESET_LIMITE+' presets salvos neste squad — remova algum antes de salvar um novo.'); return; }
+  const nome = await uiPrompt('Nome do preset (ex.: "Meus atrasados", "Bloqueados do time"):', '', {title:'💾 Salvar preset de filtro', okText:'Salvar', placeholder:'Nome do preset'});
+  if(!nome || !nome.trim()) return;
+  const user = window._currentUser; if(!user) return;
+  const id = 'fp_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const filtros = {};
+  FILTER_PRESET_CAMPOS.forEach(c=>{ filtros[c]=activeFilters[c]; });
+  const preset = {id, nome:nome.trim().slice(0,40), filtros};
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/filter_presets/'+ACTIVE_SQUAD+'/'+id), preset).catch(()=>{});
+  showToast('💾 Preset "'+preset.nome+'" salvo.');
+}
+function applyFilterPreset(id){
+  const preset = _filterPresets.find(p=>p.id===id);
+  if(!preset) return;
+  const f = preset.filtros||{};
+  const setVal=(elId,val)=>{ const el=document.getElementById(elId); if(el) el.value = val||''; };
+  setVal('f-owner', f.owner); setVal('f-demandante', f.demandante); setVal('f-criador', f.criador);
+  setVal('f-tag', f.tag); setVal('f-tamanho', f.tamanho); setVal('f-due', f.due);
+  setVal('f-priority', f.priority); setVal('f-subteam', f.subteam);
+  const fTx=document.getElementById('f-texto'); if(fTx) fTx.value=f.texto||'';
+  const fBl=document.getElementById('f-blocker'); if(fBl) fBl.checked=!!f.blocker;
+  const fRi=document.getElementById('f-risco'); if(fRi) fRi.checked=!!f.risco;
+  const fSc=document.getElementById('f-supercard'); if(fSc) fSc.checked=!!f.supercard;
+  activeFilters={
+    owner:f.owner||'', demandante:f.demandante||'', criador:f.criador||'', tag:f.tag||'',
+    tamanho:f.tamanho||'', submarca:Array.isArray(f.submarca)?[...f.submarca]:[], due:f.due||'',
+    priority:f.priority||'', blocker:!!f.blocker, risco:!!f.risco, subteam:f.subteam||'',
+    supercard:!!f.supercard, texto:f.texto||'',
+  };
+  _colRenderLimit={};
+  _saveSubmarcaFiltroPadrao(); // preset também vira o novo padrão de submarca, mesmo espírito de clearFilters()
+  renderSubmarcaQuickFilters();
+  renderBoard();
+  showToast('💾 Preset "'+preset.nome+'" aplicado.');
+}
+async function removeFilterPreset(id){
+  const preset = _filterPresets.find(p=>p.id===id);
+  if(!preset) return;
+  if(!await uiConfirm('Remover o preset "'+preset.nome+'"?', {danger:true, okText:'Remover'})) return;
+  const user = window._currentUser; if(!user) return;
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/filter_presets/'+ACTIVE_SQUAD+'/'+id), null).catch(()=>{});
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!passesHybridView(card)) return false;
@@ -23579,7 +23654,7 @@ const HELP_CONTENT = {
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
-    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.' },
+    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
@@ -30162,11 +30237,11 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   if(window._currentUser){
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   } else {
     // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
     window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
     }, {once:true});
   }
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
