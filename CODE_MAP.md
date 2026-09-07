@@ -1417,6 +1417,12 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   L13794 — botão "⏸ Pausar"/"▶ Retomar" no rodapé do modal (`#btn-pause-
   card`). Diferente de 🚧 Impedimento (visível pra todo mundo, tag/coluna
   própria): pausar é discreto, só o botão e o 📜 Histórico revelam.
+  **2026-09-07**: `togglePauseCard(cardId)` ganha `cardId` opcional
+  (mesmo padrão de `togglePinCard()`) — sem ele cai no `editingId` como
+  sempre; passado direto, funciona com o card fechado, usado pelo novo
+  item "⏸ Pausar"/"▶ Retomar" do menu de contexto (`showCtxMenu()`, ver
+  seção própria), ao lado de "🚧 Marcar como impedido". `_renderPauseBtn()`
+  só mexe no botão do modal se o card afetado for o mesmo aberto nele.
 - Modelo de dado: `card.paused` (bool) + `card.pausedAt` (ISO, pausa
   ATUAL em andamento) + `card.pausedMs` (acumulado de pausas já
   encerradas). `_cardPausedMs(c)` soma os dois.

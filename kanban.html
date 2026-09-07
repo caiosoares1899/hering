@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.609</div>
+<div class="version">v8.30.617</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11937,7 +11937,12 @@ function _populateFilterSelects(){
 // dela) — o board de colunas nunca ganhou o mesmo tratamento.
 // _applyFiltrosBtnUI() agora é a fonte única do destaque do botão,
 // chamada tanto ao abrir/fechar o painel quanto toda vez que o filtro
-// muda (applyFilters()/clearFilters()/applyFilterPreset()) — fica aceso
+// muda (applyFilters()/clearFilters()/applyFilterPreset(), e os 3 pontos
+// que mudam só a Submarca — setSubmarcaDropdownTodos()/
+// toggleSubmarcaDropdownItem()/setSubmarcaFromDrawer(), achado real de
+// /monitorarbugs 2026-09-07: a 1ª correção cobriu applyFilters/
+// clearFilters/applyFilterPreset mas esqueceu esses 3, que também mudam
+// activeFilters.submarca sem passar por applyFilters()) — fica aceso
 // sempre que HOUVER filtro ativo, painel aberto ou não.
 function _applyFiltrosBtnUI(){
   const btn=document.getElementById('btn-filters'); if(!btn) return;
@@ -12053,6 +12058,13 @@ function applyFilterPreset(id){
   setVal('f-owner', f.owner); setVal('f-demandante', f.demandante); setVal('f-criador', f.criador);
   setVal('f-tag', f.tag); setVal('f-tamanho', f.tamanho); setVal('f-due', f.due);
   setVal('f-priority', f.priority); setVal('f-subteam', f.subteam);
+  // Submarca é multi-seleção — o <select> do drawer só representa 0 ou 1
+  // valor (mesmo padrão de toggleSubmarcaDropdownItem()); com 2+ volta pro
+  // "Qualquer submarca" (achado real de /monitorarbugs 2026-09-07: esse
+  // <select> era o único dos campos do preset que nunca era sincronizado
+  // aqui, ficando com o valor antigo depois de aplicar um preset).
+  const fSm=document.getElementById('f-submarca');
+  if(fSm) fSm.value = Array.isArray(f.submarca)&&f.submarca.length===1 ? f.submarca[0] : '';
   const fTx=document.getElementById('f-texto'); if(fTx) fTx.value=f.texto||'';
   const fBl=document.getElementById('f-blocker'); if(fBl) fBl.checked=!!f.blocker;
   const fRi=document.getElementById('f-risco'); if(fRi) fRi.checked=!!f.risco;
@@ -12578,6 +12590,17 @@ function scheduleAutoSave(){
       // do impedimento deixada pro autosave salvar sozinho se perdia
       // silenciosamente (o card ficava com o texto antigo/vazio no Firebase).
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
+      // Achado real (/monitorarbugs 2026-09-07, escopo "salvar card"):
+      // executorType/agentStatus faltavam aqui — os <select> m-exectype/
+      // m-agentstatus têm onchange="scheduleAutoSave()" (o próprio código já
+      // assumia que autosalvavam), mas o Object.assign nunca gravava os 2
+      // campos — só saveCard() manual fazia isso. Trocar "Tipo de executor"/
+      // status do agente sem clicar Salvar (ou sem usar um dos botões de
+      // simulação, que têm o próprio _agentCommitState()) mostrava "✓ Salvo"
+      // mas a mudança nunca chegava ao Firebase, e _manualFieldsNow() também
+      // não cobria esses 2 campos pra avisar de alteração não salva.
+      executorType:document.getElementById('m-exectype')?.value||'human',
+      agentStatus:document.getElementById('m-agentstatus')?.value||'',
       criativo:getCriativoData(),
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
@@ -14267,8 +14290,13 @@ function archiveCard(){
 // Réplica do MESMO cálculo em functions/agente-agil-orquestrador/tools/
 // visaoBoard.js (cardTempos()) — mesmo padrão de duplicação documentado lá
 // (kanban.html não tem <script src> externo, Cloud Function é CommonJS).
-function togglePauseCard(){
-  if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
+// cardId opcional — sem ele, cai no card aberto no modal (mesmo
+// comportamento de sempre, usado pelo botão do modal e pelo atalho de
+// teclado). Passar um cardId direto (menu de contexto do board, card
+// fechado) é o mesmo padrão já usado por togglePinCard().
+function togglePauseCard(cardId){
+  const id = cardId || editingId;
+  if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
   const nowISO=new Date().toISOString();
   if(c.paused){
     const elapsedMs = c.pausedAt ? Math.max(0, Date.now()-new Date(c.pausedAt).getTime()) : 0;
@@ -14284,7 +14312,7 @@ function togglePauseCard(){
     showToast('⏸ Card pausado — tempo parado de contar nas métricas (cycle/lead time), sem virar impedimento público.');
   }
   fbSaveCard(c);
-  _renderPauseBtn(c);
+  if(editingId===id) _renderPauseBtn(c); // só mexe no botão do modal se for o card que está aberto nele
   renderBoard();
 }
 function _cardPausedMs(c){
@@ -15464,6 +15492,7 @@ function setSubmarcaDropdownTodos(){
   const f=document.getElementById('f-submarca'); if(f) f.value='';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Marcar/desmarcar uma submarca no menu — multi-seleção (marca quantas
@@ -15481,6 +15510,7 @@ function toggleSubmarcaDropdownItem(tagId){
   if(f) f.value = activeFilters.submarca.length===1 ? activeFilters.submarca[0] : '';
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Select do drawer de Filtros: escolha única, substitui a seleção inteira
@@ -15492,6 +15522,7 @@ function setSubmarcaFromDrawer(){
   _saveSubmarcaFiltroPadrao();
   _colRenderLimit={};
   renderSubmarcaQuickFilters();
+  _applyFiltrosBtnUI();
   renderBoard();
 }
 // Lista de checkboxes (Configurações > Tags) — uma por submarca, ligada por
@@ -16397,6 +16428,14 @@ function _agentAdvanceStep(){
     if(remaining===0){
       statusSel.value='awaiting_validation';
       _agentPostSystemComment(c,'👀 Todas as etapas concluídas. Aguardando validação.');
+      // Achado real (/monitorarbugs 2026-09-07, escopo "autosave"): completar
+      // o MESMO checklist marcando as caixinhas na mão (scheduleAutoSave()) ou
+      // clicando "💾 Salvar" (wrapper de notificações, ~L26107) sempre disparava
+      // notifChecklistDone()/runAutoRules('checklist_complete') — só avançar
+      // etapa por aqui (simulação do agente) nunca disparava nenhum dos dois,
+      // apesar de ser o 3º caminho real que também leva o checklist a 100%.
+      notifChecklistDone(c);
+      runAutoRules('checklist_complete', c.id);
     } else if(!statusSel.value || statusSel.value==='queued'){
       statusSel.value='running';
     }
@@ -18865,10 +18904,12 @@ function _renderCFD(){
   // Áreas empilhadas na ordem das colunas do board (a "de trás" acumula por
   // baixo das seguintes — visual clássico de CFD).
   let acumulado = dias.map(()=>0);
+  const cumTop = {}; // topo de cada faixa empilhada por dia — reusado pelos marcadores do hover abaixo
   const areas = colIds.map(id=>{
     const baseline = acumulado.slice();
     acumulado = acumulado.map((v,i)=>v+serie[id][i]);
     const top = acumulado;
+    cumTop[id] = top;
     const pathTop = top.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' L ');
     const pathBottom = baseline.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).reverse().join(' L ');
     return `<path d="M ${pathTop} L ${pathBottom} Z" fill="${colInfo[id]?.color||'#38b6ff'}" opacity=".72" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`;
@@ -18876,8 +18917,70 @@ function _renderCFD(){
   const everyN = Math.max(1, Math.ceil(dias.length/7));
   const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
   const legenda = visibleCols.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;">${areas}${labels}</svg>
+  // Crosshair + tooltip ao passar o mouse (pedido direto: "ver os números e
+  // a data" ao passear pelo gráfico) — estado guardado em window._cfdChartState
+  // pra _cfdHover()/_cfdHoverOut() lerem sem precisar reconstruir nada a cada
+  // movimento do mouse. Posição calculada via SVG getScreenCTM() (não por
+  // cálculo manual de escala) pra funcionar certo mesmo com o
+  // preserveAspectRatio esticando/centralizando o viewBox.
+  window._cfdChartState = {dias, stepX, padL, padT, padB, H, colIds, colInfo, serie, cumTop, toY};
+  el.innerHTML = `<div id="cfd-chart-wrap" style="position:relative;">
+    <svg id="cfd-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;cursor:crosshair;" onmousemove="_cfdHover(event)" onmouseleave="_cfdHoverOut()">${areas}${labels}<line id="cfd-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/><g id="cfd-dots" style="opacity:0;pointer-events:none;"></g></svg>
+    <div id="cfd-tooltip" style="position:absolute;display:none;top:4px;min-width:120px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;font-size:10.5px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+  </div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
+}
+function _cfdHover(evt){
+  const st = window._cfdChartState; if(!st) return;
+  const svg = document.getElementById('cfd-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  let idx = Math.round((svgP.x - st.padL) / (st.stepX || 1));
+  idx = Math.max(0, Math.min(st.dias.length-1, idx));
+  const xUser = st.padL + idx*st.stepX;
+
+  const line = document.getElementById('cfd-crosshair');
+  if(line){ line.setAttribute('x1', xUser); line.setAttribute('x2', xUser); line.style.opacity = 1; }
+
+  const dots = document.getElementById('cfd-dots');
+  if(dots){
+    dots.innerHTML = st.colIds.map(id=>
+      `<circle cx="${xUser.toFixed(1)}" cy="${st.toY(st.cumTop[id][idx]).toFixed(1)}" r="2.5" fill="${st.colInfo[id]?.color||'#38b6ff'}" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`
+    ).join('');
+    dots.style.opacity = 1;
+  }
+
+  const tip = document.getElementById('cfd-tooltip');
+  const wrap = document.getElementById('cfd-chart-wrap');
+  if(tip && wrap){
+    const diaStr = st.dias[idx];
+    const dataFmt = diaStr.slice(8,10)+'/'+diaStr.slice(5,7);
+    const linhas = st.colIds.map(id=>
+      `<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;">`
+      +`<span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:${st.colInfo[id]?.color||'#38b6ff'};flex-shrink:0;"></span>${esc(st.colInfo[id]?.name||id)}</span>`
+      +`<b style="color:var(--txt);">${st.serie[id][idx]}</b></div>`
+    ).join('');
+    const total = st.colIds.reduce((s,id)=>s+st.serie[id][idx],0);
+    tip.innerHTML = `<div style="font-weight:700;color:var(--txt);margin-bottom:4px;">${dataFmt}</div>${linhas}`
+      +`<div style="display:flex;justify-content:space-between;gap:14px;margin-top:4px;padding-top:4px;border-top:1px solid var(--glass-b);color:var(--txt2);"><span>Total</span><b>${total}</b></div>`;
+    tip.style.display = 'block';
+    // Posiciona a tooltip alinhada com a linha (transforma o ponto de volta
+    // pra client-space) sem deixar vazar pra fora do wrapper.
+    const topPt = svg.createSVGPoint(); topPt.x = xUser; topPt.y = st.padT;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 130;
+    let left = (screenTop.x - wrapRect.left) + 10;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _cfdHoverOut(){
+  const line = document.getElementById('cfd-crosshair'); if(line) line.style.opacity = 0;
+  const dots = document.getElementById('cfd-dots'); if(dots) dots.style.opacity = 0;
+  const tip = document.getElementById('cfd-tooltip'); if(tip) tip.style.display = 'none';
 }
 function _renderBurndown(){
   const el = document.getElementById('boarddata-burndown'); if(!el) return;
@@ -23777,7 +23880,7 @@ const HELP_CONTENT = {
     { icon:'↩', title:'Desfazer ações no checklist', text:'Dentro do modal do card, o botão ↩ ao lado do campo de novo item desfaz a última ação feita no checklist (adicionar, remover, editar ou reordenar). O Ctrl+Z também funciona quando o modal está aberto.' },
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
-    { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: só o botão do modal (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.' },
+    { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
@@ -29099,6 +29202,13 @@ function addBlockerTag(cardId){
   const card = cards.find(x=>x.id===cardId); if(!card) return;
   openCard(cardId);
   setTimeout(()=>{
+    // Achado real (/monitorarbugs 2026-09-07, escopo "openCard"): faltava o
+    // mesmo guard de corrida que o setTimeout(...,100) DENTRO de openCard()
+    // já tem (ver comentário lá) — se o usuário fechar este card e abrir
+    // outro dentro desses 100ms, editingId já mudou, e sem essa checagem os
+    // dados do card ANTIGO (closure de `card`, acima) vazavam pro formulário
+    // do card ATUAL.
+    if(editingId !== cardId) return;
     const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=card.isOKR||false;
     initLinkedCards(card);
     document.getElementById('m-blocker-row').style.display='block';
@@ -29202,7 +29312,6 @@ function showCtxMenu(e, cardId){
       Mover para ${esc(col.name)}
     </div>`).join('');
 
-  const isProg = card.col==='progress';
   const isBlocker = _cardIsBlocked(card);
 
   // Conteúdo dos flyouts — guardado à parte (não fica aninhado no HTML do
@@ -29241,6 +29350,9 @@ function showCtxMenu(e, cardId){
     ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
       <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
     </div>` : ''}
+    <div class="ctx-item" onclick="togglePauseCard('${cardId}')">
+      <span class="ctx-item-icon">${card.paused?'▶':'⏸'}</span> ${card.paused?'Retomar contagem de tempo':'Pausar contagem de tempo'}
+    </div>
 
     <div class="ctx-item" onclick="toggleCtxSubmenu(event,'prioridade')">
       <span class="ctx-item-icon">🚩</span> Prioridade <span class="ctx-arrow">▸</span>
