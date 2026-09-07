@@ -2943,6 +2943,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.616-dev — 2026-09-07 — /monitorarbugs no autosave: completar checklist pela simulação do Agente Ágil nunca notificava
+
+Pedido explícito, escopo nomeado: "roda /monitorarbugs no autosave".
+
+1. **`_agentAdvanceStep()` (botão "▶ Avançar etapa" da simulação de fluxo
+   do Agente Ágil — 100% client-side, disponível em qualquer card com
+   "Tipo de executor" agente/híbrido) nunca disparava
+   `notifChecklistDone()`/`runAutoRules('checklist_complete', ...)` ao
+   completar o checklist.** Comparando os 3 caminhos que levam um
+   checklist a 100% (técnica 1): marcar as caixinhas na mão (autosave,
+   `scheduleAutoSave()`) e clicar "💾 Salvar" (wrapper de notificações,
+   ~L26107) sempre disparavam os dois; só avançar etapa por aqui nunca
+   disparava nenhum — confirmado via `grep` (`checklist_complete`/
+   `notifChecklistDone`/`runAutoRules`: zero ocorrências em toda a seção
+   "SIMULAÇÃO DE FLUXO DO AGENTE"). Cenário: completar as etapas pela
+   simulação avança o card visualmente pra "👀 Aguardando validação",
+   mas ninguém é notificado e nenhuma Automação com esse gatilho
+   dispara — diferente de completar o MESMO checklist na mão. Fix:
+   mesma chamada adicionada no exato ponto onde `_agentAdvanceStep()` já
+   detecta a transição pra `remaining===0` (checklist acabou de fechar).
+
+Checado e sem achado (foco no mecanismo de autosave em si, não só
+comparação de campos — já coberta na rodada anterior "salvar card"):
+`_autoSaveTimer` sempre limpo antes de qualquer escrita concorrente
+(wrapper de `saveCard`, achado real já documentado no próprio código);
+callback do `setTimeout` sempre relê `editingId`/`cards.find()` na hora
+de executar (não usa closure stale), diferente do padrão que causou o
+bug de `addBlockerTag()` corrigido na rodada anterior — não vulnerável
+à mesma classe de corrida; `_saveCardWithRetry()` usado de forma
+consistente nos 3 call sites (`scheduleAutoSave`, `saveExtraDesc`,
+`_agentCommitState`).
+
+Validado com Playwright: `_agentAdvanceStep()` chamado com o último
+item do checklist pendente, `notifChecklistDone`/`runAutoRules`
+espionados — confirmado FALHANDO antes do fix (zero chamadas) e
+passando depois.
+
 ### v8.30.615-dev — 2026-09-07 — /monitorarbugs em openCard(): impedimento marcado pelo menu de contexto podia vazar pro card errado
 
 Pedido explícito, escopo nomeado: "roda /monitorarbugs na função

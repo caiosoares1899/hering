@@ -6064,7 +6064,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.615-dev</div>
+<div class="version">v8.30.616-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -16423,6 +16423,14 @@ function _agentAdvanceStep(){
     if(remaining===0){
       statusSel.value='awaiting_validation';
       _agentPostSystemComment(c,'👀 Todas as etapas concluídas. Aguardando validação.');
+      // Achado real (/monitorarbugs 2026-09-07, escopo "autosave"): completar
+      // o MESMO checklist marcando as caixinhas na mão (scheduleAutoSave()) ou
+      // clicando "💾 Salvar" (wrapper de notificações, ~L26107) sempre disparava
+      // notifChecklistDone()/runAutoRules('checklist_complete') — só avançar
+      // etapa por aqui (simulação do agente) nunca disparava nenhum dos dois,
+      // apesar de ser o 3º caminho real que também leva o checklist a 100%.
+      notifChecklistDone(c);
+      runAutoRules('checklist_complete', c.id);
     } else if(!statusSel.value || statusSel.value==='queued'){
       statusSel.value='running';
     }
