@@ -783,7 +783,17 @@ abre `#atalhos-ov`.
 - `ATALHO_RESERVADOS` (~L24656) — combinações que a UI de captura nunca
   deixa reatribuir: as 5 fixas acima (com `'mod'` cobrindo Ctrl E Cmd,
   mesmo critério que o handler principal já usa via
-  `e.ctrlKey||e.metaKey`) + clássicos do navegador (Ctrl+C/V/X/A/F...).
+  `e.ctrlKey||e.metaKey`) + clássicos do navegador (Ctrl+C/V/X/A/F...) +
+  teclas de função que o Chrome já usa pra alguma coisa (F1/F3/F5/F6/
+  F7/F11/F12). **Achado direto do usuário (2026-09-07)**, testando F8
+  ("no chrome n faz nada, n posso usar ele?") — SIM: F2/F4/F8/F9/F10
+  não são usadas pelo navegador por padrão, e por serem teclas de
+  função (não digitam nada num campo de texto) valem SOZINHAS, sem
+  precisar de Ctrl/Cmd/Alt junto — ver `ehTeclaFuncao` em
+  `_atalhoValidarESalvar()`. A própria tela do modal (`#atalhos-ov`)
+  ganhou um bloco de dica explicando isso, pedido explícito ("acho q vc
+  precisa tb falar sobre os atalhos ja usados pelo navegador, pra
+  facilitar na escolha").
 - Preferência 100% pessoal, mesmo padrão de `notif_prefs`/DND:
   `kanban/usuarios/{uid}/atalhos_custom` (`{acaoId: 'mod+shift+d', ...}`),
   `loadAtalhosCustom()` (~L24660, listener ao vivo, chamado junto de
@@ -792,12 +802,14 @@ abre `#atalhos-ov`.
   (~L24667/24672/24691) — UI com 2 abas (`_atalhosTab`, sempre reseta
   pra `'global'` ao abrir o modal); cada linha mostra a ação +
   combinação atual (formatada por `_atalhoComboLabel()`, Cmd/Option em
-  Mac) + botões Definir/✕. Trocar de aba com uma captura "armada"
-  cancela ela (senão a tecla capturaria numa ação que já saiu de vista).
+  Mac, `F8` etc. já vêm maiúsculas de graça) + botões Definir/✕. Trocar
+  de aba com uma captura "armada" cancela ela (senão a tecla capturaria
+  numa ação que já saiu de vista).
 - `_atalhoCapturaKeydown(e,id)` (~L24715) — captura a próxima tecla
   real depois de clicar "Definir" (ignora teclas de modificador puro,
   Esc cancela) → `_atalhoValidarESalvar()` (~L24728): rejeita sem
-  Ctrl/Cmd/Alt, rejeita `ATALHO_RESERVADOS`, rejeita conflito com outra
+  Ctrl/Cmd/Alt (exceto tecla de função sozinha), rejeita
+  `ATALHO_RESERVADOS`, rejeita conflito com outra
   ação já configurada (não conta como conflito consigo mesma).
 - `_matchAtalhoCombo(e,combo)` (~L24748) — usado tanto pra validar
   quanto pelo handler principal de `keydown` (mesmo bloco onde já mora

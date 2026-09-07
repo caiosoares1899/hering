@@ -5126,6 +5126,13 @@ input[type="date"]{-moz-appearance:textfield;}
   <div style="padding:12px 16px 0;font-size:11px;color:var(--txt3);">
     <b>Ctrl+K</b> (busca), <b>Ctrl+D</b> (Meu Dia), <b>Ctrl+S</b> (salvar card), <b>Ctrl+Z</b> (desfazer) e <b>Esc</b> continuam fixos. Personalize os atalhos abaixo — preferência sua, salva na sua conta (funciona em qualquer aparelho que você entrar).
   </div>
+  <!-- Dica sobre o que já é do navegador — pedido direto do usuário
+       ("acho q vc precisa tb falar sobre os atalhos ja usados pelo
+       navegador, pra facilitar na escolha"), depois de perguntar se
+       F8 (livre no Chrome) dava pra usar sem Ctrl. -->
+  <div style="margin:8px 16px 0;padding:8px 10px;font-size:10px;line-height:1.5;color:var(--txt3);background:rgba(var(--surface2-rgb),.5);border-radius:8px;">
+    💡 <b>Dica pra escolher uma combinação livre:</b> o Chrome já usa Ctrl+T/N/W (abas), Ctrl+P (imprimir) e <b>F1/F3/F5/F6/F7/F11/F12</b> — o app já bloqueia essas na hora de definir. <b>F2/F4/F8/F9/F10</b> costumam estar livres no navegador e podem ser usadas SOZINHAS (sem Ctrl/Cmd/Alt) — teclas de função não digitam nada, então não atrapalham nenhum campo de texto.
+  </div>
   <div class="ag-tabs" id="atalhos-tabs" style="flex-shrink:0;margin:10px 16px 0;">
     <div class="ag-tab on" data-tab="global" onclick="swAtalhosTab('global')">🗂️ Board</div>
     <div class="ag-tab" data-tab="card" onclick="swAtalhosTab('card')">📇 Modal do card</div>
@@ -5967,7 +5974,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.597-dev</div>
+<div class="version">v8.30.598-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23431,7 +23438,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
-    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela pra você escolher SUA própria combinação de teclas pra várias ações, divididas em 2 abas:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma tecla sozinha, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer) e os clássicos do navegador (Ctrl+C/V/X/A/F...) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
+    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela pra você escolher SUA própria combinação de teclas pra várias ações, divididas em 2 abas:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
@@ -24652,8 +24659,18 @@ const ATALHO_ACOES = {
 // fixas acima (com "mod" cobrindo tanto Ctrl quanto Cmd, mesmo critério
 // que o handler principal já usa via e.ctrlKey||e.metaKey) + os
 // clássicos do navegador que o usuário pediu explicitamente pra não
-// mexer ("obviamente não substituir... ctrl+c, ctrl+k, ctrl+v").
-const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n']);
+// mexer ("obviamente não substituir... ctrl+c, ctrl+k, ctrl+v") + as
+// teclas de função que o PRÓPRIO Chrome/navegador já usa pra alguma
+// coisa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na
+// barra de endereço, F7 navegação por cursor, F11 tela cheia, F12
+// DevTools) — achado direto do usuário testando F8 ("no chrome n faz
+// nada, n posso usar ele?"): SIM, F2/F4/F8/F9/F10 são teclas de função
+// que o navegador não usa pra nada por padrão, então valem como atalho
+// SEM precisar de Ctrl/Cmd/Alt junto (só letra/número sozinho continua
+// bloqueado, ver semModificador em _atalhoValidarESalvar() — uma tecla
+// de função não digita nada num campo de texto, então não tem o mesmo
+// risco de atrapalhar digitação normal que uma letra solta teria).
+const ATALHO_RESERVADOS = new Set(['mod+k','mod+d','mod+s','mod+z','mod+c','mod+v','mod+x','mod+a','mod+f','mod+p','mod+r','mod+t','mod+w','mod+n','f1','f3','f5','f6','f7','f11','f12']);
 let _atalhosCustom = {};
 let _atalhoCapturando = null; // id da ação em modo "aperte a tecla" agora, ou null
 let _atalhosTab = 'global'; // 🗂️ Board (global) ou 📇 Modal do card (card)
@@ -24726,8 +24743,11 @@ function _atalhoCapturaKeydown(e, id){
   _atalhoValidarESalvar(id, parts.join('+'));
 }
 function _atalhoValidarESalvar(id, combo){
+  const parts=combo.split('+');
+  const tecla=parts[parts.length-1];
+  const ehTeclaFuncao=/^f([1-9]|1[0-2])$/.test(tecla); // F1-F12 não digitam nada, então não precisam de Ctrl/Cmd/Alt
   const semModificador = !combo.includes('mod') && !combo.includes('alt');
-  if(semModificador){ showToast('⚠ Escolha uma combinação com Ctrl/Cmd ou Alt junto — não dá pra usar uma tecla sozinha.'); renderAtalhosBody(); return; }
+  if(semModificador && !ehTeclaFuncao){ showToast('⚠ Escolha uma combinação com Ctrl/Cmd ou Alt junto (ou uma tecla de função sozinha, tipo F8) — não dá pra usar uma letra/número sozinho.'); renderAtalhosBody(); return; }
   if(ATALHO_RESERVADOS.has(combo)){ showToast('⚠ Essa combinação já é um atalho fixo do sistema — escolha outra.'); renderAtalhosBody(); return; }
   const conflito=Object.entries(_atalhosCustom).find(([outroId,outroCombo])=>outroId!==id && outroCombo===combo);
   if(conflito){ showToast('⚠ Essa combinação já está em uso em "'+(ATALHO_ACOES[conflito[0]]?.label||conflito[0])+'".'); renderAtalhosBody(); return; }
