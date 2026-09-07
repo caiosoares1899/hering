@@ -174,6 +174,41 @@ revalidadas — seções novas — achados incidentais notáveis.
   repositório está ativo na mesma sessão — os dois compartilham o
   working directory independente de qual branch está "logicamente"
   ativa.
+- **2026-09-07 (7ª)**: `7d22d03`→`5c320c2`. kanban/kanban-dev sincronizados
+  (só a divergência permanente de favicon/versão). ~173 âncoras
+  revalidadas por script (extração automática de `` `nome()` — LNNNN ``
+  + re-grep de cada uma), a maioria com drift sistemático de +250 a
+  +2900 linhas (nenhuma seção nova, só o volume normal de código
+  acrescentado desde a última rodada — Atalhos de teclado, tempo em
+  atraso/bloqueado, histórico visual rico, OKR bloco quinzenal +
+  vínculo de cards, Feed de marcos do painel — todos já tinham seção
+  própria criada ad-hoc durante o trabalho do dia, então esta rodada
+  foi só sincronizar linha, não descobrir área nova). **Achado real de
+  processo, não só drift**: ~20 anchors com 2+ nomes na mesma linha
+  (`` `nomeA()`/`nomeB()` — LNNNN/LMMMM ``) tinham os NÚMEROS TROCADOS
+  entre si (ex.: `_sortCards()`/`_sortCardsByMode()` — o número que
+  deveria ser do 1º nome estava no 2º e vice-versa) — sinal de que
+  foram escritos de cabeça/copiados errado em vez de re-grepados;
+  corrigidos um a um conferindo a ordem real das declarações no
+  arquivo, não só reaplicando um offset. **Achado real de conteúdo**:
+  o cabeçalho do arquivo dizia "os números da seção painel abaixo são
+  de `painel.html` (prod)", mas TODAS as ~40 âncoras da seção painel
+  batem com `painel-dev.html` (confirmado cruzando um punhado direto
+  contra os dois arquivos) — contradizia as 2 notas de seção que já
+  diziam corretamente "linhas abaixo são de painel-dev.html".
+  Cabeçalho corrigido pra bater com a realidade (e com as notas de
+  seção já certas). Seções revisadas e confirmadas já em dia (criadas
+  ad-hoc durante o próprio trabalho do dia, não nesta rodada): Atalhos
+  de teclado personalizáveis, Reorganizar barra de ferramentas, Esc
+  fecha a tela, Tempo em atraso/bloqueado, Histórico visual rico
+  (avatar/ícone), OKR vínculo de cards, Feed de marcos do painel, sino
+  de notificações do painel. **Lição pra próxima vez**: rodar a
+  revalidação de âncoras via script (extrair nome+linha, re-grep,
+  comparar) é MUITO mais rápido que manual, mas scripts baseados em
+  regex "número mais próximo do nome no texto" erram a PAREAÇÃO quando
+  2+ nomes/números aparecem juntos na mesma entrada — sempre conferir
+  manualmente esses casos combinados em vez de confiar no ranking por
+  proximidade.
 
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
