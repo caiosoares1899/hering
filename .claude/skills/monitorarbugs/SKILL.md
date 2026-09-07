@@ -393,6 +393,40 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   espalhados pelo arquivo (aqui, Esc), grep pelo evento/tecla INTEIRO
   (`key==='Escape'`) antes de assumir que já mapeou todos os pontos de
   contato — não só os que a memória da sessão lembra de ter tocado.
+- **2026-09-07, Visualizador externo do painel (pedido genérico, "/monitorarbugs"
+  sem escopo — área escolhida por prioridade 2: nunca teve rodada
+  própria, e é a única seção do `CODE_MAP.md` explicitamente
+  security-adjacent (acesso de convidado fora de `@ciahering.com.br`)
+  ainda sem auditoria)**: **sem achados**, depois de investigação real
+  (técnica 1 — mapeados TODOS os `function open*` de `painel-dev.html`,
+  17 no total, comparando os 8 que já têm `_blockIfPainelViewer()`
+  contra os 9 que não têm). Quase-achado que NÃO se confirmou, vale
+  registrar pra não reabrir a mesma linha de investigação: `openOkrObjetivo()`/
+  `openOkrMarco()` (e as escritas `saveOkrObjetivo()`/`saveOkrMarco()`/
+  arquivar/desarquivar/excluir) não têm o guard `_blockIfPainelViewer()`
+  que os outros 8 (`openCfg`, `openCampEdit`, `openPainelCampMsEdit`,
+  `openPevModal`, `openComunicadoCompose`, `openGlobalUsersModal`,
+  `openBoardSetup`, `openGlobalBackup`) têm — mas isso não é um gap de
+  verdade: o formulário editável do OKR só renderiza quando
+  `_okrCanEdit(obj)`/`_okrCanCreate()` (`isAdmUser()` ou
+  `obj.responsaveis.includes(uid)`) é `true`, e um visualizador externo
+  nunca aparece em `_okrPessoaOptions()` (fonte dos "responsáveis"
+  selecionáveis — filtra por `inscrito`/`squads`/`role==='adm'`, nenhum
+  dos quais um convidado tem) nem em `ADM_EMAILS`. Ou seja, o gate do
+  OKR é role-based (por objetivo) em vez de flag-based
+  (`_isPainelViewer`), mas já exclui o visualizador na prática — os 2
+  mecanismos coexistem sem lacuna real. Resto do arquivo checado e
+  também sem achado: os 9 `open*` restantes sem o guard são views
+  puramente de leitura (`openCampLogs`, `openCampDetalhe`,
+  `openCampCardsGrid`, `openPcModal`, `openPcalDayPopover`,
+  `openAgentesHelp`, `openOkrHelp`, `openPainelHistorico`) ou já caem
+  atrás de outro gate próprio (`_isAdmPainel()`/`isAdmUser()`, usado em
+  ~25 pontos espalhados pelo arquivo pra ações admin-only, todos
+  conferidos consistentes). `painel.html`/`painel-dev.html` batem 1:1
+  nos 8 pontos guardados (mesmas funções, sem divergência introduzida
+  por edições recentes). Limitação já conhecida e documentada no
+  `CODE_MAP.md` (não é achado novo): `openPevModal` sempre abre editável
+  mesmo só pra ver um evento existente.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
