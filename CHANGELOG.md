@@ -13837,6 +13837,19 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-08 (5ª rodada) — Fix: rodapé com conteúdo real "comia" quase todo o espaço, deixando Marcos/raia esquerda minúsculos e sobrepondo o próprio rodapé
+
+Print do usuário na 4ª rodada (encolhimento por seção): "vc aumentou o espaço desproporcional kkkk ai a letra ficou minuscula" — o rodapé ficou enorme (intocado) enquanto a tabela de Marcos e a raia esquerda ficaram minúsculas, e a raia ainda vazava por cima do próprio rodapé.
+
+**Causa raiz**: `.d2-footer` tinha `flex-shrink:0` — nunca cedia espaço, então quando o Objetivo tinha rodapé com conteúdo REAL (frases inteiras, não só 1-2 palavras), ele sozinho consumia a maior parte da altura disponível, deixando pouquíssimo pra Marcos+raia esquerda dividirem — o oposto do "só encolhe quem não cabe" pedido na rodada anterior.
+
+**Fix, em 3 camadas** (cada uma só apareceu depois da anterior corrigida, todas via Playwright com os dados reais do print):
+1. `.d2-footer` ganha `flex:1 1 auto;min-height:0` (era `flex-shrink:0`) — agora compete de forma proporcional com `.d2-body` pelo espaço disponível, em vez de ficar sempre protegido.
+2. Isso reintroduziu, num nível diferente, o mesmo problema de "medir depois de já ter mexido": encolher a raia esquerda (`.d2-left`) mudava o tamanho natural de baixo-pra-cima de `.d2-body` (célula de grid), que por sua vez mudava quanto o `d2-wrap` externo dava pro corpo vs. pro rodapé — mesmo pré-capturando o orçamento de cada seção antes de mexer nela, a divisão corpo/rodapé continuava sendo recalculada ao vivo a cada mudança. Fix: trava a divisão externa (`height` explícito em px + `flex:none` nos dois) **antes** de tocar em qualquer seção interna.
+3. Mesmo com o rodapé travado numa altura fixa, cada coluna (`.d2-fcol`) — célula de grid dentro dele — continuava crescendo além da linha (CSS Grid não limita o tamanho "auto" de uma célula pelo tamanho do container): uma coluna sozinha chegou a renderizar 374px dentro de um rodapé travado em 227px, vazando 147px pra fora. Fix: cada `.d2-fcol` recebe a mesma trava (`align-self:start` + `height` igual à do rodapé) antes de medir sua própria lista.
+
+Validado com os dados reais do print: rodapé, tabela de Marcos e raia esquerda agora dividem o espaço de forma proporcional — nenhum fica gigante à custa dos outros, nada corta, nada sobrepõe. Casos sem overflow e o cenário de overflow extremo (14 marcos sintéticos + rodapé muito verboso) seguem sem clipping, com distribuição bem mais equilibrada que antes.
+
 ### 2026-09-08 (4ª rodada) — Fix: encolhimento GLOBAL (fonte de tudo) trocado por encolhimento POR SEÇÃO — só quem realmente não cabe encolhe
 
 Print do usuário no fix anterior (3ª rodada, `zoom` em vez de `transform:scale`): fonte maior e largura cheia, mas "ainda sem leitura! usa todo o espaço e diminui a fonte SÓ do q n couber no espaço! as outras estão minúsculas" — confirmado via `AskUserQuestion`: texto pequeno demais + espaço sobrando.
