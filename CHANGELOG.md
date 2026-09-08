@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.619 — 2026-09-08 — Correção isolada: sombra preta grudada na borda direita da tela
+
+Relato direto do usuário: "no canto direito da tela tá com uma sombra
+preta". Causa: os 4 painéis que abrem deslizando da direita (📌
+Lembretes, 📊 Central de Dados, 🗒 Notas, 🎧 Spotify — todos reaproveitam
+a classe `.lem-drawer`) ficam "fechados" fora da tela via
+`transform:translateX(100%)`, mas o `box-shadow` preto de 48px de blur
+continuava na regra base do CSS, aplicado o tempo todo — mesmo fechado,
+a borda esquerda do painel para exatamente na borda direita da tela, e o
+blur da sombra vaza de volta pra dentro, visível permanentemente como
+uma faixa escura no canto. Fix: `box-shadow` movido pra dentro de
+`.lem-drawer.open` — só existe enquanto o painel está de fato visível na
+tela, igual sempre foi visualmente enquanto aberto.
+
+**Promoção isolada, fora do lote acumulado em dev** (mesmo padrão do PR
+#764): esta é a única mudança promovida agora — o restante do que está
+acumulado em `kanban-dev.html` (arquivamento por coluna, filtro em
+Arquivados, histórico do card, tema automático) continua aguardando
+validação/fim do dia, sem entrar nesta promoção.
+
 ### v8.30.618 — 2026-09-08 · Promove pra prod — Revisão mobile: dica visual de "rola pro lado" na tabela de Controle de Criativos
 
 Promove pra produção o lote v8.30.618-dev de `kanban-dev.html`:
@@ -2984,6 +3004,14 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.622-dev — 2026-09-08 — Correção isolada: sombra preta grudada na borda direita da tela
+
+Mesma correção já promovida direto pra `kanban.html` nesta data (ver
+entrada v8.30.619 em "kanban.html (produção)" pro relato/causa/fix
+completos) — replicada aqui só pra manter os dois arquivos em sincronia
+no trecho de CSS tocado; não faz parte do lote de features ainda
+pendente de validação.
 
 ### v8.30.621-dev — 2026-09-08 — 🕐 Tema automático: acompanha o horário de São Paulo
 
