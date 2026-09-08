@@ -142,10 +142,16 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    Cada painel tem ALTURA NATURAL (auto) — nada de overflow:hidden/máscara
    individual, que cortava conteúdo no meio da linha e deixava painéis
    vazios esticados sem necessidade (achado real, print do usuário: "tem
-   conteúdo cortado, outros esticados"). Em vez disso, o wrapper inteiro
-   (#d2-wrap) é encolhido de uma vez via fitSlideContent() (mesmo mecanismo
-   das outras slides) quando o conteúdo não cabe — nunca corta, só reduz
-   proporcionalmente. */
+   conteúdo cortado, outros esticados").
+   Encolhimento por SEÇÃO, não no bloco inteiro (achado real, 3ª rodada de
+   print do usuário: um único fit no #d2-wrap inteiro deixava TUDO
+   minúsculo — cabeçalho, indicadores curtos, rodapé — só porque a tabela
+   de Marcos, bem maior que o normal, puxava o encolhimento junto; "as
+   outras estão minúsculas" à toa). Cada seção que pode crescer demais
+   (tabela de Marcos, Indicadores de Entrega, cada coluna do rodapé) ajusta
+   a PRÓPRIA fonte via fitSectionContent() (JS), dentro do espaço que o
+   layout (flex/grid) já reserva pra ela — nunca corta, só reduz
+   proporcionalmente, e só a seção que realmente precisa. */
 #detail-ov{position:fixed;inset:0;z-index:400;display:none;
   background:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),
              radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;}
@@ -170,32 +176,45 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-legend span{display:flex;align-items:center;gap:8px;}
 
 /* Corpo: rail (Objetivo/Responsável/Indicadores) + tabela de Marcos. Altura
-   generosa mas ainda flexível (flex:1) — o rodapé (tira de 4 colunas) é
-   flex-shrink:0, então o corpo sempre cede espaço a ele primeiro.
-   SEM min-height:0 aqui de propósito (achado real, print do usuário: com
-   Objetivo cheio de marcos/campos longos, a tabela de Marcos aparecia com
-   1 linha só e as colunas do rodapé vazias — nunca acionava o encolhimento
-   da slide inteira). Com min-height:0, o corpo podia ser espremido pra bem
-   menos do que o conteúdo real precisa (o rodapé, flex-shrink:0, nunca cede
-   espaço, então TODO o déficit caía sobre o corpo) — e como esse
-   espremimento acontece dentro da própria altura fixa do d2-wrap, ele nunca
-   aparecia na medição de fitSlideContent() (que só olha scrollHeight vs.
-   clientHeight do wrapper), então o encolhimento proporcional nunca era
-   acionado. Sem min-height:0, o corpo recusa ficar menor que seu conteúdo
-   mínimo — aí sim o excesso empurra o d2-wrap pra além de 100%, isso É
-   visto pela medição, e a slide inteira encolhe proporcionalmente (fonte
-   incluída) até caber, exatamente o pedido do usuário ("diminuir a fonte
-   pra dar leitura e caber tudo"). */
-.d2-body{flex:1 1 auto;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
+   generosa mas ainda flexível (flex:1;min-height:0) — o rodapé (tira de 4
+   colunas) é flex-shrink:0, então o corpo sempre cede espaço a ele
+   primeiro.
+   Achado real, 2 rodadas de print do usuário: a 1ª versão daqui (SEM
+   min-height:0) deixava um Objetivo com muitos marcos empurrar o d2-wrap
+   inteiro pra além de 100%, acionando um encolhimento GLOBAL (fonte de
+   TUDO — inclusive o rodapé e os indicadores, que tinham conteúdo curto e
+   cabiam à vontade) só porque a tabela de Marcos precisava de mais espaço
+   ("as outras estão minúsculas" à toa). O ajuste fino agora é LOCAL, não
+   global (ver comentário de fitSectionContent() mais abaixo no JS): cada
+   seção que pode crescer muito (a tabela de Marcos, os Indicadores de
+   Entrega) encolhe só a PRÓPRIA fonte, dentro do espaço que sobrar pra
+   ela — o resto do layout (cabeçalho, legenda, rodapé, campos curtos)
+   continua no tamanho normal. Por isso min-height:0 volta aqui: o corpo
+   PRECISA poder ser espremido pelo layout externo (senão nunca sobra
+   menos espaço pra tabela de Marcos precisar encolher) — só que agora,
+   em vez de silenciar o corte (que era o bug original, antes de existir
+   qualquer mecanismo de fit), cada seção internamente comprimida se
+   ajusta sozinha via fitSectionContent(). */
+.d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
 .d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;}
 .d2-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:14px 18px;
   backdrop-filter:blur(12px);}
-.d2-panel.grow{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+/* SEM overflow:hidden aqui de propósito (agora que .d2-body voltou a ter
+   min-height:0, achado real repetido do Round 1): com overflow!=visible,
+   o navegador zera a contribuição de tamanho MÍNIMO deste item pro
+   grid/flex — ele fica livre pra ser espremido bem menor que o conteúdo
+   precisa ANTES mesmo do fitSectionContent() ter a chance de medir/reagir
+   (a medição roda sobre o clientHeight JÁ espremido, então nunca vê o
+   déficit de verdade). Sem overflow:hidden, o painel mantém seu tamanho
+   mínimo real na conta do layout, e fitSectionContent() consegue medir e
+   encolher a fonte certinho quando precisa. */
+.d2-panel.grow{flex:1;min-height:0;display:flex;flex-direction:column;}
 .d2-panel-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
 .d2-panel-body{font-size:14px;color:var(--txt2);line-height:1.55;}
 
+/* Mesmo motivo do .d2-panel.grow acima. */
 .d2-right{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 22px;
-  backdrop-filter:blur(12px);display:flex;flex-direction:column;min-height:0;overflow:hidden;}
+  backdrop-filter:blur(12px);display:flex;flex-direction:column;min-height:0;}
 .d2-table-header{display:flex;font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);
   font-weight:700;padding-bottom:10px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .d2-table-header .c-nome{flex:1;}
@@ -225,8 +244,17 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   backdrop-filter:blur(12px);overflow:hidden;display:flex;flex-direction:column;}
 .d2-fcol h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--cyan);margin-bottom:8px;
   display:flex;align-items:center;gap:7px;flex-shrink:0;}
+/* min-height:0 é o que permite fitSectionContent() medir o espaço de
+   verdade disponível pra essa lista: sem ele, o item de flex nunca é
+   comprimido abaixo do próprio tamanho natural (min-content), então
+   clientHeight sempre reporta "do tamanho que eu quero", nunca "do
+   tamanho que sobrou" — e a lista passa a vazar visualmente pra fora do
+   painel/coluna quando o conteúdo não cabe no espaço reservado (achado
+   real, print do usuário: "Indicadores de Entrega" com 6 itens perdendo o
+   último item, escondido fora da borda do card, sem nenhum overflow:hidden
+   pra sequer escondê-lo — só ficava fora de vista). */
 .d2-flist{list-style:none;font-size:14px;color:var(--txt2);line-height:1.65;margin:0;padding:0;
-  flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;}
+  flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:8px;}
 .d2-flist li{padding-left:13px;position:relative;}
 .d2-flist li::before{content:'•';position:absolute;left:0;color:var(--txt3);}
 .d2-empty{font-size:12.5px;color:var(--txt3);font-style:italic;}
@@ -540,29 +568,39 @@ function rebuild(){
 // zoom) — combinado com a compensação `100/zoom`, isso vira uma conta ao
 // quadrado (cresce descontroladamente a cada iteração). Usar `px`
 // absoluto (não `%`) pra largura evita essa composição.
-function fitSlideContent(containerEl, contentEl){
-  if(!containerEl) return;
-  const content = contentEl || containerEl.firstElementChild;
-  if(!content) return;
+// Núcleo compartilhado: encolhe `content` (zoom + largura compensada em px)
+// até sua altura renderizada caber em `availH`, sem nunca deixar a largura
+// visual sair de `content`'s largura natural (targetW) — só a fonte
+// encolhe, a largura continua ocupando o espaço todo. Usado tanto pro
+// encolhimento de UMA seção específica (fitSectionContent) quanto pro
+// encolhimento do bloco inteiro (fitSlideContent, carrossel de slides).
+function _zoomFitToHeight(content, availH){
   content.style.zoom = '';
   content.style.width = '';
   content.style.height = '';
-  const cs = getComputedStyle(containerEl);
-  const padY = parseFloat(cs.paddingTop||0) + parseFloat(cs.paddingBottom||0);
-  const availH = containerEl.clientHeight - padY;
+  content.style.flex = '';
+  content.style.alignSelf = '';
   if(!availH) return;
   // scrollHeight continua confiável aqui (zoom:1, sem override de height):
-  // revela o overflow de verdade mesmo o content tendo height:100% no CSS —
-  // é o mesmo mecanismo já usado antes desta função existir.
+  // revela o overflow de verdade mesmo o content tendo height:100% no CSS.
   if(content.scrollHeight <= availH) return; // já cabe no tamanho normal, não mexe
 
-  // Só a partir daqui o height:100% do CSS atrapalha a medição: ele prende
-  // getBoundingClientRect().height no tamanho do container, mascarando se
-  // o conteúdo (na largura/zoom sendo testado) ainda estoura ou não. Troca
-  // pra height:auto só durante o encolhimento — o conteúdo passa a ocupar
-  // exatamente o que precisa, em vez do 100% fixo, e a medição por FORA
-  // (getBoundingClientRect) passa a refletir a real necessidade a cada
-  // tentativa de zoom.
+  // Achado real (print do usuário: tabela de Marcos indo pro MENOR zoom
+  // permitido, 0.15, mesmo bastando um encolhimento leve): setar
+  // height:auto NÃO basta quando content ainda é esticado pelo layout do
+  // PAI — se o pai for flex (ex.: .d2-table-rows dentro de .d2-right), o
+  // algoritmo de flexbox continua prendendo a altura no espaço que o
+  // container reservou (flex-grow), ignorando o height:auto; se o pai for
+  // grid (ex.: .d2-left dentro de .d2-body), quem prende é o
+  // align-self:stretch padrão de todo item de grid — MESMO bug, mecanismo
+  // diferente (achado 2x: 1ª vez em .d2-table-rows via flex-grow, 2ª vez
+  // em .d2-left via align-self — a medição ficava travada sempre no MESMO
+  // número, então a busca binária nunca via "já coube" e ia direto pro
+  // piso do intervalo). flex:none + align-self:start desligam os dois
+  // tipos de esticamento — só então o height:auto reflete o tamanho
+  // NATURAL do conteúdo, que é o que precisa ser medido a cada zoom.
+  content.style.flex = 'none';
+  content.style.alignSelf = 'start';
   content.style.height = 'auto';
   const targetW = content.getBoundingClientRect().width; // largura real a manter em qualquer nível de zoom
   let lo = 0.15, hi = 1;
@@ -574,6 +612,73 @@ function fitSlideContent(containerEl, contentEl){
   }
   content.style.zoom = lo;
   content.style.width = (targetW/lo)+'px';
+}
+
+// Nunca deixa uma slide precisar de scroll (pedido direto: "tem que ser one
+// page view, é uma apresentação"). Em vez de cortar conteúdo, encolhe até
+// caber no espaço disponível — só entra em ação quando o conteúdo
+// realmente não cabe (poucos Objetivos numa gerência renderiza em tamanho
+// normal/grande). Usado no carrossel de slides (.slide/.slide-inner), cujo
+// conteúdo (grid de cards) não tem a mesma composição "seção pequena ao
+// lado de seção grande" do detalhe do Objetivo — ali um único fit no bloco
+// inteiro é suficiente (ver fitSectionContent() logo abaixo pro caso que
+// precisa de ajuste por seção).
+//
+// Achado real (2 rodadas de print do usuário): a 1ª versão disso usava
+// transform:scale(fator) no bloco inteiro — encolhe altura E largura pelo
+// MESMO fator, pra manter a proporção. Só que largura quase nunca é o
+// problema aqui (o conteúdo já ocupa ~100% da largura disponível antes de
+// qualquer encolhimento); é praticamente sempre só a ALTURA que estoura.
+// Resultado: o fator ficava definido pela altura (a dimensão realmente
+// apertada), e esse MESMO fator pequeno também encolhia a largura, que já
+// cabia — sobrava um respiro enorme nas laterais ("sobra espaço vazio que
+// podia ser usado") e a fonte ficava menor do que precisava
+// ("texto muito pequeno"), porque a largura nunca foi de fato reduzida.
+//
+// Fix: troca transform:scale por zoom + largura compensada em px (ver
+// _zoomFitToHeight acima) — zoom, diferente de transform, dispara reflow
+// de verdade, então o texto quebra linha considerando a largura já
+// compensada (a largura VISUAL final continua ocupando 100% do espaço
+// disponível, só a fonte/paddings encolhem).
+//
+// Duas pegadinhas reais do CSS `zoom` que já derrubaram uma 1ª tentativa
+// desta função (medida explodindo pra 10x/100x do esperado, testado com
+// Playwright antes de subir): (1) `scrollHeight`/`scrollWidth` lidos DE
+// DENTRO de um elemento com zoom aplicado retornam no sistema de
+// coordenadas LOCAL dele (como se o zoom não existisse por dentro) — pra
+// comparar com a altura disponível de verdade (medida por FORA, no
+// container sem zoom), tem que usar getBoundingClientRect(), que sempre
+// reporta em pixels físicos/reais. (2) `width` em PORCENTAGEM num elemento
+// com zoom resolve contra containingBlockWidth/zoom (maior quanto menor o
+// zoom) — combinado com a compensação `100/zoom`, isso vira uma conta ao
+// quadrado (cresce descontroladamente a cada iteração). Usar `px`
+// absoluto (não `%`) pra largura evita essa composição.
+function fitSlideContent(containerEl, contentEl){
+  if(!containerEl) return;
+  const content = contentEl || containerEl.firstElementChild;
+  if(!content) return;
+  const cs = getComputedStyle(containerEl);
+  const padY = parseFloat(cs.paddingTop||0) + parseFloat(cs.paddingBottom||0);
+  _zoomFitToHeight(content, containerEl.clientHeight - padY);
+}
+
+// Ajusta UMA seção específica do detalhe do Objetivo (tabela de Marcos,
+// painel de Indicadores de Entrega, cada coluna do rodapé) — nunca o bloco
+// inteiro. Achado real (print do usuário, depois de fitSlideContent() já
+// ter corrigido corte e desperdício de largura): um Objetivo com muitos
+// marcos ainda deixava TUDO minúsculo — cabeçalho, indicadores curtos,
+// rodapé com listas de 1-2 itens — só porque a tabela de Marcos, bem maior
+// que o normal, empurrava o encolhimento pro d2-wrap INTEIRO ("as outras
+// estão minúsculas" à toa, sobrando espaço perfeitamente utilizável nas
+// seções pequenas). `el` já é um item flex com `flex:1;min-height:0`
+// dentro de um pai que tem altura fixa (a própria estrutura garante isso —
+// ver .d2-table-rows/.d2-panel.grow/.d2-flist no CSS) — ou seja, o próprio
+// `el.clientHeight` ATUAL (antes de qualquer zoom) já é exatamente o
+// espaço que o layout externo reservou pra essa seção, sem precisar
+// descontar padding de um container separado.
+function fitSectionContent(el){
+  if(!el) return;
+  _zoomFitToHeight(el, el.clientHeight);
 }
 
 function render(){
@@ -600,7 +705,7 @@ window.addEventListener('resize', () => fitSlideContent(document.querySelector('
 document.fonts?.ready?.then(() => {
   fitSlideContent(document.querySelector('.slide.active'));
   if(document.getElementById('detail-ov')?.classList.contains('open')){
-    fitSlideContent(document.getElementById('detail-modal'), document.getElementById('d2-wrap'));
+    _okrFitDetailSections();
   }
 });
 
@@ -626,7 +731,7 @@ document.addEventListener('keydown', e=>{
 // no mesmo espírito do modelo-fonte (título + legenda + 2 colunas + tira de
 // 4 colunas embaixo), ver CSS .d2-* acima. ──
 function d2FieldList(arr){
-  if(!arr || !arr.length) return '<div class="d2-empty" style="flex:1;display:flex;align-items:center;">Nada registrado ainda.</div>';
+  if(!arr || !arr.length) return '<div class="d2-empty" style="flex:1;min-height:0;display:flex;align-items:center;">Nada registrado ainda.</div>';
   return `<ul class="d2-flist">${arr.map(v=>`<li>${esc(v)}</li>`).join('')}</ul>`;
 }
 window._okrOpenDetail = id => {
@@ -675,8 +780,30 @@ window._okrOpenDetail = id => {
     </div>
   `;
   document.getElementById('detail-ov').classList.add('open');
-  fitSlideContent(document.getElementById('detail-modal'), document.getElementById('d2-wrap'));
+  _okrFitDetailSections();
 };
+// Ajusta cada seção independentemente (ver fitSectionContent()) — nunca um
+// único fit pro d2-wrap inteiro, senão a tabela de Marcos grande encolhe
+// TUDO junto, inclusive seções curtas que cabiam à vontade.
+//
+// A raia da esquerda (.d2-left) é ajustada INTEIRA, não só o painel de
+// Indicadores: achado real, print do usuário com a descrição real do
+// Objetivo (~270 caracteres, ocupa boa parte da raia sozinha) — só
+// encolher o painel de Indicadores não bastava, porque ele é o ÚLTIMO da
+// pilha (Objetivo → Responsável → Indicadores) e os 2 primeiros, sem
+// nenhum ajuste, comiam quase todo o espaço da raia sozinhos, deixando
+// Indicadores com uma fração ínfima (chegava a ~48px pra uma lista de 6
+// itens) — pequeno demais pra caber mesmo no zoom mínimo, vazando por
+// cima do rodapé. Encolher a raia INTEIRA junto (Objetivo + Responsável +
+// Indicadores) faz os 3 dividirem o mesmo encolhimento proporcional, em
+// vez de 2 ficarem intocados e 1 sozinho pagar a conta toda.
+function _okrFitDetailSections(){
+  fitSectionContent(document.querySelector('.d2-table-rows'));
+  fitSectionContent(document.querySelector('.d2-left'));
+  document.querySelectorAll('.d2-fcol').forEach(fcol=>{
+    fitSectionContent(fcol.querySelector('.d2-flist, .d2-empty'));
+  });
+}
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
 
 // ── Clock ──

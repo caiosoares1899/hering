@@ -13837,6 +13837,19 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-08 (4ª rodada) — Fix: encolhimento GLOBAL (fonte de tudo) trocado por encolhimento POR SEÇÃO — só quem realmente não cabe encolhe
+
+Print do usuário no fix anterior (3ª rodada, `zoom` em vez de `transform:scale`): fonte maior e largura cheia, mas "ainda sem leitura! usa todo o espaço e diminui a fonte SÓ do q n couber no espaço! as outras estão minúsculas" — confirmado via `AskUserQuestion`: texto pequeno demais + espaço sobrando.
+
+**Causa raiz**: um único `fitSlideContent()` no `#d2-wrap` inteiro encolhia cabeçalho, indicadores curtos e rodapé JUNTO com a tabela de Marcos, só porque esta última (variável, pode ter dezenas de linhas) precisava de mais espaço — seções com conteúdo curto que cabiam à vontade ficavam minúsculas à toa.
+
+**Fix — 3 achados técnicos em cadeia, cada um só aparecendo depois do anterior ser corrigido** (todos via Playwright, medindo a função de verdade a cada passo, não uma reimplementação):
+1. Troca o fit único do bloco inteiro por `fitSectionContent()` aplicado em CADA seção que pode crescer disparate (tabela de Marcos, raia esquerda inteira — Objetivo+Responsável+Indicadores — e cada coluna do rodapé) — cada uma mede e encolhe só a PRÓPRIA fonte, dentro do espaço que o layout (flex/grid) já reserva pra ela.
+2. Pra isso funcionar, `.d2-body` precisou voltar a ter `min-height:0` (compressível) — o que reintroduziu o bug ORIGINAL do Round 1 (`.d2-right`/`.d2-panel.grow` com `overflow:hidden` zerando a contribuição mínima de tamanho pro grid, espremendo silenciosamente ANTES do fit medir) — removido de novo, e `.d2-flist` (a lista em si, não só o painel) ganhou `min-height:0` que nunca tinha tido, sem o qual ela não podia ser comprimida e vazava visualmente pra fora do card (achado batendo o item "f" de uma lista de 6 sumindo sem nenhum `overflow:hidden` pra sequer escondê-lo).
+3. **Achado mais sutil**: `height:auto` sozinho não bastava pra medir o tamanho natural — se o elemento ainda tivesse `flex-grow` ativo (ex.: `.d2-table-rows`, item de FLEX) ou fosse item de GRID com o `align-self:stretch` padrão (ex.: `.d2-left`, célula de `.d2-body{display:grid}`), o layout continuava esticando/prendendo a altura no espaço reservado, ignorando o `height:auto` — a medição ficava travada sempre no MESMO número e a busca binária ia direto pro piso do intervalo (zoom 0.15, texto minúsculo à toa). Fix: `flex:none` (neutraliza o esticamento de flexbox) **+** `align-self:start` (neutraliza o de grid) antes de medir — os dois mecanismos, cobrindo os dois tipos de container usados no layout.
+
+Validado com os dados reais do print (Objetivo "IA no Data Analytics", descrição de ~270 caracteres, 6 indicadores, 13 marcos, rodapé com 10 itens): tabela de Marcos e raia esquerda (Objetivo+Responsável+Indicadores, que dividem o mesmo encolhimento proporcional entre si) ajustam a própria fonte pro necessário; cabeçalho, legenda e rodapé ficam no tamanho normal, sem cortar nem sobrepor nada. Casos sem overflow continuam sem nenhum zoom aplicado.
+
 ### 2026-09-08 (3ª rodada) — Fix: fitSlideContent() encolhia largura junto com altura à toa, deixando fonte menor e espaço vazio nas laterais
 
 Print do usuário no fix anterior (2ª rodada): nada mais cortado, mas
