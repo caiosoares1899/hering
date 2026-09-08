@@ -2142,6 +2142,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
 #dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
+#theme-auto-btn.theme-auto-active{border-color:rgba(56,182,255,.5)!important;color:var(--accent)!important;background:rgba(56,182,255,.12)!important;}
 .dnd-toggle-btn{
   box-sizing:border-box;width:100%;text-align:left;background:none;
   border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;
@@ -3333,10 +3334,21 @@ input[type="date"]{-moz-appearance:textfield;}
 // pode bloquear localStorage).
 (function(){
   try{
-    const t=localStorage.getItem('mare_theme');
+    const auto = localStorage.getItem('mare_theme_auto')==='1';
+    let t;
+    if(auto){
+      // Tema automático: banda calculada pelo horário de São Paulo, não
+      // pelo valor salvo em mare_theme (que aqui só guarda o ÚLTIMO tema
+      // aplicado, pra outras abas/telas que ainda leem essa chave direto —
+      // ver _applyAutoTheme() no <script> principal, mesma conta).
+      const h = Number(new Intl.DateTimeFormat('en-US',{hour:'numeric',hourCycle:'h23',timeZone:'America/Sao_Paulo'}).format(new Date()));
+      t = (h>=6 && h<12) ? 'light' : (h>=12 && h<18) ? 'vice' : 'dark';
+    }else{
+      t = localStorage.getItem('mare_theme');
+    }
     if(t==='light') document.documentElement.setAttribute('data-theme','light');
     else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
-    if(localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
+    if(!auto && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
 </script>
@@ -3404,6 +3416,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
     <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -5515,6 +5528,11 @@ input[type="date"]{-moz-appearance:textfield;}
           <input class="fi" type="number" id="archcfg-inactive" min="0" value="90">
         </div>
       </div>
+      <div style="margin-bottom:10px;">
+        <label class="fl" style="display:block;margin-bottom:5px;">Nunca arquivar automaticamente cards nestas colunas</label>
+        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:6px;">Ex.: Backlog — cards parados ali de propósito, aguardando priorização, não deviam sumir junto com os esquecidos de verdade.</div>
+        <div id="archcfg-excluded-chips" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
       <div style="display:flex;justify-content:flex-end;">
         <button class="btn btn-p btn-sm" onclick="saveArchiveCfg()">💾 Salvar regra</button>
       </div>
@@ -6013,6 +6031,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <select id="arch-f-col" class="ql-filter-sel" onchange="openArquivados()" title="Coluna em que o card estava quando foi arquivado"></select>
     <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">Criado há mais de <input type="number" id="arch-f-days" min="0" placeholder="0" style="width:56px;" class="ql-filter-inp" onchange="openArquivados()"> dias</label>
   </div>
   <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
@@ -6080,7 +6099,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.619</div>
+<div class="version">v8.30.622</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6510,6 +6529,7 @@ function renderHdMoreDD(){
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeAuto();">🕐 Tema automático${_isThemeAutoOn()?' — Ligado':''}</div>
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="doSignOut();" style="color:#ff8fa3;">🚪 Sair</div>
   `;
@@ -8250,13 +8270,17 @@ const HIST_FIELDS = {
   title:'título', col:'coluna', owner:'responsável', due:'prazo',
   priority:'prioridade', tag:'tag', desc:'descrição', po:'Insights do PO',
   sp:'story points', blocker:'impedimento', archived:'arquivamento', isOKR:'OKR',
+  // demandante: mesmo achado /monitorarbugs 2026-09-08 dos campos abaixo —
+  // scheduleAutoSave()/saveCard() sempre gravaram o campo normalmente, só
+  // nunca apareceu no Histórico por nunca ter entrado nesta lista.
+  demandante:'demandante',
 };
 function _histWho(){ return window._currentUser?.displayName || window._currentUser?.email || 'Usuário'; }
-// Resolve valor "humano" de um campo (coluna/owner viram nomes)
+// Resolve valor "humano" de um campo (coluna/owner/demandante viram nomes)
 function _histVal(field, val){
   if(val==null||val==='') return '—';
   if(field==='col'){ const c=columns.find(x=>x.id===val); return c?c.name:val; }
-  if(field==='owner'){ const m=members.find(x=>x.init===val); return m?m.name:val; }
+  if(field==='owner'||field==='demandante'){ const m=members.find(x=>x.init===val); return m?m.name:val; }
   if(field==='blocker') return val?'sim':'não';
   if(field==='archived') return val?'arquivado':'ativo';
   if(field==='isOKR') return val?'sim':'não';
@@ -8287,6 +8311,16 @@ function _histSnapshot(card){
   // array inteiro, não só card.tag (1ª tag, campo legado que HIST_FIELDS
   // ainda rastreia por compatibilidade com telas antigas).
   s.tags = (card.tags||[]).slice();
+  // participants[]/riscos[]/blockerReason: achado /monitorarbugs 2026-09-08
+  // (relato direto de usuário — "mudanças que fiz em uns cards não
+  // apareceram no histórico"). Os 3 sempre foram gravados normalmente por
+  // scheduleAutoSave()/saveCard() (ver Object.assign nas duas), mas nunca
+  // tiveram diff nenhum em _histDiff() — editar participantes, riscos, ou
+  // só o texto do motivo de um impedimento já marcado nunca deixava rastro
+  // no Histórico, silenciosamente. Ver diffs dedicados em _histDiff().
+  s.participants = (card.participants||[]).slice();
+  s.riscos = (card.riscos||[]).slice();
+  s.blockerReason = card.blockerReason||'';
   return s;
 }
 // Compara snapshot antigo com o card atual e registra cada mudança
@@ -8324,6 +8358,26 @@ function _histDiff(card, before, whoOverride){
   const removedTags=(before.tags||[]).filter(t=>!afterTagsSet.has(t));
   if(addedTags.length) recordHistory(card, `adicionou tag${addedTags.length>1?'s':''}: `+addedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
   if(removedTags.length) recordHistory(card, `removeu tag${removedTags.length>1?'s':''}: `+removedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
+  // participants[]/riscos[] — mesma técnica Set-based do tags[] acima
+  // (achado /monitorarbugs 2026-09-08, ver comentário em _histSnapshot()).
+  const beforePartSet=new Set(before.participants||[]), afterPartSet=new Set(card.participants||[]);
+  const addedPart=(card.participants||[]).filter(p=>!beforePartSet.has(p));
+  const removedPart=(before.participants||[]).filter(p=>!afterPartSet.has(p));
+  const _histPersonLabel=init=>{ const m=members.find(x=>x.init===init); return m?m.name:init; };
+  if(addedPart.length) recordHistory(card, `adicionou participante${addedPart.length>1?'s':''}: `+addedPart.map(_histPersonLabel).join(', '), whoOverride);
+  if(removedPart.length) recordHistory(card, `removeu participante${removedPart.length>1?'s':''}: `+removedPart.map(_histPersonLabel).join(', '), whoOverride);
+  const beforeRiscosSet=new Set(before.riscos||[]), afterRiscosSet=new Set(card.riscos||[]);
+  const addedRiscos=(card.riscos||[]).filter(r=>!beforeRiscosSet.has(r));
+  const removedRiscos=(before.riscos||[]).filter(r=>!afterRiscosSet.has(r));
+  if(addedRiscos.length) recordHistory(card, `adicionou risco${addedRiscos.length>1?'s':''}: `+addedRiscos.join(', '), whoOverride);
+  if(removedRiscos.length) recordHistory(card, `removeu risco${removedRiscos.length>1?'s':''}: `+removedRiscos.join(', '), whoOverride);
+  // Motivo do impedimento — só o TEXTO, separado do toggle em si (esse já
+  // vira entrada própria via o campo 'blocker' no loop genérico acima).
+  // Só registra quando o impedimento CONTINUA marcado antes e depois —
+  // marcar/desmarcar já gera sua própria entrada, não precisa duplicar.
+  if(card.blocker && before.blocker && (before.blockerReason||'')!==(card.blockerReason||'')){
+    recordHistory(card, `atualizou o motivo do impedimento: ${_histVal('blockerReason', card.blockerReason)}`, whoOverride);
+  }
   // checklist
   const nd=(card.checklist||[]).filter(i=>i&&i.done).length, nt=(card.checklist||[]).length;
   if(nt!==before._clTotal) recordHistory(card, `atualizou o checklist (${nd}/${nt})`, whoOverride);
@@ -12483,11 +12537,12 @@ function maybeAutoArchiveOldCards(){
   if(!cfg.enabled) return;
   const days=parseInt(cfg.days||365);
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
+  const excludedCols=new Set(cfg.excludedCols||[]);
   const now=Date.now();
   let n=0;
   const touchedIds=[];
   cards.forEach(c=>{
-    if(c.archived || !c.createdAt) return;
+    if(c.archived || !c.createdAt || excludedCols.has(c.col)) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
     const created=new Date(createdS).getTime();
     if(isNaN(created)) return;
@@ -12506,17 +12561,40 @@ function maybeAutoArchiveOldCards(){
   });
   if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }
+// Colunas nunca arquivadas automaticamente (ex.: Backlog) — pedido direto
+// do usuário: cards parados de propósito numa coluna (aguardando
+// priorização, por exemplo) não deviam sumir sozinhos junto com os
+// esquecidos de verdade. Estado pendente separado de archiveCfg (só grava
+// de fato em "💾 Salvar regra", mesmo padrão dos campos de dias ao lado)
+// pra clicar nos chips não disparar uma escrita no Firebase a cada toque.
+let _archCfgExcludedColsPending = new Set();
+function _archCfgExcludedColsChips(){
+  return columns.map(col=>{
+    const ex = _archCfgExcludedColsPending.has(col.id);
+    return `<span onclick="_archCfgToggleExcludedCol('${esc(col.id)}')" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
+      +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
+      +`border:1px solid ${ex?'rgba(255,209,102,.4)':'rgba(255,255,255,.1)'};background:${ex?'rgba(255,209,102,.12)':'transparent'};color:${ex?'var(--warn)':'var(--txt3)'};">`
+      +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${ex?1:.35};"></span>${esc(col.name)}</span>`;
+  }).join('');
+}
+function _archCfgToggleExcludedCol(colId){
+  if(_archCfgExcludedColsPending.has(colId)) _archCfgExcludedColsPending.delete(colId); else _archCfgExcludedColsPending.add(colId);
+  const el=document.getElementById('archcfg-excluded-chips'); if(el) el.innerHTML=_archCfgExcludedColsChips();
+}
 function fillArchiveCfgTab(){
   const c=archiveCfg||{};
   const chk=document.getElementById('archcfg-enabled'); if(chk) chk.checked=!!c.enabled;
   const d=document.getElementById('archcfg-days'); if(d) d.value=c.days||365;
   const i=document.getElementById('archcfg-inactive'); if(i) i.value=(c.inactivityDays!=null?c.inactivityDays:90);
+  _archCfgExcludedColsPending = new Set(c.excludedCols||[]);
+  const el=document.getElementById('archcfg-excluded-chips'); if(el) el.innerHTML=_archCfgExcludedColsChips();
 }
 function saveArchiveCfg(){
   archiveCfg={
     enabled: !!document.getElementById('archcfg-enabled')?.checked,
     days: parseInt(document.getElementById('archcfg-days')?.value||'365'),
     inactivityDays: parseInt(document.getElementById('archcfg-inactive')?.value||'90'),
+    excludedCols: [..._archCfgExcludedColsPending],
   };
   fbSet(FB+'/archive_cfg', archiveCfg);
   showToast('🗄 Regra de arquivamento automático salva.');
@@ -20740,7 +20818,7 @@ function _renderArquivadosBody(){
   const purgeBar=document.getElementById('arch-purge-bar'); if(purgeBar) purgeBar.style.display=(typeof canBulkDelete==='function' && canBulkDelete())?'flex':'none';
   let archived=cards.filter(c=>c.archived);
   // Popula dropdowns de filtro preservando a seleção atual
-  const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
+  const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner'), fCol=document.getElementById('arch-f-col');
   const fNomeEl=document.getElementById('arch-f-nome');
   if(fTag){
     const prev=fTag.value;
@@ -20758,15 +20836,31 @@ function _renderArquivadosBody(){
     fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(_shortName(m.name)):''}</option>`}).join('');
     fOwner.value=prev;
   }
+  if(fCol){
+    // Coluna em que o card estava quando foi arquivado — arquivar nunca
+    // mexe em c.col (só liga c.archived), então o valor atual JÁ é isso,
+    // sem precisar guardar um campo separado. Coluna pode ter sido
+    // excluída desde então — mostra o nome atual quando existe, senão o
+    // id cru com aviso, pra não sumir da lista de filtros silenciosamente.
+    const prev=fCol.value;
+    const colsUsadas=[...new Set(archived.map(c=>c.col).filter(Boolean))];
+    const opts=colsUsadas.map(id=>{
+      const col=columns.find(x=>x.id===id);
+      return {id, label: col ? col.name : id+' (coluna excluída)', ord: col ? columns.indexOf(col) : 999};
+    }).sort((a,b)=>a.ord-b.ord);
+    fCol.innerHTML='<option value="">📍 Todas as colunas</option>'+opts.map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
+    fCol.value=prev;
+  }
   // Aplica filtros
   const qNome=(fNomeEl?.value||'').toLowerCase().trim();
-  const qTag=fTag?.value||''; const qOwner=fOwner?.value||'';
+  const qTag=fTag?.value||''; const qOwner=fOwner?.value||''; const qCol=fCol?.value||'';
   if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
   if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
   if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
+  if(qCol) archived=archived.filter(c=>c.col===qCol);
   const qDays=parseInt(document.getElementById('arch-f-days')?.value||'0');
   if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qCol||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     // getCardTags(c)[0] (não c.tag cru) — achado via /monitorarbugs: o
     // filtro por tag desta mesma função (linhas acima) já usa getCardTags(),
@@ -23853,7 +23947,7 @@ const HELP_CONTENT = {
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
-    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
+    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que arquiva sozinho cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
@@ -30260,6 +30354,7 @@ function _recordThemeDiscovered(theme){
 }
 window.addEventListener('auth-change', ()=>{ _recordThemeDiscovered(_currentTheme()); });
 function toggleTheme(){
+  _disableThemeAutoIfOn();
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
@@ -30280,11 +30375,84 @@ function toggleThemeVariant(){
     showToast('A versão mais escura só existe no tema claro ☀️ — troca pro claro primeiro.');
     return;
   }
+  _disableThemeAutoIfOn();
   const isB = document.documentElement.getAttribute('data-theme-variant')==='b';
   if(isB){ document.documentElement.removeAttribute('data-theme-variant'); safeLS.setItem('mare_theme_variant',''); }
   else{ document.documentElement.setAttribute('data-theme-variant','b'); safeLS.setItem('mare_theme_variant','b'); }
   showToast(isB ? '☀️ Lençóis Maranhenses — padrão' : '☀️ Lençóis Maranhenses — mais escuro');
 }
+// ── TEMA AUTOMÁTICO (🕐, acompanha o horário de São Paulo) ───────────
+// Pedido direto: 4º modo, botão próprio ao lado do de tema (não reusa o
+// clique/duplo-clique/long-press do botão principal, que já fazem 3
+// coisas diferentes — ver comentário do Vice City abaixo). Reaproveita
+// os 3 temas existentes como "bandas" do dia, sem CSS novo: 06h-12h
+// claro, 12h-18h vice, resto escuro. Qualquer troca MANUAL de tema
+// (toggleTheme/toggleThemeVariant/toggleViceCity/exitViceCity) desliga
+// o automático — nesse momento a pessoa expressou uma preferência
+// explícita, que não devia ser sobrescrita sozinha na próxima virada de
+// horário.
+function _themeBandForSaoPauloNow(){
+  const h = Number(new Intl.DateTimeFormat('en-US',{hour:'numeric',hourCycle:'h23',timeZone:'America/Sao_Paulo'}).format(new Date()));
+  if(h>=6 && h<12) return 'light';
+  if(h>=12 && h<18) return 'vice';
+  return 'dark';
+}
+function _isThemeAutoOn(){ return safeLS.getItem('mare_theme_auto')==='1'; }
+let _themeAutoInterval=null;
+function _applyAutoTheme(showToastOnChange){
+  const band = _themeBandForSaoPauloNow();
+  const before = _currentTheme();
+  if(band==='light') document.documentElement.setAttribute('data-theme','light');
+  else if(band==='vice') document.documentElement.setAttribute('data-theme','vice');
+  else document.documentElement.removeAttribute('data-theme');
+  safeLS.setItem('mare_theme', band);
+  _applyThemeButtonIcon();
+  _applyThemeAutoButtonState();
+  _recordThemeDiscovered(band);
+  if(showToastOnChange && before!==band){
+    showToast('🕐 Tema automático: '+(band==='light'?'☀️ Lençóis Maranhenses':band==='vice'?'🌴 Vice City':'🌙 Abrolhos'));
+  }
+}
+function _applyThemeAutoButtonState(){
+  const btn=document.getElementById('theme-auto-btn');
+  if(!btn) return;
+  const on=_isThemeAutoOn();
+  btn.classList.toggle('theme-auto-active', on);
+  btn.title = on
+    ? 'Tema automático LIGADO — troca sozinho conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra desligar.'
+    : 'Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar.';
+}
+function _startThemeAutoWatch(){
+  if(_themeAutoInterval) clearInterval(_themeAutoInterval);
+  // A cada 1min: a virada de banda só acontece 3x/dia, não precisa de
+  // mais precisão — o custo de checar de sobra é irrelevante.
+  _themeAutoInterval = setInterval(()=>_applyAutoTheme(true), 60000);
+}
+function _disableThemeAutoIfOn(){
+  if(!_isThemeAutoOn()) return;
+  safeLS.setItem('mare_theme_auto','');
+  if(_themeAutoInterval){ clearInterval(_themeAutoInterval); _themeAutoInterval=null; }
+  _applyThemeAutoButtonState();
+}
+function toggleThemeAuto(){
+  if(_isThemeAutoOn()){
+    _disableThemeAutoIfOn();
+    showToast('🕐 Tema automático desligado — o tema atual fica fixo até você trocar de novo.');
+    return;
+  }
+  safeLS.setItem('mare_theme_auto','1');
+  _applyAutoTheme(false);
+  _startThemeAutoWatch();
+  showToast('🕐 Tema automático ligado — acompanha o horário de São Paulo (☀️ manhã, 🌴 tarde, 🌙 noite).');
+}
+if(_isThemeAutoOn()){ _applyAutoTheme(false); _startThemeAutoWatch(); }
+// Aba volta a ficar visível com o automático ligado: reavalia na hora —
+// setInterval pode ser pausado/atrasado pelo navegador com a aba em
+// segundo plano, sem isso a virada de banda só apareceria minutos depois
+// de a pessoa voltar pra aba.
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && _isThemeAutoOn()) _applyAutoTheme(true);
+});
 // 🌴 Vice City — easter egg interno (piada com o trailer de GTA 6, visual
 // Miami Vice: rosa neon, ciano, pôr do sol roxo/laranja — ver
 // [data-theme="vice"] no CSS). Só entra segurando o botão de tema
@@ -30312,6 +30480,7 @@ function _themeBtnPointerUp(){
 }
 function toggleViceCity(){
   if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
   document.documentElement.setAttribute('data-theme','vice');
@@ -30322,6 +30491,7 @@ function toggleViceCity(){
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){
+  _disableThemeAutoIfOn();
   const prevTheme = safeLS.getItem('mare_theme_before_vice') || '';
   const prevVariant = safeLS.getItem('mare_theme_variant_before_vice') || '';
   if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
@@ -30369,6 +30539,7 @@ function _mobileThemeRowClick(){
   toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
+_applyThemeAutoButtonState(); // idem pro botão 🕐, com o estado ligado/desligado já aplicado no <head>
 // Fish & Bubbles
 (function(){
   const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
