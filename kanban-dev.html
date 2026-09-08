@@ -2459,6 +2459,22 @@ input[type="date"]{-moz-appearance:textfield;}
   .app{padding:.5rem .6rem 74px;}
   *{-webkit-tap-highlight-color:transparent;}
 
+  /* ── Tabela de Controle de Criativos: dica visual de "rola pro lado" ──
+     Achado real (revisão mobile, 2026-09-07): a tabela (9 colunas) já
+     tinha overflow-x:auto — rolava de verdade — mas sem NENHUM indício
+     visual disso; a última coluna visível cortava no meio da palavra
+     bem na borda do painel ("Formato" virava "Fo"), parecendo quebrada
+     em vez de "arraste pra ver mais", diferente das colunas do board
+     (que deixam a próxima coluna espiando na borda, dando a mesma dica
+     sem precisar de texto). Gradiente fixo na borda direita resolve —
+     mais simples que calcular via JS se ainda há conteúdo pra rolar. */
+  .crv-table-scroll{position:relative;}
+  .crv-table-scroll::after{
+    content:''; position:absolute; top:0; right:0; bottom:0; width:24px;
+    background:linear-gradient(to right, transparent, rgba(var(--surface-rgb),.85));
+    pointer-events:none;
+  }
+
   /* ── HEADER: redesenho tipo Trello (2026-09-02) ──────────────────────
      A fileira de ícones do topo (tema, modo de visualização, avatares de
      quem tá online, seu badge com nome, busca) não cabia numa linha só e
@@ -5670,7 +5686,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <button class="btn btn-sm" id="crv-import-btn" onclick="_crvTriggerImport()" style="margin-left:auto;color:#ffb3d9;border-color:rgba(255,179,217,.35);">📥 Importar Excel</button>
       <button class="btn btn-sm" id="crv-export-btn" onclick="exportCriativosCSV()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">⬇ Exportar CSV</button>
     </div>
-    <div style="overflow-x:auto;">
+    <div class="crv-table-scroll" style="overflow-x:auto;">
       <table style="border-collapse:collapse;width:100%;font-size:12px;">
         <thead>
           <tr style="text-align:left;color:var(--txt3);border-bottom:1px solid var(--glass-b);">
@@ -6064,7 +6080,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.617-dev</div>
+<div class="version">v8.30.618-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

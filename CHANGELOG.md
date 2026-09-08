@@ -2970,6 +2970,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.618-dev — 2026-09-08 — Revisão mobile: dica visual de "rola pro lado" na tabela de Controle de Criativos
+
+Pedido direto do usuário: "Quero q vc der uma revisada nas telas do
+mobile! Tanto painel como kanban! Tem q caber na tela sem precisar
+scroll lateral e bastante visual".
+
+Testado em viewport de celular (375px) com Playwright, tela por tela.
+O board principal, modal do card, Filtros, 📊 Dados do Board e ❓ Ajuda
+já estavam bem cuidados (colunas com scroll-snap de 82vw, sem vazamento
+de página). Achado real: a tabela do **🎬 Controle de Criativos** (9
+colunas) já tinha `overflow-x:auto` funcionando de verdade (confirmado
+via `scrollLeft`), mas sem NENHUM indício visual disso — a última
+coluna visível cortava a palavra no meio bem na borda do painel
+("Formato" virava "Fo"), parecendo quebrada em vez de "arraste pra ver
+mais", diferente das colunas do board (que deixam a próxima coluna
+espiando na borda, mesma dica sem precisar de texto). Fix: gradiente
+fixo na borda direita da tabela (`.crv-table-scroll::after`, cor
+`rgba(var(--surface-rgb),.85)` — a mesma do fundo do `.panel`),
+escopado ao `@media(max-width:768px)`.
+
+Ver entrada correspondente em `painel.html / painel-dev.html` (achado
+maior desta rodada: colisão de texto na barra de abas do rodapé).
+
 ### v8.30.617-dev — 2026-09-07 — Menu de contexto do board ganha "⏸ Pausar/Retomar contagem de tempo"
 
 Pedido direto do usuário: depois de pedir uma auditoria do menu de
@@ -13798,6 +13821,45 @@ só sugerindo texto.
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.33 · painel-dev — 2026-09-08 — Revisão mobile: colisão de texto na barra de abas do rodapé
+
+Pedido direto do usuário: "Quero q vc der uma revisada nas telas do
+mobile! Tanto painel como kanban! Tem q caber na tela sem precisar
+scroll lateral e bastante visual". Escolhida a opção "scroll horizontal
+na barra de abas" entre as 2 propostas.
+
+**Achado real, confirmado por screenshot em TODA tela do painel**: a
+barra de abas do rodapé (Visão/Fluxo/Timeline/OKR/Pessoas/Monitor/
+Status/Dados/Agentes — 9 no total) usava `flex:1` pra dividir a largura
+igualmente entre as 9 — num celular de 375px, cada uma ficava com
+~41px, insuficiente pro rótulo ("Timeline"/"Agentes"...); o texto
+vazava da própria célula e colidia com o da aba vizinha, ficando
+ilegível ("Dados"/"Agentes" grudados um no outro). Fix: mesmo padrão de
+scroll horizontal já usado no filter-bar/`#squad-links-wrap`/
+`#online-list` — `.ptab` ganha `min-width:64px` fixo (cabe o rótulo sem
+quebrar linha) e `.ptabs` ganha `overflow-x:auto` (rola de lado quando
+não cabem todas, sem colisão). `swPtab()` ganha `scrollIntoView({block:
+'nearest', inline:'nearest'})` na aba recém-ativada — sem isso, trocar
+de aba por um caminho que não é o toque direto (ex.: deep-link
+`?tab=<id>` de notificação) podia deixar a aba ativa escondida fora da
+área visível da barra.
+
+**Achado incidental, mesma rodada**: `.version` (`bottom:6px;right:12px;
+z-index:3`) furava por CIMA do texto das abas mesmo com `.ptabs` em
+`z-index:100` — `.ptabs` usa `backdrop-filter`, que cria um novo
+contexto de empilhamento; a comparação de z-index entre os dois não
+acontecia como o número sozinho sugere. Fix: reposiciona `.version`
+pra `bottom:56px` no mobile (acima da barra fixa), mais simples que
+brigar com contexto de empilhamento.
+
+Validado com Playwright: zero sobreposições entre abas, barra
+comprovadamente rolável (576px de conteúdo em 375px de tela), trocar
+pra "Agentes" (fora da área inicial visível) rola a barra até revelar
+a aba.
+
+Ver entrada correspondente em `kanban-dev.html` (achado menor da mesma
+rodada: tabela do Controle de Criativos sem dica visual de scroll).
 
 ### painel.html v3.32 · painel — 2026-09-07 · Promove pra prod — Feed de marcos: fix de filtro morto ao trocar de squad + 🎯 OKR: card do Objetivo destaca quando você é responsável
 

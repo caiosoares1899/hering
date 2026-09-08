@@ -877,22 +877,42 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   #squad-links-wrap::-webkit-scrollbar{ display:none; }
   #squad-links-wrap .btn{ white-space:nowrap; flex-shrink:0; }
 
-  /* ── Abas: fixas no bottom para acesso rápido ── */
+  /* ── Abas: fixas no bottom para acesso rápido ──
+     Achado real (revisão mobile, 2026-09-07): com 9 abas e flex:1 pra
+     dividir a largura igualmente, cada uma ficava com ~41px num celular
+     de 375px — insuficiente pro rótulo ("Timeline"/"Agentes"...), o texto
+     vazava da própria célula e colidia com o da aba vizinha (ilegível,
+     em TODA tela do painel, não só uma). Mesmo padrão de scroll horizontal
+     já usado no filter-bar/#squad-links-wrap/#online-list logo abaixo:
+     cada aba ganha largura mínima fixa (cabe o rótulo sem quebrar linha)
+     e a barra rola de lado quando não cabem todas — sem colisão, sem
+     cortar texto no meio. */
   .ptabs{
     position:fixed; bottom:0; left:0; right:0; z-index:100;
     background:rgba(6,20,40,.97); border-top:1px solid var(--glass-b);
     border-bottom:none; margin-bottom:0;
-    display:flex; justify-content:space-around;
+    display:flex; justify-content:flex-start;
+    overflow-x:auto; scrollbar-width:none; -webkit-overflow-scrolling:touch;
     backdrop-filter:blur(16px); padding:2px 0 env(safe-area-inset-bottom);
   }
+  .ptabs::-webkit-scrollbar{ display:none; }
   .ptab{
-    flex:1; padding:8px 4px 6px; font-size:10px;
+    flex:0 0 auto; min-width:64px; padding:8px 8px 6px; font-size:10px;
     border-bottom:none; border-top:2px solid transparent;
     margin-bottom:0; text-align:center; display:flex;
     flex-direction:column; align-items:center; gap:2px;
-    color:var(--txt3);
+    color:var(--txt3); white-space:nowrap;
   }
   .ptab.on{ border-top-color:var(--accent); color:var(--txt); border-bottom:none; }
+
+  /* Achado real, junto do achado acima: .version (bottom:6px;right:12px;
+     z-index:3) furava por CIMA do texto das abas mesmo com .ptabs em
+     z-index:100 — .ptabs usa backdrop-filter, que cria um novo contexto
+     de empilhamento; a comparação de z-index entre os dois não acontecia
+     como o número sozinho sugere. Mais simples resolver reposicionando
+     .version pra ACIMA da barra fixa no mobile do que brigar com
+     contexto de empilhamento. */
+  .version{ bottom:56px; }
 
   /* ── Refresh bar ── */
   .refresh-bar{ font-size:10px; margin-bottom:.6rem; gap:6px; }
@@ -2777,7 +2797,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.32 · painel-dev</div>
+<div class="version">v3.33 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6492,7 +6512,15 @@ function swPtab(tab){
   document.querySelectorAll('.ptab-pane').forEach(p=>p.classList.remove('on'));
   const btn=document.getElementById('ptab-'+tab);
   const pane=document.getElementById('ppane-'+tab);
-  if(btn) btn.classList.add('on');
+  if(btn){
+    btn.classList.add('on');
+    // A barra agora rola de lado no mobile (ver .ptabs) — sem isto, trocar
+    // de aba por um caminho que não é o toque direto no botão (ex.:
+    // deep-link "?tab=<id>" vindo de notificação) podia deixar a aba
+    // ativa destacada mas escondida fora da área visível da barra.
+    // block:'nearest'/inline:'nearest' só mexe o scroll quando precisa.
+    btn.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+  }
   if(pane) pane.classList.add('on');
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
