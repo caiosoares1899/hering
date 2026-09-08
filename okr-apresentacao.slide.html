@@ -509,7 +509,21 @@ function fitSlideContent(containerEl, contentEl){
   const content = contentEl || containerEl.firstElementChild;
   if(!content) return;
   content.style.transform = 'none';
-  const availH = containerEl.clientHeight, availW = containerEl.clientWidth;
+  // Achado real (print do usuário: "não usou o espaço todo ai ficou
+  // pequeno", com a última linha visível cortada mesmo com esse mecanismo
+  // no lugar): containerEl.clientHeight/clientWidth incluem o PADDING do
+  // próprio container (ex.: .detail-modal tem padding:34px 46px), mas
+  // quem de fato precisa caber é o content (ex.: #d2-wrap), que só tem a
+  // altura/largura JÁ DESCONTADA desse padding pra trabalhar. Sem
+  // descontar aqui, a escala saía maior do que deveria (achava que tinha
+  // ~68px a mais de altura livre do que realmente tinha), cortando a
+  // última linha por baixo — sem sobrar nem faltar espaço, só calculado
+  // errado. Descontar o padding do container garante que availH/availW
+  // batem com o espaço real que o content ocupa.
+  const cs = getComputedStyle(containerEl);
+  const padY = parseFloat(cs.paddingTop||0) + parseFloat(cs.paddingBottom||0);
+  const padX = parseFloat(cs.paddingLeft||0) + parseFloat(cs.paddingRight||0);
+  const availH = containerEl.clientHeight - padY, availW = containerEl.clientWidth - padX;
   if(!availH || !availW) return;
   const needH = content.scrollHeight, needW = content.scrollWidth;
   const scale = Math.min(1, (availH-2)/needH, (availW-2)/needW);
