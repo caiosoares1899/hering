@@ -6086,7 +6086,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.619-dev</div>
+<div class="version">v8.30.620-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8256,13 +8256,17 @@ const HIST_FIELDS = {
   title:'título', col:'coluna', owner:'responsável', due:'prazo',
   priority:'prioridade', tag:'tag', desc:'descrição', po:'Insights do PO',
   sp:'story points', blocker:'impedimento', archived:'arquivamento', isOKR:'OKR',
+  // demandante: mesmo achado /monitorarbugs 2026-09-08 dos campos abaixo —
+  // scheduleAutoSave()/saveCard() sempre gravaram o campo normalmente, só
+  // nunca apareceu no Histórico por nunca ter entrado nesta lista.
+  demandante:'demandante',
 };
 function _histWho(){ return window._currentUser?.displayName || window._currentUser?.email || 'Usuário'; }
-// Resolve valor "humano" de um campo (coluna/owner viram nomes)
+// Resolve valor "humano" de um campo (coluna/owner/demandante viram nomes)
 function _histVal(field, val){
   if(val==null||val==='') return '—';
   if(field==='col'){ const c=columns.find(x=>x.id===val); return c?c.name:val; }
-  if(field==='owner'){ const m=members.find(x=>x.init===val); return m?m.name:val; }
+  if(field==='owner'||field==='demandante'){ const m=members.find(x=>x.init===val); return m?m.name:val; }
   if(field==='blocker') return val?'sim':'não';
   if(field==='archived') return val?'arquivado':'ativo';
   if(field==='isOKR') return val?'sim':'não';
@@ -8293,6 +8297,16 @@ function _histSnapshot(card){
   // array inteiro, não só card.tag (1ª tag, campo legado que HIST_FIELDS
   // ainda rastreia por compatibilidade com telas antigas).
   s.tags = (card.tags||[]).slice();
+  // participants[]/riscos[]/blockerReason: achado /monitorarbugs 2026-09-08
+  // (relato direto de usuário — "mudanças que fiz em uns cards não
+  // apareceram no histórico"). Os 3 sempre foram gravados normalmente por
+  // scheduleAutoSave()/saveCard() (ver Object.assign nas duas), mas nunca
+  // tiveram diff nenhum em _histDiff() — editar participantes, riscos, ou
+  // só o texto do motivo de um impedimento já marcado nunca deixava rastro
+  // no Histórico, silenciosamente. Ver diffs dedicados em _histDiff().
+  s.participants = (card.participants||[]).slice();
+  s.riscos = (card.riscos||[]).slice();
+  s.blockerReason = card.blockerReason||'';
   return s;
 }
 // Compara snapshot antigo com o card atual e registra cada mudança
@@ -8330,6 +8344,26 @@ function _histDiff(card, before, whoOverride){
   const removedTags=(before.tags||[]).filter(t=>!afterTagsSet.has(t));
   if(addedTags.length) recordHistory(card, `adicionou tag${addedTags.length>1?'s':''}: `+addedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
   if(removedTags.length) recordHistory(card, `removeu tag${removedTags.length>1?'s':''}: `+removedTags.map(id=>getTag(id)?.label||id).join(', '), whoOverride);
+  // participants[]/riscos[] — mesma técnica Set-based do tags[] acima
+  // (achado /monitorarbugs 2026-09-08, ver comentário em _histSnapshot()).
+  const beforePartSet=new Set(before.participants||[]), afterPartSet=new Set(card.participants||[]);
+  const addedPart=(card.participants||[]).filter(p=>!beforePartSet.has(p));
+  const removedPart=(before.participants||[]).filter(p=>!afterPartSet.has(p));
+  const _histPersonLabel=init=>{ const m=members.find(x=>x.init===init); return m?m.name:init; };
+  if(addedPart.length) recordHistory(card, `adicionou participante${addedPart.length>1?'s':''}: `+addedPart.map(_histPersonLabel).join(', '), whoOverride);
+  if(removedPart.length) recordHistory(card, `removeu participante${removedPart.length>1?'s':''}: `+removedPart.map(_histPersonLabel).join(', '), whoOverride);
+  const beforeRiscosSet=new Set(before.riscos||[]), afterRiscosSet=new Set(card.riscos||[]);
+  const addedRiscos=(card.riscos||[]).filter(r=>!beforeRiscosSet.has(r));
+  const removedRiscos=(before.riscos||[]).filter(r=>!afterRiscosSet.has(r));
+  if(addedRiscos.length) recordHistory(card, `adicionou risco${addedRiscos.length>1?'s':''}: `+addedRiscos.join(', '), whoOverride);
+  if(removedRiscos.length) recordHistory(card, `removeu risco${removedRiscos.length>1?'s':''}: `+removedRiscos.join(', '), whoOverride);
+  // Motivo do impedimento — só o TEXTO, separado do toggle em si (esse já
+  // vira entrada própria via o campo 'blocker' no loop genérico acima).
+  // Só registra quando o impedimento CONTINUA marcado antes e depois —
+  // marcar/desmarcar já gera sua própria entrada, não precisa duplicar.
+  if(card.blocker && before.blocker && (before.blockerReason||'')!==(card.blockerReason||'')){
+    recordHistory(card, `atualizou o motivo do impedimento: ${_histVal('blockerReason', card.blockerReason)}`, whoOverride);
+  }
   // checklist
   const nd=(card.checklist||[]).filter(i=>i&&i.done).length, nt=(card.checklist||[]).length;
   if(nt!==before._clTotal) recordHistory(card, `atualizou o checklist (${nd}/${nt})`, whoOverride);
