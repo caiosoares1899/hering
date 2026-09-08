@@ -142,6 +142,18 @@ detalhe dos 4 call sites.
   (mesma técnica de `_doBulkTagMulti()`/`_okrDiffStringArray()`), fora
   do loop genérico de `HIST_FIELDS` (que agora pula `'tag'`
   explicitamente).
+  **Achado real (2026-09-08, `/monitorarbugs`, relato direto de
+  usuário — mudanças em cards não apareciam no histórico)**: mesma
+  classe de bug do achado de `tags[]` acima, em 4 campos diferentes.
+  `participants[]`/`riscos[]` eram gravados normalmente por
+  `saveCard()`/`scheduleAutoSave()` mas nunca tinham diff nenhum
+  (corrigido com o mesmo padrão Set-based); `demandante` nem estava em
+  `HIST_FIELDS` (diferente de `owner`, que já tinha tratamento
+  dedicado em `_histVal()`); e o TEXTO de `blockerReason` só virava
+  entrada quando o `blocker` booleano mudava junto — editar só o motivo
+  com o impedimento já marcado nunca gerava histórico (diff dedicado,
+  só dispara quando `blocker` continua `true` antes e depois, pra não
+  duplicar a entrada de marcar/desmarcar).
   **Visual rico com avatar (2026-09-06, pedido direto — "aquele
   histórico que você criou pro OKR, com a fotinha da pessoa, dá pra
   fazer isso no kanban também?")**: `recordHistory()` passa a gravar
@@ -380,13 +392,27 @@ detalhe dos 4 call sites.
   BLOQUEIO/ORDEM (um card não deveria "poder" antes do outro), sem teto
   de profundidade — só o guard de ciclo acima.
 
-### Tema (claro/escuro + 🌴 Vice City)
-- `_currentTheme()` — L29733 — lê `data-theme` do `<html>`, retorna
+### Tema (claro/escuro + 🌴 Vice City + 🕐 automático)
+- `_currentTheme()` — L30310 — lê `data-theme` do `<html>`, retorna
   `'light'`/`'dark'`/`'vice'`.
-- `toggleTheme()` — L29779 — alterna claro/escuro (clique no botão de
+- `toggleTheme()` — L30356 — alterna claro/escuro (clique no botão de
   tema). `toggleThemeVariant()` — logo abaixo — variante mais escura do
   claro (duplo-clique, só faz sentido dentro do claro).
-- `toggleViceCity()` / `exitViceCity()` — L29841/próximas linhas —
+- `toggleThemeAuto()` — L30437 (2026-09-08) — 4º modo, botão próprio
+  `#theme-auto-btn` (🕐) ao lado do botão de tema principal. Liga/desliga
+  a troca automática de tema pelo horário de São Paulo —
+  `_themeBandForSaoPauloNow()` (L30394, `Intl.DateTimeFormat` com
+  `timeZone:'America/Sao_Paulo'`) mapeia a hora pra uma das 3 bandas já
+  existentes (06h-12h claro, 12h-18h vice, resto escuro — nenhum CSS
+  novo). `_applyAutoTheme()` reaplica a cada 1min
+  (`_startThemeAutoWatch()`) e ao voltar a ficar visível
+  (`visibilitychange`). Qualquer troca MANUAL de tema
+  (`toggleTheme()`/`toggleThemeVariant()`/`toggleViceCity()`/
+  `exitViceCity()`, todas chamando `_disableThemeAutoIfOn()` no início)
+  desliga o automático. Estado em `localStorage` (`mare_theme_auto`),
+  replicado no script anti-flash do `<head>` (perto da L3327) e no menu
+  "⋯" mobile.
+- `toggleViceCity()` / `exitViceCity()` — L30481/próximas linhas —
   easter egg (2026-09-02, piada interna com GTA 6/Vice City): 3º tema
   escondido, ativado segurando o botão de tema por
   `VICE_LONGPRESS_MS` (`_themeBtnPointerDown()`/`_themeBtnPointerUp()`,
@@ -410,6 +436,23 @@ detalhe dos 4 call sites.
   `mare_theme_seen_{tema}`), consultável via console. Chamada em
   `toggleTheme()`/`toggleViceCity()` + listener de `auth-change` (cobre
   quem nunca troca de tema).
+
+### Arquivados / arquivamento automático
+- `maybeAutoArchiveOldCards()` — L12531 — roda a regra opcional de
+  arquivar sozinho cards antigos E parados (`archiveCfg`, configurável
+  em ⚙ Config → Automações). (2026-09-08) ganhou `excludedCols` — Set
+  de ids de coluna que a regra nunca toca (ex.: Backlog, onde cards
+  ficam parados de propósito). Pending state em
+  `_archCfgExcludedColsPending`, chips renderizados por
+  `_archCfgExcludedColsChips()`/`_archCfgToggleExcludedCol()`, só grava
+  em `archiveCfg.excludedCols` no "💾 Salvar regra"
+  (`fillArchiveCfgTab()` L12584).
+- `openArquivados()` — L20881 — tela "Funções de card → Arquivados".
+  (2026-09-08) filtro novo por coluna (`#arch-f-col`) — arquivar nunca
+  reescreve `c.col` (só liga `c.archived`), então o valor atual do
+  campo já É "a coluna de quando foi arquivado", sem precisar de campo
+  dedicado. Coluna excluída desde então aparece como `id (coluna
+  excluída)`, ordenada por último.
 
 ### Comunicados / Mural (popup + badge + Mural)
 - `_refreshComunicados()` — L32507 — busca `kanban/comunicados`

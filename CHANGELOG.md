@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.622 — 2026-09-08 · Promove pra prod — Arquivamento por coluna, filtro em Arquivados, histórico do card e 🕐 tema automático
+
+Promove pra produção o lote v8.30.619-dev → v8.30.622-dev de
+`kanban-dev.html`, na sequência da correção isolada da sombra (v8.30.619
+prod, ver entrada abaixo) — pedido direto do usuário pra já subir tudo
+que estava acumulado, no lugar de esperar o fim do dia:
+
+- **🗄 Arquivamento automático ganha exceção por coluna**: em ⚙ Config →
+  Automações, dá pra marcar colunas (ex.: Backlog) que a regra de
+  arquivar cards antigos e parados nunca toca — cards deixados ali de
+  propósito, aguardando priorização, não somem sozinhos junto com os
+  esquecidos de verdade.
+- **📦 Arquivados ganha filtro por coluna**: em Funções de card →
+  Arquivados, novo filtro pela coluna em que o card estava quando foi
+  arquivado, além dos filtros já existentes por nome/tag/responsável.
+- **📜 Histórico do card**: corrige 4 campos que eram salvos
+  normalmente mas nunca geravam entrada no histórico — Participantes,
+  Riscos, Demandante, e o texto do motivo de um impedimento já marcado
+  (achado via relato direto de usuário — "teve mudanças que ele
+  realizou em uns cards e que não apareceu ali no histórico").
+- **🕐 Tema automático**: 4º modo de tema (botão próprio ao lado do
+  toggle de tema), reaproveitando os 3 temas existentes como "bandas"
+  do dia pelo horário de São Paulo — ☀️ claro (06h-12h), 🌴 Vice City
+  (12h-18h), 🌙 escuro (resto do dia). Qualquer troca manual de tema
+  desliga o automático.
+
 ### v8.30.619 — 2026-09-08 — Correção isolada: sombra preta grudada na borda direita da tela
 
 Relato direto do usuário: "no canto direito da tela tá com uma sombra
@@ -33,10 +59,11 @@ uma faixa escura no canto. Fix: `box-shadow` movido pra dentro de
 tela, igual sempre foi visualmente enquanto aberto.
 
 **Promoção isolada, fora do lote acumulado em dev** (mesmo padrão do PR
-#764): esta é a única mudança promovida agora — o restante do que está
-acumulado em `kanban-dev.html` (arquivamento por coluna, filtro em
-Arquivados, histórico do card, tema automático) continua aguardando
-validação/fim do dia, sem entrar nesta promoção.
+#764) — na hora, o restante do que estava acumulado em
+`kanban-dev.html` (arquivamento por coluna, filtro em Arquivados,
+histórico do card, tema automático) ainda aguardava validação/fim do
+dia. Minutos depois, a pedido do usuário, esse lote inteiro foi
+promovido junto (ver v8.30.622 acima).
 
 ### v8.30.618 — 2026-09-08 · Promove pra prod — Revisão mobile: dica visual de "rola pro lado" na tabela de Controle de Criativos
 
