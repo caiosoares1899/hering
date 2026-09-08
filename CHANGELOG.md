@@ -2985,6 +2985,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.621-dev — 2026-09-08 — 🕐 Tema automático: acompanha o horário de São Paulo
+
+Pedido direto do usuário: um 4º modo de tema que troca sozinho ao longo
+do dia, em vez de fixo até a próxima troca manual. Reaproveita os 3
+temas já existentes como "bandas" do dia (nenhum CSS novo) — só
+07h-11h59 fica <b>06h-12h ☀️ Lençóis Maranhenses</b> (claro), 12h-18h
+🌴 Vice City (o easter egg de long-press vira tema oficial da tarde),
+resto do dia 🌙 Abrolhos (escuro), sempre pelo horário de São Paulo
+(`Intl.DateTimeFormat` com `timeZone:'America/Sao_Paulo'`, cobre fuso
+sem depender de DST).
+
+Botão novo (🕐) ao lado do botão de tema principal, tanto na toolbar
+desktop quanto no menu "⋯" do mobile. Clique liga/desliga; enquanto
+ligado, reavalia a cada 1min (a virada só acontece 3x/dia, não precisa
+de mais frequência) e também na hora em que a aba volta a ficar visível
+(o navegador pode atrasar `setInterval` em aba em segundo plano). Sai do
+automático sozinho na primeira troca manual de tema (clique, duplo-clique
+ou long-press no botão principal) — a partir daí o tema escolhido fica
+fixo até a pessoa ligar o automático de novo.
+
 ### v8.30.620-dev — 2026-09-08 — `/monitorarbugs` no Histórico do card: participantes, riscos, demandante e motivo do impedimento nunca apareciam
 
 Pedido direto do usuário: "André me disse aqui que teve mudanças q ele
