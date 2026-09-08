@@ -13876,6 +13876,27 @@ a aba.
 Ver entrada correspondente em `kanban-dev.html` (achado menor da mesma
 rodada: tabela do Controle de Criativos sem dica visual de scroll).
 
+### painel.html v3.33 · painel — 2026-09-08 · Promove pra prod — Revisão mobile: colisão de texto na barra de abas do rodapé
+
+Promove pra produção o lote v3.33 · painel-dev de `painel-dev.html` (ver
+entrada logo abaixo pro racional completo), aplicado via patch cirúrgico
+(preservando as seções prod-only — Push Manual, cooldown de
+visibilitychange, paths `_debug_bytes_log`/`_debug_bytes_daily`, seed do
+Mural):
+
+- barra de abas do rodapé (Visão/Fluxo/Timeline/OKR/Pessoas/Monitor/
+  Status/Dados/Agentes) ganha scroll horizontal em vez de dividir a
+  largura igualmente — corrige colisão de texto entre abas vizinhas num
+  celular de 375px;
+- `.version` reposicionado pra acima da barra fixa no mobile (achado
+  incidental: furava por cima do texto das abas mesmo com z-index maior,
+  por causa do contexto de empilhamento criado pelo `backdrop-filter` da
+  barra).
+
+Parte da mesma revisão mobile pedida pelo usuário cobrindo painel e
+kanban — ver entrada correspondente em `kanban.html (produção)` (achado
+menor da mesma rodada: tabela do Controle de Criativos).
+
 ### painel.html v3.32 · painel — 2026-09-07 · Promove pra prod — Feed de marcos: fix de filtro morto ao trocar de squad + 🎯 OKR: card do Objetivo destaca quando você é responsável
 
 Promove pra produção as duas últimas rodadas validadas em
