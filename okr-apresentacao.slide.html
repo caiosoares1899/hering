@@ -149,7 +149,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    de Marcos, bem maior que o normal, puxava o encolhimento junto; "as
    outras estão minúsculas" à toa). Cada seção que pode crescer demais
    (tabela de Marcos, Indicadores de Entrega, cada coluna do rodapé) ajusta
-   a PRÓPRIA fonte via fitSectionContent() (JS), dentro do espaço que o
+   a PRÓPRIA fonte via _okrFitDetailSections() (JS), dentro do espaço que o
    layout (flex/grid) já reserva pra ela — nunca corta, só reduz
    proporcionalmente, e só a seção que realmente precisa. */
 #detail-ov{position:fixed;inset:0;z-index:400;display:none;
@@ -185,7 +185,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    TUDO — inclusive o rodapé e os indicadores, que tinham conteúdo curto e
    cabiam à vontade) só porque a tabela de Marcos precisava de mais espaço
    ("as outras estão minúsculas" à toa). O ajuste fino agora é LOCAL, não
-   global (ver comentário de fitSectionContent() mais abaixo no JS): cada
+   global (ver comentário de _okrFitDetailSections() mais abaixo no JS): cada
    seção que pode crescer muito (a tabela de Marcos, os Indicadores de
    Entrega) encolhe só a PRÓPRIA fonte, dentro do espaço que sobrar pra
    ela — o resto do layout (cabeçalho, legenda, rodapé, campos curtos)
@@ -194,7 +194,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    menos espaço pra tabela de Marcos precisar encolher) — só que agora,
    em vez de silenciar o corte (que era o bug original, antes de existir
    qualquer mecanismo de fit), cada seção internamente comprimida se
-   ajusta sozinha via fitSectionContent(). */
+   ajusta sozinha via _okrFitDetailSections(). */
 .d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
 .d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;}
 .d2-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:14px 18px;
@@ -203,10 +203,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    min-height:0, achado real repetido do Round 1): com overflow!=visible,
    o navegador zera a contribuição de tamanho MÍNIMO deste item pro
    grid/flex — ele fica livre pra ser espremido bem menor que o conteúdo
-   precisa ANTES mesmo do fitSectionContent() ter a chance de medir/reagir
+   precisa ANTES mesmo do _okrFitDetailSections() ter a chance de medir/reagir
    (a medição roda sobre o clientHeight JÁ espremido, então nunca vê o
    déficit de verdade). Sem overflow:hidden, o painel mantém seu tamanho
-   mínimo real na conta do layout, e fitSectionContent() consegue medir e
+   mínimo real na conta do layout, e _okrFitDetailSections() consegue medir e
    encolher a fonte certinho quando precisa. */
 .d2-panel.grow{flex:1;min-height:0;display:flex;flex-direction:column;}
 .d2-panel-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
@@ -238,13 +238,31 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    cada card fica CENTRALIZADO verticalmente: quando o objetivo tem poucos
    itens, o espaço sobrando vira respiro em volta do texto, não uma caixa
    vazia largada no topo (achado real, print do usuário: "olha o espaço
-   vazio! aproveita melhor o espaço"). */
-.d2-footer{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex-shrink:0;}
+   vazio! aproveita melhor o espaço").
+   flex:1 1 auto;min-height:0 (NÃO flex-shrink:0) de propósito — achado
+   real, print do usuário rindo do resultado ("aumentou o espaço
+   desproporcional, a letra ficou minúscula"): com o rodapé protegido
+   (flex-shrink:0, nunca cede espaço), um Objetivo com rodapé de conteúdo
+   real (frases inteiras, não só 1-2 palavras) tomava sozinho a maior
+   parte da altura disponível, sobrando quase nada pra Marcos/raia
+   esquerda — o TEXTO delas ficava minúsculo tentando caber num espaço
+   injustamente pequeno, enquanto o rodapé ficava enorme e intocado. Sem
+   flex-shrink:0, o rodapé passa a dividir o mesmo aperto proporcionalmente
+   com o corpo (.d2-body) quando o total não cabe — cada seção que estoura
+   (rodapé incluído, via _okrFitDetailSections() nas colunas) encolhe a
+   própria fonte igual as outras, em vez de uma ficar sempre intocada à
+   custa das demais. */
+.d2-footer{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;flex:1 1 auto;min-height:0;}
+/* SEM overflow:hidden aqui (mesmo motivo do .d2-right/.d2-panel.grow mais
+   acima): agora que .d2-footer também é compressível (flex:1;min-height:0,
+   ver comentário lá em cima), overflow:hidden zeraria a contribuição
+   mínima desta coluna pro grid, deixando-a ser espremida antes do
+   _okrFitDetailSections() ter a chance de medir/reagir. */
 .d2-fcol{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:16px 18px;
-  backdrop-filter:blur(12px);overflow:hidden;display:flex;flex-direction:column;}
+  backdrop-filter:blur(12px);display:flex;flex-direction:column;}
 .d2-fcol h4{font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:var(--cyan);margin-bottom:8px;
   display:flex;align-items:center;gap:7px;flex-shrink:0;}
-/* min-height:0 é o que permite fitSectionContent() medir o espaço de
+/* min-height:0 é o que permite _okrFitDetailSections() medir o espaço de
    verdade disponível pra essa lista: sem ele, o item de flex nunca é
    comprimido abaixo do próprio tamanho natural (min-content), então
    clientHeight sempre reporta "do tamanho que eu quero", nunca "do
@@ -572,7 +590,7 @@ function rebuild(){
 // até sua altura renderizada caber em `availH`, sem nunca deixar a largura
 // visual sair de `content`'s largura natural (targetW) — só a fonte
 // encolhe, a largura continua ocupando o espaço todo. Usado tanto pro
-// encolhimento de UMA seção específica (fitSectionContent) quanto pro
+// encolhimento de UMA seção específica (_okrFitDetailSections) quanto pro
 // encolhimento do bloco inteiro (fitSlideContent, carrossel de slides).
 function _zoomFitToHeight(content, availH){
   content.style.zoom = '';
@@ -621,7 +639,7 @@ function _zoomFitToHeight(content, availH){
 // normal/grande). Usado no carrossel de slides (.slide/.slide-inner), cujo
 // conteúdo (grid de cards) não tem a mesma composição "seção pequena ao
 // lado de seção grande" do detalhe do Objetivo — ali um único fit no bloco
-// inteiro é suficiente (ver fitSectionContent() logo abaixo pro caso que
+// inteiro é suficiente (ver _okrFitDetailSections() logo abaixo pro caso que
 // precisa de ajuste por seção).
 //
 // Achado real (2 rodadas de print do usuário): a 1ª versão disso usava
@@ -662,24 +680,20 @@ function fitSlideContent(containerEl, contentEl){
   _zoomFitToHeight(content, containerEl.clientHeight - padY);
 }
 
-// Ajusta UMA seção específica do detalhe do Objetivo (tabela de Marcos,
-// painel de Indicadores de Entrega, cada coluna do rodapé) — nunca o bloco
-// inteiro. Achado real (print do usuário, depois de fitSlideContent() já
-// ter corrigido corte e desperdício de largura): um Objetivo com muitos
-// marcos ainda deixava TUDO minúsculo — cabeçalho, indicadores curtos,
-// rodapé com listas de 1-2 itens — só porque a tabela de Marcos, bem maior
-// que o normal, empurrava o encolhimento pro d2-wrap INTEIRO ("as outras
-// estão minúsculas" à toa, sobrando espaço perfeitamente utilizável nas
-// seções pequenas). `el` já é um item flex com `flex:1;min-height:0`
-// dentro de um pai que tem altura fixa (a própria estrutura garante isso —
-// ver .d2-table-rows/.d2-panel.grow/.d2-flist no CSS) — ou seja, o próprio
-// `el.clientHeight` ATUAL (antes de qualquer zoom) já é exatamente o
-// espaço que o layout externo reservou pra essa seção, sem precisar
-// descontar padding de um container separado.
-function fitSectionContent(el){
-  if(!el) return;
-  _zoomFitToHeight(el, el.clientHeight);
-}
+// Ajuste por seção do detalhe do Objetivo (tabela de Marcos, raia
+// esquerda, cada coluna do rodapé) — nunca o bloco inteiro. Achado real
+// (print do usuário, depois de fitSlideContent() já ter corrigido corte e
+// desperdício de largura): um Objetivo com muitos marcos ainda deixava
+// TUDO minúsculo — cabeçalho, indicadores curtos, rodapé com listas de
+// 1-2 itens — só porque a tabela de Marcos, bem maior que o normal,
+// empurrava o encolhimento pro d2-wrap INTEIRO ("as outras estão
+// minúsculas" à toa, sobrando espaço perfeitamente utilizável nas seções
+// pequenas). Cada `el` já é um item flex/grid com `min-height:0` dentro
+// de um pai com altura fixa (a própria estrutura garante isso — ver
+// .d2-table-rows/.d2-left/.d2-flist no CSS) — ou seja, `el.clientHeight`
+// (medido ANTES de qualquer ajuste, ver _okrFitDetailSections() logo
+// abaixo pro motivo de medir tudo de uma vez) já é exatamente o espaço
+// que o layout externo reservou pra essa seção.
 
 function render(){
   const wrap = document.getElementById('slides');
@@ -782,7 +796,7 @@ window._okrOpenDetail = id => {
   document.getElementById('detail-ov').classList.add('open');
   _okrFitDetailSections();
 };
-// Ajusta cada seção independentemente (ver fitSectionContent()) — nunca um
+// Ajusta cada seção independentemente (ver _okrFitDetailSections()) — nunca um
 // único fit pro d2-wrap inteiro, senão a tabela de Marcos grande encolhe
 // TUDO junto, inclusive seções curtas que cabiam à vontade.
 //
@@ -797,12 +811,52 @@ window._okrOpenDetail = id => {
 // cima do rodapé. Encolher a raia INTEIRA junto (Objetivo + Responsável +
 // Indicadores) faz os 3 dividirem o mesmo encolhimento proporcional, em
 // vez de 2 ficarem intocados e 1 sozinho pagar a conta toda.
+//
+// Achado real (2ª rodada, print do usuário: rodapé virou gigante e a
+// raia/tabela ficaram minúsculas espremidas num canto — literalmente o
+// oposto do pedido, MESMO já pré-capturando o orçamento de cada seção
+// antes de mexer nela): pré-capturar não bastou porque a divisão externa
+// (.d2-body vs .d2-footer, que competem por flex-shrink desde que o
+// rodapé também virou compressível — ver comentário do .d2-footer no
+// CSS) continuava sendo recalculada AO VIVO a cada mudança — encolher
+// .d2-left/.d2-table-rows (flex:none + align-self:start + height:auto)
+// muda o tamanho NATURAL de baixo-pra-cima da célula de grid, o que muda
+// o flex-basis:auto do PRÓPRIO .d2-body, o que muda quanto o d2-wrap
+// externo dá pro corpo vs pro rodapé DEPOIS que a 1ª seção já foi
+// ajustada. Fix: trava a divisão body/footer (height explícito em px +
+// flex:none nos DOIS) ANTES de tocar em qualquer seção interna — só
+// depois disso mede e ajusta cada seção (tabela de Marcos, raia
+// esquerda, colunas do rodapé) dentro do espaço já congelado, sem risco
+// de a divisão externa se mexer no meio do processo.
 function _okrFitDetailSections(){
-  fitSectionContent(document.querySelector('.d2-table-rows'));
-  fitSectionContent(document.querySelector('.d2-left'));
-  document.querySelectorAll('.d2-fcol').forEach(fcol=>{
-    fitSectionContent(fcol.querySelector('.d2-flist, .d2-empty'));
-  });
+  const dBody = document.querySelector('.d2-body');
+  const dFooter = document.querySelector('.d2-footer');
+  dBody.style.flex = ''; dBody.style.height = '';
+  dFooter.style.flex = ''; dFooter.style.height = '';
+  const dBodyH = dBody.clientHeight, dFooterH = dFooter.clientHeight;
+  dBody.style.flex = 'none'; dBody.style.height = dBodyH+'px';
+  dFooter.style.flex = 'none'; dFooter.style.height = dFooterH+'px';
+
+  const marcosRows = document.querySelector('.d2-table-rows');
+  const dLeft = document.querySelector('.d2-left');
+  const fcols = [...document.querySelectorAll('.d2-fcol')];
+  // Mesma trava do .d2-left acima: cada coluna do rodapé também é célula
+  // de grid (align-self:stretch por padrão) — travar só a altura do
+  // .d2-footer não impede uma .d2-fcol de crescer além da linha (CSS Grid
+  // não limita o tamanho "auto" de uma célula pelo tamanho do container,
+  // achado real: rodapé travado em 227px, mas uma coluna sozinha
+  // renderizava 374px, vazando 147px pra fora do próprio rodapé). Trava
+  // cada fcol na MESMA altura do rodapé já travado, do mesmo jeito.
+  fcols.forEach(fcol=>{ fcol.style.alignSelf = 'start'; fcol.style.height = dFooterH+'px'; });
+  const fcolLists = fcols.map(fcol=>fcol.querySelector('.d2-flist, .d2-empty'));
+
+  const availMarcos = marcosRows.clientHeight;
+  const availLeft = dLeft.clientHeight;
+  const availFcols = fcolLists.map(el=>el ? el.clientHeight : 0);
+
+  _zoomFitToHeight(marcosRows, availMarcos);
+  _zoomFitToHeight(dLeft, availLeft);
+  fcolLists.forEach((el,i)=>{ if(el) _zoomFitToHeight(el, availFcols[i]); });
 }
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
 
