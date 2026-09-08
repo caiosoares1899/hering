@@ -18,6 +18,21 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.618 — 2026-09-08 · Promove pra prod — Revisão mobile: dica visual de "rola pro lado" na tabela de Controle de Criativos
+
+Promove pra produção o lote v8.30.618-dev de `kanban-dev.html`:
+
+- **🎬 Controle de Criativos, no celular**: a tabela (9 colunas) já
+  rolava horizontalmente de verdade, mas sem nenhuma dica visual disso —
+  a última coluna cortava a palavra bem na borda, parecendo quebrada em
+  vez de "arraste pra ver mais". Adicionado um gradiente fixo na borda
+  direita indicando que tem mais conteúdo pra rolar.
+
+Parte de uma revisão mobile pedida pelo usuário cobrindo painel e
+kanban — ver entrada correspondente em `painel.html / painel-dev.html`
+pro achado maior desta rodada (colisão de texto na barra de abas do
+rodapé).
+
 ### v8.30.617 — 2026-09-07 · Promove pra prod — 📊 Crosshair no CFD, fixes de filtros/salvar/menu de contexto, ⏸ Pausar no menu de contexto
 
 Promove pra produção o lote v8.30.610-dev → v8.30.617-dev de
