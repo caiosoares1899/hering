@@ -2142,6 +2142,7 @@ input[type="date"]{-moz-appearance:textfield;}
 .notif-btn.has-unread{color:var(--txt);}
 .notif-btn.ring{animation:bell-ring .5s ease;}
 #dnd-toggle-btn.dnd-active{border-color:rgba(255,209,102,.4)!important;color:var(--warn)!important;background:rgba(255,209,102,.08)!important;}
+#theme-auto-btn.theme-auto-active{border-color:rgba(56,182,255,.5)!important;color:var(--accent)!important;background:rgba(56,182,255,.12)!important;}
 .dnd-toggle-btn{
   box-sizing:border-box;width:100%;text-align:left;background:none;
   border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;
@@ -3333,10 +3334,21 @@ input[type="date"]{-moz-appearance:textfield;}
 // pode bloquear localStorage).
 (function(){
   try{
-    const t=localStorage.getItem('mare_theme');
+    const auto = localStorage.getItem('mare_theme_auto')==='1';
+    let t;
+    if(auto){
+      // Tema automático: banda calculada pelo horário de São Paulo, não
+      // pelo valor salvo em mare_theme (que aqui só guarda o ÚLTIMO tema
+      // aplicado, pra outras abas/telas que ainda leem essa chave direto —
+      // ver _applyAutoTheme() no <script> principal, mesma conta).
+      const h = Number(new Intl.DateTimeFormat('en-US',{hour:'numeric',hourCycle:'h23',timeZone:'America/Sao_Paulo'}).format(new Date()));
+      t = (h>=6 && h<12) ? 'light' : (h>=12 && h<18) ? 'vice' : 'dark';
+    }else{
+      t = localStorage.getItem('mare_theme');
+    }
     if(t==='light') document.documentElement.setAttribute('data-theme','light');
     else if(t==='vice') document.documentElement.setAttribute('data-theme','vice');
-    if(localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
+    if(!auto && localStorage.getItem('mare_theme_variant')==='b') document.documentElement.setAttribute('data-theme-variant','b');
   }catch(e){}
 })();
 </script>
@@ -3404,6 +3416,7 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
     <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
       <button class="hvs-btn" data-mode="hybrid" onclick="setHybridView('hybrid')" title="Tudo (padrão)">🤝</button>
@@ -6086,7 +6099,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.620-dev</div>
+<div class="version">v8.30.621-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6516,6 +6529,7 @@ function renderHdMoreDD(){
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeAuto();">🕐 Tema automático${_isThemeAutoOn()?' — Ligado':''}</div>
     <div class="sm-dd-sep"></div>
     <div class="squad-switcher-item" onclick="doSignOut();" style="color:#ff8fa3;">🚪 Sair</div>
   `;
@@ -30340,6 +30354,7 @@ function _recordThemeDiscovered(theme){
 }
 window.addEventListener('auth-change', ()=>{ _recordThemeDiscovered(_currentTheme()); });
 function toggleTheme(){
+  _disableThemeAutoIfOn();
   const next = _currentTheme()==='light' ? 'dark' : 'light';
   if(next==='light') document.documentElement.setAttribute('data-theme','light');
   else document.documentElement.removeAttribute('data-theme');
@@ -30360,11 +30375,84 @@ function toggleThemeVariant(){
     showToast('A versão mais escura só existe no tema claro ☀️ — troca pro claro primeiro.');
     return;
   }
+  _disableThemeAutoIfOn();
   const isB = document.documentElement.getAttribute('data-theme-variant')==='b';
   if(isB){ document.documentElement.removeAttribute('data-theme-variant'); safeLS.setItem('mare_theme_variant',''); }
   else{ document.documentElement.setAttribute('data-theme-variant','b'); safeLS.setItem('mare_theme_variant','b'); }
   showToast(isB ? '☀️ Lençóis Maranhenses — padrão' : '☀️ Lençóis Maranhenses — mais escuro');
 }
+// ── TEMA AUTOMÁTICO (🕐, acompanha o horário de São Paulo) ───────────
+// Pedido direto: 4º modo, botão próprio ao lado do de tema (não reusa o
+// clique/duplo-clique/long-press do botão principal, que já fazem 3
+// coisas diferentes — ver comentário do Vice City abaixo). Reaproveita
+// os 3 temas existentes como "bandas" do dia, sem CSS novo: 06h-12h
+// claro, 12h-18h vice, resto escuro. Qualquer troca MANUAL de tema
+// (toggleTheme/toggleThemeVariant/toggleViceCity/exitViceCity) desliga
+// o automático — nesse momento a pessoa expressou uma preferência
+// explícita, que não devia ser sobrescrita sozinha na próxima virada de
+// horário.
+function _themeBandForSaoPauloNow(){
+  const h = Number(new Intl.DateTimeFormat('en-US',{hour:'numeric',hourCycle:'h23',timeZone:'America/Sao_Paulo'}).format(new Date()));
+  if(h>=6 && h<12) return 'light';
+  if(h>=12 && h<18) return 'vice';
+  return 'dark';
+}
+function _isThemeAutoOn(){ return safeLS.getItem('mare_theme_auto')==='1'; }
+let _themeAutoInterval=null;
+function _applyAutoTheme(showToastOnChange){
+  const band = _themeBandForSaoPauloNow();
+  const before = _currentTheme();
+  if(band==='light') document.documentElement.setAttribute('data-theme','light');
+  else if(band==='vice') document.documentElement.setAttribute('data-theme','vice');
+  else document.documentElement.removeAttribute('data-theme');
+  safeLS.setItem('mare_theme', band);
+  _applyThemeButtonIcon();
+  _applyThemeAutoButtonState();
+  _recordThemeDiscovered(band);
+  if(showToastOnChange && before!==band){
+    showToast('🕐 Tema automático: '+(band==='light'?'☀️ Lençóis Maranhenses':band==='vice'?'🌴 Vice City':'🌙 Abrolhos'));
+  }
+}
+function _applyThemeAutoButtonState(){
+  const btn=document.getElementById('theme-auto-btn');
+  if(!btn) return;
+  const on=_isThemeAutoOn();
+  btn.classList.toggle('theme-auto-active', on);
+  btn.title = on
+    ? 'Tema automático LIGADO — troca sozinho conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra desligar.'
+    : 'Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar.';
+}
+function _startThemeAutoWatch(){
+  if(_themeAutoInterval) clearInterval(_themeAutoInterval);
+  // A cada 1min: a virada de banda só acontece 3x/dia, não precisa de
+  // mais precisão — o custo de checar de sobra é irrelevante.
+  _themeAutoInterval = setInterval(()=>_applyAutoTheme(true), 60000);
+}
+function _disableThemeAutoIfOn(){
+  if(!_isThemeAutoOn()) return;
+  safeLS.setItem('mare_theme_auto','');
+  if(_themeAutoInterval){ clearInterval(_themeAutoInterval); _themeAutoInterval=null; }
+  _applyThemeAutoButtonState();
+}
+function toggleThemeAuto(){
+  if(_isThemeAutoOn()){
+    _disableThemeAutoIfOn();
+    showToast('🕐 Tema automático desligado — o tema atual fica fixo até você trocar de novo.');
+    return;
+  }
+  safeLS.setItem('mare_theme_auto','1');
+  _applyAutoTheme(false);
+  _startThemeAutoWatch();
+  showToast('🕐 Tema automático ligado — acompanha o horário de São Paulo (☀️ manhã, 🌴 tarde, 🌙 noite).');
+}
+if(_isThemeAutoOn()){ _applyAutoTheme(false); _startThemeAutoWatch(); }
+// Aba volta a ficar visível com o automático ligado: reavalia na hora —
+// setInterval pode ser pausado/atrasado pelo navegador com a aba em
+// segundo plano, sem isso a virada de banda só apareceria minutos depois
+// de a pessoa voltar pra aba.
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && _isThemeAutoOn()) _applyAutoTheme(true);
+});
 // 🌴 Vice City — easter egg interno (piada com o trailer de GTA 6, visual
 // Miami Vice: rosa neon, ciano, pôr do sol roxo/laranja — ver
 // [data-theme="vice"] no CSS). Só entra segurando o botão de tema
@@ -30392,6 +30480,7 @@ function _themeBtnPointerUp(){
 }
 function toggleViceCity(){
   if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
   document.documentElement.setAttribute('data-theme','vice');
@@ -30402,6 +30491,7 @@ function toggleViceCity(){
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){
+  _disableThemeAutoIfOn();
   const prevTheme = safeLS.getItem('mare_theme_before_vice') || '';
   const prevVariant = safeLS.getItem('mare_theme_variant_before_vice') || '';
   if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
@@ -30449,6 +30539,7 @@ function _mobileThemeRowClick(){
   toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
+_applyThemeAutoButtonState(); // idem pro botão 🕐, com o estado ligado/desligado já aplicado no <head>
 // Fish & Bubbles
 (function(){
   const fw=document.getElementById('fwrap'), bw=document.getElementById('bwrap');
