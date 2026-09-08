@@ -507,6 +507,21 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `editingId`/`cards.find()` fresco (não usa closure stale, diferente
   do padrão que causou o bug de `addBlockerTag()` da rodada anterior);
   `_saveCardWithRetry()` consistente nos 3 call sites.
+- **2026-09-08, Histórico do card (pedido explícito, relato direto de
+  usuário — "André... teve mudanças que ele realizou em uns cards e
+  que não apareceu ali no histórico")**: 4 achados, comparando
+  `HIST_FIELDS`/`_histSnapshot()`/`_histDiff()` contra todos os campos
+  que `saveCard()`/`scheduleAutoSave()` de fato gravam (técnica 1 —
+  mesma técnica que já achou o gap de `tags[]` no PR #770).
+  Participantes, Riscos e Demandante eram persistidos normalmente mas
+  nunca tinham diff nenhum (Demandante nem estava no `HIST_FIELDS`,
+  diferente de Responsável); motivo do impedimento só virava entrada
+  quando o `blocker` booleano mudava, nunca quando só o TEXTO do
+  motivo era editado com o impedimento já marcado. Fix: mesma técnica
+  Set-based do `tags[]` pra participantes/riscos; `demandante` no
+  `HIST_FIELDS` genérico; diff dedicado pro motivo, só quando o
+  impedimento continua marcado antes e depois (evita duplicar a
+  entrada de marcar/desmarcar). dev v8.30.620.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

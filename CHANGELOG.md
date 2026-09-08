@@ -2985,6 +2985,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.620-dev — 2026-09-08 — `/monitorarbugs` no Histórico do card: participantes, riscos, demandante e motivo do impedimento nunca apareciam
+
+Pedido direto do usuário: "André me disse aqui que teve mudanças q ele
+realizou em uns cards e que nao apareceu ali no historico". Investigação
+comparando `HIST_FIELDS`/`_histSnapshot()`/`_histDiff()` (o que o
+Histórico rastreia) contra todos os campos que `saveCard()`/
+`scheduleAutoSave()` de fato gravam no card (o `Object.assign` das
+duas) — 4 campos eram persistidos normalmente no Firebase mas nunca
+tinham diff nenhum registrado:
+
+- **👤 Participantes**: adicionar/remover alguém da lista de
+  participantes nunca virava entrada de histórico.
+- **⚠ Riscos**: idem, pra qualquer item de risco adicionado/removido.
+- **📢 Demandante**: definir/trocar/remover o campo não gerava
+  entrada — só `owner` (Responsável) estava no `HIST_FIELDS`.
+- **Motivo do impedimento**: só marcar/desmarcar o impedimento
+  (`blocker`, booleano) já gerava entrada — editar o TEXTO do motivo
+  com o card já impedido (ex.: corrigir/detalhar o motivo depois)
+  nunca aparecia.
+
+Fix: mesma técnica Set-based já usada pra `tags[]` (achado de rodada
+anterior, PR #770) pra participantes e riscos; `demandante` entra no
+`HIST_FIELDS` genérico (mesmo tratamento de `owner`, resolve init →
+nome); motivo do impedimento ganha diff dedicado, só disparando quando
+o impedimento CONTINUA marcado antes e depois (marcar/desmarcar já tem
+sua própria entrada, sem duplicar). Validado com Playwright: os 4
+casos geram a entrada certa; nenhuma mudança gera 0 entradas (sem
+falso positivo); desmarcar impedimento enquanto limpa o motivo junto
+gera só 1 entrada ("removeu o impedimento"), não 2.
+
 ### v8.30.619-dev — 2026-09-08 — Arquivamento automático ganha exceção por coluna + Arquivados ganha filtro por coluna
 
 Dois pedidos diretos do usuário:
