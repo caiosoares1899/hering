@@ -13837,6 +13837,38 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-08 (3ª rodada) — Fix: fitSlideContent() encolhia largura junto com altura à toa, deixando fonte menor e espaço vazio nas laterais
+
+Print do usuário no fix anterior (2ª rodada): nada mais cortado, mas
+"texto muito pequeno" + "sobra espaço vazio que podia ser usado" — dois
+achados apontados via `AskUserQuestion` confirmando o diagnóstico.
+
+**Causa raiz**: `fitSlideContent()` usava `transform:scale(fator)` — um
+ÚNICO fator aplicado em altura E largura juntas, pra manter a proporção.
+Só que a largura do conteúdo já ocupava ~100% do espaço disponível ANTES
+de qualquer encolhimento (só a altura estourava); o fator ficava definido
+pela altura (a dimensão realmente apertada), e esse MESMO fator pequeno
+encolhia a largura também, que nunca precisou encolher — sobrava um
+respiro enorme nas laterais e o texto ficava menor do que o necessário
+(largura nunca foi de fato o limitante).
+
+**Fix**: troca `transform:scale` por `zoom` + largura compensada em `px`
+— `zoom`, diferente de `transform`, dispara reflow de verdade, então o
+texto quebra linha considerando a largura JÁ compensada (a largura visual
+final continua ocupando 100% do espaço disponível; só a fonte/paddings
+encolhem). Como "menos zoom" não reduz a altura linearmente (o texto
+também reflui em mais linhas, cada uma mais estreita), usa busca binária:
+tenta um nível de zoom, mede a altura resultante de verdade
+(`getBoundingClientRect`, não `scrollHeight` — zoom tem sua própria
+pegadinha de coordenadas locais, documentada no comentário da função) e
+ajusta até achar o MAIOR zoom que ainda cabe.
+
+Validado com os mesmos dados reais do print: zoom foi de 0.643 (equivalente
+ao `transform:scale` antigo) pra 0.704 — fonte maior — e a largura
+renderizada passou a bater exatamente com a disponível (antes sobrava
+respiro nas duas laterais). Casos sem overflow e o cenário de overflow mais
+pesado (14 marcos sintéticos) continuam sem clipping.
+
 ### 2026-09-08 (2ª rodada) — Fix: fitSlideContent() calculava o espaço disponível errado (padding do container contado 2x), cortando a última linha
 
 Print do usuário no primeiro fix desta mesma tela (rodada anterior, ver
