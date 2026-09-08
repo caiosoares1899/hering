@@ -13837,7 +13837,34 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
-### 2026-09-08 — Fix: Objetivo com muitos marcos/campos longos cortava conteúdo em vez de encolher a fonte
+### 2026-09-08 (2ª rodada) — Fix: fitSlideContent() calculava o espaço disponível errado (padding do container contado 2x), cortando a última linha
+
+Print do usuário no primeiro fix desta mesma tela (rodada anterior, ver
+entrada logo abaixo): "não usou o espaço todo ai ficou pequeno" — a
+última linha da lista de Progressos ("Correções de cores nos gráficos do
+report diário") continuava cortada, mesmo já com o `.d2-body` corrigido.
+
+**Causa raiz, num nível abaixo do fix anterior**: `fitSlideContent()` usa
+`containerEl.clientHeight/clientWidth` como espaço disponível — mas
+`containerEl` (ex.: `.detail-modal`) tem padding próprio (`34px 46px`), e
+quem precisa caber de fato é o `content` (`#d2-wrap`), que só enxerga o
+espaço JÁ DESCONTADO desse padding (`height:100%` do quê sobra depois
+dele). Sem descontar o padding do container na conta, a escala saía maior
+do que deveria (achava que tinha ~68px de altura livre a mais do que
+realmente tinha) — cortando a última linha por baixo (`.detail-modal`
+tem `overflow:hidden`), sem sobrar nem faltar espaço perceptível, só uma
+conta de proporção errada. Mesmo bug, mesma função, também usada pra
+escalar as slides principais (`.slide`, padding `30px 44px`) — corrigido
+ali também, não só no detalhe do Objetivo.
+
+Fix: `fitSlideContent()` agora lê o padding real do container
+(`getComputedStyle`) e desconta de `availH`/`availW` antes de calcular a
+escala. Validado com os mesmos dados reais do print do usuário: escala
+foi de 0.705 (errada, cortava a última linha) pra 0.643 (correta, tudo
+visível, sem sobra nem corte) — e os casos sem overflow (poucos itens)
+continuam sem nenhum encolhimento (`transform:none`), sem regressão.
+
+### 2026-09-08 (1ª rodada) — Fix: Objetivo com muitos marcos/campos longos cortava conteúdo em vez de encolher a fonte
 
 Achado real (2 prints do usuário): o Objetivo "IA no Data Analytics" (9
 marcos + várias listas longas de Progressos/Próximos Passos/Riscos/Planos
