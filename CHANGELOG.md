@@ -13835,7 +13835,50 @@ só sugerindo texto.
 - **Requer deploy manual**: `firebase deploy --only
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
+## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
+
+### 2026-09-08 — Fix: Objetivo com muitos marcos/campos longos cortava conteúdo em vez de encolher a fonte
+
+Achado real (2 prints do usuário): o Objetivo "IA no Data Analytics" (9
+marcos + várias listas longas de Progressos/Próximos Passos/Riscos/Planos
+de Ação) aparecia com a tabela de Marcos mostrando só a 1ª linha e as 3
+últimas colunas do rodapé completamente vazias — mesmo a página já tendo
+um mecanismo dedicado (`fitSlideContent()`) pra encolher a slide inteira
+proporcionalmente (fonte incluída) quando o conteúdo não cabe, em vez de
+cortar. Pedido direto: "seria interessante diminuir a fonte pra dar
+leitura e caber tudo".
+
+**Causa raiz**: `.d2-body` (a seção do meio, com o rail do Objetivo +
+tabela de Marcos) tinha `min-height:0`, permitindo o layout flexível
+espremê-la bem menor que o conteúdo real precisa sempre que o rodapé (tira
+de 4 colunas, `flex-shrink:0`, nunca cede espaço) já ocupava a maior parte
+da altura disponível. Como esse espremimento acontece TODO dentro da
+altura fixa do wrapper principal (`#d2-wrap`), a medição que decide se
+precisa encolher (`scrollHeight` vs. `clientHeight` do wrapper) nunca via
+overflow nenhum — o "corte" acontecia silenciosamente por dentro, sem
+nunca acionar o encolhimento proporcional que já existia pra esse
+propósito.
+
+**Fix**: removido o `min-height:0` de `.d2-body` — agora ele recusa ficar
+menor que seu próprio conteúdo mínimo, o que empurra corretamente o
+`#d2-wrap` pra além de 100% quando o Objetivo é grande, ISSO sim é visto
+pela medição existente, e a slide inteira (incluindo a fonte) encolhe
+proporcionalmente até caber — exatamente o comportamento "nunca corta, só
+reduz" que a página já documentava como intenção, só que quebrado nesse
+caso específico. Validado com Playwright: Objetivo sintético com 14
+marcos + listas longas — antes do fix, tabela mostrava 1/14 linhas e 3
+das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
+aparecem completas, com a slide toda escalada a ~63% pra caber.
+
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.34 · painel-dev — 2026-09-08 — Aba OKR ganha link direto pra tela de apresentação
+
+Pedido direto: "la na aba de okr do painel, tem q ter um link direto para
+apresentação" (`okr-apresentacao.slide.html`, já mencionada só dentro do
+texto da Central de Ajuda até então, sem nenhum acesso direto na própria
+tela). Novo botão "🎥 Apresentação" na barra de ações da aba 🎯 OKR
+(ao lado de "❓ Ajuda"), abre a apresentação em nova aba (`target="_blank"`).
 
 ### painel-dev.html v3.33 · painel-dev — 2026-09-08 — Revisão mobile: colisão de texto na barra de abas do rodapé
 

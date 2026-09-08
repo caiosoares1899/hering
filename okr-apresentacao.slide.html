@@ -171,8 +171,22 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 /* Corpo: rail (Objetivo/Responsável/Indicadores) + tabela de Marcos. Altura
    generosa mas ainda flexível (flex:1) — o rodapé (tira de 4 colunas) é
-   flex-shrink:0, então o corpo sempre cede espaço a ele primeiro. */
-.d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
+   flex-shrink:0, então o corpo sempre cede espaço a ele primeiro.
+   SEM min-height:0 aqui de propósito (achado real, print do usuário: com
+   Objetivo cheio de marcos/campos longos, a tabela de Marcos aparecia com
+   1 linha só e as colunas do rodapé vazias — nunca acionava o encolhimento
+   da slide inteira). Com min-height:0, o corpo podia ser espremido pra bem
+   menos do que o conteúdo real precisa (o rodapé, flex-shrink:0, nunca cede
+   espaço, então TODO o déficit caía sobre o corpo) — e como esse
+   espremimento acontece dentro da própria altura fixa do d2-wrap, ele nunca
+   aparecia na medição de fitSlideContent() (que só olha scrollHeight vs.
+   clientHeight do wrapper), então o encolhimento proporcional nunca era
+   acionado. Sem min-height:0, o corpo recusa ficar menor que seu conteúdo
+   mínimo — aí sim o excesso empurra o d2-wrap pra além de 100%, isso É
+   visto pela medição, e a slide inteira encolhe proporcionalmente (fonte
+   incluída) até caber, exatamente o pedido do usuário ("diminuir a fonte
+   pra dar leitura e caber tudo"). */
+.d2-body{flex:1 1 auto;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
 .d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;}
 .d2-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:14px 18px;
   backdrop-filter:blur(12px);}
