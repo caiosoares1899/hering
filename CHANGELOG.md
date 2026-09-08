@@ -2985,6 +2985,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.619-dev — 2026-09-08 — Arquivamento automático ganha exceção por coluna + Arquivados ganha filtro por coluna
+
+Dois pedidos diretos do usuário:
+
+- **🗄 Arquivamento automático por idade, exceção por coluna**: em ⚙
+  Config → Automações, a regra de arquivamento automático (idade mínima
+  + tempo sem edição) ganha um seletor de chips "Nunca arquivar
+  automaticamente cards nestas colunas" — pensado pro caso de um
+  Backlog onde cards ficam parados de propósito, aguardando
+  priorização, e não deviam sumir sozinhos junto com os esquecidos de
+  verdade. Novo campo `archiveCfg.excludedCols` (array de ids de
+  coluna), checado em `maybeAutoArchiveOldCards()` antes de qualquer
+  outra condição.
+- **📦 Arquivados, filtro por coluna**: a tela de cards arquivados
+  (⚡ Funções de card → Arquivados) ganha um 4º filtro, junto de
+  nome/tag/responsável — a coluna em que o card estava quando foi
+  arquivado. Arquivar nunca mexe em `card.col` (só liga
+  `card.archived`), então o valor já reflete isso direto, sem precisar
+  de um campo novo. Lida com coluna excluída depois do arquivamento
+  (mostra o id com aviso "(coluna excluída)", em vez de sumir da lista
+  de filtros).
+
+Validado com Playwright (dados fake: card antigo/parado numa coluna
+excluída não arquiva, os outros arquivam normalmente; toggle dos chips
++ salvar regra persiste `excludedCols` certinho; filtro por coluna em
+Arquivados, incluindo o caso de coluna já excluída).
+
 ### v8.30.618-dev — 2026-09-08 — Revisão mobile: dica visual de "rola pro lado" na tabela de Controle de Criativos
 
 Pedido direto do usuário: "Quero q vc der uma revisada nas telas do
