@@ -500,34 +500,80 @@ function rebuild(){
 }
 
 // Nunca deixa uma slide precisar de scroll (pedido direto: "tem que ser one
-// page view, é uma apresentação"). Em vez de cortar conteúdo, encolhe a
-// slide inteira (transform:scale, mantendo proporção) até caber no espaço
-// disponível — só entra em ação quando o conteúdo realmente não cabe
-// (poucos Objetivos numa gerência renderiza em tamanho normal/grande).
+// page view, é uma apresentação"). Em vez de cortar conteúdo, encolhe até
+// caber no espaço disponível — só entra em ação quando o conteúdo
+// realmente não cabe (poucos Objetivos numa gerência renderiza em tamanho
+// normal/grande).
+//
+// Achado real (2 rodadas de print do usuário): a 1ª versão disso usava
+// transform:scale(fator) no bloco inteiro — encolhe altura E largura pelo
+// MESMO fator, pra manter a proporção. Só que largura quase nunca é o
+// problema aqui (o conteúdo já ocupa ~100% da largura disponível antes de
+// qualquer encolhimento); é praticamente sempre só a ALTURA que estoura.
+// Resultado: o fator ficava definido pela altura (a dimensão realmente
+// apertada), e esse MESMO fator pequeno também encolhia a largura, que já
+// cabia — sobrava um respiro enorme nas laterais ("sobra espaço vazio que
+// podia ser usado") e a fonte ficava menor do que precisava
+// ("texto muito pequeno"), porque a largura nunca foi de fato reduzida.
+//
+// Fix: troca transform:scale por zoom + largura compensada
+// (width:(100/zoom)%). zoom, diferente de transform, dispara reflow de
+// verdade — o texto quebra linha considerando a largura já compensada
+// (ou seja, a largura VISUAL final continua ocupando 100% do espaço
+// disponível, só a fonte/paddings encolhem). Como menos zoom = texto
+// quebrando em MAIS linhas por parágrafo mas cada linha mais estreita (não
+// dá pra prever a altura final por uma conta linear simples), faz busca
+// binária: tenta um nível de zoom, mede a altura resultante de verdade
+// (getBoundingClientRect, já com o reflow aplicado) e ajusta até achar o
+// MAIOR zoom que ainda cabe — a fonte fica exatamente do tamanho que sobra
+// o mínimo de espaço, nunca menor que o necessário.
+//
+// Duas pegadinhas reais do CSS `zoom` que já derrubaram uma 1ª tentativa
+// desta função (media explodindo pra 10x/100x do esperado, testado com
+// Playwright antes de subir): (1) `scrollHeight`/`scrollWidth` lidos DE
+// DENTRO de um elemento com zoom aplicado retornam no sistema de
+// coordenadas LOCAL dele (como se o zoom não existisse por dentro) — pra
+// comparar com a altura disponível de verdade (medida por FORA, no
+// container sem zoom), tem que usar getBoundingClientRect(), que sempre
+// reporta em pixels físicos/reais. (2) `width` em PORCENTAGEM num elemento
+// com zoom resolve contra containingBlockWidth/zoom (maior quanto menor o
+// zoom) — combinado com a compensação `100/zoom`, isso vira uma conta ao
+// quadrado (cresce descontroladamente a cada iteração). Usar `px`
+// absoluto (não `%`) pra largura evita essa composição.
 function fitSlideContent(containerEl, contentEl){
   if(!containerEl) return;
   const content = contentEl || containerEl.firstElementChild;
   if(!content) return;
-  content.style.transform = 'none';
-  // Achado real (print do usuário: "não usou o espaço todo ai ficou
-  // pequeno", com a última linha visível cortada mesmo com esse mecanismo
-  // no lugar): containerEl.clientHeight/clientWidth incluem o PADDING do
-  // próprio container (ex.: .detail-modal tem padding:34px 46px), mas
-  // quem de fato precisa caber é o content (ex.: #d2-wrap), que só tem a
-  // altura/largura JÁ DESCONTADA desse padding pra trabalhar. Sem
-  // descontar aqui, a escala saía maior do que deveria (achava que tinha
-  // ~68px a mais de altura livre do que realmente tinha), cortando a
-  // última linha por baixo — sem sobrar nem faltar espaço, só calculado
-  // errado. Descontar o padding do container garante que availH/availW
-  // batem com o espaço real que o content ocupa.
+  content.style.zoom = '';
+  content.style.width = '';
+  content.style.height = '';
   const cs = getComputedStyle(containerEl);
   const padY = parseFloat(cs.paddingTop||0) + parseFloat(cs.paddingBottom||0);
-  const padX = parseFloat(cs.paddingLeft||0) + parseFloat(cs.paddingRight||0);
-  const availH = containerEl.clientHeight - padY, availW = containerEl.clientWidth - padX;
-  if(!availH || !availW) return;
-  const needH = content.scrollHeight, needW = content.scrollWidth;
-  const scale = Math.min(1, (availH-2)/needH, (availW-2)/needW);
-  if(scale < 0.995) content.style.transform = `scale(${scale})`;
+  const availH = containerEl.clientHeight - padY;
+  if(!availH) return;
+  // scrollHeight continua confiável aqui (zoom:1, sem override de height):
+  // revela o overflow de verdade mesmo o content tendo height:100% no CSS —
+  // é o mesmo mecanismo já usado antes desta função existir.
+  if(content.scrollHeight <= availH) return; // já cabe no tamanho normal, não mexe
+
+  // Só a partir daqui o height:100% do CSS atrapalha a medição: ele prende
+  // getBoundingClientRect().height no tamanho do container, mascarando se
+  // o conteúdo (na largura/zoom sendo testado) ainda estoura ou não. Troca
+  // pra height:auto só durante o encolhimento — o conteúdo passa a ocupar
+  // exatamente o que precisa, em vez do 100% fixo, e a medição por FORA
+  // (getBoundingClientRect) passa a refletir a real necessidade a cada
+  // tentativa de zoom.
+  content.style.height = 'auto';
+  const targetW = content.getBoundingClientRect().width; // largura real a manter em qualquer nível de zoom
+  let lo = 0.15, hi = 1;
+  for(let i=0;i<16;i++){
+    const mid = (lo+hi)/2;
+    content.style.zoom = mid;
+    content.style.width = (targetW/mid)+'px';
+    if(content.getBoundingClientRect().height <= availH) lo = mid; else hi = mid;
+  }
+  content.style.zoom = lo;
+  content.style.width = (targetW/lo)+'px';
 }
 
 function render(){
