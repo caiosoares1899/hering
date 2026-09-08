@@ -5515,6 +5515,11 @@ input[type="date"]{-moz-appearance:textfield;}
           <input class="fi" type="number" id="archcfg-inactive" min="0" value="90">
         </div>
       </div>
+      <div style="margin-bottom:10px;">
+        <label class="fl" style="display:block;margin-bottom:5px;">Nunca arquivar automaticamente cards nestas colunas</label>
+        <div style="font-size:10.5px;color:var(--txt3);margin-bottom:6px;">Ex.: Backlog — cards parados ali de propósito, aguardando priorização, não deviam sumir junto com os esquecidos de verdade.</div>
+        <div id="archcfg-excluded-chips" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
       <div style="display:flex;justify-content:flex-end;">
         <button class="btn btn-p btn-sm" onclick="saveArchiveCfg()">💾 Salvar regra</button>
       </div>
@@ -6013,6 +6018,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <input id="arch-f-nome" class="ql-filter-inp" placeholder="🔍 Buscar por nome..." oninput="openArquivados()">
     <select id="arch-f-tag" class="ql-filter-sel" onchange="openArquivados()"></select>
     <select id="arch-f-owner" class="ql-filter-sel" onchange="openArquivados()"></select>
+    <select id="arch-f-col" class="ql-filter-sel" onchange="openArquivados()" title="Coluna em que o card estava quando foi arquivado"></select>
     <label style="font-size:11px;color:var(--txt2);display:flex;align-items:center;gap:6px;white-space:nowrap;">Criado há mais de <input type="number" id="arch-f-days" min="0" placeholder="0" style="width:56px;" class="ql-filter-inp" onchange="openArquivados()"> dias</label>
   </div>
   <div id="arch-purge-bar" style="display:none;padding:8px 14px;background:rgba(255,107,107,.06);border-bottom:1px solid rgba(255,107,107,.15);align-items:center;gap:8px;flex-wrap:wrap;">
@@ -6080,7 +6086,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.618-dev</div>
+<div class="version">v8.30.619-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12483,11 +12489,12 @@ function maybeAutoArchiveOldCards(){
   if(!cfg.enabled) return;
   const days=parseInt(cfg.days||365);
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
+  const excludedCols=new Set(cfg.excludedCols||[]);
   const now=Date.now();
   let n=0;
   const touchedIds=[];
   cards.forEach(c=>{
-    if(c.archived || !c.createdAt) return;
+    if(c.archived || !c.createdAt || excludedCols.has(c.col)) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
     const created=new Date(createdS).getTime();
     if(isNaN(created)) return;
@@ -12506,17 +12513,40 @@ function maybeAutoArchiveOldCards(){
   });
   if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }
+// Colunas nunca arquivadas automaticamente (ex.: Backlog) — pedido direto
+// do usuário: cards parados de propósito numa coluna (aguardando
+// priorização, por exemplo) não deviam sumir sozinhos junto com os
+// esquecidos de verdade. Estado pendente separado de archiveCfg (só grava
+// de fato em "💾 Salvar regra", mesmo padrão dos campos de dias ao lado)
+// pra clicar nos chips não disparar uma escrita no Firebase a cada toque.
+let _archCfgExcludedColsPending = new Set();
+function _archCfgExcludedColsChips(){
+  return columns.map(col=>{
+    const ex = _archCfgExcludedColsPending.has(col.id);
+    return `<span onclick="_archCfgToggleExcludedCol('${esc(col.id)}')" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
+      +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
+      +`border:1px solid ${ex?'rgba(255,209,102,.4)':'rgba(255,255,255,.1)'};background:${ex?'rgba(255,209,102,.12)':'transparent'};color:${ex?'var(--warn)':'var(--txt3)'};">`
+      +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${ex?1:.35};"></span>${esc(col.name)}</span>`;
+  }).join('');
+}
+function _archCfgToggleExcludedCol(colId){
+  if(_archCfgExcludedColsPending.has(colId)) _archCfgExcludedColsPending.delete(colId); else _archCfgExcludedColsPending.add(colId);
+  const el=document.getElementById('archcfg-excluded-chips'); if(el) el.innerHTML=_archCfgExcludedColsChips();
+}
 function fillArchiveCfgTab(){
   const c=archiveCfg||{};
   const chk=document.getElementById('archcfg-enabled'); if(chk) chk.checked=!!c.enabled;
   const d=document.getElementById('archcfg-days'); if(d) d.value=c.days||365;
   const i=document.getElementById('archcfg-inactive'); if(i) i.value=(c.inactivityDays!=null?c.inactivityDays:90);
+  _archCfgExcludedColsPending = new Set(c.excludedCols||[]);
+  const el=document.getElementById('archcfg-excluded-chips'); if(el) el.innerHTML=_archCfgExcludedColsChips();
 }
 function saveArchiveCfg(){
   archiveCfg={
     enabled: !!document.getElementById('archcfg-enabled')?.checked,
     days: parseInt(document.getElementById('archcfg-days')?.value||'365'),
     inactivityDays: parseInt(document.getElementById('archcfg-inactive')?.value||'90'),
+    excludedCols: [..._archCfgExcludedColsPending],
   };
   fbSet(FB+'/archive_cfg', archiveCfg);
   showToast('🗄 Regra de arquivamento automático salva.');
@@ -20740,7 +20770,7 @@ function _renderArquivadosBody(){
   const purgeBar=document.getElementById('arch-purge-bar'); if(purgeBar) purgeBar.style.display=(typeof canBulkDelete==='function' && canBulkDelete())?'flex':'none';
   let archived=cards.filter(c=>c.archived);
   // Popula dropdowns de filtro preservando a seleção atual
-  const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner');
+  const fTag=document.getElementById('arch-f-tag'), fOwner=document.getElementById('arch-f-owner'), fCol=document.getElementById('arch-f-col');
   const fNomeEl=document.getElementById('arch-f-nome');
   if(fTag){
     const prev=fTag.value;
@@ -20758,15 +20788,31 @@ function _renderArquivadosBody(){
     fOwner.innerHTML='<option value="">👤 Todos responsáveis</option>'+ownersUsados.map(init=>{const m=members.find(x=>x.init===init);return `<option value="${esc(init)}">${esc(init)}${m?' · '+esc(_shortName(m.name)):''}</option>`}).join('');
     fOwner.value=prev;
   }
+  if(fCol){
+    // Coluna em que o card estava quando foi arquivado — arquivar nunca
+    // mexe em c.col (só liga c.archived), então o valor atual JÁ é isso,
+    // sem precisar guardar um campo separado. Coluna pode ter sido
+    // excluída desde então — mostra o nome atual quando existe, senão o
+    // id cru com aviso, pra não sumir da lista de filtros silenciosamente.
+    const prev=fCol.value;
+    const colsUsadas=[...new Set(archived.map(c=>c.col).filter(Boolean))];
+    const opts=colsUsadas.map(id=>{
+      const col=columns.find(x=>x.id===id);
+      return {id, label: col ? col.name : id+' (coluna excluída)', ord: col ? columns.indexOf(col) : 999};
+    }).sort((a,b)=>a.ord-b.ord);
+    fCol.innerHTML='<option value="">📍 Todas as colunas</option>'+opts.map(o=>`<option value="${esc(o.id)}">${esc(o.label)}</option>`).join('');
+    fCol.value=prev;
+  }
   // Aplica filtros
   const qNome=(fNomeEl?.value||'').toLowerCase().trim();
-  const qTag=fTag?.value||''; const qOwner=fOwner?.value||'';
+  const qTag=fTag?.value||''; const qOwner=fOwner?.value||''; const qCol=fCol?.value||'';
   if(qNome) archived=archived.filter(c=>(c.title||'').toLowerCase().includes(qNome));
   if(qTag) archived=archived.filter(c=>getCardTags(c).includes(qTag));
   if(qOwner) archived=archived.filter(c=>c.owner===qOwner);
+  if(qCol) archived=archived.filter(c=>c.col===qCol);
   const qDays=parseInt(document.getElementById('arch-f-days')?.value||'0');
   if(qDays>0) archived=archived.filter(c=>{ const age=_cardAgeDays(c); return age!==null && age>=qDays; });
-  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qDays)?' com esse filtro.':'.')+'</div>'; }
+  if(!archived.length){ body.innerHTML='<div style="font-size:12px;color:var(--txt3);">Nenhum card arquivado'+((qNome||qTag||qOwner||qCol||qDays)?' com esse filtro.':'.')+'</div>'; }
   archived.forEach(c=>{
     // getCardTags(c)[0] (não c.tag cru) — achado via /monitorarbugs: o
     // filtro por tag desta mesma função (linhas acima) já usa getCardTags(),
@@ -23853,7 +23899,7 @@ const HELP_CONTENT = {
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
-    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag e responsável para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.' },
+    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que arquiva sozinho cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
