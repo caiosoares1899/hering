@@ -2344,6 +2344,10 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           Toda sexta-feira um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo. O botão "📈 Histórico" mostra a evolução — gráfico de tendência geral e uma tabela de evolução por Objetivo.
         </div>
         <div>
+          <b style="color:var(--txt);">🔗 Link direto do Objetivo</b><br>
+          Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login @ciahering e acesso ao painel — é um atalho pra achar rápido, não uma exceção de acesso.
+        </div>
+        <div>
           <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
           Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, setas/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.
         </div>
@@ -2818,6 +2822,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div class="pc-modal" style="width:min(680px,94vw);">
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-obj-title">🎯 Objetivo</div>
+      <button class="x-btn" id="okr-obj-share-btn" onclick="shareOkrObjLink()" title="Copiar link direto deste Objetivo" style="display:none;margin-right:4px;">🔗</button>
       <button class="x-btn" onclick="closeOkrObjetivo()">✕</button>
     </div>
     <div class="pc-modal-body" id="okr-obj-body"></div>
@@ -2837,7 +2842,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.33 · painel</div>
+<div class="version">v3.34 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5444,12 +5449,61 @@ function openOkrObjetivo(id){
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   document.getElementById('okr-obj-title').textContent = id ? '🎯 Editar Objetivo' : '🎯 Novo Objetivo';
+  // Link só faz sentido pra um Objetivo que já existe (tem id real pro
+  // deep-link ?okr=<id> apontar) — "Novo Objetivo" ainda não tem pra onde
+  // levar até o 1º Salvar.
+  const shareBtn=document.getElementById('okr-obj-share-btn'); if(shareBtn) shareBtn.style.display = id ? '' : 'none';
   renderOkrObjBody(id);
   document.getElementById('okr-obj-ov').classList.add('open');
 }
 function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   _okrEditingObjId = null; _okrObjDraft = null;
+}
+// 🔗 Link direto pro Objetivo — pedido direto do usuário ("n tem como
+// cada okr ganhar um link compartilhado igual o card?"). Reaproveita
+// 100% o deep-link ?okr=<id> que já existe (construído originalmente
+// pras notificações de OKR navegarem certo — ver _okrTryOpenFromUrl()),
+// mesmo padrão de shareCardLink()/_cardShareUrl() em kanban(-dev).html.
+//
+// Só usa o atalho curto okr.html (redirect na raiz do repo, também
+// pedido direto — "não tem como o okr ganhar uma página tipo /okr?")
+// quando estamos em painel.html de VERDADE — okr.html sempre aponta pra
+// painel.html (prod) fixo, então gerar esse link a partir do painel-dev
+// mandaria a pessoa pros dados errados (prod, não dev). No dev, o link
+// vai direto pro próprio painel-dev.html.
+function _okrObjShareUrl(id){
+  if(!id) return null;
+  const isDev = /painel-dev\.html/.test(window.location.pathname);
+  const base = window.location.origin + window.location.pathname.replace(/painel(-dev)?\.html$/, '');
+  return isDev
+    ? base + 'painel-dev.html?tab=okr&okr=' + encodeURIComponent(id)
+    : base + 'okr.html?okr=' + encodeURIComponent(id);
+}
+async function shareOkrObjLink(){
+  const url = _okrObjShareUrl(_okrEditingObjId);
+  if(!url) return;
+  await _copyToClipboard(url, '🔗 Link do Objetivo copiado! Já pode colar (Ctrl+V).');
+}
+// Copia texto pro clipboard com fallback pra contextos sem permissão
+// (ex.: http sem HTTPS, iframe restrito) — mesmo helper de
+// kanban(-dev).html, o painel ainda não tinha um equivalente próprio.
+async function _copyToClipboard(text, successMsg){
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast(successMsg);
+  } catch(e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+      document.body.appendChild(ta); ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      showToast(successMsg);
+    } catch(e2) {
+      showToast('⚠ Não foi possível copiar automaticamente.');
+    }
+  }
 }
 // Achado ao testar (2026-09-04): qualquer ação de lista/pessoa chama
 // renderOkrObjBody(), que reescreve #okr-obj-body inteiro a partir de
@@ -10361,10 +10415,54 @@ function _finishPainelLogin(user){
   document.body.classList.toggle('painel-viewer-mode', window._isPainelViewer);
   const banner=document.getElementById('painel-viewer-banner');
   if(banner) banner.style.display = window._isPainelViewer ? 'block' : 'none';
+  // Visualizador externo (painel_viewers) não é um usuário "de verdade" do
+  // Maré Digital — só ganhou exceção de leitura, não deve ganhar registro
+  // em kanban/usuarios/{uid} (ver _painelEnsureUserRecord() abaixo).
+  if(!window._isPainelViewer) _painelEnsureUserRecord(user);
   setTimeout(_seedComunicadoRascunhos, 2000);
   // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
   // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
   loadPainelNotifs();
+}
+// Achado real (relato direto do usuário, 2026-09-09 — "quando alguem se
+// cadastra no maré pelo painel, dá erro! e como temos pessoas que agora
+// vao usar OKR mas n vao usar o kanban, isso precisa ser ajustado"):
+// kanban/usuarios/{uid} (o registro "de verdade" — nome/email/foto/role/
+// inscrito/squads) só é criado ou curado por kanban(-dev).html no login
+// (ver o Object.assign perto de resolveSquadAndShow(), lá) — o painel
+// nunca escreveu nada ali. Quem só usa o painel (nunca abriu o board)
+// ficava com um "?" pra sempre em qualquer tela que lê u.nome (👥 Pessoas/
+// Global Users, Push manual...), mesmo aparecendo com o nome certo em
+// "Visão → Online" (que lê o nome direto do Auth ao vivo — kanban/squads/
+// {sq}/presence, ver loadPresence() — nunca desse node, por isso só ali
+// o nome "não sumia").
+//
+// Cria o registro no 1º login pelo painel — SEM inscrito/squads/role: só
+// abrir o painel não deveria auto-matricular ninguém em nenhum squad do
+// board, isso continua sendo decisão de um ADM em 👥 Pessoas (ou da
+// própria pessoa, ao abrir um squad no board pela 1ª vez). Se um registro
+// incompleto já existir (mesmo caso relatado — squads/inscrito setados
+// por fora, sem nome nunca ter sido gravado), cura só os campos vazios
+// via _update — nunca reescreve o node inteiro, pra não arriscar apagar
+// squads/inscrito/role de quem já é membro de verdade do board.
+function _painelEnsureUserRecord(user){
+  if(!user || !user.uid) return;
+  window._get(window._ref(window._db,'kanban/usuarios/'+user.uid)).then(snap=>{
+    const existe = snap.val();
+    if(!existe){
+      window._set(window._ref(window._db,'kanban/usuarios/'+user.uid), {
+        uid: user.uid, nome: user.displayName||'', email: user.email||'',
+        foto: user.photoURL||'', criadoEm: new Date().toISOString(),
+      }).catch(err=>console.error('[painel] falha ao criar registro de usuário:', err));
+      return;
+    }
+    const cura={};
+    if(!existe.nome && user.displayName) cura.nome=user.displayName;
+    if(!existe.email && user.email) cura.email=user.email;
+    if(!existe.foto && user.photoURL) cura.foto=user.photoURL;
+    if(!existe.uid) cura.uid=user.uid;
+    if(Object.keys(cura).length) window._update(window._ref(window._db,'kanban/usuarios/'+user.uid), cura).catch(err=>console.error('[painel] falha ao curar registro de usuário:', err));
+  }).catch(err=>console.error('[painel] falha ao checar registro de usuário:', err));
 }
 // Bloqueia qualquer ação de edição pro visualizador externo — chamada no
 // topo de cada função que abre um modal/formulário de edição (ver

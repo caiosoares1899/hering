@@ -14246,6 +14246,25 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.34 · painel — 2026-09-09 · Promove pra prod — 🔗 Link por Objetivo de OKR + fix de nome no cadastro pelo painel
+
+Promoção isolada (não é o dev inteiro — `painel.html`/`painel-dev.html`
+divergem de propósito, ver `CLAUDE.md`), aplicando só os 2 lotes de fix/
+feature abaixo, já validados em dev:
+
+- **🔗 Link direto por Objetivo** + **`okr.html`** (atalho curto pra aba
+  OKR) — ver entrada completa em `painel-dev.html v3.36` logo abaixo.
+- **Fix: quem se cadastra pelo painel ficava sem nome pra sempre** — ver
+  entrada completa em `painel-dev.html v3.35` mais abaixo.
+
+Fora de escopo desta promoção (permanece só em dev, sem validação
+ainda): nada pendente no momento — o restante do `COMUNICADO_RASCUNHOS_SEED`
+de `painel-dev.html` é intencionalmente diferente do de produção (ver
+`CLAUDE.md`: rascunhos de Mural entram direto em `painel.html`, nunca
+passam por dev) e os paths `_dev` do Firebase (`feedback_dev`,
+`dados_editors_dev`, etc.) são divergência permanente entre os dois
+ambientes, não algo a "promover".
+
 ### painel-dev.html v3.36 · painel-dev — 2026-09-09 — 🔗 Link direto por Objetivo de OKR + `okr.html`, atalho pra aba OKR
 
 Pedido direto do usuário: "n tem como o okr ganhar uma pagina tipo
