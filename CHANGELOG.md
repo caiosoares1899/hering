@@ -3032,6 +3032,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.625-dev — 2026-09-09 — Fix: nome do usuário nunca era corrigido de volta em kanban/usuarios/{uid} no login
+
+Complemento do fix em `painel-dev.html` v3.35 (ver entrada lá pro
+relato completo, com prints, do usuário) — mesma causa raiz, metade da
+correção mora aqui: `autoRegistrar()`, no branch de usuário JÁ
+EXISTENTE, já tinha auto-cura de `foto` (se a foto do Google mudasse,
+corrigia sozinho em `kanban/usuarios/{uid}` E no espelho leve
+`usuarios_publicos`), mas **nunca tinha o mesmo tratamento pra
+`nome`/`email`** — só escrevia esses dois de volta no espelho leve
+(`usuarios_publicos`, que o próprio kanban.html nem lê de volta pra
+si). Resultado: um registro que tivesse nascido incompleto por
+qualquer caminho (o caso relatado: nasceu via painel, antes do fix
+em `_painelEnsureUserRecord()`) continuava sem nome pra sempre, mesmo
+a pessoa logando aqui repetidas vezes — o auto-login não tinha
+nenhum jeito de se autocorrigir. Fix: mesmo padrão do `foto`, agora
+também pra `nome` (sincroniza sempre que diverge do Auth) e `email`
+(cura só se estiver vazio).
+
 ### v8.30.624-dev — 2026-09-09 — `/monitorarbugs` no "Enviar pra outro squad": campos ficavam desmarcados ao voltar pro modo normal
 
 Pedido direto do usuário logo após validar a feature na UI: "tudo
@@ -14200,6 +14218,43 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.35 · painel-dev — 2026-09-09 — Fix: quem se cadastra pelo painel ficava sem nome pra sempre
+
+Relato direto do usuário, com prints: um novo membro (Gabriela Cornassini
+Maschio) aparecia certinho em "Visão → Online" mas com "? (GMS)" em
+👥 Pessoas/Global Users — as iniciais (GMS) tinham sido digitadas na mão
+por um ADM, mas o nome nunca apareceu. Contexto do pedido: "temos pessoas
+que agora vao usar OKR mas n vao usar o kanban, isso precisa ser
+ajustado".
+
+**Causa raiz**: `kanban/usuarios/{uid}` (o registro "de verdade" —
+nome/email/foto/role/inscrito/squads) só era criado ou curado por
+`kanban(-dev).html` no login (`autoRegistrar()`) — o painel nunca
+escrevia nada ali, nem na primeira vez que alguém logava só por ele.
+Quem só usa o painel (o caso explícito citado — gente de OKR que não
+mexe no board) ficava sem NENHUM registro, ou com um registro
+incompleto criado por outro caminho (ex.: um ADM marcando squads em
+👥 Pessoas antes da pessoa nunca ter aberto o board) — sem nome pra
+sempre, mesmo logando repetidas vezes. "Visão → Online" não tinha esse
+problema porque lê o nome direto do Firebase Auth ao vivo (via
+`kanban/squads/{sq}/presence`, escrito só pelo kanban.html), nunca desse
+node — daí o nome aparecer ali e sumir em toda tela que lê `u.nome`.
+
+**Fix**: `_painelEnsureUserRecord()`, chamada no login (`_finishPainelLogin()`,
+só pra quem não é visualizador externo):
+- Sem registro nenhum → cria com `nome`/`email`/`foto`/`uid`/`criadoEm`.
+  **Deliberadamente sem** `inscrito`/`squads`/`role` — abrir o painel não
+  deve auto-matricular ninguém em squad nenhum do board; isso continua
+  sendo decisão de um ADM (👥 Pessoas) ou da própria pessoa, ao abrir um
+  squad no board pela 1ª vez.
+- Registro incompleto já existente (o caso relatado) → cura só os campos
+  vazios via `_update` (nunca reescreve o node inteiro — squads/inscrito/
+  role de quem já é membro de verdade do board ficam intactos).
+
+Complementado por um fix irmão em `kanban-dev.html` (ver entrada
+correspondente): o login de quem JÁ TINHA registro nunca corrigia o nome
+de volta em `kanban/usuarios/{uid}` — só a foto tinha essa auto-cura.
 
 ### painel-dev.html v3.34 · painel-dev — 2026-09-08 — Aba OKR ganha link direto pra tela de apresentação
 

@@ -37,7 +37,14 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - `getEffectiveRole()` — L6192 — papel efetivo, ADMs hardcoded não são rebaixáveis
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6221 / L6190
 - `resolveSquadAndShow()` — L10033 — resolve squad da URL, decide o que mostrar
-- `autoRegistrar()` — L10186 — cria/atualiza o doc do usuário no login
+- `autoRegistrar()` — L10408 — cria/atualiza o doc do usuário no login.
+  (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
+  (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
+  tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
+  — antes só escrevia esses 2 campos no espelho leve `usuarios_publicos`,
+  nunca no registro principal, deixando um registro nascido incompleto
+  (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
+  pra sempre mesmo com login repetido.
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
@@ -2221,6 +2228,17 @@ auto-update passou a existir em `painel.html` também (`VERSION_KEY =
   ganha exceção de READ nos nodes que o painel lê: `painel`,
   `squads_meta`, `config`, `feedback`, e por squad — `dados`,
   `presence`, `snapshots`, `error_logs`, `error_stats`, `agent_usage`).
+- **`_painelEnsureUserRecord(user)` (2026-09-09)** — chamada de dentro de
+  `_finishPainelLogin()`, só pra quem NÃO é visualizador externo. Achado
+  real, relato direto do usuário: quem só usa o painel (gente de OKR que
+  não mexe no board) nunca ganhava registro em `kanban/usuarios/{uid}` —
+  só `kanban(-dev).html` (`autoRegistrar()`) cria/cura esse node, no
+  login do board. Cria o registro no 1º login pelo painel — **sem**
+  `inscrito`/`squads`/`role` (abrir o painel não deve auto-matricular
+  ninguém em squad nenhum do board, isso continua sendo decisão de um
+  ADM em 👥 Pessoas). Se o registro já existir incompleto, cura só os
+  campos vazios via `_update` (nunca reescreve o node inteiro — não
+  toca em squads/inscrito/role de quem já é membro de verdade).
 - `window._isPainelViewer` / `_blockIfPainelViewer()` — flag + guard
   chamado no topo de toda função que abre modal de edição (`openCfg`,
   `openComunicadoCompose`, `openCampEdit`, `openPevModal`,

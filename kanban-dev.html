@@ -6107,7 +6107,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.624-dev</div>
+<div class="version">v8.30.625-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10511,6 +10511,17 @@ function autoRegistrar(user){
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
       if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
+      // Achado real (relato direto do usuário, 2026-09-09 — registro
+      // nascido pelo painel, antes do fix em _painelEnsureUserRecord()
+      // lá, ficava sem nome pra sempre): só a foto tinha auto-cura aqui —
+      // nome nunca era escrito de volta em kanban/usuarios/{uid} pra
+      // quem JÁ tinha registro (só no espelho leve usuarios_publicos,
+      // linha 3 acima, que este arquivo nem lê de volta pra si mesmo).
+      // "👥 Pessoas"/Global Users (painel) e qualquer tela que lê
+      // u.nome ficavam com "?" pra sempre, mesmo a pessoa logando aqui
+      // repetidas vezes.
+      if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
+      if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
