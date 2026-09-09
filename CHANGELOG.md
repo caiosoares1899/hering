@@ -14219,6 +14219,38 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.36 · painel-dev — 2026-09-09 — 🔗 Link direto por Objetivo de OKR + `okr.html`, atalho pra aba OKR
+
+Pedido direto do usuário: "n tem como o okr ganhar uma pagina tipo
+/okr? para facilitar o compartilhamento. e outra: n tem como cada okr
+ganhar um link compartilhado igual o card?" — as duas coisas, reaproveitando
+100% de infraestrutura que já existia:
+
+- **🔗 Link por Objetivo**: botão novo no cabeçalho de todo Objetivo já
+  existente (some em "Novo Objetivo", que ainda não tem id pra apontar)
+  — copia um link que abre esse Objetivo específico direto, mesma ideia
+  do "Copiar link" de um card do board. Reaproveita o deep-link
+  `?okr=<id>` que já existia (construído originalmente pras notificações
+  de OKR navegarem certo, ver `_okrTryOpenFromUrl()`) — trabalho novo foi
+  só o botão + `_copyToClipboard()` (o painel ainda não tinha esse
+  helper, portado de `kanban(-dev).html`).
+- **`okr.html`** (arquivo novo, raiz do repo): endereço curto que
+  redireciona pra `painel.html?tab=okr` — mais fácil de digitar/lembrar/
+  compartilhar que `painel.html?tab=okr` na mão. Repassa qualquer
+  parâmetro da URL (em especial o `?okr=<id>` gerado pelo botão acima),
+  então um link de Objetivo específico compartilhado por ele continua
+  abrindo o Objetivo certo, não só a aba. **Decisão explícita do
+  usuário**: continua exigindo login @ciahering normal, igual hoje — não
+  é acesso sem login pra quem é de fora (opção descartada de propósito,
+  ficaria fora do escopo pedido e mexeria em regra de segurança do
+  Firebase).
+
+Como `okr.html` é fixo, sempre aponta pra `painel.html` (produção), o
+link gerado pelo botão 🔗 detecta se está rodando em `painel-dev.html`
+e, nesse caso, aponta direto pro próprio dev (`painel-dev.html?tab=okr&okr=<id>`)
+em vez do atalho curto — sem isso, um link copiado no dev mandaria a
+pessoa pros dados de produção por engano.
+
 ### painel-dev.html v3.35 · painel-dev — 2026-09-09 — Fix: quem se cadastra pelo painel ficava sem nome pra sempre
 
 Relato direto do usuário, com prints: um novo membro (Gabriela Cornassini
