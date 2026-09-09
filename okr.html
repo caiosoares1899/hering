@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OKR · Maré Digital</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8E%AF%3C/text%3E%3C/svg%3E">
+<style>
+  body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+    background:#0a1420;color:#8fa5b8;font-family:"DM Sans",system-ui,sans-serif;font-size:13px;}
+</style>
+</head>
+<body>
+Redirecionando…
+<script>
+// Link curto/fácil de compartilhar pro OKR do painel — pedido direto do
+// usuário ("n tem como o okr ganhar uma pagina tipo /okr? para facilitar
+// o compartilhamento"). Continua exigindo login @ciahering normal, mesma
+// tela/permissões de painel.html — isto aqui só encurta o endereço, não
+// muda quem pode ver o quê (decisão explícita do usuário, ver conversa).
+//
+// Repassa TODOS os parâmetros da URL — em especial ?okr=<id>, gerado por
+// shareOkrObjLink() em painel.html pra abrir um Objetivo específico
+// direto (ver _okrTryOpenFromUrl() lá) — só garantindo tab=okr como
+// padrão se nada mais tiver sido passado.
+const params = new URLSearchParams(location.search);
+if(!params.has('tab')) params.set('tab', 'okr');
+location.replace('painel.html?' + params.toString());
+</script>
+</body>
+</html>

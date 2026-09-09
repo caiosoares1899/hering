@@ -2078,6 +2078,27 @@ v3.19 · painel-dev pro racional completo.
   reabrir a cada mudança subsequente no nó. Existe porque antes disso
   clicar numa notificação de OKR não levava a lugar nenhum —
   `openNotif()` (kanban-dev.html) só sabia navegar por `cardId`.
+- **`shareOkrObjLink()`/`_okrObjShareUrl()`/`_copyToClipboard()` (2026-09-09)**
+  — pedido direto: "cada okr ganhar um link compartilhado igual o
+  card?". Botão 🔗 no cabeçalho de `#okr-obj-ov` (só visível pra
+  Objetivo já existente, `openOkrObjetivo(id)` alterna
+  `#okr-obj-share-btn`), reaproveita o `?okr=<id>` de
+  `_okrTryOpenFromUrl()` acima — trabalho novo foi só o botão +
+  `_copyToClipboard()` (helper novo no painel, portado igual de
+  `kanban(-dev).html`, que já tinha `_cardShareUrl()`/`shareCardLink()`
+  pro mesmo conceito em card). `_okrObjShareUrl()` detecta
+  `painel-dev.html` no `location.pathname` e usa link direto pro dev
+  nesse caso — `okr.html` (raiz do repo, ver abaixo) é fixo, sempre
+  aponta pra `painel.html` (prod), não serve como atalho a partir do
+  dev.
+- **`okr.html` (2026-09-09, raiz do repo, sem `-dev`)** — pedido direto:
+  "n tem como o okr ganhar uma pagina tipo /okr?". Redirect estático
+  puro (`location.replace`) pra `painel.html?tab=okr`, repassando
+  qualquer param da URL (`?okr=<id>` incluso) — usa o mesmo mecanismo
+  de deep-link `?tab=<id>` (`_painelTryOpenTabFromUrl()`) e `?okr=<id>`
+  já existentes em `painel.html`, não duplica lógica nenhuma. Continua
+  exigindo login @ciahering normal — decisão explícita do usuário, só
+  encurta o endereço, não é exceção de acesso.
 - Achado (mesma classe do já documentado acima pra
   `_okrSyncObjDraftFromDom()`): `_okrTagCriar()` e as novas seções
   também re-renderizam o modal inteiro — todas as novas mutações
