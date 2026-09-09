@@ -18,6 +18,33 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.625 — 2026-09-09 · Promove pra prod — Enviar card pra outro squad + fix de nome de usuário no cadastro
+
+Promove pra produção o lote v8.30.623-dev → v8.30.625-dev de
+`kanban-dev.html`:
+
+- **🏢 Duplicar card ganha opção de enviar para outro squad**: o modal
+  de ⧉ Duplicar ganha um seletor "Squad de destino" no topo. Escolhendo
+  outro squad, você é levado direto pra "+ Novo card" já naquele squad,
+  com Descrição/Checklist/Tags/Prazo/Prioridade/Riscos/Links
+  pré-preenchidos (o que estiver marcado) — só falta preencher o que é
+  específico daquele squad (Responsável, Demandante, Submarca, Ficha
+  Técnica se usar) e Salvar. Card original fica intacto, ganha entrada
+  no Histórico registrando o envio.
+- **`/monitorarbugs` na feature acima**: alternar o seletor de squad
+  pra outro e de volta pra "Este squad", sem fechar o modal, deixava
+  Responsável/Participantes/Comentários desmarcados em silêncio — a
+  tela parecia normal, mas uma duplicação em seguida saía sem esses 3
+  campos. Corrigido, junto de um squad recém-criado no painel ficando
+  invisível como destino no seletor.
+- **Fix: quem se cadastra pelo painel ficava sem nome pra sempre** —
+  gente que só usa o painel (ex.: quem vai usar OKR sem mexer no
+  kanban) ficava com "?" em vez do nome em qualquer tela que lê o
+  registro de usuário, mesmo aparecendo certo em "Visão → Online" do
+  painel. Corrigido nos dois lados: o painel agora cria/cura esse
+  registro no login, e o kanban corrige o nome de quem já tinha
+  registro incompleto.
+
 ### v8.30.622 — 2026-09-08 · Promove pra prod — Arquivamento por coluna, filtro em Arquivados, histórico do card e 🕐 tema automático
 
 Promove pra produção o lote v8.30.619-dev → v8.30.622-dev de

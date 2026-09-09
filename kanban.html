@@ -4483,7 +4483,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
   <div class="modal-ft-row">
     <button class="btn btn-sm" id="btn-del-card" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="deleteCard()">🗑 Excluir</button>
-    <button class="btn btn-sm" id="btn-dup-card" onclick="duplicarCard()" title="Duplicar este card">⧉ Duplicar</button>
+    <button class="btn btn-sm" id="btn-dup-card" onclick="duplicarCard()" title="Duplicar este card — ou enviar uma cópia pra outro squad">⧉ Duplicar</button>
     <button class="btn btn-sm" onclick="salvarComoModeloModal()" title="Salvar como modelo">📋 Modelo</button>
     <div style="position:relative;" id="m-usarmodelo-wrap">
       <button class="btn btn-sm" onclick="toggleUsarModeloMenu()" title="Aplicar um modelo salvo neste card">📥 Usar modelo</button>
@@ -5403,36 +5403,44 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 
-<!-- Modal de duplicar card (escolher quais campos entram na cópia) -->
+<!-- Modal de duplicar card (escolher quais campos entram na cópia, ou
+     enviar uma cópia pra outro squad) -->
 <div class="ov" id="dup-ov">
 <div class="panel" style="max-width:400px;width:92vw;">
   <div class="panel-hd">
-    <div class="panel-title">⧉ Duplicar card</div>
+    <div class="panel-title" id="dup-panel-title">⧉ Duplicar card</div>
     <button class="x-btn" onclick="fecharDuplicarModal()">✕</button>
   </div>
   <div style="padding:14px 16px;">
-    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 10px;">Duplicando "<b id="dup-card-title"></b>". O título sempre copia (com "(cópia)" no final) — escolha a coluna de destino e o que mais entra na cópia:</p>
+    <p style="font-size:11.5px;color:var(--txt2);line-height:1.5;margin:0 0 10px;">Duplicando "<b id="dup-card-title"></b>". O título sempre copia (com "(cópia)" no final) — escolha o destino e o que mais entra na cópia:</p>
     <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:11px;color:var(--txt3);margin-bottom:4px;">🏢 Squad de destino</label>
+      <select id="dup-squad" class="fi" style="width:100%;" onchange="_dupOnSquadChange()"></select>
+    </div>
+    <div id="dup-col-wrap" style="margin-bottom:10px;">
       <label style="display:block;font-size:11px;color:var(--txt3);margin-bottom:4px;">Coluna da cópia</label>
       <select id="dup-col" class="fi" style="width:100%;"></select>
+    </div>
+    <div id="dup-crosssquad-note" style="display:none;font-size:10.5px;color:var(--txt3);line-height:1.5;background:var(--glass-h);border:1px solid var(--glass-b);border-radius:8px;padding:8px 10px;margin-bottom:10px;">
+      🏢 Coluna, responsável, demandante e outros campos específicos desse squad (ex.: Submarca) são preenchidos na tela de criação do card, logo em seguida — igual criar um card novo ali, só que já vem com o que for marcado abaixo preenchido.
     </div>
     <div style="display:flex;flex-direction:column;gap:2px;">
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-desc" checked> Descrição</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-checklist" checked> Checklist</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-tags" checked> Tags</label>
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-owner" checked> Responsável</label>
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-participants" checked> Participantes</label>
+      <label id="dup-owner-wrap" style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-owner" checked> Responsável</label>
+      <label id="dup-participants-wrap" style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-participants" checked> Participantes</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-due" checked> Prazo</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-priority" checked> Prioridade</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-riscos" checked> Riscos</label>
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-links" checked> Anexos/Links</label>
-      <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-comments" checked> Comentários</label>
+      <label id="dup-comments-wrap" style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-comments" checked> Comentários</label>
     </div>
     <div id="dup-super-children-wrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid var(--glass-b);">
       <label style="display:flex;align-items:center;gap:7px;font-size:12px;cursor:pointer;padding:4px 0;"><input type="checkbox" id="dup-super-children"> 🧩 Duplicar os <span id="dup-super-children-count">0</span> card(s) filho(s) também</label>
-      <div style="font-size:10px;color:var(--txt3);margin-left:24px;line-height:1.4;">Cada filho vira uma cópia independente, com os mesmos campos marcados acima. Se algum filho também tiver filhos (versão), esses entram junto.</div>
+      <div id="dup-super-children-note" style="font-size:10px;color:var(--txt3);margin-left:24px;line-height:1.4;">Cada filho vira uma cópia independente, com os mesmos campos marcados acima. Se algum filho também tiver filhos (versão), esses entram junto.</div>
     </div>
-    <button class="btn btn-teal" onclick="confirmarDuplicar()" style="margin-top:16px;width:100%;">⧉ Duplicar</button>
+    <button class="btn btn-teal" id="dup-confirm-btn" onclick="confirmarDuplicar()" style="margin-top:16px;width:100%;">⧉ Duplicar</button>
   </div>
 </div>
 </div>
@@ -6099,7 +6107,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.622</div>
+<div class="version">v8.30.625</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7738,6 +7746,15 @@ let intakePendentes=[];  // derivado de _intakeBucket, só status:'pending'
 // por ter sido aberto). Resetado no início de openNewCard()/openCard() pra
 // nunca vazar pro card errado numa sessão de edição não relacionada.
 let _intakeOrigemPendingId=null;
+// Mesmo padrão do intake acima, só que pra "🏢 Enviar pra outro squad" (ver
+// _confirmarEnviarOutroSquad()/_consumirTransferSquad()): links não têm
+// como entrar no formulário de card novo (attachSave() exige um id real —
+// ver comentário lá —, e o card só ganha id de verdade neste ponto, na
+// criação), então ficam pendurados aqui até o momento exato em que
+// _newCard nasce (dentro de saveCard()), igual intakeId. Resetado em
+// openNewCard() pelo mesmo motivo do de cima.
+let _pendingTransferLinks=null;
+let _pendingTransferOrigem=null; // {squad,squadLabel,cardId} — só metadado/traceability, ver campo transferOrigem em _newCard
 // ═══ CONECTIVIDADE (Fase 5, item 7) ═══ indicador + trava de saída
 // acidental — ver listener em fbLoadAll() e o beforeunload logo abaixo de
 // _cardIsDirty(). NÃO é uma fila genérica de reenvio (ver justificativa no
@@ -10494,6 +10511,17 @@ function autoRegistrar(user){
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
       if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
+      // Achado real (relato direto do usuário, 2026-09-09 — registro
+      // nascido pelo painel, antes do fix em _painelEnsureUserRecord()
+      // lá, ficava sem nome pra sempre): só a foto tinha auto-cura aqui —
+      // nome nunca era escrito de volta em kanban/usuarios/{uid} pra
+      // quem JÁ tinha registro (só no espelho leve usuarios_publicos,
+      // linha 3 acima, que este arquivo nem lê de volta pra si mesmo).
+      // "👥 Pessoas"/Global Users (painel) e qualquer tela que lê
+      // u.nome ficavam com "?" pra sempre, mesmo a pessoa logando aqui
+      // repetidas vezes.
+      if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
+      if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
@@ -13968,6 +13996,7 @@ function _quickAddApplyIfNew(){
 function openNewCard(col){
   if(!checkEditPermission()) return;
   _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
+  _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem p/ "Enviar pra outro squad" — _consumirTransferSquad() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
   _pendingQLSource=null; // idem p/ o trigger "Modelo usado"/"Card recorrente criado" — usarQLItem re-seta depois
   editingLinkedCards=[];
@@ -14268,6 +14297,13 @@ function saveCard(){
       // Intake — ver renderBoardDataGrid()), mesmo depois que intake_pending
       // some da lista de pendentes.
       intakeId:_intakeOrigemPendingId||null,
+      // Card veio de "🏢 Enviar pra outro squad"? Mesmo padrão do intakeId
+      // acima — links só entram aqui (attachSave() não funciona sem um id
+      // real, ver comentário na declaração de _pendingTransferLinks) e
+      // transferOrigem fica gravado pra sempre, só como traceability (não é
+      // lido por nenhuma validação/regra).
+      links:_pendingTransferLinks||[],
+      transferOrigem:_pendingTransferOrigem||null,
       coverColor:_pendingCoverColor||null,
       coverImageUrl:_pendingCoverImageUrl||null,
       padraoId:_newCardPadraoId||null,
@@ -14344,6 +14380,7 @@ function saveCard(){
       window._update(fb(FB+'/intake_pending/'+_savedIntakePendingId), {status:'done', cardId:_savedNewCardId||null, doneAt:new Date().toISOString()});
     }
     _intakeOrigemPendingId=null;
+    _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem, ver comentário na declaração
     _stopDirtyWatch(); // confirmado no Firebase — não faz sentido avisar de "não salvo" ao fechar
     _newCardGuardOff = true; // idem pra _newCardHasContent() — editingId pode continuar null aqui (ver comentário acima)
     closeOv('card-ov');
@@ -14527,16 +14564,33 @@ function _duplicarComFilhos(card, opts, visited, isChild){
   fbCreateCard(novo).catch(err=>console.error('[duplicar] falha ao salvar card:', err));
   return novo;
 }
-// ── Modal de duplicar: deixa escolher quais campos entram na cópia ──────
+// ── Modal de duplicar: deixa escolher quais campos entram na cópia,
+// ou ENVIAR uma cópia pra outro squad (pedido direto do usuário) ────────
 let _dupCardId = null;
 const _DUP_CAMPOS = ['desc','checklist','tags','owner','participants','due','priority','riscos','links','comments'];
+// Campos que não sobrevivem a uma troca de squad: owner/participants são
+// inits de MEMBROS do squad atual (podem nem existir no squad de destino,
+// e mesmo existindo o "certo" lá pode ser outra pessoa — decisão de quem
+// está recebendo, não algo pra herdar às cegas); comments dependem do card
+// já ter um id real no Firebase, e o card de destino só ganha id depois de
+// "Salvar" na tela de criação (ver _consumirTransferSquad()). Desabilitados
+// (não só desmarcados) em _dupOnSquadChange() pra deixar claro que a opção
+// não se aplica, não que a pessoa escolheu não levar.
+const _DUP_CAMPOS_SEM_CROSS_SQUAD = ['owner','participants','comments'];
 function abrirDuplicarModal(cardId){
   const card=cards.find(x=>x.id===cardId); if(!card) return;
   _dupCardId = cardId;
   const titleEl=document.getElementById('dup-card-title'); if(titleEl) titleEl.textContent=card.title||'(sem título)';
-  _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el) el.checked=true; });
+  _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el){ el.checked=true; el.disabled=false; } });
   const colSel=document.getElementById('dup-col');
   if(colSel){ colSel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); colSel.value=card.col; }
+  // Sempre abre em "Este squad" — zera ANTES de _dupPopulateSquadSelect()
+  // ler o valor atual pra preservar durante o refresh assíncrono dela (ver
+  // comentário lá): sem isso, reabrir o modal pra um card DIFERENTE
+  // herdava a seleção de squad que tivesse ficado de uma sessão anterior
+  // do modal (achado ao testar a própria correção do refresh assíncrono).
+  const squadSelReset=document.getElementById('dup-squad'); if(squadSelReset) squadSelReset.value='';
+  _dupPopulateSquadSelect();
   // Opção só aparece pra supercard (tem pelo menos 1 filho ativo) — pedido
   // direto: "quando ele for um supercard, habilita a opção de poder
   // duplicar filhos tb". Desmarcada por padrão (opt-in): duplicar filhos
@@ -14551,7 +14605,81 @@ function abrirDuplicarModal(cardId){
     const nFilhos=(card.childCardIds||[]).filter(id=>{ const c=cards.find(x=>x.id===id); return c && !c.archived; }).length;
     const cntEl=document.getElementById('dup-super-children-count'); if(cntEl) cntEl.textContent=nFilhos;
   }
+  _dupOnSquadChange();
   document.getElementById('dup-ov').classList.add('open');
+}
+// Lista todo squad conhecido (SQUAD_META_LIVE, mesma fonte do seletor no
+// header — inclui squads que a pessoa não é "inscrita", igual lá: regra do
+// Firebase já libera escrita pra qualquer squad pra quem tem e-mail
+// @ciahering.com.br, então restringir aqui só esconderia squads de destino
+// válidos sem nenhum ganho real de segurança).
+function _dupPopulateSquadSelect(){
+  const render = () => {
+    const sel=document.getElementById('dup-squad'); if(!sel) return;
+    const prev=sel.value; // preserva seleção — a atualização abaixo pode chegar depois da pessoa já ter escolhido algo
+    const outros=Object.keys(SQUAD_META_LIVE).filter(id=>id!==ACTIVE_SQUAD);
+    sel.innerHTML = '<option value="">Este squad (cópia normal)</option>'
+      + outros.map(id=>`<option value="${esc(id)}">🏢 ${esc(SQUAD_META_LIVE[id].label||id)}</option>`).join('');
+    sel.value = outros.includes(prev) ? prev : '';
+  };
+  render();
+  // Achado real (/monitorarbugs, 2026-09-09, técnica 2): o seletor de squad
+  // do header (toggleSquadSwitcher()) já refaz essa mesma consulta pra
+  // pegar squad criado recentemente no painel — este aqui usava só o
+  // SQUAD_META_LIVE em memória, sem se atualizar, deixando um squad novo
+  // invisível como destino até a pessoa abrir o seletor do header pelo
+  // menos 1 vez na sessão.
+  loadSquadsFromFirebase(render);
+}
+// Alterna a UI do modal entre "duplicar no mesmo squad" e "enviar pra
+// outro squad" — mesmo modal, mesmos checkboxes, só o que é POSSÍVEL
+// varia (ver _DUP_CAMPOS_SEM_CROSS_SQUAD acima).
+function _dupOnSquadChange(){
+  const sel=document.getElementById('dup-squad');
+  const squadId = sel ? sel.value : '';
+  const cross = !!squadId;
+  const titleEl=document.getElementById('dup-panel-title');
+  const btn=document.getElementById('dup-confirm-btn');
+  const colWrap=document.getElementById('dup-col-wrap');
+  const note=document.getElementById('dup-crosssquad-note');
+  const scWrap=document.getElementById('dup-super-children-wrap');
+  const scNote=document.getElementById('dup-super-children-note');
+  const scChk=document.getElementById('dup-super-children');
+  if(colWrap) colWrap.style.display = cross ? 'none' : '';
+  if(note) note.style.display = cross ? '' : 'none';
+  // Achado real (/monitorarbugs, 2026-09-09): alternar squad→"Este
+  // squad"→squad outra vez, sem fechar o modal, reabilitava os 3 campos
+  // mas deixava CHECKED=false — voltar pra "Este squad" parecia restaurar
+  // tudo (título/botão/coluna voltam), mas Responsável/Participantes/
+  // Comentários ficavam de fora de uma duplicação normal, sem nenhum
+  // aviso visual. `true` é o único default que existe pra esses 3
+  // (mesmo valor que abrirDuplicarModal() já usa pra TODOS os campos ao
+  // abrir o modal) — restaura ao voltar pra "Este squad", não só ao
+  // desabilitar.
+  _DUP_CAMPOS_SEM_CROSS_SQUAD.forEach(f=>{
+    const el=document.getElementById('dup-'+f);
+    if(!el) return;
+    el.disabled = cross;
+    el.checked = !cross;
+    // Polish: campo desabilitado só mudava a aparência nativa do
+    // checkbox — o texto do label ao lado continuava com cor normal,
+    // ambíguo demais no tema escuro pra "isso não se aplica aqui".
+    const wrap=document.getElementById('dup-'+f+'-wrap');
+    if(wrap){ wrap.style.opacity = cross ? '.5' : ''; wrap.style.cursor = cross ? 'default' : 'pointer'; }
+  });
+  // Duplicar-com-filhos fica fora do escopo de envio pra outro squad (cada
+  // filho precisaria repetir todo o fluxo de campos obrigatórios do squad
+  // de destino, um por um) — desabilita e explica, em vez de esconder sem
+  // dizer o motivo.
+  if(scChk) scChk.disabled = cross;
+  if(cross && scChk) scChk.checked = false;
+  if(scNote) scNote.textContent = cross
+    ? 'Não disponível ao enviar pra outro squad — duplique os filhos separadamente, já no squad de destino.'
+    : 'Cada filho vira uma cópia independente, com os mesmos campos marcados acima. Se algum filho também tiver filhos (versão), esses entram junto.';
+  if(titleEl) titleEl.textContent = cross ? '🏢 Enviar pra outro squad' : '⧉ Duplicar card';
+  if(btn) btn.textContent = cross ? '🏢 Enviar cópia' : '⧉ Duplicar';
+  if(scWrap && cross) scWrap.style.opacity = '.55';
+  if(scWrap && !cross) scWrap.style.opacity = '';
 }
 function fecharDuplicarModal(){
   document.getElementById('dup-ov')?.classList.remove('open');
@@ -14559,8 +14687,11 @@ function fecharDuplicarModal(){
 }
 function confirmarDuplicar(){
   const card=cards.find(x=>x.id===_dupCardId); if(!card){ fecharDuplicarModal(); return; }
+  const squadSel=document.getElementById('dup-squad');
+  const targetSquad = squadSel ? squadSel.value : '';
   const opts = {};
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); opts[f]=el?el.checked:true; });
+  if(targetSquad){ _confirmarEnviarOutroSquad(card, targetSquad, opts); return; }
   const colSel=document.getElementById('dup-col');
   if(colSel && colSel.value) opts.col = colSel.value;
   const scChk=document.getElementById('dup-super-children');
@@ -14587,6 +14718,115 @@ function ctxDuplicate(){
   const cardId=_ctxCardId; if(!cardId){ hideCtxMenu(); return; }
   hideCtxMenu();
   abrirDuplicarModal(cardId);
+}
+// ── Enviar cópia pra outro squad ─────────────────────────────────────
+// Cada squad é uma página/config isolada (ACTIVE_SQUAD fixo por load —
+// ver declaração — colunas, membros, tags e Submarca do squad de destino
+// não estão carregados aqui). Em vez de reimplementar um 2º formulário
+// "obrigatórios do squad X" dentro deste modal (duplicaria toda a
+// validação de saveCard()/_applySubmarcaUIVisibility()/Ficha Técnica, com
+// 2 lugares pra manter sincronizados pra sempre), a cópia vira uma
+// "encomenda" leve (sessionStorage — mesma aba, não vaza pra outras
+// pessoas nem sobrevive ao fechar a aba) e a pessoa é levada pro squad de
+// destino com "+ Novo card" já aberto e pré-preenchido — reaproveitando
+// 100% do formulário e das validações REAIS daquele squad (mesmo padrão
+// já usado por _intakeCriarCard() pra casar tags/Submarca por NOME em vez
+// de id, já que ids de tag não são os mesmos entre squads).
+function _confirmarEnviarOutroSquad(card, targetSquad, opts){
+  if(!checkEditPermission()) return;
+  const squadIdSafe = String(targetSquad||'').replace(/[^a-z0-9_-]/gi,'');
+  if(!squadIdSafe || !SQUAD_META_LIVE[squadIdSafe] || squadIdSafe===ACTIVE_SQUAD){
+    showToast('Squad de destino inválido.');
+    return;
+  }
+  const squadLabel = SQUAD_META_LIVE[squadIdSafe].label || squadIdSafe;
+  const payload = {
+    v: 1, // versão do formato do payload — _consumirTransferSquad() ignora se não bater
+    fromSquad: ACTIVE_SQUAD,
+    fromSquadLabel: _squadMeta.label || ACTIVE_SQUAD,
+    fromCardId: card.id,
+    title: card.title || '',
+    desc: opts.desc ? (card.desc||'') : '',
+    checklist: opts.checklist ? (card.checklist||[]).filter(Boolean).map(i=>({t:i.t||'', done:!!i.done})) : [],
+    tagLabels: opts.tags ? (card.tags||[]).map(id=>tags.find(t=>t.id===id)?.label).filter(Boolean) : [],
+    due: opts.due ? (card.due||'') : '',
+    priority: opts.priority ? (card.priority||'') : '',
+    riscos: opts.riscos ? (card.riscos||[]).filter(Boolean).slice() : [],
+    links: opts.links ? (card.links||[]).filter(Boolean).slice() : [],
+  };
+  let stored=false;
+  try{
+    sessionStorage.setItem('mare_squad_transfer', JSON.stringify(payload));
+    stored=true;
+  }catch(e){
+    console.warn('[enviar-squad] sessionStorage indisponível:', e);
+  }
+  if(!stored){
+    showToast('🔒 Não consegui preparar o envio (armazenamento do navegador bloqueado nesta aba/modo). Tenta em uma janela normal.');
+    return;
+  }
+  // Histórico no card ORIGINAL (fica aqui, intacto — "enviar" é cópia, não
+  // move) registra o envio antes de navegar pra longe dele.
+  recordHistory(card, `enviou uma cópia pra squad ${squadLabel}`);
+  fbSaveCard(card).catch(err=>console.error('[enviar-squad] falha ao salvar histórico no card original:', err));
+  fecharDuplicarModal();
+  const url=new URL(window.location.href);
+  url.searchParams.set('squad', squadIdSafe);
+  url.searchParams.set('transfer', '1');
+  window.location.href = url.toString();
+}
+// Roda uma única vez, logo após o boot (ver chamada perto de fbLoadAll()) —
+// consome a "encomenda" deixada por _confirmarEnviarOutroSquad() na aba
+// ANTERIOR (mesma aba, squad de origem) e abre "+ Novo card" já
+// pré-preenchido no squad de destino (squad ATUAL, já que a navegação
+// trocou o ?squad= da URL). Delay curto: dá tempo de columns/tags/
+// Submarca deste squad chegarem do Firebase antes de tentar casar tag/
+// submarca por nome — best-effort, igual _intakeCriarCard() já faz (se
+// não achar, só não pré-marca, não trava nada).
+function _maybeConsumirTransferSquad(){
+  if(_urlParams.get('transfer')!=='1') return;
+  let raw=null;
+  try{ raw=sessionStorage.getItem('mare_squad_transfer'); }catch(e){ return; }
+  if(!raw) return;
+  try{ sessionStorage.removeItem('mare_squad_transfer'); }catch(e){}
+  // Tira "transfer=1" da URL na hora (history, sem reload) — um F5 depois
+  // não deve tentar consumir de novo um payload que já foi limpo.
+  try{
+    const url=new URL(window.location.href);
+    url.searchParams.delete('transfer');
+    window.history.replaceState(null,'',url.toString());
+  }catch(e){}
+  let payload=null;
+  try{ payload=JSON.parse(raw); }catch(e){ return; }
+  if(!payload || payload.v!==1) return;
+  setTimeout(()=>_consumirTransferSquad(payload), 900);
+}
+function _consumirTransferSquad(payload){
+  if(!checkEditPermission()) return;
+  // Links não têm como entrar no <input>/lista do modal ainda (attachSave()
+  // exige um card com id real — ver comentário na declaração de
+  // _pendingTransferLinks) — fica pendurado pra _newCard herdar assim que
+  // nascer, dentro de saveCard(). openNewCard() (chamada logo abaixo) reseta
+  // as duas variáveis, então SÓ pode setar depois dela, nunca antes.
+  openNewCard();
+  _pendingTransferLinks = (payload.links && payload.links.length) ? payload.links : null;
+  _pendingTransferOrigem = { squad: payload.fromSquad||'', squadLabel: payload.fromSquadLabel||'', cardId: payload.fromCardId||'' };
+  document.getElementById('m-title').value = payload.title || '';
+  if(payload.desc) eocInitDisplay('desc-eoc', payload.desc, 'Adicionar descrição...');
+  if(payload.checklist && payload.checklist.length) renderCL(payload.checklist);
+  if(payload.riscos && payload.riscos.length) renderRiscos(payload.riscos);
+  if(payload.due){ document.getElementById('m-due').value = payload.due; _mNoDue=false; _renderNoDueBtn(); }
+  if(payload.priority){ const pEl=document.getElementById('m-priority'); if(pEl) pEl.value=payload.priority; renderSubPrioRow(); }
+  // Tags por NOME (ids não batem entre squads) — mesma técnica de
+  // _intakeCriarCard(), silencioso pro que não achar correspondência.
+  (payload.tagLabels||[]).forEach(nome=>{
+    const alvo=_norm(nome);
+    const tMatch=(tags||[]).find(t=>_norm(t.label)===alvo);
+    if(tMatch) addCardTag(tMatch.id);
+  });
+  const nLinksPend = (payload.links||[]).length;
+  const origem = payload.fromSquadLabel || payload.fromSquad || 'outro squad';
+  showToast(`🏢 Cópia recebida de ${origem}${nLinksPend?` (+${nLinksPend} link(s), entram junto ao salvar)`:''} — revise responsável, demandante e o que mais esse squad exigir, e clique em Salvar.`);
 }
 // ── MÚLTIPLOS CHECKLISTS POR CARD ──────────────────────────────────
 // _mCurrentGroups = cópia de trabalho de card.checklistGroups enquanto o
@@ -23983,7 +24223,7 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
-    { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.\n\n🧩 Supercard com filhos: se o card tem cards filhos vinculados (ver dica "Supercard"), o modal de duplicar mostra a opção "Duplicar os N card(s) filho(s) também" (desmarcada por padrão). Marcando, a cópia sai com toda a estrutura duplicada junto — inclusive netos, se algum filho também tiver os próprios filhos. Cada filho duplicado mantém a própria coluna (não herda a coluna do card raiz); filhos arquivados ficam de fora.' },
+    { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.\n\n🧩 Supercard com filhos: se o card tem cards filhos vinculados (ver dica "Supercard"), o modal de duplicar mostra a opção "Duplicar os N card(s) filho(s) também" (desmarcada por padrão). Marcando, a cópia sai com toda a estrutura duplicada junto — inclusive netos, se algum filho também tiver os próprios filhos. Cada filho duplicado mantém a própria coluna (não herda a coluna do card raiz); filhos arquivados ficam de fora.\n\n🏢 Enviar para outro squad: o mesmo modal tem um seletor "Squad de destino" no topo. Escolhendo outro squad em vez de "Este squad", a tela muda: Responsável, Participantes, Coluna e Comentários somem da lista (não fazem sentido em outro squad — cada squad tem seus próprios membros e colunas) e você é levado direto para "+ Novo card" já naquele squad, com Descrição/Checklist/Tags/Prazo/Prioridade/Riscos/Links (o que estiver marcado) pré-preenchidos. Tags entram por NOME — se o squad de destino tiver uma tag com o mesmo nome, ela já vem marcada; senão, fica de fora, sem travar nada. Só falta você preencher o que é específico daquele squad (Responsável, Demandante, Submarca, Ficha Técnica se o squad usar) e clicar em Salvar. O card original continua intacto no squad de origem — "enviar" é cópia, não move — e ganha uma linha no Histórico registrando o envio.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com ações em massa: 📥 Mover para coluna, 👤 Responsável, 📅 Prazo, 🏷 Tag (adicionar ou substituir), 🚧 Impedimento (marcar/remover em vários cards de uma vez), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
     { icon:'📱', title:'Arrastar card no celular', text:'No celular, para mover um card entre colunas, segure o dedo nele por um instante até ele "levantar" (vibra e ganha destaque) e então arraste. Um toque rápido ou arrastar direto rola o board normalmente, sem mover cards por engano.' },
     { icon:'📱', title:'Reordenar colunas no celular', text:'Mesmo gesto dos cards: segure o dedo no cabeçalho da coluna até ela "levantar" e então arraste pra esquerda ou direita, soltando na metade da coluna vizinha onde quer posicioná-la.' },
@@ -24388,8 +24628,8 @@ function initPWA(){
       // menos 2x com proporções diferentes entre os peixes e a moldura).
       // Mesmo recorte aplicado ao favicon.png colorido (acima) pros dois
       // continuarem enquadrados igual.
-      // 2026-09-02: kanban-dev.html passou a usar favicon-dev.png/
-      // favicon-dev-monochrome.png em vez de favicon.png/favicon-monochrome.png
+      // 2026-09-02: kanban-dev.html passou a usar favicon.png/
+      // favicon-monochrome.png em vez de favicon.png/favicon-monochrome.png
       // — arte própria (peixes sobre "linhas de código"), pedido direto do
       // usuário pra diferenciar dev de prod no ícone instalado do celular
       // (mesmo nome "Maré Digital" nos dois, sem isso ficavam idênticos).
@@ -30593,8 +30833,8 @@ _onFbReady(()=>{
   // retry automático quando o login terminava logo em seguida. Resultado:
   // board abrindo vazio até um F5 (que por acaso já pegava o login
   // resolvido a tempo). Agora espera o auth-change real antes de carregar.
-  if(window._currentUser) fbLoadAll();
-  else window.addEventListener('auth-change', e=>{ if(e.detail) fbLoadAll(); }, {once:true});
+  if(window._currentUser){ fbLoadAll(); _maybeConsumirTransferSquad(); }
+  else window.addEventListener('auth-change', e=>{ if(e.detail){ fbLoadAll(); _maybeConsumirTransferSquad(); } }, {once:true});
   loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadFanoutTemplates();
