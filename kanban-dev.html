@@ -6107,7 +6107,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.623-dev</div>
+<div class="version">v8.30.624-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14573,6 +14573,12 @@ function abrirDuplicarModal(cardId){
   _DUP_CAMPOS.forEach(f=>{ const el=document.getElementById('dup-'+f); if(el){ el.checked=true; el.disabled=false; } });
   const colSel=document.getElementById('dup-col');
   if(colSel){ colSel.innerHTML=columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join(''); colSel.value=card.col; }
+  // Sempre abre em "Este squad" — zera ANTES de _dupPopulateSquadSelect()
+  // ler o valor atual pra preservar durante o refresh assíncrono dela (ver
+  // comentário lá): sem isso, reabrir o modal pra um card DIFERENTE
+  // herdava a seleção de squad que tivesse ficado de uma sessão anterior
+  // do modal (achado ao testar a própria correção do refresh assíncrono).
+  const squadSelReset=document.getElementById('dup-squad'); if(squadSelReset) squadSelReset.value='';
   _dupPopulateSquadSelect();
   // Opção só aparece pra supercard (tem pelo menos 1 filho ativo) — pedido
   // direto: "quando ele for um supercard, habilita a opção de poder
@@ -14597,11 +14603,22 @@ function abrirDuplicarModal(cardId){
 // @ciahering.com.br, então restringir aqui só esconderia squads de destino
 // válidos sem nenhum ganho real de segurança).
 function _dupPopulateSquadSelect(){
-  const sel=document.getElementById('dup-squad'); if(!sel) return;
-  const outros=Object.keys(SQUAD_META_LIVE).filter(id=>id!==ACTIVE_SQUAD);
-  sel.innerHTML = '<option value="">Este squad (cópia normal)</option>'
-    + outros.map(id=>`<option value="${esc(id)}">🏢 ${esc(SQUAD_META_LIVE[id].label||id)}</option>`).join('');
-  sel.value = '';
+  const render = () => {
+    const sel=document.getElementById('dup-squad'); if(!sel) return;
+    const prev=sel.value; // preserva seleção — a atualização abaixo pode chegar depois da pessoa já ter escolhido algo
+    const outros=Object.keys(SQUAD_META_LIVE).filter(id=>id!==ACTIVE_SQUAD);
+    sel.innerHTML = '<option value="">Este squad (cópia normal)</option>'
+      + outros.map(id=>`<option value="${esc(id)}">🏢 ${esc(SQUAD_META_LIVE[id].label||id)}</option>`).join('');
+    sel.value = outros.includes(prev) ? prev : '';
+  };
+  render();
+  // Achado real (/monitorarbugs, 2026-09-09, técnica 2): o seletor de squad
+  // do header (toggleSquadSwitcher()) já refaz essa mesma consulta pra
+  // pegar squad criado recentemente no painel — este aqui usava só o
+  // SQUAD_META_LIVE em memória, sem se atualizar, deixando um squad novo
+  // invisível como destino até a pessoa abrir o seletor do header pelo
+  // menos 1 vez na sessão.
+  loadSquadsFromFirebase(render);
 }
 // Alterna a UI do modal entre "duplicar no mesmo squad" e "enviar pra
 // outro squad" — mesmo modal, mesmos checkboxes, só o que é POSSÍVEL
@@ -14619,11 +14636,25 @@ function _dupOnSquadChange(){
   const scChk=document.getElementById('dup-super-children');
   if(colWrap) colWrap.style.display = cross ? 'none' : '';
   if(note) note.style.display = cross ? '' : 'none';
+  // Achado real (/monitorarbugs, 2026-09-09): alternar squad→"Este
+  // squad"→squad outra vez, sem fechar o modal, reabilitava os 3 campos
+  // mas deixava CHECKED=false — voltar pra "Este squad" parecia restaurar
+  // tudo (título/botão/coluna voltam), mas Responsável/Participantes/
+  // Comentários ficavam de fora de uma duplicação normal, sem nenhum
+  // aviso visual. `true` é o único default que existe pra esses 3
+  // (mesmo valor que abrirDuplicarModal() já usa pra TODOS os campos ao
+  // abrir o modal) — restaura ao voltar pra "Este squad", não só ao
+  // desabilitar.
   _DUP_CAMPOS_SEM_CROSS_SQUAD.forEach(f=>{
     const el=document.getElementById('dup-'+f);
     if(!el) return;
     el.disabled = cross;
-    if(cross) el.checked = false;
+    el.checked = !cross;
+    // Polish: campo desabilitado só mudava a aparência nativa do
+    // checkbox — o texto do label ao lado continuava com cor normal,
+    // ambíguo demais no tema escuro pra "isso não se aplica aqui".
+    const wrap=document.getElementById('dup-'+f+'-wrap');
+    if(wrap){ wrap.style.opacity = cross ? '.5' : ''; wrap.style.cursor = cross ? 'default' : 'pointer'; }
   });
   // Duplicar-com-filhos fica fora do escopo de envio pra outro squad (cada
   // filho precisaria repetir todo o fluxo de campos obrigatórios do squad
