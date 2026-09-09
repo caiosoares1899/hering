@@ -1160,6 +1160,35 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   mantêm a própria coluna (não herdam `opts.col` do card raiz), filhos
   arquivados ficam de fora, `visited` protege contra ciclo corrompido nos
   dados
+- **🏢 Enviar card pra outro squad (2026-09-09)** — MESMO modal de
+  ⧉ Duplicar (`#dup-ov`), seletor `#dup-squad` no topo
+  (`_dupPopulateSquadSelect()`, lista `SQUAD_META_LIVE` menos
+  `ACTIVE_SQUAD`). `_dupOnSquadChange()` alterna a UI (esconde Coluna/
+  Responsável/Participantes/Comentários — não fazem sentido cross-squad
+  — quando um squad é escolhido). Como cada squad é uma página isolada
+  (`ACTIVE_SQUAD` fixo por load, `FB='kanban/squads/'+ACTIVE_SQUAD+
+  '/dados'` — colunas/membros/tags/config de outro squad NÃO estão
+  carregados aqui), a implementação não tenta um 2º formulário de
+  validação: `_confirmarEnviarOutroSquad(card, squad, opts)` monta um
+  payload leve (tags por NOME, não id — squads têm tag ids diferentes),
+  grava em `sessionStorage` (`mare_squad_transfer`), registra
+  `recordHistory()` no card ORIGEM ("enviou uma cópia pra squad X") e
+  navega pra `?squad=X&transfer=1` — mesmo mecanismo de troca de squad
+  do header. `_maybeConsumirTransferSquad()` (chamada perto de
+  `fbLoadAll()` no boot) detecta `transfer=1`, espera ~900ms (dar tempo
+  de columns/tags/Submarca do squad de destino chegarem) e chama
+  `_consumirTransferSquad(payload)`: abre `openNewCard()` (formulário
+  REAL do squad de destino, com Submarca/Ficha Técnica já corretos pra
+  lá) e pré-preenche título/desc/checklist/prazo/prioridade/riscos;
+  tags casadas por label (mesma técnica de `_intakeCriarCard()`,
+  silencioso se não achar). Links são um caso à parte: `attachSave()`
+  exige um card com id real (não existe ainda nesse ponto) — ficam em
+  `_pendingTransferLinks`/`_pendingTransferOrigem` (mesmo padrão de
+  `_intakeOrigemPendingId`/`intakeId`) até `saveCard()` criar `_newCard`
+  de verdade, que herda `links`/`transferOrigem` (traceability) direto
+  no objeto. Sem checagem de permissão nova: `database.rules.json`
+  já libera escrita em qualquer squad pra e-mail `@ciahering.com.br`
+  (mesma base do seletor de squad do header).
 
 ### Card lock / "Pedir o card"
 - `CARD_LOCK_REQUEST_GRACE_MS` — L12522

@@ -3032,6 +3032,62 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.623-dev — 2026-09-09 — 🏢 Duplicar card ganha opção de enviar para outro squad
+
+Pedido direto do usuário: "quão custoso seria poder enviar um card
+(duplicar) para outra squad? ai teria q ter uma telinha tipo a de
+duplicar para aparecer oq q a pessoa quer duplicar + se quer mudar
+campos tipo responsavel, demandante e tals e preencher campos q sao
+obrigatorios nessa outra squad (submarca, por ex)".
+
+O modal de ⧉ Duplicar (mesmo já existente — nenhum modal novo) ganhou
+um seletor **🏢 Squad de destino** no topo. Escolhendo "Este squad" o
+comportamento continua idêntico a antes; escolhendo outro squad, a
+tela se adapta:
+
+- **Coluna, Responsável, Participantes e Comentários somem** da lista —
+  não fazem sentido em outro squad (cada squad tem seus próprios
+  membros/colunas, e Comentários dependem do card já ter um id real,
+  que só existe depois de criado).
+- Descrição, Checklist, Tags, Prazo, Prioridade, Riscos e Links (o que
+  estiver marcado) são levados junto.
+- Ao confirmar, a pessoa é levada direto pra "+ Novo card" **já no
+  squad de destino**, com esses campos pré-preenchidos — e só falta
+  preencher o que é específico daquele squad (Responsável, Demandante,
+  Submarca, Ficha Técnica se o squad usar), reaproveitando 100% do
+  formulário e das validações REAIS de lá. O card original fica
+  intacto no squad de origem (é cópia, não move) e ganha uma entrada no
+  Histórico registrando o envio.
+
+**Decisão de arquitetura**: em vez de reimplementar dentro do modal um
+2º formulário "campos obrigatórios do squad X" (duplicaria toda a
+validação de `saveCard()`/Ficha Técnica/Submarca, com 2 lugares pra
+manter sincronizados pra sempre — cada squad já roda um app inteiro
+isolado, com colunas/membros/tags/config próprios, `ACTIVE_SQUAD` fixo
+por carregamento de página), a cópia vira uma "encomenda" leve
+(`sessionStorage`, mesma aba, nunca sai do navegador da pessoa) e a
+navegação `?squad=X` — o mesmo mecanismo que já troca de squad no menu
+do header — faz o resto. Tags são casadas por **nome**, não por id
+(ids de tag não são os mesmos entre squads), mesma técnica que
+`_intakeCriarCard()` já usa pra casar tag/Submarca vindas de fora do
+squad atual — silencioso pro que não achar correspondência, não trava
+nada.
+
+**Segurança**: nenhuma checagem de permissão nova foi necessária — as
+regras do Firebase já liberam escrita em qualquer squad pra quem tem
+e-mail `@ciahering.com.br` (a checagem de squad-membro é só fallback
+pra e-mail externo), mesma base que já sustenta o seletor de squad do
+header. `checkEditPermission()` roda tanto no envio quanto na
+criação do lado de destino, mesmo padrão de qualquer outra criação de
+card.
+
+4 cenários testados via Playwright (modal lista squads corretamente,
+UI alterna certo entre os 2 modos, payload de envio só carrega o que
+está marcado, e o card no destino nasce com checklist/riscos/tags
+casadas por nome/links pendentes/campo de rastreabilidade
+`transferOrigem` — tudo conferido lendo o objeto `_newCard` real
+construído por `saveCard()`, não uma reimplementação).
+
 ### v8.30.622-dev — 2026-09-08 — Correção isolada: sombra preta grudada na borda direita da tela
 
 Mesma correção já promovida direto pra `kanban.html` nesta data (ver
