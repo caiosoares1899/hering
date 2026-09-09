@@ -3032,6 +3032,62 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.624-dev — 2026-09-09 — `/monitorarbugs` no "Enviar pra outro squad": campos ficavam desmarcados ao voltar pro modo normal
+
+Pedido direto do usuário logo após validar a feature na UI: "tudo
+certo! só por garantia, roda um /monitorarbugs". Escopo: a própria
+feature recém-lançada (v8.30.623-dev). 2 achados reais + 1 polish de
+UX, lendo `_dupOnSquadChange()`/`_dupPopulateSquadSelect()` de ponta a
+ponta (técnicas 2 e 3 da skill).
+
+- **Achado 1 (severo, técnica 3 — comportamento vs. o que a UI
+  promete)**: alternar o seletor "🏢 Squad de destino" pra outro squad e
+  depois de volta pra "Este squad", **sem fechar o modal**, reabilitava
+  Responsável/Participantes/Comentários (checkbox volta clicável) mas
+  deixava **checked=false** — a UI parecia ter voltado ao normal
+  (título, botão e Coluna reaparecem certinhos), mas uma duplicação
+  normal feita logo em seguida saía sem Responsável/Participantes/
+  Comentários, sem nenhum aviso visual do motivo.
+  `_dupOnSquadChange()` só desmarcava os 3 campos ao ENTRAR no modo
+  cross-squad (`if(cross) el.checked=false`), nunca remarcava ao sair.
+  Fix: `el.checked = !cross` (restaura pro único default que esses 3
+  campos têm — o mesmo `true` que `abrirDuplicarModal()` já usa pra
+  TODOS os campos ao abrir o modal).
+- **Achado 2 (técnica 2 — comparado contra o padrão irmão já resolvido
+  no mesmo arquivo)**: o seletor de squad do HEADER
+  (`toggleSquadSwitcher()`) já busca `squads_meta` no Firebase de novo
+  toda vez que abre, pra pegar um squad criado recentemente no painel —
+  o seletor novo do modal de Duplicar (`_dupPopulateSquadSelect()`) só
+  lia `SQUAD_META_LIVE` já em memória, sem se atualizar. Um squad
+  recém-criado ficava invisível como destino até a pessoa abrir o
+  seletor do header pelo menos 1 vez na sessão. Fix: mesma chamada a
+  `loadSquadsFromFirebase()`, preservando a seleção em andamento
+  durante o refresh assíncrono.
+  **Achado incidental, corrigido junto (regressão da própria correção
+  acima)**: preservar a seleção durante o refresh assíncrono, sem
+  cuidado extra, vazava a seleção de squad de uma sessão do modal pra
+  outra — reabrir "Duplicar" pra um card DIFERENTE herdava o squad
+  escolhido da última vez, em vez de sempre abrir em "Este squad".
+  Pego só porque o teste da própria correção do Achado 2 cobriu
+  explicitamente "abrir pra um 2º card depois". Fix: `abrirDuplicarModal()`
+  zera o seletor pra `''` explicitamente ANTES de
+  `_dupPopulateSquadSelect()` capturar o valor a preservar.
+- **Polish de UX (não é bug, mas ligado ao pedido original de "UI/UX
+  excelente")**: os 3 campos desabilitados (Responsável/Participantes/
+  Comentários) só mudavam a aparência nativa do checkbox — o texto do
+  label ao lado continuava com cor normal, ambíguo no tema escuro.
+  Adicionado opacidade reduzida + cursor normal no texto quando
+  desabilitado.
+
+Checado e sem achado: payload de envio (`_confirmarEnviarOutroSquad()`)
+só inclui os `_DUP_CAMPOS` que a UI de fato deixa marcar; casamento de
+tag por nome (`_consumirTransferSquad()`) idêntico ao padrão já usado
+por `_intakeCriarCard()`; `_pendingTransferLinks`/`_pendingTransferOrigem`
+sempre resetados no início de `openNewCard()` — todo caminho que chega
+em `saveCard()` criando um card novo passa por `openNewCard()`
+primeiro (`usarQLItem()` incluso), então não existe rota pra um valor
+pendente vazar pra um card criado por engano de outro fluxo.
+
 ### v8.30.623-dev — 2026-09-09 — 🏢 Duplicar card ganha opção de enviar para outro squad
 
 Pedido direto do usuário: "quão custoso seria poder enviar um card

@@ -522,6 +522,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `HIST_FIELDS` genérico; diff dedicado pro motivo, só quando o
   impedimento continua marcado antes e depois (evita duplicar a
   entrada de marcar/desmarcar). dev v8.30.620.
+- **2026-09-09, "Enviar card pra outro squad" (pedido explícito, "tudo
+  certo! só por garantia, roda um /monitorarbugs" logo após validar a
+  feature na UI — escopo: a própria feature do dia)**: 2 achados +
+  1 polish. `_dupOnSquadChange()` desmarcava Responsável/Participantes/
+  Comentários ao entrar no modo cross-squad mas nunca remarcava ao
+  voltar pra "Este squad" dentro da mesma abertura do modal (técnica 3
+  — UI parecia ter voltado ao normal, campos ficavam de fora em
+  silêncio). `_dupPopulateSquadSelect()` não atualizava a lista de
+  squads como o seletor do header já faz (técnica 2 — squad recém-
+  criado no painel ficava invisível como destino). Corrigir o achado 2
+  quase introduziu uma regressão nova (preservar seleção durante o
+  refresh assíncrono vazava a seleção de squad de uma sessão do modal
+  pra outra, reabrir pra um card diferente já vinha com squad
+  escolhido) — pego só porque o teste da própria correção cobriu
+  "abrir pra um 2º card depois" explicitamente. **Lição pra próxima
+  vez**: ao corrigir um achado que envolve estado assíncrono
+  preservado entre re-renders, sempre testar o cenário "abre de novo,
+  do zero, pra uma entidade diferente" — não só o cenário que o achado
+  original descreveu. dev v8.30.624.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
