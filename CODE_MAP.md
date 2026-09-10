@@ -1353,6 +1353,18 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   L~20885, executor de `criar_card` do chat direto L~23300) já está pronto
   pra casar `item.canal`/`input.canal` por label assim que o backend
   passar a enviá-lo.
+  **`/monitorarbugs` (2026-09-10, rodada logo após criar o campo)**: 3
+  achados reais comparando Canal ponto a ponto contra tudo que Submarca já
+  cobre — `swCfgTab('tags')` não re-sincronizava os 2 checkboxes de Canal
+  nem chamava `renderCanalVendaCfgList()` ao reabrir a aba (só Tamanho/
+  Submarca tinham essa linha); `_hasActiveFilters()` (~L11230) não checava
+  `f.canalVenda` — mesma classe de bug já corrigida 2x antes pra Submarca
+  (PR #800/#809); import do Trello (~L23901, dentro da função de import)
+  não tinha a "Prioridade 1" de match exato por nome que Submarca tem —
+  label "Amazon"/"Shopee"/"Mercado Livre" caíam no fuzzy `includes()`
+  genérico, risco real de colar no canal errado (ex.: "Amazon" → "Amazon
+  (FBA)") pela ordem do array. Os 3 corrigidos, ver `CHANGELOG.md` (dev
+  v8.30.628) pro detalhe de cada um.
 
 ### Impedimentos (modo coluna vs. tag)
 - `blockerMode` (let) — L28571 — carregado de `config/blockerMode`, `'col'`
