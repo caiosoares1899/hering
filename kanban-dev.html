@@ -6107,7 +6107,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.625-dev</div>
+<div class="version">v8.30.626-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -22148,11 +22148,26 @@ async function delColumn(i){
   // coluna "parece" sem uso ali) e, na hora de voltar pra "coluna" depois,
   // qualquer card que ainda carregasse col='blocker' de um período anterior
   // sumia do board sem aviso nenhum — 64 cards afetados numa squad só, em
-  // mais de uma rodada. Por isso o bloqueio agora é incondicional: essa
-  // coluna nunca é excluível por aqui, independente do modo atual.
+  // mais de uma rodada.
+  //
+  // Pedido direto do usuário (2026-09-10, squad Marketplace nova, colunas
+  // usadas como tag — board sem nenhum card ainda, mas a coluna "Impedimentos"
+  // fixa não deixava excluir): agora que existem guards irmãos fechando o
+  // MESMO buraco em todo caminho que poderia recriar o problema —
+  // saveBlockerMode() recusa voltar pro modo "coluna" se 'blocker' não
+  // existir mais, e _doBulkBlockCol()/ctxMove() recusam mover um card pra
+  // lá se a coluna sumiu — o bloqueio incondicional passou a proteger só um
+  // cenário que já não acontece mais silenciosamente. Mantém a trava SÓ
+  // enquanto a coluna ainda tem cards de verdade (a reatribuição pra
+  // columns[0] logo abaixo já é segura pra esses, mas exigir esvaziar
+  // primeiro é mais claro que empurrar cards de impedimento pra Backlog
+  // sem a pessoa pedir).
   if(columns[i].id==='blocker'){
-    uiAlert('Essa é a coluna fixa de "Impedimentos" — não pode ser excluída, mesmo com o modo de impedimentos em "tag". Cards antigos podem continuar referenciando ela por baixo dos panos, e excluí-la faz esses cards sumirem do board sem aviso. Se não usam mais, deixem ela vazia/no fim da lista.');
-    return;
+    const nCards = cards.filter(c=>c.col==='blocker').length;
+    if(nCards>0){
+      uiAlert('A coluna "Impedimentos" ainda tem '+nCards+' card(s) nela — mova ou arquive esses cards antes de excluir. Depois de vazia, dá pra excluir normalmente.');
+      return;
+    }
   }
   if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
   const oldId=columns[i].id;
