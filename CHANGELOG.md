@@ -14430,6 +14430,44 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.38 · painel — 2026-09-10 — Fix: squad já existente antes do boot AINDA ficava fora do Monitor (bug reintroduzido no fix anterior)
+
+Pedido direto: "roda um /monitorarbugs na pagina 'monitor' no painel
+(incluindo prod)" — auditoria de acompanhamento logo depois de promover o
+fix da v3.37 (mesma área). Achado real, técnica 2 (comparar contra um
+padrão irmão já resolvido no mesmo arquivo — `loadPresence()`, que tem um
+comentário datado de 2026-08-25 documentando EXATAMENTE esta classe de
+bug).
+
+**Causa raiz**: a v3.37 pôs a chamada de `loadErrorLogs()` dentro do
+branch `else if(changed)` de `loadExtraSquads()` — parecia certo (só
+rechama quando `SQUADS` ganha um squad novo), mas esse branch **nunca
+roda no 1º carregamento da página**: o `if(firstRun)` sempre captura o
+fluxo primeiro. Mesmo quando um squad extra JÁ EXISTIA antes desta sessão
+abrir (o caso mais comum na prática — ex.: squad Marketplace criado
+ontem, board aberto do zero hoje), essa 1ª passagem empurra ele pra
+`SQUADS` (`changed=true` internamente) mas o código nunca chega a
+avaliar esse `changed`, porque o `if(firstRun)` já capturou o fluxo.
+Resultado: só um squad criado **depois** que a aba já estava aberta se
+beneficiava do fix da v3.37 — o cenário original relatado pelo usuário
+("criei a squad marketplace... não aparece no Monitor") continuava
+reproduzível numa aba nova, mesmo já com o fix anterior em produção.
+
+**Fix**: `loadErrorLogs()` chamado incondicionalmente logo depois de
+`loadPresence()` (fora do `if(firstRun)/else if(changed)`), exatamente
+como `loadPresence()` já faz — idempotente
+(`_errLogSquadsAttached`), então repetir a chamada em toda
+passagem do listener de `squads_meta` é seguro e barato.
+
+Validado via Playwright reproduzindo a race condition real: registra o
+listener de `squads_meta` (sem resolver ainda), chama `loadErrorLogs()`
+direto — como o boot real faz — e só DEPOIS dispara o Firebase mock com
+`marketplace` já presente (squad pré-existente, não criado durante a
+sessão). Confirmado que o código da v3.37 (testado lado a lado, mesmo
+harness) deixava `marketplace` fora de `_errLogSquadsAttached`; o fix
+desta rodada cobre. `node --check` limpo nos 2 arquivos; balanço de
+chaves/parênteses de cada um bate com o baseline já conhecido (`-1`/`-14`).
+
 ### painel.html v3.37 · painel — 2026-09-10 · Promove pra prod — Fix: aba 🐛 Monitor não cobria squads criados depois do boot
 
 Promoção isolada (não é o dev inteiro — `painel.html`/`painel-dev.html`

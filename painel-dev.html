@@ -2804,7 +2804,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.37 · painel-dev</div>
+<div class="version">v3.38 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9420,17 +9420,17 @@ function loadExtraSquads(callback){
       }
     });
     loadPresence(); // pega squad(s) extra(s) recém-adicionado(s) a SQUADS — ver comentário na declaração
+    // Achado real (/monitorarbugs, 2026-09-10, 2ª rodada): loadErrorLogs()
+    // dentro do `else if(changed)` nunca roda no 1º carregamento (firstRun
+    // sempre captura o fluxo antes) — mesmo se este trecho for reativado
+    // algum dia (hoje é código morto, ver early return acima), precisa
+    // ficar incondicional aqui, igual loadPresence(), pra cobrir squad que
+    // já existia antes da sessão abrir. Ver painel.html pro efeito prático.
+    loadErrorLogs();
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
-    else if(changed){
-      loadAll(); renderSquadCards();
-      // Achado real (/monitorarbugs, 2026-09-10): faltava rechamar
-      // loadErrorLogs() aqui — mesmo se este trecho for reativado algum dia
-      // (hoje é código morto, ver early return acima), o Monitor precisa
-      // disso pra pegar squad novo. Ver painel.html pro efeito prático.
-      loadErrorLogs();
-    }
+    else if(changed){ loadAll(); renderSquadCards(); }
   });
 }
 

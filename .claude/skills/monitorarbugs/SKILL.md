@@ -563,6 +563,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   uma implementação cuidadosa cobrindo ~20 pontos de integração, ainda
   sobraram 3 (2 pequenos + 1 sério) só visíveis fazendo essa varredura
   find-all, não relendo a própria implementação de memória.
+- **2026-09-10, 🐛 Monitor do painel (pedido explícito, "roda um
+  /monitorarbugs na pagina monitor no painel, incluindo prod" — checagem
+  de acompanhamento do próprio fix promovido minutos antes)**: 1 achado
+  severo, técnica 2 (comparado contra `loadPresence()`, padrão irmão já
+  resolvido no mesmo arquivo desde 2026-08-25). O fix anterior (v3.37)
+  pôs `loadErrorLogs()` dentro do `else if(changed)` de
+  `loadExtraSquads()` — mas esse branch nunca roda no 1º carregamento da
+  página (`if(firstRun)` sempre captura o fluxo primeiro), então squad
+  extra que JÁ EXISTIA antes da sessão abrir (o caso mais comum — squad
+  criado ontem, board aberto do zero hoje) continuava sem listener de
+  erro, mesmo já em prod. `loadPresence()` já evita essa mesma armadilha
+  chamando incondicionalmente, fora do if/else — `loadErrorLogs()`
+  passou a fazer o mesmo. Validado via Playwright reproduzindo a race de
+  verdade (registra listener, chama antes do Firebase responder, só
+  depois dispara com o squad já presente) — testado lado a lado contra
+  o código da v3.37 pra confirmar que o bug era real antes do fix. dev
+  v3.38/prod v3.38. **Lição pra próxima vez**: ao corrigir um bug de
+  "código roda 1x só no boot, precisa ser idempotente + rechamado", não
+  basta rechamar só no branch de MUDANÇA — checar se existe um caminho
+  IRMÃO já resolvido (aqui, `loadPresence()`) e replicar exatamente ONDE
+  ele chama, não só COMO.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
