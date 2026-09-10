@@ -764,8 +764,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   min-height:2px;transition:height .3s;
 }
 .err-bar-lbl{ font-size:8px;color:var(--txt3); }
+/* auto-fit (não repeat(4,1fr) fixo) porque a quantidade de cards varia — 2
+   fixos (Abertos/Resolvidos) + 1 por squad, gerado por renderErrStatsCards().
+   Squad novo só soma mais uma coluna/quebra de linha, nunca estoura o grid
+   nem deixa buraco vazio quando tem menos de 4 no total. */
 .err-stats-grid{
-  display:grid;grid-template-columns:repeat(4,1fr);
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));
   gap:10px;margin-bottom:14px;
 }
 .err-filters{
@@ -1969,23 +1973,20 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
         <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
       </div>
-      <div class="err-stats-grid">
+      <div class="err-stats-grid" id="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
-        <div class="met"><div class="met-lbl">Squad Dados e IA</div><div class="met-val" id="es-dados">—</div><div class="met-sub">total</div></div>
-        <div class="met"><div class="met-lbl">Marketing de Performance</div><div class="met-val" id="es-prf">—</div><div class="met-sub">total</div></div>
         <div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>
+        <!-- 1 card por squad, gerado por renderErrStatsCards() — nunca hardcoded, senão squad criado depois fica invisível aqui (mesmo bug que motivou renderFilterBar()/renderGerenciaBar() virarem dinâmicos). -->
       </div>
       <div class="card" style="margin-bottom:14px;">
         <div class="card-title">📈 Erros por dia — últimos 7 dias</div>
         <div class="tp-chart-wrap" id="err-chart" style="margin-top:8px;"></div>
       </div>
       <div class="err-filters">
-        <div class="err-filter-row">
+        <div class="err-filter-row" id="ef-squad-row">
           <span class="err-filter-label">Squad</span>
-          <button class="err-filter-btn active" onclick="setErrFilter('squad','all')"          id="ef-squad-all">Todos</button>
-          <button class="err-filter-btn"        onclick="setErrFilter('squad','dados')"        id="ef-squad-dados">📊 Dados</button>
-          <button class="err-filter-btn"        onclick="setErrFilter('squad','prf')"        id="ef-squad-prf">📱 Mkt Perf</button>
-          <button class="err-filter-btn"        onclick="setErrFilter('squad','midiacriativa')" id="ef-squad-midiacriativa">🎨 Criativa</button>
+          <button class="err-filter-btn active" onclick="setErrFilter('squad','all')" id="ef-squad-all" data-sq="all">Todos</button>
+          <!-- 1 botão por squad, gerado por renderErrSquadFilterRow() -->
         </div>
         <div class="err-filter-row">
           <span class="err-filter-label">Tipo</span>
@@ -2842,7 +2843,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.34 · painel</div>
+<div class="version">v3.37 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7539,7 +7540,11 @@ function setErrFilter(type, val){
   if(type==='status') errFilterStatus=val;
   // Atualiza botões
   if(type==='squad'){
-    ['all','dados','prf'].forEach(v=>document.getElementById('ef-squad-'+v)?.classList.toggle('active',v===val));
+    // Não hardcoda ids de squad (achado real: 'midiacriativa' tinha botão na
+    // tela mas nunca ficava com destaque visual porque esta lista o
+    // ignorava) — lê o data-sq de cada botão realmente renderizado por
+    // renderErrSquadFilterRow(), cobre qualquer squad presente agora.
+    document.querySelectorAll('#ef-squad-row .err-filter-btn').forEach(btn=>btn.classList.toggle('active', btn.dataset.sq===val));
   }
   if(type==='cat'){
     ['all','firebase','agente','ui','importacao'].forEach(v=>document.getElementById('ef-cat-'+v)?.classList.toggle('active',v===val));
@@ -7571,8 +7576,6 @@ function renderErrors(){
   const filtered=getFilteredErrors();
   const open=allErrors.filter(e=>e.entry.status==='novo').length;
   const resolved=allErrors.filter(e=>e.entry.status==='resolvido').length;
-  const dados=allErrors.filter(e=>e.squad==='dados').length;
-  const prf=allErrors.filter(e=>e.squad==='prf').length;
   const last24h=allErrors.filter(e=>{
     const ts=new Date(e.entry.ts); const now=new Date();
     return (now-ts)<86400000;
@@ -7581,9 +7584,10 @@ function renderErrors(){
   // Stats
   const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.textContent=v; };
   set('es-open',last24h);
-  set('es-dados',dados);
-  set('es-prf',prf);
   set('es-resolved',resolved);
+  // 1 card por squad (ver renderErrStatsCards()) — nunca só 'dados'/'prf'
+  // hardcoded, senão squad criado depois do boot fica sem total nenhum aqui.
+  SQUADS.forEach(sq=>set('es-sq-'+sq.id, allErrors.filter(e=>e.squad===sq.id).length));
   set('err-open-count',open+' abertos');
   document.getElementById('err-open-count').style.background=open?'rgba(255,107,107,.2)':'rgba(29,233,182,.1)';
   document.getElementById('err-open-count').style.color=open?'var(--danger)':'var(--teal)';
@@ -9515,8 +9519,57 @@ async function loadUsoData(){
   if(avisoEl) avisoEl.style.display = (errosPermissao===KNOWN.length && KNOWN.length>0) ? 'block' : 'none';
 }
 
+// Nome curto pro squad em contextos apertados (pill de filtro, card de
+// stat de 110px) — 'short' é só um apelido opcional nos squads nativos
+// (ver SQUADS); squad criado depois via painel não tem 'short', cai no
+// label completo sem o prefixo "Squad ".
+function _errSqShort(sq){ return sq.short || (sq.label||sq.id).replace('Squad ',''); }
+
+// Card "Erros abertos"/"Resolvidos" (fixos, são métricas globais) + 1 card
+// por squad de SQUADS — nunca hardcoded (achado real: só existiam cards pra
+// 'dados'/'prf', squad criado depois via painel de setup — ex. Marketplace —
+// nunca tinha total nenhum aqui). Grid é auto-fit (ver CSS), então squad novo
+// só quebra linha, nunca estoura o layout. Chamado no boot e de novo sempre
+// que SQUADS ganha um squad novo (loadExtraSquads()).
+function renderErrStatsCards(){
+  const grid = document.getElementById('err-stats-grid'); if(!grid) return;
+  const sqCards = SQUADS.map(sq=>
+    `<div class="met"><div class="met-lbl">${esc(sq.icon)} ${esc(_errSqShort(sq))}</div><div class="met-val" id="es-sq-${esc(sq.id)}">—</div><div class="met-sub">total</div></div>`
+  ).join('');
+  grid.innerHTML =
+    '<div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>'
+    + sqCards
+    + '<div class="met"><div class="met-lbl">Resolvidos</div><div class="met-val met-ok" id="es-resolved">—</div><div class="met-sub">total</div></div>';
+}
+
+// Mesma ideia pro filtro "Squad" do Monitor — 1 botão por squad de SQUADS,
+// igual renderFilterBar() já faz pro filtro geral do painel (mesmo comentário
+// lá: squad criado depois nunca ganhava botão de filtro em lugar nenhum).
+// Preserva o filtro ativo ao re-renderizar (squad novo aparece no meio da sessão).
+function renderErrSquadFilterRow(){
+  const row = document.getElementById('ef-squad-row'); if(!row) return;
+  const active = errFilterSquad;
+  row.innerHTML = '<span class="err-filter-label">Squad</span>'
+    + `<button class="err-filter-btn${active==='all'?' active':''}" onclick="setErrFilter('squad','all')" id="ef-squad-all" data-sq="all">Todos</button>`
+    + SQUADS.map(sq=>
+        `<button class="err-filter-btn${active===sq.id?' active':''}" onclick="setErrFilter('squad','${esc(sq.id)}')" id="ef-squad-${esc(sq.id)}" data-sq="${esc(sq.id)}">${esc(sq.icon)} ${esc(_errSqShort(sq))}</button>`
+      ).join('');
+}
+
+// Achado real (2026-09-10, usuário: "a aba monitor só monitora bugs em
+// dados/ia e mídia criativa? e as outras squads?"): esta função rodava 1x só,
+// no boot de fb-ready — squad criado DEPOIS via painel de setup (squads_meta,
+// resolvido de forma assíncrona por loadExtraSquads()) nunca ganhava listener
+// de error_logs/error_stats nenhum, porque loadErrorLogs() nunca era rechamada
+// quando SQUADS crescia (diferente de loadPresence()/loadAll(), que já eram
+// rechamadas — ver loadExtraSquads()). Guard idempotente por squad.id deixa
+// seguro rechamar loadErrorLogs() toda vez que um squad novo aparece, sem
+// duplicar listener nos squads que já tinham.
+let _errLogSquadsAttached = new Set();
 function loadErrorLogs(){
   SQUADS.forEach(sq=>{
+    if(_errLogSquadsAttached.has(sq.id)) return;
+    _errLogSquadsAttached.add(sq.id);
     // Error logs
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/error_logs'),snap=>{
       const val=snap.val()||{};
@@ -9538,6 +9591,8 @@ function loadErrorLogs(){
       if(_isPtab('monitor')) renderErrChart();
     });
   });
+  renderErrStatsCards();
+  renderErrSquadFilterRow();
 }
 // ── FIM MONITORAMENTO ─────────────────────────────────────────────
 
@@ -10312,7 +10367,17 @@ function loadExtraSquads(callback){
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
-    else if(changed){ loadAll(); renderSquadCards(); }
+    else if(changed){
+      loadAll(); renderSquadCards();
+      // Achado real (/monitorarbugs, 2026-09-10): faltava rechamar
+      // loadErrorLogs() aqui — a função já tinha ganhado guard idempotente
+      // (_errLogSquadsAttached) pra ser segura de rechamar, mas nada de fato
+      // a rechamava quando um squad novo aparecia, então continuava sem
+      // listener de error_logs/error_stats nenhum mesmo depois do resto do
+      // fix. Squad criado via painel de setup (ex.: Marketplace) só passa a
+      // aparecer no Monitor a partir de agora.
+      loadErrorLogs();
+    }
   });
 }
 

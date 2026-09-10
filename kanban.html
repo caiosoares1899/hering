@@ -3487,6 +3487,9 @@ input[type="date"]{-moz-appearance:textfield;}
   <select id="f-submarca" onchange="setSubmarcaFromDrawer()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">🏷️ Qualquer submarca</option>
   </select>
+  <select id="f-canalvenda" onchange="setCanalVendaFromDrawer()" style="display:none;padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+    <option value="">🛒 Qualquer canal</option>
+  </select>
   <select id="f-subteam" onchange="applyFilters()" style="padding:4px 8px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
     <option value="">Todos os subtimes</option>
   </select>
@@ -3614,6 +3617,10 @@ input[type="date"]{-moz-appearance:textfield;}
   <div style="position:relative;display:inline-block;" id="submarca-dd-wrap" data-tb-id="submarcas">
     <button class="btn btn-sm" onclick="toggleSubmarcaDropdown()" id="submarca-dd-trigger" style="display:none;">🏷️ Submarcas ▾</button>
     <div id="submarca-dd-panel" style="display:none;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;max-width:300px;max-height:360px;overflow-y:auto;z-index:500;padding:6px;"></div>
+  </div>
+  <div style="position:relative;display:inline-block;" id="canalvenda-dd-wrap" data-tb-id="canaisvenda">
+    <button class="btn btn-sm" onclick="toggleCanalVendaDropdown()" id="canalvenda-dd-trigger" style="display:none;">🛒 Canais ▾</button>
+    <div id="canalvenda-dd-panel" style="display:none;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.2);border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);min-width:230px;max-width:300px;max-height:360px;overflow-y:auto;z-index:500;padding:6px;"></div>
   </div>
   <button class="btn btn-sm" data-tb-id="selecionar" onclick="toggleSelectMode()" id="btn-select" title="Selecionar vários cards para excluir em massa">☑️ Selecionar</button>
   <div class="tb-sep" data-tb-id="sep2"></div>
@@ -4069,6 +4076,11 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="field" id="m-submarca-field" style="display:none;"><label class="fl">🏷️ Submarca</label>
             <select class="fi" id="m-submarca" onchange="setCardSubmarca(this.value)">
               <option value="">— sem submarca —</option>
+            </select>
+          </div>
+          <div class="field" id="m-canalvenda-field" style="display:none;"><label class="fl">🛒 Canal</label>
+            <select class="fi" id="m-canalvenda" onchange="setCardCanalVenda(this.value)">
+              <option value="">— sem canal —</option>
             </select>
           </div>
           <div class="field"><label class="fl">Executor</label>
@@ -4843,6 +4855,23 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="submarca-visiveis-cfg-wrap" style="display:none;margin-top:10px;padding-left:4px;">
           <div style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Marcadas aparecem no card e nos filtros rápidos — todas ligadas por padrão</div>
           <div id="submarca-visiveis-cfg-body" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
+        <div class="cfg-sec-title">🛒 Canal</div>
+        <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
+          Campo dedicado "Canal" no card (Mercado Livre, Shopee, Amazon...) — pensado pro squad Marketplace, que vende os mesmos produtos em vários canais ao mesmo tempo.
+        </p>
+        <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.25);border-radius:var(--r);">
+          <input type="checkbox" id="cfg-canalvenda-ativo" onchange="toggleCanalVendaAtivo(this.checked)"> Ativar campo de canal neste squad
+        </label>
+        <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;margin-top:6px;background:rgba(255,107,107,.06);border:1px solid rgba(255,107,107,.2);border-radius:var(--r);">
+          <input type="checkbox" id="cfg-canalvenda-obrigatorio" onchange="toggleCanalVendaObrigatorio(this.checked)"> Tornar Canal obrigatório pra salvar o card (como a Submarca é)
+        </label>
+        <div id="canalvenda-visiveis-cfg-wrap" style="display:none;margin-top:10px;padding-left:4px;">
+          <div style="font-size:10.5px;color:var(--txt3);margin-bottom:8px;text-transform:uppercase;letter-spacing:.05em;">Marcados aparecem no card e nos filtros rápidos — todos ligados por padrão</div>
+          <div id="canalvenda-visiveis-cfg-body" style="display:flex;flex-direction:column;gap:6px;"></div>
         </div>
       </div>
     </div>
@@ -6107,7 +6136,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.625</div>
+<div class="version">v8.30.628</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7464,7 +7493,7 @@ function _renderBulkTagPicker(){
       // (achado via /monitorarbugs: sem isso dava pra marcar "👕 P" + "👕 G"
       // e clicar Adicionar, deixando os cards com 2 tamanhos ao mesmo tempo —
       // estado impossível de alcançar pela tela do card).
-      [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+      [SIZE_TAGS, SUBMARCA_TAGS, CANAL_VENDA_TAGS].forEach(group=>{
         const groupIds=group.map(t=>t.id);
         if(groupIds.includes(id)) window._bulkSelectedTags=window._bulkSelectedTags.filter(t=>!groupIds.includes(t));
       });
@@ -7499,7 +7528,7 @@ function _doBulkTagMulti(mode){
     // grupo de ANTES + "Adicionar" uma nova do mesmo grupo ainda somava as
     // duas em vez de substituir — checagem própria aqui, mantendo a última
     // (a recém-aplicada), mesmo critério das duas funções citadas.
-    [SIZE_TAGS, SUBMARCA_TAGS].forEach(group=>{
+    [SIZE_TAGS, SUBMARCA_TAGS, CANAL_VENDA_TAGS].forEach(group=>{
       const groupIds=group.map(t=>t.id);
       const chosen=current.filter(id=>groupIds.includes(id));
       if(chosen.length>1) current=current.filter(id=>!groupIds.includes(id)||id===chosen[chosen.length-1]);
@@ -7511,6 +7540,7 @@ function _doBulkTagMulti(mode){
     current.filter(t=>!_prevTags.includes(t)).forEach(t=>{
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+      if(CANAL_VENDA_TAGS.some(st=>st.id===t)) runAutoRules('canal_venda_set', c.id, t);
     });
     _prevTags.filter(t=>!current.includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
   });
@@ -7859,6 +7889,35 @@ const SUBMARCA_TAGS = [
   {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro',       pi:4},
 ];
 function _submarcaIsVisivel(tagId){ return submarcasVisiveis[tagId]!==false; }
+
+// Canal de venda — mesma "pegada" da Submarca acima (toggle por squad, tags
+// fixas, campo dedicado + filtro), pra squads de marketplace que vendem o
+// mesmo produto em vários canais ao mesmo tempo (pedido direto do usuário,
+// 2026-09-10, squad Marketplace). Nome interno "canalVenda"/"CANAL_VENDA"
+// de propósito — já existe um campo "Canal" DIFERENTE (Ficha Técnica de
+// Criativos: canal de mídia tipo Instagram/E-mail, ver CANAL_OPCOES_DEFAULT)
+// e os dois não podem se confundir no código nem no Firebase.
+let canalVendaAtivo=false; // toggle por squad: mostra o campo dedicado "Canal" no card + filtros rápidos no toolbar (squad "marketplace")
+let canalVendaObrigatorio=false; // toggle separado (pedido direto): só trava o Salvar exigindo Canal se o squad também ligar este
+let canaisVendaVisiveis={}; // {tagId:boolean} — visibilidade individual de cada canal; ausente = visível (default: todos aparecem, PO desmarca os que não usa)
+// Tags de canal — ids fixos (idempotência: reativar não duplica, mesmo espírito de SUBMARCA_TAGS/SIZE_TAGS).
+const CANAL_VENDA_TAGS = [
+  {id:'tag_cv_meli1',      label:'Mercado Livre (ME1)',   pi:5},
+  {id:'tag_cv_meli2',      label:'Mercado Livre (ME2)',   pi:5},
+  {id:'tag_cv_melifull',   label:'Mercado Livre (Full)',  pi:5},
+  {id:'tag_cv_dafiti',     label:'Dafiti',                pi:5},
+  {id:'tag_cv_netshoes',   label:'Netshoes',              pi:5},
+  {id:'tag_cv_shopee',     label:'Shopee',                pi:5},
+  {id:'tag_cv_shopeekids', label:'Shopee Kids',           pi:5},
+  {id:'tag_cv_amazon',     label:'Amazon',                pi:5},
+  {id:'tag_cv_amazonfba',  label:'Amazon (FBA)',          pi:5},
+  {id:'tag_cv_privalia',   label:'Privalia',              pi:5},
+  {id:'tag_cv_magalu',     label:'Magazine Luiza',        pi:5},
+  {id:'tag_cv_zzmall',     label:'ZZ Mall',               pi:5},
+  {id:'tag_cv_offpremium', label:'Off Premium',           pi:5},
+  {id:'tag_cv_tiktokshop', label:'TikTok Shop',           pi:5},
+];
+function _canalVendaIsVisivel(tagId){ return canaisVendaVisiveis[tagId]!==false; }
 
 // ═══════════════════════════════════════════════════════
 // FIREBASE HELPERS
@@ -8956,6 +9015,19 @@ function fbLoadAll(){
     submarcasVisiveis = val||{};
     _applySubmarcaUIVisibility();
   });
+  fbListen(FB+'/config/canal_venda_ativo', val=>{
+    canalVendaAtivo = !!val;
+    const el=document.getElementById('cfg-canalvenda-ativo'); if(el) el.checked=canalVendaAtivo;
+    _applyCanalVendaUIVisibility();
+  });
+  fbListen(FB+'/config/canal_venda_obrigatorio', val=>{
+    canalVendaObrigatorio = !!val;
+    const el=document.getElementById('cfg-canalvenda-obrigatorio'); if(el) el.checked=canalVendaObrigatorio;
+  });
+  fbListen(FB+'/config/canais_venda_visiveis', val=>{
+    canaisVendaVisiveis = val||{};
+    _applyCanalVendaUIVisibility();
+  });
   fbListen(FB+'/config/criativos_listas', val=>{
     criativosListas = val||{};
     renderCriativosListasCfg();
@@ -9064,6 +9136,11 @@ function fbLoadAll(){
   // não existem em `tags`). Roda 1x por squad por sessão, só quem pode
   // editar tags (_isPOorOrg) — ver _ensureSubmarcaTagsBackfilled abaixo.
   _ensureSubmarcaTagsBackfilled();
+  // Mesma rede de segurança da Submarca acima, adiantada desde já (a lista
+  // de canais ainda pode crescer — ex. um marketplace novo — e squads que já
+  // tinham canalVendaAtivo ligado não passariam de novo por
+  // toggleCanalVendaAtivo(), único lugar que hoje provisiona a tag).
+  _ensureCanalVendaTagsBackfilled();
 
   // Cards — via listeners granulares (child_added/child_changed/child_removed) em vez
   // de onValue no array inteiro. onValue reenviava o node /cards COMPLETO pra CADA
@@ -10910,7 +10987,11 @@ function togglePinCard(cardId){
     // pinnedAt) contanto que os cards cheguem até ela já filtrados por
     // submarca, que é o caso normal do board — só o "desafixa outro"
     // aqui embaixo enxergava a coluna inteira, cross-submarca.
-    const _pinSmIds = submarcaAtivo ? SUBMARCA_TAGS.map(t=>t.id) : null;
+    // Mesma ideia vale pra Canal de venda (squad Marketplace, vários canais
+    // dividindo o mesmo board) — usa qualquer um dos dois grupos que
+    // estiver ativo no squad como chave de agrupamento (nunca os dois ao
+    // mesmo tempo na prática, cada squad liga só o que usa).
+    const _pinSmIds = submarcaAtivo ? SUBMARCA_TAGS.map(t=>t.id) : (canalVendaAtivo ? CANAL_VENDA_TAGS.map(t=>t.id) : null);
     const _cSubmarca = _pinSmIds ? (getCardTags(c).find(id=>_pinSmIds.includes(id))||'') : null;
     cards.filter(x=>{
       if(x.archived || x.col!==c.col || !x.pinned || x.id===c.id) return false;
@@ -11108,7 +11189,12 @@ function toggleTimelineView(){
 // atalho "🔭 Filtros" indicar filtro ativo mesmo com o painel fechado).
 function _hasActiveFilters(){
   const f=activeFilters||{};
-  return !!(f.owner||f.demandante||f.criador||f.tag||f.tamanho||(f.submarca&&f.submarca.length)||f.due||f.priority||f.blocker||f.risco||f.subteam||f.supercard||f.texto);
+  // Achado real (/monitorarbugs, 2026-09-10): faltava (f.canalVenda&&f.canalVenda.length)
+  // aqui — mesma classe de bug já corrigida 2x antes pra Submarca (PR #800,
+  // depois PR #809 pra 3 pontos que ainda faltavam). Filtrar só por Canal
+  // escondia cards sem o botão "🔭 Filtros" acender, mesmo com o predicado
+  // de passesFilter() já aplicando o filtro corretamente por baixo.
+  return !!(f.owner||f.demandante||f.criador||f.tag||f.tamanho||(f.submarca&&f.submarca.length)||(f.canalVenda&&f.canalVenda.length)||f.due||f.priority||f.blocker||f.risco||f.subteam||f.supercard||f.texto);
 }
 // Chip "💡 Só eu" da Timeline — alterna o filtro de responsável (mesmo
 // activeFilters.owner que #f-owner já usa) pro usuário atual, sem precisar
@@ -11956,7 +12042,7 @@ function _shortName(name){
 // filtros continuam começando limpos, como sempre foi. Ver
 // _saveSubmarcaFiltroPadrao(), chamado nos 3 pontos que mudam
 // activeFilters.submarca.
-let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
+let activeFilters={owner:'',demandante:'',tag:'',tamanho:'',submarca:JSON.parse(safeLS.getItem('sm_filtro_'+ACTIVE_SQUAD)||'[]'),canalVenda:JSON.parse(safeLS.getItem('cv_filtro_'+ACTIVE_SQUAD)||'[]'),due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
 // Mesma regra usada pelo rollup do card no board (makeCardEl) — um card é
 // supercard quando tem pelo menos 1 filho ainda ativo (não arquivado).
 // Extraído como helper pro filtro "🧩 Supercards" reusar em vez de reescrever.
@@ -11989,6 +12075,10 @@ function _crvCardCountBreakdown(rows){
 function _saveSubmarcaFiltroPadrao(){
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca||[]));
   _saveBoardPref('submarca_filtro', activeFilters.submarca||[]);
+}
+function _saveCanalVendaFiltroPadrao(){
+  safeLS.setItem('cv_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.canalVenda||[]));
+  _saveBoardPref('canal_venda_filtro', activeFilters.canalVenda||[]);
 }
 // Popula os <select> da barra de Filtros (#f-owner/#f-demandante/#f-criador/
 // #f-tag/#f-subteam). Extraído de toggleFilters() pra poder ser chamado
@@ -12076,6 +12166,9 @@ function applyFilters(){
     // setSubmarcaFromDrawer). Chamar applyFilters() por causa de outro filtro
     // (dono, tag, prazo...) não pode apagar a seleção de submarca.
     submarca:activeFilters.submarca||[],
+    // canalVenda também é multi-seleção (array) — mesmo motivo/comentário do
+    // campo submarca acima, preserva o que já estava lá.
+    canalVenda:activeFilters.canalVenda||[],
     due:document.getElementById('f-due').value,
     priority:document.getElementById('f-priority')?.value||'',
     blocker:document.getElementById('f-blocker').checked,
@@ -12086,6 +12179,7 @@ function applyFilters(){
   };
   _colRenderLimit={}; // reseta limite de render ao filtrar
   renderSubmarcaQuickFilters(); // realça o botão certo se o filtro mudou pelo drawer, não só pelo botão rápido
+  renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
   renderBoard();
 }
@@ -12096,6 +12190,7 @@ function clearFilters(){
   document.getElementById('f-tag').value='';
   const ftm=document.getElementById('f-tamanho'); if(ftm) ftm.value='';
   const fsm=document.getElementById('f-submarca'); if(fsm) fsm.value='';
+  const fcv=document.getElementById('f-canalvenda'); if(fcv) fcv.value='';
   document.getElementById('f-due').value='';
   const fp=document.getElementById('f-priority'); if(fp) fp.value='';
   document.getElementById('f-blocker').checked=false;
@@ -12103,9 +12198,11 @@ function clearFilters(){
   const fs=document.getElementById('f-subteam'); if(fs) fs.value='';
   const fsc=document.getElementById('f-supercard'); if(fsc) fsc.checked=false;
   const fTx=document.getElementById('f-texto'); if(fTx) fTx.value='';
-  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
+  activeFilters={owner:'',demandante:'',criador:'',tag:'',tamanho:'',submarca:[],canalVenda:[],due:'',priority:'',blocker:false,risco:false,subteam:'',supercard:false,texto:''};
   _saveSubmarcaFiltroPadrao(); // "Limpar filtros" também limpa o padrão salvo de submarca, não só a sessão atual
+  _saveCanalVendaFiltroPadrao();
   renderSubmarcaQuickFilters();
+  renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
   renderBoard();
 }
@@ -12119,7 +12216,7 @@ function clearFilters(){
 // "de runtime" próprio pra aplicar (diferente de board_prefs): aplicar
 // um preset já É popular os mesmos campos/DOM que applyFilters() usa,
 // não tem estado intermediário pra manter em sincronia.
-const FILTER_PRESET_CAMPOS = ['owner','demandante','criador','tag','tamanho','submarca','due','priority','blocker','risco','subteam','supercard','texto'];
+const FILTER_PRESET_CAMPOS = ['owner','demandante','criador','tag','tamanho','submarca','canalVenda','due','priority','blocker','risco','subteam','supercard','texto'];
 const FILTER_PRESET_LIMITE = 10;
 let _filterPresets = [];
 function loadFilterPresets(){
@@ -12163,19 +12260,25 @@ function applyFilterPreset(id){
   // aqui, ficando com o valor antigo depois de aplicar um preset).
   const fSm=document.getElementById('f-submarca');
   if(fSm) fSm.value = Array.isArray(f.submarca)&&f.submarca.length===1 ? f.submarca[0] : '';
+  // Mesmo padrão/mesmo achado real citado acima pro select de Canal de venda.
+  const fCv=document.getElementById('f-canalvenda');
+  if(fCv) fCv.value = Array.isArray(f.canalVenda)&&f.canalVenda.length===1 ? f.canalVenda[0] : '';
   const fTx=document.getElementById('f-texto'); if(fTx) fTx.value=f.texto||'';
   const fBl=document.getElementById('f-blocker'); if(fBl) fBl.checked=!!f.blocker;
   const fRi=document.getElementById('f-risco'); if(fRi) fRi.checked=!!f.risco;
   const fSc=document.getElementById('f-supercard'); if(fSc) fSc.checked=!!f.supercard;
   activeFilters={
     owner:f.owner||'', demandante:f.demandante||'', criador:f.criador||'', tag:f.tag||'',
-    tamanho:f.tamanho||'', submarca:Array.isArray(f.submarca)?[...f.submarca]:[], due:f.due||'',
+    tamanho:f.tamanho||'', submarca:Array.isArray(f.submarca)?[...f.submarca]:[],
+    canalVenda:Array.isArray(f.canalVenda)?[...f.canalVenda]:[], due:f.due||'',
     priority:f.priority||'', blocker:!!f.blocker, risco:!!f.risco, subteam:f.subteam||'',
     supercard:!!f.supercard, texto:f.texto||'',
   };
   _colRenderLimit={};
   _saveSubmarcaFiltroPadrao(); // preset também vira o novo padrão de submarca, mesmo espírito de clearFilters()
+  _saveCanalVendaFiltroPadrao();
   renderSubmarcaQuickFilters();
+  renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
   renderBoard();
   showToast('💾 Preset "'+preset.nome+'" aplicado.');
@@ -12202,6 +12305,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!ignoreTag&&activeFilters.tag&&!cardHasTag(card, activeFilters.tag)) return false;
   if(activeFilters.tamanho&&!cardHasTag(card, activeFilters.tamanho)) return false;
   if(activeFilters.submarca&&activeFilters.submarca.length&&!activeFilters.submarca.some(id=>cardHasTag(card, id))) return false;
+  if(activeFilters.canalVenda&&activeFilters.canalVenda.length&&!activeFilters.canalVenda.some(id=>cardHasTag(card, id))) return false;
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
@@ -12788,6 +12892,7 @@ function scheduleAutoSave(){
     (c.tags||[]).filter(t=>!_prevTags.includes(t)).forEach(t=>{
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+      if(CANAL_VENDA_TAGS.some(st=>st.id===t)) runAutoRules('canal_venda_set', c.id, t);
     });
     _prevTags.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
     // feedback sutil
@@ -14131,9 +14236,14 @@ function saveCard(){
   if(!title) alwaysMissing.push('title');
   if(!document.getElementById('m-due').value && !_mNoDue) alwaysMissing.push('due');
   if(submarcaAtivo && !document.getElementById('m-submarca')?.value) alwaysMissing.push('submarca');
+  // Canal só vira obrigatório se o squad ligar os DOIS toggles (campo ativo
+  // + "obrigatório" — pedido direto do usuário: opcional por padrão, mesmo
+  // quando o squad já usa o campo, diferente de Submarca que é sempre
+  // obrigatória assim que ativada).
+  if(canalVendaAtivo && canalVendaObrigatorio && !document.getElementById('m-canalvenda')?.value) alwaysMissing.push('canalVenda');
   if(alwaysMissing.length){
     _highlightMissingFields(alwaysMissing);
-    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':(k==='submarca'?'Submarca':'Título'));
+    const labels=alwaysMissing.map(k=>k==='due'?'Prazo (ou marque "Sem prazo definido")':(k==='submarca'?'Submarca':(k==='canalVenda'?'Canal':'Título')));
     showToast('🔒 Preencha os campos obrigatórios: '+labels.join(', '));
     return;
   }
@@ -14283,6 +14393,7 @@ function saveCard(){
     (c.tags||[]).filter(t=>!_prevTagsSave.includes(t)).forEach(t=>{
       runAutoRules('tag_added', c.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', c.id, t);
+      if(CANAL_VENDA_TAGS.some(st=>st.id===t)) runAutoRules('canal_venda_set', c.id, t);
     });
     _prevTagsSave.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
     _reagirSeAgenteAgilAtribuido(c, _prevOwnerSave, _prevParticipantsSave);
@@ -14341,6 +14452,7 @@ function saveCard(){
     (_newCard.tags||[]).forEach(t=>{
       runAutoRules('tag_added', _newCard.id, t);
       if(SUBMARCA_TAGS.some(st=>st.id===t)) runAutoRules('submarca_set', _newCard.id, t);
+      if(CANAL_VENDA_TAGS.some(st=>st.id===t)) runAutoRules('canal_venda_set', _newCard.id, t);
     });
     // Triggers "Modelo usado"/"Card recorrente criado" (Automações) — só dispara
     // se este card novo veio de fato de um "+ Usar" em Modelos/Recorrentes (ver
@@ -15867,6 +15979,191 @@ function renderSubmarcaCfgList(){
   body.innerHTML = SUBMARCA_TAGS.map(st=>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
     +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel('${st.id}',this.checked)"> ${esc(st.label)}`
+    +`</label>`
+  ).join('');
+}
+
+// ── Canal de venda (squad Marketplace) — mesma "pegada" da Submarca acima,
+// ver comentário na declaração de CANAL_VENDA_TAGS sobre o nome interno. ──
+let _canalVendaBackfillCheckedSquad=null;
+async function _ensureCanalVendaTagsBackfilled(){
+  if(_canalVendaBackfillCheckedSquad===ACTIVE_SQUAD) return;
+  _canalVendaBackfillCheckedSquad=ACTIVE_SQUAD;
+  if(!window._fbReady || !_isPOorOrg()) return;
+  try{
+    const [ativoSnap, tagsSnap] = await Promise.all([
+      fbGet(FB+'/config/canal_venda_ativo'),
+      fbGet(FB+'/tags'),
+    ]);
+    if(!ativoSnap.val()) return; // squad não usa Canal de venda — nada a fazer
+    const rawTags = tagsSnap.val();
+    const remoteTags = Array.isArray(rawTags) ? rawTags.filter(Boolean) : Object.values(rawTags||{});
+    const missing = CANAL_VENDA_TAGS.filter(cv=>!remoteTags.find(t=>t && t.id===cv.id));
+    if(!missing.length) return;
+    const merged = remoteTags.concat(missing.map(cv=>Object.assign({}, cv)));
+    await window._update(fb(FB), { tags: merged });
+    tags = merged;
+    renderTagEditor();
+    renderBoard();
+    console.log(`[canal_venda] backfill: ${missing.length} tag(s) de Canal que faltavam foram adicionadas.`);
+  }catch(e){ console.warn('[canal_venda] backfill de tags falhou:', e); }
+}
+function toggleCanalVendaAtivo(checked){
+  if(!_isPOorOrg()) return;
+  canalVendaAtivo = !!checked;
+  fbSet(FB+'/config/canal_venda_ativo', canalVendaAtivo);
+  if(canalVendaAtivo){
+    let mudou=false;
+    CANAL_VENDA_TAGS.forEach(cv=>{ if(!tags.find(t=>t.id===cv.id)){ tags.push(Object.assign({},cv)); mudou=true; } });
+    if(mudou){ fbSet(FB+'/tags', tags); renderTagEditor(); }
+  }
+  showToast(canalVendaAtivo?'🛒 Campo de canal ativado neste squad.':'Campo de canal desativado (tags já usadas em cards continuam disponíveis).');
+  _applyCanalVendaUIVisibility();
+}
+function toggleCanalVendaObrigatorio(checked){
+  if(!_isPOorOrg()) return;
+  canalVendaObrigatorio = !!checked;
+  fbSet(FB+'/config/canal_venda_obrigatorio', canalVendaObrigatorio);
+  showToast(canalVendaObrigatorio?'🔒 Canal virou obrigatório pra salvar o card neste squad.':'Canal voltou a ser opcional neste squad.');
+}
+function toggleCanalVendaVisivel(tagId, checked){
+  if(!_isPOorOrg()) return;
+  canaisVendaVisiveis[tagId] = !!checked;
+  fbSet(FB+'/config/canais_venda_visiveis/'+tagId, !!checked);
+  _applyCanalVendaUIVisibility();
+}
+// Mostra/esconde o campo dedicado "🛒 Canal" (modal), o filtro dedicado
+// (drawer de Filtros) e os botões de filtro rápido (toolbar) conforme os
+// toggles do squad — mesmo padrão de _applySubmarcaUIVisibility.
+function _applyCanalVendaUIVisibility(){
+  const field=document.getElementById('m-canalvenda-field'); if(field) field.style.display=canalVendaAtivo?'':'none';
+  const f=document.getElementById('f-canalvenda'); if(f) f.style.display=canalVendaAtivo?'':'none';
+  _populateCanalVendaFilterSelect();
+  _populateCanalVendaSelect();
+  renderCanalVendaQuickFilters();
+  renderCanalVendaCfgList();
+}
+// Troca a tag de canal do card sendo editado — exclusivo (nunca 2 canais ao
+// mesmo tempo, mesmo padrão de setCardSubmarca).
+function setCardCanalVenda(tagId){
+  const cvIds = CANAL_VENDA_TAGS.map(t=>t.id);
+  editingTags = editingTags.filter(id=>!cvIds.includes(id));
+  if(tagId) editingTags.push(tagId);
+  populateTagSelect();
+  scheduleAutoSave();
+}
+// Opções do <select> do modal: canais visíveis + o canal ATUAL do card mesmo
+// se tiver sido desativado depois (senão o campo "esconderia" silenciosamente
+// qual canal o card já tinha).
+function _populateCanalVendaSelect(){
+  const sel=document.getElementById('m-canalvenda'); if(!sel) return;
+  const cvIds=CANAL_VENDA_TAGS.map(t=>t.id);
+  const c=editingId?cards.find(x=>x.id===editingId):null;
+  const currentTagId=c?getCardTags(c).find(id=>cvIds.includes(id))||'':'';
+  const opts=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id)||cv.id===currentTagId);
+  sel.innerHTML='<option value="">— sem canal —</option>'+opts.map(cv=>`<option value="${cv.id}">${esc(cv.label)}</option>`).join('');
+  sel.value=currentTagId;
+}
+// Opções do <select> do drawer de Filtros — só canais visíveis (filtrar por
+// um canal desativado não faz sentido pra descoberta de card novo).
+function _populateCanalVendaFilterSelect(){
+  const sel=document.getElementById('f-canalvenda'); if(!sel) return;
+  const cur=sel.value;
+  const visiveis=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id));
+  sel.innerHTML='<option value="">🛒 Qualquer canal</option>'+visiveis.map(cv=>`<option value="${cv.id}">${esc(cv.label)}</option>`).join('');
+  sel.value=visiveis.some(cv=>cv.id===cur)?cur:'';
+}
+// Menu suspenso "🛒 Canais ▾" na toolbar, mesmo padrão do menu de Submarcas —
+// só que sem agrupamento (não há uma 2ª dimensão tipo Comercial/Cadastro
+// aqui, cada canal já é uma linha própria).
+function renderCanalVendaQuickFilters(){
+  const trigger=document.getElementById('canalvenda-dd-trigger');
+  const panel=document.getElementById('canalvenda-dd-panel');
+  if(!trigger||!panel) return;
+  const visiveis=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id));
+  if(!canalVendaAtivo || !visiveis.length){
+    trigger.style.display='none';
+    closeCanalVendaDropdown();
+    return;
+  }
+  const cur=activeFilters.canalVenda||[];
+  trigger.style.display='';
+  trigger.textContent = cur.length ? `🛒 Canais (${cur.length}) ▾` : '🛒 Canais ▾';
+  trigger.style.color = cur.length ? 'var(--accent)' : '';
+  trigger.style.borderColor = cur.length ? 'var(--accent)' : '';
+  panel.innerHTML = `
+    <div class="sm-dd-title">🛒 Filtrar por canal</div>
+    <label class="sm-dd-row sm-dd-row-all">
+      <input type="checkbox" ${cur.length?'':'checked'} onchange="setCanalVendaDropdownTodos()"> Todos
+    </label>
+    <div class="sm-dd-sep"></div>
+    ${visiveis.map(cv=>`<label class="sm-dd-row sm-dd-row-sub">
+      <input type="checkbox" ${cur.includes(cv.id)?'checked':''} onchange="toggleCanalVendaDropdownItem('${cv.id}')"> ${esc(cv.label)}
+    </label>`).join('')}`;
+}
+// Mesmo padrão de position:fixed do menu de Submarcas (toggleSubmarcaDropdown).
+function toggleCanalVendaDropdown(){
+  const panel=document.getElementById('canalvenda-dd-panel');
+  if(!panel) return;
+  const willShow = panel.style.display==='none' || panel.style.display==='';
+  if(willShow){
+    const btn=document.getElementById('canalvenda-dd-trigger');
+    const r=btn.getBoundingClientRect();
+    panel.style.position='fixed';
+    panel.style.top=(r.bottom+6)+'px';
+    panel.style.left=r.left+'px';
+  }
+  panel.style.display = willShow ? 'block' : 'none';
+}
+function closeCanalVendaDropdown(){
+  const panel=document.getElementById('canalvenda-dd-panel');
+  if(panel) panel.style.display='none';
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#canalvenda-dd-wrap')) closeCanalVendaDropdown();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeCanalVendaDropdown();
+});
+function setCanalVendaDropdownTodos(){
+  activeFilters.canalVenda=[];
+  _saveCanalVendaFiltroPadrao();
+  const f=document.getElementById('f-canalvenda'); if(f) f.value='';
+  _colRenderLimit={};
+  renderCanalVendaQuickFilters();
+  _applyFiltrosBtnUI();
+  renderBoard();
+}
+function toggleCanalVendaDropdownItem(tagId){
+  const arr=(activeFilters.canalVenda||[]).slice();
+  const idx=arr.indexOf(tagId);
+  if(idx>=0) arr.splice(idx,1); else arr.push(tagId);
+  activeFilters.canalVenda=arr;
+  _saveCanalVendaFiltroPadrao();
+  const f=document.getElementById('f-canalvenda');
+  if(f) f.value = activeFilters.canalVenda.length===1 ? activeFilters.canalVenda[0] : '';
+  _colRenderLimit={};
+  renderCanalVendaQuickFilters();
+  _applyFiltrosBtnUI();
+  renderBoard();
+}
+function setCanalVendaFromDrawer(){
+  const v=document.getElementById('f-canalvenda')?.value||'';
+  activeFilters.canalVenda = v ? [v] : [];
+  _saveCanalVendaFiltroPadrao();
+  _colRenderLimit={};
+  renderCanalVendaQuickFilters();
+  _applyFiltrosBtnUI();
+  renderBoard();
+}
+// Lista de checkboxes (Configurações > Tags) — uma por canal, ligada por
+// padrão (canaisVendaVisiveis[id]!==false, ver _canalVendaIsVisivel).
+function renderCanalVendaCfgList(){
+  const wrap=document.getElementById('canalvenda-visiveis-cfg-wrap'); if(wrap) wrap.style.display=canalVendaAtivo?'':'none';
+  const body=document.getElementById('canalvenda-visiveis-cfg-body'); if(!body) return;
+  body.innerHTML = CANAL_VENDA_TAGS.map(cv=>
+    `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
+    +`<input type="checkbox" ${_canalVendaIsVisivel(cv.id)?'checked':''} onchange="toggleCanalVendaVisivel('${cv.id}',this.checked)"> ${esc(cv.label)}`
     +`</label>`
   ).join('');
 }
@@ -19109,6 +19406,24 @@ function renderBoardDataInsights(){
     window._bdInsightsResumoCache.porSubmarca = smSegs.map(s=>({submarca:s.label,qtd:s.count}));
   }
 
+  // ── Por canal de venda (só se o squad usa o campo) — mesma ideia acima ──
+  if(canalVendaAtivo){
+    const CANAL_VENDA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const porCanal={};
+    activeCards.forEach(c=>{
+      const tagsDoCard=getCardTags(c);
+      const cv=CANAL_VENDA_TAGS.find(cv=>tagsDoCard.includes(cv.id));
+      const k=cv?cv.id:'__sem__';
+      porCanal[k]=(porCanal[k]||0)+1;
+    });
+    const cvSegs=CANAL_VENDA_TAGS.map((cv,i)=>({label:cv.label,count:porCanal[cv.id]||0,color:CANAL_VENDA_COLORS[i%CANAL_VENDA_COLORS.length]}))
+      .filter(s=>s.count>0)
+      .sort((a,b)=>b.count-a.count);
+    if(porCanal.__sem__) cvSegs.push({label:'Sem canal definido',count:porCanal.__sem__,color:'#5b6472'});
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🛒','Por canal',cvSegs.length?cvSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+    window._bdInsightsResumoCache.porCanalVenda = cvSegs.map(s=>({canal:s.label,qtd:s.count}));
+  }
+
   if(AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)){
     html += '<div style="margin-top:4px;">'
       +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseDados(\'board_insights\', window._bdInsightsResumoCache, \'bd-insights-agente-btn\', \'bd-insights-agente-box\')" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
@@ -20570,6 +20885,19 @@ function _intakeCriarCard(id){
       if(smSel) smSel.value=smMatch.id;
     }
   }
+  // Mesmo mecanismo pra Canal — hoje não há um `item.canal` vindo do backend
+  // (a ferramenta criar_card do Agente Ágil ainda não sugere Canal, só
+  // Submarca), mas deixa pronto pro dia em que sugerir: se e quando o campo
+  // chegar no intake, já casa por label e marca os dois lugares certos.
+  if(item.canal && canalVendaAtivo && typeof CANAL_VENDA_TAGS!=='undefined'){
+    const alvoCv=_norm(item.canal);
+    const cvMatch=CANAL_VENDA_TAGS.find(cv=>_norm(cv.label)===alvoCv);
+    if(cvMatch){
+      addCardTag(cvMatch.id);
+      const cvSel=document.getElementById('m-canalvenda');
+      if(cvSel) cvSel.value=cvMatch.id;
+    }
+  }
   // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
   // mesmo campo no início (ver comentário na declaração), então só marcar
   // aqui garante que sobreviva até o saveCard() de verdade.
@@ -21855,7 +22183,7 @@ function _missingRequired(){
   return _pendingRequired.filter(k=>!_reqFieldFilled(k));
 }
 // Destaca visualmente os campos obrigatórios faltando
-const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca',
+const _FIELD_EL={title:'m-title',owner:'m-owner',due:'m-due',po:'m-po',priority:'m-priority',submarca:'m-submarca',canalVenda:'m-canalvenda',
   crvEtapa:'m-crv-etapa',crvCanal:'m-crv-canal',crvTipo:'m-crv-tipo',crvFormato:'m-crv-formato',crvDirecional:'m-crv-direcional'};
 function _highlightMissingFields(missing){
   // limpa destaques antigos
@@ -21937,6 +22265,15 @@ function swCfgTab(tab){
     const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
     const elSm=document.getElementById('cfg-submarca-ativo'); if(elSm) elSm.checked=submarcaAtivo;
     renderSubmarcaCfgList();
+    // Achado real (/monitorarbugs, 2026-09-10): faltava o mesmo re-sync
+    // defensivo pros toggles de Canal — mesmo padrão de Tamanho/Submarca
+    // acima (self-heal pro caso de toggleCanalVendaAtivo()/
+    // toggleCanalVendaObrigatorio() terem sido chamados sem permissão e
+    // retornado cedo, deixando o checkbox com o valor VISUAL que a pessoa
+    // tentou, diferente do valor real que nunca mudou).
+    const elCv=document.getElementById('cfg-canalvenda-ativo'); if(elCv) elCv.checked=canalVendaAtivo;
+    const elCvObr=document.getElementById('cfg-canalvenda-obrigatorio'); if(elCvObr) elCvObr.checked=canalVendaObrigatorio;
+    renderCanalVendaCfgList();
   }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
@@ -22148,11 +22485,26 @@ async function delColumn(i){
   // coluna "parece" sem uso ali) e, na hora de voltar pra "coluna" depois,
   // qualquer card que ainda carregasse col='blocker' de um período anterior
   // sumia do board sem aviso nenhum — 64 cards afetados numa squad só, em
-  // mais de uma rodada. Por isso o bloqueio agora é incondicional: essa
-  // coluna nunca é excluível por aqui, independente do modo atual.
+  // mais de uma rodada.
+  //
+  // Pedido direto do usuário (2026-09-10, squad Marketplace nova, colunas
+  // usadas como tag — board sem nenhum card ainda, mas a coluna "Impedimentos"
+  // fixa não deixava excluir): agora que existem guards irmãos fechando o
+  // MESMO buraco em todo caminho que poderia recriar o problema —
+  // saveBlockerMode() recusa voltar pro modo "coluna" se 'blocker' não
+  // existir mais, e _doBulkBlockCol()/ctxMove() recusam mover um card pra
+  // lá se a coluna sumiu — o bloqueio incondicional passou a proteger só um
+  // cenário que já não acontece mais silenciosamente. Mantém a trava SÓ
+  // enquanto a coluna ainda tem cards de verdade (a reatribuição pra
+  // columns[0] logo abaixo já é segura pra esses, mas exigir esvaziar
+  // primeiro é mais claro que empurrar cards de impedimento pra Backlog
+  // sem a pessoa pedir).
   if(columns[i].id==='blocker'){
-    uiAlert('Essa é a coluna fixa de "Impedimentos" — não pode ser excluída, mesmo com o modo de impedimentos em "tag". Cards antigos podem continuar referenciando ela por baixo dos panos, e excluí-la faz esses cards sumirem do board sem aviso. Se não usam mais, deixem ela vazia/no fim da lista.');
-    return;
+    const nCards = cards.filter(c=>c.col==='blocker').length;
+    if(nCards>0){
+      uiAlert('A coluna "Impedimentos" ainda tem '+nCards+' card(s) nela — mova ou arquive esses cards antes de excluir. Depois de vazia, dá pra excluir normalmente.');
+      return;
+    }
   }
   if(!await uiConfirm('Excluir coluna "'+columns[i].name+'"? Cards nessa coluna serão movidos para a primeira coluna.')) return;
   const oldId=columns[i].id;
@@ -22960,7 +23312,23 @@ function executeTool(name,input){
         if(!match) return{ok:false,msg:`Submarca "${input.submarca}" não é uma opção válida. Opções: ${opcoes}`};
         submarcaTagId=match.id;
       }
-      const tagsIniciais=[input.tag||'', submarcaTagId].filter(Boolean);
+      // Mesma regra pra Canal — só EXIGE (bloqueia sem input.canal) quando o
+      // squad ligou o 2º interruptor "obrigatório" (ver toggleCanalVendaObrigatorio);
+      // com Canal ativo mas não-obrigatório, um input.canal válido ainda é
+      // aplicado, só não é exigido. A ferramenta criar_card (backend) ainda
+      // não declara este parâmetro no schema que o agente vê — pronto pro dia
+      // em que declarar, mesmo espírito do bloco de intake acima.
+      let canalVendaTagId='';
+      if(canalVendaAtivo){
+        const opcoesCv=CANAL_VENDA_TAGS.filter(cv=>_canalVendaIsVisivel(cv.id)).map(cv=>cv.label).join(', ');
+        if(canalVendaObrigatorio && !input.canal) return{ok:false,msg:`Este squad exige Canal pra salvar um card. Opções: ${opcoesCv}`};
+        if(input.canal){
+          const matchCv=CANAL_VENDA_TAGS.find(cv=>cv.label.toLowerCase()===String(input.canal).toLowerCase());
+          if(!matchCv) return{ok:false,msg:`Canal "${input.canal}" não é uma opção válida. Opções: ${opcoesCv}`};
+          canalVendaTagId=matchCv.id;
+        }
+      }
+      const tagsIniciais=[input.tag||'', submarcaTagId, canalVendaTagId].filter(Boolean);
       const novo={id:'c'+Date.now(),col:input.coluna,tag:tagsIniciais[0]||'',tags:tagsIniciais,title:input.titulo,
         desc:input.descricao||'',owner:ownerNovo,due:input.prazo||'',noDue:!input.prazo,po:input.po||'',
         checklist:[],riscos:[],archived:false,sp:'',priority:input.prioridade||'',participants:[],
@@ -23556,6 +23924,26 @@ function parseTrelloJSON(raw, defaultTeam){
       labelTagMap[lb.id]=smMatch.id;
       return;
     }
+    // Mesma ideia da Prioridade 1 acima, pra Canal (squad Marketplace) —
+    // achado real via /monitorarbugs (2026-09-10, técnica 1: comparando
+    // Canal ponto a ponto contra tudo que Submarca já cobre): sem este
+    // bloco, um label "Shopee"/"Amazon"/"Mercado Livre (ME1)" caía direto
+    // no fuzzy includes() da Prioridade 3 abaixo, que casa por SUBSTRING —
+    // "Amazon" é substring de "Amazon (FBA)", "Shopee" é substring de
+    // "Shopee Kids", "Mercado Livre" é substring das 3 variantes ME1/ME2/
+    // Full — o mesmo risco de "template errado" que a Prioridade 1
+    // original já existe pra evitar em Submarca, só que sem a
+    // complexidade de time (Comercial/Cadastro) que Canal não tem, então
+    // não precisa da Prioridade 2 (marca solta + time padrão) — aqui o
+    // nome já É a opção inteira.
+    const cvMatch=CANAL_VENDA_TAGS.find(cv=>cv.label.toLowerCase()===lname);
+    if(cvMatch){
+      if(!tags.find(t=>t.id===cvMatch.id) && !newTagsToCreate.find(t=>t.id===cvMatch.id)){
+        newTagsToCreate.push(Object.assign({}, cvMatch));
+      }
+      labelTagMap[lb.id]=cvMatch.id;
+      return;
+    }
 
     // Prioridade 2: label só com a MARCA, sem time (ex.: "HERING ADULTO",
     // "ADULTO", "Hering Kids") — achado real (2026-08-04, import de 4 boards
@@ -23592,13 +23980,19 @@ function parseTrelloJSON(raw, defaultTeam){
 
     // Tenta match com tag existente no board (case-insensitive) — NUNCA
     // contra uma tag de Submarca (SUBMARCA_TAGS): esse fuzzy includes() é
-    // pensado pra tags genéricas (canal, tipo...), e "adulto"/"kids" sendo
-    // substring de "Hering X Comercial/Cadastro" faria ele "roubar" o match
-    // que as Prioridades 1/2 acima deveriam decidir com mais certeza (ou
-    // deliberadamente deixar como tag nova, pra corrigir na mão, em vez de
-    // adivinhar o time errado em silêncio).
+    // pensado pra tags genéricas (canal de mídia, tipo...), e "adulto"/
+    // "kids" sendo substring de "Hering X Comercial/Cadastro" faria ele
+    // "roubar" o match que as Prioridades 1/2 acima deveriam decidir com
+    // mais certeza (ou deliberadamente deixar como tag nova, pra corrigir
+    // na mão, em vez de adivinhar o time errado em silêncio). Mesma
+    // exclusão vale pra Canal de venda (CANAL_VENDA_TAGS) — "Amazon" é
+    // substring de "Amazon (FBA)", "Shopee" de "Shopee Kids", "Mercado
+    // Livre" das 3 variantes ME1/ME2/Full — já resolvido de propósito
+    // pela Prioridade 1b acima; chegar até aqui SEM ter casado lá significa
+    // que o nome não bate com NENHUMA opção fixa, não faz sentido arriscar
+    // um match aproximado contra outra.
     const existing=tags.find(t=>
-      !SUBMARCA_TAGS.find(st=>st.id===t.id) && (
+      !SUBMARCA_TAGS.find(st=>st.id===t.id) && !CANAL_VENDA_TAGS.find(cv=>cv.id===t.id) && (
         t.label.toLowerCase()===lname ||
         t.label.toLowerCase().includes(lname) ||
         lname.includes(t.label.toLowerCase())
@@ -24223,7 +24617,7 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
-    { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.\n\n🧩 Supercard com filhos: se o card tem cards filhos vinculados (ver dica "Supercard"), o modal de duplicar mostra a opção "Duplicar os N card(s) filho(s) também" (desmarcada por padrão). Marcando, a cópia sai com toda a estrutura duplicada junto — inclusive netos, se algum filho também tiver os próprios filhos. Cada filho duplicado mantém a própria coluna (não herda a coluna do card raiz); filhos arquivados ficam de fora.\n\n🏢 Enviar para outro squad: o mesmo modal tem um seletor "Squad de destino" no topo. Escolhendo outro squad em vez de "Este squad", a tela muda: Responsável, Participantes, Coluna e Comentários somem da lista (não fazem sentido em outro squad — cada squad tem seus próprios membros e colunas) e você é levado direto para "+ Novo card" já naquele squad, com Descrição/Checklist/Tags/Prazo/Prioridade/Riscos/Links (o que estiver marcado) pré-preenchidos. Tags entram por NOME — se o squad de destino tiver uma tag com o mesmo nome, ela já vem marcada; senão, fica de fora, sem travar nada. Só falta você preencher o que é específico daquele squad (Responsável, Demandante, Submarca, Ficha Técnica se o squad usar) e clicar em Salvar. O card original continua intacto no squad de origem — "enviar" é cópia, não move — e ganha uma linha no Histórico registrando o envio.' },
+    { icon:'⧉', title:'Duplicar card', text:'Para clonar um card, clique em ⧉ Duplicar no rodapé do card aberto, ou clique com o botão direito no card no board e escolha Duplicar. A cópia vem com "(cópia)" no título e começa com histórico limpo, pronta para editar.\n\n🧩 Supercard com filhos: se o card tem cards filhos vinculados (ver dica "Supercard"), o modal de duplicar mostra a opção "Duplicar os N card(s) filho(s) também" (desmarcada por padrão). Marcando, a cópia sai com toda a estrutura duplicada junto — inclusive netos, se algum filho também tiver os próprios filhos. Cada filho duplicado mantém a própria coluna (não herda a coluna do card raiz); filhos arquivados ficam de fora.\n\n🏢 Enviar para outro squad: o mesmo modal tem um seletor "Squad de destino" no topo. Escolhendo outro squad em vez de "Este squad", a tela muda: Responsável, Participantes, Coluna e Comentários somem da lista (não fazem sentido em outro squad — cada squad tem seus próprios membros e colunas) e você é levado direto para "+ Novo card" já naquele squad, com Descrição/Checklist/Tags/Prazo/Prioridade/Riscos/Links (o que estiver marcado) pré-preenchidos. Tags entram por NOME — se o squad de destino tiver uma tag com o mesmo nome, ela já vem marcada; senão, fica de fora, sem travar nada. Só falta você preencher o que é específico daquele squad (Responsável, Demandante, Submarca, Canal, Ficha Técnica se o squad usar) e clicar em Salvar. O card original continua intacto no squad de origem — "enviar" é cópia, não move — e ganha uma linha no Histórico registrando o envio.' },
     { icon:'☑️', title:'Seleção múltipla (ações em massa)', text:'Clique em Selecionar na toolbar e marque vários cards. Aparece uma barra com ações em massa: 📥 Mover para coluna, 👤 Responsável, 📅 Prazo, 🏷 Tag (adicionar ou substituir), 🚧 Impedimento (marcar/remover em vários cards de uma vez), ⧉ Duplicar, 📦 Arquivar e 🗑 Excluir. As ações que precisam de escolha abrem um menu rápido. Use "☑️ Todos" no cabeçalho da coluna para selecionar a coluna inteira.' },
     { icon:'📱', title:'Arrastar card no celular', text:'No celular, para mover um card entre colunas, segure o dedo nele por um instante até ele "levantar" (vibra e ganha destaque) e então arraste. Um toque rápido ou arrastar direto rola o board normalmente, sem mover cards por engano.' },
     { icon:'📱', title:'Reordenar colunas no celular', text:'Mesmo gesto dos cards: segure o dedo no cabeçalho da coluna até ela "levantar" e então arraste pra esquerda ou direita, soltando na metade da coluna vizinha onde quer posicioná-la.' },
@@ -24233,7 +24627,7 @@ const HELP_CONTENT = {
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
-    { icon:'🔒', title:'Prazo e Submarca obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
+    { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
   agente: [
     { icon:'🤖', title:'O que é o Agente Ágil', text:'Uma IA que lê e age sobre um card específico quando alguém o menciona. Pra chamar: mencione "@Agente Ágil" (ou selecione ele no autocomplete de @) num comentário do card — só disponível nos squads dev e dados por enquanto. A resposta chega como um novo comentário no mesmo card, geralmente em menos de 1 minuto, com notificação 🔔 pra quem perguntou.\n\nEnquanto a resposta não chega, um aviso "🤖 pensando..." aparece no card (dentro do modal e como um chip no board) — a resposta some sozinha assim que ela chega, sem precisar fechar e reabrir o card.\n\nAtalhos que fazem a mesma coisa sem precisar digitar a menção: o botão "🤖 Insights" no rodapé do card, ou "Insights" no menu de contexto (botão direito) de um card no board.\n\nAntes de responder, ele sempre lê o card de verdade (descrição, checklist, comentários, coluna, tags, responsável) — nunca responde só com base no que foi perguntado, sem olhar o estado real.' },
@@ -24248,7 +24642,7 @@ const HELP_CONTENT = {
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
-    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, ou notificar todo mundo do squad.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").' },
+    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/canal/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, ou notificar todo mundo do squad.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).\n\n🔌 "Agentes Externos" (optgroup separado, "🔌"): sistemas de verdade fora do Maré Digital (ex.: um agente de automação rodando na Vtex), cadastrados em Painel → Configurações → 🔌 Agentes Externos com iniciais/cor/emoji preenchidos — aí eles também viram selecionáveis aqui, do mesmo jeito que um Agente de IA decorativo. A diferença: quando o Agente Ágil muda algo de verdade num card responsável de um Agente Externo, ALÉM do "📎 cc" de sempre, ele manda um POST de verdade pro webhook cadastrado daquele agente, resumindo o que mudou — sem nenhuma ação do agente externo sobre o board (é só destinatário, tudo passa pelo Agente Ágil). Só chama o webhook de verdade nos squads onde essa capacidade está habilitada (hoje: dev); nos demais, o "📎 cc" acontece igual, só sem o POST.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
@@ -24256,9 +24650,10 @@ const HELP_CONTENT = {
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
     { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (uma opção fechada), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só — vira múltipla escolha automaticamente se o card já é um supercard, ver abaixo), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Escolhendo "Outros" em Canal, Objetivo, Plataforma ou Tipo, abre um campo "Qual?" pra especificar — esse texto passa a aparecer no lugar de "Outros" em todo lugar (título automático, tabela do Controle de Criativos, gráficos do Dashboard, exportação CSV). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Ficha e supercard (ver dica "Supercard"):</b> como o supercard vai até 2 níveis (campanha → criativo → versão), a ficha se comporta diferente em cada papel. <b>Campanha</b> (tem filhos, não é filha de ninguém): só os 4 campos compartilhados (Campanha/Funil/Etapa/Canal) ficam visíveis aqui — preenche uma vez e propaga sozinho pros criativos (só quem ainda está vazio no filho, nunca sobrescreve o que já tinha). <b>Criativo</b> (é filho de uma campanha): o inverso — os 4 campos compartilhados somem (vêm herdados, com nota linkando de volta pra campanha), só os campos que variam por peça (Objetivo/Plataforma/Tipo/Formato/Variações) continuam editáveis aqui, MESMO que esse criativo já tenha ganhado suas próprias versões (ele continua sendo a fonte de verdade da ficha — agora propagando ela INTEIRA pras versões, não só os 4 compartilhados, já que é a mesma peça sendo produzida por gente diferente). <b>Versão</b> (2º nível — o pai dela já é filho de outra coisa): não edita nada da ficha, só mostra o resumo herdado completo do criativo-pai. Se um card já tinha ficha preenchida antes de virar supercard/filho, o conteúdo continua salvo (só some/reaparece da tela conforme o papel muda).\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.\n\n🤖 Ponto de vista do Agente Ágil: no modo Dashboard, um botão no fim do painel manda os números já exibidos (total, atrasados, composição, distribuição por canal/plataforma/formato...) pro agente interpretar e devolver uma leitura curta. Só lê — não recalcula nada, não escreve nada no board.\n\n📊 No modo Dashboard do painel (além da tabela em lista), o checkbox "🧩 Incluir supercards" nos filtros liga/desliga se o card container de um supercard (campanha/criativo com filhos) entra na contagem total — desmarcado, só os filhos entram; o card container sai da conta.\n\n<b>🪄 Título automático:</b> em cards novos criados a partir de um Modelo (📐), o título se monta sozinho conforme a Ficha vai sendo preenchida, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão "🪄 Gerar título", no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento, sem precisar vir de um Modelo.\n\n<b>Total de variações no dashboard:</b> o "🎬 Controle de Criativos" também soma a quantidade total de variações marcadas nos cards ("Variações: Sim" + quantidade preenchida), num card de estatística próprio — útil pra ter uma visão rápida de quantas peças estão sendo produzidas no total, sem contar card por card.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
-    { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo e Submarca obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
+    { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
+    { icon:'🛒', title:'Canal (venda em marketplaces)', text:'Em Config → Tags, role até "🛒 Canal" e ative "Ativar campo de canal neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Marketplace, que vende os mesmos produtos em vários canais ao mesmo tempo (Mercado Livre nas modalidades ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop). Mesma "pegada" da Submarca do squad Site — o campo dedicado "🛒 Canal" aparece no modal do card (ao lado de Executor) e é exclusivo (só um canal por vez).\n\nObrigatório é opt-in: diferente da Submarca (sempre obrigatória assim que ativada), o Canal só trava o Salvar se o squad TAMBÉM ligar o segundo interruptor "Tornar Canal obrigatório pra salvar o card" — ativar só o campo deixa o Canal opcional (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: cada um dos 14 canais tem seu próprio interruptor em Config → Tags — todos começam ligados por padrão, e desligar um esconde ele do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🛒 Canais ▾" — mesmo funcionamento do menu de Submarcas: marque quantos canais quiser ao mesmo tempo, o botão mostra quantos estão marcados (ex.: "🛒 Canais (2) ▾"), e "Todos" limpa a seleção.' },
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
-    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
+    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
@@ -24628,14 +25023,14 @@ function initPWA(){
       // menos 2x com proporções diferentes entre os peixes e a moldura).
       // Mesmo recorte aplicado ao favicon.png colorido (acima) pros dois
       // continuarem enquadrados igual.
-      // 2026-09-02: kanban-dev.html passou a usar favicon.png/
-      // favicon-monochrome.png em vez de favicon.png/favicon-monochrome.png
+      // 2026-09-02: kanban-dev.html passou a usar favicon-dev.png/
+      // favicon-dev-monochrome.png em vez de favicon.png/favicon-monochrome.png
       // — arte própria (peixes sobre "linhas de código"), pedido direto do
       // usuário pra diferenciar dev de prod no ícone instalado do celular
       // (mesmo nome "Maré Digital" nos dois, sem isso ficavam idênticos).
       // Mesma técnica de recorte/monocromia aplicada, só a fonte mudou.
       // kanban.html (prod) continua com favicon.png/favicon-monochrome.png.
-      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
+      {src:new URL('favicon-dev-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
@@ -25469,6 +25864,9 @@ function _applyBoardPrefsSquad(){
   activeFilters.submarca = _boardPrefLoadOrMigrate('submarca_filtro', 'sm_filtro_'+ACTIVE_SQUAD, [], JSON.parse);
   safeLS.setItem('sm_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.submarca));
   renderSubmarcaQuickFilters();
+  activeFilters.canalVenda = _boardPrefLoadOrMigrate('canal_venda_filtro', 'cv_filtro_'+ACTIVE_SQUAD, [], JSON.parse);
+  safeLS.setItem('cv_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.canalVenda));
+  renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
 
   renderBoard();
@@ -28808,6 +29206,8 @@ const AUTO_TRIGGERS = [
     matches:(rule,ev,card,extra)=> ev==='tag_removed' && extra===rule.triggerVal },
   { key:'submarca_set', label:'Submarca definida como', valueType:'submarca', visible:()=>submarcaAtivo,
     matches:(rule,ev,card,extra)=> ev==='submarca_set' && extra===rule.triggerVal },
+  { key:'canal_venda_set', label:'Canal definido como', valueType:'canal_venda', visible:()=>canalVendaAtivo,
+    matches:(rule,ev,card,extra)=> ev==='canal_venda_set' && extra===rule.triggerVal },
   { key:'marked_okr', label:'Card marcado como OKR', valueType:'none',
     matches:(rule,ev)=> ev==='marked_okr' },
   { key:'cover_set', label:'Capa de cor definida como', valueType:'cover',
@@ -28916,6 +29316,8 @@ const AUTO_ACTIONS = [
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
     run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
+  { key:'set_canal_venda', label:'Definir canal', valueType:'canal_venda', visible:()=>canalVendaAtivo,
+    run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
   { key:'set_tamanho', label:'Definir tamanho', valueType:'tamanho', visible:()=>tamanhoAtivo,
     run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
   { key:'set_demandante', label:'Definir demandante', valueType:'member_optional', visible:()=>demandanteAtivo,
@@ -28975,6 +29377,7 @@ function _autoValLabel(valueType, val){
     case 'member_optional': case 'member': { const m=members.find(x=>x.init===val); return m?(m.init+' · '+_shortName(m.name)):val; }
     case 'agent_tab': return ({daily:'Aba Daily',metricas:'Aba Métricas',retro:'Aba Retrospectiva',auto:'🤖 Modo autônomo'})[val] || val;
     case 'submarca': return SUBMARCA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
+    case 'canal_venda': return CANAL_VENDA_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'tamanho': return SIZE_TAGS.find(t=>t.id===val)?.label || getTag(val)?.label || val;
     case 'padrao': return cardPatterns[val]?.nome || val;
     case 'cover': return CARD_COVER_COLORS.find(c=>c.id===val)?.label || val;
@@ -29014,6 +29417,7 @@ function _autoRenderValueOptions(valueType){
       return oldOpts+autoOpt;
     }
     case 'submarca': { const opts=tags.filter(t=>SUBMARCA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhuma —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
+    case 'canal_venda': { const opts=tags.filter(t=>CANAL_VENDA_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'tamanho': { const opts=tags.filter(t=>SIZE_TAGS.some(st=>st.id===t.id)); return '<option value="">— nenhum —</option>'+opts.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join(''); }
     case 'padrao': { const ids=Object.keys(cardPatterns||{}); return '<option value="">— nenhum —</option>'+ids.map(id=>`<option value="${esc(id)}">${esc(cardPatterns[id].nome||'Sem nome')}</option>`).join(''); }
     case 'cover': return '<option value="">— sem capa —</option>'+CARD_COVER_COLORS.map(c=>`<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
@@ -30188,6 +30592,13 @@ function aplicarModeloNoCard(idx){
       const smSel=document.getElementById('m-submarca');
       if(smTag && smSel) smSel.value=smTag;
     }
+    // Mesmo bug/mesmo fix, pro <select id="m-canalvenda"> dedicado.
+    if(typeof CANAL_VENDA_TAGS!=='undefined'){
+      const cvIds=CANAL_VENDA_TAGS.map(cv=>cv.id);
+      const cvTag=estado.tags.find(t=>cvIds.includes(t));
+      const cvSel=document.getElementById('m-canalvenda');
+      if(cvTag && cvSel) cvSel.value=cvTag;
+    }
   }
 
   if(Array.isArray(modelo.checklist) && modelo.checklist.length) renderCL(estado.checklist);
@@ -30562,11 +30973,11 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon.png aqui) uma única vez, na
+// ORIGINAL do <link rel="icon"> (favicon.png aqui; vira favicon.png
+// se/quando este trecho for promovido pra kanban.html) uma única vez, na
 // carga do script — antes de qualquer troca acontecer — pra sempre saber
 // pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
-// duas vezes (dev/prod usam nomes diferentes — kanban-dev.html guarda
-// favicon-dev.png aqui).
+// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
 const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');

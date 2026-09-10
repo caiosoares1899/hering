@@ -18,6 +18,45 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.628 — 2026-09-10 · Promove pra prod — Coluna "Impedimentos" vazia + campo "🛒 Canal" (Marketplace) + fixes de /monitorarbugs
+
+Promove pra produção o lote v8.30.626-dev → v8.30.628-dev de
+`kanban-dev.html`, validado e aprovado pelo usuário:
+
+- **Coluna "Impedimentos" vazia agora pode ser excluída** — a trava
+  incondicional foi relaxada: continua bloqueando exclusão só enquanto a
+  coluna tem cards de verdade nela. Três guards irmãos
+  (`saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`) já fecham o risco
+  de dado órfão que motivou o bloqueio original em todo outro caminho, por
+  isso o bloqueio incondicional virou proteção desnecessária pro caso
+  vazio. Pedido direto do usuário, motivado pela squad Marketplace nova
+  (board sem nenhum card ainda, coluna fixa impedia excluir).
+- **Novo campo/filtro "🛒 Canal" (squad Marketplace)** — 14 canais fixos
+  (Mercado Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids,
+  Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium,
+  TikTok Shop), espelhando ponto a ponto a arquitetura da Submarca (squad
+  Site): toggle por squad em Config → Tags, campo dedicado exclusivo no
+  modal do card, filtro no drawer + menu suspenso multi-seleção na
+  toolbar, visibilidade individual por canal, persistência de filtro,
+  presets, exclusividade em bulk-tag, pin-por-coluna-e-canal, Automações
+  (trigger + ação), donut "Por canal" nos Insights. Diferente de
+  Submarca (sempre obrigatória): Canal é opcional por padrão, só vira
+  obrigatório se o squad ligar um 2º interruptor separado.
+- **3 achados de `/monitorarbugs`** na rodada seguinte, auditando o
+  próprio campo Canal recém-criado: `swCfgTab('tags')` não re-sincronizava
+  os 2 checkboxes de Canal ao reabrir a aba; `_hasActiveFilters()` não
+  contava filtro só de Canal (botão "🔭 Filtros" não acendia); import do
+  Trello não tinha a "Prioridade 1" de match exato por nome que Submarca
+  já tem — labels como "Amazon"/"Shopee"/"Mercado Livre" corriam risco
+  real de colar no canal errado por substring (ex.: "Amazon" → "Amazon
+  (FBA)").
+
+Ver `kanban-dev.html v8.30.626-dev`/`v8.30.627-dev`/`v8.30.628-dev` logo
+abaixo pro detalhe completo de cada mudança.
+
+Checks de rotina: `node --check` limpo; balanço de chaves/parênteses do
+arquivo inteiro — `-1`/`0` — bate com o baseline conhecido da sessão.
+
 ### v8.30.625 — 2026-09-09 · Promove pra prod — Enviar card pra outro squad + fix de nome de usuário no cadastro
 
 Promove pra produção o lote v8.30.623-dev → v8.30.625-dev de
@@ -14391,6 +14430,26 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.37 · painel — 2026-09-10 · Promove pra prod — Fix: aba 🐛 Monitor não cobria squads criados depois do boot
+
+Promoção isolada (não é o dev inteiro — `painel.html`/`painel-dev.html`
+divergem de propósito, ver `CLAUDE.md`), aplicando só o lote abaixo,
+validado e aprovado pelo usuário. Ver entrada completa em
+`painel-dev.html v3.37` logo abaixo pro detalhe técnico.
+
+**Achado extra durante a QA da promoção** (não fazia parte do fix
+original de dev): `loadErrorLogs()` tinha ganhado um guard idempotente
+pra ficar seguro rechamar, mas nada de fato a rechamava quando `SQUADS`
+crescia — `loadExtraSquads()` (que em `painel.html`, diferente de
+`painel-dev.html`, de fato carrega `squads_meta` de produção) nunca tinha
+essa chamada adicionada no branch `changed`. Corrigido nos dois arquivos
+antes de promover — sem essa 2ª parte, squad criado via painel de setup
+continuaria invisível no Monitor mesmo depois do resto do fix.
+
+Checks de rotina: `node --check` limpo; balanço de chaves/parênteses do
+arquivo inteiro — `-1`/`-14` — bate com o baseline do arquivo original
+(conferido antes de editar, não é regressão).
+
 ### painel-dev.html v3.37 · painel-dev — 2026-09-10 — Fix: aba 🐛 Monitor só cobria os 3 squads nativos, squad criado depois do boot ficava invisível
 
 Pergunta direta do usuário: "a aba monitor do painel só monitora bugs em
@@ -14459,6 +14518,14 @@ do diff (linhas adicionadas/removidas) 13/13 e 72/72 · 12/12.
 — em `painel-dev.html` esse trecho fica sem efeito prático (squads fixas
 de teste), mas o resto (UI dinâmica, sem hardcode de squad) já é
 validável e visível em dev com os 2 squads de teste (`dev`/`omnichannel`).
+
+**Correção (na hora da promoção pra prod, 2026-09-10)**: esta rodada
+tinha deixado `loadErrorLogs()` só com o guard idempotente (seguro
+rechamar), mas nunca chegou a ADICIONAR a chamada de fato dentro do
+branch `changed` de `loadExtraSquads()` — o parágrafo acima descrevia a
+intenção, não o código que de fato existia. Sem isso, `painel.html`
+continuaria com o MESMO bug original mesmo depois de promovido. Fechado
+antes de promover — ver `painel.html v3.37` acima.
 
 ### painel.html v3.34 · painel — 2026-09-09 · Promove pra prod — 🔗 Link por Objetivo de OKR + fix de nome no cadastro pelo painel
 
