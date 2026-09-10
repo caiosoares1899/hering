@@ -171,6 +171,17 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .detail-close{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;width:32px;height:32px;
   color:var(--txt2);font-size:16px;cursor:pointer;flex-shrink:0;}
 .detail-close:hover{background:var(--glass-hover);}
+/* Botão de avançar pro próximo Objetivo DENTRO da mesma gerência (pedido
+   direto: "passa ate acabar comercial, dps tem q fechar e abrir a proxima
+   gerencia" — nunca cruza pra outra gerência sozinho). Fica desabilitado no
+   último Objetivo da gerência em vez de sumir, pra deixar claro que acabou
+   (em vez de parecer que travou). */
+.detail-next{background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;height:32px;padding:0 14px;
+  color:var(--txt2);font-size:12.5px;font-weight:700;cursor:pointer;flex-shrink:0;white-space:nowrap;
+  display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;}
+.detail-next:hover{background:var(--glass-hover);}
+.detail-next:disabled{opacity:.35;cursor:default;}
+.detail-next:disabled:hover{background:var(--glass);}
 
 .d2-legend{display:flex;gap:26px;flex-wrap:wrap;font-size:13px;color:var(--txt2);flex-shrink:0;}
 .d2-legend span{display:flex;align-items:center;gap:8px;}
@@ -221,14 +232,22 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-table-header .c-status{width:160px;}
 .d2-table-header .c-prazo{width:95px;text-align:right;}
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
-.d2-marco-row{display:flex;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px;}
+.d2-marco-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-num{width:22px;color:var(--txt3);font-size:12.5px;flex-shrink:0;}
-/* Nome do marco em 1 linha só (nowrap+ellipsis, title="" pro texto completo no
-   hover) — é isso que sustenta uma tabela DENSA (7+ marcos) legível sem cada
-   nome disputar 2 linhas de altura (achado real: nome longo quebrando em 2
-   linhas empurrava o resto do conteúdo pra fora da tela). */
-.d2-marco-nome{flex:1;color:var(--txt);padding-right:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:default;}
+/* Nome do marco agora QUEBRA em várias linhas em vez de cortar (pedido direto
+   do usuário, 2026-09-10: "a parte de marcos nao ta respeitando o limite
+   lateral! vale quebrar o texto se ultrapassar a linha" — troca deliberada
+   da decisão anterior de nowrap+ellipsis abaixo). min-width:0 é o que faltava
+   pro ellipsis funcionar de verdade: um item flex:1 mantém min-width:auto por
+   padrão, que trava a largura mínima no tamanho do CONTEÚDO — por isso o
+   texto vazava pra fora da linha em vez de truncar. Risco documentado antigo
+   ("nome longo empurrava o resto do conteúdo pra fora da tela") não se aplica
+   mais: _okrFitDetailSections()/_zoomFitToHeight() medem o scrollHeight real
+   de .d2-table-rows (não um clientHeight já espremido) e encolhem via zoom
+   até caber, do mesmo jeito que já fazem pra qualquer outro excesso de
+   conteúdo nesta tela. */
+.d2-marco-nome{flex:1;min-width:0;color:var(--txt);padding-right:10px;white-space:normal;overflow-wrap:break-word;}
 .d2-marco-status{width:160px;display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt2);flex-shrink:0;}
 .d2-marco-prazo{width:95px;text-align:right;font-size:13px;color:var(--txt3);flex-shrink:0;}
 
@@ -421,6 +440,13 @@ function avatarHtml(uid){
   return `<span class="avatar" title="${esc(p.nome)}">${img}</span>`;
 }
 function objMarcos(objId){ return Object.values(okrMarcos).filter(m=>m && m.objetivoId===objId && !m.arquivado); }
+// Mesma ordenação usada pra montar os cards de cada gerência em buildSlides()
+// (alfabética por título) — garante que "Próximo objetivo" (ver
+// _okrOpenDetail) segue a MESMA ordem que a pessoa já viu na grade de cards.
+function _okrGerenciaObjetivos(areaId){
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId)
+    .sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+}
 function objStatus(objId){
   const marcos = objMarcos(objId);
   if(!marcos.length) return 'nao_iniciado';
@@ -752,6 +778,9 @@ window._okrOpenDetail = id => {
   const o = okrObjetivos[id]; if(!o) return;
   const st = okrStatusInfo(objStatus(id));
   const marcos = objMarcos(id).sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
+  const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral');
+  const gerIdx = gerObjs.findIndex(x=>x.id===id);
+  const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
   document.getElementById('detail-modal').innerHTML = `
     <div class="d2-wrap" id="d2-wrap">
       <div class="d2-header">
@@ -759,6 +788,7 @@ window._okrOpenDetail = id => {
         <div class="d2-trim">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
+          <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail('${nextObj.id}')" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>
@@ -778,7 +808,7 @@ window._okrOpenDetail = id => {
             const ms=okrStatusInfo(m.progresso);
             return `<div class="d2-marco-row">
               <span class="d2-marco-num">${i+1}.</span>
-              <span class="d2-marco-nome" title="${esc(m.nome||'—')}">${esc(m.nome||'—')}</span>
+              <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
               <span class="d2-marco-prazo">${m.prazo?esc(m.prazo):'—'}</span>
             </div>`;
