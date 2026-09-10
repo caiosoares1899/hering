@@ -9423,7 +9423,14 @@ function loadExtraSquads(callback){
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
-    else if(changed){ loadAll(); renderSquadCards(); }
+    else if(changed){
+      loadAll(); renderSquadCards();
+      // Achado real (/monitorarbugs, 2026-09-10): faltava rechamar
+      // loadErrorLogs() aqui — mesmo se este trecho for reativado algum dia
+      // (hoje é código morto, ver early return acima), o Monitor precisa
+      // disso pra pegar squad novo. Ver painel.html pro efeito prático.
+      loadErrorLogs();
+    }
   });
 }
 
