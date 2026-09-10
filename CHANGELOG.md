@@ -14430,6 +14430,67 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.39 · painel-dev — 2026-09-10 — OKR "Editar Objetivo": campo Objetivo pequeno demais + resize não funcionava + achado extra (perda de digitação não salva)
+
+Pedido direto do usuário, com print da tela "Editar Objetivo" anexado:
+"essa parte do objetivo ta pequeno demais la nos okrs e nao ta
+funcionando aquela função ali no cantinho para aumentar essa area! pode
+aumentar de default e deixar essa função de aumentar a area".
+
+**Parte 1 — tamanho default.** `.okr-textarea` (CSS compartilhado pelo
+campo Objetivo e pelo campo Descrição de Marco) tinha `min-height:52px`
+— cabiam só 2 linhas visíveis, forçando quase todo Objetivo real a
+precisar de resize manual. Aumentado pra `min-height:130px` (~5-6
+linhas), o suficiente pra maioria dos objetivos reais sem precisar
+redimensionar.
+
+**Parte 2 — resize "não funcionava" (achado real via Playwright, não
+suposição).** O resize nativo do navegador (`resize:vertical`) funciona
+normalmente — arrastar a alça grava `style.height` no elemento. O
+problema é que `renderOkrObjBody(id)` reescreve `#okr-obj-body` inteiro
+a partir de um template gerado do zero toda vez que é chamada, e esse
+template nunca carrega a altura manualmente ajustada — então qualquer
+resize era perdido no próximo re-render. E esse re-render acontece com
+bastante frequência por motivos que nada têm a ver com o campo Objetivo:
+o listener de `kanban/okr/marcos` (dentro de `loadOkr()`) chama
+`renderOkrObjBody(_okrEditingObjId)` sempre que QUALQUER marco muda, de
+QUALQUER Objetivo, pra manter o modal aberto "ao vivo" — bastava alguém
+(ou o próprio Agente Ágil) mexer num marco de outro Objetivo enquanto a
+pessoa tinha o modal de Editar Objetivo aberto e redimensionado, pra
+altura resetar sozinha pros 52px/130px default. Confirmado via
+Playwright: resize pra 250px → simular o listener de marcos disparando
+→ altura sem o fix volta pro default; com o fix, permanece 250px. Fix:
+`renderOkrObjBody()` agora guarda `style.height` do campo Objetivo antes
+de reescrever o HTML e reaplica no final, só quando havia uma altura
+manual setada.
+
+**Achado extra, mais severo que o pedido original (técnica 2 —
+comparar contra um padrão já resolvido no mesmo arquivo)**: o mesmo
+listener de `kanban/okr/marcos` que dispara o re-render é o ÚNICO
+caminho de re-render do modal de Objetivo que **não** chama
+`_okrSyncObjDraftFromDom()` antes de re-renderizar — todos os outros
+gatilhos (ex.: trocar a Gerência no `<select>`) já chamam essa função,
+criada justamente numa correção anterior documentada no próprio código
+("título/trimestre/pilar/descrição digitados eram perdidos no 1º '+
+Add' clicado"). Sem essa chamada, o mesmo cenário do resize (marco
+mudando em QUALQUER Objetivo enquanto o modal está aberto) também
+**descartava silenciosamente** qualquer título/pilar/descrição já
+digitado e ainda não salvo — não só a altura da textarea, mas o próprio
+conteúdo digitado revertia pro valor antigo do Firebase. Confirmado via
+Playwright reproduzindo o cenário sem o fix (título/pilar/descrição
+digitados revertiam pro valor original) e com o fix (preservados). Fix:
+adicionada a chamada de `_okrSyncObjDraftFromDom()` no listener, mesmo
+padrão já usado nos outros gatilhos.
+
+Validado via Playwright chamando as funções REAIS extraídas do arquivo
+(`renderOkrObjBody`, `_okrSyncObjDraftFromDom`), 6 cenários: altura
+default ≥130px; resize de 250px sobrevive a um re-render manual; resize
+de 250px sobrevive ao re-render disparado pelo listener de marcos;
+título/pilar/descrição digitados sobrevivem ao mesmo re-render (os 3
+falhavam sem o fix, confirmado lado a lado). `node --check` limpo;
+balanço de chaves/parênteses do arquivo inteiro — `-1`/`-14` — bate com
+o baseline já conhecido.
+
 ### painel.html v3.38 · painel — 2026-09-10 — Fix: squad já existente antes do boot AINDA ficava fora do Monitor (bug reintroduzido no fix anterior)
 
 Pedido direto: "roda um /monitorarbugs na pagina 'monitor' no painel
