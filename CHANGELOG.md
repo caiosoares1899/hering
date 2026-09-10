@@ -3059,6 +3059,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.627-dev — 2026-09-10 — Novo campo/filtro "🛒 Canal" (squad Marketplace)
+
+Pedido direto do usuário: "a squad marketplace usa CANAIS, uma estrutura
+muito parecida com o 'submarcas' que site usa. cria na mesma pegada do
+submarcas, esse filtro/campo Canais" — com a lista de 14 canais (Mercado
+Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon
+FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop).
+
+Implementado espelhando ponto a ponto a arquitetura da Submarca (squad
+Site): toggle por squad em Config → Tags, 14 tags fixas provisionadas
+automaticamente ao ativar, campo dedicado "🛒 Canal" no modal do card (ao
+lado de Executor, exclusivo — só um canal por vez), filtro dedicado no
+drawer de Filtros, menu suspenso "🛒 Canais ▾" na toolbar (multi-seleção,
+sem agrupamento — diferente do de Submarca, não há uma 2ª dimensão tipo
+Comercial/Cadastro aqui), visibilidade individual por canal em Config →
+Tags, persistência do filtro entre sessões (mesmo padrão de
+`_saveSubmarcaFiltroPadrao()`), presets de filtro nomeados, exclusividade
+mútua em ações de tag em massa, 1-card-fixado-por-coluna-e-canal (mesma
+regra que já existia por coluna+submarca), disparo de Automação "Canal
+definido como"/ação "Definir canal", e um novo donut "Por canal" em 📊
+Dados do Board → Insights.
+
+**Diferença deliberada, confirmada com o usuário via pergunta direta antes
+de implementar**: na Submarca, escolher a opção é sempre obrigatório pra
+salvar o card assim que o campo é ativado. Pro Canal, a resposta foi
+"deixa opcional mas configurável, caso eles optem por deixar obrigatorio"
+— criou-se um 2º interruptor separado ("Tornar Canal obrigatório pra
+salvar o card"), desligado por padrão; só quando os DOIS toggles do squad
+estão ligados (campo ativo + obrigatório) é que o Salvar passa a exigir um
+Canal escolhido, no mesmo modal/mesmo aviso amarelo que já existe pra
+Título/Prazo/Submarca.
+
+**Gap conhecido, fora do escopo desta rodada** (mudança em `functions/`,
+exigiria deploy separado): a ferramenta `criar_card` do Agente Ágil
+orquestrador ainda não sugere Canal automaticamente a partir de um pedido
+de intake (ela já faz isso pra Submarca, via uma cópia fixa
+`SUBMARCA_LABELS` no backend) — o client-side já está pronto pra casar por
+label assim que o backend passar a enviar o campo, mas a ferramenta em si
+não foi tocada nesta sessão.
+
+Checks de rotina: `node --check` limpo no maior bloco `<script>`; balanço
+de chaves/parênteses do diff (linhas adicionadas/removidas) 92/92 e
+351/351; suíte de lógica isolada via Playwright (26 cenários — provisionar
+tags, exclusividade do campo, visibilidade individual, filtro
+multi-seleção, predicado de filtro do board, validação condicional de
+obrigatoriedade, e reset ao desativar) e checagem visual da tela de
+Config/modal do card/dropdown da toolbar com os 14 canais reais.
+
 ### v8.30.626-dev — 2026-09-10 — Coluna "Impedimentos" vazia agora pode ser excluída
 
 Pedido direto do usuário: "pensando q ja resolvemos aquele problema de
@@ -14284,6 +14332,75 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.37 · painel-dev — 2026-09-10 — Fix: aba 🐛 Monitor só cobria os 3 squads nativos, squad criado depois do boot ficava invisível
+
+Pergunta direta do usuário: "a aba monitor do painel só monitora bugs em
+dados e ia e midia criativa? e as outras squads?" — confirmado, era um bug
+real, não só impressão.
+
+**Causa raiz (a séria)**: `loadErrorLogs()` anexa os listeners do Firebase
+(`error_logs`/`error_stats`) iterando `SQUADS` — mas roda **1x só**, no
+boot (`fb-ready`), no exato instante em que `loadExtraSquads()` só acabou
+de SER CHAMADA (ainda não recebeu resposta do Firebase pra `squads_meta`,
+que é assíncrona). Squad criado depois via painel de setup (ex.:
+"Marketplace") só entra em `SQUADS` quando essa resposta chega — e
+`loadErrorLogs()` nunca era rechamada nesse momento, diferente de
+`loadPresence()`/`loadAll()`/`renderSquadCards()`, que **já eram**
+rechamadas no branch `else if(changed)` de `loadExtraSquads()`. Resultado:
+squad criado depois do boot nunca tinha listener nenhum — os erros dele
+nem apareciam em "Todos". Fix: `loadErrorLogs()` ganha guard idempotente
+por `squad.id` (`_errLogSquadsAttached`, um `Set`) e passa a ser chamada
+de novo dali (efeito só em `painel.html`, onde `loadExtraSquads()` de fato
+carrega `squads_meta` — `painel-dev.html` usa squads fixas de teste, então
+o `return` antecipado ali mantém esse trecho como código morto por
+enquanto, sem efeito prático em dev).
+
+**Causa raiz (a de UI)**: mesmo pros 3 squads que já carregavam,
+`setErrFilter('squad',...)` decidia qual botão ficava "ativo" com um array
+hardcoded `['all','dados','prf']` — Mídia Criativa já tinha botão de
+filtro na tela, mas nunca acendia (não tava na lista). Os 2 cards de
+estatística do topo ("Squad Dados e IA"/"Marketing de Performance") também
+eram HTML fixo, sem card nenhum pra Mídia Criativa nem pra squad futuro.
+
+**Fix, mantendo visual limpo com qualquer quantidade de squads** (pedido
+explícito: "o visual vc faz de um jeito q n fique uma bagunça"):
+- `renderErrStatsCards()` (nova) gera os cards de estatística — 2 fixos
+  (Erros abertos/Resolvidos, métricas globais) + 1 por squad de `SQUADS` —
+  substituindo o HTML estático. `.err-stats-grid` troca
+  `grid-template-columns:repeat(4,1fr)` fixo por
+  `repeat(auto-fit,minmax(110px,1fr))`: squad a mais só quebra linha, nunca
+  estoura o grid nem deixa buraco vazio com menos de 4.
+- `renderErrSquadFilterRow()` (nova) gera os botões de filtro por squad —
+  mesmo padrão que `renderFilterBar()` já usa pro filtro geral do painel
+  (mesma classe de bug documentada lá: "squad criado depois não ganhava
+  botão em lugar nenhum").
+- `setErrFilter('squad',...)` troca o array hardcoded por
+  `document.querySelectorAll('#ef-squad-row .err-filter-btn')` +
+  `data-sq`, cobre qualquer squad realmente renderizado.
+- Squads nativos ganham um `short` opcional (Dados/Mkt Perf/Criativa) pra
+  manter os rótulos compactos nos botões/cards estreitos; squad novo sem
+  `short` cai no label completo (mesma convenção já usada em
+  `renderSquadLinks()`/`renderFilterBar()`).
+- `renderErrors()` troca as somas hardcoded de `dados`/`prf` por
+  `SQUADS.forEach(sq=>...)`.
+
+Validado via Playwright com um cenário de 5 squads (incluindo nomes longos
+tipo "Marketing de Performance" e "Squad CRM e Relacionamento", simulando
+o pior caso de bagunça visual): grid de estatística e filtros continuam
+organizados em uma única fileira em desktop (1200px) e quebram em 3
+colunas limpas no mobile (390px, sem nem precisar da regra mobile já
+existente que força 2 colunas); clicar no filtro de um squad novo
+("Marketplace") acende o botão certo e filtra a lista corretamente (2/2
+erros daquele squad). `node --check` limpo; balanço de chaves/parênteses
+do diff (linhas adicionadas/removidas) 13/13 e 72/72 · 12/12.
+
+**Pendente pra promoção**: a parte que resolve o bug de verdade (rechamar
+`loadErrorLogs()` quando um squad novo aparece) só tem efeito em
+`painel.html`, onde `loadExtraSquads()` carrega `squads_meta` de produção
+— em `painel-dev.html` esse trecho fica sem efeito prático (squads fixas
+de teste), mas o resto (UI dinâmica, sem hardcode de squad) já é
+validável e visível em dev com os 2 squads de teste (`dev`/`omnichannel`).
 
 ### painel.html v3.34 · painel — 2026-09-09 · Promove pra prod — 🔗 Link por Objetivo de OKR + fix de nome no cadastro pelo painel
 
