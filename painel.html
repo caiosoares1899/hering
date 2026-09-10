@@ -2843,7 +2843,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.37 · painel</div>
+<div class="version">v3.38 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10379,20 +10379,26 @@ function loadExtraSquads(callback){
       }
     });
     loadPresence(); // pega squad(s) extra(s) recém-adicionado(s) a SQUADS — ver comentário na declaração
+    // Achado real (/monitorarbugs, 2026-09-10, 2ª rodada — mesma classe do
+    // bug de loadPresence() documentado acima, reintroduzida por mim
+    // mesmo na 1ª rodada): pôr loadErrorLogs() dentro do `else if(changed)`
+    // parecia certo, mas esse branch NUNCA roda no 1º carregamento da
+    // página (firstRun sempre entra no `if(firstRun)` primeiro) — mesmo
+    // quando um squad extra JÁ EXISTIA antes desta sessão (ex.:
+    // Marketplace criado ontem), essa 1ª passagem empurra ele pra SQUADS
+    // (changed=true) mas o `if(firstRun)` captura o fluxo antes do
+    // `else if` ser avaliado, então loadErrorLogs() nunca rodava de novo
+    // pra esse squad. Só squad criado DEPOIS que a aba já estava aberta
+    // (2ª passagem em diante, sem firstRun) se beneficiava do fix
+    // original — o caso mais comum na prática (squad já existente, board
+    // aberto do zero) continuava quebrado. Fix: chama incondicionalmente
+    // aqui fora do if/else, igual loadPresence() já faz — idempotente
+    // (_errLogSquadsAttached), então repetir a chamada é seguro.
+    loadErrorLogs();
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
     if(firstRun){ firstRun=false; if(callback) callback(); }
-    else if(changed){
-      loadAll(); renderSquadCards();
-      // Achado real (/monitorarbugs, 2026-09-10): faltava rechamar
-      // loadErrorLogs() aqui — a função já tinha ganhado guard idempotente
-      // (_errLogSquadsAttached) pra ser segura de rechamar, mas nada de fato
-      // a rechamava quando um squad novo aparecia, então continuava sem
-      // listener de error_logs/error_stats nenhum mesmo depois do resto do
-      // fix. Squad criado via painel de setup (ex.: Marketplace) só passa a
-      // aparecer no Monitor a partir de agora.
-      loadErrorLogs();
-    }
+    else if(changed){ loadAll(); renderSquadCards(); }
   });
 }
 
