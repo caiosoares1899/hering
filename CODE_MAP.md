@@ -1308,6 +1308,52 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `intake_pending` que um humano confirma pelo modal normal (mesmo
   `saveCard()` que já dispara tudo certo).
 
+### Campos dedicados por squad: Submarca / Canal de venda
+Mesma arquitetura pros dois (toggle por squad + tags fixas + campo dedicado
++ filtro dedicado) — ver comentário na declaração de `CANAL_VENDA_TAGS`
+sobre por que o nome interno é "canalVenda"/`CANAL_VENDA` (já existe um
+campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
+`CANAL_OPCOES_DEFAULT`/`card.canal` — sem relação nenhuma com este).
+- **Submarca** (squad Site Hering) — `SUBMARCA_TAGS` L7879 (10 tags fixas,
+  5 marcas × Comercial/Cadastro); `submarcaAtivo`/`submarcasVisiveis` L7873-4;
+  `toggleSubmarcaAtivo()`/`_ensureSubmarcaTagsBackfilled()` L15709/15687;
+  `_applySubmarcaUIVisibility()` L15777; `setCardSubmarca()` L15787;
+  dropdown da toolbar `renderSubmarcaQuickFilters()`/
+  `toggleSubmarcaDropdown()` L15825/15869 (`#submarca-dd-wrap`); sempre
+  **obrigatória** pra salvar assim que ativada (ver `saveCard()` ~L14204,
+  HELP_CONTENT "Prazo, Submarca e Canal obrigatórios").
+- **Canal de venda** (squad Marketplace, 2026-09-10, pedido direto do
+  usuário "cria na mesma pegada do submarcas") — `CANAL_VENDA_TAGS` L7904
+  (14 tags fixas: Mercado Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/
+  Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off
+  Premium, TikTok Shop); `canalVendaAtivo`/`canaisVendaVisiveis` L7900/7902;
+  `toggleCanalVendaAtivo()`/`_ensureCanalVendaTagsBackfilled()` — mesmo
+  bloco de funções logo depois de `renderSubmarcaCfgList()` (~L15981-16165);
+  `_applyCanalVendaUIVisibility()`; `setCardCanalVenda()`; dropdown da
+  toolbar `renderCanalVendaQuickFilters()`/`toggleCanalVendaDropdown()`
+  (`#canalvenda-dd-wrap`, sem agrupamento — diferente do de Submarca, não
+  há uma 2ª dimensão tipo Comercial/Cadastro aqui). Diferença deliberada de
+  Submarca (confirmado com o usuário via `AskUserQuestion` antes de
+  implementar): **opcional por padrão** — só vira obrigatório pra salvar se
+  o squad ligar um 2º interruptor separado, `canalVendaObrigatorio`
+  (`toggleCanalVendaObrigatorio()`, `config/canal_venda_obrigatorio`).
+  Integrado em tudo que Submarca já tocava: `passesFilter()`
+  (~L12253/12254), `activeFilters`/presets (`FILTER_PRESET_CAMPOS`),
+  restauração no boot, exclusividade mútua em bulk-tag
+  (`[SIZE_TAGS, SUBMARCA_TAGS, CANAL_VENDA_TAGS]`), 1-fixado-por-coluna+grupo
+  (`togglePinCard()`), Automações (`AUTO_TRIGGERS` `canal_venda_set` /
+  `AUTO_ACTIONS` `set_canal_venda`), donut "Por canal" em 📊 Dados do Board
+  → Insights. **Gap conhecido, deixado de propósito fora desta rodada**: a
+  ferramenta `criar_card` do Agente Ágil orquestrador
+  (`functions/agente-agil-orquestrador/tools/criarCard.js`) tem uma cópia
+  fixa `SUBMARCA_LABELS` validando o campo `submarca` server-side — ainda
+  não existe um `CANAL_VENDA_LABELS` equivalente lá (mudança em
+  `functions/`, exige deploy separado da Cloud Function pelo usuário, ver
+  seção sobre `functions/` no `CLAUDE.md`) — o client (`_intakeCriarCard()`
+  L~20885, executor de `criar_card` do chat direto L~23300) já está pronto
+  pra casar `item.canal`/`input.canal` por label assim que o backend
+  passar a enviá-lo.
+
 ### Impedimentos (modo coluna vs. tag)
 - `blockerMode` (let) — L28571 — carregado de `config/blockerMode`, `'col'`
   (default) ou `'tag'`

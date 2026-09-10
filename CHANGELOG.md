@@ -3059,6 +3059,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.627-dev — 2026-09-10 — Novo campo/filtro "🛒 Canal" (squad Marketplace)
+
+Pedido direto do usuário: "a squad marketplace usa CANAIS, uma estrutura
+muito parecida com o 'submarcas' que site usa. cria na mesma pegada do
+submarcas, esse filtro/campo Canais" — com a lista de 14 canais (Mercado
+Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon
+FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop).
+
+Implementado espelhando ponto a ponto a arquitetura da Submarca (squad
+Site): toggle por squad em Config → Tags, 14 tags fixas provisionadas
+automaticamente ao ativar, campo dedicado "🛒 Canal" no modal do card (ao
+lado de Executor, exclusivo — só um canal por vez), filtro dedicado no
+drawer de Filtros, menu suspenso "🛒 Canais ▾" na toolbar (multi-seleção,
+sem agrupamento — diferente do de Submarca, não há uma 2ª dimensão tipo
+Comercial/Cadastro aqui), visibilidade individual por canal em Config →
+Tags, persistência do filtro entre sessões (mesmo padrão de
+`_saveSubmarcaFiltroPadrao()`), presets de filtro nomeados, exclusividade
+mútua em ações de tag em massa, 1-card-fixado-por-coluna-e-canal (mesma
+regra que já existia por coluna+submarca), disparo de Automação "Canal
+definido como"/ação "Definir canal", e um novo donut "Por canal" em 📊
+Dados do Board → Insights.
+
+**Diferença deliberada, confirmada com o usuário via pergunta direta antes
+de implementar**: na Submarca, escolher a opção é sempre obrigatório pra
+salvar o card assim que o campo é ativado. Pro Canal, a resposta foi
+"deixa opcional mas configurável, caso eles optem por deixar obrigatorio"
+— criou-se um 2º interruptor separado ("Tornar Canal obrigatório pra
+salvar o card"), desligado por padrão; só quando os DOIS toggles do squad
+estão ligados (campo ativo + obrigatório) é que o Salvar passa a exigir um
+Canal escolhido, no mesmo modal/mesmo aviso amarelo que já existe pra
+Título/Prazo/Submarca.
+
+**Gap conhecido, fora do escopo desta rodada** (mudança em `functions/`,
+exigiria deploy separado): a ferramenta `criar_card` do Agente Ágil
+orquestrador ainda não sugere Canal automaticamente a partir de um pedido
+de intake (ela já faz isso pra Submarca, via uma cópia fixa
+`SUBMARCA_LABELS` no backend) — o client-side já está pronto pra casar por
+label assim que o backend passar a enviar o campo, mas a ferramenta em si
+não foi tocada nesta sessão.
+
+Checks de rotina: `node --check` limpo no maior bloco `<script>`; balanço
+de chaves/parênteses do diff (linhas adicionadas/removidas) 92/92 e
+351/351; suíte de lógica isolada via Playwright (26 cenários — provisionar
+tags, exclusividade do campo, visibilidade individual, filtro
+multi-seleção, predicado de filtro do board, validação condicional de
+obrigatoriedade, e reset ao desativar) e checagem visual da tela de
+Config/modal do card/dropdown da toolbar com os 14 canais reais.
+
 ### v8.30.626-dev — 2026-09-10 — Coluna "Impedimentos" vazia agora pode ser excluída
 
 Pedido direto do usuário: "pensando q ja resolvemos aquele problema de
