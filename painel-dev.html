@@ -342,7 +342,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-field-label{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--txt3);margin:14px 0 6px;}
 .okr-field-label:first-child{margin-top:0;}
 .okr-input,.okr-textarea,.okr-select{width:100%;padding:8px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;}
-.okr-textarea{resize:vertical;min-height:52px;font-family:'DM Sans',sans-serif;}
+/* min-height default aumentado (era 52px — pedido direto: "essa parte do
+   objetivo ta pequeno demais"): 130px já mostra ~5-6 linhas sem precisar
+   redimensionar na maioria dos objetivos reais. */
+.okr-textarea{resize:vertical;min-height:130px;font-family:'DM Sans',sans-serif;}
 .okr-list-editable{display:flex;flex-direction:column;gap:5px;}
 .okr-list-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:7px;padding:6px 8px;}
 .okr-list-item span{flex:1;}
@@ -2804,7 +2807,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.38 · painel-dev</div>
+<div class="version">v3.39 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4822,6 +4825,15 @@ function loadOkr(){
     // objetivo aberto na hora que um marco muda (outra pessoa editando, ou
     // escrita do próprio agente) precisa refletir ao vivo, não só no próximo clique
     if(document.getElementById('okr-obj-ov')?.classList.contains('open') && _okrEditingObjId){
+      // Achado real: este listener dispara pra QUALQUER marco de QUALQUER
+      // Objetivo, e antes de reescrever o HTML do zero via renderOkrObjBody()
+      // não sincronizava o que a pessoa já tinha digitado (título/pilar/
+      // descrição) de volta pro draft — diferente de outros gatilhos de
+      // re-render no arquivo (ex.: trocar Gerência), que já chamam
+      // _okrSyncObjDraftFromDom() antes. Sem isso, editar o Objetivo A
+      // enquanto um marco do Objetivo B muda em outra aba perdia tudo que
+      // ainda não tinha sido salvo.
+      _okrSyncObjDraftFromDom();
       renderOkrObjBody(_okrEditingObjId);
     }
   });
@@ -5545,6 +5557,17 @@ function renderOkrObjBody(id){
   if(!body || !_okrObjDraft) return;
   const podeEditar = id ? _okrCanEdit(okrObjetivos[id]||{}) : _okrCanCreate();
   const d = _okrObjDraft;
+  // Achado real (usuário: "aquela função ali no cantinho para aumentar
+  // essa area [do Objetivo] não tá funcionando") — esta função reescreve
+  // #okr-obj-body do ZERO a partir do template, então qualquer altura
+  // arrastada manualmente na textarea (resize:vertical, ver CSS) era
+  // perdida no próximo re-render — e este re-render é disparado com
+  // bastante frequência por caminhos que nada têm a ver com o que a
+  // pessoa está editando (ex.: o listener de `kanban/okr/marcos` chama
+  // renderOkrObjBody() sempre que QUALQUER marco muda, de QUALQUER
+  // Objetivo, pra refletir ao vivo). Guarda a altura atual (se alguém já
+  // redimensionou) antes de reescrever o HTML e reaplica no fim.
+  const _alturaDescricaoPrevia = document.getElementById('okr-f-descricao')?.style.height || '';
 
   if(!podeEditar){
     body.innerHTML = `
@@ -5604,6 +5627,10 @@ function renderOkrObjBody(id){
       : `<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
     ):''}
     <button class="save-btn" onclick="saveOkrObjetivo()">💾 Salvar</button>`;
+  if(_alturaDescricaoPrevia){
+    const taDescricao = document.getElementById('okr-f-descricao');
+    if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
+  }
 }
 
 async function saveOkrObjetivo(){
