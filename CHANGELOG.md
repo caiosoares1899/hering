@@ -3059,6 +3059,64 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.628-dev — 2026-09-10 — /monitorarbugs no campo "🛒 Canal" recém-criado: 3 achados reais
+
+Pedido direto: "roda um /monitorarbugs aqui" — escopo escolhido por
+prioridade 1 da skill (código mais recente = maior risco): o campo/filtro
+Canal de venda (squad Marketplace) implementado poucos minutos antes,
+espelhando a Submarca. Técnica de maior retorno: comparar, ponto a ponto,
+CADA lugar do arquivo que ainda referencia `submarcaAtivo`/
+`SUBMARCA_TAGS`/`f.submarca`/`activeFilters.submarca` contra o Canal —
+achou 3 gaps reais, nenhum chutado.
+
+1. **`swCfgTab('tags')`** não re-sincronizava `cfg-canalvenda-ativo`/
+   `cfg-canalvenda-obrigatorio` nem chamava `renderCanalVendaCfgList()` ao
+   reabrir a aba — Tamanho/Submarca/Criativos/Padrões já fazem esse
+   re-sync defensivo (self-heal pro caso de `toggleCanalVendaAtivo()`
+   ter sido chamada sem permissão e retornado cedo, deixando o checkbox
+   com o valor que a pessoa TENTOU marcar, não o valor real). Canal ficou
+   de fora por ser o único toggle da aba Tags que não recebeu essa linha
+   quando foi criado.
+2. **`_hasActiveFilters()`** não checava `f.canalVenda` — filtrar só por
+   Canal escondia a maioria dos cards sem o botão "🔭 Filtros" acender,
+   mesma classe de bug já corrigida 2x antes pra Submarca (PR #800, depois
+   PR #809 pra mais 3 pontos que tinham ficado de fora). `passesFilter()`
+   já aplicava o filtro certo por baixo — só o indicador visual mentia.
+3. **Import do Trello** (mais sério): a Submarca tem uma "Prioridade 1"
+   que casa um label do Trello com o MESMO NOME de uma opção fixa direto
+   na tag certa (ex.: label "Hering Adulto Comercial"), evitando cair no
+   fuzzy `includes()` genérico mais abaixo — Canal não tinha o
+   equivalente. Resultado: importar um board com label "Amazon" corria o
+   risco de casar com "Amazon (FBA)" (substring), "Shopee" com "Shopee
+   Kids", "Mercado Livre" com qualquer uma das 3 variantes ME1/ME2/Full —
+   dependendo só da ordem em que as tags apareciam no array, template
+   errado sem nenhum aviso. Fix: mesma "Prioridade 1" adicionada pra
+   Canal (mais simples que a de Submarca — sem a etapa de time Comercial/
+   Cadastro, que Canal não tem) + `CANAL_VENDA_TAGS` somado à lista de
+   exclusão do fuzzy genérico (mesmo motivo que já excluía `SUBMARCA_TAGS`
+   de lá).
+
+Achados descartados após investigação real (não eram bugs, checados e
+confirmados corretos por comparação/teste): disparo de `tag_added`/
+`canal_venda_set` nos 4 call sites que mudam tags de card (autosave,
+Salvar manual, criação, bulk); exclusividade mútua em bulk-tag
+(`_bulkToggleTag`/`_doBulkTagMulti`); ícone do Histórico do card pra
+"definiu canal (automação)" cai no genérico ✏️ — comportamento IDÊNTICO
+ao de "definiu submarca (automação)" (nenhuma regressão, os 2 nunca
+tiveram regex próprio); `_manualFieldsNow()`/`_newCardHasContent()` não
+precisam de entrada própria pra Canal (já cobertos genericamente por
+`editingTags.length`, mesmo caminho de Submarca); `_bulkToggleTag`'s
+picker (`tags.map(...)`) já lista qualquer tag sem exclusão, Canal
+aparece ali automaticamente.
+
+Checks de rotina: `node --check` limpo; balanço de chaves/parênteses do
+diff (linhas adicionadas/removidas) 3/3 e 32/32; suíte de teste isolada
+via Playwright, 8 novos cenários (`_hasActiveFilters` com só Canal
+setado, prioridade de match exato no import pros 4 canais com risco real
+de colisão + confirma que Submarca não regrediu, exclusão do fuzzy
+genérico, re-sync dos 2 checkboxes de Canal simulando um toggle
+bloqueado) — nenhuma falha.
+
 ### v8.30.627-dev — 2026-09-10 — Novo campo/filtro "🛒 Canal" (squad Marketplace)
 
 Pedido direto do usuário: "a squad marketplace usa CANAIS, uma estrutura

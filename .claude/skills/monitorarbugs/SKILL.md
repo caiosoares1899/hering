@@ -541,6 +541,28 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   preservado entre re-renders, sempre testar o cenário "abre de novo,
   do zero, pra uma entidade diferente" — não só o cenário que o achado
   original descreveu. dev v8.30.624.
+- **2026-09-10, campo "🛒 Canal" (pedido genérico, "roda um
+  /monitorarbugs aqui" — área escolhida por prioridade 1: código mais
+  recente da sessão, criado minutos antes espelhando a Submarca)**: 3
+  achados, todos via técnica 2 (comparar ponto a ponto contra o padrão já
+  resolvido de Submarca no mesmo arquivo). `swCfgTab('tags')` não
+  re-sincronizava os 2 checkboxes de Canal nem chamava
+  `renderCanalVendaCfgList()` ao reabrir a aba — único toggle da aba Tags
+  sem esse re-sync defensivo que Tamanho/Submarca/Criativos/Padrões já
+  têm. `_hasActiveFilters()` não checava `f.canalVenda` — mesma classe de
+  bug já corrigida 2x antes pra Submarca (PR #800/#809), filtrar só por
+  Canal escondia cards sem o botão "🔭 Filtros" acender. **Mais sério**:
+  import do Trello não tinha a "Prioridade 1" de match exato por nome que
+  Submarca tem — labels "Amazon"/"Shopee"/"Mercado Livre" caindo no fuzzy
+  `includes()` genérico corriam risco real de colar no canal errado por
+  substring (ex.: "Amazon" → "Amazon (FBA)"), dependendo só da ordem do
+  array. dev v8.30.628. **Lição pra próxima vez**: ao construir um campo
+  novo "na mesma pegada" de um já existente, `grep` por TODA referência ao
+  nome do campo original (`submarcaAtivo`, `SUBMARCA_TAGS`,
+  `f.submarca`) antes de considerar a réplica completa — mesmo depois de
+  uma implementação cuidadosa cobrindo ~20 pontos de integração, ainda
+  sobraram 3 (2 pequenos + 1 sério) só visíveis fazendo essa varredura
+  find-all, não relendo a própria implementação de memória.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

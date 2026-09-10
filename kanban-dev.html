@@ -6136,7 +6136,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.627-dev</div>
+<div class="version">v8.30.628-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11189,7 +11189,12 @@ function toggleTimelineView(){
 // atalho "🔭 Filtros" indicar filtro ativo mesmo com o painel fechado).
 function _hasActiveFilters(){
   const f=activeFilters||{};
-  return !!(f.owner||f.demandante||f.criador||f.tag||f.tamanho||(f.submarca&&f.submarca.length)||f.due||f.priority||f.blocker||f.risco||f.subteam||f.supercard||f.texto);
+  // Achado real (/monitorarbugs, 2026-09-10): faltava (f.canalVenda&&f.canalVenda.length)
+  // aqui — mesma classe de bug já corrigida 2x antes pra Submarca (PR #800,
+  // depois PR #809 pra 3 pontos que ainda faltavam). Filtrar só por Canal
+  // escondia cards sem o botão "🔭 Filtros" acender, mesmo com o predicado
+  // de passesFilter() já aplicando o filtro corretamente por baixo.
+  return !!(f.owner||f.demandante||f.criador||f.tag||f.tamanho||(f.submarca&&f.submarca.length)||(f.canalVenda&&f.canalVenda.length)||f.due||f.priority||f.blocker||f.risco||f.subteam||f.supercard||f.texto);
 }
 // Chip "💡 Só eu" da Timeline — alterna o filtro de responsável (mesmo
 // activeFilters.owner que #f-owner já usa) pro usuário atual, sem precisar
@@ -22260,6 +22265,15 @@ function swCfgTab(tab){
     const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
     const elSm=document.getElementById('cfg-submarca-ativo'); if(elSm) elSm.checked=submarcaAtivo;
     renderSubmarcaCfgList();
+    // Achado real (/monitorarbugs, 2026-09-10): faltava o mesmo re-sync
+    // defensivo pros toggles de Canal — mesmo padrão de Tamanho/Submarca
+    // acima (self-heal pro caso de toggleCanalVendaAtivo()/
+    // toggleCanalVendaObrigatorio() terem sido chamados sem permissão e
+    // retornado cedo, deixando o checkbox com o valor VISUAL que a pessoa
+    // tentou, diferente do valor real que nunca mudou).
+    const elCv=document.getElementById('cfg-canalvenda-ativo'); if(elCv) elCv.checked=canalVendaAtivo;
+    const elCvObr=document.getElementById('cfg-canalvenda-obrigatorio'); if(elCvObr) elCvObr.checked=canalVendaObrigatorio;
+    renderCanalVendaCfgList();
   }
   if(tab==='subtimes') renderSubteamEditor();
   if(tab==='fluxo') renderFluxoCfg();
@@ -23910,6 +23924,26 @@ function parseTrelloJSON(raw, defaultTeam){
       labelTagMap[lb.id]=smMatch.id;
       return;
     }
+    // Mesma ideia da Prioridade 1 acima, pra Canal (squad Marketplace) —
+    // achado real via /monitorarbugs (2026-09-10, técnica 1: comparando
+    // Canal ponto a ponto contra tudo que Submarca já cobre): sem este
+    // bloco, um label "Shopee"/"Amazon"/"Mercado Livre (ME1)" caía direto
+    // no fuzzy includes() da Prioridade 3 abaixo, que casa por SUBSTRING —
+    // "Amazon" é substring de "Amazon (FBA)", "Shopee" é substring de
+    // "Shopee Kids", "Mercado Livre" é substring das 3 variantes ME1/ME2/
+    // Full — o mesmo risco de "template errado" que a Prioridade 1
+    // original já existe pra evitar em Submarca, só que sem a
+    // complexidade de time (Comercial/Cadastro) que Canal não tem, então
+    // não precisa da Prioridade 2 (marca solta + time padrão) — aqui o
+    // nome já É a opção inteira.
+    const cvMatch=CANAL_VENDA_TAGS.find(cv=>cv.label.toLowerCase()===lname);
+    if(cvMatch){
+      if(!tags.find(t=>t.id===cvMatch.id) && !newTagsToCreate.find(t=>t.id===cvMatch.id)){
+        newTagsToCreate.push(Object.assign({}, cvMatch));
+      }
+      labelTagMap[lb.id]=cvMatch.id;
+      return;
+    }
 
     // Prioridade 2: label só com a MARCA, sem time (ex.: "HERING ADULTO",
     // "ADULTO", "Hering Kids") — achado real (2026-08-04, import de 4 boards
@@ -23946,13 +23980,19 @@ function parseTrelloJSON(raw, defaultTeam){
 
     // Tenta match com tag existente no board (case-insensitive) — NUNCA
     // contra uma tag de Submarca (SUBMARCA_TAGS): esse fuzzy includes() é
-    // pensado pra tags genéricas (canal, tipo...), e "adulto"/"kids" sendo
-    // substring de "Hering X Comercial/Cadastro" faria ele "roubar" o match
-    // que as Prioridades 1/2 acima deveriam decidir com mais certeza (ou
-    // deliberadamente deixar como tag nova, pra corrigir na mão, em vez de
-    // adivinhar o time errado em silêncio).
+    // pensado pra tags genéricas (canal de mídia, tipo...), e "adulto"/
+    // "kids" sendo substring de "Hering X Comercial/Cadastro" faria ele
+    // "roubar" o match que as Prioridades 1/2 acima deveriam decidir com
+    // mais certeza (ou deliberadamente deixar como tag nova, pra corrigir
+    // na mão, em vez de adivinhar o time errado em silêncio). Mesma
+    // exclusão vale pra Canal de venda (CANAL_VENDA_TAGS) — "Amazon" é
+    // substring de "Amazon (FBA)", "Shopee" de "Shopee Kids", "Mercado
+    // Livre" das 3 variantes ME1/ME2/Full — já resolvido de propósito
+    // pela Prioridade 1b acima; chegar até aqui SEM ter casado lá significa
+    // que o nome não bate com NENHUMA opção fixa, não faz sentido arriscar
+    // um match aproximado contra outra.
     const existing=tags.find(t=>
-      !SUBMARCA_TAGS.find(st=>st.id===t.id) && (
+      !SUBMARCA_TAGS.find(st=>st.id===t.id) && !CANAL_VENDA_TAGS.find(cv=>cv.id===t.id) && (
         t.label.toLowerCase()===lname ||
         t.label.toLowerCase().includes(lname) ||
         lname.includes(t.label.toLowerCase())
@@ -24613,7 +24653,7 @@ const HELP_CONTENT = {
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'🛒', title:'Canal (venda em marketplaces)', text:'Em Config → Tags, role até "🛒 Canal" e ative "Ativar campo de canal neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Marketplace, que vende os mesmos produtos em vários canais ao mesmo tempo (Mercado Livre nas modalidades ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop). Mesma "pegada" da Submarca do squad Site — o campo dedicado "🛒 Canal" aparece no modal do card (ao lado de Executor) e é exclusivo (só um canal por vez).\n\nObrigatório é opt-in: diferente da Submarca (sempre obrigatória assim que ativada), o Canal só trava o Salvar se o squad TAMBÉM ligar o segundo interruptor "Tornar Canal obrigatório pra salvar o card" — ativar só o campo deixa o Canal opcional (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: cada um dos 14 canais tem seu próprio interruptor em Config → Tags — todos começam ligados por padrão, e desligar um esconde ele do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🛒 Canais ▾" — mesmo funcionamento do menu de Submarcas: marque quantos canais quiser ao mesmo tempo, o botão mostra quantos estão marcados (ex.: "🛒 Canais (2) ▾"), e "Todos" limpa a seleção.' },
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
-    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca: se o squad usa o campo Submarca (ver dica em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial") ela vincula direto na tag fixa da Submarca — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
+    { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
