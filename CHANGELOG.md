@@ -3059,6 +3059,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.626-dev — 2026-09-10 — Coluna "Impedimentos" vazia agora pode ser excluída
+
+Pedido direto do usuário: "pensando q ja resolvemos aquele problema de
+esconder cards impedidos que tavam numa coluna impedida e foi excluida,
+remove a trava de nao poder excluir uma coluna de impedimentos vazia!
+tipo agora que criei a squad marketplace, o board tava vazio e eu n
+conseguir excluir essa coluna, eles vão usar como tag e eu ja configurei
+assim".
+
+`delColumn()` bloqueava a exclusão da coluna fixa "Impedimentos"
+(`id==='blocker'`) de forma incondicional desde 2026-08-26 — na época,
+era a única proteção contra cards ficarem com `.col` órfão e sumirem do
+board em silêncio se a coluna fosse excluída e o modo de impedimentos
+depois voltasse pra "coluna" (ou algum card fosse movido pra lá por
+engano). Desde então, 3 guards irmãos passaram a fechar o MESMO buraco
+de forma independente, em todo caminho que poderia recriar o problema:
+`saveBlockerMode()` recusa voltar pro modo "coluna" se `blocker` não
+existir mais; `_doBulkBlockCol()`/`ctxMove()` (usado por `ctxBlock()`)
+recusam mover um card pra lá se a coluna já foi excluída. Com essas 3
+proteções confirmadas (lidas e conferidas uma a uma antes da mudança),
+o bloqueio incondicional em `delColumn()` passou a proteger só um
+cenário que hoje já não acontece mais silenciosamente — relaxado pra só
+bloquear enquanto a coluna ainda tem cards de verdade (a reatribuição
+pra `columns[0]` que a exclusão normal já faz é segura, mas exigir
+esvaziar primeiro continua mais claro que empurrar cards de impedimento
+pra Backlog sem a pessoa pedir).
+
 ### v8.30.625-dev — 2026-09-09 — Fix: nome do usuário nunca era corrigido de volta em kanban/usuarios/{uid} no login
 
 Complemento do fix em `painel-dev.html` v3.35 (ver entrada lá pro

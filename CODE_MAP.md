@@ -1362,7 +1362,12 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
 - `_doBulkBlockCol()`/`_doBulkUnblockCol(colId)` — L7432/L7454 —
   versões em massa do mesmo par; `_doBulkBlockCol()` ganhou o mesmo
   guard de existência da coluna
-- `delColumn(i)` — L21146 — editor de colunas em ⚙ Configurações.
+- `delColumn(i)` — L21146 — editor de colunas em ⚙ Configurações. Coluna
+  fixa `id==='blocker'` ("Impedimentos") só bloqueia a exclusão enquanto
+  ainda tem cards nela (2026-09-10, antes era bloqueio incondicional —
+  relaxado depois que `saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`
+  passaram a recusar independentemente qualquer caminho que recriaria o
+  card órfão que motivou o bloqueio original).
   Bloqueia incondicionalmente excluir a coluna com id `blocker` (não só
   quando `blockerMode==='col'` — cards antigos podem carregar esse id
   independente do modo atual da squad; excluir a coluna em modo `tag` e
