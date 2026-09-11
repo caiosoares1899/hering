@@ -3150,6 +3150,48 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.632-dev — 2026-09-11 — 📊 Dados do Board: Canal/Submarca por coluna, Agente Ágil passa a explicar CFD+Burndown, ❓ no CFD
+
+3 pedidos diretos do usuário, na mesma rodada:
+
+1. **Submarca/Canal quebrados por coluna, na aba "📊 Visão Geral"**: até
+   agora só existia o donut "por submarca"/"por canal" (total geral) na
+   aba Insights — não dava pra ver ONDE no fluxo cada valor está
+   concentrado. Nova tabela (`_boardDataSmCvPorColuna()`, chamada junto
+   com `_boardDataBarChart()`) cruza os dois eixos: linha = valor de
+   Submarca/Canal, coluna = coluna do board, célula = contagem. Só
+   aparece pra squads que usam o(s) campo(s) (mesmo guard condicional do
+   donut). Tabela em vez de gráfico empilhado de propósito — com até 14
+   valores de Canal, cor não seria suficiente pra distinguir tudo.
+2. **"🤖 Ponto de vista do Agente Ágil" (aba Insights) agora também lê e
+   SEMPRE comenta o CFD e o Burndown** (aba "📈 CFD & Burndown",
+   separada) — antes só recebia prioridade/responsável/riscos/OKR/
+   parados. `_renderCFD()`/`_renderBurndown()` ganharam
+   `window._cfdResumo`/`window._burndownResumo` (início×atual por
+   coluna pro CFD; escopo/restante/ideal/status pro Burndown) — como as
+   duas são lazy (só a aba própria calcula, ver `_boardDataSwitchTab()`),
+   novo wrapper `_pedirAnaliseBoardInsights()` garante que rodaram antes
+   de montar o resumo, mesmo se a pessoa nunca abriu aquela aba (cálculo
+   100% local, sem leitura nova do Firebase). Prompt do backend
+   (`functions/agente-agil-orquestrador/analiseDados.js`, contexto
+   `board_insights`) atualizado pra instruir "SEMPRE comente CFD e
+   Burndown explicitamente" — não só considerar em silêncio. 1 teste novo
+   confirmando isso (`analiseDados.test.js`), suíte 476/476.
+3. **❓ no título do CFD**: tooltip explicando o que é (área empilhada,
+   cada faixa = 1 coluna), como ler (altura = cards parados ali, faixa
+   engordando = gargalo) e o que é um resultado satisfatório (faixas
+   estáveis/encolhendo, nenhuma desproporcional, "Concluído" crescendo
+   constante) — mesmo padrão `.help-tip`/`.help-tip-balloon` já usado nos
+   cards de métrica da Visão Geral.
+
+`HELP_CONTENT` atualizado: entrada "Insights pra PO/ADM/Organizador"
+ganhou menção a Canal (só citava Submarca) + o novo cruzamento por
+coluna + o Agente Ágil considerando CFD/Burndown; entrada "CFD &
+Burndown" ganhou menção ao novo ❓.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses -1/-1 (artefato conhecido, não desbalanço real).
+
 ### v8.30.631-dev — 2026-09-11 — Fix: causa raiz real do consumo de `comunicados` (2 "correções" anteriores nunca tinham resolvido)
 
 Investigação de consumo do Firebase pedida direto pelo usuário
