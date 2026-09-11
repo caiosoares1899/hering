@@ -3182,6 +3182,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.640-dev — 2026-09-11 — /otimizaçãoderotina (Passo 4.1): `loadNotifs()` baixava a árvore inteira de notificações a cada mudança
+
+Achado real aplicando o novo Passo 4.1 da skill `/otimizaçãoderotina`
+(consumo de leitura do Firebase) numa área antiga — o sino de
+notificações existe desde v8.30.64-dev, bem antes do baseline da skill.
+
+`loadNotifs()` mantinha um `onValue` sempre ligado em
+`kanban/usuarios/{uid}/notificacoes` sem nenhum filtro server-side: toda
+mudança (nova notificação, marcar como lida, expirar por TTL) redisparava
+o listener com o node INTEIRO, filtrado por TTL/tipo só no cliente. Mesma
+classe de ineficiência do bug de `comunicados` (custo recorrente que
+escala com uso) — mas não é um bug, é um filtro que nunca foi tentado.
+
+Fix (Fase 1 de 2, ver plano completo): `query(ref, orderByKey(),
+limitToLast(NOTIF_QUERY_LIMIT=80))` em vez do `ref` bare — capa o pior
+caso sem exigir migração de schema. `orderByKey`/`limitToLast` agora
+pendurados em `window` (`window._orderByKey`/`window._limitToLast`),
+mesmo padrão de `window._query`/`_orderByChild`/`_equalTo` já usado pelo
+fix de `comunicados`.
+
+Fase 2 (fix "correto" — campo `expiraEm` indexável, filtro exato em vez
+de aproximado por contagem) fica documentada como recomendação futura,
+não implementada agora — exige migração de dado existente (RTDB ordena
+nodes sem o campo indexado antes de qualquer valor) e uma Cloud Function
+de limpeza nova (o cleanup físico hoje faz piggyback no próprio `onValue`
+de `loadNotifs()`, que não vê mais itens fora da janela dos últimos 80
+depois deste fix).
+
+Mesmo fix aplicado em `painel-dev.html` (`loadPainelNotifs()` lê o MESMO
+node, com filtro diferente — sino do painel é pro ADM, sem TTL) — ver
+entrada correspondente abaixo.
+
+Checks de rotina: `node --check` OK nos 2 arquivos (blocos reais
+extraídos por âncora de linha, não regex — o mesmo artefato de sempre
+faz um regex ingênuo cortar errado em `painel-dev.html` também). Balanço
+de chaves/parênteses inalterado em relação ao baseline de cada arquivo.
+
 ### v8.30.639-dev — 2026-09-11 — /monitorarbugs no caso #5 de "personalização baseada em rotina": sugestão de "Atrasados" disparava com 1 sessão só
 
 Achado numa rodada de `/monitorarbugs` nos 5 casos recém-implementados de
@@ -14922,6 +14959,22 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.42 · painel-dev — 2026-09-11 — `loadPainelNotifs()` baixava a árvore inteira de notificações a cada mudança
+
+Mesmo achado/fix de `kanban-dev.html` v8.30.640-dev (ver entrada
+correspondente lá) — `loadPainelNotifs()` lê o MESMO node
+(`kanban/usuarios/{uid}/notificacoes`) com um `onValue` sem filtro
+server-side, dessa vez pro sino do painel (ADM, sem TTL — mostra tudo).
+Fix: `query(ref, orderByKey(), limitToLast(80))` em vez do `ref` bare.
+`query`/`orderByKey`/`limitToLast` agora importados e pendurados em
+`window` (painel-dev.html nunca tinha usado query do Firebase antes).
+
+Checks de rotina: `node --check` OK nos 3 blocos `<script>` reais
+(extraídos por âncora de linha — um regex ingênuo corta errado em algum
+ponto do arquivo, mesmo artefato já documentado em `kanban-dev.html`).
+Balanço de chaves/parênteses inalterado em relação ao baseline do
+arquivo (braces -1, parens -14, ambos pré-existentes).
 
 ### painel-dev.html v3.41 · painel-dev — 2026-09-11 — Dashboard consolidado ganha donut "Por canal de venda" (faltava, só "Por submarca" existia)
 

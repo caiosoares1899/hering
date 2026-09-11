@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.639-dev</div>
+<div class="version">v8.30.640-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6166,7 +6166,7 @@ input[type="date"]{-moz-appearance:textfield;}
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -6221,6 +6221,11 @@ window._increment=increment;
 // das chamadas desde que essa feature existe (confirmado via
 // _dbgTrack('comunicados_fallback')).
 window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
+// orderByKey/limitToLast: mesmo padrão dos 3 acima (/otimizaçãoderotina,
+// Passo 4.1, 2026-09-11) -- usados por loadNotifs() pra limitar quanto do
+// node kanban/usuarios/{uid}/notificacoes é baixado a cada mudança, em vez
+// de sempre baixar a árvore inteira e filtrar tudo no cliente.
+window._orderByKey=orderByKey; window._limitToLast=limitToLast;
 window._auth=auth; window._provider=provider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -25956,6 +25961,14 @@ document.addEventListener('click', e=>{
 // ── NOTIFICAÇÕES ─────────────────────────────────────────────────
 const NOTIF_TTL_DAYS = 3; // notificações lidas somem após 3 dias
 const NOTIF_TTL_UNREAD_DAYS = 30; // notificações NÃO lidas só somem depois de 30 dias (evita apagar antes de ver)
+// /otimizaçãoderotina (Passo 4.1, 2026-09-11): loadNotifs() baixava o node
+// INTEIRO a cada mudança (nova notif, marcar como lida...) e filtrava TTL só
+// no cliente -- mesma classe de ineficiência do bug de comunicados (custo
+// recorrente que escala com uso). limitToLast() capa o pior caso sem exigir
+// migração de schema (fix "correto" -- campo expiraEm indexável -- fica
+// documentado como recomendação futura, não implementado agora). Folga
+// generosa sobre o volume típico dentro da janela de 30 dias.
+const NOTIF_QUERY_LIMIT = 80;
 let notifOpen = false;
 let _notifListener = null;
 
@@ -26814,7 +26827,11 @@ function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
-  _notifListener = window._onValue(ref, snap=>{
+  // Só as últimas NOTIF_QUERY_LIMIT (por chave -- id começa com 'n'+timestamp,
+  // então ordem de chave ≈ ordem cronológica) em vez do node inteiro. Ver
+  // comentário grande na declaração de NOTIF_QUERY_LIMIT.
+  const notifQuery = window._query(ref, window._orderByKey(), window._limitToLast(NOTIF_QUERY_LIMIT));
+  _notifListener = window._onValue(notifQuery, snap=>{
     _dbgTrack('notificacoes', snap.val());
     const val = snap.val()||{};
     const now = Date.now();

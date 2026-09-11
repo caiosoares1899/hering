@@ -2807,12 +2807,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.41 · painel-dev</div>
+<div class="version">v3.42 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, get, update, query, orderByKey, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
@@ -2848,6 +2848,13 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
 });
 
 window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update;
+// query/orderByKey/limitToLast: mesmo padrão de window._query/_orderByChild/
+// _equalTo já pendurados no kanban-dev.html (fix do consumo de comunicados,
+// 2026-09-11) -- bindings de import de módulo ES não atravessam pro <script>
+// clássico seguinte, então precisam ficar em window pra serem chamados de lá.
+// Usado por loadPainelNotifs() (/otimizaçãoderotina, Passo 4.1) pra limitar
+// quanto do node kanban/usuarios/{uid}/notificacoes é baixado por evento.
+window._query=query; window._orderByKey=orderByKey; window._limitToLast=limitToLast;
 window._storage=storage; window._sRef=sRef; window._uploadBytes=uploadBytes; window._getDownloadURL=getDownloadURL; window._deleteObject=deleteObject;
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
@@ -7908,7 +7915,13 @@ function loadPainelNotifs(){
   // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
   renderPainelNotifs();
   // 1) Notificações do usuário (já são unificadas por uid, independente de squad)
-  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), snap=>{
+  // /otimizaçãoderotina (Passo 4.1, 2026-09-11): baixava o node INTEIRO a
+  // cada mudança -- mesmo achado de kanban-dev.html/loadNotifs() (mesmo
+  // node, mesma ineficiência), NOTIF_QUERY_LIMIT lá == 80, mantido igual
+  // aqui por consistência entre os 2 leitores do mesmo dado.
+  const notifRef = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  const notifQuery = window._query(notifRef, window._orderByKey(), window._limitToLast(80));
+  window._onValue(notifQuery, snap=>{
     const val = snap.val()||{};
     const notifs = Object.values(val).filter(Boolean).map(n=>({
       _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',

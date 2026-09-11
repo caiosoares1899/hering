@@ -385,5 +385,21 @@ registrando o baseline atual pra próxima rodada comparar.
   contra o Passo 4.1 — se for reabrir uma área antiga, vale rodar esse
   passo nela mesmo que já tenha sido marcada "limpa" antes.
 
+- **2026-09-11, 1ª validação real do Passo 4.1 (pedido explícito: "roda o
+  passo novo numa área antiga pra validar")**: achado real, não em código
+  recente — `loadNotifs()` (kanban-dev.html, feature existe desde
+  v8.30.64-dev) e `loadPainelNotifs()` (painel-dev.html, mesmo node)
+  mantinham `onValue` sempre ligado em
+  `kanban/usuarios/{uid}/notificacoes` sem filtro server-side, baixando o
+  node inteiro a cada mudança. Diferente de `comunicados`, não era bug
+  (nenhuma query silenciosamente falhando) — era um filtro nunca
+  tentado, e o node é auto-limitado por TTL (não cresce sem fim). Fix
+  Fase 1 (`query()+orderByKey()+limitToLast(80)`, sem mudar schema) nos
+  2 leitores — dev v8.30.640-dev / painel-dev v3.42. Fase 2 (campo
+  `expiraEm` indexável, filtro exato) documentada como recomendação
+  futura — exige migração de dado existente + Cloud Function de limpeza
+  nova, fora do escopo desta rodada. Confirma que o Passo 4.1 funciona
+  em área antiga, não só no caso que motivou sua criação.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.
