@@ -3124,6 +3124,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.630-dev — 2026-09-11 — /atualizarhelpcontent: "Tema automático" tinha tooltip mas nenhuma entrada na Central de Ajuda
+
+Puramente documentação, sem mudança de comportamento. Rodada de
+`/atualizarhelpcontent` sem escopo nomeado — comparou os ~50 commits de
+`kanban-dev.html` desde a última rodada registrada (2026-09-04) contra
+`HELP_CONTENT`. A maioria das features do período já tinha entrada
+adicionada na hora da implementação (Atalhos de teclado, Canal de venda,
+Enviar pra outro squad, densidade dos cards, squad padrão, presets de
+filtro, arquivamento por coluna, tempo em atraso/bloqueado, Esc fecha a
+tela...) — sinal de que a disciplina "atualiza o help junto com a
+feature" segue firme.
+
+**1 gap real encontrado**: "🕐 Tema automático" (troca de tema sozinha
+pelo horário de São Paulo, 2026-09-08) já tinha o tooltip inline
+correto no botão (`title="Tema automático — liga a troca sozinha
+conforme o horário..."`) mas nunca ganhou entrada na Central de Ajuda —
+buscar "tema" ou "automático" no Ctrl+K não achava nada. Entrada nova
+adicionada em `HELP_CONTENT.board`, mesmo tom das vizinhas (Densidade,
+Squad padrão) — inclui a nuance de que essa preferência específica é
+salva só no navegador (`localStorage`), diferente da maioria das outras
+que sincronizam com a conta.
+
+**Achado incidental, não corrigido** (fora do escopo desta rodada —
+gap pré-existente, não introduzido por mudança recente): não existe
+nenhuma entrada de ajuda sobre o editor de Colunas em geral (⚙
+Configurações → Colunas) — a mudança recente que permite excluir a
+coluna "Impedimentos" vazia (PR #840) só mudou a mensagem de erro,
+sem UI nova, então não chegou a ser uma inconsistência introduzida
+agora, mas vale considerar como oportunidade futura.
+
+`node --check` limpo; balanço de chaves/parênteses do arquivo inteiro
+— `-1`/`0` — bate com o baseline já conhecido.
+
 ### v8.30.629-dev — 2026-09-11 — Fix: board abria em branco pós-login (precisava de F5) — em 5 lugares, não só no carregamento dos cards
 
 Relato direto do usuário: "aquele lance do board abrir pós login todo em
