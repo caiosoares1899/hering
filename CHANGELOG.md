@@ -3150,6 +3150,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.636-dev — 2026-09-11 — 🛤️ Timeline como visão inicial (3º caso de "personalização baseada em rotina")
+
+3º dos 5 casos discutidos: **"Você costuma abrir a Timeline [de
+manhã/à tarde/à noite] — tornar essa sua visão inicial?"**.
+
+**Mecanismo**: mesma janela deslizante de 5 sessões dos casos
+anteriores. `toggleTimelineView()` marca a sessão atual como "usou
+Timeline" só se isso aconteceu nos primeiros 3 minutos do boot desta
+aba (`_boardBootMs`) — abrir a Timeline depois de já estar trabalhando
+faz parte do fluxo normal, não é sinal de "eu queria começar por
+aqui". Com 80%+ das últimas 5 sessões nesse padrão, sugere tornar a
+Timeline a visão inicial — o texto da sugestão inclui o período do dia
+predominante (manhã/tarde/noite), só pra enriquecer, nunca como
+condição pra disparar.
+
+**Aplicação no boot**: aceitar grava `_saveBoardPref('visao_inicial',
+'timeline')`. **Achado real durante a implementação, corrigido antes
+de chegar a existir em produção**: `_applyBoardPrefsSquad()` é um
+listener AO VIVO (`onValue`), rodando de novo toda vez que QUALQUER
+board_pref muda — sem guard, aplicar a troca de visão nesse handler
+forçaria a pessoa de volta pra Timeline a cada pref que mudasse (uma
+coluna reordenada, a visão de raia trocada...) mesmo que ela tivesse
+voltado pro Kanban manualmente no meio da sessão, o oposto exato da
+regra "nunca muda a interface sem a pessoa pedir". Fix: flag
+`window._visaoInicialAplicada`, aplica a troca só na 1ª vez que os
+board_prefs chegam depois do boot, nunca de novo na mesma sessão.
+
+`HELP_CONTENT` (entrada "Timeline") ganhou um sub-parágrafo.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+-1/-1 (artefato conhecido).
+
 ### v8.30.635-dev — 2026-09-11 — 📌 "Fixar Meus cards na toolbar" + mecanismo de sugestão virou genérico (2º caso de "personalização baseada em rotina")
 
 Continuação direta do v8.30.634-dev (sugestão de preset de filtro) —
