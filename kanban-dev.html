@@ -6141,7 +6141,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.632-dev</div>
+<div class="version">v8.30.633-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -25086,11 +25086,20 @@ document.addEventListener('mouseover', e=>{
   balloon.style.right = 'auto';
   // Prefere abrir acima; vai abaixo se não houver espaço
   const bh = balloon.offsetHeight || 110;
+  let top;
   if(r.top - bh - 10 >= 8){
-    balloon.style.top = (r.top - bh - 8)+'px';
+    top = r.top - bh - 8;
   } else {
-    balloon.style.top = (r.bottom + 8)+'px';
+    top = r.bottom + 8;
+    // Achado real (2026-09-11, tooltip do CFD cortando embaixo da tela):
+    // o ramo "abre abaixo" nunca verificava se CABIA abaixo — só que não
+    // cabia acima. Balões curtos (a maioria) quase sempre cabiam por
+    // sorte; um balão alto o bastante (3 parágrafos) vazava pra fora da
+    // viewport sem clamp nenhum. Mesmo espírito do clamp horizontal
+    // logo acima, só que no eixo vertical.
+    top = Math.min(top, window.innerHeight - bh - 8);
   }
+  balloon.style.top = Math.max(8, top)+'px';
   balloon.style.bottom = 'auto';
 });
 // ═══════════════════════════════════════════════════════
