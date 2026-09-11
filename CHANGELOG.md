@@ -3182,6 +3182,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.641-dev — 2026-09-11 — Fix: `limitToLast` da v8.30.640-dev excluía sistematicamente notificações de id determinístico
+
+Achado real testando o fix anterior (mesmo dia — usuário rodou o teste de
+console e reportou `❌` num dos checks). O fix da v8.30.640-dev usava
+`orderByKey()` pra aproximar "as mais recentes", assumindo que todo id de
+notificação começa com `'n'+Date.now()` (ordem de chave ≈ ordem
+cronológica). Falso: `createNotif()` aceita `idOverride` pra notificações
+de id determinístico — `due_today_{cardId}_{data}`, `due_overdue_{...}`,
+`mention_{cardId}_{uid}`, `reuniao-{ms}-{slug}`, `rascunho_{seedId}` —
+nenhum começa com `'n'`. Sob ordenação lexicográfica de CHAVE, essas
+notificações caem sistematicamente fora do `limitToLast(80)` assim que
+existem 80+ notificações `'n...'`, **mesmo sendo as mais recentes** — só
+por causa do prefixo textual, não da idade real.
+
+Fix: `orderByChild('ts')` em vez de `orderByKey()`, nos 2 leitores
+(`loadNotifs()`/`loadPainelNotifs()`). `ts` (ISO 8601) é gravado por
+TODO ponto de escrita de notificação, nos 2 arquivos, sem exceção
+(confirmado lendo cada um) — e string ISO 8601 é lexicograficamente
+ordenável = cronologicamente ordenável, sem a armadilha do prefixo de id.
+`window._orderByKey` removido dos 2 arquivos (só existia pra isso).
+
+Checks de rotina: `node --check` OK nos 3 blocos reais de cada arquivo.
+Balanço de chaves/parênteses inalterado em relação ao baseline.
+
 ### v8.30.640-dev — 2026-09-11 — /otimizaçãoderotina (Passo 4.1): `loadNotifs()` baixava a árvore inteira de notificações a cada mudança
 
 Achado real aplicando o novo Passo 4.1 da skill `/otimizaçãoderotina`
@@ -14959,6 +14983,16 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.43 · painel-dev — 2026-09-11 — Fix: `limitToLast` da v3.42 excluía sistematicamente notificações de id determinístico
+
+Mesmo achado/fix de `kanban-dev.html` v8.30.641-dev (ver entrada
+correspondente lá) — `orderByKey()` assumia que todo id de notificação
+começa com `'n'+timestamp`, mas notificações de id determinístico
+(`due_today_`/`due_overdue_`/`mention_`/`reuniao-`/`rascunho_`) não
+seguem esse prefixo, então caíam sistematicamente fora do
+`limitToLast(80)` mesmo sendo recentes. Fix: `orderByChild('ts')`.
+`window._orderByKey` removido (só existia pra isso).
 
 ### painel-dev.html v3.42 · painel-dev — 2026-09-11 — `loadPainelNotifs()` baixava a árvore inteira de notificações a cada mudança
 
