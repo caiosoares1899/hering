@@ -3150,6 +3150,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.637-dev — 2026-09-11 — ⌨️ Atalho rápido de atribuição (4º caso de "personalização baseada em rotina")
+
+4º dos 5 casos discutidos: **"Você atribui cards ao mesmo grupo com
+frequência — criar atalho?"** — "grupo" esclarecido pelo usuário como
+responsável (owner) ou tag, escolhido responsável por ser o sentido
+mais direto de "atribuir" (tag é mais sobre categorizar).
+
+**Sinal**: `runAutoRules('assigned', ...)` é o funil único que os 4
+caminhos de atribuição do arquivo já passam por (manual, autosave,
+bulk, criação) — hookado ali em vez de duplicar o sinal em cada
+call site. Últimas 8 atribuições reais (não sessões — é sobre a AÇÃO
+se repetir), 60%+ pro mesmo responsável dispara a sugestão.
+
+**Diferença dos 3 casos anteriores**: "aceitar" aqui não *aplica* nada
+— o próprio sistema de atalhos personalizáveis exige capturar a
+combinação na mão (não existe tecla padrão). Aceitar só CRIA a ação
+(`ATALHO_ACOES['atribuir_'+init]`, adicionada em runtime — `const`
+trava a referência do objeto, não suas propriedades) e leva direto pra
+"⌨️ Atalhos" já na aba certa, faltando só apertar a tecla. A ação em si
+(`_quickAssignOwner()`) reusa o MESMO caminho do dropdown manual do
+modal (`scheduleAutoSave()`, o mesmo que o `onchange` do campo
+Responsável já chama) em vez de reimplementar `notifAssigned()`/
+`runAutoRules('assigned',...)`/histórico na mão — evita os 2 caminhos
+divergirem.
+
+`HELP_CONTENT` (entrada "Atalhos de teclado personalizáveis") ganhou
+um sub-parágrafo.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.636-dev — 2026-09-11 — 🛤️ Timeline como visão inicial (3º caso de "personalização baseada em rotina")
 
 3º dos 5 casos discutidos: **"Você costuma abrir a Timeline [de
