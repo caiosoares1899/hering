@@ -3532,6 +3532,12 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 <div class="toolbar" id="main-toolbar">
   <button class="btn btn-sm" data-tb-id="meudia" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
+  <!-- Escondido por padrão -- só aparece se a pessoa aceitou a sugestão
+       "personalização baseada em rotina" (_fixarMeusCardsNoHeader()) ou já
+       tinha essa preferência salva (_applyMeusCardsFixadoUI()). Mesmo botão/
+       mesma ação de "💡 Meus cards" na barra de Filtros (highlightMyCards()),
+       só que sempre visível, sem precisar abrir Filtros primeiro. -->
+  <button class="btn btn-sm" id="tb-meus-cards" data-tb-id="meuscards" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.35);">💡 Meus cards</button>
   <div class="tb-sep" data-tb-id="sep1"></div>
   <button class="btn btn-sm" data-tb-id="raia" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="position:relative;" id="sort-menu-wrap" data-tb-id="ordenacao">
@@ -5690,6 +5696,11 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="boarddata-bar-chart"></div>
       <div id="boarddata-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;" title="Clique numa coluna pra tirá-la (ou trazê-la de volta) da conta de todos os números acima"></div>
     </div>
+    <!-- Submarca/Canal de venda por coluna — pedido direto do usuário
+         (2026-09-11): "quero canal/submarca quebrado por coluna também".
+         Só entra se o squad usa algum dos 2 campos (mesmo guard condicional
+         do donut irmão em Insights) — ver _boardDataSmCvPorColuna(). -->
+    <div id="boarddata-smcv-col"></div>
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
       <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
@@ -5707,7 +5718,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="boarddata-fluxo-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       </div>
       <div style="margin-bottom:22px;">
-        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias</div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;display:flex;align-items:center;gap:4px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon"><b>O que é:</b> cada faixa colorida é uma coluna do board, empilhada — de baixo (início do fluxo) pra cima (fim). No eixo horizontal, o dia; no vertical, quantos cards estavam em cada coluna naquele dia.<br><br><b>Como ler:</b> a altura de uma faixa num dia = quantos cards estão parados ali. Se uma faixa vai engordando com o tempo, cards estão entrando mais rápido do que saindo — é o gargalo. Faixa larga (na direção vertical) = etapa demorada.<br><br><b>Resultado satisfatório:</b> faixas com largura estável ou encolhendo (não crescendo sem parar), nenhuma faixa muito mais grossa que as outras, e a faixa de "Concluído" crescendo de forma constante — mostra entrega real, não só início de trabalho novo.</span></span></div>
         <div id="boarddata-cfd"></div>
       </div>
       <div>
@@ -6136,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.631</div>
+<div class="version">v8.30.639</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11193,6 +11204,54 @@ function toggleTimelineView(){
   const btn=document.getElementById('btn-timeline');
   if(btn){ btn.style.borderColor = boardView==='timeline'?'var(--teal)':''; btn.style.color = boardView==='timeline'?'var(--teal)':''; }
   renderBoard();
+  if(boardView==='timeline') _marcarUsoTimelineCedo(); // personalização baseada em rotina, caso #1
+}
+// ── Caso #1 de "personalização baseada em rotina": Timeline aberta cedo
+// na sessão, com frequência -- tornar visão inicial? Mesma janela
+// deslizante de sessões do caso "Meus cards" (ver comentário grande na
+// declaração de SUGESTAO_FILTRO_CAMPOS pro raciocínio completo de manter
+// tudo em localStorage). "Cedo" = dentro dos primeiros 3min do boot desta
+// aba -- abrir a Timeline depois de já estar trabalhando faz parte do
+// fluxo normal, não é sinal de "eu queria começar por aqui".
+const SUGESTAO_TIMELINE_JANELA_SESSOES = 5;
+const SUGESTAO_TIMELINE_LIMIAR = 0.8; // 80% das últimas sessões
+const SUGESTAO_TIMELINE_JANELA_MIN_BOOT = 3*60000;
+const _boardBootMs = Date.now(); // capturado 1x, quando este script carrega
+function _sugestaoTimelineKey(){ return 'sugestao_timeline_sessoes_'+ACTIVE_SQUAD; }
+// Chamada 1x no boot (mesmo gatilho de _iniciarSessaoMeusCards()) -- marca
+// o início de mais 1 sessão na janela deslizante.
+function _iniciarSessaoTimeline(){
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoTimelineKey())||'[]'); }catch(e){ sessoes=[]; }
+  sessoes.push({usado:false, hora:new Date().getHours()});
+  if(sessoes.length > SUGESTAO_TIMELINE_JANELA_SESSOES) sessoes = sessoes.slice(-SUGESTAO_TIMELINE_JANELA_SESSOES);
+  safeLS.setItem(_sugestaoTimelineKey(), JSON.stringify(sessoes));
+}
+function _marcarUsoTimelineCedo(){
+  if(Date.now()-_boardBootMs > SUGESTAO_TIMELINE_JANELA_MIN_BOOT) return; // não foi cedo na sessão -- não conta
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoTimelineKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(!sessoes.length) return; // _iniciarSessaoTimeline() ainda não rodou nesta sessão
+  sessoes[sessoes.length-1].usado = true;
+  safeLS.setItem(_sugestaoTimelineKey(), JSON.stringify(sessoes));
+  clearTimeout(window._sugestaoTimelineTimer);
+  window._sugestaoTimelineTimer = setTimeout(_checarSugestaoTimeline, 1500);
+}
+function _checarSugestaoTimeline(){
+  if(_boardPrefsSquad.visao_inicial==='timeline') return; // já configurado -- nada a oferecer
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoTimelineKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(sessoes.length < SUGESTAO_TIMELINE_JANELA_SESSOES) return;
+  const usadas = sessoes.filter(s=>s.usado);
+  if(usadas.length/sessoes.length < SUGESTAO_TIMELINE_LIMIAR) return;
+  // Período predominante só enriquece o texto -- nunca é condição pra sugerir.
+  const horaMedia = usadas.reduce((s,x)=>s+(x.hora||0),0)/usadas.length;
+  const periodo = horaMedia<12 ? 'de manhã' : horaMedia<18 ? 'à tarde' : 'à noite';
+  _mostrarSugestaoRotina('timeline', '<b style="color:var(--txt);">Você costuma abrir a Timeline '+periodo+'</b><br>Tornar essa sua visão inicial ao abrir o board?', 'timeline', '🛤️ Tornar inicial', _tornarTimelineVisaoInicial);
+}
+function _tornarTimelineVisaoInicial(){
+  _saveBoardPref('visao_inicial', 'timeline');
+  showToast('🛤️ Timeline será sua visão inicial a partir de agora.');
 }
 // Algum filtro de #filter-bar realmente ativo? (usado pro chip "🧹 Limpar"
 // só aparecer na Timeline quando há algo pra limpar, e pro contorno do
@@ -12192,6 +12251,7 @@ function applyFilters(){
   renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
   renderBoard();
+  _registrarSinalFiltro(); // personalização baseada em rotina, ver comentário na declaração
 }
 function clearFilters(){
   document.getElementById('f-owner').value='';
@@ -12299,6 +12359,178 @@ async function removeFilterPreset(id){
   if(!await uiConfirm('Remover o preset "'+preset.nome+'"?', {danger:true, okText:'Remover'})) return;
   const user = window._currentUser; if(!user) return;
   window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/filter_presets/'+ACTIVE_SQUAD+'/'+id), null).catch(()=>{});
+}
+// ── Sugestão proativa de preset ("personalização baseada em rotina",
+// caso #2 do pedido direto do usuário, 2026-09-11) — em vez de esperar a
+// pessoa descobrir sozinha o botão "💾 Salvar preset" acima, observa
+// quando a MESMA combinação de filtro se repete em dias diferentes e
+// oferece salvar. Sempre opcional (3 respostas: sim/agora não/não
+// sugerir mais), nunca muda a interface sozinha. Sinal fica só em
+// `localStorage` — não Firebase: é recalculável e descartável a
+// qualquer momento, não precisa de durabilidade cross-device nem custo
+// de escrita remota (mesmo espírito de "Tema automático" — ver
+// COMUNICADOS_POLL_MS/_dbg pra contraste com o que NÃO deve ficar só
+// local). Só o RESULTADO aceito (o preset em si) usa a infra que já
+// existe (`saveFilterPresetPrompt()`), não escreve nada novo no Firebase.
+const SUGESTAO_FILTRO_CAMPOS = ['tag','owner','priority','subteam','canalVenda','submarca'];
+const SUGESTAO_FILTRO_LIMIAR_DIAS = 4; // combinação precisa aparecer em pelo menos 4 dias diferentes...
+const SUGESTAO_FILTRO_JANELA_DIAS = 10; // ...dentro dos últimos 10 dias de uso registrados
+function _sugestaoFiltroHistKey(){ return 'sugestao_filtro_hist_'+ACTIVE_SQUAD; }
+// "Impressão digital" da combinação — só os campos rastreados, ordenados,
+// pra duas aplicações do MESMO filtro baterem sempre, mesmo que outros
+// campos (texto, due, blocker...) tenham mudado no meio.
+function _filtroFingerprint(f){
+  const partes = SUGESTAO_FILTRO_CAMPOS.map(campo=>{
+    const v = f[campo];
+    if(Array.isArray(v)) return v.length ? campo+':'+[...v].sort().join(',') : '';
+    return v ? campo+':'+v : '';
+  }).filter(Boolean);
+  return partes.sort().join('|');
+}
+// Texto legível da combinação pra mostrar na sugestão — reconstruído a
+// partir dos dados ATUAIS (tags/members/subteams), nunca de um texto
+// salvo antigo, pra nunca exibir o nome de uma tag/pessoa já renomeada.
+function _filtroComboLabel(f){
+  const partes = [];
+  if(f.tag){ const t=getTag(f.tag); if(t) partes.push('Tag: '+t.label); }
+  if(f.owner){ const m=members.find(x=>x.init===f.owner); partes.push('Responsável: '+(m?_shortName(m.name):f.owner)); }
+  if(f.priority) partes.push('Prioridade: '+f.priority);
+  if(f.subteam){ const st=subteams.find(x=>x.id===f.subteam); if(st) partes.push('Subtime: '+st.name); }
+  if(f.canalVenda&&f.canalVenda.length){ const nomes=f.canalVenda.map(id=>CANAL_VENDA_TAGS.find(c=>c.id===id)?.label).filter(Boolean); if(nomes.length) partes.push('Canal: '+nomes.join(', ')); }
+  if(f.submarca&&f.submarca.length){ const nomes=f.submarca.map(id=>SUBMARCA_TAGS.find(c=>c.id===id)?.label).filter(Boolean); if(nomes.length) partes.push('Submarca: '+nomes.join(', ')); }
+  return partes.join(' + ');
+}
+// Grava no máximo 1 sinal por dia por combinação (idempotente — aplicar o
+// mesmo filtro 5x na mesma sessão conta como 1 dia só, não infla o
+// contador à toa) e agenda a checagem da sugestão.
+function _registrarSinalFiltro(){
+  const fp = _filtroFingerprint(activeFilters);
+  if(!fp) return; // nenhum campo rastreado ativo -- nada a sugerir
+  const hoje = _localDateStrBoard(new Date());
+  let hist = [];
+  try{ hist = JSON.parse(safeLS.getItem(_sugestaoFiltroHistKey())||'[]'); }catch(e){ hist=[]; }
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-SUGESTAO_FILTRO_JANELA_DIAS);
+  const cutoffStr = _localDateStrBoard(cutoff);
+  hist = hist.filter(h=>h.date>=cutoffStr); // poda histórico velho
+  if(!hist.some(h=>h.fp===fp && h.date===hoje)) hist.push({fp, date:hoje});
+  safeLS.setItem(_sugestaoFiltroHistKey(), JSON.stringify(hist));
+  // Debounce curto — não checa a cada tecla/clique isolado dentro de um
+  // ajuste de vários campos em sequência, só depois que a pessoa parar.
+  clearTimeout(window._sugestaoFiltroTimer);
+  window._sugestaoFiltroTimer = setTimeout(()=>_checarSugestaoFiltro(fp, hist), 1500);
+}
+function _checarSugestaoFiltro(fp, hist){
+  const diasDistintos = new Set(hist.filter(h=>h.fp===fp).map(h=>h.date)).size;
+  if(diasDistintos < SUGESTAO_FILTRO_LIMIAR_DIAS) return;
+  if(_filterPresets.some(p=>_filtroFingerprint(p.filtros||{})===fp)) return; // já é um preset salvo -- nada a oferecer
+  const label = _filtroComboLabel(activeFilters);
+  if(!label) return;
+  _mostrarSugestaoRotina('filtro:'+fp, '<b style="color:var(--txt);">Você costuma filtrar assim:</b><br>'+esc(label)+'<br>Salvar como preset?', 'sim', '💾 Salvar', saveFilterPresetPrompt);
+}
+// ── Mecanismo GENÉRICO de sugestão (compartilhado por todos os casos de
+// "personalização baseada em rotina" — filtro recorrente acima, "Meus
+// cards" fixado abaixo, e o que vier depois). Extraído pra 1 cartão só
+// depois que o 2º caso deixou claro que 2 mecanismos independentes
+// quebrariam a promessa de "nunca mais de 1 sugestão na tela ao mesmo
+// tempo" (cada um só sabia vigiar a si mesmo, não o outro tipo). Mesma
+// regra de sempre: 3 respostas (aceitar/agora não/não sugerir mais),
+// nunca aplica nada sozinho, sinal em localStorage (ver comentário
+// grande na declaração de SUGESTAO_FILTRO_CAMPOS acima pro raciocínio
+// completo de não usar Firebase aqui).
+function _sugestaoRecusadasKey(){ return 'sugestao_recusadas_'+ACTIVE_SQUAD; }
+function _sugestaoRecusadaPermanente(id){
+  let recusados = [];
+  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
+  return recusados.includes(id);
+}
+function _sugestaoRecusarPermanente(id){
+  let recusados = [];
+  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
+  if(!recusados.includes(id)) recusados.push(id);
+  safeLS.setItem(_sugestaoRecusadasKey(), JSON.stringify(recusados));
+}
+function _mostrarSugestaoRotina(id, mensagemHtml, respostaSim, labelSim, aoAceitar){
+  if(window._sugestaoRotinaSessionDismissed) return; // "agora não" já foi dito nesta sessão -- não insiste com NENHUM tipo de sugestão
+  if(_sugestaoRecusadaPermanente(id)) return;
+  const existente = document.getElementById('sugestao-rotina-card');
+  if(existente && existente.style.display==='flex') return; // já tem uma sugestão na tela -- nunca empilha, mesmo de outro tipo
+  let card = existente;
+  if(!card){
+    card = document.createElement('div');
+    card.id = 'sugestao-rotina-card';
+    // bottom:90px pra não colidir com o .fab (bottom:22px) — ver CSS dele
+    card.style.cssText = 'position:fixed;bottom:90px;right:22px;z-index:60;max-width:280px;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.3);border-radius:14px;padding:14px 16px;font-size:12px;color:var(--txt2);line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,.5);backdrop-filter:blur(14px);display:none;flex-direction:column;gap:10px;';
+    document.body.appendChild(card);
+  }
+  card.innerHTML = `<div style="display:flex;align-items:flex-start;gap:8px;">
+      <span style="font-size:16px;">💡</span>
+      <div style="flex:1;">${mensagemHtml}</div>
+    </div>
+    <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--txt3);" onclick="_sugestaoRotinaResponder('nunca')">Não sugerir mais</button>
+      <button class="btn btn-sm" style="font-size:10.5px;" onclick="_sugestaoRotinaResponder('agora_nao')">Agora não</button>
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder('${respostaSim}')">${esc(labelSim)}</button>
+    </div>`;
+  card.style.display = 'flex';
+  window._sugestaoRotinaAtual = {id, respostaSim, aoAceitar};
+}
+async function _sugestaoRotinaResponder(resposta){
+  const atual = window._sugestaoRotinaAtual;
+  const card = document.getElementById('sugestao-rotina-card');
+  if(card) card.style.display = 'none';
+  if(!atual) return;
+  if(resposta==='nunca'){
+    _sugestaoRecusarPermanente(atual.id);
+  } else if(resposta==='agora_nao'){
+    window._sugestaoRotinaSessionDismissed = true;
+  } else if(resposta===atual.respostaSim && atual.aoAceitar){
+    await atual.aoAceitar();
+  }
+}
+// ── Caso #3: "Meus cards" usado na maioria das sessões -- fixar no
+// header? "💡 Meus cards" (highlightMyCards(), ver botão na barra de
+// Filtros) só é alcançável hoje abrindo Filtros primeiro. Quem usa
+// sempre ganha um atalho igual na toolbar principal (sempre visível),
+// sem precisar abrir Filtros só pra isso.
+const SUGESTAO_MEUSCARDS_JANELA_SESSOES = 5;
+const SUGESTAO_MEUSCARDS_LIMIAR = 0.8; // 80% das últimas sessões
+function _sugestaoMeusCardsKey(){ return 'sugestao_meuscards_sessoes_'+ACTIVE_SQUAD; }
+// Chamada 1x no boot (ver perto de _onRealAuthChange) -- marca o início
+// de MAIS UMA sessão na janela deslizante. usado:false até
+// highlightMyCards() rodar de verdade nesta mesma sessão.
+function _iniciarSessaoMeusCards(){
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  sessoes.push({usado:false});
+  if(sessoes.length > SUGESTAO_MEUSCARDS_JANELA_SESSOES) sessoes = sessoes.slice(-SUGESTAO_MEUSCARDS_JANELA_SESSOES);
+  safeLS.setItem(_sugestaoMeusCardsKey(), JSON.stringify(sessoes));
+}
+function _marcarUsoMeusCards(){
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(!sessoes.length) return; // _iniciarSessaoMeusCards() ainda não rodou nesta sessão -- nada a marcar
+  sessoes[sessoes.length-1].usado = true;
+  safeLS.setItem(_sugestaoMeusCardsKey(), JSON.stringify(sessoes));
+  clearTimeout(window._sugestaoMeusCardsTimer);
+  window._sugestaoMeusCardsTimer = setTimeout(_checarSugestaoMeusCards, 1500);
+}
+function _checarSugestaoMeusCards(){
+  if(_boardPrefsSquad.meus_cards_fixado) return; // já fixado -- nada a oferecer
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(sessoes.length < SUGESTAO_MEUSCARDS_JANELA_SESSOES) return; // ainda não tem sessões suficientes pra julgar
+  const usadas = sessoes.filter(s=>s.usado).length;
+  if(usadas/sessoes.length < SUGESTAO_MEUSCARDS_LIMIAR) return;
+  _mostrarSugestaoRotina('meuscards', '<b style="color:var(--txt);">Você usa "💡 Meus cards" na maioria das sessões</b><br>Fixar um atalho pra ele no topo do board, sem precisar abrir Filtros primeiro?', 'fixar', '📌 Fixar', _fixarMeusCardsNoHeader);
+}
+function _fixarMeusCardsNoHeader(){
+  _saveBoardPref('meus_cards_fixado', true);
+  _applyMeusCardsFixadoUI();
+  showToast('📌 "Meus cards" fixado no topo do board.');
+}
+function _applyMeusCardsFixadoUI(){
+  const btn = document.getElementById('tb-meus-cards');
+  if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!passesHybridView(card)) return false;
@@ -13721,6 +13953,7 @@ function openCard(id){
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
+  _registrarSinalAtrasado(c); // personalização baseada em rotina, caso #5
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
   if(c._autoVisto===false){
     c._autoVisto = true;
@@ -17187,6 +17420,7 @@ function _euEstouNoCard(c){
 // time: achar os próprios cards num board lotado sem precisar filtrar.
 function highlightMyCards(){
   if(!window._currentUserInit){ if(typeof toast==='function') toast('Não consegui identificar seu usuário.'); return; }
+  _marcarUsoMeusCards(); // personalização baseada em rotina, ver comentário na declaração
   const mine = cards.filter(c=>!c.archived && _euEstouNoCard(c));
   if(!mine.length){ if(typeof toast==='function') toast('💡 Nenhum card seu neste squad.'); return; }
 
@@ -19436,7 +19670,7 @@ function renderBoardDataInsights(){
 
   if(AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)){
     html += '<div style="margin-top:4px;">'
-      +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseDados(\'board_insights\', window._bdInsightsResumoCache, \'bd-insights-agente-btn\', \'bd-insights-agente-box\')" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
+      +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseBoardInsights()" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
       +'<div id="bd-insights-agente-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>'
       +'</div>';
   }
@@ -19465,6 +19699,61 @@ function _boardDataBarChart(){
     x += barW+16;
   });
   el.innerHTML = `<svg viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">${bars}</svg>`;
+  _boardDataSmCvPorColuna();
+}
+// Submarca/Canal de venda quebrado por coluna (pedido direto do usuário,
+// 2026-09-11) — tabela em vez de barra empilhada: com até 14 valores de
+// Canal, um SVG empilhado ficaria ilegível (cores demais pra distinguir);
+// tabela linha=valor/coluna=coluna do board é mais fácil de ler nesse
+// volume, mesmo padrão de "achado real" já usado noutros lugares deste
+// arquivo (preferir a representação mais legível, não a mais bonita).
+// Roda sempre junto com _boardDataBarChart() (mesmo gatilho/mesma fonte de
+// activeCards/colunas ocultas) pra nunca ficar dessincronizado dele.
+function _boardDataSmCvPorColuna(){
+  const el = document.getElementById('boarddata-smcv-col'); if(!el) return;
+  if(!submarcaAtivo && !canalVendaAtivo){ el.innerHTML=''; return; }
+  const activeCards = cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
+  const colsVisiveis = columns.filter(col=>!_bdHiddenCols.has(col.id));
+  function bloco(titulo, coluna1, TAGS){
+    if(!colsVisiveis.length) return '';
+    const porColPorTag={}, semTagPorCol={};
+    colsVisiveis.forEach(col=>{ semTagPorCol[col.id]=0; });
+    TAGS.forEach(t=>{ porColPorTag[t.id]={}; colsVisiveis.forEach(col=>porColPorTag[t.id][col.id]=0); });
+    activeCards.forEach(c=>{
+      if(!colsVisiveis.some(col=>col.id===c.col)) return;
+      const tagsDoCard=getCardTags(c);
+      const tMatch=TAGS.find(t=>tagsDoCard.includes(t.id));
+      if(tMatch) porColPorTag[tMatch.id][c.col]++;
+      else semTagPorCol[c.col]++;
+    });
+    const linhasComDado=TAGS.filter(t=>colsVisiveis.some(col=>porColPorTag[t.id][col.id]>0));
+    const temSemTag=Object.values(semTagPorCol).some(n=>n>0);
+    if(!linhasComDado.length && !temSemTag) return '';
+    const th=(txt)=>'<th style="text-align:center;padding:5px 8px;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--glass-b);white-space:nowrap;">'+txt+'</th>';
+    const td=(txt,cor)=>'<td style="text-align:center;padding:5px 8px;color:'+(cor||'var(--txt2)')+';border-bottom:1px solid rgba(255,255,255,.04);">'+txt+'</td>';
+    let html='<div style="margin-top:14px;">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;">'+titulo+'</div>';
+    html+='<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:10.5px;width:100%;">';
+    html+='<tr><th style="text-align:left;padding:5px 8px;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--glass-b);white-space:nowrap;">'+coluna1+'</th>'
+      + colsVisiveis.map(col=>th(esc((col.name||col.id).substring(0,10)))).join('') + th('Total') + '</tr>';
+    linhasComDado.forEach(t=>{
+      const total=colsVisiveis.reduce((s,col)=>s+porColPorTag[t.id][col.id],0);
+      html+='<tr><td style="padding:5px 8px;color:var(--txt2);border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;">'+esc(t.label)+'</td>'
+        + colsVisiveis.map(col=>{ const n=porColPorTag[t.id][col.id]; return td(n||'·', n?'var(--txt)':'var(--txt3)'); }).join('')
+        + td('<b>'+total+'</b>','var(--txt)') + '</tr>';
+    });
+    if(temSemTag){
+      const totalSem=Object.values(semTagPorCol).reduce((s,n)=>s+n,0);
+      html+='<tr><td style="padding:5px 8px;color:var(--txt3);font-style:italic;white-space:nowrap;">Sem definição</td>'
+        + colsVisiveis.map(col=>td(semTagPorCol[col.id]||'·')).join('') + td('<b>'+totalSem+'</b>') + '</tr>';
+    }
+    html+='</table></div></div>';
+    return html;
+  }
+  let out='';
+  if(submarcaAtivo) out+=bloco('🏷️ Submarca por coluna','Submarca',SUBMARCA_TAGS);
+  if(canalVendaAtivo) out+=bloco('🛒 Canal de venda por coluna','Canal',CANAL_VENDA_TAGS);
+  el.innerHTML=out;
 }
 
 async function _boardDataTrendChart(){
@@ -19532,7 +19821,7 @@ function _renderCFD(){
   const el = document.getElementById('boarddata-cfd'); if(!el) return;
   const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
   const ativos = cards.filter(c=>!c.archived);
-  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; return; }
+  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; window._cfdResumo=null; return; }
   const hoje = new Date();
   const dias = [];
   for(let i=CFD_DIAS-1; i>=0; i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); dias.push(_localDateStrBoard(d)); }
@@ -19544,7 +19833,7 @@ function _renderCFD(){
   // substituir o que já está configurado em ⚙ Config → Fluxo.
   const cfdHidden = new Set([...(flowConfig.cfdHiddenCols||[]), ..._bdHiddenCols]);
   const visibleCols = columns.filter(c=>!cfdHidden.has(c.id));
-  if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; return; }
+  if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; window._cfdResumo=null; return; }
   const colIds = visibleCols.map(c=>c.id);
   const colInfo = Object.fromEntries(visibleCols.map(c=>[c.id,c]));
   const serie = Object.fromEntries(colIds.map(id=>[id,[]]));
@@ -19556,6 +19845,21 @@ function _renderCFD(){
     });
     colIds.forEach(id=>serie[id].push(contagem[id]));
   });
+  // Resumo compacto pro "🤖 Ponto de vista do Agente Ágil" (pedido direto:
+  // "ele deve levar em consideração o CFD e o Burndown! e explicar ambos")
+  // — em vez de mandar as 21 séries diárias inteiras (pesado e o LLM não
+  // precisa do dia-a-dia pra apontar gargalo), manda só início×atual por
+  // coluna: uma faixa que cresceu MUITO entre os dois pontos é gargalo
+  // visível sem precisar reconstruir o gráfico no texto.
+  window._cfdResumo = {
+    periodoDias: dias.length,
+    colunas: colIds.map(id=>{
+      const inicio=serie[id][0]||0, atual=serie[id][serie[id].length-1]||0;
+      return { nome: colInfo[id]?.name||id, contagemInicioPeriodo: inicio, contagemAtual: atual, delta: atual-inicio };
+    }),
+    totalInicioPeriodo: colIds.reduce((s,id)=>s+(serie[id][0]||0),0),
+    totalAtual: colIds.reduce((s,id)=>s+(serie[id][serie[id].length-1]||0),0),
+  };
   const maxTotal = Math.max(1, ...dias.map((_,i)=>colIds.reduce((s,id)=>s+serie[id][i],0)));
   const W=Math.max(360,dias.length*26), H=180, padL=6, padR=6, padT=10, padB=22;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
@@ -19646,12 +19950,12 @@ function _renderBurndown(){
   const start = agilCfg?.sprintStart, end = agilCfg?.sprintEnd;
   if(!start || !end){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Configure início e fim da sprint em ⚙ Config → Ágil pra ver o burndown.</div>';
-    return;
+    window._burndownResumo=null; return;
   }
   const dStart = new Date(start+'T00:00:00'), dEnd = new Date(end+'T00:00:00');
   if(isNaN(dStart.getTime()) || isNaN(dEnd.getTime()) || dEnd<=dStart){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Datas de sprint inválidas em ⚙ Config → Ágil.</div>';
-    return;
+    window._burndownResumo=null; return;
   }
   const hojeStr = _localDateStrBoard(new Date());
   const dias=[]; for(let d=new Date(dStart); d<=dEnd; d.setDate(d.getDate()+1)) dias.push(_localDateStrBoard(new Date(d)));
@@ -19670,7 +19974,7 @@ function _renderBurndown(){
     return !doneAt || doneAt>=startStr;
   });
   const total = escopo.length;
-  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; return; }
+  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; window._burndownResumo=null; return; }
   const restantes = dias.map(dia=>{
     if(dia>hojeStr) return null; // dias futuros: sem dado real ainda
     return escopo.filter(c=>{
@@ -19678,6 +19982,26 @@ function _renderBurndown(){
       return !doneAt || doneAt>dia;
     }).length;
   });
+  // Resumo compacto pro "🤖 Ponto de vista do Agente Ágil" (mesmo pedido do
+  // CFD acima) — restante real de hoje vs. o que a linha ideal (linear)
+  // preveria nesse mesmo dia, já classificado em texto (o LLM não precisa
+  // reconstruir a comparação sozinho a partir de 2 números soltos).
+  {
+    const comDado = dias.map((d,i)=>({d,i,v:restantes[i]})).filter(x=>x.v!=null);
+    const ultimo = comDado[comDado.length-1];
+    const idealNoMesmoDia = ultimo!=null ? Math.round(total - (total/(dias.length-1||1))*ultimo.i) : null;
+    let status = null;
+    if(ultimo && idealNoMesmoDia!=null){
+      status = ultimo.v < idealNoMesmoDia ? 'adiantado em relação ao ideal' : (ultimo.v > idealNoMesmoDia ? 'atrasado em relação ao ideal' : 'exatamente no ritmo ideal');
+    }
+    window._burndownResumo = {
+      inicioSprint: startStr, fimSprint: endStr,
+      totalEscopo: total,
+      restanteAtual: ultimo ? ultimo.v : null,
+      idealNoMesmoDia,
+      status,
+    };
+  }
   const W=Math.max(360,dias.length*30), H=170, padL=8, padR=8, padT=14, padB=22;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
   const toY = v => padT + (H-padT-padB) - (v/total)*(H-padT-padB);
@@ -20694,6 +21018,23 @@ async function _pedirResumoMeuDia(){
 // mesmos números que o painel já mostra na tela).
 const AGENTE_AGIL_ANALISE_DADOS_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/agenteAgilAnaliseDados';
 let _analiseDadosEmVoo = false;
+// Wrapper só do contexto 'board_insights' (pedido direto: "na leitura do
+// agente agil em insights, ele deve levar em consideração o CFD e o
+// Burndown! e explicar ambos"). CFD/Burndown são lazy — só a aba "📈 CFD &
+// Burndown" os calcula (ver _boardDataSwitchTab()) — então quem clica
+// "Ponto de vista" direto na aba Insights, sem nunca ter aberto a outra
+// aba, teria window._cfdResumo/_burndownResumo undefined. Roda os dois
+// cálculos aqui antes de montar o resumo: são 100% locais (cards já
+// carregados, flow.log já gravado), sem leitura nova do Firebase — barato
+// rodar de novo mesmo se a aba já tiver sido aberta antes.
+function _pedirAnaliseBoardInsights(){
+  _renderCFD();
+  _renderBurndown();
+  if(!window._bdInsightsResumoCache) window._bdInsightsResumoCache = {};
+  window._bdInsightsResumoCache.cfd = window._cfdResumo || null;
+  window._bdInsightsResumoCache.burndown = window._burndownResumo || null;
+  _pedirAnaliseDados('board_insights', window._bdInsightsResumoCache, 'bd-insights-agente-btn', 'bd-insights-agente-box');
+}
 async function _pedirAnaliseDados(contexto, resumo, btnId, boxId){
   if(_analiseDadosEmVoo) return;
   const cu = window._currentUser; if(!cu) return;
@@ -24573,14 +24914,14 @@ const HELP_CONTENT = {
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
-    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).' },
+    { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
-    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.' },
-    { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
+    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
+    { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'⎋', title:'Esc fecha a tela aberta', text:'Aperte Esc pra fechar rapidinho qualquer tela aberta no momento — 📊 Dados do Board, ❓ Central de Ajuda, 🎬 Controle de Criativos, o modal do card, e por aí vai — sem precisar procurar o ✕ ou clicar fora. Mesma trava de segurança de sempre: se o card tiver alteração não salva, Esc pede confirmação antes de fechar, igual clicar no ✕ já fazia.\n\nDentro de um campo com seu próprio uso pro Esc (ex.: limpar o texto de uma busca, cancelar a edição de um item, fechar um dropdown de @menção), o Esc cuida disso primeiro — só fecha a tela inteira se apertar de novo (ou se aquele campo não tiver mais nada pra "desfazer" com Esc).' },
-    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
+    { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
@@ -24599,8 +24940,8 @@ const HELP_CONTENT = {
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
-    { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
-    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
+    { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
     { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
@@ -24974,11 +25315,20 @@ document.addEventListener('mouseover', e=>{
   balloon.style.right = 'auto';
   // Prefere abrir acima; vai abaixo se não houver espaço
   const bh = balloon.offsetHeight || 110;
+  let top;
   if(r.top - bh - 10 >= 8){
-    balloon.style.top = (r.top - bh - 8)+'px';
+    top = r.top - bh - 8;
   } else {
-    balloon.style.top = (r.bottom + 8)+'px';
+    top = r.bottom + 8;
+    // Achado real (2026-09-11, tooltip do CFD cortando embaixo da tela):
+    // o ramo "abre abaixo" nunca verificava se CABIA abaixo — só que não
+    // cabia acima. Balões curtos (a maioria) quase sempre cabiam por
+    // sorte; um balão alto o bastante (3 parágrafos) vazava pra fora da
+    // viewport sem clamp nenhum. Mesmo espírito do clamp horizontal
+    // logo acima, só que no eixo vertical.
+    top = Math.min(top, window.innerHeight - bh - 8);
   }
+  balloon.style.top = Math.max(8, top)+'px';
   balloon.style.bottom = 'auto';
 });
 // ═══════════════════════════════════════════════════════
@@ -25800,6 +26150,78 @@ const ATALHO_ACOES = {
   secoes:      { label:'⇕ Expandir/recolher seções', tipo:'card', run:()=>toggleAllModalSecs() },
   historico:   { label:'📜 Mostrar/esconder Histórico', tipo:'card', run:()=>toggleHistory() },
 };
+// ── Caso #4 de "personalização baseada em rotina": atribui cards ao
+// mesmo responsável com frequência -- criar um atalho de teclado direto
+// pra isso? "Grupo" (do pedido original, "atribuir cards ao mesmo
+// grupo") mapeado pra responsável (owner) -- é o sentido mais direto de
+// "atribuir"; tag é mais sobre categorizar do que atribuir. Mesmo
+// espírito dos casos anteriores (sinal em localStorage, 3 respostas,
+// nunca muda nada sozinha) -- com uma diferença: "aceitar" aqui NEM
+// PODERIA aplicar a mudança sozinho, porque o próprio sistema de
+// atalhos personalizáveis exige capturar a combinação na mão (não
+// existe "tecla padrão", ver _atalhoIniciarCaptura() acima) -- então
+// aceitar cria a AÇÃO (entrada nova em ATALHO_ACOES) e leva a pessoa
+// direto pra ⌨️ Atalhos, já na aba certa, faltando só ela apertar a
+// combinação que preferir.
+const SUGESTAO_ATRIBUICAO_JANELA = 8; // últimas 8 atribuições reais (não sessões -- é a AÇÃO se repetir, não presença)
+const SUGESTAO_ATRIBUICAO_LIMIAR = 0.6; // 60% pro mesmo responsável
+function _sugestaoAtribuicaoKey(){ return 'sugestao_atribuicao_hist_'+ACTIVE_SQUAD; }
+function _registrarSinalAtribuicao(ownerInit){
+  if(!ownerInit) return;
+  if((_boardPrefsSquad.atribuicao_rapida||[]).includes(ownerInit)) return; // já tem atalho pra esse -- nada a aprender
+  let hist = [];
+  try{ hist = JSON.parse(safeLS.getItem(_sugestaoAtribuicaoKey())||'[]'); }catch(e){ hist=[]; }
+  hist.push(ownerInit);
+  if(hist.length > SUGESTAO_ATRIBUICAO_JANELA) hist = hist.slice(-SUGESTAO_ATRIBUICAO_JANELA);
+  safeLS.setItem(_sugestaoAtribuicaoKey(), JSON.stringify(hist));
+  clearTimeout(window._sugestaoAtribuicaoTimer);
+  window._sugestaoAtribuicaoTimer = setTimeout(()=>_checarSugestaoAtribuicao(hist), 1500);
+}
+function _checarSugestaoAtribuicao(hist){
+  if(hist.length < SUGESTAO_ATRIBUICAO_JANELA) return; // ainda não tem histórico suficiente pra julgar
+  const contagem = {};
+  hist.forEach(init=>{ contagem[init]=(contagem[init]||0)+1; });
+  const [initTop, qtd] = Object.entries(contagem).sort((a,b)=>b[1]-a[1])[0];
+  if(qtd/hist.length < SUGESTAO_ATRIBUICAO_LIMIAR) return;
+  if((_boardPrefsSquad.atribuicao_rapida||[]).includes(initTop)) return; // já tem atalho -- nada a oferecer
+  const m = members.find(x=>x.init===initTop);
+  const nome = m ? _shortName(m.name) : initTop;
+  _mostrarSugestaoRotina('atribuicao:'+initTop, '<b style="color:var(--txt);">Você atribui cards a '+esc(nome)+' com frequência</b><br>Criar um atalho de teclado pra atribuir direto?', 'atribuir', '⌨️ Criar atalho', ()=>_criarAtalhoAtribuicao(initTop));
+}
+function _criarAtalhoAtribuicao(init){
+  const atual = _boardPrefsSquad.atribuicao_rapida||[];
+  if(!atual.includes(init)) _saveBoardPref('atribuicao_rapida', [...atual, init]);
+  _applyAtribuicaoRapidaAcoes();
+  openAtalhos();
+  swAtalhosTab('card'); // já leva direto pra aba certa -- é ali que a nova ação vai aparecer
+  showToast('👤 Ação "Atribuir a '+init+'" criada — defina a tecla que preferir aqui embaixo.');
+}
+// Recria as ações dinâmicas em ATALHO_ACOES a partir de
+// _boardPrefsSquad.atribuicao_rapida -- roda toda vez que board_prefs
+// carrega/muda (mesmo padrão de _applyMeusCardsFixadoUI()), pra essas
+// ações existirem ANTES de alguém abrir ⌨️ Atalhos ou apertar a tecla.
+// ATALHO_ACOES é `const`, mas isso só trava a REFERÊNCIA do objeto --
+// adicionar propriedades nele continua válido.
+function _applyAtribuicaoRapidaAcoes(){
+  (_boardPrefsSquad.atribuicao_rapida||[]).forEach(init=>{
+    const id = 'atribuir_'+init;
+    const m = members.find(x=>x.init===init);
+    ATALHO_ACOES[id] = { label:'👤 Atribuir a '+(m?_shortName(m.name):init), tipo:'card', run:()=>_quickAssignOwner(init) };
+  });
+}
+// Reusa o MESMO caminho do dropdown manual do modal (onchange="scheduleAutoSave()")
+// em vez de reimplementar notifAssigned()/runAutoRules('assigned',...)/
+// histórico na mão -- eles já saem de graça, sem risco de os 2 caminhos
+// divergirem (mesma lição de sempre: comparar caminhos paralelos pra
+// mesma operação, não duplicar lógica de mutação).
+function _quickAssignOwner(init){
+  if(!editingId) return; // atalho tipo 'card' só roda com o modal aberto, mas confere mesmo assim
+  const sel = document.getElementById('m-owner'); if(!sel) return;
+  if(!Array.from(sel.options).some(o=>o.value===init)){ showToast('⚠ Essa pessoa não está mais disponível pra atribuir.'); return; }
+  sel.value = init;
+  scheduleAutoSave();
+  showToast('👤 Atribuído a '+init+'.');
+}
 // Combinações que o atalho personalizável NUNCA pode assumir — as 5
 // fixas acima (com "mod" cobrindo tanto Ctrl quanto Cmd, mesmo critério
 // que o handler principal já usa via e.ctrlKey||e.metaKey) + os
@@ -25879,6 +26301,41 @@ function _applyBoardPrefsSquad(){
   safeLS.setItem('cv_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.canalVenda));
   renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
+  _applyMeusCardsFixadoUI(); // personalização baseada em rotina, caso #3
+  _applyAtribuicaoRapidaAcoes(); // personalização baseada em rotina, caso #4
+
+  // Personalização baseada em rotina, caso #1: troca pra Timeline só 1x
+  // por sessão (nunca de novo depois) -- este listener é AO VIVO
+  // (loadBoardPrefs()/onValue), roda de novo toda vez que QUALQUER
+  // board_pref muda, não só visao_inicial. Sem o guard abaixo, alguém que
+  // tivesse aceito a sugestão e depois voltasse pro Kanban manualmente no
+  // meio da sessão seria jogado de volta pra Timeline à força no próximo
+  // pref que mudasse (reordenar coluna, trocar visão de raia...) -- o
+  // oposto do "nunca muda a interface sem a pessoa pedir".
+  if(_boardPrefsSquad.visao_inicial==='timeline' && !window._visaoInicialAplicada){
+    window._visaoInicialAplicada = true;
+    boardView = 'timeline';
+    const btnTl=document.getElementById('btn-timeline');
+    if(btnTl){ btnTl.style.borderColor='var(--teal)'; btnTl.style.color='var(--teal)'; }
+  }
+
+  // Personalização baseada em rotina, caso #5: aplica o filtro de
+  // atrasados só 1x no boot (mesmo guard "1x por sessão" do caso #1
+  // acima) e só se a hora ATUAL cair dentro do bloco de 2h aprendido —
+  // "ativar no início do dia", não "forçar o dia inteiro". Nunca reavalia
+  // de novo durante a sessão (evita a complexidade/risco de ligar E
+  // desligar o filtro sozinho enquanto a pessoa trabalha — se ela quiser
+  // tirar o filtro, o botão de Limpar de sempre já resolve).
+  if(_boardPrefsSquad.visao_atrasados_bloco!=null && !window._visaoAtrasadosAplicada){
+    window._visaoAtrasadosAplicada = true;
+    const bloco = _boardPrefsSquad.visao_atrasados_bloco;
+    const horaAtual = new Date().getHours();
+    if(horaAtual>=bloco && horaAtual<bloco+2){
+      activeFilters.due = 'late';
+      const selDue=document.getElementById('f-due'); if(selDue) selDue.value='late';
+      _applyFiltrosBtnUI();
+    }
+  }
 
   renderBoard();
 }
@@ -29736,6 +30193,13 @@ function _runAutoRuleAction(rule, cardId){
   }
 }
 function runAutoRules(eventType, cardId, extraVal){
+  // Personalização baseada em rotina, caso #4 -- runAutoRules('assigned', ...)
+  // é o funil único que TODOS os caminhos de atribuição já passam por
+  // (manual, autosave, bulk, criação), então é o ponto certo pra
+  // observar o padrão sem duplicar o sinal em 4 lugares diferentes (ver
+  // os 4 call sites de runAutoRules('assigned'). Ver comentário grande
+  // na declaração de SUGESTAO_ATRIBUICAO_JANELA, mais abaixo.
+  if(eventType==='assigned' && extraVal) _registrarSinalAtribuicao(extraVal);
   const activeRules=autoRules.filter(r=>r.active);
   const card=cards.find(c=>c.id===cardId); if(!card) return;
   if(eventType==='move') _checkSupercardAutoComplete(card);
@@ -29904,6 +30368,72 @@ function _cardAtrasadoMs(c){
   if(!c?.atrasadoDesde) return acc;
   const start=new Date(c.atrasadoDesde+'T00:00:00').getTime();
   return acc+Math.max(0, Date.now()-start);
+}
+// ── Caso #5 de "personalização baseada em rotina" (o mais caro dos 5,
+// deixado por último de propósito na discussão original — sinal mais
+// ruidoso, amostra menor): "Você trabalha mais com atrasados num
+// horário específico — ativar essa visão automaticamente nesse
+// horário?" Diferente dos casos #1/#3/#4 (janela por SESSÃO ou por
+// AÇÃO), aqui o sinal é por HORA DO DIA — agrupa em blocos de 2h
+// (0-2,2-4,...,22-24) quantas vezes um card ATRASADO foi aberto em
+// cada bloco, ao longo de vários dias/sessões.
+// /monitorarbugs 2026-09-11: a 1ª versão contava só os últimos 12
+// eventos brutos, sem checar dia — uma varredura só de cards atrasados
+// numa tarde (workflow comum) já disparava a sugestão, contradizendo
+// este mesmo comentário ("ao longo de vários dias/sessões"). Corrigido
+// reaproveitando o padrão que o caso #2 (filtro recorrente) já resolve
+// pro mesmo problema: histórico vira {bloco, date}, idempotente por
+// dia+bloco (repetir o mesmo bloco 5x no mesmo dia conta como 1 dia
+// só), e exige um mínimo de dias DISTINTOS, não só de eventos.
+const SUGESTAO_ATRASADOS_LIMIAR_DIAS = 4; // bloco precisa se repetir em pelo menos 4 dias diferentes...
+const SUGESTAO_ATRASADOS_JANELA_DIAS = 10; // ...dentro dos últimos 10 dias de uso registrados
+const SUGESTAO_ATRASADOS_LIMIAR = 0.5; // 50%+ dos dias distintos registrados concentrados no MESMO bloco de 2h
+function _sugestaoAtrasadosKey(){ return 'sugestao_atrasados_hist_'+ACTIVE_SQUAD; }
+// Mesma checagem que passesFilter() já usa pro filtro due==='late'
+// (card com prazo, fora de coluna concluída, prazo já passou) — não
+// reaproveita _cardAtrasadoMs() de propósito: aquele mede tempo
+// ACUMULADO histórico (pode ser >0 mesmo se o card não estiver
+// atrasado agora, ex.: prazo foi adiado depois de já ter atrasado). O
+// que importa aqui é "está atrasado NESTE INSTANTE".
+function _cardEstaAtrasadoAgora(c){
+  if(!c?.due || _isColDone(c.col)) return false;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
+  return d<hoje;
+}
+function _registrarSinalAtrasado(c){
+  if(!_cardEstaAtrasadoAgora(c)) return;
+  const bloco = Math.floor(new Date().getHours()/2)*2; // 0,2,4,...,22
+  const hoje = _localDateStrBoard(new Date());
+  let hist = [];
+  try{ hist = JSON.parse(safeLS.getItem(_sugestaoAtrasadosKey())||'[]'); }catch(e){ hist=[]; }
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-SUGESTAO_ATRASADOS_JANELA_DIAS);
+  const cutoffStr = _localDateStrBoard(cutoff);
+  hist = hist.filter(h=>h.date>=cutoffStr); // poda histórico velho
+  // Idempotente por dia+bloco — abrir 5 cards atrasados no mesmo bloco no
+  // mesmo dia conta como 1 dia só, não infla o contador à toa (mesma regra
+  // de _registrarSinalFiltro()).
+  if(!hist.some(h=>h.bloco===bloco && h.date===hoje)) hist.push({bloco, date:hoje});
+  safeLS.setItem(_sugestaoAtrasadosKey(), JSON.stringify(hist));
+  clearTimeout(window._sugestaoAtrasadosTimer);
+  window._sugestaoAtrasadosTimer = setTimeout(()=>_checarSugestaoAtrasados(hist), 1500);
+}
+function _checarSugestaoAtrasados(hist){
+  if(_boardPrefsSquad.visao_atrasados_bloco!=null) return; // já configurado -- nada a oferecer
+  const diasTotais = new Set(hist.map(h=>h.date)).size;
+  if(diasTotais < SUGESTAO_ATRASADOS_LIMIAR_DIAS) return; // ainda não tem dias suficientes pra julgar
+  const diasPorBloco = {};
+  hist.forEach(h=>{ (diasPorBloco[h.bloco] = diasPorBloco[h.bloco] || new Set()).add(h.date); });
+  const [blocoTopStr, diasSet] = Object.entries(diasPorBloco).sort((a,b)=>b[1].size-a[1].size)[0];
+  const blocoTop = parseInt(blocoTopStr), diasBlocoTop = diasSet.size;
+  if(diasBlocoTop < SUGESTAO_ATRASADOS_LIMIAR_DIAS) return; // o bloco líder ainda não bateu o mínimo de dias distintos
+  if(diasBlocoTop/diasTotais < SUGESTAO_ATRASADOS_LIMIAR) return;
+  const ini=blocoTop, fim=blocoTop+2;
+  _mostrarSugestaoRotina('atrasados:'+blocoTop, '<b style="color:var(--txt);">Você trabalha mais com cards atrasados entre '+ini+'h e '+fim+'h</b><br>Ativar automaticamente o filtro de atrasados nesse horário, ao abrir o board?', 'ativar', '🔴 Ativar', ()=>_ativarVisaoAtrasados(blocoTop));
+}
+function _ativarVisaoAtrasados(bloco){
+  _saveBoardPref('visao_atrasados_bloco', bloco);
+  showToast('🔴 A partir de amanhã, o board já abre filtrado em "Atrasados" entre '+bloco+'h e '+(bloco+2)+'h.');
 }
 // Mostra o total acumulado (⏱️) direto no modal do card — perto do Prazo
 // (atrasado) e do bloco de Impedimento (bloqueado), só quando há algo pra
@@ -31274,7 +31804,7 @@ _onFbReady(()=>{
   // do Firebase estar pronto, não o login em si — usa _onRealAuthChange()
   // (ver comentário na declaração dela, acima) pra esperar o auth de
   // verdade, ignorando qualquer disparo intermediário com null.
-  _onRealAuthChange(()=>{ fbLoadAll(); _maybeConsumirTransferSquad(); });
+  _onRealAuthChange(()=>{ fbLoadAll(); _maybeConsumirTransferSquad(); _iniciarSessaoMeusCards(); _iniciarSessaoTimeline(); });
   loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadFanoutTemplates();
