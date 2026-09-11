@@ -1094,6 +1094,79 @@ mecanismos nunca disputam o mesmo gesto.
   no boot; os próprios handlers só agem de verdade quando
   `_toolbarReorderMode` está ligado.
 
+### 💡 Personalização baseada em rotina (2026-09-11)
+5 sugestões opt-in, nascidas de uma proposta direta do usuário — o app
+observa como cada pessoa usa o board (100% em `localStorage`, nunca
+Firebase — dado recalculável/descartável, sem custo de escrita remota) e,
+quando um padrão se repete de verdade, **sugere** — nunca aplica — um
+atalho pra esse padrão. Só o RESULTADO de uma sugestão aceita persiste de
+verdade, sempre reaproveitando infraestrutura já existente (board_prefs,
+filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
+- **Mecanismo genérico** (compartilhado pelos 5 casos, de propósito — evita
+  2 sugestões empilhadas na tela): `_mostrarSugestaoRotina(id, mensagemHtml,
+  respostaSim, labelSim, aoAceitar)` — L12452, `_sugestaoRotinaResponder(resposta)`
+  — L12477 (3 respostas sempre: aceitar/`'agora_nao'` some por 1 sessão
+  pra QUALQUER sugestão/`'nunca'` recusa permanente só daquele `id`).
+  `_sugestaoRecusadasKey()`/`_sugestaoRecusadaPermanente(id)`/
+  `_sugestaoRecusarPermanente(id)` — L12440-12450.
+- **Caso #1 — Timeline como visão inicial**: `SUGESTAO_TIMELINE_*` — L11216,
+  `_marcarUsoTimelineCedo()` — L11230 (chamada por `toggleTimelineView()`
+  — L11202, só conta se dentro dos 3min iniciais do boot),
+  `_checarSugestaoTimeline()` — L11240, `_tornarTimelineVisaoInicial()` —
+  L11252 (grava `board_prefs.visao_inicial`). Aplicado no boot dentro de
+  `_applyBoardPrefsSquad()` (ver abaixo) com guard `window._visaoInicialAplicada`
+  — 1x por sessão, nunca força de volta se a pessoa trocar pra Kanban na
+  mão (bug pego ANTES de shippar: o listener é ao vivo, sem o guard
+  reaplicaria toda vez que outro board_pref mudasse).
+- **Caso #2 — preset de filtro recorrente**: `SUGESTAO_FILTRO_CAMPOS`/
+  `SUGESTAO_FILTRO_LIMIAR_DIAS`(4)/`SUGESTAO_FILTRO_JANELA_DIAS`(10) —
+  L12375, `_filtroFingerprint(f)`/`_filtroComboLabel(f)` — L12382/12393,
+  `_registrarSinalFiltro()` — L12406 (chamada no fim de `applyFilters()`
+  — L12226), `_checarSugestaoFiltro(fp,hist)` — L12422. Aceitar chama o
+  `saveFilterPresetPrompt()` já existente, sem duplicar lógica.
+- **Caso #3 — "Meus cards" fixado na toolbar**: `SUGESTAO_MEUSCARDS_*` —
+  L12495, `_marcarUsoMeusCards()` — L12508 (chamada no topo de
+  `highlightMyCards()` — L17421), `_checarSugestaoMeusCards()` — L12517,
+  `_fixarMeusCardsNoHeader()`/`_applyMeusCardsFixadoUI()` — L12526/12531
+  (grava `board_prefs.meus_cards_fixado`, toggla `#tb-meus-cards`).
+- **Caso #4 — atalho rápido de atribuição**: `SUGESTAO_ATRIBUICAO_*` —
+  L26166, `_registrarSinalAtribuicao(ownerInit)` — L26169 (chamada no
+  TOPO de `runAutoRules()` — L30195, funil único por onde os 4 caminhos
+  de atribuição — manual/autosave/bulk/criação — já passavam, evita
+  duplicar o sinal em 4 call sites), `_checarSugestaoAtribuicao(hist)` —
+  L26180, `_criarAtalhoAtribuicao(init)` — L26191 (grava
+  `board_prefs.atribuicao_rapida[]`, registra ação dinâmica em
+  `ATALHO_ACOES` e leva pra ⌨️ Atalhos já na aba certa),
+  `_applyAtribuicaoRapidaAcoes()` — L26205 (recria as ações toda vez que
+  board_prefs carrega — `ATALHO_ACOES` é `const`, mas isso só trava a
+  REFERÊNCIA, adicionar propriedade continua válido), `_quickAssignOwner(init)`
+  — L26217 (reusa `scheduleAutoSave()` do dropdown manual, não reimplementa
+  `notifAssigned()`/histórico).
+- **Caso #5 — filtro de atrasados por horário**: o mais caro/frágil dos 5
+  (sinal mais ruidoso, amostra menor), deixado por último de propósito.
+  `_cardEstaAtrasadoAgora(c)` — L30398 (NÃO reaproveita `_cardAtrasadoMs()`,
+  que mede tempo acumulado histórico, não o estado atual),
+  `_registrarSinalAtrasado(c)` — L30404 (chamada em `openCard()` — L13951),
+  `_checarSugestaoAtrasados(hist)` — L30421, `_ativarVisaoAtrasados(bloco)`
+  — L30434 (grava `board_prefs.visao_atrasados_bloco`). Aplicado no boot
+  só 1x por sessão (`window._visaoAtrasadosAplicada`) e só se a hora atual
+  cair no bloco de 2h aprendido — simplificação deliberada, versão
+  "correta" (ligar/desligar dinamicamente ao longo do dia) tinha risco
+  real de sobrescrever um filtro que a pessoa já mexeu na mão.
+  **`/monitorarbugs` (mesmo dia, PR #867)**: histórico nasceu contando só
+  eventos brutos (`SUGESTAO_ATRASADOS_LIMIAR`=0.5 sobre as últimas 12
+  aberturas), sem checar em quantos DIAS diferentes o padrão se repetia —
+  1 sessão de triagem já disparava a sugestão. Corrigido reaproveitando o
+  padrão `{valor,date}`/dias-distintos do Caso #2:
+  `SUGESTAO_ATRASADOS_LIMIAR_DIAS`(4)/`SUGESTAO_ATRASADOS_JANELA_DIAS`(10)
+  — L30388-30389.
+- **Aplicação no boot**: dentro de `_applyBoardPrefsSquad()` — L26284
+  (listener AO VIVO de `loadBoardPrefs()` — L26261, roda de novo a cada
+  mudança de QUALQUER board_pref) — casos #1/#3/#4/#5 todos aplicados
+  aqui, cada um com seu próprio guard "1x por sessão" quando aplicável.
+  Boot chama `_iniciarSessaoMeusCards()`/`_iniciarSessaoTimeline()` junto
+  de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L31789.
+
 ### ⎋ Esc fecha a tela aberta (2026-09-07)
 Pedido direto do usuário — "quando o board abre outras telas, tipo
 dashboard ou help content, o esc tem q funcionar como um fechar". O

@@ -18,6 +18,38 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.639 — 2026-09-11 · Promove pra prod — Personalização baseada em rotina + Dados do Board + fixes
+
+Promove pra produção o lote v8.30.631-dev → v8.30.639-dev de
+`kanban-dev.html`, validado pelo usuário. Ver entradas completas em
+`kanban-dev.html` logo abaixo pro detalhe técnico de cada item.
+
+**Personalização baseada em rotina** (5 casos, PRs #862-#867): o app passa
+a observar como cada pessoa usa o board (só no navegador, nunca Firebase)
+e, quando um padrão se repete de verdade, **sugere** — nunca aplica sozinho
+— um atalho pra esse padrão, sempre com 3 respostas (aceitar/agora não/não
+sugerir mais). Os 5 casos: Timeline como visão inicial, salvar preset de
+filtro recorrente, fixar "💡 Meus cards" na toolbar, atalho de teclado pra
+atribuição frequente, e ativar o filtro "Atrasados" automaticamente num
+horário recorrente — este último corrigido via `/monitorarbugs` (PR #867)
+pra exigir dias distintos de verdade, não só eventos de uma sessão só.
+
+**Dados do Board**: tabela nova "Submarca/Canal de venda por coluna" na
+Visão Geral (só squads que usam os campos), "🤖 Ponto de vista do Agente
+Ágil" (aba Insights) agora sempre lê e comenta CFD e Burndown mesmo se a
+pessoa nunca abriu aquela aba, e o CFD ganhou um "?" explicando o que é,
+como ler e o que é um resultado satisfatório.
+
+**Fixes**: tooltip de ajuda (`?`) que cortava embaixo da tela em conteúdo
+longo (achado real reportado com print) corrigido pra todos os balões do
+app; consumo de bytes de `comunicados` (achado real, `query()` nunca
+executava de verdade desde 12/08 — ver v8.30.631 abaixo).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido (braces -1, parens +1 — artefato de comentário, não
+desbalanço real). `CODE_MAP.md` ganhou seção nova pra "Personalização
+baseada em rotina" (não tinha nenhuma âncora ainda).
+
 ### v8.30.631 — 2026-09-11 · Promove pra prod — Fix: consumo de bytes de `comunicados` + doc "Tema automático"
 
 Promove pra produção o lote v8.30.630-dev → v8.30.631-dev de
