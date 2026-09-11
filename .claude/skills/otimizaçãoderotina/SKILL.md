@@ -1,6 +1,6 @@
 ---
 name: otimizaçãoderotina
-description: Audita o código do Maré Digital (kanban.html/kanban-dev.html, e por extensão painel.html se pedido) em busca de oportunidades reais de otimização de bytes de download, performance e mobile — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código").
+description: Audita o código do Maré Digital (kanban.html/kanban-dev.html, e por extensão painel.html se pedido) em busca de oportunidades reais de otimização de bytes de download da PÁGINA, performance, mobile, E consumo de LEITURA do Firebase (query/fallback/tree completa) — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "revisar consumo do Firebase", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código", "nosso consumo de Firebase tá alto").
 ---
 
 # Rotina de otimização — Maré Digital
@@ -30,9 +30,21 @@ arquitetura deliberada, não um descuido. Por isso:
   com sinal verde explícito — são trade-off de design, não bug.
 
 O que ESTÁ dentro do escopo: cortar bytes redundantes, adicionar hints de
-rede de graça, e apontar leaks/ineficiências concretas — tudo que reduz
-download/trabalho do navegador sem mudar como o app é estruturado ou como
-ele se parece.
+rede de graça, apontar leaks/ineficiências concretas, e auditar se as
+LEITURAS do Firebase (não só o download da página) estão filtrando no
+servidor como deveriam — tudo que reduz download/trabalho do navegador
+(inicial OU recorrente) sem mudar como o app é estruturado ou como ele se
+parece.
+
+**Duas classes de custo diferentes, não confunda uma com a outra**: bytes
+de PÁGINA (Passos 1-8, abaixo) são um custo de UMA VEZ por reload — cresce
+com o tamanho do HTML, não com o quanto o squad usa o board. Bytes de
+LEITURA do Firebase (Passo 4.1, novo) são um custo RECORRENTE que escala
+com uso real — uma query mal filtrada custa pouco pra 1 pessoa testando e
+muito pra 20 pessoas com o board aberto o dia inteiro. Os Passos 1-8 nunca
+teriam achado o bug de `comunicados` (~181MB/30 dias, achado fora desta
+skill, ver Passo 4.1) porque nenhum deles lê código de busca de dado — só
+o HTML/CSS/JS que o navegador baixa pra montar a página.
 
 ## Passo 1 — Levantar o tamanho real do arquivo
 
@@ -131,6 +143,89 @@ Deve mostrar imports nomeados de módulos separados
 `firebase-messaging.js`), não um bundle monolítico. Se já for assim
 (normalmente é), não tem nada a fazer aqui — só confirme e siga em
 frente. Isso já evita puxar Firestore/Storage/Analytics que o app não usa.
+
+## Passo 4.1 — Leitura do Firebase: query filtra de verdade, ou cai em fallback de árvore inteira?
+
+**Nasceu de um gap real** (2026-09-11): uma rodada desta skill, feita horas
+antes de descobrir que `comunicados` respondia por ~181MB/30 dias (o maior
+path isolado do sistema), saiu "limpa" — porque nenhum dos Passos 1-8 olha
+pra ISSO. A causa raiz (`query()`/`orderByChild()`/`equalTo()` chamados
+bare dentro do `<script>` clássico, sem acesso aos bindings do `<script
+type="module">` anterior — bindings de import de módulo ES não atravessam
+esse limite) fazia a query filtrada lançar `ReferenceError` em SILÊNCIO
+(engolido por um `try/catch` de blindagem) em 100% das chamadas desde que
+a feature existia — todo refresh baixava a árvore `comunicados` INTEIRA
+(ativos + arquivados) em vez de só os ativos. Nenhum dos Passos 1-8
+passaria perto disso: são todos sobre o peso da PÁGINA (HTML/CSS/JS que o
+navegador baixa pra montar a tela), não sobre quanto dado uma leitura do
+Firebase transfere depois que a página já carregou.
+
+**1. Ache bindings de módulo usados fora de escopo (a causa raiz exata do
+bug de `comunicados`)**. Liste os nomes importados no `<script
+type="module">`:
+
+```bash
+grep -an '^import {' kanban-dev.html
+```
+
+Pra cada nome da lista (`query`, `orderByChild`, `equalTo`, `limitToLast`,
+`startAt`, `endAt`, `runTransaction`, `onChildAdded`, `signInWithPopup`,
+`onAuthStateChanged`, `getMessaging`, etc.), confirme que TODO uso fora do
+próprio `<script type="module">` passa por um alias em `window` (mesmo
+padrão de `window._ref`/`window._get`/`window._query`), nunca bare:
+
+```bash
+# Ache onde o script clássico começa (depois do </script> do módulo) --
+# -a sempre, senão emoji/unicode fazem grep reportar "binary file matches"
+grep -an '^</script>' kanban-dev.html | head -2
+# Pegue só o conteúdo a partir dali e procure uso BARE de cada nome
+awk 'NR>LINHA_DO_FECHAMENTO' kanban-dev.html > /tmp/_classic_script.txt
+for nome in query orderByChild equalTo limitToLast startAt endAt runTransaction onChildAdded onChildChanged onChildRemoved signInWithPopup onAuthStateChanged getMessaging; do
+  echo "== $nome =="
+  grep -na "[^._a-zA-Z]$nome(" /tmp/_classic_script.txt | grep -v "window\._$nome("
+done
+```
+
+Qualquer ocorrência fora de comentário é candidato real — `ReferenceError`
+síncrono, quase sempre engolido por algum `try/catch` de blindagem (como o
+de `comunicados`), nunca aparece no console de quem não está procurando.
+**Cuidado com falso positivo**: uma `const nome = (a,b)=>{...}` LOCAL
+dentro de uma função (sombra de propósito, nome genérico tipo `set`/`get`)
+não é bug — confirme lendo a função inteira antes de reportar.
+
+**2. Pra cada `query(`/`onValue(`/`get(fb(...))` que lê um node do
+Firebase, pergunte: filtra no servidor, ou baixa tudo e filtra no
+cliente?**
+
+```bash
+grep -an 'window\._query(\|window\._onValue(fb(\|window\._get(fb(' kanban-dev.html
+```
+
+Pra cada ocorrência: o node lido (`kanban/comunicados`, `kanban/squads/...`)
+cresce sem limite (histórico que só aumenta, nunca é podado)? Se sim, e só
+uma FATIA é usada depois (`.filter(c=>c.ativo)`, `.filter(c=>!c.archived)`
+logo em seguida), isso é candidato a um `query()`+`orderByChild()`/
+`equalTo()`/`limitToLast()` que filtre no servidor em vez de baixar tudo —
+mesma economia que o fix de `comunicados` já aplicou. **Não é automático
+que todo `get()`+`filter()` seja bug** — nodes pequenos/limitados (tags,
+columns, membros) não valem a complexidade de uma query; o critério é
+"esse node cresce sem limite E é lido com frequência" (poll/listener ao
+vivo, não uma leitura única no boot).
+
+**3. Se tiver acesso ao console de uma sessão de verdade (não só leitura
+estática do arquivo)**, rode a telemetria que o próprio app já expõe antes
+de adivinhar qual path investigar:
+
+```js
+// No console do kanban.html/painel.html, já logado, com permissão de ADM
+await debugBytesAllSquads()
+```
+
+Isso mostra o consumo real por path/squad dos últimos dias
+(`_dbgTrack`/`_debug_bytes_daily`) — qualquer path desproporcional ao
+resto (como `comunicados` estava) é prioridade #1 pra aplicar os itens 1-2
+acima nele especificamente, em vez de auditar todo `onValue()`/`get()` do
+arquivo sem prioridade.
 
 ## Passo 5 — Heurística de leak em `setInterval`
 
@@ -235,11 +330,12 @@ não faz parte desta rotina por padrão, a menos que peçam.
 
 ## Resumo do que já foi encontrado (histórico, pra não repetir trabalho)
 
-Rodada limpa = todos os 9 checks (asset duplicado, tamanho dos blocos,
-setInterval/clearInterval pareados, backdrop-filter, preconnect,
-import modular do Firebase, asset fora do favicon, viewport/touch,
-sintaxe+brace balance) conferidos sem achado, só registrando o
-baseline atual pra próxima rodada comparar.
+Rodada limpa = todos os 10 checks (asset duplicado, tamanho dos blocos,
+**leitura do Firebase filtrando de verdade (Passo 4.1, a partir de
+2026-09-11)**, setInterval/clearInterval pareados, backdrop-filter,
+preconnect, import modular do Firebase, asset fora do favicon,
+viewport/touch, sintaxe+brace balance) conferidos sem achado, só
+registrando o baseline atual pra próxima rodada comparar.
 
 - **v8.30.332-dev (origem)**: achado real — favicon/logo/ícone PWA
   embutidos 4x como base64 (~75KB redundantes), extraído pra
@@ -278,6 +374,16 @@ baseline atual pra próxima rodada comparar.
   2.156.026 bytes (34293 linhas), CSS ~217KB, script principal
   ~1.70MB, 18/17 timers, 34 `backdrop-filter`, zero `data:image`
   embutido.
+
+- **2026-09-11 (retroativo)**: a rodada v8.30.629-dev acima foi marcada
+  "limpa" usando o checklist de 9 passos que existia até então — horas
+  depois, uma investigação de consumo FORA desta skill achou o bug de
+  `comunicados` (~181MB/30 dias). Não é um erro da rodada em si (os 9
+  passos de então cobriram tudo que se propunham a cobrir) — é um gap de
+  ESCOPO da skill, corrigido agora com o Passo 4.1 (leitura do Firebase).
+  Rodadas anteriores a esta data não foram reauditadas retroativamente
+  contra o Passo 4.1 — se for reabrir uma área antiga, vale rodar esse
+  passo nela mesmo que já tenha sido marcada "limpa" antes.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.
