@@ -246,6 +246,41 @@ revalidadas — seções novas — achados incidentais notáveis.
   já foi coberto"; cruzar com a DATA e com o texto do histórico de
   rodadas anteriores é mais confiável que só `git log <rodapé>..HEAD`.
 
+- **2026-09-11 (9ª)**: `f29add1`→`4b7a377`, só ~4h depois da 8ª rodada
+  (mesmo dia). Escopo deliberadamente reduzido ao DELTA desde a rodada
+  anterior (4 commits próprios da sessão — fix real de `comunicados`,
+  feature de 3 partes em "📊 Dados do Board" + fix de tooltip, donut de
+  Canal no painel), não uma revalidação completa das ~193 âncoras da
+  seção kanban. **Achado de processo**: tentativa de script automático
+  pra revalidar tudo em lote bateu de novo no mesmo problema já
+  documentado na rodada 7 (pareamento errado em entradas
+  `` `nomeA()`/`nomeB()` — LX/LY ``) — uma 2ª tentativa com regex de
+  pareamento correto sofreu catastrophic backtracking e travou (matada
+  depois de 2min+ de CPU). Decisão: abandonar o bulk automático desta
+  vez, revalidar manualmente só as áreas tocadas pelos commits do dia
+  (mais alto valor, já que são as mais prováveis de estar erradas) —
+  9 âncoras corrigidas (`_refreshComunicados`/`COMUNICADOS_POLL_MS`,
+  `updateMetrics`/`renderBoardDataGrid`/`renderBoardDataInsights`/
+  `maybeSnapshot`, `_renderCardTimeInfo`/`openCard`/
+  `renderCriativosDashboard`, `_cardDataCriacaoStr`/
+  `_cardColunaEmDia`/`_renderBurndown`, `_onRealAuthChange` nos dois
+  arquivos — 2 delas tinham drift de centenas de linhas, PRÉ-existente
+  à sessão de hoje, não introduzido agora). 2 âncoras novas adicionadas
+  (`_boardDataSmCvPorColuna()`, `_pedirAnaliseBoardInsights()`) +
+  cross-referência nova no registro de `analiseDados.js` sobre o
+  `resumo.cfd`/`resumo.burndown`. `functions/index.js` — registro de
+  exports 100% batendo de novo (21/21, incluindo `agenteAgilAnalisePO`
+  que a contagem "16/16" da 8ª rodada não somava — provavelmente só
+  contou até onde tinha revisado, não o total real do arquivo).
+  `painel.html`/`painel-dev.html` seguem divergindo de verdade
+  (1608 linhas de diff, nota do cabeçalho confirmada). **Lição pra
+  próxima vez**: script de revalidação em lote pra este arquivo precisa
+  ser escrito com MUITO mais cuidado (parsing incremental token a
+  token em vez de uma regex só cobrindo `N nomes / N números`,
+  evitando grupos aninhados com `*` que colidem) — até lá, rodadas
+  espaçadas por poucas horas no mesmo dia compensam mais fazendo
+  revalidação manual dirigida pelo `git log` do período, não bulk.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir

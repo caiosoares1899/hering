@@ -33,11 +33,11 @@ confiar num número aqui se for mexer em `painel.html` prod).
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
-- `ADM_EMAILS` (let) — L6293
-- `getEffectiveRole()` — L6331 — papel efetivo, ADMs hardcoded não são rebaixáveis
-- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6415 / L6384
-- `resolveSquadAndShow()` — L10300 — resolve squad da URL, decide o que mostrar
-- `autoRegistrar()` — L10485 — cria/atualiza o doc do usuário no login.
+- `ADM_EMAILS` (let) — L6308
+- `getEffectiveRole()` — L6346 — papel efetivo, ADMs hardcoded não são rebaixáveis
+- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6430 / L6399
+- `resolveSquadAndShow()` — L10315 — resolve squad da URL, decide o que mostrar
+- `autoRegistrar()` — L10500 — cria/atualiza o doc do usuário no login.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
   tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
@@ -45,7 +45,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   nunca no registro principal, deixando um registro nascido incompleto
   (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
   pra sempre mesmo com login repetido.
-- `_onRealAuthChange(fn)` — ~L31243 (perto de `_onFbReady()`) — espera o
+- `_onRealAuthChange(fn)` — L31375 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara
   `auth-change` assim que o listener é registrado, quase sempre com
@@ -59,7 +59,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   reimplementar `{once:true}` na mão. Mesmo padrão quebrado achado
   independentemente em `painel-dev.html` (`checkOverdueGlobalBackup()`,
   que tem seu PRÓPRIO `onAuthStateChanged`, sem relação com o do kanban)
-  — mesma função `_onRealAuthChange(fn)` também existe lá, ~L11774.
+  — mesma função `_onRealAuthChange(fn)` também existe lá, L11821.
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
@@ -480,15 +480,25 @@ detalhe dos 4 call sites.
   excluída)`, ordenada por último.
 
 ### Comunicados / Mural (popup + badge + Mural)
-- `_refreshComunicados()` — L33822 — busca `kanban/comunicados`
+- `_refreshComunicados()` — L33957 — busca `kanban/comunicados`
   filtrado `ativo:true` no servidor (`query(...)`), com fallback pra
   árvore inteira se a query falhar (`_dbgTrack('comunicados_fallback', ...)`
-  registra quando isso acontece de verdade — ver otimização de bytes
-  2026-09-02). `_comunicadosAtivos` (popup) e `_muralTodos` (badge +
-  Mural) saem os dois já filtrados por `c.ativo` na origem — nenhuma
-  tela de `kanban-dev.html` mostra comunicado inativo/arquivado (isso é
-  feature só do `painel.html`, pra ADM revisar).
-- `COMUNICADOS_POLL_MS` — L33804 — 12min (era 3min até 2026-09-02,
+  registra quando isso acontece de verdade). **Causa raiz confirmada e
+  corrigida em 2026-09-11**: `query`/`orderByChild`/`equalTo` eram
+  chamados direto (sem `window._x`) de dentro do `<script>` clássico,
+  mas importados só no `<script type="module">` anterior — bindings de
+  import de módulo ES não atravessam esse limite, então a query SEMPRE
+  lançava `ReferenceError`, caindo no fallback em 100% das chamadas
+  desde que essa feature existe (confirmado cruzando
+  `comunicados_fallback` contra `comunicados` no `_debug_bytes_daily`
+  de todas as squads — idênticos, todo dia). Fix: `query`/
+  `orderByChild`/`equalTo` agora penduradas em `window` (~L6207, mesmo
+  padrão de `window._ref`/`window._get`). `_comunicadosAtivos` (popup) e
+  `_muralTodos` (badge + Mural) saem os dois já filtrados por `c.ativo`
+  na origem — nenhuma tela de `kanban-dev.html` mostra comunicado
+  inativo/arquivado (isso é feature só do `painel.html`, pra ADM
+  revisar).
+- `COMUNICADOS_POLL_MS` — L33939 — 12min (era 3min até 2026-09-02,
   corte de bytes).
 - **`insistente`** (opção "reaparece até expirar" na composição,
   `painel-dev.html`) — `_talvezMostrarComunicado()`/`dismissComunicado()`
@@ -781,11 +791,21 @@ Tempo/Cycle Time/Throughput/CFD" (nunca auditada, maior consumidora de
 fixa, ignora `flowConfig.doneCols` — a config manual do PO) reimplementado
 em 9 lugares, de antes de `_isColDone()` existir como helper canônico.
 Todos passam a usar `_isColDone(colId)`:
-- `updateMetrics()` — L12474 — Throughput do toolbar.
-- `renderBoardDataGrid()` — L12492 — Throughput/Cards ativos/Intake
-  concluído (📊 Dados do Board → Visão Geral).
-- `renderBoardDataInsights()` — L~18029 — mesma exclusão, aba Insights.
-- `maybeSnapshot()` — L12627 — `done`/`sp_done` do snapshot histórico
+- `updateMetrics()` — L12489 — Throughput do toolbar.
+- `renderBoardDataGrid()` — L12507 — Throughput/Cards ativos/Intake
+  concluído (📊 Dados do Board → Visão Geral). Desde 2026-09-11 essa aba
+  também ganhou `_boardDataSmCvPorColuna()` — L19483 — tabela Submarca/
+  Canal quebrado por coluna (chamada de dentro de `_boardDataBarChart()`
+  — L19452), só pra squads que usam os campos.
+- `renderBoardDataInsights()` — L19224 — mesma exclusão, aba Insights.
+  Desde 2026-09-11, o botão "🤖 Ponto de vista do Agente Ágil" ali passou
+  a chamar `_pedirAnaliseBoardInsights()` — L20801 (em vez de
+  `_pedirAnaliseDados()` direto) — garante que `_renderCFD()`/
+  `_renderBurndown()` (aba separada "📈 CFD & Burndown", L19591/L19719)
+  já rodaram e preencheram `window._cfdResumo`/`window._burndownResumo`
+  antes de montar o resumo enviado ao backend, mesmo se a pessoa nunca
+  abriu aquela aba.
+- `maybeSnapshot()` — L12642 — `done`/`sp_done` do snapshot histórico
   diário (`kanban/squads/{squad}/snapshots/{date}`) — sem correção
   retroativa nos snapshots já gravados, só os de hoje em diante.
 - `agCtx()` — L~22075 — contagem "Concluídos" no prompt de sistema do
@@ -1594,11 +1614,11 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   src>` externo, Cloud Function CommonJS) — sem essa réplica, `visao_
   board` (usado pelo orquestrador e por `analisePO.js`) ficaria
   divergente do relatório client-side pra um card pausado.
-- `_cardDataCriacaoStr()` — L18966, logo acima de `_cardTempos()` — data
+- `_cardDataCriacaoStr()` — L18981, logo acima de `_cardTempos()` — data
   de criação (YYYY-MM-DD) com fallback pra `card.flow.log[0].at` quando
   `card.createdAt` falta (dado legado). Usada por `_cardColunaEmDia()`
-  (CFD, ~L18273) e pelo filtro de escopo de `_renderBurndown()`
-  (~L18340) — achado `/monitorarbugs` 2026-09-04: os dois liam
+  (CFD, L19573) e pelo filtro de escopo de `_renderBurndown()`
+  (L19719) — achado `/monitorarbugs` 2026-09-04: os dois liam
   `card.createdAt` puro e descartavam pra sempre um card sem o campo,
   em vez de cair no mesmo fallback que `_cardTempos()` já tinha.
 - Visibilidade do botão: escondido em `openNewCard()` (pausar só faz
@@ -1641,11 +1661,11 @@ derivado do card mudando).
 - `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)` — L29887/28680 — total
   "efetivo até agora" (fechado + episódio aberto), mesmo padrão de
   `_cardPausedMs()`.
-- `_renderCardTimeInfo(c)` — L29901 — mostra o total no modal do card
+- `_renderCardTimeInfo(c)` — L30033 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (~L13188).
-- Dashboards: `renderBoardDataInsights()` (~L18280, seção "Tempo em
-  atraso/bloqueado") e `renderCriativosDashboard()` (~L15453, mesma
+  bloco de Impedimento), chamado no `openCard()` (L13724).
+- Dashboards: `renderBoardDataInsights()` (L19224, seção "Tempo em
+  atraso/bloqueado") e `renderCriativosDashboard()` (L16391, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
   contrário do resto dessas telas), de propósito — é o ponto principal
   do pedido ("mesmo que depois ele seja concluído").
@@ -2798,7 +2818,12 @@ detalhe aberto — ver nota abaixo).
   tela (`renderBoardDataInsights()`/`renderCriativosDashboard()`); o
   handler só valida formato/tamanho (`resumo` objeto, máx. 12.000
   caracteres de JSON) e `squadId` contra `ANALISE_DADOS_SQUADS`.
-  `gerarAnaliseDados()` — lógica pura testável (llmClient injetado)
+  `gerarAnaliseDados()` — lógica pura testável (llmClient injetado).
+  Desde 2026-09-11, o `resumo` do contexto `board_insights` também
+  carrega `cfd`/`burndown` (`window._cfdResumo`/`window._burndownResumo`
+  em `kanban-dev.html`, montados por `_pedirAnaliseBoardInsights()`) —
+  `CONTEXTOS.board_insights.prompt` instrui explicitamente "SEMPRE
+  comente CFD e Burndown", não só considerar em silêncio.
 - `analisePO.js` — "🤖 Análise do board (PO)" (2026-09-01), dentro de
   "Meu Dia", só pra PO/Organizador/ADM (gate no client, ver
   `AGENTE_AGIL_ANALISE_PO_SQUADS` abaixo). Mesmo padrão de
@@ -2959,4 +2984,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `f29add1` (2026-09-11).*
+*Retrato do commit `4b7a377` (2026-09-11).*
