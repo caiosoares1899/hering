@@ -585,6 +585,43 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   IRMÃO já resolvido (aqui, `loadPresence()`) e replicar exatamente ONDE
   ele chama, não só COMO.
 
+- **2026-09-11, `functions/` — endpoints HTTP sensíveis (pedido explícito,
+  "roda um /monitorarbugs nas areas sensiveis")**: 2 achados reais, os 2
+  race conditions, achados via técnica 2 (comparar contra
+  `functions/agente-agil/board.js`, que já usa `.transaction()` pro mesmo
+  tipo de operação — `board.js` era o padrão irmão já resolvido, os 2
+  endpoints HTTP ainda faziam `get()`+`update()`/`set()` sem transação).
+  (1) `functions/intake/submit.js` — rate limiter por IP (único freio do
+  formulário público sem CAPTCHA) não era atômico: 2 requisições
+  concorrentes liam o mesmo `count` antes de escrever, incrementos se
+  perdiam, um script conseguia furar o limite de 5/hora por um fator
+  arbitrário; (2) `functions/agente-agil/http.js` — idempotência por
+  `requestId` (proteção contra retry duplicado do especialista externo)
+  tinha o mesmo padrão: `get()` no início, `set()` só no final, deixando
+  uma janela onde 2 requisições com o mesmo `requestId` criavam 2 entradas
+  pendentes processadas 2x pelo orquestrador. Fix nos 2: `.transaction()`.
+  Como `http.js`/`submit.js` não têm teste de handler próprio (só as
+  dependências puras — o próprio repo documenta isso como "fica pro
+  Firebase Emulator Suite"), validado com um fake db escrito na hora que
+  implementa compare-and-swap + retry (semântica real de transaction() do
+  Firebase, não a versão simplificada de `fakeDb.js` que não simula
+  concorrência de verdade) rodando o CÓDIGO REAL extraído dos 2 arquivos —
+  10 requisições concorrentes: código antigo deixava passar 10/10 (rate
+  limit) e criava 10 entradas duplicadas (idempotência); código novo trava
+  em exatamente 5/10 e cria só 1 entrada. Suíte formal 475/475, sem
+  regressão. Requer `firebase deploy --only functions:intakeSubmit` e
+  `--only functions:agenteAgil` manuais (resync antes, ver `CLAUDE.md`).
+  **Lição pra próxima vez**: "áreas sensíveis" sem escopo nomeado —
+  interpretado como qualquer ponto de entrada que aceita escrita de fora
+  do fluxo normal de auth do Firebase (aqui: os 2 endpoints HTTP públicos/
+  semi-públicos do Agente Ágil). A whitelist de `externos`
+  (`_extKey()`/`salvarExterno()`/`removerExterno()`, kanban-dev.html) foi
+  auditada na mesma rodada e NÃO teve achado — grant/revoke simétricos,
+  `removerMembro()` já limpa a entrada de externos junto; o cap de 8 replaces
+  em `database.rules.json` pra sanitizar `.`→`,` (linguagem de regras do
+  Firebase não tem regex/replace global) é limitação conhecida e aceita,
+  não um bug novo.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

@@ -13940,6 +13940,25 @@ o link antigo quebrado.
 
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
 
+### 2026-09-11 — Fix: rate limiter não era atômico (race condition)
+Pedido direto: "roda um /monitorarbugs nas areas sensiveis" — achado real
+via técnica 2 (comparar contra `functions/agente-agil/board.js`, que já
+usa `.transaction()` pro mesmo tipo de operação). O rate limiter por
+IP — único freio deste endpoint público sem CAPTCHA — fazia `get()`
+seguido de `update()` sem transação: duas requisições concorrentes da
+mesma origem liam o mesmo `count` antes de qualquer uma escrever, cada
+uma incrementava a partir do valor antigo, e incrementos se perdiam. Um
+script disparando N requisições em paralelo furava o limite de 5/hora
+por um fator arbitrário. Fix: `rateRef.transaction()` faz a checagem
+e o incremento atomicamente. Validado com um fake db que implementa
+compare-and-swap + retry (mesma semântica real do Firebase): 10
+requisições concorrentes da mesma origem — código antigo deixava
+10/10 passarem (deveria ser 5); código novo trava em exatamente 5/10,
+`count` final bate com o número de permitidas. **Requer
+`firebase deploy --only functions:intakeSubmit` manual** — resync o
+clone local antes (ver `CLAUDE.md`, seção "`functions/` deploys rodam
+na máquina do usuário").
+
 ### 2026-08-12 — Remove debug temporário: notificação confirmada funcionando
 Confirmado pelo usuário ("fiz um novo pedido e funcionou!") — os testes
 anteriores que voltavam `null` eram de pedidos feitos antes do deploy
@@ -19224,6 +19243,39 @@ squad de teste, tornar `SQUAD_ID` configurável. Nada aqui é chamado por
 nenhum endpoint HTTP ainda — não requer `firebase deploy`.
 
 ## Agente Ágil (`functions/agente-agil/`)
+
+### 2026-09-11 — Fix: idempotência por `requestId` não era atômica (race condition)
+Mesma rodada de `/monitorarbugs` que achou o rate limiter de
+`intakeSubmit` (ver entrada em "Cloud Function — `intakeSubmit`" acima),
+achado via a mesma técnica (comparar contra `board.js`, que já usa
+`.transaction()`). `http.js` checava `IDEMPOTENCY_PATH/{requestId}` com
+`get()` e só gravava o marcador no FINAL do handler (depois de resolver
+referencia e criar o pending entry) — duas requisições concorrentes com
+o mesmo `requestId` (retry por timeout do especialista externo, cenário
+comum em integração HTTP) passavam as duas pela checagem antes de
+qualquer uma marcar, criando 2 entradas pendentes duplicadas que o
+orquestrador processava 2x, exatamente o que o mecanismo de
+idempotência existe pra evitar.
+
+Fix: reivindica o `requestId` atomicamente via `idemRef.transaction()`
+logo depois da resolução de referencia (não antes — se a resolução
+falhar com 500, o requestId não pode estar "gasto", senão um retry
+legítimo do cliente depois de um erro transiente nunca mais processaria
+o pedido). Se a transação for abortada (outra requisição concorrente já
+reivindicou), responde `idempotent:true` sem criar entrada nova. Mantém
+o `get()` inicial como fast-path (evita refazer a resolução de
+referencia pro caso comum de retry já conhecido) — a guarda de verdade é
+a transação.
+
+Validado com um fake db compare-and-swap + retry (mesma semântica real
+do Firebase, sem precisar do Emulator Suite): 10 requisições
+concorrentes com o mesmo `requestId` — código antigo criava 10 entradas
+pending duplicadas; código novo cria exatamente 1, resto recebe
+`idempotent:true`. Suíte de testes existente (475/475, sem
+regressão — `http.js` não tem cobertura própria, só as dependências
+puras usadas por ele: `schema.js`/`board.js`). **Requer
+`firebase deploy --only functions:agenteAgil` manual** — resync o clone
+local antes (ver `CLAUDE.md`).
 
 ### 2026-08-25 · Squad default trocado de `ecomm` pra `dev`
 Achado 2 do desenho "orquestrador recebe/organiza input de especialistas
