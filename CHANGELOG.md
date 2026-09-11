@@ -3150,6 +3150,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.633-dev — 2026-09-11 — Fix: tooltip de ajuda (help-tip) cortava embaixo da tela quando o conteúdo era longo
+
+Achado real, reportado direto pelo usuário com print: o ❓ novo do CFD
+(v8.30.632-dev, 3 parágrafos) aparecia cortado na borda inferior da
+tela. Causa raiz em `document.addEventListener('mouseover', ...)` (o
+posicionador global de TODOS os balões `.help-tip-balloon` do app, não
+só do CFD): o ramo "abre abaixo do botão" (quando não cabe acima)
+calculava `top = r.bottom + 8` sem nunca checar se o balão CABIA
+abaixo — só decidia entre "acima" ou "abaixo" pela falta de espaço em
+cima, nunca clampava o resultado contra `window.innerHeight`. Balões
+curtos (a maioria, ~80-110px) raramente estouravam por sorte; o
+primeiro balão alto o bastante (o do CFD) expôs o gap. Mesmo espírito
+do clamp horizontal que já existia 2 linhas acima (`Math.max(8,
+Math.min(left, window.innerWidth - bw - 8))`), só que nunca tinha sido
+aplicado no eixo vertical. Fix: mesmo clamp, agora também em `top`.
+Corrige TODOS os balões do app (qualquer um que algum dia fique alto
+o bastante perto da borda inferior), não só o do CFD.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.632-dev — 2026-09-11 — 📊 Dados do Board: Canal/Submarca por coluna, Agente Ágil passa a explicar CFD+Burndown, ❓ no CFD
 
 3 pedidos diretos do usuário, na mesma rodada:
