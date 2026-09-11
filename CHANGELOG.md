@@ -15013,6 +15013,21 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.39 · painel — 2026-09-11 · Promove pra prod — Sino de notificações filtra no servidor
+
+Promove pra produção o lote v3.38 → v3.44-painel-dev de `painel-dev.html`
+(patch cirúrgico, não cópia completa — os dois arquivos divergem de
+propósito: banner de dev, seção "🔔 Enviar push manual" só existe em
+prod, `okr-textarea` min-height diferente, log de bytes com sufixo
+`_dev`, entre outras — `diff painel.html painel-dev.html` conferido
+antes e depois pra garantir que só as 3 mudanças pretendidas entraram).
+Validado pelo usuário. Ver entradas completas de `painel-dev.html`
+abaixo pro detalhe técnico (mesmo achado/fix de `kanban.html` v8.30.641,
+`loadNotifs()` — este é o leitor irmão do painel, `loadPainelNotifs()`).
+
+Checks de rotina: `node --check` OK nos 3 blocos reais. Balanço de
+chaves/parênteses igual ao baseline conhecido (braces -1, parens -14).
+
 ### painel-dev.html v3.44 · painel-dev — 2026-09-11 — Fix: `loadPainelNotifs()` perdia a chave real do Firebase, virava "id:undefined"
 
 Achado real testando o fix da v3.43 (usuário rodou o teste de diagnóstico
