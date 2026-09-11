@@ -2807,7 +2807,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.39 · painel-dev</div>
+<div class="version">v3.40 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11761,9 +11761,24 @@ function checkOverdueGlobalBackup(){
     sendGlobalBackupEmail(false);
   }
 }
-window.addEventListener('auth-change', e=>{
-  if(e.detail) setTimeout(checkOverdueGlobalBackup, 5000);
-}, {once:true});
+// Achado real (/monitorarbugs, "comentários que dizem ter resolvido bugs
+// mas há uma inconsistência" — mesma classe de bug já corrigida em
+// kanban-dev.html via _onRealAuthChange(), 2026-09-11): onAuthStateChanged
+// (linha ~2864) dispara 'auth-change' assim que o listener é registrado —
+// quase sempre com null, ninguém logado ainda — e de novo quando o login
+// termina, agora com o usuário. Um listener {once:true} é consumido pelo
+// PRIMEIRO disparo, seja ele qual for — se o null chegasse primeiro (o
+// caso comum), o disparo real nunca tinha mais ninguém escutando, e
+// checkOverdueGlobalBackup() nunca rodava na sessão inteira. Mesmo fix:
+// espera o primeiro disparo com usuário de verdade, ignora null.
+function _onRealAuthChange(fn){
+  if(window._currentUser){ fn(window._currentUser); return; }
+  const handler = e=>{
+    if(e.detail){ window.removeEventListener('auth-change', handler); fn(e.detail); }
+  };
+  window.addEventListener('auth-change', handler);
+}
+_onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
 
