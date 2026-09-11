@@ -210,6 +210,42 @@ revalidadas — seções novas — achados incidentais notáveis.
   manualmente esses casos combinados em vez de confiar no ranking por
   proximidade.
 
+- **2026-09-11 (8ª)**: `5c320c2`→`f29add1`. kanban/kanban-dev seguem só
+  com a divergência permanente conhecida (favicon/versão). Revalidação
+  via script (extração robusta a bullets quebrados em várias linhas +
+  re-grep de cada nome, ~175 âncoras) — 149 com drift de linha corrigido
+  em lote (a maioria +100 a +1100 linhas, volume normal desde a última
+  rodada), 0 removidas/renomeadas de verdade. `functions/index.js` —
+  registro de exports 100% batendo (16/16), sem drift — sinal de que a
+  disciplina de manter isso em dia durante o próprio trabalho está
+  pegando. 3 âncoras "MISSING" na 1ª passada eram ruído da extração
+  (nomes genéricos tipo `kanban`/`mover_coluna` pegos de dentro de
+  prosa, não anchors de verdade) — confirmado manualmente antes de
+  descartar, não só assumido. **2 achados reais de conteúdo, não só
+  drift de linha**: `saveCard()` apontava pra uma linha que não era nem
+  a declaração real nem o hook — a declaração real é monkey-patched
+  (`saveCard = function(){...}`) mais abaixo no arquivo pra plugar
+  notificações, e QUALQUER chamada em runtime pega essa versão, não a
+  original — anchor agora aponta pra declaração + nota sobre o hook;
+  `sinaisDoCard()`/`collectPendingCards()` (resumoMeuDia.js) tinham os
+  NÚMEROS TROCADOS entre si (mesma classe de erro já documentada na
+  rodada 7 — escritos de cabeça, não re-grepados), corrigido conferindo
+  a ordem real no arquivo. **1 seção nova**: `okr-apresentacao.slide.html`
+  nunca tinha tido seção própria neste mapa apesar de ~935 linhas e 6+
+  rodadas de fix documentadas no `CHANGELOG.md` (zoom-fit, modal de
+  detalhe, botão "Próximo objetivo") — adicionada entre `painel.html` e
+  `functions/`. Cross-referência nova: `_onRealAuthChange()` também
+  existe em `painel-dev.html` (achado do dia anterior, mesmo bug
+  duplicado em arquivo diferente) — nota adicionada na entrada do
+  kanban apontando pra lá. **Lição pra próxima vez**: o rodapé da rodada
+  7 (`5c320c2`) já estava referenciando um commit CRONOLOGICAMENTE
+  ANTERIOR ao próprio trabalho que a entrada do histórico daquela rodada
+  descreve ter coberto (squash-merges/resets de branch no meio da sessão
+  podem deixar o hash do rodapé "para trás" do que foi realmente
+  revisado) — não confiar cegamente no SHA do rodapé pra decidir "o que
+  já foi coberto"; cruzar com a DATA e com o texto do histórico de
+  rodadas anteriores é mais confiável que só `git log <rodapé>..HEAD`.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir
