@@ -3150,6 +3150,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.634-dev — 2026-09-11 — 💡 Sugestão automática de preset de filtro (1º caso de "personalização baseada em rotina")
+
+Pedido direto do usuário: proposta de personalização proativa — o app
+observar padrões de uso e sugerir (nunca aplicar sozinho) atalhos
+baseados em rotina. Discutido 5 casos possíveis; implementado o mais
+barato como prova de conceito: **"Você sempre filtra pelo canal Amazon
+— salvar esse filtro?"**, generalizado pra qualquer combinação de
+tag/responsável/prioridade/subtime/canal/submarca, não só canal.
+
+**Mecanismo**: cada vez que `applyFilters()` roda, grava uma "impressão
+digital" da combinação de filtros ativa (`_filtroFingerprint()`) num
+histórico em `localStorage` — no máximo 1 registro por dia por
+combinação (idempotente), poda automática do que passou de 10 dias. Se
+a MESMA combinação aparecer em 4+ dias diferentes, e ainda não foi
+salva como preset nem recusada permanentemente antes, um cartão
+discreto (`💡`, canto inferior direito, acima do FAB) pergunta se quer
+salvar — com 3 respostas: **💾 Salvar** (chama `saveFilterPresetPrompt()`,
+a mesma função do botão manual — zero lógica de salvamento duplicada),
+**Agora não** (não insiste de novo NESTA sessão) e **Não sugerir mais**
+(recusa permanente só pra aquela combinação específica).
+
+**Decisão de arquitetura, de propósito**: todo o sinal/histórico fica
+só em `localStorage`, nunca Firebase — é recalculável e descartável a
+qualquer momento, não precisa sincronizar entre aparelhos, e essa
+sessão inteira passou boa parte do dia caçando um bug real de consumo
+de bytes (`comunicados`); não fazia sentido introduzir uma feature nova
+que pudesse repetir esse padrão de custo. Só o RESULTADO aceito (o
+preset em si) usa a infra que já existe — nenhuma escrita nova no
+Firebase por causa desta feature.
+
+`HELP_CONTENT` (entrada "Filtros") ganhou um sub-parágrafo explicando o
+mecanismo.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses -1/-1 (artefato conhecido).
+
 ### v8.30.633-dev — 2026-09-11 — Fix: tooltip de ajuda (help-tip) cortava embaixo da tela quando o conteúdo era longo
 
 Achado real, reportado direto pelo usuário com print: o ❓ novo do CFD
