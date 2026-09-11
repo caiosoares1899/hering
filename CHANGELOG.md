@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.629 — 2026-09-11 · Promove pra prod — Fix: board abria em branco pós-login (precisava de F5)
+
+Promove pra produção o v8.30.629-dev de `kanban-dev.html`, validado e
+aprovado pelo usuário (confirmado na UI + teste de console). Ver entrada
+completa em `kanban-dev.html v8.30.629-dev` logo abaixo pro detalhe
+técnico.
+
+Relato direto do usuário: "aquele lance do board abrir pós login todo em
+branco ainda ta rolando... tem q dar um f5 pros cards aparecerem" — o
+sintoma já tinha um fix anterior documentado no código que resolvia uma
+race (SDK do Firebase pronto antes do login resolver) mas reintroduzia
+outra: um listener `{once:true}` esperando o login é consumido pelo
+PRIMEIRO disparo do evento de auth, mesmo esse sendo o `null` que o
+Firebase dispara quase sempre ANTES do login interativo terminar — o
+disparo real, com o usuário, nunca tinha mais ninguém escutando.
+`fbLoadAll()` nunca rodava, board ficava com o esqueleto pronto e zero
+card. Achado mais espalhado que o relato original: o mesmo padrão
+quebrado estava em mais 4 lugares (sino de notificações, backup,
+lembrete do sino, Mural) — só o dos cards era visível.
+
+Fix: `_onRealAuthChange(fn)` nova, espera o primeiro disparo com usuário
+de verdade, ignora `null`. Validado via Playwright (função real extraída
+do arquivo, simulando o disparo duplo null→real) e depois via console na
+sessão de produção do usuário, ambos confirmando. `node --check` limpo;
+balanço de chaves/parênteses `-1`/`0`, dentro do baseline.
+
 ### v8.30.628 — 2026-09-10 · Promove pra prod — Coluna "Impedimentos" vazia + campo "🛒 Canal" (Marketplace) + fixes de /monitorarbugs
 
 Promove pra produção o lote v8.30.626-dev → v8.30.628-dev de

@@ -6136,7 +6136,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.628</div>
+<div class="version">v8.30.629</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31225,6 +31225,28 @@ function _onFbReady(fn){
   if(window._fbReady) fn();
   else window.addEventListener('fb-ready', fn, {once:true});
 }
+// Mesmo espírito de _onFbReady() acima, mas pro auth: espera o PRIMEIRO
+// 'auth-change' com usuário de verdade, ignorando qualquer disparo com
+// null que aconteça antes (achado real, relato direto do usuário: "board
+// abre pós login todo em branco, precisa dar F5" — ainda acontecia mesmo
+// com o comentário logo abaixo já documentando um fix anterior pra essa
+// EXATA mensagem de sintoma). Causa raiz: onAuthStateChanged(auth,...)
+// dispara 'auth-change' assim que o listener é registrado (quase sempre
+// com null, ninguém logado ainda) e dispara de novo quando o login
+// interativo termina (agora com o usuário) — um listener {once:true}
+// (usado em 5 lugares neste arquivo) é consumido pelo PRIMEIRO disparo,
+// mesmo esse sendo o null, e nunca chega a ver o disparo real que vem
+// logo depois. window._currentUser continua null pra sempre nesse caso,
+// então fbLoadAll()/loadNotifs()/etc. nunca rodam — só um F5 resolve,
+// porque no reload o SDK às vezes já tem a sessão persistida e
+// onAuthStateChanged dispara só 1x, direto com o usuário certo.
+function _onRealAuthChange(fn){
+  if(window._currentUser){ fn(window._currentUser); return; }
+  const handler = e=>{
+    if(e.detail){ window.removeEventListener('auth-change', handler); fn(e.detail); }
+  };
+  window.addEventListener('auth-change', handler);
+}
 _onFbReady(()=>{
   // Limpa error_logs se tiver mais de 500 entradas (evita acúmulo do loop)
   window._get(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/error_logs')).then(s=>{
@@ -31238,27 +31260,18 @@ _onFbReady(()=>{
   applyBlockerMode();
   // fbLoadAll() registra os listeners de /cards, /columns etc. — eles exigem
   // auth.token.email (ver database.rules.json). _onFbReady só espera o SDK
-  // do Firebase estar pronto, não o login em si: em conexões mais lentas o
-  // onAuthStateChanged podia resolver DEPOIS desse ponto, e os listeners
-  // eram registrados sem usuário logado ainda — permission_denied, sem
-  // retry automático quando o login terminava logo em seguida. Resultado:
-  // board abrindo vazio até um F5 (que por acaso já pegava o login
-  // resolvido a tempo). Agora espera o auth-change real antes de carregar.
-  if(window._currentUser){ fbLoadAll(); _maybeConsumirTransferSquad(); }
-  else window.addEventListener('auth-change', e=>{ if(e.detail){ fbLoadAll(); _maybeConsumirTransferSquad(); } }, {once:true});
+  // do Firebase estar pronto, não o login em si — usa _onRealAuthChange()
+  // (ver comentário na declaração dela, acima) pra esperar o auth de
+  // verdade, ignorando qualquer disparo intermediário com null.
+  _onRealAuthChange(()=>{ fbLoadAll(); _maybeConsumirTransferSquad(); });
   loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadFanoutTemplates();
   loadCalEvents();
   applyViewMode();
-  if(window._currentUser){
+  _onRealAuthChange(()=>{
     setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
-  } else {
-    // login pode demorar mais que 2s (rede lenta) — sem isso o sino nunca era escutado na sessão
-    window.addEventListener('auth-change', e=>{
-      if(e.detail) setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
-    }, {once:true});
-  }
+  });
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
   // 09:00 (horário de SP, ver DAILY_TRIGGER_HOUR_SP) — sem isso, quem abre o
   // board de madrugada/manhã cedo e não recarrega depois das 9h nunca via a
@@ -33728,9 +33741,7 @@ function checkOverdueBackup(){
   }
 }
 // Roda a checagem pouco depois do login, dando tempo do cache de config (Firebase) chegar
-window.addEventListener('auth-change', e=>{
-  if(e.detail) setTimeout(checkOverdueBackup, 5000);
-}, {once:true});
+_onRealAuthChange(()=>setTimeout(checkOverdueBackup, 5000));
 
 // ── FIM BACKUP ────────────────────────────────────────────────────────────
 
@@ -33752,12 +33763,11 @@ window.addEventListener('auth-change', e=>{
     safeLS.setItem('notif_reminder_day', today);
     showToast('🔔 Você tem notificações não lidas — clique no sino para ver.');
   }
-  window.addEventListener('auth-change', e=>{
-    if(!e.detail) return;
+  _onRealAuthChange(()=>{
     setInterval(_ringIfUnread, 30 * 60 * 1000);    // tremer a cada 30min
     setInterval(_checkDayReminder, 60 * 60 * 1000); // checar nova dia a cada 1h
     setTimeout(_checkDayReminder, 8000);            // checar logo após login
-  }, {once:true});
+  });
 })();
 
 // ══════════════════════════════════════════════════════════════════════
@@ -34059,9 +34069,7 @@ async function enviarFeedback(){
 function _lsGet(k){ try{ return (typeof safeLS!=='undefined'?safeLS:localStorage).getItem(k); }catch(e){ return null; } }
 function _lsSet(k,v){ try{ (typeof safeLS!=='undefined'?safeLS:localStorage).setItem(k,v); }catch(e){} }
 
-window.addEventListener('auth-change', e=>{
-  if(e.detail){ setTimeout(_initComunicados, 2000); }
-}, {once:true});
+_onRealAuthChange(()=>setTimeout(_initComunicados, 2000));
 
 renderBoard();
 
