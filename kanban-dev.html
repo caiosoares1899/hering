@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.640-dev</div>
+<div class="version">v8.30.641-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6166,7 +6166,7 @@ input[type="date"]{-moz-appearance:textfield;}
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -6221,11 +6221,20 @@ window._increment=increment;
 // das chamadas desde que essa feature existe (confirmado via
 // _dbgTrack('comunicados_fallback')).
 window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
-// orderByKey/limitToLast: mesmo padrão dos 3 acima (/otimizaçãoderotina,
-// Passo 4.1, 2026-09-11) -- usados por loadNotifs() pra limitar quanto do
-// node kanban/usuarios/{uid}/notificacoes é baixado a cada mudança, em vez
-// de sempre baixar a árvore inteira e filtrar tudo no cliente.
-window._orderByKey=orderByKey; window._limitToLast=limitToLast;
+// limitToLast: mesmo padrão dos 3 acima (/otimizaçãoderotina, Passo 4.1,
+// 2026-09-11) -- usado por loadNotifs() pra limitar quanto do node
+// kanban/usuarios/{uid}/notificacoes é baixado a cada mudança, em vez de
+// sempre baixar a árvore inteira e filtrar tudo no cliente. Ordena por
+// orderByChild('ts') (window._orderByChild já existe acima), NÃO por
+// orderByKey() -- achado real testando: notificações de id determinístico
+// (due_today_/due_overdue_/mention_/reuniao-/rascunho_, ver createNotif())
+// não compartilham o prefixo 'n'+timestamp das demais, então ordem de
+// CHAVE não é ordem cronológica -- limitToLast(orderByKey()) excluía
+// sistematicamente essas notificações do resultado, mesmo recentes,
+// só por causa do prefixo textual. 'ts' é ISO 8601 (sempre presente,
+// todo ponto de escrita já grava), lexicograficamente ordenável =
+// cronologicamente ordenável, sem essa armadilha.
+window._limitToLast=limitToLast;
 window._auth=auth; window._provider=provider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -26827,10 +26836,9 @@ function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
-  // Só as últimas NOTIF_QUERY_LIMIT (por chave -- id começa com 'n'+timestamp,
-  // então ordem de chave ≈ ordem cronológica) em vez do node inteiro. Ver
-  // comentário grande na declaração de NOTIF_QUERY_LIMIT.
-  const notifQuery = window._query(ref, window._orderByKey(), window._limitToLast(NOTIF_QUERY_LIMIT));
+  // Só as últimas NOTIF_QUERY_LIMIT por 'ts' (não por chave -- ver comentário
+  // grande na declaração de NOTIF_QUERY_LIMIT) em vez do node inteiro.
+  const notifQuery = window._query(ref, window._orderByChild('ts'), window._limitToLast(NOTIF_QUERY_LIMIT));
   _notifListener = window._onValue(notifQuery, snap=>{
     _dbgTrack('notificacoes', snap.val());
     const val = snap.val()||{};

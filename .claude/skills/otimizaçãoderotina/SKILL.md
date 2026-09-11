@@ -394,12 +394,28 @@ registrando o baseline atual pra próxima rodada comparar.
   node inteiro a cada mudança. Diferente de `comunicados`, não era bug
   (nenhuma query silenciosamente falhando) — era um filtro nunca
   tentado, e o node é auto-limitado por TTL (não cresce sem fim). Fix
-  Fase 1 (`query()+orderByKey()+limitToLast(80)`, sem mudar schema) nos
-  2 leitores — dev v8.30.640-dev / painel-dev v3.42. Fase 2 (campo
-  `expiraEm` indexável, filtro exato) documentada como recomendação
-  futura — exige migração de dado existente + Cloud Function de limpeza
-  nova, fora do escopo desta rodada. Confirma que o Passo 4.1 funciona
-  em área antiga, não só no caso que motivou sua criação.
+  Fase 1 (`query()+limitToLast(80)`, sem mudar schema) nos 2 leitores —
+  dev v8.30.640-dev / painel-dev v3.42. Fase 2 (campo `expiraEm`
+  indexável, filtro exato) documentada como recomendação futura — exige
+  migração de dado existente + Cloud Function de limpeza nova, fora do
+  escopo desta rodada. Confirma que o Passo 4.1 funciona em área antiga,
+  não só no caso que motivou sua criação.
+  **Correção no mesmo dia** (usuário rodou o teste de console entregue e
+  reportou `❌`): a 1ª versão do fix ordenava por `orderByKey()`,
+  assumindo que todo id de notificação começa com `'n'+timestamp` — falso,
+  `createNotif()` aceita `idOverride` determinístico
+  (`due_today_`/`due_overdue_`/`mention_`/`reuniao-`/`rascunho_`, nenhum
+  com esse prefixo), então essas notificações caíam sistematicamente fora
+  do `limitToLast(80)` mesmo sendo recentes. Trocado pra
+  `orderByChild('ts')` (ISO 8601, gravado por todo ponto de escrita,
+  lexicograficamente ordenável = cronologicamente ordenável) — dev
+  v8.30.641-dev / painel-dev v3.43. **Lição pra próxima vez**: ao usar
+  `limitToLast`/`orderByKey` como proxy de "mais recente" por causa do
+  formato do id, confirmar que TODO gerador de id no arquivo (não só o
+  mais comum) segue o mesmo formato — `grep` por todo `idOverride`/id
+  customizado antes de assumir um prefixo único, mesma disciplina que já
+  vale pra "grep por todo call site" nas outras técnicas desta skill/do
+  `/monitorarbugs`.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.
