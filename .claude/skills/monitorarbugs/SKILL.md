@@ -622,6 +622,34 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   Firebase não tem regex/replace global) é limitação conhecida e aceita,
   não um bug novo.
 
+- **2026-09-11, implementações recentes: "Próximo objetivo"/quebra de texto
+  do Marco (okr-apresentacao.slide.html, #841) + exclusão da coluna
+  "Impedimentos" vazia (kanban-dev.html, #840) (pedido genérico, "roda
+  outro nas implementações recentes" — as 2 áreas de código mais
+  recentemente alteradas em kanban-dev.html/painel-dev.html/
+  okr-apresentacao.slide.html ainda sem rodada própria)**: **sem achados**
+  nas 2, depois de investigação real (não superficial). (1) `_okrGerenciaObjetivos()`/botão
+  "Próximo →": confirmado que o filtro+sort bate EXATAMENTE com
+  `buildSlides()` (mesma ordem que a pessoa já viu na grade, conforme o
+  comentário promete — técnica 3); confirmado que `_okrOpenDetail()` só é
+  alcançável com objetivos não-arquivados nos 2 call sites (clique no
+  card e o próprio botão "Próximo", ambos vindos de listas já
+  filtradas) — o branch "desabilitado" nunca dispara incorretamente pra
+  um objetivo arquivado; confirmado que `_zoomFitToHeight()` mede
+  `scrollHeight` (não `clientHeight`) a `zoom:1`, então a promessa do
+  comentário ("o encolhimento automático já cobre o texto quebrando em
+  mais linhas") é real, não só alegada. (2) `delColumn()`: confirmado
+  que os 3 guards irmãos que o comentário cita
+  (`saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`) TODOS recusam de
+  fato mover/reativar cards pra uma coluna `'blocker'` inexistente
+  (técnica 3, comentário vs. código real, não assumido). Achado
+  incidental que NÃO virou bug: `parseTrelloJSON()` (import) tem um 4º
+  caminho que também toca `col:'blocker'`, não citado no comentário do
+  fix — mas tem sua PRÓPRIA proteção independente (fallback pra
+  `columns[0]` quando a coluna não existe), então continua seguro mesmo
+  sem estar na lista dos "3 guards"; só a enumeração do comentário ficou
+  incompleta, o comportamento não.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
