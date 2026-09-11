@@ -164,5 +164,19 @@ Formato: baseline → novo — o que motivou — achados/correções.
   "retrato não é live", mesma disciplina do `CODE_MAP.md`. 1 gap real
   (atalho "🔗 Copiar link do card" sem menção na ajuda).
 
+- **v8.30.584-dev→v8.30.630-dev (2026-09-11)**: ~50 commits desde a
+  última rodada registrada, pedido genérico ("/atualizarhelpcontent"
+  sem escopo). Sinal muito positivo: quase toda feature grande do
+  período já tinha entrada adicionada na hora (Atalhos de teclado
+  personalizáveis, Canal de venda, Enviar pra outro squad, densidade
+  dos cards, squad padrão, presets de filtro, arquivamento por coluna,
+  tempo em atraso/bloqueado, Esc fecha a tela, Reorganizar barra) —
+  checado campo a campo, sem gap. **1 gap real**: "🕐 Tema automático"
+  (2026-09-08) tinha o tooltip inline certo desde o dia 1, mas nunca
+  ganhou entrada na Central de Ajuda — corrigido. Achado incidental
+  documentado, não corrigido: nenhuma entrada cobre o editor de Colunas
+  em geral (pré-existente, não introduzido pela mudança recente de
+  #840, que só mudou texto de erro sem UI nova).
+
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.
