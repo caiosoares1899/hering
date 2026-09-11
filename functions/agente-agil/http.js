@@ -82,7 +82,14 @@ const agenteAgil = onRequest(
     const payload = parsed.data;
     const db = getDatabase();
 
-    const processedSnap = await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).get();
+    const idemRef = db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`);
+    // Checagem rápida (não-atômica, só evita refazer a resolução de
+    // referencia pro caso comum de retry já conhecido) -- a guarda de
+    // verdade é a transaction() logo abaixo, feita só depois da resolução
+    // de referencia pra não "gastar" o requestId se ela falhar com 500
+    // (um retry legítimo do cliente depois de um erro transiente ainda
+    // precisa conseguir processar).
+    const processedSnap = await idemRef.get();
     if (processedSnap.exists()) {
       res.status(200).json({ ok: true, idempotent: true });
       return;
@@ -106,6 +113,25 @@ const agenteAgil = onRequest(
       }
     }
 
+    // Achado real (/monitorarbugs, áreas sensíveis, 2026-09-11): a checagem
+    // get()+set() acima/abaixo não é atômica -- 2 requisições concorrentes
+    // com o MESMO requestId (retry por timeout do especialista externo,
+    // cenário comum em integração HTTP) passavam as duas pelo get() antes
+    // de qualquer uma gravar, criando 2 entradas pendentes duplicadas que o
+    // orquestrador processava 2x. Reivindica o requestId atomicamente antes
+    // de criar o pending entry -- se outra requisição concorrente já
+    // reivindicou, esta recebe idempotent:true sem duplicar nada.
+    let alreadyClaimed = false;
+    const claimResult = await idemRef.transaction((current) => {
+      alreadyClaimed = !!current;
+      if (current) return; // aborta, não sobrescreve o registro existente
+      return { at: new Date().toISOString(), claiming: true };
+    });
+    if (alreadyClaimed || !claimResult.committed) {
+      res.status(200).json({ ok: true, idempotent: true });
+      return;
+    }
+
     const pendingRef = db.ref(intakePendingPath(SQUAD_ID)).push();
     const entry = {
       id: pendingRef.key,
@@ -117,7 +143,7 @@ const agenteAgil = onRequest(
       createdAt: new Date().toISOString(),
     };
     await pendingRef.set(entry);
-    await db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`).set({ at: new Date().toISOString(), pendingId: pendingRef.key });
+    await idemRef.update({ pendingId: pendingRef.key });
 
     res.status(200).json({ ok: true, queued: true, pendingId: pendingRef.key });
   }

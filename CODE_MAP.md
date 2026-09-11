@@ -45,6 +45,18 @@ confiar num número aqui se for mexer em `painel.html` prod).
   nunca no registro principal, deixando um registro nascido incompleto
   (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
   pra sempre mesmo com login repetido.
+- `_onRealAuthChange(fn)` — ~L31243 (perto de `_onFbReady()`) — espera o
+  PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
+  disparo com `null` que aconteça antes (`onAuthStateChanged` dispara
+  `auth-change` assim que o listener é registrado, quase sempre com
+  `null`, e de novo quando o login termina). Fix real (2026-09-11,
+  relato direto: "board abre pós login todo em branco, precisa de F5")
+  — os 5 pontos que esperavam login pra rodar (`fbLoadAll()`, sino/
+  notifs, backup, lembrete do sino, Mural) usavam
+  `addEventListener('auth-change',...,{once:true})`, que é consumido
+  pelo PRIMEIRO disparo (o `null`), nunca vendo o real. Qualquer novo
+  código que precise esperar o login deve usar esta função, não
+  reimplementar `{once:true}` na mão.
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que

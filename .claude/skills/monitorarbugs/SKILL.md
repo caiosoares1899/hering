@@ -585,6 +585,97 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   IRMÃO já resolvido (aqui, `loadPresence()`) e replicar exatamente ONDE
   ele chama, não só COMO.
 
+- **2026-09-11, `functions/` — endpoints HTTP sensíveis (pedido explícito,
+  "roda um /monitorarbugs nas areas sensiveis")**: 2 achados reais, os 2
+  race conditions, achados via técnica 2 (comparar contra
+  `functions/agente-agil/board.js`, que já usa `.transaction()` pro mesmo
+  tipo de operação — `board.js` era o padrão irmão já resolvido, os 2
+  endpoints HTTP ainda faziam `get()`+`update()`/`set()` sem transação).
+  (1) `functions/intake/submit.js` — rate limiter por IP (único freio do
+  formulário público sem CAPTCHA) não era atômico: 2 requisições
+  concorrentes liam o mesmo `count` antes de escrever, incrementos se
+  perdiam, um script conseguia furar o limite de 5/hora por um fator
+  arbitrário; (2) `functions/agente-agil/http.js` — idempotência por
+  `requestId` (proteção contra retry duplicado do especialista externo)
+  tinha o mesmo padrão: `get()` no início, `set()` só no final, deixando
+  uma janela onde 2 requisições com o mesmo `requestId` criavam 2 entradas
+  pendentes processadas 2x pelo orquestrador. Fix nos 2: `.transaction()`.
+  Como `http.js`/`submit.js` não têm teste de handler próprio (só as
+  dependências puras — o próprio repo documenta isso como "fica pro
+  Firebase Emulator Suite"), validado com um fake db escrito na hora que
+  implementa compare-and-swap + retry (semântica real de transaction() do
+  Firebase, não a versão simplificada de `fakeDb.js` que não simula
+  concorrência de verdade) rodando o CÓDIGO REAL extraído dos 2 arquivos —
+  10 requisições concorrentes: código antigo deixava passar 10/10 (rate
+  limit) e criava 10 entradas duplicadas (idempotência); código novo trava
+  em exatamente 5/10 e cria só 1 entrada. Suíte formal 475/475, sem
+  regressão. Requer `firebase deploy --only functions:intakeSubmit` e
+  `--only functions:agenteAgil` manuais (resync antes, ver `CLAUDE.md`).
+  **Lição pra próxima vez**: "áreas sensíveis" sem escopo nomeado —
+  interpretado como qualquer ponto de entrada que aceita escrita de fora
+  do fluxo normal de auth do Firebase (aqui: os 2 endpoints HTTP públicos/
+  semi-públicos do Agente Ágil). A whitelist de `externos`
+  (`_extKey()`/`salvarExterno()`/`removerExterno()`, kanban-dev.html) foi
+  auditada na mesma rodada e NÃO teve achado — grant/revoke simétricos,
+  `removerMembro()` já limpa a entrada de externos junto; o cap de 8 replaces
+  em `database.rules.json` pra sanitizar `.`→`,` (linguagem de regras do
+  Firebase não tem regex/replace global) é limitação conhecida e aceita,
+  não um bug novo.
+
+- **2026-09-11, implementações recentes: "Próximo objetivo"/quebra de texto
+  do Marco (okr-apresentacao.slide.html, #841) + exclusão da coluna
+  "Impedimentos" vazia (kanban-dev.html, #840) (pedido genérico, "roda
+  outro nas implementações recentes" — as 2 áreas de código mais
+  recentemente alteradas em kanban-dev.html/painel-dev.html/
+  okr-apresentacao.slide.html ainda sem rodada própria)**: **sem achados**
+  nas 2, depois de investigação real (não superficial). (1) `_okrGerenciaObjetivos()`/botão
+  "Próximo →": confirmado que o filtro+sort bate EXATAMENTE com
+  `buildSlides()` (mesma ordem que a pessoa já viu na grade, conforme o
+  comentário promete — técnica 3); confirmado que `_okrOpenDetail()` só é
+  alcançável com objetivos não-arquivados nos 2 call sites (clique no
+  card e o próprio botão "Próximo", ambos vindos de listas já
+  filtradas) — o branch "desabilitado" nunca dispara incorretamente pra
+  um objetivo arquivado; confirmado que `_zoomFitToHeight()` mede
+  `scrollHeight` (não `clientHeight`) a `zoom:1`, então a promessa do
+  comentário ("o encolhimento automático já cobre o texto quebrando em
+  mais linhas") é real, não só alegada. (2) `delColumn()`: confirmado
+  que os 3 guards irmãos que o comentário cita
+  (`saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`) TODOS recusam de
+  fato mover/reativar cards pra uma coluna `'blocker'` inexistente
+  (técnica 3, comentário vs. código real, não assumido). Achado
+  incidental que NÃO virou bug: `parseTrelloJSON()` (import) tem um 4º
+  caminho que também toca `col:'blocker'`, não citado no comentário do
+  fix — mas tem sua PRÓPRIA proteção independente (fallback pra
+  `columns[0]` quando a coluna não existe), então continua seguro mesmo
+  sem estar na lista dos "3 guards"; só a enumeração do comentário ficou
+  incompleta, o comportamento não.
+
+- **2026-09-11, boot/auth-change (pedido explícito, relato direto do
+  usuário: "aquele lance do board abrir pós login todo em branco ainda ta
+  rolando... tem q dar um f5 pros cards aparecerem")**: 1 achado severo,
+  em 5 lugares. `fbLoadAll()`/`loadNotifs()`/`checkOverdueBackup()`/
+  lembrete do sino/`_initComunicados()` esperavam o login via
+  `addEventListener('auth-change', e=>{if(e.detail){...}}, {once:true})`
+  — mas `{once:true}` remove o listener no PRIMEIRO disparo do evento,
+  não no primeiro disparo VERDADEIRO. `onAuthStateChanged` dispara
+  `auth-change` assim que registrado (quase sempre com `null`, ninguém
+  logado ainda) e de novo quando o login popup termina — o `null` sozinho
+  já consumia o listener `{once:true}`, o disparo real nunca tinha mais
+  ninguém escutando. Achado via técnica 3 (confrontar o comportamento
+  contra o que um comentário JÁ existente promete — havia um comentário
+  documentando um fix anterior pra esse MESMO sintoma, que resolvia uma
+  race diferente mas reintroduzia esta um nível abaixo) + técnica 1
+  (grep por todo `auth-change`, achando os outros 4 call sites com o
+  MESMO padrão frágil, não só o dos cards). Fix: `_onRealAuthChange(fn)`
+  nova (mesmo espírito de `_onFbReady()`), espera o primeiro disparo com
+  `detail` truthy, ignora `null`. Validado via Playwright rodando a
+  função REAL extraída do arquivo, simulando o disparo duplo exato
+  (null→real): código antigo nunca chamava o callback; código novo
+  chama certo. dev v8.30.629. **Lição pra próxima vez**: um comentário
+  dizendo "já corrigido" não é prova de que o sintoma sumiu de verdade —
+  vale reler o fix documentado linha a linha quando o MESMO sintoma for
+  relatado de novo, em vez de assumir que é uma causa nova.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

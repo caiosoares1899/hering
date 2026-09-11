@@ -160,16 +160,29 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const ipKey = hashIp(String(ip).split(',')[0].trim());
   const rateRef = db.ref(`kanban/_intake_rate/${ipKey}`);
   const now = Date.now();
-  const rateSnap = await rateRef.get();
-  const rate = rateSnap.val();
-  if (rate && rate.resetAt > now) {
-    if (rate.count >= RATE_LIMIT_MAX) {
-      res.status(429).json({ error: 'rate_limited' });
-      return;
+  // Achado real (/monitorarbugs, áreas sensíveis, 2026-09-11): get()+update()
+  // não é atômico -- é o ÚNICO freio deste endpoint público sem CAPTCHA, e
+  // duas requisições concorrentes da MESMA origem liam o mesmo `count` antes
+  // de qualquer uma escrever, cada uma incrementando a partir do valor
+  // antigo (incrementos se perdiam). Um script disparando N requisições em
+  // paralelo furava o limite de RATE_LIMIT_MAX por hora por um fator
+  // arbitrário. transaction() já é o padrão usado em
+  // functions/agente-agil/board.js pra evitar exatamente esse tipo de race.
+  let limited = false;
+  await rateRef.transaction((current) => {
+    limited = false;
+    if (!current || current.resetAt <= now) {
+      return { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
     }
-    await rateRef.update({ count: rate.count + 1 });
-  } else {
-    await rateRef.set({ count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    if (current.count >= RATE_LIMIT_MAX) {
+      limited = true;
+      return; // aborta a transação, não escreve nada
+    }
+    return { count: current.count + 1, resetAt: current.resetAt };
+  });
+  if (limited) {
+    res.status(429).json({ error: 'rate_limited' });
+    return;
   }
 
   const pendingRef = db.ref(`kanban/squads/${squad}/dados/intake_pending`).push();
