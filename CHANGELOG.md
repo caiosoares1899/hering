@@ -3098,6 +3098,56 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.629-dev — 2026-09-11 — Fix: board abria em branco pós-login (precisava de F5) — em 5 lugares, não só no carregamento dos cards
+
+Relato direto do usuário: "aquele lance do board abrir pós login todo em
+branco ainda ta rolando... tem q dar um f5 para os cards aparecerem" —
+esse EXATO sintoma já tinha um comentário no código (perto de
+`fbLoadAll()`) dizendo que tinha sido corrigido antes (esperar o
+`auth-change` antes de carregar os cards, em vez de só o SDK do Firebase
+ficar pronto). O fix antigo realmente resolvia a race que ele descrevia,
+mas introduzia OUTRA, um nível abaixo, no mesmo mecanismo.
+
+**Causa raiz**: `onAuthStateChanged(auth, ...)` dispara o evento
+`auth-change` assim que o listener é registrado — quase sempre com
+`null` primeiro, já que ninguém está logado ainda nesse instante — e
+dispara de novo quando o login interativo (`signInWithPopup`) termina,
+agora com o usuário de verdade. O fix anterior registrava um listener
+`{once:true}` pra pegar esse 2º disparo — mas `{once:true}` remove o
+listener no PRIMEIRO disparo do evento, seja ele qual for. Se o `null`
+chegasse primeiro (o caso comum: o listener é registrado antes do login
+popup terminar), esse `null` sozinho já consumia o listener, e o disparo
+real — com o usuário — não tinha mais ninguém escutando.
+`window._currentUser` nunca era setado a tempo, `fbLoadAll()` nunca
+rodava, o board ficava com o esqueleto pronto mas zero card. Um F5
+"resolvia" só porque no reload o SDK às vezes já tinha a sessão
+persistida e `onAuthStateChanged` disparava uma vez só, direto com o
+usuário certo — dando a falsa impressão de que era só lentidão de rede.
+
+**Acha bem mais espalhado**: o MESMO padrão frágil (`auth-change` +
+`{once:true}` + `if(e.detail)` por dentro) estava duplicado em mais 4
+lugares — `loadNotifs()`/sino/atalhos/board prefs/presets de filtro,
+`checkOverdueBackup()`, o lembrete "🔔 tremer a cada 30min" do sino, e
+`_initComunicados()` (Mural). Todos sofriam do mesmo gap — só o dos
+cards era o mais visível porque é o que deixa o board literalmente em
+branco.
+
+**Fix**: nova `_onRealAuthChange(fn)` (perto de `_onFbReady()`, mesmo
+espírito) — espera o primeiro `auth-change` cujo `detail` seja truthy,
+ignorando qualquer `null` que dispare antes, e só remove o próprio
+listener nesse ponto (em vez de `{once:true}`, que remove no primeiro
+disparo goste ou não do valor). Os 5 pontos afetados passaram a usar
+essa função em vez de reimplementar o padrão quebrado cada um.
+
+Validado via Playwright rodando a função real extraída do arquivo:
+simulado o disparo duplo exato (`null` seguido do usuário real, como o
+Firebase realmente faz) — código antigo nunca chamava o callback (bug
+reproduzido de propósito, confirmado); código novo chama corretamente.
+Testado também o caminho síncrono (login já resolvido antes do registro)
+e o caminho "só null, login nunca completa" (callback corretamente NÃO
+dispara). `node --check` limpo; balanço de chaves/parênteses do arquivo
+inteiro — `-1`/`0` — bate com o baseline já conhecido.
+
 ### v8.30.628-dev — 2026-09-10 — /monitorarbugs no campo "🛒 Canal" recém-criado: 3 achados reais
 
 Pedido direto: "roda um /monitorarbugs aqui" — escopo escolhido por

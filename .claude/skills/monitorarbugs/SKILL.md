@@ -650,6 +650,32 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   sem estar na lista dos "3 guards"; só a enumeração do comentário ficou
   incompleta, o comportamento não.
 
+- **2026-09-11, boot/auth-change (pedido explícito, relato direto do
+  usuário: "aquele lance do board abrir pós login todo em branco ainda ta
+  rolando... tem q dar um f5 pros cards aparecerem")**: 1 achado severo,
+  em 5 lugares. `fbLoadAll()`/`loadNotifs()`/`checkOverdueBackup()`/
+  lembrete do sino/`_initComunicados()` esperavam o login via
+  `addEventListener('auth-change', e=>{if(e.detail){...}}, {once:true})`
+  — mas `{once:true}` remove o listener no PRIMEIRO disparo do evento,
+  não no primeiro disparo VERDADEIRO. `onAuthStateChanged` dispara
+  `auth-change` assim que registrado (quase sempre com `null`, ninguém
+  logado ainda) e de novo quando o login popup termina — o `null` sozinho
+  já consumia o listener `{once:true}`, o disparo real nunca tinha mais
+  ninguém escutando. Achado via técnica 3 (confrontar o comportamento
+  contra o que um comentário JÁ existente promete — havia um comentário
+  documentando um fix anterior pra esse MESMO sintoma, que resolvia uma
+  race diferente mas reintroduzia esta um nível abaixo) + técnica 1
+  (grep por todo `auth-change`, achando os outros 4 call sites com o
+  MESMO padrão frágil, não só o dos cards). Fix: `_onRealAuthChange(fn)`
+  nova (mesmo espírito de `_onFbReady()`), espera o primeiro disparo com
+  `detail` truthy, ignora `null`. Validado via Playwright rodando a
+  função REAL extraída do arquivo, simulando o disparo duplo exato
+  (null→real): código antigo nunca chamava o callback; código novo
+  chama certo. dev v8.30.629. **Lição pra próxima vez**: um comentário
+  dizendo "já corrigido" não é prova de que o sintoma sumiu de verdade —
+  vale reler o fix documentado linha a linha quando o MESMO sintoma for
+  relatado de novo, em vez de assumir que é uma causa nova.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
