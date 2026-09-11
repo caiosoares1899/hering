@@ -5690,6 +5690,11 @@ input[type="date"]{-moz-appearance:textfield;}
       <div id="boarddata-bar-chart"></div>
       <div id="boarddata-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;" title="Clique numa coluna pra tirá-la (ou trazê-la de volta) da conta de todos os números acima"></div>
     </div>
+    <!-- Submarca/Canal de venda por coluna — pedido direto do usuário
+         (2026-09-11): "quero canal/submarca quebrado por coluna também".
+         Só entra se o squad usa algum dos 2 campos (mesmo guard condicional
+         do donut irmão em Insights) — ver _boardDataSmCvPorColuna(). -->
+    <div id="boarddata-smcv-col"></div>
     <div style="margin-top:22px;">
       <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
       <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
@@ -5707,7 +5712,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="boarddata-fluxo-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       </div>
       <div style="margin-bottom:22px;">
-        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias</div>
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;display:flex;align-items:center;gap:4px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon"><b>O que é:</b> cada faixa colorida é uma coluna do board, empilhada — de baixo (início do fluxo) pra cima (fim). No eixo horizontal, o dia; no vertical, quantos cards estavam em cada coluna naquele dia.<br><br><b>Como ler:</b> a altura de uma faixa num dia = quantos cards estão parados ali. Se uma faixa vai engordando com o tempo, cards estão entrando mais rápido do que saindo — é o gargalo. Faixa larga (na direção vertical) = etapa demorada.<br><br><b>Resultado satisfatório:</b> faixas com largura estável ou encolhendo (não crescendo sem parar), nenhuma faixa muito mais grossa que as outras, e a faixa de "Concluído" crescendo de forma constante — mostra entrega real, não só início de trabalho novo.</span></span></div>
         <div id="boarddata-cfd"></div>
       </div>
       <div>
@@ -6136,7 +6141,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.631-dev</div>
+<div class="version">v8.30.632-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19436,7 +19441,7 @@ function renderBoardDataInsights(){
 
   if(AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)){
     html += '<div style="margin-top:4px;">'
-      +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseDados(\'board_insights\', window._bdInsightsResumoCache, \'bd-insights-agente-btn\', \'bd-insights-agente-box\')" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
+      +'<button class="btn btn-sm" id="bd-insights-agente-btn" onclick="_pedirAnaliseBoardInsights()" style="color:var(--accent);border-color:rgba(56,182,255,.3);">🤖 Ponto de vista do Agente Ágil</button>'
       +'<div id="bd-insights-agente-box" style="display:none;margin-top:10px;padding:12px 14px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.2);border-radius:10px;font-size:12px;color:var(--txt2);line-height:1.6;white-space:pre-wrap;"></div>'
       +'</div>';
   }
@@ -19465,6 +19470,61 @@ function _boardDataBarChart(){
     x += barW+16;
   });
   el.innerHTML = `<svg viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">${bars}</svg>`;
+  _boardDataSmCvPorColuna();
+}
+// Submarca/Canal de venda quebrado por coluna (pedido direto do usuário,
+// 2026-09-11) — tabela em vez de barra empilhada: com até 14 valores de
+// Canal, um SVG empilhado ficaria ilegível (cores demais pra distinguir);
+// tabela linha=valor/coluna=coluna do board é mais fácil de ler nesse
+// volume, mesmo padrão de "achado real" já usado noutros lugares deste
+// arquivo (preferir a representação mais legível, não a mais bonita).
+// Roda sempre junto com _boardDataBarChart() (mesmo gatilho/mesma fonte de
+// activeCards/colunas ocultas) pra nunca ficar dessincronizado dele.
+function _boardDataSmCvPorColuna(){
+  const el = document.getElementById('boarddata-smcv-col'); if(!el) return;
+  if(!submarcaAtivo && !canalVendaAtivo){ el.innerHTML=''; return; }
+  const activeCards = cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
+  const colsVisiveis = columns.filter(col=>!_bdHiddenCols.has(col.id));
+  function bloco(titulo, coluna1, TAGS){
+    if(!colsVisiveis.length) return '';
+    const porColPorTag={}, semTagPorCol={};
+    colsVisiveis.forEach(col=>{ semTagPorCol[col.id]=0; });
+    TAGS.forEach(t=>{ porColPorTag[t.id]={}; colsVisiveis.forEach(col=>porColPorTag[t.id][col.id]=0); });
+    activeCards.forEach(c=>{
+      if(!colsVisiveis.some(col=>col.id===c.col)) return;
+      const tagsDoCard=getCardTags(c);
+      const tMatch=TAGS.find(t=>tagsDoCard.includes(t.id));
+      if(tMatch) porColPorTag[tMatch.id][c.col]++;
+      else semTagPorCol[c.col]++;
+    });
+    const linhasComDado=TAGS.filter(t=>colsVisiveis.some(col=>porColPorTag[t.id][col.id]>0));
+    const temSemTag=Object.values(semTagPorCol).some(n=>n>0);
+    if(!linhasComDado.length && !temSemTag) return '';
+    const th=(txt)=>'<th style="text-align:center;padding:5px 8px;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--glass-b);white-space:nowrap;">'+txt+'</th>';
+    const td=(txt,cor)=>'<td style="text-align:center;padding:5px 8px;color:'+(cor||'var(--txt2)')+';border-bottom:1px solid rgba(255,255,255,.04);">'+txt+'</td>';
+    let html='<div style="margin-top:14px;">';
+    html+='<div style="font-size:11px;font-weight:700;color:var(--txt2);margin-bottom:6px;">'+titulo+'</div>';
+    html+='<div style="overflow-x:auto;"><table style="border-collapse:collapse;font-size:10.5px;width:100%;">';
+    html+='<tr><th style="text-align:left;padding:5px 8px;color:var(--txt3);font-weight:600;border-bottom:1px solid var(--glass-b);white-space:nowrap;">'+coluna1+'</th>'
+      + colsVisiveis.map(col=>th(esc((col.name||col.id).substring(0,10)))).join('') + th('Total') + '</tr>';
+    linhasComDado.forEach(t=>{
+      const total=colsVisiveis.reduce((s,col)=>s+porColPorTag[t.id][col.id],0);
+      html+='<tr><td style="padding:5px 8px;color:var(--txt2);border-bottom:1px solid rgba(255,255,255,.04);white-space:nowrap;">'+esc(t.label)+'</td>'
+        + colsVisiveis.map(col=>{ const n=porColPorTag[t.id][col.id]; return td(n||'·', n?'var(--txt)':'var(--txt3)'); }).join('')
+        + td('<b>'+total+'</b>','var(--txt)') + '</tr>';
+    });
+    if(temSemTag){
+      const totalSem=Object.values(semTagPorCol).reduce((s,n)=>s+n,0);
+      html+='<tr><td style="padding:5px 8px;color:var(--txt3);font-style:italic;white-space:nowrap;">Sem definição</td>'
+        + colsVisiveis.map(col=>td(semTagPorCol[col.id]||'·')).join('') + td('<b>'+totalSem+'</b>') + '</tr>';
+    }
+    html+='</table></div></div>';
+    return html;
+  }
+  let out='';
+  if(submarcaAtivo) out+=bloco('🏷️ Submarca por coluna','Submarca',SUBMARCA_TAGS);
+  if(canalVendaAtivo) out+=bloco('🛒 Canal de venda por coluna','Canal',CANAL_VENDA_TAGS);
+  el.innerHTML=out;
 }
 
 async function _boardDataTrendChart(){
@@ -19532,7 +19592,7 @@ function _renderCFD(){
   const el = document.getElementById('boarddata-cfd'); if(!el) return;
   const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
   const ativos = cards.filter(c=>!c.archived);
-  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; return; }
+  if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; window._cfdResumo=null; return; }
   const hoje = new Date();
   const dias = [];
   for(let i=CFD_DIAS-1; i>=0; i--){ const d=new Date(hoje); d.setDate(d.getDate()-i); dias.push(_localDateStrBoard(d)); }
@@ -19544,7 +19604,7 @@ function _renderCFD(){
   // substituir o que já está configurado em ⚙ Config → Fluxo.
   const cfdHidden = new Set([...(flowConfig.cfdHiddenCols||[]), ..._bdHiddenCols]);
   const visibleCols = columns.filter(c=>!cfdHidden.has(c.id));
-  if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; return; }
+  if(!visibleCols.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Todas as colunas estão ocultas do CFD — ajuste em ⚙ Config → Fluxo.</div>'; window._cfdResumo=null; return; }
   const colIds = visibleCols.map(c=>c.id);
   const colInfo = Object.fromEntries(visibleCols.map(c=>[c.id,c]));
   const serie = Object.fromEntries(colIds.map(id=>[id,[]]));
@@ -19556,6 +19616,21 @@ function _renderCFD(){
     });
     colIds.forEach(id=>serie[id].push(contagem[id]));
   });
+  // Resumo compacto pro "🤖 Ponto de vista do Agente Ágil" (pedido direto:
+  // "ele deve levar em consideração o CFD e o Burndown! e explicar ambos")
+  // — em vez de mandar as 21 séries diárias inteiras (pesado e o LLM não
+  // precisa do dia-a-dia pra apontar gargalo), manda só início×atual por
+  // coluna: uma faixa que cresceu MUITO entre os dois pontos é gargalo
+  // visível sem precisar reconstruir o gráfico no texto.
+  window._cfdResumo = {
+    periodoDias: dias.length,
+    colunas: colIds.map(id=>{
+      const inicio=serie[id][0]||0, atual=serie[id][serie[id].length-1]||0;
+      return { nome: colInfo[id]?.name||id, contagemInicioPeriodo: inicio, contagemAtual: atual, delta: atual-inicio };
+    }),
+    totalInicioPeriodo: colIds.reduce((s,id)=>s+(serie[id][0]||0),0),
+    totalAtual: colIds.reduce((s,id)=>s+(serie[id][serie[id].length-1]||0),0),
+  };
   const maxTotal = Math.max(1, ...dias.map((_,i)=>colIds.reduce((s,id)=>s+serie[id][i],0)));
   const W=Math.max(360,dias.length*26), H=180, padL=6, padR=6, padT=10, padB=22;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
@@ -19646,12 +19721,12 @@ function _renderBurndown(){
   const start = agilCfg?.sprintStart, end = agilCfg?.sprintEnd;
   if(!start || !end){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Configure início e fim da sprint em ⚙ Config → Ágil pra ver o burndown.</div>';
-    return;
+    window._burndownResumo=null; return;
   }
   const dStart = new Date(start+'T00:00:00'), dEnd = new Date(end+'T00:00:00');
   if(isNaN(dStart.getTime()) || isNaN(dEnd.getTime()) || dEnd<=dStart){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Datas de sprint inválidas em ⚙ Config → Ágil.</div>';
-    return;
+    window._burndownResumo=null; return;
   }
   const hojeStr = _localDateStrBoard(new Date());
   const dias=[]; for(let d=new Date(dStart); d<=dEnd; d.setDate(d.getDate()+1)) dias.push(_localDateStrBoard(new Date(d)));
@@ -19670,7 +19745,7 @@ function _renderBurndown(){
     return !doneAt || doneAt>=startStr;
   });
   const total = escopo.length;
-  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; return; }
+  if(!total){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Nenhum card no escopo da sprint pra calcular o burndown.</div>'; window._burndownResumo=null; return; }
   const restantes = dias.map(dia=>{
     if(dia>hojeStr) return null; // dias futuros: sem dado real ainda
     return escopo.filter(c=>{
@@ -19678,6 +19753,26 @@ function _renderBurndown(){
       return !doneAt || doneAt>dia;
     }).length;
   });
+  // Resumo compacto pro "🤖 Ponto de vista do Agente Ágil" (mesmo pedido do
+  // CFD acima) — restante real de hoje vs. o que a linha ideal (linear)
+  // preveria nesse mesmo dia, já classificado em texto (o LLM não precisa
+  // reconstruir a comparação sozinho a partir de 2 números soltos).
+  {
+    const comDado = dias.map((d,i)=>({d,i,v:restantes[i]})).filter(x=>x.v!=null);
+    const ultimo = comDado[comDado.length-1];
+    const idealNoMesmoDia = ultimo!=null ? Math.round(total - (total/(dias.length-1||1))*ultimo.i) : null;
+    let status = null;
+    if(ultimo && idealNoMesmoDia!=null){
+      status = ultimo.v < idealNoMesmoDia ? 'adiantado em relação ao ideal' : (ultimo.v > idealNoMesmoDia ? 'atrasado em relação ao ideal' : 'exatamente no ritmo ideal');
+    }
+    window._burndownResumo = {
+      inicioSprint: startStr, fimSprint: endStr,
+      totalEscopo: total,
+      restanteAtual: ultimo ? ultimo.v : null,
+      idealNoMesmoDia,
+      status,
+    };
+  }
   const W=Math.max(360,dias.length*30), H=170, padL=8, padR=8, padT=14, padB=22;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
   const toY = v => padT + (H-padT-padB) - (v/total)*(H-padT-padB);
@@ -20694,6 +20789,23 @@ async function _pedirResumoMeuDia(){
 // mesmos números que o painel já mostra na tela).
 const AGENTE_AGIL_ANALISE_DADOS_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/agenteAgilAnaliseDados';
 let _analiseDadosEmVoo = false;
+// Wrapper só do contexto 'board_insights' (pedido direto: "na leitura do
+// agente agil em insights, ele deve levar em consideração o CFD e o
+// Burndown! e explicar ambos"). CFD/Burndown são lazy — só a aba "📈 CFD &
+// Burndown" os calcula (ver _boardDataSwitchTab()) — então quem clica
+// "Ponto de vista" direto na aba Insights, sem nunca ter aberto a outra
+// aba, teria window._cfdResumo/_burndownResumo undefined. Roda os dois
+// cálculos aqui antes de montar o resumo: são 100% locais (cards já
+// carregados, flow.log já gravado), sem leitura nova do Firebase — barato
+// rodar de novo mesmo se a aba já tiver sido aberta antes.
+function _pedirAnaliseBoardInsights(){
+  _renderCFD();
+  _renderBurndown();
+  if(!window._bdInsightsResumoCache) window._bdInsightsResumoCache = {};
+  window._bdInsightsResumoCache.cfd = window._cfdResumo || null;
+  window._bdInsightsResumoCache.burndown = window._burndownResumo || null;
+  _pedirAnaliseDados('board_insights', window._bdInsightsResumoCache, 'bd-insights-agente-btn', 'bd-insights-agente-box');
+}
 async function _pedirAnaliseDados(contexto, resumo, btnId, boxId){
   if(_analiseDadosEmVoo) return;
   const cu = window._currentUser; if(!cu) return;
@@ -24599,8 +24711,8 @@ const HELP_CONTENT = {
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
-    { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca, ganha também a distribuição por submarca. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
-    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
+    { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
     { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],

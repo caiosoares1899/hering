@@ -33,6 +33,13 @@ test('CONTEXTOS: só board_insights e criativos existem, cada um com prompt pró
   assert.ok(CONTEXTOS.criativos.prompt.includes('Criativos'));
 });
 
+test('CONTEXTOS.board_insights: prompt manda considerar E explicar CFD e Burndown explicitamente (pedido direto, 2026-09-11)', () => {
+  const p = CONTEXTOS.board_insights.prompt;
+  assert.ok(p.includes('CFD'), 'prompt precisa mencionar CFD');
+  assert.ok(p.includes('Burndown'), 'prompt precisa mencionar Burndown');
+  assert.ok(/SEMPRE coment/i.test(p), 'prompt precisa instruir a SEMPRE comentar os dois, não só considerar em silêncio');
+});
+
 test('buildUserMessage: inclui o resumo agregado como JSON e o rótulo do contexto certo', () => {
   const msg = buildUserMessage('criativos', { total: 10, atrasados: 2 });
   assert.ok(msg.includes('"total":10'));
