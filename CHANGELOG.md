@@ -18,6 +18,35 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.641 — 2026-09-11 · Promove pra prod — Sino de notificações filtra no servidor
+
+Promove pra produção o lote v8.30.639-dev → v8.30.641-dev de
+`kanban-dev.html`, validado pelo usuário (testou o script de console,
+achou um bug real no fix, corrigido no mesmo lote e revalidado — "agora
+passou!"). Ver entradas completas em `kanban-dev.html` logo abaixo pro
+detalhe técnico.
+
+**Sino de notificações** (`loadNotifs()`): mantinha um `onValue` sempre
+ligado em `kanban/usuarios/{uid}/notificacoes` sem filtro server-side —
+toda mudança (nova notificação, marcar como lida, expirar por TTL)
+redisparava o listener com o node INTEIRO, filtrado só no cliente. Mesma
+classe de ineficiência do bug de `comunicados` (v8.30.631), achada
+aplicando o Passo 4.1 novo da skill `/otimizaçãoderotina` numa área
+antiga (feature existe desde v8.30.64-dev). Corrigido com
+`query(orderByChild('ts'), limitToLast(80))` — sem mudar schema, sem
+migração.
+
+Achado incidental no meio do processo (1ª versão do fix usava
+`orderByKey()`, corrigido no mesmo lote antes de promover): notificações
+de id determinístico (`due_today_`/`mention_`/`reuniao-`/etc.) não
+compartilham o prefixo `'n'+timestamp` das demais, então ordenar por
+CHAVE as excluía do resultado mesmo sendo recentes. `orderByChild('ts')`
+resolve sem essa armadilha.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido (braces -1, parens +1 — artefato de comentário,
+não desbalanço real).
+
 ### v8.30.639 — 2026-09-11 · Promove pra prod — Personalização baseada em rotina + Dados do Board + fixes
 
 Promove pra produção o lote v8.30.631-dev → v8.30.639-dev de
