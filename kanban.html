@@ -6136,7 +6136,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.629</div>
+<div class="version">v8.30.631</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6200,6 +6200,16 @@ window._onValue=onValue; window._update=update; window._remove=remove;
 window._runTransaction=runTransaction;
 window._onChildAdded=onChildAdded; window._onChildChanged=onChildChanged; window._onChildRemoved=onChildRemoved;
 window._increment=increment;
+// query/orderByChild/equalTo: achado real (/investigação de consumo, 2026-09-11) --
+// _refreshComunicados() (mais abaixo, já no <script> clássico que começa
+// depois deste módulo fechar) chamava essas 3 funções direto, sem passar por
+// window._x como todo o resto -- bindings de import de módulo ES não
+// atravessam pro <script> clássico seguinte, então query(...) SEMPRE lançava
+// ReferenceError ali, silenciosamente engolido pelo try/catch, fazendo a
+// query filtrada de comunicados cair no fallback de árvore inteira em 100%
+// das chamadas desde que essa feature existe (confirmado via
+// _dbgTrack('comunicados_fallback')).
+window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
 window._auth=auth; window._provider=provider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -24585,6 +24595,7 @@ const HELP_CONTENT = {
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
+    { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
     { icon:'📣', title:'Campanhas & Coleções', text:'Clique em 📣 Campanhas na toolbar para abrir a visão de campanhas e coleções (Dia dos Pais, Verão, Inverno...). Cada campanha é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro de cada campanha você vê o fluxo dos cards vinculados e um histórico rico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Ao escrever um registro, use a barra de formatação (negrito, itálico, sublinhado, link) e @ para mencionar pessoas ou @card: para vincular cards — igual funciona na edição de card. Use o botão ✏️ Editar para configurar nome, mote, período, squads participantes (multi-squad) e o tema visual da estação (Inverno ❄️, Verão ☀️, Alto Verão 🔥, Outono 🍂, Primavera 🌸).\n\n📈 Dados de Produção: aba ao lado da timeline, com estatísticas dos cards vinculados (status do fluxo, prioridade, responsável, squad) — mesma linguagem visual do Controle de Criativos. Tem o mesmo checkbox "🧩 Incluir supercards" pra ligar/desligar se o card container de um supercard entra na contagem total.' },
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
@@ -33801,6 +33812,9 @@ let _comunicadoDismissedSession = new Set();
 // antes) estava disparando sistematicamente. Subir o intervalo de 3 pra
 // 12min corta o volume proporcionalmente (~1/4) mesmo no pior caso, sem
 // depender de resolver a causa raiz do fallback.
+// ATUALIZAÇÃO (2026-09-11): causa raiz confirmada e corrigida — ver
+// comentário em _refreshComunicados() logo abaixo. O fallback estava
+// disparando em 100% das chamadas, não "sistematicamente" por inferência.
 const COMUNICADOS_POLL_MS = 12*60000; // 12 minutos (era 3 — avisos não são tempo-real)
 let _lastComunicadosRefresh = 0;
 
@@ -33829,29 +33843,29 @@ function _refreshComunicados(){
   // servidor — mesmo resultado visível, sem baixar o histórico inativo.
   //
   // Blindagem (achado real: "query is not defined" reportado por uma
-  // pessoa, nunca reproduzido — código conferido várias vezes contra o que
-  // estava sendo servido pra ela, sempre batendo; SDK do Firebase confirmado
-  // exportando `query` normalmente). Sem causa raiz confirmada, mas essa
-  // função é chamada SÍNCRONA como a 1ª linha de _initComunicados() — se
-  // query() lançar por qualquer motivo, a exceção interrompia a função
-  // ali mesmo, e o setInterval()/listener de visibilitychange logo abaixo
-  // NUNCA chegavam a ser registrados: quem for afetado ficava com
-  // Mural/avisos quebrados pelo resto da sessão, em silêncio. Try/catch
-  // aqui cai pro comportamento antigo (busca a árvore inteira, sem filtro
-  // no servidor) se o filtro falhar — o filtro de "ativo" logo abaixo já
-  // roda no cliente de qualquer forma, então o fallback continua
-  // funcionalmente correto, só sem a economia de banda.
-  //
-  // Instrumentação (2026-09-02): a teoria acima nunca foi confirmada nem
-  // descartada de verdade — o consumo real (ver comentário em
-  // COMUNICADOS_POLL_MS) bate exatamente com o fallback disparando quase
-  // sempre, mas isso é inferência, não prova. _dbgTrack('comunicados_fallback', ...)
-  // só acumula quando o catch roda — próxima vez que alguém puxar o
-  // relatório de bytes, dá pra confirmar direto pela presença (ou
-  // ausência) dessa chave, em vez de inferir pelo tamanho.
+  // pessoa em 2026-08-12). CAUSA RAIZ CONFIRMADA em 2026-09-11 (não era
+  // rede/proxy corrompendo o download do SDK, teoria nunca provada): este
+  // <script> é um bloco CLÁSSICO separado do <script type="module"> que
+  // faz `import {query, orderByChild, equalTo, ...}` (fecha na linha
+  // ~6269, bem antes daqui) — bindings de import de módulo ES não
+  // atravessam pra um <script> clássico seguinte. query()/orderByChild()/
+  // equalTo() bare SEMPRE lançavam ReferenceError aqui, em 100% das
+  // chamadas, desde que essa query existe — confirmado batendo
+  // _dbgTrack('comunicados_fallback', ...) byte a byte contra
+  // _dbgTrack('comunicados', ...) (idênticos, todo dia, toda squad, desde
+  // que a instrumentação existe). Fix: query/orderByChild/equalTo agora
+  // vêm penduradas em window (window._query/_orderByChild/_equalTo,
+  // mesmo padrão de window._ref/window._get), setadas no módulo acima.
+  // Try/catch continua aqui como rede de segurança de verdade (qualquer
+  // outra falha ainda cai pro comportamento antigo, sem quebrar
+  // Mural/avisos) — mas o motivo que disparava sempre já não existe mais.
+  // Essa função é chamada SÍNCRONA como a 1ª linha de _initComunicados()
+  // — por isso o try/catch é indispensável aqui: sem ele, uma falha síncrona
+  // interrompe _initComunicados() inteira e o setInterval()/listener de
+  // visibilitychange logo abaixo nunca chegam a ser registrados.
   let _comunicadosPromise, _comunicadosFellBack=false;
   try{
-    const _comunicadosQuery = query(fb('kanban/comunicados'), orderByChild('ativo'), equalTo(true));
+    const _comunicadosQuery = window._query(fb('kanban/comunicados'), window._orderByChild('ativo'), window._equalTo(true));
     _comunicadosPromise = window._get(_comunicadosQuery);
   }catch(e){
     console.warn('[comunicados] query() falhou, caindo pro fallback sem filtro server-side:', e);
