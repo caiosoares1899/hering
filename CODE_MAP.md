@@ -2445,6 +2445,11 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 
 ### Dashboard consolidado
 - `loadAll()` — L10127 / `renderAll()` — L9920
+- `renderPainelInsights()` — L6111 — stat cards + donuts cross-squad
+  (prioridade, carga por responsável, riscos, parados, OKR por coluna,
+  por submarca, por canal de venda — os 2 últimos só entram se pelo
+  menos uma squad visível tiver o campo ativo, mesmo padrão de
+  `renderBoardDataInsights()` em kanban-dev.html, mas agregado)
 - `renderOKR()` — L5963
 - `renderBlockers()` — L10701 / `resolveAllBlockers()` — L10404
 - `renderRiscos()` — L6007

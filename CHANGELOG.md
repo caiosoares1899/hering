@@ -14631,6 +14631,30 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.41 · painel-dev — 2026-09-11 — Dashboard consolidado ganha donut "Por canal de venda" (faltava, só "Por submarca" existia)
+
+Pedido direto do usuário: "as squads que tem o 'canais' precisa colocar
+esse filtro no dashboard! submarcas tb". `kanban-dev.html` já tem o
+donut "Por canal de venda" nos Insights de UM squad (📊 Dados do Board
+→ 💡 Insights) desde que o campo Canal existe (v8.30.???-dev, 09-10) —
+mas o Dashboard consolidado do painel (`renderPainelInsights()`,
+cross-squad, agregando todas as squads visíveis de uma vez) só tinha o
+donut irmão "Por submarca", nunca ganhou o de Canal. Submarca em si já
+funcionava certinho no painel — nada pra corrigir ali, só replicar o
+mesmo padrão pro Canal.
+
+**Adicionado**: `CANAL_VENDA_TAGS` (mesmo array fixo de ids/labels do
+kanban), `canalVendaAtivo` no `squadData` (lido de
+`config/canal_venda_ativo`, mesmo path que o kanban escreve — sem custo
+novo de Firebase, já vem dentro do payload que o polling de 60s busca)
+e o bloco do donut "🛒 Por canal de venda" em `renderPainelInsights()`,
+logo depois do de submarca — só aparece se pelo menos uma squad visível
+tiver o campo Canal ativo (mesmo guard condicional de submarca).
+`CODE_MAP.md` ganhou a entrada de `renderPainelInsights()` (estava
+ausente da seção "Dashboard consolidado" mesmo já existindo há tempos).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### painel-dev.html v3.40 · painel-dev — 2026-09-11 — Fix: backup global nunca rodava se o login disparasse null antes do usuário (mesma classe do fix de kanban.html v8.30.629)
 
 Pedido explícito: `/monitorarbugs` procurando especificamente por
