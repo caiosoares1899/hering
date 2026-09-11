@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.631 — 2026-09-11 · Promove pra prod — Fix: consumo de bytes de `comunicados` + doc "Tema automático"
+
+Promove pra produção o lote v8.30.630-dev → v8.30.631-dev de
+`kanban-dev.html`, validado (teste de console rodado pelo usuário em dev,
+todos os 4 checks ✅). Ver entradas completas em `kanban-dev.html` logo
+abaixo pro detalhe técnico.
+
+**Fix principal**: investigação de consumo do Firebase (`comunicados`
+respondia por 181.42 MB em 30 dias, o maior path isolado do sistema)
+achou a causa raiz real de um problema que já tinha passado por duas
+"correções" anteriores sem nunca ter sido confirmado com dado real —
+`query()`/`orderByChild()`/`equalTo()` eram chamados de um `<script>`
+clássico que não tem acesso aos bindings importados no `<script
+type="module">` anterior, então a query filtrada de comunicados **nunca
+executava de verdade**: toda chamada caía no fallback de baixar a árvore
+inteira. Corrigido pendurando as 3 funções em `window` (mesmo padrão já
+usado por `window._ref`/`window._get`). Sem mudança de comportamento
+visível — só volume trafegado cai.
+
+**Incluído na mesma leva**: entrada nova na Central de Ajuda pro "🕐 Tema
+automático" (puramente documentação).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline conhecido (braces -1, parens -1 — artefato do comentário
+com `<script>` literal, não desbalanço real).
+
 ### v8.30.629 — 2026-09-11 · Promove pra prod — Fix: board abria em branco pós-login (precisava de F5)
 
 Promove pra produção o v8.30.629-dev de `kanban-dev.html`, validado e
