@@ -3124,6 +3124,53 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.631-dev — 2026-09-11 — Fix: causa raiz real do consumo de `comunicados` (2 "correções" anteriores nunca tinham resolvido)
+
+Investigação de consumo do Firebase pedida direto pelo usuário
+(`debugBytesAllSquads()`, novo script de diagnóstico multi-squad criado
+nesta mesma sessão): `comunicados` sozinho respondia por 181.42 MB em 30
+dias (18% do consumo total do sistema, todas as squads somadas) — o
+maior path isolado de todos.
+
+Esse path já tinha tido **duas rodadas de "correção" anteriores**
+(v8.30.400-dev/12-08: query filtrada `orderByChild('ativo').equalTo(true)`;
+v8.30.555-dev/02-09: poll 3min→12min + instrumentação
+`_dbgTrack('comunicados_fallback', ...)` pra confirmar se o fallback sem
+filtro ainda disparava) — nenhuma delas resolveu de verdade, porque
+nenhuma tinha confirmado a causa raiz com dado real. Cruzando os dados do
+`_debug_bytes_daily` de todas as squads via a nova instrumentação: **todo
+dia, toda squad, desde que a instrumentação existe, a entrada
+`comunicados_fallback` bate byte a byte com a entrada `comunicados`** —
+ou seja, o fallback sem filtro estava disparando em **100% das chamadas**,
+não "sistematicamente" por inferência como o comentário anterior dizia.
+
+**Causa raiz confirmada**: `query`/`orderByChild`/`equalTo` são
+importados via `import {...} from '...firebase-database.js'` dentro do
+`<script type="module">` que fecha na linha ~6269 — mas
+`_refreshComunicados()` (que os chama) vive no `<script>` **clássico**
+seguinte (abre na linha 6271). Bindings de import de módulo ES não
+atravessam pra um `<script>` clássico depois — `query(...)` bare SEMPRE
+lançava `ReferenceError: query is not defined` ali, silenciosamente
+engolido pelo try/catch (adicionado em 12-08 depois de uma usuária
+reportar esse exato erro — na época creditado a possível
+corrupção de rede/proxy, teoria nunca confirmada nem descartada). A query
+filtrada por `ativo:true` nunca tinha chegado a executar uma vez sequer.
+
+**Fix**: `query`/`orderByChild`/`equalTo` agora são penduradas em
+`window` (`window._query`/`window._orderByChild`/`window._equalTo`) no
+bloco do módulo, mesmo padrão já usado pra `window._ref`/`window._get`/
+etc. — `_refreshComunicados()` passa a chamá-las via `window._x`, cruzando
+corretamente o limite entre os dois `<script>`. Try/catch continua no
+lugar como rede de segurança (qualquer outra falha ainda cai pro
+comportamento antigo sem quebrar Mural/avisos), só que agora o motivo que
+disparava sempre deixou de existir. Comentários no código atualizados pra
+registrar a causa confirmada em vez da teoria antiga.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço de
+chaves/parênteses do arquivo (-1/-1, mesmo artefato conhecido do
+comentário que menciona `<script>` literalmente, documentado na skill de
+otimização — não é desbalanço real).
+
 ### v8.30.630-dev — 2026-09-11 — /atualizarhelpcontent: "Tema automático" tinha tooltip mas nenhuma entrada na Central de Ajuda
 
 Puramente documentação, sem mudança de comportamento. Rodada de
