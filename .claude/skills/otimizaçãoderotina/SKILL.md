@@ -269,5 +269,15 @@ baseline atual pra próxima rodada comparar.
   (32508 linhas), CSS ~212.5KB, script principal ~1.595MB, 17/15
   timers, 33 `backdrop-filter`, zero `data:image` embutido.
 
+- **v8.30.629-dev (2026-09-11)**: limpa. Crescimento de timers (17/15→
+  18/17) e `backdrop-filter` (33→34) proporcional a features legítimas
+  do período (tema automático, board em branco pós-login, race
+  conditions em `functions/`, OKR — todas rastreadas individualmente:
+  `_themeAutoInterval` — pareado certinho — e um `waitFb` novo que se
+  autolimpa no próprio callback, sem leak). Baseline: HTML total
+  2.156.026 bytes (34293 linhas), CSS ~217KB, script principal
+  ~1.70MB, 18/17 timers, 34 `backdrop-filter`, zero `data:image`
+  embutido.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.
