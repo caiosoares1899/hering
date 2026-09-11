@@ -2807,7 +2807,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.43 · painel-dev</div>
+<div class="version">v3.44 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7929,8 +7929,15 @@ function loadPainelNotifs(){
   const notifQuery = window._query(notifRef, window._orderByChild('ts'), window._limitToLast(80));
   window._onValue(notifQuery, snap=>{
     const val = snap.val()||{};
-    const notifs = Object.values(val).filter(Boolean).map(n=>({
-      _kind:'notif', id:n.id, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
+    // Achado real (2026-09-11, testando o fix acima): Object.values() descarta
+    // a CHAVE de verdade do Firebase -- se um registro antigo/malformado não
+    // tiver o campo `id` (pode ter sobrado de bug ou escrita manual), virava
+    // "id:undefined" aqui, intraçável (clique/marcar-como-lida escreviam em
+    // notificacoes/undefined/read, criando mais lixo). loadNotifs() do
+    // kanban-dev.html já resolve isso certo (Object.entries + spread com a
+    // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
+    const notifs = Object.entries(val).filter(([,n])=>n).map(([nid,n])=>({
+      _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
       ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
     }));
     _mergePainelNotifs('notif', notifs);
