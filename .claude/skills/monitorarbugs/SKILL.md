@@ -731,6 +731,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   vira achado — confirmar com leitura da ordem de execução/do
   mecanismo redundante antes de reportar evita falso positivo.
 
+- **2026-09-11, "Dados do Board" — Submarca/Canal por coluna +
+  "🤖 Ponto de vista" lendo CFD/Burndown (#0a28d37) + fix do fallback de
+  `comunicados` (`window._query`/`_orderByChild`/`_equalTo`, #e7aab50)**:
+  pedido genérico, escolhido por prioridade 1 (código mais recente sem
+  rodada própria). **Sem achados** em nenhuma das duas áreas, depois de
+  investigação real: (1) `_boardDataSmCvPorColuna()`/`_pedirAnaliseBoardInsights()`
+  — confirmado que os 3 `activeCards` irmãos (Visão Geral, tabela nova,
+  Insights) usam exatamente os mesmos filtros documentados (a diferença
+  entre eles — Insights exclui coluna "done", Visão Geral não — é
+  intencional, não bug); confirmado via leitura de HTML que
+  `#boarddata-cfd`/`#boarddata-burndown` são estáticos (só o PAI tem
+  `display:none`, não o próprio elemento), então `_renderCFD()`/
+  `_renderBurndown()` sempre acham o elemento mesmo se a aba Fluxo nunca
+  foi aberta — a suposição inicial de "DOM lazy, resumo ficaria
+  undefined" não se confirmou; (2) a partir do fix real de `comunicados`
+  (bare `query()`/`orderByChild()`/`equalTo()` no `<script>` clássico —
+  binding de import de módulo ES não atravessa esse limite), grep por
+  TODOS os outros nomes importados no módulo (`signInWithPopup`,
+  `onAuthStateChanged`, `getMessaging`, `runTransaction`, `onChildAdded`
+  etc.) usados bare no restante do arquivo — nenhum achado (o único
+  "quase-achado", `set('m-crv-campanha-nome',...)` dentro de
+  `setCriativoFields()`, é uma `const set=(id,val)=>...` LOCAL que
+  sombra de propósito, sem ambiguidade de escopo). **Lição pra próxima
+  vez**: depois de confirmar um bug de "nome importado só existe no
+  módulo, chamado bare no script clássico", grepar TODOS os nomes
+  daquele `import {...}` (não só o que quebrou) é rápido e já provou
+  valer a pena antes (mesma técnica do achado de `auth-change`
+  duplicado em `painel-dev.html`) — aqui não achou nada NOVO, mas é
+  precisamente o tipo de checagem que só vale a pena fazer, não pular.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
