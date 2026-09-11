@@ -3532,6 +3532,12 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 <div class="toolbar" id="main-toolbar">
   <button class="btn btn-sm" data-tb-id="meudia" onclick="openMeuDia()" title="Meus cards de todos os squads, agrupados por prazo (atalho: Ctrl+D)" style="color:#ffd166;border-color:rgba(255,209,102,.35);">🌅 Meu Dia</button>
+  <!-- Escondido por padrão -- só aparece se a pessoa aceitou a sugestão
+       "personalização baseada em rotina" (_fixarMeusCardsNoHeader()) ou já
+       tinha essa preferência salva (_applyMeusCardsFixadoUI()). Mesmo botão/
+       mesma ação de "💡 Meus cards" na barra de Filtros (highlightMyCards()),
+       só que sempre visível, sem precisar abrir Filtros primeiro. -->
+  <button class="btn btn-sm" id="tb-meus-cards" data-tb-id="meuscards" onclick="highlightMyCards()" title="Destaca (e rola até) os cards que você é responsável ou participante" style="display:none;color:var(--warn);border-color:rgba(255,209,102,.35);">💡 Meus cards</button>
   <div class="tb-sep" data-tb-id="sep1"></div>
   <button class="btn btn-sm" data-tb-id="raia" onclick="toggleRaia()" id="btn-raia">⇔ Raia</button>
   <div style="position:relative;" id="sort-menu-wrap" data-tb-id="ordenacao">
@@ -6141,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.634-dev</div>
+<div class="version">v8.30.635-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12322,7 +12328,6 @@ const SUGESTAO_FILTRO_CAMPOS = ['tag','owner','priority','subteam','canalVenda',
 const SUGESTAO_FILTRO_LIMIAR_DIAS = 4; // combinação precisa aparecer em pelo menos 4 dias diferentes...
 const SUGESTAO_FILTRO_JANELA_DIAS = 10; // ...dentro dos últimos 10 dias de uso registrados
 function _sugestaoFiltroHistKey(){ return 'sugestao_filtro_hist_'+ACTIVE_SQUAD; }
-function _sugestaoFiltroRecusadosKey(){ return 'sugestao_filtro_recusados_'+ACTIVE_SQUAD; }
 // "Impressão digital" da combinação — só os campos rastreados, ordenados,
 // pra duas aplicações do MESMO filtro baterem sempre, mesmo que outros
 // campos (texto, due, blocker...) tenham mudado no meio.
@@ -12367,53 +12372,117 @@ function _registrarSinalFiltro(){
   window._sugestaoFiltroTimer = setTimeout(()=>_checarSugestaoFiltro(fp, hist), 1500);
 }
 function _checarSugestaoFiltro(fp, hist){
-  if(window._sugestaoFiltroSessionDismissed) return; // "agora não" já foi dito nesta sessão -- não insiste de novo
-  if(document.getElementById('sugestao-filtro-card')?.style.display==='flex') return; // já tem uma sugestão na tela -- nunca empilha
   const diasDistintos = new Set(hist.filter(h=>h.fp===fp).map(h=>h.date)).size;
   if(diasDistintos < SUGESTAO_FILTRO_LIMIAR_DIAS) return;
-  let recusados = [];
-  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoFiltroRecusadosKey())||'[]'); }catch(e){}
-  if(recusados.includes(fp)) return; // "não sugerir mais" pra essa combinação específica
   if(_filterPresets.some(p=>_filtroFingerprint(p.filtros||{})===fp)) return; // já é um preset salvo -- nada a oferecer
   const label = _filtroComboLabel(activeFilters);
   if(!label) return;
-  _mostrarSugestaoFiltro(fp, label);
+  _mostrarSugestaoRotina('filtro:'+fp, '<b style="color:var(--txt);">Você costuma filtrar assim:</b><br>'+esc(label)+'<br>Salvar como preset?', 'sim', '💾 Salvar', saveFilterPresetPrompt);
 }
-function _mostrarSugestaoFiltro(fp, label){
-  let card = document.getElementById('sugestao-filtro-card');
+// ── Mecanismo GENÉRICO de sugestão (compartilhado por todos os casos de
+// "personalização baseada em rotina" — filtro recorrente acima, "Meus
+// cards" fixado abaixo, e o que vier depois). Extraído pra 1 cartão só
+// depois que o 2º caso deixou claro que 2 mecanismos independentes
+// quebrariam a promessa de "nunca mais de 1 sugestão na tela ao mesmo
+// tempo" (cada um só sabia vigiar a si mesmo, não o outro tipo). Mesma
+// regra de sempre: 3 respostas (aceitar/agora não/não sugerir mais),
+// nunca aplica nada sozinho, sinal em localStorage (ver comentário
+// grande na declaração de SUGESTAO_FILTRO_CAMPOS acima pro raciocínio
+// completo de não usar Firebase aqui).
+function _sugestaoRecusadasKey(){ return 'sugestao_recusadas_'+ACTIVE_SQUAD; }
+function _sugestaoRecusadaPermanente(id){
+  let recusados = [];
+  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
+  return recusados.includes(id);
+}
+function _sugestaoRecusarPermanente(id){
+  let recusados = [];
+  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
+  if(!recusados.includes(id)) recusados.push(id);
+  safeLS.setItem(_sugestaoRecusadasKey(), JSON.stringify(recusados));
+}
+function _mostrarSugestaoRotina(id, mensagemHtml, respostaSim, labelSim, aoAceitar){
+  if(window._sugestaoRotinaSessionDismissed) return; // "agora não" já foi dito nesta sessão -- não insiste com NENHUM tipo de sugestão
+  if(_sugestaoRecusadaPermanente(id)) return;
+  const existente = document.getElementById('sugestao-rotina-card');
+  if(existente && existente.style.display==='flex') return; // já tem uma sugestão na tela -- nunca empilha, mesmo de outro tipo
+  let card = existente;
   if(!card){
     card = document.createElement('div');
-    card.id = 'sugestao-filtro-card';
+    card.id = 'sugestao-rotina-card';
     // bottom:90px pra não colidir com o .fab (bottom:22px) — ver CSS dele
     card.style.cssText = 'position:fixed;bottom:90px;right:22px;z-index:60;max-width:280px;background:rgba(var(--surface-rgb),.98);border:1px solid rgba(56,182,255,.3);border-radius:14px;padding:14px 16px;font-size:12px;color:var(--txt2);line-height:1.5;box-shadow:0 8px 32px rgba(0,0,0,.5);backdrop-filter:blur(14px);display:none;flex-direction:column;gap:10px;';
     document.body.appendChild(card);
   }
   card.innerHTML = `<div style="display:flex;align-items:flex-start;gap:8px;">
       <span style="font-size:16px;">💡</span>
-      <div style="flex:1;"><b style="color:var(--txt);">Você costuma filtrar assim:</b><br>${esc(label)}<br>Salvar como preset?</div>
+      <div style="flex:1;">${mensagemHtml}</div>
     </div>
     <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
-      <button class="btn btn-sm" style="font-size:10.5px;color:var(--txt3);" onclick="_sugestaoFiltroResponder('nunca')">Não sugerir mais</button>
-      <button class="btn btn-sm" style="font-size:10.5px;" onclick="_sugestaoFiltroResponder('agora_nao')">Agora não</button>
-      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoFiltroResponder('sim')">💾 Salvar</button>
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--txt3);" onclick="_sugestaoRotinaResponder('nunca')">Não sugerir mais</button>
+      <button class="btn btn-sm" style="font-size:10.5px;" onclick="_sugestaoRotinaResponder('agora_nao')">Agora não</button>
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder('${respostaSim}')">${esc(labelSim)}</button>
     </div>`;
   card.style.display = 'flex';
-  window._sugestaoFiltroAtual = fp;
+  window._sugestaoRotinaAtual = {id, respostaSim, aoAceitar};
 }
-async function _sugestaoFiltroResponder(resposta){
-  const fp = window._sugestaoFiltroAtual;
-  const card = document.getElementById('sugestao-filtro-card');
+async function _sugestaoRotinaResponder(resposta){
+  const atual = window._sugestaoRotinaAtual;
+  const card = document.getElementById('sugestao-rotina-card');
   if(card) card.style.display = 'none';
-  if(resposta==='nunca' && fp){
-    let recusados = [];
-    try{ recusados = JSON.parse(safeLS.getItem(_sugestaoFiltroRecusadosKey())||'[]'); }catch(e){}
-    if(!recusados.includes(fp)) recusados.push(fp);
-    safeLS.setItem(_sugestaoFiltroRecusadosKey(), JSON.stringify(recusados));
+  if(!atual) return;
+  if(resposta==='nunca'){
+    _sugestaoRecusarPermanente(atual.id);
   } else if(resposta==='agora_nao'){
-    window._sugestaoFiltroSessionDismissed = true;
-  } else if(resposta==='sim'){
-    await saveFilterPresetPrompt();
+    window._sugestaoRotinaSessionDismissed = true;
+  } else if(resposta===atual.respostaSim && atual.aoAceitar){
+    await atual.aoAceitar();
   }
+}
+// ── Caso #3: "Meus cards" usado na maioria das sessões -- fixar no
+// header? "💡 Meus cards" (highlightMyCards(), ver botão na barra de
+// Filtros) só é alcançável hoje abrindo Filtros primeiro. Quem usa
+// sempre ganha um atalho igual na toolbar principal (sempre visível),
+// sem precisar abrir Filtros só pra isso.
+const SUGESTAO_MEUSCARDS_JANELA_SESSOES = 5;
+const SUGESTAO_MEUSCARDS_LIMIAR = 0.8; // 80% das últimas sessões
+function _sugestaoMeusCardsKey(){ return 'sugestao_meuscards_sessoes_'+ACTIVE_SQUAD; }
+// Chamada 1x no boot (ver perto de _onRealAuthChange) -- marca o início
+// de MAIS UMA sessão na janela deslizante. usado:false até
+// highlightMyCards() rodar de verdade nesta mesma sessão.
+function _iniciarSessaoMeusCards(){
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  sessoes.push({usado:false});
+  if(sessoes.length > SUGESTAO_MEUSCARDS_JANELA_SESSOES) sessoes = sessoes.slice(-SUGESTAO_MEUSCARDS_JANELA_SESSOES);
+  safeLS.setItem(_sugestaoMeusCardsKey(), JSON.stringify(sessoes));
+}
+function _marcarUsoMeusCards(){
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(!sessoes.length) return; // _iniciarSessaoMeusCards() ainda não rodou nesta sessão -- nada a marcar
+  sessoes[sessoes.length-1].usado = true;
+  safeLS.setItem(_sugestaoMeusCardsKey(), JSON.stringify(sessoes));
+  clearTimeout(window._sugestaoMeusCardsTimer);
+  window._sugestaoMeusCardsTimer = setTimeout(_checarSugestaoMeusCards, 1500);
+}
+function _checarSugestaoMeusCards(){
+  if(_boardPrefsSquad.meus_cards_fixado) return; // já fixado -- nada a oferecer
+  let sessoes = [];
+  try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
+  if(sessoes.length < SUGESTAO_MEUSCARDS_JANELA_SESSOES) return; // ainda não tem sessões suficientes pra julgar
+  const usadas = sessoes.filter(s=>s.usado).length;
+  if(usadas/sessoes.length < SUGESTAO_MEUSCARDS_LIMIAR) return;
+  _mostrarSugestaoRotina('meuscards', '<b style="color:var(--txt);">Você usa "💡 Meus cards" na maioria das sessões</b><br>Fixar um atalho pra ele no topo do board, sem precisar abrir Filtros primeiro?', 'fixar', '📌 Fixar', _fixarMeusCardsNoHeader);
+}
+function _fixarMeusCardsNoHeader(){
+  _saveBoardPref('meus_cards_fixado', true);
+  _applyMeusCardsFixadoUI();
+  showToast('📌 "Meus cards" fixado no topo do board.');
+}
+function _applyMeusCardsFixadoUI(){
+  const btn = document.getElementById('tb-meus-cards');
+  if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
 function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(!passesHybridView(card)) return false;
@@ -17302,6 +17371,7 @@ function _euEstouNoCard(c){
 // time: achar os próprios cards num board lotado sem precisar filtrar.
 function highlightMyCards(){
   if(!window._currentUserInit){ if(typeof toast==='function') toast('Não consegui identificar seu usuário.'); return; }
+  _marcarUsoMeusCards(); // personalização baseada em rotina, ver comentário na declaração
   const mine = cards.filter(c=>!c.archived && _euEstouNoCard(c));
   if(!mine.length){ if(typeof toast==='function') toast('💡 Nenhum card seu neste squad.'); return; }
 
@@ -24798,7 +24868,7 @@ const HELP_CONTENT = {
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
     { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).' },
-    { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.' },
+    { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'⎋', title:'Esc fecha a tela aberta', text:'Aperte Esc pra fechar rapidinho qualquer tela aberta no momento — 📊 Dados do Board, ❓ Central de Ajuda, 🎬 Controle de Criativos, o modal do card, e por aí vai — sem precisar procurar o ✕ ou clicar fora. Mesma trava de segurança de sempre: se o card tiver alteração não salva, Esc pede confirmação antes de fechar, igual clicar no ✕ já fazia.\n\nDentro de um campo com seu próprio uso pro Esc (ex.: limpar o texto de uma busca, cancelar a edição de um item, fechar um dropdown de @menção), o Esc cuida disso primeiro — só fecha a tela inteira se apertar de novo (ou se aquele campo não tiver mais nada pra "desfazer" com Esc).' },
@@ -26110,6 +26180,7 @@ function _applyBoardPrefsSquad(){
   safeLS.setItem('cv_filtro_'+ACTIVE_SQUAD, JSON.stringify(activeFilters.canalVenda));
   renderCanalVendaQuickFilters();
   _applyFiltrosBtnUI();
+  _applyMeusCardsFixadoUI(); // personalização baseada em rotina, caso #3
 
   renderBoard();
 }
@@ -31505,7 +31576,7 @@ _onFbReady(()=>{
   // do Firebase estar pronto, não o login em si — usa _onRealAuthChange()
   // (ver comentário na declaração dela, acima) pra esperar o auth de
   // verdade, ignorando qualquer disparo intermediário com null.
-  _onRealAuthChange(()=>{ fbLoadAll(); _maybeConsumirTransferSquad(); });
+  _onRealAuthChange(()=>{ fbLoadAll(); _maybeConsumirTransferSquad(); _iniciarSessaoMeusCards(); });
   loadSquadsFromFirebase(() => applySquadIdentity()); // atualiza título com dados do Firebase
   loadAutoRules();
   loadFanoutTemplates();
