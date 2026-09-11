@@ -3150,6 +3150,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.635-dev — 2026-09-11 — 📌 "Fixar Meus cards na toolbar" + mecanismo de sugestão virou genérico (2º caso de "personalização baseada em rotina")
+
+Continuação direta do v8.30.634-dev (sugestão de preset de filtro) —
+2º dos 5 casos discutidos: **"Você usa 'Meus cards' na maioria das
+sessões — fixar no header?"**.
+
+**Refactor primeiro**: o mecanismo de cartão de sugestão (criado só pro
+caso do filtro) virou genérico (`_mostrarSugestaoRotina()`/
+`_sugestaoRotinaResponder()`, 1 único `#sugestao-rotina-card`) antes de
+adicionar o 2º caso — 2 mecanismos independentes quebrariam a garantia
+de "nunca mais de 1 sugestão na tela ao mesmo tempo" (cada um só sabia
+vigiar a si mesmo, não o outro tipo). Comportamento do caso do filtro
+não mudou, só a implementação por baixo.
+
+**Mecanismo do caso novo**: `_iniciarSessaoMeusCards()` marca 1 sessão
+nova (janela deslizante das últimas 5) toda vez que o login resolve de
+verdade; `highlightMyCards()` (botão "💡 Meus cards" da barra de
+Filtros) marca a sessão atual como "usada". Se 80%+ das últimas 5
+sessões usaram o recurso, sugere fixar um atalho equivalente
+(`data-tb-id="meuscards"`, escondido por padrão) direto na toolbar
+principal — aceitar chama `_saveBoardPref('meus_cards_fixado', true)`
+(mesma infra de preferência já usada por raia/ordenação/visão) e o
+botão vira visível, sem precisar abrir Filtros primeiro pra chegar
+nele. Mesmas 3 respostas de sempre, mesma regra de nunca mudar a
+interface sozinho.
+
+`HELP_CONTENT` (entrada "Meus cards") ganhou um sub-parágrafo.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+-1/-1 (artefato conhecido).
+
 ### v8.30.634-dev — 2026-09-11 — 💡 Sugestão automática de preset de filtro (1º caso de "personalização baseada em rotina")
 
 Pedido direto do usuário: proposta de personalização proativa — o app
