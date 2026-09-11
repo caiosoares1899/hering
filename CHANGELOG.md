@@ -3150,6 +3150,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.639-dev — 2026-09-11 — /monitorarbugs no caso #5 de "personalização baseada em rotina": sugestão de "Atrasados" disparava com 1 sessão só
+
+Achado numa rodada de `/monitorarbugs` nos 5 casos recém-implementados de
+personalização baseada em rotina (PRs #862-#866): o comentário do caso #5
+("Atrasados por horário") prometia que o padrão era observado **"ao longo
+de vários dias/sessões"**, mas a implementação só contava as últimas 12
+aberturas de card atrasado como eventos soltos, sem nenhuma checagem de
+dia — diferente do caso #2 (preset de filtro), que já resolve esse
+exato problema exigindo dias DISTINTOS.
+
+**Cenário real que expunha o bug**: uma sessão só de triagem, abrindo
+12+ cards atrasados em sequência dentro da mesma janela de 2h (workflow
+comum — "hoje vou limpar os atrasados"), já disparava a sugestão
+"🔴 Ativar" na hora, mesmo sendo 1 sessão isolada, não uma rotina.
+
+**Fix**: reaproveita o mesmo padrão do caso #2 — histórico vira
+`{bloco, date}` em vez de só `bloco`, idempotente por dia+bloco (repetir
+o mesmo bloco várias vezes no mesmo dia conta como 1 dia só), poda por
+janela de dias (`SUGESTAO_ATRASADOS_JANELA_DIAS=10`, igual
+`SUGESTAO_FILTRO_JANELA_DIAS`) e exige um mínimo de dias distintos
+(`SUGESTAO_ATRASADOS_LIMIAR_DIAS=4`, igual `SUGESTAO_FILTRO_LIMIAR_DIAS`)
+tanto no total quanto no bloco líder, além do limiar de concentração de
+50% já existente (agora medido em dias, não em eventos brutos).
+
+Não havia violação da regra de "nunca muda a UI sem consentimento" (a
+sugestão continua opcional, 3 respostas de sempre) — o problema era só a
+condição de disparo ficar mais frágil do que o próprio texto do código
+prometia.
+
+Demais 4 casos, o mecanismo genérico de sugestão (`_mostrarSugestaoRotina`)
+e os pontos de integração (`runAutoRules('assigned',...)`, `openCard()`,
+`applyFilters()`) auditados sem achado.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.638-dev — 2026-09-11 — 🔴 Atrasados por horário (5º e último caso de "personalização baseada em rotina")
 
 5º e último dos 5 casos discutidos: **"Você trabalha mais com cards

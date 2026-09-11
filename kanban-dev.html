@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.638-dev</div>
+<div class="version">v8.30.639-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30377,8 +30377,17 @@ function _cardAtrasadoMs(c){
 // AÇÃO), aqui o sinal é por HORA DO DIA — agrupa em blocos de 2h
 // (0-2,2-4,...,22-24) quantas vezes um card ATRASADO foi aberto em
 // cada bloco, ao longo de vários dias/sessões.
-const SUGESTAO_ATRASADOS_JANELA_EVENTOS = 12; // últimas 12 aberturas de card atrasado
-const SUGESTAO_ATRASADOS_LIMIAR = 0.5; // 50%+ concentrado no MESMO bloco de 2h
+// /monitorarbugs 2026-09-11: a 1ª versão contava só os últimos 12
+// eventos brutos, sem checar dia — uma varredura só de cards atrasados
+// numa tarde (workflow comum) já disparava a sugestão, contradizendo
+// este mesmo comentário ("ao longo de vários dias/sessões"). Corrigido
+// reaproveitando o padrão que o caso #2 (filtro recorrente) já resolve
+// pro mesmo problema: histórico vira {bloco, date}, idempotente por
+// dia+bloco (repetir o mesmo bloco 5x no mesmo dia conta como 1 dia
+// só), e exige um mínimo de dias DISTINTOS, não só de eventos.
+const SUGESTAO_ATRASADOS_LIMIAR_DIAS = 4; // bloco precisa se repetir em pelo menos 4 dias diferentes...
+const SUGESTAO_ATRASADOS_JANELA_DIAS = 10; // ...dentro dos últimos 10 dias de uso registrados
+const SUGESTAO_ATRASADOS_LIMIAR = 0.5; // 50%+ dos dias distintos registrados concentrados no MESMO bloco de 2h
 function _sugestaoAtrasadosKey(){ return 'sugestao_atrasados_hist_'+ACTIVE_SQUAD; }
 // Mesma checagem que passesFilter() já usa pro filtro due==='late'
 // (card com prazo, fora de coluna concluída, prazo já passou) — não
@@ -30394,22 +30403,31 @@ function _cardEstaAtrasadoAgora(c){
 }
 function _registrarSinalAtrasado(c){
   if(!_cardEstaAtrasadoAgora(c)) return;
+  const bloco = Math.floor(new Date().getHours()/2)*2; // 0,2,4,...,22
+  const hoje = _localDateStrBoard(new Date());
   let hist = [];
   try{ hist = JSON.parse(safeLS.getItem(_sugestaoAtrasadosKey())||'[]'); }catch(e){ hist=[]; }
-  const bloco = Math.floor(new Date().getHours()/2)*2; // 0,2,4,...,22
-  hist.push(bloco);
-  if(hist.length > SUGESTAO_ATRASADOS_JANELA_EVENTOS) hist = hist.slice(-SUGESTAO_ATRASADOS_JANELA_EVENTOS);
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate()-SUGESTAO_ATRASADOS_JANELA_DIAS);
+  const cutoffStr = _localDateStrBoard(cutoff);
+  hist = hist.filter(h=>h.date>=cutoffStr); // poda histórico velho
+  // Idempotente por dia+bloco — abrir 5 cards atrasados no mesmo bloco no
+  // mesmo dia conta como 1 dia só, não infla o contador à toa (mesma regra
+  // de _registrarSinalFiltro()).
+  if(!hist.some(h=>h.bloco===bloco && h.date===hoje)) hist.push({bloco, date:hoje});
   safeLS.setItem(_sugestaoAtrasadosKey(), JSON.stringify(hist));
   clearTimeout(window._sugestaoAtrasadosTimer);
   window._sugestaoAtrasadosTimer = setTimeout(()=>_checarSugestaoAtrasados(hist), 1500);
 }
 function _checarSugestaoAtrasados(hist){
-  if(hist.length < SUGESTAO_ATRASADOS_JANELA_EVENTOS) return;
   if(_boardPrefsSquad.visao_atrasados_bloco!=null) return; // já configurado -- nada a oferecer
-  const contagem = {};
-  hist.forEach(b=>{ contagem[b]=(contagem[b]||0)+1; });
-  const [blocoTop, qtd] = Object.entries(contagem).map(([k,v])=>[parseInt(k),v]).sort((a,b)=>b[1]-a[1])[0];
-  if(qtd/hist.length < SUGESTAO_ATRASADOS_LIMIAR) return;
+  const diasTotais = new Set(hist.map(h=>h.date)).size;
+  if(diasTotais < SUGESTAO_ATRASADOS_LIMIAR_DIAS) return; // ainda não tem dias suficientes pra julgar
+  const diasPorBloco = {};
+  hist.forEach(h=>{ (diasPorBloco[h.bloco] = diasPorBloco[h.bloco] || new Set()).add(h.date); });
+  const [blocoTopStr, diasSet] = Object.entries(diasPorBloco).sort((a,b)=>b[1].size-a[1].size)[0];
+  const blocoTop = parseInt(blocoTopStr), diasBlocoTop = diasSet.size;
+  if(diasBlocoTop < SUGESTAO_ATRASADOS_LIMIAR_DIAS) return; // o bloco líder ainda não bateu o mínimo de dias distintos
+  if(diasBlocoTop/diasTotais < SUGESTAO_ATRASADOS_LIMIAR) return;
   const ini=blocoTop, fim=blocoTop+2;
   _mostrarSugestaoRotina('atrasados:'+blocoTop, '<b style="color:var(--txt);">Você trabalha mais com cards atrasados entre '+ini+'h e '+fim+'h</b><br>Ativar automaticamente o filtro de atrasados nesse horário, ao abrir o board?', 'ativar', '🔴 Ativar', ()=>_ativarVisaoAtrasados(blocoTop));
 }
