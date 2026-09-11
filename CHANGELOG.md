@@ -3150,6 +3150,40 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.638-dev — 2026-09-11 — 🔴 Atrasados por horário (5º e último caso de "personalização baseada em rotina")
+
+5º e último dos 5 casos discutidos: **"Você trabalha mais com cards
+atrasados entre Xh e Yh — ativar essa visão no início do dia?"** — o
+mais caro/frágil dos cinco, deixado por último de propósito desde a
+discussão original (sinal mais ruidoso, amostra menor que os outros
+casos).
+
+**Sinal**: `openCard()` registra a hora (em blocos de 2h: 0-2, 2-4...)
+toda vez que o card aberto está atrasado NESTE INSTANTE
+(`_cardEstaAtrasadoAgora()` — mesma checagem que `passesFilter()` já
+usa pro filtro `due==='late'`; não reaproveita `_cardAtrasadoMs()` de
+propósito, que mede tempo acumulado histórico, não o estado atual).
+Nas últimas 12 aberturas de card atrasado, se 50%+ caíram no MESMO
+bloco de 2h, sugere ativar o filtro "Atrasados" automaticamente nesse
+horário.
+
+**Simplificação deliberada** (é o caso mais arriscado dos 5, decidido
+manter simples): em vez de ligar/desligar o filtro dinamicamente
+conforme o relógio passa (a versão "correta" teria que nunca
+sobrescrever um filtro que a pessoa já mexeu na mão no meio da sessão
+— complexidade real, risco real de bug), aplica o filtro só 1x no
+boot — mesmo guard "1x por sessão" do caso #1 (visão inicial) — e só
+se a hora atual já cair dentro do bloco aprendido. "Ativar no início
+do dia", não "forçar o dia inteiro"; quem quiser tirar o filtro depois
+usa o "Limpar" de sempre.
+
+`HELP_CONTENT` (entrada "Filtros") ganhou um sub-parágrafo.
+
+Checks de rotina: `node --check` OK.
+
+**Com este PR, os 5 casos de "personalização baseada em rotina"
+discutidos com o usuário estão todos implementados.**
+
 ### v8.30.637-dev — 2026-09-11 — ⌨️ Atalho rápido de atribuição (4º caso de "personalização baseada em rotina")
 
 4º dos 5 casos discutidos: **"Você atribui cards ao mesmo grupo com

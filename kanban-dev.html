@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.637-dev</div>
+<div class="version">v8.30.638-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13953,6 +13953,7 @@ function openCard(id){
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
+  _registrarSinalAtrasado(c); // personalização baseada em rotina, caso #5
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
   if(c._autoVisto===false){
     c._autoVisto = true;
@@ -24915,7 +24916,7 @@ const HELP_CONTENT = {
     { icon:'⇔', title:'Raia por usuário ou tipo', text:'Clique em Raia na toolbar para reorganizar o board por responsável ou por tag. Cada linha mostra uma pessoa com suas tarefas distribuídas pelas colunas. Ideal para visualizar a carga de trabalho do time.\n\n👤 O modo de Raia escolhido (e quais colunas você deixou colapsadas) é preferência sua, salva na sua conta — continua do jeito que você deixou mesmo se sair e voltar, ou trocar de computador.' },
     { icon:'🛤️', title:'Timeline', text:'Botão "🛤️ Timeline" na toolbar, ao lado de "📅 Calendários", troca o board de colunas por uma lista cronológica dos cards ATIVOS (não arquivados, fora de coluna de Concluído), agrupados pelo prazo — mesmo espírito de "🌅 Meu Dia", só que pro board inteiro, não só os seus cards.\n\nAgrupado em buckets progressivos: 🔴 Atrasado (ordenado do mais antigo pro mais recente — o mais antigo é a dívida real, e cada card mostra "Nd atrasado"), 📅 Hoje, 📅 Amanhã, 🗓️ Resto da semana, 🗓️ Próxima semana, ⏳ Depois, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Card fora de Hoje/Amanhã também mostra a data exata (ex.: "23 de set."), já que um bucket como "Resto da semana" cobre vários dias. Cada card mostra o mesmo tanto de informação que no board normal — avatar do responsável, 🔥🔴🟡🟢 prioridade, 🚧 impedimento, 🧩 supercard e tags — pra não precisar abrir o card só pra ver esses detalhes. Clique em qualquer card da lista pra abrir ele. Clique de novo no botão "🛤️ Timeline" pra voltar ao board de colunas.\n\n⚡ Ação no lugar: card sem prazo ganha um campo de data direto na linha (define o prazo sem abrir o modal); card atrasado ganha os atalhos "+1d"/"+1 sem" (adia o prazo com 1 clique). Cards já concluídos não ganham essas ações — só aparecem no bucket "✅ Concluído recente" (ver abaixo).\n\n🎯 Marcos de contexto: eventos do "📅 Calendários" (campanhas, reuniões, marcos do squad) aparecem como uma linha fina entre os cards, na posição cronológica certa dentro dos buckets Hoje/Amanhã/Resto da semana/Próxima semana/Depois — dá pra ver, por exemplo, que um card vence depois que uma campanha já começou, sem abrir o Calendário. Clique na linha do evento pra abrir o Calendário. Eventos pessoais espelhados do Google Agenda não entram (só os do squad).\n\n✅ Concluído recente: no fim da lista (recolhido), mostra os cards concluídos desde o início desta semana — fecha o "loop" da Timeline, que de resto só olha pra frente (pendências).\n\n🔎 Filtros direto na aba: uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) e dois atalhos — "💡 Só eu" filtra na hora pelos cards em que você é responsável ou participante (clique de novo pra tirar o filtro), e "🔭 Filtros" abre o mesmo painel de Filtros do board normal (responsável, tag, prioridade, prazo, texto…) — são os MESMOS filtros dos dois lados: o que você filtrar aqui continua filtrado se voltar pro board de colunas, e vice-versa. "💡 Meus cards" da toolbar (o de cima, que pisca os cards) também funciona normalmente estando na Timeline.\n\n📰 Feed de marcos: dê um DUPLO CLIQUE no cabeçalho de qualquer grupo de data (Hoje, Amanhã, ou uma data específica — não funciona em "Atrasado", que espalha por vários dias) pra abrir um feed estilo rede social do que foi executado no board naquele dia: cards criados 🆕, movidos de coluna 🔀, concluídos 🏁, 🎚️ prioridade alterada, 🚧 marcado como impedido, 🔓 desimpedido (inclusive quando o card desimpede sozinho por ter sido concluído — ver "Impedimentos" na Central de Ajuda) e 💯 checklist chegou a 100%, mais recente primeiro, com o horário de cada um. Cobre o board inteiro (não só os cards daquele grupo) e inclui cards já arquivados depois — é um retrospecto do que aconteceu, não some se o card foi guardado depois. Cada linha também traz avatar do responsável, tags e prioridade — com uma faixa colorida na lateral por tipo de marco pra diferenciar de relance, mesmo se o emoji específico não renderizar bem no seu navegador.\n\n🔎 O Feed TAMBÉM tem filtro próprio (diferente do filtro da Timeline principal, de propósito — o feed é um retrospecto do dia inteiro, não deveria encolher escondido só porque um filtro ficou ligado no board por outro motivo): os chips no topo (um por tipo de marco: 🆕/🔀/🏁/🎚️/🚧/🔓/💯) ligam/desligam cada tipo (clique pra esconder/mostrar), mais os selects de Responsável/Subtime/Tag e o atalho "💡 Só eu". Reseta sozinho toda vez que você abre um dia (ou período) novo.\n\n📜 Histórico (qualquer data, não só as da Timeline): dentro do Feed de marcos, 2 campos de data ("de" / "até") deixam escolher UM dia ou um PERÍODO qualquer — inclusive bem no passado ("o que a gente fez na semana do Cliente X, ano passado?"). Botão "📜 Histórico" na barra de topo da Timeline abre o Feed já nesse modo (começa em hoje, você troca as datas e clica "🔍 Buscar"); duplo clique num dia da Timeline também abre o Feed, só que já filtrado pra aquele dia exato — dá pra alargar o período dali mesmo, sem fechar o modal. Cards antigos só saem da busca se alguém excluir eles de vez em "🧹 Cards antigos" (ação manual, rara).\n\n🛤️ <b>Tornar visão inicial</b>: se você costuma abrir a Timeline logo nos primeiros minutos de boa parte das suas sessões, o app pode sugerir tornar ela sua visão inicial (abre direto na Timeline, sem precisar clicar no botão toda vez) — sugestão opcional, sempre com opção de aceitar/adiar/recusar, nunca aplicada sozinha.' },
     { icon:'↕', title:'Ordenar cards nas colunas (botão Ordenação)', text:'O botão ↕ Ordenação na toolbar controla a ordem dos cards em TODAS as colunas de uma vez. Opções:\n\n🔥 Prioridade (padrão) — críticos e altos aparecem primeiro.\n🕐 Data de criação — cards mais antigos primeiro.\n📅 Prazo (mais antigos primeiro) — cards com prazo mais próximo (mais urgentes) aparecem primeiro, em qualquer coluna. Quem não tem prazo definido fica no final, ordenado por prioridade.\n📅 Prazo (mais novos primeiro) — mesma lógica, invertida: prazos mais distantes primeiro.\n🕓 Movimentação — cards que mudaram de coluna mais recentemente aparecem primeiro.\n👕 Tamanho — ordena pela tag de tamanho (P → M → G → GG, ver dica "Tamanho (camiseta)"). Cards sem tag de tamanho ficam no final.\n🔤 Alfabética (A → Z) — ordena pelo título do card.\n🖐 Manual — ordenação 100% livre: arraste os cards pra qualquer posição dentro da coluna, do jeito que você quiser. Só funciona nesse modo (nos outros, arrastar dentro da mesma coluna não move nada, porque o card se reordenaria sozinho no próximo carregamento de qualquer forma).\n\n↕ Ordenação individual: cada coluna também tem seu próprio ↕ pequeno, ao lado do contador de cards no cabeçalho. Clique nele pra sobrescrever a ordenação SÓ daquela coluna (cicla entre criação → prazo → volta ao padrão geral), ou escolha qualquer uma das opções acima (inclusive Tamanho e Manual) em ⚙ da coluna. O ícone fica destacado em verde quando a coluna tem uma ordenação diferente do resto do board.\n\n🎯 Posição na prioridade: dentro de cards com a MESMA prioridade (ex.: todos os "Alta" de uma coluna), abra o ⚙ da coluna e arraste a lista em "Posição dentro da prioridade" pra decidir qual vem primeiro — uma priorização dentro da priorização, diferente do modo 🖐 Manual (que reordena TODOS os cards da coluna, não só o desempate). Quando alguma coluna tem cards reordenados assim, aparece um selo "🔀 manual" no cabeçalho dela; clique nele pra voltar todos ao padrão.\n\nÉ tudo preferência pessoal de visualização (exceto a Posição na prioridade, que é salva pra todo mundo ver igual) — fica salvo no seu navegador e não muda a ordem que os outros veem. A ordem definida no modo 🖐 Manual, porém, é salva no card (campo interno), então todo mundo vê a mesma posição, mesmo quem não está com esse modo ativo.' },
-    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).' },
+    { icon:'🔭', title:'Filtros', text:'Clique em Filtros para filtrar os cards por usuário, tag, prazo (atrasados, vencem hoje, próximos 7 dias), impedidos, com riscos mapeados ou Supercards (só cards que têm pelo menos 1 card filho ativo — ver dica "Supercard (cards filhos)"). Os filtros combinam. Para limpar, clique em Limpar.\n\n💾 <b>Presets de filtro</b>: montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado; "Bloqueados do time" — impedido + subtime)? Clique em "💾 Salvar preset" e dá um nome — ele vira um chip clicável ao lado do botão, que reaplica a combinação inteira de uma vez, sem precisar remontar campo por campo. Clique no ✕ do chip pra remover um preset que não usa mais. Limite de 10 presets por squad. Preferência 100% sua, sincroniza com a conta — funciona igual em qualquer computador que você entrar.\n\n💡 <b>Sugestão automática de preset</b>: se você aplicar a MESMA combinação de filtro (tag/responsável/prioridade/subtime/canal/submarca) em 4 dias diferentes, um cartão discreto aparece perguntando se quer salvar aquilo como preset — só uma sugestão, nunca salva nem muda nada sozinho. "Não sugerir mais" pra aquela combinação específica, "Agora não" pra só adiar. O que decide fica só neste navegador (não sincroniza entre aparelhos, é fácil de recalcular do zero).\n\n🔴 <b>Ativar "Atrasados" automaticamente num horário</b>: se você costuma abrir cards atrasados sempre no mesmo intervalo de 2h do dia, o app pode sugerir ativar o filtro "Atrasados" sozinho quando você abre o board dentro desse horário — só na primeira vez que você abre o board naquele dia, nunca liga/desliga sozinho no meio da sessão. Sugestão opcional, mesmas 3 respostas de sempre (aceitar/agora não/não sugerir mais).' },
     { icon:'💡', title:'Meus cards', text:'Na barra de Filtros, clique em 💡 Meus cards pra destacar (um brilho pulsante, sem esconder o resto do board) todos os cards em que você é responsável ou participante. Rola automaticamente até o primeiro — os demais já ficam pré-posicionados nas suas colunas, então mesmo os que estão fora da tela ou mais abaixo aparecem certinho assim que você rolar até lá.\n\n📌 <b>Fixar na toolbar principal</b>: se você usa "💡 Meus cards" na maioria das vezes que abre o board, o app pode sugerir sozinho fixar um atalho pra ele lá em cima, direto na barra de ferramentas (mesma ação, sem precisar abrir Filtros primeiro) — é só uma sugestão opcional (aceite/adie/recuse), nunca muda a tela sem você confirmar.' },
     { icon:'▼', title:'Minimizar colunas', text:'Backlog e Concluído podem ser minimizados clicando no botão ▼ no cabeçalho da coluna. Útil durante a daily para focar no que está em andamento. Clique em ▶ para expandir.' },
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
@@ -26316,6 +26317,24 @@ function _applyBoardPrefsSquad(){
     boardView = 'timeline';
     const btnTl=document.getElementById('btn-timeline');
     if(btnTl){ btnTl.style.borderColor='var(--teal)'; btnTl.style.color='var(--teal)'; }
+  }
+
+  // Personalização baseada em rotina, caso #5: aplica o filtro de
+  // atrasados só 1x no boot (mesmo guard "1x por sessão" do caso #1
+  // acima) e só se a hora ATUAL cair dentro do bloco de 2h aprendido —
+  // "ativar no início do dia", não "forçar o dia inteiro". Nunca reavalia
+  // de novo durante a sessão (evita a complexidade/risco de ligar E
+  // desligar o filtro sozinho enquanto a pessoa trabalha — se ela quiser
+  // tirar o filtro, o botão de Limpar de sempre já resolve).
+  if(_boardPrefsSquad.visao_atrasados_bloco!=null && !window._visaoAtrasadosAplicada){
+    window._visaoAtrasadosAplicada = true;
+    const bloco = _boardPrefsSquad.visao_atrasados_bloco;
+    const horaAtual = new Date().getHours();
+    if(horaAtual>=bloco && horaAtual<bloco+2){
+      activeFilters.due = 'late';
+      const selDue=document.getElementById('f-due'); if(selDue) selDue.value='late';
+      _applyFiltrosBtnUI();
+    }
   }
 
   renderBoard();
@@ -30349,6 +30368,54 @@ function _cardAtrasadoMs(c){
   if(!c?.atrasadoDesde) return acc;
   const start=new Date(c.atrasadoDesde+'T00:00:00').getTime();
   return acc+Math.max(0, Date.now()-start);
+}
+// ── Caso #5 de "personalização baseada em rotina" (o mais caro dos 5,
+// deixado por último de propósito na discussão original — sinal mais
+// ruidoso, amostra menor): "Você trabalha mais com atrasados num
+// horário específico — ativar essa visão automaticamente nesse
+// horário?" Diferente dos casos #1/#3/#4 (janela por SESSÃO ou por
+// AÇÃO), aqui o sinal é por HORA DO DIA — agrupa em blocos de 2h
+// (0-2,2-4,...,22-24) quantas vezes um card ATRASADO foi aberto em
+// cada bloco, ao longo de vários dias/sessões.
+const SUGESTAO_ATRASADOS_JANELA_EVENTOS = 12; // últimas 12 aberturas de card atrasado
+const SUGESTAO_ATRASADOS_LIMIAR = 0.5; // 50%+ concentrado no MESMO bloco de 2h
+function _sugestaoAtrasadosKey(){ return 'sugestao_atrasados_hist_'+ACTIVE_SQUAD; }
+// Mesma checagem que passesFilter() já usa pro filtro due==='late'
+// (card com prazo, fora de coluna concluída, prazo já passou) — não
+// reaproveita _cardAtrasadoMs() de propósito: aquele mede tempo
+// ACUMULADO histórico (pode ser >0 mesmo se o card não estiver
+// atrasado agora, ex.: prazo foi adiado depois de já ter atrasado). O
+// que importa aqui é "está atrasado NESTE INSTANTE".
+function _cardEstaAtrasadoAgora(c){
+  if(!c?.due || _isColDone(c.col)) return false;
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
+  return d<hoje;
+}
+function _registrarSinalAtrasado(c){
+  if(!_cardEstaAtrasadoAgora(c)) return;
+  let hist = [];
+  try{ hist = JSON.parse(safeLS.getItem(_sugestaoAtrasadosKey())||'[]'); }catch(e){ hist=[]; }
+  const bloco = Math.floor(new Date().getHours()/2)*2; // 0,2,4,...,22
+  hist.push(bloco);
+  if(hist.length > SUGESTAO_ATRASADOS_JANELA_EVENTOS) hist = hist.slice(-SUGESTAO_ATRASADOS_JANELA_EVENTOS);
+  safeLS.setItem(_sugestaoAtrasadosKey(), JSON.stringify(hist));
+  clearTimeout(window._sugestaoAtrasadosTimer);
+  window._sugestaoAtrasadosTimer = setTimeout(()=>_checarSugestaoAtrasados(hist), 1500);
+}
+function _checarSugestaoAtrasados(hist){
+  if(hist.length < SUGESTAO_ATRASADOS_JANELA_EVENTOS) return;
+  if(_boardPrefsSquad.visao_atrasados_bloco!=null) return; // já configurado -- nada a oferecer
+  const contagem = {};
+  hist.forEach(b=>{ contagem[b]=(contagem[b]||0)+1; });
+  const [blocoTop, qtd] = Object.entries(contagem).map(([k,v])=>[parseInt(k),v]).sort((a,b)=>b[1]-a[1])[0];
+  if(qtd/hist.length < SUGESTAO_ATRASADOS_LIMIAR) return;
+  const ini=blocoTop, fim=blocoTop+2;
+  _mostrarSugestaoRotina('atrasados:'+blocoTop, '<b style="color:var(--txt);">Você trabalha mais com cards atrasados entre '+ini+'h e '+fim+'h</b><br>Ativar automaticamente o filtro de atrasados nesse horário, ao abrir o board?', 'ativar', '🔴 Ativar', ()=>_ativarVisaoAtrasados(blocoTop));
+}
+function _ativarVisaoAtrasados(bloco){
+  _saveBoardPref('visao_atrasados_bloco', bloco);
+  showToast('🔴 A partir de amanhã, o board já abre filtrado em "Atrasados" entre '+bloco+'h e '+(bloco+2)+'h.');
 }
 // Mostra o total acumulado (⏱️) direto no modal do card — perto do Prazo
 // (atrasado) e do bloco de Impedimento (bloqueado), só quando há algo pra
