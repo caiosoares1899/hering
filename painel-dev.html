@@ -2807,7 +2807,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.40 · painel-dev</div>
+<div class="version">v3.41 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6063,6 +6063,29 @@ const SUBMARCA_TAGS = [
   {id:'tag_sm_teen_com',      label:'Hering Teen Comercial'},
   {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro'},
 ];
+// Tags de canal de venda — mesmo array fixo de kanban.html/kanban-dev.html
+// (ids/labels idênticos, pensado pro squad "marketplace"). Achado real
+// (pedido direto do usuário, 2026-09-11): kanban-dev.html já tem o donut
+// "Por canal de venda" nos Insights de UM squad (📊 Dados do Board) desde
+// que o campo Canal existe (09-10) — mas o Dashboard consolidado do painel
+// (cross-squad) só tinha "Por submarca", nunca ganhou o equivalente de
+// Canal. Mesmo padrão do array de submarca acima.
+const CANAL_VENDA_TAGS = [
+  {id:'tag_cv_meli1',      label:'Mercado Livre (ME1)'},
+  {id:'tag_cv_meli2',      label:'Mercado Livre (ME2)'},
+  {id:'tag_cv_melifull',   label:'Mercado Livre (Full)'},
+  {id:'tag_cv_dafiti',     label:'Dafiti'},
+  {id:'tag_cv_netshoes',   label:'Netshoes'},
+  {id:'tag_cv_shopee',     label:'Shopee'},
+  {id:'tag_cv_shopeekids', label:'Shopee Kids'},
+  {id:'tag_cv_amazon',     label:'Amazon'},
+  {id:'tag_cv_amazonfba',  label:'Amazon (FBA)'},
+  {id:'tag_cv_privalia',   label:'Privalia'},
+  {id:'tag_cv_magalu',     label:'Magazine Luiza'},
+  {id:'tag_cv_zzmall',     label:'ZZ Mall'},
+  {id:'tag_cv_offpremium', label:'Off Premium'},
+  {id:'tag_cv_tiktokshop', label:'TikTok Shop'},
+];
 function _cardTagIds(c){ return (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]); }
 function _pvDonutGradient(segments){
   const total = segments.reduce((s,x)=>s+x.value,0) || 1;
@@ -6239,6 +6262,27 @@ function renderPainelInsights(){
       .sort((a,b)=>b.count-a.count);
     if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
     html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+  }
+
+  // ── Por canal de venda (só entra se pelo menos uma squad visível usa o campo) ──
+  // Mesmo padrão do bloco "Por submarca" acima (achado real, pedido direto
+  // do usuário 2026-09-11: existia no board de UM squad, nunca chegou no
+  // consolidado cross-squad do painel).
+  const squadsComCanal = SQUADS.filter(sq=>squadVisible(sq.id) && squadData[sq.id]?.canalVendaAtivo);
+  if(squadsComCanal.length){
+    const CANAL_VENDA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const porCanal={};
+    activeCards.filter(c=>squadsComCanal.some(sq=>sq.id===c._squad.id)).forEach(c=>{
+      const tagsDoCard=_cardTagIds(c);
+      const cv=CANAL_VENDA_TAGS.find(st=>tagsDoCard.includes(st.id));
+      const k=cv?cv.id:'__sem__';
+      porCanal[k]=(porCanal[k]||0)+1;
+    });
+    const cvSegs=CANAL_VENDA_TAGS.map((st,i)=>({label:st.label,count:porCanal[st.id]||0,color:CANAL_VENDA_COLORS[i%CANAL_VENDA_COLORS.length]}))
+      .filter(s=>s.count>0)
+      .sort((a,b)=>b.count-a.count);
+    if(porCanal.__sem__) cvSegs.push({label:'Sem canal definido',count:porCanal.__sem__,color:'#5b6472'});
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🛒','Por canal de venda',cvSegs.length?cvSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
   }
 
   body.innerHTML=html;
@@ -10088,6 +10132,9 @@ function _applySquadDados(sqId, val){
     // novo de Firebase. Usado pra decidir se mostra o donut "Por submarca"
     // nos Insights agregados.
     submarcaAtivo: !!val.config?.submarca_ativo,
+    // Mesmo path que kanban.html/kanban-dev.html lê (config/canal_venda_ativo)
+    // — mesma ideia de submarcaAtivo acima, pro donut "Por canal de venda".
+    canalVendaAtivo: !!val.config?.canal_venda_ativo,
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
