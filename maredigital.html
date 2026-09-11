@@ -190,7 +190,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>Estrutura Firebase</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.586</div>
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.631</div>
     <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>Autenticação & papéis</a>
     <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>Board & visualizações</a>
     <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>Sistema de cards</a>
@@ -203,11 +203,12 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('backup')"><span class="nd" style="background:var(--orange)"></span>Backup & snapshots</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.586-dev</div>
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.639-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
+    <a class="nl" onclick="goTo('personalizacao')"><span class="nd" style="background:var(--warn)"></span>💡 Personalização baseada em rotina <span class="nb nb-t">novo</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">painel.html · v3.24</div>
+  <div class="ng"><div class="ng-lbl">painel.html · v3.38</div>
     <a class="nl" onclick="goTo('painel-overview')"><span class="nd" style="background:var(--teal)"></span>Visão geral</a>
     <a class="nl" onclick="goTo('painel-sections')"><span class="nd" style="background:var(--cyan)"></span>Seções & métricas</a>
     <a class="nl" onclick="goTo('painel-setup')"><span class="nd" style="background:var(--purple)"></span>Board Setup</a>
@@ -232,9 +233,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
   <p class="hdesc">Sistema Kanban desenvolvido internamente. Páginas HTML autocontidas (sem build, sem servidor próprio), sincronização em tempo real via Firebase, um orquestrador de IA rodando em Cloud Functions e suporte a múltiplos squads.</p>
   <div class="pills">
-    <span class="pill pb">kanban.html · v8.30.586</span>
-    <span class="pill pp">kanban-dev.html · v8.30.586-dev</span>
-    <span class="pill pt">painel.html · v3.24</span>
+    <span class="pill pb">kanban.html · v8.30.631</span>
+    <span class="pill pp">kanban-dev.html · v8.30.639-dev</span>
+    <span class="pill pt">painel.html · v3.38</span>
     <span class="pill pw">🤖 Agente Ágil · Claude</span>
     <span class="pill po">☁ Firebase RTDB + Functions</span>
   </div>
@@ -316,9 +317,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
-      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.586 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
-      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.586-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
-      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.24</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads, incluindo a aba 🎯 OKR. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.631 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.639-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
+      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.38</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads, incluindo a aba 🎯 OKR. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
       <tr><td>okr-apresentacao.slide.html</td><td>sem versão própria</td><td>acesso direto</td><td>Apresentação em slides dos Objetivos estratégicos (1 Objetivo = 1 slide) — ver seção "🎯 OKR"</td></tr>
       <tr><td>firebase-messaging-sw.js</td><td>sem versão própria</td><td>raiz do domínio</td><td>Service Worker — cache offline + exibição de push com a aba fechada</td></tr>
       <tr><td>maredigital.html</td><td>sem versão própria</td><td>acesso direto</td><td>Esta página — documentação técnica, fora do ciclo de release versionado</td></tr>
@@ -695,9 +696,56 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <div class="div"></div>
 
-<!-- 17 PAINEL OVERVIEW -->
-<section class="section" id="painel-overview">
+<!-- 17 PERSONALIZAÇÃO -->
+<section class="section" id="personalizacao">
   <div class="sh"><div class="sn">17</div><div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>kanban-dev.html <span class="nb nb-p" style="margin-left:4px;">dev</span></div>
+    <h2>💡 Personalização baseada em rotina</h2>
+    <p class="slead">O app observa como cada pessoa usa o board (localmente, no navegador) e, quando um padrão se repete de verdade, <strong>sugere</strong> — nunca aplica — um atalho pra esse padrão. 5 casos implementados até agora (PRs #862–#867).</p>
+  </div></div>
+
+  <div class="wc" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
+    <div class="wch"><div class="wci">🧭</div><div class="wct">O princípio: opt-in, explicável, nunca sozinho</div></div>
+    <div class="wcb">Toda sugestão desta família segue as mesmas 3 regras, sem exceção: <strong>(1) nunca muda a interface sem clique explícito</strong> — o sistema só observa e propõe; <strong>(2) sempre 3 respostas</strong> — "aceitar" (aplica e persiste), "agora não" (some por esta sessão, some com QUALQUER sugestão da família, nunca 2 ao mesmo tempo na tela) e "não sugerir mais" (recusa permanente só pra aquele padrão específico); <strong>(3) o sinal de aprendizado vive só em <code class="hl">localStorage</code></strong>, nunca no Firebase — é dado 100% recalculável/descartável, sem custo de escrita remota. Só o RESULTADO de uma sugestão aceita (o preset, a preferência, o atalho) persiste de verdade, e sempre reaproveitando infraestrutura que já existia (presets de filtro, <code class="hl">board_prefs</code>, atalhos de teclado) — nenhum caso destes criou um node novo no Firebase só pra si.</div>
+  </div>
+
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">🔧</div><div class="wct">Mecanismo genérico — 1 cartão para os 5 casos</div></div>
+    <div class="wcb"><code class="hl">_mostrarSugestaoRotina(id, mensagem, ...)</code> / <code class="hl">_sugestaoRotinaResponder()</code> é o único cartão de sugestão do app (canto inferior direito) — todos os 5 casos passam por ele, de propósito: assim nunca existe risco de 2 sugestões empilhadas na tela (se um 2º padrão for detectado enquanto o cartão já está mostrando outro, ele simplesmente espera a próxima vez). "Não sugerir mais" grava o <code class="hl">id</code> específico (ex.: <code class="hl">filtro:tag:urgente</code>, <code class="hl">atrasados:14</code>) numa lista de recusas permanentes por squad — recusar um preset de filtro não afeta a sugestão de Timeline, por exemplo.</div>
+  </div>
+
+  <div class="grid" style="margin-top:1rem;">
+    <div class="card"><div class="ci">🛤️</div><div class="ct">#1 · Timeline como visão inicial</div><div class="cd">Abriu a Timeline dentro dos 3min iniciais em 80%+ das últimas 5 sessões → sugere torná-la a visão padrão ao abrir o board. Aceitar grava <code class="hl">board_prefs.visao_inicial</code>. Aplicado 1x por sessão (nunca força de volta se a pessoa trocar pra Kanban na mão).</div></div>
+    <div class="card"><div class="ci">💾</div><div class="ct">#2 · Preset de filtro recorrente</div><div class="cd">A mesma combinação de filtro (tag/dono/prioridade/subtime/canal/submarca) usada em 4+ dias diferentes nos últimos 10 → sugere salvar como preset. Aceitar chama o <code class="hl">saveFilterPresetPrompt()</code> já existente — mesma tela de "💾 Salvar preset" manual.</div></div>
+    <div class="card"><div class="ci">📌</div><div class="ct">#3 · "Meus cards" fixado na toolbar</div><div class="cd">Usou "💡 Meus cards" (hoje só dentro de Filtros) em 80%+ das últimas 5 sessões → sugere fixar um atalho igual na toolbar principal, sempre visível. Aceitar grava <code class="hl">board_prefs.meus_cards_fixado</code>.</div></div>
+    <div class="card"><div class="ci">⌨️</div><div class="ct">#4 · Atalho rápido de atribuição</div><div class="cd">60%+ das últimas 8 atribuições reais foram pra mesma pessoa → sugere criar um atalho de teclado "Atribuir a fulano". Sinal observado no funil único <code class="hl">runAutoRules('assigned',...)</code>, por onde os 4 caminhos de atribuição (manual, autosave, bulk, criação) já passavam. Aceitar cria a ação e já abre ⌨️ Atalhos na aba certa — só falta a pessoa escolher a tecla.</div></div>
+    <div class="card"><div class="ci">🔴</div><div class="ct">#5 · Filtro de atrasados por horário</div><div class="cd">Abrir cards atrasados concentrado no mesmo bloco de 2h em 50%+ de pelo menos 4 dias diferentes (últimos 10 dias) → sugere ativar o filtro "Atrasados" automaticamente nesse horário. Aceitar grava <code class="hl">board_prefs.visao_atrasados_bloco</code>; aplicado só 1x no boot, só se a hora atual cair na janela aprendida.</div></div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-top:1rem;">
+  <table class="tbl">
+    <thead><tr><th>Caso</th><th>Sinal</th><th>Janela / limiar</th><th>Onde persiste (aceito)</th></tr></thead>
+    <tbody>
+      <tr><td>#1 Timeline inicial</td><td>Abrir Timeline cedo na sessão</td><td>5 sessões, 80%</td><td><code class="hl">board_prefs.visao_inicial</code></td></tr>
+      <tr><td>#2 Preset de filtro</td><td>Mesma combinação de filtro aplicada</td><td>10 dias, 4 dias distintos</td><td><code class="hl">filter_presets/{squad}/{id}</code></td></tr>
+      <tr><td>#3 Meus cards fixado</td><td>Clique em "💡 Meus cards"</td><td>5 sessões, 80%</td><td><code class="hl">board_prefs.meus_cards_fixado</code></td></tr>
+      <tr><td>#4 Atalho de atribuição</td><td>Atribuição de card (<code class="hl">runAutoRules('assigned')</code>)</td><td>8 atribuições, 60%</td><td><code class="hl">board_prefs.atribuicao_rapida[]</code> + <code class="hl">ATALHO_ACOES</code></td></tr>
+      <tr><td>#5 Atrasados por horário</td><td>Abrir card atrasado (<code class="hl">openCard()</code>)</td><td>10 dias, 4 dias distintos, 50%</td><td><code class="hl">board_prefs.visao_atrasados_bloco</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="wc" style="margin-top:8px;border-color:rgba(29,233,182,.28);background:rgba(29,233,182,.04);">
+    <div class="wch"><div class="wci">🐞</div><div class="wct">/monitorarbugs — achado real corrigido</div></div>
+    <div class="wcb">O caso #5 nasceu contando só eventos brutos (últimas 12 aberturas de card atrasado), sem checar em quantos DIAS diferentes o padrão se repetia — uma única sessão de triagem (abrir 12+ cards atrasados numa tarde só) já disparava a sugestão, mesmo não sendo uma rotina real. Corrigido reaproveitando o mesmo padrão de "dias distintos" que o caso #2 já usava (PR #867) — hoje os 5 casos são consistentes entre si nesse critério.</div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 18 PAINEL OVERVIEW -->
+<section class="section" id="painel-overview">
+  <div class="sh"><div class="sn">18</div><div>
     <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>painel.html</div>
     <h2>Painel — Visão Geral</h2>
     <p class="slead">Dashboard de gestão para diretoria. Lê dados de todos os squads simultaneamente.</p>
@@ -715,9 +763,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 18 PAINEL SECTIONS -->
+<!-- 19 PAINEL SECTIONS -->
 <section class="section" id="painel-sections">
-  <div class="sh"><div class="sn">18</div><div>
+  <div class="sh"><div class="sn">19</div><div>
     <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>painel.html</div>
     <h2>Seções & Métricas</h2>
   </div></div>
@@ -742,9 +790,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 19 BOARD SETUP -->
+<!-- 20 BOARD SETUP -->
 <section class="section" id="painel-setup">
-  <div class="sh"><div class="sn">19</div><div>
+  <div class="sh"><div class="sn">20</div><div>
     <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>painel.html</div>
     <h2>Board Setup — criação de squads</h2>
     <p class="slead">Cria novos squads dinâmicos sem editar código.</p>
@@ -759,9 +807,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 20 PAINEL USERS -->
+<!-- 21 PAINEL USERS -->
 <section class="section" id="painel-users">
-  <div class="sh"><div class="sn">20</div><div>
+  <div class="sh"><div class="sn">21</div><div>
     <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>painel.html</div>
     <h2>Gestão global de usuários</h2>
   </div></div>
@@ -775,9 +823,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 21 OKR -->
+<!-- 22 OKR -->
 <section class="section" id="okr">
-  <div class="sh"><div class="sn">21</div><div>
+  <div class="sh"><div class="sn">22</div><div>
     <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>painel.html</div>
     <h2>🎯 OKR — Objetivos e Marcos estratégicos</h2>
     <p class="slead">Aba dedicada em painel.html/painel-dev.html — modelo estruturado de metas estratégicas por gerência, diferente (e mais completo) do que a flag <code class="hl">card.isOKR</code> embutida no card (seção 08/18) resolve sozinha.</p>
@@ -811,9 +859,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <div class="div"></div>
 
-<!-- 22 SEGURANÇA -->
+<!-- 23 SEGURANÇA -->
 <section class="section" id="security">
-  <div class="sh"><div class="sn">22</div><div>
+  <div class="sh"><div class="sn">23</div><div>
     <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Segurança</div>
     <h2>Camadas de segurança</h2>
     <p class="slead">Camadas independentes. Se uma falhar, as outras continuam de pé.</p>
@@ -828,9 +876,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div>
 </section>
 
-<!-- 23 FIREBASE RULES -->
+<!-- 24 FIREBASE RULES -->
 <section class="section" id="firebase-rules">
-  <div class="sh"><div class="sn">23</div><div>
+  <div class="sh"><div class="sn">24</div><div>
     <div class="stag" style="color:var(--danger)"><span style="background:var(--danger)"></span>Firebase</div>
     <h2>Firebase Database Rules</h2>
     <p class="slead">Aplicadas no servidor — não há como contornar pelo browser. Mirror manual de <code class="hl">database.rules.json</code>.</p>
@@ -868,9 +916,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 }}</div>
 </section>
 
-<!-- 24 CLOUD FUNCTIONS & SECRETS -->
+<!-- 25 CLOUD FUNCTIONS & SECRETS -->
 <section class="section" id="functions-sec">
-  <div class="sh"><div class="sn">24</div><div>
+  <div class="sh"><div class="sn">25</div><div>
     <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>Cloud Functions</div>
     <h2>Cloud Functions & Secrets</h2>
     <p class="slead">Funções deployadas em <code class="hl">functions/</code>, rodando com credenciais próprias do Firebase — nada de proxy externo.</p>
