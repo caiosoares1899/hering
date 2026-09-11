@@ -416,6 +416,16 @@ registrando o baseline atual pra próxima rodada comparar.
   customizado antes de assumir um prefixo único, mesma disciplina que já
   vale pra "grep por todo call site" nas outras técnicas desta skill/do
   `/monitorarbugs`.
+  **2ª correção no mesmo dia** (teste de diagnóstico, achado real não
+  relacionado a ordenação): `loadPainelNotifs()` usava `Object.values(val)`
+  em vez de `Object.entries(val)`, então um registro sem o campo `id`
+  interno virava `id:undefined` em `_painelNotifs` — intraçável, e clicar
+  nele escreveria em `notificacoes/undefined/read`. `loadNotifs()`
+  (kanban-dev.html) já resolvia isso certo (`Object.entries`+`{...n,id}`,
+  chave real sempre por cima) — técnica 2 (comparar contra padrão irmão
+  já resolvido). Fix: mesmo padrão — painel-dev v3.44. Não era bug desta
+  rodada (pré-existente, só ficou visível pelo teste de diagnóstico com
+  dado real).
 
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.

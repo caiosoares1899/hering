@@ -14984,6 +14984,26 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.44 · painel-dev — 2026-09-11 — Fix: `loadPainelNotifs()` perdia a chave real do Firebase, virava "id:undefined"
+
+Achado real testando o fix da v3.43 (usuário rodou o teste de diagnóstico
+entregue — mostrou um item com `id:undefined`, sumido do "ground truth"
+mas presente em `_painelNotifs`). Causa: `Object.values(val)` descarta a
+CHAVE de verdade do Firebase, então o mapeamento confiava só no campo
+`n.id` de dentro do objeto — se algum registro (antigo/malformado, sem
+esse campo) chegasse no listener, virava `id:undefined`, intraçável, e
+clicar nele/marcar como lido escreveria em
+`notificacoes/undefined/read`, criando mais lixo no mesmo padrão.
+
+`loadNotifs()` (kanban-dev.html) já resolve isso certo desde sempre —
+`Object.entries(val)` + `{...n, id}` (chave real sempre por cima).
+Achado via técnica 2 (comparar contra o padrão irmão já resolvido no
+mesmo dado). Fix: mesmo padrão em `loadPainelNotifs()` — `id:n.id||nid`,
+`nid` vindo de `Object.entries()`.
+
+Checks de rotina: `node --check` OK. Balanço de chaves/parênteses
+inalterado.
+
 ### painel-dev.html v3.43 · painel-dev — 2026-09-11 — Fix: `limitToLast` da v3.42 excluía sistematicamente notificações de id determinístico
 
 Mesmo achado/fix de `kanban-dev.html` v8.30.641-dev (ver entrada
