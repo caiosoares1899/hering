@@ -14525,6 +14525,43 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.40 · painel-dev — 2026-09-11 — Fix: backup global nunca rodava se o login disparasse null antes do usuário (mesma classe do fix de kanban.html v8.30.629)
+
+Pedido explícito: `/monitorarbugs` procurando especificamente por
+"comentários que dizem ter resolvido bugs mas há uma inconsistência" —
+mesma técnica que achou o fix anterior (`_onRealAuthChange()`,
+`kanban-dev.html`, v8.30.629). Achado via técnica 1 (grep por todo
+`auth-change` no arquivo, comparando com o padrão já sabido ser
+quebrado) — `checkOverdueGlobalBackup()` (checagem "o backup global
+está atrasado?" ao abrir o painel) esperava o login com
+`addEventListener('auth-change', e=>{if(e.detail){...}}, {once:true})`
+— o MESMO padrão frágil corrigido em `kanban-dev.html` no dia anterior,
+duplicado de forma independente neste arquivo (`painel-dev.html`/
+`painel.html` têm seu próprio `onAuthStateChanged`, separado do
+kanban).
+
+**Causa raiz**: idêntica à do fix de `kanban-dev.html` — o Firebase
+dispara `auth-change` assim que o listener é registrado (quase sempre
+com `null`, ninguém logado ainda) e de novo quando o login termina,
+agora com o usuário. `{once:true}` remove o listener no PRIMEIRO
+disparo, seja ele qual for — se o `null` chegasse primeiro (o caso
+comum), o disparo real nunca tinha mais ninguém escutando, e
+`checkOverdueGlobalBackup()` nunca rodava na sessão inteira. Impacto
+prático: o backup semanal automático do painel podia silenciosamente
+deixar de disparar por semanas, sem nenhum erro visível — só rodava se
+alguém abrisse o painel numa sessão onde o auth resolvesse numa
+tacada só (ex.: sessão já persistida, sem o disparo duplo).
+
+**Fix**: mesma `_onRealAuthChange(fn)` (agora também em
+`painel-dev.html`, junto do único call site que precisava dela) —
+espera o primeiro disparo com usuário de verdade, ignora `null`.
+
+Validado via Playwright rodando a função real extraída do arquivo (o
+mesmo teste do fix de `kanban-dev.html`, aplicado aqui): código antigo
+nunca chamava o callback após o disparo duplo null→real; código novo
+chama corretamente. `node --check` limpo; balanço de chaves/parênteses
+do arquivo inteiro — `-1`/`-14` — bate com o baseline já conhecido.
+
 ### painel-dev.html v3.39 · painel-dev — 2026-09-10 — OKR "Editar Objetivo": campo Objetivo pequeno demais + resize não funcionava + achado extra (perda de digitação não salva)
 
 Pedido direto do usuário, com print da tela "Editar Objetivo" anexado:

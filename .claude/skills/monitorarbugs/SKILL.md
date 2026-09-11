@@ -676,6 +676,37 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   vale reler o fix documentado linha a linha quando o MESMO sintoma for
   relatado de novo, em vez de assumir que é uma causa nova.
 
+- **2026-09-11, "comentários que dizem ter resolvido bugs mas há uma
+  inconsistência" (pedido explícito, técnica dirigida: "roda um
+  monitorarbugs parecido com esse" — logo após o achado do
+  `_onRealAuthChange`/`kanban-dev.html`, procurando a MESMA classe de bug
+  em outros lugares)**: 1 achado real, via técnica 1 (grep por
+  `auth-change` fora de `kanban-dev.html`, comparando contra o padrão
+  agora sabido ser quebrado). `painel-dev.html`/`painel.html` têm seu
+  próprio `onAuthStateChanged`/`auth-change`, independente do kanban — e
+  `checkOverdueGlobalBackup()` (checagem "backup global atrasado?" ao
+  abrir o painel) usava o EXATO mesmo padrão frágil
+  (`addEventListener('auth-change', e=>{if(e.detail){...}}, {once:true})`)
+  corrigido no dia anterior em `kanban-dev.html` — código duplicado
+  independentemente em 2 arquivos diferentes, mesma causa raiz, mesmo
+  sintoma (o disparo `null` que o Firebase manda antes do login
+  interativo terminar consumia o listener `{once:true}`, o disparo real
+  nunca tinha mais ninguém escutando). Impacto: o backup semanal
+  automático do painel podia silenciosamente parar de disparar por
+  semanas. Checado e sem achado: o OUTRO listener de `auth-change` em
+  `painel-dev.html` (`_finishPainelLogin`, guarda `_currentUser`/decide
+  visualizador externo) é persistente (sem `{once:true}`), correto desde
+  sempre; `_seedComunicadoRascunhos()` roda de dentro desse listener
+  seguro, não do vulnerável. Fix: mesma `_onRealAuthChange(fn)`, agora
+  também em `painel-dev.html`. dev v3.40·painel-dev. **Lição pra próxima
+  vez**: um bug de "padrão de código frágil" (não um bug de lógica de
+  produto) tende a ter sido copiado em qualquer outro arquivo que
+  resolve o MESMO problema de infraestrutura (aqui: esperar o login
+  antes de rodar algo) de forma independente — vale grepar o MESMO
+  padrão nos arquivos irmãos (`kanban-dev.html`↔`painel-dev.html`) assim
+  que uma classe nova de bug é confirmada, não só dentro do arquivo onde
+  foi achada.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
