@@ -707,6 +707,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   que uma classe nova de bug é confirmada, não só dentro do arquivo onde
   foi achada.
 
+- **2026-09-11, `_onRealAuthChange`/5 pontos (fix do dia, board branco
+  pós-login) + exclusão da coluna "Impedimentos" (#840)**: pedido
+  genérico, escopo escolhido por prioridade 1 (código mais recente).
+  Sem achado em nenhuma das duas áreas — 2 hipóteses investigadas a
+  fundo e descartadas com evidência, não só por inspeção rápida: (1)
+  listener de presença em `fbLoadAll()` parecia "registrado tarde
+  demais" pra pegar o auth-change real que o disparou — descartado ao
+  confirmar que o heartbeat (`setInterval` de 15s, independente do
+  listener) é quem de fato garante a própria presença, o listener é só
+  bônus pra reconexões; (2) `window.addEventListener('fb-ready',
+  _initBackupCfgListener, {once:true})` bare (sem passar por
+  `_onFbReady()`) parecia vulnerável à mesma classe de bug do
+  auth-change — descartado ao confirmar a ordem de execução real
+  `<script type="module">` (deferred, roda só depois do documento
+  inteiro parseado) vs `<script>` clássico (síncrono, roda primeiro):
+  o registro acontece cedo o bastante sempre. Pra Impedimentos: os 3
+  guards irmãos que a #840 dependia (`ctxMove`/`ctxBlock`,
+  `_doBulkBlockCol`, `saveBlockerMode`) já existiam de rodadas
+  anteriores (26-27/08) e seguem corretos; `parseTrelloJSON()` (import)
+  também já se autoprotege via fallback pra `columns[0]` quando
+  `'blocker'` não resolve. **Lição**: nem toda hipótese promissora
+  vira achado — confirmar com leitura da ordem de execução/do
+  mecanismo redundante antes de reportar evita falso positivo.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
