@@ -201,11 +201,11 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('notifs')"><span class="nd" style="background:var(--cyan)"></span>Notificações & push</a>
     <a class="nl" onclick="goTo('extras')"><span class="nd" style="background:var(--accent)"></span>Extras & features</a>
     <a class="nl" onclick="goTo('backup')"><span class="nd" style="background:var(--orange)"></span>Backup & snapshots</a>
+    <a class="nl" onclick="goTo('personalizacao')"><span class="nd" style="background:var(--warn)"></span>🎛️ Personalização <span class="nb nb-t">novo</span></a>
   </div>
 
   <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.639-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
-    <a class="nl" onclick="goTo('personalizacao')"><span class="nd" style="background:var(--warn)"></span>💡 Personalização baseada em rotina <span class="nb nb-t">novo</span></a>
   </div>
 
   <div class="ng"><div class="ng-lbl">painel.html · v3.38</div>
@@ -673,36 +673,57 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 
 <div class="div"></div>
 
-<!-- 16 DEV -->
-<section class="section" id="dev">
+<!-- 16 PERSONALIZAÇÃO -->
+<section class="section" id="personalizacao">
   <div class="sh"><div class="sn">16</div><div>
-    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>kanban-dev.html</div>
-    <h2>Sandbox & Dev Seed</h2>
-    <p class="slead">Ambiente isolado para testar features novas antes de ir para produção.</p>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>kanban.html</div>
+    <h2>🎛️ Personalização</h2>
+    <p class="slead">Tudo que cada pessoa pode ajustar no board pra ele ficar do jeito que ela trabalha — atalhos de teclado, ordem da toolbar, presets de filtro, raia/densidade/fonte/visão padrão — mais a camada que aprende sozinha e <strong>sugere</strong> alguns desses ajustes, sempre com permissão explícita. Preferência 100% pessoal, sincronizada por conta (funciona igual em qualquer computador que a pessoa entrar).</p>
   </div></div>
-  <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
-    <div class="wch"><div class="wci">🧪</div><div class="wct">O que é o kanban-dev</div></div>
-    <div class="wcb">Cópia funcional do kanban.html com squad padrão em <code class="hl">dev</code>. Dados isolados em <code class="hl">kanban/squads/dev/</code> — não interferem em produção. Mesmo Firebase, mesma lógica. É também o único squad onde o "Modo autônomo" do Agente Ágil (via Automações) está ligado hoje.</div>
+
+  <div class="cl">⌨️ Atalhos de teclado personalizáveis</div>
+  <div class="wc">
+    <div class="wch"><div class="wci">⌨️</div><div class="wct">24 ações, mapeadas a partir dos botões DE VERDADE</div></div>
+    <div class="wcb">Botão "⌨️ Atalhos" na toolbar (visível pra todo papel) abre uma tela com 2 abas: <strong>🗂️ Board</strong> (Dados do Board, Timeline, Central de Ajuda, alternar tema, Raia, Filtros, Selecionar, Links, Mapa de dependências, Calendários, Campanhas, Intake...) e <strong>📇 Modal do card</strong> (Copiar link, Duplicar, Salvar como modelo, Arquivar, Excluir, Pausar/retomar, Histórico...) — esta última só dispara com um card aberto, mesmo espírito do Ctrl+S. Uma ação só aparece na lista quando a funcionalidade correspondente está ativa/visível pro squad atual. Definir uma combinação abre uma "captura armada" — a próxima tecla de verdade que a pessoa apertar vira o atalho, com validação contra combinações reservadas (Ctrl+C/V/X/A/F, as 5 fixas do app, teclas que o navegador já usa) e contra conflito com outra ação já configurada.</div>
   </div>
   <div class="wc" style="margin-top:8px;">
-    <div class="wch"><div class="wci">🌱</div><div class="wct">Dev Seed — runDevSeed()</div></div>
-    <div class="wcb">Se o board dev está vazio ao abrir, um <strong>overlay de seed</strong> lista os cards que serão criados. Ao confirmar, popula o board com dados fictícios realistas — cards com tags, donos, prazos, checklists e riscos. Log visual em tempo real mostra cada card criado. Ideal para demos e testes de UI.</div>
+    <div class="wch"><div class="wci">🔑</div><div class="wct">Teclas de função sozinhas também valem</div></div>
+    <div class="wcb">F2/F4/F8/F9/F10 não são usadas pelo Chrome por padrão e, por não digitarem nada num campo de texto, funcionam como atalho sozinhas — sem precisar de Ctrl/Cmd/Alt junto (achado direto testando F8: "no chrome não faz nada, não posso usar ele?"). Salvo em <code class="hl">kanban/usuarios/{uid}/atalhos_custom</code>.</div>
   </div>
-  <div class="grid g2" style="margin-top:.8rem;">
-    <div class="card"><div class="ci">🔁</div><div class="ct">Ciclo de desenvolvimento</div><div class="cd">Feature → testada no dev → validada explicitamente por quem pediu → portada para kanban.html cirurgicamente (nunca uma cópia cega do arquivo).</div></div>
-    <div class="card"><div class="ci">📋</div><div class="ct">Squad dev no Painel</div><div class="cd">Aparece no seletor do Painel identificado como sandbox. Backups do dev são separados dos de produção.</div></div>
+
+  <div class="cl" style="margin-top:1.1rem;">🔀 Reorganizar a barra de ferramentas</div>
+  <div class="wc">
+    <div class="wch"><div class="wci">🔀</div><div class="wct">Arraste os botões pra onde fizer sentido pra você</div></div>
+    <div class="wcb">3ª aba do mesmo modal "⌨️ Atalhos" ("🔀 Barra") — mesmo esqueleto de drag-and-drop já usado pra reordenar colunas, aplicado nos 25 filhos diretos da toolbar principal (20 botões/menus + 5 divisores). Pedido direto: "tem como deixar a pessoa reorganizar o menu header? ex.: puxar o calendário para perto de fonte." Salvo em <code class="hl">kanban/usuarios/{uid}/toolbar_order</code>.</div>
   </div>
-</section>
 
-<div class="div"></div>
+  <div class="cl" style="margin-top:1.1rem;">💾 Presets de filtro nomeados</div>
+  <div class="wc">
+    <div class="wch"><div class="wci">💾</div><div class="wct">Salve uma combinação de filtro e reaplique com 1 clique</div></div>
+    <div class="wcb">Montou uma combinação que usa sempre (ex.: "Meus atrasados" — responsável + prazo atrasado)? Botão "💾 Salvar preset" (dentro de "🔭 Filtros") vira um chip clicável que reaplica tudo de uma vez, sem remontar campo por campo. Limite de 10 presets por squad. Salvo em <code class="hl">kanban/usuarios/{uid}/filter_presets/{squadId}/{presetId}</code>.</div>
+  </div>
 
-<!-- 17 PERSONALIZAÇÃO -->
-<section class="section" id="personalizacao">
-  <div class="sh"><div class="sn">17</div><div>
-    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>kanban-dev.html <span class="nb nb-p" style="margin-left:4px;">dev</span></div>
-    <h2>💡 Personalização baseada em rotina</h2>
-    <p class="slead">O app observa como cada pessoa usa o board (localmente, no navegador) e, quando um padrão se repete de verdade, <strong>sugere</strong> — nunca aplica — um atalho pra esse padrão. 5 casos implementados até agora (PRs #862–#867).</p>
-  </div></div>
+  <div class="cl" style="margin-top:1.1rem;">🎛️ Preferências do board (por squad e globais)</div>
+  <div class="tbl-wrap">
+  <table class="tbl">
+    <thead><tr><th>Preferência</th><th>Onde vive</th><th>Node Firebase</th></tr></thead>
+    <tbody>
+      <tr><td>Raia (por responsável)</td><td>Botão "🛶 Raia" na toolbar</td><td><code class="hl">board_prefs.raia</code></td></tr>
+      <tr><td>Colunas colapsadas</td><td>Clique no cabeçalho da coluna</td><td><code class="hl">board_prefs.collapsed_cols</code></td></tr>
+      <tr><td>Ordenação de coluna</td><td>Menu de ordenar colunas</td><td><code class="hl">board_prefs.col_sort</code></td></tr>
+      <tr><td>Modo de visualização (híbrido)</td><td>Toggle de visualização</td><td><code class="hl">board_prefs.view_mode</code></td></tr>
+      <tr><td>Filtro padrão de Submarca/Canal</td><td>Drawer/menu rápido da toolbar</td><td><code class="hl">board_prefs.submarca_filtro</code> / <code class="hl">canal_venda_filtro</code></td></tr>
+      <tr><td>Colunas escondidas do Dashboard</td><td>Aba Fluxo/Dashboard</td><td><code class="hl">board_prefs.dashboard_hidden_cols</code></td></tr>
+      <tr><td>Densidade do card (🗐 Detalhado / 🤏 Compacto)</td><td>Menu "🔍 Fonte"</td><td><code class="hl">board_prefs_global.card_density</code></td></tr>
+      <tr><td>Tamanho de fonte</td><td>Menu "🔍 Fonte"</td><td><code class="hl">board_prefs_global.font_size</code></td></tr>
+      <tr><td>Squad padrão ao abrir sem <code class="hl">?squad=</code></td><td>"📌 Fixar squad como padrão" (clique no nome do squad)</td><td><code class="hl">board_prefs_global.pinned_squad</code> / <code class="hl">last_squad</code></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <div class="wcb" style="margin-top:.5rem;font-size:10.5px;">Todas com o mesmo mecanismo: escrita otimista local + <code class="hl">window._set()</code>, listener ao vivo (<code class="hl">loadBoardPrefs()</code>/<code class="hl">loadBoardPrefsGlobal()</code>) reaplica em qualquer aba/computador aberto na mesma conta. As que já salvavam algo antes (raia, ordenação, submarca...) migraram do <code class="hl">localStorage</code> puro pra este mecanismo sem resetar quem já tinha configurado — <code class="hl">_boardPrefLoadOrMigrate()</code> herda o valor local na 1ª vez e sobe pro Firebase.</div>
+
+  <div class="cl" style="margin-top:1.1rem;">💡 Sugestões automáticas baseadas em rotina <span class="nb nb-p" style="margin-left:4px;">dev</span></div>
+  <p class="slead" style="margin:.3rem 0 .8rem;">Além de tudo acima ser ajustável na mão, o app observa como cada pessoa usa o board (localmente, no navegador) e, quando um padrão se repete de verdade, <strong>sugere</strong> — nunca aplica — configurar automaticamente uma dessas preferências. 5 casos implementados até agora (PRs #862–#867), hoje só em <code class="hl">kanban-dev.html</code>.</p>
 
   <div class="wc" style="border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
     <div class="wch"><div class="wci">🧭</div><div class="wct">O princípio: opt-in, explicável, nunca sozinho</div></div>
@@ -738,6 +759,29 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <div class="wc" style="margin-top:8px;border-color:rgba(29,233,182,.28);background:rgba(29,233,182,.04);">
     <div class="wch"><div class="wci">🐞</div><div class="wct">/monitorarbugs — achado real corrigido</div></div>
     <div class="wcb">O caso #5 nasceu contando só eventos brutos (últimas 12 aberturas de card atrasado), sem checar em quantos DIAS diferentes o padrão se repetia — uma única sessão de triagem (abrir 12+ cards atrasados numa tarde só) já disparava a sugestão, mesmo não sendo uma rotina real. Corrigido reaproveitando o mesmo padrão de "dias distintos" que o caso #2 já usava (PR #867) — hoje os 5 casos são consistentes entre si nesse critério.</div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+<!-- 17 DEV -->
+<section class="section" id="dev">
+  <div class="sh"><div class="sn">17</div><div>
+    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>kanban-dev.html</div>
+    <h2>Sandbox & Dev Seed</h2>
+    <p class="slead">Ambiente isolado para testar features novas antes de ir para produção.</p>
+  </div></div>
+  <div class="wc" style="border-color:rgba(251,146,60,.3);background:rgba(251,146,60,.05);">
+    <div class="wch"><div class="wci">🧪</div><div class="wct">O que é o kanban-dev</div></div>
+    <div class="wcb">Cópia funcional do kanban.html com squad padrão em <code class="hl">dev</code>. Dados isolados em <code class="hl">kanban/squads/dev/</code> — não interferem em produção. Mesmo Firebase, mesma lógica. É também o único squad onde o "Modo autônomo" do Agente Ágil (via Automações) está ligado hoje.</div>
+  </div>
+  <div class="wc" style="margin-top:8px;">
+    <div class="wch"><div class="wci">🌱</div><div class="wct">Dev Seed — runDevSeed()</div></div>
+    <div class="wcb">Se o board dev está vazio ao abrir, um <strong>overlay de seed</strong> lista os cards que serão criados. Ao confirmar, popula o board com dados fictícios realistas — cards com tags, donos, prazos, checklists e riscos. Log visual em tempo real mostra cada card criado. Ideal para demos e testes de UI.</div>
+  </div>
+  <div class="grid g2" style="margin-top:.8rem;">
+    <div class="card"><div class="ci">🔁</div><div class="ct">Ciclo de desenvolvimento</div><div class="cd">Feature → testada no dev → validada explicitamente por quem pediu → portada para kanban.html cirurgicamente (nunca uma cópia cega do arquivo).</div></div>
+    <div class="card"><div class="ci">📋</div><div class="ct">Squad dev no Painel</div><div class="cd">Aparece no seletor do Painel identificado como sandbox. Backups do dev são separados dos de produção.</div></div>
   </div>
 </section>
 
