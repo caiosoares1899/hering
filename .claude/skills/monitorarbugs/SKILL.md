@@ -761,6 +761,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   duplicado em `painel-dev.html`) — aqui não achou nada NOVO, mas é
   precisamente o tipo de checagem que só vale a pena fazer, não pular.
 
+- **2026-09-12, "modal do card" (pedido explícito, escopo nomeado —
+  comentários: `submitComment()`/`saveEditComment()`/`deleteComment()`/
+  reações)**: 1 achado real, técnica 1 (comparar `submitComment()` vs.
+  `saveEditComment()`, mesma operação — mencionar alguém num
+  comentário). Editar um comentário pra ADICIONAR `@Agente Ágil` ficava
+  em silêncio total: `saveEditComment()` já tinha o fix de
+  `parseMentions()` (@menção humana), mas nunca ganhou o equivalente
+  pro agente — e o gatilho real (`mentionTrigger.js`, backend) é
+  `onValueCreated`, nunca dispara em `window._update()` (edição usada
+  por `saveEditComment()`), então nem um fix client-side conseguiria
+  fazer o agente responder de verdade. Fix aplicado: toast avisando que
+  editar não notifica o agente (poste um comentário novo); o fix
+  arquitetural de verdade (`onValueWritten` + diff antes/depois em
+  `functions/`) documentado como recomendação separada, não
+  implementado. dev v8.30.642. Checado e sem achado: permissão de
+  editar/excluir (`canEdit`/`canDel`) consistente com o resto do app
+  (client-gated, mesmo padrão de outras ações); reações
+  (`toggleReaction()`) notificam o autor certo, sem duplicar.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
