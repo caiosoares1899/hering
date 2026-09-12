@@ -780,6 +780,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (client-gated, mesmo padrão de outras ações); reações
   (`toggleReaction()`) notificam o autor certo, sem duplicar.
 
+- **2026-09-12, ⏸ Pausar card (pedido genérico, escopo escolhido via
+  prioridade 1 — feature recente sem rodada dedicada,
+  `git log --oneline -40 -- kanban-dev.html`)**: 1 achado real, técnica
+  2 (comparar contra o padrão irmão já resolvido: `blockedMs`/
+  `atrasadoMs`, auditado em 2026-09-06). `_cardTempos()` (lead/cycle
+  time total do Relatório Tempo por Tag) já descontava
+  `_cardPausedMs()` corretamente; `_cardTempoPorColuna()` — o
+  detalhamento por coluna do MESMO relatório — não descontava pausa
+  nenhuma, deixando os dois números do mesmo card inconsistentes entre
+  si e contradizendo a Central de Ajuda. Fix (3 opções apresentadas via
+  `AskUserQuestion`, usuário escolheu best-effort): desconta a pausa
+  ATIVA agora do último trecho aberto do `flow.log`; pausas passadas já
+  encerradas ficam fora (limitação aceita — `card.pausedMs` é soma
+  total, não intervalos por coluna; corrigir de verdade exigiria
+  schema novo, registrado como recomendação futura, não implementado).
+  dev v8.30.643, PR #879.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
