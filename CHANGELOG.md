@@ -3211,6 +3211,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.642-dev — 2026-09-12 — /monitorarbugs no modal do card: editar comentário pra mencionar o Agente Ágil ficava em silêncio total
+
+Achado real auditando comentários do modal do card (técnica 1 — comparar
+`submitComment()` com `saveEditComment()`, mesma operação de "mencionar
+alguém num comentário").
+
+`submitComment()` (comentário novo) faz 2 coisas quando o texto menciona
+`@Agente Ágil`: `parseMentions()` (notificação) e
+`_startAgenteAgilThinking()` (indicador "🤖 pensando...").
+`saveEditComment()` só tinha `parseMentions()` — um fix documentado no
+próprio código pra @menção humana. Mas o gatilho real do Agente Ágil no
+backend (`functions/agente-agil-orquestrador/mentionTrigger.js`) é
+`onValueCreated`: só dispara quando um comentário é CRIADO, nunca em
+`window._update()` (edição, usado por `saveEditComment()`). Editar um
+comentário pra ADICIONAR "@Agente Ágil" ficava em silêncio total — sem
+erro, sem resposta, sem indicador — mesmo texto que funcionaria
+perfeitamente como comentário novo.
+
+Fix aplicado: `saveEditComment()` avisa por toast quando a edição
+ADICIONA a menção (não tinha antes, tem agora), explicando que precisa
+postar um comentário novo. **Fix "de verdade" fica como recomendação
+separada**: o gatilho reagir também a `onValueWritten` (com diff
+antes/depois pra não reprocessar edição de um comentário que já
+mencionava o agente) é mudança de arquitetura em `functions/`, fora do
+escopo desta rodada.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses igual
+ao baseline (braces -1, parens +1).
+
 ### v8.30.641-dev — 2026-09-11 — Fix: `limitToLast` da v8.30.640-dev excluía sistematicamente notificações de id determinístico
 
 Achado real testando o fix anterior (mesmo dia — usuário rodou o teste de

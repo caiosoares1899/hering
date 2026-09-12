@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.641-dev</div>
+<div class="version">v8.30.642-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32564,6 +32564,7 @@ function saveEditComment(cid){
   if(!newText){ showToast('Comentário não pode ficar vazio.'); return; }
   const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
+  const oldText = comment.text||''; // guardado ANTES de sobrescrever, ver aviso do Agente Ágil abaixo
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
   window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {text:newText, editedAt:comment.editedAt}).catch(()=>{});
@@ -32573,6 +32574,21 @@ function saveEditComment(cid){
   // adicionada só na edição (ex.: corrigindo o handle de alguém) nunca
   // notificava ninguém.
   parseMentions(newText, _commentCardId, cid);
+  // Achado real (/monitorarbugs, 2026-09-12, "modal do card"): diferente da
+  // @menção humana (parseMentions acima, já corrigida antes), mencionar o
+  // Agente Ágil só funciona de verdade num comentário NOVO — o gatilho no
+  // backend (functions/agente-agil-orquestrador/mentionTrigger.js) é
+  // onValueCreated, nunca dispara em window._update() (edição). Editar um
+  // comentário pra ADICIONAR "@Agente Ágil" ficava em silêncio total: sem
+  // erro, sem resposta, sem indicador "pensando..." — mesmo texto que
+  // funcionaria se fosse comentário novo. Corrigir de verdade (o gatilho
+  // reagir também a edição, com diff antes/depois pra não reprocessar toda
+  // edição de um comentário que JÁ mencionava o agente) é mudança de
+  // arquitetura em functions/ — fica como recomendação separada. Aqui só
+  // avisa, em vez de deixar a pessoa esperando uma resposta que nunca vem.
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(newText) && !_textMencionaAgenteAgil(oldText)){
+    showToast('⚠ Editar um comentário não notifica o Agente Ágil — poste um novo comentário pra ele responder.');
+  }
 }
 
 function cancelEditComment(cid){
