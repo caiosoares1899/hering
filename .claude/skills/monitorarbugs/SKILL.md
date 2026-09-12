@@ -797,6 +797,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   schema novo, registrado como recomendação futura, não implementado).
   dev v8.30.643, PR #879.
 
+- **2026-09-12, 🗄 Arquivamento automático por idade (#827) (pedido
+  genérico, escopo escolhido via prioridade 1 — feature de 2026-09-08
+  sem rodada própria, `git log --oneline -40 -- kanban-dev.html`)**: 1
+  achado real, técnica 3 (confrontar comportamento contra a própria
+  promessa "checa 1x/dia por navegador"). `maybeAutoArchiveOldCards()`
+  gravava a flag "já rodei hoje" (`localStorage`) ANTES de checar
+  `cfg.enabled` — como a função roda 3s após todo load do board, ligar a
+  regra pela 1ª vez sempre caía num dia já "consumido" pela mesma aba
+  (que a pessoa usou pra abrir ⚙ Config e ativar), empurrando o sweep
+  pro dia seguinte em silêncio. Fix: checa `enabled` antes de tocar no
+  `localStorage`. Checado e sem achado: filtro por coluna nos Arquivados
+  (`_renderArquivadosBody()`, lida bem com coluna excluída depois);
+  `excludedCols`/config UI consistentes; rótulo "Sem edição há (dias)"
+  já é honesto sobre rastrear só edições de campo, não toda atividade
+  (comentário não bumpa `editedAt` de propósito, arquitetura separada —
+  não é bug). dev v8.30.644, PR #881.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
