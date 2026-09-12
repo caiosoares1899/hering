@@ -3211,6 +3211,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.643-dev — 2026-09-12 — /monitorarbugs em ⏸ Pausar card: detalhamento por coluna do Relatório Tempo por Tag não descontava tempo pausado
+
+Achado real auditando a feature nova ⏸ Pausar card (técnica 2 — comparar
+contra um padrão irmão já resolvido: o mesmo par acumulado/episódio-aberto
+de `blockedMs`/`atrasadoMs`).
+
+`_cardTempos()` (lead/cycle time do card) já descontava `_cardPausedMs(c)`
+corretamente. Mas `_cardTempoPorColuna()` — o detalhamento "tempo em cada
+etapa" mostrado no MESMO relatório (📊 Dados do Board → ⏱ Relatórios de
+Tempo) — somava `saida-entrada` de cada trecho do `flow.log` sem tocar em
+pausa nenhuma. Cenário: card 5 dias numa coluna, 2 deles pausado — o total
+do card mostrava corretamente ~3 dias de lead time, mas o chip daquela
+coluna mostrava ~5 dias, os dois números do mesmo relatório não batiam, e
+contradizia o texto da Central de Ajuda ("tempo simplesmente não corre nos
+relatórios... Relatório Tempo por Tag").
+
+Fix (best-effort, aprovado pelo usuário): passou a descontar a pausa ATIVA
+agora (timestamp exato conhecido) do último trecho aberto do `flow.log`.
+Pausas passadas já encerradas continuam fora do detalhamento por coluna —
+`card.pausedMs` guarda só a soma total acumulada, não uma lista de
+intervalos, então não dá pra saber em qual coluna cada pausa passada
+aconteceu (mesma limitação já aceita hoje pra `blockedMs`/`atrasadoMs`).
+Corrigir isso de verdade exigiria guardar histórico de intervalos de
+pausa — mudança de schema, registrada como recomendação futura, não
+implementada agora.
+
 ### v8.30.642-dev — 2026-09-12 — /monitorarbugs no modal do card: editar comentário pra mencionar o Agente Ágil ficava em silêncio total
 
 Achado real auditando comentários do modal do card (técnica 1 — comparar
