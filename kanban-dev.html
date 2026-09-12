@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.642-dev</div>
+<div class="version">v8.30.643-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -19243,15 +19243,29 @@ function _cardTempos(c){
   return { lead, cycle, done: !!doneMs };
 }
 // Tempo (horas) que um card passou em cada coluna, a partir do flow.log
+// Achado real (/monitorarbugs, 2026-09-12, "⏸ Pausar card"): diferente de
+// _cardTempos() (lead/cycle time), que já desconta _cardPausedMs() inteiro,
+// aqui só dá pra descontar a pausa ATIVA agora (timestamp exato conhecido,
+// cai sempre no último trecho ainda aberto) — pausas passadas já encerradas
+// não têm registro de EM QUAL coluna aconteceram (card.pausedMs é só soma
+// total acumulada, não uma lista de intervalos), então ficam de fora do
+// detalhamento por coluna. Limitação conhecida, aceita de propósito (mesma
+// decisão já tomada pra blockedMs/atrasadoMs, ver comentário em
+// _settleBlockedTag() perto de L30297) — corrigir de verdade exigiria
+// guardar histórico de intervalos de pausa, mudança de schema fora de
+// escopo aqui.
 function _cardTempoPorColuna(c){
   const out={};
   const log=c.flow?.log; if(!log||!log.length) return out;
   const now=Date.now();
+  const pausaAtivaMs = (c.paused && c.pausedAt) ? Math.max(0, now-new Date(c.pausedAt).getTime()) : 0;
   for(let i=0;i<log.length;i++){
     const entrada=new Date(log[i].at).getTime();
+    const isUltimoTrechoAberto = (i+1>=log.length) && !c.flow?.doneAt;
     const saida = (i+1<log.length) ? new Date(log[i+1].at).getTime() : (c.flow?.doneAt? new Date(c.flow.doneAt).getTime() : now);
     const col=log[i].to;
-    const h=Math.max(0,(saida-entrada)/3600000);
+    let h=Math.max(0,(saida-entrada)/3600000);
+    if(isUltimoTrechoAberto && pausaAtivaMs) h=Math.max(0, h-pausaAtivaMs/3600000);
     out[col]=(out[col]||0)+h;
   }
   return out;
