@@ -227,6 +227,22 @@ resto (como `comunicados` estava) é prioridade #1 pra aplicar os itens 1-2
 acima nele especificamente, em vez de auditar todo `onValue()`/`get()` do
 arquivo sem prioridade.
 
+**4. Toda `query(ref, orderByChild('campo'), ...)` nova precisa do
+`.indexOn` correspondente em `database.rules.json`** — achado real
+(2026-09-12): o próprio fix do item 2 (`loadNotifs()`/`loadPainelNotifs()`
+passando a usar `orderByChild('ts')`) saiu sem o índice, e só foi pego
+depois, pelo warning do Firebase no console do navegador
+(`FIREBASE WARNING: Using an unspecified index... Consider adding
+".indexOn": "ts"`) — sem o índice, o RTDB ainda faz o scan/sort completo
+do node NO SERVIDOR antes de aplicar `limitToLast`, perdendo parte real do
+ganho que a query deveria trazer (o download pro cliente fica menor, mas
+o trabalho do servidor não). Depois de qualquer `orderByChild()` novo,
+grep o path no `database.rules.json` (`grep -n '"<node>"'`) e confirme
+`".indexOn": ["<campo>"]` no nível certo (o node que está sendo
+percorrido, ex. `usuarios/$uid/notificacoes`, não o `$notifId` de dentro)
+— e, se faltar, adicionar já faz parte do MESMO fix, não uma rodada
+separada.
+
 ## Passo 5 — Heurística de leak em `setInterval`
 
 ```bash
@@ -426,6 +442,18 @@ registrando o baseline atual pra próxima rodada comparar.
   já resolvido). Fix: mesmo padrão — painel-dev v3.44. Não era bug desta
   rodada (pré-existente, só ficou visível pelo teste de diagnóstico com
   dado real).
+
+- **2026-09-12, `.indexOn` faltando pro fix de `orderByChild('ts')`**:
+  achado real, confirmado ao vivo pelo warning do próprio Firebase no
+  console do navegador (não por auditoria estática) —
+  `kanban/usuarios/{uid}/notificacoes` ganhou `orderByChild('ts')` no
+  fix de 2 rodadas atrás, mas `database.rules.json` nunca ganhou o
+  `.indexOn` correspondente, então o RTDB seguia fazendo o scan/sort
+  completo no SERVIDOR antes do `limitToLast`. Fix: `".indexOn":
+  ["ts"]` no node `usuarios/$uid/notificacoes`. Motivou o item 4 novo
+  do Passo 4.1 acima (checar `.indexOn` faz parte do MESMO fix de
+  query, não uma rodada separada). Precisa de `firebase deploy --only
+  database` rodado localmente pelo usuário pra valer.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.

@@ -20168,7 +20168,21 @@ divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
 
-### 2026-08-20 — Escalação de privilégio: qualquer conta Google conseguia se auto-conceder acesso a um squad
+### 2026-09-12 — `.indexOn: "ts"` faltando em `kanban/usuarios/{uid}/notificacoes`
+
+Gap deixado aberto pelo fix de Fase 1 desta mesma sessão (PRs #874/#875,
+`/otimizaçãoderotina` Passo 4.1): `loadNotifs()`/`loadPainelNotifs()`
+passaram a consultar o node com `query(ref, orderByChild('ts'),
+limitToLast(80))` em vez de baixar a árvore inteira, mas ninguém
+adicionou o índice correspondente na regra — o Firebase confirmou isso
+na prática com o warning `Using an unspecified index... Consider adding
+".indexOn": "ts"`, sinal de que a query estava filtrando client-side
+mesmo depois do fix. Sem o índice, o RTDB ainda baixa e ordena o node
+inteiro no servidor antes de aplicar o `limitToLast`, perdendo boa parte
+do ganho pretendido pela Fase 1. **Fix**: `".indexOn": ["ts"]` no node
+`kanban/usuarios/$uid/notificacoes`. Precisa de `firebase deploy --only
+database` rodado localmente (mesma ressalva de `functions/` — resync o
+clone antes).
 Achado durante uma revisão de segurança pra internalização do projeto na
 infra corporativa. A whitelist de "externos" (colaboradores não-
 `@ciahering.com.br` autorizados pelo PO por squad, em Configurações) só
