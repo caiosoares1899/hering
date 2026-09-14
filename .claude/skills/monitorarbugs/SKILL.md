@@ -861,6 +861,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   opt-in via regra, não tem checagem "existe regra?" equivalente antes
   da flag). dev v8.30.646, PR #883.
 
+- **2026-09-14, Timeline (kanban) — collapse dos buckets (feature nova,
+  não `/monitorarbugs`, checada de passagem no início da rodada seguinte
+  por prioridade 1)**: sem achados — double-click em Hoje/Amanhã se
+  resolve sozinho (2 toggles nativos do `<details>` se cancelam), critério
+  de "Expandir/Recolher tudo" herdado fielmente do painel, reset de
+  scroll ao re-renderizar é característica pré-existente de toda a
+  Timeline (não uma regressão nova desta feature).
+- **2026-09-14, 🕐 Tema automático (pedido genérico, "roda mais um
+  /monitorarbugs" — área escolhida por prioridade 2, nunca tinha rodada
+  própria, só o help content tinha sido sincronizado)**: 1 achado real, 4
+  call sites, técnica 3 (um valor com 2 origens tratado como se fosse
+  1 só). `_currentTheme()==='vice'` é escrito tanto pelo easter egg manual
+  🌴 Vice City (`toggleViceCity()`, long-press) quanto pela banda normal
+  das 12h-18h do Tema automático (`_applyAutoTheme()`) — os handlers do
+  botão de tema (`onThemeBtnClick`/`onThemeBtnDblClick`/
+  `_mobileThemeRowClick`/`toggleViceCity`) usavam só isso pra decidir "sai
+  do easter egg", então clicar no botão durante a banda automática da
+  tarde desligava o automático sem pedir e mostrava um toast confuso de
+  "De volta pra...". Fix: `_isViceCityEasterEggAtivo()` — só considera
+  easter egg de verdade quando vice + automático DESLIGADO (seguro,
+  `toggleViceCity()` sempre desliga o automático ao entrar). dev
+  v8.30.648, PR #885.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
