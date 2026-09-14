@@ -1005,6 +1005,24 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `_isPOOuMais()` (client) bate com `canBulkDelete()`/papéis
   po/organizador/adm, mesmo critério dos dois lados.
 
+- **2026-09-14, filtro de tags (pedido explícito, escopo nomeado)**:
+  **sem achados**, depois de investigação real — técnica 1 aplicada a
+  TODA a família de implementações paralelas de "filtrar por tag"
+  espalhadas pelo arquivo, não só o filtro genérico principal
+  (`#f-tag`/`applyFilters()`/`clearFilters()`/`applyFilterPreset()` — os
+  3 sincronizam `activeFilters.tag` e o `<select>` corretamente,
+  diferente do gap já corrigido de Submarca/Canal em rodadas passadas).
+  Checado também: `cardHasTag()` (usa `getCardTags()`, multi-tag-aware,
+  sem o bug legado de `card.tag`); os quick-filters de Submarca/Canal
+  (`renderSubmarcaQuickFilters()`/`toggleSubmarcaDropdownItem()`/
+  `setSubmarcaFromDrawer()`/`setSubmarcaDropdownTodos()` e os
+  equivalentes de Canal) — todos os pontos de mutação já sincronizam
+  `<select>`+render+`_applyFiltrosBtnUI()`; filtro de tag do Calendário
+  (`cal-f-tag`, dentro de `makeDayEl()`) e dos Arquivados (`arch-f-tag`,
+  já auditado antes) — ambos usam `cardHasTag()`/`getCardTags()`
+  corretamente, não a versão legada. Nenhum ponto de mutação de
+  `activeFilters.tag` encontrado fora dos 3 já checados.
+
 - **2026-09-14, modal do card e suas funções (pedido explícito, escopo
   nomeado, amplo — "faz uma rodada no modal do card e suas funções")**:
   1 achado real, na área de Dependências entre cards, técnica 2
