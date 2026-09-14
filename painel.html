@@ -142,6 +142,25 @@
 [data-theme="vice"] .hd-btn-adm{
   color:var(--txt) !important;
 }
+/* Achado real (relato direto do usuário, 2026-09-14, print mostrando
+   "Resolver todos"/"Limpar resolvidos" apagados no Vice City): o fix acima
+   (2026-09-04) só cobriu os BOTÕES DA ABA (#ptab-monitor/#ptab-dados/
+   #ptab-agentes), nunca o CONTEÚDO de dentro de cada aba
+   (#ppane-monitor/#ppane-dados/#ppane-agentes) — onde mora a maioria dos
+   elementos com cor de destaque fixada inline (o rótulo da aba é só 1-2
+   palavras; o conteúdo tem dezenas de botões/badges). Seletor por atributo
+   (em vez de mais uma lista de ids pra lembrar de manter) pega qualquer
+   elemento presente E futuro que use --teal/--cyan/--accent/--danger/--warn
+   como cor de texto dentro dessas 3 abas — mesma família de cores que o
+   fix de cima já mirava, só que agora no lugar certo. */
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--teal)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--cyan)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--accent)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--danger)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--warn)"],
+[data-theme="vice"] #err-clear-resolved-btn{
+  color:var(--txt) !important;
+}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 /* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
@@ -342,7 +361,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-field-label{font-size:10px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--txt3);margin:14px 0 6px;}
 .okr-field-label:first-child{margin-top:0;}
 .okr-input,.okr-textarea,.okr-select{width:100%;padding:8px 10px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;}
-.okr-textarea{resize:vertical;min-height:52px;font-family:'DM Sans',sans-serif;}
+/* min-height default aumentado (era 52px — pedido direto: "essa parte do
+   objetivo ta pequeno demais"): 130px já mostra ~5-6 linhas sem precisar
+   redimensionar na maioria dos objetivos reais. */
+.okr-textarea{resize:vertical;min-height:130px;font-family:'DM Sans',sans-serif;}
 .okr-list-editable{display:flex;flex-direction:column;gap:5px;}
 .okr-list-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:7px;padding:6px 8px;}
 .okr-list-item span{flex:1;}
@@ -1724,6 +1746,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
       <div style="display:flex;gap:6px;">
         <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
+        <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
         <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
         <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
         <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
@@ -1971,7 +1994,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <span>🐛 Monitoramento de Erros</span>
         <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
         <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
-        <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
+        <button onclick="clearResolvedErrors()" id="err-clear-resolved-btn" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
       </div>
       <div class="err-stats-grid" id="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
@@ -2843,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.39 · painel</div>
+<div class="version">v3.47 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4871,6 +4894,15 @@ function loadOkr(){
     // objetivo aberto na hora que um marco muda (outra pessoa editando, ou
     // escrita do próprio agente) precisa refletir ao vivo, não só no próximo clique
     if(document.getElementById('okr-obj-ov')?.classList.contains('open') && _okrEditingObjId){
+      // Achado real: este listener dispara pra QUALQUER marco de QUALQUER
+      // Objetivo, e antes de reescrever o HTML do zero via renderOkrObjBody()
+      // não sincronizava o que a pessoa já tinha digitado (título/pilar/
+      // descrição) de volta pro draft — diferente de outros gatilhos de
+      // re-render no arquivo (ex.: trocar Gerência), que já chamam
+      // _okrSyncObjDraftFromDom() antes. Sem isso, editar o Objetivo A
+      // enquanto um marco do Objetivo B muda em outra aba perdia tudo que
+      // ainda não tinha sido salvo.
+      _okrSyncObjDraftFromDom();
       renderOkrObjBody(_okrEditingObjId);
     }
   });
@@ -5371,7 +5403,7 @@ function _okrCardSearchResults(query){
     // um card com a tag OKR na 2ª/3ª posição mostrava o 🎯 no board mas
     // NUNCA aparecia aqui pra ser vinculado a um Objetivo. Mesma classe
     // de bug do PR #770 (_histDiff() só rastreava card.tag), em outro
-    // arquivo. _pGetCardTags() (L3306) já existe pra isso.
+    // arquivo. _pGetCardTags() (L3275) já existe pra isso.
     (Array.isArray(d.cards)?d.cards:[]).filter(c=>{
       if(!c || c.archived) return false;
       if(c.isOKR) return true;
@@ -5594,6 +5626,17 @@ function renderOkrObjBody(id){
   if(!body || !_okrObjDraft) return;
   const podeEditar = id ? _okrCanEdit(okrObjetivos[id]||{}) : _okrCanCreate();
   const d = _okrObjDraft;
+  // Achado real (usuário: "aquela função ali no cantinho para aumentar
+  // essa area [do Objetivo] não tá funcionando") — esta função reescreve
+  // #okr-obj-body do ZERO a partir do template, então qualquer altura
+  // arrastada manualmente na textarea (resize:vertical, ver CSS) era
+  // perdida no próximo re-render — e este re-render é disparado com
+  // bastante frequência por caminhos que nada têm a ver com o que a
+  // pessoa está editando (ex.: o listener de `kanban/okr/marcos` chama
+  // renderOkrObjBody() sempre que QUALQUER marco muda, de QUALQUER
+  // Objetivo, pra refletir ao vivo). Guarda a altura atual (se alguém já
+  // redimensionou) antes de reescrever o HTML e reaplica no fim.
+  const _alturaDescricaoPrevia = document.getElementById('okr-f-descricao')?.style.height || '';
 
   if(!podeEditar){
     body.innerHTML = `
@@ -5653,6 +5696,10 @@ function renderOkrObjBody(id){
       : `<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
     ):''}
     <button class="save-btn" onclick="saveOkrObjetivo()">💾 Salvar</button>`;
+  if(_alturaDescricaoPrevia){
+    const taDescricao = document.getElementById('okr-f-descricao');
+    if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
+  }
 }
 
 async function saveOkrObjetivo(){
@@ -6085,6 +6132,29 @@ const SUBMARCA_TAGS = [
   {id:'tag_sm_teen_com',      label:'Hering Teen Comercial'},
   {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro'},
 ];
+// Tags de canal de venda — mesmo array fixo de kanban.html/kanban-dev.html
+// (ids/labels idênticos, pensado pro squad "marketplace"). Achado real
+// (pedido direto do usuário, 2026-09-11): kanban-dev.html já tem o donut
+// "Por canal de venda" nos Insights de UM squad (📊 Dados do Board) desde
+// que o campo Canal existe (09-10) — mas o Dashboard consolidado do painel
+// (cross-squad) só tinha "Por submarca", nunca ganhou o equivalente de
+// Canal. Mesmo padrão do array de submarca acima.
+const CANAL_VENDA_TAGS = [
+  {id:'tag_cv_meli1',      label:'Mercado Livre (ME1)'},
+  {id:'tag_cv_meli2',      label:'Mercado Livre (ME2)'},
+  {id:'tag_cv_melifull',   label:'Mercado Livre (Full)'},
+  {id:'tag_cv_dafiti',     label:'Dafiti'},
+  {id:'tag_cv_netshoes',   label:'Netshoes'},
+  {id:'tag_cv_shopee',     label:'Shopee'},
+  {id:'tag_cv_shopeekids', label:'Shopee Kids'},
+  {id:'tag_cv_amazon',     label:'Amazon'},
+  {id:'tag_cv_amazonfba',  label:'Amazon (FBA)'},
+  {id:'tag_cv_privalia',   label:'Privalia'},
+  {id:'tag_cv_magalu',     label:'Magazine Luiza'},
+  {id:'tag_cv_zzmall',     label:'ZZ Mall'},
+  {id:'tag_cv_offpremium', label:'Off Premium'},
+  {id:'tag_cv_tiktokshop', label:'TikTok Shop'},
+];
 function _cardTagIds(c){ return (c.tags&&c.tags.length)?c.tags:(c.tag?[c.tag]:[]); }
 function _pvDonutGradient(segments){
   const total = segments.reduce((s,x)=>s+x.value,0) || 1;
@@ -6261,6 +6331,27 @@ function renderPainelInsights(){
       .sort((a,b)=>b.count-a.count);
     if(porSubmarca.__sem__) smSegs.push({label:'Sem submarca definida',count:porSubmarca.__sem__,color:'#5b6472'});
     html += '<div style="margin-bottom:16px;">' + donutBlock('🏷️','Por submarca',smSegs.length?smSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
+  }
+
+  // ── Por canal de venda (só entra se pelo menos uma squad visível usa o campo) ──
+  // Mesmo padrão do bloco "Por submarca" acima (achado real, pedido direto
+  // do usuário 2026-09-11: existia no board de UM squad, nunca chegou no
+  // consolidado cross-squad do painel).
+  const squadsComCanal = SQUADS.filter(sq=>squadVisible(sq.id) && squadData[sq.id]?.canalVendaAtivo);
+  if(squadsComCanal.length){
+    const CANAL_VENDA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const porCanal={};
+    activeCards.filter(c=>squadsComCanal.some(sq=>sq.id===c._squad.id)).forEach(c=>{
+      const tagsDoCard=_cardTagIds(c);
+      const cv=CANAL_VENDA_TAGS.find(st=>tagsDoCard.includes(st.id));
+      const k=cv?cv.id:'__sem__';
+      porCanal[k]=(porCanal[k]||0)+1;
+    });
+    const cvSegs=CANAL_VENDA_TAGS.map((st,i)=>({label:st.label,count:porCanal[st.id]||0,color:CANAL_VENDA_COLORS[i%CANAL_VENDA_COLORS.length]}))
+      .filter(s=>s.count>0)
+      .sort((a,b)=>b.count-a.count);
+    if(porCanal.__sem__) cvSegs.push({label:'Sem canal definido',count:porCanal.__sem__,color:'#5b6472'});
+    html += '<div style="margin-bottom:16px;">' + donutBlock('🛒','Por canal de venda',cvSegs.length?cvSegs:[{label:'Sem dados',count:0,color:'#5b6472'}]) + '</div>';
   }
 
   body.innerHTML=html;
@@ -6821,9 +6912,7 @@ async function _forcarLimpezaCacheGcal(){
   }
 
   // 1) Cache global de agendas do Google
-  const _remGcal = totalRemovido;
   await limpaPath('kanban/painel/config/gcal_cache', 'obj');
-  if(totalRemovido !== _remGcal) _touchPcalCacheMeta();
   // 2) Eventos manuais do painel
   await limpaPath('kanban/painel/cal_events', 'arr');
   // 3) Eventos de cada squad (feriados podem ter sido gravados por squad)
@@ -7003,7 +7092,6 @@ function _applyGcalCacheCleaning(){
   if(_isAdmPainel() && window._pcalCalendarsLoaded && (removidosOrfaos>0 || removidosDup>0)){
     const cacheLimpo = Object.fromEntries(eventos.map(ev=>[ev.id, ev]));
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheLimpo).catch(()=>{});
-    _touchPcalCacheMeta();
   }
 }
 
@@ -7386,7 +7474,6 @@ async function removePcalAgenda(id){
       const cache = snap.val()||{};
       const filtrado = Object.fromEntries(Object.entries(cache).filter(([_,ev])=>ev._calId!==id));
       await window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), filtrado);
-      _touchPcalCacheMeta();
     }catch(e){ console.warn('Não foi possível purgar cache imediatamente:', e); }
     renderPcalAgendasList();
     showToast('🗑 Agenda removida.');
@@ -7408,15 +7495,6 @@ async function reconectarPcalGCal(){
     showToast('⚠ Não foi possível reconectar: '+(e?.message||e));
   }
 }
-// Toda escrita em kanban/painel/config/gcal_cache PRECISA tocar o gcal_cache_meta junto —
-// kanban.html/kanban-dev.html escutam só o meta e buscam o cache cheio sob demanda quando
-// ele muda; sem isso a escrita fica invisível pros outros clientes até o próximo refetch.
-function _touchPcalCacheMeta(){
-  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
-    updatedAt: new Date().toISOString(),
-    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
-  }).catch(()=>{});
-}
 // Só o ADM busca da API do Google — o resultado processado fica em cache no Firebase
 // (kanban/painel/config/gcal_cache) e todo mundo lê de lá, sem precisar autorizar nada.
 async function carregarPcalAgendasGlobais(){
@@ -7426,7 +7504,6 @@ async function carregarPcalAgendasGlobais(){
   const list=Object.values(window._pcalCalendars||{});
   if(!list.length){
     window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), {});
-    _touchPcalCacheMeta();
     if(_isPtab('pessoas')) renderPcal();
     return;
   }
@@ -7494,7 +7571,10 @@ async function carregarPcalAgendasGlobais(){
   });
   const cacheObj = Object.fromEntries(todosEventosDedup.map(ev=>[ev.id, ev]));
   window._set(window._ref(window._db,'kanban/painel/config/gcal_cache'), cacheObj);
-  _touchPcalCacheMeta();
+  window._set(window._ref(window._db,'kanban/painel/config/gcal_cache_meta'), {
+    updatedAt: new Date().toISOString(),
+    updatedBy: window._currentUser?.displayName || window._currentUser?.email || '?',
+  });
 
   const temExpirado = Object.values(window._pcalGcalErrors).some(e=>e.type==='expired');
   _pcalGcalWarnBanner(temExpirado);
@@ -7842,7 +7922,7 @@ async function loadStatusData(){
 // consumo de download do Firebase quando o time deixa a aba aberta a noite/fim de semana.
 async function deslogarTodos(){
   if(!_isAdmPainel()){ showToast('🔒 Ação disponível só para ADM.'); return; }
-  if(!await uiConfirm('Deslogar TODOS os usuários de TODAS as squads agora? Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos'})) return;
+  if(!await uiConfirm('[AMBIENTE DE TESTES] Deslogar TODOS os usuários de TODAS as squads DO DEV agora? Isso NÃO afeta o kanban.html de produção. Cada pessoa vai precisar entrar de novo na próxima vez que abrir o quadro.',{danger:true,okText:'Deslogar todos (dev)'})) return;
   try{
     await window._set(window._ref(window._db,'kanban/global/force_logout_after'), Date.now());
     showToast('🚪 Pronto -- todo mundo vai ser deslogado.');
@@ -7954,8 +8034,6 @@ async function markAllPainelNotifsRead(){
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
   if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
-  // Lê fresco do Firebase antes de escrever — evita reverter mudanças
-  // concorrentes feitas pelo próprio board no mesmo instante.
   try {
     const snap = await window._get(ref);
     const val = snap.val() || {};
@@ -8096,944 +8174,9 @@ function loadComunicados(){
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
 const COMUNICADO_RASCUNHOS_SEED = [
   {
-    id: 'seed_fix_consumo_dados_mural_2026_09_11',
-    titulo: '📉 Mural de Avisos ficou mais leve (menos dados/bateria)',
-    corpo: `<p>Achamos e corrigimos um bug técnico que fazia o Mural 📢 baixar avisos <b>de mais</b> em segundo plano — inclusive avisos antigos/já encerrados que ninguém precisa ver — a cada poucos minutos, o tempo todo, mesmo sem ninguém abrir o Mural.</p>
-
-<p>O comportamento pra quem usa o board não muda em nada — avisos, popups e o histórico do Mural continuam funcionando exatamente igual. Só o consumo de dados/bateria em segundo plano cai bastante, principalmente pra quem fica com o board aberto o dia inteiro.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'dica',
-    squad: '*',
-  },
-  {
-    id: 'seed_fix_board_branco_pos_login_2026_09_11',
-    titulo: '🐛 Corrigido: board abrindo em branco logo após entrar',
-    corpo: `<p>Corrigido um bug que fazia o board abrir <b>sem nenhum card</b> logo depois de fazer login — precisando de um F5 pra tudo aparecer. Isso podia acontecer em qualquer login, dependendo do tempo que o Google levava pra confirmar sua conta.</p>
-
-<p>Se isso já te aconteceu, pode ficar tranquilo(a): era um problema de carregamento, nenhum dado foi perdido. A partir de agora o board espera o login terminar de verdade antes de tentar carregar os cards.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'aviso',
-    squad: '*',
-  },
-  {
-    id: 'seed_canal_marketplace_impedimentos_monitor_2026_09_10',
-    titulo: '🛒 Campo "Canal" pra squad Marketplace + coluna Impedimentos liberada',
-    corpo: `<p>Lote de novidades no board e no painel:</p>
-
-<p><b>🛒 Novo campo "Canal" (squad Marketplace):</b> igual à Submarca do squad Site, o board da squad Marketplace ganhou um campo dedicado "Canal" — Mercado Livre (ME1/ME2/Full), Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium e TikTok Shop. Escolha o canal direto no card (é exclusivo, só um por vez), filtre pela toolbar ou pelo painel de Filtros. Por padrão o campo é opcional pra salvar o card — dá pra tornar obrigatório em ⚙ Config → Tags, se a squad preferir.</p>
-
-<p><b>🚧 Coluna "Impedimentos" vazia agora pode ser excluída:</b> squads que usam colunas como tag (ex.: Marketplace) não ficam mais travadas numa coluna "Impedimentos" fixa sem conseguir excluir — a trava só continua ativa enquanto a coluna tem cards de verdade nela.</p>
-
-<p><b>🐛 Monitor (painel) agora cobre qualquer squad:</b> a aba 🐛 Monitor de Erros do painel só mostrava dados dos squads originais — squad criado depois (como o Marketplace) agora aparece certinho nos filtros e nas estatísticas.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_enviar_squad_okr_link_nome_cadastro_2026_09_09',
-    titulo: '🏢 Enviar card pra outro squad + 🔗 link direto por Objetivo de OKR',
-    corpo: `<p>Lote de novidades no board e no painel:</p>
-
-<p><b>🏢 Duplicar card ganha opção de enviar para outro squad:</b> abrindo ⧉ Duplicar num card, agora tem um seletor "Squad de destino" no topo. Escolhendo outro squad, você é levado direto pra "+ Novo card" já naquele squad, com Descrição/Checklist/Tags/Prazo/Prioridade/Riscos/Links pré-preenchidos — só falta completar o que é específico daquele squad (Responsável, Demandante, Submarca) e Salvar. O card original fica intacto.</p>
-
-<p><b>🔗 Link direto por Objetivo de OKR (painel):</b> todo Objetivo já existente ganhou um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto, igual o "Copiar link" de um card do board.</p>
-
-<p><b>Cadastro pelo painel corrigido:</b> quem entra só pelo painel (ex.: pra usar o OKR, sem mexer no board) agora tem o nome salvo certinho desde o 1º login — antes ficava com "?" em telas como 👥 Pessoas.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_arquivamento_coluna_historico_tema_auto_2026_09_08',
-    titulo: '🕐 Tema automático, arquivamento sem "comer" o Backlog e histórico mais completo',
-    corpo: `<p>Lote de novidades e correções no board:</p>
-
-<p><b>🕐 Tema automático:</b> botão novo ao lado do botão de tema (o do 🌙/☀️) — liga a troca de tema sozinha ao longo do dia, seguindo o horário de São Paulo: ☀️ claro de manhã (06h-12h), 🌴 Vice City à tarde (12h-18h — sim, aquele tema escondido virou oficial!) e 🌙 escuro à noite. Trocar de tema na mão desliga o automático de novo.</p>
-
-<p><b>🗄 Arquivamento automático ganha exceção por coluna:</b> em ⚙ Config → Automações, dá pra marcar colunas (ex.: Backlog) que a regra de arquivar cards antigos e parados nunca deve tocar — cards deixados ali de propósito, aguardando priorização, não somem sozinhos.</p>
-
-<p><b>📦 Arquivados ganha filtro por coluna:</b> em Funções de card → Arquivados, novo filtro pela coluna em que o card estava quando foi arquivado.</p>
-
-<p><b>📜 Histórico do card mais completo:</b> corrigidos 4 campos que eram salvos normalmente mas nunca apareciam no histórico de mudanças — Participantes, Riscos, Demandante, e o motivo de um impedimento editado.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_mobile_criativos_scroll_ptabs_2026_09_08',
-    titulo: '📱 Melhorias no uso pelo celular (painel e board)',
-    corpo: `<p>Revisão completa das telas no celular — board e painel — pra caber direitinho na tela, sem cortar nem sobrepor nada:</p>
-
-<p><b>📱 Painel — barra de abas do rodapé:</b> no celular, as abas (Visão/Fluxo/Timeline/OKR/Pessoas/Monitor/Status/Dados/Agentes) estavam ficando apertadas demais e o texto de uma esbarrava no da vizinha. Agora a barra rola de lado — arraste pra ver todas, sem mais texto colado.</p>
-
-<p><b>🎬 Board — Controle de Criativos:</b> a tabela no celular já rolava de lado normalmente, só faltava um indício visual disso — agora tem um gradiente sutil na borda mostrando que dá pra arrastar pra ver mais colunas.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_kanban_cfd_hover_ctxmenu_pausar_2026_09_07',
-    titulo: '📊 Board: gráfico CFD com hover + Pausar no menu de contexto',
-    corpo: `<p>Mais um lote de melhorias e correções no board:</p>
-
-<p><b>📊 CFD com números ao passar o mouse:</b> no gráfico "Cumulative Flow Diagram" (📊 Dados do Board → 📈 CFD & Burndown), agora dá pra passar o mouse por cima e ver uma linha acompanhando o cursor, com a data e a quantidade de cards em cada coluna naquele dia.</p>
-
-<p><b>⏸ Pausar contagem de tempo agora tem atalho no menu de contexto:</b> clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo" (ou "▶ Retomar") — sem precisar abrir o card inteiro pra isso, igual já funcionava pra marcar impedimento.</p>
-
-<p><b>🔧 Correções:</b> filtrar só por Submarca voltou a acender o botão "🔭 Filtros"; aplicar um preset de filtro salvo agora atualiza certinho o campo de Submarca do painel de Filtros; trocar "Tipo de executor"/status do agente sem clicar Salvar agora salva de verdade; e completar o checklist pela simulação do Agente Ágil volta a notificar e disparar Automações, igual já acontecia marcando na mão.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_painel_okr_destaque_feed_filtro_2026_09_07',
-    titulo: '🎯 Painel: seu OKR agora se destaca + fix no Feed de marcos',
-    corpo: `<p>Duas melhorias no <b>painel</b>:</p>
-
-<p><b>🎯 Seu Objetivo de OKR agora se destaca:</b> na aba OKR, o card de qualquer Objetivo onde você está entre os responsáveis ganha um tingimento azul — igual já acontecia com os cards do board — pra facilitar achar rápido "o que é meu" no meio de vários Objetivos.</p>
-
-<p><b>📜 Corrigido no Feed de marcos:</b> trocar de squad dentro do Feed de marcos (aba Timeline → 📜 Histórico) podia deixar um filtro de responsável/tag "preso" na squad anterior, fazendo a lista aparecer vazia sem nenhuma pista do motivo — corrigido.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_atalhos_esc_reorganizar_toolbar_2026_09_07',
-    titulo: '🎛️ Novo: um monte de jeitos de deixar o board do seu jeito',
-    corpo: `<p>Foi ao ar um lote grande de personalizações do board — quase tudo guardado na sua conta, funciona igual em qualquer computador que você usar:</p>
-
-<p><b>⌨️ Atalhos de teclado personalizáveis:</b> clique em "⌨️ Atalhos" na barra do board pra configurar sua própria combinação de teclas pra 24 ações — desde abrir o 📊 Dados do Board e 🌅 Meu Dia até, com um card aberto, 🔗 Copiar link, ⧉ Duplicar ou 📦 Arquivar. Dá pra usar teclas de função sozinhas (F2, F4, F8, F9, F10) sem precisar segurar Ctrl/Cmd — a própria tela mostra quais combinações já são do navegador, pra facilitar a escolha.</p>
-
-<p><b>⎋ Esc agora fecha a tela aberta:</b> Dados do Board, Central de Ajuda, Controle de Criativos, o modal do card... aperte Esc que fecha, sem precisar clicar no ✕. Se tiver uma alteração não salva no card, o Esc respeita o mesmo aviso de sempre.</p>
-
-<p><b>🔀 Reorganize a barra de ferramentas do seu jeito:</b> na tela de "⌨️ Atalhos", aba "🔀 Barra", arraste qualquer botão (ou divisor) pra posição que preferir — por exemplo, deixar o 📅 Calendários mais perto do seletor de fonte. "↩️ Restaurar padrão" desfaz tudo quando quiser.</p>
-
-<p><b>⇔ Raia e colunas que você colapsou agora ficam do jeito que você deixou</b> — antes voltavam ao normal toda vez que a página recarregava.</p>
-
-<p><b>🔎 Ordenação, modo de visualização, filtro de Submarca e colunas escondidas do 📊 Dados do Board</b> também passam a acompanhar sua conta, não só o navegador onde você configurou.</p>
-
-<p><b>📐 Densidade dos cards:</b> no mesmo menu "🔍 Fonte" da toolbar, escolha "🤏 Compacto" pra ver mais cards na tela de uma vez (esconde capa, indicadores e badges secundários — prioridade, prazo, impedimento e responsável continuam sempre visíveis).</p>
-
-<p><b>🎯 Squad padrão:</b> abrir o board sem escolher um squad específico agora cai sozinho no último squad que você usou — ou, se preferir, dá pra fixar um squad fixo no seletor de squad (clique no nome do squad atual, no cabeçalho).</p>
-
-<p><b>💾 Presets de filtro:</b> montou uma combinação de filtros que usa sempre? Na barra de "🔭 Filtros", clique em "💾 Salvar preset" e dá um nome — vira um atalho de 1 clique pra reaplicar tudo de novo. E agora, sempre que algum filtro estiver ativo, o botão "🔭 Filtros" pisca com um brilho — mesmo com o painel fechado, pra nunca mais parecer que os cards "sumiram".</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_tempo_atraso_bloqueado_okr_vinculo_2026_09_06',
-    titulo: '⏱️ Tempo em atraso e bloqueado agora fica registrado (mesmo depois de concluído)',
-    corpo: `<p>Mais um lote de melhorias no board e no painel:</p>
-
-<p><b>⏱️ Tempo em atraso e bloqueado agora é arquivado:</b> quando um card fica atrasado ou bloqueado, esse período agora é somado e guardado — mesmo depois do card ser concluído. Aparece em <b>📊 Dados do Board → Insights</b>, <b>🎬 Controle de Criativos</b> (inclusive cards já concluídos) e direto no modal do card, perto do Prazo e do Impedimento.</p>
-
-<p><b>🏷️ Corrigido no vínculo de cards do OKR:</b> um card com a tag OKR fora da 1ª posição às vezes não aparecia na busca pra vincular a um Objetivo, nem no badge do card já vinculado — corrigido.</p>
-
-<p><b>🔧 Bastidor:</b> mover um card pelo menu de contexto ("↦ Mover para") agora conta certinho pra métricas de cycle/lead time, CFD e Timeline; e aplicar uma receita de fan-out na mão volta a mostrar a foto de quem aplicou no Histórico.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_historico_avatar_notif_autoupdate_2026_09_06',
-    titulo: '📜 Histórico do card com carinha nova + notificações que agora te levam a algum lugar',
-    corpo: `<p>Foi ao ar um lote de melhorias no board e no painel:</p>
-
-<p><b>📜 Histórico do card com carinha nova:</b> agora cada entrada do 📜 Histórico mostra a foto de quem editou (ou as iniciais, sem foto) e um ícone colorido pelo tipo de mudança — mesmo visual "linha do tempo" que já existia no 🎯 OKR do painel.</p>
-
-<p><b>🔔 Notificações que agora levam a algum lugar:</b> clicar numa notificação de reunião abre o link direto; agenda pendente já processa a fila; e notificações de OKR e de feedback do Mural levam pro lugar certo — antes, essas só marcavam como lida sem fazer nada.</p>
-
-<p><b>🏷️ Corrigido:</b> adicionar ou remover uma 2ª/3ª tag de um card agora aparece certinho no Histórico (antes só a 1ª tag era rastreada); e um comunicado marcado "Insistente" no Mural não trava mais num loop de popup.</p>
-
-<p><b>🔄 Painel agora avisa quando tem versão nova:</b> quem fica com o painel aberto o dia inteiro vai ver um aviso "Atualizar agora" no canto, em vez de precisar recarregar manualmente pra ver as novidades.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_painel_timeline_uiux_glass_2026_09_04',
-    titulo: '🛤️ Timeline do Painel ficou mais fácil de usar (e mais bonita)',
-    corpo: `<p>A aba <b>🛤️ Timeline</b> do Painel (lançada essa semana) ganhou uma repaginada, direto de feedback de quem já testou:</p>
-
-<p><b>🔎 Filtro direto na própria aba:</b> não precisa mais ir na aba "👁 Visão" pra filtrar por squad ou gerência — agora tem um seletor no topo da própria Timeline. Continua sendo o mesmo filtro de sempre: mudar num lugar reflete no outro.</p>
-
-<p><b>📂 Grupos que recolhem/expandem:</b> "Atrasado" e "Hoje" já abrem prontos (o que mais precisa de atenção agora); o resto ("Amanhã", "Resto/Próxima semana", "Depois", "Sem prazo") começa recolhido — clique no cabeçalho de qualquer grupo pra abrir. Tem também um botão "Recolher tudo"/"Expandir tudo" pra alternar todos de uma vez.</p>
-
-<p><b>✨ Visual mais limpo:</b> os cards ganharam o mesmo estilo compacto da Timeline do board — avatar do responsável, tags com a cor de verdade, e as informações (squad, coluna, prazo) numa linha só, em vez de vários selos empilhados.</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_painel_timeline_vice_fix_2026_09_04',
-    titulo: '🛤️ Timeline chegou no Painel + contraste corrigido no 🌴 Vice City',
-    corpo: `<p>Duas novidades no <b>Painel</b> (visão consolidada de todas as squads):</p>
-
-<p><b>🛤️ Nova aba "Timeline":</b> mostra os cards ativos de <b>todas as squads juntas</b>, organizados por prazo — mesmos grupos da Timeline do board (🔴 Atrasado, 📅 Hoje/Amanhã, 🗓️ Resto/Próxima semana, ⏳ Depois, 🗂 Sem prazo). Respeita o mesmo filtro de squad/gerência já usado no resto do Painel — troca lá, reflete aqui também. Clique no card abre as informações rápidas, com link direto pra editar no board de origem.</p>
-
-<p><b>🌴 Contraste corrigido no Vice City:</b> quem já brincou de segurar o botão de tema no Painel deve ter notado que "Monitor", "Dados", "Agentes" e os botões do cabeçalho (Backup/Novo board/Usuários) ficavam quase ilegíveis nesse tema — corrigido, agora leem em branco como o resto da interface.</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_timeline_completo_2026_09_04',
-    titulo: '🛤️ Chegou a Timeline: um jeito novo de ver seus prazos',
-    corpo: `<p>Tem novidade grande no Maré Digital: a <b>🛤️ Timeline</b> — um jeito de ver o board organizado por PRAZO em vez de por coluna. Encontra na toolbar, o botão fica ao lado de "📅 Calendários". Explicando tudo por aqui, porque tem bastante coisa útil pra aproveitar. 👇</p>
-
-<p><b>📆 Como ela organiza os cards:</b> em vez das colunas de sempre, a Timeline agrupa os cards ativos em: 🔴 <b>Atrasado</b> (o mais antigo primeiro, com o número de dias de atraso na frente — o mais velho é a dívida real), 📅 <b>Hoje</b>, 📅 <b>Amanhã</b>, 🗓️ <b>Resto da semana</b>, 🗓️ <b>Próxima semana</b>, ⏳ <b>Depois</b>, e por último "🗂 Sem prazo definido" (recolhido, clique pra abrir). Cada card mostra avatar do responsável, prioridade, tags e impedimento, igual no board normal — dá pra entender o card sem precisar abrir ele.</p>
-
-<p><b>⚡ Resolve o prazo ali mesmo:</b> card sem prazo ganha um campo de data direto na linha — define sem abrir o card. Card atrasado ganha os atalhos "+1d" e "+1 sem" pra adiar com 1 clique só.</p>
-
-<p><b>🎯 Cruza com o Calendário:</b> os eventos do "📅 Calendários" (campanhas, reuniões, marcos importantes) aparecem como uma linha fina entre os cards, bem na data certa — dá pra enxergar de relance se algum prazo cai depois que uma campanha já começou.</p>
-
-<p><b>✅ Concluído recente:</b> um grupo recolhido no fim da lista, mostrando o que já foi entregue desde domingo — pra não ficar só olhando pendência.</p>
-
-<p><b>📰 Feed de marcos:</b> dê um duplo clique no cabeçalho de qualquer dia (Hoje, Amanhã, ou uma data futura específica) pra abrir um feed estilo rede social do que aconteceu no board naquele dia — cards criados 🆕, movidos de coluna 🔀 e concluídos 🏁, do mais recente pro mais antigo. O Feed tem filtro próprio (responsável, subtime, tag, tipo de marco) e mostra avatar/tags/prioridade também.</p>
-
-<p><b>🔎 Filtros:</b> uma barra no topo mostra a contagem rápida (ativos/atrasados/sem prazo) + atalhos "💡 Só eu" (filtra pelos seus cards na hora) e "🔭 Filtros" — os MESMOS filtros do board de colunas, então o que você filtra aqui continua filtrado se voltar pro board normal.</p>
-
-<p><b>⏸ Pausar card</b> (chegou junto, no rodapé do modal do card): para a contagem de tempo/métricas (cycle time e lead time) sem marcar o card como impedimento público — útil quando o card está parado por um motivo que não é bem um "bloqueio" (férias do responsável, prioridade trocada), mas você não quer que isso pese nas métricas do time.</p>
-
-<p><b>💡 Pra que serve na prática — alguns insumos que dá pra tirar:</b></p>
-<p>• <b>Abertura do dia/daily:</b> em segundos, veja o que está atrasado (e resolva ali — adia ou abre), o que vence hoje e amanhã, sem precisar catar card por card nas colunas.<br>
-• <b>Planejamento da semana:</b> "Resto da semana" e "Próxima semana" já mostram a carga que vem — dá pra antecipar gargalo antes dele virar atraso.<br>
-• <b>Checagem de risco de campanha:</b> os marcos de contexto mostram se algum prazo cai depois que uma campanha/evento importante já começou — dá pra agir antes, não depois.<br>
-• <b>Retrospecto rápido:</b> voltou de férias, faltou uma daily, ou só quer saber "o que rolou ontem"? O Feed de marcos conta a história do dia sem precisar abrir card por card.<br>
-• <b>Sensação de progresso:</b> "Concluído recente" mostra o que o time já entregou essa semana — bom pra fechar sprint ou só pra ver que o trabalho está andando.</p>
-
-<p>Testem à vontade e mandem feedback pelo <b>Fale com o ADM</b> no Mural! 🐟</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_backup_e_dependencias_2026_09_03',
-    titulo: '📊 Comparação com backup mais clara + acertos em ⛓ Dependências',
-    corpo: `<p><b>📊 Comparação com backup</b> (⚙ Configurações → Backup → comparar com backup): agora separa quem <b>sumiu sem explicação</b> ⚠ (destacado, com "Restaurar todos" em lote) de quem foi <b>excluído de propósito</b> 🗑 (num bloco recolhido, discreto, restaurando 1 por 1 se precisar) — antes tudo entrava na mesma lista, com o mesmo aviso.</p>
-
-<p><b>⛓ Dependências entre cards:</b> corrigimos um bug em que vincular uma dependência podia fechar um <b>ciclo</b> sem nenhum aviso (card A dependendo de B, que já dependia de A). Também corrigimos o selo "✓ pai atual" no seletor, que nunca aparecia mesmo quando era de fato o pai já vinculado.</p>
-
-<p>Além disso, demos mais uma passada de acertos finos por dentro do board (edição de Modelo/Recorrente/Agendamento, navegação entre cards relacionados) — nada visível, mas o board fica mais confiável.</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_squad_switcher_mobile_2026_09_03',
-    titulo: '📱 Trocar de squad no celular ficou mais fácil',
-    corpo: `<p>Quem usa o board pelo celular sabe: a setinha "▾" pra trocar de squad era bem pequena, difícil de acertar com o dedo. 🎯</p>
-
-<p>Agora <b>o título "🐟 Maré Digital" inteiro</b>, ali no topo, também abre a lista de squads — um alvo de toque bem maior, sem precisar mirar na setinha.</p>
-
-<p>Aproveitamos e demos uma passada em outra área do board pra deixar tudo redondinho por dentro também — nada visível, mas o board fica um pouco mais confiável.</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_lancamento_camiseta_brasil_2026_09_03',
-    titulo: '🇧🇷 Chegou o grande dia! Lançamento da Camiseta Brasil',
-    corpo: `<p>🎉 <b>Chegou o grande dia!</b> Hoje é o lançamento da <b>Camiseta Brasil</b> — nosso novo ícone chegando com tudo! 🇧🇷👕</p>
-
-<p>✨ Dia de <b>brilhar muito e vender bastante</b>. Confiamos demais no trabalho que foi feito e na estratégia que montamos juntos — agora é a hora de colher o resultado! 💪</p>
-
-<p>🚀 <b>Vamos pra cima, time!</b> Bora fazer esse lançamento ser um sucesso! 🔥</p>
-
-<p><img src="comunicado-camiseta-brasil-2026-09-03.jpg" width="100%" alt="Nova Camiseta Brasil — lançamento"></p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_vice_city_reveal_2026_09_02',
-    titulo: '🌴 Revelado: o modo secreto Vice City',
-    corpo: `<p>Faz um tempinho que soltamos uma pista por aqui ("clica e segura uns 2 segundinhos no botão de tema..."). Chegou a hora de contar o segredo pra quem ainda não achou! 🕵️</p>
-
-<p><b>🌴 Vice City</b> é um 3º tema do board, além do 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro) — uma brincadeira interna com a estética "Miami Vice" do trailer de GTA 6: rosa, lavanda e pôr do sol sobre um fundo bem escuro.</p>
-
-<p><b>Como ativar:</b> clique no ícone de tema (🌙 ou ☀️, no topo do board) e <b>segure por ~1 segundo e meio</b>, sem soltar. O tema muda, o ícone vira 🌴, e até o favicon da aba do navegador acompanha. Pra sair, é só 1 clique normal — volta pro tema que você estava antes.</p>
-
-<p>Sem compromisso nenhum, é só pra alegrar o dia. Quem já usa vira e mexe pode deixar fixo — a preferência fica salva no seu navegador.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_pin_submarca_tags_fixes_2026_09_02',
-    titulo: '📌 Pin por submarca + acertos finos em tags, campanhas e supercards',
-    corpo: `<p><b>📌 Pin agora respeita a Submarca:</b> em squads com Submarca ativa, cada submarca pode fixar seu próprio card no topo da coluna, sem uma "roubar" o pin da outra — antes, só a primeira submarca a fixar um card na coluna conseguia.</p>
-
-<p><b>🏷️ Tags em massa mais consistentes:</b> ao aplicar tags em vários cards de uma vez (seleção múltipla), marcar um Tamanho (P/M/G/GG) ou uma Submarca agora substitui a opção anterior do mesmo grupo, em vez de acumular as duas — igual já acontecia ao editar um card por vez.</p>
-
-<p><b>🔢 Contagens e selos de tag mais confiáveis:</b> corrigimos alguns cantos onde a contagem de cards vinculados numa Campanha, ou o selo de tag exibido em Arquivados/Cards antigos/Modelos, podia ficar desatualizado em relação ao que o card realmente tinha marcado.</p>
-
-<p><b>🛡️ Mais uma trava de segurança em Supercards:</b> reforçamos a proteção contra um cenário raro de dado corrompido na hierarquia de Supercards, que em teoria travaria a aba.</p>
-
-<p>💡 <i>Dica de quem sabe: se eu fosse você, clicava e segurava uns 2 segundinhos no botão de tema (🌙/☀️)... entramos na modinha! (fui clubista, confesso 🤓)</i></p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_ctxmenu_pin_link_2026_09_02',
-    titulo: '🖱️ Menu de contexto renovado: fixar, copiar link e submenus mais enxutos',
-    corpo: `<p><b>📌 Fixar card também pelo menu de contexto:</b> em celular/tablet (sem hover pra ver o ícone de pin), agora dá pra fixar/desafixar um card no topo da coluna direto pelo menu de contexto (toque e segure) — não depende mais só do ícone que só aparece passando o mouse.</p>
-
-<p><b>🔗 Copiar link do card:</b> novo item no menu de contexto pra copiar o link direto do card, sem precisar abrir o modal primeiro.</p>
-
-<p><b>↦ Mover para / 🚩 Prioridade agora abrem pro lado:</b> em vez de uma lista grande empilhada no meio do menu, essas duas opções abrem um submenu enxuto ao lado — mesmo padrão que menu de contexto de arquivos costuma usar.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_todos_agenteagil_insights_2026_09_01',
-    titulo: '📣 @todos, indicador "pensando..." e o Agente Ágil dando pitaco nos dados',
-    corpo: `<p><b>📣 @todos:</b> quer chamar o squad inteiro num comentário? Digite "@todos" — funciona igual uma @menção normal, só que notifica todo mundo do squad de uma vez. Aparece sempre como a 1ª opção no autocomplete de @.</p>
-
-<p><b>🤖 Indicador "pensando...":</b> depois de @mencionar o Agente Ágil num card, um aviso discreto aparece dizendo que a resposta está a caminho — sem precisar ficar reabrindo o card pra conferir se já chegou.</p>
-
-<p><b>📊 Ponto de vista do Agente Ágil:</b> nos painéis "Dados do Board" (aba Insights) e "Controle de Criativos", tem um botão novo "🤖 Ponto de vista do Agente Ágil" — ele lê os números que já estão na tela e devolve uma leitura rápida do que chama atenção.</p>
-
-<p><b>🌅 Análise do board (PO):</b> quem é PO/Organizador/ADM ganhou um botão em "Meu Dia" pra pedir uma leitura completa do board (atrasados, bloqueados, cards incompletos) — e, quando fizer sentido, o Agente Ágil sugere se algum assunto recorrente já merece virar campanha ou coleção.</p>
-
-<p><b>🔌 Agentes Externos no board:</b> sistemas externos cadastrados no Painel (com identidade visual definida) agora também podem ser Responsável/Participante de card — aparecem num optgroup próprio "🔌 Agentes Externos", separado dos agentes de IA decorativos.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_pin_card_pwa_resync_2026_09_01',
-    titulo: '📌 Novo: fixe um card no topo da coluna',
-    corpo: `<p><b>📌 Pin no card:</b> passe o mouse sobre qualquer card e vai aparecer um ícone de pin no canto superior direito. Clique pra fixar o card no topo da coluna — ele fica lá em cima não importa como você esteja ordenando ou visualizando o board (por prioridade, por responsável, por tag...). Ótimo pra deixar sempre visível um card-aviso ou um card guia da coluna. Só dá pra fixar 1 card por coluna — fixar outro solta o anterior automaticamente.</p>
-
-<p><b>🎨 Ícone do app mais bonito no Android:</b> quem usa "ícones temáticos" (Material You, Android 13+) agora vê o ícone do Maré Digital combinando com a cor do resto do celular, igual aos outros apps.</p>
-
-<p><b>🔄 Mais um reforço na sincronização do board.</b> Seguimos fechando as brechas de "o board não atualizou sozinho" — dessa vez cobrindo o caso de um card recém-criado por outra pessoa não aparecer na sua tela.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agenteagil_responsavel_reconciliacao_2026_09_01',
-    titulo: '🤖 Agente Ágil vira "gente" no board + board não trava mais desatualizado',
-    corpo: `<p><b>🤖 Cadastro de Agentes de IA:</b> em ⚙ Configurações → Usuários, dá pra cadastrar identidades de IA (nome, iniciais, cor, emoji) que aparecem junto com pessoas de verdade nos seletores de Responsável/Participante de qualquer card.</p>
-
-<p><b>🤖 O Agente Ágil de verdade agora pode ser Responsável ou Participante de um card</b> (squads dev e dados) — e quando isso acontece, ele reage sozinho: lê o card e responde como se alguém tivesse chamado ele com @Agente Ágil.</p>
-
-<p><b>🔄 O board não fica mais desatualizado sozinho.</b> Corrigimos um caso em que uma alteração salva num card não aparecia na tela de outra pessoa por um bom tempo, sem nenhum aviso de que algo estava errado. Agora o board reconfirma sozinho, a cada poucos minutos, que está com os dados mais recentes — sem precisar recarregar a página na mão.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_padroescard_refresh_2026_08_29',
-    titulo: '🛠️ Ajuste fino: editar Padrões de card atualiza na hora',
-    corpo: `<p>Pequeno ajuste pra quem usa <b>Padrões de card</b> (⚙ Configurações → Padrões): criar, renomear, marcar como padrão da squad ou excluir um padrão agora reflete instantaneamente num card que já esteja aberto — antes podia levar um instante pra atualizar sozinho.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agentesexternos_2026_08_28',
-    titulo: '🔌 Novidade pros ADMs: documentar sistemas externos pro Agente Ágil',
-    corpo: `<p><b>🔌 Nova aba "Agentes Externos"</b>, no Painel (⚙ Configurações) — pra ADM/PO descreverem o que cada sistema externo (como o Databricks) que manda avisos pro Agente Ágil realmente faz, e em quais squads cada um vale. A partir de agora, sempre que chegar um aviso daquele sistema, o Agente Ágil já sabe o contexto na hora, sem precisar que a mensagem explique tudo de novo.</p>
-
-<p>Não muda nada no dia a dia de quem só usa o board — é uma ferramenta a mais pra quem administra a integração com sistemas externos.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_automacoes_criacao_agenteagil_2026_08_29',
-    titulo: '⚡ Automações agora cobrem mais situações: criação de card e ações do Agente Ágil',
-    corpo: `<p><b>⚡ Automações na criação do card:</b> se você configura uma regra "Capa de cor definida como X", "Padrão de card definido como X" ou "Tag adicionada" (incluindo Submarca), ela agora dispara também quando você já escolhe aquele valor NA HORA de criar o card — antes só disparava se você mudasse esse campo depois, num card já existente.</p>
-
-<p><b>🤖 Ações do Agente Ágil agora respeitam suas Automações.</b> Quando o Agente Ágil move um card de coluna, edita campos, marca um item do checklist ou registra um risco, as regras de Automação configuradas pra essas situações passam a disparar do mesmo jeito que disparariam se você tivesse feito manualmente.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_meudia_padrao_card_agente_2026_08_28',
-    titulo: '🛠️ Lote de ajustes: Padrão de card, Agente Ágil e Meu Dia',
-    corpo: `<p><b>🛠️ Padrão de card:</b> se você usa um Padrão de card pra esconder a seção de <b>Ficha Técnica</b>, ele agora funciona de verdade — antes, mesmo escondida, a Ficha Técnica continuava travando o "Salvar" pedindo campos que ninguém conseguia ver na tela. Também corrigimos: escolher um padrão logo ao CRIAR um card novo (antes do primeiro Salvar) não fazia nada além de mudar o texto do seletor — agora aplica de verdade.</p>
-
-<p><b>🤖 Card "Converse com o Agente Ágil":</b> ele não avisa mais "Alterações não salvas?" na hora de fechar, mesmo sem você ter digitado nada — era um falso alarme causado pelo "@Agente Ágil " que já vem preenchido sozinho.</p>
-
-<p><b>🌅 Meu Dia:</b> pequeno ajuste de consistência interna, sem efeito visível no dia a dia.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agentelog_fix_painel_visualizador_2026_08_28',
-    titulo: '🛠️ Ajuste no Histórico do Agente Ágil + novidade pros ADMs',
-    corpo: `<p><b>🛠️ Corrigido:</b> o "Histórico do Agente Ágil" (⚙ Configurações) às vezes mostrava "pediu via menção" pra uma ação que na verdade veio de um aviso automático de sistema externo (tipo o Databricks) — ninguém tinha mencionado o agente de verdade. Agora o histórico mostra a origem certa.</p>
-
-<p><b>👁 Novidade pros ADMs:</b> o Painel agora permite dar acesso de visualização (só leitura, sem edição nenhuma) pra alguém de fora da empresa — útil pra compartilhar os indicadores com parceiros externos sem dar acesso de edição. Fica em ⚙ Config → aba ADMs, no Painel.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agente_agil_intake_historico_2026_08_27',
-    titulo: '🤖 Novidades: Agente Ágil recebe avisos de sistemas externos + Histórico do Agente',
-    corpo: `<p><b>🤖 Nova aba "Histórico do Agente Ágil"</b>, dentro de ⚙ Configurações — mostra tudo que o Agente Ágil já alterou nos cards da sua squad, incluindo quem pediu (via @menção) ou se foi um disparo automático. Útil pra quem quer acompanhar o que o agente andou fazendo sem precisar caçar card por card.</p>
-
-<p><b>🔌 O Agente Ágil agora recebe avisos de sistemas externos</b> (como o Databricks) e decide sozinho o que fazer com eles — comentar num card, mover, marcar, avisar alguém do time, e até sugerir a criação de um card novo quando o assunto ainda não tem nenhum card associado. Quando ele sugere um card novo, ele aparece na tela de <b>Pedidos de Intake</b> com um 🤖 no título e, se fizer sentido, já com uma submarca sugerida.</p>
-
-<p><b>🛠️ Corrigido:</b> ações em massa (bloquear, desbloquear ou mover vários cards de uma vez) agora disparam as Automações configuradas, igual já acontecia fazendo uma por uma. E cards recorrentes/agendados não nascem mais numa coluna "fantasma" caso a coluna configurada tenha sido excluída depois.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fix_hotline_metricas_buscas_2026_08_26',
-    titulo: '🛠️ Ajuste fino no card "Converse com o Agente Ágil"',
-    corpo: `<p>Pequeno ajuste no card especial <b>"🤖 Converse com o Agente Ágil"</b>: ele estava sendo contado sem querer nos números de <b>"📊 Dados do Board"</b> (inflando "Cards ativos" e "Sem responsável" em +1) e aparecia em buscas de card (@menção em comentários, vincular numa Nota, adicionar como filho de supercard) onde não devia. Já corrigido — não muda nada na forma de usar o card, só limpa esses números e buscas.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fix_coluna_impedimentos_2026_08_26',
-    titulo: '🛠️ Corrigido: cards de impedimento podiam sumir do board',
-    corpo: `<p>Identificamos e corrigimos um bug que fazia cards marcados como <b>impedimento</b> (com o modo "Impedimentos como coluna" ativo) sumirem do board em algumas squads — o card continuava existindo normalmente (dava pra achar pelo painel), só ficava invisível no quadro.</p>
-
-<p>Causa: se a coluna "Impedimentos" fosse excluída, nada impedia que um card continuasse sendo mandado pra ela — e sem essa coluna, o card não tinha onde aparecer. Agora isso é protegido em vários pontos: a coluna "Impedimentos" não pode mais ser excluída, e marcar um card como impedido (individual, em massa ou por automação) avisa na hora se algo estiver errado, em vez de deixar o card sumir em silêncio.</p>
-
-<p>Se algum card seu sumiu recentemente e você não sabe onde foi parar, procure pelo título no painel ou chama a gente que a gente ajuda a localizar.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_central_ajuda_sync_2026_08_26',
-    titulo: '📚 Central de Ajuda atualizada',
-    corpo: `<p>Demos uma revisão geral na <b>Central de Ajuda</b> (aquele botão de dúvida ⓘ espalhado pelo board) pra ela acompanhar tudo que mudou por aqui nas últimas semanas:</p>
-
-<p><b>🧹 Limpeza:</b> tiramos os textos que ainda explicavam o painel de chat antigo do Agente Ágil (abas Daily/Métricas/Retrospectiva) — ele saiu do ar faz tempo e não tinha mais nenhum botão pra abrir. E corrigimos algumas informações que estavam desatualizadas, tipo dizer que só o PO tinha acesso ao Agente Ágil (nunca foi verdade) ou que ele conseguia atribuir responsável sozinho (não consegue).</p>
-
-<p><b>📖 Documentação nova:</b> agora tem explicação pra várias coisas que já estavam no ar mas sem nenhuma ajuda associada — o card especial "Converse com o Agente Ágil", o Resumo do Agente Ágil dentro de Meu Dia, o aviso de automações disparando, duplicar supercard com os filhos junto, e o checkbox "Incluir supercards" nos dashboards de Criativos e Campanhas.</p>
-
-<p>Mudança só de texto/documentação, nada de comportamento no board muda. Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agente_hotline_automacoes_campanhas_2026_08_26',
-    titulo: '🤖 Novo: card pra conversar com o Agente Ágil + melhorias em Automações e Campanhas',
-    corpo: `<p><b>🤖 Novo botão "Converse com o Agente Ágil"</b>, ao lado do ⚙ Configurações. Ele abre um card fixo, especial — não fica em nenhuma coluna do board — pra você conversar com o Agente Ágil sobre qualquer coisa solta que não precisa virar uma tarefa de verdade (dúvida, ideia, pedido informal). O comentário já abre com a menção pronta pra digitar, e a resposta do agente aparece sozinha, sem precisar sair e voltar do card. Tem até um botão pra limpar a conversa e começar do zero.</p>
-
-<p><b>⚡ Automações agora avisam quando disparam.</b> Quando uma regra roda (mover coluna, atribuir responsável, etc.), o efeito só aparece ~1 segundo depois, com um aviso na tela mostrando qual automação foi aplicada — assim dá pra perceber que foi a automação, não um bug. Criar card através do Agente Ágil também passou a disparar automações de "Card criado em coluna X" corretamente.</p>
-
-<p><b>🧩 Dashboard de Campanhas ganhou o mesmo checkbox "Incluir supercards"</b> que o Controle de Criativos já tinha — desmarcar tira o card container da campanha da contagem total, mantendo só os filhos.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fix_automacao_move_capa_supercard_2026_08_26',
-    titulo: '🛠️ Corrigido: automação de "Card movido para coluna" + capa do supercard',
-    corpo: `<p>Quem usa <b>⚡ Automações</b> com o gatilho <b>"Card movido para coluna"</b> pode ter notado que a regra só disparava ao arrastar o card no board ou usar "Mover para" no menu de contexto — trocar a coluna direto no modal do card (pelo campo "Coluna" + <b>💾 Salvar</b>) não disparava a automação. Já está corrigido: agora dispara do mesmo jeito, não importa por onde você mudou a coluna.</p>
-
-<p>Também ajustamos um detalhe visual: em cards do tipo <b>supercard</b> (com capa/imagem), a bordinha colorida do lado esquerdo estava sendo levemente encoberta pela capa. Agora a borda aparece completa.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fix_automacao_assigned_2026_08_26',
-    titulo: '🛠️ Corrigido: automação de "Card atribuído a" não disparava direito',
-    corpo: `<p>Quem usa <b>⚡ Automações</b> com o gatilho <b>"Card atribuído a"</b> (ex.: atribuir a alguém → mover pra uma coluna automaticamente) pode ter notado que, às vezes, a regra não disparava — principalmente ao trocar o responsável e clicar em <b>💾 Salvar</b> logo em seguida.</p>
-
-<p>Já está corrigido: agora a automação dispara certinho toda vez que você troca o responsável de um card, não importa o quão rápido você clique em Salvar depois.</p>
-
-<p>Se você tinha uma automação assim configurada e desistiu de usar achando que não funcionava, vale a pena testar de novo! Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto.</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_duplicar_supercard_filhos_2026_08_25',
-    titulo: '🧩 Novo: duplicar um supercard já traz os filhos junto',
-    corpo: `<p>Quem usa <b>supercards</b> (aquele card com vários filhos dentro) ganhou um jeito mais rápido de reaproveitar uma estrutura inteira: ao clicar em <b>⧉ Duplicar</b> num card que tem filhos, aparece a opção <b>"🧩 Duplicar os card(s) filho(s) também"</b>. Marcando ela, a cópia sai com todos os filhos já duplicados junto — inclusive netos, se algum filho também tiver os próprios filhos.</p>
-
-<p>A opção vem desmarcada por padrão — se você só quiser duplicar o card principal (como já funcionava antes), não precisa mudar nada.</p>
-
-<p>Aproveitamos e corrigimos mais dois detalhes: a data de <b>"Criado por"</b>/<b>"Editado por"</b> no card estava aparecendo em AAAA-MM-DD, agora mostra certinho em DD/MM/AAAA. E o cabeçalho de cada coluna ganhou um contorno sutil com a cor da própria coluna, pra ficar mais fácil identificar de relance.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_resumo_meudia_agenteagil_2026_08_25',
-    titulo: '🤖 Novo: Resumo do Agente Ágil dentro de "Meu Dia"',
-    corpo: `<p><b>🌅 Meu Dia</b> ganhou um botão novo: <b>🤖 Resumo do Agente Ágil</b>. Um clique e ele faz um levantamento rápido do board pra você — cards incompletos, sem prazo, atrasados, bloqueados — e sugere uma ordem de ataque pro dia. Não mexe em nada no board, só lê e mostra o resumo na tela.</p>
-
-<p>Aproveitamos e demos uma limpeza: o botão antigo "🤖 Agente Ágil" (que ficava no canto da tela e na barra de navegação do celular) foi removido — ele abria um painel que já estava fora do ar fazia tempo. O jeito certo de falar com o Agente Ágil continua sendo mencionar <code>@Agente Ágil</code> num comentário do card, o botão 🤖 Insights, ou agora esse novo Resumo em Meu Dia.</p>
-
-<p>Também corrigimos um probleminha: se você criasse um card novo, escolhesse uma <b>Prioridade</b> mas fechasse o modal sem preencher mais nada (clicando fora, no ✕ ou em Cancelar), a prioridade escolhida sumia sem nenhum aviso. Agora ela é protegida igual aos outros campos.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_automacoes_todos_filtro_receita_2026_08_24',
-    titulo: '⚡ Automações liberado pra todos + filtro em "Aplicar receita" + aviso ao sair sem salvar',
-    corpo: `<p><b>⚡ Automações agora é liberado pra todo mundo.</b> Antes, só quem era PO/Organizador/ADM enxergava o botão que levava até lá. Agora tem um atalho novo em <b>⚡ Funções de card</b>, disponível pra qualquer papel — dá pra criar suas próprias regras "Quando X → Então Y" e receitas de fan-out sem precisar pedir pra ninguém.</p>
-
-<p><b>🧩 "Aplicar receita" ganha busca por nome + filtro por tag</b>, igual já tinha em Recorrentes/Modelos/Arquivados e no "📥 Usar modelo" — fica mais rápido achar a receita certa quando tem várias configuradas.</p>
-
-<p><b>Clicar fora de um card sem salvar agora avisa</b>, do mesmo jeito que clicar em "Cancelar" — antes, se você estivesse criando um card novo e clicasse fora sem querer, tudo que tinha digitado sumia sem aviso nenhum. Agora aparece a telinha de confirmação também nesse caso.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_alerta_card_sumido_2026_08_24',
-    titulo: '🛡️ Novo alerta: se um card sumir sem querer, você fica sabendo na hora',
-    corpo: `<p>Depois do fix da criação de cards de hoje mais cedo, entregamos a segunda parte da rede de segurança: se, por qualquer motivo, um card sumir do quadro <b>sem ninguém ter excluído ele de propósito</b>, quem estiver com o board aberto naquele momento recebe um aviso na tela na hora, e o time de tecnologia fica com um registro automático do que aconteceu.</p>
-
-<p>Isso não muda nada no dia a dia de excluir cards normalmente — o aviso só aparece no cenário raro de um sumiço inesperado, exatamente o tipo de coisa que antes só descobríamos dias depois, quando alguém notava e reportava.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agenteagil_squad_dados_2026_08_24',
-    titulo: '🤖 Agente Ágil chega no squad dados',
-    corpo: `<p>O <b>🤖 Agente Ágil</b> agora também responde no squad <b>dados</b> — não é mais exclusividade do squad de testes. Mencione <code>@Agente Ágil</code> num comentário do card (o autocomplete de @ já sugere ele), ou use o botão <b>🤖 Insights</b>/opção <b>Insights</b> no menu de contexto/automação <b>"Notificar Agente Ágil"</b>. A resposta chega em cerca de 1 minuto como comentário novo, com notificação pra quem perguntou.</p>
-
-<p>Novidade extra: agora dá pra configurar uma Automação pra avisar o agente sozinho quando um card <b>vence hoje</b> ou <b>fica atrasado</b> — sem precisar de ninguém mencionar na mão. É só criar a regra em ⚙ Config → Auto, gatilho "Card vence hoje"/"Card atrasado", ação "🤖 Notificar Agente Ágil".</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_agenteagil_reativado_2026_08_21',
-    titulo: '🤖 Agente Ágil voltou a responder pelo botão Insights',
-    corpo: `<p>O botão <b>🤖 Insights</b> (no rodapé do card) e a opção <b>Insights</b> no menu de contexto do card estavam sem resposta havia um tempo — o painel de chat que eles abriam dependia de uma peça externa que saiu do ar silenciosamente. Já está corrigido: agora esses dois atalhos, e também a automação <b>"Notificar Agente Ágil"</b> (⚙ Automações), postam a pergunta como um comentário <code>@Agente Ágil</code> no próprio card — a resposta chega em cerca de 1 minuto como um comentário novo, com notificação pra quem perguntou.</p>
-
-<p>Por enquanto essa reativação vale só pra squad <b>dev</b> — as outras squads seguem no radar pra expansão.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_supercard_fixes_2026_08_21b',
-    titulo: '🔧 Supercard: 2 ajustes de comportamento',
-    corpo: `<p>Pequeno lote de correções em cima do encadeamento de 2 níveis do supercard (campanha → criativo → versão) lançado hoje mais cedo:</p>
-
-<p><b>Cancelar tudo não é a mesma coisa que concluir tudo</b><br>
-Antes, se todos os "filhos" de um supercard (ex.: todas as versões de um criativo) fossem movidos pra uma coluna de cancelamento, o supercard concluía sozinho — como se tivesse dado certo. Agora, nesse caso, o supercard fica onde está; ele só conclui automaticamente quando pelo menos um filho terminou numa coluna de conclusão de verdade.</p>
-
-<p><b>Versão não edita mais nada da própria Ficha Técnica</b><br>
-Uma "versão" (o 2º nível do supercard) tinha os campos de Tipo/Formato/Objetivo aparecendo editáveis, mesmo o card avisando que essa ficha vem inteira do criativo-pai. Agora esses campos ficam ocultos de verdade nesse card — a ficha é sempre a do criativo.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_supercard_2niveis_cordescricao_2026_08_21',
-    titulo: '🧩 Supercard agora encadeia em 2 níveis + cor no rótulo das descrições',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🧩 Supercard: campanha → criativo → versão</b><br>
-Até agora um supercard (ex.: uma campanha) só aceitava filhos diretos (ex.: um criativo) — se o time de mídia pedisse <b>várias versões</b> daquele mesmo criativo pra designers diferentes, não tinha como criar um card por versão sem perder o vínculo com a campanha. Agora dá: um criativo que já é filho de uma campanha pode, ele mesmo, virar "supercard" e ganhar filhos — as versões, uma pra cada designer/execução — sem perder o vínculo com a campanha original. O encadeamento vai até 2 níveis (campanha → criativo → versão); uma versão não pode ter filhos próprios, pra manter simples.</p>
-
-<p>A <b>Ficha Técnica</b> acompanha esse encadeamento automaticamente: os campos que a campanha compartilha com os criativos (Funil, Etapa, Canal...) continuam descendo normalmente; e agora a ficha <b>inteira</b> do criativo (Tipo, Formato, Objetivo, tudo) desce também pras versões — afinal é a mesma peça, só sendo produzida por gente diferente. A versão não precisa preencher nada, só herda.</p>
-
-<p>E tem <b>conclusão automática em cascata</b>: quando todas as versões de um criativo são concluídas, o criativo conclui sozinho; se isso completar os últimos criativos pendentes da campanha, a campanha conclui também — tudo automático, sem precisar fechar card por card manualmente.</p>
-
-<p><b>🎨 Cor no rótulo das descrições adicionais</b><br>
-O campo "adicionar nova descrição" ganhou um seletor de cor novo pra colorir o <b>rótulo/badge</b> de cada descrição (útil pra identificar visualmente qual time ou etapa escreveu o quê) — separado do seletor de cor de texto que já existia (esse continua servindo pra destacar palavras dentro do próprio texto).</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_buscaboard_agenteagil_supercard_2026_08_20',
-    titulo: '🔍 Busca ganhou "Ver no board" + Agente Ágil automático + fixes de Supercard',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🔍 Busca geral: "Ver no board"</b><br>
-Depois de buscar um termo (🔍/Ctrl+K), agora tem um botão <b>"Ver N cards no board"</b> logo abaixo dos resultados — em vez de escolher um card da lista, ele mostra todos os cards que batem com a busca direto no board, arrumados nas colunas. Esse filtro de texto também ganhou um campo próprio na barra de Filtros, pra usar direto por lá também.</p>
-
-<p><b>🤖 Agente Ágil: acionamento automático via Automações</b><br>
-A ação "Notificar Agente Ágil" (dentro de ⚙ Automações) ganhou o modo "🤖 Modo autônomo" — uma regra pode acionar o agente sozinha quando algo acontece no card (ex.: tag adicionada, prazo vencendo, checklist completo), sem precisar de ninguém mencionar ele manualmente.</p>
-
-<p><b>🧩 Supercards/cards filhos: 3 bugs corrigidos</b><br>
-Título de um card filho que não deixava mais editar manualmente (voltava sozinho pro formato automático) — corrigido; um Objetivo que ninguém marcou aparecendo no título automático — mesma causa, corrigido junto; busca de "card existente pra virar filho" mostrando resultados sem nexo com só 1 letra digitada — agora exige 2+ caracteres.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_checklist_lock_pedircard_notif_2026_08_20',
-    titulo: '🔔 Card travado ganhou botão "Pedir o card" + fim das notificações bugadas',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🔔 Card travado: botão "Pedir o card"</b><br>
-Card travado (outra pessoa editando) até agora só tinha um jeito de resolver: chamar a pessoa no privado pra sair. Agora tem um botão <b>"🔔 Pedir o card"</b> no aviso de travado. Quem está editando recebe um alerta com 5 minutos pra salvar e sair (ou clicar em "✅ Liberar agora"); se ninguém fizer nada, o card salva e libera sozinho quando o prazo acaba — e quem pediu já vê o card atualizado automaticamente, sem precisar reabrir.</p>
-
-<p><b>🔗 Card travado: links e menções de card voltam a funcionar</b><br>
-Enquanto o card está travado, os links da descrição/comentário/checklist e as menções a outro card agora ficam clicáveis normalmente — só a edição continua bloqueada. Antes, o modo leitura travava tudo, inclusive um link que a pessoa só queria abrir pra consultar.</p>
-
-<p><b>☑ Checklist: opção de recolher</b><br>
-Card com mais de um checklist ganhou um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido.</p>
-
-<p><b>🔕 Notificações: fim das duplicatas e das que "ressuscitavam"</b><br>
-Duas correções na aba de notificações: "Prazo hoje!"/"Prazo atrasado!" não aparecem mais duplicadas quando o board recarrega em várias abas quase ao mesmo tempo; e uma @menção que você já viu e leu não volta mais a aparecer como não lida dias depois.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_modelo_fichatecnica_2026_08_19',
-    titulo: '📋 Modelo de card agora salva a Ficha Técnica também',
-    corpo: `<p>Foi ao ar mais um ajuste no board:</p>
-
-<p><b>📋 Modelo (Salvar/Usar/Editar) agora leva a Ficha Técnica junto</b><br>
-Até agora, salvar um card como Modelo (📋) levava título, tags, descrição, Insights do PO, checklist e riscos — mas a Ficha Técnica (Campanha, Funil, Canal etc.) ficava pra trás. Agora ela vai junto: quem cria um card a partir de um Modelo (ou aplica "📥 Usar modelo" num card já aberto) já recebe a Ficha Técnica preenchida também — sempre respeitando o que você já tiver digitado (nunca sobrescreve).</p>
-
-<p><b>🐛 Bug corrigido: editar um Modelo (✏️) não mostrava/salvava o conteúdo já preenchido</b><br>
-Quem editava um Modelo que já tinha Ficha Técnica preenchida via ✏️ via essa parte em branco, como se nunca tivesse sido salva — e as alterações feitas ali não eram gravadas de volta no Modelo. Corrigido: editar um Modelo agora mostra e permite alterar a Ficha Técnica dele normalmente, igual todo o resto do conteúdo.</p>
-
-<p><b>📌 Nova diretriz de horário para publicações</b><br>
-Pra não atrapalhar quem está com o board aberto trabalhando, passamos a concentrar assim as publicações em produção: <b>correções de bug sobem a qualquer momento</b> (não faz sentido segurar um erro sendo corrigido); <b>novidades/funcionalidades novas ficam concentradas fora do horário de trabalho</b>, evitando o recarregamento forçado do board (~5 min após cada publicação) atrapalhar quem está no meio de uma tarefa.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_iniciais_usarmodelo_mencaocard_fichatec_supercard_2026_08_19',
-    titulo: '🧩 Ficha Técnica compartilhada em Supercard + fix de @menção de card no comentário',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🧩 Ficha Técnica compartilhada em Supercard</b><br>
-Numa campanha, Campanha/Funil/Etapa do Funil/Canal não mudam entre os cards filhos. Agora esses 4 campos aparecem no supercard e, uma vez preenchidos, já valem automaticamente pra todos os cards filhos — sem precisar repetir a mesma informação em cada um. Nos filhos, só os campos que realmente variam por peça (Objetivo, Plataforma, Tipo, Formato, Variações) continuam editáveis.</p>
-
-<p><b>💬 Menção de card (@card:) no comentário volta a funcionar</b><br>
-Digitar @card:, achar o card certo na lista e clicar às vezes não inseria nada — corrigido. Bônus: a caixa de comentário também ganhou autocomplete de @pessoa.</p>
-
-<p><b>📥 Filtro no botão "Usar modelo"</b><br>
-Dentro de um card já aberto, o botão "📥 Usar modelo" agora tem busca por nome e filtro por tag — mais fácil achar o modelo certo numa lista grande.</p>
-
-<p><b>🔤 Iniciais duplicadas: checagem agora é no board inteiro</b><br>
-Duas pessoas com a mesma sigla (ex.: "GS") em squads diferentes podiam fazer "Meu Dia" misturar os cards de uma na outra. Agora o cadastro/confirmação/edição de iniciais checa conflito contra todos os squads, não só o seu.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fichatec_outros_filtrocoluna_insights_cfd_2026_08_17',
-    titulo: '🎬 Ficha Técnica mostra o nome real em vez de "Outros" + filtro de coluna em Insights e CFD',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🎬 Ficha Técnica: "Outros" vira o nome real</b><br>
-Quando alguém escolhe "Outros" em Canal, Objetivo, Plataforma ou Tipo e preenche o campo "Qual?" (ex.: "Dafiti"), esse nome agora aparece no título do card, na tabela do Controle de Criativos, nos gráficos do Dashboard e na exportação CSV — em vez de "Outros" genérico. Tipo também ganhou o campo "Qual?", que ainda não tinha.</p>
-
-<p><b>📊 Filtro de coluna agora vale em Insights e CFD & Burndown</b><br>
-O filtro que tira uma coluna da conta em 📊 Dados do Board → Visão Geral (chips "📍 Colunas na conta") agora também aparece e vale nas abas Insights e CFD & Burndown — útil pra squads que têm colunas tipo Backlog/Arquivo que não deveriam entrar nas métricas.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_ctrls_anexo_criadopor_filtrocoluna_2026_08_17',
-    titulo: '⌨️ Ctrl+S, badge de anexo, filtro "Criado por" e filtro de coluna em Dados do Board',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>⌨️ Ctrl+S salva o card na hora</b><br>
-Com um card aberto, aperte Ctrl+S (ou Cmd+S no Mac) pra salvar imediatamente, sem esperar o salvamento automático.</p>
-
-<p><b>📎 Badge de anexo na lista</b><br>
-Cards com pelo menos um link/anexo salvo agora mostram um 📎 direto na visão do board, sem precisar abrir o card pra saber.</p>
-
-<p><b>✍️ Filtro "Criado por"</b><br>
-Novo filtro na barra de Filtros pra achar rápido os cards criados por uma pessoa específica.</p>
-
-<p><b>📊 Filtro de coluna em Dados do Board</b><br>
-Na aba 📊 Dados do Board → Visão Geral, agora dá pra clicar numa coluna (ex.: Backlog, Arquivo) pra tirá-la da conta de todos os números — WIP, Throughput, bloqueios etc. — e trazer de volta quando quiser. Útil pra squads que têm colunas que não deveriam entrar nas métricas de fluxo.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_autoscroll_agente_agil_prazo_submarca_mencao_2026_08_15',
-    titulo: '🖱️ Coluna rola sozinha ao arrastar card + Agente Ágil mais esperto',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🖱️ Coluna rola sozinha durante o arrasto</b><br>
-Quem usa a ordenação 🖐 Manual sabe a dor: reordenar um card do meio de uma coluna longa pra primeira posição exigia soltar, rolar na mão, pegar o drag de novo, repetir várias vezes. Agora, ao arrastar um card e chegar perto da borda de cima ou de baixo da coluna visível, ela rola sozinha enquanto você continua arrastando — solta quando chegar onde quer, sem parar no meio do caminho.</p>
-
-<p><b>🤖 Agente Ágil respeita Prazo/Submarca/Ficha Técnica</b><br>
-As mesmas regras que bloqueiam salvar um card incompleto pelo modal (Prazo obrigatório, Submarca quando o squad usa, Ficha Técnica quando ativa) agora valem também quando é o Agente Ágil quem cria o card ou mexe no prazo — ele não deixa mais passar um card incompleto por trás.</p>
-
-<p><b>💬 Agente Ágil aparece no @ (menção)</b><br>
-Digite "@a" num comentário e "Agente Ágil" já aparece como sugestão — não precisa mais lembrar de cor como chamar o agente.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_ficha_tecnica_intake_opcional_responder_2026_08_11',
-    titulo: '🎬 Ficha Técnica reformulada, Intake opcional por squad e mais',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🎬 Ficha Técnica (produção criativa)</b><br>
-Pra quem usa a Ficha de Criativo no card: ela foi reformulada com uma hierarquia fixa — Campanha, Funil, Etapa do Funil, Canal, Objetivo, Plataforma, Tipo, Formato e Variações (todos obrigatórios pra quem pede, exceto Direcional de Mídia, que é opcional). Canal/Objetivo/Plataforma/Tipo/Formato agora são listas fechadas configuráveis em ⚙ Config → Criativos — ninguém digita texto livre, evitando duplicata tipo "vídeo"/"vídeos". "Status de produção" foi removido do card por ser redundante com a coluna do board (já visível em 📊 Dados do Board). E supercard não precisa mais preencher ficha própria — a seção some sozinha do modal assim que o card ganha o primeiro filho, já que ele é só a soma dos filhos.</p>
-
-<p><b>💬 Responder comentário</b><br>
-Cada comentário do card ganhou um botão "↩ Responder" — clique nele e a caixa de novo comentário já abre com "@" da pessoa que comentou preenchido, prontinho pra continuar digitando.</p>
-
-<p><b>📥 Intake virou opcional por squad</b><br>
-Quem não quer receber pedidos externos pelo link público pode desligar em ⚙ Config → Ágil. Desligado, o botão "📥 Intake" some e o link para de aceitar pedidos novos (pedidos antigos continuam disponíveis pra revisar).</p>
-
-<p><b>📈 Filtro de colunas no CFD</b><br>
-Em ⚙ Config → Fluxo dá pra escolher quais colunas somem do gráfico de CFD (ex.: Backlog, Arquivo) — útil pra deixar o gráfico só com o fluxo de trabalho de verdade.</p>
-
-<p><b>🖼️ Capa de imagem: onde hospedar</b><br>
-Sem onde subir a imagem da capa? A dica agora recomenda postimages.org ou imgbb.com (sem conta, sem custo, gera link direto na hora) — link do Google Drive geralmente não funciona nas contas da Hering, a política de Workspace bloqueia o compartilhamento público necessário.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_fase1a5_otimizacao_mobile_tema_features_2026_08_11',
-    titulo: '🚀 Grande atualização do Maré Digital — performance, mobile, tema claro e 7 novidades',
-    corpo: `<p>Foi ao ar um lote grande de melhorias no board, acumulado e testado nos últimos dias. Resumo do que muda pra vocês:</p>
-
-<p><b>⚡ Performance e banda</b><br>
-Board mais leve pra abrir e consome menos dados do Firebase — sem nada visível diferente, é trabalho de bastidor (menos coisa sendo baixada/reenviada à toa a cada ação sua ou de colegas).</p>
-
-<p><b>📱 Mobile</b><br>
-Quem usa o board no celular vai notar: o card abre num modal de baixo pra cima (mais natural de rolar), dá pra navegar entre colunas deslizando o dedo, e os botões ficaram maiores/mais fáceis de tocar.</p>
-
-<p><b>☀️ Tema claro com nova paleta</b><br>
-Ajustamos o contraste do tema claro (☀️ Lençóis Maranhenses): o card agora fica quase branco de verdade contra um fundo mais presente, bem mais fácil de diferenciar um do outro que na versão anterior.</p>
-
-<p><b>🌅 Novidade: Meu Dia</b><br>
-Botão novo na toolbar (ou atalho <b>Ctrl+D</b>) — mostra TODOS os seus cards, de TODOS os squads que você participa, agrupados por Atrasado / Hoje / Esta semana / Menções não lidas / Bloqueios / Sem prazo. Não precisa mais abrir board por board pra saber o que é seu.</p>
-
-<p><b>⏳ Novidade: Aging visual</b><br>
-Card que fica tempo demais parado numa coluna agora ganha um selo "⏳" — ajuda a enxergar gargalo sem precisar abrir card por card. O limite de dias é configurável por coluna em ⚙ Config → Fluxo.</p>
-
-<p><b>✨ Novidade: criação rápida por texto</b><br>
-Ao criar um card novo, dá pra digitar tudo direto no título: <code>!alta @fulano #tag amanhã</code> já detecta prioridade, responsável, tag e prazo sozinho — só conferir e salvar.</p>
-
-<p><b>📈 Novidade: CFD & Burndown</b><br>
-Dentro de "📊 Dados do Board" tem uma aba nova com dois gráficos — Cumulative Flow Diagram (pra enxergar gargalo por coluna ao longo do tempo) e Burndown da sprint ativa. Reconstruídos do histórico que o board já guarda, sem nenhuma configuração extra.</p>
-
-<p><b>📥 Novidade: formulário de intake</b><br>
-Agora dá pra receber pedidos de fora do squad (ou de fora da empresa) sem precisar dar acesso ao board pra ninguém: um link público (peça pro seu PO/ADM o link do seu squad) leva a um formulário simples. Quem preenche não cria o card sozinho — vira um "pedido pendente" que aparece no botão "📥 Intake" da toolbar, e alguém do squad revisa antes de virar card de verdade.</p>
-
-<p><b>🖼️ Novidade: capa de card com imagem</b><br>
-Além da cor sólida que já existia, agora dá pra colar uma URL de imagem como capa do card (menu 🎨 no topo do card).</p>
-
-<p><b>🔴 Novidade: indicador de offline</b><br>
-Se sua internet cair, um selo "🔴 Offline" aparece no topo do board, e se você tentar fechar a aba com um card aberto e não salvo enquanto estiver offline, o navegador avisa antes — pra ninguém perder o que escreveu sem perceber.</p>
-
-<p>Qualquer dúvida ou problema, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_filtro_supercard_e_barra_filtros_2026_08_10',
-    titulo: '🧩 Novidade: filtro de Supercards + barra de Filtros reorganizada',
-    corpo: '<p>Duas melhorias na barra de <b>Filtros</b> do board:</p><p><b>🧩 Filtro "Supercards"</b> — novo checkbox que mostra só os cards que têm pelo menos 1 card filho ativo (ver "🧩 Cards filhos (supercard)"). Combina com os outros filtros normalmente.</p><p><b>🎨 Layout reorganizado</b> — a barra de Filtros ganhou um painel próprio (fundo/borda visível, em vez de ficar solta em cima do board) e os campos agora ficam agrupados em 3 blocos: filtros, opções rápidas (Só impedidos / Com riscos / Supercards) e ações (Meus cards / Limpar).</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_tema_claro_mais_escuro_2026_08_10',
-    titulo: '☀️ Novidade: versão mais escura do tema claro (opcional)',
-    corpo: '<p>Quem acha o tema claro (☀️ Lençóis Maranhenses) ainda muito claro agora tem uma opção: <b>dê um duplo-clique no botão de tema</b> (🌙/☀️, no header do board) enquanto estiver no tema claro — ele alterna pra uma variante mais escura, com um azul de destaque mais profundo e mais contraste.</p><p>Clique único continua funcionando como sempre (alterna entre claro e escuro). O duplo-clique só faz algo dentro do tema claro. A escolha fica salva no seu navegador — depois de escolher a versão mais escura, ela volta sozinha da próxima vez.</p><p>De quebra, título das colunas e fundo dos cards no claro também ficaram um pouco mais suaves/contrastados, nas duas versões.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_legibilidade_tema_claro_2026_08_10',
-    titulo: '🔆 Ajuste: tags e badges mais legíveis no tema claro',
-    corpo: '<p>Quem usa o board no <b>tema claro</b> (☀️ Lençóis Maranhenses) reportou que as tags, o chip de status do executor/agente, o badge de prazo, o badge de risco, a pílula de prazo no calendário e o rótulo do supercard estavam "apagados" — cores pensadas originalmente pro tema escuro, que ficavam sem contraste no claro.</p><p>Ajustamos o preenchimento de todas essas tags/badges pra ficarem tão saturadas e legíveis quanto já eram no tema escuro. Puramente visual — nada de dado ou comportamento muda.</p>',
-    tipo: 'aviso',
-    squad: '*',
-  },
-  {
-    id: 'seed_supercard_fanout_2026_08_09',
-    titulo: '🧩 Novidade: Supercard (cards filhos) + filtros na aba Insights',
-    corpo: '<p>Pedido direto do time de Mídia Alcance: quando um pedido vira vários cards (formato/veículo/teste diferentes), agora dá pra agrupar isso num <b>supercard</b> em vez de espalhar solto no board.</p><p>Dentro de qualquer card, na seção "🔗 Vínculos & anexos", tem "🧩 Cards filhos (supercard)" — vincula um card já existente, digita um título novo e aperta Enter pra criar um filho na hora, ou aplica uma <b>receita pronta</b> (configurável em ⚙ Config → Automações) que cria vários filhos de uma vez (ex.: Feed, Stories, Reels...). Funciona até num card ainda sendo criado, antes de salvar pela 1ª vez. O card pai passa a mostrar, direto no board, o progresso dos filhos ("3/6 concluído(s)"). Pra quem usa muito, um botão "← Voltar" no topo do card ajuda a navegar entre pai e filhos sem se perder.</p><p>Quem quiser, também dá pra configurar uma receita pra disparar sozinha via automação (ação "🧩 Aplicar fan-out"), e cada filho da receita pode ser vinculado a um <b>📋 Modelo</b> pra nascer já com descrição, checklist, tags e riscos prontos.</p><p><b>Bônus:</b> a aba "💡 Insights" (dentro de 📊 Dados do Board) ganhou filtro de período (ativos agora, ou só os criados nos últimos 7/14/30/90 dias) e filtro por tag.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_insights_dados_board_2026_08_09',
-    titulo: '💡 Novidade: aba Insights em "Dados do Board"',
-    corpo: '<p>O painel "📊 Dados do Board" (botão no header do board) ganhou uma nova aba: <b>💡 Insights</b>, ao lado da Visão Geral já existente.</p><p>Pensada pra PO/ADM entenderem rápido como a squad está, sem precisar vasculhar card por card: distribuição dos cards ativos por <b>prioridade</b> (com aviso se a fatia de "Crítica" estiver desproporcional), <b>carga por responsável</b> (com aviso quando alguém está com bem mais cards que a média do time), os cards com <b>mais riscos mapeados</b> em aberto, cards marcados como <b>OKR</b> por coluna, e os cards <b>parados há mais tempo</b> sem edição (1+ sprint). Squads que usam o campo Submarca também veem a distribuição por submarca.</p><p>Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_tamanho_fonte_board_2026_08_04',
-    titulo: '🔍 Novidade: tamanho da fonte do board agora é ajustável',
-    corpo: '<p>Chegou um pedido de várias pessoas com dificuldade de leitura no board — resolvido!</p><p><b>🔍 Novo botão "Fonte" na barra de ferramentas</b> — clique nele e escolha entre <b>Pequena, Padrão, Grande ou Muito grande</b>. O tamanho escolhido aumenta os cards, tags, títulos e prazos proporcionalmente, deixando tudo mais fácil de ler.</p><p>É uma preferência <b>pessoal</b> — cada pessoa escolhe o tamanho que prefere, e fica salvo só no seu navegador (não muda o que os outros veem, e não sincroniza entre computador e celular).</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_submarca_10_tags_menu_2026_08_04b',
-    titulo: '🏷️ Novidades: Submarca agora separa Comercial e Cadastro',
-    corpo: '<p>Mais atualizações no board de hoje, pro squad Site Hering principalmente:</p><p><b>🏷️ Submarca virou 10 opções</b> — cada marca (Adulto, Kids, Sports, Intimates, Teen) agora se divide em <b>Comercial</b> e <b>Cadastro</b>, os dois times que atuam em cada uma. Ex.: em vez de só "Hering Kids", agora tem "Hering Kids Comercial" e "Hering Kids Cadastro" como opções separadas no campo do card.</p><p><b>🔍 Filtro de Submarca virou menu</b> — com 10 opções não cabia mais como fileira de botões, então agora é um menu suspenso "🏷️ Submarcas ▾" na barra de ferramentas do board (logo depois do botão Filtros). Clique pra abrir e marque quantas quiser — as opções vêm agrupadas por marca, pra ficar fácil de achar.</p><p><b>📥 Import do Trello mais esperto</b> — se uma label do Trello tem o mesmo nome de uma opção de Submarca (ex.: "Hering Adulto Comercial"), o card importado já nasce com a submarca certa marcada, sem precisar arrumar depois.</p><p><b>🐟 Bônus: os peixinhos do fundo agora são opcionais</b> — clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra ligar ou desligar a animação. É só sua preferência, fica salva no seu navegador.</p><p><b>Atenção:</b> se algum card já tinha sido marcado com uma das 5 submarcas antigas (sem Comercial/Cadastro), essa marcação ficou "órfã" — precisa reabrir o card e escolher a opção nova correspondente.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_prazo_submarca_obrigatorios_2026_08_04',
-    titulo: '⚠️ Novidades: Prazo obrigatório no card + filtros de Submarca melhorados',
-    corpo: '<p>Algumas mudanças no board a partir de hoje:</p><p><b>📅 Prazo agora é obrigatório</b><br>Não dá mais pra salvar um card (novo ou editado) sem definir um Prazo. Se ainda não tem uma data certa, tem um botão novo "🚫 Sem prazo definido" embaixo do campo Prazo — clique nele em vez de chutar uma data. É só um clique, e o card salva normalmente.</p><p><b>🏷️ Submarca também virou obrigatória</b> (só pra quem usa esse campo, hoje o squad Site Hering) — não dá mais pra salvar um card sem escolher qual submarca é (Adulto, Kids, Sports, Intimates ou Teens).</p><p><b>🔍 Filtros rápidos de Submarca melhorados</b> (Site Hering): os botões de filtro no topo do board não quebram mais linha, e agora dá pra marcar mais de uma submarca ao mesmo tempo (ex.: Kids + Teens juntas).</p><p>Também corrigimos, nos bastidores, uma causa de lentidão/consumo alto de dados em squads muito movimentados — não precisa fazer nada, foi um ajuste interno de performance.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_modelo_card_aberto_duplicar_coluna_2026_08',
-    titulo: '📥 Novidades: usar modelo no card já aberto + escolher coluna ao duplicar',
-    corpo: '<p>Duas melhorias novas no board, direto no modal do card:</p><p><b>📥 Usar modelo num card já aberto</b><br>Antes, aplicar um modelo sempre abria um card novo do zero. Agora tem um botão "📥 Usar modelo" no rodapé do card que você já está editando — ele aplica o modelo <b>sem apagar nada</b> do que você já preencheu: checklist e riscos do modelo são somados aos que já existem (sem duplicar), tags são somadas, e descrição/PO só entram se ainda estiverem vazios.</p><p><b>⧉ Escolher a coluna ao duplicar</b><br>O modal de "Duplicar" agora deixa escolher em qual coluna a cópia deve nascer (antes ela sempre repetia a coluna do card original, sem opção). E depois de duplicar, a cópia já abre sozinha pra edição — não precisa mais procurar ela no board.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_backup_automatico_2026_07',
-    titulo: '🔧 Backup automático agora funciona de verdade',
-    corpo: '<p>Encontramos e corrigimos um problema sério: o backup semanal automático (board e painel) dependia de manter uma aba do navegador aberta ininterruptamente por até 7 dias — o que na prática nunca acontecia.</p><p>Agora a checagem roda toda vez que alguém abre o board ou o painel: se já passaram 7+ dias desde o último backup, ele dispara na hora. A configuração (email, chaves do EmailJS) também deixou de ficar presa a um navegador específico — agora fica salva no Firebase, compartilhada entre qualquer dispositivo.</p><p><b>Ação sugerida:</b> se você já tinha configurado o backup antes, abra a aba Backup (no board e no painel) e reconfigure uma vez — a config antiga estava só no seu navegador local e não migra sozinha.</p>',
-    tipo: 'aviso',
-    squad: '*',
-  },
-  {
-    id: 'seed_rascunhos_comunicados_2026_07',
-    titulo: '🤖 Novidades agora chegam como rascunho pra você revisar',
-    corpo: '<p>A partir de agora, sempre que uma funcionalidade relevante for concluída, um rascunho de comunicado é preparado automaticamente — mas <b>nunca publicado sem sua revisão</b>.</p><p>Você vai encontrá-los na aba Pessoas → 📢 Comunicados, numa seção separada "🤖 Rascunhos aguardando sua revisão". De lá, é só clicar em "Revisar e publicar" pra abrir o editor já preenchido (ajuste o que quiser) ou "Descartar" se não fizer sentido avisar o time.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_novidades_semana_2026_07_07',
-    titulo: '🚀 Novidades do Maré Digital — semana de 04–05/jul',
-    corpo: `<p>Fizemos várias melhorias no board e no painel essa semana. Aqui o resumo do que chegou pra vocês:</p>
-
-<p><b>❓ Ajuda contextual em todo o board</b><br>
-Agora tem um botão <b>?</b> discreto em vários pontos do board — Calendário, Agendas, Relatório de Tempo, WIP, Mural, Impedimento, Recorrentes, Modelos e Estrelas. Passe o mouse pra ver uma explicação rápida da funcionalidade, com link pra ir direto no Help Content completo.</p>
-
-<p><b>🔍 Busca no Help (Ctrl+K)</b><br>
-A Central de Ajuda ganhou campo de busca. Use <b>Ctrl+K</b> (ou Cmd+K no Mac) pra abrir e já digitar o que procura — a busca funciona em todas as seções ao mesmo tempo, com destaque do termo encontrado.</p>
-
-<p><b>📢 Sistema de Comunicados (Mural)</b><br>
-Clique no botão 📢 no header do board pra ver avisos do ADM e novidades. Tem também a aba <b>"Fale com o ADM"</b> — use pra reportar problemas, dar sugestões ou tirar dúvidas sem precisar de mensagem no WhatsApp.</p>
-
-<p><b>🔔 Sino mais esperto</b><br>
-O sininho agora treme a cada 30 minutos enquanto você tiver notificações não lidas. E se você abrir o board num dia diferente com notificações pendentes, aparece um lembrete. O botão <b>"Limpar antigas"</b> também foi corrigido — agora remove todas as já lidas de uma vez.</p>
-
-<p><b>💾 Backup automático de verdade</b><br>
-O backup semanal agora funciona de fato — ele rodava só se a aba ficasse aberta por 7 dias, o que nunca acontecia. Agora verifica na abertura e roda se estiver atrasado, de qualquer dispositivo. Se você já tinha configurado, vale reconfigurar uma vez em <b>Config → Backup</b>.</p>
-
-<p>Qualquer dúvida ou problema, use o <b>Fale com o ADM</b> no Mural 📢 ou chama direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_intake_titulo_automatico_2026_08_12',
-    titulo: '📥 Intake mais completo + título de card automático (Ficha Técnica)',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>📥 Intake mais completo</b><br>
-O formulário público de pedidos ganhou reforços: Descrição e "Squad/time solicitante" agora são obrigatórios, e o campo de squad virou uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Mídia, Comercial Geral) — evita erro de digitação e já vincula a tag certa automaticamente ao criar o card. O squad inteiro agora recebe notificação (sino 🔔 + push) assim que um pedido novo chega, sem precisar de ninguém com o board aberto. Cards criados a partir de um pedido de intake ganham um selo 📥 discreto no card, e "📊 Dados do Board" ganha um novo painel com o funil completo: quantos pedidos chegaram, quantos viraram card, quantos foram descartados e quantos já foram concluídos.</p>
-
-<p><b>🎬 Título de card automático (Ficha Técnica)</b><br>
-Pra quem usa a Ficha Técnica: o título do card agora se monta sozinho a partir do que for preenchido — Plataforma, Formato, Campanha, Objetivo, Etapa do Funil e Funil — no formato <code>Plataforma Formato - Campanha Objetivo - Etapa/Funil</code>. Não precisa mais digitar o título completo na mão, só preencher a Ficha; o título continua editável a qualquer momento.</p>
-
-<p><b>🛠️ Estabilidade</b><br>
-Corrigido um problema pontual que podia deixar o Mural/avisos sem atualizar em algumas sessões.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_titulo_automatico_ajustes_2026_08_12',
-    titulo: '🎬 Título automático da Ficha Técnica — ajustes de formato',
-    corpo: `<p>Ajustes rápidos no título automático anunciado há pouco, depois de feedback direto de quem já testou:</p>
-
-<p><b>Novo formato, com colchetes</b><br>
-<code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa do Funil/Funil</code><br>
-Os colchetes em Plataforma e Objetivo deixam mais fácil separar visualmente cada pedaço do título (antes, o Objetivo podia ficar "colado" no nome da campanha). E o campo <b>Tipo</b> entrou no lugar de Formato.</p>
-
-<p><b>Só em cards novos criados a partir de Modelo</b><br>
-O título automático agora só se aplica quando o card nasce de um item de 📐 Modelos. Cards criados em branco e cards já existentes continuam com o título 100% manual, como sempre.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
-    tipo: 'novidade',
-    squad: '*',
-  },
-  {
-    id: 'seed_demandante_backup_2026_08_12',
-    titulo: '🔒 Proteção de descrição, restaurar backup e mais',
-    corpo: `<p>Foi ao ar mais um lote de melhorias no board:</p>
-
-<p><b>🔒 Proteção da descrição em cards com Demandante</b><br>
-Quem usa o campo "📢 Demandante" (Config → Padrões de card): a partir de agora, um card com Demandante definido trava a descrição principal pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição, evitando que alguém apague ou substitua sem querer o conteúdo de quem pediu o card. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais".</p>
-
-<p><b>🧯 Restaurar backup</b><br>
-Nova seção em Config → Backup (só ADM/PO/Organizador): sobe um arquivo de backup salvo antes (ou escolhe um snapshot do histórico) e dá pra "🔍 Comparar com o board atual" — lista só os cards que sumiram desde aquele backup, sem mexer em nada que foi arquivado ou excluído de propósito, com restauração card a card ou tudo de uma vez. Também tem a opção "🧯 Restaurar TUDO" pra cenários mais graves. Antes de qualquer restauração, o estado atual é salvo automaticamente como rede de segurança.</p>
-
-<p><b>💾 Backup automático semanal</b><br>
-Agora, todo domingo de madrugada, um backup de cada squad é salvo sozinho, sem precisar que ninguém abra o board — mais uma camada de proteção pros dados.</p>
-
-<p><b>🪄 Gerar título sob demanda</b><br>
-Quem usa a Ficha Técnica: o botão "🪄 Gerar título" monta o título a partir da ficha em qualquer card, a qualquer momento — não só nos criados via Modelo.</p>
-
-<p><b>🔤 Nova ordenação Alfabética</b><br>
-Mais uma opção no botão ↕ Ordenação: organiza os cards de A a Z pelo título.</p>
-
-<p>Qualquer dúvida, usem o <b>Fale com o ADM</b> no Mural 📢 ou chamem direto!</p>`,
+    id: 'seed_teste_comunicados_dev_2026_07',
+    titulo: '🧪 Teste: sistema de comunicados funcionando',
+    corpo: '<p>Este é um rascunho de <b>teste</b> do ambiente dev. Clique em "Revisar e publicar" pra testar o fluxo completo.</p>',
     tipo: 'novidade',
     squad: '*',
   },
@@ -10404,19 +9547,22 @@ function toggleSqCol(sqId, colId){
 // ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
 
 // Squads base — sempre presentes
+// ── PAINEL DEV: só exibe squads fictícias de teste ──────────────────────────
 let SQUADS = [
-  {id:'dados',         label:'Squad Dados e IA',               icon:'📊', color:'#38b6ff', wipLimit:3},
-  {id:'prf',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
-  {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
+  {id:'dev',         label:'Dev Sandbox',       icon:'🧪', color:'#38b6ff', wipLimit:3},
+  {id:'omnichannel', label:'Squad Omnichannel',  icon:'🛍️', color:'#f97316', wipLimit:3},
 ];
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId, cardId){ return 'kanban.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
 
-// Carrega squads criados via painel de setup do Firebase
+// Painel-dev: squads fixas, não carrega squads_meta de produção
 function loadExtraSquads(callback){
-  let firstRun=true;
-  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{ _dbgTrack('squads_meta', snap.val());
+  renderFilterBar(); renderGerenciaBar(); // painel-dev: SQUADS já fixo (não carrega squads_meta de produção) — ver early return abaixo
+  if(callback) callback();
+  return;
+  let firstRun=true; // eslint-disable-line
+  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
     const val=snap.val()||{};
     let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
@@ -10427,21 +9573,12 @@ function loadExtraSquads(callback){
       }
     });
     loadPresence(); // pega squad(s) extra(s) recém-adicionado(s) a SQUADS — ver comentário na declaração
-    // Achado real (/monitorarbugs, 2026-09-10, 2ª rodada — mesma classe do
-    // bug de loadPresence() documentado acima, reintroduzida por mim
-    // mesmo na 1ª rodada): pôr loadErrorLogs() dentro do `else if(changed)`
-    // parecia certo, mas esse branch NUNCA roda no 1º carregamento da
-    // página (firstRun sempre entra no `if(firstRun)` primeiro) — mesmo
-    // quando um squad extra JÁ EXISTIA antes desta sessão (ex.:
-    // Marketplace criado ontem), essa 1ª passagem empurra ele pra SQUADS
-    // (changed=true) mas o `if(firstRun)` captura o fluxo antes do
-    // `else if` ser avaliado, então loadErrorLogs() nunca rodava de novo
-    // pra esse squad. Só squad criado DEPOIS que a aba já estava aberta
-    // (2ª passagem em diante, sem firstRun) se beneficiava do fix
-    // original — o caso mais comum na prática (squad já existente, board
-    // aberto do zero) continuava quebrado. Fix: chama incondicionalmente
-    // aqui fora do if/else, igual loadPresence() já faz — idempotente
-    // (_errLogSquadsAttached), então repetir a chamada é seguro.
+    // Achado real (/monitorarbugs, 2026-09-10, 2ª rodada): loadErrorLogs()
+    // dentro do `else if(changed)` nunca roda no 1º carregamento (firstRun
+    // sempre captura o fluxo antes) — mesmo se este trecho for reativado
+    // algum dia (hoje é código morto, ver early return acima), precisa
+    // ficar incondicional aqui, igual loadPresence(), pra cobrir squad que
+    // já existia antes da sessão abrir. Ver painel.html pro efeito prático.
     loadErrorLogs();
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();
@@ -10693,6 +9830,13 @@ function loadKudosGeral(){
 }
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
+  // Achado real (/monitorarbugs, 2026-09-14): usava 'kudos' (caminho
+  // órfão, que nenhum board lê) em vez de 'kudos_geral' — o comentário logo
+  // acima já dizia "mesmo padrão do path global do prod", mas o literal
+  // divergia. Kudos "Geral" enviado daqui sumia (não aparecia em nenhum
+  // board, prod ou dev) mesmo a notificação "Você recebeu uma Estrela"
+  // sendo criada normalmente pro destinatário — notificação fantasma, sem
+  // conteúdo nenhum pra ela apontar.
   window._get(window._ref(window._db,'kanban/painel/kudos_geral')).then(snap=>{
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
@@ -10998,7 +10142,6 @@ function _pushHistReenviar(id){
   document.getElementById('pushm-title').scrollIntoView({behavior:'smooth', block:'center'});
 }
 
-
 function renderGlobalUsers(){
   const list = document.getElementById('global-users-list');
   const countEl = document.getElementById('global-users-count');
@@ -11211,6 +10354,9 @@ function _applySquadDados(sqId, val){
     // novo de Firebase. Usado pra decidir se mostra o donut "Por submarca"
     // nos Insights agregados.
     submarcaAtivo: !!val.config?.submarca_ativo,
+    // Mesmo path que kanban.html/kanban-dev.html lê (config/canal_venda_ativo)
+    // — mesma ideia de submarcaAtivo acima, pro donut "Por canal de venda".
+    canalVendaAtivo: !!val.config?.canal_venda_ativo,
     flowBaseline: val.flow_baseline || _prev.flowBaseline || null,
     lembretes: val.lembretes ? (Array.isArray(val.lembretes)?val.lembretes:Object.values(val.lembretes)).filter(Boolean) : (_prev.lembretes||[]),
     cal_events: _prev.cal_events,
@@ -11238,27 +10384,16 @@ function _pollSquadSnapshots(sqId){
     .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/snapshots', snap.val()); snapshots[sqId]=snap.val()||{}; renderTrend(); })
     .catch(()=>{});
 }
-// Quando a aba volta a ficar visível, faz um refresh de todos os squads já
-// rastreados — mas só se já tiver passado um tempo mínimo desde o último
-// refresh completo. Sem esse cooldown, cada troca de aba (ir olhar email,
-// Slack etc. e voltar) disparava um puxão do node /dados INTEIRO de TODOS
-// os squads de novo, mesmo que a pessoa tivesse saído e voltado há 5
-// segundos — isso foi identificado como uma fonte relevante de consumo de
-// download mesmo em uso de squad único, sem qualquer ação manual.
-const VISIBILITY_REFRESH_COOLDOWN_MS = 3*60000; // 3 minutos
-let _lastVisibilityRefresh = 0;
+// Quando a aba volta a ficar visível, faz um refresh imediato de todos os
+// squads já rastreados (em vez de esperar até 60s pra atualizar de novo).
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || !window._squadListeners) return;
-  const now = Date.now();
-  if(now - _lastVisibilityRefresh < VISIBILITY_REFRESH_COOLDOWN_MS) return; // ainda dentro do cooldown, ignora
-  _lastVisibilityRefresh = now;
   Object.keys(window._squadListeners).forEach(sqId=>{
     _pollSquadDados(sqId);
     _pollSquadSnapshots(sqId);
   });
 });
 function loadAll(){
-  _lastVisibilityRefresh = Date.now(); // conta como refresh recente, evita duplicar com o próximo visibilitychange
   // Antes disparava um setInterval por squad a cada POLL_MS (60s), rodando pra
   // sempre enquanto a aba do painel ficasse aberta em primeiro plano — isso
   // buscava o node /dados INTEIRO (cards+colunas+tags) de TODAS as squads a
@@ -12895,9 +12030,24 @@ function checkOverdueGlobalBackup(){
     sendGlobalBackupEmail(false);
   }
 }
-window.addEventListener('auth-change', e=>{
-  if(e.detail) setTimeout(checkOverdueGlobalBackup, 5000);
-}, {once:true});
+// Achado real (/monitorarbugs, "comentários que dizem ter resolvido bugs
+// mas há uma inconsistência" — mesma classe de bug já corrigida em
+// kanban-dev.html via _onRealAuthChange(), 2026-09-11): onAuthStateChanged
+// (linha ~2864) dispara 'auth-change' assim que o listener é registrado —
+// quase sempre com null, ninguém logado ainda — e de novo quando o login
+// termina, agora com o usuário. Um listener {once:true} é consumido pelo
+// PRIMEIRO disparo, seja ele qual for — se o null chegasse primeiro (o
+// caso comum), o disparo real nunca tinha mais ninguém escutando, e
+// checkOverdueGlobalBackup() nunca rodava na sessão inteira. Mesmo fix:
+// espera o primeiro disparo com usuário de verdade, ignora null.
+function _onRealAuthChange(fn){
+  if(window._currentUser){ fn(window._currentUser); return; }
+  const handler = e=>{
+    if(e.detail){ window.removeEventListener('auth-change', handler); fn(e.detail); }
+  };
+  window.addEventListener('auth-change', handler);
+}
+_onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 
 // ── FIM BACKUP GLOBAL ─────────────────────────────────────────────────────
 

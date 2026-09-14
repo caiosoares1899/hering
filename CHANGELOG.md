@@ -15542,6 +15542,38 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.47 · painel — 2026-09-14 · Promove pra prod — Vice City, Kudos, OKR e uma leva grande de correções de bugs
+
+Promove pra produção o lote v3.40 → v3.46 de `painel-dev.html` (7
+entradas de dev). Patch cirúrgico, não cópia completa — os dois
+arquivos divergem de propósito e isso foi conferido linha a linha antes
+e depois da promoção: banner de dev, seção "🔔 Enviar push manual" (só
+existe em prod — reconstruída byte-a-byte a partir do `painel.html`
+anterior, incluindo a checagem de ADM e o path certo de histórico),
+filtro `SQUADS_FICTICIOS` (só faz sentido em prod), mapeamento real de
+Gerências (prod usa squads de verdade, dev usa placeholder pra testar a
+mecânica), título/versão/`VERSION_KEY`, e ~40 paths do Firebase com
+sufixo `_dev` (calendário, dados diários, backup, lembretes de gestão,
+etc. — cada um restaurado pro path de produção). Ver entradas completas
+de `painel-dev.html` abaixo pro detalhe técnico de cada achado.
+
+**Correções de bugs mais relevantes**: botões das abas Monitor/Dados/
+Agentes ilegíveis no tema Vice City (achado real, relato direto com
+print); Estrela do Mar "Geral" enviada pelo painel-dev sumia por causa
+de um caminho órfão no Firebase (nunca aparecia em nenhum board); Kudos
+e Agenda aprovada não navegavam pra lugar nenhum ao clicar na
+notificação; campo de descrição do Objetivo (OKR) ficava pequeno demais
+e perdia a altura redimensionada a cada re-render; sincronização de
+rascunho do Objetivo se perdia quando um Marco de OUTRO Objetivo mudava
+em outra aba.
+
+**Feature nova**: Dashboard consolidado ganha o donut "Por canal de
+venda" (faltava, só existia "Por submarca").
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses igual ao baseline conhecido (braces -1, parens
+-14).
+
 ### painel.html v3.39 · painel — 2026-09-11 · Promove pra prod — Sino de notificações filtra no servidor
 
 Promove pra produção o lote v3.38 → v3.44-painel-dev de `painel-dev.html`
