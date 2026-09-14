@@ -3211,6 +3211,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.646-dev — 2026-09-14 — /monitorarbugs em Automações: ligar a 1ª regra "aging" no mesmo dia podia perder cards pra sempre
+
+Achado real auditando o motor de Automações (`runAutoRules()`/
+`AUTO_TRIGGERS`/`AUTO_ACTIONS`) — mesma classe de bug já corrigida em
+`maybeAutoArchiveOldCards()` (2026-09-12), agora achada num vizinho:
+`checkAgingAutomations()` (trigger "Card parado há muito tempo").
+
+A flag "já rodei hoje" (`lastAgingCheck_{squad}`, `localStorage`) era
+gravada ANTES de checar se existia alguma regra "aging" ativa. Squad sem
+regra de aging configurada (comum — Fase 2 é opt-in) já marcava o dia
+como "checado" na primeira passada, sem fazer nada; se o PO criasse a 1ª
+regra horas depois, ela ficava sem efeito até o dia seguinte — mesmo
+sintoma do arquivamento automático. Só que aqui é PIOR: o trigger só
+dispara no dia EXATO em que um card cruza o limiar de idade
+(`ageDays===sprintLen`, não repete depois), então qualquer card que
+cruzasse o limiar justamente naquele dia perdia a checagem PRA SEMPRE, não
+só adiada pro dia seguinte.
+
+Fix: passou a checar se existe regra "aging" ativa antes de tocar no
+`localStorage` — ligar a regra pela primeira vez já cobre os cards que
+cruzam o limiar no mesmo dia.
+
 ### v8.30.645-dev — 2026-09-14 — /monitorarbugs em ↺ Desfazer (Ctrl+Z): risco de apagar/reverter cards de outras pessoas + reordenar colunas nunca desfazia de verdade
 
 Achado real auditando o mecanismo de Desfazer (`saveUndo()`/`doUndo()`) —

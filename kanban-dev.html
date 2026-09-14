@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.645-dev</div>
+<div class="version">v8.30.646-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -27367,8 +27367,18 @@ function checkAgingAutomations(){
   const lastCheck=safeLS.getItem('lastAgingCheck_'+ACTIVE_SQUAD);
   if(lastCheck===todayStr) return;
   if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
-  safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
+  // Achado real (/monitorarbugs, 2026-09-14) — mesma classe do bug já
+  // corrigido em maybeAutoArchiveOldCards() (2026-09-12): checa se existe
+  // regra "aging" ativa ANTES de gravar a flag "já rodei hoje". Antes, a
+  // flag gravava incondicionalmente — squad SEM regra de aging (comum,
+  // Fase 2 é opt-in) marcava o dia como "checado" mesmo sem fazer nada; se
+  // o PO criasse a 1ª regra de aging horas depois, ficava sem efeito até
+  // amanhã. Aqui é ainda pior que no arquivamento: como o trigger só
+  // dispara no dia EXATO em que um card cruza o limiar (ageDays===sprintLen,
+  // não repete depois), qualquer card que cruzasse o limiar justamente
+  // nesse dia perdia a checagem PRA SEMPRE, não só adiada.
   if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
+  safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   cards.filter(c=>!c.archived && !_isColDone(c.col) && c.editedAt).forEach(card=>{
