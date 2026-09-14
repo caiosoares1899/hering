@@ -949,6 +949,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   pra criação em lote — padrão correto pra operação estrutural, sem o
   anti-padrão de índice). dev v8.30.650, PR #888.
 
+- **2026-09-14, saveCard() (pedido explícito, escopo nomeado)**: 1
+  achado real severo, técnica 3 (comportamento vs. o que o campo deveria
+  representar em cada modo). `c.blocker` era derivado da visibilidade
+  CSS de `#m-blocker-row`, que fica visível também com `blockerReason`
+  residual (nunca limpo em modo COLUNA ao sair da coluna Impedimentos —
+  só o auto-desimpedimento em modo TAG, dentro de `recordMove()`, limpa
+  isso). Card que passa pela coluna Impedimentos com motivo digitado
+  ficava com `c.blocker` travado em `true` pra sempre depois de
+  resolvido — sem nenhum indício visível no board (`_cardIsBlocked()`
+  ignora `c.blocker` em modo coluna) — e `_settleBlockedTag()` abria um
+  episódio de "tempo bloqueado" que nunca fechava, inflando ⏱️ Tempo
+  bloqueado (Insights) em silêncio. Fix: `c.blocker` só é derivado/
+  atualizado em modo tag; `_settleBlockedTag()` só roda em modo tag
+  também. Achado incidental documentado, não corrigido (assimetria
+  pré-existente, fora do escopo desta rodada): `scheduleAutoSave()`
+  nunca grava `c.blocker` (só `blockerReason`), então marcar/desmarcar
+  impedimento por tag só surte efeito via Salvar manual/os botões da
+  própria linha — não é alcançável via autosave hoje (nenhum controle
+  de UI liga blocker a `scheduleAutoSave()`), então não corrigido por
+  não ter cenário real que dispare. dev v8.30.651, PR #889.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
