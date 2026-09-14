@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.650-dev</div>
+<div class="version">v8.30.651-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14664,6 +14664,22 @@ function saveCard(){
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
     const _prevBlockerSave=c.blocker||false; // ⏱️ ver _settleBlockedTag()
+    // Achado real (/monitorarbugs, 2026-09-14): a linha #m-blocker-row fica
+    // visível em openCard() por 2 motivos — _cardIsBlocked(c) (mode-aware)
+    // OU c.blockerReason ter texto (mesmo residual, de um impedimento já
+    // resolvido — nada em modo COLUNA limpa esse campo ao sair da coluna
+    // Impedimentos, só o auto-desimpedimento em modo TAG faz isso, ver
+    // recordMove()). Derivar c.blocker cru da visibilidade da linha (sem
+    // checar o modo) fazia QUALQUER card que já passou pela coluna
+    // Impedimentos com um motivo digitado voltar com c.blocker=true pra
+    // sempre depois de sair de lá — mesmo nunca mais aparecendo bloqueado
+    // no board (_cardIsBlocked() ignora c.blocker em modo coluna) — e
+    // _settleBlockedTag() abria um episódio de "tempo bloqueado" fantasma
+    // que nunca fechava, inflando ⏱️ Tempo bloqueado (Insights) em
+    // silêncio. Em modo coluna, c.blocker não é fonte de verdade nenhuma
+    // (recordMove() já cobre o tempo bloqueado de verdade por lá) — só
+    // deriva/mantém o flag em modo tag.
+    const _blockerRowOn=document.getElementById('m-blocker-row')?.style.display!=='none';
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
@@ -14682,14 +14698,14 @@ function saveCard(){
       // que não estão na lista — o campo antigo fica intacto até loadComments()
       // migrá-lo em background na próxima vez que alguém abrir esse card.
       linkedCards:editingLinkedCards.map(l=>l.id),
-      blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
+      blocker: blockerMode==='tag' ? _blockerRowOn : c.blocker,
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td,
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
-    _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+    if(blockerMode==='tag') _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)

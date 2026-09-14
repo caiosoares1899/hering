@@ -3211,6 +3211,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.651-dev — 2026-09-14 — /monitorarbugs em saveCard(): modo coluna podia deixar `c.blocker` travado em `true` pra sempre, inflando "Tempo bloqueado"
+
+Achado real auditando `saveCard()` (escopo nomeado). A linha `#m-blocker-row`
+do modal fica visível em `openCard()` por 2 motivos — `_cardIsBlocked(c)`
+(consciente do modo, coluna OU tag) OU `c.blockerReason` ter texto, mesmo
+residual de um impedimento já resolvido. Nada em modo **coluna** limpa
+`blockerReason` ao sair da coluna Impedimentos (só o auto-desimpedimento
+em modo tag, dentro de `recordMove()`, faz isso) — mas `saveCard()`
+derivava `c.blocker` direto da visibilidade CSS dessa linha, sem checar o
+modo.
+
+Cenário real: card entra na coluna "Impedimentos" (modo coluna); alguém
+abre o card e digita o motivo no campo (visível, já que o card está
+bloqueado) e clica em Salvar — `c.blocker` vira `true`, `blockerReason`
+grava o texto. Card é arrastado de volta pra uma coluna normal (resolvido
+de verdade, board mostra certinho — `_cardIsBlocked()` ignora `c.blocker`
+em modo coluna). Mas a linha continua aparecendo em qualquer abertura
+futura do card (por causa do `blockerReason` residual, nunca limpo em
+modo coluna), e qualquer Salvar seguinte (por QUALQUER motivo, nem
+precisa mexer no impedimento) re-derivava `c.blocker=true` de novo — o
+campo ficava travado em `true` pra sempre, e `_settleBlockedTag()` abria
+um episódio de "tempo bloqueado" que nunca fechava, inflando ⏱️ Tempo
+bloqueado (Insights, "cards mais bloqueados") em silêncio, sem nenhum
+indício visível no board.
+
+Fix: `c.blocker` só é derivado/atualizado pela linha do modal quando
+`blockerMode==='tag'` — em modo coluna, mantém o valor que já tinha (o
+campo não é fonte de verdade de impedimento nesse modo, `recordMove()`
+já cobre o tempo bloqueado de verdade por lá). `_settleBlockedTag()`
+também só roda em modo tag agora, mesmo padrão já usado no
+auto-desimpedimento de `recordMove()`.
+
 ### v8.30.650-dev — 2026-09-14 — /monitorarbugs em criar card/openCard: escrita de `_autoVisto`/`_autoRelembradoEm` podia gravar no card ERRADO
 
 Achado real (2 ocorrências, mesma causa raiz), auditando `openCard()` e o
