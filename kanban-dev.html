@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.648-dev</div>
+<div class="version">v8.30.649-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10827,8 +10827,15 @@ function makeCardEl(card){
   const div=document.createElement('div');
   // Card aging — limiares atrelados à duração da sprint configurada
   // 1 sprint sem edição = aged-1 (esmaece); 2 sprints = aged-2 (mais apagado + 💤)
+  // Achado real (/monitorarbugs, 2026-09-14): !card.paused — ⏸ Pausar card
+  // promete explicitamente "você não quer que isso conte contra as
+  // métricas de tempo do time NEM APAREÇA COMO ALARME pro resto do board"
+  // (Central de Ajuda), mas este esmaecimento (e os outros 3 lugares que
+  // compartilham o mesmo cálculo — checkAgingAutomations(), "Cards
+  // parados" de Insights, e o badge de aging por coluna logo abaixo) nunca
+  // excluíam cards pausados.
   let agingClass='';
-  if(!_isColDone(card.col)&&card.editedAt){
+  if(!_isColDone(card.col)&&card.editedAt&&!card.paused){
     const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
     const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
     if(ageDays>=sprintLen*2) agingClass=' aged-2';
@@ -10918,7 +10925,7 @@ function makeCardEl(card){
   // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
   // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
   let agingColBadge='';
-  if(!isDone && card.flow?.enteredAt?.[card.col]){
+  if(!isDone && !card.paused && card.flow?.enteredAt?.[card.col]){
     const limiar=(flowConfig.agingDays||{})[card.col];
     if(limiar>0){
       const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
@@ -19615,9 +19622,12 @@ function renderBoardDataInsights(){
   const okrPorCol=columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({label:col.name||col.id,count:okrCards.filter(c=>c.col===col.id).length,color:col.color||'#38b6ff'}));
 
   // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
+  // !c.paused — achado real (/monitorarbugs, 2026-09-14), mesmo motivo dos
+  // outros 3 pontos que fazem esta conta: ⏸ Pausar card promete "não
+  // aparece como alarme pro resto do board".
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
-  const parados=activeCards.filter(c=>c.editedAt).map(c=>{
+  const parados=activeCards.filter(c=>c.editedAt&&!c.paused).map(c=>{
     const editedD=new Date(c.editedAt+'T00:00:00');
     const ageDays=Math.round((hojeAging-editedD)/86400000);
     return {c, ageDays};
@@ -27418,7 +27428,10 @@ function checkAgingAutomations(){
   safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
-  cards.filter(c=>!c.archived && !_isColDone(c.col) && c.editedAt).forEach(card=>{
+  // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
+  // promete "não aparece como alarme pro resto do board" (Central de
+  // Ajuda), mas o trigger 'aging' nunca excluía card pausado.
+  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && c.editedAt).forEach(card=>{
     const editedD=new Date(card.editedAt+'T00:00:00');
     const ageDays=Math.round((hoje-editedD)/86400000);
     if(ageDays===sprintLen) runAutoRules('aging', card.id);
