@@ -970,6 +970,21 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   de UI liga blocker a `scheduleAutoSave()`), então não corrigido por
   não ter cenário real que dispare. dev v8.30.651, PR #889.
 
+- **2026-09-14, board de colunas / tela inicial (pedido explícito,
+  escopo nomeado)**: 1 achado real, técnica 2 (comparar contra padrão
+  irmão já resolvido na mesma função). `renderBoard()` já ignorava o
+  filtro de Responsável na raia por pessoa e o de Tag na raia por tipo
+  (mesma dimensão que a raia organiza), mas nunca ganhou o equivalente
+  pra raia por subtime — ativar raia+filtro de Subtime ao mesmo tempo
+  colapsava a raia pra mostrar só 1 subtime. Fix: `passesFilter()` ganha
+  `ignoreSubteam` (4º parâmetro), aplicado quando `raiaMode==='subteam'`.
+  Checado e sem achado: `renderNormal()` (render das colunas em si —
+  drag and drop, WIP, "ver mais" paginado, colapsar coluna); `_applyBoardPrefsSquad()`/
+  `visao_inicial` (guard 1x-por-sessão correto, `ACTIVE_SQUAD` é `const`
+  fixado no boot — trocar de squad sempre recarrega a página, não há
+  cenário de reaproveitar `window._visaoInicialAplicada` entre squads).
+  dev v8.30.652, PR #890.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
