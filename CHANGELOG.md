@@ -14872,6 +14872,23 @@ function roda sozinha, sem depender de ninguém.
 
 ## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
 
+### 2026-09-14 — `feedback` entra em PUSH_TYPES
+
+Pergunta direta do usuário (ADM): "quando alguém manda uma mensagem do
+board [✍️ Fale com o ADM, dentro do 📢 Mural], chega notificação pra
+mim?". Investigando: a notificação (tipo `feedback`) já era criada
+certinho (`enviarFeedback()`, kanban-dev.html) e aparecia no sino 🔔,
+como a Central de Ajuda promete ("O ADM é notificado no sino 🔔") — mas
+`feedback` nunca esteve em `PUSH_TYPES`, diferente do irmão mais parecido
+(`intake`, pedido externo chegando pra quem acompanha, já push desde
+2026-08-12 — ver entrada acima). Sem push, um ADM sem a aba aberta nunca
+ficava sabendo que alguém mandou mensagem — só descobria se abrisse o
+board por outro motivo e reparasse no sino.
+
+`PUSH_TYPES` ganha o tipo `'feedback'` — mensagens de "Fale com o ADM"
+agora também viram push, não só sino. **Requer `firebase deploy --only
+functions:sendPushOnNotification` manual.**
+
 ### 2026-08-12 — `intake` entra em PUSH_TYPES
 `PUSH_TYPES` ganha o tipo `'intake'` — notificação de pedido novo (ver
 seção de `intakeSubmit`) agora também vira push, não só sino 🔔.
