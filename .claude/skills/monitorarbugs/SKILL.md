@@ -838,6 +838,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   Desfeito: reordenar colunas" mas a ordem nunca voltava. Fix: snapshot
   passa a guardar `columns` também. dev v8.30.645.
 
+- **2026-09-14, motor de Automações (`runAutoRules()`/`checkAgingAutomations()`)
+  (pedido genérico, "roda mais um /monitorarbugs" — escolhido por ser o
+  motor central de Automações, já auditado por partes em várias rodadas
+  passadas mas nunca de ponta a ponta)**: 1 achado real, técnica 2
+  (comparar contra o padrão irmão já resolvido — `maybeAutoArchiveOldCards()`,
+  fix de 2 dias antes). `checkAgingAutomations()` gravava a flag "já rodei
+  hoje" (`localStorage`) ANTES de checar se existia regra "aging" ativa —
+  mesmo bug do arquivamento automático, mas PIOR: o trigger "aging" só
+  dispara no dia EXATO em que um card cruza o limiar de idade (não
+  repete depois), então ligar a 1ª regra no mesmo dia em que algum card
+  cruzava o limiar perdia esse card PRA SEMPRE, não só adiado. Fix: checa
+  a regra ativa antes de tocar no `localStorage`. Checado e sem achado
+  (revisão extensa, a maior parte já auditada em rodadas anteriores):
+  `runAutoRules()`/`_runAutoRuleAction()` (re-busca o card fresco no
+  `setTimeout`, sem race entre regras da mesma execução); todos os 15
+  `AUTO_ACTIONS` (`move_card`/`set_cover`/`apply_fanout` já tinham fixes
+  documentados de rodadas passadas; `add_tag`/`remove_tag`/
+  `set_submarca`/`set_canal_venda`/`set_tamanho` usam `getCardTags()`
+  consistentemente); todos os 19 `AUTO_TRIGGERS.matches()`;
+  `checkDueNotifs()` (não tem o mesmo bug — devido/atrasado não é
+  opt-in via regra, não tem checagem "existe regra?" equivalente antes
+  da flag). dev v8.30.646, PR #883.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
