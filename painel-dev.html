@@ -142,6 +142,25 @@
 [data-theme="vice"] .hd-btn-adm{
   color:var(--txt) !important;
 }
+/* Achado real (relato direto do usuário, 2026-09-14, print mostrando
+   "Resolver todos"/"Limpar resolvidos" apagados no Vice City): o fix acima
+   (2026-09-04) só cobriu os BOTÕES DA ABA (#ptab-monitor/#ptab-dados/
+   #ptab-agentes), nunca o CONTEÚDO de dentro de cada aba
+   (#ppane-monitor/#ppane-dados/#ppane-agentes) — onde mora a maioria dos
+   elementos com cor de destaque fixada inline (o rótulo da aba é só 1-2
+   palavras; o conteúdo tem dezenas de botões/badges). Seletor por atributo
+   (em vez de mais uma lista de ids pra lembrar de manter) pega qualquer
+   elemento presente E futuro que use --teal/--cyan/--accent/--danger/--warn
+   como cor de texto dentro dessas 3 abas — mesma família de cores que o
+   fix de cima já mirava, só que agora no lugar certo. */
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--teal)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--cyan)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--accent)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--danger)"],
+[data-theme="vice"] :is(#ppane-monitor,#ppane-dados,#ppane-agentes) [style*="var(--warn)"],
+[data-theme="vice"] #err-clear-resolved-btn{
+  color:var(--txt) !important;
+}
 /* ── DATE PICKER: calendário custom pra ações de data ────────────────── */
 .dp-btn{background:none;border:1px solid var(--glass-b);border-radius:6px;padding:3px 7px;cursor:pointer;color:var(--txt2);font-size:12px;margin-left:5px;vertical-align:middle;line-height:1;}
 /* Esconde o iconezinho nativo do navegador dentro do <input type=date> —
@@ -1935,7 +1954,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <span>🐛 Monitoramento de Erros</span>
         <span class="badge" id="err-open-count" style="background:rgba(255,107,107,.2);color:var(--danger);border:1px solid rgba(255,107,107,.3);">0 abertos</span>
         <button onclick="resolveAllErrors()" class="btn btn-sm" style="margin-left:auto;font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">✅ Resolver todos</button>
-        <button onclick="clearResolvedErrors()" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
+        <button onclick="clearResolvedErrors()" id="err-clear-resolved-btn" class="btn btn-sm" style="font-size:10px;color:var(--txt3);">🗑 Limpar resolvidos</button>
       </div>
       <div class="err-stats-grid" id="err-stats-grid">
         <div class="met"><div class="met-lbl">Erros abertos</div><div class="met-val met-bad" id="es-open">—</div><div class="met-sub">últimas 24h</div></div>
@@ -2807,7 +2826,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.44 · painel-dev</div>
+<div class="version">v3.45 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

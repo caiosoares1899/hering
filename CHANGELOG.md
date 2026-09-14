@@ -15421,6 +15421,32 @@ abaixo pro detalhe técnico (mesmo achado/fix de `kanban.html` v8.30.641,
 Checks de rotina: `node --check` OK nos 3 blocos reais. Balanço de
 chaves/parênteses igual ao baseline conhecido (braces -1, parens -14).
 
+### painel-dev.html v3.45 · painel-dev — 2026-09-14 — Fix: botões da aba Monitor/Dados/Agentes ilegíveis no Vice City
+
+Achado real, relato direto do usuário (print mostrando "Resolver
+todos"/"Limpar resolvidos", na aba 🐛 Monitor, apagados/sem contraste no
+tema 🌴 Vice City). O fix anterior (2026-09-04) já tinha identificado essa
+classe de bug — cores de destaque (`--teal`/`--cyan`/`--accent`/`--danger`/
+`--warn`) fixadas via `style` inline ficam da MESMA família de tom do fundo
+do Vice City, sem contraste — mas só cobriu os **botões da própria aba**
+no menu (`#ptab-monitor`/`#ptab-dados`/`#ptab-agentes`), nunca o
+**conteúdo de dentro** de cada aba (`#ppane-monitor`/`#ppane-dados`/
+`#ppane-agentes`) — onde mora a maioria dos elementos afetados (o rótulo
+da aba é só 1-2 palavras; o conteúdo tem dezenas de botões/badges).
+
+Varredura nas 3 abas achou mais 2 pontos com o mesmo problema, além dos 2
+do print: o badge "0 abertos" (Monitor) e os botões "🔄 Atualizar"/"❓
+Ajuda" (Agentes) — todos com cor fixada inline sem contraste no Vice City.
+
+Fix: novo bloco de CSS com seletor por atributo (`[style*="var(--teal)"]`
+etc.), escopado às mesmas 3 abas, em vez de mais uma lista de ids pra
+lembrar de manter — pega qualquer elemento presente E futuro que use essa
+família de cores como texto dentro delas. "Limpar resolvidos" usa
+`--txt3` (não faz parte da família de destaque, usado de propósito como
+texto secundário em várias outras partes do painel) — ganhou um id
+próprio e entrou na mesma regra, já que aqui é o texto de um botão de
+ação, não uma legenda secundária.
+
 ### painel-dev.html v3.44 · painel-dev — 2026-09-11 — Fix: `loadPainelNotifs()` perdia a chave real do Firebase, virava "id:undefined"
 
 Achado real testando o fix da v3.43 (usuário rodou o teste de diagnóstico
