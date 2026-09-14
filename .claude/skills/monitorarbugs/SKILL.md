@@ -1126,6 +1126,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   antes do listener em tempo real propagar. Fix: mesmo padrão dos 2
   irmãos. dev v8.30.658, PR #900.
 
+- **2026-09-14, validação de arquivamento automático (pedido explícito,
+  logo após implementar a feature — "garante que as exceções salvas
+  estejam funcionando... que as ações dentro do card estejam sendo
+  lidas")**: 2 achados reais. (1) técnica 3 (confrontar comportamento
+  com a promessa da própria tela) — a fila acumulada (`archive_pending`)
+  só checava `excludedCols` quando um card ENTRAVA como candidato novo,
+  não ao revalidar a fila já acumulada — card pendente movido pra coluna
+  excluída (ex.: Backlog) nunca saía da lista, contradizendo "nunca
+  arquivar automaticamente cards nestas colunas". Fix: revalida
+  `excludedCols` também na limpeza da fila. (2) achado maior, técnica 1 —
+  o cálculo de "sem atividade" olhava só `card.editedAt`, que só é
+  setado por quem lembra (`scheduleAutoSave()`/`handleDrop()`/
+  `ctxMove()`); `togglePinCard()`/`attachSave()`/`attachRemove()` (entre
+  outros) chamam `fbSaveCard()` puro sem tocar `editedAt`. Fix: passa a
+  considerar `card.updatedAt` também — confirmado no código que
+  `fbSaveCard()`/`fbSaveAll()` JÁ garantem esse campo centralizado em
+  TODA escrita pontual (nenhum `fbSet()` cru em `/cards/` sobrevive),
+  então é um sinal muito mais confiável que `editedAt` isolado. Achado
+  incidental, não corrigido: a mesma limitação existe nos badges de
+  "card parado" e em `checkAgingAutomations()` — mesma solução
+  (considerar `updatedAt`) resolveria os dois, fica pra rodada própria.
+  dev v8.30.661, PR #905.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

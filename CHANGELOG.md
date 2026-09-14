@@ -3252,6 +3252,43 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.661-dev — 2026-09-14 — /monitorarbugs na validação de arquivamento: exceções de coluna e ações dentro do card
+
+Pedido explícito do usuário ("garante que as exceções salvas estejam
+funcionando... que as ações dentro do card estejam sendo lidas"),
+auditando a feature nova da v8.30.660. 2 achados reais:
+
+1. **Exceções de coluna não revalidadas.** Um card que já estava
+   pendente de um dia anterior e foi movido pra uma coluna EXCLUÍDA da
+   regra (ex.: Backlog) nunca saía da fila — o filtro `excludedCols` só
+   era aplicado quando um card ENTRAVA como candidato novo, não quando a
+   fila acumulada era revalidada a cada boot. Contradizia a própria
+   promessa da tela de Config ("nunca arquivar automaticamente cards
+   nestas colunas"). Fix: revalida `excludedCols` também na limpeza da
+   fila acumulada.
+
+2. **"Ações dentro do card" não contavam como atividade.** O cálculo de
+   "dias sem atividade" olhava só `card.editedAt` — mas esse campo só é
+   setado por quem lembra de tocar nele manualmente
+   (`scheduleAutoSave()`/`handleDrop()`/`ctxMove()`/etc.).
+   `togglePinCard()`, `attachSave()`/`attachRemove()` (entre outros) só
+   mudam o campo deles (`pinned`, `links`) e chamam `fbSaveCard()` puro,
+   sem tocar `editedAt` — pinar um card ou anexar um link não contava
+   como atividade, mesmo a pessoa claramente estando de olho nele. Fix:
+   passa a considerar também `card.updatedAt`, que `fbSaveCard()`/
+   `fbSaveAll()` JÁ garantem centralizado em TODA escrita pontual, sem
+   exceção (mesmo padrão que `fbSaveAll()` usa com `touchedIds` —
+   confirmado no código que não há nenhum `fbSet()` cru em `/cards/`
+   bypassando essa garantia). Usa o mais recente entre `editedAt` e
+   `updatedAt`.
+
+**Fora do escopo desta rodada, documentado como risco relacionado**: a
+mesma limitação de `editedAt`-only existe nos badges visuais de "card
+parado" (`makeCardEl()`) e em `checkAgingAutomations()` — ambos já
+documentados como risco conhecido na v8.30.659; a mesma lógica de
+`updatedAt` poderia resolver os dois, mas fica pra uma rodada própria
+se pedido.
+
 ### v8.30.660-dev — 2026-09-14 — Feature: Arquivamento automático agora pede confirmação antes de arquivar
 
 Pedido direto do usuário, depois do achado crítico corrigido na v8.30.659
