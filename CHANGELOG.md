@@ -3211,6 +3211,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.654-dev — 2026-09-14 — /monitorarbugs no 🌅 Meu Dia: cache de squads cruzados nunca atualizava + fallback de campo legado faltando
+
+Achado real auditando o 🌅 Meu Dia (escopo nomeado). Dois problemas:
+
+1. **Cache permanente que contradizia a própria mensagem de loading.**
+   `_loadMeuDiaCrossSquads()` só buscava um squad de fora do ativo na
+   PRIMEIRA vez (`!_meuDiaCrossData[sq]`) — depois disso, nunca mais,
+   mesmo `openMeuDia()` mostrando "⏳ Carregando seus cards de todos os
+   squads..." e chamando essa função de novo a cada abertura do painel.
+   Cenário: card de outro squad é concluído ou reatribuído por outra
+   pessoa enquanto você já tinha aberto o Meu Dia uma vez na sessão —
+   reabrir o painel continuava mostrando o dado velho pelo resto da
+   sessão, não importa quantas vezes reabrisse. Fix (opção escolhida
+   pelo usuário entre 3 alternativas): passou a buscar TODOS os squads
+   de fora sempre que o painel abre — custo é 1 leitura por squad, só
+   sob ação explícita da pessoa (não é polling automático).
+2. **Fallback de campo legado faltando na filtragem de "meus cards".**
+   `card.participants||card.participantes||[]` já é o padrão usado em 3
+   outros lugares do arquivo (busca/filtro em `passesFilter()`,
+   autocomplete de @menção) e no `lerCard.js` do orquestrador
+   (server-side) — mas a filtragem de "meus cards" do Meu Dia só olhava
+   `card.participants`, sem o fallback. Card com apenas o campo legado
+   `participantes` preenchido (sem `participants`) aparecia em
+   busca/filtro e no resumo que o Agente Ágil lê, mas sumia do Meu Dia
+   de quem estava nele como participante.
+
 ### v8.30.653-dev — 2026-09-14 — /monitorarbugs no modal do card: trocar de "pai" numa dependência deixava um dependente fantasma no pai antigo
 
 Achado real auditando o modal do card e suas funções (escopo nomeado),

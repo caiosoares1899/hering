@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.653-dev</div>
+<div class="version">v8.30.654-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -20919,8 +20919,17 @@ async function setCampViewMode(mode){
 // memória pra não rebuscar em aberturas seguintes na mesma sessão.
 // ═══════════════════════════════════════════════════════
 let _meuDiaCrossData = {}; // sqId -> {cards, columns, doneCols}
+// Achado real (/monitorarbugs, 2026-09-14): antes só buscava squads AINDA
+// não cacheados (!_meuDiaCrossData[sq]) — cada squad de fora era lido 1x
+// por sessão inteira e nunca mais, mesmo com openMeuDia() mostrando
+// "⏳ Carregando..." (e de fato chamando esta função) toda vez que o
+// painel abre de novo. Card marcado como concluído/reatribuído por outra
+// pessoa em outro squad ficava desatualizado no Meu Dia pelo resto da
+// sessão, não importa quantas vezes reabrisse. Passou a buscar TODOS os
+// squads de fora sempre — custo é 1 leitura por squad, só quando a pessoa
+// abre o painel manualmente (ação explícita, não polling automático).
 async function _loadMeuDiaCrossSquads(){
-  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD && !_meuDiaCrossData[sq]);
+  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD);
   if(!outros.length) return;
   await Promise.all(outros.map(sq=>
     window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
@@ -21023,7 +21032,13 @@ function renderMeuDia(){
   // regra escrita e vira armadilha pra qualquer mudança futura que passe
   // a tocar esses campos.
   const all = _meuDiaAllCards().filter(c=>!c.archived && !c.agenteHotline);
-  const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
+  // Achado real (/monitorarbugs, 2026-09-14): faltava o fallback pro campo
+  // legado `participantes` que passesFilter() (~L12606), o autocomplete de
+  // @menção (~L17509) e o próprio lerCard.js do orquestrador (server-side)
+  // já tratam como dado ainda vivo — card com só `participantes` (sem
+  // `participants`) aparecia em busca/filtro/no resumo que o Agente Ágil lê,
+  // mas sumia do Meu Dia de quem estava nele.
+  const meus = all.filter(c=>c.owner===meuInit || (c.participants||c.participantes||[]).includes(meuInit));
   const hojeStr = _localDateStrBoard(new Date());
   const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);
   const semanaLimiteStr = _localDateStrBoard(semanaLimite);
