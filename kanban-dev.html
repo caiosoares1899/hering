@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.643-dev</div>
+<div class="version">v8.30.644-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12917,12 +12917,19 @@ function _autoArchiveDoneToday(){
   return !!safeLS.getItem('autoarchive_'+ACTIVE_SQUAD+'_'+today);
 }
 function maybeAutoArchiveOldCards(){
+  // Achado real (/monitorarbugs, 2026-09-12): checa cfg.enabled ANTES de
+  // gravar a flag "já rodei hoje" — antes disso, a flag era gravada
+  // incondicionalmente (esta função roda 3s após todo carregamento do
+  // board, ver setTimeout perto de L11150), então ligar o arquivamento
+  // automático pela 1ª vez SEMPRE caía num dia já "consumido" pela mesma
+  // aba que a pessoa usou pra abrir ⚙ Config e ativar — o sweep só rodava
+  // no dia seguinte, sem aviso nenhum do motivo.
+  const cfg=archiveCfg||{};
+  if(!cfg.enabled) return;
   const today=new Date().toISOString().split('T')[0];
   const key='autoarchive_'+ACTIVE_SQUAD+'_'+today;
   if(safeLS.getItem(key)) return;
   safeLS.setItem(key,'1');
-  const cfg=archiveCfg||{};
-  if(!cfg.enabled) return;
   const days=parseInt(cfg.days||365);
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   const excludedCols=new Set(cfg.excludedCols||[]);

@@ -3211,6 +3211,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.644-dev — 2026-09-12 — /monitorarbugs em 🗄 Arquivamento automático: ligar a regra pela 1ª vez não rodava no mesmo dia
+
+Achado real auditando a feature de arquivamento automático por idade
+(técnica 3 — confrontar o comportamento com a própria promessa da regra
+"checa 1x/dia por navegador").
+
+`maybeAutoArchiveOldCards()` gravava a flag "já rodei hoje" (localStorage,
+1x/dia por navegador) **antes** de checar `cfg.enabled`. Como a função
+roda automaticamente 3s depois de todo carregamento do board, o cenário
+mais comum era: pessoa abre o board (flag "feito hoje" já grava, mesmo
+desligado) → vai em ⚙ Config → Automações → liga "Ativar arquivamento
+automático" → Salvar. Nada acontecia — o dia já tinha sido "consumido"
+pela mesma aba antes da regra ser ativada, o sweep só rodaria no dia
+seguinte, sem nenhum aviso do motivo, mesmo com cards de sobra já
+satisfazendo os critérios de idade/inatividade.
+
+Fix: passou a checar `cfg.enabled` antes de tocar no `localStorage` — a
+flag só é gravada quando a regra está de fato ativa, então ligá-la pela
+primeira vez já roda o sweep no mesmo dia.
+
 ### v8.30.643-dev — 2026-09-12 — /monitorarbugs em ⏸ Pausar card: detalhamento por coluna do Relatório Tempo por Tag não descontava tempo pausado
 
 Achado real auditando a feature nova ⏸ Pausar card (técnica 2 — comparar
