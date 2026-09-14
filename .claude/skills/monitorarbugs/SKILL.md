@@ -1087,6 +1087,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   orquestrador) — mutação recalculada sobre o valor fresco do servidor a
   cada tentativa, UI continua otimista. dev v8.30.656, PR #896.
 
+- **2026-09-14, notificações (pedido explícito, "roda /monitorarbugs nas
+  notificações", aproveitando o fix de push do "Fale com o ADM")**: 2
+  achados reais. (1) técnica 1/comparação com a mega-rodada de
+  2026-09-06 — `openNotif()` não tratava `kudos`/`kudos_monitor`/
+  `gcal_approved` (todos com `cardId:null`), clicar não navegava pra
+  lugar nenhum, mesma classe de bug já corrigida em outros tipos naquela
+  rodada, só que estes 3 são mais novos e passaram batido. Fix:
+  `gcal_approved`→`openCal()`, `kudos`/`kudos_monitor`→`openKudos()`, +
+  `extra:{link:'pessoas'}` nos 3 `createNotif()` de kudos (pro sino
+  próprio do painel navegar também, mesmo padrão de `rascunho`). (2)
+  **achado incidental, severo** — comparando os 4 arquivos que mexem em
+  Kudos "Geral": `painel-dev.html` lia/escrevia `kudos_dev`, caminho
+  órfão que NENHUM board lê (`kanban.html`/`kanban-dev.html`/`painel.html`
+  sempre usaram `kudos_geral`) — Estrela enviada pelo painel-dev sumia
+  (invisível em todo lugar), mesmo a notificação de recebimento sendo
+  criada normalmente — notificação fantasma. Confirmado com o usuário
+  antes de corrigir (dev tocando um caminho compartilhado). dev
+  v8.30.657/painel-dev v3.46, PR #899.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
