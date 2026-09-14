@@ -3211,6 +3211,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.652-dev — 2026-09-14 — /monitorarbugs no board (tela inicial): raia por subtime colapsava pra 1 raia só com o filtro de Subtime ativo
+
+Achado real auditando o board de colunas (escopo "board em si, tela
+inicial"), técnica 2 — comparar contra um padrão irmão já resolvido na
+MESMA função: `renderBoard()` já ignora o filtro de Responsável quando a
+raia está organizada por pessoa, e o filtro de Tag quando organizada por
+tipo (comentário no código: "cada raia só ignora o filtro da MESMA
+dimensão que ela organiza... filtrar de novo seria redundante"). A raia
+por **subtime** nunca ganhou o equivalente pro filtro de **Subtime**.
+
+Cenário: ativa a raia "⇔ Raia · subtime" (pra comparar vários subtimes
+lado a lado) e, ao mesmo tempo, tem o filtro de Subtime ligado (ex.: de
+uma sessão anterior, ou porque alguém filtrou por engano) — a raia
+colapsava pra mostrar só 1 subtime (o próprio filtro já excluía os
+cards dos outros), justamente o oposto do que a raia existe pra fazer.
+
+Fix: `passesFilter()` ganhou um 4º parâmetro `ignoreSubteam`, e
+`renderBoard()` passa `true` quando `raiaMode==='subteam'` — mesmo
+padrão dos outros 2 casos já corrigidos.
+
 ### v8.30.651-dev — 2026-09-14 — /monitorarbugs em saveCard(): modo coluna podia deixar `c.blocker` travado em `true` pra sempre, inflando "Tempo bloqueado"
 
 Achado real auditando `saveCard()` (escopo nomeado). A linha `#m-blocker-row`
