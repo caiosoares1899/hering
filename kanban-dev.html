@@ -6147,7 +6147,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.644-dev</div>
+<div class="version">v8.30.645-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30586,7 +30586,13 @@ function ctxBlockTag(){
 let _undoStack = []; // stack de estados anteriores
 
 function saveUndo(label){
-  _undoStack.push({cards:JSON.parse(JSON.stringify(cards)), label});
+  // columns junto do snapshot — achado real (/monitorarbugs, 2026-09-14):
+  // "reordenar colunas" (mouse e touch) chama saveUndo() depois de mutar
+  // columns[], mas até aqui o snapshot só guardava cards — Ctrl+Z mostrava
+  // "↩ Desfeito: reordenar colunas" (como se tivesse funcionado) e a ordem
+  // nunca voltava, além de disparar um fbSaveAll() de cards à toa (sem
+  // nenhum benefício, já que cards nem tinha mudado).
+  _undoStack.push({cards:JSON.parse(JSON.stringify(cards)), columns:JSON.parse(JSON.stringify(columns)), label});
   if(_undoStack.length > 10) _undoStack.shift(); // máx 10 estados
   showUndoBtn(label);
 }
@@ -30606,14 +30612,48 @@ function hideUndoBtn(){
 function doUndo(){
   if(!_undoStack.length) return;
   const prev=_undoStack.pop();
-  const before=cards;
-  cards=prev.cards;
-  // touchedIds: diferença de conteúdo entre o estado atual (before, que está
-  // sendo descartado) e o estado restaurado (cards) — só esses ids precisam
-  // de updatedAt novo pra outros clientes perceberem a mudança real.
-  const beforeById={}; before.forEach(c=>{ if(c&&c.id) beforeById[c.id]=c; });
-  const touchedIds=cards.filter(c=>c&&c.id && JSON.stringify(c)!==JSON.stringify(beforeById[c.id])).map(c=>c.id);
-  fbSaveAll(undefined, touchedIds); renderBoard();
+  // Escrita cirúrgica por card (achado real /monitorarbugs 2026-09-14):
+  // antes, isto trocava `cards` pelo array INTEIRO do snapshot e chamava
+  // fbSaveAll() (reescreve a árvore /cards completa) — qualquer card criado
+  // ou editado por OUTRA pessoa depois do saveUndo() correspondente era
+  // apagado/revertido em silêncio, porque o snapshot antigo simplesmente
+  // não tinha esse card. Sem limite de tempo: a pilha guarda até 10 estados
+  // e Ctrl+Z funciona mesmo bem depois do toast sumir (6s) — minutos de
+  // trabalho alheio podiam ir junto. Agora: calcula só os cards que DE FATO
+  // mudam entre o snapshot restaurado e o estado ATUAL ao vivo (já
+  // sincronizado com o Firebase) e escreve só esses, um a um, via
+  // fbSaveCard() — mesma proteção que fbSaveCard() já dá contra pisar em
+  // edição concorrente alheia em qualquer outro ponto do app. Qualquer card
+  // intocado (inclusive um que outra pessoa criou depois do snapshot)
+  // permanece exatamente como está, local e remoto.
+  // Risco residual, não eliminado por completo (documentado, não é o
+  // escopo desta correção): se uma das cartas TOCADAS por ESTE undo
+  // específico também foi editada por outra pessoa nesse meio-tempo, essa
+  // edição pontual ainda pode ser sobrescrita — corrigir isso por completo
+  // exigiria undo por card de verdade (cada um dos ~21 call sites de
+  // saveUndo() informando qual card está tocando), registrado como
+  // recomendação futura, não implementado agora.
+  const currentById={}; cards.forEach(c=>{ if(c&&c.id) currentById[c.id]=c; });
+  const prevById={}; (prev.cards||[]).forEach(c=>{ if(c&&c.id) prevById[c.id]=c; });
+  const touchedIds=(prev.cards||[]).filter(pc=>{
+    if(!pc||!pc.id) return false;
+    const cur=currentById[pc.id];
+    return !cur || JSON.stringify(cur)!==JSON.stringify(pc);
+  }).map(pc=>pc.id);
+  const touchedSet=new Set(touchedIds);
+  // Remonta `cards`: mantém tudo que não foi tocado exatamente como está
+  // (ao vivo), troca só as entradas tocadas pela versão restaurada.
+  cards = cards.filter(c=>!(c&&c.id&&touchedSet.has(c.id)));
+  touchedIds.forEach(id=>{ cards.push(prevById[id]); });
+  touchedIds.forEach(id=>{ fbSaveCard(cards.find(c=>c.id===id)); });
+  // Restaura columns também, se o snapshot registrou uma ordem diferente da
+  // atual (ver comentário em saveUndo()) — sem isso, desfazer "reordenar
+  // colunas" nunca movia nada de volta.
+  if(prev.columns && JSON.stringify(prev.columns)!==JSON.stringify(columns)){
+    columns=prev.columns;
+    fbSet(FB+'/columns', columns);
+  }
+  renderBoard();
   // Se o modal do card estava aberto, os campos em tela (descrição, checklist, etc.)
   // não se atualizam sozinhos com o renderBoard() — sem isso, o "Desfazer" parecia não
   // fazer nada (o Firebase voltava, mas a tela continuava com o texto novo, e qualquer
