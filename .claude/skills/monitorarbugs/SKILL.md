@@ -1028,6 +1028,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   os outros, registrado como observação, não como achado desta rodada.
   dev v8.30.653, PR #893.
 
+- **2026-09-14, 🌅 Meu Dia (pedido explícito, escopo nomeado)**: 2
+  achados reais. (1) técnica 3 (confrontar comportamento com a promessa
+  da própria tela) — `_loadMeuDiaCrossSquads()` só buscava cada squad de
+  fora do ativo na 1ª vez (`!_meuDiaCrossData[sq]`), mesmo `openMeuDia()`
+  mostrando "⏳ Carregando..." e chamando essa função de novo em TODA
+  abertura do painel; card concluído/reatribuído por outra pessoa em
+  outro squad ficava desatualizado no Meu Dia pelo resto da sessão,
+  reabrir quantas vezes fosse. Ambíguo (freshness vs. custo de leitura
+  Firebase) — perguntado ao usuário via `AskUserQuestion` (3 opções:
+  sempre recarregar / TTL / só corrigir a mensagem); escolheu "sempre
+  recarregar ao abrir". (2) técnica 2 (comparar contra padrão irmão já
+  resolvido) — `renderMeuDia()` filtrava "meus cards" só por
+  `card.participants`, sem o fallback pro campo legado `participantes`
+  que `passesFilter()` (~L12606), o autocomplete de @menção (~L17509) e
+  o `lerCard.js` do orquestrador (server-side, `functions/`) já tratam
+  como dado vivo — confirmado que não é campo morto antes de corrigir
+  (`lerCard.js` usa o MESMO fallback pra montar o resumo que o Agente
+  Ágil lê). Card só com o campo legado preenchido sumia do Meu Dia de
+  quem estava nele. dev v8.30.654, PR #894.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
