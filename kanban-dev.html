@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.656-dev</div>
+<div class="version">v8.30.657-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18030,7 +18030,11 @@ function toggleKudosReaction(id, scope, emoji){
     return arr;
   }).then(()=>{
     if(adicionou && notifyFromUid && notifyFromUid!==uid){
-      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null);
+      // extra.link='pessoas' (achado /monitorarbugs 2026-09-14, mesma classe
+      // do fix de 'rascunho'): sem isso, clicar nessa notificação no sino
+      // PRÓPRIO do painel não navegava pra lugar nenhum — loadPainelNotifs()
+      // lê n.link direto do objeto salvo, não deriva de `type`.
+      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'});
     }
   }).catch(()=>{});
 }
@@ -18059,7 +18063,7 @@ function addKudos(){
   // Notifica o agraciado (reaproveita o sistema de notificações)
   const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
-    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
+    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'});
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
   fbGet('kanban/usuarios_publicos').then(snap=>{
@@ -18069,7 +18073,7 @@ function addKudos(){
       const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
       if(isAdmUser({email:udata.email, uid}) || role==='po'){
         createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
-          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null);
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'});
       }
     });
   }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
@@ -27159,6 +27163,21 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // dela (achado via /monitorarbugs, 2026-09-06).
   if(type==='gcal_pending'){
     if(typeof processGcalQueueForAdmin==='function') processGcalQueueForAdmin();
+    return;
+  }
+  // Agenda aprovada (quem pediu a conexão é avisado) — mesma classe de
+  // achado do gcal_pending acima, achada numa rodada nova de
+  // /monitorarbugs (2026-09-14): cardId sempre null pra esse tipo, sem
+  // tratamento nenhum aqui, clicar não fazia nada além de marcar como lida.
+  if(type==='gcal_approved'){
+    openCal();
+    return;
+  }
+  // Kudos (Estrela do Mar) — reação/recebimento/monitoramento ADM sempre
+  // têm cardId null (achado da mesma rodada acima): clicar não abria o
+  // drawer de Kudos, só fechava o painel de notificações em silêncio.
+  if(type==='kudos' || type==='kudos_monitor'){
+    openKudos();
     return;
   }
   if(!cardId) return;
