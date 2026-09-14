@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.651-dev</div>
+<div class="version">v8.30.652-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11181,7 +11181,14 @@ function renderBoard(){
   // não seguem a exceção que só faz sentido dentro das colunas por raia.
   const ignoreOwner = raiaMode==='owner' && boardView!=='timeline';
   const ignoreTag = raiaMode==='tag' && boardView!=='timeline';
-  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag));
+  // Achado real (/monitorarbugs, 2026-09-14): faltava o equivalente pra raia
+  // de subtime — mesmo bug já corrigido antes pras raias de pessoa/tipo (ver
+  // comentário grande acima). Em raia por subtime, ter o filtro de Subtime
+  // TAMBÉM ativo (mesma dimensão que a raia já organiza) colapsava a raia
+  // inteira pra mostrar só 1 subtime — o oposto do que a raia serve pra
+  // fazer (comparar vários subtimes lado a lado).
+  const ignoreSubteam = raiaMode==='subteam' && boardView!=='timeline';
+  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag, ignoreSubteam));
   // 📅 Timeline: substitui o board de colunas por uma lista cronológica por
   // prazo — reusa o MESMO activeCards (já filtrado) do board normal, pra
   // nunca divergir do que os filtros ativos mostrariam. Sai cedo: nada do
@@ -12590,7 +12597,7 @@ function _applyMeusCardsFixadoUI(){
   const btn = document.getElementById('tb-meus-cards');
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
-function passesFilter(card, ignoreOwner=false, ignoreTag=false){
+function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=false){
   if(!passesHybridView(card)) return false;
   if(!ignoreOwner&&activeFilters.owner){
     // Filtro "por usuário" deve pegar tanto o responsável quanto os
@@ -12609,7 +12616,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
-  if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
+  if(!ignoreSubteam&&activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
   if(activeFilters.texto){
     // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
