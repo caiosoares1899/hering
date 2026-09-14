@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.660-dev</div>
+<div class="version">v8.30.661-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13013,6 +13013,17 @@ async function maybeAutoArchiveOldCards(){
     const editedS=editRaw.length<=10?editRaw+'T12:00:00':editRaw;
     let lastEdit=new Date(editedS).getTime();
     if(isNaN(lastEdit)) lastEdit=created;
+    // Achado real (/monitorarbugs, 2026-09-14): editedAt só é setado por
+    // quem CHAMA fbSaveCard() lembrando de tocar nele (scheduleAutoSave/
+    // handleDrop/ctxMove/etc.) — vários call sites (togglePinCard(),
+    // attachSave()/attachRemove(), entre outros) só mudam o campo deles
+    // (pinned, links) e chamam fbSaveCard() puro, sem editedAt. Mas
+    // fbSaveCard() JÁ garante card.updatedAt centralizado em TODA escrita
+    // pontual, sem exceção (mesmo padrão que fbSaveAll() usa com
+    // touchedIds) — pinar um card ou anexar um link não contava como
+    // "atividade" pro cálculo de parado, mesmo updatedAt refletindo certo.
+    const updatedAtMs = c.updatedAt ? new Date(c.updatedAt).getTime() : NaN;
+    if(!isNaN(updatedAtMs) && updatedAtMs>lastEdit) lastEdit=updatedAtMs;
     const ageDays=(now-created)/86400000;
     const idleDays=(now-lastEdit)/86400000;
     if(ageDays>=days && idleDays>=inactDays) candidatos.push({c,lastEdit});
@@ -13049,9 +13060,16 @@ async function maybeAutoArchiveOldCards(){
     const snap=await window._get(window._ref(window._db,_archPendingPath()));
     pending=snap.val()||{ids:[],offeredUids:{}};
   }catch(e){}
+  // Achado real (/monitorarbugs, 2026-09-14): um card que já estava
+  // pendente de um dia anterior e foi movido pra uma coluna EXCLUÍDA da
+  // regra (ex.: Backlog) nunca saía da fila — só entrava candidatos novos
+  // é que passavam pelo filtro excludedCols (linha ~13008 acima),
+  // contradizendo a própria promessa da tela de Config ("nunca arquivar
+  // automaticamente cards nestas colunas"). Revalida excludedCols aqui
+  // também, não só na entrada.
   const idsAtuais = new Set((pending.ids||[]).filter(id=>{
     const c=cards.find(x=>x.id===id);
-    return c && !c.archived; // limpa quem já foi arquivado/excluído/restaurado por outro caminho
+    return c && !c.archived && !excludedCols.has(c.col); // limpa quem já foi arquivado/excluído/restaurado/movido pra coluna excluída
   }));
   novosIds.forEach(id=>idsAtuais.add(id));
   const idsFinal = [...idsAtuais];
