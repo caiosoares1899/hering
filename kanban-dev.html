@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.654-dev</div>
+<div class="version">v8.30.655-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10792,13 +10792,28 @@ function cardHasTag(card, tagId){
   return getCardTags(card).includes(tagId);
 }
 
+// Conta dias ÚTEIS (seg-sex) estritamente entre d1 (exclusive) e d2
+// (inclusive) — mesmo critério que a recorrência "weekdays" já usa
+// (dow===0||dow===6, só fim de semana, sem feriados por enquanto). Usada
+// pra mostrar "Xd atrasado" sem contar sáb/dom como dívida — card vencido
+// numa sexta só vira "1 dia atrasado" na segunda, não na sexta+3.
+function _diasUteisEntre(d1, d2){
+  let dias=0;
+  const cursor=new Date(d1);
+  while(cursor<d2){
+    cursor.setDate(cursor.getDate()+1);
+    const dow=cursor.getDay();
+    if(dow!==0 && dow!==6) dias++;
+  }
+  return dias;
+}
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
   if(isDone) return {cls:'due-done',lbl:'✓ '+new Date(due+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})};
   const d=new Date(due+'T00:00:00'); d.setHours(0,0,0,0);
   const diff=Math.round((d-today)/86400000);
   const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  if(diff<0) return {cls:'due-late',lbl:`⚠ ${Math.abs(diff)}d atrasado`};
+  if(diff<0) return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
   if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
@@ -11530,7 +11545,7 @@ function _timelineCardRow(card, hojeStr){
   let prazoMeta='';
   if(card.due){
     if(card.due<hojeStr){
-      const dias=Math.round((new Date(hojeStr+'T12:00:00')-new Date(card.due+'T12:00:00'))/86400000);
+      const dias=_diasUteisEntre(new Date(card.due+'T12:00:00'), new Date(hojeStr+'T12:00:00'));
       prazoMeta=` · <span style="color:#ff6b6b;font-weight:700;">${dias}d atrasado</span>`;
     } else if(card.due!==hojeStr){
       const lbl=new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
@@ -17579,7 +17594,7 @@ function computeAvisosQuadro(){
     if(c.due && !_isColDone(c.col)){
       const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
       const diff=Math.round((d-today)/86400000);
-      if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
+      if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${_diasUteisEntre(d,today)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
       else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
       else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
     }

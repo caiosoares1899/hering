@@ -3211,6 +3211,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.655-dev — 2026-09-14 — Prazos atrasados contados em dias úteis (não conta sáb/dom)
+
+Feature pedida pelo usuário, mesmo critério que a recorrência "Todo dia
+útil" já usa (`dow===0||dow===6`, ~L22242): o número de dias mostrado em
+"⚠ Xd atrasado" contava dias corridos, incluindo fim de semana — card
+vencido numa sexta aparecia "3 dias atrasado" já na segunda de manhã, sem
+ninguém ter trabalhado (nem podido trabalhar) nesses 3 dias. Time não
+trabalha sáb/dom, então essa contagem não refletia dívida real.
+
+Novo helper `_diasUteisEntre(d1, d2)` (perto de `getDue()`) conta só
+dias úteis estritamente entre duas datas — sem lista de feriados por
+enquanto, só fim de semana (mesmo escopo da recorrência). Trocados os 3
+call sites que calculavam esse número de forma independente (técnica 1 —
+comparar implementações paralelas da mesma conta):
+
+- `getDue()` (~L10795) — badge "⚠ Xd atrasado" no card, board e busca.
+- `_timelineCardRow()` (~L11549) — "Nd atrasado" na Timeline.
+- Avisos automáticos do quadro (~L17597) — post-it "⏰ Atrasado Xd".
+
+**Fora do escopo desta rodada** (confirmado com o usuário antes de
+implementar): o gatilho "já está atrasado?" continua em dias corridos —
+um card vencido na sexta já aparece nas listas/filtros de "atrasado" no
+sábado, só o NÚMERO de dias que muda pra dias úteis. A contagem regressiva
+"vence em Xd" (antes do prazo vencer) também continua em dias corridos —
+só a dívida já vencida passou a ignorar fim de semana. Feriados nacionais/
+locais não entram nesta rodada — precisaria de uma lista mantida à parte,
+escopo maior, fica como recomendação futura se pedido.
+
 ### v8.30.654-dev — 2026-09-14 — /monitorarbugs no 🌅 Meu Dia: cache de squads cruzados nunca atualizava + fallback de campo legado faltando
 
 Achado real auditando o 🌅 Meu Dia (escopo nomeado). Dois problemas:
