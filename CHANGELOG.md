@@ -3211,6 +3211,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.650-dev — 2026-09-14 — /monitorarbugs em criar card/openCard: escrita de `_autoVisto`/`_autoRelembradoEm` podia gravar no card ERRADO
+
+Achado real (2 ocorrências, mesma causa raiz), auditando `openCard()` e o
+ciclo de vida de cards automáticos (recorrentes/agendados). Técnica 2 —
+comparar contra um padrão já resolvido no mesmo arquivo: `fbSaveCard()`
+documenta explicitamente por que nunca usa `cards.indexOf(card)`/posição
+local do array como chave do Firebase ("pode desalinhar da posição real
+... gravando no card ERRADO sem erro visível") — mas 2 pontos do arquivo
+ainda faziam exatamente isso, com uma escrita `fbSet()` bruta em vez de
+passar pelo helper seguro.
+
+`openCard()` (marcar `_autoVisto:true` na 1ª abertura de um card
+recorrente/agendado) e `processRelembreteAuto()` (marcar
+`_autoRelembradoEm` ao lembrar de um card automático ainda não visto)
+escreviam via `fbSet(FB+'/cards/'+cards.findIndex(...)+'/campo', valor)`
+— usando a posição LOCAL do array `cards` como se fosse a chave real no
+Firebase. Cenário: card recorrente C nasce na posição local 5; antes de
+alguém abrir C pela 1ª vez, outra pessoa cria/exclui/reordena algo que
+desalinha a posição 5 da chave real no Firebase; ao abrir C, a escrita
+`cards/5/_autoVisto` cai num card TOTALMENTE DIFERENTE, injetando um
+campo estranho nele — silenciosamente, sem erro nenhum.
+
+Fix: os 2 pontos passaram a usar `fbSaveCard(card)` — já resolve a chave
+real via `window._cardsByKey` (com fallback seguro), mesmo helper usado
+em todo o resto do arquivo pra escrita pontual de 1 card.
+
 ### v8.30.649-dev — 2026-09-14 — /monitorarbugs em Dados do Board: ⏸ card pausado continuava aparecendo como "alarme" de card parado
 
 Achado real auditando "📊 Dados do Board" (pedido explícito, escopo

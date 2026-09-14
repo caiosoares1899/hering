@@ -932,6 +932,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   testes automatizados cobrindo os 2; (6) filtro de trimestre na lista de
   Objetivos usa `_okrTrimestresOf()` (array-aware), não o campo legado.
 
+- **2026-09-14, criar card / openCard (pedido explícito, escopo
+  nomeado)**: 2 achados reais (mesma causa raiz), técnica 2 (comparar
+  contra `fbSaveCard()`, que já documenta e evita exatamente este
+  anti-padrão). `openCard()` (marcar `_autoVisto:true` na 1ª abertura de
+  card recorrente/agendado) e `processRelembreteAuto()` (marcar
+  `_autoRelembradoEm`) escreviam via `fbSet(FB+'/cards/'+
+  cards.findIndex(...)+'/campo', valor)` — posição LOCAL do array como
+  chave do Firebase, que pode desalinhar da chave real se outra pessoa
+  criar/excluir/reordenar algo nesse meio-tempo, gravando o campo no
+  card ERRADO em silêncio. Fix: os 2 passaram a usar `fbSaveCard(card)`.
+  Checado e sem achado: `openNewCard()` (já tem os fixes documentados de
+  rodadas anteriores — vazamento de comentário, seções herdadas do card
+  anterior); `_criarCardRecorrente()`/`_criarCardAgendado()`/
+  `processRecorrentes()`/`processAgendamentos()` (usam `fbSaveAll()`
+  pra criação em lote — padrão correto pra operação estrutural, sem o
+  anti-padrão de índice). dev v8.30.650, PR #888.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
