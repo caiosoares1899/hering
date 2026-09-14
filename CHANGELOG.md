@@ -3211,6 +3211,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.649-dev — 2026-09-14 — /monitorarbugs em Dados do Board: ⏸ card pausado continuava aparecendo como "alarme" de card parado
+
+Achado real auditando "📊 Dados do Board" (pedido explícito, escopo
+nomeado). Técnica 3: confrontar comportamento contra a promessa
+explícita da Central de Ajuda de ⏸ Pausar card — "você não quer que isso
+conte contra as métricas de tempo do time **nem apareça como alarme pro
+resto do board**".
+
+4 lugares calculam "card parado há muito tempo" a partir do mesmo
+critério (`editedAt` velho demais) e nenhum excluía card pausado:
+`makeCardEl()` (esmaecimento visual `aged-1`/`aged-2` + 💤 no board),
+o badge `⏳` de aging por coluna (Fase 5.2, mesma função), o trigger
+`'aging'` de Automações (`checkAgingAutomations()`) e a lista "Cards
+parados" da aba 💡 Insights (`renderBoardDataInsights()`). Um card
+pausado de propósito (ex.: "esperando decisão externa") continuava
+esmaecendo no board, aparecendo na lista de Insights e podia até
+disparar uma Automação de aging — exatamente o "alarme" que a feature
+promete não gerar.
+
+Fix: os 4 pontos passaram a checar `!card.paused` também, junto do
+critério de idade já existente.
+
 ### v8.30.648-dev — 2026-09-14 — /monitorarbugs em 🕐 Tema automático: clicar no botão de tema durante a banda "vice" da tarde desligava o automático sem pedir
 
 Achado real auditando 🕐 Tema automático (nunca tinha rodada própria —
