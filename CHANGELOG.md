@@ -18,6 +18,47 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.659 — 2026-09-14 · Promove pra prod — Prazos em dias úteis, Timeline colapsável e uma leva grande de correções de bugs
+
+Promove pra produção o lote v8.30.642-dev → v8.30.659-dev de
+`kanban-dev.html` (18 entradas de dev) — pedido do usuário dado um bug
+crítico encontrado no meio do lote (arquivamento automático). Ver
+entradas completas de `kanban-dev.html` abaixo pro detalhe técnico de
+cada achado.
+
+**Feature nova**: prazos já vencidos agora mostram "Xd atrasado" contando
+só dias úteis (não conta sábado/domingo) — card vencido numa sexta só
+vira "1 dia atrasado" na segunda, não "3 dias". A Timeline também ganhou
+o mesmo mecanismo de recolher/expandir seções que o painel já tinha.
+
+**Correção mais importante (achado crítico, reportado pelo usuário)**:
+o Arquivamento automático por idade estava arquivando cards com
+discussão ativa nos comentários — um comentário recente nunca contava
+como "atividade" pro cálculo, então um card conversado a cada poucos
+dias podia ser arquivado sozinho como se estivesse esquecido há meses.
+
+**Outras correções de bugs relatados/achados nesta leva** (auditoria
+`/monitorarbugs`, área por área): Estrelas do Mar (Kudos) podiam ser
+apagadas por outra pessoa numa corrida de escrita; "Meu Dia" não
+atualizava dados de outros squads depois da primeira abertura; trocar o
+"pai" de um card numa dependência deixava um vínculo fantasma no pai
+antigo; raia por subtime ficava presa a 1 raia só com o filtro de
+Subtime ligado; `Salvar` podia travar um card como "bloqueado" pra
+sempre em certas condições; criar card/abrir card podiam gravar campos
+internos no card ERRADO; card pausado (⏸) continuava contando como
+"alarme" de parado, contrariando o que a própria opção promete; o tema
+automático podia desligar sozinho sem pedir durante a janela "vice" da
+tarde; ligar a 1ª regra de automação por idade no mesmo dia podia
+perder cards; Desfazer (Ctrl+Z) tinha risco de apagar/reverter cards de
+outras pessoas e nunca desfazia reordenação de colunas de verdade;
+regra de Arquivamento automático não rodava no mesmo dia em que era
+ligada pela 1ª vez; Relatório de Tempo por Tag não descontava tempo
+pausado no detalhamento por coluna; editar um comentário pra mencionar
+o Agente Ágil ficava em silêncio total, sem resposta.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses igual ao baseline conhecido (braces -1, parens +1).
+
 ### v8.30.641 — 2026-09-11 · Promove pra prod — Sino de notificações filtra no servidor
 
 Promove pra produção o lote v8.30.639-dev → v8.30.641-dev de
@@ -15500,6 +15541,38 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.47 · painel — 2026-09-14 · Promove pra prod — Vice City, Kudos, OKR e uma leva grande de correções de bugs
+
+Promove pra produção o lote v3.40 → v3.46 de `painel-dev.html` (7
+entradas de dev). Patch cirúrgico, não cópia completa — os dois
+arquivos divergem de propósito e isso foi conferido linha a linha antes
+e depois da promoção: banner de dev, seção "🔔 Enviar push manual" (só
+existe em prod — reconstruída byte-a-byte a partir do `painel.html`
+anterior, incluindo a checagem de ADM e o path certo de histórico),
+filtro `SQUADS_FICTICIOS` (só faz sentido em prod), mapeamento real de
+Gerências (prod usa squads de verdade, dev usa placeholder pra testar a
+mecânica), título/versão/`VERSION_KEY`, e ~40 paths do Firebase com
+sufixo `_dev` (calendário, dados diários, backup, lembretes de gestão,
+etc. — cada um restaurado pro path de produção). Ver entradas completas
+de `painel-dev.html` abaixo pro detalhe técnico de cada achado.
+
+**Correções de bugs mais relevantes**: botões das abas Monitor/Dados/
+Agentes ilegíveis no tema Vice City (achado real, relato direto com
+print); Estrela do Mar "Geral" enviada pelo painel-dev sumia por causa
+de um caminho órfão no Firebase (nunca aparecia em nenhum board); Kudos
+e Agenda aprovada não navegavam pra lugar nenhum ao clicar na
+notificação; campo de descrição do Objetivo (OKR) ficava pequeno demais
+e perdia a altura redimensionada a cada re-render; sincronização de
+rascunho do Objetivo se perdia quando um Marco de OUTRO Objetivo mudava
+em outra aba.
+
+**Feature nova**: Dashboard consolidado ganha o donut "Por canal de
+venda" (faltava, só existia "Por submarca").
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses igual ao baseline conhecido (braces -1, parens
+-14).
 
 ### painel.html v3.39 · painel — 2026-09-11 · Promove pra prod — Sino de notificações filtra no servidor
 
