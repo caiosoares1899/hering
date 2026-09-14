@@ -3211,6 +3211,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.647-dev — 2026-09-14 — Timeline: buckets progressivos (Atrasado/Hoje/Amanhã/…) agora são colapsáveis, igual ao painel
+
+Pedido direto do usuário ("aquele collapse que você colocou na timeline
+no painel, pode por no kanban tb"): porta o mecanismo de buckets
+colapsáveis do Feed de marcos/Timeline do `painel-dev.html`
+(`_painelTimelineOpen`/`_painelTimelineToggleAll()`) pra cá.
+
+Antes, só "🗂 Sem prazo definido" e "✅ Concluído recente" eram `<details>`
+colapsáveis — os 6 buckets progressivos principais (Atrasado, Hoje,
+Amanhã, Resto da semana, Próxima semana, Depois) sempre apareciam
+totalmente abertos, sem opção de recolher. Agora todos os 8 grupos usam o
+mesmo mecanismo: `_timelineCollapseOpen` (estendido de 2 pra 8 chaves)
+guarda o estado aberto/fechado de cada um entre renders, Atrasado/Hoje
+começam abertos (o que mais precisa de atenção agora) e o resto começa
+fechado. Novo botão "🔽 Expandir tudo"/"🔼 Recolher tudo" na barra de ações
+da Timeline (`_timelineToggleAllBuckets()`) alterna todos de uma vez, com
+o mesmo critério do painel (maioria aberta → fecha tudo; maioria fechada →
+abre tudo). Seta ▸ que rotaciona 90° quando aberto, mesmo visual do
+`.pt-chevron` do painel.
+
 ### v8.30.646-dev — 2026-09-14 — /monitorarbugs em Automações: ligar a 1ª regra "aging" no mesmo dia podia perder cards pra sempre
 
 Achado real auditando o motor de Automações (`runAutoRules()`/

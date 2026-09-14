@@ -2256,6 +2256,15 @@ input[type="date"]{-moz-appearance:textfield;}
 .timeline-collapse{margin-top:6px;}
 .timeline-collapse summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
 .timeline-collapse summary::-webkit-details-marker{display:none;}
+/* Buckets progressivos (Atrasado/Hoje/Amanhã/…) viram <details> também —
+   pedido direto ("aquele collapse que você colocou na timeline no painel,
+   pode por no kanban tb"), mesmo padrão visual do .pt-chevron/.pt-bucket
+   do painel-dev.html (seta ▸ que rotaciona 90° quando aberto). */
+.timeline-collapse.meudia-sec{margin-bottom:10px;}
+.timeline-collapse .meudia-sec-hd{cursor:pointer;margin-bottom:0;padding:6px 0 6px 8px;list-style:none;}
+.timeline-collapse .meudia-sec-hd::-webkit-details-marker{display:none;}
+.timeline-chevron{display:inline-block;font-size:10px;color:var(--txt3);transition:transform .15s;}
+.timeline-collapse[open] .timeline-chevron{transform:rotate(90deg);}
 /* Divisor "🎯 marco de contexto" (evento do Calendário) entre cards da
    Timeline — ver _timelineEventMarkerHtml(). */
 .timeline-event-marker{font-size:10.5px;color:var(--txt3);text-align:center;padding:4px 0;margin:2px 0;cursor:pointer;opacity:.75;}
@@ -6147,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.646-dev</div>
+<div class="version">v8.30.647-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11321,9 +11330,27 @@ function _timelineEventMarkerHtml(ev){
 // "Sem prazo definido" fechava a seção na hora — o oposto do que a feature
 // promete ("sem isso a pessoa tem que abrir 12 modais pra limpar a raia
 // Sem prazo", comentário original de _timelineCardRow()).
-let _timelineCollapseOpen = { semPrazo:false, concluidoRecente:false };
+// Pedido direto do usuário ("aquele collapse que você colocou na timeline
+// no painel, pode por no kanban tb"): estendido de 2 chaves (semPrazo/
+// concluidoRecente) pros 6 buckets progressivos também (Atrasado/Hoje/
+// Amanhã/Resto da semana/Próxima semana/Depois) — mesmo padrão de
+// `_painelTimelineOpen` do painel-dev.html. Atrasado/Hoje começam abertos
+// (o que mais precisa de atenção agora), o resto começa fechado.
+let _timelineCollapseOpen = { atrasado:true, hoje:true, amanha:false, resto:false, prox:false, depois:false, semPrazo:false, concluidoRecente:false };
 function _timelineSetCollapseOpen(key, isOpen){
   _timelineCollapseOpen[key]=isOpen;
+}
+// "Recolher tudo/Expandir tudo" — mesmo botão/critério do painel-dev.html
+// (_painelTimelineToggleAll): se a maioria dos buckets já está aberta,
+// fecha todos; senão, abre todos. Precisa de um render completo (ao
+// contrário do toggle individual de 1 <details>, que o navegador já
+// reflete sozinho) porque mexe em vários de uma vez.
+function _timelineToggleAllBuckets(){
+  const chaves=Object.keys(_timelineCollapseOpen);
+  const abertos=chaves.filter(k=>_timelineCollapseOpen[k]).length;
+  const novoEstado = abertos < chaves.length/2;
+  chaves.forEach(k=>_timelineCollapseOpen[k]=novoEstado);
+  renderBoard();
 }
 function renderTimelineView(activeCards){
   const wrap=document.getElementById('timeline-view'); if(!wrap) return;
@@ -11387,14 +11414,21 @@ function renderTimelineView(activeCards){
   // só". Duplo clique no cabeçalho do grupo abre o feed de marcos (📰, ver
   // openTimelineFeed()) — "uma timeline como rede social" do que aconteceu
   // no board naquele dia.
-  const secao=(titulo,icone,lista,corBorda,dateStr,eventos)=>{
+  // key: identifica o bucket em _timelineCollapseOpen (estado colapsado/
+  // aberto lembrado entre renders — mesmo padrão de _painelTimelineOpen no
+  // painel-dev.html, pedido direto do usuário pra trazer esse collapse pro
+  // kanban também). O clique que abre/fecha já é o próprio <summary>; o
+  // ondblclick de Hoje/Amanhã continua funcionando por cima (2 clicks =
+  // 2 toggles nativos do <details> = volta pro estado de antes, sem mudar
+  // nada visível além do dblclick abrir o feed).
+  const secao=(key,titulo,icone,lista,corBorda,dateStr,eventos)=>{
     if(!lista.length && !(eventos&&eventos.length)) return '';
     const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
     const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
-    return `<div class="meudia-sec">
-    <div class="meudia-sec-hd" style="${hdStyle}"${dbl}>${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
+    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen('${key}', this.open)">
+    <summary class="meudia-sec-hd" style="${hdStyle}"${dbl}><span class="timeline-chevron">▸</span> ${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></summary>
     ${comMarcos(lista,eventos)}
-  </div>`;
+  </details>`;
   };
   // Barra de topo: contagem rápida (orientação de relance) + entrada pros
   // filtros direto aqui dentro (pedido do usuário: "falta filtros" — os
@@ -11403,6 +11437,8 @@ function renderTimelineView(activeCards){
   // existe quando se está numa lista longa rolada pra baixo).
   const souEu = activeFilters.owner===window._currentUserInit;
   const temFiltro = _hasActiveFilters();
+  const chavesAbertas=Object.values(_timelineCollapseOpen).filter(Boolean).length;
+  const vaiExpandirTudo = chavesAbertas < Object.keys(_timelineCollapseOpen).length/2;
   const statsHtml = `<div class="timeline-toolbar">
     <div class="timeline-stats">
       <span title="Cards ativos elegíveis pra Timeline (fora de coluna Concluído)">📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}</span>
@@ -11414,27 +11450,28 @@ function renderTimelineView(activeCards){
       <button type="button" class="btn btn-sm" style="${temFiltro?'color:var(--accent);border-color:var(--accent);':''}" onclick="toggleFilters()" title="Abrir/fechar o painel de Filtros (responsável, tag, prioridade, prazo…) — os mesmos filtros do board de colunas">🔭 Filtros</button>
       ${temFiltro?`<button type="button" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar todos os filtros">✕🗑️</button>`:''}
       <button type="button" class="btn btn-sm" onclick="abrirHistoricoPeriodo()" title="Ver o que aconteceu no board num dia específico ou período do passado — qualquer data, não só as da Timeline">📜 Histórico</button>
+      <button type="button" class="btn btn-sm" onclick="_timelineToggleAllBuckets()" title="Abre ou fecha todos os grupos de uma vez">${vaiExpandirTudo?'🔽 Expandir tudo':'🔼 Recolher tudo'}</button>
     </div>
   </div>`;
   let html=statsHtml;
-  html += secao('Atrasado','🔴',atrasados,'#ff6b6b');
-  html += secao('Hoje','📅',hojeGrupo,'#38b6ff',hojeStr,eventosNoDia(hojeStr));
-  html += secao('Amanhã','📅',amanhaGrupo,'#38b6ff',amanhaStr,eventosNoDia(amanhaStr));
-  html += secao('Resto da semana','🗓️',restoSemana,'#7ec8e3',null,eventosEntre(amanhaStr,fimSemanaStr));
-  html += secao('Próxima semana','🗓️',proxSemana,'#a78bfa',null,eventosEntre(fimSemanaStr,fimProxSemanaStr));
-  html += secao('Depois','⏳',depois,'#8899aa',null,eventosEntre(fimProxSemanaStr,'9999-12-31'));
+  html += secao('atrasado','Atrasado','🔴',atrasados,'#ff6b6b');
+  html += secao('hoje','Hoje','📅',hojeGrupo,'#38b6ff',hojeStr,eventosNoDia(hojeStr));
+  html += secao('amanha','Amanhã','📅',amanhaGrupo,'#38b6ff',amanhaStr,eventosNoDia(amanhaStr));
+  html += secao('resto','Resto da semana','🗓️',restoSemana,'#7ec8e3',null,eventosEntre(amanhaStr,fimSemanaStr));
+  html += secao('prox','Próxima semana','🗓️',proxSemana,'#a78bfa',null,eventosEntre(fimSemanaStr,fimProxSemanaStr));
+  html += secao('depois','Depois','⏳',depois,'#8899aa',null,eventosEntre(fimProxSemanaStr,'9999-12-31'));
   if(!atrasados.length && !hojeGrupo.length && !amanhaGrupo.length && !restoSemana.length && !proxSemana.length && !depois.length){
     html += `<div style="font-size:12px;color:var(--txt3);padding:10px 0 20px;">Nenhum card com prazo definido${semPrazo.length?' (fora "Sem prazo" abaixo)':' nesta squad'}.</div>`;
   }
   if(semPrazo.length){
     html += `<details class="timeline-collapse" ${_timelineCollapseOpen.semPrazo?'open':''} ontoggle="_timelineSetCollapseOpen('semPrazo', this.open)">
-      <summary>🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
+      <summary><span class="timeline-chevron">▸</span> 🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
       ${ordenaCronologico(semPrazo).map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
   if(concluidosRecentes.length){
     html += `<details class="timeline-collapse" ${_timelineCollapseOpen.concluidoRecente?'open':''} ontoggle="_timelineSetCollapseOpen('concluidoRecente', this.open)">
-      <summary>✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
+      <summary><span class="timeline-chevron">▸</span> ✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
       ${concluidosRecentes.map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
