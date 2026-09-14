@@ -5566,7 +5566,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
     <div style="background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);border-radius:var(--r);padding:10px;margin-top:4px;">
       <div class="cfg-sec-title" style="margin-bottom:6px;">🗄 Arquivamento automático por idade</div>
-      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Cards muito antigos e parados somem sozinhos do board ativo (continuam salvos em Arquivados, dá pra restaurar a qualquer hora). Só arquiva se as DUAS condições forem verdadeiras: idade mínima E tempo parado sem edição.</p>
+      <p style="font-size:11px;color:var(--txt2);line-height:1.6;margin-bottom:8px;">Cards muito antigos e parados (idade mínima E tempo sem edição/comentário, as DUAS condições) entram numa fila de arquivamento — mas nunca somem sozinhos sem alguém ver antes: o 1º PO/Organizador/ADM que abrir o board no dia vê a lista inteira, com checkbox por card, e confirma ou pula pra próxima pessoa ("Agora não"). Continuam salvos em Arquivados, dá pra restaurar a qualquer hora.</p>
       <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);margin-bottom:10px;cursor:pointer;">
         <input type="checkbox" id="archcfg-enabled" style="accent-color:var(--teal);"> Ativar arquivamento automático pra este squad
       </label>
@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.659-dev</div>
+<div class="version">v8.30.660-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12982,6 +12982,7 @@ function _autoArchiveDoneToday(){
   const today=new Date().toISOString().split('T')[0];
   return !!safeLS.getItem('autoarchive_'+ACTIVE_SQUAD+'_'+today);
 }
+function _archPendingPath(){ return FB+'/archive_pending'; }
 async function maybeAutoArchiveOldCards(){
   // Achado real (/monitorarbugs, 2026-09-12): checa cfg.enabled ANTES de
   // gravar a flag "já rodei hoje" — antes disso, a flag era gravada
@@ -13016,7 +13017,6 @@ async function maybeAutoArchiveOldCards(){
     const idleDays=(now-lastEdit)/86400000;
     if(ageDays>=days && idleDays>=inactDays) candidatos.push({c,lastEdit});
   });
-  if(!candidatos.length) return;
   // 2ª passada (assíncrona, só nos pré-candidatos — não no board inteiro):
   // achado real relatado pelo usuário (card com comentário de 3 dias atrás
   // arquivado sob uma regra de 45 dias). submitComment() grava o comentário
@@ -13036,16 +13036,90 @@ async function maybeAutoArchiveOldCards(){
     const idleDaysReal=(now-Math.max(lastEdit,lastCommentTs))/86400000;
     return {c, ok: idleDaysReal>=inactDays};
   }));
+  const novosIds = verificados.filter(v=>v.ok).map(v=>v.c.id);
+  // Pedido direto do usuário (2026-09-14): não arquiva mais sozinho — junta
+  // os candidatos de hoje com o que já estava pendente (acumula enquanto
+  // ninguém confirmar) e oferece uma tela de validação pro primeiro PO/
+  // ADM/Organizador que abrir o board. Se essa pessoa clicar "Agora não",
+  // guarda a data em offeredUids[uid] — a MESMA pessoa não é incomodada de
+  // novo hoje, mas a PRÓXIMA pessoa elegível que abrir o board (mesmo
+  // squad, mesmo dia) já cai direto na tela, sem esperar amanhã.
+  let pending={ids:[],offeredUids:{}};
+  try{
+    const snap=await window._get(window._ref(window._db,_archPendingPath()));
+    pending=snap.val()||{ids:[],offeredUids:{}};
+  }catch(e){}
+  const idsAtuais = new Set((pending.ids||[]).filter(id=>{
+    const c=cards.find(x=>x.id===id);
+    return c && !c.archived; // limpa quem já foi arquivado/excluído/restaurado por outro caminho
+  }));
+  novosIds.forEach(id=>idsAtuais.add(id));
+  const idsFinal = [...idsAtuais];
+  if(!idsFinal.length){
+    if((pending.ids||[]).length) window._set(window._ref(window._db,_archPendingPath()),null).catch(()=>{});
+    return;
+  }
+  const offeredUids = pending.offeredUids||{};
+  window._set(window._ref(window._db,_archPendingPath()), {ids:idsFinal, offeredUids}).catch(()=>{});
+  if(!_isPOorOrg()) return; // computa/acumula pra qualquer um, mas só oferece a tela pra quem pode decidir
+  const meuUid = window._currentUser?.uid;
+  if(!meuUid || offeredUids[meuUid]===today) return; // já foi oferecido a mim hoje (respondi ou não, não insiste de novo)
+  const cardsPendentes = idsFinal.map(id=>cards.find(c=>c.id===id)).filter(Boolean);
+  if(cardsPendentes.length) _archiveValidationOpen(cardsPendentes, days, inactDays);
+}
+function _archiveValidationOpen(cardsPendentes, days, inactDays){
+  const ov=document.getElementById('archive-validation-ov'); if(!ov) return;
+  const list=document.getElementById('archive-validation-list');
+  const nowMs=Date.now();
+  list.innerHTML = cardsPendentes.map(c=>{
+    const editRaw=c.editedAt||c.createdAt||'';
+    const editedS=editRaw.length<=10?editRaw+'T12:00:00':editRaw;
+    const t=new Date(editedS).getTime();
+    const diasParado = isNaN(t) ? '?' : Math.round((nowMs-t)/86400000);
+    const colName = columns.find(x=>x.id===c.col)?.name || c.col;
+    return `<label style="display:flex;align-items:flex-start;gap:9px;padding:9px 10px;border-radius:9px;background:rgba(var(--surface2-rgb),.5);border:1px solid var(--glass-b);cursor:pointer;">
+      <input type="checkbox" class="archive-validation-chk" data-card-id="${esc(c.id)}" checked style="margin-top:2px;flex-shrink:0;">
+      <span style="min-width:0;">
+        <span style="display:block;font-size:12.5px;color:var(--txt);font-weight:600;">${esc(c.title||'(sem título)')}</span>
+        <span style="display:block;font-size:10.5px;color:var(--txt3);margin-top:2px;">${esc(colName)} · parado há ~${diasParado}d</span>
+      </span>
+    </label>`;
+  }).join('');
+  const sub=document.getElementById('archive-validation-sub');
+  if(sub) sub.textContent = `${cardsPendentes.length} card(s) batem com a regra deste squad (${days}d de idade, ${inactDays}d sem atividade). Desmarque quem não deve ser arquivado agora.`;
+  ov.classList.add('open');
+}
+function _archiveValidationSkip(){
+  const ov=document.getElementById('archive-validation-ov'); if(ov) ov.classList.remove('open');
+  const meuUid=window._currentUser?.uid; if(!meuUid) return;
+  const today=new Date().toISOString().split('T')[0];
+  window._update(window._ref(window._db,_archPendingPath()+'/offeredUids'), {[meuUid]:today}).catch(()=>{});
+}
+async function _archiveValidationConfirm(){
+  const ov=document.getElementById('archive-validation-ov');
+  const checks=[...document.querySelectorAll('.archive-validation-chk')];
+  const marcados=checks.filter(chk=>chk.checked).map(chk=>chk.dataset.cardId);
+  const desmarcados=checks.filter(chk=>!chk.checked).map(chk=>chk.dataset.cardId);
+  if(ov) ov.classList.remove('open');
+  if(!marcados.length){ showToast('Nenhum card selecionado — nada foi arquivado.'); return; }
+  const cfg=archiveCfg||{};
+  const days=parseInt(cfg.days||365);
+  const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   let n=0;
   const touchedIds=[];
-  verificados.forEach(({c,ok})=>{
-    if(!ok) return;
+  marcados.forEach(id=>{
+    const c=cards.find(x=>x.id===id); if(!c || c.archived) return;
     c.archived=true; c.archivedAt=new Date().toISOString();
-    recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
+    recordHistory(c,'arquivado automaticamente, confirmado por '+(window._currentUserInit||'?')+' ('+days+'d de idade, '+inactDays+'d sem atividade)');
     n++;
     touchedIds.push(c.id);
   });
-  if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
+  if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); }
+  // Cards desmarcados continuam pendentes (oferecidos de novo pra próxima
+  // pessoa/dia) — só os confirmados saem da fila.
+  if(desmarcados.length) window._set(window._ref(window._db,_archPendingPath()), {ids:desmarcados, offeredUids:{}}).catch(()=>{});
+  else window._set(window._ref(window._db,_archPendingPath()), null).catch(()=>{});
+  showToast(n>0 ? '🗄 '+n+' card(s) arquivado(s).' : 'Nada arquivado.');
 }
 // Colunas nunca arquivadas automaticamente (ex.: Backlog) — pedido direto
 // do usuário: cards parados de propósito numa coluna (aguardando
@@ -25147,7 +25221,7 @@ const HELP_CONTENT = {
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
-    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que arquiva sozinho cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.' },
+    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
@@ -35149,6 +35223,22 @@ renderBoard();
   </div>
 </div>
 <!-- ══ POPUP DE BOAS-VINDAS (primeira vez no board) ══ -->
+<!-- ⏸ Validação de arquivamento automático (pedido direto, 2026-09-14): em vez
+     de arquivar sozinho, oferece a lista pro primeiro PO/ADM/Organizador que
+     abrir o board no dia — ver maybeAutoArchiveOldCards()/_archiveValidationOpen(). -->
+<div class="ov" id="archive-validation-ov" style="z-index:220;">
+  <div class="panel" style="max-width:520px;width:94%;max-height:80vh;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--glass-b);">
+      <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--txt);">🗄 Confirmar arquivamento automático</div>
+      <div id="archive-validation-sub" style="font-size:11px;color:var(--txt2);margin-top:4px;line-height:1.5;"></div>
+    </div>
+    <div id="archive-validation-list" style="overflow-y:auto;flex:1;padding:12px 18px;display:flex;flex-direction:column;gap:7px;"></div>
+    <div style="padding:14px 18px;border-top:1px solid var(--glass-b);display:flex;justify-content:space-between;gap:10px;">
+      <button class="btn btn-sm" onclick="_archiveValidationSkip()">⏭ Agora não</button>
+      <button class="btn btn-p btn-sm" onclick="_archiveValidationConfirm()">✅ Confirmar arquivamento</button>
+    </div>
+  </div>
+</div>
 <div class="ov" id="boasvindas-ov" style="z-index:210;">
   <div class="panel" style="max-width:460px;width:94%;border:1px solid rgba(29,233,182,.25);">
     <div style="padding:28px 26px 0;text-align:center;">
