@@ -985,6 +985,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   cenário de reaproveitar `window._visaoInicialAplicada` entre squads).
   dev v8.30.652, PR #890.
 
+- **2026-09-14, 📢 Comunicados/Mural (pedido explícito, escopo nomeado)**:
+  **sem achados**, depois de investigação real cobrindo o ciclo completo
+  — painel-dev.html (`loadComunicados()`, seed de rascunhos, lista/
+  arquivados/rascunhos, arquivar/reativar, compose/`_ccTogglePrioridadeUI()`,
+  `saveComunicado()`/`deleteComunicado()`, `_sanitizeComunicadoHtml()`) e
+  kanban-dev.html (elegibilidade de popup vs. Mural em `_refreshComunicados()`,
+  `_talvezMostrarComunicado()`/insistente, badge, `renderMuralLista()`).
+  Quase-achado que NÃO se confirmou: `_muralTodos` (painel→kanban) não
+  filtra `expiraEm` como `_comunicadosAtivos` (popup) filtra — parecia gap
+  à primeira vista, mas é design intencional confirmado lendo os 3
+  consumidores junto: Mural é "história completa" de propósito (mostra
+  expirados com badge "expirado", `renderMuralLista()`), só
+  `_updateMuralBadge()` (contagem de não-lidos) reaplica o filtro de
+  expiração por cima — os 3 pontos already são consistentes entre si.
+  Também checado: `saveComunicado()` sempre reativa (`ativo:true`) ao
+  clicar "Publicar", mesmo editando um arquivado — não é bug, o botão é
+  sempre rotulado "Publicar" (nunca "Salvar"), expectativa correta;
+  `_isPOOuMais()` (client) bate com `canBulkDelete()`/papéis
+  po/organizador/adm, mesmo critério dos dois lados.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
