@@ -884,6 +884,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `toggleViceCity()` sempre desliga o automático ao entrar). dev
   v8.30.648, PR #885.
 
+- **2026-09-14, "Dados do Board" (pedido explícito, escopo nomeado —
+  rodada de acompanhamento da auditoria de 2026-09-11, que tinha ficado
+  restrita a Submarca/Canal por coluna + CFD/Burndown)**: 1 achado real,
+  4 call sites, técnica 3 (comportamento vs. promessa explícita da
+  Central de Ajuda). ⏸ Pausar card promete "não conta contra as
+  métricas de tempo... NEM APARECE COMO ALARME pro resto do board", mas
+  nenhum dos 4 lugares que calculam "card parado há muito tempo" a
+  partir do mesmo `editedAt` excluía card pausado: esmaecimento visual
+  `aged-1`/`aged-2`+💤 (`makeCardEl()`), badge `⏳` de aging por coluna
+  (mesma função, Fase 5.2), trigger `'aging'` de Automações
+  (`checkAgingAutomations()`), lista "Cards parados" da aba 💡 Insights
+  (`renderBoardDataInsights()`). Fix: os 4 passaram a checar
+  `!card.paused` também. Checado e sem achado (revisão extensa do
+  restante da área): `renderBoardDataGrid()` (Visão Geral — WIP/
+  Throughput/Bloqueios/Cards ativos/Intake), `_bdHiddenCols` (consistente
+  nos 4 lugares que já usam: Grid, Insights, CFD, Burndown),
+  `_boardDataSwitchTab()`/`openBoardData()` (troca de aba, reset de
+  filtros de período/tag), `_pedirAnaliseBoardInsights()` (só manda
+  resumo de CFD/burndown pro Agente Ágil, não o resto de Insights —
+  consistente com o que a função já promete). dev v8.30.649, PR #886.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
