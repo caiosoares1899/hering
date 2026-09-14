@@ -3211,6 +3211,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.656-dev — 2026-09-14 — /monitorarbugs em ⭐ Estrelas do Mar (Kudos): reação/envio/exclusão podia apagar Estrela de outra pessoa
+
+Achado real (técnica 1 — comparar caminhos paralelos de mutação), mesma
+classe já corrigida em Agentes Externos (2026-08-29: "merge a partir de
+cache local em vez de ler fresco"), só que aqui a janela de corrida é bem
+maior: `addKudos()`, `delKudos()` e `toggleKudosReaction()` liam o array
+local (`kudosSquad`/`kudosGeral`, atualizado só por **poll a cada 3
+minutos**, não `onValue` em tempo real — trocado de propósito por custo de
+Firebase) e escreviam ele INTEIRO de volta com `window._set()`.
+
+Cenário: pessoa A abre o kanban (poll carrega `kudosSquad=[k1,k2]`).
+Pessoa B, em outra aba, manda uma Estrela nova `k3`. Antes do próximo
+poll de A (até 3 min de janela), A reage a `k1`, ou manda uma Estrela
+nova, ou apaga uma antiga — qualquer uma dessas 3 ações sobrescrevia o
+node inteiro com o array desatualizado de A, apagando `k3` do Firebase
+sem erro nenhum pra ninguém.
+
+Fix: os 3 pontos de escrita passaram a usar `window._runTransaction()`
+(já importado e usado em 2 outros lugares do arquivo — `fbCreateCard()`,
+fila do orquestrador) — a mutação (push/filter/toggle de reação) agora é
+calculada em cima do valor FRESCO do servidor a cada tentativa, nunca do
+array em cache local. UI continua otimista (reflete local na hora, sem
+esperar o round-trip) — só a persistência de verdade mudou.
+
 ### v8.30.655-dev — 2026-09-14 — Prazos atrasados contados em dias úteis (não conta sáb/dom)
 
 Feature pedida pelo usuário, mesmo critério que a recorrência "Todo dia

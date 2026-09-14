@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.655-dev</div>
+<div class="version">v8.30.656-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18002,19 +18002,37 @@ function _renderKudosReactions(k){
   return `<div class="kr-row">${chips}${addBtn}</div>`;
 }
 function toggleKudosReaction(id, scope, emoji){
-  const arr = scope==='geral' ? kudosGeral : kudosSquad;
-  const k=arr.find(x=>x.id===id); if(!k) return;
   const uid=window._currentUser?.uid; if(!uid) return;
-  if(!k.reactions) k.reactions={};
-  if(k.reactions[uid]===emoji) delete k.reactions[uid];
-  else k.reactions[uid]=emoji;
-  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
-  window._set(window._ref(window._db,path), arr).catch(()=>{});
-  renderKudos();
-  // notifica o autor do kudo que reagiram (se não for ele mesmo)
-  if(k.reactions[uid] && k.fromUid && k.fromUid!==uid){
-    createNotif(k.fromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null);
+  // Otimista: reflete local pra resposta instantânea. Quem decide o valor
+  // DEFINITIVO é a transaction abaixo, calculada sobre o dado FRESCO do
+  // servidor a cada tentativa — nunca a partir do array em cache local, que
+  // só é reatualizado por um poll de 3min (achado /monitorarbugs
+  // 2026-09-14, mesma classe do fix de Agentes Externos 2026-08-29: "merge
+  // a partir de cache local em vez de ler fresco" já causava perda em
+  // corrida ali; aqui a janela de corrida é o poll inteiro, não só a UI).
+  const arrLocal = scope==='geral' ? kudosGeral : kudosSquad;
+  const kLocal=arrLocal.find(x=>x.id===id);
+  if(kLocal){
+    if(!kLocal.reactions) kLocal.reactions={};
+    if(kLocal.reactions[uid]===emoji) delete kLocal.reactions[uid];
+    else kLocal.reactions[uid]=emoji;
   }
+  renderKudos();
+  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  let notifyFromUid=null, adicionou=false;
+  window._runTransaction(window._ref(window._db,path), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    const k = arr.find(x=>x.id===id);
+    if(!k) return arr; // apagado por outra pessoa nesse meio tempo — não recria
+    if(!k.reactions) k.reactions={};
+    if(k.reactions[uid]===emoji){ delete k.reactions[uid]; }
+    else { k.reactions[uid]=emoji; adicionou=true; notifyFromUid=k.fromUid; }
+    return arr;
+  }).then(()=>{
+    if(adicionou && notifyFromUid && notifyFromUid!==uid){
+      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null);
+    }
+  }).catch(()=>{});
 }
 function addKudos(){
   const para=document.getElementById('kudos-para').value;
@@ -18026,13 +18044,18 @@ function addKudos(){
   const obj={ id:'k'+Date.now()+Math.random().toString(36).slice(2,6),
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:window._currentUserInit||'?', fromFoto:u.photoURL||'',
     toInit:para, toNome:m?.name||'', toUid:m?.uid||'', texto, scope:_kudosScope, reactions:{}, ts:new Date().toISOString() };
-  if(_kudosScope==='geral'){
-    kudosGeral.push(obj);
-    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(e=>toast('Erro: '+e.message));
-  } else {
-    kudosSquad.push(obj);
-    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(e=>toast('Erro: '+e.message));
-  }
+  // Push local é só otimista (UI instantânea) — a persistência de verdade
+  // usa transaction sobre o valor FRESCO do servidor (ver achado
+  // /monitorarbugs 2026-09-14 em toggleKudosReaction()), pra não sobrescrever
+  // Estrelas que outra pessoa tenha adicionado enquanto o poll de 3min
+  // ainda não trouxe elas pro array local.
+  const _kudosPath = _kudosScope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  if(_kudosScope==='geral') kudosGeral.push(obj); else kudosSquad.push(obj);
+  window._runTransaction(window._ref(window._db,_kudosPath), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(obj);
+    return arr;
+  }).catch(e=>toast('Erro: '+e.message));
   // Notifica o agraciado (reaproveita o sistema de notificações)
   const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
@@ -18058,13 +18081,15 @@ function addKudos(){
   toast('⭐ Estrela enviada para '+(m?.name?.split(' ')[0]||para)+'!');
 }
 function delKudos(id, scope){
-  if(scope==='geral'){
-    kudosGeral=kudosGeral.filter(k=>k.id!==id);
-    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
-  } else {
-    kudosSquad=kudosSquad.filter(k=>k.id!==id);
-    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(()=>{});
-  }
+  // Mesmo achado/fix de addKudos()/toggleKudosReaction() — transaction sobre
+  // o valor fresco do servidor, não sobre o array local (poll de 3min).
+  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  if(scope==='geral') kudosGeral=kudosGeral.filter(k=>k.id!==id);
+  else kudosSquad=kudosSquad.filter(k=>k.id!==id);
+  window._runTransaction(window._ref(window._db,path), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(k=>k.id!==id);
+  }).catch(()=>{});
   renderKudos();
 }
 function updKudosBadge(){
