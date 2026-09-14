@@ -905,6 +905,33 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   resumo de CFD/burndown pro Agente Ágil, não o resto de Insights —
   consistente com o que a função já promete). dev v8.30.649, PR #886.
 
+- **2026-09-14, OKR (painel-dev.html) (pedido explícito, escopo nomeado)**:
+  **sem achados**, depois de investigação real (não superficial) em
+  sub-áreas específicas ainda não cobertas por rodadas anteriores (Fase 1/
+  extensão/4 achados em prod/histórico semanal/excluir Objetivo já tinham
+  suas próprias rodadas — ver entradas anteriores). Checado: (1) fórmula
+  do 🗓️ Bloco quinzenal (`_okrProximaReuniaoDoBloco()` no cliente vs.
+  `ehDiaDeReuniao()` em `functions/okr/dailyScan.js`) — testada à mão
+  contra várias datas reais, paridade/período batem exatamente nos dois
+  lados; achado incidental NÃO corrigido (comentário desatualizado, não
+  bug de comportamento): os 2 arquivos ainda citam `_okrBlocoNaData()`
+  como "o mirror a manter em sincronia", mas essa função foi removida
+  como código morto em 2026-09-06 — o mirror real e correto hoje é
+  `_okrProximaReuniaoDoBloco()`; (2) `_okrExcluirObjetivo()` — cascade de
+  Marco+comentários completo, sem órfão; (3) 📈 Histórico semanal —
+  `OKR_STATUS` (cliente) e as chaves de `resumoGeral` gravadas por
+  `weeklySnapshot.js` batem exatamente; (4) disciplina "sincroniza o
+  draft antes de re-renderizar" (`_okrSyncObjDraftFromDom()`/
+  `_okrSyncMarcoDraftFromDom()`) — confirmada em TODOS os call sites de
+  `renderOkrObjBody()`/`renderOkrMarcoBody()`, incluindo o gatilho por
+  listener ao vivo (`loadOkr()`, marco de QUALQUER Objetivo mudando
+  enquanto outro está aberto) — já tinha sido corrigido numa rodada
+  anterior não registrada explicitamente nesta lista; (5) notificação
+  `_okrNotifyEditado()` (client) e o equivalente server-side
+  (`agenteHelpers.js`, 3 handlers do Agente Ágil) — mesmo formato/path,
+  testes automatizados cobrindo os 2; (6) filtro de trimestre na lista de
+  Objetivos usa `_okrTrimestresOf()` (array-aware), não o campo legado.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
