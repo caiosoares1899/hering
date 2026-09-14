@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.649-dev</div>
+<div class="version">v8.30.650-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14020,10 +14020,17 @@ function openCard(id){
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
   _registrarSinalAtrasado(c); // personalização baseada em rotina, caso #5
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
+  // Achado real (/monitorarbugs, 2026-09-14): escrevia via fbSet() direto
+  // em 'cards/'+idx (posição LOCAL do array, cards.findIndex()) — mesma
+  // classe de bug já documentada e evitada em fbSaveCard() (a posição
+  // local pode desalinhar da chave real no Firebase se outra pessoa criou/
+  // excluiu/reordenou algo nesse meio-tempo, gravando _autoVisto:true no
+  // card ERRADO, sem erro visível nenhum). fbSaveCard(c) já resolve a
+  // chave real via window._cardsByKey (com fallback seguro), mesmo helper
+  // usado em todo o resto do arquivo pra escrita pontual de 1 card.
   if(c._autoVisto===false){
     c._autoVisto = true;
-    const idx = cards.findIndex(x=>x.id===id);
-    if(idx>=0 && window._fbReady){ fbSet(FB+'/cards/'+idx+'/_autoVisto', true); }
+    if(window._fbReady) fbSaveCard(c).catch(()=>{});
   }
   // Se camp-ov estiver aberto, elevar card-ov acima dele
   const _cov=document.getElementById('card-ov');
@@ -22432,8 +22439,11 @@ function processRelembreteAuto(){
       cardId:card.id, ts:new Date().toISOString() };
     lembretesProprios.push(obj); lemPropMudou=true;
     card._autoRelembradoEm=hojeStr;
-    const idx=cards.findIndex(x=>x.id===card.id);
-    if(idx>=0) fbSet(FB+'/cards/'+idx+'/_autoRelembradoEm', hojeStr);
+    // Achado real (/monitorarbugs, 2026-09-14) — mesmo bug do openCard()
+    // (_autoVisto): fbSet('cards/'+idx+...) usava a posição LOCAL do
+    // array como chave, podia desalinhar da chave real no Firebase e
+    // gravar em cima do card ERRADO. fbSaveCard() já resolve a chave real.
+    fbSaveCard(card).catch(()=>{});
     // notifica o responsável também
     if(card.owner){
       const uid=getUidByInit(card.owner);
