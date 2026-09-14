@@ -1005,6 +1005,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `_isPOOuMais()` (client) bate com `canBulkDelete()`/papéis
   po/organizador/adm, mesmo critério dos dois lados.
 
+- **2026-09-14, modal do card e suas funções (pedido explícito, escopo
+  nomeado, amplo — "faz uma rodada no modal do card e suas funções")**:
+  1 achado real, na área de Dependências entre cards, técnica 2
+  (comparar contra `unlinkDependsOn()`, padrão irmão já resolvido no
+  mesmo arquivo). `setDependsOn()` serve tanto pra vincular quanto pra
+  TROCAR de pai (menu "🔗 Vincular a outro card" continua disponível
+  mesmo já vinculado), mas só atualizava o pai NOVO — nunca limpava a
+  referência no pai ANTIGO, diferente de `unlinkDependsOn()`. Card
+  trocado de pai ficava listado como dependente do pai antigo pra
+  sempre, corrompendo `buildDepChains()`/⛓ Mapa de dependências (card
+  aparecia como filho de 2 pais) e bloqueando vínculos futuros
+  legítimos via `_dependsDescendants()`. Fix: remove do pai antigo antes
+  de vincular ao novo. Checado e sem achado (achado ainda parcial, área
+  ampla — não esgotada nesta rodada, ver "Próximo": anexos/links do
+  card (`attachSave()`/`attachRemove()`) usam `fbSaveCard()` sem
+  `.catch()` — mesma classe de silêncio já corrigida em autosave/
+  descrição extra/estado do agente via `_saveCardWithRetry()`, mas essa
+  ausência de retry é um padrão espalhado em DEZENAS de outros call
+  sites de `fbSaveCard()` no arquivo (pin, arquivar, etc.) — não é um
+  gap NOVO nem isolado o bastante pra corrigir só em 1 lugar sem tocar
+  os outros, registrado como observação, não como achado desta rodada.
+  dev v8.30.653, PR #893.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
