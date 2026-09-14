@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.647-dev</div>
+<div class="version">v8.30.648-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31804,7 +31804,10 @@ function _themeBtnPointerUp(){
   if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
 }
 function toggleViceCity(){
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  // Mesmo achado do comentário grande acima de onThemeBtnClick() — vale
+  // aqui também: um long-press durante a banda automática da tarde não
+  // pode ser lido como "já tá no easter egg, então sai dele".
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
@@ -31841,10 +31844,23 @@ function exitViceCity(){
 // propósito) — e o clique que dispara logo depois de um long-press bem
 // sucedido (_viceLongPressFired) é ignorado, senão entrar em Vice City já
 // sairia de novo no mesmo gesto.
+// Achado real (/monitorarbugs, 2026-09-14): _currentTheme()==='vice' sozinho
+// não distingue o easter egg (toggleViceCity(), manual) da banda normal das
+// 12h-18h do 🕐 Tema automático (_applyAutoTheme(), também escreve
+// data-theme="vice") — os 3 handlers abaixo usavam só isso pra decidir "a
+// pessoa tá no easter egg, clique deve SAIR dele" via exitViceCity(). Com o
+// automático ligado durante a tarde, um clique normal no botão desligava o
+// automático sem pedir e restaurava mare_theme_before_vice (lixo de uma
+// visita antiga ao easter egg, ou vazio), com toast de "De volta pra..."
+// mesmo a pessoa nunca tendo entrado no easter egg. toggleViceCity() SEMPRE
+// desliga o automático ao entrar (ver _disableThemeAutoIfOn() ali) — então
+// "vice de verdade, não é banda automática" é sempre !_isThemeAutoOn()
+// também, com segurança.
+function _isViceCityEasterEggAtivo(){ return _currentTheme()==='vice' && !_isThemeAutoOn(); }
 let _themeClickTimer=null;
 function onThemeBtnClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){
+  if(_isViceCityEasterEggAtivo()){
     if(_themeClickTimer) return;
     _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
     return;
@@ -31855,12 +31871,12 @@ function onThemeBtnClick(){
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleThemeVariant();
 }
 function _mobileThemeRowClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>

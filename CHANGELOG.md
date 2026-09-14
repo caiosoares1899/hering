@@ -3211,6 +3211,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.648-dev — 2026-09-14 — /monitorarbugs em 🕐 Tema automático: clicar no botão de tema durante a banda "vice" da tarde desligava o automático sem pedir
+
+Achado real auditando 🕐 Tema automático (nunca tinha rodada própria —
+só o texto de ajuda tinha sido sincronizado antes). Técnica 3: um mesmo
+valor (`data-theme="vice"`) tem DUAS origens que o código tratava como
+se fossem uma só.
+
+`onThemeBtnClick()`/`onThemeBtnDblClick()`/`_mobileThemeRowClick()`/
+`toggleViceCity()` usavam `_currentTheme()==='vice'` como sinal de "a
+pessoa está no easter egg 🌴 Vice City, então este clique deve SAIR
+dele" (`exitViceCity()`). Mas o Tema automático (`_applyAutoTheme()`)
+também escreve `data-theme="vice"` sozinho, todo dia, das 12h às 18h
+(horário de SP) — é só a banda normal da tarde, sem nenhuma relação com
+o easter egg escondido (ativado só por long-press no botão).
+
+Cenário: liga o Tema automático às 14h — o app mostra Vice City
+corretamente como tema da tarde. Um clique normal no botão de tema
+(esperando trocar pra claro/escuro, como sempre) chamava `exitViceCity()`
+por engano: desligava o automático sem avisar, restaurava
+`mare_theme_before_vice`/`mare_theme_variant_before_vice` (lixo de uma
+visita antiga ao easter egg, ou vazio na primeira vez) e mostrava um
+toast de "De volta pra Lençóis Maranhenses/Abrolhos" — confuso, já que a
+pessoa nunca tinha entrado no easter egg de verdade. Mesmo problema no
+long-press de `toggleViceCity()`: tentar ativar o easter egg de verdade
+durante a banda automática da tarde silenciosamente virava um "sair"
+em vez de "entrar".
+
+Fix: novo `_isViceCityEasterEggAtivo()` — só considera "no easter egg de
+verdade" quando `data-theme==='vice'` E o automático está DESLIGADO
+(seguro, porque `toggleViceCity()` sempre desliga o automático ao
+entrar de propósito — não existe caminho onde o automático fica ligado
+enquanto a pessoa está genuinamente dentro do easter egg manual). Os 4
+pontos passaram a usar esse helper em vez do `_currentTheme()==='vice'`
+cru.
+
 ### v8.30.647-dev — 2026-09-14 — Timeline: buckets progressivos (Atrasado/Hoje/Amanhã/…) agora são colapsáveis, igual ao painel
 
 Pedido direto do usuário ("aquele collapse que você colocou na timeline
