@@ -1066,6 +1066,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   Ágil lê). Card só com o campo legado preenchido sumia do Meu Dia de
   quem estava nele. dev v8.30.654, PR #894.
 
+- **2026-09-14, prazos em dias úteis (feature nova) + ⭐ Kudos (pedido
+  genérico, "roda mais um /monitorarbugs")**: código mais fresco
+  auditado primeiro (feature "Xd atrasado em dias úteis", PR #895) —
+  `_diasUteisEntre()` e os 3 call sites revisados, sem achado (todos
+  corretamente gated pra d1<d2, sem mistura de fuso/hora entre os
+  sites). Em seguida, área nunca coberta pela skill: ⭐ Estrelas do Mar
+  (Kudos). 1 achado real e severo, técnica 1 — mesma classe já corrigida
+  em Agentes Externos (2026-08-29: "merge a partir de cache local em vez
+  de ler fresco"), só que com janela de corrida MUITO maior aqui:
+  `addKudos()`/`delKudos()`/`toggleKudosReaction()` liam
+  `kudosSquad`/`kudosGeral` (array local, só atualizado por poll a cada
+  3min desde que o `onValue` foi trocado por poll por custo de Firebase —
+  ver comentário em `_listenKudos()`) e escreviam ele INTEIRO de volta
+  com `window._set()`. Estrela adicionada por outra pessoa durante essa
+  janela de até 3min sumia silenciosamente do Firebase no próximo write
+  de qualquer outra pessoa (reagir, mandar Estrela nova, ou apagar uma
+  antiga — as 3 ações tinham o bug). Fix: os 3 pontos de escrita passam a
+  usar `window._runTransaction()` (já usada em `fbCreateCard()`/fila do
+  orquestrador) — mutação recalculada sobre o valor fresco do servidor a
+  cada tentativa, UI continua otimista. dev v8.30.656, PR #896.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
