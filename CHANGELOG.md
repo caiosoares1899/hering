@@ -3211,6 +3211,25 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.657-dev — 2026-09-14 — /monitorarbugs nas notificações: Kudos/Agenda aprovada não navegavam ao clicar
+
+Achado real, pedido explícito ("roda /monitorarbugs nas notificações",
+depois de corrigir o push de "Fale com o ADM"). Mesma classe de bug já
+mapeada na mega-rodada de 2026-09-06 (clicar numa notificação não
+navegava pra lugar nenhum) — só que em 3 tipos mais novos, que passaram
+batido daquela varredura: `kudos`, `kudos_monitor` e `gcal_approved`.
+Todos os 3 sempre têm `cardId:null` e não tinham tratamento nenhum em
+`openNotif()` — clicar só marcava como lida e fechava o painel, sem
+levar a pessoa a lugar nenhum.
+
+Fix: `gcal_approved` abre `openCal()` (mesmo destino do botão "📅
+Calendários"); `kudos`/`kudos_monitor` abrem `openKudos()`. Os 3 pontos
+que criam notificação `kudos`/`kudos_monitor` (`toggleKudosReaction()`,
+`addKudos()` × 2) também ganharam `extra:{link:'pessoas'}` — sem isso, a
+MESMA notificação clicada no sino PRÓPRIO do painel (`loadPainelNotifs()`,
+que lê `n.link` direto do objeto salvo, não deriva de `type`) continuava
+sem navegar, mesmo padrão já usado pro tipo `rascunho`.
+
 ### v8.30.656-dev — 2026-09-14 — /monitorarbugs em ⭐ Estrelas do Mar (Kudos): reação/envio/exclusão podia apagar Estrela de outra pessoa
 
 Achado real (técnica 1 — comparar caminhos paralelos de mutação), mesma
@@ -15437,6 +15456,26 @@ abaixo pro detalhe técnico (mesmo achado/fix de `kanban.html` v8.30.641,
 
 Checks de rotina: `node --check` OK nos 3 blocos reais. Balanço de
 chaves/parênteses igual ao baseline conhecido (braces -1, parens -14).
+
+### painel-dev.html v3.46 · painel-dev — 2026-09-14 — Fix: Kudos "Geral" enviado pelo painel-dev sumia (caminho errado no Firebase) + notificação sem navegação
+
+Achado real, /monitorarbugs nas notificações. Dois problemas na mesma
+funcionalidade (Kudos "🌊 Geral", aba Pessoas):
+
+1. **Caminho de dado órfão.** `_refreshKudosGeral()`/`addKudosPainel()`/
+   `delKudosPainel()`/`toggleKudosReaction()` liam e escreviam
+   `kanban/painel/kudos_dev` — só `painel-dev.html` usava esse caminho;
+   `kanban.html`, `kanban-dev.html` e `painel.html` (prod) sempre usaram
+   `kanban/painel/kudos_geral`. O comentário logo acima da função já dizia
+   "mesmo padrão do path global do prod", mas o literal divergia — Estrela
+   "Geral" enviada pelo painel-dev sumia (não aparecia em NENHUM board),
+   mesmo a notificação "Você recebeu uma Estrela" sendo criada
+   normalmente pro destinatário. Fix: os 4 pontos passam a usar
+   `kudos_geral`, igual aos outros 3 arquivos.
+2. **Notificação sem navegação** (mesmo achado do lado `kanban-dev.html`
+   nesta rodada): `kudos`/`kudos_monitor` ganharam `link:'pessoas'` na
+   criação — clicar na notificação no sino próprio do painel agora navega
+   pra aba Pessoas, onde o Kudos vive.
 
 ### painel-dev.html v3.45 · painel-dev — 2026-09-14 — Fix: botões da aba Monitor/Dados/Agentes ilegíveis no Vice City
 

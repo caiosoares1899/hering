@@ -2826,7 +2826,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.45 · painel-dev</div>
+<div class="version">v3.46 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9793,7 +9793,14 @@ function loadKudosGeral(){
 }
 function _refreshKudosGeral(){
   _lastKudosGeralRefresh = Date.now();
-  window._get(window._ref(window._db,'kanban/painel/kudos_dev')).then(snap=>{
+  // Achado real (/monitorarbugs, 2026-09-14): usava 'kudos_dev' (caminho
+  // órfão, que nenhum board lê) em vez de 'kudos_geral' — o comentário logo
+  // acima já dizia "mesmo padrão do path global do prod", mas o literal
+  // divergia. Kudos "Geral" enviado daqui sumia (não aparecia em nenhum
+  // board, prod ou dev) mesmo a notificação "Você recebeu uma Estrela"
+  // sendo criada normalmente pro destinatário — notificação fantasma, sem
+  // conteúdo nenhum pra ela apontar.
+  window._get(window._ref(window._db,'kanban/painel/kudos_geral')).then(snap=>{
     const val=snap.val();
     kudosGeral = val ? (Array.isArray(val)?val:Object.values(val)).filter(Boolean) : [];
     renderKudosPainel();
@@ -9865,7 +9872,7 @@ function addKudosPainel(){
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:'', fromFoto:u.photoURL||'',
     toInit:toU.init||'', toNome:toU.nome||'', texto, scope:'geral', ts:new Date().toISOString() };
   const arr=[...kudosGeral, obj];
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
     .then(()=>{ kudosGeral=arr; showToast('⭐ Estrela geral enviada!'); renderKudosPainel();
       // notifica o agraciado
       if(toUid && toUid!==u.uid){
@@ -9881,7 +9888,7 @@ function addKudosPainel(){
 }
 function delKudosPainel(id){
   const arr=kudosGeral.filter(k=>k.id!==id);
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), arr)
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), arr)
     .then(()=>{ kudosGeral=arr; renderKudosPainel(); }).catch(()=>{});
 }
 // ── Reações aos kudos no painel ──
@@ -9906,7 +9913,7 @@ function toggleKudospReaction(id, emoji){
   if(!k.reactions) k.reactions={};
   if(k.reactions[uid]===emoji) delete k.reactions[uid];
   else k.reactions[uid]=emoji;
-  window._set(window._ref(window._db,'kanban/painel/kudos_dev'), kudosGeral).catch(()=>{});
+  window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
   renderKudosPainel();
 }
 
