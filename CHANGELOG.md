@@ -3211,6 +3211,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.645-dev — 2026-09-14 — /monitorarbugs em ↺ Desfazer (Ctrl+Z): risco de apagar/reverter cards de outras pessoas + reordenar colunas nunca desfazia de verdade
+
+Achado real auditando o mecanismo de Desfazer (`saveUndo()`/`doUndo()`) —
+central, usado em ~21 pontos do código, nunca tinha tido rodada própria.
+
+**Achado 1 (severo)**: `doUndo()` tirava uma foto do array `cards` INTEIRO
+antes de qualquer ação, e ao desfazer restaurava esse array completo via
+`fbSaveAll()` — que reescreve a árvore `/cards` inteira no Firebase (o
+mesmo tipo de sobrescrita já documentado como perigoso no comentário "BUG
+CRÍTICO DE PRODUÇÃO 2026-08-04"). Sem limite de tempo: a pilha guarda até
+10 estados e o atalho Ctrl+Z funciona globalmente mesmo bem depois do
+toast visual sumir (6s). Cenário: você move um card às 14h00 (foto tirada
+nesse instante); um colega em outra aba cria um card novo às 14h02; às
+14h05 você aperta Ctrl+Z — o card do colega é apagado silenciosamente,
+porque a foto de 14h00 não tinha ele. Comparado com o padrão irmão já
+resolvido no mesmo arquivo (`_notasPushUndo()`/`notasUndo()`, Notas, que
+escreve só o node específico tocado, nunca a árvore inteira).
+
+Fix (aprovado pelo usuário, entre 3 opções apresentadas — "escrita
+cirúrgica por card"): `doUndo()` não chama mais `fbSaveAll()`. Calcula só
+os cards que DE FATO mudam entre o snapshot restaurado e o estado ATUAL ao
+vivo (já sincronizado com o Firebase) e escreve só esses, um a um, via
+`fbSaveCard()` — mesma proteção contra pisar em edição concorrente que
+`fbSaveCard()` já dá em qualquer outro ponto do app. Qualquer card
+intocado (inclusive um criado por outra pessoa depois do snapshot)
+permanece exatamente como está. Risco residual documentado, não eliminado
+por completo: se um dos cards TOCADOS por esse undo específico também foi
+editado por outra pessoa nesse meio-tempo, essa edição pontual ainda pode
+ser sobrescrita — corrigir isso por completo exigiria undo por card de
+verdade nos ~21 call sites de `saveUndo()`, registrado como recomendação
+futura, não implementado agora.
+
+**Achado 2 (claro)**: "reordenar colunas" (mouse e touch, 2 call sites)
+chamava `saveUndo('reordenar colunas')` depois de mutar `columns[]`, mas o
+snapshot só guardava `cards`, nunca `columns` — Ctrl+Z mostrava "↩
+Desfeito: reordenar colunas" (como se tivesse funcionado) mas a ordem
+nunca voltava, disparando o `fbSaveAll()`/agora `fbSaveCard()` à toa, sem
+nenhum benefício real. Fix: o snapshot passou a guardar `columns` também,
+e `doUndo()` restaura e grava a ordem anterior quando ela mudou.
+
 ### v8.30.644-dev — 2026-09-12 — /monitorarbugs em 🗄 Arquivamento automático: ligar a regra pela 1ª vez não rodava no mesmo dia
 
 Achado real auditando a feature de arquivamento automático por idade

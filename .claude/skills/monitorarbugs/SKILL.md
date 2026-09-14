@@ -814,6 +814,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (comentário não bumpa `editedAt` de propósito, arquitetura separada —
   não é bug). dev v8.30.644, PR #881.
 
+- **2026-09-14, ↺ Desfazer / Ctrl+Z (pedido genérico, "roda mais um
+  /monitorarbugs nas principais partes do código" — escolhido por ser um
+  mecanismo central usado em ~21 call sites, nunca auditado)**: 2
+  achados. PR #882. (1) **severo**, técnica 2 (comparar contra o padrão
+  irmão já resolvido no mesmo arquivo — `_notasPushUndo()`/`notasUndo()`
+  em Notas, que escreve só o node específico tocado): `doUndo()`
+  restaurava o array `cards` INTEIRO via `fbSaveAll()` (reescreve a
+  árvore `/cards` completa), sem limite de tempo (pilha guarda até 10
+  estados, Ctrl+Z funciona bem depois do toast de 6s sumir) — qualquer
+  card criado/editado por OUTRA pessoa depois do `saveUndo()`
+  correspondente era apagado/revertido em silêncio. Fix (3 opções via
+  `AskUserQuestion`, usuário escolheu "escrita cirúrgica por card"):
+  `doUndo()` calcula só os cards que de fato mudam vs. o estado ATUAL ao
+  vivo e escreve cada um via `fbSaveCard()` (mesma proteção contra
+  pisar em edição concorrente que esse helper já dá em qualquer outro
+  lugar do app); risco residual (editar o MESMO card tocado pelo undo,
+  no mesmo instante) documentado, não eliminado — undo por card de
+  verdade nos ~21 call sites fica como recomendação futura. (2) claro,
+  técnica 3 (comportamento vs. o que o label promete): "reordenar
+  colunas" (2 call sites) chamava `saveUndo()` depois de mutar
+  `columns[]`, mas o snapshot só guardava `cards` — Ctrl+Z mostrava "↩
+  Desfeito: reordenar colunas" mas a ordem nunca voltava. Fix: snapshot
+  passa a guardar `columns` também. dev v8.30.645.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
