@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.652-dev</div>
+<div class="version">v8.30.653-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32440,6 +32440,22 @@ function setDependsOn(parentId){
     showToast('⚠ Não dá pra vincular — criaria um ciclo de dependência.');
     return;
   }
+  // Achado real (/monitorarbugs, 2026-09-14): esta função também é usada
+  // pra TROCAR de pai (o card pode já ter um dependsOn anterior — o menu
+  // "🔗 Vincular a outro card" fica disponível mesmo já vinculado, ver
+  // #m-depends-bar/menu de dependências), mas nunca limpava a referência
+  // no pai ANTIGO — diferente de unlinkDependsOn(), que já faz essa
+  // limpeza certinho. O pai antigo ficava com um "dependente fantasma"
+  // pra sempre (mesmo depois do card ter migrado pra outro pai),
+  // corrompendo buildDepChains()/renderDepMap() (mostrava o card como
+  // filho de 2 pais ao mesmo tempo) e _dependsDescendants() (bloqueava
+  // vínculos futuros legítimos por achar que ainda era um ciclo).
+  const _oldParentId = card.dependsOn;
+  let _oldParent = null;
+  if(_oldParentId && _oldParentId!==parentId){
+    _oldParent = cards.find(c=>c.id===_oldParentId);
+    if(_oldParent?.dependents) _oldParent.dependents = _oldParent.dependents.filter(id=>id!==editingId);
+  }
   card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);
@@ -32447,7 +32463,7 @@ function setDependsOn(parentId){
     if(!parent.dependents) parent.dependents=[];
     if(!parent.dependents.includes(editingId)) parent.dependents.push(editingId);
   }
-  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
+  fbSaveAll(undefined, [editingId, parentId, _oldParent?.id].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderCardDepMini(editingId);

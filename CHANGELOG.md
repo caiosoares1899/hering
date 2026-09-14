@@ -3211,6 +3211,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.653-dev — 2026-09-14 — /monitorarbugs no modal do card: trocar de "pai" numa dependência deixava um dependente fantasma no pai antigo
+
+Achado real auditando o modal do card e suas funções (escopo nomeado),
+área de Dependências entre cards. `setDependsOn()` é usada tanto pra
+vincular a primeira vez quanto pra TROCAR de pai (o menu "🔗 Vincular a
+outro card" continua disponível mesmo com um pai já definido) — mas só
+atualizava o pai NOVO, nunca limpava a referência no pai ANTIGO.
+Diferente de `unlinkDependsOn()`, que já faz essa limpeza corretamente
+ao desvincular de vez.
+
+Cenário: Card A depende de P1 (P1.dependents inclui A). Trocar o pai de A
+pra P2 via o picker atualiza `A.dependsOn=P2` e `P2.dependents` ganha A
+— mas `P1.dependents` continua citando A pra sempre, mesmo A não
+dependendo mais dele. Corrompia `buildDepChains()`/`⛓ Mapa de
+dependências` (mostrava o card como filho de 2 pais ao mesmo tempo) e
+`_dependsDescendants()` (a proteção contra ciclo passava a bloquear
+vínculos futuros legítimos, achando que ainda existia um ciclo com o pai
+antigo).
+
+Fix: `setDependsOn()` agora remove o card da lista `dependents[]` do pai
+antigo (quando existir e for diferente do novo) antes de vincular ao
+novo, e inclui o pai antigo no `fbSaveAll()` pra a limpeza persistir.
+
 ### v8.30.652-dev — 2026-09-14 — /monitorarbugs no board (tela inicial): raia por subtime colapsava pra 1 raia só com o filtro de Subtime ativo
 
 Achado real auditando o board de colunas (escopo "board em si, tela
