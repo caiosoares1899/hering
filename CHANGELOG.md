@@ -3252,6 +3252,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.660-dev — 2026-09-14 — Feature: Arquivamento automático agora pede confirmação antes de arquivar
+
+Pedido direto do usuário, depois do achado crítico corrigido na v8.30.659
+(comentário recente não contava como atividade): em vez de arquivar
+sozinho, a regra agora sempre passa por validação humana antes.
+
+Como funciona: quando existem cards batendo com a regra (idade mínima +
+tempo sem edição/comentário), o card fica numa fila (`archive_pending`,
+por squad) até alguém decidir. O PRIMEIRO PO/Organizador/ADM que abrir o
+board no dia vê uma tela com a lista inteira — cada card com checkbox
+(marcado por padrão, desmarcável individualmente), coluna e "parado há
+~Nd" — e dois botões: "✅ Confirmar arquivamento" (arquiva só os
+marcados; os desmarcados continuam pendentes pra próxima revisão) ou
+"⏭ Agora não" (marca que essa PESSOA já foi consultada hoje — não é
+incomodada de novo, mas a PRÓXIMA pessoa elegível que abrir o board no
+mesmo dia já cai direto na tela). Se ninguém confirmar no dia, a fila
+continua pendente e acumula com os novos candidatos do dia seguinte, até
+alguém revisar.
+
+`maybeAutoArchiveOldCards()` ganhou as funções `_archiveValidationOpen()`/
+`_archiveValidationConfirm()`/`_archiveValidationSkip()` e o novo overlay
+`#archive-validation-ov`. Central de Ajuda ("📦 Arquivados") e o texto
+inline de Config → Automações atualizados pra refletir o novo
+comportamento (não prometem mais "arquiva sozinho").
+
 ### v8.30.659-dev — 2026-09-14 — /monitorarbugs em Lembretes: addLembrete() podia apagar lembrete próprio adicionado em outra aba
 
 Achado real, pedido genérico ("roda mais um /monitorarbugs"). Área

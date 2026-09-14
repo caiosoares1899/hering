@@ -464,14 +464,21 @@ detalhe dos 4 call sites.
 
 ### Arquivados / arquivamento automático
 - `maybeAutoArchiveOldCards()` — L12663 — roda a regra opcional de
-  arquivar sozinho cards antigos E parados (`archiveCfg`, configurável
-  em ⚙ Config → Automações). (2026-09-08) ganhou `excludedCols` — Set
-  de ids de coluna que a regra nunca toca (ex.: Backlog, onde cards
-  ficam parados de propósito). Pending state em
+  arquivar cards antigos E parados (`archiveCfg`, configurável em ⚙
+  Config → Automações). (2026-09-08) ganhou `excludedCols` — Set de ids
+  de coluna que a regra nunca toca (ex.: Backlog, onde cards ficam
+  parados de propósito). Pending state em
   `_archCfgExcludedColsPending`, chips renderizados por
   `_archCfgExcludedColsChips()`/`_archCfgToggleExcludedCol()`, só grava
   em `archiveCfg.excludedCols` no "💾 Salvar regra"
-  (`fillArchiveCfgTab()` L12584).
+  (`fillArchiveCfgTab()` L12584). (2026-09-14) **nunca mais arquiva
+  sozinho** — candidatos entram na fila `archive_pending` (por squad,
+  acumula até alguém decidir) e o 1º PO/Organizador/ADM a abrir o board
+  no dia vê `#archive-validation-ov` (`_archiveValidationOpen()`, lista
+  com checkbox por card) — confirma (`_archiveValidationConfirm()`, só
+  arquiva os marcados) ou pula pra próxima pessoa elegível
+  (`_archiveValidationSkip()`, grava `offeredUids[uid]=hoje`, não
+  incomoda a mesma pessoa 2x no dia).
 - `openArquivados()` — L21449 — tela "Funções de card → Arquivados".
   (2026-09-08) filtro novo por coluna (`#arch-f-col`) — arquivar nunca
   reescreve `c.col` (só liga `c.archived`), então o valor atual do
