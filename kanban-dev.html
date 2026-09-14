@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.657-dev</div>
+<div class="version">v8.30.658-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12982,7 +12982,7 @@ function _autoArchiveDoneToday(){
   const today=new Date().toISOString().split('T')[0];
   return !!safeLS.getItem('autoarchive_'+ACTIVE_SQUAD+'_'+today);
 }
-function maybeAutoArchiveOldCards(){
+async function maybeAutoArchiveOldCards(){
   // Achado real (/monitorarbugs, 2026-09-12): checa cfg.enabled ANTES de
   // gravar a flag "já rodei hoje" — antes disso, a flag era gravada
   // incondicionalmente (esta função roda 3s após todo carregamento do
@@ -13000,8 +13000,9 @@ function maybeAutoArchiveOldCards(){
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   const excludedCols=new Set(cfg.excludedCols||[]);
   const now=Date.now();
-  let n=0;
-  const touchedIds=[];
+  // 1ª passada (síncrona, só com o que já está em memória): pré-candidatos
+  // pela idade/edição, igual antes.
+  const candidatos=[];
   cards.forEach(c=>{
     if(c.archived || !c.createdAt || excludedCols.has(c.col)) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
@@ -13013,12 +13014,36 @@ function maybeAutoArchiveOldCards(){
     if(isNaN(lastEdit)) lastEdit=created;
     const ageDays=(now-created)/86400000;
     const idleDays=(now-lastEdit)/86400000;
-    if(ageDays>=days && idleDays>=inactDays){
-      c.archived=true; c.archivedAt=new Date().toISOString();
-      recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
-      n++;
-      touchedIds.push(c.id);
-    }
+    if(ageDays>=days && idleDays>=inactDays) candidatos.push({c,lastEdit});
+  });
+  if(!candidatos.length) return;
+  // 2ª passada (assíncrona, só nos pré-candidatos — não no board inteiro):
+  // achado real relatado pelo usuário (card com comentário de 3 dias atrás
+  // arquivado sob uma regra de 45 dias). submitComment() grava o comentário
+  // num path PRÓPRIO (card_comments/{cardId}/...) e nunca toca
+  // card.editedAt — então um card com discussão ativa nos comentários, mas
+  // sem edição nos CAMPOS do card, contava como "parado" havia meses. Busca
+  // o comentário mais recente de cada pré-candidato antes de decidir de
+  // verdade — só nos poucos que já passaram no filtro de idade/edição, não
+  // no board inteiro (custo de leitura extra fica pequeno e proporcional).
+  const verificados=await Promise.all(candidatos.map(async ({c,lastEdit})=>{
+    let lastCommentTs=0;
+    try{
+      const snap=await fbGet(FB+'/card_comments/'+c.id);
+      const val=snap.val();
+      if(val) Object.values(val).forEach(cm=>{ const t=new Date(cm.ts).getTime(); if(!isNaN(t)&&t>lastCommentTs) lastCommentTs=t; });
+    }catch(e){}
+    const idleDaysReal=(now-Math.max(lastEdit,lastCommentTs))/86400000;
+    return {c, ok: idleDaysReal>=inactDays};
+  }));
+  let n=0;
+  const touchedIds=[];
+  verificados.forEach(({c,ok})=>{
+    if(!ok) return;
+    c.archived=true; c.archivedAt=new Date().toISOString();
+    recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
+    n++;
+    touchedIds.push(c.id);
   });
   if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }

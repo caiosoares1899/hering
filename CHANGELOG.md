@@ -3211,6 +3211,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.658-dev — 2026-09-14 — Fix severo: Arquivamento automático arquivava card com discussão ativa nos comentários
+
+Relato direto do usuário: card "Melhorias Maré Digital" (com comentário
+de 11/09) foi arquivado sozinho por uma regra configurada pra 45 dias
+sem atividade — bem antes do prazo.
+
+Causa raiz: `maybeAutoArchiveOldCards()` calculava "dias sem atividade"
+usando só `card.editedAt` — mas comentários (`submitComment()`) são
+gravados num path PRÓPRIO no Firebase (`card_comments/{cardId}/...`,
+Fase 1.1) e **nunca tocam `card.editedAt`**. Um card com discussão ativa
+só nos comentários (sem ninguém editar título/descrição/coluna) contava
+como "parado" há meses, mesmo com gente conversando nele a cada poucos
+dias — exatamente o cenário relatado.
+
+Fix: nova 2ª passada assíncrona, só nos cards que já passaram no filtro
+de idade/edição (não no board inteiro — custo de leitura extra fica
+pequeno e proporcional) — busca o comentário mais recente de cada
+pré-candidato e só confirma o arquivamento se `max(editedAt,
+últimoComentário)` também estiver além do limite configurado.
+
+**Fora do escopo desta rodada, documentado como risco conhecido**: a
+mesma limitação (editedAt não reflete comentários) também existe nos
+badges visuais de "card parado" (`makeCardEl()`) e em
+`checkAgingAutomations()` — ambos rodam por card a CADA render/dia,
+então estender a mesma checagem assíncrona ali teria custo bem maior
+(precisaria de um campo tipo `lastCommentAt` mantido no próprio card,
+atualizado a cada comentário — mudança de arquitetura maior, não
+implementada de bandeja).
+
 ### v8.30.657-dev — 2026-09-14 — /monitorarbugs nas notificações: Kudos/Agenda aprovada não navegavam ao clicar
 
 Achado real, pedido explícito ("roda /monitorarbugs nas notificações",
