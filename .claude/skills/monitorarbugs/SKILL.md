@@ -1106,6 +1106,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   antes de corrigir (dev tocando um caminho compartilhado). dev
   v8.30.657/painel-dev v3.46, PR #899.
 
+- **2026-09-14, Presença online (pedido genérico, "roda mais um
+  /monitorarbugs")**: sem achados — os 3 consumidores
+  (`_renderPresenceFromMap()` do kanban, `loadPresence()` do painel,
+  "👥 Equipe do quadro") usam consistentemente o mesmo timeout de 30s.
+  Observação de baixo risco documentada, não corrigida: presença de um
+  squad anterior (após trocar de squad na mesma sessão sem reload) nunca
+  é explicitamente removida do Firebase ao trocar — só fica inerte
+  (nunca aparece como "online" pra ninguém, já que os 3 consumidores
+  filtram por `ts` recente), então não é bug de comportamento, só bytes
+  parados (mais perto de `/otimizaçãoderotina`, não implementado aqui).
+- **2026-09-14, Lembretes (mesma rodada, achado real)**: técnica 1
+  (comparar caminhos paralelos de mutação do mesmo dado) —
+  `delLembrete()`/`dismissLembrete()` já liam o Firebase fresco antes de
+  escrever `lembretes_prop/{uid}` (comentário citando o "bug dos
+  fantasmas"), mas `addLembrete()` (mesmo dado, tipo `'proprio'`)
+  escrevia o array local direto. Pessoa com 2 abas/aparelhos podia
+  perder um lembrete adicionado numa aba se adicionasse outro na outra
+  antes do listener em tempo real propagar. Fix: mesmo padrão dos 2
+  irmãos. dev v8.30.658, PR #900.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

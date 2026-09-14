@@ -3211,6 +3211,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.659-dev — 2026-09-14 — /monitorarbugs em Lembretes: addLembrete() podia apagar lembrete próprio adicionado em outra aba
+
+Achado real, pedido genérico ("roda mais um /monitorarbugs"). Área
+"Presença online" auditada primeiro (código mais fresco depois da
+rodada de notificações) — sem achados, os 3 pontos de leitura
+(`_renderPresenceFromMap()`/`loadPainelNotifs()`.../"👥 Equipe do
+quadro") usam consistentemente o mesmo timeout de 30s; um achado
+incidental de baixo risco (entrada de presença de um squad antigo, após
+trocar de squad na mesma sessão, não é explicitamente removida do
+Firebase — só fica inerte, nunca aparece como "online" pra ninguém por
+causa do filtro de 30s) foi registrado como observação, não como bug
+(nenhum comportamento observável fica errado).
+
+Técnica 1 (comparar caminhos paralelos de mutação do mesmo dado) achou
+o bug real em Lembretes: `delLembrete()`/`dismissLembrete()` já leem o
+estado ATUAL do Firebase antes de escrever (comentário explícito citando
+o "bug dos fantasmas"), mas `addLembrete()` — mesmo dado
+(`lembretes_prop/{uid}`), mesmo tipo `'proprio'` — escrevia o array
+local direto (`fbSet(p, lembretesProprios)`), sem ler fresco primeiro.
+
+Cenário: pessoa com 2 abas/dispositivos abertos (ex.: notebook e
+celular) adiciona um lembrete próprio na aba A; antes do listener em
+tempo real propagar essa mudança pra aba B (janela pequena, mas real),
+adiciona outro lembrete na aba B — a escrita de B sobrescrevia o node
+inteiro com o array local (desatualizado, sem o lembrete de A), fazendo
+o lembrete de A sumir silenciosamente do Firebase.
+
+Fix: `addLembrete()` (branch `tipo==='proprio'`) passa a ler o Firebase
+fresco antes de escrever, mesmo padrão exato dos 2 irmãos.
+
 ### v8.30.658-dev — 2026-09-14 — Fix severo: Arquivamento automático arquivava card com discussão ativa nos comentários
 
 Relato direto do usuário: card "Melhorias Maré Digital" (com comentário
