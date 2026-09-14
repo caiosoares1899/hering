@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.658-dev</div>
+<div class="version">v8.30.659-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17758,8 +17758,24 @@ function addLembrete(){
   const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
     tipo, text, autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
   if(tipo==='proprio'){
+    // Lê o estado ATUAL do Firebase antes de escrever — mesmo padrão já
+    // usado em delLembrete()/dismissLembrete() pro MESMO dado (achado
+    // /monitorarbugs 2026-09-14, técnica 1: os 2 irmãos já tinham o fix,
+    // só addLembrete() escrevia o array local direto). Sem isso, um
+    // lembrete adicionado segundos antes em outra aba/dispositivo (que o
+    // listener em tempo real ainda não tinha propagado pra cá) podia ser
+    // apagado silenciosamente por essa escrita usando o array desatualizado.
     lembretesProprios.push(obj);
-    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+    const p=_lemPropPath();
+    if(p && window._fbReady){
+      window._get(window._ref(window._db,p)).then(snap=>{
+        const val=snap.val();
+        const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+        arr.push(obj);
+        lembretesProprios=arr;
+        window._set(window._ref(window._db,p), arr).catch(()=>{});
+      }).catch(()=>{});
+    }
   } else {
     // Escreve só o item novo (chave = obj.id), não o array inteiro — o
     // listener granular (child_added) atualiza `lembretes` sozinho quando o
