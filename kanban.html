@@ -2256,6 +2256,15 @@ input[type="date"]{-moz-appearance:textfield;}
 .timeline-collapse{margin-top:6px;}
 .timeline-collapse summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--txt2);display:flex;align-items:center;gap:6px;padding:6px 0;list-style:none;}
 .timeline-collapse summary::-webkit-details-marker{display:none;}
+/* Buckets progressivos (Atrasado/Hoje/Amanhã/…) viram <details> também —
+   pedido direto ("aquele collapse que você colocou na timeline no painel,
+   pode por no kanban tb"), mesmo padrão visual do .pt-chevron/.pt-bucket
+   do painel-dev.html (seta ▸ que rotaciona 90° quando aberto). */
+.timeline-collapse.meudia-sec{margin-bottom:10px;}
+.timeline-collapse .meudia-sec-hd{cursor:pointer;margin-bottom:0;padding:6px 0 6px 8px;list-style:none;}
+.timeline-collapse .meudia-sec-hd::-webkit-details-marker{display:none;}
+.timeline-chevron{display:inline-block;font-size:10px;color:var(--txt3);transition:transform .15s;}
+.timeline-collapse[open] .timeline-chevron{transform:rotate(90deg);}
 /* Divisor "🎯 marco de contexto" (evento do Calendário) entre cards da
    Timeline — ver _timelineEventMarkerHtml(). */
 .timeline-event-marker{font-size:10.5px;color:var(--txt3);text-align:center;padding:4px 0;margin:2px 0;cursor:pointer;opacity:.75;}
@@ -6147,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.641</div>
+<div class="version">v8.30.659</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10783,13 +10792,28 @@ function cardHasTag(card, tagId){
   return getCardTags(card).includes(tagId);
 }
 
+// Conta dias ÚTEIS (seg-sex) estritamente entre d1 (exclusive) e d2
+// (inclusive) — mesmo critério que a recorrência "weekdays" já usa
+// (dow===0||dow===6, só fim de semana, sem feriados por enquanto). Usada
+// pra mostrar "Xd atrasado" sem contar sáb/dom como dívida — card vencido
+// numa sexta só vira "1 dia atrasado" na segunda, não na sexta+3.
+function _diasUteisEntre(d1, d2){
+  let dias=0;
+  const cursor=new Date(d1);
+  while(cursor<d2){
+    cursor.setDate(cursor.getDate()+1);
+    const dow=cursor.getDay();
+    if(dow!==0 && dow!==6) dias++;
+  }
+  return dias;
+}
 function getDue(due, isDone){
   if(!due) return {cls:'',lbl:''};
   if(isDone) return {cls:'due-done',lbl:'✓ '+new Date(due+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})};
   const d=new Date(due+'T00:00:00'); d.setHours(0,0,0,0);
   const diff=Math.round((d-today)/86400000);
   const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  if(diff<0) return {cls:'due-late',lbl:`⚠ ${Math.abs(diff)}d atrasado`};
+  if(diff<0) return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
   if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
@@ -10818,8 +10842,15 @@ function makeCardEl(card){
   const div=document.createElement('div');
   // Card aging — limiares atrelados à duração da sprint configurada
   // 1 sprint sem edição = aged-1 (esmaece); 2 sprints = aged-2 (mais apagado + 💤)
+  // Achado real (/monitorarbugs, 2026-09-14): !card.paused — ⏸ Pausar card
+  // promete explicitamente "você não quer que isso conte contra as
+  // métricas de tempo do time NEM APAREÇA COMO ALARME pro resto do board"
+  // (Central de Ajuda), mas este esmaecimento (e os outros 3 lugares que
+  // compartilham o mesmo cálculo — checkAgingAutomations(), "Cards
+  // parados" de Insights, e o badge de aging por coluna logo abaixo) nunca
+  // excluíam cards pausados.
   let agingClass='';
-  if(!_isColDone(card.col)&&card.editedAt){
+  if(!_isColDone(card.col)&&card.editedAt&&!card.paused){
     const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
     const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
     if(ageDays>=sprintLen*2) agingClass=' aged-2';
@@ -10909,7 +10940,7 @@ function makeCardEl(card){
   // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
   // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
   let agingColBadge='';
-  if(!isDone && card.flow?.enteredAt?.[card.col]){
+  if(!isDone && !card.paused && card.flow?.enteredAt?.[card.col]){
     const limiar=(flowConfig.agingDays||{})[card.col];
     if(limiar>0){
       const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
@@ -11165,7 +11196,14 @@ function renderBoard(){
   // não seguem a exceção que só faz sentido dentro das colunas por raia.
   const ignoreOwner = raiaMode==='owner' && boardView!=='timeline';
   const ignoreTag = raiaMode==='tag' && boardView!=='timeline';
-  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag));
+  // Achado real (/monitorarbugs, 2026-09-14): faltava o equivalente pra raia
+  // de subtime — mesmo bug já corrigido antes pras raias de pessoa/tipo (ver
+  // comentário grande acima). Em raia por subtime, ter o filtro de Subtime
+  // TAMBÉM ativo (mesma dimensão que a raia já organiza) colapsava a raia
+  // inteira pra mostrar só 1 subtime — o oposto do que a raia serve pra
+  // fazer (comparar vários subtimes lado a lado).
+  const ignoreSubteam = raiaMode==='subteam' && boardView!=='timeline';
+  const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&passesFilter(c, ignoreOwner, ignoreTag, ignoreSubteam));
   // 📅 Timeline: substitui o board de colunas por uma lista cronológica por
   // prazo — reusa o MESMO activeCards (já filtrado) do board normal, pra
   // nunca divergir do que os filtros ativos mostrariam. Sai cedo: nada do
@@ -11321,9 +11359,27 @@ function _timelineEventMarkerHtml(ev){
 // "Sem prazo definido" fechava a seção na hora — o oposto do que a feature
 // promete ("sem isso a pessoa tem que abrir 12 modais pra limpar a raia
 // Sem prazo", comentário original de _timelineCardRow()).
-let _timelineCollapseOpen = { semPrazo:false, concluidoRecente:false };
+// Pedido direto do usuário ("aquele collapse que você colocou na timeline
+// no painel, pode por no kanban tb"): estendido de 2 chaves (semPrazo/
+// concluidoRecente) pros 6 buckets progressivos também (Atrasado/Hoje/
+// Amanhã/Resto da semana/Próxima semana/Depois) — mesmo padrão de
+// `_painelTimelineOpen` do painel-dev.html. Atrasado/Hoje começam abertos
+// (o que mais precisa de atenção agora), o resto começa fechado.
+let _timelineCollapseOpen = { atrasado:true, hoje:true, amanha:false, resto:false, prox:false, depois:false, semPrazo:false, concluidoRecente:false };
 function _timelineSetCollapseOpen(key, isOpen){
   _timelineCollapseOpen[key]=isOpen;
+}
+// "Recolher tudo/Expandir tudo" — mesmo botão/critério do painel-dev.html
+// (_painelTimelineToggleAll): se a maioria dos buckets já está aberta,
+// fecha todos; senão, abre todos. Precisa de um render completo (ao
+// contrário do toggle individual de 1 <details>, que o navegador já
+// reflete sozinho) porque mexe em vários de uma vez.
+function _timelineToggleAllBuckets(){
+  const chaves=Object.keys(_timelineCollapseOpen);
+  const abertos=chaves.filter(k=>_timelineCollapseOpen[k]).length;
+  const novoEstado = abertos < chaves.length/2;
+  chaves.forEach(k=>_timelineCollapseOpen[k]=novoEstado);
+  renderBoard();
 }
 function renderTimelineView(activeCards){
   const wrap=document.getElementById('timeline-view'); if(!wrap) return;
@@ -11387,14 +11443,21 @@ function renderTimelineView(activeCards){
   // só". Duplo clique no cabeçalho do grupo abre o feed de marcos (📰, ver
   // openTimelineFeed()) — "uma timeline como rede social" do que aconteceu
   // no board naquele dia.
-  const secao=(titulo,icone,lista,corBorda,dateStr,eventos)=>{
+  // key: identifica o bucket em _timelineCollapseOpen (estado colapsado/
+  // aberto lembrado entre renders — mesmo padrão de _painelTimelineOpen no
+  // painel-dev.html, pedido direto do usuário pra trazer esse collapse pro
+  // kanban também). O clique que abre/fecha já é o próprio <summary>; o
+  // ondblclick de Hoje/Amanhã continua funcionando por cima (2 clicks =
+  // 2 toggles nativos do <details> = volta pro estado de antes, sem mudar
+  // nada visível além do dblclick abrir o feed).
+  const secao=(key,titulo,icone,lista,corBorda,dateStr,eventos)=>{
     if(!lista.length && !(eventos&&eventos.length)) return '';
     const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
     const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
-    return `<div class="meudia-sec">
-    <div class="meudia-sec-hd" style="${hdStyle}"${dbl}>${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></div>
+    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen('${key}', this.open)">
+    <summary class="meudia-sec-hd" style="${hdStyle}"${dbl}><span class="timeline-chevron">▸</span> ${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></summary>
     ${comMarcos(lista,eventos)}
-  </div>`;
+  </details>`;
   };
   // Barra de topo: contagem rápida (orientação de relance) + entrada pros
   // filtros direto aqui dentro (pedido do usuário: "falta filtros" — os
@@ -11403,6 +11466,8 @@ function renderTimelineView(activeCards){
   // existe quando se está numa lista longa rolada pra baixo).
   const souEu = activeFilters.owner===window._currentUserInit;
   const temFiltro = _hasActiveFilters();
+  const chavesAbertas=Object.values(_timelineCollapseOpen).filter(Boolean).length;
+  const vaiExpandirTudo = chavesAbertas < Object.keys(_timelineCollapseOpen).length/2;
   const statsHtml = `<div class="timeline-toolbar">
     <div class="timeline-stats">
       <span title="Cards ativos elegíveis pra Timeline (fora de coluna Concluído)">📊 <b>${elegiveis.length}</b> ativo${elegiveis.length!==1?'s':''}</span>
@@ -11414,27 +11479,28 @@ function renderTimelineView(activeCards){
       <button type="button" class="btn btn-sm" style="${temFiltro?'color:var(--accent);border-color:var(--accent);':''}" onclick="toggleFilters()" title="Abrir/fechar o painel de Filtros (responsável, tag, prioridade, prazo…) — os mesmos filtros do board de colunas">🔭 Filtros</button>
       ${temFiltro?`<button type="button" class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="clearFilters()" title="Limpar todos os filtros">✕🗑️</button>`:''}
       <button type="button" class="btn btn-sm" onclick="abrirHistoricoPeriodo()" title="Ver o que aconteceu no board num dia específico ou período do passado — qualquer data, não só as da Timeline">📜 Histórico</button>
+      <button type="button" class="btn btn-sm" onclick="_timelineToggleAllBuckets()" title="Abre ou fecha todos os grupos de uma vez">${vaiExpandirTudo?'🔽 Expandir tudo':'🔼 Recolher tudo'}</button>
     </div>
   </div>`;
   let html=statsHtml;
-  html += secao('Atrasado','🔴',atrasados,'#ff6b6b');
-  html += secao('Hoje','📅',hojeGrupo,'#38b6ff',hojeStr,eventosNoDia(hojeStr));
-  html += secao('Amanhã','📅',amanhaGrupo,'#38b6ff',amanhaStr,eventosNoDia(amanhaStr));
-  html += secao('Resto da semana','🗓️',restoSemana,'#7ec8e3',null,eventosEntre(amanhaStr,fimSemanaStr));
-  html += secao('Próxima semana','🗓️',proxSemana,'#a78bfa',null,eventosEntre(fimSemanaStr,fimProxSemanaStr));
-  html += secao('Depois','⏳',depois,'#8899aa',null,eventosEntre(fimProxSemanaStr,'9999-12-31'));
+  html += secao('atrasado','Atrasado','🔴',atrasados,'#ff6b6b');
+  html += secao('hoje','Hoje','📅',hojeGrupo,'#38b6ff',hojeStr,eventosNoDia(hojeStr));
+  html += secao('amanha','Amanhã','📅',amanhaGrupo,'#38b6ff',amanhaStr,eventosNoDia(amanhaStr));
+  html += secao('resto','Resto da semana','🗓️',restoSemana,'#7ec8e3',null,eventosEntre(amanhaStr,fimSemanaStr));
+  html += secao('prox','Próxima semana','🗓️',proxSemana,'#a78bfa',null,eventosEntre(fimSemanaStr,fimProxSemanaStr));
+  html += secao('depois','Depois','⏳',depois,'#8899aa',null,eventosEntre(fimProxSemanaStr,'9999-12-31'));
   if(!atrasados.length && !hojeGrupo.length && !amanhaGrupo.length && !restoSemana.length && !proxSemana.length && !depois.length){
     html += `<div style="font-size:12px;color:var(--txt3);padding:10px 0 20px;">Nenhum card com prazo definido${semPrazo.length?' (fora "Sem prazo" abaixo)':' nesta squad'}.</div>`;
   }
   if(semPrazo.length){
     html += `<details class="timeline-collapse" ${_timelineCollapseOpen.semPrazo?'open':''} ontoggle="_timelineSetCollapseOpen('semPrazo', this.open)">
-      <summary>🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
+      <summary><span class="timeline-chevron">▸</span> 🗂 Sem prazo definido <span class="meudia-sec-n">${semPrazo.length}</span></summary>
       ${ordenaCronologico(semPrazo).map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
   if(concluidosRecentes.length){
     html += `<details class="timeline-collapse" ${_timelineCollapseOpen.concluidoRecente?'open':''} ontoggle="_timelineSetCollapseOpen('concluidoRecente', this.open)">
-      <summary>✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
+      <summary><span class="timeline-chevron">▸</span> ✅ Concluído recente <span class="meudia-sec-n">${concluidosRecentes.length}</span></summary>
       ${concluidosRecentes.map(c=>_timelineCardRow(c,hojeStr)).join('')}
     </details>`;
   }
@@ -11479,7 +11545,7 @@ function _timelineCardRow(card, hojeStr){
   let prazoMeta='';
   if(card.due){
     if(card.due<hojeStr){
-      const dias=Math.round((new Date(hojeStr+'T12:00:00')-new Date(card.due+'T12:00:00'))/86400000);
+      const dias=_diasUteisEntre(new Date(card.due+'T12:00:00'), new Date(hojeStr+'T12:00:00'));
       prazoMeta=` · <span style="color:#ff6b6b;font-weight:700;">${dias}d atrasado</span>`;
     } else if(card.due!==hojeStr){
       const lbl=new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
@@ -12546,7 +12612,7 @@ function _applyMeusCardsFixadoUI(){
   const btn = document.getElementById('tb-meus-cards');
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
-function passesFilter(card, ignoreOwner=false, ignoreTag=false){
+function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=false){
   if(!passesHybridView(card)) return false;
   if(!ignoreOwner&&activeFilters.owner){
     // Filtro "por usuário" deve pegar tanto o responsável quanto os
@@ -12565,7 +12631,7 @@ function passesFilter(card, ignoreOwner=false, ignoreTag=false){
   if(activeFilters.priority&&card.priority!==activeFilters.priority) return false;
   if(activeFilters.blocker&&!_cardIsBlocked(card)) return false;
   if(activeFilters.risco&&(!card.riscos||!card.riscos.length)) return false;
-  if(activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
+  if(!ignoreSubteam&&activeFilters.subteam&&!cardInSubteam(card, activeFilters.subteam)) return false;
   if(activeFilters.supercard&&!_cardIsSupercard(card)) return false;
   if(activeFilters.texto){
     // Mesmos campos que a busca geral (Ctrl+K/🔍) já usa em renderSearchResults()
@@ -12916,19 +12982,27 @@ function _autoArchiveDoneToday(){
   const today=new Date().toISOString().split('T')[0];
   return !!safeLS.getItem('autoarchive_'+ACTIVE_SQUAD+'_'+today);
 }
-function maybeAutoArchiveOldCards(){
+async function maybeAutoArchiveOldCards(){
+  // Achado real (/monitorarbugs, 2026-09-12): checa cfg.enabled ANTES de
+  // gravar a flag "já rodei hoje" — antes disso, a flag era gravada
+  // incondicionalmente (esta função roda 3s após todo carregamento do
+  // board, ver setTimeout perto de L11150), então ligar o arquivamento
+  // automático pela 1ª vez SEMPRE caía num dia já "consumido" pela mesma
+  // aba que a pessoa usou pra abrir ⚙ Config e ativar — o sweep só rodava
+  // no dia seguinte, sem aviso nenhum do motivo.
+  const cfg=archiveCfg||{};
+  if(!cfg.enabled) return;
   const today=new Date().toISOString().split('T')[0];
   const key='autoarchive_'+ACTIVE_SQUAD+'_'+today;
   if(safeLS.getItem(key)) return;
   safeLS.setItem(key,'1');
-  const cfg=archiveCfg||{};
-  if(!cfg.enabled) return;
   const days=parseInt(cfg.days||365);
   const inactDays=parseInt(cfg.inactivityDays!=null?cfg.inactivityDays:90);
   const excludedCols=new Set(cfg.excludedCols||[]);
   const now=Date.now();
-  let n=0;
-  const touchedIds=[];
+  // 1ª passada (síncrona, só com o que já está em memória): pré-candidatos
+  // pela idade/edição, igual antes.
+  const candidatos=[];
   cards.forEach(c=>{
     if(c.archived || !c.createdAt || excludedCols.has(c.col)) return;
     const createdS=c.createdAt.length<=10?c.createdAt+'T12:00:00':c.createdAt;
@@ -12940,12 +13014,36 @@ function maybeAutoArchiveOldCards(){
     if(isNaN(lastEdit)) lastEdit=created;
     const ageDays=(now-created)/86400000;
     const idleDays=(now-lastEdit)/86400000;
-    if(ageDays>=days && idleDays>=inactDays){
-      c.archived=true; c.archivedAt=new Date().toISOString();
-      recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
-      n++;
-      touchedIds.push(c.id);
-    }
+    if(ageDays>=days && idleDays>=inactDays) candidatos.push({c,lastEdit});
+  });
+  if(!candidatos.length) return;
+  // 2ª passada (assíncrona, só nos pré-candidatos — não no board inteiro):
+  // achado real relatado pelo usuário (card com comentário de 3 dias atrás
+  // arquivado sob uma regra de 45 dias). submitComment() grava o comentário
+  // num path PRÓPRIO (card_comments/{cardId}/...) e nunca toca
+  // card.editedAt — então um card com discussão ativa nos comentários, mas
+  // sem edição nos CAMPOS do card, contava como "parado" havia meses. Busca
+  // o comentário mais recente de cada pré-candidato antes de decidir de
+  // verdade — só nos poucos que já passaram no filtro de idade/edição, não
+  // no board inteiro (custo de leitura extra fica pequeno e proporcional).
+  const verificados=await Promise.all(candidatos.map(async ({c,lastEdit})=>{
+    let lastCommentTs=0;
+    try{
+      const snap=await fbGet(FB+'/card_comments/'+c.id);
+      const val=snap.val();
+      if(val) Object.values(val).forEach(cm=>{ const t=new Date(cm.ts).getTime(); if(!isNaN(t)&&t>lastCommentTs) lastCommentTs=t; });
+    }catch(e){}
+    const idleDaysReal=(now-Math.max(lastEdit,lastCommentTs))/86400000;
+    return {c, ok: idleDaysReal>=inactDays};
+  }));
+  let n=0;
+  const touchedIds=[];
+  verificados.forEach(({c,ok})=>{
+    if(!ok) return;
+    c.archived=true; c.archivedAt=new Date().toISOString();
+    recordHistory(c,'arquivado automaticamente ('+days+'d de idade, '+inactDays+'d sem atividade)');
+    n++;
+    touchedIds.push(c.id);
   });
   if(n>0){ fbSaveAll(undefined, touchedIds); renderBoard(); showToast('🗄 '+n+' card(s) arquivados automaticamente (regra de arquivamento por idade).'); }
 }
@@ -13969,10 +14067,17 @@ function openCard(id){
   editingId=id; const c=cards.find(x=>x.id===id); if(!c) return;
   _registrarSinalAtrasado(c); // personalização baseada em rotina, caso #5
   // Marca card automático (recorrente/agendado) como visto — para de relembrar
+  // Achado real (/monitorarbugs, 2026-09-14): escrevia via fbSet() direto
+  // em 'cards/'+idx (posição LOCAL do array, cards.findIndex()) — mesma
+  // classe de bug já documentada e evitada em fbSaveCard() (a posição
+  // local pode desalinhar da chave real no Firebase se outra pessoa criou/
+  // excluiu/reordenou algo nesse meio-tempo, gravando _autoVisto:true no
+  // card ERRADO, sem erro visível nenhum). fbSaveCard(c) já resolve a
+  // chave real via window._cardsByKey (com fallback seguro), mesmo helper
+  // usado em todo o resto do arquivo pra escrita pontual de 1 card.
   if(c._autoVisto===false){
     c._autoVisto = true;
-    const idx = cards.findIndex(x=>x.id===id);
-    if(idx>=0 && window._fbReady){ fbSet(FB+'/cards/'+idx+'/_autoVisto', true); }
+    if(window._fbReady) fbSaveCard(c).catch(()=>{});
   }
   // Se camp-ov estiver aberto, elevar card-ov acima dele
   const _cov=document.getElementById('card-ov');
@@ -14606,6 +14711,22 @@ function saveCard(){
     const _prevTagsSave=(c.tags||[]).slice(); // ver comentário no scheduleAutoSave() sobre tag_added/submarca_set
     const _prevOwnerSave=c.owner||'', _prevParticipantsSave=(c.participants||[]).slice();
     const _prevBlockerSave=c.blocker||false; // ⏱️ ver _settleBlockedTag()
+    // Achado real (/monitorarbugs, 2026-09-14): a linha #m-blocker-row fica
+    // visível em openCard() por 2 motivos — _cardIsBlocked(c) (mode-aware)
+    // OU c.blockerReason ter texto (mesmo residual, de um impedimento já
+    // resolvido — nada em modo COLUNA limpa esse campo ao sair da coluna
+    // Impedimentos, só o auto-desimpedimento em modo TAG faz isso, ver
+    // recordMove()). Derivar c.blocker cru da visibilidade da linha (sem
+    // checar o modo) fazia QUALQUER card que já passou pela coluna
+    // Impedimentos com um motivo digitado voltar com c.blocker=true pra
+    // sempre depois de sair de lá — mesmo nunca mais aparecendo bloqueado
+    // no board (_cardIsBlocked() ignora c.blocker em modo coluna) — e
+    // _settleBlockedTag() abria um episódio de "tempo bloqueado" fantasma
+    // que nunca fechava, inflando ⏱️ Tempo bloqueado (Insights) em
+    // silêncio. Em modo coluna, c.blocker não é fonte de verdade nenhuma
+    // (recordMove() já cobre o tempo bloqueado de verdade por lá) — só
+    // deriva/mantém o flag em modo tag.
+    const _blockerRowOn=document.getElementById('m-blocker-row')?.style.display!=='none';
     Object.assign(c,{title,tags:editingTags.slice(),tag:(editingTags[0]||''),col:_newCol,
       owner:document.getElementById('m-owner').value,demandante:document.getElementById('m-demandante')?.value||'',due:document.getElementById('m-due').value,noDue:_mNoDue,
       desc:document.getElementById('m-desc').value,descsExtra:_cleanExtraDescs(),po:document.getElementById('m-po').value,
@@ -14624,14 +14745,14 @@ function saveCard(){
       // que não estão na lista — o campo antigo fica intacto até loadComments()
       // migrá-lo em background na próxima vez que alguém abrir esse card.
       linkedCards:editingLinkedCards.map(l=>l.id),
-      blocker:document.getElementById('m-blocker-row')?.style.display!=='none',
+      blocker: blockerMode==='tag' ? _blockerRowOn : c.blocker,
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td,
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
-    _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+    if(blockerMode==='tag') _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
@@ -17498,7 +17619,7 @@ function computeAvisosQuadro(){
     if(c.due && !_isColDone(c.col)){
       const d=new Date(c.due+'T00:00:00'); d.setHours(0,0,0,0);
       const diff=Math.round((d-today)/86400000);
-      if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${Math.abs(diff)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
+      if(diff<0) out.push({tipo:'quadro', urgent:true, text:`⏰ Atrasado ${_diasUteisEntre(d,today)}d: "${titulo}"`, cardId:c.id, sub:'prazo vencido', ts:c.due});
       else if(diff===0) out.push({tipo:'quadro', urgent:true, text:`⚡ Vence hoje: "${titulo}"`, cardId:c.id, sub:'prazo é hoje', ts:c.due});
       else if(diff<=2) out.push({tipo:'quadro', urgent:false, text:`📅 Vence em ${diff}d: "${titulo}"`, cardId:c.id, sub:'prazo próximo', ts:c.due});
     }
@@ -17637,8 +17758,24 @@ function addLembrete(){
   const obj={ id:'l'+Date.now()+Math.random().toString(36).slice(2,6),
     tipo, text, autor:u?.displayName||'?', autorUid:u?.uid||'', init:window._currentUserInit||'', ts:new Date().toISOString() };
   if(tipo==='proprio'){
+    // Lê o estado ATUAL do Firebase antes de escrever — mesmo padrão já
+    // usado em delLembrete()/dismissLembrete() pro MESMO dado (achado
+    // /monitorarbugs 2026-09-14, técnica 1: os 2 irmãos já tinham o fix,
+    // só addLembrete() escrevia o array local direto). Sem isso, um
+    // lembrete adicionado segundos antes em outra aba/dispositivo (que o
+    // listener em tempo real ainda não tinha propagado pra cá) podia ser
+    // apagado silenciosamente por essa escrita usando o array desatualizado.
     lembretesProprios.push(obj);
-    const p=_lemPropPath(); if(p) fbSet(p, lembretesProprios);
+    const p=_lemPropPath();
+    if(p && window._fbReady){
+      window._get(window._ref(window._db,p)).then(snap=>{
+        const val=snap.val();
+        const arr=val?(Array.isArray(val)?val:Object.values(val)).filter(Boolean):[];
+        arr.push(obj);
+        lembretesProprios=arr;
+        window._set(window._ref(window._db,p), arr).catch(()=>{});
+      }).catch(()=>{});
+    }
   } else {
     // Escreve só o item novo (chave = obj.id), não o array inteiro — o
     // listener granular (child_added) atualiza `lembretes` sozinho quando o
@@ -17906,19 +18043,41 @@ function _renderKudosReactions(k){
   return `<div class="kr-row">${chips}${addBtn}</div>`;
 }
 function toggleKudosReaction(id, scope, emoji){
-  const arr = scope==='geral' ? kudosGeral : kudosSquad;
-  const k=arr.find(x=>x.id===id); if(!k) return;
   const uid=window._currentUser?.uid; if(!uid) return;
-  if(!k.reactions) k.reactions={};
-  if(k.reactions[uid]===emoji) delete k.reactions[uid];
-  else k.reactions[uid]=emoji;
-  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
-  window._set(window._ref(window._db,path), arr).catch(()=>{});
-  renderKudos();
-  // notifica o autor do kudo que reagiram (se não for ele mesmo)
-  if(k.reactions[uid] && k.fromUid && k.fromUid!==uid){
-    createNotif(k.fromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null);
+  // Otimista: reflete local pra resposta instantânea. Quem decide o valor
+  // DEFINITIVO é a transaction abaixo, calculada sobre o dado FRESCO do
+  // servidor a cada tentativa — nunca a partir do array em cache local, que
+  // só é reatualizado por um poll de 3min (achado /monitorarbugs
+  // 2026-09-14, mesma classe do fix de Agentes Externos 2026-08-29: "merge
+  // a partir de cache local em vez de ler fresco" já causava perda em
+  // corrida ali; aqui a janela de corrida é o poll inteiro, não só a UI).
+  const arrLocal = scope==='geral' ? kudosGeral : kudosSquad;
+  const kLocal=arrLocal.find(x=>x.id===id);
+  if(kLocal){
+    if(!kLocal.reactions) kLocal.reactions={};
+    if(kLocal.reactions[uid]===emoji) delete kLocal.reactions[uid];
+    else kLocal.reactions[uid]=emoji;
   }
+  renderKudos();
+  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  let notifyFromUid=null, adicionou=false;
+  window._runTransaction(window._ref(window._db,path), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    const k = arr.find(x=>x.id===id);
+    if(!k) return arr; // apagado por outra pessoa nesse meio tempo — não recria
+    if(!k.reactions) k.reactions={};
+    if(k.reactions[uid]===emoji){ delete k.reactions[uid]; }
+    else { k.reactions[uid]=emoji; adicionou=true; notifyFromUid=k.fromUid; }
+    return arr;
+  }).then(()=>{
+    if(adicionou && notifyFromUid && notifyFromUid!==uid){
+      // extra.link='pessoas' (achado /monitorarbugs 2026-09-14, mesma classe
+      // do fix de 'rascunho'): sem isso, clicar nessa notificação no sino
+      // PRÓPRIO do painel não navegava pra lugar nenhum — loadPainelNotifs()
+      // lê n.link direto do objeto salvo, não deriva de `type`.
+      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'});
+    }
+  }).catch(()=>{});
 }
 function addKudos(){
   const para=document.getElementById('kudos-para').value;
@@ -17930,17 +18089,22 @@ function addKudos(){
   const obj={ id:'k'+Date.now()+Math.random().toString(36).slice(2,6),
     fromUid:u.uid, fromNome:u.displayName||u.email||'?', fromInit:window._currentUserInit||'?', fromFoto:u.photoURL||'',
     toInit:para, toNome:m?.name||'', toUid:m?.uid||'', texto, scope:_kudosScope, reactions:{}, ts:new Date().toISOString() };
-  if(_kudosScope==='geral'){
-    kudosGeral.push(obj);
-    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(e=>toast('Erro: '+e.message));
-  } else {
-    kudosSquad.push(obj);
-    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(e=>toast('Erro: '+e.message));
-  }
+  // Push local é só otimista (UI instantânea) — a persistência de verdade
+  // usa transaction sobre o valor FRESCO do servidor (ver achado
+  // /monitorarbugs 2026-09-14 em toggleKudosReaction()), pra não sobrescrever
+  // Estrelas que outra pessoa tenha adicionado enquanto o poll de 3min
+  // ainda não trouxe elas pro array local.
+  const _kudosPath = _kudosScope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  if(_kudosScope==='geral') kudosGeral.push(obj); else kudosSquad.push(obj);
+  window._runTransaction(window._ref(window._db,_kudosPath), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(obj);
+    return arr;
+  }).catch(e=>toast('Erro: '+e.message));
   // Notifica o agraciado (reaproveita o sistema de notificações)
   const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
-    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null);
+    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'});
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
   fbGet('kanban/usuarios_publicos').then(snap=>{
@@ -17950,7 +18114,7 @@ function addKudos(){
       const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
       if(isAdmUser({email:udata.email, uid}) || role==='po'){
         createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
-          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null);
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'});
       }
     });
   }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
@@ -17962,13 +18126,15 @@ function addKudos(){
   toast('⭐ Estrela enviada para '+(m?.name?.split(' ')[0]||para)+'!');
 }
 function delKudos(id, scope){
-  if(scope==='geral'){
-    kudosGeral=kudosGeral.filter(k=>k.id!==id);
-    window._set(window._ref(window._db,'kanban/painel/kudos_geral'), kudosGeral).catch(()=>{});
-  } else {
-    kudosSquad=kudosSquad.filter(k=>k.id!==id);
-    window._set(window._ref(window._db,'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos'), kudosSquad).catch(()=>{});
-  }
+  // Mesmo achado/fix de addKudos()/toggleKudosReaction() — transaction sobre
+  // o valor fresco do servidor, não sobre o array local (poll de 3min).
+  const path = scope==='geral' ? 'kanban/painel/kudos_geral' : 'kanban/squads/'+ACTIVE_SQUAD+'/dados/kudos';
+  if(scope==='geral') kudosGeral=kudosGeral.filter(k=>k.id!==id);
+  else kudosSquad=kudosSquad.filter(k=>k.id!==id);
+  window._runTransaction(window._ref(window._db,path), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(k=>k.id!==id);
+  }).catch(()=>{});
   renderKudos();
 }
 function updKudosBadge(){
@@ -19243,15 +19409,29 @@ function _cardTempos(c){
   return { lead, cycle, done: !!doneMs };
 }
 // Tempo (horas) que um card passou em cada coluna, a partir do flow.log
+// Achado real (/monitorarbugs, 2026-09-12, "⏸ Pausar card"): diferente de
+// _cardTempos() (lead/cycle time), que já desconta _cardPausedMs() inteiro,
+// aqui só dá pra descontar a pausa ATIVA agora (timestamp exato conhecido,
+// cai sempre no último trecho ainda aberto) — pausas passadas já encerradas
+// não têm registro de EM QUAL coluna aconteceram (card.pausedMs é só soma
+// total acumulada, não uma lista de intervalos), então ficam de fora do
+// detalhamento por coluna. Limitação conhecida, aceita de propósito (mesma
+// decisão já tomada pra blockedMs/atrasadoMs, ver comentário em
+// _settleBlockedTag() perto de L30297) — corrigir de verdade exigiria
+// guardar histórico de intervalos de pausa, mudança de schema fora de
+// escopo aqui.
 function _cardTempoPorColuna(c){
   const out={};
   const log=c.flow?.log; if(!log||!log.length) return out;
   const now=Date.now();
+  const pausaAtivaMs = (c.paused && c.pausedAt) ? Math.max(0, now-new Date(c.pausedAt).getTime()) : 0;
   for(let i=0;i<log.length;i++){
     const entrada=new Date(log[i].at).getTime();
+    const isUltimoTrechoAberto = (i+1>=log.length) && !c.flow?.doneAt;
     const saida = (i+1<log.length) ? new Date(log[i+1].at).getTime() : (c.flow?.doneAt? new Date(c.flow.doneAt).getTime() : now);
     const col=log[i].to;
-    const h=Math.max(0,(saida-entrada)/3600000);
+    let h=Math.max(0,(saida-entrada)/3600000);
+    if(isUltimoTrechoAberto && pausaAtivaMs) h=Math.max(0, h-pausaAtivaMs/3600000);
     out[col]=(out[col]||0)+h;
   }
   return out;
@@ -19557,9 +19737,12 @@ function renderBoardDataInsights(){
   const okrPorCol=columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({label:col.name||col.id,count:okrCards.filter(c=>c.col===col.id).length,color:col.color||'#38b6ff'}));
 
   // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
+  // !c.paused — achado real (/monitorarbugs, 2026-09-14), mesmo motivo dos
+  // outros 3 pontos que fazem esta conta: ⏸ Pausar card promete "não
+  // aparece como alarme pro resto do board".
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
-  const parados=activeCards.filter(c=>c.editedAt).map(c=>{
+  const parados=activeCards.filter(c=>c.editedAt&&!c.paused).map(c=>{
     const editedD=new Date(c.editedAt+'T00:00:00');
     const ageDays=Math.round((hojeAging-editedD)/86400000);
     return {c, ageDays};
@@ -20821,8 +21004,17 @@ async function setCampViewMode(mode){
 // memória pra não rebuscar em aberturas seguintes na mesma sessão.
 // ═══════════════════════════════════════════════════════
 let _meuDiaCrossData = {}; // sqId -> {cards, columns, doneCols}
+// Achado real (/monitorarbugs, 2026-09-14): antes só buscava squads AINDA
+// não cacheados (!_meuDiaCrossData[sq]) — cada squad de fora era lido 1x
+// por sessão inteira e nunca mais, mesmo com openMeuDia() mostrando
+// "⏳ Carregando..." (e de fato chamando esta função) toda vez que o
+// painel abre de novo. Card marcado como concluído/reatribuído por outra
+// pessoa em outro squad ficava desatualizado no Meu Dia pelo resto da
+// sessão, não importa quantas vezes reabrisse. Passou a buscar TODOS os
+// squads de fora sempre — custo é 1 leitura por squad, só quando a pessoa
+// abre o painel manualmente (ação explícita, não polling automático).
 async function _loadMeuDiaCrossSquads(){
-  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD && !_meuDiaCrossData[sq]);
+  const outros = Object.keys(SQUAD_META_LIVE).filter(sq=>sq!==ACTIVE_SQUAD);
   if(!outros.length) return;
   await Promise.all(outros.map(sq=>
     window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
@@ -20925,7 +21117,13 @@ function renderMeuDia(){
   // regra escrita e vira armadilha pra qualquer mudança futura que passe
   // a tocar esses campos.
   const all = _meuDiaAllCards().filter(c=>!c.archived && !c.agenteHotline);
-  const meus = all.filter(c=>c.owner===meuInit || (c.participants||[]).includes(meuInit));
+  // Achado real (/monitorarbugs, 2026-09-14): faltava o fallback pro campo
+  // legado `participantes` que passesFilter() (~L12606), o autocomplete de
+  // @menção (~L17509) e o próprio lerCard.js do orquestrador (server-side)
+  // já tratam como dado ainda vivo — card com só `participantes` (sem
+  // `participants`) aparecia em busca/filtro/no resumo que o Agente Ágil lê,
+  // mas sumia do Meu Dia de quem estava nele.
+  const meus = all.filter(c=>c.owner===meuInit || (c.participants||c.participantes||[]).includes(meuInit));
   const hojeStr = _localDateStrBoard(new Date());
   const semanaLimite = new Date(); semanaLimite.setDate(semanaLimite.getDate()+7);
   const semanaLimiteStr = _localDateStrBoard(semanaLimite);
@@ -22364,8 +22562,11 @@ function processRelembreteAuto(){
       cardId:card.id, ts:new Date().toISOString() };
     lembretesProprios.push(obj); lemPropMudou=true;
     card._autoRelembradoEm=hojeStr;
-    const idx=cards.findIndex(x=>x.id===card.id);
-    if(idx>=0) fbSet(FB+'/cards/'+idx+'/_autoRelembradoEm', hojeStr);
+    // Achado real (/monitorarbugs, 2026-09-14) — mesmo bug do openCard()
+    // (_autoVisto): fbSet('cards/'+idx+...) usava a posição LOCAL do
+    // array como chave, podia desalinhar da chave real no Firebase e
+    // gravar em cima do card ERRADO. fbSaveCard() já resolve a chave real.
+    fbSaveCard(card).catch(()=>{});
     // notifica o responsável também
     if(card.owner){
       const uid=getUidByInit(card.owner);
@@ -25367,7 +25568,7 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      {src:new URL('favicon-dev.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
       // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
       // 'monochrome' (silhueta branca em fundo transparente, o sistema
       // aplica a própria cor por cima), o Android não consegue retintar o
@@ -27005,6 +27206,21 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
     if(typeof processGcalQueueForAdmin==='function') processGcalQueueForAdmin();
     return;
   }
+  // Agenda aprovada (quem pediu a conexão é avisado) — mesma classe de
+  // achado do gcal_pending acima, achada numa rodada nova de
+  // /monitorarbugs (2026-09-14): cardId sempre null pra esse tipo, sem
+  // tratamento nenhum aqui, clicar não fazia nada além de marcar como lida.
+  if(type==='gcal_approved'){
+    openCal();
+    return;
+  }
+  // Kudos (Estrela do Mar) — reação/recebimento/monitoramento ADM sempre
+  // têm cardId null (achado da mesma rodada acima): clicar não abria o
+  // drawer de Kudos, só fechava o painel de notificações em silêncio.
+  if(type==='kudos' || type==='kudos_monitor'){
+    openKudos();
+    return;
+  }
   if(!cardId) return;
   // Notificação de outro squad (ex.: menção de alguém trabalhando em outro
   // board) — antes isso não fazia NADA além de marcar como lida, e a pessoa
@@ -27346,11 +27562,24 @@ function checkAgingAutomations(){
   const lastCheck=safeLS.getItem('lastAgingCheck_'+ACTIVE_SQUAD);
   if(lastCheck===todayStr) return;
   if(!_pastDailyTriggerSP()) return; // ainda não passou das 9h (SP) hoje — tenta de novo mais tarde
-  safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
+  // Achado real (/monitorarbugs, 2026-09-14) — mesma classe do bug já
+  // corrigido em maybeAutoArchiveOldCards() (2026-09-12): checa se existe
+  // regra "aging" ativa ANTES de gravar a flag "já rodei hoje". Antes, a
+  // flag gravava incondicionalmente — squad SEM regra de aging (comum,
+  // Fase 2 é opt-in) marcava o dia como "checado" mesmo sem fazer nada; se
+  // o PO criasse a 1ª regra de aging horas depois, ficava sem efeito até
+  // amanhã. Aqui é ainda pior que no arquivamento: como o trigger só
+  // dispara no dia EXATO em que um card cruza o limiar (ageDays===sprintLen,
+  // não repete depois), qualquer card que cruzasse o limiar justamente
+  // nesse dia perdia a checagem PRA SEMPRE, não só adiada.
   if(!autoRules.some(r=>r.active && r.trigger==='aging')) return;
+  safeLS.setItem('lastAgingCheck_'+ACTIVE_SQUAD, todayStr);
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hoje=new Date(); hoje.setHours(0,0,0,0);
-  cards.filter(c=>!c.archived && !_isColDone(c.col) && c.editedAt).forEach(card=>{
+  // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
+  // promete "não aparece como alarme pro resto do board" (Central de
+  // Ajuda), mas o trigger 'aging' nunca excluía card pausado.
+  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && c.editedAt).forEach(card=>{
     const editedD=new Date(card.editedAt+'T00:00:00');
     const ageDays=Math.round((hoje-editedD)/86400000);
     if(ageDays===sprintLen) runAutoRules('aging', card.id);
@@ -30565,7 +30794,13 @@ function ctxBlockTag(){
 let _undoStack = []; // stack de estados anteriores
 
 function saveUndo(label){
-  _undoStack.push({cards:JSON.parse(JSON.stringify(cards)), label});
+  // columns junto do snapshot — achado real (/monitorarbugs, 2026-09-14):
+  // "reordenar colunas" (mouse e touch) chama saveUndo() depois de mutar
+  // columns[], mas até aqui o snapshot só guardava cards — Ctrl+Z mostrava
+  // "↩ Desfeito: reordenar colunas" (como se tivesse funcionado) e a ordem
+  // nunca voltava, além de disparar um fbSaveAll() de cards à toa (sem
+  // nenhum benefício, já que cards nem tinha mudado).
+  _undoStack.push({cards:JSON.parse(JSON.stringify(cards)), columns:JSON.parse(JSON.stringify(columns)), label});
   if(_undoStack.length > 10) _undoStack.shift(); // máx 10 estados
   showUndoBtn(label);
 }
@@ -30585,14 +30820,48 @@ function hideUndoBtn(){
 function doUndo(){
   if(!_undoStack.length) return;
   const prev=_undoStack.pop();
-  const before=cards;
-  cards=prev.cards;
-  // touchedIds: diferença de conteúdo entre o estado atual (before, que está
-  // sendo descartado) e o estado restaurado (cards) — só esses ids precisam
-  // de updatedAt novo pra outros clientes perceberem a mudança real.
-  const beforeById={}; before.forEach(c=>{ if(c&&c.id) beforeById[c.id]=c; });
-  const touchedIds=cards.filter(c=>c&&c.id && JSON.stringify(c)!==JSON.stringify(beforeById[c.id])).map(c=>c.id);
-  fbSaveAll(undefined, touchedIds); renderBoard();
+  // Escrita cirúrgica por card (achado real /monitorarbugs 2026-09-14):
+  // antes, isto trocava `cards` pelo array INTEIRO do snapshot e chamava
+  // fbSaveAll() (reescreve a árvore /cards completa) — qualquer card criado
+  // ou editado por OUTRA pessoa depois do saveUndo() correspondente era
+  // apagado/revertido em silêncio, porque o snapshot antigo simplesmente
+  // não tinha esse card. Sem limite de tempo: a pilha guarda até 10 estados
+  // e Ctrl+Z funciona mesmo bem depois do toast sumir (6s) — minutos de
+  // trabalho alheio podiam ir junto. Agora: calcula só os cards que DE FATO
+  // mudam entre o snapshot restaurado e o estado ATUAL ao vivo (já
+  // sincronizado com o Firebase) e escreve só esses, um a um, via
+  // fbSaveCard() — mesma proteção que fbSaveCard() já dá contra pisar em
+  // edição concorrente alheia em qualquer outro ponto do app. Qualquer card
+  // intocado (inclusive um que outra pessoa criou depois do snapshot)
+  // permanece exatamente como está, local e remoto.
+  // Risco residual, não eliminado por completo (documentado, não é o
+  // escopo desta correção): se uma das cartas TOCADAS por ESTE undo
+  // específico também foi editada por outra pessoa nesse meio-tempo, essa
+  // edição pontual ainda pode ser sobrescrita — corrigir isso por completo
+  // exigiria undo por card de verdade (cada um dos ~21 call sites de
+  // saveUndo() informando qual card está tocando), registrado como
+  // recomendação futura, não implementado agora.
+  const currentById={}; cards.forEach(c=>{ if(c&&c.id) currentById[c.id]=c; });
+  const prevById={}; (prev.cards||[]).forEach(c=>{ if(c&&c.id) prevById[c.id]=c; });
+  const touchedIds=(prev.cards||[]).filter(pc=>{
+    if(!pc||!pc.id) return false;
+    const cur=currentById[pc.id];
+    return !cur || JSON.stringify(cur)!==JSON.stringify(pc);
+  }).map(pc=>pc.id);
+  const touchedSet=new Set(touchedIds);
+  // Remonta `cards`: mantém tudo que não foi tocado exatamente como está
+  // (ao vivo), troca só as entradas tocadas pela versão restaurada.
+  cards = cards.filter(c=>!(c&&c.id&&touchedSet.has(c.id)));
+  touchedIds.forEach(id=>{ cards.push(prevById[id]); });
+  touchedIds.forEach(id=>{ fbSaveCard(cards.find(c=>c.id===id)); });
+  // Restaura columns também, se o snapshot registrou uma ordem diferente da
+  // atual (ver comentário em saveUndo()) — sem isso, desfazer "reordenar
+  // colunas" nunca movia nada de volta.
+  if(prev.columns && JSON.stringify(prev.columns)!==JSON.stringify(columns)){
+    columns=prev.columns;
+    fbSet(FB+'/columns', columns);
+  }
+  renderBoard();
   // Se o modal do card estava aberto, os campos em tela (descrição, checklist, etc.)
   // não se atualizam sozinhos com o renderBoard() — sem isso, o "Desfazer" parecia não
   // fazer nada (o Firebase voltava, mas a tela continuava com o texto novo, e qualquer
@@ -31539,12 +31808,12 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon.png aqui; vira favicon.png
+// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
 // se/quando este trecho for promovido pra kanban.html) uma única vez, na
 // carga do script — antes de qualquer troca acontecer — pra sempre saber
 // pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
 // duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
-const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
+const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon-dev.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
   if(!link) return;
@@ -31696,7 +31965,10 @@ function _themeBtnPointerUp(){
   if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
 }
 function toggleViceCity(){
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  // Mesmo achado do comentário grande acima de onThemeBtnClick() — vale
+  // aqui também: um long-press durante a banda automática da tarde não
+  // pode ser lido como "já tá no easter egg, então sai dele".
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   _disableThemeAutoIfOn();
   safeLS.setItem('mare_theme_before_vice', document.documentElement.getAttribute('data-theme') || '');
   safeLS.setItem('mare_theme_variant_before_vice', document.documentElement.getAttribute('data-theme-variant') || '');
@@ -31733,10 +32005,23 @@ function exitViceCity(){
 // propósito) — e o clique que dispara logo depois de um long-press bem
 // sucedido (_viceLongPressFired) é ignorado, senão entrar em Vice City já
 // sairia de novo no mesmo gesto.
+// Achado real (/monitorarbugs, 2026-09-14): _currentTheme()==='vice' sozinho
+// não distingue o easter egg (toggleViceCity(), manual) da banda normal das
+// 12h-18h do 🕐 Tema automático (_applyAutoTheme(), também escreve
+// data-theme="vice") — os 3 handlers abaixo usavam só isso pra decidir "a
+// pessoa tá no easter egg, clique deve SAIR dele" via exitViceCity(). Com o
+// automático ligado durante a tarde, um clique normal no botão desligava o
+// automático sem pedir e restaurava mare_theme_before_vice (lixo de uma
+// visita antiga ao easter egg, ou vazio), com toast de "De volta pra..."
+// mesmo a pessoa nunca tendo entrado no easter egg. toggleViceCity() SEMPRE
+// desliga o automático ao entrar (ver _disableThemeAutoIfOn() ali) — então
+// "vice de verdade, não é banda automática" é sempre !_isThemeAutoOn()
+// também, com segurança.
+function _isViceCityEasterEggAtivo(){ return _currentTheme()==='vice' && !_isThemeAutoOn(); }
 let _themeClickTimer=null;
 function onThemeBtnClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){
+  if(_isViceCityEasterEggAtivo()){
     if(_themeClickTimer) return;
     _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
     return;
@@ -31747,12 +32032,12 @@ function onThemeBtnClick(){
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleThemeVariant();
 }
 function _mobileThemeRowClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
-  if(_currentTheme()==='vice'){ exitViceCity(); return; }
+  if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleTheme();
 }
 _applyThemeButtonIcon(); // sincroniza o ícone do botão com o tema já aplicado no <head>
@@ -32270,6 +32555,22 @@ function setDependsOn(parentId){
     showToast('⚠ Não dá pra vincular — criaria um ciclo de dependência.');
     return;
   }
+  // Achado real (/monitorarbugs, 2026-09-14): esta função também é usada
+  // pra TROCAR de pai (o card pode já ter um dependsOn anterior — o menu
+  // "🔗 Vincular a outro card" fica disponível mesmo já vinculado, ver
+  // #m-depends-bar/menu de dependências), mas nunca limpava a referência
+  // no pai ANTIGO — diferente de unlinkDependsOn(), que já faz essa
+  // limpeza certinho. O pai antigo ficava com um "dependente fantasma"
+  // pra sempre (mesmo depois do card ter migrado pra outro pai),
+  // corrompendo buildDepChains()/renderDepMap() (mostrava o card como
+  // filho de 2 pais ao mesmo tempo) e _dependsDescendants() (bloqueava
+  // vínculos futuros legítimos por achar que ainda era um ciclo).
+  const _oldParentId = card.dependsOn;
+  let _oldParent = null;
+  if(_oldParentId && _oldParentId!==parentId){
+    _oldParent = cards.find(c=>c.id===_oldParentId);
+    if(_oldParent?.dependents) _oldParent.dependents = _oldParent.dependents.filter(id=>id!==editingId);
+  }
   card.dependsOn = parentId;
   // Also add this card to parent's children list
   const parent = cards.find(c=>c.id===parentId);
@@ -32277,7 +32578,7 @@ function setDependsOn(parentId){
     if(!parent.dependents) parent.dependents=[];
     if(!parent.dependents.includes(editingId)) parent.dependents.push(editingId);
   }
-  fbSaveAll(undefined, [editingId, parentId].filter(Boolean));
+  fbSaveAll(undefined, [editingId, parentId, _oldParent?.id].filter(Boolean));
   closeOv('depends-picker-ov');
   renderDependsBar(card);
   renderCardDepMini(editingId);
@@ -32564,6 +32865,7 @@ function saveEditComment(cid){
   if(!newText){ showToast('Comentário não pode ficar vazio.'); return; }
   const comment = _commentsCache[_commentCardId]?.[cid];
   if(!comment) return;
+  const oldText = comment.text||''; // guardado ANTES de sobrescrever, ver aviso do Agente Ágil abaixo
   comment.text = newText;
   comment.editedAt = new Date().toISOString();
   window._update(window._ref(window._db, FB+'/card_comments/'+_commentCardId+'/'+cid), {text:newText, editedAt:comment.editedAt}).catch(()=>{});
@@ -32573,6 +32875,21 @@ function saveEditComment(cid){
   // adicionada só na edição (ex.: corrigindo o handle de alguém) nunca
   // notificava ninguém.
   parseMentions(newText, _commentCardId, cid);
+  // Achado real (/monitorarbugs, 2026-09-12, "modal do card"): diferente da
+  // @menção humana (parseMentions acima, já corrigida antes), mencionar o
+  // Agente Ágil só funciona de verdade num comentário NOVO — o gatilho no
+  // backend (functions/agente-agil-orquestrador/mentionTrigger.js) é
+  // onValueCreated, nunca dispara em window._update() (edição). Editar um
+  // comentário pra ADICIONAR "@Agente Ágil" ficava em silêncio total: sem
+  // erro, sem resposta, sem indicador "pensando..." — mesmo texto que
+  // funcionaria se fosse comentário novo. Corrigir de verdade (o gatilho
+  // reagir também a edição, com diff antes/depois pra não reprocessar toda
+  // edição de um comentário que JÁ mencionava o agente) é mudança de
+  // arquitetura em functions/ — fica como recomendação separada. Aqui só
+  // avisa, em vez de deixar a pessoa esperando uma resposta que nunca vem.
+  if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(newText) && !_textMencionaAgenteAgil(oldText)){
+    showToast('⚠ Editar um comentário não notifica o Agente Ágil — poste um novo comentário pra ele responder.');
+  }
 }
 
 function cancelEditComment(cid){
