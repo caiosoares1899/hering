@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.676-dev</div>
+<div class="version">v8.30.677-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -31300,6 +31300,12 @@ let _ctxSubmenus = {}; // {mover, prioridade} — ver toggleCtxSubmenu()
 function showCtxMenu(e, cardId){
   e.preventDefault();
   e.stopPropagation();
+  // Achado real (/monitorarbugs 2026-09-15): menu.innerHTML é reconstruído
+  // do zero aqui, destruindo os elementos <div class="ctx-item"> que um
+  // _ctxSubmenuHoverEnter() pendente (hover no menu ANTERIOR) capturou como
+  // `trigger`. Sem limpar o timer, ele dispara mais tarde contra um nó
+  // desanexado — ver comentário completo em hideCtxMenu().
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
   _ctxCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   if(!card) return;
@@ -31495,6 +31501,19 @@ function hideCtxMenu(){
   if(m) m.style.display = 'none';
   const fly = document.getElementById('ctx-submenu-fly');
   if(fly){ fly.classList.remove('open'); fly._ctxOwner = null; }
+  // Achado real (/monitorarbugs 2026-09-15): _ctxSubmenuHoverEnter() agenda
+  // _ctxOpenSubmenuAt() com 120ms de atraso (evita "piscar" ao passar o
+  // mouse de raspão). Se o menu fechar ANTES desse atraso passar — clique
+  // fora, Esc, ou trocar de card — sem cancelar o timer, ele dispara depois
+  // do menu já escondido: `trigger` continua sendo o item antigo (dentro de
+  // #ctx-menu, display:none), getBoundingClientRect() de um elemento
+  // invisível volta tudo zero, e o flyout reabre sozinho grudado no canto
+  // superior esquerdo da tela, mostrando opções de um card cujo
+  // `_ctxCardId` já foi limpo pra null — clicar numa opção não faz nada
+  // (ctxMove()/ctxSetPriority() acham `cards.find(x=>x.id===null)` vazio e
+  // saem em silêncio). Cancela aqui, mesma defesa que showCtxMenu() já
+  // ganhou pro caso de trocar de card com o timer pendente.
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
   _ctxCardId = null;
 }
 
