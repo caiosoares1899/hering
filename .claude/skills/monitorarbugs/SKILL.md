@@ -1165,6 +1165,20 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   TODOS os botões do item ficam mudos (reproduzido sem querer num script
   de teste manual pro usuário, sem afetar produção). dev v8.30.665.
 
+- **2026-09-15, menu de contexto — submenus hover (pedido genérico, "roda
+  um /monitorarbugs" — área escolhida por ser o código mais recente da
+  sessão, v8.30.676 recém-validado)**: 1 achado real, técnica 3
+  (confrontar com a própria promessa da feature — atraso de 120ms pra
+  abrir). `_ctxSubmenuHoverEnter()` agenda `_ctxOpenSubmenuAt()` 120ms no
+  futuro; nem `hideCtxMenu()` (clique fora/Esc) nem `showCtxMenu()`
+  (trocar de card) cancelavam esse timer. Fechar o menu ou abrir outro
+  card com o timer ainda pendente fazia o flyout reabrir sozinho ~120ms
+  depois, grudado no canto superior esquerdo (trigger desanexado/
+  `display:none` → `getBoundingClientRect()` zerado), com `_ctxCardId`
+  já `null` ou apontando pro card errado — clique numa opção do flyout
+  fantasma não fazia nada. Fix: `clearTimeout(_ctxHoverTimer)` nas duas
+  funções. PR #925, dev v8.30.677.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
