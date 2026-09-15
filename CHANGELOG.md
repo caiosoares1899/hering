@@ -3283,6 +3283,38 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.665-dev — 2026-09-15 — /monitorarbugs nas áreas de hoje: Intake (vincular/guardar) e Arquivados (abrir card)
+
+Pedido explícito do usuário, auditando as duas features construídas
+hoje (v8.30.662 a v8.30.664). 1 achado real, 1 checagem limpa:
+
+1. **Achado real — botão "Arquivar" não refletia card já arquivado.**
+   Antes de hoje, não existia nenhum jeito prático de abrir o modal
+   de um card ARQUIVADO (só via link direto `?opencard=`, pouco
+   usado) — agora que a lista de Arquivados abre o card num clique
+   (v8.30.664), esse estado ficou muito mais alcançável, e expôs uma
+   inconsistência pré-existente: o botão do rodapé do modal sempre
+   dizia "📦 Arquivar", mesmo pra um card já arquivado (clicar de
+   novo só regravava os mesmos campos, sem servir pra nada — e sem
+   opção de restaurar dali). Fix: `openCard()` agora alterna o botão
+   pra "♻️ Restaurar" quando `c.archived`, chamando `desarquivar()`.
+   `desarquivar()` também ganhou uma checagem (só reabre a tela de
+   Arquivados se ela já estava aberta) — antes disso, chamá-la a
+   partir do modal (sem a lista de Arquivados aberta) criaria um
+   overlay novo por baixo do card, sem sentido nenhum.
+2. **Checagem limpa (técnica 1, comparar escritores paralelos)**:
+   os dois pontos que criam itens em `intake_pending`
+   (`functions/intake/submit.js`, formulário público, e
+   `functions/agente-agil-orquestrador/tools/criarCard.js`, Agente
+   Ágil) gravam `id: pendingRef.key` corretamente nos dois — sem esse
+   campo, TODOS os botões do item ficam mudos (acabei de reproduzir
+   esse exato bug num script de teste manual que dei pro usuário,
+   sem `id` — mas confirmado que os 2 writers de produção estão
+   certos).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.664-dev — 2026-09-15 — Arquivados: clicar num card da lista abre ele (continua arquivado)
 
 Pedido direto do usuário: a lista de "📦 Arquivados" (`_renderArquivadosBody()`)

@@ -1148,6 +1148,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   "card parado" e em `checkAgingAutomations()` — mesma solução
   (considerar `updatedAt`) resolveria os dois, fica pra rodada própria.
   dev v8.30.661, PR #905.
+- **2026-09-15, Intake (vincular/guardar) + Arquivados (abrir card)**:
+  pedido explícito, escopo nomeado ("essas áreas que mexemos hoje") logo
+  depois de construir as 2 features. 1 achado real — abrir um card
+  ARQUIVADO (só ficou fácil hoje, via `_renderArquivadosBody()`; antes só
+  dava via `?opencard=` direto, pouco alcançado) expôs que o botão
+  "📦 Arquivar" do modal nunca checava `c.archived` — clicar de novo num
+  card já arquivado só regravava os mesmos campos, sem servir pra nada, e
+  sem opção de restaurar dali. Fix: `openCard()` alterna o botão pra
+  "♻️ Restaurar" quando arquivado; `desarquivar()` ganhou checagem pra só
+  reabrir a tela de Arquivados se ela já estava aberta (senão criava
+  overlay novo por baixo do modal do card). Checagem limpa (técnica 1,
+  escritores paralelos): os 2 pontos que criam `intake_pending`
+  (`functions/intake/submit.js` e `.../tools/criarCard.js` do Agente
+  Ágil) gravam `id: pendingRef.key` certinho nos dois — sem esse campo
+  TODOS os botões do item ficam mudos (reproduzido sem querer num script
+  de teste manual pro usuário, sem afetar produção). dev v8.30.665.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

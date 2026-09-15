@@ -4526,7 +4526,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="m-usarmodelo-list" style="overflow-y:auto;"></div>
       </div>
     </div>
-    <button class="btn btn-sm" onclick="archiveCard()">📦 Arquivar</button>
+    <button class="btn btn-sm" id="btn-archive-card" onclick="archiveCard()">📦 Arquivar</button>
     <button class="btn btn-sm" id="btn-pause-card" onclick="togglePauseCard()" title="Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.">⏸ Pausar</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
@@ -6163,7 +6163,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.664-dev</div>
+<div class="version">v8.30.665-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14239,6 +14239,24 @@ function openCard(id){
   document.getElementById('btn-del-card').style.visibility='visible';
   const pauseBtn=document.getElementById('btn-pause-card'); if(pauseBtn) pauseBtn.style.visibility='visible';
   _renderPauseBtn(c);
+  // Achado real (/monitorarbugs, 2026-09-15): abrir um card ARQUIVADO
+  // (agora possível direto da lista de Arquivados, ver
+  // _renderArquivadosBody()) mostrava "📦 Arquivar" do mesmo jeito que um
+  // card ativo — clicar não fazia nada de útil (archiveCard() só re-grava
+  // os mesmos campos), sem opção de restaurar dali. Alterna rótulo/ação
+  // conforme o estado atual do card.
+  const archBtn=document.getElementById('btn-archive-card');
+  if(archBtn){
+    if(c.archived){
+      archBtn.textContent='♻️ Restaurar';
+      archBtn.title='Restaura este card pro board ativo';
+      archBtn.onclick=()=>{ desarquivar(c.id); closeOv('card-ov'); showToast('♻️ Card restaurado.'); };
+    } else {
+      archBtn.textContent='📦 Arquivar';
+      archBtn.title='';
+      archBtn.onclick=()=>archiveCard();
+    }
+  }
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
@@ -22275,7 +22293,18 @@ async function openArquivados(){
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _renderArquivadosBody();
 }
-function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
+// Achado real (/monitorarbugs, 2026-09-15): antes só era chamada com a
+// tela de Arquivados já aberta (daí o openArquivados() incondicional no
+// final) — agora que dá pra abrir um card arquivado direto no modal
+// (openCard() a partir da lista, ver _renderArquivadosBody()) e restaurar
+// por lá (ver btn-archive-card em openCard()), reabrir Arquivados sem essa
+// tela estar aberta criava um overlay novo por baixo do card, sem sentido.
+// Só reabre/re-renderiza se ela já estava aberta.
+function desarquivar(id){
+  const c=cards.find(x=>x.id===id); if(!c) return;
+  c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard();
+  if(document.getElementById('arch-ov')?.classList.contains('open')) openArquivados();
+}
 function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
 async function deleteSelectedArchived(){
   const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
