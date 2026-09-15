@@ -589,28 +589,23 @@
    de um 2º conceito paralelo. Selo é só visual (::before), não muda
    nada nos dados do card nem aparece fora deste tema. */
 [data-theme="blackfriday"] .bf-countdown-bar{display:flex;}
-/* Fita diagonal — feedback direto comparando com o mockup original:
-   "essa faixa que vc criou no artefato ta muito melhor".
-   2ª rodada (2026-09-15, "bugou kkk" com print): a 1ª versão (120px,
-   depois 90px) dependia de overflow:hidden no .card pra recortar a
-   parte que passava dos limites — no Chrome real da pessoa (mesmo
-   motor testado aqui, print confirmou) isso "vazava" como uma barra
-   larga em vez de recortar limpo, quase certamente a combinação
-   overflow:hidden (aqui) + backdrop-filter (.col, por cima) + transform
-   rotacionado não recortando direito com zoom/escala de tela ≠100% —
-   reproduzido só depois de tentar com deviceScaleFactor≠1 numa réplica
-   isolada; em 100% renderizava limpo nos meus testes, then confirmado
-   como suspeito mais forte. Redesenhada pra NUNCA precisar de recorte:
-   fita pequena (62px, ângulo raso de 18°) posicionada com offsets
-   POSITIVOS (right:4px, não mais right:-Npx) — cabe inteira dentro do
-   card sempre, então overflow:hidden virou desnecessário e foi
-   removido. Testado antes numa réplica isolada do CSS real (com e sem
-   escala de tela) antes de aplicar aqui. */
+/* Selo reto de cantinho — 3ª rodada (2026-09-15). Histórico: fita
+   diagonal grande (120px→90px) dependia de overflow:hidden pra
+   recortar o que passava do card — vazava como barra larga no Chrome
+   real (print confirmou), suspeita de interação overflow:hidden +
+   backdrop-filter da coluna + transform rotacionado fora de 100% de
+   zoom. Redesenhada pra caber inteira sem recorte (62px, 18°) — aí
+   sim renderizou contida, mas SEM tocar a borda do card ela só parece
+   um retângulo torto, não lê mais como "fita cruzando o canto"
+   (feedback: "ficou torto"). Volta pro selo reto (sem rotação
+   nenhuma) — perde o efeito ribbon do mockup, mas é geometria simples
+   (sem overflow, sem transform) e não tem como ficar torto. */
 [data-theme="blackfriday"] .card.card-prio-critical{border-color:rgba(255,43,77,.55);}
 [data-theme="blackfriday"] .card.card-prio-critical::before{
-  content:"OFERTA"; position:absolute; top:8px; right:4px; width:62px; text-align:center;
-  transform:rotate(18deg); background:var(--danger); color:#1a0505; font-size:6.5px; font-weight:800;
-  letter-spacing:.02em; padding:2px 0; border-radius:3px; pointer-events:none;
+  content:"🔥 OFERTA"; position:absolute; top:-1px; right:-1px;
+  background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
+  letter-spacing:.02em; padding:3px 8px; border-radius:0 var(--r) 0 8px;
+  pointer-events:none;
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -6254,7 +6249,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.671-dev</div>
+<div class="version">v8.30.672-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
