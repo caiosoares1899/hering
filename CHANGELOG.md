@@ -16118,6 +16118,17 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.49 · painel — 2026-09-15 · Rascunho de Mural — promoção do kanban.html v8.30.679
+
+Puramente conteúdo, sem mudança de comportamento: nova entrada em
+`COMUNICADO_RASCUNHOS_SEED` (`seed_promocao_2026_09_15_v2`) anunciando
+em termos de usuário a promoção de `kanban.html` v8.30.662→v8.30.679
+(🔥 Modo Black Friday, Intake vincular/Guardados, hover no menu de
+contexto, e o hotfix de configuração). Fica como rascunho — só é
+publicado quando um ADM abre o painel e revisa manualmente.
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.48 · painel — 2026-09-15 · 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
 
 Hotfix isolado, não uma promoção do lote acumulado em `painel-dev.html`
