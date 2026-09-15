@@ -3283,6 +3283,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.676-dev — 2026-09-15 — Menu de contexto: submenus "Mover para"/"Prioridade" abrem no hover
+
+Pedido direto do usuário (print do menu de contexto): os submenus só
+abriam com clique, "seria legal se fosse responsivo, só passar o
+mouse". `toggleCtxSubmenu()` refatorado (lógica de abrir extraída pra
+`_ctxOpenSubmenuAt()`, reaproveitada pelos dois caminhos) + 3 funções
+novas de hover (`_ctxSubmenuHoverEnter()`/`_ctxSubmenuScheduleClose()`/
+`_ctxSubmenuCancelClose()`) com delay de abrir (120ms, evita "piscar"
+ao passar o mouse de raspão) e delay de fechar (300ms, cancelado se o
+mouse entrar no trigger OU no próprio flyout — resolve o clássico
+"bermuda triangle" de menu-hover, senão o submenu sumia no meio do
+caminho ao mover o mouse na diagonal até ele).
+
+Só ativa em dispositivo com hover de verdade + ponteiro fino
+(`matchMedia('(hover: hover) and (pointer: fine)')`, checado 1x) —
+telas de toque continuam só no clique, já que hover simulado num tap
+abriria o submenu sozinho sem jeito controlado de fechar. Clique
+continua funcionando exatamente como antes nos dois casos.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.675-dev — 2026-09-15 — 🔥 Black Friday: peixinhos viram 💰
 
 Pedido direto do usuário: "trocar os peixinhos por 💰". Na 1ª versão
