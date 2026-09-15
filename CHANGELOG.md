@@ -3283,6 +3283,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.672-dev — 2026-09-15 — 🔥 Black Friday: volta pro selo reto de cantinho (fita sem overflow ficava torta)
+
+Feedback direto ("ficou torto") na fita redesenhada da v8.30.671: sem
+tocar a borda do card (pra não depender de `overflow:hidden`), a
+rotação de 18° deixou de ler como "fita cruzando o canto" — virou só
+um retângulo pequeno torto. Volta pro selo RETO (sem `transform`
+nenhum) no cantinho — perde o efeito visual de fita do mockup
+original, mas é geometria simples o bastante (sem rotação, sem
+dependência de recorte) pra não ter como ficar torta nem vazar.
+Histórico completo da investigação nas 3 rodadas anteriores (v8.30.669
+a v8.30.671) documentado direto no comentário do CSS.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.671-dev — 2026-09-15 — 🔥 Black Friday: fita redesenhada sem depender de recorte (overflow:hidden removido)
 
 Print novo confirmou: mesmo depois de encolher (v8.30.670), a fita
