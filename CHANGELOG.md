@@ -18,6 +18,40 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.662 — 2026-09-15 · 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
+
+Hotfix isolado, **não** é uma promoção do lote acumulado em
+`kanban-dev.html` (que segue com features ainda não validadas, ex. tema
+🔥 Black Friday) — só esta correção pontual entrou direto em prod, pela
+gravidade do achado. Relato direto do usuário: "painel prod tá lendo os
+dados de painel dev".
+
+**Causa raiz**: as 4 páginas (`kanban.html`, `kanban-dev.html`,
+`painel.html`, `painel-dev.html`) liam/gravavam o override manual de
+config do Firebase (aba ⚙ Firebase, `saveFbConfig()`) sob as MESMAS
+chaves cruas de `localStorage` (`fb_apiKey`, `fb_databaseURL`,
+`fb_projectId`, `fb_appId`, etc.). Como as 4 rodam sob o mesmo domínio
+do GitHub Pages (`caiosoares1899.github.io/hering/` — mesma origin),
+`localStorage` é compartilhado entre elas no mesmo navegador: um
+override salvo em QUALQUER uma delas (ex. usar a aba ⚙ Firebase de
+`kanban-dev.html` pra apontar o dev pra outro projeto/banco de teste)
+vazava silenciosamente pras outras 3 — inclusive pro `painel.html` de
+produção, sem nenhum aviso visual, log, ou sinal de que a página não
+estava mais lendo o banco real.
+
+**Fix**: cada página agora lê/grava seu próprio override sob uma chave
+namespaced por página (`fb_apiKey_kanban`, `fb_apiKey_kanban_dev`,
+`fb_apiKey_painel`, `fb_apiKey_painel_dev`, etc.) — isola completamente
+o override de uma página das demais. Efeito colateral esperado e
+desejado: qualquer override antigo salvo sob a chave crua antiga passa
+a ser ignorado (a página volta a usar o Firebase real por padrão) — se
+alguém realmente precisa de um override de teste, precisa configurar de
+novo na aba ⚙ Firebase (hoje só existe em `kanban.html`/
+`kanban-dev.html`).
+
+Checks de rotina: `node --check` OK nos 3 blocos reais (incluindo o
+`<script type="module">` onde o `firebaseConfig` vive).
+
 ### v8.30.661 — 2026-09-15 · Promove pra prod — Notificações, Lembretes e validação de arquivamento automático
 
 Promove pra produção o lote v8.30.659-dev → v8.30.661-dev de
@@ -3282,6 +3316,27 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.678-dev — 2026-09-15 — 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
+
+Mesmo fix aplicado simultaneamente nas 4 páginas (`kanban.html`,
+`kanban-dev.html`, `painel.html`, `painel-dev.html`) — ver entrada
+completa em `kanban.html` v8.30.662 acima pro detalhe técnico da causa
+raiz e da correção (achado real, relato direto do usuário: "painel prod
+tá lendo os dados de painel dev").
+
+Resumo: o override manual de config do Firebase (aba ⚙ Firebase) usava
+as MESMAS chaves cruas de `localStorage` nas 4 páginas — como todas
+rodam na mesma origin do GitHub Pages, um override salvo aqui (dev)
+vazava pra prod. Chaves agora namespaced por página
+(`fb_apiKey_kanban_dev` em vez de `fb_apiKey`, etc.) em 2 lugares deste
+arquivo: o `firebaseConfig` no `<script type="module">` e o par
+leitura(aba)/`saveFbConfig()` no `<script>` clássico principal (são 2
+blocos de escopo separado — cada um precisou de sua própria constante
+`FB_OVERRIDE_NS`, já que módulos ES não compartilham escopo com
+`<script>` clássico).
+
+Checks de rotina: `node --check` OK nos 3 blocos reais.
 
 ### v8.30.677-dev — 2026-09-15 — `/monitorarbugs`: fix no hover dos submenus do menu de contexto (v8.30.676)
 
@@ -16019,6 +16074,36 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.48 · painel — 2026-09-15 · 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
+
+Hotfix isolado, não uma promoção do lote acumulado em `painel-dev.html`
+— só esta correção pontual entrou direto em prod, pela gravidade do
+achado. **Achado reportado pelo próprio usuário**: "painel prod tá
+lendo os dados de painel dev". Ver entrada completa em `kanban.html`
+v8.30.662 pro detalhe técnico da causa raiz (as 4 páginas do domínio
+compartilhavam as mesmas chaves cruas de `localStorage` pro override de
+config do Firebase — `fb_apiKey`, `fb_databaseURL` etc. — e por
+rodarem todas na mesma origin do GitHub Pages, um override salvo em
+qualquer uma vazava pras outras 3).
+
+Fix: `firebaseConfig` deste arquivo agora lê `fb_apiKey_painel`,
+`fb_databaseURL_painel` etc. (sufixo `_painel`), em vez das chaves
+cruas — isola o override desta página das outras 3.
+
+Checks de rotina: `node --check` OK no `<script type="module">` onde o
+`firebaseConfig` vive.
+
+### painel-dev.html v3.47 · painel-dev — 2026-09-15 · 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
+
+Mesmo fix aplicado simultaneamente nas 4 páginas — ver entrada completa
+em `kanban.html` v8.30.662 pro detalhe técnico. `firebaseConfig` deste
+arquivo agora lê `fb_apiKey_painel_dev`, `fb_databaseURL_painel_dev`
+etc. (sufixo `_painel_dev`), em vez das chaves cruas compartilhadas com
+`painel.html`/`kanban.html`/`kanban-dev.html`.
+
+Checks de rotina: `node --check` OK no `<script type="module">` onde o
+`firebaseConfig` vive.
 
 ### painel.html v3.47 · painel — 2026-09-14 · Promove pra prod — Vice City, Kudos, OKR e uma leva grande de correções de bugs
 

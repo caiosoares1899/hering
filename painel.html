@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.47 · painel</div>
+<div class="version">v3.48 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2878,13 +2878,21 @@ import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } fr
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
 const firebaseConfig = {
-  apiKey:            localStorage.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
-  authDomain:        localStorage.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
-  databaseURL:       localStorage.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
-  projectId:         localStorage.getItem('fb_projectId')        || 'hering-onboarding',
-  storageBucket:     localStorage.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
-  messagingSenderId: localStorage.getItem('fb_messagingSenderId')|| '122502391131',
-  appId:             localStorage.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+  // Achado real (/monitorarbugs 2026-09-15): esta página lia o override
+  // manual de config do Firebase sob as MESMAS chaves cruas de
+  // localStorage ('fb_apiKey' etc.) que kanban.html/kanban-dev.html/
+  // painel-dev.html — como as 4 rodam no mesmo domínio do GitHub Pages
+  // (mesma origin), um override salvo em QUALQUER uma delas (ex.
+  // testando kanban-dev.html apontar pra outro projeto) vazava pras
+  // outras 3 silenciosamente, inclusive pra este painel de PRODUÇÃO.
+  // Sufixo '_painel' isola essa chave das demais páginas.
+  apiKey:            localStorage.getItem('fb_apiKey_painel')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomain_painel')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURL_painel')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectId_painel')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucket_painel')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderId_painel')|| '122502391131',
+  appId:             localStorage.getItem('fb_appId_painel')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
