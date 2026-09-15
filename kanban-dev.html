@@ -579,6 +579,23 @@
     radial-gradient(ellipse at 97% 0%, rgba(255,43,77,.08) 0%, transparent 38%),
     var(--deep);
 }
+/* Pedido direto do usuário (2ª rodada, depois de ver o tema no board):
+   trazer o countdown e o selo de oferta do mockup pro app de verdade.
+   Countdown: mesma .bf-countdown-bar acima, só fica visível com o tema
+   ligado. Selo "🔥 OFERTA": reaproveita card.priority==='critical' (já
+   existe, badge 🔥 na lista de prioridades — ver prioMap em
+   makeCardEl()) em vez de inventar um campo novo só pra Black Friday —
+   card.priority já é exatamente "isso aqui é importante", não precisa
+   de um 2º conceito paralelo. Selo é só visual (::before), não muda
+   nada nos dados do card nem aparece fora deste tema. */
+[data-theme="blackfriday"] .bf-countdown-bar{display:flex;}
+[data-theme="blackfriday"] .card.card-prio-critical{border-color:rgba(255,43,77,.55);}
+[data-theme="blackfriday"] .card.card-prio-critical::before{
+  content:"🔥 OFERTA"; position:absolute; top:-1px; right:-1px;
+  background:var(--danger); color:#1a0505; font-size:8.5px; font-weight:800;
+  letter-spacing:.03em; padding:2px 7px; border-radius:0 var(--r) 0 8px;
+  pointer-events:none;
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -686,6 +703,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
 .goal-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;position:relative;z-index:2;}
 .goal-bar.show{display:flex;}
+/* 🔥 Barra de contagem regressiva do tema Black Friday (mesmo padrão
+   visual da .goal-bar acima) — só existe visualmente com o tema ligado,
+   ver [data-theme="blackfriday"] .bf-countdown-bar abaixo. */
+.bf-countdown-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(255,43,77,.35);border-radius:var(--r);padding:7px 14px;font-size:11.5px;color:var(--txt2);margin-bottom:.8rem;display:none;align-items:center;justify-content:center;gap:8px;position:relative;z-index:2;flex-wrap:wrap;text-align:center;}
+.bf-countdown-bar b{font-family:Syne,sans-serif;font-weight:800;color:var(--danger);font-variant-numeric:tabular-nums;}
 /* board */
 .board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
 /* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
@@ -3523,6 +3545,8 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
+<div id="bf-countdown-bar" class="bf-countdown-bar">🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</div>
+
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
   <div class="fb-group">
@@ -6214,7 +6238,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.667-dev</div>
+<div class="version">v8.30.668-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10941,7 +10965,7 @@ function makeCardEl(card){
   // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
   const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
   const isSuper_=_superChildren.length>0;
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -32369,6 +32393,21 @@ function _themeBtnRightClick(e){
   if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
   toggleBlackFriday();
 }
+// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS) —
+// roda sempre em segundo plano, independente do tema atual (mesmo padrão
+// de timer "vida inteira da sessão" já usado no resto do arquivo, ex.
+// _startThemeAutoWatch) — custo irrelevante, evita ter que ligar/desligar
+// o timer toda vez que a pessoa entra/sai do modo Black Friday.
+function _bfUpdateCountdown(){
+  const el=document.getElementById('bf-countdown-num'); if(!el) return;
+  const target=new Date(Date.UTC(2026,10,27,3,0,0)); // Black Friday 2026 (27 de novembro)
+  const diff=target-new Date();
+  if(diff<=0){ el.textContent='chegou 🎉'; return; }
+  const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
+  el.textContent=d+'d '+String(h).padStart(2,'0')+'h';
+}
+_bfUpdateCountdown();
+setInterval(_bfUpdateCountdown, 60000);
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
