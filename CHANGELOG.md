@@ -18,6 +18,36 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.680 — 2026-09-15 · 🔴 Fix crítico — Notas: campo undefined derrubava a escrita inteira no Firebase
+
+Reportado via card de erro (🔥 Firebase, "Uncaught Error: update failed:
+values argument contains undefined in property 'k...", usuário Eduardo
+Nathan De Sousa Barros).
+
+**Causa raiz**: a feature de Notas é a única do arquivo que escreve no
+Firebase com `update()` de múltiplos caminhos usando uma referência
+"crua" (`window._ref(window._db)`, sem path) e chaves absolutas tipo
+`kanban/squads/.../notas/...` — os ~13 pontos de escrita (renomear
+nota, indentar/desindentar bloco, mesclar blocos, trocar de modo
+estruturado/livre, vincular card, etc.) todos seguem esse padrão. O
+`update()` do Firebase é **tudo-ou-nada**: se QUALQUER campo do
+payload vier `undefined` (nota mais antiga sem um campo, bloco
+montado a partir de dado incompleto), a chamada inteira falha —
+inclusive campos que estavam certos (ex.: `atualizadoEm`) não são
+salvos junto, e a mudança do usuário simplesmente não persiste, com um
+erro só visível no console/log de erros do painel.
+
+Não foi possível isolar com certeza qual campo específico ficava
+undefined (mensagem de erro cortada no relato), então o fix é
+defensivo e cobre a classe inteira: `_notasUpdate(updates)`, novo
+helper central que remove recursivamente qualquer campo `undefined` do
+payload antes de mandar pro Firebase (nunca troca por `null`, que
+apagaria o campo de propósito — só evita mandar um campo que não
+deveria nem estar ali). Os 13 call sites de Notas passaram a usar esse
+helper em vez de chamar `window._update()` direto.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.679 — 2026-09-15 · Promove pra prod — 🔥 Modo Black Friday, Intake (vincular/Guardados), hover nos submenus e uma leva de correções de bugs
 
 Promove pra produção o lote v8.30.662-dev → v8.30.678-dev de
@@ -3359,6 +3389,19 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.680-dev — 2026-09-15 — 🔴 Fix crítico — Notas: campo undefined derrubava a escrita inteira no Firebase
+
+Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.680, direto
+em prod pela gravidade — bug ativo, real usuário afetado) — ver entrada
+completa lá pro detalhe técnico. Resumo: `update()` multi-path do
+Firebase é tudo-ou-nada — os ~13 pontos de escrita de Notas (que usam
+esse padrão, únicos no arquivo) tinham risco de falhar por inteiro se
+qualquer campo do payload viesse `undefined`. Novo helper
+`_notasUpdate()` filtra `undefined` recursivamente antes de escrever;
+os 13 call sites passaram a usá-lo.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
 
 ### v8.30.678-dev — 2026-09-15 — 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
 

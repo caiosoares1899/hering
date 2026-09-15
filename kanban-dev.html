@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.678-dev</div>
+<div class="version">v8.30.680-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18466,6 +18466,30 @@ function _notasBasePath(){
   const uid=window._currentUser?.uid;
   return _notasScope==='squad' ? (FB+'/notas') : (FB+'/notas_pessoais/'+uid);
 }
+// Achado real (erro reportado via 🔥 Firebase no painel, 2026-09-15):
+// update() multi-path do Firebase é tudo-ou-nada — se QUALQUER campo do
+// objeto vier undefined (nota antiga sem um campo, bloco montado a partir
+// de dado incompleto), a chamada inteira falha com "update failed: values
+// argument contains undefined in property '<path>'", derrubando junto os
+// OUTROS campos que estavam certos (ex.: atualizadoEm nunca era salvo).
+// Helper central pras ~13 escritas de Notas abaixo: remove campos
+// undefined do payload (nunca troca por null, que apagaria o campo de
+// propósito) antes de mandar pro Firebase, recursivamente (undefined pode
+// estar aninhado dentro do objeto de um bloco novo, não só no 1º nível).
+function _stripUndefinedDeep(val){
+  if(Array.isArray(val)) return val.map(_stripUndefinedDeep);
+  if(val && typeof val==='object'){
+    const out={};
+    Object.entries(val).forEach(([k,v])=>{ if(v!==undefined) out[k]=_stripUndefinedDeep(v); });
+    return out;
+  }
+  return val;
+}
+function _notasUpdate(updates){
+  const clean={};
+  Object.entries(updates).forEach(([k,v])=>{ if(v!==undefined) clean[k]=_stripUndefinedDeep(v); });
+  return window._update(window._ref(window._db), clean);
+}
 function _attachNotasListeners(){
   if(_notasUnsubs.length || !window._fbReady) return;
   const unsubSquad = window._onValue(window._ref(window._db, FB+'/notas'), snap=>{ _dbgTrack('notas', snap.val());
@@ -18600,7 +18624,7 @@ async function deleteNota(id){
 async function renameNotaFromInput(v){
   const t=(v||'').trim(); if(!t || !_notasOpenId) return;
   const nota=_notasStore()[_notasOpenId]; if(!nota || nota.titulo===t) return;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/titulo']: t,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -18660,7 +18684,7 @@ function notaSearchCards(q){
 
 async function notaAddCardLink(cardId){
   if(!_notasOpenId) return;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: true,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -18669,7 +18693,7 @@ async function notaAddCardLink(cardId){
 }
 async function notaRemoveCardLink(cardId){
   if(!_notasOpenId) return;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: null,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -18770,7 +18794,7 @@ function cardSearchNotas(q){
 }
 async function cardAddNotaLink(notaId, scope){
   const cardId=editingId; if(!cardId) return;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: true,
     [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -18784,7 +18808,7 @@ async function cardAddNotaLink(notaId, scope){
 }
 async function cardRemoveNotaLink(notaId, scope){
   const cardId=editingId; if(!cardId) return;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notaPathForScope(scope,notaId)+'/cardIds/'+cardId]: null,
     [_notaPathForScope(scope,notaId)+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -18969,7 +18993,7 @@ function onBlocoInput(blocoId, ta){
 async function saveBlocoTexto(blocoId, texto){
   if(!_notasOpenId) return;
   _notasPushUndo();
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+blocoId+'/texto']: texto,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
@@ -19015,7 +19039,7 @@ async function criarBlocoIrmao(blocoId, textoAtual, cursorPos){
   updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
   _notasFocusedBlockId=novoId;
   _notasMergeCaret=0;
-  await window._update(window._ref(window._db), updates);
+  await _notasUpdate(updates);
 }
 // Indenta o bloco: vira FILHO do irmão imediatamente acima (mesma
 // convenção de Notion/Workflowy/RemNote — não tem "irmão anterior" pra
@@ -19042,7 +19066,7 @@ async function indentBloco(blocoId){
   });
   updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
   _notasFocusedBlockId=blocoId;
-  await window._update(window._ref(window._db), updates);
+  await _notasUpdate(updates);
 }
 async function outdentBloco(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
@@ -19061,7 +19085,7 @@ async function outdentBloco(blocoId){
   });
   updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
   _notasFocusedBlockId=blocoId;
-  await window._update(window._ref(window._db), updates);
+  await _notasUpdate(updates);
 }
 async function mergeComAnterior(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
@@ -19093,7 +19117,7 @@ async function mergeComAnterior(blocoId){
   updates[_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']=agora;
   _notasFocusedBlockId=alvo.id;
   _notasMergeCaret=textoAlvoAtual.length;
-  await window._update(window._ref(window._db), updates);
+  await _notasUpdate(updates);
 }
 async function toggleBlocoColapso(blocoId){
   const nota=_notasStore()[_notasOpenId]; if(!nota) return;
@@ -19126,7 +19150,7 @@ async function _addBlocoNoFinal(){
   const novoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
   const agora=new Date().toISOString();
   _notasFocusedBlockId=novoId;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/blocos/'+novoId]: {id:novoId, texto:'', parentId:null, ordem:roots.length, colapsado:false, checklist:false, done:false},
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
   });
@@ -19155,7 +19179,7 @@ async function toggleNotaModo(){
   const agora=new Date().toISOString();
   if(nota.modo==='livre'){
     _notasPushUndo();
-    await window._update(window._ref(window._db), {
+    await _notasUpdate({
       [_notasBasePath()+'/'+_notasOpenId+'/modo']: 'estruturado',
       [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
     });
@@ -19173,7 +19197,7 @@ async function toggleNotaModo(){
   const textoFinal=_notasTextoLinearizado(nota);
   const novoBlocoId='b'+Date.now()+Math.random().toString(36).slice(2,4);
   _notasFocusedBlockId=null;
-  await window._update(window._ref(window._db), {
+  await _notasUpdate({
     [_notasBasePath()+'/'+_notasOpenId+'/blocos']: { [novoBlocoId]: {id:novoBlocoId, texto:textoFinal, parentId:null, ordem:0, colapsado:false, checklist:false, done:false} },
     [_notasBasePath()+'/'+_notasOpenId+'/modo']: 'livre',
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: agora,
