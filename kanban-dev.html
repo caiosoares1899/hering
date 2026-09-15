@@ -589,23 +589,37 @@
    de um 2º conceito paralelo. Selo é só visual (::before), não muda
    nada nos dados do card nem aparece fora deste tema. */
 [data-theme="blackfriday"] .bf-countdown-bar{display:flex;}
-/* Selo reto de cantinho — 3ª rodada (2026-09-15). Histórico: fita
-   diagonal grande (120px→90px) dependia de overflow:hidden pra
-   recortar o que passava do card — vazava como barra larga no Chrome
-   real (print confirmou), suspeita de interação overflow:hidden +
-   backdrop-filter da coluna + transform rotacionado fora de 100% de
-   zoom. Redesenhada pra caber inteira sem recorte (62px, 18°) — aí
-   sim renderizou contida, mas SEM tocar a borda do card ela só parece
-   um retângulo torto, não lê mais como "fita cruzando o canto"
-   (feedback: "ficou torto"). Volta pro selo reto (sem rotação
-   nenhuma) — perde o efeito ribbon do mockup, mas é geometria simples
-   (sem overflow, sem transform) e não tem como ficar torto. */
-[data-theme="blackfriday"] .card.card-prio-critical{border-color:rgba(255,43,77,.55);}
+/* Fita diagonal — 4ª rodada (2026-09-15), causa raiz confirmada por
+   pesquisa antes de reimplementar (pedido direto: "pode pensar e
+   executar com calma"). Histórico: rodadas 1-3 tentaram evitar o
+   sintoma (encolher, tirar rotação) sem entender a causa — pedido do
+   usuário foi voltar pra fita diagonal de verdade, então desta vez
+   fui atrás da causa raiz.
+   CAUSA CONFIRMADA: bug real e documentado do Chromium — compositor
+   não suporta clip de border-radius corretamente em elementos
+   transformados/compositados quando há backdrop-filter num ancestral
+   (exatamente o nosso caso: .card tem overflow:hidden+border-radius
+   pra recortar a fita rotacionada, .col por cima tem
+   backdrop-filter). Ver issues.chromium.org #40212642 ("round borders
+   on a clip are not supported by the compositor") e #40683387
+   (backdrop-filter quebra com overflow) — mesmo padrão no WebKit
+   (bug #205019). PIORA em zoom de navegador ≥125% (não é
+   devicePixelRatio — é o Ctrl+/Ctrl- normal), o que bate com o
+   ambiente real onde foi visto ("bugou"/"vazou") vs. os meus testes
+   anteriores em 100% que sempre renderizaram limpo.
+   FIX: troca overflow:hidden por clip-path:inset(0 round var(--r)) —
+   workaround padrão da comunidade pra esse exato bug (motor de
+   clipping diferente no Chrome, não passa pelo caminho de compositor
+   com o bug). Testado numa réplica isolada do CSS real simulando
+   escala de tela 150% antes de aplicar aqui — renderizou limpo. */
+[data-theme="blackfriday"] .card.card-prio-critical{
+  border-color:rgba(255,43,77,.55);
+  clip-path: inset(0 round var(--r));
+}
 [data-theme="blackfriday"] .card.card-prio-critical::before{
-  content:"🔥 OFERTA"; position:absolute; top:-1px; right:-1px;
-  background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
-  letter-spacing:.02em; padding:3px 8px; border-radius:0 var(--r) 0 8px;
-  pointer-events:none;
+  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none;
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -6249,7 +6263,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.672-dev</div>
+<div class="version">v8.30.673-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

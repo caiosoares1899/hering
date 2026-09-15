@@ -3283,6 +3283,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.673-dev — 2026-09-15 — 🔥 Black Friday: fita diagonal de volta, com a causa raiz corrigida (clip-path)
+
+Pedido direto do usuário ("quero na diagonal tipo o artefato, pode
+pensar e executar com calma") — desta vez, pesquisa da causa raiz
+antes de reimplementar, em vez de só ajustar tamanho/ângulo como nas
+3 rodadas anteriores.
+
+**Causa confirmada**: bug real e documentado do Chromium — o
+compositor não suporta corretamente `border-radius` em clips de
+elementos transformados/compositados quando existe `backdrop-filter`
+num ancestral (nosso caso exato: `.card` tinha `overflow:hidden` +
+`border-radius` pra recortar a fita rotacionada, `.col` por cima tem
+`backdrop-filter`). Ver Chromium issues #40212642 e #40683387, mesmo
+padrão documentado no WebKit (#205019). Piora em zoom de navegador
+≥125%, o que bate com "funciona nos meus testes em 100%, quebra no
+ambiente real da pessoa".
+
+**Fix**: `overflow:hidden` trocado por `clip-path: inset(0 round
+var(--r))` — workaround padrão da comunidade pra esse exato bug,
+usa um caminho de clipping diferente no Chrome que não passa pelo
+bug do compositor. Fita volta ao tamanho/ângulo do mockup original
+(110px, 40°). Testado antes numa réplica isolada do CSS real
+simulando escala de tela 150% (a condição que mais provavelmente
+disparava o bug).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.672-dev — 2026-09-15 — 🔥 Black Friday: volta pro selo reto de cantinho (fita sem overflow ficava torta)
 
 Feedback direto ("ficou torto") na fita redesenhada da v8.30.671: sem
