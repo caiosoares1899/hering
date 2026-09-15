@@ -8195,6 +8195,19 @@ const COMUNICADO_RASCUNHOS_SEED = [
     tipo: 'novidade',
     squad: '*',
   },
+  {
+    id: 'seed_promocao_2026_09_15',
+    titulo: '🗄 Arquivamento automático agora pede sua confirmação',
+    corpo: '<p>Ajustamos como o <b>Arquivamento automático por idade</b> funciona:</p>'
+      + '<ul>'
+      + '<li>Ele <b>nunca mais arquiva sozinho</b> sem alguém ver antes. Quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma telinha com a lista completa — dá pra desmarcar card por card e confirmar, ou clicar em "Agora não" e passar a decisão pra próxima pessoa que abrir o board.</li>'
+      + '<li>Se ninguém confirmar, a lista fica pendente e acumula com os novos candidatos do dia seguinte — nada some sem revisão.</li>'
+      + '<li>Corrigimos também: um card movido pra uma coluna marcada como "nunca arquivar" (ex.: Backlog) agora sai corretamente da fila; e ações como pinar um card ou anexar um link passam a contar como atividade recente, evitando arquivamento indevido.</li>'
+      + '</ul>'
+      + '<p>De quebra, corrigimos duas notificações que não estavam levando pro lugar certo ao clicar (agenda aprovada e Estrelas do Mar) e um bug raro de Lembretes em corrida entre abas.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
