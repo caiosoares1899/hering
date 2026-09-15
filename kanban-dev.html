@@ -6163,7 +6163,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.663-dev</div>
+<div class="version">v8.30.664-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -22260,7 +22260,7 @@ function _renderArquivadosBody(){
     // branco/errado na lista.
     const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard('${c.id}');closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
 }
