@@ -3283,6 +3283,39 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.677-dev — 2026-09-15 — `/monitorarbugs`: fix no hover dos submenus do menu de contexto (v8.30.676)
+
+Rodada de `/monitorarbugs` sem área nomeada — foco no código mais
+recente da sessão (feature de hover nos submenus "Mover para"/
+"Prioridade" do menu de contexto, v8.30.676, entrada abaixo).
+
+**Achado real (técnica 3 — confrontar com a própria promessa da
+feature)**: `_ctxSubmenuHoverEnter()` agenda `_ctxOpenSubmenuAt()` com
+120ms de atraso (evita "piscar" ao passar o mouse de raspão). Se o
+menu de contexto fechasse ANTES desse atraso passar — clique fora
+(`document.addEventListener('click', hideCtxMenu)`), tecla Esc, ou
+simplesmente abrir o menu de OUTRO card — o timer pendente nunca era
+cancelado. Cenário concreto: usuário abre o menu do card A, passa o
+mouse por "Mover para" (agenda abertura em 120ms) e clica fora antes
+disso — `hideCtxMenu()` escondia `#ctx-menu` e limpava `_ctxCardId`,
+mas o timer continuava rodando. ~120ms depois ele disparava mesmo
+assim: `trigger` seguia sendo o item antigo (dentro de um `#ctx-menu`
+agora `display:none`), `getBoundingClientRect()` de um elemento
+invisível volta tudo zerado, então o flyout reabria sozinho grudado no
+canto superior esquerdo da tela — um submenu fantasma, com
+`_ctxCardId` já `null`, então clicar numa opção não fazia nada
+(`ctxMove()`/`ctxSetPriority()` acham `cards.find(x=>x.id===null)`
+vazio e saem em silêncio). Mesma falha ao trocar de card rapidamente
+(clicar direito no card B antes do timer do card A disparar): o
+`trigger` capturado fica desanexado, já que `showCtxMenu()` reconstrói
+`menu.innerHTML` do zero a cada card.
+
+Fix: `hideCtxMenu()` e `showCtxMenu()` agora cancelam `_ctxHoverTimer`
+pendente (`clearTimeout` + reset pra `null`), mesma defesa que as
+próprias funções de hover já aplicam entre si pro "bermuda triangle".
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.676-dev — 2026-09-15 — Menu de contexto: submenus "Mover para"/"Prioridade" abrem no hover
 
 Pedido direto do usuário (print do menu de contexto): os submenus só
