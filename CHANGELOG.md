@@ -3283,6 +3283,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.666-dev — 2026-09-15 — /atualizarhelpcontent: Arquivados (abrir card/Restaurar) + fix de contagem no Intake
+
+Sincronização de documentação in-app, sem mudança de comportamento.
+Escopo: as duas áreas mexidas hoje (Intake e Arquivados).
+
+- **`HELP_CONTENT.cards`, entrada "Arquivados"**: não mencionava que
+  dá pra clicar no título de um card da lista pra abrir o modal e ver
+  o conteúdo sem restaurar antes (v8.30.664), nem que o botão
+  "📦 Arquivar" do modal vira "♻️ Restaurar" quando o card já está
+  arquivado (v8.30.665). Texto inline da própria tela (`title=` no
+  título de cada card da lista) já estava certo desde a v8.30.664 —
+  só a Central de Ajuda ficou pra trás.
+- **`HELP_CONTENT.board`, entrada "Formulário de intake"**: achado
+  incidental — dizia que a aba "Guardados" oferece "as mesmas 4
+  ações", mas o código só mostra 3 lá (sem "Guardar" de novo, já que
+  o item já está guardado). Corrigido pra listar as 3 certas.
+
+Achado incidental, não corrigido (fora do escopo de hoje, pré-existente):
+o badge "Xd atrasado" (conta só dias úteis, v8.30.659) não tem tooltip
+nem entrada própria na Central de Ajuda explicando que sábado/domingo
+não contam.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.665-dev — 2026-09-15 — /monitorarbugs nas áreas de hoje: Intake (vincular/guardar) e Arquivados (abrir card)
 
 Pedido explícito do usuário, auditando as duas features construídas
