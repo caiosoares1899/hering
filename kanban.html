@@ -528,6 +528,110 @@
 }
 [data-theme="vice"] .hd-badge{color:var(--txt);}
 [data-theme="vice"] .col-cnt{color:var(--txt);}
+/* ── 🔥 BLACK FRIDAY (proposta em avaliação, 2026-09-15) ──────────────
+   Pedido direto do usuário: modo de visualização especial pra época da
+   Black Friday. Direção aprovada por ele num mockup à parte: preto
+   dominante, vermelho só como DETALHE pontual (não "vermelho em tudo")
+   — 1ª versão tinha vermelho/laranja/dourado espalhados, feedback foi
+   "deixaria mais preto com vermelho de detalhe".
+   Ainda EXPERIMENTAL, não é opção decidida/permanente — por isso não
+   entra no ciclo normal de clique/duplo-clique/long-press dos outros 3
+   temas, nem grava em temasDescobertos (não é pra contar métrica de
+   teste). Entra/sai com botão DIREITO no botão de tema
+   (_themeBtnRightClick()/toggleBlackFriday()); um clique normal de
+   qualquer lugar já sai, igual ao Vice City.
+   Continua um tema ESCURO por baixo (mesmo raciocínio do Vice City, ver
+   comentário grande acima) — só troca os tokens de cor + oceano.
+   Peixinhos (2026-09-15, 2ª rodada, pedido direto: "trocar os
+   peixinhos por 💰"): a mascote aquática original não combinava com a
+   energia de "vitrine em liquidação" (peixe nadando junto de banner de
+   desconto ficou estranho na 1ª versão, então tinham sido desligados
+   de vez com --fish-op:0) — em vez de tirar, agora troca de fantasia:
+   --fish-op volta pra 1 (mesma opacidade/contagem/velocidade de sempre,
+   só recicladas) e o SVG de cada peixe fica escondido, substituído por
+   um 💰 via ::before — reaproveita a MESMA animação de nado
+   (swimLTR/swimRTL) e o wrapper (.fish-wrap/#fwrap) sem duplicar
+   nenhuma lógica de posicionamento/timing. --blue/--accent/--cyan/--teal (usados em toolbar/tags/
+   badges por TODO o app, não só nos cards) viram tons neutros de chumbo
+   — NÃO vermelho puro — porque essas cores aparecem em dezenas de
+   lugares sem relação nenhuma com "oferta"; pintar tudo de vermelho
+   contradiria o próprio feedback de "vermelho só no detalhe". O
+   vermelho de verdade fica reservado pra --danger/--warn (sinalização
+   real de bloqueio/atenção, já semanticamente vermelha antes disso) e
+   um glow bem sutil no .ocean — mesmo raciocínio de reserva de cor do
+   mockup aprovado (fita "OFERTA", chip urgente, botão em destaque).
+   1ª passada — assim como o Vice City precisou de ~4 ajustes pontuais
+   depois de rodar contra a tela de verdade (ver comentários acima),
+   espera-se afinar contraste elemento a elemento depois que a pessoa
+   testar com cards reais; não gold-plate isso antes do feedback. */
+:root[data-theme="blackfriday"]{
+  --deep:#0a0807;
+  --deep-rgb:10,8,7;
+  --surface-rgb:26,20,19;
+  --surface2-rgb:16,12,11;
+  --glass-rgb:26,20,19;
+  --glass:rgba(26,20,19,0.66);
+  --glass-b:rgba(255,43,77,0.16);
+  --glass-h:rgba(255,43,77,0.10);
+  --blue:#6b625e;--accent:#b3665f;--cyan:#8f8681;--teal:#6b625e;
+  --txt:#efe9e6;--txt2:rgba(239,233,230,0.66);--txt3:rgba(239,233,230,0.42);
+  --warn:#d9633f;--danger:#ff2b4d;
+  --ocean-op:1; --fish-op:1;
+  --pulse-rgb:255,43,77;
+}
+[data-theme="blackfriday"] .fish-ltr svg,[data-theme="blackfriday"] .fish-rtl svg{visibility:hidden;}
+[data-theme="blackfriday"] .fish-ltr::before,[data-theme="blackfriday"] .fish-rtl::before{
+  content:"💰"; position:absolute; top:0; left:0; font-size:24px; line-height:1;
+  filter:drop-shadow(0 0 3px rgba(255,43,77,.35));
+}
+[data-theme="blackfriday"] .ocean{
+  background:
+    radial-gradient(ellipse at 6% 100%, rgba(255,43,77,.15) 0%, transparent 42%),
+    radial-gradient(ellipse at 97% 0%, rgba(255,43,77,.08) 0%, transparent 38%),
+    var(--deep);
+}
+/* Pedido direto do usuário (2ª rodada, depois de ver o tema no board):
+   trazer o countdown e o selo de oferta do mockup pro app de verdade.
+   Countdown: mesma .bf-countdown-bar acima, só fica visível com o tema
+   ligado. Selo "🔥 OFERTA": reaproveita card.priority==='critical' (já
+   existe, badge 🔥 na lista de prioridades — ver prioMap em
+   makeCardEl()) em vez de inventar um campo novo só pra Black Friday —
+   card.priority já é exatamente "isso aqui é importante", não precisa
+   de um 2º conceito paralelo. Selo é só visual (::before), não muda
+   nada nos dados do card nem aparece fora deste tema. */
+[data-theme="blackfriday"] .bf-countdown-bar{display:flex;}
+/* Fita diagonal — 4ª rodada (2026-09-15), causa raiz confirmada por
+   pesquisa antes de reimplementar (pedido direto: "pode pensar e
+   executar com calma"). Histórico: rodadas 1-3 tentaram evitar o
+   sintoma (encolher, tirar rotação) sem entender a causa — pedido do
+   usuário foi voltar pra fita diagonal de verdade, então desta vez
+   fui atrás da causa raiz.
+   CAUSA CONFIRMADA: bug real e documentado do Chromium — compositor
+   não suporta clip de border-radius corretamente em elementos
+   transformados/compositados quando há backdrop-filter num ancestral
+   (exatamente o nosso caso: .card tem overflow:hidden+border-radius
+   pra recortar a fita rotacionada, .col por cima tem
+   backdrop-filter). Ver issues.chromium.org #40212642 ("round borders
+   on a clip are not supported by the compositor") e #40683387
+   (backdrop-filter quebra com overflow) — mesmo padrão no WebKit
+   (bug #205019). PIORA em zoom de navegador ≥125% (não é
+   devicePixelRatio — é o Ctrl+/Ctrl- normal), o que bate com o
+   ambiente real onde foi visto ("bugou"/"vazou") vs. os meus testes
+   anteriores em 100% que sempre renderizaram limpo.
+   FIX: troca overflow:hidden por clip-path:inset(0 round var(--r)) —
+   workaround padrão da comunidade pra esse exato bug (motor de
+   clipping diferente no Chrome, não passa pelo caminho de compositor
+   com o bug). Testado numa réplica isolada do CSS real simulando
+   escala de tela 150% antes de aplicar aqui — renderizou limpo. */
+[data-theme="blackfriday"] .card.card-prio-critical{
+  border-color:rgba(255,43,77,.55);
+  clip-path: inset(0 round var(--r));
+}
+[data-theme="blackfriday"] .card.card-prio-critical::before{
+  content:"🔥 OFERTA"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none;
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -635,6 +739,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    do fundo "vazarem" através da barra, parecendo um bug visual no topo do board) */
 .goal-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(37,99,201,.3);border-radius:var(--r);padding:6px 12px;font-size:11px;color:#7eb3ff;margin-bottom:.8rem;display:none;align-items:center;gap:7px;position:relative;z-index:2;}
 .goal-bar.show{display:flex;}
+/* 🔥 Barra de contagem regressiva do tema Black Friday (mesmo padrão
+   visual da .goal-bar acima) — só existe visualmente com o tema ligado,
+   ver [data-theme="blackfriday"] .bf-countdown-bar abaixo. */
+.bf-countdown-bar{background:var(--glass);backdrop-filter:blur(12px);border:1px solid rgba(255,43,77,.35);border-radius:var(--r);padding:7px 14px;font-size:11.5px;color:var(--txt2);margin-bottom:.8rem;display:none;align-items:center;justify-content:center;gap:8px;position:relative;z-index:2;flex-wrap:wrap;text-align:center;}
+.bf-countdown-bar b{font-family:Syne,sans-serif;font-weight:800;color:var(--danger);font-variant-numeric:tabular-nums;}
 /* board */
 .board-wrap{overflow-x:auto;overflow-y:hidden;padding-bottom:3px;-webkit-overflow-scrolling:touch;}
 /* No modo expandido, limita a altura à viewport pra scrollbar horizontal ficar visível
@@ -1244,6 +1353,8 @@ input[type="date"]{-moz-appearance:textfield;}
    à esquerda. Sem overlap, sem depender de overflow de ancestral nenhum. */
 #intake-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
   line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:1px;}
+#intake-guardados-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:4px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);
@@ -3370,7 +3481,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- LOGIN -->
 <div class="login-ov" id="login-ov">
   <div style="text-align:center;margin-bottom:8px;">
-    <img src="favicon.png" width="100" height="100" style="margin-bottom:4px;border-radius:12px;object-fit:contain;" alt="Maré Digital">
+    <img src="favicon-dev.png" width="100" height="100" style="margin-bottom:4px;border-radius:12px;object-fit:contain;" alt="Maré Digital">
     <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;">🐟 Maré Digital</div>
     <div style="font-size:13px;color:var(--txt2);" id="login-subtitle">Digital Hering</div>
   </div>
@@ -3424,7 +3535,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito: 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -3469,6 +3580,8 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
+
+<div id="bf-countdown-bar" class="bf-countdown-bar"><span>🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
 
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
@@ -4524,7 +4637,7 @@ input[type="date"]{-moz-appearance:textfield;}
         <div id="m-usarmodelo-list" style="overflow-y:auto;"></div>
       </div>
     </div>
-    <button class="btn btn-sm" onclick="archiveCard()">📦 Arquivar</button>
+    <button class="btn btn-sm" id="btn-archive-card" onclick="archiveCard()">📦 Arquivar</button>
     <button class="btn btn-sm" id="btn-pause-card" onclick="togglePauseCard()" title="Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.">⏸ Pausar</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
@@ -4644,6 +4757,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <p id="bmode-desc" style="font-size:11px;color:var(--txt3);margin-bottom:4px;line-height:1.5;"></p>
       <div style="margin-top:10px;" class="cfg-sec-title">Objetivo da sprint</div>
       <div class="field"><textarea class="fi fi-ta" id="cfg-sprint-goal" rows="2" placeholder="Descreva o objetivo..."></textarea></div>
+      <div style="margin-top:10px;" class="cfg-sec-title">🔥 Banner do tema Black Friday (opcional)</div>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (ver botão direito no botão de tema). Deixe em branco pra mostrar só a contagem.</p>
+      <div class="field"><input class="fi" id="cfg-bf-banner-msg" type="text" maxlength="80" placeholder="Ex: Meta do squad: -40% em toda a categoria Inverno"></div>
       <div style="margin-top:10px;" class="cfg-sec-title">📥 Formulário de intake</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;margin-bottom:4px;">
         <input type="checkbox" id="cfg-intake-enabled" style="accent-color:var(--accent2,#2ecc9c);">
@@ -5670,10 +5786,15 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('intake-ov')">✕</button>
   </div>
   <div style="padding:10px 18px 0;">
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido) ou descarte.</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido), vincule a um card já existente, guarde pra decidir depois, ou descarte.</div>
     <button class="btn btn-sm" onclick="_copyIntakeLink()" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);margin-bottom:10px;">🔗 Copiar link de intake deste squad</button>
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <button class="btn btn-sm crv-tab-btn active" id="intake-tab-pendentes" onclick="_intakeSwitchTab('pendentes')">📋 Pendentes</button>
+      <button class="btn btn-sm crv-tab-btn" id="intake-tab-guardados" onclick="_intakeSwitchTab('guardados')">🗂 Guardados<span id="intake-guardados-badge" style="display:none;"></span></button>
+    </div>
   </div>
   <div id="intake-body" style="padding:0 18px 20px;overflow-y:auto;flex:1;"></div>
+  <div id="intake-body-guardados" style="padding:0 18px 20px;overflow-y:auto;flex:1;display:none;"></div>
 </div>
 </div>
 
@@ -6156,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.662</div>
+<div class="version">v8.30.679</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6623,7 +6744,7 @@ function renderHdMoreDD(){
       </span>
     </div>`:''}
     <div class="sm-dd-sep"></div>
-    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':_currentTheme()==='blackfriday'?'🔥':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeAuto();">🕐 Tema automático${_isThemeAutoOn()?' — Ligado':''}</div>
     <div class="sm-dd-sep"></div>
@@ -7828,6 +7949,20 @@ let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts vis
 // padrão de _lembretesBucket.
 let _intakeBucket={};    // FB+'/intake_pending' — key = chave real no Firebase
 let intakePendentes=[];  // derivado de _intakeBucket, só status:'pending'
+// Pedido direto do usuário (2026-09-15): "guardar" um pedido de intake que
+// não precisa virar card AGORA nem ser vinculado ainda — tira da fila de
+// "pendentes" (não conta mais pra badge/ação urgente) mas mantém disponível
+// numa aba própria dentro do próprio Intake, sem prazo, até alguém decidir
+// (as mesmas 3 ações — criar card / vincular / descartar — continuam
+// disponíveis a partir de lá). status:'saved', ver _intakeGuardar().
+let intakeGuardados=[];  // derivado de _intakeBucket, só status:'saved'
+// Vincular pedido de intake a um card JÁ EXISTENTE (2026-09-15, pedido
+// direto): vira comentário ou item de checklist no card escolhido, em vez
+// de criar um card novo. _intakeLinkOpenId = id do pedido com o buscador de
+// card aberto agora (só 1 por vez); _intakeLinkSel = {id: {cardId,cardTitle}}
+// guarda o card já escolhido, antes de confirmar comentário/checklist.
+let _intakeLinkOpenId=null;
+let _intakeLinkSel={};
 // Setado por _intakeCriarCard() logo antes de abrir o modal de card novo já
 // pré-preenchido; consumido só no .then() de saveCard() (confirmação real do
 // Firebase) — assim, se a pessoa abrir o modal pré-preenchido e CANCELAR sem
@@ -9964,8 +10099,14 @@ let _cardsSyncDebounce = null;
     const _intakeRef = window._ref(window._db, FB+'/intake_pending');
     const _syncIntake = ()=>{
       intakePendentes = Object.values(_intakeBucket).filter(v=>v && v.status==='pending');
+      intakeGuardados = Object.values(_intakeBucket).filter(v=>v && v.status==='saved');
       updIntakeBadge();
-      if(document.getElementById('intake-ov')?.classList.contains('open')) renderIntakeBody();
+      const gBadge=document.getElementById('intake-guardados-badge');
+      if(gBadge){
+        if(intakeGuardados.length){ gBadge.textContent=intakeGuardados.length>9?'9+':intakeGuardados.length; gBadge.style.display=''; }
+        else gBadge.style.display='none';
+      }
+      if(document.getElementById('intake-ov')?.classList.contains('open')){ renderIntakeBody(); renderIntakeGuardadosBody(); }
     };
     window._onChildAdded(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_added', snap.val());
       const v=snap.val(); if(!v) return;
@@ -10878,7 +11019,7 @@ function makeCardEl(card){
   // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
   const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
   const isSuper_=_superChildren.length>0;
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -12868,8 +13009,14 @@ function renderBoardDataGrid(){
   const intakeAprovados=intakeVals.filter(v=>v.status==='done').length;
   const intakeDescartados=intakeVals.filter(v=>v.status==='discarded').length;
   const intakePendentesN=intakeVals.filter(v=>v.status==='pending').length;
+  // status:'saved'/'linked' (ver _intakeGuardar()/_intakeConfirmLink(),
+  // 2026-09-15) somados ao sub-texto abaixo — senão os 3 termos antigos
+  // (aprovados+descartados+pendentes) param de bater com intakeRecebidos
+  // assim que existir pelo menos 1 pedido guardado ou vinculado.
+  const intakeGuardadosN=intakeVals.filter(v=>v.status==='saved').length;
+  const intakeVinculados=intakeVals.filter(v=>v.status==='linked').length;
   const intakeConcluidos=activeCards.filter(c=>c.intakeId&&_isColDone(c.col)).length;
-  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), vinculados a um card existente, guardados pra decidir depois, descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeVinculados+' vinculados · '+intakeGuardadosN+' guardados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
 }
 
 
@@ -14221,6 +14368,24 @@ function openCard(id){
   document.getElementById('btn-del-card').style.visibility='visible';
   const pauseBtn=document.getElementById('btn-pause-card'); if(pauseBtn) pauseBtn.style.visibility='visible';
   _renderPauseBtn(c);
+  // Achado real (/monitorarbugs, 2026-09-15): abrir um card ARQUIVADO
+  // (agora possível direto da lista de Arquivados, ver
+  // _renderArquivadosBody()) mostrava "📦 Arquivar" do mesmo jeito que um
+  // card ativo — clicar não fazia nada de útil (archiveCard() só re-grava
+  // os mesmos campos), sem opção de restaurar dali. Alterna rótulo/ação
+  // conforme o estado atual do card.
+  const archBtn=document.getElementById('btn-archive-card');
+  if(archBtn){
+    if(c.archived){
+      archBtn.textContent='♻️ Restaurar';
+      archBtn.title='Restaura este card pro board ativo';
+      archBtn.onclick=()=>{ desarquivar(c.id); closeOv('card-ov'); showToast('♻️ Card restaurado.'); };
+    } else {
+      archBtn.textContent='📦 Arquivar';
+      archBtn.title='';
+      archBtn.onclick=()=>archiveCard();
+    }
+  }
   const blockerRow=document.getElementById('m-blocker-row');
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
@@ -21456,12 +21621,41 @@ function updIntakeBadge(){
   else badge.style.display='none';
 }
 function openIntakePanel(){
-  renderIntakeBody();
+  _intakeSwitchTab('pendentes');
   document.getElementById('intake-ov').classList.add('open');
 }
 function _copyIntakeLink(){
   const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + 'intake.html?squad=' + encodeURIComponent(ACTIVE_SQUAD);
   navigator.clipboard?.writeText(url).then(()=>showToast('🔗 Link copiado! '+url), ()=>showToast('⚠️ Não deu pra copiar — copie manualmente: '+url));
+}
+function _intakeSwitchTab(tab){
+  const isGuardados = tab==='guardados';
+  const vp=document.getElementById('intake-body'); if(vp) vp.style.display = isGuardados?'none':'';
+  const vg=document.getElementById('intake-body-guardados'); if(vg) vg.style.display = isGuardados?'':'none';
+  const tp=document.getElementById('intake-tab-pendentes'); if(tp) tp.classList.toggle('active', !isGuardados);
+  const tg=document.getElementById('intake-tab-guardados'); if(tg) tg.classList.toggle('active', isGuardados);
+  if(isGuardados) renderIntakeGuardadosBody(); else renderIntakeBody();
+}
+// Item compartilhado entre a aba Pendentes e a aba Guardados — só o botão
+// "🗂 Guardar" (opts.showGuardar) e a data exibida mudam entre as duas.
+function _intakeItemHtml(item, opts){
+  const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
+  const botoes = [
+    `<button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeToggleLink('${esc(item.id)}')" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
+  ];
+  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar('${esc(item.id)}')" style="color:var(--txt2);">🗂 Guardar</button>`);
+  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
+  return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
+      ${item.status==='saved' && item.savedAt ? `<div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">🗂 Guardado em ${new Date(item.savedAt).toLocaleDateString('pt-BR')}</div>` : ''}
+      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
+      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">${botoes.join('')}</div>
+      ${_intakeLinkOpenId===item.id ? _intakeLinkUIHtml(item.id) : ''}
+    </div>`;
 }
 function renderIntakeBody(){
   const body=document.getElementById('intake-body'); if(!body) return;
@@ -21470,20 +21664,16 @@ function renderIntakeBody(){
     return;
   }
   const ordenados = intakePendentes.slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
-  body.innerHTML = ordenados.map(item=>{
-    const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-    const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
-    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
-      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
-      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
-        <button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>
-      </div>
-    </div>`;
-  }).join('');
+  body.innerHTML = ordenados.map(item=>_intakeItemHtml(item,{showGuardar:true})).join('');
+}
+function renderIntakeGuardadosBody(){
+  const body=document.getElementById('intake-body-guardados'); if(!body) return;
+  if(!intakeGuardados.length){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">🗂 Nada guardado no momento — pedidos que você guardar pra decidir depois aparecem aqui.</div>';
+    return;
+  }
+  const ordenados = intakeGuardados.slice().sort((a,b)=>(a.savedAt||a.createdAt||'').localeCompare(b.savedAt||b.createdAt||''));
+  body.innerHTML = ordenados.map(item=>_intakeItemHtml(item,{showGuardar:false})).join('');
 }
 function _intakeCriarCard(id){
   if(!checkEditPermission()) return;
@@ -21582,6 +21772,116 @@ function _intakeDescartar(id){
     window._update(fb(FB+'/intake_pending/'+id), {status:'discarded', discardedAt:new Date().toISOString()});
   });
 }
+// Pedido direto do usuário (2026-09-15): tira o pedido da fila de
+// "pendentes" (não conta mais na badge/ação urgente) sem resolver de
+// verdade — fica guardado numa aba própria, sem prazo, até alguém decidir
+// (dali, as mesmas 3 ações — criar card / vincular / descartar — continuam
+// disponíveis, ver _intakeItemHtml()).
+function _intakeGuardar(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  window._update(fb(FB+'/intake_pending/'+id), {status:'saved', savedAt:new Date().toISOString()});
+  showToast('🗂 Pedido guardado — revise quando quiser na aba "Guardados".');
+}
+// Vincular pedido de intake a um card já existente (vira comentário ou item
+// de checklist nele, em vez de virar card novo) — pedido direto do usuário.
+function _intakeRerenderFor(id){
+  const item=_intakeBucket[id];
+  if(item && item.status==='saved') renderIntakeGuardadosBody(); else renderIntakeBody();
+}
+function _intakeToggleLink(id){
+  if(_intakeLinkOpenId===id){ _intakeLinkOpenId=null; }
+  else { _intakeLinkOpenId=id; _intakeLinkSel[id]=null; }
+  _intakeRerenderFor(id);
+  if(_intakeLinkOpenId===id) document.getElementById('intake-link-inp-'+id)?.focus();
+}
+function _intakeLinkUIHtml(id){
+  const sel=_intakeLinkSel[id];
+  if(sel){
+    const card=cards.find(c=>c.id===sel.cardId);
+    const titulo=card?card.title:sel.cardTitle;
+    return `<div class="link-search" style="margin-top:8px;">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel('${esc(id)}')" style="color:var(--accent,#2596e8);">trocar</a></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','comment')">💬 Virar comentário</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','checklist')">☑ Virar item de checklist</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="link-search" style="margin-top:8px;">
+    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink('${esc(id)}',this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink('${esc(id)}');}">
+    <div class="link-dropdown" id="intake-link-dd-${esc(id)}"></div>
+  </div>`;
+}
+function _intakeSearchLink(id, q){
+  const dd=document.getElementById('intake-link-dd-'+id); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const lower=q.toLowerCase();
+  const results=cards.filter(c=>!c.archived && c.title.toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(card=>{
+    const col=columns.find(c=>c.id===card.col);
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+esc(col?.name||card.col)+'</span><span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
+    opt.onclick=()=>_intakePickLinkCard(id, card.id);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+function _intakePickLinkCard(id, cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
+  _intakeLinkSel[id]={cardId:card.id, cardTitle:card.title};
+  _intakeRerenderFor(id);
+}
+function _intakeCancelLinkSel(id){
+  _intakeLinkSel[id]=null;
+  _intakeRerenderFor(id);
+}
+function _intakeConfirmLink(id, mode){
+  if(!checkEditPermission()) return;
+  const item=_intakeBucket[id]; if(!item) return;
+  const sel=_intakeLinkSel[id]; if(!sel) return;
+  const card=cards.find(c=>c.id===sel.cardId);
+  if(!card){ showToast('⚠ Esse card não existe mais.'); _intakeLinkSel[id]=null; _intakeRerenderFor(id); return; }
+  const partes=['📥 Pedido via formulário de intake: **'+item.titulo+'**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
+  if(item.squadDemandante) partes.push('Squad/time solicitante: '+item.squadDemandante);
+  if(item.descricao){ partes.push(''); partes.push(item.descricao); }
+  const texto=partes.join('\n');
+  if(mode==='comment'){
+    const user=window._currentUser; if(!user) return;
+    const comment={
+      id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+      uid:user.uid, author:user.displayName||user.email||'?',
+      init:window._currentUserInit||'?', foto:user.photoURL||'',
+      text:texto, ts:new Date().toISOString(),
+    };
+    if(!_commentsCache[card.id]) _commentsCache[card.id]={};
+    _commentsCache[card.id][comment.id]=comment;
+    window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment)
+      .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
+    if(_commentCardId===card.id) renderCommentList(_sortedComments(_commentsCache[card.id]));
+    parseMentions(texto, card.id, comment.id);
+    if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(texto)) _startAgenteAgilThinking(card.id);
+  } else {
+    card.checklist = Array.isArray(card.checklist) ? card.checklist.slice() : [];
+    card.checklist.push({t:'📥 '+item.titulo, done:false});
+    recordHistory(card, 'adicionou item de checklist a partir de um pedido de intake');
+    fbSaveCard(card);
+    renderBoard();
+    if(editingId===card.id) renderCL(card.checklist);
+  }
+  window._update(fb(FB+'/intake_pending/'+id), {status:'linked', linkedCardId:card.id, linkedCardTitle:card.title, linkedAs:mode, linkedAt:new Date().toISOString()});
+  _intakeLinkOpenId=null; _intakeLinkSel[id]=null;
+  showToast(mode==='comment' ? '💬 Pedido virou comentário em "'+card.title+'".' : '☑ Pedido virou item de checklist em "'+card.title+'".');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#intake-ov .link-search')) document.querySelectorAll('#intake-ov .link-dropdown.show').forEach(dd=>dd.classList.remove('show'));
+});
 
 function setCampSqFilter(sq){
   window._campSqFilter = sq;
@@ -22107,7 +22407,7 @@ function _renderArquivadosBody(){
     // branco/errado na lista.
     const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard('${c.id}');closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
     body.appendChild(row);
   });
 }
@@ -22122,7 +22422,18 @@ async function openArquivados(){
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _renderArquivadosBody();
 }
-function desarquivar(id){ const c=cards.find(x=>x.id===id); if(!c) return; c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard(); openArquivados(); }
+// Achado real (/monitorarbugs, 2026-09-15): antes só era chamada com a
+// tela de Arquivados já aberta (daí o openArquivados() incondicional no
+// final) — agora que dá pra abrir um card arquivado direto no modal
+// (openCard() a partir da lista, ver _renderArquivadosBody()) e restaurar
+// por lá (ver btn-archive-card em openCard()), reabrir Arquivados sem essa
+// tela estar aberta criava um overlay novo por baixo do card, sem sentido.
+// Só reabre/re-renderiza se ela já estava aberta.
+function desarquivar(id){
+  const c=cards.find(x=>x.id===id); if(!c) return;
+  c.archived=false; delete c.archivedAt; fbSaveCard(c); renderBoard();
+  if(document.getElementById('arch-ov')?.classList.contains('open')) openArquivados();
+}
 function _archSelectAll(v){ document.querySelectorAll('.arch-chk').forEach(cb=>cb.checked=v); }
 async function deleteSelectedArchived(){
   const ids=[...document.querySelectorAll('.arch-chk:checked')].map(cb=>cb.dataset.id);
@@ -23058,6 +23369,7 @@ function fillAgilTab(){
   document.getElementById('cfg-wip').value=s.wip||'3';
   document.getElementById('cfg-capacity').value=s.capacity||'80';
   document.getElementById('cfg-sprint-goal').value=s.goal||'';
+  const bfBannerEl=document.getElementById('cfg-bf-banner-msg'); if(bfBannerEl) bfBannerEl.value=s.bfBannerMsg||'';
   // intakeEnabled ausente (squad nunca configurou) = tratado como ligado,
   // já que o formulário já estava ativo em produção pra todo mundo antes
   // deste toggle existir — precisa de opt-OUT explícito, não opt-in.
@@ -23066,7 +23378,7 @@ function fillAgilTab(){
 }
 function saveAgilCfg(){
   calcSprintEnd();
-  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
+  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,bfBannerMsg:document.getElementById('cfg-bf-banner-msg')?.value||'',intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
   fbSet(FB+'/agil_cfg',agilCfg);
   fbSet(FB+'/tags',tags);
 
@@ -23120,6 +23432,15 @@ function applyAgilCfg(){
   const gb=document.getElementById('goal-bar');
   if(agilCfg.goal){ document.getElementById('goal-txt').textContent=agilCfg.goal; gb.classList.add('show'); }
   else gb.classList.remove('show');
+  // Mensagem opcional do banner do tema 🔥 Black Friday (ver
+  // #bf-countdown-bar/_bfUpdateCountdown()) — mesmo padrão do Objetivo da
+  // sprint acima, campo próprio (agilCfg.bfBannerMsg) pra não confundir
+  // com o objetivo normal da sprint (podem ser mensagens bem diferentes).
+  const bfMsgWrap=document.getElementById('bf-banner-msg-wrap');
+  if(bfMsgWrap){
+    if(agilCfg.bfBannerMsg){ document.getElementById('bf-banner-msg').textContent=agilCfg.bfBannerMsg; bfMsgWrap.style.display=''; }
+    else bfMsgWrap.style.display='none';
+  }
   // intakeEnabled ausente = ligado (mesma regra de fillAgilTab — squad
   // nunca configurou = comportamento de antes do toggle existir).
   const btnIntake=document.getElementById('btn-intake');
@@ -25254,7 +25575,7 @@ const HELP_CONTENT = {
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
     { icon:'🗓️', title:'Agendas do Google no calendário', text:'Em ⚙ Config → Calendário, PO/Organizador pode pedir para conectar uma agenda externa do Google (reuniões, rituais, feriados). O pedido entra numa fila e o administrador é avisado no sino 🔔; ninguém mais precisa autorizar nada no Google. Quando o ADM aprova, os eventos aparecem automaticamente pra todo o squad, com hora, descrição e botão "🎥 Entrar na reunião" quando houver Meet/Zoom/Teams. Reuniões avisam 10 minutos antes (toast + notificação). A legenda "📅 Agendas ▾" no topo do calendário mostra a cor de cada agenda conectada (cada uma recebe uma cor própria automática). PO/Organizador/ADM podem excluir qualquer evento, inclusive os do Google — a exclusão é só local no board, não mexe na agenda real. Agendas conectadas pelo painel (feriados nacionais, eventos do Digital) aparecem em todos os squads automaticamente.' },
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
-    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em Arquivar no modal. Para ver e restaurar arquivados, clique em Arquivados na toolbar. A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
+    { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em "📦 Arquivar" no modal (o mesmo botão vira "♻️ Restaurar" quando o card já está arquivado). Para ver arquivados, clique em Arquivados na toolbar. Clique no <b>título</b> de um card da lista pra abrir o modal normal e ver o conteúdo (descrição, checklist, histórico...) sem precisar restaurar antes — ele continua arquivado até alguém clicar em "Restaurar" (na lista ou dentro do próprio modal, que já mostra o botão certo pro estado atual). A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
@@ -25265,7 +25586,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
@@ -30994,6 +31315,12 @@ let _ctxSubmenus = {}; // {mover, prioridade} — ver toggleCtxSubmenu()
 function showCtxMenu(e, cardId){
   e.preventDefault();
   e.stopPropagation();
+  // Achado real (/monitorarbugs 2026-09-15): menu.innerHTML é reconstruído
+  // do zero aqui, destruindo os elementos <div class="ctx-item"> que um
+  // _ctxSubmenuHoverEnter() pendente (hover no menu ANTERIOR) capturou como
+  // `trigger`. Sem limpar o timer, ele dispara mais tarde contra um nó
+  // desanexado — ver comentário completo em hideCtxMenu().
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
   _ctxCardId = cardId;
   const card = cards.find(x=>x.id===cardId);
   if(!card) return;
@@ -31036,7 +31363,7 @@ function showCtxMenu(e, cardId){
     <div class="ctx-label">${card.title.substring(0,28)}${card.title.length>28?'…':''}</div>
     <div class="ctx-sep"></div>
 
-    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'mover')">
+    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'mover')" onmouseenter="_ctxSubmenuHoverEnter(event,'mover')" onmouseleave="_ctxSubmenuScheduleClose()">
       <span class="ctx-item-icon">↦</span> Mover para <span class="ctx-arrow">▸</span>
     </div>
 
@@ -31050,7 +31377,7 @@ function showCtxMenu(e, cardId){
       <span class="ctx-item-icon">${card.paused?'▶':'⏸'}</span> ${card.paused?'Retomar contagem de tempo':'Pausar contagem de tempo'}
     </div>
 
-    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'prioridade')">
+    <div class="ctx-item" onclick="toggleCtxSubmenu(event,'prioridade')" onmouseenter="_ctxSubmenuHoverEnter(event,'prioridade')" onmouseleave="_ctxSubmenuScheduleClose()">
       <span class="ctx-item-icon">🚩</span> Prioridade <span class="ctx-arrow">▸</span>
     </div>
 
@@ -31118,15 +31445,13 @@ function showCtxMenu(e, cardId){
 // click que chama hideCtxMenu()); clicar num item DENTRO do flyout ainda
 // fecha tudo normalmente — a ação escolhida chama hideCtxMenu() no fim
 // (ctxMove()/ctxSetPriority()), que agora também esconde o flyout.
-function toggleCtxSubmenu(ev, key){
-  ev.stopPropagation();
+// Abre o flyout único (#ctx-submenu-fly) encostado no trigger dado —
+// extraído de toggleCtxSubmenu() pra ser reaproveitado pelo hover
+// (_ctxSubmenuHoverEnter() abaixo), sem duplicar a lógica de
+// posicionamento/anti-vazamento de tela.
+function _ctxOpenSubmenuAt(trigger, key){
   const fly = document.getElementById('ctx-submenu-fly');
   if(!fly) return;
-  const trigger = ev.currentTarget;
-  const jaAbertoAqui = fly.classList.contains('open') && fly._ctxOwner===trigger;
-  fly.classList.remove('open');
-  fly._ctxOwner = null;
-  if(jaAbertoAqui) return;
   fly.innerHTML = _ctxSubmenus[key] || '';
   fly._ctxOwner = trigger;
   // Alinha o topo do flyout com o topo do item clicado, encostado na borda
@@ -31141,12 +31466,69 @@ function toggleCtxSubmenu(ev, key){
   if(fr.right > window.innerWidth - 8){ fly.style.left = ''; fly.style.right = (window.innerWidth - r.left) + 'px'; }
   if(fr.bottom > window.innerHeight - 8){ fly.style.top = ''; fly.style.bottom = '8px'; }
 }
+function toggleCtxSubmenu(ev, key){
+  ev.stopPropagation();
+  const fly = document.getElementById('ctx-submenu-fly');
+  if(!fly) return;
+  const trigger = ev.currentTarget;
+  const jaAbertoAqui = fly.classList.contains('open') && fly._ctxOwner===trigger;
+  fly.classList.remove('open');
+  fly._ctxOwner = null;
+  if(jaAbertoAqui) return;
+  _ctxOpenSubmenuAt(trigger, key);
+}
+// Pedido direto do usuário: os submenus "Mover para"/"Prioridade" só
+// abriam com clique, parecendo "travado" — num mouse de verdade, passar
+// por cima já deveria abrir, como qualquer menu nativo do sistema. Só
+// ativa em dispositivo com hover de verdade + ponteiro fino
+// ((hover:hover) and (pointer:fine), checado 1x) — telas de toque
+// continuam só no clique, porque hover simulado num tap abriria sozinho
+// sem jeito controlado de fechar. Delay de abrir evita "piscar" ao só
+// passar o mouse de raspão pelo item; delay de fechar (mesmo em cima do
+// trigger e do próprio flyout — ver onmouseenter/onmouseleave dos dois)
+// dá tempo de mover o mouse na diagonal até o submenu sem ele sumir no
+// meio do caminho, mesmo problema clássico de menu-hover ("bermuda
+// triangle") que qualquer menu decente já resolve assim.
+const _ctxHoverCapable = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+let _ctxHoverTimer=null;
+function _ctxSubmenuHoverEnter(ev, key){
+  if(!_ctxHoverCapable) return;
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
+  const trigger = ev.currentTarget;
+  const fly = document.getElementById('ctx-submenu-fly');
+  if(fly && fly.classList.contains('open') && fly._ctxOwner===trigger) return; // já é este
+  _ctxHoverTimer = setTimeout(()=>_ctxOpenSubmenuAt(trigger, key), 120);
+}
+function _ctxSubmenuScheduleClose(){
+  if(!_ctxHoverCapable) return;
+  if(_ctxHoverTimer) clearTimeout(_ctxHoverTimer);
+  _ctxHoverTimer = setTimeout(()=>{
+    const fly = document.getElementById('ctx-submenu-fly');
+    if(fly){ fly.classList.remove('open'); fly._ctxOwner=null; }
+  }, 300);
+}
+function _ctxSubmenuCancelClose(){
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
+}
 
 function hideCtxMenu(){
   const m = document.getElementById('ctx-menu');
   if(m) m.style.display = 'none';
   const fly = document.getElementById('ctx-submenu-fly');
   if(fly){ fly.classList.remove('open'); fly._ctxOwner = null; }
+  // Achado real (/monitorarbugs 2026-09-15): _ctxSubmenuHoverEnter() agenda
+  // _ctxOpenSubmenuAt() com 120ms de atraso (evita "piscar" ao passar o
+  // mouse de raspão). Se o menu fechar ANTES desse atraso passar — clique
+  // fora, Esc, ou trocar de card — sem cancelar o timer, ele dispara depois
+  // do menu já escondido: `trigger` continua sendo o item antigo (dentro de
+  // #ctx-menu, display:none), getBoundingClientRect() de um elemento
+  // invisível volta tudo zero, e o flyout reabre sozinho grudado no canto
+  // superior esquerdo da tela, mostrando opções de um card cujo
+  // `_ctxCardId` já foi limpo pra null — clicar numa opção não faz nada
+  // (ctxMove()/ctxSetPriority() acham `cards.find(x=>x.id===null)` vazio e
+  // saem em silêncio). Cancela aqui, mesma defesa que showCtxMenu() já
+  // ganhou pro caso de trocar de card com o timer pendente.
+  if(_ctxHoverTimer){ clearTimeout(_ctxHoverTimer); _ctxHoverTimer=null; }
   _ctxCardId = null;
 }
 
@@ -31903,13 +32285,14 @@ function toggleFishBackground(e){
 function _currentTheme(){
   const t=document.documentElement.getAttribute('data-theme');
   if(t==='vice') return 'vice';
+  if(t==='blackfriday') return 'blackfriday';
   return t==='light' ? 'light' : 'dark';
 }
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
   if(btn){
     const t=_currentTheme();
-    btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
+    btn.textContent = t==='vice' ? '🌴' : t==='blackfriday' ? '🔥' : (t==='light' ? '☀️' : '🌙');
   }
   _applyFavicon();
 }
@@ -32099,6 +32482,57 @@ function exitViceCity(){
   _applyThemeButtonIcon();
   showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
 }
+// 🔥 Black Friday — proposta em avaliação (ver comentário grande no CSS,
+// [data-theme="blackfriday"]). Mesmo padrão de entrar/guardar/sair do
+// Vice City acima, só que via botão DIREITO no botão de tema (em vez de
+// long-press) — gesto próprio, não compete com clique/duplo-clique/
+// long-press que já fazem 3 coisas diferentes no mesmo botão. De
+// propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
+// um teste, não uma opção real ainda, sem sentido contar métrica disso.
+function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
+function toggleBlackFriday(){
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
+  _disableThemeAutoIfOn();
+  safeLS.setItem('mare_theme_before_bf', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_variant_before_bf', document.documentElement.getAttribute('data-theme-variant') || '');
+  document.documentElement.setAttribute('data-theme','blackfriday');
+  document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme','blackfriday');
+  _applyThemeButtonIcon();
+  showToast('🔥 Modo Black Friday — proposta em teste (botão direito no 🔥 pra sair).');
+}
+function exitBlackFriday(){
+  const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
+  const prevVariant = safeLS.getItem('mare_theme_variant_before_bf') || '';
+  if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  if(prevVariant==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme', prevTheme==='light' ? 'light' : 'dark');
+  safeLS.setItem('mare_theme_variant', prevVariant);
+  _applyThemeButtonIcon();
+  showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
+}
+function _themeBtnRightClick(e){
+  e.preventDefault();
+  if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
+  toggleBlackFriday();
+}
+// Contador de #bf-countdown-bar (visível só com o tema ligado, ver CSS) —
+// roda sempre em segundo plano, independente do tema atual (mesmo padrão
+// de timer "vida inteira da sessão" já usado no resto do arquivo, ex.
+// _startThemeAutoWatch) — custo irrelevante, evita ter que ligar/desligar
+// o timer toda vez que a pessoa entra/sai do modo Black Friday.
+function _bfUpdateCountdown(){
+  const el=document.getElementById('bf-countdown-num'); if(!el) return;
+  const target=new Date(Date.UTC(2026,10,27,3,0,0)); // Black Friday 2026 (27 de novembro)
+  const diff=target-new Date();
+  if(diff<=0){ el.textContent='chegou 🎉'; return; }
+  const d=Math.floor(diff/86400000), h=Math.floor((diff%86400000)/3600000);
+  el.textContent=d+'d '+String(h).padStart(2,'0')+'h';
+}
+_bfUpdateCountdown();
+setInterval(_bfUpdateCountdown, 60000);
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
@@ -32128,6 +32562,7 @@ function _isViceCityEasterEggAtivo(){ return _currentTheme()==='vice' && !_isThe
 let _themeClickTimer=null;
 function onThemeBtnClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){
     if(_themeClickTimer) return;
     _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
@@ -32139,11 +32574,13 @@ function onThemeBtnClick(){
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleThemeVariant();
 }
 function _mobileThemeRowClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleTheme();
 }
@@ -35127,7 +35564,7 @@ renderBoard();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>
 <div id="ctx-menu" class="ctx-menu" style="display:none;"></div>
-<div id="ctx-submenu-fly" class="ctx-submenu"></div>
+<div id="ctx-submenu-fly" class="ctx-submenu" onmouseenter="_ctxSubmenuCancelClose()" onmouseleave="_ctxSubmenuScheduleClose()"></div>
 
 <!-- BUSCA GLOBAL Ctrl+K -->
 <div id="search-overlay" onclick="if(event.target===this) closeSearch();">
