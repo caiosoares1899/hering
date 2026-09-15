@@ -177,6 +177,15 @@ Formato: baseline → novo — o que motivou — achados/correções.
   documentado, não corrigido: nenhuma entrada cobre o editor de Colunas
   em geral (pré-existente, não introduzido pela mudança recente de
   #840, que só mudou texto de erro sem UI nova).
+- **v8.30.665-dev→v8.30.666-dev (2026-09-15)**: pedido logo após 2
+  features do dia (Intake vincular/guardar + Arquivados abrir card).
+  2 correções: "Arquivados" não mencionava clicar no card pra abrir
+  (inline já estava certo, só a Central de Ajuda ficou pra trás — a
+  mesma lição do gap de origem desta skill se repetiu); "Formulário
+  de intake" dizia "4 ações" na aba Guardados, código só mostra 3.
+  Achado incidental, não corrigido (pré-existente, fora do escopo do
+  dia): badge "Xd atrasado" sem tooltip/entrada explicando que só
+  conta dias úteis.
 
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.
