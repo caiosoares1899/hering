@@ -3283,6 +3283,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.664-dev — 2026-09-15 — Arquivados: clicar num card da lista abre ele (continua arquivado)
+
+Pedido direto do usuário: a lista de "📦 Arquivados" (`_renderArquivadosBody()`)
+só tinha os botões "Restaurar" e "Excluir" por card — não dava pra ver
+o CONTEÚDO de um card arquivado (descrição, checklist, histórico...)
+sem antes restaurá-lo. O título de cada card na lista agora é
+clicável — abre o modal normal (`openCard()`) pra visualizar/editar,
+sem mexer em `c.archived` (o card continua arquivado depois de
+fechar o modal; `saveCard()` nunca toca nesse campo, só
+`desarquivar()`/o botão "Arquivar" fazem isso). Fecha a tela de
+Arquivados ao abrir o card, mesmo padrão já usado no grid de cards
+vinculados de Campanha.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.663-dev — 2026-09-15 — Fix: comentário do "Vincular a card" nunca incluía o título do pedido
 
 Achado pelo próprio teste de console entregue com a v8.30.662-dev
