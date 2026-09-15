@@ -3283,6 +3283,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.668-dev — 2026-09-15 — 🔥 Black Friday: countdown + selo de oferta (2ª rodada)
+
+Pedido direto do usuário depois de testar a v8.30.667 com cards reais:
+trazer 2 elementos que tinham ficado só no mockup.
+
+- **Barra de contagem regressiva** (`#bf-countdown-bar`, mesmo padrão
+  visual da `.goal-bar` de meta de sprint que já existia) — só
+  aparece com o tema 🔥 ligado, logo acima da barra de filtros.
+  Calcula de verdade os dias/horas até a Black Friday 2026 (27/nov),
+  atualiza a cada minuto.
+- **Selo "🔥 OFERTA"** nos cards — reaproveita `card.priority==='critical'`
+  (campo que já existe, mesmo badge 🔥 que já aparece na lista de
+  prioridades) em vez de inventar um campo novo só pra isso. Puramente
+  visual (`::before`, `.card-prio-critical`), não muda nenhum dado do
+  card nem aparece fora do tema Black Friday.
+
+Ainda EXPERIMENTAL (mesma ressalva da v8.30.667 — não é opção decidida/
+permanente, `CODE_MAP.md` não atualizado de propósito).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.667-dev — 2026-09-15 — 🔥 Modo Black Friday (proposta EXPERIMENTAL, botão direito no tema pra testar)
 
 Pedido direto do usuário: organizar o board de um jeito especial pra
