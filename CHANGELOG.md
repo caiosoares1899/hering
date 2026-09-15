@@ -3283,6 +3283,20 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.670-dev — 2026-09-15 — 🔥 Black Friday: fita "OFERTA" encolhida (atropelava tags empilhadas)
+
+Feedback direto ("bugou kkk", com print): num card real com 2 linhas de
+tag empilhadas coladas no topo (comum, ver `makeCardEl()`), a fita de
+120px da v8.30.669 atravessava por cima delas, ficando grande/
+atropelando o conteúdo em vez de um detalhe discreto de cantinho.
+Testado antes numa réplica isolada do CSS real (coluna + card, fora do
+app) pra confirmar o ajuste sem só chutar tamanho — encolhida
+120px→90px, puxada mais pro canto (top 10px→6px, right -30px→-24px),
+fonte reduzida.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.669-dev — 2026-09-15 — 🔥 Black Friday: fita diagonal no lugar do selo de cantinho
 
 Feedback direto comparando com o mockup original (artifact): "essa
