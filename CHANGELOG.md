@@ -18,6 +18,49 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.679 — 2026-09-15 · Promove pra prod — 🔥 Modo Black Friday, Intake (vincular/Guardados), hover nos submenus e uma leva de correções de bugs
+
+Promove pra produção o lote v8.30.662-dev → v8.30.678-dev de
+`kanban-dev.html` (17 entradas de dev), a pedido explícito do usuário
+("já sobe tudo que tá acumulado então"). Ver entradas completas de
+`kanban-dev.html` abaixo pro detalhe técnico de cada achado.
+
+**Feature nova — 🔥 Modo Black Friday (EXPERIMENTAL)**: 4º tema visual
+do app, preto dominante com vermelho só como detalhe pontual — pedido
+direto do usuário pra época de Black Friday. Entra/sai com **botão
+direito** no botão de tema (não faz parte do ciclo normal de
+clique/duplo-clique/long-press dos outros 3 temas — ainda não é opção
+decidida/permanente). Inclui: contagem regressiva até a Black Friday
+(mensagem configurável em ⚙ Config → Ágil), selo "🔥 OFERTA" em fita
+diagonal nos cards de prioridade crítica (reaproveita `card.priority`
+existente, não inventa campo novo), e peixinhos trocados por 💰 (mesma
+animação de nado). `CODE_MAP.md` deliberadamente não indexa esse tema
+ainda — feature segue marcada como experimental, decisão de torná-la
+permanente fica em aberto (ver card "Organizar o Maré Digital para
+BF26" no board).
+
+**Feature nova — Intake**: vincular um pedido do Intake a um card já
+existente (em vez de só criar um novo), e uma aba "Guardados" pra
+pedidos sem prazo definido que ainda não viraram card.
+
+**Feature nova — menu de contexto**: os submenus "Mover para"/
+"Prioridade" agora abrem com hover (mouse parado em cima), não só
+clique — pedido direto do usuário, mesmo padrão de menu de SO
+(Explorer/Finder). Só ativa em dispositivo com hover de verdade +
+ponteiro fino; toque continua só no clique.
+
+**Correções de bugs mais relevantes (`/monitorarbugs`)**: (1) menu de
+contexto — timer de hover pendente não era cancelado ao fechar o menu
+ou trocar de card, fazendo o submenu reabrir sozinho grudado no canto
+superior esquerdo da tela; (2) comentário do "Vincular a card" (Intake)
+nunca incluía o título do pedido original; (3) Arquivados — clicar num
+card da lista agora abre ele; botão "📦 Arquivar" do modal não checava
+se o card já estava arquivado (virava "♻️ Restaurar" quando aplicável).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>` e no
+`<script type="module">`, balanço de chaves/parênteses igual ao
+baseline conhecido (braces -1, parens 0).
+
 ### v8.30.662 — 2026-09-15 · 🔴 Hotfix crítico — vazamento de config do Firebase entre kanban/painel prod e dev
 
 Hotfix isolado, **não** é uma promoção do lote acumulado em
