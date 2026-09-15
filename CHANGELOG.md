@@ -3283,6 +3283,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.669-dev — 2026-09-15 — 🔥 Black Friday: fita diagonal no lugar do selo de cantinho
+
+Feedback direto comparando com o mockup original (artifact): "essa
+faixa que você criou no artefato tá muito melhor". O selo "🔥 OFERTA"
+da v8.30.668 era um cantinho reto — trocado pela fita DIAGONAL do
+mockup original (`transform:rotate(40deg)`, atravessando o canto
+superior direito do card). `overflow:hidden` adicionado só na
+combinação tema+prioridade crítica, pra recortar a fita nos limites
+arredondados do card sem afetar overflow do resto do app.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.668-dev — 2026-09-15 — 🔥 Black Friday: countdown + selo de oferta (2ª rodada)
 
 Pedido direto do usuário depois de testar a v8.30.667 com cards reais:
