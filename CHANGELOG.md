@@ -3283,6 +3283,22 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.663-dev — 2026-09-15 — Fix: comentário do "Vincular a card" nunca incluía o título do pedido
+
+Achado pelo próprio teste de console entregue com a v8.30.662-dev
+(rodado pelo usuário, 1 de 6 cenários falhou). `_intakeConfirmLink()`,
+modo `'comment'`, montava o texto só com "Demandante"/"Squad"/
+descrição — nunca com `item.titulo`. Resultado: o comentário criado no
+card vinculado nunca dizia O QUE foi pedido, só quem pediu — pra quem
+lesse o comentário depois, sem abrir o Intake de novo, não dava pra
+saber do que se tratava. (O modo `'checklist'` não tinha esse bug —
+usa `'📥 '+item.titulo` direto.) Fix: primeira linha do comentário
+passa a ser `'📥 Pedido via formulário de intake: **'+item.titulo+'**'`
+(negrito já suportado pelo `renderMd()` dos comentários).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.662-dev — 2026-09-15 — Intake: vincular a card existente + lista de "Guardados"
 
 Feature pedida direto pelo usuário: "às vezes aquela demanda não
