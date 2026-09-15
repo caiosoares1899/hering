@@ -3283,6 +3283,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.671-dev — 2026-09-15 — 🔥 Black Friday: fita redesenhada sem depender de recorte (overflow:hidden removido)
+
+Print novo confirmou: mesmo depois de encolher (v8.30.670), a fita
+continuava "vazando" como uma barra larga no Chrome real da pessoa
+(mesmo motor testado aqui — perguntado direto, confirmado Chrome).
+Suspeita mais forte: `overflow:hidden` no `.card` + `backdrop-filter`
+na `.col` por cima + o `transform:rotate()` da fita — essa combinação
+de 2 níveis de recorte/blur aninhados é uma interação conhecida do
+Chrome que às vezes não recorta corretamente, especialmente fora de
+100% de zoom/escala de tela (só reproduzido numa réplica isolada
+testando com `deviceScaleFactor` diferente de 1 — em 100% renderizava
+limpo nos meus testes anteriores, por isso passou pelas 2 rodadas
+prévias).
+
+Fix definitivo: fita redesenhada pra **nunca precisar de recorte** —
+62px (era 90px), ângulo mais raso (18°, era 40°), offset POSITIVO
+(`right:4px`, não mais negativo) — cabe inteira dentro dos limites do
+card sempre, então `overflow:hidden` no `.card.card-prio-critical`
+virou desnecessário e foi removido. Elimina a interação suspeita de
+vez, independente de zoom/escala de tela.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.670-dev — 2026-09-15 — 🔥 Black Friday: fita "OFERTA" encolhida (atropelava tags empilhadas)
 
 Feedback direto ("bugou kkk", com print): num card real com 2 linhas de
