@@ -14971,6 +14971,26 @@ PWA, `<img>` da tela de login — todos continuam apontando pra
 
 ## Service Worker — `firebase-messaging-sw.js` (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-15 — `respondWith()` podia resolver pra `undefined` offline e sem cache (`TypeError: Failed to convert value to 'Response'`)
+
+Reportado direto no console: `firebase-messaging-sw.js:1 Uncaught (in
+promise) TypeError: Failed to convert value to 'Response'`. Nos dois
+handlers de `fetch` (network-first pra `version.json`/navegação, e
+cache-first pro resto), o `.catch()` do `fetch()` que falha cai de
+volta em `caches.match(e.request)`/na variável `cached` — mas se a
+rede falhar (offline, ou uma requisição que nunca foi cacheada antes)
+E não existir nada em cache pra aquela URL específica, os dois
+resolvem pra `undefined`. `event.respondWith(undefined)` é exatamente
+esse `TypeError` — o Service Worker é obrigado a devolver um
+`Response` de verdade.
+
+**Fix**: `offlineFallback()`, um `Response` sintético (`504`, sem
+corpo), como último recurso nos dois `.catch()` — garante que
+`respondWith()` sempre resolve pra um `Response`, mesmo offline e sem
+nada em cache pra aquele request específico. Sem versão própria em
+`version.json` (service worker fica na raiz, atualiza sozinho); sem
+dev-first (arquivo sem par `-dev`, ver `CLAUDE.md`).
+
 ### 2026-08-12 — `/vendor/` também excluído do cache do SW (o bug nunca foi o gstatic.com)
 A vendorização do SDK do Firebase (v8.30.412-dev de `kanban-dev.html`)
 não resolveu o `query is not defined` reportado — mesmo com ctrl+F5,
