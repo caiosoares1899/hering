@@ -3570,7 +3570,7 @@ input[type="date"]{-moz-appearance:textfield;}
 
 <div id="goal-bar" class="goal-bar"><span style="opacity:.6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Objetivo</span><span id="goal-txt"></span></div>
 
-<div id="bf-countdown-bar" class="bf-countdown-bar">🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</div>
+<div id="bf-countdown-bar" class="bf-countdown-bar"><span>🔥 <b id="bf-countdown-num">calculando…</b> pra Black Friday</span><span id="bf-banner-msg-wrap" style="display:none;">· <span id="bf-banner-msg"></span></span></div>
 
 <div id="filter-bar" class="filter-bar-panel" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:.6rem;align-items:center;display:none;">
   <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
@@ -4746,6 +4746,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <p id="bmode-desc" style="font-size:11px;color:var(--txt3);margin-bottom:4px;line-height:1.5;"></p>
       <div style="margin-top:10px;" class="cfg-sec-title">Objetivo da sprint</div>
       <div class="field"><textarea class="fi fi-ta" id="cfg-sprint-goal" rows="2" placeholder="Descreva o objetivo..."></textarea></div>
+      <div style="margin-top:10px;" class="cfg-sec-title">🔥 Banner do tema Black Friday (opcional)</div>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Some ao lado da contagem regressiva quando o tema 🔥 Black Friday estiver ligado (ver botão direito no botão de tema). Deixe em branco pra mostrar só a contagem.</p>
+      <div class="field"><input class="fi" id="cfg-bf-banner-msg" type="text" maxlength="80" placeholder="Ex: Meta do squad: -40% em toda a categoria Inverno"></div>
       <div style="margin-top:10px;" class="cfg-sec-title">📥 Formulário de intake</div>
       <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;margin-bottom:4px;">
         <input type="checkbox" id="cfg-intake-enabled" style="accent-color:var(--accent2,#2ecc9c);">
@@ -6263,7 +6266,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.673-dev</div>
+<div class="version">v8.30.674-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23340,6 +23343,7 @@ function fillAgilTab(){
   document.getElementById('cfg-wip').value=s.wip||'3';
   document.getElementById('cfg-capacity').value=s.capacity||'80';
   document.getElementById('cfg-sprint-goal').value=s.goal||'';
+  const bfBannerEl=document.getElementById('cfg-bf-banner-msg'); if(bfBannerEl) bfBannerEl.value=s.bfBannerMsg||'';
   // intakeEnabled ausente (squad nunca configurou) = tratado como ligado,
   // já que o formulário já estava ativo em produção pra todo mundo antes
   // deste toggle existir — precisa de opt-OUT explícito, não opt-in.
@@ -23348,7 +23352,7 @@ function fillAgilTab(){
 }
 function saveAgilCfg(){
   calcSprintEnd();
-  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
+  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,bfBannerMsg:document.getElementById('cfg-bf-banner-msg')?.value||'',intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
   fbSet(FB+'/agil_cfg',agilCfg);
   fbSet(FB+'/tags',tags);
 
@@ -23402,6 +23406,15 @@ function applyAgilCfg(){
   const gb=document.getElementById('goal-bar');
   if(agilCfg.goal){ document.getElementById('goal-txt').textContent=agilCfg.goal; gb.classList.add('show'); }
   else gb.classList.remove('show');
+  // Mensagem opcional do banner do tema 🔥 Black Friday (ver
+  // #bf-countdown-bar/_bfUpdateCountdown()) — mesmo padrão do Objetivo da
+  // sprint acima, campo próprio (agilCfg.bfBannerMsg) pra não confundir
+  // com o objetivo normal da sprint (podem ser mensagens bem diferentes).
+  const bfMsgWrap=document.getElementById('bf-banner-msg-wrap');
+  if(bfMsgWrap){
+    if(agilCfg.bfBannerMsg){ document.getElementById('bf-banner-msg').textContent=agilCfg.bfBannerMsg; bfMsgWrap.style.display=''; }
+    else bfMsgWrap.style.display='none';
+  }
   // intakeEnabled ausente = ligado (mesma regra de fillAgilTab — squad
   // nunca configurou = comportamento de antes do toggle existir).
   const btnIntake=document.getElementById('btn-intake');

@@ -3283,6 +3283,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.674-dev — 2026-09-15 — 🔥 Black Friday: mensagem do banner configurável
+
+Pedido direto do usuário: poder configurar manualmente o que aparece
+no bannerzinho de contagem regressiva. Novo campo opcional
+`agilCfg.bfBannerMsg` (⚙ Config → Ágil, logo abaixo de "Objetivo da
+sprint" — campo separado de propósito, pode ser uma mensagem bem
+diferente do objetivo normal da sprint), mesmo padrão já usado pro
+Objetivo (`fillAgilTab()`/`saveAgilCfg()`/`applyAgilCfg()`). Quando
+preenchida, aparece ao lado da contagem regressiva
+(`#bf-countdown-bar`) — "🔥 Xd XXh pra Black Friday · <mensagem>". Em
+branco, mostra só a contagem, como já era.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.673-dev — 2026-09-15 — 🔥 Black Friday: fita diagonal de volta, com a causa raiz corrigida (clip-path)
 
 Pedido direto do usuário ("quero na diagonal tipo o artefato, pode
