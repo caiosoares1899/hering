@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.50 · painel</div>
+<div class="version">v3.51 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9612,22 +9612,33 @@ function toggleSqCol(sqId, colId){
 // ── FIM FILTRO DE COLUNAS ─────────────────────────────────────────
 
 // Squads base — sempre presentes
-// ── PAINEL DEV: só exibe squads fictícias de teste ──────────────────────────
+// Achado real (/monitorarbugs 2026-09-15, relato direto do usuário: "painel
+// prod tá lendo os dados de painel dev" — e depois "não resolveu"/"não tá
+// lendo os dados do kanban prod" quando os squads simplesmente sumiram):
+// este bloco tinha o exato conteúdo de painel-dev.html — SQUADS array
+// hardcoded só com dev/omnichannel (squads fictícios de teste) e
+// loadExtraSquads() com um `return;` antes de sequer chamar
+// window._onValue('kanban/squads_meta') — ou seja, este arquivo de
+// PRODUÇÃO nunca carregava os squads reais (dados/prf/midiacriativa), só
+// tinha os 2 squads de teste. Mesmo incidente já documentado antes (commit
+// 87c4d58, "INCIDENTE: reconstrói painel.html — dev vazou pra produção"),
+// reintroduzido pela promoção de painel.html v3.47 (patch bruto naquela
+// época pegou este trecho junto). Restaurado pro padrão de produção: SQUADS
+// nasce com os 3 squads reais, loadExtraSquads() carrega de verdade
+// squads_meta pra pegar squads extras criados depois.
 let SQUADS = [
-  {id:'dev',         label:'Dev Sandbox',       icon:'🧪', color:'#38b6ff', wipLimit:3},
-  {id:'omnichannel', label:'Squad Omnichannel',  icon:'🛍️', color:'#f97316', wipLimit:3},
+  {id:'dados',         label:'Squad Dados e IA',               icon:'📊', color:'#38b6ff', wipLimit:3},
+  {id:'prf',         label:'Marketing de Performance',   icon:'📱', color:'#1de9b6', wipLimit:3},
+  {id:'midiacriativa', label:'Squad Mídia Criativa',       icon:'🎨', color:'#a855f7', wipLimit:3},
 ];
 // Squads extras criados via painel são carregados do Firebase via loadExtraSquads()
 // URL helper: abre o board de um squad no kanban unificado
 function squadBoardUrl(squadId, cardId){ return 'kanban.html?squad=' + squadId + (cardId ? '&card='+encodeURIComponent(cardId) : ''); }
 
-// Painel-dev: squads fixas, não carrega squads_meta de produção
+// Carrega squads criados via painel de setup do Firebase
 function loadExtraSquads(callback){
-  renderFilterBar(); renderGerenciaBar(); // painel-dev: SQUADS já fixo (não carrega squads_meta de produção) — ver early return abaixo
-  if(callback) callback();
-  return;
-  let firstRun=true; // eslint-disable-line
-  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{
+  let firstRun=true;
+  window._onValue(window._ref(window._db,'kanban/squads_meta'),snap=>{ _dbgTrack('squads_meta', snap.val());
     const val=snap.val()||{};
     let changed=false;
     Object.entries(val).forEach(([id,meta])=>{
@@ -9640,10 +9651,9 @@ function loadExtraSquads(callback){
     loadPresence(); // pega squad(s) extra(s) recém-adicionado(s) a SQUADS — ver comentário na declaração
     // Achado real (/monitorarbugs, 2026-09-10, 2ª rodada): loadErrorLogs()
     // dentro do `else if(changed)` nunca roda no 1º carregamento (firstRun
-    // sempre captura o fluxo antes) — mesmo se este trecho for reativado
-    // algum dia (hoje é código morto, ver early return acima), precisa
-    // ficar incondicional aqui, igual loadPresence(), pra cobrir squad que
-    // já existia antes da sessão abrir. Ver painel.html pro efeito prático.
+    // sempre captura o fluxo antes) — precisa ficar incondicional aqui,
+    // igual loadPresence(), pra cobrir squad que já existia antes da sessão
+    // abrir.
     loadErrorLogs();
     renderSquadLinks();
     renderFilterBar(); renderGerenciaBar();

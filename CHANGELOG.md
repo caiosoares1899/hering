@@ -16118,6 +16118,51 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.51 · painel — 2026-09-15 · 🔴 INCIDENTE (recorrente): painel.html rodando com o `loadExtraSquads()` de dev — nunca carregava os squads reais
+
+O fix v3.50 (esconder `dev`/`omnichannel` em `squadVisible()`) era
+correto, mas revelou o problema de verdade em vez de resolvê-lo: depois
+dele, o dashboard ficou **completamente vazio** (nenhum squad, "Online
+agora 0", tudo "—") — reportado pelo usuário na hora ("não resolveu no
+painel prod!", e depois "não tá lendo os dados do kanban prod").
+
+**Causa raiz de verdade**: este bloco (`SQUADS` inicial +
+`loadExtraSquads()`) estava com o conteúdo **literal de
+`painel-dev.html`** — `SQUADS` nascia só com `dev`/`omnichannel`
+(squads fictícios de teste, sem nenhum dos 3 squads reais), e
+`loadExtraSquads()` tinha um `return;` logo no início, ANTES da query
+`window._onValue('kanban/squads_meta')` que carrega os squads reais —
+ou seja, este arquivo de **produção nunca carregava `dados`/`prf`/
+`midiacriativa`**, só tinha os 2 squads de teste na memória o tempo
+todo. Isso explica os DOIS sintomas, na ordem: antes do v3.50, o
+dashboard mostrava `dev`/`omnichannel` (os únicos squads que existiam);
+depois do v3.50 escondê-los, sobrou nada, porque nunca existiu mais
+nada pra mostrar.
+
+Este é o **mesmo incidente já documentado antes** (commit `87c4d58`,
+"INCIDENTE: reconstrói painel.html — dev vazou pra produção",
+2026-08-10) — reintroduzido pela promoção `painel.html v3.47`
+(2026-09-14, "patch cirúrgico" que aparentemente pegou este trecho
+junto do lote de dev sem perceber). Confirmado por comparação direta:
+`painel-dev.html` tem exatamente esse mesmo bloco, incluindo um
+comentário que literalmente diz "ver painel.html pro efeito prático" —
+prova de que o texto foi escrito pensando em dev, não devia estar aqui.
+
+**Fix**: `SQUADS` volta a nascer com os 3 squads reais (Dados e IA,
+Marketing de Performance, Mídia Criativa); `loadExtraSquads()` volta a
+consultar `kanban/squads_meta` de verdade, sem o `return;` prematuro.
+Squad de teste (`dev`/`omnichannel`) continua protegido de reaparecer
+por `squadVisible()` (fix do v3.50), mesmo se algum dia entrar em
+`squads_meta` por engano.
+
+**Lição de processo**: da próxima vez que `painel.html`/`painel-dev.html`
+divergirem (o que é intencional, ver `CLAUDE.md`), qualquer patch que
+toque numa função marcada com comentário "painel-dev: ..." merece
+atenção redobrada — é sinal de que aquele trecho é conhecidamente
+diferente entre os dois arquivos.
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.50 · painel — 2026-09-15 · 🔴 Fix real do "painel prod lendo dados de dev" — squad 'dev' vazava no dashboard
 
 O hotfix v3.48 (localStorage do Firebase compartilhado entre as 4
