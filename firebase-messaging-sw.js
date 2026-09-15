@@ -93,6 +93,13 @@ self.addEventListener('fetch', (e) => {
   // etc., que não participam do check de versão) continua como antes.
   const isVersionCheck = /version\.json(\?|$)/.test(e.request.url);
   const isNavigation = e.request.mode === 'navigate' || e.request.destination === 'document';
+  // Sem rede E sem nada em cache pra essa URL, os dois `.catch()` abaixo
+  // resolviam pra `undefined` — e `event.respondWith(undefined)` dá
+  // "TypeError: Failed to convert value to 'Response'" (achado real, erro
+  // reportado no console). Fallback pra um Response sintético 504 garante
+  // que sempre volta um Response de verdade, mesmo offline e sem cache.
+  const offlineFallback = () => new Response('', { status: 504, statusText: 'Offline e sem cache' });
+
   if (isVersionCheck || isNavigation) {
     e.respondWith(
       fetch(e.request)
@@ -103,7 +110,7 @@ self.addEventListener('fetch', (e) => {
           }
           return res;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() => caches.match(e.request).then((cached) => cached || offlineFallback()))
     );
     return;
   }
@@ -118,7 +125,7 @@ self.addEventListener('fetch', (e) => {
           }
           return res;
         })
-        .catch(() => cached);
+        .catch(() => cached || offlineFallback());
       return cached || fresh;
     })
   );
