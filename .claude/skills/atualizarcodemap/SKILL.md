@@ -281,6 +281,35 @@ revalidadas — seções novas — achados incidentais notáveis.
   espaçadas por poucas horas no mesmo dia compensam mais fazendo
   revalidação manual dirigida pelo `git log` do período, não bulk.
 
+- **2026-09-15 (10ª)**: `4b7a377`→`ec66aa9`, 4 dias depois. kanban/
+  kanban-dev **não** estão sincronizados agora (292 linhas de diff) —
+  `kanban-dev.html` tem um lote novo não promovido (Intake vincular/
+  guardar, Arquivados abrir card) além do favicon/versão permanente;
+  cabeçalho reescrito pra deixar isso explícito como o estado NORMAL
+  (não exceção) em vez de assumir "hoje idênticos". Escopo deliberado:
+  as 2 áreas mexidas no dia (mesmo padrão da rodada 9) — 8 âncoras
+  corrigidas (`maybeAutoArchiveOldCards`/`fillArchiveCfgTab`/
+  `openArquivados`/`_renderArquivadosBody`/`desarquivar`/`archiveCard`/
+  `renderIntakeBody`/`_intakeCriarCard`/`_intakeItemHtml`/
+  `_intakeSwitchTab`/`renderIntakeGuardadosBody`/`_intakeGuardar`/
+  `_intakeToggleLink`/`_intakeConfirmLink`), drift de +350 a +840
+  linhas (volume normal desde a última rodada). 2 seções existentes
+  ganharam conteúdo novo (não seções do zero): Arquivados (clicar pra
+  abrir + botão Arquivar/Restaurar alternando) e Intake (guardar +
+  vincular a card existente). 1 imprecisão de conteúdo corrigida (não
+  só drift de linha): a entrada de Intake dizia "as mesmas 4 ações"
+  disponíveis na aba Guardados, código só mostra 3 (mesmo erro já
+  achado e corrigido no `HELP_CONTENT` horas antes, na rodada de
+  `/atualizarhelpcontent` do mesmo dia — sinal de vale a pena checar os
+  dois textos juntos quando um already-known gap aparece num). Checado
+  e confirmado sem drift: `functions/index.js` — registro de exports
+  (21/21, linhas idênticas às já documentadas); `painel.html`/
+  `painel-dev.html` seguem divergindo de verdade (479 linhas de diff).
+  Cluster "personalização baseada em rotina" (5 casos, seção grande já
+  existente) conferido por alto e confirmado já em dia — não
+  revalidado linha a linha (fora do escopo de hoje, criado ad-hoc em
+  rodada anterior).
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir

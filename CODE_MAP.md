@@ -17,13 +17,17 @@ de versão + `VERSION_KEY`, e pelo favicon próprio de cada ambiente
 manifest — commit `ff759f8`, "favicon próprio pro dev + favicon do 🌴 Vice
 City"). Essa divergência de favicon é **permanente e intencional**, não
 "dev com trabalho não promovido" — os dois ambientes devem manter ícones
-diferentes pra sempre, não vai ser promovida como diff. Os números abaixo
-valem pros dois arquivos (retrato deste rodapé: promoção da v8.30.586
-confirmada, ver `CHANGELOG.md`). Isso pode mudar a qualquer momento que
-uma feature nova entrar em dev antes de ir pra prod (ver "Release
-process" no `CLAUDE.md`) — se o `diff` entre os dois mostrar mais do que
-versão/`VERSION_KEY`/favicon, refaça o grep no arquivo específico que
-você está editando (provavelmente `kanban-dev.html`, o superset).
+diferentes pra sempre, não vai ser promovida como diff. Fora essa
+divergência permanente, os dois arquivos ficam byte-idênticos só
+LOGO DEPOIS de uma promoção (última confirmada: v8.30.661, ver
+`CHANGELOG.md`) — neste exato momento (retrato deste rodapé) `kanban-dev.html`
+já tem um lote novo de trabalho ainda não promovido (Intake vincular/
+guardar, Arquivados abrir card), então os números abaixo são de
+`kanban-dev.html` (o superset), não de `kanban.html`. Isso é o estado
+normal na maior parte do tempo, não exceção — se o `diff` entre os dois
+mostrar mais do que versão/`VERSION_KEY`/favicon, refaça o grep no
+arquivo específico que você está editando (provavelmente
+`kanban-dev.html`).
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel-dev.html` (o superset, mesmo padrão do par kanban — sempre
@@ -463,7 +467,7 @@ detalhe dos 4 call sites.
   quem nunca troca de tema).
 
 ### Arquivados / arquivamento automático
-- `maybeAutoArchiveOldCards()` — L12663 — roda a regra opcional de
+- `maybeAutoArchiveOldCards()` — L13019 — roda a regra opcional de
   arquivar cards antigos E parados (`archiveCfg`, configurável em ⚙
   Config → Automações). (2026-09-08) ganhou `excludedCols` — Set de ids
   de coluna que a regra nunca toca (ex.: Backlog, onde cards ficam
@@ -471,20 +475,44 @@ detalhe dos 4 call sites.
   `_archCfgExcludedColsPending`, chips renderizados por
   `_archCfgExcludedColsChips()`/`_archCfgToggleExcludedCol()`, só grava
   em `archiveCfg.excludedCols` no "💾 Salvar regra"
-  (`fillArchiveCfgTab()` L12584). (2026-09-14) **nunca mais arquiva
+  (`fillArchiveCfgTab()` L13195). (2026-09-14) **nunca mais arquiva
   sozinho** — candidatos entram na fila `archive_pending` (por squad,
   acumula até alguém decidir) e o 1º PO/Organizador/ADM a abrir o board
   no dia vê `#archive-validation-ov` (`_archiveValidationOpen()`, lista
   com checkbox por card) — confirma (`_archiveValidationConfirm()`, só
   arquiva os marcados) ou pula pra próxima pessoa elegível
   (`_archiveValidationSkip()`, grava `offeredUids[uid]=hoje`, não
-  incomoda a mesma pessoa 2x no dia).
-- `openArquivados()` — L21449 — tela "Funções de card → Arquivados".
+  incomoda a mesma pessoa 2x no dia). (2026-09-15, `/monitorarbugs`) 2
+  fixes: `excludedCols` agora revalidado também na limpeza da fila
+  acumulada (não só na entrada de candidatos novos — card movido pra
+  coluna excluída ficava preso na fila); idle-check passa a considerar
+  também `card.updatedAt` (garantido centralizado por
+  `fbSaveCard()`/`fbSaveAll()`), não só `card.editedAt` (setado manual
+  por quem lembra) — pin/anexo de link agora conta como atividade.
+- `_renderArquivadosBody()` — L22225 — lista da tela "📦 Arquivados"
+  (`#arch-body`). (2026-09-15, pedido direto) o **título** de cada
+  card agora é clicável — chama `openCard(id)` (o card continua
+  arquivado; `saveCard()`/o resto do modal nunca tocam `c.archived`, só
+  `archiveCard()`/`desarquivar()`) e fecha a própria tela
+  (`closeOv('arch-ov')`), mesmo padrão do grid de cards vinculados de
+  Campanha (`_renderCampCardsGrid()`).
+- `openArquivados()` — L22290 — tela "Funções de card → Arquivados".
   (2026-09-08) filtro novo por coluna (`#arch-f-col`) — arquivar nunca
   reescreve `c.col` (só liga `c.archived`), então o valor atual do
   campo já É "a coluna de quando foi arquivado", sem precisar de campo
   dedicado. Coluna excluída desde então aparece como `id (coluna
   excluída)`, ordenada por último.
+- `desarquivar(id)` — L22303 — restaura um card (chamado da lista de
+  Arquivados E, desde 2026-09-15, de dentro do próprio modal do card —
+  ver `btn-archive-card` abaixo). Só reabre/re-renderiza `#arch-ov` se
+  ela já estava aberta (antes reabria incondicionalmente, criando um
+  overlay novo por baixo do modal do card quando chamada de lá).
+- **`#btn-archive-card`** (rodapé do modal do card, `archiveCard()`
+  L15036) — achado real `/monitorarbugs` 2026-09-15: nunca checava
+  `c.archived`, sempre mostrava "📦 Arquivar" mesmo pra um card já
+  arquivado (clicar de novo só regravava os mesmos campos, sem
+  restaurar). `openCard()` agora alterna o botão pra "♻️ Restaurar"
+  (chama `desarquivar()` + fecha o modal) quando `c.archived`.
 
 ### Comunicados / Mural (popup + badge + Mural)
 - `_refreshComunicados()` — L33957 — busca `kanban/comunicados`
@@ -1890,7 +1918,7 @@ pra trás de um comportamento que os outros já tinham.
 - `salvarExterno()` — L33020
 
 ### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
-- `renderIntakeBody()` — L21513 — lista de `intakePendentes`
+- `renderIntakeBody()` — L21531 — lista de `intakePendentes`
   (`_intakeBucket`, alimentado por listeners granulares em
   `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
   `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
@@ -1898,27 +1926,30 @@ pra trás de um comportamento que os outros já tinham.
   `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
   desses campos existirem, a tela só sabia renderizar pedidos do
   formulário público.
-- `_intakeCriarCard(id)` — L21531 — abre o modal de novo card pré-
+- `_intakeCriarCard(id)` — L21549 — abre o modal de novo card pré-
   preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
   tags reais por label (case/acento-insensitive, `_norm()`), pré-
   marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
   valida submarca lendo o VALOR do `<select id="m-submarca">`, não
   `editingTags`, então os dois precisam ser setados).
 - **2026-09-15, pedido direto**: cada pedido pendente ganhou 2 ações
-  novas além de Criar card/Descartar — `_intakeItemHtml()` (L~21497,
-  template compartilhado entre as 2 abas) monta os 4 botões:
-  - `_intakeGuardar(id)` — L21633 — não resolve o pedido, só tira da
+  novas além de Criar card/Descartar — `_intakeItemHtml()` (L21512,
+  template compartilhado entre as 2 abas) monta os botões (4 na aba
+  Pendentes, 3 na aba Guardados — sem "Guardar" de novo):
+  - `_intakeGuardar(id)` — L21651 — não resolve o pedido, só tira da
     fila de "pendentes" (`status:'pending'`→`'saved'`) e joga numa 2ª
-    aba dentro do próprio Intake (`_intakeSwitchTab()`, L21484,
-    `renderIntakeGuardadosBody()`, L21522) — sem prazo, pra decidir
-    depois. De lá, as mesmas 4 ações continuam disponíveis.
+    aba dentro do próprio Intake (`_intakeSwitchTab()`, L21502,
+    `renderIntakeGuardadosBody()`, L21540) — sem prazo, pra decidir
+    depois. De lá, Criar card/Vincular/Descartar continuam disponíveis.
   - `_intakeToggleLink()`/`_intakeSearchLink()`/`_intakePickLinkCard()`/
-    `_intakeConfirmLink(id,mode)` — L21645/21698 — "🔗 Vincular a card":
+    `_intakeConfirmLink(id,mode)` — L21663/21716 — "🔗 Vincular a card":
     busca um card JÁ EXISTENTE (mesmo padrão de busca/dropdown de
     `searchLinkedCards()`) e vira **comentário** (escreve direto em
-    `card_comments/`, mesmo formato de `submitComment()`) ou **item de
-    checklist** (`card.checklist.push()` + `fbSaveCard()`, mesmo padrão
-    da ação `set_cover`/checklist de Automação) no card escolhido — pra
+    `card_comments/`, mesmo formato de `submitComment()` — inclui o
+    título do pedido desde o fix de 2026-09-15, achado pelo próprio
+    teste de console entregue) ou **item de checklist**
+    (`card.checklist.push()` + `fbSaveCard()`, mesmo padrão da ação
+    `set_cover`/checklist de Automação) no card escolhido — pra
     demandas que não precisam de card próprio, só integrar uma já
     existente. `status:'pending'|'saved'`→`'linked'`.
 
@@ -3081,4 +3112,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `4b7a377` (2026-09-11).*
+*Retrato do commit `ec66aa9` (2026-09-15).*
