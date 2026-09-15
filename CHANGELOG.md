@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.661 — 2026-09-15 · Promove pra prod — Notificações, Lembretes e validação de arquivamento automático
+
+Promove pra produção o lote v8.30.659-dev → v8.30.661-dev de
+`kanban-dev.html`, validado pelo usuário. Ver entradas completas de
+`kanban-dev.html` abaixo pro detalhe técnico de cada achado.
+
+**Feature nova (pedido direto do usuário)**: o Arquivamento automático
+por idade nunca mais arquiva sozinho sem ninguém ver antes. Quando
+existem cards batendo com a regra, o primeiro PO/Organizador/ADM que
+abrir o board no dia vê uma tela com a lista inteira, cada card com
+checkbox pra desmarcar quem não deve ser arquivado agora, e dois
+botões — "✅ Confirmar arquivamento" ou "⏭ Agora não" (passa a decisão
+pra próxima pessoa elegível que abrir o board no mesmo dia). Se
+ninguém confirmar, a lista continua pendente e acumula com os novos
+candidatos do dia seguinte.
+
+**Correções de bugs (`/monitorarbugs`)**: (1) notificações — clique em
+notificações de aprovação de agenda (`gcal_approved`) e de Estrelas do
+Mar (kudos) não navegava a lugar nenhum; (2) Lembretes — `addLembrete()`
+(tipo "próprio") gravava por cima do array em memória em vez de ler
+fresco do Firebase antes de escrever, com risco de perda em corrida
+entre abas (mesmo padrão já corrigido em `delLembrete()`); (3) validação
+de arquivamento — um card já pendente de um dia anterior, movido pra uma
+coluna EXCLUÍDA da regra, nunca saía da fila acumulada; o cálculo de
+"dias sem atividade" ignorava ações como pin/anexo de link (que só
+tocam `card.updatedAt`, não `card.editedAt`), então esse tipo de ação
+não contava como atividade recente.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses igual ao baseline conhecido (braces -1, parens +1).
+
 ### v8.30.659 — 2026-09-14 · Promove pra prod — Prazos em dias úteis, Timeline colapsável e uma leva grande de correções de bugs
 
 Promove pra produção o lote v8.30.642-dev → v8.30.659-dev de
