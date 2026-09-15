@@ -3283,6 +3283,45 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.667-dev — 2026-09-15 — 🔥 Modo Black Friday (proposta EXPERIMENTAL, botão direito no tema pra testar)
+
+Pedido direto do usuário: organizar o board de um jeito especial pra
+Black Friday — 4º tema do app, mesmo mecanismo do 🌴 Vice City
+(`[data-theme="blackfriday"]`, tokens de cor só). Direção validada
+antes num mockup à parte (artifact): preto dominante, vermelho só como
+**detalhe** pontual — 1ª versão do mockup tinha vermelho/laranja/
+dourado espalhados, feedback foi "deixaria mais preto com vermelho de
+detalhe", ajustado antes de trazer pro código.
+
+**Como testar**: botão direito no 🌙/☀️/🌴 da toolbar entra no modo
+🔥; um clique normal de qualquer lugar sai (igual o Vice City). Como o
+sistema de temas já é 100% CSS custom properties (`--glass`, `--accent`,
+`--txt`...), a troca cobre o app inteiro — toolbar, colunas, cards,
+modal do card, Config, Intake, Arquivados, Timeline, tudo — sem
+precisar tocar tela por tela.
+
+**Decisões de cor**: `--blue`/`--accent`/`--cyan`/`--teal` (usados em
+dezenas de lugares sem relação com "oferta" — tags, badges, botões)
+viram cinza-chumbo neutro, NÃO vermelho — pintar tudo de vermelho
+contradiria o próprio "vermelho só no detalhe". O vermelho de verdade
+fica em `--danger`/`--warn` (sinalização real, já semanticamente
+vermelha) e um glow bem sutil no `.ocean`. Peixinhos/bolhas desligados
+(`--fish-op:0`) — a mascote aquática não combina com a energia de
+"vitrine em liquidação" da peça, tirado de propósito.
+
+**Ainda EXPERIMENTAL, não é opção decidida/permanente**: por isso não
+entra no ciclo normal de clique/duplo-clique/long-press dos outros 3
+temas nem grava em `temasDescobertos` (métrica). 1ª passada de cor —
+mesmo padrão do Vice City original, que precisou de ~4 ajustes pontuais
+depois de rodar contra a tela de verdade — espera-se afinar contraste
+elemento a elemento depois do teste com cards reais, não faz sentido
+"gold-plate" antes do feedback. `CODE_MAP.md` não atualizado de
+propósito (feature ainda não decidida — atualiza se/quando virar
+permanente).
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.666-dev — 2026-09-15 — /atualizarhelpcontent: Arquivados (abrir card/Restaurar) + fix de contagem no Intake
 
 Sincronização de documentação in-app, sem mudança de comportamento.
