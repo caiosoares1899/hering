@@ -589,12 +589,16 @@
    de um 2º conceito paralelo. Selo é só visual (::before), não muda
    nada nos dados do card nem aparece fora deste tema. */
 [data-theme="blackfriday"] .bf-countdown-bar{display:flex;}
-[data-theme="blackfriday"] .card.card-prio-critical{border-color:rgba(255,43,77,.55);}
+/* Fita diagonal (não o selo de cantinho da 1ª versão) — feedback direto
+   comparando com o mockup original: "essa faixa que vc criou no
+   artefato ta muito melhor". overflow:hidden só nesta combinação
+   (tema+prioridade crítica) pra recortar a fita nos limites arredondados
+   do card, sem afetar overflow do resto do app. */
+[data-theme="blackfriday"] .card.card-prio-critical{border-color:rgba(255,43,77,.55); overflow:hidden;}
 [data-theme="blackfriday"] .card.card-prio-critical::before{
-  content:"🔥 OFERTA"; position:absolute; top:-1px; right:-1px;
-  background:var(--danger); color:#1a0505; font-size:8.5px; font-weight:800;
-  letter-spacing:.03em; padding:2px 7px; border-radius:0 var(--r) 0 8px;
-  pointer-events:none;
+  content:"🔥 OFERTA"; position:absolute; top:10px; right:-30px; width:120px; text-align:center;
+  transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8.5px; font-weight:800;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none;
 }
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
@@ -6238,7 +6242,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.668-dev</div>
+<div class="version">v8.30.669-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
