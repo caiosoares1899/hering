@@ -3283,6 +3283,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.675-dev — 2026-09-15 — 🔥 Black Friday: peixinhos viram 💰
+
+Pedido direto do usuário: "trocar os peixinhos por 💰". Na 1ª versão
+do tema (v8.30.667) os peixinhos tinham sido desligados de vez
+(`--fish-op:0`) por não combinarem com a energia de liquidação — em
+vez de continuar sem eles, troca de fantasia: `--fish-op` volta pra 1
+(mesma opacidade/contagem/velocidade de sempre) e o SVG de cada peixe
+fica escondido (`visibility:hidden`), substituído por um 💰 via
+`::before` — reaproveita a MESMA animação de nado (`swimLTR`/
+`swimRTL`) e o wrapper (`.fish-wrap`/`#fwrap`) sem duplicar nenhuma
+lógica de posicionamento/timing/pausa-em-aba-oculta.
+
+Checks de rotina: `node --check` OK, balanço de chaves/parênteses
+igual ao baseline (braces -1, parens +1).
+
 ### v8.30.674-dev — 2026-09-15 — 🔥 Black Friday: mensagem do banner configurável
 
 Pedido direto do usuário: poder configurar manualmente o que aparece

@@ -541,11 +541,17 @@
    (_themeBtnRightClick()/toggleBlackFriday()); um clique normal de
    qualquer lugar já sai, igual ao Vice City.
    Continua um tema ESCURO por baixo (mesmo raciocínio do Vice City, ver
-   comentário grande acima) — só troca os tokens de cor + oceano, e
-   apaga os peixinhos (--fish-op:0 — a mascote aquática não combina com
-   a energia de "vitrine em liquidação" que a peça pede; peixe nadando
-   junto de banner de desconto ficou estranho no mockup, tirado de
-   propósito). --blue/--accent/--cyan/--teal (usados em toolbar/tags/
+   comentário grande acima) — só troca os tokens de cor + oceano.
+   Peixinhos (2026-09-15, 2ª rodada, pedido direto: "trocar os
+   peixinhos por 💰"): a mascote aquática original não combinava com a
+   energia de "vitrine em liquidação" (peixe nadando junto de banner de
+   desconto ficou estranho na 1ª versão, então tinham sido desligados
+   de vez com --fish-op:0) — em vez de tirar, agora troca de fantasia:
+   --fish-op volta pra 1 (mesma opacidade/contagem/velocidade de sempre,
+   só recicladas) e o SVG de cada peixe fica escondido, substituído por
+   um 💰 via ::before — reaproveita a MESMA animação de nado
+   (swimLTR/swimRTL) e o wrapper (.fish-wrap/#fwrap) sem duplicar
+   nenhuma lógica de posicionamento/timing. --blue/--accent/--cyan/--teal (usados em toolbar/tags/
    badges por TODO o app, não só nos cards) viram tons neutros de chumbo
    — NÃO vermelho puro — porque essas cores aparecem em dezenas de
    lugares sem relação nenhuma com "oferta"; pintar tudo de vermelho
@@ -570,8 +576,13 @@
   --blue:#6b625e;--accent:#b3665f;--cyan:#8f8681;--teal:#6b625e;
   --txt:#efe9e6;--txt2:rgba(239,233,230,0.66);--txt3:rgba(239,233,230,0.42);
   --warn:#d9633f;--danger:#ff2b4d;
-  --ocean-op:1; --fish-op:0;
+  --ocean-op:1; --fish-op:1;
   --pulse-rgb:255,43,77;
+}
+[data-theme="blackfriday"] .fish-ltr svg,[data-theme="blackfriday"] .fish-rtl svg{visibility:hidden;}
+[data-theme="blackfriday"] .fish-ltr::before,[data-theme="blackfriday"] .fish-rtl::before{
+  content:"💰"; position:absolute; top:0; left:0; font-size:24px; line-height:1;
+  filter:drop-shadow(0 0 3px rgba(255,43,77,.35));
 }
 [data-theme="blackfriday"] .ocean{
   background:
@@ -6266,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.674-dev</div>
+<div class="version">v8.30.675-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
