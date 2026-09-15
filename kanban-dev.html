@@ -528,6 +528,57 @@
 }
 [data-theme="vice"] .hd-badge{color:var(--txt);}
 [data-theme="vice"] .col-cnt{color:var(--txt);}
+/* ── 🔥 BLACK FRIDAY (proposta em avaliação, 2026-09-15) ──────────────
+   Pedido direto do usuário: modo de visualização especial pra época da
+   Black Friday. Direção aprovada por ele num mockup à parte: preto
+   dominante, vermelho só como DETALHE pontual (não "vermelho em tudo")
+   — 1ª versão tinha vermelho/laranja/dourado espalhados, feedback foi
+   "deixaria mais preto com vermelho de detalhe".
+   Ainda EXPERIMENTAL, não é opção decidida/permanente — por isso não
+   entra no ciclo normal de clique/duplo-clique/long-press dos outros 3
+   temas, nem grava em temasDescobertos (não é pra contar métrica de
+   teste). Entra/sai com botão DIREITO no botão de tema
+   (_themeBtnRightClick()/toggleBlackFriday()); um clique normal de
+   qualquer lugar já sai, igual ao Vice City.
+   Continua um tema ESCURO por baixo (mesmo raciocínio do Vice City, ver
+   comentário grande acima) — só troca os tokens de cor + oceano, e
+   apaga os peixinhos (--fish-op:0 — a mascote aquática não combina com
+   a energia de "vitrine em liquidação" que a peça pede; peixe nadando
+   junto de banner de desconto ficou estranho no mockup, tirado de
+   propósito). --blue/--accent/--cyan/--teal (usados em toolbar/tags/
+   badges por TODO o app, não só nos cards) viram tons neutros de chumbo
+   — NÃO vermelho puro — porque essas cores aparecem em dezenas de
+   lugares sem relação nenhuma com "oferta"; pintar tudo de vermelho
+   contradiria o próprio feedback de "vermelho só no detalhe". O
+   vermelho de verdade fica reservado pra --danger/--warn (sinalização
+   real de bloqueio/atenção, já semanticamente vermelha antes disso) e
+   um glow bem sutil no .ocean — mesmo raciocínio de reserva de cor do
+   mockup aprovado (fita "OFERTA", chip urgente, botão em destaque).
+   1ª passada — assim como o Vice City precisou de ~4 ajustes pontuais
+   depois de rodar contra a tela de verdade (ver comentários acima),
+   espera-se afinar contraste elemento a elemento depois que a pessoa
+   testar com cards reais; não gold-plate isso antes do feedback. */
+:root[data-theme="blackfriday"]{
+  --deep:#0a0807;
+  --deep-rgb:10,8,7;
+  --surface-rgb:26,20,19;
+  --surface2-rgb:16,12,11;
+  --glass-rgb:26,20,19;
+  --glass:rgba(26,20,19,0.66);
+  --glass-b:rgba(255,43,77,0.16);
+  --glass-h:rgba(255,43,77,0.10);
+  --blue:#6b625e;--accent:#b3665f;--cyan:#8f8681;--teal:#6b625e;
+  --txt:#efe9e6;--txt2:rgba(239,233,230,0.66);--txt3:rgba(239,233,230,0.42);
+  --warn:#d9633f;--danger:#ff2b4d;
+  --ocean-op:1; --fish-op:0;
+  --pulse-rgb:255,43,77;
+}
+[data-theme="blackfriday"] .ocean{
+  background:
+    radial-gradient(ellipse at 6% 100%, rgba(255,43,77,.15) 0%, transparent 42%),
+    radial-gradient(ellipse at 97% 0%, rgba(255,43,77,.08) 0%, transparent 38%),
+    var(--deep);
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -3426,7 +3477,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito: 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -6163,7 +6214,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.666-dev</div>
+<div class="version">v8.30.667-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6615,7 +6666,7 @@ function renderHdMoreDD(){
       </span>
     </div>`:''}
     <div class="sm-dd-sep"></div>
-    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
+    <div class="squad-switcher-item" onclick="closeHdMore();_mobileThemeRowClick();" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()">${_currentTheme()==='vice'?'🌴':_currentTheme()==='blackfriday'?'🔥':(_currentTheme()==='light'?'☀️':'🌙')} Alternar tema</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeVariant();">🌑 Versão mais escura</div>
     <div class="squad-switcher-item" onclick="closeHdMore();toggleThemeAuto();">🕐 Tema automático${_isThemeAutoOn()?' — Ligado':''}</div>
     <div class="sm-dd-sep"></div>
@@ -32085,13 +32136,14 @@ function toggleFishBackground(e){
 function _currentTheme(){
   const t=document.documentElement.getAttribute('data-theme');
   if(t==='vice') return 'vice';
+  if(t==='blackfriday') return 'blackfriday';
   return t==='light' ? 'light' : 'dark';
 }
 function _applyThemeButtonIcon(){
   const btn=document.getElementById('theme-toggle-btn');
   if(btn){
     const t=_currentTheme();
-    btn.textContent = t==='vice' ? '🌴' : (t==='light' ? '☀️' : '🌙');
+    btn.textContent = t==='vice' ? '🌴' : t==='blackfriday' ? '🔥' : (t==='light' ? '☀️' : '🌙');
   }
   _applyFavicon();
 }
@@ -32281,6 +32333,42 @@ function exitViceCity(){
   _applyThemeButtonIcon();
   showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
 }
+// 🔥 Black Friday — proposta em avaliação (ver comentário grande no CSS,
+// [data-theme="blackfriday"]). Mesmo padrão de entrar/guardar/sair do
+// Vice City acima, só que via botão DIREITO no botão de tema (em vez de
+// long-press) — gesto próprio, não compete com clique/duplo-clique/
+// long-press que já fazem 3 coisas diferentes no mesmo botão. De
+// propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
+// um teste, não uma opção real ainda, sem sentido contar métrica disso.
+function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
+function toggleBlackFriday(){
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
+  _disableThemeAutoIfOn();
+  safeLS.setItem('mare_theme_before_bf', document.documentElement.getAttribute('data-theme') || '');
+  safeLS.setItem('mare_theme_variant_before_bf', document.documentElement.getAttribute('data-theme-variant') || '');
+  document.documentElement.setAttribute('data-theme','blackfriday');
+  document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme','blackfriday');
+  _applyThemeButtonIcon();
+  showToast('🔥 Modo Black Friday — proposta em teste (botão direito no 🔥 pra sair).');
+}
+function exitBlackFriday(){
+  const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
+  const prevVariant = safeLS.getItem('mare_theme_variant_before_bf') || '';
+  if(prevTheme==='light') document.documentElement.setAttribute('data-theme','light');
+  else document.documentElement.removeAttribute('data-theme');
+  if(prevVariant==='b') document.documentElement.setAttribute('data-theme-variant','b');
+  else document.documentElement.removeAttribute('data-theme-variant');
+  safeLS.setItem('mare_theme', prevTheme==='light' ? 'light' : 'dark');
+  safeLS.setItem('mare_theme_variant', prevVariant);
+  _applyThemeButtonIcon();
+  showToast(prevTheme==='light' ? '☀️ De volta pra Lençóis Maranhenses' : '🌙 De volta pra Abrolhos');
+}
+function _themeBtnRightClick(e){
+  e.preventDefault();
+  if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
+  toggleBlackFriday();
+}
 // Clique único (toggleTheme) e duplo-clique (toggleThemeVariant) no MESMO
 // botão precisam ser diferenciados manualmente: o navegador dispara 2
 // eventos "click" ANTES do "dblclick" (não espera pra ver se vai virar
@@ -32310,6 +32398,7 @@ function _isViceCityEasterEggAtivo(){ return _currentTheme()==='vice' && !_isThe
 let _themeClickTimer=null;
 function onThemeBtnClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){
     if(_themeClickTimer) return;
     _themeClickTimer=setTimeout(()=>{ _themeClickTimer=null; exitViceCity(); }, 260);
@@ -32321,11 +32410,13 @@ function onThemeBtnClick(){
 function onThemeBtnDblClick(){
   if(_themeClickTimer){ clearTimeout(_themeClickTimer); _themeClickTimer=null; }
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleThemeVariant();
 }
 function _mobileThemeRowClick(){
   if(_viceLongPressFired){ _viceLongPressFired=false; return; }
+  if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
   if(_isViceCityEasterEggAtivo()){ exitViceCity(); return; }
   toggleTheme();
 }
