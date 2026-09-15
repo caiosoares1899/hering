@@ -16118,6 +16118,39 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.50 · painel — 2026-09-15 · 🔴 Fix real do "painel prod lendo dados de dev" — squad 'dev' vazava no dashboard
+
+O hotfix v3.48 (localStorage do Firebase compartilhado entre as 4
+páginas) era um achado real, mas **não era a causa do sintoma que o
+usuário via** — relatado de novo com print depois do v3.48 já no ar:
+"não resolveu no painel prod!". O print mostrava, na aba Visão do
+`painel.html` (produção), os squads "🧪 Dev Sandbox" e "🌐 Squad
+Omnichannel" misturados com os squads reais em "Squads em tempo real".
+
+**Causa raiz de verdade**: `loadCampanhas()` já excluía campanhas cujos
+squads eram só `dev`/`omnichannel` ("evita que dados de teste
+apareçam no painel de produção" — comentário já existente no código),
+mas essa mesma exclusão nunca tinha sido aplicada em `squadVisible()` —
+a função central que praticamente TODO o dashboard usa pra decidir o
+que mostrar (`renderSquadCards()`, `renderConsolidated()`,
+`renderComparison()`, `renderBlockers()`, entre outras, todas chamadas
+por `renderAll()`). Com o filtro padrão em "🏠 Todos" (o estado ao abrir
+a página — não existe nem botão pra filtrar especificamente por
+`dev`/`omnichannel`, já que eles não aparecem na barra "Ver por
+squad"), `squadVisible('dev')` sempre retornava `true`, então o squad
+de teste usado por `kanban-dev.html` aparecia direto no dashboard de
+produção — card próprio, entrando nos totais consolidados, na
+comparação entre squads e na lista de impedimentos.
+
+**Fix**: `SQUADS_FICTICIOS` (antes só uma constante local dentro de
+`loadCampanhas()`) virou uma constante compartilhada, e `squadVisible()`
+passou a excluir esses squads incondicionalmente — corrige de uma vez
+só todos os pontos do dashboard que já dependiam dela (achado via
+técnica 2 do `/monitorarbugs`: comparar contra um padrão já resolvido
+em outro lugar do mesmo arquivo).
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.49 · painel — 2026-09-15 · Rascunho de Mural — promoção do kanban.html v8.30.679
 
 Puramente conteúdo, sem mudança de comportamento: nova entrada em

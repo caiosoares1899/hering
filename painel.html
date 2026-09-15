@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.49 · painel</div>
+<div class="version">v3.50 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3238,7 +3238,22 @@ function renderGerenciaBar(){
   }).join('');
 }
 
+// Squads de teste/dev que nunca devem aparecer no painel de PRODUÇÃO — 'dev'
+// (usado por kanban-dev.html pra testar) e 'omnichannel' (squad fictício de
+// teste). loadCampanhas() já excluía campanhas fictícias com essa mesma
+// lista (comentário lá: "evita que dados de teste apareçam no painel de
+// produção") — achado real (/monitorarbugs 2026-09-15, relato direto do
+// usuário: "painel prod tá lendo os dados de painel dev"): squadVisible()
+// nunca aplicava a mesma exclusão, então "Squads em tempo real",
+// "Consolidado", comparação entre squads e impedimentos no dashboard
+// principal mostravam o squad 'dev' junto dos squads reais sempre que o
+// filtro estava em "🏠 Todos" (o padrão ao abrir a página) — não porque o
+// painel estivesse lendo do banco errado, mas porque o squad de teste em si
+// nunca foi escondido dessas telas, só das campanhas.
+const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+
 function squadVisible(sqId){
+  if(SQUADS_FICTICIOS.has(sqId)) return false;
   if(activeFilter === 'all') return true;
   if(activeFilter.startsWith('ger-')) return gerenciaSquadIds(activeFilter).includes(sqId);
   return activeFilter === sqId;
@@ -3643,8 +3658,9 @@ function loadCampanhas(){
   window._onValue(_campRef(), snap=>{
     const raw = snap.val()||{};
     // Exclui campanhas cujos squads são todos fictícios (dev, omnichannel)
-    // — evita que dados de teste apareçam no painel de produção
-    const SQUADS_FICTICIOS = new Set(['dev','omnichannel']);
+    // — evita que dados de teste apareçam no painel de produção. Usa a
+    // MESMA constante SQUADS_FICTICIOS de squadVisible() (ver comentário
+    // lá) — antes cada uma tinha sua própria cópia local.
     _campanhas = Object.fromEntries(
       Object.entries(raw).filter(([_,c])=>{
         const sq = c.squads||[];
