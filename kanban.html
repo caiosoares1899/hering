@@ -6156,7 +6156,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.661</div>
+<div class="version">v8.30.662</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6192,14 +6192,25 @@ const safeLS = (function(){
   };
 })();
 
+// Achado real (/monitorarbugs 2026-09-15): as 4 páginas (kanban.html,
+// kanban-dev.html, painel.html, painel-dev.html) liam/gravavam o override
+// manual de config do Firebase (aba ⚙ Firebase, saveFbConfig()) sob as
+// MESMAS chaves cruas de localStorage ('fb_apiKey' etc.) — como todas
+// rodam no mesmo domínio do GitHub Pages (mesma origin), um override
+// salvo em QUALQUER uma delas (ex. testando kanban-dev.html apontar pra
+// outro projeto) vazava pras outras 3 silenciosamente, inclusive pro
+// painel.html de produção. Sufixo por página (mesmo valor de VERSION_KEY,
+// só que como literal aqui — a const VERSION_KEY só é declarada bem mais
+// abaixo no arquivo, depois deste bloco já ter rodado) isola cada uma.
+const FB_OVERRIDE_NS = 'kanban';
 const firebaseConfig = {
-  apiKey:            safeLS.getItem('fb_apiKey')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
-  authDomain:        safeLS.getItem('fb_authDomain')       || 'hering-onboarding.firebaseapp.com',
-  databaseURL:       safeLS.getItem('fb_databaseURL')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
-  projectId:         safeLS.getItem('fb_projectId')        || 'hering-onboarding',
-  storageBucket:     safeLS.getItem('fb_storageBucket')    || 'hering-onboarding.firebasestorage.app',
-  messagingSenderId: safeLS.getItem('fb_messagingSenderId')|| '122502391131',
-  appId:             safeLS.getItem('fb_appId')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+  apiKey:            safeLS.getItem('fb_apiKey_'+FB_OVERRIDE_NS)           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        safeLS.getItem('fb_authDomain_'+FB_OVERRIDE_NS)       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       safeLS.getItem('fb_databaseURL_'+FB_OVERRIDE_NS)      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         safeLS.getItem('fb_projectId_'+FB_OVERRIDE_NS)        || 'hering-onboarding',
+  storageBucket:     safeLS.getItem('fb_storageBucket_'+FB_OVERRIDE_NS)    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: safeLS.getItem('fb_messagingSenderId_'+FB_OVERRIDE_NS)|| '122502391131',
+  appId:             safeLS.getItem('fb_appId_'+FB_OVERRIDE_NS)            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
 };
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
@@ -6326,6 +6337,10 @@ const safeLS = (function(){
     removeItem(k){ try{ if(ok) window.localStorage.removeItem(k); else delete mem[k]; }catch(e){ delete mem[k]; } },
   };
 })();
+// Mesmo valor do FB_OVERRIDE_NS declarado no <script type="module"> acima
+// (blocos <script> não-module não compartilham escopo entre si — precisa
+// existir nos dois). Ver comentário completo junto ao firebaseConfig.
+const FB_OVERRIDE_NS = 'kanban';
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -22948,7 +22963,7 @@ function swCfgTab(tab){
   }
   if(tab==='worker') document.getElementById('worker-url-inp').value=safeLS.getItem('kanban_worker_url')||'';
   if(tab==='backup') loadBackupTab();
-  if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL')||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey')||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId')||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId')||''; }
+  if(tab==='firebase'){ document.getElementById('fb-url').value=safeLS.getItem('fb_databaseURL_'+FB_OVERRIDE_NS)||'https://hering-onboarding-default-rtdb.firebaseio.com'; document.getElementById('fb-key').value=safeLS.getItem('fb_apiKey_'+FB_OVERRIDE_NS)||''; document.getElementById('fb-pid').value=safeLS.getItem('fb_projectId_'+FB_OVERRIDE_NS)||'hering-onboarding'; document.getElementById('fb-aid').value=safeLS.getItem('fb_appId_'+FB_OVERRIDE_NS)||''; }
   if(tab==='calendario'){
     if(typeof renderCalendarList === 'function') renderCalendarList();
   }
@@ -23871,7 +23886,7 @@ function saveSubteams(){
 
 // --- Worker / Firebase ---
 function saveWorkerUrl(){ const url=document.getElementById('worker-url-inp').value.trim(); if(!url) return; safeLS.setItem('kanban_worker_url',url); location.reload(); }
-function saveFbConfig(){ safeLS.setItem('fb_databaseURL',document.getElementById('fb-url').value.trim()); safeLS.setItem('fb_apiKey',document.getElementById('fb-key').value.trim()); safeLS.setItem('fb_projectId',document.getElementById('fb-pid').value.trim()); safeLS.setItem('fb_appId',document.getElementById('fb-aid').value.trim()); safeLS.setItem('fb_authDomain',document.getElementById('fb-pid').value.trim()+'.firebaseapp.com'); location.reload(); }
+function saveFbConfig(){ safeLS.setItem('fb_databaseURL_'+FB_OVERRIDE_NS,document.getElementById('fb-url').value.trim()); safeLS.setItem('fb_apiKey_'+FB_OVERRIDE_NS,document.getElementById('fb-key').value.trim()); safeLS.setItem('fb_projectId_'+FB_OVERRIDE_NS,document.getElementById('fb-pid').value.trim()); safeLS.setItem('fb_appId_'+FB_OVERRIDE_NS,document.getElementById('fb-aid').value.trim()); safeLS.setItem('fb_authDomain_'+FB_OVERRIDE_NS,document.getElementById('fb-pid').value.trim()+'.firebaseapp.com'); location.reload(); }
 
 // ═══════════════════════════════════════════════════════
 // AGENTE ÁGIL
