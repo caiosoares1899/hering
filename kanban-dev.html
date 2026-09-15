@@ -1244,6 +1244,8 @@ input[type="date"]{-moz-appearance:textfield;}
    à esquerda. Sem overlap, sem depender de overflow de ancestral nenhum. */
 #intake-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
   line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:1px;}
+#intake-guardados-badge{background:var(--danger);color:#fff;font-size:10px;font-weight:700;
+  line-height:1;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 5px;margin-left:4px;}
 .lem-drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);z-index:8800;
   background:linear-gradient(160deg,rgba(var(--surface-rgb),.98),rgba(var(--surface2-rgb),.99));
   border-left:1px solid rgba(56,182,255,.25);
@@ -5670,10 +5672,15 @@ input[type="date"]{-moz-appearance:textfield;}
     <button class="x-btn" onclick="closeOv('intake-ov')">✕</button>
   </div>
   <div style="padding:10px 18px 0;">
-    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido) ou descarte.</div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;">Pedidos enviados pelo link público, sem login. Revise e crie o card (pré-preenchido), vincule a um card já existente, guarde pra decidir depois, ou descarte.</div>
     <button class="btn btn-sm" onclick="_copyIntakeLink()" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);margin-bottom:10px;">🔗 Copiar link de intake deste squad</button>
+    <div style="display:flex;gap:8px;margin-bottom:4px;">
+      <button class="btn btn-sm crv-tab-btn active" id="intake-tab-pendentes" onclick="_intakeSwitchTab('pendentes')">📋 Pendentes</button>
+      <button class="btn btn-sm crv-tab-btn" id="intake-tab-guardados" onclick="_intakeSwitchTab('guardados')">🗂 Guardados<span id="intake-guardados-badge" style="display:none;"></span></button>
+    </div>
   </div>
   <div id="intake-body" style="padding:0 18px 20px;overflow-y:auto;flex:1;"></div>
+  <div id="intake-body-guardados" style="padding:0 18px 20px;overflow-y:auto;flex:1;display:none;"></div>
 </div>
 </div>
 
@@ -6156,7 +6163,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.661-dev</div>
+<div class="version">v8.30.662-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7813,6 +7820,20 @@ let _lemSeenTs=parseInt(safeLS.getItem('lemSeenTs')||'0')||0;  // último ts vis
 // padrão de _lembretesBucket.
 let _intakeBucket={};    // FB+'/intake_pending' — key = chave real no Firebase
 let intakePendentes=[];  // derivado de _intakeBucket, só status:'pending'
+// Pedido direto do usuário (2026-09-15): "guardar" um pedido de intake que
+// não precisa virar card AGORA nem ser vinculado ainda — tira da fila de
+// "pendentes" (não conta mais pra badge/ação urgente) mas mantém disponível
+// numa aba própria dentro do próprio Intake, sem prazo, até alguém decidir
+// (as mesmas 3 ações — criar card / vincular / descartar — continuam
+// disponíveis a partir de lá). status:'saved', ver _intakeGuardar().
+let intakeGuardados=[];  // derivado de _intakeBucket, só status:'saved'
+// Vincular pedido de intake a um card JÁ EXISTENTE (2026-09-15, pedido
+// direto): vira comentário ou item de checklist no card escolhido, em vez
+// de criar um card novo. _intakeLinkOpenId = id do pedido com o buscador de
+// card aberto agora (só 1 por vez); _intakeLinkSel = {id: {cardId,cardTitle}}
+// guarda o card já escolhido, antes de confirmar comentário/checklist.
+let _intakeLinkOpenId=null;
+let _intakeLinkSel={};
 // Setado por _intakeCriarCard() logo antes de abrir o modal de card novo já
 // pré-preenchido; consumido só no .then() de saveCard() (confirmação real do
 // Firebase) — assim, se a pessoa abrir o modal pré-preenchido e CANCELAR sem
@@ -9949,8 +9970,14 @@ let _cardsSyncDebounce = null;
     const _intakeRef = window._ref(window._db, FB+'/intake_pending');
     const _syncIntake = ()=>{
       intakePendentes = Object.values(_intakeBucket).filter(v=>v && v.status==='pending');
+      intakeGuardados = Object.values(_intakeBucket).filter(v=>v && v.status==='saved');
       updIntakeBadge();
-      if(document.getElementById('intake-ov')?.classList.contains('open')) renderIntakeBody();
+      const gBadge=document.getElementById('intake-guardados-badge');
+      if(gBadge){
+        if(intakeGuardados.length){ gBadge.textContent=intakeGuardados.length>9?'9+':intakeGuardados.length; gBadge.style.display=''; }
+        else gBadge.style.display='none';
+      }
+      if(document.getElementById('intake-ov')?.classList.contains('open')){ renderIntakeBody(); renderIntakeGuardadosBody(); }
     };
     window._onChildAdded(_intakeRef, snap=>{ _dbgTrack('/intake_pending:child_added', snap.val());
       const v=snap.val(); if(!v) return;
@@ -12853,8 +12880,14 @@ function renderBoardDataGrid(){
   const intakeAprovados=intakeVals.filter(v=>v.status==='done').length;
   const intakeDescartados=intakeVals.filter(v=>v.status==='discarded').length;
   const intakePendentesN=intakeVals.filter(v=>v.status==='pending').length;
+  // status:'saved'/'linked' (ver _intakeGuardar()/_intakeConfirmLink(),
+  // 2026-09-15) somados ao sub-texto abaixo — senão os 3 termos antigos
+  // (aprovados+descartados+pendentes) param de bater com intakeRecebidos
+  // assim que existir pelo menos 1 pedido guardado ou vinculado.
+  const intakeGuardadosN=intakeVals.filter(v=>v.status==='saved').length;
+  const intakeVinculados=intakeVals.filter(v=>v.status==='linked').length;
   const intakeConcluidos=activeCards.filter(c=>c.intakeId&&_isColDone(c.col)).length;
-  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
+  g.innerHTML=`<div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">WIP <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">WIP = Work In Progress: quantos cards estão na coluna "Em andamento" agora. Passou do limite? O time está tentando tocar coisa demais ao mesmo tempo — termine antes de começar mais.</span></span></div><div class="met-val" style="color:${wipColor}">${wip}</div><div class="met-sub">${'limite '+wipLimit}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Throughput <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Quantos cards foram concluídos no total. Acompanhe a tendência ao longo do tempo: se cair, pode ser sinal de bloqueio ou sobrecarga.</span></span></div><div class="met-val">${done}</div><div class="met-sub">${'concluídos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Bloqueios <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards parados na coluna "Bloqueado". Cada um aqui é um item que precisa de ação (destravar, escalar ou remover impedimento) para o fluxo não travar.</span></span></div><div class="met-val" style="color:${bl?'var(--danger)':'var(--txt)'}">${bl}</div><div class="met-sub">${bl?'atenção':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Capacidade <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Capacidade do time configurada manualmente (⚙ Configurações). É a referência usada para saber se o WIP atual está compatível com o time disponível.</span></span></div><div class="met-val">${(agilCfg.capacity||'—')+'%'}</div><div class="met-sub">${'configurado'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Cards ativos <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Total de cards não arquivados e ainda não concluídos — o tamanho real do backlog + trabalho em andamento agora. Supercards são a junção de vários cards filhos (não contam como demanda própria), por isso o total abaixo separa card comum, supercard e card filho.</span></span></div><div class="met-val">${totalAtivos}</div><div class="met-sub">${compos.cards+' cards · '+compos.supercards+' super · '+compos.superChildren+' filhos'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Sem responsável <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards ativos sem responsável definido. Cada um aqui é um item que pode ficar esquecido por ninguém estar de olho nele — vale atribuir um dono.</span></span></div><div class="met-val" style="color:${semDono?'var(--warn)':'var(--txt)'}">${semDono}</div><div class="met-sub">${semDono?'atribua um dono':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">Prazo vencido <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Cards com prazo (data prevista) já no passado e que ainda não foram concluídos. Priorize resolver ou renegociar o prazo desses primeiro.</span></span></div><div class="met-val" style="color:${vencidos?'var(--danger)':'var(--txt)'}">${vencidos}</div><div class="met-sub">${vencidos?'resolva primeiro':'ok'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">📥 Pedidos de intake <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Funil do formulário público de intake (link em 📥 no topo do board): total recebido desde sempre, e quantos desses já foram aprovados (viraram card), vinculados a um card existente, guardados pra decidir depois, descartados ou continuam pendentes de revisão.</span></span></div><div class="met-val">${intakeRecebidos}</div><div class="met-sub">${intakeAprovados+' aprovados · '+intakeVinculados+' vinculados · '+intakeGuardadosN+' guardados · '+intakeDescartados+' descartados · '+intakePendentesN+' pendentes'}</div></div><div class="met"><div class="met-lbl" style="display:flex;align-items:center;gap:4px;">✅ Intake concluído <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">Dos pedidos de intake que já viraram card (aprovados), quantos já chegaram na coluna "Concluído". Cards de intake arquivados não entram nessa conta.</span></span></div><div class="met-val">${intakeConcluidos}</div><div class="met-sub">${intakeAprovados>0?Math.round(intakeConcluidos/intakeAprovados*100)+'% dos aprovados':'sem aprovados ainda'}</div></div>`;
 }
 
 
@@ -21441,12 +21474,41 @@ function updIntakeBadge(){
   else badge.style.display='none';
 }
 function openIntakePanel(){
-  renderIntakeBody();
+  _intakeSwitchTab('pendentes');
   document.getElementById('intake-ov').classList.add('open');
 }
 function _copyIntakeLink(){
   const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + 'intake.html?squad=' + encodeURIComponent(ACTIVE_SQUAD);
   navigator.clipboard?.writeText(url).then(()=>showToast('🔗 Link copiado! '+url), ()=>showToast('⚠️ Não deu pra copiar — copie manualmente: '+url));
+}
+function _intakeSwitchTab(tab){
+  const isGuardados = tab==='guardados';
+  const vp=document.getElementById('intake-body'); if(vp) vp.style.display = isGuardados?'none':'';
+  const vg=document.getElementById('intake-body-guardados'); if(vg) vg.style.display = isGuardados?'':'none';
+  const tp=document.getElementById('intake-tab-pendentes'); if(tp) tp.classList.toggle('active', !isGuardados);
+  const tg=document.getElementById('intake-tab-guardados'); if(tg) tg.classList.toggle('active', isGuardados);
+  if(isGuardados) renderIntakeGuardadosBody(); else renderIntakeBody();
+}
+// Item compartilhado entre a aba Pendentes e a aba Guardados — só o botão
+// "🗂 Guardar" (opts.showGuardar) e a data exibida mudam entre as duas.
+function _intakeItemHtml(item, opts){
+  const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
+  const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
+  const botoes = [
+    `<button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeToggleLink('${esc(item.id)}')" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
+  ];
+  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar('${esc(item.id)}')" style="color:var(--txt2);">🗂 Guardar</button>`);
+  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
+  return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
+      ${item.status==='saved' && item.savedAt ? `<div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">🗂 Guardado em ${new Date(item.savedAt).toLocaleDateString('pt-BR')}</div>` : ''}
+      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
+      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">${botoes.join('')}</div>
+      ${_intakeLinkOpenId===item.id ? _intakeLinkUIHtml(item.id) : ''}
+    </div>`;
 }
 function renderIntakeBody(){
   const body=document.getElementById('intake-body'); if(!body) return;
@@ -21455,20 +21517,16 @@ function renderIntakeBody(){
     return;
   }
   const ordenados = intakePendentes.slice().sort((a,b)=>(a.createdAt||'').localeCompare(b.createdAt||''));
-  body.innerHTML = ordenados.map(item=>{
-    const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
-    const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
-    return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
-      ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
-      ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>
-        <button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>
-      </div>
-    </div>`;
-  }).join('');
+  body.innerHTML = ordenados.map(item=>_intakeItemHtml(item,{showGuardar:true})).join('');
+}
+function renderIntakeGuardadosBody(){
+  const body=document.getElementById('intake-body-guardados'); if(!body) return;
+  if(!intakeGuardados.length){
+    body.innerHTML='<div style="text-align:center;padding:30px 0;color:var(--txt3);font-size:13px;">🗂 Nada guardado no momento — pedidos que você guardar pra decidir depois aparecem aqui.</div>';
+    return;
+  }
+  const ordenados = intakeGuardados.slice().sort((a,b)=>(a.savedAt||a.createdAt||'').localeCompare(b.savedAt||b.createdAt||''));
+  body.innerHTML = ordenados.map(item=>_intakeItemHtml(item,{showGuardar:false})).join('');
 }
 function _intakeCriarCard(id){
   if(!checkEditPermission()) return;
@@ -21567,6 +21625,116 @@ function _intakeDescartar(id){
     window._update(fb(FB+'/intake_pending/'+id), {status:'discarded', discardedAt:new Date().toISOString()});
   });
 }
+// Pedido direto do usuário (2026-09-15): tira o pedido da fila de
+// "pendentes" (não conta mais na badge/ação urgente) sem resolver de
+// verdade — fica guardado numa aba própria, sem prazo, até alguém decidir
+// (dali, as mesmas 3 ações — criar card / vincular / descartar — continuam
+// disponíveis, ver _intakeItemHtml()).
+function _intakeGuardar(id){
+  if(!checkEditPermission()) return;
+  const item = _intakeBucket[id]; if(!item) return;
+  window._update(fb(FB+'/intake_pending/'+id), {status:'saved', savedAt:new Date().toISOString()});
+  showToast('🗂 Pedido guardado — revise quando quiser na aba "Guardados".');
+}
+// Vincular pedido de intake a um card já existente (vira comentário ou item
+// de checklist nele, em vez de virar card novo) — pedido direto do usuário.
+function _intakeRerenderFor(id){
+  const item=_intakeBucket[id];
+  if(item && item.status==='saved') renderIntakeGuardadosBody(); else renderIntakeBody();
+}
+function _intakeToggleLink(id){
+  if(_intakeLinkOpenId===id){ _intakeLinkOpenId=null; }
+  else { _intakeLinkOpenId=id; _intakeLinkSel[id]=null; }
+  _intakeRerenderFor(id);
+  if(_intakeLinkOpenId===id) document.getElementById('intake-link-inp-'+id)?.focus();
+}
+function _intakeLinkUIHtml(id){
+  const sel=_intakeLinkSel[id];
+  if(sel){
+    const card=cards.find(c=>c.id===sel.cardId);
+    const titulo=card?card.title:sel.cardTitle;
+    return `<div class="link-search" style="margin-top:8px;">
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel('${esc(id)}')" style="color:var(--accent,#2596e8);">trocar</a></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','comment')">💬 Virar comentário</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','checklist')">☑ Virar item de checklist</button>
+      </div>
+    </div>`;
+  }
+  return `<div class="link-search" style="margin-top:8px;">
+    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink('${esc(id)}',this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink('${esc(id)}');}">
+    <div class="link-dropdown" id="intake-link-dd-${esc(id)}"></div>
+  </div>`;
+}
+function _intakeSearchLink(id, q){
+  const dd=document.getElementById('intake-link-dd-'+id); if(!dd) return;
+  if(!q.trim()){ dd.classList.remove('show'); return; }
+  const lower=q.toLowerCase();
+  const results=cards.filter(c=>!c.archived && c.title.toLowerCase().includes(lower)).slice(0,8);
+  if(!results.length){
+    dd.innerHTML='<div style="padding:8px 10px;font-size:11px;color:var(--txt3);">Nenhum card encontrado.</div>';
+    dd.classList.add('show'); return;
+  }
+  dd.innerHTML='';
+  results.forEach(card=>{
+    const col=columns.find(c=>c.id===card.col);
+    const opt=document.createElement('div');
+    opt.className='link-option';
+    opt.innerHTML='<span class="link-option-col">'+esc(col?.name||card.col)+'</span><span style="flex:1;color:var(--txt);">'+esc(card.title)+'</span>';
+    opt.onclick=()=>_intakePickLinkCard(id, card.id);
+    dd.appendChild(opt);
+  });
+  dd.classList.add('show');
+}
+function _intakePickLinkCard(id, cardId){
+  const card=cards.find(c=>c.id===cardId); if(!card) return;
+  _intakeLinkSel[id]={cardId:card.id, cardTitle:card.title};
+  _intakeRerenderFor(id);
+}
+function _intakeCancelLinkSel(id){
+  _intakeLinkSel[id]=null;
+  _intakeRerenderFor(id);
+}
+function _intakeConfirmLink(id, mode){
+  if(!checkEditPermission()) return;
+  const item=_intakeBucket[id]; if(!item) return;
+  const sel=_intakeLinkSel[id]; if(!sel) return;
+  const card=cards.find(c=>c.id===sel.cardId);
+  if(!card){ showToast('⚠ Esse card não existe mais.'); _intakeLinkSel[id]=null; _intakeRerenderFor(id); return; }
+  const partes=['📥 Pedido via formulário de intake', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
+  if(item.squadDemandante) partes.push('Squad/time solicitante: '+item.squadDemandante);
+  if(item.descricao){ partes.push(''); partes.push(item.descricao); }
+  const texto=partes.join('\n');
+  if(mode==='comment'){
+    const user=window._currentUser; if(!user) return;
+    const comment={
+      id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+      uid:user.uid, author:user.displayName||user.email||'?',
+      init:window._currentUserInit||'?', foto:user.photoURL||'',
+      text:texto, ts:new Date().toISOString(),
+    };
+    if(!_commentsCache[card.id]) _commentsCache[card.id]={};
+    _commentsCache[card.id][comment.id]=comment;
+    window._set(window._ref(window._db, FB+'/card_comments/'+card.id+'/'+comment.id), comment)
+      .catch(err=>showToast('⚠ Erro ao salvar comentário: '+(err?.message||err)));
+    if(_commentCardId===card.id) renderCommentList(_sortedComments(_commentsCache[card.id]));
+    parseMentions(texto, card.id, comment.id);
+    if(AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) && _textMencionaAgenteAgil(texto)) _startAgenteAgilThinking(card.id);
+  } else {
+    card.checklist = Array.isArray(card.checklist) ? card.checklist.slice() : [];
+    card.checklist.push({t:'📥 '+item.titulo, done:false});
+    recordHistory(card, 'adicionou item de checklist a partir de um pedido de intake');
+    fbSaveCard(card);
+    renderBoard();
+    if(editingId===card.id) renderCL(card.checklist);
+  }
+  window._update(fb(FB+'/intake_pending/'+id), {status:'linked', linkedCardId:card.id, linkedCardTitle:card.title, linkedAs:mode, linkedAt:new Date().toISOString()});
+  _intakeLinkOpenId=null; _intakeLinkSel[id]=null;
+  showToast(mode==='comment' ? '💬 Pedido virou comentário em "'+card.title+'".' : '☑ Pedido virou item de checklist em "'+card.title+'".');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#intake-ov .link-search')) document.querySelectorAll('#intake-ov .link-dropdown.show').forEach(dd=>dd.classList.remove('show'));
+});
 
 function setCampSqFilter(sq){
   window._campSqFilter = sq;
@@ -25250,7 +25418,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e clica em "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão.\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; as mesmas 4 ações continuam disponíveis a partir de lá) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },

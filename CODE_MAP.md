@@ -1890,7 +1890,7 @@ pra trás de um comportamento que os outros já tinham.
 - `salvarExterno()` — L33020
 
 ### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
-- `renderIntakeBody()` — L20796 — lista de `intakePendentes`
+- `renderIntakeBody()` — L21513 — lista de `intakePendentes`
   (`_intakeBucket`, alimentado por listeners granulares em
   `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
   `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
@@ -1898,12 +1898,29 @@ pra trás de um comportamento que os outros já tinham.
   `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
   desses campos existirem, a tela só sabia renderizar pedidos do
   formulário público.
-- `_intakeCriarCard(id)` — L20818 — abre o modal de novo card pré-
+- `_intakeCriarCard(id)` — L21531 — abre o modal de novo card pré-
   preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
   tags reais por label (case/acento-insensitive, `_norm()`), pré-
   marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
   valida submarca lendo o VALOR do `<select id="m-submarca">`, não
   `editingTags`, então os dois precisam ser setados).
+- **2026-09-15, pedido direto**: cada pedido pendente ganhou 2 ações
+  novas além de Criar card/Descartar — `_intakeItemHtml()` (L~21497,
+  template compartilhado entre as 2 abas) monta os 4 botões:
+  - `_intakeGuardar(id)` — L21633 — não resolve o pedido, só tira da
+    fila de "pendentes" (`status:'pending'`→`'saved'`) e joga numa 2ª
+    aba dentro do próprio Intake (`_intakeSwitchTab()`, L21484,
+    `renderIntakeGuardadosBody()`, L21522) — sem prazo, pra decidir
+    depois. De lá, as mesmas 4 ações continuam disponíveis.
+  - `_intakeToggleLink()`/`_intakeSearchLink()`/`_intakePickLinkCard()`/
+    `_intakeConfirmLink(id,mode)` — L21645/21698 — "🔗 Vincular a card":
+    busca um card JÁ EXISTENTE (mesmo padrão de busca/dropdown de
+    `searchLinkedCards()`) e vira **comentário** (escreve direto em
+    `card_comments/`, mesmo formato de `submitComment()`) ou **item de
+    checklist** (`card.checklist.push()` + `fbSaveCard()`, mesmo padrão
+    da ação `set_cover`/checklist de Automação) no card escolhido — pra
+    demandas que não precisam de card próprio, só integrar uma já
+    existente. `status:'pending'|'saved'`→`'linked'`.
 
 ### Backup
 - `exportBackupJSON()` — L33121

@@ -3283,6 +3283,42 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.662-dev — 2026-09-15 — Intake: vincular a card existente + lista de "Guardados"
+
+Feature pedida direto pelo usuário: "às vezes aquela demanda não
+necessariamente precisa virar um card, ela pode integrar um card já
+existente". O painel de Intake (`renderIntakeBody()`) ganhou 2 ações
+novas, além de Criar card/Descartar:
+
+1. **🔗 Vincular a card existente.** Busca um card já existente pelo
+   título (mesmo padrão de busca/dropdown já usado em "Cards
+   Vinculados") e escolhe se o pedido vira um **comentário** (escreve
+   em `card_comments/`, mesmo formato de `submitComment()`, incluindo
+   `parseMentions()`/detecção de @Agente Ágil) ou um **item de
+   checklist** (`card.checklist.push({t,done:false})` +
+   `recordHistory()` + `fbSaveCard()`, mesmo padrão já usado pela ação
+   de checklist de Automação) no card escolhido — sem criar card novo.
+   `intake_pending/{id}.status` vira `'linked'`.
+
+2. **🗂 Guardar / aba "Guardados".** Pra quando não dá pra decidir na
+   hora: tira o pedido da fila de "pendentes" (não conta mais na
+   badge/ação urgente) sem descartar nem resolver — vai pra uma aba
+   própria dentro do próprio Intake (`_intakeSwitchTab()`), sem prazo,
+   até alguém revisar. De lá, as mesmas 4 ações (Criar card/Vincular/
+   Guardar não aparece de novo/Descartar) continuam disponíveis.
+   `status` vira `'saved'`, com `savedAt`.
+
+Reaproveita as 3 primitivas já existentes no arquivo (`fbSaveCard()`,
+`submitComment()`'s data shape, e o buscador de cards de
+`searchLinkedCards()`) — nenhum mecanismo novo de escrita. O stat tile
+"📥 Pedidos de intake" (Dados do Board) ganhou os 2 novos contadores
+(vinculados/guardados) no sub-texto, pra continuar batendo com o total
+recebido. Central de Ajuda (`HELP_CONTENT.board`, entrada "Formulário
+de intake") e texto de intro do painel de Intake atualizados.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`, balanço
+de chaves/parênteses igual ao baseline conhecido (braces -1, parens +1).
+
 ### v8.30.661-dev — 2026-09-14 — /monitorarbugs na validação de arquivamento: exceções de coluna e ações dentro do card
 
 Pedido explícito do usuário ("garante que as exceções salvas estejam
