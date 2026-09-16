@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.680-dev</div>
+<div class="version">v8.30.681-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18688,8 +18688,18 @@ async function notaAddCardLink(cardId){
     [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: true,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
+  // Achado real (/monitorarbugs 2026-09-16, técnica 1 — comparar caminhos
+  // paralelos): cardAddNotaLink()/cardRemoveNotaLink() (vincular do lado do
+  // CARD) já atualizam o cache local na hora + repintam, comentário
+  // explícito "sem esperar o próximo listener/get". Este par (vincular do
+  // lado da NOTA) nunca ganhou o mesmo tratamento — só o listener do
+  // Firebase atualizava a UI, com o atraso do round-trip. Mesmo padrão
+  // aplicado aqui pra ficar consistente com o outro sentido.
+  const store=_notasStore();
+  if(store[_notasOpenId]){ store[_notasOpenId].cardIds = store[_notasOpenId].cardIds||{}; store[_notasOpenId].cardIds[cardId]=true; }
   const inp=document.getElementById('notas-link-search-inp'); if(inp) inp.value='';
   hideNotaLinkDropdown();
+  renderNotaLinkedCards();
 }
 async function notaRemoveCardLink(cardId){
   if(!_notasOpenId) return;
@@ -18697,6 +18707,9 @@ async function notaRemoveCardLink(cardId){
     [_notasBasePath()+'/'+_notasOpenId+'/cardIds/'+cardId]: null,
     [_notasBasePath()+'/'+_notasOpenId+'/atualizadoEm']: new Date().toISOString(),
   });
+  const store=_notasStore();
+  if(store[_notasOpenId]?.cardIds) delete store[_notasOpenId].cardIds[cardId];
+  renderNotaLinkedCards();
 }
 function hideNotaLinkDropdown(){ document.getElementById('notas-link-dropdown')?.classList.remove('show'); }
 function notaOpenLinkedCard(cardId){ openCard(cardId); }
@@ -18987,6 +19000,20 @@ function onBlocoBlur(blocoId){
 }
 function onBlocoInput(blocoId, ta){
   ta.style.height='auto'; ta.style.height=ta.scrollHeight+'px';
+  // Achado real (/monitorarbugs 2026-09-16): saveBlocoTexto() só escreve no
+  // Firebase 700ms depois (debounce), mas onBlocoBlur() re-renderiza a nota
+  // NA HORA ao sair do campo — sem atualizar o modelo local primeiro, esse
+  // re-render mostrava nota.blocos[blocoId].texto (ainda o valor ANTIGO,
+  // já que o debounce nem tinha disparado) em vez do que a pessoa acabou de
+  // digitar. Cenário: digitar rápido e clicar fora/Tab antes de 700ms — o
+  // texto "some" da tela por até 700ms, até o round-trip do Firebase trazer
+  // o valor certo de volta. Atualiza o modelo local aqui, na hora, além do
+  // debounce (que continua existindo só pra não martelar o Firebase a cada
+  // tecla) — assim QUALQUER re-render nesse meio-tempo já mostra o texto
+  // certo, sem esperar a escrita confirmar.
+  const nota=_notasStore()[_notasOpenId];
+  const bloco=nota?.blocos?.[blocoId];
+  if(bloco) bloco.texto=ta.value;
   clearTimeout(_notasSaveTimers[blocoId]);
   _notasSaveTimers[blocoId]=setTimeout(()=>saveBlocoTexto(blocoId, ta.value), 700);
 }
