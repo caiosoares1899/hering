@@ -3390,6 +3390,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.681-dev — 2026-09-16 — `/monitorarbugs`: Notas — texto digitado "sumia" ao sair do campo antes do autosave
+
+Rodada de `/monitorarbugs` sem área nomeada — foco na feature de Notas
+(código mais recentemente mexido da sessão, PR #932, nunca tinha
+recebido uma auditoria dedicada).
+
+**Achado real, severo (técnica 3 — confrontar com o que a feature
+promete)**: `saveBlocoTexto()` só escreve no Firebase 700ms depois de
+parar de digitar (debounce), mas `onBlocoBlur()` re-renderiza a nota
+NA HORA ao sair do campo (clicar fora, Tab, clicar noutro bloco) — sem
+sincronizar o modelo local primeiro. Cenário concreto: digitar algo
+rápido num bloco e clicar fora/apertar Tab antes dos 700ms passarem —
+o texto recém-digitado "some" da tela (o re-render mostra
+`nota.blocos[blocoId].texto`, ainda o valor ANTIGO) por até 700ms, até
+o round-trip do Firebase confirmar a escrita e trazer o valor certo de
+volta. A escrita em si não se perdia (o timer pendente ainda disparava
+com o valor certo, capturado via closure), mas a UI mentia por um
+instante — confuso o bastante pra parecer perda de dado de verdade.
+Fix: `onBlocoInput()` agora atualiza `nota.blocos[blocoId].texto` no
+modelo local imediatamente, além de continuar agendando o debounce
+(que segue existindo só pra não martelar o Firebase a cada tecla) —
+qualquer re-render nesse meio-tempo já mostra o texto certo.
+
+**Achado real, menor (técnica 1 — comparar caminhos paralelos pra
+mesma operação)**: vincular/desvincular card a partir do lado da NOTA
+(`notaAddCardLink()`/`notaRemoveCardLink()`) nunca atualizava o cache
+local nem repintava a lista — só o lado do CARD
+(`cardAddNotaLink()`/`cardRemoveNotaLink()`) fazia isso, com comentário
+explícito "sem esperar o próximo listener/get". Resultado: vincular um
+card de dentro da nota levava até o round-trip do Firebase pra
+aparecer na lista "🔗 Vínculos", enquanto o mesmo vínculo feito do lado
+do card aparecia na hora. Mesmo padrão aplicado nos dois agora.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.680-dev — 2026-09-15 — 🔴 Fix crítico — Notas: campo undefined derrubava a escrita inteira no Firebase
 
 Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.680, direto
