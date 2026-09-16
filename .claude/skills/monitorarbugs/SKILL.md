@@ -1214,6 +1214,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   independentes (opacity via CSS var vs. `display:none` via JS no
   elemento), um não fura o outro. PR #935, dev v8.30.682.
 
+- **2026-09-16, painel.html (pedido genérico — área escolhida por
+  verificar se algo mais vazou na mesma promoção v3.47 que causou o
+  incidente do `loadExtraSquads()`, PR #931)**: 1 achado real, técnica
+  2 (comparar contra `painel-dev.html`) — `COMUNICADO_RASCUNHOS_SEED`
+  de produção tinha a entrada `seed_teste_comunicados_dev_2026_07`
+  ("rascunho de teste do AMBIENTE DEV"), mesma classe de vazamento,
+  mesma promoção culpada. `_seedComunicadoRascunhos()` roda sozinha pra
+  qualquer ADM que abre a página e grava cada entrada direto no
+  Firebase de produção — esse rascunho provavelmente já estava sentado
+  lá desde 14/09. Removido de `painel.html`, continua em
+  `painel-dev.html`. Checagem de passagem, sem achado: buscas por
+  outros `_dev` suffixed paths / comentários "painel-dev" soltos em
+  `painel.html` não acharam mais nada (banner, Push manual, GERENCIAS,
+  `squadBoardUrl()` — todos corretamente divergentes de propósito). PR
+  #937.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
