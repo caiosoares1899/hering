@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.684</div>
+<div class="version">v8.30.685</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9019,7 +9019,12 @@ async function fbCreateCard(card){
   const updates = {};
   updates['cards/'+key] = card;
   updates['cards_updated_at/'+card.id] = card.updatedAt;
-  return _trackFbWrite(window._update(fb(FB), updates).catch(err=>{
+  // Mesma rede de segurança de fbSaveAll()/fbSaveCard() (achado real
+  // /monitorarbugs 2026-09-16, ver comentário completo em fbSaveAll) —
+  // esta é a 3ª via de escrita de cards e tinha ficado de fora da 1ª
+  // rodada do fix; mesmo risco (campo undefined derruba a criação
+  // inteira), mesma correção.
+  return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbCreateCard] write failed:', err);
     throw err;

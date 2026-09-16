@@ -18,6 +18,19 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.685 — 2026-09-16 · Fix: `fbCreateCard()` ficou de fora da 1ª rodada do fix de campo undefined
+
+Achado de passagem enquanto preparava o teste de console do fix
+anterior (v8.30.681/PR #939): `fbCreateCard()` — a 3ª via de escrita
+de cards (criação pontual, separada de `fbSaveAll()`/`fbSaveCard()`)
+— também escreve o objeto `card` bruto (`updates['cards/'+key] =
+card;`) e tinha ficado de fora da rede de segurança
+(`_stripUndefinedDeep()`) aplicada às outras duas. Mesmo risco (campo
+undefined derruba a criação do card inteira), mesma correção — agora
+as 3 vias de escrita de cards passam pela mesma blindagem.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.684 — 2026-09-16 · Promove pra prod — Notas (sync blur/autosave) e Black Friday (fix de métrica)
 
 Promove os 2 fixes de `/monitorarbugs` que ainda só estavam em
@@ -3454,6 +3467,15 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.684-dev — 2026-09-16 — Fix: `fbCreateCard()` ficou de fora da 1ª rodada do fix de campo undefined
+
+Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.685, direto
+em prod — mesma classe de bug crítico já corrigida nas outras 2 vias
+de escrita) — ver entrada completa lá. `fbCreateCard()` também passou
+a usar `_stripUndefinedDeep()`.
+
+Checks de rotina: `node --check` OK.
 
 ### v8.30.683-dev — 2026-09-16 — 🔴 Fix crítico — campo `blocker` undefined derrubava TODA escrita de card em produção (150+ ocorrências reais)
 
