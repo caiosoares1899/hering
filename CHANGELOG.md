@@ -3390,6 +3390,45 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.682-dev — 2026-09-16 — `/monitorarbugs`: 🔥 Black Friday furava a própria regra de "não conta métrica"
+
+Rodada de `/monitorarbugs` sem área nomeada — foco no tema 🔥 Black
+Friday (feature substancial já validada ao vivo pelo usuário em várias
+rodadas, mas nunca tinha passado por uma auditoria sistemática de
+código — só correção reativa de bugs visuais reportados).
+
+**Achado real (técnica 3 — confrontar com a promessa documentada)**:
+`toggleBlackFriday()` de propósito nunca chama `_recordThemeDiscovered()`
+(comentário no próprio código: "é um teste, não uma opção real ainda,
+sem sentido contar métrica disso" — diferente do Vice City, que
+registra normalmente). Mas o listener global
+`window.addEventListener('auth-change', ...)` chamava
+`_recordThemeDiscovered(_currentTheme())` sem NENHUMA exceção — e
+`_currentTheme()` é lido direto do atributo `data-theme` ao vivo no
+DOM. Se um `auth-change` disparasse de novo enquanto a pessoa
+estivesse ATIVAMENTE no modo Black Friday (o SDK do Firebase Auth já
+tem histórico documentado neste arquivo de refirar esse evento sozinho
+por instabilidade, não só no login inicial), `temasDescobertos/
+blackfriday:true` seria gravado no Firebase mesmo assim — furando a
+própria regra que `toggleBlackFriday()` tenta garantir.
+
+Confirmado que o tema NÃO sobrevive a um F5 (o script inline de
+"flash de tema errado", antes do `<body>`, só restaura `light`/`vice`
+a partir de `localStorage`, nunca `blackfriday`) — o risco é só
+durante uma sessão ativa com re-autenticação no meio.
+
+Fix: o listener agora exclui `'blackfriday'` explicitamente antes de
+chamar `_recordThemeDiscovered()`.
+
+Checagem de passagem, sem achado: `--fish-op:1` fixo no bloco
+`:root[data-theme="blackfriday"]` (peixinhos/💰 sempre visíveis nesse
+tema) NÃO fura a preferência pessoal de peixinhos desligados
+(`fish_bg_off`) — esse toggle esconde os wrappers `#fwrap`/`#bwrap`
+via `display:none` direto no elemento (JS), que sempre vence sobre
+opacidade controlada por CSS var, mecanismos independentes.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.681-dev — 2026-09-16 — `/monitorarbugs`: Notas — texto digitado "sumia" ao sair do campo antes do autosave
 
 Rodada de `/monitorarbugs` sem área nomeada — foco na feature de Notas
