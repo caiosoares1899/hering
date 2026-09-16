@@ -1230,6 +1230,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `squadBoardUrl()` — todos corretamente divergentes de propósito). PR
   #937.
 
+- **2026-09-16, `saveCard()`/`fbSaveAll()`/`fbSaveCard()` (investigação
+  de erro real no painel, 2ª ocorrência do mesmo padrão "update
+  failed... undefined in property 'k...")**: em vez de chutar entre
+  ~13 candidatos como na 1ª ocorrência (PR #932), busquei o texto
+  COMPLETO direto no Firebase (`error_logs`, campo `msg` guarda até
+  300 chars, a tela só mostra 80) — achei 155+ ocorrências reais, 3
+  usuários, squad `outlet-crm`, desde 14/09: `cards.<índice>.blocker`.
+  Causa raiz: `saveCard()` grava `c.blocker` cru em modo coluna — cards
+  antigos sem esse campo têm `c.blocker` `undefined` de verdade, não
+  `false`; `update()` do Firebase é tudo-ou-nada, então isso derrubava
+  a escrita do card INTEIRO, e como `fbSaveAll()` reescreve `/cards`
+  inteiro, um card "envenenado" em memória travava o save de QUALQUER
+  card até recarregar a página. Fix na origem (`!!c.blocker`) + rede de
+  segurança (`_stripUndefinedDeep()`, mesmo padrão do PR #932) em
+  `fbSaveAll()`/`fbSaveCard()` (as 2 vias centrais de escrita de
+  cards, ~50 call sites combinados). Aplicado direto em prod pela
+  gravidade. PR #939. **Lição pra próxima vez**: quando a mensagem de
+  erro do card do painel vier cortada, busque o campo `msg` completo
+  direto no Firebase (`kanban/squads/{sq}/error_logs`, precisa
+  descobrir squads via `squads_meta` — não assuma só dados/prf/
+  midiacriativa) ANTES de tentar adivinhar pela lista de call sites —
+  muito mais rápido e preciso que análise estática às cegas.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
