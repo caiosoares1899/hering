@@ -16235,6 +16235,29 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.52 · painel — 2026-09-16 · `/monitorarbugs`: rascunho de Mural de teste do ambiente dev vazado pra produção
+
+Rodada de `/monitorarbugs` sem área nomeada — foco em `painel.html`
+(mesma promoção v3.47 que causou o incidente do `loadExtraSquads()`,
+verificando se algo mais tinha vazado junto).
+
+**Achado real (técnica 2 — comparar contra `painel-dev.html`)**: a
+entrada `seed_teste_comunicados_dev_2026_07` ("🧪 Teste: sistema de
+comunicados funcionando" / "Este é um rascunho de teste do AMBIENTE
+DEV") estava em `COMUNICADO_RASCUNHOS_SEED` deste arquivo de
+**produção** — mesma classe de vazamento do `loadExtraSquads()`,
+mesma promoção culpada (v3.47, 14/09). `_seedComunicadoRascunhos()`
+roda sozinha pra qualquer ADM que abre a página (2s após login) e
+grava cada entrada direto em `kanban/comunicados/{id}` de produção —
+então esse rascunho de teste provavelmente já está sentado lá desde
+14/09, visível pra qualquer ADM que abrir a aba de Comunicados/Mural
+em produção.
+
+Removido daqui — continua existindo em `painel-dev.html`, onde faz
+sentido.
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.51 · painel — 2026-09-15 · 🔴 INCIDENTE (recorrente): painel.html rodando com o `loadExtraSquads()` de dev — nunca carregava os squads reais
 
 O fix v3.50 (esconder `dev`/`omnichannel` em `squadVisible()`) era

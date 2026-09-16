@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.51 · painel</div>
+<div class="version">v3.52 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8196,14 +8196,20 @@ function loadComunicados(){
 // efetivamente escreve. Cada rascunho tem um ID fixo e estável: se você já
 // revisou/publicou ou descartou, ele nunca é recriado (checa se o ID já
 // existe, mesmo que tenha sido apagado — usamos uma lista de "já vistos").
+// Achado real (/monitorarbugs 2026-09-16, técnica 2 — comparar contra
+// painel-dev.html): o rascunho "seed_teste_comunicados_dev_2026_07" ("Este
+// é um rascunho de teste do AMBIENTE DEV") existia aqui em painel.html
+// (produção) — mesma classe de vazamento já encontrada em
+// loadExtraSquads() (PR #931), reintroduzido pela mesma promoção
+// painel.html v3.47. _seedComunicadoRascunhos() roda sozinha pra qualquer
+// ADM que abrir a página (setTimeout 2s após login) e grava CADA entrada
+// daqui direto em kanban/comunicados/{id} de produção — então esse
+// rascunho de teste provavelmente já está sentado lá desde 14/09,
+// aparecendo pra qualquer ADM que abrir a aba de Comunicados/Mural.
+// Removido daqui — continua existindo em painel-dev.html, onde faz
+// sentido. Ver script de console (entregue junto com este fix) pra
+// checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
-  {
-    id: 'seed_teste_comunicados_dev_2026_07',
-    titulo: '🧪 Teste: sistema de comunicados funcionando',
-    corpo: '<p>Este é um rascunho de <b>teste</b> do ambiente dev. Clique em "Revisar e publicar" pra testar o fluxo completo.</p>',
-    tipo: 'novidade',
-    squad: '*',
-  },
   {
     id: 'seed_promocao_2026_09_14',
     titulo: '🚀 Melhorias no board e no painel',
