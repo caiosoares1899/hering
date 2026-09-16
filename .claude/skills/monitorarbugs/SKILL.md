@@ -1198,6 +1198,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   corrigida em `_notasUpdate()` (PR #932, rodada anterior), confirmado
   que os 13 call sites já usam o helper novo, nenhum escapou.
 
+- **2026-09-16, 🔥 Black Friday (pedido genérico — área escolhida por
+  ser substancial e nunca ter recebido auditoria sistemática, só
+  correção reativa de bugs visuais reportados ao vivo)**: 1 achado
+  real, técnica 3 — `toggleBlackFriday()` de propósito nunca chama
+  `_recordThemeDiscovered()` ("é um teste, sem sentido contar
+  métrica"), mas o listener global `auth-change` chamava
+  `_recordThemeDiscovered(_currentTheme())` sem nenhuma exceção — se
+  esse evento refirasse com a pessoa ativamente no modo BF (SDK do
+  Firebase Auth já tem histórico documentado de refirar sozinho por
+  instabilidade), gravava `temasDescobertos/blackfriday` mesmo assim,
+  furando a própria regra da feature. Fix: listener exclui
+  `'blackfriday'` explicitamente. Checado e sem achado: interação
+  `--fish-op` (tema) × `fish_bg_off` (preferência pessoal) — mecanismos
+  independentes (opacity via CSS var vs. `display:none` via JS no
+  elemento), um não fura o outro. PR #935, dev v8.30.682.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
