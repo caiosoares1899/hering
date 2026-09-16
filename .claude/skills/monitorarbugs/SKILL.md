@@ -1179,6 +1179,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   fantasma não fazia nada. Fix: `clearTimeout(_ctxHoverTimer)` nas duas
   funções. PR #925, dev v8.30.677.
 
+- **2026-09-16, Notas (pedido genérico, "roda um /monitorarbugs" —
+  área escolhida por ser o código mais recente da sessão, nunca
+  auditado dedicadamente antes)**: 2 achados. PR #933: (1) **severo**,
+  técnica 3 — `saveBlocoTexto()` escreve no Firebase com debounce de
+  700ms, mas `onBlocoBlur()` re-renderiza a nota NA HORA ao sair do
+  campo sem sincronizar o modelo local antes — digitar rápido e clicar
+  fora/Tab antes do debounce fazia o texto recém-digitado sumir
+  visualmente da tela por até 700ms (a escrita em si não se perdia, só
+  a UI mentia por um instante). Fix: `onBlocoInput()` atualiza o
+  modelo local na hora, além de continuar agendando o debounce; (2)
+  menor, técnica 1 — vincular/desvincular card do lado da NOTA
+  (`notaAddCardLink`/`notaRemoveCardLink`) nunca atualizava cache local
+  nem repintava, diferente do lado do CARD (que já fazia isso, com
+  comentário explícito sobre não esperar o listener). Mesmo padrão
+  aplicado nos dois. Achado de passagem, não é bug: a feature usa
+  `update()` multi-path com ref crua — mesma classe de risco já
+  corrigida em `_notasUpdate()` (PR #932, rodada anterior), confirmado
+  que os 13 call sites já usam o helper novo, nenhum escapou.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
