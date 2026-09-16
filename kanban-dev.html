@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.681-dev</div>
+<div class="version">v8.30.682-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32379,7 +32379,22 @@ function _recordThemeDiscovered(theme){
   safeLS.setItem(key,'1');
   window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {['temasDescobertos/'+theme]:true}).catch(()=>{});
 }
-window.addEventListener('auth-change', ()=>{ _recordThemeDiscovered(_currentTheme()); });
+// Achado real (/monitorarbugs 2026-09-16, técnica 3 — confrontar com a
+// promessa documentada): toggleBlackFriday() DE PROPÓSITO nunca chama
+// _recordThemeDiscovered() (ver comentário lá — "é um teste, não uma
+// opção real ainda, sem sentido contar métrica disso"), mas este listener
+// global chamava _recordThemeDiscovered(_currentTheme()) sem exceção
+// nenhuma. _currentTheme() é lido direto do atributo data-theme ao vivo —
+// se um 'auth-change' disparasse de novo enquanto a pessoa estivesse
+// ATIVAMENTE no modo Black Friday (o app já documenta em outro lugar que
+// o SDK do Firebase Auth pode refirar esse evento sozinho por
+// instabilidade, não só no login), gravava 'blackfriday' em
+// temasDescobertos mesmo assim — furando a mesma regra que
+// toggleBlackFriday() tenta garantir.
+window.addEventListener('auth-change', ()=>{
+  const t = _currentTheme();
+  if(t!=='blackfriday') _recordThemeDiscovered(t);
+});
 function toggleTheme(){
   _disableThemeAutoIfOn();
   const next = _currentTheme()==='light' ? 'dark' : 'light';
