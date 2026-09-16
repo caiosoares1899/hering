@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.680</div>
+<div class="version">v8.30.681</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8943,8 +8943,23 @@ async function fbSaveAll(extra, touchedIds){
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
   // mesma chamada que cria os cards do dia — atômico com cards/cards_index,
   // sem precisar de um update() separado depois).
+  // Achado real (/monitorarbugs 2026-09-16, erro em produção — 150+
+  // ocorrências reais, vários usuários, squad outlet-crm): update() do
+  // Firebase é tudo-ou-nada — se QUALQUER card em cardsToSave tiver um
+  // campo com valor `undefined` de verdade (ex.: campo que nunca existiu
+  // num card antigo, herdado cru via Object.assign em vez de normalizado),
+  // a escrita inteira falha ("...contains undefined in property
+  // 'kanban.squads.<squad>.dados.cards.<índice>.<campo>'") — TODOS os
+  // cards deste save ficam sem persistir, silenciosamente (a UI já mostra
+  // como salvo). A causa raiz específica achada (campo `blocker`) já foi
+  // corrigida na origem (ver saveCard()), mas esta é a via de escrita
+  // CENTRAL de todo o array de cards (~50 call sites) — rede de segurança
+  // aqui protege contra qualquer outro campo com o mesmo problema, mesmo
+  // padrão de _stripUndefinedDeep() já usado em Notas (PR #932): remove
+  // campos undefined do payload (nunca troca por null, que apagaria o
+  // campo de propósito) antes de escrever.
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), { cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) }),
+    window._update(fb(FB), _stripUndefinedDeep({ cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -9091,7 +9106,13 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // OU `null` (remove) explicitamente conforme o estado atual do card,
       // nunca deixar a entrada velha pra trás quando alguém desarquiva.
       updates['cards_archived/'+card.id] = card.archived ? true : null;
-      return _trackFbWrite(window._update(fb(FB), updates).catch(err=>{
+      // Achado real (/monitorarbugs 2026-09-16) — mesma rede de segurança
+      // de fbSaveAll() (ver comentário lá): _stripUndefinedDeep() remove
+      // qualquer campo undefined que tenha sobrado em `card` antes de
+      // escrever, sem o que UM campo undefined derrubava a escrita
+      // pontual inteira deste card (índice + updated_at + archived
+      // juntos), silenciosamente.
+      return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
@@ -15017,7 +15038,22 @@ function saveCard(){
       // que não estão na lista — o campo antigo fica intacto até loadComments()
       // migrá-lo em background na próxima vez que alguém abrir esse card.
       linkedCards:editingLinkedCards.map(l=>l.id),
-      blocker: blockerMode==='tag' ? _blockerRowOn : c.blocker,
+      // Achado real (/monitorarbugs 2026-09-16, erro em produção — 150+
+      // ocorrências reais, vários usuários, squad outlet-crm): em modo
+      // COLUNA (blockerMode!=='tag'), a linha só "preserva" c.blocker como
+      // estava — mas cards antigos de antes desse campo existir nunca
+      // tiveram `blocker` setado, então c.blocker é `undefined` de
+      // verdade, não `false`. Object.assign grava a chave undefined assim
+      // mesmo, e window._update()/fbSaveAll() (que reescreve /cards
+      // inteiro) REJEITA A ESCRITA INTEIRA quando qualquer card tem um
+      // campo undefined ("update failed: values argument contains
+      // undefined in property 'kanban.squads.<squad>.dados.cards.<idx>.
+      // blocker'") — a pessoa clicava Salvar e a edição simplesmente não
+      // ia pro Firebase, sem aviso nenhum. Mesmo comentário logo acima já
+      // documenta que em modo coluna c.blocker "não é fonte de verdade
+      // nenhuma" — não tem motivo pra preservar um valor cru possivelmente
+      // undefined; normaliza pra boolean.
+      blocker: blockerMode==='tag' ? _blockerRowOn : !!c.blocker,
       blockerReason:document.getElementById('m-blocker-reason')?.value||'',
       edited:user,editedAt:td,
       updatedAt:new Date().toISOString(),

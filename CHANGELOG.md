@@ -18,6 +18,49 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.681 — 2026-09-16 · 🔴 Fix crítico — campo `blocker` undefined derrubava TODA escrita de card em produção (150+ ocorrências reais)
+
+`/monitorarbugs` sem área nomeada — investigação de um novo relato de
+erro "🔥 Firebase" no painel (mesma mensagem cortada de antes: "update
+failed: values argument contains undefined in property 'k..."). Como o
+fix de Notas (v8.30.680) já cobria o único padrão de escrita "kanban/…"
+com ref crua, a suspeita passou a ser outra coisa — busquei o texto
+COMPLETO direto no Firebase (`error_logs`) e achei: **155+ ocorrências
+reais**, 3 usuários diferentes, squad `outlet-crm`, indo até 14/09 —
+`"...contains undefined in property 'kanban.squads.outlet-crm.dados.
+cards.<índice>.blocker'"`.
+
+**Causa raiz**: em `saveCard()` (botão "💾 Salvar" do modal), quando o
+squad usa modo de impedimento por COLUNA (`blockerMode!=='tag'`, o
+caso comum), a linha só devia "preservar" `c.blocker` como já estava —
+mas cards antigos, criados antes desse campo existir no schema, nunca
+tiveram `blocker` setado: `c.blocker` é `undefined` de verdade, não
+`false`. `Object.assign` grava a chave `undefined` assim mesmo, e o
+`update()` do Firebase (usado tanto por `fbSaveAll()` quanto por
+`fbSaveCard()`) é **tudo-ou-nada** — um único campo undefined derruba a
+escrita inteira, silenciosamente (a UI já mostrava a edição como salva
+enquanto o Firebase nunca recebia nada). Como `fbSaveAll()` reescreve o
+array `/cards` inteiro de uma vez, um ÚNICO card "envenenado" em
+memória bloqueava o save de QUALQUER card do board até a pessoa
+recarregar a página — explica os clusters de erro repetido ao longo de
+horas no squad afetado.
+
+**Fix**: `saveCard()` normaliza `c.blocker` pra boolean (`!!c.blocker`)
+em vez de preservar o valor cru — o próprio comentário já existente na
+função documenta que em modo coluna esse campo "não é fonte de verdade
+nenhuma", então não havia motivo pra preservar um `undefined`. Rede de
+segurança adicional (mesmo padrão de `_notasUpdate()`, PR #932) em
+`fbSaveAll()`/`fbSaveCard()` — as duas vias centrais de escrita de
+cards (~50 call sites combinados): `_stripUndefinedDeep()` remove
+qualquer campo `undefined` do payload antes de escrever, protegendo
+contra qualquer OUTRO campo com o mesmo problema em cards antigos.
+
+Aplicado direto em prod pela gravidade (bug ativo há pelo menos 3
+dias, vários usuários reais, squad inteiro com saves falhando em
+silêncio).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.680 — 2026-09-15 · 🔴 Fix crítico — Notas: campo undefined derrubava a escrita inteira no Firebase
 
 Reportado via card de erro (🔥 Firebase, "Uncaught Error: update failed:
@@ -3389,6 +3432,24 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.683-dev — 2026-09-16 — 🔴 Fix crítico — campo `blocker` undefined derrubava TODA escrita de card em produção (150+ ocorrências reais)
+
+Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.681, direto
+em prod pela gravidade — bug ativo há pelo menos 3 dias, vários
+usuários reais, squad `outlet-crm` inteiro com saves falhando em
+silêncio) — ver entrada completa lá pro detalhe técnico.
+
+Resumo: `saveCard()` gravava `c.blocker` cru (podendo ser `undefined`
+em cards antigos sem esse campo) em vez de normalizar pra boolean;
+`update()` do Firebase é tudo-ou-nada, então esse único campo
+derrubava a escrita do card inteiro — e como `fbSaveAll()` reescreve
+`/cards` inteiro de uma vez, um card "envenenado" em memória travava o
+save de QUALQUER card até recarregar a página. Fix na origem
+(`!!c.blocker`) + rede de segurança (`_stripUndefinedDeep()`, mesmo
+padrão de `_notasUpdate()`/PR #932) em `fbSaveAll()`/`fbSaveCard()`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
 
 ### v8.30.682-dev — 2026-09-16 — `/monitorarbugs`: 🔥 Black Friday furava a própria regra de "não conta métrica"
 
