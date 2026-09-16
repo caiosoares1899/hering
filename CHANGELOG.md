@@ -18,6 +18,28 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.684 — 2026-09-16 · Promove pra prod — Notas (sync blur/autosave) e Black Friday (fix de métrica)
+
+Promove os 2 fixes de `/monitorarbugs` que ainda só estavam em
+`kanban-dev.html` (v8.30.682-dev/v8.30.683-dev), já validados pelo
+usuário via teste de console:
+
+- **Notas**: `onBlocoInput()` sincroniza o modelo local do texto na
+  hora (antes só o debounce de 700ms fazia isso) — sem isso, digitar
+  rápido e sair do campo antes do autosave fazia o texto "sumir" da
+  tela por até 700ms. Junto, `notaAddCardLink()`/`notaRemoveCardLink()`
+  passaram a atualizar o cache local + repintar na hora, igual o par
+  do lado do card já fazia.
+- **Black Friday**: o listener global `auth-change` não grava mais
+  `temasDescobertos/blackfriday` — o modo é experimental e de propósito
+  nunca deveria contar métrica, mas o listener não tinha essa exceção.
+
+Ver `kanban-dev.html` v8.30.682-dev/v8.30.683-dev abaixo pro detalhe
+técnico completo de cada achado.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>` e no
+`<script type="module">`.
+
 ### v8.30.681 — 2026-09-16 · 🔴 Fix crítico — campo `blocker` undefined derrubava TODA escrita de card em produção (150+ ocorrências reais)
 
 `/monitorarbugs` sem área nomeada — investigação de um novo relato de
