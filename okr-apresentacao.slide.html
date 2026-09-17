@@ -41,7 +41,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
 #app[hidden]{display:none;}
 
-#topbar{position:relative;display:flex;align-items:center;gap:16px;padding:0 22px;height:58px;flex-shrink:0;
+#topbar{display:flex;align-items:center;gap:16px;padding:0 22px;height:58px;flex-shrink:0;
   background:rgba(3,13,26,.75);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);}
 .tb-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:.02em;flex-shrink:0;}
 .tb-live{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--teal);letter-spacing:.06em;text-transform:uppercase;font-weight:700;flex-shrink:0;}
@@ -60,9 +60,15 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .tb-countdown{font-size:9.5px;font-weight:700;letter-spacing:.03em;color:var(--teal);}
 .tb-countdown.warn{color:var(--warn);}
 .tb-countdown.over{color:var(--danger);}
-.agenda-cfg-ov{position:absolute;top:100%;left:22px;margin-top:2px;z-index:20;display:none;}
+/* Backdrop cobrindo a tela inteira (mesmo padrão de #detail-ov/#notes-ov
+   — click-outside-fecha via onclick="if(event.target===this)...", sem
+   depender de stopPropagation em cascata) — mais robusto que um listener
+   de document, que fechava o popover ao interagir com o próprio <input
+   type="time"> (picker nativo do navegador disparando eventos que
+   escapavam do closest() esperado). */
+.agenda-cfg-ov{position:fixed;inset:0;z-index:20;display:none;background:transparent;}
 .agenda-cfg-ov.open{display:block;}
-.agenda-cfg-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;backdrop-filter:blur(18px);
+.agenda-cfg-panel{position:absolute;top:58px;left:22px;background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;backdrop-filter:blur(18px);
   padding:14px 16px;width:220px;box-shadow:0 10px 30px rgba(0,0,0,.4);}
 .agenda-cfg-hd{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px;}
 .agenda-cfg-hd button{background:none;border:1px solid var(--glass-b);border-radius:8px;width:24px;height:24px;color:var(--txt2);
@@ -409,7 +415,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
       <div class="tb-clock" id="tb-clock">--:--</div>
       <div class="tb-countdown" id="tb-countdown" hidden></div>
     </div>
-    <div class="agenda-cfg-ov" id="agenda-cfg-ov" onclick="event.stopPropagation()">
+    <div class="agenda-cfg-ov" id="agenda-cfg-ov" onclick="if(event.target===this) window._okrCloseAgendaCfg()">
       <div class="agenda-cfg-panel">
         <div class="agenda-cfg-hd"><span>⏱ Reunião de hoje</span><button onclick="window._okrCloseAgendaCfg()">✕</button></div>
         <label for="agenda-inicio">Início</label>
@@ -1198,11 +1204,6 @@ window._okrAgendaLimpar = () => {
   window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
   window._okrCloseAgendaCfg();
 };
-// Fecha o popover ao clicar fora (o próprio painel já tem stopPropagation()
-// pra não fechar clicando dentro).
-document.addEventListener('click', e=>{
-  if(!e.target.closest('#tb-clock-wrap') && !e.target.closest('#agenda-cfg-ov')) window._okrCloseAgendaCfg();
-});
 function _okrRenderCountdown(){
   const el = document.getElementById('tb-countdown');
   const ag = _okrAgendaHoje();
