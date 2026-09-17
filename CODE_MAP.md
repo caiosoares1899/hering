@@ -2709,24 +2709,43 @@ detalhe aberto — ver nota abaixo).
   agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`; 3ª
   rodada — segmentação por reunião, ver abaixo) — botão flutuante abre
   um painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
-  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1004
+  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1053
   — `YYYY-MM-DD` local, 1 reunião = 1 dia; node herda `.read`/`.write` de
   `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
   necessária). Seletor `#notes-date-sel` troca a reunião sendo vista
-  (`window._okrNotesSetViewDate()` — L1038, `_notasPopulateDateSel()`
-  monta as opções a partir de `Object.keys(okrNotas)` ∪ hoje). Reunião
-  que não é a de hoje abre só-leitura (`.notes-compose` escondido,
-  `.notes-readonly` visível). `renderNotas()` — L1043 — lista
+  (`window._okrNotesSetViewDate()` — L1087, `_notasPopulateDateSel()` —
+  L1075 — monta as opções a partir de `Object.keys(okrNotas)` ∪ hoje).
+  Reunião que não é a de hoje abre só-leitura (`.notes-compose`
+  escondido, `.notes-readonly` visível). `renderNotas()` — L1092 — lista
   cronológica do dia selecionado (mais antiga primeiro, lê como ata);
-  `window._okrToggleNotes()` — L1076 — abre/fecha (sempre na reunião de
-  hoje na 1ª abertura) + rola pro fim; `window._okrAddNota()` — L1088 —
+  `window._okrToggleNotes()` — L1125 — abre/fecha (sempre na reunião de
+  hoje na 1ª abertura) + rola pro fim; `window._okrAddNota()` — L1137 —
   sempre grava no bucket de HOJE, Enter envia (Shift+Enter quebra linha,
   `window._okrNotesKeydown()` faz `stopPropagation()` em toda tecla pra
   não vazar pro atalho global de navegação de slides, ← → espaço).
-  Exclusão (`window._okrDelNota()` — L1101) só pelo próprio autor
+  Exclusão (`window._okrDelNota()` — L1150) só pelo próprio autor
   (`n.autorUid===window._currentUser?.uid`) e só na reunião de hoje —
   sem papel de PO/organizador carregado nesta página, diferente do resto
   do Maré Digital, então não dá pra oferecer exclusão por admin aqui.
+- **⏱ Contagem regressiva da agenda** (2026-09-17, pedido direto do
+  usuário: "quero um cronometro mostrando quanto tempo falta para a
+  agenda acabar... configurável que horario começou + o horario
+  programado para acabar") — relógio do topbar virou clicável
+  (`#tb-clock-wrap`, `window._okrToggleAgendaCfg()` — L1182) e abre um
+  popover (`#agenda-cfg-ov`) com `<input type="time">` de Início/Término
+  previsto. Mesma segmentação por reunião/dia dos Anotações — grava em
+  `kanban/okr/reuniao_agenda/{data}` (`window._okrAgendaSalvar()` —
+  L1188 — exige os 2 campos preenchidos; `window._okrAgendaLimpar()` —
+  L1197). `_okrAgendaHoje()` — L1175 — lê `okrAgendas[_hojeStr()]`;
+  `_okrRenderCountdown()` — L1206 — roda dentro do MESMO `setInterval`
+  de 1s que já movia o relógio (`#tb-clock`), escreve "⏳ Xmin restantes"
+  (amarelo nos últimos 5min) ou "🔴 +Xmin (atrasado)" (vermelho, depois
+  do horário previsto) em `#tb-countdown`; sem `fim` configurado pra
+  hoje, o elemento fica `hidden`. Só `Término previsto` entra no
+  cálculo — `Início` é só registro (pré-preenchido com o horário atual
+  ao abrir o popover pela 1ª vez no dia). Mesmo guard de Escape de
+  `#detail-ov`/`#notes-ov` no handler de teclado global, pra não vazar
+  pro atalho de navegação de slides.
   Estrutura de dado deliberadamente simples (`texto`+`autorUid`+`ts` ISO
   string) — pensada pra uma evolução futura (análise estratégica da
   lista, gerar atividades) sem precisar remodelar nada agora,

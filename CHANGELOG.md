@@ -16650,6 +16650,37 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (4ª rodada) — Novo: ⏱ contagem regressiva da agenda (configurável, ao vivo)
+
+Pedido direto do usuário, ao lado do relógio no topo: "quero um cronometro
+mostrando quanto tempo falta para a agenda acabar! entao, tem q ser
+configurável que horario começou + o horario programado para acabar".
+
+O relógio (`#tb-clock`) virou clicável (`#tb-clock-wrap`) e abre um
+popover pequeno com dois campos `<input type="time">` — Início e Término
+previsto. Salvar grava em `kanban/okr/reuniao_agenda/{data}` (mesma
+segmentação por reunião/dia de `reuniao_notas` — 1 reunião = 1 dia,
+`_hojeStr()`), então quem configura o horário no começo da apresentação já
+deixa a contagem visível, ao vivo, pra qualquer outra pessoa com a tela
+aberta, sem precisar reconfigurar por pessoa.
+
+Abaixo do relógio aparece "⏳ Xmin restantes" (ou "Xh Ymin" acima de 1h),
+atualizado no mesmo `setInterval` de 1s que já movia o relógio — vira
+amarelo (`--warn`) nos últimos 5 minutos, e "🔴 +Xmin (atrasado)"
+(`--danger`) depois do horário previsto passar. Sem `fim` configurado pra
+reunião de hoje, a contagem some (`hidden`), só o relógio normal fica.
+`Início` é usado só como registro (pré-preenchido com o horário atual ao
+abrir o popover pela 1ª vez no dia) — só `Término previsto` participa do
+cálculo da contagem.
+
+Escape fecha o popover sem vazar pro atalho global de navegação de slides
+(mesmo guard de `#detail-ov`/`#notes-ov` no handler de teclado), e
+clicar fora dele fecha também. `.read`/`.write` seguem a mesma cascata de
+`kanban/okr` do `database.rules.json` — sem entrada nova de regra.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107).
+
 ### 2026-09-17 (3ª rodada) — Anotações agora segmentadas por reunião (1 reunião = 1 dia)
 
 Pedido direto do usuário, depois de validar a 2ª rodada: "as anotações vao
