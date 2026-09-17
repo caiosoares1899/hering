@@ -41,13 +41,39 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 #app{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;}
 #app[hidden]{display:none;}
 
-#topbar{display:flex;align-items:center;gap:16px;padding:0 22px;height:58px;flex-shrink:0;
+#topbar{position:relative;display:flex;align-items:center;gap:16px;padding:0 22px;height:58px;flex-shrink:0;
   background:rgba(3,13,26,.75);backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);}
 .tb-logo{display:flex;align-items:center;gap:9px;font-weight:800;font-size:15px;letter-spacing:.02em;flex-shrink:0;}
 .tb-live{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--teal);letter-spacing:.06em;text-transform:uppercase;font-weight:700;flex-shrink:0;}
 .tb-live-dot{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 1.8s infinite;}
 @keyframes pulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(29,233,182,.5);}50%{opacity:.4;box-shadow:0 0 0 5px rgba(29,233,182,0);}}
 .tb-clock{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--txt2);letter-spacing:.05em;flex-shrink:0;}
+/* ⏳ Contagem regressiva da agenda — pedido direto do usuário: "quero um
+   cronometro mostrando quanto tempo falta pra agenda acabar", configurável
+   (início + término previsto). Clicável (o próprio relógio) abre o
+   popover de configuração; segmentado por reunião como as Anotações
+   (kanban/okr/reuniao_agenda/{data}), então o horário configurado por
+   quem abre a apresentação já aparece pra todo mundo, ao vivo. */
+.tb-clock-wrap{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0;cursor:pointer;
+  padding:3px 8px;border-radius:8px;}
+.tb-clock-wrap:hover{background:var(--glass-hover);}
+.tb-countdown{font-size:9.5px;font-weight:700;letter-spacing:.03em;color:var(--teal);}
+.tb-countdown.warn{color:var(--warn);}
+.tb-countdown.over{color:var(--danger);}
+.agenda-cfg-ov{position:absolute;top:100%;left:22px;margin-top:2px;z-index:20;display:none;}
+.agenda-cfg-ov.open{display:block;}
+.agenda-cfg-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;backdrop-filter:blur(18px);
+  padding:14px 16px;width:220px;box-shadow:0 10px 30px rgba(0,0,0,.4);}
+.agenda-cfg-hd{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:700;margin-bottom:10px;}
+.agenda-cfg-hd button{background:none;border:1px solid var(--glass-b);border-radius:8px;width:24px;height:24px;color:var(--txt2);
+  font-size:12px;cursor:pointer;font-family:inherit;}
+.agenda-cfg-panel label{display:block;font-size:10.5px;color:var(--txt3);text-transform:uppercase;letter-spacing:.04em;margin:8px 0 3px;}
+.agenda-cfg-panel input[type=time]{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--glass-b);border-radius:8px;
+  color:var(--txt);font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 8px;box-sizing:border-box;}
+.agenda-cfg-actions{display:flex;gap:8px;margin-top:12px;}
+.agenda-cfg-actions button{flex:1;border-radius:8px;padding:7px 0;font-size:11.5px;cursor:pointer;font-family:inherit;border:1px solid var(--glass-b);}
+.agenda-cfg-actions .ac-limpar{background:none;color:var(--txt2);}
+.agenda-cfg-actions .ac-salvar{background:var(--accent);color:#01212e;font-weight:700;border-color:transparent;}
 .tb-mid{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;}
 .tb-title{font-size:12px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .tb-bar{width:min(280px,40vw);height:3px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
@@ -379,7 +405,23 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   <div id="topbar">
     <div class="tb-logo">🎯 OKR</div>
     <div class="tb-live"><span class="tb-live-dot"></span>Ao vivo</div>
-    <div class="tb-clock" id="tb-clock">--:--</div>
+    <div class="tb-clock-wrap" id="tb-clock-wrap" onclick="window._okrToggleAgendaCfg()" title="Configurar horário da reunião">
+      <div class="tb-clock" id="tb-clock">--:--</div>
+      <div class="tb-countdown" id="tb-countdown" hidden></div>
+    </div>
+    <div class="agenda-cfg-ov" id="agenda-cfg-ov" onclick="event.stopPropagation()">
+      <div class="agenda-cfg-panel">
+        <div class="agenda-cfg-hd"><span>⏱ Reunião de hoje</span><button onclick="window._okrCloseAgendaCfg()">✕</button></div>
+        <label for="agenda-inicio">Início</label>
+        <input type="time" id="agenda-inicio">
+        <label for="agenda-fim">Término previsto</label>
+        <input type="time" id="agenda-fim">
+        <div class="agenda-cfg-actions">
+          <button type="button" class="ac-limpar" onclick="window._okrAgendaLimpar()">Limpar</button>
+          <button type="button" class="ac-salvar" onclick="window._okrAgendaSalvar()">Salvar</button>
+        </div>
+      </div>
+    </div>
     <div class="tb-mid">
       <div class="tb-title" id="tb-title">—</div>
       <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:0%;"></div></div>
@@ -861,6 +903,13 @@ document.addEventListener('keydown', e=>{
     if(e.key==='Escape'){ e.preventDefault(); window._okrCloseNotes(); }
     return;
   }
+  // Mesmo guard acima — o popover de horário da agenda tem <input
+  // type="time">, e Escape/setas dentro dele não podem vazar pro atalho
+  // global de navegação de slides.
+  if(document.getElementById('agenda-cfg-ov').classList.contains('open')){
+    if(e.key==='Escape'){ e.preventDefault(); window._okrCloseAgendaCfg(); }
+    return;
+  }
   if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
   else if(e.key==='ArrowLeft') window._okrPrev();
   else if(e.key.toLowerCase()==='f') window._okrFullscreen();
@@ -1114,9 +1163,68 @@ window._okrNotesKeydown = e => {
   else if(e.key==='Escape'){ e.preventDefault(); window._okrCloseNotes(); }
 };
 
-// ── Clock ──
+// ── Clock + ⏱ contagem regressiva da agenda — pedido direto do usuário:
+// "quero um cronometro mostrando quanto tempo falta pra agenda acabar...
+// tem q ser configurável que horario começou + o horario programado pra
+// acabar". Config vive em kanban/okr/reuniao_agenda/{data} (mesma
+// segmentação por reunião/dia de reuniao_notas — quem configura o horário
+// vale pra apresentação inteira daquele dia, visível ao vivo pra todo
+// mundo que estiver com a tela aberta, sem precisar reconfigurar por
+// pessoa). ──
+let okrAgendas = {};  // {data: {inicio:'HH:MM', fim:'HH:MM', ts}}
+function _okrAgendaHoje(){ return okrAgendas[_hojeStr()] || null; }
+function _okrAgendaPopulateInputs(){
+  const ag = _okrAgendaHoje();
+  const agora = new Date().toTimeString().slice(0,5);
+  document.getElementById('agenda-inicio').value = ag?.inicio || agora;
+  document.getElementById('agenda-fim').value = ag?.fim || '';
+}
+window._okrToggleAgendaCfg = () => {
+  const ov = document.getElementById('agenda-cfg-ov');
+  if(ov.classList.contains('open')) window._okrCloseAgendaCfg();
+  else { _okrAgendaPopulateInputs(); ov.classList.add('open'); }
+};
+window._okrCloseAgendaCfg = () => document.getElementById('agenda-cfg-ov').classList.remove('open');
+window._okrAgendaSalvar = () => {
+  const inicio = document.getElementById('agenda-inicio').value;
+  const fim = document.getElementById('agenda-fim').value;
+  if(!inicio || !fim) return;
+  window._set(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr()), {
+    inicio, fim, ts: new Date().toISOString(),
+  }).catch(err=>console.error('[agenda] falha ao salvar:', err));
+  window._okrCloseAgendaCfg();
+};
+window._okrAgendaLimpar = () => {
+  window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
+  window._okrCloseAgendaCfg();
+};
+// Fecha o popover ao clicar fora (o próprio painel já tem stopPropagation()
+// pra não fechar clicando dentro).
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#tb-clock-wrap') && !e.target.closest('#agenda-cfg-ov')) window._okrCloseAgendaCfg();
+});
+function _okrRenderCountdown(){
+  const el = document.getElementById('tb-countdown');
+  const ag = _okrAgendaHoje();
+  if(!ag || !ag.fim){ el.hidden = true; return; }
+  const hoje = _hojeStr();
+  const fimMs = new Date(hoje+'T'+ag.fim+':00').getTime();
+  const diffMin = Math.round((fimMs - Date.now())/60000);
+  el.hidden = false;
+  el.classList.remove('warn','over');
+  if(diffMin > 5){
+    el.textContent = '⏳ ' + (diffMin>=60 ? Math.floor(diffMin/60)+'h'+String(diffMin%60).padStart(2,'0') : diffMin+'min') + ' restantes';
+  } else if(diffMin > 0){
+    el.classList.add('warn');
+    el.textContent = '⏳ ' + diffMin + 'min restantes';
+  } else {
+    el.classList.add('over');
+    el.textContent = '🔴 +' + Math.abs(diffMin) + 'min (atrasado)';
+  }
+}
 setInterval(()=>{
   document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  _okrRenderCountdown();
 }, 1000);
 
 // ── Auth / data lifecycle ──
@@ -1143,6 +1251,13 @@ function startListeners(){
   window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{
     okrNotas = snap.val()||{};
     renderNotas();
+  }, ()=>{});
+  // ⏱ Horário da agenda — mesmo padrão de reuniao_notas (independente do
+  // carrossel, segmentado por reunião/dia); o setInterval do relógio (mais
+  // abaixo) lê okrAgendas[_hojeStr()] a cada tick pra desenhar a contagem
+  // regressiva, sem precisar de outro timer.
+  window._onValue(window._ref(window._db,'kanban/okr/reuniao_agenda'), snap=>{
+    okrAgendas = snap.val()||{};
   }, ()=>{});
 }
 
