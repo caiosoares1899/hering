@@ -16650,6 +16650,23 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (7ª rodada) — Fix: botão de Sair aparecia quebrado (glifo Unicode sem suporte)
+
+Relato direto do usuário, com print: "esse botao de sair ta quebrado" —
+o botão de logout no canto superior direito (ao lado do avatar) aparecia
+como um quadrado vazio em vez de um ícone.
+
+**Causa raiz**: usava `⏻` (U+23FB, POWER SYMBOL) — um caractere Unicode
+do bloco "Miscellaneous Technical", sem apresentação de emoji garantida
+e sem glifo em várias fontes/sistemas (especialmente Windows), diferente
+de emojis do bloco padrão já usados no resto do arquivo (📋, 🎯, ⏱ etc.).
+
+**Fix**: troca por `🚪` (porta) — emoji do bloco padrão, suporte amplo
+em qualquer SO/navegador moderno, mesma ideia de "sair".
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107).
+
 ### 2026-09-17 (6ª rodada) — Fix: popover de horário não deixava clicar nos campos (causa raiz real: mesma armadilha de stacking context do `#notes-fab`)
 
 Relato direto do usuário, imediatamente depois da 5ª rodada: "ele agora
