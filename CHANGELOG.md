@@ -3503,6 +3503,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.690-dev — 2026-09-17 — Tags com emoji no início vão pro fim da lista (chips + dropdown de adicionar)
+
+Pedido direto do usuário, invertendo um efeito colateral da ordenação
+alfabética das duas rodadas anteriores (v8.30.688/689-dev): em Unicode,
+emoji ordena ANTES de letra — então tags de tamanho (`👖 P`/`M`/`G`/`GG`)
+sempre pulavam pro topo da lista, atropelando a ordem alfabética "de
+verdade" que o pedido original queria pras tags de texto.
+
+Fix: novo `_tagLabelCmp(la,lb)`, usado nos dois lugares que ordenam tag
+por label (`renderEditingTags()` e `_tagAddAvail()`) — detecta emoji no
+início do label via `/^\p{Extended_Pictographic}/u`, e só entra na
+comparação alfabética normal quando os dois labels concordam em
+começar (ou não) com emoji; caso contrário o que começa com emoji vai
+pro fim. Resultado: tags de texto em ordem alfabética normal primeiro,
+tags de emoji (tamanho, etc.) em ordem alfabética entre si no final.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.689-dev — 2026-09-17 — Dropdown "+ Adicionar tag…" do modal do card ganhou filtro de texto (+ ordem alfabética)
 
 Pedido direto do usuário, na sequência do fix da v8.30.688-dev (chips
