@@ -3503,6 +3503,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.689-dev — 2026-09-17 — Dropdown "+ Adicionar tag…" do modal do card ganhou filtro de texto (+ ordem alfabética)
+
+Pedido direto do usuário, na sequência do fix da v8.30.688-dev (chips
+em ordem alfabética). O `<select id="m-tag-add">` nativo listava as
+tags disponíveis na ordem de criação, sem nenhuma forma de buscar —
+squads com muitas tags (ver print do usuário: ~15 opções) tinham que
+rolar a lista inteira toda vez.
+
+Trocado por um combobox próprio: `input` de texto (`#m-tag-add`) +
+uma lista suspensa (`#m-tag-add-list`, `position:fixed`, calculada via
+`getBoundingClientRect()` do input — mesmo padrão já usado no dropdown
+de submarca, evita o bug de clipping por `overflow` de um ancestral).
+Filtra as tags ainda não adicionadas ao card por `_norm()` (substring,
+sem acento/caixa — mesma função já usada em outros filtros do arquivo),
+sempre em ordem alfabética. Clique num item (`onmousedown` +
+`preventDefault()`, pra não perder o foco do input antes do clique
+registrar) chama `addCardTag()` de verdade, limpa o campo e mantém o
+foco — dá pra adicionar várias tags em sequência sem clicar de novo no
+campo. Enter escolhe o 1º resultado filtrado; Esc ou clique fora fecha.
+
+`populateTagSelect()` só reconstrói esse dropdown quando ele já está
+aberto (dropdown fechado por padrão) — chamado de ~13 lugares no
+arquivo (abrir card, trocar coluna, Config → tags…), forçar abertura
+em todos eles seria um bug novo.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.688-dev — 2026-09-17 — Tags do modal do card em ordem alfabética
 
 `renderEditingTags()` (modal de edição, chips em `#m-tags-chips`)

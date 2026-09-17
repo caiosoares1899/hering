@@ -940,7 +940,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .m-tag-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid transparent;}
 .m-tag-chip .x{cursor:pointer;opacity:.6;font-weight:800;font-size:12px;line-height:1;}
 .m-tag-chip .x:hover{opacity:1;}
-.m-tags-add{cursor:pointer;}
+.m-tags-add{cursor:text;}
+.m-tag-add-wrap{position:relative;}
+.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(14px);}
+.m-tag-add-list.open{display:block;}
+.m-tag-add-item{padding:6px 9px;border-radius:7px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-tag-add-item:hover{background:rgba(56,182,255,.14);}
+.m-tag-add-empty{padding:6px 9px;font-size:11px;color:var(--txt3);}
 .card-title{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4;overflow-wrap:break-word;word-break:break-word;}
 
 .card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;}
@@ -4138,9 +4144,11 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="field"><label class="fl">Tags</label>
             <div id="m-tags-box" class="m-tags-box">
               <div id="m-tags-chips" class="m-tags-chips"></div>
-              <select class="fi m-tags-add" id="m-tag-add" onchange="addCardTag(this.value)">
-                <option value="">+ Adicionar tag…</option>
-              </select>
+              <div class="m-tag-add-wrap" id="m-tag-add-wrap">
+                <input class="fi m-tags-add" id="m-tag-add" type="text" placeholder="+ Adicionar tag…" autocomplete="off"
+                  oninput="renderTagAddDropdown()" onfocus="renderTagAddDropdown()" onkeydown="_tagAddKeydown(event)">
+                <div class="m-tag-add-list" id="m-tag-add-list"></div>
+              </div>
             </div>
           </div>
           <div class="field"><label class="fl">Coluna</label>
@@ -6277,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.688-dev</div>
+<div class="version">v8.30.689-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14103,12 +14111,52 @@ function saveExtraDesc(i){
   showToast('✅ Descrição salva!');
 }
 function populateTagSelect(){
-  const add=document.getElementById('m-tag-add');
-  if(add){
-    const avail=tags.filter(t=>!editingTags.includes(t.id));
-    add.innerHTML='<option value="">+ Adicionar tag…</option>'+avail.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
-  }
   renderEditingTags();
+  // Só reconstrói o dropdown de "+ Adicionar tag…" se ele já estiver
+  // aberto (usuário digitando/acabou de clicar num item) — populateTagSelect()
+  // é chamado por bem mais coisa do que só isso (abrir card, trocar coluna,
+  // Config → tags…), e forçar o dropdown a abrir nesses casos seria um bug novo.
+  const list=document.getElementById('m-tag-add-list');
+  if(list && list.classList.contains('open')) renderTagAddDropdown();
+}
+function _tagAddAvail(){
+  const q=_norm(document.getElementById('m-tag-add')?.value||'');
+  return tags.filter(t=>!editingTags.includes(t.id) && (!q || _norm(t.label).includes(q)))
+    .sort((a,b)=>a.label.localeCompare(b.label,'pt-BR'));
+}
+function renderTagAddDropdown(){
+  const inp=document.getElementById('m-tag-add');
+  const list=document.getElementById('m-tag-add-list');
+  if(!inp||!list) return;
+  const avail=_tagAddAvail();
+  list.innerHTML = avail.length
+    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag('${esc(t.id)}')">${esc(t.label)}</div>`).join('')
+    : `<div class="m-tag-add-empty">${tags.length===editingTags.length?'Todas as tags já foram adicionadas.':'Nenhuma tag encontrada.'}</div>`;
+  const r=inp.getBoundingClientRect();
+  list.style.top=(r.bottom+4)+'px';
+  list.style.left=r.left+'px';
+  list.style.minWidth=Math.max(r.width,180)+'px';
+  list.classList.add('open');
+}
+function closeTagAddDropdown(){
+  const list=document.getElementById('m-tag-add-list');
+  if(list) list.classList.remove('open');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#m-tag-add-wrap')) closeTagAddDropdown();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeTagAddDropdown();
+});
+function _tagAddKeydown(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const avail=_tagAddAvail();
+    if(avail.length) addCardTag(avail[0].id);
+  } else if(e.key==='Escape'){
+    closeTagAddDropdown();
+    e.target.blur();
+  }
 }
 function renderEditingTags(){
   const box=document.getElementById('m-tags-chips'); if(!box) return;
@@ -14125,8 +14173,8 @@ function renderEditingTags(){
 function addCardTag(id){
   if(!id) return;
   if(!editingTags.includes(id)) editingTags.push(id);
+  const add=document.getElementById('m-tag-add'); if(add){ add.value=''; add.focus(); }
   populateTagSelect();
-  const add=document.getElementById('m-tag-add'); if(add) add.value='';
   scheduleAutoSave();
 }
 function removeCardTag(id){
