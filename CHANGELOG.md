@@ -16650,6 +16650,35 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (6ª rodada) — Fix: popover de horário não deixava clicar nos campos (causa raiz real: mesma armadilha de stacking context do `#notes-fab`)
+
+Relato direto do usuário, imediatamente depois da 5ª rodada: "ele agora
+nao some mais mas nao da pra editar! vc clica e nada acontece". O fix
+anterior (trocar o fechamento por `if(event.target===this)`) resolveu o
+sumiço, mas não a causa de fundo.
+
+**Causa raiz real**: `#agenda-cfg-ov` (o backdrop `position:fixed;
+inset:0`) continuava vivendo DENTRO de `#topbar`/`#app`. `#app` tem
+`position:relative;z-index:1` — isso cria o PRÓPRIO contexto de
+empilhamento CSS pra TODOS os descendentes, inclusive os com
+`position:fixed`. Mesma armadilha já documentada e corrigida pra
+`#notes-fab`/`#notes-ov` nesta mesma tela (2ª rodada, 2026-09-17): um
+elemento `position:fixed` não escapa automaticamente do contexto de
+empilhamento de um ancestral que o cria, só escapa do FLUXO normal do
+documento (posicionamento). O `z-index:20` do popover só competia
+DENTRO do contexto de `#app`, e cliques nos `<input type="time">`
+(picker nativo do navegador) acabavam não batendo de forma confiável no
+elemento esperado.
+
+**Fix**: `#agenda-cfg-ov` vira sibling de `#app`/`#detail-ov`/
+`#notes-fab`/`#notes-ov` na raiz do documento — mesmo lugar, mesmo
+motivo dos outros 3. O gatilho (`#tb-clock-wrap`) continua dentro do
+`#topbar` normalmente (só um botão, sem overlay), sem mudança de
+comportamento aí.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107).
+
 ### 2026-09-17 (5ª rodada) — Fix: popover de configurar horário fechava sozinho ao clicar no `<input type="time">`
 
 Relato direto do usuário, com print: "nao consigo usar o configurador!
