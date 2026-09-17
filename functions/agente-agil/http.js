@@ -45,6 +45,7 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
+const crypto = require('crypto');
 
 const { intakeEnvelope } = require('./schema');
 const { SQUAD_ID } = require('./board');
@@ -54,12 +55,60 @@ const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
 const IDEMPOTENCY_PATH = `kanban/squads/${SQUAD_ID}/dados/agente_agil_processed`;
 const intakePendingPath = (squadId) => `kanban/squads/${squadId}/dados/agente_intake_pending`;
+const AUTH_RATE_LIMIT_PATH = 'kanban/_agente_agil_auth_rate';
+const AUTH_RATE_LIMIT_MAX = 20; // tentativas de auth (certas ou erradas) por IP
+const AUTH_RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // por hora
 
 // Único especialista real usando este canal até 2026-08-25 — nenhuma
 // chamada existente manda `especialista` no envelope ainda (campo opcional,
 // ver schema.js). Mesmo fallback de sempre, agora usado só pra rotular o
 // item enfileirado (não mais pra creditar uma escrita direta).
 const DEFAULT_ESPECIALISTA = 'databricks';
+
+function hashIp(ip) {
+  return crypto.createHash('sha256').update(String(ip || 'unknown')).digest('hex').slice(0, 24);
+}
+
+// Comparação constant-time do secret (achado de análise de segurança,
+// 2026-09-17): `!==` numa string comum vaga cedo no primeiro byte
+// diferente, abrindo (na teoria — exige muita paciência estatística
+// numa rede real) um timing attack pra adivinhar AGENTE_AGIL_KEY byte a
+// byte. crypto.timingSafeEqual() exige os dois buffers do MESMO
+// tamanho — checagem de tamanho primeiro não é constant-time em si, mas
+// vaza só o COMPRIMENTO do header recebido, não nenhum byte do segredo.
+function timingSafeEqualStr(a, b) {
+  const bufA = Buffer.from(String(a || ''), 'utf8');
+  const bufB = Buffer.from(String(b || ''), 'utf8');
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+// Rate limit de tentativas de autenticação por IP (achado de análise de
+// segurança, 2026-09-17: este endpoint não tinha NENHUM freio, diferente
+// de intake/submit.js — combinado com o timing attack acima, dava pra
+// tentar adivinhar o secret sem limite nenhum de tentativas). Conta TODA
+// tentativa (certa ou errada) — mesmo padrão de transaction() atômico já
+// usado no rate limiter de intake/submit.js, pro mesmo motivo (get()+set()
+// não-atômico deixava um script concorrente furar o limite).
+async function checkAuthRateLimit(db, req) {
+  const ip = req.headers['fastly-client-ip'] || req.headers['x-forwarded-for'] || req.ip || 'unknown';
+  const ipKey = hashIp(String(ip).split(',')[0].trim());
+  const rateRef = db.ref(`${AUTH_RATE_LIMIT_PATH}/${ipKey}`);
+  const now = Date.now();
+  let limited = false;
+  await rateRef.transaction((current) => {
+    limited = false;
+    if (!current || current.resetAt <= now) {
+      return { count: 1, resetAt: now + AUTH_RATE_LIMIT_WINDOW_MS };
+    }
+    if (current.count >= AUTH_RATE_LIMIT_MAX) {
+      limited = true;
+      return;
+    }
+    return { count: current.count + 1, resetAt: current.resetAt };
+  });
+  return limited;
+}
 
 const agenteAgil = onRequest(
   { region: 'us-central1', secrets: [AGENTE_AGIL_KEY] },
@@ -69,7 +118,13 @@ const agenteAgil = onRequest(
       return;
     }
 
-    if (req.get('x-agent-key') !== AGENTE_AGIL_KEY.value()) {
+    const db = getDatabase();
+    if (await checkAuthRateLimit(db, req)) {
+      res.status(429).json({ error: 'rate_limited' });
+      return;
+    }
+
+    if (!timingSafeEqualStr(req.get('x-agent-key'), AGENTE_AGIL_KEY.value())) {
       res.status(401).json({ error: 'unauthorized' });
       return;
     }
@@ -80,7 +135,6 @@ const agenteAgil = onRequest(
       return;
     }
     const payload = parsed.data;
-    const db = getDatabase();
 
     const idemRef = db.ref(`${IDEMPOTENCY_PATH}/${payload.requestId}`);
     // Checagem rápida (não-atômica, só evita refazer a resolução de

@@ -13,9 +13,24 @@
 // da conta que vai hospedar as playlists — não tem uid nenhum envolvido
 // (é sempre a mesma conta fixa), então não passa pelo fluxo
 // state/oauth_pending. O `state` ainda é enviado (recomendação padrão
-// OAuth contra CSRF) mas validado contra um valor fixo, não contra um
-// registro no banco — não existe uma "URL pública" que dispare isso, é
+// OAuth contra CSRF) — não existe uma "URL pública" que dispare isso, é
 // uma URL entregue manualmente, uma vez, fora do app.
+//
+// ACHADO DE ANÁLISE DE SEGURANÇA (2026-09-17): `state` era uma STRING
+// CONSTANTE no código-fonte ('radio-owner-connect-v1'), não um nonce —
+// qualquer pessoa com acesso ao repositório (ou que visse a URL de
+// autorização por acaso) conseguia montar sua própria URL de
+// `/authorize` apontando pra este mesmo callback (REDIRECT_URI +
+// CLIENT_ID não são segredo — o próprio Spotify exige os dois expostos),
+// autorizar com a PRÓPRIA conta Spotify, e SEQUESTRAR
+// kanban/spotify_radio_owner_secret — a Rádio do Maré passaria a usar a
+// conta do atacante até alguém reconectar manualmente. Fix: `state`
+// passa a incluir um valor vindo do Secret Manager
+// (RADIO_OWNER_CONNECT_TOKEN, nunca commitado no repo) — quem for gerar
+// a URL de autorização de novo (reconexão futura) precisa rodar
+// `firebase functions:secrets:get RADIO_OWNER_CONNECT_TOKEN` (ou setar
+// um valor novo com `functions:secrets:set`, se ainda não existir) antes
+// de montar a URL.
 //
 // IMPORTANTE (achado em produção, ver CHANGELOG "Cloud Functions —
 // Spotify" de 2026-07-31): mesmo com token válido e escopo certo, a
@@ -29,13 +44,14 @@ const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
 
 const SPOTIFY_CLIENT_SECRET = defineSecret('SPOTIFY_CLIENT_SECRET');
+const RADIO_OWNER_CONNECT_TOKEN = defineSecret('RADIO_OWNER_CONNECT_TOKEN');
 const SPOTIFY_CLIENT_ID = '737e3e1ce3d449dc955c0d4c7657bb6b';
 const REDIRECT_URI = 'https://us-central1-hering-onboarding.cloudfunctions.net/spotifyRadioOwnerCallback';
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token';
-const EXPECTED_STATE = 'radio-owner-connect-v1';
+const STATE_PREFIX = 'radio-owner-connect-v1:';
 
 exports.spotifyRadioOwnerCallback = onRequest(
-  { region: 'us-central1', secrets: [SPOTIFY_CLIENT_SECRET] },
+  { region: 'us-central1', secrets: [SPOTIFY_CLIENT_SECRET, RADIO_OWNER_CONNECT_TOKEN] },
   async (req, res) => {
     const { code, state, error } = req.query;
 
@@ -43,7 +59,7 @@ exports.spotifyRadioOwnerCallback = onRequest(
       res.status(400).send('Autorização negada no Spotify: ' + error);
       return;
     }
-    if (state !== EXPECTED_STATE) {
+    if (state !== STATE_PREFIX + RADIO_OWNER_CONNECT_TOKEN.value()) {
       res.status(400).send('state inválido — use a URL de autorização gerada especificamente pra isso.');
       return;
     }
