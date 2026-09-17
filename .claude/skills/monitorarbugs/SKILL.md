@@ -1287,6 +1287,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   quando comparada entre features DIFERENTES que uma alheia acabou de
   revelar, não só dentro da mesma feature.
 
+- **2026-09-17, áreas críticas do board — `handleDrop()` (pedido
+  explícito do usuário, escopo nomeado "áreas críticas")**: 1 achado
+  real, severo, técnica 3 — o `.catch()` de `handleDrop()` promete
+  "reverte o estado local se o Firebase falhou", mas o update otimista
+  antes dele muta bem mais que só `card.col`/`card.edited`: `editedAt`/
+  `updatedAt`/`updatedBy`, uma entrada em `card.history[]`
+  (`recordHistory()`), e `recordMove()` reescreve `card.flow` inteiro
+  (log/enteredAt/firstStartAt/doneAt) + `blocker`/`blockedAt`/
+  `blockedMs`. O catch só revertia 2 desses campos (e um deles,
+  `card.edited`, nem revertia de verdade — usava `card._prevEdited`,
+  nunca setado em lugar nenhum, um no-op disfarçado). Save falho =
+  corrupção silenciosa de métricas de fluxo (cycle time/CFD/Throughput)
+  + histórico fantasma. Fix: snapshot completo (JSON round-trip) antes
+  da mutação, restauração total no catch — em vez de lista de campos
+  manual (já ficou desatualizada 1x). Aplicado direto em prod pela
+  gravidade (corrupção de dado, ainda que só no caminho de falha).
+  Checado e sem achado adicional: nenhum outro lugar do arquivo tem o
+  mesmo padrão "otimista + revert no catch" pra cards. PR #947, prod
+  v8.30.686.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
