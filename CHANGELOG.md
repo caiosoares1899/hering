@@ -3503,6 +3503,18 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.688-dev — 2026-09-17 — Tags do modal do card em ordem alfabética
+
+`renderEditingTags()` (modal de edição, chips em `#m-tags-chips`)
+mostrava as tags na ordem em que foram adicionadas ao card, não em
+ordem alfabética — pedido direto do usuário. Fix: ordena por
+`getTag(id).label` (`localeCompare` com locale `pt-BR`, cobre
+acentuação) antes de renderizar os chips, sem alterar `editingTags`
+(a ordem de armazenamento/persistência do card continua a mesma, só
+a exibição no modal mudou).
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.687-dev — 2026-09-17 — 🔴 Fix crítico — arrastar card que falhasse ao salvar corrompia métricas de fluxo em silêncio
 
 Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.686, direto
