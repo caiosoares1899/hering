@@ -1443,6 +1443,32 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   verdade em runtime, e ignorar isso já gerou um achado FALSO
   registrado (e agora corrigido) na entrada anterior desta mesma lista.
 
+- **2026-09-17, Backup (pedido genérico, "roda outro" — área nunca
+  auditada, prioridade 2)**: **sem achados**, depois de investigação
+  real nos 2 mecanismos — `functions/backup/weeklyBackup.js` (Cloud
+  Function, real fonte de verdade — roda sozinha, sem depender do
+  board aberto) e `checkOverdueBackup()`/`sendBackupEmail()`
+  (kanban-dev.html, lembrete client-side best-effort). Checado: (1)
+  `DEFAULT_SQUADS`/`SQUADS_IGNORADOS` do Cloud Function batem
+  exatamente com `SQUAD_META_DEFAULT`/`SQUADS_FICTICIOS` do client (5
+  declarações independentes do mesmo conjunto `{dev,omnichannel}`
+  espalhadas por `kanban-dev.html`×2/`painel.html`×2/
+  `weeklyBackup.js`×1, todas consistentes — sem drift); (2)
+  `storage-lifecycle.json` tem mesmo a regra de retenção de 60 dias
+  pro prefixo `backups/` que o comentário do Cloud Function promete;
+  (3) `sendBackupEmail()` só grava `cfg.lastRun` DEPOIS do
+  `emailjs.send()` resolver com sucesso (dentro do `try`), sem o
+  padrão "grava flag antes de confirmar" que já causou bug em
+  `maybeAutoArchiveOldCards()`/`checkAgingAutomations()` (rodadas de
+  2026-09-12/14). Achado incidental NÃO corrigido (limitação já
+  conhecida e superada pelo próprio Cloud Function, não é bug novo):
+  `checkOverdueBackup()` só roda 1x por sessão (login), sem
+  `setInterval` — diferente de `checkAgingAutomations()`, que reroda a
+  cada 5min — mas o comentário na declaração de `weeklyBackup.js` já
+  documenta essa fragilidade do lembrete por e-mail como motivação
+  EXPLÍCITA pra ter construído o Cloud Function como rede de segurança
+  de verdade.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
