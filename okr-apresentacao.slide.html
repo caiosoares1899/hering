@@ -415,19 +415,6 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
       <div class="tb-clock" id="tb-clock">--:--</div>
       <div class="tb-countdown" id="tb-countdown" hidden></div>
     </div>
-    <div class="agenda-cfg-ov" id="agenda-cfg-ov" onclick="if(event.target===this) window._okrCloseAgendaCfg()">
-      <div class="agenda-cfg-panel">
-        <div class="agenda-cfg-hd"><span>⏱ Reunião de hoje</span><button onclick="window._okrCloseAgendaCfg()">✕</button></div>
-        <label for="agenda-inicio">Início</label>
-        <input type="time" id="agenda-inicio">
-        <label for="agenda-fim">Término previsto</label>
-        <input type="time" id="agenda-fim">
-        <div class="agenda-cfg-actions">
-          <button type="button" class="ac-limpar" onclick="window._okrAgendaLimpar()">Limpar</button>
-          <button type="button" class="ac-salvar" onclick="window._okrAgendaSalvar()">Salvar</button>
-        </div>
-      </div>
-    </div>
     <div class="tb-mid">
       <div class="tb-title" id="tb-title">—</div>
       <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:0%;"></div></div>
@@ -448,6 +435,28 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 <div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
   <div class="detail-modal" id="detail-modal"></div>
+</div>
+
+<!-- Mesmo motivo do comentão abaixo (#notes-fab/#notes-ov) — sibling na
+     raiz, não dentro de #topbar/#app: achado real (print do usuário,
+     "nao consigo usar o configurador! quando clico ele some" e depois
+     "nao da pra editar! vc clica e nada acontece") — o backdrop
+     position:fixed;inset:0 continuava preso DENTRO do contexto de
+     empilhamento de #app (position:relative;z-index:1) enquanto viveu
+     como filho de #topbar, então cliques nos <input type="time"> do
+     popover não batiam de forma confiável no elemento certo. -->
+<div class="agenda-cfg-ov" id="agenda-cfg-ov" onclick="if(event.target===this) window._okrCloseAgendaCfg()">
+  <div class="agenda-cfg-panel">
+    <div class="agenda-cfg-hd"><span>⏱ Reunião de hoje</span><button onclick="window._okrCloseAgendaCfg()">✕</button></div>
+    <label for="agenda-inicio">Início</label>
+    <input type="time" id="agenda-inicio">
+    <label for="agenda-fim">Término previsto</label>
+    <input type="time" id="agenda-fim">
+    <div class="agenda-cfg-actions">
+      <button type="button" class="ac-limpar" onclick="window._okrAgendaLimpar()">Limpar</button>
+      <button type="button" class="ac-salvar" onclick="window._okrAgendaSalvar()">Salvar</button>
+    </div>
+  </div>
 </div>
 
 <!-- Sibling de #app/#detail-ov de propósito, NÃO dentro de #app — achado
