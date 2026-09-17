@@ -16671,6 +16671,42 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (8ª rodada) — `/monitorarbugs`: fix — barra de compor Anotação nunca ficava escondida numa reunião passada
+
+Achado real via `/monitorarbugs` (pedido genérico, área escolhida por
+prioridade 1 — todo o recurso de Anotações/Agenda desta sessão ainda
+não tinha rodada própria da skill).
+
+**Causa raiz**: `.notes-compose` (CSS) tem `display:flex` numa regra de
+classe. `renderNotas()` esconde a barra de composição via
+`document.getElementById('notes-compose').hidden = !isHoje` (atributo
+`hidden`) quando a reunião sendo vista não é a de hoje. `[hidden]
+{display:none}` é regra padrão do NAVEGADOR (origem UA, sempre perde
+pra qualquer regra de AUTOR com a mesma ou maior especificidade,
+independente de quão específica a regra de autor seja) — sem um
+`.notes-compose[hidden]{display:none;}` explícito, a barra nunca
+sumia de verdade. Mesma classe de bug já corrigida nesta sessão pra
+`#notes-fab`/`#login-ov`, só que aqui a regra de CLASSE (não ID)
+ficou sem o override equivalente.
+
+**Impacto real**: abrir uma reunião de dias anteriores (só leitura,
+por design) mostrava o aviso "🔒 Reunião encerrada" **junto com** a
+caixa de texto + botão enviar ainda totalmente funcionais. Pior:
+`window._okrAddNota()` sempre grava no bucket de HOJE, independente da
+data sendo vista no seletor — alguém digitando ali, pensando estar
+anotando na reunião antiga, tinha a nota parar silenciosamente no dia
+errado, sem nenhum aviso.
+
+**Fix**: `.notes-compose[hidden]{display:none;}` — mesmo padrão de
+`#notes-fab[hidden]`/`#login-ov[hidden]`. Checado e confirmado sem o
+mesmo bug: `painel.html`/`painel-dev.html` (aba OKR, mesma feature)
+usa `style.display='none'` direto pro equivalente
+(`#okr-notas-compose`), que sempre vence qualquer regra de classe —
+não precisou de fix lá.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107); chaves do CSS balanceadas (183/183).
+
 ### 2026-09-17 (7ª rodada) — Fix: botão de Sair aparecia quebrado (glifo Unicode sem suporte)
 
 Relato direto do usuário, com print: "esse botao de sair ta quebrado" —

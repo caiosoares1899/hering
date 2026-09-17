@@ -379,6 +379,14 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .note-del{background:none;border:none;color:var(--txt3);font-size:12px;cursor:pointer;padding:2px 4px;flex-shrink:0;font-family:inherit;}
 .note-del:hover{color:var(--danger);}
 .notes-compose{flex-shrink:0;padding:14px 18px;border-top:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-end;}
+/* Mesmo motivo de #login-ov[hidden]/#notes-fab[hidden] (ver comentários
+   acima): display:flex de uma regra de classe vence o [hidden] padrão do
+   navegador sozinho — achado real via /monitorarbugs, 2026-09-17:
+   renderNotas() escondia a barra de composição via .hidden (atributo),
+   mas sem este override ela nunca sumia de verdade numa reunião passada
+   (só leitura), deixando escrever ali por engano e a nota parar
+   silenciosamente no bucket de HOJE em vez do dia sendo visto. */
+.notes-compose[hidden]{display:none;}
 .notes-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--glass-b);border-radius:10px;
   padding:9px 12px;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:13.5px;resize:none;max-height:100px;
   line-height:1.4;}
