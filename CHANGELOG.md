@@ -3503,6 +3503,27 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.698-dev — 2026-09-17 — Fix: log do Agente Ágil mostrava `**negrito**` literal em vez de renderizar
+
+Relato direto do usuário, com print (achado na Central Agente Ágil do
+painel, mas pedido explícito pra rever "em todos os lugares q ele
+escreve"): texto com `**negrito**` aparecia com os asteriscos literais
+na tela em vez de virar `<strong>`.
+
+Auditoria em todos os pontos onde o Agente Ágil escreve texto livre
+exibido pro usuário: comentários de card (`renderCommentList()`) já
+passavam por `renderMd()` — OK. O único ponto sem `renderMd()` era
+`renderAgenteLog()` (aba "🤖 Agente" em Configurações — lista de ações
+que o agente tomou em cada card), que usava `esc(a)` puro pra cada item
+da lista `acoes[]`.
+
+**Fix**: troca `esc(a)` por `renderMd(a)` — mesma engine já usada em
+comentários/descrição/campanhas, suporta negrito/itálico/sublinhado/
+código/links/menções/[[CARD:...]].
+
+Checks de rotina: `node --check` OK; chaves balanceadas no baseline
+conhecido (-1, inalterado).
+
 ### v8.30.697-dev — 2026-09-17 — Fecha a corrida de cadastro que permitia 2 pessoas ficarem com a mesma sigla
 
 Pedido direto do usuário, depois de rastrear a causa raiz de verdade
@@ -16973,6 +16994,30 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.52 · painel-dev — 2026-09-17 · Fix: texto do Agente Ágil mostrava `**negrito**` literal em vez de renderizar
+
+Relato direto do usuário, com print da Central Agente Ágil (aba OKR):
+uma resposta do agente com `**negrito**` aparecia com os asteriscos
+literais na tela em vez de virar `<strong>`, mesmo tratando-se de um
+texto claramente formatado (cabeçalhos, tópicos) pra ficar legível.
+Pedido explícito pra rever "em todos os lugares q ele escreve".
+
+**Causa raiz**: `renderOkrAgenteChat()` (mensagens do chat) usava
+`esc(m.text).replace(/\n/g,'<br>')` puro — nunca passava pelo
+renderizador de texto rico que o resto do painel já tinha (usado até
+agora só em Campanhas). Auditoria nos outros pontos onde o Agente Ágil
+escreve texto exibido: `renderAgentesLogCross()` (log cross-squad da
+aba 🤖 Agentes) tinha o mesmo gap pra cada item de `acoes[]`.
+
+**Fix**: `_campRenderMd()` renomeada pra `_renderMd()` (deixou de ser
+só de Campanhas) e passa a ser usada nos 2 pontos acima também —
+suporta negrito/itálico/sublinhado/código/links/menções/`[[CARD:...]]`.
+Equivalente aplicado em `kanban-dev.html` (`renderAgenteLog()`, mesmo
+padrão de log de ações, já tinha `renderMd()` disponível no arquivo).
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+chaves/parênteses no baseline conhecido (-1/-14, inalterado).
 
 ### painel-dev.html v3.51 · painel-dev — 2026-09-17 · Novo: 📋 Anotações da reunião na aba 🎯 OKR
 

@@ -2846,7 +2846,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.51 · painel-dev</div>
+<div class="version">v3.52 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3950,8 +3950,13 @@ function renderCampDetalhe(c){
 }
 
 
-// Render de texto enriquecido para campanhas (display): negrito, itálico, links, menções, cards
-function _campRenderMd(txt){
+// Render de texto enriquecido (display): negrito, itálico, sublinhado, código,
+// links, menções, cards — usado por Campanhas, Central Agente Ágil (aba OKR)
+// e o log cross-squad da aba 🤖 Agentes (nome genérico porque deixou de ser
+// só de campanhas — achado real, 2026-09-17: texto do Agente Ágil com
+// **negrito** aparecia com asteriscos literais em todo canto que só fazia
+// esc()+nl2br sem passar por aqui).
+function _renderMd(txt){
   if(!txt) return '';
   txt = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -3998,7 +4003,7 @@ function _renderEntrada(e, campId){
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
-    <div class="camp-entry-corpo">${typeof _campRenderMd==='function'?_campRenderMd(e.corpo||''):esc(e.corpo||'')}</div>
+    <div class="camp-entry-corpo">${typeof _renderMd==='function'?_renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
     <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
@@ -4945,7 +4950,7 @@ function renderOkrAgenteChat(){
     const cls = 'okr-comment okr-agente-msg' + (isAgente ? '' : ' okr-agente-msg-humano');
     const dt = m.ts ? new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     const autor = isAgente ? '🤖 Agente Ágil' : esc(m.author||m.init||'?');
-    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${esc(m.text||'').replace(/\n/g,'<br>')}</div>`;
+    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${_renderMd(m.text||'')}</div>`;
   }).join('');
   if(wasNearBottom) list.scrollTop = list.scrollHeight;
 }
@@ -9212,7 +9217,7 @@ function renderAgentesLogCross(){
         ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
         : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
     const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
-    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${_renderMd(a)}</li>`).join('');
     const cardLink=e.cardId?`<a href="${esc(squadBoardUrl(e.squadId,e.cardId))}" target="_blank" style="color:var(--cyan);">abrir card ↗</a>`:'';
     return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${sqLbl}${cardLink?' · '+cardLink:''}</div>

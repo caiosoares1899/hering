@@ -1911,7 +1911,7 @@ pra trás de um comportamento que os outros já tinham.
   arquivo (inacessíveis pela UI agora) por causa dos outros 2 pontos que
   ainda chamam `openAgent()` sem card real (AutoLab, alerta de WIP
   excedido) — não removidos nesta rodada, fora do escopo pedido
-- `renderAgenteLog()` — L22306 — aba "🤖 Histórico do Agente" em
+- `renderAgenteLog()` — L23563 — aba "🤖 Histórico do Agente" em
   ⚙ Configurações (pedido direto: "quero uma area q guarde todas as
   alterações nos cards que ele faça naquela squad, para servir de
   historico para o PO"). Leitura pontual (`window._get`, não um listener
@@ -1922,7 +1922,9 @@ pra trás de um comportamento que os outros já tinham.
   `autonomous` binário, achado real via `/monitorarbugs` no mesmo dia
   que `especialista` passou a existir: exibia "pediu via menção" pra
   ações vindas de especialista externo) e a lista de ações em português
-  simples. Aba só aparece pra squads com escrita real do orquestrador
+  simples, cada item passando por `renderMd()` desde 2026-09-17 (achado
+  real: `esc()` puro mostrava `**negrito**` literal quando o agente
+  formatava uma ação). Aba só aparece pra squads com escrita real do orquestrador
   (`AGENTE_AGIL_MENTION_SQUADS`, gate em `openCfg()` — L21202);
   Configurações inteiro já é PO/Organizador/ADM-only (`#fab-cfg-btn`, ver
   `_applyRoleVisibility()`), não precisa de
@@ -2413,7 +2415,9 @@ qual das 3 vistas mutuamente exclusivas fica visível — `_okrToggleHistorico()
 e `_okrToggleAgenteChat()` só chamam ela). `okrAgenteChatMsgs` (estado
 local, `loadOkrAgenteChat()`, `onValue` em `kanban/okr/agente_chat`),
 `renderOkrAgenteChat()` (lista de bolhas `.okr-comment.okr-agente-msg`,
-acento azul pra humano/teal pra agente via `.okr-agente-msg-humano`),
+acento azul pra humano/teal pra agente via `.okr-agente-msg-humano`,
+texto passa por `_renderMd()` — L3959, ver seção Campanhas — desde
+2026-09-17, achado real: `**negrito**` aparecia literal),
 `_okrAgenteChatSend()` (grava `{id,uid,author,init,foto,text,ts}`, `ts`
 sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
@@ -2618,11 +2622,13 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   Agentes de IA do board com Agentes Externos que têm `init` (mesma
   condição que os torna selecionáveis em `kanban-dev.html`); os sem
   `init` aparecem separados como "📡 só contexto".
-- `renderAgentesLogCross()` — L8991 — mesma lógica de `renderAgenteLog()`
+- `renderAgentesLogCross()` — L9197 — mesma lógica de `renderAgenteLog()`
   (kanban.html/kanban-dev.html) mas agregando `_agentesTabCache` de
   TODOS os squads numa lista só, filtrável pelo select acima; link
   "abrir card ↗" usa `squadBoardUrl(squadId,cardId)` (já existente) pra
-  abrir o board certo em nova aba.
+  abrir o board certo em nova aba. Cada item de `acoes[]` passa por
+  `_renderMd()` desde 2026-09-17 (mesmo achado/fix de
+  `renderAgenteLog()` — `esc()` puro mostrava `**negrito**` literal).
 - `openAgentesHelp()`/`closeAgentesHelp()` — L9024 — modal estático
   (`agentes-help-ov`) explicando a diferença entre Agente Ágil/Agentes de
   IA no board/Agentes Externos (e os 2 sentidos de fluxo destes últimos)
