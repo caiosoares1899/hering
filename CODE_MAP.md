@@ -1763,13 +1763,23 @@ derivado do card mudando).
 - Modelo: `card.blockedMs`/`card.blockedAt` (mesmo par `pausedMs`/
   `pausedAt`) + `card.atrasadoMs`/`card.atrasadoDesde` (guarda a DATA de
   início, não a hora — `due` já é conhecido de antemão). Múltiplos
-  episódios se somam.
-- `_settleBlockedTag(card, wasBlocked)` — L29834 — fecha/abre o
+  episódios se somam — SEMPRE via `Number(x)||0` (2026-09-17, achado
+  severo: relato direto do usuário, card mostrando "666202d 11h" de
+  atraso acumulado — `(x||0)+número` faz CONCATENAÇÃO de string em JS
+  se `x` já estiver salvo como string, não soma; confirmado o mecanismo
+  exato via diagnóstico dos dados crus do card. Blindado nos 6 pontos
+  de escrita E nas 3 funções de leitura abaixo). `_duplicarCardObj()`
+  (~L15471, "🧬 Duplicar card") também passou a RESETAR esses 5 campos +
+  `flow`/`_lastFlowCol` pra uma cópia nova (mesmo motivo de
+  `childCardIds`/`pinned`, já resetados ali) — antes herdava tempo
+  acumulado (e `flow.enteredAt` desalinhado de `createdAt`) do card
+  original.
+- `_settleBlockedTag(card, wasBlocked)` — L31506 — fecha/abre o
   episódio em modo TAG, chamado nos pontos que já fazem esse toggle de
   propósito: `_doBulkBlockTag()`/`_doBulkUnblockTag()` (~L7469/7486),
   `scheduleAutoSave()` (par `_prevBlocker`, ~L12303) e `saveCard()`
   manual (`_prevBlockerSave`, ~L13834).
-- `recordMove()` (~L8024, ver comentário grande no topo da função sobre
+- `recordMove()` (L8446, ver comentário grande no topo da função sobre
   `from` ser mais confiável que reler `card.col`) — trata modo COLUNA
   (transição pra/de `'blocker'`) E fecha atrasado quando o destino é
   coluna de conclusão, usando `due`/`from`/`toCol` que a função já
@@ -1777,16 +1787,18 @@ derivado do card mudando).
   mesmo numa tacada só (card arrastado direto de Impedimentos/atrasado
   pra Concluído, sem nenhum save intermediário — settle preguiçoso
   sozinho perderia esse período, ver comentário em
-  `_settleCardTimeTrackingLazy()`).
-- `_settleCardTimeTrackingLazy(card)` — L29866 — rede de segurança
+  `_settleCardTimeTrackingLazy()`). `isNewFlow = !card.flow` (dentro
+  dela) é o mecanismo que `_duplicarCardObj()` reaproveita ao apagar
+  `novo.flow` — inicializa um flow de verdade do zero, mesmo caminho de
+  um card genuinamente novo.
+- `_settleCardTimeTrackingLazy(card)` — L31538 — rede de segurança
   genérica, chamada em `fbSaveCard()` (~L8607) e no loop por card de
   `fbSaveAll()` (~L8390, só nos `touchedIds`). Idempotente.
-- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)` — L29887/28680 — total
-  "efetivo até agora" (fechado + episódio aberto), mesmo padrão de
-  `_cardPausedMs()`.
-- `_renderCardTimeInfo(c)` — L30033 — mostra o total no modal do card
+- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L31559/
+  31567/15439 — total "efetivo até agora" (fechado + episódio aberto).
+- `_renderCardTimeInfo(c)` — L31643 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L13724).
+  bloco de Impedimento), chamado no `openCard()` (~L13724).
 - Dashboards: `renderBoardDataInsights()` (L19224, seção "Tempo em
   atraso/bloqueado") e `renderCriativosDashboard()` (L17256, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
