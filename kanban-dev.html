@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.694-dev</div>
+<div class="version">v8.30.695-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30768,7 +30768,24 @@ const AUTO_ACTIONS = [
   { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
     run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
   { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
-    run:(rule,card)=>{ const txt=(rule.actionVal||'').trim(); if(!txt) return false; card.checklist=Array.isArray(card.checklist)?card.checklist.slice():[]; card.checklist.push({t:txt,done:false}); recordHistory(card,'adicionou item de checklist (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): este é o único
+    // AUTO_ACTIONS com `valueType:'text'` — texto livre configurado na
+    // regra. Diferente da edição manual de um item de checklist
+    // existente (scheduleAutoSave(), que já escaneia `it.t` por
+    // @menção) e das outras ações que geram texto por conta própria
+    // (notify_all/notify_po_org/notify_agent, todas chamam
+    // parseMentions() no que elas mesmas montam), esta nunca escaneava
+    // o texto configurado na regra — uma automação "adicionar item
+    // 'Avisar @fulano'" nunca notificava @fulano, mesmo o texto sendo
+    // literalmente livre pra isso.
+    run:(rule,card)=>{
+      const txt=(rule.actionVal||'').trim(); if(!txt) return false;
+      card.checklist=Array.isArray(card.checklist)?card.checklist.slice():[];
+      card.checklist.push({t:txt,done:false});
+      recordHistory(card,'adicionou item de checklist (automação)','⚙ Automação');
+      parseMentions(txt, card.id, undefined, {includeSelf:true});
+      return true;
+    } },
   // Cria os cards filhos de uma receita de fan-out (ver bloco "RECEITAS DE
   // FAN-OUT" acima) e vira supercard — pedido direto: "supercard de campanha
   // de meta gera esses 6 cards menores... automaticamente". Guard de
