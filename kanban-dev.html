@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.691-dev</div>
+<div class="version">v8.30.692-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -25943,6 +25943,7 @@ Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer p
 <div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"</span></div>
 <div>🤖 <b>Notificar Agente Ágil</b> <span style="font-size:10px;color:var(--txt3);">— só aparece nos squads onde o Agente Ágil já responde de verdade (dev e dados hoje)</span></div>
 <div>📣 <b>Notificar todos</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— posta um comentário "@todos" no card e avisa todo mundo do squad no sino 🔔, disponível em qualquer squad</span></div>
+<div>📣 <b>Notificar PO/Organizador</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— igual "Notificar todos", mas só avisa quem tem o papel PO ou Organizador neste squad; se não houver ninguém com esses papéis, não posta nada</span></div>
 </div>
 
 Todas as ações marcadas "só aparece se..." ficam escondidas do dropdown pra quem não usa aquele recurso — não polui a lista de quem não precisa. Se o recurso for ativado depois, a ação aparece sozinha, sem precisar recriar nada.` },
@@ -30692,6 +30693,33 @@ const AUTO_ACTIONS = [
       // evento) ficava de fora do "todos" — parseMentions() por padrão
       // exclui window._currentUser?.uid (correto pra @menção humana, não
       // pra esta automação).
+      parseMentions(comment.text, card.id, comment.id, {includeSelf:true});
+      return false; // não altera o card em si, só notifica
+    } },
+  // "Notificar PO/Organizador" (pedido direto do usuário, 2026-09-17) —
+  // mesmo padrão de "Notificar todos" acima, mas escopado a quem tem o
+  // papel PO ou Organizador NESTE squad (mesmo critério de _isPOorOrg(),
+  // sem o 'adm' — aqui é especificamente quem foi promovido a PO/
+  // Organizador, não qualquer Admin da plataforma). Usa mentionMatchLabel()
+  // pra montar o mesmo handle (@nome.sobrenome) que getMemberByHandle()
+  // dentro de parseMentions() sabe resolver de volta — não dá pra usar
+  // member.init direto aqui (não é garantido bater no formato de handle
+  // que parseMentions espera).
+  { key:'notify_po_org', label:'Notificar PO/Organizador', valueType:'none',
+    run:(rule,card)=>{
+      const poOrg=members.filter(m=>m.role==='po'||m.role==='organizador');
+      if(!poOrg.length) return false; // squad sem ninguém nesses papéis — nada a notificar
+      const comment={
+        id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+        uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+        text:poOrg.map(m=>'@'+mentionMatchLabel(m)).join(' ')+' [Automação] a regra "'+rule.label+'" disparou no card "'+card.title+'".',
+        ts:new Date().toISOString(),
+      };
+      _pushCardComment(card.id, comment);
+      // includeSelf:true — mesmo raciocínio de notify_all: se quem
+      // disparou a regra for a própria PO/Organizadora, ela também deve
+      // ser notificada (não é uma @menção manual de alguém pra outra
+      // pessoa, é a automação avisando o papel inteiro).
       parseMentions(comment.text, card.id, comment.id, {includeSelf:true});
       return false; // não altera o card em si, só notifica
     } },
