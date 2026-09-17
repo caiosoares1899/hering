@@ -1339,6 +1339,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   invariante mais escapa, e o de Automação é sempre o mais perigoso
   desses por rodar sem ninguém olhando.
 
+- **2026-09-17, automações — `AUTO_ACTIONS` (pedido genérico, "roda
+  outro" — área escolhida por ser a mais recentemente alterada, logo
+  depois de adicionar `notify_po_org`)**: 1 achado real, técnica 1 —
+  `card.owner` muda em 4 lugares já documentados (comentário na
+  declaração de `runAutoRules()`) que sempre fazem
+  `notifAssigned()`+`runAutoRules('assigned',...)` junto; a ação de
+  Automação "Atribuir responsável" (`assign_owner`) era um 5º lugar que
+  mudava `card.owner` sem fazer nem uma coisa nem outra — ninguém
+  avisado no sino, nenhuma regra encadeada em "atribuído a X"
+  disparava. Faltava também o guard de no-op que `add_tag`/`toggle_okr`
+  já têm. Fix: `assign_owner.run()` ganhou os dois. PR #955, dev
+  v8.30.693-dev. **Achado maior reportado, NÃO corrigido** (decisão de
+  produto): nenhuma OUTRA ação de `AUTO_ACTIONS` re-dispara
+  `runAutoRules()` após aplicar seu efeito — hoje automação nenhuma
+  encadeia em outra automação. Diferente do gap do `assign_owner`
+  (tinha 4 precedentes prontos pra copiar), isso seria construir
+  encadeamento pela primeira vez, sem promessa existente no código, e
+  precisa de proteção deliberada contra loop entre regras — documentado
+  como recomendação, não implementado de bandeja.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
