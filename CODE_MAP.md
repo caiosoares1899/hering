@@ -2683,20 +2683,27 @@ detalhe aberto — ver nota abaixo).
   (`position:relative;z-index:1`), então um filho seu nunca escapava
   acima de `#detail-ov` mesmo com `z-index:450` — botão sumia/quebrava
   dentro do detalhamento do Objetivo. Visibilidade na tela de login
-  agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`) —
-  botão flutuante abre um painel lateral (`#notes-ov`) de anotações ao
-  vivo, salvas em
-  `kanban/okr/reuniao_notas/{id}` (node novo, herda `.read`/`.write` de
+  agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`; 3ª
+  rodada — segmentação por reunião, ver abaixo) — botão flutuante abre
+  um painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
+  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1004
+  — `YYYY-MM-DD` local, 1 reunião = 1 dia; node herda `.read`/`.write` de
   `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
-  necessária). `renderNotas()` — L983 — lista cronológica (mais antiga
-  primeiro, lê como ata); `window._okrToggleNotes()` — L1007 — abre/
-  fecha + rola pro fim; `window._okrAddNota()` — L1018 — Enter envia
-  (Shift+Enter quebra linha, `window._okrNotesKeydown()` faz
-  `stopPropagation()` em toda tecla pra não vazar pro atalho global de
-  navegação de slides, ← → espaço). Exclusão (`window._okrDelNota()`) só
-  pelo próprio autor (`n.autorUid===window._currentUser?.uid`) — sem
-  papel de PO/organizador carregado nesta página, diferente do resto do
-  Maré Digital, então não dá pra oferecer exclusão por admin aqui.
+  necessária). Seletor `#notes-date-sel` troca a reunião sendo vista
+  (`window._okrNotesSetViewDate()` — L1038, `_notasPopulateDateSel()`
+  monta as opções a partir de `Object.keys(okrNotas)` ∪ hoje). Reunião
+  que não é a de hoje abre só-leitura (`.notes-compose` escondido,
+  `.notes-readonly` visível). `renderNotas()` — L1043 — lista
+  cronológica do dia selecionado (mais antiga primeiro, lê como ata);
+  `window._okrToggleNotes()` — L1076 — abre/fecha (sempre na reunião de
+  hoje na 1ª abertura) + rola pro fim; `window._okrAddNota()` — L1088 —
+  sempre grava no bucket de HOJE, Enter envia (Shift+Enter quebra linha,
+  `window._okrNotesKeydown()` faz `stopPropagation()` em toda tecla pra
+  não vazar pro atalho global de navegação de slides, ← → espaço).
+  Exclusão (`window._okrDelNota()` — L1101) só pelo próprio autor
+  (`n.autorUid===window._currentUser?.uid`) e só na reunião de hoje —
+  sem papel de PO/organizador carregado nesta página, diferente do resto
+  do Maré Digital, então não dá pra oferecer exclusão por admin aqui.
   Estrutura de dado deliberadamente simples (`texto`+`autorUid`+`ts` ISO
   string) — pensada pra uma evolução futura (análise estratégica da
   lista, gerar atividades) sem precisar remodelar nada agora,
