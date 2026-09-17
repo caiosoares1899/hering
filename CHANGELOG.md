@@ -16406,6 +16406,52 @@ anterior já tinha sido deployada com o bug).
 
 ## Cloud Functions — Spotify (`functions/spotify/`, sem versão própria em `version.json`)
 
+### 2026-09-17 — Análise de segurança: 3 achados na Rádio do Maré
+
+Continuação da análise de segurança pedida pelo usuário (painel +
+apresentação de OKR numa rodada anterior no mesmo dia; esta rodada:
+"roda outra rodada nos endpoints do functions/").
+
+**`spotifyRadioSuggest`/`spotifyRadioSearch` sem checagem de domínio**:
+os dois só verificavam `verifyIdToken()`, com o comentário explícito
+"não checa domínio... porque o Firebase Auth do projeto já restringe
+quem consegue logar" — a mesma suposição errada já corrigida em
+`database.rules.json`/`okr-apresentacao.slide.html` na rodada anterior
+(`hd:'ciahering.com.br'` é só dica de UI, não é imposto pelo Firebase
+Auth). Qualquer conta Google conseguia usar os dois. Fix: checagem de
+domínio no servidor, mesmo padrão de `analiseDados.js`/`resumoMeuDia.js`.
+
+**`spotifyRadioSuggest` também aceitava `playlistId` arbitrário**: o
+token de escrita da conta dona (`playlist-modify-*`) vale pra QUALQUER
+playlist que ela edite, não só a Rádio do Maré — sem validar o id
+contra os pointers de verdade (`kanban/painel/radio_geral`/
+`kanban/squads/{id}/dados/radio_squad`, que só quem tem permissão de
+escrita nesses nós consegue registrar), dava pra injetar faixa em
+qualquer playlist da conta dona. Fix: `isRegisteredPlaylist()` confere
+o id contra os pointers registrados (geral + todos os squads, incluindo
+os fixos sem `squads_meta`) antes de aceitar a sugestão.
+
+**`spotifyRadioOwnerCallback` usava `state` fixo, não nonce**:
+`EXPECTED_STATE='radio-owner-connect-v1'` era uma constante no código —
+`REDIRECT_URI`/`CLIENT_ID` não são segredo (o Spotify exige os dois
+expostos), então quem tivesse acesso ao repositório conseguia montar a
+própria URL de autorização, conectar a PRÓPRIA conta Spotify, e
+sequestrar `kanban/spotify_radio_owner_secret` (a Rádio do Maré passaria
+a usar a conta do atacante até alguém reconectar manualmente). Fix:
+`state` passa a incluir um valor do Secret Manager
+(`RADIO_OWNER_CONNECT_TOKEN`, novo secret — precisa ser criado antes do
+deploy, ver nota abaixo).
+
+**Precisa, além do deploy normal**: `firebase functions:secrets:set
+RADIO_OWNER_CONNECT_TOKEN` (gerar um valor aleatório, ex. `openssl rand
+-hex 24`) **antes** de fazer `firebase deploy --only
+functions:spotifyRadioOwnerCallback` — sem o secret existir, a function
+falha ao carregar. A conta dona já conectada hoje não é afetada (o token
+dela já está salvo); isso só importa numa reconexão futura, quando for
+preciso montar a URL de autorização de novo com o novo `state`.
+
+Checks de rotina: suíte completa `npm test` (476/476, sem regressão).
+
 ### 2026-07-31 · PR #116 — corrige 401 no controle de playback + bug real de cache de token
 Primeiro teste real do controle de playback (PR #115) voltou 500
 genérico. `detail` (mecanismo criado nos PRs #110/#112 especificamente
@@ -22383,6 +22429,33 @@ squad de teste, tornar `SQUAD_ID` configurável. Nada aqui é chamado por
 nenhum endpoint HTTP ainda — não requer `firebase deploy`.
 
 ## Agente Ágil (`functions/agente-agil/`)
+
+### 2026-09-17 — Análise de segurança: comparação do secret + limite de tamanho do `texto`
+
+Continuação da análise de segurança pedida pelo usuário (ver entrada da
+mesma data em "Cloud Functions — Spotify" e no `database.rules.json`
+pro contexto completo).
+
+**`agenteAgil` (http.js) comparava o secret com `!==`**: comparação de
+string comum não é *constant-time* — teoricamente vulnerável a timing
+attack (CWE-208) pra adivinhar `AGENTE_AGIL_KEY` byte a byte via
+latência (exige muita paciência estatística numa rede real, mas o fix é
+trivial). O endpoint também não tinha NENHUM rate limit, diferente de
+`intake/submit.js`. Fix: `timingSafeEqualStr()` (`crypto.
+timingSafeEqual`, com checagem de tamanho antes — vaza só o comprimento
+do header, não bytes do segredo) + `checkAuthRateLimit()` (20
+tentativas/hora por IP, mesmo padrão de `transaction()` atômico do
+rate limiter de `intake/submit.js`, conta toda tentativa certa ou
+errada).
+
+**`intakeEnvelope.texto` (schema.js) sem limite de tamanho**: ia direto
+pro prompt do LLM em `intakeTrigger.js` sem passar pela função
+`truncar()` que o mesmo arquivo já usa em outros campos — quem tivesse
+o secret (ou explorasse o achado acima) conseguia forçar chamadas de
+LLM arbitrariamente caras. Fix: `.max(20000)` — generoso pra qualquer
+atualização de status real, ainda limita o pior caso.
+
+Checks de rotina: suíte completa `npm test` (476/476, sem regressão).
 
 ### 2026-09-11 — Fix: idempotência por `requestId` não era atômica (race condition)
 Mesma rodada de `/monitorarbugs` que achou o rate limiter de

@@ -1,11 +1,13 @@
 // functions/spotify/radioSearch.js
 //
 // Wrapper onRequest em cima de radioSearchCore.js (mesmo motivo de
-// sync.js vs. syncCore.js). Qualquer pessoa logada no Maré pode buscar
-// (não precisa ter conectado o próprio Spotify pro "ouvindo agora") —
-// só verifica o ID token do Firebase Auth, não checa domínio de e-mail
-// aqui porque o Firebase Auth do projeto já restringe quem consegue
-// logar.
+// sync.js vs. syncCore.js). Qualquer pessoa @ciahering.com.br logada no
+// Maré pode buscar (não precisa ter conectado o próprio Spotify pro
+// "ouvindo agora") — verifica o ID token do Firebase Auth E o domínio
+// (achado de análise de segurança, 2026-09-17: o comentário antigo dizia
+// "não checa domínio... porque o Firebase Auth do projeto já restringe
+// quem consegue logar" — suposição errada, o `hd` do GoogleAuthProvider é
+// só dica de UI, ver database.rules.json/painel.html da mesma rodada).
 const { onRequest } = require('firebase-functions/v2/https');
 const { getAuth } = require('firebase-admin/auth');
 const { defineSecret } = require('firebase-functions/params');
@@ -23,10 +25,16 @@ exports.spotifyRadioSearch = onRequest(
       res.status(401).send('Faltou o header Authorization: Bearer <idToken>.');
       return;
     }
+    let email;
     try {
-      await getAuth().verifyIdToken(match[1]);
+      const decoded = await getAuth().verifyIdToken(match[1]);
+      email = decoded.email || '';
     } catch (e) {
       res.status(401).send('Token inválido ou expirado.');
+      return;
+    }
+    if (!email.toLowerCase().endsWith('@ciahering.com.br')) {
+      res.status(403).json({ error: 'domain_not_allowed' });
       return;
     }
 

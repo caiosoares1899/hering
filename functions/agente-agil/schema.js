@@ -160,10 +160,19 @@ function envelopeJsonSchema() {
 // `dryRun` saiu do envelope — a decisão de sombra/escrita real agora é por
 // SQUAD, na criação do trigger (ver intakeTrigger.js), mesmo padrão que
 // mentionTrigger.js já usa, não mais por chamada individual.
+// `texto` limitado a 20.000 caracteres (achado de análise de segurança,
+// 2026-09-17): sem `.max()`, este campo ia direto pro prompt do LLM sem
+// nenhum limite (intakeTrigger.js usa truncar() em vários campos, mas
+// nunca neste) — quem tivesse a AGENTE_AGIL_KEY conseguia forçar chamadas
+// de LLM arbitrariamente caras/grandes. 20k chars é generoso pra
+// qualquer atualização de status real (a maioria dos comentários/
+// descrições do board tem uma fração disso) e ainda limita o pior caso.
+const INTAKE_TEXTO_MAX = 20000;
+
 const intakeEnvelope = z
   .object({
     requestId: z.string().min(1),
-    texto: z.string().min(1),
+    texto: z.string().min(1).max(INTAKE_TEXTO_MAX),
     cardId: z.string().min(1).optional(),
     referencia: referencia.optional(),
     // Mesmo campo/mesmo propósito de atribuição que `envelope.especialista`
