@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.693-dev</div>
+<div class="version">v8.30.694-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30872,7 +30872,13 @@ function populateAutoSelects(){
   // Preenche as duas listas (Quando/Então) a partir da config, escondendo
   // o que não se aplica ao squad atual (visible()) — evita oferecer uma
   // ação que não faz nada (ex.: Notificar Agente Ágil desativado).
-  const triggerOptsHtml=AUTO_TRIGGERS.filter(t=>!t.visible||t.visible()).map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
+  // Ordem alfabética (pedido direto do usuário) — mesmo `_tagLabelCmp()`
+  // já usado pras tags do modal do card, reaproveitado aqui só pelo
+  // critério de ordenação por label (não tem nada de tag-específico
+  // nele): joga labels que começam com emoji (ex.: "🧩 Aplicar fan-out…")
+  // pro fim, em vez de deixar o emoji bagunçar a ordem alfabética normal
+  // (emoji ordena antes de letra em Unicode).
+  const triggerOptsHtml=AUTO_TRIGGERS.filter(t=>!t.visible||t.visible()).slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
   if(triggerSel.dataset.optsHtml!==triggerOptsHtml){
     const prevVal=triggerSel.value;
     triggerSel.innerHTML=triggerOptsHtml;
@@ -30881,8 +30887,9 @@ function populateAutoSelects(){
   }
   // Condição extra opcional (E a tag do card é ___) — mesma lista de tags
   // usada em "Adicionar tag", só que aqui é sempre opcional (1ª opção vazia).
+  // Mesma ordem alfabética (emoji no fim) das outras 2 listas desta tela.
   if(condTagSel){
-    const condOptsHtml='<option value="">— sem condição extra —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+    const condOptsHtml='<option value="">— sem condição extra —</option>'+tags.slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
     if(condTagSel.dataset.optsHtml!==condOptsHtml){
       const prevVal=condTagSel.value;
       condTagSel.innerHTML=condOptsHtml;
@@ -30890,7 +30897,7 @@ function populateAutoSelects(){
       if([...condTagSel.options].some(o=>o.value===prevVal)) condTagSel.value=prevVal;
     }
   }
-  const actionOptsHtml=AUTO_ACTIONS.filter(a=>!a.visible||a.visible()).map(a=>`<option value="${a.key}">${esc(a.label)}</option>`).join('');
+  const actionOptsHtml=AUTO_ACTIONS.filter(a=>!a.visible||a.visible()).slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(a=>`<option value="${a.key}">${esc(a.label)}</option>`).join('');
   if(actionSel.dataset.optsHtml!==actionOptsHtml){
     const prevVal=actionSel.value;
     actionSel.innerHTML=actionOptsHtml;

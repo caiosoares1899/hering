@@ -3503,6 +3503,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.694-dev — 2026-09-17 — Listas "Quando"/"Então"/"condição extra" das Automações em ordem alfabética
+
+Pedido direto do usuário. As 3 listas suspensas da tela de Automações
+(`populateAutoSelects()`) passam a ser ordenadas alfabeticamente em vez
+de seguir a ordem de declaração em `AUTO_TRIGGERS`/`AUTO_ACTIONS`/`tags`:
+o dropdown "Quando" (gatilhos, ex. "Card movido para coluna"), o
+"Então" (ações, ex. "Adicionar tag"), e o "E (opcional)" — condição
+extra por tag, mesma lista de tags do "Adicionar tag". Reaproveita
+`_tagLabelCmp()` (já usado pras tags do modal do card desde a
+v8.30.688/690-dev) — não tem nada de tag-específico nele, só compara 2
+labels e joga quem começa com emoji (ex. "🧩 Aplicar fan-out…") pro
+fim, em vez de deixar o emoji bagunçar a ordem alfabética normal.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.693-dev — 2026-09-17 — `/monitorarbugs` (Automações): "Atribuir responsável" nunca notificava nem encadeava outras regras
 
 Rodada de `/monitorarbugs` sem área nomeada — foco na área mais
