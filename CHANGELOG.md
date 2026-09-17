@@ -3503,6 +3503,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.695-dev — 2026-09-17 — `/monitorarbugs` (Automações, escopo nomeado): "Adicionar item de checklist" nunca escaneava @menção no texto configurado
+
+Rodada de `/monitorarbugs` com área nomeada ("automações"), técnica 1
+(comparar `add_checklist_item` — o único `AUTO_ACTIONS` com
+`valueType:'text'`, texto livre configurado na regra — contra os
+outros lugares que escaneiam texto por @menção).
+
+A edição manual de um item de checklist já existente
+(`scheduleAutoSave()`) escaneia `it.t` por @menção desde 2026-08-30; as
+outras ações de Automação que geram texto por conta própria
+(`notify_all`/`notify_po_org`/`notify_agent`) sempre chamam
+`parseMentions()` no que elas mesmas montam. `add_checklist_item`
+nunca chamava — uma regra configurada com "ENTÃO Adicionar item de
+checklist 'Avisar @fulano'" nunca notificava @fulano, mesmo o campo
+sendo literalmente texto livre pra isso (é o exemplo que a própria
+Central de Ajuda usa: "pede um texto livre, ex.: 'Revisar com o
+time'"). Fix: `add_checklist_item.run()` chama `parseMentions()` no
+texto configurado, com `includeSelf:true` (mesmo raciocínio de
+`notify_all`/`notify_po_org` — quem por acaso tiver o board aberto
+quando a regra disparar não deveria ficar de fora só por coincidência).
+
+**Achado incidental, real, mas FORA do escopo desta rodada (não
+corrigido)**: investigando isso, confirmado que `saveCard()` não tem
+NENHUMA chamada de `parseMentions()` em lugar nenhum — description/PO/
+checklist de um card sendo CRIADO (antes do 1º Salvar) nunca são
+escaneados por menção nenhuma, porque `scheduleAutoSave()` só roda com
+`editingId` já setado (`if(!editingId) return;`). Uma @menção digitada
+ao compor a descrição de um card NOVO só notifica se o campo for
+editado de novo depois que o card já existe. Isso não é sobre
+Automações — é uma classe de bug em `saveCard()`/`scheduleAutoSave()`,
+fora do escopo nomeado desta rodada. Registrado aqui pra não se perder,
+não implementado.
+
+**Achado maior, já reportado em rodada anterior, reconfirmado aqui, NÃO
+corrigido**: `toggle_okr` (marca OKR) e `set_priority` (define
+prioridade) são mais 2 casos do mesmo gap geral já documentado na
+v8.30.693-dev — o manual `saveCard()`/`ctxToggleOKR()` re-dispara
+`runAutoRules('marked_okr'/'priority', ...)` pra encadear em outra
+regra, mas as ações de Automação equivalentes não. Continua sendo o
+MESMO achado arquitetural já relatado (nenhuma ação de `AUTO_ACTIONS`
+encadeia em outra automação), não uma lista nova de bugs — não
+reimplementado por regra própria.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.694-dev — 2026-09-17 — Listas "Quando"/"Então"/"condição extra" das Automações em ordem alfabética
 
 Pedido direto do usuário. As 3 listas suspensas da tela de Automações
