@@ -3503,6 +3503,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.691-dev — 2026-09-17 — `/monitorarbugs` (tags): dava pra somar 2 Tamanhos/Submarcas/Canais no mesmo card, pelo dropdown genérico ou por automação
+
+Rodada de `/monitorarbugs` com área nomeada ("tags"), técnica 1
+(comparar caminhos paralelos pra mesma mutação). Tamanho (`SIZE_TAGS`),
+Submarca (`SUBMARCA_TAGS`) e Canal de venda (`CANAL_VENDA_TAGS`) são
+grupos de tags mutuamente exclusivas — um card nunca deveria ter 2
+tamanhos ao mesmo tempo — e essa regra já era garantida em 3 lugares:
+os campos dedicados do modal (`setCardTamanho()`/`setCardSubmarca()`/
+`setCardCanalVenda()`), a ação em massa (`_doBulkTagMulti()`) e as
+ações dedicadas de Automação (`set_tamanho`/`set_submarca`/
+`set_canal_venda`). 2 achados reais, mesma causa raiz — um caminho
+GENÉRICO pra mexer em tags (sem saber que algumas pertencem a um
+grupo exclusivo) nunca tinha essa checagem:
+
+1. **Dropdown "+ Adicionar tag…" do modal do card** (o mesmo que ganhou
+   filtro de texto nas duas rodadas anteriores): listava as tags de
+   Tamanho/Submarca/Canal junto com as demais, sem checar grupo nem a
+   visibilidade que o PO configura por tag (`_submarcaIsVisivel()`/
+   `_canalVendaIsVisivel()` — também ignoradas aqui). Dava pra clicar
+   "👕 P" e depois "👕 G" nesse dropdown e o card ficava com os 2
+   tamanhos, e também dava pra escolher uma submarca/canal que o PO
+   tinha escondido explicitamente. Fix: `_tagAddAvail()` exclui os 3
+   grupos da lista — quem precisa deles usa o campo dedicado.
+2. **Mais severo, achado incidental**: a ação de Automação "Adicionar
+   tag" (genérica, `add_tag`) aceita qualquer tag no seletor, incluindo
+   as de Tamanho/Submarca/Canal — e o `run()` só empurrava a tag nova
+   sem tirar a antiga do mesmo grupo, diferente das ações dedicadas
+   (`set_tamanho`/etc.) que já filtram o grupo antes de aplicar. Uma
+   regra configurada com esse action genérico (ex.: "ENTÃO Adicionar
+   tag = 👕 G") corrompia o card silenciosamente — roda sozinha, sem
+   tela, então o card ficava com 2 tamanhos até alguém notar num
+   relatório. Fix: `add_tag.run()` ganhou a mesma exclusividade de
+   grupo de `_doBulkTagMulti()`/`set_tamanho`/`set_submarca`/
+   `set_canal_venda` antes de empurrar a tag nova. `remove_tag` não
+   precisa do mesmo fix (remover uma tag nunca cria um estado de 2 no
+   grupo). O seletor de valor genérico (`case 'tag'` em
+   `_autoRenderValueOptions()`, compartilhado com os TRIGGERS "tag
+   adicionada"/"tag removida ao card") foi mantido intacto de propósito
+   — excluir os grupos dali quebraria configurações legítimas de
+   trigger; o fix ficou só no ponto de mutação (`run()`), mesma escolha
+   já usada pelo picker de ação em massa.
+
+Checado e sem achado: `_renderCampTagPicker()`/`campToggleTag()`
+(picker de tags de Campanha) não tem essa invariante — é um multi-select
+livre pra categorizar a CAMPANHA, não o card, então não se aplica.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.690-dev — 2026-09-17 — Tags com emoji no início vão pro fim da lista (chips + dropdown de adicionar)
 
 Pedido direto do usuário, invertendo um efeito colateral da ordenação
