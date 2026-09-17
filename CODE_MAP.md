@@ -2676,6 +2676,26 @@ detalhe aberto — ver nota abaixo).
   de bloqueio por domínio/whitelist do resto do Maré Digital
   (`@ciahering.com.br` ou `painel_viewers`), erro mostra
   `#login-err`/`#login-out-btn` em vez de deixar a tela em branco.
+- **📋 Anotações da reunião** (2026-09-17, pedido direto do usuário) —
+  botão flutuante dentro de `#app` (por baixo do app shell de propósito,
+  ver comentário no HTML — não aparece sozinho na tela de login) abre um
+  painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
+  `kanban/okr/reuniao_notas/{id}` (node novo, herda `.read`/`.write` de
+  `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
+  necessária). `renderNotas()` — L983 — lista cronológica (mais antiga
+  primeiro, lê como ata); `window._okrToggleNotes()` — L1007 — abre/
+  fecha + rola pro fim; `window._okrAddNota()` — L1018 — Enter envia
+  (Shift+Enter quebra linha, `window._okrNotesKeydown()` faz
+  `stopPropagation()` em toda tecla pra não vazar pro atalho global de
+  navegação de slides, ← → espaço). Exclusão (`window._okrDelNota()`) só
+  pelo próprio autor (`n.autorUid===window._currentUser?.uid`) — sem
+  papel de PO/organizador carregado nesta página, diferente do resto do
+  Maré Digital, então não dá pra oferecer exclusão por admin aqui.
+  Estrutura de dado deliberadamente simples (`texto`+`autorUid`+`ts` ISO
+  string) — pensada pra uma evolução futura (análise estratégica da
+  lista, gerar atividades) sem precisar remodelar nada agora,
+  explicitamente NÃO implementada ainda (pedido do usuário: "depois
+  podemos evoluir").
 
 ## functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
 
