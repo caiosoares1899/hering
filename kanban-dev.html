@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.702-dev</div>
+<div class="version">v8.30.703-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10965,8 +10965,10 @@ function autoRegistrar(user){
     }
   });
 }
+let _inscOriginalInit = '';
 function mostrarInscricao(user,dados){
   const init=dados?.init||window._currentUserInit||'';
+  _inscOriginalInit = init;
   document.getElementById('insc-nome').textContent=user.displayName||user.email;
   document.getElementById('insc-email').textContent=user.email;
   document.getElementById('insc-init').value=init;
@@ -10996,6 +10998,34 @@ async function confirmarInscricao(){
   // Oculta erro se existia
   const errEl=document.getElementById('insc-init-err');
   if(errEl) errEl.style.display='none';
+
+  // /monitorarbugs 2026-09-17: esta tela deixa a pessoa EDITAR a sigla
+  // pré-preenchida antes de confirmar — mesmo padrão ler-checar-escrever
+  // não-atômico que causou a colisão real "MS"/"MS" (Marina Saran
+  // Bernardo × Marciel Santos Alexandrino, PR #969), só que aqui ainda
+  // sem o fix: a checagem `conflict` acima é só um erro amigável, não uma
+  // garantia sob concorrência real. Reivindica via kanban/init_registry
+  // (runTransaction, mesmo padrão de editarInicial()) antes de gravar; se
+  // a sigla foi reivindicada por outra pessoa nesse meio-tempo, erro
+  // amigável em vez de deixar as duas gravarem a mesma. Try/catch: se a
+  // regra ainda não foi publicada (deploy manual, ver CLAUDE.md), segue
+  // só com a checagem `conflict` de cima, como sempre funcionou.
+  try{
+    const claimRef = window._ref(window._db, 'kanban/init_registry/'+init);
+    const claimResult = await window._runTransaction(claimRef, current => (current===null||current===user.uid) ? user.uid : undefined);
+    if(!claimResult.committed){
+      if(errEl){ errEl.textContent='⚠ Iniciais "'+init+'" foram reivindicadas por outra pessoa agora mesmo. Tente de novo.'; errEl.style.display='block'; }
+      return;
+    }
+    // Libera a sigla anterior (se a pessoa editou o campo pré-preenchido) —
+    // mesma lógica de editarInicial(): só libera se ESTE uid for o dono
+    // registrado, nunca mexe se já pertencer a outra pessoa.
+    if(_inscOriginalInit && _inscOriginalInit.toUpperCase()!==init){
+      window._runTransaction(window._ref(window._db, 'kanban/init_registry/'+_inscOriginalInit.toUpperCase()), current => current===user.uid ? null : undefined).catch(()=>{});
+    }
+  }catch(e){
+    console.warn('[confirmarInscricao] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
+  }
 
   const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;

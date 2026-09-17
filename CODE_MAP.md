@@ -61,8 +61,13 @@ confiar num número aqui se for mexer em `painel.html` prod).
   `editarInicial()` (L24019, troca manual de sigla) também usa a mesma
   transação antes de gravar, e libera a sigla antiga no registro (só se
   o registro ainda apontar pra este uid — sigla pode ser compartilhada).
-  As duas funções caem de volta pro mecanismo antigo (não-atômico, mas
-  não trava ninguém) se o registry ainda não tiver a regra publicada.
+  `confirmarInscricao()` (~L10976, tela "Confirmar inscrição" — pessoa
+  edita a própria sigla num campo de texto antes de confirmar) ganhou o
+  mesmo tratamento numa rodada seguinte de `/monitorarbugs` no mesmo dia
+  — era a 3ª mutação de `init` do arquivo e tinha ficado de fora do fix
+  original, mesma corrida exata. As 3 funções caem de volta pro
+  mecanismo antigo (não-atômico, mas não trava ninguém) se o registry
+  ainda não tiver a regra publicada.
 - `_onRealAuthChange(fn)` — L31375 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara
