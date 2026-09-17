@@ -3468,6 +3468,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.685-dev — 2026-09-17 — `/monitorarbugs`: Estrela do Mar — dava pra mandar Estrela pra si mesmo no escopo Geral
+
+Rodada de `/monitorarbugs` sem área nomeada — foco em Estrela do Mar/
+Kudos (nunca tinha recebido uma auditoria dedicada; código já bem
+hardened de rodadas anteriores contra corrida de escrita, mas nunca
+verificado ponta a ponta).
+
+**Achado real (técnica 1 — comparar caminhos paralelos)**:
+`_populateKudosPara()` (dropdown "Para quem?") já excluía a própria
+pessoa da lista no escopo **Cardume** (squad) —
+`m.uid!==window._currentUser?.uid` — mas o escopo **Geral** não tinha
+o mesmo filtro. Dava pra escolher a si mesmo como destinatário e
+mandar uma Estrela pra si próprio em "🌊 Geral": `addKudos()` só evita
+a NOTIFICAÇÃO de auto-envio (`toUid!==u.uid`), o card do kudos em si
+era criado normalmente e ficava visível pra todo mundo. Sem motivo
+pra Geral se comportar diferente de Squad aqui — Estrela do Mar é
+reconhecimento a alguém do time, não a si mesmo. Confirmado sem
+achado adicional: nenhum ranking/leaderboard usa a contagem de
+kudos recebidos (checado em `painel.html`), então não era um vetor
+de "inflar métrica", só uma entrada semanticamente estranha visível
+publicamente.
+
+Fix: `_populateKudosPara()` aplica o mesmo filtro no escopo Geral.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.684-dev — 2026-09-16 — Fix: `fbCreateCard()` ficou de fora da 1ª rodada do fix de campo undefined
 
 Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.685, direto

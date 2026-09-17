@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.684-dev</div>
+<div class="version">v8.30.685-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18287,9 +18287,18 @@ function setKudosScope(s){
 function _populateKudosPara(){
   const sel=document.getElementById('kudos-para'); if(!sel) return;
   const opts=['<option value="">Para quem? (escolha)</option>'];
+  // Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
+  // paralelos): o escopo Cardume (squad) já excluía a própria pessoa da
+  // lista ("m.uid!==window._currentUser?.uid"), mas o escopo Geral não
+  // tinha o mesmo filtro — dava pra escolher a si mesmo como destinatário
+  // e mandar uma Estrela pra si próprio (addKudos() não bloqueia por
+  // "toUid!==u.uid" — esse check só evita a NOTIFICAÇÃO de auto-envio, o
+  // card do kudos em si era criado e ficava visível pra todo mundo em
+  // "🌊 Geral"). Sem motivo pra Geral se comportar diferente de Squad aqui
+  // — Estrela do Mar é reconhecimento a alguém do time, não a si mesmo.
   // Geral: todos os usuários da empresa · Cardume: só membros da squad
   const fonte = _kudosScope==='geral'
-    ? (window._allUsers||[])
+    ? (window._allUsers||[]).filter(m=>m.uid!==window._currentUser?.uid)
     : (members||[]).filter(m=>m.init && m.uid!==window._currentUser?.uid);
   // ordena por nome
   fonte.slice().sort((a,b)=>String(a.name||a.init).localeCompare(String(b.name||b.init))).forEach(m=>{
