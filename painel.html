@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.52 · painel</div>
+<div class="version">v3.53 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10970,8 +10970,20 @@ function resolveOwnerName(init, squadId){
   if(!init) return init;
   const d = squadData[squadId];
   if(!d) return init;
-  // Try members array (populated from Firebase usuarios)
-  const m = (d.members||[]).find(x=>x.init===init||x.email?.startsWith(init.toLowerCase()));
+  // Achado real (relato direto do usuário, 2026-09-17 — card criado e
+  // usado inteiramente por "Marina Saran Bernardo" aparecia no Histórico
+  // do painel como "Marciel Santos"): o find() combinava "init bate" OU
+  // "email começa com o init em minúsculo" numa condição só, sem
+  // priorizar o match EXATO — iniciais curtas (2-3 letras) colidem fácil
+  // com o começo do email de gente totalmente diferente (aqui, "ms" batia
+  // com o início do email de outra pessoa). Se essa pessoa aparecesse
+  // ANTES na lista de membros, o find() parava nela e nunca chegava no
+  // match exato de verdade, mais adiante no array — atribuindo o card a
+  // um nome errado. Fix: tenta o match exato primeiro, isolado; só cai
+  // no fallback por email se ninguém tiver esse init.
+  const membros = d.members||[];
+  const exato = membros.find(x=>x.init===init);
+  const m = exato || membros.find(x=>x.email?.startsWith(init.toLowerCase()));
   if(m && m.name) return m.name.split(' ').slice(0,2).join(' ');
   // Fallback: return init as-is
   return init;
