@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.689-dev</div>
+<div class="version">v8.30.690-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14119,10 +14119,21 @@ function populateTagSelect(){
   const list=document.getElementById('m-tag-add-list');
   if(list && list.classList.contains('open')) renderTagAddDropdown();
 }
+// Ordem alfabética normal, exceto tags cujo label COMEÇA com emoji (ex.:
+// "👖 P"/"👖 M"/"👖 GG" de tamanho) — essas vão pro fim da lista, também
+// em ordem alfabética entre si, em vez de se intercalarem no meio (emoji
+// ordena antes de letra em Unicode, então sem isso ficavam sempre no topo).
+function _tagLabelCmp(la,lb){
+  la=la||''; lb=lb||'';
+  const ea=/^\p{Extended_Pictographic}/u.test(la.trim());
+  const eb=/^\p{Extended_Pictographic}/u.test(lb.trim());
+  if(ea!==eb) return ea?1:-1;
+  return la.localeCompare(lb,'pt-BR');
+}
 function _tagAddAvail(){
   const q=_norm(document.getElementById('m-tag-add')?.value||'');
   return tags.filter(t=>!editingTags.includes(t.id) && (!q || _norm(t.label).includes(q)))
-    .sort((a,b)=>a.label.localeCompare(b.label,'pt-BR'));
+    .sort((a,b)=>_tagLabelCmp(a.label,b.label));
 }
 function renderTagAddDropdown(){
   const inp=document.getElementById('m-tag-add');
@@ -14160,7 +14171,7 @@ function _tagAddKeydown(e){
 }
 function renderEditingTags(){
   const box=document.getElementById('m-tags-chips'); if(!box) return;
-  const _sortedTagIds=editingTags.slice().sort((a,b)=>(getTag(a)?.label||'').localeCompare(getTag(b)?.label||'','pt-BR'));
+  const _sortedTagIds=editingTags.slice().sort((a,b)=>_tagLabelCmp(getTag(a)?.label,getTag(b)?.label));
   box.innerHTML=_sortedTagIds.map(id=>{
     const t=getTag(id); if(!t) return '';
     let bg,bc,col;
