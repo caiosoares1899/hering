@@ -3503,6 +3503,49 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.696-dev — 2026-09-17 — `/monitorarbugs`: criar um card com responsável já disparava "Card movido para X"/"Card concluído 🎉" pra ele, sem o card nunca ter se movido
+
+Rodada de `/monitorarbugs` sem área nomeada — motivada por uma
+investigação equivocada da rodada anterior (v8.30.695-dev, ver
+correção lá): ao reler `saveCard()` pra confirmar o achado incidental
+que eu tinha reportado, descobri que `saveCard` é REATRIBUÍDO mais
+adiante no arquivo (bloco `── Hook no saveCard para disparar
+notificações ──`, `const _origSaveCardForNotif = saveCard; saveCard =
+function(){...}`) — esse wrapper é quem de fato roda em produção
+sempre que alguém clica "💾 Salvar", e eu tinha ignorado sua
+existência.
+
+**Achado real, técnica 3** (confrontar o comportamento com o que a
+notificação promete): dentro do wrapper, `prevCard = editingId ?
+cards.find(...) : null` — ao CRIAR um card, `prevCard` é `null`, então
+`prevCol` vira `''` (string vazia). O bloco "card mudou de coluna"
+(`if(prevCol!==card.col){ ... notifMoved()/notifDone() ...
+runAutoRules('move',...) }`) nunca checava se havia de fato um
+`prevCard` — qualquer coluna real de destino já satisfaz `'' !==
+card.col`, então TODO card criado já com Responsável e/ou Participantes
+preenchidos (comum — o dropdown "Responsável" já aparece na tela de
+criação) disparava a notificação errada pra essas pessoas: "Card
+movido para [coluna]" (ou "Card concluído 🎉", se o card nasceu numa
+coluna de fim), quando na verdade o card só tinha acabado de ser
+criado ali — nunca se moveu de lugar nenhum. Também disparava
+`runAutoRules('move', card.id, card.col)` — o trigger de Automação
+dedicado "Card movido para coluna X", distinto do "Card criado em X"
+(`card_created`) — então uma regra configurada só pra reagir a MOVE de
+verdade também disparava (errado) em toda criação de card na coluna X,
+podendo até duplicar efeito junto com uma regra separada de
+`card_created` pra mesma coluna.
+
+Fix: guarda o bloco inteiro com `prevCard &&` — só considera "mudou de
+coluna" quando havia um card anterior de verdade (edição), nunca numa
+criação. Os outros blocos do mesmo wrapper (responsável atribuído,
+desbloqueado, risco adicionado, checklist 100%) foram revisados e
+ficam como estão — são afirmações que continuam verdadeiras
+independente de ser criação ou edição ("essa pessoa é a responsável
+agora", "esse card tem um risco mapeado"), diferente de "moveu", que
+implica uma transição que não existe na criação.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.695-dev — 2026-09-17 — `/monitorarbugs` (Automações, escopo nomeado): "Adicionar item de checklist" nunca escaneava @menção no texto configurado
 
 Rodada de `/monitorarbugs` com área nomeada ("automações"), técnica 1
@@ -3524,7 +3567,19 @@ texto configurado, com `includeSelf:true` (mesmo raciocínio de
 `notify_all`/`notify_po_org` — quem por acaso tiver o board aberto
 quando a regra disparar não deveria ficar de fora só por coincidência).
 
-**Achado incidental, real, mas FORA do escopo desta rodada (não
+**CORREÇÃO** (feita na rodada seguinte, v8.30.696-dev): o achado
+incidental abaixo, registrado nesta entrada, estava ERRADO — não
+levei em conta que `saveCard` é reatribuído mais adiante no arquivo
+(`const _origSaveCardForNotif = saveCard; saveCard = function(){...}`,
+"── Hook no saveCard para disparar notificações ──"), e É esse wrapper
+que chama `parseMentions()` (cobrindo criação E edição, via
+`cardId = editingId || cards[cards.length-1]?.id`). Card novo com
+@menção na descrição/PO/checklist já era notificado normalmente. Texto
+original mantido abaixo, riscado, só pra rastreabilidade — ver a
+entrada da v8.30.696-dev pro achado real que essa investigação
+equivocada acabou revelando.
+
+~~**Achado incidental, real, mas FORA do escopo desta rodada (não
 corrigido)**: investigando isso, confirmado que `saveCard()` não tem
 NENHUMA chamada de `parseMentions()` em lugar nenhum — description/PO/
 checklist de um card sendo CRIADO (antes do 1º Salvar) nunca são
@@ -3534,7 +3589,7 @@ ao compor a descrição de um card NOVO só notifica se o campo for
 editado de novo depois que o card já existe. Isso não é sobre
 Automações — é uma classe de bug em `saveCard()`/`scheduleAutoSave()`,
 fora do escopo nomeado desta rodada. Registrado aqui pra não se perder,
-não implementado.
+não implementado.~~
 
 **Achado maior, já reportado em rodada anterior, reconfirmado aqui, NÃO
 corrigido**: `toggle_okr` (marca OKR) e `set_priority` (define

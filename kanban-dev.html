@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.695-dev</div>
+<div class="version">v8.30.696-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28270,7 +28270,17 @@ saveCard = function(){
   // Movido para feito (ou pra qualquer outra coluna) — _isColDone() em vez
   // da heurística local (achado real, /monitorarbugs 2026-09-04, mesma
   // classe corrigida em updateMetrics()/agCtx()/handleDrop()/ctxMove()).
-  if(prevCol!==card.col){
+  // `prevCard &&` (achado real, /monitorarbugs 2026-09-17): ao CRIAR um
+  // card, prevCol é '' (prevCard é null, ver declaração acima) — qualquer
+  // coluna real de destino já satisfaz `prevCol!==card.col` sem prevCard,
+  // então criar um card com responsável/participantes já preenchidos
+  // disparava "Card movido para X" (ou "Card concluído 🎉", se nasceu
+  // numa coluna de fim) pra essas pessoas, apesar do card nunca ter se
+  // MOVIDO — só acabou de nascer ali. Também disparava o trigger de
+  // Automação 'move' (distinto do 'card_created' dedicado, ver
+  // AUTO_TRIGGERS) pra toda regra "QUANDO card movido pra X", mesmo pra
+  // cards só criados em X, nunca movidos.
+  if(prevCard && prevCol!==card.col){
     if(_isColDone(card.col)) notifDone(card);
     else notifMoved(card, columns.find(c=>c.id===card.col)?.name);
     // Achado real 2026-08-26 (skill /monitorarbugs): mesmo gap do 'assigned'
