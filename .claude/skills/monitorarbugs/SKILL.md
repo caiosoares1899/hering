@@ -1359,6 +1359,34 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   precisa de proteção deliberada contra loop entre regras — documentado
   como recomendação, não implementado de bandeja.
 
+- **2026-09-17, painel-dev.html — Dashboard consolidado (pedido
+  genérico, "roda outro" — área escolhida por prioridade 2, nunca tinha
+  tido rodada própria)**: 2 achados reais, mesma causa raiz, técnica 1
+  (comparar TODOS os lugares que escrevem `/cards` de volta no
+  Firebase em `painel-dev.html` — só existiam 2). `loadAll()` removeu
+  o polling automático de `squadData` de propósito (custo de Firebase)
+  — o cache local só atualiza ao abrir a página/voltar pra aba/clicar
+  em "Atualizar dados". `resolveAllBlockers()` ("✅ Resolver todos" dos
+  Bloqueios) e `resetSquadFlow()` (⚙ Config → "Zerar contagem de
+  fluxo") mutavam esse cache e escreviam a árvore `/cards` INTEIRA do
+  squad de volta — deixar o painel aberto em foco por um tempo (uso
+  normal de dashboard) e clicar em qualquer um dos dois apagava
+  silenciosamente qualquer card criado/editado/excluído por qualquer
+  pessoa nesse intervalo. Mesma classe de bug já corrigida em Kudos (PR
+  #896, via transação) e Lembretes (PR #900), aqui com blast radius
+  maior (sobrescreve `/cards` inteiro do squad, não um campo). Fix:
+  os 2 releem `/cards` fresco do Firebase antes de escrever. Checado e
+  sem achado: `buildGlobalPayload()`/`exportEachSquadJSON()` também
+  leem `d.cards`, mas é export de backup em JSON, nunca escrevem de
+  volta — staleness ali não é perda de dado real. PR #957, dev
+  v3.48·painel-dev. **Lição pra próxima vez**: "área nunca auditada"
+  não precisa ser uma feature nova — `resolveAllBlockers()`/
+  `resetSquadFlow()` existem há semanas; a técnica 1 aplicada de forma
+  sistemática ("grep TODOS os writers de um node específico, não só o
+  que motivou a rodada") ainda rende achado sério em código antigo,
+  especialmente em `painel-dev.html`, que tem muito menos rodadas
+  dedicadas que `kanban-dev.html` até agora.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
