@@ -16738,6 +16738,46 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.53 · painel / painel-dev.html v3.49 · painel-dev — 2026-09-17 · Histórico/Feed do painel podia atribuir um card a uma pessoa ERRADA
+
+Relato direto do usuário, com prints: um card criado e usado
+inteiramente por "Marina Saran Bernardo" (histórico do modal do card,
+em `kanban-dev.html`, mostrava ela em toda linha) aparecia no
+📜 Histórico/Feed do painel como se fosse de **"Marciel Santos"** —
+uma pessoa completamente diferente, nem mencionada no histórico real.
+
+**Causa raiz**: `resolveOwnerName(init, squadId)` resolve o `init`
+salvo em `card.owner` pro nome completo da pessoa, buscando em
+`squadData[squadId].members`. A busca combinava "o `init` bate" OU "o
+email começa com o `init` em minúsculo" na MESMA condição de um único
+`.find()`, sem priorizar o match EXATO. Iniciais curtas (2-3 letras,
+`window._currentUserInit` deriva das 2 primeiras letras iniciais do
+nome) colidem com facilidade com o começo do email de gente
+completamente diferente — aqui, o início do `init` de Marina batia
+com o começo do email de outra pessoa. Como essa outra pessoa
+aparecia ANTES na lista de membros (ordem de `Object.values()`, não
+determinística/significativa), o `.find()` parava nela e nunca
+chegava no match exato de verdade, mais adiante no array — exibindo
+o nome de uma pessoa errada como se fosse a responsável pelo card.
+
+**Fix**: tenta o match exato (`x.init===init`) primeiro, isolado; só
+cai no fallback por email se ninguém tiver esse `init` exato.
+
+Aplicado direto nos dois arquivos (não é uma promoção dev→prod normal
+— `resolveOwnerName()` já existia idêntica nos dois, e o bug já estava
+ativo em produção, confirmado pelos prints do usuário) — mesmo
+critério de hotfix imediato já usado nesta sessão pra bugs confirmados
+ativos, mesmo sendo um bug de exibição (não corrompe `card.owner` em
+si, só mostra o nome errado). `_painelOwnerAvatarHtml()` (avatar ao
+lado) já usava só match exato — não tinha o mesmo bug, checado.
+
+Checado também no `kanban-dev.html` (o usuário pediu pra checar os
+dois): nenhuma função equivalente lá usa esse fallback frágil por
+email — o Histórico do modal do card sempre mostrou a pessoa certa,
+confirmado no próprio print do usuário.
+
+Checks de rotina: `node --check` OK nos dois arquivos.
+
 ### painel-dev.html v3.48 · painel-dev — 2026-09-17 · `/monitorarbugs`: "Resolver bloqueios" e "Zerar contagem" podiam apagar edições de outras pessoas em silêncio
 
 Rodada de `/monitorarbugs` sem área nomeada — área escolhida por
