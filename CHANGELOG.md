@@ -3503,6 +3503,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.697-dev — 2026-09-17 — Fecha a corrida de cadastro que permitia 2 pessoas ficarem com a mesma sigla
+
+Pedido direto do usuário, depois de rastrear a causa raiz de verdade
+do card exibido com o nome errado no painel (ver correção na entrada
+de painel.html/painel-dev.html do mesmo dia): Marina Saran Bernardo e
+Marciel Santos Alexandrino tinham as duas o `init` "MS" cadastrado —
+confirmado direto no Firebase via script de diagnóstico. As duas
+iniciais batem pelo MESMO algoritmo (1ª letra do 1º+2º nome, cortado
+em 2 letras): "**M**arina **S**aran Bernardo" e "**M**arciel **S**antos
+Alexandrino" → "MS" nos dois casos.
+
+**Causa raiz**: `autoRegistrar()` (1º login) já tinha uma checagem de
+colisão "board inteiro" (não só squad atual), mas era ler→computar→
+escrever em 3 passos separados, sem nada impedindo 2 pessoas se
+cadastrando quase ao mesmo tempo de lerem a mesma sigla como livre
+ANTES de qualquer uma escrever — uma corrida de verdade, clássica
+(mesma classe já corrigida em `functions/intake/submit.js`/
+`functions/agente-agil/http.js`, 2026-09-11, só que do lado client
+desta vez). `editarInicial()` (troca manual de sigla) tinha o mesmo
+padrão não-atômico, só que numa janela bem mais rara (ação deliberada).
+
+**Fix**: `kanban/init_registry/{INIT}=uid`, node novo, reivindicado via
+`runTransaction()` (`_claimUserInit()`) — atômico de verdade, garante
+que só uma pessoa vence mesmo sob concorrência real, mesma técnica já
+usada em `fbCreateCard()`/fila do orquestrador/Kudos. Backfill 1x por
+sessão (`_ensureInitRegistryBackfilled()`) preenche o registro pra quem
+já tinha init antes dele existir. `editarInicial()` também passou a
+reivindicar a nova sigla nesse mesmo registro antes de gravar, e libera
+a sigla antiga (só se o registro ainda apontar pra este uid — sigla
+pode ser compartilhada, como no nosso caso real). As duas funções caem
+de volta pro mecanismo antigo (não-atômico, mas não trava ninguém) se
+o registry ainda não tiver a regra do Firebase publicada.
+
+**⚠️ Requer deploy manual**: `database.rules.json` ganhou a entrada
+`kanban/init_registry` — como esse arquivo não é publicado
+automaticamente pelo GitHub Pages (ver "Commands" no `CLAUDE.md`),
+rode `firebase deploy --only database` (resync o clone local primeiro,
+`git fetch`+`git reset --hard origin/main`) antes de validar. Sem isso,
+o código já cai no fallback sozinho — não quebra o cadastro de
+ninguém, só não fecha a corrida de verdade até o deploy rodar.
+
+Checks de rotina: `node --check` OK. `database.rules.json` validado
+como JSON.
+
 ### v8.30.696-dev — 2026-09-17 — `/monitorarbugs`: criar um card com responsável já disparava "Card movido para X"/"Card concluído 🎉" pra ele, sem o card nunca ter se movido
 
 Rodada de `/monitorarbugs` sem área nomeada — motivada por uma

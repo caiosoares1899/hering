@@ -41,7 +41,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - `getEffectiveRole()` — L6346 — papel efetivo, ADMs hardcoded não são rebaixáveis
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6430 / L6399
 - `resolveSquadAndShow()` — L10315 — resolve squad da URL, decide o que mostrar
-- `autoRegistrar()` — L10500 — cria/atualiza o doc do usuário no login.
+- `autoRegistrar()` — L10813 — cria/atualiza o doc do usuário no login.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
   tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
@@ -49,6 +49,20 @@ confiar num número aqui se for mexer em `painel.html` prod).
   nunca no registro principal, deixando um registro nascido incompleto
   (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
   pra sempre mesmo com login repetido.
+- `_claimUserInit()` — L10752 / `_ensureInitRegistryBackfilled()` — L10795
+  — reivindica a sigla (`init`) de um usuário novo de forma ATÔMICA, via
+  `runTransaction()` em `kanban/init_registry/{INIT}=uid` (node novo,
+  precisa de entrada em `database.rules.json`, deploy manual). Achado
+  real (2026-09-17, relato direto: card da Marina Saran Bernardo exibido
+  como se fosse do Marciel Santos Alexandrino no painel) — o mecanismo
+  antigo em `autoRegistrar()` (ler `usuarios_publicos`, computar
+  localmente, escrever) tinha uma janela de corrida real entre 2 pessoas
+  se cadastrando quase ao mesmo tempo com o mesmo par de iniciais.
+  `editarInicial()` (L24019, troca manual de sigla) também usa a mesma
+  transação antes de gravar, e libera a sigla antiga no registro (só se
+  o registro ainda apontar pra este uid — sigla pode ser compartilhada).
+  As duas funções caem de volta pro mecanismo antigo (não-atômico, mas
+  não trava ninguém) se o registry ainda não tiver a regra publicada.
 - `_onRealAuthChange(fn)` — L31375 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara

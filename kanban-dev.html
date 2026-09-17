@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.696-dev</div>
+<div class="version">v8.30.697-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10736,6 +10736,80 @@ function _applyRoleVisibility(){
   const fabHotline=document.getElementById('fab-agente-hotline-btn');
   if(fabHotline) fabHotline.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
 }
+// Reivindica um init de forma ATÔMICA via kanban/init_registry/{INIT}=uid.
+// Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário — card
+// da Marina Saran Bernardo aparecia no Histórico do painel como se fosse do
+// Marciel Santos Alexandrino): o mecanismo antigo de evitar colisão de
+// iniciais no 1º login (autoRegistrar() abaixo) lia usuarios_publicos,
+// computava localmente qual sigla estava livre, e só DEPOIS escrevia — 3
+// passos separados, sem nada impedindo 2 pessoas se cadastrando quase ao
+// mesmo tempo de lerem a mesma sigla como livre antes de qualquer uma
+// escrever. As iniciais dos dois ("MS", mesmo algoritmo — 1ª letra do
+// 1º+2º nome) coincidiram, e as duas acabaram gravadas com "MS".
+// runTransaction() garante atomicidade de verdade (mesma técnica já usada
+// em fbCreateCard()/fila do orquestrador/Kudos): só uma reivindicação
+// vence, mesmo sob concorrência real — sem depender de sorte no timing.
+async function _claimUserInit(uid, baseInit){
+  try{
+    await _ensureInitRegistryBackfilled();
+    let init = baseInit, n = 2;
+    while(n < 50){
+      const ref = window._ref(window._db, 'kanban/init_registry/'+init);
+      const result = await window._runTransaction(ref, current => (current===null||current===uid) ? uid : undefined);
+      if(result.committed) return init;
+      init = baseInit + (n++);
+    }
+    // Fallback extremo — nunca deveria chegar aqui com <50 pessoas colidindo
+    // no mesmo par de iniciais; evita loop infinito em vez de travar o login.
+    return baseInit + Date.now().toString(36).slice(-4).toUpperCase();
+  }catch(e){
+    // Fallback pro mecanismo antigo (não-atômico, mas não trava NINGUÉM
+    // de se cadastrar) — kanban/init_registry precisa de
+    // database.rules.json publicado (deploy manual, fora do alcance do
+    // GitHub Pages, ver CLAUDE.md); se o código já foi ao ar mas a regra
+    // ainda não, a transação acima cai aqui em vez de quebrar o login.
+    console.warn('[_claimUserInit] kanban/init_registry indisponível, usando fallback não-atômico:', e);
+    try{
+      const pubSnap = await fbGet('kanban/usuarios_publicos');
+      const allPub = pubSnap.val()||{};
+      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
+      let init = baseInit;
+      if(usedInits.has(init)){
+        let n=2; while(usedInits.has(init+n) && n<10) n++;
+        init = init+n;
+      }
+      return init;
+    }catch(e2){
+      console.warn('[_claimUserInit] fallback também falhou, usando init cru sem checagem:', e2);
+      return baseInit;
+    }
+  }
+}
+// Preenche kanban/init_registry pra quem já tinha init ANTES dele existir —
+// só roda 1x por sessão (guard). update() simples, não precisa de
+// transação: cada entrada vem de um init JÁ estabelecido/existente, então
+// 2 pessoas rodando o backfill em paralelo escreveriam o mesmo valor —
+// inofensivo, diferente da corrida original (que era sobre CRIAR um valor
+// novo, não replicar um já existente).
+let _initRegistryBackfillDone = false;
+async function _ensureInitRegistryBackfilled(){
+  if(_initRegistryBackfillDone) return;
+  _initRegistryBackfillDone = true;
+  try{
+    const [pubSnap, regSnap] = await Promise.all([
+      fbGet('kanban/usuarios_publicos'),
+      fbGet('kanban/init_registry'),
+    ]);
+    const pub = pubSnap.val()||{};
+    const reg = regSnap.val()||{};
+    const updates = {};
+    Object.entries(pub).forEach(([uid2,d])=>{
+      const init2 = (d.init||'').toUpperCase();
+      if(init2 && !reg[init2]) updates['kanban/init_registry/'+init2] = uid2;
+    });
+    if(Object.keys(updates).length) await window._update(window._ref(window._db), updates);
+  }catch(e){ console.warn('[_ensureInitRegistryBackfilled] falhou, segue sem registry:', e); }
+}
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -10743,28 +10817,30 @@ function autoRegistrar(user){
     window._currentUserRole='adm';
     _applyRoleVisibility();
   }
-  // Busca em paralelo o usuário (existe ou não) e o registro público de TODO
-  // mundo, não só do squad atual — precisa dele aqui embaixo pra checar
-  // colisão de iniciais board inteiro antes de gravar um usuário novo (ver
-  // comentário abaixo). Iniciais são um campo GLOBAL por uid
-  // (kanban/usuarios/{uid}.init), então checar só o squad atual deixava
-  // passar batido gente de squads diferentes com a mesma sigla — achado
-  // real: "GS" de Outlet CRM e "GS" de Site Hering, cards se misturando no
-  // Meu Dia sem ninguém saber por quê até investigar.
-  Promise.all([fbGet('kanban/usuarios/'+user.uid), fbGet('kanban/usuarios_publicos')]).then(([snap, pubSnap])=>{
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) — ver
+  // _claimUserInit() abaixo pra colisão board inteiro (não só squad atual;
+  // achado real antigo: "GS" de Outlet CRM e "GS" de Site Hering, cards se
+  // misturando no Meu Dia sem ninguém saber por quê até investigar).
+  // Achado real (/monitorarbugs, 2026-09-17): não precisa mais buscar
+  // usuarios_publicos aqui — a checagem de colisão migrou pra dentro de
+  // _claimUserInit() via runTransaction(), leitura a menos.
+  fbGet('kanban/usuarios/'+user.uid).then(async (snap)=>{
     const existe=snap.val();
     let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
-      // Colisão de iniciais board inteiro: se a inicial gerada automaticamente
-      // já está em uso por qualquer outro uid (de qualquer squad), acrescenta
-      // um dígito até achar uma livre — silencioso de propósito (não tem
-      // diálogo nesse fluxo pra mostrar erro), mas evita duplicar às cegas.
-      const allPub = pubSnap.val()||{};
-      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
-      if(usedInits.has(init)){
-        let n=2; while(usedInits.has(init+n) && n<10) n++;
-        init = init+n;
-      }
+      // Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário —
+      // um card da Marina Saran Bernardo aparecia no Histórico do painel
+      // como se fosse do Marciel Santos Alexandrino): as iniciais dos dois
+      // ("MS", mesmo algoritmo — 1ª letra do 1º+2º nome) colidiram porque
+      // este bloco fazia ler-checar-escrever em 3 passos separados (leu
+      // usuarios_publicos, computou localmente, gravou) — sem nada
+      // impedindo 2 pessoas se cadastrando quase ao mesmo tempo de lerem
+      // "MS" como livre ANTES de qualquer uma das duas escrever, e as duas
+      // acabarem gravadas com a mesma sigla. `_claimUserInit()` reivindica
+      // via `runTransaction()` num nó dedicado (`kanban/init_registry`) —
+      // atômico de verdade, sobrevive a concorrência real (mesma técnica já
+      // usada em `fbCreateCard()`/fila do orquestrador/Kudos).
+      init = await _claimUserInit(user.uid, init);
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
@@ -23961,6 +24037,32 @@ async function editarInicial(uid, initAtual, nome){
   let migrar=false;
   if(cardsAfetados.length){
     migrar = await uiConfirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
+  }
+  // Reivindica a nova inicial no mesmo registro atômico do 1º login (ver
+  // _claimUserInit()) — a checagem `conflito` acima já dá um erro amigável
+  // com o nome de quem já usa, mas é ler-depois-escrever (mesma classe de
+  // corrida corrigida em autoRegistrar()); esta transação é a garantia de
+  // verdade bem antes de gravar, ainda que a janela de 2 ADMs trocando
+  // pra MESMA sigla ao mesmo tempo seja rara (ação manual, deliberada).
+  // Try/catch: se kanban/init_registry ainda não tiver a regra publicada
+  // (deploy manual do database.rules.json, ver CLAUDE.md), não trava a
+  // edição — segue confiando só na checagem `conflito` de cima, como
+  // sempre funcionou.
+  try{
+    const claimRef = window._ref(window._db, 'kanban/init_registry/'+novaInit);
+    const claimResult = await window._runTransaction(claimRef, current => (current===null||current===uid) ? uid : undefined);
+    if(!claimResult.committed){
+      showToast('⚠ Iniciais "'+novaInit+'" foram reivindicadas por outra pessoa agora mesmo. Tente de novo.');
+      return;
+    }
+    // Libera a sigla antiga no registro — só se ELE (uid) for quem está
+    // registrado lá; se "initAtual" for compartilhada com outra pessoa
+    // (nosso caso real: 2 pessoas com "MS"), o registro pode já apontar
+    // pra ela, não pra este uid — nesse caso não mexe (a outra pessoa
+    // continua dona).
+    window._runTransaction(window._ref(window._db, 'kanban/init_registry/'+initAtual.toUpperCase()), current => current===uid ? null : undefined).catch(()=>{});
+  }catch(e){
+    console.warn('[editarInicial] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
   }
   // Atualiza a inicial do usuário
   await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});

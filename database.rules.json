@@ -132,6 +132,12 @@
           ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))"
         }
       },
+      "init_registry": {
+        ".read": "auth != null",
+        "$init": {
+          ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || newData.val() === auth.uid || (newData.val() === null && data.val() === auth.uid))"
+        }
+      },
       "presence": {
         ".read": "auth != null && auth.token.email.endsWith('@ciahering.com.br')",
         "$uid": {
