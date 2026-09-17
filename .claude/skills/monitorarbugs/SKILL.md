@@ -1307,6 +1307,38 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   mesmo padrão "otimista + revert no catch" pra cards. PR #947, prod
   v8.30.686.
 
+- **2026-09-17, tags (pedido explícito, escopo nomeado)**: 2 achados
+  reais, mesma causa raiz, técnica 1 — Tamanho (`SIZE_TAGS`), Submarca
+  (`SUBMARCA_TAGS`) e Canal de venda (`CANAL_VENDA_TAGS`) são grupos de
+  tags mutuamente exclusivas (nunca 2 do mesmo grupo no mesmo card), já
+  garantido em 3 lugares (campos dedicados do modal, `_doBulkTagMulti()`,
+  ações de Automação `set_tamanho`/`set_submarca`/`set_canal_venda`) —
+  mas um caminho GENÉRICO de mexer em tags nunca tinha essa checagem:
+  (1) dropdown "+ Adicionar tag…" do modal (`_tagAddAvail()`) listava
+  as tags de grupo junto com as demais, sem checar exclusividade nem a
+  visibilidade por tag que o PO configura (`_submarcaIsVisivel()`/
+  `_canalVendaIsVisivel()`, também ignoradas) — dava pra somar "👕 P" +
+  "👕 G" no mesmo card por ali; (2) **mais severo, achado incidental**
+  — a ação de Automação "Adicionar tag" (`add_tag`, genérica) aceita
+  qualquer tag no seletor, incluindo as de grupo, e seu `run()` só
+  empurrava a nova sem tirar a antiga do mesmo grupo — regra configurada
+  assim corrompia o card silenciosamente (roda sozinha, sem tela, só
+  aparece num relatório depois). Fix: dropdown genérico exclui os 3
+  grupos (usa o campo dedicado); `add_tag.run()` ganhou a mesma
+  exclusividade que as ações dedicadas já tinham. Decisão deliberada:
+  o seletor `case 'tag'` de `_autoRenderValueOptions()` (compartilhado
+  com os TRIGGERS "tag adicionada/removida") foi mantido intacto —
+  excluir os grupos dali quebraria configs de trigger legítimas; fix
+  ficou só no ponto de mutação. Checado e sem achado: picker de tags de
+  Campanha (`campToggleTag()`) é multi-select livre pra categorizar a
+  Campanha, não o card — invariante não se aplica. PR #952, dev
+  v8.30.691-dev. **Lição pra próxima vez**: quando uma invariante
+  (exclusividade de grupo, visibilidade, etc.) já está garantida em
+  vários pontos "dedicados", vale procurar explicitamente por um ponto
+  "genérico" que trabalhe no mesmo dado sem saber da regra — é onde a
+  invariante mais escapa, e o de Automação é sempre o mais perigoso
+  desses por rodar sem ninguém olhando.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
