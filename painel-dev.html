@@ -2826,7 +2826,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.47 · painel-dev</div>
+<div class="version">v3.48 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10637,35 +10637,46 @@ function resetSquadFlow(){
   const sq=SQUADS.find(s=>s.id===cfgSquadId);
   if(!confirm('Zerar a contagem de métricas de fluxo do squad "'+(sq?sq.label:cfgSquadId)+'"?\n\nOs cards NÃO são apagados. Apenas Cycle Time, Throughput e Work Item Age passam a contar a partir de agora. Útil após importar histórico do Trello.')) return;
   const now=new Date().toISOString();
-  const d=squadData[cfgSquadId];
-  const touchedIds=[];
-  const cards=(d&&Array.isArray(d.cards)?d.cards:[]).map(c=>{
-    if(!c||c.archived) return c;
-    const nf={ enteredAt:{}, log:[], firstStartAt:null, doneAt:null, resetAt:now };
-    nf.enteredAt[c.col]=now;
-    const { startId, doneId }=flowColsFor(d);
-    if(c.col===startId){ nf.firstStartAt=now; }
-    if(c.col===doneId){ nf.firstStartAt=now; nf.doneAt=now; }
-    touchedIds.push(c.id);
-    return { ...c, flow:nf, _lastFlowCol:c.col, updatedAt:now };
-  });
-  // BUGFIX (achado 2026-08-04, investigando "cache_desatualizado_demais"
-  // persistente num squad — ver comentário grande em resolveAllBlockers()):
-  // escrevia /dados/cards direto sem tocar /dados/cards_updated_at, o
-  // índice paralelo que kanban.html usa pra saber quais cards rebaixar de
-  // novo no carregamento em duas etapas. Quem já tinha cache válido nunca
-  // ficava sabendo que o flow foi resetado — continuava servindo o card
-  // com o flow ANTIGO até um fallback completo acontecer por outro
-  // motivo. Fix: update() multi-path atômico junto com /cards_updated_at/
-  // {id} de cada card realmente tocado (todos os não-arquivados, aqui).
-  const base = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados');
-  const updates = { cards, flow_baseline:{at:now, by:'painel'} };
-  touchedIds.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = now; });
-  window._update(base, updates).then(()=>{
-    if(d){ d.cards=cards; d.flowBaseline={at:now,by:'painel'}; }
-    showToast('⏱ Contagem zerada para '+(sq?sq.label:cfgSquadId));
-    updateFlowBaselineLabel();
-    renderAll();
+  const sqId=cfgSquadId;
+  const d=squadData[sqId];
+  // Achado real (/monitorarbugs, 2026-09-17): mesma classe de bug de
+  // resolveAllBlockers() (ver comentário grande lá) — mapeava
+  // squadData[cfgSquadId].cards (cache local, só atualizado ao abrir a
+  // página/voltar pra aba/clicar em "Atualizar dados") e escrevia a árvore
+  // /cards INTEIRA de volta com esse cache. Deixar o painel aberto por um
+  // tempo e clicar aqui apagava silenciosamente qualquer card criado/
+  // editado/excluído por qualquer pessoa nesse intervalo. Fix: relê /cards
+  // fresco do Firebase antes de mutar e escrever.
+  window._get(window._ref(window._db, 'kanban/squads/'+sqId+'/dados/cards')).then(snap=>{
+    const freshCards = snap.val();
+    const cardsArr = Array.isArray(freshCards) ? freshCards : [];
+    const touchedIds=[];
+    const cards = cardsArr.map(c=>{
+      if(!c||c.archived) return c;
+      const nf={ enteredAt:{}, log:[], firstStartAt:null, doneAt:null, resetAt:now };
+      nf.enteredAt[c.col]=now;
+      const { startId, doneId }=flowColsFor(d);
+      if(c.col===startId){ nf.firstStartAt=now; }
+      if(c.col===doneId){ nf.firstStartAt=now; nf.doneAt=now; }
+      touchedIds.push(c.id);
+      return { ...c, flow:nf, _lastFlowCol:c.col, updatedAt:now };
+    });
+    // BUGFIX (achado 2026-08-04, investigando "cache_desatualizado_demais"
+    // persistente num squad — ver comentário grande em resolveAllBlockers()):
+    // escrevia /dados/cards direto sem tocar /dados/cards_updated_at, o
+    // índice paralelo que kanban.html usa pra saber quais cards rebaixar de
+    // novo no carregamento em duas etapas. Fix: update() multi-path atômico
+    // junto com /cards_updated_at/{id} de cada card realmente tocado (todos
+    // os não-arquivados, aqui).
+    const base = window._ref(window._db, 'kanban/squads/'+sqId+'/dados');
+    const updates = { cards, flow_baseline:{at:now, by:'painel'} };
+    touchedIds.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = now; });
+    return window._update(base, updates).then(()=>{
+      if(d){ d.cards=cards; d.flowBaseline={at:now,by:'painel'}; }
+      showToast('⏱ Contagem zerada para '+(sq?sq.label:sqId));
+      updateFlowBaselineLabel();
+      renderAll();
+    });
   }).catch(e=>{ console.error(e); showToast('❌ Erro: '+e.message); });
 }
 
@@ -10736,59 +10747,76 @@ function resolveOwnerName(init, squadId){
 
 // ── BLOQUEIOS ──────────────────────────────────────────────────────
 function resolveAllBlockers(){
-  const squadsToSave = new Set();
-  const touchedBySquad = {}; // squadId -> [cardId, ...] -- ver BUGFIX abaixo
-  let count = 0;
   const nowIso = new Date().toISOString();
-  SQUADS.forEach(sq=>{
-    const d = squadData[sq.id]; if(!d || !d.cards) return;
+  // Usa o cache local (squadData) só pra decidir QUAIS squads vale a pena
+  // olhar — decisão de UI barata, não a fonte de verdade da escrita (ver
+  // BUGFIX abaixo).
+  const candidatos = SQUADS.map(sq=>{
+    const d = squadData[sq.id]; if(!d || !d.cards) return null;
     const doneCol = d.columns?.find(c=>c.id==='done'||c.name?.toLowerCase().includes('conclu'))?.id || 'done';
-    // Mesma detecção mode-aware de renderBlockers() — ver comentário lá.
     const bmode = d.blockerMode||'col';
-    (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+    const temBloqueado = (Array.isArray(d.cards)?d.cards:[]).some(c=>{
       const isBlocked = bmode==='col' ? c.col==='blocker' : !!c.blocker;
-      if(c && !c.archived && isBlocked && c.col!==doneCol){
-        c.col = doneCol;
-        c.doneAt = nowIso;
-        c.updatedAt = nowIso;
-        // Limpa os dois campos do modo "tag" (não só blocker) — deixar
-        // blockerReason órfão pra trás é justamente o que causava um card já
-        // resolvido continuar contando como bloqueado depois, se algum dia o
-        // squad tivesse mudado de modo (ver bug corrigido em renderBlockers).
-        c.blocker = false;
-        c.blockerReason = '';
-        count++;
-        squadsToSave.add(sq.id);
-        (touchedBySquad[sq.id] = touchedBySquad[sq.id]||[]).push(c.id);
-      }
+      return c && !c.archived && isBlocked && c.col!==doneCol;
     });
-  });
-  if(!count){ showPainelToast('Nenhum bloqueio ativo encontrado.'); return; }
-  // Save each affected squad to Firebase
-  squadsToSave.forEach(sqId=>{
-    const d = squadData[sqId]; if(!d) return;
-    // BUGFIX (achado 2026-08-04, investigando "cache_desatualizado_demais"
-    // persistente num squad): isto escrevia só /dados/cards direto (visão
-    // "crua"), sem tocar /dados/cards_updated_at — o índice paralelo que
-    // kanban.html usa (ver fbSaveAll lá) pra decidir, no carregamento em
-    // duas etapas, quais cards precisam ser rebaixados de novo. Sem
-    // atualizar esse índice, quem já tinha esses cards em cache continuava
-    // com o timestamp cacheado batendo com o remoto (que nunca mudava) —
-    // a resolução de bloqueio feita aqui no painel nunca "chegava" de
-    // verdade pra quem já tinha aberto o board antes: o card seguia
-    // aparecendo bloqueado no cache local, silenciosamente desatualizado,
-    // até um reload que caísse no fallback completo por outro motivo.
-    // Fix: update() multi-path atômico, igual ao padrão de fbSaveCard() em
-    // kanban.html — grava /cards inteiro (mesma escrita de antes) JUNTO
-    // com /cards_updated_at/{id} só dos cards realmente tocados (chave com
-    // barra = caminho profundo, não substitui o nó inteiro).
+    return temBloqueado ? {sqId:sq.id, doneCol, bmode} : null;
+  }).filter(Boolean);
+  if(!candidatos.length){ showPainelToast('Nenhum bloqueio ativo encontrado.'); return; }
+
+  // Achado real (/monitorarbugs, 2026-09-17): a versão anterior mutava e
+  // gravava squadData[sqId].cards direto — o cache local, que só é
+  // atualizado ao abrir a página, voltar pra aba, ou clicar em
+  // "🔄 Atualizar dados" (ver comentário na declaração de loadAll(): o
+  // polling automático foi removido de propósito por custo de Firebase).
+  // Deixar o painel aberto e em foco por um tempo (uso normal de um
+  // dashboard) e clicar aqui reescrevia a árvore /cards INTEIRA do squad
+  // com esse cache velho — qualquer card criado, editado ou excluído por
+  // QUALQUER pessoa nesse intervalo sumia em silêncio, revertido pro
+  // estado antigo. Fix: relê /cards fresco do Firebase na hora de
+  // escrever, recalcula quem AINDA está bloqueado nos dados frescos (não
+  // no cache), e só grava em cima disso — mesma classe de fix já usada em
+  // Kudos (PR #896) e Lembretes (PR #900) pra esse mesmo padrão de bug.
+  let totalCount = 0, pending = candidatos.length, teveErro = false;
+  candidatos.forEach(({sqId, doneCol, bmode})=>{
     const base = window._ref(window._db, 'kanban/squads/'+sqId+'/dados');
-    const updates = { cards: d.cards };
-    (touchedBySquad[sqId]||[]).forEach(cardId=>{ updates['cards_updated_at/'+cardId] = nowIso; });
-    window._update(base, updates).catch(e=>console.error('Save error',sqId,e));
+    window._get(window._ref(window._db, 'kanban/squads/'+sqId+'/dados/cards')).then(snap=>{
+      const freshCards = snap.val();
+      const cardsArr = Array.isArray(freshCards) ? freshCards : [];
+      const touchedIds=[];
+      cardsArr.forEach(c=>{
+        const isBlocked = bmode==='col' ? c.col==='blocker' : !!c.blocker;
+        if(c && !c.archived && isBlocked && c.col!==doneCol){
+          c.col = doneCol;
+          c.doneAt = nowIso;
+          c.updatedAt = nowIso;
+          // Limpa os dois campos do modo "tag" (não só blocker) — deixar
+          // blockerReason órfão pra trás é justamente o que causava um card já
+          // resolvido continuar contando como bloqueado depois, se algum dia o
+          // squad tivesse mudado de modo (ver bug corrigido em renderBlockers).
+          c.blocker = false;
+          c.blockerReason = '';
+          touchedIds.push(c.id);
+        }
+      });
+      if(touchedIds.length){
+        totalCount += touchedIds.length;
+        // BUGFIX (achado 2026-08-04): update() multi-path atômico — grava
+        // /cards JUNTO com /cards_updated_at/{id} só dos cards tocados
+        // (índice paralelo que kanban.html usa pra saber o que rebaixar de
+        // novo do cache — ver comentário completo no histórico do PR).
+        const updates = { cards: cardsArr };
+        touchedIds.forEach(cardId=>{ updates['cards_updated_at/'+cardId] = nowIso; });
+        return window._update(base, updates);
+      }
+    }).catch(e=>{ teveErro=true; console.error('Save error',sqId,e); })
+      .finally(()=>{
+        if(--pending===0){
+          renderAll();
+          if(totalCount) showPainelToast('✅ '+totalCount+' bloqueio'+(totalCount>1?'s':'')+' marcado'+(totalCount>1?'s':'')+' como Concluído!');
+          else showPainelToast(teveErro ? '⚠ Erro ao resolver bloqueios — tente de novo.' : 'Nenhum bloqueio ativo encontrado.');
+        }
+      });
   });
-  renderAll();
-  showPainelToast('✅ '+count+' bloqueio'+(count>1?'s':'')+' marcado'+(count>1?'s':'')+' como Concluído!');
 }
 
 function showPainelToast(msg){

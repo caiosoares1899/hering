@@ -16623,6 +16623,41 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.48 · painel-dev — 2026-09-17 · `/monitorarbugs`: "Resolver bloqueios" e "Zerar contagem" podiam apagar edições de outras pessoas em silêncio
+
+Rodada de `/monitorarbugs` sem área nomeada — área escolhida por
+prioridade 2 (Dashboard consolidado do painel, nunca tinha tido rodada
+própria).
+
+**2 achados reais, mesma causa raiz, técnica 1** (comparar todos os
+lugares que escrevem `/cards` de volta pro Firebase em
+`painel-dev.html` — só existiam 2, e os dois tinham o mesmo bug).
+`loadAll()` documenta explicitamente que o polling automático de
+`squadData` foi removido de propósito (custo de Firebase) — hoje o
+cache local só atualiza ao abrir a página, voltar pra aba, ou clicar
+em "🔄 Atualizar dados". `resolveAllBlockers()` (botão "✅ Resolver
+todos" dos Bloqueios) e `resetSquadFlow()` (⚙ Config → "Zerar
+contagem de fluxo") mutavam esse cache local e escreviam a árvore
+`/cards` **inteira** do squad de volta — deixar o painel aberto e em
+foco por um tempo (uso normal de dashboard) e clicar em qualquer um
+dos dois apagava silenciosamente qualquer card criado, editado ou
+excluído por qualquer pessoa nesse intervalo, revertido pro estado
+velho do cache. Mesma classe de bug já corrigida antes em Kudos (PR
+#896, via transação) e Lembretes (PR #900) — só que aqui a escrita
+sobrescrevia o `/cards` inteiro do squad, não um campo específico.
+
+Fix nos 2: relê `/cards` fresco do Firebase direto na hora de
+escrever (recalculando quem ainda está bloqueado, no caso de
+`resolveAllBlockers()`) em vez de reusar o cache — mesmo padrão de
+"leia fresco antes de escrever" já usado em várias correções desta
+sessão. Checado e sem achado: os outros 2 lugares que citam
+`d.cards`/`cards: d.cards` (`buildGlobalPayload()`/`exportEachSquadJSON()`)
+são exportação de backup em JSON (download local, nunca escrevem de
+volta no Firebase) — staleness ali é um "backup pode estar um pouco
+desatualizado", não perda de dado real.
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.52 · painel — 2026-09-16 · `/monitorarbugs`: rascunho de Mural de teste do ambiente dev vazado pra produção
 
 Rodada de `/monitorarbugs` sem área nomeada — foco em `painel.html`
