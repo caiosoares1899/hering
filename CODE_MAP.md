@@ -2423,7 +2423,7 @@ sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
 pedidos, sem viewer de log separado.
 
-#### 📋 Anotações da reunião na aba OKR (2026-09-17, v3.51 · painel-dev)
+#### 📋 Anotações da reunião na aba OKR (2026-09-17, v3.51 · painel-dev — promovida pra prod v3.55 em 2026-09-17)
 Pedido direto do usuário depois de shippar a segmentação por reunião em
 `okr-apresentacao.slide.html`: "na vdd quero q isso apareça la no painel
 aba okr" — aditivo, lê/escreve o MESMO node

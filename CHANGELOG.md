@@ -16995,6 +16995,33 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.55 · painel — 2026-09-17 · Promove pra prod: 📋 Anotações da reunião na aba OKR + fix de negrito no texto do Agente Ágil
+
+Promoção pedida direto pelo usuário ("sobe PAINEL prod, sem kanban"),
+depois de validar as duas rodadas de dev acumuladas desde a última
+promoção (v3.51 e v3.52 abaixo — ver entradas correspondentes pro
+detalhe técnico completo de cada uma):
+
+1. **📋 Anotações da reunião na aba 🎯 OKR** — botão de alternância no
+   toolbar, lê/escreve o mesmo node Firebase
+   (`kanban/okr/reuniao_notas/{data}/{id}`) da apresentação ao vivo
+   (`okr-apresentacao.slide.html`), aditivo — não substitui o painel
+   flutuante de lá.
+2. **Fix: `**negrito**` aparecia literal** no texto do Agente Ágil —
+   `_campRenderMd()` renomeada pra `_renderMd()` (deixou de ser só de
+   Campanhas) e passa a ser usada também em `renderOkrAgenteChat()`
+   (Central Agente Ágil) e `renderAgentesLogCross()` (log cross-squad
+   da aba 🤖 Agentes).
+
+`kanban.html` **não foi tocado nesta promoção** (pedido explícito do
+usuário) — segue na versão anterior.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`diff painel.html painel-dev.html` confirmado só com a divergência
+pré-existente já esperada (banner de dev, seção "🔔 Enviar push
+manual" só em prod, sufixos de config do Firebase, path de debug
+bytes) — nenhum resíduo relacionado a esta promoção.
+
 ### painel-dev.html v3.52 · painel-dev — 2026-09-17 · Fix: texto do Agente Ágil mostrava `**negrito**` literal em vez de renderizar
 
 Relato direto do usuário, com print da Central Agente Ágil (aba OKR):

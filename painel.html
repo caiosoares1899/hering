@@ -1748,6 +1748,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
         <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
         <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
+        <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
         <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
         <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
         <button type="button" class="btn btn-sm" id="okr-novo-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
@@ -1785,6 +1786,25 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <input type="text" class="okr-input" id="okr-agente-inp" placeholder="Ex.: já validamos a viabilidade do OMNI, falta apresentar pro conselho…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrAgenteChatSend();}">
         <button type="button" class="btn btn-sm" id="okr-agente-send-btn" onclick="_okrAgenteChatSend()">Enviar</button>
       </div>
+    </div>
+
+    <!-- 📋 Anotações da reunião — mesmo dado ao vivo de
+         okr-apresentacao.slide.html (kanban/okr/reuniao_notas/{data}/{id},
+         pedido direto do usuário: "na vdd quero q isso apareça la no
+         painel aba okr" — aditivo, não substitui o painel flutuante da
+         apresentação). Alterna com a lista de Objetivos, mesmo padrão de
+         _okrToggleHistorico/_okrToggleAgenteChat via _okrSetView(). -->
+    <div id="okr-notas-wrap" style="display:none;">
+      <div class="sec-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px;">
+        <span>📋 Anotações da reunião</span>
+        <select id="okr-notas-date-sel" class="pt-filter-input" onchange="window._okrNotasSetViewDate(this.value)" style="max-width:220px;"></select>
+      </div>
+      <div id="okr-notas-list" style="max-height:440px;overflow-y:auto;margin-bottom:10px;padding-right:2px;"></div>
+      <div class="okr-list-add" id="okr-notas-compose">
+        <input type="text" class="okr-input" id="okr-notas-inp" placeholder="Escreva uma anotação… (Enter envia)" onkeydown="if(event.key==='Enter'){event.preventDefault();window._okrNotaAdd();}">
+        <button type="button" class="btn btn-sm" id="okr-notas-send-btn" onclick="window._okrNotaAdd()">Enviar</button>
+      </div>
+      <div id="okr-notas-readonly" style="font-size:11px;color:var(--txt3);text-align:center;font-style:italic;padding:8px;" hidden>🔒 Reunião encerrada — só leitura. Abra "Hoje" pra adicionar uma anotação nova.</div>
     </div>
 
     <!-- 📈 Histórico — Fase 3: lê kanban/okr/snapshots/{data} (gravado toda
@@ -2866,12 +2886,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.54 · painel</div>
+<div class="version">v3.55 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get, update, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
@@ -2914,7 +2934,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   return credential;
 });
 
-window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove;
 // query/orderByChild/limitToLast: mesmo padrão de window._query/_orderByChild/
 // _equalTo já pendurados no kanban-dev.html (fix do consumo de comunicados,
 // 2026-09-11) -- bindings de import de módulo ES não atravessam pro <script>
@@ -3987,8 +4007,13 @@ function renderCampDetalhe(c){
 }
 
 
-// Render de texto enriquecido para campanhas (display): negrito, itálico, links, menções, cards
-function _campRenderMd(txt){
+// Render de texto enriquecido (display): negrito, itálico, sublinhado, código,
+// links, menções, cards — usado por Campanhas, Central Agente Ágil (aba OKR)
+// e o log cross-squad da aba 🤖 Agentes (nome genérico porque deixou de ser
+// só de campanhas — achado real, 2026-09-17: texto do Agente Ágil com
+// **negrito** aparecia com asteriscos literais em todo canto que só fazia
+// esc()+nl2br sem passar por aqui).
+function _renderMd(txt){
   if(!txt) return '';
   txt = String(txt).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
     .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
@@ -4035,7 +4060,7 @@ function _renderEntrada(e, campId){
     ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
-    <div class="camp-entry-corpo">${typeof _campRenderMd==='function'?_campRenderMd(e.corpo||''):esc(e.corpo||'')}</div>
+    <div class="camp-entry-corpo">${typeof _renderMd==='function'?_renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
     <div class="camp-entry-meta">${esc(e.autor||'?')} · ${quando} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
@@ -4933,6 +4958,7 @@ function loadOkr(){
   loadOkrTags();
   loadOkrSnapshots();
   loadOkrAgenteChat();
+  loadOkrReuniaoNotas();
 }
 
 // ── 📈 Histórico — Fase 3: kanban/okr/snapshots/{data}, gravado toda sexta
@@ -4977,7 +5003,7 @@ function renderOkrAgenteChat(){
     const cls = 'okr-comment okr-agente-msg' + (isAgente ? '' : ' okr-agente-msg-humano');
     const dt = m.ts ? new Date(m.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
     const autor = isAgente ? '🤖 Agente Ágil' : esc(m.author||m.init||'?');
-    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${esc(m.text||'').replace(/\n/g,'<br>')}</div>`;
+    return `<div class="${cls}"><span class="okr-comment-ts">${dt}</span><b>${autor}</b><br>${_renderMd(m.text||'')}</div>`;
   }).join('');
   if(wasNearBottom) list.scrollTop = list.scrollHeight;
 }
@@ -4999,18 +5025,95 @@ async function _okrAgenteChatSend(){
   await window._set(window._ref(window._db,'kanban/okr/agente_chat/'+msg.id), msg);
 }
 
-// 3 vistas mutuamente exclusivas na aba OKR (lista de Objetivos / Histórico
-// / Central Agente Ágil) — nunca duas juntas. _okrSetView() é o único ponto
-// que decide isso; os toggles individuais só chamam ela.
-function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente'
+// ── 📋 Anotações da reunião — mesmo dado ao vivo de
+// okr-apresentacao.slide.html (kanban/okr/reuniao_notas/{data}/{id},
+// {data}=YYYY-MM-DD local, 1 reunião = 1 dia). Pedido direto do usuário:
+// "na vdd quero q isso apareça la no painel aba okr" — leitura/escrita
+// nesta aba usa a MESMA fonte de dado que a apresentação ao vivo, sync em
+// tempo real nas duas telas (onValue no node inteiro, filtra por data no
+// cliente, mesmo padrão de okrReuniaoNotas aqui e okrNotas na apresentação).
+let okrReuniaoNotas = {};  // {data: {notaId: {texto,autorUid,ts}}}
+let _okrShowNotas = false;
+let _okrNotasViewDate = null;
+function loadOkrReuniaoNotas(){
+  window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{
+    okrReuniaoNotas = snap.val() || {};
+    if(_okrShowNotas) renderOkrNotas();
+  });
+}
+function _okrNotasPopulateDateSel(){
+  const sel = document.getElementById('okr-notas-date-sel'); if(!sel) return;
+  const hoje = _todayStr();
+  const datas = new Set(Object.keys(okrReuniaoNotas)); datas.add(hoje);
+  const lista = [...datas].sort().reverse();
+  const atual = sel.value || _okrNotasViewDate || hoje;
+  sel.innerHTML = lista.map(d=>`<option value="${d}">${esc(d===hoje ? 'Hoje, '+_fmtDateBR(d) : _fmtDateBR(d))}</option>`).join('');
+  sel.value = lista.includes(atual) ? atual : hoje;
+  _okrNotasViewDate = sel.value;
+}
+window._okrNotasSetViewDate = dataStr => {
+  _okrNotasViewDate = dataStr;
+  renderOkrNotas();
+};
+function renderOkrNotas(){
+  const list = document.getElementById('okr-notas-list'); if(!list) return;
+  _okrNotasPopulateDateSel();
+  const isHoje = _okrNotasViewDate===_todayStr();
+  document.getElementById('okr-notas-compose').style.display = isHoje ? '' : 'none';
+  document.getElementById('okr-notas-readonly').hidden = isHoje;
+  const notasDoDia = okrReuniaoNotas[_okrNotasViewDate] || {};
+  const notas = Object.entries(notasDoDia).filter(([,n])=>n).sort((a,b)=>(a[1].ts||'').localeCompare(b[1].ts||''));
+  if(!notas.length){
+    list.innerHTML = isHoje
+      ? '<div style="font-size:11px;color:var(--txt3);">Nenhuma anotação ainda. Escreva a primeira aqui embaixo.</div>'
+      : '<div style="font-size:11px;color:var(--txt3);">Nenhuma anotação registrada nesta reunião.</div>';
+    return;
+  }
+  const meuUid = window._currentUser?.uid;
+  list.innerHTML = notas.map(([id,n])=>{
+    const p = _okrPessoaInfo(n.autorUid);
+    const dt = n.ts ? new Date(n.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+    const delBtn = (isHoje && n.autorUid===meuUid) ? `<span style="cursor:pointer;margin-left:6px;" title="Excluir" onclick="window._okrNotaDel('${id}')">✕</span>` : '';
+    return `<div class="okr-comment"><span class="okr-comment-ts">${dt}${delBtn}</span><b>${esc(p.nome.split(' ')[0]||'—')}</b><br>${esc(n.texto||'').replace(/\n/g,'<br>')}</div>`;
+  }).join('');
+}
+window._okrNotaAdd = () => {
+  const inp = document.getElementById('okr-notas-inp');
+  const texto = (inp.value||'').trim();
+  if(!texto || !window._currentUser) return;
+  const hoje = _todayStr();
+  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6);
+  window._set(window._ref(window._db,'kanban/okr/reuniao_notas/'+hoje+'/'+id), {
+    texto,
+    autorUid: window._currentUser.uid,
+    ts: new Date().toISOString(),
+  }).catch(err=>console.error('[notas] falha ao salvar:', err));
+  inp.value = '';
+};
+window._okrNotaDel = id => {
+  const hoje = _todayStr();
+  const n = (okrReuniaoNotas[hoje]||{})[id];
+  if(!n || n.autorUid!==window._currentUser?.uid) return; // só o autor apaga a própria anotação, só na reunião de hoje
+  window._remove(window._ref(window._db,'kanban/okr/reuniao_notas/'+hoje+'/'+id)).catch(err=>console.error('[notas] falha ao excluir:', err));
+};
+
+// 4 vistas mutuamente exclusivas na aba OKR (lista de Objetivos / Histórico
+// / Central Agente Ágil / Anotações da reunião) — nunca duas juntas.
+// _okrSetView() é o único ponto que decide isso; os toggles individuais só
+// chamam ela.
+function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   _okrShowHistorico = view==='historico';
   _okrShowAgenteChat = view==='agente';
+  _okrShowNotas = view==='notas';
   const histBtn = document.getElementById('okr-historico-btn');
   if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📈 Histórico';
   const agBtn = document.getElementById('okr-agente-btn');
   if(agBtn) agBtn.textContent = _okrShowAgenteChat ? '◀ Ver Objetivos' : '💬 Central Agente Ágil';
+  const notasBtn = document.getElementById('okr-notas-btn');
+  if(notasBtn) notasBtn.textContent = _okrShowNotas ? '◀ Ver Objetivos' : '📋 Anotações da reunião';
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
+  document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
   ['okr-toolbar','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
   });
@@ -5018,9 +5121,15 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente'
   const novoBtn = document.getElementById('okr-novo-btn'); if(novoBtn) novoBtn.style.display = view==='objetivos' ? (_okrCanCreate() ? 'inline-flex' : 'none') : 'none';
   if(_okrShowHistorico) renderOkrHistorico();
   if(_okrShowAgenteChat) renderOkrAgenteChat();
+  if(_okrShowNotas){
+    if(!_okrNotasViewDate) _okrNotasViewDate = _todayStr();
+    renderOkrNotas();
+    const list = document.getElementById('okr-notas-list'); if(list) list.scrollTop = list.scrollHeight;
+  }
 }
 function _okrToggleHistorico(){ _okrSetView(_okrShowHistorico ? 'objetivos' : 'historico'); }
 function _okrToggleAgenteChat(){ _okrSetView(_okrShowAgenteChat ? 'objetivos' : 'agente'); }
+function _okrToggleNotas(){ _okrSetView(_okrShowNotas ? 'objetivos' : 'notas'); }
 function renderOkrHistorico(){
   const sel = document.getElementById('okr-hist-obj-select');
   if(sel){
@@ -9208,7 +9317,7 @@ function renderAgentesLogCross(){
         ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
         : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
     const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
-    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${_renderMd(a)}</li>`).join('');
     const cardLink=e.cardId?`<a href="${esc(squadBoardUrl(e.squadId,e.cardId))}" target="_blank" style="color:var(--cyan);">abrir card ↗</a>`:'';
     return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${sqLbl}${cardLink?' · '+cardLink:''}</div>
