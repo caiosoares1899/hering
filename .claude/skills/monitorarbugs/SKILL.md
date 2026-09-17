@@ -1387,6 +1387,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   especialmente em `painel-dev.html`, que tem muito menos rodadas
   dedicadas que `kanban-dev.html` até agora.
 
+- **2026-09-17, automações (pedido explícito, escopo nomeado — 2ª
+  rodada seguida em Automações no mesmo dia)**: 1 achado real, técnica
+  1 (comparar `add_checklist_item` — único `AUTO_ACTIONS` com
+  `valueType:'text'`, texto livre — contra os outros lugares que
+  escaneiam @menção). Edição manual de item de checklist já escaneia
+  `@menção` desde 2026-08-30 (`scheduleAutoSave()`); as outras ações
+  que geram texto por conta própria (`notify_all`/`notify_po_org`/
+  `notify_agent`) sempre chamam `parseMentions()` no próprio texto.
+  `add_checklist_item` nunca chamava — regra "Adicionar item 'Avisar
+  @fulano'" nunca notificava @fulano, mesmo sendo literalmente texto
+  livre pra isso (o próprio exemplo da Central de Ajuda). Fix:
+  `parseMentions()` no texto configurado, `includeSelf:true`. PR #960,
+  dev v8.30.695-dev. **Achado incidental real, fora do escopo
+  (Automações), não corrigido**: `saveCard()` não tem NENHUMA chamada
+  de `parseMentions()` — descrição/PO/checklist de um card sendo
+  CRIADO nunca são escaneados por menção, porque `scheduleAutoSave()`
+  só roda com `editingId` já setado (`if(!editingId) return;`). Não é
+  sobre automações — fica registrado aqui pra virar rodada própria
+  depois. **Reconfirmado, não implementado**: `toggle_okr`/
+  `set_priority` são mais 2 casos do mesmo gap arquitetural já
+  reportado na rodada anterior do mesmo dia (nenhuma ação de
+  `AUTO_ACTIONS` re-dispara `runAutoRules()` pra encadear em outra
+  automação) — mesmo achado, não uma lista nova a cada rodada.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
