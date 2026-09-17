@@ -1490,7 +1490,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `A||B` dentro de um `.find()`/`.filter()` onde A é um match EXATO e B
   é um match APROXIMADO/frouxo é sempre suspeita — sem prioridade
   explícita entre os dois, a ORDEM DO ARRAY decide silenciosamente qual
-  ganha, não a precisão do critério.
+  ganha, não a precisão do critério. **CORREÇÃO (usuário testou em
+  prod, não funcionou)**: o fix acima estava incompleto — continua
+  válido (risco real de colisão de init), mas não era a causa raiz
+  DESTE relato. Causa real: `squadData[sq].cards` (fonte de
+  `card.owner`) só atualiza no login/troca de aba/clique manual em
+  "Atualizar dados" — diferente de `squadData[sq].members` (`onValue`,
+  sempre ao vivo). Com a aba aberta em foco por um tempo, `card.owner`
+  cacheado ficava várias edições atrás do responsável real —
+  `resolveOwnerName()` resolvia CERTO pra pessoa ERRADA, porque o
+  `init` em si já chegava velho. Fix de verdade:
+  `openPainelHistorico()` dispara `_pollSquadDados()` ao abrir (ação
+  explícita = bom gatilho pra dado fresco); `_applySquadDados()` ganhou
+  re-render do Feed quando o overlay já está aberto (`renderAll()`
+  nunca incluía `_renderPtFeed()` — dado chegava fresco mas a tela
+  ficava com o HTML velho). PR #967, painel v3.54/painel-dev v3.50.
+  **Lição pra próxima vez**: "achei uma explicação plausível e
+  code-verificável" não é o mesmo que "achei a causa raiz" —
+  `resolveOwnerName()` era um bug real e válido, mas eu não conferi se
+  o DADO DE ENTRADA (`card.owner`) também podia estar errado por outro
+  motivo (staleness) antes de assumir que só a lógica de resolução
+  explicava o sintoma. Rodadas anteriores no mesmo dia (Dashboard
+  consolidado, v3.48/v3.49) já tinham confirmado que `squadData.cards`
+  é stale-by-design no painel — deveria ter cruzado essa informação
+  ANTES de propor o primeiro fix, não só depois de ele falhar.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
