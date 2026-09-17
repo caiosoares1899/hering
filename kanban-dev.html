@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.690-dev</div>
+<div class="version">v8.30.691-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14130,9 +14130,27 @@ function _tagLabelCmp(la,lb){
   if(ea!==eb) return ea?1:-1;
   return la.localeCompare(lb,'pt-BR');
 }
+// Achado real (/monitorarbugs, 2026-09-17): Tamanho (SIZE_TAGS), Submarca
+// (SUBMARCA_TAGS) e Canal de venda (CANAL_VENDA_TAGS) têm campo dedicado
+// próprio (👕/🏷️/📢 — setCardTamanho()/setCardSubmarca()/setCardCanalVenda())
+// que já garante exclusividade dentro do grupo (nunca 2 tamanhos ao mesmo
+// tempo — mesma invariante de _doBulkTagMulti()) e respeita a visibilidade
+// por tag que o PO configura (_submarcaIsVisivel()/_canalVendaIsVisivel()).
+// Este dropdown genérico listava essas tags junto com as demais, sem
+// checar grupo nem visibilidade — dava pra clicar "👕 P" e depois "👕 G"
+// aqui e o card ficava com os 2 tamanhos ao mesmo tempo (estado que os
+// campos dedicados e o picker de ação em massa nunca permitem), e também
+// pra escolher uma submarca/canal que o PO tinha escondido explicitamente.
+// Exclui os 3 grupos daqui — quem precisa deles usa o campo dedicado.
+const _TAG_ADD_EXCLUDED_IDS=new Set();
+function _tagAddExcludedIds(){
+  if(!_TAG_ADD_EXCLUDED_IDS.size) [...SIZE_TAGS,...SUBMARCA_TAGS,...CANAL_VENDA_TAGS].forEach(t=>_TAG_ADD_EXCLUDED_IDS.add(t.id));
+  return _TAG_ADD_EXCLUDED_IDS;
+}
 function _tagAddAvail(){
   const q=_norm(document.getElementById('m-tag-add')?.value||'');
-  return tags.filter(t=>!editingTags.includes(t.id) && (!q || _norm(t.label).includes(q)))
+  const excluded=_tagAddExcludedIds();
+  return tags.filter(t=>!editingTags.includes(t.id) && !excluded.has(t.id) && (!q || _norm(t.label).includes(q)))
     .sort((a,b)=>_tagLabelCmp(a.label,b.label));
 }
 function renderTagAddDropdown(){
@@ -14140,9 +14158,10 @@ function renderTagAddDropdown(){
   const list=document.getElementById('m-tag-add-list');
   if(!inp||!list) return;
   const avail=_tagAddAvail();
+  const q=inp.value.trim();
   list.innerHTML = avail.length
     ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag('${esc(t.id)}')">${esc(t.label)}</div>`).join('')
-    : `<div class="m-tag-add-empty">${tags.length===editingTags.length?'Todas as tags já foram adicionadas.':'Nenhuma tag encontrada.'}</div>`;
+    : `<div class="m-tag-add-empty">${q?'Nenhuma tag encontrada.':'Todas as tags disponíveis já foram adicionadas.'}</div>`;
   const r=inp.getBoundingClientRect();
   list.style.top=(r.bottom+4)+'px';
   list.style.left=r.left+'px';
@@ -30597,7 +30616,22 @@ const AUTO_ACTIONS = [
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
-    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false; ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): "Adicionar tag" genérico
+    // aceita QUALQUER tag no seletor (inclusive as de Tamanho/Submarca/
+    // Canal de venda, que têm ação dedicada — set_tamanho/set_submarca/
+    // set_canal_venda — logo abaixo, com exclusividade de grupo garantida
+    // no próprio run()). Sem essa mesma checagem aqui, uma regra configurada
+    // com este action genérico (ex.: "Adicionar tag = 👕 G") somava em cima
+    // de um tamanho que o card já tinha (👕 P), deixando 2 tamanhos ao
+    // mesmo tempo — e por rodar sozinho, sem tela, o card ficava assim em
+    // silêncio até alguém notar num relatório. Mesma exclusividade de
+    // _doBulkTagMulti()/set_tamanho/set_submarca/set_canal_venda.
+    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false;
+      [SIZE_TAGS,SUBMARCA_TAGS,CANAL_VENDA_TAGS].forEach(group=>{
+        const groupIds=group.map(t=>t.id);
+        if(groupIds.includes(rule.actionVal)) for(let i=ct.length-1;i>=0;i--) if(groupIds.includes(ct[i])) ct.splice(i,1);
+      });
+      ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
   { key:'remove_tag', label:'Remover tag', valueType:'tag',
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
