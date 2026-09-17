@@ -3503,6 +3503,41 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.699-dev — 2026-09-17 — Controle de Criativos: tempo médio por categoria + motivo do bloqueio
+
+Pedido direto do usuário, depois de perguntar "hoje com os dados q nós
+temos, vc acrescentaria algo útil em dashboard de controle de
+criativos?": "pode montar o tempo médio por categoria! outra coisa q
+eu traria é os motivos dos bloqueados, caso as pessoas tenham
+preenchido!"
+
+**⏱️ Tempo médio de produção por canal/plataforma/formato** — 3 blocos
+novos no Dashboard de Criativos, logo abaixo dos gráficos de contagem
+já existentes (📡 Por canal/🎯 Por plataforma/🖼 Por formato). Reusa
+`_cardTempos()` (mesmo lead time do Relatório de Tempo/
+`_computeTempoData()`) — só pedidos JÁ CONCLUÍDOS entram na média
+(`t.done`), senão um pedido em andamento (que ainda vai crescer)
+puxaria a média artificialmente pra baixo. Barra proporcional à média
+do grupo (não à soma, diferente das barras de contagem — tempo médio
+não é "parte de um todo"), rótulo mostra o tempo formatado + tamanho
+da amostra entre parênteses (`_crvBarRowTime()`).
+
+**🚧 Motivo do bloqueio na lista "Mais tempo bloqueado"** — `card.
+blockerReason` (texto livre da Ficha do card) agora aparece numa linha
+abaixo do título/tempo quando preenchido, silenciosamente omitido
+quando ninguém preencheu (`crvBlockRow()`, substitui `crvCardRow()` só
+nesse bloco — o de "Mais tempo em atraso" continua igual, atraso não
+tem motivo).
+
+`window._criativosResumoCache` (resumo mandado pro "🤖 Ponto de vista
+do Agente Ágil") ganhou os campos correspondentes
+(`tempoMedioProducaoHorasPor{Canal,Plataforma,Formato}`, `motivo` em
+cada item de `topBloqueado`) — passagem genérica via `JSON.stringify()`
+em `analiseDados.js`, sem precisar de mudança em `functions/`.
+
+Checks de rotina: `node --check` OK; chaves balanceadas no baseline
+conhecido (-1, inalterado).
+
 ### v8.30.698-dev — 2026-09-17 — Fix: log do Agente Ágil mostrava `**negrito**` literal em vez de renderizar
 
 Relato direto do usuário, com print (achado na Central Agente Ágil do
