@@ -16866,6 +16866,34 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.51 · painel-dev — 2026-09-17 · Novo: 📋 Anotações da reunião na aba 🎯 OKR
+
+Pedido direto do usuário, depois de shippar a segmentação por reunião em
+`okr-apresentacao.slide.html`: "na vdd quero q isso apareça la no painel
+aba okr". Aditivo — não substitui o painel flutuante da apresentação ao
+vivo, os dois leem/escrevem o MESMO node Firebase
+(`kanban/okr/reuniao_notas/{data}/{id}`), sincronizados em tempo real
+entre as duas telas.
+
+Aba OKR ganhou um 4º botão de alternância no toolbar, "📋 Anotações da
+reunião" (`_okrToggleNotas()`, mesmo padrão mutuamente-exclusivo de
+`_okrSetView()` já usado por Histórico/Central Agente Ágil/lista de
+Objetivos). Mesmo comportamento da apresentação: seletor de data no topo
+(`#okr-notas-date-sel`, populado com toda data que já tem anotação +
+"Hoje"), reunião que não é a de hoje abre só leitura, só o autor apaga a
+própria anotação e só na reunião de hoje. Autor resolvido via
+`_okrPessoaInfo(uid)` (já existente na aba OKR, fonte `_globalUsersCache`)
+— a apresentação usa seu próprio `pessoaInfo()`, ambas resolvendo o mesmo
+`autorUid` gravado na anotação.
+
+Precisou expor `remove` (import do SDK modular) e `window._remove` no
+`<script type="module">` — só `set`/`get`/`update`/`onValue` estavam
+pendurados até agora, `painel-dev.html` nunca precisou apagar um nó do
+Firebase direto antes.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+chaves/parênteses no baseline conhecido (-1/-14, inalterado).
+
 ### painel.html v3.54 · painel / painel-dev.html v3.50 · painel-dev — 2026-09-17 · CORREÇÃO: causa raiz real do Histórico mostrando pessoa errada era dado velho, não a lógica de resolução
 
 O fix da v3.53/v3.49 (abaixo) não resolveu o problema — o usuário

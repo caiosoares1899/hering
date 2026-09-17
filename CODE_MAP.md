@@ -2419,6 +2419,29 @@ sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
 pedidos, sem viewer de log separado.
 
+#### 📋 Anotações da reunião na aba OKR (2026-09-17, v3.51 · painel-dev)
+Pedido direto do usuário depois de shippar a segmentação por reunião em
+`okr-apresentacao.slide.html`: "na vdd quero q isso apareça la no painel
+aba okr" — aditivo, lê/escreve o MESMO node
+`kanban/okr/reuniao_notas/{data}/{id}` da apresentação (sync em tempo
+real entre as duas telas, sem duplicar dado). Botão `#okr-notas-btn`,
+`_okrShowNotas`/`_okrToggleNotas()` — L5074 — 4ª vista mutuamente
+exclusiva em `_okrSetView('objetivos'|'historico'|'agente'|'notas')` —
+L5046 (mesmo ponto único de decisão que já cobria as outras 3).
+`okrReuniaoNotas` (estado local, `loadOkrReuniaoNotas()` — L4980 —
+`onValue` no node inteiro, filtra por data no cliente, mesmo padrão de
+`okrNotas` na apresentação), `renderOkrNotas()` — L5000 — reusa
+`.okr-comment` (mesma bolha da Central Agente Ágil) + seletor de data
+`#okr-notas-date-sel` (`window._okrNotasSetViewDate()`). Reunião que não
+é a de hoje abre só leitura (`#okr-notas-compose` escondido,
+`#okr-notas-readonly` visível). `window._okrNotaAdd()` — L5022 — sempre
+grava no bucket de HOJE; `window._okrNotaDel()` — L5035 — só o próprio
+autor apaga, só na reunião de hoje. Autor resolvido via
+`_okrPessoaInfo(uid)` (já existente, fonte `_globalUsersCache`) — L5228
+(ver seção Objetivos acima). Precisou expor `window._remove` no
+`<script type="module">` (`remove` do SDK, novo import) — nenhuma outra
+função do painel apagava nó do Firebase direto antes.
+
 #### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — promovida pra prod v3.24 em 2026-09-05)
 Modal estático `#okr-help-ov` (`openOkrHelp()`/`closeOkrHelp()`), mesmo
 padrão de `#agentes-help-ov`/`openAgentesHelp()` (reusa as classes
