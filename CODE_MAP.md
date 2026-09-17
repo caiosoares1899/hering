@@ -2701,9 +2701,17 @@ detalhe aberto — ver nota abaixo).
   a pessoa já viu na grade), desabilitado no último Objetivo da gerência
   em vez de cruzar pra outra gerência sozinho (confirmado sem achado,
   `/monitorarbugs` 2026-09-11 — ver `SKILL.md` da skill monitorarbugs).
-- Login: `window._okrHandleAuth = user => {...}` — L917 — mesmo padrão
-  de bloqueio por domínio/whitelist do resto do Maré Digital
-  (`@ciahering.com.br` ou `painel_viewers`), erro mostra
+- Login: `window._okrHandleAuth = user => {...}` — L1315 — desde
+  2026-09-17 (achado de análise de segurança), checa domínio OU
+  `painel_viewers` (`_okrViewerKey()` — L1314, cache de 24h +
+  3 tentativas — mesmo padrão de `painel.html`
+  `_finishPainelLogin()`/`_check()`) **antes** de chamar
+  `_okrShowApp()` — L1291 — (mostra `#app`, chama `startListeners()`)
+  — antes só checava `if(user)`, deixando `startListeners()` rodar pra
+  qualquer login Google bem-sucedido e só recusando depois, se/quando
+  um `onValue` batesse "permission denied". `_okrDenyAccess(msg)` —
+  L1254 — usada tanto por essa checagem quanto pelo `onErr` dos 5
+  listeners de `startListeners()`, erro mostra
   `#login-err`/`#login-out-btn` em vez de deixar a tela em branco.
 - **📋 Anotações da reunião** (2026-09-17, pedido direto do usuário;
   2ª rodada no mesmo dia — fix real: `#notes-fab`/`#notes-ov` viraram
