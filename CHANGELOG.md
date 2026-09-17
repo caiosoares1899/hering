@@ -16650,6 +16650,28 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (3ª rodada) — Anotações agora segmentadas por reunião (1 reunião = 1 dia)
+
+Pedido direto do usuário, depois de validar a 2ª rodada: "as anotações vao
+ficar disponiveis onde? alem disso, tem q segmentar por reuniao". Antes,
+todas as anotações de todas as apresentações viviam juntas numa lista só
+(`kanban/okr/reuniao_notas/{id}`) — sem separação por data, uma reunião
+misturava com a anterior.
+
+**Mudança**: dado agora vive em `kanban/okr/reuniao_notas/{data}/{id}`,
+com `{data}` no formato `YYYY-MM-DD` local (`_hojeStr()`) — 1 reunião = 1
+dia, sem precisar saber hora exata de início/fim (improvável 2
+apresentações de OKR no mesmo dia). Painel ganhou um seletor "Reunião" no
+topo (`#notes-date-sel`), populado com todas as datas que já têm
+anotação + "Hoje" (sempre disponível). Reunião passada abre em modo só
+leitura (caixa de composição escondida, aviso "🔒 Reunião encerrada"); só
+a reunião de HOJE aceita escrever/apagar anotação nova. `.read`/`.write`
+continuam herdados da cascata de `kanban/okr` no `database.rules.json` —
+nó aninhado, sem entrada nova de regra.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico; `<div>`s
+balanceados (101/101).
+
 ### 2026-09-17 (2ª rodada) — Fix: botão de Anotações sumia/quebrava dentro do detalhamento do Objetivo
 
 Relato direto do usuário, com print, logo depois da rodada anterior:
