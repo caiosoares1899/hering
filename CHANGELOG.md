@@ -3503,6 +3503,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.703-dev — 2026-09-17 — /monitorarbugs: tela "Confirmar inscrição" reabria a mesma corrida de iniciais duplicadas do PR #969
+
+O PR #969 (mesmo dia) corrigiu a colisão de iniciais ("MS"/"MS", Marina
+Saran Bernardo × Marciel Santos Alexandrino) em 2 lugares —
+`autoRegistrar()` (1º login automático) e `editarInicial()` (edição
+manual pelo ADM) — introduzindo `kanban/init_registry` +
+`runTransaction()` pra reivindicação atômica. Uma 3ª tela fazia
+exatamente a mesma mutação sem o fix: `confirmarInscricao()` (a tela
+"Confirmar inscrição", onde a pessoa REVISA/EDITA suas próprias
+iniciais num campo de texto antes de confirmar — `#insc-init`) ainda
+fazia o padrão antigo ler `usuarios_publicos` → checar conflito
+localmente → escrever, sem nada impedindo 2 pessoas confirmando a
+inscrição com a mesma sigla editada quase ao mesmo tempo de passarem
+pela checagem antes de qualquer uma escrever.
+
+Fix: mesmo padrão de `editarInicial()` — reivindica a sigla via
+`kanban/init_registry`/`runTransaction()` antes de gravar (erro amigável
+se perder a corrida), e libera a sigla anterior no registro se a pessoa
+editou o campo pré-preenchido (`_inscOriginalInit`, novo estado guardado
+por `mostrarInscricao()`). Try/catch preserva o comportamento antigo se
+a regra do Realtime Database ainda não tiver sido publicada.
+
 ### v8.30.702-dev — 2026-09-17 — Fix crítico: chave vazia em `flow.enteredAt` travava salvamento em lote da squad inteira
 
 Erro real reportado pelo usuário ao rodar o script de teste da entrada

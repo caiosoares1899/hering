@@ -1579,6 +1579,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   teste isolado esquecido em produção pode travar toda a squad em
   silêncio até alguém tropeçar nele.
 
+- **2026-09-17, `kanban/init_registry`/reivindicação de sigla (pedido
+  genérico, "roda outro" — área escolhida por prioridade 1: código mais
+  recente sem rodada própria, PR #969, mesmo dia)**: 1 achado real,
+  técnica 1 (mapear TODOS os pontos que mutam `.init` de um usuário —
+  achou 3, não 2). O PR #969 corrigiu a corrida de colisão de sigla
+  ("MS"/"MS") em `autoRegistrar()` (1º login) e `editarInicial()`
+  (edição manual pelo ADM), via `runTransaction()` em
+  `kanban/init_registry`. `confirmarInscricao()` (tela "Confirmar
+  inscrição" — pessoa edita a própria sigla, pré-preenchida mas
+  alterável, antes de confirmar) fazia a MESMA mutação com o padrão
+  antigo (ler `usuarios_publicos` → checar conflito local → escrever),
+  sem passar pelo registry — mesma corrida exata, só que numa 3ª tela
+  que ficou de fora do fix original. Fix: mesmo padrão de
+  `editarInicial()` (reivindica antes de gravar, libera a sigla
+  anterior se a pessoa editou o campo). dev v8.30.703-dev. **Lição pra
+  próxima vez**: depois de corrigir uma classe de bug em N lugares
+  "conhecidos", a técnica 1 aplicada de forma EXAUSTIVA (grep por todo
+  ponto que MUTA o mesmo campo, não só os pontos já sabidos) continua
+  valendo a pena mesmo no mesmo dia do fix original — aqui achou um 3º
+  ponto que nem o autor do fix original tinha listado.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
