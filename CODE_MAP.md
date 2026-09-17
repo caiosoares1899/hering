@@ -2600,7 +2600,9 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   menos uma squad visível tiver o campo ativo, mesmo padrão de
   `renderBoardDataInsights()` em kanban-dev.html, mas agregado)
 - `renderOKR()` — L5963
-- `renderBlockers()` — L10701 / `resolveAllBlockers()` — L10404
+- `renderBlockers()` — L10836 / `resolveAllBlockers()` — L10749 (relê
+  `/cards` fresco do Firebase antes de escrever, não usa `squadData`
+  cacheado pra montar o payload — ver `/monitorarbugs` 2026-09-17)
 - `renderRiscos()` — L6007
 - `renderTrend()` — L11269 (throughput)
 - `renderColDist()` — L11292
