@@ -503,7 +503,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, remove, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -523,7 +523,7 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Mesmo padrão de exposição de kanban.html/painel.html (window._db/_ref/_onValue/...)
 // — deixa a página testável com o mesmo mock de Firebase já usado nos testes
 // Playwright do resto do repo, em vez de import direto do SDK espalhado pelo código.
-window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove;
+window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove; window._get = get;
 
 window._doLogin = () => {
   document.getElementById('login-err').hidden = true;
@@ -1247,17 +1247,24 @@ setInterval(()=>{
 
 // ── Auth / data lifecycle ──
 let listenersStarted = false;
+// _okrDenyAccess() é chamada tanto pela checagem de domínio/painel_viewers
+// (ANTES de mostrar o app — ver window._okrHandleAuth) quanto pelo onErr
+// dos listeners abaixo (rede de segurança se as REGRAS do Firebase, a
+// fronteira real, recusarem por algum motivo não previsto no client).
+function _okrDenyAccess(msg){
+  document.getElementById('login-ov').hidden = false;
+  document.getElementById('app').hidden = true;
+  document.getElementById('notes-fab').hidden = true;
+  window._okrCloseNotes();
+  const el = document.getElementById('login-err');
+  el.textContent = msg;
+  el.hidden = false;
+  document.getElementById('login-out-btn').hidden = false;
+}
 function startListeners(){
   if(listenersStarted) return;
   listenersStarted = true;
-  const onErr = err => {
-    document.getElementById('login-ov').hidden = false;
-    document.getElementById('app').hidden = true;
-    const el = document.getElementById('login-err');
-    el.textContent = '⚠️ Sua conta entrou, mas não tem permissão pra ver os dados de OKR (precisa ser @ciahering.com.br ou ter acesso liberado no painel).';
-    el.hidden = false;
-    document.getElementById('login-out-btn').hidden = false;
-  };
+  const onErr = () => _okrDenyAccess('⚠️ Sua conta entrou, mas não tem permissão pra ver os dados de OKR (precisa ser @ciahering.com.br ou ter acesso liberado no painel).');
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{ okrObjetivos = snap.val()||{}; _loaded.obj=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
@@ -1265,32 +1272,51 @@ function startListeners(){
   // Anotações da reunião — independente do carrossel de slides (não entra
   // em _loaded/scheduleRebuild()), só re-renderiza o próprio painel; ao
   // vivo pra quem estiver com o painel aberto ver anotações de outras
-  // pessoas na sala chegando em tempo real.
+  // pessoas na sala chegando em tempo real. onErr real (não mais callback
+  // vazio) — achado real via análise de segurança, 2026-09-17: um erro de
+  // permissão aqui ficava mudo, sem avisar a pessoa nem fechar a tela.
   window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{
     okrNotas = snap.val()||{};
     renderNotas();
-  }, ()=>{});
+  }, onErr);
   // ⏱ Horário da agenda — mesmo padrão de reuniao_notas (independente do
   // carrossel, segmentado por reunião/dia); o setInterval do relógio (mais
   // abaixo) lê okrAgendas[_hojeStr()] a cada tick pra desenhar a contagem
   // regressiva, sem precisar de outro timer.
   window._onValue(window._ref(window._db,'kanban/okr/reuniao_agenda'), snap=>{
     okrAgendas = snap.val()||{};
-  }, ()=>{});
+  }, onErr);
 }
 
+function _okrShowApp(user){
+  document.getElementById('login-ov').hidden = true;
+  document.getElementById('app').hidden = false;
+  document.getElementById('login-err').hidden = true;
+  document.getElementById('login-out-btn').hidden = true;
+  document.getElementById('notes-fab').hidden = false;
+  if(safeUrl(user.photoURL)) document.getElementById('tb-avatar').src = user.photoURL;
+  startListeners();
+}
+// Achado real de análise de segurança, 2026-09-17: window._okrHandleAuth()
+// só checava `if(user)` (QUALQUER login Google bem-sucedido, não só
+// @ciahering.com.br) antes de mostrar #app e chamar startListeners() — a
+// recusa só acontecia se/quando um dos onValue batesse "permission denied"
+// nas regras (evento assíncrono separado, sem ordem garantida contra os
+// outros listeners). kanban/usuarios, em particular, tinha regra frouxa o
+// bastante (.read: "auth != null", sem checar domínio — corrigido junto
+// nesta mesma rodada em database.rules.json) pra vazar o diretório inteiro
+// de funcionários pra qualquer conta Google antes da tela de erro aparecer.
+// Fix: mesmo padrão já usado em painel.html (_finishPainelLogin/_check) —
+// checa domínio OU painel_viewers ANTES de mostrar o app, com cache de 24h
+// (evita reconsultar à toa a cada auth-change) e 3 tentativas antes de
+// recusar por erro de rede.
+window._okrIsViewer = false;
+function _okrViewerKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
 window._okrHandleAuth = user => {
   window._currentUser = user||null;
   document.getElementById('login-btn').textContent = 'Entrar com Google';
-  if(user){
-    document.getElementById('login-ov').hidden = true;
-    document.getElementById('app').hidden = false;
-    document.getElementById('login-err').hidden = true;
-    document.getElementById('login-out-btn').hidden = true;
-    document.getElementById('notes-fab').hidden = false;
-    if(safeUrl(user.photoURL)) document.getElementById('tb-avatar').src = user.photoURL;
-    startListeners();
-  } else {
+  if(!user){
+    window._okrIsViewer = false;
     document.getElementById('login-ov').hidden = false;
     document.getElementById('app').hidden = true;
     // #notes-fab é sibling de #app (ver comentário na declaração do HTML),
@@ -1298,7 +1324,35 @@ window._okrHandleAuth = user => {
     // toggle aqui, e fecha o painel se tivesse ficado aberto.
     document.getElementById('notes-fab').hidden = true;
     window._okrCloseNotes();
+    return;
   }
+  if(user.email && user.email.endsWith('@ciahering.com.br')){
+    window._okrIsViewer = false;
+    _okrShowApp(user);
+    return;
+  }
+  const cacheKey = 'okr_viewer_ok_'+user.email;
+  const cached = parseInt(localStorage.getItem(cacheKey)||'0', 10);
+  if(cached && (Date.now()-cached) < 86400000){
+    window._okrIsViewer = true;
+    _okrShowApp(user);
+    return;
+  }
+  const check = tentativa => window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
+    const viewers = snap.val()||{};
+    if(viewers[_okrViewerKey(user.email)]){
+      localStorage.setItem(cacheKey, String(Date.now()));
+      window._okrIsViewer = true;
+      _okrShowApp(user);
+    } else {
+      _okrDenyAccess('⚠️ Sua conta entrou, mas não tem permissão pra ver os dados de OKR (precisa ser @ciahering.com.br ou ter acesso liberado no painel).');
+    }
+  }).catch(err=>{
+    console.error('[okr] falha ao checar painel_viewers (tentativa '+tentativa+'):', err);
+    if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>check(tentativa+1));
+    _okrDenyAccess('⚠️ Erro ao verificar permissão de acesso — avise um ADM. ('+(err?.message||err)+')');
+  });
+  check(1);
 };
 </script>
 </body>

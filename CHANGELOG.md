@@ -16671,6 +16671,34 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (9ª rodada) — Segurança: checagem de domínio/painel_viewers agora roda ANTES de mostrar a tela
+
+Achado da análise de segurança pedida pelo usuário (ver entrada da
+mesma data em `database.rules.json` pro contexto completo). `window.
+_okrHandleAuth(user)` só checava `if(user)` — QUALQUER login Google
+bem-sucedido (não só @ciahering.com.br) já mostrava `#app` e chamava
+`startListeners()`. A recusa só acontecia se/quando um dos `onValue`
+batesse "permission denied" nas regras — evento assíncrono separado,
+sem ordem garantida contra os outros listeners, incluindo o de
+`kanban/usuarios` (cuja regra frouxa demais foi corrigida na mesma
+rodada). Os listeners de `reuniao_notas`/`reuniao_agenda` também
+passavam um `onErr` vazio (`()=>{}`), ficando mudos numa eventual
+recusa.
+
+**Fix**: mesmo padrão já usado e comprovado em `painel.html`
+(`_finishPainelLogin()`/`_check()`) — `window._okrHandleAuth()` agora
+checa domínio OU `painel_viewers` **antes** de chamar `_okrShowApp()`/
+`startListeners()`, com cache de 24h (`localStorage`, evita reconsultar
+à toa a cada `auth-change`) e 3 tentativas antes de recusar por erro de
+rede. Precisou expor `get` (import do SDK) + `window._get` no `<script
+type="module">` (só `set`/`onValue`/`remove` estavam pendurados até
+agora). Os 2 listeners de Anotações/Agenda ganharam o `onErr` de
+verdade (mesmo handler `_okrDenyAccess()`, rede de segurança contra a
+regra recusar por algum motivo não previsto no client).
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107).
+
 ### 2026-09-17 (8ª rodada) — `/monitorarbugs`: fix — barra de compor Anotação nunca ficava escondida numa reunião passada
 
 Achado real via `/monitorarbugs` (pedido genérico, área escolhida por
@@ -22538,6 +22566,55 @@ retry e erro rastreável (`stale_cards_index`, HTTP 409) em caso de
 divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
+
+### 2026-09-17 — Análise de segurança: 14 nodes com `.read: "auth != null"` sem checagem de domínio
+
+Pedido direto do usuário: "quero q vc faça uma analise profunda sobre a
+segurança das informações no painel e na apresentação". A fronteira de
+segurança real deste app é 100% `database.rules.json` — não tem backend
+de aplicação (site estático no GitHub Pages), e `window._db`/`window._get`
+já ficam expostos em `window` de propósito (pros scripts de teste em
+console) — qualquer checagem de domínio feita só em JavaScript no
+cliente é UX, não segurança, contornável abrindo o DevTools.
+
+`provider.setCustomParameters({hd:'ciahering.com.br'})` (painel/kanban/
+apresentação) é só uma dica pra tela de login do Google pré-filtrar
+contas — não impede uma conta Google QUALQUER de autenticar com sucesso
+(`auth != null` vira `true`) a menos que o projeto OAuth no Google Cloud
+esteja configurado como "Interno" (G Suite-only, fora do alcance desta
+sessão verificar).
+
+**14 nodes tinham `.read: "auth != null"` puro**, sem checar domínio nem
+`painel_viewers` — diferente do padrão já usado na maioria do arquivo
+(`domain || painel_viewers`): `kanban/usuarios` (diretório COMPLETO de
+funcionários — nome/email/foto/role/squads, PII de todo mundo),
+`usuarios_publicos`, `campanhas`, `campanhas_log(_dev)`,
+`dados_diarios(_dev)`, `comunicados`, `painel_viewers` (lista de quem
+tem acesso de convidado), `squads/{id}/externos`, `init_registry`,
+`global/force_logout_after(_dev)`, `global/idle_logout_config`.
+Confirmado que o achado não era só teórico: `okr-apresentacao.slide.html`
+lê `kanban/usuarios` em paralelo com os nodes de OKR (domain-gated) —
+uma conta Google qualquer que entrasse na apresentação recebia o
+diretório inteiro de funcionários na memória do navegador antes mesmo
+da tela mostrar "sem permissão" (ver entrada da mesma data, mais abaixo).
+
+**Fix**: os 14 nodes passam a usar o mesmo padrão `auth.token.email.
+endsWith('@ciahering.com.br') || root.child('kanban/painel_viewers/'+
+...).exists()` já usado em `painel`/`config`/`okr`/`squads_meta`/etc.
+— domain ou visualizador externo já aprovado, nunca conta Google
+qualquer. `painel_viewers` em si usa o mesmo padrão auto-referenciado
+(não é circular na engine de regras do Firebase — já usado assim em
+`usuarios/{uid}/squads/{squadId}` pra checar `externos`).
+
+Não fechado nesta rodada (documentado como aceitável, não achado):
+`squads/{id}/dados` permite escrita de qualquer membro @ciahering.com.br
+em QUALQUER squad, não só o seu — modelo de confiança amplo já
+intencional pra uma ferramenta interna (papéis como PO/organizador são
+gate client-side, não de regra), mudar isso é decisão de produto
+separada, fora do escopo desta análise.
+
+Precisa de `firebase deploy --only database` rodado localmente (resync
+o clone antes — ver nota do `CLAUDE.md`).
 
 ### 2026-09-12 — `.indexOn: "ts"` faltando em `kanban/usuarios/{uid}/notificacoes`
 
