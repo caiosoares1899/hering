@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.685-dev</div>
+<div class="version">v8.30.686-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6758,6 +6758,25 @@ const today = new Date(); today.setHours(0,0,0,0);
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
+// Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
+// paralelos): os 5 drawers laterais (Lembretes/Dados/Kudos/Spotify/Notas)
+// compartilham a MESMA classe base .lem-drawer — position:fixed idêntico
+// (4 deles, inclusive, do MESMO lado da tela: só .kudos-drawer espelha pra
+// esquerda). Cada toggleXxx() mantinha sua PRÓPRIA lista solta de "que
+// outros drawers fechar" — e as 5 listas tinham divergido: toggleNotas()
+// fechava os 4 outros corretamente, mas toggleSpotify() esquecia Notas,
+// toggleKudos() só fechava Lembretes, e toggleDados()/toggleLembretes()
+// não fechavam NENHUM outro. Abrir Dados com Lembretes já aberto (ou
+// qualquer combinação faltante acima) deixava os dois `.open` ao mesmo
+// tempo, exatamente na mesma posição da tela — um por cima do outro,
+// sem nenhum jeito de saber que os dois estavam tecnicamente abertos.
+// Centralizado aqui pra não voltar a divergir por esquecimento — toda
+// nova aba lateral que for criada só precisa entrar nesta lista.
+const _DRAWER_IDS = ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer','notas-drawer'];
+function _closeOtherDrawers(exceptId){
+  _DRAWER_IDS.forEach(id=>{ if(id!==exceptId) document.getElementById(id)?.classList.remove('open'); });
+}
+
 // ── CENTRAL DE DADOS (captação digital — leitura no board) ─────────
 let dadosDiariosBoard = {};   // {date:'YYYY-MM-DD': {...}} — kanban/dados_diarios
 let dadosApresentacoesBoard = []; // [{id,title,url}] — kanban/config/dados_apresentacoes
@@ -6766,6 +6785,7 @@ function toggleDados(){
   const d = document.getElementById('dados-drawer');
   if(!d) return;
   const opening = !d.classList.contains('open');
+  if(opening) _closeOtherDrawers('dados-drawer');
   d.classList.toggle('open');
   if(opening) renderDadosPainel();
 }
@@ -17972,6 +17992,7 @@ function _collectLembretes(){
 function toggleLembretes(){
   const dr=document.getElementById('lem-drawer');
   const wasOpen=dr.classList.contains('open');
+  if(!wasOpen) _closeOtherDrawers('lem-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     _populateLemTypeSelect();
@@ -18271,8 +18292,7 @@ function _refreshKudosGeral(){
 function toggleKudos(){
   const dr=document.getElementById('kudos-drawer');
   const wasOpen=dr.classList.contains('open');
-  // fecha o drawer de lembretes se estiver aberto (ambos ocupam a tela)
-  document.getElementById('lem-drawer')?.classList.remove('open');
+  if(!wasOpen) _closeOtherDrawers('kudos-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){ _populateKudosPara(); renderKudos(); try{ safeLS.setItem('mare_kudos_seen', Date.now()); }catch(e){} updKudosBadge(); }
 }
@@ -18569,7 +18589,7 @@ function _renderNotasCurrentView(){ if(_notasOpenId) renderNotaEditor(); else re
 function toggleNotas(){
   const dr=document.getElementById('notas-drawer'); if(!dr) return;
   const wasOpen=dr.classList.contains('open');
-  ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  if(!wasOpen) _closeOtherDrawers('notas-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     _notasOpenId=null;
@@ -18893,7 +18913,7 @@ function abrirNotaVinculada(notaId, scope){
     _notasScope = scope;
     document.getElementById('nstab-pessoal')?.classList.toggle('on', scope==='pessoal');
     document.getElementById('nstab-squad')?.classList.toggle('on', scope==='squad');
-    ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(x=>document.getElementById(x)?.classList.remove('open'));
+    _closeOtherDrawers('notas-drawer');
     document.getElementById('notas-drawer')?.classList.add('open');
     _notasOpenId = notaId;
     const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
@@ -19328,10 +19348,7 @@ function _spotifyAttach(scope){
 async function toggleSpotify(){
   const dr=document.getElementById('spotify-drawer');
   const wasOpen=dr.classList.contains('open');
-  // fecha os outros drawers que ocupam a mesma área
-  document.getElementById('lem-drawer')?.classList.remove('open');
-  document.getElementById('kudos-drawer')?.classList.remove('open');
-  document.getElementById('dados-drawer')?.classList.remove('open');
+  if(!wasOpen) _closeOtherDrawers('spotify-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     const cu=window._currentUser;
