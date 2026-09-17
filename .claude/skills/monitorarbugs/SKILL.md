@@ -1266,6 +1266,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   direto em prod, diferente das rodadas anteriores dessa semana). PR
   #943, dev v8.30.685.
 
+- **2026-09-17, Spotify (pedido genérico — área nunca auditada, sem
+  git log recente; escolhida por eliminação depois de esgotar as áreas
+  recentemente alteradas)**: Spotify em si sem achado (código já bem
+  defensivo). Mas achou de passagem 1 bug real e abrangente, técnica 1
+  — os 5 drawers laterais (Lembretes/Dados/Kudos/Spotify/Notas)
+  compartilham a mesma classe CSS `.lem-drawer` (mesma posição/
+  z-index, 4 deles do mesmo lado da tela), e cada `toggleXxx()` mantinha
+  sua própria lista solta de "que outros fechar ao abrir" — as 5
+  listas tinham divergido: só `toggleNotas()` fechava os 4 outros
+  certinho; `toggleDados()`/`toggleLembretes()` não fechavam NENHUM
+  outro. Abrir 2 drawers em sequência (ex. Dados depois de Lembretes)
+  deixava os dois `.open` ao mesmo tempo, exatamente na mesma posição
+  da tela. Fix: centralizado em `_DRAWER_IDS`/`_closeOtherDrawers()`,
+  usado pelos 5 toggles + `abrirNotaVinculada()`. Achado proativo, sem
+  risco de dado — fica em dev. PR #945, dev v8.30.686. **Lição pra
+  próxima vez**: ao investigar uma área e não achar nada nela mesma,
+  vale olhar pro que ela COMPARTILHA com áreas vizinhas (aqui, a classe
+  CSS base de todos os drawers) — a técnica 1 às vezes rende mais
+  quando comparada entre features DIFERENTES que uma alheia acabou de
+  revelar, não só dentro da mesma feature.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
