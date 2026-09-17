@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.53 · painel</div>
+<div class="version">v3.54 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10452,6 +10452,13 @@ function _applySquadDados(sqId, val){
   renderAll();
   if(cfgSquadId===sqId) updateFlowBaselineLabel();
   if(typeof renderLembretesPainel==='function') renderLembretesPainel();
+  // Achado real (relato direto do usuário — card editado recentemente
+  // aparecia no 📜 Histórico com um responsável de VÁRIAS edições atrás):
+  // renderAll() não inclui _renderPtFeed() — o Feed do Histórico, se já
+  // estiver aberto, continuava mostrando o HTML renderizado com os dados
+  // velhos de antes deste refresh, mesmo depois de squadData já estar em
+  // dia. Re-renderiza também quando o overlay está aberto.
+  if(document.getElementById('pt-feed-ov')?.classList.contains('open')) _renderPtFeed();
 }
 function _pollSquadDados(sqId){
   if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
@@ -11535,8 +11542,19 @@ function openPainelHistorico(){
   const hoje=_localDateStr(new Date());
   _ptFeedState={deStr:hoje, ateStr:hoje, labelStr:'Hoje'};
   _ptFeedResetFilter();
-  _renderPtFeed();
+  _renderPtFeed(); // renderiza com o que já tem, pra não deixar a tela vazia
   document.getElementById('pt-feed-ov')?.classList.add('open');
+  // Achado real (relato direto do usuário — card editado recentemente
+  // aparecia no Histórico com dado velho, ex. responsável de várias
+  // edições atrás): squadData[sq].cards só atualiza no login, ao voltar
+  // pra aba, ou num clique manual em "🔄 Atualizar dados" (polling
+  // automático removido de propósito, ver comentário em loadAll()) — o
+  // Histórico promete mostrar "o que aconteceu", então abrir ele é o
+  // tipo de ação explícita que já justifica buscar dado fresco na hora,
+  // sem esperar um desses outros gatilhos. _applySquadDados() já
+  // re-renderiza o Feed sozinho quando os dados chegam (ver comentário
+  // lá), então só falta disparar a busca.
+  SQUADS.forEach(sq=>{ if(squadVisible(sq.id)) _pollSquadDados(sq.id); });
 }
 function closePainelFeed(){
   document.getElementById('pt-feed-ov')?.classList.remove('open');

@@ -16738,6 +16738,40 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.54 · painel / painel-dev.html v3.50 · painel-dev — 2026-09-17 · CORREÇÃO: causa raiz real do Histórico mostrando pessoa errada era dado velho, não a lógica de resolução
+
+O fix da v3.53/v3.49 (abaixo) não resolveu o problema — o usuário
+testou em prod e o Histórico continuou mostrando "Marciel Santos" no
+card da Marina. Diagnóstico corrigido: `resolveOwnerName()` só resolve
+um `init` que já está em `card.owner` — o problema real é que
+`card.owner`, dentro de `squadData[sq].cards`, podia estar
+DESATUALIZADO. Diferente de `squadData[sq].members` (populado por um
+`onValue` — listener AO VIVO, sempre em dia), `squadData[sq].cards` só
+é buscado do Firebase no login, ao voltar pra aba, ou num clique manual
+em "🔄 Atualizar dados" (`loadAll()` já documenta que o polling
+automático foi removido de propósito, por custo de Firebase — ver
+achado irmão do Dashboard consolidado, v3.48/v3.49 abaixo). Se a aba do
+painel ficar aberta e em foco por um tempo — uso normal de quem
+acompanha um dashboard —, `card.owner` cacheado podia estar VÁRIAS
+edições atrás do responsável real (aqui, "Marciel Santos" era
+provavelmente um responsável bem anterior a Leticia/Marina, ainda preso
+no cache). O fix anterior (priorizar match exato) continua válido — é
+uma correção real e independente pra um risco de colisão de iniciais —
+mas não tinha como consertar isto, porque `card.owner` em si já vinha
+errado, resolvido corretamente pra pessoa errada.
+
+**Fix de verdade**: `openPainelHistorico()` agora dispara
+`_pollSquadDados()` pra todo squad visível assim que o Histórico abre —
+abrir essa tela é uma ação explícita de "quero saber o que aconteceu",
+justificando buscar dado fresco na hora, sem esperar um dos outros
+gatilhos. E `_applySquadDados()` (o callback que aplica o resultado de
+CADA refresh, não só este) ganhou um `if` re-renderizando o Feed quando
+o overlay já está aberto — sem isso, o dado até chegava fresco em
+`squadData`, mas o HTML já renderizado na tela continuava mostrando a
+versão velha (`renderAll()` nunca incluiu `_renderPtFeed()`).
+
+Checks de rotina: `node --check` OK nos dois arquivos.
+
 ### painel.html v3.53 · painel / painel-dev.html v3.49 · painel-dev — 2026-09-17 · Histórico/Feed do painel podia atribuir um card a uma pessoa ERRADA
 
 Relato direto do usuário, com prints: um card criado e usado
