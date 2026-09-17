@@ -1788,10 +1788,16 @@ derivado do card mudando).
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
   bloco de Impedimento), chamado no `openCard()` (L13724).
 - Dashboards: `renderBoardDataInsights()` (L19224, seção "Tempo em
-  atraso/bloqueado") e `renderCriativosDashboard()` (L16391, mesma
+  atraso/bloqueado") e `renderCriativosDashboard()` (L17256, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
   contrário do resto dessas telas), de propósito — é o ponto principal
-  do pedido ("mesmo que depois ele seja concluído").
+  do pedido ("mesmo que depois ele seja concluído"). `renderCriativosDashboard()`
+  ganhou 2 blocos novos (2026-09-17, pedido direto do usuário): ⏱️ Tempo
+  médio de produção por canal/plataforma/formato (`avgTempoBy()`, reusa
+  `_cardTempos()`, só pedidos concluídos entram na média — `_crvBarRowTime()`
+  desenha a barra) e motivo do bloqueio (`card.blockerReason`) na lista
+  "Mais tempo bloqueado" (`crvBlockRow()`, silencioso quando não
+  preenchido).
 - **Limitação conhecida, documentada no código** (`_settleCardTimeTrackingLazy`):
   card atrasado sem NENHUM save no meio até o prazo ser adiado direto
   pro futuro (sem completar) perde esse período — `due` antigo já foi

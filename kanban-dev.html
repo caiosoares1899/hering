@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.698-dev</div>
+<div class="version">v8.30.699-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -17154,6 +17154,20 @@ function _crvBarRow(label, count, total, color){
     + '<span style="width:30px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+count+'</span>'
     + '</div>';
 }
+// Mesma barra de _crvBarRow(), mas a largura é proporcional à MÉDIA de
+// horas (contra o maior valor do grupo, não contra a soma — tempo médio
+// não é "parte de um todo" como contagem é) e o rótulo à direita mostra
+// o tempo formatado + o tamanho da amostra entre parênteses.
+function _crvBarRowTime(label, avgHoras, maxHoras, n, color){
+  const pct = maxHoras>0 ? Math.round(avgHoras/maxHoras*100) : 0;
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
+    + '<span style="width:110px;flex-shrink:0;font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+esc(label)+'">'+esc(label)+'</span>'
+    + '<div style="flex:1;height:13px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden;">'
+    +   '<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:7px;"></div>'
+    + '</div>'
+    + '<span style="width:70px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+_fmtHoras(avgHoras)+' <span style="opacity:.65;">('+n+')</span></span>'
+    + '</div>';
+}
 // Filtros do Dashboard (Tag/Responsável/Demandante/Coluna/Prioridade/Período)
 // — pedido direto ("coloca filtros: tag, responsável, demandante, data...
 // e mais filtros que julgar interessante"). Separados dos filtros da aba
@@ -17285,6 +17299,21 @@ function renderCriativosDashboard(){
   const crvCardRow=(c,ms)=>'<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
     +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
     +'<span style="flex-shrink:0;color:var(--txt3);">'+_fmtHoras(ms/3600000)+'</span></div>';
+  // Mesma linha de crvCardRow, mas com o motivo do impedimento embaixo do
+  // título quando preenchido (pedido direto do usuário: "os motivos dos
+  // bloqueados, caso as pessoas tenham preenchido") — card.blockerReason é
+  // texto livre digitado na Ficha do card, fica em branco silenciosamente
+  // quando ninguém preencheu, sem forçar um "sem motivo" na tela.
+  const crvBlockRow=(c,ms)=>{
+    const motivo=(c.blockerReason||'').trim();
+    return '<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;">'
+        +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
+        +'<span style="flex-shrink:0;color:var(--txt3);">'+_fmtHoras(ms/3600000)+'</span>'
+      +'</div>'
+      + (motivo?'<div style="font-size:10.5px;color:var(--txt3);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(motivo)+'">🚧 '+esc(motivo)+'</div>':'')
+      +'</div>';
+  };
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -17312,6 +17341,31 @@ function renderCriativosDashboard(){
   rows.forEach(c=>{ const lid=c.criativo&&c.criativo.lista; const nome=lid&&criativosListas[lid]?criativosListas[lid].nome:'Sem lista'; listaMap.set(nome,(listaMap.get(nome)||0)+1); });
   const byLista=[...listaMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
 
+  // ⏱️ Tempo médio de produção por categoria — pedido direto do usuário
+  // ("acrescentaria tempo médio por categoria"). Reusa _cardTempos() (mesmo
+  // lead time do Relatório de Tempo/_computeTempoData()) — só pedidos JÁ
+  // CONCLUÍDOS entram na média (t.done), senão um pedido em andamento (que
+  // ainda vai crescer) puxaria a média artificialmente pra baixo.
+  function avgTempoBy(opcoesKey,cardField,isArray,limitN){
+    const m=new Map(); // label -> {sum, n}
+    rows.forEach(c=>{
+      const t=_cardTempos(c);
+      if(!t.done||t.lead==null) return;
+      const labels=isArray
+        ? _crvEffectiveLabelsFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo)
+        : [_crvEffectiveLabelFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo)||'—'];
+      labels.forEach(label=>{
+        const cur=m.get(label)||{sum:0,n:0};
+        cur.sum+=t.lead; cur.n++;
+        m.set(label,cur);
+      });
+    });
+    return [...m.entries()].map(([label,v])=>[label,v.sum/v.n,v.n]).sort((a,b)=>b[1]-a[1]).slice(0,limitN||6);
+  }
+  const avgByCanal=avgTempoBy('canais','canal',false,6);
+  const avgByPlataforma=avgTempoBy('plataformas','plataformas',true,6);
+  const avgByFormato=avgTempoBy('formatos','formato',false,6);
+
   const prioSegs=prioOrder.map(p=>({color:prioColors[p],value:prioCounts[p]}));
   if(semPrio>0) prioSegs.push({color:prioColors.none,value:semPrio});
   const prioGrad=_crvDonutGradient(prioSegs);
@@ -17337,6 +17391,13 @@ function renderCriativosDashboard(){
       + (items.length ? items.map(([label,count])=>_crvBarRow(label,count,bTotal,'#ffb3d9')).join('') : '<div style="font-size:11px;color:var(--txt3);">Sem dados.</div>')
       +'</div>';
   };
+  const timeBarsBlock=(title,items)=>{
+    const maxH = items.reduce((m,[,h])=>Math.max(m,h),0);
+    return '<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+      +'<div class="cfg-sec-title" style="margin-bottom:10px;">'+title+'</div>'
+      + (items.length ? items.map(([label,avgH,n])=>_crvBarRowTime(label,avgH,maxH,n,'#38b6ff')).join('') : '<div style="font-size:11px;color:var(--txt3);">Sem pedidos concluídos suficientes ainda.</div>')
+      +'</div>';
+  };
 
   // ── Resumo agregado pro botão "🤖 Ponto de vista do Agente Ágil" ──
   // Mesmos números já calculados acima pra desenhar o painel (ver
@@ -17352,10 +17413,13 @@ function renderCriativosDashboard(){
     topCanal: byCanal.map(([label,qtd])=>({label,qtd})),
     topPlataforma: byPlataforma.map(([label,qtd])=>({label,qtd})),
     topFormato: byFormato.map(([label,qtd])=>({label,qtd})),
+    tempoMedioProducaoHorasPorCanal: avgByCanal.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
+    tempoMedioProducaoHorasPorPlataforma: avgByPlataforma.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
+    tempoMedioProducaoHorasPorFormato: avgByFormato.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
     tempoTotalAtrasoHoras: Math.round(totalAtrasoCrvH),
     tempoTotalBloqueadoHoras: Math.round(totalBlockCrvH),
     topAtraso: atrasoTopCrv.map(c=>({titulo:c.title||'(sem título)',horasAtrasado:Math.round(_cardAtrasadoMs(c)/3600000)})),
-    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000)})),
+    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000),motivo:(c.blockerReason||'').trim()||null})),
   };
   const botaoAgente = AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)
     ? '<div style="margin-top:16px;">'
@@ -17388,6 +17452,11 @@ function renderCriativosDashboard(){
       +barsBlock('🎯 Por plataforma',byPlataforma)
       +barsBlock('🖼 Por formato',byFormato)
     +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">'
+      +timeBarsBlock('⏱️ Tempo médio por canal',avgByCanal)
+      +timeBarsBlock('⏱️ Tempo médio por plataforma',avgByPlataforma)
+      +timeBarsBlock('⏱️ Tempo médio por formato',avgByFormato)
+    +'</div>'
     +((totalAtrasoCrvH>0||totalBlockCrvH>0) ?
       '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
         +statCard('⏱️','Tempo total em atraso',_fmtHoras(totalAtrasoCrvH),totalAtrasoCrvH?'#ff6b6b':'var(--txt)')
@@ -17400,7 +17469,7 @@ function renderCriativosDashboard(){
         +'</div>'
         +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
           +'<div class="cfg-sec-title" style="margin-bottom:12px;">⏱️ Mais tempo bloqueado (acumulado, mesmo já concluídos)</div>'
-          + (blockTopCrv.length ? blockTopCrv.map(c=>crvCardRow(c,_cardBlockedMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou bloqueio.</div>')
+          + (blockTopCrv.length ? blockTopCrv.map(c=>crvBlockRow(c,_cardBlockedMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou bloqueio.</div>')
         +'</div>'
       +'</div>'
       : '')
