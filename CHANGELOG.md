@@ -3503,6 +3503,29 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.701-dev — 2026-09-17 — /monitorarbugs: motivo do bloqueio sumia do dashboard de Criativos em squads com modo "tag"
+
+Achado da rotina `/monitorarbugs`, área escolhida por ser a mais recente
+(feature de tempo médio/motivo do bloqueio do Controle de Criativos,
+v8.30.699-dev). A lista "⏱️ Mais tempo bloqueado" existe justamente pra
+mostrar o motivo que a pessoa preencheu no impedimento — mas em squads
+com `blockerMode==='tag'` (alternativa ao modo coluna padrão,
+configurável por squad), `card.blockerReason` é zerado no exato momento
+em que o card é desbloqueado (`_doBulkUnblockTag()`, auto-desimpedimento
+em `recordMove()` ao concluir, e `removeBlockerTag()` no modal) — então
+todo card já RESOLVIDO aparecia na lista sem motivo nenhum, mesmo que a
+pessoa tivesse preenchido um na hora. Em modo coluna (padrão) isso não
+acontecia, porque nada limpa esse campo por lá — só modo tag tinha o gap.
+
+Corrigido guardando o texto em `card.lastBlockerReason` nos 3 pontos que
+fecham o episódio, antes de limpar `blockerReason` — `crvBlockRow()`
+(e o resumo `window._criativosResumoCache.topBloqueado[].motivo`, usado
+pelo botão "🤖 Ponto de vista do Agente Ágil") agora leem
+`blockerReason||lastBlockerReason`. `_duplicarCardObj()` também passou a
+apagar `lastBlockerReason` da cópia — mesmo motivo já aplicado a
+`atrasadoMs`/`blockedMs`/`pausedMs` no fix anterior (v8.30.700-dev): é
+histórico do card ORIGINAL, não deveria vazar pra um card recém-criado.
+
 ### v8.30.700-dev — 2026-09-17 — Fix severo: card podia acumular "666202d 11h" de atraso (bug de concatenação de string)
 
 Relato direto do usuário, com print, ao testar a rodada anterior:

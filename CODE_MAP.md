@@ -1809,7 +1809,17 @@ derivado do card mudando).
   `_cardTempos()`, só pedidos concluídos entram na média — `_crvBarRowTime()`
   desenha a barra) e motivo do bloqueio (`card.blockerReason`) na lista
   "Mais tempo bloqueado" (`crvBlockRow()`, silencioso quando não
-  preenchido).
+  preenchido). **`card.lastBlockerReason`** (`/monitorarbugs` 2026-09-17):
+  em modo TAG, `blockerReason` é zerado assim que o card é desbloqueado
+  (`_doBulkUnblockTag()` L7856, auto-unblock em `recordMove()` ~L8500,
+  `removeBlockerTag()` L31725) — sem guardar em outro lugar, todo card já
+  resolvido perdia o motivo no dashboard, mesmo preenchido. Cada um dos 3
+  pontos copia o texto pra `lastBlockerReason` antes de limpar
+  `blockerReason`; `crvBlockRow()` lê `blockerReason||lastBlockerReason`.
+  Em modo COLUNA não precisa (nada limpa `blockerReason` lá, ver
+  comentário em `saveCard()` ~L15199). `_duplicarCardObj()` (~L15471)
+  também apaga `lastBlockerReason` da cópia, mesmo motivo de
+  `atrasadoMs`/`blockedMs`/`pausedMs`.
 - **Limitação conhecida, documentada no código** (`_settleCardTimeTrackingLazy`):
   card atrasado sem NENHUM save no meio até o prazo ser adiado direto
   pro futuro (sem completar) perde esse período — `due` antigo já foi
