@@ -3468,6 +3468,44 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.686-dev — 2026-09-17 — `/monitorarbugs`: drawers laterais abriam um por cima do outro (Lembretes/Dados/Kudos/Spotify/Notas)
+
+Rodada de `/monitorarbugs` sem área nomeada — foco em Spotify (nunca
+tinha recebido auditoria dedicada), que acabou revelando um achado
+bem mais abrangente, envolvendo 5 áreas diferentes de uma vez.
+
+**Achado real, técnica 1 (comparar caminhos paralelos)**: os 5 drawers
+laterais do board (📌 Lembretes, 📊 Dados, ⭐ Kudos, 🎧 Spotify, 📝 Notas)
+compartilham a MESMA classe base CSS `.lem-drawer` — `position:fixed`
+idêntico, mesmo `z-index`, e 4 deles (todos menos Kudos, que espelha
+pra esquerda) do MESMO lado da tela. Cada `toggleXxx()` mantinha sua
+própria lista solta de "quais outros drawers fechar ao abrir", e essas
+5 listas tinham divergido silenciosamente ao longo do tempo:
+`toggleNotas()` fechava os 4 outros corretamente, `toggleSpotify()`
+esquecia de fechar Notas, `toggleKudos()` só fechava Lembretes, e
+`toggleDados()`/`toggleLembretes()` não fechavam NENHUM outro drawer.
+
+Na prática: abrir 📊 Dados com 📌 Lembretes já aberto (ou qualquer
+combinação faltante das listadas acima) deixava os dois com a classe
+`.open` ao mesmo tempo, ocupando exatamente a mesma posição da tela —
+um renderizado por cima do outro, sem nenhum jeito de perceber que os
+dois estavam tecnicamente abertos ao mesmo tempo.
+
+**Fix**: centralizado num único ponto — `_DRAWER_IDS` (lista) +
+`_closeOtherDrawers(exceptId)` (helper) — usado pelos 5 `toggleXxx()`
+e por `abrirNotaVinculada()` (que também tinha sua própria cópia da
+lista). Qualquer aba lateral nova que for criada no futuro só precisa
+entrar em `_DRAWER_IDS` uma vez, em vez de lembrar de atualizar 6
+lugares diferentes — a causa raiz do bug era exatamente essa
+duplicação.
+
+Checagem de passagem em Spotify (o motivo original da rodada): sem
+achado — código já bem defensivo (fetch cancelado se a aba trocar
+durante um `await`, flag `_spotifySelfConnected` evita janela de até
+1min sem status próprio, listener zera o bucket antes de reatachar).
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.685-dev — 2026-09-17 — `/monitorarbugs`: Estrela do Mar — dava pra mandar Estrela pra si mesmo no escopo Geral
 
 Rodada de `/monitorarbugs` sem área nomeada — foco em Estrela do Mar/
