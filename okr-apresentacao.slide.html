@@ -311,6 +311,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(14px);color:var(--txt);
   font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
   box-shadow:0 6px 22px rgba(0,0,0,.35);transition:transform .15s,background .15s;font-family:inherit;}
+/* Mesmo motivo de #login-ov[hidden] logo acima: display:flex com
+   especificidade de ID vence o [hidden] padrão do navegador sozinho. */
+#notes-fab[hidden]{display:none;}
 #notes-fab:hover{transform:translateY(-2px);background:var(--glass-hover);}
 #notes-ov{position:fixed;inset:0;z-index:460;display:none;background:rgba(3,13,26,.55);backdrop-filter:blur(4px);}
 #notes-ov.open{display:flex;justify-content:flex-end;}
@@ -383,29 +386,39 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   </div>
   <div id="slides"></div>
   <div id="bottombar"></div>
-
-  <!-- Dentro de #app de propósito (não sibling solto) — herda o mesmo
-       ciclo de show/hide do app shell (ver #app[hidden] no CSS), então o
-       botão flutuante não aparece sozinho por cima da tela de login. -->
-  <button id="notes-fab" onclick="window._okrToggleNotes()" title="Anotações da reunião">📋</button>
-  <div id="notes-ov" onclick="if(event.target===this) window._okrCloseNotes()">
-    <div class="notes-panel">
-      <div class="notes-hd">
-        <h3>📋 Anotações da reunião</h3>
-        <button class="notes-close" onclick="window._okrCloseNotes()">✕</button>
-      </div>
-      <div class="notes-list" id="notes-list"></div>
-      <div class="notes-compose">
-        <textarea class="notes-input" id="notes-input" rows="1" placeholder="Escreva uma anotação… (Enter envia, Shift+Enter quebra linha)"
-          onkeydown="window._okrNotesKeydown(event)"></textarea>
-        <button class="notes-send" id="notes-send" onclick="window._okrAddNota()" title="Enviar (Enter)">➤</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
   <div class="detail-modal" id="detail-modal"></div>
+</div>
+
+<!-- Sibling de #app/#detail-ov de propósito, NÃO dentro de #app — achado
+     real (print do usuário: botão sumia/aparecia quebrado dentro do
+     detalhamento do Objetivo): #app tem position:relative+z-index:1, que
+     cria o PRÓPRIO contexto de empilhamento — um filho dele com
+     z-index:450 só compete DENTRO desse contexto, nunca escapa acima de
+     #detail-ov (z-index:400 na raiz), porque quem compara com #detail-ov
+     na raiz é o z-index do #app inteiro (1), não o do filho. Ficando como
+     sibling na raiz, #notes-fab/#notes-ov competem de verdade com
+     #detail-ov pelos MESMOS 450/460 > 400 — sempre acessível, mesmo com
+     o detalhamento do Objetivo aberto (pedido direto do usuário: "esconde
+     no canto, quando a pessoa puxar ele aparece"). Visibilidade na tela
+     de login tratada por JS (hidden toggled em window._okrHandleAuth()),
+     não mais herdando de #app[hidden]. -->
+<button id="notes-fab" onclick="window._okrToggleNotes()" title="Anotações da reunião" hidden>📋</button>
+<div id="notes-ov" onclick="if(event.target===this) window._okrCloseNotes()">
+  <div class="notes-panel">
+    <div class="notes-hd">
+      <h3>📋 Anotações da reunião</h3>
+      <button class="notes-close" onclick="window._okrCloseNotes()">✕</button>
+    </div>
+    <div class="notes-list" id="notes-list"></div>
+    <div class="notes-compose">
+      <textarea class="notes-input" id="notes-input" rows="1" placeholder="Escreva uma anotação… (Enter envia, Shift+Enter quebra linha)"
+        onkeydown="window._okrNotesKeydown(event)"></textarea>
+      <button class="notes-send" id="notes-send" onclick="window._okrAddNota()" title="Enviar (Enter)">➤</button>
+    </div>
+  </div>
 </div>
 
 <script type="module">
@@ -1082,11 +1095,17 @@ window._okrHandleAuth = user => {
     document.getElementById('app').hidden = false;
     document.getElementById('login-err').hidden = true;
     document.getElementById('login-out-btn').hidden = true;
+    document.getElementById('notes-fab').hidden = false;
     if(safeUrl(user.photoURL)) document.getElementById('tb-avatar').src = user.photoURL;
     startListeners();
   } else {
     document.getElementById('login-ov').hidden = false;
     document.getElementById('app').hidden = true;
+    // #notes-fab é sibling de #app (ver comentário na declaração do HTML),
+    // não esconde mais sozinho junto com o app shell — precisa do próprio
+    // toggle aqui, e fecha o painel se tivesse ficado aberto.
+    document.getElementById('notes-fab').hidden = true;
+    window._okrCloseNotes();
   }
 };
 </script>

@@ -2676,10 +2676,16 @@ detalhe aberto — ver nota abaixo).
   de bloqueio por domínio/whitelist do resto do Maré Digital
   (`@ciahering.com.br` ou `painel_viewers`), erro mostra
   `#login-err`/`#login-out-btn` em vez de deixar a tela em branco.
-- **📋 Anotações da reunião** (2026-09-17, pedido direto do usuário) —
-  botão flutuante dentro de `#app` (por baixo do app shell de propósito,
-  ver comentário no HTML — não aparece sozinho na tela de login) abre um
-  painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
+- **📋 Anotações da reunião** (2026-09-17, pedido direto do usuário;
+  2ª rodada no mesmo dia — fix real: `#notes-fab`/`#notes-ov` viraram
+  sibling de `#app`/`#detail-ov` na raiz do documento, não mais filhos
+  de `#app` — `#app` cria o próprio contexto de empilhamento CSS
+  (`position:relative;z-index:1`), então um filho seu nunca escapava
+  acima de `#detail-ov` mesmo com `z-index:450` — botão sumia/quebrava
+  dentro do detalhamento do Objetivo. Visibilidade na tela de login
+  agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`) —
+  botão flutuante abre um painel lateral (`#notes-ov`) de anotações ao
+  vivo, salvas em
   `kanban/okr/reuniao_notas/{id}` (node novo, herda `.read`/`.write` de
   `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
   necessária). `renderNotas()` — L983 — lista cronológica (mais antiga

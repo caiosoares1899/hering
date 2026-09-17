@@ -16650,6 +16650,38 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (2ª rodada) — Fix: botão de Anotações sumia/quebrava dentro do detalhamento do Objetivo
+
+Relato direto do usuário, com print, logo depois da rodada anterior:
+abrir o detalhamento de um Objetivo (`#detail-ov`) escondia (ou
+renderizava quebrado) o botão flutuante 📋 e o painel de anotações.
+
+**Causa raiz**: a 1ª versão colocou `#notes-fab`/`#notes-ov` DENTRO de
+`#app` de propósito, só pra herdar o show/hide da tela de login. Mas
+`#app` já tem `position:relative;z-index:1` — isso cria o PRÓPRIO
+contexto de empilhamento CSS, e um filho dele com `z-index:450` só
+compete DENTRO desse contexto; nunca escapa acima de `#detail-ov`
+(`z-index:400` na raiz do documento), porque quem entra na comparação
+com `#detail-ov` na raiz é o z-index do `#app` inteiro (1), não o do
+filho. Resultado: o botão de anotações nunca conseguia ficar por cima
+do detalhamento do Objetivo, exatamente o oposto do pedido original
+("esconde no canto, quando a pessoa puxar ele aparece" — implícito:
+sempre acessível).
+
+**Fix**: `#notes-fab`/`#notes-ov` voltam a ser sibling de `#app`/
+`#detail-ov` na raiz do documento (mesmo nível de `#detail-ov`), onde
+o `450`/`460` de fato vence o `400` do detalhamento. A visibilidade na
+tela de login (que motivou colocá-los dentro de `#app` na 1ª versão)
+passa a ser controlada por JS puro — `#notes-fab` nasce com o atributo
+`hidden`, e `window._okrHandleAuth()` liga/desliga esse `hidden`
+junto com `#login-ov`/`#app` (mesma função que já faz esse toggle pros
+outros dois). CSS ganhou `#notes-fab[hidden]{display:none;}` — mesmo
+motivo de `#login-ov[hidden]` já existente: `display:flex` com
+especificidade de ID vence o `[hidden]` padrão do navegador sozinho.
+
+Checks de rotina: `node --check` OK nos 2 blocos; `<div>`s balanceados
+(98/98).
+
 ### 2026-09-17 — Novo: 📋 Anotações da reunião (botão flutuante, ao vivo, persistente)
 
 Pedido direto do usuário: um jeito rápido de registrar o que se discute
