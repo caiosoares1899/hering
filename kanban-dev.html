@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.692-dev</div>
+<div class="version">v8.30.693-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30636,7 +30636,28 @@ const AUTO_ACTIONS = [
   { key:'remove_tag', label:'Remover tag', valueType:'tag',
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
-    run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): comparado aos 4 call sites
+    // que já fazem "notifAssigned() + runAutoRules('assigned',...)" toda
+    // vez que card.owner muda (bulk `_doBulkAssign()`, modal `saveCard()`,
+    // criação, `scheduleAutoSave()` — ver comentário na declaração de
+    // `runAutoRules()`), esta ação de Automação fazia só metade: mutava
+    // card.owner e gravava histórico, mas nunca notificava a pessoa nova
+    // nem disparava o evento 'assigned' pra encadear outras regras — quem
+    // era atribuído por uma Automação nunca via nada no sino 🔔. Também
+    // faltava o guard de no-op que as ações vizinhas já têm (`add_tag`/
+    // `toggle_okr` retornam `false` sem mudar nada quando o valor já é o
+    // mesmo) — sem ele, reatribuir a MESMA pessoa toda vez que a regra
+    // disparasse gravava histórico + salvava no Firebase + mostrava
+    // "Automação aplicada" à toa, mesmo sem nenhuma mudança real.
+    run:(rule,card)=>{
+      if(!rule.actionVal || rule.actionVal===card.owner) return false;
+      card.owner=rule.actionVal;
+      const m=members.find(x=>x.init===rule.actionVal);
+      recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação');
+      notifAssigned(rule.actionVal, card.id, card.title);
+      runAutoRules('assigned', card.id, rule.actionVal);
+      return true;
+    } },
   { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab',
     // Visibilidade escopada por squad (mesma fonte que o autocomplete de
     // @menção usa, ver AGENTE_AGIL_MENTION_SQUADS) — AGENTE_AGIL_ATIVO

@@ -3503,6 +3503,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.693-dev — 2026-09-17 — `/monitorarbugs` (Automações): "Atribuir responsável" nunca notificava nem encadeava outras regras
+
+Rodada de `/monitorarbugs` sem área nomeada — foco na área mais
+recentemente alterada (`AUTO_ACTIONS`, onde `notify_po_org` acabou de
+entrar), técnica 1 (comparar caminhos paralelos pra mesma mutação:
+`card.owner`).
+
+Existem 4 lugares que mudam `card.owner` e, sempre que muda de verdade,
+fazem as duas mesmas coisas — `notifAssigned()` (avisa a pessoa nova no
+sino 🔔) + `runAutoRules('assigned', ...)` (deixa outra regra de
+Automação reagir a "card atribuído a X") — `_doBulkAssign()`,
+`saveCard()`, criação de card e `scheduleAutoSave()` (essa lista de "4
+call sites" já é documentada no comentário de `runAutoRules()`). A ação
+de Automação "Atribuir responsável" (`assign_owner`) era um 5º lugar
+que muda `card.owner`, mas só gravava histórico — quem era atribuído
+por uma regra nunca via nada no sino, e nenhuma outra regra configurada
+com o gatilho "Card foi atribuído a X" disparava quando a atribuição
+vinha de uma Automação. Achado incidental corrigido junto: faltava
+também o guard de no-op que as ações vizinhas (`add_tag`/`toggle_okr`)
+já têm — reatribuir a MESMA pessoa toda vez que a regra disparasse
+gravava histórico + salvava no Firebase + mostrava "Automação aplicada"
+sem nenhuma mudança real ter acontecido.
+
+Fix: `assign_owner.run()` ganhou o mesmo guard de no-op + as mesmas 2
+chamadas (`notifAssigned()` + `runAutoRules('assigned',...)`) dos outros
+4 lugares.
+
+**Achado maior, reportado mas NÃO corrigido nesta rodada** (decisão de
+produto, fora do escopo de um fix pontual): nenhuma outra ação de
+Automação (`add_tag`/`move_card`/`set_submarca`/`toggle_okr`/etc.)
+re-dispara `runAutoRules()` com o evento correspondente depois de
+aplicar seu efeito — ou seja, hoje NENHUMA automação encadeia em outra
+(regra A move o card → regra B, que reage a "card movido para X", nunca
+sabe que isso aconteceu). Diferente do gap do `assign_owner` acima
+(que tinha um padrão já estabelecido em 4 lugares pra copiar), isto
+seria construir encadeamento de automações pela primeira vez em
+QUALQUER ação — nenhum comentário no código promete esse
+comportamento, e implementar precisa de proteção deliberada contra
+loop (regra A dispara regra B que dispara regra A de novo), que não
+existe hoje nem nos 4 lugares que já encadeiam 'assigned'. Fica como
+recomendação pra decisão explícita, não implementado de bandeja.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.692-dev — 2026-09-17 — Nova ação de Automação: "Notificar PO/Organizador"
 
 Pedido direto do usuário. Nova ação no lado ENTÃO das regras de
