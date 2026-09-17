@@ -3503,6 +3503,61 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.700-dev — 2026-09-17 — Fix severo: card podia acumular "666202d 11h" de atraso (bug de concatenação de string)
+
+Relato direto do usuário, com print, ao testar a rodada anterior:
+"iiih algum bug aqui! como q um card pode ficar tanto tempo
+atrasado?kkk" — um card mostrava "❗ Já ficou atrasado por 666202d 11h
+no total" (≈1825 anos), com prazo pra amanhã.
+
+**Causa raiz confirmada via script de diagnóstico** (dados crus do
+card): `atrasadoMs: 57559892048539`. Os 2 pontos que acumulam esse
+campo (`recordMove()`, `_settleCardTimeTrackingLazy()`) fazem `card.
+atrasadoMs = (card.atrasadoMs||0) + Math.max(0, ...)` — se `atrasadoMs`
+já estivesse salvo como STRING (não achada a origem exata de quando
+isso aconteceu pela 1ª vez — provavelmente dado antigo/importado), o
+operador `+` do JS faz CONCATENAÇÃO de texto em vez de soma quando um
+dos lados já é string: `"575598920" + 48539` virou o texto
+`"57559892048539"`, lido depois como milissegundos por `_fmtHoras()`
+(`57559892048539 / 3600000 ≈ 15988859h ≈ 666202d`, batendo exatamente
+com o número do print). 575598920ms ≈ 6.66 dias — um valor real e
+plausível de atraso ANTES da corrupção.
+
+**Achado incidental relacionado, mesma causa raiz** — `_duplicarCardObj()`
+(usado por "🧬 Duplicar card") clona o card inteiro com `JSON.parse(
+JSON.stringify(card))` e nunca resetava `atrasadoMs`/`atrasadoDesde`/
+`blockedMs`/`blockedAt`/`pausedMs`/`flow` — mesma lacuna que
+`childCardIds`/`pinned` já tinham antes de serem corrigidos (aqueles já
+resetam corretamente). O card do relato tinha "duplicou o card" no
+Histórico: a cópia nasceu herdando o `atrasadoMs` já corrompido do
+card original, e o `flow.enteredAt` também ficava com datas de quando
+o ORIGINAL entrou em cada coluna (completamente desalinhado de
+`createdAt`, que já é resetado corretamente).
+
+**Fix, em 2 camadas**:
+1. `Number(x)||0` em vez de `(x||0)` nos 6 pontos de acumulação
+   (`atrasadoMs` ×2, `blockedMs` ×3, `pausedMs` ×1) E nas 3 funções de
+   leitura (`_cardAtrasadoMs()`/`_cardBlockedMs()`/`_cardPausedMs()`) —
+   garante soma numérica sempre, mesmo se o valor salvo já estiver
+   corrompido como string (blindagem na leitura, não só na escrita).
+2. `_duplicarCardObj()` agora reseta `atrasadoMs`/`blockedMs`/`pausedMs`
+   pra 0 e apaga `atrasadoDesde`/`blockedAt`/`pausedAt`/`flow`/
+   `_lastFlowCol` — uma cópia nasce sem herdar tempo acumulado de outro
+   card, mesmo espírito de `childCardIds`/`pinned`. `flow` apagado (em
+   vez de reconstruído na mão) deixa o próprio `if(!card.flow)` de
+   `recordMove()` (chamado logo depois, na mesma função) inicializar do
+   zero — mesmo caminho que um card genuinamente novo já passa,
+   confirmado lendo a lógica de `isNewFlow` ali.
+
+**Não corrigido nesta rodada** (fora do alcance de código): o valor já
+corrompido do card específico do relato — o usuário pode zerar
+manualmente `atrasadoMs` desse card pelo script de correção entregue no
+chat, já que não dá pra recuperar com certeza total qual parte do
+número concatenado era o valor real anterior à corrupção.
+
+Checks de rotina: `node --check` OK; chaves balanceadas no baseline
+conhecido (-1, inalterado).
+
 ### v8.30.699-dev — 2026-09-17 — Controle de Criativos: tempo médio por categoria + motivo do bloqueio
 
 Pedido direto do usuário, depois de perguntar "hoje com os dados q nós

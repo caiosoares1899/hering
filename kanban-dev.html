@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.699-dev</div>
+<div class="version">v8.30.700-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8516,7 +8516,19 @@ function recordMove(card, toCol, atISO){
     if(toCol==='blocker' && from!=='blocker' && !card.blockedAt){
       card.blockedAt = at;
     } else if(from==='blocker' && toCol!=='blocker' && card.blockedAt){
-      card.blockedMs = (card.blockedMs||0) + Math.max(0, new Date(at).getTime()-new Date(card.blockedAt).getTime());
+      // Number(...) em vez de (x||0): achado real (relato direto do
+      // usuário, print de um card mostrando "666202d 11h" de atraso
+      // acumulado — impossível). Causa raiz confirmada via script de
+      // diagnóstico: atrasadoMs tinha virado STRING em algum momento
+      // (não achada a origem exata — provavelmente um dado antigo/
+      // importado), e (card.atrasadoMs||0) + número faz CONCATENAÇÃO de
+      // string em JS quando o operando já é string, não soma — "575598920"
+      // + 48539 virou o texto "57559892048539", lido depois como
+      // milissegundos. Number(x)||0 garante soma numérica sempre, mesmo
+      // se o valor salvo já estiver corrompido como string. Mesmo padrão
+      // aplicado aqui e nos outros 4 pontos que fazem esse tipo de
+      // acumulação (blockedMs ×3, pausedMs ×1, atrasadoMs mais abaixo).
+      card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, new Date(at).getTime()-new Date(card.blockedAt).getTime());
       card.blockedAt = null;
     }
   }
@@ -8529,7 +8541,7 @@ function recordMove(card, toCol, atISO){
     if(estavaAtrasado){
       const startStr = card.atrasadoDesde || card.due;
       const start = new Date(startStr+'T00:00:00').getTime();
-      card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, new Date(at).getTime()-start);
+      card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, new Date(at).getTime()-start);
     }
     card.atrasadoDesde = null;
   }
@@ -15409,7 +15421,7 @@ function togglePauseCard(cardId){
   const nowISO=new Date().toISOString();
   if(c.paused){
     const elapsedMs = c.pausedAt ? Math.max(0, Date.now()-new Date(c.pausedAt).getTime()) : 0;
-    c.pausedMs = (c.pausedMs||0) + elapsedMs;
+    c.pausedMs = (Number(c.pausedMs)||0) + elapsedMs;
     c.paused = false;
     c.pausedAt = null;
     recordHistory(c, 'retomou a contagem de tempo do card (⏸ Pausar)');
@@ -15426,7 +15438,7 @@ function togglePauseCard(cardId){
 }
 function _cardPausedMs(c){
   if(!c) return 0;
-  let ms = c.pausedMs||0;
+  let ms = Number(c.pausedMs)||0;
   if(c.paused && c.pausedAt) ms += Math.max(0, Date.now()-new Date(c.pausedAt).getTime());
   return ms;
 }
@@ -15478,6 +15490,23 @@ function _duplicarCardObj(card, opts){
   // do childCardIds acima: sem isso, a cópia "herdaria" pinned:true e
   // ficariam 2 cards fixados na mesma coluna, violando a regra de só 1.
   novo.pinned=false; delete novo.pinnedAt;
+  // Rastreamento de tempo (flow/atrasadoMs/blockedMs/pausedMs) TAMBÉM
+  // nunca deveria sobreviver à duplicação, mesmo motivo do childCardIds/
+  // pinned acima — achado real (relato direto do usuário, print de um
+  // card mostrando "666202d 11h" de atraso acumulado): o clone via
+  // JSON.parse(JSON.stringify(card)) herdava esses campos do card
+  // ORIGINAL sem resetar, então uma cópia recém-criada podia nascer já
+  // "atrasada há anos" (ou bloqueada/pausada) só por carregar o histórico
+  // acumulado de tempo de outro card. `flow` também ficava com
+  // `enteredAt`/`log` de quando o ORIGINAL entrou em cada coluna, uma
+  // data completamente desalinhada de `createdAt` (que já é resetado
+  // acima) — apaga o objeto inteiro pra deixar o `if(!card.flow)` de
+  // recordMove() (chamado logo abaixo) inicializar um `flow` de verdade,
+  // do zero, mesmo caminho que um card genuinamente novo passa.
+  delete novo.flow; delete novo._lastFlowCol;
+  novo.atrasadoMs=0; delete novo.atrasadoDesde;
+  novo.blockedMs=0; delete novo.blockedAt;
+  novo.pausedMs=0; novo.paused=false; delete novo.pausedAt;
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -31481,7 +31510,7 @@ function _settleBlockedTag(card, wasBlocked){
   if(isBlocked){
     card.blockedAt = new Date().toISOString();
   } else if(card.blockedAt){
-    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
     card.blockedAt = null;
   }
 }
@@ -31512,7 +31541,7 @@ function _settleCardTimeTrackingLazy(card){
   if(isBlocked && !card.blockedAt){
     card.blockedAt = new Date().toISOString();
   } else if(!isBlocked && card.blockedAt){
-    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
     card.blockedAt = null;
   }
   const isOverdue = _cardIsOverdue(card);
@@ -31520,7 +31549,7 @@ function _settleCardTimeTrackingLazy(card){
     card.atrasadoDesde = card.due;
   } else if(!isOverdue && card.atrasadoDesde){
     const start = new Date(card.atrasadoDesde+'T00:00:00').getTime();
-    card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, Date.now()-start);
+    card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, Date.now()-start);
     card.atrasadoDesde = null;
   }
 }
@@ -31528,11 +31557,15 @@ function _settleCardTimeTrackingLazy(card){
 // mesmo padrão de _cardPausedMs(). Ler o total não precisa settle antes:
 // soma o acumulado com o episódio em aberto calculado na hora.
 function _cardBlockedMs(c){
-  const acc=c?.blockedMs||0;
+  // Number(...) por segurança na leitura também (não só na escrita, ver
+  // recordMove()/_settleCardTimeTrackingLazy()) — se algum card antigo
+  // ainda tiver o campo salvo como string por causa do bug de concatenação
+  // já corrigido, a leitura não soma texto em cima de texto de novo.
+  const acc=Number(c?.blockedMs)||0;
   return c?.blockedAt ? acc+Math.max(0, Date.now()-new Date(c.blockedAt).getTime()) : acc;
 }
 function _cardAtrasadoMs(c){
-  const acc=c?.atrasadoMs||0;
+  const acc=Number(c?.atrasadoMs)||0;
   if(!c?.atrasadoDesde) return acc;
   const start=new Date(c.atrasadoDesde+'T00:00:00').getTime();
   return acc+Math.max(0, Date.now()-start);
