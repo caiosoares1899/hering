@@ -371,6 +371,20 @@ detalhe dos 4 call sites.
   qualquer call site, presente ou futuro, que tente persistir esse
   objeto por engano — não precisa (e não deve) ser reproduzido call
   site por call site.
+- **`_stripUndefinedDeep(val)`** — L18822 — rede de segurança central
+  aplicada nas 3 primitivas acima (mais `_notasUpdate()`) antes de todo
+  `window._update()`: remove recursivamente campos `undefined` (achado
+  2026-09-16) E, desde `/monitorarbugs` 2026-09-17, chaves inválidas de
+  Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
+  — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
+  dois aparecer em qualquer lugar da árvore, não só no campo tocado.
+  Causa raiz do achado de chave inválida: `backfillFlow()` (~L8557) e
+  `recordMove()` (~L8446) usam `card.col`/`toCol` como chave de
+  `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
+  (card criado fora do fluxo normal, sem coluna, é o único jeito
+  observado de chegar nesse estado). `_stripUndefinedDeep()` continua
+  como 2ª camada pra qualquer outro campo-objeto que acumule o mesmo
+  problema por um caminho ainda não mapeado.
 
 ### Rede de segurança — detecção ao vivo de card sumido inesperadamente
 - `_reportUnexpectedCardDisappearance()` — L8828 — dispara toast +

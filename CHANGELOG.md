@@ -3503,6 +3503,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.702-dev — 2026-09-17 — Fix crítico: chave vazia em `flow.enteredAt` travava salvamento em lote da squad inteira
+
+Erro real reportado pelo usuário ao rodar o script de teste da entrada
+anterior: `Uncaught (in promise) Error: update failed: values argument
+contains an invalid key () in property 'kanban.squads.dev.dados.cards.
+599.flow.enteredAt'`.
+
+**Causa raiz confirmada via diagnóstico de console**: o card
+`c_teste_exectype_1788805309964` ("Card de teste — autosave", criado
+2026-09-07, claramente um artefato de teste manual) tinha `col: ""` e
+nenhum `flow`. `backfillFlow()` (roda automaticamente em
+`_applyCardsSync()` pra qualquer card legado/importado sem `flow`) faz
+`card.flow.enteredAt[card.col] = created` sem checar se `card.col` é
+vazio — resultado: `flow.enteredAt` ganhou uma chave literalmente vazia
+(`""`), proibida pelo Realtime Database (`.`/`#`/`$`/`/`/`[`/`]`/vazio
+são os únicos caracteres/valores banidos em chave).
+
+**Por que travou a squad inteira, não só esse 1 card**: `fbSaveAll()`
+reescreve `/cards` por completo a cada chamada — então qualquer operação
+em lote (duplicar, mover em massa, recorrências, import) que rodasse
+NAQUELA squad incluía esse card corrompido no mesmo `update()`
+multi-path, e o Realtime Database rejeita a escrita INTEIRA se qualquer
+valor tiver uma chave inválida em qualquer lugar da árvore — mesma
+classe de falha "tudo-ou-nada" já documentada pro caso de campo
+`undefined` (ver `_stripUndefinedDeep()`, achado 2026-09-16). Como
+`_bulkFinish()`/`fbSaveAll()` são chamados fire-and-forget na maioria
+dos ~49 call sites (sem `.catch()` no call site), a falha virava uma
+promise rejeitada sem tratamento — nenhum toast, nenhum aviso, só um
+erro no console que ninguém via a menos que abrisse o DevTools.
+
+**Fix em 2 camadas** (mesmo padrão dos achados anteriores desta
+classe): (1) na origem — `backfillFlow()` e `recordMove()` agora só
+gravam `flow.enteredAt[col]` quando `col` não é vazio; (2) rede de
+segurança central — `_stripUndefinedDeep()` (já usada pelos 3 pontos de
+escrita de cards: `fbSaveAll()`/`fbCreateCard()`/`fbSaveCard()`, e por
+~13 escritas de Notas) agora também remove, recursivamente, qualquer
+chave inválida de Realtime Database (vazia ou com `.#$/[]`), não só
+valores `undefined` — protege contra qualquer outro campo-objeto que
+acumule o mesmo problema por um caminho ainda não mapeado, sem precisar
+tocar call site por call site.
+
 ### v8.30.701-dev — 2026-09-17 — /monitorarbugs: motivo do bloqueio sumia do dashboard de Criativos em squads com modo "tag"
 
 Achado da rotina `/monitorarbugs`, área escolhida por ser a mais recente
