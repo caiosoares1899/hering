@@ -18,6 +18,41 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.686 — 2026-09-17 · 🔴 Fix crítico — arrastar card que falhasse ao salvar corrompia métricas de fluxo em silêncio
+
+`/monitorarbugs` nas áreas críticas do board (drag-and-drop, pedido
+explícito do usuário).
+
+**Achado real (técnica 3 — confrontar com a promessa do próprio
+comentário)**: `handleDrop()` faz uma atualização otimista ao arrastar
+um card — muta `col`/`edited`/`editedAt`/`updatedAt`/`updatedBy`, grava
+uma entrada em `card.history[]` (`recordHistory()`) e atualiza as
+métricas de fluxo (`recordMove()`: `card.flow.log`, `enteredAt`,
+`firstStartAt`, `doneAt`, além de `blocker`/`blockedAt`/`blockedMs`
+dependendo do modo de impedimento) — tudo isso ANTES da escrita no
+Firebase confirmar. O comentário do `.catch()` prometia "reverte o
+estado local se o Firebase falhou", mas só revertia `card.col` e
+`card.edited` (esse último nem revertia de verdade — usava
+`card._prevEdited`, um campo que nunca era setado em lugar nenhum, um
+no-op disfarçado). Se a escrita falhasse (rede, permissão), todo o
+resto ficava corrompido em memória: uma transição de fluxo que nunca
+foi persistida (cegando cycle time/CFD/Throughput na próxima vez que o
+card salvasse de verdade) e uma entrada "moveu para X" fantasma no
+Histórico do card.
+
+**Fix**: snapshot completo do card (JSON round-trip, mesmo padrão já
+usado em `_notasPushUndo()`) antes da mutação otimista, restauração
+total (`Object.keys().forEach(delete)` + `Object.assign()`) no
+`.catch()` — em vez de manter uma lista de campos pra reverter
+manualmente (a lista já tinha ficado desatualizada uma vez; pode
+acontecer de novo se `recordMove()` ganhar mais efeitos colaterais no
+futuro).
+
+Aplicado direto em prod pela gravidade (corrupção silenciosa de dado
+de métricas, ainda que só no caminho de falha de rede/permissão).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.685 — 2026-09-16 · Fix: `fbCreateCard()` ficou de fora da 1ª rodada do fix de campo undefined
 
 Achado de passagem enquanto preparava o teste de console do fix
@@ -3467,6 +3502,21 @@ Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
+
+### v8.30.687-dev — 2026-09-17 — 🔴 Fix crítico — arrastar card que falhasse ao salvar corrompia métricas de fluxo em silêncio
+
+Mesmo fix aplicado simultaneamente em `kanban.html` (v8.30.686, direto
+em prod pela gravidade — corrupção silenciosa de dado de métricas) —
+ver entrada completa lá pro detalhe técnico.
+
+Resumo: o `.catch()` de `handleDrop()` prometia reverter o estado
+local se o save no Firebase falhasse, mas só revertia `card.col`/
+`card.edited` — `recordMove()`/`recordHistory()` (chamados como parte
+do update otimista) mutam bem mais que isso (flow/histórico/
+blocker), e ficavam corrompidos em memória se a escrita falhasse.
+Fix: snapshot completo antes da mutação + restauração total no catch.
+
+Checks de rotina: `node --check` OK.
 
 ### v8.30.686-dev — 2026-09-17 — `/monitorarbugs`: drawers laterais abriam um por cima do outro (Lembretes/Dados/Kudos/Spotify/Notas)
 
