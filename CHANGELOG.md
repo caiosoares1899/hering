@@ -16650,6 +16650,37 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 (5ª rodada) — Fix: popover de configurar horário fechava sozinho ao clicar no `<input type="time">`
+
+Relato direto do usuário, com print: "nao consigo usar o configurador!
+quando clico ele some" — abrir o popover funcionava, mas clicar em
+qualquer um dos campos de horário fazia ele desaparecer na hora, sem
+dar tempo de digitar nada.
+
+**Causa raiz**: a 1ª versão fechava o popover com um listener genérico
+em `document` (`if(!e.target.closest('#tb-clock-wrap') &&
+!e.target.closest('#agenda-cfg-ov')) fecha`), contando com
+`event.stopPropagation()` no próprio popover pra evitar que cliques
+DENTRO dele disparassem esse fechamento. Interagir com o picker nativo
+do `<input type="time">` do navegador (a esfera/ícone de relógio, os
+spinners de hora/minuto) gera eventos que não se comportam como um
+clique comum bubbling pelo DOM esperado — o `stopPropagation()`
+não impedia o listener de `document` de rodar, fechando o popover no
+1º clique dentro dele.
+
+**Fix**: troca pro MESMO padrão já usado e comprovado em `#detail-ov`/
+`#notes-ov` neste arquivo — um backdrop `position:fixed;inset:0`
+(`#agenda-cfg-ov`) com `onclick="if(event.target===this)
+window._okrCloseAgendaCfg()"`. Como o clique só fecha quando o
+`target` é o PRÓPRIO backdrop (nunca um descendente, independente de
+como aquele descendente dispara seus eventos internos), não depende
+mais de `stopPropagation()` em cascata nem de um listener solto em
+`document` — mesma robustez que já funciona pros outros 2 overlays da
+página.
+
+Checks de rotina: `node --check` OK no módulo e no bloco clássico;
+`<div>`s balanceados (107/107).
+
 ### 2026-09-17 (4ª rodada) — Novo: ⏱ contagem regressiva da agenda (configurável, ao vivo)
 
 Pedido direto do usuário, ao lado do relógio no topo: "quero um cronometro
