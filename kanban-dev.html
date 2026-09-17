@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.687-dev</div>
+<div class="version">v8.30.688-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -14112,7 +14112,8 @@ function populateTagSelect(){
 }
 function renderEditingTags(){
   const box=document.getElementById('m-tags-chips'); if(!box) return;
-  box.innerHTML=editingTags.map(id=>{
+  const _sortedTagIds=editingTags.slice().sort((a,b)=>(getTag(a)?.label||'').localeCompare(getTag(b)?.label||'','pt-BR'));
+  box.innerHTML=_sortedTagIds.map(id=>{
     const t=getTag(id); if(!t) return '';
     let bg,bc,col;
     if(t.isOKR||t.id==='okr'){ bg='rgba(255,215,0,.15)';bc='rgba(255,215,0,.5)';col='#ffd700'; }
