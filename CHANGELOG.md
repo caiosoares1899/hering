@@ -16650,6 +16650,36 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-17 — Novo: 📋 Anotações da reunião (botão flutuante, ao vivo, persistente)
+
+Pedido direto do usuário: um jeito rápido de registrar o que se discute
+durante a apresentação ao vivo dos OKRs, sem sair da tela cheia — "depois
+podemos evoluir para uma análise estratégica dessa listinha, caso ela
+gere atividades futuras".
+
+Botão flutuante 📋 (dentro de `#app`, não aparece na tela de login) abre
+um painel lateral com a lista de anotações, mais antiga primeiro (lê
+como uma ata) — cada uma com avatar/nome de quem escreveu e
+data+hora. Campo de texto embaixo: Enter envia, Shift+Enter quebra
+linha. Salvo em `kanban/okr/reuniao_notas/{id}` — node novo, mas sem
+precisar de entrada nova em `database.rules.json` (herda `.read`/
+`.write` de `kanban/okr`, mesma regra que já cobre `objetivos`/
+`marcos`/`tags`, cascata do arquivo de regras). Como o resto da página,
+é ao vivo via `onValue` — qualquer pessoa com a apresentação aberta na
+sala vê as anotações de todo mundo chegando em tempo real, sem F5.
+Exclusão só pelo próprio autor (esta página não carrega papel de PO/
+organizador, diferente do resto do Maré Digital).
+
+Estrutura de dado deliberadamente simples (`texto`+`autorUid`+`ts` ISO
+string) — meio caminho andado pra uma evolução futura (analisar a
+lista, sugerir/gerar atividades a partir dela), mas essa parte NÃO foi
+implementada agora, por pedido explícito ("depois podemos evoluir").
+
+Checks de rotina: `node --check` OK nos 2 blocos (`<script
+type="module">` e `<script>` clássico); `<div>`s balanceados (98/98).
+Arquivo não tem `-dev`/versão própria em `version.json` (mesma
+convenção já usada nesta seção).
+
 ### 2026-09-10 — Fix: nome do Marco vazava pro lado sem quebrar (nowrap+ellipsis nunca truncava de verdade) + botão "Próximo objetivo" limitado à gerência
 
 Print do usuário mostrando o nome de um Marco cortado abruptamente no meio da palavra, sem reticências: "la no slide dos okrs, a parte de marcos nao ta respeitando o limite lateral! vale quebrar o texto se ultrapassar a linha" — pedido explícito pra aceitar quebra de linha, revertendo uma decisão anterior (nowrap+ellipsis, documentada no CSS) que existia justamente pra evitar nome longo empurrando o resto do conteúdo pra fora da tela.

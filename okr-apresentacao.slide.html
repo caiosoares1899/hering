@@ -298,6 +298,50 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 ::-webkit-scrollbar{width:8px;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px;}
+
+/* ── Anotações da reunião (📋 flutuante) — pedido direto do usuário: um
+   jeito rápido de registrar o que se discute durante a apresentação ao
+   vivo, sem sair da tela cheia. Fica salvo (Firebase, mesmo onValue ao
+   vivo do resto da página — qualquer pessoa com a apresentação aberta vê
+   as anotações de todo mundo em tempo real, mesmo espírito de "Ao vivo"
+   do topbar). Estrutura de dado deliberadamente simples (texto+autor+
+   data) — pensada pra uma evolução futura (análise estratégica da lista,
+   gerar atividades) sem precisar remodelar nada agora. */
+#notes-fab{position:fixed;right:28px;bottom:28px;z-index:450;width:54px;height:54px;border-radius:50%;
+  background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(14px);color:var(--txt);
+  font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 22px rgba(0,0,0,.35);transition:transform .15s,background .15s;font-family:inherit;}
+#notes-fab:hover{transform:translateY(-2px);background:var(--glass-hover);}
+#notes-ov{position:fixed;inset:0;z-index:460;display:none;background:rgba(3,13,26,.55);backdrop-filter:blur(4px);}
+#notes-ov.open{display:flex;justify-content:flex-end;}
+.notes-panel{width:min(420px,92vw);height:100%;background:var(--glass);border-left:1px solid var(--glass-b);
+  backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);}
+.notes-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px;
+  border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.notes-hd h3{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;}
+.notes-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);
+  font-size:15px;cursor:pointer;font-family:inherit;}
+.notes-close:hover{background:var(--glass-hover);}
+.notes-list{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.notes-empty{margin:auto;text-align:center;color:var(--txt3);font-size:13px;padding:20px;}
+.note-item{background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:12px;padding:11px 14px;}
+.note-item-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;}
+.note-author{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt2);font-weight:600;min-width:0;}
+.note-avatar{width:20px;height:20px;border-radius:50%;object-fit:cover;border:1px solid var(--glass-b);flex-shrink:0;
+  background:var(--blue);}
+.note-time{font-size:10.5px;color:var(--txt3);flex-shrink:0;white-space:nowrap;}
+.note-text{font-size:13.5px;color:var(--txt);line-height:1.5;white-space:pre-wrap;word-break:break-word;}
+.note-del{background:none;border:none;color:var(--txt3);font-size:12px;cursor:pointer;padding:2px 4px;flex-shrink:0;font-family:inherit;}
+.note-del:hover{color:var(--danger);}
+.notes-compose{flex-shrink:0;padding:14px 18px;border-top:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-end;}
+.notes-input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--glass-b);border-radius:10px;
+  padding:9px 12px;color:var(--txt);font-family:'DM Sans',sans-serif;font-size:13.5px;resize:none;max-height:100px;
+  line-height:1.4;}
+.notes-input:focus{outline:none;border-color:var(--accent);}
+.notes-send{background:var(--accent);border:none;border-radius:10px;width:38px;height:38px;color:#04263f;
+  font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;}
+.notes-send:hover{background:var(--cyan);}
+.notes-send:disabled{opacity:.4;cursor:default;}
 </style>
 </head>
 <body>
@@ -339,6 +383,25 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   </div>
   <div id="slides"></div>
   <div id="bottombar"></div>
+
+  <!-- Dentro de #app de propósito (não sibling solto) — herda o mesmo
+       ciclo de show/hide do app shell (ver #app[hidden] no CSS), então o
+       botão flutuante não aparece sozinho por cima da tela de login. -->
+  <button id="notes-fab" onclick="window._okrToggleNotes()" title="Anotações da reunião">📋</button>
+  <div id="notes-ov" onclick="if(event.target===this) window._okrCloseNotes()">
+    <div class="notes-panel">
+      <div class="notes-hd">
+        <h3>📋 Anotações da reunião</h3>
+        <button class="notes-close" onclick="window._okrCloseNotes()">✕</button>
+      </div>
+      <div class="notes-list" id="notes-list"></div>
+      <div class="notes-compose">
+        <textarea class="notes-input" id="notes-input" rows="1" placeholder="Escreva uma anotação… (Enter envia, Shift+Enter quebra linha)"
+          onkeydown="window._okrNotesKeydown(event)"></textarea>
+        <button class="notes-send" id="notes-send" onclick="window._okrAddNota()" title="Enviar (Enter)">➤</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
@@ -347,7 +410,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -367,7 +430,7 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Mesmo padrão de exposição de kanban.html/painel.html (window._db/_ref/_onValue/...)
 // — deixa a página testável com o mesmo mock de Firebase já usado nos testes
 // Playwright do resto do repo, em vez de import direto do SDK espalhado pelo código.
-window._db = db; window._ref = ref; window._onValue = onValue;
+window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove;
 
 window._doLogin = () => {
   document.getElementById('login-err').hidden = true;
@@ -426,7 +489,7 @@ const PT_PALETTE=[
   {bg:'rgba(200,100,255,.12)',b:'rgba(200,100,255,.3)',c:'#d67fff'},
 ];
 
-let okrObjetivos = {}, okrMarcos = {}, okrTags = {}, usersCache = {};
+let okrObjetivos = {}, okrMarcos = {}, okrTags = {}, usersCache = {}, okrNotas = {};
 let _loaded = {obj:false, marco:false, tag:false, users:false};
 let _lastUpdate = null;
 
@@ -762,6 +825,14 @@ document.addEventListener('keydown', e=>{
     if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
     return;
   }
+  // Mesmo guard do detail-ov acima — sem isso, abrir o painel de Anotações
+  // e apertar espaço/setas (sem estar focado na própria textarea, que já
+  // tem seu stopPropagation() dedicado, ver _okrNotesKeydown()) trocava de
+  // slide por baixo do painel aberto.
+  if(document.getElementById('notes-ov').classList.contains('open')){
+    if(e.key==='Escape'){ e.preventDefault(); window._okrCloseNotes(); }
+    return;
+  }
   if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
   else if(e.key==='ArrowLeft') window._okrPrev();
   else if(e.key.toLowerCase()==='f') window._okrFullscreen();
@@ -890,6 +961,87 @@ function _okrFitDetailSections(){
 }
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
 
+// ── Anotações da reunião (📋 flutuante) — pedido direto do usuário: registrar
+// o que se discute durante a apresentação ao vivo, sem sair da tela cheia.
+// kanban/okr/reuniao_notas/{id} — mesmo padrão .read/.write de
+// kanban/okr/{objetivos,marcos,tags} (cascata do rules.json, não precisou de
+// entrada nova), então qualquer @ciahering.com.br autenticado já pode ler e
+// escrever aqui. Nó novo, dado simples de propósito (texto+autor+data) —
+// pensado pra uma evolução futura (análise estratégica da lista, virar
+// atividade) sem precisar remodelar nada agora.
+function _notaAvatarHtml(uid){
+  const p = pessoaInfo(uid);
+  const img = safeUrl(p.foto) ? `<img class="note-avatar" src="${safeUrl(p.foto)}" alt="">`
+    : `<span class="note-avatar" style="display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${esc((p.init||p.nome.slice(0,2)).toUpperCase())}</span>`;
+  return img;
+}
+function _notaTempoFmt(ts){
+  if(!ts) return '';
+  const d = new Date(ts);
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+', '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+}
+function renderNotas(){
+  const list = document.getElementById('notes-list'); if(!list) return;
+  // Ordem cronológica (mais antiga primeiro) — lê como uma ata da reunião,
+  // não um feed. `ts` é ISO string (mesma convenção do resto do app —
+  // NUNCA Date.now() cru, ver comentário no CLAUDE.md sobre isso quebrar
+  // sort em outros lugares), localeCompare ordena certinho.
+  const notas = Object.entries(okrNotas).filter(([,n])=>n).sort((a,b)=>(a[1].ts||'').localeCompare(b[1].ts||''));
+  if(!notas.length){
+    list.innerHTML = '<div class="notes-empty">Nenhuma anotação ainda.<br>Escreva a primeira aqui embaixo ⤵</div>';
+    return;
+  }
+  const meuUid = window._currentUser?.uid;
+  list.innerHTML = notas.map(([id,n])=>`
+    <div class="note-item">
+      <div class="note-item-hd">
+        <div class="note-author">${_notaAvatarHtml(n.autorUid)}<span>${esc(pessoaInfo(n.autorUid).nome.split(' ')[0]||'—')}</span></div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span class="note-time">${_notaTempoFmt(n.ts)}</span>
+          ${n.autorUid===meuUid?`<button class="note-del" onclick="window._okrDelNota('${id}')" title="Excluir">✕</button>`:''}
+        </div>
+      </div>
+      <div class="note-text">${esc(n.texto)}</div>
+    </div>`).join('');
+}
+window._okrToggleNotes = () => {
+  const ov = document.getElementById('notes-ov');
+  if(ov.classList.contains('open')) window._okrCloseNotes();
+  else {
+    ov.classList.add('open');
+    renderNotas();
+    const list = document.getElementById('notes-list'); if(list) list.scrollTop = list.scrollHeight;
+    setTimeout(()=>document.getElementById('notes-input')?.focus(), 50);
+  }
+};
+window._okrCloseNotes = () => document.getElementById('notes-ov').classList.remove('open');
+window._okrAddNota = () => {
+  const inp = document.getElementById('notes-input');
+  const texto = (inp.value||'').trim();
+  if(!texto || !window._currentUser) return;
+  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6);
+  window._set(window._ref(window._db, 'kanban/okr/reuniao_notas/'+id), {
+    texto,
+    autorUid: window._currentUser.uid,
+    ts: new Date().toISOString(),
+  }).catch(err=>console.error('[notas] falha ao salvar:', err));
+  inp.value = '';
+};
+window._okrDelNota = id => {
+  const n = okrNotas[id];
+  if(!n || n.autorUid!==window._currentUser?.uid) return; // só o autor apaga a própria anotação
+  window._remove(window._ref(window._db, 'kanban/okr/reuniao_notas/'+id)).catch(err=>console.error('[notas] falha ao excluir:', err));
+};
+// Enter envia (Shift+Enter quebra linha) — stopPropagation() em TODA tecla
+// (não só Enter) pra não vazar pro handler global de navegação de slides
+// (← → espaço), que senão trocaria de slide enquanto a pessoa digita uma
+// anotação com espaço no meio do texto.
+window._okrNotesKeydown = e => {
+  e.stopPropagation();
+  if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); window._okrAddNota(); }
+  else if(e.key==='Escape'){ e.preventDefault(); window._okrCloseNotes(); }
+};
+
 // ── Clock ──
 setInterval(()=>{
   document.getElementById('tb-clock').textContent = new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
@@ -912,6 +1064,14 @@ function startListeners(){
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
+  // Anotações da reunião — independente do carrossel de slides (não entra
+  // em _loaded/scheduleRebuild()), só re-renderiza o próprio painel; ao
+  // vivo pra quem estiver com o painel aberto ver anotações de outras
+  // pessoas na sala chegando em tempo real.
+  window._onValue(window._ref(window._db,'kanban/okr/reuniao_notas'), snap=>{
+    okrNotas = snap.val()||{};
+    renderNotas();
+  }, ()=>{});
 }
 
 window._okrHandleAuth = user => {
