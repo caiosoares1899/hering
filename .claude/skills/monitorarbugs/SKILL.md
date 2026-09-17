@@ -1253,6 +1253,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   midiacriativa) ANTES de tentar adivinhar pela lista de call sites —
   muito mais rápido e preciso que análise estática às cegas.
 
+- **2026-09-17, Estrela do Mar/Kudos (pedido genérico — área nunca
+  auditada dedicadamente, já bem hardened de rodadas anteriores contra
+  corrida de escrita mas nunca verificada ponta a ponta)**: 1 achado
+  real, técnica 1 — `_populateKudosPara()` excluía a própria pessoa do
+  dropdown no escopo Cardume (squad), mas não no escopo Geral — dava
+  pra mandar Estrela pra si mesmo em "🌊 Geral" (`addKudos()` só evita
+  a NOTIFICAÇÃO de auto-envio, o card do kudos era criado normalmente).
+  Checado e sem achado: nenhum ranking/leaderboard usa contagem de
+  kudos (não era vetor de métrica). Fix: mesmo filtro aplicado nos dois
+  escopos. Baixa severidade — fica só em dev (não justificou hotfix
+  direto em prod, diferente das rodadas anteriores dessa semana). PR
+  #943, dev v8.30.685.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
