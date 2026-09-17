@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.701-dev</div>
+<div class="version">v8.30.702-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8469,7 +8469,9 @@ function recordMove(card, toCol, atISO){
   if(!card.flow.log) card.flow.log = [];
   const from = isNewFlow ? null : (card._lastFlowCol!=null ? card._lastFlowCol : (card.col||null));
   if(from === toCol && card.flow.enteredAt[toCol]) { card._lastFlowCol = toCol; return; }
-  card.flow.enteredAt[toCol] = at;
+  // ver comentário em backfillFlow() — mesma proteção contra toCol vazio
+  // virando chave inválida em flow.enteredAt.
+  if(toCol) card.flow.enteredAt[toCol] = at;
   card.flow.log.push({ from: from||'—', to: toCol, at });
   if(card.flow.log.length>40) card.flow.log = card.flow.log.slice(-40);
   const startIds = _flowStartColIds();
@@ -8558,7 +8560,14 @@ function backfillFlow(card){
   if(!card || card.flow) return;
   const created = card.createdAt ? card.createdAt + (card.createdAt.length<=10?'T12:00:00.000Z':'') : new Date().toISOString();
   card.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, imported:true };
-  card.flow.enteredAt[card.col] = created;
+  // /monitorarbugs 2026-09-17: card.col vazio (card criado fora do fluxo
+  // normal, sem coluna atribuída) virava chave vazia em flow.enteredAt —
+  // Realtime Database rejeita chave vazia em QUALQUER escrita que inclua
+  // esse card, derrubando fbSaveAll() (e todo bulk action da squad) sem
+  // aviso nenhum ao usuário. _stripUndefinedDeep() agora filtra isso como
+  // rede de segurança central, mas não tem por que gerar a chave inválida
+  // aqui pra começo de conversa.
+  if(card.col) card.flow.enteredAt[card.col] = created;
   card._lastFlowCol = card.col;
   // Mesmo achado do recordMove() logo acima — _isColDone() em vez de
   // comparar só contra a 1ª coluna de fim configurada.
@@ -18815,15 +18824,34 @@ function _notasBasePath(){
 // de dado incompleto), a chamada inteira falha com "update failed: values
 // argument contains undefined in property '<path>'", derrubando junto os
 // OUTROS campos que estavam certos (ex.: atualizadoEm nunca era salvo).
-// Helper central pras ~13 escritas de Notas abaixo: remove campos
-// undefined do payload (nunca troca por null, que apagaria o campo de
-// propósito) antes de mandar pro Firebase, recursivamente (undefined pode
-// estar aninhado dentro do objeto de um bloco novo, não só no 1º nível).
+// Helper central pras ~13 escritas de Notas abaixo (e também usado por
+// fbSaveAll()/fbCreateCard()/fbSaveCard(), ver comentários lá): remove
+// campos undefined do payload (nunca troca por null, que apagaria o campo
+// de propósito) antes de mandar pro Firebase, recursivamente (undefined
+// pode estar aninhado dentro do objeto de um bloco novo, não só no 1º
+// nível).
+//
+// Achado real (/monitorarbugs 2026-09-17): mesma classe de erro, mas de
+// CHAVE em vez de valor — "update failed: values argument contains an
+// invalid key () in property '...flow.enteredAt'". Uma chave vazia (ou
+// com '.'/'#'/'$'/'/'/'['/']', todos proibidos pelo Realtime Database)
+// em QUALQUER objeto aninhado também derruba a escrita inteira, do mesmo
+// jeito que um valor undefined. Causa raiz encontrada: `backfillFlow()`
+// usa `card.col` como chave de `flow.enteredAt` sem checar se é vazio
+// (corrigido na origem, ver lá) — mas outros campos-objeto podem
+// acumular o mesmo problema por caminhos ainda não mapeados, então a
+// rede de segurança central aqui remove qualquer chave inválida que
+// sobrevier, igual já faz com undefined.
+const INVALID_FB_KEY_RE = /[.#$/\[\]]/;
 function _stripUndefinedDeep(val){
   if(Array.isArray(val)) return val.map(_stripUndefinedDeep);
   if(val && typeof val==='object'){
     const out={};
-    Object.entries(val).forEach(([k,v])=>{ if(v!==undefined) out[k]=_stripUndefinedDeep(v); });
+    Object.entries(val).forEach(([k,v])=>{
+      if(v===undefined) return;
+      if(k===''||INVALID_FB_KEY_RE.test(k)) return;
+      out[k]=_stripUndefinedDeep(v);
+    });
     return out;
   }
   return val;

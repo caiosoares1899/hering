@@ -1554,6 +1554,31 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   limpeza, `crvBlockRow()`/cache do Agente Ágil caem pra ele.
   `_duplicarCardObj()` também passou a resetá-lo. dev v8.30.701-dev.
 
+- **2026-09-17, `flow.enteredAt`/`_stripUndefinedDeep()` (achado
+  incidental — apareceu como erro real no console ao rodar o script de
+  teste da rodada anterior, "Uncaught... invalid key () in property
+  '...flow.enteredAt'")**: 1 achado severo, confirmado com dado real
+  (`console.log` do card corrompido) antes de qualquer fix, mesmo método
+  do bug do atraso (2026-09-17, `atrasadoMs`). Causa raiz:
+  `backfillFlow()` fazia `card.flow.enteredAt[card.col] = created` sem
+  checar `card.col` vazio — um card de teste manual
+  (`c_teste_exectype_...`, `col:""`) virou chave literalmente vazia,
+  proibida pelo Realtime Database. Como `fbSaveAll()` reescreve `/cards`
+  por COMPLETO a cada chamada, esse 1 card corrompido travava
+  (`Uncaught`, sem toast — a maioria dos ~49 call sites de `fbSaveAll()`
+  não tem `.catch()` próprio) QUALQUER operação em lote da squad
+  inteira, não só o card em si — mesma classe "tudo-ou-nada" do achado
+  de campo `undefined` de 2026-09-16. Fix em 2 camadas: guard na origem
+  (`backfillFlow()`/`recordMove()` só gravam a chave quando não-vazia) +
+  `_stripUndefinedDeep()` (já a rede de segurança central pras 3
+  primitivas de escrita de card + Notas) estendida pra também remover
+  chaves inválidas de RTDB (vazia ou com `.#$/[]`), não só valores
+  `undefined`. dev v8.30.702-dev. **Lição pra próxima vez**: "tudo-ou-
+  nada" na escrita multi-path do Firebase não é só sobre VALOR
+  (`undefined`) — CHAVE inválida quebra do mesmo jeito, e um card de
+  teste isolado esquecido em produção pode travar toda a squad em
+  silêncio até alguém tropeçar nele.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
