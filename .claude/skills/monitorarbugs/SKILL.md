@@ -1469,6 +1469,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   EXPLÍCITA pra ter construído o Cloud Function como rede de segurança
   de verdade.
 
+- **2026-09-17, `resolveOwnerName()` — Histórico/Feed do painel (relato
+  direto do usuário, com prints: card de "Marina Saran Bernardo"
+  aparecia como se fosse de "Marciel Santos")**: 1 achado real, técnica
+  4 (pegadinha de matching — condição OR combinando um match EXATO com
+  um fallback FROUXO, sem prioridade entre os dois). `resolveOwnerName()`
+  buscava `x.init===init||x.email?.startsWith(init.toLowerCase())` num
+  único `.find()` — iniciais curtas (2-3 letras) colidem fácil com o
+  começo do email de gente diferente; se essa pessoa aparecesse ANTES
+  na lista (ordem não-determinística), o `.find()` parava nela e nunca
+  chegava no match exato de verdade. Fix: tenta o match exato isolado
+  primeiro, só cai no fallback por email se não achar. Aplicado direto
+  em `painel.html`+`painel-dev.html` (bug já confirmado ativo em
+  produção pelos prints do usuário — não é promoção dev→prod normal).
+  Checado e sem achado: `_painelOwnerAvatarHtml()` (avatar ao lado) já
+  usa só match exato; `kanban-dev.html` não tem função equivalente com
+  esse fallback frágil (Histórico do modal do card sempre mostrou a
+  pessoa certa, confirmado no print do usuário). PR #965, painel
+  v3.53/painel-dev v3.49. **Lição pra próxima vez**: uma condição
+  `A||B` dentro de um `.find()`/`.filter()` onde A é um match EXATO e B
+  é um match APROXIMADO/frouxo é sempre suspeita — sem prioridade
+  explícita entre os dois, a ORDEM DO ARRAY decide silenciosamente qual
+  ganha, não a precisão do critério.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
