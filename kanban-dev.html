@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.700-dev</div>
+<div class="version">v8.30.701-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7858,6 +7858,11 @@ function _doBulkUnblockTag(){
   const n=list.length;
   list.forEach(c=>{
     c.blocker=false;
+    // /monitorarbugs 2026-09-17: motivo some do dashboard de Criativos
+    // ("Mais tempo bloqueado") assim que o card é desbloqueado, porque
+    // blockerReason era zerado aqui sem preservar o texto em lugar nenhum —
+    // guarda em lastBlockerReason antes de limpar (ver crvBlockRow()).
+    if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
     c.blockerReason='';
     _settleBlockedTag(c, true); // ⏱️ list já filtrou _cardIsBlocked(c) — fecha o episódio
     c.updatedAt=new Date().toISOString();
@@ -8494,6 +8499,8 @@ function recordMove(card, toCol, atISO){
   const _wasBlockedTagBeforeAutoUnblock = card.blocker;
   if(blockerMode==='tag' && card.blocker && from!==toCol && _isColDone(toCol)){
     card.blocker=false;
+    // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
+    if((card.blockerReason||'').trim()) card.lastBlockerReason=card.blockerReason;
     card.blockerReason='';
     recordHistory(card,'impedimento removido automaticamente (card concluído)');
   }
@@ -15507,6 +15514,11 @@ function _duplicarCardObj(card, opts){
   novo.atrasadoMs=0; delete novo.atrasadoDesde;
   novo.blockedMs=0; delete novo.blockedAt;
   novo.pausedMs=0; novo.paused=false; delete novo.pausedAt;
+  // lastBlockerReason (/monitorarbugs 2026-09-17): mesmo raciocínio acima —
+  // é histórico do episódio de bloqueio do card ORIGINAL, não faz sentido a
+  // cópia nascer já mostrando um "motivo" no dashboard de Criativos pra um
+  // bloqueio que nunca aconteceu nela.
+  delete novo.lastBlockerReason;
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -17333,8 +17345,16 @@ function renderCriativosDashboard(){
   // bloqueados, caso as pessoas tenham preenchido") — card.blockerReason é
   // texto livre digitado na Ficha do card, fica em branco silenciosamente
   // quando ninguém preencheu, sem forçar um "sem motivo" na tela.
+  // Fallback pra c.lastBlockerReason (/monitorarbugs 2026-09-17): em modo
+  // TAG, blockerReason é zerado assim que o card é desbloqueado (ver
+  // _doBulkUnblockTag()/removeBlockerTag()/recordMove() auto-unblock) —
+  // sem isso, todo card já resolvido aparecia aqui sem motivo, mesmo que a
+  // pessoa tivesse preenchido um (motivo só sobrevivia em modo COLUNA, que
+  // nunca limpa o campo). lastBlockerReason guarda o último texto antes de
+  // cada limpeza, pra esta lista continuar mostrando o motivo do episódio
+  // mais recente mesmo depois de resolvido.
   const crvBlockRow=(c,ms)=>{
-    const motivo=(c.blockerReason||'').trim();
+    const motivo=(c.blockerReason||c.lastBlockerReason||'').trim();
     return '<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
       +'<div style="display:flex;justify-content:space-between;gap:8px;">'
         +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
@@ -17448,7 +17468,7 @@ function renderCriativosDashboard(){
     tempoTotalAtrasoHoras: Math.round(totalAtrasoCrvH),
     tempoTotalBloqueadoHoras: Math.round(totalBlockCrvH),
     topAtraso: atrasoTopCrv.map(c=>({titulo:c.title||'(sem título)',horasAtrasado:Math.round(_cardAtrasadoMs(c)/3600000)})),
-    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000),motivo:(c.blockerReason||'').trim()||null})),
+    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000),motivo:(c.blockerReason||c.lastBlockerReason||'').trim()||null})),
   };
   const botaoAgente = AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)
     ? '<div style="margin-top:16px;">'
@@ -31718,7 +31738,10 @@ function addBlockerTag(cardId){
 function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.blocker=false; c.blockerReason='';
+  c.blocker=false;
+  // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
+  if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
+  c.blockerReason='';
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';

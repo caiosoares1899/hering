@@ -1534,6 +1534,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   usa `style.display='none'` direto — sempre vence qualquer regra de
   classe, não precisou de fix lá. PR #981.
 
+- **2026-09-17, Controle de Criativos — tempo médio/motivo do bloqueio
+  (pedido genérico, "roda um /monitorarbugs mais um pouco" — área
+  escolhida por prioridade 1: feature mais recente, v8.30.699-dev,
+  nunca tinha tido rodada própria)**: 1 achado real, técnica 1 (mapear
+  todo call site que mexe no mesmo campo) + técnica 3 (comportamento
+  vs. a própria promessa da feature, "motivo dos bloqueados, caso as
+  pessoas tenham preenchido"). Em squads com `blockerMode==='tag'`,
+  `card.blockerReason` é zerado no instante em que o card é
+  desbloqueado (3 pontos: `_doBulkUnblockTag()`, auto-desimpedimento em
+  `recordMove()`, `removeBlockerTag()`) — todo card já RESOLVIDO
+  aparecia em "Mais tempo bloqueado" sem motivo, mesmo preenchido. Modo
+  coluna (padrão) não tinha o bug, porque nada limpa esse campo lá
+  (assimetria já documentada num achado anterior, 2026-09-14, mas nunca
+  antes cruzada com uma feature que LÊ blockerReason de cards já
+  resolvidos). Ambíguo o bastante pra perguntar antes de corrigir
+  (usuário escolheu opção b: campo novo em vez de parar de limpar o
+  original) — `card.lastBlockerReason` guarda o texto antes de cada
+  limpeza, `crvBlockRow()`/cache do Agente Ágil caem pra ele.
+  `_duplicarCardObj()` também passou a resetá-lo. dev v8.30.701-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
