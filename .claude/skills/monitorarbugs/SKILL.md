@@ -1515,6 +1515,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   é stale-by-design no painel — deveria ter cruzado essa informação
   ANTES de propor o primeiro fix, não só depois de ele falhar.
 
+- **2026-09-17, `okr-apresentacao.slide.html` — Anotações da reunião +
+  ⏱ Agenda (pedido genérico, "roda um /monitorarbugs" — área escolhida
+  por prioridade 1: todo o recurso construído nesta sessão, nunca tinha
+  tido rodada própria da skill)**: 1 achado real, técnica 2 (comparar
+  contra o padrão irmão já resolvido no mesmo arquivo —
+  `#notes-fab[hidden]`/`#login-ov[hidden]`, fix de uma rodada anterior
+  no mesmo dia). `.notes-compose` (barra de compor anotação) tem
+  `display:flex` numa regra de CLASSE; `renderNotas()` esconde ela via
+  `.hidden = !isHoje` (atributo), mas sem `.notes-compose[hidden]
+  {display:none;}` a regra de autor sempre vence o `[hidden]` padrão do
+  navegador — a barra nunca sumia de verdade numa reunião passada (só
+  leitura). Pior: `window._okrAddNota()` sempre grava no bucket de
+  HOJE independente da data sendo vista, então digitar ali por engano
+  fazia a nota parar silenciosamente no dia errado, sem aviso nenhum.
+  Fix: mesmo override `[hidden]` aplicado. Checado e confirmado sem o
+  mesmo bug: `painel.html`/`painel-dev.html` (mesma feature, aba OKR)
+  usa `style.display='none'` direto — sempre vence qualquer regra de
+  classe, não precisou de fix lá. PR #981.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
