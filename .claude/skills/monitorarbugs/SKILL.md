@@ -1399,17 +1399,49 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   @fulano'" nunca notificava @fulano, mesmo sendo literalmente texto
   livre pra isso (o próprio exemplo da Central de Ajuda). Fix:
   `parseMentions()` no texto configurado, `includeSelf:true`. PR #960,
-  dev v8.30.695-dev. **Achado incidental real, fora do escopo
-  (Automações), não corrigido**: `saveCard()` não tem NENHUMA chamada
-  de `parseMentions()` — descrição/PO/checklist de um card sendo
-  CRIADO nunca são escaneados por menção, porque `scheduleAutoSave()`
-  só roda com `editingId` já setado (`if(!editingId) return;`). Não é
-  sobre automações — fica registrado aqui pra virar rodada própria
-  depois. **Reconfirmado, não implementado**: `toggle_okr`/
+  dev v8.30.695-dev. **CORRIGIDO na rodada seguinte**: o achado
+  incidental registrado aqui ("`saveCard()` não tem NENHUMA chamada de
+  `parseMentions()`, card novo nunca é escaneado por menção") estava
+  ERRADO — não considerei que `saveCard` é reatribuído mais adiante no
+  arquivo ("── Hook no saveCard para disparar notificações ──"), e é
+  esse wrapper que chama `parseMentions()`, cobrindo criação E edição.
+  Ver entrada de 2026-09-17 (rodada seguinte) pro achado real que essa
+  investigação (equivocada) acabou revelando ali. **Lição pra próxima
+  vez**: antes de declarar "função X nunca faz Y" baseado em ler o
+  corpo de `function X(){...}`, `grep` pelo NOME da função sendo
+  REATRIBUÍDO (`nomeDaFuncao = function` ou `nomeDaFuncao=`) em outro
+  lugar do arquivo — um wrapper/monkey-patch depois da declaração
+  original muda o que `X()` faz de verdade em tempo de execução, e a
+  declaração original sozinha não conta a história completa.
+  **Reconfirmado, não implementado**: `toggle_okr`/
   `set_priority` são mais 2 casos do mesmo gap arquitetural já
   reportado na rodada anterior do mesmo dia (nenhuma ação de
   `AUTO_ACTIONS` re-dispara `runAutoRules()` pra encadear em outra
   automação) — mesmo achado, não uma lista nova a cada rodada.
+
+- **2026-09-17, `saveCard()` — wrapper de notificações (pedido
+  genérico, "roda outro" — motivada por corrigir um erro meu na rodada
+  anterior, ver correção lá)**: 1 achado real, técnica 3. O wrapper
+  (`── Hook no saveCard para disparar notificações ──`, reatribui
+  `saveCard` global) deriva `prevCol` de `prevCard` (`null` ao criar um
+  card) — o bloco "card mudou de coluna" nunca checava se havia um
+  `prevCard` de verdade, só `prevCol!==card.col` (`''!==` qualquer
+  coluna real é sempre `true`). Criar um card já com Responsável/
+  Participantes preenchidos (comum — o dropdown já aparece na tela de
+  criação) disparava "Card movido para X"/"Card concluído 🎉" pra essas
+  pessoas, e `runAutoRules('move',...)` — trigger dedicado, distinto de
+  "Card criado em X" (`card_created`) — disparando errado em toda
+  criação na coluna X. Fix: guarda o bloco com `prevCard &&`. Outros
+  blocos do mesmo wrapper (responsável/desbloqueado/risco/checklist
+  100%) revisados e mantidos — continuam verdadeiros seja criação ou
+  edição, diferente de "moveu" (implica transição inexistente na
+  criação). PR #962, dev v8.30.696-dev. **Lição pra próxima vez**:
+  antes de declarar "função X nunca faz Y" só de ler
+  `function X(){...}`, `grep` pelo NOME sendo REATRIBUÍDO em outro
+  lugar do arquivo (`nomeDaFuncao = function`/`nomeDaFuncao=`) — um
+  wrapper depois da declaração original muda o que `X()` faz de
+  verdade em runtime, e ignorar isso já gerou um achado FALSO
+  registrado (e agora corrigido) na entrada anterior desta mesma lista.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
