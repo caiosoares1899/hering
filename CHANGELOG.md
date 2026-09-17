@@ -3503,6 +3503,26 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.692-dev — 2026-09-17 — Nova ação de Automação: "Notificar PO/Organizador"
+
+Pedido direto do usuário. Nova ação no lado ENTÃO das regras de
+Automação (`AUTO_ACTIONS`, `key:'notify_po_org'`), mesmo padrão de
+"Notificar todos" (`notify_all`) já existente: posta um comentário
+automático no card mencionando cada pessoa, e `parseMentions()` faz o
+fan-out real de notificação (sino 🔔) — mas em vez de mencionar o squad
+inteiro, filtra `members` por `role==='po'||role==='organizador'`
+(mesmo critério de `_isPOorOrg()`, exceto `adm` — aqui é
+especificamente quem tem o papel PO ou Organizador atribuído neste
+squad, não qualquer Admin da plataforma). Se o squad não tiver ninguém
+com esses papéis, a ação não posta nada (retorna sem efeito, silenciosamente).
+Usa `mentionMatchLabel()` (mesmo helper do autocomplete de @menção) pra
+montar o handle — não dá pra usar `member.init` cru, que não é
+garantido bater no formato que `parseMentions()`/`getMemberByHandle()`
+esperam. Central de Ajuda (categoria Automações → "Ações") e
+`CODE_MAP.md` atualizados junto.
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.691-dev — 2026-09-17 — `/monitorarbugs` (tags): dava pra somar 2 Tamanhos/Submarcas/Canais no mesmo card, pelo dropdown genérico ou por automação
 
 Rodada de `/monitorarbugs` com área nomeada ("tags"), técnica 1

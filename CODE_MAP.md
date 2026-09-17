@@ -1407,12 +1407,13 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
 - `renderNotasVinculadasNoCard()` — L17994 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L29158 (21 triggers — `agendado_created` adicionado
+- `AUTO_TRIGGERS` — L30526 (21 triggers — `agendado_created` adicionado
   2026-08-30, par de `recorrente_created` que faltava)
-- `AUTO_ACTIONS` — L29235 (15 ações — `notify_all` ["Notificar todos"]
-  adicionada 2026-09-01, posta comentário `@todos` + `parseMentions()`
-  manual pro fan-out de verdade, mesmo padrão de `notify_agent` mas sem
-  squad-gate)
+- `AUTO_ACTIONS` — L30603 (16 ações — `notify_po_org` ["Notificar
+  PO/Organizador"] adicionada 2026-09-17, pedido direto do usuário;
+  mesmo padrão de `notify_all` mas filtra `members` por
+  `role==='po'||role==='organizador'` antes de montar o `@menção`, sem
+  postar nada se o squad não tiver ninguém nesses papéis)
 - `runAutoRules()` — L29727 — só decide QUAIS regras batem (síncrono);
   `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
   de verdade depois de ~1.2s (pedido direto: dar um respiro visual antes do
