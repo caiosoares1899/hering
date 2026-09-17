@@ -6277,7 +6277,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.686-dev</div>
+<div class="version">v8.30.687-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29872,6 +29872,25 @@ function handleDrop(e, colId){
   saveUndo('mover card');
   const prevColDrop = sourceCol;
   const prevBlockerDrop = card.blocker||false;
+  // Achado real (/monitorarbugs 2026-09-17, técnica 3 — confrontar com a
+  // promessa do comentário "Reverte o estado local se o Firebase falhou"):
+  // o .catch() abaixo só revertia card.col e card.edited — mas o trecho de
+  // update otimista logo abaixo também muta editedAt/updatedAt/updatedBy,
+  // empurra uma entrada em card.history[] (recordHistory) e, mais grave,
+  // recordMove() reescreve card.flow (log/enteredAt/firstStartAt/doneAt),
+  // card._lastFlowCol e, dependendo do blockerMode, card.blocker/
+  // blockerReason/blockedAt/blockedMs. Se fbSaveCard() falhasse (rede,
+  // permissão), só col/edited voltavam ao normal — o resto ficava
+  // corrompido em memória com uma transição de fluxo que NUNCA foi
+  // persistida (cycle time/CFD/Throughput cegos pra isso na próxima vez
+  // que o card salvasse de verdade) e um "moveu para X" fantasma no
+  // Histórico. `card._prevEdited` (usado no fallback de card.edited) nunca
+  // era setado em lugar nenhum — sempre `undefined`, tornando aquela linha
+  // um no-op disfarçado. Snapshot completo (JSON round-trip, mesmo padrão
+  // de `_notasPushUndo()`) + restauração total no catch, em vez de tentar
+  // listar campo por campo (a lista já tinha ficado desatualizada 1x,
+  // pode ficar de novo se recordMove() ganhar mais efeitos colaterais).
+  const _cardSnapshotAntes = JSON.parse(JSON.stringify(card));
 
   // Optimistic update: muta local e renderiza imediatamente para UX fluida
   card.col = colId;
@@ -29908,10 +29927,11 @@ function handleDrop(e, colId){
       }
     })
     .catch(err=>{
-      // Reverte o estado local se o Firebase falhou
+      // Reverte o estado local se o Firebase falhou — restauração completa
+      // do snapshot (ver comentário acima), não só col/edited.
+      Object.keys(card).forEach(k=>delete card[k]);
+      Object.assign(card, _cardSnapshotAntes);
       card._savePending = false;
-      card.col = prevColDrop;
-      card.edited = card._prevEdited||card.edited;
       renderBoard();
       showToast('⚠ Falha ao salvar movimentação — revertido');
       console.warn('handleDrop save failed:', err);
