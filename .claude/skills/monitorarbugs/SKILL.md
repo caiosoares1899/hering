@@ -1738,6 +1738,28 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   criar filho grava histórico no PAI (fix anterior), nunca no FILHO
   ("fui vinculado a X"). dev v8.30.707-dev.
 
+- **2026-09-18, Controle de Criativos — tempo médio por categoria/
+  tempo em atraso-bloqueado (pedido genérico, "roda outro" — área
+  escolhida por prioridade 1, feat e45e8ee/#986/ebdae2d, mesmo dia,
+  só o achado de `blockerReason` de 2026-09-17 tinha rodada própria)**:
+  **sem achados**, investigação real e exaustiva, não superficial.
+  Confirmado via grep exaustivo (técnica 1) que o fix do #986 (bug de
+  concatenação de string) já cobre TODOS os 6 pontos de escrita de
+  `atrasadoMs`/`blockedMs`/`pausedMs` (`Number(x)||0` em todos) e as 3
+  funções de leitura seguras (`_cardAtrasadoMs`/`_cardBlockedMs`/
+  `_cardPausedMs`) — nenhum consumidor lê os campos crus sem passar por
+  elas. `avgTempoBy()` reusa `_cardTempos()`, que já depende de
+  `flow.doneAt` setado via `_isColDone()` (não um hardcode de coluna
+  única — mesmo padrão corrigido em 2026-09-04). Cards cancelados
+  entram na média de "tempo médio de produção" junto com concluídos —
+  não é bug, é o mesmo comportamento estabelecido de `_isColDone()`
+  (junta Concluído+Cancelado) usado em CFD/Throughput/Relatório de
+  Tempo há semanas, não uma divergência desta feature. `_criativosRows()`/
+  `_crvDashFilteredRows()` já filtram arquivados e usam `getCardTags()`/
+  `_cardIsSupercard()`/`_cardIsSuperChild()` corretamente (não o campo
+  legado `card.tag`). `_crvCardCountBreakdown()` também usa os helpers
+  certos.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
