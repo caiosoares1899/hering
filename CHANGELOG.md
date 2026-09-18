@@ -16453,20 +16453,25 @@ push), adicionado a pedido explícito.
 regressão. **Requer `firebase deploy --only
 functions:sendPushOnNotification` manual.**
 
-**Follow-up (mesmo dia, validação com o usuário)**: depois do deploy, os
-pushes de teste dos 3 tipos novos não chegaram no celular. Sessão de
-debug ao vivo (logs de `firebase functions:log`) confirmou que o
-problema NÃO era o fix — `PUSH_TYPES`/deploy corretos — mas revelou um
-problema real e independente: **todos os `return` antecipados da função
-eram silenciosos**, sem nenhum log. Sem isso, não dava pra saber se a
-função estava saindo por tipo fora da lista, Não Perturbe ativo, ou sem
-token cadastrado — cada hipótese exigia um novo ciclo de
-teste+deploy+log só pra descartar. Corrigido: cada `return` agora loga o
-motivo exato (`tipo '...' fora de PUSH_TYPES`, `sem fcm_tokens
-cadastrado`, etc.). Suíte 476/476. **Mesmo deploy manual necessário**
-(`firebase deploy --only functions:sendPushOnNotification`) — a causa
-raiz de "por que o push não chega" pros 3 tipos novos ainda está sendo
-investigada com esses logs.
+**Follow-up (mesmo dia, validação com o usuário)**: depois do 1º deploy,
+os pushes de teste dos 3 tipos novos não chegaram no celular. Sessão de
+debug ao vivo (logs de `firebase functions:log`) confirmou a causa raiz
+real: **puro timing de propagação do deploy** — cada teste rodou antes
+da revisão nova estar totalmente ativa (o Cloud Run leva alguns minutos
+pra migrar 100% do tráfego pra revisão recém-implantada), então caía na
+versão ANTIGA da função, que corretamente não mandava push pra tipos
+ainda fora de `PUSH_TYPES`. Sem bug nenhum no fix em si — só precisava
+esperar o deploy assentar antes de testar de novo.
+
+Achado incidental real durante a investigação (corrigido de qualquer
+forma, fica como melhoria permanente): **todos os `return` antecipados
+da função eram silenciosos**, sem log nenhum — sem isso, não dava pra
+diferenciar "ainda propagando" de "tipo fora da lista"/"Não
+Perturbe"/"sem token", e cada hipótese custou um ciclo inteiro de
+teste+deploy+log só pra descartar. Cada `return` agora loga o motivo
+exato. Suíte 476/476. Confirmado funcionando ponta a ponta depois do 2º
+deploy (`3 ok, 1 falha` — a falha é um token morto, já limpo
+automaticamente pela própria função).
 
 ### 2026-09-14 — `feedback` entra em PUSH_TYPES
 

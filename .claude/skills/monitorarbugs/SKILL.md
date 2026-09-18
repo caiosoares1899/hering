@@ -1664,6 +1664,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   lista de novo (mesma disciplina já aplicada a `init_registry`
   2026-09-17/PUSH_TYPES agora) — allow-lists que crescem por adição
   manual, uma de cada vez, tendem a acumular mais de um esquecimento.
+  **Follow-up de validação (mesmo dia)**: push não chegava no celular
+  mesmo após o deploy — sessão de debug ao vivo com o usuário
+  (`firebase functions:log`) confirmou que a causa era só TIMING de
+  propagação do deploy (Cloud Run demora alguns minutos pra migrar
+  100% do tráfego pra revisão nova; testar cedo demais bate na versão
+  ANTIGA da função, que rejeita os tipos corretamente). Achado
+  incidental real na investigação: todos os `return` antecipados de
+  `sendPushOnNotification` eram silenciosos, sem log — tornava
+  impossível diferenciar "ainda propagando" de "tipo fora da lista"/
+  "Não Perturbe"/"sem token" sem um ciclo inteiro de deploy+teste por
+  hipótese. Corrigido (cada `return` loga o motivo). Confirmado
+  funcionando ponta a ponta no 2º deploy. **Lição pra próxima vez**:
+  depois de QUALQUER deploy de `functions/`, esperar ~1-2min antes de
+  testar (Cloud Run/Functions Gen2 não troca de revisão instantaneamente,
+  mesmo com o comando já tendo retornado sucesso) — e funções com
+  múltiplos `return` antecipados deveriam nascer já logando o motivo de
+  cada um, não só descobrir isso na hora que precisa debugar ao vivo.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
