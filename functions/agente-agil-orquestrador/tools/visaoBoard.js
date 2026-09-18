@@ -51,9 +51,14 @@ const visaoBoardSchema = z.object({
 // ⏸ Pausar (2026-09-03, pedido direto): tempo pausado não conta em cycle/
 // lead time — soma o acumulado de pausas já encerradas (card.pausedMs) com
 // a pausa em andamento, se houver (card.paused && card.pausedAt).
+// Number(x)||0 em vez de (x||0) (/monitorarbugs, 2026-09-18): kanban-dev.html
+// levou esse cast em 2026-09-17 (PR #986) depois de um card real salvar
+// pausedMs como STRING (bug de concatenação — "575598920"+48539 virou o
+// texto "57559892048539") e o valor corrompido nunca ter sido corrigido
+// aqui, réplica deliberada que ficou pra trás do lado que a escreve.
 function cardPausedMs(card) {
   if (!card) return 0;
-  let ms = card.pausedMs || 0;
+  let ms = Number(card.pausedMs) || 0;
   if (card.paused && card.pausedAt) ms += Math.max(0, Date.now() - new Date(card.pausedAt).getTime());
   return ms;
 }

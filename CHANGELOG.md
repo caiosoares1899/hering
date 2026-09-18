@@ -20652,6 +20652,37 @@ como confirmação indireta de que `renderFilterBar()` está funcionando.
 
 ## Agente Ágil Orquestrador (`functions/agente-agil-orquestrador/`) — Fase 2
 
+### 2026-09-18 · fix: `tools/visaoBoard.js` podia herdar o mesmo bug de concatenação de string do `pausedMs` (`/monitorarbugs`)
+
+Rodada de `/monitorarbugs` genérica ("outra área", sem escopo nomeado) —
+técnica 1 (comparar caminhos paralelos pra mesma operação), aplicada desta
+vez comparando o client (`kanban-dev.html`) com sua RÉPLICA server-side
+documentada neste mesmo arquivo (ver entrada 2026-09-03 logo abaixo).
+
+No dia anterior (2026-09-17, PR #986) um card real acumulou `pausedMs`
+absurdo (~1825 anos de "atraso", relatado pelo usuário com print) porque o
+campo tinha sido salvo como STRING em algum momento — `(x||0) + numero`
+faz CONCATENAÇÃO de texto em JS quando `x` já é string, não soma
+("575598920"+48539 virou o texto "57559892048539", lido depois como
+milissegundos). O fix trocou `(x||0)` por `Number(x)||0` em 6 pontos de
+escrita e 3 funções de leitura no cliente (`_cardAtrasadoMs`/
+`_cardBlockedMs`/`_cardPausedMs`) — mas a réplica deliberada
+`cardPausedMs()` aqui, que o comentário no topo do arquivo já avisa
+("se algum dia mudarem no client, replicar aqui manualmente"), ficou pra
+trás: continuava com `card.pausedMs || 0` puro. Se qualquer card no board
+tiver (ou vier a ter) `pausedMs` salvo como string, `visao_board` — usado
+pelo orquestrador pra responder sobre cycle/lead time do board — voltaria
+a fazer a mesma concatenação e reportar um tempo fantasioso pro PO/
+especialista que perguntasse, sem nenhum aviso.
+
+Fix: `Number(card.pausedMs) || 0` em `cardPausedMs()`, mesmo padrão do
+lado cliente. 1 teste novo (`pausedMs` salvo como string, com e sem pausa
+em andamento) em `__tests__/visaoBoard.test.js`, suíte inteira: 20/20
+nesse arquivo, 477/477 em `functions/`.
+
+**Requer redeploy manual** de qualquer função que usa o toolset completo
+(inclui `visao_board`): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO`
+
 ### 2026-09-03 · `tools/visaoBoard.js` passa a descontar o tempo pausado (⏸ Pausar card) de cycle/lead time
 
 Acompanha a feature nova ⏸ Pausar card em `kanban-dev.html` (ver entrada
