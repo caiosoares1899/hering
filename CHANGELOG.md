@@ -3503,6 +3503,24 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.709-dev — 2026-09-18 — Novo: hover no gráfico "📊 Cards ativos por coluna" mostra o rótulo inteiro + valor
+
+Pedido direto do usuário (print do gráfico em 📊 Dados do Board → Visão
+Geral): com muitas colunas no squad, o rótulo embaixo de cada barra
+(cortado em 9 caracteres pra não colidir com a barra vizinha, ex.
+"MÉDIA | P"/"MÉDIA | Pe") fica ilegível — difícil saber qual barra é
+qual coluna de verdade.
+
+Mesmo padrão já usado no hover do CFD (`_cfdHover()`): passar o mouse
+sobre uma barra mostra uma tooltip com a cor + nome COMPLETO da coluna +
+contagem, e um destaque sutil na barra. Posição calculada via SVG
+`getScreenCTM()`/`createSVGPoint()` (funciona certo mesmo com o
+`preserveAspectRatio` esticando o viewBox, não um cálculo manual de
+escala). `_bdBarHover(evt)`/`_bdBarHoverOut()`, estado em
+`window._bdBarChartState`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.708-dev — 2026-09-18 — `/atualizarhelpcontent`: sincroniza Central de Ajuda com as últimas mudanças de Automações/Supercard/Controle de Criativos
 
 Pedido genérico ("roda um /atualizarhelpcontent"), sem escopo nomeado —
