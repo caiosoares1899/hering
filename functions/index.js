@@ -30,10 +30,18 @@ exports.sendPushOnNotification = onValueCreated(
   async (event) => {
     const { uid } = event.params;
     const notif = event.data.val();
-    if (!notif) return;
+    // Achado real (/monitorarbugs 2026-09-18, sessão de debug ao vivo com o
+    // usuário): TODOS os returns abaixo eram silenciosos — sem log nenhum —
+    // o que tornou impossível saber ONDE a função estava parando quando um
+    // push esperado não chegava (rodada inteira de testes/logs gastos só
+    // pra descobrir isso). Cada saída agora loga o motivo.
+    if (!notif) { console.log(`[push] ${uid}: evento sem dado (notif null), ignorando.`); return; }
 
     // Tipos que não devem virar push (ex.: rascunho, só-painel) — mas continuam no sino normalmente
-    if (notif.type && !PUSH_TYPES.has(notif.type)) return;
+    if (notif.type && !PUSH_TYPES.has(notif.type)) {
+      console.log(`[push] ${uid}: tipo '${notif.type}' fora de PUSH_TYPES, não enviando.`);
+      return;
+    }
 
     const db = getDatabase();
 
@@ -51,11 +59,11 @@ exports.sendPushOnNotification = onValueCreated(
     // Busca os tokens de push registrados pra essa pessoa (pode ter mais de um aparelho)
     const tokensSnap = await db.ref(`kanban/usuarios/${uid}/fcm_tokens`).get();
     const tokensObj = tokensSnap.val();
-    if (!tokensObj) return; // pessoa nunca ativou push em nenhum aparelho
+    if (!tokensObj) { console.log(`[push] ${uid}: sem fcm_tokens cadastrado, não enviando.`); return; } // pessoa nunca ativou push em nenhum aparelho
 
     const tokenEntries = Object.entries(tokensObj); // [ [key, {token, ua, ...}], ... ]
     const tokens = tokenEntries.map(([, t]) => t.token).filter(Boolean);
-    if (!tokens.length) return;
+    if (!tokens.length) { console.log(`[push] ${uid}: fcm_tokens existe mas sem token válido (${tokenEntries.length} entradas), não enviando.`); return; }
 
     const title = notif.title || 'Maré Digital';
     const body = notif.sub || '';

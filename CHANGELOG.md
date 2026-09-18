@@ -16453,6 +16453,21 @@ push), adicionado a pedido explícito.
 regressão. **Requer `firebase deploy --only
 functions:sendPushOnNotification` manual.**
 
+**Follow-up (mesmo dia, validação com o usuário)**: depois do deploy, os
+pushes de teste dos 3 tipos novos não chegaram no celular. Sessão de
+debug ao vivo (logs de `firebase functions:log`) confirmou que o
+problema NÃO era o fix — `PUSH_TYPES`/deploy corretos — mas revelou um
+problema real e independente: **todos os `return` antecipados da função
+eram silenciosos**, sem nenhum log. Sem isso, não dava pra saber se a
+função estava saindo por tipo fora da lista, Não Perturbe ativo, ou sem
+token cadastrado — cada hipótese exigia um novo ciclo de
+teste+deploy+log só pra descartar. Corrigido: cada `return` agora loga o
+motivo exato (`tipo '...' fora de PUSH_TYPES`, `sem fcm_tokens
+cadastrado`, etc.). Suíte 476/476. **Mesmo deploy manual necessário**
+(`firebase deploy --only functions:sendPushOnNotification`) — a causa
+raiz de "por que o push não chega" pros 3 tipos novos ainda está sendo
+investigada com esses logs.
+
 ### 2026-09-14 — `feedback` entra em PUSH_TYPES
 
 Pergunta direta do usuário (ADM): "quando alguém manda uma mensagem do
