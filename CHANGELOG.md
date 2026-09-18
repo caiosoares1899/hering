@@ -3503,6 +3503,55 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.707-dev — 2026-09-18 — `/monitorarbugs`: card filho de um pai arquivado ficava "preso" a ele, sem conseguir editar a própria Ficha Técnica
+
+Rodada de `/monitorarbugs` pedida pelo usuário direto na área de
+Supercard, mesma área dos 3 fixes acima (contagem, arquivados
+preservados, histórico) — auditoria de ponta a ponta das ~16 funções da
+área, técnica 2 (comparar contra padrão já resolvido).
+
+**Causa raiz**: `initSuperChildren()` calcula `editingSuperParent`
+("quem é o pai deste card?") com uma busca reversa em
+`childCardIds` que **não filtra pais arquivados** — diferente do
+helper irmão `_cardIsSuperChild()` (usado em `searchSuperChildren()`
+pra decidir se um card já tem dono) e diferente do cálculo do AVÔ,
+2 linhas abaixo, DENTRO da própria função, que já filtra
+`!gp.archived`.
+
+**Cenário concreto**: campanha "X" é arquivada (finalizada); o criativo
+"Y" (filho, ainda ativo) continua no board. Abrir Y mostrava "🧩 Este
+card é filho do supercard X" (X arquivado), escondia os campos próprios
+de Ficha Técnica de Y (Campanha/Funil/Etapa/Canal —
+`_crvUpdateFichaSecVisibility()` usa `editingSuperParent` pra decidir
+isso) e direcionava a pessoa pra um card arquivado. Mas
+`searchSuperChildren()` já considerava Y **livre** (via
+`_cardIsSuperChild()`, que já filtra arquivados) — dava pra vincular Y
+a um supercard novo. Y ficava preso a um pai morto, sem conseguir editar
+os próprios campos, mesmo já estando livre pra ser adotado por outro
+supercard.
+
+**Fix**: mesmo filtro `!c.archived` na busca do pai direto, igual ao
+resto da função e ao helper irmão.
+
+Checked sem achado (auditoria completa da área): `renderSuperChildrenList()`,
+`addSuperChild()`/`removeSuperChild()`/`quickCreateSuperChild()`,
+`_applyFanoutTemplate()`/`applyFanoutToCurrentCard()`,
+`_checkSupercardAutoComplete()` (cascata de auto-conclusão — já correta,
+guard de ciclo confirmado, `_isColCancelLike()` funcionando, hook único
+via `runAutoRules('move',...)`, coberto por todos os 9 call sites já
+auditados em rodadas anteriores), `_duplicarComFilhos()` (já filtra
+arquivados nos filhos duplicados), badges de contagem na Timeline
+(`superN`, 2 sites, já filtram arquivados). **Achado incidental
+reportado, não corrigido (ambíguo/decisão de produto)**: vincular
+(`addSuperChild`) ou criar (`quickCreateSuperChild`) um filho grava
+histórico no card PAI (fix da rodada anterior), mas nunca no card
+FILHO em si ("foi vinculado ao supercard X") — só
+`quickCreateSuperChild()` grava algo no filho, e é sobre a CRIAÇÃO dele,
+não sobre o vínculo. Fica como recomendação, não implementado de
+bandeja.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.706-dev — 2026-09-18 — Novo: vincular/desvincular filho de Supercard agora entra no Histórico do card pai
 
 Pergunta direta do usuário, na sequência das duas correções acima:

@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.706-dev</div>
+<div class="version">v8.30.707-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26755,7 +26755,7 @@ function initSuperChildren(card){
   // Calculado ANTES de renderSuperChildrenList()/_crvUpdateFichaSecVisibility()
   // (chamada logo abaixo) — precisa estar pronto pra decidir se Campanha/
   // Funil/Etapa/Canal aparecem ou somem da Ficha Técnica deste card.
-  editingSuperParent = card ? (cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) || null) : null;
+  editingSuperParent = card ? (cards.find(c=>c.id!==card.id && !c.archived && (c.childCardIds||[]).includes(card.id)) || null) : null;
   editingSuperParentIsChild = !!(editingSuperParent && cards.some(gp=>!gp.archived && gp.id!==editingSuperParent.id && (gp.childCardIds||[]).includes(editingSuperParent.id)));
   _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
