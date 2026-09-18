@@ -1760,6 +1760,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   legado `card.tag`). `_crvCardCountBreakdown()` também usa os helpers
   certos.
 
+- **2026-09-18, ⏸ Pausar card (pedido explícito, escopo nomeado — 2ª
+  rodada, 1ª foi 2026-09-12/`_cardTempoPorColuna()`)**: 1 achado real,
+  técnica 2 (mesma classe já corrigida 2x — `blockedMs`/`atrasadoMs`
+  — episódio aberto nunca fechado no desfecho "card concluído").
+  `togglePauseCard()` é o único ponto que mexe em `paused`/`pausedAt`/
+  `pausedMs` (sem duplicação entre modal/menu de contexto/atalho), mas
+  nada nunca desmarcava `paused` quando o card conclui — diferente do
+  impedimento em modo tag, que já tem "auto-desimpedimento" documentado
+  em `recordMove()`. `_cardPausedMs()` soma o episódio aberto com
+  `Date.now()`, mas `_cardTempos()` usa `doneMs` FIXO — card concluído
+  ainda pausado tinha o lead time encolhendo em silêncio a cada dia até
+  saturar em zero. Alcançável por 2 caminhos (pausar→concluir sem save
+  no meio; concluir→pausar depois, nada impede). Fix: `recordMove()`
+  fecha a pausa na transição pra coluna de fim (mesmo padrão do
+  auto-desimpedimento);  `_settleCardTimeTrackingLazy()` ganha a mesma
+  rede de segurança pro 2º caminho. dev v8.30.711-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

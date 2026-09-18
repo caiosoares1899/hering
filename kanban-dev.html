@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.710-dev</div>
+<div class="version">v8.30.711-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8553,6 +8553,24 @@ function recordMove(card, toCol, atISO){
       card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, new Date(at).getTime()-start);
     }
     card.atrasadoDesde = null;
+  }
+  // ⏸️ Fecha a pausa se o card chega numa coluna de fim ainda pausado —
+  // achado real (/monitorarbugs 2026-09-18, escopo nomeado "pausar
+  // cards"): nada nunca desmarcava card.paused/pausedAt ao concluir (só
+  // togglePauseCard() manual mexe nesses 2 campos). _cardPausedMs()
+  // soma o episódio ABERTO usando Date.now() — como doneMs (usado por
+  // _cardTempos() pro lead/cycle time) fica FIXO no momento da conclusão,
+  // um card concluído-mas-ainda-pausado tinha o "tempo pausado" crescendo
+  // pra sempre com o relógio, corroendo o lead time em silêncio até zerar
+  // (Math.max(0,...) satura) — mesma classe de bug já corrigida aqui pra
+  // blockedMs/atrasadoMs (episódio aberto nunca fechado no desfecho
+  // "concluiu"), agora pra pausedMs. Mesmo espírito do auto-desimpedimento
+  // acima ("se o card está concluído, automaticamente ele é X").
+  if(_isColDone(toCol) && !_isColDone(from) && card.paused){
+    if(card.pausedAt) card.pausedMs = (Number(card.pausedMs)||0) + Math.max(0, new Date(at).getTime()-new Date(card.pausedAt).getTime());
+    card.paused = false;
+    card.pausedAt = null;
+    recordHistory(card, 'retomou a contagem de tempo do card automaticamente (card concluído)');
   }
 }
 // Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
@@ -31762,6 +31780,16 @@ function _settleCardTimeTrackingLazy(card){
     const start = new Date(card.atrasadoDesde+'T00:00:00').getTime();
     card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, Date.now()-start);
     card.atrasadoDesde = null;
+  }
+  // ⏸️ Rede de segurança pro mesmo fix de recordMove() (ver comentário lá) —
+  // cobre o caso que uma transição de coluna não pega: pausar um card que
+  // JÁ está numa coluna de fim (sem nenhuma movimentação envolvida, o botão
+  // "⏸ Pausar" nunca checou isso). Sem isto, o episódio aberto continuaria
+  // crescendo pra sempre até o próximo save tocar o card.
+  if(card.paused && card.pausedAt && _isColDone(card.col)){
+    card.pausedMs = (Number(card.pausedMs)||0) + Math.max(0, Date.now()-new Date(card.pausedAt).getTime());
+    card.paused = false;
+    card.pausedAt = null;
   }
 }
 // Total "efetivo até agora" (fechado + episódio aberto, se houver) —
