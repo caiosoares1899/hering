@@ -1703,7 +1703,17 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   modal) fazia a mesma busca em `card.childCardIds` sem esse filtro —
   10 filhos arquivados (versões antigas) continuavam contando no total
   do modal, alguns inflando até o numerador de "concluído(s)". Fix:
-  mesmo filtro `!c.archived`. dev v8.30.704-dev.
+  mesmo filtro `!c.archived`. dev v8.30.704-dev. **Follow-up no mesmo
+  dia (pergunta direta do usuário: "só mexeu na visualização, não
+  desvinculou nada?")**: o filtro resolveu a contagem mas
+  `persistSuperChildren()`/`saveCard()` escrevem `childCardIds` DIRETO a
+  partir da mesma `editingSuperChildren` filtrada — qualquer salvamento
+  seguinte do card (não só mexer nos filhos) desvincularia os
+  arquivados de verdade do Firebase. Lição: filtrar uma lista que
+  alimenta TANTO exibição quanto persistência exige separar as duas
+  antes de aplicar o filtro, não filtrar a fonte única. Fix: lista
+  separada `editingSuperArchivedIds`, exibição só com ativos,
+  persistência sempre com os dois juntos. dev v8.30.705-dev.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

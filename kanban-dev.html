@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.704-dev</div>
+<div class="version">v8.30.705-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -15353,7 +15353,7 @@ function saveCard(){
       // applyFanoutToCurrentCard) — os filhos em si já existem como cards de
       // verdade desde a hora que foram criados; só o vínculo ficava pendente
       // até agora, que o pai finalmente ganha um id real.
-      childCardIds:editingSuperChildren.map(l=>l.id),
+      childCardIds:[...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds],
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
@@ -26691,7 +26691,30 @@ document.addEventListener('click', e=>{
 // Escopo desta 1ª versão: só o núcleo (dado + board + modal). Fan-out via
 // automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
 // fica pra depois de validar o conceito visual.
-let editingSuperChildren = []; // [{id,title,col}]
+let editingSuperChildren = []; // [{id,title,col}] — só filhos ATIVOS (ver _splitSuperChildIds)
+// Ids de filhos ARQUIVADOS que já estavam em childCardIds antes de abrir o
+// modal — mantidos à parte de editingSuperChildren pra não sumir da tela
+// (rollup/contagem só faz sentido pra filhos ativos), mas SEM deixar de ser
+// persistido: saveCard()/persistSuperChildren() escrevem childCardIds a
+// partir de editingSuperChildren, então sem isso, salvar o card (por
+// qualquer motivo, não só mexer nos filhos) reescreveria childCardIds só com
+// os ativos e desvincularia os arquivados de verdade do Firebase — achado
+// junto do fix de contagem (/monitorarbugs 2026-09-18).
+let editingSuperArchivedIds = [];
+// Separa card.childCardIds em {ativos:[{id,title,col}], arquivadosIds:[id]} —
+// usado tanto na abertura do modal (initSuperChildren) quanto depois de
+// aplicar uma receita de fan-out (applyFanoutToCurrentCard), os 2 pontos que
+// recalculam editingSuperChildren a partir do card de verdade.
+function _splitSuperChildIds(childCardIds){
+  const ativos=[], arquivadosIds=[];
+  (childCardIds||[]).forEach(id=>{
+    const found=cards.find(c=>c.id===id);
+    if(!found) return;
+    if(found.archived) arquivadosIds.push(id);
+    else ativos.push({id:found.id, title:found.title, col:found.col});
+  });
+  return {ativos, arquivadosIds};
+}
 // Card (objeto completo) do supercard do qual ESTE card é filho, ou null —
 // calculado uma vez por abertura de modal (initSuperChildren), reusado pela
 // Ficha Técnica compartilhada (ver _crvUpdateFichaSecVisibility/saveCard) pra
@@ -26724,10 +26747,9 @@ let _newSuperChildIds = [];
 function initSuperChildren(card){
   const wrap=document.getElementById('m-super-attach-wrap');
   if(wrap) wrap.style.display='';
-  editingSuperChildren = card ? (card.childCardIds||[]).map(id=>{
-    const found = cards.find(c=>c.id===id&&!c.archived);
-    return found ? {id:found.id, title:found.title, col:found.col} : null;
-  }).filter(Boolean) : [];
+  { const _split = _splitSuperChildIds(card ? card.childCardIds : []);
+    editingSuperChildren = _split.ativos;
+    editingSuperArchivedIds = _split.arquivadosIds; }
   // Calculado ANTES de renderSuperChildrenList()/_crvUpdateFichaSecVisibility()
   // (chamada logo abaixo) — precisa estar pronto pra decidir se Campanha/
   // Funil/Etapa/Canal aparecem ou somem da Ficha Técnica deste card.
@@ -27060,7 +27082,7 @@ function persistSuperChildren(){
   if(!editingId) return;
   if(editingSuperParentIsChild) return; // teto de 2 níveis — ver initSuperChildren()
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
-  parent.childCardIds = editingSuperChildren.map(l=>l.id);
+  parent.childCardIds = [...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds];
   fbSaveCard(parent);
   _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração
   renderBoard(); // atualiza o rollup no board na hora
@@ -30797,10 +30819,9 @@ function applyFanoutToCurrentCard(templateId){
     const novos=_applyFanoutTemplate(parent, tpl, _histWho());
     fbSaveCard(parent);
     _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filhos recém-criados via receita, ver declaração
-    editingSuperChildren=(parent.childCardIds||[]).map(id=>{
-      const found=cards.find(c=>c.id===id);
-      return found?{id:found.id,title:found.title,col:found.col}:null;
-    }).filter(Boolean);
+    { const _split = _splitSuperChildIds(parent.childCardIds);
+      editingSuperChildren = _split.ativos;
+      editingSuperArchivedIds = _split.arquivadosIds; }
     renderSuperChildrenList();
     renderBoard();
     showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);

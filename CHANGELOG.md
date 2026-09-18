@@ -3503,6 +3503,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.705-dev — 2026-09-18 — Fix de acompanhamento: salvar o card depois do fix anterior desvincularia os filhos arquivados de verdade
+
+Achado ao validar a v8.30.704-dev com o usuário (pergunta direta: "mas vc
+so mexeu na visualização ne? nao desvinculou nada n ne?") — o fix anterior
+filtrou `editingSuperChildren` pra excluir filhos arquivados, resolvendo a
+contagem, mas `persistSuperChildren()` (chamado ao adicionar/remover
+filho) e o branch de criação de `saveCard()` escrevem `card.childCardIds`
+DIRETO a partir dessa mesma lista. Como só abrir o modal não salva nada,
+a visualização sozinha era segura — mas qualquer salvamento seguinte do
+card (mexer nos filhos, ou até uma edição comum de campo, já que
+`saveCard()` reusa `editingSuperChildren` no branch de criação) reescreveria
+`childCardIds` só com os filhos ativos, desvinculando os 10 arquivados de
+verdade do Firebase — sem intenção nenhuma da pessoa.
+
+**Fix**: nova lista separada `editingSuperArchivedIds`, preenchida junto
+de `editingSuperChildren` (extraída num helper `_splitSuperChildIds()`,
+usado tanto em `initSuperChildren()` quanto no re-cálculo depois de
+aplicar uma receita de fan-out). Exibição/contagem continuam só com os
+ativos; os dois pontos de escrita (`persistSuperChildren()`/`saveCard()`)
+agora gravam `[...ativos, ...arquivados]`, preservando o vínculo com os
+filhos arquivados independente de quantas vezes o card for salvo.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.704-dev — 2026-09-18 — Fix: contagem de filhos no modal do Supercard incluía cards arquivados
 
 Reportado ao vivo: um Supercard mostrava "8/9 concluído(s)" no rollup do
