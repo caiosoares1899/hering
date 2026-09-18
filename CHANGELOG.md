@@ -16428,6 +16428,46 @@ function roda sozinha, sem depender de ninguém.
 
 ## Cloud Function — `sendPushOnNotification` (`functions/index.js`, sem versão própria em `version.json`)
 
+### 2026-09-18 — `reuniao`/`due_today`/`due_overdue` entram em PUSH_TYPES
+
+`/monitorarbugs`, mesma técnica que achou o gap do `feedback` (14/09):
+comparar TODOS os tipos de `createNotif()` contra `PUSH_TYPES`, não só
+o tipo que motivou a rodada anterior.
+
+**`reuniao`** (lembrete "🎥 Reunião em X min", `kanban-dev.html`) tinha
+exatamente a mesma assimetria do `feedback`/`intake` — o irmão quase
+idêntico `okr_reuniao` (lembrete de reunião de OKR) já estava em
+`PUSH_TYPES` desde 2026-09-04, mas o tipo genérico `reuniao` (calendário
+vinculado, o mais usado dos dois) nunca entrou. Só ajuda o cenário
+multi-dispositivo (o lembrete só é CRIADO enquanto alguém já tem uma aba
+aberta em algum lugar — sem isso, quem só tem o board aberto no
+notebook nunca recebia o aviso no celular).
+
+**`due_today`/`due_overdue`** (prazo vence hoje/já venceu,
+`checkDueNotifs()`) — achado secundário, mais ambíguo (podia ser decisão
+deliberada de não interromper toda vez que um prazo vence), confirmado
+com o usuário antes de aplicar: tão relevante quanto `risk` (que já tem
+push), adicionado a pedido explícito.
+
+`PUSH_TYPES` ganha os 3 tipos. Suíte de `functions/` 476/476, sem
+regressão. **Requer `firebase deploy --only
+functions:sendPushOnNotification` manual.**
+
+**Follow-up (mesmo dia, validação com o usuário)**: depois do deploy, os
+pushes de teste dos 3 tipos novos não chegaram no celular. Sessão de
+debug ao vivo (logs de `firebase functions:log`) confirmou que o
+problema NÃO era o fix — `PUSH_TYPES`/deploy corretos — mas revelou um
+problema real e independente: **todos os `return` antecipados da função
+eram silenciosos**, sem nenhum log. Sem isso, não dava pra saber se a
+função estava saindo por tipo fora da lista, Não Perturbe ativo, ou sem
+token cadastrado — cada hipótese exigia um novo ciclo de
+teste+deploy+log só pra descartar. Corrigido: cada `return` agora loga o
+motivo exato (`tipo '...' fora de PUSH_TYPES`, `sem fcm_tokens
+cadastrado`, etc.). Suíte 476/476. **Mesmo deploy manual necessário**
+(`firebase deploy --only functions:sendPushOnNotification`) — a causa
+raiz de "por que o push não chega" pros 3 tipos novos ainda está sendo
+investigada com esses logs.
+
 ### 2026-09-14 — `feedback` entra em PUSH_TYPES
 
 Pergunta direta do usuário (ADM): "quando alguém manda uma mensagem do

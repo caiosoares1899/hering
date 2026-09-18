@@ -1645,6 +1645,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   não precisam dessas 3 áreas. Não implementado. Revisitar só se um
   convidado precisar de fato dessas telas no futuro.
 
+- **2026-09-18, `PUSH_TYPES` (`functions/index.js`) (pedido genérico,
+  "roda mais um /monitorarbugs" — área escolhida por ser continuação
+  direta do fix de `feedback`/14-09, código mais recente de
+  `functions/` sem rodada dedicada)**: 1 achado real + 1 secundário
+  aplicado a pedido, técnica 1 (mapear TODOS os tipos de
+  `createNotif()` contra `PUSH_TYPES`, mesma técnica do achado de
+  `feedback`). `reuniao` (lembrete de reunião do calendário) tinha a
+  MESMA assimetria que causou o bug do `feedback` — irmão quase
+  idêntico `okr_reuniao` já tinha push desde 2026-09-04, `reuniao`
+  (o mais usado dos dois) nunca entrou. `due_today`/`due_overdue`
+  (achado secundário, mais ambíguo — podia ser decisão deliberada de
+  não interromper a cada prazo vencido) confirmados com o usuário antes
+  de aplicar. `PUSH_TYPES` ganha os 3. Suíte 476/476. Requer
+  `firebase deploy --only functions:sendPushOnNotification` manual.
+  **Lição pra próxima vez**: depois de corrigir um "tipo X esquecido de
+  um allow-list", vale comparar TODOS os tipos existentes contra a
+  lista de novo (mesma disciplina já aplicada a `init_registry`
+  2026-09-17/PUSH_TYPES agora) — allow-lists que crescem por adição
+  manual, uma de cada vez, tendem a acumular mais de um esquecimento.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
