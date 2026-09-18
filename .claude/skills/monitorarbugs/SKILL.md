@@ -1787,6 +1787,39 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   do Board, Criativos, Meu Dia, sino) ficaram de fora, registrados como
   recomendação, não corrigidos. dev v8.30.712-dev.
 
+- **2026-09-18, 📋 Anotações da reunião (painel-dev.html, aba 🎯 OKR)
+  (pedido genérico, "outra área" — área escolhida por ter só um spot-check
+  parcial, nunca uma rodada dedicada)**: sem achados, confirmado por 2
+  vias independentes. Leitura completa de `renderOkrNotas()`/
+  `window._okrNotaAdd()`/`window._okrNotaDel()` (L4975-5045): apesar de
+  escrever/apagar sempre no bucket de HOJE (`hoje=_todayStr()`, hardcoded,
+  igual ao padrão que causou bug na versão irmã), aqui a caixa de compor
+  (`#okr-notas-compose`) e o botão de excluir só existem no DOM quando
+  `isHoje` é true — via `.style.display='none'` (inline, sempre vence, não
+  a classe CSS que causou o bug em `okr-apresentacao.slide.html`) — sem
+  caminho de UI pra escrever/apagar contra uma data que não seja hoje. O
+  commit `2a14449` (fix da versão irmã) já tinha confirmado isso
+  explicitamente ("painel.html/painel-dev.html… não tem o bug — usa
+  style.display='none' direto"); esta rodada releu as funções inteiras e
+  confirma de novo, independente. Nenhuma mudança feita.
+- **2026-09-18, Cloud Function `visao_board` (réplica server-side de
+  `_cardPausedMs()`/`_cardTempos()`) (pedido genérico, "outra área")**: 1
+  achado real, técnica 1 (comparar caminhos paralelos — aqui client vs.
+  réplica server documentada no próprio arquivo). O fix de
+  concatenação-de-string em `pausedMs`/`blockedMs`/`atrasadoMs`
+  (2026-09-17, PR #986, `Number(x)||0` em vez de `(x||0)`) foi aplicado só
+  no client; `functions/agente-agil-orquestrador/tools/visaoBoard.js`
+  `cardPausedMs()` — que o próprio comentário do arquivo documenta como
+  "réplica deliberada, replicar manualmente se mudar no client" — ficou
+  pra trás com `card.pausedMs || 0` puro, sujeito à mesma corrupção se
+  algum card tiver (ou vier a ter) o campo salvo como string. Fix +1 teste
+  novo em `__tests__/visaoBoard.test.js` (20/20 no arquivo, 477/477 em
+  `functions/`). **Requer redeploy manual** (`functions/` não republica
+  sozinho, ver `CLAUDE.md`) — `agenteAgilMencao`, `agenteAgilMencaoDados`,
+  `agenteAgilIntake`, `agenteAgilAnalisePO` (todas usam o toolset
+  completo). Nenhum outro campo (`atrasadoMs`/`blockedMs`) é lido nesta
+  réplica — só `pausedMs`.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

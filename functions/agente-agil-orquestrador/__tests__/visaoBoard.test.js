@@ -56,6 +56,18 @@ test('cardPausedMs soma pausas encerradas + a pausa em andamento, se houver', ()
   assert.equal(cardPausedMs({ pausedMs: H, paused: true, pausedAt: null }), H);
 });
 
+// /monitorarbugs, 2026-09-18: réplica ficou pra trás do fix aplicado no
+// client (kanban-dev.html, PR #986) depois de um card real salvar pausedMs
+// como STRING no Firebase — (x||0) faz CONCATENAÇÃO em vez de soma quando x
+// já é string, dando um total absurdo (mesma classe do bug real relatado:
+// "666202d 11h" de atraso). Number(x)||0 garante soma numérica mesmo com o
+// campo salvo corrompido.
+test('cardPausedMs soma como número mesmo se pausedMs foi salvo como string (dado corrompido)', () => {
+  assert.equal(cardPausedMs({ pausedMs: '10800000' }), 3 * H); // "10800000" (string) == 3h em ms
+  const c = { pausedMs: '7200000', paused: true, pausedAt: ago(1 * H) }; // "7200000" == 2h
+  assert.ok(Math.abs(cardPausedMs(c) - 3 * H) < 2000, `esperado ~3h em ms mesmo com pausedMs string, veio ${cardPausedMs(c)}`);
+});
+
 test('cardTempos subtrai o tempo pausado (pausedMs) de lead e cycle', () => {
   const card = {
     createdAt: ago(5 * D),
