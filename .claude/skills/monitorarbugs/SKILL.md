@@ -1720,7 +1720,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   só `quickCreateSuperChild()` gravava, e só no FILHO). Implementado a
   pedido: `persistSuperChildren(histWhat)` grava no pai antes de salvar,
   chamado pelos 3 sites + ícone próprio (🧩) agrupando com o "aplicou
-  fan-out..." que já existia. dev v8.30.706-dev.
+  fan-out..." que já existia. dev v8.30.706-dev. **Follow-up 3 (pedido
+  "roda um /monitorarbugs nisso" — auditoria completa das ~16 funções
+  da área, não só pergunta pontual)**: 1 achado real, técnica 2 —
+  `editingSuperParent` (busca reversa "quem é meu pai?", dentro de
+  `initSuperChildren()`) não filtrava pai arquivado, diferente do
+  helper irmão `_cardIsSuperChild()` (usado em `searchSuperChildren()`)
+  E do cálculo do AVÔ 2 linhas abaixo, NA MESMA função, que já filtra.
+  Campanha arquivada deixava o criativo-filho ainda ativo "preso" a
+  ela: Ficha Técnica própria escondida, nota apontando pro pai morto —
+  mas `searchSuperChildren()` já considerava esse filho livre pra
+  adotar em outro supercard, uma contradição real entre 2 pontos do
+  mesmo arquivo. Fix: mesmo filtro `!c.archived`. Resto da área (9
+  funções + os 2 badges de Timeline) auditado e sem achado — cascata de
+  auto-conclusão, fan-out, duplicar com filhos, tudo já correto.
+  Achado incidental reportado, não implementado (ambíguo): vincular/
+  criar filho grava histórico no PAI (fix anterior), nunca no FILHO
+  ("fui vinculado a X"). dev v8.30.707-dev.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
