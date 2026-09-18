@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.708-dev</div>
+<div class="version">v8.30.709-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -20598,6 +20598,13 @@ function renderBoardDataInsights(){
   body.innerHTML=html;
 }
 
+// Hover (pedido direto: "quando tem mt colunas, fica ruim de enxergar" —
+// rótulo embaixo de cada barra é cortado em 9 caracteres pra não colidir
+// com a barra vizinha) — mesmo padrão já usado no CFD (_cfdHover()/
+// window._cfdChartState): estado guardado num objeto global, posição via
+// SVG getScreenCTM()/createSVGPoint() (funciona certo mesmo com o
+// preserveAspectRatio esticando/centralizando o viewBox), tooltip mostra
+// o rótulo INTEIRO + valor, sem depender do texto cortado do SVG.
 function _boardDataBarChart(){
   const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
   const chipsEl = document.getElementById('boarddata-col-chips');
@@ -20609,17 +20616,51 @@ function _boardDataBarChart(){
   }));
   const max = Math.max(1, ...data.map(d=>d.count));
   const W = Math.max(320, data.length*72), H = 150, barW = Math.min(56, (W-20)/Math.max(1,data.length) - 12);
-  let x = 14, bars = '';
+  let x = 14, bars = '', bares = [];
   data.forEach(d=>{
     const h = Math.round((d.count/max) * (H-46));
     const y = H-30-h;
     bars += `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h,d.count>0?2:0)}" rx="4" fill="${d.color}" opacity=".85"/>
       <text x="${x+barW/2}" y="${y-6}" text-anchor="middle" font-size="11" fill="var(--txt)" font-weight="700">${d.count}</text>
       <text x="${x+barW/2}" y="${H-14}" text-anchor="middle" font-size="9" fill="var(--txt3)">${esc((d.label||'').substring(0,9))}</text>`;
+    bares.push({x: x-8, w: barW+16, label: d.label, count: d.count, color: d.color});
     x += barW+16;
   });
-  el.innerHTML = `<svg viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">${bars}</svg>`;
+  window._bdBarChartState = {bares, H};
+  el.innerHTML = `<div id="bd-bar-wrap" style="position:relative;">
+    <svg id="bd-bar-svg" viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:pointer;" onmousemove="_bdBarHover(event)" onmouseleave="_bdBarHoverOut()">${bars}<rect id="bd-bar-highlight" x="0" y="0" width="0" height="${H}" fill="#fff" opacity="0" style="pointer-events:none;"/></svg>
+    <div id="bd-bar-tooltip" style="position:absolute;display:none;top:4px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;font-size:11px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+  </div>`;
   _boardDataSmCvPorColuna();
+}
+function _bdBarHover(evt){
+  const st = window._bdBarChartState; if(!st) return;
+  const svg = document.getElementById('bd-bar-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  const bar = st.bares.find(b=>svgP.x>=b.x && svgP.x<=b.x+b.w);
+  const highlight = document.getElementById('bd-bar-highlight');
+  const tip = document.getElementById('bd-bar-tooltip');
+  const wrap = document.getElementById('bd-bar-wrap');
+  if(!bar){ _bdBarHoverOut(); return; }
+  if(highlight){ highlight.setAttribute('x', bar.x); highlight.setAttribute('width', bar.w); highlight.style.opacity = .06; }
+  if(tip && wrap){
+    tip.innerHTML = `<div style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:2px;background:${bar.color};flex-shrink:0;"></span><span style="color:var(--txt2);">${esc(bar.label)}</span><b style="color:var(--txt);margin-left:4px;">${bar.count}</b></div>`;
+    tip.style.display = 'block';
+    const topPt = svg.createSVGPoint(); topPt.x = bar.x+bar.w/2; topPt.y = 0;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 100;
+    let left = (screenTop.x - wrapRect.left) - tipW/2;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _bdBarHoverOut(){
+  const highlight = document.getElementById('bd-bar-highlight'); if(highlight) highlight.style.opacity = 0;
+  const tip = document.getElementById('bd-bar-tooltip'); if(tip) tip.style.display = 'none';
 }
 // Submarca/Canal de venda quebrado por coluna (pedido direto do usuário,
 // 2026-09-11) — tabela em vez de barra empilhada: com até 14 valores de
