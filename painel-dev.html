@@ -2846,7 +2846,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.52 · painel-dev</div>
+<div class="version">v3.53 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7638,13 +7638,16 @@ async function carregarPcalAgendasGlobais(){
   }));
 
   // Salva o resultado processado no Firebase — todo mundo lê daqui, sem token próprio
-  // Deduplica por título+data — algumas agendas públicas do Google (ex: feriados nacionais)
-  // retornam o mesmo feriado mais de uma vez com IDs internos diferentes. Sem isso, duplicava
-  // visualmente no calendário mesmo vindo de uma única chamada à API.
+  // Deduplica por calendário+título+data — algumas agendas públicas do Google (ex: feriados
+  // nacionais) retornam o mesmo feriado mais de uma vez com IDs internos diferentes DENTRO da
+  // MESMA agenda. Sem incluir _calId na chave, dois eventos de agendas DIFERENTES com título
+  // genérico igual na mesma data (ex.: "Reunião") colidiam e um sumia do resultado —
+  // /monitorarbugs 2026-09-18 (mesma causa raiz corrigida em kanban-dev.html
+  // _fetchAndCacheGcalForSquad()/_mergeGcalSources()).
   const vistos = new Set();
   const todosEventosDedup = todosEventos.filter(ev=>{
     const _normStr2 = s=>(s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
-    const chave = (ev.start||'').split('T')[0]+'|'+_normStr2(ev.title);
+    const chave = (ev._calId||'')+'|'+(ev.start||'').split('T')[0]+'|'+_normStr2(ev.title);
     if(vistos.has(chave)) return false;
     vistos.add(chave);
     return true;

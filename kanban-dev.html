@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.703-dev</div>
+<div class="version">v8.30.704-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26725,7 +26725,7 @@ function initSuperChildren(card){
   const wrap=document.getElementById('m-super-attach-wrap');
   if(wrap) wrap.style.display='';
   editingSuperChildren = card ? (card.childCardIds||[]).map(id=>{
-    const found = cards.find(c=>c.id===id);
+    const found = cards.find(c=>c.id===id&&!c.archived);
     return found ? {id:found.id, title:found.title, col:found.col} : null;
   }).filter(Boolean) : [];
   // Calculado ANTES de renderSuperChildrenList()/_crvUpdateFichaSecVisibility()
@@ -29362,8 +29362,14 @@ function loadCalEvents(){
     combinados.forEach(e => porId.set(e.id, e));
     const vistos = new Set();
     const _norm = s => (s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    // Achado real (/monitorarbugs 2026-09-18, mesma causa raiz de
+    // _fetchAndCacheGcalForSquad(), ver coment\u00e1rio l\u00e1): chave sem _calId
+    // cruzava agendas DIFERENTES (local do squad \u00d7 global do painel) \u2014 pior
+    // aqui, porque abaixo o resultado \u00e9 REGRAVADO no cache do Firebase
+    // (localLimpo), ent\u00e3o um evento diferente que perdesse a colis\u00e3o sa\u00eda
+    // apagado de vez do cache persistido, n\u00e3o s\u00f3 escondido da tela.
     const final = [...porId.values()].filter(ev=>{
-      const chave = (ev.start||'').split('T')[0]+'|'+_norm(ev.title);
+      const chave = (ev._calId||'')+'|'+(ev.start||'').split('T')[0]+'|'+_norm(ev.title);
       if(vistos.has(chave)) return false;
       vistos.add(chave);
       return true;
@@ -29760,11 +29766,17 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
     }
   }));
 
-  // Deduplica por título+data — algumas agendas públicas (ex: feriados nacionais) retornam
-  // o mesmo evento mais de uma vez com IDs internos diferentes.
+  // Deduplica por agenda+título+data — algumas agendas públicas (ex: feriados
+  // nacionais) retornam o mesmo evento mais de uma vez com IDs internos
+  // diferentes, DENTRO da mesma agenda. Achado real (/monitorarbugs
+  // 2026-09-18): a chave não incluía a agenda (_calId) — duas pessoas com
+  // eventos genuinamente diferentes ("Reunião", "Daily") no mesmo dia, em
+  // calendários DIFERENTES que o squad conectou, colidiam e um sumia em
+  // silêncio. Escopar por agenda preserva a intenção original (só dedupe
+  // dentro da MESMA fonte) sem cruzar calendários diferentes.
   const _vistosCal = new Set();
   const todosEventosGoogleDedup = todosEventosGoogle.filter(ev=>{
-    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    const chave = ev._calId+'|'+ev.start+'|'+ev.title.trim().toLowerCase();
     if(_vistosCal.has(chave)) return false;
     _vistosCal.add(chave);
     return true;
