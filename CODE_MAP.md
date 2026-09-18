@@ -19,10 +19,13 @@ City"). Essa divergência de favicon é **permanente e intencional**, não
 "dev com trabalho não promovido" — os dois ambientes devem manter ícones
 diferentes pra sempre, não vai ser promovida como diff. Fora essa
 divergência permanente, os dois arquivos ficam byte-idênticos só
-LOGO DEPOIS de uma promoção (última confirmada: v8.30.661, ver
-`CHANGELOG.md`) — neste exato momento (retrato deste rodapé) `kanban-dev.html`
-já tem um lote novo de trabalho ainda não promovido (Intake vincular/
-guardar, Arquivados abrir card), então os números abaixo são de
+LOGO DEPOIS de uma promoção (última confirmada: v8.30.686, hotfix direto
+em prod por gravidade — `handleDrop()` corrompendo métricas de fluxo em
+silêncio — ver `CHANGELOG.md`) — neste exato momento (retrato deste
+rodapé) `kanban-dev.html` já tem um lote grande de trabalho ainda não
+promovido (Automações, Tags, Controle de Criativos, Supercard,
+`/atualizarhelpcontent`, entre outros — ~22 versões de dev acumuladas,
+v8.30.687-dev a v8.30.708-dev), então os números abaixo são de
 `kanban-dev.html` (o superset), não de `kanban.html`. Isso é o estado
 normal na maior parte do tempo, não exceção — se o `diff` entre os dois
 mostrar mais do que versão/`VERSION_KEY`/favicon, refaça o grep no
@@ -58,10 +61,10 @@ confiar num número aqui se for mexer em `painel.html` prod).
   antigo em `autoRegistrar()` (ler `usuarios_publicos`, computar
   localmente, escrever) tinha uma janela de corrida real entre 2 pessoas
   se cadastrando quase ao mesmo tempo com o mesmo par de iniciais.
-  `editarInicial()` (L24019, troca manual de sigla) também usa a mesma
+  `editarInicial()` (L24197, troca manual de sigla) também usa a mesma
   transação antes de gravar, e libera a sigla antiga no registro (só se
   o registro ainda apontar pra este uid — sigla pode ser compartilhada).
-  `confirmarInscricao()` (~L10976, tela "Confirmar inscrição" — pessoa
+  `confirmarInscricao()` (L10980, tela "Confirmar inscrição" — pessoa
   edita a própria sigla num campo de texto antes de confirmar) ganhou o
   mesmo tratamento numa rodada seguinte de `/monitorarbugs` no mesmo dia
   — era a 3ª mutação de `init` do arquivo e tinha ficado de fora do fix
@@ -376,15 +379,15 @@ detalhe dos 4 call sites.
   qualquer call site, presente ou futuro, que tente persistir esse
   objeto por engano — não precisa (e não deve) ser reproduzido call
   site por call site.
-- **`_stripUndefinedDeep(val)`** — L18822 — rede de segurança central
+- **`_stripUndefinedDeep(val)`** — L18878 — rede de segurança central
   aplicada nas 3 primitivas acima (mais `_notasUpdate()`) antes de todo
   `window._update()`: remove recursivamente campos `undefined` (achado
   2026-09-16) E, desde `/monitorarbugs` 2026-09-17, chaves inválidas de
   Realtime Database (vazia ou com `.#$/[]`) de qualquer objeto aninhado
   — Firebase rejeita a escrita MULTI-PATH INTEIRA se qualquer um dos
   dois aparecer em qualquer lugar da árvore, não só no campo tocado.
-  Causa raiz do achado de chave inválida: `backfillFlow()` (~L8557) e
-  `recordMove()` (~L8446) usam `card.col`/`toCol` como chave de
+  Causa raiz do achado de chave inválida: `backfillFlow()` (L8559) e
+  `recordMove()` (L8451) usam `card.col`/`toCol` como chave de
   `flow.enteredAt` — as duas agora só gravam quando o valor não é vazio
   (card criado fora do fluxo normal, sem coluna, é o único jeito
   observado de chegar nesse estado). `_stripUndefinedDeep()` continua
@@ -497,7 +500,27 @@ detalhe dos 4 call sites.
   1ª vez que a pessoa usa cada tema (guard em `localStorage`,
   `mare_theme_seen_{tema}`), consultável via console. Chamada em
   `toggleTheme()`/`toggleViceCity()` + listener de `auth-change` (cobre
-  quem nunca troca de tema).
+  quem nunca troca de tema); exclui `'blackfriday'` explicitamente
+  (`/monitorarbugs` 2026-09-16 — `toggleBlackFriday()` nunca chama essa
+  função de propósito, "é teste, sem sentido contar métrica", mas o
+  listener genérico de `auth-change` gravava mesmo assim se o evento
+  refirasse com a pessoa no tema BF).
+- `_isViceCityEasterEggAtivo()` — L33213 — `vice` só conta como easter
+  egg de verdade quando o Tema automático está DESLIGADO (`/monitorarbugs`
+  2026-09-14, técnica 3): a banda 12h-18h do automático TAMBÉM deixa
+  `_currentTheme()==='vice'`, então os handlers do botão de tema
+  (`onThemeBtnClick()`/`onThemeBtnDblClick()`/`_mobileThemeRowClick()`)
+  usavam só isso pra decidir "sai do easter egg" — clicar no botão
+  durante a banda automática da tarde desligava o automático sem
+  ninguém pedir.
+- **🔥 Black Friday** (tema experimental, `toggleBlackFriday()` — L33145 /
+  `exitBlackFriday()` — L33156, botão direito no botão de tema —
+  `_themeBtnRightClick()` — L33168): 5º "tema" — não é opção visível
+  nem tem paleta séria própria, é uma decoração temporária de campanha
+  (fita diagonal "OFERTA", contador regressivo — `_bfUpdateCountdown()`
+  — L33178 — mensagem do banner configurável, "peixinhos viram dinheiro"
+  no fundo). `_isBlackFridayAtivo()` — L33144 — helper de estado, mesmo
+  padrão de `_currentTheme()==='vice'`.
 
 ### Arquivados / arquivamento automático
 - `maybeAutoArchiveOldCards()` — L13019 — roda a regra opcional de
@@ -1321,25 +1344,54 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   não tem entrada própria aqui.)
 
 ### Supercards / Ficha Técnica
-- `_crvAutoTitle()` — L15418 — título automático do filho a partir da Ficha Técnica
-- `searchSuperChildren()` — L25468 — busca de cards existentes ao criar um filho
-- `_mergeModeloEmCardObj()` — L29043
-- `_applyFanoutTemplate()` — L28997 — cria os filhos de uma receita de fan-out
+- `_crvAutoTitle()` — L16366 — título automático do filho a partir da Ficha Técnica
+- `searchSuperChildren()` — L26972 — busca de cards existentes ao criar um filho
+- `_mergeModeloEmCardObj()` — L30737
+- `_applyFanoutTemplate()` — L30691 — cria os filhos de uma receita de fan-out;
+  `applyFanoutToCurrentCard()` — L30798 — botão manual "🧩 Aplicar receita",
+  recalcula `editingSuperChildren`/`editingSuperArchivedIds` via
+  `_splitSuperChildIds()` depois de aplicar
 - Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
-  (global, L21647) + `initSuperChildren()` — L25224 — calcula se o card
-  aberto já seria uma "versão" (teto real do 2º nível)
-- `_crvOwnSummary()` — L25339 — resumo dos campos próprios do criativo,
+  (global, L26729) + `initSuperChildren()` — L26749 — calcula se o card
+  aberto já seria uma "versão" (teto real do 2º nível). `editingSuperParent`
+  (busca reversa "quem é meu pai?", dentro da mesma função) filtra pai
+  arquivado desde 2026-09-18 (`/monitorarbugs` — sem isso, um filho ainda
+  ativo de uma campanha arquivada ficava "preso" a ela: Ficha Técnica
+  própria escondida, mas já livre pra `searchSuperChildren()` adotar em
+  outro supercard — contradição entre os 2 pontos, corrigida com o mesmo
+  filtro `!c.archived` que o cálculo do avô, logo abaixo na função, já
+  usava).
+- `_crvOwnSummary()` — L26843 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- `_checkSupercardAutoComplete(childCard, ancestry)` — L29610 — conclui o
+- **`_splitSuperChildIds(childCardIds)` — L26710** (2026-09-18) — separa
+  `card.childCardIds` em `{ativos:[{id,title,col}], arquivadosIds:[id]}`;
+  usado por `initSuperChildren()` e por `applyFanoutToCurrentCard()`.
+  `editingSuperChildren` (global, L26696) guarda só os ativos — é o que
+  o modal exibe/conta ("X/Y concluído(s)"); `editingSuperArchivedIds`
+  (global, L26705) guarda os arquivados à parte, existe só pra não se
+  perderem: `persistSuperChildren(histWhat)` — L27084 — grava
+  `childCardIds` de volta sempre como `[...ativos, ...arquivadosIds]`
+  juntos, senão salvar o card depois de abrir o modal desvincularia os
+  arquivados de verdade do Firebase (achado ao filtrar só a exibição na
+  1ª tentativa do fix). `histWhat` opcional grava no 📜 Histórico do PAI
+  antes de salvar — chamado por `addSuperChild()` (L27005, "vinculou o
+  card filho..."), `removeSuperChild()` (L27015, "desvinculou...") e
+  `quickCreateSuperChild()` (L27053, "vinculou... (novo)"); `_histTipo()`
+  (~L8745) classifica essas 3 frases + "aplicou fan-out..." (já existente)
+  com ícone próprio 🧩 (`CARD_HIST_TIPOS.supercard`).
+- `_checkSupercardAutoComplete(childCard, ancestry)` — L31390 — conclui o
   supercard sozinho quando todos os filhos ativos chegam numa coluna de
   fim; cascateia filho→pai→avô recursivamente. `_isColCancelLike()` —
-  L27696, logo acima — se TODOS os filhos ativos terminaram cancelados,
+  L31376, logo acima — se TODOS os filhos ativos terminaram cancelados,
   o pai NÃO conclui sozinho, fica onde está. `ancestry` (2026-09-02) —
   guard contra ciclo corrompido em `childCardIds`; Set copiado por
   chamada (não compartilhado entre irmãos, ao contrário do `visited` de
   `_duplicarComFilhos()` abaixo) — um Set global quebraria a cascata
-  legítima de um card com 2 pais/avô compartilhado.
-- `_duplicarComFilhos()` — L14662 — duplicar um supercard com opção de
+  legítima de um card com 2 pais/avô compartilhado. Hook único:
+  `runAutoRules('move', card.id, ...)` chama ela direto (~L31517, dentro
+  de `runAutoRules()`) — herda cobertura dos 9 call sites que já disparam
+  `runAutoRules('move',...)`, não precisa de chamada própria em cada um.
+- `_duplicarComFilhos()` — L15610 — duplicar um supercard com opção de
   duplicar os filhos junto (checkbox opt-in no modal de duplicar, só
   aparece se `_cardIsSupercard()`). Recursivo (cobre netos, 3 níveis
   campanha→criativo→versão), religa `childCardIds` pros ids NOVOS, filhos
@@ -1430,6 +1482,37 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   de @; entradas sintéticas (`init` sentinela, nunca um membro real):
   `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
   (só em squads com Cloud Function ouvindo).
+
+### 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
+Arquitetura em 2 camadas independentes, sem token OAuth próprio pro squad
+comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
+- **Squad ("local")**: `addCalendarToList()` — L29573 — grava a agenda
+  direto em `FB+'/config/calendars'` (client-side), depois enfileira uma
+  aprovação via `_queueGcalRequest()` — L29598 (`gcal_pending`, ver
+  `NOTIF_ICONS`/`openNotif()` na seção Notificações acima) — porque só
+  um ADM tem token OAuth válido pra buscar de verdade.
+  `processGcalQueueForAdmin()` — L29821 — ADM aprova, dispara
+  `_fetchAndCacheGcalForSquad()` — L29722 — fetch real na API do Google,
+  escreve `gcal_cache` do squad.
+- **Painel ("global")**: sistema PARALELO e independente em
+  `painel-dev.html`, com seu próprio loop de fetch (~L7580-7660) e
+  escrita em `kanban/painel/config/gcal_cache_dev` — cada squad pode ter
+  calendários próprios ("locais") além dos globais do painel.
+- **Merge pra exibição**: `_mergeGcalSources()` — L29378 (função aninhada,
+  não top-level) — combina os eventos "locais" do squad com os "globais"
+  do painel pra desenhar o calendário do kanban. Mais sensível que uma
+  função de exibição normal: além de filtrar, ela REGRAVA o resultado
+  filtrado de volta no `gcal_cache` LOCAL do squad (`window._set(...)`)
+  — não é só uma view, é a fonte que persiste o cache local.
+- **Dedup de eventos** (`/monitorarbugs` 2026-09-18, 3 sites: os 2 acima
+  + o loop do painel): agendas públicas do Google (ex.: feriados
+  nacionais) às vezes retornam o MESMO evento 2x com IDs internos
+  diferentes — os 3 sites deduplicam por `_calId+data+título normalizado`.
+  Achado real: a chave ORIGINAL (sem `_calId`) colidia eventos
+  DIFERENTES de calendários DIFERENTES com título genérico igual na
+  mesma data (ex.: "Reunião") — em `_mergeGcalSources()` isso é mais
+  grave que um bug de exibição, porque apaga o evento de verdade do
+  cache persistido, não só esconde de uma renderização.
 
 ### Notas
 - `toggleNotas()` — L17799, `setNotasScope()` — L16881
@@ -1576,12 +1659,12 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   mais robusta do ⏱️ tempo atrasado/bloqueado (ver seção própria acima)
   ficava sem cobertura. Corrigido: `recordMove(card, colId)` adicionado
   antes de mutar `card.col`, mesmo padrão de `_doBulkMove()`.
-- Menu de contexto do card (`showCtxMenu()` — L30052) — 2026-09-01,
+- Menu de contexto do card (`showCtxMenu()` — L31952) — 2026-09-01,
   pedido direto ("mudar prioridade e mudar coluna... deveria abrir a
   lista pro lado pra n ficar mt grande", comparando com o submenu do
   Windows Explorer): "Mover para" e "Prioridade" viraram flyouts em vez
   de listas soltas ocupando a metade do menu. `toggleCtxSubmenu(ev,key)`
-  — L28147 — abre/fecha `#ctx-submenu-fly`, elemento ÚNICO e
+  — L32106 — abre/fecha `#ctx-submenu-fly`, elemento ÚNICO e
   INDEPENDENTE (irmão de `#ctx-menu`, não filho — `.ctx-menu` tem
   `overflow-x:hidden`, que corta um filho `position:absolute` que vaza
   da caixa do pai, mesmo com z-index maior; achado só ao tirar
@@ -1591,16 +1674,25 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   `_ctxSubmenus.prioridade` (preenchido por `showCtxMenu()`). CSS
   reaproveita `.ctx-sub`/`.ctx-submenu`, que já existiam no arquivo mas
   nunca tinham sido usadas em HTML/JS nenhum — sobra de uma feature
-  começada e abandonada antes. `hideCtxMenu()` — L28983 — também fecha
-  o flyout agora. `ctxCopyLink(cardId)` — L28284 — item novo "🔗 Copiar
+  começada e abandonada antes. `hideCtxMenu()` — L32151 — também fecha
+  o flyout agora. `ctxCopyLink(cardId)` — L32341 — item novo "🔗 Copiar
   link do card", mesma URL de `shareCardLink()` (botão do modal) mas sem
   precisar abrir o card primeiro — `_cardShareUrl()` ganhou um `cardId`
   opcional (antes só funcionava com `editingId`, o card do modal
   aberto).
-- `_doBulkBlockCol()`/`_doBulkUnblockCol(colId)` — L7594/L7616 —
+  **Submenus abrem no hover** (2026-09-15, `_ctxSubmenuHoverEnter()` —
+  L32131 / `_ctxOpenSubmenuAt()` — L32089): passar o mouse por cima de
+  "Mover para"/"Prioridade" já abre o flyout depois de 120ms
+  (`_ctxHoverTimer`, L32130), sem precisar clicar. `/monitorarbugs` no
+  mesmo lote (PR #925): nem `hideCtxMenu()` nem `showCtxMenu()`
+  cancelavam esse timer — fechar o menu ou trocar de card com o timer
+  ainda pendente fazia o flyout reabrir sozinho ~120ms depois, grudado
+  no canto (trigger já desanexado), apontando pro card errado. Fix:
+  `clearTimeout(_ctxHoverTimer)` nas duas funções.
+- `_doBulkBlockCol()`/`_doBulkUnblockCol(colId)` — L7802/L7824 —
   versões em massa do mesmo par; `_doBulkBlockCol()` ganhou o mesmo
   guard de existência da coluna
-- `delColumn(i)` — L22478 — editor de colunas em ⚙ Configurações. Coluna
+- `delColumn(i)` — L23923 — editor de colunas em ⚙ Configurações. Coluna
   fixa `id==='blocker'` ("Impedimentos") só bloqueia a exclusão enquanto
   ainda tem cards nela (2026-09-10, antes era bloqueio incondicional —
   relaxado depois que `saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`
@@ -1788,17 +1880,17 @@ derivado do card mudando).
   se `x` já estiver salvo como string, não soma; confirmado o mecanismo
   exato via diagnóstico dos dados crus do card. Blindado nos 6 pontos
   de escrita E nas 3 funções de leitura abaixo). `_duplicarCardObj()`
-  (~L15471, "🧬 Duplicar card") também passou a RESETAR esses 5 campos +
+  (L15519, "🧬 Duplicar card") também passou a RESETAR esses 5 campos +
   `flow`/`_lastFlowCol` pra uma cópia nova (mesmo motivo de
   `childCardIds`/`pinned`, já resetados ali) — antes herdava tempo
   acumulado (e `flow.enteredAt` desalinhado de `createdAt`) do card
   original.
-- `_settleBlockedTag(card, wasBlocked)` — L31506 — fecha/abre o
+- `_settleBlockedTag(card, wasBlocked)` — L31621 — fecha/abre o
   episódio em modo TAG, chamado nos pontos que já fazem esse toggle de
-  propósito: `_doBulkBlockTag()`/`_doBulkUnblockTag()` (~L7469/7486),
-  `scheduleAutoSave()` (par `_prevBlocker`, ~L12303) e `saveCard()`
-  manual (`_prevBlockerSave`, ~L13834).
-- `recordMove()` (L8446, ver comentário grande no topo da função sobre
+  propósito: `_doBulkBlockTag()`/`_doBulkUnblockTag()` (L7839/7856),
+  `scheduleAutoSave()` (par `_prevBlocker`) e `saveCard()` manual
+  (`_prevBlockerSave`).
+- `recordMove()` (L8451, ver comentário grande no topo da função sobre
   `from` ser mais confiável que reler `card.col`) — trata modo COLUNA
   (transição pra/de `'blocker'`) E fecha atrasado quando o destino é
   coluna de conclusão, usando `due`/`from`/`toCol` que a função já
@@ -1810,31 +1902,34 @@ derivado do card mudando).
   dela) é o mecanismo que `_duplicarCardObj()` reaproveita ao apagar
   `novo.flow` — inicializa um flow de verdade do zero, mesmo caminho de
   um card genuinamente novo.
-- `_settleCardTimeTrackingLazy(card)` — L31538 — rede de segurança
-  genérica, chamada em `fbSaveCard()` (~L8607) e no loop por card de
-  `fbSaveAll()` (~L8390, só nos `touchedIds`). Idempotente.
-- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L31559/
-  31567/15439 — total "efetivo até agora" (fechado + episódio aberto).
-- `_renderCardTimeInfo(c)` — L31643 — mostra o total no modal do card
+- `_settleCardTimeTrackingLazy(card)` — L31653 — rede de segurança
+  genérica, chamada em `fbSaveCard()` e no loop por card de
+  `fbSaveAll()` (só nos `touchedIds`). Idempotente.
+- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L31674/
+  31682/15487 — total "efetivo até agora" (fechado + episódio aberto).
+- `_renderCardTimeInfo(c)` — L31758 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (~L13724).
-- Dashboards: `renderBoardDataInsights()` (L19224, seção "Tempo em
-  atraso/bloqueado") e `renderCriativosDashboard()` (L17256, mesma
+  bloco de Impedimento), chamado no `openCard()` (L14578).
+- Dashboards: `renderBoardDataInsights()` (L20370, seção "Tempo em
+  atraso/bloqueado") e `renderCriativosDashboard()` (L17338, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
   contrário do resto dessas telas), de propósito — é o ponto principal
   do pedido ("mesmo que depois ele seja concluído"). `renderCriativosDashboard()`
   ganhou 2 blocos novos (2026-09-17, pedido direto do usuário): ⏱️ Tempo
-  médio de produção por canal/plataforma/formato (`avgTempoBy()`, reusa
-  `_cardTempos()`, só pedidos concluídos entram na média — `_crvBarRowTime()`
-  desenha a barra) e motivo do bloqueio (`card.blockerReason`) na lista
-  "Mais tempo bloqueado" (`crvBlockRow()`, silencioso quando não
-  preenchido). **`card.lastBlockerReason`** (`/monitorarbugs` 2026-09-17):
-  em modo TAG, `blockerReason` é zerado assim que o card é desbloqueado
-  (`_doBulkUnblockTag()` L7856, auto-unblock em `recordMove()` ~L8500,
-  `removeBlockerTag()` L31725) — sem guardar em outro lugar, todo card já
-  resolvido perdia o motivo no dashboard, mesmo preenchido. Cada um dos 3
-  pontos copia o texto pra `lastBlockerReason` antes de limpar
-  `blockerReason`; `crvBlockRow()` lê `blockerReason||lastBlockerReason`.
+  médio de produção por canal/plataforma/formato (`avgTempoBy()` — L17439,
+  reusa `_cardTempos()`, só pedidos concluídos entram na média —
+  `_crvBarRowTime()` — L17243 — desenha a barra) e motivo do bloqueio
+  (`card.blockerReason`) na lista "Mais tempo bloqueado" (`crvBlockRow()`
+  — L17397, silencioso quando não preenchido). **`card.lastBlockerReason`**
+  (`/monitorarbugs` 2026-09-17): em modo TAG, `blockerReason` é zerado
+  assim que o card é desbloqueado (`_doBulkUnblockTag()` L7856,
+  auto-unblock em `recordMove()`, `removeBlockerTag()` L31833) — sem
+  guardar em outro lugar, todo card já resolvido perdia o motivo no
+  dashboard, mesmo preenchido. Cada um dos 3 pontos copia o texto pra
+  `lastBlockerReason` antes de limpar `blockerReason`; `crvBlockRow()` lê
+  `blockerReason||lastBlockerReason`. Só o Controle de Criativos mostra
+  esse motivo — `renderBoardDataInsights()` usa um `cardRow()` genérico
+  sem esse detalhe.
   Em modo COLUNA não precisa (nada limpa `blockerReason` lá, ver
   comentário em `saveCard()` ~L15199). `_duplicarCardObj()` (~L15471)
   também apaga `lastBlockerReason` da cópia, mesmo motivo de
@@ -2829,34 +2924,34 @@ detalhe aberto — ver nota abaixo).
   mesmo gap do `feedback` — irmão quase idêntico `okr_reuniao` já tinha
   push, o genérico não)) — L23
 - `sendPushOnNotification` — L25
-- `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
-- `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
-- `intakeSubmit` — L168 → `intake/submit.js`
-- `weeklyBackup` — L173 → `backup/weeklyBackup.js`
-- `okrDailyScan` — L180 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
-- `okrWeeklySnapshot` — L187 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
-- `okrAgenteChat` — L195 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
-- `agenteAgilMencao` — L209 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
-- `agenteAgilMencaoDados` — L220 → mesma fábrica, squad `dados`, ativado em
+- `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L127 → `agente-agil/http.js`
+- `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L131–L170 → `spotify/*.js`
+- `intakeSubmit` — L176 → `intake/submit.js`
+- `weeklyBackup` — L181 → `backup/weeklyBackup.js`
+- `okrDailyScan` — L188 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
+- `okrWeeklySnapshot` — L195 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
+- `okrAgenteChat` — L203 → `okr/agenteChat.js` (2026-09-05, novo — chat dedicado com o Agente Ágil, `DRY_RUN_OKR_CHAT=false` desde o 1º deploy, ver seção `okr/` abaixo)
+- `agenteAgilMencao` — L217 → `agente-agil-orquestrador/mentionTrigger.js` (orquestrador novo, gatilho por @menção, squad `dev`)
+- `agenteAgilMencaoDados` — L228 → mesma fábrica, squad `dados`, ativado em
   escrita real 2026-08-24 (ver seção abaixo)
-- `agenteAgilDueOverdueScan` — L239 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
+- `agenteAgilDueOverdueScan` — L247 → `agente-agil-orquestrador/dueOverdueTrigger.js`,
   scan diário (`onSchedule`), item 5 do roadmap — squads `dev` **e**
   `dados` (dados adicionado 2026-08-25), cobre `due_overdue` **e**
   `due_today` (nome ficou de v1, só due_overdue/squad dev — ver seção
   abaixo)
-- `agenteAgilResumoMeuDia` — L250 → `agente-agil-orquestrador/resumoMeuDia.js`,
+- `agenteAgilResumoMeuDia` — L258 → `agente-agil-orquestrador/resumoMeuDia.js`,
   `onRequest` (não gatilho por evento) — "🤖 Resumo do Agente Ágil"
   dentro de "Meu Dia", 2026-08-25, ver seção abaixo
-- `agenteAgilIntake` — L267 → `agente-agil-orquestrador/intakeTrigger.js`,
+- `agenteAgilIntake` — L275 → `agente-agil-orquestrador/intakeTrigger.js`,
   squad `dev`, escrita real desde 2026-08-27 (rodou em modo sombra do 1º
   deploy até essa decisão) — 2º gatilho automático do orquestrador, escuta
   `agente_intake_pending/{id}` (ver `agente-agil/http.js` abaixo pro
   porquê de existir)
-- `agenteAgilAnaliseDados` — L280 → `agente-agil-orquestrador/analiseDados.js`,
+- `agenteAgilAnaliseDados` — L288 → `agente-agil-orquestrador/analiseDados.js`,
   `onRequest` (não gatilho por evento) — "🤖 Ponto de vista do Agente
   Ágil" dentro dos painéis "Dados do Board"/"Controle de Criativos",
   2026-09-01, ver seção abaixo
-- `agenteAgilAnalisePO` — L293 → `agente-agil-orquestrador/analisePO.js`,
+- `agenteAgilAnalisePO` — L301 → `agente-agil-orquestrador/analisePO.js`,
   `onRequest` (não gatilho por evento) — "🤖 Análise do board (PO)"
   dentro de "Meu Dia", 2026-09-01, ver seção abaixo
 
@@ -3272,4 +3367,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `ec66aa9` (2026-09-15).*
+*Retrato do commit `cc04784` (2026-09-18).*

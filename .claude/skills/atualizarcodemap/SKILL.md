@@ -310,6 +310,34 @@ revalidadas — seções novas — achados incidentais notáveis.
   revalidado linha a linha (fora do escopo de hoje, criado ad-hoc em
   rodada anterior).
 
+- **2026-09-18 (11ª)**: `ec66aa9`→`cc04784`, 3 dias depois (42 commits
+  em `kanban-dev.html` desde a última rodada). kanban/kanban-dev seguem
+  divergindo de verdade (864 linhas de diff — dev com ~22 versões
+  acumuladas, v8.30.687-dev a v8.30.708-dev, favicon incluído);
+  cabeçalho atualizado com a última promoção real (v8.30.686, hotfix
+  direto por gravidade) em vez da referência velha (v8.30.661).
+  `painel.html`/`painel-dev.html` seguem divergindo (814 linhas).
+  Escopo deliberadamente dirigido pelo `git log` do período, não bulk
+  completo (mesma lição das rodadas 9/10). **Seção "Supercards / Ficha
+  Técnica" totalmente revalidada** (era a mais tocada pela sessão) —
+  10 âncoras corrigidas (drift de +1500 linhas em algumas, ex.
+  `initSuperChildren()` L25224→L26749), 1 helper novo indexado
+  (`_splitSuperChildIds()`), e o fix de `editingSuperParent` não
+  filtrar pai arquivado documentado. **2 seções novas**: 📅 Calendários
+  (Google Calendar) — arquitetura de 2 camadas (squad "local" + painel
+  "global") + merge + dedup, nunca tinha seção própria apesar de ~300
+  linhas de lógica; 🔥 Black Friday (tema experimental, botão direito
+  no tema) — 10 commits desde que nasceu, zero menção no mapa até
+  agora. Seção "Menu de contexto do card" ganhou o hover dos submenus
+  (2026-09-15, não documentado). Seção "⏱ Tempo em atraso/bloqueado"
+  revalidada (drift de +1100 linhas em `renderBoardDataInsights()`).
+  `functions/index.js` — registro de exports: 21/21, TODOS com drift
+  uniforme de +8 linhas (alguma edição pequena no topo do arquivo) —
+  corrigido em lote. **Lição pra próxima vez**: um drift UNIFORME (mesmo
+  offset em todas as âncoras de uma lista) é mais rápido de corrigir em
+  lote que revalidar cada uma isoladamente — vale checar se o drift é
+  uniforme antes de re-grepar item por item.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir
