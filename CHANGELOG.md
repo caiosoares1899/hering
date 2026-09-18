@@ -3503,6 +3503,21 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.710-dev — 2026-09-18 — Novo: hover no gráfico "📈 Tendência — últimos 14 dias" (mesmo pedido da rodada anterior)
+
+Extensão do fix anterior (hover em "Cards ativos por coluna",
+v8.30.709-dev) — usuário pediu pra aplicar o mesmo tratamento no outro
+gráfico do mesmo painel (📊 Dados do Board → Visão Geral).
+
+Aqui o eixo é por DIA (índice), não por barra — mesmo espírito do
+crosshair já usado no CFD (`_cfdHover()`): passar o mouse acha o dia
+mais próximo, mostra uma linha vertical + 2 pontos (WIP/Concluídos
+daquele dia) + tooltip com a data e os 2 valores.
+`_bdTrendHover(evt)`/`_bdTrendHoverOut()`, estado em
+`window._bdTrendChartState`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.709-dev — 2026-09-18 — Novo: hover no gráfico "📊 Cards ativos por coluna" mostra o rótulo inteiro + valor
 
 Pedido direto do usuário (print do gráfico em 📊 Dados do Board → Visão
