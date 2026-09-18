@@ -1600,6 +1600,51 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   valendo a pena mesmo no mesmo dia do fix original — aqui achou um 3º
   ponto que nem o autor do fix original tinha listado.
 
+- **2026-09-18, `painel.html` — 🐛 Monitor não mostrava 5 squads
+  (relato direto do usuário, print: só 3 cards de squad na aba
+  Monitor)**: investigação real, mas **inconclusiva** — sem fix
+  aplicado, registrado aqui pra não repetir o caminho de diagnóstico do
+  zero se voltar a acontecer. `squads_meta` tinha 8 squads (3 nativos +
+  `app`/`mktplace`/`outlet`/`outlet-crm`/`site`), mas `SQUADS` (array em
+  memória) só tinha os 3 nativos — `_errLogSquadsAttached` confirmava
+  que `loadErrorLogs()` nunca tinha rodado pros 5 extras. Descartado:
+  bug de lógica (`loadExtraSquads()`/`loadErrorLogs()` lidos de ponta a
+  ponta, código idêntico ao já corrigido em PR #931/#933, sem
+  regressão); label ausente em `squads_meta` (todos os 5 tinham `label`
+  válido); exceção no `forEach` (isolado com try/catch por entrada, sem
+  erro). Chamar `loadExtraSquads()` manualmente no console, na mesma
+  aba, funcionou na hora (8/8 squads, com contagens reais — `outlet-crm`
+  sozinho tinha 183 erros invisíveis até então). Hipótese mais forte,
+  NÃO confirmada com certeza: corrida entre o evento `fb-ready`
+  (dispara assim que o SDK carrega, independente de autenticação) e a
+  restauração da sessão do Firebase Auth — `kanban/squads_meta` exige
+  `auth != null` pra ler, e se o primeiro `onValue()` for registrado
+  antes do token de auth estar pronto, a leitura pode ser negada sem
+  retry automático. Não reproduzido de novo no mesmo dia (F5 sozinho
+  resolveu, sem erro nenhum no console) — evidência insuficiente pra
+  aplicar um fix (`_onRealAuthChange()`, já usado em
+  `checkOverdueGlobalBackup()` no mesmo arquivo, seria o candidato
+  óbvio se reconfirmado). Se voltar a acontecer, capturar o console
+  ANTES do F5 é o próximo passo, não repetir o diagnóstico desde o
+  início.
+
+- **2026-09-18, `database.rules.json` — os outros 10 nodes do fix de
+  segurança de 2026-09-17 (continuação direta do fix urgente do dia:
+  login de freelancer travado pelos 4 nodes já corrigidos)**: técnica 1
+  aplicada aos 10 nodes RESTANTES do mesmo PR (#983) — nenhum trava
+  login (todos degradam graciosamente: `onValue`/`get()` com
+  `.catch(()=>{})` ou sem callback de erro), mas `campanhas`/
+  `dados_diarios`/`comunicados` alimentam 3 telas (📣 Campanhas, 📊
+  Dados do Board, 📢 Mural) que continuam VISÍVEIS pra qualquer papel
+  — `_applyRoleVisibility()` só controla o FAB de Configurações e o
+  hotline do Agente Ágil, nada esconde essas 3 abas de um `convidado`.
+  Resultado: uma freelancer vê as abas normalmente, mas ficam vazias em
+  silêncio (permissão negada, sem nenhum aviso). Apresentado ao usuário
+  como decisão de produto (não bug claro) — **decisão: deixar como
+  está**, freelancers desta empresa só usam o board pra cards mesmo,
+  não precisam dessas 3 áreas. Não implementado. Revisitar só se um
+  convidado precisar de fato dessas telas no futuro.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
