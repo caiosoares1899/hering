@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.711-dev</div>
+<div class="version">v8.30.712-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11171,13 +11171,24 @@ function _diasUteisEntre(d1, d2){
   }
   return dias;
 }
-function getDue(due, isDone){
+// paused (2026-09-18, /monitorarbugs — relato direto: "pausei um card, mas
+// vi que estava contando os dias ainda") — card pausado com prazo vencido
+// continuava mostrando o selo "⚠ Xd atrasado" contando normalmente,
+// contradizendo a própria promessa do botão ⏸ Pausar ("não quer que isso...
+// apareça como alarme pro resto do board" — já valia pra "card parado"
+// desde 2026-09-14, mas "atrasado" é um conceito diferente que ficou de
+// fora daquela rodada). Enquanto pausado, mostra só a data (neutro, sem
+// alarme) em vez do selo vermelho — mesmo espírito do isDone acima.
+function getDue(due, isDone, paused){
   if(!due) return {cls:'',lbl:''};
   if(isDone) return {cls:'due-done',lbl:'✓ '+new Date(due+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})};
   const d=new Date(due+'T00:00:00'); d.setHours(0,0,0,0);
   const diff=Math.round((d-today)/86400000);
   const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  if(diff<0) return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
+  if(diff<0){
+    if(paused) return {cls:'due-ok',lbl};
+    return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
+  }
   if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
@@ -11185,7 +11196,7 @@ function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.don
 
 function makeCardEl(card){
   const isDone=_isColDone(card.col);
-  const{cls:dc,lbl:dl}=getDue(card.due,isDone);
+  const{cls:dc,lbl:dl}=getDue(card.due,isDone,card.paused);
   const cp=clProg(card.checklist);
   const bex=_cardIsBlocked(card)?'border-color:rgba(255,107,107,.4);':''
   const op=isDone?'opacity:.62;':''
@@ -11906,9 +11917,13 @@ function _timelineCardRow(card, hojeStr){
   // os buckets progressivos (ver renderTimelineView()) um grupo agora cobre
   // VÁRIOS dias (ex.: "Resto da semana"), então o nome do grupo sozinho não
   // basta mais pra saber QUANDO exatamente.
+  // card.paused (2026-09-18, /monitorarbugs — mesmo achado do selo "⚠ Xd
+  // atrasado" no board, ver getDue()): card pausado com prazo vencido não
+  // ganha o "Xd atrasado" em vermelho aqui também, cai no mesmo fallback
+  // de data neutra que um card com prazo futuro já usa.
   let prazoMeta='';
   if(card.due){
-    if(card.due<hojeStr){
+    if(card.due<hojeStr && !card.paused){
       const dias=_diasUteisEntre(new Date(card.due+'T12:00:00'), new Date(hojeStr+'T12:00:00'));
       prazoMeta=` · <span style="color:#ff6b6b;font-weight:700;">${dias}d atrasado</span>`;
     } else if(card.due!==hojeStr){
