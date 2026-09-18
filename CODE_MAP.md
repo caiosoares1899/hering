@@ -2818,9 +2818,16 @@ detalhe aberto — ver nota abaixo).
 ### index.js — registro de exports
 - `PUSH_TYPES` (allow-list de push, hoje: assigned/mention/unblocked/risk/
   recorrente/painel_broadcast/intake/okr_editado/okr_prazo/okr_reuniao/
-  okr_agente — os 3 do meio 2026-09-04 (`okr/dailyScan.js`; `okr_periodo`
-  removido em 2026-09-05 junto com o gatilho "período de editar"), o
-  último 2026-09-05 (`okr/agenteChat.js`)) — L23
+  okr_agente/feedback/reuniao/due_today/due_overdue — os 3 do meio
+  2026-09-04 (`okr/dailyScan.js`; `okr_periodo` removido em 2026-09-05
+  junto com o gatilho "período de editar"), `okr_agente` 2026-09-05
+  (`okr/agenteChat.js`), `feedback` 2026-09-14 (achado real — tinha o
+  irmão `intake` com push mas `feedback`, criado pelo mesmo "✍️ Fale com
+  o ADM", nunca tinha sido adicionado), `reuniao`/`due_today`/
+  `due_overdue` 2026-09-18 (`/monitorarbugs`, técnica 1 — comparou TODOS
+  os tipos de `createNotif()` contra `PUSH_TYPES`; `reuniao` tinha o
+  mesmo gap do `feedback` — irmão quase idêntico `okr_reuniao` já tinha
+  push, o genérico não)) — L23
 - `sendPushOnNotification` — L25
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L119 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L123–L162 → `spotify/*.js`
