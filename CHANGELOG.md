@@ -3503,6 +3503,50 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.711-dev — 2026-09-18 — `/monitorarbugs` (⏸ Pausar card, escopo nomeado): card concluído ainda pausado corroía o lead time em silêncio
+
+Pedido explícito, escopo nomeado ("roda um /monitorarbugs na função de
+pausar cards"). 1 achado real, técnica 2 — mesma classe de bug já
+corrigida 2x neste arquivo pra `blockedMs`/`atrasadoMs` (episódio aberto
+nunca fechado no desfecho "card concluído"), desta vez pra `pausedMs`.
+
+**Causa raiz**: `card.paused`/`card.pausedAt`/`card.pausedMs` só são
+mexidos por `togglePauseCard()` (o único ponto de escrita — modal,
+menu de contexto e atalho de teclado convergem pra lá, sem duplicação).
+Nada nunca desmarca `paused` quando o card é concluído — diferente do
+impedimento (`blockerMode==='tag'`), que já tem um "auto-desimpedimento"
+documentado em `recordMove()` ("se o card está concluído,
+automaticamente ele é desimpedido"). `_cardPausedMs()` soma o episódio
+ABERTO usando `Date.now()`; como `_cardTempos()` usa `doneMs` (FIXO, do
+momento da conclusão) pra calcular o lead time, um card concluído ainda
+com `paused:true` tinha o "tempo pausado" crescendo pra sempre com o
+relógio — o lead time desse card ia encolhendo silenciosamente a cada
+dia que passava, até saturar em zero (`Math.max(0,...)`), inflando pra
+baixo qualquer métrica que leia `_cardTempos()` (Relatório de Tempo,
+tempo médio de produção do Controle de Criativos). Confirmado alcançável
+por 2 caminhos: pausar → depois concluir (sem nenhum save no meio), e
+concluir → pausar depois (nada impede pausar um card já em coluna de
+fim).
+
+**Fix**, mesmo padrão dos dois já corrigidos: `recordMove()` fecha a
+pausa (soma o episódio aberto, zera `paused`/`pausedAt`, registra
+"retomou a contagem de tempo do card automaticamente (card concluído)"
+no 📜 Histórico) na transição pra uma coluna de fim — cobre o caso sem
+save intermediário; `_settleCardTimeTrackingLazy()` (roda em todo
+`fbSaveCard()`/`fbSaveAll()`) ganha a mesma rede de segurança, cobrindo
+o 2º caminho (pausar um card já concluído, sem nenhuma movimentação de
+coluna envolvida).
+
+Checado e sem achado adicional: `_cardIsBlocked()` não interage com
+`paused` (documentado como conceitos distintos, confirmado no código);
+os 4 pontos que já excluem card pausado de "card parado"/aging
+(`/monitorarbugs` 2026-09-14) continuam corretos; `_cardTempoPorColuna()`
+(limitação já aceita de 2026-09-12 — só desconta a pausa ATIVA, não
+intervalos passados por coluna) segue como estava, fora do escopo desta
+rodada.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.710-dev — 2026-09-18 — Novo: hover no gráfico "📈 Tendência — últimos 14 dias" (mesmo pedido da rodada anterior)
 
 Extensão do fix anterior (hover em "Cards ativos por coluna",
