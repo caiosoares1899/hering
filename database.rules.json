@@ -71,7 +71,7 @@
             ".write": "auth != null"
           },
           "externos": {
-            ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".read": "auth != null",
             ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
           }
         }
@@ -107,7 +107,7 @@
         }
       },
       "usuarios": {
-        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read": "auth != null",
         "$uid": {
           ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
           "role": {
@@ -127,13 +127,13 @@
         }
       },
       "usuarios_publicos": {
-        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read": "auth != null",
         "$uid": {
           ".write": "auth != null && (auth.uid === $uid || auth.token.email.endsWith('@ciahering.com.br') && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))"
         }
       },
       "init_registry": {
-        ".read": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".read": "auth != null",
         "$init": {
           ".write": "auth != null && (auth.token.email.endsWith('@ciahering.com.br') || newData.val() === auth.uid || (newData.val() === null && data.val() === auth.uid))"
         }

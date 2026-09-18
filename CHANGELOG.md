@@ -22816,6 +22816,57 @@ divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
 
+### 2026-09-18 — Fix urgente: freelancers ficaram bloqueados de logar (regressão do fix de segurança 2026-09-17)
+
+Relato direto do usuário: "uma freela cadastrada não ta conseguindo
+entrar no maré! vc mexeu ontem na segurança, pode ter quebrado isso" —
+confirmado, era exatamente isso.
+
+**Causa raiz**: o fix de segurança de 2026-09-17 (entrada abaixo) trocou
+`.read: "auth != null"` por `domain || painel_viewers` em 14 nodes — 4
+deles fazem parte do próprio fluxo de LOGIN de um externo (freelancer
+não-`@ciahering.com.br`), criando um catch-22: a checagem que deveria
+VALIDAR a pessoa como autorizada passou a exigir a própria autorização
+que ela ainda não tem.
+
+1. `kanban/squads/{squadId}/externos` — `_checkExternos()`
+   (kanban-dev.html) lê este nó pra confirmar que o email do freela está
+   na whitelist ANTES de liberar o login. Freela não é domínio nem
+   `painel_viewers` → leitura negada → depois de 3 tentativas,
+   `signOut()` com "Acesso restrito... avise o admin".
+2. `kanban/usuarios` / `usuarios_publicos` — mesmo um freela já
+   autorizado cairia aqui em seguida: `autoRegistrar()` lê
+   `kanban/usuarios/{uid}` pra completar o login/cadastro, mesma
+   negativa.
+3. `kanban/init_registry` — usado por `_claimUserInit()` (cadastro
+   novo); tem fallback gracioso (não trava sozinho, só degrada a
+   proteção contra sigla duplicada em silêncio).
+
+Afeta qualquer freelancer cujo cache de 24h (`ext_ok_{email}` no
+localStorage) tenha expirado ou que esteja logando de um
+navegador/dispositivo novo — não só cadastros novos.
+
+**Fix**: reverte `.read` desses 4 nodes especificamente de volta pra
+`auth != null` puro — exatamente o comportamento de antes de
+2026-09-17. Os outros 10 nodes do fix de segurança (`campanhas`,
+`dados_diarios`, `comunicados`, `painel_viewers`, `global/*`) continuam
+com o gate de domínio — são dados de painel/dashboard, não fazem parte
+do caminho crítico de login e não bloqueavam ninguém.
+
+**Trade-off aceito conscientemente**: qualquer conta Google autenticada
+volta a conseguir ler a whitelist de externos por squad e a lista de
+usuários (nome/email/foto/role — não senhas, não cards, não dados de
+negócio) — era assim que funcionava por anos sem incidente relatado
+antes do fix de ontem. Squad guest-access (`externos`) e a lista
+"magra" de identidade (`usuarios_publicos`) são, por desenho, dados que
+qualquer pessoa já dentro do board precisa poder ler pra funcionalidades
+básicas (@menção, atribuição, verificação da própria elegibilidade) —
+não dá pra fechar esses 2 nós especificamente sem quebrar o próprio
+fluxo que eles servem, diferente dos outros 10.
+
+**⚠️ Requer deploy manual**: `firebase deploy --only database` — ver
+nota no `CLAUDE.md` sobre resincronizar o clone local antes.
+
 ### 2026-09-17 — Análise de segurança: 14 nodes com `.read: "auth != null"` sem checagem de domínio
 
 Pedido direto do usuário: "quero q vc faça uma analise profunda sobre a
