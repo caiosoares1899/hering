@@ -1713,7 +1713,14 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   alimenta TANTO exibição quanto persistência exige separar as duas
   antes de aplicar o filtro, não filtrar a fonte única. Fix: lista
   separada `editingSuperArchivedIds`, exibição só com ativos,
-  persistência sempre com os dois juntos. dev v8.30.705-dev.
+  persistência sempre com os dois juntos. dev v8.30.705-dev. **Follow-up
+  2 (pergunta direta, não achado de varredura)**: "colocar e tirar
+  filhos pode entrar no histórico?" — checado: não entrava
+  (`addSuperChild()`/`removeSuperChild()` nunca gravavam nada no pai;
+  só `quickCreateSuperChild()` gravava, e só no FILHO). Implementado a
+  pedido: `persistSuperChildren(histWhat)` grava no pai antes de salvar,
+  chamado pelos 3 sites + ícone próprio (🧩) agrupando com o "aplicou
+  fan-out..." que já existia. dev v8.30.706-dev.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
