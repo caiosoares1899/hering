@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.705-dev</div>
+<div class="version">v8.30.706-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8740,6 +8740,7 @@ const CARD_HIST_TIPOS = {
   duplicado:   {icon:'📄', cor:'#1de9b6'},
   tempo:       {icon:'⏸️', cor:'#38b6ff'},
   pin:         {icon:'📌', cor:'#ffd700'},
+  supercard:   {icon:'🧩', cor:'#a78bfa'},
   campo:       {icon:'✏️', cor:'#38b6ff'},
 };
 function _histTipo(what){
@@ -8770,6 +8771,7 @@ function _histTipo(what){
   if(/^(alterou prazo|removeu prazo|definiu prazo|adiou o prazo)/.test(what)) return 'prazo';
   if(/^(pausou|retomou) a contagem/.test(what)) return 'tempo';
   if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
+  if(/^(vinculou|desvinculou) o card filho|^aplicou fan-out/.test(what)) return 'supercard';
   return 'campo';
 }
 // Ícone/cor pra quem não é uma pessoa de verdade. 2 origens diferentes,
@@ -27006,14 +27008,15 @@ function addSuperChild(card){
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
-  persistSuperChildren(); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
+  persistSuperChildren('vinculou o card filho "'+card.title+'"'); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
   hideSuperChildDropdown();
 }
 function removeSuperChild(id){
+  const removed=editingSuperChildren.find(l=>l.id===id);
   editingSuperChildren = editingSuperChildren.filter(l=>l.id!==id);
   renderSuperChildrenList();
-  persistSuperChildren();
+  persistSuperChildren(removed ? ('desvinculou o card filho "'+removed.title+'"') : null);
 }
 // Molde de card "em branco" pra virar filho de supercard — herda col/due/
 // priority/demandante/po do card pai, igual nos dois lugares que criam um
@@ -27070,7 +27073,7 @@ function quickCreateSuperChild(title){
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
   if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
-  persistSuperChildren();
+  persistSuperChildren('vinculou o card filho "'+novo.title+'" (novo)');
   const inp=document.getElementById('m-super-search-inp'); if(inp){ inp.value=''; }
   hideSuperChildDropdown();
   showToast('✅ Card filho criado: '+title);
@@ -27078,10 +27081,11 @@ function quickCreateSuperChild(title){
 // Card ainda não existe (editingId null) → não tem onde pendurar
 // childCardIds ainda; fica só em editingSuperChildren, e saveCard() é quem
 // grava o vínculo junto com o resto do card novo.
-function persistSuperChildren(){
+function persistSuperChildren(histWhat){
   if(!editingId) return;
   if(editingSuperParentIsChild) return; // teto de 2 níveis — ver initSuperChildren()
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
+  if(histWhat) recordHistory(parent, histWhat);
   parent.childCardIds = [...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds];
   fbSaveCard(parent);
   _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração

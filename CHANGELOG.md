@@ -3503,6 +3503,28 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.706-dev — 2026-09-18 — Novo: vincular/desvincular filho de Supercard agora entra no Histórico do card pai
+
+Pergunta direta do usuário, na sequência das duas correções acima:
+"colocar e tirar filhos pode entrar no histórico?". Checado no código: só
+`quickCreateSuperChild()` já gravava histórico — mas só no card FILHO
+recém-criado ("criou o card (filho de supercard)"), nunca no PAI.
+`addSuperChild()`/`removeSuperChild()` (vincular um card já existente /
+desvincular) não gravavam nada em lugar nenhum. `_applyFanoutTemplate()`
+já registrava "aplicou fan-out..." no pai — esse não mudou.
+
+**Fix**: `persistSuperChildren()` ganhou um parâmetro opcional
+(`histWhat`) que grava a entrada no card pai antes de salvar, chamado
+pelos 3 sites: `addSuperChild()` ("vinculou o card filho..."),
+`removeSuperChild()` ("desvinculou o card filho...", capturando o título
+antes de tirar da lista) e `quickCreateSuperChild()` ("vinculou o card
+filho... (novo)"). Ganhou também ícone próprio no Histórico (🧩,
+`_histTipo()`/`CARD_HIST_TIPOS`), reunindo essas 3 frases novas + o
+"aplicou fan-out..." já existente (que antes caía no ✏️ genérico) num
+mesmo grupo visual.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.705-dev — 2026-09-18 — Fix de acompanhamento: salvar o card depois do fix anterior desvincularia os filhos arquivados de verdade
 
 Achado ao validar a v8.30.704-dev com o usuário (pergunta direta: "mas vc
