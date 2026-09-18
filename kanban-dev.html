@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.709-dev</div>
+<div class="version">v8.30.710-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -20717,6 +20717,10 @@ function _boardDataSmCvPorColuna(){
   el.innerHTML=out;
 }
 
+// Hover (mesmo pedido/padrão do gráfico "Cards ativos por coluna" acima —
+// ver _bdBarHover()) — aqui o eixo é por DIA (índice), não por barra, mesmo
+// espírito do crosshair do CFD (_cfdHover()): acha o dia mais próximo do
+// mouse, mostra os 2 valores daquele dia numa tooltip.
 async function _boardDataTrendChart(){
   const el = document.getElementById('boarddata-trend'); if(!el) return;
   try{
@@ -20737,11 +20741,17 @@ async function _boardDataTrendChart(){
     const ptsDone = doneVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
     const everyN = Math.max(1, Math.ceil(dias.length/6));
     const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
-    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">
-      <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
-      <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
-      ${labels}
-    </svg>
+    window._bdTrendChartState = {dias, wipVals, doneVals, stepX, padL, padT, padB, H};
+    el.innerHTML = `<div id="bd-trend-wrap" style="position:relative;">
+      <svg id="bd-trend-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:crosshair;" onmousemove="_bdTrendHover(event)" onmouseleave="_bdTrendHoverOut()">
+        <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
+        <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
+        ${labels}
+        <line id="bd-trend-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/>
+        <g id="bd-trend-dots" style="opacity:0;pointer-events:none;"></g>
+      </svg>
+      <div id="bd-trend-tooltip" style="position:absolute;display:none;top:4px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;font-size:10.5px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+    </div>
     <div style="display:flex;gap:16px;font-size:10px;color:var(--txt2);margin-top:6px;">
       <span><span style="display:inline-block;width:8px;height:8px;background:var(--warn);border-radius:2px;margin-right:4px;"></span>WIP no dia</span>
       <span><span style="display:inline-block;width:8px;height:8px;background:var(--teal);border-radius:2px;margin-right:4px;"></span>Concluídos (acumulado)</span>
@@ -20749,6 +20759,51 @@ async function _boardDataTrendChart(){
   }catch(e){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Não foi possível carregar o histórico agora.</div>';
   }
+}
+function _bdTrendHover(evt){
+  const st = window._bdTrendChartState; if(!st) return;
+  const svg = document.getElementById('bd-trend-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  let idx = Math.round((svgP.x - st.padL) / (st.stepX || 1));
+  idx = Math.max(0, Math.min(st.dias.length-1, idx));
+  const xUser = st.padL + idx*st.stepX;
+  const toY = v => st.padT + (st.H-st.padT-st.padB) - (v/Math.max(1,...st.wipVals,...st.doneVals))*(st.H-st.padT-st.padB);
+
+  const line = document.getElementById('bd-trend-crosshair');
+  if(line){ line.setAttribute('x1', xUser); line.setAttribute('x2', xUser); line.style.opacity = 1; }
+
+  const dots = document.getElementById('bd-trend-dots');
+  if(dots){
+    dots.innerHTML = `<circle cx="${xUser.toFixed(1)}" cy="${toY(st.doneVals[idx]).toFixed(1)}" r="2.5" fill="var(--teal)" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`
+      + `<circle cx="${xUser.toFixed(1)}" cy="${toY(st.wipVals[idx]).toFixed(1)}" r="2.5" fill="var(--warn)" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`;
+    dots.style.opacity = 1;
+  }
+
+  const tip = document.getElementById('bd-trend-tooltip');
+  const wrap = document.getElementById('bd-trend-wrap');
+  if(tip && wrap){
+    const diaStr = st.dias[idx];
+    const dataFmt = diaStr.slice(8,10)+'/'+diaStr.slice(5,7);
+    tip.innerHTML = `<div style="font-weight:700;color:var(--txt);margin-bottom:4px;">${dataFmt}</div>`
+      +`<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;"><span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:var(--warn);flex-shrink:0;"></span>WIP no dia</span><b style="color:var(--txt);">${st.wipVals[idx]}</b></div>`
+      +`<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;"><span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:var(--teal);flex-shrink:0;"></span>Concluídos</span><b style="color:var(--txt);">${st.doneVals[idx]}</b></div>`;
+    tip.style.display = 'block';
+    const topPt = svg.createSVGPoint(); topPt.x = xUser; topPt.y = st.padT;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 110;
+    let left = (screenTop.x - wrapRect.left) + 10;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _bdTrendHoverOut(){
+  const line = document.getElementById('bd-trend-crosshair'); if(line) line.style.opacity = 0;
+  const dots = document.getElementById('bd-trend-dots'); if(dots) dots.style.opacity = 0;
+  const tip = document.getElementById('bd-trend-tooltip'); if(tip) tip.style.display = 'none';
 }
 
 // ── CFD (Cumulative Flow Diagram) + Burndown — Fase 5, item 3 ──────────
