@@ -1775,7 +1775,17 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   no meio; concluir→pausar depois, nada impede). Fix: `recordMove()`
   fecha a pausa na transição pra coluna de fim (mesmo padrão do
   auto-desimpedimento);  `_settleCardTimeTrackingLazy()` ganha a mesma
-  rede de segurança pro 2º caminho. dev v8.30.711-dev.
+  rede de segurança pro 2º caminho. dev v8.30.711-dev. **Follow-up no
+  mesmo dia (relato de usuário, via outro usuário: "pausei um card, mas
+  vi que estava contando os dias ainda")**: achado real DIFERENTE do
+  anterior — `getDue()` (selo "⚠ Xd atrasado" no card, no board) nunca
+  checava `card.paused`, mesmo gap do aging de 2026-09-14 mas pra
+  "atrasado" (prazo vencido), conceito que aquela rodada não cobriu.
+  `_timelineCardRow()` tinha o mesmo gap. Fix: os 2 ganham fallback
+  neutro (só a data, sem alarme) quando pausado. Escopo confirmado com
+  o usuário: só os 2 lugares "por card" — contadores agregados (Dados
+  do Board, Criativos, Meu Dia, sino) ficaram de fora, registrados como
+  recomendação, não corrigidos. dev v8.30.712-dev.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

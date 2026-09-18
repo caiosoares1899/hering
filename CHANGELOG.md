@@ -3503,6 +3503,36 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.712-dev — 2026-09-18 — Fix: card pausado com prazo vencido continuava mostrando o selo "⚠ Xd atrasado"
+
+Relato direto de um usuário, via outro usuário: "eu tinha pausado um
+[card], mas vi que estava contando os dias ainda, aí coloquei na coluna
+de pausados" — achado real, diferente (embora relacionado) do fix
+anterior (v8.30.711-dev, que corrigia a métrica INTERNA de lead time,
+não o selo visível no card).
+
+**Causa raiz**: `getDue(due, isDone)` — a função que desenha o selo
+"⚠ Xd atrasado" direto no card, no board — nunca checava `card.paused`.
+Um card pausado com prazo vencido continuava mostrando o alarme
+vermelho contando os dias normalmente, contradizendo a própria promessa
+do botão ⏸ Pausar ("você não quer que isso... apareça como alarme pro
+resto do board"). Mesma classe de bug já corrigida em 2026-09-14 pra
+"card parado" (aging) — mas aquela rodada nunca cobriu "atrasado"
+(prazo vencido), um conceito diferente sujeito à mesma promessa. O
+🛤️ Timeline tinha o mesmo gap (`_timelineCardRow()`, o "Xd atrasado"
+mostrado em cada linha).
+
+**Fix**: `getDue()` ganha um 3º parâmetro (`paused`) — card pausado com
+prazo vencido cai no mesmo tratamento neutro que um prazo futuro (só a
+data, sem alarme); mesmo ajuste em `_timelineCardRow()`. Escopo
+confirmado com o usuário: fixado só nos 2 lugares onde o selo aparece
+"por card" (board + Timeline) — contadores agregados de atrasados
+(Dados do Board → Insights, Controle de Criativos, Meu Dia, item do
+sino "⏰ Atrasado Xd") ficam de fora por enquanto, registrados como
+recomendação futura, não corrigidos nesta rodada.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.711-dev — 2026-09-18 — `/monitorarbugs` (⏸ Pausar card, escopo nomeado): card concluído ainda pausado corroía o lead time em silêncio
 
 Pedido explícito, escopo nomeado ("roda um /monitorarbugs na função de
