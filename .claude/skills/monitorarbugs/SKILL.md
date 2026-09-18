@@ -1682,6 +1682,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   múltiplos `return` antecipados deveriam nascer já logando o motivo de
   cada um, não só descobrir isso na hora que precisa debugar ao vivo.
 
+- **2026-09-18, Google Calendar (pedido genérico, área nunca auditada
+  antes)**: 1 achado (3 sites) — os 3 pontos de dedup de eventos
+  (`_fetchAndCacheGcalForSquad()`/`_mergeGcalSources()` em
+  kanban-dev.html + fetch global em painel-dev.html) usavam chave
+  `data+título normalizado`, sem o id da agenda — colidia eventos
+  DIFERENTES de calendários DIFERENTES com título genérico igual na
+  mesma data (não só o mesmo feriado repetido, caso que a chave foi
+  desenhada pra cobrir). Mais grave em `_mergeGcalSources()`: regrava o
+  resultado deduplicado no `gcal_cache`, então a colisão apagava o
+  evento de verdade do Firebase, não só escondia da tela. Fix: inclui
+  `ev._calId` na chave nos 3 sites. dev kanban v8.30.704-dev/painel-dev
+  v3.53.
+- **2026-09-18, Supercard — contagem no modal (pedido direto, print
+  mostrando "8/9" fora do card vs. "10/19" dentro do modal)**: 1
+  achado, técnica 2 (comparar contra padrão já resolvido). O rollup de
+  fora do card (`_superChildren`, dentro de `makeCardEl()`) já filtra
+  filhos arquivados (mesmo padrão de `_duplicarComFilhos()`);
+  `initSuperChildren()` (popula `editingSuperChildren`, usado pelo
+  modal) fazia a mesma busca em `card.childCardIds` sem esse filtro —
+  10 filhos arquivados (versões antigas) continuavam contando no total
+  do modal, alguns inflando até o numerador de "concluído(s)". Fix:
+  mesmo filtro `!c.archived`. dev v8.30.704-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

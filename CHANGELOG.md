@@ -3503,6 +3503,33 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.704-dev — 2026-09-18 — Fix: contagem de filhos no modal do Supercard incluía cards arquivados
+
+Reportado ao vivo: um Supercard mostrava "8/9 concluído(s)" no rollup do
+próprio card (fora do modal), mas "10/19 concluído(s)" dentro do modal,
+na seção "🧩 CARDS FILHOS (SUPERCARD)".
+
+**Causa raiz**: o rollup de fora do card (`_superChildren`, dentro de
+`makeCardEl()`) já filtra `card.childCardIds` para excluir filhos
+arquivados (`cards.find(c=>c.id===id&&!c.archived)`) — mesmo padrão já
+usado em `_duplicarComFilhos()` ("filhos arquivados ficam de fora",
+documentado no `CODE_MAP.md`). `initSuperChildren()`, que popula
+`editingSuperChildren` (a lista renderizada dentro do modal por
+`renderSuperChildrenList()`), fazia a mesma busca SEM esse filtro —
+então os 10 filhos arquivados deste card específico (versões antigas de
+criativo, provavelmente substituídas ao longo do tempo) continuavam
+contando no total do modal, incluindo o numerador (alguns tinham ficado
+arquivados numa coluna que contava como "concluído").
+
+Achado via técnica 2 do `/monitorarbugs` (comparar contra um padrão já
+resolvido em outro lugar do arquivo — o board já tinha a filtragem
+certa, o modal não).
+
+**Fix**: `initSuperChildren()` agora filtra `!c.archived` igual ao
+board, então o modal e o rollup do card sempre mostram o mesmo total.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.703-dev — 2026-09-17 — /monitorarbugs: tela "Confirmar inscrição" reabria a mesma corrida de iniciais duplicadas do PR #969
 
 O PR #969 (mesmo dia) corrigiu a colisão de iniciais ("MS"/"MS", Marina
@@ -17325,6 +17352,34 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.53 · painel-dev — 2026-09-18 · Fix: dedup de eventos do Google Calendar colidia eventos diferentes de calendários diferentes
+
+`/monitorarbugs` nos 3 pontos de deduplicação de eventos de Google
+Calendar do Maré Digital (`_fetchAndCacheGcalForSquad()` e
+`_mergeGcalSources()` em `kanban-dev.html`, e o fetch global de
+calendários aqui em `painel-dev.html`).
+
+**Causa raiz**: os 3 sites deduplicavam eventos usando uma chave de
+`data+título normalizado` — pensada só pra pegar o MESMO feriado
+nacional que algumas agendas públicas do Google retornam mais de uma
+vez, com IDs internos diferentes, dentro da MESMA agenda. Sem incluir o
+identificador da agenda (`ev._calId`) na chave, dois eventos
+DIFERENTES de calendários DIFERENTES com título genérico igual na
+mesma data (ex.: "Reunião", "Daily", "1:1") também colidiam, e um dos
+dois desaparecia silenciosamente. Em `_mergeGcalSources()`
+(`kanban-dev.html`) isso é mais grave que um bug de exibição: o
+resultado deduplicado é regravado no `gcal_cache` do Firebase, então
+uma colisão falsa apagava permanentemente um evento legítimo do cache
+persistido, não só escondia ele de uma renderização.
+
+**Fix**: os 3 sites agora incluem `ev._calId` na chave de dedup
+(`_calId+data+título`), preservando o comportamento original (mesmo
+feriado repetido na mesma agenda continua sendo filtrado) sem mais
+colidir eventos de agendas diferentes.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>` de
+`kanban-dev.html` e `painel-dev.html`.
 
 ### painel.html v3.55 · painel — 2026-09-17 · Promove pra prod: 📋 Anotações da reunião na aba OKR + fix de negrito no texto do Agente Ágil
 
