@@ -186,6 +186,21 @@ Formato: baseline → novo — o que motivou — achados/correções.
   Achado incidental, não corrigido (pré-existente, fora do escopo do
   dia): badge "Xd atrasado" sem tooltip/entrada explicando que só
   conta dias úteis.
+- **v8.30.666-dev→v8.30.708-dev (2026-09-18)**: pedido genérico, sem
+  escopo — ~40 versões de dev acumuladas desde a última rodada. 4
+  gaps reais: "Automações" (visão geral em prosa esquecida da ação
+  "Notificar PO/Organizador", 2026-09-17 — a entrada dedicada já
+  estava certa); "Adicionar item de checklist" (Automações) não
+  mencionava a nova varredura de @menção no texto configurado; "Tempo
+  em atraso e bloqueado" não mencionava que só o Controle de Criativos
+  mostra o motivo do bloqueio na lista; **gap mais significativo**:
+  "Ficha Técnica (produção criativa)" nunca ganhou menção aos 3
+  gráficos novos de "⏱️ Tempo médio de produção por canal/plataforma/
+  formato" — feature inteira sem NENHUMA documentação. "Supercard"
+  também atualizada pro novo registro de vincular/desvincular no
+  Histórico (mesmo dia). Resto do período (~35 entradas relevantes)
+  já estava em dia — sinal consistente de que a maioria das features
+  grandes já nasce com a Central de Ajuda atualizada junto.
 
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.

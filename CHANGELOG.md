@@ -3503,6 +3503,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.708-dev — 2026-09-18 — `/atualizarhelpcontent`: sincroniza Central de Ajuda com as últimas mudanças de Automações/Supercard/Controle de Criativos
+
+Pedido genérico ("roda um /atualizarhelpcontent"), sem escopo nomeado —
+baseline anterior registrado era v8.30.666-dev, então cobre ~40 versões
+de dev acumuladas. Puramente documentação, sem mudança de
+comportamento. 4 gaps reais encontrados:
+
+- **"⚡ Automações"** (entrada geral): a lista de ações em prosa
+  mencionava "notificar o Agente Ágil, ou notificar todo mundo do
+  squad", mas nunca "notificar PO/Organizador" (ação nova de
+  2026-09-17) — a entrada dedicada "🎬 Ações — o que a regra faz
+  sozinha" já estava certa, só a visão geral tinha ficado pra trás.
+  Ganhou também um parágrafo próprio explicando a ação.
+- **"🎬 Ações — o que a regra faz sozinha"**: "Adicionar item de
+  checklist" não mencionava que o texto configurado é escaneado por
+  @menção (fix de 2026-09-17) — uma regra "Avisar @fulano" já notifica
+  de verdade, mas isso não estava documentado em lugar nenhum.
+- **"⏱️ Tempo em atraso e bloqueado (arquivado)"**: não mencionava que,
+  só no 🎬 Controle de Criativos (não em 📊 Dados do Board → Insights),
+  a lista de "mais tempo bloqueado" também mostra o motivo do
+  impedimento quando preenchido (feature de 2026-09-17).
+- **"🎬 Ficha Técnica (produção criativa)"**: o Dashboard ganhou 3
+  gráficos novos de "⏱️ Tempo médio de produção por canal/plataforma/
+  formato" (2026-09-17) sem NENHUMA menção na Central de Ajuda — gap
+  mais significativo desta rodada, feature inteira sem documentação.
+- **"🧩 Supercard (cards filhos)"**: não mencionava que vincular/
+  desvincular/criar um filho agora entra no 📜 Histórico do card pai
+  (2026-09-18, mesmo dia).
+
+Checado e sem gap: as ~35 outras entradas relevantes ao período (Tags,
+Timeline, Notas, Comunicados, Kudos, Notificações, Lembretes, Arquivamento
+automático, prazos em dias úteis, drawers laterais, Google Calendar) já
+estavam com texto correto — a maioria das features grandes do período já
+nasceu com a Central de Ajuda atualizada junto (sinal positivo,
+consistente com rodadas anteriores desta skill). Melhorias puramente
+cosméticas de Tags (ordem alfabética, filtro de texto no dropdown, emoji
+no fim da lista) tratadas como baixo risco o suficiente pra não precisar
+de menção própria — mesmo padrão de outras rodadas.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.707-dev — 2026-09-18 — `/monitorarbugs`: card filho de um pai arquivado ficava "preso" a ele, sem conseguir editar a própria Ficha Técnica
 
 Rodada de `/monitorarbugs` pedida pelo usuário direto na área de
