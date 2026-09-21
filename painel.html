@@ -2886,7 +2886,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.57 · painel</div>
+<div class="version">v3.58 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9072,6 +9072,22 @@ function removeAdmEmail(email){
   if(!confirm('Remover '+email+' dos ADMs?')) return;
   ADM_EMAILS=ADM_EMAILS.filter(e=>e!==email);
   saveAdmEmails();
+  // /monitorarbugs 2026-09-21, "login e segurança" (técnica 1 — comparar
+  // add vs. remove da mesma relação): addAdmEmail() sincroniza
+  // kanban/usuarios/{uid}/role='adm' quando promove, mas remover daqui
+  // nunca desfazia isso — getEffectiveRole() (kanban-dev.html) cai pra
+  // esse campo 'role' assim que isAdmUser() volta a dar false, então a
+  // pessoa "removida dos ADMs" continuava com papel 'adm' no board
+  // (bulk delete etc.) via esse resquício. Rebaixa pra 'membro' se o
+  // registro existir e ainda estiver marcado como 'adm'.
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val()||{};
+    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
+    if(entry && entry[1].role==='adm'){
+      window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'membro')
+        .catch(e=>console.warn('Não foi possível rebaixar role de ADM (Firebase Rules):',e.message));
+    }
+  });
 }
 
 function saveAdmEmails(){
@@ -9701,7 +9717,14 @@ function loadPcfgUsers(){
       // Select
       const sel=document.createElement('select');
       sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(var(--ink-rgb),.8);color:var(--txt);cursor:pointer;';
-      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(u.role===r) opt.selected=true; sel.appendChild(opt); });
+      // Papel EFETIVO desta pessoa NESTE squad -- squads_roles[cfgSquadId] tem
+      // prioridade sobre o campo global 'role' em todo o resto do app (mesmo
+      // padrão de updateSquadUserRole()/kanban-dev.html getEffectiveRole()).
+      // /monitorarbugs 2026-09-21: antes mostrava só u.role, ignorando um
+      // override por squad já definido via "👥 Global Users" -- dropdown
+      // exibia o papel ERRADO sempre que existisse um override.
+      const papelEfetivo=(u.squads_roles&&u.squads_roles[cfgSquadId])||u.role||'membro';
+      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
       sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
       row.appendChild(av); row.appendChild(info); row.appendChild(sel);
       list.appendChild(row);
@@ -9709,7 +9732,15 @@ function loadPcfgUsers(){
   }).catch(e=>{ list.innerHTML='<div style="font-size:11px;color:var(--danger);">Erro: '+e.message+'</div>'; });
 }
 function updateUserRole(uid, role){
-  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
+  // Grava só o papel PARA ESTE SQUAD (squads_roles/{cfgSquadId}), nunca no
+  // campo global 'role' -- mesmo padrão de updateSquadUserRole() (modal
+  // "👥 Global Users"). /monitorarbugs 2026-09-21: esta aba ("Membros do
+  // Squad", filtrada por cfgSquadId) gravava no campo GLOBAL até aqui --
+  // se a pessoa já tivesse um override em squads_roles[cfgSquadId] (o campo
+  // que kanban-dev.html realmente prioriza em getEffectiveRole()), a troca
+  // aqui mostrava "✅ Role atualizado" mas podia não ter efeito NENHUM no
+  // papel efetivo dela naquele squad, sem nenhum aviso.
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+cfgSquadId),role)
     .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
     .catch(e=>{
       if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
@@ -9881,12 +9912,19 @@ window.addEventListener('auth-change',e=>{
   if(user){
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
-      // externos: cache de 24h (evita reconsultar à toa a cada auth-change,
+      // externos: cache curto (evita reconsultar à toa a cada auth-change,
       // que pode disparar sozinho por instabilidade do SDK) + 3 tentativas
       // antes de desconectar por erro de rede.
+      // TTL 15min, não 24h (/monitorarbugs 2026-09-21, "login e segurança" —
+      // mesmo achado severo já corrigido em kanban-dev.html, técnica 1):
+      // com 24h, removePainelViewer() não tinha efeito prático por até 1 dia
+      // inteiro pra quem já tinha esse cache válido no próprio navegador — um
+      // F5 pulava a checagem e chamava _finishPainelLogin(user) direto, com
+      // acesso de LEITURA a squads_meta/config/squads/{id}/dados de TODOS os
+      // squads (não só 1, ver comentário acima) continuando liberado.
       const _cacheKey = 'painel_viewer_ok_'+user.email;
       const _cached = parseInt(localStorage.getItem(_cacheKey)||'0', 10);
-      if(_cached && (Date.now()-_cached) < 86400000){
+      if(_cached && (Date.now()-_cached) < 900000){
         window._isPainelViewer = true;
         _finishPainelLogin(user);
         return;
