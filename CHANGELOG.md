@@ -18,6 +18,64 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.712 — 2026-09-21 · Promove pra prod — lote grande acumulado (v8.30.687-dev → v8.30.712-dev, 26 versões)
+
+Promoção de todo o lote acumulado em `kanban-dev.html` desde a última
+promoção (v8.30.686, 17/09) — validado pelo usuário ("pode subir tudo")
+depois de eu apresentar a lista completa separada em bugs vs. features.
+Ver as entradas de dev correspondentes (seção "kanban-dev.html (ambiente
+de teste)" abaixo) pro detalhe técnico completo de cada achado; aqui só
+o resumo do que muda pra quem usa o board.
+
+**🔴 Correções críticas/severas:**
+- Card arrastado direto pra uma coluna sem o registro de tempo em dia
+  (ex.: pausado, ou já bloqueado) podia travar o salvamento em lote da
+  squad INTEIRA por causa de uma chave vazia gerada no rastreamento de
+  fluxo (`flow.enteredAt`).
+- Um card podia acumular um tempo de atraso absurdo (ex.: "666202d 11h")
+  por um bug de concatenação de texto em vez de soma numérica.
+- Card concluído enquanto ainda pausado tinha o lead/cycle time corroendo
+  em silêncio a cada dia (o registro de tempo pausado nunca fechava).
+- Card pausado com prazo vencido continuava mostrando o selo vermelho
+  "⚠ Xd atrasado" no board e na Timeline, mesmo devendo ficar neutro
+  enquanto pausado.
+
+**🐛 Outras correções:**
+- Supercard: card filho de um pai arquivado ficava "preso", sem
+  conseguir editar a própria Ficha Técnica; contagem de filhos no modal
+  incluía cards já arquivados.
+- Corrida de cadastro que podia deixar 2 pessoas com a mesma sigla
+  (fechada em mais um ponto — tela "Confirmar inscrição").
+- Controle de Criativos: motivo do bloqueio sumia da lista "Mais tempo
+  bloqueado" em squads no modo "tag".
+- Automações: "Adicionar item de checklist" não escaneava @menção no
+  texto configurado; "Atribuir responsável" não notificava nem
+  encadeava outras regras; dava pra somar 2 Tamanhos/Submarcas/Canais no
+  mesmo card pelo dropdown genérico ou por automação.
+- Criar um card já com responsável disparava "Card movido"/"Card
+  concluído 🎉" fantasma, sem o card ter se movido de verdade.
+- Texto do Agente Ágil (log de ações) mostrava `**negrito**` literal em
+  vez de renderizar.
+
+**✨ Novidades:**
+- Hover nos 2 gráficos de "📊 Dados do Board" ("Cards ativos por
+  coluna" e "📈 Tendência — últimos 14 dias") — passa o mouse e vê o
+  rótulo/valor completo, útil quando tem muita coluna e o texto fica
+  cortado.
+- Controle de Criativos: tempo médio de produção por canal/plataforma/
+  formato, e o motivo do bloqueio (quando preenchido) na lista de "Mais
+  tempo bloqueado".
+- Vincular/desvincular um filho de Supercard agora entra no Histórico
+  do card pai.
+- Nova ação de Automação "Notificar PO/Organizador"; listas
+  "Quando"/"Então"/condição extra das Automações e as tags do modal do
+  card em ordem alfabética; dropdown "+ Adicionar tag…" ganhou filtro
+  de texto.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses idêntico ao de `kanban-dev.html` (braces -1,
+parens +1).
+
 ### v8.30.686 — 2026-09-17 · 🔴 Fix crítico — arrastar card que falhasse ao salvar corrompia métricas de fluxo em silêncio
 
 `/monitorarbugs` nas áreas críticas do board (drag-and-drop, pedido
@@ -17623,6 +17681,26 @@ colidir eventos de agendas diferentes.
 
 Checks de rotina: `node --check` OK no maior bloco `<script>` de
 `kanban-dev.html` e `painel-dev.html`.
+
+### painel.html v3.56 · painel — 2026-09-21 · Promove pra prod: fix de dedup de eventos do Google Calendar por calendário
+
+Promoção do único item pendente em `painel-dev.html` (v3.53) desde a
+última promoção — validado junto com o lote de `kanban.html` ("pode
+subir tudo"). Patch cirúrgico, não cópia completa (ver entrada de dev
+"painel-dev.html v3.53" abaixo pro detalhe técnico completo):
+`carregarPcalAgendasGlobais()` deduplicava eventos do Google Calendar
+usando só data+título normalizado — dois eventos de agendas
+DIFERENTES com título genérico igual na mesma data (ex.: "Reunião")
+colidiam e um sumia permanentemente do `gcal_cache` no Firebase, não
+só da tela. Fix: inclui `ev._calId` na chave de dedup.
+
+`diff painel.html painel-dev.html` conferido antes e depois — só a
+divergência pré-existente esperada (banner de dev, seção "🔔 Enviar
+push manual" só em prod, sufixos `_dev` de config do Firebase/paths de
+debug bytes/campanhas) além desta mudança.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses no baseline conhecido (braces -1, parens -14).
 
 ### painel.html v3.55 · painel — 2026-09-17 · Promove pra prod: 📋 Anotações da reunião na aba OKR + fix de negrito no texto do Agente Ágil
 
