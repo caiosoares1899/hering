@@ -338,6 +338,43 @@ revalidadas — seções novas — achados incidentais notáveis.
   lote que revalidar cada uma isoladamente — vale checar se o drift é
   uniforme antes de re-grepar item por item.
 
+- **2026-09-21 (12ª)**: `cc04784`→`e8e4eaf`, 3 dias depois. kanban/
+  kanban-dev **voltaram a ficar sincronizados** (promoção v8.30.716
+  aconteceu na mesma sessão) — cabeçalho reescrito: as 3 linhas que
+  agora divergem PERMANENTEMENTE são versão/`VERSION_KEY`, favicon, e
+  (nova) a chave de `force_logout_after` (kanban.html escuta sem
+  sufixo, kanban-dev.html escuta `_dev`, ver "Papéis & autenticação").
+  Escopo AMPLO por acidente: a área tocada pela sessão (papel de
+  usuário/ADMs/`force_logout_after`) tinha drift tão grande que revelar
+  os números certos de `getEffectiveRole()`/`ADM_EMAILS`/
+  `resolveSquadAndShow()`/`autoRegistrar()` (drift de +170 a +2075
+  linhas) motivou uma varredura completa via script (extração de
+  `` `nome()` — LNNNN `` + re-grep de cada uma, ~217 âncoras
+  checadas) em vez de só o delta do dia. **~185 âncoras corrigidas**
+  (a maioria drift de +40 a +2900 linhas — volume normal acumulado
+  desde a 11ª rodada), 0 removidas/renomeadas de verdade. `functions/
+  index.js` — registro de exports 100% batendo (21/21) + spot-check de
+  6 âncoras extras em `mentionTrigger.js`/`escolheClienteParaTarefa.js`/
+  `resumoMeuDia.js`, todas sem drift algum — Cloud Functions mudam bem
+  menos que os HTML. **2 corrupções reais encontradas e corrigidas**,
+  causadas pelo PRÓPRIO script de bulk-fix desta rodada (não
+  pré-existentes): entradas `nome1()/nome2()/nome3() — LX/` com os
+  números continuando na linha SEGUINTE (`abrirAddAgente()/
+  editarAgente(id)/fecharAddAgente()`, `_cardBlockedMs/_cardAtrasadoMs/
+  _cardPausedMs`) tiveram o único número visível na 1ª linha
+  reatribuído ao ÚLTIMO nome (o mais próximo sintaticamente do "— L"),
+  sobrescrevendo o número do 1º nome com o valor errado — mesma classe
+  de erro das rodadas 7/9, mas desta vez introduzida pela ferramenta de
+  correção em massa, não herdada do documento. Detectado rodando um 2º
+  script de validação (mesma técnica, comparando contra o texto já
+  corrigido) que sinalizou os 2 casos como ainda-errados depois do
+  "fix". **Lição pra próxima vez**: bulk-fix por regex de padrão único
+  (1 nome + 1 número na mesma linha) SEMPRE checar se a linha faz parte
+  de uma lista `nome1/nome2/nome3` — mesmo que só 1 número apareça
+  fisicamente na linha, ele pode pertencer a uma lista maior continuando
+  na linha seguinte; rodar uma 2ª validação (não só o diff visual) depois
+  de qualquer bulk-fix baseado em regex antes de considerar terminado.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir

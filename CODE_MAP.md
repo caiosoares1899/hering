@@ -10,27 +10,25 @@ específico (ver rodapé) e ficam desatualizados a cada edição no arquivo —
 neles pra uma edição**. O valor real deste arquivo é a lista de nomes
 (âncoras estáveis), não os números de linha em si.
 
-`kanban.html` e `kanban-dev.html` estão hoje idênticos exceto pela string
-de versão + `VERSION_KEY`, e pelo favicon próprio de cada ambiente
+`kanban.html` e `kanban-dev.html` divergem em 3 linhas PERMANENTES/
+deliberadas, nunca promovidas como diff: (1) string de versão +
+`VERSION_KEY`/`FB_OVERRIDE_NS`; (2) favicon próprio de cada ambiente
 (`favicon.png` em prod / `favicon-dev.png` em dev — `link rel="icon"`,
 `apple-touch-icon`, a imagem de splash, e as 2 entradas de ícone do
-manifest — commit `ff759f8`, "favicon próprio pro dev + favicon do 🌴 Vice
-City"). Essa divergência de favicon é **permanente e intencional**, não
-"dev com trabalho não promovido" — os dois ambientes devem manter ícones
-diferentes pra sempre, não vai ser promovida como diff. Fora essa
-divergência permanente, os dois arquivos ficam byte-idênticos só
-LOGO DEPOIS de uma promoção (última confirmada: v8.30.686, hotfix direto
-em prod por gravidade — `handleDrop()` corrompendo métricas de fluxo em
-silêncio — ver `CHANGELOG.md`) — neste exato momento (retrato deste
-rodapé) `kanban-dev.html` já tem um lote grande de trabalho ainda não
-promovido (Automações, Tags, Controle de Criativos, Supercard,
-`/atualizarhelpcontent`, entre outros — ~22 versões de dev acumuladas,
-v8.30.687-dev a v8.30.708-dev), então os números abaixo são de
-`kanban-dev.html` (o superset), não de `kanban.html`. Isso é o estado
-normal na maior parte do tempo, não exceção — se o `diff` entre os dois
-mostrar mais do que versão/`VERSION_KEY`/favicon, refaça o grep no
-arquivo específico que você está editando (provavelmente
-`kanban-dev.html`).
+manifest — commit `ff759f8`); (3) **nova desde 2026-09-21** — a chave do
+Firebase que o listener de "Deslogar todos" escuta
+(`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
+em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3
+divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
+DEPOIS de uma promoção (última confirmada: v8.30.716, "login e
+segurança" — ver `CHANGELOG.md`) — no retrato deste rodapé os dois
+arquivos ESTÃO sincronizados (nenhum lote de dev pendente), mas isso é o
+estado passageiro, não a norma — na maior parte do tempo
+`kanban-dev.html` tem trabalho acumulado ainda não promovido, e os
+números abaixo passam a ser dele (o superset), não de `kanban.html`. Se
+o `diff` entre os dois mostrar mais do que essas 3 divergências
+conhecidas, refaça o grep no arquivo específico que você está editando
+(provavelmente `kanban-dev.html`).
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel-dev.html` (o superset, mesmo padrão do par kanban — sempre
@@ -40,10 +38,10 @@ confiar num número aqui se for mexer em `painel.html` prod).
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
-- `ADM_EMAILS` (let) — L6308
-- `getEffectiveRole()` — L6346 — papel efetivo, ADMs hardcoded não são rebaixáveis
-- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6430 / L6399
-- `resolveSquadAndShow()` — L10315 — resolve squad da URL, decide o que mostrar
+- `ADM_EMAILS` (let) — L6481
+- `getEffectiveRole()` — L6519 — papel efetivo, ADMs hardcoded não são rebaixáveis
+- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6603 / L6572
+- `resolveSquadAndShow()` — L10602 — resolve squad da URL, decide o que mostrar
 - **`force_logout_after` (botão "Deslogar todos") — chaves DIVERGEM de
   propósito entre prod/dev, promovido pra prod em v8.30.716**
   (2026-09-21, `/monitorarbugs`): listener em `kanban-dev.html` — L33667
@@ -56,7 +54,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   contrário). **Essa é uma 3ª linha que diverge deliberadamente entre
   kanban.html/kanban-dev.html na promoção dev→prod** (além de versão/
   `VERSION_KEY`) — nunca copiar essa linha ao promover.
-- `autoRegistrar()` — L10813 — cria/atualiza o doc do usuário no login.
+- `autoRegistrar()` — L10870 — cria/atualiza o doc do usuário no login.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
   tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
@@ -64,7 +62,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   nunca no registro principal, deixando um registro nascido incompleto
   (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
   pra sempre mesmo com login repetido.
-- `_claimUserInit()` — L10752 / `_ensureInitRegistryBackfilled()` — L10795
+- `_claimUserInit()` — L10809 / `_ensureInitRegistryBackfilled()` — L10852
   — reivindica a sigla (`init`) de um usuário novo de forma ATÔMICA, via
   `runTransaction()` em `kanban/init_registry/{INIT}=uid` (node novo,
   precisa de entrada em `database.rules.json`, deploy manual). Achado
@@ -73,17 +71,17 @@ confiar num número aqui se for mexer em `painel.html` prod).
   antigo em `autoRegistrar()` (ler `usuarios_publicos`, computar
   localmente, escrever) tinha uma janela de corrida real entre 2 pessoas
   se cadastrando quase ao mesmo tempo com o mesmo par de iniciais.
-  `editarInicial()` (L24197, troca manual de sigla) também usa a mesma
+  `editarInicial()` (L24347, troca manual de sigla) também usa a mesma
   transação antes de gravar, e libera a sigla antiga no registro (só se
   o registro ainda apontar pra este uid — sigla pode ser compartilhada).
-  `confirmarInscricao()` (L10980, tela "Confirmar inscrição" — pessoa
+  `confirmarInscricao()` (L11007, tela "Confirmar inscrição" — pessoa
   edita a própria sigla num campo de texto antes de confirmar) ganhou o
   mesmo tratamento numa rodada seguinte de `/monitorarbugs` no mesmo dia
   — era a 3ª mutação de `init` do arquivo e tinha ficado de fora do fix
   original, mesma corrida exata. As 3 funções caem de volta pro
   mecanismo antigo (não-atômico, mas não trava ninguém) se o registry
   ainda não tiver a regra publicada.
-- `_onRealAuthChange(fn)` — L31375 (perto de `_onFbReady()`) — espera o
+- `_onRealAuthChange(fn)` — L33450 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara
   `auth-change` assim que o listener é registrado, quase sempre com
@@ -97,24 +95,24 @@ confiar num número aqui se for mexer em `painel.html` prod).
   reimplementar `{once:true}` na mão. Mesmo padrão quebrado achado
   independentemente em `painel-dev.html` (`checkOverdueGlobalBackup()`,
   que tem seu PRÓPRIO `onAuthStateChanged`, sem relação com o do kanban)
-  — mesma função `_onRealAuthChange(fn)` também existe lá, L11821.
+  — mesma função `_onRealAuthChange(fn)` também existe lá, L12094.
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
 aparecem lado a lado com pessoas nos seletores de Responsável/
-Participante — `agentes` (let) — L6815 / `allIdentities()` — L6827
+Participante — `agentes` (let) — L7183 / `allIdentities()` — L7195
 (combina `members`+`agentes` só pra exibição/seleção, NUNCA pra checagem
 de permissão). Até 2026-08-31 só existia o listener (leitura) — pedido
 direto do usuário ("quero que isso fique mais claro o cadastro"): CRUD
 completo em ⚙ Configurações → Usuários → "🤖 Agentes de IA".
-- `renderAgentesList()` — L22606 — lista + detecção de colisão de
+- `renderAgentesList()` — L24189 — lista + detecção de colisão de
   iniciais (humano×agente E agente×agente, mesmo padrão de `dupInit` em
   `renderUsuarios()`)
-- `abrirAddAgente()`/`editarAgente(id)`/`fecharAddAgente()` — L22628/
-  L22637/L22647 — abre/preenche/fecha o form inline (mesmo padrão de
+- `abrirAddAgente()`/`editarAgente(id)`/`fecharAddAgente()` — L24211/
+  L24220/L24230 — abre/preenche/fecha o form inline (mesmo padrão de
   "+ Adicionar externo", não é modal separado)
-- `salvarAgente()` — L22651 — valida nome/iniciais e colisão antes de
-  gravar; `excluirAgente(id, nome)` — L19356 — usa `window._set()` direto
+- `salvarAgente()` — L24234 — valida nome/iniciais e colisão antes de
+  gravar; `excluirAgente(id, nome)` — L24261 — usa `window._set()` direto
   (não `fbSet()`, que é fire-and-forget e engole erro em silêncio) pra
   aguardar a escrita e só avisar sucesso depois de confirmada — fix
   2026-09-01, reporte direto do usuário
@@ -175,7 +173,7 @@ independentemente em 4 lugares (`_askAgenteAgilNoCard`,
 detalhe dos 4 call sites.
 
 ### Card — estrutura & modal
-- `CARD_SECTIONS` — L6911 — seções do modal (Conteúdo, Vínculos, Colaboração...)
+- `CARD_SECTIONS` — L7119 — seções do modal (Conteúdo, Vínculos, Colaboração...)
 - **📜 Histórico do card** (`card.history[]`) — `HIST_CAP`/`HIST_FIELDS`
   (rótulos legíveis), `_histSnapshot(card)` (antes de editar) →
   `_histDiff(card, before, whoOverride)` (compara e grava cada mudança)
@@ -281,8 +279,8 @@ detalhe dos 4 call sites.
   automaticamente" movido pro grupo `desimpedido`. 48 padrões de texto
   testados isoladamente contra os regexes novos, todos corretos. PR
   #778.
-- `openCard()` — L13709
-- `openAgenteHotline()` — L13618 — card especial fixo por squad "🤖 Converse
+- `openCard()` — L14620
+- `openAgenteHotline()` — L14529 — card especial fixo por squad "🤖 Converse
   com o Agente Ágil" (`AGENTE_AGIL_MENTION_SQUADS`, hoje `dev`/
   `dados`, os únicos com escrita real do agente — até 2026-08-31 tinha uma
   constante própria `AGENTE_AGIL_HOTLINE_SQUADS` com o mesmo valor,
@@ -292,7 +290,7 @@ detalhe dos 4 call sites.
   `_findAgenteHotlineCard()`) — reusa 100% do mecanismo de `@menção`
   existente, só some do board normal (filtro em `renderBoard()`'s
   `activeCards`) e o modal ganha tema cinza/robô + atalhos
-  (`_applyAgenteHotlineSkin()` — L13083, chamado por `openCard()`/
+  (`_applyAgenteHotlineSkin()` — L14505, chamado por `openCard()`/
   `openNewCard()`). `_cardSectionVisible()` esconde toda seção exceto
   comentários pra esse card. Botão de acesso: `#fab-agente-hotline-btn`,
   visível pra todo mundo (não só PO/Organizador) nos squads habilitados —
@@ -339,12 +337,12 @@ detalhe dos 4 call sites.
   padrão). Hoje não é explorável pela UI normal (o card hotline nasce com
   `owner`/`participants` sempre vazios, e o modal trava a edição desses
   campos pra ele), mas ficava inconsistente com a regra escrita acima.
-- `saveCard()` — L14176 — auto-save (debounce 800ms) passa por aqui.
+- `saveCard()` — L15113 — auto-save (debounce 800ms) passa por aqui.
   Monkey-patched (`saveCard = function(){...}`) perto de L26869, hook
   pra disparar notificações — qualquer chamada em runtime pega essa
   versão, não a declaração original
-- `_finishCloseOv()` — L30762 — fechamento do modal, reset de estado pendente
-- `_newCardHasContent()`/`_newCardGuardOff` — L12948/L12922 — card ainda sem
+- `_finishCloseOv()` — L32883 — fechamento do modal, reset de estado pendente
+- `_newCardHasContent()`/`_newCardGuardOff` — L13788/L13762 — card ainda sem
   `editingId` (criação em andamento): se título/descrição/tags/checklist/
   riscos/PO/comentário têm algo preenchido, `closeOv('card-ov')` avisa
   antes de descartar (fora, Cancelar, ✕, arrastar no mobile — os 4 já
@@ -369,18 +367,18 @@ detalhe dos 4 call sites.
   pro PRÓXIMO card aberto por qualquer caminho normal.
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
-- `fbSaveAll()` — L8631 — reescreve `/cards` INTEIRO (só pra operações
+- `fbSaveAll()` — L8901 — reescreve `/cards` INTEIRO (só pra operações
   estruturais em lote: duplicar/arquivar em massa, reordenar, importar,
   recorrências/agendamentos) — **nunca usar pra 1 card só**, arrisca
   sobrescrever o array com o estado local de outra pessoa
-- `fbCreateCard()` — L8782 — cria 1 card NOVO com escrita pontual,
+- `fbCreateCard()` — L9067 — cria 1 card NOVO com escrita pontual,
   posição alocada via `transaction()` no `cards_index` (atômico contra
   criações concorrentes) — achado real 2026-08-24 (squad
   `midiacriativa`, "cards sumindo"): `fbSaveAll()` na criação
   colidia com o mesmo tipo de ação concorrente e apagava cards de
   outras pessoas. Usar sempre pra criar 1 card (modal, duplicar, filho
   de supercard, fan-out)
-- `fbSaveCard()` — L8841 — edita 1 card EXISTENTE, escrita pontual
+- `fbSaveCard()` — L9131 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
 - **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
   `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
@@ -407,7 +405,7 @@ detalhe dos 4 call sites.
   problema por um caminho ainda não mapeado.
 
 ### Rede de segurança — detecção ao vivo de card sumido inesperadamente
-- `_reportUnexpectedCardDisappearance()` — L8828 — dispara toast +
+- `_reportUnexpectedCardDisappearance()` — L9118 — dispara toast +
   `console.error` + grava `cards_incidentes_sumico/{incId}` quando um id
   some de `/cards_index` sem ter passado por `cards_deleted_intentionally`
   — "ponto 2" da rede de segurança pras ~46 chamadas de `fbSaveAll()` que
@@ -449,9 +447,9 @@ detalhe dos 4 call sites.
   + `card.dependents` (array de ids que dependem deste) — out-degree 1,
   in-degree N, mesmo shape de árvore do supercard (`childCardIds`), só
   com nomes/direção diferentes.
-- `setDependsOn(parentId)`/`unlinkDependsOn()` — perto de L30379/L30404
+- `setDependsOn(parentId)`/`unlinkDependsOn()` — perto de L33912/L33953
   — vincula/desvincula, sempre a partir do card `editingId` aberto no
-  modal. `searchDependsCards(q)` — L31697 — alimenta o picker
+  modal. `searchDependsCards(q)` — L33875 — alimenta o picker
   (`openDependsPicker()`).
 - **Guard de ciclo** (2026-09-03, `/monitorarbugs`) — `_dependsDescendants(cardId)`
   (logo antes de `openDependsPicker()`) — Set com todo descendente de
@@ -470,12 +468,12 @@ detalhe dos 4 call sites.
   de profundidade — só o guard de ciclo acima.
 
 ### Tema (claro/escuro + 🌴 Vice City + 🕐 automático)
-- `_currentTheme()` — L30961 — lê `data-theme` do `<html>`, retorna
+- `_currentTheme()` — L33082 — lê `data-theme` do `<html>`, retorna
   `'light'`/`'dark'`/`'vice'`.
-- `toggleTheme()` — L31007 — alterna claro/escuro (clique no botão de
+- `toggleTheme()` — L33144 — alterna claro/escuro (clique no botão de
   tema). `toggleThemeVariant()` — logo abaixo — variante mais escura do
   claro (duplo-clique, só faz sentido dentro do claro).
-- `toggleThemeAuto()` — L31088 (2026-09-08) — 4º modo, botão próprio
+- `toggleThemeAuto()` — L33225 (2026-09-08) — 4º modo, botão próprio
   `#theme-auto-btn` (🕐) ao lado do botão de tema principal. Liga/desliga
   a troca automática de tema pelo horário de São Paulo —
   `_themeBandForSaoPauloNow()` (L30394, `Intl.DateTimeFormat` com
@@ -489,7 +487,7 @@ detalhe dos 4 call sites.
   desliga o automático. Estado em `localStorage` (`mare_theme_auto`),
   replicado no script anti-flash do `<head>` (perto da L3327) e no menu
   "⋯" mobile.
-- `toggleViceCity()` / `exitViceCity()` — L31132/próximas linhas —
+- `toggleViceCity()` / `exitViceCity()` — L33269/L33284 —
   easter egg (2026-09-02, piada interna com GTA 6/Vice City): 3º tema
   escondido, ativado segurando o botão de tema por
   `VICE_LONGPRESS_MS` (`_themeBtnPointerDown()`/`_themeBtnPointerUp()`,
@@ -517,7 +515,7 @@ detalhe dos 4 call sites.
   função de propósito, "é teste, sem sentido contar métrica", mas o
   listener genérico de `auth-change` gravava mesmo assim se o evento
   refirasse com a pessoa no tema BF).
-- `_isViceCityEasterEggAtivo()` — L33213 — `vice` só conta como easter
+- `_isViceCityEasterEggAtivo()` — L33373 — `vice` só conta como easter
   egg de verdade quando o Tema automático está DESLIGADO (`/monitorarbugs`
   2026-09-14, técnica 3): a banda 12h-18h do automático TAMBÉM deixa
   `_currentTheme()==='vice'`, então os handlers do botão de tema
@@ -525,17 +523,17 @@ detalhe dos 4 call sites.
   usavam só isso pra decidir "sai do easter egg" — clicar no botão
   durante a banda automática da tarde desligava o automático sem
   ninguém pedir.
-- **🔥 Black Friday** (tema experimental, `toggleBlackFriday()` — L33145 /
-  `exitBlackFriday()` — L33156, botão direito no botão de tema —
-  `_themeBtnRightClick()` — L33168): 5º "tema" — não é opção visível
+- **🔥 Black Friday** (tema experimental, `toggleBlackFriday()` — L33305 /
+  `exitBlackFriday()` — L33316, botão direito no botão de tema —
+  `_themeBtnRightClick()` — L33328): 5º "tema" — não é opção visível
   nem tem paleta séria própria, é uma decoração temporária de campanha
   (fita diagonal "OFERTA", contador regressivo — `_bfUpdateCountdown()`
   — L33178 — mensagem do banner configurável, "peixinhos viram dinheiro"
-  no fundo). `_isBlackFridayAtivo()` — L33144 — helper de estado, mesmo
+  no fundo). `_isBlackFridayAtivo()` — L33304 — helper de estado, mesmo
   padrão de `_currentTheme()==='vice'`.
 
 ### Arquivados / arquivamento automático
-- `maybeAutoArchiveOldCards()` — L13019 — roda a regra opcional de
+- `maybeAutoArchiveOldCards()` — L13380 — roda a regra opcional de
   arquivar cards antigos E parados (`archiveCfg`, configurável em ⚙
   Config → Automações). (2026-09-08) ganhou `excludedCols` — Set de ids
   de coluna que a regra nunca toca (ex.: Backlog, onde cards ficam
@@ -557,20 +555,20 @@ detalhe dos 4 call sites.
   também `card.updatedAt` (garantido centralizado por
   `fbSaveCard()`/`fbSaveAll()`), não só `card.editedAt` (setado manual
   por quem lembra) — pin/anexo de link agora conta como atividade.
-- `_renderArquivadosBody()` — L22225 — lista da tela "📦 Arquivados"
+- `_renderArquivadosBody()` — L22943 — lista da tela "📦 Arquivados"
   (`#arch-body`). (2026-09-15, pedido direto) o **título** de cada
   card agora é clicável — chama `openCard(id)` (o card continua
   arquivado; `saveCard()`/o resto do modal nunca tocam `c.archived`, só
   `archiveCard()`/`desarquivar()`) e fecha a própria tela
   (`closeOv('arch-ov')`), mesmo padrão do grid de cards vinculados de
   Campanha (`_renderCampCardsGrid()`).
-- `openArquivados()` — L22290 — tela "Funções de card → Arquivados".
+- `openArquivados()` — L23008 — tela "Funções de card → Arquivados".
   (2026-09-08) filtro novo por coluna (`#arch-f-col`) — arquivar nunca
   reescreve `c.col` (só liga `c.archived`), então o valor atual do
   campo já É "a coluna de quando foi arquivado", sem precisar de campo
   dedicado. Coluna excluída desde então aparece como `id (coluna
   excluída)`, ordenada por último.
-- `desarquivar(id)` — L22303 — restaura um card (chamado da lista de
+- `desarquivar(id)` — L23021 — restaura um card (chamado da lista de
   Arquivados E, desde 2026-09-15, de dentro do próprio modal do card —
   ver `btn-archive-card` abaixo). Só reabre/re-renderiza `#arch-ov` se
   ela já estava aberta (antes reabria incondicionalmente, criando um
@@ -583,7 +581,7 @@ detalhe dos 4 call sites.
   (chama `desarquivar()` + fecha o modal) quando `c.archived`.
 
 ### Comunicados / Mural (popup + badge + Mural)
-- `_refreshComunicados()` — L33957 — busca `kanban/comunicados`
+- `_refreshComunicados()` — L36072 — busca `kanban/comunicados`
   filtrado `ativo:true` no servidor (`query(...)`), com fallback pra
   árvore inteira se a query falhar (`_dbgTrack('comunicados_fallback', ...)`
   registra quando isso acontece de verdade). **Causa raiz confirmada e
@@ -601,7 +599,7 @@ detalhe dos 4 call sites.
   na origem — nenhuma tela de `kanban-dev.html` mostra comunicado
   inativo/arquivado (isso é feature só do `painel.html`, pra ADM
   revisar).
-- `COMUNICADOS_POLL_MS` — L33939 — 12min (era 3min até 2026-09-02,
+- `COMUNICADOS_POLL_MS` — L36054 — 12min (era 3min até 2026-09-02,
   corte de bytes).
 - **`insistente`** (opção "reaparece até expirar" na composição,
   `painel-dev.html`) — `_talvezMostrarComunicado()`/`dismissComunicado()`
@@ -639,7 +637,7 @@ enganando 2 rodadas seguidas) — não precisa de anchors próprios porque
 não introduziu função nenhuma.
 
 ### Cabeçalho mobile — menu "⋯" (2026-09-02)
-- `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6527/L6535/L6538
+- `toggleHdMore(e)` / `closeHdMore()` / `renderHdMoreDD()` — L6715/L6723/L6726
   — no mobile (≤768px), tudo que não é essencial no topo (tema, modo de
   visualização, avatares de quem tá online, perfil/status/sair, busca) some
   da fileira de ícones e vai pro menu "⋯" (`#hd-more-btn`/`#hd-more-dd`,
@@ -652,21 +650,21 @@ não introduziu função nenhuma.
   só ficam escondidos no `@media(max-width:768px)` do mobile.
 
 ### Board & render
-- `renderNormal()` — L11812
-- `renderRaiaOwner()` — L11870
-- `renderRaiaTag()` — L11921
-- `toggleRaia()` — L12344
-- `passesFilter()` — L12293
-- `handleDragStart/End/Over/Leave()` — L28480/L27286/L27297/L27325
-- `addTouchDnD()` — L28670 — drag-and-drop por toque (mobile)
-- `makeCardEl()` — L10763 — monta o HTML de um card no board (tags, badges,
+- `renderNormal()` — L12349
+- `renderRaiaOwner()` — L12407
+- `renderRaiaTag()` — L12458
+- `toggleRaia()` — L13054
+- `passesFilter()` — L13003
+- `handleDragStart/End/Over/Leave()` — L30304/L30315/L30326/L30354
+- `addTouchDnD()` — L30514 — drag-and-drop por toque (mobile)
+- `makeCardEl()` — L11206 — monta o HTML de um card no board (tags, badges,
   avatar, capa, ícone de pin...).
-- `_sortCards()` / `_sortCardsByMode()` — L10959/L11013 — ordena os cards de
+- `_sortCards()` / `_sortCardsByMode()` — L11409/L11463 — ordena os cards de
   uma coluna; `_sortCards()` resolve o pin (card fixado sempre no topo,
   ver `togglePinCard()`) por cima do resultado de `_sortCardsByMode()`
   (a lógica de ordenação de verdade — prioridade/criação/manual/etc.),
   num único ponto usado por `renderNormal()` E todas as raias.
-- `togglePinCard()` — L10969 — fixa/desafixa 1 card no topo da coluna
+- `togglePinCard()` — L11419 — fixa/desafixa 1 card no topo da coluna
   (2026-09-01); 1 fixado por coluna — ou 1 por coluna+submarca em squads
   com `submarcaAtivo` (2026-09-02, cada submarca fixa o seu sem
   atrapalhar as outras).
@@ -863,7 +861,7 @@ não introduziu função nenhuma.
     não filtra `archived` de propósito (herdado de `_marcosDoDia`).
 - **`/monitorarbugs` na Timeline (2026-09-04)** — 1ª revisão dedicada da
   área inteira, 3 achados reais:
-  1. `recordMove()`/`backfillFlow()` (~L8116/~L8022) comparavam
+  1. `recordMove()`/`backfillFlow()` (~L8451/~L8577) comparavam
      `toCol`/`from`/`card.col` só contra `_flowDoneColId()` (a 1ª coluna
      de fim configurada) pra gravar `card.flow.doneAt` — squad com 2+
      colunas de fim (`flowConfig.doneCols`, ex.: "Concluído"+
@@ -894,21 +892,25 @@ Tempo/Cycle Time/Throughput/CFD" (nunca auditada, maior consumidora de
 fixa, ignora `flowConfig.doneCols` — a config manual do PO) reimplementado
 em 9 lugares, de antes de `_isColDone()` existir como helper canônico.
 Todos passam a usar `_isColDone(colId)`:
-- `updateMetrics()` — L12489 — Throughput do toolbar.
-- `renderBoardDataGrid()` — L12507 — Throughput/Cards ativos/Intake
+- `updateMetrics()` — L13184 — Throughput do toolbar.
+- `renderBoardDataGrid()` — L13202 — Throughput/Cards ativos/Intake
   concluído (📊 Dados do Board → Visão Geral). Desde 2026-09-11 essa aba
-  também ganhou `_boardDataSmCvPorColuna()` — L19483 — tabela Submarca/
+  também ganhou `_boardDataSmCvPorColuna()` — L20715 — tabela Submarca/
   Canal quebrado por coluna (chamada de dentro de `_boardDataBarChart()`
-  — L19452), só pra squads que usam os campos.
-- `renderBoardDataInsights()` — L19224 — mesma exclusão, aba Insights.
+  — L20650), só pra squads que usam os campos. `_boardDataTrendChart()`
+  (gráfico "Tendência — últimos 14 dias") e `_boardDataBarChart()`
+  ("Cards ativos por coluna") ganharam hover com crosshair/tooltip em
+  2026-09-18 (`_bdTrendHover()`/`_bdBarHover()`, mesmo espírito do
+  crosshair do CFD).
+- `renderBoardDataInsights()` — L20412 — mesma exclusão, aba Insights.
   Desde 2026-09-11, o botão "🤖 Ponto de vista do Agente Ágil" ali passou
-  a chamar `_pedirAnaliseBoardInsights()` — L20801 (em vez de
+  a chamar `_pedirAnaliseBoardInsights()` — L22103 (em vez de
   `_pedirAnaliseDados()` direto) — garante que `_renderCFD()`/
-  `_renderBurndown()` (aba separada "📈 CFD & Burndown", L19591/L19719)
+  `_renderBurndown()` (aba separada "📈 CFD & Burndown", L20878/L21006)
   já rodaram e preencheram `window._cfdResumo`/`window._burndownResumo`
   antes de montar o resumo enviado ao backend, mesmo se a pessoa nunca
   abriu aquela aba.
-- `maybeSnapshot()` — L12642 — `done`/`sp_done` do snapshot histórico
+- `maybeSnapshot()` — L13343 — `done`/`sp_done` do snapshot histórico
   diário (`kanban/squads/{squad}/snapshots/{date}`) — sem correção
   retroativa nos snapshots já gravados, só os de hoje em diante.
 - `agCtx()` — L~22075 — contagem "Concluídos" no prompt de sistema do
@@ -917,13 +919,13 @@ Todos passam a usar `_isColDone(colId)`:
   `c.doneAt` (campo raso, NUNCA escrito em lugar nenhum do app — o real é
   `card.flow.doneAt`, ver `recordMove()`) — a omissão de cards concluídos
   há +7 dias do snapshot enviado à IA nunca funcionava.
-- `computeAvisosQuadro()` — L17225 — mesmo bug do campo raso `c.doneAt`
+- `computeAvisosQuadro()` — L18293 — mesmo bug do campo raso `c.doneAt`
   no aviso "✅ Resolvido: X" (🌅 Meu Dia) — nunca disparava, pra card
   nenhum, desde que a feature existe.
 - 4 caminhos de notificação "card concluído" vs. "card movido" — cada um
   reimplementava a MESMA heurística local (regex de nome) por conta
-  própria: modal-save (~L12153), `scheduleAutoSave()` (~L12243),
-  `handleDrop()` (~L27360), `ctxMove()` (~L29076) — todos trocados por
+  própria: modal-save (~L12153), `scheduleAutoSave()` (~L13582),
+  `handleDrop()` (~L30389), `ctxMove()` (~L32417) — todos trocados por
   `if(_isColDone(colId)) notifDone(...); else notifMoved(...)`, sem
   variável local nenhuma.
 Testado com Playwright, squad fictícia com coluna de conclusão de id
@@ -942,10 +944,10 @@ se `_timelineFeedState.deStr!==_timelineFeedState.ateStr`, a hora vira
 hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 
 ### Busca (Ctrl+K + "Ver no board")
-- `openSearch()` — L31491
-- `renderSearchResults()` — L31503
-- `verNoBoardFromSearch()` — L31570
-- `_scheduleTextFilterApply()` — L12153 — debounce do filtro `#f-texto`
+- `openSearch()` — L33706
+- `renderSearchResults()` — L33718
+- `verNoBoardFromSearch()` — L33785
+- `_scheduleTextFilterApply()` — L12690 — debounce do filtro `#f-texto`
 
 ### ⌨️ Atalhos de teclado personalizáveis (2026-09-07)
 Pedido direto do usuário — "personalizar atalhos do teclado pra ações
@@ -1019,17 +1021,17 @@ irmão, não `board_prefs`, ver Rodada 5 abaixo). `kanban/usuarios/
 {uid}/board_prefs/{squadId}` (por squad) + `board_prefs_global` (o que
 não depende de squad — fonte, densidade do card, squad padrão), mesmo
 listener-ao-vivo + cache local de sempre.
-- `_saveBoardPref(campo,valor)` (~L24780) — escrita otimista (atualiza
+- `_saveBoardPref(campo,valor)` (~L27559) — escrita otimista (atualiza
   `_boardPrefsSquad` local + `window._set()`), `loadBoardPrefs()`
-  (~L24785) — listener, `_applyBoardPrefsSquad()` (~L24808) — aplica o
+  (~L27564) — listener, `_applyBoardPrefsSquad()` (~L27587) — aplica o
   snapshot nas variáveis de runtime já existentes e re-renderiza.
   Chamado no boot junto de `loadNotifPrefs()`/`loadAtalhosCustom()`/
   `loadToolbarOrder()`.
 - **Rodada 1**: `raia` e `collapsed_cols` — nenhum dos dois salvava
   NADA antes disso, nem localStorage (voltavam ao padrão a cada F5,
-  mesmo no mesmo navegador). `toggleRaia()` (~L11935, UI extraída pra
+  mesmo no mesmo navegador). `toggleRaia()` (~L13054, UI extraída pra
   `_applyRaiaBtnUI()`), `toggleRaiaCol(id)`/`toggleCol(id)`
-  (~L12052/L12058) — os dois fazem a mesma coisa em `collapsedCols`
+  (~L13171/L13177) — os dois fazem a mesma coisa em `collapsedCols`
   (duplicação pré-existente, não tocada aqui) — ambos chamam
   `_saveBoardPref('collapsed_cols',...)`.
 - **Rodada 2**: `col_sort`, `view_mode`, `submarca_filtro`,
@@ -1037,13 +1039,13 @@ listener-ao-vivo + cache local de sempre.
   navegador (`safeLS`/`localStorage`, chave por squad:
   `col_sort_`/`hybrid_view_`/`sm_filtro_`/`bd_hcols_`). Precisou de
   **migração** (diferente da Rodada 1): `_boardPrefLoadOrMigrate(campo,
-  legacyKey, padrao, parse)` (~L24800) — se a conta já tem valor
+  legacyKey, padrao, parse)` (~L27579) — se a conta já tem valor
   sincronizado usa ele; senão herda o que já tava salvo localmente (se
   tiver) e sobe pro Firebase na hora, sem resetar quem já tinha
-  configurado. `setColSortMode()` (~L12043, UI extraída pra
-  `_applyColSortBtnUI()` ~L12036), `setHybridView()` (~L7114),
-  `_saveSubmarcaFiltroPadrao()` (~L11784), `_bdLoadHiddenCols()`/
-  `_bdToggleCol()` (~L18242/L18245) — todos continuam gravando em
+  configurado. `setColSortMode()` (~L13162, UI extraída pra
+  `_applyColSortBtnUI()` ~L13155), `setHybridView()` (~L7455),
+  `_saveSubmarcaFiltroPadrao()` (~L12612), `_bdLoadHiddenCols()`/
+  `_bdToggleCol()` (~L20310/L20313) — todos continuam gravando em
   `safeLS`/`localStorage` também (cache rápido pra 1ª pintura antes do
   Firebase responder), só ADICIONARAM a chamada a `_saveBoardPref()`.
 - **Rodada 3**: densidade do card (`card_density`) — feature NOVA, não
@@ -1101,7 +1103,7 @@ listener-ao-vivo + cache local de sempre.
     verdade vai aparecer — sempre roda
     `document.getElementById('squad-selector')?.classList.remove('active')`
     antes de mostrar o app.
-  - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6387/L6390) — UI
+  - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6682/L6685) — UI
     é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6356,
     clique no nome do squad atual no cabeçalho): "📌 Fixar este squad
     como padrão" / "📌 ...remover", acima da lista de squads.
@@ -1207,54 +1209,55 @@ verdade, sempre reaproveitando infraestrutura já existente (board_prefs,
 filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
 - **Mecanismo genérico** (compartilhado pelos 5 casos, de propósito — evita
   2 sugestões empilhadas na tela): `_mostrarSugestaoRotina(id, mensagemHtml,
-  respostaSim, labelSim, aoAceitar)` — L12452, `_sugestaoRotinaResponder(resposta)`
-  — L12477 (3 respostas sempre: aceitar/`'agora_nao'` some por 1 sessão
+  respostaSim, labelSim, aoAceitar)` — L12920, `_sugestaoRotinaResponder(resposta)`
+  — L12945 (3 respostas sempre: aceitar/`'agora_nao'` some por 1 sessão
   pra QUALQUER sugestão/`'nunca'` recusa permanente só daquele `id`).
   `_sugestaoRecusadasKey()`/`_sugestaoRecusadaPermanente(id)`/
-  `_sugestaoRecusarPermanente(id)` — L12440-12450.
-- **Caso #1 — Timeline como visão inicial**: `SUGESTAO_TIMELINE_*` — L11216,
-  `_marcarUsoTimelineCedo()` — L11230 (chamada por `toggleTimelineView()`
-  — L11202, só conta se dentro dos 3min iniciais do boot),
-  `_checarSugestaoTimeline()` — L11240, `_tornarTimelineVisaoInicial()` —
-  L11252 (grava `board_prefs.visao_inicial`). Aplicado no boot dentro de
-  `_applyBoardPrefsSquad()` (ver abaixo) com guard `window._visaoInicialAplicada`
-  — 1x por sessão, nunca força de volta se a pessoa trocar pra Kanban na
-  mão (bug pego ANTES de shippar: o listener é ao vivo, sem o guard
-  reaplicaria toda vez que outro board_pref mudasse).
+  `_sugestaoRecusarPermanente(id)` — L12908/L12909/L12914.
+- **Caso #1 — Timeline como visão inicial**: `SUGESTAO_TIMELINE_*` — L11652,
+  `_marcarUsoTimelineCedo()` — L11666 (chamada por `toggleTimelineView()`
+  — L11638, só conta se dentro dos 3min iniciais do boot),
+  `_checarSugestaoTimeline()` — L11676, `_tornarTimelineVisaoInicial()` —
+  L11688 (grava `board_prefs.visao_inicial`). Aplicado no boot dentro de
+  `_applyBoardPrefsSquad()` (L27587, ver abaixo) com guard
+  `window._visaoInicialAplicada` — 1x por sessão, nunca força de volta se a
+  pessoa trocar pra Kanban na mão (bug pego ANTES de shippar: o listener é
+  ao vivo, sem o guard reaplicaria toda vez que outro board_pref mudasse).
 - **Caso #2 — preset de filtro recorrente**: `SUGESTAO_FILTRO_CAMPOS`/
   `SUGESTAO_FILTRO_LIMIAR_DIAS`(4)/`SUGESTAO_FILTRO_JANELA_DIAS`(10) —
-  L12375, `_filtroFingerprint(f)`/`_filtroComboLabel(f)` — L12382/12393,
-  `_registrarSinalFiltro()` — L12406 (chamada no fim de `applyFilters()`
-  — L12226), `_checarSugestaoFiltro(fp,hist)` — L12422. Aceitar chama o
-  `saveFilterPresetPrompt()` já existente, sem duplicar lógica.
+  L12843/L12844/L12845, `_filtroFingerprint(f)`/`_filtroComboLabel(f)` —
+  L12850/L12861, `_registrarSinalFiltro()` — L12874 (chamada no fim de
+  `applyFilters()` — L12694), `_checarSugestaoFiltro(fp,hist)` — L12890.
+  Aceitar chama o `saveFilterPresetPrompt()` já existente, sem duplicar
+  lógica.
 - **Caso #3 — "Meus cards" fixado na toolbar**: `SUGESTAO_MEUSCARDS_*` —
-  L12495, `_marcarUsoMeusCards()` — L12508 (chamada no topo de
-  `highlightMyCards()` — L17421), `_checarSugestaoMeusCards()` — L12517,
-  `_fixarMeusCardsNoHeader()`/`_applyMeusCardsFixadoUI()` — L12526/12531
+  L12963, `_marcarUsoMeusCards()` — L12976 (chamada no topo de
+  `highlightMyCards()` — L18245), `_checarSugestaoMeusCards()` — L12985,
+  `_fixarMeusCardsNoHeader()`/`_applyMeusCardsFixadoUI()` — L12994/L12999
   (grava `board_prefs.meus_cards_fixado`, toggla `#tb-meus-cards`).
 - **Caso #4 — atalho rápido de atribuição**: `SUGESTAO_ATRIBUICAO_*` —
-  L26166, `_registrarSinalAtribuicao(ownerInit)` — L26169 (chamada no
-  TOPO de `runAutoRules()` — L30195, funil único por onde os caminhos
+  L27469, `_registrarSinalAtribuicao(ownerInit)` — L27472 (chamada no
+  TOPO de `runAutoRules()` — L31657, funil único por onde os caminhos
   de atribuição — manual/autosave/bulk/criação, e desde 2026-09-21
   também `executarReatribuir()` (⚙ Config → "🔁 Reatribuir cards",
   achado real de `/monitorarbugs`: mutava `card.owner` sem
   `recordHistory()`/`runAutoRules()`) — já passam, evita duplicar o
   sinal em cada call site), `_checarSugestaoAtribuicao(hist)` —
-  L26180, `_criarAtalhoAtribuicao(init)` — L26191 (grava
+  L27483, `_criarAtalhoAtribuicao(init)` — L27494 (grava
   `board_prefs.atribuicao_rapida[]`, registra ação dinâmica em
   `ATALHO_ACOES` e leva pra ⌨️ Atalhos já na aba certa),
-  `_applyAtribuicaoRapidaAcoes()` — L26205 (recria as ações toda vez que
+  `_applyAtribuicaoRapidaAcoes()` — L27508 (recria as ações toda vez que
   board_prefs carrega — `ATALHO_ACOES` é `const`, mas isso só trava a
   REFERÊNCIA, adicionar propriedade continua válido), `_quickAssignOwner(init)`
-  — L26217 (reusa `scheduleAutoSave()` do dropdown manual, não reimplementa
+  — L27520 (reusa `scheduleAutoSave()` do dropdown manual, não reimplementa
   `notifAssigned()`/histórico).
 - **Caso #5 — filtro de atrasados por horário**: o mais caro/frágil dos 5
   (sinal mais ruidoso, amostra menor), deixado por último de propósito.
-  `_cardEstaAtrasadoAgora(c)` — L30398 (NÃO reaproveita `_cardAtrasadoMs()`,
+  `_cardEstaAtrasadoAgora(c)` — L31874 (NÃO reaproveita `_cardAtrasadoMs()`,
   que mede tempo acumulado histórico, não o estado atual),
-  `_registrarSinalAtrasado(c)` — L30404 (chamada em `openCard()` — L13951),
-  `_checarSugestaoAtrasados(hist)` — L30421, `_ativarVisaoAtrasados(bloco)`
-  — L30434 (grava `board_prefs.visao_atrasados_bloco`). Aplicado no boot
+  `_registrarSinalAtrasado(c)` — L31880 (chamada em `openCard()` — L14620),
+  `_checarSugestaoAtrasados(hist)` — L31897, `_ativarVisaoAtrasados(bloco)`
+  — L31910 (grava `board_prefs.visao_atrasados_bloco`). Aplicado no boot
   só 1x por sessão (`window._visaoAtrasadosAplicada`) e só se a hora atual
   cair no bloco de 2h aprendido — simplificação deliberada, versão
   "correta" (ligar/desligar dinamicamente ao longo do dia) tinha risco
@@ -1266,12 +1269,12 @@ filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
   padrão `{valor,date}`/dias-distintos do Caso #2:
   `SUGESTAO_ATRASADOS_LIMIAR_DIAS`(4)/`SUGESTAO_ATRASADOS_JANELA_DIAS`(10)
   — L30388-30389.
-- **Aplicação no boot**: dentro de `_applyBoardPrefsSquad()` — L26284
-  (listener AO VIVO de `loadBoardPrefs()` — L26261, roda de novo a cada
+- **Aplicação no boot**: dentro de `_applyBoardPrefsSquad()` — L27587
+  (listener AO VIVO de `loadBoardPrefs()` — L27564, roda de novo a cada
   mudança de QUALQUER board_pref) — casos #1/#3/#4/#5 todos aplicados
   aqui, cada um com seu próprio guard "1x por sessão" quando aplicável.
   Boot chama `_iniciarSessaoMeusCards()`/`_iniciarSessaoTimeline()` junto
-  de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L31789.
+  de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L33450.
 
 ### ⎋ Esc fecha a tela aberta (2026-09-07)
 Pedido direto do usuário — "quando o board abre outras telas, tipo
@@ -1342,12 +1345,12 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
    (mesmo caminho do botão "✅ Pronto", salva o que já foi arrastado).
 
 ### Checklist (com grupos colapsáveis)
-- `renderCL()` — L14988
-- `_clGroupsInit()` — L14953
-- `toggleChecklistGroupCollapse()` — L14966
+- `renderCL()` — L15978
+- `_clGroupsInit()` — L15943
+- `toggleChecklistGroupCollapse()` — L15956
 
 ### Campanhas (`openCamp()`, botão "📣 Campanhas")
-- `renderCampDashboard()` — L20334 — aba "📊 Dados de Produção" do detalhe
+- `renderCampDashboard()` — L21726 — aba "📊 Dados de Produção" do detalhe
   de campanha, alimentada por `window._campVinculados` (cards com a(s)
   tag(s) da campanha — setado em `renderCampDetalhe()`). Checkbox "🧩
   Incluir supercards" (estado em `window._campDashIncludeSuper`, não no
@@ -1359,15 +1362,15 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   não tem entrada própria aqui.)
 
 ### Supercards / Ficha Técnica
-- `_crvAutoTitle()` — L16366 — título automático do filho a partir da Ficha Técnica
-- `searchSuperChildren()` — L26972 — busca de cards existentes ao criar um filho
-- `_mergeModeloEmCardObj()` — L30737
-- `_applyFanoutTemplate()` — L30691 — cria os filhos de uma receita de fan-out;
-  `applyFanoutToCurrentCard()` — L30798 — botão manual "🧩 Aplicar receita",
+- `_crvAutoTitle()` — L16408 — título automático do filho a partir da Ficha Técnica
+- `searchSuperChildren()` — L27122 — busca de cards existentes ao criar um filho
+- `_mergeModeloEmCardObj()` — L30887
+- `_applyFanoutTemplate()` — L30841 — cria os filhos de uma receita de fan-out;
+  `applyFanoutToCurrentCard()` — L30948 — botão manual "🧩 Aplicar receita",
   recalcula `editingSuperChildren`/`editingSuperArchivedIds` via
   `_splitSuperChildIds()` depois de aplicar
 - Nesting de 2 níveis (campanha → criativo → versão): `editingSuperParentIsChild`
-  (global, L26729) + `initSuperChildren()` — L26749 — calcula se o card
+  (global, L26879) + `initSuperChildren()` — L26899 — calcula se o card
   aberto já seria uma "versão" (teto real do 2º nível). `editingSuperParent`
   (busca reversa "quem é meu pai?", dentro da mesma função) filtra pai
   arquivado desde 2026-09-18 (`/monitorarbugs` — sem isso, um filho ainda
@@ -1376,15 +1379,15 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   outro supercard — contradição entre os 2 pontos, corrigida com o mesmo
   filtro `!c.archived` que o cálculo do avô, logo abaixo na função, já
   usava).
-- `_crvOwnSummary()` — L26843 — resumo dos campos próprios do criativo,
+- `_crvOwnSummary()` — L26993 — resumo dos campos próprios do criativo,
   usado no card de versão (2º nível)
-- **`_splitSuperChildIds(childCardIds)` — L26710** (2026-09-18) — separa
+- **`_splitSuperChildIds(childCardIds)` — L26860** (2026-09-18) — separa
   `card.childCardIds` em `{ativos:[{id,title,col}], arquivadosIds:[id]}`;
   usado por `initSuperChildren()` e por `applyFanoutToCurrentCard()`.
   `editingSuperChildren` (global, L26696) guarda só os ativos — é o que
   o modal exibe/conta ("X/Y concluído(s)"); `editingSuperArchivedIds`
   (global, L26705) guarda os arquivados à parte, existe só pra não se
-  perderem: `persistSuperChildren(histWhat)` — L27084 — grava
+  perderem: `persistSuperChildren(histWhat)` — L27234 — grava
   `childCardIds` de volta sempre como `[...ativos, ...arquivadosIds]`
   juntos, senão salvar o card depois de abrir o modal desvincularia os
   arquivados de verdade do Firebase (achado ao filtrar só a exibição na
@@ -1394,7 +1397,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `quickCreateSuperChild()` (L27053, "vinculou... (novo)"); `_histTipo()`
   (~L8745) classifica essas 3 frases + "aplicou fan-out..." (já existente)
   com ícone próprio 🧩 (`CARD_HIST_TIPOS.supercard`).
-- `_checkSupercardAutoComplete(childCard, ancestry)` — L31390 — conclui o
+- `_checkSupercardAutoComplete(childCard, ancestry)` — L31540 — conclui o
   supercard sozinho quando todos os filhos ativos chegam numa coluna de
   fim; cascateia filho→pai→avô recursivamente. `_isColCancelLike()` —
   L31376, logo acima — se TODOS os filhos ativos terminaram cancelados,
@@ -1406,7 +1409,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `runAutoRules('move', card.id, ...)` chama ela direto (~L31517, dentro
   de `runAutoRules()`) — herda cobertura dos 9 call sites que já disparam
   `runAutoRules('move',...)`, não precisa de chamada própria em cada um.
-- `_duplicarComFilhos()` — L15610 — duplicar um supercard com opção de
+- `_duplicarComFilhos()` — L15652 — duplicar um supercard com opção de
   duplicar os filhos junto (checkbox opt-in no modal de duplicar, só
   aparece se `_cardIsSupercard()`). Recursivo (cobre netos, 3 níveis
   campanha→criativo→versão), religa `childCardIds` pros ids NOVOS, filhos
@@ -1444,12 +1447,12 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   (mesma base do seletor de squad do header).
 
 ### Card lock / "Pedir o card"
-- `CARD_LOCK_REQUEST_GRACE_MS` — L13033
-- `_cardLockRequestPath()` — L13040
-- `pedirCard()` — L13050
-- `liberarCardAgora()` — L13064
-- `_renderLockRequestUI()` — L13068
-- `_handleLockRequest()` — L13103
+- `CARD_LOCK_REQUEST_GRACE_MS` — L13873
+- `_cardLockRequestPath()` — L13880
+- `pedirCard()` — L13890
+- `liberarCardAgora()` — L13904
+- `_renderLockRequestUI()` — L13908
+- `_handleLockRequest()` — L13943
 - `_checkCardLock(cardId)` — perto de L12453 — chamada de dentro de
   `openCard()`; lê/assina `card_locks/{cardId}` e decide travar em
   leitura ou assumir. 2 early-returns ANTES de tocar o Firebase, os dois
@@ -1467,7 +1470,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   L25649. `extra` (2026-09-06, opcional) — objeto mesclado no registro,
   pra campo específico de 1 tipo só (ex.: `{meetingLink}` em `reuniao`)
   sem virar campo fixo de todo notif.
-- `loadNotifs()` — L26345
+- `loadNotifs()` — L28116
 - `NOTIF_ICONS` — ícone por `type`; ganhou `okr_editado`/`okr_prazo`/
   `okr_reuniao` (🎯), `okr_agente` (🤖) em 2026-09-06, e
   `recorrente`/`reuniao`/`gcal_pending`/`gcal_approved`/`reacao`/
@@ -1489,11 +1492,11 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   (nenhum desses tipos tem `cardId`, e só `intake` tinha tratamento
   especial pra isso). `cardId` presente (todo o resto): abre o card
   (mesmo squad ou redireciona `?squad=`).
-- `checkDueNotifs()` — L26809 — due_today/due_overdue, 1x/dia
-- `parseMentions()` — L26617 — @menção em descrição/PO/checklist/comentário;
+- `checkDueNotifs()` — L28598 — due_today/due_overdue, 1x/dia
+- `parseMentions()` — L28406 — @menção em descrição/PO/checklist/comentário;
   `@todos` (`TODOS_MENTION_ENTRY`, 2026-09-01) notifica todos os membros do
   squad de uma vez em vez de 1 pessoa.
-- `mentionCandidates()`/`mentionMatchLabel()` — L7219/L7238 — autocomplete
+- `mentionCandidates()`/`mentionMatchLabel()` — L7427/L7446 — autocomplete
   de @; entradas sintéticas (`init` sentinela, nunca um membro real):
   `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
   (só em squads com Cloud Function ouvindo).
@@ -1501,19 +1504,19 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
 ### 📅 Calendários (Google Calendar) — nunca teve seção própria até 2026-09-18
 Arquitetura em 2 camadas independentes, sem token OAuth próprio pro squad
 comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
-- **Squad ("local")**: `addCalendarToList()` — L29573 — grava a agenda
+- **Squad ("local")**: `addCalendarToList()` — L29723 — grava a agenda
   direto em `FB+'/config/calendars'` (client-side), depois enfileira uma
-  aprovação via `_queueGcalRequest()` — L29598 (`gcal_pending`, ver
+  aprovação via `_queueGcalRequest()` — L29748 (`gcal_pending`, ver
   `NOTIF_ICONS`/`openNotif()` na seção Notificações acima) — porque só
   um ADM tem token OAuth válido pra buscar de verdade.
-  `processGcalQueueForAdmin()` — L29821 — ADM aprova, dispara
-  `_fetchAndCacheGcalForSquad()` — L29722 — fetch real na API do Google,
+  `processGcalQueueForAdmin()` — L29971 — ADM aprova, dispara
+  `_fetchAndCacheGcalForSquad()` — L29872 — fetch real na API do Google,
   escreve `gcal_cache` do squad.
 - **Painel ("global")**: sistema PARALELO e independente em
   `painel-dev.html`, com seu próprio loop de fetch (~L7580-7660) e
   escrita em `kanban/painel/config/gcal_cache_dev` — cada squad pode ter
   calendários próprios ("locais") além dos globais do painel.
-- **Merge pra exibição**: `_mergeGcalSources()` — L29378 (função aninhada,
+- **Merge pra exibição**: `_mergeGcalSources()` — L29528 (função aninhada,
   não top-level) — combina os eventos "locais" do squad com os "globais"
   do painel pra desenhar o calendário do kanban. Mais sensível que uma
   função de exibição normal: além de filtrar, ela REGRAVA o resultado
@@ -1530,34 +1533,34 @@ comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
   cache persistido, não só esconde de uma renderização.
 
 ### Notas
-- `toggleNotas()` — L17799, `setNotasScope()` — L16881
-- `renderNotasList()` — L17847, `createNota()` — L16948
-- `openNota()`/`closeNotaEditor()` — L17895/L17896
-- `renderNotaEditor()` — L18159, `toggleNotaModo()` — L17526 (livre/estruturado)
-- `renderNotaLinkedCards()` — L17922, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L17009/L17034/L17043
-- `renderNotasVinculadasNoCard()` — L17994 — seção "Vínculos" dentro do card
+- `toggleNotas()` — L18964, `setNotasScope()` — L18977
+- `renderNotasList()` — L19012, `createNota()` — L19044
+- `openNota()`/`closeNotaEditor()` — L19060/L19061
+- `renderNotaEditor()` — L19337, `toggleNotaModo()` — L19649 (livre/estruturado)
+- `renderNotaLinkedCards()` — L19087, `notaSearchCards()`/`notaAddCardLink()`/`notaRemoveCardLink()` — L19105/L19130/L19149
+- `renderNotasVinculadasNoCard()` — L19172 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L30526 (21 triggers — `agendado_created` adicionado
+- `AUTO_TRIGGERS` — L31001 (21 triggers — `agendado_created` adicionado
   2026-08-30, par de `recorrente_created` que faltava)
-- `AUTO_ACTIONS` — L30603 (16 ações — `notify_po_org` ["Notificar
+- `AUTO_ACTIONS` — L31078 (16 ações — `notify_po_org` ["Notificar
   PO/Organizador"] adicionada 2026-09-17, pedido direto do usuário;
   mesmo padrão de `notify_all` mas filtra `members` por
   `role==='po'||role==='organizador'` antes de montar o `@menção`, sem
   postar nada se o squad não tiver ninguém nesses papéis)
-- `runAutoRules()` — L29727 — só decide QUAIS regras batem (síncrono);
+- `runAutoRules()` — L31657 — só decide QUAIS regras batem (síncrono);
   `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
   de verdade depois de ~1.2s (pedido direto: dar um respiro visual antes do
   efeito da automação, e mostrar toast "⚡ Automação ... foi aplicada" —
   antes era instantâneo e silencioso) — re-busca o card no momento de
   aplicar (guarda contra card excluído/arquivado durante o delay)
-- `_autoTrigger()`/`_autoAction()` — L29367/L29368
-- `_autoValLabel()`/`_autoRenderValueOptions()` — L29371/L29395
+- `_autoTrigger()`/`_autoAction()` — L31290/L31291
+- `_autoValLabel()`/`_autoRenderValueOptions()` — L31294/L31318
 - **Acesso à tela de Automações** (achado real 2026-08-24: só existia via
   `⚙ Configurações → aba ⚡ Auto`, e o botão de Configurações fica
   escondido de quem não é PO/Organizador/ADM — `_applyRoleVisibility()`,
   L9153 — mesmo sem nenhuma trava de permissão nas ações em si) —
-  `openAutoOv()` — L10476 — abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
+  `openAutoOv()` — L23932 — abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
   tanto por um atalho em ⚡ Funções de card (`#card-fn-ov`, visível pra
   qualquer papel) quanto pela aba "⚡ Auto" em Configurações (que virou
   um redirecionamento pro mesmo overlay, não mais uma aba inline)
@@ -1577,7 +1580,7 @@ comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
   `window._onChildAdded` (L8816) e reivindica cada entrada via
   `window._runTransaction()` antes de processar, garantindo exatamente 1
   disparo mesmo com várias pessoas com o board aberto ao mesmo tempo.
-  `_claimPendingAuto()` — L28454 / `_refreshCardFromFirebase()` — L28472
+  `_claimPendingAuto()` — L31595 / `_refreshCardFromFirebase()` — L31613
   (força `cards` a refletir o estado mais recente do card antes de rodar
   `runAutoRules()`, já que a sincronização granular normal tem debounce de
   150ms e correria o risco de ler/resalvar um snapshot desatualizado por
@@ -1595,7 +1598,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
 - **Submarca** (squad Site Hering) — `SUBMARCA_TAGS` L7879 (10 tags fixas,
   5 marcas × Comercial/Cadastro); `submarcaAtivo`/`submarcasVisiveis` L7873-4;
   `toggleSubmarcaAtivo()`/`_ensureSubmarcaTagsBackfilled()` L15709/15687;
-  `_applySubmarcaUIVisibility()` L15777; `setCardSubmarca()` L15787;
+  `_applySubmarcaUIVisibility()` L16806; `setCardSubmarca()` L16816;
   dropdown da toolbar `renderSubmarcaQuickFilters()`/
   `toggleSubmarcaDropdown()` L15825/15869 (`#submarca-dd-wrap`); sempre
   **obrigatória** pra salvar assim que ativada (ver `saveCard()` ~L14204,
@@ -1645,18 +1648,18 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   v8.30.628) pro detalhe de cada um.
 
 ### Impedimentos (modo coluna vs. tag)
-- `blockerMode` (let) — L29782 — carregado de `config/blockerMode`, `'col'`
+- `blockerMode` (let) — L31719 — carregado de `config/blockerMode`, `'col'`
   (default) ou `'tag'`
-- `_cardIsBlocked(card)` — L29792 — fonte única de verdade pro "está
+- `_cardIsBlocked(card)` — L31729 — fonte única de verdade pro "está
   impedido?": modo `col` → `card.col==='blocker'`; modo `tag` →
   `!!card.blocker` (ignora o campo que não é da modalidade ativa)
-- `saveBlockerMode(mode)` — L29920 — acionado em ⚙ Configurações →
+- `saveBlockerMode(mode)` — L31937 — acionado em ⚙ Configurações →
   Impedimentos. Achado real 2026-08-26 (squad `midiacriativa`, incidente
   em produção — 64 cards sumidos do board): agora valida ANTES de trocar
   pra `'col'` se existe uma coluna com id `blocker`; se não existir,
   bloqueia a troca com aviso em vez de deixar a squad num estado onde
   cards já impedidos ficam invisíveis
-- `ctxMove(colId)`/`ctxBlock()` — L30296/L30338 — `ctxBlock()` é só
+- `ctxMove(colId)`/`ctxBlock()` — L32417/L32459 — `ctxBlock()` é só
   `ctxMove('blocker')`. Mesmo incidente:
   `ctxMove()` agora aborta com aviso se `colId` não bater com nenhuma
   coluna existente, em vez de gravar um `card.col` órfão —
@@ -1674,7 +1677,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   mais robusta do ⏱️ tempo atrasado/bloqueado (ver seção própria acima)
   ficava sem cobertura. Corrigido: `recordMove(card, colId)` adicionado
   antes de mutar `card.col`, mesmo padrão de `_doBulkMove()`.
-- Menu de contexto do card (`showCtxMenu()` — L31952) — 2026-09-01,
+- Menu de contexto do card (`showCtxMenu()` — L32112) — 2026-09-01,
   pedido direto ("mudar prioridade e mudar coluna... deveria abrir a
   lista pro lado pra n ficar mt grande", comparando com o submenu do
   Windows Explorer): "Mover para" e "Prioridade" viraram flyouts em vez
@@ -1689,14 +1692,14 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   `_ctxSubmenus.prioridade` (preenchido por `showCtxMenu()`). CSS
   reaproveita `.ctx-sub`/`.ctx-submenu`, que já existiam no arquivo mas
   nunca tinham sido usadas em HTML/JS nenhum — sobra de uma feature
-  começada e abandonada antes. `hideCtxMenu()` — L32151 — também fecha
-  o flyout agora. `ctxCopyLink(cardId)` — L32341 — item novo "🔗 Copiar
+  começada e abandonada antes. `hideCtxMenu()` — L32311 — também fecha
+  o flyout agora. `ctxCopyLink(cardId)` — L32501 — item novo "🔗 Copiar
   link do card", mesma URL de `shareCardLink()` (botão do modal) mas sem
   precisar abrir o card primeiro — `_cardShareUrl()` ganhou um `cardId`
   opcional (antes só funcionava com `editingId`, o card do modal
   aberto).
   **Submenus abrem no hover** (2026-09-15, `_ctxSubmenuHoverEnter()` —
-  L32131 / `_ctxOpenSubmenuAt()` — L32089): passar o mouse por cima de
+  L32291 / `_ctxOpenSubmenuAt()` — L32249): passar o mouse por cima de
   "Mover para"/"Prioridade" já abre o flyout depois de 120ms
   (`_ctxHoverTimer`, L32130), sem precisar clicar. `/monitorarbugs` no
   mesmo lote (PR #925): nem `hideCtxMenu()` nem `showCtxMenu()`
@@ -1707,7 +1710,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
 - `_doBulkBlockCol()`/`_doBulkUnblockCol(colId)` — L7802/L7824 —
   versões em massa do mesmo par; `_doBulkBlockCol()` ganhou o mesmo
   guard de existência da coluna
-- `delColumn(i)` — L23923 — editor de colunas em ⚙ Configurações. Coluna
+- `delColumn(i)` — L24061 — editor de colunas em ⚙ Configurações. Coluna
   fixa `id==='blocker'` ("Impedimentos") só bloqueia a exclusão enquanto
   ainda tem cards nela (2026-09-10, antes era bloqueio incondicional —
   relaxado depois que `saveBlockerMode()`/`_doBulkBlockCol()`/`ctxMove()`
@@ -1719,7 +1722,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   só voltar pra `col` depois já causou o incidente uma 2ª vez)
 - Ação de Automação "Mover card para coluna" (`AUTO_ACTIONS`, ver seção
   Automações acima) tem o mesmo guard de existência de coluna
-- `_meuDiaIsBlocked(card)` — L20519 (dentro da seção "Meu Dia", ver
+- `_meuDiaIsBlocked(card)` — L21920 (dentro da seção "Meu Dia", ver
   `renderMeuDia()`/`_meuDiaCrossData` acima) — achado real 2026-08-28
   (`/monitorarbugs`): checava `card.blocker===true || card.col==='blocker'`
   incondicionalmente, dando falso-positivo pra squads em modo `col` com
@@ -1863,7 +1866,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   src>` externo, Cloud Function CommonJS) — sem essa réplica, `visao_
   board` (usado pelo orquestrador e por `analisePO.js`) ficaria
   divergente do relatório client-side pra um card pausado.
-- `_cardDataCriacaoStr()` — L18981, logo acima de `_cardTempos()` — data
+- `_cardDataCriacaoStr()` — L20155, logo acima de `_cardTempos()` — data
   de criação (YYYY-MM-DD) com fallback pra `card.flow.log[0].at` quando
   `card.createdAt` falta (dado legado). Usada por `_cardColunaEmDia()`
   (CFD, L19573) e pelo filtro de escopo de `_renderBurndown()`
@@ -1881,7 +1884,7 @@ o agora), isto acumula quanto tempo cada card já passou nesses estados,
 sobrevivendo à conclusão — mesmo espírito de `card.pausedMs` (seção
 acima), mas 100% automático (nenhum clique dispara, só o estado
 derivado do card mudando).
-- `_cardIsOverdue(card)`/`_cardIsBlocked(card)` — perto de L28608/L28581
+- `_cardIsOverdue(card)`/`_cardIsBlocked(card)` — perto de L31756/L31729
   — fonte única de verdade pros 2 estados (o 2º já existia antes desta
   rodada). `_cardIsOverdue` usa o mesmo critério de "Prazo vencido"
   (`due` no passado — due=hoje NÃO conta —, card ativo, não numa coluna
@@ -1900,7 +1903,7 @@ derivado do card mudando).
   `childCardIds`/`pinned`, já resetados ali) — antes herdava tempo
   acumulado (e `flow.enteredAt` desalinhado de `createdAt`) do card
   original.
-- `_settleBlockedTag(card, wasBlocked)` — L31621 — fecha/abre o
+- `_settleBlockedTag(card, wasBlocked)` — L31771 — fecha/abre o
   episódio em modo TAG, chamado nos pontos que já fazem esse toggle de
   propósito: `_doBulkBlockTag()`/`_doBulkUnblockTag()` (L7839/7856),
   `scheduleAutoSave()` (par `_prevBlocker`) e `saveCard()` manual
@@ -1917,28 +1920,28 @@ derivado do card mudando).
   dela) é o mecanismo que `_duplicarCardObj()` reaproveita ao apagar
   `novo.flow` — inicializa um flow de verdade do zero, mesmo caminho de
   um card genuinamente novo.
-- `_settleCardTimeTrackingLazy(card)` — L31653 — rede de segurança
+- `_settleCardTimeTrackingLazy(card)` — L31803 — rede de segurança
   genérica, chamada em `fbSaveCard()` e no loop por card de
   `fbSaveAll()` (só nos `touchedIds`). Idempotente.
-- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L31674/
-  31682/15487 — total "efetivo até agora" (fechado + episódio aberto).
-- `_renderCardTimeInfo(c)` — L31758 — mostra o total no modal do card
+- `_cardBlockedMs(c)`/`_cardAtrasadoMs(c)`/`_cardPausedMs(c)` — L31834/
+  31842/15529 — total "efetivo até agora" (fechado + episódio aberto).
+- `_renderCardTimeInfo(c)` — L31918 — mostra o total no modal do card
   (`#m-atraso-info` perto do campo Prazo, `#m-blocked-info` dentro do
-  bloco de Impedimento), chamado no `openCard()` (L14578).
-- Dashboards: `renderBoardDataInsights()` (L20370, seção "Tempo em
-  atraso/bloqueado") e `renderCriativosDashboard()` (L17338, mesma
+  bloco de Impedimento), chamado no `openCard()` (L14620).
+- Dashboards: `renderBoardDataInsights()` (L20412, seção "Tempo em
+  atraso/bloqueado") e `renderCriativosDashboard()` (L17380, mesma
   seção) — os 2 já incluem cards CONCLUÍDOS (não filtram só ativos, ao
   contrário do resto dessas telas), de propósito — é o ponto principal
   do pedido ("mesmo que depois ele seja concluído"). `renderCriativosDashboard()`
   ganhou 2 blocos novos (2026-09-17, pedido direto do usuário): ⏱️ Tempo
-  médio de produção por canal/plataforma/formato (`avgTempoBy()` — L17439,
+  médio de produção por canal/plataforma/formato (`avgTempoBy()` — L17481,
   reusa `_cardTempos()`, só pedidos concluídos entram na média —
-  `_crvBarRowTime()` — L17243 — desenha a barra) e motivo do bloqueio
+  `_crvBarRowTime()` — L17285 — desenha a barra) e motivo do bloqueio
   (`card.blockerReason`) na lista "Mais tempo bloqueado" (`crvBlockRow()`
-  — L17397, silencioso quando não preenchido). **`card.lastBlockerReason`**
+  — L17439, silencioso quando não preenchido). **`card.lastBlockerReason`**
   (`/monitorarbugs` 2026-09-17): em modo TAG, `blockerReason` é zerado
   assim que o card é desbloqueado (`_doBulkUnblockTag()` L7856,
-  auto-unblock em `recordMove()`, `removeBlockerTag()` L31833) — sem
+  auto-unblock em `recordMove()`, `removeBlockerTag()` L31993) — sem
   guardar em outro lugar, todo card já resolvido perdia o motivo no
   dashboard, mesmo preenchido. Cada um dos 3 pontos copia o texto pra
   `lastBlockerReason` antes de limpar `blockerReason`; `crvBlockRow()` lê
@@ -1946,7 +1949,7 @@ derivado do card mudando).
   esse motivo — `renderBoardDataInsights()` usa um `cardRow()` genérico
   sem esse detalhe.
   Em modo COLUNA não precisa (nada limpa `blockerReason` lá, ver
-  comentário em `saveCard()` ~L15199). `_duplicarCardObj()` (~L15471)
+  comentário em `saveCard()` ~L15113). `_duplicarCardObj()` (~L15561)
   também apaga `lastBlockerReason` da cópia, mesmo motivo de
   `atrasadoMs`/`blockedMs`/`pausedMs`.
 - **Limitação conhecida, documentada no código** (`_settleCardTimeTrackingLazy`):
@@ -1969,23 +1972,23 @@ dias recentes (#589/#590/#600/#605, todos `/monitorarbugs`), sempre a
 mesma classe de problema — um dos 5-6 pontos que mexem no padrão ficando
 pra trás de um comportamento que os outros já tinham.
 - `criarPadraoCard()`/`renomearPadraoCard(id)`/`definirPadraoDefault(id)`/
-  `excluirPadraoCard(id)` — L23073/L23084/L23094/L23103 — as 4 gravam
+  `excluirPadraoCard(id)` — L24694/L24705/L24715/L24724 — as 4 gravam
   direto em `config/cardPatterns` (`fbSet`), sem tocar um card já aberto
   na hora (dependiam só do round-trip do listener até o fix abaixo)
-- `togglePadraoSecao(id, key, visible)` — L23113 — única das 5 que já
+- `togglePadraoSecao(id, key, visible)` — L24734 — única das 5 que já
   atualizava o card aberto na hora, via `_applyCardSectionsVisibility()`
-- `setCardPattern(patId)` — L23138 — aplica o padrão ao card (chamado na
+- `setCardPattern(patId)` — L24759 — aplica o padrão ao card (chamado na
   criação E na edição)
-- `_refreshOpenCardPattern()` — L23068 (achado 2026-08-30, PR #605) —
+- `_refreshOpenCardPattern()` — L24689 (achado 2026-08-30, PR #605) —
   helper que replica o par `populateCardPatternSelect()` +
   `_applyCardSectionsVisibility()` que o `fbListen` de `config/
   cardPatterns` já fazia; chamado agora pelas 4 funções do 1º bullet, pra
   fechar a mesma janela de inconsistência visual que só `togglePadraoSecao`
   corrigia (alcançável de verdade: `mnavGo('cfg')` no nav mobile abre
   Configurações sem fechar um card já aberto)
-- `_applyCardSectionsVisibility()` — L6956 / `populateCardPatternSelect()`
+- `_applyCardSectionsVisibility()` — L7164 / `populateCardPatternSelect()`
   — L21778
-- `setCardCover(colorId)` — L6846 (achado 2026-08-29, PR #600): branch de
+- `setCardCover(colorId)` — L7054 (achado 2026-08-29, PR #600): branch de
   card NOVO (`!editingId`) não disparava `runAutoRules('cover_set', ...)`
   — só o branch de card existente chamava; mesma classe de bug em
   `setCardPattern()`/`saveCard()` (branch de criação) pra `padrao_set`/
@@ -1995,7 +1998,7 @@ pra trás de um comportamento que os outros já tinham.
   correspondentes adicionadas no branch de criação de `saveCard()`.
 
 ### Agente Ágil (client-side — atalhos que postam @menção real)
-- `AGENTE_AGIL_MENTION_SQUADS` — L7037 — squads onde os atalhos abaixo
+- `AGENTE_AGIL_MENTION_SQUADS` — L7245 — squads onde os atalhos abaixo
   estão ativos: `'dev'` e `'dados'` (2026-08-24) — precisa ter uma Cloud
   Function de verdade escutando o squad (ver seção `agente-agil-
   orquestrador/` abaixo), senão a sugestão aparece sem nada escutando.
@@ -2019,21 +2022,21 @@ pra trás de um comportamento que os outros já tinham.
     mesma coisa, fora do loop por-card porque WIP é agregado do board
     inteiro
 - **Indicador "🤖 pensando..."** (2026-09-01) — `_startAgenteAgilThinking()`/
-  `_stopAgenteAgilThinking()` — L7142/L7163 — estado efêmero client-side
+  `_stopAgenteAgilThinking()` — L7350/L7371 — estado efêmero client-side
   (`window._agenteAgilThinking`, não persistido) enquanto uma @menção real
   aguarda resposta; abre um listener TEMPORÁRIO em `card_comments`
   (mesma técnica de `_attachAgenteHotlineCommentsListener`, sem duplicar
   pro card hotline) que se auto-encerra ao ver um comentário
   `uid==='agente-agil'`, ou por timeout de 120s. `_updateAgenteThinkingBanner()`
   — L6955 — atualiza o banner `#m-agente-thinking` no modal;
-  `_textMencionaAgenteAgil()` — L7020 — detecta @menção real (mesmo
+  `_textMencionaAgenteAgil()` — L7388 — detecta @menção real (mesmo
   critério do backend) num comentário digitado à mão em `submitComment()`
   (chamada síncrona de `_dispatchAgenteAgilComment()` não precisa dessa
   detecção — todo call site dela já posta `@Agente Ágil` literal). Chip
   correspondente em `makeCardEl()` (board) e banner dentro do modal.
-- `insightsCard()` — L17110 — botão "🤖 Insights" no rodapé do card
-- `ctxInsights()` — L30370 — opção "Insights" no menu de contexto do card
-- `_pedirResumoMeuDia()` — L20639 — botão "🤖 Resumo do Agente Ágil"
+- `insightsCard()` — L18177 — botão "🤖 Insights" no rodapé do card
+- `ctxInsights()` — L32491 — opção "Insights" no menu de contexto do card
+- `_pedirResumoMeuDia()` — L22046 — botão "🤖 Resumo do Agente Ágil"
   dentro do painel "🌅 Meu Dia" (`openMeuDia()` L19522/`renderMeuDia()`
   L19271) — chama `agenteAgilResumoMeuDia` (onRequest, ver seção
   `agente-agil-orquestrador/` abaixo) com `Bearer <idToken>`, mostra o
@@ -2068,7 +2071,7 @@ pra trás de um comportamento que os outros já tinham.
   arquivo (inacessíveis pela UI agora) por causa dos outros 2 pontos que
   ainda chamam `openAgent()` sem card real (AutoLab, alerta de WIP
   excedido) — não removidos nesta rodada, fora do escopo pedido
-- `renderAgenteLog()` — L23563 — aba "🤖 Histórico do Agente" em
+- `renderAgenteLog()` — L23879 — aba "🤖 Histórico do Agente" em
   ⚙ Configurações (pedido direto: "quero uma area q guarde todas as
   alterações nos cards que ele faça naquela squad, para servir de
   historico para o PO"). Leitura pontual (`window._get`, não um listener
@@ -2082,17 +2085,25 @@ pra trás de um comportamento que os outros já tinham.
   simples, cada item passando por `renderMd()` desde 2026-09-17 (achado
   real: `esc()` puro mostrava `**negrito**` literal quando o agente
   formatava uma ação). Aba só aparece pra squads com escrita real do orquestrador
-  (`AGENTE_AGIL_MENTION_SQUADS`, gate em `openCfg()` — L21202);
+  (`AGENTE_AGIL_MENTION_SQUADS`, gate em `openCfg()` — L23817);
   Configurações inteiro já é PO/Organizador/ADM-only (`#fab-cfg-btn`, ver
   `_applyRoleVisibility()`), não precisa de
   gate de papel próprio aqui.
 
 ### Externos / segurança
-- `_extKey()` — L33019 — chave de e-mail sanitizada (`.` → `,`)
-- `salvarExterno()` — L33020
+- `_extKey()` — L35266 — chave de e-mail sanitizada (`.` → `,`)
+- `salvarExterno()` — L35267
+- Whitelist `externos` (por squad) checada no listener `auth-change` —
+  L10744 (`ext_ok_{email}`, cache local). TTL 15min (reduzido de 24h em
+  2026-09-21, `/monitorarbugs` "cancelar acesso de usuários excluídos":
+  com 24h, remover alguém não tinha efeito prático por até 1 dia inteiro
+  pra quem já tivesse o cache válido — pior ainda com `deleteGlobalUser()`,
+  que RECRIAVA o cadastro do zero via `autoRegistrar()`). Mesmo achado
+  corrigido em `painel_viewers` (`painel-dev.html`, ver seção própria) e
+  em `okr-apresentacao.slide.html`.
 
 ### Intake (pedidos pendentes — formulário público E `criar_card` do Agente Ágil)
-- `renderIntakeBody()` — L21531 — lista de `intakePendentes`
+- `renderIntakeBody()` — L22249 — lista de `intakePendentes`
   (`_intakeBucket`, alimentado por listeners granulares em
   `intake_pending`, ver comentário na declaração). 2026-08-27: mostra
   `🤖` no título + linha "🏷 Submarca sugerida" quando o item veio do
@@ -2100,7 +2111,7 @@ pra trás de um comportamento que os outros já tinham.
   `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
   desses campos existirem, a tela só sabia renderizar pedidos do
   formulário público.
-- `_intakeCriarCard(id)` — L21549 — abre o modal de novo card pré-
+- `_intakeCriarCard(id)` — L22267 — abre o modal de novo card pré-
   preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
   tags reais por label (case/acento-insensitive, `_norm()`), pré-
   marcando a tag — mesmo cuidado do bugfix de "usar modelo" (saveCard()
@@ -2110,13 +2121,13 @@ pra trás de um comportamento que os outros já tinham.
   novas além de Criar card/Descartar — `_intakeItemHtml()` (L21512,
   template compartilhado entre as 2 abas) monta os botões (4 na aba
   Pendentes, 3 na aba Guardados — sem "Guardar" de novo):
-  - `_intakeGuardar(id)` — L21651 — não resolve o pedido, só tira da
+  - `_intakeGuardar(id)` — L22369 — não resolve o pedido, só tira da
     fila de "pendentes" (`status:'pending'`→`'saved'`) e joga numa 2ª
     aba dentro do próprio Intake (`_intakeSwitchTab()`, L21502,
     `renderIntakeGuardadosBody()`, L21540) — sem prazo, pra decidir
     depois. De lá, Criar card/Vincular/Descartar continuam disponíveis.
   - `_intakeToggleLink()`/`_intakeSearchLink()`/`_intakePickLinkCard()`/
-    `_intakeConfirmLink(id,mode)` — L21663/21716 — "🔗 Vincular a card":
+    `_intakeConfirmLink(id,mode)` — L22434/21716 — "🔗 Vincular a card":
     busca um card JÁ EXISTENTE (mesmo padrão de busca/dropdown de
     `searchLinkedCards()`) e vira **comentário** (escreve direto em
     `card_comments/`, mesmo formato de `submitComment()` — inclui o
@@ -2128,9 +2139,9 @@ pra trás de um comportamento que os outros já tinham.
     existente. `status:'pending'|'saved'`→`'linked'`.
 
 ### Backup
-- `exportBackupJSON()` — L33121
-- `maybeSnapshot()` — L12627
-- `_applyRestorePayload(payload)` — L33646 — "🧯 Restaurar backup". Achado
+- `exportBackupJSON()` — L35368
+- `maybeSnapshot()` — L13343
+- `_applyRestorePayload(payload)` — L35893 — "🧯 Restaurar backup". Achado
   real 2026-08-28 (squad midiacriativa, `/monitorarbugs`): era a ÚNICA
   atribuição de `cards`/`columns`/`tags` a partir de dado externo no
   arquivo sem `.filter(Boolean)` (as 6 outras, todas `fbListen`/`fbGet` de
@@ -2143,11 +2154,11 @@ pra trás de um comportamento que os outros já tinham.
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção
 aplicada no arquivo inteiro, não confie neles como única forma de navegar:
-- L21039 Ágil, L21124 Col editor, L21182 Usuários, L21468 Tags,
-  L21867 "Worker / Firebase" (nome do comentário é antigo — hoje é
+- L23944 Ágil, L24039 Col editor, L24112 Usuários, L24436 Tags,
+  L24835 "Worker / Firebase" (nome do comentário é antigo — hoje é
   config/legado de Firebase, **não** tem relação com o Cloudflare Worker,
   que não existe mais na arquitetura atual)
-- L26531 D&D das colunas, L26600 D&D dos cards
+- L30234 D&D das colunas, L30303 D&D dos cards
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
@@ -2156,17 +2167,30 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 {squadId}` é o papel POR SQUAD, mecanismo mais novo e o que de fato tem
 prioridade — `kanban-dev.html` resolve `window._currentUserRole` sempre
 como `squads_roles[ACTIVE_SQUAD] || role || 'membro'` (~8 call sites,
-`getEffectiveRole()`). Em `painel(-dev).html`, `updateSquadUserRole()`
-(modal "👥 Global Users", `openGlobalUsersModal()`) já grava certo em
-`squads_roles/{squadId}`. `updateUserRole()`/`loadPcfgUsers()` (aba
-"👥 Usuários" do modal de Config do squad, `cfg-ov`) gravava no campo
-global até corrigido em 2026-09-21 (`/monitorarbugs` — mostrava o papel
-errado e podia ser um no-op silencioso se já existisse override por
-squad) — agora também usa `squads_roles/{cfgSquadId}`. Lista de papéis
-diverge entre os 2 mecanismos por decisão pré-existente, não bug:
+`getEffectiveRole()` — L6519). Em `painel(-dev).html`,
+`updateSquadUserRole()` — L10284 (modal "👥 Global Users",
+`openGlobalUsersModal()` — L10109) já grava certo em
+`squads_roles/{squadId}`. `updateUserRole()` — L9604 / `loadPcfgUsers()`
+— L9559 (aba "👥 Usuários" do modal de Config do squad, `cfg-ov`) gravava
+no campo global até corrigido em 2026-09-21 (`/monitorarbugs` — mostrava
+o papel errado e podia ser um no-op silencioso se já existisse override
+por squad) — agora também usa `squads_roles/{cfgSquadId}`. Lista de
+papéis diverge entre os 2 mecanismos por decisão pré-existente, não bug:
 `ROLES` (aba Usuários) tem `['adm','po','organizador','membro',
 'convidado']`; `SQUAD_ROLES` (modal Global) tem só `['membro',
 'organizador','po']`.
+- **`addAdmEmail()`** — L8923 / **`removeAdmEmail(email)`** — L8941 (aba
+  "🔑 ADMs" do mesmo modal — mecanismo SEPARADO dos dois acima, controla
+  `ADM_EMAILS`/`kanban/config/adm_emails`, que `isAdmUser()` prioriza
+  antes até de `squads_roles`). Achado real 2026-09-21
+  (`/monitorarbugs`, "login e segurança", técnica 1 — comparar par
+  add/remove): `addAdmEmail()` sincroniza
+  `kanban/usuarios/{uid}/role='adm'` ao promover, mas `removeAdmEmail()`
+  nunca desfazia isso — só limpava `ADM_EMAILS`. Como `getEffectiveRole()`
+  cai pro campo `role` legado assim que `isAdmUser()` vira `false`, um
+  ADM "removido" continuava com papel `adm` efetivo no board via esse
+  resquício. Fix: `removeAdmEmail()` ganhou o mesmo lookup por e-mail que
+  `addAdmEmail()` já usa, rebaixa `role` pra `'membro'` se ainda `'adm'`.
 
 ### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
 UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
@@ -2438,7 +2462,7 @@ v3.19 · painel-dev pro racional completo.
   `_okrCardLinkAdd/Remove()`, `_okrCardLinksHtml(podeEditar)` — modo
   leitura esconde busca/botão de desvincular.
   **Achado real (2026-09-06, `/monitorarbugs`, técnica 2 — comparar
-  contra `getCardTags()`/`isOKR_` do kanban-dev.html, L10426/L10485,
+  contra `getCardTags()`/`isOKR_` do kanban-dev.html, L11153/L11245,
   a fonte de verdade de "esse card tem badge 🎯 OKR no board")**: 4
   lugares em painel-dev.html detectavam "card é OKR" olhando só
   `card.tag` (campo legado, só a 1ª tag) — nunca `card.tags[]`
@@ -2603,19 +2627,19 @@ Pedido direto do usuário depois de shippar a segmentação por reunião em
 aba okr" — aditivo, lê/escreve o MESMO node
 `kanban/okr/reuniao_notas/{data}/{id}` da apresentação (sync em tempo
 real entre as duas telas, sem duplicar dado). Botão `#okr-notas-btn`,
-`_okrShowNotas`/`_okrToggleNotas()` — L5074 — 4ª vista mutuamente
+`_okrShowNotas`/`_okrToggleNotas()` — L4983/L5079 — 4ª vista mutuamente
 exclusiva em `_okrSetView('objetivos'|'historico'|'agente'|'notas')` —
 L5046 (mesmo ponto único de decisão que já cobria as outras 3).
-`okrReuniaoNotas` (estado local, `loadOkrReuniaoNotas()` — L4980 —
+`okrReuniaoNotas` (estado local, `loadOkrReuniaoNotas()` — L4985 —
 `onValue` no node inteiro, filtra por data no cliente, mesmo padrão de
-`okrNotas` na apresentação), `renderOkrNotas()` — L5000 — reusa
+`okrNotas` na apresentação), `renderOkrNotas()` — L5005 — reusa
 `.okr-comment` (mesma bolha da Central Agente Ágil) + seletor de data
 `#okr-notas-date-sel` (`window._okrNotasSetViewDate()`). Reunião que não
 é a de hoje abre só leitura (`#okr-notas-compose` escondido,
 `#okr-notas-readonly` visível). `window._okrNotaAdd()` — L5022 — sempre
 grava no bucket de HOJE; `window._okrNotaDel()` — L5035 — só o próprio
 autor apaga, só na reunião de hoje. Autor resolvido via
-`_okrPessoaInfo(uid)` (já existente, fonte `_globalUsersCache`) — L5228
+`_okrPessoaInfo(uid)` (já existente, fonte `_globalUsersCache`) — L5233
 (ver seção Objetivos acima). Precisou expor `window._remove` no
 `<script type="module">` (`remove` do SDK, novo import) — nenhuma outra
 função do painel apagava nó do Firebase direto antes.
@@ -2694,6 +2718,13 @@ auto-update passou a existir em `painel.html` também (`VERSION_KEY =
   ganha exceção de READ nos nodes que o painel lê: `painel`,
   `squads_meta`, `config`, `feedback`, e por squad — `dados`,
   `presence`, `snapshots`, `error_logs`, `error_stats`, `agent_usage`).
+  Cache local (`localStorage`, chave `painel_viewer_ok_{email}`) evita
+  reconsultar a whitelist a cada `auth-change` — TTL 15min (reduzido de
+  24h em 2026-09-21, `/monitorarbugs` "login e segurança": com 24h,
+  remover alguém de `painel_viewers` não tinha efeito prático por até 1
+  dia inteiro pra quem já tivesse o cache válido no navegador; mesmo
+  achado corrigido também no `externos` do kanban e em
+  `okr-apresentacao.slide.html`, ver seção própria abaixo).
 - **`_painelEnsureUserRecord(user)` (2026-09-09)** — chamada de dentro de
   `_finishPainelLogin()`, só pra quem NÃO é visualizador externo. Achado
   real, relato direto do usuário: quem só usa o painel (gente de OKR que
@@ -2732,19 +2763,19 @@ painel de configuração desses agentes plugados! listar todos eles...
 setar em quais squads ele vai ficar"). Lido pelo backend em
 `kanban/config/agentesExternos/{especialista}` — ver
 `lerDescricaoEspecialista()` na seção "Cloud Functions" abaixo.
-- `loadAgentesExternosPainel()` — L8766 — registra o listener em
+- `loadAgentesExternosPainel()` — L8996 — registra o listener em
   `kanban/config/agentesExternos`, chamado no boot (`fb-ready`).
-- `renderAgentesExternosPainel()` — L8778 — lista expansível, agora
+- `renderAgentesExternosPainel()` — L9008 — lista expansível, agora
   dentro da aba própria "🤖 Agentes" (`ppane-agentes`, ver seção "Aba
   Agentes" abaixo — MOVIDA de dentro de `openCfg()`/`#cfg-ov` em
   2026-09-01, era dado GLOBAL vivendo dentro de um modal por squad);
   cada item mostra descrição (textarea) + chips de squad (`SQUADS`,
   checkbox por squad). Ganhou também um campo "🔗 Webhook de retorno"
   (`webhookUrl`, 2026-08-31 — ver entrada própria abaixo).
-- `criarAgenteExternoPainel()` — L8846 / `salvarAgenteExternoPainel(id)`
-  — L8705 / `toggleAgenteExternoSquad(id,squadId,checked)` — L8727
+- `criarAgenteExternoPainel()` — L9076 / `salvarAgenteExternoPainel(id)`
+  — L9111 / `toggleAgenteExternoSquad(id,squadId,checked)` — L9133
   (grava na hora, sem precisar de "Salvar") / `excluirAgenteExternoPainel(id)`
-  — L8741. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
+  — L9147. Todas as escritas gateadas por `_isAdmPainel()`. As duas do
   meio leem fresco do Firebase (`window._get`) antes de mesclar/escrever
   — achado real `/monitorarbugs` (2026-08-29): sem isso, marcar 2 squads
   em sequência rápida no mesmo agente podia apagar a 1ª marcação
@@ -2781,10 +2812,10 @@ merece uma aba sozinha, nao ficar dentro de outras". Consolida tudo que
 antes vivia espalhado: Agentes Externos (ver seção acima, movida pra cá),
 visão cross-squad de quem está representado no board, e o Histórico do
 Agente Ágil (que só existia por squad, dentro do próprio kanban).
-- `_fillAgentesLogSquadFilter()` — L8935 — popula o `<select>` de filtro
+- `_fillAgentesLogSquadFilter()` — L9165 — popula o `<select>` de filtro
   por squad a partir de `SQUADS` (client-side, sem leitura de Firebase),
   chamado toda vez que a aba abre (`swPtab()`).
-- `loadAgentesTabData()` — L8942 — SOB DEMANDA (botão "🔄 Atualizar", não
+- `loadAgentesTabData()` — L9172 — SOB DEMANDA (botão "🔄 Atualizar", não
   listener sempre ligado — são N squads × 2 leituras: `kanban/squads/
   {squadId}/dados/agentes` + `kanban/squads/{squadId}/dados/agente_log` —
   ambos sob `dados/`, mesmo path que `FB` já usa em kanban.html/
@@ -2792,47 +2823,47 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `kanban/squads/{squadId}/agentes` SEM o `/dados/`, path sem regra
   nenhuma em `database.rules.json` → "Permission denied" ao vivo).
   Guarda o resultado em `_agentesTabCache` e chama os 2 renders abaixo.
-- `renderAgentesAtivosGrid(results)` — L8966 — grid por squad cruzando
+- `renderAgentesAtivosGrid(results)` — L9196 — grid por squad cruzando
   Agentes de IA do board com Agentes Externos que têm `init` (mesma
   condição que os torna selecionáveis em `kanban-dev.html`); os sem
   `init` aparecem separados como "📡 só contexto".
-- `renderAgentesLogCross()` — L9197 — mesma lógica de `renderAgenteLog()`
+- `renderAgentesLogCross()` — L9221 — mesma lógica de `renderAgenteLog()`
   (kanban.html/kanban-dev.html) mas agregando `_agentesTabCache` de
   TODOS os squads numa lista só, filtrável pelo select acima; link
   "abrir card ↗" usa `squadBoardUrl(squadId,cardId)` (já existente) pra
   abrir o board certo em nova aba. Cada item de `acoes[]` passa por
   `_renderMd()` desde 2026-09-17 (mesmo achado/fix de
   `renderAgenteLog()` — `esc()` puro mostrava `**negrito**` literal).
-- `openAgentesHelp()`/`closeAgentesHelp()` — L9024 — modal estático
+- `openAgentesHelp()`/`closeAgentesHelp()` — L9254/L9255 — modal estático
   (`agentes-help-ov`) explicando a diferença entre Agente Ágil/Agentes de
   IA no board/Agentes Externos (e os 2 sentidos de fluxo destes últimos)
   — primeiro help_content próprio do painel (não tem Central de Ajuda
   tipo `HELP_CONTENT`/Ctrl+K do kanban).
 
 ### Dashboard consolidado
-- `loadAll()` — L10127 / `renderAll()` — L9920
-- `renderPainelInsights()` — L6111 — stat cards + donuts cross-squad
+- `loadAll()` — L10396 / `renderAll()` — L10416
+- `renderPainelInsights()` — L6260 — stat cards + donuts cross-squad
   (prioridade, carga por responsável, riscos, parados, OKR por coluna,
   por submarca, por canal de venda — os 2 últimos só entram se pelo
   menos uma squad visível tiver o campo ativo, mesmo padrão de
   `renderBoardDataInsights()` em kanban-dev.html, mas agregado)
-- `renderOKR()` — L5963
-- `renderBlockers()` — L10836 / `resolveAllBlockers()` — L10749 (relê
+- `renderOKR()` — L6112
+- `renderBlockers()` — L11010 / `resolveAllBlockers()` — L10923 (relê
   `/cards` fresco do Firebase antes de escrever, não usa `squadData`
   cacheado pra montar o payload — ver `/monitorarbugs` 2026-09-17)
-- `renderRiscos()` — L6007
-- `renderTrend()` — L11269 (throughput)
-- `renderColDist()` — L11292
-- `renderComparison()` — L10578
-- `loadAgentUsage()` — L6404
-- `renderGerenciaBar()` — L3161 / `gerenciaSquadIds()` — L3114 (Insights por Gerência)
+- `renderRiscos()` — L6156
+- `renderTrend()` — L11589 (throughput)
+- `renderColDist()` — L11612
+- `renderComparison()` — L10858
+- `loadAgentUsage()` — L6597
+- `renderGerenciaBar()` — L3221 / `gerenciaSquadIds()` — L3214 (Insights por Gerência)
 
 ### Board Setup
-- `openBoardSetup()` — L11327
+- `openBoardSetup()` — L11647
 
 ### Usuários
-- `openGlobalUsersModal()` — L9850
-- `initHiddenCols()` — L9405
+- `openGlobalUsersModal()` — L10109
+- `initHiddenCols()` — L9650
 
 ## okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
 seção própria neste mapa até agora apesar de ~935 linhas e várias
@@ -2846,10 +2877,10 @@ até caber, nunca corta conteúdo). Dados ao vivo via `onValue` direto em
 edição no painel reflete aqui sem F5 (grid de cards, não o modal de
 detalhe aberto — ver nota abaixo).
 
-- `buildSlides()` — L490 — monta a lista de slides a partir de
+- `buildSlides()` — L646 — monta a lista de slides a partir de
   `okrObjetivos` (agrupado por `areaId||'geral'`, ordenado por
-  `titulo`). `startListeners()` — L900 — os 4 listeners ao vivo, cada um
-  chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L564
+  `titulo`). `startListeners()` — L1264 — os 4 listeners ao vivo, cada um
+  chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L720
   (preserva o slide atual pela `key`, não pelo índice) → `render()` —
   L724.
 - **Zoom-fit ("nunca cortar, nunca scroll")** — `_zoomFitToHeight(content,
@@ -2860,9 +2891,9 @@ detalhe aberto — ver nota abaixo).
   `width:%` compondo ao quadrado com a compensação). 2 chamadores, cada
   um encolhendo sua própria granularidade (nunca o slide inteiro de uma
   vez, senão uma seção curta encolhe à toa por causa de uma longa):
-  `fitSlideContent(containerEl, contentEl)` — L700 — o carrossel de
+  `fitSlideContent(containerEl, contentEl)` — L856 — o carrossel de
   slides (dispara no `resize` e depois que a webfont troca de verdade,
-  `document.fonts.ready`); `_okrFitDetailSections()` — L861 — o modal de
+  `document.fonts.ready`); `_okrFitDetailSections()` — L1032 — o modal de
   detalhe de 1 Objetivo (trava a divisão `.d2-body`/`.d2-footer` ANTES de
   ajustar cada seção interna — ver comentário grande sobre a raiz de 2
   bugs reais anteriores nisso).
@@ -2871,13 +2902,13 @@ detalhe aberto — ver nota abaixo).
   chamada (sem preservar zoom entre re-abertura, mas cada abertura já
   chama `_okrFitDetailSections()` de novo, então não perde o fit).
   Botão "Próximo →" (2026-09-10) usa `_okrGerenciaObjetivos(areaId)` —
-  L446 — MESMO filtro+sort de `buildSlides()` (garante a mesma ordem que
+  L602 — MESMO filtro+sort de `buildSlides()` (garante a mesma ordem que
   a pessoa já viu na grade), desabilitado no último Objetivo da gerência
   em vez de cruzar pra outra gerência sozinho (confirmado sem achado,
   `/monitorarbugs` 2026-09-11 — ver `SKILL.md` da skill monitorarbugs).
-- Login: `window._okrHandleAuth = user => {...}` — L1315 — desde
+- Login: `window._okrHandleAuth = user => {...}` — L1320 — desde
   2026-09-17 (achado de análise de segurança), checa domínio OU
-  `painel_viewers` (`_okrViewerKey()` — L1314, cache de 15min [reduzido
+  `painel_viewers` (`_okrViewerKey()` — L1319, cache de 15min [reduzido
   de 24h em 2026-09-21, `/monitorarbugs` "login e segurança" — mesmo
   achado já corrigido em `kanban-dev.html`/`painel-dev.html`] +
   3 tentativas — mesmo padrão de `painel.html`
@@ -2899,14 +2930,14 @@ detalhe aberto — ver nota abaixo).
   agora por JS puro, `hidden` toggled em `window._okrHandleAuth()`; 3ª
   rodada — segmentação por reunião, ver abaixo) — botão flutuante abre
   um painel lateral (`#notes-ov`) de anotações ao vivo, salvas em
-  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1053
+  `kanban/okr/reuniao_notas/{data}/{id}` (`{data}` = `_hojeStr()` — L1076
   — `YYYY-MM-DD` local, 1 reunião = 1 dia; node herda `.read`/`.write` de
   `kanban/okr` — cascata do `database.rules.json`, sem entrada própria
   necessária). Seletor `#notes-date-sel` troca a reunião sendo vista
   (`window._okrNotesSetViewDate()` — L1087, `_notasPopulateDateSel()` —
   L1075 — monta as opções a partir de `Object.keys(okrNotas)` ∪ hoje).
   Reunião que não é a de hoje abre só-leitura (`.notes-compose`
-  escondido, `.notes-readonly` visível). `renderNotas()` — L1092 — lista
+  escondido, `.notes-readonly` visível). `renderNotas()` — L1115 — lista
   cronológica do dia selecionado (mais antiga primeiro, lê como ata);
   `window._okrToggleNotes()` — L1125 — abre/fecha (sempre na reunião de
   hoje na 1ª abertura) + rola pro fim; `window._okrAddNota()` — L1137 —
@@ -2921,13 +2952,13 @@ detalhe aberto — ver nota abaixo).
   usuário: "quero um cronometro mostrando quanto tempo falta para a
   agenda acabar... configurável que horario começou + o horario
   programado para acabar") — relógio do topbar virou clicável
-  (`#tb-clock-wrap`, `window._okrToggleAgendaCfg()` — L1182) e abre um
+  (`#tb-clock-wrap`, `window._okrToggleAgendaCfg()` — L1205) e abre um
   popover (`#agenda-cfg-ov`) com `<input type="time">` de Início/Término
   previsto. Mesma segmentação por reunião/dia dos Anotações — grava em
   `kanban/okr/reuniao_agenda/{data}` (`window._okrAgendaSalvar()` —
-  L1188 — exige os 2 campos preenchidos; `window._okrAgendaLimpar()` —
-  L1197). `_okrAgendaHoje()` — L1175 — lê `okrAgendas[_hojeStr()]`;
-  `_okrRenderCountdown()` — L1206 — roda dentro do MESMO `setInterval`
+  L1211 — exige os 2 campos preenchidos; `window._okrAgendaLimpar()` —
+  L1220). `_okrAgendaHoje()` — L1198 — lê `okrAgendas[_hojeStr()]`;
+  `_okrRenderCountdown()` — L1224 — roda dentro do MESMO `setInterval`
   de 1s que já movia o relógio (`#tb-clock`), escreve "⏳ Xmin restantes"
   (amarelo nos últimos 5min) ou "🔴 +Xmin (atrasado)" (vermelho, depois
   do horário previsto) em `#tb-countdown`; sem `fim` configurado pra
@@ -3388,7 +3419,7 @@ colaborativa). Completo e validado em produção, mas o sync periódico
 (`spotify/sync.js`, `spotifySync`) era a única function agendada de todo o
 projeto — rodava 24h/dia mesmo sem ninguém conectado — e custou mais do que
 o esperado. Pausado desligando só essa function (linha comentada em
-`functions/index.js`, L129-L140) e escondendo a aba `#spotify-tab` no board.
+`functions/index.js`, L148) e escondendo a aba `#spotify-tab` no board.
 As outras 6 functions da integração continuam deployadas normalmente:
 - `oauth.js` (`spotifyOauthCallback`) — conexão por pessoa (opt-in)
 - `disconnect.js` (`spotifyDisconnect`) — apaga o refresh_token de verdade
@@ -3401,4 +3432,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `cc04784` (2026-09-18).*
+*Retrato do commit `e8e4eaf` (2026-09-21).*
