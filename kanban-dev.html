@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.720-dev</div>
+<div class="version">v8.30.721-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9211,8 +9211,30 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // escrever, sem o que UM campo undefined derrubava a escrita
       // pontual inteira deste card (índice + updated_at + archived
       // juntos), silenciosamente.
-      // DIAGNÓSTICO TEMPORÁRIO (2026-09-21) — remover depois de achar a causa
-      console.log('🔬 [fbSaveCard] key='+key, '| path=', fb(FB).toString(), '| tags enviadas=', JSON.stringify(updates['cards/'+key]?.tags));
+      // ACHADO REAL / CAUSA RAIZ (2026-09-21, relato direto de usuária —
+      // "salvo beleza, mas se eu atualizo a página some o que eu tinha
+      // feito"; card confirmado corretamente enviado ao Firebase via log
+      // ao vivo, promise resolvendo sem erro, e MESMO ASSIM revertendo):
+      // fbSaveAll() (linha ~9010) e fbCreateCard() (linha ~9107) já
+      // populam window._cardsByKey[key] de forma SÍNCRONA, antes da
+      // escrita real, com um comentário JÁ AVISANDO que fbSaveCard() usa
+      // esse espelho pra achar a chave de um card — mas fbSaveCard() em si
+      // nunca ganhou essa mesma linha. _applyCardsSync() reconstrói TODO o
+      // array `cards` a partir de window._cardsByKey sempre que o listener
+      // de QUALQUER OUTRO card dispara (não precisa ser este), protegido
+      // só por uma janela fixa de 2s desde _lastLocalSave — carimbado no
+      // INÍCIO da tentativa (linha ~9169), não na confirmação. Se a
+      // escrita demorar mais que isso (_waitForFirebaseReady(), retry de
+      // 3s do _saveCardWithRetry(), latência de rede — todos > 2s em
+      // cenários reais), window._cardsByKey[key] continua com o valor
+      // ANTIGO até o eco desta escrita chegar, e _applyCardsSync()
+      // reconstrói `cards` com esse valor velho por cima da edição feita
+      // na tela — podendo inclusive regravar esse estado velho de volta
+      // no Firebase (ver window._set(fb(FB+'/cards'), cards) dentro de
+      // _applyCardsSync()), sobrescrevendo a escrita que este fbSaveCard()
+      // acabou de confirmar. Fix: mesmo padrão de fbSaveAll()/
+      // fbCreateCard(), síncrono, ANTES de disparar a escrita.
+      if(window._cardsByKey) window._cardsByKey[key] = card;
       return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);

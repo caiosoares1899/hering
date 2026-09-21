@@ -3611,6 +3611,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.721-dev — 2026-09-21 — Causa raiz REAL (3ª e definitiva): `fbSaveCard()` não espelhava `window._cardsByKey` antes de escrever, deixando `_applyCardsSync()` reverter a edição
+
+As duas correções anteriores (v8.30.717-dev, `_saveCardWithRetry()`
+retornando a promise de verdade; v8.30.718-dev/719-dev, `_flushAutoSave()`
++ `_waitForFirebaseReady()`) eram causas raiz REAIS, mas não a única — a
+usuária reportou de volta que o sintoma continuava mesmo num teste 100%
+manual (sem console), e diagnóstico ao vivo (log embutido direto em
+`fbSaveCard()`, sem interceptor) confirmou algo muito mais grave: a
+escrita no Firebase estava correta (chave certa, payload certo, cross-
+checado contra `cards_index`) e a promise resolvia SEM ERRO — e mesmo
+assim uma leitura crua (`window._get()`) no mesmo path, logo em seguida,
+mostrava dado de mais de um mês atrás (`updatedAt` de 2026-08-18), sem a
+tag que tinha acabado de ser salva.
+
+**Causa raiz**: `_applyCardsSync()` (o handler que reconcilia o array
+local `cards` a partir do eco dos listeners granulares, via
+`window._cardsByKey`) reconstrói `cards` (e, condicionalmente, regrava
+`/cards` inteiro no Firebase) toda vez que QUALQUER card muda em
+QUALQUER lugar do board — não precisa ser o card sendo editado. A única
+proteção é uma janela fixa de 2s desde `_lastLocalSave`, carimbado no
+INÍCIO da tentativa de salvar, não na confirmação. `fbSaveAll()` (achado
+de 2026-08-04, import Trello) e `fbCreateCard()` (achado de 2026-09-03)
+já tinham sido corrigidos pra esse exato problema, populando
+`window._cardsByKey[key]` de forma SÍNCRONA com o card atual ANTES de
+disparar a escrita — o comentário em `fbCreateCard()` inclusive já
+avisava "fbSaveCard() usa window._cardsByKey pra achar a chave real de
+um card", mas essa mesma correção nunca chegou a ser replicada dentro
+do próprio `fbSaveCard()` — a via de escrita usada por praticamente toda
+edição de card existente (tags, título, descrição, checklist, prazo...).
+Resultado: se a escrita demorasse mais que os 2s de proteção (Firebase
+não pronto, retry de 3s, latência de rede — comum em uso real), o
+espelho `window._cardsByKey[key]` continuava com o valor ANTIGO até o
+eco da escrita chegar, e qualquer `_applyCardsSync()` disparado nesse
+meio-tempo por OUTRO card reconstruía `cards` com esse valor velho por
+cima da edição — podendo inclusive regravar esse estado velho de volta
+no Firebase, sobrescrevendo a escrita que `fbSaveCard()` tinha acabado
+de confirmar.
+
+**Fix**: `fbSaveCard()` agora popula `window._cardsByKey[key] = card`
+de forma síncrona, no mesmo ponto e com o mesmo padrão que
+`fbSaveAll()`/`fbCreateCard()` já usam, antes de chamar `window._update()`.
+Removido também o `console.log` de diagnóstico temporário adicionado
+durante a investigação (v8.30.720-dev).
+
+Checks de rotina: `node --check` OK.
+
 ### v8.30.719-dev — 2026-09-21 — Reconciliação: hotfix `_waitForFirebaseReady()` (aplicado direto em prod) portado de volta pra dev
 
 Enquanto a investigação do relato da usuária estava em andamento, o dono
