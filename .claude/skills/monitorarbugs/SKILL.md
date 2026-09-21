@@ -1980,6 +1980,24 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   não uma reimplementação local — encerra a sessão de fato, sem gap.
   dev v8.30.715-dev + painel v3.57 + painel-dev v3.56.
 
+- **2026-09-21, "✓ Salvo"/"✅" mentindo sobre confirmação real (relato
+  direto de usuária, não pedido genérico)**: usuária reportou "subo 3
+  cards, salvo beleza, mas se atualizo a página some o que eu tinha
+  feito" ao criar descrição num card existente. Investigação por
+  técnica 3 (confrontar o que o toast promete vs. o que o código
+  confirma): `_saveCardWithRetry()` (usada por `scheduleAutoSave()`,
+  `saveExtraDesc()`, simulação de agente) sempre foi fire-and-forget —
+  nenhum call site esperava a escrita confirmar antes de mostrar
+  sucesso. `saveExtraDesc()` mostrava "✅ Descrição salva!" e
+  `scheduleAutoSave()` trocava o botão pra "✓ Salvo" NA MESMA HORA que
+  chamavam a função, não quando ela de fato confirmava — numa conexão
+  instável onde as 2 tentativas internas falhassem (~3+ segundos), o
+  único aviso de erro real vinha DEPOIS do sucesso falso já ter
+  aparecido e sumido, fácil de não notar passando rápido por vários
+  cards. Fix: `_saveCardWithRetry()` retorna a promise de verdade; os 3
+  call sites só mostram feedback de sucesso depois da confirmação real.
+  dev v8.30.717-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

@@ -3591,6 +3591,46 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.717-dev — 2026-09-21 — Fix severo: "✅ salvo" aparecia mesmo quando a escrita no Firebase falhava de verdade
+
+Relato direto de uma usuária: "eu estou tentando subir 3 cards ai eu subo
+eles salvo beleza, mas se eu atualizo a pagina do maré some o que eu
+tinha feito" — editando um card já existente, criando uma descrição.
+
+**Causa raiz (técnica 3 — confrontar o que o toast promete com o que o
+código de fato confirma)**: `_saveCardWithRetry()` (usada por
+`scheduleAutoSave()`, `saveExtraDesc()` e a simulação de agente) sempre
+foi fire-and-forget — chama `fbSaveCard()`, e se falhar tenta de novo
+em 3s; só mostra um aviso ⚠ se as 2 tentativas falharem. O problema:
+ela nunca retornava a própria promise, então nenhum call site tinha
+como saber se a escrita REALMENTE confirmou antes de dar feedback de
+sucesso. `saveExtraDesc()` (a tela "Adicionar descrição") mostrava
+"✅ Descrição salva!" **na mesma hora** que chamava
+`_saveCardWithRetry()`, sem esperar nada — e o indicador "✓ Salvo" do
+botão principal do modal (dentro de `scheduleAutoSave()`, dispara pra
+QUALQUER edição de card existente — título, checklist, tags, descrição
+principal via o campo de texto) fazia exatamente a mesma coisa.
+
+**Impacto real**: numa conexão instável (rede corporativa, VPN, wifi de
+hotel...) onde as 2 tentativas internas de `_saveCardWithRetry()`
+falhassem (~3+ segundos), o único aviso de erro era um toast ⚠
+genérico aparecendo alguns segundos DEPOIS do "✅"/"✓ Salvo" já ter
+aparecido e sumido — fácil de não notar, principalmente pra quem está
+passando rápido por vários cards em sequência (como a usuária, editando
+3 cards seguidos). Um F5/reload puxava o estado real do Firebase, onde
+a edição nunca tinha chegado, e o conteúdo "sumia".
+
+**Fix**: `_saveCardWithRetry()` agora retorna a promise de verdade
+(resolve só quando uma das 2 tentativas confirma, rejeita só se as 2
+falharem). Os 3 call sites (`scheduleAutoSave()`, `saveExtraDesc()`,
+simulação de agente) atualizados: o feedback de sucesso ("✓ Salvo"/
+"✅ Descrição salva!") só aparece DEPOIS da confirmação real; se falhar,
+o aviso ⚠ que já existia continua sendo o feedback (evita duplicar
+mensagem de erro).
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido (braces -1, parens +1).
+
 ### v8.30.715-dev — 2026-09-21 — Fix severo: "Deslogar todos" do painel-dev.html não fazia nada (chave errada escutada)
 
 `/monitorarbugs` explícito, escopo nomeado "login e segurança" —

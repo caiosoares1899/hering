@@ -380,6 +380,17 @@ detalhe dos 4 call sites.
   de supercard, fan-out)
 - `fbSaveCard()` — L9131 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
+- `_saveCardWithRetry(card, label)` — L9231 — wrapper de `fbSaveCard()`
+  com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
+  usada por `scheduleAutoSave()` (L13598), `saveExtraDesc()` (L14287) e
+  a simulação de agente (perto de L18100). **Retorna a promise de
+  verdade desde 2026-09-21** (`/monitorarbugs`, relato direto de
+  usuária — "salvo beleza, mas some ao atualizar"): antes era
+  fire-and-forget, e os 3 call sites mostravam feedback de sucesso
+  ("✓ Salvo"/"✅ Descrição salva!") na mesma hora que chamavam a
+  função, sem esperar a escrita confirmar — se as 2 tentativas
+  falhassem (rede instável), o único aviso real vinha alguns segundos
+  DEPOIS do sucesso falso já ter aparecido e sumido.
 - **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
   `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
   todas recusam operar sobre um card com `card._isQLTemp===true` (o
