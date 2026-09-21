@@ -17654,6 +17654,41 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.54 · painel-dev — 2026-09-21 · Fix: aba "👥 Usuários" (Config do squad) editava o papel global em vez do papel por squad
+
+`/monitorarbugs` genérico — área escolhida por prioridade 2 (gerenciamento
+de usuários/papéis nunca tinha tido rodada própria da skill).
+
+**Causa raiz (técnica 1 — comparar caminho paralelo pra mesma operação, e
+técnica 3 — comportamento vs. o que o rótulo promete)**: existem 2
+mecanismos pra definir o papel de alguém. `updateSquadUserRole()` (modal
+"👥 Global Users") grava em `kanban/usuarios/{uid}/squads_roles/{squadId}`
+— papel **por squad**, o mecanismo que `kanban-dev.html` de fato prioriza
+em todo lugar que resolve `window._currentUserRole`
+(`squads_roles[ACTIVE_SQUAD] || role || 'membro'`, ~8 pontos). A aba
+"👥 Usuários" do modal de Config (seção rotulada **"Membros do Squad"**,
+filtrada por squad) usava um mecanismo diferente e mais antigo —
+`updateUserRole()` gravava direto no campo GLOBAL legado
+`kanban/usuarios/{uid}/role`, e o dropdown mostrava o papel selecionado
+lendo só esse campo global, ignorando qualquer override já definido via
+o modal Global Users.
+
+**Impacto real**: se a pessoa já tinha um override em
+`squads_roles[squadId]`, a aba "👥 Usuários" (a) mostrava o papel ERRADO
+(o global, não o efetivo daquele squad) e (b) trocar o papel ali dava
+"✅ Role atualizado" mas podia não ter EFEITO NENHUM no papel efetivo da
+pessoa naquele squad — porque `squads_roles` continuava tendo prioridade
+em todo o resto do app. De quebra, escrever no campo global também podia
+vazar o novo papel pra outros squads onde a pessoa não tinha override.
+
+**Fix**: `loadPcfgUsers()` passa a mostrar o papel EFETIVO
+(`squads_roles[cfgSquadId] || role || 'membro'`) como selecionado;
+`updateUserRole()` passa a gravar em `squads_roles/{cfgSquadId}`, mesmo
+padrão de `updateSquadUserRole()`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço de
+chaves/parênteses no baseline conhecido (braces -1, parens -14).
+
 ### painel-dev.html v3.53 · painel-dev — 2026-09-18 · Fix: dedup de eventos do Google Calendar colidia eventos diferentes de calendários diferentes
 
 `/monitorarbugs` nos 3 pontos de deduplicação de eventos de Google

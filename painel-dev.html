@@ -2846,7 +2846,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.53 · painel-dev</div>
+<div class="version">v3.54 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9566,7 +9566,14 @@ function loadPcfgUsers(){
       // Select
       const sel=document.createElement('select');
       sel.style.cssText='padding:3px 6px;font-size:10px;border:1px solid var(--glass-b);border-radius:6px;background:rgba(var(--ink-rgb),.8);color:var(--txt);cursor:pointer;';
-      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(u.role===r) opt.selected=true; sel.appendChild(opt); });
+      // Papel EFETIVO desta pessoa NESTE squad -- squads_roles[cfgSquadId] tem
+      // prioridade sobre o campo global 'role' em todo o resto do app (mesmo
+      // padrão de updateSquadUserRole()/kanban-dev.html getEffectiveRole()).
+      // /monitorarbugs 2026-09-21: antes mostrava só u.role, ignorando um
+      // override por squad já definido via "👥 Global Users" -- dropdown
+      // exibia o papel ERRADO sempre que existisse um override.
+      const papelEfetivo=(u.squads_roles&&u.squads_roles[cfgSquadId])||u.role||'membro';
+      ROLES.forEach(r=>{ const opt=document.createElement('option'); opt.value=r; opt.textContent=r; if(papelEfetivo===r) opt.selected=true; sel.appendChild(opt); });
       sel.addEventListener('change',function(){ updateUserRole(uid, this.value); });
       row.appendChild(av); row.appendChild(info); row.appendChild(sel);
       list.appendChild(row);
@@ -9574,7 +9581,15 @@ function loadPcfgUsers(){
   }).catch(e=>{ list.innerHTML='<div style="font-size:11px;color:var(--danger);">Erro: '+e.message+'</div>'; });
 }
 function updateUserRole(uid, role){
-  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/role'),role)
+  // Grava só o papel PARA ESTE SQUAD (squads_roles/{cfgSquadId}), nunca no
+  // campo global 'role' -- mesmo padrão de updateSquadUserRole() (modal
+  // "👥 Global Users"). /monitorarbugs 2026-09-21: esta aba ("Membros do
+  // Squad", filtrada por cfgSquadId) gravava no campo GLOBAL até aqui --
+  // se a pessoa já tivesse um override em squads_roles[cfgSquadId] (o campo
+  // que kanban-dev.html realmente prioriza em getEffectiveRole()), a troca
+  // aqui mostrava "✅ Role atualizado" mas podia não ter efeito NENHUM no
+  // papel efetivo dela naquele squad, sem nenhum aviso.
+  window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+cfgSquadId),role)
     .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
     .catch(e=>{
       if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
