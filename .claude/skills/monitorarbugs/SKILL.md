@@ -1857,6 +1857,37 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   então a ferramenta passa a contar pra essa feature também, de graça.
   dev v8.30.713-dev.
 
+- **2026-09-21, 📣 Campanhas (pedido genérico, "roda outro" — área
+  escolhida por prioridade 2, só tinha sido checada superficialmente
+  1x em 2026-08-26 junto com outra área)**: **sem achados**, depois de
+  investigação real. Checado: (1) os 2 caminhos de exclusão
+  (`campDeleteFromDetail()`/`campDeleteCurrent()`) e os 2 de criação/
+  edição (`saveCamp()`) são simétricos — mesma checagem `_isPOorOrg()`,
+  mesmo `_logCampAction()`, sem drift; (2) `saveCamp()` faz spread de
+  `existing=_campanhas[id]` antes de gravar — parecia o mesmo padrão
+  de sobrescrita com cache velho já corrigido em Kudos/Lembretes/
+  Dashboard consolidado (rodadas anteriores), mas `_campanhas` é
+  populado via `onValue` (tempo real), não poll — `existing` reflete o
+  estado mais recente do servidor no momento do save, não um snapshot
+  velho de quando o modal abriu; risco não se confirma; (3)
+  `campAddFixedLink()`/`campDelFixedLink()`/`saveCampEntrada()`/
+  `delCampEntrada()` não têm `_isPOorOrg()` — parecia gap comparado às
+  4 funções que têm (criar/editar/excluir campanha/ver logs), mas é
+  design deliberado: `_applyCampPerms()` só esconde os 4 botões de
+  gestão estrutural da campanha, nunca os de KV/link/registro — esses
+  são conteúdo colaborativo aberto a qualquer membro do squad, não
+  gestão da campanha em si; (4) `_campRef()`/`_campLogRef()` do
+  `kanban-dev.html` apontam pro node de PRODUÇÃO (`kanban/campanhas`,
+  sem sufixo `_dev`) — à primeira vista parecia contradizer o
+  `CLAUDE.md` ("campanhas_log/campanhas_log_dev... usado pelas páginas
+  dev"), mas confirmado que isso é característica JÁ CONHECIDA e
+  aceita de `kanban-dev.html` (diferente de `painel-dev.html`, que
+  separa quase tudo por sufixo `_dev`) — `dados_diarios` (outro node
+  checado de passagem) tem exatamente o mesmo padrão, e o próprio
+  `CLAUDE.md` já documenta `kanban-dev.html` como "atualmente
+  byte-idêntico a `kanban.html`", implicando dado compartilhado por
+  design, não um bug novo desta área.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
