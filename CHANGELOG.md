@@ -17682,6 +17682,26 @@ colidir eventos de agendas diferentes.
 Checks de rotina: `node --check` OK no maior bloco `<script>` de
 `kanban-dev.html` e `painel-dev.html`.
 
+### painel.html v3.56 · painel — 2026-09-21 · Promove pra prod: fix de dedup de eventos do Google Calendar por calendário
+
+Promoção do único item pendente em `painel-dev.html` (v3.53) desde a
+última promoção — validado junto com o lote de `kanban.html` ("pode
+subir tudo"). Patch cirúrgico, não cópia completa (ver entrada de dev
+"painel-dev.html v3.53" abaixo pro detalhe técnico completo):
+`carregarPcalAgendasGlobais()` deduplicava eventos do Google Calendar
+usando só data+título normalizado — dois eventos de agendas
+DIFERENTES com título genérico igual na mesma data (ex.: "Reunião")
+colidiam e um sumia permanentemente do `gcal_cache` no Firebase, não
+só da tela. Fix: inclui `ev._calId` na chave de dedup.
+
+`diff painel.html painel-dev.html` conferido antes e depois — só a
+divergência pré-existente esperada (banner de dev, seção "🔔 Enviar
+push manual" só em prod, sufixos `_dev` de config do Firebase/paths de
+debug bytes/campanhas) além desta mudança.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses no baseline conhecido (braces -1, parens -14).
+
 ### painel.html v3.55 · painel — 2026-09-17 · Promove pra prod: 📋 Anotações da reunião na aba OKR + fix de negrito no texto do Agente Ágil
 
 Promoção pedida direto pelo usuário ("sobe PAINEL prod, sem kanban"),
