@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.717 — 2026-09-21 · Promove pra prod — fix severo: "✓ Salvo"/"✅" mentindo sobre confirmação real (v8.30.717-dev)
+
+Promoção imediata (bug severo, validado via relato direto de usuária +
+teste de console com todos os 3 cenários passando). Ver a entrada de
+dev correspondente (seção "kanban-dev.html (ambiente de teste)" abaixo)
+pro detalhe técnico completo; aqui só o resumo pra quem usa o board.
+
+**🔴 Correção severa**: editar um card já existente (autosave) ou
+adicionar uma descrição extra mostrava "✓ Salvo"/"✅ Descrição salva!"
+mesmo quando a escrita no Firebase acabava falhando de verdade (rede
+instável) — a pessoa via o card como salvo, mas ao atualizar a página
+a edição tinha sumido, sem nenhum aviso claro na hora. Agora o feedback
+de sucesso só aparece depois que o Firebase confirma de verdade.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido (braces -1, parens +1). Diff contra `kanban-dev.html`
+restrito às 3 linhas de ambiente já esperadas (favicon, versão,
+`FB_OVERRIDE_NS`/`VERSION_KEY`, chave de `force_logout_after` — ver
+`CODE_MAP.md`).
+
 ### v8.30.716 — 2026-09-21 · Promove pra prod — lote de "login e segurança" (v8.30.713-dev → v8.30.715-dev)
 
 Promoção de todo o lote acumulado em `kanban-dev.html` desde a última
