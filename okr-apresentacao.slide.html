@@ -1307,9 +1307,14 @@ function _okrShowApp(user){
 // nesta mesma rodada em database.rules.json) pra vazar o diretório inteiro
 // de funcionários pra qualquer conta Google antes da tela de erro aparecer.
 // Fix: mesmo padrão já usado em painel.html (_finishPainelLogin/_check) —
-// checa domínio OU painel_viewers ANTES de mostrar o app, com cache de 24h
+// checa domínio OU painel_viewers ANTES de mostrar o app, com cache curto
 // (evita reconsultar à toa a cada auth-change) e 3 tentativas antes de
 // recusar por erro de rede.
+// TTL 15min, não 24h (/monitorarbugs 2026-09-21, "login e segurança" —
+// 3ª ocorrência do mesmo achado severo, já corrigido em kanban-dev.html
+// e painel-dev.html: com 24h, remover alguém de painel_viewers não tinha
+// efeito prático por até 1 dia inteiro pra quem já tivesse esse cache
+// válido no próprio navegador).
 window._okrIsViewer = false;
 function _okrViewerKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
 window._okrHandleAuth = user => {
@@ -1333,7 +1338,7 @@ window._okrHandleAuth = user => {
   }
   const cacheKey = 'okr_viewer_ok_'+user.email;
   const cached = parseInt(localStorage.getItem(cacheKey)||'0', 10);
-  if(cached && (Date.now()-cached) < 86400000){
+  if(cached && (Date.now()-cached) < 900000){
     window._okrIsViewer = true;
     _okrShowApp(user);
     return;

@@ -2846,7 +2846,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.54 · painel-dev</div>
+<div class="version">v3.55 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8937,6 +8937,22 @@ function removeAdmEmail(email){
   if(!confirm('Remover '+email+' dos ADMs?')) return;
   ADM_EMAILS=ADM_EMAILS.filter(e=>e!==email);
   saveAdmEmails();
+  // /monitorarbugs 2026-09-21, "login e segurança" (técnica 1 — comparar
+  // add vs. remove da mesma relação): addAdmEmail() sincroniza
+  // kanban/usuarios/{uid}/role='adm' quando promove, mas remover daqui
+  // nunca desfazia isso — getEffectiveRole() (kanban-dev.html) cai pra
+  // esse campo 'role' assim que isAdmUser() volta a dar false, então a
+  // pessoa "removida dos ADMs" continuava com papel 'adm' no board
+  // (bulk delete etc.) via esse resquício. Rebaixa pra 'membro' se o
+  // registro existir e ainda estiver marcado como 'adm'.
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+    const val=snap.val()||{};
+    const entry=Object.entries(val).find(([uid,u])=>u.email===email);
+    if(entry && entry[1].role==='adm'){
+      window._set(window._ref(window._db,'kanban/usuarios/'+entry[0]+'/role'),'membro')
+        .catch(e=>console.warn('Não foi possível rebaixar role de ADM (Firebase Rules):',e.message));
+    }
+  });
 }
 
 function saveAdmEmails(){
@@ -9751,12 +9767,19 @@ window.addEventListener('auth-change',e=>{
   if(user){
     if(user.email && !user.email.endsWith('@ciahering.com.br')){
       // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
-      // externos: cache de 24h (evita reconsultar à toa a cada auth-change,
+      // externos: cache curto (evita reconsultar à toa a cada auth-change,
       // que pode disparar sozinho por instabilidade do SDK) + 3 tentativas
       // antes de desconectar por erro de rede.
+      // TTL 15min, não 24h (/monitorarbugs 2026-09-21, "login e segurança" —
+      // mesmo achado severo já corrigido em kanban-dev.html, técnica 1):
+      // com 24h, removePainelViewer() não tinha efeito prático por até 1 dia
+      // inteiro pra quem já tinha esse cache válido no próprio navegador — um
+      // F5 pulava a checagem e chamava _finishPainelLogin(user) direto, com
+      // acesso de LEITURA a squads_meta/config/squads/{id}/dados de TODOS os
+      // squads (não só 1, ver comentário acima) continuando liberado.
       const _cacheKey = 'painel_viewer_ok_'+user.email;
       const _cached = parseInt(localStorage.getItem(_cacheKey)||'0', 10);
-      if(_cached && (Date.now()-_cached) < 86400000){
+      if(_cached && (Date.now()-_cached) < 900000){
         window._isPainelViewer = true;
         _finishPainelLogin(user);
         return;

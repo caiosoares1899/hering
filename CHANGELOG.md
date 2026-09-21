@@ -17342,6 +17342,28 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-21 (10ª rodada) — Fix: cache de acesso `painel_viewers` de 24h reduzido pra 15min
+
+`/monitorarbugs` escopado explicitamente pra "login e segurança" —
+achado por extensão do mesmo bug já corrigido em `kanban-dev.html`
+(whitelist `externos`) e `painel-dev.html` (whitelist `painel_viewers`,
+mesma rodada): `_okrHandleAuth()` usa o MESMO mecanismo de cache
+(`localStorage`, chave `okr_viewer_ok_{email}`) introduzido na 9ª rodada
+(2026-09-17, acima) pra evitar reconsultar `painel_viewers` a cada
+`auth-change` — só que com TTL de 24h. Remover alguém de
+`kanban/painel_viewers` não tinha efeito prático por até 1 dia inteiro
+pra quem já tivesse esse cache válido no próprio navegador — um F5
+pulava a checagem e chamava `_okrShowApp(user)` direto, mantendo acesso
+de leitura aos dados de OKR (Objetivos/Marcos/Anotações/Agenda de
+reunião).
+
+**Fix**: TTL reduzido de `86400000` (24h) pra `900000` (15min), mesmo
+valor já aplicado às outras 2 ocorrências desta rodada.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses igual ao estado anterior à mudança (braces 0,
+parens +1 — pré-existente, não introduzido por esta correção).
+
 ### 2026-09-17 (9ª rodada) — Segurança: checagem de domínio/painel_viewers agora roda ANTES de mostrar a tela
 
 Achado da análise de segurança pedida pelo usuário (ver entrada da
@@ -17729,6 +17751,43 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.55 · painel-dev — 2026-09-21 · 2 fixes: login e segurança (cache de acesso externo + rebaixar ADM removido)
+
+`/monitorarbugs` escopado explicitamente pra "login e segurança".
+
+**Fix 1 — cache de 24h no whitelist `painel_viewers` (técnica 1, mesmo
+achado já corrigido em `kanban-dev.html`)**: o listener de `auth-change`
+que valida acesso de e-mails fora de `@ciahering.com.br` guardava um
+cache local (`localStorage`) de "acesso já validado" por 24h. Remover
+alguém de `kanban/painel_viewers` (via `removePainelViewer()`) não tinha
+efeito prático por até 1 dia inteiro pra quem já tivesse esse cache
+válido no próprio navegador — um F5 pulava a checagem e chamava
+`_finishPainelLogin(user)` direto. Exposição maior que a versão do
+kanban: `painel_viewers` libera leitura de `squads_meta`/`config`/
+`squads/{id}/dados` de TODOS os squads (não só 1), além de `presence`/
+`snapshots`/`error_logs`/`error_stats`/`agent_usage`/`feedback`. Fix:
+TTL reduzido de `86400000` (24h) pra `900000` (15min) — mesmo trade-off
+já aprovado pelo usuário na correção paralela de `kanban-dev.html`.
+
+**Fix 2 — `removeAdmEmail()` não rebaixava o campo `role` (técnica 1,
+comparando com `addAdmEmail()`)**: `addAdmEmail()` sincroniza
+`kanban/usuarios/{uid}/role='adm'` ao promover alguém pra ADM, mas
+`removeAdmEmail()` só removia o e-mail de `ADM_EMAILS`/
+`kanban/config/adm_emails` — nunca desfazia esse campo `role`.
+`getEffectiveRole()` (`kanban-dev.html`) prioriza `isAdmUser()` (que
+corretamente passa a retornar `false` assim que `ADM_EMAILS` é
+atualizado, já que os dois arquivos leem o mesmo node compartilhado),
+mas cai pra `squadRole || legacyRole || 'membro'` em seguida — e o
+campo `role:'adm'` remanescente (o `legacyRole`) virava o fallback
+efetivo. Resultado: uma pessoa "removida dos ADMs" continuava com
+papel `adm` no board (ex.: `canBulkDelete()`) via esse resquício. Fix:
+`removeAdmEmail()` agora busca o registro do usuário por e-mail (mesmo
+padrão de lookup que `addAdmEmail()` já usa) e, se `role==='adm'`,
+rebaixa pra `'membro'`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses no baseline conhecido (braces -1, parens -14).
 
 ### painel-dev.html v3.54 · painel-dev — 2026-09-21 · Fix: aba "👥 Usuários" (Config do squad) editava o papel global em vez do papel por squad
 

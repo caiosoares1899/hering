@@ -2865,7 +2865,9 @@ detalhe aberto — ver nota abaixo).
   `/monitorarbugs` 2026-09-11 — ver `SKILL.md` da skill monitorarbugs).
 - Login: `window._okrHandleAuth = user => {...}` — L1315 — desde
   2026-09-17 (achado de análise de segurança), checa domínio OU
-  `painel_viewers` (`_okrViewerKey()` — L1314, cache de 24h +
+  `painel_viewers` (`_okrViewerKey()` — L1314, cache de 15min [reduzido
+  de 24h em 2026-09-21, `/monitorarbugs` "login e segurança" — mesmo
+  achado já corrigido em `kanban-dev.html`/`painel-dev.html`] +
   3 tentativas — mesmo padrão de `painel.html`
   `_finishPainelLogin()`/`_check()`) **antes** de chamar
   `_okrShowApp()` — L1291 — (mostra `#app`, chama `startListeners()`)

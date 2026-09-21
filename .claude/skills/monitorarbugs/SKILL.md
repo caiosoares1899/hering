@@ -1913,6 +1913,44 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   24h→15min, absorve o re-disparo rápido (segundos) mas corta a janela
   de acesso pós-remoção pra 15min. dev v8.30.714-dev.
 
+- **2026-09-21, login e segurança (pedido explícito, escopo nomeado,
+  continuação da rodada de "cancelar acesso de usuários excluídos")**:
+  3 achados reais, os 3 primeiros via técnica 1. (1)+(3) mesmo bug de
+  cache 24h já corrigido em `kanban-dev.html` (`externos`), duplicado
+  de forma independente em MAIS DE UM lugar que consulta a whitelist
+  `painel_viewers`: `painel-dev.html` (o comentário do próprio código
+  já dizia "mesmo padrão de resiliência que kanban-dev.html usa") E
+  `okr-apresentacao.slide.html` (`_okrHandleAuth()`, achado ao notar a
+  entrada de CHANGELOG de 2026-09-17 que introduziu esse mesmo cache —
+  achado por extensão, não fazia parte do escopo original até então).
+  Exposição de `painel_viewers` é arguível MAIOR que a do `externos` do
+  kanban: libera leitura de `squads_meta`/`config`/`squads/{id}/dados`
+  de TODOS os squads (não só 1) + `presence`/`snapshots`/`error_logs`/
+  `error_stats`/`agent_usage`/`feedback`, e no caso do OKR, todos os
+  dados de Objetivos/Marcos/Anotações/reunião. Mesmo fix nos 2 lugares,
+  TTL 24h→15min — trade-off já aprovado pelo usuário na correção
+  paralela do kanban momentos antes, não re-perguntado (a 3ª ocorrência
+  também não, por ser exatamente o mesmo padrão). **Lição**: ao achar
+  um padrão duplicado, sempre `grep` o padrão específico (aqui,
+  `painel_viewers`) no repo TODO, não só nos 2 arquivos óbvios do
+  escopo nomeado — o 3º caso só apareceu ao revisar o `CODE_MAP.md` de
+  passagem. (2) **mais sutil, achado novo**: comparando
+  `addAdmEmail()`/`removeAdmEmail()` (par add/remove da mesma relação
+  ADM), `addAdmEmail()` sincroniza `kanban/usuarios/{uid}/role='adm'`
+  ao promover, mas `removeAdmEmail()` nunca desfazia — só limpava
+  `ADM_EMAILS`. `getEffectiveRole()` (`kanban-dev.html`) prioriza
+  `isAdmUser()` (corretamente vira `false`), mas cai pro campo `role`
+  legado em seguida — um ADM "removido" continuava com papel `adm`
+  efetivo no board (`canBulkDelete()` etc.) via esse resquício. Fix:
+  `removeAdmEmail()` ganhou o mesmo lookup por e-mail que
+  `addAdmEmail()` já usa, rebaixa `role` pra `'membro'` se ainda
+  `'adm'`. dev v3.55·painel-dev + `okr-apresentacao.slide.html` (sem
+  versão própria). Ainda não coberto nesta rodada (segue pendente se o
+  usuário voltar ao tema): `force_logout_after` (existe mas não
+  confirmado se algo escreve nele), fluxo completo de
+  `confirmarInscricao()`, se o timeout de inatividade de fato encerra
+  a sessão do Firebase Auth ou só limpa estado local.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
