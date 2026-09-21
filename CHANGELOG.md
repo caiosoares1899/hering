@@ -3561,6 +3561,51 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.714-dev — 2026-09-21 — Fix severo: cancelar acesso de usuário externo não valia por até 24h (cache local não invalidava)
+
+`/monitorarbugs` explícito, escopo nomeado: "cancelar o acesso de
+usuários excluídos".
+
+**Contexto já confirmado, não é achado novo**: `removerMembro()`
+(kanban-dev.html) e `deleteGlobalUser()` (painel-dev.html) já limpam
+consistentemente `squads`/`squads_roles`/`usuarios_publicos`/whitelist
+`externos` — sem divergência entre os dois. Pra usuários
+`@ciahering.com.br`, o acesso ao board é liberado pelo domínio do
+email nas `database.rules.json` (já documentado no `CLAUDE.md`) —
+remover alguém interno de um squad é organizacional, nunca foi
+fronteira de segurança.
+
+**Achado real**: pra usuário EXTERNO (onde a whitelist `externos` de
+fato importa, já que o domínio não libera acesso), a checagem contra
+essa whitelist só rodava no evento `auth-change` — e o resultado
+ficava em cache no `localStorage` do PRÓPRIO NAVEGADOR da pessoa por
+**24 HORAS** (`ext_ok_{email}`). Se a pessoa já tinha logado com
+sucesso nas últimas 24h, um F5/reabrir a aba pulava a checagem inteira
+e chamava `autoRegistrar(user)` direto, sem consultar a whitelist
+atual nem uma vez.
+
+**Impacto real**: um PO remove um freelancer (`removerMembro()`)
+achando que cortou o acesso na hora — mas com o cache ainda válido no
+navegador da pessoa removida, ela continuava acessando o board
+normalmente por até 24h, mesmo com a whitelist já limpa no Firebase.
+Pior com `deleteGlobalUser()` (apaga `kanban/usuarios/{uid}` por
+completo): `autoRegistrar()` caía no branch de "usuário novo" e
+RECRIAVA o cadastro do zero, incluindo `squads[ACTIVE_SQUAD]=true` de
+novo — a pessoa "excluída" se auto-reinscrevia sozinha no squad, só
+por ainda ter o cache válido.
+
+**Fix**: TTL do cache reduzido de 24h pra 15min — ainda absorve o
+re-disparo rápido do `auth-change` (o bug original que motivou o
+cache, relatado pela usuária Roberta — instabilidade do SDK do
+Firebase Auth disparando o evento sozinho, em segundos, sem a pessoa
+fazer nada), mas corta a janela de acesso pós-remoção de 1 dia inteiro
+pra 15 minutos. Confirmado com o usuário via `AskUserQuestion` antes
+de aplicar (trade-off segurança vs. estabilidade de rede) — escolheu
+a opção recomendada.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses no baseline conhecido (braces -1, parens +1).
+
 ### v8.30.713-dev — 2026-09-21 — Fix: "🔁 Reatribuir cards" (Config) não deixava rastro nenhum — sem histórico, sem encadear automações
 
 `/monitorarbugs` genérico — área escolhida por prioridade 2 (ferramenta
