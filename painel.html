@@ -8398,6 +8398,15 @@ const COMUNICADO_RASCUNHOS_SEED = [
     tipo: 'novidade',
     squad: '*',
   },
+  {
+    id: 'seed_fix_salvamento_card_2026_09_21',
+    titulo: '🔴 Corrigido: edição/criação de card podia "sumir" ao atualizar a página',
+    corpo: '<p>Identificamos e corrigimos um bug sério: desde o dia <b>17/09</b>, editar um card já existente (tags, título, descrição, checklist, prazo, responsável...) ou <b>criar um card novo</b> podia mostrar "salvo" na tela sem a alteração chegar a ser gravada de verdade — ao atualizar a página (F5), a edição ou o card criado desaparecia, como se nunca tivesse acontecido.</p>'
+      + '<p>Isso podia acontecer com qualquer pessoa, em qualquer squad, sem nenhum aviso na tela. Já está corrigido a partir de agora.</p>'
+      + '<p><b>Se você editou ou criou algum card entre 17/09 e hoje e reparou que ele "sumiu" ou voltou como estava antes</b>, pode ter sido esse bug — vale conferir esse card e refazer a edição se precisar. Pedimos desculpas pelo transtorno.</p>',
+    tipo: 'urgente',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
