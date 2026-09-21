@@ -940,7 +940,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .m-tag-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;border:1px solid transparent;}
 .m-tag-chip .x{cursor:pointer;opacity:.6;font-weight:800;font-size:12px;line-height:1;}
 .m-tag-chip .x:hover{opacity:1;}
-.m-tags-add{cursor:pointer;}
+.m-tags-add{cursor:text;}
+.m-tag-add-wrap{position:relative;}
+.m-tag-add-list{display:none;position:fixed;z-index:9300;background:rgba(var(--surface-rgb),.99);border:1px solid var(--glass-b);border-radius:10px;padding:4px;max-height:220px;overflow-y:auto;box-shadow:0 10px 30px rgba(0,0,0,.5);backdrop-filter:blur(14px);}
+.m-tag-add-list.open{display:block;}
+.m-tag-add-item{padding:6px 9px;border-radius:7px;font-size:12px;color:var(--txt);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.m-tag-add-item:hover{background:rgba(56,182,255,.14);}
+.m-tag-add-empty{padding:6px 9px;font-size:11px;color:var(--txt3);}
 .card-title{font-size:11px;font-weight:500;margin-bottom:3px;line-height:1.4;overflow-wrap:break-word;word-break:break-word;}
 
 .card-footer{display:flex;align-items:center;justify-content:space-between;gap:4px;}
@@ -4138,9 +4144,11 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="field"><label class="fl">Tags</label>
             <div id="m-tags-box" class="m-tags-box">
               <div id="m-tags-chips" class="m-tags-chips"></div>
-              <select class="fi m-tags-add" id="m-tag-add" onchange="addCardTag(this.value)">
-                <option value="">+ Adicionar tag…</option>
-              </select>
+              <div class="m-tag-add-wrap" id="m-tag-add-wrap">
+                <input class="fi m-tags-add" id="m-tag-add" type="text" placeholder="+ Adicionar tag…" autocomplete="off"
+                  oninput="renderTagAddDropdown()" onfocus="renderTagAddDropdown()" onkeydown="_tagAddKeydown(event)">
+                <div class="m-tag-add-list" id="m-tag-add-list"></div>
+              </div>
             </div>
           </div>
           <div class="field"><label class="fl">Coluna</label>
@@ -6277,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.686</div>
+<div class="version">v8.30.712</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6758,6 +6766,25 @@ const today = new Date(); today.setHours(0,0,0,0);
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
+// Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
+// paralelos): os 5 drawers laterais (Lembretes/Dados/Kudos/Spotify/Notas)
+// compartilham a MESMA classe base .lem-drawer — position:fixed idêntico
+// (4 deles, inclusive, do MESMO lado da tela: só .kudos-drawer espelha pra
+// esquerda). Cada toggleXxx() mantinha sua PRÓPRIA lista solta de "que
+// outros drawers fechar" — e as 5 listas tinham divergido: toggleNotas()
+// fechava os 4 outros corretamente, mas toggleSpotify() esquecia Notas,
+// toggleKudos() só fechava Lembretes, e toggleDados()/toggleLembretes()
+// não fechavam NENHUM outro. Abrir Dados com Lembretes já aberto (ou
+// qualquer combinação faltante acima) deixava os dois `.open` ao mesmo
+// tempo, exatamente na mesma posição da tela — um por cima do outro,
+// sem nenhum jeito de saber que os dois estavam tecnicamente abertos.
+// Centralizado aqui pra não voltar a divergir por esquecimento — toda
+// nova aba lateral que for criada só precisa entrar nesta lista.
+const _DRAWER_IDS = ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer','notas-drawer'];
+function _closeOtherDrawers(exceptId){
+  _DRAWER_IDS.forEach(id=>{ if(id!==exceptId) document.getElementById(id)?.classList.remove('open'); });
+}
+
 // ── CENTRAL DE DADOS (captação digital — leitura no board) ─────────
 let dadosDiariosBoard = {};   // {date:'YYYY-MM-DD': {...}} — kanban/dados_diarios
 let dadosApresentacoesBoard = []; // [{id,title,url}] — kanban/config/dados_apresentacoes
@@ -6766,6 +6793,7 @@ function toggleDados(){
   const d = document.getElementById('dados-drawer');
   if(!d) return;
   const opening = !d.classList.contains('open');
+  if(opening) _closeOtherDrawers('dados-drawer');
   d.classList.toggle('open');
   if(opening) renderDadosPainel();
 }
@@ -7830,6 +7858,11 @@ function _doBulkUnblockTag(){
   const n=list.length;
   list.forEach(c=>{
     c.blocker=false;
+    // /monitorarbugs 2026-09-17: motivo some do dashboard de Criativos
+    // ("Mais tempo bloqueado") assim que o card é desbloqueado, porque
+    // blockerReason era zerado aqui sem preservar o texto em lugar nenhum —
+    // guarda em lastBlockerReason antes de limpar (ver crvBlockRow()).
+    if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
     c.blockerReason='';
     _settleBlockedTag(c, true); // ⏱️ list já filtrou _cardIsBlocked(c) — fecha o episódio
     c.updatedAt=new Date().toISOString();
@@ -8436,7 +8469,9 @@ function recordMove(card, toCol, atISO){
   if(!card.flow.log) card.flow.log = [];
   const from = isNewFlow ? null : (card._lastFlowCol!=null ? card._lastFlowCol : (card.col||null));
   if(from === toCol && card.flow.enteredAt[toCol]) { card._lastFlowCol = toCol; return; }
-  card.flow.enteredAt[toCol] = at;
+  // ver comentário em backfillFlow() — mesma proteção contra toCol vazio
+  // virando chave inválida em flow.enteredAt.
+  if(toCol) card.flow.enteredAt[toCol] = at;
   card.flow.log.push({ from: from||'—', to: toCol, at });
   if(card.flow.log.length>40) card.flow.log = card.flow.log.slice(-40);
   const startIds = _flowStartColIds();
@@ -8466,6 +8501,8 @@ function recordMove(card, toCol, atISO){
   const _wasBlockedTagBeforeAutoUnblock = card.blocker;
   if(blockerMode==='tag' && card.blocker && from!==toCol && _isColDone(toCol)){
     card.blocker=false;
+    // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
+    if((card.blockerReason||'').trim()) card.lastBlockerReason=card.blockerReason;
     card.blockerReason='';
     recordHistory(card,'impedimento removido automaticamente (card concluído)');
   }
@@ -8488,7 +8525,19 @@ function recordMove(card, toCol, atISO){
     if(toCol==='blocker' && from!=='blocker' && !card.blockedAt){
       card.blockedAt = at;
     } else if(from==='blocker' && toCol!=='blocker' && card.blockedAt){
-      card.blockedMs = (card.blockedMs||0) + Math.max(0, new Date(at).getTime()-new Date(card.blockedAt).getTime());
+      // Number(...) em vez de (x||0): achado real (relato direto do
+      // usuário, print de um card mostrando "666202d 11h" de atraso
+      // acumulado — impossível). Causa raiz confirmada via script de
+      // diagnóstico: atrasadoMs tinha virado STRING em algum momento
+      // (não achada a origem exata — provavelmente um dado antigo/
+      // importado), e (card.atrasadoMs||0) + número faz CONCATENAÇÃO de
+      // string em JS quando o operando já é string, não soma — "575598920"
+      // + 48539 virou o texto "57559892048539", lido depois como
+      // milissegundos. Number(x)||0 garante soma numérica sempre, mesmo
+      // se o valor salvo já estiver corrompido como string. Mesmo padrão
+      // aplicado aqui e nos outros 4 pontos que fazem esse tipo de
+      // acumulação (blockedMs ×3, pausedMs ×1, atrasadoMs mais abaixo).
+      card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, new Date(at).getTime()-new Date(card.blockedAt).getTime());
       card.blockedAt = null;
     }
   }
@@ -8501,9 +8550,27 @@ function recordMove(card, toCol, atISO){
     if(estavaAtrasado){
       const startStr = card.atrasadoDesde || card.due;
       const start = new Date(startStr+'T00:00:00').getTime();
-      card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, new Date(at).getTime()-start);
+      card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, new Date(at).getTime()-start);
     }
     card.atrasadoDesde = null;
+  }
+  // ⏸️ Fecha a pausa se o card chega numa coluna de fim ainda pausado —
+  // achado real (/monitorarbugs 2026-09-18, escopo nomeado "pausar
+  // cards"): nada nunca desmarcava card.paused/pausedAt ao concluir (só
+  // togglePauseCard() manual mexe nesses 2 campos). _cardPausedMs()
+  // soma o episódio ABERTO usando Date.now() — como doneMs (usado por
+  // _cardTempos() pro lead/cycle time) fica FIXO no momento da conclusão,
+  // um card concluído-mas-ainda-pausado tinha o "tempo pausado" crescendo
+  // pra sempre com o relógio, corroendo o lead time em silêncio até zerar
+  // (Math.max(0,...) satura) — mesma classe de bug já corrigida aqui pra
+  // blockedMs/atrasadoMs (episódio aberto nunca fechado no desfecho
+  // "concluiu"), agora pra pausedMs. Mesmo espírito do auto-desimpedimento
+  // acima ("se o card está concluído, automaticamente ele é X").
+  if(_isColDone(toCol) && !_isColDone(from) && card.paused){
+    if(card.pausedAt) card.pausedMs = (Number(card.pausedMs)||0) + Math.max(0, new Date(at).getTime()-new Date(card.pausedAt).getTime());
+    card.paused = false;
+    card.pausedAt = null;
+    recordHistory(card, 'retomou a contagem de tempo do card automaticamente (card concluído)');
   }
 }
 // Backfill: cards importados (ex.: Trello) ou legados sem c.flow.
@@ -8511,7 +8578,14 @@ function backfillFlow(card){
   if(!card || card.flow) return;
   const created = card.createdAt ? card.createdAt + (card.createdAt.length<=10?'T12:00:00.000Z':'') : new Date().toISOString();
   card.flow = { enteredAt:{}, log:[], firstStartAt:null, doneAt:null, imported:true };
-  card.flow.enteredAt[card.col] = created;
+  // /monitorarbugs 2026-09-17: card.col vazio (card criado fora do fluxo
+  // normal, sem coluna atribuída) virava chave vazia em flow.enteredAt —
+  // Realtime Database rejeita chave vazia em QUALQUER escrita que inclua
+  // esse card, derrubando fbSaveAll() (e todo bulk action da squad) sem
+  // aviso nenhum ao usuário. _stripUndefinedDeep() agora filtra isso como
+  // rede de segurança central, mas não tem por que gerar a chave inválida
+  // aqui pra começo de conversa.
+  if(card.col) card.flow.enteredAt[card.col] = created;
   card._lastFlowCol = card.col;
   // Mesmo achado do recordMove() logo acima — _isColDone() em vez de
   // comparar só contra a 1ª coluna de fim configurada.
@@ -8684,6 +8758,7 @@ const CARD_HIST_TIPOS = {
   duplicado:   {icon:'📄', cor:'#1de9b6'},
   tempo:       {icon:'⏸️', cor:'#38b6ff'},
   pin:         {icon:'📌', cor:'#ffd700'},
+  supercard:   {icon:'🧩', cor:'#a78bfa'},
   campo:       {icon:'✏️', cor:'#38b6ff'},
 };
 function _histTipo(what){
@@ -8714,6 +8789,7 @@ function _histTipo(what){
   if(/^(alterou prazo|removeu prazo|definiu prazo|adiou o prazo)/.test(what)) return 'prazo';
   if(/^(pausou|retomou) a contagem/.test(what)) return 'tempo';
   if(/^(fixou|desafixou) o card/.test(what)) return 'pin';
+  if(/^(vinculou|desvinculou) o card filho|^aplicou fan-out/.test(what)) return 'supercard';
   return 'campo';
 }
 // Ícone/cor pra quem não é uma pessoa de verdade. 2 origens diferentes,
@@ -10708,6 +10784,80 @@ function _applyRoleVisibility(){
   const fabHotline=document.getElementById('fab-agente-hotline-btn');
   if(fabHotline) fabHotline.style.display=AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD)?'':'none';
 }
+// Reivindica um init de forma ATÔMICA via kanban/init_registry/{INIT}=uid.
+// Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário — card
+// da Marina Saran Bernardo aparecia no Histórico do painel como se fosse do
+// Marciel Santos Alexandrino): o mecanismo antigo de evitar colisão de
+// iniciais no 1º login (autoRegistrar() abaixo) lia usuarios_publicos,
+// computava localmente qual sigla estava livre, e só DEPOIS escrevia — 3
+// passos separados, sem nada impedindo 2 pessoas se cadastrando quase ao
+// mesmo tempo de lerem a mesma sigla como livre antes de qualquer uma
+// escrever. As iniciais dos dois ("MS", mesmo algoritmo — 1ª letra do
+// 1º+2º nome) coincidiram, e as duas acabaram gravadas com "MS".
+// runTransaction() garante atomicidade de verdade (mesma técnica já usada
+// em fbCreateCard()/fila do orquestrador/Kudos): só uma reivindicação
+// vence, mesmo sob concorrência real — sem depender de sorte no timing.
+async function _claimUserInit(uid, baseInit){
+  try{
+    await _ensureInitRegistryBackfilled();
+    let init = baseInit, n = 2;
+    while(n < 50){
+      const ref = window._ref(window._db, 'kanban/init_registry/'+init);
+      const result = await window._runTransaction(ref, current => (current===null||current===uid) ? uid : undefined);
+      if(result.committed) return init;
+      init = baseInit + (n++);
+    }
+    // Fallback extremo — nunca deveria chegar aqui com <50 pessoas colidindo
+    // no mesmo par de iniciais; evita loop infinito em vez de travar o login.
+    return baseInit + Date.now().toString(36).slice(-4).toUpperCase();
+  }catch(e){
+    // Fallback pro mecanismo antigo (não-atômico, mas não trava NINGUÉM
+    // de se cadastrar) — kanban/init_registry precisa de
+    // database.rules.json publicado (deploy manual, fora do alcance do
+    // GitHub Pages, ver CLAUDE.md); se o código já foi ao ar mas a regra
+    // ainda não, a transação acima cai aqui em vez de quebrar o login.
+    console.warn('[_claimUserInit] kanban/init_registry indisponível, usando fallback não-atômico:', e);
+    try{
+      const pubSnap = await fbGet('kanban/usuarios_publicos');
+      const allPub = pubSnap.val()||{};
+      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
+      let init = baseInit;
+      if(usedInits.has(init)){
+        let n=2; while(usedInits.has(init+n) && n<10) n++;
+        init = init+n;
+      }
+      return init;
+    }catch(e2){
+      console.warn('[_claimUserInit] fallback também falhou, usando init cru sem checagem:', e2);
+      return baseInit;
+    }
+  }
+}
+// Preenche kanban/init_registry pra quem já tinha init ANTES dele existir —
+// só roda 1x por sessão (guard). update() simples, não precisa de
+// transação: cada entrada vem de um init JÁ estabelecido/existente, então
+// 2 pessoas rodando o backfill em paralelo escreveriam o mesmo valor —
+// inofensivo, diferente da corrida original (que era sobre CRIAR um valor
+// novo, não replicar um já existente).
+let _initRegistryBackfillDone = false;
+async function _ensureInitRegistryBackfilled(){
+  if(_initRegistryBackfillDone) return;
+  _initRegistryBackfillDone = true;
+  try{
+    const [pubSnap, regSnap] = await Promise.all([
+      fbGet('kanban/usuarios_publicos'),
+      fbGet('kanban/init_registry'),
+    ]);
+    const pub = pubSnap.val()||{};
+    const reg = regSnap.val()||{};
+    const updates = {};
+    Object.entries(pub).forEach(([uid2,d])=>{
+      const init2 = (d.init||'').toUpperCase();
+      if(init2 && !reg[init2]) updates['kanban/init_registry/'+init2] = uid2;
+    });
+    if(Object.keys(updates).length) await window._update(window._ref(window._db), updates);
+  }catch(e){ console.warn('[_ensureInitRegistryBackfilled] falhou, segue sem registry:', e); }
+}
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -10715,28 +10865,30 @@ function autoRegistrar(user){
     window._currentUserRole='adm';
     _applyRoleVisibility();
   }
-  // Busca em paralelo o usuário (existe ou não) e o registro público de TODO
-  // mundo, não só do squad atual — precisa dele aqui embaixo pra checar
-  // colisão de iniciais board inteiro antes de gravar um usuário novo (ver
-  // comentário abaixo). Iniciais são um campo GLOBAL por uid
-  // (kanban/usuarios/{uid}.init), então checar só o squad atual deixava
-  // passar batido gente de squads diferentes com a mesma sigla — achado
-  // real: "GS" de Outlet CRM e "GS" de Site Hering, cards se misturando no
-  // Meu Dia sem ninguém saber por quê até investigar.
-  Promise.all([fbGet('kanban/usuarios/'+user.uid), fbGet('kanban/usuarios_publicos')]).then(([snap, pubSnap])=>{
+  // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) — ver
+  // _claimUserInit() abaixo pra colisão board inteiro (não só squad atual;
+  // achado real antigo: "GS" de Outlet CRM e "GS" de Site Hering, cards se
+  // misturando no Meu Dia sem ninguém saber por quê até investigar).
+  // Achado real (/monitorarbugs, 2026-09-17): não precisa mais buscar
+  // usuarios_publicos aqui — a checagem de colisão migrou pra dentro de
+  // _claimUserInit() via runTransaction(), leitura a menos.
+  fbGet('kanban/usuarios/'+user.uid).then(async (snap)=>{
     const existe=snap.val();
     let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
     if(!existe){
-      // Colisão de iniciais board inteiro: se a inicial gerada automaticamente
-      // já está em uso por qualquer outro uid (de qualquer squad), acrescenta
-      // um dígito até achar uma livre — silencioso de propósito (não tem
-      // diálogo nesse fluxo pra mostrar erro), mas evita duplicar às cegas.
-      const allPub = pubSnap.val()||{};
-      const usedInits = new Set(Object.values(allPub).map(d=>(d.init||'').toUpperCase()).filter(Boolean));
-      if(usedInits.has(init)){
-        let n=2; while(usedInits.has(init+n) && n<10) n++;
-        init = init+n;
-      }
+      // Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário —
+      // um card da Marina Saran Bernardo aparecia no Histórico do painel
+      // como se fosse do Marciel Santos Alexandrino): as iniciais dos dois
+      // ("MS", mesmo algoritmo — 1ª letra do 1º+2º nome) colidiram porque
+      // este bloco fazia ler-checar-escrever em 3 passos separados (leu
+      // usuarios_publicos, computou localmente, gravou) — sem nada
+      // impedindo 2 pessoas se cadastrando quase ao mesmo tempo de lerem
+      // "MS" como livre ANTES de qualquer uma das duas escrever, e as duas
+      // acabarem gravadas com a mesma sigla. `_claimUserInit()` reivindica
+      // via `runTransaction()` num nó dedicado (`kanban/init_registry`) —
+      // atômico de verdade, sobrevive a concorrência real (mesma técnica já
+      // usada em `fbCreateCard()`/fila do orquestrador/Kudos).
+      init = await _claimUserInit(user.uid, init);
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
@@ -10833,8 +10985,10 @@ function autoRegistrar(user){
     }
   });
 }
+let _inscOriginalInit = '';
 function mostrarInscricao(user,dados){
   const init=dados?.init||window._currentUserInit||'';
+  _inscOriginalInit = init;
   document.getElementById('insc-nome').textContent=user.displayName||user.email;
   document.getElementById('insc-email').textContent=user.email;
   document.getElementById('insc-init').value=init;
@@ -10864,6 +11018,34 @@ async function confirmarInscricao(){
   // Oculta erro se existia
   const errEl=document.getElementById('insc-init-err');
   if(errEl) errEl.style.display='none';
+
+  // /monitorarbugs 2026-09-17: esta tela deixa a pessoa EDITAR a sigla
+  // pré-preenchida antes de confirmar — mesmo padrão ler-checar-escrever
+  // não-atômico que causou a colisão real "MS"/"MS" (Marina Saran
+  // Bernardo × Marciel Santos Alexandrino, PR #969), só que aqui ainda
+  // sem o fix: a checagem `conflict` acima é só um erro amigável, não uma
+  // garantia sob concorrência real. Reivindica via kanban/init_registry
+  // (runTransaction, mesmo padrão de editarInicial()) antes de gravar; se
+  // a sigla foi reivindicada por outra pessoa nesse meio-tempo, erro
+  // amigável em vez de deixar as duas gravarem a mesma. Try/catch: se a
+  // regra ainda não foi publicada (deploy manual, ver CLAUDE.md), segue
+  // só com a checagem `conflict` de cima, como sempre funcionou.
+  try{
+    const claimRef = window._ref(window._db, 'kanban/init_registry/'+init);
+    const claimResult = await window._runTransaction(claimRef, current => (current===null||current===user.uid) ? user.uid : undefined);
+    if(!claimResult.committed){
+      if(errEl){ errEl.textContent='⚠ Iniciais "'+init+'" foram reivindicadas por outra pessoa agora mesmo. Tente de novo.'; errEl.style.display='block'; }
+      return;
+    }
+    // Libera a sigla anterior (se a pessoa editou o campo pré-preenchido) —
+    // mesma lógica de editarInicial(): só libera se ESTE uid for o dono
+    // registrado, nunca mexe se já pertencer a outra pessoa.
+    if(_inscOriginalInit && _inscOriginalInit.toUpperCase()!==init){
+      window._runTransaction(window._ref(window._db, 'kanban/init_registry/'+_inscOriginalInit.toUpperCase()), current => current===user.uid ? null : undefined).catch(()=>{});
+    }
+  }catch(e){
+    console.warn('[confirmarInscricao] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
+  }
 
   const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
@@ -10989,13 +11171,24 @@ function _diasUteisEntre(d1, d2){
   }
   return dias;
 }
-function getDue(due, isDone){
+// paused (2026-09-18, /monitorarbugs — relato direto: "pausei um card, mas
+// vi que estava contando os dias ainda") — card pausado com prazo vencido
+// continuava mostrando o selo "⚠ Xd atrasado" contando normalmente,
+// contradizendo a própria promessa do botão ⏸ Pausar ("não quer que isso...
+// apareça como alarme pro resto do board" — já valia pra "card parado"
+// desde 2026-09-14, mas "atrasado" é um conceito diferente que ficou de
+// fora daquela rodada). Enquanto pausado, mostra só a data (neutro, sem
+// alarme) em vez do selo vermelho — mesmo espírito do isDone acima.
+function getDue(due, isDone, paused){
   if(!due) return {cls:'',lbl:''};
   if(isDone) return {cls:'due-done',lbl:'✓ '+new Date(due+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'})};
   const d=new Date(due+'T00:00:00'); d.setHours(0,0,0,0);
   const diff=Math.round((d-today)/86400000);
   const lbl=d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-  if(diff<0) return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
+  if(diff<0){
+    if(paused) return {cls:'due-ok',lbl};
+    return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
+  }
   if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
@@ -11003,7 +11196,7 @@ function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.don
 
 function makeCardEl(card){
   const isDone=_isColDone(card.col);
-  const{cls:dc,lbl:dl}=getDue(card.due,isDone);
+  const{cls:dc,lbl:dl}=getDue(card.due,isDone,card.paused);
   const cp=clProg(card.checklist);
   const bex=_cardIsBlocked(card)?'border-color:rgba(255,107,107,.4);':''
   const op=isDone?'opacity:.62;':''
@@ -11724,9 +11917,13 @@ function _timelineCardRow(card, hojeStr){
   // os buckets progressivos (ver renderTimelineView()) um grupo agora cobre
   // VÁRIOS dias (ex.: "Resto da semana"), então o nome do grupo sozinho não
   // basta mais pra saber QUANDO exatamente.
+  // card.paused (2026-09-18, /monitorarbugs — mesmo achado do selo "⚠ Xd
+  // atrasado" no board, ver getDue()): card pausado com prazo vencido não
+  // ganha o "Xd atrasado" em vermelho aqui também, cai no mesmo fallback
+  // de data neutra que um card com prazo futuro já usa.
   let prazoMeta='';
   if(card.due){
-    if(card.due<hojeStr){
+    if(card.due<hojeStr && !card.paused){
       const dias=_diasUteisEntre(new Date(card.due+'T12:00:00'), new Date(hojeStr+'T12:00:00'));
       prazoMeta=` · <span style="color:#ff6b6b;font-weight:700;">${dias}d atrasado</span>`;
     } else if(card.due!==hojeStr){
@@ -14083,16 +14280,87 @@ function saveExtraDesc(i){
   showToast('✅ Descrição salva!');
 }
 function populateTagSelect(){
-  const add=document.getElementById('m-tag-add');
-  if(add){
-    const avail=tags.filter(t=>!editingTags.includes(t.id));
-    add.innerHTML='<option value="">+ Adicionar tag…</option>'+avail.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
-  }
   renderEditingTags();
+  // Só reconstrói o dropdown de "+ Adicionar tag…" se ele já estiver
+  // aberto (usuário digitando/acabou de clicar num item) — populateTagSelect()
+  // é chamado por bem mais coisa do que só isso (abrir card, trocar coluna,
+  // Config → tags…), e forçar o dropdown a abrir nesses casos seria um bug novo.
+  const list=document.getElementById('m-tag-add-list');
+  if(list && list.classList.contains('open')) renderTagAddDropdown();
+}
+// Ordem alfabética normal, exceto tags cujo label COMEÇA com emoji (ex.:
+// "👖 P"/"👖 M"/"👖 GG" de tamanho) — essas vão pro fim da lista, também
+// em ordem alfabética entre si, em vez de se intercalarem no meio (emoji
+// ordena antes de letra em Unicode, então sem isso ficavam sempre no topo).
+function _tagLabelCmp(la,lb){
+  la=la||''; lb=lb||'';
+  const ea=/^\p{Extended_Pictographic}/u.test(la.trim());
+  const eb=/^\p{Extended_Pictographic}/u.test(lb.trim());
+  if(ea!==eb) return ea?1:-1;
+  return la.localeCompare(lb,'pt-BR');
+}
+// Achado real (/monitorarbugs, 2026-09-17): Tamanho (SIZE_TAGS), Submarca
+// (SUBMARCA_TAGS) e Canal de venda (CANAL_VENDA_TAGS) têm campo dedicado
+// próprio (👕/🏷️/📢 — setCardTamanho()/setCardSubmarca()/setCardCanalVenda())
+// que já garante exclusividade dentro do grupo (nunca 2 tamanhos ao mesmo
+// tempo — mesma invariante de _doBulkTagMulti()) e respeita a visibilidade
+// por tag que o PO configura (_submarcaIsVisivel()/_canalVendaIsVisivel()).
+// Este dropdown genérico listava essas tags junto com as demais, sem
+// checar grupo nem visibilidade — dava pra clicar "👕 P" e depois "👕 G"
+// aqui e o card ficava com os 2 tamanhos ao mesmo tempo (estado que os
+// campos dedicados e o picker de ação em massa nunca permitem), e também
+// pra escolher uma submarca/canal que o PO tinha escondido explicitamente.
+// Exclui os 3 grupos daqui — quem precisa deles usa o campo dedicado.
+const _TAG_ADD_EXCLUDED_IDS=new Set();
+function _tagAddExcludedIds(){
+  if(!_TAG_ADD_EXCLUDED_IDS.size) [...SIZE_TAGS,...SUBMARCA_TAGS,...CANAL_VENDA_TAGS].forEach(t=>_TAG_ADD_EXCLUDED_IDS.add(t.id));
+  return _TAG_ADD_EXCLUDED_IDS;
+}
+function _tagAddAvail(){
+  const q=_norm(document.getElementById('m-tag-add')?.value||'');
+  const excluded=_tagAddExcludedIds();
+  return tags.filter(t=>!editingTags.includes(t.id) && !excluded.has(t.id) && (!q || _norm(t.label).includes(q)))
+    .sort((a,b)=>_tagLabelCmp(a.label,b.label));
+}
+function renderTagAddDropdown(){
+  const inp=document.getElementById('m-tag-add');
+  const list=document.getElementById('m-tag-add-list');
+  if(!inp||!list) return;
+  const avail=_tagAddAvail();
+  const q=inp.value.trim();
+  list.innerHTML = avail.length
+    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag('${esc(t.id)}')">${esc(t.label)}</div>`).join('')
+    : `<div class="m-tag-add-empty">${q?'Nenhuma tag encontrada.':'Todas as tags disponíveis já foram adicionadas.'}</div>`;
+  const r=inp.getBoundingClientRect();
+  list.style.top=(r.bottom+4)+'px';
+  list.style.left=r.left+'px';
+  list.style.minWidth=Math.max(r.width,180)+'px';
+  list.classList.add('open');
+}
+function closeTagAddDropdown(){
+  const list=document.getElementById('m-tag-add-list');
+  if(list) list.classList.remove('open');
+}
+document.addEventListener('click', e=>{
+  if(!e.target.closest('#m-tag-add-wrap')) closeTagAddDropdown();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape') closeTagAddDropdown();
+});
+function _tagAddKeydown(e){
+  if(e.key==='Enter'){
+    e.preventDefault();
+    const avail=_tagAddAvail();
+    if(avail.length) addCardTag(avail[0].id);
+  } else if(e.key==='Escape'){
+    closeTagAddDropdown();
+    e.target.blur();
+  }
 }
 function renderEditingTags(){
   const box=document.getElementById('m-tags-chips'); if(!box) return;
-  box.innerHTML=editingTags.map(id=>{
+  const _sortedTagIds=editingTags.slice().sort((a,b)=>_tagLabelCmp(getTag(a)?.label,getTag(b)?.label));
+  box.innerHTML=_sortedTagIds.map(id=>{
     const t=getTag(id); if(!t) return '';
     let bg,bc,col;
     if(t.isOKR||t.id==='okr'){ bg='rgba(255,215,0,.15)';bc='rgba(255,215,0,.5)';col='#ffd700'; }
@@ -14104,8 +14372,8 @@ function renderEditingTags(){
 function addCardTag(id){
   if(!id) return;
   if(!editingTags.includes(id)) editingTags.push(id);
+  const add=document.getElementById('m-tag-add'); if(add){ add.value=''; add.focus(); }
   populateTagSelect();
-  const add=document.getElementById('m-tag-add'); if(add) add.value='';
   scheduleAutoSave();
 }
 function removeCardTag(id){
@@ -15120,7 +15388,7 @@ function saveCard(){
       // applyFanoutToCurrentCard) — os filhos em si já existem como cards de
       // verdade desde a hora que foram criados; só o vínculo ficava pendente
       // até agora, que o pai finalmente ganha um id real.
-      childCardIds:editingSuperChildren.map(l=>l.id),
+      childCardIds:[...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds],
       updatedAt:new Date().toISOString(),
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'};
     recordHistory(_newCard, 'criou o card'); // 📜 marco inicial
@@ -15234,7 +15502,7 @@ function togglePauseCard(cardId){
   const nowISO=new Date().toISOString();
   if(c.paused){
     const elapsedMs = c.pausedAt ? Math.max(0, Date.now()-new Date(c.pausedAt).getTime()) : 0;
-    c.pausedMs = (c.pausedMs||0) + elapsedMs;
+    c.pausedMs = (Number(c.pausedMs)||0) + elapsedMs;
     c.paused = false;
     c.pausedAt = null;
     recordHistory(c, 'retomou a contagem de tempo do card (⏸ Pausar)');
@@ -15251,7 +15519,7 @@ function togglePauseCard(cardId){
 }
 function _cardPausedMs(c){
   if(!c) return 0;
-  let ms = c.pausedMs||0;
+  let ms = Number(c.pausedMs)||0;
   if(c.paused && c.pausedAt) ms += Math.max(0, Date.now()-new Date(c.pausedAt).getTime());
   return ms;
 }
@@ -15303,6 +15571,28 @@ function _duplicarCardObj(card, opts){
   // do childCardIds acima: sem isso, a cópia "herdaria" pinned:true e
   // ficariam 2 cards fixados na mesma coluna, violando a regra de só 1.
   novo.pinned=false; delete novo.pinnedAt;
+  // Rastreamento de tempo (flow/atrasadoMs/blockedMs/pausedMs) TAMBÉM
+  // nunca deveria sobreviver à duplicação, mesmo motivo do childCardIds/
+  // pinned acima — achado real (relato direto do usuário, print de um
+  // card mostrando "666202d 11h" de atraso acumulado): o clone via
+  // JSON.parse(JSON.stringify(card)) herdava esses campos do card
+  // ORIGINAL sem resetar, então uma cópia recém-criada podia nascer já
+  // "atrasada há anos" (ou bloqueada/pausada) só por carregar o histórico
+  // acumulado de tempo de outro card. `flow` também ficava com
+  // `enteredAt`/`log` de quando o ORIGINAL entrou em cada coluna, uma
+  // data completamente desalinhada de `createdAt` (que já é resetado
+  // acima) — apaga o objeto inteiro pra deixar o `if(!card.flow)` de
+  // recordMove() (chamado logo abaixo) inicializar um `flow` de verdade,
+  // do zero, mesmo caminho que um card genuinamente novo passa.
+  delete novo.flow; delete novo._lastFlowCol;
+  novo.atrasadoMs=0; delete novo.atrasadoDesde;
+  novo.blockedMs=0; delete novo.blockedAt;
+  novo.pausedMs=0; novo.paused=false; delete novo.pausedAt;
+  // lastBlockerReason (/monitorarbugs 2026-09-17): mesmo raciocínio acima —
+  // é histórico do episódio de bloqueio do card ORIGINAL, não faz sentido a
+  // cópia nascer já mostrando um "motivo" no dashboard de Criativos pra um
+  // bloqueio que nunca aconteceu nela.
+  delete novo.lastBlockerReason;
   if(opts.desc===false){ novo.desc=''; novo.descsExtra=[]; }
   if(opts.checklist===false){ novo.checklist=[]; novo.checklistGroups=[{id:'default',title:'Checklist'}]; }
   if(opts.tags===false){ novo.tags=[]; novo.tag=''; }
@@ -16979,6 +17269,20 @@ function _crvBarRow(label, count, total, color){
     + '<span style="width:30px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+count+'</span>'
     + '</div>';
 }
+// Mesma barra de _crvBarRow(), mas a largura é proporcional à MÉDIA de
+// horas (contra o maior valor do grupo, não contra a soma — tempo médio
+// não é "parte de um todo" como contagem é) e o rótulo à direita mostra
+// o tempo formatado + o tamanho da amostra entre parênteses.
+function _crvBarRowTime(label, avgHoras, maxHoras, n, color){
+  const pct = maxHoras>0 ? Math.round(avgHoras/maxHoras*100) : 0;
+  return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px;">'
+    + '<span style="width:110px;flex-shrink:0;font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="'+esc(label)+'">'+esc(label)+'</span>'
+    + '<div style="flex:1;height:13px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden;">'
+    +   '<div style="height:100%;width:'+pct+'%;background:'+color+';border-radius:7px;"></div>'
+    + '</div>'
+    + '<span style="width:70px;text-align:right;font-size:11px;color:var(--txt3);flex-shrink:0;">'+_fmtHoras(avgHoras)+' <span style="opacity:.65;">('+n+')</span></span>'
+    + '</div>';
+}
 // Filtros do Dashboard (Tag/Responsável/Demandante/Coluna/Prioridade/Período)
 // — pedido direto ("coloca filtros: tag, responsável, demandante, data...
 // e mais filtros que julgar interessante"). Separados dos filtros da aba
@@ -17110,6 +17414,29 @@ function renderCriativosDashboard(){
   const crvCardRow=(c,ms)=>'<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);display:flex;justify-content:space-between;gap:8px;" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
     +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
     +'<span style="flex-shrink:0;color:var(--txt3);">'+_fmtHoras(ms/3600000)+'</span></div>';
+  // Mesma linha de crvCardRow, mas com o motivo do impedimento embaixo do
+  // título quando preenchido (pedido direto do usuário: "os motivos dos
+  // bloqueados, caso as pessoas tenham preenchido") — card.blockerReason é
+  // texto livre digitado na Ficha do card, fica em branco silenciosamente
+  // quando ninguém preencheu, sem forçar um "sem motivo" na tela.
+  // Fallback pra c.lastBlockerReason (/monitorarbugs 2026-09-17): em modo
+  // TAG, blockerReason é zerado assim que o card é desbloqueado (ver
+  // _doBulkUnblockTag()/removeBlockerTag()/recordMove() auto-unblock) —
+  // sem isso, todo card já resolvido aparecia aqui sem motivo, mesmo que a
+  // pessoa tivesse preenchido um (motivo só sobrevivia em modo COLUNA, que
+  // nunca limpa o campo). lastBlockerReason guarda o último texto antes de
+  // cada limpeza, pra esta lista continuar mostrando o motivo do episódio
+  // mais recente mesmo depois de resolvido.
+  const crvBlockRow=(c,ms)=>{
+    const motivo=(c.blockerReason||c.lastBlockerReason||'').trim();
+    return '<div onclick="closeOv(\'criativos-ov\');openCard(\''+esc(c.id)+'\')" style="cursor:pointer;padding:6px 4px;border-bottom:1px solid var(--glass-b);font-size:11.5px;color:var(--txt2);" onmouseover="this.style.color=\'var(--txt)\'" onmouseout="this.style.color=\'var(--txt2)\'">'
+      +'<div style="display:flex;justify-content:space-between;gap:8px;">'
+        +'<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc((c.title||'').substring(0,60))+'</span>'
+        +'<span style="flex-shrink:0;color:var(--txt3);">'+_fmtHoras(ms/3600000)+'</span>'
+      +'</div>'
+      + (motivo?'<div style="font-size:10.5px;color:var(--txt3);font-style:italic;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="'+esc(motivo)+'">🚧 '+esc(motivo)+'</div>':'')
+      +'</div>';
+  };
 
   const prioOrder=['critical','high','medium','low'];
   const prioLabels={critical:'🔥 Crítica',high:'🔴 Alta',medium:'🟡 Média',low:'🟢 Baixa'};
@@ -17137,6 +17464,31 @@ function renderCriativosDashboard(){
   rows.forEach(c=>{ const lid=c.criativo&&c.criativo.lista; const nome=lid&&criativosListas[lid]?criativosListas[lid].nome:'Sem lista'; listaMap.set(nome,(listaMap.get(nome)||0)+1); });
   const byLista=[...listaMap.entries()].sort((a,b)=>b[1]-a[1]).slice(0,6);
 
+  // ⏱️ Tempo médio de produção por categoria — pedido direto do usuário
+  // ("acrescentaria tempo médio por categoria"). Reusa _cardTempos() (mesmo
+  // lead time do Relatório de Tempo/_computeTempoData()) — só pedidos JÁ
+  // CONCLUÍDOS entram na média (t.done), senão um pedido em andamento (que
+  // ainda vai crescer) puxaria a média artificialmente pra baixo.
+  function avgTempoBy(opcoesKey,cardField,isArray,limitN){
+    const m=new Map(); // label -> {sum, n}
+    rows.forEach(c=>{
+      const t=_cardTempos(c);
+      if(!t.done||t.lead==null) return;
+      const labels=isArray
+        ? _crvEffectiveLabelsFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo)
+        : [_crvEffectiveLabelFromRow(opcoesKey,c.criativo&&c.criativo[cardField],c.criativo)||'—'];
+      labels.forEach(label=>{
+        const cur=m.get(label)||{sum:0,n:0};
+        cur.sum+=t.lead; cur.n++;
+        m.set(label,cur);
+      });
+    });
+    return [...m.entries()].map(([label,v])=>[label,v.sum/v.n,v.n]).sort((a,b)=>b[1]-a[1]).slice(0,limitN||6);
+  }
+  const avgByCanal=avgTempoBy('canais','canal',false,6);
+  const avgByPlataforma=avgTempoBy('plataformas','plataformas',true,6);
+  const avgByFormato=avgTempoBy('formatos','formato',false,6);
+
   const prioSegs=prioOrder.map(p=>({color:prioColors[p],value:prioCounts[p]}));
   if(semPrio>0) prioSegs.push({color:prioColors.none,value:semPrio});
   const prioGrad=_crvDonutGradient(prioSegs);
@@ -17162,6 +17514,13 @@ function renderCriativosDashboard(){
       + (items.length ? items.map(([label,count])=>_crvBarRow(label,count,bTotal,'#ffb3d9')).join('') : '<div style="font-size:11px;color:var(--txt3);">Sem dados.</div>')
       +'</div>';
   };
+  const timeBarsBlock=(title,items)=>{
+    const maxH = items.reduce((m,[,h])=>Math.max(m,h),0);
+    return '<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
+      +'<div class="cfg-sec-title" style="margin-bottom:10px;">'+title+'</div>'
+      + (items.length ? items.map(([label,avgH,n])=>_crvBarRowTime(label,avgH,maxH,n,'#38b6ff')).join('') : '<div style="font-size:11px;color:var(--txt3);">Sem pedidos concluídos suficientes ainda.</div>')
+      +'</div>';
+  };
 
   // ── Resumo agregado pro botão "🤖 Ponto de vista do Agente Ágil" ──
   // Mesmos números já calculados acima pra desenhar o painel (ver
@@ -17177,10 +17536,13 @@ function renderCriativosDashboard(){
     topCanal: byCanal.map(([label,qtd])=>({label,qtd})),
     topPlataforma: byPlataforma.map(([label,qtd])=>({label,qtd})),
     topFormato: byFormato.map(([label,qtd])=>({label,qtd})),
+    tempoMedioProducaoHorasPorCanal: avgByCanal.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
+    tempoMedioProducaoHorasPorPlataforma: avgByPlataforma.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
+    tempoMedioProducaoHorasPorFormato: avgByFormato.map(([label,h,n])=>({label,horasMedias:Math.round(h),amostras:n})),
     tempoTotalAtrasoHoras: Math.round(totalAtrasoCrvH),
     tempoTotalBloqueadoHoras: Math.round(totalBlockCrvH),
     topAtraso: atrasoTopCrv.map(c=>({titulo:c.title||'(sem título)',horasAtrasado:Math.round(_cardAtrasadoMs(c)/3600000)})),
-    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000)})),
+    topBloqueado: blockTopCrv.map(c=>({titulo:c.title||'(sem título)',horasBloqueado:Math.round(_cardBlockedMs(c)/3600000),motivo:(c.blockerReason||c.lastBlockerReason||'').trim()||null})),
   };
   const botaoAgente = AGENTE_AGIL_ANALISE_DADOS_SQUADS.has(ACTIVE_SQUAD)
     ? '<div style="margin-top:16px;">'
@@ -17213,6 +17575,11 @@ function renderCriativosDashboard(){
       +barsBlock('🎯 Por plataforma',byPlataforma)
       +barsBlock('🖼 Por formato',byFormato)
     +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">'
+      +timeBarsBlock('⏱️ Tempo médio por canal',avgByCanal)
+      +timeBarsBlock('⏱️ Tempo médio por plataforma',avgByPlataforma)
+      +timeBarsBlock('⏱️ Tempo médio por formato',avgByFormato)
+    +'</div>'
     +((totalAtrasoCrvH>0||totalBlockCrvH>0) ?
       '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">'
         +statCard('⏱️','Tempo total em atraso',_fmtHoras(totalAtrasoCrvH),totalAtrasoCrvH?'#ff6b6b':'var(--txt)')
@@ -17225,7 +17592,7 @@ function renderCriativosDashboard(){
         +'</div>'
         +'<div style="background:rgba(255,255,255,.04);border:1px solid var(--glass-b);border-radius:10px;padding:14px 16px;">'
           +'<div class="cfg-sec-title" style="margin-bottom:12px;">⏱️ Mais tempo bloqueado (acumulado, mesmo já concluídos)</div>'
-          + (blockTopCrv.length ? blockTopCrv.map(c=>crvCardRow(c,_cardBlockedMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou bloqueio.</div>')
+          + (blockTopCrv.length ? blockTopCrv.map(c=>crvBlockRow(c,_cardBlockedMs(c))).join('') : '<div style="font-size:11px;color:var(--txt3);">Nenhum pedido acumulou bloqueio.</div>')
         +'</div>'
       +'</div>'
       : '')
@@ -17972,6 +18339,7 @@ function _collectLembretes(){
 function toggleLembretes(){
   const dr=document.getElementById('lem-drawer');
   const wasOpen=dr.classList.contains('open');
+  if(!wasOpen) _closeOtherDrawers('lem-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     _populateLemTypeSelect();
@@ -18271,8 +18639,7 @@ function _refreshKudosGeral(){
 function toggleKudos(){
   const dr=document.getElementById('kudos-drawer');
   const wasOpen=dr.classList.contains('open');
-  // fecha o drawer de lembretes se estiver aberto (ambos ocupam a tela)
-  document.getElementById('lem-drawer')?.classList.remove('open');
+  if(!wasOpen) _closeOtherDrawers('kudos-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){ _populateKudosPara(); renderKudos(); try{ safeLS.setItem('mare_kudos_seen', Date.now()); }catch(e){} updKudosBadge(); }
 }
@@ -18287,9 +18654,18 @@ function setKudosScope(s){
 function _populateKudosPara(){
   const sel=document.getElementById('kudos-para'); if(!sel) return;
   const opts=['<option value="">Para quem? (escolha)</option>'];
+  // Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
+  // paralelos): o escopo Cardume (squad) já excluía a própria pessoa da
+  // lista ("m.uid!==window._currentUser?.uid"), mas o escopo Geral não
+  // tinha o mesmo filtro — dava pra escolher a si mesmo como destinatário
+  // e mandar uma Estrela pra si próprio (addKudos() não bloqueia por
+  // "toUid!==u.uid" — esse check só evita a NOTIFICAÇÃO de auto-envio, o
+  // card do kudos em si era criado e ficava visível pra todo mundo em
+  // "🌊 Geral"). Sem motivo pra Geral se comportar diferente de Squad aqui
+  // — Estrela do Mar é reconhecimento a alguém do time, não a si mesmo.
   // Geral: todos os usuários da empresa · Cardume: só membros da squad
   const fonte = _kudosScope==='geral'
-    ? (window._allUsers||[])
+    ? (window._allUsers||[]).filter(m=>m.uid!==window._currentUser?.uid)
     : (members||[]).filter(m=>m.init && m.uid!==window._currentUser?.uid);
   // ordena por nome
   fonte.slice().sort((a,b)=>String(a.name||a.init).localeCompare(String(b.name||b.init))).forEach(m=>{
@@ -18513,15 +18889,34 @@ function _notasBasePath(){
 // de dado incompleto), a chamada inteira falha com "update failed: values
 // argument contains undefined in property '<path>'", derrubando junto os
 // OUTROS campos que estavam certos (ex.: atualizadoEm nunca era salvo).
-// Helper central pras ~13 escritas de Notas abaixo: remove campos
-// undefined do payload (nunca troca por null, que apagaria o campo de
-// propósito) antes de mandar pro Firebase, recursivamente (undefined pode
-// estar aninhado dentro do objeto de um bloco novo, não só no 1º nível).
+// Helper central pras ~13 escritas de Notas abaixo (e também usado por
+// fbSaveAll()/fbCreateCard()/fbSaveCard(), ver comentários lá): remove
+// campos undefined do payload (nunca troca por null, que apagaria o campo
+// de propósito) antes de mandar pro Firebase, recursivamente (undefined
+// pode estar aninhado dentro do objeto de um bloco novo, não só no 1º
+// nível).
+//
+// Achado real (/monitorarbugs 2026-09-17): mesma classe de erro, mas de
+// CHAVE em vez de valor — "update failed: values argument contains an
+// invalid key () in property '...flow.enteredAt'". Uma chave vazia (ou
+// com '.'/'#'/'$'/'/'/'['/']', todos proibidos pelo Realtime Database)
+// em QUALQUER objeto aninhado também derruba a escrita inteira, do mesmo
+// jeito que um valor undefined. Causa raiz encontrada: `backfillFlow()`
+// usa `card.col` como chave de `flow.enteredAt` sem checar se é vazio
+// (corrigido na origem, ver lá) — mas outros campos-objeto podem
+// acumular o mesmo problema por caminhos ainda não mapeados, então a
+// rede de segurança central aqui remove qualquer chave inválida que
+// sobrevier, igual já faz com undefined.
+const INVALID_FB_KEY_RE = /[.#$/\[\]]/;
 function _stripUndefinedDeep(val){
   if(Array.isArray(val)) return val.map(_stripUndefinedDeep);
   if(val && typeof val==='object'){
     const out={};
-    Object.entries(val).forEach(([k,v])=>{ if(v!==undefined) out[k]=_stripUndefinedDeep(v); });
+    Object.entries(val).forEach(([k,v])=>{
+      if(v===undefined) return;
+      if(k===''||INVALID_FB_KEY_RE.test(k)) return;
+      out[k]=_stripUndefinedDeep(v);
+    });
     return out;
   }
   return val;
@@ -18560,7 +18955,7 @@ function _renderNotasCurrentView(){ if(_notasOpenId) renderNotaEditor(); else re
 function toggleNotas(){
   const dr=document.getElementById('notas-drawer'); if(!dr) return;
   const wasOpen=dr.classList.contains('open');
-  ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(id=>document.getElementById(id)?.classList.remove('open'));
+  if(!wasOpen) _closeOtherDrawers('notas-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     _notasOpenId=null;
@@ -18884,7 +19279,7 @@ function abrirNotaVinculada(notaId, scope){
     _notasScope = scope;
     document.getElementById('nstab-pessoal')?.classList.toggle('on', scope==='pessoal');
     document.getElementById('nstab-squad')?.classList.toggle('on', scope==='squad');
-    ['lem-drawer','dados-drawer','kudos-drawer','spotify-drawer'].forEach(x=>document.getElementById(x)?.classList.remove('open'));
+    _closeOtherDrawers('notas-drawer');
     document.getElementById('notas-drawer')?.classList.add('open');
     _notasOpenId = notaId;
     const listView=document.getElementById('notas-list-view'), edView=document.getElementById('notas-editor-view');
@@ -19319,10 +19714,7 @@ function _spotifyAttach(scope){
 async function toggleSpotify(){
   const dr=document.getElementById('spotify-drawer');
   const wasOpen=dr.classList.contains('open');
-  // fecha os outros drawers que ocupam a mesma área
-  document.getElementById('lem-drawer')?.classList.remove('open');
-  document.getElementById('kudos-drawer')?.classList.remove('open');
-  document.getElementById('dados-drawer')?.classList.remove('open');
+  if(!wasOpen) _closeOtherDrawers('spotify-drawer');
   dr.classList.toggle('open');
   if(!wasOpen){
     const cu=window._currentUser;
@@ -20239,6 +20631,13 @@ function renderBoardDataInsights(){
   body.innerHTML=html;
 }
 
+// Hover (pedido direto: "quando tem mt colunas, fica ruim de enxergar" —
+// rótulo embaixo de cada barra é cortado em 9 caracteres pra não colidir
+// com a barra vizinha) — mesmo padrão já usado no CFD (_cfdHover()/
+// window._cfdChartState): estado guardado num objeto global, posição via
+// SVG getScreenCTM()/createSVGPoint() (funciona certo mesmo com o
+// preserveAspectRatio esticando/centralizando o viewBox), tooltip mostra
+// o rótulo INTEIRO + valor, sem depender do texto cortado do SVG.
 function _boardDataBarChart(){
   const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
   const chipsEl = document.getElementById('boarddata-col-chips');
@@ -20250,17 +20649,51 @@ function _boardDataBarChart(){
   }));
   const max = Math.max(1, ...data.map(d=>d.count));
   const W = Math.max(320, data.length*72), H = 150, barW = Math.min(56, (W-20)/Math.max(1,data.length) - 12);
-  let x = 14, bars = '';
+  let x = 14, bars = '', bares = [];
   data.forEach(d=>{
     const h = Math.round((d.count/max) * (H-46));
     const y = H-30-h;
     bars += `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h,d.count>0?2:0)}" rx="4" fill="${d.color}" opacity=".85"/>
       <text x="${x+barW/2}" y="${y-6}" text-anchor="middle" font-size="11" fill="var(--txt)" font-weight="700">${d.count}</text>
       <text x="${x+barW/2}" y="${H-14}" text-anchor="middle" font-size="9" fill="var(--txt3)">${esc((d.label||'').substring(0,9))}</text>`;
+    bares.push({x: x-8, w: barW+16, label: d.label, count: d.count, color: d.color});
     x += barW+16;
   });
-  el.innerHTML = `<svg viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">${bars}</svg>`;
+  window._bdBarChartState = {bares, H};
+  el.innerHTML = `<div id="bd-bar-wrap" style="position:relative;">
+    <svg id="bd-bar-svg" viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:pointer;" onmousemove="_bdBarHover(event)" onmouseleave="_bdBarHoverOut()">${bars}<rect id="bd-bar-highlight" x="0" y="0" width="0" height="${H}" fill="#fff" opacity="0" style="pointer-events:none;"/></svg>
+    <div id="bd-bar-tooltip" style="position:absolute;display:none;top:4px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;font-size:11px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+  </div>`;
   _boardDataSmCvPorColuna();
+}
+function _bdBarHover(evt){
+  const st = window._bdBarChartState; if(!st) return;
+  const svg = document.getElementById('bd-bar-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  const bar = st.bares.find(b=>svgP.x>=b.x && svgP.x<=b.x+b.w);
+  const highlight = document.getElementById('bd-bar-highlight');
+  const tip = document.getElementById('bd-bar-tooltip');
+  const wrap = document.getElementById('bd-bar-wrap');
+  if(!bar){ _bdBarHoverOut(); return; }
+  if(highlight){ highlight.setAttribute('x', bar.x); highlight.setAttribute('width', bar.w); highlight.style.opacity = .06; }
+  if(tip && wrap){
+    tip.innerHTML = `<div style="display:flex;align-items:center;gap:6px;"><span style="width:8px;height:8px;border-radius:2px;background:${bar.color};flex-shrink:0;"></span><span style="color:var(--txt2);">${esc(bar.label)}</span><b style="color:var(--txt);margin-left:4px;">${bar.count}</b></div>`;
+    tip.style.display = 'block';
+    const topPt = svg.createSVGPoint(); topPt.x = bar.x+bar.w/2; topPt.y = 0;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 100;
+    let left = (screenTop.x - wrapRect.left) - tipW/2;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _bdBarHoverOut(){
+  const highlight = document.getElementById('bd-bar-highlight'); if(highlight) highlight.style.opacity = 0;
+  const tip = document.getElementById('bd-bar-tooltip'); if(tip) tip.style.display = 'none';
 }
 // Submarca/Canal de venda quebrado por coluna (pedido direto do usuário,
 // 2026-09-11) — tabela em vez de barra empilhada: com até 14 valores de
@@ -20317,6 +20750,10 @@ function _boardDataSmCvPorColuna(){
   el.innerHTML=out;
 }
 
+// Hover (mesmo pedido/padrão do gráfico "Cards ativos por coluna" acima —
+// ver _bdBarHover()) — aqui o eixo é por DIA (índice), não por barra, mesmo
+// espírito do crosshair do CFD (_cfdHover()): acha o dia mais próximo do
+// mouse, mostra os 2 valores daquele dia numa tooltip.
 async function _boardDataTrendChart(){
   const el = document.getElementById('boarddata-trend'); if(!el) return;
   try{
@@ -20337,11 +20774,17 @@ async function _boardDataTrendChart(){
     const ptsDone = doneVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
     const everyN = Math.max(1, Math.ceil(dias.length/6));
     const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
-    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;">
-      <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
-      <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
-      ${labels}
-    </svg>
+    window._bdTrendChartState = {dias, wipVals, doneVals, stepX, padL, padT, padB, H};
+    el.innerHTML = `<div id="bd-trend-wrap" style="position:relative;">
+      <svg id="bd-trend-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:crosshair;" onmousemove="_bdTrendHover(event)" onmouseleave="_bdTrendHoverOut()">
+        <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
+        <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
+        ${labels}
+        <line id="bd-trend-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/>
+        <g id="bd-trend-dots" style="opacity:0;pointer-events:none;"></g>
+      </svg>
+      <div id="bd-trend-tooltip" style="position:absolute;display:none;top:4px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;font-size:10.5px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
+    </div>
     <div style="display:flex;gap:16px;font-size:10px;color:var(--txt2);margin-top:6px;">
       <span><span style="display:inline-block;width:8px;height:8px;background:var(--warn);border-radius:2px;margin-right:4px;"></span>WIP no dia</span>
       <span><span style="display:inline-block;width:8px;height:8px;background:var(--teal);border-radius:2px;margin-right:4px;"></span>Concluídos (acumulado)</span>
@@ -20349,6 +20792,51 @@ async function _boardDataTrendChart(){
   }catch(e){
     el.innerHTML = '<div style="font-size:10.5px;color:var(--txt3);">Não foi possível carregar o histórico agora.</div>';
   }
+}
+function _bdTrendHover(evt){
+  const st = window._bdTrendChartState; if(!st) return;
+  const svg = document.getElementById('bd-trend-svg'); if(!svg) return;
+  const ctm = svg.getScreenCTM(); if(!ctm) return;
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  const svgP = pt.matrixTransform(ctm.inverse());
+  let idx = Math.round((svgP.x - st.padL) / (st.stepX || 1));
+  idx = Math.max(0, Math.min(st.dias.length-1, idx));
+  const xUser = st.padL + idx*st.stepX;
+  const toY = v => st.padT + (st.H-st.padT-st.padB) - (v/Math.max(1,...st.wipVals,...st.doneVals))*(st.H-st.padT-st.padB);
+
+  const line = document.getElementById('bd-trend-crosshair');
+  if(line){ line.setAttribute('x1', xUser); line.setAttribute('x2', xUser); line.style.opacity = 1; }
+
+  const dots = document.getElementById('bd-trend-dots');
+  if(dots){
+    dots.innerHTML = `<circle cx="${xUser.toFixed(1)}" cy="${toY(st.doneVals[idx]).toFixed(1)}" r="2.5" fill="var(--teal)" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`
+      + `<circle cx="${xUser.toFixed(1)}" cy="${toY(st.wipVals[idx]).toFixed(1)}" r="2.5" fill="var(--warn)" stroke="rgba(0,0,0,.4)" stroke-width=".5"/>`;
+    dots.style.opacity = 1;
+  }
+
+  const tip = document.getElementById('bd-trend-tooltip');
+  const wrap = document.getElementById('bd-trend-wrap');
+  if(tip && wrap){
+    const diaStr = st.dias[idx];
+    const dataFmt = diaStr.slice(8,10)+'/'+diaStr.slice(5,7);
+    tip.innerHTML = `<div style="font-weight:700;color:var(--txt);margin-bottom:4px;">${dataFmt}</div>`
+      +`<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;"><span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:var(--warn);flex-shrink:0;"></span>WIP no dia</span><b style="color:var(--txt);">${st.wipVals[idx]}</b></div>`
+      +`<div style="display:flex;align-items:center;justify-content:space-between;gap:14px;"><span style="display:flex;align-items:center;gap:5px;color:var(--txt2);"><span style="width:7px;height:7px;border-radius:2px;background:var(--teal);flex-shrink:0;"></span>Concluídos</span><b style="color:var(--txt);">${st.doneVals[idx]}</b></div>`;
+    tip.style.display = 'block';
+    const topPt = svg.createSVGPoint(); topPt.x = xUser; topPt.y = st.padT;
+    const screenTop = topPt.matrixTransform(ctm);
+    const wrapRect = wrap.getBoundingClientRect();
+    const tipW = tip.offsetWidth || 110;
+    let left = (screenTop.x - wrapRect.left) + 10;
+    left = Math.max(4, Math.min(wrapRect.width - tipW - 4, left));
+    tip.style.left = left+'px';
+  }
+}
+function _bdTrendHoverOut(){
+  const line = document.getElementById('bd-trend-crosshair'); if(line) line.style.opacity = 0;
+  const dots = document.getElementById('bd-trend-dots'); if(dots) dots.style.opacity = 0;
+  const tip = document.getElementById('bd-trend-tooltip'); if(tip) tip.style.display = 'none';
 }
 
 // ── CFD (Cumulative Flow Diagram) + Burndown — Fase 5, item 3 ──────────
@@ -23418,7 +23906,7 @@ async function renderAgenteLog(){
         ? '<span style="color:var(--warn);">⚙ Disparo automático</span> (Automação ou verificação diária)'
         : `<span style="color:var(--teal);">👤 ${esc(e.requestedBy?.name||e.requestedBy?.init||'alguém')}</span> pediu via menção`;
     const pedido=e.pedido?`: "${esc(e.pedido)}"`:'';
-    const acoesHtml=(e.acoes||[]).map(a=>`<li>${esc(a)}</li>`).join('');
+    const acoesHtml=(e.acoes||[]).map(a=>`<li>${renderMd(a)}</li>`).join('');
     return `<div style="padding:10px 12px;margin-bottom:8px;background:rgba(126,200,227,.05);border:1px solid rgba(126,200,227,.15);border-radius:var(--r);">
       <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">${dt} · ${cardLink}</div>
       <div style="font-size:12px;color:var(--txt2);margin-bottom:4px;">${quem}${pedido}</div>
@@ -23856,6 +24344,32 @@ async function editarInicial(uid, initAtual, nome){
   let migrar=false;
   if(cardsAfetados.length){
     migrar = await uiConfirm(cardsAfetados.length+' card(s) estão atribuídos à inicial "'+initAtual+'".\n\nMigrar esses cards para "'+novaInit+'"?\n\n⚠ ATENÇÃO: se "'+initAtual+'" é compartilhada com outra pessoa (iniciais repetidas), NÃO migre — os cards podem ser de outra pessoa. Cancele e use a ferramenta "Reatribuir cards" para escolher card por card.');
+  }
+  // Reivindica a nova inicial no mesmo registro atômico do 1º login (ver
+  // _claimUserInit()) — a checagem `conflito` acima já dá um erro amigável
+  // com o nome de quem já usa, mas é ler-depois-escrever (mesma classe de
+  // corrida corrigida em autoRegistrar()); esta transação é a garantia de
+  // verdade bem antes de gravar, ainda que a janela de 2 ADMs trocando
+  // pra MESMA sigla ao mesmo tempo seja rara (ação manual, deliberada).
+  // Try/catch: se kanban/init_registry ainda não tiver a regra publicada
+  // (deploy manual do database.rules.json, ver CLAUDE.md), não trava a
+  // edição — segue confiando só na checagem `conflito` de cima, como
+  // sempre funcionou.
+  try{
+    const claimRef = window._ref(window._db, 'kanban/init_registry/'+novaInit);
+    const claimResult = await window._runTransaction(claimRef, current => (current===null||current===uid) ? uid : undefined);
+    if(!claimResult.committed){
+      showToast('⚠ Iniciais "'+novaInit+'" foram reivindicadas por outra pessoa agora mesmo. Tente de novo.');
+      return;
+    }
+    // Libera a sigla antiga no registro — só se ELE (uid) for quem está
+    // registrado lá; se "initAtual" for compartilhada com outra pessoa
+    // (nosso caso real: 2 pessoas com "MS"), o registro pode já apontar
+    // pra ela, não pra este uid — nesse caso não mexe (a outra pessoa
+    // continua dona).
+    window._runTransaction(window._ref(window._db, 'kanban/init_registry/'+initAtual.toUpperCase()), current => current===uid ? null : undefined).catch(()=>{});
+  }catch(e){
+    console.warn('[editarInicial] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
   }
   // Atualiza a inicial do usuário
   await fbUpdate('kanban/usuarios/'+uid, {init:novaInit});
@@ -25683,7 +26197,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.' },
@@ -25712,7 +26226,7 @@ const HELP_CONTENT = {
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
-    { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
+    { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
   ],
@@ -25729,13 +26243,13 @@ const HELP_CONTENT = {
     { icon:'🔤', title:'Iniciais únicas e reatribuição', text:'Cada pessoa tem iniciais (ex.: CS) que vinculam os cards a ela. Se duas pessoas teriam as mesmas iniciais no squad, o sistema gera uma única automaticamente e avisa. Na lista de usuários, iniciais repetidas piscam em vermelho — clique na pílula para corrigir. O botão "🔄 Reatribuir cards" move todos os cards de uma pessoa para outra de uma vez.' },
     { icon:'🏃', title:'Configurações Ágeis', text:'Configure número e duração da sprint, datas de início e fim (o fim é calculado automaticamente), limite de WIP, capacidade do time e objetivo da sprint. O objetivo aparece no header do board.' },
     { icon:'📐', title:'Colunas editáveis', text:'Em Config → Ágil, clique em Editar para personalizar as colunas. Você pode renomear, colorir, reordenar, marcar como minimizável e excluir colunas. Cards em colunas excluídas são movidos para a primeira.' },
-    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/canal/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, ou notificar todo mundo do squad.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").' },
+    { icon:'⚡', title:'Automações', text:'Em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie regras "Quando X → Então Y" que disparam sozinhas. Quando: card mudou de coluna, foi criado, prazo chegou/venceu, prioridade virou crítica, checklist bateu 100%, risco foi adicionado, foi bloqueado/desbloqueado, WIP excedeu, ou ficou muito tempo sem editar. Dá pra adicionar uma condição extra ("E a tag é X") e mais de uma ação na mesma regra (clique "+ Ação" antes de salvar). Então: mover coluna, mudar prioridade, adicionar tag, atribuir responsável/submarca/canal/tamanho/demandante, definir padrão de card ou capa de cor, marcar OKR, adicionar item de checklist, aplicar uma receita de fan-out (criar os cards filhos de um supercard automaticamente, ver dica "Supercard"), notificar o Agente Ágil, notificar todo mundo do squad, ou notificar só quem é PO/Organizador.\n\n🤖 Notificar Agente Ágil (squads dev e dados): dispara o Agente Ágil de verdade no card que acionou a regra — o mesmo pipeline de quando alguém menciona "@Agente Ágil" na mão, sem precisar de ninguém digitar nada. A resposta chega como comentário no card, com notificação pra quem acompanha.\n\n📣 Notificar todos (qualquer squad): posta um comentário "@todos [Automação]..." no card, avisando cada pessoa do squad no sino 🔔 — útil pra um alerta que todo mundo precisa ver (ex.: "Card crítico criado").\n\n📣 Notificar PO/Organizador (qualquer squad): igual "Notificar todos", mas só avisa quem tem o papel PO ou Organizador neste squad — útil pra um alerta que só quem decide precisa ver, sem incomodar o resto do time. Se ninguém no squad tiver esses papéis, não posta nada.' },
     { icon:'👥', title:'Usuários', text:'Lista todos que se inscreveram via Google. O PO pode alterar o papel de cada membro: Convidado, Membro, Organizador ou PO — e é o único que pode remover alguém da lista. Convidado tem as mesmas permissões de Membro (cria, edita e move cards, lembretes, kudos); a diferença é só o rótulo do papel.' },
     { icon:'🤖', title:'Agentes de IA (piloto híbrido humano+agente)', text:'Em Config → Usuários, role até "🤖 Agentes de IA" — cadastre identidades de IA (nome, iniciais, cor, emoji) que passam a aparecer lado a lado com pessoas de verdade nos seletores de Responsável/Participante de qualquer card, junto de um "🤖" separando-as do resto da lista.\n\nUm agente cadastrado NÃO é um usuário de verdade — não tem login, não recebe notificação pelo sino/push como uma pessoa recebe. É uma identidade visual/organizacional: dá pra ver de relance quem (ou o quê) está tocando um card, e habilita o campo "Executor" (👤 Humano/🤖 Agente/🤝 Híbrido) e a simulação de fluxo do agente no card.\n\n🔗 Ligado ao Agente Ágil: quando o Agente Ágil muda algo de verdade num card que já tem um desses agentes cadastrados como responsável ou participante, ele mesmo posta um comentário extra marcando esse agente ("📎 cc: ..."), logo depois da resposta normal — um jeito de "avisar" o agente cadastrado sem precisar de notificação de verdade. Iniciais não podem colidir com as de uma pessoa nem de outro agente já cadastrado no mesmo squad.\n\n🆚 "🤖 Agente Ágil" (o de VERDADE, não um cadastro): nos squads dev e dados, o próprio Agente Ágil aparece nesse mesmo optgroup, separado dos agentes cadastrados. Diferente deles, colocar ele como Responsável ou Participante REAGE de verdade — ele lê o card e responde como se tivesse sido @mencionado, todo vez que esse campo muda pra incluir ele (reatribuir de novo dispara de novo; editar outro campo do card não).\n\n🔌 "Agentes Externos" (optgroup separado, "🔌"): sistemas de verdade fora do Maré Digital (ex.: um agente de automação rodando na Vtex), cadastrados em Painel → Configurações → 🔌 Agentes Externos com iniciais/cor/emoji preenchidos — aí eles também viram selecionáveis aqui, do mesmo jeito que um Agente de IA decorativo. A diferença: quando o Agente Ágil muda algo de verdade num card responsável de um Agente Externo, ALÉM do "📎 cc" de sempre, ele manda um POST de verdade pro webhook cadastrado daquele agente, resumindo o que mudou — sem nenhuma ação do agente externo sobre o board (é só destinatário, tudo passa pelo Agente Ágil). Só chama o webhook de verdade nos squads onde essa capacidade está habilitada (hoje: dev); nos demais, o "📎 cc" acontece igual, só sem o POST.' },
     { icon:'🏷', title:'Tags', text:'Crie, renomeie e colora as tags do board em Config → Tags. Use para classificar por tipo de trabalho.' },
     { icon:'⚙', title:'Fluxo do trabalho (lead/cycle time)', text:'Em Config → Fluxo, escolha quais colunas marcam o início (ex.: "Em andamento") e o fim (ex.: "Concluído") do trabalho de um card. Isso alimenta o relatório ⏱ Relatórios de Tempo, calculando lead time (da criação até o fim) e cycle time (do início até o fim). Se deixar em branco, o sistema tenta adivinhar automaticamente pelas colunas padrão.' },
     { icon:'⏳', title:'Aging — card parado há muito tempo', text:'Em Config → Fluxo, na seção "⏳ Aging", defina quantos dias um card pode ficar parado na MESMA coluna até ganhar um aviso ⏳ Xd no board — configurável coluna por coluna (ex.: 5 dias em "Em Progresso", nenhum limiar em "Backlog"). Deixe o campo vazio pra desligar o aviso naquela coluna.\n\nConta a partir da última vez que o card mudou de coluna (não da criação nem da última edição) — é um sinal diferente do esmaecimento automático que já existe pra cards sem edição há muito tempo. Os dois convivem: um avisa "ninguém mexeu nesse card", o outro avisa "esse card específico está travado nessa etapa".' },
-    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (uma opção fechada), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só — vira múltipla escolha automaticamente se o card já é um supercard, ver abaixo), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Escolhendo "Outros" em Canal, Objetivo, Plataforma ou Tipo, abre um campo "Qual?" pra especificar — esse texto passa a aparecer no lugar de "Outros" em todo lugar (título automático, tabela do Controle de Criativos, gráficos do Dashboard, exportação CSV). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Ficha e supercard (ver dica "Supercard"):</b> como o supercard vai até 2 níveis (campanha → criativo → versão), a ficha se comporta diferente em cada papel. <b>Campanha</b> (tem filhos, não é filha de ninguém): só os 4 campos compartilhados (Campanha/Funil/Etapa/Canal) ficam visíveis aqui — preenche uma vez e propaga sozinho pros criativos (só quem ainda está vazio no filho, nunca sobrescreve o que já tinha). <b>Criativo</b> (é filho de uma campanha): o inverso — os 4 campos compartilhados somem (vêm herdados, com nota linkando de volta pra campanha), só os campos que variam por peça (Objetivo/Plataforma/Tipo/Formato/Variações) continuam editáveis aqui, MESMO que esse criativo já tenha ganhado suas próprias versões (ele continua sendo a fonte de verdade da ficha — agora propagando ela INTEIRA pras versões, não só os 4 compartilhados, já que é a mesma peça sendo produzida por gente diferente). <b>Versão</b> (2º nível — o pai dela já é filho de outra coisa): não edita nada da ficha, só mostra o resumo herdado completo do criativo-pai. Se um card já tinha ficha preenchida antes de virar supercard/filho, o conteúdo continua salvo (só some/reaparece da tela conforme o papel muda).\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.\n\n🤖 Ponto de vista do Agente Ágil: no modo Dashboard, um botão no fim do painel manda os números já exibidos (total, atrasados, composição, distribuição por canal/plataforma/formato...) pro agente interpretar e devolver uma leitura curta. Só lê — não recalcula nada, não escreve nada no board.\n\n📊 No modo Dashboard do painel (além da tabela em lista), o checkbox "🧩 Incluir supercards" nos filtros liga/desliga se o card container de um supercard (campanha/criativo com filhos) entra na contagem total — desmarcado, só os filhos entram; o card container sai da conta.\n\n<b>🪄 Título automático:</b> em cards novos criados a partir de um Modelo (📐), o título se monta sozinho conforme a Ficha vai sendo preenchida, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão "🪄 Gerar título", no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento, sem precisar vir de um Modelo.\n\n<b>Total de variações no dashboard:</b> o "🎬 Controle de Criativos" também soma a quantidade total de variações marcadas nos cards ("Variações: Sim" + quantidade preenchida), num card de estatística próprio — útil pra ter uma visão rápida de quantas peças estão sendo produzidas no total, sem contar card por card.' },
+    { icon:'🎬', title:'Ficha Técnica (produção criativa)', text:'Em Config → Criativos, PO/ADM/Organizador pode ativar "Ativar Ficha Técnica neste squad" — útil pra times que produzem peças criativas, no lugar de planilha de controle.\n\nCom a ficha ativa, cada card ganha uma seção extra, na hierarquia: <b>Campanha</b> (Campanha/Ação Comercial/Perene/Refresh — só uma opção; Campanha e Ação Comercial abrem um campo pra digitar o nome), <b>Funil</b> (MKT/ECM), <b>Etapa do Funil</b> (AWS/CON/PRF), <b>Canal</b> (uma opção fechada), <b>Objetivo</b> (múltipla escolha), <b>Plataforma</b> (uma só — vira múltipla escolha automaticamente se o card já é um supercard, ver abaixo), <b>Tipo</b> (depende da Plataforma escolhida — vem de uma tabela de referência real), <b>Formato</b> (pré-preenchido pelo Tipo, editável), <b>Variações</b> (Sim/Não + quantidade) e <b>Direcional de Mídia</b> (campo de texto livre, com destaque visual no card pra quem for produzir ver na hora). Escolhendo "Outros" em Canal, Objetivo, Plataforma ou Tipo, abre um campo "Qual?" pra especificar — esse texto passa a aparecer no lugar de "Outros" em todo lugar (título automático, tabela do Controle de Criativos, gráficos do Dashboard, exportação CSV). Todos os campos são obrigatórios pro demandante conseguir salvar o card, <b>exceto Direcional de Mídia</b>, que é opcional — só preenche quem tiver algo relevante pra avisar.\n\n<b>Ficha e supercard (ver dica "Supercard"):</b> como o supercard vai até 2 níveis (campanha → criativo → versão), a ficha se comporta diferente em cada papel. <b>Campanha</b> (tem filhos, não é filha de ninguém): só os 4 campos compartilhados (Campanha/Funil/Etapa/Canal) ficam visíveis aqui — preenche uma vez e propaga sozinho pros criativos (só quem ainda está vazio no filho, nunca sobrescreve o que já tinha). <b>Criativo</b> (é filho de uma campanha): o inverso — os 4 campos compartilhados somem (vêm herdados, com nota linkando de volta pra campanha), só os campos que variam por peça (Objetivo/Plataforma/Tipo/Formato/Variações) continuam editáveis aqui, MESMO que esse criativo já tenha ganhado suas próprias versões (ele continua sendo a fonte de verdade da ficha — agora propagando ela INTEIRA pras versões, não só os 4 compartilhados, já que é a mesma peça sendo produzida por gente diferente). <b>Versão</b> (2º nível — o pai dela já é filho de outra coisa): não edita nada da ficha, só mostra o resumo herdado completo do criativo-pai. Se um card já tinha ficha preenchida antes de virar supercard/filho, o conteúdo continua salvo (só some/reaparece da tela conforme o papel muda).\n\n<b>Listas fechadas:</b> Canal/Objetivo/Plataforma/Tipo/Formato só deixam escolher, nunca digitar — o PO mantém as opções em Config → Criativos → "🗂️ Opções da Ficha Técnica" (igual gerenciar tags), evitando duplicata tipo "vídeo"/"vídeos". Tipo já vem com uma referência de quantidade sugerida por plataforma (ex.: Pmax → 15, mínimo/ideal), mostrada como dica ao lado de Variações — não trava nada, só orienta (não tem campo próprio de Quantidade de Criativos na ficha, já que a quantidade real só se sabe depois que os designers entregam).\n\nUm painel "🎬 Controle de Criativos" aparece no topo do board, listando automaticamente todos os cards com a ficha preenchida numa tabela filtrável — sempre atualizada, sem trabalho duplicado (a tabela ainda tem uma coluna própria de Quantidade, editável ali, pra registrar o total real depois da entrega). Desativar a ficha não apaga o conteúdo já preenchido nos cards.\n\n🤖 Ponto de vista do Agente Ágil: no modo Dashboard, um botão no fim do painel manda os números já exibidos (total, atrasados, composição, distribuição por canal/plataforma/formato...) pro agente interpretar e devolver uma leitura curta. Só lê — não recalcula nada, não escreve nada no board.\n\n📊 No modo Dashboard do painel (além da tabela em lista), o checkbox "🧩 Incluir supercards" nos filtros liga/desliga se o card container de um supercard (campanha/criativo com filhos) entra na contagem total — desmarcado, só os filhos entram; o card container sai da conta.\n\n<b>🪄 Título automático:</b> em cards novos criados a partir de um Modelo (📐), o título se monta sozinho conforme a Ficha vai sendo preenchida, no formato <code>[Plataforma] Tipo - Campanha [Objetivo] - Etapa/Funil</code>. Cards criados em branco (sem Modelo) e cards já existentes mantêm o título só na mão — mas o botão "🪄 Gerar título", no fim da Ficha Técnica, monta o mesmo título sob demanda em qualquer card, a qualquer momento, sem precisar vir de um Modelo.\n\n<b>Total de variações no dashboard:</b> o "🎬 Controle de Criativos" também soma a quantidade total de variações marcadas nos cards ("Variações: Sim" + quantidade preenchida), num card de estatística próprio — útil pra ter uma visão rápida de quantas peças estão sendo produzidas no total, sem contar card por card.\n\n⏱️ Tempo médio de produção por canal/plataforma/formato: o Dashboard também mostra 3 gráficos de barra com o tempo médio (lead time, criação até Concluído) de cada categoria — só pedidos JÁ CONCLUÍDOS entram na média, pra um pedido ainda em andamento não puxar o número artificialmente pra baixo. Útil pra ver, por exemplo, se peças de um canal específico costumam demorar mais que as de outro.' },
     { icon:'👕', title:'Tamanho (camiseta)', text:'Em Config → Tags, role até "👕 Tamanho (camiseta)" e ative "Ativar tags de tamanho neste squad" (só PO/ADM/Organizador conseguem ligar). Isso cria 4 tags prontas — P, M, G e GG — no espírito da camiseta, o carro-chefe da Hering, e libera um campo dedicado "👕 Tamanho" no modal do card (logo abaixo de Prioridade).\n\nComo usar: abra um card e escolha o tamanho no campo dedicado — é exclusivo (só um tamanho por vez; trocar substitui o anterior automaticamente). A definição de qual tamanho usar fica a critério do time (ex.: esforço estimado, complexidade). O emoji 👕 cresce visualmente conforme o tamanho (P menor, GG maior), tanto no card quanto nos filtros. Por baixo, continua sendo uma tag normal — também aparece e pode ser gerenciada em Config → Tags.\n\nA barra de Filtros também ganha um dropdown dedicado "👕 Qualquer tamanho" (junto dos outros filtros), separado do filtro geral de tags.\n\nDesativar o toggle esconde o campo dedicado e o filtro, mas não apaga as tags já criadas nem as que já foram aplicadas em cards. Pra remover de vez, exclua a tag manualmente em Config → Tags.\n\nDepois de ativado, dá pra ordenar o board inteiro por tamanho — ver dica "Ordenar cards nas colunas".' },
     { icon:'🏷️', title:'Submarca (marca do produto + time)', text:'Em Config → Tags, role até "🏷️ Submarca" e ative "Ativar Submarca neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Site Hering, que cuida de várias marcas e times (Comercial e Cadastro) no mesmo board. Isso libera um campo dedicado "🏷️ Submarca" no modal do card (ao lado de Executor) com 10 opções fixas: cada uma das 5 marcas (Adulto, Kids, Sports, Intimates, Teen) dividida em Comercial e Cadastro — ex.: "Hering Kids Comercial" e "Hering Kids Cadastro" são opções separadas.\n\nComo usar: abra um card e escolha a submarca no campo dedicado — é exclusivo (só uma por vez). Depois de ativado, escolher a submarca vira obrigatório pra salvar o card (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: ainda em Config → Tags, cada uma das 10 opções tem seu próprio interruptor — todas começam ligadas por padrão, e desligar uma esconde ela do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🏷️ Submarcas ▾" — clique pra abrir um menu com um checkbox por opção visível, mais "Todos". Marque quantas quiser ao mesmo tempo (ex.: "Hering Kids Comercial" + "Hering Teen Cadastro"); o botão mostra quantas estão marcadas, ex.: "🏷️ Submarcas (2) ▾". Clique em "Todos" pra limpar a seleção e ver tudo de novo.' },
     { icon:'🛒', title:'Canal (venda em marketplaces)', text:'Em Config → Tags, role até "🛒 Canal" e ative "Ativar campo de canal neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Marketplace, que vende os mesmos produtos em vários canais ao mesmo tempo (Mercado Livre nas modalidades ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop). Mesma "pegada" da Submarca do squad Site — o campo dedicado "🛒 Canal" aparece no modal do card (ao lado de Executor) e é exclusivo (só um canal por vez).\n\nObrigatório é opt-in: diferente da Submarca (sempre obrigatória assim que ativada), o Canal só trava o Salvar se o squad TAMBÉM ligar o segundo interruptor "Tornar Canal obrigatório pra salvar o card" — ativar só o campo deixa o Canal opcional (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: cada um dos 14 canais tem seu próprio interruptor em Config → Tags — todos começam ligados por padrão, e desligar um esconde ele do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🛒 Canais ▾" — mesmo funcionamento do menu de Submarcas: marque quantos canais quiser ao mesmo tempo, o botão mostra quantos estão marcados (ex.: "🛒 Canais (2) ▾"), e "Todos" limpa a seleção.' },
@@ -25835,9 +26349,10 @@ Onde configurar: ⚡ Automações → "+ Nova regra" — liberado pra qualquer p
 <div>📐 <b>Definir padrão de card</b> <span style="font-size:10px;color:var(--txt3);">— só aparece se existir algum Padrão criado</span></div>
 <div>🎨 <b>Definir capa de cor</b></div>
 <div>🎯 <b>Marcar como OKR</b></div>
-<div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"</span></div>
+<div>☑️ <b>Adicionar item de checklist</b> <span style="font-size:10px;color:var(--txt3);">— pede um texto livre, ex.: "Revisar com o time"; o texto é escaneado por @menção igual qualquer outro lugar do app, então "Avisar @fulano" já notifica @fulano no sino 🔔 quando a regra dispara</span></div>
 <div>🤖 <b>Notificar Agente Ágil</b> <span style="font-size:10px;color:var(--txt3);">— só aparece nos squads onde o Agente Ágil já responde de verdade (dev e dados hoje)</span></div>
 <div>📣 <b>Notificar todos</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— posta um comentário "@todos" no card e avisa todo mundo do squad no sino 🔔, disponível em qualquer squad</span></div>
+<div>📣 <b>Notificar PO/Organizador</b> <span style="font-size:9px;font-weight:700;padding:1px 6px;border-radius:8px;background:rgba(61,220,151,.18);color:#3ddc97;margin-left:2px;">NOVO</span> <span style="font-size:10px;color:var(--txt3);">— igual "Notificar todos", mas só avisa quem tem o papel PO ou Organizador neste squad; se não houver ninguém com esses papéis, não posta nada</span></div>
 </div>
 
 Todas as ações marcadas "só aparece se..." ficam escondidas do dropdown pra quem não usa aquele recurso — não polui a lista de quem não precisa. Se o recurso for ativado depois, a ação aparece sozinha, sem precisar recriar nada.` },
@@ -26307,7 +26822,30 @@ document.addEventListener('click', e=>{
 // Escopo desta 1ª versão: só o núcleo (dado + board + modal). Fan-out via
 // automação/config ("supercard de campanha X sempre gera os cards A,B,C...")
 // fica pra depois de validar o conceito visual.
-let editingSuperChildren = []; // [{id,title,col}]
+let editingSuperChildren = []; // [{id,title,col}] — só filhos ATIVOS (ver _splitSuperChildIds)
+// Ids de filhos ARQUIVADOS que já estavam em childCardIds antes de abrir o
+// modal — mantidos à parte de editingSuperChildren pra não sumir da tela
+// (rollup/contagem só faz sentido pra filhos ativos), mas SEM deixar de ser
+// persistido: saveCard()/persistSuperChildren() escrevem childCardIds a
+// partir de editingSuperChildren, então sem isso, salvar o card (por
+// qualquer motivo, não só mexer nos filhos) reescreveria childCardIds só com
+// os ativos e desvincularia os arquivados de verdade do Firebase — achado
+// junto do fix de contagem (/monitorarbugs 2026-09-18).
+let editingSuperArchivedIds = [];
+// Separa card.childCardIds em {ativos:[{id,title,col}], arquivadosIds:[id]} —
+// usado tanto na abertura do modal (initSuperChildren) quanto depois de
+// aplicar uma receita de fan-out (applyFanoutToCurrentCard), os 2 pontos que
+// recalculam editingSuperChildren a partir do card de verdade.
+function _splitSuperChildIds(childCardIds){
+  const ativos=[], arquivadosIds=[];
+  (childCardIds||[]).forEach(id=>{
+    const found=cards.find(c=>c.id===id);
+    if(!found) return;
+    if(found.archived) arquivadosIds.push(id);
+    else ativos.push({id:found.id, title:found.title, col:found.col});
+  });
+  return {ativos, arquivadosIds};
+}
 // Card (objeto completo) do supercard do qual ESTE card é filho, ou null —
 // calculado uma vez por abertura de modal (initSuperChildren), reusado pela
 // Ficha Técnica compartilhada (ver _crvUpdateFichaSecVisibility/saveCard) pra
@@ -26340,14 +26878,13 @@ let _newSuperChildIds = [];
 function initSuperChildren(card){
   const wrap=document.getElementById('m-super-attach-wrap');
   if(wrap) wrap.style.display='';
-  editingSuperChildren = card ? (card.childCardIds||[]).map(id=>{
-    const found = cards.find(c=>c.id===id);
-    return found ? {id:found.id, title:found.title, col:found.col} : null;
-  }).filter(Boolean) : [];
+  { const _split = _splitSuperChildIds(card ? card.childCardIds : []);
+    editingSuperChildren = _split.ativos;
+    editingSuperArchivedIds = _split.arquivadosIds; }
   // Calculado ANTES de renderSuperChildrenList()/_crvUpdateFichaSecVisibility()
   // (chamada logo abaixo) — precisa estar pronto pra decidir se Campanha/
   // Funil/Etapa/Canal aparecem ou somem da Ficha Técnica deste card.
-  editingSuperParent = card ? (cards.find(c=>c.id!==card.id && (c.childCardIds||[]).includes(card.id)) || null) : null;
+  editingSuperParent = card ? (cards.find(c=>c.id!==card.id && !c.archived && (c.childCardIds||[]).includes(card.id)) || null) : null;
   editingSuperParentIsChild = !!(editingSuperParent && cards.some(gp=>!gp.archived && gp.id!==editingSuperParent.id && (gp.childCardIds||[]).includes(editingSuperParent.id)));
   _newSuperChildIds = []; // reseta a cada card aberto — ver comentário na declaração
   renderSuperChildrenList();
@@ -26600,14 +27137,15 @@ function addSuperChild(card){
   if(editingSuperChildren.find(l=>l.id===card.id)) return;
   editingSuperChildren.push({id:card.id, title:card.title, col:card.col});
   renderSuperChildrenList();
-  persistSuperChildren(); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
+  persistSuperChildren('vinculou o card filho "'+card.title+'"'); // no-op se for card novo (ver função abaixo) — entra no childCardIds só ao Salvar
   const inp=document.getElementById('m-super-search-inp'); if(inp) inp.value='';
   hideSuperChildDropdown();
 }
 function removeSuperChild(id){
+  const removed=editingSuperChildren.find(l=>l.id===id);
   editingSuperChildren = editingSuperChildren.filter(l=>l.id!==id);
   renderSuperChildrenList();
-  persistSuperChildren();
+  persistSuperChildren(removed ? ('desvinculou o card filho "'+removed.title+'"') : null);
 }
 // Molde de card "em branco" pra virar filho de supercard — herda col/due/
 // priority/demandante/po do card pai, igual nos dois lugares que criam um
@@ -26664,7 +27202,7 @@ function quickCreateSuperChild(title){
   editingSuperChildren.push({id:novo.id,title:novo.title,col:novo.col});
   if(!editingId) _newSuperChildIds.push(novo.id); // ver comentário na declaração — cancelar o pai remove este filho de verdade
   renderSuperChildrenList();
-  persistSuperChildren();
+  persistSuperChildren('vinculou o card filho "'+novo.title+'" (novo)');
   const inp=document.getElementById('m-super-search-inp'); if(inp){ inp.value=''; }
   hideSuperChildDropdown();
   showToast('✅ Card filho criado: '+title);
@@ -26672,11 +27210,12 @@ function quickCreateSuperChild(title){
 // Card ainda não existe (editingId null) → não tem onde pendurar
 // childCardIds ainda; fica só em editingSuperChildren, e saveCard() é quem
 // grava o vínculo junto com o resto do card novo.
-function persistSuperChildren(){
+function persistSuperChildren(histWhat){
   if(!editingId) return;
   if(editingSuperParentIsChild) return; // teto de 2 níveis — ver initSuperChildren()
   const parent=cards.find(c=>c.id===editingId); if(!parent) return;
-  parent.childCardIds = editingSuperChildren.map(l=>l.id);
+  if(histWhat) recordHistory(parent, histWhat);
+  parent.childCardIds = [...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds];
   fbSaveCard(parent);
   _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração
   renderBoard(); // atualiza o rollup no board na hora
@@ -28164,7 +28703,17 @@ saveCard = function(){
   // Movido para feito (ou pra qualquer outra coluna) — _isColDone() em vez
   // da heurística local (achado real, /monitorarbugs 2026-09-04, mesma
   // classe corrigida em updateMetrics()/agCtx()/handleDrop()/ctxMove()).
-  if(prevCol!==card.col){
+  // `prevCard &&` (achado real, /monitorarbugs 2026-09-17): ao CRIAR um
+  // card, prevCol é '' (prevCard é null, ver declaração acima) — qualquer
+  // coluna real de destino já satisfaz `prevCol!==card.col` sem prevCard,
+  // então criar um card com responsável/participantes já preenchidos
+  // disparava "Card movido para X" (ou "Card concluído 🎉", se nasceu
+  // numa coluna de fim) pra essas pessoas, apesar do card nunca ter se
+  // MOVIDO — só acabou de nascer ali. Também disparava o trigger de
+  // Automação 'move' (distinto do 'card_created' dedicado, ver
+  // AUTO_TRIGGERS) pra toda regra "QUANDO card movido pra X", mesmo pra
+  // cards só criados em X, nunca movidos.
+  if(prevCard && prevCol!==card.col){
     if(_isColDone(card.col)) notifDone(card);
     else notifMoved(card, columns.find(c=>c.id===card.col)?.name);
     // Achado real 2026-08-26 (skill /monitorarbugs): mesmo gap do 'assigned'
@@ -28968,8 +29517,14 @@ function loadCalEvents(){
     combinados.forEach(e => porId.set(e.id, e));
     const vistos = new Set();
     const _norm = s => (s||'').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ');
+    // Achado real (/monitorarbugs 2026-09-18, mesma causa raiz de
+    // _fetchAndCacheGcalForSquad(), ver coment\u00e1rio l\u00e1): chave sem _calId
+    // cruzava agendas DIFERENTES (local do squad \u00d7 global do painel) \u2014 pior
+    // aqui, porque abaixo o resultado \u00e9 REGRAVADO no cache do Firebase
+    // (localLimpo), ent\u00e3o um evento diferente que perdesse a colis\u00e3o sa\u00eda
+    // apagado de vez do cache persistido, n\u00e3o s\u00f3 escondido da tela.
     const final = [...porId.values()].filter(ev=>{
-      const chave = (ev.start||'').split('T')[0]+'|'+_norm(ev.title);
+      const chave = (ev._calId||'')+'|'+(ev.start||'').split('T')[0]+'|'+_norm(ev.title);
       if(vistos.has(chave)) return false;
       vistos.add(chave);
       return true;
@@ -29366,11 +29921,17 @@ async function _fetchAndCacheGcalForSquad(squadId, calendarsList){
     }
   }));
 
-  // Deduplica por título+data — algumas agendas públicas (ex: feriados nacionais) retornam
-  // o mesmo evento mais de uma vez com IDs internos diferentes.
+  // Deduplica por agenda+título+data — algumas agendas públicas (ex: feriados
+  // nacionais) retornam o mesmo evento mais de uma vez com IDs internos
+  // diferentes, DENTRO da mesma agenda. Achado real (/monitorarbugs
+  // 2026-09-18): a chave não incluía a agenda (_calId) — duas pessoas com
+  // eventos genuinamente diferentes ("Reunião", "Daily") no mesmo dia, em
+  // calendários DIFERENTES que o squad conectou, colidiam e um sumia em
+  // silêncio. Escopar por agenda preserva a intenção original (só dedupe
+  // dentro da MESMA fonte) sem cruzar calendários diferentes.
   const _vistosCal = new Set();
   const todosEventosGoogleDedup = todosEventosGoogle.filter(ev=>{
-    const chave = ev.start+'|'+ev.title.trim().toLowerCase();
+    const chave = ev._calId+'|'+ev.start+'|'+ev.title.trim().toLowerCase();
     if(_vistosCal.has(chave)) return false;
     _vistosCal.add(chave);
     return true;
@@ -30391,10 +30952,9 @@ function applyFanoutToCurrentCard(templateId){
     const novos=_applyFanoutTemplate(parent, tpl, _histWho());
     fbSaveCard(parent);
     _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filhos recém-criados via receita, ver declaração
-    editingSuperChildren=(parent.childCardIds||[]).map(id=>{
-      const found=cards.find(c=>c.id===id);
-      return found?{id:found.id,title:found.title,col:found.col}:null;
-    }).filter(Boolean);
+    { const _split = _splitSuperChildIds(parent.childCardIds);
+      editingSuperChildren = _split.ativos;
+      editingSuperArchivedIds = _split.arquivadosIds; }
     renderSuperChildrenList();
     renderBoard();
     showToast('✅ '+novos.length+' card(s) criado(s) a partir de "'+tpl.nome+'"'+_modeloSuffix);
@@ -30511,11 +31071,47 @@ const AUTO_ACTIONS = [
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
     run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
-    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false; ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): "Adicionar tag" genérico
+    // aceita QUALQUER tag no seletor (inclusive as de Tamanho/Submarca/
+    // Canal de venda, que têm ação dedicada — set_tamanho/set_submarca/
+    // set_canal_venda — logo abaixo, com exclusividade de grupo garantida
+    // no próprio run()). Sem essa mesma checagem aqui, uma regra configurada
+    // com este action genérico (ex.: "Adicionar tag = 👕 G") somava em cima
+    // de um tamanho que o card já tinha (👕 P), deixando 2 tamanhos ao
+    // mesmo tempo — e por rodar sozinho, sem tela, o card ficava assim em
+    // silêncio até alguém notar num relatório. Mesma exclusividade de
+    // _doBulkTagMulti()/set_tamanho/set_submarca/set_canal_venda.
+    run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(ct.includes(rule.actionVal)) return false;
+      [SIZE_TAGS,SUBMARCA_TAGS,CANAL_VENDA_TAGS].forEach(group=>{
+        const groupIds=group.map(t=>t.id);
+        if(groupIds.includes(rule.actionVal)) for(let i=ct.length-1;i>=0;i--) if(groupIds.includes(ct[i])) ct.splice(i,1);
+      });
+      ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'adicionou tag (automação)','⚙ Automação'); return true; } },
   { key:'remove_tag', label:'Remover tag', valueType:'tag',
     run:(rule,card)=>{ if(!rule.actionVal) return false; const ct=getCardTags(card); if(!ct.includes(rule.actionVal)) return false; const nt=ct.filter(id=>id!==rule.actionVal); card.tags=nt; card.tag=nt[0]||''; recordHistory(card,'removeu tag (automação)','⚙ Automação'); return true; } },
   { key:'assign_owner', label:'Atribuir responsável', valueType:'member_optional',
-    run:(rule,card)=>{ if(!rule.actionVal) return false; card.owner=rule.actionVal; const m=members.find(x=>x.init===rule.actionVal); recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): comparado aos 4 call sites
+    // que já fazem "notifAssigned() + runAutoRules('assigned',...)" toda
+    // vez que card.owner muda (bulk `_doBulkAssign()`, modal `saveCard()`,
+    // criação, `scheduleAutoSave()` — ver comentário na declaração de
+    // `runAutoRules()`), esta ação de Automação fazia só metade: mutava
+    // card.owner e gravava histórico, mas nunca notificava a pessoa nova
+    // nem disparava o evento 'assigned' pra encadear outras regras — quem
+    // era atribuído por uma Automação nunca via nada no sino 🔔. Também
+    // faltava o guard de no-op que as ações vizinhas já têm (`add_tag`/
+    // `toggle_okr` retornam `false` sem mudar nada quando o valor já é o
+    // mesmo) — sem ele, reatribuir a MESMA pessoa toda vez que a regra
+    // disparasse gravava histórico + salvava no Firebase + mostrava
+    // "Automação aplicada" à toa, mesmo sem nenhuma mudança real.
+    run:(rule,card)=>{
+      if(!rule.actionVal || rule.actionVal===card.owner) return false;
+      card.owner=rule.actionVal;
+      const m=members.find(x=>x.init===rule.actionVal);
+      recordHistory(card,'definiu responsável: '+(m?m.name:rule.actionVal),'⚙ Automação');
+      notifAssigned(rule.actionVal, card.id, card.title);
+      runAutoRules('assigned', card.id, rule.actionVal);
+      return true;
+    } },
   { key:'notify_agent', label:'Notificar Agente Ágil', valueType:'agent_tab',
     // Visibilidade escopada por squad (mesma fonte que o autocomplete de
     // @menção usa, ver AGENTE_AGIL_MENTION_SQUADS) — AGENTE_AGIL_ATIVO
@@ -30575,6 +31171,33 @@ const AUTO_ACTIONS = [
       parseMentions(comment.text, card.id, comment.id, {includeSelf:true});
       return false; // não altera o card em si, só notifica
     } },
+  // "Notificar PO/Organizador" (pedido direto do usuário, 2026-09-17) —
+  // mesmo padrão de "Notificar todos" acima, mas escopado a quem tem o
+  // papel PO ou Organizador NESTE squad (mesmo critério de _isPOorOrg(),
+  // sem o 'adm' — aqui é especificamente quem foi promovido a PO/
+  // Organizador, não qualquer Admin da plataforma). Usa mentionMatchLabel()
+  // pra montar o mesmo handle (@nome.sobrenome) que getMemberByHandle()
+  // dentro de parseMentions() sabe resolver de volta — não dá pra usar
+  // member.init direto aqui (não é garantido bater no formato de handle
+  // que parseMentions espera).
+  { key:'notify_po_org', label:'Notificar PO/Organizador', valueType:'none',
+    run:(rule,card)=>{
+      const poOrg=members.filter(m=>m.role==='po'||m.role==='organizador');
+      if(!poOrg.length) return false; // squad sem ninguém nesses papéis — nada a notificar
+      const comment={
+        id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+        uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+        text:poOrg.map(m=>'@'+mentionMatchLabel(m)).join(' ')+' [Automação] a regra "'+rule.label+'" disparou no card "'+card.title+'".',
+        ts:new Date().toISOString(),
+      };
+      _pushCardComment(card.id, comment);
+      // includeSelf:true — mesmo raciocínio de notify_all: se quem
+      // disparou a regra for a própria PO/Organizadora, ela também deve
+      // ser notificada (não é uma @menção manual de alguém pra outra
+      // pessoa, é a automação avisando o papel inteiro).
+      parseMentions(comment.text, card.id, comment.id, {includeSelf:true});
+      return false; // não altera o card em si, só notifica
+    } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
     run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
@@ -30599,7 +31222,24 @@ const AUTO_ACTIONS = [
   { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
     run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
   { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
-    run:(rule,card)=>{ const txt=(rule.actionVal||'').trim(); if(!txt) return false; card.checklist=Array.isArray(card.checklist)?card.checklist.slice():[]; card.checklist.push({t:txt,done:false}); recordHistory(card,'adicionou item de checklist (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-09-17): este é o único
+    // AUTO_ACTIONS com `valueType:'text'` — texto livre configurado na
+    // regra. Diferente da edição manual de um item de checklist
+    // existente (scheduleAutoSave(), que já escaneia `it.t` por
+    // @menção) e das outras ações que geram texto por conta própria
+    // (notify_all/notify_po_org/notify_agent, todas chamam
+    // parseMentions() no que elas mesmas montam), esta nunca escaneava
+    // o texto configurado na regra — uma automação "adicionar item
+    // 'Avisar @fulano'" nunca notificava @fulano, mesmo o texto sendo
+    // literalmente livre pra isso.
+    run:(rule,card)=>{
+      const txt=(rule.actionVal||'').trim(); if(!txt) return false;
+      card.checklist=Array.isArray(card.checklist)?card.checklist.slice():[];
+      card.checklist.push({t:txt,done:false});
+      recordHistory(card,'adicionou item de checklist (automação)','⚙ Automação');
+      parseMentions(txt, card.id, undefined, {includeSelf:true});
+      return true;
+    } },
   // Cria os cards filhos de uma receita de fan-out (ver bloco "RECEITAS DE
   // FAN-OUT" acima) e vira supercard — pedido direto: "supercard de campanha
   // de meta gera esses 6 cards menores... automaticamente". Guard de
@@ -30703,7 +31343,13 @@ function populateAutoSelects(){
   // Preenche as duas listas (Quando/Então) a partir da config, escondendo
   // o que não se aplica ao squad atual (visible()) — evita oferecer uma
   // ação que não faz nada (ex.: Notificar Agente Ágil desativado).
-  const triggerOptsHtml=AUTO_TRIGGERS.filter(t=>!t.visible||t.visible()).map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
+  // Ordem alfabética (pedido direto do usuário) — mesmo `_tagLabelCmp()`
+  // já usado pras tags do modal do card, reaproveitado aqui só pelo
+  // critério de ordenação por label (não tem nada de tag-específico
+  // nele): joga labels que começam com emoji (ex.: "🧩 Aplicar fan-out…")
+  // pro fim, em vez de deixar o emoji bagunçar a ordem alfabética normal
+  // (emoji ordena antes de letra em Unicode).
+  const triggerOptsHtml=AUTO_TRIGGERS.filter(t=>!t.visible||t.visible()).slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(t=>`<option value="${t.key}">${esc(t.label)}</option>`).join('');
   if(triggerSel.dataset.optsHtml!==triggerOptsHtml){
     const prevVal=triggerSel.value;
     triggerSel.innerHTML=triggerOptsHtml;
@@ -30712,8 +31358,9 @@ function populateAutoSelects(){
   }
   // Condição extra opcional (E a tag do card é ___) — mesma lista de tags
   // usada em "Adicionar tag", só que aqui é sempre opcional (1ª opção vazia).
+  // Mesma ordem alfabética (emoji no fim) das outras 2 listas desta tela.
   if(condTagSel){
-    const condOptsHtml='<option value="">— sem condição extra —</option>'+tags.map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
+    const condOptsHtml='<option value="">— sem condição extra —</option>'+tags.slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(t=>`<option value="${esc(t.id)}">${esc(t.label)}</option>`).join('');
     if(condTagSel.dataset.optsHtml!==condOptsHtml){
       const prevVal=condTagSel.value;
       condTagSel.innerHTML=condOptsHtml;
@@ -30721,7 +31368,7 @@ function populateAutoSelects(){
       if([...condTagSel.options].some(o=>o.value===prevVal)) condTagSel.value=prevVal;
     }
   }
-  const actionOptsHtml=AUTO_ACTIONS.filter(a=>!a.visible||a.visible()).map(a=>`<option value="${a.key}">${esc(a.label)}</option>`).join('');
+  const actionOptsHtml=AUTO_ACTIONS.filter(a=>!a.visible||a.visible()).slice().sort((a,b)=>_tagLabelCmp(a.label,b.label)).map(a=>`<option value="${a.key}">${esc(a.label)}</option>`).join('');
   if(actionSel.dataset.optsHtml!==actionOptsHtml){
     const prevVal=actionSel.value;
     actionSel.innerHTML=actionOptsHtml;
@@ -31107,7 +31754,7 @@ function _settleBlockedTag(card, wasBlocked){
   if(isBlocked){
     card.blockedAt = new Date().toISOString();
   } else if(card.blockedAt){
-    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
     card.blockedAt = null;
   }
 }
@@ -31138,7 +31785,7 @@ function _settleCardTimeTrackingLazy(card){
   if(isBlocked && !card.blockedAt){
     card.blockedAt = new Date().toISOString();
   } else if(!isBlocked && card.blockedAt){
-    card.blockedMs = (card.blockedMs||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
+    card.blockedMs = (Number(card.blockedMs)||0) + Math.max(0, Date.now()-new Date(card.blockedAt).getTime());
     card.blockedAt = null;
   }
   const isOverdue = _cardIsOverdue(card);
@@ -31146,19 +31793,33 @@ function _settleCardTimeTrackingLazy(card){
     card.atrasadoDesde = card.due;
   } else if(!isOverdue && card.atrasadoDesde){
     const start = new Date(card.atrasadoDesde+'T00:00:00').getTime();
-    card.atrasadoMs = (card.atrasadoMs||0) + Math.max(0, Date.now()-start);
+    card.atrasadoMs = (Number(card.atrasadoMs)||0) + Math.max(0, Date.now()-start);
     card.atrasadoDesde = null;
+  }
+  // ⏸️ Rede de segurança pro mesmo fix de recordMove() (ver comentário lá) —
+  // cobre o caso que uma transição de coluna não pega: pausar um card que
+  // JÁ está numa coluna de fim (sem nenhuma movimentação envolvida, o botão
+  // "⏸ Pausar" nunca checou isso). Sem isto, o episódio aberto continuaria
+  // crescendo pra sempre até o próximo save tocar o card.
+  if(card.paused && card.pausedAt && _isColDone(card.col)){
+    card.pausedMs = (Number(card.pausedMs)||0) + Math.max(0, Date.now()-new Date(card.pausedAt).getTime());
+    card.paused = false;
+    card.pausedAt = null;
   }
 }
 // Total "efetivo até agora" (fechado + episódio aberto, se houver) —
 // mesmo padrão de _cardPausedMs(). Ler o total não precisa settle antes:
 // soma o acumulado com o episódio em aberto calculado na hora.
 function _cardBlockedMs(c){
-  const acc=c?.blockedMs||0;
+  // Number(...) por segurança na leitura também (não só na escrita, ver
+  // recordMove()/_settleCardTimeTrackingLazy()) — se algum card antigo
+  // ainda tiver o campo salvo como string por causa do bug de concatenação
+  // já corrigido, a leitura não soma texto em cima de texto de novo.
+  const acc=Number(c?.blockedMs)||0;
   return c?.blockedAt ? acc+Math.max(0, Date.now()-new Date(c.blockedAt).getTime()) : acc;
 }
 function _cardAtrasadoMs(c){
-  const acc=c?.atrasadoMs||0;
+  const acc=Number(c?.atrasadoMs)||0;
   if(!c?.atrasadoDesde) return acc;
   const start=new Date(c.atrasadoDesde+'T00:00:00').getTime();
   return acc+Math.max(0, Date.now()-start);
@@ -31311,7 +31972,10 @@ function addBlockerTag(cardId){
 function removeBlockerTag(){
   if(!editingId) return;
   const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.blocker=false; c.blockerReason='';
+  c.blocker=false;
+  // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
+  if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
+  c.blockerReason='';
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
