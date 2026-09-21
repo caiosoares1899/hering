@@ -17888,6 +17888,31 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.58 · painel — 2026-09-21 · Promove pra prod: papel por squad na aba Usuários + cache do painel_viewers + rebaixar ADM removido
+
+Patch cirúrgico (não cópia completa — os arquivos divergem de
+propósito, ver `CLAUDE.md`), aplicando as 3 correções já validadas em
+`painel-dev.html` (v3.54/v3.55, ambas por `/monitorarbugs`) direto em
+`painel.html`:
+
+- **Aba "👥 Usuários" (Config do squad)**: `loadPcfgUsers()`/
+  `updateUserRole()` agora leem e gravam o papel EFETIVO por squad
+  (`squads_roles/{cfgSquadId}`), igual ao modal "👥 Global Users" — antes
+  mostravam/gravavam só o campo global legado `role`, podendo ser um
+  no-op silencioso se a pessoa já tivesse um override por squad.
+- **Whitelist `painel_viewers`**: cache local de acesso reduzido de 24h
+  pra 15min — remover alguém da whitelist agora tem efeito rápido de
+  verdade (mesmo achado/fix já aplicado ao `externos` do kanban).
+- **`removeAdmEmail()`**: agora rebaixa `kanban/usuarios/{uid}/role`
+  pra `'membro'` quando aplicável — antes um ADM "removido" continuava
+  com papel `adm` efetivo no board via esse campo legado residual.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido (braces -1, parens -14). Diff contra
+`painel-dev.html` conferido linha a linha nos 3 pontos tocados — só as
+divergências já conhecidas (Push Manual, banner dev, config Firebase
+por sufixo, instrumentação de bytes) restam depois do patch.
+
 ### painel.html v3.57 · painel — 2026-09-21 · Fix de produção: texto de "Deslogar todos" mentia sobre o que a ação fazia
 
 **Exceção deliberada ao fluxo dev-first**: esta correção foi feita
