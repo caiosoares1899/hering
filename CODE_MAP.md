@@ -45,10 +45,11 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6430 / L6399
 - `resolveSquadAndShow()` — L10315 — resolve squad da URL, decide o que mostrar
 - **`force_logout_after` (botão "Deslogar todos") — chaves DIVERGEM de
-  propósito entre prod/dev** (2026-09-21, `/monitorarbugs`): listener em
-  `kanban-dev.html` — L33668 — escuta `kanban/global/force_logout_after_dev`
-  (escrito por `deslogarTodos()` em `painel-dev.html` — L8011); `kanban.html`
-  escuta `kanban/global/force_logout_after` (sem sufixo, escrito por
+  propósito entre prod/dev, promovido pra prod em v8.30.716**
+  (2026-09-21, `/monitorarbugs`): listener em `kanban-dev.html` — L33667
+  — escuta `kanban/global/force_logout_after_dev` (escrito por
+  `deslogarTodos()` em `painel-dev.html` — L8011); `kanban.html` — L33667
+  — escuta `kanban/global/force_logout_after` (sem sufixo, escrito por
   `deslogarTodos()` em `painel.html` — L8066). Antes desta correção as duas
   chaves eram confundidas (botão do painel-dev.html era um no-op; botão do
   painel.html de produção deslogava a produção com um aviso que dizia o

@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.712</div>
+<div class="version">v8.30.716</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10729,12 +10729,21 @@ window.addEventListener('auth-change',e=>{
       // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
       // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
       // por instabilidade do SDK do Firebase, sem a pessoa fazer nada — e qualquer erro passageiro de
-      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Agora: guarda por 24h
-      // que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais 2x
-      // antes de desconectar de fato.
+      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Guarda por um tempo
+      // curto que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais
+      // 2x antes de desconectar de fato.
+      // TTL 15min, não 24h (/monitorarbugs 2026-09-21, pedido explícito "cancelar o acesso de
+      // usuários excluídos"): com 24h, remover um externo da whitelist (removerMembro()/
+      // deleteGlobalUser()) não tinha efeito prático nenhum por até 1 dia inteiro pra quem já
+      // tinha esse cache válido no próprio navegador — um F5 pulava a checagem inteira e chamava
+      // autoRegistrar(user) direto; em deleteGlobalUser() (apaga kanban/usuarios/{uid} por
+      // completo) isso ainda RECRIAVA o cadastro do zero, com squads[ACTIVE_SQUAD]=true de novo,
+      // a pessoa "excluída" se auto-reinscrevendo sozinha. 15min ainda absorve o re-disparo
+      // rápido do auth-change (o bug original, que acontece em segundos), mas corta a janela de
+      // acesso pós-remoção de 24h pra 15min.
       const _extCacheKey = 'ext_ok_'+user.email;
       const _extCached = parseInt(safeLS.getItem(_extCacheKey)||'0', 10);
-      if(_extCached && (Date.now()-_extCached) < 86400000){
+      if(_extCached && (Date.now()-_extCached) < 900000){
         window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
         autoRegistrar(user);
         return;
@@ -24301,8 +24310,20 @@ async function executarReatribuir(){
   if(!alvos.length){ showToast('Nenhum card atribuído a '+from+'.'); return; }
   const toMember=members.find(m=>m.init===to);
   if(!await uiConfirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
+  // /monitorarbugs 2026-09-21, técnica 1 (comparar contra o padrão irmão já
+  // resolvido _doBulkAssign(), a outra ferramenta de reatribuição em massa):
+  // esta função mutava c.owner/c.participants direto, sem recordHistory()
+  // nem runAutoRules('assigned',...) — card reatribuído em massa (ex.:
+  // alguém saiu do time) não deixava rastro no Histórico do card nem
+  // encadeava automações de "atribuído a X". notifAssigned() de propósito
+  // NÃO é chamado aqui (mesma escolha de _doBulkAssign()) — evita inundar
+  // quem recebe os cards com 1 notificação por card num lote grande.
   alvos.forEach(c=>{
-    if(c.owner===from) c.owner=to;
+    if(c.owner===from){
+      c.owner=to;
+      recordHistory(c, 'reatribuiu responsável: '+(toMember?toMember.name:to)+' (via 🔁 Reatribuir cards)');
+      runAutoRules('assigned', c.id, to);
+    }
     if(incPart && Array.isArray(c.participants)){
       const idx=c.participants.indexOf(from);
       if(idx>=0){ if(c.participants.includes(to)) c.participants.splice(idx,1); else c.participants[idx]=to; }
@@ -33536,10 +33557,18 @@ _onFbReady(()=>{
 
   // Deslogar todos (manual, via painel) + logout automatico por inatividade --
   // reduz consumo de download do Firebase de abas deixadas abertas a noite/fim de
-  // semana. (1) um admin escreve em kanban/global/force_logout_after pelo painel,
-  // e todo cliente com sessao anterior a esse timestamp se desloga sozinho; (2)
-  // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
-  // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
+  // semana. (1) um admin escreve o timestamp em kanban/global/force_logout_after*
+  // pelo painel(-dev).html, e todo cliente com sessao anterior a esse timestamp
+  // se desloga sozinho; (2) depois de IDLE_LOGOUT_MS sem nenhuma interacao,
+  // desloga automaticamente mesmo sem ninguem mandar nada -- cobre o caso de
+  // esquecer a aba aberta.
+  // /monitorarbugs 2026-09-21, "login e segurança": kanban.html escuta
+  // force_logout_after (sem sufixo, escrito por painel.html); kanban-dev.html
+  // escuta force_logout_after_dev (escrito por painel-dev.html) -- chaves
+  // isoladas de propósito, pra "Deslogar todos" do painel-dev.html nunca afetar
+  // produção. Essa linha (window._onValue logo abaixo) é a 3ª que diverge
+  // deliberadamente entre os dois arquivos na promoção dev→prod, depois de
+  // versão/VERSION_KEY -- ver CODE_MAP.md.
   const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
   const IDLE_EDIT_GRACE_MS = 30*60*1000; // carencia maxima por card aberto/edicao em andamento -- nao e mais imunidade eterna (P1-4)
   window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
