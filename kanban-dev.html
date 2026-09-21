@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.721-dev</div>
+<div class="version">v8.30.722-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9053,7 +9053,7 @@ async function fbSaveAll(extra, touchedIds){
   // campos undefined do payload (nunca troca por null, que apagaria o
   // campo de propósito) antes de escrever.
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), _stripUndefinedDeep({ cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
+    window._update(fb(FB), _stripUndefinedMultiPath({ cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -9118,7 +9118,7 @@ async function fbCreateCard(card){
   // esta é a 3ª via de escrita de cards e tinha ficado de fora da 1ª
   // rodada do fix; mesmo risco (campo undefined derruba a criação
   // inteira), mesma correção.
-  return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
+  return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbCreateCard] write failed:', err);
     throw err;
@@ -9235,7 +9235,7 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // acabou de confirmar. Fix: mesmo padrão de fbSaveAll()/
       // fbCreateCard(), síncrono, ANTES de disparar a escrita.
       if(window._cardsByKey) window._cardsByKey[key] = card;
-      return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
+      return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
@@ -19045,6 +19045,34 @@ function _stripUndefinedDeep(val){
     return out;
   }
   return val;
+}
+// CAUSA RAIZ / ACHADO CRÍTICO (2026-09-21, mesmo relato de dado sumindo —
+// "salvo beleza, mas some ao atualizar a página" — os 3 fixes anteriores
+// nesta mesma investigação, todos reais, não resolveram porque nenhum
+// deles era isto): fbSaveCard()/fbCreateCard() chamavam
+// `_stripUndefinedDeep(updates)` no objeto de update MULTI-PATH inteiro —
+// cujas chaves de NÍVEL SUPERIOR são de propósito caminhos com barra
+// (`'cards/'+key`, `'cards_updated_at/'+id`, `'cards_archived/'+id`,
+// sintaxe exigida pelo próprio Firebase pra escrever em vários locais
+// numa chamada só). `INVALID_FB_KEY_RE` (linha ~19035) rejeita qualquer
+// chave com `/` — correto para uma chave ANINHADA dentro de um valor
+// (onde `/` nunca é válido), mas errado aplicado às chaves de nível
+// superior de um update multi-path, onde `/` é a sintaxe válida. O
+// resultado: TODAS as 3 chaves eram descartadas, `_stripUndefinedDeep()`
+// devolvia `{}`, e `window._update(ref, {})` — um no-op 100% válido pro
+// Firebase — resolvia com sucesso sem escrever NADA. Diagnóstico ao vivo
+// confirmado: fbSaveCard() rodava a cadeia inteira certa (chave/payload
+// corretos), a promise resolvia sem erro, e uma leitura crua imediata
+// (mesma sessão do SDK, sem F5) mostrava o registro completamente
+// intocado. Mesmo padrão que causava o relato ORIGINAL ("subo 3 cards,
+// salvo beleza, mas some ao atualizar") — fbCreateCard() tinha o mesmo
+// bug. `_notasUpdate()` (linha ~19049) já fazia isso do jeito CERTO
+// (strip por VALOR, não no objeto inteiro) — esta função generaliza esse
+// padrão pros 3 pontos de escrita de card.
+function _stripUndefinedMultiPath(updates){
+  const clean={};
+  Object.entries(updates).forEach(([k,v])=>{ if(v!==undefined) clean[k]=_stripUndefinedDeep(v); });
+  return clean;
 }
 function _notasUpdate(updates){
   const clean={};
