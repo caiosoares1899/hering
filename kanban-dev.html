@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.714-dev</div>
+<div class="version">v8.30.715-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -33557,10 +33557,19 @@ _onFbReady(()=>{
 
   // Deslogar todos (manual, via painel) + logout automatico por inatividade --
   // reduz consumo de download do Firebase de abas deixadas abertas a noite/fim de
-  // semana. (1) um admin escreve em kanban/global/force_logout_after pelo painel,
-  // e todo cliente com sessao anterior a esse timestamp se desloga sozinho; (2)
-  // depois de IDLE_LOGOUT_MS sem nenhuma interacao, desloga automaticamente mesmo
-  // sem ninguem mandar nada -- cobre o caso de esquecer a aba aberta.
+  // semana. (1) um admin escreve em kanban/global/force_logout_after_dev pelo
+  // painel-dev.html, e todo cliente DESTE arquivo com sessao anterior a esse
+  // timestamp se desloga sozinho; (2) depois de IDLE_LOGOUT_MS sem nenhuma
+  // interacao, desloga automaticamente mesmo sem ninguem mandar nada -- cobre o
+  // caso de esquecer a aba aberta.
+  // /monitorarbugs 2026-09-21, "login e segurança": até aqui este arquivo
+  // escutava a MESMA chave sem sufixo que kanban.html (prod) escuta
+  // (força-logout de painel.html afetava kanban-dev.html sem querer, e o botão
+  // "Deslogar todos (dev)" de painel-dev.html, que grava em
+  // force_logout_after_dev, não tinha efeito nenhum). Divergência deliberada:
+  // esta é a 3ª linha (depois de VERSION_KEY/versão) que passa a diferenciar
+  // este arquivo de kanban.html na promoção dev→prod — kanban.html continua
+  // escutando force_logout_after (sem sufixo).
   const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
   const IDLE_EDIT_GRACE_MS = 30*60*1000; // carencia maxima por card aberto/edicao em andamento -- nao e mais imunidade eterna (P1-4)
   window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
@@ -33656,7 +33665,7 @@ _onFbReady(()=>{
     }
   }, 60000);
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
-  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
+  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after_dev'), snap=>{
     const forceAfter = snap.val();
     if(forceAfter && _sessionStartMs < forceAfter && (Date.now() - forceAfter) < 15*60*1000){ window._signOut('admin_force_logout'); }
   });

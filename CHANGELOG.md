@@ -3561,6 +3561,52 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.715-dev — 2026-09-21 — Fix severo: "Deslogar todos" do painel-dev.html não fazia nada (chave errada escutada)
+
+`/monitorarbugs` explícito, escopo nomeado "login e segurança" —
+achado ao investigar `force_logout_after` (item que ficou pendente da
+rodada anterior).
+
+**Causa raiz (técnica 1 — comparar caminho paralelo, e técnica 3 —
+comportamento vs. o que o texto da tela promete)**: mapeando quem
+escreve e quem escuta `kanban/global/force_logout_after*`:
+`painel.html` (produção) grava em `force_logout_after` (sem sufixo);
+`painel-dev.html` grava em `force_logout_after_dev`. Mas
+`kanban-dev.html` (igual a `kanban.html`, já que os dois eram
+byte-idênticos até esta correção) só escutava a chave SEM sufixo — a
+mesma que `kanban.html` escuta. Resultado: (1) o botão "Deslogar todos
+(dev)" em `painel-dev.html` sempre foi um no-op silencioso — a escrita
+no Firebase funcionava, o toast dizia "Pronto — todo mundo vai ser
+deslogado", mas ninguém era deslogado de verdade, porque nada escutava
+aquela chave; (2) pior, o texto de confirmação em `painel.html`
+(produção) dizia "[AMBIENTE DE TESTES]... Isso NÃO afeta o kanban.html
+de produção" — mas a escrita SEMPRE foi na chave que `kanban.html`
+realmente escuta, então esse botão sempre deslogou a produção inteira,
+contrariando o próprio aviso que o ADM lia antes de confirmar (ver
+entrada correspondente em `painel.html (produção)` abaixo).
+
+**Fix**: `kanban-dev.html` passa a escutar `force_logout_after_dev`
+(chave própria, já coberta em `database.rules.json`), tornando o botão
+de `painel-dev.html` funcional e isolado da produção. Esta é a 3ª
+linha que passa a divergir deliberadamente entre `kanban.html`/
+`kanban-dev.html` na promoção dev→prod (além de versão/`VERSION_KEY`)
+— documentado no `CODE_MAP.md` pra não ser copiada por engano numa
+promoção futura.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses
+igual ao baseline conhecido (braces -1, parens +1).
+
+**Confirmado sem achado nesta rodada** (2 dos 3 ângulos pendentes da
+rodada anterior de "login e segurança"): fluxo completo de
+`confirmarInscricao()` — expõe leitura de dados antes da pessoa
+confirmar a inscrição, mas isso é consistente com o modelo de acesso
+já documentado (domínio `@ciahering.com.br` libera leitura
+independente de "inscrição"; a tela é um ritual de boas-vindas/escolha
+de iniciais, nunca foi fronteira de segurança); e o timeout de
+inatividade (`_signOut('idle_timeout')`, L6415) chama o `signOut()`
+real do SDK do Firebase Auth (não uma reimplementação local), então
+efetivamente encerra a sessão, sem gap.
+
 ### v8.30.714-dev — 2026-09-21 — Fix severo: cancelar acesso de usuário externo não valia por até 24h (cache local não invalidava)
 
 `/monitorarbugs` explícito, escopo nomeado: "cancelar o acesso de
@@ -17751,6 +17797,37 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.57 · painel — 2026-09-21 · Fix de produção: texto de "Deslogar todos" mentia sobre o que a ação fazia
+
+**Exceção deliberada ao fluxo dev-first**: esta correção foi feita
+DIRETO em `painel.html` (produção), sem passar por `painel-dev.html` —
+é puramente uma correção de texto (nenhuma lógica/escrita no Firebase
+mudou), motivada por segurança: o texto de confirmação do botão
+"Deslogar todos" dizia "[AMBIENTE DE TESTES]... Isso NÃO afeta o
+kanban.html de produção", mas a ação SEMPRE gravou na chave que
+`kanban.html` de fato escuta — ou seja, sempre deslogou a produção
+inteira, contrariando o próprio aviso. Ver a entrada completa da causa
+raiz em `kanban-dev.html v8.30.715-dev` (acima). Texto corrigido pra
+descrever a ação de verdade: "⚠️ PRODUÇÃO: Deslogar TODOS os usuários
+de TODAS as squads do kanban.html AGORA?".
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses
+igual ao baseline conhecido (braces -1, parens -14).
+
+### painel-dev.html v3.56 · painel-dev — 2026-09-21 · Fix: comentário de "Deslogar todos (dev)" desatualizado após fix em kanban-dev.html
+
+Ajuste de comentário acompanhando o fix real, que mora em
+`kanban-dev.html` (v8.30.715-dev, ver entrada acima): o botão "Deslogar
+todos (dev)" aqui sempre gravou na chave certa
+(`force_logout_after_dev`), mas essa chave não tinha nenhum listener em
+lugar nenhum até agora — era um no-op silencioso (toast de sucesso
+mentindo). Nenhuma mudança de lógica neste arquivo, só o comentário
+que documentava (incorretamente) que `kanban.html`/`kanban-dev.html`
+escutavam essa chave.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses
+igual ao baseline conhecido (braces -1, parens -14).
 
 ### painel-dev.html v3.55 · painel-dev — 2026-09-21 · 2 fixes: login e segurança (cache de acesso externo + rebaixar ADM removido)
 

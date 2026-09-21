@@ -1945,11 +1945,40 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `removeAdmEmail()` ganhou o mesmo lookup por e-mail que
   `addAdmEmail()` já usa, rebaixa `role` pra `'membro'` se ainda
   `'adm'`. dev v3.55·painel-dev + `okr-apresentacao.slide.html` (sem
-  versão própria). Ainda não coberto nesta rodada (segue pendente se o
-  usuário voltar ao tema): `force_logout_after` (existe mas não
-  confirmado se algo escreve nele), fluxo completo de
-  `confirmarInscricao()`, se o timeout de inatividade de fato encerra
-  a sessão do Firebase Auth ou só limpa estado local.
+  versão própria).
+
+- **2026-09-21, login e segurança (3ª rodada, cobrindo os 3 ângulos
+  pendentes da rodada anterior)**: 1 achado real severo (técnica 1 +
+  técnica 3), 2 ângulos confirmados sem achado. **Achado**:
+  `force_logout_after` EXISTE e está funcional em produção, mas
+  `kanban-dev.html` escutava a mesma chave sem sufixo que `kanban.html`
+  escuta (`kanban/global/force_logout_after`), enquanto
+  `painel-dev.html` grava em `force_logout_after_dev` — ninguém
+  escutava essa 2ª chave. Resultado: (1) botão "Deslogar todos (dev)"
+  em `painel-dev.html` sempre foi um no-op silencioso, com toast de
+  sucesso mentindo; (2) **mais grave** — o botão de `painel.html`
+  (produção) tinha texto de confirmação dizendo "[AMBIENTE DE
+  TESTES]... não afeta produção", mas SEMPRE gravou na chave que
+  `kanban.html` escuta de verdade — ou seja, sempre deslogava a
+  produção inteira, mentindo pro ADM sobre o próprio efeito da ação.
+  Perguntado ao usuário via `AskUserQuestion` como resolver a
+  divergência de chaves (dar a `kanban-dev.html` uma chave própria,
+  quebrando a característica "byte-idêntico a kanban.html" documentada
+  no `CLAUDE.md`, vs. remover o botão do dev, vs. só corrigir o texto)
+  — escolheu dar chave própria. Fix: `kanban-dev.html` passa a escutar
+  `force_logout_after_dev` (3ª linha que diverge deliberadamente de
+  `kanban.html` na promoção, documentado no `CODE_MAP.md` pra não ser
+  copiada por engano); texto de `painel.html` corrigido pra descrever
+  a ação real — **exceção deliberada ao fluxo dev-first**, aplicada
+  direto em produção por ser correção pura de texto (zero mudança de
+  lógica/escrita), justificada pelo risco de um ADM confiar no aviso
+  errado e deslogar produção sem querer. **Sem achado**:
+  `confirmarInscricao()` expõe leitura de dados antes de confirmar,
+  mas é consistente com o modelo de acesso por domínio já documentado
+  (não é fronteira de segurança, nunca foi); timeout de inatividade
+  chama o `signOut()` real do SDK do Firebase Auth (import verificado),
+  não uma reimplementação local — encerra a sessão de fato, sem gap.
+  dev v8.30.715-dev + painel v3.57 + painel-dev v3.56.
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
