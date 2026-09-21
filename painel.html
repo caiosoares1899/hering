@@ -8375,6 +8375,22 @@ const COMUNICADO_RASCUNHOS_SEED = [
     tipo: 'novidade',
     squad: '*',
   },
+  {
+    id: 'seed_promocao_2026_09_21_lote',
+    titulo: '⏱️ Correções no ⏸ Pausar card + hover nos gráficos + Controle de Criativos',
+    corpo: '<p>Foi uma leva grande de correções e novidades:</p>'
+      + '<ul>'
+      + '<li><b>⏸ Pausar card</b>: corrigimos um bug em que um card concluído ainda marcado como pausado tinha o tempo de produção (lead/cycle time) contado errado, cada vez pior com o passar dos dias; e o selo "⚠ atrasado" continuava vermelho no board mesmo com o card pausado — agora fica neutro, como deveria.</li>'
+      + '<li>Corrigimos um bug raro que podia travar o salvamento de vários cards de uma vez pra squad inteira.</li>'
+      + '<li><b>Supercard</b>: card filho de uma campanha arquivada não conseguia mais editar a própria Ficha Técnica — corrigido; e a contagem de "concluídos" no modal parou de incluir cards já arquivados.</li>'
+      + '<li><b>Automações</b>: "Adicionar item de checklist" agora detecta @menção no texto configurado; "Atribuir responsável" volta a notificar e disparar outras automações encadeadas; e não dá mais pra somar 2 tags do mesmo grupo (ex. 2 Tamanhos) sem querer.</li>'
+      + '<li><b>Novo</b>: os 2 gráficos de "📊 Dados do Board" (Cards ativos por coluna / Tendência) mostram o valor completo ao passar o mouse — útil quando tem muita coluna e o rótulo fica cortado.</li>'
+      + '<li><b>Controle de Criativos</b>: novo indicador de tempo médio de produção por canal/plataforma/formato, e o motivo do bloqueio (quando preenchido) passa a aparecer na lista de "Mais tempo bloqueado".</li>'
+      + '<li><b>Calendário do Google</b> (painel): corrigido um bug em que 2 reuniões de agendas diferentes, com título parecido (ex. "Reunião") no mesmo dia, podiam sumir uma da outra.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
