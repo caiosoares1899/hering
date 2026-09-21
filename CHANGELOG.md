@@ -18,6 +18,41 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.719 — 2026-09-21 · Promove pra prod — 🔴 correção crítica: edições e criações de card podiam "salvar" na tela sem persistir de verdade
+
+Promoção imediata (bug crítico de perda de dados, validado pela usuária
+que reportou o problema originalmente, via teste real no board — F5
+depois de editar). Ver as entradas de dev correspondentes (seção
+"kanban-dev.html (ambiente de teste)" abaixo, v8.30.719-dev a
+v8.30.722-dev) pro detalhe técnico completo; aqui só o resumo pro
+público de prod.
+
+**🔴 Correção crítica**: desde **17/09**, editar um card já existente
+(tags, título, descrição, checklist, prazo, responsável — qualquer
+campo, tanto pelo salvamento automático quanto pelo botão "💾 Salvar")
+ou **criar um card novo** podia mostrar "salvo com sucesso" na tela sem
+a alteração chegar a ser gravada de verdade no Firebase — ao atualizar
+a página (F5), a edição ou o card criado desaparecia, como se nunca
+tivesse acontecido. Isso podia atingir qualquer pessoa, em qualquer
+squad, não só quem reportou o problema. A causa era uma proteção
+interna (adicionada em 17/09 pra resolver outro problema) que acabou
+descartando a escrita inteira por engano antes dela sair pro Firebase.
+Já está corrigido — se você editou ou criou algum card nos últimos dias
+e reparou que ele "sumiu" depois de atualizar a página, pode ter sido
+isso; vale conferir e refazer se for o caso.
+
+**Também nesta promoção** (fixes já descritos nas entradas de prod
+anteriores, agora reconciliados com o hotfix aplicado direto em
+produção em 17-18/09): `_waitForFirebaseReady()` (salvar nunca mais
+"confirma sucesso" antes do Firebase terminar de inicializar) e
+`_flushAutoSave()` (fechar ou trocar de card não perde mais uma edição
+recente que ainda estava no intervalo de 800ms do salvamento
+automático).
+
+Checks de rotina: `node --check` OK; diff contra `kanban-dev.html`
+restrito às 7 linhas de ambiente já esperadas (favicon, versão,
+`FB_OVERRIDE_NS` ×2, `VERSION_KEY`, chave de `force_logout_after`).
+
 ### v8.30.717 — 2026-09-21 · Promove pra prod — fix severo: "✓ Salvo"/"✅" mentindo sobre confirmação real (v8.30.717-dev)
 
 Promoção imediata (bug severo, validado via relato direto de usuária +

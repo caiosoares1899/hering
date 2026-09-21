@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.718</div>
+<div class="version">v8.30.719</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8388,24 +8388,6 @@ function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ co
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
-// Nunca tratar uma edição como salva enquanto o SDK ainda não terminou de
-// inicializar. Antes, os caminhos de save devolviam Promise.resolve() nesse
-// cenário; o modal podia fechar, mas o conteúdo ficava somente em memória e
-// desaparecia no F5.
-function _waitForFirebaseReady(timeoutMs=15000){
-  if(window._fbReady) return Promise.resolve();
-  return new Promise((resolve,reject)=>{
-    let settled=false;
-    const onReady=()=>finish();
-    const finish=(err)=>{
-      if(settled) return; settled=true;
-      clearTimeout(timer); window.removeEventListener('fb-ready', onReady);
-      err ? reject(err) : resolve();
-    };
-    const timer=setTimeout(()=>finish(new Error('Firebase ainda não está pronto para salvar.')), timeoutMs);
-    window.addEventListener('fb-ready', onReady, {once:true});
-  });
-}
 // Contador de escritas em voo (fbSaveAll/fbSaveCard) + aviso ao sair da
 // página enquanto alguma ainda não confirmou. ACHADO REAL (2026-08-04,
 // import Trello): fbSaveAll()/fbSaveCard() são chamados fire-and-forget
@@ -8916,6 +8898,24 @@ function toggleAllModalSecs(){
 // tinha, sem invalidar cache de ninguém à toa. Omitir touchedIds mantém o
 // comportamento antigo (carimba tudo) — fallback seguro pra quem ainda não
 // foi migrado; nunca INVENTA um touchedIds errado por conta própria.
+// Nunca tratar uma edição como salva enquanto o SDK ainda não terminou de
+// inicializar. Antes, os caminhos de save devolviam Promise.resolve() nesse
+// cenário; o modal podia fechar, mas o conteúdo ficava somente em memória e
+// desaparecia no F5.
+function _waitForFirebaseReady(timeoutMs=15000){
+  if(window._fbReady) return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const onReady=()=>finish();
+    const finish=(err)=>{
+      if(settled) return; settled=true;
+      clearTimeout(timer); window.removeEventListener('fb-ready', onReady);
+      err ? reject(err) : resolve();
+    };
+    const timer=setTimeout(()=>finish(new Error('Firebase ainda não está pronto para salvar.')), timeoutMs);
+    window.addEventListener('fb-ready', onReady, {once:true});
+  });
+}
 async function fbSaveAll(extra, touchedIds){
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
@@ -9053,7 +9053,7 @@ async function fbSaveAll(extra, touchedIds){
   // campos undefined do payload (nunca troca por null, que apagaria o
   // campo de propósito) antes de escrever.
   return _trackFbWrite(Promise.all([
-    window._update(fb(FB), _stripUndefinedDeep({ cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
+    window._update(fb(FB), _stripUndefinedMultiPath({ cards: cardsToSave, cards_index: cardsIndex, cards_updated_at: cardsUpdatedAt, cards_archived: cardsArchived, ...(extra||{}) })),
   ]).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbSaveAll] write failed:', err);
@@ -9118,7 +9118,7 @@ async function fbCreateCard(card){
   // esta é a 3ª via de escrita de cards e tinha ficado de fora da 1ª
   // rodada do fix; mesmo risco (campo undefined derruba a criação
   // inteira), mesma correção.
-  return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
+  return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
     if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
       console.warn('[fbCreateCard] write failed:', err);
     throw err;
@@ -9211,7 +9211,31 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // escrever, sem o que UM campo undefined derrubava a escrita
       // pontual inteira deste card (índice + updated_at + archived
       // juntos), silenciosamente.
-      return _trackFbWrite(window._update(fb(FB), _stripUndefinedDeep(updates)).catch(err=>{
+      // ACHADO REAL / CAUSA RAIZ (2026-09-21, relato direto de usuária —
+      // "salvo beleza, mas se eu atualizo a página some o que eu tinha
+      // feito"; card confirmado corretamente enviado ao Firebase via log
+      // ao vivo, promise resolvendo sem erro, e MESMO ASSIM revertendo):
+      // fbSaveAll() (linha ~9010) e fbCreateCard() (linha ~9107) já
+      // populam window._cardsByKey[key] de forma SÍNCRONA, antes da
+      // escrita real, com um comentário JÁ AVISANDO que fbSaveCard() usa
+      // esse espelho pra achar a chave de um card — mas fbSaveCard() em si
+      // nunca ganhou essa mesma linha. _applyCardsSync() reconstrói TODO o
+      // array `cards` a partir de window._cardsByKey sempre que o listener
+      // de QUALQUER OUTRO card dispara (não precisa ser este), protegido
+      // só por uma janela fixa de 2s desde _lastLocalSave — carimbado no
+      // INÍCIO da tentativa (linha ~9169), não na confirmação. Se a
+      // escrita demorar mais que isso (_waitForFirebaseReady(), retry de
+      // 3s do _saveCardWithRetry(), latência de rede — todos > 2s em
+      // cenários reais), window._cardsByKey[key] continua com o valor
+      // ANTIGO até o eco desta escrita chegar, e _applyCardsSync()
+      // reconstrói `cards` com esse valor velho por cima da edição feita
+      // na tela — podendo inclusive regravar esse estado velho de volta
+      // no Firebase (ver window._set(fb(FB+'/cards'), cards) dentro de
+      // _applyCardsSync()), sobrescrevendo a escrita que este fbSaveCard()
+      // acabou de confirmar. Fix: mesmo padrão de fbSaveAll()/
+      // fbCreateCard(), síncrono, ANTES de disparar a escrita.
+      if(window._cardsByKey) window._cardsByKey[key] = card;
+      return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
@@ -13635,7 +13659,39 @@ function scheduleAutoSave(){
   // jeito de persistir a edição, como sempre foi o comportamento real.
   if(_editingQLItem) return;
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(()=>{
+  _autoSaveTimer = setTimeout(_performAutoSave, 800);
+}
+// Achado real severo (/monitorarbugs 2026-09-21, relato direto de usuária —
+// "subo 3 cards, salvo beleza, mas some ao atualizar", persistiu mesmo
+// depois do fix de _saveCardWithRetry(): esta função nunca tinha como ser
+// "flushada" antes do modal fechar ou trocar de card. Se a pessoa fechasse
+// o card (X/ESC/clique fora) OU abrisse outro card (openCard()) DENTRO da
+// janela de 800ms do debounce, o timer pendente:
+// (a) fechar o modal não cancela _autoSaveTimer em nenhum lugar
+//     (_finishCloseOv() nunca chamava clearTimeout nele) — o timer segue
+//     rodando sozinho e, quando finalmente dispara, ou editingId já é
+//     null (edição perdida em silêncio, `if(!c) return` aborta) ou aponta
+//     pra OUTRO card (openCard() reatribui editingId synchronously) — ou
+//     seja, escreve no card ERRADO com os campos do DOM que openCard() já
+//     tinha repopulado com os dados do card novo, mascarando o problema
+//     (a escrita "funciona", só que no card errado, e a edição original
+//     nunca chega a lugar nenhum).
+// (b) _cardIsDirty() (o aviso de "alterações não salvas" ao fechar) NÃO
+//     cobre tags/título/coluna/responsável/prazo/descrição/checklist/
+//     riscos DE PROPÓSITO — a suposição sempre foi "o autosave já cobre
+//     isso", suposição que quebra exatamente nesse intervalo de 800ms.
+// Fix: _flushAutoSave() roda a escrita pendente NA HORA, com o editingId/
+// DOM ainda válidos — chamada no topo de _finishCloseOv() (fechar o
+// modal) e no topo de openCard() (trocar de card com o modal já aberto),
+// antes de qualquer um dos dois mexer em editingId/DOM.
+function _flushAutoSave(){
+  if(_autoSaveTimer){
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = null;
+    _performAutoSave();
+  }
+}
+function _performAutoSave(){
     const title=document.getElementById('m-title').value.trim();
     if(!title) return;
     const td=new Date().toISOString().split('T')[0];
@@ -13776,7 +13832,6 @@ function scheduleAutoSave(){
     _asSaveP.then(()=>{
       if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
     }).catch(()=>{});
-  }, 800);
 }
 // ── FIM AUTO-SAVE ──────────────────────────────────────────────────
 
@@ -14673,6 +14728,12 @@ function toggleAgenteHotlineInfo(){
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 function openCard(id){
+  // Flusha o autosave pendente do card ANTERIOR (se houver) antes de
+  // reatribuir editingId/DOM pro card novo — ver comentário completo em
+  // _flushAutoSave(). Sem isso, trocar de card rápido (link, "← Voltar",
+  // menção) dentro da janela de 800ms do debounce perdia a edição do card
+  // anterior em silêncio.
+  _flushAutoSave();
   _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
@@ -18984,6 +19045,34 @@ function _stripUndefinedDeep(val){
     return out;
   }
   return val;
+}
+// CAUSA RAIZ / ACHADO CRÍTICO (2026-09-21, mesmo relato de dado sumindo —
+// "salvo beleza, mas some ao atualizar a página" — os 3 fixes anteriores
+// nesta mesma investigação, todos reais, não resolveram porque nenhum
+// deles era isto): fbSaveCard()/fbCreateCard() chamavam
+// `_stripUndefinedDeep(updates)` no objeto de update MULTI-PATH inteiro —
+// cujas chaves de NÍVEL SUPERIOR são de propósito caminhos com barra
+// (`'cards/'+key`, `'cards_updated_at/'+id`, `'cards_archived/'+id`,
+// sintaxe exigida pelo próprio Firebase pra escrever em vários locais
+// numa chamada só). `INVALID_FB_KEY_RE` (linha ~19035) rejeita qualquer
+// chave com `/` — correto para uma chave ANINHADA dentro de um valor
+// (onde `/` nunca é válido), mas errado aplicado às chaves de nível
+// superior de um update multi-path, onde `/` é a sintaxe válida. O
+// resultado: TODAS as 3 chaves eram descartadas, `_stripUndefinedDeep()`
+// devolvia `{}`, e `window._update(ref, {})` — um no-op 100% válido pro
+// Firebase — resolvia com sucesso sem escrever NADA. Diagnóstico ao vivo
+// confirmado: fbSaveCard() rodava a cadeia inteira certa (chave/payload
+// corretos), a promise resolvia sem erro, e uma leitura crua imediata
+// (mesma sessão do SDK, sem F5) mostrava o registro completamente
+// intocado. Mesmo padrão que causava o relato ORIGINAL ("subo 3 cards,
+// salvo beleza, mas some ao atualizar") — fbCreateCard() tinha o mesmo
+// bug. `_notasUpdate()` (linha ~19049) já fazia isso do jeito CERTO
+// (strip por VALOR, não no objeto inteiro) — esta função generaliza esse
+// padrão pros 3 pontos de escrita de card.
+function _stripUndefinedMultiPath(updates){
+  const clean={};
+  Object.entries(updates).forEach(([k,v])=>{ if(v!==undefined) clean[k]=_stripUndefinedDeep(v); });
+  return clean;
 }
 function _notasUpdate(updates){
   const clean={};
@@ -32938,6 +33027,10 @@ function voltarParaFuncoesCard(modalId){
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    // Flusha o autosave pendente ANTES de qualquer outra limpeza abaixo —
+    // ver comentário completo em _flushAutoSave(). editingId/DOM ainda
+    // válidos neste ponto (nada abaixo os altera antes disto rodar).
+    _flushAutoSave();
     // Rede de segurança: garante que o botão "💾 Salvar" nunca fique preso em
     // "Salvando…"/desabilitado pro próximo card aberto, mesmo em caminho de
     // fechamento que não passou pelo .then()/.catch() de saveCard() (ex.:
