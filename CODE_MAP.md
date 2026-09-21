@@ -44,6 +44,17 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - `getEffectiveRole()` — L6346 — papel efetivo, ADMs hardcoded não são rebaixáveis
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6430 / L6399
 - `resolveSquadAndShow()` — L10315 — resolve squad da URL, decide o que mostrar
+- **`force_logout_after` (botão "Deslogar todos") — chaves DIVERGEM de
+  propósito entre prod/dev** (2026-09-21, `/monitorarbugs`): listener em
+  `kanban-dev.html` — L33668 — escuta `kanban/global/force_logout_after_dev`
+  (escrito por `deslogarTodos()` em `painel-dev.html` — L8011); `kanban.html`
+  escuta `kanban/global/force_logout_after` (sem sufixo, escrito por
+  `deslogarTodos()` em `painel.html` — L8066). Antes desta correção as duas
+  chaves eram confundidas (botão do painel-dev.html era um no-op; botão do
+  painel.html de produção deslogava a produção com um aviso que dizia o
+  contrário). **Essa é uma 3ª linha que diverge deliberadamente entre
+  kanban.html/kanban-dev.html na promoção dev→prod** (além de versão/
+  `VERSION_KEY`) — nunca copiar essa linha ao promover.
 - `autoRegistrar()` — L10813 — cria/atualiza o doc do usuário no login.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
