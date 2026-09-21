@@ -1222,9 +1222,12 @@ filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
   (grava `board_prefs.meus_cards_fixado`, toggla `#tb-meus-cards`).
 - **Caso #4 — atalho rápido de atribuição**: `SUGESTAO_ATRIBUICAO_*` —
   L26166, `_registrarSinalAtribuicao(ownerInit)` — L26169 (chamada no
-  TOPO de `runAutoRules()` — L30195, funil único por onde os 4 caminhos
-  de atribuição — manual/autosave/bulk/criação — já passavam, evita
-  duplicar o sinal em 4 call sites), `_checarSugestaoAtribuicao(hist)` —
+  TOPO de `runAutoRules()` — L30195, funil único por onde os caminhos
+  de atribuição — manual/autosave/bulk/criação, e desde 2026-09-21
+  também `executarReatribuir()` (⚙ Config → "🔁 Reatribuir cards",
+  achado real de `/monitorarbugs`: mutava `card.owner` sem
+  `recordHistory()`/`runAutoRules()`) — já passam, evita duplicar o
+  sinal em cada call site), `_checarSugestaoAtribuicao(hist)` —
   L26180, `_criarAtalhoAtribuicao(init)` — L26191 (grava
   `board_prefs.atribuicao_rapida[]`, registra ação dinâmica em
   `ATALHO_ACOES` e leva pra ⌨️ Atalhos já na aba certa),
