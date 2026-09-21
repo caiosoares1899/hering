@@ -1820,6 +1820,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   completo). Nenhum outro campo (`atrasadoMs`/`blockedMs`) é lido nesta
   réplica — só `pausedMs`.
 
+- **2026-09-21, painel-dev.html — papel de usuário via aba "👥 Usuários"
+  (pedido genérico, "roda um /monitorarbugs" — logo após a promoção em
+  lote pra prod; área escolhida por prioridade 2, gerenciamento de
+  usuários/papéis nunca tinha rodada própria)**: 1 achado real, técnica
+  1 (comparar `updateUserRole()` contra `updateSquadUserRole()`, mesma
+  operação) + técnica 3 (rótulo "Membros do Squad" promete escopo por
+  squad). `updateUserRole()`/`loadPcfgUsers()` liam/gravavam o campo
+  GLOBAL legado `kanban/usuarios/{uid}/role`, ignorando
+  `squads_roles/{squadId}` — o mecanismo que `kanban-dev.html` de fato
+  prioriza em `getEffectiveRole()` (~8 call sites) e que o modal irmão
+  "👥 Global Users" (`updateSquadUserRole()`) já usa corretamente.
+  Dropdown mostrava o papel ERRADO quando já existia override por
+  squad, e trocar o papel ali podia ser um NO-OP silencioso (toast de
+  sucesso, papel efetivo sem mudar). Confirmado com o usuário via
+  `AskUserQuestion` antes de corrigir (permission-sensitive) — escolheu
+  alinhar com `squads_roles`. Fix: os 2 passam a ler/gravar
+  `squads_roles[cfgSquadId]`. dev v3.54·painel-dev. Novo anchor em
+  `CODE_MAP.md` ("Papel de usuário — 2 mecanismos").
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

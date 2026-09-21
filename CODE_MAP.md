@@ -2136,6 +2136,23 @@ aplicada no arquivo inteiro, não confie neles como única forma de navegar:
 
 ## painel.html (prod — painel-dev.html diverge, confira com `diff` antes de assumir paridade)
 
+### Papel de usuário (2 mecanismos — `squads_roles` é o correto/atual)
+`kanban/usuarios/{uid}/role` é o campo GLOBAL legado; `squads_roles/
+{squadId}` é o papel POR SQUAD, mecanismo mais novo e o que de fato tem
+prioridade — `kanban-dev.html` resolve `window._currentUserRole` sempre
+como `squads_roles[ACTIVE_SQUAD] || role || 'membro'` (~8 call sites,
+`getEffectiveRole()`). Em `painel(-dev).html`, `updateSquadUserRole()`
+(modal "👥 Global Users", `openGlobalUsersModal()`) já grava certo em
+`squads_roles/{squadId}`. `updateUserRole()`/`loadPcfgUsers()` (aba
+"👥 Usuários" do modal de Config do squad, `cfg-ov`) gravava no campo
+global até corrigido em 2026-09-21 (`/monitorarbugs` — mostrava o papel
+errado e podia ser um no-op silencioso se já existisse override por
+squad) — agora também usa `squads_roles/{cfgSquadId}`. Lista de papéis
+diverge entre os 2 mecanismos por decisão pré-existente, não bug:
+`ROLES` (aba Usuários) tem `['adm','po','organizador','membro',
+'convidado']`; `SQUAD_ROLES` (modal Global) tem só `['membro',
+'organizador','po']`.
+
 ### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
 UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
 `CODE_MAP.md` de `kanban-dev.html`) — mesmo Firebase
