@@ -1839,6 +1839,24 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `squads_roles[cfgSquadId]`. dev v3.54·painel-dev. Novo anchor em
   `CODE_MAP.md` ("Papel de usuário — 2 mecanismos").
 
+- **2026-09-21, "🔁 Reatribuir cards" (⚙ Config) (pedido genérico, "roda
+  outro" — área escolhida por prioridade 2, ferramenta administrativa
+  de reatribuição em massa nunca teve rodada própria)**: 1 achado real,
+  técnica 1 (comparar `executarReatribuir()` contra o padrão irmão já
+  resolvido `_doBulkAssign()`, bulk assign do board). Os 2 mutam
+  `card.owner` em lote, mas só `_doBulkAssign()` chamava
+  `recordHistory()`+`runAutoRules('assigned',...)` — reatribuir os
+  cards de alguém que saiu do time (o caso de uso típico da
+  ferramenta) não deixava rastro NENHUM no Histórico de nenhum card
+  afetado, e nenhuma Automação com gatilho "atribuído a X" disparava.
+  Fix: os 2 adicionados, só quando `c.owner` muda de fato.
+  `notifAssigned()` continua de fora de propósito (mesma escolha de
+  `_doBulkAssign()`, evita inundar com 1 notificação por card num lote
+  grande). Bônus: `runAutoRules('assigned',...)` já alimenta o funil
+  `_registrarSinalAtribuicao()` (sugestão de atalho de atribuição),
+  então a ferramenta passa a contar pra essa feature também, de graça.
+  dev v8.30.713-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

@@ -3561,6 +3561,37 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.713-dev — 2026-09-21 — Fix: "🔁 Reatribuir cards" (Config) não deixava rastro nenhum — sem histórico, sem encadear automações
+
+`/monitorarbugs` genérico — área escolhida por prioridade 2 (ferramenta
+administrativa de reatribuição em massa, nunca teve rodada própria).
+
+**Achado (técnica 1 — comparar contra o padrão irmão já resolvido)**:
+`_doBulkAssign()` (seleção múltipla de cards no board → "Atribuir a...")
+já grava `recordHistory()` por card e dispara `runAutoRules('assigned',
+card.id, init)` quando o responsável muda de verdade. `executarReatribuir()`
+(⚙ Config → "🔁 Reatribuir cards" — ferramenta pra mover TODOS os cards de
+uma inicial pra outra de uma vez, o caso de uso típico é alguém saindo do
+time) faz essencialmente a mesma operação, só que em lote maior — mas
+mutava `card.owner`/`card.participants` direto, sem chamar nem
+`recordHistory()` nem `runAutoRules('assigned',...)`.
+
+**Impacto real**: reatribuir os cards de alguém que saiu do time não
+deixava NENHUM rastro no Histórico de nenhum dos cards afetados
+("reatribuído por quem, quando, de quem pra quem" — informação que hoje
+só existe olhando `card.owner` atual, sem contexto), e nenhuma Automação
+configurada com gatilho "responsável atribuído" disparava pros cards
+reatribuídos dessa forma — só pelos outros 4 caminhos já documentados
+(modal, criação, autosave, bulk do board).
+
+**Fix**: os 2 são adicionados no loop, só quando `c.owner===from` de
+fato muda. `notifAssigned()` continua de fora, de propósito — mesma
+escolha já feita em `_doBulkAssign()`, pra não inundar quem recebe os
+cards com 1 notificação por card num lote grande.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses no baseline conhecido (braces -1, parens +1).
+
 ### v8.30.712-dev — 2026-09-18 — Fix: card pausado com prazo vencido continuava mostrando o selo "⚠ Xd atrasado"
 
 Relato direto de um usuário, via outro usuário: "eu tinha pausado um

@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.712-dev</div>
+<div class="version">v8.30.713-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24301,8 +24301,20 @@ async function executarReatribuir(){
   if(!alvos.length){ showToast('Nenhum card atribuído a '+from+'.'); return; }
   const toMember=members.find(m=>m.init===to);
   if(!await uiConfirm(`Reatribuir ${alvos.length} card(s) de "${from}" para "${to}"${toMember?' ('+toMember.name+')':''}?`)) return;
+  // /monitorarbugs 2026-09-21, técnica 1 (comparar contra o padrão irmão já
+  // resolvido _doBulkAssign(), a outra ferramenta de reatribuição em massa):
+  // esta função mutava c.owner/c.participants direto, sem recordHistory()
+  // nem runAutoRules('assigned',...) — card reatribuído em massa (ex.:
+  // alguém saiu do time) não deixava rastro no Histórico do card nem
+  // encadeava automações de "atribuído a X". notifAssigned() de propósito
+  // NÃO é chamado aqui (mesma escolha de _doBulkAssign()) — evita inundar
+  // quem recebe os cards com 1 notificação por card num lote grande.
   alvos.forEach(c=>{
-    if(c.owner===from) c.owner=to;
+    if(c.owner===from){
+      c.owner=to;
+      recordHistory(c, 'reatribuiu responsável: '+(toMember?toMember.name:to)+' (via 🔁 Reatribuir cards)');
+      runAutoRules('assigned', c.id, to);
+    }
     if(incPart && Array.isArray(c.participants)){
       const idx=c.participants.indexOf(from);
       if(idx>=0){ if(c.participants.includes(to)) c.participants.splice(idx,1); else c.participants[idx]=to; }
