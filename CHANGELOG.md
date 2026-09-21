@@ -18,6 +18,36 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.716 — 2026-09-21 · Promove pra prod — lote de "login e segurança" (v8.30.713-dev → v8.30.715-dev)
+
+Promoção de todo o lote acumulado em `kanban-dev.html` desde a última
+promoção (v8.30.712, mais cedo hoje) — validado pelo usuário via testes
+de console em cada rodada (`/monitorarbugs`). Ver as entradas de dev
+correspondentes (seção "kanban-dev.html (ambiente de teste)" abaixo)
+pro detalhe técnico completo; aqui só o resumo do que muda pra quem usa
+o board.
+
+**🔴 Correções severas:**
+- Remover uma pessoa externa (`externos`) da whitelist do squad não
+  cortava o acesso dela na prática por até 24h — um cache local no
+  navegador da própria pessoa deixava passar direto sem reconsultar.
+  Reduzido pra 15min.
+- O botão "Deslogar todos" agora funciona corretamente e de forma
+  isolada por ambiente: `kanban.html` (produção) escuta uma chave
+  própria (`force_logout_after`), sem risco de ser afetado por engano
+  pelo botão equivalente do ambiente de testes.
+
+**🐛 Outras correções:**
+- "🔁 Reatribuir cards" (troca de responsável em massa) agora registra
+  histórico no card e encadeia as automações de "atribuído a X", igual
+  já acontecia na reatribuição individual.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido (braces -1, parens +1). Diff contra `kanban-dev.html`
+restrito às linhas de ambiente já esperadas (favicon, versão,
+`FB_OVERRIDE_NS`/`VERSION_KEY`, e a nova linha de
+`force_logout_after` — ver `CODE_MAP.md`).
+
 ### v8.30.712 — 2026-09-21 · Promove pra prod — lote grande acumulado (v8.30.687-dev → v8.30.712-dev, 26 versões)
 
 Promoção de todo o lote acumulado em `kanban-dev.html` desde a última

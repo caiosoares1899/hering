@@ -33557,19 +33557,18 @@ _onFbReady(()=>{
 
   // Deslogar todos (manual, via painel) + logout automatico por inatividade --
   // reduz consumo de download do Firebase de abas deixadas abertas a noite/fim de
-  // semana. (1) um admin escreve em kanban/global/force_logout_after_dev pelo
-  // painel-dev.html, e todo cliente DESTE arquivo com sessao anterior a esse
-  // timestamp se desloga sozinho; (2) depois de IDLE_LOGOUT_MS sem nenhuma
-  // interacao, desloga automaticamente mesmo sem ninguem mandar nada -- cobre o
-  // caso de esquecer a aba aberta.
-  // /monitorarbugs 2026-09-21, "login e segurança": até aqui este arquivo
-  // escutava a MESMA chave sem sufixo que kanban.html (prod) escuta
-  // (força-logout de painel.html afetava kanban-dev.html sem querer, e o botão
-  // "Deslogar todos (dev)" de painel-dev.html, que grava em
-  // force_logout_after_dev, não tinha efeito nenhum). Divergência deliberada:
-  // esta é a 3ª linha (depois de VERSION_KEY/versão) que passa a diferenciar
-  // este arquivo de kanban.html na promoção dev→prod — kanban.html continua
-  // escutando force_logout_after (sem sufixo).
+  // semana. (1) um admin escreve o timestamp em kanban/global/force_logout_after*
+  // pelo painel(-dev).html, e todo cliente com sessao anterior a esse timestamp
+  // se desloga sozinho; (2) depois de IDLE_LOGOUT_MS sem nenhuma interacao,
+  // desloga automaticamente mesmo sem ninguem mandar nada -- cobre o caso de
+  // esquecer a aba aberta.
+  // /monitorarbugs 2026-09-21, "login e segurança": kanban.html escuta
+  // force_logout_after (sem sufixo, escrito por painel.html); kanban-dev.html
+  // escuta force_logout_after_dev (escrito por painel-dev.html) -- chaves
+  // isoladas de propósito, pra "Deslogar todos" do painel-dev.html nunca afetar
+  // produção. Essa linha (window._onValue logo abaixo) é a 3ª que diverge
+  // deliberadamente entre os dois arquivos na promoção dev→prod, depois de
+  // versão/VERSION_KEY -- ver CODE_MAP.md.
   const IDLE_LOGOUT_MS = 3*60*60*1000; // padrao 3h sem interacao (configuravel no painel > Status)
   const IDLE_EDIT_GRACE_MS = 30*60*1000; // carencia maxima por card aberto/edicao em andamento -- nao e mais imunidade eterna (P1-4)
   window._idleLogoutConfig = window._idleLogoutConfig || { enabled: true, minutes: 180 };
