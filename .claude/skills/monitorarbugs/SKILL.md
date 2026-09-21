@@ -2055,6 +2055,38 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   ponta — não parar no 1º nem no 2º achado só porque cada um, isolado,
   parecia justificar o sintoma.
 
+- **2026-09-21, MESMO relato, 4ª e causa raiz REAL/FINAL (as 3 anteriores,
+  incluindo o espelho síncrono de `window._cardsByKey`, eram achados
+  reais mas nenhuma era ISTO — usuária confirmou o sintoma persistindo
+  de novo)**: diagnóstico ao vivo com interceptors em TODA a cadeia
+  (`scheduleAutoSave()`→`_performAutoSave()`→`_saveCardWithRetry()`→
+  `fbSaveCard()`) mostrou tudo disparando certo, payload certo,
+  `fbSaveCard()` resolvendo sem erro — e uma leitura crua, pelo MESMO
+  SDK, na MESMA sessão, imediatamente depois, mostrando o card
+  intocado. Confirmado também direto no Console do Firebase (fora de
+  qualquer código nosso). Achado via reprodução isolada em Node do
+  helper `_stripUndefinedDeep()`: `fbSaveCard()`/`fbCreateCard()`
+  chamavam essa função no objeto de update MULTI-PATH inteiro, cujas
+  chaves de nível superior são de propósito caminhos com barra
+  (`'cards/'+key`) — a validação de chave inválida (`INVALID_FB_KEY_RE`,
+  adicionada em 17/09 pra outro bug) rejeita `/`, então TODA chave do
+  update era descartada, virando `{}`, e `window._update(ref,{})`
+  resolve como sucesso sem escrever nada. `fbSaveCard()`/`fbCreateCard()`
+  ficaram completamente quebrados desde 17/09 — qualquer edição/criação
+  de card de QUALQUER pessoa, não só de quem reportou. Fix:
+  `_stripUndefinedMultiPath()`, aplica o strip por VALOR, não no objeto
+  inteiro. dev v8.30.722-dev. **Lição pra próxima vez**: quando um
+  helper genérico (`_stripUndefinedDeep`) é reaproveitado num call site
+  novo, testar ISOLADO (Node, sem o app) contra o formato REAL do
+  argumento daquele call site específico — um objeto de update
+  multi-path (chaves com `/` de propósito) não é o mesmo formato que um
+  valor aninhado (chaves com `/` sempre inválidas), mesmo passando pela
+  mesma função. E: quando 3 fixes reais seguidos não resolvem o
+  sintoma, a técnica mais eficiente deixou de ser ler código e virou
+  rastrear a cadeia INTEIRA ao vivo com interceptors em cada função,
+  até o ponto exato onde "sucesso relatado" e "efeito real" divergem —
+  esse é o ponto onde a causa raiz de verdade sempre está.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

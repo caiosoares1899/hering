@@ -404,6 +404,27 @@ detalhe dos 4 call sites.
   ser revertida em memória (e às vezes regravada por cima no Firebase)
   por um `_applyCardsSync()` disparado por outro card qualquer, mesmo
   com a escrita original já confirmada com sucesso pelo Firebase.
+- **`_stripUndefinedMultiPath(updates)`** — L19072 (CAUSA RAIZ REAL E
+  FINAL do mesmo relato acima — o fix do `_cardsByKey` logo acima era
+  real, mas não era isto): `fbSaveCard()`/`fbCreateCard()` chamavam
+  `_stripUndefinedDeep(val)` (a função "irmã", que remove campos
+  `undefined`/chaves inválidas RECURSIVAMENTE) no objeto de update
+  MULTI-PATH INTEIRO, cujas chaves de nível superior são, de propósito,
+  caminhos com barra (`'cards/'+key`, `'cards_updated_at/'+id`). Desde
+  que `INVALID_FB_KEY_RE` (L~19035) passou a rejeitar qualquer chave com
+  `/` (2026-09-17, commit `5c6278a`, fix de um bug DIFERENTE), todo
+  update multi-path virava `{}` — `window._update(ref, {})` é um no-op
+  válido que resolve com SUCESSO sem escrever nada. Isso deixou
+  `fbSaveCard()`/`fbCreateCard()` **completamente quebrados desde
+  17/09** (toda edição/criação de card "salvava" na tela sem nunca
+  persistir), afetando qualquer pessoa/squad, não só quem reportou.
+  Fix: `_stripUndefinedMultiPath()` aplica `_stripUndefinedDeep()` em
+  cada VALOR do update, preservando as chaves de nível superior —
+  mesmo padrão que `_notasUpdate()` (L19049) já usava certo. Trocada
+  nos 3 pontos de escrita (`fbSaveAll()`/`fbCreateCard()`/
+  `fbSaveCard()`). **Lição**: `_stripUndefinedDeep(val)` só deve
+  receber um VALOR a ser escrito (um card, um bloco de Nota) — nunca o
+  objeto de update multi-path inteiro.
 - `_saveCardWithRetry(card, label)` — L9214 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L13594/L13652),

@@ -3611,6 +3611,68 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.722-dev — 2026-09-21 — CAUSA RAIZ REAL E FINAL: `_stripUndefinedDeep()` aplicado no objeto multi-path inteiro apagava a escrita silenciosamente (`fbSaveCard()`/`fbCreateCard()` não gravavam NADA desde 17/09)
+
+As 3 correções anteriores desta mesma investigação (v8.30.717-dev a
+v8.30.721-dev) eram achados reais, mas nenhuma delas era a causa do
+sintoma reportado — a prova final veio de rastrear ao vivo, com
+interceptors em `scheduleAutoSave()`→`_performAutoSave()`→
+`_saveCardWithRetry()`→`fbSaveCard()`, TUDO disparando certo, com o
+payload certo, `fbSaveCard()` resolvendo sem erro nenhum — e mesmo
+assim uma leitura crua, pelo MESMO SDK, na MESMA sessão, imediatamente
+depois do "sucesso", mostrando o card completamente intocado (mesmo
+`updatedAt` de mais de um mês atrás). Ground truth confirmada também
+direto no Console do Firebase (Realtime Database → Dados), fora de
+qualquer código nosso: o registro nunca mudou.
+
+**Causa raiz**: `fbSaveCard()`/`fbCreateCard()` chamavam
+`_stripUndefinedDeep(updates)` no objeto de update MULTI-PATH inteiro —
+cujas chaves de nível superior são, de propósito, caminhos com barra
+(`'cards/'+key`, `'cards_updated_at/'+id`, `'cards_archived/'+id` — é
+assim que o Firebase escreve em vários locais numa chamada só).
+`INVALID_FB_KEY_RE` (introduzido em 17/09, commit `5c6278a`, pra
+resolver um bug DIFERENTE — chave vazia em `flow.enteredAt` travando
+`fbSaveAll()`) rejeita qualquer chave com `/` — certo pra uma chave
+ANINHADA dentro de um valor, errado aplicado às chaves de nível
+superior de um update multi-path. Resultado: as 3 chaves eram
+descartadas, `_stripUndefinedDeep()` devolvia `{}`, e
+`window._update(ref, {})` — um no-op 100% válido pro Firebase —
+resolvia com SUCESSO sem escrever nada. Reproduzido isolado (Node):
+`_stripUndefinedDeep({'cards/311': {...}, 'cards_updated_at/x': '...'})`
+→ `{}`.
+
+**Alcance real**: desde 17/09/2026, **toda edição de card existente**
+(`fbSaveCard()` — tags, título, descrição, checklist, qualquer campo,
+via autosave ou botão Salvar) **e toda criação de card novo**
+(`fbCreateCard()`) resolviam como "salvo com sucesso" sem gravar
+absolutamente nada no Firebase — de qualquer pessoa, em qualquer squad,
+não só da usuária que reportou. Bate exatamente com o relato ORIGINAL
+que abriu esta investigação ("subo 3 cards, salvo beleza, mas some ao
+atualizar a página"). `fbSaveAll()` (duplicar/arquivar em massa,
+reordenar, importar, recorrências) não tinha o bug na escrita principal
+(chaves de nível superior `cards`/`cards_index`/`cards_updated_at`/
+`cards_archived` não têm barra) — só writes extras via seu parâmetro
+`extra` com chave multi-path (ex.: `cards_deleted_intentionally/{id}`)
+tinham o mesmo problema.
+
+**Fix**: nova função `_stripUndefinedMultiPath(updates)` — aplica
+`_stripUndefinedDeep()` em cada VALOR do objeto de update, não no
+objeto inteiro, preservando as chaves de nível superior intactas
+(mesmo padrão que `_notasUpdate()` já usava corretamente, ver
+comentário na declaração). Trocada nos 3 pontos de escrita
+(`fbSaveAll()`, `fbCreateCard()`, `fbSaveCard()`).
+
+Checks de rotina: `node --check` OK; teste isolado em Node confirmando
+que chaves multi-path sobrevivem e chaves/valores inválidos ANINHADOS
+continuam sendo removidos.
+
+**Lição pra próxima vez**: um "achado real" documentado com comentário
+detalhado (como o de 17/09 foi) não é garantia de estar certo pra TODOS
+os call sites que passaram a usar a mesma função depois — vale testar
+a função isolada (Node, sem o app) contra o formato REAL do argumento
+em cada call site, não só confiar que "já foi corrigido/documentado
+antes".
+
 ### v8.30.721-dev — 2026-09-21 — Causa raiz REAL (3ª e definitiva): `fbSaveCard()` não espelhava `window._cardsByKey` antes de escrever, deixando `_applyCardsSync()` reverter a edição
 
 As duas correções anteriores (v8.30.717-dev, `_saveCardWithRetry()`
