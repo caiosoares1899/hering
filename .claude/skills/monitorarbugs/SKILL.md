@@ -2023,6 +2023,38 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   a própria pessoa afetada roda) é muito mais rápido que só ler código
   quando o sintoma é "intermitente"/difícil de reproduzir de cabeça.
 
+- **2026-09-21, MESMO relato, 3ª e causa raiz DEFINITIVA (os 2 fixes
+  acima eram reais mas ainda não resolviam — usuária confirmou sintoma
+  persistindo num teste 100% manual, sem console)**: diagnóstico ao vivo
+  com log embutido direto em `fbSaveCard()` (sem interceptor, pra
+  eliminar ambiguidade de timing) confirmou o cenário mais grave
+  possível: a escrita ia com a chave certa, payload certo (cross-
+  checado contra `cards_index`), a promise resolvia SEM ERRO — e mesmo
+  assim uma leitura crua (`window._get()`) no mesmo path, LOGO em
+  seguida, mostrava dado de mais de um MÊS atrás. Achado via técnica 2
+  (comparar contra um padrão já resolvido em outro lugar do arquivo):
+  `fbSaveAll()`/`fbCreateCard()` já tinham sido corrigidos (2026-08-04 e
+  2026-09-03) pra popular `window._cardsByKey[key]` de forma SÍNCRONA
+  antes de escrever — o comentário em `fbCreateCard()` inclusive já
+  avisava "fbSaveCard() usa window._cardsByKey pra achar a chave real de
+  um card", mas ninguém nunca tinha voltado pra aplicar a MESMA correção
+  dentro do próprio `fbSaveCard()`. Sem o espelho síncrono,
+  `_applyCardsSync()` (que reconstrói TODO `cards` a partir de
+  `window._cardsByKey` toda vez que QUALQUER card muda, protegido só por
+  uma janela fixa de 2s desde `_lastLocalSave` carimbado no INÍCIO da
+  tentativa) podia reverter — e às vezes regravar no Firebase por cima —
+  uma escrita que tinha acabado de confirmar sucesso, sempre que ela
+  demorasse mais que 2s (retry, `_waitForFirebaseReady()`, latência).
+  Fix: mesma linha de `fbSaveAll()`/`fbCreateCard()`, replicada em
+  `fbSaveCard()`. dev v8.30.721-dev. **Lição pra próxima vez**: quando um
+  comentário em UMA função avisa "função X depende disso", vale grepar
+  se X de fato tem a mesma proteção — não assumir que sim só porque o
+  comentário fala como se fosse óbvio. E: 3 fixes reais e distintos
+  coexistindo no mesmo fluxo (autosave/confirmação/persistência) não é
+  incomum quando a área nunca tinha passado por uma auditoria de ponta a
+  ponta — não parar no 1º nem no 2º achado só porque cada um, isolado,
+  parecia justificar o sintoma.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

@@ -387,7 +387,23 @@ detalhe dos 4 call sites.
   outras pessoas. Usar sempre pra criar 1 card (modal, duplicar, filho
   de supercard, fan-out)
 - `fbSaveCard()` — L9131 — edita 1 card EXISTENTE, escrita pontual
-  (usada por drag-and-drop, autosave, etc.)
+  (usada por drag-and-drop, autosave, etc.). **Espelha
+  `window._cardsByKey[key]` de forma síncrona ANTES de escrever, desde
+  2026-09-21** — mesmo padrão que `fbSaveAll()`/`fbCreateCard()` já
+  usavam (ver comentário nesta última, que literalmente avisava disso e
+  nunca tinha sido aplicado aqui). Causa raiz REAL do relato "salvo
+  beleza, mas some ao atualizar a página" (3ª causa achada na mesma
+  investigação, depois de `_saveCardWithRetry()`/`_flushAutoSave()`
+  também terem sido corrigidos sem resolver o sintoma por completo):
+  `_applyCardsSync()` (L9483) reconstrói TODO o array `cards` a partir
+  de `window._cardsByKey` sempre que o listener de QUALQUER OUTRO card
+  dispara, protegido só por uma janela fixa de 2s desde `_lastLocalSave`
+  (carimbado no INÍCIO da tentativa, não na confirmação) — sem o
+  espelho síncrono, uma escrita que demorasse mais que 2s (comum:
+  `_waitForFirebaseReady()`, retry de 3s, latência) ficava vulnerável a
+  ser revertida em memória (e às vezes regravada por cima no Firebase)
+  por um `_applyCardsSync()` disparado por outro card qualquer, mesmo
+  com a escrita original já confirmada com sucesso pelo Firebase.
 - `_saveCardWithRetry(card, label)` — L9214 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
   usada por `scheduleAutoSave()`/`_performAutoSave()` (L13594/L13652),
