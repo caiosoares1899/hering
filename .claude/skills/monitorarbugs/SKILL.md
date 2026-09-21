@@ -1888,6 +1888,31 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   byte-idêntico a `kanban.html`", implicando dado compartilhado por
   design, não um bug novo desta área.
 
+- **2026-09-21, cancelar acesso de usuários excluídos (pedido
+  explícito, escopo nomeado)**: 1 achado real severo, técnica 3
+  (confrontar comportamento com o que "excluir"/"remover" promete).
+  Confirmado antes, sem achado: `removerMembro()`/`deleteGlobalUser()`
+  já limpam consistentemente `squads`/`squads_roles`/
+  `usuarios_publicos`/whitelist `externos`, sem divergência entre os
+  2; pra `@ciahering.com.br` o acesso é por domínio nas
+  `database.rules.json` (já documentado no `CLAUDE.md`), squad é só
+  organizacional pra interno, nunca foi fronteira de segurança — não é
+  achado novo. **O achado real**: a checagem da whitelist `externos`
+  (o que de fato barra um externo removido) só roda no `auth-change`,
+  cacheada no `localStorage` do navegador da PESSOA por 24h
+  (`ext_ok_{email}`) — remover um externo não tinha efeito prático
+  algum por até 1 dia inteiro se ela ainda tivesse esse cache válido:
+  um F5 pulava a checagem e chamava `autoRegistrar(user)` direto. Com
+  `deleteGlobalUser()` (apaga `kanban/usuarios/{uid}` inteiro) ainda
+  pior — `autoRegistrar()` caía no branch de "usuário novo" e RECRIAVA
+  o cadastro do zero, `squads[ACTIVE_SQUAD]=true` de novo, a pessoa
+  "excluída" se auto-reinscrevendo sozinha. Confirmado com o usuário
+  via `AskUserQuestion` (trade-off segurança vs. o bug original que
+  motivou o cache — SDK do Firebase Auth redisparando `auth-change`
+  sozinho por instabilidade) — escolheu a opção recomendada: TTL
+  24h→15min, absorve o re-disparo rápido (segundos) mas corta a janela
+  de acesso pós-remoção pra 15min. dev v8.30.714-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.713-dev</div>
+<div class="version">v8.30.714-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10729,12 +10729,21 @@ window.addEventListener('auth-change',e=>{
       // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
       // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
       // por instabilidade do SDK do Firebase, sem a pessoa fazer nada — e qualquer erro passageiro de
-      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Agora: guarda por 24h
-      // que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais 2x
-      // antes de desconectar de fato.
+      // rede na consulta derrubava a sessão como se ela não tivesse autorização. Guarda por um tempo
+      // curto que a pessoa já foi validada (não reconsulta à toa) e, se a consulta falhar, tenta mais
+      // 2x antes de desconectar de fato.
+      // TTL 15min, não 24h (/monitorarbugs 2026-09-21, pedido explícito "cancelar o acesso de
+      // usuários excluídos"): com 24h, remover um externo da whitelist (removerMembro()/
+      // deleteGlobalUser()) não tinha efeito prático nenhum por até 1 dia inteiro pra quem já
+      // tinha esse cache válido no próprio navegador — um F5 pulava a checagem inteira e chamava
+      // autoRegistrar(user) direto; em deleteGlobalUser() (apaga kanban/usuarios/{uid} por
+      // completo) isso ainda RECRIAVA o cadastro do zero, com squads[ACTIVE_SQUAD]=true de novo,
+      // a pessoa "excluída" se auto-reinscrevendo sozinha. 15min ainda absorve o re-disparo
+      // rápido do auth-change (o bug original, que acontece em segundos), mas corta a janela de
+      // acesso pós-remoção de 24h pra 15min.
       const _extCacheKey = 'ext_ok_'+user.email;
       const _extCached = parseInt(safeLS.getItem(_extCacheKey)||'0', 10);
-      if(_extCached && (Date.now()-_extCached) < 86400000){
+      if(_extCached && (Date.now()-_extCached) < 900000){
         window._currentUserInit=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
         autoRegistrar(user);
         return;
