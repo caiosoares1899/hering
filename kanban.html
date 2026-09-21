@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.716</div>
+<div class="version">v8.30.717</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -9213,14 +9213,26 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
 // and forget" do modal.
 function _saveCardWithRetry(card, label){
   label = label || 'Alterações do card';
-  fbSaveCard(card).catch(err=>{
+  // Retorna a promise (achado real /monitorarbugs 2026-09-21, relato direto de
+  // usuária: "salvo beleza, mas se eu atualizo a página some o que eu tinha
+  // feito"): antes, esta função era fire-and-forget — nenhum call site tinha
+  // como saber se a escrita realmente confirmou antes de mostrar feedback de
+  // sucesso (ver saveExtraDesc(), que mostrava "✅ Descrição salva!" na mesma
+  // hora que chamava esta função, sem esperar nada). Agora resolve só quando
+  // uma das 2 tentativas confirma de verdade, e rejeita só se as 2 falharem —
+  // mesmo comportamento de retry/aviso de antes, só que observável por quem
+  // chama.
+  return fbSaveCard(card).catch(err=>{
     console.warn('[_saveCardWithRetry] falha ao salvar, tentando de novo em 3s:', err);
-    setTimeout(()=>{
-      fbSaveCard(card).catch(err2=>{
-        console.warn('[_saveCardWithRetry] segunda tentativa também falhou:', err2);
-        showToast('⚠ '+label+' pode não ter sido salva — verifique sua conexão e edite de novo pra garantir.', 8000);
-      });
-    }, 3000);
+    return new Promise((resolve, reject)=>{
+      setTimeout(()=>{
+        fbSaveCard(card).then(resolve).catch(err2=>{
+          console.warn('[_saveCardWithRetry] segunda tentativa também falhou:', err2);
+          showToast('⚠ '+label+' pode não ter sido salva — verifique sua conexão e edite de novo pra garantir.', 8000);
+          reject(err2);
+        });
+      }, 3000);
+    });
   });
 }
 function fbSaveMsgs(tab){
@@ -13680,7 +13692,7 @@ function scheduleAutoSave(){
     // voltou como se nunca tivesse mexido". Agora avisa e tenta de novo 1x
     // antes de desistir (mesmo espírito do handleDrop, que já faz isso pro
     // arrastar de coluna).
-    _saveCardWithRetry(c, 'Alterações do card');
+    const _asSaveP = _saveCardWithRetry(c, 'Alterações do card');
     _crvPropagateToChildren(c); // Ficha Técnica compartilhada (Campanha/Funil/Etapa/Canal) — ver declaração
     renderBoard();
     // ── Notificações (saúde: precisam disparar aqui também, não só no saveCard manual) ──
@@ -13735,9 +13747,17 @@ function scheduleAutoSave(){
       if(CANAL_VENDA_TAGS.some(st=>st.id===t)) runAutoRules('canal_venda_set', c.id, t);
     });
     _prevTags.filter(t=>!(c.tags||[]).includes(t)).forEach(t=>runAutoRules('tag_removed', c.id, t));
-    // feedback sutil
+    // feedback sutil — só depois que _saveCardWithRetry() confirma de verdade
+    // (mesmo achado/fix de saveExtraDesc(), ver comentário lá: antes isto
+    // rodava na mesma hora que a escrita era disparada, sem esperar nada —
+    // "✓ Salvo" aparecia mesmo quando a escrita acabava falhando de verdade
+    // nas 2 tentativas). Se falhar, o próprio aviso ⚠ de _saveCardWithRetry
+    // já cobre o feedback de erro — só engole a rejeição aqui pra não gerar
+    // "uncaught promise" no console.
     const btn=document.querySelector('#card-ov .btn-p');
-    if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
+    _asSaveP.then(()=>{
+      if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
+    }).catch(()=>{});
   }, 800);
 }
 // ── FIM AUTO-SAVE ──────────────────────────────────────────────────
@@ -14276,7 +14296,19 @@ function saveExtraDesc(i){
     const c=cards.find(x=>x.id===editingId);
     if(c){
       c.descsExtra=_cleanExtraDescs();
-      _saveCardWithRetry(c, 'Descrição adicional');
+      // Achado real (/monitorarbugs 2026-09-21, relato direto de usuária:
+      // "salvo beleza, mas se eu atualizo a página some o que eu tinha
+      // feito"): antes, "✅ Descrição salva!" aparecia na mesma hora que
+      // _saveCardWithRetry() era chamada, sem esperar a escrita confirmar —
+      // se as 2 tentativas internas falhassem (rede instável), o único
+      // aviso era um toast de erro genérico ⚠ aparecendo alguns segundos
+      // depois, fácil de não notar enquanto já se está editando o próximo
+      // card. Agora o toast de sucesso só aparece quando a escrita confirma
+      // de verdade; se falhar, o próprio aviso ⚠ de _saveCardWithRetry já
+      // cobre o feedback de erro, então não precisa de um catch aqui.
+      _saveCardWithRetry(c, 'Descrição adicional').then(()=>{
+        showToast('✅ Descrição salva!');
+      }).catch(()=>{}); // aviso ⚠ já mostrado dentro, se falhar
       renderBoard();
       // Descrições ADICIONAIS nunca disparavam @menção/[[CARD:...]] — só a
       // descrição principal (m-desc) e o campo PO tinham parseMentions
@@ -14284,9 +14316,14 @@ function saveExtraDesc(i){
       // nunca era notificada.
       parseMentions(d.text, editingId);
     }
+  } else {
+    // Card ainda não existe (rascunho de criação) — não há escrita nenhuma
+    // acontecendo aqui, só entra em editingDescs até saveCard() criar o
+    // card de verdade. Toast de sucesso é imediato mesmo, sem nada a
+    // esperar.
+    showToast('✅ Descrição salva!');
   }
   renderExtraDescs();
-  showToast('✅ Descrição salva!');
 }
 function populateTagSelect(){
   renderEditingTags();
@@ -18068,7 +18105,7 @@ function _agentCommitState(c){
   c.editedAt = new Date().toISOString().split('T')[0];
   c.updatedAt = new Date().toISOString();
   c.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  _saveCardWithRetry(c, 'Estado do agente');
+  _saveCardWithRetry(c, 'Estado do agente').catch(()=>{}); // aviso ⚠ já mostrado dentro, se falhar
   renderBoard();
   if(_commentCardId===c.id) loadComments(c.id);
   _agentSimRefreshUI();
