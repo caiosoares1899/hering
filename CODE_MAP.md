@@ -367,11 +367,19 @@ detalhe dos 4 call sites.
   pro PRÓXIMO card aberto por qualquer caminho normal.
 
 ### Escrita de card no Firebase — 3 primitivas (não intercambiáveis)
-- `fbSaveAll()` — L8901 — reescreve `/cards` INTEIRO (só pra operações
+- **`_waitForFirebaseReady(timeoutMs=15000)`** — L8905 (2026-09-21, hotfix
+  aplicado DIRETO em produção pelo dono do repo via GitHub web, sem passar
+  pelo fluxo dev→PR — depois portado de volta pra `kanban-dev.html` pra
+  restaurar a sincronia): as 3 primitivas abaixo faziam
+  `if(!window._fbReady) return Promise.resolve();` — um save chamado antes
+  do SDK terminar de inicializar (`window._fbReady` só vira `true` uma vez,
+  perto do boot) confirmava sucesso sem nunca escrever nada. Agora esperam
+  o evento `fb-ready` (com timeout) antes de seguir.
+- `fbSaveAll()` — L8919 — reescreve `/cards` INTEIRO (só pra operações
   estruturais em lote: duplicar/arquivar em massa, reordenar, importar,
   recorrências/agendamentos) — **nunca usar pra 1 card só**, arrisca
   sobrescrever o array com o estado local de outra pessoa
-- `fbCreateCard()` — L9067 — cria 1 card NOVO com escrita pontual,
+- `fbCreateCard()` — L9085 — cria 1 card NOVO com escrita pontual,
   posição alocada via `transaction()` no `cards_index` (atômico contra
   criações concorrentes) — achado real 2026-08-24 (squad
   `midiacriativa`, "cards sumindo"): `fbSaveAll()` na criação
@@ -380,17 +388,28 @@ detalhe dos 4 call sites.
   de supercard, fan-out)
 - `fbSaveCard()` — L9131 — edita 1 card EXISTENTE, escrita pontual
   (usada por drag-and-drop, autosave, etc.)
-- `_saveCardWithRetry(card, label)` — L9231 — wrapper de `fbSaveCard()`
+- `_saveCardWithRetry(card, label)` — L9214 — wrapper de `fbSaveCard()`
   com 1 retry automático em 3s + aviso ⚠ se as 2 tentativas falharem;
-  usada por `scheduleAutoSave()` (L13598), `saveExtraDesc()` (L14287) e
-  a simulação de agente (perto de L18100). **Retorna a promise de
-  verdade desde 2026-09-21** (`/monitorarbugs`, relato direto de
-  usuária — "salvo beleza, mas some ao atualizar"): antes era
-  fire-and-forget, e os 3 call sites mostravam feedback de sucesso
-  ("✓ Salvo"/"✅ Descrição salva!") na mesma hora que chamavam a
+  usada por `scheduleAutoSave()`/`_performAutoSave()` (L13594/L13652),
+  `saveExtraDesc()` (L14318) e a simulação de agente (perto de L18100+).
+  **Retorna a promise de verdade desde 2026-09-21** (`/monitorarbugs`,
+  relato direto de usuária — "salvo beleza, mas some ao atualizar"):
+  antes era fire-and-forget, e os 3 call sites mostravam feedback de
+  sucesso ("✓ Salvo"/"✅ Descrição salva!") na mesma hora que chamavam a
   função, sem esperar a escrita confirmar — se as 2 tentativas
   falhassem (rede instável), o único aviso real vinha alguns segundos
   DEPOIS do sucesso falso já ter aparecido e sumido.
+- **`_flushAutoSave()`** — L13645 (causa raiz REAL do mesmo relato acima
+  — o fix de `_saveCardWithRetry()` sozinho não resolveu): `_performAutoSave()`
+  (L13652, corpo extraído do `setTimeout` de `scheduleAutoSave()`) só
+  rodava 800ms depois da última interação, e nada CANCELAVA ou FLUSHAVA
+  esse timer pendente antes do modal fechar (`_finishCloseOv()`, L32957)
+  ou trocar de card (`openCard()`, L14688) — se a pessoa fechasse/trocasse
+  de card dentro dessa janela de 800ms, a edição pendente era perdida em
+  silêncio (`editingId` já `null`, aborta) ou gravada no card ERRADO
+  (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
+  timer e roda a escrita na hora, chamada no topo dos dois pontos acima
+  — antes de qualquer um mexer em `editingId`/DOM.
 - **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
   `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
   todas recusam operar sobre um card com `card._isQLTemp===true` (o

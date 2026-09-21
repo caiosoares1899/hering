@@ -1998,6 +1998,31 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   call sites só mostram feedback de sucesso depois da confirmação real.
   dev v8.30.717-dev.
 
+- **2026-09-21, MESMO relato, causa raiz REAL (o fix acima não
+  resolveu — usuária confirmou "o erro continua... tá sem salvar NADA")**:
+  diagnóstico ao vivo via scripts de console (interceptar
+  `window._update`, reler direto do Firebase sem cache) — a escrita
+  CONFIRMAVA sucesso, o dado só nunca era escrito porque
+  `scheduleAutoSave()` (debounce de 800ms) nunca tinha como ser
+  "flushada" antes do modal fechar ou trocar de card. `_finishCloseOv()`
+  nunca cancelava o timer pendente; quando disparava depois, `editingId`
+  já era `null` (perde em silêncio) ou já apontava pro PRÓXIMO card
+  (`openCard()` reatribui synchronously) — escrevia no card errado,
+  mascarando o problema. `_cardIsDirty()` não cobre esses campos de
+  propósito (assume que autosave já resolve). Achado por técnica 5
+  (rastrear a mutação até a origem, ao vivo, em vez de só ler código) —
+  os scripts de diagnóstico ao vivo (interceptar window._update/_set,
+  reler direto do Firebase) resolveram o que a leitura de código sozinha
+  não tinha pego na 1ª rodada. Fix: `_flushAutoSave()` cancela e roda a
+  escrita pendente na hora, chamada no topo de `_finishCloseOv()` e
+  `openCard()`. dev v8.30.718-dev. **Lição pra próxima vez**: quando um
+  relato de usuário persiste depois de um fix que parecia certo pela
+  leitura de código, não assumir que o fix estava errado — pode ser um
+  2º bug diferente na mesma área (aqui, 2 bugs reais e distintos no
+  mesmo fluxo de autosave). Diagnóstico ao vivo (scripts de console que
+  a própria pessoa afetada roda) é muito mais rápido que só ler código
+  quando o sintoma é "intermitente"/difícil de reproduzir de cabeça.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

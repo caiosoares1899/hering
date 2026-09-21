@@ -3611,6 +3611,81 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.719-dev — 2026-09-21 — Reconciliação: hotfix `_waitForFirebaseReady()` (aplicado direto em prod) portado de volta pra dev
+
+Enquanto a investigação do relato da usuária estava em andamento, o dono
+do repositório aplicou um hotfix DIRETO em `kanban.html` (produção) via
+GitHub web, fora do fluxo normal (dev-first → PR) — entendível dado a
+urgência (board sem salvar nada), mas quebrou a sincronia entre os dois
+arquivos. Fix aplicado por ele: `_waitForFirebaseReady()`, que faz as 3
+primitivas de escrita (`fbSaveAll()`/`fbCreateCard()`/`fbSaveCard()`)
+esperarem o evento `fb-ready` (com timeout de 15s) em vez de simplesmente
+devolver `Promise.resolve()` sem escrever nada quando `window._fbReady`
+ainda não tivesse virado `true` — cobre uma janela real (ainda que
+estreita, já que `_fbReady` só é setado 1x perto do boot) onde um save
+disparado ANTES do SDK terminar de inicializar confirmava sucesso sem
+persistir nada.
+
+Esta entrada porta esse mesmo fix de volta pra `kanban-dev.html` (que
+não tinha recebido, já que o hotfix foi direto em prod), restaurando a
+sincronia entre os dois ambientes — mesmo texto/lógica, sem alterações.
+Combinado nesta versão com o fix de `_flushAutoSave()` da entrada
+anterior (v8.30.718-dev), que endereça uma causa raiz DIFERENTE e mais
+provável pro sintoma relatado (autosave nunca reagindo ao fechar/trocar
+de card, independente do estado de `_fbReady`).
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido.
+
+### v8.30.718-dev — 2026-09-21 — Fix severo (causa raiz real): autosave nunca "flushava" antes de trocar/fechar o card, perdendo edições em silêncio
+
+Continuação do relato direto de uma usuária — o fix anterior (v8.30.717-dev,
+`_saveCardWithRetry()` retornando a promise de verdade) **não resolveu o
+problema**: ela reportou de volta "o erro continua! [...] tá sem salvar
+NADA no board" depois da promoção pra produção. Diagnóstico ao vivo, via
+scripts de console (interceptando `window._update`/relendo direto do
+Firebase), confirmou que a escrita em si CONFIRMAVA sucesso — o dado
+simplesmente nunca era escrito, porque a função de autosave nunca chegava
+a rodar de verdade antes do card fechar.
+
+**Causa raiz real**: `scheduleAutoSave()` agenda a escrita 800ms depois da
+última interação (debounce). Essa função nunca tinha como ser "flushada"
+antes do modal fechar (`closeOv()`/`_finishCloseOv()`) ou antes de trocar
+de card com o modal já aberto (`openCard()`, link de card, menção, "←
+Voltar"). Dois problemas simultâneos tornavam isso severo:
+
+1. `_finishCloseOv()` nunca chamava `clearTimeout(_autoSaveTimer)` — o
+   timer pendente segue rodando sozinho depois do modal fechar. Quando
+   finalmente dispara (800ms depois), `editingId` já pode ser `null`
+   (edição perdida em silêncio, `if(!c) return` aborta sem aviso) ou já
+   aponta pra OUTRO card (se a pessoa abriu um novo logo em seguida) —
+   nesse caso o autosave sobrescreve o card ERRADO com os valores do DOM
+   que `openCard()` já tinha repopulado pro card novo, mascarando tudo: a
+   escrita "funciona" (sem erro), só que no card errado, e a edição
+   original nunca chega a lugar nenhum.
+2. `_cardIsDirty()` (o aviso "alterações não salvas" ao tentar fechar) não
+   cobre tags/título/coluna/responsável/prazo/descrição/checklist/riscos
+   DE PROPÓSITO — a suposição sempre foi "o autosave já cobre isso",
+   suposição que quebra exatamente nessa janela de 800ms.
+
+**Impacto real**: qualquer pessoa trabalhando rápido (ex.: passando por
+vários cards em sequência, como a usuária — "subo 3 cards") tinha boa
+chance de fechar/trocar de card antes dos 800ms do debounce, perdendo a
+edição sem NENHUM aviso — nem erro, nem confirmação, nada. Diferente do
+achado anterior (v8.30.717-dev, escrita realmente falhando por rede), aqui
+a escrita muitas vezes nem chegava a ser TENTADA.
+
+**Fix**: `_performAutoSave()` extraída do corpo do `setTimeout` de
+`scheduleAutoSave()`; nova `_flushAutoSave()` cancela o timer pendente e
+roda a escrita NA HORA, com `editingId`/DOM ainda válidos — chamada no
+topo de `_finishCloseOv()` (fechar o modal) e no topo de `openCard()`
+(trocar de card com o modal já aberto), antes de qualquer um dos dois
+mexer em `editingId`/DOM.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido (braces -1; parens teve drift de comentário, não de código —
+`node --check` confirma sintaxe válida).
+
 ### v8.30.717-dev — 2026-09-21 — Fix severo: "✅ salvo" aparecia mesmo quando a escrita no Firebase falhava de verdade
 
 Relato direto de uma usuária: "eu estou tentando subir 3 cards ai eu subo
