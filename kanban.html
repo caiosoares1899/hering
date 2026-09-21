@@ -8388,6 +8388,24 @@ function fbListen(path,cb){ if(window._fbReady) window._onValue(fb(path),s=>{ co
 
 let _lastLocalSave = 0;
 let _hasLocalSession = false; // true só depois do primeiro save desta sessão
+// Nunca tratar uma edição como salva enquanto o SDK ainda não terminou de
+// inicializar. Antes, os caminhos de save devolviam Promise.resolve() nesse
+// cenário; o modal podia fechar, mas o conteúdo ficava somente em memória e
+// desaparecia no F5.
+function _waitForFirebaseReady(timeoutMs=15000){
+  if(window._fbReady) return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const onReady=()=>finish();
+    const finish=(err)=>{
+      if(settled) return; settled=true;
+      clearTimeout(timer); window.removeEventListener('fb-ready', onReady);
+      err ? reject(err) : resolve();
+    };
+    const timer=setTimeout(()=>finish(new Error('Firebase ainda não está pronto para salvar.')), timeoutMs);
+    window.addEventListener('fb-ready', onReady, {once:true});
+  });
+}
 // Contador de escritas em voo (fbSaveAll/fbSaveCard) + aviso ao sair da
 // página enquanto alguma ainda não confirmou. ACHADO REAL (2026-08-04,
 // import Trello): fbSaveAll()/fbSaveCard() são chamados fire-and-forget
@@ -8914,8 +8932,8 @@ async function fbSaveAll(extra, touchedIds){
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady){
-    // Firebase not ready — just mark local, return resolved promise
-    return Promise.resolve();
+    // Não confirmar um save que ainda não tem destino persistente.
+    await _waitForFirebaseReady();
   }
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
   // NOTA: columns e tags NÃO são salvos aqui — apenas cards (+ cards_index,
@@ -9073,7 +9091,7 @@ async function fbCreateCard(card){
   if(card && card._isQLTemp) return Promise.resolve();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
-  if(!window._fbReady) return Promise.resolve();
+  if(!window._fbReady) await _waitForFirebaseReady();
   card.updatedAt = new Date().toISOString();
   const idxRef = fb(FB+'/cards_index');
   const txResult = await window._runTransaction(idxRef, currentIndex=>{
@@ -9150,7 +9168,7 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       _settleCardTimeTrackingLazy(card); // ⏱️ rede de segurança — ver comentário na declaração
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
-      if(!window._fbReady) return Promise.resolve();
+      if(!window._fbReady) return _waitForFirebaseReady().then(()=>fbSaveCard(card));
       // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
       // feito isso — centraliza a garantia num lugar só (mais fácil de manter
       // certa do que auditar todo call-site) pro cards_updated_at (ver
