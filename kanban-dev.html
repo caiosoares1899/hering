@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.717-dev</div>
+<div class="version">v8.30.719-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8898,6 +8898,24 @@ function toggleAllModalSecs(){
 // tinha, sem invalidar cache de ninguém à toa. Omitir touchedIds mantém o
 // comportamento antigo (carimba tudo) — fallback seguro pra quem ainda não
 // foi migrado; nunca INVENTA um touchedIds errado por conta própria.
+// Nunca tratar uma edição como salva enquanto o SDK ainda não terminou de
+// inicializar. Antes, os caminhos de save devolviam Promise.resolve() nesse
+// cenário; o modal podia fechar, mas o conteúdo ficava somente em memória e
+// desaparecia no F5.
+function _waitForFirebaseReady(timeoutMs=15000){
+  if(window._fbReady) return Promise.resolve();
+  return new Promise((resolve,reject)=>{
+    let settled=false;
+    const onReady=()=>finish();
+    const finish=(err)=>{
+      if(settled) return; settled=true;
+      clearTimeout(timer); window.removeEventListener('fb-ready', onReady);
+      err ? reject(err) : resolve();
+    };
+    const timer=setTimeout(()=>finish(new Error('Firebase ainda não está pronto para salvar.')), timeoutMs);
+    window.addEventListener('fb-ready', onReady, {once:true});
+  });
+}
 async function fbSaveAll(extra, touchedIds){
   // Garante que os arquivados que este device nunca baixou (ficaram de fora
   // de propósito, ver _planCardsDelta/_ensureArchivedCardsLoaded) estejam em
@@ -8914,8 +8932,8 @@ async function fbSaveAll(extra, touchedIds){
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
   if(!window._fbReady){
-    // Firebase not ready — just mark local, return resolved promise
-    return Promise.resolve();
+    // Não confirmar um save que ainda não tem destino persistente.
+    await _waitForFirebaseReady();
   }
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
   // NOTA: columns e tags NÃO são salvos aqui — apenas cards (+ cards_index,
@@ -9073,7 +9091,7 @@ async function fbCreateCard(card){
   if(card && card._isQLTemp) return Promise.resolve();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
-  if(!window._fbReady) return Promise.resolve();
+  if(!window._fbReady) await _waitForFirebaseReady();
   card.updatedAt = new Date().toISOString();
   const idxRef = fb(FB+'/cards_index');
   const txResult = await window._runTransaction(idxRef, currentIndex=>{
@@ -9150,7 +9168,7 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       _settleCardTimeTrackingLazy(card); // ⏱️ rede de segurança — ver comentário na declaração
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
-      if(!window._fbReady) return Promise.resolve();
+      if(!window._fbReady) return _waitForFirebaseReady().then(()=>fbSaveCard(card));
       // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
       // feito isso — centraliza a garantia num lugar só (mais fácil de manter
       // certa do que auditar todo call-site) pro cards_updated_at (ver
@@ -13617,7 +13635,39 @@ function scheduleAutoSave(){
   // jeito de persistir a edição, como sempre foi o comportamento real.
   if(_editingQLItem) return;
   clearTimeout(_autoSaveTimer);
-  _autoSaveTimer = setTimeout(()=>{
+  _autoSaveTimer = setTimeout(_performAutoSave, 800);
+}
+// Achado real severo (/monitorarbugs 2026-09-21, relato direto de usuária —
+// "subo 3 cards, salvo beleza, mas some ao atualizar", persistiu mesmo
+// depois do fix de _saveCardWithRetry(): esta função nunca tinha como ser
+// "flushada" antes do modal fechar ou trocar de card. Se a pessoa fechasse
+// o card (X/ESC/clique fora) OU abrisse outro card (openCard()) DENTRO da
+// janela de 800ms do debounce, o timer pendente:
+// (a) fechar o modal não cancela _autoSaveTimer em nenhum lugar
+//     (_finishCloseOv() nunca chamava clearTimeout nele) — o timer segue
+//     rodando sozinho e, quando finalmente dispara, ou editingId já é
+//     null (edição perdida em silêncio, `if(!c) return` aborta) ou aponta
+//     pra OUTRO card (openCard() reatribui editingId synchronously) — ou
+//     seja, escreve no card ERRADO com os campos do DOM que openCard() já
+//     tinha repopulado com os dados do card novo, mascarando o problema
+//     (a escrita "funciona", só que no card errado, e a edição original
+//     nunca chega a lugar nenhum).
+// (b) _cardIsDirty() (o aviso de "alterações não salvas" ao fechar) NÃO
+//     cobre tags/título/coluna/responsável/prazo/descrição/checklist/
+//     riscos DE PROPÓSITO — a suposição sempre foi "o autosave já cobre
+//     isso", suposição que quebra exatamente nesse intervalo de 800ms.
+// Fix: _flushAutoSave() roda a escrita pendente NA HORA, com o editingId/
+// DOM ainda válidos — chamada no topo de _finishCloseOv() (fechar o
+// modal) e no topo de openCard() (trocar de card com o modal já aberto),
+// antes de qualquer um dos dois mexer em editingId/DOM.
+function _flushAutoSave(){
+  if(_autoSaveTimer){
+    clearTimeout(_autoSaveTimer);
+    _autoSaveTimer = null;
+    _performAutoSave();
+  }
+}
+function _performAutoSave(){
     const title=document.getElementById('m-title').value.trim();
     if(!title) return;
     const td=new Date().toISOString().split('T')[0];
@@ -13758,7 +13808,6 @@ function scheduleAutoSave(){
     _asSaveP.then(()=>{
       if(btn){ const orig=btn.textContent; btn.textContent='✓ Salvo'; setTimeout(()=>btn.textContent=orig,1200); }
     }).catch(()=>{});
-  }, 800);
 }
 // ── FIM AUTO-SAVE ──────────────────────────────────────────────────
 
@@ -14655,6 +14704,12 @@ function toggleAgenteHotlineInfo(){
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 function openCard(id){
+  // Flusha o autosave pendente do card ANTERIOR (se houver) antes de
+  // reatribuir editingId/DOM pro card novo — ver comentário completo em
+  // _flushAutoSave(). Sem isso, trocar de card rápido (link, "← Voltar",
+  // menção) dentro da janela de 800ms do debounce perdia a edição do card
+  // anterior em silêncio.
+  _flushAutoSave();
   _intakeOrigemPendingId=null; // ver comentário na declaração
   if(_cardNavSkipReset){ _cardNavSkipReset=false; } else { _cardNavStack=[]; }
   _updateCardBackBtn();
@@ -32920,6 +32975,10 @@ function voltarParaFuncoesCard(modalId){
 function _finishCloseOv(id){
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
+    // Flusha o autosave pendente ANTES de qualquer outra limpeza abaixo —
+    // ver comentário completo em _flushAutoSave(). editingId/DOM ainda
+    // válidos neste ponto (nada abaixo os altera antes disto rodar).
+    _flushAutoSave();
     // Rede de segurança: garante que o botão "💾 Salvar" nunca fique preso em
     // "Salvando…"/desabilitado pro próximo card aberto, mesmo em caminho de
     // fechamento que não passou pelo .then()/.catch() de saveCard() (ex.:
