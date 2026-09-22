@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.732-dev</div>
+<div class="version">v8.30.733-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8691,9 +8691,21 @@ function _histDiff(card, before, whoOverride){
     // baseado em Set (pega qualquer tag entrando/saindo, não só a 1ª).
     if(f==='tag') return;
     const oldV=before[f], newV=card[f];
-    // normaliza booleanos/strings vazias
-    const a = (oldV===undefined||oldV===null)?'':oldV;
-    const b = (newV===undefined||newV===null)?'':newV;
+    // Achado real (relato direto do usuário — card recém-criado já
+    // nascia com "removeu o impedimento"/"definiu OKR: não" no
+    // Histórico, sem ninguém ter tocado nesses campos): `blocker`/
+    // `archived`/`isOKR` nunca entram no objeto de um card novo (ver
+    // `_newCard` no branch de criação de `saveCard()`, ficam undefined
+    // de propósito) — mas normalizar undefined pra `''` (como os campos
+    // de TEXTO precisam) faz `String('')` (undefined) divergir de
+    // `String(false)` ('false'), disparando um diff falso assim que a
+    // 1ª edição de verdade normaliza esses 3 campos pra boolean via
+    // Object.assign. Pra campos booleanos, undefined/null/false são
+    // exatamente a mesma coisa ("não") — normaliza com `!!` em vez de
+    // `''`, não com o mesmo tratamento dos campos de texto.
+    const isBoolField = f==='blocker'||f==='archived'||f==='isOKR';
+    const a = isBoolField ? !!oldV : ((oldV===undefined||oldV===null)?'':oldV);
+    const b = isBoolField ? !!newV : ((newV===undefined||newV===null)?'':newV);
     if(String(a)!==String(b)){
       const label=HIST_FIELDS[f];
       if(f==='title') recordHistory(card, `renomeou o card para "${_histVal(f,newV)}"`, whoOverride);
