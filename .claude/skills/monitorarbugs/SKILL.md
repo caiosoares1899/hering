@@ -2254,6 +2254,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   verdade?". Os dois sentidos já renderam achado real em rodadas
   diferentes.
 
+- **2026-09-22, "notificações do kanban" (escopo nomeado) — leitura
+  ponta a ponta de `createNotif()`/`loadNotifs()`/`openNotif()`/
+  `NOTIF_ICONS`/som/todos os call sites de `createNotif(`**: 1 achado
+  real — a dedupeKey de 5s de `createNotif()`
+  (`targetUid+type+(cardId||idOverride)`) é grossa demais pra tipos sem
+  `cardId` próprio (`kudos`/`kudos_monitor`/`gcal_pending`/`feedback`,
+  sempre `cardId=null`) ou que compartilham o MESMO `cardId` entre
+  eventos distintos (`reacao` — reações a comentários diferentes do
+  mesmo card): 2 eventos REAIS e diferentes pro mesmo destinatário
+  dentro da mesma janela de 5s colidiam na chave e o 2º era descartado
+  em silêncio, como se fosse repetição do 1º disparo. Achado via
+  releitura de TODOS os ~17 call sites de `createNotif(` comparando o
+  que cada um passa como `cardId`/`idOverride` (técnica 1, mas aplicada
+  contra a própria função de baixo nível, não entre call sites
+  irmãos de uma mutação). Fix: novo parâmetro opcional `dedupeExtra`,
+  dedupeKey passou a somar `commentId||dedupeExtra` (o `commentId` já
+  existia como parâmetro do createNotif, só nunca entrava na conta).
+  Aplicado nos 6 call sites afetados: `toggleReaction` (`cid`),
+  `addKudos` -- Estrela recebida + monitoramento ADM/PO (`obj.id`),
+  `toggleKudosReaction` (`k.id`), `_queueGcalRequest` (`reqId`),
+  feedback do Mural (`id`). dev v8.30.729-dev. Achado incidental
+  registrado, não corrigido (baixo valor): `NOTIF_ICONS.due_soon`
+  definido mas nunca emitido por nenhum `createNotif()` — código morto
+  inofensivo (comentário já deixado no `CODE_MAP.md`).
+  **Lição pra próxima vez**: além de comparar call sites IRMÃOS entre
+  si (técnica 1 clássica), vale às vezes comparar todos os call sites
+  de uma função de baixo nível contra os PRÓPRIOS parâmetros dela — um
+  parâmetro que só alguns call sites conseguem preencher bem (aqui,
+  `cardId`) pode esconder um bug na função em si, não nos call sites.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

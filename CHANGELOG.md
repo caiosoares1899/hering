@@ -3646,6 +3646,44 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.729-dev — 2026-09-22 — `/monitorarbugs` (escopo: notificações do kanban): dedup de 5s de `createNotif()` derrubava notificações reais diferentes
+
+Escopo pedido: "roda um /monitorarbugs nas notificações do kanban".
+`createNotif()` protege contra a MESMA notificação disparar 2x na mesma
+aba (ex.: 2 timers quase juntos) com uma `dedupeKey` de 5s baseada em
+`targetUid+type+(cardId||idOverride)`. Pra tipos sem `cardId` próprio
+(`kudos`, `kudos_monitor`, `gcal_pending`, `feedback` — sempre
+`cardId=null`) ou que compartilham o MESMO `cardId` entre eventos
+distintos (`reacao` — reações a comentários diferentes do mesmo card),
+essa chave é grossa demais: 2 EVENTOS REAIS e diferentes pro mesmo
+destinatário dentro da mesma janela de 5s colidiam, e o 2º era
+descartado em silêncio como se fosse repetição do 1º. Cenário concreto:
+uma pessoa comenta 2x num card; 2 colegas reagem (👍/❤️) a esses 2
+comentários diferentes quase ao mesmo tempo — o autor só recebia UMA
+notificação "reagiram ao seu comentário", nunca as duas. Mesma classe
+em `kudos`: receber uma Estrela nova e uma reação a uma Estrela antiga
+quase juntos também colidiam (não tinham NENHUM diferenciador — nem
+`cardId`, nem `idOverride`).
+
+Fix: `createNotif()` ganhou um parâmetro opcional `dedupeExtra`, e a
+`dedupeKey` passou a incluir `commentId||dedupeExtra` também (o
+`commentId` já existia como parâmetro, só nunca entrava na conta).
+Aplicado nos 6 call sites afetados: `toggleReaction()` (passa `cid`),
+`addKudos()` — Estrela recebida e monitoramento de ADM/PO (passam
+`obj.id`), `toggleKudosReaction()` (passa `k.id`),
+`_queueGcalRequest()` (passa `reqId`), `enviarFeedback` do Mural (passa
+`id`). Tipos que já tinham `cardId` próprio e não-compartilhado
+(`assigned`, `unblocked`, `done`, `moved`, `risk`, `checklist`,
+`due_today`/`due_overdue`) não precisaram de mudança — a dedupeKey já
+os distinguia corretamente.
+
+Achado incidental, não corrigido (baixo valor): `NOTIF_ICONS.due_soon`
+(`⏰`) definido mas nunca usado por nenhum `createNotif()` — resquício
+de refactor, sem impacto funcional (nada cria esse tipo hoje).
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens +3).
+
 ### v8.30.728-dev — 2026-09-22 — `/monitorarbugs`: notificação de Comunicado urgente agora navega pro Mural ao clicar
 
 Complemento do fix em `painel-dev.html` (v3.58 · painel-dev, mesmo

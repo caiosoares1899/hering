@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.728-dev</div>
+<div class="version">v8.30.729-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -18965,7 +18965,12 @@ function toggleKudosReaction(id, scope, emoji){
       // do fix de 'rascunho'): sem isso, clicar nessa notificação no sino
       // PRÓPRIO do painel não navegava pra lugar nenhum — loadPainelNotifs()
       // lê n.link direto do objeto salvo, não deriva de `type`.
-      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'});
+      // dedupeExtra=k.id (achado /monitorarbugs 2026-09-22): 'kudos' não tem
+      // cardId (sempre null) — sem diferenciador, essa notificação colidia
+      // na dedupeKey com QUALQUER outro evento 'kudos' pro mesmo uid dentro
+      // de 5s (ex.: receber uma Estrela nova E uma reação a uma antiga quase
+      // juntos) e uma das duas sumia. Ver comentário completo em createNotif().
+      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'},k.id);
     }
   }).catch(()=>{});
 }
@@ -18994,7 +18999,9 @@ function addKudos(){
   // Notifica o agraciado (reaproveita o sistema de notificações)
   const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
-    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'});
+    // dedupeExtra=obj.id — mesmo achado do 'kudos' de reação acima, ver
+    // comentário completo em createNotif() e em toggleKudosReaction().
+    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'},obj.id);
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
   fbGet('kanban/usuarios_publicos').then(snap=>{
@@ -19003,8 +19010,11 @@ function addKudos(){
       if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
       const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
       if(isAdmUser({email:udata.email, uid}) || role==='po'){
+        // dedupeExtra=obj.id — mesma classe: sem isso, 2 Estrelas emitidas
+        // por pessoas diferentes dentro de 5s notificariam o mesmo ADM só
+        // sobre a 1ª (achado /monitorarbugs 2026-09-22).
         createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
-          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'});
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'},obj.id);
       }
     });
   }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
@@ -27578,11 +27588,22 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra){
+function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra, dedupeExtra){
   if(!window._fbReady || !targetUid) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
-  const dedupeKey = targetUid+'|'+type+'|'+(cardId||idOverride||'');
+  // dedupeExtra (achado real /monitorarbugs 2026-09-22): tipos sem cardId
+  // próprio (kudos/kudos_monitor/gcal_pending/feedback, sempre cardId=null)
+  // ou que compartilham o MESMO cardId entre eventos distintos (reacao —
+  // vários comentários diferentes do mesmo card) colidiam na MESMA
+  // dedupeKey dentro da janela de 5s — a 2ª chamada era tratada como
+  // repetição da 1ª e derrubada, mesmo sendo um EVENTO REAL diferente (ex.:
+  // 2 pessoas reagem a 2 comentários diferentes do mesmo autor quase ao
+  // mesmo tempo — só 1 das 2 notificações sobrevivia). commentId (já
+  // existia, só nunca entrava na conta) resolve o caso de reacao;
+  // dedupeExtra é o mesmo mecanismo pros tipos sem cardId, usando o id do
+  // próprio evento (kudos.id, req.id, feedback.id) como diferenciador.
+  const dedupeKey = targetUid+'|'+type+'|'+(cardId||idOverride||'')+'|'+(commentId||dedupeExtra||'');
   const lastTs = _recentNotifs.get(dedupeKey)||0;
   if(Date.now()-lastTs < 5000) return;
   _recentNotifs.set(dedupeKey, Date.now());
@@ -30038,8 +30059,11 @@ async function _queueGcalRequest(calId, calLabel){
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
+        // dedupeExtra=reqId (achado /monitorarbugs 2026-09-22): mesma classe
+        // dos achados em 'reacao'/'kudos' — 2 pedidos de conexão de agenda
+        // diferentes dentro de 5s pro mesmo ADM colidiriam sem isso.
         createNotif(uid, 'gcal_pending', '📅 Nova agenda aguardando aprovação',
-          (reqObj.requestedByName)+' pediu para conectar "'+calLabel+'" ('+_sqLabel(ACTIVE_SQUAD)+')', null);
+          (reqObj.requestedByName)+' pediu para conectar "'+calLabel+'" ('+_sqLabel(ACTIVE_SQUAD)+')', null,undefined,undefined,undefined,reqId);
       }
     });
   }catch(e){ console.warn('Não foi possível notificar ADMs:', e); }
@@ -34585,7 +34609,11 @@ function toggleReaction(cid, emoji){
   renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // notifica o autor do comentário que reagiram (se não for ele mesmo)
   if(c.reactions[uid] && c.uid && c.uid!==uid){
-    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId);
+    // cid (achado /monitorarbugs 2026-09-22): sem passar o commentId, 2
+    // reações a 2 comentários DIFERENTES do mesmo autor dentro de 5s
+    // colidiam na dedupeKey (mesmo card, mesmo tipo) e a 2ª sumia — ver
+    // comentário completo na declaração de createNotif().
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId,undefined,cid);
   }
 }
 function _renderReactions(c){
@@ -36616,8 +36644,10 @@ async function enviarFeedback(){
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
         const icones = {bug:'🐛',sugestao:'💡',duvida:'❓',outro:'💬'};
+        // dedupeExtra=id — mesma classe (2 feedbacks de pessoas diferentes
+        // dentro de 5s pro mesmo ADM colidiriam sem isso, achado /monitorarbugs 2026-09-22).
         createNotif(uid, 'feedback', (icones[tipo]||'💬')+' Nova mensagem de '+payload.nome,
-          texto.slice(0,80)+(texto.length>80?'…':''), null);
+          texto.slice(0,80)+(texto.length>80?'…':''), null,undefined,undefined,undefined,id);
       }
     });
     document.getElementById('fb-texto').value = '';

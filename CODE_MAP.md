@@ -1598,10 +1598,18 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   no `beforeunload`.
 
 ### Notificações in-app
-- `createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra)` —
+- `createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra, dedupeExtra)` —
   L25649. `extra` (2026-09-06, opcional) — objeto mesclado no registro,
   pra campo específico de 1 tipo só (ex.: `{meetingLink}` em `reuniao`)
-  sem virar campo fixo de todo notif.
+  sem virar campo fixo de todo notif. `dedupeExtra` (2026-09-22,
+  opcional) — a dedupeKey de 5s (`targetUid+type+(cardId||idOverride)`)
+  colidia pra tipos sem `cardId` próprio (`kudos`/`kudos_monitor`/
+  `gcal_pending`/`feedback`, sempre `cardId=null`) ou que compartilham o
+  MESMO `cardId` entre eventos distintos (`reacao` — reações a
+  comentários diferentes do mesmo card), derrubando notificações reais
+  diferentes disparadas a poucos segundos de distância. Agora a
+  dedupeKey também soma `commentId||dedupeExtra` — call sites afetados
+  passam o id do próprio evento (`k.id`/`obj.id`/`reqId`/`id`/`cid`).
 - `loadNotifs()` — L28116
 - `NOTIF_ICONS` — ícone por `type`; ganhou `okr_editado`/`okr_prazo`/
   `okr_reuniao` (🎯), `okr_agente` (🤖) em 2026-09-06, e
