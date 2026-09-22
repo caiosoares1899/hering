@@ -2195,6 +2195,18 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   porque o fix crítico mais recente (`handleDrop()`, 17/09) nunca tinha
   sido comparado contra os caminhos irmãos daquela MESMA correção.
 
+- **2026-09-22, 🔍 Busca/Ctrl+K (pedido genérico, "roda mais um" — área
+  escolhida por ter um achado de passagem PENDENTE desde 2026-09-02,
+  registrado como "fora de escopo" naquela rodada)**: 1 achado real,
+  fechando exatamente o que tinha ficado anotado — `renderSearchResults()`
+  mostrava o selo de tag lendo `c.tag` (campo legado), mesma classe já
+  corrigida em 3 lugares em 2026-09-02 (Arquivados/Cards antigos/QL),
+  nunca aplicada à Busca. Fix: `getCardTags(c)[0]`. dev v8.30.727-dev.
+  **Lição pra próxima vez**: um achado registrado como "de passagem, fora
+  de escopo" não é o mesmo que "sem achado" — vale grepar o histórico por
+  "fora de escopo"/"achado de passagem" de vez em quando pra achar esses
+  pendentes antes de escolher uma área nova do zero.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
