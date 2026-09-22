@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.719</div>
+<div class="version">v8.30.733</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7553,7 +7553,22 @@ function _bulkFinish(msg, keepSelection, extraIds){
   // bulkDuplicate — as CÓPIAS não estão em selectedCards, que só tem os
   // originais). Captura ANTES de fbSaveAll (que ainda não mexeu em
   // selectedCards) e antes de selectedCards.clear() logo abaixo.
-  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]);
+  // Achado real (/monitorarbugs 2026-09-22, técnica 1 — comparar contra
+  // handleDrop()/ctxMove(), mesma classe de operação): fbSaveAll() aqui
+  // era fire-and-forget, sem then()/catch() — o toast de sucesso
+  // (showToast(msg), abaixo) sempre aparecia, mesmo que a escrita
+  // tivesse falhado de verdade (rede instável, campo inválido). Como
+  // _bulkFinish() é o finalizador COMPARTILHADO de toda ação em massa
+  // (mover, atribuir, tag, bloquear, excluir-marca...), esse silêncio
+  // valia pra todas elas de uma vez. Reverter o estado local de N cards
+  // exigiria snapshot em CADA chamador antes de mutar (mudança maior,
+  // fora do escopo deste fix) — mas pelo menos parar de MENTIR sobre o
+  // sucesso é direto: mostra um aviso real se a escrita falhar, em vez
+  // do toast de sucesso genérico.
+  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]).catch(err=>{
+    showToast('⚠ Falha ao salvar a ação em massa — pode não ter sido persistida. Verifique sua conexão e tente de novo.', 8000);
+    console.warn('_bulkFinish save failed:', err);
+  });
   if(!keepSelection){
     const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
     selectedCards.clear(); selectMode=false;
@@ -8676,9 +8691,21 @@ function _histDiff(card, before, whoOverride){
     // baseado em Set (pega qualquer tag entrando/saindo, não só a 1ª).
     if(f==='tag') return;
     const oldV=before[f], newV=card[f];
-    // normaliza booleanos/strings vazias
-    const a = (oldV===undefined||oldV===null)?'':oldV;
-    const b = (newV===undefined||newV===null)?'':newV;
+    // Achado real (relato direto do usuário — card recém-criado já
+    // nascia com "removeu o impedimento"/"definiu OKR: não" no
+    // Histórico, sem ninguém ter tocado nesses campos): `blocker`/
+    // `archived`/`isOKR` nunca entram no objeto de um card novo (ver
+    // `_newCard` no branch de criação de `saveCard()`, ficam undefined
+    // de propósito) — mas normalizar undefined pra `''` (como os campos
+    // de TEXTO precisam) faz `String('')` (undefined) divergir de
+    // `String(false)` ('false'), disparando um diff falso assim que a
+    // 1ª edição de verdade normaliza esses 3 campos pra boolean via
+    // Object.assign. Pra campos booleanos, undefined/null/false são
+    // exatamente a mesma coisa ("não") — normaliza com `!!` em vez de
+    // `''`, não com o mesmo tratamento dos campos de texto.
+    const isBoolField = f==='blocker'||f==='archived'||f==='isOKR';
+    const a = isBoolField ? !!oldV : ((oldV===undefined||oldV===null)?'':oldV);
+    const b = isBoolField ? !!newV : ((newV===undefined||newV===null)?'':newV);
     if(String(a)!==String(b)){
       const label=HIST_FIELDS[f];
       if(f==='title') recordHistory(card, `renomeou o card para "${_histVal(f,newV)}"`, whoOverride);
@@ -8931,10 +8958,6 @@ async function fbSaveAll(extra, touchedIds){
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
-  if(!window._fbReady){
-    // Não confirmar um save que ainda não tem destino persistente.
-    await _waitForFirebaseReady();
-  }
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
   // NOTA: columns e tags NÃO são salvos aqui — apenas cards (+ cards_index,
   // ver abaixo). columns/tags têm save dedicado em saveAgilCfg()/saveTags()
@@ -9032,6 +9055,22 @@ async function fbSaveAll(extra, touchedIds){
     cardsToSave.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
     Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]);
     Object.assign(window._cardsByKey, freshByKey);
+  }
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe do achado de
+  // 2026-09-21 em fbSaveCard()): o espelho window._cardsByKey acima
+  // precisa ficar fresco ANTES de qualquer chance de _applyCardsSync()
+  // rodar — mas antes deste fix, a espera abaixo (_waitForFirebaseReady())
+  // acontecia ANTES de todo este bloco (que é cálculo 100% local, não
+  // depende do Firebase estar pronto), enquanto _lastLocalSave já tinha
+  // sido carimbado lá em cima. Se _fbReady estivesse false e a espera
+  // demorasse mais que os 2s de proteção de _applyCardsSync(), o espelho
+  // ficava com o valor VELHO durante toda a espera — mesma janela de
+  // risco que a de fbSaveCard(), só que aqui reescrevendo /cards inteiro.
+  // Fix: espera só entra na frente da escrita de verdade, depois de todo
+  // cálculo local (incluindo o espelho) já estar pronto.
+  if(!window._fbReady){
+    // Não confirmar um save que ainda não tem destino persistente.
+    await _waitForFirebaseReady();
   }
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
@@ -9168,7 +9207,6 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       _settleCardTimeTrackingLazy(card); // ⏱️ rede de segurança — ver comentário na declaração
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
-      if(!window._fbReady) return _waitForFirebaseReady().then(()=>fbSaveCard(card));
       // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
       // feito isso — centraliza a garantia num lugar só (mais fácil de manter
       // certa do que auditar todo call-site) pro cards_updated_at (ver
@@ -9235,11 +9273,21 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // acabou de confirmar. Fix: mesmo padrão de fbSaveAll()/
       // fbCreateCard(), síncrono, ANTES de disparar a escrita.
       if(window._cardsByKey) window._cardsByKey[key] = card;
-      return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
+      // Achado real (/monitorarbugs 2026-09-22): o espelho acima precisa
+      // ficar fresco MESMO quando o Firebase ainda não está pronto — antes
+      // deste fix, `if(!window._fbReady) return _waitForFirebaseReady()...`
+      // ficava logo no início da função, ANTES de tudo isto (inclusive do
+      // espelho), deixando window._cardsByKey[key] com o valor VELHO
+      // durante toda a espera (pode passar de 2s em cold start/reconexão —
+      // exatamente o cenário do incidente original, "começou depois das
+      // promoções"). Fix: a espera só entra na frente da escrita de
+      // verdade, depois do espelho já estar atualizado.
+      const doWrite = ()=> _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
       }));
+      return window._fbReady ? doWrite() : _waitForFirebaseReady().then(doWrite);
     }
 // Wrapper de fbSaveCard() com aviso visível + 1 retentativa em caso de falha.
 // Chamadores "fire-and-forget" de fbSaveCard() (autosave, salvar descrição
@@ -9514,7 +9562,19 @@ let _cardsSyncDebounce = null;
       cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
       renderBoard();
       // Persiste o backfill (1x) sem disparar loop de echo
-      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
+      // Achado real (/monitorarbugs 2026-09-22, técnica 2 — comparado
+      // contra fbSaveAll()/fbSaveCard()/fbCreateCard(), que já aplicam
+      // _stripUndefinedDeep()/_stripUndefinedMultiPath() antes de
+      // qualquer window._update()/_set() de card): esta é a 4ª via de
+      // escrita do array `cards` no arquivo e nunca ganhou a mesma rede
+      // de segurança — um card com campo `undefined` de verdade
+      // derrubava esta escrita específica (mesma classe do achado de
+      // 2026-09-16), e o `.catch(()=>{})` engolia o erro sem NENHUM
+      // aviso, nem um console.warn — pior que as outras 3 vias, que pelo
+      // menos logam. Fix: mesmo strip (aqui é um valor aninhado comum,
+      // não um objeto de update multi-path — _stripUndefinedDeep() é o
+      // helper certo, não _stripUndefinedMultiPath()) + warn visível.
+      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), _stripUndefinedDeep(cards)).catch(err=>console.warn('[_applyCardsSync] backfill write failed:', err)); }
       _persistCardsCacheFromCurrent();
     }
   }
@@ -13237,7 +13297,16 @@ function toggleCol(id){
 
 function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
-  const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
+  // Achado real (/monitorarbugs 2026-09-22, técnica 2+3): comparava contra a
+  // string fixa 'progress' — mesma classe já corrigida pro campo `done`
+  // aqui do lado (achado 2026-09-04, ver comentário 3 linhas abaixo), nunca
+  // aplicada ao WIP. addColumn() nunca gera id 'progress' (gera 'col_'+
+  // timestamp) — squad que recriou/renomeou a coluna "Em andamento" sempre
+  // mostrava WIP=0. _flowStartColIds() já é o resolvedor canônico desse
+  // conceito (config do PO + heurística por nome), usado pelas Métricas de
+  // Fluxo — mesmo critério aqui.
+  const _wipColIds=new Set(_flowStartColIds());
+  const wip=cards.filter(c=>_wipColIds.has(c.col)&&!c.archived).length;
   const bl=cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length;
   // Achado real (/monitorarbugs 2026-09-04): comparava contra a string fixa
   // 'done' — squad que já recriou a coluna de conclusão (addColumn() gera
@@ -13263,7 +13332,10 @@ function renderBoardDataGrid(){
   // hotline (owner:'' sempre, nunca tem prazo) inflava "Cards ativos" e
   // "Sem responsável" em +1 permanentemente em qualquer squad com o recurso.
   const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
-  const wip=activeCards.filter(c=>c.col==='progress').length;
+  // Mesmo achado/fix de updateMetrics() acima (/monitorarbugs 2026-09-22):
+  // 'progress' fixo → _flowStartColIds().
+  const _wipColIds2=new Set(_flowStartColIds());
+  const wip=activeCards.filter(c=>_wipColIds2.has(c.col)).length;
   const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
   // Mesmo achado do updateMetrics() acima — _isColDone() em vez da string
   // fixa 'done' (achado real, /monitorarbugs 2026-09-04).
@@ -13403,11 +13475,15 @@ function maybeSnapshot(){
   // /monitorarbugs 2026-09-04, mesma classe do updateMetrics()/
   // renderBoardDataGrid() acima) — snapshot é gravado PERMANENTE no
   // Firebase 1x/dia, então snapshots já gravados com o bug antigo não são
-  // corrigidos retroativamente, só os de hoje em diante.
+  // corrigidos retroativamente, só os de hoje em diante. wip: mesma classe,
+  // mas só corrigida agora (/monitorarbugs 2026-09-22) — 'progress' fixo →
+  // _flowStartColIds(), mesmo fix aplicado em updateMetrics()/
+  // renderBoardDataGrid().
+  const _wipColIds3=new Set(_flowStartColIds());
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
     total:cards.filter(c=>!c.archived).length,
-    wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
+    wip:cards.filter(c=>_wipColIds3.has(c.col)&&!c.archived).length,
     done:cards.filter(c=>_isColDone(c.col)&&!c.archived).length,
     blockers:cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
@@ -15153,6 +15229,18 @@ function _quickAddApplyIfNew(){
 
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
+  // openCard() em _flushAutoSave() — ver comentário completo lá):
+  // usarQLItem() ("Usar modelo/recorrente") e _intakeCriarCard() ("criar
+  // card" a partir de um pedido do Intake) chamam openNewCard() sem
+  // fechar #card-ov primeiro (só fecham ql-ov/intake-ov, overlays
+  // diferentes que podem ficar empilhados por cima de um card já aberto
+  // — o comentário de usarQLItem() já documentava esse cenário: "mesma
+  // causa do 'usar modelo' dentro do card já aberto"). Sem flush aqui, um
+  // card existente sendo editado nesse instante (dentro da janela de
+  // 800ms do debounce) tinha a edição perdida em silêncio, exatamente
+  // como openCard() tinha antes do fix de ontem.
+  _flushAutoSave();
   _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
   _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem p/ "Enviar pra outro squad" — _consumirTransferSquad() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
@@ -18889,7 +18977,12 @@ function toggleKudosReaction(id, scope, emoji){
       // do fix de 'rascunho'): sem isso, clicar nessa notificação no sino
       // PRÓPRIO do painel não navegava pra lugar nenhum — loadPainelNotifs()
       // lê n.link direto do objeto salvo, não deriva de `type`.
-      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'});
+      // dedupeExtra=k.id (achado /monitorarbugs 2026-09-22): 'kudos' não tem
+      // cardId (sempre null) — sem diferenciador, essa notificação colidia
+      // na dedupeKey com QUALQUER outro evento 'kudos' pro mesmo uid dentro
+      // de 5s (ex.: receber uma Estrela nova E uma reação a uma antiga quase
+      // juntos) e uma das duas sumia. Ver comentário completo em createNotif().
+      createNotif(notifyFromUid,'kudos','💛 Reagiram à sua Estrela!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,null,undefined,undefined,{link:'pessoas'},k.id);
     }
   }).catch(()=>{});
 }
@@ -18918,7 +19011,9 @@ function addKudos(){
   // Notifica o agraciado (reaproveita o sistema de notificações)
   const toUid = m?.uid || getUidByInit(para);
   if(toUid && toUid!==u.uid){
-    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'});
+    // dedupeExtra=obj.id — mesmo achado do 'kudos' de reação acima, ver
+    // comentário completo em createNotif() e em toggleKudosReaction().
+    createNotif(toUid,'kudos','⭐ Você recebeu uma Estrela do Mar!',(u.displayName||'Alguém')+': '+texto.substring(0,60),null,undefined,undefined,{link:'pessoas'},obj.id);
   }
   // Notifica ADMs e PO's do squad — monitoramento de estrelas emitidas
   fbGet('kanban/usuarios_publicos').then(snap=>{
@@ -18927,8 +19022,11 @@ function addKudos(){
       if(uid===u.uid || uid===toUid) return; // não duplica pro remetente nem pro agraciado
       const role=(udata.squads_roles&&udata.squads_roles[ACTIVE_SQUAD])||udata.role||'membro';
       if(isAdmUser({email:udata.email, uid}) || role==='po'){
+        // dedupeExtra=obj.id — mesma classe: sem isso, 2 Estrelas emitidas
+        // por pessoas diferentes dentro de 5s notificariam o mesmo ADM só
+        // sobre a 1ª (achado /monitorarbugs 2026-09-22).
         createNotif(uid,'kudos_monitor','⭐ Nova Estrela do Mar emitida',
-          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'});
+          (u.displayName||'Alguém')+' → '+(m?.name?.split(' ')[0]||para)+': '+texto.substring(0,60), null,undefined,undefined,{link:'pessoas'},obj.id);
       }
     });
   }).catch(e=>console.warn('Não foi possível notificar ADMs/POs sobre kudos:', e));
@@ -23437,8 +23535,18 @@ function addQLItem(){
   const title=document.getElementById('ql-new-title').value.trim(); if(!title) return;
   const tag=document.getElementById('ql-new-tag').value;
   if(!qlItems[currentQL]) qlItems[currentQL]=[];
-  qlItems[currentQL].push({title,tag});
-  fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]);
+  const item={title,tag};
+  qlItems[currentQL].push(item); // otimista, só pra resposta instantânea na tela
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe de Kudos/Links):
+  // qlItems (Modelos/Recorrentes/Agendamentos) é sincronizado ao vivo
+  // (fbListen), mas escrever o array local inteiro de volta ainda perde um
+  // item adicionado por outra pessoa na janela entre o último eco do
+  // listener e este clique. transaction() recalcula sobre o valor FRESCO.
+  window._runTransaction(window._ref(window._db, FB+'/ql_items/'+currentQL), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(item);
+    return arr;
+  }).catch(e=>showToast('Erro ao adicionar: '+e.message));
   document.getElementById('ql-new-title').value='';
   renderQLBody();
 }
@@ -23729,7 +23837,19 @@ function processRelembreteAuto(){
     updLemBadge();
   }
 }
-function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]); renderQLBody(); }
+function delQLItem(i){
+  const alvo=qlItems[currentQL]?.[i]; if(!alvo) return;
+  qlItems[currentQL].splice(i,1);
+  // Mesmo achado/fix de addQLItem() acima. Sem id próprio, remoção continua
+  // por conteúdo (title+tag) — mesma fragilidade de duplicata exata que já
+  // existia antes (não piora nada), só sem mais o risco de apagar a
+  // adição/edição de outra pessoa.
+  window._runTransaction(window._ref(window._db, FB+'/ql_items/'+currentQL), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(it=>!(it.title===alvo.title && it.tag===alvo.tag));
+  }).catch(e=>showToast('Erro ao excluir: '+e.message));
+  renderQLBody();
+}
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
 let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
@@ -23943,17 +24063,43 @@ function renderLinksBody(){
     body.appendChild(row);
   });
 }
+// Achado real (/monitorarbugs 2026-09-22, mesma classe já corrigida em
+// Kudos/Lembretes/Dashboard consolidado): addLink()/delLink() escreviam o
+// array `links` local inteiro de volta (fbSet) — mesmo com fbListen(FB+
+// '/links',...) sendo um listener ao vivo (não um poll, diferente do caso
+// mais grave de Kudos), ainda existe uma janela entre o eco do listener e
+// o clique de outra pessoa onde o array local fica um passo atrás; nesse
+// intervalo, um link adicionado/removido por alguém mais é apagado em
+// silêncio pela próxima escrita. transaction() recalcula sobre o valor
+// FRESCO do servidor a cada tentativa, mesmo padrão de addKudos()/
+// delKudos(). Links não têm id próprio (dado histórico) — remoção
+// continua por conteúdo (label+url), mesma fragilidade de duplicata
+// exata que já existia antes, só que agora sem risco de apagar a edição
+// de outra pessoa.
 function addLink(){
   const label=document.getElementById('link-new-label').value.trim();
   const url=document.getElementById('link-new-url').value.trim();
   if(!url) return;
-  links.push({label:label||url,url});
-  fbSet(FB+'/links',links);
+  const lk={label:label||url,url};
+  links.push(lk); // otimista, só pra resposta instantânea na tela
+  window._runTransaction(window._ref(window._db, FB+'/links'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(lk);
+    return arr;
+  }).catch(e=>showToast('Erro ao adicionar link: '+e.message));
   document.getElementById('link-new-label').value='';
   document.getElementById('link-new-url').value='';
   renderLinksBody();
 }
-function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBody(); }
+function delLink(i){
+  const alvo=links[i]; if(!alvo) return;
+  links.splice(i,1);
+  window._runTransaction(window._ref(window._db, FB+'/links'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(lk=>!(lk.url===alvo.url && lk.label===alvo.label));
+  }).catch(e=>showToast('Erro ao remover link: '+e.message));
+  renderLinksBody();
+}
 
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
@@ -26362,7 +26508,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.' },
@@ -26437,7 +26583,7 @@ const HELP_CONTENT = {
     { icon:'🏊', title:'Papéis no board', text:'Convidado e Membro: cria, edita e move cards, posta lembretes e kudos, e também usa ⚡ Automações (regras e receitas de fan-out — liberado pra qualquer papel, ver dica "Automações") e o Agente Ágil (mencionar @Agente Ágil num comentário, ou o card especial "Converse com o Agente Ágil" — nenhum dos dois é exclusivo de papel nenhum) (Convidado é só um rótulo diferente, pra sinalizar gente de fora — ex. freelancer — e é o único papel que pode ser removido da lista pelo PO). Organizador: gerencia colunas e tags. PO: acesso total incluindo configurações do board. ADM: acesso irrestrito a todos os squads.' },
   ],
   comunicacao: [
-    { icon:'📢', title:'Mural — avisos do ADM', text:'Clique em 📢 no header (ao lado do sino 🔔) para abrir o Mural. Na aba Avisos você vê todos os comunicados publicados pelo administrador — novidades, dicas, avisos e alertas urgentes. Cada tipo tem cor e ícone próprios. Itens que você ainda não leu aparecem com uma bolinha colorida. Clicar num item abre o comunicado completo. Comunicados importantes podem aparecer automaticamente como popup ao abrir ou recarregar o board — basta clicar "Entendi 👍" para não ver de novo.' },
+    { icon:'📢', title:'Mural — avisos do ADM', text:'Clique em 📢 no header (ao lado do sino 🔔) para abrir o Mural. Na aba Avisos você vê todos os comunicados publicados pelo administrador — novidades, dicas, avisos e alertas urgentes. Cada tipo tem cor e ícone próprios. Itens que você ainda não leu aparecem com uma bolinha colorida. Clicar num item abre o comunicado completo. Comunicados importantes podem aparecer automaticamente como popup ao abrir ou recarregar o board — basta clicar "Entendi 👍" para não ver de novo.\n\n🔔 Chega até quem não está no board: um comunicado 🚨 Urgente (ou Popup com Insistente ligado) também vira uma notificação de verdade no sino, pra quem não estiver com o board aberto naquele momento — não é preciso estar olhando a tela pra saber que saiu um aviso importante.' },
     { icon:'✍️', title:'Fale com o ADM', text:'Dentro do 📢 Mural, clique na aba "✍️ Fale com o ADM" para enviar uma mensagem diretamente ao administrador. Escolha o tipo (🐛 problema, 💡 sugestão, ❓ dúvida, 💬 outro), escreva o texto e envie. O ADM é notificado no sino 🔔. O sistema anexa automaticamente seu squad, papel e a versão do board.' },
     { icon:'📌', title:'Quadro de lembretes', text:'Abra a aba 📌 Lembretes na lateral direita. São post-its coloridos por tipo: 🏛️ Gestão (avisos globais, aparecem em todos os quadros), 📋 PO/Org (avisos da squad, podem ser direcionados), ✏️ Próprios (privados, só você vê) e 🌊 Quadro (alertas automáticos dos cards). Os filtros no topo ligam/desligam cada tipo; o de Quadro vem desligado por padrão.' },
     { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
@@ -27383,6 +27529,12 @@ function persistSuperChildren(histWhat){
   parent.childCardIds = [...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds];
   fbSaveCard(parent);
   _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração
+  // Achado real /monitorarbugs 2026-09-22: vincular um filho que já estava
+  // concluído (ex.: "+ Adicionar" um card existente já pronto) nunca
+  // disparava a checagem de "todos os filhos concluídos" — só um evento de
+  // MOVER disparava (ver _checkSupercardAllDone()). Card vinculado assim
+  // como o último filho pendente nunca gerava o aviso pro Responsável.
+  _notifySupercardAllDone(parent);
   renderBoard(); // atualiza o rollup no board na hora
 }
 function hideSuperChildDropdown(){ document.getElementById('m-super-link-dropdown')?.classList.remove('show'); }
@@ -27454,11 +27606,22 @@ document.addEventListener('click', e=>{
 // ── Cria uma notificação para um usuário ──────────────────────────
 // Deduplication: track recently created notifs (uid+type+cardId) within 5s
 const _recentNotifs = new Map();
-function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra){
+function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra, dedupeExtra){
   if(!window._fbReady || !targetUid) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
-  const dedupeKey = targetUid+'|'+type+'|'+(cardId||idOverride||'');
+  // dedupeExtra (achado real /monitorarbugs 2026-09-22): tipos sem cardId
+  // próprio (kudos/kudos_monitor/gcal_pending/feedback, sempre cardId=null)
+  // ou que compartilham o MESMO cardId entre eventos distintos (reacao —
+  // vários comentários diferentes do mesmo card) colidiam na MESMA
+  // dedupeKey dentro da janela de 5s — a 2ª chamada era tratada como
+  // repetição da 1ª e derrubada, mesmo sendo um EVENTO REAL diferente (ex.:
+  // 2 pessoas reagem a 2 comentários diferentes do mesmo autor quase ao
+  // mesmo tempo — só 1 das 2 notificações sobrevivia). commentId (já
+  // existia, só nunca entrava na conta) resolve o caso de reacao;
+  // dedupeExtra é o mesmo mecanismo pros tipos sem cardId, usando o id do
+  // próprio evento (kudos.id, req.id, feedback.id) como diferenciador.
+  const dedupeKey = targetUid+'|'+type+'|'+(cardId||idOverride||'')+'|'+(commentId||dedupeExtra||'');
   const lastTs = _recentNotifs.get(dedupeKey)||0;
   if(Date.now()-lastTs < 5000) return;
   _recentNotifs.set(dedupeKey, Date.now());
@@ -28445,6 +28608,16 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
     openKudos();
     return;
   }
+  // Comunicado urgente do Mural (achado real /monitorarbugs 2026-09-22 —
+  // 'painel_broadcast' existia em PUSH_TYPES/NOTIF_ICONS mas nunca era
+  // criado por nada; agora que _painelNotifyBroadcast() em painel-dev.html
+  // cria essas notificações, precisa de tratamento aqui igual às outras
+  // notificações sem cardId — senão clicar só marcaria como lida, mesma
+  // classe de gap já corrigida 6x na rodada de 2026-09-06.
+  if(type==='painel_broadcast'){
+    openMural();
+    return;
+  }
   if(!cardId) return;
   // Notificação de outro squad (ex.: menção de alguém trabalhando em outro
   // board) — antes isso não fazia NADA além de marcar como lida, e a pessoa
@@ -28585,7 +28758,17 @@ function parseMentions(text, cardId, commentId, opts){
     if(byHandle){ uid=byHandle.uid; init=byHandle.init; }
     else if(/^[A-Z]{2,3}$/.test(token)){ uid=getUidByInit(token); init=token; }
     if(!uid || notified.has(uid)) continue;
-    if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
+    // Achado real (relato direto do usuário testando o aviso de supercard,
+    // 2026-09-22): diferente do branch "@todos" 2 blocos acima (que já
+    // respeita opts.includeSelf desde 2026-09-01), este branch (@handle/
+    // @init) ignorava opts.includeSelf por completo — sempre excluía quem
+    // está logado, mesmo quando quem chamou parseMentions() pediu
+    // explicitamente includeSelf:true. `_notifySupercardAllDone()` (novo)
+    // e `notify_po_org` (Automação, já existia) sofriam o mesmo bug: se a
+    // pessoa que disparou o evento (linkou o filho, PO que causou a regra)
+    // for justamente quem deveria ser @mencionada, ela nunca era
+    // notificada — sem erro nenhum, silencioso.
+    if(!opts.includeSelf && uid===window._currentUser?.uid) continue; // não notifica a si mesmo (a menos que a automação peça includeSelf)
     notified.add(uid);
     // idOverride determinístico (cardId+uid): parseMentions roda de novo em
     // TODO save do card (hook em saveCard, ver mais abaixo) pra não perder
@@ -29904,8 +30087,11 @@ async function _queueGcalRequest(calId, calLabel){
     const usuarios = snap.val()||{};
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
+        // dedupeExtra=reqId (achado /monitorarbugs 2026-09-22): mesma classe
+        // dos achados em 'reacao'/'kudos' — 2 pedidos de conexão de agenda
+        // diferentes dentro de 5s pro mesmo ADM colidiriam sem isso.
         createNotif(uid, 'gcal_pending', '📅 Nova agenda aguardando aprovação',
-          (reqObj.requestedByName)+' pediu para conectar "'+calLabel+'" ('+_sqLabel(ACTIVE_SQUAD)+')', null);
+          (reqObj.requestedByName)+' pediu para conectar "'+calLabel+'" ('+_sqLabel(ACTIVE_SQUAD)+')', null,undefined,undefined,undefined,reqId);
       }
     });
   }catch(e){ console.warn('Não foi possível notificar ADMs:', e); }
@@ -31662,71 +31848,68 @@ function _autoRuleActions(rule){
 
 // Coluna "cancelamento" só por heurística de nome — não existe um cancelCols
 // configurável separado do doneCols (que já junta Concluído+Cancelado pro
-// resto do fluxo/CFD, ver _flowDoneColIds()). Usado só por
-// _checkSupercardAutoComplete() pra decidir se o supercard conclui sozinho
-// ou fica onde está quando TODOS os filhos terminam cancelados — pedido
-// direto: "se todos filhos forem cancelados, o supercard deve se manter
-// onde está" (cancelar tudo não é a mesma coisa que concluir tudo).
+// resto do fluxo/CFD, ver _flowDoneColIds()). Usado por
+// _notifySupercardAllDone() pra decidir se avisa ou fica quieto quando
+// TODOS os filhos terminam cancelados — pedido direto: "se todos filhos
+// forem cancelados, o supercard deve se manter onde está" (cancelar tudo
+// não é a mesma coisa que concluir tudo).
 function _isColCancelLike(colId){
   const col=(columns||[]).find(c=>c.id===colId);
   return /cancel/i.test(col?.name||'');
 }
 // Quando TODOS os filhos ATIVOS de um supercard chegam numa coluna de fim
-// (Concluído, Cancelado etc. — ver _flowDoneColIds(), que respeita a config
-// do PO em vez de assumir só uma coluna "done"), o pai vai pra lá sozinho:
-// o supercard é a soma dos filhos, não faz sentido continuar aberto se tudo
-// já foi resolvido. Espelha _crvPropagateToChildren() (pai→filhos, Ficha
-// Técnica), só que na direção oposta (filhos→pai). Filhos arquivados ficam
-// de fora da checagem (não contam nem a favor nem contra); se não sobrar
-// nenhum filho ativo, não decide sozinho. Exceção: se TODOS os filhos
-// ativos terminaram cancelados (nenhum de fato concluído), o pai fica onde
-// está — ver _isColCancelLike() acima.
-function _checkSupercardAutoComplete(childCard, ancestry){
+// (Concluído, Cancelado etc. — ver _flowDoneColIds()), posta um comentário
+// automático no PAI marcando o Responsável, pedindo pra ele mover o card
+// pra Concluído. Decisão do usuário (2026-09-22, achado /monitorarbugs —
+// a versão anterior desta função movia o pai SOZINHO, e não estava nem
+// disparando: _checkSupercardAllDone() só era chamada em eventos de
+// MOVIMENTO de um filho, nunca ao VINCULAR um filho já concluído via
+// addSuperChild()/persistSuperChildren(), o caminho real que causou o
+// relato original): mover sozinho tira a decisão da pessoa responsável;
+// um aviso pedindo confirmação é mais seguro E resolve o próprio bug (o
+// aviso dispara nos 2 caminhos agora, ver call sites). `_superAllDoneNudged`
+// evita repetir o aviso a cada novo evento — reseta sozinho se o card
+// deixar de estar 100% completo (reabriu um filho, adicionou um novo).
+// Diferente da versão anterior, não cascateia sozinha pelos 2 níveis: o
+// aviso do nível de cima só dispara quando a pessoa move o nível de baixo
+// de verdade (isso já é um evento de 'move' novo, que re-roda esta mesma
+// checagem pro avô — sem precisar de recursão nem guard de ciclo).
+function _checkSupercardAllDone(childCard){
   if(!childCard) return;
-  // Guard contra ciclo corrompido nos dados (achado via /monitorarbugs,
-  // mesma classe de risco que já motivou o `visited` de _duplicarComFilhos()
-  // — mesmo grafo childCardIds, sem guard equivalente aqui até agora). Não
-  // dá pra usar um Set COMPARTILHADO entre chamadas-irmãs como lá: o
-  // comentário abaixo já prevê que um card pode ter mais de um pai (avô
-  // compartilhado), e um Set global bloquearia a 2ª cascata legítima
-  // (ex.: A e B são filhos de C; A completa e cascateia até C, ainda
-  // incompleto por causa de B — quando B completa depois, precisa
-  // re-checar C, que um Set global já teria marcado "visitado" na
-  // passagem de A). Por isso cada chamada carrega sua PRÓPRIA cópia do
-  // caminho de ancestrais (raiz→...→atual) — só bloqueia um ciclo de
-  // verdade (o mesmo id reaparecendo no MESMO caminho), não a cascata
-  // legítima entre irmãos.
-  ancestry = ancestry ? new Set(ancestry) : new Set();
-  if(ancestry.has(childCard.id)) return;
-  ancestry.add(childCard.id);
   // Não há parentId no filho — mesmo padrão de busca reversa de
   // _cardIsSuperChild(): o pai é quem lista, em childCardIds, o id de quem
-  // acabou de mover (ver comentário em _cardIsSuperChild acima). Um card
-  // pode em tese aparecer em mais de um childCardIds — checa todos.
+  // acabou de mover. Um card pode em tese aparecer em mais de um
+  // childCardIds — checa todos.
   const parents=cards.filter(p=>!p.archived && p.id!==childCard.id && (p.childCardIds||[]).includes(childCard.id));
-  if(!parents.length) return;
+  parents.forEach(parent=>_notifySupercardAllDone(parent));
+}
+function _notifySupercardAllDone(parent){
+  if(!parent) return;
   const doneIds=_flowDoneColIds();
-  const doneCol=_flowDoneColId();
-  let any=false;
-  parents.forEach(parent=>{
-    if(doneIds.includes(parent.col)) return; // pai já concluído
-    const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
-    if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
-    if(activeChildren.every(c=>_isColCancelLike(c.col))) return; // todos cancelados — mantém o pai onde está
-    recordMove(parent, doneCol);
-    parent.col=doneCol;
-    parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];
-    parent.updatedAt=new Date().toISOString(); parent.updatedBy='Automação';
-    recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
-    fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
-    any=true;
-    // Cascata: se este pai (ex.: um criativo) também é filho de outra
-    // coisa (ex.: uma campanha), acabou de concluir pode ser exatamente o
-    // que faltava pro AVÔ também concluir sozinho — reaproveita a mesma
-    // função em vez de duplicar a lógica pra "quantos níveis existem".
-    _checkSupercardAutoComplete(parent, ancestry);
-  });
-  if(any) renderBoard();
+  const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
+  const allDone = activeChildren.length>0
+    && activeChildren.every(c=>doneIds.includes(c.col))
+    && !activeChildren.every(c=>_isColCancelLike(c.col)); // todos cancelados — não avisa, ver comentário acima
+  if(!allDone){
+    if(parent._superAllDoneNudged){ parent._superAllDoneNudged=false; fbSaveCard(parent).catch(()=>{}); }
+    return;
+  }
+  if(parent._superAllDoneNudged) return; // já avisado — evita repetir o comentário a cada evento
+  if(!parent.owner) return; // sem Responsável pra marcar — nada a fazer (mesmo critério de notifChecklistDone())
+  const comment={
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+    text:'@'+parent.owner+' 🧩 Todos os '+activeChildren.length+' filhos deste supercard foram concluídos. Pode mover o card pra Concluído?',
+    ts:new Date().toISOString(),
+  };
+  _pushCardComment(parent.id, comment);
+  // includeSelf:true — mesmo raciocínio de notify_all/notify_po_org: quem
+  // acabou de completar/vincular o último filho pode ser o próprio
+  // Responsável, e ele também precisa ser avisado (não é uma @menção
+  // manual de uma pessoa pra outra, é a automação avisando o papel).
+  parseMentions(comment.text, parent.id, comment.id, {includeSelf:true});
+  parent._superAllDoneNudged=true;
+  fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao marcar aviso de conclusão:', err));
 }
 // Reivindica UMA entrada da fila kanban/.../agente_pending_auto (ver
 // pendingAuto.js, functions/agente-agil-orquestrador/) via transaction() —
@@ -31808,7 +31991,7 @@ function runAutoRules(eventType, cardId, extraVal){
   if(eventType==='assigned' && extraVal) _registrarSinalAtribuicao(extraVal);
   const activeRules=autoRules.filter(r=>r.active);
   const card=cards.find(c=>c.id===cardId); if(!card) return;
-  if(eventType==='move') _checkSupercardAutoComplete(card);
+  if(eventType==='move') _checkSupercardAllDone(card);
   activeRules.forEach(rule=>{
     const triggerDef=_autoTrigger(rule.trigger);
     if(!triggerDef) return; // regra salva com trigger que não existe mais
@@ -32583,20 +32766,43 @@ function ctxMove(colId){
   // disparava, e o settle de ⏱️ tempo atrasado/bloqueado (PR #776) perdia
   // a rede de segurança mais robusta que só recordMove() tem (usa `due`/
   // `from` confiáveis mesmo numa tacada só, sem save intermediário).
+  // Achado real (/monitorarbugs 2026-09-22, técnica 1 — comparar contra
+  // handleDrop(), mesma operação "mover card"): handleDrop() ganhou em
+  // 17/09 (PR #947, aplicado direto em prod pela gravidade) um snapshot
+  // completo + revert total se fbSaveCard() falhar — sem isso, uma falha
+  // de escrita deixa o card visualmente movido (já renderizado
+  // otimista), com flow/histórico/blocker corrompidos em memória, sem
+  // NENHUM aviso, porque nada revertia. ctxMove() nunca ganhou a mesma
+  // proteção, apesar de ser a via de movimentação usada tanto pelo
+  // submenu "↦ Mover para" quanto por ctxBlock() ("🚧 Marcar
+  // impedimento") — mesmo padrão de snapshot/revert replicado aqui.
+  const _cardSnapshotAntesCtx = JSON.parse(JSON.stringify(card));
   recordMove(card, colId);
   card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
-  // Notificações — _isColDone() em vez da heurística local (achado real,
-  // /monitorarbugs 2026-09-04, mesma classe corrigida em updateMetrics()/
-  // agCtx()/scheduleAutoSave()/handleDrop()).
-  if(ant!==colId){
-    if(_isColDone(colId)) notifDone(card);
-    else notifMoved(card, colName);
-  }
+  renderBoard();
+  fbSaveCard(card)
+    .then(()=>{
+      // Notificações só depois de confirmado pelo Firebase — mesmo padrão
+      // de handleDrop() — e _isColDone() em vez da heurística local
+      // (achado real, /monitorarbugs 2026-09-04, mesma classe corrigida
+      // em updateMetrics()/agCtx()/scheduleAutoSave()/handleDrop()).
+      if(ant!==colId){
+        if(_isColDone(colId)) notifDone(card);
+        else notifMoved(card, colName);
+      }
+    })
+    .catch(err=>{
+      Object.keys(card).forEach(k=>delete card[k]);
+      Object.assign(card, _cardSnapshotAntesCtx);
+      renderBoard();
+      showToast('⚠ Falha ao salvar movimentação — revertido');
+      console.warn('ctxMove save failed:', err);
+    });
+  runAutoRules('move',card.id,colId);
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
@@ -33896,7 +34102,14 @@ function renderSearchResults(){
   }
   container.innerHTML = matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
-    const tag = getTag(c.tag);
+    // Achado real (/monitorarbugs 2026-09-02, achado de passagem — "mesmo
+    // padrão em openSearch()", nunca corrigido até agora): lia c.tag (campo
+    // legado, só a 1ª tag do array, sem sincronia garantida com tags[]) em
+    // vez de getCardTags(c) (array-aware, mesma fonte que tagsHtml()/
+    // cardHasTag() já usam). Card com a tag original removida e outra
+    // adicionada depois mostrava o selo da tag ERRADA (ou nenhum selo, se
+    // c.tag tivesse ficado vazio) na busca.
+    const tag = getTag(getCardTags(c)[0]);
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
     const ownerTxt = owner ? owner.name : (c.owner||'');
@@ -34421,7 +34634,11 @@ function toggleReaction(cid, emoji){
   renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
   // notifica o autor do comentário que reagiram (se não for ele mesmo)
   if(c.reactions[uid] && c.uid && c.uid!==uid){
-    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId);
+    // cid (achado /monitorarbugs 2026-09-22): sem passar o commentId, 2
+    // reações a 2 comentários DIFERENTES do mesmo autor dentro de 5s
+    // colidiam na dedupeKey (mesmo card, mesmo tipo) e a 2ª sumia — ver
+    // comentário completo na declaração de createNotif().
+    createNotif(c.uid,'reacao','💬 Reagiram ao seu comentário!',(window._currentUser?.displayName||'Alguém')+' reagiu '+emoji,_commentCardId,undefined,cid);
   }
 }
 function _renderReactions(c){
@@ -36452,8 +36669,10 @@ async function enviarFeedback(){
     Object.entries(usuarios).forEach(([uid,udata])=>{
       if(isAdmUser({email:udata.email, uid})){
         const icones = {bug:'🐛',sugestao:'💡',duvida:'❓',outro:'💬'};
+        // dedupeExtra=id — mesma classe (2 feedbacks de pessoas diferentes
+        // dentro de 5s pro mesmo ADM colidiriam sem isso, achado /monitorarbugs 2026-09-22).
         createNotif(uid, 'feedback', (icones[tipo]||'💬')+' Nova mensagem de '+payload.nome,
-          texto.slice(0,80)+(texto.length>80?'…':''), null);
+          texto.slice(0,80)+(texto.length>80?'…':''), null,undefined,undefined,undefined,id);
       }
     });
     document.getElementById('fb-texto').value = '';
