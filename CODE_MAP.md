@@ -2580,6 +2580,22 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   participante/status antes de re-renderizar.
 - "🎯 Cards do board com badge OKR" (`renderOKR()`) mudou de casa: antes
   na aba Visão, agora dentro desta aba nova, junto do resto do assunto.
+- **`_okrTryCloseObjetivo()`/`_okrTryCloseMarco()`** (`/monitorarbugs`
+  2026-09-22, confirmado com o usuário antes de implementar — decisão de
+  produto, não bug óbvio): fechar os modais (✕/clique fora/"Cancelar")
+  nunca avisava sobre alteração não salva, diferente do modal de card do
+  kanban.html (`_cardIsDirty()`) — um misclique descartava tudo em
+  silêncio, inclusive campos de texto longo (descrição, indicadores,
+  riscos, planos de ação). `_okrObjOpenSnapshot`/`_okrMarcoOpenSnapshot`
+  guardam `JSON.stringify(draft)` no momento de abrir; as 2 funções
+  sincronizam o DOM pro draft (`_okrSyncObjDraftFromDom()`/
+  `_okrSyncMarcoDraftFromDom()`) e comparam antes de fechar de verdade —
+  só confirmam com `uiConfirm()` se algo mudou. `closeOkrObjetivo()`/
+  `closeOkrMarco()` continuam chamadas DIRETO (sem passar por aqui) nos
+  fluxos que já persistiram ou descartaram de propósito (salvar/
+  arquivar/desarquivar/excluir) — só ✕/clique fora/"Cancelar" passam
+  pelo dirty-check. Só em `painel-dev.html` (não promovido a
+  `painel.html` ainda).
 
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`

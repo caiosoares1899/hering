@@ -2827,7 +2827,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-obj-title">🎯 Objetivo</div>
       <button class="x-btn" id="okr-obj-share-btn" onclick="shareOkrObjLink()" title="Copiar link direto deste Objetivo" style="display:none;margin-right:4px;">🔗</button>
-      <button class="x-btn" onclick="closeOkrObjetivo()">✕</button>
+      <button class="x-btn" onclick="_okrTryCloseObjetivo()">✕</button>
     </div>
     <div class="pc-modal-body" id="okr-obj-body"></div>
     <div class="pc-footer" id="okr-obj-footer"></div>
@@ -2839,14 +2839,14 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div class="pc-modal" style="width:min(560px,94vw);">
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-marco-title">🏁 Marco</div>
-      <button class="x-btn" onclick="closeOkrMarco()">✕</button>
+      <button class="x-btn" onclick="_okrTryCloseMarco()">✕</button>
     </div>
     <div class="pc-modal-body" id="okr-marco-body"></div>
     <div class="pc-footer" id="okr-marco-footer"></div>
   </div>
 </div>
 
-<div class="version">v3.56 · painel-dev</div>
+<div class="version">v3.57 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5561,6 +5561,12 @@ async function _okrNotifyEditado(objId){
 // ── Modal de Objetivo ─────────────────────────────────────────────────
 let _okrEditingObjId = null;   // id do objetivo aberto, null = criando novo
 let _okrObjDraft = null;       // rascunho em edição (só grava no Salvar)
+// Achado real (/monitorarbugs 2026-09-22): fechar o modal (X/clique fora/
+// Cancelar) nunca avisava sobre alterações não salvas, diferente do modal
+// de card do kanban.html (_cardIsDirty()). _okrObjOpenSnapshot guarda o
+// rascunho como estava ao abrir — _okrTryCloseObjetivo() compara contra o
+// estado atual antes de fechar de verdade.
+let _okrObjOpenSnapshot = null;
 
 function openOkrObjetivo(id){
   if(id && !okrObjetivos[id]) return;
@@ -5574,6 +5580,7 @@ function openOkrObjetivo(id){
   // _okrTrimestresOf(). Não regrava sozinho no Firebase, só no rascunho em
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
+  _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
   document.getElementById('okr-obj-title').textContent = id ? '🎯 Editar Objetivo' : '🎯 Novo Objetivo';
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
   // deep-link ?okr=<id> apontar) — "Novo Objetivo" ainda não tem pra onde
@@ -5584,7 +5591,22 @@ function openOkrObjetivo(id){
 }
 function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
-  _okrEditingObjId = null; _okrObjDraft = null;
+  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
+}
+// Fecha só depois de confirmar se há alteração não salva — mesmo espírito
+// de _cardIsDirty()/closeOv('card-ov') no kanban.html, que este modal nunca
+// teve. closeOkrObjetivo() continua sendo chamado DIRETO pelos fluxos que
+// já persistiram ou descartaram de propósito (salvar/arquivar/desarquivar/
+// excluir) — só quem tenta fechar sem ter feito nenhuma dessas ações (✕,
+// clique fora, "Cancelar") passa por aqui primeiro.
+async function _okrTryCloseObjetivo(){
+  if(_okrObjDraft && _okrObjOpenSnapshot!=null){
+    _okrSyncObjDraftFromDom();
+    if(JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+      if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+    }
+  }
+  closeOkrObjetivo();
 }
 // 🔗 Link direto pro Objetivo — pedido direto do usuário ("n tem como
 // cada okr ganhar um link compartilhado igual o card?"). Reaproveita
@@ -5769,7 +5791,7 @@ function renderOkrObjBody(id){
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
-    <button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
@@ -5851,6 +5873,9 @@ let _okrEditingMarcoId = null;
 let _okrEditingMarcoObjId = null;
 let _okrMarcoDraft = null;
 let _okrMarcoComments = [];
+// Mesmo achado/motivo de _okrObjOpenSnapshot acima — dirty-check ao fechar,
+// nunca existiu pro modal de Marco.
+let _okrMarcoOpenSnapshot = null;
 
 function openOkrMarco(id, objId){
   if(id && !okrMarcos[id]) return;
@@ -5860,6 +5885,7 @@ function openOkrMarco(id, objId){
     objetivoId: objId, nome:'', responsavel:'', prazo:'', progresso:'nao_iniciado',
     checklist:[], tags:[], participantes:[], descricao:'', history:[],
   };
+  _okrMarcoOpenSnapshot = JSON.stringify(_okrMarcoDraft);
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : '🏁 Novo Marco';
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');
@@ -5870,8 +5896,20 @@ function openOkrMarco(id, objId){
 function closeOkrMarco(){
   document.getElementById('okr-marco-ov').classList.remove('open');
   const objId = _okrEditingMarcoObjId;
-  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null;
+  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
   if(objId){ document.getElementById('okr-obj-ov').classList.add('open'); renderOkrObjBody(objId); }
+}
+// Mesmo espírito de _okrTryCloseObjetivo() acima — closeOkrMarco() continua
+// chamado direto por salvar/arquivar (já persistiram/descartaram de
+// propósito); só ✕/clique fora/"Cancelar" passam por aqui primeiro.
+async function _okrTryCloseMarco(){
+  if(_okrMarcoDraft && _okrMarcoOpenSnapshot!=null){
+    _okrSyncMarcoDraftFromDom();
+    if(JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+      if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+    }
+  }
+  closeOkrMarco();
 }
 // Mesmo achado/motivo de _okrSyncObjDraftFromDom() acima, pro modal de Marco:
 // toda ação de checklist/tag/participante/status re-renderiza #okr-marco-body
@@ -6037,7 +6075,7 @@ function renderOkrMarcoBody(){
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
-    <button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    <button onclick="_okrTryCloseMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
 }
@@ -6715,8 +6753,8 @@ document.addEventListener('click', function(e){
 
 document.addEventListener('click',e=>{if(e.target.id==='pc-modal-ov')closePcModal();});
 document.addEventListener('click',e=>{if(e.target.id==='pt-feed-ov')closePainelFeed();});
-document.addEventListener('click',e=>{if(e.target.id==='okr-obj-ov')closeOkrObjetivo();});
-document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')closeOkrMarco();});
+document.addEventListener('click',e=>{if(e.target.id==='okr-obj-ov')_okrTryCloseObjetivo();});
+document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')_okrTryCloseMarco();});
 
 // ── HELPER ───────────────────────────────────────────────────────
 function checklistPct(c){
