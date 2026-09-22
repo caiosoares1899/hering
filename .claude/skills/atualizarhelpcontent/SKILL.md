@@ -202,5 +202,22 @@ Formato: baseline → novo — o que motivou — achados/correções.
   já estava em dia — sinal consistente de que a maioria das features
   grandes já nasce com a Central de Ajuda atualizada junto.
 
+- **v8.30.708-dev→v8.30.732-dev (2026-09-22)**: pedido explícito
+  (`/atualizarhelpcontent`), 22 commits desde a última rodada. Maioria
+  fixes internos sem promessa nova pro usuário (pipeline de salvamento,
+  dedup de notificações, `parseMentions`). **1 gap real**: "Mural —
+  avisos do ADM" (Central de Ajuda) nunca mencionou que um Comunicado
+  🚨 Urgente (ou Popup + Insistente) também vira notificação de verdade
+  no sino — a feature (`_painelNotifyBroadcast()`) tinha ido ao ar
+  DENTRO desta mesma sessão (v8.30.728-dev/painel-dev v3.58, achada
+  numa rodada de `/monitorarbugs`) sem o texto de ajuda acompanhar.
+  Corrigido nos 2 lados: Central de Ajuda (`kanban-dev.html`) + a caixa
+  de dica 💡 inline da tela "Novo Comunicado" (`painel-dev.html`) —
+  as 2 fontes desta skill mesmo. Achado incidental, não corrigido
+  (pré-existente, não é regressão desta rodada): os 2 hovers novos de
+  gráfico (Tendência/Cards ativos por coluna, aba Visão Geral) não têm
+  entrada própria, mas nenhum gráfico daquela aba tem — só
+  Insights/CFD/Burndown são documentados.
+
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.

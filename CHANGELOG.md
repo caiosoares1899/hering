@@ -3646,6 +3646,30 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.732-dev — 2026-09-22 — `/atualizarhelpcontent`: Mural não mencionava que Urgente/Insistente também vira notificação de verdade
+
+Puramente documentação, sem mudança de comportamento. Revisão do
+período desde a última rodada (v8.30.708-dev, 2026-09-18) — 22 commits
+no `kanban-dev.html`, a maioria fixes internos sem promessa nova pro
+usuário (pipeline de salvamento, dedup de notificações, etc.), exceto 1
+gap real: a entrada "Mural — avisos do ADM" da Central de Ajuda nunca
+mencionou que um Comunicado 🚨 Urgente (ou Popup + Insistente) também
+gera uma notificação de verdade no sino — feature que foi ao ar nesta
+mesma sessão (v8.30.728-dev, PR #1031) sem esse texto ter sido
+atualizado junto. Adicionado um parágrafo curto explicando isso.
+Contraparte inline (`painel-dev.html`, tela de compor Comunicado)
+também atualizada na mesma rodada — ver entrada correspondente abaixo.
+
+Achado incidental, não corrigido (pré-existente, fora do escopo): as
+2 melhorias de hover (`Tendência — últimos 14 dias`/`Cards ativos por
+coluna`, aba Visão Geral de 📊 Dados do Board) não têm entrada própria
+na Central de Ajuda — mas nenhum gráfico da aba Visão Geral tem, mesmo
+antes dessas melhorias (só Insights/CFD/Burndown têm entrada dedicada),
+então não é uma regressão introduzida agora.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens +3).
+
 ### v8.30.731-dev — 2026-09-22 — `parseMentions()`: `opts.includeSelf` era ignorado pra @menções normais — automação nunca notificava quem disparou o próprio evento
 
 Achado ao validar o fix anterior (v8.30.730-dev, aviso de conclusão do
@@ -18370,6 +18394,21 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.60 · painel-dev — 2026-09-22 — `/atualizarhelpcontent`: tela de compor Comunicado não avisava sobre a notificação de Urgente/Insistente
+
+Puramente documentação, sem mudança de comportamento. Contraparte do
+fix de `kanban-dev.html` (v8.30.732-dev) — a caixa de dica 💡 na tela
+"Novo Comunicado" (explica Popup/Só no mural/Insistente pro ADM que
+está compondo) nunca mencionava que 🚨 Urgente (ou Popup + Insistente)
+também dispara uma notificação de verdade pra quem deve receber, feature
+que foi ao ar na mesma sessão (v3.58 · painel-dev) sem esse texto ter
+sido atualizado junto — exatamente o tipo de gap que esta skill existe
+pra pegar (as 2 fontes — Central de Ajuda do kanban e texto inline do
+painel — contam a mesma história, só que em profundidades diferentes).
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens -14).
 
 ### painel-dev.html v3.59 · painel-dev — 2026-09-22 — `/monitorarbugs` (escopo: notificações do painel): "Marcar todas como lidas"/"Limpar lidas" do sino podiam apagar notificação nova em silêncio
 
