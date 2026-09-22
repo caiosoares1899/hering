@@ -2254,6 +2254,27 @@ pra trás de um comportamento que os outros já tinham.
   (`col.name`/`col.id` de undefined). Agora normaliza igual ao client
   (`Array.isArray?:Object.values`, depois `filter(Boolean)`)
 
+### Links / Modelos-Recorrentes-Agendamentos (`qlItems`) — escrita concorrente
+- `addLink()`/`delLink()` — L23994+ ("🔗 Links", squad) e
+  `addQLItem()`/`delQLItem()` — L23499/L23803 (Modelos/Recorrentes/
+  Agendamentos, `qlItems[tipo]`) — **achado real (/monitorarbugs
+  2026-09-22)**: os 2 arrays são sincronizados ao vivo (`fbListen`), mas
+  adicionar/remover reescrevia o array local INTEIRO de volta
+  (`fbSet`) — mesma classe já corrigida em Kudos (2026-09-14)/Lembretes/
+  Dashboard consolidado (2026-09-17), só que aqui com listener em tempo
+  real em vez de poll (janela de corrida bem mais estreita, mas real).
+  Fix: `window._runTransaction()`, mesmo padrão de `addKudos()`.
+  **Achado incidental reportado, NÃO corrigido**: os outros 6 pontos que
+  mutam um item ESPECÍFICO de `qlItems` por índice local
+  (`salvarAgendamento()` L23458, `saveReqFields()` L23492,
+  `salvarRecorrencia()` L23881/L23895, e os 2 de criação automática
+  diária de card recorrente/agendado L23651/L23732) têm o MESMO risco de
+  corrida, mas `qlItems` não tem `id` próprio por item — corrigir direito
+  exigiria localizar "o mesmo item" no valor fresco da transaction sem um
+  identificador estável, ou adicionar um `id` a cada item (mudança de
+  modelo de dado, não só do ponto de escrita) — fora do escopo de um fix
+  pontual, reportado como recomendação.
+
 ### Marcadores `// --- X ---` já existentes no código
 Só existem para um subconjunto pequeno de áreas — não é uma convenção
 aplicada no arquivo inteiro, não confie neles como única forma de navegar:

@@ -3646,6 +3646,34 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.725-dev — 2026-09-22 — `/monitorarbugs`: 🔗 Links e Modelos/Recorrentes/Agendamentos podiam apagar em silêncio um item adicionado por outra pessoa
+
+`addLink()`/`delLink()` ("🔗 Links", squad) e `addQLItem()`/
+`delQLItem()` (Modelos/Recorrentes/Agendamentos, `qlItems`) reescreviam
+o array local INTEIRO de volta no Firebase a cada adição/remoção —
+mesma classe de bug já corrigida em Kudos (2026-09-14), Lembretes e
+Dashboard consolidado (2026-09-17): se alguém mais adicionasse/removesse
+um item na janela entre o último eco do listener em tempo real e o seu
+clique, essa mudança sumia em silêncio na próxima escrita. Aqui a
+janela é bem mais estreita que nos casos anteriores (listener ao vivo,
+não um poll de minutos), mas real.
+
+Fix: os 4 pontos passam a usar `window._runTransaction()`, recalculando
+sobre o valor fresco do servidor a cada tentativa — mesmo padrão já
+usado em `addKudos()`.
+
+**Achado incidental reportado, não corrigido**: outros 6 pontos que
+editam um item específico de `qlItems` por posição no array local
+(editar data/coluna de um agendamento, campos obrigatórios de um
+modelo, ativar/configurar uma recorrência, e a criação automática
+diária de cards recorrentes/agendados) têm o mesmo risco de corrida —
+mas `qlItems` não tem um `id` próprio por item, então corrigir direito
+exigiria uma mudança no modelo de dado, não só no ponto de escrita.
+Documentado no `CODE_MAP.md` como recomendação futura.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.724-dev — 2026-09-22 — `/monitorarbugs`: WIP calculado com string fixa `'progress'` (mesmo bug do `'done'` de 2026-09-04, campo irmão nunca corrigido)
 
 `updateMetrics()` (Ágil, toolbar), `renderBoardDataGrid()` (📊 Dados do

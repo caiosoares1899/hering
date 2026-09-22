@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.724-dev</div>
+<div class="version">v8.30.725-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23498,8 +23498,18 @@ function addQLItem(){
   const title=document.getElementById('ql-new-title').value.trim(); if(!title) return;
   const tag=document.getElementById('ql-new-tag').value;
   if(!qlItems[currentQL]) qlItems[currentQL]=[];
-  qlItems[currentQL].push({title,tag});
-  fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]);
+  const item={title,tag};
+  qlItems[currentQL].push(item); // otimista, só pra resposta instantânea na tela
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe de Kudos/Links):
+  // qlItems (Modelos/Recorrentes/Agendamentos) é sincronizado ao vivo
+  // (fbListen), mas escrever o array local inteiro de volta ainda perde um
+  // item adicionado por outra pessoa na janela entre o último eco do
+  // listener e este clique. transaction() recalcula sobre o valor FRESCO.
+  window._runTransaction(window._ref(window._db, FB+'/ql_items/'+currentQL), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(item);
+    return arr;
+  }).catch(e=>showToast('Erro ao adicionar: '+e.message));
   document.getElementById('ql-new-title').value='';
   renderQLBody();
 }
@@ -23790,7 +23800,19 @@ function processRelembreteAuto(){
     updLemBadge();
   }
 }
-function delQLItem(i){ qlItems[currentQL].splice(i,1); fbSet(FB+'/ql_items/'+currentQL,qlItems[currentQL]); renderQLBody(); }
+function delQLItem(i){
+  const alvo=qlItems[currentQL]?.[i]; if(!alvo) return;
+  qlItems[currentQL].splice(i,1);
+  // Mesmo achado/fix de addQLItem() acima. Sem id próprio, remoção continua
+  // por conteúdo (title+tag) — mesma fragilidade de duplicata exata que já
+  // existia antes (não piora nada), só sem mais o risco de apagar a
+  // adição/edição de outra pessoa.
+  window._runTransaction(window._ref(window._db, FB+'/ql_items/'+currentQL), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(it=>!(it.title===alvo.title && it.tag===alvo.tag));
+  }).catch(e=>showToast('Erro ao excluir: '+e.message));
+  renderQLBody();
+}
 // ── Modal de configuração de recorrência ──
 let _recEditIdx=null;
 let _editingQLItem = null; // {tipo, idx} quando editando um modelo/recorrente via modal de card
@@ -24004,17 +24026,43 @@ function renderLinksBody(){
     body.appendChild(row);
   });
 }
+// Achado real (/monitorarbugs 2026-09-22, mesma classe já corrigida em
+// Kudos/Lembretes/Dashboard consolidado): addLink()/delLink() escreviam o
+// array `links` local inteiro de volta (fbSet) — mesmo com fbListen(FB+
+// '/links',...) sendo um listener ao vivo (não um poll, diferente do caso
+// mais grave de Kudos), ainda existe uma janela entre o eco do listener e
+// o clique de outra pessoa onde o array local fica um passo atrás; nesse
+// intervalo, um link adicionado/removido por alguém mais é apagado em
+// silêncio pela próxima escrita. transaction() recalcula sobre o valor
+// FRESCO do servidor a cada tentativa, mesmo padrão de addKudos()/
+// delKudos(). Links não têm id próprio (dado histórico) — remoção
+// continua por conteúdo (label+url), mesma fragilidade de duplicata
+// exata que já existia antes, só que agora sem risco de apagar a edição
+// de outra pessoa.
 function addLink(){
   const label=document.getElementById('link-new-label').value.trim();
   const url=document.getElementById('link-new-url').value.trim();
   if(!url) return;
-  links.push({label:label||url,url});
-  fbSet(FB+'/links',links);
+  const lk={label:label||url,url};
+  links.push(lk); // otimista, só pra resposta instantânea na tela
+  window._runTransaction(window._ref(window._db, FB+'/links'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(lk);
+    return arr;
+  }).catch(e=>showToast('Erro ao adicionar link: '+e.message));
   document.getElementById('link-new-label').value='';
   document.getElementById('link-new-url').value='';
   renderLinksBody();
 }
-function delLink(i){ links.splice(i,1); fbSet(FB+'/links',links); renderLinksBody(); }
+function delLink(i){
+  const alvo=links[i]; if(!alvo) return;
+  links.splice(i,1);
+  window._runTransaction(window._ref(window._db, FB+'/links'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(lk=>!(lk.url===alvo.url && lk.label===alvo.label));
+  }).catch(e=>showToast('Erro ao remover link: '+e.message));
+  renderLinksBody();
+}
 
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
