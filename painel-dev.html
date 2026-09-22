@@ -2846,12 +2846,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.58 · painel-dev</div>
+<div class="version">v3.59 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
@@ -2894,7 +2894,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   return credential;
 });
 
-window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove; window._runTransaction=runTransaction;
 // query/orderByChild/limitToLast: mesmo padrão de window._query/_orderByChild/
 // _equalTo já pendurados no kanban-dev.html (fix do consumo de comunicados,
 // 2026-09-11) -- bindings de import de módulo ES não atravessam pro <script>
@@ -8160,11 +8160,21 @@ async function markAllPainelNotifsRead(){
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
   if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  const idsNaoLidas = new Set(naoLidas.map(n=>n.id));
   try {
-    const snap = await window._get(ref);
-    const val = snap.val() || {};
-    naoLidas.forEach(n=>{ if(val[n.id]) val[n.id].read = true; });
-    await window._set(ref, val);
+    // runTransaction() em vez de get()+set() do node inteiro (achado real,
+    // /monitorarbugs 2026-09-22, mesma classe já corrigida em Kudos/
+    // Lembretes/Dashboard consolidado/Links/qlItems): entre o get() e o
+    // set() havia uma janela onde uma notificação NOVA chegando por outro
+    // caminho (menção, prazo, push...) era descartada em silêncio ao
+    // regravar o node inteiro com um snapshot já desatualizado.
+    // runTransaction() recalcula sobre o valor FRESCO do servidor a cada
+    // tentativa, sem esse risco.
+    await window._runTransaction(ref, current=>{
+      if(!current) return current;
+      idsNaoLidas.forEach(id=>{ if(current[id]) current[id].read = true; });
+      return current;
+    });
     showToast('✅ '+naoLidas.length+' notificação'+(naoLidas.length>1?'ões':'')+' marcada'+(naoLidas.length>1?'s':'')+' como lida'+(naoLidas.length>1?'s':'')+'.');
   } catch(e) {
     showToast('❌ Erro ao marcar como lidas.');
@@ -8177,11 +8187,14 @@ async function clearReadPainelNotifs(){
   const lidas = _painelNotifs.filter(n=>n._kind==='notif' && n.read);
   if(!lidas.length){ showToast('Nenhuma notificação lida para remover.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  const idsLidas = new Set(lidas.map(n=>n.id));
   try {
-    const snap = await window._get(ref);
-    const val = snap.val() || {};
-    lidas.forEach(n=>{ delete val[n.id]; });
-    await window._set(ref, val);
+    // runTransaction() — mesmo achado/fix de markAllPainelNotifsRead() acima.
+    await window._runTransaction(ref, current=>{
+      if(!current) return current;
+      idsLidas.forEach(id=>{ delete current[id]; });
+      return current;
+    });
     showToast('🧹 '+lidas.length+' notificação'+(lidas.length>1?'ões':'')+' lida'+(lidas.length>1?'s':'')+' removida'+(lidas.length>1?'s':'')+'.');
   } catch(e) {
     showToast('❌ Erro ao limpar notificações.');

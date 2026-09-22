@@ -2401,6 +2401,15 @@ no `.map()`.
   `swPtab()` continuando a salvar a aba ativa a cada troca. Não
   corrigido ainda (fora do escopo daquela rodada — era sobre clique não
   navegar, isso é falta de persistência entre sessões).
+- `markAllPainelNotifsRead()`/`clearReadPainelNotifs()` — usam
+  `window._runTransaction()` sobre o node inteiro (achado real,
+  `/monitorarbugs` 2026-09-22, mesma classe já corrigida em Kudos/
+  Lembretes/Dashboard consolidado do painel): antes faziam `get()` do
+  node inteiro + mutação local + `set()` de volta — notificação nova
+  chegando nessa janela (menção, prazo, push de outra aba) era
+  descartada em silêncio. `runTransaction` precisou ser importado do
+  SDK e exposto em `window._runTransaction` pela 1ª vez em
+  `painel-dev.html` (já existia em `kanban-dev.html` desde 2026-09-14).
 
 ### Aba "🛤️ Timeline" (criada 2026-09-04, presente nos dois arquivos —
 promovida pra prod v3.09 · painel; revisão de UI/UX + visual "glass"

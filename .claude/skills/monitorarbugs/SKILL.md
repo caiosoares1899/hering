@@ -2284,6 +2284,40 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   parâmetro que só alguns call sites conseguem preencher bem (aqui,
   `cardId`) pode esconder um bug na função em si, não nos call sites.
 
+- **2026-09-22, "dentro de notificações" (continuação — cobrindo os
+  ângulos que a rodada anterior, "notificações do kanban", tinha
+  deixado de fora: sino próprio do painel, notificações nativas do
+  navegador, push/DND/poda de token)**: 1 achado real severo, técnica 1
+  (mesmo padrão já corrigido 3x antes em outros nodes —
+  Kudos/Lembretes/Dashboard consolidado do painel). `markAllPainelNotifsRead()`/
+  `clearReadPainelNotifs()` (o sino PRÓPRIO do painel, nunca auditado
+  nesse ângulo antes — só a navegação ao clicar tinha tido rodada, em
+  2026-09-06) liam o node INTEIRO de `.../notificacoes` (`get()`),
+  mutavam localmente e regravavam ele inteiro de volta (`set()`) —
+  notificação nova chegando nessa janela (menção, prazo, push de outra
+  aba) sumia em silêncio a cada "Marcar todas como lidas"/"Limpar
+  antigas". Fix: `window._runTransaction()`, mesmo padrão dos 3
+  precedentes — só que `painel-dev.html` nunca tinha `runTransaction`
+  importado do SDK nem exposto em `window.`, precisou dos 2 (import +
+  `window._runTransaction=runTransaction`). painel-dev v3.59. Checado e
+  sem achado: `checkUpcomingMeetings()` (dedup por `Set`+`tag`, respeita
+  DND, limpeza de ids expirados — já bem hardened); `PUSH_TYPES`
+  (`functions/index.js`) comparado contra todos os tipos que
+  `createNotif()` cria — vários tipos de fora da lista
+  (`checklist`/`done`/`moved`/`kudos`/`kudos_monitor`/`gcal_pending`/
+  `gcal_approved`/`reacao`/`rascunho`), mas o comentário da própria
+  declaração já documenta a lista como curadoria deliberada e ajustável
+  ("ajuste conforme o time for testando"), não um allow-list esquecido
+  — diferente dos achados reais de `painel_broadcast`/`reuniao`/
+  `due_today` (2026-09-18/22), aqui não há nenhum sinal de que algum
+  desses tipos DEVERIA empurrar push e simplesmente foi esquecido, fica
+  como observação, não como achado; checagem de Não Perturbe no
+  servidor (`dnd.on`/`dnd.until`) comparada campo a campo contra
+  `isDndActive()` do cliente — mesma semântica exata; poda de tokens
+  FCM só remove nos 2 códigos de erro corretos
+  (`registration-token-not-registered`/`invalid-argument`), sem
+  over-pruning.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
