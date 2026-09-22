@@ -18298,6 +18298,46 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.59 · painel-dev — 2026-09-22 — `/monitorarbugs` (escopo: notificações do painel): "Marcar todas como lidas"/"Limpar lidas" do sino podiam apagar notificação nova em silêncio
+
+Escopo pedido: continuação da rodada de notificações, agora olhando
+pra ângulos ainda não cobertos — o sino PRÓPRIO do painel
+(`loadPainelNotifs()`/`renderPainelNotifs()`), notificações nativas do
+navegador e push, todos revisados de ponta a ponta.
+
+Achado real e severo em `markAllPainelNotifsRead()`/
+`clearReadPainelNotifs()`: os dois liam o node inteiro de
+`kanban/usuarios/{uid}/notificacoes` (`get()`), mutavam o objeto
+localmente (marcando como lida / apagando as lidas) e regravavam ele
+INTEIRO de volta (`set()`) — clássica janela de corrida "lê tudo,
+muta, escreve tudo de volta", mesma classe de bug já corrigida nesta
+sessão em Kudos (PR #896), Lembretes (PR #900) e no Dashboard
+consolidado do painel (PR #957). Qualquer notificação NOVA chegando
+nesse meio-tempo por outro caminho — uma menção, um prazo vencendo,
+um push chegando de outra aba — era descartada em silêncio no próximo
+clique em "Marcar todas como lidas" ou "Limpar antigas", porque o
+`set()` sobrescrevia com um snapshot já desatualizado.
+
+Fix: os 2 passam a usar `window._runTransaction()` (Firebase
+`runTransaction()`, já usada em `kanban-dev.html` desde 2026-09-14
+pra Kudos/Lembretes) — recalcula a mutação sobre o valor FRESCO do
+servidor a cada tentativa, sem essa janela. `painel-dev.html` nunca
+tinha `runTransaction` importado do SDK nem exposto em `window.` —
+adicionado ao import do módulo Firebase e a `window._runTransaction`,
+mesmo padrão de `window._set`/`window._get`/etc já expostos ali.
+
+Revisado sem achado: notificações nativas do navegador
+(`checkUpcomingMeetings()`, dedup por `Set`/`tag`, respeita DND,
+limpeza de ids expirados); `functions/index.js` — `PUSH_TYPES`
+(comentário já documenta como lista curada deliberadamente, ajustada
+sob demanda — não um allow-list "esquecido"), checagem de Não
+Perturbe (`dnd.on`/`dnd.until`, semântica idêntica ao `isDndActive()`
+do cliente), poda de tokens FCM inválidos (só remove nos códigos de
+erro certos, `registration-token-not-registered`/`invalid-argument`).
+
+Checks de rotina: `node --check` OK (bloco clássico + módulo);
+balanço de chaves/parênteses consistente com o diff aplicado.
+
 ### painel-dev.html v3.58 · painel-dev — 2026-09-22 — `/monitorarbugs`: Comunicado urgente agora notifica quem não está com o board aberto
 
 Achado real, técnica 6 (código morto pela via inversa — infraestrutura
