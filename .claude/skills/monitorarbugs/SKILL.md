@@ -2117,6 +2117,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   nas 3 primitivas, uma 4ª via de escrita nunca coberta) sem a mesma
   correção.
 
+- **2026-09-22, WIP (pedido genérico, "roda outro" — área nunca
+  auditada, escolhida por eliminação já que o pipeline de salvamento
+  tinha acabado de passar por 2 rodadas seguidas)**: 1 achado real, 3
+  call sites, técnica 2+3 combinadas — `updateMetrics()`/
+  `renderBoardDataGrid()`/`maybeSnapshot()` calculavam WIP com
+  `c.col==='progress'` (string fixa), exatamente a mesma classe de bug
+  já corrigida em 2026-09-04 pro campo IRMÃO `done` (`_isColDone()`)
+  NESSAS MESMAS 3 FUNÇÕES — o comentário da correção antiga estava
+  literalmente do lado da linha do `wip` nunca corrigida. Squad que
+  recriou/renomeou a coluna "Em andamento" sempre via WIP=0.
+  `maybeSnapshot()` grava isso permanente no Firebase 1x/dia. Fix:
+  `_flowStartColIds()` (já o resolvedor canônico do conceito "coluna de
+  início", usado pelas Métricas de Fluxo). Achado incidental reportado,
+  não corrigido (ambíguo, decisão de produto): o "limite" mostrado
+  junto (`agilCfg.wip`) ignora `_colWipLimit()`, que já suporta limite
+  por coluna — sem forma óbvia de agregar se `_flowStartColIds()`
+  devolver mais de 1 coluna. dev v8.30.724-dev. **Lição pra próxima
+  vez**: quando uma função já documenta ter corrigido um campo pra usar
+  um resolvedor canônico (aqui, `done`→`_isColDone()`), vale checar se
+  TODOS os campos irmãos da mesma função (aqui, `wip`) receberam a
+  mesma correção — o comentário do fix antigo geralmente está a poucas
+  linhas do bug ainda vivo, tornando a técnica 3 (comentário vs.
+  código) quase automática de aplicar.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

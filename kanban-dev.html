@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.723-dev</div>
+<div class="version">v8.30.724-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13270,7 +13270,16 @@ function toggleCol(id){
 
 function updateMetrics(){
   const g=document.getElementById('met-grid'); if(!g) return;
-  const wip=cards.filter(c=>c.col==='progress'&&!c.archived).length;
+  // Achado real (/monitorarbugs 2026-09-22, técnica 2+3): comparava contra a
+  // string fixa 'progress' — mesma classe já corrigida pro campo `done`
+  // aqui do lado (achado 2026-09-04, ver comentário 3 linhas abaixo), nunca
+  // aplicada ao WIP. addColumn() nunca gera id 'progress' (gera 'col_'+
+  // timestamp) — squad que recriou/renomeou a coluna "Em andamento" sempre
+  // mostrava WIP=0. _flowStartColIds() já é o resolvedor canônico desse
+  // conceito (config do PO + heurística por nome), usado pelas Métricas de
+  // Fluxo — mesmo critério aqui.
+  const _wipColIds=new Set(_flowStartColIds());
+  const wip=cards.filter(c=>_wipColIds.has(c.col)&&!c.archived).length;
   const bl=cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length;
   // Achado real (/monitorarbugs 2026-09-04): comparava contra a string fixa
   // 'done' — squad que já recriou a coluna de conclusão (addColumn() gera
@@ -13296,7 +13305,10 @@ function renderBoardDataGrid(){
   // hotline (owner:'' sempre, nunca tem prazo) inflava "Cards ativos" e
   // "Sem responsável" em +1 permanentemente em qualquer squad com o recurso.
   const activeCards=cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
-  const wip=activeCards.filter(c=>c.col==='progress').length;
+  // Mesmo achado/fix de updateMetrics() acima (/monitorarbugs 2026-09-22):
+  // 'progress' fixo → _flowStartColIds().
+  const _wipColIds2=new Set(_flowStartColIds());
+  const wip=activeCards.filter(c=>_wipColIds2.has(c.col)).length;
   const bl=activeCards.filter(c=>_cardIsBlocked(c)).length;
   // Mesmo achado do updateMetrics() acima — _isColDone() em vez da string
   // fixa 'done' (achado real, /monitorarbugs 2026-09-04).
@@ -13436,11 +13448,15 @@ function maybeSnapshot(){
   // /monitorarbugs 2026-09-04, mesma classe do updateMetrics()/
   // renderBoardDataGrid() acima) — snapshot é gravado PERMANENTE no
   // Firebase 1x/dia, então snapshots já gravados com o bug antigo não são
-  // corrigidos retroativamente, só os de hoje em diante.
+  // corrigidos retroativamente, só os de hoje em diante. wip: mesma classe,
+  // mas só corrigida agora (/monitorarbugs 2026-09-22) — 'progress' fixo →
+  // _flowStartColIds(), mesmo fix aplicado em updateMetrics()/
+  // renderBoardDataGrid().
+  const _wipColIds3=new Set(_flowStartColIds());
   const snapshot={
     date:today,squad:ACTIVE_SQUAD,
     total:cards.filter(c=>!c.archived).length,
-    wip:cards.filter(c=>c.col==='progress'&&!c.archived).length,
+    wip:cards.filter(c=>_wipColIds3.has(c.col)&&!c.archived).length,
     done:cards.filter(c=>_isColDone(c.col)&&!c.archived).length,
     blockers:cards.filter(c=>_cardIsBlocked(c)&&!c.archived).length,
     byCol:columns.reduce((acc,col)=>{
