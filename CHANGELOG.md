@@ -3646,6 +3646,31 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.731-dev — 2026-09-22 — `parseMentions()`: `opts.includeSelf` era ignorado pra @menções normais — automação nunca notificava quem disparou o próprio evento
+
+Achado ao validar o fix anterior (v8.30.730-dev, aviso de conclusão do
+Supercard) na UI de verdade, não no console: usuário testou vinculando
+um filho já concluído sendo ele mesmo o Responsável do card — o
+comentário foi postado certinho, marcando `@CO`, mas a notificação nunca
+chegou.
+
+Causa raiz: `parseMentions()` tem 2 branches de @menção — `@todos`
+(coletivo) e `@handle`/`@init` (pessoa específica). O branch `@todos` já
+respeitava `opts.includeSelf` desde que o parâmetro existe (2026-09-01);
+o branch normal tinha um `if(uid===window._currentUser?.uid) continue;`
+**hardcoded**, sem checar `opts.includeSelf` antes — sempre excluía quem
+está logado, mesmo quando quem chamou a função pediu explicitamente
+`includeSelf:true`. Isso não afetava só a feature nova: `notify_po_org`
+(ação de Automação já existente) tinha o MESMO bug — se a pessoa cujo
+card/ação disparou a regra fosse justamente um PO/Organizador sendo
+@mencionado, ela nunca era notificada, em silêncio.
+
+Fix: o branch normal agora também checa `!opts.includeSelf` antes de
+excluir. `@todos` não precisou de mudança (já estava certo).
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens +3).
+
 ### v8.30.730-dev — 2026-09-22 — Supercard: conclusão automática nunca disparava — trocada por comentário avisando o Responsável
 
 Relato direto do usuário, com print: um supercard ("Semana do Cliente")

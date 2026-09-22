@@ -1650,7 +1650,17 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
 - `checkDueNotifs()` — L28598 — due_today/due_overdue, 1x/dia
 - `parseMentions()` — L28406 — @menção em descrição/PO/checklist/comentário;
   `@todos` (`TODOS_MENTION_ENTRY`, 2026-09-01) notifica todos os membros do
-  squad de uma vez em vez de 1 pessoa.
+  squad de uma vez em vez de 1 pessoa. `opts.includeSelf` (2026-09-01,
+  achado real corrigido 2026-09-22): o branch `@todos` já respeitava desde
+  a origem, mas o branch normal (`@handle`/`@init`, usado por
+  `notify_po_org` e `_notifySupercardAllDone()`) ignorava o parâmetro por
+  completo — `if(uid===window._currentUser?.uid) continue;` sem checar
+  `opts.includeSelf` antes. Quando quem disparava o evento automático era
+  justamente a pessoa @mencionada (PO que causou a própria regra,
+  Responsável que acabou de vincular o último filho do supercard), ela
+  nunca era notificada, em silêncio — achado via teste real na UI, não no
+  console (o script de teste usava um init fake, que nunca bateria com o
+  próprio usuário testando).
 - `mentionCandidates()`/`mentionMatchLabel()` — L7427/L7446 — autocomplete
   de @; entradas sintéticas (`init` sentinela, nunca um membro real):
   `TODOS_MENTION_ENTRY` (sempre 1ª opção) e `AGENTE_AGIL_MENTION_ENTRY`
