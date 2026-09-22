@@ -2141,6 +2141,31 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   linhas do bug ainda vivo, tornando a técnica 3 (comentário vs.
   código) quase automática de aplicar.
 
+- **2026-09-22, "roda mais um" (genérico — grep sistemático de todo
+  `fbSet(FB+'/...` do arquivo, técnica 1 aplicada de forma exaustiva em
+  vez de escopo por feature)**: 1 achado real em 2 áreas pequenas nunca
+  auditadas, mesma classe já corrigida em Kudos (2026-09-14)/Lembretes/
+  Dashboard consolidado (2026-09-17) — array sincronizado por listener
+  AO VIVO (não poll) ainda assim reescrito inteiro a partir do estado
+  local, perdendo em silêncio o que outra pessoa adicionou/removeu na
+  janela entre o eco do listener e o clique. `addLink()`/`delLink()`
+  ("🔗 Links") e `addQLItem()`/`delQLItem()` (Modelos/Recorrentes/
+  Agendamentos) corrigidos com `window._runTransaction()`. Achado maior,
+  reportado e NÃO corrigido: outros 6 call sites de `qlItems` que editam
+  um item ESPECÍFICO por posição no array (não só adicionar/remover) têm
+  o mesmo risco, mas `qlItems` não tem `id` por item — consertar direito
+  exige mudança de modelo de dado, fora do escopo de um fix pontual. dev
+  v8.30.725-dev. **Lição pra próxima vez**: a técnica 1 ("grep TODOS os
+  writers do mesmo padrão") rende achado mesmo sem escopo de feature
+  nenhum — aqui bastou grepar `fbSet(FB+'/` inteiro e comparar cada
+  resultado contra o padrão de bug já conhecido (array local reescrito
+  sem reler fresco), achando 2 features pequenas que nunca tinham tido
+  nome numa rodada anterior. E: quando o fix certo esbarra numa
+  limitação de MODELO DE DADO (aqui, falta de `id` estável), a linha
+  certa é corrigir só os call sites onde isso não importa (adicionar,
+  puramente append) e reportar o resto — não forçar um id-by-content
+  frágil em 6 lugares diferentes só pra "corrigir tudo".
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
