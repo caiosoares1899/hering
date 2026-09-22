@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.729-dev</div>
+<div class="version">v8.30.730-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26496,7 +26496,7 @@ const HELP_CONTENT = {
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
-    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n✅ Conclusão automática: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o pai vai pra lá sozinho — e isso cascateia pelos 2 níveis (todas as versões concluídas → o criativo conclui sozinho → se completar os últimos criativos pendentes, a campanha conclui também, no mesmo evento). Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), o pai fica onde está — cancelar tudo não é a mesma coisa que concluir tudo.' },
+    { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.' },
     { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.' },
@@ -27517,6 +27517,12 @@ function persistSuperChildren(histWhat){
   parent.childCardIds = [...editingSuperChildren.map(l=>l.id), ...editingSuperArchivedIds];
   fbSaveCard(parent);
   _crvPropagateToChildren(parent); // Ficha Técnica compartilhada — cobre filho recém-adicionado/criado, ver declaração
+  // Achado real /monitorarbugs 2026-09-22: vincular um filho que já estava
+  // concluído (ex.: "+ Adicionar" um card existente já pronto) nunca
+  // disparava a checagem de "todos os filhos concluídos" — só um evento de
+  // MOVER disparava (ver _checkSupercardAllDone()). Card vinculado assim
+  // como o último filho pendente nunca gerava o aviso pro Responsável.
+  _notifySupercardAllDone(parent);
   renderBoard(); // atualiza o rollup no board na hora
 }
 function hideSuperChildDropdown(){ document.getElementById('m-super-link-dropdown')?.classList.remove('show'); }
@@ -31820,71 +31826,68 @@ function _autoRuleActions(rule){
 
 // Coluna "cancelamento" só por heurística de nome — não existe um cancelCols
 // configurável separado do doneCols (que já junta Concluído+Cancelado pro
-// resto do fluxo/CFD, ver _flowDoneColIds()). Usado só por
-// _checkSupercardAutoComplete() pra decidir se o supercard conclui sozinho
-// ou fica onde está quando TODOS os filhos terminam cancelados — pedido
-// direto: "se todos filhos forem cancelados, o supercard deve se manter
-// onde está" (cancelar tudo não é a mesma coisa que concluir tudo).
+// resto do fluxo/CFD, ver _flowDoneColIds()). Usado por
+// _notifySupercardAllDone() pra decidir se avisa ou fica quieto quando
+// TODOS os filhos terminam cancelados — pedido direto: "se todos filhos
+// forem cancelados, o supercard deve se manter onde está" (cancelar tudo
+// não é a mesma coisa que concluir tudo).
 function _isColCancelLike(colId){
   const col=(columns||[]).find(c=>c.id===colId);
   return /cancel/i.test(col?.name||'');
 }
 // Quando TODOS os filhos ATIVOS de um supercard chegam numa coluna de fim
-// (Concluído, Cancelado etc. — ver _flowDoneColIds(), que respeita a config
-// do PO em vez de assumir só uma coluna "done"), o pai vai pra lá sozinho:
-// o supercard é a soma dos filhos, não faz sentido continuar aberto se tudo
-// já foi resolvido. Espelha _crvPropagateToChildren() (pai→filhos, Ficha
-// Técnica), só que na direção oposta (filhos→pai). Filhos arquivados ficam
-// de fora da checagem (não contam nem a favor nem contra); se não sobrar
-// nenhum filho ativo, não decide sozinho. Exceção: se TODOS os filhos
-// ativos terminaram cancelados (nenhum de fato concluído), o pai fica onde
-// está — ver _isColCancelLike() acima.
-function _checkSupercardAutoComplete(childCard, ancestry){
+// (Concluído, Cancelado etc. — ver _flowDoneColIds()), posta um comentário
+// automático no PAI marcando o Responsável, pedindo pra ele mover o card
+// pra Concluído. Decisão do usuário (2026-09-22, achado /monitorarbugs —
+// a versão anterior desta função movia o pai SOZINHO, e não estava nem
+// disparando: _checkSupercardAllDone() só era chamada em eventos de
+// MOVIMENTO de um filho, nunca ao VINCULAR um filho já concluído via
+// addSuperChild()/persistSuperChildren(), o caminho real que causou o
+// relato original): mover sozinho tira a decisão da pessoa responsável;
+// um aviso pedindo confirmação é mais seguro E resolve o próprio bug (o
+// aviso dispara nos 2 caminhos agora, ver call sites). `_superAllDoneNudged`
+// evita repetir o aviso a cada novo evento — reseta sozinho se o card
+// deixar de estar 100% completo (reabriu um filho, adicionou um novo).
+// Diferente da versão anterior, não cascateia sozinha pelos 2 níveis: o
+// aviso do nível de cima só dispara quando a pessoa move o nível de baixo
+// de verdade (isso já é um evento de 'move' novo, que re-roda esta mesma
+// checagem pro avô — sem precisar de recursão nem guard de ciclo).
+function _checkSupercardAllDone(childCard){
   if(!childCard) return;
-  // Guard contra ciclo corrompido nos dados (achado via /monitorarbugs,
-  // mesma classe de risco que já motivou o `visited` de _duplicarComFilhos()
-  // — mesmo grafo childCardIds, sem guard equivalente aqui até agora). Não
-  // dá pra usar um Set COMPARTILHADO entre chamadas-irmãs como lá: o
-  // comentário abaixo já prevê que um card pode ter mais de um pai (avô
-  // compartilhado), e um Set global bloquearia a 2ª cascata legítima
-  // (ex.: A e B são filhos de C; A completa e cascateia até C, ainda
-  // incompleto por causa de B — quando B completa depois, precisa
-  // re-checar C, que um Set global já teria marcado "visitado" na
-  // passagem de A). Por isso cada chamada carrega sua PRÓPRIA cópia do
-  // caminho de ancestrais (raiz→...→atual) — só bloqueia um ciclo de
-  // verdade (o mesmo id reaparecendo no MESMO caminho), não a cascata
-  // legítima entre irmãos.
-  ancestry = ancestry ? new Set(ancestry) : new Set();
-  if(ancestry.has(childCard.id)) return;
-  ancestry.add(childCard.id);
   // Não há parentId no filho — mesmo padrão de busca reversa de
   // _cardIsSuperChild(): o pai é quem lista, em childCardIds, o id de quem
-  // acabou de mover (ver comentário em _cardIsSuperChild acima). Um card
-  // pode em tese aparecer em mais de um childCardIds — checa todos.
+  // acabou de mover. Um card pode em tese aparecer em mais de um
+  // childCardIds — checa todos.
   const parents=cards.filter(p=>!p.archived && p.id!==childCard.id && (p.childCardIds||[]).includes(childCard.id));
-  if(!parents.length) return;
+  parents.forEach(parent=>_notifySupercardAllDone(parent));
+}
+function _notifySupercardAllDone(parent){
+  if(!parent) return;
   const doneIds=_flowDoneColIds();
-  const doneCol=_flowDoneColId();
-  let any=false;
-  parents.forEach(parent=>{
-    if(doneIds.includes(parent.col)) return; // pai já concluído
-    const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
-    if(!activeChildren.length || !activeChildren.every(c=>doneIds.includes(c.col))) return;
-    if(activeChildren.every(c=>_isColCancelLike(c.col))) return; // todos cancelados — mantém o pai onde está
-    recordMove(parent, doneCol);
-    parent.col=doneCol;
-    parent.edited='Automação'; parent.editedAt=new Date().toISOString().split('T')[0];
-    parent.updatedAt=new Date().toISOString(); parent.updatedBy='Automação';
-    recordHistory(parent, 'concluído automaticamente — todos os filhos foram concluídos', '⚙ Supercard');
-    fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao concluir automaticamente:', err));
-    any=true;
-    // Cascata: se este pai (ex.: um criativo) também é filho de outra
-    // coisa (ex.: uma campanha), acabou de concluir pode ser exatamente o
-    // que faltava pro AVÔ também concluir sozinho — reaproveita a mesma
-    // função em vez de duplicar a lógica pra "quantos níveis existem".
-    _checkSupercardAutoComplete(parent, ancestry);
-  });
-  if(any) renderBoard();
+  const activeChildren=(parent.childCardIds||[]).map(cid=>cards.find(c=>c.id===cid)).filter(c=>c && !c.archived);
+  const allDone = activeChildren.length>0
+    && activeChildren.every(c=>doneIds.includes(c.col))
+    && !activeChildren.every(c=>_isColCancelLike(c.col)); // todos cancelados — não avisa, ver comentário acima
+  if(!allDone){
+    if(parent._superAllDoneNudged){ parent._superAllDoneNudged=false; fbSaveCard(parent).catch(()=>{}); }
+    return;
+  }
+  if(parent._superAllDoneNudged) return; // já avisado — evita repetir o comentário a cada evento
+  if(!parent.owner) return; // sem Responsável pra marcar — nada a fazer (mesmo critério de notifChecklistDone())
+  const comment={
+    id:'c'+Date.now()+Math.random().toString(36).slice(2,5),
+    uid:'automacao', author:'⚙ Automação', init:'⚙', foto:'',
+    text:'@'+parent.owner+' 🧩 Todos os '+activeChildren.length+' filhos deste supercard foram concluídos. Pode mover o card pra Concluído?',
+    ts:new Date().toISOString(),
+  };
+  _pushCardComment(parent.id, comment);
+  // includeSelf:true — mesmo raciocínio de notify_all/notify_po_org: quem
+  // acabou de completar/vincular o último filho pode ser o próprio
+  // Responsável, e ele também precisa ser avisado (não é uma @menção
+  // manual de uma pessoa pra outra, é a automação avisando o papel).
+  parseMentions(comment.text, parent.id, comment.id, {includeSelf:true});
+  parent._superAllDoneNudged=true;
+  fbSaveCard(parent).catch(err=>console.error('[supercard] falha ao marcar aviso de conclusão:', err));
 }
 // Reivindica UMA entrada da fila kanban/.../agente_pending_auto (ver
 // pendingAuto.js, functions/agente-agil-orquestrador/) via transaction() —
@@ -31966,7 +31969,7 @@ function runAutoRules(eventType, cardId, extraVal){
   if(eventType==='assigned' && extraVal) _registrarSinalAtribuicao(extraVal);
   const activeRules=autoRules.filter(r=>r.active);
   const card=cards.find(c=>c.id===cardId); if(!card) return;
-  if(eventType==='move') _checkSupercardAutoComplete(card);
+  if(eventType==='move') _checkSupercardAllDone(card);
   activeRules.forEach(rule=>{
     const triggerDef=_autoTrigger(rule.trigger);
     if(!triggerDef) return; // regra salva com trigger que não existe mais

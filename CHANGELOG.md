@@ -3646,6 +3646,54 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.730-dev — 2026-09-22 — Supercard: conclusão automática nunca disparava — trocada por comentário avisando o Responsável
+
+Relato direto do usuário, com print: um supercard ("Semana do Cliente")
+com **7/7 filhos concluídos** continuava aberto no board, 4 dias
+atrasado, sem nunca ter se movido sozinho pra Concluído — apesar da
+feature "conclusão automática" já existir desde 2026-08-21.
+
+Causa raiz real: `_checkSupercardAutoComplete()` só era chamada quando
+um card **se movia** de coluna (hook único dentro de `runAutoRules('move',
+...)`). Vincular um filho que **já estava concluído** — via "+
+Adicionar" um card existente pronto (ex.: uma iniciativa como "APP DAY
+| 9.9" já finalizada antes de entrar na campanha) — nunca dispara um
+evento de movimento, então a checagem simplesmente nunca rodava pra
+esse card. Provavelmente foi assim que o último filho do supercard do
+relato completou o conjunto.
+
+Discutido com o usuário: em vez de só corrigir o disparo e manter o
+auto-mover, trocar o comportamento inteiro — o board nunca move o
+supercard sozinho pra Concluído; quando todos os filhos ativos chegam
+numa coluna de fim, ele posta um **comentário automático** no card pai
+(autoria "⚙ Automação"), marcando `@`+Responsável, pedindo pra ele mover
+manualmente. Decisão final sempre de uma pessoa, e resolve o bug junto
+(o aviso dispara nos 2 caminhos agora: mover um filho E vincular um
+filho já pronto).
+
+- `_checkSupercardAutoComplete()` → renomeada `_checkSupercardAllDone()`
+  (chamada em todo `runAutoRules('move',...)`, como antes) +
+  `_notifySupercardAllDone(parent)` (lógica de fato, chamada também
+  direto de `persistSuperChildren()` — cobre o vínculo de filho já
+  pronto).
+- Sem cascata recursiva pelos 2 níveis: como o pai não muda mais de
+  coluna sozinho, o nível de cima só é reavaliado quando a pessoa move o
+  nível de baixo de verdade — isso já é um evento de 'move' novo, que
+  re-roda a checagem sozinho.
+- `card._superAllDoneNudged` (novo campo) evita repetir o comentário a
+  cada evento subsequente; reseta sozinho se o card deixar de estar 100%
+  completo (reabriu um filho, adicionou um novo).
+- Sem Responsável definido no card, não tem quem marcar — não posta
+  nada (mesmo critério já usado em `notifChecklistDone()`).
+- Exceção mantida: se TODOS os filhos ativos terminaram cancelados
+  (nenhum de fato concluído), não avisa nada — cancelar tudo não é a
+  mesma coisa que concluir tudo.
+- Central de Ajuda (🧩 Supercard) atualizada — o parágrafo "✅ Conclusão
+  automática" agora descreve o aviso, não mais o movimento sozinho.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens +3).
+
 ### v8.30.729-dev — 2026-09-22 — `/monitorarbugs` (escopo: notificações do kanban): dedup de 5s de `createNotif()` derrubava notificações reais diferentes
 
 Escopo pedido: "roda um /monitorarbugs nas notificações do kanban".

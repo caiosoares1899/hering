@@ -1523,24 +1523,39 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
   `childCardIds` de volta sempre como `[...ativos, ...arquivadosIds]`
   juntos, senão salvar o card depois de abrir o modal desvincularia os
   arquivados de verdade do Firebase (achado ao filtrar só a exibição na
-  1ª tentativa do fix). `histWhat` opcional grava no 📜 Histórico do PAI
+  1ª tentativa do fix); também chama `_notifySupercardAllDone(parent)`
+  (2026-09-22, ver seção logo abaixo) — vincular um filho já concluído
+  reavalia a conclusão do pai na hora, não só quando algo se MOVE.
+  `histWhat` opcional grava no 📜 Histórico do PAI
   antes de salvar — chamado por `addSuperChild()` (L27005, "vinculou o
   card filho..."), `removeSuperChild()` (L27015, "desvinculou...") e
   `quickCreateSuperChild()` (L27053, "vinculou... (novo)"); `_histTipo()`
   (~L8745) classifica essas 3 frases + "aplicou fan-out..." (já existente)
   com ícone próprio 🧩 (`CARD_HIST_TIPOS.supercard`).
-- `_checkSupercardAutoComplete(childCard, ancestry)` — L31540 — conclui o
-  supercard sozinho quando todos os filhos ativos chegam numa coluna de
-  fim; cascateia filho→pai→avô recursivamente. `_isColCancelLike()` —
-  L31376, logo acima — se TODOS os filhos ativos terminaram cancelados,
-  o pai NÃO conclui sozinho, fica onde está. `ancestry` (2026-09-02) —
-  guard contra ciclo corrompido em `childCardIds`; Set copiado por
-  chamada (não compartilhado entre irmãos, ao contrário do `visited` de
-  `_duplicarComFilhos()` abaixo) — um Set global quebraria a cascata
-  legítima de um card com 2 pais/avô compartilhado. Hook único:
-  `runAutoRules('move', card.id, ...)` chama ela direto (~L31517, dentro
-  de `runAutoRules()`) — herda cobertura dos 9 call sites que já disparam
-  `runAutoRules('move',...)`, não precisa de chamada própria em cada um.
+- **`_checkSupercardAllDone(childCard)`/`_notifySupercardAllDone(parent)`**
+  — L31842, logo abaixo de `_isColCancelLike()`. Antes (até 2026-09-22)
+  chamava-se `_checkSupercardAutoComplete()` e MOVIA o pai sozinho pra
+  coluna de fim quando todos os filhos ativos concluíam, cascateando
+  filho→pai→avô recursivamente (guard `ancestry` contra ciclo). Decisão
+  do usuário (`/monitorarbugs`, relato direto — auto-mover não estava
+  disparando de verdade): trocado por um COMENTÁRIO automático no pai
+  (autoria "⚙ Automação"), marcando `@`+`parent.owner` (Responsável),
+  pedindo pra mover manualmente — o board nunca muda a coluna sozinho
+  agora. `parent._superAllDoneNudged` (novo campo) evita repetir o
+  comentário a cada evento; reseta sozinho (via `_notifySupercardAllDone`)
+  se o card deixar de estar 100% completo. Sem `ancestry`/recursão: como
+  o pai não muda mais de coluna sozinho, a cascata pro avô só acontece
+  quando a pessoa move o pai de verdade — isso já é um evento de 'move'
+  novo, que re-roda a mesma checagem naturalmente. `_isColCancelLike()`
+  — L31828, logo acima — se TODOS os filhos ativos terminaram cancelados,
+  não avisa nada (cancelar tudo ≠ concluir tudo). Hooks: `runAutoRules
+  ('move', card.id, ...)` chama `_checkSupercardAllDone(card)` direto
+  (dentro de `runAutoRules()`) — herda cobertura dos 9 call sites que já
+  disparam `runAutoRules('move',...)`; `persistSuperChildren()` (abaixo)
+  chama `_notifySupercardAllDone(parent)` direto no pai — cobre o
+  caminho que NUNCA disparava antes (vincular um filho JÁ concluído via
+  `addSuperChild()`/"+ Adicionar", sem nenhum evento de 'move' — a causa
+  raiz real do bug reportado).
 - `_duplicarComFilhos()` — L15652 — duplicar um supercard com opção de
   duplicar os filhos junto (checkbox opt-in no modal de duplicar, só
   aparece se `_cardIsSupercard()`). Recursivo (cobre netos, 3 níveis
