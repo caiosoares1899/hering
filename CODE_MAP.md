@@ -1016,6 +1016,28 @@ pontos corretos, `ctxMove()` disparando `notifDone()` (não `notifMoved()`)
 pro id customizado; regressão zero confirmada pro caso padrão (id `'done'`
 literal, sem `flowConfig.doneCols`).
 
+**Achado 2026-09-22, mesma classe, campo irmão nunca corrigido**:
+`updateMetrics()`, `renderBoardDataGrid()` e `maybeSnapshot()` (os 3
+listados acima) também calculavam `wip` comparando `c.col==='progress'`
+(string fixa) — igual ao `c.col==='done'` que já tinha sido corrigido
+em 2026-09-04 NESSAS MESMAS 3 FUNÇÕES, só que pro campo `done`, deixando
+`wip` pra trás. `addColumn()` nunca gera id `'progress'` (gera
+`'col_'+timestamp`) — squad que recriou/renomeou a coluna "Em andamento"
+sempre via WIP=0. Trocado por `_flowStartColIds()` (L8421 — mesmo
+resolvedor que Métricas de Fluxo já usa: config do PO
+`flowConfig.startCols` + heurística por nome), igual espírito de
+`_isColDone()` pro lado "início" em vez de "fim". `maybeSnapshot()`
+grava `wip` permanente no Firebase 1x/dia — mesma ressalva do `done`
+acima, snapshots antigos não são corrigidos retroativamente.
+**Achado incidental, não corrigido (ambíguo — decisão de produto)**: os
+3 também calculam `wipLimit=parseInt(agilCfg.wip||3)` — ignora
+`_colWipLimit(col)` (L15084, que já suporta limite POR coluna via
+`col.wip`, usado no cabeçalho da coluna no board desde antes). Como
+`_flowStartColIds()` pode devolver mais de 1 coluna, não há uma forma
+óbvia de agregar múltiplos `col.wip` num único "limite" pro widget sem
+uma decisão de produto (somar? usar só o 1º?) — reportado, não
+implementado.
+
 ### 📜 Histórico: data em período de vários dias (2026-09-04)
 Achado real do usuário (print de um período "01/09/26 a 04/09/26"):
 `_timelineFeedRow()` mostrava só a hora (`🕐 09:01`) em toda linha do

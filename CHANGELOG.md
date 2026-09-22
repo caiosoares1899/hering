@@ -3646,6 +3646,32 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.724-dev — 2026-09-22 — `/monitorarbugs`: WIP calculado com string fixa `'progress'` (mesmo bug do `'done'` de 2026-09-04, campo irmão nunca corrigido)
+
+`updateMetrics()` (Ágil, toolbar), `renderBoardDataGrid()` (📊 Dados do
+Board → Visão Geral) e `maybeSnapshot()` (snapshot histórico diário,
+gravado no Firebase) calculavam WIP comparando `c.col==='progress'` —
+squad que recriou ou renomeou a coluna "Em andamento" (`addColumn()`
+nunca gera o id literal `'progress'`) sempre via WIP = 0, mesmo com
+cards ativos de verdade na coluna. É exatamente a mesma classe de bug
+já corrigida em 2026-09-04 para o campo `done` NESSAS MESMAS 3 funções
+— só que o campo `wip`, do lado, nunca tinha recebido o mesmo tratamento.
+
+Trocado por `_flowStartColIds()` — o resolvedor já usado pelas Métricas
+de Fluxo (respeita a configuração do PO, com heurística automática por
+nome como último recurso). O snapshot histórico diário não é corrigido
+retroativamente (mesma ressalva já documentada pro `done`): só os
+snapshots gravados a partir de hoje refletem o WIP correto.
+
+Achado incidental reportado, não corrigido (decisão de produto):
+o "limite" de WIP mostrado junto (`agilCfg.wip`, padrão 3) ignora o
+limite configurável por coluna que o próprio cabeçalho da coluna no
+board já respeita — fica pra uma rodada futura, se fizer sentido
+agregar múltiplas colunas de início.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.723-dev — 2026-09-22 — `/monitorarbugs`: 3 achados reais no pipeline de salvamento de card (mesma área da correção crítica de ontem)
 
 Auditoria sistemática (não reativa a um relato) do pipeline de
