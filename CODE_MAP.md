@@ -213,6 +213,18 @@ detalhe dos 4 call sites.
   com o impedimento já marcado nunca gerava histórico (diff dedicado,
   só dispara quando `blocker` continua `true` antes e depois, pra não
   duplicar a entrada de marcar/desmarcar).
+  **Achado real (2026-09-22, relato direto de usuário — card recém-
+  criado com 2 entradas que ninguém gerou)**: mesma classe de "pegadinha
+  de vazio/falsy" do achado de 2026-09-06, mas na direção oposta —
+  `blocker`/`archived`/`isOKR` nunca entram no objeto de um card novo
+  (`_newCard`, branch de criação de `saveCard()` — ficam `undefined` de
+  propósito), mas o diff genérico normalizava `undefined`/`null` pra
+  `''` igual faz com campo de TEXTO. `String('')`≠`String(false)`, então
+  a 1ª edição de verdade (autosave ou Salvar manual), que normaliza os 3
+  campos pra `boolean` via `Object.assign`, gerava "removeu o
+  impedimento"/"definiu OKR: não" mesmo sem ninguém ter tocado neles.
+  Fix: os 3 campos booleanos normalizam com `!!` (undefined/null/false
+  todos viram `false`, equivalentes) em vez de `''`.
   **Visual rico com avatar (2026-09-06, pedido direto — "aquele
   histórico que você criou pro OKR, com a fotinha da pessoa, dá pra
   fazer isso no kanban também?")**: `recordHistory()` passa a gravar

@@ -3644,7 +3644,32 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
-## kanban-dev.html (ambiente de teste)
+### v8.30.733-dev — 2026-09-22 — Histórico do card: card recém-criado já nascia com "removeu o impedimento"/"definiu OKR: não" sem ninguém ter tocado nesses campos
+
+Relato direto do usuário, com print: um card recém-criado mostrava no
+📜 Histórico, logo depois de "criou o card" e "definiu descrição: ...",
+duas entradas que ninguém gerou de propósito — "removeu o impedimento"
+e "definiu OKR: não".
+
+Causa raiz: o objeto `_newCard` (branch de criação de `saveCard()`)
+nunca inclui as chaves `blocker`/`isOKR` — ficam `undefined` de
+propósito até a 1ª edição de verdade. `_histDiff()` normalizava
+`undefined`/`null` pra `''` igual faz com campos de texto — mas
+`String('')` (vindo de `undefined`) é diferente de `String(false)`
+('false'), então assim que a 1ª edição (autosave ou Salvar manual)
+normaliza `blocker`/`isOKR` pra `false` de verdade via `Object.assign`,
+o diff via o campo "mudando" de `undefined` pra `false` e registrava a
+entrada — mesmo sem NINGUÉM ter mexido no impedimento ou no OKR.
+
+Fix: campos booleanos (`blocker`/`archived`/`isOKR`) agora normalizam
+com `!!` em vez de `''` antes de comparar — `undefined`, `null` e
+`false` valem exatamente a mesma coisa ("não") pra esses 3 campos,
+diferente dos campos de texto (onde `''` é o "vazio" de verdade).
+Transições reais (ex.: desbloquear um card de fato bloqueado) continuam
+registrando normalmente.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses no
+baseline conhecido da sessão (braces -1, parens +3).
 
 ### v8.30.732-dev — 2026-09-22 — `/atualizarhelpcontent`: Mural não mencionava que Urgente/Insistente também vira notificação de verdade
 
