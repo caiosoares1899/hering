@@ -8458,6 +8458,21 @@ const COMUNICADO_RASCUNHOS_SEED = [
     tipo: 'urgente',
     squad: '*',
   },
+  {
+    id: 'seed_promocao_2026_09_22_lote',
+    titulo: '📜 Histórico mais limpo + notificações mais confiáveis + Comunicado urgente agora te avisa de verdade',
+    corpo: '<p>Mais uma leva de correções e novidades:</p>'
+      + '<ul>'
+      + '<li><b>📜 Histórico do card</b>: corrigimos um bug em que todo card recém-criado ganhava 2 entradas falsas — "removeu o impedimento" e "definiu OKR: não" — sem ninguém ter tocado nesses campos. Já limpamos essas entradas falsas de todos os cards antigos também.</li>'
+      + '<li><b>🔔 Notificações</b>: corrigimos casos em que 2 avisos disparados quase ao mesmo tempo (ex.: 2 reações a comentários diferentes, 2 Estrelas do Mar) se "engoliam" um ao outro — agora cada evento gera sua própria notificação; e casos em que uma automação deveria te notificar por você mesmo ter causado o evento, mas isso não acontecia.</li>'
+      + '<li><b>📢 Comunicado Urgente</b> (ou Popup + Insistente): agora também dispara uma notificação de verdade no sino de quem deve receber — não é mais preciso estar com o board aberto pra saber que saiu um aviso importante.</li>'
+      + '<li><b>🧩 Supercard</b>: em vez de mover o card pai sozinho pra Concluído quando todos os filhos terminam, o board agora posta um comentário avisando o Responsável e pedindo pra ele mover manualmente — a decisão final fica sempre com uma pessoa.</li>'
+      + '<li><b>🎯 OKR (painel)</b>: os modais de Objetivo e Marco agora avisam se você tentar fechar com alterações não salvas, mesmo comportamento que o card do board já tinha.</li>'
+      + '<li>Diversas outras correções: Busca (Ctrl+K) mostrando tag errada, WIP zerando em squads com coluna renomeada, itens perdidos em Links/Modelos/Recorrentes quando 2 pessoas editavam quase ao mesmo tempo, e mais.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
