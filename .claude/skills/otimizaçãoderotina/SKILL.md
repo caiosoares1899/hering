@@ -455,5 +455,27 @@ registrando o baseline atual pra próxima rodada comparar.
   query, não uma rodada separada). Precisa de `firebase deploy --only
   database` rodado localmente pelo usuário pra valer.
 
+- **v8.30.731-dev (2026-09-22)**: quase limpa — 1 achado real (Passo 4.1,
+  item 2), reportado, não implementado (muda comportamento visível,
+  precisa de confirmação). `kudos`/`kudos_geral`
+  (`_refreshKudosSquad()`/`_refreshKudosGeral()`) são listas que só
+  crescem, sem limpeza (comentário do próprio código já reconhece isso) —
+  já foram trocadas de `onValue` ao vivo pra poll de 3min (fix anterior,
+  não datado nesta skill), mas o poll em si ainda baixa a árvore INTEIRA
+  a cada rodada, pra sempre, em todo aparelho com a aba aberta.
+  `renderKudos()` mostra o histórico completo sem paginação — aplicar
+  `limitToLast()` cortaria Estrelas antigas da tela, mudança de
+  comportamento visível, não só bytes. Resto do checklist limpo:
+  `.indexOn` correto pros 2 `orderByChild()` existentes (`ts`/`ativo`);
+  bindings de módulo (Passo 4.1 item 1) sem nenhum uso bare fora de
+  escopo, `comunicados` continua sólido; zero `data:image` embutido;
+  preconnect certo, sem órfão; import do Firebase modular (vendorizado);
+  setInterval/clearInterval 18/17 — EXATAMENTE igual ao baseline anterior
+  (nenhum leak novo, nenhum timer novo desde 2026-09-11). Baseline: HTML
+  total 2.335.107 bytes (36914 linhas), CSS ~225.5KB, script principal
+  ~1.86MB, 18/17 timers, 42 `backdrop-filter` (34→42, proporcional ao
+  volume de features do período — OKR, supercard, painel_broadcast,
+  dedup de notificações), zero `data:image` embutido.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: versão, achado ou
 "limpa", baseline atual) — evita re-analisar do zero algo já checado.
