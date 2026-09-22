@@ -375,6 +375,42 @@ revalidadas — seções novas — achados incidentais notáveis.
   na linha seguinte; rodar uma 2ª validação (não só o diff visual) depois
   de qualquer bulk-fix baseado em regex antes de considerar terminado.
 
+- **2026-09-22 (13ª)**: `e8e4eaf`→`55a20bd`, 1 dia depois, 16 commits em
+  `kanban-dev.html`/`painel-dev.html` desde a última rodada (incidente
+  crítico de perda de dado + 8 rodadas de `/monitorarbugs` + 3 fixes do
+  dia). `kanban-dev.html` voltou a ter lote não promovido (492 linhas de
+  diff — cabeçalho reescrito, essa é a norma, não exceção);
+  `painel.html`/`painel-dev.html` seguem divergindo de verdade (1037
+  linhas). Seção **Notificações in-app** totalmente revalidada (drift de
+  +300 uniforme — `createNotif`/`loadNotifs`/`parseMentions`/
+  `checkDueNotifs`/seção Calendários inteira), mais **Notas** (+230
+  uniforme) e **WIP/Backup** (+100-115). ~185 âncoras corrigidas ao todo
+  via script (extração `` `nome(` `` + `` L\d+ `` na MESMA linha,
+  re-`grep` de cada nome, reaplicado 1x pro par kanban e 1x pro par
+  painel/okr) — 0 seções novas (nenhum commit do período introduziu área
+  funcional genuinamente nova, só fixes dentro de áreas já indexadas).
+  `functions/index.js` — registro de exports 100% batendo (21/21,
+  incluindo `PUSH_TYPES` com `painel_broadcast` já refletido).
+  **Achado real de processo, pego a tempo**: o 1º script (varredura do
+  par kanban) rodou SEM restringir a busca à seção `## kanban.html /
+  kanban-dev.html` — linhas da seção `painel.html` que citam uma função
+  cujo NOME por acaso também existe (único) em `kanban-dev.html` (ex.:
+  `renderRiscos()`, presente nos dois arquivos com corpos diferentes)
+  foram corrigidas com o número ERRADO (o de `kanban-dev.html`, não o de
+  `painel-dev.html`). Pego rodando uma 2ª validação cruzada (checa se o
+  valor atual bate com painel OU kanban, sinaliza quando só bate com o
+  arquivo errado) — 0 sobras depois do reprocessamento restrito à seção
+  painel (que recalcula usando `painel-dev.html` e sobrescreve
+  incondicionalmente). **Lição pra próxima vez**: ao escrever um script
+  de revalidação em lote que varre o `CODE_MAP.md` inteiro, sempre
+  restringir a busca por `## cabeçalho de seção` ANTES de rodar contra
+  o arquivo-fonte certo — um nome de função pode existir, único, em MAIS
+  DE UM arquivo do repo (kanban/painel replicam padrões um do outro de
+  propósito), e sem restringir por seção o script corrige silenciosamente
+  usando o arquivo errado. Rodar uma validação cruzada de "bate com o
+  arquivo A ou com o B?" depois de qualquer bulk-fix multi-seção é bem
+  mais barato que assumir que só existe uma correspondência possível.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir
