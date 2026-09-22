@@ -404,6 +404,15 @@ detalhe dos 4 call sites.
   ser revertida em memória (e às vezes regravada por cima no Firebase)
   por um `_applyCardsSync()` disparado por outro card qualquer, mesmo
   com a escrita original já confirmada com sucesso pelo Firebase.
+  **Achado 2026-09-22, mesma classe**: o espelho síncrono só cobria a
+  escrita demorada com `_fbReady` já `true` — as 3 primitivas ainda
+  carimbavam `_lastLocalSave` ANTES de `await _waitForFirebaseReady()`,
+  deixando o espelho (aqui) ou o cálculo local que o alimenta
+  (`fbSaveAll()`, ver abaixo) intocado durante TODA a espera quando
+  `_fbReady` começava `false` (cold start/reconexão — o cenário do
+  próprio incidente, "começou depois das promoções"). Fix: a espera de
+  `_fbReady` move pra acontecer só na frente da escrita de rede em si,
+  depois do espelho/cálculo local já prontos, nas 3 primitivas.
 - **`_stripUndefinedMultiPath(updates)`** — L19072 (CAUSA RAIZ REAL E
   FINAL do mesmo relato acima — o fix do `_cardsByKey` logo acima era
   real, mas não era isto): `fbSaveCard()`/`fbCreateCard()` chamavam
@@ -446,7 +455,12 @@ detalhe dos 4 call sites.
   silêncio (`editingId` já `null`, aborta) ou gravada no card ERRADO
   (`editingId` já aponta pro card novo). `_flushAutoSave()` cancela o
   timer e roda a escrita na hora, chamada no topo dos dois pontos acima
-  — antes de qualquer um mexer em `editingId`/DOM.
+  — antes de qualquer um mexer em `editingId`/DOM. **Achado 2026-09-22,
+  3º ponto**: `openNewCard()` (L15154) tinha o MESMO gap — chamada por
+  `usarQLItem()`/`_intakeCriarCard()` sem fechar `#card-ov` primeiro
+  (só fecham `ql-ov`/`intake-ov`, overlays que ficam empilhados por
+  cima de um card já aberto — comportamento já documentado no próprio
+  código). `_flushAutoSave()` adicionada no topo dela também.
 - **Guard `_isQLTemp`, presente nas 3** (2026-09-03,
   `/monitorarbugs` — causa real de "[card sumiu inesperadamente]"):
   todas recusam operar sobre um card com `card._isQLTemp===true` (o

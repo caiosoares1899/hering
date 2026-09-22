@@ -3646,6 +3646,47 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.723-dev — 2026-09-22 — `/monitorarbugs`: 3 achados reais no pipeline de salvamento de card (mesma área da correção crítica de ontem)
+
+Auditoria sistemática (não reativa a um relato) do pipeline de
+salvamento de card, área mais recentemente alterada por conta da
+investigação de ontem (v8.30.717-dev → v8.30.722-dev). 3 achados, todos
+da mesma classe já validada como real na investigação anterior.
+
+**Achado 1 (severo)**: `openNewCard()` nunca ganhou o `_flushAutoSave()`
+que `openCard()`/`_finishCloseOv()` receberam ontem — "Usar modelo/
+recorrente" (`usarQLItem()`) e "Criar card" a partir de um pedido do
+Intake (`_intakeCriarCard()`) chamam `openNewCard()` sem fechar
+`#card-ov` primeiro (só fecham `ql-ov`/`intake-ov`, overlays que ficam
+empilhados por cima de um card já aberto — o próprio comentário do
+código já documentava esse cenário). Editar um card, abrir "Usar
+modelo" sem fechar o card primeiro, dentro da janela de 800ms do
+autosave, perdia a edição em silêncio. Fix: mesma chamada no topo de
+`openNewCard()`.
+
+**Achado 2 (real, gatilho estreito)**: nas 3 primitivas de escrita
+(`fbSaveAll()`/`fbCreateCard()`/`fbSaveCard()`), `_lastLocalSave` era
+carimbado ANTES de `await _waitForFirebaseReady()` — mas o espelho
+`window._cardsByKey` (proteção de ontem contra `_applyCardsSync()`
+reverter uma escrita em voo) só era populado DEPOIS dessa espera.
+Quando `_fbReady` começa `false` (cold start/reconexão — exatamente o
+cenário "começou depois das promoções" do incidente original) e a
+espera passa de 2s, existe uma janela onde a proteção de ontem não
+cobre. Fix: a espera de `_fbReady` foi movida pra acontecer só na
+frente da escrita de rede em si, depois do cálculo local/espelho já
+prontos.
+
+**Achado 3 (real, gatilho estreito)**: a escrita de backfill dentro de
+`_applyCardsSync()` (`window._set(fb(FB+'/cards'), cards)`, dispara só
+quando `backfillAllFlow()` migra algo) nunca ganhou a proteção contra
+campo `undefined` que as outras 3 vias de escrita de card já têm desde
+16/09 — e falhava 100% em silêncio (`.catch(()=>{})`, nem um
+`console.warn`). Fix: `_stripUndefinedDeep(cards)` + warn visível no
+catch.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.722-dev — 2026-09-21 — CAUSA RAIZ REAL E FINAL: `_stripUndefinedDeep()` aplicado no objeto multi-path inteiro apagava a escrita silenciosamente (`fbSaveCard()`/`fbCreateCard()` não gravavam NADA desde 17/09)
 
 As 3 correções anteriores desta mesma investigação (v8.30.717-dev a
