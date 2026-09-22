@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.725-dev</div>
+<div class="version">v8.30.726-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7553,7 +7553,22 @@ function _bulkFinish(msg, keepSelection, extraIds){
   // bulkDuplicate — as CÓPIAS não estão em selectedCards, que só tem os
   // originais). Captura ANTES de fbSaveAll (que ainda não mexeu em
   // selectedCards) e antes de selectedCards.clear() logo abaixo.
-  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]);
+  // Achado real (/monitorarbugs 2026-09-22, técnica 1 — comparar contra
+  // handleDrop()/ctxMove(), mesma classe de operação): fbSaveAll() aqui
+  // era fire-and-forget, sem then()/catch() — o toast de sucesso
+  // (showToast(msg), abaixo) sempre aparecia, mesmo que a escrita
+  // tivesse falhado de verdade (rede instável, campo inválido). Como
+  // _bulkFinish() é o finalizador COMPARTILHADO de toda ação em massa
+  // (mover, atribuir, tag, bloquear, excluir-marca...), esse silêncio
+  // valia pra todas elas de uma vez. Reverter o estado local de N cards
+  // exigiria snapshot em CADA chamador antes de mutar (mudança maior,
+  // fora do escopo deste fix) — mas pelo menos parar de MENTIR sobre o
+  // sucesso é direto: mostra um aviso real se a escrita falhar, em vez
+  // do toast de sucesso genérico.
+  fbSaveAll(undefined, [...selectedCards, ...(extraIds||[])]).catch(err=>{
+    showToast('⚠ Falha ao salvar a ação em massa — pode não ter sido persistida. Verifique sua conexão e tente de novo.', 8000);
+    console.warn('_bulkFinish save failed:', err);
+  });
   if(!keepSelection){
     const pop=document.getElementById('bulk-pop'); if(pop) pop.remove();
     selectedCards.clear(); selectMode=false;
@@ -32692,20 +32707,43 @@ function ctxMove(colId){
   // disparava, e o settle de ⏱️ tempo atrasado/bloqueado (PR #776) perdia
   // a rede de segurança mais robusta que só recordMove() tem (usa `due`/
   // `from` confiáveis mesmo numa tacada só, sem save intermediário).
+  // Achado real (/monitorarbugs 2026-09-22, técnica 1 — comparar contra
+  // handleDrop(), mesma operação "mover card"): handleDrop() ganhou em
+  // 17/09 (PR #947, aplicado direto em prod pela gravidade) um snapshot
+  // completo + revert total se fbSaveCard() falhar — sem isso, uma falha
+  // de escrita deixa o card visualmente movido (já renderizado
+  // otimista), com flow/histórico/blocker corrompidos em memória, sem
+  // NENHUM aviso, porque nada revertia. ctxMove() nunca ganhou a mesma
+  // proteção, apesar de ser a via de movimentação usada tanto pelo
+  // submenu "↦ Mover para" quanto por ctxBlock() ("🚧 Marcar
+  // impedimento") — mesmo padrão de snapshot/revert replicado aqui.
+  const _cardSnapshotAntesCtx = JSON.parse(JSON.stringify(card));
   recordMove(card, colId);
   card.col=colId;
   card.edited=window._currentUser?.displayName||'Usuário';
   card.editedAt=new Date().toISOString().split('T')[0];
   card.updatedAt = new Date().toISOString();
   card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-  renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
-  // Notificações — _isColDone() em vez da heurística local (achado real,
-  // /monitorarbugs 2026-09-04, mesma classe corrigida em updateMetrics()/
-  // agCtx()/scheduleAutoSave()/handleDrop()).
-  if(ant!==colId){
-    if(_isColDone(colId)) notifDone(card);
-    else notifMoved(card, colName);
-  }
+  renderBoard();
+  fbSaveCard(card)
+    .then(()=>{
+      // Notificações só depois de confirmado pelo Firebase — mesmo padrão
+      // de handleDrop() — e _isColDone() em vez da heurística local
+      // (achado real, /monitorarbugs 2026-09-04, mesma classe corrigida
+      // em updateMetrics()/agCtx()/scheduleAutoSave()/handleDrop()).
+      if(ant!==colId){
+        if(_isColDone(colId)) notifDone(card);
+        else notifMoved(card, colName);
+      }
+    })
+    .catch(err=>{
+      Object.keys(card).forEach(k=>delete card[k]);
+      Object.assign(card, _cardSnapshotAntesCtx);
+      renderBoard();
+      showToast('⚠ Falha ao salvar movimentação — revertido');
+      console.warn('ctxMove save failed:', err);
+    });
+  runAutoRules('move',card.id,colId);
   showToast(`"${card.title.substring(0,25)}" → ${colName}`);
   hideCtxMenu();
 }
