@@ -2229,6 +2229,31 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   mais nova; perguntar antes evita implementar uma feature nova (não um
   fix) sem sinal verde.
 
+- **2026-09-22, "roda mais um" (genérico — grep de `PUSH_TYPES` contra
+  quem de fato cria cada tipo, técnica 6 aplicada pela via inversa:
+  infraestrutura pronta pra um tipo nunca criado)**: 1 achado real e
+  grande — `painel_broadcast` já existia em `PUSH_TYPES`
+  (`functions/index.js`) e `NOTIF_ICONS` (`kanban-dev.html`), mas NADA
+  no repo jamais criava esse tipo de notificação. Publicar um
+  Comunicado (`saveComunicado()`, `painel-dev.html`) sempre escreveu só
+  em `kanban/comunicados/{id}` — quem não estivesse com o board aberto
+  nunca ficava sabendo, nem de um "🚨 Urgente". Confirmado o escopo com
+  o usuário via `AskUserQuestion` antes de implementar (feature real
+  faltando — dispara só pra tipo urgente/popup insistente, só na
+  transição pra publicado). Fix: `_painelResolveComunicadoAlvos()`/
+  `_painelNotifyBroadcast()` (painel-dev.html, mesmo padrão de
+  `_okrNotifyEditado()`) + `openNotif()` ganhou o tratamento de
+  navegação pro tipo (`kanban-dev.html`, mesma classe de gap já
+  corrigida 6x em 2026-09-06) + sino próprio do painel navega via
+  `link:'pessoas'` (mesmo mecanismo daquela rodada). dev
+  v8.30.728-dev/painel-dev v3.58. **Lição pra próxima vez**: depois de
+  qualquer achado "tipo X esquecido de um allow-list" (aqui, o
+  antecedente foi o achado de `reuniao`/`due_today` em 2026-09-18),
+  vale inverter a pergunta — não só "todo tipo criado está na
+  allow-list?", mas "todo tipo na allow-list é criado por alguém de
+  verdade?". Os dois sentidos já renderam achado real em rodadas
+  diferentes.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

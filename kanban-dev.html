@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.727-dev</div>
+<div class="version">v8.30.728-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28567,6 +28567,16 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // drawer de Kudos, só fechava o painel de notificações em silêncio.
   if(type==='kudos' || type==='kudos_monitor'){
     openKudos();
+    return;
+  }
+  // Comunicado urgente do Mural (achado real /monitorarbugs 2026-09-22 —
+  // 'painel_broadcast' existia em PUSH_TYPES/NOTIF_ICONS mas nunca era
+  // criado por nada; agora que _painelNotifyBroadcast() em painel-dev.html
+  // cria essas notificações, precisa de tratamento aqui igual às outras
+  // notificações sem cardId — senão clicar só marcaria como lida, mesma
+  // classe de gap já corrigida 6x na rodada de 2026-09-06.
+  if(type==='painel_broadcast'){
+    openMural();
     return;
   }
   if(!cardId) return;

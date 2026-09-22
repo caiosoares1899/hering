@@ -3646,6 +3646,19 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.728-dev — 2026-09-22 — `/monitorarbugs`: notificação de Comunicado urgente agora navega pro Mural ao clicar
+
+Complemento do fix em `painel-dev.html` (v3.58 · painel-dev, mesmo
+dia) que passou a criar notificações do tipo `painel_broadcast` pra
+Comunicados urgentes/popup insistente. `openNotif()` ganhou o
+tratamento pro tipo — sem isso, clicar na notificação só marcaria como
+lida, sem navegar a lugar nenhum (mesma classe de gap já corrigida 6x
+na rodada de 2026-09-06 pra outros tipos sem `cardId`). Agora abre o
+Mural (`openMural()`).
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.727-dev — 2026-09-22 — `/monitorarbugs`: 🔍 Busca (Ctrl+K) mostrava o selo de tag errado (achado pendente desde 02/09)
 
 Fechando um achado que tinha ficado registrado como "de passagem, fora
@@ -18246,6 +18259,36 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.58 · painel-dev — 2026-09-22 — `/monitorarbugs`: Comunicado urgente agora notifica quem não está com o board aberto
+
+Achado real, técnica 6 (código morto pela via inversa — infraestrutura
+pronta pra um tipo de notificação que nunca era criado): `painel_broadcast`
+já existia no allow-list de push (`functions/index.js`) e no ícone do
+sino (`kanban-dev.html`), mas nada no repo jamais criava uma
+notificação desse tipo. Publicar um Comunicado sempre escreveu só em
+`kanban/comunicados/{id}` — quem não estivesse com o board aberto no
+momento nunca ficava sabendo, mesmo de um "🚨 Urgente".
+
+Confirmado o escopo com o usuário antes de implementar: só dispara
+notificação (e push, via o allow-list já existente) pra Comunicados do
+tipo "🚨 Urgente" ou marcados "Insistente" (popup que reaparece até
+expirar) — evita notificar por avisos rotineiros de novidade/dica — e
+só na transição pra publicado (não a cada edição de algo que já estava
+ativo, pra não re-notificar por corrigir um typo).
+
+Alvos calculados a partir de `squad`/`quem recebe` do próprio
+Comunicado (mesmo critério que já decide quem vê no Mural). O sino
+próprio do painel (só visível a ADM) e o sino do board recebem a
+notificação; ver a entrada correspondente em `kanban-dev.html`
+(v8.30.728-dev, mesmo dia) pro fix de navegação ao clicar.
+
+**Requer redeploy manual**: `painel_broadcast` já estava no
+`PUSH_TYPES` de `functions/index.js`, então o push em si não precisa
+de nenhuma mudança em `functions/` — só a criação da notificação (que
+é 100% client-side, `painel-dev.html`).
+
+Checks de rotina: `node --check` OK.
 
 ### painel-dev.html v3.57 · painel-dev — 2026-09-22 — `/monitorarbugs` (escopo nomeado: aba 🎯 OKR): modais de Objetivo e Marco fecham sem avisar sobre alterações não salvas
 

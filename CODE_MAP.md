@@ -702,6 +702,28 @@ detalhe dos 4 call sites.
   Corrigido: só desabilita, não desmarca — `saveComunicado()` já força
   `insistente:false` fora de popup na hora de salvar, então manter o
   checkbox marcado-mas-desabilitado é seguro.
+- **`painel_broadcast` — notificação/push de Comunicado urgente (2026-09-22,
+  `/monitorarbugs`, técnica 6 — código morto pela via inversa)**: esse
+  tipo já existia em `PUSH_TYPES` (`functions/index.js`) e em
+  `NOTIF_ICONS` (`kanban-dev.html`, 📢), mas NADA no repo jamais criava
+  uma notificação desse tipo — `saveComunicado()` só escrevia em
+  `kanban/comunicados/{id}`, nunca em `kanban/usuarios/{uid}/
+  notificacoes`. Quem não estivesse com o board aberto no momento nunca
+  ficava sabendo de um Comunicado, nem um "🚨 Urgente". Confirmado com o
+  usuário antes de implementar (feature real faltando, escopo decidido
+  junto: só dispara pra `tipo==='urgente'` ou popup insistente, e só na
+  transição pra `ativo` — não a cada edição de algo já publicado).
+  `_painelResolveComunicadoAlvos(c)` (`painel-dev.html`) — resolve os
+  uids-alvo a partir de `_globalUsersCache`, mesmo critério de
+  visibilidade que `kanban-dev.html` já usa pro Mural (`c.squad`/
+  `c.publico==='po'`, ver comentário acima); `_painelNotifyBroadcast(c,id)`
+  escreve 1 notificação por alvo, mesmo padrão de `_okrNotifyEditado()`.
+  `openNotif()` (`kanban-dev.html`, ~L28572) ganhou o tratamento pro
+  tipo (`openMural()`, sem isso caía no `if(!cardId) return` — mesma
+  classe de gap já corrigida 6x na rodada de 2026-09-06); o sino
+  próprio do painel (`renderPainelNotifs()`, só visível a ADM) navega
+  via `link:'pessoas'` (mesmo mecanismo genérico `?tab=<id>` daquela
+  mesma rodada — "+ Novo comunicado" vive dentro de `#ppane-pessoas`).
 
 ### Modal do card no mobile — redesenho estilo Trello (2026-09-02, CSS puro, sem função nova)
 3 commits em sequência no mesmo dia, cada um corrigindo o que o
