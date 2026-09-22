@@ -3646,6 +3646,23 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.727-dev — 2026-09-22 — `/monitorarbugs`: 🔍 Busca (Ctrl+K) mostrava o selo de tag errado (achado pendente desde 02/09)
+
+Fechando um achado que tinha ficado registrado como "de passagem, fora
+de escopo" numa rodada de 2026-09-02: o resultado da Busca (Ctrl+K)
+mostrava o selo de tag lendo `c.tag` (campo legado — só a 1ª tag do
+array, sem garantia de estar sincronizado com `tags[]`), a mesma classe
+de bug já corrigida em 3 outros lugares naquela mesma rodada, mas nunca
+aplicada aqui. Um card com a tag original removida e outra adicionada
+depois mostrava o selo da tag ERRADA na lista de resultados (ou nenhum
+selo, se `c.tag` tivesse ficado vazio).
+
+Trocado por `getCardTags(c)[0]` — a mesma fonte array-aware que
+`tagsHtml()`/`cardHasTag()` já usam em todo o resto do arquivo.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.726-dev — 2026-09-22 — `/monitorarbugs` (escopo nomeado: mover card, data, descrições, comentários, checklist): mover card pelo menu de contexto e ações em massa não revertiam/avisavam em falha de rede
 
 Pedido explícito, escopo nomeado nas ações mais usadas do card. Checklist,

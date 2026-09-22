@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.726-dev</div>
+<div class="version">v8.30.727-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -34043,7 +34043,14 @@ function renderSearchResults(){
   }
   container.innerHTML = matches.slice(0,20).map((c,i)=>{
     const col = columns.find(x=>x.id===c.col)||{name:c.col,color:'#888'};
-    const tag = getTag(c.tag);
+    // Achado real (/monitorarbugs 2026-09-02, achado de passagem — "mesmo
+    // padrão em openSearch()", nunca corrigido até agora): lia c.tag (campo
+    // legado, só a 1ª tag do array, sem sincronia garantida com tags[]) em
+    // vez de getCardTags(c) (array-aware, mesma fonte que tagsHtml()/
+    // cardHasTag() já usam). Card com a tag original removida e outra
+    // adicionada depois mostrava o selo da tag ERRADA (ou nenhum selo, se
+    // c.tag tivesse ficado vazio) na busca.
+    const tag = getTag(getCardTags(c)[0]);
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
     const ownerTxt = owner ? owner.name : (c.owner||'');

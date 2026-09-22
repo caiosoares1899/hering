@@ -1048,7 +1048,14 @@ hora. Mesmo fix espelhado em `_ptFeedRow()` do painel-dev.html.
 
 ### Busca (Ctrl+K + "Ver no board")
 - `openSearch()` — L33706
-- `renderSearchResults()` — L33718
+- `renderSearchResults()` — L33718 — **achado real (`/monitorarbugs`
+  2026-09-22, fechando um achado de passagem registrado em 2026-09-02
+  como "fora de escopo, mesmo padrão aqui")**: o selo de tag do
+  resultado lia `c.tag` (campo legado, só a 1ª tag do array, sem
+  garantia de sincronia com `tags[]`) — mesma classe já corrigida em 3
+  lugares naquela rodada. Card com a tag original removida/trocada
+  mostrava o selo errado ou nenhum. Trocado por `getCardTags(c)[0]`
+  (array-aware, mesma fonte de `tagsHtml()`/`cardHasTag()`).
 - `verNoBoardFromSearch()` — L33785
 - `_scheduleTextFilterApply()` — L12690 — debounce do filtro `#f-texto`
 
