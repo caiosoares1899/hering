@@ -2846,7 +2846,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.57 · painel-dev</div>
+<div class="version">v3.58 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8571,6 +8571,61 @@ function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
   _editingComunicadoId = null;
 }
+// Achado real (/monitorarbugs 2026-09-22, técnica 6 — código morto pela
+// via inversa: infraestrutura pronta pra um tipo que nunca era criado):
+// 'painel_broadcast' já existia em PUSH_TYPES (functions/index.js) e em
+// NOTIF_ICONS (kanban-dev.html), mas NADA no repo (client ou Cloud
+// Function) jamais criava uma notificação desse tipo — Comunicados
+// publicados sempre escreveram só em kanban/comunicados/{id}, nunca em
+// kanban/usuarios/{uid}/notificacoes. Quem não estava com o board aberto
+// no momento nunca ficava sabendo de um Comunicado, nem um "🚨 Urgente".
+// Confirmado com o usuário antes de implementar (feature real faltando,
+// não bug de comportamento) — escopo: só dispara pra tipo 'urgente' ou
+// popup insistente, e só na transição pra ativo (não a cada edição de algo
+// que já estava publicado, pra não notificar de novo por corrigir um typo).
+function _painelResolveComunicadoAlvos(c){
+  const alvos = new Set();
+  Object.entries(_globalUsersCache||{}).forEach(([uid,u])=>{
+    if(!u) return;
+    const squadsDoUsuario = Object.keys(u.squads||{}).filter(sq=>u.squads[sq]===true);
+    const pertenceAoSquad = !c.squad || c.squad==='*' || squadsDoUsuario.includes(c.squad);
+    if(!pertenceAoSquad) return;
+    if(c.publico==='po'){
+      const ehAdm = isAdmUser({email:u.email}) || u.role==='adm';
+      const ehPoOuOrg = squadsDoUsuario.some(sq=>{
+        const papel = (u.squads_roles && u.squads_roles[sq]) || u.role || 'membro';
+        return papel==='po' || papel==='organizador';
+      });
+      if(!ehAdm && !ehPoOuOrg) return;
+    }
+    alvos.add(uid);
+  });
+  return alvos;
+}
+async function _painelNotifyBroadcast(c, id){
+  const autorUid = window._currentUser?.uid;
+  const alvos = _painelResolveComunicadoAlvos(c);
+  alvos.delete(autorUid);
+  const writes = [...alvos].map(uid=>{
+    const nid='n'+Date.now()+Math.random().toString(36).slice(2,6);
+    return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
+      id:nid, type:'painel_broadcast',
+      title: '📢 '+(c.titulo||'Comunicado'),
+      sub: 'Novo comunicado do time',
+      comunicadoId: id,
+      // link:'pessoas' — mesmo mecanismo genérico ?tab=<id> já usado por
+      // outras notificações sem card (ver renderPainelNotifs()/n.link,
+      // achado /monitorarbugs 2026-09-06): "+ Novo comunicado" vive dentro
+      // de #ppane-pessoas — sem isso, clicar no sino PRÓPRIO do painel (só
+      // visível a ADM) marcaria como lida sem navegar a lugar nenhum,
+      // mesma classe de gap já corrigida 1x naquela rodada.
+      link: 'pessoas',
+      read:false,
+      ts:new Date().toISOString(),
+    }).catch(()=>{});
+  });
+  await Promise.all(writes);
+}
 function saveComunicado(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
   const titulo = document.getElementById('cc-titulo').value.trim();
@@ -8580,21 +8635,29 @@ function saveComunicado(){
   const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
   const existente = _comunicadosCache[id] || {};
   const eraRascunho = !!existente.rascunho;
+  const estavaAtivo = !!existente.ativo; // pra decidir se notifica (só na transição pra ativo, ver comentário acima)
   const prioridade = document.getElementById('cc-prioridade').value;
+  const insistente = prioridade==='popup' ? document.getElementById('cc-insistente').checked : false;
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
     squad: document.getElementById('cc-squad').value,
     publico: document.getElementById('cc-publico').value,
     prioridade,
-    insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
+    insistente,
     ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
     rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
   };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
-    .then(()=>{ showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!'); closeComunicadoCompose(); })
+    .then(()=>{
+      showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!');
+      if(!estavaAtivo && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
+        _painelNotifyBroadcast(obj, id);
+      }
+      closeComunicadoCompose();
+    })
     .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
 }
 async function deleteComunicado(){
