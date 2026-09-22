@@ -1780,6 +1780,25 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   mais robusta do ⏱️ tempo atrasado/bloqueado (ver seção própria acima)
   ficava sem cobertura. Corrigido: `recordMove(card, colId)` adicionado
   antes de mutar `card.col`, mesmo padrão de `_doBulkMove()`.
+  **Achado real (`/monitorarbugs` 2026-09-22, técnica 1 — comparar
+  contra `handleDrop()`, mesma operação "mover card")**: `handleDrop()`
+  ganhou em 17/09 (PR #947, direto em prod pela gravidade) snapshot
+  completo + revert total se `fbSaveCard()` falhar — `ctxMove()` nunca
+  ganhou a mesma proteção. Uma falha de escrita (rede, permissão)
+  deixava o card visualmente movido (já otimista/renderizado), com
+  `flow`/histórico/`blocker` corrompidos em memória sem nenhum aviso.
+  Mesmo padrão de snapshot (`JSON.parse(JSON.stringify(card))`)/revert
+  no `.catch()` replicado aqui.
+- **`_bulkFinish(msg, keepSelection, extraIds)`** — L7550 — finalizador
+  COMPARTILHADO de toda ação em massa (mover, atribuir, tag, bloquear,
+  excluir-marca...). **Achado real (`/monitorarbugs` 2026-09-22, mesma
+  técnica acima)**: chamava `fbSaveAll()` fire-and-forget, sem
+  `then()`/`catch()` — o toast de sucesso sempre aparecia, mesmo com a
+  escrita falhando de verdade, pra QUALQUER ação em massa (choke point
+  único). Reverter o estado local de N cards exigiria snapshot em CADA
+  chamador antes de mutar (fora do escopo deste fix, maior) — corrigido
+  só o mais direto: mostra aviso real (`.catch()`) em vez do toast de
+  sucesso genérico quando a escrita falha.
 - Menu de contexto do card (`showCtxMenu()` — L32112) — 2026-09-01,
   pedido direto ("mudar prioridade e mudar coluna... deveria abrir a
   lista pro lado pra n ficar mt grande", comparando com o submenu do

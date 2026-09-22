@@ -3646,6 +3646,35 @@ histórico completo (sem tags/changelog retroativo).
 
 ## kanban-dev.html (ambiente de teste)
 
+### v8.30.726-dev — 2026-09-22 — `/monitorarbugs` (escopo nomeado: mover card, data, descrições, comentários, checklist): mover card pelo menu de contexto e ações em massa não revertiam/avisavam em falha de rede
+
+Pedido explícito, escopo nomeado nas ações mais usadas do card. Checklist,
+descrição, comentários e prazo (incluindo os atalhos "+1d"/"+1 sem" da
+Timeline) foram revisados de ponta a ponta sem achado novo — já estavam
+bem cobertos por rodadas anteriores. **2 achados reais em "mover
+card"**, mesma classe do fix crítico de 17/09 (`handleDrop()`, PR
+#947, aplicado direto em prod pela gravidade — reverte o estado local
+completo se `fbSaveCard()` falhar em vez de deixar o card "movido" só
+na tela).
+
+**Achado 1**: `ctxMove()` (menu de contexto — submenu "↦ Mover para" e
+`ctxBlock()`, "🚧 Marcar impedimento") nunca tinha ganho essa mesma
+proteção. Uma falha de escrita deixava o card visualmente movido, com
+métricas de fluxo/histórico/impedimento corrompidos em memória, sem
+nenhum aviso. Fix: mesmo snapshot completo + revert total no `.catch()`.
+
+**Achado 2**: `_bulkFinish()` — o finalizador compartilhado de TODA
+ação em massa (mover, atribuir, tag, bloquear, excluir-marca...) —
+chamava a escrita no Firebase sem nenhum `.then()`/`.catch()`: o toast
+de sucesso sempre aparecia, mesmo com a escrita falhando de verdade.
+Reverter o estado local de vários cards de uma vez exigiria mudança
+maior (snapshot em cada ação antes de mutar) — fica como recomendação
+futura. Corrigido o mais direto: mostra um aviso real quando a escrita
+falha, em vez do toast de sucesso genérico.
+
+Checks de rotina: `node --check` OK; balanço de chaves no baseline
+conhecido da sessão.
+
 ### v8.30.725-dev — 2026-09-22 — `/monitorarbugs`: 🔗 Links e Modelos/Recorrentes/Agendamentos podiam apagar em silêncio um item adicionado por outra pessoa
 
 `addLink()`/`delLink()` ("🔗 Links", squad) e `addQLItem()`/

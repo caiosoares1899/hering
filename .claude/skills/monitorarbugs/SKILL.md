@@ -2166,6 +2166,35 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   puramente append) e reportar o resto — não forçar um id-by-content
   frágil em 6 lugares diferentes só pra "corrigir tudo".
 
+- **2026-09-22, "mover card, alterar data, escrever descrições,
+  comentários, checklist" (pedido explícito, escopo nomeado nas ações
+  mais usadas do card)**: checklist (`getCL()`/`renderCL()`/`delCI()`/
+  grupos), descrição (`saveCard()` vs. autosave — proteção de
+  demandante consistente nos 2), prazo (incluindo os atalhos inline
+  "+1d"/"+1 sem" da Timeline) e comentários (`submitComment()`/
+  `saveEditComment()`/`deleteComment()`/reações, já tinham rodada
+  própria em 2026-09-12) revisados de ponta a ponta — sem achado novo,
+  já bem cobertos. 2 achados reais em "mover card", técnica 1 (comparar
+  contra `handleDrop()`, que ganhou snapshot+revert completo em 17/09,
+  PR #947, aplicado direto em prod pela gravidade). (1) `ctxMove()`
+  (menu de contexto — "↦ Mover para"/`ctxBlock()`) nunca tinha ganho a
+  mesma proteção — falha de escrita deixava o card visualmente movido,
+  com flow/histórico/blocker corrompidos em memória, sem aviso nenhum.
+  Mesmo padrão de snapshot completo/revert replicado. (2) `_bulkFinish()`
+  — finalizador COMPARTILHADO de toda ação em massa (mover, atribuir,
+  tag, bloquear...) — chamava a escrita sem `then()`/`catch()`: toast
+  de sucesso sempre aparecia, mesmo com falha real. Reverter N cards de
+  uma vez exigiria snapshot em cada chamador antes de mutar (maior,
+  reportado, não implementado) — corrigido o mais direto: aviso real em
+  vez do toast de sucesso mentiroso. dev v8.30.726-dev. **Lição pra
+  próxima vez**: um pedido nomeando várias "ações do card" de uma vez
+  vale a pena auditar TODAS mesmo que algumas pareçam já bem cobertas
+  por rodadas passadas — aqui 3 das 5 áreas pedidas não renderam nada
+  de novo, mas "mover card" (que já tinha tido MAIS rodadas anteriores
+  que as outras 4 juntas) ainda escondia 2 achados reais, exatamente
+  porque o fix crítico mais recente (`handleDrop()`, 17/09) nunca tinha
+  sido comparado contra os caminhos irmãos daquela MESMA correção.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
