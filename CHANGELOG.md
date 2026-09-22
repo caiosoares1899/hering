@@ -18247,6 +18247,28 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.57 · painel-dev — 2026-09-22 — `/monitorarbugs` (escopo nomeado: aba 🎯 OKR): modais de Objetivo e Marco fecham sem avisar sobre alterações não salvas
+
+Pedido explícito ("roda mais um dentro de okr no painel"). 1 achado
+real, confirmado com o usuário via pergunta direta antes de implementar
+(decisão de produto, não bug óbvio de comportamento errado): fechar os
+modais de Objetivo e Marco (✕, clique fora do modal, botão "Cancelar")
+nunca avisava sobre alterações não salvas — diferente do modal de card
+do `kanban.html`, que tem essa proteção (`_cardIsDirty()`) há tempos.
+Um misclique fora do modal descartava tudo digitado em silêncio,
+inclusive campos de texto longo (descrição, indicadores, riscos, planos
+de ação) — mais dolorido aqui que num card, já que o preenchimento
+costuma ser mais longo e menos frequente.
+
+**Fix**: `_okrTryCloseObjetivo()`/`_okrTryCloseMarco()` — guardam um
+snapshot do rascunho ao abrir o modal e comparam contra o estado atual
+(sincronizado do DOM) antes de fechar de verdade, só pedindo
+confirmação se algo realmente mudou. Fluxos que já persistiram ou
+descartaram de propósito (salvar/arquivar/desarquivar/excluir)
+continuam fechando direto, sem re-perguntar.
+
+Checks de rotina: `node --check` OK.
+
 ### painel.html v3.58 · painel — 2026-09-21 · Promove pra prod: papel por squad na aba Usuários + cache do painel_viewers + rebaixar ADM removido
 
 Patch cirúrgico (não cópia completa — os arquivos divergem de

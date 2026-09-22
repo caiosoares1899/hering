@@ -2207,6 +2207,28 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   "fora de escopo"/"achado de passagem" de vez em quando pra achar esses
   pendentes antes de escolher uma área nova do zero.
 
+- **2026-09-22, aba 🎯 OKR — painel-dev.html (pedido explícito, "roda
+  mais um dentro de okr no painel")**: checado e sem achado —
+  `_okrTagCriar()`/`_okrTagApagar()` (escrita escopada por tag id,
+  `okrTags` é objeto keyed, não array — sem o risco de "escrever array
+  local inteiro" já corrigido hoje em Links/qlItems); `_okrCommentSend()`
+  (escrita escopada por comentário, mesmo padrão correto); cascade de
+  `_okrExcluirObjetivo()` (já limpa `marco_comments` junto). 1 achado
+  real, técnica 2 (comparar contra o modal de card do kanban.html) —
+  fechar os modais de Objetivo/Marco (✕/clique fora/"Cancelar") nunca
+  avisava sobre alteração não salva, diferente de `_cardIsDirty()` no
+  kanban.html. Ambíguo o bastante pra perguntar antes (`AskUserQuestion`)
+  — usuário confirmou implementar. Fix: `_okrTryCloseObjetivo()`/
+  `_okrTryCloseMarco()`, snapshot do rascunho ao abrir vs. estado atual
+  ao tentar fechar, só pedindo confirmação se algo mudou; fluxos que já
+  persistiram/descartaram de propósito (salvar/arquivar/excluir)
+  continuam fechando direto. painel-dev v3.57. **Lição pra próxima
+  vez**: nem todo achado real é "bug claro" — uma proteção que existe
+  numa feature irmã (aqui, o card) e falta noutra pode ser tanto
+  inconsistência real quanto escolha de escopo da 1ª versão da feature
+  mais nova; perguntar antes evita implementar uma feature nova (não um
+  fix) sem sinal verde.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
