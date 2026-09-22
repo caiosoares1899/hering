@@ -2472,7 +2472,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           </div>
         </div>
         <div style="font-size:10px;color:var(--txt3);line-height:1.5;background:rgba(var(--ink-rgb),.4);border-radius:7px;padding:8px 10px;">
-          💡 <b>Popup</b> interrompe ao abrir/recarregar o board — depois que a pessoa clica "Entendi" some do popup, mas continua disponível no mural pra reconsulta. <b>Só no mural</b> nunca interrompe ninguém — fica direto no botão 📢 pra quem quiser ler. <b>Insistente</b> só se aplica ao popup: reaparece a cada abertura até expirar ou você desativar.
+          💡 <b>Popup</b> interrompe ao abrir/recarregar o board — depois que a pessoa clica "Entendi" some do popup, mas continua disponível no mural pra reconsulta. <b>Só no mural</b> nunca interrompe ninguém — fica direto no botão 📢 pra quem quiser ler. <b>Insistente</b> só se aplica ao popup: reaparece a cada abertura até expirar ou você desativar. 🔔 <b>Urgente</b> (ou Popup + Insistente junto) também dispara uma notificação de verdade no sino de quem deve receber — chega pra quem não está com o board aberto na hora, não só pra quem abrir depois.
         </div>
       </div>
       <div class="pev-ft">
@@ -2867,7 +2867,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-obj-title">🎯 Objetivo</div>
       <button class="x-btn" id="okr-obj-share-btn" onclick="shareOkrObjLink()" title="Copiar link direto deste Objetivo" style="display:none;margin-right:4px;">🔗</button>
-      <button class="x-btn" onclick="closeOkrObjetivo()">✕</button>
+      <button class="x-btn" onclick="_okrTryCloseObjetivo()">✕</button>
     </div>
     <div class="pc-modal-body" id="okr-obj-body"></div>
     <div class="pc-footer" id="okr-obj-footer"></div>
@@ -2879,19 +2879,19 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div class="pc-modal" style="width:min(560px,94vw);">
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title" id="okr-marco-title">🏁 Marco</div>
-      <button class="x-btn" onclick="closeOkrMarco()">✕</button>
+      <button class="x-btn" onclick="_okrTryCloseMarco()">✕</button>
     </div>
     <div class="pc-modal-body" id="okr-marco-body"></div>
     <div class="pc-footer" id="okr-marco-footer"></div>
   </div>
 </div>
 
-<div class="version">v3.58 · painel</div>
+<div class="version">v3.60 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
@@ -2934,7 +2934,7 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   return credential;
 });
 
-window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove;
+window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove; window._runTransaction=runTransaction;
 // query/orderByChild/limitToLast: mesmo padrão de window._query/_orderByChild/
 // _equalTo já pendurados no kanban-dev.html (fix do consumo de comunicados,
 // 2026-09-11) -- bindings de import de módulo ES não atravessam pro <script>
@@ -5614,6 +5614,12 @@ async function _okrNotifyEditado(objId){
 // ── Modal de Objetivo ─────────────────────────────────────────────────
 let _okrEditingObjId = null;   // id do objetivo aberto, null = criando novo
 let _okrObjDraft = null;       // rascunho em edição (só grava no Salvar)
+// Achado real (/monitorarbugs 2026-09-22): fechar o modal (X/clique fora/
+// Cancelar) nunca avisava sobre alterações não salvas, diferente do modal
+// de card do kanban.html (_cardIsDirty()). _okrObjOpenSnapshot guarda o
+// rascunho como estava ao abrir — _okrTryCloseObjetivo() compara contra o
+// estado atual antes de fechar de verdade.
+let _okrObjOpenSnapshot = null;
 
 function openOkrObjetivo(id){
   if(id && !okrObjetivos[id]) return;
@@ -5627,6 +5633,7 @@ function openOkrObjetivo(id){
   // _okrTrimestresOf(). Não regrava sozinho no Firebase, só no rascunho em
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
+  _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
   document.getElementById('okr-obj-title').textContent = id ? '🎯 Editar Objetivo' : '🎯 Novo Objetivo';
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
   // deep-link ?okr=<id> apontar) — "Novo Objetivo" ainda não tem pra onde
@@ -5637,7 +5644,22 @@ function openOkrObjetivo(id){
 }
 function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
-  _okrEditingObjId = null; _okrObjDraft = null;
+  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
+}
+// Fecha só depois de confirmar se há alteração não salva — mesmo espírito
+// de _cardIsDirty()/closeOv('card-ov') no kanban.html, que este modal nunca
+// teve. closeOkrObjetivo() continua sendo chamado DIRETO pelos fluxos que
+// já persistiram ou descartaram de propósito (salvar/arquivar/desarquivar/
+// excluir) — só quem tenta fechar sem ter feito nenhuma dessas ações (✕,
+// clique fora, "Cancelar") passa por aqui primeiro.
+async function _okrTryCloseObjetivo(){
+  if(_okrObjDraft && _okrObjOpenSnapshot!=null){
+    _okrSyncObjDraftFromDom();
+    if(JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+      if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+    }
+  }
+  closeOkrObjetivo();
 }
 // 🔗 Link direto pro Objetivo — pedido direto do usuário ("n tem como
 // cada okr ganhar um link compartilhado igual o card?"). Reaproveita
@@ -5822,7 +5844,7 @@ function renderOkrObjBody(id){
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
-    <button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
@@ -5904,6 +5926,9 @@ let _okrEditingMarcoId = null;
 let _okrEditingMarcoObjId = null;
 let _okrMarcoDraft = null;
 let _okrMarcoComments = [];
+// Mesmo achado/motivo de _okrObjOpenSnapshot acima — dirty-check ao fechar,
+// nunca existiu pro modal de Marco.
+let _okrMarcoOpenSnapshot = null;
 
 function openOkrMarco(id, objId){
   if(id && !okrMarcos[id]) return;
@@ -5913,6 +5938,7 @@ function openOkrMarco(id, objId){
     objetivoId: objId, nome:'', responsavel:'', prazo:'', progresso:'nao_iniciado',
     checklist:[], tags:[], participantes:[], descricao:'', history:[],
   };
+  _okrMarcoOpenSnapshot = JSON.stringify(_okrMarcoDraft);
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : '🏁 Novo Marco';
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');
@@ -5923,8 +5949,20 @@ function openOkrMarco(id, objId){
 function closeOkrMarco(){
   document.getElementById('okr-marco-ov').classList.remove('open');
   const objId = _okrEditingMarcoObjId;
-  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null;
+  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
   if(objId){ document.getElementById('okr-obj-ov').classList.add('open'); renderOkrObjBody(objId); }
+}
+// Mesmo espírito de _okrTryCloseObjetivo() acima — closeOkrMarco() continua
+// chamado direto por salvar/arquivar (já persistiram/descartaram de
+// propósito); só ✕/clique fora/"Cancelar" passam por aqui primeiro.
+async function _okrTryCloseMarco(){
+  if(_okrMarcoDraft && _okrMarcoOpenSnapshot!=null){
+    _okrSyncMarcoDraftFromDom();
+    if(JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+      if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+    }
+  }
+  closeOkrMarco();
 }
 // Mesmo achado/motivo de _okrSyncObjDraftFromDom() acima, pro modal de Marco:
 // toda ação de checklist/tag/participante/status re-renderiza #okr-marco-body
@@ -6090,7 +6128,7 @@ function renderOkrMarcoBody(){
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
-    <button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    <button onclick="_okrTryCloseMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
 }
@@ -6768,8 +6806,8 @@ document.addEventListener('click', function(e){
 
 document.addEventListener('click',e=>{if(e.target.id==='pc-modal-ov')closePcModal();});
 document.addEventListener('click',e=>{if(e.target.id==='pt-feed-ov')closePainelFeed();});
-document.addEventListener('click',e=>{if(e.target.id==='okr-obj-ov')closeOkrObjetivo();});
-document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')closeOkrMarco();});
+document.addEventListener('click',e=>{if(e.target.id==='okr-obj-ov')_okrTryCloseObjetivo();});
+document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')_okrTryCloseMarco();});
 
 // ── HELPER ───────────────────────────────────────────────────────
 function checklistPct(c){
@@ -8177,11 +8215,21 @@ async function markAllPainelNotifsRead(){
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
   if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  const idsNaoLidas = new Set(naoLidas.map(n=>n.id));
   try {
-    const snap = await window._get(ref);
-    const val = snap.val() || {};
-    naoLidas.forEach(n=>{ if(val[n.id]) val[n.id].read = true; });
-    await window._set(ref, val);
+    // runTransaction() em vez de get()+set() do node inteiro (achado real,
+    // /monitorarbugs 2026-09-22, mesma classe já corrigida em Kudos/
+    // Lembretes/Dashboard consolidado/Links/qlItems): entre o get() e o
+    // set() havia uma janela onde uma notificação NOVA chegando por outro
+    // caminho (menção, prazo, push...) era descartada em silêncio ao
+    // regravar o node inteiro com um snapshot já desatualizado.
+    // runTransaction() recalcula sobre o valor FRESCO do servidor a cada
+    // tentativa, sem esse risco.
+    await window._runTransaction(ref, current=>{
+      if(!current) return current;
+      idsNaoLidas.forEach(id=>{ if(current[id]) current[id].read = true; });
+      return current;
+    });
     showToast('✅ '+naoLidas.length+' notificação'+(naoLidas.length>1?'ões':'')+' marcada'+(naoLidas.length>1?'s':'')+' como lida'+(naoLidas.length>1?'s':'')+'.');
   } catch(e) {
     showToast('❌ Erro ao marcar como lidas.');
@@ -8194,11 +8242,14 @@ async function clearReadPainelNotifs(){
   const lidas = _painelNotifs.filter(n=>n._kind==='notif' && n.read);
   if(!lidas.length){ showToast('Nenhuma notificação lida para remover.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
+  const idsLidas = new Set(lidas.map(n=>n.id));
   try {
-    const snap = await window._get(ref);
-    const val = snap.val() || {};
-    lidas.forEach(n=>{ delete val[n.id]; });
-    await window._set(ref, val);
+    // runTransaction() — mesmo achado/fix de markAllPainelNotifsRead() acima.
+    await window._runTransaction(ref, current=>{
+      if(!current) return current;
+      idsLidas.forEach(id=>{ delete current[id]; });
+      return current;
+    });
     showToast('🧹 '+lidas.length+' notificação'+(lidas.length>1?'ões':'')+' lida'+(lidas.length>1?'s':'')+' removida'+(lidas.length>1?'s':'')+'.');
   } catch(e) {
     showToast('❌ Erro ao limpar notificações.');
@@ -8672,6 +8723,61 @@ function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
   _editingComunicadoId = null;
 }
+// Achado real (/monitorarbugs 2026-09-22, técnica 6 — código morto pela
+// via inversa: infraestrutura pronta pra um tipo que nunca era criado):
+// 'painel_broadcast' já existia em PUSH_TYPES (functions/index.js) e em
+// NOTIF_ICONS (kanban-dev.html), mas NADA no repo (client ou Cloud
+// Function) jamais criava uma notificação desse tipo — Comunicados
+// publicados sempre escreveram só em kanban/comunicados/{id}, nunca em
+// kanban/usuarios/{uid}/notificacoes. Quem não estava com o board aberto
+// no momento nunca ficava sabendo de um Comunicado, nem um "🚨 Urgente".
+// Confirmado com o usuário antes de implementar (feature real faltando,
+// não bug de comportamento) — escopo: só dispara pra tipo 'urgente' ou
+// popup insistente, e só na transição pra ativo (não a cada edição de algo
+// que já estava publicado, pra não notificar de novo por corrigir um typo).
+function _painelResolveComunicadoAlvos(c){
+  const alvos = new Set();
+  Object.entries(_globalUsersCache||{}).forEach(([uid,u])=>{
+    if(!u) return;
+    const squadsDoUsuario = Object.keys(u.squads||{}).filter(sq=>u.squads[sq]===true);
+    const pertenceAoSquad = !c.squad || c.squad==='*' || squadsDoUsuario.includes(c.squad);
+    if(!pertenceAoSquad) return;
+    if(c.publico==='po'){
+      const ehAdm = isAdmUser({email:u.email}) || u.role==='adm';
+      const ehPoOuOrg = squadsDoUsuario.some(sq=>{
+        const papel = (u.squads_roles && u.squads_roles[sq]) || u.role || 'membro';
+        return papel==='po' || papel==='organizador';
+      });
+      if(!ehAdm && !ehPoOuOrg) return;
+    }
+    alvos.add(uid);
+  });
+  return alvos;
+}
+async function _painelNotifyBroadcast(c, id){
+  const autorUid = window._currentUser?.uid;
+  const alvos = _painelResolveComunicadoAlvos(c);
+  alvos.delete(autorUid);
+  const writes = [...alvos].map(uid=>{
+    const nid='n'+Date.now()+Math.random().toString(36).slice(2,6);
+    return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
+      id:nid, type:'painel_broadcast',
+      title: '📢 '+(c.titulo||'Comunicado'),
+      sub: 'Novo comunicado do time',
+      comunicadoId: id,
+      // link:'pessoas' — mesmo mecanismo genérico ?tab=<id> já usado por
+      // outras notificações sem card (ver renderPainelNotifs()/n.link,
+      // achado /monitorarbugs 2026-09-06): "+ Novo comunicado" vive dentro
+      // de #ppane-pessoas — sem isso, clicar no sino PRÓPRIO do painel (só
+      // visível a ADM) marcaria como lida sem navegar a lugar nenhum,
+      // mesma classe de gap já corrigida 1x naquela rodada.
+      link: 'pessoas',
+      read:false,
+      ts:new Date().toISOString(),
+    }).catch(()=>{});
+  });
+  await Promise.all(writes);
+}
 function saveComunicado(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
   const titulo = document.getElementById('cc-titulo').value.trim();
@@ -8681,21 +8787,29 @@ function saveComunicado(){
   const id = _editingComunicadoId || ('com_'+Date.now()+Math.random().toString(36).slice(2,6));
   const existente = _comunicadosCache[id] || {};
   const eraRascunho = !!existente.rascunho;
+  const estavaAtivo = !!existente.ativo; // pra decidir se notifica (só na transição pra ativo, ver comentário acima)
   const prioridade = document.getElementById('cc-prioridade').value;
+  const insistente = prioridade==='popup' ? document.getElementById('cc-insistente').checked : false;
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
     squad: document.getElementById('cc-squad').value,
     publico: document.getElementById('cc-publico').value,
     prioridade,
-    insistente: prioridade==='popup' ? document.getElementById('cc-insistente').checked : false,
+    insistente,
     ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
     rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
   };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
-    .then(()=>{ showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!'); closeComunicadoCompose(); })
+    .then(()=>{
+      showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!');
+      if(!estavaAtivo && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
+        _painelNotifyBroadcast(obj, id);
+      }
+      closeComunicadoCompose();
+    })
     .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
 }
 async function deleteComunicado(){

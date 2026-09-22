@@ -18465,6 +18465,27 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.60 · painel — 2026-09-22 · Promove pra prod (patch cirúrgico) — OKR dirty-check, sino do painel via transação, Comunicado urgente notifica
+
+Promoção cirúrgica (não cópia completa — os arquivos divergem de
+propósito, ver `CLAUDE.md`) de 4 commits acumulados em `painel-dev.html`
+desde a última promoção real (v3.58). Validado ao longo da sessão.
+
+- 🎯 Modais de Objetivo/Marco (aba OKR) agora avisam se você tentar
+  fechar (✕, clicar fora, "Cancelar") com alterações não salvas — mesmo
+  comportamento que o modal de card do board já tinha.
+- 🔔 Sino de notificações do painel: "Marcar todas como lidas" e
+  "Limpar antigas" não correm mais risco de apagar uma notificação nova
+  chegando bem naquele instante.
+- 📢 Comunicado 🚨 Urgente (ou Popup + Insistente) agora também dispara
+  notificação de verdade pra quem deve receber, não só fica salvo no
+  Mural — mesma novidade já descrita na promoção de `kanban.html`.
+- Caixa de dica da tela "Novo Comunicado" atualizada explicando a
+  notificação acima.
+
+Ver as entradas de dev correspondentes (v3.57·painel-dev a
+v3.60·painel-dev) pro detalhe técnico completo de cada achado.
+
 ### painel-dev.html v3.60 · painel-dev — 2026-09-22 — `/atualizarhelpcontent`: tela de compor Comunicado não avisava sobre a notificação de Urgente/Insistente
 
 Puramente documentação, sem mudança de comportamento. Contraparte do
