@@ -18,6 +18,51 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.733 — 2026-09-22 · Promove pra prod — lote acumulado (13 versões de dev)
+
+Promoção do lote inteiro acumulado desde a última promoção (v8.30.719),
+validado ao longo da própria sessão — cada item foi testado via script
+de console (resultados ✅ conferidos) e, nos casos de maior impacto
+visível, também validado direto na tela pelo usuário. Ver as entradas
+de dev correspondentes (seção "kanban-dev.html (ambiente de teste)"
+abaixo, v8.30.720-dev a v8.30.733-dev) pro detalhe técnico completo de
+cada achado; aqui só o resumo pro público de prod.
+
+**Correções de comportamento:**
+- Um card recém-criado não mostra mais entradas falsas de "removeu o
+  impedimento"/"definiu OKR: não" no 📜 Histórico, sem ninguém ter
+  tocado nesses campos. Cards antigos com essas entradas falsas também
+  já foram limpos diretamente no banco de dados.
+- Notificações que deveriam avisar você mesmo (ex.: automações
+  disparadas por uma ação sua) agora chegam de verdade — antes eram
+  silenciosamente ignoradas em alguns casos.
+- Eventos de notificação diferentes acontecendo quase ao mesmo tempo
+  (ex.: 2 reações a comentários diferentes, 2 Estrelas do Mar) não se
+  "engolem" mais um ao outro — cada um gera sua própria notificação.
+- Vincular/desvincular um item em 🔗 Links e em 📋 Modelos/Recorrentes/
+  Agendamentos não corre mais o risco de apagar por cima um item que
+  outra pessoa adicionou quase ao mesmo tempo.
+- Mover um card pelo menu de contexto ("↦ Mover para") ou por uma ação
+  em massa agora avisa de verdade se a escrita falhar (rede instável),
+  em vez de mostrar sucesso silenciosamente.
+- O contador de WIP (trabalho em andamento) no topo do board voltava a
+  zero em squads que renomeiam/recriam a coluna "Em andamento" — corrigido.
+- A Busca (Ctrl+K) mostrava o selo de tag errado em alguns resultados —
+  corrigido.
+- Corrigida uma falha rara e severa no salvamento de card (edição ou
+  criação) ligada à ordem de sincronização com o Firebase — mesma
+  classe do incidente crítico já corrigido na promoção anterior.
+
+**Novidades:**
+- 📢 Comunicados marcados como 🚨 Urgente (ou Popup + Insistente) agora
+  também chegam como notificação de verdade no sino — pra quem não
+  estiver com o board aberto no momento da publicação, não só pra quem
+  entrar depois e ver no Mural.
+- 🧩 Supercard: em vez de mover o card pai sozinho pra Concluído quando
+  todos os filhos terminam, o board agora posta um comentário avisando
+  o Responsável e pedindo pra ele mover manualmente — a decisão final
+  fica sempre com uma pessoa.
+
 ### v8.30.719 — 2026-09-21 · Promove pra prod — 🔴 correção crítica: edições e criações de card podiam "salvar" na tela sem persistir de verdade
 
 Promoção imediata (bug crítico de perda de dados, validado pela usuária
