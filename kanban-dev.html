@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.730-dev</div>
+<div class="version">v8.30.731-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28746,7 +28746,17 @@ function parseMentions(text, cardId, commentId, opts){
     if(byHandle){ uid=byHandle.uid; init=byHandle.init; }
     else if(/^[A-Z]{2,3}$/.test(token)){ uid=getUidByInit(token); init=token; }
     if(!uid || notified.has(uid)) continue;
-    if(uid===window._currentUser?.uid) continue; // não notifica a si mesmo
+    // Achado real (relato direto do usuário testando o aviso de supercard,
+    // 2026-09-22): diferente do branch "@todos" 2 blocos acima (que já
+    // respeita opts.includeSelf desde 2026-09-01), este branch (@handle/
+    // @init) ignorava opts.includeSelf por completo — sempre excluía quem
+    // está logado, mesmo quando quem chamou parseMentions() pediu
+    // explicitamente includeSelf:true. `_notifySupercardAllDone()` (novo)
+    // e `notify_po_org` (Automação, já existia) sofriam o mesmo bug: se a
+    // pessoa que disparou o evento (linkou o filho, PO que causou a regra)
+    // for justamente quem deveria ser @mencionada, ela nunca era
+    // notificada — sem erro nenhum, silencioso.
+    if(!opts.includeSelf && uid===window._currentUser?.uid) continue; // não notifica a si mesmo (a menos que a automação peça includeSelf)
     notified.add(uid);
     // idOverride determinístico (cardId+uid): parseMentions roda de novo em
     // TODO save do card (hook em saveCard, ver mais abaixo) pra não perder
