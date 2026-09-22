@@ -2087,6 +2087,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   até o ponto exato onde "sucesso relatado" e "efeito real" divergem —
   esse é o ponto onde a causa raiz de verdade sempre está.
 
+- **2026-09-22, pipeline de salvamento de card (pedido genérico, "roda
+  um /monitorarbugs sem quebrar o código" — área escolhida por
+  prioridade 1: código mais recente, mexido sob pressão ontem durante o
+  incidente de perda de dados, nunca lido com calma de ponta a ponta)**:
+  3 achados reais, todos da mesma classe já validada como real na
+  investigação de ontem. (1) **severo**, técnica 1 — `openNewCard()`
+  nunca ganhou o `_flushAutoSave()` que `openCard()` ganhou ontem;
+  `usarQLItem()`/`_intakeCriarCard()` chamam `openNewCard()` fechando só
+  `ql-ov`/`intake-ov` (overlays que ficam empilhados por cima de um card
+  já aberto — o comentário do próprio código já confirmava esse
+  cenário), sem nunca fechar `#card-ov` — mesma perda silenciosa de
+  edição dentro da janela de 800ms do debounce, achada só porque
+  procurei TODOS os call sites que reatribuem `editingId`/abrem o modal,
+  não só os dois já corrigidos ontem. (2)+(3) técnica 2 (comparar contra
+  o padrão que a própria correção de ontem estabeleceu) — nas 3
+  primitivas, `_lastLocalSave` era carimbado ANTES de esperar
+  `_fbReady`, mas o espelho `window._cardsByKey`/cálculo local só era
+  populado DEPOIS — reabrindo a mesma janela de ontem especificamente
+  quando `_fbReady` começa `false` e a espera passa de 2s; e a escrita
+  de backfill de `_applyCardsSync()` nunca tinha ganho a proteção contra
+  campo `undefined` que as outras 3 vias já têm desde 16/09, falhando
+  100% em silêncio. dev v8.30.723-dev. **Lição pra próxima vez**: depois
+  de corrigir um incidente sob pressão, vale voltar com calma pra
+  auditar a MESMA área com o método sistemático da skill — código
+  mexido durante um incidente ao vivo tende a corrigir só o caminho
+  exato que estava sendo testado, deixando irmãos próximos (aqui:
+  `openNewCard()`, o mesmo padrão "carimba antes de esperar" replicado
+  nas 3 primitivas, uma 4ª via de escrita nunca coberta) sem a mesma
+  correção.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

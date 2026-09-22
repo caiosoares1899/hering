@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.722-dev</div>
+<div class="version">v8.30.723-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8931,10 +8931,6 @@ async function fbSaveAll(extra, touchedIds){
   if(window._ensureArchivedCardsLoaded) await window._ensureArchivedCardsLoaded();
   _lastLocalSave = Date.now();
   _hasLocalSession = true;
-  if(!window._fbReady){
-    // Não confirmar um save que ainda não tem destino persistente.
-    await _waitForFirebaseReady();
-  }
   // Returns a Promise so callers can .then/.catch (e.g. handleDrop anti-rubber-band)
   // NOTA: columns e tags NÃO são salvos aqui — apenas cards (+ cards_index,
   // ver abaixo). columns/tags têm save dedicado em saveAgilCfg()/saveTags()
@@ -9032,6 +9028,22 @@ async function fbSaveAll(extra, touchedIds){
     cardsToSave.forEach((c,i)=>{ if(c && c.id) freshByKey[cardsIndex[c.id]]=c; });
     Object.keys(window._cardsByKey).forEach(k=>delete window._cardsByKey[k]);
     Object.assign(window._cardsByKey, freshByKey);
+  }
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe do achado de
+  // 2026-09-21 em fbSaveCard()): o espelho window._cardsByKey acima
+  // precisa ficar fresco ANTES de qualquer chance de _applyCardsSync()
+  // rodar — mas antes deste fix, a espera abaixo (_waitForFirebaseReady())
+  // acontecia ANTES de todo este bloco (que é cálculo 100% local, não
+  // depende do Firebase estar pronto), enquanto _lastLocalSave já tinha
+  // sido carimbado lá em cima. Se _fbReady estivesse false e a espera
+  // demorasse mais que os 2s de proteção de _applyCardsSync(), o espelho
+  // ficava com o valor VELHO durante toda a espera — mesma janela de
+  // risco que a de fbSaveCard(), só que aqui reescrevendo /cards inteiro.
+  // Fix: espera só entra na frente da escrita de verdade, depois de todo
+  // cálculo local (incluindo o espelho) já estar pronto.
+  if(!window._fbReady){
+    // Não confirmar um save que ainda não tem destino persistente.
+    await _waitForFirebaseReady();
   }
   // extra: paths adicionais pra entrar no MESMO update multi-path (ex.:
   // recorrentes_index/{slug}/{data}, gravado por processRecorrentes() na
@@ -9168,7 +9180,6 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       _settleCardTimeTrackingLazy(card); // ⏱️ rede de segurança — ver comentário na declaração
       _lastLocalSave = Date.now();
       _hasLocalSession = true;
-      if(!window._fbReady) return _waitForFirebaseReady().then(()=>fbSaveCard(card));
       // Carimba updatedAt AQUI, não confiando em quem chamou fbSaveCard() ter
       // feito isso — centraliza a garantia num lugar só (mais fácil de manter
       // certa do que auditar todo call-site) pro cards_updated_at (ver
@@ -9235,11 +9246,21 @@ function _reportUnexpectedCardDisappearance(cardId, cardTitle){
       // acabou de confirmar. Fix: mesmo padrão de fbSaveAll()/
       // fbCreateCard(), síncrono, ANTES de disparar a escrita.
       if(window._cardsByKey) window._cardsByKey[key] = card;
-      return _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
+      // Achado real (/monitorarbugs 2026-09-22): o espelho acima precisa
+      // ficar fresco MESMO quando o Firebase ainda não está pronto — antes
+      // deste fix, `if(!window._fbReady) return _waitForFirebaseReady()...`
+      // ficava logo no início da função, ANTES de tudo isto (inclusive do
+      // espelho), deixando window._cardsByKey[key] com o valor VELHO
+      // durante toda a espera (pode passar de 2s em cold start/reconexão —
+      // exatamente o cenário do incidente original, "começou depois das
+      // promoções"). Fix: a espera só entra na frente da escrita de
+      // verdade, depois do espelho já estar atualizado.
+      const doWrite = ()=> _trackFbWrite(window._update(fb(FB), _stripUndefinedMultiPath(updates)).catch(err=>{
         if(!String(err).includes('error_logs')&&!String(err).includes('error_stats'))
           console.warn('[fbSaveCard] write failed:', err);
         throw err;
       }));
+      return window._fbReady ? doWrite() : _waitForFirebaseReady().then(doWrite);
     }
 // Wrapper de fbSaveCard() com aviso visível + 1 retentativa em caso de falha.
 // Chamadores "fire-and-forget" de fbSaveCard() (autosave, salvar descrição
@@ -9514,7 +9535,19 @@ let _cardsSyncDebounce = null;
       cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
       renderBoard();
       // Persiste o backfill (1x) sem disparar loop de echo
-      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), cards).catch(()=>{}); }
+      // Achado real (/monitorarbugs 2026-09-22, técnica 2 — comparado
+      // contra fbSaveAll()/fbSaveCard()/fbCreateCard(), que já aplicam
+      // _stripUndefinedDeep()/_stripUndefinedMultiPath() antes de
+      // qualquer window._update()/_set() de card): esta é a 4ª via de
+      // escrita do array `cards` no arquivo e nunca ganhou a mesma rede
+      // de segurança — um card com campo `undefined` de verdade
+      // derrubava esta escrita específica (mesma classe do achado de
+      // 2026-09-16), e o `.catch(()=>{})` engolia o erro sem NENHUM
+      // aviso, nem um console.warn — pior que as outras 3 vias, que pelo
+      // menos logam. Fix: mesmo strip (aqui é um valor aninhado comum,
+      // não um objeto de update multi-path — _stripUndefinedDeep() é o
+      // helper certo, não _stripUndefinedMultiPath()) + warn visível.
+      if(_bf>0 && window._fbReady){ _lastLocalSave=Date.now(); window._set(fb(FB+'/cards'), _stripUndefinedDeep(cards)).catch(err=>console.warn('[_applyCardsSync] backfill write failed:', err)); }
       _persistCardsCacheFromCurrent();
     }
   }
@@ -15153,6 +15186,18 @@ function _quickAddApplyIfNew(){
 
 function openNewCard(col){
   if(!checkEditPermission()) return;
+  // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
+  // openCard() em _flushAutoSave() — ver comentário completo lá):
+  // usarQLItem() ("Usar modelo/recorrente") e _intakeCriarCard() ("criar
+  // card" a partir de um pedido do Intake) chamam openNewCard() sem
+  // fechar #card-ov primeiro (só fecham ql-ov/intake-ov, overlays
+  // diferentes que podem ficar empilhados por cima de um card já aberto
+  // — o comentário de usarQLItem() já documentava esse cenário: "mesma
+  // causa do 'usar modelo' dentro do card já aberto"). Sem flush aqui, um
+  // card existente sendo editado nesse instante (dentro da janela de
+  // 800ms do debounce) tinha a edição perdida em silêncio, exatamente
+  // como openCard() tinha antes do fix de ontem.
+  _flushAutoSave();
   _intakeOrigemPendingId=null; // ver comentário na declaração — _intakeCriarCard() re-seta logo depois se for o caso
   _pendingTransferLinks=null; _pendingTransferOrigem=null; // idem p/ "Enviar pra outro squad" — _consumirTransferSquad() re-seta logo depois se for o caso
   _clearPendingRequired(); // limpa exigências de modelo anterior (usarQLItem re-seta depois se vier de modelo)
