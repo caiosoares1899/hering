@@ -833,8 +833,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    que arma o addTouchDnD() (arrastar por toque) compete com o balão
    nativo do iOS de seleção de texto/"Copiar" sobre o título do card,
    que interrompe visualmente o gesto de arrastar já construído pra
-   touch (mesmo achado do .col-hd logo abaixo, mesma causa). */
-.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
+   touch (mesmo achado do .col-hd logo abaixo, mesma causa). touch-
+   action:manipulation — o duplo-toque abre o menu de contexto (ver
+   div.ondblclick em makeCardEl()); sem isso o iOS pode interpretar o
+   2º toque como "duplo-toque pra dar zoom" na página em vez de
+   sintetizar o dblclick que o app espera. */
+.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 /* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
    organização visual além das tags (pedido direto: "as tags parecem não
    ser suficiente visualmente"). Usa margin negativo pra "vazar" até a
@@ -6321,7 +6325,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.736-dev</div>
+<div class="version">v8.30.737-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11408,15 +11412,30 @@ function makeCardEl(card){
   if(selectMode){
     div.onclick=(e)=>{ e.stopPropagation(); toggleCardSelection(card.id); };
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCardSelection(card.id); } };
+    div.ondblclick=e=>{e.stopPropagation();};
   } else {
-    div.onclick=()=>openCard(card.id);
+    // Duplo-clique/duplo-toque abre o menu de contexto (showCtxMenu()) —
+    // pedido direto do usuário testando no iPad: o "⋯" ficou feio, e
+    // oncontextmenu sozinho depende do Safari sintetizar contextmenu a
+    // partir de um long-press que compete com addTouchDnD() no mesmo
+    // elemento (ver v8.30.735-dev/v8.30.736-dev). Duplo-toque não tem
+    // esse conflito. Isso exige atrasar o clique SIMPLES (~260ms) — sem
+    // esse atraso o navegador já disparou 2x openCard() antes do
+    // dblclick chegar, então não dava pra distinguir "abrir" de "menu"
+    // depois do fato. Contexto aceito direto com o usuário (aumenta
+    // levemente a latência de abrir card, imperceptível pra abrir modal).
+    let _cardClickTimer=null;
+    div.onclick=()=>{
+      if(_cardClickTimer){ clearTimeout(_cardClickTimer); _cardClickTimer=null; return; } // 2º clique do duplo — deixa o dblclick cuidar
+      _cardClickTimer=setTimeout(()=>{ _cardClickTimer=null; openCard(card.id); }, 260);
+    };
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
     div.oncontextmenu=e=>showCtxMenu(e,card.id);
+    div.ondblclick=e=>{ e.stopPropagation(); showCtxMenu(e,card.id); };
     div.ondragstart=e=>handleDragStart(e,card.id);
     div.ondragend=e=>handleDragEnd(e);
     addTouchDnD(div,card.id);
   }
-  div.ondblclick=e=>{e.stopPropagation();};
   // NOTA sobre display:inline-block nos badges abaixo: margin-top/bottom NÃO
   // tem efeito nenhum em <span> comum (display:inline) — só .card-tag já
   // tinha isso certo (CSS: display:inline-block + margin-bottom). Os outros
