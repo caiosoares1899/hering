@@ -3722,6 +3722,36 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.738-dev — 2026-09-23 — Fix: duplo-toque no iPad continuava abrindo o card em vez do menu
+
+Feedback direto do usuário testando no iPad, imediatamente após a
+v8.30.737-dev: "no pc funcionou mas no ipad continua abrindo o card".
+
+**Causa raiz**: a v8.30.737-dev dependia do evento nativo `dblclick`
+sintetizado pelo navegador a partir de um duplo-toque — funciona bem
+com mouse (clique real, rápido, ~50-100ms entre os 2), mas em toque real
+isso é conhecidamente pouco confiável: o intervalo entre os 2 toques de
+um dedo costuma ser mais lento e variável que um clique de mouse, e o
+timer de 260ms que decidia "é clique único, abre o card" muitas vezes já
+tinha disparado ANTES do segundo toque (e o `dblclick`) chegar — o app
+via só 2 cliques únicos isolados, cada um abrindo o card.
+
+**Fix**: troca a dependência de `dblclick` por detecção manual via
+timestamp em cima do evento `click` (que dispara igual em mouse e
+touch, com timing consistente) — 2 clicks/toques dentro de 350ms no
+mesmo card = menu de contexto; passou da janela = trata como 2 cliques
+únicos normais (abre o card 2x, comportamento aceitável de fallback).
+
+Validado com 4 cenários via Playwright (elemento sintético, mesma
+lógica): clique único → abre 1x; duplo rápido (~50ms, típico de mouse)
+→ menu, sem abrir; **duplo lento (~300ms, mais realista pra um toque de
+dedo — o cenário exato que falhava antes)** → agora mostra o menu
+corretamente, sem abrir o card; 2 toques bem espaçados (400ms, fora da
+janela) → 2 aberturas normais, sem menu.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra nova).
+
 ### v8.30.737-dev — 2026-09-23 — Menu de contexto do card por duplo-clique/duplo-toque (alternativa ao "⋯" removido)
 
 Sugestão direta do usuário depois do revert do botão "⋯" (v8.30.736-dev):
