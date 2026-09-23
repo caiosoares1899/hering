@@ -6326,7 +6326,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.738-dev</div>
+<div class="version">v8.30.739-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30910,6 +30910,18 @@ function getDragAfterElement(container, y){
 // Touch drag and drop (mobile)
 function addTouchDnD(el, cardId){
   let startX,startY,clone,dragging,longPressTimer,armed;
+  // Duplo-toque abre o menu de contexto (showCtxMenu()) — ver comentário
+  // longo em makeCardEl() sobre por que "⋯" foi removido e por que a
+  // 1ª e a 2ª tentativa (v8.30.737-dev/v8.30.738-dev, baseadas em
+  // click/dblclick sintéticos) não funcionaram de verdade no iPad:
+  // depender do navegador sintetizar click/dblclick a partir de toque se
+  // mostrou consistentemente pouco confiável entre toques reais. Esta
+  // versão conta os toques AQUI mesmo, direto no touchend — sem
+  // intermediário nenhum — e usa e.preventDefault() pra suprimir de
+  // propósito o clique sintético que viria depois, assim o
+  // div.onclick/ondblclick (só usados por mouse de verdade, que nunca
+  // passa por touchend) nunca vê esse toque duas vezes.
+  let _lastTapAt=0, _tapTimer=null;
   // ── Mobile: drag só ativa com TOQUE LONGO (long-press ~400ms parado) ──
   // Assim, arrastar pro lado rola o board normalmente (sem "esbarrar" nos cards).
   el.addEventListener('touchstart',e=>{
@@ -30956,7 +30968,24 @@ function addTouchDnD(el, cardId){
     el.style.opacity='';
     if(clone){ clone.remove(); clone=null; }
     document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over'));
-    if(!dragging) return; // não foi um arrasto (tap ou scroll)
+    if(!dragging){
+      // Não foi arrasto — foi um toque simples. Conta aqui mesmo (ver
+      // comentário grande no topo da função) se é o 2º toque de um
+      // duplo-toque (abre o menu de contexto) ou o 1º (abre o card, com
+      // pequeno atraso pra dar chance ao 2º toque chegar). preventDefault
+      // suprime o clique sintético que o navegador dispararia em seguida.
+      e.preventDefault();
+      const now=Date.now();
+      if(_tapTimer && (now-_lastTapAt)<350){
+        clearTimeout(_tapTimer); _tapTimer=null;
+        const t=e.changedTouches[0];
+        showCtxMenu({clientX:t.clientX,clientY:t.clientY,preventDefault(){},stopPropagation(){}}, cardId);
+        return;
+      }
+      _lastTapAt=now;
+      _tapTimer=setTimeout(()=>{ _tapTimer=null; openCard(cardId); },350);
+      return;
+    }
     const touch=e.changedTouches[0];
     const elUnder=document.elementFromPoint(touch.clientX,touch.clientY);
     const colBody=elUnder?.closest('.col-body');
@@ -30976,6 +31005,7 @@ function addTouchDnD(el, cardId){
   el.addEventListener('touchcancel',()=>{
     clearTimeout(longPressTimer); el.classList.remove('card-armed');
     el.style.opacity=''; if(clone){ clone.remove(); clone=null; } dragging=false;
+    if(_tapTimer){ clearTimeout(_tapTimer); _tapTimer=null; } // toque interrompido não conta pro duplo-toque
   },{passive:true});
 }
 
