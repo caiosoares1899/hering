@@ -3689,6 +3689,58 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.734-dev — 2026-09-23 — Melhorias de UI/UX pro iPad (achados de uma auditoria dedicada, pedido explícito)
+
+Rodada pedida explicitamente ("procure melhorias de UI/UX para a versão
+de iPad dos códigos"), fora do escopo do `/monitorarbugs`/
+`/otimizaçãoderotina` — foco em toque/tablet, não em bytes nem em
+comportamento incorreto. 4 achados reais, todos com uma causa raiz em
+comum: o único breakpoint de responsividade do arquivo é
+`@media(max-width:768px)`, que cobre celular mas **não** cobre a
+maioria dos iPads (largura em pontos > 768px em retrato, exceto iPad
+mini) — mesmo eles sendo touch, caem no branch "desktop".
+
+- **Zoom automático ao tocar em campos de texto**: iOS/iPadOS força
+  zoom da página ao focar qualquer `input`/`textarea`/`select` com
+  `font-size` computado < 16px — a maioria dos campos deste arquivo usa
+  9-14px (visual pensado pra tela com mouse). Fix: novo bloco
+  `@media (hover:none) and (pointer:coarse)` (detecta "é touch?"
+  independente da largura, ao contrário de `max-width`) força
+  `font-size:16px` em campos de texto só nesse cenário — não muda nada
+  em desktop com mouse nem em iPad com Magic Keyboard/trackpad
+  (`hover:hover`+`pointer:fine`, cai fora da regra).
+- **Botões de remover/dispensar invisíveis em toque**: `.notif-dismiss`
+  (dispensar notificação no sino), `.camp-entry-del` (remover entrada
+  de campanha), `.camp-fixed-link-del` (remover link fixo),
+  `.cal-ev-del` (remover evento do calendário) nasciam com `opacity:0`
+  e só apareciam via `:hover` do elemento pai — sem mouse, ficavam
+  inacessíveis (mesma classe de bug já corrigida pro `.card-pin-btn`
+  em 2026-09-01, mas nunca estendida a estes 4). Fix: mesmo bloco
+  `(hover:none)+(pointer:coarse)` acima força `opacity:1!important`
+  nesses 4 seletores.
+- **Correção de teclado virtual cobrindo campo, restrita ao celular**:
+  `_onVVResize()` (ajusta a altura do modal do card quando o teclado
+  virtual abre, pra não cobrir o campo focado) tinha o guard
+  `matchMedia('(max-width:768px)')` — nunca rodava em iPad, mesmo o
+  teclado do iPad tendo o mesmo problema. Guard trocado pro mesmo
+  critério `(hover:none) and (pointer:coarse)`.
+- Sinalizado, não corrigido nesta rodada (padrão grande demais pra
+  mexer de uma vez, mesmo espírito do achado de `backdrop-filter` já
+  registrado em `/otimizaçãoderotina`): 278 atributos `title="..."`
+  usados como única explicação de botões só-ícone — tooltip nativo via
+  `title` nunca aparece em toque no iOS (sem long-press que dispare
+  isso).
+
+Validado com Playwright + Chromium emulando iPad Pro 11" (834px de
+largura, touch, sem hover) contra desktop com mouse (1440px): as 4
+correções ativam corretamente só no perfil touch (`font-size` 13px→16px
+nos campos, `opacity` 0→1 nos 4 botões) e ficam idênticas ao
+comportamento original no perfil desktop com mouse — sem regressão
+visual.
+
+Checks de rotina: `node --check` OK (blocos 1/2, bloco 0 é o artefato
+de comentário já conhecido); balanço de chaves do CSS 1555/1555.
+
 ### v8.30.733-dev — 2026-09-22 — Histórico do card: card recém-criado já nascia com "removeu o impedimento"/"definiu OKR: não" sem ninguém ter tocado nesses campos
 
 Relato direto do usuário, com print: um card recém-criado mostrava no
