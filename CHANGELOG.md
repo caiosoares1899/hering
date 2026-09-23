@@ -3722,7 +3722,23 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
-### v8.30.735-dev — 2026-09-23 — Melhorias de UI/UX pro iPad (2ª rodada) — long-press competindo com o menu nativo do iOS, menu de contexto sem caminho de toque garantido, Black Friday inacessível sem mouse
+### v8.30.736-dev — 2026-09-23 — Reverte o botão "⋯" do card (feedback direto do usuário: feio no iPad)
+
+Feedback direto testando no iPad, sobre o botão "⋯" (`.card-ctx-btn`)
+adicionado na rodada anterior (v8.30.735-dev) como caminho garantido pro
+menu de contexto por toque: "achei esses tres pontinhos como menu de
+contexto mt feio no ipad kkkk deixa como long press". Removido por
+completo — `.card-ctx-btn` (CSS + a força de `opacity:1` em touch) e a
+`const ctxBtn` no template do card.
+
+O menu de contexto do card volta a depender só de `oncontextmenu` (long-
+press nativo do iOS sintetizando `contextmenu`) — os outros 2 achados da
+mesma rodada (`-webkit-touch-callout:none` em `.card`/`.col-hd`, toque
+com 2 dedos pro Black Friday) continuam valendo, não fazem parte deste
+revert.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (volta ao baseline de antes do botão ter sido adicionado).
 
 Continuação da auditoria dedicada de UI/UX pro iPad da rodada anterior
 (v8.30.734-dev). 3 achados, todos sobre gestos de toque competindo entre
