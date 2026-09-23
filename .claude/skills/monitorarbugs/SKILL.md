@@ -2342,6 +2342,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   evento do caminho de toque já cobre os 4; `addTouchDnD()` só tem 1
   call site no arquivo.
 
+- **2026-09-23, prazo automático da Recorrência (pedido genérico, "roda
+  outro /monitorarbugs" — área escolhida por prioridade 1: código mais
+  recente, v8.30.741-dev/v8.30.742-dev, nunca tinha rodada própria)**:
+  1 achado real, técnica 6 (código morto) via técnica 1 (comparar
+  caminhos paralelos — Recorrência vs. Agendamentos, mesma família de
+  "criação automática de card"). `_criarCardAgendado()` já usava
+  `due:item.dueCard||''`, mas `dueCard` nunca era escrito em NENHUM
+  lugar do repo — todo card criado por Agendamento sempre nasceu sem
+  prazo, apesar do código parecer suportar isso. Confirmado que o
+  campo "Prazo" do modal compartilhado de editar conteúdo já era
+  ignorado no salvamento DE PROPÓSITO (comentário já documentava essa
+  limitação) — não é o mesmo achado, só uma pista que não se confirmou
+  como bug novo. Ambíguo (decisão de produto: UI nova vs. limpar código
+  morto) — perguntado via `AskUserQuestion`, usuário escolheu
+  implementar a UI de verdade. Fix: campo "Prazo do card (opcional)"
+  (data absoluta) na tela de configurar o Agendamento — mesmo espírito
+  da feature de prazo automático da Recorrência (que usa offset
+  relativo, já que dispara repetidamente, diferente de Agendamento que
+  dispara 1x só). dev v8.30.743-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
