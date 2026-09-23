@@ -18550,6 +18550,32 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.61 · painel — 2026-09-23 · Novo favicon próprio (painel.html nunca tinha tido um de verdade)
+
+Achado ao confirmar o funcionamento do PWA no `kanban.html` — o
+`painel.html` nunca teve favicon nenhum de verdade: o `<link rel="icon">`
+apontava pra um emoji ⚙️ via data-URI SVG, e não existia
+`<link rel="apple-touch-icon">` nenhum (diferente do `kanban.html`, que
+já tinha ícone próprio e infraestrutura de PWA). Ilustração enviada
+diretamente pelo usuário — os 2 peixes do "Marine Glass" de capacete e
+colete de segurança, tema "obra"/"em manutenção" — processada pra
+512×512 e salva como `favicon-painel.png` (raiz do domínio, mesmo padrão
+de `favicon.png`/`favicon-dev.png` do kanban). `<link rel="icon">`
+trocado pro arquivo real; `<link rel="apple-touch-icon">` adicionado do
+zero.
+
+Escopo desta rodada: só `painel.html` (prod), a pedido explícito — sem
+mexer em `painel-dev.html` nem adicionar manifest/PWA completo (isso o
+`painel.html` continua sem ter, igual antes).
+
+Validado com Playwright + Chromium servindo `painel.html` local: os 2
+links resolvem pro `favicon-painel.png` certo, carrega com 200 OK.
+Conferida legibilidade da arte em 512px/32px/16px (tamanho real de aba
+de navegador) — silhueta dos 2 peixes continua reconhecível mesmo no
+menor tamanho.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK.
+
 ### painel.html v3.60 · painel — 2026-09-22 · Promove pra prod (patch cirúrgico) — OKR dirty-check, sino do painel via transação, Comunicado urgente notifica
 
 Promoção cirúrgica (não cópia completa — os arquivos divergem de
