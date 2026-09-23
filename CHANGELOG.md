@@ -3722,6 +3722,47 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.743-dev — 2026-09-23 — `/monitorarbugs`: Agendamentos ganha campo de prazo de verdade (o código já lia `item.dueCard`, mas nada nunca escrevia nele)
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
+por prioridade 1 (código mais recente: a feature de prazo automático
+da Recorrência, v8.30.741-dev/v8.30.742-dev, nunca tinha tido rodada
+própria). Comparado contra o caminho paralelo de Agendamentos (técnica
+1 — mesma família de "criação automática de card").
+
+**Achado real (técnica 6, código morto)**: `_criarCardAgendado()` já
+usava `due:item.dueCard||''` desde que a função existe — o código
+estava escrito como se `item.dueCard` pudesse vir preenchido. Busca no
+repo inteiro (`kanban.html`+`kanban-dev.html`) confirmou: esse campo
+aparece em UMA linha só, sempre como LEITURA — nenhuma tela, modal ou
+automação jamais escreveu nele. Resultado prático: todo card criado
+por um Agendamento sempre nasceu sem prazo, desde sempre, mesmo o
+código parecendo suportar isso.
+
+Confirmado que não é um bug de "nome de campo trocado": o modal
+compartilhado de editar conteúdo (✏️, Recorrentes/Modelos/
+Agendamentos) mostra um campo "Prazo" que já era ignorado no
+salvamento de propósito, documentado no próprio comentário do código
+("segue silencioso como sempre foi... due também não cobre aqui") —
+limitação já conhecida, não um achado novo.
+
+Apresentado como decisão de produto (`AskUserQuestion`) — usuário
+escolheu adicionar a UI de verdade, em vez de só limpar o código
+morto. **Novo**: campo "Prazo do card (opcional)" na tela de
+configurar o Agendamento (⚡ Funções de card → 📅 Agendamentos → 📅 no
+item) — data absoluta (diferente do offset relativo da Recorrência,
+já que Agendamento dispara uma única vez). Deixar em branco continua
+criando o card sem prazo, como sempre foi. Central de Ajuda (entrada
+"Agendamentos") atualizada junto.
+
+Validado com a lógica de `_criarCardAgendado()` extraída direto do
+arquivo: com `dueCard` preenchido → card nasce com aquele prazo; sem
+preencher (undefined/null) → continua nascendo sem prazo.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra nova, reaproveitou `.rec-field`/`.dp-btn` já
+existentes).
+
 ### v8.30.742-dev — 2026-09-23 — Fix: modal de Recorrência automática ficava cortado, botão "Salvar" inacessível
 
 Relato direto do usuário, com print, logo após a v8.30.741-dev: "a
