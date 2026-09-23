@@ -18,6 +18,39 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.734 — 2026-09-23 · Hotfix isolado (sem passar por dev) — ícone do PWA/tela de login usando a arte de dev em produção
+
+Achado ao confirmar pro usuário se o "Adicionar à Tela de Início"
+(PWA) já estava funcionando direito no iPad — não é uma promoção do
+`kanban-dev.html` (que já estava correto), é um hotfix isolado direto
+em `kanban.html`, corrigindo referências que ficaram pra trás em
+promoções anteriores.
+
+**🔴 Correção**: 3 lugares em `kanban.html` (produção) ainda
+referenciavam `favicon-dev.png`/`favicon-dev-monochrome.png` (a arte
+de dev, "peixes sobre linhas de código") em vez de
+`favicon.png`/`favicon-monochrome.png` (a arte de prod) — diferente do
+`<link rel="icon">`/`<link rel="apple-touch-icon">` do `<head>`, que já
+estavam corretos:
+- A imagem da tela de login (`#login-ov`) mostrava o ícone de dev.
+- O manifest dinâmico do PWA (`initPWA()`) — usado quando alguém faz
+  "Adicionar à Tela de Início" — apontava os 2 ícones (`any maskable` e
+  `monochrome`) pra arte de dev. No iOS isso é mascarado em parte pelo
+  `apple-touch-icon` (que Safari prioriza e já estava certo), mas no
+  Android/Chrome, que lê o manifest diretamente, o ícone instalado
+  saía com a arte errada.
+- O fallback hardcoded de `_faviconDefaultHref` (usado só se o elemento
+  `#favicon-link` não for encontrado — nunca acontece na prática, mas
+  ficava inconsistente com o resto do arquivo).
+
+Validado com Playwright + Chromium emulando iPad (servindo o
+`kanban.html` local): manifest, `apple-touch-icon`, `favicon-link` e a
+imagem da tela de login agora resolvem todos pro mesmo `favicon.png`;
+os 2 ícones do manifest carregam com 200 OK.
+
+Checks de rotina: `node --check` OK (bloco 0 é o artefato de comentário
+já conhecido); balanço de chaves do CSS 1552/1552.
+
 ### v8.30.733 — 2026-09-22 · Promove pra prod — lote acumulado (13 versões de dev)
 
 Promoção do lote inteiro acumulado desde a última promoção (v8.30.719),

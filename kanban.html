@@ -3487,7 +3487,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- LOGIN -->
 <div class="login-ov" id="login-ov">
   <div style="text-align:center;margin-bottom:8px;">
-    <img src="favicon-dev.png" width="100" height="100" style="margin-bottom:4px;border-radius:12px;object-fit:contain;" alt="Maré Digital">
+    <img src="favicon.png" width="100" height="100" style="margin-bottom:4px;border-radius:12px;object-fit:contain;" alt="Maré Digital">
     <div style="font-family:Syne,sans-serif;font-size:26px;font-weight:800;">🐟 Maré Digital</div>
     <div style="font-size:13px;color:var(--txt2);" id="login-subtitle">Digital Hering</div>
   </div>
@@ -6285,7 +6285,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.733</div>
+<div class="version">v8.30.734</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -26914,7 +26914,7 @@ function initPWA(){
     background_color:'#030d1a',
     theme_color:'#030d1a',
     icons:[
-      {src:new URL('favicon-dev.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
+      {src:new URL('favicon.png', location.href).href,sizes:'any',type:'image/png',purpose:'any maskable'},
       // "Ícones temáticos" (Android 13+/Material You) — sem uma variante
       // 'monochrome' (silhueta branca em fundo transparente, o sistema
       // aplica a própria cor por cima), o Android não consegue retintar o
@@ -26952,7 +26952,7 @@ function initPWA(){
       // (mesmo nome "Maré Digital" nos dois, sem isso ficavam idênticos).
       // Mesma técnica de recorte/monocromia aplicada, só a fonte mudou.
       // kanban.html (prod) continua com favicon.png/favicon-monochrome.png.
-      {src:new URL('favicon-dev-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
+      {src:new URL('favicon-monochrome.png', location.href).href,sizes:'any',type:'image/png',purpose:'monochrome'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
@@ -33449,12 +33449,12 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
-// se/quando este trecho for promovido pra kanban.html) uma única vez, na
-// carga do script — antes de qualquer troca acontecer — pra sempre saber
-// pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
-// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
-const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon-dev.png';
+// ORIGINAL do <link rel="icon"> (favicon.png aqui, favicon-dev.png em
+// kanban-dev.html) uma única vez, na carga do script — antes de qualquer
+// troca acontecer — pra sempre saber pra onde voltar ao sair do Vice
+// City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
+// nomes diferentes desde a troca acima).
+const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
   if(!link) return;
