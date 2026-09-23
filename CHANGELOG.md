@@ -3722,6 +3722,33 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.742-dev — 2026-09-23 — Fix: modal de Recorrência automática ficava cortado, botão "Salvar" inacessível
+
+Relato direto do usuário, com print, logo após a v8.30.741-dev: "a
+tela quebrou". Causa raiz: `#rec-ov .panel` nunca teve `max-height`/
+`overflow-y` (diferente de outros modais do arquivo, ex. `.card-panel`/
+`.ql-panel`, que já têm) — o conteúdo sempre coube confortavelmente na
+tela até agora. Os 2 campos novos do prazo automático (checkbox +
+input + texto de ajuda) deixaram o modal alto o bastante pra estourar
+a altura da viewport em telas menores/mais curtas, sem nenhum jeito de
+rolar até o botão "Salvar" — ele ficava simplesmente fora da área
+visível, inacessível.
+
+Fix: `max-height:90vh;overflow-y:auto;` no painel (mesmo padrão já
+usado em `.card-panel`/`.ql-panel`). `.panel-hd` já tem
+`position:sticky` globalmente, então o cabeçalho ("🔁 Recorrência
+automática" + ✕) continua fixo no topo enquanto o corpo rola.
+
+Validado com Playwright, reproduzindo o cenário exato (viewport curto,
+mesma estrutura HTML/CSS do modal): confirmado que o conteúdo excedia
+a altura visível antes do fix (`scrollHeight` 653px vs. `clientHeight`
+513px); depois do fix, rolar até o fim deixa o botão "Salvar"
+totalmente visível dentro do painel. Conferido visualmente por
+screenshot.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (mudança só em `style=` inline, sem regra CSS nova).
+
 ### v8.30.741-dev — 2026-09-23 — Recorrência automática ganha prazo automático (pedido do chefe do usuário)
 
 Feature pedida via ideia do chefe do usuário: "quando a pessoa for
