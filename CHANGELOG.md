@@ -18550,6 +18550,22 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.61 · painel-dev — 2026-09-23 · Novo favicon próprio (dev, arte distinta de prod — mesmo padrão do kanban-dev.html)
+
+Mesmo gap do `painel.html` (ver entrada abaixo): `painel-dev.html`
+também usava o emoji ⚙️ genérico como `<link rel="icon">`, sem
+`apple-touch-icon`. Ilustração enviada pelo usuário — mesmos 2 peixes
+de capacete/colete, mas com o fundo de "linhas de código" (em vez das
+ondas do oceano da versão de prod) — processada pra 512×512 e salva
+como `favicon-painel-dev.png`. Segue o mesmo padrão de distinção visual
+dev/prod que o `kanban-dev.html` já usa (`favicon-dev.png`, "peixes
+sobre linhas de código", vs. `favicon.png` do kanban prod, ondas do
+oceano) — agora o painel ganha o par equivalente.
+
+Validado com Playwright + Chromium servindo `painel-dev.html` local: os
+2 links resolvem pro arquivo certo, 200 OK. Checks de rotina:
+`node --check` OK.
+
 ### painel.html v3.61 · painel — 2026-09-23 · Novo favicon próprio (painel.html nunca tinha tido um de verdade)
 
 Achado ao confirmar o funcionamento do PWA no `kanban.html` — o
