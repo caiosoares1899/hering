@@ -814,7 +814,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* column */
 .col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;}
+.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
@@ -829,7 +829,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;}
 
 /* card */
-.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
+/* -webkit-touch-callout:none + user-select:none — sem isso, o long-press
+   que arma o addTouchDnD() (arrastar por toque) compete com o balão
+   nativo do iOS de seleção de texto/"Copiar" sobre o título do card,
+   que interrompe visualmente o gesto de arrastar já construído pra
+   touch (mesmo achado do .col-hd logo abaixo, mesma causa). */
+.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 /* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
    organização visual além das tags (pedido direto: "as tags parecem não
    ser suficiente visualmente"). Usa margin negativo pra "vazar" até a
@@ -908,6 +913,16 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card-pin-btn{position:absolute;top:7px;right:7px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;}
 .card:hover .card-pin-btn{opacity:1;}
 .card-pinned .card-pin-btn{opacity:1;background:rgba(255,209,102,.18);border-color:rgba(255,209,102,.5);color:var(--warn);}
+/* Menu "⋯": único jeito de abrir o menu de contexto do card (showCtxMenu())
+   era oncontextmenu — no mouse é botão direito, mas no touch depende do
+   iOS sintetizar contextmenu a partir de um long-press, o MESMO gesto que
+   addTouchDnD() já usa pra armar o arrasto no mesmo elemento. Garante um
+   caminho de toque simples e confiável, sem depender dessa sobreposição.
+   Escondido por padrão (mesmo hover-reveal do pin, não polui o board) —
+   forçado visível em touch no bloco @media(hover:none) mais abaixo. */
+.card-ctx-btn{position:absolute;top:7px;right:30px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;line-height:1;}
+.card:hover .card-ctx-btn{opacity:1;}
+.card-ctx-btn:hover{color:var(--accent);border-color:var(--accent);}
 .col-selectall{font-size:9px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);color:var(--cyan);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;}
 .col-selectall:hover{background:rgba(56,182,255,.2);color:var(--txt);}
 .bulk-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:12px;background:rgba(4,22,39,.96);border:1px solid var(--accent);border-radius:999px;padding:10px 18px;backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:bulkIn .25s ease;}
@@ -2603,6 +2618,13 @@ input[type="date"]{-moz-appearance:textfield;}
   .cal-ev-del{
     opacity:1!important;
   }
+
+  /* Menu "⋯" do card (ver comentário na regra base .card-ctx-btn) —
+     garante visível sempre em touch, já que é justamente o fallback pro
+     long-press nativo que compete com o addTouchDnD(). */
+  .card-ctx-btn{
+    opacity:1!important;
+  }
 }
 
 /* ── MOBILE ──────────────────────────────────────────── */
@@ -3572,7 +3594,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito: 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" ontouchstart="_themeBtnTouchStart(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito (ou toque com 2 dedos): 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -6316,7 +6338,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.734-dev</div>
+<div class="version">v8.30.735-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11485,6 +11507,7 @@ function makeCardEl(card){
   // (o card inteiro já muda de semântica de clique nesse modo, ver
   // div.onclick acima).
   const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
+  const ctxBtn=selectMode?'':`<button type="button" class="card-ctx-btn" title="Mais opções (mover, bloquear, duplicar...)" onclick="event.stopPropagation();showCtxMenu(event,'${esc(card.id)}')">⋯</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   // Ícone próprio (🎨), não mais 📌 — pedido direto do usuário: colidia
@@ -11524,7 +11547,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${ctxBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -33690,6 +33713,9 @@ function exitViceCity(){
 // long-press que já fazem 3 coisas diferentes no mesmo botão. De
 // propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
 // um teste, não uma opção real ainda, sem sentido contar métrica disso.
+// Sem mouse (iPad) botão direito não existe — _themeBtnTouchStart()
+// abaixo usa toque com 2 dedos como equivalente, mesma lógica de "gesto
+// próprio que não compete com os outros 3 já no mesmo botão".
 function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
 function toggleBlackFriday(){
   if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
@@ -33700,7 +33726,7 @@ function toggleBlackFriday(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','blackfriday');
   _applyThemeButtonIcon();
-  showToast('🔥 Modo Black Friday — proposta em teste (botão direito no 🔥 pra sair).');
+  showToast('🔥 Modo Black Friday — proposta em teste (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
 }
 function exitBlackFriday(){
   const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
@@ -33716,6 +33742,17 @@ function exitBlackFriday(){
 }
 function _themeBtnRightClick(e){
   e.preventDefault();
+  if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
+  toggleBlackFriday();
+}
+// Equivalente por toque do botão direito acima — iPad/celular não tem
+// botão direito, e long-press já está ocupado pelo Vice City (1200ms,
+// _themeBtnPointerDown). Toque com 2 dedos é um gesto à parte, não
+// compete com nenhum dos outros 3 do mesmo botão.
+function _themeBtnTouchStart(e){
+  if(e.touches.length!==2) return;
+  e.preventDefault();
+  if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
   if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
   toggleBlackFriday();
 }

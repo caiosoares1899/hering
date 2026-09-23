@@ -3722,6 +3722,49 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.735-dev — 2026-09-23 — Melhorias de UI/UX pro iPad (2ª rodada) — long-press competindo com o menu nativo do iOS, menu de contexto sem caminho de toque garantido, Black Friday inacessível sem mouse
+
+Continuação da auditoria dedicada de UI/UX pro iPad da rodada anterior
+(v8.30.734-dev). 3 achados, todos sobre gestos de toque competindo entre
+si ou com o comportamento nativo do iOS/Safari — nenhum coberto pelos
+`@media(hover:none)` da rodada passada (que era só sobre visibilidade/
+zoom, não sobre gestos).
+
+- **`.card`/`.col-hd` sem `-webkit-touch-callout:none`**: 0 ocorrências
+  dessa propriedade no arquivo inteiro, apesar de serem exatamente os 2
+  elementos com gesto próprio de long-press pra arrastar
+  (`addTouchDnD()`/`addTouchColDnD()`, armado aos 400ms). Sem essa
+  propriedade, o iOS mostra o balão nativo de seleção de texto/"Copiar"
+  no mesmo long-press, competindo com o arrasto customizado. Adicionado
+  `-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;`
+  nos dois.
+- **Menu de contexto do card (`showCtxMenu()`) sem caminho de toque
+  garantido**: única forma de abrir era `oncontextmenu` — no touch,
+  depende do Safari sintetizar `contextmenu` a partir de um long-press,
+  o MESMO gesto que `addTouchDnD()` já usa no mesmo elemento pra armar o
+  arrasto. Novo botão "⋯" (`.card-ctx-btn`, mesmo padrão visual do
+  `.card-pin-btn` já existente) chama `showCtxMenu()` direto — escondido
+  por padrão (hover-reveal, não polui o board com mouse), forçado
+  visível em touch no bloco `@media(hover:none)` já existente.
+- **🔥 Modo Black Friday só acessível via botão direito**: sem mouse
+  (iPad) não existe botão direito, e o long-press do mesmo botão já está
+  ocupado pelo Vice City (1200ms). Toque com 2 dedos
+  (`_themeBtnTouchStart()`) adicionado como gesto equivalente — não
+  compete com nenhum dos outros 3 gestos já no mesmo botão (clique/
+  duplo-clique/long-press). Toast e tooltip atualizados pra mencionar a
+  alternativa.
+
+Validado com Playwright + Chromium emulando iPad Pro 11": `user-select`
+aplicado corretamente, `.card-ctx-btn` força `opacity:1` em touch,
+função `_themeBtnTouchStart` presente, sem erros de JS no carregamento
+da página. `-webkit-touch-callout` não é reconhecida pelo Chromium (só
+WebKit/Safari) — não dá pra validar via `getComputedStyle` neste
+ambiente, mas é o padrão universal usado em apps iOS; sintaxe/balanço de
+chaves conferidos normalmente.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1559/1559.
+
 ### v8.30.734-dev — 2026-09-23 — Melhorias de UI/UX pro iPad (achados de uma auditoria dedicada, pedido explícito)
 
 Rodada pedida explicitamente ("procure melhorias de UI/UX para a versão
