@@ -3722,6 +3722,39 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.737-dev — 2026-09-23 — Menu de contexto do card por duplo-clique/duplo-toque (alternativa ao "⋯" removido)
+
+Sugestão direta do usuário depois do revert do botão "⋯" (v8.30.736-dev):
+"e se o menu de contexto for clicar duas vezes? acho que funciona mais".
+`div.ondblclick`, que antes só fazia `e.stopPropagation()` sem nenhum
+efeito real, agora chama `showCtxMenu()` — funciona tanto com
+duplo-clique de mouse quanto com duplo-toque em touch, sem depender do
+Safari sintetizar `contextmenu` a partir do long-press que já é usado
+pelo `addTouchDnD()` no mesmo elemento.
+
+**Trade-off técnico, confirmado direto com o usuário antes de
+implementar**: pra distinguir "1 clique = abre o card" de "2 cliques =
+menu de contexto" no MESMO elemento, o clique simples precisou ganhar um
+pequeno atraso (~260ms, `setTimeout` cancelável) — sem isso o navegador
+já dispara 2 eventos `click` (chamando `openCard()` 2x) antes do
+`dblclick` chegar, então não dá pra decidir depois do fato. Mesmo padrão
+usado por apps tipo Trello/Explorer do Windows pra separar clique de
+duplo-clique no mesmo alvo.
+
+`.card` ganhou `touch-action:manipulation` — sem isso o iOS pode
+interpretar o 2º toque como "duplo-toque pra dar zoom" na página em vez
+de sintetizar o `dblclick` que o app espera.
+
+Validado com um teste isolado (Playwright, elemento sintético com a
+mesma lógica de disambiguação): 1 clique → `openCard()` chamado 1x após
+o atraso, `showCtxMenu()` 0x; clique duplo (sequência
+click→click→dblclick que o navegador já dispara sozinho) →
+`openCard()` 0x (cancelado pelo 2º clique), `showCtxMenu()` 1x.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem mudança — só ajuste de declarações existentes, sem regra
+nova).
+
 ### v8.30.736-dev — 2026-09-23 — Reverte o botão "⋯" do card (feedback direto do usuário: feio no iPad)
 
 Feedback direto testando no iPad, sobre o botão "⋯" (`.card-ctx-btn`)
