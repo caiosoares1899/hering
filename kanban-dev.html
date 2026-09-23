@@ -6326,7 +6326,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.739-dev</div>
+<div class="version">v8.30.740-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11415,26 +11415,31 @@ function makeCardEl(card){
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCardSelection(card.id); } };
     div.ondblclick=e=>{e.stopPropagation();};
   } else {
-    // Duplo-clique/duplo-toque abre o menu de contexto (showCtxMenu()) —
-    // pedido direto do usuário testando no iPad: o "⋯" ficou feio, e
-    // oncontextmenu sozinho depende do Safari sintetizar contextmenu a
-    // partir de um long-press que compete com addTouchDnD() no mesmo
-    // elemento (ver v8.30.735-dev/v8.30.736-dev). 1ª tentativa (v8.30.737-dev)
-    // usava o evento nativo `dblclick` — funcionou no mouse, mas não no
-    // iPad de teste ("continua abrindo o card"): o dblclick sintetizado a
-    // partir de toque não é confiável entre browsers/toques reais (ou o
-    // intervalo entre os 2 toques do dedo passa da janela que o navegador
-    // espera). Troca pra detecção MANUAL via timestamp, só em cima do
-    // evento `click` — esse sim dispara igual em mouse E em toque, sem
-    // depender de dblclick nenhum. 2 clicks/toques dentro de 350ms no
-    // MESMO card = menu de contexto; senão, abre o card depois do atraso
-    // (necessário pra sempre dar chance de um 2º clique chegar antes de
-    // decidir).
-    let _cardClickTimer=null, _cardLastClickAt=0;
+    // Duplo-clique abre o menu de contexto (showCtxMenu()) — pedido direto
+    // do usuário testando no iPad: o "⋯" ficou feio, e oncontextmenu
+    // sozinho depende do Safari sintetizar contextmenu a partir de um
+    // long-press que compete com addTouchDnD() no mesmo elemento (ver
+    // v8.30.735-dev/v8.30.736-dev). Detecção manual via timestamp em cima
+    // do evento `click` (2 clicks dentro de 350ms = menu; senão abre o
+    // card depois do atraso, pra sempre dar chance de um 2º clique
+    // chegar). Isto aqui só importa pro MOUSE de verdade — o TOQUE é
+    // tratado inteiramente dentro de addTouchDnD() (touchend supre o
+    // clique sintético via preventDefault desde a v8.30.739-dev; 2
+    // tentativas anteriores, dblclick nativo e depois esta mesma lógica
+    // de timestamp só que em cima de `click`, não funcionaram de verdade
+    // com toque real — ver comentário completo lá).
+    // _ctxTapLockUntil evita um 3º clique rápido (ex. triplo-clique) —
+    // chegando logo depois de já ter reconhecido um par como duplo-clique
+    // — ser lido como o "1º clique" de um NOVO par e reabrir o card por
+    // cima do menu que acabou de aparecer (achado via /monitorarbugs,
+    // 2026-09-23; mesmo fix espelhado no toque, addTouchDnD() abaixo).
+    let _cardClickTimer=null, _cardLastClickAt=0, _ctxTapLockUntil=0;
     div.onclick=(e)=>{
       const now=Date.now();
+      if(now<_ctxTapLockUntil) return;
       if(_cardClickTimer && (now-_cardLastClickAt)<350){
         clearTimeout(_cardClickTimer); _cardClickTimer=null;
+        _ctxTapLockUntil=now+400;
         showCtxMenu(e,card.id);
         return;
       }
@@ -30921,7 +30926,13 @@ function addTouchDnD(el, cardId){
   // propósito o clique sintético que viria depois, assim o
   // div.onclick/ondblclick (só usados por mouse de verdade, que nunca
   // passa por touchend) nunca vê esse toque duas vezes.
-  let _lastTapAt=0, _tapTimer=null;
+  // _tapLockUntil evita um 3º toque rápido (contato "quicando" na tela é
+  // comum em touchscreen, ou alguém tocando 3x por hábito) — chegando
+  // logo depois de já ter reconhecido um par como duplo-toque — ser lido
+  // como o "1º toque" de um NOVO par e reabrir o card por cima do menu
+  // que acabou de aparecer (achado via /monitorarbugs, 2026-09-23; mesmo
+  // fix espelhado no mouse, div.onclick em makeCardEl()).
+  let _lastTapAt=0, _tapTimer=null, _tapLockUntil=0;
   // ── Mobile: drag só ativa com TOQUE LONGO (long-press ~400ms parado) ──
   // Assim, arrastar pro lado rola o board normalmente (sem "esbarrar" nos cards).
   el.addEventListener('touchstart',e=>{
@@ -30976,8 +30987,10 @@ function addTouchDnD(el, cardId){
       // suprime o clique sintético que o navegador dispararia em seguida.
       e.preventDefault();
       const now=Date.now();
+      if(now<_tapLockUntil) return;
       if(_tapTimer && (now-_lastTapAt)<350){
         clearTimeout(_tapTimer); _tapTimer=null;
+        _tapLockUntil=now+400;
         const t=e.changedTouches[0];
         showCtxMenu({clientX:t.clientX,clientY:t.clientY,preventDefault(){},stopPropagation(){}}, cardId);
         return;

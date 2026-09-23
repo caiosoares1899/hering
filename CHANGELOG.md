@@ -3722,6 +3722,55 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.740-dev — 2026-09-23 — `/monitorarbugs`: toque/clique triplo no menu de contexto do card abria o card por cima do menu
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
+por prioridade 1 (código mais recente da sessão: os 5 commits seguidos
+do rework de menu de contexto por duplo-toque/duplo-clique,
+v8.30.734-dev a v8.30.739-dev, testado sob pressão em iteração ao vivo
+com o usuário — mesmo padrão que já rendeu achados em rodadas passadas
+ao revisitar com calma depois de um incidente/fix ao vivo). Leitura
+completa de `makeCardEl()`/`addTouchDnD()`/`showCtxMenu()`.
+
+**Achado real**: depois de reconhecer um par de toques/clicks como
+duplo (mostra o menu de contexto), um 3º toque/clique chegando rápido
+em seguida — contato "quicando" na tela (comum em touchscreen) ou
+alguém tocando/clicando 3x por hábito — era lido como o "1º toque" de
+um par NOVO, reativando o timer de 350ms que abre o card. Resultado: o
+modal do card aparecia por cima do menu de contexto que tinha acabado
+de mostrar. Confirmado nos dois caminhos (mouse em `makeCardEl()` e
+toque em `addTouchDnD()`, mesma causa raiz — técnica 1 de comparar
+caminhos paralelos pra mesma operação).
+
+Fix: variável de lockout (`_ctxTapLockUntil`/`_tapLockUntil`) que
+ignora qualquer toque/clique chegando dentro de 400ms depois de já ter
+reconhecido um duplo — sem afetar um toque/clique único normal depois
+que o lockout expira.
+
+Achado secundário, corrigido junto (não é bug de comportamento, mas
+evita confundir rodadas futuras): o comentário grande em `makeCardEl()`
+ainda descrevia a detecção por `click`+timestamp como se valesse tanto
+pra mouse quanto pra toque — desde a v8.30.739-dev o toque é tratado
+inteiramente dentro de `addTouchDnD()` (clique sintético suprimido via
+`preventDefault`), comentário estava desatualizado.
+
+Validado com Playwright + `TouchEvent` reais emulando iPad: toque
+triplo rápido → `showCtxMenu` 1x, `openCard` 0x (antes do fix, o 3º
+toque também abriria o card); duplo-toque normal continua funcionando;
+toque único depois do lockout expirar (600ms) continua abrindo o card
+normalmente, sem efeito colateral permanente.
+
+Checado e sem achado adicional: `addTouchColDnD()` (colunas não têm
+menu de contexto próprio, sem risco equivalente); `_renderArquivadosBody()`
+usa template próprio, sem `makeCardEl()`, sem risco de interferência;
+`showCtxMenu()` só usa `e.clientX`/`clientY`/`preventDefault`/
+`stopPropagation` — o shim de evento construído no caminho de toque já
+cobre os 4; `addTouchDnD()` é chamada num único lugar do arquivo, sem
+divergência de caminho paralelo além dos 2 já comparados.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra nova).
+
 ### v8.30.739-dev — 2026-09-23 — Fix: duplo-toque no iPad AINDA abrindo o card (2ª tentativa) — abandona click/dblclick sintéticos de vez
 
 Feedback direto do usuário, de novo, após a v8.30.738-dev: "aqui
