@@ -2574,6 +2574,37 @@ input[type="date"]{-moz-appearance:textfield;}
 .ctx-submenu.open{display:block;}
 
 
+/* ── TOQUE (independe de largura — pega iPad, não só @media max-width) ──
+   `hover:none` + `pointer:coarse` identifica "sem mouse/trackpad"
+   independente da largura da tela — ao contrário de
+   @media(max-width:768px), que não pega a maioria dos iPads (largura em
+   pontos > 768px em retrato, exceto iPad mini) mesmo eles sendo touch.
+   Não afeta iPad com Magic Keyboard/trackpad conectado (esse tem
+   hover:hover + pointer:fine, cai fora daqui). */
+@media (hover:none) and (pointer:coarse){
+  /* iOS/iPadOS dá zoom automático na página ao focar qualquer campo com
+     font-size computado < 16px — a maioria dos inputs/selects/textareas
+     deste arquivo usa 9-14px (visual desejado em telas com mouse). */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  textarea,
+  select{
+    font-size:16px!important;
+  }
+
+  /* Botões de remover/dispensar que só aparecem no :hover do pai ficam
+     invisíveis e inacessíveis em touch (sem mouse não tem como "passar
+     por cima" pra revelar) — força visível sempre aqui. !important
+     porque as regras base (`.camp-entry-del`/`.camp-fixed-link-del`)
+     ficam DEPOIS deste bloco no arquivo e, com a mesma especificidade,
+     ganhariam por ordem de cascata sem isso. */
+  .notif-dismiss,
+  .camp-entry-del,
+  .camp-fixed-link-del,
+  .cal-ev-del{
+    opacity:1!important;
+  }
+}
+
 /* ── MOBILE ──────────────────────────────────────────── */
 @media(max-width:768px){
 
@@ -6285,7 +6316,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.733-dev</div>
+<div class="version">v8.30.734-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -33324,15 +33355,19 @@ document.querySelectorAll('.ov').forEach(ov=>{
   });
 })();
 
-// ── Fase 3.1 (mobile): teclado virtual x bottom-sheet ───────────────────
-// Sem isso, o teclado do celular cobre o campo que a pessoa está editando
-// (o layout visual não sabe que perdeu espaço — só o visualViewport sabe).
-// Redimensiona a folha pra caber no espaço que sobrou e mantém o campo
-// focado visível, reaproveitando o mesmo scroll interno do modal.
+// ── Fase 3.1 (mobile) + iPad: teclado virtual x bottom-sheet ────────────
+// Sem isso, o teclado do celular/iPad cobre o campo que a pessoa está
+// editando (o layout visual não sabe que perdeu espaço — só o
+// visualViewport sabe). Redimensiona a folha pra caber no espaço que
+// sobrou e mantém o campo focado visível, reaproveitando o mesmo scroll
+// interno do modal. Guard por (hover:none)+(pointer:coarse) — "é touch?"
+// — em vez de max-width:768px: quase todo iPad tem largura em pontos
+// > 768px em retrato (exceto iPad mini), então o guard antigo por largura
+// nunca rodava lá, mesmo o teclado do iPad tendo o mesmo problema.
 if(window.visualViewport){
   const _onVVResize = () => {
     const panel = document.querySelector('#card-ov.open .card-panel');
-    if(!panel || window.matchMedia('(max-width:768px)').matches===false) return;
+    if(!panel || !window.matchMedia('(hover:none) and (pointer:coarse)').matches) return;
     const vv = window.visualViewport;
     const kbOpen = (window.innerHeight - vv.height) > 100; // heurística: teclado ocupando >100px
     panel.style.maxHeight = kbOpen ? (vv.height*0.98)+'px' : '';
