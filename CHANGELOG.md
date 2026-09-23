@@ -3722,6 +3722,39 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.741-dev — 2026-09-23 — Recorrência automática ganha prazo automático (pedido do chefe do usuário)
+
+Feature pedida via ideia do chefe do usuário: "quando a pessoa for
+configurar um card recorrente, podia ter a opção dela já definir uma
+recorrência pro prazo desse card também" — ex.: card recorrente entra
+toda segunda, prazo sempre cai na terça seguinte (1 dia depois).
+
+Até agora, todo card criado por uma recorrência automática nascia
+SEM prazo (`due:''` fixo, independente da configuração) — não existia
+opção nenhuma pra isso.
+
+**Novo**: na tela de configuração da recorrência (⚡ Funções de card →
+🔁 Recorrentes → 🔁 no item), campo opcional "Definir prazo
+automaticamente" + "dias após a criação" — quando ativado, todo card
+criado por aquela recorrência já nasce com o prazo calculado (data de
+criação + N dias). Sem ativar, continua nascendo sem prazo, como
+sempre foi.
+
+Implementação: `item.dueOffsetDays` (novo campo em `qlItems.recorrentes`,
+`null` quando desativado) + `_recorrenteDueDate(hoje, offsetDays)`
+(mesmo padrão de soma de dias — meio-dia local, evita virar o dia
+errado por DST/fuso — que `_timelineAdiarCard()` já usa), chamada
+dentro de `_criarCardRecorrente()`. Central de Ajuda (entrada
+"Recorrência automática") atualizada junto.
+
+Validado com a função `_recorrenteDueDate()` extraída direto do
+arquivo: exemplo exato do pedido (segunda 21/09 + 1 dia = terça 22/09)
+✅; virada de mês/ano ✅; offset 0/desativado = sem prazo ✅.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra CSS nova, só reaproveitou `.rec-field`/`.rec-switch`
+já existentes).
+
 ### v8.30.740-dev — 2026-09-23 — `/monitorarbugs`: toque/clique triplo no menu de contexto do card abria o card por cima do menu
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida

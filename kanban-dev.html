@@ -5605,6 +5605,14 @@ input[type="date"]{-moz-appearance:textfield;}
         <label class="rec-lbl">Responsável (opcional)</label>
         <select id="rec-owner" class="rec-input"></select>
       </div>
+      <label class="rec-switch" style="margin-top:10px;"><input type="checkbox" id="rec-due-active" onchange="_recToggleDueActive()"> <span>Definir prazo automaticamente</span></label>
+      <div id="rec-due-config" style="margin-top:6px;opacity:.4;pointer-events:none;">
+        <div class="rec-field">
+          <label class="rec-lbl">Prazo — dias após a criação do card</label>
+          <input type="number" id="rec-due-offset" class="rec-input" min="1" max="365" value="1">
+        </div>
+        <p style="font-size:10.5px;color:var(--txt3);margin:2px 0 0;">Ex.: card entra na segunda, "1" deixa o prazo pra terça seguinte.</p>
+      </div>
       <p style="font-size:11px;color:var(--txt3);margin:10px 0 0;line-height:1.5;">💡 O conteúdo do card (descrição, checklist, tag) é copiado do item recorrente. Edite o item para mudar o que vem preenchido.</p>
     </div>
     <button class="btn btn-teal" onclick="salvarRecorrencia()" style="margin-top:16px;width:100%;">💾 Salvar</button>
@@ -6326,7 +6334,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.740-dev</div>
+<div class="version">v8.30.741-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23697,6 +23705,16 @@ function _slugifyRecorrente(title){
 // resolveReferencia() na prática: quem perguntasse pela data local de hoje
 // (a única que faz sentido pra alguém de fora) batia com recorrenteData,
 // mas o card continuava existindo — só que documentado erroneamente.
+// Prazo automático do card recorrente (item.dueOffsetDays, configurado em
+// openRecorrenciaModal()/salvarRecorrencia()) — mesmo padrão de soma de dias
+// (meio-dia local, evita virar o dia errado por causa de DST/fuso) que
+// _timelineAdiarCard() já usa.
+function _recorrenteDueDate(hoje, offsetDays){
+  if(!Number.isFinite(offsetDays)||offsetDays<=0) return '';
+  const d=new Date(hoje+'T12:00:00');
+  d.setDate(d.getDate()+offsetDays);
+  return _localDateStrBoard(d);
+}
 function _criarCardRecorrente(item, hoje){
   const td=hoje;
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
@@ -23715,7 +23733,7 @@ function _criarCardRecorrente(item, hoje){
     desc:item.desc||'',
     descsExtra:[],
     owner:item.owner||'',
-    due:'', po:item.po||'',
+    due:_recorrenteDueDate(hoje,item.dueOffsetDays), po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
     sp:item.sp||'', priority:item.priority||'medium',
@@ -23975,9 +23993,18 @@ function openRecorrenciaModal(i){
   const ownSel=document.getElementById('rec-owner');
   ownSel.innerHTML='<option value="">— sem responsável —</option>'+members.filter(m=>m.init).map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
   ownSel.value=item.owner||'';
+  document.getElementById('rec-due-active').checked = Number.isFinite(item.dueOffsetDays) && item.dueOffsetDays>0;
+  document.getElementById('rec-due-offset').value = (Number.isFinite(item.dueOffsetDays) && item.dueOffsetDays>0) ? item.dueOffsetDays : 1;
   _recRenderSub();
   _recToggleActive();
+  _recToggleDueActive();
   document.getElementById('rec-ov').classList.add('open');
+}
+function _recToggleDueActive(){
+  const on=document.getElementById('rec-due-active').checked;
+  const cfg=document.getElementById('rec-due-config');
+  cfg.style.opacity=on?'1':'.4';
+  cfg.style.pointerEvents=on?'auto':'none';
 }
 function _recToggleActive(){
   const on=document.getElementById('rec-active').checked;
@@ -24022,11 +24049,13 @@ function salvarRecorrencia(){
   item.active=true;
   item.col=document.getElementById('rec-col').value;
   item.owner=document.getElementById('rec-owner').value;
+  const dueOn=document.getElementById('rec-due-active').checked;
+  item.dueOffsetDays = dueOn ? Math.max(1,parseInt(document.getElementById('rec-due-offset').value)||1) : null;
   if(item.lastCreated===undefined) item.lastCreated=null;
   fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
   renderQLBody();
   closeOv('rec-ov');
-  showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec));
+  showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec)+(dueOn?' · prazo +'+item.dueOffsetDays+'d':''));
 }
 // Guarda de onde veio a "Usar" (modelo/recorrente) até o card ser de fato
 // criado (clique em Salvar) — usarQLItem() só PRÉ-PREENCHE o modal, quem
@@ -26556,7 +26585,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
-    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
+    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n🔗 Copiar link sem abrir o card: no menu de contexto do card (clique direito, ou o botão "⋮" no board), tem o atalho "🔗 Copiar link do card" — copia o mesmo link, sem precisar abrir o card primeiro.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
