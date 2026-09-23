@@ -913,16 +913,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .card-pin-btn{position:absolute;top:7px;right:7px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:11px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;}
 .card:hover .card-pin-btn{opacity:1;}
 .card-pinned .card-pin-btn{opacity:1;background:rgba(255,209,102,.18);border-color:rgba(255,209,102,.5);color:var(--warn);}
-/* Menu "⋯": único jeito de abrir o menu de contexto do card (showCtxMenu())
-   era oncontextmenu — no mouse é botão direito, mas no touch depende do
-   iOS sintetizar contextmenu a partir de um long-press, o MESMO gesto que
-   addTouchDnD() já usa pra armar o arrasto no mesmo elemento. Garante um
-   caminho de toque simples e confiável, sem depender dessa sobreposição.
-   Escondido por padrão (mesmo hover-reveal do pin, não polui o board) —
-   forçado visível em touch no bloco @media(hover:none) mais abaixo. */
-.card-ctx-btn{position:absolute;top:7px;right:30px;width:19px;height:19px;padding:0;border-radius:5px;border:1.5px solid rgba(255,255,255,.18);background:rgba(var(--surface2-rgb),.85);color:var(--txt3);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:3;opacity:0;transition:opacity .15s,background .15s,border-color .15s;line-height:1;}
-.card:hover .card-ctx-btn{opacity:1;}
-.card-ctx-btn:hover{color:var(--accent);border-color:var(--accent);}
 .col-selectall{font-size:9px;background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);color:var(--cyan);border-radius:6px;padding:2px 7px;cursor:pointer;font-family:"DM Sans",sans-serif;white-space:nowrap;}
 .col-selectall:hover{background:rgba(56,182,255,.2);color:var(--txt);}
 .bulk-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9000;display:flex;align-items:center;gap:12px;background:rgba(4,22,39,.96);border:1px solid var(--accent);border-radius:999px;padding:10px 18px;backdrop-filter:blur(14px);box-shadow:0 8px 30px rgba(0,0,0,.5);animation:bulkIn .25s ease;}
@@ -2616,13 +2606,6 @@ input[type="date"]{-moz-appearance:textfield;}
   .camp-entry-del,
   .camp-fixed-link-del,
   .cal-ev-del{
-    opacity:1!important;
-  }
-
-  /* Menu "⋯" do card (ver comentário na regra base .card-ctx-btn) —
-     garante visível sempre em touch, já que é justamente o fallback pro
-     long-press nativo que compete com o addTouchDnD(). */
-  .card-ctx-btn{
     opacity:1!important;
   }
 }
@@ -6338,7 +6321,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.735-dev</div>
+<div class="version">v8.30.736-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11507,7 +11490,6 @@ function makeCardEl(card){
   // (o card inteiro já muda de semântica de clique nesse modo, ver
   // div.onclick acima).
   const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
-  const ctxBtn=selectMode?'':`<button type="button" class="card-ctx-btn" title="Mais opções (mover, bloquear, duplicar...)" onclick="event.stopPropagation();showCtxMenu(event,'${esc(card.id)}')">⋯</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   // Ícone próprio (🎨), não mais 📌 — pedido direto do usuário: colidia
@@ -11547,7 +11529,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${ctxBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
