@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.743-dev</div>
+<div class="version">v8.30.744-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23548,7 +23548,7 @@ function renderQLBody(){
       const temData = item.data && !item.criado;
       const jaCriado = item.criado;
       const lbl = jaCriado ? '✅ Criado '+(item.criadoEm||'') : (temData ? _fmtDataAg(item.data) : 'Definir data');
-      recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="Data de entrada" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
+      recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="${jaCriado?'Abrir o card criado por este agendamento':'Data de entrada'}" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
     }
     const usarBtn = currentQL==='agendamentos'
       ? '' // agendamentos não têm "+ Usar" manual, entram por data
@@ -23563,7 +23563,20 @@ let _agEditIdx = -1;
 function openAgendamentoModal(i){
   _agEditIdx = i;
   const item = (qlItems.agendamentos||[])[i]; if(!item) return;
-  if(item.criado){ showToast('Esse card já entrou no quadro.'); return; }
+  // Achado real (/monitorarbugs, relato direto: "cards agendados tb tem q
+  // ter um opencard pra conseguir editar ele") — clicar num agendamento já
+  // disparado (item.criado) só mostrava um toast e não abria nada, sem
+  // jeito nenhum de editar o card real que ele criou. processAgendamentos()
+  // agora guarda item.criadoCardId (ver logo abaixo) — abre o card de
+  // verdade quando existir; itens antigos (criados antes deste fix, sem
+  // criadoCardId) ou cujo card foi excluído desde então caem no aviso de
+  // sempre, sem crashar.
+  if(item.criado){
+    const card = item.criadoCardId ? cards.find(c=>c.id===item.criadoCardId) : null;
+    if(card){ openCard(card.id); return; }
+    showToast(item.criadoCardId ? '⚠ O card criado por este agendamento não existe mais (foi excluído).' : 'Esse card já entrou no quadro.');
+    return;
+  }
   document.getElementById('agcfg-data').value = item.data||'';
   const colSel = document.getElementById('agcfg-col');
   colSel.innerHTML = columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
@@ -23865,6 +23878,7 @@ function processAgendamentos(){
     if(dataAg<=hoje){
       const card=_criarCardAgendado(item);
       item.criado=true; item.criadoEm=new Date().toISOString().split('T')[0];
+      item.criadoCardId=card.id; // permite abrir o card real depois (ver openAgendamentoModal())
       criados.push(card); mudou=true;
     }
   });

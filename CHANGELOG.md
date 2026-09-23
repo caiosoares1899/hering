@@ -3722,6 +3722,38 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.744-dev — 2026-09-23 — Fix: card já criado por um Agendamento não tinha como ser aberto/editado
+
+Relato direto do usuário: "cards agendados tb tem q ter um opencard pra
+conseguir editar ele".
+
+**Causa raiz**: `_criarCardAgendado()` gera o card com `id` próprio,
+mas nada guardava esse `id` de volta no item de
+`qlItems.agendamentos` — `processAgendamentos()` só marcava
+`item.criado=true`/`item.criadoEm`. Clicar no botão "✅ Criado ..." da
+lista de Agendamentos (`openAgendamentoModal()`) só mostrava o toast
+"Esse card já entrou no quadro." e não fazia mais nada — sem jeito
+nenhum de reabrir/editar o card de verdade a partir dali, era preciso
+procurar manualmente no board.
+
+**Fix**: `processAgendamentos()` agora grava `item.criadoCardId`
+junto com `item.criado`/`item.criadoEm`. `openAgendamentoModal()`
+passa a checar isso: se o card ainda existir, abre ele de verdade
+(`openCard()`); se o `id` existir mas o card tiver sido excluído
+depois, avisa isso especificamente em vez do toast genérico; itens
+criados ANTES deste fix (sem `criadoCardId` salvo) continuam com o
+aviso de sempre — limitação aceita pra dado antigo, sem tentar
+adivinhar o card por outro critério frágil (ex. slug do título, que
+pode colidir). Tooltip do botão também atualizado pra "Abrir o card
+criado por este agendamento" quando já disparado.
+
+Validado com os 3 cenários isolados (lógica extraída do arquivo real):
+card ainda existe → abre; card foi excluído depois → avisa sem
+travar; item antigo sem o novo campo → mantém o toast de sempre.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra CSS nova).
+
 ### v8.30.743-dev — 2026-09-23 — `/monitorarbugs`: Agendamentos ganha campo de prazo de verdade (o código já lia `item.dueCard`, mas nada nunca escrevia nele)
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
