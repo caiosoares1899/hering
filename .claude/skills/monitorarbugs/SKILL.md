@@ -2318,6 +2318,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (`registration-token-not-registered`/`invalid-argument`), sem
   over-pruning.
 
+- **2026-09-23, menu de contexto do card por toque/duplo-clique (pedido
+  genérico, "roda um /monitorarbugs" — área escolhida por prioridade 1:
+  os 5 commits seguidos do rework de duplo-toque/duplo-clique,
+  v8.30.734-dev a v8.30.739-dev, mexido sob pressão em iteração ao vivo
+  com o usuário no iPad — mesmo padrão de "revisitar com calma depois
+  de um incidente" que já rendeu achado em 2026-09-22)**: 1 achado
+  real, técnica 1 (comparar os 2 caminhos paralelos — mouse em
+  `makeCardEl()` e toque em `addTouchDnD()` — que reimplementam a MESMA
+  lógica de "2 toques/clicks dentro de 350ms = menu"). Depois de
+  reconhecer um duplo, um 3º toque/clique chegando rápido em seguida
+  (contato "quicando" na tela, ou hábito de tocar/clicar 3x) era lido
+  como o "1º toque" de um par NOVO — reabria o card por cima do menu
+  que tinha acabado de mostrar. Fix: lockout de 400ms após reconhecer
+  um duplo, espelhado nos 2 caminhos. Achado secundário corrigido
+  junto: comentário em `makeCardEl()` ainda descrevia touch como
+  dependente do `click`+timestamp, desatualizado desde a v8.30.739-dev
+  (touch é tratado só em `addTouchDnD()` desde então). dev
+  v8.30.740-dev. Checado e sem achado: `addTouchColDnD()` (colunas não
+  têm menu de contexto, sem risco equivalente); `_renderArquivadosBody()`
+  usa template próprio, sem `makeCardEl()`; `showCtxMenu()` só usa
+  `clientX`/`clientY`/`preventDefault`/`stopPropagation` — o shim de
+  evento do caminho de toque já cobre os 4; `addTouchDnD()` só tem 1
+  call site no arquivo.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
