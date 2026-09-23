@@ -834,10 +834,11 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    nativo do iOS de seleção de texto/"Copiar" sobre o título do card,
    que interrompe visualmente o gesto de arrastar já construído pra
    touch (mesmo achado do .col-hd logo abaixo, mesma causa). touch-
-   action:manipulation — o duplo-toque abre o menu de contexto (ver
-   div.ondblclick em makeCardEl()); sem isso o iOS pode interpretar o
-   2º toque como "duplo-toque pra dar zoom" na página em vez de
-   sintetizar o dblclick que o app espera. */
+   action:manipulation — 2 toques rápidos abrem o menu de contexto
+   (detecção manual via click+timestamp em makeCardEl(), não depende de
+   dblclick); sem essa propriedade o iOS pode interpretar o 2º toque
+   como "duplo-toque pra dar zoom" na página em vez de disparar o
+   evento click rápido que a detecção espera. */
 .card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 /* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
    organização visual além das tags (pedido direto: "as tags parecem não
@@ -6325,7 +6326,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.737-dev</div>
+<div class="version">v8.30.738-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11418,20 +11419,31 @@ function makeCardEl(card){
     // pedido direto do usuário testando no iPad: o "⋯" ficou feio, e
     // oncontextmenu sozinho depende do Safari sintetizar contextmenu a
     // partir de um long-press que compete com addTouchDnD() no mesmo
-    // elemento (ver v8.30.735-dev/v8.30.736-dev). Duplo-toque não tem
-    // esse conflito. Isso exige atrasar o clique SIMPLES (~260ms) — sem
-    // esse atraso o navegador já disparou 2x openCard() antes do
-    // dblclick chegar, então não dava pra distinguir "abrir" de "menu"
-    // depois do fato. Contexto aceito direto com o usuário (aumenta
-    // levemente a latência de abrir card, imperceptível pra abrir modal).
-    let _cardClickTimer=null;
-    div.onclick=()=>{
-      if(_cardClickTimer){ clearTimeout(_cardClickTimer); _cardClickTimer=null; return; } // 2º clique do duplo — deixa o dblclick cuidar
-      _cardClickTimer=setTimeout(()=>{ _cardClickTimer=null; openCard(card.id); }, 260);
+    // elemento (ver v8.30.735-dev/v8.30.736-dev). 1ª tentativa (v8.30.737-dev)
+    // usava o evento nativo `dblclick` — funcionou no mouse, mas não no
+    // iPad de teste ("continua abrindo o card"): o dblclick sintetizado a
+    // partir de toque não é confiável entre browsers/toques reais (ou o
+    // intervalo entre os 2 toques do dedo passa da janela que o navegador
+    // espera). Troca pra detecção MANUAL via timestamp, só em cima do
+    // evento `click` — esse sim dispara igual em mouse E em toque, sem
+    // depender de dblclick nenhum. 2 clicks/toques dentro de 350ms no
+    // MESMO card = menu de contexto; senão, abre o card depois do atraso
+    // (necessário pra sempre dar chance de um 2º clique chegar antes de
+    // decidir).
+    let _cardClickTimer=null, _cardLastClickAt=0;
+    div.onclick=(e)=>{
+      const now=Date.now();
+      if(_cardClickTimer && (now-_cardLastClickAt)<350){
+        clearTimeout(_cardClickTimer); _cardClickTimer=null;
+        showCtxMenu(e,card.id);
+        return;
+      }
+      _cardLastClickAt=now;
+      _cardClickTimer=setTimeout(()=>{ _cardClickTimer=null; openCard(card.id); },350);
     };
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
     div.oncontextmenu=e=>showCtxMenu(e,card.id);
-    div.ondblclick=e=>{ e.stopPropagation(); showCtxMenu(e,card.id); };
+    div.ondblclick=e=>{ e.stopPropagation(); e.preventDefault(); }; // já tratado via click+timestamp acima; só evita seleção de texto num duplo-clique/toque real
     div.ondragstart=e=>handleDragStart(e,card.id);
     div.ondragend=e=>handleDragEnd(e);
     addTouchDnD(div,card.id);
