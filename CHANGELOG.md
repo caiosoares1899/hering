@@ -3722,6 +3722,37 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.739-dev — 2026-09-23 — Fix: duplo-toque no iPad AINDA abrindo o card (2ª tentativa) — abandona click/dblclick sintéticos de vez
+
+Feedback direto do usuário, de novo, após a v8.30.738-dev: "aqui
+continua nao funcionando". 2 tentativas seguidas (v8.30.737-dev via
+`dblclick`, v8.30.738-dev via `click`+timestamp) dependiam de alguma
+forma do navegador sintetizar eventos de mouse a partir do toque — e as
+2 falharam no iPad real, mesmo a 2ª tendo sido validada com uma
+simulação isolada da lógica de timestamp (o teste validava só a
+matemática do timer, não o comportamento de sintetização de toque→clique
+do WebKit de verdade, que é onde a falha realmente estava).
+
+**Mudança de estratégia**: abandona QUALQUER dependência de click/
+dblclick sintéticos pro caminho de toque. A contagem de toques agora
+acontece direto dentro do `touchend` do próprio `addTouchDnD()` — sem
+intermediário nenhum — e `e.preventDefault()` suprime de propósito o
+clique sintético que o navegador dispararia depois, então o
+`div.onclick`/`ondblclick` (que continuam existindo, mas agora só
+importam pro MOUSE de verdade, que nunca passa por `touchend`) nunca
+vê esse toque duas vezes. 2 toques dentro de 350ms no mesmo card = menu
+de contexto; senão, abre o card (mesmo atraso de 350ms de antes, agora
+implementado na camada certa).
+
+Desta vez o teste cobre o cenário de verdade: `TouchEvent`/`Touch`
+reais, dispatchados contra a função `addTouchDnD()` tal como ela existe
+no arquivo (não uma reimplementação simplificada), sob emulação de
+iPad Pro 11" no Playwright — toque único, duplo rápido (~50ms) e duplo
+lento (~300ms, o cenário que vinha falhando) todos corretos.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555 (sem regra nova).
+
 ### v8.30.738-dev — 2026-09-23 — Fix: duplo-toque no iPad continuava abrindo o card em vez do menu
 
 Feedback direto do usuário testando no iPad, imediatamente após a
