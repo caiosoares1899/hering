@@ -3766,6 +3766,39 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.750-dev — 2026-09-24 — Fix: aba errada acendia na Central de Ajuda ao clicar em "Conceitos Ágeis"/"⚡ Automações"
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
+por prioridade 2 (nunca tinha tido rodada dedicada): ❓ Central de Ajuda
+(`openHelp()`/`swHelpTab()`/`renderHelp()`).
+
+**Achado único, técnica 3** (confrontar o comentário `<!-- Spotify
+pausado, ver comentário no botão #spotify-tab -->` contra o código):
+quando a aba "🎵 Spotify" foi removida do HTML da Central de Ajuda (o
+`<div class="ag-tab">` correspondente saiu do DOM, ficando só 8 abas —
+Board/Cards/Agente Ágil/Configurações/Comunicação/Estrelas/Conceitos
+Ágeis/Automações), a constante local `TABS` dentro de `swHelpTab()`
+não foi atualizada e continuou com 9 nomes (incluindo `'spotify'`). O
+destaque visual da aba ativa (`.ag-tab.on`) é aplicado por POSIÇÃO
+(`document.querySelectorAll('#help-tabs .ag-tab').forEach((t,i) =>
+t.classList.toggle('on', TABS[i]===tab))`), então o índice 6 (que no
+DOM real é "Conceitos Ágeis") ficava comparado contra `TABS[6] ===
+'spotify'` (nunca bate) e o índice 7 (DOM real: "⚡ Automações") contra
+`TABS[7] === 'agil'` — resultado: clicar em "Conceitos Ágeis" abria o
+conteúdo certo mas acendia visualmente a aba "⚡ Automações", e clicar
+em "⚡ Automações" abria o conteúdo certo mas não acendia NENHUMA aba
+(índice 8 não existe no DOM de 8 elementos). O conteúdo mostrado
+sempre esteve correto (`renderHelp()` usa a variável `_helpTab`, não a
+classe CSS) — só o indicador visual de "aba atual" ficava errado. O
+`ALL_TABS` usado por `renderHelp()` pra busca global (que itera as
+CHAVES de `HELP_CONTENT`, não os elementos do DOM) não tem esse
+problema — `HELP_CONTENT.spotify` continua existindo e buscável
+normalmente, só sem aba dedicada (comportamento correto/intencional
+pro Spotify "pausado"). Fix: removido `'spotify'` da `TABS` local de
+`swHelpTab()`, realinhando 1:1 com os 8 elementos reais do DOM.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.749-dev — 2026-09-24 — `/monitorarbugs`: continuação do fix de "+ Usar" — Modelo nunca capturava coluna/responsável na criação, e "+ Usar" nunca aplicava o Responsável
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida

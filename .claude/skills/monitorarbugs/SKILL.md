@@ -2436,6 +2436,21 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   decisão de semântica de merge, fora do escopo. dev v8.30.749-dev,
   PR #1064.
 
+- **2026-09-24, ❓ Central de Ajuda (pedido genérico — área nunca tinha
+  tido rodada dedicada, prioridade 2)**: 1 achado real, técnica 3
+  (comentário vs. código). A aba "🎵 Spotify" foi removida do DOM da
+  Central de Ajuda (feature pausada), mas `swHelpTab()` continuou com
+  uma `TABS` local de 9 nomes (incluindo `'spotify'`) contra os 8
+  `.ag-tab` reais — o destaque da aba ativa é por POSIÇÃO
+  (`forEach((t,i) => t.classList.toggle('on', TABS[i]===tab))`), então
+  clicar em "Conceitos Ágeis" acendia "⚡ Automações", e clicar em
+  "⚡ Automações" não acendia nenhuma aba (conteúdo sempre correto, só
+  o indicador visual). `ALL_TABS` de `renderHelp()` (busca global,
+  itera chaves de `HELP_CONTENT`) não tem o mesmo bug —
+  `HELP_CONTENT.spotify` segue buscável, só sem aba dedicada
+  (intencional). Fix: removido `'spotify'` da `TABS` local, realinhando
+  1:1 com o DOM. dev v8.30.750-dev, PR #1065.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
