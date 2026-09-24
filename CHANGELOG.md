@@ -18,6 +18,50 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.744 — 2026-09-24 · Promove pra prod — lote acumulado (v8.30.734-dev → v8.30.744-dev)
+
+Promoção do lote inteiro acumulado desde a última promoção normal
+(v8.30.733 — o hotfix isolado v8.30.734 já estava em prod à parte).
+Validado ao longo da própria sessão — os achados de UI/UX do iPad
+foram testados ao vivo, direto no aparelho, pelo usuário; os demais
+foram validados via scripts de console com resultados conferidos. Ver
+as entradas de dev correspondentes acima pro detalhe técnico completo
+de cada achado; aqui só o resumo pro público de prod.
+
+**Melhorias de toque/iPad:**
+- Campos de texto não dão mais aquele "zoom" automático indesejado do
+  iOS ao tocar neles.
+- Botões de remover/dispensar (notificações, campanhas) que só
+  apareciam passando o mouse agora ficam visíveis também no toque.
+- O teclado virtual do iPad não cobre mais o campo sendo editado no
+  modal do card.
+- Arrastar um card ou coluna por toque não compete mais com o menu
+  nativo de seleção de texto do iOS.
+- **Menu de contexto do card (mover, bloquear, duplicar...) agora abre
+  com duplo-clique/duplo-toque** — funciona igual em mouse e touch,
+  sem depender do navegador sintetizar o gesto certo.
+- 🔥 Modo Black Friday (proposta em teste) agora também entra/sai com
+  toque de 2 dedos no botão de tema, pra quem não tem mouse.
+
+**Novidades:**
+- 🔁 **Recorrência automática ganha prazo automático**: além de
+  configurar quando o card recorrente entra no board, agora dá pra
+  definir que o prazo dele sempre cai N dias depois da criação — ex.:
+  card entra toda segunda, prazo pra terça seguinte.
+- 📅 **Agendamentos também ganham campo de prazo** (data fixa) e agora
+  o card já criado por um agendamento pode ser reaberto/editado
+  direto pela lista de Agendamentos (antes só mostrava um aviso, sem
+  jeito de acessar o card).
+
+**Correções de comportamento:**
+- Corrigido um caso raro em que um toque/clique triplo no card abria
+  o card por cima do menu de contexto que tinha acabado de aparecer.
+
+Checks de rotina: `node --check` OK; balanço de chaves do CSS
+1555/1555. `diff kanban.html kanban-dev.html` confirmado com só as 11
+linhas de ambiente já conhecidas (versão/`VERSION_KEY`/
+`FB_OVERRIDE_NS`×2/favicon×6/`force_logout_after`).
+
 ### v8.30.734 — 2026-09-23 · Hotfix isolado (sem passar por dev) — ícone do PWA/tela de login usando a arte de dev em produção
 
 Achado ao confirmar pro usuário se o "Adicionar à Tela de Início"
