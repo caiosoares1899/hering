@@ -19137,6 +19137,60 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.62 · painel-dev — 2026-09-24 · 🎯 OKR: Configurações do Objetivo (título, gerência, trimestre, pilar, tags, responsável) movida pra tela própria (⚙)
+
+Pedido direto do usuário depois de usar o modal de Objetivo por um tempo:
+"aquela parte de configuração podia ficar em outra tela, dentro de um
+⚙... e deixar em foco a parte de edição de marcos, riscos, planos de
+ação". O modal principal (`renderOkrObjBody()`) empilhava título/
+gerência/trimestre/pilar/tags/responsável ANTES de indicadores/
+progressos/próximos passos/riscos/planos de ação/marcos — mas os
+primeiros só mudam raramente (na criação, e volta e meia depois), os
+segundos são o que se edita toda semana no check-in.
+
+**Mudança**: novo modal `#okr-obj-config-ov` (mesmo padrão `.pc-modal-ov`
+já usado por card/histórico/Marco), aberto pelo botão ⚙ no cabeçalho do
+modal principal — concentra Título, Gerência, Trimestre(s), Pilar,
+Objetivo (descrição), Tags e Responsável(is), com botões "← Voltar" e
+"💾 Salvar" no rodapé. `renderOkrObjBody()` (tela principal) ficou só com
+Indicadores/Progressos/Próximos Passos/Riscos/Planos de Ação/Marcos/
+Cards vinculados/Histórico, mais um recap curto (Gerência · Trimestre ·
+Pilar · Responsável) no topo pra manter contexto sem precisar abrir a
+Config. Objetivo NOVO abre direto na Config (não dá pra editar marcos
+antes de existir título/id salvo); Objetivo existente abre normal, na
+tela principal.
+
+É a MESMA `_okrObjDraft`/`_okrObjOpenSnapshot` nas duas telas — não é um
+2º rascunho, só uma 2ª tela (`openOkrConfig()`/`closeOkrConfigBack()`
+trocam de tela sincronizando o DOM pro draft antes, sem salvar no
+Firebase). O dirty-check (`_okrTryCloseObjetivo()`) continua igual,
+funcionando em qualquer uma das 2 telas, porque compara o draft inteiro
+contra o snapshot, não campo a campo.
+
+**Achado real ao migrar (bug pré-existente, não introduzido agora)**:
+`saveOkrObjetivo()` lia `título`/`gerência`/`pilar`/`descrição` direto de
+`document.getElementById(...)` sem guard — com esses campos agora vivendo
+numa tela que pode estar fechada no momento do Salvar (ex.: editar só um
+marco/risco e salvar sem nunca abrir a Config), isso quebraria com
+`Cannot read properties of null`. Corrigido chamando
+`_okrSyncObjDraftFromDom()` (já com guard por campo) e lendo do
+`_okrObjDraft` daí em diante — mais robusto que antes, não só compatível
+com a divisão nova.
+
+Outros pontos ajustados pra apontar pro re-render certo:
+`_okrTagCriar()`/`_okrTagAddToObj()`/`_okrTagRemoveFromObj()`/
+`_okrPessoaAdd()`/`_okrPessoaRemove()` (só existem na Config agora) e o
+listener de `kanban/okr/tags` re-renderizam a tela que estiver de fato
+aberta. `_okrListAdd()`/`_okrListRemove()` (reaproveitados tanto pra
+Trimestres, na Config, quanto pra Indicadores/Progressos/Próximos
+Passos/Riscos/Planos de Ação, na principal) ganharam um helper
+`_okrRerenderCurrentScreen()` que decide com base em qual dos 2 overlays
+está `.open` no momento.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço de
+chaves/parênteses do arquivo inteiro sem alteração no offset conhecido
+(-1/-14, mesmo de antes desta rodada).
+
 ### painel-dev.html v3.61 · painel-dev — 2026-09-23 · Novo favicon próprio (dev, arte distinta de prod — mesmo padrão do kanban-dev.html)
 
 Mesmo gap do `painel.html` (ver entrada abaixo): `painel-dev.html`
