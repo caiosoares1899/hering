@@ -3766,6 +3766,42 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.746-dev — 2026-09-24 — Fix: 🕐 Tema automático desligado numa aba continuava alternando o tema (vazava até pro painel)
+
+Relato direto do usuário: "liguei o Tema automático hoje pra testar, já
+desliguei e mesmo assim tá alternando" — o sintoma original relatado foi
+o `painel.html` voltando pro tema claro sozinho a cada reload.
+
+**Causa raiz**: `mare_theme`/`mare_theme_auto` são chaves de `localStorage`
+compartilhadas por `kanban.html`/`kanban-dev.html`/`painel.html`/
+`painel-dev.html` (mesmo domínio, sem sufixo `_dev`). `_startThemeAutoWatch()`
+agenda um `setInterval` de 1min que chama `_applyAutoTheme(true)` — que
+sobrescreve `mare_theme` conforme a banda do horário — sem NUNCA
+re-checar `_isThemeAutoOn()` a cada disparo. `_disableThemeAutoIfOn()`
+só limpa esse timer via `clearInterval` na MESMA aba/instância que
+desligou — com mais de uma aba aberta ao mesmo tempo (`kanban.html` +
+`kanban-dev.html`, ou 2 abas da mesma página), desligar numa aba nunca
+parava o timer já rodando na outra, que seguia escrevendo `mare_theme`
+a cada minuto pro resto da sessão daquela aba — vazando pro
+`painel.html`/`painel-dev.html` no próximo reload (que só leem essa
+chave no boot, sem ter a feature "Tema automático" nem mostrar isso na
+tela — parecia um reset espontâneo, sem explicação nenhuma na UI).
+
+**Fix**: o callback do `setInterval` agora relê `_isThemeAutoOn()` a
+cada disparo e se autodesliga (`clearInterval`) se encontrar a flag
+off — cobre o cenário de mais de uma aba/página aberta, sem precisar de
+um listener de `storage` entre abas (a correção converge em até 1min).
+
+Varredura adicional pedida pelo usuário ("vale uma varredura"): mapeados
+os outros ~19 `setInterval()` do arquivo — nenhum outro combina (1) um
+toggle ON/OFF explícito guardado numa chave compartilhada de
+`localStorage` com (2) escrita numa OUTRA chave que outra página lê no
+boot — a combinação específica que causou o bug. Os demais timers são
+"vida inteira da sessão" sem toggle (presença, polls, contadores) ou já
+gated por uma checagem fresca a cada disparo (ex.: `document.hidden`).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.745-dev — 2026-09-24 — `/monitorarbugs`: arquivar o último filho pendente de um supercard nunca avisava o Responsável
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida por
@@ -3797,6 +3833,8 @@ logo depois de marcar `archived=true` — mesmo helper que o evento
 `'move'` já usa, reutilizado sem mudança de assinatura.
 
 Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
+### v8.30.744-dev — 2026-09-23 — Fix: card já criado por um Agendamento não tinha como ser aberto/editado
 
 Relato direto do usuário: "cards agendados tb tem q ter um opencard pra
 conseguir editar ele".
