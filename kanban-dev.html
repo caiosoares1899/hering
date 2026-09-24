@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.746-dev</div>
+<div class="version">v8.30.747-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30751,10 +30751,18 @@ function handleColDrop(e, targetColId) {
   if (e.clientX > mid) insertIdx++;
   if (draggedIdx < insertIdx) insertIdx--;
 
+  // Achado real (/monitorarbugs 2026-09-24, técnica 3 — a correção de
+  // 2026-09-14 só fez o snapshot de saveUndo() passar a incluir `columns`,
+  // mas saveUndo() continuava sendo chamado DEPOIS do splice — a "foto"
+  // capturada já era a ordem NOVA, então Ctrl+Z virava um no-op completo
+  // pra reordenar colunas, exatamente o mesmo sintoma que aquele fix dizia
+  // ter corrigido. Todo OUTRO call site de saveUndo() do arquivo chama
+  // ANTES de mutar — aqui e no equivalente por toque (addTouchColDnD)
+  // eram os únicos 2 que mutavam primeiro.
+  saveUndo('reordenar colunas');
   const [removed] = columns.splice(draggedIdx, 1);
   columns.splice(insertIdx, 0, removed);
 
-  saveUndo('reordenar colunas');
   fbSet(FB+'/columns', columns);
   renderBoard();
 }
@@ -31064,13 +31072,46 @@ function addTouchDnD(el, cardId){
     if(!colId) return;
     const card=cards.find(x=>x.id===cardId); if(!card) return;
     if(card.col===colId) return;
-    const ant=card.col; card.col=colId;
+    saveUndo('mover card');
+    const prevBlockerTouch = card.blocker||false;
+    // Achado real (/monitorarbugs 2026-09-24, técnica 1 — comparar contra
+    // handleDrop()/ctxMove(), os outros 2 caminhos de "mover card" já
+    // corrigidos em 17/09 e 22/09): este 3º caminho — arrastar o card por
+    // TOQUE (mobile/tablet) — nunca tinha ganho nem uma correção nem a
+    // outra. Mutava card.col direto, sem recordMove() (flow/cycle-lead
+    // time/CFD/Throughput e o auto-desimpedimento ficavam cegos pra TODO
+    // drag feito por toque — o caminho mais comum em tablet), sem
+    // recordHistory()/saveUndo(), e fbSaveCard() sem .then()/.catch()
+    // nenhum (falha de rede deixava o card visualmente movido, sem
+    // reverter e sem avisar). Mesmo padrão de snapshot completo/
+    // restauração de handleDrop() replicado aqui.
+    const _cardSnapshotTouch = JSON.parse(JSON.stringify(card));
+    card.col=colId;
     card.edited=window._currentUser?.displayName||'Usuário';
     card.editedAt=new Date().toISOString().split('T')[0];
     card.updatedAt = new Date().toISOString();
     card.updatedBy = window._currentUser?.displayName||window._currentUser?.email||'Usuário';
-    renderBoard(); fbSaveCard(card); runAutoRules('move',card.id,colId);
-    showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
+    recordHistory(card, 'moveu para '+(columns.find(c=>c.id===colId)?.name||colId));
+    recordMove(card, colId);
+    card._savePending = true;
+    renderBoard();
+    fbSaveCard(card)
+      .then(()=>{
+        card._savePending=false;
+        if(_isColDone(colId)) notifDone(card);
+        else notifMoved(card, columns.find(c=>c.id===colId)?.name);
+        if(prevBlockerTouch && !card.blocker) notifUnblocked(card);
+        showToast(`"${card.title.substring(0,30)}" → ${columns.find(c=>c.id===colId)?.name||colId}`);
+      })
+      .catch(err=>{
+        Object.keys(card).forEach(k=>delete card[k]);
+        Object.assign(card, _cardSnapshotTouch);
+        card._savePending=false;
+        renderBoard();
+        showToast('⚠ Falha ao salvar movimentação — revertido');
+        console.warn('addTouchDnD save failed:', err);
+      });
+    runAutoRules('move',card.id,colId);
   });
   el.addEventListener('touchcancel',()=>{
     clearTimeout(longPressTimer); el.classList.remove('card-armed');
@@ -31139,9 +31180,10 @@ function addTouchColDnD(el, colId){
     let insertIdx=targetIdx;
     if(touch.clientX>mid) insertIdx++;
     if(draggedIdx<insertIdx) insertIdx--;
+    // Mesmo achado/mesmo fix de handleColDrop() (mouse) — ver comentário lá.
+    saveUndo('reordenar colunas');
     const [removed]=columns.splice(draggedIdx,1);
     columns.splice(insertIdx,0,removed);
-    saveUndo('reordenar colunas');
     fbSet(FB+'/columns', columns);
     renderBoard();
   });
