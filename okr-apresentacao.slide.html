@@ -948,7 +948,16 @@ function d2FieldList(arr){
 window._okrOpenDetail = id => {
   const o = okrObjetivos[id]; if(!o) return;
   const st = okrStatusInfo(objStatus(id));
-  const marcos = objMarcos(id).sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
+  // Mesma ordenação do painel (painel-dev.html, _okrMarcosSorted()): por
+  // padrão segue como sempre foi, por prazo (texto livre); a partir do 1º
+  // reordenar manual no painel, os marcos desse Objetivo ganham `ordem`
+  // numérico, que passa a mandar aqui também — pra não mostrar uma ordem
+  // diferente da que o time já arrumou.
+  const objMarcosOrdenados = objMarcos(id);
+  const temOrdem = objMarcosOrdenados.some(m=>typeof m.ordem==='number');
+  const marcos = temOrdem
+    ? objMarcosOrdenados.sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
+    : objMarcosOrdenados.sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
   const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral');
   const gerIdx = gerObjs.findIndex(x=>x.id===id);
   const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;

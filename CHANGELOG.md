@@ -18727,6 +18727,19 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-24 — Ordenação de marcos passa a respeitar `ordem` manual (consistência com painel-dev.html)
+
+Acompanha o processo de reordenação manual de marcos adicionado ao
+`painel-dev.html` (ver entrada correspondente) — sem esse ajuste aqui, a
+apresentação continuaria mostrando os marcos na ordem antiga (por
+`prazo`, texto livre) mesmo depois de alguém reorganizar manualmente no
+painel, mostrando uma ordem diferente da que o time já arrumou.
+`window._okrOpenDetail()` (drill-down de um Objetivo) passa a usar o
+mesmo critério: `ordem` numérico quando presente em algum marco do
+Objetivo, senão mantém o fallback por `prazo` de sempre.
+
+Checks de rotina: `node --check` OK.
+
 ### 2026-09-21 (10ª rodada) — Fix: cache de acesso `painel_viewers` de 24h reduzido pra 15min
 
 `/monitorarbugs` escopado explicitamente pra "login e segurança" —
@@ -19136,6 +19149,64 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.64 · painel-dev — 2026-09-24 · 🎯 OKR: duplicar Objetivo (⧉)
+
+Pedido direto do usuário: "preciso da opção de duplicar um okr". Botão
+"⧉ Duplicar" novo no rodapé do modal de Objetivo (`_okrDuplicarObjetivo()`),
+disponível pra quem pode editar (`_okrCanEdit`, não só ADM — diferente
+de Excluir/Arquivar, duplicar não afeta o original).
+
+Mesmo espírito de `_duplicarCardObj()`/`bulkDuplicate()` no
+`kanban-dev.html`: mantém a **estrutura** (título com sufixo " (cópia)",
+gerência, trimestre(s), pilar, descrição, tags, responsável(is),
+indicadores, e o **nome** de cada marco), mas zera o que é
+**estado/andamento** específico da cópia original — progressos/próximos
+passos/riscos/planos de ação, histórico do Objetivo, e em cada marco
+prazo/progresso (volta pra "não iniciado")/histórico do marco.
+`cardLinks` também não é copiado — um card vinculado à execução do
+Objetivo original não vale pra uma cópia nova, ainda por fazer.
+
+Depois de duplicar, o modal fecha o Objetivo original e já abre o
+Objetivo novo pra revisão/ajuste na hora, sem precisar procurar ele na
+lista.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses sem alteração no offset conhecido (-1/-14).
+
+### painel-dev.html v3.63 · painel-dev — 2026-09-24 · 🎯 OKR: reordenar marcos manualmente (▲/▼)
+
+Pedido direto do usuário: "implementa um processo de reordenação dos
+marcos". Até aqui a lista de marcos de um Objetivo (`_okrMarcosListHtml()`)
+só ordenava por `prazo` — campo de texto livre (`"30/04"`, `"A definir"`,
+`"recorrente"`, `""`...), então nem sempre batia com a ordem cronológica
+ou com a ordem que fazia sentido pro time acompanhar, e não tinha como
+ajustar manualmente.
+
+**Fix/feature**: botões ▲/▼ em cada marco (só quando `podeEditar`,
+mesma checagem de sempre) chamam `_okrMarcoMover(objId, marcoId, dir)`,
+que troca a posição do marco com o vizinho e grava um campo novo
+`ordem` (numérico) em `kanban/okr/marcos/{id}/ordem`. Enquanto NENHUM
+marco de um Objetivo tem `ordem` ainda, a lista continua ordenando por
+`prazo` do jeito que sempre fez (`_okrMarcosSorted()`, sem migração
+forçada em massa) — só no 1º clique em ▲/▼ desse Objetivo é que TODOS os
+seus marcos ativos ganham `ordem` de uma vez (a mesma ordem visual que
+já estava na tela, via prazo), e dali em diante `ordem` manda. A cada
+clique subsequente, `ordem` de TODOS os marcos do Objetivo é
+regravada — lista curta (poucos itens por Objetivo), e assim qualquer
+inconsistência (duplicata, buraco) se autocorrige a cada uso, em vez de
+só trocar 2 valores e confiar que nunca diverge.
+
+Reordenar NÃO gera entrada em `history[]` do marco/Objetivo — decisão
+de escopo (é um ajuste de organização visual, não uma mudança de
+conteúdo/status/prazo, que são os únicos tipos que o histórico do OKR
+já rastreia hoje).
+
+Acompanha ajuste equivalente em `okr-apresentacao.slide.html` (ver
+entrada própria) — a apresentação lê a mesma `ordem` quando presente,
+pra não mostrar uma ordem diferente da que foi arrumada no painel.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
 
 ### painel-dev.html v3.62 · painel-dev — 2026-09-24 · 🎯 OKR: Configurações do Objetivo (título, gerência, trimestre, pilar, tags, responsável) movida pra tela própria (⚙)
 

@@ -2865,7 +2865,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.62 · painel-dev</div>
+<div class="version">v3.64 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5775,16 +5775,51 @@ function _okrPessoaPickerHtml(campo, label){
 function _okrPessoaAdd(campo, uid){ _okrSyncObjDraftFromDom(); (_okrObjDraft[campo]=_okrObjDraft[campo]||[]).push(uid); renderOkrObjConfigBody(); }
 function _okrPessoaRemove(campo, uid){ _okrSyncObjDraftFromDom(); _okrObjDraft[campo] = (_okrObjDraft[campo]||[]).filter(x=>x!==uid); renderOkrObjConfigBody(); }
 
-function _okrMarcosListHtml(objId){
-  const marcos = _okrObjMarcos(objId).sort((a,b)=>(a.prazo||'9999').localeCompare(b.prazo||'9999'));
+// Ordem dos marcos dentro de um Objetivo: por padrão (nenhum marco desse
+// Objetivo tem `ordem` ainda) segue como sempre foi, por prazo — texto
+// livre (ex. "30/04", "A definir", "recorrente", "") então nem sempre
+// ordena de forma cronológica de verdade, mas é o que já existia. Assim
+// que a pessoa reordena manualmente uma vez (ver _okrMarcoMover()), o
+// Objetivo "materializa" um `ordem` numérico em TODOS os seus marcos, e
+// dali em diante `ordem` manda, não mais o prazo.
+function _okrMarcosSorted(objId){
+  const marcos = _okrObjMarcos(objId);
+  const temOrdem = marcos.some(m=>typeof m.ordem==='number');
+  return temOrdem
+    ? marcos.sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
+    : marcos.sort((a,b)=>(a.prazo||'9999').localeCompare(b.prazo||'9999'));
+}
+function _okrMarcosListHtml(objId, podeEditar){
+  const marcos = _okrMarcosSorted(objId);
   if(!marcos.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum marco ainda.</div>';
-  return marcos.map(m=>`
+  return marcos.map((m,i)=>`
     <div class="okr-marco-row" onclick="openOkrMarco('${m.id}','${objId}')">
+      ${podeEditar?`<span style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
+        <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
+        <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',1)" ${i===marcos.length-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===marcos.length-1?'opacity:.25;cursor:default;':''}">▼</button>
+      </span>`:''}
       ${okrStatusDot(m.progresso||'nao_iniciado')}
       <span class="okr-marco-nome">${esc(m.nome||'(sem nome)')}</span>
       ${m.responsavel?`<span class="okr-marco-meta">${esc(_okrPessoaInfo(m.responsavel).nome)}</span>`:''}
       ${m.prazo?`<span class="okr-marco-meta">📅 ${new Date(m.prazo+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
     </div>`).join('');
+}
+// Move um marco 1 posição pra cima/baixo (dir -1/1) dentro do Objetivo.
+// Reescreve `ordem` de TODOS os marcos ativos do Objetivo a cada clique
+// (lista curta, poucos itens) — mais simples e auto-corrige qualquer
+// inconsistência (duplicata, buraco) em vez de só trocar 2 valores.
+async function _okrMarcoMover(objId, marcoId, dir){
+  const marcos = _okrMarcosSorted(objId);
+  const idx = marcos.findIndex(m=>m.id===marcoId);
+  const alvo = idx + dir;
+  if(idx<0 || alvo<0 || alvo>=marcos.length) return;
+  const ordens = marcos.map((m,i)=> typeof m.ordem==='number' ? m.ordem : i);
+  [ordens[idx], ordens[alvo]] = [ordens[alvo], ordens[idx]];
+  const updates = {};
+  marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = ordens[i]; });
+  await window._update(window._ref(window._db), updates);
+  marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: ordens[i]}; });
+  renderOkrObjBody(_okrEditingObjId);
 }
 
 function renderOkrObjBody(id){
@@ -5812,7 +5847,7 @@ function renderOkrObjBody(id){
       ${_okrReadonlyList('Riscos', d.riscos)}
       ${_okrReadonlyList('Planos de Ação', d.planosAcao)}
       <div class="okr-field-label">Marcos</div>
-      ${_okrMarcosListHtml(id)}
+      ${_okrMarcosListHtml(id, false)}
       ${_okrCardLinksHtml(false)}
       <div class="okr-field-label">📜 Histórico</div>
       ${renderOkrHistory(d)}`;
@@ -5841,12 +5876,13 @@ function renderOkrObjBody(id){
       <span>Marcos</span>
       ${id?`<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;" onclick="openOkrMarco(null,'${id}')">+ Novo marco</button>`:''}
     </div>
-    ${id ? _okrMarcosListHtml(id) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
+    ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
     <div class="okr-field-label">📜 Histórico</div>
     ${renderOkrHistory(d)}`;
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
     ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
@@ -5929,6 +5965,66 @@ async function _okrDesarquivarObjetivo(id){
   if(okrObjetivos[id]){ okrObjetivos[id].arquivado = false; okrObjetivos[id].history = hist; }
   showToast('✅ Objetivo desarquivado — já está de volta na lista de ativos.');
   closeOkrObjetivo();
+}
+// Duplicar (pedido direto do usuário: "preciso da opção de duplicar um
+// okr") — mesmo espírito de _duplicarCardObj()/bulkDuplicate() no
+// kanban.html: mantém a ESTRUTURA (título, gerência, trimestre, pilar,
+// descrição, tags, responsável, indicadores, e o nome de cada marco),
+// mas zera o que é ESTADO/ANDAMENTO específico da cópia original —
+// progressos/próximos passos/riscos/planos de ação, histórico, e (em
+// cada marco) prazo/progresso/histórico/responsável do marco. cardLinks
+// também não é copiado, porque um card vinculado à execução do
+// Objetivo original não passa a valer pra uma cópia nova, ainda por
+// fazer. Disponível pra quem pode editar (mesma checagem de sempre,
+// _okrCanEdit — não é destrutivo pro original, então não precisa ser só
+// ADM como Arquivar/Excluir).
+async function _okrDuplicarObjetivo(id){
+  const original = okrObjetivos[id];
+  if(!original) return;
+  if(!await uiConfirm(`Duplicar "${original.titulo||'(sem título)'}"? Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra você ajustar antes de usar.`, {okText:'Duplicar'})) return;
+  const user = window._currentUser;
+  const who = user?.displayName || user?.email || '?';
+  const now = new Date().toISOString();
+  const newId = 'obj_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+  const novo = {
+    id: newId,
+    areaId: original.areaId||'geral',
+    pilar: original.pilar||'',
+    trimestres: (original.trimestres||_okrTrimestresOf(original)||[]).slice(),
+    descricao: original.descricao||'',
+    titulo: (original.titulo||'')+' (cópia)',
+    tagIds: (original.tagIds||[]).slice(),
+    responsaveis: (original.responsaveis||[]).slice(),
+    indicadores: (original.indicadores||[]).slice(),
+    progressos: [], proximosPassos: [], riscos: [], planosAcao: [],
+    cardLinks: [],
+    arquivado: false,
+    criadoEm: now, criadoPor: who, atualizadoEm: now, atualizadoPor: who,
+    history: [{at:now, uid:user?.uid||'', who, what:`duplicou de "${original.titulo||'(sem título)'}"`, tipo:'criado'}],
+  };
+  await window._set(window._ref(window._db,'kanban/okr/objetivos/'+newId), novo);
+  okrObjetivos[newId] = novo;
+
+  const marcosOriginais = _okrObjMarcos(id);
+  if(marcosOriginais.length){
+    const updates = {};
+    marcosOriginais.forEach(m=>{
+      const mid = 'marco_'+Date.now()+'_'+Math.random().toString(36).slice(2,7);
+      const novoMarco = {
+        id: mid, objetivoId: newId,
+        nome: m.nome||'', responsavel: m.responsavel||'',
+        prazo:'', progresso:'nao_iniciado', descricao:'',
+        checklist:[], tags:[], participantes:[], history:[],
+        arquivado:false, criadoEm:now, criadoPor:who, atualizadoEm:now, atualizadoPor:who,
+      };
+      updates['kanban/okr/marcos/'+mid] = novoMarco;
+      okrMarcos[mid] = novoMarco;
+    });
+    await window._update(window._ref(window._db), updates);
+  }
+  showToast('⧉ Objetivo duplicado — ajusta os detalhes e salva.');
+  closeOkrObjetivo();
+  openOkrObjetivo(newId);
 }
 // Exclusão DEFINITIVA (pedido direto do usuário: "faltou a opção de poder
 // excluir um objetivo") — diferente de Arquivar (que só esconde da lista
