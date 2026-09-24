@@ -3766,7 +3766,37 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
-### v8.30.744-dev — 2026-09-23 — Fix: card já criado por um Agendamento não tinha como ser aberto/editado
+### v8.30.745-dev — 2026-09-24 — `/monitorarbugs`: arquivar o último filho pendente de um supercard nunca avisava o Responsável
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida por
+prioridade 1 (`_checkSupercardAllDone()`/`_notifySupercardAllDone()`,
+reescrita no dia anterior, PR #1034 — trocou "supercard conclui sozinho"
+por um comentário automático avisando o Responsável quando todos os
+filhos ATIVOS de um supercard terminam).
+
+**Causa raiz**: `_notifySupercardAllDone()` calcula "filhos ativos"
+filtrando os arquivados (`c && !c.archived`) do `childCardIds` do pai —
+então arquivar um filho, igual mover ele pra uma coluna de fim, também
+pode fazer o supercard "fechar" (os filhos que sobraram, todos já
+concluídos). Mas a checagem só era disparada em 2 lugares: o evento
+`'move'` (`runAutoRules()`) e vincular um filho já pronto
+(`persistSuperChildren()`) — **arquivar nunca disparava nada**, nos 5
+pontos que fazem essa mutação (`bulkArchive()`, `_archiveValidationConfirm()`
+— confirmação do arquivamento automático por idade —, `archiveCard()`
+— botão do modal —, `bulkArchiveOldCards()` — limpeza de cards antigos
+— e `ctxArchive()` — menu de contexto).
+
+**Cenário concreto**: supercard com 3 filhos ativos — A e B concluídos,
+C ainda em andamento. Alguém arquiva C (ex.: era um duplicado por
+engano) em vez de movê-lo pra uma coluna de fim. A partir daí só sobram
+A e B como filhos ativos, ambos já concluídos — mas ninguém nunca é
+avisado, porque nenhuma das 5 funções de arquivar chama a checagem.
+
+**Fix**: as 5 funções passam a chamar `_checkSupercardAllDone(card)`
+logo depois de marcar `archived=true` — mesmo helper que o evento
+`'move'` já usa, reutilizado sem mudança de assinatura.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
 
 Relato direto do usuário: "cards agendados tb tem q ter um opencard pra
 conseguir editar ele".
