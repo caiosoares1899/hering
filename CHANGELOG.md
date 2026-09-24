@@ -3766,6 +3766,31 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.748-dev — 2026-09-24 — Fix: "+ Usar" (Modelos/Recorrentes) sempre criava o card na 1ª coluna do board, ignorando a coluna configurada no item
+
+Relato direto do usuário, com prints: abrir um item de Recorrente (aba
+"🔁 Recorrentes") mostrava a coluna configurada como "Pronto para
+executar", mas clicar em "+ Usar" criava o card na coluna "Recorrentes"
+— a PRIMEIRA coluna do board, não a que estava configurada no item.
+
+**Causa raiz**: `usarQLItem()` (função por trás do botão "+ Usar",
+compartilhada por Modelos e Recorrentes) chama `openNewCard()` sem
+argumento — e `openNewCard(col)` cai no fallback
+`col||columns[0]?.id||'backlog'` quando `col` não é passado, sempre
+resultando na 1ª coluna do array `columns`. `usarQLItem()` já
+pré-preenche título/tags/descrição/checklist/riscos/Ficha Técnica a
+partir do item, mas nunca passava `item.col` adiante.
+
+**Fix**: `openNewCard(item.col && columns.some(c=>c.id===item.col) ?
+item.col : undefined)` — mesmo padrão de validação (não usar a coluna
+crua se ela já tiver sido excluída do board) que
+`_criarCardRecorrente()`/`_criarCardAgendado()`/`openQLEdit()` já usam
+pro mesmo campo `item.col`. Afeta os 2 tipos de item com "+ Usar"
+(Modelos e Recorrentes) — Agendamentos não tem esse botão (entram
+automaticamente na data configurada, já correto desde 2026-08-27).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.747-dev — 2026-09-24 — `/monitorarbugs`: mover card por toque (mobile) sem recordMove()/saveUndo()/revert + "reordenar colunas" com Ctrl+Z quebrado (mouse e touch)
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida

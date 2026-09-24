@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.747-dev</div>
+<div class="version">v8.30.748-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24093,7 +24093,14 @@ let _pendingQLSource=null; // {tipo:'modelos'|'recorrentes', idx, slug}
 function usarQLItem(i){
   const item=qlItems[currentQL][i]; if(!item) return;
   closeOv('ql-ov');
-  openNewCard();
+  // Achado real (relato direto do usuário, com prints: "+ Usar" de um
+  // Modelo/Recorrente sempre criava o card na PRIMEIRA coluna do board,
+  // ignorando a coluna configurada no próprio item) — openNewCard() sem
+  // argumento cai no fallback columns[0] (ver openNewCard()). Mesmo
+  // padrão de validação já usado por _criarCardRecorrente()/
+  // _criarCardAgendado()/openQLEdit() pro mesmo campo item.col — não
+  // usa a coluna crua se ela já tiver sido excluída do board.
+  openNewCard((item.col && columns.some(c=>c.id===item.col)) ? item.col : undefined);
   _pendingQLSource = (currentQL==='modelos'||currentQL==='recorrentes')
     ? {tipo:currentQL, idx:i, slug:_slugifyRecorrente(item.title)} : null;
   document.getElementById('m-title').value=item.title;
