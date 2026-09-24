@@ -3766,6 +3766,45 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.749-dev — 2026-09-24 — `/monitorarbugs`: continuação do fix de "+ Usar" — Modelo nunca capturava coluna/responsável na criação, e "+ Usar" nunca aplicava o Responsável
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
+por continuidade direta do achado anterior (v8.30.748-dev, "+ Usar"
+ignorando `item.col`), aplicando a mesma técnica de comparação (os 3
+caminhos que salvam um card como Modelo/Recorrente reutilizável)
+contra o próprio fix de ontem.
+
+**Achado 1, técnica 1** (comparar `ctxModel()`/`salvarComoModeloModal()`
+— os 2 pontos que criam um Modelo — contra `ctxRecorrente()`, mesmo
+menu de contexto, mesma operação): só `ctxRecorrente()` capturava
+`col`/`owner` do card ao salvar. As 2 formas de criar um Modelo nunca
+capturavam nenhum dos dois — então mesmo com o fix de ontem
+(`usarQLItem()` já aplicando `item.col`/`item.owner` quando presentes),
+um Modelo nunca tinha esses campos pra aplicar, e "+ Usar" continuava
+caindo no fallback de sempre. Fix: os 2 pontos de criação de Modelo
+passam a capturar `col`/`owner`, mesmo padrão de `ctxRecorrente()`.
+
+**Achado 2, técnica 1** (comparar `usarQLItem()` contra
+`_criarCardRecorrente()`/`_criarCardAgendado()`, que já aplicam
+`owner:item.owner||''` na criação automática): "+ Usar" nunca aplicava
+o Responsável configurado no item, mesmo `openNewCard()` já deixando o
+campo pré-preenchido com QUEM CLICOU por padrão — o Responsável
+combinado no Recorrente/Modelo era sempre substituído silenciosamente
+por quem apertasse o botão. Fix: `usarQLItem()` sobrescreve
+`#m-owner` com `item.owner` só quando o item de fato tem um definido.
+
+Achado incidental, técnica 6 (dado gravado mas nunca lido de volta),
+reportado e NÃO corrigido: `descsExtra` (descrições extras) é
+capturado por `salvarComoModeloModal()` desde que a Ficha Técnica
+ganhou suporte a Modelo, mas nem `usarQLItem()` nem
+`_mergeModeloEmCardObj()` (fonte única de "aplicar um Modelo",
+também usada por `aplicarModeloNoCard()`) nunca leem esse campo de
+volta — puramente write-only. Corrigir direito exigiria decidir a
+semântica de merge pra um array (dedup por quê? por texto?), fora do
+escopo de um fix pontual — fica como recomendação.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.748-dev — 2026-09-24 — Fix: "+ Usar" (Modelos/Recorrentes) sempre criava o card na 1ª coluna do board, ignorando a coluna configurada no item
 
 Relato direto do usuário, com prints: abrir um item de Recorrente (aba

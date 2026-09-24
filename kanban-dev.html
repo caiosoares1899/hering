@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.748-dev</div>
+<div class="version">v8.30.749-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -24115,6 +24115,13 @@ function usarQLItem(i){
   document.getElementById('m-desc').value=item.desc||'';
   eocInitDisplay('desc-eoc', item.desc||'', 'Adicionar descrição...');
   document.getElementById('m-po').value=item.po||'';
+  // Achado real (/monitorarbugs, técnica 1 — comparar contra
+  // _criarCardRecorrente()/_criarCardAgendado(), que já aplicam
+  // owner:item.owner||'' na criação automática): "+ Usar" nunca aplicava
+  // o Responsável configurado no item, mesmo openNewCard() já deixando
+  // o campo pré-preenchido com QUEM CLICOU por padrão — sobrescreve só
+  // quando o item de fato tem um responsável definido.
+  if(item.owner) document.getElementById('m-owner').value=item.owner;
   _clGroupsInit(item);
   if(item.checklist?.length) renderCL(item.checklist);
   if(item.riscos?.length) renderRiscos(item.riscos);
@@ -33089,9 +33096,17 @@ async function ctxModel(){
   if(qlItems.modelos.find(m=>m.title===card.title)){
     showToast('"'+card.title.substring(0,20)+'" já está nos modelos'); return;
   }
+  // Achado real (/monitorarbugs, técnica 1 — comparar contra
+  // ctxRecorrente() logo abaixo, mesmo menu de contexto, mesma operação
+  // "salvar card como item reutilizável"): só o Recorrente capturava
+  // col/owner — Modelo nunca capturou nenhum dos dois, então mesmo com
+  // usarQLItem() já aplicando item.col/item.owner quando presentes
+  // (fix de ontem/hoje), um Modelo nunca tinha o que aplicar. Mesmo
+  // padrão dos 2 campos que ctxRecorrente() já usa.
   qlItems.modelos.push({
     title:card.title, tag:card.tag, tags:getCardTags(card).slice(), desc:card.desc||'',
     po:card.po||'', checklist:(card.checklist||[]).map(i=>({t:i.t,done:false})), riscos:card.riscos||[],
+    owner:card.owner||'', col:card.col||(columns[0]?.id)||'',
   });
   fbSet(FB+'/ql_items/modelos',qlItems.modelos);
   showToast('✅ Salvo como modelo');
@@ -33148,6 +33163,9 @@ async function salvarComoModeloModal(){
   if(!qlItems.modelos) qlItems.modelos=[];
   const jaExiste=qlItems.modelos.find(m=>m.title===title);
   if(jaExiste){ await uiAlert('"'+title+'" já está nos modelos.',{title:'Modelo duplicado'}); return; }
+  // Achado real (/monitorarbugs, mesma causa raiz de ctxModel() — este é
+  // o 2º dos 2 pontos que criam Modelo, também sem col/owner até agora):
+  // mesmo padrão de ctxRecorrente() aplicado aqui.
   qlItems.modelos.push({
     title,
     tags:editingTags.slice(),tag:(editingTags[0]||''),
@@ -33155,6 +33173,7 @@ async function salvarComoModeloModal(){
     po:document.getElementById('m-po').value,
     checklist:getCL().map(i=>({t:i.t,done:false})),
     riscos:getRiscos(),
+    owner:document.getElementById('m-owner').value||'', col:document.getElementById('m-col').value||(columns[0]?.id)||'',
     // Ficha Técnica (pedido direto: "quando um modelo é salvo, a ficha
     // também deveria ser salva") — null se o card não tinha nada
     // preenchido na Ficha (mesmo getCriativoData() de sempre). Aplicada

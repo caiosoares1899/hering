@@ -2420,6 +2420,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   checagem de coluna excluída que os 3 irmãos já usam. dev v8.30.748-dev,
   PR #1063.
 
+- **2026-09-24, continuação do "+ Usar" (pedido genérico — área
+  escolhida por continuidade direta do achado anterior)**: 2 achados
+  reais, técnica 1. (1) `ctxModel()`/`salvarComoModeloModal()` (os 2
+  pontos que criam um Modelo) nunca capturavam `col`/`owner`, diferente
+  de `ctxRecorrente()` (mesmo menu, mesma operação) — mesmo com o fix
+  anterior, um Modelo nunca tinha o que aplicar. Fix: os 2 passam a
+  capturar, mesmo padrão do irmão. (2) `usarQLItem()` nunca aplicava
+  `item.owner`, diferente de `_criarCardRecorrente()`/
+  `_criarCardAgendado()` (criação automática, já aplicam há semanas) —
+  Responsável configurado sempre sobrescrito por quem clicasse "+
+  Usar". Fix: aplica `item.owner` quando presente. Achado incidental,
+  não corrigido: `descsExtra` do Modelo é write-only (nunca lido de
+  volta por `usarQLItem()`/`_mergeModeloEmCardObj()`) — precisa de
+  decisão de semântica de merge, fora do escopo. dev v8.30.749-dev,
+  PR #1064.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
