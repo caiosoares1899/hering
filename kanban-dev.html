@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.744-dev</div>
+<div class="version">v8.30.745-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7973,7 +7973,13 @@ async function bulkArchive(){
   if(!selectedCards.size) return;
   const n = selectedCards.size;
   if(!await uiConfirm('Arquivar '+n+' card(s)?',{title:'Arquivar cards',okText:'Arquivar'})) return;
-  _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivou o card'); } });
+  // _checkSupercardAllDone(c) — achado real /monitorarbugs: arquivar tira o
+  // card da lista de filhos ATIVOS de um supercard (_notifySupercardAllDone
+  // já ignora filho arquivado), o mesmo jeito que mover pra uma coluna de
+  // fim tira — mas só o evento 'move' (runAutoRules) disparava a checagem
+  // até agora. Arquivar o último filho pendente de um supercard nunca
+  // avisava o Responsável do pai, mesmo com os outros filhos já concluídos.
+  _selectedList().forEach(c=>{ if(!c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivou o card'); _checkSupercardAllDone(c); } });
   // Para arquivar, o card some, então precisamos de renderBoard()
   const wrap = document.getElementById('board-wrap');
   const scrollX = wrap ? wrap.scrollLeft : 0;
@@ -13738,6 +13744,7 @@ async function _archiveValidationConfirm(){
     const c=cards.find(x=>x.id===id); if(!c || c.archived) return;
     c.archived=true; c.archivedAt=new Date().toISOString();
     recordHistory(c,'arquivado automaticamente, confirmado por '+(window._currentUserInit||'?')+' ('+days+'d de idade, '+inactDays+'d sem atividade)');
+    _checkSupercardAllDone(c); // mesmo achado de bulkArchive() — arquivar tira o card dos filhos ATIVOS de um supercard
     n++;
     touchedIds.push(c.id);
   });
@@ -15771,7 +15778,7 @@ async function deleteCard(){
 }
 function archiveCard(){
   if(!editingId) return; const c=cards.find(x=>x.id===editingId); if(!c) return;
-  c.archived=true; c.archivedAt=new Date().toISOString(); fbSaveCard(c); renderBoard(); closeOv('card-ov');
+  c.archived=true; c.archivedAt=new Date().toISOString(); _checkSupercardAllDone(c); fbSaveCard(c); renderBoard(); closeOv('card-ov');
 }
 
 // ═══ ⏸ PAUSAR CARD ═══════════════════════════════════════════════════════
@@ -23440,7 +23447,7 @@ async function bulkArchiveOldCards(){
   if(!ids.length){ showToast('Nenhum card selecionado.'); return; }
   if(!await uiConfirm('Arquivar '+ids.length+' card(s) antigo(s)? Eles somem do board ativo mas continuam salvos — dá pra restaurar em Arquivados.',{title:'Arquivar cards antigos',okText:'Arquivar'})) return;
   const idSet=new Set(ids); let n=0; const touchedIds=[];
-  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); n++; touchedIds.push(c.id); } });
+  cards.forEach(c=>{ if(idSet.has(c.id) && !c.archived){ c.archived=true; c.archivedAt=new Date().toISOString(); recordHistory(c,'arquivado (limpeza de cards antigos)'); _checkSupercardAllDone(c); n++; touchedIds.push(c.id); } });
   fbSaveAll(undefined, touchedIds); renderBoard();
   showToast('📦 '+n+' card(s) arquivado(s).');
   renderCleanupList();
@@ -33066,7 +33073,7 @@ function ctxRecorrente(){
 function ctxArchive(){
   const card=cards.find(x=>x.id===_ctxCardId); if(!card) return;
   saveUndo('arquivar card');
-  card.archived=true; card.archivedAt=new Date().toISOString(); renderBoard(); fbSaveCard(card);
+  card.archived=true; card.archivedAt=new Date().toISOString(); _checkSupercardAllDone(card); renderBoard(); fbSaveCard(card);
   showToast(`"${card.title.substring(0,25)}" arquivado`);
   hideCtxMenu();
 }
