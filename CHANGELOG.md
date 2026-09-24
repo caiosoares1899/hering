@@ -3766,6 +3766,49 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.747-dev — 2026-09-24 — `/monitorarbugs`: mover card por toque (mobile) sem recordMove()/saveUndo()/revert + "reordenar colunas" com Ctrl+Z quebrado (mouse e touch)
+
+Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
+por prioridade 2 (nenhuma área nova apontada pelo `git log` recente,
+que já tinha sido coberta pelas 2 rodadas anteriores do dia — foco em
+"mover card", já auditado 2x antes, mas nunca comparando os 3
+caminhos de ponta a ponta).
+
+**Achado 1, severo, técnica 1** (comparar os 3 caminhos paralelos que
+movem um card entre colunas — `handleDrop()`, mouse; `ctxMove()`, menu
+de contexto; `addTouchDnD()`, arrastar por toque/mobile). Os 2
+primeiros já tinham ganho, em rodadas anteriores (17/09 e 22/09),
+snapshot completo + restauração no `.catch()` de falha de rede. O 3º —
+arrastar o card por TOQUE, o caminho mais comum em tablet/iPad — nunca
+tinha sido comparado contra os outros 2: mutava `card.col` direto, sem
+`recordMove()` (cycle/lead time, CFD, Throughput e o
+auto-desimpedimento ficavam cegos pra TODO drag feito por toque), sem
+`recordHistory()`/`saveUndo()`, e `fbSaveCard()` sem `.then()`/
+`.catch()` nenhum — falha de rede deixava o card visualmente movido,
+sem reverter e sem avisar. Fix: mesmo padrão de snapshot completo/
+restauração de `handleDrop()` replicado em `addTouchDnD()`.
+
+**Achado 2, severo, técnica 3** (confrontar o que um fix anterior já
+"corrigido" promete vs. o código de verdade). O fix de 2026-09-14
+("Ctrl+Z") documentou que "reordenar colunas" (mouse e touch) chamava
+`saveUndo()` DEPOIS de mutar `columns[]`, e resolveu isso fazendo o
+snapshot de `saveUndo()` passar a incluir `columns` também — mas
+**nunca mudou O MOMENTO em que `saveUndo()` é chamado**: continuava
+sendo chamado depois do `columns.splice()`, então a "foto" capturada
+já era a ordem NOVA (pós-reordenação). `doUndo()` só restaura
+`columns` quando `JSON.stringify(prev.columns)!==JSON.stringify(columns)`
+— como os dois eram idênticos (a foto era da ordem já nova), essa
+condição nunca era verdadeira, e Ctrl+Z depois de reordenar colunas
+continuava um no-op completo, o EXATO mesmo sintoma que aquele fix
+achava ter corrigido. Confirmado grepando TODOS os ~20 call sites de
+`saveUndo()` do arquivo — os 2 de "reordenar colunas" (`handleColDrop`,
+mouse; dentro de `addTouchColDnD()`, toque) eram os ÚNICOS que chamavam
+`saveUndo()` depois de mutar, contra o padrão universal do resto do
+arquivo (sempre antes). Fix: `saveUndo('reordenar colunas')` movido pra
+antes do `columns.splice()` nos 2 lugares.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.746-dev — 2026-09-24 — Fix: 🕐 Tema automático desligado numa aba continuava alternando o tema (vazava até pro painel)
 
 Relato direto do usuário: "liguei o Tema automático hoje pra testar, já

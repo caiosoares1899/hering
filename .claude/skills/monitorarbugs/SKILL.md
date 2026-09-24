@@ -2362,6 +2362,51 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   relativo, já que dispara repetidamente, diferente de Agendamento que
   dispara 1x só). dev v8.30.743-dev.
 
+- **2026-09-24, painel mudando de tema sozinho (relato direto do
+  usuário, escopo nomeado)**: 1 achado real severo. `mare_theme`/
+  `mare_theme_auto` são chaves de `localStorage` compartilhadas (sem
+  sufixo `_dev`) entre `kanban.html`/`kanban-dev.html`/`painel.html`/
+  `painel-dev.html`. `_startThemeAutoWatch()` agenda um `setInterval`
+  de 1min que sobrescreve `mare_theme` conforme a banda do horário, mas
+  nunca re-checava `_isThemeAutoOn()` a cada disparo —
+  `_disableThemeAutoIfOn()` só limpa o timer na MESMA aba/instância que
+  desligou; com mais de uma aba aberta (confirmado pelo usuário: "liguei
+  hoje pra testar, já desliguei e mesmo assim tá alternando"), desligar
+  numa não parava o timer já rodando na outra, que seguia sobrescrevendo
+  `mare_theme` — vazando pro painel no próximo reload (que só lê a
+  chave no boot, sem a feature nem indicação na tela). Fix: o callback
+  do `setInterval` relê a flag a cada disparo e se autodesliga. Varredura
+  nos outros ~19 `setInterval()` do arquivo: nenhum outro combina
+  toggle compartilhado + escrita em chave lida por outra página — caso
+  isolado. dev v8.30.746-dev, PR #1061.
+
+- **2026-09-24, "mover card" (3º caminho: toque/mobile) + "reordenar
+  colunas" (Ctrl+Z) (pedido genérico, "roda outro /monitorarbugs" —
+  área escolhida por prioridade 2, sem código novo desde as 2 rodadas
+  anteriores do dia)**: 2 achados reais, ambos severos. (1) técnica 1
+  (comparar os 3 caminhos paralelos que movem um card — `handleDrop()`/
+  `ctxMove()`, já com snapshot+revert de rodadas de 17/09 e 22/09 —
+  `addTouchDnD()`, nunca comparado) — arrastar card por TOQUE (o mais
+  comum em tablet) mutava `card.col` direto, sem `recordMove()`
+  (cycle/lead time, CFD, Throughput e auto-desimpedimento cegos pra
+  todo drag por toque), sem `recordHistory()`/`saveUndo()`, `fbSaveCard()`
+  sem `.then()`/`.catch()`. Fix: mesmo padrão replicado. (2) técnica 3
+  (confrontar um fix anterior "corrigido" vs. código real) — o fix de
+  Ctrl+Z de 2026-09-14 só corrigiu O QUE o snapshot de "reordenar
+  colunas" guarda (`columns`), nunca QUANDO `saveUndo()` é chamado —
+  continuava depois do `columns.splice()` nos 2 call sites (mouse e
+  touch), a "foto" já era a ordem NOVA, `doUndo()` nunca via diferença
+  pra restaurar — Ctrl+Z de reordenar colunas continuava um no-op
+  completo, o MESMO sintoma que aquele fix achava ter resolvido.
+  Confirmado grepando todos os ~20 call sites de `saveUndo()` — só
+  esses 2 chamavam depois de mutar. Fix: `saveUndo()` movido pra antes
+  do `splice()` nos 2 lugares. dev v8.30.747-dev, PR #1062. **Lição pra
+  próxima vez**: um comentário dizendo "já corrigido" (mesmo com o
+  próprio código do fix ao lado) merece releitura linha a linha do QUE
+  mudou vs. o QUE o sintoma original precisava — corrigir o formato do
+  dado guardado não é o mesmo que corrigir a ORDEM em que ele é
+  capturado.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
