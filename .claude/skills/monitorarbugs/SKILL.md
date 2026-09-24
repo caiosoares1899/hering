@@ -2407,6 +2407,19 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   dado guardado não é o mesmo que corrigir a ORDEM em que ele é
   capturado.
 
+- **2026-09-24, "+ Usar" (Modelos/Recorrentes) (relato direto do
+  usuário, com prints, durante validação da rodada anterior)**: 1
+  achado real, técnica 2 (comparar contra o padrão já resolvido em
+  `_criarCardRecorrente()`/`_criarCardAgendado()`/`openQLEdit()` pro
+  mesmo campo `item.col`). `usarQLItem()` (botão "+ Usar", Modelos e
+  Recorrentes) chama `openNewCard()` sem argumento — cai no fallback
+  `columns[0]?.id` — nunca repassava `item.col`, então o card sempre
+  nascia na 1ª coluna do board, ignorando a coluna configurada no item
+  (visível/certa na tela de editar o item, errada só na criação de
+  verdade). Fix: `openNewCard(item.col validado : undefined)`, mesma
+  checagem de coluna excluída que os 3 irmãos já usam. dev v8.30.748-dev,
+  PR #1063.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
