@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.745-dev</div>
+<div class="version">v8.30.746-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -33739,7 +33739,22 @@ function _startThemeAutoWatch(){
   if(_themeAutoInterval) clearInterval(_themeAutoInterval);
   // A cada 1min: a virada de banda só acontece 3x/dia, não precisa de
   // mais precisão — o custo de checar de sobra é irrelevante.
-  _themeAutoInterval = setInterval(()=>_applyAutoTheme(true), 60000);
+  // Achado real (/monitorarbugs, relato direto: "liguei o Tema automático
+  // pra testar, já desliguei e mesmo assim tá alternando" — reflexo até no
+  // painel, que lê mare_theme mas nem tem essa feature): este callback
+  // nunca re-checava _isThemeAutoOn() antes de aplicar — só o clearInterval
+  // de _disableThemeAutoIfOn() parava o timer, e isso só tem efeito NA
+  // MESMA aba/instância que desligou. Com kanban.html + kanban-dev.html (ou
+  // 2 abas da mesma página) abertos ao mesmo tempo — os 2 leem/escrevem a
+  // MESMA chave mare_theme_auto, sem sufixo _dev — desligar numa aba nunca
+  // parava o setInterval já rodando na OUTRA, que seguia sobrescrevendo
+  // mare_theme a cada 1min conforme o horário, vazando pro painel no
+  // próximo reload como se tivesse "resetado sozinho". Fix: o próprio
+  // callback relê a flag a cada disparo e se autodesliga se achar off.
+  _themeAutoInterval = setInterval(()=>{
+    if(!_isThemeAutoOn()){ clearInterval(_themeAutoInterval); _themeAutoInterval=null; return; }
+    _applyAutoTheme(true);
+  }, 60000);
 }
 function _disableThemeAutoIfOn(){
   if(!_isThemeAutoOn()) return;
