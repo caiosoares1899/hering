@@ -19150,6 +19150,30 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.64 · painel-dev — 2026-09-24 · 🎯 OKR: duplicar Objetivo (⧉)
+
+Pedido direto do usuário: "preciso da opção de duplicar um okr". Botão
+"⧉ Duplicar" novo no rodapé do modal de Objetivo (`_okrDuplicarObjetivo()`),
+disponível pra quem pode editar (`_okrCanEdit`, não só ADM — diferente
+de Excluir/Arquivar, duplicar não afeta o original).
+
+Mesmo espírito de `_duplicarCardObj()`/`bulkDuplicate()` no
+`kanban-dev.html`: mantém a **estrutura** (título com sufixo " (cópia)",
+gerência, trimestre(s), pilar, descrição, tags, responsável(is),
+indicadores, e o **nome** de cada marco), mas zera o que é
+**estado/andamento** específico da cópia original — progressos/próximos
+passos/riscos/planos de ação, histórico do Objetivo, e em cada marco
+prazo/progresso (volta pra "não iniciado")/histórico do marco.
+`cardLinks` também não é copiado — um card vinculado à execução do
+Objetivo original não vale pra uma cópia nova, ainda por fazer.
+
+Depois de duplicar, o modal fecha o Objetivo original e já abre o
+Objetivo novo pra revisão/ajuste na hora, sem precisar procurar ele na
+lista.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses sem alteração no offset conhecido (-1/-14).
+
 ### painel-dev.html v3.63 · painel-dev — 2026-09-24 · 🎯 OKR: reordenar marcos manualmente (▲/▼)
 
 Pedido direto do usuário: "implementa um processo de reordenação dos
