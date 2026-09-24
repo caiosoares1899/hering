@@ -814,7 +814,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* column */
 .col{display:flex;flex-direction:column;max-height:100%;width:272px;min-width:272px;flex-shrink:0;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);overflow:hidden;backdrop-filter:blur(12px);transition:opacity .2s;}
 .col.collapsed .col-body,.col.collapsed .add-btn{display:none;}
-.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;}
+.col-hd{flex-shrink:0;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--glass-b);border-left:3px solid var(--col-accent,transparent);border-top:3px solid var(--col-accent,transparent);border-top-left-radius:var(--r2);cursor:default;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;}
 .col-title{font-family:"Syne",sans-serif;font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px;}
 .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .col-cnt{font-size:10px;background:rgba(56,182,255,.1);color:var(--cyan);padding:1px 7px;border-radius:999px;border:1px solid rgba(56,182,255,.2);}
@@ -829,7 +829,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .col-body{flex:1;min-height:0;padding:6px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overflow-x:hidden;}
 
 /* card */
-.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;}
+/* -webkit-touch-callout:none + user-select:none — sem isso, o long-press
+   que arma o addTouchDnD() (arrastar por toque) compete com o balão
+   nativo do iOS de seleção de texto/"Copiar" sobre o título do card,
+   que interrompe visualmente o gesto de arrastar já construído pra
+   touch (mesmo achado do .col-hd logo abaixo, mesma causa). touch-
+   action:manipulation — 2 toques rápidos abrem o menu de contexto
+   (detecção manual via click+timestamp em makeCardEl(), não depende de
+   dblclick); sem essa propriedade o iOS pode interpretar o 2º toque
+   como "duplo-toque pra dar zoom" na página em vez de disparar o
+   evento click rápido que a detecção espera. */
+.card{background:linear-gradient(rgba(255,255,255,.05),rgba(255,255,255,.05)),rgba(var(--surface-rgb),.95);border:1px solid rgba(56,182,255,.3);border-radius:var(--r);padding:10px;cursor:pointer;transition:all .2s;position:relative;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;}
 /* Capa de cor (testeira) — tira de cor no topo do card, tipo Trello, pra
    organização visual além das tags (pedido direto: "as tags parecem não
    ser suficiente visualmente"). Usa margin negativo pra "vazar" até a
@@ -2574,6 +2584,37 @@ input[type="date"]{-moz-appearance:textfield;}
 .ctx-submenu.open{display:block;}
 
 
+/* ── TOQUE (independe de largura — pega iPad, não só @media max-width) ──
+   `hover:none` + `pointer:coarse` identifica "sem mouse/trackpad"
+   independente da largura da tela — ao contrário de
+   @media(max-width:768px), que não pega a maioria dos iPads (largura em
+   pontos > 768px em retrato, exceto iPad mini) mesmo eles sendo touch.
+   Não afeta iPad com Magic Keyboard/trackpad conectado (esse tem
+   hover:hover + pointer:fine, cai fora daqui). */
+@media (hover:none) and (pointer:coarse){
+  /* iOS/iPadOS dá zoom automático na página ao focar qualquer campo com
+     font-size computado < 16px — a maioria dos inputs/selects/textareas
+     deste arquivo usa 9-14px (visual desejado em telas com mouse). */
+  input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]):not([type=file]),
+  textarea,
+  select{
+    font-size:16px!important;
+  }
+
+  /* Botões de remover/dispensar que só aparecem no :hover do pai ficam
+     invisíveis e inacessíveis em touch (sem mouse não tem como "passar
+     por cima" pra revelar) — força visível sempre aqui. !important
+     porque as regras base (`.camp-entry-del`/`.camp-fixed-link-del`)
+     ficam DEPOIS deste bloco no arquivo e, com a mesma especificidade,
+     ganhariam por ordem de cascata sem isso. */
+  .notif-dismiss,
+  .camp-entry-del,
+  .camp-fixed-link-del,
+  .cal-ev-del{
+    opacity:1!important;
+  }
+}
+
 /* ── MOBILE ──────────────────────────────────────────── */
 @media(max-width:768px){
 
@@ -3541,7 +3582,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div class="hd-btns">
     <span id="conn-badge" style="display:none;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:999px;background:rgba(255,92,122,.15);border:1px solid rgba(255,92,122,.4);color:#ff8fa3;" title="Sem conexão com o Firebase — suas alterações ficam guardadas neste aparelho e são reenviadas assim que a internet voltar. Não feche esta aba enquanto estiver offline com algo não salvo.">🔴 Offline</span>
-    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito: 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
+    <button id="theme-toggle-btn" class="btn btn-sm" onclick="onThemeBtnClick()" ondblclick="onThemeBtnDblClick()" oncontextmenu="_themeBtnRightClick(event)" ontouchstart="_themeBtnTouchStart(event)" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Clique: alterna entre 🌙 Abrolhos e ☀️ Lençóis Maranhenses. Duplo-clique (no claro): alterna pra uma versão mais escura. Botão direito (ou toque com 2 dedos): 🔥 modo Black Friday (proposta em teste). Preferência salva só neste navegador." style="padding:5px 9px;">🌙</button>
     <button id="theme-auto-btn" class="btn btn-sm" onclick="toggleThemeAuto()" title="Tema automático — liga a troca sozinha conforme o horário de São Paulo (☀️ 06h-12h, 🌴 12h-18h, 🌙 18h-06h). Clique pra ligar." style="padding:5px 9px;">🕐</button>
     <div id="hybrid-view-switch" style="display:none;align-items:center;gap:1px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:999px;padding:2px;margin-right:2px;" title="Modo de visualização">
       <button class="hvs-btn" data-mode="human" onclick="setHybridView('human')" title="Só cards com humano envolvido">👤</button>
@@ -5537,7 +5578,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- ARQUIVADOS -->
 <!-- MODAL DE RECORRÊNCIA -->
 <div class="ov" id="rec-ov">
-<div class="panel" style="max-width:440px;width:92vw;">
+<div class="panel" style="max-width:440px;width:92vw;max-height:90vh;overflow-y:auto;">
   <div class="panel-hd">
     <div class="panel-title">🔁 Recorrência automática</div>
     <button class="x-btn" onclick="closeOv('rec-ov')">✕</button>
@@ -5563,6 +5604,14 @@ input[type="date"]{-moz-appearance:textfield;}
       <div class="rec-field">
         <label class="rec-lbl">Responsável (opcional)</label>
         <select id="rec-owner" class="rec-input"></select>
+      </div>
+      <label class="rec-switch" style="margin-top:10px;"><input type="checkbox" id="rec-due-active" onchange="_recToggleDueActive()"> <span>Definir prazo automaticamente</span></label>
+      <div id="rec-due-config" style="margin-top:6px;opacity:.4;pointer-events:none;">
+        <div class="rec-field">
+          <label class="rec-lbl">Prazo — dias após a criação do card</label>
+          <input type="number" id="rec-due-offset" class="rec-input" min="1" max="365" value="1">
+        </div>
+        <p style="font-size:10.5px;color:var(--txt3);margin:2px 0 0;">Ex.: card entra na segunda, "1" deixa o prazo pra terça seguinte.</p>
       </div>
       <p style="font-size:11px;color:var(--txt3);margin:10px 0 0;line-height:1.5;">💡 O conteúdo do card (descrição, checklist, tag) é copiado do item recorrente. Edite o item para mudar o que vem preenchido.</p>
     </div>
@@ -5732,6 +5781,11 @@ input[type="date"]{-moz-appearance:textfield;}
     <div class="rec-field" style="margin-top:10px;">
       <label class="rec-lbl">Coluna de entrada</label>
       <select id="agcfg-col" class="rec-input" style="width:100%;"></select>
+    </div>
+    <div class="rec-field" style="margin-top:10px;">
+      <label class="rec-lbl">Prazo do card (opcional)</label>
+      <input type="date" id="agcfg-due" class="rec-input" style="width:100%;box-sizing:border-box;"> <button type="button" class="dp-btn" onclick="_dpOpen('agcfg-due',this)" title="Escolher no calendário">📅</button>
+      <div style="font-size:10px;color:var(--txt3);margin-top:6px;line-height:1.5;">Diferente da data de entrada acima — deixe em branco pro card nascer sem prazo, como sempre foi.</div>
     </div>
     <button class="btn btn-teal" onclick="salvarAgendamento()" style="margin-top:14px;width:100%;">💾 Salvar agendamento</button>
   </div>
@@ -6285,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.734</div>
+<div class="version">v8.30.744</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11372,15 +11426,46 @@ function makeCardEl(card){
   if(selectMode){
     div.onclick=(e)=>{ e.stopPropagation(); toggleCardSelection(card.id); };
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggleCardSelection(card.id); } };
+    div.ondblclick=e=>{e.stopPropagation();};
   } else {
-    div.onclick=()=>openCard(card.id);
+    // Duplo-clique abre o menu de contexto (showCtxMenu()) — pedido direto
+    // do usuário testando no iPad: o "⋯" ficou feio, e oncontextmenu
+    // sozinho depende do Safari sintetizar contextmenu a partir de um
+    // long-press que compete com addTouchDnD() no mesmo elemento (ver
+    // v8.30.735-dev/v8.30.736-dev). Detecção manual via timestamp em cima
+    // do evento `click` (2 clicks dentro de 350ms = menu; senão abre o
+    // card depois do atraso, pra sempre dar chance de um 2º clique
+    // chegar). Isto aqui só importa pro MOUSE de verdade — o TOQUE é
+    // tratado inteiramente dentro de addTouchDnD() (touchend supre o
+    // clique sintético via preventDefault desde a v8.30.739-dev; 2
+    // tentativas anteriores, dblclick nativo e depois esta mesma lógica
+    // de timestamp só que em cima de `click`, não funcionaram de verdade
+    // com toque real — ver comentário completo lá).
+    // _ctxTapLockUntil evita um 3º clique rápido (ex. triplo-clique) —
+    // chegando logo depois de já ter reconhecido um par como duplo-clique
+    // — ser lido como o "1º clique" de um NOVO par e reabrir o card por
+    // cima do menu que acabou de aparecer (achado via /monitorarbugs,
+    // 2026-09-23; mesmo fix espelhado no toque, addTouchDnD() abaixo).
+    let _cardClickTimer=null, _cardLastClickAt=0, _ctxTapLockUntil=0;
+    div.onclick=(e)=>{
+      const now=Date.now();
+      if(now<_ctxTapLockUntil) return;
+      if(_cardClickTimer && (now-_cardLastClickAt)<350){
+        clearTimeout(_cardClickTimer); _cardClickTimer=null;
+        _ctxTapLockUntil=now+400;
+        showCtxMenu(e,card.id);
+        return;
+      }
+      _cardLastClickAt=now;
+      _cardClickTimer=setTimeout(()=>{ _cardClickTimer=null; openCard(card.id); },350);
+    };
     div.onkeydown=e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); openCard(card.id); } };
     div.oncontextmenu=e=>showCtxMenu(e,card.id);
+    div.ondblclick=e=>{ e.stopPropagation(); e.preventDefault(); }; // já tratado via click+timestamp acima; só evita seleção de texto num duplo-clique/toque real
     div.ondragstart=e=>handleDragStart(e,card.id);
     div.ondragend=e=>handleDragEnd(e);
     addTouchDnD(div,card.id);
   }
-  div.ondblclick=e=>{e.stopPropagation();};
   // NOTA sobre display:inline-block nos badges abaixo: margin-top/bottom NÃO
   // tem efeito nenhum em <span> comum (display:inline) — só .card-tag já
   // tinha isso certo (CSS: display:inline-block + margin-bottom). Os outros
@@ -23463,7 +23548,7 @@ function renderQLBody(){
       const temData = item.data && !item.criado;
       const jaCriado = item.criado;
       const lbl = jaCriado ? '✅ Criado '+(item.criadoEm||'') : (temData ? _fmtDataAg(item.data) : 'Definir data');
-      recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="Data de entrada" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
+      recBtn=`<button class="btn btn-sm" onclick="openAgendamentoModal(${i})" title="${jaCriado?'Abrir o card criado por este agendamento':'Data de entrada'}" style="font-size:10px;color:${jaCriado?'var(--txt3)':(temData?'var(--teal)':'var(--txt2)')};border-color:${temData&&!jaCriado?'rgba(29,233,182,.4)':'var(--glass-b)'};">📅 ${esc(lbl)}</button>`;
     }
     const usarBtn = currentQL==='agendamentos'
       ? '' // agendamentos não têm "+ Usar" manual, entram por data
@@ -23478,11 +23563,25 @@ let _agEditIdx = -1;
 function openAgendamentoModal(i){
   _agEditIdx = i;
   const item = (qlItems.agendamentos||[])[i]; if(!item) return;
-  if(item.criado){ showToast('Esse card já entrou no quadro.'); return; }
+  // Achado real (/monitorarbugs, relato direto: "cards agendados tb tem q
+  // ter um opencard pra conseguir editar ele") — clicar num agendamento já
+  // disparado (item.criado) só mostrava um toast e não abria nada, sem
+  // jeito nenhum de editar o card real que ele criou. processAgendamentos()
+  // agora guarda item.criadoCardId (ver logo abaixo) — abre o card de
+  // verdade quando existir; itens antigos (criados antes deste fix, sem
+  // criadoCardId) ou cujo card foi excluído desde então caem no aviso de
+  // sempre, sem crashar.
+  if(item.criado){
+    const card = item.criadoCardId ? cards.find(c=>c.id===item.criadoCardId) : null;
+    if(card){ openCard(card.id); return; }
+    showToast(item.criadoCardId ? '⚠ O card criado por este agendamento não existe mais (foi excluído).' : 'Esse card já entrou no quadro.');
+    return;
+  }
   document.getElementById('agcfg-data').value = item.data||'';
   const colSel = document.getElementById('agcfg-col');
   colSel.innerHTML = columns.map(c=>`<option value="${esc(c.id)}">${esc(c.name)}</option>`).join('');
   colSel.value = item.col||(columns[0]?.id)||'';
+  document.getElementById('agcfg-due').value = item.dueCard||'';
   document.getElementById('agcfg-ov').classList.add('open');
 }
 function salvarAgendamento(){
@@ -23492,6 +23591,7 @@ function salvarAgendamento(){
   if(!data){ showToast('Escolha uma data.'); return; }
   item.data = data;
   item.col  = document.getElementById('agcfg-col').value;
+  item.dueCard = document.getElementById('agcfg-due').value || null;
   fbSet(FB+'/ql_items/agendamentos',qlItems.agendamentos);
   closeOv('agcfg-ov');
   renderQLBody();
@@ -23625,6 +23725,16 @@ function _slugifyRecorrente(title){
 // resolveReferencia() na prática: quem perguntasse pela data local de hoje
 // (a única que faz sentido pra alguém de fora) batia com recorrenteData,
 // mas o card continuava existindo — só que documentado erroneamente.
+// Prazo automático do card recorrente (item.dueOffsetDays, configurado em
+// openRecorrenciaModal()/salvarRecorrencia()) — mesmo padrão de soma de dias
+// (meio-dia local, evita virar o dia errado por causa de DST/fuso) que
+// _timelineAdiarCard() já usa.
+function _recorrenteDueDate(hoje, offsetDays){
+  if(!Number.isFinite(offsetDays)||offsetDays<=0) return '';
+  const d=new Date(hoje+'T12:00:00');
+  d.setDate(d.getDate()+offsetDays);
+  return _localDateStrBoard(d);
+}
 function _criarCardRecorrente(item, hoje){
   const td=hoje;
   const tags = Array.isArray(item.tags)?item.tags.slice():(item.tag?[item.tag]:[]);
@@ -23643,7 +23753,7 @@ function _criarCardRecorrente(item, hoje){
     desc:item.desc||'',
     descsExtra:[],
     owner:item.owner||'',
-    due:'', po:item.po||'',
+    due:_recorrenteDueDate(hoje,item.dueOffsetDays), po:item.po||'',
     checklist:Array.isArray(item.checklist)?JSON.parse(JSON.stringify(item.checklist)):[],
     riscos:Array.isArray(item.riscos)?item.riscos.slice():[],
     sp:item.sp||'', priority:item.priority||'medium',
@@ -23768,6 +23878,7 @@ function processAgendamentos(){
     if(dataAg<=hoje){
       const card=_criarCardAgendado(item);
       item.criado=true; item.criadoEm=new Date().toISOString().split('T')[0];
+      item.criadoCardId=card.id; // permite abrir o card real depois (ver openAgendamentoModal())
       criados.push(card); mudou=true;
     }
   });
@@ -23903,9 +24014,18 @@ function openRecorrenciaModal(i){
   const ownSel=document.getElementById('rec-owner');
   ownSel.innerHTML='<option value="">— sem responsável —</option>'+members.filter(m=>m.init).map(m=>`<option value="${esc(m.init)}">${esc(m.init)} · ${esc(m.name)}</option>`).join('');
   ownSel.value=item.owner||'';
+  document.getElementById('rec-due-active').checked = Number.isFinite(item.dueOffsetDays) && item.dueOffsetDays>0;
+  document.getElementById('rec-due-offset').value = (Number.isFinite(item.dueOffsetDays) && item.dueOffsetDays>0) ? item.dueOffsetDays : 1;
   _recRenderSub();
   _recToggleActive();
+  _recToggleDueActive();
   document.getElementById('rec-ov').classList.add('open');
+}
+function _recToggleDueActive(){
+  const on=document.getElementById('rec-due-active').checked;
+  const cfg=document.getElementById('rec-due-config');
+  cfg.style.opacity=on?'1':'.4';
+  cfg.style.pointerEvents=on?'auto':'none';
 }
 function _recToggleActive(){
   const on=document.getElementById('rec-active').checked;
@@ -23950,11 +24070,13 @@ function salvarRecorrencia(){
   item.active=true;
   item.col=document.getElementById('rec-col').value;
   item.owner=document.getElementById('rec-owner').value;
+  const dueOn=document.getElementById('rec-due-active').checked;
+  item.dueOffsetDays = dueOn ? Math.max(1,parseInt(document.getElementById('rec-due-offset').value)||1) : null;
   if(item.lastCreated===undefined) item.lastCreated=null;
   fbSet(FB+'/ql_items/recorrentes',qlItems.recorrentes);
   renderQLBody();
   closeOv('rec-ov');
-  showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec));
+  showToast('🔁 Recorrência salva: '+_recurrenceLabel(rec)+(dueOn?' · prazo +'+item.dueOffsetDays+'d':''));
 }
 // Guarda de onde veio a "Usar" (modelo/recorrente) até o card ser de fato
 // criado (clique em Salvar) — usarQLItem() só PRÉ-PREENCHE o modal, quem
@@ -26484,7 +26606,7 @@ const HELP_CONTENT = {
     { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
     { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
-    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.' },
+    { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
     { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n🔗 Copiar link sem abrir o card: no menu de contexto do card (clique direito, ou o botão "⋮" no board), tem o atalho "🔗 Copiar link do card" — copia o mesmo link, sem precisar abrir o card primeiro.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
@@ -26525,7 +26647,7 @@ const HELP_CONTENT = {
     { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.\n\nCada comentário tem um botão <b>↩ Responder</b>: clique nele pra abrir a caixa de comentário já com "@" + o nome de quem comentou preenchido automaticamente, prontinho pra continuar digitando — a pessoa mencionada recebe notificação no sino 🔔, igual qualquer outra menção.' },
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
-    { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.' },
+    { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.\n\n📆 <b>Prazo do card (opcional):</b> na mesma tela, dá pra definir de já um prazo pro card — uma data fixa, diferente da data de entrada. Deixe em branco pro card nascer sem prazo, como sempre foi.' },
     { icon:'⚡', title:'Funções de card', text:'O botão ⚡ Funções de card na toolbar reúne: ⚡ Automações (regras "Quando X → Então Y" e receitas de fan-out, ver dica "Automações"), 🔁 Recorrentes (cards que se repetem automaticamente), 📅 Agendamentos (cards que entram numa data marcada), 📋 Modelos (cards prontos para reusar), 📦 Arquivados (cards que saíram do quadro) e 🧹 Cards antigos (arquivamento em lote de cards parados há muito tempo, disponível pra ADM/PO/Organizador). Todos os itens recorrentes e modelos podem ser editados por completo pelo ✏️.' },
     { icon:'👻', title:'ADM fantasma', text:'Administradores não aparecem mais automaticamente na lista de membros dos quadros — ficam "fantasmas" para não poluir menções e atribuições, mas mantêm acesso total a tudo. Para participar ativamente de um quadro (aparecer como membro, poder ser atribuído a cards), abra a Equipe do quadro (clique nos avatares no topo direito) e use 🙋 Participar do quadro. Para voltar a ser invisível, use 👻 Sair do quadro no mesmo lugar. Sair nunca remove nenhum acesso.' },
     { icon:'🎯', title:'OKR', text:'Clique com o botão direito em qualquer card e selecione Marcar como OKR para destacá-lo como entrega-chave da sprint. Cards OKR aparecem com borda dourada no board.' },
@@ -30843,6 +30965,24 @@ function getDragAfterElement(container, y){
 // Touch drag and drop (mobile)
 function addTouchDnD(el, cardId){
   let startX,startY,clone,dragging,longPressTimer,armed;
+  // Duplo-toque abre o menu de contexto (showCtxMenu()) — ver comentário
+  // longo em makeCardEl() sobre por que "⋯" foi removido e por que a
+  // 1ª e a 2ª tentativa (v8.30.737-dev/v8.30.738-dev, baseadas em
+  // click/dblclick sintéticos) não funcionaram de verdade no iPad:
+  // depender do navegador sintetizar click/dblclick a partir de toque se
+  // mostrou consistentemente pouco confiável entre toques reais. Esta
+  // versão conta os toques AQUI mesmo, direto no touchend — sem
+  // intermediário nenhum — e usa e.preventDefault() pra suprimir de
+  // propósito o clique sintético que viria depois, assim o
+  // div.onclick/ondblclick (só usados por mouse de verdade, que nunca
+  // passa por touchend) nunca vê esse toque duas vezes.
+  // _tapLockUntil evita um 3º toque rápido (contato "quicando" na tela é
+  // comum em touchscreen, ou alguém tocando 3x por hábito) — chegando
+  // logo depois de já ter reconhecido um par como duplo-toque — ser lido
+  // como o "1º toque" de um NOVO par e reabrir o card por cima do menu
+  // que acabou de aparecer (achado via /monitorarbugs, 2026-09-23; mesmo
+  // fix espelhado no mouse, div.onclick em makeCardEl()).
+  let _lastTapAt=0, _tapTimer=null, _tapLockUntil=0;
   // ── Mobile: drag só ativa com TOQUE LONGO (long-press ~400ms parado) ──
   // Assim, arrastar pro lado rola o board normalmente (sem "esbarrar" nos cards).
   el.addEventListener('touchstart',e=>{
@@ -30889,7 +31029,26 @@ function addTouchDnD(el, cardId){
     el.style.opacity='';
     if(clone){ clone.remove(); clone=null; }
     document.querySelectorAll('.col-body').forEach(b=>b.classList.remove('drag-over'));
-    if(!dragging) return; // não foi um arrasto (tap ou scroll)
+    if(!dragging){
+      // Não foi arrasto — foi um toque simples. Conta aqui mesmo (ver
+      // comentário grande no topo da função) se é o 2º toque de um
+      // duplo-toque (abre o menu de contexto) ou o 1º (abre o card, com
+      // pequeno atraso pra dar chance ao 2º toque chegar). preventDefault
+      // suprime o clique sintético que o navegador dispararia em seguida.
+      e.preventDefault();
+      const now=Date.now();
+      if(now<_tapLockUntil) return;
+      if(_tapTimer && (now-_lastTapAt)<350){
+        clearTimeout(_tapTimer); _tapTimer=null;
+        _tapLockUntil=now+400;
+        const t=e.changedTouches[0];
+        showCtxMenu({clientX:t.clientX,clientY:t.clientY,preventDefault(){},stopPropagation(){}}, cardId);
+        return;
+      }
+      _lastTapAt=now;
+      _tapTimer=setTimeout(()=>{ _tapTimer=null; openCard(cardId); },350);
+      return;
+    }
     const touch=e.changedTouches[0];
     const elUnder=document.elementFromPoint(touch.clientX,touch.clientY);
     const colBody=elUnder?.closest('.col-body');
@@ -30909,6 +31068,7 @@ function addTouchDnD(el, cardId){
   el.addEventListener('touchcancel',()=>{
     clearTimeout(longPressTimer); el.classList.remove('card-armed');
     el.style.opacity=''; if(clone){ clone.remove(); clone=null; } dragging=false;
+    if(_tapTimer){ clearTimeout(_tapTimer); _tapTimer=null; } // toque interrompido não conta pro duplo-toque
   },{passive:true});
 }
 
@@ -33324,15 +33484,19 @@ document.querySelectorAll('.ov').forEach(ov=>{
   });
 })();
 
-// ── Fase 3.1 (mobile): teclado virtual x bottom-sheet ───────────────────
-// Sem isso, o teclado do celular cobre o campo que a pessoa está editando
-// (o layout visual não sabe que perdeu espaço — só o visualViewport sabe).
-// Redimensiona a folha pra caber no espaço que sobrou e mantém o campo
-// focado visível, reaproveitando o mesmo scroll interno do modal.
+// ── Fase 3.1 (mobile) + iPad: teclado virtual x bottom-sheet ────────────
+// Sem isso, o teclado do celular/iPad cobre o campo que a pessoa está
+// editando (o layout visual não sabe que perdeu espaço — só o
+// visualViewport sabe). Redimensiona a folha pra caber no espaço que
+// sobrou e mantém o campo focado visível, reaproveitando o mesmo scroll
+// interno do modal. Guard por (hover:none)+(pointer:coarse) — "é touch?"
+// — em vez de max-width:768px: quase todo iPad tem largura em pontos
+// > 768px em retrato (exceto iPad mini), então o guard antigo por largura
+// nunca rodava lá, mesmo o teclado do iPad tendo o mesmo problema.
 if(window.visualViewport){
   const _onVVResize = () => {
     const panel = document.querySelector('#card-ov.open .card-panel');
-    if(!panel || window.matchMedia('(max-width:768px)').matches===false) return;
+    if(!panel || !window.matchMedia('(hover:none) and (pointer:coarse)').matches) return;
     const vv = window.visualViewport;
     const kbOpen = (window.innerHeight - vv.height) > 100; // heurística: teclado ocupando >100px
     panel.style.maxHeight = kbOpen ? (vv.height*0.98)+'px' : '';
@@ -33449,11 +33613,11 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon.png aqui, favicon-dev.png em
-// kanban-dev.html) uma única vez, na carga do script — antes de qualquer
-// troca acontecer — pra sempre saber pra onde voltar ao sair do Vice
-// City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
-// nomes diferentes desde a troca acima).
+// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
+// se/quando este trecho for promovido pra kanban.html) uma única vez, na
+// carga do script — antes de qualquer troca acontecer — pra sempre saber
+// pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
+// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
 const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
@@ -33655,6 +33819,9 @@ function exitViceCity(){
 // long-press que já fazem 3 coisas diferentes no mesmo botão. De
 // propósito NÃO grava em temasDescobertos (_recordThemeDiscovered) — é
 // um teste, não uma opção real ainda, sem sentido contar métrica disso.
+// Sem mouse (iPad) botão direito não existe — _themeBtnTouchStart()
+// abaixo usa toque com 2 dedos como equivalente, mesma lógica de "gesto
+// próprio que não compete com os outros 3 já no mesmo botão".
 function _isBlackFridayAtivo(){ return _currentTheme()==='blackfriday'; }
 function toggleBlackFriday(){
   if(_isBlackFridayAtivo()){ exitBlackFriday(); return; }
@@ -33665,7 +33832,7 @@ function toggleBlackFriday(){
   document.documentElement.removeAttribute('data-theme-variant');
   safeLS.setItem('mare_theme','blackfriday');
   _applyThemeButtonIcon();
-  showToast('🔥 Modo Black Friday — proposta em teste (botão direito no 🔥 pra sair).');
+  showToast('🔥 Modo Black Friday — proposta em teste (botão direito, ou toque com 2 dedos no 🔥, pra sair).');
 }
 function exitBlackFriday(){
   const prevTheme = safeLS.getItem('mare_theme_before_bf') || '';
@@ -33681,6 +33848,17 @@ function exitBlackFriday(){
 }
 function _themeBtnRightClick(e){
   e.preventDefault();
+  if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
+  toggleBlackFriday();
+}
+// Equivalente por toque do botão direito acima — iPad/celular não tem
+// botão direito, e long-press já está ocupado pelo Vice City (1200ms,
+// _themeBtnPointerDown). Toque com 2 dedos é um gesto à parte, não
+// compete com nenhum dos outros 3 do mesmo botão.
+function _themeBtnTouchStart(e){
+  if(e.touches.length!==2) return;
+  e.preventDefault();
+  if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
   if(_isViceCityEasterEggAtivo()) return; // não mistura com o easter egg
   toggleBlackFriday();
 }
