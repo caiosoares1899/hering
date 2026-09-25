@@ -88,6 +88,12 @@ letting them hit the error first.
   the kanban pair, these two **do** diverge (dev has extra debug
   instrumentation, a "dev" banner, etc.) — check `diff painel.html
   painel-dev.html` before assuming a change should land in both.
+- `guia-okr.html` — standalone visual guide (Marine Glass slide deck, same
+  family as `apresentacao.criativa.html`) for the 🎯 OKR tab in
+  `painel.html`/`painel-dev.html`, linked from a **📘 Guia OKR** button in
+  that tab's toolbar. No `version.json`/`-dev` counterpart — same pattern
+  as the other standalone tools below, just linked FROM a Maré Digital
+  page instead of being unrelated to it.
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
   root** (not in a subfolder) — it handles both offline caching and showing
   push notifications when the tab is closed/backgrounded.
