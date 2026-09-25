@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.751-dev</div>
+<div class="version">v8.30.752-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12652,7 +12652,7 @@ function renderRaiaOwner(board,activeCards){
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${rColId}')">${rCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${safeId}-${col.id}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}')">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard('${col.id}'${owner?`,'${owner}'`:''})" title="${owner?'Novo card, já atribuído a '+esc(nomeCompleto):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!rCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -12714,7 +12714,7 @@ function renderRaiaTag(board,activeCards){
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${tColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}')">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard('${col.id}',null${tagId?`,'${tagId}'`:''})" title="${t?'Novo card, já com a tag '+esc(t.label):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -12772,7 +12772,10 @@ function renderRaiaSubteam(board,activeCards){
           ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${sColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}')">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard('${col.id}')" title="Novo card">+ Card</button>`;
+      // "+ Card" aqui não pré-preenche o subtime de propósito — ver
+      // comentário em openNewCard(): subtime é derivado de owner/
+      // participants, sem um único membro "certo" pra chutar.
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!sCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -15345,7 +15348,15 @@ function _quickAddApplyIfNew(){
   if(applied.length) showToast('✨ Detectei: '+applied.join(', ')+' — confere antes de salvar.');
 }
 
-function openNewCard(col){
+// prefillOwner/prefillTagId: só usados pelo botão "+ Card" DENTRO de uma
+// raia (renderRaiaOwner()/renderRaiaTag()) — achado de /monitorarbugs
+// (2026-09-25): criar um card a partir da raia da Maria não a atribuía a
+// ela (openNewCard() sempre ignorou o contexto da raia, card nascia
+// "Sem responsável", noutra raia da que a pessoa clicou). Raia por
+// subtime fica de fora de propósito: subtime é DERIVADO de
+// owner/participants (cardInSubteam()), não um campo próprio do card —
+// não tem um único membro "certo" pra pré-selecionar sem chutar.
+function openNewCard(col, prefillOwner, prefillTagId){
   if(!checkEditPermission()) return;
   // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
   // openCard() em _flushAutoSave() — ver comentário completo lá):
@@ -15374,10 +15385,10 @@ function openNewCard(col){
   eocInitDisplay('desc-eoc','','Adicionar descrição...');
   editingDescs=[]; _editingDescIdx=new Set(); renderExtraDescs();
   document.getElementById('m-title-disp').textContent='Novo card';
-  editingTags=[]; populateTagSelect();
+  editingTags=prefillTagId?[prefillTagId]:[]; populateTagSelect();
   document.getElementById('m-col').value=col||columns[0]?.id||'backlog';
   _modalOpenCol=null;
-  document.getElementById('m-owner').value=window._currentUserInit||'';
+  document.getElementById('m-owner').value=prefillOwner||window._currentUserInit||'';
   document.getElementById('m-due').value='';
   _mNoDue=false; _renderNoDueBtn();
   document.getElementById('m-meta-c').textContent='';

@@ -2451,6 +2451,51 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (intencional). Fix: removido `'spotify'` da `TABS` local, realinhando
   1:1 com o DOM. dev v8.30.750-dev, PR #1065.
 
+- **2026-09-25, aba 🎯 OKR — painel-dev.html (pedido explícito, "roda
+  outro /monitorarbugs no okr" — escopo: Configurações/Reordenar/
+  Duplicar, os 3 recursos mais recentes, nunca tinham tido rodada
+  própria)**: 1 achado real, técnica 3 (comentário vs. código) —
+  `_okrDuplicarObjetivo()` documenta no próprio comentário que a cópia
+  zera "prazo/progresso/histórico/responsável do marco", mas o código
+  copiava `m.responsavel` pro marco duplicado. Fix: `responsavel:''`.
+  1 achado secundário reportado, não corrigido (ambíguo/arquitetural):
+  `_okrMarcoMover()` (reordenar ▲/▼) escreve `ordem` de todos os marcos
+  ativos a partir de um snapshot local do listener — 2 pessoas
+  reordenando o mesmo Objetivo quase ao mesmo tempo podem se
+  sobrescrever; corrigir de verdade exigiria reler valores frescos
+  antes do swap (multi-path, `runTransaction()` não se aplica direto).
+  PR #1076, dev v3.66·painel-dev.
+
+- **2026-09-25, `functions/okr/` (continuação direta da rodada
+  anterior, agora no backend — `agenteTools.js`/`agenteHelpers.js`/
+  `agenteChat.js`/`dailyScan.js`)**: 1 achado real, técnica 2 (comparar
+  os 2 gatilhos do mesmo arquivo) — `runOkrDailyScan()`: o gatilho
+  "véspera de reunião" já pula Objetivo arquivado, o gatilho "prazo de
+  marco chegando" só checava a flag do próprio Marco. Arquivar um
+  Objetivo nunca cascateia pros Marcos, então um Marco ativo de um
+  Objetivo já arquivado continuava notificando prazo normalmente. Fix +
+  teste novo (478/478 em `functions/`). Resto da área (permissão ADM/
+  Responsável, formato de histórico, `okrObjId` na notificação,
+  PUSH_TYPES/NOTIF_ICONS) auditado, sem achado — consistente com o
+  client. PR #1077. **Requer redeploy manual**
+  (`functions:okrDailyScan`) — já confirmado feito pelo usuário.
+
+- **2026-09-25, Raia por responsável/tipo/subtime (pedido genérico,
+  "roda mais um /monitorarbugs" — área escolhida por prioridade 1:
+  código mais recente do arquivo, o próprio fix de drag/criar em Raia
+  do início da sessão, nunca auditado depois de corrigido)**: fix
+  anterior (drag/criar não funcionava, ver entrada de CHANGELOG
+  v8.30.751-dev) revisado e confirmado consistente nas 3 variantes. 1
+  achado ambíguo, confirmado com o usuário antes de implementar
+  (opção 2 de 2 apresentadas): o botão "+ Card" dentro de uma Raia
+  chamava `openNewCard(col.id)` sem contexto — card novo nascia sem o
+  responsável/tag daquela raia, aparecendo em "Sem responsável"/"Sem
+  tipo" em vez da raia clicada. Fix: `openNewCard(col, prefillOwner,
+  prefillTagId)`, aplicado em `renderRaiaOwner()`/`renderRaiaTag()`.
+  `renderRaiaSubteam()` fica de fora de propósito — subtime é
+  DERIVADO de owner/participants (`cardInSubteam()`), sem um único
+  membro "certo" pra pré-selecionar sem chutar. dev v8.30.752-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
