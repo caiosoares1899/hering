@@ -19282,6 +19282,25 @@ OK; balanço de chaves/parênteses do arquivo inteiro sem alteração
 conferido — só as divergências já conhecidas (versão/`VERSION_KEY`/
 paths de `_debug_bytes_*_dev`).
 
+### `functions/okr/dailyScan.js` — 2026-09-25 · fix: prazo de marco de Objetivo arquivado continuava notificando
+
+Continuação da mesma rodada de `/monitorarbugs` na aba OKR (ver entrada
+de dev logo abaixo). Técnica 2 (comparar contra o gatilho irmão no
+MESMO arquivo): o gatilho "véspera de reunião" já pula Objetivo
+arquivado (`if (!o || o.arquivado) continue;`), mas o gatilho "prazo de
+marco chegando" só checava `m.arquivado` (flag do próprio Marco) —
+nunca `obj.arquivado`. Como `_okrArquivarObjetivo()` nunca cascateia
+pros Marcos (só marca o Objetivo), um Marco ativo dentro de um
+Objetivo já arquivado continuava disparando "Marco X vence amanhã/em
+3 dias" normalmente, mesmo com ninguém mais acompanhando aquele
+Objetivo. Fix: pula o Marco também quando o Objetivo pai está
+arquivado ou não existe. Teste novo em `dailyScan.test.js` (22/22 no
+arquivo, 478/478 em `functions/`).
+
+**Requer redeploy manual** (`firebase deploy --only
+functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
+rodar localmente.
+
 ### painel-dev.html v3.66 · painel-dev — 2026-09-25 · fix(OKR): ⧉ Duplicar Objetivo mantinha o responsável do marco original
 
 `/monitorarbugs` na aba 🎯 OKR (Configurações/Reordenar/Duplicar — os 3
