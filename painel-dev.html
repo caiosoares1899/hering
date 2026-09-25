@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.66 · painel-dev</div>
+<div class="version">v3.67 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -12018,6 +12018,19 @@ async function saveNewBoard(){
   if(!name){ uiAlert('Defina o nome do squad.'); return; }
   if(SQUADS.find(s=>s.id===id)){ uiAlert('Já existe um squad com o ID “'+id+'”. Escolha outro.'); return; }
   if(isNaN(wip)||wip<1){ uiAlert('WIP limit deve ser um número maior que 0.'); return; }
+
+  // Achado real (/monitorarbugs, 2026-09-25): o check acima só olha o array
+  // local SQUADS — em painel-dev.html loadExtraSquads() é código morto
+  // (comentário na própria função: "SQUADS já fixo, não carrega squads_meta
+  // de produção"), então SQUADS aqui NUNCA inclui squads extras já criados
+  // via painel.html (prod). Criar um board daqui com o mesmo id de um já
+  // existente sobrescrevia (nome/cor/emoji/WIP) a configuração do squad de
+  // produção em silêncio, sem aviso nenhum. Confirma direto no Firebase,
+  // fonte da verdade, não só no cache local desta sessão.
+  try {
+    const existingSnap = await window._get(window._ref(window._db,'kanban/squads_meta/'+id));
+    if(existingSnap.exists()){ uiAlert('Já existe um squad com o ID “'+id+'” no Firebase. Escolha outro.'); return; }
+  } catch(e) { uiAlert('Erro ao verificar squad existente: '+e.message); return; }
 
   const meta = {
     label:     name,

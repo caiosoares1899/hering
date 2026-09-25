@@ -2512,6 +2512,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   calendários globais não têm fila/aprovação (ADM configura direto),
   sem o mesmo padrão de risco. dev v8.30.753-dev.
 
+- **2026-09-25, "Board Setup" (painel-dev.html) (pedido genérico, "roda
+  outro /monitorarbugs" — área escolhida por prioridade 2, nunca tinha
+  tido rodada própria, 1 âncora só no `CODE_MAP.md`)**: 1 achado real
+  severo — `saveNewBoard()` recusa criar squad com ID duplicado só
+  checando o array local `SQUADS`, mas `loadExtraSquads()` (o listener
+  que populariza `SQUADS` com squads extras de `squads_meta`) é código
+  morto em `painel-dev.html` (early-return deliberado) — `SQUADS` nesse
+  arquivo NUNCA inclui um squad extra já existente. Criar um board daqui
+  com o mesmo id de um squad de produção sobrescrevia nome/cor/emoji/WIP
+  dele em silêncio. Fix: confirma direto no Firebase (`squads_meta/{id}`)
+  antes de gravar. Achado secundário, reportado e não corrigido (exige
+  editar o listener ao vivo em `painel.html`/prod, `painel-dev.html`
+  nunca exercitaria o fix): `loadExtraSquads()` (prod) só adiciona
+  squads que aparecem em `squads_meta`, nunca remove os que somem —
+  excluir um board não reflete ao vivo pras outras abas/sessões já
+  abertas (autocorrige só no F5). dev v3.67·painel-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

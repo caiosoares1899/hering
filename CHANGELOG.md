@@ -19353,6 +19353,37 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.67 · painel-dev — 2026-09-25 · fix: "🛠 Board Setup" podia sobrescrever um squad já existente em silêncio
+
+`/monitorarbugs` na área "Board Setup" (`openBoardSetup()`/
+`saveNewBoard()`/`bsDeleteBoard()`, nunca tinha tido rodada própria). 1
+achado real e severo, via investigação direta do código (checagem de ID
+duplicado vs. a fonte real do dado). `saveNewBoard()` só recusa criar um
+squad novo se o ID já existir no array local `SQUADS` — mas
+`loadExtraSquads()` (o listener que popularia `SQUADS` com squads extras
+de `kanban/squads_meta`) é **código morto em `painel-dev.html`**
+(early-return deliberado, comentário: "SQUADS já fixo, não carrega
+squads_meta de produção"). Resultado: `SQUADS` em `painel-dev.html`
+NUNCA inclui um squad extra já criado (seja via `painel.html` prod, seja
+numa sessão anterior) — criar um board aqui com o MESMO id de um squad
+já existente sobrescrevia (nome/cor/emoji/WIP limit) a configuração do
+squad de produção em silêncio, sem nenhum aviso, mesmo os dados de
+cards por baixo (`kanban/squads/{id}/dados`) continuando intactos. Fix:
+`saveNewBoard()` confirma diretamente no Firebase (`kanban/squads_meta/
+{id}`) antes de gravar, não só no cache local desta sessão.
+
+Achado secundário, reportado e não corrigido (baixo risco, exige editar
+o listener ao vivo em `painel.html`/prod pra corrigir de verdade —
+`painel-dev.html` nunca exercitaria o fix, já que seu `loadExtraSquads()`
+é código morto): `loadExtraSquads()` (prod) só ADICIONA squads que
+aparecem em `squads_meta`, nunca remove os que somem — excluir um board
+via "🗑" não reflete ao vivo pras OUTRAS sessões/abas do painel já
+abertas (o squad excluído continua nos filtros/links até um F5). A
+sessão que executou a exclusão já se corrige sozinha (`SQUADS = SQUADS.
+filter(...)` local); o gap é só pras demais.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK.
+
 ### painel-dev.html v3.66 · painel-dev — 2026-09-25 · fix(OKR): ⧉ Duplicar Objetivo mantinha o responsável do marco original
 
 `/monitorarbugs` na aba 🎯 OKR (Configurações/Reordenar/Duplicar — os 3
