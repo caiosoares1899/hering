@@ -3766,6 +3766,53 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.751-dev — 2026-09-25 — Fix: arrastar/criar card numa Raia (por responsável/tipo/subtime) não fazia nada
+
+Relato direto do usuário: "no maré se eu tento arrastar, criar,
+atualizar algum card em uma raia que seja diferente da raia principal
+ele não deixa / não salva". Achado via técnica 1 (comparar caminhos
+paralelos — aqui, "renderizar uma coluna" no board normal vs. dentro de
+uma Raia): `renderNormal()` sempre vinculou `ondragover`/`ondragleave`/
+`ondrop` no `.col-body` de cada coluna e um botão "+ Card"
+(`openNewCard(col.id)`) — as 3 variantes de Raia (`renderRaiaOwner()`,
+`renderRaiaTag()`, `renderRaiaSubteam()`) nunca fizeram nem uma coisa
+nem outra. Resultado: soltar um card numa coluna dentro de QUALQUER
+Raia nunca registrava nada (o navegador nem mostrava o cursor de "pode
+soltar", sem `preventDefault()` no `ondragover`), e não existia botão
+nenhum pra criar um card direto ali.
+
+**2º achado, mesma causa raiz por trás**: mesmo corrigindo o mouse,
+arrastar por TOQUE (`addTouchDnD()`, tablet/mobile) continuaria quebrado
+— ele identifica a coluna de destino lendo `colBody.id.replace('body-','')`,
+que só funciona pro formato `body-${col.id}` que `renderNormal()` usa; os
+`.col-body` das 3 Raias usam `rbody-...` (precisam ser únicos por
+linha+coluna, não só por coluna), e a troca de string virava lixo (ex.
+`"rbody-joao-col123"` → `"rjoao-col123"`, nunca bate com nenhuma coluna
+real) — caía no early-return em silêncio.
+
+**Fix**: os 4 pontos que criam um `.col-body` (`renderNormal()` + as 3
+Raias) ganharam `data-col-id="${col.id}"`, e `addTouchDnD()` passou a
+ler esse atributo em vez de tentar adivinhar pelo formato do `id` do
+elemento — não depende mais de nenhuma convenção de string. As 3
+funções de Raia ganharam a mesma wiring de `ondragover`/`ondragleave`/
+`ondrop` (mouse) que `renderNormal()` já tinha, e o mesmo botão "+ Card"
+por coluna. `handleDrop(e, col.id)` continua só mudando a coluna do
+card (mesmo comportamento do board normal) — arrastar um card de uma
+Raia pra outra (ex.: da linha do João pra linha da Maria) ainda não
+reatribui responsável/tag/subtime automaticamente, só a coluna; fica
+como possível melhoria futura, não implementada agora (fora do escopo
+do bug relatado).
+
+"Atualizar" (editar um card já aberto e salvar) não tinha bug
+equivalente — `openCard()`/`saveCard()` não dependem de qual Raia o
+clique veio, mesmo caminho sempre; o relato provavelmente descrevia o
+mesmo sintoma do drag (mover card = uma forma comum de "atualizar" o
+status dele no dia a dia).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses sem alteração no offset conhecido da sessão
+(braces -1, parens +4).
+
 ### v8.30.750-dev — 2026-09-24 — Fix: aba errada acendia na Central de Ajuda ao clicar em "Conceitos Ágeis"/"⚡ Automações"
 
 Rodada da skill `/monitorarbugs`, sem escopo nomeado — área escolhida
