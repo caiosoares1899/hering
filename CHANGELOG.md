@@ -3806,6 +3806,31 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.752-dev — 2026-09-25 — fix(Raia): "+ Card" não pré-preenchia responsável/tag da raia clicada
+
+`/monitorarbugs`, continuação direta da rodada anterior (o fix de
+drag/criar em Raia acima, mesmo dia) — escopo escolhido por prioridade
+1 (código mais recente do arquivo). Achado ambíguo, confirmado com o
+usuário antes de implementar: o botão "+ Card" dentro de uma Raia
+(`renderRaiaOwner()`/`renderRaiaTag()`) já funcionava (fix anterior),
+mas chamava `openNewCard(col.id)` sem nenhum parâmetro extra — card
+novo nascia sem o responsável/tag daquela raia, aparecendo na raia
+"Sem responsável"/"Sem tipo" em vez da que a pessoa clicou.
+
+**Fix**: `openNewCard(col, prefillOwner, prefillTagId)` ganha 2
+parâmetros opcionais; os botões "+ Card" de `renderRaiaOwner()`/
+`renderRaiaTag()` passam o valor da raia clicada quando ela tem um
+dono/tipo real (raia "Sem responsável"/"Sem tipo" continua sem
+pré-preencher nada, não há o que herdar). `renderRaiaSubteam()` fica
+de fora de propósito — subtime é **derivado** de
+`owner`/`participants` (`cardInSubteam()`), não um campo próprio do
+card, então não existe um único membro "certo" pra pré-selecionar sem
+chutar; se a pessoa que cria já for do subtime, o padrão de owner
+(usuário logado) já resolve sozinho.
+
+Checks de rotina: `node --check` OK; balanço de chaves/parênteses sem
+alteração (braces -1, parens +4, igual ao fix anterior no mesmo dia).
+
 ### v8.30.751-dev — 2026-09-25 — Fix: arrastar/criar card numa Raia (por responsável/tipo/subtime) não fazia nada
 
 Relato direto do usuário: "no maré se eu tento arrastar, criar,
