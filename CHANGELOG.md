@@ -19269,6 +19269,22 @@ OK; balanço de chaves/parênteses do arquivo inteiro sem alteração
 conferido — só as divergências já conhecidas (versão/`VERSION_KEY`/
 paths de `_debug_bytes_*_dev`).
 
+### painel-dev.html v3.65 · painel-dev — 2026-09-25 · 🎯 OKR: botão pro novo Guia visual (`guia-okr.html`)
+
+Novo botão **📘 Guia OKR** no topo da aba 🎯 OKR (ao lado de ❓ Ajuda e
+🎥 Apresentação), abrindo `guia-okr.html` em outra aba — um guia visual
+estilo apresentação ("Marine Glass", mesma linha de `apresentacao.
+criativa.html`), com navegação por teclado/pontinhos e 6 gifs reais
+gravados contra o `painel.html` (Lista de Objetivos, Criar Objetivo,
+⚙ Configurações, Criar Marco, Reordenar ▲/▼, ⧉ Duplicar), além dos
+demais tópicos da aba (status/semáforo, Histórico, Reuniões,
+Notificações, Central do Agente Ágil, Apresentação ao vivo, Permissões).
+`guia-okr.html` é um arquivo standalone (sem `version.json`/`-dev`, mesmo
+padrão de `apresentacao.criativa.html`/`onboarding.html`) — só o botão
+que aponta pra ele é que é uma mudança em `painel-dev.html`.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### painel-dev.html v3.64 · painel-dev — 2026-09-24 · 🎯 OKR: duplicar Objetivo (⧉)
 
 Pedido direto do usuário: "preciso da opção de duplicar um okr". Botão
