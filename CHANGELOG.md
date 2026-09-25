@@ -18,6 +18,46 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.751 — 2026-09-25 · Promove pra prod — lote acumulado (v8.30.745-dev → v8.30.751-dev)
+
+Promoção do lote inteiro acumulado desde a última promoção (v8.30.744).
+Validado via relato direto do usuário (a Raia foi testada ao vivo,
+inclusive com um script de console conferindo cada achado) e via
+`/monitorarbugs` nas demais correções. Ver as entradas de dev
+correspondentes acima pro detalhe técnico completo; aqui só o resumo
+pro público de prod.
+
+**Correções de comportamento:**
+- 🔴 **Arrastar, criar ou soltar um card dentro de qualquer "Raia" (por
+  responsável, por tipo/tag ou por subtime) não funcionava** — só
+  funcionava no board normal, sem Raia ativada. Corrigido tanto pra
+  quem usa mouse quanto pra quem usa toque (tablet/celular).
+- **Tema automático** (liga/desliga sozinho por horário): desativar ele
+  numa aba, mas continuar com outra aba do board aberta, fazia o tema
+  continuar alternando sozinho na aba onde já tinha sido desligado.
+- **Mover um card arrastando pelo toque** (tablet/celular) não estava
+  registrando certinho no histórico de tempo do card (atraso, ciclo),
+  e se a internet falhasse no meio do arrastar o card ficava com a
+  mudança "fantasma" na tela, sem avisar nem desfazer.
+- **Ctrl+Z depois de reordenar colunas** não desfazia de verdade.
+- **Botão "+ Usar"** (nos Modelos e Recorrentes salvos) sempre criava o
+  card na primeira coluna do board e sem o Responsável combinado,
+  mesmo quando o Modelo/Recorrente tinha coluna e responsável
+  configurados.
+- **Arquivar o último card pendente de um "supercard"** (card com
+  filhos) não avisava o Responsável do card pai que tudo tinha sido
+  concluído.
+- Na **❓ Central de Ajuda**, clicar em "Conceitos Ágeis" acendia
+  visualmente a aba errada ("⚡ Automações"), e "⚡ Automações" não
+  acendia nenhuma — o conteúdo mostrado sempre esteve certo, só o
+  destaque da aba estava trocado.
+
+Checks de rotina: `node --check` OK nos 2 blocos `<script>` reais;
+balanço de chaves/parênteses do arquivo inteiro (braces -1, parens +4,
+mesmo baseline da sessão). `diff kanban.html kanban-dev.html`
+confirmado com só as linhas de ambiente já conhecidas (versão/
+`VERSION_KEY`/`FB_OVERRIDE_NS`×2/favicon×7).
+
 ### v8.30.744 — 2026-09-24 · Promove pra prod — lote acumulado (v8.30.734-dev → v8.30.744-dev)
 
 Promoção do lote inteiro acumulado desde a última promoção normal
@@ -19196,6 +19236,38 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.64 · painel — 2026-09-25 · Promove pra prod — 🎯 OKR: Configurações em tela própria (⚙), reordenar marcos (▲/▼) e duplicar Objetivo (⧉)
+
+Promoção do lote acumulado em `painel-dev.html` desde a última
+promoção (v3.61 · painel — só favicon, sem mudança de comportamento).
+Pedido explícito do usuário pra promover mesmo sem validação visual
+prévia dessas 3 features (feitas sob encomenda, passo a passo, na
+própria conversa). Ver as 3 entradas de dev logo abaixo pro detalhe
+técnico completo; aqui só o resumo pro público de prod.
+
+**Novidades na aba 🎯 OKR:**
+- O modal de **Objetivo** ficou mais enxuto: agora mostra só o que se
+  edita no dia a dia (indicadores, progressos, próximos passos, riscos,
+  planos de ação, marcos). Título, gerência, trimestre, pilar, tags e
+  responsável(is) — que raramente mudam depois de criado — foram pra
+  uma tela própria, acessível pelo botão **⚙** no topo do modal.
+- Os **marcos** de um Objetivo agora podem ser **reordenados
+  manualmente** com os botões ▲/▼ — antes só seguiam a ordem do prazo
+  (texto livre, nem sempre cronológico).
+- Novo botão **⧉ Duplicar** no modal de Objetivo — cria uma cópia com a
+  mesma estrutura (título, gerência, trimestre, pilar, descrição, tags,
+  responsável, indicadores, e o nome de cada marco), mas com o
+  andamento zerado (marcos sem prazo/progresso, sem progressos/riscos/
+  planos de ação antigos), pronta pra ajustar e usar.
+
+Checks de rotina: patch dos 3 commits de dev aplicado em cima de
+`painel.html` (arquivos NÃO ficam idênticos — `painel.html`/
+`painel-dev.html` divergem de propósito, ver `CLAUDE.md`); `node --check`
+OK; balanço de chaves/parênteses do arquivo inteiro sem alteração
+(-1/-14, igual antes desta promoção); `diff painel.html painel-dev.html`
+conferido — só as divergências já conhecidas (versão/`VERSION_KEY`/
+paths de `_debug_bytes_*_dev`).
 
 ### painel-dev.html v3.64 · painel-dev — 2026-09-24 · 🎯 OKR: duplicar Objetivo (⧉)
 
