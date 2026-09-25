@@ -19282,6 +19282,34 @@ OK; balanço de chaves/parênteses do arquivo inteiro sem alteração
 conferido — só as divergências já conhecidas (versão/`VERSION_KEY`/
 paths de `_debug_bytes_*_dev`).
 
+### painel-dev.html v3.66 · painel-dev — 2026-09-25 · fix(OKR): ⧉ Duplicar Objetivo mantinha o responsável do marco original
+
+`/monitorarbugs` na aba 🎯 OKR (Configurações/Reordenar/Duplicar — os 3
+recursos mais recentes, nunca tinham tido rodada própria). 1 achado
+real, técnica 3 (comentário vs. código): o próprio comentário de
+`_okrDuplicarObjetivo()` documenta que a cópia zera "prazo/progresso/
+histórico/**responsável do marco**" — mas o código copiava
+`m.responsavel` pro marco novo em vez de zerar. Duplicar um Objetivo
+com marcos atribuídos criava a cópia já com os MESMOS responsáveis do
+original, contradizendo a própria promessa da feature ("estrutura
+mantida, andamento zerado, pra ajustar antes de usar"). Fix:
+`responsavel:''` no marco duplicado, igual a `prazo`/`progresso`.
+
+Achado secundário, reportado e não corrigido (ambíguo/arquitetural):
+`_okrMarcoMover()` (reordenar ▲/▼) lê `okrMarcos` (populado por
+listener `onValue`, não poll — bem mais fresco que os casos já
+corrigidos de Kudos/Lembretes) e escreve `ordem` de TODOS os marcos
+ativos do Objetivo de uma vez via `update()` multi-path a partir desse
+snapshot local. 2 pessoas clicando ▲/▼ no MESMO Objetivo dentro da
+janela de propagação do listener (tipicamente sub-segundo) podem
+sobrescrever a reordenação uma da outra em silêncio. Diferente dos
+achados já corrigidos com `runTransaction()` (escrita de 1 path só),
+aqui a escrita é multi-path — corrigir de verdade exigiria reler os
+`ordem` frescos antes de computar o swap, mudança maior que um fix
+pontual; fica como recomendação, não implementado nesta rodada.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK.
+
 ### painel-dev.html v3.65 · painel-dev — 2026-09-25 · 🎯 OKR: botão pro novo Guia visual (`guia-okr.html`)
 
 Novo botão **📘 Guia OKR** no topo da aba 🎯 OKR (ao lado de ❓ Ajuda e
