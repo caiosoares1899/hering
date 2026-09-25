@@ -2496,6 +2496,22 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   DERIVADO de owner/participants (`cardInSubteam()`), sem um único
   membro "certo" pra pré-selecionar sem chutar. dev v8.30.752-dev.
 
+- **2026-09-25, 📅 Google Calendar (pedido genérico, "roda um
+  /monitorarbugs" — área escolhida por prioridade 2, só tinha tido o
+  fix de dedup de 2026-09-18, nunca uma auditoria da fila de aprovação
+  em si)**: 1 achado real — `processGcalQueueForAdmin()` (fila global
+  de pedidos de conexão de agenda, processada em lote por squad)
+  apagava CADA entrada da fila incondicionalmente, mesmo quando
+  `_fetchAndCacheGcalForSquad()` retornava `ok:false` (token do Google
+  expira em ~1h; um lote com vários squads pode atravessar essa borda
+  no meio do processamento — a própria função já tem um aviso de "~55
+  min" pra esse cenário). Pedido sumia da fila em silêncio, sem
+  notificar sucesso nem falha, sem nunca ser reprocessado. Fix: só
+  limpa a fila/notifica quando `result.ok`; toast final avisa se algum
+  squad falhou. Checado e sem achado equivalente no lado do painel —
+  calendários globais não têm fila/aprovação (ADM configura direto),
+  sem o mesmo padrão de risco. dev v8.30.753-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
