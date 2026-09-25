@@ -110,9 +110,16 @@ async function runOkrDailyScan(db, hojeOverride) {
   for (const marcoId of Object.keys(marcos)) {
     const m = marcos[marcoId];
     if (!m || m.arquivado || m.progresso === 'concluido' || !m.prazo) continue;
+    const obj = objetivos[m.objetivoId];
+    // Achado de /monitorarbugs (2026-09-25, técnica 2 — comparar contra o
+    // gatilho irmão logo abaixo, "véspera da reunião", que já checa
+    // `o.arquivado`): arquivar um Objetivo NUNCA cascateia pros Marcos dele
+    // (_okrArquivarObjetivo() só marca o Objetivo) — sem este check, um
+    // Marco de um Objetivo já arquivado (fora da lista de ativos, ninguém
+    // mais acompanhando) continuava disparando "vence amanhã" normalmente.
+    if (!obj || obj.arquivado) continue;
     const dias = diasAte(m.prazo);
     if (dias !== 3 && dias !== 1) continue;
-    const obj = objetivos[m.objetivoId];
     const alvos = m.responsavel ? [m.responsavel] : (obj?.responsaveis || []);
     const quando = dias === 1 ? 'amanhã' : `em ${dias} dias`;
     for (const uid of alvos) {

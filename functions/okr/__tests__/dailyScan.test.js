@@ -86,6 +86,20 @@ test('marco arquivado NÃO notifica', async () => {
   assert.equal((await notifsDe(db, 'uidMarco')).length, 0);
 });
 
+test('marco de Objetivo arquivado NÃO notifica, mesmo com o marco ativo e o prazo batendo', async () => {
+  // Achado de /monitorarbugs (2026-09-25): arquivar um Objetivo nunca
+  // cascateia pros Marcos dele (_okrArquivarObjetivo() só marca o
+  // Objetivo) — sem checar `obj.arquivado` aqui, um Marco continuava
+  // notificando prazo mesmo com o Objetivo pai já fora da lista de ativos.
+  const db = seedDb({
+    objetivos: { o1: { id: 'o1', titulo: 'X', responsaveis: ['uidResp'], arquivado: true } },
+    marcos: { m1: { id: 'm1', objetivoId: 'o1', nome: 'Marco A', prazo: addDias(1), progresso: 'no_prazo', responsavel: 'uidMarco' } },
+  });
+  await runOkrDailyScan(db);
+  assert.equal((await notifsDe(db, 'uidMarco')).length, 0);
+  assert.equal((await notifsDe(db, 'uidResp')).length, 0);
+});
+
 test('marco com prazo fora da janela (2 ou 5 dias) NÃO notifica', async () => {
   const db = seedDb({
     objetivos: { o1: { id: 'o1', titulo: 'X', responsaveis: [] } },
