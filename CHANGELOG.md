@@ -19237,6 +19237,19 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.65 · painel — 2026-09-25 · Promove pra prod — botão 📘 Guia OKR
+
+Promoção pontual (patch de 1 linha + bump de versão) do único commit
+acumulado em `painel-dev.html` desde a v3.64: novo botão **📘 Guia OKR**
+no topo da aba 🎯 OKR, abrindo `guia-okr.html` — guia visual (gifs reais)
+de como usar Objetivos/Marcos/Configurações. Ver a entrada de dev logo
+abaixo pro detalhe completo do guia.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; `diff
+painel.html painel-dev.html` conferido — só as divergências já
+conhecidas (versão/`VERSION_KEY`, banner/favicon dev, paths `_dev`, e os
+rascunhos do Mural que só existem em prod).
+
 ### painel.html v3.64 · painel — 2026-09-25 · Promove pra prod — 🎯 OKR: Configurações em tela própria (⚙), reordenar marcos (▲/▼) e duplicar Objetivo (⧉)
 
 Promoção do lote acumulado em `painel-dev.html` desde a última
