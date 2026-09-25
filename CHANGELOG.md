@@ -3806,6 +3806,33 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.753-dev — 2026-09-25 — fix(Google Calendar): fila de aprovação de agenda podia sumir sem processar
+
+`/monitorarbugs`, sem escopo nomeado — área escolhida por prioridade 2
+(nunca tinha tido rodada própria, só o fix de dedup de 2026-09-18).
+Achado real em `processGcalQueueForAdmin()` (fila global
+`kanban/config/gcal_queue` — pedidos de conexão de agenda que um ADM
+aprova em lote, agrupados por squad e processados um a um em
+`for...of`): a fila era apagada **incondicionalmente** ao final de
+cada squad, mesmo quando `_fetchAndCacheGcalForSquad()` retornava
+`ok:false` (sem token válido — cenário real: o token do Google expira
+em ~1h, e a função já tem um aviso pra "~55min" logo acima, então um
+lote com vários squads pode legitimamente atravessar essa borda no
+meio do processamento). O pedido sumia da fila em silêncio — sem
+notificar sucesso NEM falha pra quem pediu, e sem nunca ser
+reprocessado automaticamente.
+
+**Fix**: só limpa a fila e notifica quando `result.ok` é `true`; squad
+com falha fica com o(s) pedido(s) na fila pra próxima tentativa. Toast
+final também passou a avisar quando algum squad falhou (antes sempre
+dizia "✅ Solicitações processadas!", mesmo com falha real). Checado e
+sem achado equivalente no lado do painel — `carregarPcalAgendasGlobais()`
+(calendários globais) não tem fila/aprovação, o ADM configura direto,
+então não existe o mesmo padrão "processar em lote + apagar
+incondicionalmente" lá.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`.
+
 ### v8.30.752-dev — 2026-09-25 — fix(Raia): "+ Card" não pré-preenchia responsável/tag da raia clicada
 
 `/monitorarbugs`, continuação direta da rodada anterior (o fix de

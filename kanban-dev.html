@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.752-dev</div>
+<div class="version">v8.30.753-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -30499,20 +30499,30 @@ async function processGcalQueueForAdmin(){
   // Agrupa por squad — cada squad é processado buscando TODAS as agendas já configuradas
   // nele (não só as pendentes), garantindo que o cache fique completo e atualizado.
   const squadIds = [...new Set(Object.values(queue).map(r=>r.squadId))];
+  let squadsComFalha = 0;
   for(const squadId of squadIds){
     const cfgSnap = await fbGet('kanban/squads/'+squadId+'/dados/config/calendars');
     const calendarsList = Object.values(cfgSnap.val()||{});
     const result = await _fetchAndCacheGcalForSquad(squadId, calendarsList);
-    // Notifica quem pediu (só os pedidos deste squad) e limpa a fila
+    // Notifica quem pediu (só os pedidos deste squad) e limpa a fila — só quando
+    // o fetch de fato deu certo. Achado real (/monitorarbugs 2026-09-25): antes,
+    // a fila era apagada INCONDICIONALMENTE mesmo com result.ok:false (token
+    // expirando no meio do processamento de vários squads em lote é o caso real —
+    // ver o aviso de expiração ~55min acima) — o pedido sumia da fila em
+    // silêncio, sem notificar sucesso NEM falha, sem nunca ser reprocessado.
+    if(!result.ok) squadsComFalha++;
     const reqsDoSquad = Object.entries(queue).filter(([_,r])=>r.squadId===squadId);
     for(const [reqId, req] of reqsDoSquad){
-      if(result.ok && req.requestedByUid){
+      if(!result.ok) continue; // deixa na fila pra próxima tentativa
+      if(req.requestedByUid){
         createNotif(req.requestedByUid, 'gcal_approved', '✅ Agenda conectada', req.label+' já está sincronizada no board', null);
       }
       await window._set(window._ref(window._db,'kanban/config/gcal_queue/'+reqId), null).catch(()=>{});
     }
   }
-  showToast('✅ Solicitações processadas!');
+  showToast(squadsComFalha
+    ? '⚠ Processado com falhas — '+squadsComFalha+' squad(s) sem token válido, tentativas ficaram na fila.'
+    : '✅ Solicitações processadas!');
   _updateGcalPendingBadge();
   renderCalendarList();
 }
