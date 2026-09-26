@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.753 — 2026-09-26 · Promove pra prod — lote acumulado (v8.30.752-dev → v8.30.753-dev)
+
+Promoção do lote acumulado desde a última promoção (v8.30.751).
+Validado e aprovado pelo usuário. Ver as entradas de dev correspondentes
+abaixo pro detalhe técnico completo; aqui só o resumo pro público de
+prod.
+
+**Correções de comportamento:**
+- **Botão "+ Card" dentro de uma "Raia"** (visualização por responsável
+  ou por tipo/tag): o card novo nascia sempre "Sem responsável"/"Sem
+  tipo", em vez de já vir atribuído à raia clicada.
+- **Fila de aprovação de agenda do Google Calendar**: quando o token de
+  acesso expirava no meio do processamento de vários squads em lote, o
+  pedido pendente sumia da fila em silêncio — sem avisar sucesso nem
+  falha, e sem nunca ser reprocessado. Agora só sai da fila quando de
+  fato processado com sucesso; um aviso mostra se algum squad falhou.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao de `kanban-dev.html` (braces -1, parens
++4); `diff kanban.html kanban-dev.html` conferido — só as divergências
+já conhecidas (versão/`VERSION_KEY`/`FB_OVERRIDE_NS`, favicon/manifest
+de ambiente).
+
 ### v8.30.751 — 2026-09-25 · Promove pra prod — lote acumulado (v8.30.745-dev → v8.30.751-dev)
 
 Promoção do lote inteiro acumulado desde a última promoção (v8.30.744).
@@ -19288,6 +19311,28 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.67 · painel — 2026-09-26 · Promove pra prod — fix(OKR): duplicar Objetivo + fix: Board Setup podia sobrescrever squad existente
+
+Promoção do lote acumulado em `painel-dev.html` desde a v3.65 (patch de 2
+correções, sem mudança visual). Validado e aprovado pelo usuário. Ver as
+2 entradas de dev logo abaixo pro detalhe técnico completo; aqui só o
+resumo pro público de prod.
+
+**Correções de comportamento:**
+- **⧉ Duplicar Objetivo** (aba 🎯 OKR): a cópia de um Objetivo com marcos
+  atribuídos vinha com os MESMOS responsáveis dos marcos originais, em
+  vez de vir zerada pra ajustar do zero (como o resto da cópia já
+  promete — prazo/progresso/histórico zerados).
+- **"🛠 Board Setup"** (criar/gerenciar boards): criar um squad novo com
+  o mesmo ID de um squad já existente podia sobrescrever silenciosamente
+  a configuração dele (nome/cor/emoji/limite de WIP), sem nenhum aviso.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao de `painel-dev.html` (braces -1, parens
+-14); `diff painel.html painel-dev.html` conferido — arquivos NÃO ficam
+idênticos (divergem de propósito, ver `CLAUDE.md`), só as 2 correções
+acima + versão/`VERSION_KEY` mudaram de fato.
 
 ### painel.html v3.65 · painel — 2026-09-25 · Promove pra prod — botão 📘 Guia OKR
 
