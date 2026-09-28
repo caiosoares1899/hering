@@ -167,7 +167,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
   <div class="tb-center">
     <div class="tb-clock" id="brtClock">--:--</div>
     <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
-    <span class="slide-counter" id="slideCounter">1 / 5</span>
+    <span class="slide-counter" id="slideCounter">1 / 6</span>
   </div>
   <div class="tb-nav">
     <div class="ai-tag-pill" onclick="togglePanel()"><span class="ai-dot"></span>Atualizar com IA</div>
@@ -223,10 +223,21 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
     <div class="slide-inner">
       <div class="slide-header">
         <div class="s-tag">⚠ Impedimentos</div>
-        <h2 class="slide-h2">Resumo dos Times</h2>
+        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">1/2</span></h2>
         <span style="font-size:13px;color:var(--w30);margin-left:auto;" id="imp-date"></span>
       </div>
       <div class="squads-grid" id="squads-container"></div>
+    </div>
+  </div>
+
+  <!-- S1b: IMPEDIMENTOS pág 2 -->
+  <div class="slide" id="slide-1b">
+    <div class="slide-inner">
+      <div class="slide-header">
+        <div class="s-tag">⚠ Impedimentos</div>
+        <h2 class="slide-h2">Resumo dos Times <span style="font-size:14px;font-weight:400;color:var(--w40);">2/2</span></h2>
+      </div>
+      <div class="squads-grid" id="squads-container-2"></div>
     </div>
   </div>
 
@@ -297,7 +308,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v4.8</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v5.0</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -328,21 +339,24 @@ let DATA = {
   },
   squads:[
     {name:"SITE & APP",impedimentos:[
-      "18 artigos inativos a pedido do time de foto aguardando correção — previsão de chegada hoje.",
-      "Tamanhos EXG da Camiseta Brasil criados indevidamente no briefing integraram no PIM e geraram IDSKUs na VTEX como 'avise-me'. Mesmo após inativação, o tamanho voltou a ser exibido — gerou questionamento público de influenciador sobre plus size. Time de PIM/integração trabalhando em regra para suprimir exibição. Ponto de atenção: criação de tamanhos incorretos no briefing impacta diretamente o B2C (ocorreu também na Cápsula Camadas)."
+      "KVs do Ciclo 3 Verão (Preview AV) não vieram com as peças mais fortes vistas no showroom. Times Comercial e Criação vão produzir novas fotos com IA para aprovação do Nadale."
     ]},
     {name:"PERFORMANCE",impedimentos:[
-      "Falha na integração AppsFlyer/GTM impede otimização de campanhas para usuários Apple desde 07/08 — escala travada no público de maior ticket médio no APP. Nova previsão de retorno: 17/09."
+      "<strong>Perda de UTMs/Parâmetros (Rakuten e GA4)</strong> — Chamados abertos em 26/08 (Afiliados) e 04/09 (Todos os canais). Impacto: queda de 20 p.p. no share de mídia, excesso de 'not set', prejuízo na validação de afiliados e nos sinais para veículos de mídia. Sem previsão de resolução — gargalo ainda não identificado.",
+      "<strong>Queda de Afiliados no APP</strong> — Chamado aberto 22/09. Redução de 41% no tráfego e receita mobile (ago). Diagnóstico técnico GA4 previsto para 01/10.",
+      "<strong>Atribuição Meta iOS 14+ e TikTok</strong> — Chamado aberto 07/08. Limitação em campanhas App (iOS) e falhas no catálogo dinâmico TikTok. Publicação de código e atualização GTM previstas para 29–30/09.",
+      "<strong>Setup Mídia OpenAI</strong> — Adiamento de novo canal com potencial de +3% a +8% em receita incremental. Pendente: implementação de Pixel e CAPI (com deduplicação).",
+      "<strong>Custom Attribution Meta</strong> — Perda estimada de até 30% em performance por falta de otimização baseada na VTEX. Análise em backlog — revisão prevista para 2ª quinzena de outubro (fila BF)."
     ]},
     {name:"CRIAÇÃO",impedimentos:[
-      "Aguardando reduções de 15s e 30s do vídeo da Bala para produção dos criativos de marca."
+      "<strong>Content AV27:</strong> aguardando orçamento final da MK para aprovação com Thais e start na produção (MK disse que enviaria hoje).",
+      "<strong>Camiseta Brasil:</strong> aguardando assets masterbrand para desdobramento das peças da 3ª fase (início da campanha: 05/10)."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Geral, Mkt Performance, Comercial e Dados.<br><small style='color:rgba(255,255,255,.4);font-size:13px;'>Lembrem de usar o Gem Estratégico para facilitar a vida de vocês 💎</small>"}
+    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Geral, Mkt Performance, Comercial e Dados.<br><small style='color:rgba(255,255,255,.4);font-size:13px;'>Vamos migrar o OKR para o Maré Digital 🐟</small>"}
   ],
   calDigital:[
-    {day:"23",mon:"SET",name:"Big Review",type:"todos slots preenchidos"},
     {day:"29",mon:"SET",name:"Alinhamento Fritos *",type:"* data a confirmar"}
   ],
   calCIA:[
@@ -409,6 +423,8 @@ function render(){
 
   // SQUADS
   const sc=document.getElementById('squads-container');
+  const sc2=document.getElementById('squads-container-2');
+  const half=Math.ceil(DATA.squads.length/2);
   const renderSquad=s=>`
     <div class="squad-card">
       <div class="squad-name">${s.name}</div>
@@ -416,7 +432,8 @@ function render(){
         <div class="imp-item"><div class="imp-dot">!</div><span>${i}</span></div>
       `).join('')}
     </div>`;
-  if(sc) sc.innerHTML=DATA.squads.map(renderSquad).join('');
+  if(sc) sc.innerHTML=DATA.squads.slice(0,half).map(renderSquad).join('');
+  if(sc2) sc2.innerHTML=DATA.squads.slice(half).map(renderSquad).join('');
 
   // INSIGHTS
   const ic=document.getElementById('insights-container');
@@ -479,7 +496,7 @@ function render(){
 }
 
 /* ====== NAV ====== */
-const TOTAL=5;let cur=0;
+const TOTAL=6;let cur=0;
 const slides=Array.from(document.querySelectorAll('.slide'));
 const dotsWrap=document.getElementById('bottombar');
 const counter=document.getElementById('slideCounter');
