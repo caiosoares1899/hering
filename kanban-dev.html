@@ -6355,7 +6355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.757-dev</div>
+<div class="version">v8.30.758-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6890,9 +6890,12 @@ function _pctBadgeDados(cap,meta){
 function _renderDadosDay(date){
   const d = dadosDiariosBoard[date]||{};
   return `<div style="background:rgba(var(--surface-rgb),.6);border:1px solid var(--glass-b);border-radius:12px;padding:14px;">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px;">
       <div style="font-size:11px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;">${esc(_fmtDateBR2(date))}</div>
-      ${d.pdfUrl?`<a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;">📄 PDF completo</a>`:''}
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
+        ${d.pdfUrl?`<a href="${esc(d.pdfUrl)}" target="_blank" rel="noopener" style="font-size:10.5px;color:var(--cyan);text-decoration:none;">📄 PDF completo</a>`:''}
+      </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div class="met"><div class="met-lbl">Captação hoje</div><div class="met-val" style="font-size:16px;">${_fmtBRL(d.capDia)}</div><div style="margin-top:4px;">${_pctBadgeDados(d.capDia,d.metaDia)}</div></div>
@@ -6907,6 +6910,7 @@ function _renderDadosDayCompact(date){
   const d = dadosDiariosBoard[date]||{};
   return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;background:rgba(var(--surface-rgb),.4);border:1px solid var(--glass-b);border-radius:8px;margin-bottom:6px;font-size:11px;">
     <span style="color:var(--txt2);">${esc(_fmtDateBR2(date))}</span>
+    ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" style="text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖</a>`:''}
     <span style="color:var(--txt3);">${_fmtBRL(d.capDia)}</span>
     ${_pctBadgeDados(d.capDia,d.metaDia)}
   </div>`;
