@@ -3119,16 +3119,17 @@ nenhum, card que sumiu, falha de upload (não derruba o processamento
 inteiro), e confirmação de que o HTML bruto nunca aparece na `task`
 passada ao modelo. Suíte inteira: 489/489 passando.
 
-**Ainda em aberto, fora do escopo desta rodada** (documentado, não
-resolvido): `processRecorrentes()` só roda quando alguém ABRE o board
-(client-side) — se a Databricks mandar o relatório antes de qualquer
-pessoa abrir o board no squad `dev` naquele dia, a `referencia` ainda
-não resolve nenhum `cardId` (`resolveReferencia()` lança
-`referencia_not_found`, e o pedido cai no caminho `semCard` do jeito
-que já existia). Não migrado pra criação server-side (`onSchedule`,
-mesmo padrão de `okrDailyScan.js`/`dueOverdueTrigger.js`) porque isso é
-trabalho novo por si só — decisão de arquitetura em aberto pro usuário,
-não algo pra implementar de bandeja.
+**Decisão explícita do usuário (2026-09-28)**: `processRecorrentes()`
+segue só rodando quando alguém ABRE o board (client-side) — se a
+Databricks mandar o relatório antes de qualquer pessoa abrir o board no
+squad `dev` naquele dia, a `referencia` ainda não resolve nenhum
+`cardId` (`resolveReferencia()` lança `referencia_not_found`, e o
+pedido cai no caminho `semCard` do jeito que já existia). Perguntado
+diretamente ("não tem problema rodar só quando alguém abrir o board") —
+usuário confirmou que é aceitável. **Não migrar** pra criação
+server-side (`onSchedule`, mesmo padrão de `okrDailyScan.js`/
+`dueOverdueTrigger.js`) a menos que isso vire um problema de verdade na
+prática — não é trabalho pendente, é o comportamento decidido.
 
 **Ainda não canário-testado em produção de verdade** — só testes
 unitários com fakes. Antes de confiar com um relatório real da
