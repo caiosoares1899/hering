@@ -3510,7 +3510,20 @@ detalhe aberto — ver nota abaixo).
   post manual diário de captação; o botão "🤖 Relatório" aparece sozinho
   no Histórico, sem ninguém colar link. `_dev` fixo de propósito por ora
   (mecanismo ainda em validação, squad `dev`) — vai precisar virar
-  configurável quando for pra produção de verdade.
+  configurável quando for pra produção de verdade. Também mostrado no
+  drawer "📊 Dados" do próprio board (`_renderDadosDay()`/
+  `_renderDadosDayCompact()`, kanban-dev.html) — esse drawer lê
+  `kanban/dados_diarios` SEM sufixo (compartilhado de propósito entre
+  kanban.html/kanban-dev.html, diferente de painel), então só mostra de
+  verdade quando o mecanismo for pra produção.
+  **`entry.dadosDiarios` (2026-09-28, mesmo pedido, números de
+  captação)**: `schema.js:dadosDiariosPayload` — `{data, capDia,
+  metaDia, capAcum, metaAcum, lyAcumPct, metaAmanha, texto}` — DIFERENTE
+  de `htmlAnexo`: independente de `cardId`/`referencia`, processado logo
+  no início de `processarIntake()` (funciona mesmo sem nenhum card
+  resolvido, ao contrário do link do relatório, que precisa de um card
+  real pra anexar). Mesmo espelho `update()` em
+  `kanban/dados_diarios_dev/{entry.dadosDiarios.data}`.
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate

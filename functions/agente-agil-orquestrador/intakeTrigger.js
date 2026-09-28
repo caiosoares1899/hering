@@ -61,6 +61,10 @@
 // é espelhado em `kanban/dados_diarios_dev/{data}` — pedido direto,
 // alimenta a aba "📊 Central de Dados" do painel.html sem publicação
 // manual (ver `entry.referencia`/o bloco logo antes de `buildTools()`).
+// `entry.dadosDiarios` (mesmo dia, pedido seguinte): números de captação
+// (capDia/metaDia/capAcum/metaAcum/lyAcumPct/metaAmanha/texto) —
+// DIFERENTE de htmlAnexo, não depende de cardId/referencia nenhum,
+// processado logo no início de `processarIntake()`.
 
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { defineSecret } = require('firebase-functions/params');
@@ -208,6 +212,29 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     const jaProcessado = await db.ref(`${IDEMPOTENCY_PATH}/${id}`).get();
     if (jaProcessado.exists()) {
       return { processed: false, reason: 'idempotent' };
+    }
+
+    // 📊 Central de Dados (números de captação, 2026-09-28, pedido direto):
+    // DE PROPÓSITO independente de cardId/referencia — capta um dado de
+    // negócio direto, não precisa de card nenhum resolvido pra fazer
+    // sentido (ao contrário de htmlAnexo, que precisa de um card real pra
+    // anexar o link). Processa isso ANTES/independente do resto —
+    // funciona mesmo se o card recorrente do dia não tiver nascido ainda.
+    // update() (nunca set()) — mesmo motivo do espelho de relatorioUrl
+    // abaixo: não apaga nada que um humano já tenha publicado no mesmo
+    // dia (texto/PDF/apresentações), e publishDadosPost() (painel-dev.html)
+    // já preserva esses campos do mesmo jeito.
+    if (entry.dadosDiarios && entry.dadosDiarios.data) {
+      const upd = {};
+      ['capDia', 'metaDia', 'capAcum', 'metaAcum', 'lyAcumPct', 'metaAmanha', 'texto'].forEach((k) => {
+        if (entry.dadosDiarios[k] !== undefined) upd[k] = entry.dadosDiarios[k];
+      });
+      if (Object.keys(upd).length) {
+        await db
+          .ref('kanban/dados_diarios_dev/' + entry.dadosDiarios.data)
+          .update(upd)
+          .catch((err) => console.error(`[agente-agil-intake:${squadId}] falha ao espelhar dadosDiarios:`, id, err));
+      }
     }
 
     const cardId = await resolverCardId(db, entry);

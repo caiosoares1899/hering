@@ -97,3 +97,41 @@ test('rejeita htmlAnexo com html vazio', () => {
   const result = intakeEnvelope.safeParse({ requestId: 'r12', texto: 'algo', htmlAnexo: { html: '', titulo: 'Relatório' } });
   assert.equal(result.success, false);
 });
+
+// dadosDiarios (2026-09-28, números de captação pra 📊 Central de Dados) —
+// DIFERENTE de htmlAnexo, independente de cardId/referencia (ver
+// comentário grande em schema.js).
+test('aceita dadosDiarios completo, sem cardId/referencia nenhum', () => {
+  const result = intakeEnvelope.safeParse({
+    requestId: 'r13',
+    texto: 'Captação do dia processada.',
+    dadosDiarios: { data: '2026-09-28', capDia: 1170000, metaDia: 1570000, capAcum: 9120000, metaAcum: 12460000, lyAcumPct: -40, metaAmanha: 1359000, texto: 'Bom dia pessoal...' },
+  });
+  assert.equal(result.success, true);
+});
+
+test('aceita dadosDiarios só com data (todos os números opcionais)', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r14', texto: 'algo', dadosDiarios: { data: '2026-09-28' } });
+  assert.equal(result.success, true);
+});
+
+test('rejeita dadosDiarios sem data', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r15', texto: 'algo', dadosDiarios: { capDia: 100 } });
+  assert.equal(result.success, false);
+});
+
+test('rejeita dadosDiarios com data em formato errado', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r16', texto: 'algo', dadosDiarios: { data: '28/09/2026', capDia: 100 } });
+  assert.equal(result.success, false);
+});
+
+test('rejeita dadosDiarios com campo numérico como string', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r17', texto: 'algo', dadosDiarios: { data: '2026-09-28', capDia: '100' } });
+  assert.equal(result.success, false);
+});
+
+test('sem dadosDiarios continua aceitando normalmente (campo opcional)', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r18', texto: 'algo' });
+  assert.equal(result.success, true);
+  assert.equal(result.data.dadosDiarios, undefined);
+});

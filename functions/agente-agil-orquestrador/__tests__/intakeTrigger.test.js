@@ -653,3 +653,100 @@ test('htmlAnexo + referencia relatorio_diario: NÃO apaga dado que um humano já
   assert.equal(espelho.capDia, 100);
   assert.ok(espelho.relatorioUrl, 'link do relatório foi adicionado junto');
 });
+
+// ── 📊 Central de Dados: entry.dadosDiarios (2026-09-28) ────────────────
+// DIFERENTE de htmlAnexo/relatorioUrl: não depende de cardId/referencia
+// nenhum -- deveria funcionar mesmo sem NENHUM card associado.
+test('dadosDiarios: espelha os números em dados_diarios_dev/{data}, sem cardId/referencia nenhum', async () => {
+  const db = seedDb();
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Captação do dia processada.',
+    especialista: 'databricks',
+    dadosDiarios: { data: '2026-09-28', capDia: 1170000, metaDia: 1570000, capAcum: 9120000, metaAcum: 12460000, lyAcumPct: -40, metaAmanha: 1359000, texto: 'Bom dia pessoal...' },
+  };
+
+  const outcome = await processarIntake(db, { id: 'i-dd-1', entry, llmClient: client });
+
+  assert.equal(outcome.processed, true);
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.capDia, 1170000);
+  assert.equal(espelho.metaDia, 1570000);
+  assert.equal(espelho.capAcum, 9120000);
+  assert.equal(espelho.metaAcum, 12460000);
+  assert.equal(espelho.lyAcumPct, -40);
+  assert.equal(espelho.metaAmanha, 1359000);
+  assert.equal(espelho.texto, 'Bom dia pessoal...');
+});
+
+test('dadosDiarios: funciona mesmo quando o card do dia não existe (cai em semCard)', async () => {
+  const db = seedDb();
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'Sem card associado, ok.' }]);
+  const entry = {
+    texto: 'Captação do dia, sem card nenhum.',
+    especialista: 'databricks',
+    dadosDiarios: { data: '2026-09-28', capDia: 500000 },
+  };
+
+  const outcome = await processarIntake(db, { id: 'i-dd-2', entry, llmClient: client });
+
+  assert.equal(outcome.semCard, true, 'confirma que realmente caiu no caminho sem card');
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.capDia, 500000, 'mesmo sem card, os números foram espelhados');
+});
+
+test('dadosDiarios: só data (sem nenhum número) não escreve nada além da data em si', async () => {
+  const db = seedDb();
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = { texto: 'algo', especialista: 'databricks', dadosDiarios: { data: '2026-09-28' } };
+
+  await processarIntake(db, { id: 'i-dd-3', entry, llmClient: client });
+
+  const espelho = await db.ref('kanban/dados_diarios_dev/2026-09-28').get();
+  assert.equal(espelho.val(), null, 'sem nenhum campo preenchido, update() vazio não cria nada');
+});
+
+test('entry sem dadosDiarios: não mexe em dados_diarios_dev', async () => {
+  const db = seedDb();
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = { texto: 'informação normal', especialista: 'databricks', cardId: 'c1' };
+
+  await processarIntake(db, { id: 'i-dd-4', entry, llmClient: client });
+
+  const espelho = await db.ref('kanban/dados_diarios_dev').get();
+  assert.equal(espelho.val(), null);
+});
+
+test('dadosDiarios: NÃO apaga dado que um humano já publicou nesse mesmo dia (update, não set)', async () => {
+  const db = seedDb();
+  await db.ref('kanban/dados_diarios_dev/2026-09-28').set({ date: '2026-09-28', texto: 'Texto original do humano', pdfUrl: 'https://exemplo.com/a.pdf' });
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = { texto: 'algo', especialista: 'databricks', dadosDiarios: { data: '2026-09-28', capDia: 700000 } };
+
+  await processarIntake(db, { id: 'i-dd-5', entry, llmClient: client });
+
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.pdfUrl, 'https://exemplo.com/a.pdf', 'PDF publicado por humano continua intacto');
+  assert.equal(espelho.capDia, 700000, 'número novo foi adicionado junto');
+});
+
+test('dadosDiarios + htmlAnexo (relatorio_diario) juntos no mesmo request: os dois espelham no mesmo dia', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploadAndSign, reportBasePath } = fakeUpload();
+  const client = scriptedLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório + captação do dia, juntos.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    referencia: { tipo: 'recorrente', nome: 'relatorio_diario', data: '2026-09-28' },
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+    dadosDiarios: { data: '2026-09-28', capDia: 900000 },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dd-6', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.capDia, 900000);
+  assert.ok(espelho.relatorioUrl);
+});
