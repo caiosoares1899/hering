@@ -3829,6 +3829,26 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.758-dev — 2026-09-28 — feat(📊 Dados): botão do relatório da Databricks também no drawer de Dados do board
+
+Continuação do report diário via card recorrente: o drawer "📊 Dados"
+(`toggleDados()`/`renderDadosPainel()`) já mostra o resultado de captação
+publicado em `painel.html`/`painel-dev.html` → Central de Dados — agora
+mostra também um link "🤖 Relatório" quando aquele dia tem um relatório
+da Databricks anexado (`d.relatorioUrl`), tanto no card do dia mais
+recente quanto na lista compacta de dias anteriores.
+
+**Nota**: este drawer lê `kanban/dados_diarios` (nó GLOBAL, sem sufixo
+`_dev` — decisão pré-existente, compartilhado de propósito entre
+`kanban.html`/`kanban-dev.html`, diferente de `painel.html`/
+`painel-dev.html`, que usa `dados_diarios`/`dados_diarios_dev`
+separados). O mecanismo do `htmlAnexo` ainda escreve só em
+`dados_diarios_dev` (squad de teste `dev`, ver
+`agente-agil-orquestrador/README.md`) — o botão só aparece aqui de
+verdade quando a integração for pra produção.
+
+Checks de rotina: `node --check` nos blocos `<script>` 1 e 2 OK.
+
 ### v8.30.757-dev — 2026-09-28 — feat(👤 Minhas Preferências): atalho pro tema 🌴 Vice City, só pra quem já descobriu o easter egg
 
 Pedido direto do usuário: "🌴 Vice City" (o tema escondido, só alcançável
