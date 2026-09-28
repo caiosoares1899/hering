@@ -3829,6 +3829,28 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.757-dev — 2026-09-28 — feat(👤 Minhas Preferências): atalho pro tema 🌴 Vice City, só pra quem já descobriu o easter egg
+
+Pedido direto do usuário: "🌴 Vice City" (o tema escondido, só alcançável
+até aqui segurando o botão de tema por 1.2s) ganhou um atalho dentro de
+"👤 Minhas Preferências" → 🎨 Tema — mas sem revelar o easter egg pra
+quem nunca o descobriu. O app já registrava quem tinha achado cada tema
+(`kanban/usuarios/{uid}/temasDescobertos/vice`, gravado por
+`_recordThemeDiscovered()` desde antes, só pra métrica de ADM via
+console) — esse mesmo campo agora também é lido de volta
+(`loadTemasDescobertos()`, novo listener ao vivo, mesmo padrão de
+`loadSugestoesRecusadas()`) e usado pra decidir se o botão aparece: só
+quem já ativou o easter egg ao menos uma vez (em qualquer aparelho, é
+por conta, não por navegador) vê o atalho; quem nunca segurou o botão
+continua sem nenhuma pista de que ele existe. O botão reusa
+`toggleViceCity()` (mesma função do long-press — entra se não estiver
+no tema, sai se já estiver).
+
+Checks de rotina: `node --check` nos blocos `<script>` 1 e 2 OK (bloco 0
+sempre falha por um comentário com `<script>` literal no meio do texto,
+achado antigo, não relacionado); balanço de chaves/parênteses idêntico
+ao baseline da sessão (braces -1, parens +4).
+
 ### v8.30.756-dev — 2026-09-28 — fix(👤 Minhas Preferências): 3 achados reais do `/monitorarbugs` na área
 
 `/monitorarbugs`, escopo nomeado — área "👤 Minhas Preferências" (v8.30.755-dev,

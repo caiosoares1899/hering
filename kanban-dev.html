@@ -6355,7 +6355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.756-dev</div>
+<div class="version">v8.30.757-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13322,6 +13322,21 @@ function _applyMeusCardsFixadoUI(){
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
 
+// Lê se a pessoa já descobriu o easter egg do Vice City (temasDescobertos/vice,
+// gravado por _recordThemeDiscovered()) -- só pra decidir se mostra um atalho
+// pra ele em "👤 Minhas Preferências" (ver seção logo abaixo), sem estragar a
+// surpresa pra quem nunca segurou o botão de tema. Por CONTA (não por
+// navegador, diferente do tema automático) -- quem descobriu no celular já vê
+// o atalho aqui no desktop também.
+let _temasDescobertos = {};
+function loadTemasDescobertos(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/temasDescobertos'), snap=>{
+    _temasDescobertos = snap.val() || {};
+    if(document.getElementById('minhasprefs-ov')?.classList.contains('open')) renderMinhasPrefsBody();
+  });
+}
+
 // ══════════════════════════════════════════════════════════════════
 // 👤 Minhas Preferências — painel único reunindo a personalização
 // pessoal do board, antes espalhada em ~6 pontos de entrada diferentes
@@ -13345,6 +13360,7 @@ function renderMinhasPrefsBody(){
   const temaAtual = _currentTheme();
   const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
   const autoOn = _isThemeAutoOn();
+  const viceDescoberto = _temasDescobertos.vice===true;
   const dndOn = isDndActive();
   const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
   const meusCardsOn = !!_boardPrefsSquad.meus_cards_fixado;
@@ -13358,6 +13374,7 @@ function renderMinhasPrefsBody(){
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-sm" onclick="toggleTheme();renderMinhasPrefsBody();">Trocar tema</button>
         <button class="btn btn-sm" style="${autoOn?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleThemeAuto();renderMinhasPrefsBody();">🕐 ${autoOn?'Automático (ligado)':'Ligar automático'}</button>
+        ${viceDescoberto ? `<button class="btn btn-sm" style="${temaAtual==='vice'?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleViceCity();renderMinhasPrefsBody();" title="Você já descobriu esse tema segurando o botão 🌙/☀️ -- aqui é só um atalho.">🌴 Vice City</button>` : ''}
       </div>
     </div>
 
@@ -26908,7 +26925,7 @@ const HELP_CONTENT = {
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em "📦 Arquivar" no modal (o mesmo botão vira "♻️ Restaurar" quando o card já está arquivado). Para ver arquivados, clique em Arquivados na toolbar. Clique no <b>título</b> de um card da lista pra abrir o modal normal e ver o conteúdo (descrição, checklist, histórico...) sem precisar restaurar antes — ele continua arquivado até alguém clicar em "Restaurar" (na lista ou dentro do próprio modal, que já mostra o botão certo pro estado atual). A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
-    { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
+    { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático — e um atalho "🌴 Vice City" que só aparece depois que você já descobriu esse tema escondido segurando o botão de tema), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
     { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
@@ -34423,7 +34440,7 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   _onRealAuthChange(()=>{
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); loadSugestoesRecusadas(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); loadSugestoesRecusadas(); loadTemasDescobertos(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   });
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
   // 09:00 (horário de SP, ver DAILY_TRIGGER_HOUR_SP) — sem isso, quem abre o
