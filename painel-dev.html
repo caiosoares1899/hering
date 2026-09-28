@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.67 · painel-dev</div>
+<div class="version">v3.68 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9910,7 +9910,16 @@ function updateUserRole(uid, role){
   // que kanban-dev.html realmente prioriza em getEffectiveRole()), a troca
   // aqui mostrava "✅ Role atualizado" mas podia não ter efeito NENHUM no
   // papel efetivo dela naquele squad, sem nenhum aviso.
+  // /monitorarbugs 2026-09-28: também espelha em usuarios_publicos/{uid} --
+  // é o node que kanban.html escuta ao vivo (onValue) pra montar `members`,
+  // e sem isso o papel novo só aparecia pra quem já tivesse essa aba aberta
+  // depois do PRÓXIMO login dessa pessoa. Alguém promovida a PO/Organizador
+  // continuava de fora de automações como "Notificar PO/Organizador"
+  // (members.filter(m=>m.role==='po'||...)) até relogar. Mesmo padrão que
+  // alterarRole() (kanban-dev.html) e toggleUserSquad() (logo abaixo, neste
+  // mesmo arquivo) já aplicam.
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+cfgSquadId),role)
+    .then(()=>window._set(window._ref(window._db,'kanban/usuarios_publicos/'+uid+'/squads_roles/'+cfgSquadId),role))
     .then(()=>{ showToast('✅ Role atualizado'); loadPcfgUsers(); })
     .catch(e=>{
       if(e.code==='PERMISSION_DENIED'||e.message?.includes('permission')){
@@ -9933,6 +9942,11 @@ function addGuestByEmail(){
       const [uid,u]=entry;
       const upd={role:u.role||'convidado'}; upd['squads/'+cfgSquadId]=true;
       window._update(window._ref(window._db,'kanban/usuarios/'+uid),upd)
+        // /monitorarbugs 2026-09-28: espelha em usuarios_publicos também --
+        // mesmo gap de updateUserRole()/updateSquadUserRole() -- sem isso a
+        // pessoa não aparecia na lista de membros (kanban.html lê
+        // usuarios_publicos ao vivo pra montar `members`) até o próximo login.
+        .then(()=>window._update(window._ref(window._db,'kanban/usuarios_publicos/'+uid),upd))
         .then(()=>{ showToast('✅ '+email+' adicionado como convidado'); loadPcfgUsers(); document.getElementById('pcfg-guest-email').value=''; });
     } else {
       showToast('⚠ Usuário não encontrado — precisa ter feito login ao menos uma vez');
@@ -10584,7 +10598,13 @@ function toggleUserSquad(uid, squadId, checked){
 function updateSquadUserRole(uid, squadId, role){
   // Grava só o papel PARA ESTE SQUAD (squads_roles/{squadId}) -- nunca mexe no
   // campo global 'role', pra não vazar o papel de um squad pra outros da pessoa.
+  // /monitorarbugs 2026-09-28: também espelha em usuarios_publicos/{uid} --
+  // mesmo padrão de toggleUserSquad() (logo acima) e alterarRole()
+  // (kanban-dev.html) -- é o node que kanban.html escuta ao vivo pra montar
+  // `members`; sem isso o papel novo só valia pra quem tivesse essa pessoa
+  // (ex.: automação "Notificar PO/Organizador") depois do próximo login dela.
   window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/squads_roles/'+squadId), role)
+    .then(()=>window._set(window._ref(window._db,'kanban/usuarios_publicos/'+uid+'/squads_roles/'+squadId), role))
     .then(()=>showToast('✅ Papel em '+squadId+' atualizado para '+role))
     .catch(e=>showToast('❌ '+e.message));
 }

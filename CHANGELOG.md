@@ -19537,6 +19537,42 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.68 · painel-dev — 2026-09-28 · fix: mudança de papel/convite no "👥 Global Users" não refletia ao vivo no kanban
+
+`/monitorarbugs` genérico ("Roda outro") — área nunca auditada:
+gerenciamento global de usuários (`openGlobalUsersModal()`/
+`renderGlobalUsers()`/`updateSquadUserRole()`/`deleteGlobalUser()`) e a
+aba "Membros do Squad" (`updateUserRole()`/`addGuestByEmail()`), todas em
+`painel-dev.html`. 3 achados reais, mesma causa raiz, via comparação com
+padrões-irmãos já resolvidos no próprio arquivo: `toggleUserSquad()`
+(mesmo modal, mutando a mesma pessoa) e `alterarRole()`
+(`kanban-dev.html`, a mesma operação feita a partir do board) sempre
+gravam tanto em `kanban/usuarios/{uid}` quanto no espelho leve
+`kanban/usuarios_publicos/{uid}` — é este 2º node que `kanban.html`
+escuta ao vivo (`onValue`) pra montar o array `members` (avatar/nome/
+**papel**/squad de cada pessoa, usado por @menção, atribuição, filtros e
+automações). `updateSquadUserRole()` (modal "👥 Global Users"),
+`updateUserRole()` (aba "Membros do Squad") e `addGuestByEmail()`
+gravavam SÓ em `kanban/usuarios/{uid}`, esquecendo o espelho.
+
+Cenário concreto: um ADM promove alguém a "po" ou "organizador" por
+qualquer uma dessas 3 telas. Quem já está com `kanban.html` aberto (a
+própria pessoa promovida, ou qualquer colega) continua vendo o papel
+ANTIGO no board — inclusive a automação "Notificar PO/Organizador"
+(`members.filter(m=>m.role==='po'||m.role==='organizador')`) simplesmente
+não inclui a pessoa recém-promovida — até ela relogar (próximo boot de
+`autoRegistrar()`, que aí sim resincroniza os dois nodes). `addGuestByEmail()`
+tinha o mesmo gap pro convite em si: a pessoa adicionada a um squad não
+aparecia na lista de membros de ninguém até relogar.
+
+Fix: as 3 funções agora espelham a mesma escrita em
+`kanban/usuarios_publicos/{uid}` logo depois de gravar em
+`kanban/usuarios/{uid}`, mesmo padrão que `toggleUserSquad()` já
+documentava ("é o que o kanban.html lê pra listar membros do squad, e
+ficava desatualizado só com o update acima").
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK.
+
 ### painel-dev.html v3.67 · painel-dev — 2026-09-25 · fix: "🛠 Board Setup" podia sobrescrever um squad já existente em silêncio
 
 `/monitorarbugs` na área "Board Setup" (`openBoardSetup()`/
