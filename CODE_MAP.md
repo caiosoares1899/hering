@@ -3484,6 +3484,22 @@ detalhe aberto — ver nota abaixo).
   entrada — sem o squad atual marcado ali, trata como especialista
   desconhecido (não injeta nada). Não existe mais UI equivalente dentro
   do kanban (removida na mesma migração).
+  **`entry.htmlAnexo` — report diário via card recorrente (2026-09-28,
+  pedido direto)**: quando o especialista manda um relatório HTML pronto
+  (`schema.js:htmlAnexo` — `{html, titulo}`, campo separado de `texto`
+  porque um relatório real passa longe do limite de 20.000 caracteres —
+  o exemplo usado no comentário de `outputs/relatorioHtml.js` tem
+  ~940KB), `processarIntake()` hospeda ele DETERMINISTICAMENTE
+  (reaproveita `buildWritePlan`/`applyWritePlan` de `board.js` direto,
+  igual `http.js` fazia antes da correção de arquitetura de
+  2026-08-27) ANTES de montar a tarefa do LLM — decisão explícita do
+  usuário (AskUserQuestion): o HTML bruto nunca passa pelo prompt do
+  modelo, só o link final já pronto entra no `task` (`contextoRelatorio`).
+  Só roda quando `cardId` resolveu pra um card real — sem card,
+  `relatorioSemCardAviso` avisa o modelo (e por tabela
+  `notificarFalhaSemCard()`) que chegou um relatório sem onde anexar.
+  `uploadAndSign`/`reportBasePath` injetáveis em `processarIntake()` só
+  pra teste (mesmo padrão de `buildWritePlan`).
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate
@@ -3604,7 +3620,10 @@ detalhe aberto — ver nota abaixo).
   `agente_intake_pending/{id}` — quem decide é sempre
   `agente-agil-orquestrador/intakeTrigger.js`. `schema.js:envelope`/
   `output` (vocabulário de ações antigo) ficam só como contrato legado,
-  não lidos mais aqui.
+  não lidos mais aqui. `schema.js:htmlAnexo` (2026-09-28, report diário
+  via card recorrente) — `{html, titulo}` opcional, `http.js` só repassa
+  pra fila sem olhar o conteúdo; quem hospeda (fora do LLM) é
+  `intakeTrigger.js`, ver seção do orquestrador acima.
 - `board.js` — `resolveActor(especialistaId)`/`ctx.actor` (2026-08-25): identidade
   (`uid`/`author`/`who`/`init`) creditada em todo output. `init` (🤖 padrão/🔌
   especialista) só passou a ser PROPAGADO nos pushes de `card.history[]`

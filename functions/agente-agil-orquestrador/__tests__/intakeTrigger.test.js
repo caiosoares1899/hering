@@ -428,3 +428,130 @@ test('instância dev exportada tem escrita real (destravada em 2026-08-27)', () 
   assert.equal(DRY_RUN_INTAKE, false);
   assert.equal(SQUAD_ID, 'dev');
 });
+
+// ── htmlAnexo: report diário via card recorrente (2026-09-28) ──────────
+// Relatório hospedado DETERMINISTICAMENTE (fora do toolset do LLM) antes de
+// montar a tarefa — decisão explícita do usuário: o HTML bruto nunca deve
+// passar pelo prompt do modelo, só o link final.
+function fakeUpload() {
+  const uploaded = [];
+  return {
+    uploaded,
+    uploadAndSign: async (path, buffer) => {
+      uploaded.push({ path, bytes: buffer.length });
+      return `https://fake-storage.example/${path}`;
+    },
+    reportBasePath: (squadId, cardId) => `relatorios/${squadId}/${cardId}/2026-09-28`,
+  };
+}
+
+test('htmlAnexo + card resolvido, escrita real: hospeda antes do LLM e injeta o link já pronto na tarefa', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploaded, uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'Relatório recebido, obrigado!' }]);
+  const entry = {
+    texto: 'Segue o relatório diário.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    htmlAnexo: { html: '<html><body><img src="data:image/png;base64,QUJD"></body></html>', titulo: 'Relatório Diário' },
+  };
+
+  const outcome = await trigger.processarIntake(db, { id: 'i-html-1', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  assert.equal(outcome.processed, true);
+  assert.equal(uploaded.length, 2, '1 imagem + 1 html');
+  assert.match(client.historias()[0][0].text, /relatório HTML \("Relatório Diário"\) já foi hospedado/);
+  assert.match(client.historias()[0][0].text, /https:\/\/fake-storage\.example\/relatorios\/dev\/c1\/2026-09-28\/relatorio\.html/);
+  assert.doesNotMatch(client.historias()[0][0].text, /<img src="data:image/, 'o HTML bruto nunca deve chegar no prompt do modelo');
+
+  const links = (await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9/links`).get()).val();
+  assert.equal(links.length, 1);
+  assert.equal(links[0].title, 'Relatório Diário');
+  assert.ok(links[0].url.endsWith('relatorio.html'));
+});
+
+test('htmlAnexo + card resolvido, dryRun: não sobe nada pro Storage nem escreve link, mas avisa o LLM que está em modo sombra', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: true });
+  const { uploaded, uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Segue o relatório diário.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-html-2', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  assert.equal(uploaded.length, 0, 'dryRun não deveria subir nada pro Storage');
+  const links = (await db.ref(`kanban/squads/${SQUAD_ID}/dados/cards/9/links`).get()).val();
+  assert.equal(links, null);
+  assert.match(client.historias()[0][0].text, /modo sombra.*Relatório Diário/s);
+});
+
+test('htmlAnexo sem NENHUM card resolvido: cai no caminho semCard e avisa que o relatório não pôde ser anexado', async () => {
+  const db = seedDb();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'Sem card pra anexar, avisando.' }]);
+  const entry = {
+    texto: 'Relatório sem card associado ainda.',
+    especialista: 'databricks',
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  const outcome = await processarIntake(db, { id: 'i-html-3', entry, llmClient: client });
+
+  assert.equal(outcome.semCard, true);
+  assert.match(client.historias()[0][0].text, /Um relatório HTML também foi enviado.*sem nenhum card resolvido/s);
+});
+
+test('htmlAnexo + cardId que não resolve mais (card sumiu): mesmo aviso do caminho semCard', async () => {
+  const db = seedDb();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'Card sumiu, avisando.' }]);
+  const entry = {
+    texto: 'Relatório de um card que já era.',
+    especialista: 'databricks',
+    cardId: 'card-fantasma',
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  const outcome = await processarIntake(db, { id: 'i-html-4', entry, llmClient: client });
+
+  assert.equal(outcome.semCard, true);
+  assert.match(client.historias()[0][0].text, /sem nenhum card resolvido/);
+});
+
+test('htmlAnexo + card resolvido, mas upload falha: avisa o erro na tarefa em vez de derrubar o processamento', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório com falha de upload.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  const outcome = await trigger.processarIntake(db, {
+    id: 'i-html-5',
+    entry,
+    llmClient: client,
+    uploadAndSign: async () => {
+      throw new Error('Storage indisponível (simulado)');
+    },
+  });
+
+  assert.equal(outcome.processed, true, 'a falha de hospedagem não deveria derrubar o processamento inteiro');
+  assert.match(client.historias()[0][0].text, /não deu pra hospedar: Storage indisponível/);
+});
+
+test('entry sem htmlAnexo: tarefa não menciona relatório nenhum (comportamento antigo intacto)', async () => {
+  const db = seedDb();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = { texto: 'informação normal, sem anexo', especialista: 'databricks', cardId: 'c1' };
+
+  await processarIntake(db, { id: 'i-html-6', entry, llmClient: client });
+
+  assert.doesNotMatch(client.historias()[0][0].text, /relatório/i);
+});

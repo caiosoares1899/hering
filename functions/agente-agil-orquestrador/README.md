@@ -3069,3 +3069,74 @@ SDK real garante) fazia o snapshot "antes" mudar sozinho quando o
 **Requer redeploy** (mesmas 3 functions de sempre, `runWritePlan()`
 mudou):
 `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake`
+
+## Report diário via card recorrente — `htmlAnexo` hospedado fora do LLM (2026-09-28)
+
+Pedido direto do usuário: quer testar a ideia de um report diário (squad
+`dev`, que já tem tudo deployado) — um card recorrente nasce todo dia,
+a Databricks manda o relatório HTML do dia, e o link final aparece
+anexado ao card. A infraestrutura de fundo já existia praticamente
+inteira (`relatorio_html`/`outputs/relatorioHtml.js`, `referencia` de
+negócio pra achar "o card de hoje" sem o especialista saber o cardId
+interno, `resolver.js`) — só faltava um jeito são de o HTML de verdade
+(o exemplo real citado no comentário de `relatorioHtml.js` tem ~940KB
+com imagens embutidas) chegar até ali.
+
+**O problema**: `intakeEnvelope.texto` tem limite de 20.000 caracteres
+(trava de segurança de 2026-09-17) — longe de caber um relatório real.
+E mesmo com um limite maior, não faria sentido pedir pro LLM
+"reproduzir" um HTML de centenas de KB como argumento de tool call:
+caro (cada token do payload entra no prompt), lento, e arriscado (o
+modelo pode truncar/corromper um payload desse tamanho tentando
+ecoá-lo de volta).
+
+**Decisão (AskUserQuestion, confirmada pelo usuário)**: o HTML nunca
+passa pelo prompt do modelo. Em vez disso:
+
+- **`schema.js`**: novo campo opcional `htmlAnexo: {html, titulo}` no
+  `intakeEnvelope`, separado de `texto` — `INTAKE_HTML_ANEXO_MAX` (~8MB
+  de texto, generoso sobre o exemplo real de 940KB) em vez do limite de
+  20k do texto livre.
+- **`http.js`**: só repassa `htmlAnexo` pra fila (`agente_intake_pending`),
+  sem olhar o conteúdo — mesma filosofia de sempre ("só enfileira, quem
+  decide é o orquestrador").
+- **`intakeTrigger.js`** (`processarIntake()`): quando `entry.htmlAnexo`
+  vem preenchido E um card real foi resolvido, hospeda o relatório
+  DETERMINISTICAMENTE — reaproveita `buildWritePlan`/`applyWritePlan`
+  de `board.js` DIRETO (mesmo mecanismo que `http.js` usava pra aplicar
+  ação direto, antes da correção de arquitetura de 2026-08-27, mas
+  agora escopado só a este 1 output específico, nunca decidido pelo
+  LLM) — ANTES de montar a tarefa do modelo. O `task` só recebe o link
+  final já pronto (`contextoRelatorio`), nunca o HTML. Sem card
+  resolvido, `relatorioSemCardAviso` avisa o modelo (e por tabela
+  `notificarFalhaSemCard()`, que já existia) que chegou um relatório
+  sem onde anexar — não perde o rastro em silêncio, mesma filosofia do
+  resto deste arquivo.
+
+11 testes novos (`intakeEnvelope.test.js` + `intakeTrigger.test.js`) —
+card resolvido com escrita real, dryRun (não sobe nada), sem card
+nenhum, card que sumiu, falha de upload (não derruba o processamento
+inteiro), e confirmação de que o HTML bruto nunca aparece na `task`
+passada ao modelo. Suíte inteira: 489/489 passando.
+
+**Ainda em aberto, fora do escopo desta rodada** (documentado, não
+resolvido): `processRecorrentes()` só roda quando alguém ABRE o board
+(client-side) — se a Databricks mandar o relatório antes de qualquer
+pessoa abrir o board no squad `dev` naquele dia, a `referencia` ainda
+não resolve nenhum `cardId` (`resolveReferencia()` lança
+`referencia_not_found`, e o pedido cai no caminho `semCard` do jeito
+que já existia). Não migrado pra criação server-side (`onSchedule`,
+mesmo padrão de `okrDailyScan.js`/`dueOverdueTrigger.js`) porque isso é
+trabalho novo por si só — decisão de arquitetura em aberto pro usuário,
+não algo pra implementar de bandeja.
+
+**Ainda não canário-testado em produção de verdade** — só testes
+unitários com fakes. Antes de confiar com um relatório real da
+Databricks, vale um canário manual: criar um item Recorrente no board
+`dev`, abrir o board pra ele nascer, e mandar um POST de teste (HTML
+pequeno, 1 imagem) pro endpoint com a `referencia` certa.
+
+**Requer redeploy** (só as 2 functions que carregam o código tocado —
+`agenteAgilMencao`/`agenteAgilMencaoDados` não usam nem `http.js` nem
+`intakeTrigger.js`):
+`firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`

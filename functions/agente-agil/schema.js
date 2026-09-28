@@ -169,6 +169,26 @@ function envelopeJsonSchema() {
 // descrições do board tem uma fração disso) e ainda limita o pior caso.
 const INTAKE_TEXTO_MAX = 20000;
 
+// htmlAnexo: relatório HTML completo (imagens embutidas em base64) que o
+// especialista externo já traz pronto — pensado pro caso "Databricks manda
+// o report_diario.html de hoje". Existe SEPARADO de `texto` (2026-09-28,
+// pedido direto: report diário via card recorrente) porque um relatório
+// real passa longe do limite de 20.000 caracteres pensado pra mensagem
+// curta (o próprio exemplo usado em outputs/relatorioHtml.js tem ~940KB) —
+// e mesmo com um `texto` maior, não faria sentido pedir pro LLM "reproduzir"
+// um HTML de centenas de KB como argumento de tool call (caro, lento, risco
+// real de truncar/corromper um payload desse tamanho). Por isso
+// `htmlAnexo` NUNCA passa pelo prompt do modelo — intakeTrigger.js hospeda
+// ele DETERMINISTICAMENTE (reaproveitando outputs/relatorioHtml.js direto,
+// fora do loop do LLM) antes de decidir qualquer outra coisa, e só informa
+// o modelo do link já pronto. Só processado quando o envelope resolve um
+// card real (cardId/referencia) — sem card não tem onde anexar o link.
+const INTAKE_HTML_ANEXO_MAX = 8000000; // ~8MB de texto — generoso sobre o exemplo real (~940KB), ainda limitado
+const htmlAnexo = z.object({
+  html: z.string().min(1).max(INTAKE_HTML_ANEXO_MAX),
+  titulo: z.string().min(1),
+});
+
 const intakeEnvelope = z
   .object({
     requestId: z.string().min(1),
@@ -180,6 +200,7 @@ const intakeEnvelope = z
     // por compatibilidade, mesmo fallback de sempre (ver DEFAULT_ESPECIALISTA
     // em http.js).
     especialista: z.string().min(1).optional(),
+    htmlAnexo: htmlAnexo.optional(),
   })
   .refine((data) => !(data.cardId && data.referencia), {
     message: 'Envie no máximo um de "cardId" ou "referencia" — nunca os dois.',
@@ -205,4 +226,7 @@ module.exports = {
   envelopeJsonSchema,
   intakeEnvelope,
   intakeEnvelopeJsonSchema,
+  htmlAnexo,
+  INTAKE_TEXTO_MAX,
+  INTAKE_HTML_ANEXO_MAX,
 };
