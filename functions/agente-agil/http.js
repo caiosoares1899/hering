@@ -45,6 +45,10 @@
 // `htmlAnexo` (2026-09-28, report diário via card recorrente): este arquivo
 // só repassa o campo pra fila, sem olhar o conteúdo — quem hospeda (fora do
 // LLM, ver schema.js:htmlAnexo) é intakeTrigger.js.
+//
+// `dadosDiarios` (2026-09-28, números de captação pra 📊 Central de Dados):
+// mesma coisa — só repassa, sem processar. Independente de cardId/
+// referencia (ver schema.js:dadosDiariosPayload).
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -208,6 +212,9 @@ const agenteAgil = onRequest(
       // Relatório HTML pronto (ver schema.js:htmlAnexo) — passa direto pra
       // fila, sem tocar no LLM aqui; intakeTrigger.js é quem hospeda.
       htmlAnexo: payload.htmlAnexo || null,
+      // Números de captação do dia (ver schema.js:dadosDiariosPayload) —
+      // independente de cardId/referencia, passa direto igual htmlAnexo.
+      dadosDiarios: payload.dadosDiarios || null,
       status: 'pending',
       createdAt: new Date().toISOString(),
     };

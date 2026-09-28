@@ -189,6 +189,31 @@ const htmlAnexo = z.object({
   titulo: z.string().min(1),
 });
 
+// dadosDiarios: números de captação digital do dia — pedido direto
+// (2026-09-28), continuação do report diário via card recorrente. Mesmos
+// campos que o formulário manual de "📊 Central de Dados" (painel.html)
+// já grava em kanban/dados_diarios_dev/{data} (capDia/metaDia/capAcum/
+// metaAcum/lyAcumPct/metaAmanha/texto) — ver publishDadosPost() em
+// painel-dev.html. De propósito INDEPENDENTE de cardId/referencia (ao
+// contrário de htmlAnexo, que precisa de um card real pra anexar o
+// link): captação é dado de negócio direto, não precisa de card nenhum
+// pra fazer sentido — teria que funcionar mesmo se o card recorrente do
+// dia tiver falhado em nascer (achado real da 1ª rodada de teste:
+// `processRecorrentes()` é client-side e pode não ter rodado ainda, ou
+// o card pode ter sumido numa corrida de fbSaveAll() — ver
+// agente-agil-orquestrador/README.md). Por isso carrega a própria
+// `data` (YYYY-MM-DD), em vez de depender de `referencia.data`.
+const dadosDiariosPayload = z.object({
+  data: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar no formato YYYY-MM-DD'),
+  capDia: z.number().optional(),
+  metaDia: z.number().optional(),
+  capAcum: z.number().optional(),
+  metaAcum: z.number().optional(),
+  lyAcumPct: z.number().optional(),
+  metaAmanha: z.number().optional(),
+  texto: z.string().max(5000).optional(),
+});
+
 const intakeEnvelope = z
   .object({
     requestId: z.string().min(1),
@@ -201,6 +226,7 @@ const intakeEnvelope = z
     // em http.js).
     especialista: z.string().min(1).optional(),
     htmlAnexo: htmlAnexo.optional(),
+    dadosDiarios: dadosDiariosPayload.optional(),
   })
   .refine((data) => !(data.cardId && data.referencia), {
     message: 'Envie no máximo um de "cardId" ou "referencia" — nunca os dois.',
@@ -227,6 +253,7 @@ module.exports = {
   intakeEnvelope,
   intakeEnvelopeJsonSchema,
   htmlAnexo,
+  dadosDiariosPayload,
   INTAKE_TEXTO_MAX,
   INTAKE_HTML_ANEXO_MAX,
 };

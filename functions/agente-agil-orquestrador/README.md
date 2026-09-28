@@ -3230,3 +3230,45 @@ quando não é `relatorio_diario`/quando veio por `cardId` direto/quando é
 `processarIntake()`; `http.js` também mudou — `agenteAgil` também
 precisa):
 `firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`
+
+## `entry.dadosDiarios` — números de captação, independente de card (2026-09-28)
+
+Pedido seguinte, mesmo dia: depois de validar o link do relatório
+aparecendo automático em "📊 Central de Dados", o usuário perguntou se
+dava pra também preencher os números de captação (Databricks confirmou
+que tem acesso a todos: captação do dia, meta do dia, acumulado no mês,
+meta acumulada, % vs. ano anterior, meta de amanhã).
+
+Diferente de `htmlAnexo` (precisa de um card real resolvido pra anexar o
+link), captação é dado de negócio puro — não precisa de card nenhum pra
+fazer sentido, e forçar essa dependência arriscaria repetir o mesmo
+problema que o `htmlAnexo`/recorrente já teve na 1ª rodada de canário
+(`processRecorrentes()` é client-side, o card do dia pode não ter
+nascido ainda, ou pode ter sumido numa corrida de `fbSaveAll()`). Por
+isso `dadosDiarios` é DE PROPÓSITO um mecanismo independente:
+
+- **`schema.js`**: `dadosDiariosPayload` — só `data` (`YYYY-MM-DD`) é
+  obrigatório; `capDia`/`metaDia`/`capAcum`/`metaAcum`/`lyAcumPct`/
+  `metaAmanha` (números) e `texto` (até 5.000 chars) são todos
+  opcionais — mesmos campos que `publishDadosPost()` (painel-dev.html)
+  já grava manualmente.
+- **`http.js`**: só repassa `payload.dadosDiarios` pra fila, sem olhar.
+- **`intakeTrigger.js`**: processado logo no INÍCIO de
+  `processarIntake()` (antes de resolver `cardId`/`semCard`) —
+  `update()` em `kanban/dados_diarios_dev/{entry.dadosDiarios.data}`,
+  só com os campos que vieram preenchidos. Mesma proteção do
+  `relatorioUrl`: `update()`, nunca `set()`, não apaga texto/PDF/
+  apresentações que um humano já tenha publicado nesse dia.
+
+12 testes novos (6 em `intakeEnvelope.test.js`, 6 em
+`intakeTrigger.test.js` — inclui um teste específico confirmando que
+funciona mesmo quando o card do dia não existe, e um confirmando que
+`dadosDiarios` + `htmlAnexo` juntos no mesmo request espelham os dois
+sem conflito). Suíte inteira: 518/518 passando.
+
+Nenhuma mudança necessária em `painel-dev.html`/`kanban-dev.html` — os
+dois já leem `capDia`/`metaDia`/etc. genericamente do mesmo node, então
+os números aparecem sozinhos assim que chegam.
+
+**Requer redeploy** (`http.js`/`intakeTrigger.js` mudaram):
+`firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`
