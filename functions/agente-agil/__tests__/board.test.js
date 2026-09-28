@@ -70,6 +70,27 @@ test('buildWritePlan monta update multi-path pra comentario', async () => {
   assert.equal(comment.text, 'oi');
 });
 
+// Achado real (canário do htmlAnexo, 2026-09-28): comentando sobre um
+// relatório recém-hospedado, o modelo vazou um fragmento de fechamento de
+// tag alucinado (`</texto>\n</invoke>`) no fim do texto — nunca conteúdo
+// de verdade, artefato de formatação interna. sanitizeAgentText() corta
+// isso antes de persistir (ver outputs/sanitizeAgentText.js).
+test('buildWritePlan (comentario) remove fragmento de tag alucinado no fim do texto', async () => {
+  const plan = await buildWritePlan(
+    '5',
+    [{ type: 'comentario', texto: 'Relatório hospedado com sucesso.\n\nLink: https://exemplo.com/relatorio.html</texto>\n</invoke>\n' }],
+    { cardId: 'c5' }
+  );
+  const comment = Object.values(plan[0].data)[0];
+  assert.equal(comment.text, 'Relatório hospedado com sucesso.\n\nLink: https://exemplo.com/relatorio.html');
+});
+
+test('buildWritePlan (comentario) texto normal, sem tag nenhuma, não muda em nada', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'comentario', texto: 'Card em dia, sem pendências.' }], { cardId: 'c5' });
+  const comment = Object.values(plan[0].data)[0];
+  assert.equal(comment.text, 'Card em dia, sem pendências.');
+});
+
 // ── Identidade do ator (achado real 2026-08-25) ──────────────────────────
 // Antes desta rodada, todo output gravava uid:'agente-agil'/author:'Agente
 // Ágil' sem distinguir "especialista externo via http.js" de "o próprio
@@ -184,6 +205,11 @@ test('buildWritePlan monta transaction escopada em riscos pra risco', async () =
   const result = plan[0].transform(null);
   assert.equal(result.length, 1);
   assert.equal(result[0], 'Fornecedor pode atrasar a entrega');
+});
+
+test('buildWritePlan (risco) também remove fragmento de tag alucinado no fim do texto', async () => {
+  const plan = await buildWritePlan('5', [{ type: 'risco', texto: 'Fornecedor pode atrasar</texto>\n</invoke>' }]);
+  assert.equal(plan[0].preview, 'Fornecedor pode atrasar');
 });
 
 test('buildWritePlan preserva riscos existentes na transaction', async () => {

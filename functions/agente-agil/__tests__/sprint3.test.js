@@ -274,6 +274,16 @@ test('editar_campos atualiza desc/priority e registra histórico dos dois', asyn
   assert.equal(card.history.length, 2);
 });
 
+// Achado real (canário do htmlAnexo, 2026-09-28) — mesmo class de bug de
+// comentario.js/risco.js: sanitizeAgentText() também se aplica a desc.
+test('editar_campos remove fragmento de tag alucinado no fim de desc', async () => {
+  const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', desc: 'antiga' });
+  const plan = await buildWritePlan('5', [{ type: 'editar_campos', desc: 'nova descrição</texto>\n</invoke>' }], { cardId: 'c5', db });
+  await applyWritePlan(db, plan);
+  const card = db._data().kanban.squads.dev.dados.cards['5'];
+  assert.equal(card.desc, 'nova descrição');
+});
+
 test('editar_campos resolve tag por label pro id correto', async () => {
   const db = seedDb('5', { id: 'c5', title: 'Card X', col: 'progress', tags: [] });
   const plan = await buildWritePlan('5', [{ type: 'editar_campos', tags: ['Piloto'] }], { cardId: 'c5', db });

@@ -16,8 +16,10 @@
 // evita a leitura em todo comentário sem @ nenhum.
 
 const notify = require('../notifications');
+const { sanitizeAgentText } = require('./sanitizeAgentText');
 
 async function build(out, ctx) {
+  const texto = sanitizeAgentText(out.texto);
   const id = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
   const commentStep = {
     kind: 'update',
@@ -31,17 +33,17 @@ async function build(out, ctx) {
         uid: ctx.actor.uid,
         author: ctx.actor.author,
         init: ctx.actor.init,
-        text: out.texto,
+        text: texto,
         ts: new Date().toISOString(),
       },
     },
   };
   const steps = [commentStep];
-  if (/@[a-zA-Z]/.test(out.texto)) {
+  if (/@[a-zA-Z]/.test(texto)) {
     const members = await ctx.readMembers();
     const mentionSteps = await notify.buildMentionSteps(ctx.db, {
       squadId: ctx.squadId,
-      text: out.texto,
+      text: texto,
       members,
       cardId: ctx.cardId,
       dryRun: ctx.dryRun,

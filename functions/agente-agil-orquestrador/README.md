@@ -3141,3 +3141,44 @@ pequeno, 1 imagem) pro endpoint com a `referencia` certa.
 `agenteAgilMencao`/`agenteAgilMencaoDados` não usam nem `http.js` nem
 `intakeTrigger.js`):
 `firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`
+
+## `sanitizeAgentText()` — fragmento de tag alucinado vazando em texto do modelo (2026-09-28)
+
+Achado real, durante o canário do `htmlAnexo` acima: pedido pra comentar
+sobre um relatório recém-hospedado (texto mais longo/complexo que o
+normal — tinha um link de Storage assinado, bem grande), o modelo
+terminou o `texto` do `comentario` vazando um fragmento de fechamento de
+tag alucinado: `</texto>\n</invoke>`. Nunca fez parte do prompt/contexto
+deste módulo (conferido: nenhum arquivo de `agente-agil-orquestrador/`
+ou `agente-agil/` menciona `<invoke>`/`<texto>` em lugar nenhum) — é
+puramente um artefato de formatação que o modelo alucinou, provavelmente
+imitando um formato de tool-calling baseado em XML que viu em outro
+contexto de treino, não o formato nativo (JSON) que a API da Anthropic
+usa de verdade aqui.
+
+Como isso é comportamento do modelo, não dá pra "consertar" na raiz —
+mas dá pra proteger o board: nenhum comentário/risco/descrição de card
+em português deveria legitimamente terminar com uma tag XML solta desse
+jeito. `outputs/sanitizeAgentText.js` (novo) remove qualquer sequência
+de tags de fechamento (`</algo>`) no FIM do texto (nunca no meio, pra
+não arriscar mexer em conteúdo real que por acaso contenha `<` `>`) —
+aplicado nos 3 campos de texto livre que vão direto pro board sem
+vocabulário fixo: `comentario.texto`, `risco.texto`,
+`editarCampos.desc`. `mover_coluna`/`checklist_item`/`tags` não
+precisam disso — já são valores restritos/validados contra um
+vocabulário fixo, não texto livre do modelo.
+
+**Card real afetado durante o canário**: `c1778983675376_b0ta`
+("Corrigir bug de checkout em Hering Sports", squad `dev`) ganhou um
+comentário de teste com o sufixo sujo, postado ANTES deste fix — não foi
+limpo automaticamente (edição de comentário existente é decisão
+manual/visual, fora do escopo deste fix de código).
+
+12 testes novos (`sanitizeAgentText.test.js` + casos em `board.test.js`/
+`sprint3.test.js`). Suíte inteira: 501/501 passando.
+
+**Requer redeploy** (só as functions que de fato executam `comentario`/
+`risco`/`editar_campos` via `realHandlers.js` — `agenteAgil`/`http.js`
+não chama mais nenhum output builder desde a correção de arquitetura de
+2026-08-27, só valida e enfileira):
+`firebase deploy --only functions:agenteAgilIntake,functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
