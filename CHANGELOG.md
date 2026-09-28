@@ -19559,6 +19559,27 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.69 · painel-dev — 2026-09-28 · feat(📊 Central de Dados): link do relatório diário da Databricks aparece automático no Histórico
+
+Pedido direto do usuário, continuação do report diário via card
+recorrente (ver `functions/agente-agil-orquestrador/README.md`): o link
+do relatório HTML que a Databricks manda (via `htmlAnexo`, hospedado
+deterministicamente pelo `intakeTrigger.js`) agora aparece sozinho, como
+um botão "🤖 Relatório", em cada card do Histórico da aba "📊 Central de
+Dados" — sem ninguém precisar colar link nenhum manualmente. O backend
+(PR do dia) espelha o link em `kanban/dados_diarios_dev/{data}` só
+quando o `htmlAnexo` vem do recorrente `relatorio_diario` especificamente
+(não qualquer relatório genérico).
+
+Fix relacionado no mesmo lote: `publishDadosPost()` usava `.set()` (não
+`.update()`) pra publicar o resultado manual do dia — sem preservar
+`relatorioUrl`/`relatorioTitulo`, publicar os números de captação
+DEPOIS que o pipeline já tivesse anexado o relatório apagaria o link em
+silêncio. Corrigido preservando os 2 campos, mesmo padrão que
+`pdfUrl`/`pdfName` já usava.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK.
+
 ### painel-dev.html v3.68 · painel-dev — 2026-09-28 · fix: mudança de papel/convite no "👥 Global Users" não refletia ao vivo no kanban
 
 `/monitorarbugs` genérico ("Roda outro") — área nunca auditada:

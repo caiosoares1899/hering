@@ -3182,3 +3182,51 @@ manual/visual, fora do escopo deste fix de código).
 não chama mais nenhum output builder desde a correção de arquitetura de
 2026-08-27, só valida e enfileira):
 `firebase deploy --only functions:agenteAgilIntake,functions:agenteAgilMencao,functions:agenteAgilMencaoDados`
+
+## Espelho em "📊 Central de Dados" (painel.html) — link do relatório aparece sozinho (2026-09-28)
+
+Pedido direto do usuário, depois de validar o `htmlAnexo` ponta a ponta:
+"podemos usar esse conteudo para atualizar a aba dados... criar um botao
+com a data do dia... com o link gerado pelo html". A aba "📊 Central de
+Dados — Digital" (`painel.html`/`painel-dev.html`) já existia — é onde o
+time publica manualmente o resultado diário de captação (números, texto,
+PDF, apresentações), com um "Histórico" de 1 card por dia. Decisão
+confirmada com o usuário (`AskUserQuestion`): automático, direto do
+pipeline (não manual, não uma lista separada).
+
+- **`http.js`**: `entry` (o item enfileirado em `agente_intake_pending`)
+  ganha o campo `referencia` (a `referencia` ORIGINAL do envelope, não só
+  o `cardId` já resolvido) — sem isso, `intakeTrigger.js` não tinha como
+  saber se o `htmlAnexo` veio do recorrente `relatorio_diario`
+  especificamente ou de um `cardId` direto qualquer.
+- **`intakeTrigger.js`**: quando `relatorioHospedado.url` existe (upload
+  real, não dryRun/erro) E `entry.referencia.tipo==='recorrente'` E
+  `entry.referencia.nome==='relatorio_diario'`, espelha
+  `{relatorioUrl, relatorioTitulo}` em
+  `kanban/dados_diarios_dev/{entry.referencia.data}` via `update()` —
+  nunca `set()`, pra não apagar nenhum dado que um humano já tenha
+  publicado (ou vá publicar depois) nesse mesmo dia.
+- **`painel-dev.html`**: `publishDadosPost()` (o botão "📊 Publicar no
+  quadro" do formulário manual) usava `.set()` — sem preservar
+  `relatorioUrl`/`relatorioTitulo` do registro existente, publicar os
+  números manualmente DEPOIS que o pipeline já tivesse anexado o
+  relatório apagaria o link em silêncio (mesmo risco que `pdfUrl`/
+  `pdfName` já tratava). Corrigido preservando os 2 campos, mesmo
+  padrão. `renderDadosHistorico()` ganhou um botão "🤖 Relatório"
+  (visível quando `d.relatorioUrl` existe) ao lado dos badges de %
+  meta/acumulado.
+
+`_dev` fixo de propósito no path `dados_diarios_dev` — mecanismo ainda
+em validação (squad `dev`); precisa virar configurável quando isso for
+pra produção de verdade (não dá pra saber, de dentro do backend por
+squad, se o resultado é pro `painel.html` ou `painel-dev.html`).
+
+7 testes novos (`intakeTrigger.test.js`) — espelha certo, não espelha
+quando não é `relatorio_diario`/quando veio por `cardId` direto/quando é
+`dryRun`, e preserva dado publicado manualmente. Suíte inteira do
+`functions/`: 506/506 passando.
+
+**Requer redeploy** (só `agenteAgilIntake`, o novo write vive em
+`processarIntake()`; `http.js` também mudou — `agenteAgil` também
+precisa):
+`firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`

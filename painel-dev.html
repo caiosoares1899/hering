@@ -2866,7 +2866,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.68 · painel-dev</div>
+<div class="version">v3.69 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9748,6 +9748,14 @@ function publishDadosPost(){
     lyAcumPct: _numVal('dd-ly'), metaAmanha: _numVal('dd-meta-amanha'),
     pdfUrl: _dadosPendingPdf?.url || existing.pdfUrl || '',
     pdfName: _dadosPendingPdf?.name || existing.pdfName || '',
+    // Relatório da Databricks (2026-09-28) -- preenchido automaticamente
+    // pelo backend do Agente Ágil (intakeTrigger.js), nunca por este
+    // formulário. Preserva igual pdfUrl/pdfName acima -- sem isso, este
+    // .set() (reescreve o registro do dia inteiro) apagaria o link que o
+    // pipeline já tivesse anexado antes de alguém publicar os números do
+    // dia manualmente.
+    relatorioUrl: existing.relatorioUrl || '',
+    relatorioTitulo: existing.relatorioTitulo || '',
   };
   window._set(window._ref(window._db,'kanban/dados_diarios_dev/'+date), obj)
     .then(()=>{
@@ -9788,6 +9796,7 @@ function renderDadosHistorico(){
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
           ${pct!=null?`<span class="badge" style="background:${ok?'rgba(29,233,182,.2)':'rgba(255,107,107,.2)'};color:${ok?'var(--teal)':'var(--danger)'};border:1px solid ${ok?'rgba(29,233,182,.3)':'rgba(255,107,107,.3)'};">${pct}% da meta do dia</span>`:''}
           ${pctAcum!=null?`<span class="badge" style="background:rgba(56,182,255,.15);color:var(--blue);border:1px solid rgba(56,182,255,.3);">${pctAcum}% acum.</span>`:''}
+          ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" class="btn btn-sm" style="color:var(--cyan);border-color:rgba(126,200,227,.35);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
           ${editor?`<button class="btn btn-sm" onclick="editDadosPost('${date}')" style="font-size:10px;" title="Carregar no formulário pra editar">✏️</button><button class="btn btn-sm" onclick="deleteDadosPost('${date}')" style="font-size:10px;color:var(--danger);" title="Excluir">🗑</button>`:''}
         </div>
       </div>
