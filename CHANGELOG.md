@@ -3829,6 +3829,50 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.755-dev — 2026-09-28 — feat: painel "👤 Minhas Preferências"
+
+Pedido direto do usuário, na sequência de uma varredura de "oportunidades
+de melhoria" nas personalizações do board (não um bug — um gap de
+produto): tudo que é preferência pessoal (Tema, Densidade/Fonte dos
+cards, Squad padrão, Não Perturbe, Atalhos de teclado, e as 5 sugestões
+de "Personalização baseada em rotina") vivia espalhado em ~6 pontos de
+entrada diferentes, e as sugestões de rotina aceitas não tinham NENHUM
+jeito de desfazer pela UI (só editando direto no Firebase). Novo painel
+único "👤 Minhas Preferências", acessível a QUALQUER papel (menu do
+avatar → "Meu status", ponto de entrada universal já existente) +
+atalho de dentro de "⚙ Configurações" pra ADM/PO/Organizador (mesma
+tela, não duplicada).
+
+**O que o painel reúne:**
+- 🎨 Tema, 🔍 Fonte, 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não
+  Perturbe (atalhos rápidos pras mesmas opções que já existiam em
+  outros lugares — nenhuma lógica nova, só front-door).
+- ⌨️ Link direto pro modal de Atalhos de teclado já existente.
+- 💡 **Sugestões de rotina — agora reversíveis**: Timeline como visão
+  inicial, "Meus cards" fixado, filtro de atrasados automático e cada
+  atalho de atribuição rápida já criado ganham um toggle liga/desliga
+  de verdade — antes, uma vez aceitas, não tinham NENHUM jeito de
+  desfazer pela UI.
+- 🚫 **Sugestões recusadas ("não sugerir mais")**: lista com
+  "🔄 Esquecer recusa" pra cada uma. Migração: até agora, "não sugerir
+  mais" só ficava salvo no `localStorage` do navegador que clicou — sem
+  sincronizar entre aparelhos e sem nenhum jeito de ver/desfazer.
+  `_sugestaoRecusarPermanente()`/`_sugestaoRecusadaPermanente()`
+  migradas pra `kanban/usuarios/{uid}/sugestoes_recusadas/{squadId}`
+  (Firebase, mesmo padrão de `board_prefs`), com migração automática do
+  que já estava só no navegador na 1ª leitura — ninguém perde recusa
+  antiga.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses sem alteração (-1/+4); validado com Playwright
+(harness de mock do Firebase — vendor SDK local interceptado via
+`page.route()`, zero chance de tocar o projeto de produção) — painel
+abre com as 7 seções corretas, toggles de Timeline/Meus Cards/Atrasados
+funcionam, remoção de atalho de atribuição funciona, "Esquecer recusa"
+funciona, e o botão dentro de "⚙ Configurações" colapsa pro emoji
+sozinho em telas estreitas (mobile) sem quebrar o layout do cabeçalho.
+Entrada nova em `HELP_CONTENT.board` (Central de Ajuda).
+
 ### v8.30.754-dev — 2026-09-28 — fix(personalização baseada em rotina): reload forçado pelo auto-update inflava a contagem de "sessões"
 
 `/monitorarbugs`, sem escopo nomeado — área escolhida por prioridade 2
