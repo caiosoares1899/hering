@@ -2529,6 +2529,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   excluir um board não reflete ao vivo pras outras abas/sessões já
   abertas (autocorrige só no F5). dev v3.67·painel-dev.
 
+- **2026-09-28, 💡 Personalização baseada em rotina (pedido genérico,
+  "roda um /monitorarbugs de rotina" — área escolhida por prioridade 2,
+  os 5 casos nunca tinham tido rodada própria desde que a feature
+  nasceu em 2026-09-11)**: 1 achado real, técnica 2 (comparar contra um
+  padrão irmão já corrigido no mesmo arquivo — Caso #5/PR #867, que já
+  tinha passado por essa mesma classe de bug). Casos #1 (Timeline visão
+  inicial) e #3 ("Meus cards" fixado) contavam "sessões" cruas — 1x a
+  cada BOOT do script — em vez de dias distintos (como #2/#5 já fazem);
+  como o auto-update força reload de toda aba a cada versão nova
+  publicada (`CHECK_INTERVAL_MS`, já registrado até 13 reloads em ~40h
+  num dia de promoções em lote), um único dia de trabalho normal podia
+  sozinho preencher a janela de 5 "sessões" e disparar a sugestão sem a
+  pessoa ter repetido o padrão em mais de 1 dia real. Fix:
+  `_iniciarSessaoTimeline()`/`_iniciarSessaoMeusCards()` idempotentes
+  por dia calendário, não por boot. Checado e sem achado: Caso #2/#5 já
+  contam por dias distintos; Caso #4 conta AÇÕES reais (atribuição de
+  card), imune a esse tipo de inflação; aplicação no boot
+  (`_applyBoardPrefsSquad()`) já auditada em 2026-09-11, confirmada de
+  novo correta. dev v8.30.754-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

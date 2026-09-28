@@ -3829,6 +3829,44 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.754-dev — 2026-09-28 — fix(personalização baseada em rotina): reload forçado pelo auto-update inflava a contagem de "sessões"
+
+`/monitorarbugs`, sem escopo nomeado — área escolhida por prioridade 2
+(💡 Personalização baseada em rotina, 5 casos, nunca tinha tido rodada
+própria da skill desde que foi construída em 2026-09-11).
+
+Achado real, técnica 2 (comparar contra um padrão irmão já corrigido no
+mesmo arquivo): o Caso #5 (visão de atrasados por horário) já tinha
+passado por esse mesmo bug e sido corrigido em PR #867 — contava só
+eventos brutos, sem exigir que o padrão se repetisse em DIAS diferentes,
+então uma única sessão de triagem intensa já disparava a sugestão. Os
+Casos #1 (Timeline como visão inicial) e #3 ("Meus cards" fixado na
+toolbar) nunca receberam a mesma correção — continuavam contando
+"sessões" cruas via `_iniciarSessaoTimeline()`/`_iniciarSessaoMeusCards()`,
+chamadas 1x a cada boot do script. Como o mecanismo de auto-atualização
+do board força um reload de toda aba aberta a cada nova versão publicada
+(`CHECK_INTERVAL_MS`, ver `CLAUDE.md` — um dia de promoções em lote já
+registrou até 13 reloads forçados em ~40h), um único dia de trabalho
+normal com várias promoções no meio podia sozinho preencher a janela
+inteira de 5 "sessões" e dobrar de vez a sugestão ("💡 Fixar 'Meus
+cards'?"/"💡 Tornar a Timeline sua visão inicial?"), sem a pessoa ter
+de fato repetido o comportamento em mais de 1 dia real.
+
+**Fix**: `_iniciarSessaoTimeline()`/`_iniciarSessaoMeusCards()` passam a
+ser idempotentes por DIA (não por boot) — um reload no mesmo dia calendário
+reaproveita a entrada já registrada em vez de empurrar uma nova, mesmo
+padrão que o Caso #5 já usa pra deduplicar sinal por dia. Checado e sem
+achado: Caso #2 (preset de filtro recorrente) e Caso #5 já contam por
+dias distintos desde a origem/PR #867; Caso #4 (atalho de atribuição
+rápida) conta AÇÕES reais (atribuições de card), não sessões/boots — sem
+o mesmo risco de inflação por reload; aplicação no boot
+(`_applyBoardPrefsSquad()`, guards `window._visaoInicialAplicada`/
+`window._visaoAtrasadosAplicada`) já auditada e confirmada correta numa
+rodada anterior (2026-09-11).
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses sem alteração (-1/+4).
+
 ### v8.30.753-dev — 2026-09-25 — fix(Google Calendar): fila de aprovação de agenda podia sumir sem processar
 
 `/monitorarbugs`, sem escopo nomeado — área escolhida por prioridade 2
