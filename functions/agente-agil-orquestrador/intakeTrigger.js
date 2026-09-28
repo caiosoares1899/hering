@@ -48,6 +48,15 @@
 // manuais antes de destravar escrita real) — mesma disciplina incremental,
 // não pula a etapa de sombra só porque o mecanismo de baixo (buildTools/
 // realHandlers) já é o mesmo comprovado.
+//
+// Report diário via card recorrente (2026-09-28, pedido direto): quando
+// entry.htmlAnexo vem preenchido (ver schema.js:htmlAnexo), ESTE arquivo
+// hospeda o relatório DETERMINISTICAMENTE (reaproveitando buildWritePlan/
+// applyWritePlan de board.js direto, fora do toolset do LLM) antes de
+// montar a tarefa — decisão explícita do usuário (AskUserQuestion): o HTML
+// bruto (pode ter centenas de KB/MB com imagens embutidas) nunca deve
+// passar pelo prompt do modelo, só o link final já hospedado. Ver
+// `relatorioHospedado`/`contextoRelatorio` dentro de processarIntake().
 
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { defineSecret } = require('firebase-functions/params');
@@ -58,7 +67,7 @@ const { runLoop } = require('./loop');
 const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
-const { resolveCardKey, cardsPath, cardCommentsPath } = require('../agente-agil/board');
+const { resolveCardKey, cardsPath, cardCommentsPath, buildWritePlan, applyWritePlan } = require('../agente-agil/board');
 const { resolveReferencia } = require('../agente-agil/resolver');
 const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
 const { marcarAgenteResponsavel } = require('./agenteMarcador');
@@ -180,7 +189,10 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     return val.descricao;
   }
 
-  async function processarIntake(db, { id, entry, llmClient }) {
+  // uploadAndSign/reportBasePath: injetáveis só pra teste (mesmo padrão de
+  // buildWritePlan em board.js) — sem override, usam o Storage de verdade
+  // via os defaults do próprio buildWritePlan.
+  async function processarIntake(db, { id, entry, llmClient, uploadAndSign, reportBasePath }) {
     if (!entry) {
       return { processed: false, reason: 'entry_vazio' };
     }
@@ -196,6 +208,43 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
 
     const cardId = await resolverCardId(db, entry);
     const semCard = !cardId;
+
+    // Report diário via card recorrente (2026-09-28, pedido direto): quando
+    // o especialista manda um HTML pronto (entry.htmlAnexo, ver
+    // schema.js:htmlAnexo), hospeda ele AGORA, determinístico, reaproveitando
+    // o mesmo builder relatorio_html direto (buildWritePlan/applyWritePlan,
+    // igual http.js fazia antes da correção de arquitetura de 2026-08-27) —
+    // NUNCA passa o HTML bruto pelo prompt do LLM (decisão explícita do
+    // usuário, AskUserQuestion). Sem card resolvido não tem onde anexar o
+    // link — nesse caso só deixa um aviso pro semCard abaixo lidar (ver
+    // relatorioSemCardAviso).
+    let relatorioHospedado = null; // null (sem htmlAnexo) | {url,titulo} | {dryRun:true,titulo} | {erro}
+    if (entry.htmlAnexo && cardId) {
+      try {
+        const cardKey = await resolveCardKey(db, cardId, { squadId });
+        if (!cardKey) {
+          relatorioHospedado = { erro: 'card não encontrado no índice ao tentar hospedar o relatório' };
+        } else if (dryRun) {
+          relatorioHospedado = { dryRun: true, titulo: entry.htmlAnexo.titulo };
+        } else {
+          const plan = await buildWritePlan(cardKey, [{ type: 'relatorio_html', html: entry.htmlAnexo.html, titulo: entry.htmlAnexo.titulo }], {
+            db,
+            cardId,
+            squadId,
+            especialista: entry.especialista,
+            dryRun: false,
+            ...(uploadAndSign ? { uploadAndSign } : {}),
+            ...(reportBasePath ? { reportBasePath } : {}),
+          });
+          await applyWritePlan(db, plan, { cardPath: `${cardsPath(squadId)}/${cardKey}`, cardId, squadId });
+          const linkStep = plan.find((s) => s.preview && s.preview.url);
+          relatorioHospedado = linkStep ? { url: linkStep.preview.url, titulo: entry.htmlAnexo.titulo } : { erro: 'upload concluído mas o link não apareceu no plano' };
+        }
+      } catch (err) {
+        console.error(`[agente-agil-intake:${squadId}] falha ao hospedar relatório (htmlAnexo):`, id, err);
+        relatorioHospedado = { erro: truncar(err.message, 300) };
+      }
+    }
 
     const tools = buildTools({
       mode: 'real',
@@ -227,9 +276,29 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
     const contextoEspecialista = descricaoEspecialista
       ? `\n\nContexto sobre este especialista (cadastrado por um ADM/PO no Painel → Configurações → Agentes Externos): ${descricaoEspecialista}`
       : '';
+    // Contexto do relatório hospedado deterministicamente acima (ver
+    // relatorioHospedado) — o modelo NUNCA vê o HTML em si, só sabe que ele
+    // já foi anexado (ou por que não deu). Instrui explicitamente a não
+    // chamar relatorio_html de novo pra este mesmo anexo (redundante — ele
+    // nem tem o HTML no contexto pra fazer isso de qualquer forma).
+    const contextoRelatorio = relatorioHospedado
+      ? relatorioHospedado.url
+        ? `\n\nUm relatório HTML ("${relatorioHospedado.titulo}") já foi hospedado e anexado automaticamente aos links deste card: ${relatorioHospedado.url}. Não é preciso (nem possível) chamar relatorio_html de novo pra isso — se fizer sentido, comente avisando que o relatório chegou, mencionando o link.`
+        : relatorioHospedado.dryRun
+        ? `\n\n(modo sombra: um relatório HTML ("${relatorioHospedado.titulo}") seria hospedado aqui, mas nada foi escrito de verdade porque este squad ainda está em dryRun.)`
+        : `\n\nUm relatório HTML veio junto com este pedido, mas não deu pra hospedar: ${relatorioHospedado.erro}. Considere avisar sobre essa falha na sua resposta.`
+      : '';
+    // htmlAnexo chegou mas SEM card resolvido — não tem onde anexar o link
+    // (criar_card só gera um rascunho em intake_pending, revisável na UI,
+    // não um card real ainda) — só avisa, pra não perder o rastro em
+    // silêncio (mesma filosofia de notificarFalhaSemCard abaixo).
+    const relatorioSemCardAviso =
+      entry.htmlAnexo && !cardId
+        ? '\n\n(Um relatório HTML também foi enviado junto com este pedido, mas sem nenhum card resolvido pra anexar o link. Se você criar um card novo com criar_card, avise na sua resposta final que o relatório não pôde ser anexado automaticamente e precisa ser reenviado depois que o card existir de verdade.)'
+        : '';
     const task = cardId
-      ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):${contextoEspecialista}\n\n${entry.texto}`
-      : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:${contextoEspecialista}\n\n${entry.texto}`;
+      ? `${especialistaLabel} mandou esta informação sobre o card ${cardId} (squad "${squadId}"):${contextoEspecialista}${contextoRelatorio}\n\n${entry.texto}`
+      : `${especialistaLabel} mandou esta informação, sem nenhum card associado a ela. Você está atuando no squad "${squadId}" — se decidir usar criar_card, o rascunho só pode nascer AQUI, neste squad (esta ferramenta não tem como criar em nenhum outro squad, mesmo que o assunto pareça mais afim de outro time). Se fizer sentido, use criar_card; se não tiver certeza, explique por que não deu pra agir:${contextoEspecialista}${relatorioSemCardAviso}\n\n${entry.texto}`;
 
     // Achado real, canário de validação (2026-08-27): uma instabilidade
     // momentânea da API da Anthropic (erro 529 "overloaded") derrubou

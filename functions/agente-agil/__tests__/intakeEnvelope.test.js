@@ -63,3 +63,37 @@ test('não exige mais status/outputs (vocabulário de ações saiu do envelope)'
   assert.equal('status' in result.data, false);
   assert.equal('outputs' in result.data, false);
 });
+
+// htmlAnexo (2026-09-28, report diário via card recorrente) — relatório
+// pronto, hospedado deterministicamente por intakeTrigger.js, nunca passa
+// pelo prompt do LLM (ver comentário grande em schema.js).
+test('aceita htmlAnexo opcional (html + titulo)', () => {
+  const result = intakeEnvelope.safeParse({
+    requestId: 'r8',
+    texto: 'Relatório diário pronto.',
+    referencia: { tipo: 'recorrente', nome: 'relatorio_diario', data: '2026-09-28' },
+    htmlAnexo: { html: '<html><body>oi</body></html>', titulo: 'Relatório Diário' },
+  });
+  assert.equal(result.success, true);
+});
+
+test('sem htmlAnexo continua aceitando normalmente (campo opcional)', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r9', texto: 'algo' });
+  assert.equal(result.success, true);
+  assert.equal(result.data.htmlAnexo, undefined);
+});
+
+test('rejeita htmlAnexo sem html', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r10', texto: 'algo', htmlAnexo: { titulo: 'Relatório' } });
+  assert.equal(result.success, false);
+});
+
+test('rejeita htmlAnexo sem titulo', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r11', texto: 'algo', htmlAnexo: { html: '<html></html>' } });
+  assert.equal(result.success, false);
+});
+
+test('rejeita htmlAnexo com html vazio', () => {
+  const result = intakeEnvelope.safeParse({ requestId: 'r12', texto: 'algo', htmlAnexo: { html: '', titulo: 'Relatório' } });
+  assert.equal(result.success, false);
+});

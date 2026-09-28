@@ -41,6 +41,10 @@
 //
 // O vocabulário `output`/`outputs` de schema.js (mover_coluna, editar_campos,
 // etc.) continua existindo só como contrato legado — não é mais lido daqui.
+//
+// `htmlAnexo` (2026-09-28, report diário via card recorrente): este arquivo
+// só repassa o campo pra fila, sem olhar o conteúdo — quem hospeda (fora do
+// LLM, ver schema.js:htmlAnexo) é intakeTrigger.js.
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
@@ -193,6 +197,9 @@ const agenteAgil = onRequest(
       especialista: payload.especialista || DEFAULT_ESPECIALISTA,
       texto: payload.texto,
       cardId,
+      // Relatório HTML pronto (ver schema.js:htmlAnexo) — passa direto pra
+      // fila, sem tocar no LLM aqui; intakeTrigger.js é quem hospeda.
+      htmlAnexo: payload.htmlAnexo || null,
       status: 'pending',
       createdAt: new Date().toISOString(),
     };
