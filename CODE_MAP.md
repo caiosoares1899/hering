@@ -1421,6 +1421,59 @@ filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
   Boot chama `_iniciarSessaoMeusCards()`/`_iniciarSessaoTimeline()` junto
   de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L33450.
 
+### 👤 Minhas Preferências (2026-09-28)
+Painel único reunindo toda personalização pessoal do board — antes
+espalhada em ~6 pontos de entrada diferentes (tema, menu Fonte, modal
+Atalhos, sino de DND, dropdown do squad, sugestões que só apareciam
+sozinhas), sem NENHUM lugar central pra ver/desfazer nada. Pedido
+direto do usuário. Acessível a QUALQUER papel — menu do avatar ("Meu
+status", `openStatusMenu()` ~L10722) — + atalho de dentro de
+"⚙ Configurações" pra ADM/PO/Organizador (mesma tela, não duplicada,
+botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
+- `openMinhasPrefs()` — L13336 / `renderMinhasPrefsBody()` — L13341 —
+  monta as 7 seções (Tema/Fonte+Densidade/Squad padrão/Não Perturbe/
+  Atalhos/Sugestões de rotina/Sugestões recusadas) a partir do estado
+  já existente (`_boardPrefsSquad`, `_boardPrefsGlobal`, `_notifPrefs`,
+  `boardFontSize`, `boardCardDensity`) — não introduz estado runtime
+  novo pra essas, só front-door pra controles que já existiam noutro
+  lugar (tema/fonte/densidade/squad padrão/DND continuam com suas
+  próprias funções originais, só chamadas daqui também).
+- **Sugestões de rotina, agora reversíveis** (achado de produto, não
+  bug — nenhuma das 5 tinha jeito de desfazer pela UI até aqui):
+  `_prefsToggleTimelineInicial()` — L13431, `_prefsToggleMeusCardsFixado()`
+  — L13437 (toggle de verdade, liga E desliga), `_prefsToggleAtrasadosAuto()`
+  — L13447 (só desliga — não tem como "ligar" sem um bloco de horário
+  aprendido pela sugestão automática; linha correspondente do painel
+  vira texto informativo, sem toggle, enquanto `visao_atrasados_bloco`
+  for `null`), `_removerAtalhoAtribuicaoRapida(init)` — L13452 (remove
+  o item de `board_prefs.atribuicao_rapida[]` + a entrada dinâmica de
+  `ATALHO_ACOES` + a combinação de tecla via `_atalhoLimpar()`, se
+  tinha uma — antes disso, o único dos 5 casos parcialmente reversível,
+  mas a linha "👤 Atribuir a X" ficava pra sempre na tela de Atalhos
+  mesmo removendo só a tecla).
+- **"Não sugerir mais" — migrado de localStorage pra Firebase**:
+  `loadSugestoesRecusadas()` — L13181 (listener,
+  `kanban/usuarios/{uid}/sugestoes_recusadas/{squadId}`, com migração
+  automática do que já estava só no `localStorage` do navegador na 1ª
+  leitura — mesmo espírito de `_boardPrefLoadOrMigrate()`),
+  `_sugestaoEsquecerRecusa(id)` — L13210 (novo — desfaz uma recusa),
+  `_sugestaoRecusaLabel(id)` — L13220 (rótulo legível; ids de Caso
+  #2/#4/#5 embutem parâmetro dinâmico — `filtro:<fp>`/
+  `atribuicao:<init>`/`atrasados:<bloco>` — não são um id fixo só).
+  `_sugestaoRecusadaPermanente()`/`_sugestaoRecusarPermanente()`
+  (declaração original, ver seção "💡 Personalização baseada em
+  rotina" acima) passaram a ler/escrever esse cache em vez do
+  `localStorage` direto.
+- Não tem seção/anchor pro Caso #2 (preset de filtro) neste painel de
+  propósito — o resultado de aceitar aquela sugestão é um preset comum,
+  já gerenciável na barra de Filtros (`removeFilterPreset()`); o painel
+  só linka pra lá (`toggleFilters()`).
+- Validado com Playwright (harness de mock do Firebase, ver nota no
+  `CHANGELOG.md` — SDK vendorizado localmente interceptado via
+  `page.route()`, zero rede real) — abertura, os 7 toggles/ações, e
+  layout mobile (botão de `#cfg-ov` colapsa pro emoji sozinho abaixo de
+  768px, `@media(max-width:768px) #cfg-minhasprefs-btn span`).
+
 ### ⎋ Esc fecha a tela aberta (2026-09-07)
 Pedido direto do usuário — "quando o board abre outras telas, tipo
 dashboard ou help content, o esc tem q funcionar como um fechar". O

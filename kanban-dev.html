@@ -2626,6 +2626,10 @@ input[type="date"]{-moz-appearance:textfield;}
   .hd-badge,.tb-sep,#online-bar{display:none!important;}
   .app{padding:.5rem .6rem 74px;}
   *{-webkit-tap-highlight-color:transparent;}
+  /* Botão "👤 Minhas Preferências" dentro de ⚙ Configurações — título da
+     tela + esse botão + ✕ não cabem lado a lado numa tela estreita;
+     esconde só o texto (emoji continua clicável/reconhecível). */
+  #cfg-minhasprefs-btn span{display:none;}
 
   /* ── Tabela de Controle de Criativos: dica visual de "rola pro lado" ──
      Achado real (revisão mobile, 2026-09-07): a tabela (9 colunas) já
@@ -4750,7 +4754,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <!-- CONFIGURAÇÕES -->
 <div class="ov" id="cfg-ov">
 <div class="panel cfg-panel">
-  <div class="panel-hd"><div class="panel-title">⚙ Configurações</div><button class="x-btn" onclick="closeOv('cfg-ov')">✕</button></div>
+  <div class="panel-hd"><div class="panel-title">⚙ Configurações</div><div style="display:flex;align-items:center;gap:8px;"><button class="btn btn-sm" id="cfg-minhasprefs-btn" onclick="closeOv('cfg-ov');openMinhasPrefs();" title="Suas preferências pessoais — tema, atalhos, sugestões de rotina...">👤 <span>Minhas Preferências</span></button><button class="x-btn" onclick="closeOv('cfg-ov')">✕</button></div></div>
   <div class="ag-tabs" id="cfg-tabs">
     <div class="ag-tab on" onclick="swCfgTab('agil')">🚀 Ágil</div>
     <div class="ag-tab" onclick="swCfgTab('usuarios')">👤 Usuários</div>
@@ -5467,6 +5471,18 @@ input[type="date"]{-moz-appearance:textfield;}
   </div>
   <div id="atalhos-tab-card-aviso" style="display:none;margin:8px 16px 0;padding:7px 10px;font-size:10.5px;color:var(--warn);background:rgba(255,209,102,.08);border:1px solid rgba(255,209,102,.25);border-radius:8px;">⚠ Estas ações só funcionam com um card aberto — apertar a combinação com o modal fechado não faz nada.</div>
   <div style="padding:8px 16px 16px;overflow-y:auto;flex:1;" id="atalhos-body"></div>
+</div>
+</div>
+
+<!-- MINHAS PREFERÊNCIAS -->
+<div class="ov" id="minhasprefs-ov">
+<div class="panel" style="max-width:520px;width:92vw;max-height:85vh;display:flex;flex-direction:column;overflow:hidden;">
+  <div class="panel-hd">
+    <div class="panel-title">👤 Minhas Preferências</div>
+    <button class="x-btn" onclick="closeOv('minhasprefs-ov')">✕</button>
+  </div>
+  <div style="padding:10px 16px 0;font-size:11px;color:var(--txt3);">Tudo aqui é 100% pessoal — sincroniza com a sua conta e não muda nada pros outros.</div>
+  <div style="padding:8px 16px 16px;overflow-y:auto;flex:1;" id="minhasprefs-body"></div>
 </div>
 </div>
 
@@ -6339,7 +6355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.754-dev</div>
+<div class="version">v8.30.755-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10720,7 +10736,13 @@ function openStatusMenu(){
       return `<div onclick="setMyStatus('${v}')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='${active?'rgba(56,182,255,.12)':'transparent'}'">
         <span style="font-size:14px;">${e}</span> ${l} ${active?'<span style="margin-left:auto;color:var(--teal);">●</span>':''}
       </div>`;
-    }).join('');
+    }).join('') +
+    // Ponto de entrada universal (qualquer papel) pro painel "👤 Minhas
+    // Preferências" — ver openMinhasPrefs(). ADM/PO/Organizador também
+    // ganham um atalho de dentro de "⚙ Configurações".
+    '<div style="border-top:1px solid var(--glass-b);margin-top:4px;padding-top:4px;">' +
+    '<div onclick="openMinhasPrefs()" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);" onmouseover="this.style.background=\'rgba(56,182,255,.08)\'" onmouseout="this.style.background=\'transparent\'">' +
+    '<span style="font-size:14px;">⚙️</span> Minhas Preferências</div></div>';
   document.body.appendChild(m);
   setTimeout(()=>document.addEventListener('click',_closeStatusOnOut),10);
 }
@@ -13148,17 +13170,67 @@ function _checarSugestaoFiltro(fp, hist){
 // nunca aplica nada sozinho, sinal em localStorage (ver comentário
 // grande na declaração de SUGESTAO_FILTRO_CAMPOS acima pro raciocínio
 // completo de não usar Firebase aqui).
+// "Não sugerir mais" — até 2026-09-28 vivia só no localStorage do
+// navegador (chave abaixo, mantida só pra migração), sem sincronizar
+// entre aparelhos e sem NENHUMA UI pra ver/desfazer um clique acidental.
+// Pedido direto do usuário ("👤 Minhas Preferências", 2026-09-28): agora
+// sincroniza por conta, mesmo padrão de board_prefs — kanban/usuarios/
+// {uid}/sugestoes_recusadas/{squadId} (array de ids).
 function _sugestaoRecusadasKey(){ return 'sugestao_recusadas_'+ACTIVE_SQUAD; }
+let _sugestoesRecusadas = [];
+function loadSugestoesRecusadas(){
+  const user = window._currentUser; if(!user) return;
+  window._onValue(window._ref(window._db,'kanban/usuarios/'+user.uid+'/sugestoes_recusadas/'+ACTIVE_SQUAD), snap=>{
+    if(snap.exists()){
+      _sugestoesRecusadas = snap.val() || [];
+    } else {
+      // Migração: nada no Firebase ainda -- herda o que já tava só no
+      // localStorage deste navegador (se tiver), sem perder recusas
+      // antigas (mesmo espírito de _boardPrefLoadOrMigrate()).
+      let legado = [];
+      try{ legado = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
+      _sugestoesRecusadas = legado;
+      if(legado.length) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/sugestoes_recusadas/'+ACTIVE_SQUAD), legado).catch(()=>{});
+    }
+    if(document.getElementById('minhasprefs-ov')?.classList.contains('open')) renderMinhasPrefsBody();
+  });
+}
 function _sugestaoRecusadaPermanente(id){
-  let recusados = [];
-  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
-  return recusados.includes(id);
+  return _sugestoesRecusadas.includes(id);
 }
 function _sugestaoRecusarPermanente(id){
-  let recusados = [];
-  try{ recusados = JSON.parse(safeLS.getItem(_sugestaoRecusadasKey())||'[]'); }catch(e){}
-  if(!recusados.includes(id)) recusados.push(id);
-  safeLS.setItem(_sugestaoRecusadasKey(), JSON.stringify(recusados));
+  const user = window._currentUser; if(!user) return;
+  if(_sugestoesRecusadas.includes(id)) return;
+  _sugestoesRecusadas = [..._sugestoesRecusadas, id];
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/sugestoes_recusadas/'+ACTIVE_SQUAD), _sugestoesRecusadas).catch(()=>{});
+}
+// Contrapartida de _sugestaoRecusarPermanente() -- usada pelo painel
+// "👤 Minhas Preferências" pra desfazer um "não sugerir mais" clicado
+// sem querer (antes disso, não existia NENHUM jeito de reverter).
+function _sugestaoEsquecerRecusa(id){
+  const user = window._currentUser; if(!user) return;
+  _sugestoesRecusadas = _sugestoesRecusadas.filter(x=>x!==id);
+  window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/sugestoes_recusadas/'+ACTIVE_SQUAD), _sugestoesRecusadas).catch(()=>{});
+  renderMinhasPrefsBody();
+  showToast('✅ Essa sugestão pode aparecer de novo, se o padrão se repetir.');
+}
+// Label legível pra cada id de recusa -- os de Caso #2/#4/#5 embutem um
+// parâmetro dinâmico (fingerprint de filtro/iniciais/bloco de horário),
+// não são um id fixo só.
+function _sugestaoRecusaLabel(id){
+  if(id==='timeline') return '🛤️ Timeline como visão inicial';
+  if(id==='meuscards') return '💡 "Meus cards" fixado na toolbar';
+  if(id.startsWith('atribuicao:')){
+    const init=id.slice('atribuicao:'.length);
+    const m=members.find(x=>x.init===init);
+    return '👤 Atalho de atribuição rápida pra '+(m?_shortName(m.name):init);
+  }
+  if(id.startsWith('atrasados:')){
+    const bloco=parseInt(id.slice('atrasados:'.length));
+    return '🔴 Filtro automático de atrasados ('+bloco+'h–'+(bloco+2)+'h)';
+  }
+  if(id.startsWith('filtro:')) return '💾 Sugestão de salvar preset de filtro';
+  return id;
 }
 function _mostrarSugestaoRotina(id, mensagemHtml, respostaSim, labelSim, aoAceitar){
   if(window._sugestaoRotinaSessionDismissed) return; // "agora não" já foi dito nesta sessão -- não insiste com NENHUM tipo de sugestão
@@ -13249,6 +13321,143 @@ function _applyMeusCardsFixadoUI(){
   const btn = document.getElementById('tb-meus-cards');
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
+
+// ══════════════════════════════════════════════════════════════════
+// 👤 Minhas Preferências — painel único reunindo a personalização
+// pessoal do board, antes espalhada em ~6 pontos de entrada diferentes
+// (botão de tema, menu 🔍 Fonte, modal ⌨️ Atalhos, sino de Não
+// Perturbe, dropdown do squad, sugestões que só apareciam sozinhas),
+// sem NENHUM lugar central pra ver ou desfazer nada disso. Pedido
+// direto do usuário, 2026-09-28. Acessível a QUALQUER papel (menu do
+// avatar, "Meu status" — mesmo ponto de entrada universal que já
+// existia) + atalho dentro de "⚙ Configurações" pra quem já está lá
+// (mesma tela, não duplicada).
+// ══════════════════════════════════════════════════════════════════
+function openMinhasPrefs(){
+  closeStatusMenu();
+  document.getElementById('minhasprefs-ov')?.classList.add('open');
+  renderMinhasPrefsBody();
+}
+function renderMinhasPrefsBody(){
+  const body = document.getElementById('minhasprefs-body');
+  if(!body) return;
+
+  const temaAtual = _currentTheme();
+  const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
+  const autoOn = _isThemeAutoOn();
+  const dndOn = isDndActive();
+  const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
+  const meusCardsOn = !!_boardPrefsSquad.meus_cards_fixado;
+  const atrasadosBloco = _boardPrefsSquad.visao_atrasados_bloco;
+  const atribuicoes = _boardPrefsSquad.atribuicao_rapida || [];
+
+  body.innerHTML = `
+    <div class="cfg-sec-title">🎨 Tema</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
+      <div style="font-size:12px;color:var(--txt2);">Atual: <b style="color:var(--txt);">${esc(temaLabel)}</b></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <button class="btn btn-sm" onclick="toggleTheme();renderMinhasPrefsBody();">Trocar tema</button>
+        <button class="btn btn-sm" style="${autoOn?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="toggleThemeAuto();renderMinhasPrefsBody();">🕐 ${autoOn?'Automático (ligado)':'Ligar automático'}</button>
+      </div>
+    </div>
+
+    <div class="cfg-sec-title">🔍 Fonte e densidade dos cards</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 0 12px;">
+      ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+      <span style="width:1px;align-self:stretch;background:var(--glass-b);margin:0 4px;"></span>
+      ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+    </div>
+
+    <div class="cfg-sec-title">📌 Squad padrão</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 12px;">
+      <div style="font-size:12px;color:var(--txt2);">${_isPinnedSquad() ? 'Este squad ('+esc(SQUAD_META_LIVE[ACTIVE_SQUAD]?.label||ACTIVE_SQUAD)+') está fixado como padrão.' : 'Nenhum squad fixado — abre sempre no último que você usou.'}</div>
+      <button class="btn btn-sm" onclick="toggleFixarSquadPadrao();renderMinhasPrefsBody();">${_isPinnedSquad() ? '📌 Remover fixação' : '📌 Fixar este squad'}</button>
+    </div>
+
+    <div class="cfg-sec-title">🔔 Não Perturbe</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:4px 0 6px;">
+      <div style="font-size:12px;color:var(--txt2);">${dndOn ? '🔕 Silenciado'+(_notifPrefs.dnd.label?' — '+esc(_notifPrefs.dnd.label):'') : '🔔 Notificações ativas'}</div>
+      ${dndOn ? `<button class="btn btn-sm" onclick="setDnd(false);renderMinhasPrefsBody();">🔔 Reativar</button>` : ''}
+    </div>
+    ${!dndOn ? `<div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 0 12px;">
+      <button class="btn btn-sm" onclick="setDnd(true,60,'1 hora');renderMinhasPrefsBody();">Por 1 hora</button>
+      <button class="btn btn-sm" onclick="setDnd(true,480,'8 horas');renderMinhasPrefsBody();">Por 8 horas</button>
+      <button class="btn btn-sm" onclick="setDndUntilTomorrowMorning();renderMinhasPrefsBody();">Até amanhã de manhã</button>
+    </div>` : '<div style="padding-bottom:12px;"></div>'}
+
+    <div class="cfg-sec-title">⌨️ Atalhos de teclado</div>
+    <div style="padding:4px 0 12px;">
+      <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');openAtalhos();">⌨️ Abrir Atalhos de teclado</button>
+    </div>
+
+    <div class="cfg-sec-title">💡 Sugestões de rotina</div>
+    <div style="font-size:10.5px;color:var(--txt3);padding:0 0 8px;line-height:1.4;">O app aprende com seu uso e sugere atalhos — ligue/desligue cada um aqui a qualquer momento, sem precisar esperar a sugestão aparecer de novo.</div>
+    ${_renderMinhasPrefsRotinaRow('🛤️ Timeline como visão inicial', timelineOn, `_prefsToggleTimelineInicial()`)}
+    ${_renderMinhasPrefsRotinaRow('💡 "Meus cards" fixado na toolbar', meusCardsOn, `_prefsToggleMeusCardsFixado()`)}
+    ${atrasadosBloco!=null
+      ? _renderMinhasPrefsRotinaRow('🔴 Filtro de atrasados automático ('+atrasadosBloco+'h–'+(atrasadosBloco+2)+'h)', true, `_prefsToggleAtrasadosAuto()`)
+      : '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);"><div style="font-size:12px;color:var(--txt3);">🔴 Filtro de atrasados automático — ainda não configurado (aparece como sugestão quando o app perceber o padrão)</div></div>'}
+    ${atribuicoes.length ? atribuicoes.map(init=>{
+      const m=members.find(x=>x.init===init);
+      return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
+        <div style="font-size:12px;color:var(--txt);">👤 Atalho de atribuição rápida — ${esc(m?_shortName(m.name):init)}</div>
+        <button class="btn btn-sm" style="color:var(--danger);" onclick="_removerAtalhoAtribuicaoRapida('${esc(init)}')">Remover</button>
+      </div>`;
+    }).join('') : ''}
+    <div style="padding:8px 0 0;">
+      <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');toggleFilters();">🔭 Ver meus presets de filtro salvos</button>
+    </div>
+
+    <div class="cfg-sec-title" style="margin-top:14px;">🚫 Sugestões recusadas ("não sugerir mais")</div>
+    <div id="minhasprefs-recusadas">
+      ${_sugestoesRecusadas.length ? _sugestoesRecusadas.map(id=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
+          <div style="font-size:12px;color:var(--txt2);">${esc(_sugestaoRecusaLabel(id))}</div>
+          <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa('${esc(id)}')">🔄 Esquecer recusa</button>
+        </div>`).join('')
+        : '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhuma sugestão recusada — tudo pode aparecer normalmente.</div>'}
+    </div>
+  `;
+}
+function _renderMinhasPrefsRotinaRow(label, on, toggleCall){
+  return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
+    <div style="font-size:12px;color:var(--txt);">${esc(label)}</div>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:${on?'var(--teal)':'var(--txt3)'};cursor:pointer;">
+      ${on?'Ligado':'Desligado'}
+      <input type="checkbox" ${on?'checked':''} onchange="${toggleCall}" style="cursor:pointer;">
+    </label>
+  </div>`;
+}
+function _prefsToggleTimelineInicial(){
+  const novo = _boardPrefsSquad.visao_inicial==='timeline' ? '' : 'timeline';
+  _saveBoardPref('visao_inicial', novo);
+  showToast(novo ? '🛤️ Timeline será sua visão inicial a partir de agora.' : '🛤️ Timeline deixou de ser a visão inicial — volta a abrir no Kanban.');
+  renderMinhasPrefsBody();
+}
+function _prefsToggleMeusCardsFixado(){
+  const novo = !_boardPrefsSquad.meus_cards_fixado;
+  _saveBoardPref('meus_cards_fixado', novo);
+  _applyMeusCardsFixadoUI();
+  showToast(novo ? '📌 "Meus cards" fixado no topo do board.' : '📌 "Meus cards" removido do topo do board.');
+  renderMinhasPrefsBody();
+}
+// Só desliga por aqui (não tem como "ligar" sem um bloco de horário —
+// esse valor só nasce da sugestão automática percebendo o padrão real
+// de uso; a linha some do painel de toggle quando ainda não existe).
+function _prefsToggleAtrasadosAuto(){
+  _saveBoardPref('visao_atrasados_bloco', null);
+  showToast('🔴 Filtro de atrasados automático desligado.');
+  renderMinhasPrefsBody();
+}
+function _removerAtalhoAtribuicaoRapida(init){
+  const atual = (_boardPrefsSquad.atribuicao_rapida||[]).filter(x=>x!==init);
+  _saveBoardPref('atribuicao_rapida', atual);
+  delete ATALHO_ACOES['atribuir_'+init];
+  _atalhoLimpar('atribuir_'+init); // remove a combinação de tecla junto, se tinha uma
+  showToast('👤 Atalho de atribuição removido.');
+  renderMinhasPrefsBody();
+}
+
 function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=false){
   if(!passesHybridView(card)) return false;
   if(!ignoreOwner&&activeFilters.owner){
@@ -26689,6 +26898,7 @@ const HELP_CONTENT = {
     { icon:'🏛', title:'Squad Gestão', text:'Quando um ADM registra algo em uma campanha (pelo board ou pelo painel), a entrada entra automaticamente como 🏛 Gestão — uma "squad" separada das operacionais, com cor própria (roxo). Isso deixa claro na timeline quando um registro veio da gestão em vez de um squad específico, sem precisar escolher manualmente.' },
     { icon:'📦', title:'Arquivados', text:'Cards podem ser arquivados clicando em "📦 Arquivar" no modal (o mesmo botão vira "♻️ Restaurar" quando o card já está arquivado). Para ver arquivados, clique em Arquivados na toolbar. Clique no <b>título</b> de um card da lista pra abrir o modal normal e ver o conteúdo (descrição, checklist, histórico...) sem precisar restaurar antes — ele continua arquivado até alguém clicar em "Restaurar" (na lista ou dentro do próprio modal, que já mostra o botão certo pro estado atual). A tela tem filtros por nome, tag, responsável e coluna (a coluna em que o card estava quando foi arquivado) para achar rápido o que precisa. As listas de Recorrentes e Modelos também têm filtros por nome e tag.\n\n🗄 <b>Arquivamento automático por idade:</b> em ⚙ Config → Automações, PO/Organizador/ADM pode ativar uma regra que sinaliza cards muito antigos E parados (as duas condições precisam ser verdadeiras: idade mínima de criação e tempo sem edição/comentário). Dá pra marcar colunas que nunca entram nessa regra — útil pra um Backlog onde cards ficam parados de propósito, aguardando priorização, sem virar "esquecido" pro sistema.\n\n<b>Nunca arquiva sozinho sem alguém ver antes:</b> quando existem cards batendo com a regra, o primeiro PO/Organizador/ADM que abrir o board no dia vê uma tela com a lista inteira, cada card com checkbox (desmarque quem não deve ser arquivado agora) e dois botões — "✅ Confirmar arquivamento" ou "⏭ Agora não". Clicar em "Agora não" passa a decisão pra próxima pessoa elegível que abrir o board (mesmo dia); ninguém é incomodado 2x no mesmo dia. Se ninguém confirmar, a lista continua pendente e acumula com os novos candidatos do dia seguinte, até alguém revisar.' },
     { icon:'🐟', title:'Multi-squad', text:'O Maré Digital suporta múltiplos boards. Acesse via kanban.html?squad=prf, kanban.html?squad=dados etc. Ao fazer login, o sistema detecta seus squads e direciona para o board correto — ou mostra a tela de seleção se você pertencer a mais de um.\n\n🎯 <b>Squad padrão:</b> se você acessa sem especificar um squad na URL (favorito salvo, digitou o endereço direto), o board abre sozinho no ÚLTIMO squad que você usou — sem precisar escolher de novo toda vez. Quer sempre cair num squad específico, mesmo que use outros de vez em quando? No seletor de squad (clique no nome do squad atual, no cabeçalho), a 1ª opção é "📌 Fixar este squad como padrão" — clique de novo pra remover a fixação e voltar a seguir o último squad usado. Um link com ?squad=X sempre respeita o squad pedido, nunca é sobrescrito por essa preferência.' },
+    { icon:'👤', title:'Minhas Preferências', text:'Painel único reunindo toda a sua personalização pessoal do board — antes espalhada em vários lugares diferentes. Acesse clicando no seu avatar (canto superior direito) → "👤 Minhas Preferências", ou pelo botão de mesmo nome dentro de "⚙ Configurações".\n\nDo que ele cuida: 🎨 Tema (claro/escuro/automático), 🔍 Fonte e 📐 Densidade dos cards, 📌 Squad padrão, 🔔 Não Perturbe (atalho rápido pras mesmas opções do sino), ⌨️ acesso direto aos Atalhos de teclado, e as sugestões de "personalização baseada em rotina" (ver abaixo).\n\n💡 <b>Sugestões de rotina, agora reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e cada atalho de atribuição rápida já criado aparecem com um toggle — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo (nem torcer pra não ter clicado "Não sugerir mais" sem querer).\n\n🚫 <b>Sugestões recusadas</b>: toda vez que você clica "Não sugerir mais" numa sugestão, ela entra numa lista aqui — "🔄 Esquecer recusa" deixa o app te sugerir aquilo de novo, se o padrão de uso se repetir. Sincroniza com a sua conta (diferente de antes, quando "não sugerir mais" ficava preso só no navegador que você clicou).' },
     { icon:'🐟', title:'Ligar/desligar os peixinhos do fundo', text:'Clique no 🐟 do título "Maré Digital" (canto superior esquerdo) pra mostrar ou esconder os peixinhos e bolhas animados do fundo. É uma preferência pessoal, salva só neste navegador (não muda o que os outros veem, e não sincroniza entre computador/celular) — clique de novo a qualquer momento pra trazer de volta.' },
     { icon:'🔍', title:'Tamanho da fonte e densidade dos cards', text:'Clique em 🔍 Fonte na toolbar para deixar os cards (título, tags, prazo) maiores ou menores — Pequena, Padrão, Grande ou Muito grande. Útil pra quem tem dificuldade de leitura na tela.\n\n📐 <b>Densidade dos cards</b> (no mesmo menu, depois da divisória): "Detalhado" (padrão) mostra tudo — capa, indicadores de descrição/anexo, barra de checklist, avatares de participantes, badges de risco/direcional/aging; "Compacto" esconde esse conteúdo secundário pra caber mais cards na tela de uma vez — título, prioridade, prazo, impedimento/OKR e avatar do responsável continuam sempre visíveis. Funciona junto com o tamanho de fonte, sem conflito (um resolve "ler melhor", o outro resolve "ver mais cards").\n\n👤 Os dois são preferência 100% sua, salvos na sua conta — funcionam igual em qualquer computador que você entrar, sem mudar nada pros outros.' },
     { icon:'🕐', title:'Tema automático', text:'Não quer ficar trocando de tema na mão ao longo do dia? Clique no botão 🕐, ao lado do botão de tema (🌙/☀️), pra ligar a troca sozinha — o board acompanha o horário de São Paulo: ☀️ Lençóis Maranhenses (claro) das 06h às 12h, 🌴 Vice City das 12h às 18h (o easter egg escondido virou tema oficial nesse horário) e 🌙 Abrolhos (escuro) das 18h às 06h. Clique de novo no 🕐 pra desligar.\n\nQualquer troca manual de tema (clicar no 🌙/☀️, trocar a variante do claro, ou o easter egg do Vice City) desliga o automático na hora — nesse momento você escolheu um tema por conta própria, e o app não sobrescreve isso sozinho na próxima virada de horário.\n\n💻 Diferente da maioria das outras preferências de tela, esta fica salva só NESTE navegador (não na sua conta) — se você usa o board em mais de um computador, precisa ligar em cada um separadamente.' },
@@ -34173,7 +34383,7 @@ _onFbReady(()=>{
   loadCalEvents();
   applyViewMode();
   _onRealAuthChange(()=>{
-    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
+    setTimeout(()=>{ loadNotifs(); checkDueNotifs(); checkAgingAutomations(); loadNotifPrefs(); loadAtalhosCustom(); loadToolbarOrder(); loadBoardPrefs(); loadBoardPrefsGlobal(); loadFilterPresets(); loadSugestoesRecusadas(); renderNotifPermUI(); renderNotifSoundToggle(); }, 2000);
   });
   // checkDueNotifs()/checkAgingAutomations() só rodam de verdade a partir das
   // 09:00 (horário de SP, ver DAILY_TRIGGER_HOUR_SP) — sem isso, quem abre o
