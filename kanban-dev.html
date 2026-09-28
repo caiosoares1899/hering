@@ -6355,7 +6355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.755-dev</div>
+<div class="version">v8.30.756-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13405,7 +13405,7 @@ function renderMinhasPrefsBody(){
       </div>`;
     }).join('') : ''}
     <div style="padding:8px 0 0;">
-      <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');toggleFilters();">🔭 Ver meus presets de filtro salvos</button>
+      <button class="btn btn-sm" onclick="closeOv('minhasprefs-ov');_prefsOpenFilters();">🔭 Ver meus presets de filtro salvos</button>
     </div>
 
     <div class="cfg-sec-title" style="margin-top:14px;">🚫 Sugestões recusadas ("não sugerir mais")</div>
@@ -13456,6 +13456,16 @@ function _removerAtalhoAtribuicaoRapida(init){
   _atalhoLimpar('atribuir_'+init); // remove a combinação de tecla junto, se tinha uma
   showToast('👤 Atalho de atribuição removido.');
   renderMinhasPrefsBody();
+}
+// Achado real (/monitorarbugs, 2026-09-28): o botão "🔭 Ver meus presets de
+// filtro salvos" chamava toggleFilters() direto -- se a barra de Filtros JÁ
+// estivesse aberta antes da pessoa abrir "Minhas Preferências" (os dois não
+// são mutuamente exclusivos, .filter-bar não é um .ov que bloqueia clique),
+// o toggle FECHAVA a barra em vez de mostrar os presets, o oposto do que o
+// botão promete. Só abre se ainda não estiver aberta.
+function _prefsOpenFilters(){
+  const bar = document.getElementById('filter-bar');
+  if(bar && (bar.style.display==='none'||bar.style.display==='')) toggleFilters();
 }
 
 function passesFilter(card, ignoreOwner=false, ignoreTag=false, ignoreSubteam=false){
@@ -28218,7 +28228,18 @@ function _criarAtalhoAtribuicao(init){
 // ATALHO_ACOES é `const`, mas isso só trava a REFERÊNCIA do objeto --
 // adicionar propriedades nele continua válido.
 function _applyAtribuicaoRapidaAcoes(){
-  (_boardPrefsSquad.atribuicao_rapida||[]).forEach(init=>{
+  const atual = _boardPrefsSquad.atribuicao_rapida||[];
+  // Achado real (/monitorarbugs, 2026-09-28, área "👤 Minhas Preferências"):
+  // esta função só ADICIONAVA entradas dinâmicas, nunca removia — reabrir
+  // ⌨️ Atalhos noutra ABA/sessão (mesma conta) depois de remover um atalho
+  // de atribuição rápida pelo novo painel continuava mostrando a ação
+  // removida (com a tecla antiga ainda funcionando) até essa outra aba ser
+  // recarregada. Poda qualquer entrada dinâmica ('atribuir_*') que não
+  // esteja mais em atribuicao_rapida antes de (re)adicionar as válidas.
+  Object.keys(ATALHO_ACOES).forEach(id=>{
+    if(id.startsWith('atribuir_') && !atual.includes(id.slice('atribuir_'.length))) delete ATALHO_ACOES[id];
+  });
+  atual.forEach(init=>{
     const id = 'atribuir_'+init;
     const m = members.find(x=>x.init===init);
     ATALHO_ACOES[id] = { label:'👤 Atribuir a '+(m?_shortName(m.name):init), tipo:'card', run:()=>_quickAssignOwner(init) };
@@ -28297,6 +28318,25 @@ function _boardPrefLoadOrMigrate(campo, legacyKey, padrao, parse){
   return valor;
 }
 function _applyBoardPrefsSquad(){
+  // Achado real (/monitorarbugs, 2026-09-28, área "👤 Minhas Preferências"):
+  // os guards "1x por sessão" dos Casos #1/#5 abaixo (window._visaoInicialAplicada/
+  // window._visaoAtrasadosAplicada) só travavam a condição, não a CHAMADA —
+  // como este listener reroda a cada mudança de QUALQUER board_pref (não só
+  // visao_inicial/visao_atrasados_bloco), ligar "Timeline como visão inicial"/
+  // "Filtro de atrasados automático" pelo novo painel (ou aceitando a sugestão)
+  // NO MEIO da sessão disparava o bloco de novo — mudava `boardView`/
+  // `activeFilters.due` em memória sem chamar renderBoard(), então o board
+  // continuava mostrando o Kanban normal até QUALQUER outra ação re-renderizar
+  // (mover um card, editar algo) e o board trocar pra Timeline sozinho, sem a
+  // pessoa ter clicado no botão — exatamente o que o comentário do Caso #1
+  // promete NUNCA fazer. Fix: os 2 blocos só avaliam a condição na 1ª chamada
+  // de verdade desta função nesta sessão (o boot real) — mudanças de pref
+  // feitas DEPOIS só valem a partir do próximo carregamento da página, igual
+  // o toast de cada um já promete ("será"/"a partir de agora", não "agora
+  // mesmo").
+  const _isFirstApply = !window._boardPrefsSquadApplied;
+  window._boardPrefsSquadApplied = true;
+
   raiaMode = _boardPrefsSquad.raia || '';
   _applyRaiaBtnUI();
   collapsedCols = new Set(_boardPrefsSquad.collapsed_cols || []);
@@ -28327,7 +28367,7 @@ function _applyBoardPrefsSquad(){
   // meio da sessão seria jogado de volta pra Timeline à força no próximo
   // pref que mudasse (reordenar coluna, trocar visão de raia...) -- o
   // oposto do "nunca muda a interface sem a pessoa pedir".
-  if(_boardPrefsSquad.visao_inicial==='timeline' && !window._visaoInicialAplicada){
+  if(_isFirstApply && _boardPrefsSquad.visao_inicial==='timeline' && !window._visaoInicialAplicada){
     window._visaoInicialAplicada = true;
     boardView = 'timeline';
     const btnTl=document.getElementById('btn-timeline');
@@ -28341,7 +28381,7 @@ function _applyBoardPrefsSquad(){
   // de novo durante a sessão (evita a complexidade/risco de ligar E
   // desligar o filtro sozinho enquanto a pessoa trabalha — se ela quiser
   // tirar o filtro, o botão de Limpar de sempre já resolve).
-  if(_boardPrefsSquad.visao_atrasados_bloco!=null && !window._visaoAtrasadosAplicada){
+  if(_isFirstApply && _boardPrefsSquad.visao_atrasados_bloco!=null && !window._visaoAtrasadosAplicada){
     window._visaoAtrasadosAplicada = true;
     const bloco = _boardPrefsSquad.visao_atrasados_bloco;
     const horaAtual = new Date().getHours();

@@ -2549,6 +2549,30 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (`_applyBoardPrefsSquad()`) já auditada em 2026-09-11, confirmada de
   novo correta. dev v8.30.754-dev.
 
+- **2026-09-28, 👤 Minhas Preferências (pedido explícito, "roda um
+  /monitorarbugs de rotina nessa area" — painel novo, v8.30.755-dev,
+  nunca tinha tido rodada própria)**: 3 achados reais. (1) **mais
+  severo, técnica 3** — ligar Timeline-visão-inicial/filtro de
+  atrasados pelo painel NO MEIO da sessão mudava `boardView`/
+  `activeFilters.due` sem `renderBoard()` — o board só trocava sozinho
+  na PRÓXIMA ação que re-renderizasse por outro motivo, sem a pessoa
+  ter clicado em nada, contradizendo o comentário do Caso #1 ("nunca
+  muda a interface sem a pessoa pedir"). Causa: os guards "1x por
+  sessão" travavam a CONDIÇÃO, não a CHAMADA — `_applyBoardPrefsSquad()`
+  reroda a cada mudança de qualquer `board_pref` (listener ao vivo).
+  Fix: `_isFirstApply`, os 2 blocos só avaliam na 1ª chamada real da
+  função na sessão. (2) técnica 1 — `_applyAtribuicaoRapidaAcoes()` só
+  adicionava, nunca removia entradas de `ATALHO_ACOES` — remover um
+  atalho de atribuição pelo painel numa aba deixava a ação fantasma
+  (com tecla funcionando) em OUTRA aba da mesma conta até recarregar.
+  Fix: poda `atribuir_*` que não esteja mais em `atribuicao_rapida`
+  antes de readicionar. (3) técnica 3 — botão "Ver meus presets de
+  filtro" chamava `toggleFilters()` direto; se a barra já estivesse
+  aberta antes de abrir o painel, FECHAVA em vez de mostrar. Fix:
+  `_prefsOpenFilters()` só abre se ainda fechada. Validado com
+  Playwright (mesmo harness de mock da rodada de construção) — os 3
+  cenários reproduzidos e confirmados. dev v8.30.756-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

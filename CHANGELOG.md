@@ -3829,6 +3829,63 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.756-dev — 2026-09-28 — fix(👤 Minhas Preferências): 3 achados reais do `/monitorarbugs` na área
+
+`/monitorarbugs`, escopo nomeado — área "👤 Minhas Preferências" (v8.30.755-dev,
+PR #1083), nunca tinha tido rodada própria da skill, só validação
+funcional feita na hora de construir. 3 achados reais.
+
+**(1) mais severo, técnica 3** — ligar "🛤️ Timeline como visão inicial"
+ou "🔴 Filtro de atrasados automático" pelo painel NO MEIO da sessão
+(ou aceitando a sugestão original, mesmo bug pré-existente) mudava
+`boardView`/`activeFilters.due` em memória sem chamar `renderBoard()` —
+o board continuava mostrando o Kanban normal até QUALQUER outra ação
+re-renderizar (mover um card, editar algo), e o board trocava pra
+Timeline sozinho, sem a pessoa ter clicado no botão. Contradiz
+diretamente o que o próprio comentário do Caso #1 promete ("nunca muda
+a interface sem a pessoa pedir"). Causa: os guards "1x por sessão"
+(`window._visaoInicialAplicada`/`window._visaoAtrasadosAplicada`)
+travavam a CONDIÇÃO, não a CHAMADA — como `_applyBoardPrefsSquad()`
+reroda a cada mudança de QUALQUER `board_pref` (listener ao vivo), uma
+mudança de pref FEITA DEPOIS do boot conseguia passar pelo guard e
+disparar o bloco de novo. Fix: os 2 blocos só avaliam a condição na 1ª
+chamada de verdade da função nesta sessão (`_isFirstApply`) — mudanças
+de pref feitas depois só valem a partir do próximo carregamento da
+página, igual o toast de cada um já promete ("será"/"a partir de
+agora", não "agora mesmo").
+
+**(2) técnica 1** — `_applyAtribuicaoRapidaAcoes()` (recria as ações
+dinâmicas de "atribuição rápida" em `ATALHO_ACOES`) só ADICIONAVA,
+nunca removia — reabrir "⌨️ Atalhos" numa OUTRA aba/sessão da mesma
+conta, depois de remover um atalho pelo novo painel, continuava
+mostrando a ação removida (com a tecla antiga ainda funcionando) até
+essa outra aba recarregar a página. Fix: poda qualquer entrada dinâmica
+(`atribuir_*`) que não esteja mais em `atribuicao_rapida` antes de
+(re)adicionar as válidas.
+
+**(3) técnica 3** — o botão "🔭 Ver meus presets de filtro salvos"
+chamava `toggleFilters()` direto — se a barra de Filtros já estivesse
+aberta ANTES da pessoa abrir "Minhas Preferências" (os dois não são
+mutuamente exclusivos), o toggle FECHAVA a barra em vez de mostrar os
+presets, o oposto do que o botão promete. Fix: `_prefsOpenFilters()`
+só chama `toggleFilters()` quando a barra ainda não está visível.
+
+Checado e sem achado: `_prefsToggleMeusCardsFixado()` (efeito
+imediato correto, via `_applyMeusCardsFixadoUI()` chamada direta, sem
+depender do listener); `_removerAtalhoAtribuicaoRapida()` lê
+`_boardPrefsSquad` sempre fresco (`board_prefs` usa `onValue` ao vivo,
+não poll — mesma garantia já confirmada segura pra Campanhas em
+2026-09-21); entrada dupla de pontos de entrada (avatar + ⚙
+Configurações) sem risco de empilhar 2 overlays (`.ov` é tela cheia,
+bloqueia clique no que está atrás).
+
+Validado com Playwright (mesmo harness de mock do Firebase da rodada
+de construção) — os 3 cenários exatos reproduzidos e confirmados
+corrigidos antes/depois do fix.
+
+Checks de rotina: `node --check` OK no maior bloco `<script>`; balanço
+de chaves/parênteses sem alteração (-1/+4).
+
 ### v8.30.755-dev — 2026-09-28 — feat: painel "👤 Minhas Preferências"
 
 Pedido direto do usuário, na sequência de uma varredura de "oportunidades
