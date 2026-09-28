@@ -197,6 +197,14 @@ const agenteAgil = onRequest(
       especialista: payload.especialista || DEFAULT_ESPECIALISTA,
       texto: payload.texto,
       cardId,
+      // Guarda a referencia ORIGINAL (não só o cardId já resolvido) —
+      // 2026-09-28, pedido direto: intakeTrigger.js precisa saber se este
+      // htmlAnexo veio do recorrente "relatorio_diario" especificamente,
+      // pra decidir se espelha o link também na aba 📊 Dados do painel
+      // (ver comentário grande em intakeTrigger.js). cardId sozinho não
+      // basta pra essa decisão — não diferencia "veio de referencia" de
+      // "veio de cardId direto".
+      referencia: payload.referencia || null,
       // Relatório HTML pronto (ver schema.js:htmlAnexo) — passa direto pra
       // fila, sem tocar no LLM aqui; intakeTrigger.js é quem hospeda.
       htmlAnexo: payload.htmlAnexo || null,

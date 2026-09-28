@@ -57,6 +57,10 @@
 // bruto (pode ter centenas de KB/MB com imagens embutidas) nunca deve
 // passar pelo prompt do modelo, só o link final já hospedado. Ver
 // `relatorioHospedado`/`contextoRelatorio` dentro de processarIntake().
+// Quando o recorrente é especificamente "relatorio_diario", o link também
+// é espelhado em `kanban/dados_diarios_dev/{data}` — pedido direto,
+// alimenta a aba "📊 Central de Dados" do painel.html sem publicação
+// manual (ver `entry.referencia`/o bloco logo antes de `buildTools()`).
 
 const { onValueCreated } = require('firebase-functions/v2/database');
 const { defineSecret } = require('firebase-functions/params');
@@ -244,6 +248,27 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
         console.error(`[agente-agil-intake:${squadId}] falha ao hospedar relatório (htmlAnexo):`, id, err);
         relatorioHospedado = { erro: truncar(err.message, 300) };
       }
+    }
+
+    // 📊 Central de Dados (painel.html), pedido direto (2026-09-28): quando
+    // o relatório é especificamente do recorrente "relatorio_diario" (não
+    // qualquer htmlAnexo genérico — só esse recorrente alimenta essa aba),
+    // espelha o link também em kanban/dados_diarios_dev/{data} — é onde o
+    // time já publica manualmente o resultado do dia (captação/
+    // apresentações/PDF); o botão do relatório aparece junto no Histórico,
+    // sem ninguém colar link nenhum. update() (nunca set()) — não apaga
+    // nada que um humano já tenha publicado nesse dia, e vice-versa:
+    // publishDadosPost() (painel-dev.html) preserva este campo do mesmo
+    // jeito que já preserva pdfUrl/pdfName.
+    // ⚠️ `_dev` fixo de propósito por ora — este mecanismo ainda está em
+    // validação (squad `dev`, ver README.md); quando for pra produção de
+    // verdade, isso precisa ficar configurável (não dá pra saber daqui se
+    // o resultado é pro painel.html ou painel-dev.html).
+    if (relatorioHospedado && relatorioHospedado.url && entry.referencia && entry.referencia.tipo === 'recorrente' && entry.referencia.nome === 'relatorio_diario') {
+      await db
+        .ref('kanban/dados_diarios_dev/' + entry.referencia.data)
+        .update({ relatorioUrl: relatorioHospedado.url, relatorioTitulo: relatorioHospedado.titulo })
+        .catch((err) => console.error(`[agente-agil-intake:${squadId}] falha ao espelhar link em dados_diarios_dev:`, id, err));
     }
 
     const tools = buildTools({

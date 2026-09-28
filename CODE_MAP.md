@@ -3500,6 +3500,17 @@ detalhe aberto — ver nota abaixo).
   `notificarFalhaSemCard()`) que chegou um relatório sem onde anexar.
   `uploadAndSign`/`reportBasePath` injetáveis em `processarIntake()` só
   pra teste (mesmo padrão de `buildWritePlan`).
+  **Espelho em "📊 Central de Dados" (2026-09-28, pedido direto)**: quando
+  o `htmlAnexo` vem do recorrente `relatorio_diario` especificamente
+  (`entry.referencia.nome`, guardado a partir de `http.js` agora —
+  antes só o `cardId` já resolvido sobrevivia até aqui), o link também é
+  espelhado via `update()` (nunca `set()`) em
+  `kanban/dados_diarios_dev/{data}` — é o node que `painel-dev.html`
+  (`renderDadosHistorico()`, ver seção `painel.html` abaixo) já usa pro
+  post manual diário de captação; o botão "🤖 Relatório" aparece sozinho
+  no Histórico, sem ninguém colar link. `_dev` fixo de propósito por ora
+  (mecanismo ainda em validação, squad `dev`) — vai precisar virar
+  configurável quando for pra produção de verdade.
 - `agenteLog.js` — histórico do Agente Ágil por squad, 2026-08-27, pedido
   direto ("quero uma area q guarde todas as alterações nos cards que ele
   faça naquela squad, para servir de historico para o PO... pode ate

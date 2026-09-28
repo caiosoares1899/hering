@@ -555,3 +555,101 @@ test('entry sem htmlAnexo: tarefa não menciona relatório nenhum (comportamento
 
   assert.doesNotMatch(client.historias()[0][0].text, /relatório/i);
 });
+
+// ── 📊 Central de Dados (painel.html): espelho em dados_diarios_dev (2026-09-28) ──
+test('htmlAnexo + referencia relatorio_diario: espelha o link em dados_diarios_dev/{data}', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório diário de hoje.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    referencia: { tipo: 'recorrente', nome: 'relatorio_diario', data: '2026-09-28' },
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário — 2026-09-28' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dados-1', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.relatorioUrl, 'https://fake-storage.example/relatorios/dev/c1/2026-09-28/relatorio.html');
+  assert.equal(espelho.relatorioTitulo, 'Relatório Diário — 2026-09-28');
+});
+
+test('htmlAnexo via cardId direto (sem referencia): NÃO espelha em dados_diarios_dev', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Teste isolado, direto por cardId.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    htmlAnexo: { html: '<html></html>', titulo: 'Teste isolado' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dados-2', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  const espelho = await db.ref('kanban/dados_diarios_dev').get();
+  assert.equal(espelho.val(), null);
+});
+
+test('htmlAnexo via referencia de OUTRO recorrente (não relatorio_diario): NÃO espelha em dados_diarios_dev', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório de outra recorrência.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    referencia: { tipo: 'recorrente', nome: 'outro_relatorio_qualquer', data: '2026-09-28' },
+    htmlAnexo: { html: '<html></html>', titulo: 'Outro relatório' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dados-3', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  const espelho = await db.ref('kanban/dados_diarios_dev').get();
+  assert.equal(espelho.val(), null);
+});
+
+test('htmlAnexo + referencia relatorio_diario, dryRun: NÃO espelha nada (nada foi hospedado de verdade)', async () => {
+  const db = seedDb();
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: true });
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório diário de hoje.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    referencia: { tipo: 'recorrente', nome: 'relatorio_diario', data: '2026-09-28' },
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dados-4', entry, llmClient: client });
+
+  const espelho = await db.ref('kanban/dados_diarios_dev').get();
+  assert.equal(espelho.val(), null);
+});
+
+test('htmlAnexo + referencia relatorio_diario: NÃO apaga dado que um humano já publicou nesse mesmo dia (update, não set)', async () => {
+  const db = seedDb();
+  await db.ref('kanban/dados_diarios_dev/2026-09-28').set({ date: '2026-09-28', texto: 'Bom dia pessoal, captação em dia.', capDia: 100 });
+  const trigger = createIntakeTrigger({ squadId: SQUAD_ID, dryRun: false });
+  const { uploadAndSign, reportBasePath } = fakeUpload();
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+  const entry = {
+    texto: 'Relatório diário de hoje.',
+    especialista: 'databricks',
+    cardId: 'c1',
+    referencia: { tipo: 'recorrente', nome: 'relatorio_diario', data: '2026-09-28' },
+    htmlAnexo: { html: '<html></html>', titulo: 'Relatório Diário' },
+  };
+
+  await trigger.processarIntake(db, { id: 'i-dados-5', entry, llmClient: client, uploadAndSign, reportBasePath });
+
+  const espelho = (await db.ref('kanban/dados_diarios_dev/2026-09-28').get()).val();
+  assert.equal(espelho.texto, 'Bom dia pessoal, captação em dia.', 'dado publicado por humano continua intacto');
+  assert.equal(espelho.capDia, 100);
+  assert.ok(espelho.relatorioUrl, 'link do relatório foi adicionado junto');
+});
