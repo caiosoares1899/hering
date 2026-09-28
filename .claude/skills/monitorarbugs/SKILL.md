@@ -2573,6 +2573,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   Playwright (mesmo harness de mock da rodada de construção) — os 3
   cenários reproduzidos e confirmados. dev v8.30.756-dev.
 
+- **2026-09-28, 👥 Gerenciamento global de usuários (pedido genérico,
+  "Roda outro" — `painel-dev.html`, `openGlobalUsersModal()`/
+  `updateSquadUserRole()`/`deleteGlobalUser()` + aba "Membros do Squad"
+  (`updateUserRole()`/`addGuestByEmail()`), área nunca tinha rodada
+  própria — só citada de passagem na rodada de 2026-09-21 sobre papel de
+  usuário)**: 1 achado real (3 ocorrências da mesma causa), técnica 2
+  (comparar contra padrão-irmão já resolvido). `toggleUserSquad()`
+  (mesmo modal) e `alterarRole()` (`kanban-dev.html`, mesma operação
+  feita a partir do board) sempre espelham a escrita em
+  `kanban/usuarios/{uid}` também em `kanban/usuarios_publicos/{uid}` —
+  o node que `kanban.html` escuta ao vivo pra montar `members`
+  (papel/squad de cada pessoa, usado por @menção, filtros e automações
+  como "Notificar PO/Organizador"). `updateSquadUserRole()`,
+  `updateUserRole()` e `addGuestByEmail()` gravavam só no 1º node —
+  promover alguém a PO/Organizador (ou convidar pra um squad) por
+  qualquer uma dessas 3 telas não refletia em nenhuma aba de
+  `kanban.html` já aberta até a pessoa relogar. Fix: as 3 agora
+  espelham em `usuarios_publicos` logo após a escrita original. dev
+  v3.68 · painel-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
