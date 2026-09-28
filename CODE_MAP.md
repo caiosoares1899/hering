@@ -3644,6 +3644,14 @@ detalhe aberto — ver nota abaixo).
   agora tem overlap real com o orquestrador, que só existe em `dev`/
   `dados`; `http.js` (canal do especialista externo) segue esse default
   automaticamente
+- `outputs/sanitizeAgentText.js` — `sanitizeAgentText()` (2026-09-28,
+  achado real no canário do `htmlAnexo`): o modelo vazou um fragmento de
+  fechamento de tag alucinado (`</texto>\n</invoke>`) no fim de um
+  comentário mais longo/complexo — corta com segurança qualquer sequência
+  de tags de fechamento soltas no FIM do texto (nunca no meio). Usado nos
+  3 campos de texto livre que vão direto pro board sem vocabulário fixo:
+  `outputs/comentario.js` (`texto`), `outputs/risco.js` (`texto`),
+  `outputs/editarCampos.js` (`desc`).
 
 ### intake/ e backup/ — online
 - `intake/submit.js` — `intakeSubmit`, HTTP público sem login, único ponto de

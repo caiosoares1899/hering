@@ -10,8 +10,10 @@
 // checklist_item/editar_campos/mover_coluna, que mudam um ESTADO existente
 // e por isso valem uma linha de histórico).
 
+const { sanitizeAgentText } = require('./sanitizeAgentText');
+
 function build(out, ctx) {
-  const texto = out.texto;
+  const texto = sanitizeAgentText(out.texto);
   return {
     kind: 'transaction',
     path: `${ctx.cardPath}/riscos`,

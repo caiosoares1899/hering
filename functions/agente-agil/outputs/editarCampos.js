@@ -28,6 +28,7 @@
 // arriscar gravar algo que a UI nunca vai conseguir resolver.
 
 const notify = require('../notifications');
+const { sanitizeAgentText } = require('./sanitizeAgentText');
 
 const HIST_CAP = 50;
 const PRIORITY_LABEL = { low: '🟢 Baixa', medium: '🟡 Média', high: '🔴 Alta', critical: '🔥 Crítica' };
@@ -50,19 +51,20 @@ async function build(out, ctx) {
   const nowISO = new Date().toISOString();
 
   if (out.desc !== undefined) {
+    const desc = sanitizeAgentText(out.desc);
     const card = await ctx.readCard();
     const before = card.desc || '';
-    if (before !== out.desc) {
-      steps.push({ kind: 'update', path: ctx.cardPath, data: { desc: out.desc } });
+    if (before !== desc) {
+      steps.push({ kind: 'update', path: ctx.cardPath, data: { desc } });
       historyEntries.push(
-        before === '' ? `definiu descrição: ${truncateForHistory(out.desc)}` : `alterou descrição: ${truncateForHistory(before)} → ${truncateForHistory(out.desc)}`
+        before === '' ? `definiu descrição: ${truncateForHistory(desc)}` : `alterou descrição: ${truncateForHistory(before)} → ${truncateForHistory(desc)}`
       );
     }
-    if (/@[a-zA-Z]/.test(out.desc)) {
+    if (/@[a-zA-Z]/.test(desc)) {
       const members = await ctx.readMembers();
       const mentionSteps = await notify.buildMentionSteps(ctx.db, {
         squadId: ctx.squadId,
-        text: out.desc,
+        text: desc,
         members,
         cardId: ctx.cardId,
         dryRun: ctx.dryRun,
