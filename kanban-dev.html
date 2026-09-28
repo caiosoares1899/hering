@@ -6339,7 +6339,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.753-dev</div>
+<div class="version">v8.30.754-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11864,7 +11864,16 @@ function _sugestaoTimelineKey(){ return 'sugestao_timeline_sessoes_'+ACTIVE_SQUA
 function _iniciarSessaoTimeline(){
   let sessoes = [];
   try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoTimelineKey())||'[]'); }catch(e){ sessoes=[]; }
-  sessoes.push({usado:false, hora:new Date().getHours()});
+  // Achado real (/monitorarbugs, 2026-09-28): sem essa checagem, cada RELOAD
+  // forçado pelo auto-update (CHECK_INTERVAL_MS, ver CLAUDE.md — um único dia
+  // de promoções em lote já registrou até 13 reloads forçados) virava uma
+  // "sessão" nova pra esta janela — a janela inteira de 5 podia se preencher
+  // num só dia de trabalho normal, sem a pessoa ter usado a Timeline cedo em
+  // mais de 1 dia de verdade. Mesma classe de bug já corrigida no Caso #5
+  // (visão de atrasados, PR #867) — idempotente por DIA, não por boot.
+  const hoje = _localDateStrBoard(new Date());
+  if(sessoes.length && sessoes[sessoes.length-1].date===hoje) return;
+  sessoes.push({usado:false, hora:new Date().getHours(), date:hoje});
   if(sessoes.length > SUGESTAO_TIMELINE_JANELA_SESSOES) sessoes = sessoes.slice(-SUGESTAO_TIMELINE_JANELA_SESSOES);
   safeLS.setItem(_sugestaoTimelineKey(), JSON.stringify(sessoes));
 }
@@ -13203,7 +13212,13 @@ function _sugestaoMeusCardsKey(){ return 'sugestao_meuscards_sessoes_'+ACTIVE_SQ
 function _iniciarSessaoMeusCards(){
   let sessoes = [];
   try{ sessoes = JSON.parse(safeLS.getItem(_sugestaoMeusCardsKey())||'[]'); }catch(e){ sessoes=[]; }
-  sessoes.push({usado:false});
+  // Achado real (/monitorarbugs, 2026-09-28): mesmo gap do Caso #1 (Timeline)
+  // — sem essa checagem, cada RELOAD forçado pelo auto-update contava como
+  // sessão nova, deixando a janela de 5 se encher num só dia de trabalho.
+  // Idempotente por DIA, não por boot — mesmo padrão do Caso #5 (PR #867).
+  const hoje = _localDateStrBoard(new Date());
+  if(sessoes.length && sessoes[sessoes.length-1].date===hoje) return;
+  sessoes.push({usado:false, date:hoje});
   if(sessoes.length > SUGESTAO_MEUSCARDS_JANELA_SESSOES) sessoes = sessoes.slice(-SUGESTAO_MEUSCARDS_JANELA_SESSOES);
   safeLS.setItem(_sugestaoMeusCardsKey(), JSON.stringify(sessoes));
 }
