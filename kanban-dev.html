@@ -6420,7 +6420,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.763-dev</div>
+<div class="version">v8.30.764-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6440,7 +6440,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6539,13 +6539,14 @@ fcmIsSupported().then(supported=>{
 }).catch(()=>{});
 
 // Captura e salva o token de acesso de forma segura
-window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   const credential = GoogleAuthProvider.credentialFromResult(r);
   if (credential && credential.accessToken) {
     safeLS.setItem('gcal_token', credential.accessToken);
     safeLS.setItem('gcal_token_ts', String(Date.now())); // OAuth expira em ~1h
   }
-  if(insc) window._pendingInsc=true; 
+  if(insc) window._pendingInsc=true;
+  safeLS.removeItem('login_popup_fail_streak'); // login popup deu certo — zera o contador do fallback de redirect (ver window._signInRedirect())
 });
 window._signOut=(reason)=>{
   if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
@@ -6583,6 +6584,52 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   return credential;
 });
 window.doSignOut = () => window._signOut('manual');
+
+// Fallback de login por redirect (achado real, 2026-09-29, relato direto de
+// usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
+// block the window.closed call", repetido dezenas de vezes no console, e a
+// tela caindo em "Login cancelado"). Causa raiz confirmada lendo o código-
+// fonte do SDK vendorizado: signInWithPopup() detecta que o popup fechou
+// checando authWindow.window.closed (ver pollUserCancellation() em
+// firebase-auth.js) — mas a PRÓPRIA página de login do Google
+// (accounts.google.com) aplica Cross-Origin-Opener-Policy nela mesma, o que
+// isola o popup e impede o Firebase de ler .closed corretamente. O SDK
+// interpreta isso como "popup fechado" e devolve auth/popup-closed-by-user
+// mesmo com a pessoa ainda no meio do login. Intermitente, só Chrome, e
+// fora do nosso controle — não é header nosso (GitHub Pages não define
+// Cross-Origin-Opener-Policy nenhum aqui) nem algo que dê pra corrigir só
+// mudando o código do app; é o Google aplicando essa política na própria
+// página deles.
+// signInWithRedirect() não depende de checar popup.closed (a página INTEIRA
+// navega pro Google e volta), elimina essa causa raiz de vez — mas muda a
+// experiência de popup pra navegação de página inteira, por isso só entra
+// como FALLBACK depois de 2 falhas SEGUIDAS do mesmo tipo (ver doSignIn()
+// no <script> clássico abaixo), nunca como caminho principal.
+window._signInRedirect=(insc)=>{
+  // localStorage, não window._pendingInsc: signInWithRedirect() navega a
+  // página INTEIRA pro Google e volta — qualquer estado só em memória
+  // (window.*) se perde no meio do caminho, diferente do popup (mesma
+  // página o tempo todo).
+  if(insc) safeLS.setItem('mare_pending_insc','1');
+  return signInWithRedirect(auth,provider);
+};
+// Restaura _pendingInsc de um redirect que acabou de voltar — SÍNCRONO,
+// antes de registrar onAuthStateChanged (logo abaixo), pra nunca competir
+// em corrida com o primeiro disparo real dele: getRedirectResult() é
+// assíncrono e não tem ordem garantida contra onAuthStateChanged (mesma
+// classe de armadilha já documentada em _onRealAuthChange(), 2026-09-11).
+if(safeLS.getItem('mare_pending_insc')==='1'){ safeLS.removeItem('mare_pending_insc'); window._pendingInsc=true; }
+// Captura o accessToken de um redirect que acabou de voltar, mesmo padrão
+// de window._signIn() acima (popup) — não é urgente/não compete com nada,
+// pode ficar assíncrono.
+getRedirectResult(auth).then(r=>{
+  if(!r) return; // nenhum redirect pendente (a maioria dos loads normais)
+  const credential = GoogleAuthProvider.credentialFromResult(r);
+  if(credential && credential.accessToken){
+    safeLS.setItem('gcal_token', credential.accessToken);
+    safeLS.setItem('gcal_token_ts', String(Date.now()));
+  }
+}).catch(e=>{ console.warn('[Mare] getRedirectResult() falhou:', e); });
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
@@ -10832,8 +10879,28 @@ function doSignIn(insc=false){
     // Popup fechado/bloqueado é comportamento normal do usuário, não um erro do sistema —
     // não deveria assustar com a mensagem técnica crua do Firebase.
     if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      // Fallback pra redirect (achado real, 2026-09-29, relato de usuária —
+      // ver comentário grande em window._signInRedirect(), <script type="module">
+      // acima): Chrome + Cross-Origin-Opener-Policy na própria página de login
+      // do Google fazem o Firebase achar que o popup fechou mesmo sem a
+      // pessoa ter feito nada. Só troca de caminho depois de 2 falhas
+      // SEGUIDAS do mesmo tipo — não penaliza quem realmente fechou o popup
+      // de propósito na 1ª tentativa, e não muda a experiência de popup pra
+      // redirect de quem nunca bate nesse problema.
+      const n=(parseInt(safeLS.getItem('login_popup_fail_streak'))||0)+1;
+      safeLS.setItem('login_popup_fail_streak', String(n));
+      if(n>=2 && window._signInRedirect){
+        safeLS.removeItem('login_popup_fail_streak');
+        // Normalmente NÃO resolve/rejeita antes de navegar — só rejeita de
+        // verdade em caso de configuração quebrada (domínio não autorizado
+        // etc.), daí sim vale mostrar erro em vez de deixar a tela travada
+        // em silêncio.
+        window._signInRedirect(insc).catch(e2=>{ err.textContent='Erro: '+(e2?.message||e2); err.style.display='block'; });
+        return; // sucesso: signInWithRedirect() navega a página inteira — nada mais a fazer aqui
+      }
       err.textContent='Login cancelado. Clique em Entrar para tentar novamente.';
     } else {
+      safeLS.removeItem('login_popup_fail_streak');
       err.textContent='Erro: '+(e?.message||e);
     }
     err.style.display='block';
