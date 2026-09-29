@@ -1468,14 +1468,18 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   propósito — o resultado de aceitar aquela sugestão é um preset comum,
   já gerenciável na barra de Filtros (`removeFilterPreset()`); o painel
   só linka pra lá (`toggleFilters()`).
-- **Atalho pro tema 🌴 Vice City (2026-09-28)**: botão na seção 🎨 Tema
-  que só aparece depois que a pessoa já descobriu o easter egg (long-
-  press de 1.2s no botão de tema, `toggleViceCity()` — ver "Temas" mais
-  abaixo) — nunca revela a existência dele pra quem nunca achou.
-  `_temasDescobertos` (cache) / `loadTemasDescobertos()` — L13332
-  (listener novo, `kanban/usuarios/{uid}/temasDescobertos`, campo que
-  já existia só de escrita, via `_recordThemeDiscovered()`, pra métrica
-  de ADM — agora também lido de volta). Botão reusa `toggleViceCity()`
+- **Atalho pro tema 🌴 Vice City (2026-09-28, fix 2026-09-29)**: botão na
+  seção 🎨 Tema que só aparece depois que a pessoa já descobriu o easter
+  egg (long-press de 1.2s no botão de tema, `toggleViceCity()` — ver
+  "Temas" mais abaixo) — nunca revela a existência dele pra quem nunca
+  achou. `_temasDescobertos` (cache) / `loadTemasDescobertos()` — L13341
+  (listener, `kanban/usuarios/{uid}/temasDescobertos`). Gate usa o campo
+  `vice_manual` (não `vice`) — `vice` sozinho também é escrito pelo tema
+  automático (`_applyAutoTheme()`, banda 12h-18h), então usá-lo pra
+  gatear o atalho vazava o easter egg pra quem nunca descobriu na mão
+  (`/monitorarbugs` 2026-09-29, dev v8.30.759-dev). `vice_manual` só é
+  gravado por `_recordViceCityManualDiscovery()` — L34237, chamada de
+  dentro de `toggleViceCity()` — L34245. Botão reusa `toggleViceCity()`
   direto (entra se não estiver no tema, sai se já estiver).
 - Validado com Playwright (harness de mock do Firebase, ver nota no
   `CHANGELOG.md` — SDK vendorizado localmente interceptado via

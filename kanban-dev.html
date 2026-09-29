@@ -6355,7 +6355,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.758-dev</div>
+<div class="version">v8.30.759-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -13326,12 +13326,17 @@ function _applyMeusCardsFixadoUI(){
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
 
-// Lê se a pessoa já descobriu o easter egg do Vice City (temasDescobertos/vice,
-// gravado por _recordThemeDiscovered()) -- só pra decidir se mostra um atalho
-// pra ele em "👤 Minhas Preferências" (ver seção logo abaixo), sem estragar a
-// surpresa pra quem nunca segurou o botão de tema. Por CONTA (não por
-// navegador, diferente do tema automático) -- quem descobriu no celular já vê
-// o atalho aqui no desktop também.
+// Lê se a pessoa já descobriu o easter egg do Vice City DE VERDADE
+// (temasDescobertos/vice_manual, gravado só por _recordViceCityManualDiscovery(),
+// chamada de dentro de toggleViceCity()) -- só pra decidir se mostra um
+// atalho pra ele em "👤 Minhas Preferências" (ver seção logo abaixo), sem
+// estragar a surpresa pra quem nunca segurou o botão de tema. Achado real
+// (/monitorarbugs, 2026-09-28): o campo `vice` (sem sufixo) também é
+// gravado por _applyAutoTheme() quando o Tema Automático cai na banda das
+// 12h-18h -- usar ESSE campo aqui mostraria o atalho pra qualquer pessoa
+// com Tema Automático ligado, mesmo sem nunca ter segurado o botão. Por
+// CONTA (não por navegador, diferente do tema automático) -- quem
+// descobriu no celular já vê o atalho aqui no desktop também.
 let _temasDescobertos = {};
 function loadTemasDescobertos(){
   const user = window._currentUser; if(!user) return;
@@ -13364,7 +13369,7 @@ function renderMinhasPrefsBody(){
   const temaAtual = _currentTheme();
   const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
   const autoOn = _isThemeAutoOn();
-  const viceDescoberto = _temasDescobertos.vice===true;
+  const viceDescoberto = _temasDescobertos.vice_manual===true;
   const dndOn = isDndActive();
   const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
   const meusCardsOn = !!_boardPrefsSquad.meus_cards_fixado;
@@ -34219,6 +34224,24 @@ function _themeBtnPointerDown(){
 function _themeBtnPointerUp(){
   if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
 }
+// Achado real (/monitorarbugs, 2026-09-28): temasDescobertos/vice também é
+// gravado por _applyAutoTheme() (Tema Automático caindo na banda das
+// 12h-18h — recurso OFICIAL, não escondido — sem a pessoa nunca ter
+// segurado o botão). Usar esse mesmo campo pra decidir se mostra o atalho
+// no painel "Minhas Preferências" (ver viceDescoberto/renderMinhasPrefsBody)
+// quebrava a promessa do próprio tooltip ("você já descobriu segurando o
+// botão"): ligar Tema Automático de manhã e deixar o board aberto até a
+// tarde já "descobria" o Vice City sozinho, estragando a surpresa pra quem
+// nunca segurou o botão de propósito. Campo PRÓPRIO, gravado só aqui
+// (nunca por _applyAutoTheme()) — vice_manual = descoberta de verdade.
+function _recordViceCityManualDiscovery(){
+  const key='mare_theme_seen_vice_manual';
+  if(safeLS.getItem(key)==='1') return;
+  const u=window._currentUser;
+  if(!u||!u.uid) return;
+  safeLS.setItem(key,'1');
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {'temasDescobertos/vice_manual':true}).catch(()=>{});
+}
 function toggleViceCity(){
   // Mesmo achado do comentário grande acima de onThemeBtnClick() — vale
   // aqui também: um long-press durante a banda automática da tarde não
@@ -34232,6 +34255,7 @@ function toggleViceCity(){
   safeLS.setItem('mare_theme','vice');
   _applyThemeButtonIcon();
   _recordThemeDiscovered('vice');
+  _recordViceCityManualDiscovery();
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){

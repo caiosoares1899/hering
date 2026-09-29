@@ -3872,6 +3872,36 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.759-dev — 2026-09-29 — fix(🌴 Vice City): atalho em "Minhas Preferências" podia vazar pra quem nunca descobriu o easter egg
+
+`/monitorarbugs` de rotina — área escolhida por prioridade 1 (código
+mais recente sem rodada própria: o atalho do Vice City e o botão de
+relatório em 📊 Dados, ambos de ontem). 1 achado real, técnica 3
+(confrontar comportamento com a promessa do próprio tooltip).
+
+O atalho "🌴 Vice City" em "👤 Minhas Preferências" (ontem, v8.30.757-dev)
+decide se aparece checando `temasDescobertos.vice` — mas esse campo
+também é gravado por `_applyAutoTheme()` sempre que o **Tema Automático**
+(recurso oficial, não escondido) cai na banda das 12h-18h, sem a pessoa
+nunca ter segurado o botão de tema. Resultado: qualquer pessoa que só
+ligasse "🕐 Tema automático" de manhã e deixasse o board aberto até a
+tarde ganhava o atalho no painel — mesmo nunca tendo descoberto o
+easter egg de propósito, contradizendo o próprio tooltip do botão
+("Você já descobriu esse tema segurando o botão"). Estragava a
+surpresa exatamente pra quem a feature prometia proteger.
+
+Fix: campo próprio (`temasDescobertos.vice_manual`), gravado só de
+dentro de `toggleViceCity()` (a entrada real do easter egg, via
+long-press) — nunca por `_applyAutoTheme()`. O campo antigo (`vice`,
+sem sufixo) continua sendo gravado normalmente pelos dois caminhos,
+preservando a métrica de admin já existente ("quantas pessoas usam
+cada modo, incluindo automático") — só o atalho no painel passou a
+depender do campo novo, mais preciso.
+
+Checks de rotina: `node --check` nos blocos `<script>` 1 e 2 OK;
+balanço de chaves/parênteses idêntico ao baseline da sessão (braces
+-1, parens +4).
+
 ### v8.30.758-dev — 2026-09-28 — feat(📊 Dados): botão do relatório da Databricks também no drawer de Dados do board
 
 Continuação do report diário via card recorrente: o drawer "📊 Dados"
