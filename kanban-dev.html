@@ -632,6 +632,30 @@
   transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
   letter-spacing:.03em; padding:3px 0; pointer-events:none;
 }
+/* ♾️ Contínuo (2026-09-29, pedido direto: "e se colocarmos esse infinito
+   como aquela faixa q vc fez pro modo black friday?") — mesma fita
+   diagonal + mesmo fix de clip-path (ver comentário grande acima, causa
+   raiz do bug de clipping do Chromium/WebKit em border-radius +
+   backdrop-filter num ancestral). Diferença chave: NÃO é theme-gated —
+   "Contínuo" é um estado real do card (ver toggleContinuo()), não
+   decoração sazonal, então precisa aparecer em qualquer tema. var(--teal)
+   em vez de cor fixa, de propósito: cada tema já define --teal com um
+   valor coerente com a própria paleta (inclusive Vice City/Black Friday),
+   então a fita se adapta sozinha sem precisar de override por tema, ao
+   contrário do dourado de .okr-card (que não tinha uma variável semântica
+   pronta pra reusar). Substituiu o selo inline pequeno que existia antes
+   (♾️ badge) — um só indicador, mais visível, mesmo espírito do 🔥 OFERTA
+   (que também não duplica com badge nenhum). Colisão rara (card
+   simultaneamente crítico + em Black Friday + Contínuo): a regra do
+   Black Friday acima tem mais especificidade CSS (atributo de tema +
+   2 classes) e vence sozinha no cascade — sem precisar de override
+   manual, o ::before mostra "🔥 OFERTA" nesse caso raríssimo. */
+.card.card-continuo{clip-path: inset(0 round var(--r));}
+.card.card-continuo::before{
+  content:"♾️ CONTÍNUO"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--teal); color:#04231d; font-size:8px; font-weight:800;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none;
+}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -6356,7 +6380,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.760-dev</div>
+<div class="version">v8.30.761-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11449,7 +11473,7 @@ function makeCardEl(card){
   // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
   const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
   const isSuper_=_superChildren.length>0;
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(card.continuo?' card-continuo':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -11513,11 +11537,9 @@ function makeCardEl(card){
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
   // ♾️ Contínuo (2026-09-29) — demanda que nunca fecha de propósito (ver
-  // toggleContinuo()). Ícone próprio, não 🔁 — colidiria com "Salvar como
-  // recorrente" no menu de contexto (conceito totalmente diferente: card
-  // recorrente é recriado periodicamente, contínuo é o MESMO card que
-  // nunca fecha).
-  const continuoBadge=card.continuo?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;" title="Contínuo — fora do CFD/Burndown/cycle-lead-time">♾️</span>':'';
+  // toggleContinuo()). Indicador vira a fita diagonal .card-continuo (CSS,
+  // ver comentário grande perto de .card.card-prio-critical do Black
+  // Friday) — sem badge inline duplicado, mesmo espírito do 🔥 OFERTA.
   // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
   // visual pra quem for pegar o card ver fácil, sem precisar abrir.
   const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">🧭 Direcional</span>`:'';
@@ -11618,7 +11640,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${continuoBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -27070,7 +27092,7 @@ const HELP_CONTENT = {
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
-    { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha um selo ♾️ ao lado do título.' },
+    { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha uma fita diagonal "♾️ CONTÍNUO" no canto, mesmo estilo da fita "🔥 OFERTA" do tema Black Friday.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
