@@ -3872,6 +3872,33 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.762-dev — 2026-09-29 — fix(♾️ Contínuo): fita colidia com o selo "👤 seu card", saindo ilegível
+
+Achado real, relato direto do usuário com screenshot: em "Melhorias
+Maré Digital" (card marcado como seu E Contínuo — a combinação MAIS
+COMUM possível, não uma exceção), a fita "♾️ CONTÍNUO" saía ilegível,
+com o texto "👤 seu card" girado 40° fora do lugar.
+
+Causa: a fita nova (v8.30.761-dev) usava `::before`, mas
+`.card.card-mine::before` (o selo "👤 seu card") JÁ ocupava esse
+pseudo-elemento no mesmo card. 2 regras `::before` de especificidade
+igual (2 classes cada) não fazem "uma vence inteira" — o CSS mescla
+PROPRIEDADE POR PROPRIEDADE (a última no arquivo vence cada propriedade
+que declara): `content`/posição/cores saíam de `.card-mine` (declarado
+depois no arquivo), mas `transform`/`width`/`text-align` (que
+`.card-mine::before` não declara) sobreviviam da regra de Contínuo —
+resultado: o texto errado, girado, no lugar errado.
+
+Fix: fita de Contínuo passa a usar `::after` em vez de `::before` — os
+2 pseudo-elementos coexistem sem se misturar. Colisão residual bem mais
+rara (crítico + tema Black Friday + Contínuo ao mesmo tempo) só pode
+gerar sobreposição visual no mesmo canto, não mistura de propriedades —
+aceito por ora, documentado no código.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao baseline da sessão (braces -1, parens
++4).
+
 ### v8.30.761-dev — 2026-09-29 — polish(♾️ Contínuo): selo inline vira fita diagonal, mesmo estilo do "🔥 OFERTA" do Black Friday
 
 Pedido direto, logo após validar a v8.30.760-dev: "e se colocarmos esse
