@@ -82,6 +82,36 @@ confiar num número aqui se for mexer em `painel.html` prod).
   original, mesma corrida exata. As 3 funções caem de volta pro
   mecanismo antigo (não-atômico, mas não trava ninguém) se o registry
   ainda não tiver a regra publicada.
+- **`window._signInRedirect()`/fallback de login por redirect (2026-09-29,
+  relato direto de usuária — screenshot: popup de login travando com
+  "Cross-Origin-Opener-Policy... would block the window.closed call",
+  caindo em "Login cancelado")**: `<script type="module">` — L6577 (perto
+  de `window._signIn=(insc)=>signInWithPopup(...)`) — causa raiz
+  confirmada lendo o SDK vendorizado (`vendor/firebase-10.14.1/
+  firebase-auth.js`): `signInWithPopup()` detecta popup fechado checando
+  `authWindow.window.closed` (`pollUserCancellation()`), mas a própria
+  página de login do Google aplica Cross-Origin-Opener-Policy nela mesma
+  — isola o popup, o Firebase não consegue ler `.closed`, interpreta como
+  "fechado" e devolve `auth/popup-closed-by-user` mesmo com a pessoa
+  ainda logando. Intermitente, só Chrome, fora do nosso controle (não é
+  header nosso — GitHub Pages não define COOP aqui). `doSignIn()` — L10873
+  — conta falhas SEGUIDAS desse tipo em `login_popup_fail_streak`
+  (localStorage) e cai pra `signInWithRedirect()` (sem popup, elimina a
+  causa raiz) na 2ª falha — só como fallback, popup continua sendo o
+  caminho principal pra não mudar a UX de quem nunca bate nisso.
+  `_pendingInsc` (sinaliza "clicou em Inscrever-se") precisa sobreviver
+  ao reload de página inteira que o redirect causa — por isso vai pro
+  localStorage (`mare_pending_insc`) em vez de `window.*`, restaurado
+  SINCRONAMENTE antes de registrar `onAuthStateChanged` (evita corrida
+  com `getRedirectResult()`, que não tem ordem garantida contra o
+  primeiro disparo real do listener — mesma classe de armadilha de
+  `_onRealAuthChange()` logo abaixo). Decisão do usuário via
+  `AskUserQuestion`: fallback automático, não trocar o login inteiro pra
+  redirect (mudaria a UX de popup pra navegação de página pra todo
+  mundo). `reconectarGCal()`/`_requestCalendarScope()` (escopo de
+  calendário, provider separado) NÃO ganharam o mesmo fallback —
+  reportado como fora de escopo, feature secundária de risco bem menor
+  que travar o login inteiro.
 - `_onRealAuthChange(fn)` — L33450 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara

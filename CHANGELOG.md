@@ -3872,6 +3872,43 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.764-dev — 2026-09-29 — fix(login): fallback pra signInWithRedirect quando o popup do Google trava por Cross-Origin-Opener-Policy
+
+Relato direto de usuária, com prints: tela de login mostrando "Login
+cancelado. Clique em Entrar para tentar novamente." repetidamente, e o
+console cheio (dezenas de vezes) de "Cross-Origin-Opener-Policy policy
+would block the window.closed call."
+
+Causa raiz confirmada lendo o código-fonte do SDK vendorizado
+(`vendor/firebase-10.14.1/firebase-auth.js`): `signInWithPopup()`
+detecta que o popup fechou checando `authWindow.window.closed`
+(`pollUserCancellation()`) — mas a própria página de login do Google
+(`accounts.google.com`) aplica Cross-Origin-Opener-Policy nela mesma,
+isolando o popup e impedindo o Firebase de ler `.closed` corretamente.
+O SDK interpreta isso como "popup fechado" e devolve
+`auth/popup-closed-by-user` mesmo com a pessoa ainda no meio do login.
+Intermitente, só Chrome, e fora do nosso controle — não é um header
+nosso (GitHub Pages não define Cross-Origin-Opener-Policy aqui), é o
+Google aplicando essa política na própria página deles.
+
+Fix (decisão do usuário, 3 opções apresentadas): `doSignIn()` conta
+falhas SEGUIDAS desse tipo específico e, na 2ª falha, cai automaticamente
+pra `signInWithRedirect()` (a página navega inteira pro Google e volta,
+sem depender de checar popup fechado — elimina a causa raiz) — só como
+fallback, sem mudar a experiência de popup de quem nunca bate nesse
+problema. `_pendingInsc` (sinaliza "Inscrever-se no quadro") passou a
+sobreviver ao reload de página que o redirect causa, via localStorage.
+
+Fora de escopo, reportado: `reconectarGCal()`/pedido de escopo de
+calendário (provider separado) não ganharam o mesmo fallback — feature
+secundária, risco bem menor que travar o login inteiro.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais do
+arquivo (extraídos por âncora de linha, não pela regex — o bloco do
+meio, `<script type="module">`, precisa ser checado como ES module) —
+os 3 OK. Balanço de chaves/parênteses idêntico ao baseline da sessão
+(braces -1, parens +4).
+
 ### v8.30.763-dev — 2026-09-29 — fix(♾️ Contínuo): 2º achado, mesmo relato — clip-path cortava o selo "👤 seu card" ao meio
 
 Segundo achado real do mesmo relato/screenshot (a troca pra `::after`
