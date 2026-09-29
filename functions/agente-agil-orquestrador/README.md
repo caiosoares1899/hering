@@ -3272,3 +3272,79 @@ os números aparecem sozinhos assim que chegam.
 
 **Requer redeploy** (`http.js`/`intakeTrigger.js` mudaram):
 `firebase deploy --only functions:agenteAgil,functions:agenteAgilIntake`
+
+## `especialista` com caractere inválido de chave do Firebase derrubava o intake em silêncio — corrigido (2026-09-29)
+
+`/monitorarbugs` de rotina, pedido explícito: "roda outro em uma área
+sensível e bastante utilizada" — escolhido `agente-agil/http.js` +
+`agente-agil-orquestrador/intakeTrigger.js`, o único ponto de contato
+entre especialistas externos e o board (auth por secret compartilhado,
+usado todo dia pelo report diário/`dadosDiarios` recém-construídos, ver
+seções acima).
+
+**Achado**: `entry.especialista` chega como texto livre no envelope HTTP
+(quem chama a API escolhe o valor, sem restrição de caracteres em
+`schema.js`) e é usado DIRETO em 2 lugares pra montar um path de leitura:
+
+- `lerDescricaoEspecialista()` (`intakeTrigger.js`) —
+  `kanban/config/agentesExternos/${especialista}`;
+- `notificar_especialista_externo`
+  (`tools/notificarEspecialistaExterno.js`) — mesmo path, mas aqui quem
+  escolhe o valor é o próprio LLM, lendo do histórico de comentários do
+  card.
+
+Chaves do Realtime Database não podem conter `.`, `#`, `$`, `[` ou `]`
+— confirmado direto contra o validador real do `@firebase/database-compat`
+(a lib que `firebase-admin` usa por baixo pra Realtime Database):
+`db.ref('kanban/config/agentesExternos/databricks.ai')` lança uma
+**exceção síncrona**, não uma promise rejeitada. Um valor plausível como
+`"databricks.ai"` (o próprio Databricks tem esse domínio) já bastava pra
+derrubar a chamada.
+
+**Por que era severo**: em `lerDescricaoEspecialista()`, essa chamada
+roda ANTES do `try/catch` que `runLoop()` já tem (o mesmo que existe
+desde 2026-08-27 justamente pra "garantir que a falha fica visível pra
+quem for olhar `agente_intake_pending` depois") — o item ficava travado
+pra sempre em `status:'pending'`, sem `status:'failed'`, sem
+`notificarFalhaSemCard()`, sem NENHUM sinal de que algo quebrou. Em
+`notificarEspecialistaExterno.js`, o próprio comentário do arquivo
+promete "Falha de rede/timeout/HTTP não-2xx NUNCA lança exceção pro loop
+acima — sempre volta `{ok:false, error, message}`" — mas exatamente essa
+promessa era quebrada por este caminho, que ficava fora de todas as
+proteções documentadas (achado via técnica 3, comentário/promessa vs.
+código real).
+
+`makeFakeDb()` (usado em todos os testes deste módulo) não reproduz essa
+validação de chave — por isso a suíte de 518 testes nunca teria pego
+isso sozinha; confirmado contra o código-fonte real da lib instalada
+(`node_modules/@firebase/database-compat`), não por suposição.
+
+**Fix**: `isValidFirebaseKey()` nova em `agente-agil/board.js` (mesmo
+arquivo que já tem `especialistaLabel()`/`resolveActor()`, outros
+helpers de identidade do especialista) — checa os 5 caracteres
+inválidos antes de montar qualquer `ref()`. Os 2 pontos passam a tratar
+um `especialista` inválido como "desconhecido"/erro próprio em vez de
+deixar a exceção escapar: `lerDescricaoEspecialista()` retorna `null`
+(mesmo comportamento de especialista sem descrição cadastrada);
+`notificarEspecialistaExterno.js` retorna
+`{ok:false, error:'especialista_id_invalido', message:...}` (mesmo
+padrão dos outros erros tratados da ferramenta). O lado de ESCRITA
+(`criarAgenteExternoPainel()`, painel-dev.html) já tinha esse problema
+documentado desde 2026-09-01 — mas lá existe uma promise que rejeita e a
+UI otimista é revertida; aqui, do lado de LEITURA, não existe promise
+nenhuma pra reverter, e o valor recebido nem precisa bater com uma
+entrada existente em `agentesExternosCfg` pra derrubar a chamada.
+
+3 testes novos (`board.test.js`: `isValidFirebaseKey()` isolado;
+`notificarEspecialistaExterno.test.js`: erro específico
+`especialista_id_invalido`; `intakeTrigger.test.js`: pedido completo com
+`especialista:'databricks.ai'` processa normal, sem injetar contexto).
+Suíte inteira: 521/521 passando.
+
+**Requer redeploy** — `board.js` é dependência compartilhada de todo
+gatilho que usa `resolveActor()`/agora `isValidFirebaseKey()`; o tool
+`notificar_especialista_externo` (o outro ponto do fix) só está ativo em
+squad `dev` (`NOTIFICAR_ESPECIALISTA_SQUADS`, `squadScope.js`), mas
+o bundle de código de cada função só pega a correção depois de
+redeployada:
+`firebase deploy --only functions:agenteAgilIntake,functions:agenteAgilMencao`

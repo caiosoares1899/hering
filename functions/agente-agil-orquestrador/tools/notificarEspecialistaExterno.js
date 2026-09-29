@@ -31,6 +31,7 @@
 // (ex.: criar_card com ficha_tecnica_obrigatoria).
 
 const { z } = require('zod');
+const { isValidFirebaseKey } = require('../../agente-agil/board');
 
 const WEBHOOK_TIMEOUT_MS = 8000;
 
@@ -47,6 +48,18 @@ function makeFakeNotificarEspecialistaExternoHandler() {
 
 function makeRealNotificarEspecialistaExternoHandler({ db, squadId, cardId, dryRun = true }) {
   return async function realNotificarEspecialistaExternoHandler(input) {
+    // db.ref() lança exceção SÍNCRONA (não promise) se input.especialista
+    // tiver ".", "#", "$", "[" ou "]" — quebraria a promessa do comentário
+    // acima ("NUNCA lança exceção pro loop acima") e derrubaria o runLoop()
+    // inteiro em vez de só esta tool call. Ver isValidFirebaseKey em board.js
+    // pro achado completo (/monitorarbugs, 2026-09-29).
+    if (!isValidFirebaseKey(input.especialista)) {
+      return {
+        ok: false,
+        error: 'especialista_id_invalido',
+        message: `"${input.especialista}" não é um identificador de especialista válido (não pode conter ".", "#", "$", "[" ou "]").`,
+      };
+    }
     const snap = await db.ref(`kanban/config/agentesExternos/${input.especialista}`).get();
     const config = snap.val();
     const webhookUrl = config && typeof config.webhookUrl === 'string' ? config.webhookUrl.trim() : '';

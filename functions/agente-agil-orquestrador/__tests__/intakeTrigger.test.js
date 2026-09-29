@@ -261,6 +261,30 @@ test('especialista cadastrado mas sem o squad atual marcado em `squads` — não
   assert.doesNotMatch(client.historias()[0][0].text, /Contexto sobre este especialista/);
 });
 
+// Achado real (/monitorarbugs 2026-09-29, "área sensível e bastante
+// utilizada"): lerDescricaoEspecialista() montava
+// kanban/config/agentesExternos/{especialista} direto do valor recebido no
+// envelope HTTP — mas chaves do RTDB não podem conter ".", "#", "$", "[" ou
+// "]", e db.ref() real lança exceção SÍNCRONA nesse caso (confirmado contra
+// o validador do @firebase/database-compat que firebase-admin usa por
+// baixo — makeFakeDb() não reproduz essa validação, por isso o teste não
+// consegue "provar o crash" diretamente, só que o pedido continua
+// processando normalmente com a guarda no lugar). Antes do fix, essa
+// chamada rodava ANTES do try/catch que runLoop() já tem — um especialista
+// real chamado "databricks.ai" travaria o item pra sempre em
+// status:'pending', sem nenhum sinal de falha.
+test('especialista com caractere inválido de chave do Firebase (ex.: "databricks.ai") — processa normalmente, sem injetar contexto e sem lançar exceção', async () => {
+  const db = seedDbComAgentesExternos({
+    'databricks.ai': { descricao: 'não deveria nunca ser lido', squads: { [SQUAD_ID]: true } },
+  });
+  const client = recordingLlmClient([{ toolCalls: [], text: 'ok' }]);
+
+  const outcome = await processarIntake(db, { id: 'i-especialista-chave-invalida', entry: { texto: 'dados novos', especialista: 'databricks.ai' }, llmClient: client });
+
+  assert.equal(outcome.processed, true);
+  assert.doesNotMatch(client.historias()[0][0].text, /Contexto sobre este especialista/);
+});
+
 // A instância `dev` exportada fica em modo sombra (DRY_RUN_INTAKE:true,
 // mecanismo ainda não validado em produção — ver comentário no fim do
 // arquivo) — criar_card em dryRun nunca grava pendingId de verdade, então

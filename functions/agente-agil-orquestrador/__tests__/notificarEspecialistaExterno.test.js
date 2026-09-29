@@ -57,6 +57,25 @@ test('especialista sem webhookUrl cadastrado — erro claro, não tenta chamar f
   assert.equal(result.error, 'webhook_nao_configurado');
 });
 
+// Achado real (/monitorarbugs 2026-09-29, "área sensível e bastante
+// utilizada"): db.ref() lança exceção SÍNCRONA (não promise) pra qualquer
+// path com ".", "#", "$", "[" ou "]" — o próprio comentário deste arquivo
+// promete "Falha... NUNCA lança exceção pro loop acima", mas um
+// input.especialista com esses caracteres derrubava justamente essa
+// promessa antes de chegar em qualquer try/catch. makeFakeDb() (usado nos
+// outros testes deste arquivo) não reproduz essa validação — por isso este
+// teste verifica o ERRO específico da guarda nova, não só que a chamada não
+// quebra (um "webhook_nao_configurado" indevido também passaria pelo fake).
+test('especialista com caractere inválido de chave do Firebase — recusa com erro próprio, nunca lança exceção', async () => {
+  const db = seedDb({ databricks: { webhookUrl: 'https://exemplo.com/webhook', squads: { dev: true } } });
+  const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
+
+  const result = await handler({ especialista: 'databricks.ai', mensagem: 'card concluído' });
+
+  assert.equal(result.ok, false);
+  assert.equal(result.error, 'especialista_id_invalido');
+});
+
 test('especialista inexistente no cadastro — mesmo erro de webhook não configurado', async () => {
   const db = seedDb({});
   const handler = makeRealNotificarEspecialistaExternoHandler({ db, squadId: 'dev', cardId: 'c9', dryRun: false });
