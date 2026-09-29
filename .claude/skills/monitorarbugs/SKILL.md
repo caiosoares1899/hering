@@ -2637,6 +2637,38 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   segurança direto contra o código-fonte da lib real instalada
   (`node_modules/`) em vez de só confiar na suíte "verde".
 
+- **2026-09-29, ♾️ Contínuo (pedido genérico, "roda um /monitorarbugs" —
+  área escolhida por prioridade 1: código mais recente da sessão, PRs
+  #1100-#1103, construída E já teve 2 rodadas de bugfix reativo — via
+  relato direto do usuário com screenshot, não via `/monitorarbugs` —
+  nunca uma auditoria sistemática de ponta a ponta)**: **sem achados
+  novos**, depois de investigação real, não superficial. Confirmado:
+  (1) `_duplicarCardObj()` não reseta `card.continuo` (mesmo espírito
+  de `card.isOKR`, categoria e não estado acumulado — correto, não
+  precisa de reset); (2) grep exaustivo de TODO `position:absolute`
+  escopado a `.card` no arquivo (técnica 1) — só `.card-mine::before`
+  tinha offset negativo (`top:-9px`), já corrigido nas 2 rodadas
+  anteriores; os outros 3 (`.card-selbox`/`.card-pin-btn`/
+  `.aged-2::after`) usam offsets positivos, dentro dos limites, sem
+  risco de colisão com o `clip-path` novo; (3) `_boardDataBarChart()`/
+  `_boardDataSmCvPorColuna()` (candidatos a precisar da mesma exclusão
+  de CFD/Burndown) são snapshots do estado ATUAL por coluna, mesma
+  categoria de WIP/Throughput — corretamente NÃO excluem `continuo`,
+  consistente com a decisão do usuário; (4) densidade compacta
+  (`#board.card-compact`) não esconde a fita ♾️ (nenhuma regra
+  `display:none` a alcança) — mesmo tratamento de "info primária" que
+  🎯 OKR/🔥 OFERTA já recebem (nem uma nem outra são escondidas em modo
+  compacto), consistente, não uma omissão; geometria de
+  `position:absolute` relativa à PADDING box (não border box) 
+  conferida à mão pra confirmar que o fix `top:0` do `.card-mine`
+  continua seguro em qualquer densidade (offset sempre positivo
+  relativo à borda visível, nunca cai fora do clip). Não fica um
+  achado formal registrado aqui pros 2 bugs de CSS já corrigidos
+  reativamente (`::before`→`::after`, depois `top:0` no selo "seu
+  card") por não terem vindo de uma rodada da skill — só a confirmação
+  de que a área está limpa agora fica registrada, pra não reabrir a
+  mesma investigação à toa numa rodada futura.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
