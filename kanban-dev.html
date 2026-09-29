@@ -676,6 +676,26 @@
   transform:rotate(40deg); background:var(--teal); color:#04231d; font-size:8px; font-weight:800;
   letter-spacing:.03em; padding:3px 0; pointer-events:none;
 }
+/* 2º achado real, MESMO relato/screenshot (a troca pra ::after acima já
+   resolveu a mistura de propriedades, mas não este 2º problema): o selo
+   "👤 seu card" (.card-mine::before) poka DE PROPÓSITO 9px ACIMA do
+   card (top:-9px — .card base não tem overflow:hidden nem clip-path,
+   então isso sempre funcionou). Mas .card-continuo{clip-path:inset(0
+   round var(--r));} (acima) clipa TUDO que passa da própria caixa do
+   card, pseudo-elemento ou não — corta o selo bem na borda, deixando só
+   a metade de baixo visível. Confirmado por geometria (o selo da fita
+   ♾️ rotacionada extrapola uns 24px ACIMA do topo do card perto do lado
+   DIREITO — por isso o clip-path top:0 é necessário ali), mas o selo
+   "seu card" fica no lado ESQUERDO, numa região que o clip nem
+   precisava cobrir. Em vez de uma forma de clip customizada (frágil,
+   dependeria da largura exata do card, que muda com densidade/view
+   mode), a correção mais simples e robusta é parar de pedir pro selo
+   "seu card" invadir a área clipada QUANDO o card também é Contínuo —
+   reposiciona pra top:0 só nessa combinação (mesma combinação mais
+   comum que motivou trocar pra ::after acima). 3 classes (especificidade
+   maior que as 2 declarações originais, dark E claro) garantem que isto
+   vence sempre, sem precisar duplicar a declaração inteira do selo. */
+.card.card-mine.card-continuo::before{top:0;}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -6400,7 +6420,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.762-dev</div>
+<div class="version">v8.30.763-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
