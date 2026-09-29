@@ -1481,6 +1481,30 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   gravado por `_recordViceCityManualDiscovery()` — L34237, chamada de
   dentro de `toggleViceCity()` — L34245. Botão reusa `toggleViceCity()`
   direto (entra se não estiver no tema, sai se já estiver).
+- **♾️ Contínuo (2026-09-29, pedido direto)**: categoria de card pra
+  demanda que nunca fecha de propósito (ex.: "Melhorias Maré Digital",
+  "Ajuste recorrentes de IA" na squad dados — sempre voltam a ter
+  trabalho, sem data de finalização real). `card.continuo` (bool, sem
+  campo companheiro de tempo — categoria fixa, sobrevive à duplicação de
+  propósito, mesmo espírito de `card.isOKR`). `toggleContinuo(cardId)` —
+  L16190 — e `_renderContinuoBtn()` — L16205 — mesmo padrão de
+  `togglePauseCard()`/`_renderPauseBtn()` logo acima (`recordHistory()`
+  explícito, não usa o sistema genérico `HIST_FIELDS`), cardId opcional
+  (cai no card aberto no modal). 2 pontos de entrada: botão `#btn-continuo-card`
+  no rodapé do modal + item no menu de contexto (ícone `♾️`, DIFERENTE de
+  `🔁` — colidiria com "Salvar como recorrente" no mesmo menu, conceito
+  totalmente diferente). Excluído de: `_renderCFD()`, `_renderBurndown()`
+  (senão infla/nunca zera o gráfico, já que o card nunca sai da coluna) e
+  `_computeTempoData()` (cycle/lead time E o "gargalo" por coluna saem
+  juntos, mesmo filtro); e do alarme visual de "card parado" (esmaecimento
+  aged-1/aged-2, badge "⏳ parado nesta coluna", trigger de Automação
+  'aging') — mesma suspensão que `card.paused` já tem, mesmo motivo.
+  Decisão explícita do usuário: continua contando no WIP (ocupa capacidade
+  real) e no Throughput (sem caso especial se algum dia chegar num done).
+  `functions/agente-agil-orquestrador/tools/visaoBoard.js` (`summarizeBoard()`)
+  já é naturalmente imune — cycle/lead/gargalo ali só olham
+  `flow.doneAt`, que um card contínuo nunca tem — confirmado lendo o
+  código, não assumido, nenhuma mudança necessária lá.
 - Validado com Playwright (harness de mock do Firebase, ver nota no
   `CHANGELOG.md` — SDK vendorizado localmente interceptado via
   `page.route()`, zero rede real) — abertura, os 7 toggles/ações, e

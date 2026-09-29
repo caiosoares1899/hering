@@ -3872,6 +3872,37 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.760-dev — 2026-09-29 — feat(♾️ Contínuo): categoria pra demanda sem data de finalização, fora do CFD/Burndown/cycle-lead-time
+
+Pedido direto do usuário: alguns cards (principalmente na squad dados —
+"Melhorias Maré Digital", "Ajuste recorrentes de IA") ficam no board pra
+sempre, porque a demanda continua indefinidamente — nem tem data de
+finalização, de propósito. Contados normal nas métricas de fluxo, eles
+distorcem tudo que assume que todo card eventualmente termina: infla o
+📈 CFD numa coluna pra sempre, o 📉 Burndown nunca chega perto de zero, e
+a média de cycle time/lead time/gargalo por coluna sobe sem representar
+trabalho parado de verdade.
+
+Novo botão "♾️ Contínuo" no rodapé do card (+ item equivalente no menu de
+contexto, botão direito) marca essa categoria. Excluído de: 📈 CFD, 📉
+Burndown, ⏱ Relatório de Tempo (cycle time, lead time e o "gargalo" por
+coluna); e do alarme visual de "card parado" (esmaecimento no board,
+badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem.
+Continua contando normal no WIP (ocupa capacidade real de alguém) e no
+Throughput, se algum dia chegar numa coluna de Concluído.
+
+Ícone próprio (♾️, não 🔁) pra não colidir com "Salvar como recorrente"
+no mesmo menu de contexto — são conceitos diferentes: recorrente é
+recriado periodicamente, contínuo é o MESMO card que nunca fecha.
+Confirmado que `functions/agente-agil-orquestrador/tools/visaoBoard.js`
+(cycle/lead/gargalo do lado do Agente Ágil) já é naturalmente imune —
+só olha cards com `flow.doneAt`, que um card contínuo nunca tem — sem
+mudança necessária lá.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao baseline da sessão (braces -1, parens
++4).
+
 ### v8.30.759-dev — 2026-09-29 — fix(🌴 Vice City): atalho em "Minhas Preferências" podia vazar pra quem nunca descobriu o easter egg
 
 `/monitorarbugs` de rotina — área escolhida por prioridade 1 (código

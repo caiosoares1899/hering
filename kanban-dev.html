@@ -4692,6 +4692,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <button class="btn btn-sm" id="btn-archive-card" onclick="archiveCard()">📦 Arquivar</button>
     <button class="btn btn-sm" id="btn-pause-card" onclick="togglePauseCard()" title="Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.">⏸ Pausar</button>
+    <button class="btn btn-sm" id="btn-continuo-card" onclick="toggleContinuo()" title="Marca este card como demanda contínua (nunca fecha de propósito) — sai do CFD, Burndown, cycle/lead time e do alarme visual de &quot;card parado&quot;, mas continua contando no limite de WIP.">♾️ Contínuo</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
@@ -6355,7 +6356,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.759-dev</div>
+<div class="version">v8.30.760-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11432,9 +11433,10 @@ function makeCardEl(card){
   // (Central de Ajuda), mas este esmaecimento (e os outros 3 lugares que
   // compartilham o mesmo cálculo — checkAgingAutomations(), "Cards
   // parados" de Insights, e o badge de aging por coluna logo abaixo) nunca
-  // excluíam cards pausados.
+  // excluíam cards pausados. !card.continuo (2026-09-29): mesmo raciocínio
+  // pra card ♾️ Contínuo — intencionalmente sem se mexer, não é abandono.
   let agingClass='';
-  if(!_isColDone(card.col)&&card.editedAt&&!card.paused){
+  if(!_isColDone(card.col)&&card.editedAt&&!card.paused&&!card.continuo){
     const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
     const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
     if(ageDays>=sprintLen*2) agingClass=' aged-2';
@@ -11510,6 +11512,12 @@ function makeCardEl(card){
   // pelo navegador). Achado real, a partir de um print com cards de teste do
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
+  // ♾️ Contínuo (2026-09-29) — demanda que nunca fecha de propósito (ver
+  // toggleContinuo()). Ícone próprio, não 🔁 — colidiria com "Salvar como
+  // recorrente" no menu de contexto (conceito totalmente diferente: card
+  // recorrente é recriado periodicamente, contínuo é o MESMO card que
+  // nunca fecha).
+  const continuoBadge=card.continuo?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;" title="Contínuo — fora do CFD/Burndown/cycle-lead-time">♾️</span>':'';
   // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
   // visual pra quem for pegar o card ver fácil, sem precisar abrir.
   const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">🧭 Direcional</span>`:'';
@@ -11555,7 +11563,7 @@ function makeCardEl(card){
   // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
   // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
   let agingColBadge='';
-  if(!isDone && !card.paused && card.flow?.enteredAt?.[card.col]){
+  if(!isDone && !card.paused && !card.continuo && card.flow?.enteredAt?.[card.col]){
     const limiar=(flowConfig.agingDays||{})[card.col];
     if(limiar>0){
       const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
@@ -11610,7 +11618,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${continuoBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -15244,6 +15252,8 @@ function openCard(id){
   document.getElementById('btn-del-card').style.visibility='visible';
   const pauseBtn=document.getElementById('btn-pause-card'); if(pauseBtn) pauseBtn.style.visibility='visible';
   _renderPauseBtn(c);
+  const continuoBtn=document.getElementById('btn-continuo-card'); if(continuoBtn) continuoBtn.style.visibility='visible';
+  _renderContinuoBtn(c);
   // Achado real (/monitorarbugs, 2026-09-15): abrir um card ARQUIVADO
   // (agora possível direto da lista de Arquivados, ver
   // _renderArquivadosBody()) mostrava "📦 Arquivar" do mesmo jeito que um
@@ -16137,6 +16147,73 @@ function _renderPauseBtn(c){
     btn.style.color='';
     btn.style.borderColor='';
     btn.title='Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.';
+  }
+}
+// 🔁/♾️ "Contínuo" — categoria pra demanda que nunca fecha de propósito
+// (ex.: "Melhorias Maré Digital", "Ajuste recorrentes de IA" na squad
+// dados: sempre voltam a ter trabalho, sem data de finalização real).
+// Pedido direto do usuário (2026-09-29): esses cards distorcem os gráficos
+// que assumem que todo card eventualmente termina — parados numa coluna
+// pra sempre, eles inflam CFD/Burndown indefinidamente e disparam a média
+// de cycle/lead time e o "gargalo" por coluna pro alto sem refletir
+// trabalho de verdade parado.
+//
+// Modelo de dado: card.continuo (bool) — sem campo companheiro de tempo
+// (diferente de paused/pausedAt/pausedMs, ver comentário acima): não tem
+// "duração pra descontar", é só uma categoria fixa, mesmo espírito de
+// card.isOKR (sobrevive à duplicação de propósito — ver _duplicarCardObj(),
+// que só reseta ESTADO acumulado, não categoria).
+//
+// Mesmo padrão de togglePauseCard() acima: cardId opcional (cai no card
+// aberto no modal sem argumento), recordHistory() explícito (não usa o
+// sistema genérico HIST_FIELDS/_histDiff(), que só roda dentro de
+// saveCard() — ctxToggleOKR() usa fbSaveCard() direto e por isso NUNCA
+// grava histórico algum quando o toggle vem do menu de contexto; aqui,
+// com recordHistory() explícito, os 2 pontos de entrada — botão do modal e
+// menu de contexto — sempre registram).
+//
+// Onde isso é excluído (ver comentários nos pontos exatos):
+// - _renderCFD() / _renderBurndown() — cards contínuos nunca entram na
+//   série (senão inflam uma coluna pra sempre, distorcendo o gráfico
+//   inteiro).
+// - _computeTempoData() — cycle time, lead time E o "gargalo" por coluna
+//   (stages) ficam de fora, mesmo raciocínio.
+// - Alarme visual de "card parado" (esmaecimento aged-1/aged-2, badge
+//   "⏳ Xd parado nesta coluna", trigger de Automação 'aging') — mesma
+//   suspensão que card.paused já tem, mesmo motivo: intencionalmente sem
+//   se mexer, não é um sinal de abandono.
+// Onde NÃO é excluído (decisão explícita do usuário, 2026-09-29): WIP —
+// o card ocupa capacidade real de alguém, continua contando no limite
+// normalmente. Throughput também não muda — se um card contínuo chegar
+// numa coluna de fim (raro, mas não bloqueado), conta normal, sem
+// caso especial.
+function toggleContinuo(cardId){
+  const id = cardId || editingId;
+  if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
+  c.continuo = !c.continuo;
+  if(c.continuo){
+    recordHistory(c, 'marcou o card como ♾️ Contínuo (demanda sem data de finalização)');
+    showToast('♾️ Card marcado como Contínuo — fora do CFD, Burndown, cycle/lead time e do alarme de "parado". Continua contando no WIP.');
+  } else {
+    recordHistory(c, 'desmarcou o card como ♾️ Contínuo');
+    showToast('Contínuo removido — card volta a contar normalmente em todas as métricas de fluxo.');
+  }
+  fbSaveCard(c);
+  if(editingId===id) _renderContinuoBtn(c);
+  renderBoard();
+}
+function _renderContinuoBtn(c){
+  const btn=document.getElementById('btn-continuo-card'); if(!btn) return;
+  if(c && c.continuo){
+    btn.textContent='♾️ Contínuo (ativo)';
+    btn.style.color='var(--teal)';
+    btn.style.borderColor='rgba(29,233,182,.4)';
+    btn.title='Este card está marcado como Contínuo — fora de CFD/Burndown/cycle-lead-time/alarme de "parado". Clique pra desmarcar.';
+  } else {
+    btn.textContent='♾️ Contínuo';
+    btn.style.color='';
+    btn.style.borderColor='';
+    btn.title='Marca este card como demanda contínua (nunca fecha de propósito) — sai do CFD, Burndown, cycle/lead time e do alarme visual de "card parado", mas continua contando no limite de WIP.';
   }
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
@@ -21135,10 +21212,11 @@ function renderBoardDataInsights(){
   // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
   // !c.paused — achado real (/monitorarbugs, 2026-09-14), mesmo motivo dos
   // outros 3 pontos que fazem esta conta: ⏸ Pausar card promete "não
-  // aparece como alarme pro resto do board".
+  // aparece como alarme pro resto do board". !c.continuo (2026-09-29):
+  // mesmo raciocínio pra card ♾️ Contínuo.
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
-  const parados=activeCards.filter(c=>c.editedAt&&!c.paused).map(c=>{
+  const parados=activeCards.filter(c=>c.editedAt&&!c.paused&&!c.continuo).map(c=>{
     const editedD=new Date(c.editedAt+'T00:00:00');
     const ageDays=Math.round((hojeAging-editedD)/86400000);
     return {c, ageDays};
@@ -21509,7 +21587,11 @@ function renderBoardDataFluxo(){
 function _renderCFD(){
   const el = document.getElementById('boarddata-cfd'); if(!el) return;
   const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
-  const ativos = cards.filter(c=>!c.archived);
+  // !c.continuo (2026-09-29, pedido direto): card ♾️ Contínuo (demanda sem
+  // data de finalização, ex. "Melhorias Maré Digital") nunca sai da coluna
+  // — incluído aqui, ele infla a mesma faixa do gráfico PRA SEMPRE,
+  // distorcendo a leitura de fluxo de todo o resto do board.
+  const ativos = cards.filter(c=>!c.archived&&!c.continuo);
   if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; window._cfdResumo=null; return; }
   const hoje = new Date();
   const dias = [];
@@ -21655,8 +21737,11 @@ function _renderBurndown(){
   // Card cuja coluna ATUAL está oculta pelo toggle de Dados do Board
   // (_bdHiddenCols) sai do escopo — mesmo espírito de "tirar da conta"
   // aplicado na Visão Geral, pedido direto pra valer aqui também.
+  // card.continuo (2026-09-29): mesmo motivo do _renderCFD() logo acima —
+  // sem doneAt nunca, um card ♾️ Contínuo nunca sairia do "restante", o
+  // burndown nunca chegaria perto de zero por causa dele.
   const escopo = cards.filter(c=>{
-    if(c.archived || _bdHiddenCols.has(c.col)) return false;
+    if(c.archived || c.continuo || _bdHiddenCols.has(c.col)) return false;
     const criado=_cardDataCriacaoStr(c);
     if(!criado || criado>endStr) return false;
     const doneAt=(c.flow?.doneAt||'').slice(0,10);
@@ -21714,10 +21799,17 @@ function _computeTempoData(){
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
   const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
   const cutoff = periodo==='all' ? 0 : Date.now()-parseInt(periodo)*86400000;
-  
+
   const porGrupo={};
 
-  cards.filter(c=>!c.archived).forEach(c=>{
+  // !c.continuo (2026-09-29, pedido direto): cobre cycle time, lead time E
+  // o "gargalo" por coluna (stages, via _cardTempoPorColuna() logo abaixo)
+  // de uma vez só, já que os 3 saem do mesmo card filtrado aqui — um card
+  // ♾️ Contínuo nunca "termina" de propósito, então mesmo no escopo 'all'
+  // (não só 'done') ele acumularia tempo-em-coluna indefinidamente,
+  // puxando a média de todo mundo pra cima sem representar trabalho
+  // parado de verdade.
+  cards.filter(c=>!c.archived&&!c.continuo).forEach(c=>{
     const t=_cardTempos(c);
     if(escopo==='done' && !t.done) return;
     if(cutoff){
@@ -26978,6 +27070,7 @@ const HELP_CONTENT = {
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
+    { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha um selo ♾️ ao lado do título.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
@@ -28197,6 +28290,7 @@ const ATALHO_ACOES = {
   arquivar:    { label:'📦 Arquivar card',           tipo:'card', run:()=>archiveCard() },
   excluir:     { label:'🗑 Excluir card',            tipo:'card', run:()=>deleteCard() }, // já pede confirmação (uiConfirm) dentro da própria função
   pausar:      { label:'⏸ Pausar/retomar contagem',  tipo:'card', run:()=>togglePauseCard() },
+  continuo:    { label:'♾️ Marcar/desmarcar Contínuo', tipo:'card', run:()=>toggleContinuo() },
   capa:        { label:'🎨 Menu de capa',            tipo:'card', run:()=>toggleCoverMenu() },
   secoes:      { label:'⇕ Expandir/recolher seções', tipo:'card', run:()=>toggleAllModalSecs() },
   historico:   { label:'📜 Mostrar/esconder Histórico', tipo:'card', run:()=>toggleHistory() },
@@ -29456,8 +29550,9 @@ function checkAgingAutomations(){
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
   // promete "não aparece como alarme pro resto do board" (Central de
-  // Ajuda), mas o trigger 'aging' nunca excluía card pausado.
-  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && c.editedAt).forEach(card=>{
+  // Ajuda), mas o trigger 'aging' nunca excluía card pausado. !c.continuo
+  // (2026-09-29): mesmo raciocínio pra card ♾️ Contínuo.
+  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && !c.continuo && c.editedAt).forEach(card=>{
     const editedD=new Date(card.editedAt+'T00:00:00');
     const ageDays=Math.round((hoje-editedD)/86400000);
     if(ageDays===sprintLen) runAutoRules('aging', card.id);
@@ -33085,6 +33180,9 @@ function showCtxMenu(e, cardId){
     </div>
     <div class="ctx-item" onclick="ctxToggleOKR()">
       <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
+    </div>
+    <div class="ctx-item" onclick="toggleContinuo('${cardId}')">
+      <span class="ctx-item-icon">♾️</span> ${card.continuo ? 'Remover Contínuo' : 'Marcar como Contínuo'}
     </div>
     <div class="ctx-item" onclick="togglePinCard('${cardId}')">
       <span class="ctx-item-icon">📌</span> ${card.pinned ? 'Desafixar do topo da coluna' : 'Fixar no topo da coluna'}
