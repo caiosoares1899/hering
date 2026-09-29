@@ -18,6 +18,49 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.758 — 2026-09-29 · Promove pra prod — lote acumulado (v8.30.754-dev → v8.30.758-dev)
+
+Promoção do lote acumulado desde a última promoção (v8.30.753).
+Validado ao vivo pelo usuário, feature a feature, ao longo da sessão
+(testes reais de "Minhas Preferências", do easter egg Vice City e do
+botão de relatório em "📊 Dados"). Ver as entradas de dev
+correspondentes abaixo pro detalhe técnico completo; aqui só o resumo
+pro público de prod.
+
+**Novidade principal — "👤 Minhas Preferências"**: painel único
+reunindo toda a personalização pessoal do board (tema, fonte/densidade
+dos cards, squad padrão, Não Perturbe, atalhos de teclado, e as
+sugestões de "personalização baseada em rotina", agora reversíveis a
+qualquer momento) — antes espalhada em ~6 pontos de entrada diferentes.
+Acessível pelo avatar → "Meu status", ou de dentro de "⚙
+Configurações". "Não sugerir mais" (sugestões recusadas) passou a
+sincronizar com a conta, não fica mais preso só no navegador.
+
+**Outras novidades:**
+- Quem já descobriu o tema escondido 🌴 Vice City ganha um atalho pra
+  ele direto em "Minhas Preferências" — sem estragar a surpresa pra
+  quem nunca segurou o botão de tema.
+- O drawer "📊 Dados" (dentro do board) ganhou um link "🤖 Relatório"
+  pra quando um relatório automático estiver disponível pro dia (mesmo
+  espaço que já mostra a "📊 Central de Dados" — recurso ainda em
+  validação com o time de dados, sem impacto visível por enquanto).
+
+**Correções de comportamento:**
+- Reload forçado pelo auto-update de versão estava inflando em dobro (ou
+  mais) a contagem de "sessões" que decide quando sugerir a Timeline ou
+  "Meus cards" fixado — a sugestão podia aparecer cedo demais.
+- 3 achados no próprio painel novo: ligar Timeline/filtro de atrasados
+  automático no meio da sessão podia trocar a tela sem a pessoa ter
+  clicado em nada; remover um atalho de atribuição rápida deixava a
+  ação fantasma em outra aba aberta; "Ver meus presets de filtro"
+  podia fechar a barra de Filtros em vez de abrir.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao de `kanban-dev.html` (braces -1, parens
++4); `diff kanban.html kanban-dev.html` conferido — só as divergências
+já conhecidas (versão/`VERSION_KEY`/`FB_OVERRIDE_NS`, favicon/manifest
+de ambiente).
+
 ### v8.30.753 — 2026-09-26 · Promove pra prod — lote acumulado (v8.30.752-dev → v8.30.753-dev)
 
 Promoção do lote acumulado desde a última promoção (v8.30.751).
