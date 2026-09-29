@@ -645,13 +645,33 @@
    contrário do dourado de .okr-card (que não tinha uma variável semântica
    pronta pra reusar). Substituiu o selo inline pequeno que existia antes
    (♾️ badge) — um só indicador, mais visível, mesmo espírito do 🔥 OFERTA
-   (que também não duplica com badge nenhum). Colisão rara (card
-   simultaneamente crítico + em Black Friday + Contínuo): a regra do
-   Black Friday acima tem mais especificidade CSS (atributo de tema +
-   2 classes) e vence sozinha no cascade — sem precisar de override
-   manual, o ::before mostra "🔥 OFERTA" nesse caso raríssimo. */
+   (que também não duplica com badge nenhum). Usa ::after, NUNCA ::before
+   — achado real (relato direto do usuário, screenshot de "Melhorias Maré
+   Digital" com o selo saindo ilegível): .card.card-mine::before (selo
+   "👤 seu card", ~L907) já ocupa ::before neste elemento, e card marcado
+   como seu E Contínuo ao mesmo tempo é o caso MAIS COMUM possível (não
+   uma exceção) — ver comentário completo perto de .card-continuo::after
+   abaixo pro detalhe de por que 2 regras ::before de especificidade igual
+   "mesclam" propriedade por propriedade em vez de uma vencer inteira.
+   Colisão bem mais rara (crítico + Black Friday + Contínuo juntos): como
+   agora é ::after vs. o ::before do 🔥 OFERTA, os dois pseudo-elementos
+   coexistem sem se misturar — só podem se sobrepor visualmente no mesmo
+   canto nesse caso raríssimo, aceito por ora. */
 .card.card-continuo{clip-path: inset(0 round var(--r));}
-.card.card-continuo::before{
+/* ::after, NUNCA ::before — achado real (relato direto do usuário,
+   screenshot de "Melhorias Maré Digital" com o selo saindo ilegível):
+   .card.card-mine::before (selo "👤 seu card", ver acima) já ocupa
+   ::before nesse mesmo elemento. Com 2 seletores de especificidade igual
+   (2 classes cada) competindo pelo MESMO pseudo-elemento, o CSS não
+   escolhe "uma regra vence", ele mescla PROPRIEDADE POR PROPRIEDADE (a
+   última no arquivo vence cada propriedade que declara) — content/
+   position/cores saíam de .card-mine (declarado depois), mas transform/
+   width/text-align (que .card-mine::before não declara) sobreviviam da
+   regra de Contínuo, produzindo "👤 seu card" girado 40° fora do lugar.
+   Card marcado como seu E Contínuo ao mesmo tempo é o caso mais comum
+   possível (ex.: exatamente "Melhorias Maré Digital"), não uma
+   colisão rara — por isso ::after aqui, nunca ::before. */
+.card.card-continuo::after{
   content:"♾️ CONTÍNUO"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
   transform:rotate(40deg); background:var(--teal); color:#04231d; font-size:8px; font-weight:800;
   letter-spacing:.03em; padding:3px 0; pointer-events:none;
@@ -6380,7 +6400,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.761-dev</div>
+<div class="version">v8.30.762-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —

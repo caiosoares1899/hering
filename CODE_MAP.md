@@ -1502,9 +1502,21 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   Diferente da fita "🔥 OFERTA" (theme-gated, decoração sazonal), a de
   Contínuo aparece em QUALQUER tema (`var(--teal)`, não cor fixa — cada
   tema já define a variável com valor coerente, sem precisar de override
-  por tema). Colisão rara (card crítico + Black Friday + Contínuo ao
-  mesmo tempo): a regra do Black Friday tem mais especificidade CSS e
-  vence sozinha no cascade, sem override manual. Excluído de: `_renderCFD()`, `_renderBurndown()`
+  por tema). **`::after`, NUNCA `::before` (fix 2026-09-29, achado real —
+  relato direto do usuário com screenshot: selo saindo ilegível em
+  "Melhorias Maré Digital")**: `.card.card-mine::before` (selo "👤 seu
+  card", ~L907) já ocupa `::before` nesse elemento — card marcado como
+  seu E Contínuo ao mesmo tempo é o caso MAIS COMUM possível, não uma
+  exceção. 2 regras `::before` de especificidade igual não fazem "uma
+  vence inteira" — o CSS mescla PROPRIEDADE POR PROPRIEDADE (a última no
+  arquivo vence cada propriedade que declara), então ficava com o texto
+  "👤 seu card" (de `.card-mine`, declarado depois) mas girado 40°/
+  largura 110px (que `.card-mine::before` não declara, sobrevivia da
+  regra de Contínuo) — selo ilegível. Colisão bem mais rara (crítico +
+  Black Friday + Contínuo juntos): como agora é `::after` vs. o
+  `::before` do 🔥 OFERTA, os 2 pseudo-elementos coexistem sem se
+  misturar, só podem se sobrepor visualmente no mesmo canto — aceito por
+  ora. Excluído de: `_renderCFD()`, `_renderBurndown()`
   (senão infla/nunca zera o gráfico, já que o card nunca sai da coluna) e
   `_computeTempoData()` (cycle/lead time E o "gargalo" por coluna saem
   juntos, mesmo filtro); e do alarme visual de "card parado" (esmaecimento
