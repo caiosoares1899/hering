@@ -2607,6 +2607,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `toggleViceCity()`); gate passa a checar `vice_manual`. dev
   v8.30.759-dev, PR #1096.
 
+- **2026-09-29, `functions/agente-agil/http.js` +
+  `agente-agil-orquestrador/intakeTrigger.js` (pedido explícito, "roda
+  outro em uma área sensível e bastante utilizada" — endpoint HTTP
+  auth-por-secret, único ponto de contato entre especialistas externos e
+  o board)**: 1 achado severo, técnica 3 (comentário/promessa vs. código
+  real) + confirmado contra o código-fonte real do
+  `@firebase/database-compat` instalado (não suposição). `entry.especialista`
+  (texto livre do envelope HTTP) era usado direto em 2 lugares
+  (`lerDescricaoEspecialista()`, `tools/notificarEspecialistaExterno.js`)
+  pra montar `kanban/config/agentesExternos/${especialista}` — chaves do
+  RTDB não podem conter `.`/`#`/`$`/`[`/`]`, `db.ref()` real lança
+  exceção SÍNCRONA nesse caso (`makeFakeDb()` dos testes não reproduz
+  essa validação, por isso a suíte de 518 nunca pegou isso). Um valor
+  plausível como `"databricks.ai"` derrubava `lerDescricaoEspecialista()`
+  ANTES do try/catch que `runLoop()` já tem — item ficava travado pra
+  sempre em `status:'pending'`, sem NENHUM sinal de falha, o exato
+  cenário que o resto do arquivo trabalha duro pra evitar.
+  `notificarEspecialistaExterno.js` quebrava sua própria promessa
+  documentada ("NUNCA lança exceção pro loop acima"). Fix:
+  `isValidFirebaseKey()` nova em `agente-agil/board.js`, checada nos 2
+  pontos antes de montar qualquer `ref()`. Lado de ESCRITA
+  (`criarAgenteExternoPainel()`, painel-dev.html) já tinha o mesmo
+  problema documentado desde 2026-09-01, mas lá existe uma promise que
+  rejeita — aqui, do lado de LEITURA, não existia nada pra reverter. 3
+  testes novos, suíte 521/521. PR #1098. **Lição pra próxima vez**:
+  quando o fake db dos testes é mais permissivo que o Firebase real
+  (aqui: não valida caracteres de chave), vale confirmar hipóteses de
+  segurança direto contra o código-fonte da lib real instalada
+  (`node_modules/`) em vez de só confiar na suíte "verde".
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
