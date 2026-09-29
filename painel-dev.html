@@ -1733,8 +1733,11 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
        Estrutura própria (Objetivo → Marco), não reusa supercard/card filho
        do kanban — dados vivem em kanban/okr/objetivos e kanban/okr/marcos
        (nó global, fora de squad, mesmo padrão de kanban/painel/config).
-       Permissão: responsável(is) do objetivo + ADM editam ("Só responsável(is)
-       + ADM", decisão do usuário), resto só visualiza — ver _okrCanEdit().
+       Permissão: responsável(is) do objetivo + ADM + PO/organizador (de
+       QUALQUER squad — OKR é global, não amarrado a squad, mesmo espírito
+       do picker de pessoas) editam (decisão do usuário, 2026-09-29 —
+       ampliação de "Só responsável(is) + ADM"), resto só visualiza — ver
+       _okrCanEdit()/_isPOouOrgEmAlgumSquad().
        Área = Gerência, mas com lista PRÓPRIA (OKR_GERENCIAS, no <script>
        abaixo), não a GERENCIAS do Dashboard (aquela é amarrada a squadIds
        reais pra "Insights por Gerência" e usa squadIds:null como catch-all
@@ -2866,7 +2869,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.69 · painel-dev</div>
+<div class="version">v3.70 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5247,8 +5250,27 @@ function _okrIsResponsavel(obj){
   const uid = window._currentUser?.uid;
   return !!(uid && obj && (obj.responsaveis||[]).includes(uid));
 }
-function _okrCanEdit(obj){ return isAdmUser(window._currentUser) || _okrIsResponsavel(obj); }
-function _okrCanCreate(){ return isAdmUser(window._currentUser); }
+// Achado real (2026-09-29, investigando "botão de adicionar OKR sumiu"):
+// window._currentUserRole (usado por _isPOorOrg(), lá embaixo no arquivo,
+// já sem uso em nada de OKR) NUNCA é atribuído em painel-dev.html — só
+// LIDO, em 3 pontos, todos pré-existentes a este achado — diferente de
+// kanban-dev.html, onde a mesma variável é preenchida de verdade no
+// login. Usá-la aqui reproduziria esse bug (sempre "false", ninguém
+// nunca seria PO/organizador). Em vez disso, lê o papel de QUALQUER
+// squad direto de _globalUsersCache (já populado ao vivo por
+// loadGlobalUsers(), fonte de verdade também usada por _okrPessoaOptions()
+// alguns comentários acima — "picker global, não amarrado a squad") —
+// checa squads_roles[cada squad] e o campo legado role como fallback,
+// mesmo padrão que o resto do arquivo já usa pra ler o papel de QUALQUER
+// OUTRA pessoa (ex.: L8795/L9905/L10540).
+function _isPOouOrgEmAlgumSquad(uid){
+  const u = uid && _globalUsersCache[uid];
+  if(!u) return false;
+  if(u.role==='po' || u.role==='organizador') return true;
+  return !!(u.squads_roles && Object.values(u.squads_roles).some(r=>r==='po'||r==='organizador'));
+}
+function _okrCanEdit(obj){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid) || _okrIsResponsavel(obj); }
+function _okrCanCreate(){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid); }
 
 // ── Pessoas: picker global (não amarrado a squad), fonte é _globalUsersCache ──
 function _okrPessoaInfo(uid){
