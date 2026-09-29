@@ -1516,7 +1516,19 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   Black Friday + Contínuo juntos): como agora é `::after` vs. o
   `::before` do 🔥 OFERTA, os 2 pseudo-elementos coexistem sem se
   misturar, só podem se sobrepor visualmente no mesmo canto — aceito por
-  ora. Excluído de: `_renderCFD()`, `_renderBurndown()`
+  ora. **2º achado real, mesmo relato/screenshot (fix 2026-09-29, mesmo
+  dia)**: trocar pra `::after` resolveu a MISTURA de propriedades, mas
+  não um 2º problema — `.card-continuo{clip-path:inset(0 round
+  var(--r));}` clipa TUDO que passa da caixa do card, incluindo o selo
+  "👤 seu card" (`.card-mine::before`, top:-9px de propósito, cortado na
+  metade). Confirmado por geometria (a fita ♾️ rotacionada extrapola
+  ~24px ACIMA do card perto do lado DIREITO — por isso o clip-path
+  top:0 é necessário ali; o selo "seu card" fica no lado ESQUERDO, fora
+  dessa região). Em vez de uma forma de clip customizada (frágil,
+  dependeria da largura exata do card), fix mais simples: `.card.card-mine.card-continuo::before{top:0;}`
+  — reposiciona o selo só nessa combinação (3 classes, especificidade
+  maior que as 2 declarações originais, dark e claro, garante que vence
+  sempre). Excluído de: `_renderCFD()`, `_renderBurndown()`
   (senão infla/nunca zera o gráfico, já que o card nunca sai da coluna) e
   `_computeTempoData()` (cycle/lead time E o "gargalo" por coluna saem
   juntos, mesmo filtro); e do alarme visual de "card parado" (esmaecimento

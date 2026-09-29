@@ -3872,6 +3872,37 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.763-dev — 2026-09-29 — fix(♾️ Contínuo): 2º achado, mesmo relato — clip-path cortava o selo "👤 seu card" ao meio
+
+Segundo achado real do mesmo relato/screenshot (a troca pra `::after`
+da v8.30.762-dev resolveu a mistura de propriedades, mas o usuário
+mandou um novo screenshot: o selo "👤 seu card" ainda saía cortado,
+faltando a metade de cima).
+
+Causa: `.card-continuo{clip-path:inset(0 round var(--r));}` clipa TUDO
+que passa da própria caixa do card — pseudo-elemento ou não. O selo
+"👤 seu card" (`.card-mine::before`) poka 9px ACIMA do card DE
+PROPÓSITO (`top:-9px` — `.card` base nunca teve overflow:hidden nem
+clip-path, então isso sempre funcionou); a fita ♾️ agora clipa essa
+área também.
+
+Confirmado por geometria (não só suposição): a fita rotacionada 40°
+extrapola ~24px acima do topo do card perto do lado DIREITO — por isso
+o `clip-path top:0` é necessário ali. O selo "seu card" fica no lado
+ESQUERDO, numa região que o clip nem precisava cobrir.
+
+Fix: em vez de uma forma de clip customizada (frágil, dependeria da
+largura exata do card, que muda com densidade/view mode), reposiciona
+o selo pra `top:0` só quando o card é AMBOS seu E Contínuo — a mesma
+combinação mais comum que motivou trocar pra `::after` no fix anterior.
+`.card.card-mine.card-continuo::before{top:0;}` (3 classes, mais
+específico que as 2 declarações originais — dark e claro — garante que
+vence sempre, sem duplicar a declaração inteira do selo).
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao baseline da sessão (braces -1, parens
++4).
+
 ### v8.30.762-dev — 2026-09-29 — fix(♾️ Contínuo): fita colidia com o selo "👤 seu card", saindo ilegível
 
 Achado real, relato direto do usuário com screenshot: em "Melhorias
