@@ -8,7 +8,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { envelope } = require('../schema');
-const { buildWritePlan, applyWritePlan, CARDS_PATH, resolveActor, especialistaLabel } = require('../board');
+const { buildWritePlan, applyWritePlan, CARDS_PATH, resolveActor, especialistaLabel, isValidFirebaseKey } = require('../board');
 const { makeFakeDb } = require('./fakeDb');
 const membersLib = require('../members');
 const flowLib = require('../flow');
@@ -124,6 +124,24 @@ test('resolveActor(): com especialista conhecido, devolve identidade PRÓPRIA �
 test('especialistaLabel(): especialista desconhecido cai num fallback capitalizado, nunca quebra', () => {
   assert.equal(especialistaLabel('databricks'), 'Databricks');
   assert.equal(especialistaLabel('novo-especialista'), 'Novo-especialista');
+});
+
+// /monitorarbugs 2026-09-29: db.ref() lança exceção SÍNCRONA (não promise)
+// pra qualquer path com ".", "#", "$", "[" ou "]" — confirmado contra o
+// validador real do @firebase/database-compat (o que firebase-admin usa por
+// baixo). isValidFirebaseKey() protege os 2 lugares (intakeTrigger.js,
+// notificarEspecialistaExterno.js) que montam kanban/config/agentesExternos/
+// {especialista} direto de um valor externo não confiável.
+test('isValidFirebaseKey(): aceita ids normais, rejeita qualquer caractere inválido de chave do RTDB', () => {
+  assert.equal(isValidFirebaseKey('databricks'), true);
+  assert.equal(isValidFirebaseKey('novo-especialista_2'), true);
+  assert.equal(isValidFirebaseKey('databricks.ai'), false);
+  assert.equal(isValidFirebaseKey('data#team'), false);
+  assert.equal(isValidFirebaseKey('a$b'), false);
+  assert.equal(isValidFirebaseKey('a[b]'), false);
+  assert.equal(isValidFirebaseKey(''), false);
+  assert.equal(isValidFirebaseKey(undefined), false);
+  assert.equal(isValidFirebaseKey(null), false);
 });
 
 test('buildWritePlan (comentario): sem extra.especialista, credita "Agente Ágil" — mesmo comportamento de sempre pro orquestrador (realHandlers.js nunca passa especialista)', async () => {

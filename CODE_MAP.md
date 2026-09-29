@@ -3672,6 +3672,26 @@ detalhe aberto — ver nota abaixo).
   agora tem overlap real com o orquestrador, que só existe em `dev`/
   `dados`; `http.js` (canal do especialista externo) segue esse default
   automaticamente
+- `board.js` — `isValidFirebaseKey(id)` (2026-09-29, `/monitorarbugs`,
+  "área sensível e bastante utilizada"): `especialista` chega como texto
+  livre de fora (envelope HTTP em `http.js`, ou escolhido pelo LLM em
+  `notificar_especialista_externo` a partir do histórico do card) e 2
+  lugares montavam `kanban/config/agentesExternos/{especialista}` direto
+  com esse valor — chaves do RTDB não podem conter `.`/`#`/`$`/`[`/`]`,
+  `db.ref()` real lança exceção SÍNCRONA nesse caso (confirmado contra o
+  validador do `@firebase/database-compat` que `firebase-admin` usa por
+  baixo — `makeFakeDb()` dos testes não reproduz essa validação). Um
+  `especialista` plausível como `"databricks.ai"` derrubava
+  `lerDescricaoEspecialista()` (`intakeTrigger.js`) ANTES do try/catch que
+  `runLoop()` já tem — item ficava travado pra sempre em `status:'pending'`
+  sem nenhum sinal de falha. Mesmo padrão em `tools/notificarEspecialistaExterno.js`
+  (quebrava a própria promessa do comentário do arquivo, "NUNCA lança
+  exceção pro loop acima"). Fix nos 2: `isValidFirebaseKey()` antes de
+  montar o `ref()`, trata como especialista desconhecido/erro próprio em
+  vez de deixar o pedido inteiro cair em silêncio. Lado de ESCRITA
+  (`criarAgenteExternoPainel()`, painel-dev.html) já reverte a UI otimista
+  quando `window._set()` rejeita (achado anterior, 2026-09-01) — isso aqui
+  protege o lado de LEITURA, onde não existe promise nenhuma pra rejeitar.
 - `outputs/sanitizeAgentText.js` — `sanitizeAgentText()` (2026-09-28,
   achado real no canário do `htmlAnexo`): o modelo vazou um fragmento de
   fechamento de tag alucinado (`</texto>\n</invoke>`) no fim de um

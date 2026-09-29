@@ -75,7 +75,7 @@ const { runLoop } = require('./loop');
 const { escolheClienteParaTarefa } = require('./escolheClienteParaTarefa');
 const { SYSTEM_PROMPT_V1 } = require('./systemPrompt');
 const { isEnabled } = require('./limits');
-const { resolveCardKey, cardsPath, cardCommentsPath, buildWritePlan, applyWritePlan } = require('../agente-agil/board');
+const { resolveCardKey, cardsPath, cardCommentsPath, buildWritePlan, applyWritePlan, isValidFirebaseKey } = require('../agente-agil/board');
 const { resolveReferencia } = require('../agente-agil/resolver');
 const { coletarAcoesAgente, registrarLogAgente } = require('./agenteLog');
 const { marcarAgenteResponsavel } = require('./agenteMarcador');
@@ -190,6 +190,13 @@ function createIntakeTrigger({ squadId, dryRun = true }) {
   // módulo.
   async function lerDescricaoEspecialista(db, especialista) {
     if (!especialista) return null;
+    // db.ref() lança exceção SÍNCRONA (não promise) se `especialista` tiver
+    // ".", "#", "$", "[" ou "]" — valor plausível vindo de fora (ver
+    // isValidFirebaseKey em board.js pro achado completo). Sem cadastro
+    // possível com esses caracteres (mesma trava do lado de escrita, painel-
+    // dev.html), então trata como "especialista desconhecido" em vez de
+    // deixar o pedido inteiro cair em silêncio.
+    if (!isValidFirebaseKey(especialista)) return null;
     const snap = await db.ref(`kanban/config/agentesExternos/${especialista}`).get();
     const val = snap.val();
     if (!val || !val.descricao) return null;

@@ -134,6 +134,34 @@ function especialistaLabel(id) {
   return ESPECIALISTA_LABELS[id] || (id.charAt(0).toUpperCase() + id.slice(1));
 }
 
+// Achado real (/monitorarbugs, 2026-09-29, "área sensível e bastante
+// utilizada"): `especialista` chega como texto livre de fora (envelope HTTP
+// em http.js, ou escolhido pelo próprio LLM em notificar_especialista_externo
+// a partir do histórico do card) e 2 lugares (intakeTrigger.js:
+// lerDescricaoEspecialista, tools/notificarEspecialistaExterno.js) usam esse
+// valor DIRETO pra montar um path de leitura em
+// kanban/config/agentesExternos/{especialista} — mas chaves do Firebase RTDB
+// não podem conter ".", "#", "$", "[" ou "]" (confirmado contra o validador
+// real do @firebase/database-compat, que o firebase-admin usa por baixo).
+// db.ref() com qualquer um desses caracteres lança uma exceção SÍNCRONA, não
+// uma promise rejeitada — um valor plausível como "databricks.ai" já bastava
+// pra derrubar em silêncio o pedido inteiro de intake (achado real: essa
+// chamada roda ANTES do try/catch que runLoop() já tem em intakeTrigger.js,
+// então o item ficava travado pra sempre em status:'pending', sem nenhum dos
+// sinais de falha que o resto do arquivo garante com tanto cuidado — nem
+// status:'failed', nem notificarFalhaSemCard). O lado de ESCRITA
+// (criarAgenteExternoPainel() em painel-dev.html) já tinha esse mesmo
+// problema documentado desde 2026-09-01 e reverte a UI otimista quando
+// window._set() rejeita — mas aqui do lado de LEITURA não existe nenhuma
+// promise pra rejeitar, o `especialista` recebido nem precisa bater com uma
+// entrada existente em agentesExternosCfg pra derrubar a chamada. Painel do
+// ADM continua só guardando ids seguros de verdade (write-side já protegido);
+// isso aqui protege o READ-side contra qualquer valor externo não confiável.
+const INVALID_FIREBASE_KEY_CHARS = /[.#$[\]]/;
+function isValidFirebaseKey(id) {
+  return typeof id === 'string' && id.length > 0 && !INVALID_FIREBASE_KEY_CHARS.test(id);
+}
+
 // `ctx.actor`: identidade creditada em todo `uid`/`author`/`who` que os
 // output builders gravam (comentario -> card_comments; os outros 6 ->
 // card.history). Achado real (2026-08-25): antes disso, TODO output —
@@ -308,4 +336,5 @@ module.exports = {
   applyWritePlan,
   resolveActor,
   especialistaLabel,
+  isValidFirebaseKey,
 };
