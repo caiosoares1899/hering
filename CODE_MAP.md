@@ -2792,9 +2792,27 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   deploy (`firebase deploy --only database`) já feito (2026-09-04).
 - `loadOkr()` — `_onValue` nos dois nós, populam `okrObjetivos`/
   `okrMarcos`. Chamado no boot junto de `loadGlobalUsers()`.
-- Permissão: `_okrCanEdit(obj)`/`_okrCanCreate()` — só responsável(is) do
-  objetivo + ADM, check client-side (mesmo padrão de gating de UI do
-  resto do app, sem ACL granular no Realtime Database).
+- Permissão: `_okrCanEdit(obj)`/`_okrCanCreate()` — responsável(is) do
+  objetivo + ADM + PO/organizador (de QUALQUER squad), check client-side
+  (mesmo padrão de gating de UI do resto do app, sem ACL granular no
+  Realtime Database). Ampliado de "só responsável(is) + ADM" em
+  2026-09-29 (pedido direto — "sumiu o botão de adicionar OKR", usuário
+  decidiu incluir PO). `_isPOouOrgEmAlgumSquad(uid)` — achado real na
+  mesma rodada: `window._currentUserRole`/`_isPOorOrg()` (mais abaixo no
+  arquivo) NUNCA são atribuídos em `painel-dev.html` — só LIDOS, sempre
+  `undefined`/`false` — diferente de `kanban-dev.html`, onde a mesma
+  variável é preenchida de verdade no login. Usar esse padrão aqui
+  reproduziria o mesmo bug; o fix lê o papel direto de
+  `_globalUsersCache` (já ao vivo, mesma fonte do picker de pessoas
+  logo abaixo), checando `squads_roles`/`role` de QUALQUER squad —
+  mesmo padrão que o resto do arquivo já usa pra ler o papel de
+  QUALQUER OUTRA pessoa. **`_isPOorOrg()`/`window._currentUserRole`
+  continuam quebrados pros outros usos** (Campanhas editar/excluir/ver
+  logs, L3476/3491/3497/4089/4158/4342/4353) — reportado ao usuário,
+  não corrigido nesta rodada (fora do escopo do pedido, mudança maior:
+  precisa decidir de onde vem "o papel da pessoa" quando ela tem papéis
+  DIFERENTES em squads diferentes, e Campanhas É amarrado a squad,
+  diferente de OKR).
 - Pessoas (responsável/participantes) via picker GLOBAL
   (`_okrPessoaOptions()`/`_okrPessoaInfo()`), fonte é `_globalUsersCache`
   — não amarrado a squad, ao contrário do resto do painel.

@@ -19803,6 +19803,37 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.70 · painel-dev — 2026-09-29 · feat(🎯 OKR): PO/organizador também podem criar/editar Objetivos, não só ADM
+
+Pedido direto do usuário, depois de investigar um relato de "sumiu o
+botão de adicionar OKR": não era regressão de código (a checagem
+"só ADM" nunca mudou desde que a feature nasceu) — era o design
+original ("Só responsável(is) + ADM", decisão antiga documentada no
+comentário da aba). Usuário decidiu ampliar: agora ADM e PO/organizador
+(de QUALQUER squad — OKR é global, não amarrado a squad, mesmo espírito
+do picker de pessoas) também podem criar/editar Objetivos, além do(s)
+responsável(is) já designado(s).
+
+**Achado real na investigação**: `window._currentUserRole`/`_isPOorOrg()`
+(usados em Campanhas — editar/excluir/ver logs) NUNCA são atribuídos em
+`painel-dev.html`, só lidos — sempre `undefined`/`false`, diferente de
+`kanban-dev.html`, onde a mesma variável é preenchida de verdade no
+login. Ou seja, PO/organizador provavelmente NUNCA conseguiram editar
+Campanhas no painel, mesmo achando que tinham esse papel — sempre caía
+no toast "Apenas PO, organizador ou adm podem...". Reportado, **não
+corrigido nesta rodada** (fora do escopo do pedido — mudança maior,
+Campanhas É amarrado a squad, diferente de OKR, precisa decidir de onde
+vem "o papel da pessoa" quando ela tem papéis diferentes por squad).
+
+Fix do OKR não depende dessa variável quebrada: `_isPOouOrgEmAlgumSquad(uid)`
+lê o papel direto de `_globalUsersCache` (já ao vivo via `loadGlobalUsers()`,
+mesma fonte que `_okrPessoaOptions()` já usa) — checa `squads_roles` de
+qualquer squad + `role` legado como fallback, mesmo padrão que o resto
+do arquivo já usa pra ler o papel de QUALQUER outra pessoa.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais do
+arquivo (extraídos por âncora de linha) — os 3 OK.
+
 ### painel-dev.html v3.69 · painel-dev — 2026-09-28 · feat(📊 Central de Dados): link do relatório diário da Databricks aparece automático no Histórico
 
 Pedido direto do usuário, continuação do report diário via card
