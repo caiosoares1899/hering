@@ -2593,6 +2593,20 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   espelham em `usuarios_publicos` logo após a escrita original. dev
   v3.68 · painel-dev.
 
+- **2026-09-29, 🌴 Vice City — atalho em "Minhas Preferências" (pedido
+  genérico, "Roda um /monitorarbugs de rotina" — área escolhida por ser
+  a mais recente ainda não auditada, `toggleViceCity()`/
+  `temasDescobertos`, 2026-09-28)**: 1 achado real, técnica 3
+  (confrontar comportamento com a promessa do comentário — "nunca
+  revela a existência dele pra quem nunca achou"). O gate do atalho
+  usava `temasDescobertos.vice`, campo também gravado por
+  `_applyAutoTheme()` (tema automático, banda 12h-18h) sem nenhuma ação
+  manual — vazava o easter egg pra quem nunca fez o long-press de
+  verdade. Fix: campo novo `vice_manual`, gravado só por
+  `_recordViceCityManualDiscovery()` (chamada de dentro de
+  `toggleViceCity()`); gate passa a checar `vice_manual`. dev
+  v8.30.759-dev, PR #1096.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
