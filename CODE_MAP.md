@@ -1493,7 +1493,18 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   (cai no card aberto no modal). 2 pontos de entrada: botão `#btn-continuo-card`
   no rodapé do modal + item no menu de contexto (ícone `♾️`, DIFERENTE de
   `🔁` — colidiria com "Salvar como recorrente" no mesmo menu, conceito
-  totalmente diferente). Excluído de: `_renderCFD()`, `_renderBurndown()`
+  totalmente diferente). **Indicador visual (fix 2026-09-29, mesmo dia,
+  pedido direto "e se colocarmos esse infinito como aquela faixa q vc fez
+  pro modo black friday?")**: fita diagonal `.card-continuo` (CSS, perto
+  de `.card.card-prio-critical` do Black Friday — L626) reusando o MESMO
+  fix de `clip-path` documentado ali (causa raiz do bug de clipping do
+  Chromium/WebKit); substituiu o selo inline pequeno que existia antes.
+  Diferente da fita "🔥 OFERTA" (theme-gated, decoração sazonal), a de
+  Contínuo aparece em QUALQUER tema (`var(--teal)`, não cor fixa — cada
+  tema já define a variável com valor coerente, sem precisar de override
+  por tema). Colisão rara (card crítico + Black Friday + Contínuo ao
+  mesmo tempo): a regra do Black Friday tem mais especificidade CSS e
+  vence sozinha no cascade, sem override manual. Excluído de: `_renderCFD()`, `_renderBurndown()`
   (senão infla/nunca zera o gráfico, já que o card nunca sai da coluna) e
   `_computeTempoData()` (cycle/lead time E o "gargalo" por coluna saem
   juntos, mesmo filtro); e do alarme visual de "card parado" (esmaecimento

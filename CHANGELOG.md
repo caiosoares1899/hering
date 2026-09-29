@@ -3872,6 +3872,31 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.761-dev — 2026-09-29 — polish(♾️ Contínuo): selo inline vira fita diagonal, mesmo estilo do "🔥 OFERTA" do Black Friday
+
+Pedido direto, logo após validar a v8.30.760-dev: "e se colocarmos esse
+infinito como aquela faixa q vc fez pro modo black friday?".
+
+O pequeno selo ♾️ ao lado do título virou uma fita diagonal "♾️ CONTÍNUO"
+no canto do card — reusa o MESMO CSS/fix de `clip-path` já validado no
+tema Black Friday (o comentário lá documenta a causa raiz: bug de
+clipping do Chromium/WebKit em border-radius + backdrop-filter num
+ancestral, 4 rodadas de debug até a causa certa). Diferença chave: a
+fita de Contínuo NÃO é presa a um tema — "Contínuo" é um estado real do
+card, não decoração sazonal — então aparece em qualquer tema. Usa
+`var(--teal)` (não uma cor fixa) de propósito: cada tema já define essa
+variável com um valor coerente com a própria paleta, adaptando a fita
+sozinha sem precisar de override manual por tema.
+
+Colisão rara documentada (card crítico + tema Black Friday + Contínuo
+ao mesmo tempo): a regra do Black Friday tem mais especificidade CSS e
+vence sozinha no cascade — sem precisar de nenhum código extra pra
+resolver, confirmado pela matemática de especificidade do CSS.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses idêntico ao baseline da sessão (braces -1, parens
++4).
+
 ### v8.30.760-dev — 2026-09-29 — feat(♾️ Contínuo): categoria pra demanda sem data de finalização, fora do CFD/Burndown/cycle-lead-time
 
 Pedido direto do usuário: alguns cards (principalmente na squad dados —
