@@ -996,9 +996,11 @@ window._okrOpenDetail = id => {
           <div class="d2-panel grow"><div class="d2-panel-label">Indicadores de Entrega</div>${d2FieldList(o.indicadores)}</div>
         </div>
         <div class="d2-right">
+          ${marcos.some(m=>m.progresso==='concluido')?`<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
+            <button class="detail-next" style="height:24px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>
+          </div>`:''}
           <div class="d2-table-header">
             <span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
-            ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:24px;padding:0 10px;font-size:11px;margin-left:auto;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           </div>
           <div class="d2-table-rows">${marcos.length ? marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);

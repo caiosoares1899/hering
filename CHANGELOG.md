@@ -19294,6 +19294,21 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-09-30 — Ajuste visual: botão "Colapsar concluídos" ficava espremido no cabeçalho da tabela
+
+Continuação do mesmo dia (ver `painel-dev.html` v3.71 acima pro
+racional do botão em si). Achado do próprio usuário logo depois de ver
+a tela: o botão tinha sido colocado DENTRO da linha flex de cabeçalho
+da tabela (`.d2-table-header`, com colunas de largura fixa
+`c-status`/`c-prazo`), sem largura própria sobrando — ficava espremido
+e quebrava linha. Fix: botão movido pra sua própria linha, acima do
+cabeçalho da tabela, alinhado à direita — `.d2-right` já é
+`flex-direction:column`, então isso só empilha mais um filho, sem
+precisar mexer no zoom-fit (`_okrFitDetailSections()` mede a altura
+renderizada de verdade, se adapta sozinho).
+
+Checks de rotina: `node --check` OK.
+
 ### 2026-09-24 — Ordenação de marcos passa a respeitar `ordem` manual (consistência com painel-dev.html)
 
 Acompanha o processo de reordenação manual de marcos adicionado ao
