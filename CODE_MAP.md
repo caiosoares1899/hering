@@ -20,16 +20,15 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção (última confirmada: v8.30.716, "login e
-segurança" — ver `CHANGELOG.md`) — no retrato deste rodapé
-`kanban-dev.html` tem de novo um lote acumulado não promovido (dedup de
-notificações, sino do painel, aviso de conclusão do Supercard, fix de
-`parseMentions()` — v8.30.719 em prod vs. v8.30.731-dev), estado normal
-na maior parte do tempo, não exceção. Os números abaixo são os de
-`kanban-dev.html` (o superset). Se o `diff` entre os dois mostrar mais
-do que essas 3 divergências conhecidas + o lote pendente do momento,
-refaça o grep no arquivo específico que você está editando (provavelmente
-`kanban-dev.html`).
+DEPOIS de uma promoção (última confirmada: v8.30.764, 2026-09-30 —
+lote ♾️ Contínuo + fallback de login por redirect + fix do atalho do
+Vice City — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
+tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
+(volta a acontecer assim que o próximo commit em dev acontecer). Os
+números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
+entre os dois mostrar mais do que essas 3 divergências conhecidas + um
+lote pendente do momento, refaça o grep no arquivo específico que você
+está editando (provavelmente `kanban-dev.html`).
 `painel.html`/`painel-dev.html` **divergem de verdade** (dev tem
 instrumentação extra) — os números da seção painel abaixo são de
 `painel-dev.html` (o superset, mesmo padrão do par kanban — sempre
@@ -85,7 +84,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - **`window._signInRedirect()`/fallback de login por redirect (2026-09-29,
   relato direto de usuária — screenshot: popup de login travando com
   "Cross-Origin-Opener-Policy... would block the window.closed call",
-  caindo em "Login cancelado")**: `<script type="module">` — L6577 (perto
+  caindo em "Login cancelado" — promovido pra prod v8.30.764)**: `<script type="module">` — L6577 (perto
   de `window._signIn=(insc)=>signInWithPopup(...)`) — causa raiz
   confirmada lendo o SDK vendorizado (`vendor/firebase-10.14.1/
   firebase-auth.js`): `signInWithPopup()` detecta popup fechado checando
@@ -1498,7 +1497,8 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   propósito — o resultado de aceitar aquela sugestão é um preset comum,
   já gerenciável na barra de Filtros (`removeFilterPreset()`); o painel
   só linka pra lá (`toggleFilters()`).
-- **Atalho pro tema 🌴 Vice City (2026-09-28, fix 2026-09-29)**: botão na
+- **Atalho pro tema 🌴 Vice City (2026-09-28, fix 2026-09-29 — promovido
+  pra prod v8.30.764)**: botão na
   seção 🎨 Tema que só aparece depois que a pessoa já descobriu o easter
   egg (long-press de 1.2s no botão de tema, `toggleViceCity()` — ver
   "Temas" mais abaixo) — nunca revela a existência dele pra quem nunca
@@ -1511,7 +1511,8 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   gravado por `_recordViceCityManualDiscovery()` — L34237, chamada de
   dentro de `toggleViceCity()` — L34245. Botão reusa `toggleViceCity()`
   direto (entra se não estiver no tema, sai se já estiver).
-- **♾️ Contínuo (2026-09-29, pedido direto)**: categoria de card pra
+- **♾️ Contínuo (2026-09-29, pedido direto — promovido pra prod v8.30.764,
+  após 5 rodadas de ajuste visual da fita diagonal, PRs #1100-#1104)**: categoria de card pra
   demanda que nunca fecha de propósito (ex.: "Melhorias Maré Digital",
   "Ajuste recorrentes de IA" na squad dados — sempre voltam a ter
   trabalho, sem data de finalização real). `card.continuo` (bool, sem

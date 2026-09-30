@@ -18,6 +18,46 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.764 — 2026-09-30 · Promove pra prod — lote acumulado (v8.30.759-dev → v8.30.764-dev)
+
+Promoção do lote acumulado desde a última promoção (v8.30.758), pedido
+direto do usuário ("promove tudo q tiver em aberto, até kanban").
+Validado ao longo da sessão anterior (5 rodadas de ajuste da fita
+diagonal do ♾️ Contínuo). Ver as entradas de dev correspondentes abaixo
+pro detalhe técnico completo; aqui só o resumo pro público de prod.
+
+**Novidade principal — categoria ♾️ Contínuo**: nova opção pra marcar
+um card como demanda que nunca fecha de propósito (ex.: "Melhorias
+Maré Digital", tarefas recorrentes que sempre voltam a ter trabalho,
+sem uma data de finalização real). Botão no rodapé do card e no menu
+de contexto (clique direito). Um card marcado sai do 📈 CFD, 📉
+Burndown, cálculo de cycle/lead time e do alarme visual de "card
+parado" — sem isso, esse tipo de card fica parado numa coluna pra
+sempre e distorce esses gráficos indefinidamente. Continua contando
+normal no limite de WIP e no Throughput. Visual: fita diagonal "♾️
+CONTÍNUO" no canto do card, mesmo estilo da fita "🔥 OFERTA" do Black
+Friday.
+
+**Correção de login**: quem usava o Chrome ocasionalmente via um popup
+de login do Google travando (mensagem de "Cross-Origin-Opener-Policy"
+no console, caindo em "Login cancelado" sem o usuário ter feito nada)
+— causa é uma política de segurança da própria página de login do
+Google, fora do nosso controle. Agora, depois de 2 falhas seguidas
+desse tipo, o login troca automaticamente pra um método alternativo
+(a página navega pro Google e volta, em vez de abrir popup) que não
+sofre desse problema.
+
+**Correção pequena**: o atalho pro tema escondido 🌴 Vice City em "👤
+Minhas Preferências" podia aparecer sozinho pra quem tinha o Tema
+Automático ligado (sem nunca ter descoberto o easter egg de verdade,
+segurando o botão de tema) — corrigido.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK;
+balanço de chaves/parênteses idêntico ao de `kanban-dev.html` (braces
+-1, parens +3); `diff kanban.html kanban-dev.html` conferido — só as 3
+divergências permanentes já conhecidas (versão/`VERSION_KEY`, favicon,
+`force_logout_after`).
+
 ### v8.30.758 — 2026-09-29 · Promove pra prod — lote acumulado (v8.30.754-dev → v8.30.758-dev)
 
 Promoção do lote acumulado desde a última promoção (v8.30.753).
