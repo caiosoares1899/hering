@@ -95,6 +95,17 @@ porque quem for usar copia daqui direto. (Isso já foi reclamação
 explícita numa sessão anterior — "vc ta falhando toda vez ao mandar o
 texto do whatsapp" — não repetir.)
 
+**OKR é público diferente de kanban — nunca junte os dois num aviso só**
+(pedido direto do usuário, 2026-09-30): se o lote promovido tem
+mudanças de 🎯 OKR (aba do painel, `okr-apresentacao.slide.html`) E
+mudanças de kanban/board no mesmo dia, gere Mural + WhatsApp SEPARADOS
+pra cada assunto — nunca uma lista única misturando os dois. Quem usa
+OKR (Gerência/PO/ADM que acompanha Objetivos) não é necessariamente
+quem usa o board no dia a dia, e vice-versa; um aviso combinado faz
+metade do conteúdo ser ruído pra quem lê. Se o lote for 100% de um dos
+dois assuntos, só esse aviso já nasce separado — não precisa fazer
+nada a mais.
+
 ## Passo 3 — Log completo no card do Firebase
 
 Sempre faça isso — inclusive quando os avisos do Passo 2 forem pulados.
