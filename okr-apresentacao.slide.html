@@ -981,6 +981,7 @@ window._okrOpenDetail = id => {
         <div class="d2-trim">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
+          ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail('${nextObj.id}')" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
@@ -996,9 +997,6 @@ window._okrOpenDetail = id => {
           <div class="d2-panel grow"><div class="d2-panel-label">Indicadores de Entrega</div>${d2FieldList(o.indicadores)}</div>
         </div>
         <div class="d2-right">
-          ${marcos.some(m=>m.progresso==='concluido')?`<div style="display:flex;justify-content:flex-end;margin-bottom:6px;">
-            <button class="detail-next" style="height:24px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>
-          </div>`:''}
           <div class="d2-table-header">
             <span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
           </div>

@@ -19294,7 +19294,31 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
-### 2026-09-30 — Ajuste visual: botão "Colapsar concluídos" ficava espremido no cabeçalho da tabela
+### 2026-09-30 (2ª rodada) — Botão "Colapsar concluídos" reposicionado de vez: 1ª correção resolveu o espremido, mas encolheu o texto da tabela inteira
+
+A correção anterior (ver entrada logo abaixo) tirou o botão de dentro
+da linha de colunas — resolveu o espremido, mas criou um problema
+diferente, achado pelo próprio usuário ao olhar a tela de novo:
+qualquer altura extra dentro de `.d2-right` disputa espaço com
+`.d2-table-rows` (`flex:1`, mesmo container), e é exatamente essa
+altura disponível (`marcosRows.clientHeight`) que
+`_okrFitDetailSections()` usa como orçamento pro zoom-fit da tabela de
+marcos — a linha nova do botão, mesmo pequena, comia uma fatia desse
+orçamento, encolhendo a fonte da tabela INTEIRA (nome do marco, status,
+prazo) pra caber, prejudicando a leitura mesmo quando ninguém colapsou
+nada ainda.
+
+Fix definitivo: botão movido pra `.d2-brand-row` (no `.d2-header`, ao
+lado de "Próximo →"/"✕" — mesma classe `.detail-next`, mesmo visual).
+Esse cabeçalho é `display:grid` com colunas `auto` que nunca competem
+com o orçamento de `.d2-body`/zoom-fit (só a ALTURA da linha do
+cabeçalho importa pro layout, e ela já era dominada pelo título antes
+de qualquer botão existir) — acrescentar um botão ali não tira nem 1px
+do espaço da tabela.
+
+Checks de rotina: `node --check` OK.
+
+### 2026-09-30 (1ª rodada) — Ajuste visual: botão "Colapsar concluídos" ficava espremido no cabeçalho da tabela
 
 Continuação do mesmo dia (ver `painel-dev.html` v3.71 acima pro
 racional do botão em si). Achado do próprio usuário logo depois de ver
@@ -19302,10 +19326,9 @@ a tela: o botão tinha sido colocado DENTRO da linha flex de cabeçalho
 da tabela (`.d2-table-header`, com colunas de largura fixa
 `c-status`/`c-prazo`), sem largura própria sobrando — ficava espremido
 e quebrava linha. Fix: botão movido pra sua própria linha, acima do
-cabeçalho da tabela, alinhado à direita — `.d2-right` já é
-`flex-direction:column`, então isso só empilha mais um filho, sem
-precisar mexer no zoom-fit (`_okrFitDetailSections()` mede a altura
-renderizada de verdade, se adapta sozinho).
+cabeçalho da tabela, alinhado à direita — **superado pela 2ª rodada
+acima**, essa linha nova acabou encolhendo o texto da tabela inteira
+via zoom-fit.
 
 Checks de rotina: `node --check` OK.
 
