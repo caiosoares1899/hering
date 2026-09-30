@@ -3129,15 +3129,46 @@ autor apaga, só na reunião de hoje. Autor resolvido via
 `<script type="module">` (`remove` do SDK, novo import) — nenhuma outra
 função do painel apagava nó do Firebase direto antes.
 
-#### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — promovida pra prod v3.24 em 2026-09-05)
+#### ❓ Ajuda (help content) da aba OKR (2026-09-05, v3.24 · painel-dev — promovida pra prod v3.24 em 2026-09-05; sincronizada com o lote de permissão/edição em 2026-09-30, v3.74 · painel-dev)
 Modal estático `#okr-help-ov` (`openOkrHelp()`/`closeOkrHelp()`), mesmo
 padrão de `#agentes-help-ov`/`openAgentesHelp()` (reusa as classes
 `pev-modal-ov`/`pev-modal`/`pev-hd`/`pev-body`, sem CSS novo). Botão
 "❓ Ajuda" no cabeçalho da aba OKR. Conteúdo cobre Objetivo/Marco/status,
-permissão (ADM/Responsável), Arquivar×Excluir, Tags/vínculo de cards,
-📈 Histórico semanal, a apresentação em slides, e a 💬 Central Agente
-Ágil (como pedir, o que ela faz, que respeita a mesma permissão de
-edição manual) — pedido direto do usuário.
+permissão (ADM/PO-Organizador/🎯 Gestor OKR/Responsável — atualizado
+2026-09-30, era só "ADM/Responsável"), click-to-edit em listas/
+checklist, reordenar Objetivos e Marcos, Arquivar×Excluir, Tags/vínculo
+de cards, 📈 Histórico semanal, a apresentação em slides (incl. "🎬
+Aparecer na apresentação"/"Colapsar concluídos"), e a 💬 Central Agente
+Ágil (como pedir, o que ela faz — **acha real, não corrigido**: a
+ferramenta `criar_objetivo` do Agente Ágil, `functions/okr/
+agenteTools.js:148`, continua hard-coded "só ADM", não foi atualizada
+junto da expansão de permissão de 2026-09-30 — PO/Organizador/Gestor
+OKR já criam Objetivo pela tela, mas são recusados incorretamente se
+pedirem pro chat) — pedido direto do usuário.
+
+#### `guia-okr.html` (raiz do repo, sem `-dev`/`version.json` — guia
+visual em slides estáticos, gifs embutidos em base64; **linhas MUITO
+longas** — algumas passam de 3 milhões de caracteres, nunca usar `Read`
+sem `grep`/`awk` filtrando por tamanho de linha antes)
+Criado 2026-09-25 (v3.65 · painel-dev), nunca tinha ganhado seção
+própria neste mapa até agora. Botão "📘 Guia OKR" no cabeçalho da aba
+🎯 OKR abre em nova aba. Estrutura: `<section class="slide">` (18 no
+retrato deste rodapé) navegadas por JS simples no fim do arquivo
+(`document.querySelectorAll('.slide')`, dots + contador — some conta
+sozinha, nunca precisa hardcodar o total ao adicionar/remover slide).
+Conteúdo: conceito Objetivo/Marco, semáforo de status, criar Objetivo/
+Marco, editar itens já escritos (click-to-edit, 2026-09-30), reordenar
+Marcos E Objetivos (▲▼/arrastar, 2026-09-30), duplicar Objetivo,
+arquivar/excluir/vincular, histórico/reuniões, notificações/Agente
+Ágil, apresentação ao vivo (incl. "🎬 Aparecer na apresentação"/
+"Colapsar concluídos", 2026-09-30), e uma tabela comparativa de
+Permissões (`.cmp-row`, grid CSS — 5 colunas desde 2026-09-30: Ação/
+ADM/PO-Org-Gestor OKR/Responsável/Outros, era 4). Sincronizado com a
+"❓ Ajuda" do painel (ver entrada acima) e com o `CHANGELOG.md` — as
+duas fontes devem contar a MESMA história, mesmo princípio da skill
+`/atualizarhelpcontent` (essa skill hoje só cobre `kanban-dev.html`
+`HELP_CONTENT`, não este arquivo — considerar estender o escopo dela
+se este gap se repetir).
 
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a

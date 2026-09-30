@@ -19955,6 +19955,43 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.74 · painel-dev — 2026-09-30 · docs(🎯 OKR): sincroniza "❓ Ajuda" com o lote de hoje (PO/Organizador/Gestor OKR, editar itens, reordenar)
+
+Achado do próprio usuário logo depois de promover o lote de OKR pra
+prod: a documentação in-app (`#okr-help-ov`, botão "❓ Ajuda" no
+cabeçalho da aba) e o guia visual (`guia-okr.html`) ainda descreviam o
+modelo antigo — "Só ADM pode criar, ADM ou Responsável edita" — sem
+nenhuma menção a PO/Organizador, 🎯 Gestor OKR, click-to-edit,
+reordenar Objetivos ou aos 2 botões novos na apresentação.
+
+**"❓ Ajuda" (painel-dev.html)**: seção "✏️ Quem pode editar" atualizada
+pro modelo atual (ADM/PO-Organizador/Gestor OKR podem criar; os três +
+Responsável podem editar um Objetivo específico); 2 seções novas
+("✏️ Editar o que já foi escrito", "↕️ Reordenar Objetivos e Marcos");
+seção "🖥️ Apresentação em slides" ganhou menção aos botões "🎬 Aparecer
+na apresentação" e "Colapsar concluídos".
+
+**Achado incidental, não corrigido nesta rodada**: a ferramenta
+`criar_objetivo` do Agente Ágil (`functions/okr/agenteTools.js:148`,
+prompt em `agentePrompt.js`) continua hard-coded "só ADM pode criar" —
+não foi atualizada junto da expansão de permissão desta sessão. Ou
+seja, hoje um PO/Organizador/Gestor OKR já consegue criar um Objetivo
+manualmente pela tela, mas se pedir pro Agente Ágil "cria um objetivo
+novo pra mim" no chat, é recusado incorretamente. Texto de ajuda
+mantido fiel ao comportamento ATUAL (chat = só ADM), não ao que
+deveria ser — corrigir o server-side é uma mudança separada (código +
+testes + deploy), fora do escopo de uma atualização de documentação.
+
+**`guia-okr.html`** (guia visual, fora do escopo de `version.json`):
+2 slides novos ("Editar o que já foi escrito", "Reordenar Objetivos
+também"), slide "Permissões" com coluna nova "PO/Org/Gestor OKR"
+(grid de 5 colunas, era 4), slide "Apresentação ao vivo" com as 2
+linhas novas, e o texto de "Como criar um novo Objetivo" atualizado.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais de
+`painel-dev.html` OK; `<section class="slide">`/`</section>` de
+`guia-okr.html` balanceados (18/18) + bloco `<script>` OK.
+
 ### painel-dev.html v3.73 · painel-dev — 2026-09-30 · feat(🎯 OKR): novo papel "🎯 Gestor OKR", pra quem mexe no OKR sem ser PO/ADM
 
 Pedido direto do usuário: "tava pensando, talvez ou a gente devesse abrir
