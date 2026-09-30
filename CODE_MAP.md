@@ -20,9 +20,9 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção (última confirmada: v8.30.764, 2026-09-30 —
-lote ♾️ Contínuo + fallback de login por redirect + fix do atalho do
-Vice City — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
+DEPOIS de uma promoção (última confirmada: v8.30.767, 2026-09-30 —
+auto-scroll da toolbar + fix de logout não limpando o token do Google
+Calendar — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
 tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -38,10 +38,10 @@ confiar num número aqui se for mexer em `painel.html` prod).
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
-- `ADM_EMAILS` (let) — L6481
-- `getEffectiveRole()` — L6519 — papel efetivo, ADMs hardcoded não são rebaixáveis
-- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6603 / L6572
-- `resolveSquadAndShow()` — L10704 — resolve squad da URL, decide o que mostrar
+- `ADM_EMAILS` (let) — L6677
+- `getEffectiveRole()` — L6715 — papel efetivo, ADMs hardcoded não são rebaixáveis
+- `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L6808 / L6777
+- `resolveSquadAndShow()` — L10957 — resolve squad da URL, decide o que mostrar
 - **`force_logout_after` (botão "Deslogar todos") — chaves DIVERGEM de
   propósito entre prod/dev, promovido pra prod em v8.30.716**
   (2026-09-21, `/monitorarbugs`): listener em `kanban-dev.html` — L33667
@@ -54,7 +54,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   contrário). **Essa é uma 3ª linha que diverge deliberadamente entre
   kanban.html/kanban-dev.html na promoção dev→prod** (além de versão/
   `VERSION_KEY`) — nunca copiar essa linha ao promover.
-- `autoRegistrar()` — L10972 — cria/atualiza o doc do usuário no login.
+- `autoRegistrar()` — L11225 — cria/atualiza o doc do usuário no login.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
   tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
@@ -62,7 +62,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   nunca no registro principal, deixando um registro nascido incompleto
   (ex.: criado só via painel, ver `_painelEnsureUserRecord()`) sem nome
   pra sempre mesmo com login repetido.
-- `_claimUserInit()` — L10911 / `_ensureInitRegistryBackfilled()` — L10954
+- `_claimUserInit()` — L11164 / `_ensureInitRegistryBackfilled()` — L11207
   — reivindica a sigla (`init`) de um usuário novo de forma ATÔMICA, via
   `runTransaction()` em `kanban/init_registry/{INIT}=uid` (node novo,
   precisa de entrada em `database.rules.json`, deploy manual). Achado
@@ -71,10 +71,10 @@ confiar num número aqui se for mexer em `painel.html` prod).
   antigo em `autoRegistrar()` (ler `usuarios_publicos`, computar
   localmente, escrever) tinha uma janela de corrida real entre 2 pessoas
   se cadastrando quase ao mesmo tempo com o mesmo par de iniciais.
-  `editarInicial()` (L24625, troca manual de sigla) também usa a mesma
+  `editarInicial()` (L25321, troca manual de sigla) também usa a mesma
   transação antes de gravar, e libera a sigla antiga no registro (só se
   o registro ainda apontar pra este uid — sigla pode ser compartilhada).
-  `confirmarInscricao()` (L11109, tela "Confirmar inscrição" — pessoa
+  `confirmarInscricao()` (L11362, tela "Confirmar inscrição" — pessoa
   edita a própria sigla num campo de texto antes de confirmar) ganhou o
   mesmo tratamento numa rodada seguinte de `/monitorarbugs` no mesmo dia
   — era a 3ª mutação de `init` do arquivo e tinha ficado de fora do fix
@@ -84,7 +84,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
 - **`window._signInRedirect()`/fallback de login por redirect (2026-09-29,
   relato direto de usuária — screenshot: popup de login travando com
   "Cross-Origin-Opener-Policy... would block the window.closed call",
-  caindo em "Login cancelado" — promovido pra prod v8.30.764)**: `<script type="module">` — L6577 (perto
+  caindo em "Login cancelado" — promovido pra prod v8.30.764)**: `<script type="module">` — L6548 (perto
   de `window._signIn=(insc)=>signInWithPopup(...)`) — causa raiz
   confirmada lendo o SDK vendorizado (`vendor/firebase-10.14.1/
   firebase-auth.js`): `signInWithPopup()` detecta popup fechado checando
@@ -93,7 +93,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   — isola o popup, o Firebase não consegue ler `.closed`, interpreta como
   "fechado" e devolve `auth/popup-closed-by-user` mesmo com a pessoa
   ainda logando. Intermitente, só Chrome, fora do nosso controle (não é
-  header nosso — GitHub Pages não define COOP aqui). `doSignIn()` — L10873
+  header nosso — GitHub Pages não define COOP aqui). `doSignIn()` — L10896
   — conta falhas SEGUIDAS desse tipo em `login_popup_fail_streak`
   (localStorage) e cai pra `signInWithRedirect()` (sem popup, elimina a
   causa raiz) na 2ª falha — só como fallback, popup continua sendo o
@@ -110,8 +110,15 @@ confiar num número aqui se for mexer em `painel.html` prod).
   mundo). `reconectarGCal()`/`_requestCalendarScope()` (escopo de
   calendário, provider separado) NÃO ganharam o mesmo fallback —
   reportado como fora de escopo, feature secundária de risco bem menor
-  que travar o login inteiro.
-- `_onRealAuthChange(fn)` — L33450 (perto de `_onFbReady()`) — espera o
+  que travar o login inteiro. **Achado real de passagem (2026-09-30,
+  `/monitorarbugs`)**: o `<script type="module">` também tinha um
+  `window.doSignOut = () => window._signOut('manual');` logo abaixo —
+  sobrescrevia (por ser deferred, roda DEPOIS de scripts clássicos) a
+  `doSignOut()` real, no `<script>` clássico mais abaixo, que é a única
+  que limpa `gcal_token` do `localStorage` ao sair — mesma classe de
+  colisão que o comentário acima já evitava pra `doSignIn()`, mas não
+  pra `doSignOut()`. Removido, promovido pra prod v8.30.767.
+- `_onRealAuthChange(fn)` — L34691 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara
   `auth-change` assim que o listener é registrado, quase sempre com
@@ -125,7 +132,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
   reimplementar `{once:true}` na mão. Mesmo padrão quebrado achado
   independentemente em `painel-dev.html` (`checkOverdueGlobalBackup()`,
   que tem seu PRÓPRIO `onAuthStateChanged`, sem relação com o do kanban)
-  — mesma função `_onRealAuthChange(fn)` também existe lá, L33792.
+  — mesma função `_onRealAuthChange(fn)` também existe lá, L12750.
 
 ### Agentes de IA (cadastro — piloto híbrido humano+agente)
 Identidades de IA (`kanban/squads/{squad}/dados/agentes`, por squad) que
@@ -1343,32 +1350,32 @@ Pedido direto do usuário — "tem como deixar a pessoa reorganizar o
 menu header? ex.: puxar o calendario para perto de fonte". 3ª aba do
 mesmo modal "⌨️ Atalhos" (aba "🔀 Barra"). Mesmo esqueleto de
 drag-and-drop já usado pra reordenar colunas
-(`handleColDragStart`/`Over`/`Drop`, ~L27208) — aqui aplicado nos 25
+(`handleColDragStart`/`Over`/`Drop`, ~L31295) — aqui aplicado nos 25
 filhos diretos de `#main-toolbar` (20 botões/menus + 5 divisores
 `.tb-sep`, todos com `data-tb-id` — os divisores também são
 arrastáveis, de propósito). Não compete com o clique-e-arraste de
 rolagem horizontal que a toolbar já tinha
-(`_initToolbarDragScroll`/`.crv-dragging`, ~L32784) — aquele já ignora
+(`_initToolbarDragScroll`/`.crv-dragging`, ~L37601) — aquele já ignora
 `mousedown` em cima de `<button>`/`<select>`/etc, então os dois
 mecanismos nunca disputam o mesmo gesto.
 - Preferência 100% pessoal, mesmo padrão de `atalhos_custom`/
   `notif_prefs`: `kanban/usuarios/{uid}/toolbar_order` (array de
-  tb-ids). `_toolbarDefaultOrder` (~L24826, capturada 1x a partir do
-  HTML original) + `loadToolbarOrder()` (~L28106, listener ao vivo,
+  tb-ids). `_toolbarDefaultOrder` (~L28826, capturada 1x a partir do
+  HTML original) + `loadToolbarOrder()` (~L28835, listener ao vivo,
   chamado junto de `loadAtalhosCustom()` no boot) → `_applyToolbarOrder()`
-  (~L24844) reconcilia: id salvo que sumiu (feature removida) é
+  (~L28844) reconcilia: id salvo que sumiu (feature removida) é
   ignorado; tb-id que existe na barra mas não está salvo (botão novo)
   entra no fim, na posição original — nunca some um botão sem avisar.
 - `iniciarReorganizarToolbar()`/`finalizarReorganizarToolbar()`
-  (~L24854/24867) — liga/desliga `_toolbarReorderMode`, fecha o modal
+  (~L28854/28867) — liga/desliga `_toolbarReorderMode`, fecha o modal
   de Atalhos e ativa `draggable` nos 25 itens + a pill flutuante
   `#tb-reorder-pill` ("✅ Pronto"). Ao finalizar, lê a ordem final DIRETO
   DO DOM (já reorganizado pelos drops) e persiste.
-  `restaurarOrdemToolbarPadrao()` (~L28155) zera a customização.
-- `_tbHandleDragStart/DragOver/DragEnd/Drop` (~L24900+) — mesmo padrão
+  `restaurarOrdemToolbarPadrao()` (~L28884) zera a customização.
+- `_tbHandleDragStart/DragOver/DragEnd/Drop` (~L28900+) — mesmo padrão
   visual de `.col-drag-left`/`.col-drag-right` (`.tb-drag-before`/
   `.tb-drag-after`, calculado pelo `clientX` vs. o meio do elemento sob
-  o cursor). `_wireToolbarDrag()` (~L28206) liga os 5 handlers via JS
+  o cursor). `_wireToolbarDrag()` (~L28935) liga os 5 handlers via JS
   (não inline HTML, pra não repetir 5 atributos × 25 itens) — chamada 1x
   no boot; os próprios handlers só agem de verdade quando
   `_toolbarReorderMode` está ligado.
@@ -1452,12 +1459,12 @@ filter_presets, `ATALHO_ACOES`), nenhum node novo no Firebase.
   padrão `{valor,date}`/dias-distintos do Caso #2:
   `SUGESTAO_ATRASADOS_LIMIAR_DIAS`(4)/`SUGESTAO_ATRASADOS_JANELA_DIAS`(10)
   — L30388-30389.
-- **Aplicação no boot**: dentro de `_applyBoardPrefsSquad()` — L27882
-  (listener AO VIVO de `loadBoardPrefs()` — L27859, roda de novo a cada
+- **Aplicação no boot**: dentro de `_applyBoardPrefsSquad()` — L28592
+  (listener AO VIVO de `loadBoardPrefs()` — L28569, roda de novo a cada
   mudança de QUALQUER board_pref) — casos #1/#3/#4/#5 todos aplicados
   aqui, cada um com seu próprio guard "1x por sessão" quando aplicável.
   Boot chama `_iniciarSessaoMeusCards()`/`_iniciarSessaoTimeline()` junto
-  de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L33450.
+  de `fbLoadAll()` no mesmo `_onRealAuthChange(...)` — L34691.
 
 ### 👤 Minhas Preferências (2026-09-28)
 Painel único reunindo toda personalização pessoal do board — antes
@@ -1465,10 +1472,10 @@ espalhada em ~6 pontos de entrada diferentes (tema, menu Fonte, modal
 Atalhos, sino de DND, dropdown do squad, sugestões que só apareciam
 sozinhas), sem NENHUM lugar central pra ver/desfazer nada. Pedido
 direto do usuário. Acessível a QUALQUER papel — menu do avatar ("Meu
-status", `openStatusMenu()` ~L10722) — + atalho de dentro de
+status", `openStatusMenu()` ~L10865) — + atalho de dentro de
 "⚙ Configurações" pra ADM/PO/Organizador (mesma tela, não duplicada,
 botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
-- `openMinhasPrefs()` — L13336 / `renderMinhasPrefsBody()` — L13341 —
+- `openMinhasPrefs()` — L13520 / `renderMinhasPrefsBody()` — L13525 —
   monta as 7 seções (Tema/Fonte+Densidade/Squad padrão/Não Perturbe/
   Atalhos/Sugestões de rotina/Sugestões recusadas) a partir do estado
   já existente (`_boardPrefsSquad`, `_boardPrefsGlobal`, `_notifPrefs`,
@@ -1478,24 +1485,24 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   próprias funções originais, só chamadas daqui também).
 - **Sugestões de rotina, agora reversíveis** (achado de produto, não
   bug — nenhuma das 5 tinha jeito de desfazer pela UI até aqui):
-  `_prefsToggleTimelineInicial()` — L13431, `_prefsToggleMeusCardsFixado()`
-  — L13437 (toggle de verdade, liga E desliga), `_prefsToggleAtrasadosAuto()`
-  — L13447 (só desliga — não tem como "ligar" sem um bloco de horário
+  `_prefsToggleTimelineInicial()` — L13617, `_prefsToggleMeusCardsFixado()`
+  — L13623 (toggle de verdade, liga E desliga), `_prefsToggleAtrasadosAuto()`
+  — L13633 (só desliga — não tem como "ligar" sem um bloco de horário
   aprendido pela sugestão automática; linha correspondente do painel
   vira texto informativo, sem toggle, enquanto `visao_atrasados_bloco`
-  for `null`), `_removerAtalhoAtribuicaoRapida(init)` — L13452 (remove
+  for `null`), `_removerAtalhoAtribuicaoRapida(init)` — L13638 (remove
   o item de `board_prefs.atribuicao_rapida[]` + a entrada dinâmica de
   `ATALHO_ACOES` + a combinação de tecla via `_atalhoLimpar()`, se
   tinha uma — antes disso, o único dos 5 casos parcialmente reversível,
   mas a linha "👤 Atribuir a X" ficava pra sempre na tela de Atalhos
   mesmo removendo só a tecla).
 - **"Não sugerir mais" — migrado de localStorage pra Firebase**:
-  `loadSugestoesRecusadas()` — L13181 (listener,
+  `loadSugestoesRecusadas()` — L13345 (listener,
   `kanban/usuarios/{uid}/sugestoes_recusadas/{squadId}`, com migração
   automática do que já estava só no `localStorage` do navegador na 1ª
   leitura — mesmo espírito de `_boardPrefLoadOrMigrate()`),
-  `_sugestaoEsquecerRecusa(id)` — L13210 (novo — desfaz uma recusa),
-  `_sugestaoRecusaLabel(id)` — L13220 (rótulo legível; ids de Caso
+  `_sugestaoEsquecerRecusa(id)` — L13374 (novo — desfaz uma recusa),
+  `_sugestaoRecusaLabel(id)` — L13384 (rótulo legível; ids de Caso
   #2/#4/#5 embutem parâmetro dinâmico — `filtro:<fp>`/
   `atribuicao:<init>`/`atrasados:<bloco>` — não são um id fixo só).
   `_sugestaoRecusadaPermanente()`/`_sugestaoRecusarPermanente()`
@@ -1511,14 +1518,14 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   seção 🎨 Tema que só aparece depois que a pessoa já descobriu o easter
   egg (long-press de 1.2s no botão de tema, `toggleViceCity()` — ver
   "Temas" mais abaixo) — nunca revela a existência dele pra quem nunca
-  achou. `_temasDescobertos` (cache) / `loadTemasDescobertos()` — L13341
+  achou. `_temasDescobertos` (cache) / `loadTemasDescobertos()` — L13501
   (listener, `kanban/usuarios/{uid}/temasDescobertos`). Gate usa o campo
   `vice_manual` (não `vice`) — `vice` sozinho também é escrito pelo tema
   automático (`_applyAutoTheme()`, banda 12h-18h), então usá-lo pra
   gatear o atalho vazava o easter egg pra quem nunca descobriu na mão
   (`/monitorarbugs` 2026-09-29, dev v8.30.759-dev). `vice_manual` só é
-  gravado por `_recordViceCityManualDiscovery()` — L34237, chamada de
-  dentro de `toggleViceCity()` — L34245. Botão reusa `toggleViceCity()`
+  gravado por `_recordViceCityManualDiscovery()` — L34487, chamada de
+  dentro de `toggleViceCity()` — L34495. Botão reusa `toggleViceCity()`
   direto (entra se não estiver no tema, sai se já estiver).
 - **♾️ Contínuo (2026-09-29, pedido direto — promovido pra prod v8.30.764,
   após 5 rodadas de ajuste visual da fita diagonal, PRs #1100-#1104)**: categoria de card pra
@@ -1527,7 +1534,7 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   trabalho, sem data de finalização real). `card.continuo` (bool, sem
   campo companheiro de tempo — categoria fixa, sobrevive à duplicação de
   propósito, mesmo espírito de `card.isOKR`). `toggleContinuo(cardId)` —
-  L16190 — e `_renderContinuoBtn()` — L16205 — mesmo padrão de
+  L16342 — e `_renderContinuoBtn()` — L16357 — mesmo padrão de
   `togglePauseCard()`/`_renderPauseBtn()` logo acima (`recordHistory()`
   explícito, não usa o sistema genérico `HIST_FIELDS`), cardId opcional
   (cai no card aberto no modal). 2 pontos de entrada: botão `#btn-continuo-card`
@@ -1545,7 +1552,7 @@ botão `#cfg-minhasprefs-btn` no `panel-hd` de `#cfg-ov`).
   por tema). **`::after`, NUNCA `::before` (fix 2026-09-29, achado real —
   relato direto do usuário com screenshot: selo saindo ilegível em
   "Melhorias Maré Digital")**: `.card.card-mine::before` (selo "👤 seu
-  card", ~L907) já ocupa `::before` nesse elemento — card marcado como
+  card", ~L947) já ocupa `::before` nesse elemento — card marcado como
   seu E Contínuo ao mesmo tempo é o caso MAIS COMUM possível, não uma
   exceção. 2 regras `::before` de especificidade igual não fazem "uma
   vence inteira" — o CSS mescla PROPRIEDADE POR PROPRIEDADE (a última no
@@ -2000,7 +2007,7 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   `data-tb-id="cardumecriativo"`, perto de `btn-criativos` na toolbar):
   `window.open('https://cardume.ai.studio/','_blank')`, ferramenta própria
   da squad Mídia Criativa. Visibilidade decidida 1x no boot, logo depois
-  de `ACTIVE_SQUAD` ser resolvido (~L6732) — `if(ACTIVE_SQUAD===
+  de `ACTIVE_SQUAD` ser resolvido (~L6740) — `if(ACTIVE_SQUAD===
   'midiacriativa'){...style.display=''}` — mais simples que um toggle de
   config pra um caso que não precisa ser configurável (não é "qualquer
   squad pode querer isso", é uma ferramenta específica de UMA squad).
@@ -2009,12 +2016,12 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   `display`) — nenhuma mudança extra precisou ser feita lá.
 
 ### Impedimentos (modo coluna vs. tag)
-- `blockerMode` (let) — L31719 — carregado de `config/blockerMode`, `'col'`
+- `blockerMode` (let) — L32866 — carregado de `config/blockerMode`, `'col'`
   (default) ou `'tag'`
-- `_cardIsBlocked(card)` — L32044 — fonte única de verdade pro "está
+- `_cardIsBlocked(card)` — L32876 — fonte única de verdade pro "está
   impedido?": modo `col` → `card.col==='blocker'`; modo `tag` →
   `!!card.blocker` (ignora o campo que não é da modalidade ativa)
-- `saveBlockerMode(mode)` — L32252 — acionado em ⚙ Configurações →
+- `saveBlockerMode(mode)` — L33084 — acionado em ⚙ Configurações →
   Impedimentos. Achado real 2026-08-26 (squad `midiacriativa`, incidente
   em produção — 64 cards sumidos do board): agora valida ANTES de trocar
   pra `'col'` se existe uma coluna com id `blocker`; se não existir,
@@ -2917,8 +2924,8 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   `closeOkrMarco()` continuam chamadas DIRETO (sem passar por aqui) nos
   fluxos que já persistiram ou descartaram de propósito (salvar/
   arquivar/desarquivar/excluir) — só ✕/clique fora/"Cancelar" passam
-  pelo dirty-check. Só em `painel-dev.html` (não promovido a
-  `painel.html` ainda).
+  pelo dirty-check. Já promovido pra `painel.html` também (confirmado
+  em dia neste retrato: 2026-09-30).
 
 #### Edição inline, reordenar Objetivos (▲▼ e drag-and-drop), "aparecer na apresentação", 🎯 Gestor OKR (2026-09-30, painel-dev.html v3.71-v3.73 + okr-apresentacao.slide.html — promovido pra prod v3.73 no mesmo dia)
 Lote de 4 pedidos numa mensagem só (feedback do chefe do usuário +
@@ -4085,4 +4092,4 @@ As outras 6 functions da integração continuam deployadas normalmente:
 
 ---
 
-*Retrato do commit `55a20bd` (2026-09-22).*
+*Retrato do commit `6e30656` (2026-09-30).*
