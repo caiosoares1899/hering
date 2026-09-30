@@ -19803,6 +19803,24 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.72 · painel-dev — 2026-09-30 · feat(🎯 OKR): arrastar (drag-and-drop) pra reordenar Objetivos
+
+Complemento direto do lote anterior (v3.71, ▲/▼): usuário pediu
+especificamente arrastar-e-soltar também. HTML5 drag-and-drop nativo
+(sem lib nova) nos cards de Objetivo — convive com os botões ▲/▼, que
+continuam funcionando (drag é o atalho rápido, botões seguem como
+alternativa acessível). Soltar um card em cima de outro reinsere na
+posição exata do alvo (não só troca 2 posições como ▲/▼) e materializa
+`ordem` em todos os Objetivos da Gerência, mesma técnica de sempre.
+Mesmo gate de permissão/filtro que os botões (`_okrCanCreate()`, sem
+filtro de busca ativo).
+
+`_okrObjReorderTo(areaId,draggedId,targetId)` + handlers
+`_okrObjDragStart/Over/Enter/Leave/Drop/End`. Ícone `⠿` no card indica
+que dá pra arrastar; `cursor:grab` no CSS.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK.
+
 ### painel-dev.html v3.71 · painel-dev — 2026-09-30 · feat(🎯 OKR): editar itens já escritos, reordenar Objetivos, esconder Marcos da apresentação
 
 Lote de 4 pedidos numa mensagem só — feedback do chefe do usuário sobre
