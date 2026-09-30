@@ -19755,6 +19755,52 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.73 · painel — 2026-09-30 · Promove pra prod — 🎯 OKR: PO/organizador, editar itens já escritos, reordenar Objetivos (▲▼ + arrastar), esconder Marcos da apresentação, novo papel "🎯 Gestor OKR"
+
+Promoção do lote de OKR acumulado em `painel-dev.html` (v3.70 a v3.73),
+validado e aprovado pelo usuário ao longo da sessão. **Patch cirúrgico**,
+não cópia integral do arquivo — `painel.html`/`painel-dev.html` divergem
+de propósito (favicon, banner de dev, chaves de Firebase Config,
+squads/gerências fictícias de teste, node "🔔 Enviar push manual" que só
+existe em prod, entre outras — ver `CLAUDE.md`), então só as 16 seções
+de código realmente tocadas pelo lote de OKR foram aplicadas aqui, com
+`git diff`/`git apply` a partir do commit-base da v3.69 (a última versão
+de dev já promovida antes deste lote) — nada mais do arquivo mudou.
+**v3.68 (fix: papel/convite não refletia ao vivo no kanban) e v3.69
+(link do relatório Databricks) continuam SÓ em dev, não fazem parte
+desta promoção** — ficam pro próximo lote. Ver as 4 entradas de dev
+abaixo (v3.70-v3.73) pro detalhe técnico completo de cada mudança; aqui
+só o resumo pro público de prod.
+
+**Novidades na aba 🎯 OKR:**
+- **Quem pode criar/editar Objetivos** deixou de ser só ADM + o(s)
+  responsável(is) — agora também incluem **PO/Organizador** (de
+  qualquer squad) e um novo papel dedicado, **🎯 Gestor OKR**: um
+  ADM pode marcar qualquer pessoa como Gestor OKR em "👥 Global
+  Users", e ela passa a poder mexer em qualquer Objetivo do OKR sem
+  precisar virar PO/ADM nem ser responsável designado — continua
+  "Membro" comum em tudo mais do board.
+- **Editar o que já foi escrito**: Indicadores de Entrega, Progressos,
+  Próximos Passos, Riscos, Planos de Ação (do Objetivo) e os itens do
+  Checklist (do Marco) agora aceitam clicar em cima do texto pra
+  editar — antes só dava pra adicionar/remover.
+- **Reordenar Objetivos**: botões ▲/▼ e também **arrastar e soltar**
+  (drag-and-drop) — os cards de Objetivo podem ser reorganizados
+  dentro de cada Gerência do jeito que fizer mais sentido pro time.
+- **"🎬 Aparecer na apresentação" por Marco**: novo checkbox no Marco,
+  pra ocultar marcos antigos/irrelevantes (útil em OKRs contínuos, com
+  muitos marcos acumulados) da tela de apresentação executiva, sem
+  precisar arquivar. A apresentação (`okr-apresentacao.slide.html`)
+  também ganhou um botão "Colapsar concluídos" no modal de detalhe de
+  cada Objetivo.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK.
+Diff conferido linha a linha contra `painel-dev.html`: só as mudanças
+listadas acima + versão/`VERSION_KEY` mudaram; toda a divergência
+pré-existente (favicon, banner, config, squads fictícios, node de push
+manual, node de calendário/campanhas com sufixo `_dev`, etc.)
+permaneceu intacta dos dois lados.
+
 ### painel.html v3.67 · painel — 2026-09-26 · Promove pra prod — fix(OKR): duplicar Objetivo + fix: Board Setup podia sobrescrever squad existente
 
 Promoção do lote acumulado em `painel-dev.html` desde a v3.65 (patch de 2
