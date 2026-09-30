@@ -1741,9 +1741,11 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
        (nó global, fora de squad, mesmo padrão de kanban/painel/config).
        Permissão: responsável(is) do objetivo + ADM + PO/organizador (de
        QUALQUER squad — OKR é global, não amarrado a squad, mesmo espírito
-       do picker de pessoas) editam (decisão do usuário, 2026-09-29 —
-       ampliação de "Só responsável(is) + ADM"), resto só visualiza — ver
-       _okrCanEdit()/_isPOouOrgEmAlgumSquad().
+       do picker de pessoas) + "🎯 Gestor OKR" (flag independente de
+       squad/role, 2026-09-30 — liga/desliga em "👥 Global Users" pra quem
+       precisa mexer no OKR sem ser PO/ADM) editam (decisão do usuário,
+       2026-09-29 — ampliação de "Só responsável(is) + ADM"), resto só
+       visualiza — ver _okrCanEdit()/_isPOouOrgEmAlgumSquad()/_isGestorOkr().
        Área = Gerência, mas com lista PRÓPRIA (OKR_GERENCIAS, no <script>
        abaixo), não a GERENCIAS do Dashboard (aquela é amarrada a squadIds
        reais pra "Insights por Gerência" e usa squadIds:null como catch-all
@@ -2875,7 +2877,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.72 · painel-dev</div>
+<div class="version">v3.73 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5275,8 +5277,21 @@ function _isPOouOrgEmAlgumSquad(uid){
   if(u.role==='po' || u.role==='organizador') return true;
   return !!(u.squads_roles && Object.values(u.squads_roles).some(r=>r==='po'||r==='organizador'));
 }
-function _okrCanEdit(obj){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid) || _okrIsResponsavel(obj); }
-function _okrCanCreate(){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid); }
+// "🎯 Gestor OKR" (2026-09-30, pedido direto: "tem gente que não vai ser
+// PO/ADM e vai mexer em OKR"). Flag SEPARADA de `role`/`squads_roles` de
+// propósito — não é um papel novo no sentido do resto do app, é um
+// liga/desliga específico do OKR (toggle em "👥 Global Users", ver
+// renderGlobalUsers()/toggleGestorOkr()). Quem tem `gestorOkr:true`
+// continua "Membro" (ou o que já for) em tudo mais — badge do board,
+// Automações, Campanhas — só ganha algo a mais aqui dentro. Por isso não
+// entrou como um 6º valor de GLOBAL_ROLES/SQUAD_ROLES: aquele campo é lido
+// por várias telas fora do OKR (badge de papel no kanban, `_isPOorOrg()`
+// de Campanhas) que não conhecem um valor novo — misturar os dois vazaria
+// esse comportamento pra lugares que não deveriam saber que "Gestor OKR"
+// existe.
+function _isGestorOkr(uid){ return !!(uid && _globalUsersCache[uid]?.gestorOkr); }
+function _okrCanEdit(obj){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid) || _isGestorOkr(window._currentUser?.uid) || _okrIsResponsavel(obj); }
+function _okrCanCreate(){ return isAdmUser(window._currentUser) || _isPOouOrgEmAlgumSquad(window._currentUser?.uid) || _isGestorOkr(window._currentUser?.uid); }
 
 // ── Pessoas: picker global (não amarrado a squad), fonte é _globalUsersCache ──
 function _okrPessoaInfo(uid){
@@ -10737,6 +10752,28 @@ function renderGlobalUsers(){
       squadsWrap.appendChild(chip);
     });
 
+    // 🎯 Gestor OKR — flag independente de squad/role (ver comentário
+    // grande em _isGestorOkr(), acima no arquivo): deixa criar/editar
+    // QUALQUER Objetivo do OKR sem precisar ser PO/Organizador/ADM nem
+    // responsável designado, mas continua "Membro" (ou o que já for) em
+    // tudo mais. Chip solto no mesmo wrap dos squads, mesmo estilo visual.
+    const okrChip = document.createElement('label');
+    okrChip.title = 'Deixa esta pessoa criar/editar qualquer Objetivo do OKR, mesmo sem ser PO/Organizador/ADM nem responsável designado — continua só "Membro" pra tudo o resto (board, Automações, Campanhas).';
+    okrChip.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'+
+      (u.gestorOkr
+        ? 'background:rgba(56,182,255,.15);border:1px solid rgba(56,182,255,.35);color:var(--txt);'
+        : 'background:rgba(255,255,255,.03);border:1px solid var(--glass-b);color:var(--txt3);');
+    const okrCb = document.createElement('input');
+    okrCb.type = 'checkbox';
+    okrCb.checked = !!u.gestorOkr;
+    okrCb.style.cssText = 'width:12px;height:12px;cursor:pointer;accent-color:var(--accent);';
+    okrCb.onchange = ()=>toggleGestorOkr(uid, okrCb.checked);
+    const okrLbl = document.createElement('span');
+    okrLbl.textContent = '🎯 Gestor OKR';
+    okrChip.appendChild(okrCb);
+    okrChip.appendChild(okrLbl);
+    squadsWrap.appendChild(okrChip);
+
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
     delBtn.textContent = '🗑';
@@ -10750,6 +10787,18 @@ function renderGlobalUsers(){
     row.appendChild(delBtn);
     list.appendChild(row);
   });
+}
+
+// Grava só em kanban/usuarios/{uid} de propósito — diferente de
+// toggleUserSquad()/updateSquadUserRole() logo abaixo, NÃO espelha em
+// usuarios_publicos: esse node é o que kanban.html lê pro board (nome/
+// foto/role/squads), e gestorOkr não tem nenhum efeito lá — só o OKR em
+// painel-dev.html lê esse campo (via _globalUsersCache, já a mesma fonte
+// de _isGestorOkr() acima).
+function toggleGestorOkr(uid, checked){
+  window._update(window._ref(window._db,'kanban/usuarios/'+uid), {gestorOkr: checked?true:null})
+    .then(()=>{ showToast(checked?'🎯 Agora é Gestor OKR.':'Deixou de ser Gestor OKR.'); if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); })
+    .catch(err=>{ showToast('Erro: '+err.message); renderGlobalUsers(); });
 }
 
 function toggleUserSquad(uid, squadId, checked){

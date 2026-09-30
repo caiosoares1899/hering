@@ -19841,6 +19841,28 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.73 · painel-dev — 2026-09-30 · feat(🎯 OKR): novo papel "🎯 Gestor OKR", pra quem mexe no OKR sem ser PO/ADM
+
+Pedido direto do usuário: "tava pensando, talvez ou a gente devesse abrir
+o okr para todos os membros poderem editar ou então criar um novo papel
+q possa editar, pq tem gente q n vai ser PO/ADM e vai mexer em OKR".
+Descartadas as duas opções literais que ele propôs — abrir pra "todos os
+membros" é arriscado demais pra um artefato estratégico entre Gerências
+(qualquer um editando Objetivo de outra área sem querer), e um papel
+novo de verdade (6º valor em `GLOBAL_ROLES`/`SQUAD_ROLES`) vazaria pra
+telas que não têm nada a ver com OKR (badge de papel no board do
+kanban, permissões de Campanhas) — foi combinada uma 3ª opção com o
+usuário: uma **flag independente**, `u.gestorOkr:true`, que só afeta
+`_okrCanEdit()`/`_okrCanCreate()`. Quem liga continua "Membro" (ou o
+papel que já tiver) em tudo mais no app — board, Automações, Campanhas
+— e só ganha a permissão extra dentro do OKR.
+
+Toggle "🎯 Gestor OKR" na tela "👥 Global Users" (mesma onde ADM já
+gerencia squad/papel de todo mundo) — chip ao lado dos squads de cada
+pessoa, liga/desliga com 1 clique.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK.
+
 ### painel-dev.html v3.72 · painel-dev — 2026-09-30 · feat(🎯 OKR): arrastar (drag-and-drop) pra reordenar Objetivos
 
 Complemento direto do lote anterior (v3.71, ▲/▼): usuário pediu
