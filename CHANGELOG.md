@@ -18,6 +18,23 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.765 — 2026-09-30 · Promove pra prod — botão "🐟 Cardume Criativo"
+
+Promoção pontual, validada pelo usuário. Único commit acumulado desde
+a última promoção (v8.30.764).
+
+**Novidade — exclusiva da squad Mídia Criativa**: botão novo na toolbar,
+"🐟 Cardume Criativo", abre `https://cardume.ai.studio/` (ferramenta
+própria da squad) numa aba nova. Aparece só pra quem está no board da
+squad Mídia Criativa — em qualquer outra squad, o botão nem existe na
+tela.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK;
+balanço de chaves/parênteses idêntico ao de `kanban-dev.html` (braces
+-1, parens +3); `diff kanban.html kanban-dev.html` conferido — só as
+3 divergências permanentes já conhecidas (versão/`VERSION_KEY`,
+favicon, `force_logout_after`).
+
 ### v8.30.764 — 2026-09-30 · Promove pra prod — lote acumulado (v8.30.759-dev → v8.30.764-dev)
 
 Promoção do lote acumulado desde a última promoção (v8.30.758), pedido
