@@ -2669,6 +2669,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   de que a área está limpa agora fica registrada, pra não reabrir a
   mesma investigação à toa numa rodada futura.
 
+- **2026-09-30, lote do dia no OKR (pedido explícito, "roda um
+  /monitorarbugs nas coisas q mexemos hj", 5 áreas nomeadas)**: 1 achado
+  real, 4 áreas limpas. PR #1126: `_okrListEditStart()`/
+  `_okrChecklistEditStart()` (painel-dev.html) só chamavam
+  `_okrSyncObjDraftFromDom()`/`_okrSyncMarcoDraftFromDom()` no branch de
+  SALVAR, nunca no de cancelar (Esc) — cancelar editar um item de
+  lista/checklist re-renderizava a tela a partir de um draft
+  desatualizado, descartando em silêncio qualquer edição pendente em
+  campos-irmãos da mesma tela (título/gerência/pilar/descrição do
+  Objetivo; nome/responsável/prazo/descrição/mostrarApresentacao do
+  Marco). Achado via técnica 2 (comparado contra `_okrListAdd()`/
+  `_okrListRemove()`, mesmo arquivo, que já sincronizavam
+  incondicionalmente). Sem achado: reorder/drag-drop de Objetivos
+  (`_okrObjMover`/`_okrObjReorderTo`/`_okrObjDrag*`, mesmo padrão já
+  validado de `_okrMarcoMover`); permissão Gestor OKR
+  (`_isGestorOkr`/`_okrCanEdit`/`_okrCanCreate`, sem bypass ad-hoc
+  fora desses 3 pontos); "Online no painel"
+  (`_painelSendHeartbeat`/`loadPainelPresence`/`renderPainelOnline`,
+  heartbeat idempotente, nó separado do presence do board);
+  `okr-apresentacao.slide.html` (filtro `mostrarApresentacao` num único
+  choke-point em `objMarcos()`, `_okrFitDetailSections()` corretamente
+  fora do orçamento de altura do botão "Colapsar concluídos", validando
+  o fix de 2 rodadas feito mais cedo no mesmo dia); botão exclusivo
+  🐟 Cardume Criativo em `kanban-dev.html` (gate `ACTIVE_SQUAD` no boot,
+  sobrevive a reorganizar toolbar); auto-scroll da toolbar perto da
+  borda (`_initToolbarEdgeAutoScroll`, máquina de estados `rafId`/`dir`
+  autolimpa em 1 frame, `.crv-dragging` evita disputa com o scroll
+  manual, `dragleave` com guard `e.target===tb` evita falso-stop ao
+  cruzar filhos).
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
