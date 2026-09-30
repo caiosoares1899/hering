@@ -2566,6 +2566,35 @@ papéis diverge entre os 2 mecanismos por decisão pré-existente, não bug:
   resquício. Fix: `removeAdmEmail()` ganhou o mesmo lookup por e-mail que
   `addAdmEmail()` já usa, rebaixa `role` pra `'membro'` se ainda `'adm'`.
 
+### 👥 Online no board × 🖥️ Online no painel (aba Visão) — 2 presenças distintas, nunca indexadas antes
+`loadPresence()`/`renderOnline()` (existe desde a origem do painel, nunca
+tinha ganhado seção própria neste mapa): LÊ (não escreve) a presença do
+BOARD — `kanban/squads/{sqId}/presence`, o mesmo node que
+`kanban(-dev).html` escreve via heartbeat (`setInterval` 15s, pausa em
+aba oculta) — um listener `onValue` por squad (`_presenceListenedSquads`,
+Set idempotente, porque `loadExtraSquads()` pode chamar de novo quando um
+squad novo aparece em `SQUADS`), filtro local de 30s de timeout, pills em
+`#online-list`/`#online-count`, título "👥 Online no board".
+- **🖥️ Online no painel** (2026-09-30, pedido direto: "mostrar ali no
+  visão tb as pessoas q tao online no painel"): node PRÓPRIO
+  `kanban/painel/presence/{uid}` — painel.html NUNCA tinha escrito a
+  própria presença antes disso, só lido a do board. Mesma técnica de
+  heartbeat que o board já usa, portada: `_painelSendHeartbeat()`
+  (`{ts,nome,foto}`, sem `init` de propósito — `window._currentUserInit`
+  é outro campo nunca atribuído em painel-dev.html, mesma classe de
+  achado que `window._currentUserRole`/`_isPOorOrg()`, ver seção OKR —
+  não vale a pena depender dele aqui) + `_painelPresenceStart()`
+  (`setInterval` 15s, chamado de `_finishPainelLogin()`, pula se
+  `window._isPainelViewer`) → `loadPainelPresence()`/
+  `renderPainelOnline()` (mesmo filtro de 30s local, pills em
+  `#painel-online-list`/`#painel-online-count`, título "🖥️ Online no
+  painel"). **Separado de propósito do board** — alguém pode estar nos
+  dois ao mesmo tempo, em abas diferentes, apps distintos; juntar numa
+  lista só criaria duplicata/confusão. Sem `onDisconnect()`, mesmo
+  motivo do board (timeout de 30s já cobre quem fechou sem avisar). Sem
+  mudança em `database.rules.json` — `kanban/painel` já tem `.write`
+  liberado pra qualquer `@ciahering.com.br`, cobre o node novo.
+
 ### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
 UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
 `CODE_MAP.md` de `kanban-dev.html`) — mesmo Firebase

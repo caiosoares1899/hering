@@ -19955,6 +19955,31 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.75 · painel-dev — 2026-09-30 · feat(Visão): "🖥️ Online no painel", separado de "👥 Online no board"
+
+Pedido direto do usuário: "tem uma outra coisa q ai vc me diz a
+complexidade: mostrar ali no visao tb as pessoas q tao online no
+painel". A aba Visão já mostrava quem está online no BOARD (lê a
+presença que `kanban(-dev).html` já escreve) — mas o painel nunca
+escreveu a própria presença em lugar nenhum, então não tinha como
+mostrar quem está de fato navegando o painel no momento.
+
+Nova seção "🖥️ Online no painel", logo abaixo de "👥 Online no board"
+(renomeada de "Online agora" pra deixar claro que são 2 coisas
+diferentes) — **de propósito 2 listas separadas**, não uma lista só:
+alguém pode estar no board E no painel ao mesmo tempo, em abas
+diferentes, e são apps distintos.
+
+Mesma técnica de heartbeat que o board já usa (`setInterval` 15s,
+pausa quando a aba fica em segundo plano, heartbeat imediato ao
+voltar, sem `onDisconnect()` — timeout de 30s na leitura já cobre
+quem fechou sem avisar), portada pro painel: node próprio
+`kanban/painel/presence/{uid}`, nunca o mesmo node do board. Sem
+mudança em `database.rules.json` (o node `kanban/painel` já é
+gravável por qualquer `@ciahering.com.br`).
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais — OK.
+
 ### painel-dev.html v3.74 · painel-dev — 2026-09-30 · docs(🎯 OKR): sincroniza "❓ Ajuda" com o lote de hoje (PO/Organizador/Gestor OKR, editar itens, reordenar)
 
 Achado do próprio usuário logo depois de promover o lote de OKR pra

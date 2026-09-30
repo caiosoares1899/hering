@@ -1475,8 +1475,16 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <!-- ═══ ABA: VISÃO ═══ -->
   <div class="ptab-pane on" id="ppane-visao">
 
-    <div class="sec-title" id="online-section-title">👥 Online agora <span class="badge" id="online-count">0</span></div>
+    <div class="sec-title" id="online-section-title">👥 Online no board <span class="badge" id="online-count">0</span></div>
     <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+    </div>
+
+    <!-- 🖥️ Online no PAINEL — separado de "Online no board" de propósito (pedido
+         direto do usuário): alguém pode estar nos dois ao mesmo tempo, em abas
+         diferentes, e são apps distintos (ver _painelSendHeartbeat()/loadPainelPresence()). -->
+    <div class="sec-title" id="painel-online-section-title">🖥️ Online no painel <span class="badge" id="painel-online-count">0</span></div>
+    <div id="painel-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
       <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
 
@@ -2885,7 +2893,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.74 · painel-dev</div>
+<div class="version">v3.75 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3386,6 +3394,55 @@ function renderOnline(){
   } else {
     el.innerHTML=renderPills(all);
   }
+}
+
+// 🖥️ Presença do PAINEL (2026-09-30, pedido direto: "mostrar ali no visão
+// tb as pessoas q tao online no painel" — separado de "Online no board"
+// acima, porque alguém pode estar nos dois ao mesmo tempo em abas
+// diferentes, apps distintos). Mesmo padrão de heartbeat que
+// kanban(-dev).html já usa pro board: setInterval 15s, pausa em aba oculta,
+// heartbeat imediato ao voltar pro primeiro plano — sem onDisconnect(), o
+// timeout de 30s na leitura (loadPainelPresence()) já cobre quem fechou a
+// aba sem avisar. Node PRÓPRIO (kanban/painel/presence/{uid}), nunca o
+// mesmo node de presença do board (kanban/squads/{sq}/presence).
+function _painelSendHeartbeat(){
+  const u = window._currentUser;
+  if(!u || !window._fbReady || window._isPainelViewer) return; // visualizador externo não "ocupa" presença de usuário de verdade
+  window._update(
+    window._ref(window._db,'kanban/painel/presence/'+u.uid),
+    {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''}
+  );
+}
+function _painelPresenceStart(){
+  clearInterval(window._painelHeartbeat);
+  window._painelHeartbeat = setInterval(()=>{ if(document.hidden) return; _painelSendHeartbeat(); }, 15000);
+  if(!window._painelHeartbeatVisHandlerSet){
+    window._painelHeartbeatVisHandlerSet = true;
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) _painelSendHeartbeat(); });
+  }
+  _painelSendHeartbeat(); // imediato, não espera o 1º tick de 15s
+}
+function loadPainelPresence(){
+  window._onValue(window._ref(window._db,'kanban/painel/presence'), snap=>{
+    const val = snap.val()||{};
+    const now = Date.now();
+    window._presence_painel = Object.values(val).filter(u=>u.nome && now-u.ts<30000);
+    renderPainelOnline();
+  });
+}
+function renderPainelOnline(){
+  const all = window._presence_painel||[];
+  const el = document.getElementById('painel-online-list'); if(!el) return;
+  const count = document.getElementById('painel-online-count'); if(count) count.textContent = all.length;
+  if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum usuário online no painel no momento.</div>'; return; }
+  el.innerHTML = all.map(u=>{
+    const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
+    return '<div class="online-pill">'
+      + '<span class="online-pip"></span>'
+      + foto
+      + '<span>'+u.nome+'</span>'
+      + '</div>';
+  }).join('');
 }
 
 // ── OKR ──────────────────────────────────────────────────────────
@@ -10363,6 +10420,7 @@ function _finishPainelLogin(user){
   // Maré Digital — só ganhou exceção de leitura, não deve ganhar registro
   // em kanban/usuarios/{uid} (ver _painelEnsureUserRecord() abaixo).
   if(!window._isPainelViewer) _painelEnsureUserRecord(user);
+  _painelPresenceStart();
   setTimeout(_seedComunicadoRascunhos, 2000);
   // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
   // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
@@ -10443,6 +10501,7 @@ window.addEventListener('fb-ready',()=>{
   _painelTryOpenTabFromUrl();
   loadOkr();
   loadPresence();
+  loadPainelPresence();
   loadAgentUsage();
   loadPcalEvents();
   // Rede de segurança: força um re-render ~2s após o boot, caso a primeira pintura da tela
