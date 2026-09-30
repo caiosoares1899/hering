@@ -20031,6 +20031,33 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.76 · painel-dev — 2026-09-30 · fix(🎯 OKR): cancelar (Esc) a edição de um item de lista/checklist descartava edições não salvas em outros campos da mesma tela
+
+Achado do `/monitorarbugs` rodado sobre tudo que foi construído hoje no
+OKR (click-to-edit, reordenar Objetivos, Gestor OKR, Online no painel,
+`okr-apresentacao.slide.html`, botão Cardume Criativo e auto-scroll da
+toolbar — as últimas 4 áreas auditadas sem achados).
+
+`_okrListEditStart()` (edição de um item de lista do Objetivo — usado
+também na tela ⚙ Configurações, que tem título/gerência/pilar/descrição
+como campos-irmãos) e `_okrChecklistEditStart()` (edição de um item do
+checklist do Marco — irmão de nome/responsável/prazo/descrição/
+"aparecer na apresentação" no mesmo modal) só chamavam
+`_okrSyncObjDraftFromDom()`/`_okrSyncMarcoDraftFromDom()` dentro do
+branch de SALVAR, nunca no de cancelar. Cenário real: editar o título
+do Objetivo (ou o nome do Marco) sem apertar Salvar, clicar num item de
+lista/checklist pra editar e apertar Esc — a tela inteira é
+re-renderizada a partir do draft em memória, que nunca recebeu a
+edição do título/nome porque a sincronização não rodou. A edição some
+sem aviso nenhum.
+
+Fix: sincroniza o draft SEMPRE no início de `finish()`, antes de checar
+se é salvar ou cancelar — mesmo padrão que `_okrListAdd()`/
+`_okrListRemove()`, logo acima no arquivo, já usavam corretamente
+(comparação que revelou o bug).
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### painel-dev.html v3.75 · painel-dev — 2026-09-30 · feat(Visão): "🖥️ Online no painel", separado de "👥 Online no board"
 
 Pedido direto do usuário: "tem uma outra coisa q ai vc me diz a
