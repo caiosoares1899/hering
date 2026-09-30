@@ -19755,6 +19755,34 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.74 · painel — 2026-09-30 · Promove pra prod — fix: papel/convite refletindo ao vivo no kanban + link do relatório Databricks
+
+Segunda promoção do dia — pedido direto do usuário ("promove tudo q
+tiver em aberto"). Fecha o backlog que tinha ficado de fora da
+promoção anterior (v3.73, acima): as 2 versões de dev que vieram ANTES
+do lote de OKR (v3.68 e v3.69), que não faziam parte do que tinha sido
+validado até então. **Patch cirúrgico**, mesma técnica da promoção
+anterior (`git diff`/`git apply` a partir do commit-base de cada
+versão de dev) — 4 dos 6 hunks aplicaram limpos, 2 precisaram de ajuste
+manual (linha de versão, e o path do node `kanban/dados_diarios` que em
+prod não tem o sufixo `_dev` que dev usa).
+
+**v3.68 — fix: mudança de papel/convite no "👥 Global Users" não
+refletia ao vivo no kanban**: promover alguém a PO/Organizador (ou
+convidar) só aparecia pra quem já estivesse com o board aberto depois
+do PRÓXIMO login dela — automações como "Notificar PO/Organizador"
+ficavam cegas pra essa pessoa até lá. Corrigido espelhando a mudança
+também em `kanban/usuarios_publicos/{uid}` (o node que o kanban.html
+escuta ao vivo), mesmo padrão que outras trocas de papel já usavam.
+
+**v3.69 — link do relatório diário da Databricks aparece automático no
+Histórico**: o link do relatório HTML que a Databricks manda (via
+integração com o Agente Ágil) agora aparece sozinho, como um botão "🤖
+Relatório", em cada card do Histórico da aba "📊 Central de Dados" —
+sem precisar colar link manualmente.
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK.
+
 ### painel.html v3.73 · painel — 2026-09-30 · Promove pra prod — 🎯 OKR: PO/organizador, editar itens já escritos, reordenar Objetivos (▲▼ + arrastar), esconder Marcos da apresentação, novo papel "🎯 Gestor OKR"
 
 Promoção do lote de OKR acumulado em `painel-dev.html` (v3.70 a v3.73),
