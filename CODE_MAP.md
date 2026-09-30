@@ -1372,6 +1372,15 @@ mecanismos nunca disputam o mesmo gesto.
   (não inline HTML, pra não repetir 5 atributos × 25 itens) — chamada 1x
   no boot; os próprios handlers só agem de verdade quando
   `_toolbarReorderMode` está ligado.
+- **Auto-scroll perto da borda** (2026-09-30, pedido direto) —
+  `_initToolbarEdgeAutoScroll()` (perto do fim do arquivo, logo depois
+  de `_initToolbarDragScroll()`/`.crv-dragging`): motor único
+  (`requestAnimationFrame`) alimentado por `mousemove` (hover parado
+  perto da borda) E `dragover` nativo (arrastando um botão pra
+  reorganizar perto da borda — `mousemove` não dispara durante drag
+  nativo, por isso os 2 listeners). Desliga sozinho enquanto
+  `.crv-dragging` está ativo, pra não brigar com a rolagem manual pelo
+  mesmo `scrollLeft`.
 
 ### 💡 Personalização baseada em rotina (2026-09-11)
 5 sugestões opt-in, nascidas de uma proposta direta do usuário — o app
