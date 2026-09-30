@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.766-dev</div>
+<div class="version">v8.30.767-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6579,6 +6579,15 @@ window.dispatchEvent(new Event('fb-ready'));
 // erro pela sem tratamento, causando o erro "auth/popup-closed-by-user" vazar
 // pro window.onunhandledrejection e ser logado como erro do sistema toda vez
 // que alguém fecha o popup de login.
+// MESMO MOTIVO pra doSignOut() — achado real, /monitorarbugs 2026-09-30:
+// existia um `window.doSignOut = () => window._signOut('manual');` aqui, que
+// sobrescrevia (por ser deferred, roda DEPOIS) a função doSignOut() de
+// verdade no script normal mais abaixo — essa sim limpa `gcal_token`
+// (window._signOut() sozinha nunca limpa esse token). Resultado: clicar em
+// "Sair" nunca removia o token de acesso do Google Calendar do localStorage
+// — em computador compartilhado, a próxima pessoa a logar com outra conta
+// Google podia herdar o token de calendário de quem saiu. Removido daqui,
+// deixa só a versão de baixo (com o cleanup) valendo.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
 window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
@@ -6589,7 +6598,6 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   }
   return credential;
 });
-window.doSignOut = () => window._signOut('manual');
 
 // Fallback de login por redirect (achado real, 2026-09-29, relato direto de
 // usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
