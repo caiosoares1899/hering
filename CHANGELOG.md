@@ -19795,6 +19795,25 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.75 · painel — 2026-09-30 · Promove pra prod — "🖥️ Online no painel" + Ajuda/Guia OKR sincronizados
+
+Terceira promoção do dia — validado pelo usuário. Patch cirúrgico
+(mesma técnica das anteriores), 6 de 7 hunks aplicaram limpos.
+
+**Novidade — "🖥️ Online no painel"**: a aba Visão já mostrava quem
+está online no board (seção renomeada pra "👥 Online no board", era
+"Online agora"); agora também mostra quem está de fato navegando o
+painel no momento, numa seção separada logo abaixo. Duas listas de
+propósito — alguém pode estar nos dois ao mesmo tempo, em abas
+diferentes.
+
+**Documentação**: a "❓ Ajuda" da aba 🎯 OKR e o guia visual
+(`guia-okr.html`) foram sincronizados com o lote de OKR promovido
+mais cedo hoje (v3.73) — permissão (PO/Organizador/🎯 Gestor OKR),
+editar itens já escritos, reordenar Objetivos.
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK.
+
 ### painel.html v3.74 · painel — 2026-09-30 · Promove pra prod — fix: papel/convite refletindo ao vivo no kanban + link do relatório Databricks
 
 Segunda promoção do dia — pedido direto do usuário ("promove tudo q
