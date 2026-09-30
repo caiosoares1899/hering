@@ -1981,6 +1981,23 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   (FBA)") pela ordem do array. Os 3 corrigidos, ver `CHANGELOG.md` (dev
   v8.30.628) pro detalhe de cada um.
 
+### Botões exclusivos por squad na toolbar — 2 padrões diferentes, escolha proposital
+- **Toggle de config, qualquer squad pode ligar** — ex.: "🎬 Controle de
+  Criativos" (`btn-criativos`), visibilidade decidida por
+  `config/criativos_ativo` (Firebase, `fbListen`), não pelo squad em si.
+- **Hardcoded pro squad, sem toggle** (2026-09-30, pedido direto: "botão
+  EXCLUSIVO pra eles") — **🐟 Cardume Criativo** (`btn-cardume-criativo`,
+  `data-tb-id="cardumecriativo"`, perto de `btn-criativos` na toolbar):
+  `window.open('https://cardume.ai.studio/','_blank')`, ferramenta própria
+  da squad Mídia Criativa. Visibilidade decidida 1x no boot, logo depois
+  de `ACTIVE_SQUAD` ser resolvido (~L6732) — `if(ACTIVE_SQUAD===
+  'midiacriativa'){...style.display=''}` — mais simples que um toggle de
+  config pra um caso que não precisa ser configurável (não é "qualquer
+  squad pode querer isso", é uma ferramenta específica de UMA squad).
+  Integra sozinho com o reorder de toolbar (`_toolbarDefaultOrder`,
+  captura TODO `[data-tb-id]` via `querySelectorAll`, independente de
+  `display`) — nenhuma mudança extra precisou ser feita lá.
+
 ### Impedimentos (modo coluna vs. tag)
 - `blockerMode` (let) — L31719 — carregado de `config/blockerMode`, `'col'`
   (default) ou `'tag'`

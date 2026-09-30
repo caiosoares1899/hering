@@ -3912,6 +3912,23 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.765-dev — 2026-09-30 — feat: botão "🐟 Cardume Criativo", exclusivo da squad Mídia Criativa
+
+Pedido direto do usuário: a squad Mídia Criativa está usando uma
+ferramenta própria (Cardume) e queria um atalho fixo na toolbar do
+board, só pra eles.
+
+Botão novo `🐟 Cardume Criativo` na toolbar (perto de "🎬 Controle de
+Criativos"), abre `https://cardume.ai.studio/` numa aba nova. Visível
+só quando `ACTIVE_SQUAD==='midiacriativa'` — decidido direto no boot,
+sem toggle de config (diferente do "🎬 Controle de Criativos" vizinho,
+que qualquer squad pode ligar por conta própria): esse aqui não
+precisa ser configurável, é uma ferramenta específica de uma squad só.
+Integra sozinho com o mecanismo de reorganizar a toolbar (captura
+qualquer `[data-tb-id]`, independente de estar visível ou não).
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### v8.30.764-dev — 2026-09-29 — fix(login): fallback pra signInWithRedirect quando o popup do Google trava por Cross-Origin-Opener-Policy
 
 Relato direto de usuária, com prints: tela de login mostrando "Login
