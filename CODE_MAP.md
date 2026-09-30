@@ -2867,6 +2867,14 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   ativo (área/trimestre/status/texto) — com filtro, a lista mostrada não
   é o grupo completo da Gerência, então ▲/▼ ficariam com índice errado.
   `renderOkrObjetivos()`/`_okrObjCardHtml(o,areaId,i,total,podeReordenar)`.
+  (2026-09-30) Ganhou também **drag-and-drop nativo** (pedido explícito
+  do usuário logo depois de validar os botões) — convive com ▲/▼, mesmo
+  gate de permissão/filtro. `_okrObjReorderTo(areaId,draggedId,targetId)`
+  reinsere o card na posição exata do alvo (diferente de `_okrObjMover()`,
+  que só troca 2 adjacentes) e materializa `ordem` igual. Handlers
+  `_okrObjDragStart/Over/Enter/Leave/Drop/End` + `_okrDraggedObjId`
+  (estado entre os eventos nativos `dragstart`/`drop`), CSS
+  `.okr-dragging`/`.okr-drag-over`.
 - **`mostrarApresentacao` por Marco** — booleano novo em
   `kanban/okr/marcos/{id}` (ausente/`true` = visível, só `false` explícito
   esconde — marcos antigos sem o campo continuam aparecendo). Checkbox "🎬

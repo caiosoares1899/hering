@@ -340,6 +340,12 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px;}
 .okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;}
 .okr-card:hover{border-color:rgba(56,182,255,.4);transform:translateY(-1px);}
+/* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
+   ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
+   continuam funcionando em telas sem mouse). */
+.okr-card[draggable="true"]{cursor:grab;}
+.okr-card.okr-dragging{opacity:.4;}
+.okr-card.okr-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,182,255,.35) inset;}
 /* "👤 você é responsável" — mesmo tratamento visual de .card-mine no
    kanban(-dev).html (tingimento azul + borda mais forte), pedido direto
    do usuário ("no OKR, faz que nem nos cards"). Mesmas cores exatas do
@@ -2869,7 +2875,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.71 · painel-dev</div>
+<div class="version">v3.72 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5341,6 +5347,51 @@ async function _okrObjMover(areaId, objId, dir){
   renderOkrObjetivos();
 }
 
+// Drag-and-drop dos cards de Objetivo (pedido direto, junto de _okrObjMover()
+// acima — os dois convivem, arrastar é o atalho rápido). HTML5 DnD nativo
+// (draggable, sem lib): _okrDraggedObjId guarda o que está sendo arrastado
+// entre os eventos; ao soltar em cima de outro card, reinsere na posição do
+// alvo (não só troca 2, como _okrObjMover() — dá pra mover pra qualquer
+// posição de uma vez) e materializa `ordem` em TODOS os objetivos da
+// Gerência, mesma técnica de sempre.
+let _okrDraggedObjId = null;
+async function _okrObjReorderTo(areaId, draggedId, targetId){
+  if(draggedId===targetId) return;
+  const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId));
+  const fromIdx = lista.findIndex(o=>o.id===draggedId);
+  const toIdx = lista.findIndex(o=>o.id===targetId);
+  if(fromIdx<0 || toIdx<0) return;
+  const [item] = lista.splice(fromIdx,1);
+  lista.splice(toIdx,0,item);
+  const updates = {};
+  lista.forEach((o,i)=>{ updates[`kanban/okr/objetivos/${o.id}/ordem`] = i; });
+  await window._update(window._ref(window._db), updates);
+  lista.forEach((o,i)=>{ okrObjetivos[o.id] = {...okrObjetivos[o.id], ordem: i}; });
+  renderOkrObjetivos();
+}
+function _okrObjDragStart(ev, objId){
+  _okrDraggedObjId = objId;
+  ev.dataTransfer.effectAllowed = 'move';
+  try{ ev.dataTransfer.setData('text/plain', objId); }catch(e){} // Firefox exige setData pra permitir o drag
+  ev.currentTarget.classList.add('okr-dragging');
+}
+function _okrObjDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; }
+function _okrObjDragEnter(ev){ ev.currentTarget.classList.add('okr-drag-over'); }
+function _okrObjDragLeave(ev){ ev.currentTarget.classList.remove('okr-drag-over'); }
+async function _okrObjDrop(ev, areaId, targetObjId){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('okr-drag-over');
+  const draggedId = _okrDraggedObjId;
+  _okrDraggedObjId = null;
+  if(!draggedId || draggedId===targetObjId) return;
+  await _okrObjReorderTo(areaId, draggedId, targetObjId);
+}
+function _okrObjDragEnd(ev){
+  ev.currentTarget.classList.remove('okr-dragging');
+  document.querySelectorAll('.okr-card.okr-drag-over').forEach(el=>el.classList.remove('okr-drag-over'));
+  _okrDraggedObjId = null;
+}
+
 function renderOkrObjetivos(){
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
@@ -5402,8 +5453,12 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   const resp = (o.responsaveis||[]).slice(0,4);
   const souResponsavel = _okrIsResponsavel(o);
   return `
-  <div class="okr-card${souResponsavel?' okr-mine':''}" onclick="openOkrObjetivo('${o.id}')">
+  <div class="okr-card${souResponsavel?' okr-mine':''}"
+    draggable="${podeReordenar?'true':'false'}"
+    ${podeReordenar?`ondragstart="_okrObjDragStart(event,'${o.id}')" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,'${areaId}','${o.id}')" ondragend="_okrObjDragEnd(event)"`:''}
+    onclick="openOkrObjetivo('${o.id}')">
     ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;">
+      <span title="Arraste pra reordenar" style="font-size:12px;color:var(--txt3);margin-right:auto;cursor:grab;">⠿</span>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
