@@ -411,6 +411,46 @@ revalidadas — seções novas — achados incidentais notáveis.
   arquivo A ou com o B?" depois de qualquer bulk-fix multi-seção é bem
   mais barato que assumir que só existe uma correspondência possível.
 
+- **2026-09-30 (14ª)**: `55a20bd`→`6e30656`, 8 dias depois, ~80 commits
+  desde a última rodada (o maior intervalo já coberto de uma vez).
+  kanban/kanban-dev **voltaram a ficar sincronizados** (promoção
+  v8.30.767 aconteceu na mesma sessão) — cabeçalho atualizado com a
+  promoção real. `painel.html`/`painel-dev.html` seguem divergindo de
+  verdade (970 linhas, nota confirmada). `functions/index.js` —
+  registro de exports 100% batendo (21/21), ZERO drift de linha —
+  nenhum commit do período tocou a estrutura do arquivo. Escopo
+  deliberadamente dirigido pelo `git log` do período (mesma lição das
+  rodadas 9/10/13), não bulk completo das ~217 âncoras do arquivo —
+  quase todas as features grandes do período (🎯 OKR PO/organizador/
+  Gestor OKR/editar-reordenar, 👤 Minhas Preferências, ♾️ Contínuo,
+  📅 relatório Databricks, `dadosDiarios`/`htmlAnexo` no intake,
+  `isValidFirebaseKey()`) já tinham ganhado seção/entrada própria
+  durante o próprio trabalho do dia — sinal forte de que a disciplina
+  de documentar na hora está pegando de vez; 0 seções novas necessárias
+  nesta rodada. Revalidação focada nas áreas mais recentemente tocadas:
+  **Papéis & autenticação** (9 âncoras corrigidas, incl. `_onRealAuthChange()`
+  em `painel-dev.html` — estava com um número MAIOR que o total de
+  linhas do arquivo, L33792 num arquivo de 13011 linhas, claramente
+  morto há tempos; corrigido pra L12750); **🔀 Reorganizar barra de
+  ferramentas** (10 âncoras, drift uniforme de +4000/+729 dependendo do
+  cluster); **Botões exclusivos por squad** (3 âncoras); **👤 Minhas
+  Preferências** (12 âncoras — **achado real de conteúdo**, não só
+  drift: `loadTemasDescobertos()` estava com o MESMO número de
+  `renderMinhasPrefsBody()`, L13341 pros dois — mesma classe de bug já
+  documentada nas rodadas 7/9/12/21ª, número copiado de outra entrada
+  em vez de re-grepado); **♾️ Contínuo** (4 âncoras). **1 achado real de
+  conteúdo adicional** (não drift de linha): a nota do dirty-check do
+  OKR (`_okrTryCloseObjetivo()`/`_okrTryCloseMarco()`, 2026-09-22)
+  ainda dizia "só em painel-dev.html, não promovido" — já tinha sido
+  promovido pra `painel.html` fazia dias (confirmado `grep -c` batendo
+  8/8 nos dois arquivos), corrigido. **Lição pra próxima vez**: um
+  intervalo de rodada muito maior que o normal (8 dias vs. o usual de
+  poucas horas a poucos dias) não significa necessariamente mais
+  trabalho de revalidação — se as features nasceram com seção própria
+  ad-hoc (prática cada vez mais consistente neste repo), o volume real
+  de correção fica concentrado só nas áreas com números de linha
+  absolutos citados, não no total de commits do período.
+
 Atualize esta seção a cada rodada nova: data, commit revisado no rodapé
 anterior vs. novo, quantas âncoras corrigidas/removidas, quantas seções
 novas adicionadas. 2-6 linhas por rodada — o objetivo é não repetir
