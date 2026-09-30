@@ -3884,6 +3884,12 @@ input[type="date"]{-moz-appearance:textfield;}
   <div class="tb-sep" data-tb-id="sep4"></div>
   <button class="btn btn-sm" data-tb-id="campanhas" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" data-tb-id="criativos" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
+  <!-- Exclusivo da squad Mídia Criativa (pedido direto do usuário, 2026-09-30)
+       -- atalho fixo pra ferramenta própria da squad, sem toggle de config
+       (diferente de "🎬 Controle de Criativos" acima, que qualquer squad
+       pode ligar): visibilidade decidida 1x no boot, ver checagem de
+       ACTIVE_SQUAD perto da própria constante. -->
+  <button class="btn btn-sm" id="btn-cardume-criativo" data-tb-id="cardumecriativo" onclick="window.open('https://cardume.ai.studio/','_blank')" title="Cardume Criativo — ferramenta própria da squad Mídia Criativa" style="display:none;color:#f4a8c8;border-color:rgba(244,168,200,.35);">🐟 Cardume Criativo</button>
   <div class="tb-sep" data-tb-id="sep5"></div>
 </div>
 
@@ -6420,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.764-dev</div>
+<div class="version">v8.30.765-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6726,6 +6732,15 @@ if(_legacySquad){
 const ACTIVE_SQUAD = ((_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,'')==='criacao'
   ? 'midiacriativa'
   : (_urlParams.get('squad') || 'dados').replace(/[^a-z0-9_-]/gi,''));
+// 🐟 Cardume Criativo (2026-09-30, pedido direto): botão exclusivo da squad
+// Mídia Criativa, sem toggle de config (diferente de "🎬 Controle de
+// Criativos") — decidido 1x aqui, direto do ACTIVE_SQUAD já resolvido
+// acima (o elemento já existe no DOM nesse ponto, a toolbar é HTML estático
+// que vem ANTES deste <script> no arquivo).
+if(ACTIVE_SQUAD==='midiacriativa'){
+  const _btnCardume=document.getElementById('btn-cardume-criativo');
+  if(_btnCardume) _btnCardume.style.display='';
+}
 // Squads onde o Agente Ágil orquestrador tem escrita real (ver mentionTrigger.js
 // no functions/agente-agil-orquestrador/ — agenteAgilMencao/agenteAgilMencaoDados).
 // Só nesses squads o botão "Converse com Agente Ágil" (ver openAgenteHotline())
