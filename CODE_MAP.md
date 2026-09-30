@@ -2847,6 +2847,50 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   pelo dirty-check. Só em `painel-dev.html` (não promovido a
   `painel.html` ainda).
 
+#### Edição inline, reordenar Objetivos, "aparecer na apresentação" (2026-09-30, painel-dev.html v3.71 + okr-apresentacao.slide.html)
+Lote de 4 pedidos numa mensagem só (feedback do chefe do usuário +
+ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
+- **Click-to-edit em listas/checklist** — `_okrListEditorHtml()`
+  (indicadores/progressos/próximos passos/riscos/planos de ação) e
+  `_okrChecklistHtml()` (checklist do Marco) eram só add/remove; ganharam
+  clique-pra-editar no texto já escrito, mesmo padrão do `renderCL()` do
+  checklist de card em `kanban-dev.html` (span vira `<textarea>`
+  auto-ajustável, Enter/blur salva, Esc cancela) — simplificado (sem
+  markdown/@menção, texto puro). `_okrListEditStart(span,campo,i)`/
+  `_okrChecklistEditStart(span,i)`.
+- **Reordenar Objetivos (▲/▼) dentro da Gerência** — mesma técnica de
+  `_okrMarcoMover()`/`_okrMarcosSorted()` (ver acima), replicada pro
+  nível Objetivo: `_okrObjetivosSorted(lista)`/`_okrObjMover(areaId,objId,dir)`,
+  materializa `ordem` numérico em TODOS os objetivos da Gerência no 1º
+  reordenar manual (antes disso, segue alfabético por título, como
+  sempre foi). Botões só aparecem com `_okrCanCreate()` E nenhum filtro
+  ativo (área/trimestre/status/texto) — com filtro, a lista mostrada não
+  é o grupo completo da Gerência, então ▲/▼ ficariam com índice errado.
+  `renderOkrObjetivos()`/`_okrObjCardHtml(o,areaId,i,total,podeReordenar)`.
+- **`mostrarApresentacao` por Marco** — booleano novo em
+  `kanban/okr/marcos/{id}` (ausente/`true` = visível, só `false` explícito
+  esconde — marcos antigos sem o campo continuam aparecendo). Checkbox "🎬
+  Aparecer na apresentação" no form de edição do Marco
+  (`renderOkrMarcoBody()`/`openOkrMarco()`/`saveOkrMarco()`/
+  `_okrSyncMarcoDraftFromDom()`). Pensado pra OKRs contínuos com muitos
+  marcos acumulados — deixa esconder os que não interessam mais na
+  apresentação executiva sem arquivar/apagar.
+- **`okr-apresentacao.slide.html`**: `objMarcos(objId)` (L598, único
+  choke-point de leitura de marcos — status/%/tabela de detalhe passam
+  todos por ela) agora filtra `mostrarApresentacao!==false`, então o
+  campo acima já se propaga sozinho pra todo lugar que consome marcos.
+  Botão novo "▴ Colapsar concluídos" no cabeçalho da tabela do modal de
+  detalhe (`.d2-table-header`, só aparece se o Objetivo tiver pelo menos
+  1 marco concluído) — `window._okrToggleColapsarConcluidos()`, estado
+  em `_okrColapsarConcluidos` (dura a sessão, não é filtro permanente):
+  só esconde a LINHA (`style="display:none"`), não mexe em
+  `objMarcos()`/`objStatus()`/`objProgressoPct()` — a contagem de
+  progresso continua contando os concluídos normalmente, só a visão que
+  colapsa. `_okrDetailCurrentId` (novo, guarda o Objetivo do modal aberto
+  — antes não existia, `window._okrOpenDetail(id)` recebia `id` sempre
+  por parâmetro sem guardar em nenhum lugar) permite reabrir o mesmo
+  Objetivo depois de togglar.
+
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
 v3.19 · painel-dev pro racional completo.
@@ -3322,6 +3366,16 @@ detalhe aberto — ver nota abaixo).
   a pessoa já viu na grade), desabilitado no último Objetivo da gerência
   em vez de cruzar pra outra gerência sozinho (confirmado sem achado,
   `/monitorarbugs` 2026-09-11 — ver `SKILL.md` da skill monitorarbugs).
+  (2026-09-30) `objMarcos(objId)` — L598 — único choke-point de leitura
+  de marcos (status/%/tabela de detalhe passam todos por ela) — ganhou
+  filtro `mostrarApresentacao!==false` (campo novo em painel-dev.html,
+  ver seção OKR acima), então esconder um marco lá já reflete aqui
+  sozinho. Botão "▴ Colapsar concluídos" no cabeçalho da tabela do modal
+  (`window._okrToggleColapsarConcluidos()`, estado em
+  `_okrColapsarConcluidos` — dura a sessão, view-only, não mexe na
+  contagem de progresso) — só existe agora um `_okrDetailCurrentId`
+  guardando qual Objetivo está aberto no modal (antes `_okrOpenDetail(id)`
+  recebia `id` sempre por parâmetro sem persistir em lugar nenhum).
 - Login: `window._okrHandleAuth = user => {...}` — L1320 — desde
   2026-09-17 (achado de análise de segurança), checa domínio OU
   `painel_viewers` (`_okrViewerKey()` — L1319, cache de 15min [reduzido

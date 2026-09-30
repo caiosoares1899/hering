@@ -19803,6 +19803,43 @@ arquivo, 478/478 em `functions/`).
 functions:okrDailyScan`) — ver `CLAUDE.md` sobre resync antes de
 rodar localmente.
 
+### painel-dev.html v3.71 · painel-dev — 2026-09-30 · feat(🎯 OKR): editar itens já escritos, reordenar Objetivos, esconder Marcos da apresentação
+
+Lote de 4 pedidos numa mensagem só — feedback do chefe do usuário sobre
+o OKR ("acho que é válido fazer igual fez nos checklists, de dar pra
+editar o que já escreveu, de progresso, objetivo, marco") mais duas
+ideias próprias do usuário.
+
+**1. Editar o que já foi escrito** (antes só dava pra adicionar/remover):
+Indicadores de Entrega, Progressos, Próximos Passos, Riscos e Planos de
+Ação do Objetivo, e os itens do Checklist do Marco, agora aceitam
+clicar em cima do texto pra editar — mesmo padrão de clique-pra-editar
+já usado no checklist de card do `kanban.html` (o texto vira uma
+caixinha, Enter ou clicar fora salva, Esc cancela).
+
+**2. Reordenar Objetivos** (▲/▼): mesma lógica que já existia pra
+reordenar Marcos dentro de um Objetivo, agora também pros Objetivos
+dentro de cada Gerência — só aparece pra quem já pode criar Objetivo
+(ADM/PO/organizador) e com nenhum filtro de busca ativo.
+
+**3. "🎬 Aparecer na apresentação" por Marco**: novo checkbox no form de
+edição do Marco. Pensado pra OKRs contínuos, que acumulam muitos marcos
+ao longo do tempo — dá pra desligar os que não fazem mais sentido
+mostrar na apresentação executiva, sem precisar arquivar ou apagar.
+Marcos antigos (sem o campo) continuam aparecendo normalmente — só
+desliga quem for marcado explicitamente.
+
+**4. `okr-apresentacao.slide.html`**: passa a respeitar o campo acima
+(marco desligado some da tabela de detalhe e da contagem de progresso
+do slide) e ganhou um botão "▴ Colapsar concluídos" no modal de
+detalhe de cada Objetivo — esconde as linhas de marco já concluído na
+tela (útil quando tem muita coisa concluída acumulada), sem mexer na
+contagem de progresso, que continua contando os concluídos
+normalmente.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` reais de
+`painel-dev.html` e nos 2 blocos de `okr-apresentacao.slide.html` — OK.
+
 ### painel-dev.html v3.70 · painel-dev — 2026-09-29 · feat(🎯 OKR): PO/organizador também podem criar/editar Objetivos, não só ADM
 
 Pedido direto do usuário, depois de investigar um relato de "sumiu o
