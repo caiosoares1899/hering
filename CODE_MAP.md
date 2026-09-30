@@ -1986,7 +1986,8 @@ campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
   Criativos" (`btn-criativos`), visibilidade decidida por
   `config/criativos_ativo` (Firebase, `fbListen`), não pelo squad em si.
 - **Hardcoded pro squad, sem toggle** (2026-09-30, pedido direto: "botão
-  EXCLUSIVO pra eles") — **🐟 Cardume Criativo** (`btn-cardume-criativo`,
+  EXCLUSIVO pra eles" — promovido pra prod v8.30.765, mesmo dia) —
+  **🐟 Cardume Criativo** (`btn-cardume-criativo`,
   `data-tb-id="cardumecriativo"`, perto de `btn-criativos` na toolbar):
   `window.open('https://cardume.ai.studio/','_blank')`, ferramenta própria
   da squad Mídia Criativa. Visibilidade decidida 1x no boot, logo depois
