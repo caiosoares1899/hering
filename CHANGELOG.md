@@ -19905,6 +19905,20 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.76 · painel — 2026-09-30 · Promove pra prod — fix(OKR): Esc ao cancelar descartava edições não salvas
+
+Quarta promoção do dia, pedido direto do usuário ("sobe tudo pro
+prod"). Patch cirúrgico (mesma técnica das anteriores) — diff limpo
+desde a última promoção (v3.75), só o fix abaixo.
+
+**Correção**: cancelar (Esc) a edição de um item de lista do Objetivo
+ou checklist do Marco descartava em silêncio qualquer edição pendente
+em campos-irmãos da mesma tela (título/gerência/pilar/descrição do
+Objetivo; nome/responsável/prazo/descrição/"aparecer na apresentação"
+do Marco) — achado do `/monitorarbugs` desta sessão.
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK.
+
 ### painel.html v3.75 · painel — 2026-09-30 · Promove pra prod — "🖥️ Online no painel" + Ajuda/Guia OKR sincronizados
 
 Terceira promoção do dia — validado pelo usuário. Patch cirúrgico

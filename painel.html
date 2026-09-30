@@ -2933,7 +2933,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.75 · painel</div>
+<div class="version">v3.76 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6004,9 +6004,16 @@ function _okrListEditStart(span, campo, i){
   let done = false;
   function finish(save){
     if(done) return; done = true;
+    // Sincroniza SEMPRE, mesmo cancelando (Esc) — mesmo padrão de
+    // _okrListAdd()/_okrListRemove() acima. Sem isso, cancelar a edição de
+    // um item aqui reconstruía a tela a partir de um _okrObjDraft
+    // desatualizado, descartando em silêncio qualquer edição ainda não
+    // sincronizada em outros campos da MESMA tela (título/gerência/pilar/
+    // descrição, na ⚙ Configurações, onde este editor de lista também é
+    // usado pra trimestres) — achado real, /monitorarbugs 2026-09-30.
+    _okrSyncObjDraftFromDom();
     const novo = ta.value.trim();
     if(save && novo && novo!==original){
-      _okrSyncObjDraftFromDom();
       _okrObjDraft[campo][i] = novo;
     }
     _okrRerenderCurrentScreen();
@@ -6433,9 +6440,14 @@ function _okrChecklistEditStart(span, i){
   let done = false;
   function finish(save){
     if(done) return; done = true;
+    // Sincroniza SEMPRE, mesmo cancelando (Esc) — mesma correção de
+    // _okrListEditStart() acima, mesma causa raiz: nome/responsável/prazo/
+    // descrição/"aparecer na apresentação" vivem na MESMA tela do
+    // checklist, cancelar aqui sem sincronizar descartava em silêncio
+    // qualquer edição ainda não sincronizada nesses campos.
+    _okrSyncMarcoDraftFromDom();
     const novo = ta.value.trim();
     if(save && novo && novo!==original){
-      _okrSyncMarcoDraftFromDom();
       _okrMarcoDraft.checklist[i].text = novo;
     }
     renderOkrMarcoBody();
