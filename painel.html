@@ -8845,6 +8845,17 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_autoscroll_logout_2026_09_30',
+    titulo: '🖱️ Toolbar rola sozinha perto da borda + login mais seguro',
+    corpo: '<p>Duas novidades no <b>kanban.html</b>:</p>'
+      + '<ul>'
+      + '<li><b>Auto-scroll da barra de ferramentas</b>: quando a toolbar não cabe inteira na tela, basta deixar o mouse parado perto da borda esquerda/direita (ou arrastar um botão pra reorganizar perto da borda) que ela rola sozinha — sem precisar clicar-e-arrastar pra empurrar.</li>'
+      + '<li><b>Logout mais seguro</b>: corrigimos um problema em que clicar em "🚪 Sair" não limpava o token de acesso do Google Calendar salvo no navegador — importante principalmente em computador compartilhado, onde a próxima pessoa a logar podia herdar esse token de quem saiu antes.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_cardume_criativo_2026_09_30',
     titulo: '🐟 Novo atalho: Cardume Criativo direto na toolbar',
     corpo: '<p>Pra quem usa o <b>Cardume</b>: agora tem um atalho fixo na barra de ferramentas do board — botão <b>"🐟 Cardume Criativo"</b>, abre a ferramenta direto numa aba nova, sem precisar guardar o link em outro lugar.</p>',
@@ -8877,6 +8888,13 @@ const COMUNICADO_RASCUNHOS_SEED = [
       + '<li>Promover alguém a PO/Organizador (ou convidar) em "👥 Global Users" agora reflete <b>na hora</b> pra quem já está com o board aberto — antes só aparecia depois do próximo login da pessoa.</li>'
       + '<li>O link do relatório diário da Databricks agora aparece sozinho, como um botão "🤖 Relatório", em cada card do Histórico da aba "📊 Central de Dados" — sem precisar colar link manualmente.</li>'
       + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_okr_fix_esc_2026_09_30',
+    titulo: '🎯 OKR: corrigido bug ao cancelar edição de itens',
+    corpo: '<p>Corrigimos um bug na aba <b>🎯 OKR</b>: se você editasse o título/pilar/descrição de um Objetivo (ou nome/prazo/descrição de um Marco) sem salvar, e em seguida cancelasse (apertando <b>Esc</b>) a edição de um item de lista/checklist na mesma tela, a primeira edição sumia em silêncio. Agora cancelar um item não afeta mais os outros campos da tela.</p>',
     tipo: 'novidade',
     squad: '*',
   },
