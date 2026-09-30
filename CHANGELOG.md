@@ -18,6 +18,24 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.768-dev — 2026-09-30 · docs: sincroniza Central de Ajuda com o auto-scroll da toolbar + menu de contexto por duplo-clique/duplo-toque
+
+Rodada do `/atualizarhelpcontent`, puramente documentação — sem mudança
+de comportamento. 35 commits desde a última sincronização (2026-09-22).
+A maioria das features grandes do período já tinha ganhado texto de
+ajuda durante o próprio trabalho do dia (🎯 OKR, 👤 Minhas Preferências,
+♾️ Contínuo, Agendamentos com prazo automático) — 2 gaps reais achados:
+
+- **"🔀 Reorganizar a barra de ferramentas"**: não mencionava o
+  auto-scroll perto da borda (mouse parado ou arrastando um botão
+  durante a reorganização) — feature nova do mesmo dia.
+- **"📌 Fixar card no topo da coluna"**: a dica de toque/celular só
+  citava "toque e segure" pra abrir o menu de contexto do card — não
+  mencionava o duplo-toque (touch) nem o duplo-clique (mouse), as duas
+  formas alternativas adicionadas depois pro mesmo menu.
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### v8.30.767 — 2026-09-30 · Promove pra prod — auto-scroll da toolbar + fix de logout (gcal_token)
 
 Promoção do lote acumulado desde a última promoção (v8.30.765), pedido
