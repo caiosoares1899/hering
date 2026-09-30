@@ -3929,6 +3929,29 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.766-dev — 2026-09-30 — feat: auto-scroll da toolbar perto da borda
+
+Pedido direto do usuário: "seria mt dificil colocar para essa toolbar
+mover automaticamente para o lado quando o mouse estivesse no fim?" —
+cobre os 2 cenários confirmados na conversa: (1) mouse simplesmente
+parado perto da borda esquerda/direita da toolbar (sem arrastar nada),
+e (2) arrastando um botão pra reorganizar (🔀 Reorganizar barra) perto
+da borda, útil numa barra cheia pra levar um botão até a ponta.
+
+`_initToolbarEdgeAutoScroll()` — motor único (`requestAnimationFrame`,
+velocidade proporcional à distância da borda) alimentado por 2
+listeners: `mousemove` (cenário 1) e `dragover` nativo (cenário 2 —
+`mousemove` não dispara durante um drag nativo do browser, por isso
+precisa de um listener separado). Convive com os outros 2 mecanismos
+de arrastar a toolbar sem competir: nunca chama `preventDefault()`
+(quem faz isso é `_tbHandleDragOver`, por item, pro indicador visual de
+onde vai cair o drop) e se desliga sozinho enquanto a rolagem manual
+por clique-e-arraste (`.crv-dragging`) está ativa, pra não brigar pelo
+mesmo `scrollLeft` e deixar a rolagem trêmula.
+
+Checks de rotina: `node --check` no maior bloco `<script>` OK; balanço
+de chaves/parênteses (braces -1, parens +3, mesmo baseline de sempre).
+
 ### v8.30.765-dev — 2026-09-30 — feat: botão "🐟 Cardume Criativo", exclusivo da squad Mídia Criativa
 
 Pedido direto do usuário: a squad Mídia Criativa está usando uma
