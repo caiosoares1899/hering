@@ -2793,7 +2793,10 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
 - `loadOkr()` — `_onValue` nos dois nós, populam `okrObjetivos`/
   `okrMarcos`. Chamado no boot junto de `loadGlobalUsers()`.
 - Permissão: `_okrCanEdit(obj)`/`_okrCanCreate()` — responsável(is) do
-  objetivo + ADM + PO/organizador (de QUALQUER squad), check client-side
+  objetivo + ADM + PO/organizador (de QUALQUER squad) + **"🎯 Gestor
+  OKR"** (2026-09-30 — flag `u.gestorOkr:true` em `kanban/usuarios/{uid}`,
+  liga/desliga em "👥 Global Users" `renderGlobalUsers()`/
+  `toggleGestorOkr()`, `_isGestorOkr(uid)` — check client-side
   (mesmo padrão de gating de UI do resto do app, sem ACL granular no
   Realtime Database). Ampliado de "só responsável(is) + ADM" em
   2026-09-29 (pedido direto — "sumiu o botão de adicionar OKR", usuário
@@ -2813,6 +2816,19 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   precisa decidir de onde vem "o papel da pessoa" quando ela tem papéis
   DIFERENTES em squads diferentes, e Campanhas É amarrado a squad,
   diferente de OKR).
+- **"🎯 Gestor OKR"** (2026-09-30, pedido direto — "tem gente que n vai
+  ser PO/ADM e vai mexer em OKR"): flag PROPOSITALMENTE separada de
+  `role`/`squads_roles` (`u.gestorOkr:true`), não um 6º valor de
+  `GLOBAL_ROLES`/`SQUAD_ROLES` — esses campos são lidos por telas fora do
+  OKR que não deveriam saber que "Gestor OKR" existe (badge de papel no
+  board do kanban, `_isPOorOrg()` de Campanhas); misturar vazaria esse
+  comportamento pra lá. Quem liga o toggle continua "Membro" (ou o que já
+  for) em tudo mais, só ganha `_okrCanEdit()`/`_okrCanCreate()` a mais.
+  Toggle na tela "👥 Global Users" (`renderGlobalUsers()`, chip solto no
+  mesmo wrap dos squads), `toggleGestorOkr(uid,checked)` grava só em
+  `kanban/usuarios/{uid}` — de propósito NÃO espelha em
+  `usuarios_publicos` (mesma técnica de `toggleUserSquad()` acima, mas
+  aqui não precisa: só o OKR em `painel-dev.html` lê esse campo).
 - Pessoas (responsável/participantes) via picker GLOBAL
   (`_okrPessoaOptions()`/`_okrPessoaInfo()`), fonte é `_globalUsersCache`
   — não amarrado a squad, ao contrário do resto do painel.
