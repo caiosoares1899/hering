@@ -2863,7 +2863,7 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   pelo dirty-check. Só em `painel-dev.html` (não promovido a
   `painel.html` ainda).
 
-#### Edição inline, reordenar Objetivos, "aparecer na apresentação" (2026-09-30, painel-dev.html v3.71 + okr-apresentacao.slide.html)
+#### Edição inline, reordenar Objetivos (▲▼ e drag-and-drop), "aparecer na apresentação", 🎯 Gestor OKR (2026-09-30, painel-dev.html v3.71-v3.73 + okr-apresentacao.slide.html — promovido pra prod v3.73 no mesmo dia)
 Lote de 4 pedidos numa mensagem só (feedback do chefe do usuário +
 ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
 - **Click-to-edit em listas/checklist** — `_okrListEditorHtml()`
