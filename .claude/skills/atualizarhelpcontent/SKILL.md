@@ -219,5 +219,24 @@ Formato: baseline → novo — o que motivou — achados/correções.
   entrada própria, mas nenhum gráfico daquela aba tem — só
   Insights/CFD/Burndown são documentados.
 
+- **v8.30.732-dev→v8.30.768-dev (2026-09-30)**: pedido explícito
+  (`/atualizarhelpcontent`), 35 commits desde a última rodada
+  (2026-09-22). Sinal muito positivo de novo: 🎯 OKR, 👤 Minhas
+  Preferências, ♾️ Contínuo e Agendamentos (prazo automático) — as
+  features grandes do período — já tinham ganhado texto de ajuda
+  durante o próprio trabalho do dia, sem gap. **2 gaps reais**:
+  "🔀 Reorganizar a barra de ferramentas" não mencionava o auto-scroll
+  perto da borda (feature nova do mesmo dia); "📌 Fixar card" só citava
+  "toque e segure" pro menu de contexto no celular, sem mencionar o
+  duplo-toque/duplo-clique adicionados depois como forma alternativa
+  (mesmo menu, PR #1049-#1052). Achados incidentais avaliados e
+  deliberadamente NÃO documentados (muito niche/automáticos, mesmo
+  padrão de julgamento de rodadas anteriores): botão exclusivo
+  "🐟 Cardume Criativo" (squad única, self-explanatory); link "🤖
+  Relatório" da Databricks no drawer 📊 Dados (automático, já
+  documentado tecnicamente no `CODE_MAP.md`); fallback de login por
+  redirect e fix de logout/gcal_token (invisíveis pro usuário, sem
+  ação nenhuma pra descrever).
+
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.
