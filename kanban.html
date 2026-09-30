@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.765</div>
+<div class="version">v8.30.767</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6579,6 +6579,15 @@ window.dispatchEvent(new Event('fb-ready'));
 // erro pela sem tratamento, causando o erro "auth/popup-closed-by-user" vazar
 // pro window.onunhandledrejection e ser logado como erro do sistema toda vez
 // que alguém fecha o popup de login.
+// MESMO MOTIVO pra doSignOut() — achado real, /monitorarbugs 2026-09-30:
+// existia um `window.doSignOut = () => window._signOut('manual');` aqui, que
+// sobrescrevia (por ser deferred, roda DEPOIS) a função doSignOut() de
+// verdade no script normal mais abaixo — essa sim limpa `gcal_token`
+// (window._signOut() sozinha nunca limpa esse token). Resultado: clicar em
+// "Sair" nunca removia o token de acesso do Google Calendar do localStorage
+// — em computador compartilhado, a próxima pessoa a logar com outra conta
+// Google podia herdar o token de calendário de quem saiu. Removido daqui,
+// deixa só a versão de baixo (com o cleanup) valendo.
 // Pede o escopo de calendário sob demanda (só quando a pessoa conecta uma agenda) —
 // isolado do login normal pra não bloquear todo mundo se o app não estiver verificado.
 window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>{
@@ -6589,7 +6598,6 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   }
   return credential;
 });
-window.doSignOut = () => window._signOut('manual');
 
 // Fallback de login por redirect (achado real, 2026-09-29, relato direto de
 // usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
@@ -34897,7 +34905,7 @@ _onFbReady(()=>{
     }
   }, 60000);
   if(window._forceLogoutUnsub) window._forceLogoutUnsub();
-  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after_dev'), snap=>{
+  window._forceLogoutUnsub = window._onValue(window._ref(window._db,'kanban/global/force_logout_after'), snap=>{
     const forceAfter = snap.val();
     if(forceAfter && _sessionStartMs < forceAfter && (Date.now() - forceAfter) < 15*60*1000){ window._signOut('admin_force_logout'); }
   });
@@ -37626,6 +37634,62 @@ renderBoard();
     hovered.scrollLeft += (e.key==='ArrowRight'?90:-90);
     e.preventDefault();
   });
+})();
+
+// 🖱️➡️ Auto-scroll da toolbar perto da borda (pedido direto, 2026-09-30) —
+// cobre os 2 cenários pedidos: (1) mouse simplesmente parado perto da
+// borda, sem arrastar nada (mousemove); (2) arrastando um botão pra
+// reorganizar, perto da borda (dragover nativo — mousemove NÃO dispara
+// durante um drag nativo do browser, por isso precisa de listener
+// separado alimentando o MESMO motor de scroll). Convive com os outros 2
+// mecanismos de arrastar sem disputar nada: nunca chama preventDefault()
+// (quem faz isso é _tbHandleDragOver, por item, pro indicador de posição
+// de drop) e só entra em jogo durante um drag nativo de verdade — items só
+// ficam draggable="true" dentro do modo de reorganizar
+// (iniciarReorganizarToolbar()), então dragover simplesmente não dispara
+// fora dele.
+(function _initToolbarEdgeAutoScroll(){
+  const tb = document.getElementById('main-toolbar');
+  if(!tb) return;
+  const EDGE = 50;      // px de distância da borda que já ativa o auto-scroll
+  const MAX_SPEED = 14; // px por frame na borda exata — mais perto, mais rápido
+  let dir = 0, speed = 0, rafId = null;
+
+  function frame(){
+    if(dir!==0) tb.scrollLeft += dir*speed;
+    rafId = dir!==0 ? requestAnimationFrame(frame) : null;
+  }
+  function updateFromClientX(clientX){
+    // Não compete com o clique-e-arraste de rolagem manual
+    // (_initToolbarDragScroll, .crv-dragging) — os dois mexendo em
+    // scrollLeft ao mesmo tempo brigaria e deixaria a rolagem trêmula.
+    if(tb.classList.contains('crv-dragging')){ dir=0; return; }
+    const rect = tb.getBoundingClientRect();
+    const distLeft = clientX - rect.left;
+    const distRight = rect.right - clientX;
+    if(distLeft>=0 && distLeft<EDGE && tb.scrollLeft>0){
+      dir = -1; speed = MAX_SPEED*(1 - distLeft/EDGE);
+    } else if(distRight>=0 && distRight<EDGE && tb.scrollLeft < tb.scrollWidth-tb.clientWidth-1){
+      dir = 1; speed = MAX_SPEED*(1 - distRight/EDGE);
+    } else {
+      dir = 0;
+    }
+    if(dir!==0 && !rafId) rafId = requestAnimationFrame(frame);
+  }
+  function stop(){ dir = 0; }
+
+  // Cenário 1: hover parado perto da borda
+  tb.addEventListener('mousemove', e=>updateFromClientX(e.clientX));
+  tb.addEventListener('mouseleave', stop);
+
+  // Cenário 2: arrastando um botão pra reorganizar — listener no
+  // CONTAINER (não só nos itens, como _tbHandleDragOver já faz pro
+  // indicador de posição), garante que funcione mesmo passando por cima
+  // de espaço vazio/gap entre botões perto da borda.
+  tb.addEventListener('dragover', e=>updateFromClientX(e.clientX));
+  tb.addEventListener('dragleave', e=>{ if(e.target===tb) stop(); });
+  tb.addEventListener('drop', stop);
+  document.addEventListener('dragend', stop);
 })();
 </script>
 <button class="undo-btn" id="undo-btn" onclick="doUndo()">↩ Desfazer</button>

@@ -18,6 +18,32 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.767 — 2026-09-30 · Promove pra prod — auto-scroll da toolbar + fix de logout (gcal_token)
+
+Promoção do lote acumulado desde a última promoção (v8.30.765), pedido
+direto do usuário ("sobe tudo pro prod"). Auto-scroll já tinha sido
+validado antes ("já validei o scroll") e deixado acumulado a pedido do
+próprio usuário pra promoção em lote; o fix de logout veio do
+`/monitorarbugs` desta sessão. Ver as entradas de dev correspondentes
+abaixo pro detalhe técnico completo.
+
+**Novidade — auto-scroll da toolbar perto da borda**: passar o mouse
+perto da borda esquerda/direita da barra de ferramentas (ou arrastar um
+botão pra reorganizar perto da borda, com "🔀 Reorganizar barra"
+ligado) agora rola a barra sozinha, sem precisar clicar-e-arrastar.
+
+**Correção — "Sair" não limpava o token do Google Calendar**: o botão
+"🚪 Sair" nunca removia o token de acesso do Google Calendar salvo no
+navegador. Em computador compartilhado, a próxima pessoa a logar com
+outra conta Google podia herdar o token de calendário de quem saiu
+antes.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais — OK;
+balanço de chaves/parênteses idêntico ao de `kanban-dev.html` (braces
+-1, parens +3); `diff kanban.html kanban-dev.html` conferido — só as
+4 divergências permanentes já conhecidas (versão/`VERSION_KEY`,
+favicon, `force_logout_after`).
+
 ### v8.30.765 — 2026-09-30 · Promove pra prod — botão "🐟 Cardume Criativo"
 
 Promoção pontual, validada pelo usuário. Único commit acumulado desde
