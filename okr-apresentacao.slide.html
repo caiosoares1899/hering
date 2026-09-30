@@ -595,7 +595,11 @@ function avatarHtml(uid){
   const img = safeUrl(p.foto) ? `<img src="${safeUrl(p.foto)}" alt="">` : esc((p.init||p.nome.slice(0,2)).toUpperCase());
   return `<span class="avatar" title="${esc(p.nome)}">${img}</span>`;
 }
-function objMarcos(objId){ return Object.values(okrMarcos).filter(m=>m && m.objetivoId===objId && !m.arquivado); }
+// `mostrarApresentacao===false` exclui o marco daqui — e por consequência de
+// TODO consumidor (status/progresso/tabela de detalhe), já que todos passam
+// por esta função. Padrão (campo ausente, marcos antigos) é considerado
+// visível — só `false` explícito esconde.
+function objMarcos(objId){ return Object.values(okrMarcos).filter(m=>m && m.objetivoId===objId && !m.arquivado && m.mostrarApresentacao!==false); }
 // Mesma ordenação usada pra montar os cards de cada gerência em buildSlides()
 // (alfabética por título) — garante que "Próximo objetivo" (ver
 // _okrOpenDetail) segue a MESMA ordem que a pessoa já viu na grade de cards.
@@ -620,6 +624,14 @@ function objProgressoPct(objId){
 // ── Slides: construídas a partir dos dados atuais, reconstruídas a cada mudança ──
 let slides = [];
 let currentIdx = 0;
+
+// Toggle "Colapsar concluídos" do modal de detalhe (ver window._okrOpenDetail
+// abaixo): view-only, não mexe em objMarcos()/objStatus()/objProgressoPct()
+// (contagens continuam contando os marcos concluídos normalmente) — só
+// esconde a LINHA na tabela. Estado dura a sessão inteira (não é por
+// Objetivo), reseta ao recarregar a página.
+let _okrColapsarConcluidos = false;
+let _okrDetailCurrentId = null;
 
 function objCardHtml(o){
   const st = okrStatusInfo(objStatus(o.id));
@@ -947,6 +959,7 @@ function d2FieldList(arr){
 }
 window._okrOpenDetail = id => {
   const o = okrObjetivos[id]; if(!o) return;
+  _okrDetailCurrentId = id;
   const st = okrStatusInfo(objStatus(id));
   // Mesma ordenação do painel (painel-dev.html, _okrMarcosSorted()): por
   // padrão segue como sempre foi, por prazo (texto livre); a partir do 1º
@@ -983,10 +996,14 @@ window._okrOpenDetail = id => {
           <div class="d2-panel grow"><div class="d2-panel-label">Indicadores de Entrega</div>${d2FieldList(o.indicadores)}</div>
         </div>
         <div class="d2-right">
-          <div class="d2-table-header"><span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span></div>
+          <div class="d2-table-header">
+            <span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
+            ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:24px;padding:0 10px;font-size:11px;margin-left:auto;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
+          </div>
           <div class="d2-table-rows">${marcos.length ? marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
-            return `<div class="d2-marco-row">
+            const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
+            return `<div class="d2-marco-row"${oculto?' style="display:none;"':''}>
               <span class="d2-marco-num">${i+1}.</span>
               <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
@@ -1069,6 +1086,10 @@ function _okrFitDetailSections(){
   fcolLists.forEach((el,i)=>{ if(el) _zoomFitToHeight(el, availFcols[i]); });
 }
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
+window._okrToggleColapsarConcluidos = () => {
+  _okrColapsarConcluidos = !_okrColapsarConcluidos;
+  if(_okrDetailCurrentId) window._okrOpenDetail(_okrDetailCurrentId);
+};
 
 // ── Anotações da reunião (📋 flutuante) — pedido direto do usuário: registrar
 // o que se discute durante a apresentação ao vivo, sem sair da tela cheia.

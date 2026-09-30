@@ -2869,7 +2869,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.70 · painel-dev</div>
+<div class="version">v3.71 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5312,6 +5312,35 @@ function _okrObjProgressoPct(objId){
 // ── Render: grid de Objetivos, agrupado por Gerência ─────────────────
 function _okrSetFilter(campo, valor){ _okrFilter[campo] = valor; renderOkrObjetivos(); }
 
+// Ordem dos Objetivos dentro de uma Gerência: por padrão (nenhum objetivo
+// dessa Gerência tem `ordem` ainda) segue alfabético por título, como
+// sempre foi. Assim que a pessoa reordena manualmente uma vez (ver
+// _okrObjMover()), a Gerência "materializa" um `ordem` numérico em TODOS
+// os objetivos dela, e dali em diante `ordem` manda — mesmo padrão já
+// usado pros marcos dentro de um Objetivo (_okrMarcosSorted()/_okrMarcoMover()).
+function _okrObjetivosSorted(lista){
+  const temOrdem = lista.some(o=>typeof o.ordem==='number');
+  return temOrdem
+    ? lista.slice().sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
+    : lista.slice().sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+}
+// Move um Objetivo 1 posição pra cima/baixo (dir -1/1) dentro da sua
+// Gerência. Mesma técnica de _okrMarcoMover(): reescreve `ordem` de TODOS
+// os objetivos ativos daquela Gerência a cada clique (lista curta).
+async function _okrObjMover(areaId, objId, dir){
+  const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId));
+  const idx = lista.findIndex(o=>o.id===objId);
+  const alvo = idx + dir;
+  if(idx<0 || alvo<0 || alvo>=lista.length) return;
+  const ordens = lista.map((o,i)=> typeof o.ordem==='number' ? o.ordem : i);
+  [ordens[idx], ordens[alvo]] = [ordens[alvo], ordens[idx]];
+  const updates = {};
+  lista.forEach((o,i)=>{ updates[`kanban/okr/objetivos/${o.id}/ordem`] = ordens[i]; });
+  await window._update(window._ref(window._db), updates);
+  lista.forEach((o,i)=>{ okrObjetivos[o.id] = {...okrObjetivos[o.id], ordem: ordens[i]}; });
+  renderOkrObjetivos();
+}
+
 function renderOkrObjetivos(){
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
@@ -5357,15 +5386,16 @@ function renderOkrObjetivos(){
   const porArea = {};
   objetivos.forEach(o=>{ (porArea[o.areaId||'geral'] = porArea[o.areaId||'geral']||[]).push(o); });
 
+  const podeReordenar = _okrCanCreate() && !_okrShowArquivados && !_okrFilter.area && !_okrFilter.trimestre && !_okrFilter.status && !_okrFilter.texto;
   wrap.innerHTML = OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).map(g=>{
-    const lista = porArea[g.id].sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+    const lista = _okrObjetivosSorted(porArea[g.id]);
     return `
     <div class="sec-title" style="margin-top:16px;">${g.icon} ${esc(g.label)} <span class="badge">${lista.length}</span></div>
-    <div class="okr-area-grid">${lista.map(o=>_okrObjCardHtml(o)).join('')}</div>`;
+    <div class="okr-area-grid">${lista.map((o,i)=>_okrObjCardHtml(o, g.id, i, lista.length, podeReordenar)).join('')}</div>`;
   }).join('');
 }
 
-function _okrObjCardHtml(o){
+function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   const status = _okrObjStatus(o.id);
   const marcos = _okrObjMarcos(o.id);
   const pct = _okrObjProgressoPct(o.id);
@@ -5373,6 +5403,10 @@ function _okrObjCardHtml(o){
   const souResponsavel = _okrIsResponsavel(o);
   return `
   <div class="okr-card${souResponsavel?' okr-mine':''}" onclick="openOkrObjetivo('${o.id}')">
+    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;">
+      <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
+      <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
+    </div>`:''}
     <p class="okr-card-title">${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${okrStatusDot(status)} <span>${esc(okrStatusInfo(status).label)}</span>
@@ -5753,12 +5787,48 @@ function _okrListEditorHtml(campo, label, placeholder){
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div class="okr-list-editable">
-      ${itens.map((txt,i)=>`<div class="okr-list-item"><span>${esc(txt)}</span><button type="button" onclick="_okrListRemove('${campo}',${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
+      ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,'${campo}',${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove('${campo}',${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
       <button type="button" class="btn btn-sm" onclick="_okrListAdd('${campo}')">+ Add</button>
     </div>`;
+}
+// Clique pra editar um item já escrito, mesmo padrão do renderCL() do
+// checklist de card no kanban (kanban-dev.html): span vira um <textarea>
+// auto-ajustável no lugar, Enter/blur salva, Esc cancela sem salvar. Mais
+// simples que a versão do kanban (sem markdown/@menção — itens de lista do
+// OKR são texto puro).
+function _okrListEditStart(span, campo, i){
+  const original = _okrObjDraft[campo][i];
+  const ta = document.createElement('textarea');
+  ta.className = 'okr-input';
+  ta.value = original;
+  ta.style.width = '100%';
+  ta.style.resize = 'none';
+  ta.style.overflow = 'hidden';
+  ta.rows = 1;
+  span.replaceWith(ta);
+  const autoResize = ()=>{ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; };
+  autoResize();
+  ta.focus();
+  ta.selectionStart = ta.value.length;
+  let done = false;
+  function finish(save){
+    if(done) return; done = true;
+    const novo = ta.value.trim();
+    if(save && novo && novo!==original){
+      _okrSyncObjDraftFromDom();
+      _okrObjDraft[campo][i] = novo;
+    }
+    _okrRerenderCurrentScreen();
+  }
+  ta.addEventListener('input', autoResize);
+  ta.addEventListener('blur', ()=>finish(true));
+  ta.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); finish(true); }
+    else if(e.key==='Escape'){ e.preventDefault(); finish(false); }
+  });
 }
 // _okrListEditorHtml() é reaproveitado tanto na tela principal (indicadores/
 // progressos/próximos passos/riscos/planos de ação) quanto na tela de ⚙
@@ -6090,7 +6160,7 @@ function openOkrMarco(id, objId){
   _okrEditingMarcoObjId = objId;
   _okrMarcoDraft = id ? JSON.parse(JSON.stringify(okrMarcos[id])) : {
     objetivoId: objId, nome:'', responsavel:'', prazo:'', progresso:'nao_iniciado',
-    checklist:[], tags:[], participantes:[], descricao:'', history:[],
+    checklist:[], tags:[], participantes:[], descricao:'', history:[], mostrarApresentacao:true,
   };
   _okrMarcoOpenSnapshot = JSON.stringify(_okrMarcoDraft);
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : '🏁 Novo Marco';
@@ -6129,6 +6199,7 @@ function _okrSyncMarcoDraftFromDom(){
   if(g('okr-m-resp')) _okrMarcoDraft.responsavel = g('okr-m-resp').value;
   if(g('okr-m-prazo')) _okrMarcoDraft.prazo = g('okr-m-prazo').value;
   if(g('okr-m-descricao')) _okrMarcoDraft.descricao = g('okr-m-descricao').value;
+  if(g('okr-m-mostrar-apresentacao')) _okrMarcoDraft.mostrarApresentacao = g('okr-m-mostrar-apresentacao').checked;
 }
 
 function _okrChecklistHtml(){
@@ -6139,7 +6210,7 @@ function _okrChecklistHtml(){
     ${cl.map((it,i)=>`
       <div class="okr-checklist-row${it.done?' done':''}">
         <input type="checkbox" ${it.done?'checked':''} onchange="_okrChecklistToggle(${i})">
-        <span>${esc(it.text)}</span>
+        <span class="okr-checklist-item-text" onclick="_okrChecklistEditStart(this,${i})" title="Clique para editar" style="cursor:pointer;">${esc(it.text)}</span>
         <button type="button" onclick="_okrChecklistRemove(${i})" style="margin-left:auto;background:none;border:none;color:var(--txt3);cursor:pointer;">✕</button>
       </div>`).join('')}
     <div class="okr-list-add">
@@ -6156,6 +6227,38 @@ function _okrChecklistAdd(){
 }
 function _okrChecklistToggle(i){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraft.checklist[i].done = !_okrMarcoDraft.checklist[i].done; renderOkrMarcoBody(); }
 function _okrChecklistRemove(i){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraft.checklist.splice(i,1); renderOkrMarcoBody(); }
+// Mesmo padrão de _okrListEditStart() acima, pro texto de um item do checklist.
+function _okrChecklistEditStart(span, i){
+  const original = _okrMarcoDraft.checklist[i].text;
+  const ta = document.createElement('textarea');
+  ta.className = 'okr-input';
+  ta.value = original;
+  ta.style.width = '100%';
+  ta.style.resize = 'none';
+  ta.style.overflow = 'hidden';
+  ta.rows = 1;
+  span.replaceWith(ta);
+  const autoResize = ()=>{ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; };
+  autoResize();
+  ta.focus();
+  ta.selectionStart = ta.value.length;
+  let done = false;
+  function finish(save){
+    if(done) return; done = true;
+    const novo = ta.value.trim();
+    if(save && novo && novo!==original){
+      _okrSyncMarcoDraftFromDom();
+      _okrMarcoDraft.checklist[i].text = novo;
+    }
+    renderOkrMarcoBody();
+  }
+  ta.addEventListener('input', autoResize);
+  ta.addEventListener('blur', ()=>finish(true));
+  ta.addEventListener('keydown', e=>{
+    if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); finish(true); }
+    else if(e.key==='Escape'){ e.preventDefault(); finish(false); }
+  });
+}
 
 function _okrTagsHtml(){
   const tags = _okrMarcoDraft.tags||[];
@@ -6248,6 +6351,7 @@ function renderOkrMarcoBody(){
       ${d.responsavel?`<div class="okr-field-label">Responsável</div><div style="font-size:12px;color:var(--txt2);">${esc(_okrPessoaInfo(d.responsavel).nome)}</div>`:''}
       ${d.prazo?`<div class="okr-field-label">Prazo</div><div style="font-size:12px;color:var(--txt2);">${new Date(d.prazo+'T00:00:00').toLocaleDateString('pt-BR')}</div>`:''}
       ${d.descricao?`<div class="okr-field-label">Descrição</div><div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;">${esc(d.descricao)}</div>`:''}
+      ${d.mostrarApresentacao===false?`<div style="font-size:11px;color:var(--txt3);">🙈 Oculto na apresentação</div>`:''}
       ${_okrChecklistHtml()}
       ${_okrTagsHtml()}
       ${_okrParticipantesHtml()}
@@ -6274,6 +6378,10 @@ function renderOkrMarcoBody(){
     ${_okrStatusPickerHtml()}
     <div class="okr-field-label">Descrição</div>
     <textarea class="okr-textarea" id="okr-m-descricao" placeholder="Detalhe o marco...">${esc(d.descricao||'')}</textarea>
+    <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;margin:6px 0;" title="Desligue pra ocultar este marco na apresentação executiva (útil em OKRs contínuos, com muitos marcos acumulados)">
+      <input type="checkbox" id="okr-m-mostrar-apresentacao" ${d.mostrarApresentacao!==false?'checked':''}>
+      🎬 Aparecer na apresentação
+    </label>
     ${_okrChecklistHtml()}
     ${_okrTagsHtml()}
     ${_okrParticipantesHtml()}
@@ -6294,6 +6402,7 @@ async function saveOkrMarco(){
   d.responsavel = document.getElementById('okr-m-resp').value;
   d.prazo = document.getElementById('okr-m-prazo').value;
   d.descricao = document.getElementById('okr-m-descricao').value.trim();
+  d.mostrarApresentacao = document.getElementById('okr-m-mostrar-apresentacao').checked;
 
   const isNovo = !_okrEditingMarcoId;
   const id = _okrEditingMarcoId || ('marco_'+Date.now()+'_'+Math.random().toString(36).slice(2,7));
