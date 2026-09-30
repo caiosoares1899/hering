@@ -3929,6 +3929,33 @@ Promove pra prod a primeira leva de correções validadas no dev:
 Base antes desta leva de trabalho. Ver `git log -- kanban.html` pro
 histórico completo (sem tags/changelog retroativo).
 
+### v8.30.767-dev — 2026-09-30 — fix(login): "Sair" nunca limpava o token do Google Calendar do navegador
+
+Achado do `/monitorarbugs` geral (rodada além do lote do dia, área
+escolhida por prioridade 1 — código mais recente, o fallback de login
+por redirect do PR #1105).
+
+`doSignOut()` de verdade (que limpa `gcal_token` do `localStorage`, no
+`<script>` clássico mais abaixo) nunca rodava: o `<script
+type="module">` (sempre deferred, executa DEPOIS de qualquer script
+clássico mesmo aparecendo antes no HTML) tinha um
+`window.doSignOut = () => window._signOut('manual');` que sobrescrevia
+silenciosamente a versão real assim que a página terminava de carregar
+— exatamente o mesmo tipo de colisão que o comentário do próprio
+código já documentava (e evitava) pra `doSignIn()`, duas linhas acima,
+mas não pra `doSignOut()`. Resultado: clicar em "🚪 Sair" nunca removia
+o token de acesso do Google Calendar — em computador compartilhado, a
+próxima pessoa a logar com outra conta Google podia herdar o token de
+calendário de quem saiu antes.
+
+Fix: removida a reatribuição redundante no módulo, só a versão de
+baixo (com o cleanup) vale — mesmo tratamento que `doSignIn()` já
+recebia.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais — OK;
+balanço de chaves/parênteses bate com o baseline da sessão
+(braces -1, parens +3).
+
 ### v8.30.766-dev — 2026-09-30 — feat: auto-scroll da toolbar perto da borda
 
 Pedido direto do usuário: "seria mt dificil colocar para essa toolbar
