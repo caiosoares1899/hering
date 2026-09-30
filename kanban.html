@@ -632,6 +632,70 @@
   transform:rotate(40deg); background:var(--danger); color:#1a0505; font-size:8px; font-weight:800;
   letter-spacing:.03em; padding:3px 0; pointer-events:none;
 }
+/* ♾️ Contínuo (2026-09-29, pedido direto: "e se colocarmos esse infinito
+   como aquela faixa q vc fez pro modo black friday?") — mesma fita
+   diagonal + mesmo fix de clip-path (ver comentário grande acima, causa
+   raiz do bug de clipping do Chromium/WebKit em border-radius +
+   backdrop-filter num ancestral). Diferença chave: NÃO é theme-gated —
+   "Contínuo" é um estado real do card (ver toggleContinuo()), não
+   decoração sazonal, então precisa aparecer em qualquer tema. var(--teal)
+   em vez de cor fixa, de propósito: cada tema já define --teal com um
+   valor coerente com a própria paleta (inclusive Vice City/Black Friday),
+   então a fita se adapta sozinha sem precisar de override por tema, ao
+   contrário do dourado de .okr-card (que não tinha uma variável semântica
+   pronta pra reusar). Substituiu o selo inline pequeno que existia antes
+   (♾️ badge) — um só indicador, mais visível, mesmo espírito do 🔥 OFERTA
+   (que também não duplica com badge nenhum). Usa ::after, NUNCA ::before
+   — achado real (relato direto do usuário, screenshot de "Melhorias Maré
+   Digital" com o selo saindo ilegível): .card.card-mine::before (selo
+   "👤 seu card", ~L907) já ocupa ::before neste elemento, e card marcado
+   como seu E Contínuo ao mesmo tempo é o caso MAIS COMUM possível (não
+   uma exceção) — ver comentário completo perto de .card-continuo::after
+   abaixo pro detalhe de por que 2 regras ::before de especificidade igual
+   "mesclam" propriedade por propriedade em vez de uma vencer inteira.
+   Colisão bem mais rara (crítico + Black Friday + Contínuo juntos): como
+   agora é ::after vs. o ::before do 🔥 OFERTA, os dois pseudo-elementos
+   coexistem sem se misturar — só podem se sobrepor visualmente no mesmo
+   canto nesse caso raríssimo, aceito por ora. */
+.card.card-continuo{clip-path: inset(0 round var(--r));}
+/* ::after, NUNCA ::before — achado real (relato direto do usuário,
+   screenshot de "Melhorias Maré Digital" com o selo saindo ilegível):
+   .card.card-mine::before (selo "👤 seu card", ver acima) já ocupa
+   ::before nesse mesmo elemento. Com 2 seletores de especificidade igual
+   (2 classes cada) competindo pelo MESMO pseudo-elemento, o CSS não
+   escolhe "uma regra vence", ele mescla PROPRIEDADE POR PROPRIEDADE (a
+   última no arquivo vence cada propriedade que declara) — content/
+   position/cores saíam de .card-mine (declarado depois), mas transform/
+   width/text-align (que .card-mine::before não declara) sobreviviam da
+   regra de Contínuo, produzindo "👤 seu card" girado 40° fora do lugar.
+   Card marcado como seu E Contínuo ao mesmo tempo é o caso mais comum
+   possível (ex.: exatamente "Melhorias Maré Digital"), não uma
+   colisão rara — por isso ::after aqui, nunca ::before. */
+.card.card-continuo::after{
+  content:"♾️ CONTÍNUO"; position:absolute; top:9px; right:-28px; width:110px; text-align:center;
+  transform:rotate(40deg); background:var(--teal); color:#04231d; font-size:8px; font-weight:800;
+  letter-spacing:.03em; padding:3px 0; pointer-events:none;
+}
+/* 2º achado real, MESMO relato/screenshot (a troca pra ::after acima já
+   resolveu a mistura de propriedades, mas não este 2º problema): o selo
+   "👤 seu card" (.card-mine::before) poka DE PROPÓSITO 9px ACIMA do
+   card (top:-9px — .card base não tem overflow:hidden nem clip-path,
+   então isso sempre funcionou). Mas .card-continuo{clip-path:inset(0
+   round var(--r));} (acima) clipa TUDO que passa da própria caixa do
+   card, pseudo-elemento ou não — corta o selo bem na borda, deixando só
+   a metade de baixo visível. Confirmado por geometria (o selo da fita
+   ♾️ rotacionada extrapola uns 24px ACIMA do topo do card perto do lado
+   DIREITO — por isso o clip-path top:0 é necessário ali), mas o selo
+   "seu card" fica no lado ESQUERDO, numa região que o clip nem
+   precisava cobrir. Em vez de uma forma de clip customizada (frágil,
+   dependeria da largura exata do card, que muda com densidade/view
+   mode), a correção mais simples e robusta é parar de pedir pro selo
+   "seu card" invadir a área clipada QUANDO o card também é Contínuo —
+   reposiciona pra top:0 só nessa combinação (mesma combinação mais
+   comum que motivou trocar pra ::after acima). 3 classes (especificidade
+   maior que as 2 declarações originais, dark E claro) garantem que isto
+   vence sempre, sem precisar duplicar a declaração inteira do selo. */
+.card.card-mine.card-continuo::before{top:0;}
 html,body{min-height:100vh;overflow-x:hidden;}
 body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* Fundo "oceano" (gradiente de base) ganha uma versão própria — água
@@ -4692,6 +4756,7 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <button class="btn btn-sm" id="btn-archive-card" onclick="archiveCard()">📦 Arquivar</button>
     <button class="btn btn-sm" id="btn-pause-card" onclick="togglePauseCard()" title="Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.">⏸ Pausar</button>
+    <button class="btn btn-sm" id="btn-continuo-card" onclick="toggleContinuo()" title="Marca este card como demanda contínua (nunca fecha de propósito) — sai do CFD, Burndown, cycle/lead time e do alarme visual de &quot;card parado&quot;, mas continua contando no limite de WIP.">♾️ Contínuo</button>
     <div style="position:relative;" id="m-depends-wrap">
       <button id="m-depends-btn" class="btn btn-sm" onclick="toggleDepsMenu()" title="Dependências" style="display:inline-flex;align-items:center;gap:6px;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/><rect x="14" y="9" width="7" height="5" rx="1"/><line x1="10" y1="5.5" x2="14" y2="11.5"/><line x1="10" y1="18.5" x2="14" y2="11.5"/></svg>
@@ -6355,7 +6420,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.758</div>
+<div class="version">v8.30.764</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6375,7 +6440,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6401,7 +6466,7 @@ const safeLS = (function(){
 // painel.html de produção. Sufixo por página (mesmo valor de VERSION_KEY,
 // só que como literal aqui — a const VERSION_KEY só é declarada bem mais
 // abaixo no arquivo, depois deste bloco já ter rodado) isola cada uma.
-const FB_OVERRIDE_NS = 'kanban';
+const FB_OVERRIDE_NS = 'kanban_dev';
 const firebaseConfig = {
   apiKey:            safeLS.getItem('fb_apiKey_'+FB_OVERRIDE_NS)           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
   authDomain:        safeLS.getItem('fb_authDomain_'+FB_OVERRIDE_NS)       || 'hering-onboarding.firebaseapp.com',
@@ -6474,13 +6539,14 @@ fcmIsSupported().then(supported=>{
 }).catch(()=>{});
 
 // Captura e salva o token de acesso de forma segura
-window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{ 
+window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   const credential = GoogleAuthProvider.credentialFromResult(r);
   if (credential && credential.accessToken) {
     safeLS.setItem('gcal_token', credential.accessToken);
     safeLS.setItem('gcal_token_ts', String(Date.now())); // OAuth expira em ~1h
   }
-  if(insc) window._pendingInsc=true; 
+  if(insc) window._pendingInsc=true;
+  safeLS.removeItem('login_popup_fail_streak'); // login popup deu certo — zera o contador do fallback de redirect (ver window._signInRedirect())
 });
 window._signOut=(reason)=>{
   if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
@@ -6519,6 +6585,52 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
 });
 window.doSignOut = () => window._signOut('manual');
 
+// Fallback de login por redirect (achado real, 2026-09-29, relato direto de
+// usuária: popup de login travando com "Cross-Origin-Opener-Policy... would
+// block the window.closed call", repetido dezenas de vezes no console, e a
+// tela caindo em "Login cancelado"). Causa raiz confirmada lendo o código-
+// fonte do SDK vendorizado: signInWithPopup() detecta que o popup fechou
+// checando authWindow.window.closed (ver pollUserCancellation() em
+// firebase-auth.js) — mas a PRÓPRIA página de login do Google
+// (accounts.google.com) aplica Cross-Origin-Opener-Policy nela mesma, o que
+// isola o popup e impede o Firebase de ler .closed corretamente. O SDK
+// interpreta isso como "popup fechado" e devolve auth/popup-closed-by-user
+// mesmo com a pessoa ainda no meio do login. Intermitente, só Chrome, e
+// fora do nosso controle — não é header nosso (GitHub Pages não define
+// Cross-Origin-Opener-Policy nenhum aqui) nem algo que dê pra corrigir só
+// mudando o código do app; é o Google aplicando essa política na própria
+// página deles.
+// signInWithRedirect() não depende de checar popup.closed (a página INTEIRA
+// navega pro Google e volta), elimina essa causa raiz de vez — mas muda a
+// experiência de popup pra navegação de página inteira, por isso só entra
+// como FALLBACK depois de 2 falhas SEGUIDAS do mesmo tipo (ver doSignIn()
+// no <script> clássico abaixo), nunca como caminho principal.
+window._signInRedirect=(insc)=>{
+  // localStorage, não window._pendingInsc: signInWithRedirect() navega a
+  // página INTEIRA pro Google e volta — qualquer estado só em memória
+  // (window.*) se perde no meio do caminho, diferente do popup (mesma
+  // página o tempo todo).
+  if(insc) safeLS.setItem('mare_pending_insc','1');
+  return signInWithRedirect(auth,provider);
+};
+// Restaura _pendingInsc de um redirect que acabou de voltar — SÍNCRONO,
+// antes de registrar onAuthStateChanged (logo abaixo), pra nunca competir
+// em corrida com o primeiro disparo real dele: getRedirectResult() é
+// assíncrono e não tem ordem garantida contra onAuthStateChanged (mesma
+// classe de armadilha já documentada em _onRealAuthChange(), 2026-09-11).
+if(safeLS.getItem('mare_pending_insc')==='1'){ safeLS.removeItem('mare_pending_insc'); window._pendingInsc=true; }
+// Captura o accessToken de um redirect que acabou de voltar, mesmo padrão
+// de window._signIn() acima (popup) — não é urgente/não compete com nada,
+// pode ficar assíncrono.
+getRedirectResult(auth).then(r=>{
+  if(!r) return; // nenhum redirect pendente (a maioria dos loads normais)
+  const credential = GoogleAuthProvider.credentialFromResult(r);
+  if(credential && credential.accessToken){
+    safeLS.setItem('gcal_token', credential.accessToken);
+    safeLS.setItem('gcal_token_ts', String(Date.now()));
+  }
+}).catch(e=>{ console.warn('[Mare] getRedirectResult() falhou:', e); });
+
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 
@@ -6539,7 +6651,7 @@ const safeLS = (function(){
 // Mesmo valor do FB_OVERRIDE_NS declarado no <script type="module"> acima
 // (blocos <script> não-module não compartilham escopo entre si — precisa
 // existir nos dois). Ver comentário completo junto ao firebaseConfig.
-const FB_OVERRIDE_NS = 'kanban';
+const FB_OVERRIDE_NS = 'kanban_dev';
 // ═══════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════
@@ -10767,8 +10879,28 @@ function doSignIn(insc=false){
     // Popup fechado/bloqueado é comportamento normal do usuário, não um erro do sistema —
     // não deveria assustar com a mensagem técnica crua do Firebase.
     if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      // Fallback pra redirect (achado real, 2026-09-29, relato de usuária —
+      // ver comentário grande em window._signInRedirect(), <script type="module">
+      // acima): Chrome + Cross-Origin-Opener-Policy na própria página de login
+      // do Google fazem o Firebase achar que o popup fechou mesmo sem a
+      // pessoa ter feito nada. Só troca de caminho depois de 2 falhas
+      // SEGUIDAS do mesmo tipo — não penaliza quem realmente fechou o popup
+      // de propósito na 1ª tentativa, e não muda a experiência de popup pra
+      // redirect de quem nunca bate nesse problema.
+      const n=(parseInt(safeLS.getItem('login_popup_fail_streak'))||0)+1;
+      safeLS.setItem('login_popup_fail_streak', String(n));
+      if(n>=2 && window._signInRedirect){
+        safeLS.removeItem('login_popup_fail_streak');
+        // Normalmente NÃO resolve/rejeita antes de navegar — só rejeita de
+        // verdade em caso de configuração quebrada (domínio não autorizado
+        // etc.), daí sim vale mostrar erro em vez de deixar a tela travada
+        // em silêncio.
+        window._signInRedirect(insc).catch(e2=>{ err.textContent='Erro: '+(e2?.message||e2); err.style.display='block'; });
+        return; // sucesso: signInWithRedirect() navega a página inteira — nada mais a fazer aqui
+      }
       err.textContent='Login cancelado. Clique em Entrar para tentar novamente.';
     } else {
+      safeLS.removeItem('login_popup_fail_streak');
       err.textContent='Erro: '+(e?.message||e);
     }
     err.style.display='block';
@@ -11432,9 +11564,10 @@ function makeCardEl(card){
   // (Central de Ajuda), mas este esmaecimento (e os outros 3 lugares que
   // compartilham o mesmo cálculo — checkAgingAutomations(), "Cards
   // parados" de Insights, e o badge de aging por coluna logo abaixo) nunca
-  // excluíam cards pausados.
+  // excluíam cards pausados. !card.continuo (2026-09-29): mesmo raciocínio
+  // pra card ♾️ Contínuo — intencionalmente sem se mexer, não é abandono.
   let agingClass='';
-  if(!_isColDone(card.col)&&card.editedAt&&!card.paused){
+  if(!_isColDone(card.col)&&card.editedAt&&!card.paused&&!card.continuo){
     const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
     const editedD=new Date(card.editedAt+'T00:00:00'); const ageDays=Math.round((today-editedD)/86400000);
     if(ageDays>=sprintLen*2) agingClass=' aged-2';
@@ -11447,7 +11580,7 @@ function makeCardEl(card){
   // filhos dentro do próprio card (ver bloco SUPERCARD mais abaixo no JS).
   const _superChildren=(card.childCardIds||[]).map(id=>cards.find(c=>c.id===id&&!c.archived)).filter(Boolean);
   const isSuper_=_superChildren.length>0;
-  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
+  div.className='card'+(card.archived?' archived':'')+agingClass+(hasBlockerTag?' has-blocker-tag':'')+(isOKR_?' okr-card':'')+(isCG_?' cg-card':'')+(isSuper_?' supercard':'')+(card.pinned?' card-pinned':'')+(card.priority==='critical'?' card-prio-critical':'')+(card.continuo?' card-continuo':'')+(selectMode&&selectedCards.has(card.id)?' card-selected':'')+(typeof _euEstouNoCard==='function'&&_euEstouNoCard(card)?' card-mine':'');
   div.style.cssText=op+bex;
   div.setAttribute('data-id',card.id);
   div.setAttribute('data-owner',card.owner||'');
@@ -11510,6 +11643,10 @@ function makeCardEl(card){
   // pelo navegador). Achado real, a partir de um print com cards de teste do
   // Agente Ágil que empilhavam tag + prioridade + risco + chip de executor.
   const prioMap={'low':'🟢','medium':'🟡','high':'🔴','critical':'🔥'}; const prioBadge=card.priority?`<span style="display:inline-block;font-size:9px;margin-left:3px;margin-bottom:4px;">${prioMap[card.priority]||''}</span>`:''; const riscoBadge=card.riscos?.length?`<span class="risco-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;">⚠ ${card.riscos.length}</span>`:''; const okrBadge=isOKR_?'<span style="display:inline-block;font-size:10px;margin-right:2px;margin-bottom:4px;">🎯</span>':'';
+  // ♾️ Contínuo (2026-09-29) — demanda que nunca fecha de propósito (ver
+  // toggleContinuo()). Indicador vira a fita diagonal .card-continuo (CSS,
+  // ver comentário grande perto de .card.card-prio-critical do Black
+  // Friday) — sem badge inline duplicado, mesmo espírito do 🔥 OFERTA.
   // Direcional de Mídia (Ficha Técnica) — pedido direto pra ter destaque
   // visual pra quem for pegar o card ver fácil, sem precisar abrir.
   const direcionalBadge=card.criativo?.direcional?`<span class="direcional-badge" style="display:inline-block;font-size:9px;background:rgba(255,209,102,.16);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;font-weight:700;" title="Direcional de Mídia: ${esc(card.criativo.direcional)}">🧭 Direcional</span>`:'';
@@ -11555,7 +11692,7 @@ function makeCardEl(card){
   // configurável por coluna em ⚙ Fluxo (flowConfig.agingDays). Coluna sem
   // limiar configurado (ou 0) nunca mostra o badge — desligado por padrão.
   let agingColBadge='';
-  if(!isDone && !card.paused && card.flow?.enteredAt?.[card.col]){
+  if(!isDone && !card.paused && !card.continuo && card.flow?.enteredAt?.[card.col]){
     const limiar=(flowConfig.agingDays||{})[card.col];
     if(limiar>0){
       const enteredD=new Date(card.flow.enteredAt[card.col]); enteredD.setHours(0,0,0,0);
@@ -13326,12 +13463,17 @@ function _applyMeusCardsFixadoUI(){
   if(btn) btn.style.display = _boardPrefsSquad.meus_cards_fixado ? '' : 'none';
 }
 
-// Lê se a pessoa já descobriu o easter egg do Vice City (temasDescobertos/vice,
-// gravado por _recordThemeDiscovered()) -- só pra decidir se mostra um atalho
-// pra ele em "👤 Minhas Preferências" (ver seção logo abaixo), sem estragar a
-// surpresa pra quem nunca segurou o botão de tema. Por CONTA (não por
-// navegador, diferente do tema automático) -- quem descobriu no celular já vê
-// o atalho aqui no desktop também.
+// Lê se a pessoa já descobriu o easter egg do Vice City DE VERDADE
+// (temasDescobertos/vice_manual, gravado só por _recordViceCityManualDiscovery(),
+// chamada de dentro de toggleViceCity()) -- só pra decidir se mostra um
+// atalho pra ele em "👤 Minhas Preferências" (ver seção logo abaixo), sem
+// estragar a surpresa pra quem nunca segurou o botão de tema. Achado real
+// (/monitorarbugs, 2026-09-28): o campo `vice` (sem sufixo) também é
+// gravado por _applyAutoTheme() quando o Tema Automático cai na banda das
+// 12h-18h -- usar ESSE campo aqui mostraria o atalho pra qualquer pessoa
+// com Tema Automático ligado, mesmo sem nunca ter segurado o botão. Por
+// CONTA (não por navegador, diferente do tema automático) -- quem
+// descobriu no celular já vê o atalho aqui no desktop também.
 let _temasDescobertos = {};
 function loadTemasDescobertos(){
   const user = window._currentUser; if(!user) return;
@@ -13364,7 +13506,7 @@ function renderMinhasPrefsBody(){
   const temaAtual = _currentTheme();
   const temaLabel = {light:'☀️ Lençóis Maranhenses (claro)', dark:'🌙 Abrolhos (escuro)', vice:'🌴 Vice City', blackfriday:'🔥 Black Friday'}[temaAtual] || temaAtual;
   const autoOn = _isThemeAutoOn();
-  const viceDescoberto = _temasDescobertos.vice===true;
+  const viceDescoberto = _temasDescobertos.vice_manual===true;
   const dndOn = isDndActive();
   const timelineOn = _boardPrefsSquad.visao_inicial==='timeline';
   const meusCardsOn = !!_boardPrefsSquad.meus_cards_fixado;
@@ -15239,6 +15381,8 @@ function openCard(id){
   document.getElementById('btn-del-card').style.visibility='visible';
   const pauseBtn=document.getElementById('btn-pause-card'); if(pauseBtn) pauseBtn.style.visibility='visible';
   _renderPauseBtn(c);
+  const continuoBtn=document.getElementById('btn-continuo-card'); if(continuoBtn) continuoBtn.style.visibility='visible';
+  _renderContinuoBtn(c);
   // Achado real (/monitorarbugs, 2026-09-15): abrir um card ARQUIVADO
   // (agora possível direto da lista de Arquivados, ver
   // _renderArquivadosBody()) mostrava "📦 Arquivar" do mesmo jeito que um
@@ -16132,6 +16276,73 @@ function _renderPauseBtn(c){
     btn.style.color='';
     btn.style.borderColor='';
     btn.title='Pausa a contagem de tempo/métricas (cycle/lead time) deste card, sem marcar como impedimento público.';
+  }
+}
+// 🔁/♾️ "Contínuo" — categoria pra demanda que nunca fecha de propósito
+// (ex.: "Melhorias Maré Digital", "Ajuste recorrentes de IA" na squad
+// dados: sempre voltam a ter trabalho, sem data de finalização real).
+// Pedido direto do usuário (2026-09-29): esses cards distorcem os gráficos
+// que assumem que todo card eventualmente termina — parados numa coluna
+// pra sempre, eles inflam CFD/Burndown indefinidamente e disparam a média
+// de cycle/lead time e o "gargalo" por coluna pro alto sem refletir
+// trabalho de verdade parado.
+//
+// Modelo de dado: card.continuo (bool) — sem campo companheiro de tempo
+// (diferente de paused/pausedAt/pausedMs, ver comentário acima): não tem
+// "duração pra descontar", é só uma categoria fixa, mesmo espírito de
+// card.isOKR (sobrevive à duplicação de propósito — ver _duplicarCardObj(),
+// que só reseta ESTADO acumulado, não categoria).
+//
+// Mesmo padrão de togglePauseCard() acima: cardId opcional (cai no card
+// aberto no modal sem argumento), recordHistory() explícito (não usa o
+// sistema genérico HIST_FIELDS/_histDiff(), que só roda dentro de
+// saveCard() — ctxToggleOKR() usa fbSaveCard() direto e por isso NUNCA
+// grava histórico algum quando o toggle vem do menu de contexto; aqui,
+// com recordHistory() explícito, os 2 pontos de entrada — botão do modal e
+// menu de contexto — sempre registram).
+//
+// Onde isso é excluído (ver comentários nos pontos exatos):
+// - _renderCFD() / _renderBurndown() — cards contínuos nunca entram na
+//   série (senão inflam uma coluna pra sempre, distorcendo o gráfico
+//   inteiro).
+// - _computeTempoData() — cycle time, lead time E o "gargalo" por coluna
+//   (stages) ficam de fora, mesmo raciocínio.
+// - Alarme visual de "card parado" (esmaecimento aged-1/aged-2, badge
+//   "⏳ Xd parado nesta coluna", trigger de Automação 'aging') — mesma
+//   suspensão que card.paused já tem, mesmo motivo: intencionalmente sem
+//   se mexer, não é um sinal de abandono.
+// Onde NÃO é excluído (decisão explícita do usuário, 2026-09-29): WIP —
+// o card ocupa capacidade real de alguém, continua contando no limite
+// normalmente. Throughput também não muda — se um card contínuo chegar
+// numa coluna de fim (raro, mas não bloqueado), conta normal, sem
+// caso especial.
+function toggleContinuo(cardId){
+  const id = cardId || editingId;
+  if(!id) return; const c=cards.find(x=>x.id===id); if(!c) return;
+  c.continuo = !c.continuo;
+  if(c.continuo){
+    recordHistory(c, 'marcou o card como ♾️ Contínuo (demanda sem data de finalização)');
+    showToast('♾️ Card marcado como Contínuo — fora do CFD, Burndown, cycle/lead time e do alarme de "parado". Continua contando no WIP.');
+  } else {
+    recordHistory(c, 'desmarcou o card como ♾️ Contínuo');
+    showToast('Contínuo removido — card volta a contar normalmente em todas as métricas de fluxo.');
+  }
+  fbSaveCard(c);
+  if(editingId===id) _renderContinuoBtn(c);
+  renderBoard();
+}
+function _renderContinuoBtn(c){
+  const btn=document.getElementById('btn-continuo-card'); if(!btn) return;
+  if(c && c.continuo){
+    btn.textContent='♾️ Contínuo (ativo)';
+    btn.style.color='var(--teal)';
+    btn.style.borderColor='rgba(29,233,182,.4)';
+    btn.title='Este card está marcado como Contínuo — fora de CFD/Burndown/cycle-lead-time/alarme de "parado". Clique pra desmarcar.';
+  } else {
+    btn.textContent='♾️ Contínuo';
+    btn.style.color='';
+    btn.style.borderColor='';
+    btn.title='Marca este card como demanda contínua (nunca fecha de propósito) — sai do CFD, Burndown, cycle/lead time e do alarme visual de "card parado", mas continua contando no limite de WIP.';
   }
 }
 // Duplica um card (objeto) e adiciona ao board; retorna o novo
@@ -21130,10 +21341,11 @@ function renderBoardDataInsights(){
   // ── Cards parados (aging) — mesmo cálculo de checkAgingAutomations()/aged-1/aged-2 ──
   // !c.paused — achado real (/monitorarbugs, 2026-09-14), mesmo motivo dos
   // outros 3 pontos que fazem esta conta: ⏸ Pausar card promete "não
-  // aparece como alarme pro resto do board".
+  // aparece como alarme pro resto do board". !c.continuo (2026-09-29):
+  // mesmo raciocínio pra card ♾️ Contínuo.
   const sprintLen=parseInt(agilCfg?.sprintDays||14)||14;
   const hojeAging=new Date(); hojeAging.setHours(0,0,0,0);
-  const parados=activeCards.filter(c=>c.editedAt&&!c.paused).map(c=>{
+  const parados=activeCards.filter(c=>c.editedAt&&!c.paused&&!c.continuo).map(c=>{
     const editedD=new Date(c.editedAt+'T00:00:00');
     const ageDays=Math.round((hojeAging-editedD)/86400000);
     return {c, ageDays};
@@ -21504,7 +21716,11 @@ function renderBoardDataFluxo(){
 function _renderCFD(){
   const el = document.getElementById('boarddata-cfd'); if(!el) return;
   const lbl = document.getElementById('cfd-dias-lbl'); if(lbl) lbl.textContent = CFD_DIAS;
-  const ativos = cards.filter(c=>!c.archived);
+  // !c.continuo (2026-09-29, pedido direto): card ♾️ Contínuo (demanda sem
+  // data de finalização, ex. "Melhorias Maré Digital") nunca sai da coluna
+  // — incluído aqui, ele infla a mesma faixa do gráfico PRA SEMPRE,
+  // distorcendo a leitura de fluxo de todo o resto do board.
+  const ativos = cards.filter(c=>!c.archived&&!c.continuo);
   if(!ativos.length){ el.innerHTML='<div style="font-size:10.5px;color:var(--txt3);">Sem cards suficientes pra montar o gráfico.</div>'; window._cfdResumo=null; return; }
   const hoje = new Date();
   const dias = [];
@@ -21650,8 +21866,11 @@ function _renderBurndown(){
   // Card cuja coluna ATUAL está oculta pelo toggle de Dados do Board
   // (_bdHiddenCols) sai do escopo — mesmo espírito de "tirar da conta"
   // aplicado na Visão Geral, pedido direto pra valer aqui também.
+  // card.continuo (2026-09-29): mesmo motivo do _renderCFD() logo acima —
+  // sem doneAt nunca, um card ♾️ Contínuo nunca sairia do "restante", o
+  // burndown nunca chegaria perto de zero por causa dele.
   const escopo = cards.filter(c=>{
-    if(c.archived || _bdHiddenCols.has(c.col)) return false;
+    if(c.archived || c.continuo || _bdHiddenCols.has(c.col)) return false;
     const criado=_cardDataCriacaoStr(c);
     if(!criado || criado>endStr) return false;
     const doneAt=(c.flow?.doneAt||'').slice(0,10);
@@ -21709,10 +21928,17 @@ function _computeTempoData(){
   const escopo=document.getElementById('tempo-escopo')?.value||'done';
   const agrupamento=document.getElementById('tempo-agrupamento')?.value||'tag';
   const cutoff = periodo==='all' ? 0 : Date.now()-parseInt(periodo)*86400000;
-  
+
   const porGrupo={};
 
-  cards.filter(c=>!c.archived).forEach(c=>{
+  // !c.continuo (2026-09-29, pedido direto): cobre cycle time, lead time E
+  // o "gargalo" por coluna (stages, via _cardTempoPorColuna() logo abaixo)
+  // de uma vez só, já que os 3 saem do mesmo card filtrado aqui — um card
+  // ♾️ Contínuo nunca "termina" de propósito, então mesmo no escopo 'all'
+  // (não só 'done') ele acumularia tempo-em-coluna indefinidamente,
+  // puxando a média de todo mundo pra cima sem representar trabalho
+  // parado de verdade.
+  cards.filter(c=>!c.archived&&!c.continuo).forEach(c=>{
     const t=_cardTempos(c);
     if(escopo==='done' && !t.done) return;
     if(cutoff){
@@ -26973,6 +27199,7 @@ const HELP_CONTENT = {
     { icon:'🚧', title:'Registrar impedimento rapidamente', text:'No campo Impedimento do card, escreva o bloqueio e pressione Ctrl+Enter (ou Cmd+Enter no Mac) para salvar direto, sem precisar clicar no botão Salvar. O card vai automaticamente para a coluna de Impedimentos e o responsável recebe uma notificação.' },
     { icon:'🚧', title:'Badge de impedimento no card', text:'Cards bloqueados mostram um badge 🚧 ao lado do título — igual ao 🎯 de OKR, e junto com ele quando o card é os dois ao mesmo tempo — e ganham uma borda mais grossa (vermelha para impedimento, dourada para OKR) pra chamar mais atenção no board. Funciona nos dois jeitos de marcar impedimento: pelo campo Impedimento do card ou movendo pra uma coluna do tipo Impedimentos.\n\n✅ Concluído desimpede sozinho: mover um card pra qualquer coluna de Concluído remove automaticamente o impedimento (campo Impedimento do card) — um card já entregue não fica mostrando um bloqueio como se ainda estivesse pendente. Fica registrado no 📜 Histórico do card. Só vale pra quando o impedimento é o campo (tag); no modo "coluna de Impedimentos" isso já acontece sozinho, porque o card só pode estar numa coluna por vez.' },
     { icon:'⏸', title:'Pausar card (tempo/métricas)', text:'No rodapé do card, o botão "⏸ Pausar" para a contagem de cycle time e lead time desse card SEM marcar impedimento público — diferente do 🚧 Impedimento (tag vermelha, coluna própria, aviso automático pra todo mundo), pausar é discreto: nenhuma tag/badge aparece no board, só o botão (que vira "▶ Retomar") e o 📜 Histórico do card mostram que aconteceu.\n\nUse quando o card está parado por um motivo que não é um bloqueio de verdade pra sinalizar — ex.: esperando uma decisão externa que não depende do squad, ou um card que ficou "estacionado" de propósito — e você não quer que isso conte contra as métricas de tempo do time nem apareça como alarme pro resto do board.\n\nEnquanto pausado, o tempo simplesmente não corre nos relatórios (⏱ Relatório Tempo por Tag, e nas métricas que o Agente Ágil lê via visão do board). Clique em "▶ Retomar" pra voltar a contar — não há limite de quantas vezes um card pode ser pausado/retomado.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "⏸ Pausar contagem de tempo"/"▶ Retomar contagem de tempo" — sem precisar abrir o modal primeiro.' },
+    { icon:'♾️', title:'Contínuo (demanda sem data de finalização)', text:'No rodapé do card, o botão "♾️ Contínuo" marca um card como demanda que nunca fecha de propósito — ex.: "Melhorias Maré Digital" ou "Ajuste recorrentes de IA" na squad dados, que sempre voltam a ter trabalho e nunca teriam uma data de finalização real.\n\nUm card assim, se contasse normal nas métricas de fluxo, distorceria elas pra sempre: parado eternamente numa coluna, ele infla o 📈 CFD indefinidamente, nunca deixa o 📉 Burndown chegar perto de zero, e puxa a média de cycle time/lead time/gargalo por coluna pra cima sem representar trabalho de verdade parado. Marcar como Contínuo tira o card dessas contas (CFD, Burndown, ⏱ Relatório de Tempo) e também do alarme visual de "card parado" (esmaecimento no board, badge "⏳ parado nesta coluna") — mesma suspensão que o ⏸ Pausar já tem, mesmo motivo: intencionalmente sem se mexer não é abandono.\n\nContinua contando normal no WIP (ocupa capacidade real de alguém) e no Throughput, se algum dia chegar numa coluna de Concluído.\n\n⚡ Direto do board: clique com o botão direito num card e escolha "Marcar como Contínuo"/"Remover Contínuo" — sem precisar abrir o modal primeiro. O card ganha uma fita diagonal "♾️ CONTÍNUO" no canto, mesmo estilo da fita "🔥 OFERTA" do tema Black Friday.' },
     { icon:'⏱️', title:'Tempo em atraso e bloqueado (arquivado)', text:'Diferente de "Bloqueios"/"Prazo vencido" em 📊 Dados do Board (que só contam o que está atrasado/bloqueado AGORA), o board também arquiva quanto tempo cada card já passou nesses dois estados — mesmo depois de concluído. Se um card ficou 3 dias atrasado antes de alguém resolver, esses 3 dias continuam contando pra sempre, mesmo com o card já em "Concluído".\n\nAparece em 2 lugares: dentro do próprio card, perto do campo Prazo (⏱️ tempo atrasado) e do bloco de Impedimento (⏱️ tempo bloqueado) — só quando há algo pra mostrar; e em 📊 Dados do Board → Insights e 🎬 Controle de Criativos, com o total acumulado e os 5 cards que mais acumularam cada um — no Controle de Criativos, a lista de bloqueados também mostra o motivo do impedimento embaixo do título, quando a pessoa preencheu um.\n\nSe o prazo for adiado enquanto o card ainda está atrasado, ou se um card for desbloqueado e bloqueado de novo depois, cada período conta e se soma ao total — não é só o último episódio.' },
     { icon:'🔒', title:'Trava de edição concorrente', text:'Se duas pessoas abrirem o mesmo card ao mesmo tempo, quem abriu primeiro trava a edição: a segunda pessoa vê um banner avisando quem está editando e o card fica em modo leitura (não dá pra alterar nada) até a trava liberar. A trava libera sozinha quando quem editava fecha o card, ou depois de alguns minutos sem atividade (evita ficar preso pra sempre se alguém fechar a aba sem querer).' },
     { icon:'🔒', title:'Prazo, Submarca e Canal obrigatórios', text:'Todo card precisa ter um Prazo definido pra salvar — se ainda não sabe a data, use o botão "🚫 Sem prazo definido" logo abaixo do campo Prazo em vez de chutar uma data (ele libera o salvamento sem exigir data nenhuma). Em squads que usam o campo Submarca (ver dica em Configurações), escolher a submarca também vira obrigatório sempre que o campo está ativo. Já o campo Canal (ver dica "Canal (venda em marketplaces)") só vira obrigatório se o squad ligar um segundo interruptor específico pra isso — ativar o campo sozinho deixa o Canal opcional. Vale tanto pra criar quanto pra editar um card; o campo que falta fica destacado em amarelo com um aviso no rodapé do modal.' },
@@ -28192,6 +28419,7 @@ const ATALHO_ACOES = {
   arquivar:    { label:'📦 Arquivar card',           tipo:'card', run:()=>archiveCard() },
   excluir:     { label:'🗑 Excluir card',            tipo:'card', run:()=>deleteCard() }, // já pede confirmação (uiConfirm) dentro da própria função
   pausar:      { label:'⏸ Pausar/retomar contagem',  tipo:'card', run:()=>togglePauseCard() },
+  continuo:    { label:'♾️ Marcar/desmarcar Contínuo', tipo:'card', run:()=>toggleContinuo() },
   capa:        { label:'🎨 Menu de capa',            tipo:'card', run:()=>toggleCoverMenu() },
   secoes:      { label:'⇕ Expandir/recolher seções', tipo:'card', run:()=>toggleAllModalSecs() },
   historico:   { label:'📜 Mostrar/esconder Histórico', tipo:'card', run:()=>toggleHistory() },
@@ -29451,8 +29679,9 @@ function checkAgingAutomations(){
   const hoje=new Date(); hoje.setHours(0,0,0,0);
   // !c.paused — achado real (/monitorarbugs, 2026-09-14): ⏸ Pausar card
   // promete "não aparece como alarme pro resto do board" (Central de
-  // Ajuda), mas o trigger 'aging' nunca excluía card pausado.
-  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && c.editedAt).forEach(card=>{
+  // Ajuda), mas o trigger 'aging' nunca excluía card pausado. !c.continuo
+  // (2026-09-29): mesmo raciocínio pra card ♾️ Contínuo.
+  cards.filter(c=>!c.archived && !_isColDone(c.col) && !c.paused && !c.continuo && c.editedAt).forEach(card=>{
     const editedD=new Date(card.editedAt+'T00:00:00');
     const ageDays=Math.round((hoje-editedD)/86400000);
     if(ageDays===sprintLen) runAutoRules('aging', card.id);
@@ -33081,6 +33310,9 @@ function showCtxMenu(e, cardId){
     <div class="ctx-item" onclick="ctxToggleOKR()">
       <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
     </div>
+    <div class="ctx-item" onclick="toggleContinuo('${cardId}')">
+      <span class="ctx-item-icon">♾️</span> ${card.continuo ? 'Remover Contínuo' : 'Marcar como Contínuo'}
+    </div>
     <div class="ctx-item" onclick="togglePinCard('${cardId}')">
       <span class="ctx-item-icon">📌</span> ${card.pinned ? 'Desafixar do topo da coluna' : 'Fixar no topo da coluna'}
     </div>
@@ -34033,11 +34265,11 @@ function _applyThemeButtonIcon(){
 }
 // Favicon do Vice City — pedido direto, arte própria do usuário (mesmo
 // estilo "2 peixes" do favicon normal, em tons rosa/roxo). Guarda o href
-// ORIGINAL do <link rel="icon"> (favicon-dev.png aqui; vira favicon.png
-// se/quando este trecho for promovido pra kanban.html) uma única vez, na
-// carga do script — antes de qualquer troca acontecer — pra sempre saber
-// pra onde voltar ao sair do Vice City, sem hardcodar o nome do arquivo
-// duas vezes (dev/prod já usam nomes diferentes desde a troca acima).
+// ORIGINAL do <link rel="icon"> (favicon.png aqui, prod; favicon-dev.png
+// em kanban-dev.html) uma única vez, na carga do script — antes de
+// qualquer troca acontecer — pra sempre saber pra onde voltar ao sair do
+// Vice City, sem hardcodar o nome do arquivo duas vezes (dev/prod já usam
+// nomes diferentes desde a troca acima).
 const _faviconDefaultHref = document.getElementById('favicon-link')?.getAttribute('href') || 'favicon.png';
 function _applyFavicon(){
   const link=document.getElementById('favicon-link');
@@ -34219,6 +34451,24 @@ function _themeBtnPointerDown(){
 function _themeBtnPointerUp(){
   if(_viceLongPressTimer){ clearTimeout(_viceLongPressTimer); _viceLongPressTimer=null; }
 }
+// Achado real (/monitorarbugs, 2026-09-28): temasDescobertos/vice também é
+// gravado por _applyAutoTheme() (Tema Automático caindo na banda das
+// 12h-18h — recurso OFICIAL, não escondido — sem a pessoa nunca ter
+// segurado o botão). Usar esse mesmo campo pra decidir se mostra o atalho
+// no painel "Minhas Preferências" (ver viceDescoberto/renderMinhasPrefsBody)
+// quebrava a promessa do próprio tooltip ("você já descobriu segurando o
+// botão"): ligar Tema Automático de manhã e deixar o board aberto até a
+// tarde já "descobria" o Vice City sozinho, estragando a surpresa pra quem
+// nunca segurou o botão de propósito. Campo PRÓPRIO, gravado só aqui
+// (nunca por _applyAutoTheme()) — vice_manual = descoberta de verdade.
+function _recordViceCityManualDiscovery(){
+  const key='mare_theme_seen_vice_manual';
+  if(safeLS.getItem(key)==='1') return;
+  const u=window._currentUser;
+  if(!u||!u.uid) return;
+  safeLS.setItem(key,'1');
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid), {'temasDescobertos/vice_manual':true}).catch(()=>{});
+}
 function toggleViceCity(){
   // Mesmo achado do comentário grande acima de onThemeBtnClick() — vale
   // aqui também: um long-press durante a banda automática da tarde não
@@ -34232,6 +34482,7 @@ function toggleViceCity(){
   safeLS.setItem('mare_theme','vice');
   _applyThemeButtonIcon();
   _recordThemeDiscovered('vice');
+  _recordViceCityManualDiscovery();
   showToast('🌴 Vice City desbloqueada. Bem-vindo(a) a 1986... ou seria 2026?');
 }
 function exitViceCity(){
