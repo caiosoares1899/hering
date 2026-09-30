@@ -2699,6 +2699,25 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   manual, `dragleave` com guard `e.target===tb` evita falso-stop ao
   cruzar filhos).
 
+- **2026-09-30, "roda outro mais geral" (genérico, sem área nomeada —
+  escolhida por prioridade 1: código mais recente sem rodada própria,
+  o fallback de login por redirect do PR #1105, área de login/
+  segurança)**: 1 achado real severo, técnica 3 (comentário vs. código
+  — o comentário de `doSignIn()` no `<script type="module">` já
+  documentava e evitava exatamente essa classe de colisão, mas o
+  código 2 linhas abaixo cometia ela mesma pra `doSignOut()`).
+  `window.doSignOut = () => window._signOut('manual');` no módulo
+  (sempre deferred, roda DEPOIS de qualquer `<script>` clássico, mesmo
+  aparecendo antes no HTML) sobrescrevia em silêncio a `function
+  doSignOut(){...}` real, no `<script>` clássico mais abaixo — a única
+  que de fato limpa `gcal_token` do `localStorage` (achado via `grep`
+  dos 2 call sites de `doSignOut()`, ambos bare, ambos resolvendo via
+  `window.doSignOut` no clique). Clicar em "🚪 Sair" nunca limpava o
+  token de acesso do Google Calendar; em computador compartilhado, a
+  próxima pessoa a logar com OUTRA conta Google podia herdar o token
+  de calendário de quem saiu antes. Fix: removida a reatribuição
+  redundante no módulo. PR #1128, dev v8.30.767-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
