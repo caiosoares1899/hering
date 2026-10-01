@@ -3416,6 +3416,22 @@ auto-update passou a existir em `painel.html` também (`VERSION_KEY =
   dia inteiro pra quem já tivesse o cache válido no navegador; mesmo
   achado corrigido também no `externos` do kanban e em
   `okr-apresentacao.slide.html`, ver seção própria abaixo).
+- **Login Microsoft (integração Arezzo, 2026-10-01)**: `painel.html`/
+  `painel-dev.html` nunca tinham recebido o mesmo tratamento que
+  `kanban.html`/`kanban-dev.html` ganharam no mesmo dia — só Google,
+  domínio confiável checado só como `@ciahering.com.br` puro (achado
+  real, pedido direto: "coisas ligadas ao usuário que são Google e você
+  precisa adaptar pra Microsoft e ainda não fez"). `msProvider`
+  (`<script type="module">`, perto de `calProvider`) + botão "Entrar
+  com Microsoft" + `doSignInMicrosoft()` — mesmo padrão exato de
+  `kanban-dev.html`, **sem** o fallback de popup→redirect (painel nunca
+  teve isso nem pro Google, mantido consistente, não introduzido aqui).
+  `TRUSTED_DOMAINS`/`_isTrustedDomainEmail()` — perto de `ADM_EMAILS` —
+  substitui o `endsWith('@ciahering.com.br')` solto no gate de login
+  (dentro do listener `auth-change`) e na tela "Adicionar
+  visualizador". `database.rules.json` já cobria isso de graça (mesmo
+  arquivo compartilhado, provider-pin feito mais cedo no mesmo dia já
+  vale pros nodes que `painel.html` lê).
 - **`_painelEnsureUserRecord(user)` (2026-09-09)** — chamada de dentro de
   `_finishPainelLogin()`, só pra quem NÃO é visualizador externo. Achado
   real, relato direto do usuário: quem só usa o painel (gente de OKR que
