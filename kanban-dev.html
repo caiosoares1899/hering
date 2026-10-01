@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.776-dev</div>
+<div class="version">v8.30.777-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -35369,6 +35369,9 @@ function verNoBoardFromSearch(){
   // renderSelectorGrid() daqui (por isso ela continua existindo e exposta
   // em window._renderSelectorGrid, só a exibição PRÉ-login é que saiu).
   // Login agora é sempre a 1ª tela, sem squad na URL ou com squad na URL.
+  // label/subtitle/emoji/id vêm de kanban/squads_meta (texto livre digitado no painel) — o seletor do
+  // header (toggleSquadSwitcher) já escapava com esc()/encodeURIComponent(); este grid era o único que
+  // injetava cru no innerHTML (/monitorarbugs 2026-10-01).
   function renderSelectorGrid(filterIds) {
     const grid = document.getElementById('squad-sel-grid');
     if (!grid) return;
@@ -35376,10 +35379,10 @@ function verNoBoardFromSearch(){
     const entries = Object.entries(SQUAD_META_LIVE)
       .filter(([id]) => !filterIds || filterIds.includes(id));
     grid.innerHTML = entries.map(([id, meta]) =>
-      `<a class="squad-sel-card" href="${window.location.pathname}?squad=${id}">
-        <span class="squad-sel-emoji">${meta.emoji || '🐟'}</span>
-        <div class="squad-sel-name">${meta.label}</div>
-        <div class="squad-sel-sub">${meta.subtitle || ''}</div>
+      `<a class="squad-sel-card" href="${window.location.pathname}?squad=${encodeURIComponent(id)}">
+        <span class="squad-sel-emoji">${esc(meta.emoji || '🐟')}</span>
+        <div class="squad-sel-name">${esc(meta.label)}</div>
+        <div class="squad-sel-sub">${esc(meta.subtitle || '')}</div>
       </a>`
     ).join('');
   }

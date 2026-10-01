@@ -2790,6 +2790,27 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   gates do client que decidem "pode entrar" e alinhar — regra mais estrita
   que o client vira tela vazia, não erro.
 
+- **2026-10-01, seletor de squad pós-login (#1148) + correções de OKR do dia
+  (#1147/#1150/#1151) (pedido genérico, "roda mais um")**: 2 achados reais.
+  (1) **severo, técnica 1** — `saveOkrMarco()`/`_okrArquivarMarco()` gravam um
+  resumo no `history[]` do Objetivo PAI (Firebase + cache), mas o Objetivo
+  segue aberto por baixo com `_okrObjDraft` desatualizado; o 💾 Salvar do
+  Objetivo grava `{...draft}` por cima do nó inteiro e apagava a entrada do
+  Marco, em silêncio (fluxo comum: editar Marco dentro do Objetivo e salvar o
+  Objetivo). Fix: `_okrSyncObjDraftHistory()` (rascunho + snapshot do
+  dirty-check). 8 cenários em Node. (2) técnica 2 — `renderSelectorGrid()`
+  (kanban) injetava label/subtitle/emoji/id de `squads_meta` crus; o seletor
+  do header já usava `esc()`/`encodeURIComponent()`. dev kanban v8.30.777,
+  painel v3.89. Reportado, NÃO corrigido (ambíguo): texto digitado em uma caixa
+  "+ Add" ainda se perde ao confirmar OUTRA lista (o corpo inteiro é
+  reconstruído) ou ao ir pra ⚙ Config/Marco e voltar — restaurar os valores
+  exige rastrear de qual Objetivo eles são, senão vazam entre Objetivos.
+  Checado e sem achado: `resolveSquadAndShow()` (ADM/1 squad/N squads/padrão),
+  `_okrTryCloseMarco()`, DnD de Marcos, `openOkrConfig()` pós-fix.
+  **Lição**: quando uma tela filha (Marco) grava no pai (Objetivo) enquanto o
+  pai está aberto com rascunho em memória, o salvar do pai sobrescreve o que a
+  filha escreveu — sincronizar o rascunho depois de toda escrita do filho no pai.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
