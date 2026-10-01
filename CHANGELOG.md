@@ -18,6 +18,29 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.776-dev — 2026-10-01 · fix(login): botão errado (Google × Microsoft) entrava em app vazio + mensagem de recusa sumia no reload
+
+`/monitorarbugs` no login com Microsoft (feito hoje). 3 achados:
+1. **Gate do client mais frouxo que as regras.** `database.rules.json` (PR
+   #1152) só aceita `@ciahering.com.br` logado pelo **Google** e
+   `@arezzo.com.br` pela **Microsoft**; o gate de `auth-change` checava só o
+   domínio. Quem clicasse no botão "errado" (ex.: conta `@ciahering.com.br`
+   que exista no Entra ID da Arezzo e escolhesse "Entrar com Microsoft")
+   passava pelo client e caía num board em branco/erros de permissão, sem
+   explicação. Novo `_loginProviderMismatchMsg(user)` recusa já no login e
+   diz qual botão usar.
+2. **Conta sem e-mail escapava do gate** — a checagem do chamador é
+   `if(user.email && !confiável)`, e e-mail vazio (comum em Microsoft sem o
+   atributo `mail`) era tratado como "ok". Agora é recusado com mensagem.
+3. **A mensagem de recusa nunca chegava a ser lida**: `window._signOut()`
+   termina em `location.reload()`, e o texto escrito em `#login-err` antes
+   dele sumia junto com a página — vale também pro "Acesso restrito... peça
+   ao PO pra adicionar como externo" que já existia. `_rejectLoginAfterReload()`
+   guarda a mensagem e `_showLoginNotice()` mostra uma vez no boot seguinte.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` — OK; função
+testada isolada (10 cenários).
+
 ### v8.30.775-dev — 2026-10-01 · fix(foto Google): releitura lia o perfil ANTIGO + aviso mentia quando a People API falhava
 
 `/monitorarbugs` nas implementações do dia. Em `window._relerFotoGoogle()`:
@@ -20254,6 +20277,13 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.88 · painel-dev — 2026-10-01 · fix(login): mesmo gate de provedor/e-mail do kanban
+
+Espelha o fix do kanban v8.30.776-dev: `_loginProviderMismatchMsg()` recusa
+conta `@ciahering.com.br` fora do Google, `@arezzo.com.br` fora da Microsoft
+e conta sem e-mail (as regras do banco são um arquivo só pros dois). No
+painel `_signOut()` não recarrega, então a mensagem aparece direto.
 
 ### painel-dev.html v3.87 · painel-dev — 2026-10-01 · fix(OKR modal): Histórico/Cards vinculados voltavam a fechar sozinhos
 
