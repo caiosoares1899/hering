@@ -19699,6 +19699,25 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-01 — Novidade: clicar num Marco mostra os comentários feitos nele
+
+Pedido direto do usuário: "na apresentação de okr, o marco deveria ser
+clicável e mostrar os comentários feitos".
+
+Dentro do detalhe de um Objetivo, cada linha de Marco agora é
+clicável — abre um painel lateral (mesmo estilo visual do já existente
+"📋 Anotações da reunião") listando os comentários já feitos nele
+(autor, foto, data/hora, texto), lidos direto de
+`kanban/okr/marco_comments/{marcoId}` — o mesmo lugar onde
+`painel.html` já grava comentários no modal do Marco. É só leitura
+aqui: comentar de verdade continua sendo feito no painel; esta tela é
+pra quem está acompanhando a apresentação ver o que já foi dito sem
+precisar abrir outra aba.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` (module +
+clássico) — OK; balanço de chaves/parênteses do arquivo (braces 0,
+parens +1).
+
 ### 2026-09-30 (2ª rodada) — Botão "Colapsar concluídos" reposicionado de vez: 1ª correção resolveu o espremido, mas encolheu o texto da tabela inteira
 
 A correção anterior (ver entrada logo abaixo) tirou o botão de dentro

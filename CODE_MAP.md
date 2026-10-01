@@ -3665,6 +3665,26 @@ detalhe aberto — ver nota abaixo).
   (`n.autorUid===window._currentUser?.uid`) e só na reunião de hoje —
   sem papel de PO/organizador carregado nesta página, diferente do resto
   do Maré Digital, então não dá pra oferecer exclusão por admin aqui.
+- **💬 Comentários do Marco** (2026-10-01, pedido direto do usuário: "o
+  marco deveria ser clicável e mostrar os comentários feitos") — clicar
+  numa linha de Marco (`.d2-marco-row`, dentro do modal de detalhe de um
+  Objetivo) abre `#mc-ov`, painel lateral SÓ LEITURA (comentar de
+  verdade continua sendo feito no modal do Marco em `painel.html`), lê
+  `kanban/okr/marco_comments/{marcoId}` 1x por abertura (mesmo node que
+  `_okrCommentSend()` em `painel-dev.html` grava — ver seção OKR acima).
+  `window._okrOpenMarcoComments(marcoId)` — L1244 — busca `okrMarcos[marcoId]`
+  pro título do painel (nunca passa o nome cru pro atributo `onclick`,
+  só o id — evita quebrar o HTML se o nome tiver aspas);
+  `window._okrCloseMarcoComments()` — L1275. Mesmo padrão visual/CSS de
+  `#notes-ov`/`.notes-panel` (reaproveita as classes `.note-item`/
+  `.note-author`/`.note-avatar`/`.note-time`/`.note-text`, classes
+  próprias só pro wrapper `.mc-*`) e MESMO motivo de ficar sibling de
+  `#app`/`#detail-ov` na raiz do documento (não dentro de `#app` — ver
+  comentário grande em "📋 Anotações da reunião" acima sobre o contexto
+  de empilhamento CSS), com `z-index:470` — acima de `#notes-ov` (460) e
+  `#detail-ov` (400), já que normalmente abre com o Objetivo ainda
+  detalhado por baixo. Checado no `keydown` global ANTES de `#detail-ov`
+  (mesma lógica de prioridade de "painel de cima fecha primeiro").
 - **⏱ Contagem regressiva da agenda** (2026-09-17, pedido direto do
   usuário: "quero um cronometro mostrando quanto tempo falta para a
   agenda acabar... configurável que horario começou + o horario
