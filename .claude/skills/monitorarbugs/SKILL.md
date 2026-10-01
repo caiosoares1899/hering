@@ -2748,6 +2748,26 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   design (ver comentário na própria função). PR #1138, dev
   v8.30.770-dev → v8.30.771-dev.
 
+- **2026-10-01, implementações do dia — OKR (preview 👁, contadores,
+  UI/UX da aba/modal), apresentação (descrição + comentários do Marco),
+  `_relerFotoGoogle()` (pedido explícito, "roda um /monitorarbugs nas coisas
+  q fizemos hj")**: 4 achados reais. (1) técnica 3 — `_okrOpenMarcoComments()`
+  (apresentação) sem guarda contra resposta assíncrona atrasada: o
+  comentário do código dizia "painel fechado antes da leitura voltar" mas o
+  `if(!list)` nunca dispara (o elemento sempre existe); clicar em outro
+  Marco rápido mostrava os comentários do anterior sob o título novo.
+  (2) técnica 3 — as seções `<details>` do modal OKR (v3.86) perdiam o estado
+  aberto a cada re-render do corpo (todo "+ Add" reconstrói o modal). (3)+(4)
+  `_relerFotoGoogle()`: lia `providerData` do objeto capturado ANTES do popup
+  (login devolve objeto novo — descartava a fonte mais fresca) e o motivo
+  "mesma foto" mentia quando a People API falhava. Checado e sem achado: stats
+  strip/filtros (contagem antes do filtro de status, `podeReordenar`), `?preview=`
+  (consumo único em `rebuild()`), contadores (`oninput` + render inicial),
+  borda de status do Marco. Dev: kanban v8.30.775, painel v3.87.
+  **Lição**: toda leitura assíncrona disparada por clique precisa de guarda
+  "ainda é a minha vez?"; e todo estado de UI que mora só no HTML gerado se
+  perde quando o container é reconstruído.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

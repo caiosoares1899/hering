@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.774-dev</div>
+<div class="version">v8.30.775-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6638,7 +6638,12 @@ window._relerFotoGoogle=async()=>{
   if(!cu || !cu.providerData.some(p=>p.providerId==='google.com')){ rel.motivo='Conta não é Google.'; return rel; }
   const r=await signInWithPopup(auth,provider);
   const token=GoogleAuthProvider.credentialFromResult(r)?.accessToken;
-  rel.providerData=(cu.providerData.find(p=>p.providerId==='google.com')||{}).photoURL||null;
+  // `cu` foi capturado ANTES do popup — o login devolve um objeto de usuário
+  // NOVO (r.user) com providerData já atualizado pelo Google; ler o velho
+  // descartava justamente a fonte mais fresca (achado do /monitorarbugs
+  // 2026-10-01).
+  const fresh=r.user;
+  rel.providerData=(fresh.providerData.find(p=>p.providerId==='google.com')||{}).photoURL||null;
   if(!token){ rel.motivo='Google não devolveu um token de acesso.'; return rel; }
   const get=url=>fetch(url,{headers:{Authorization:'Bearer '+token}}).then(x=>x.json());
   try{ rel.userinfo=(await get('https://www.googleapis.com/oauth2/v3/userinfo')).picture||null; }catch(e){}
@@ -6652,10 +6657,18 @@ window._relerFotoGoogle=async()=>{
     || (rel.userinfo&&_fotoBase(rel.userinfo)!==atualBase ? rel.userinfo : null)
     || (rel.providerData&&_fotoBase(rel.providerData)!==atualBase ? rel.providerData : null);
   if(melhor && _fotoBase(melhor)!==atualBase){
-    await updateProfile(cu,{photoURL:melhor});
+    await updateProfile(fresh,{photoURL:melhor});
+    // window._currentUser aponta pro objeto ANTIGO (auth-change não redispara
+    // pro mesmo uid) — mantém ele em sincronia pro _syncAuthProfileToFirebase().
+    if(cu!==fresh) cu.photoURL=melhor;
     rel.aplicada=melhor; rel.ok=true;
   } else if(rel.people && rel.people.length && rel.people.every(x=>x.padrao)){
     rel.motivo='O Google informa que esta conta só tem o avatar PADRÃO (sem foto pública) — não é um erro do Maré Digital.';
+  } else if(rel.peopleErro){
+    // People API (a única que diz se a foto é o avatar padrão) falhou — muito
+    // provável "API não habilitada" no projeto do Google Cloud. Sem isso o
+    // texto "mesma foto" abaixo mentiria: só 2 das 3 fontes foram consultadas.
+    rel.motivo='Não consegui consultar a People API do Google ('+rel.peopleErro+'). Só comparei as outras fontes e a foto é a mesma — não dá pra saber se é o avatar padrão.';
   } else {
     rel.motivo='O Google devolveu a mesma foto que já estava salva.';
   }

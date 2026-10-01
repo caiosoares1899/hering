@@ -18,6 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.775-dev — 2026-10-01 · fix(foto Google): releitura lia o perfil ANTIGO + aviso mentia quando a People API falhava
+
+`/monitorarbugs` nas implementações do dia. Em `window._relerFotoGoogle()`:
+(1) `providerData` era lido do objeto de usuário capturado ANTES do popup —
+o login devolve um objeto NOVO (`r.user`) com `providerData` já atualizado
+pelo Google; a fonte mais fresca era descartada (e `updateProfile()` ia pro
+objeto velho). Agora lê/atualiza `r.user` e mantém `window._currentUser` em
+sincronia. (2) Se a People API falhasse (provável "API não habilitada" no
+projeto do Google Cloud — a única fonte que diz se a foto é avatar padrão),
+o toast dizia "o Google devolveu a mesma foto", escondendo que só 2 de 3
+fontes foram consultadas; agora diz que a People API falhou e por quê.
+
 ### v8.30.774 — 2026-10-01 · Promove pra prod — "🔄 Atualizar minha foto do Google"
 
 Promoção do v8.30.774-dev (pedido: "sobe tudo que tá acumulado pra prod").
@@ -19738,6 +19750,16 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-01 (3ª rodada) — fix: comentários do Marco podiam aparecer sob o Marco errado
+
+`/monitorarbugs` nas implementações do dia. `_okrOpenMarcoComments()` lê
+`marco_comments/{id}` de forma assíncrona e a resposta nunca checava se
+ainda era a do Marco aberto: clicar em outro Marco (ou fechar e reabrir)
+antes da 1ª leitura voltar fazia a resposta ATRASADA sobrescrever a lista,
+sob o título do Marco novo. O `if(!list) return` "painel fechado" nunca
+disparava (`#mc-list` sempre existe). Agora `_mcCurrentId` descarta
+respostas de aberturas antigas.
+
 ### 2026-10-01 (2ª rodada) — Novidade: descrição do Marco agora aparece na tabela
 
 Pedido direto do usuário: "o pessoal quer q apareça tambem a descrição
@@ -20232,6 +20254,15 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.87 · painel-dev — 2026-10-01 · fix(OKR modal): Histórico/Cards vinculados voltavam a fechar sozinhos
+
+`/monitorarbugs` nas implementações do dia. As seções recolhíveis do modal
+(v3.86) dependiam do estado só no HTML gerado — e o corpo inteiro do modal é
+reconstruído a cada "+ Add"/remover/editar item: abrir o Histórico (ou
+"Cards vinculados" vazio) e mexer em qualquer lista fechava a seção de novo.
+Agora o estado aberto/fechado é lembrado por seção+entidade
+(`_okrDetailsState`/`_okrDetailsAttrs()`).
 
 ### painel.html v3.86 · painel — 2026-10-01 · Promove pra prod — lote OKR acumulado (v3.77 → v3.86 de dev)
 
