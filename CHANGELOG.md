@@ -26807,6 +26807,57 @@ divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
 
+### 2026-10-01 — Pin de provedor por domínio corporativo (Arezzo só Microsoft, Hering só Google)
+
+Segue direto da integração de login com Microsoft (PR #1144/#1145,
+mesmo dia) — revisão de segurança trazida pelo usuário (análise de uma
+outra IA, "Manus", sobre o `database.rules.json`), verificada linha a
+linha contra o arquivo real antes de aplicar qualquer coisa. A maioria
+dos achados do Manus se confirmou (`feedback`/`access_log` com
+`.write: auth != null` solto, `usuarios`/`usuarios_publicos`/
+`init_registry` com `.read: auth != null` no nó pai, `externos.read`
+aberto pra qualquer autenticado, chave de `painel_viewers`/`externos`
+por email sanitizado em vez de uid) — decisão explícita do usuário
+(`AskUserQuestion`): aplicar só o pin de provedor agora, tratar o resto
+como uma rodada de hardening separada (não bloqueia a integração
+Arezzo de hoje, maior superfície pra revisar com calma).
+
+**O que mudou**: as 52 ocorrências de
+`(auth.token.email.endsWith('@ciahering.com.br')||auth.token.email.endsWith('@arezzo.com.br'))`
+viraram
+`((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))`
+— antes, qualquer domínio autenticado por QUALQUER provider passava
+(ex.: `@arezzo.com.br` via Google, se a pessoa tivesse uma conta Google
+pessoal com esse email, passaria igual); agora cada domínio só passa
+pelo provider esperado.
+
+**Cuidado explícito, por causa do precedente documentado logo abaixo
+(2026-09-18, freelancer bloqueado por um fix de segurança anterior)**:
+confirmado que os fallbacks de freelancer/externo (`|| root.child('kanban/painel_viewers/...')`,
+`|| root.child('kanban/squads/.../externos/...')`, `|| root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId)`)
+continuam INTACTOS em todos os nodes que já os tinham — só a parte do
+domínio corporativo foi envolvida em `&&provider`, nunca a estrutura
+`||` que dá acesso a quem está explicitamente cadastrado como externo,
+independente do provider que usa.
+
+**NÃO aplicado nesta rodada** (decisão explícita, ver acima): exigir
+`email_verified == true` (precisa confirmar antes, via teste ao vivo,
+se o Firebase marca isso corretamente nos tokens de login Microsoft
+deste app — risco de travar gente sem aviso se não confirmar antes);
+fechar `feedback`/`access_log`/`usuarios`/`usuarios_publicos`/
+`init_registry`/`externos.read`; migrar `painel_viewers`/`externos` de
+chave-por-email pra chave-por-uid.
+
+⚠️ **Deploy manual pendente** — mesma limitação de sempre
+(`firebase deploy --only database`, da máquina do usuário, depois de
+resincronizar o clone local). **Recomendação forte antes do deploy
+real**: testar os 4 cenários no Firebase Console → Realtime Database →
+Rules → Rules Playground (simulação, não publica nada) —
+`@ciahering.com.br`+`google.com` permitido, `@ciahering.com.br`+
+`microsoft.com` negado, `@arezzo.com.br`+`microsoft.com` permitido,
+`@arezzo.com.br`+`google.com` negado — antes de publicar de verdade,
+dado o precedente de 2026-09-18.
+
 ### 2026-09-18 — Fix urgente: freelancers ficaram bloqueados de logar (regressão do fix de segurança 2026-09-17)
 
 Relato direto do usuário: "uma freela cadastrada não ta conseguindo
