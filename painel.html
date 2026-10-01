@@ -338,14 +338,44 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .okr-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;}
 .okr-area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px;}
-.okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;}
+.okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative;}
 .okr-card:hover{border-color:rgba(56,182,255,.4);transform:translateY(-1px);}
+/* 👁 Pré-visualizar (pedido direto: "um preview da apresentação do objetivo
+   para cada objetivo") — abre okr-apresentacao.slide.html?preview=<id> numa
+   aba nova, já focado no detalhe deste Objetivo (ver _okrPreviewApresentacao()
+   e o hook em rebuild() de lá). Canto absoluto fixo pra não disputar espaço
+   com a linha de ▲▼ (que só aparece com podeReordenar), nem com o resto do
+   card — sempre visível, qualquer um pode conferir como ficou. */
+.okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
+.okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
+.okr-char-counter{font-size:10px;text-align:right;color:var(--txt3);}
+/* ── Auditoria de UI/UX da aba OKR (pedido direto: "faça uma analise de
+   UI/UX e melhore") ──
+   1) Tira de resumo clicável (abaixo do toolbar de filtros) — a aba antes
+      ia direto pro grid de cards sem nenhuma visão agregada; pra decidir
+      "como estamos indo" a pessoa tinha que escanear card por card. Cada
+      chip também FUNCIONA como atalho do filtro de status já existente
+      (clica de novo pra limpar) — não duplica lógica nova, só expõe o
+      mesmo _okrSetFilter('status',…) de um jeito mais rápido de bater o
+      olho que abrir o <select>. */
+.okr-stats-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
+  background:var(--glass);border:1px solid var(--glass-b);font-size:11px;color:var(--txt2);
+  cursor:pointer;transition:border-color .15s,background .15s;}
+.okr-stat-chip b{color:var(--txt);font-size:12px;}
+.okr-stat-chip:hover{border-color:rgba(56,182,255,.4);}
+.okr-stat-chip.active{border-color:var(--accent);background:rgba(56,182,255,.12);}
+.okr-stat-chip.total{cursor:default;}
+.okr-stat-chip.total:hover{border-color:var(--glass-b);}
 /* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
    ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
    continuam funcionando em telas sem mouse). */
 .okr-card[draggable="true"]{cursor:grab;}
 .okr-card.okr-dragging{opacity:.4;}
 .okr-card.okr-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,182,255,.35) inset;}
+.okr-marco-row[draggable="true"]{cursor:grab;}
+.okr-marco-row.okr-dragging{opacity:.4;}
+.okr-marco-row.okr-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,182,255,.35) inset;}
 /* "👤 você é responsável" — mesmo tratamento visual de .card-mine no
    kanban(-dev).html (tingimento azul + borda mais forte), pedido direto
    do usuário ("no OKR, faz que nem nos cards"). Mesmas cores exatas do
@@ -706,7 +736,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── OKR / BLOQUEIO / RISCO TILE CARDS ────────────────────────── */
 .panel-card{
-  background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);
+  /* Achado real (relato direto, 2026-10-01, print: "modo claro no okr
+     ta bugadasso de leitura") — fundo era rgba(6,20,44,.85) FIXO (nunca
+     mudava com o tema), enquanto .pc-card-title já usava var(--txt)
+     (corretamente escuro no tema claro) — texto escuro sobre fundo
+     escuro fixo, quase ilegível. Troca pro mesmo padrão já usado em
+     .pt-row/.met/etc. (var(--ink-rgb), tema-aware) — afeta os 3 tipos
+     de tile (.okr/.risco/.blocker), não só OKR. */
+  background:rgba(var(--ink-rgb),.85);border:1px solid rgba(56,182,255,.12);
   border-radius:12px;padding:12px 14px;cursor:pointer;
   transition:border-color .15s,transform .1s,box-shadow .15s;
   display:flex;flex-direction:column;gap:7px;
@@ -1397,14 +1434,20 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div style="font-size:13px;color:var(--txt2);">Painel de Controle · Multi-Squad</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:320px;width:100%;backdrop-filter:blur(12px);">
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google da Hering para acessar o painel.</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google ou Microsoft para acessar o painel.</div>
     <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Entrar com Google
     </button>
+    <!-- Integração Arezzo (2026-10-01) — mesmo padrão já usado em kanban-dev.html
+         (ver TRUSTED_DOMAINS/_isTrustedDomainEmail() logo abaixo). -->
+    <button onclick="doSignInMicrosoft()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
+      <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+      Entrar com Microsoft
+    </button>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
-  <div style="font-size:10px;color:var(--txt3);">Acesso restrito ao time Digital Hering</div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br / @arezzo.com.br</div>
 </div>
 
 <!-- APP -->
@@ -1761,21 +1804,47 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
        direto: "seria a coluna do card filho"). Grid "Cards do board com
        badge OKR" abaixo é o renderOKR() que já existia na aba Visão — só
        mudou de casa pra ficar junto do resto do assunto OKR. -->
+  <!-- ── Auditoria de UI/UX da aba OKR (pedido direto: "faça uma analise de
+       UI/UX e melhore") — 4 achados reais, corrigidos juntos:
+       1) 8 botões no MESMO nível/peso visual na linha de cabeçalho,
+          misturando 3 tipos de ação diferentes (referência/ajuda, troca de
+          VISÃO — Central Agente/Anotações/Histórico, que substituem o grid
+          inteiro — e a CTA principal "+ Novo Objetivo") sem nenhum
+          agrupamento. Agora em 3 grupos separados por um traço vertical,
+          com "+ Novo Objetivo" como ÚNICO botão de destaque (.btn-p,
+          preenchido) — o resto fica em segundo plano visual de propósito.
+       2) Essa linha de 8 botões não tinha `flex-wrap` — só o BLOCO inteiro
+          (dentro de .sec-title, que é flex-wrap) ia pra linha de baixo no
+          mobile, mas os botões dentro dele continuavam numa fileira só sem
+          wrap nem scroll, cortando os últimos pra fora da tela. Corrigido
+          com flex-wrap no grupo em si.
+       3) "📦 Ver arquivados" é conceitualmente um FILTRO do que o grid
+          mostra (ativo vs. arquivado), não uma ação de página — movido pra
+          dentro do .okr-toolbar, junto dos outros filtros.
+       4) Resumo agregado (.okr-stats-strip, CSS acima) + "✕ Limpar
+          filtros" (só aparece com algum filtro ativo) — ver
+          renderOkrObjetivos()/_okrClearFilters(). -->
   <div class="ptab-pane" id="ppane-okr">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
-        <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
-        <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
-        <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
-        <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
-        <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
-        <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
-        <button type="button" class="btn btn-sm" id="okr-novo-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
+          <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
+          <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+        </div>
+        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
+          <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
+          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
+        </div>
+        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
+        <button type="button" class="btn btn-p" id="okr-novo-btn" style="font-size:11px;padding:6px 14px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
       </div>
     </div>
     <div class="okr-toolbar" id="okr-toolbar">
+      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 10px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
       <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
@@ -1787,7 +1856,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <option value="concluido">✅ Concluído</option>
       </select>
       <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="min-width:170px;flex:1;">
+      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="font-size:11px;padding:5px 10px;display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
     </div>
+    <div id="okr-stats-strip"></div>
     <div id="okr-objetivos-wrap"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
 
     <!-- 💬 Central Agente Ágil — chat dedicado (kanban/okr/agente_chat),
@@ -2933,13 +3004,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.76 · painel</div>
+<div class="version">v3.86 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
@@ -2980,6 +3051,14 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
   }
   return credential;
 });
+
+// Integração Arezzo (2026-10-01) — mesmo provider/parâmetros já usados em
+// kanban-dev.html (ver comentário completo lá): 'organizations' restringe
+// a contas de TRABALHO/ESCOLA Microsoft, bloqueia conta pessoal na raiz.
+const msProvider = new OAuthProvider('microsoft.com');
+msProvider.setCustomParameters({ tenant: 'organizations', prompt: 'select_account' });
+window._msProvider = msProvider;
+window._signInMicrosoft = () => signInWithPopup(auth, msProvider);
 
 window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove; window._runTransaction=runTransaction;
 // query/orderByChild/limitToLast: mesmo padrão de window._query/_orderByChild/
@@ -5210,7 +5289,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
   document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
-  ['okr-toolbar','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
+  ['okr-toolbar','okr-stats-strip','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
   });
   const arqBtn = document.getElementById('okr-arquivados-btn'); if(arqBtn) arqBtn.style.display = view==='objetivos' ? '' : 'none';
@@ -5525,6 +5604,46 @@ function _okrObjDragEnd(ev){
   _okrDraggedObjId = null;
 }
 
+function _okrTemFiltroAtivo(){
+  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto);
+}
+function _okrClearFilters(){
+  _okrFilter = {area:'', trimestre:'', status:'', texto:''};
+  const txt = document.getElementById('okr-filter-texto'); if(txt) txt.value = '';
+  renderOkrObjetivos();
+}
+// Resumo agregado clicável, ACHADO #1 da auditoria de UI/UX (2026-10-01):
+// a aba ia direto pro grid de cards sem nenhuma visão de conjunto — pra
+// saber "como estamos indo" a pessoa tinha que escanear card por card.
+// Calculado sobre `lista` (já filtrada por área/trimestre/texto, mas ANTES
+// do filtro de status — senão o próprio resumo sumiria assim que alguém
+// clicasse num chip). Cada chip reusa _okrSetFilter('status',…), o mesmo
+// filtro que o <select> já aplicava — clicar de novo no chip ativo limpa.
+function _okrStatsStripHtml(lista){
+  if(!lista.length) return '';
+  let marcosTotal=0, marcosDone=0;
+  const porStatus = {};
+  lista.forEach(o=>{
+    const st = _okrObjStatus(o.id);
+    porStatus[st] = (porStatus[st]||0)+1;
+    const marcos = _okrObjMarcos(o.id);
+    marcosTotal += marcos.length;
+    marcosDone += marcos.filter(m=>m.progresso==='concluido').length;
+  });
+  const chips = OKR_STATUS.filter(s=>porStatus[s.id]>0).map(s=>{
+    const ativo = _okrFilter.status===s.id;
+    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_okrSetFilter('status','${ativo?'':s.id}')" title="Filtrar por ${esc(s.label)}">
+      <span class="okr-dot" style="background:${s.dot};"></span><b>${porStatus[s.id]}</b> ${esc(s.label)}
+    </div>`;
+  }).join('');
+  const pctMarcos = marcosTotal ? Math.round(marcosDone/marcosTotal*100) : null;
+  return `<div class="okr-stats-strip">
+    <div class="okr-stat-chip total"><b>${lista.length}</b> Objetivo${lista.length===1?'':'s'}</div>
+    ${chips}
+    ${pctMarcos!==null?`<div class="okr-stat-chip total">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
+  </div>`;
+}
+
 function renderOkrObjetivos(){
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
@@ -5534,6 +5653,10 @@ function renderOkrObjetivos(){
   if(arqBtn) arqBtn.textContent = _okrShowArquivados ? '◀ Ver ativos' : '📦 Ver arquivados';
   const tituloAba = document.getElementById('okr-titulo-aba');
   if(tituloAba) tituloAba.textContent = _okrShowArquivados ? '📦 OKR — Objetivos arquivados' : '🎯 OKR — Objetivos estratégicos';
+  const statusSel = document.getElementById('okr-filter-status');
+  if(statusSel) statusSel.value = _okrFilter.status;
+  const clearBtn = document.getElementById('okr-clear-filters-btn');
+  if(clearBtn) clearBtn.style.display = _okrTemFiltroAtivo() ? '' : 'none';
 
   const areaSel = document.getElementById('okr-filter-area');
   if(areaSel && areaSel.options.length <= 1){
@@ -5550,27 +5673,32 @@ function renderOkrObjetivos(){
 
   if(!_okrLoaded){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; return; }
 
-  let objetivos = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
-  if(_okrFilter.area) objetivos = objetivos.filter(o=>o.areaId===_okrFilter.area);
-  if(_okrFilter.trimestre) objetivos = objetivos.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
-  if(_okrFilter.status) objetivos = objetivos.filter(o=>_okrObjStatus(o.id)===_okrFilter.status);
+  let base = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
+  if(_okrFilter.area) base = base.filter(o=>o.areaId===_okrFilter.area);
+  if(_okrFilter.trimestre) base = base.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
   if(_okrFilter.texto){
     const t = _okrFilter.texto.toLowerCase();
-    objetivos = objetivos.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
+    base = base.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
   }
+  const statsStrip = document.getElementById('okr-stats-strip');
+  if(statsStrip) statsStrip.innerHTML = _okrShowArquivados ? '' : _okrStatsStripHtml(base);
+
+  const objetivos = _okrFilter.status ? base.filter(o=>_okrObjStatus(o.id)===_okrFilter.status) : base;
 
   if(!objetivos.length){
     wrap.innerHTML = _okrShowArquivados
       ? '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo arquivado.</div>'
-      : '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo encontrado'
-        + (_okrCanCreate() ? ' — clique em "+ Novo Objetivo" pra começar.' : '.') + '</div>';
+      : _okrTemFiltroAtivo()
+        ? '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo bate com esse filtro. <a href="javascript:void(0)" onclick="_okrClearFilters()" style="color:var(--accent);">✕ Limpar filtros</a></div>'
+        : '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo encontrado'
+          + (_okrCanCreate() ? ' — clique em "+ Novo Objetivo" pra começar.' : '.') + '</div>';
     return;
   }
 
   const porArea = {};
   objetivos.forEach(o=>{ (porArea[o.areaId||'geral'] = porArea[o.areaId||'geral']||[]).push(o); });
 
-  const podeReordenar = _okrCanCreate() && !_okrShowArquivados && !_okrFilter.area && !_okrFilter.trimestre && !_okrFilter.status && !_okrFilter.texto;
+  const podeReordenar = _okrCanCreate() && !_okrShowArquivados && !_okrTemFiltroAtivo();
   wrap.innerHTML = OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).map(g=>{
     const lista = _okrObjetivosSorted(porArea[g.id]);
     return `
@@ -5579,6 +5707,9 @@ function renderOkrObjetivos(){
   }).join('');
 }
 
+function _okrPreviewApresentacao(id){
+  window.open('okr-apresentacao.slide.html?preview='+encodeURIComponent(id), '_blank', 'noopener');
+}
 function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   const status = _okrObjStatus(o.id);
   const marcos = _okrObjMarcos(o.id);
@@ -5590,12 +5721,13 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     draggable="${podeReordenar?'true':'false'}"
     ${podeReordenar?`ondragstart="_okrObjDragStart(event,'${o.id}')" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,'${areaId}','${o.id}')" ondragend="_okrObjDragEnd(event)"`:''}
     onclick="openOkrObjetivo('${o.id}')">
-    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;">
+    <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao('${o.id}')" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
+    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:28px;">
       <span title="Arraste pra reordenar" style="font-size:12px;color:var(--txt3);margin-right:auto;cursor:grab;">⠿</span>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
-    <p class="okr-card-title">${esc(o.titulo||'(sem título)')}</p>
+    <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${okrStatusDot(status)} <span>${esc(okrStatusInfo(status).label)}</span>
       ${_okrTrimestresOf(o).map(t=>`<span class="badge">${esc(t)}</span>`).join('')}
@@ -5605,8 +5737,53 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
       <span style="font-size:10px;color:var(--txt3);">🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
     </div>
-    <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;"></div></div>
+    <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;background:${okrStatusInfo(status).dot};" title="${pct}% dos marcos concluídos"></div></div>
   </div>`;
+}
+
+// ── Limites recomendados de caracteres (pedido direto: "a gente precisa
+// calcular quantos caracteres sao maximo para n quebrar a leitura") ──
+// Calculados a partir da largura REAL dos containers em
+// okr-apresentacao.slide.html (CSS lido direto de lá, no zoom base 1x —
+// antes de qualquer encolhimento automático) com uma heurística comum pra
+// fonte proporcional sans-serif: ~0.52× o tamanho da fonte por caractere.
+// NÃO é um limite técnico — nada quebra visualmente acima dele, porque o
+// zoom-fit da apresentação (_zoomFitToHeight()) sempre encolhe o que for
+// preciso pra caber, sem piso mínimo. É um limite de LEGIBILIDADE: acima
+// dele, o campo passa a dominar o espaço da própria seção e empurra a
+// fonte de TUDO ao redor pra baixo quando a apresentação roda num telão/
+// projetor — e isso é exatamente o que motivou o pedido ("ta ficando com
+// muito texto").
+//   - Objetivo (.d2-panel-body, raia esquerda ~264px úteis @ 14px,
+//     line-height 1.55): soft cap ~200 car. — dado real já registrado no
+//     CHANGELOG (2026-09-30): uma descrição de ~270 car. já "ocupa boa
+//     parte da raia sozinha", competindo com os painéis de Responsável e
+//     Indicadores na mesma coluna.
+//   - Item de lista (Indicadores/Progressos/Próx. Passos/Riscos/Planos —
+//     .d2-flist ~254px úteis @ 14px): soft cap ~90 car. por item — mais
+//     apertado que a descrição porque cada coluna do rodapé normalmente
+//     tem VÁRIOS itens, não um só.
+//   - Nome do Marco (.d2-marco-nome, ~557px úteis @ 15px, divide linha com
+//     Status/Prazo): soft cap ~70 car.
+//   - Descrição do Marco (.d2-marco-desc, mesma largura @ 12.5px, 2ª
+//     linha abaixo do nome): soft cap ~110 car.
+const OKR_CHAR_LIMITS = {
+  'okr-f-descricao': 200,
+  'okr-m-nome': 70,
+  'okr-m-descricao': 110,
+  indicadores: 90, progressos: 90, proximosPassos: 90, riscos: 90, planosAcao: 90,
+};
+function _okrCharCounterHtml(fieldId){
+  return `<div class="okr-char-counter" id="${fieldId}-counter"></div>`;
+}
+function _okrUpdateCharCounter(fieldId, limite){
+  const el = document.getElementById(fieldId), counter = document.getElementById(fieldId+'-counter');
+  if(!el || !counter || !limite) return;
+  const n = el.value.length;
+  if(n===0){ counter.textContent=''; return; }
+  const over = n > limite;
+  counter.textContent = `${n}/${limite} caracteres${over?' · pode ficar apertado na apresentação':''}`;
+  counter.style.color = over ? 'var(--danger)' : (n > limite*0.8 ? '#ffb020' : 'var(--txt3)');
 }
 
 // ── Histórico (evolução do Objetivo/Marco a cada edição) — mesmo padrão de
@@ -5731,6 +5908,25 @@ function renderOkrHistory(entity){
     </div>`;
   }).join('');
 }
+// Achado da auditoria de UI/UX do modal OKR (2026-10-01, pedido direto:
+// "agora dentro do modal do okr"): Histórico sempre vinha TOTALMENTE
+// expandido (até OKR_HIST_CAP=80 entradas), sempre no FIM do scroll —
+// num Objetivo com uso real, isso sozinho podia dobrar a altura do modal
+// por uma seção que a maioria das visitas nem olha. Reusa o MESMO padrão
+// `<details class="pt-bucket">`/`.pt-chevron` já usado na Timeline do
+// painel (`_painelTimelineRender()`) em vez de inventar um componente
+// novo — fechado por padrão quando tem bastante coisa (>5), aberto
+// quando é pouco (nada pra esconder).
+function _okrHistorySectionHtml(entity){
+  const hist = Array.isArray(entity?.history) ? entity.history : [];
+  const aberto = hist.length <= 5;
+  return `<details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      <span class="pt-chevron">▸</span> 📜 Histórico${hist.length?` <span class="badge">${hist.length}</span>`:''}
+    </summary>
+    <div style="margin-top:8px;">${renderOkrHistory(entity)}</div>
+  </details>`;
+}
 
 // ── Vínculo de cards com badge OKR (tipo campanha/coleção — mesmo padrão de
 // notaSearchCards()/notaAddCardLink() do kanban-dev.html, adaptado pra
@@ -5780,11 +5976,21 @@ function _okrRenderCardSearch(q){
     ? results.map(r=>`<div class="okr-list-item" style="cursor:pointer;" onclick="_okrCardLinkAdd('${r.squadId}','${esc(r.cardId)}')"><span>${r.squadIcon} ${esc(r.title)}</span></div>`).join('')
     : (q.trim().length>=2 ? '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum card com badge OKR encontrado.</div>' : '');
 }
+// Achado da auditoria de UI/UX do modal OKR (2026-10-01): seção de baixo
+// uso (comparado a Marcos/Riscos/Planos de Ação) que antes ficava SEMPRE
+// aberta, com campo de busca próprio ocupando espaço permanente mesmo
+// vazia. Mesmo padrão `<details class="pt-bucket">` do Histórico acima —
+// aberta de propósito quando já tem link (não esconder o que já existe),
+// fechada quando está vazia (o caso comum).
 function _okrCardLinksHtml(podeEditar){
   const links=_okrObjDraft.cardLinks||[];
+  const aberto = links.length>0;
   return `
-    <div class="okr-field-label">🔗 Cards vinculados (badge 🎯 OKR no board)</div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px;">
+    <details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      <span class="pt-chevron">▸</span> 🔗 Cards vinculados (badge 🎯 OKR no board)${links.length?` <span class="badge">${links.length}</span>`:''}
+    </summary>
+    <div style="display:flex;flex-direction:column;gap:5px;margin:8px 0 6px;">
       ${links.map((l,i)=>{
         const sq=SQUADS.find(s=>s.id===l.squadId);
         const card=(squadData[l.squadId]?.cards||[]).find(c=>c.id===l.cardId);
@@ -5793,7 +5999,8 @@ function _okrCardLinksHtml(podeEditar){
       }).join('') || '<div style="font-size:11px;color:var(--txt3);">Nenhum ainda.</div>'}
     </div>
     ${podeEditar?`<input type="text" class="okr-input" id="okr-card-search" placeholder="🔎 Buscar card com badge OKR pra vincular…" oninput="_okrRenderCardSearch(this.value)">
-    <div id="okr-card-search-results"></div>`:''}`;
+    <div id="okr-card-search-results"></div>`:''}
+    </details>`;
 }
 
 // ── Notificação "OKR editado" — Responsáveis + Participantes de qualquer
@@ -5876,7 +6083,20 @@ function closeOkrObjetivo(){
 // dirty-check próprio nem fecha o modal (ver closeOkrConfigBack()).
 function openOkrConfig(){
   if(!_okrObjDraft) return;
-  _okrSyncObjDraftFromDom();
+  // Achado real (relato direto, 2026-10-01: "clica em configurações de um
+  // okr e muda para configurar outro, ele fica preso nesse primeiro...
+  // como se tivesse numa espécie de cache"). Causa raiz: _okrSyncObjDraftFromDom()
+  // só lê okr-f-titulo/okr-f-area/okr-f-pilar/okr-f-descricao — campos que
+  // SÓ existem dentro da própria tela de Configurações (#okr-obj-config-body),
+  // nunca na tela principal de onde este botão é clicado. Essa <div> não é
+  // limpa ao fechar o modal, só escondida — então chamar o sync AQUI (com a
+  // tela principal visível, a de Config ainda não renderizada para ESTE
+  // objetivo) lia o que sobrou no DOM da última vez que a Config rodou,
+  // possivelmente de OUTRO Objetivo, e sobrescrevia título/gerência/pilar/
+  // descrição do rascunho atual com lixo antigo antes mesmo de renderizar.
+  // Removida — não existe nada de legítimo pra sincronizar aqui (a tela
+  // principal não tem esses campos); closeOkrConfigBack() já faz o sync de
+  // verdade, na hora certa (com a Config ainda ativa, saindo dela).
   document.getElementById('okr-obj-ov').classList.remove('open');
   renderOkrObjConfigBody();
   document.getElementById('okr-obj-config-title').textContent = _okrEditingObjId ? '⚙ Configurações' : '🎯 Novo Objetivo';
@@ -5904,7 +6124,18 @@ function closeOkrConfigBack(){
 async function _okrTryCloseObjetivo(){
   if(_okrObjDraft && _okrObjOpenSnapshot!=null){
     _okrSyncObjDraftFromDom();
-    if(JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+    // Achado real (relato direto, 2026-10-01): os campos "+ Add" de
+    // indicadores/progressos/próximos passos/riscos/planos de ação/
+    // trimestres (_okrListEditorHtml()) só viram item de verdade no
+    // _okrObjDraft quando confirmados (Enter/"+ Add") — texto digitado mas
+    // ainda não confirmado nunca entra em _okrSyncObjDraftFromDom() (só
+    // sincroniza título/gerência/pilar/descrição), então clicar fora com
+    // algo digitado ali (sem confirmar) perdia o texto em silêncio, sem
+    // perguntar nada — o dirty-check comparava um _okrObjDraft que nunca
+    // tinha mudado de verdade.
+    const _camposAdd = ['indicadores','progressos','proximosPassos','riscos','planosAcao','trimestres'];
+    const _temTextoPendente = _camposAdd.some(c => (document.getElementById('okr-add-'+c)?.value||'').trim());
+    if(_temTextoPendente || JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
       if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -5972,15 +6203,17 @@ function _okrSyncObjDraftFromDom(){
 
 function _okrListEditorHtml(campo, label, placeholder){
   const itens = _okrObjDraft[campo]||[];
+  const limite = OKR_CHAR_LIMITS[campo];
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div class="okr-list-editable">
       ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,'${campo}',${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove('${campo}',${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
-      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
+      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
       <button type="button" class="btn btn-sm" onclick="_okrListAdd('${campo}')">+ Add</button>
-    </div>`;
+    </div>
+    ${limite?_okrCharCounterHtml('okr-add-'+campo):''}`;
 }
 // Clique pra editar um item já escrito, mesmo padrão do renderCL() do
 // checklist de card no kanban (kanban-dev.html): span vira um <textarea>
@@ -5989,6 +6222,9 @@ function _okrListEditorHtml(campo, label, placeholder){
 // OKR são texto puro).
 function _okrListEditStart(span, campo, i){
   const original = _okrObjDraft[campo][i];
+  const limite = OKR_CHAR_LIMITS[campo];
+  const wrap = document.createElement('div');
+  wrap.style.flex = '1';
   const ta = document.createElement('textarea');
   ta.className = 'okr-input';
   ta.value = original;
@@ -5996,9 +6232,21 @@ function _okrListEditStart(span, campo, i){
   ta.style.resize = 'none';
   ta.style.overflow = 'hidden';
   ta.rows = 1;
-  span.replaceWith(ta);
+  const counter = document.createElement('div');
+  counter.className = 'okr-char-counter';
+  wrap.appendChild(ta);
+  wrap.appendChild(counter);
+  span.replaceWith(wrap);
   const autoResize = ()=>{ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; };
+  const updateCounter = ()=>{
+    const n = ta.value.length;
+    if(!limite || n===0){ counter.textContent=''; return; }
+    const over = n > limite;
+    counter.textContent = `${n}/${limite} caracteres${over?' · pode ficar apertado na apresentação':''}`;
+    counter.style.color = over ? 'var(--danger)' : (n > limite*0.8 ? '#ffb020' : 'var(--txt3)');
+  };
   autoResize();
+  updateCounter();
   ta.focus();
   ta.selectionStart = ta.value.length;
   let done = false;
@@ -6018,7 +6266,7 @@ function _okrListEditStart(span, campo, i){
     }
     _okrRerenderCurrentScreen();
   }
-  ta.addEventListener('input', autoResize);
+  ta.addEventListener('input', ()=>{ autoResize(); updateCounter(); });
   ta.addEventListener('blur', ()=>finish(true));
   ta.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); finish(true); }
@@ -6081,7 +6329,10 @@ function _okrMarcosListHtml(objId, podeEditar){
   const marcos = _okrMarcosSorted(objId);
   if(!marcos.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum marco ainda.</div>';
   return marcos.map((m,i)=>`
-    <div class="okr-marco-row" onclick="openOkrMarco('${m.id}','${objId}')">
+    <div class="okr-marco-row" style="border-left:3px solid ${okrStatusInfo(m.progresso||'nao_iniciado').dot};"
+      draggable="${podeEditar?'true':'false'}"
+      ${podeEditar?`ondragstart="_okrMarcoDragStart(event,'${m.id}')" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,'${objId}','${m.id}')" ondragend="_okrMarcoDragEnd(event)"`:''}
+      onclick="openOkrMarco('${m.id}','${objId}')">
       ${podeEditar?`<span style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
         <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
         <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',1)" ${i===marcos.length-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===marcos.length-1?'opacity:.25;cursor:default;':''}">▼</button>
@@ -6090,6 +6341,7 @@ function _okrMarcosListHtml(objId, podeEditar){
       <span class="okr-marco-nome">${esc(m.nome||'(sem nome)')}</span>
       ${m.responsavel?`<span class="okr-marco-meta">${esc(_okrPessoaInfo(m.responsavel).nome)}</span>`:''}
       ${m.prazo?`<span class="okr-marco-meta">📅 ${new Date(m.prazo+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
+      ${m.mostrarApresentacao!==false?`<span class="okr-marco-meta" title="Aparece na apresentação (okr-apresentacao.slide.html)">🎬</span>`:''}
     </div>`).join('');
 }
 // Move um marco 1 posição pra cima/baixo (dir -1/1) dentro do Objetivo.
@@ -6108,6 +6360,50 @@ async function _okrMarcoMover(objId, marcoId, dir){
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: ordens[i]}; });
   renderOkrObjBody(_okrEditingObjId);
+}
+// Drag-and-drop dos Marcos (pedido direto, mesmo espírito de
+// _okrObjDragStart()/_okrObjReorderTo() acima pros cards de Objetivo — os
+// dois convivem com ▲/▼, arrastar é o atalho rápido pra mover de uma vez
+// pra qualquer posição, não só 1 passo). Mesma técnica de sempre:
+// _okrMarcoDraggedId guarda o que está sendo arrastado entre os eventos;
+// ao soltar em cima de outro marco, reinsere na posição do alvo e
+// materializa `ordem` em TODOS os marcos do Objetivo.
+let _okrMarcoDraggedId = null;
+async function _okrMarcoReorderTo(objId, draggedId, targetId){
+  if(draggedId===targetId) return;
+  const marcos = _okrMarcosSorted(objId);
+  const fromIdx = marcos.findIndex(m=>m.id===draggedId);
+  const toIdx = marcos.findIndex(m=>m.id===targetId);
+  if(fromIdx<0 || toIdx<0) return;
+  const [item] = marcos.splice(fromIdx,1);
+  marcos.splice(toIdx,0,item);
+  const updates = {};
+  marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = i; });
+  await window._update(window._ref(window._db), updates);
+  marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: i}; });
+  renderOkrObjBody(objId);
+}
+function _okrMarcoDragStart(ev, marcoId){
+  _okrMarcoDraggedId = marcoId;
+  ev.dataTransfer.effectAllowed = 'move';
+  try{ ev.dataTransfer.setData('text/plain', marcoId); }catch(e){} // Firefox exige setData pra permitir o drag
+  ev.currentTarget.classList.add('okr-dragging');
+}
+function _okrMarcoDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; }
+function _okrMarcoDragEnter(ev){ ev.currentTarget.classList.add('okr-drag-over'); }
+function _okrMarcoDragLeave(ev){ ev.currentTarget.classList.remove('okr-drag-over'); }
+async function _okrMarcoDrop(ev, objId, targetMarcoId){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('okr-drag-over');
+  const draggedId = _okrMarcoDraggedId;
+  _okrMarcoDraggedId = null;
+  if(!draggedId || draggedId===targetMarcoId) return;
+  await _okrMarcoReorderTo(objId, draggedId, targetMarcoId);
+}
+function _okrMarcoDragEnd(ev){
+  ev.currentTarget.classList.remove('okr-dragging');
+  document.querySelectorAll('.okr-marco-row.okr-drag-over').forEach(el=>el.classList.remove('okr-drag-over'));
+  _okrMarcoDraggedId = null;
 }
 
 function renderOkrObjBody(id){
@@ -6137,8 +6433,7 @@ function renderOkrObjBody(id){
       <div class="okr-field-label">Marcos</div>
       ${_okrMarcosListHtml(id, false)}
       ${_okrCardLinksHtml(false)}
-      <div class="okr-field-label">📜 Histórico</div>
-      ${renderOkrHistory(d)}`;
+      ${_okrHistorySectionHtml(d)}`;
     footer.innerHTML = `<button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -6166,8 +6461,7 @@ function renderOkrObjBody(id){
     </div>
     ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
-    <div class="okr-field-label">📜 Histórico</div>
-    ${renderOkrHistory(d)}`;
+    ${_okrHistorySectionHtml(d)}`;
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
@@ -6204,7 +6498,8 @@ function renderOkrObjConfigBody(){
     <div class="okr-field-label">Pilar Estratégico</div>
     <input type="text" class="okr-input" id="okr-f-pilar" value="${esc(d.pilar||'')}" placeholder="Nome do pilar (opcional)">
     <div class="okr-field-label">Objetivo</div>
-    <textarea class="okr-textarea" id="okr-f-descricao" placeholder="Descreva o objetivo...">${esc(d.descricao||'')}</textarea>
+    <textarea class="okr-textarea" id="okr-f-descricao" placeholder="Descreva o objetivo..." oninput="_okrUpdateCharCounter('okr-f-descricao',${OKR_CHAR_LIMITS['okr-f-descricao']})">${esc(d.descricao||'')}</textarea>
+    ${_okrCharCounterHtml('okr-f-descricao')}
     ${_okrTagPickerHtml()}
     ${_okrPessoaPickerHtml('responsaveis','Responsável(is)')}`;
   footer.innerHTML = `
@@ -6214,6 +6509,7 @@ function renderOkrObjConfigBody(){
     const taDescricao = document.getElementById('okr-f-descricao');
     if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
   }
+  _okrUpdateCharCounter('okr-f-descricao', OKR_CHAR_LIMITS['okr-f-descricao']);
 }
 
 async function saveOkrObjetivo(){
@@ -6377,7 +6673,12 @@ function closeOkrMarco(){
 async function _okrTryCloseMarco(){
   if(_okrMarcoDraft && _okrMarcoOpenSnapshot!=null){
     _okrSyncMarcoDraftFromDom();
-    if(JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+    // Mesmo achado/mesma causa raiz de _okrTryCloseObjetivo() acima — texto
+    // digitado no "+ Add" do checklist (okr-checklist-add) só vira item de
+    // verdade com Enter/"+ Add"; sem confirmar, nunca entra em
+    // _okrSyncMarcoDraftFromDom() e clicar fora perdia o texto em silêncio.
+    const _temTextoPendente = (document.getElementById('okr-checklist-add')?.value||'').trim();
+    if(_temTextoPendente || JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
       if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -6557,8 +6858,7 @@ function renderOkrMarcoBody(){
       ${_okrParticipantesHtml()}
       <div class="okr-field-label">Comentários</div>
       ${_okrCommentsHtml()}
-      <div class="okr-field-label">📜 Histórico</div>
-      ${renderOkrHistory(d)}`;
+      ${_okrHistorySectionHtml(d)}`;
     footer.innerHTML = `<button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -6566,7 +6866,8 @@ function renderOkrMarcoBody(){
   const respOpts = _okrPessoaOptions();
   body.innerHTML = `
     <div class="okr-field-label">Nome do Marco</div>
-    <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade">
+    <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade" oninput="_okrUpdateCharCounter('okr-m-nome',${OKR_CHAR_LIMITS['okr-m-nome']})">
+    ${_okrCharCounterHtml('okr-m-nome')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div><div class="okr-field-label">Responsável</div>
         <select class="okr-select" id="okr-m-resp"><option value="">Ninguém</option>${respOpts.map(p=>`<option value="${p.uid}"${p.uid===d.responsavel?' selected':''}>${esc(p.nome)}</option>`).join('')}</select>
@@ -6577,7 +6878,8 @@ function renderOkrMarcoBody(){
     </div>
     ${_okrStatusPickerHtml()}
     <div class="okr-field-label">Descrição</div>
-    <textarea class="okr-textarea" id="okr-m-descricao" placeholder="Detalhe o marco...">${esc(d.descricao||'')}</textarea>
+    <textarea class="okr-textarea" id="okr-m-descricao" placeholder="Detalhe o marco..." oninput="_okrUpdateCharCounter('okr-m-descricao',${OKR_CHAR_LIMITS['okr-m-descricao']})">${esc(d.descricao||'')}</textarea>
+    ${_okrCharCounterHtml('okr-m-descricao')}
     <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;margin:6px 0;" title="Desligue pra ocultar este marco na apresentação executiva (útil em OKRs contínuos, com muitos marcos acumulados)">
       <input type="checkbox" id="okr-m-mostrar-apresentacao" ${d.mostrarApresentacao!==false?'checked':''}>
       🎬 Aparecer na apresentação
@@ -6587,12 +6889,13 @@ function renderOkrMarcoBody(){
     ${_okrParticipantesHtml()}
     <div class="okr-field-label">Comentários</div>
     ${_okrCommentsHtml()}
-    <div class="okr-field-label">📜 Histórico</div>
-    ${renderOkrHistory(d)}`;
+    ${_okrHistorySectionHtml(d)}`;
   footer.innerHTML = `
     <button onclick="_okrTryCloseMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
+  _okrUpdateCharCounter('okr-m-nome', OKR_CHAR_LIMITS['okr-m-nome']);
+  _okrUpdateCharCounter('okr-m-descricao', OKR_CHAR_LIMITS['okr-m-descricao']);
 }
 
 async function saveOkrMarco(){
@@ -10148,7 +10451,7 @@ function addPainelViewer(){
   const nomeInp=document.getElementById('pcfg-viewer-nome');
   const email=emailInp?.value?.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
-  if(email.endsWith('@ciahering.com.br')){ showToast('❌ Emails @ciahering já têm acesso, não precisam ser adicionados aqui.'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) já têm acesso, não precisam ser adicionados aqui.'); return; }
   const key=_painelViewerKey(email);
   const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+key), entry)
@@ -10633,7 +10936,21 @@ function doSignIn(){
   const err=document.getElementById('login-err'); err.style.display='none';
   window._signIn().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
 }
+// Login Microsoft (Arezzo) — mesmo padrão simples de doSignIn() acima
+// (painel.html nunca teve o fallback de popup→redirect que kanban-dev.html
+// tem, ver comentário lá; mantido consistente, não introduzido aqui).
+function doSignInMicrosoft(){
+  const err=document.getElementById('login-err'); err.style.display='none';
+  window._signInMicrosoft().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
+}
 function doSignOut(){ window._signOut(); }
+// Integração Arezzo (2026-10-01) — domínio tratado como CONFIÁVEL, mesmo
+// nível de @ciahering.com.br (não como "visualizador" via painel_viewers,
+// que é só leitura). Mesmo array/função de kanban-dev.html — ver comentário
+// completo lá; database.rules.json replica a MESMA lista, não dá pra ler
+// este array dali.
+const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
+function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
 
 // 👁 Visualizadores externos do painel (2026-08-27) — pedido direto: dar
 // acesso de SÓ LEITURA ao painel pra alguém fora de @ciahering.com.br (ex.:
@@ -10660,7 +10977,7 @@ window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
   if(user){
-    if(user.email && !user.email.endsWith('@ciahering.com.br')){
+    if(user.email && !_isTrustedDomainEmail(user.email)){
       // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
       // externos: cache curto (evita reconsultar à toa a cada auth-change,
       // que pode disparar sozinho por instabilidade do SDK) + 3 tentativas
@@ -10683,7 +11000,7 @@ window.addEventListener('auth-change',e=>{
         const viewers = snap.val()||{};
         const allowed = !!viewers[_painelViewerKey(user.email)];
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça a um ADM pra te adicionar como visualizador.';
+          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça a um ADM pra te adicionar como visualizador.';
           document.getElementById('login-err').style.display='block';
           window._signOut();
         } else {
@@ -10694,7 +11011,7 @@ window.addEventListener('auth-change',e=>{
       }).catch(err=>{
         console.error('[painel_viewers check] erro (tentativa '+tentativa+'):', err);
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_check(tentativa+1));
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut();
       });

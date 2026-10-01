@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.774 — 2026-10-01 · Promove pra prod — "🔄 Atualizar minha foto do Google"
+
+Promoção do v8.30.774-dev (pedido: "sobe tudo que tá acumulado pra prod").
+Item novo no menu do avatar (só pra quem logou com Google): pede o perfil
+de novo ao Google (popup rápido na mesma conta) pra corrigir foto que
+aparece como avatar genérico; se o Google confirmar que a conta só tem o
+avatar padrão, avisa claramente. Detalhes técnicos na entrada de dev logo
+abaixo.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
+`diff kanban.html kanban-dev.html` conferido — só as divergências
+permanentes de ambiente (favicon, versão/`VERSION_KEY`,
+`_faviconDefaultHref`, `force_logout_after`).
+
 ### v8.30.774-dev — 2026-10-01 · feat: "🔄 Atualizar minha foto do Google" (releitura forçada direto no Google)
 
 Pedido direto do usuário, retomando o assunto pausado ("tenta resolver
@@ -20218,6 +20232,31 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.86 · painel — 2026-10-01 · Promove pra prod — lote OKR acumulado (v3.77 → v3.86 de dev)
+
+Promoção do lote acumulado em `painel-dev.html` (pedido: "sobe tudo que
+tá acumulado pra prod"). Mudanças pro público de prod, aba 🎯 OKR:
+- **Bug real corrigido**: abrir ⚙ Configurações de um 2º Objetivo
+  mostrava título/gerência/pilar/descrição "grudados" do 1º que foi
+  configurado na sessão (já estava ao vivo em prod).
+- **Login com Microsoft** (integração Arezzo, `@arezzo.com.br`) também
+  no painel, com o mesmo nível de acesso de `@ciahering.com.br`.
+- **Preview 👁** em cada card de Objetivo: abre a apresentação já no
+  detalhe daquele Objetivo. **Contador de caracteres recomendado** nos
+  campos que aparecem na apresentação (aviso, não bloqueia salvar).
+- **Marcos**: arrastar e soltar pra reordenar (além de ▲/▼), ícone 🎬
+  nos que aparecem na apresentação, borda colorida por status.
+- **UI/UX da aba**: botões agrupados e "+ Novo Objetivo" em destaque
+  (também corrige corte de botões no celular), "Ver arquivados" junto
+  dos filtros, tira de resumo clicável por status + % de marcos
+  concluídos, "✕ Limpar filtros", barra de progresso na cor do status.
+- **UI/UX do modal**: Histórico e Cards vinculados colapsáveis.
+- Cards de OKR/Risco/Bloqueio no modo claro com fundo legível.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` — OK; versão
+`v3.86 · painel`, resto da divergência contra `painel-dev.html` é só
+ambiente (favicon/título/banner dev, nodes `_dev`, squads fictícias).
 
 ### painel-dev.html v3.86 · painel-dev — 2026-10-01 · UI/UX: auditoria + melhorias DENTRO do modal de Objetivo/Marco (OKR)
 
