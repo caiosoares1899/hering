@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.86 · painel-dev</div>
+<div class="version">v3.87 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5864,10 +5864,19 @@ function renderOkrHistory(entity){
 // painel (`_painelTimelineRender()`) em vez de inventar um componente
 // novo — fechado por padrão quando tem bastante coisa (>5), aberto
 // quando é pouco (nada pra esconder).
+// Estado aberto/fechado das seções recolhíveis — o corpo do modal inteiro é
+// reconstruído a cada "+ Add"/remover/etc., e sem lembrar o que a pessoa
+// abriu, o Histórico/Cards vinculados voltavam a fechar sozinhos no meio do
+// uso (achado do /monitorarbugs 2026-10-01). Chave por seção+entidade, vale
+// só dentro da sessão da página.
+const _okrDetailsState = {};
+function _okrDetailsAttrs(chave, abertoPadrao){
+  const aberto = chave in _okrDetailsState ? _okrDetailsState[chave] : abertoPadrao;
+  return `${aberto?'open':''} ontoggle="_okrDetailsState['${chave}']=this.open"`;
+}
 function _okrHistorySectionHtml(entity){
   const hist = Array.isArray(entity?.history) ? entity.history : [];
-  const aberto = hist.length <= 5;
-  return `<details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+  return `<details class="pt-bucket" style="margin-top:14px;" ${_okrDetailsAttrs('hist:'+(entity?.id||''), hist.length<=5)}>
     <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
       <span class="pt-chevron">▸</span> 📜 Histórico${hist.length?` <span class="badge">${hist.length}</span>`:''}
     </summary>
@@ -5931,9 +5940,8 @@ function _okrRenderCardSearch(q){
 // fechada quando está vazia (o caso comum).
 function _okrCardLinksHtml(podeEditar){
   const links=_okrObjDraft.cardLinks||[];
-  const aberto = links.length>0;
   return `
-    <details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <details class="pt-bucket" style="margin-top:14px;" ${_okrDetailsAttrs('links:'+(_okrObjDraft?.id||''), links.length>0)}>
     <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
       <span class="pt-chevron">▸</span> 🔗 Cards vinculados (badge 🎯 OKR no board)${links.length?` <span class="badge">${links.length}</span>`:''}
     </summary>

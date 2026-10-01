@@ -1257,16 +1257,24 @@ window._okrCloseNotes = () => document.getElementById('notes-ov').classList.remo
 // via _okrCommentSend(), ver CODE_MAP.md "💬 Comentários do Marco"), 1x a
 // cada abertura (não precisa de listener ao vivo pra uma apresentação —
 // se alguém comentar enquanto o painel tá aberto, reabrir mostra o novo).
+// Id do Marco cujo painel está aberto AGORA — a leitura é assíncrona, e clicar
+// em outro Marco (ou fechar e reabrir) antes da 1ª voltar fazia a resposta
+// ATRASADA sobrescrever a lista do Marco novo, sob o título dele (achado do
+// /monitorarbugs 2026-10-01; o `if(!list) return` antigo nunca disparava,
+// #mc-list sempre existe mesmo com o painel fechado).
+let _mcCurrentId = null;
 window._okrOpenMarcoComments = marcoId => {
   const m = okrMarcos[marcoId]; if(!m) return;
+  _mcCurrentId = marcoId;
   document.getElementById('mc-title').textContent = '💬 ' + (m.nome || 'Comentários');
   document.getElementById('mc-list').innerHTML = '<div class="mc-empty">Carregando…</div>';
   document.getElementById('mc-ov').classList.add('open');
   window._get(window._ref(window._db, 'kanban/okr/marco_comments/'+marcoId)).then(snap=>{
+    if(_mcCurrentId!==marcoId) return; // outra abertura/fechamento aconteceu enquanto lia
     const val = snap.val()||{};
     const comments = Object.values(val).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
     const list = document.getElementById('mc-list');
-    if(!list) return; // painel fechado antes da leitura voltar
+    if(!list) return;
     list.innerHTML = comments.length ? comments.map(c=>{
       // Mesmo padrão de _notaAvatarHtml() (classe no próprio <img>/<span>,
       // não num wrapper extra — .note-avatar tem object-fit:cover, que só
@@ -1284,11 +1292,12 @@ window._okrOpenMarcoComments = marcoId => {
     }).join('') : '<div class="mc-empty">Sem comentários ainda.</div>';
   }).catch(err=>{
     console.error('[marco comments] falha ao carregar:', err);
+    if(_mcCurrentId!==marcoId) return;
     const list = document.getElementById('mc-list');
     if(list) list.innerHTML = '<div class="mc-empty">Não foi possível carregar os comentários.</div>';
   });
 };
-window._okrCloseMarcoComments = () => document.getElementById('mc-ov').classList.remove('open');
+window._okrCloseMarcoComments = () => { _mcCurrentId = null; document.getElementById('mc-ov').classList.remove('open'); };
 window._okrAddNota = () => {
   const inp = document.getElementById('notes-input');
   const texto = (inp.value||'').trim();
