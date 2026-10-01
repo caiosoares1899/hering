@@ -19699,6 +19699,21 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-01 (2ª rodada) — Novidade: descrição do Marco agora aparece na tabela
+
+Pedido direto do usuário: "o pessoal quer q apareça tambem a descrição
+do marco na apresentação".
+
+Cada linha de Marco, na tabela "Marcos ou atividades macros" do
+detalhe do Objetivo, ganhou uma 2ª linha opcional logo abaixo do nome
+— texto menor, cor mais apagada (`--txt3`) — com `m.descricao`, quando
+o Marco tiver uma preenchida. Quebra de linha normal (mesmo padrão já
+usado no nome do Marco), não corta nem trunca. Marco sem descrição
+continua mostrando só o nome, sem espaço extra.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` — OK; balanço
+de chaves do arquivo inteiro (0, igual ao baseline anterior).
+
 ### 2026-10-01 — Novidade: clicar num Marco mostra os comentários feitos nele
 
 Pedido direto do usuário: "na apresentação de okr, o marco deveria ser
