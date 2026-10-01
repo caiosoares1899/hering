@@ -264,8 +264,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-table-header .c-status{width:160px;}
 .d2-table-header .c-prazo{width:95px;text-align:right;}
 .d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
-.d2-marco-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px;}
+.d2-marco-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px;cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
+.d2-marco-row:hover{background:rgba(255,255,255,.05);}
 .d2-marco-num{width:22px;color:var(--txt3);font-size:12.5px;flex-shrink:0;}
 /* Nome do marco agora QUEBRA em várias linhas em vez de cortar (pedido direto
    do usuário, 2026-09-10: "a parte de marcos nao ta respeitando o limite
@@ -395,6 +396,28 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   font-size:16px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit;}
 .notes-send:hover{background:var(--cyan);}
 .notes-send:disabled{opacity:.4;cursor:default;}
+
+/* Comentários do Marco (pedido direto do usuário, 2026-10-01: "o marco
+   deveria ser clicável e mostrar os comentários feitos") — mesmo padrão
+   visual de #notes-ov/.notes-panel acima (painel lateral direito), classes
+   próprias (.mc-*) pra não confundir com o de Anotações (feature
+   diferente, mesmo z-index "camada de cima"). Só leitura — comentar de
+   verdade continua sendo feito no modal do Marco dentro de painel.html;
+   aqui é só pra quem está acompanhando a apresentação ver o que já foi
+   dito, sem precisar abrir o painel noutra aba. */
+#mc-ov{position:fixed;inset:0;z-index:470;display:none;background:rgba(3,13,26,.55);backdrop-filter:blur(4px);}
+#mc-ov.open{display:flex;justify-content:flex-end;}
+.mc-panel{width:min(420px,92vw);height:100%;background:var(--glass);border-left:1px solid var(--glass-b);
+  backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);}
+.mc-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 20px;
+  border-bottom:1px solid var(--glass-b);flex-shrink:0;}
+.mc-hd h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mc-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);
+  font-size:15px;cursor:pointer;font-family:inherit;flex-shrink:0;}
+.mc-close:hover{background:var(--glass-hover);}
+.mc-list{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
+.mc-empty{margin:auto;text-align:center;color:var(--txt3);font-size:13px;padding:20px;}
 </style>
 </head>
 <body>
@@ -498,6 +521,21 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
       <button class="notes-send" id="notes-send" onclick="window._okrAddNota()" title="Enviar (Enter)">➤</button>
     </div>
     <div class="notes-readonly" id="notes-readonly" hidden>🔒 Reunião encerrada — só leitura. Abra "Hoje" pra adicionar uma anotação nova.</div>
+  </div>
+</div>
+
+<!-- Comentários do Marco (pedido direto do usuário, 2026-10-01) — mesmo
+     motivo de #notes-fab/#notes-ov logo acima pra ficar sibling na raiz
+     (não dentro de #app): precisa competir de verdade com #detail-ov
+     (z-index:400) e abrir por CIMA dele mesmo com o Objetivo já
+     detalhado na tela, que é exatamente de onde o clique no marco parte. -->
+<div id="mc-ov" onclick="if(event.target===this) window._okrCloseMarcoComments()">
+  <div class="mc-panel">
+    <div class="mc-hd">
+      <h3 id="mc-title">💬 Comentários</h3>
+      <button class="mc-close" onclick="window._okrCloseMarcoComments()">✕</button>
+    </div>
+    <div class="mc-list" id="mc-list"></div>
   </div>
 </div>
 
@@ -926,6 +964,15 @@ window._okrFullscreen = () => {
 };
 
 document.addEventListener('keydown', e=>{
+  // Checado ANTES de #detail-ov de propósito — #mc-ov abre POR CIMA dele
+  // (z-index 470 > 400, ver CSS), tipicamente com o Objetivo detalhado
+  // ainda aberto por baixo; Escape precisa fechar o painel de cima
+  // primeiro, não pular direto pro de baixo (mesmo padrão de prioridade
+  // que #notes-ov/#agenda-cfg-ov já seguem logo abaixo).
+  if(document.getElementById('mc-ov').classList.contains('open')){
+    if(e.key==='Escape'){ e.preventDefault(); window._okrCloseMarcoComments(); }
+    return;
+  }
   if(document.getElementById('detail-ov').classList.contains('open')){
     if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
     return;
@@ -1003,7 +1050,7 @@ window._okrOpenDetail = id => {
           <div class="d2-table-rows">${marcos.length ? marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
             const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
-            return `<div class="d2-marco-row"${oculto?' style="display:none;"':''}>
+            return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments('${m.id}')" title="Ver comentários">
               <span class="d2-marco-num">${i+1}.</span>
               <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
@@ -1187,6 +1234,45 @@ window._okrToggleNotes = () => {
   }
 };
 window._okrCloseNotes = () => document.getElementById('notes-ov').classList.remove('open');
+
+// Comentários do Marco (pedido direto do usuário, 2026-10-01: "o marco
+// deveria ser clicável e mostrar os comentários feitos"). Só leitura — lê
+// kanban/okr/marco_comments/{marcoId} (mesmo node que painel.html grava
+// via _okrCommentSend(), ver CODE_MAP.md "💬 Comentários do Marco"), 1x a
+// cada abertura (não precisa de listener ao vivo pra uma apresentação —
+// se alguém comentar enquanto o painel tá aberto, reabrir mostra o novo).
+window._okrOpenMarcoComments = marcoId => {
+  const m = okrMarcos[marcoId]; if(!m) return;
+  document.getElementById('mc-title').textContent = '💬 ' + (m.nome || 'Comentários');
+  document.getElementById('mc-list').innerHTML = '<div class="mc-empty">Carregando…</div>';
+  document.getElementById('mc-ov').classList.add('open');
+  window._get(window._ref(window._db, 'kanban/okr/marco_comments/'+marcoId)).then(snap=>{
+    const val = snap.val()||{};
+    const comments = Object.values(val).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
+    const list = document.getElementById('mc-list');
+    if(!list) return; // painel fechado antes da leitura voltar
+    list.innerHTML = comments.length ? comments.map(c=>{
+      // Mesmo padrão de _notaAvatarHtml() (classe no próprio <img>/<span>,
+      // não num wrapper extra — .note-avatar tem object-fit:cover, que só
+      // faz sentido no elemento com a imagem de verdade).
+      const img = safeUrl(c.foto)
+        ? `<img class="note-avatar" src="${safeUrl(c.foto)}" alt="">`
+        : `<span class="note-avatar" style="display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${esc((c.author||'?').slice(0,2).toUpperCase())}</span>`;
+      return `<div class="note-item">
+        <div class="note-item-hd">
+          <span class="note-author">${img}${esc(c.author||'?')}</span>
+          <span class="note-time">${new Date(c.ts).toLocaleString('pt-BR')}</span>
+        </div>
+        <div class="note-text">${esc(c.text)}</div>
+      </div>`;
+    }).join('') : '<div class="mc-empty">Sem comentários ainda.</div>';
+  }).catch(err=>{
+    console.error('[marco comments] falha ao carregar:', err);
+    const list = document.getElementById('mc-list');
+    if(list) list.innerHTML = '<div class="mc-empty">Não foi possível carregar os comentários.</div>';
+  });
+};
+window._okrCloseMarcoComments = () => document.getElementById('mc-ov').classList.remove('open');
 window._okrAddNota = () => {
   const inp = document.getElementById('notes-input');
   const texto = (inp.value||'').trim();
