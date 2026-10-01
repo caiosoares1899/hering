@@ -20287,6 +20287,30 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.90 · painel-dev — 2026-10-01 · fix(OKR): texto digitado numa caixa "+ Add" não some mais ao mexer em outra coisa
+
+Continuação do #1147 (aviso de "não salvo" com texto pendente). O texto
+digitado numa caixa "+ Add" (Indicadores/Progressos/Próximos Passos/Riscos/
+Planos de Ação/Trimestres no Objetivo; checklist no Marco) só vira item com
+Enter/"+ Add" — até lá vive só no `<input>`, e todo "+ Add"/remover/editar
+item reconstrói o corpo inteiro do modal. Resultado: o texto pendente de
+OUTRA caixa sumia em silêncio ao confirmar uma lista, ao ir pra ⚙
+Configurações ou abrir um Marco e voltar, e ao marcar um item do checklist.
+Agora `_okrReadPending()`/`_okrWritePending()` leem os valores logo antes de
+reconstruir e devolvem depois (com o contador de caracteres).
+
+Cuidado deliberado pra não vazar texto entre Objetivos/Marcos: a leitura é
+do DOM vivo, então o corpo de cada modal é limpo ao abrir e ao fechar a
+sessão (`openOkrObjetivo`/`closeOkrObjetivo`/`openOkrMarco`/`closeOkrMarco`);
+e o item recém-confirmado esvazia a própria caixa antes do re-render, pra
+não voltar como "pendente". O aviso de fechar com texto pendente (#1147)
+continua funcionando.
+
+Validado em Chromium (Playwright) com as funções reais da página: 12
+cenários (sobrevive ao + Add de outra lista, ida e volta pela Config e por
+um Marco, trimestres, checklist; não vaza pro próximo Objetivo/Marco; aviso
+de fechar intacto) — os 6 de "sobrevive" falham sem a correção.
+
 ### painel-dev.html v3.89 · painel-dev — 2026-10-01 · fix(OKR): salvar um Marco e depois o Objetivo apagava a entrada do Marco no histórico
 
 `/monitorarbugs` nas correções de OKR do dia. `saveOkrMarco()`/

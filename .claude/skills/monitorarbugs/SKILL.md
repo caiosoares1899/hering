@@ -2801,11 +2801,11 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   dirty-check). 8 cenários em Node. (2) técnica 2 — `renderSelectorGrid()`
   (kanban) injetava label/subtitle/emoji/id de `squads_meta` crus; o seletor
   do header já usava `esc()`/`encodeURIComponent()`. dev kanban v8.30.777,
-  painel v3.89. Reportado, NÃO corrigido (ambíguo): texto digitado em uma caixa
-  "+ Add" ainda se perde ao confirmar OUTRA lista (o corpo inteiro é
-  reconstruído) ou ao ir pra ⚙ Config/Marco e voltar — restaurar os valores
-  exige rastrear de qual Objetivo eles são, senão vazam entre Objetivos.
-  Checado e sem achado: `resolveSquadAndShow()` (ADM/1 squad/N squads/padrão),
+  painel v3.89. Texto digitado em uma caixa "+ Add" se perdia ao confirmar OUTRA lista
+  ou ao ir pra ⚙ Config/Marco e voltar — CORRIGIDO na sequência (v3.90,
+  `_okrReadPending()`/`_okrWritePending()` + corpo do modal limpo ao
+  abrir/fechar a sessão pra não vazar entre Objetivos; 12 cenários em
+  Chromium/Playwright com as funções reais, 6 falham sem o fix). Checado e sem achado: `resolveSquadAndShow()` (ADM/1 squad/N squads/padrão),
   `_okrTryCloseMarco()`, DnD de Marcos, `openOkrConfig()` pós-fix.
   **Lição**: quando uma tela filha (Marco) grava no pai (Objetivo) enquanto o
   pai está aberto com rascunho em memória, o salvar do pai sobrescreve o que a
