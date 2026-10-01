@@ -280,7 +280,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    de .d2-table-rows (não um clientHeight já espremido) e encolhem via zoom
    até caber, do mesmo jeito que já fazem pra qualquer outro excesso de
    conteúdo nesta tela. */
-.d2-marco-nome{flex:1;min-width:0;color:var(--txt);padding-right:10px;white-space:normal;overflow-wrap:break-word;}
+.d2-marco-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;padding-right:10px;}
+.d2-marco-nome{color:var(--txt);white-space:normal;overflow-wrap:break-word;}
+.d2-marco-desc{color:var(--txt3);font-size:12.5px;line-height:1.4;white-space:normal;overflow-wrap:break-word;}
 .d2-marco-status{width:160px;display:flex;align-items:center;gap:7px;font-size:13px;color:var(--txt2);flex-shrink:0;}
 .d2-marco-prazo{width:95px;text-align:right;font-size:13px;color:var(--txt3);flex-shrink:0;}
 
@@ -1052,7 +1054,10 @@ window._okrOpenDetail = id => {
             const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
             return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments('${m.id}')" title="Ver comentários">
               <span class="d2-marco-num">${i+1}.</span>
-              <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
+              <div class="d2-marco-main">
+                <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
+                ${m.descricao?`<div class="d2-marco-desc">${esc(m.descricao)}</div>`:''}
+              </div>
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
               <span class="d2-marco-prazo">${m.prazo?esc(m.prazo):'—'}</span>
             </div>`;

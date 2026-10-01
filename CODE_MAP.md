@@ -3685,6 +3685,13 @@ detalhe aberto — ver nota abaixo).
   `#detail-ov` (400), já que normalmente abre com o Objetivo ainda
   detalhado por baixo. Checado no `keydown` global ANTES de `#detail-ov`
   (mesma lógica de prioridade de "painel de cima fecha primeiro").
+  **2ª rodada (2026-10-01, mesmo dia, pedido direto: "o pessoal quer q
+  apareça tambem a descrição do marco na apresentação")**: cada linha
+  de `.d2-marco-row`, dentro de `window._okrOpenDetail()` — L1009 (a
+  tabela "Marcos ou atividades macros"), ganhou uma 2ª linha opcional
+  `.d2-marco-desc` com `m.descricao`, exibida só quando preenchida —
+  nome e descrição agora moram juntos num `.d2-marco-main` (`flex:1`)
+  pra status/prazo continuarem alinhados à 1ª linha.
 - **⏱ Contagem regressiva da agenda** (2026-09-17, pedido direto do
   usuário: "quero um cronometro mostrando quanto tempo falta para a
   agenda acabar... configurável que horario começou + o horario
