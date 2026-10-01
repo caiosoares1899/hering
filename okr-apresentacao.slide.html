@@ -625,6 +625,13 @@ const PT_PALETTE=[
 let okrObjetivos = {}, okrMarcos = {}, okrTags = {}, usersCache = {}, okrNotas = {};
 let _loaded = {obj:false, marco:false, tag:false, users:false};
 let _lastUpdate = null;
+// Preview direto de 1 Objetivo (botão "👁" no card do painel-dev.html, aba
+// OKR) — ?preview=<id> abre esta apresentação já com o detalhe desse
+// Objetivo aberto, sem precisar navegar pelo carrossel/índice. Consumido
+// uma ÚNICA vez no 1º rebuild() com dados carregados (ver lá embaixo) —
+// senão reabriria o detalhe a cada atualização ao vivo do Firebase,
+// atropelando quem já estivesse navegando a apresentação de verdade.
+let _previewObjId = new URLSearchParams(location.search).get('preview');
 
 function pessoaInfo(uid){
   const u = usersCache[uid] || {};
@@ -777,6 +784,10 @@ function rebuild(){
   let idx = slides.findIndex(s=>s.key===prevKey);
   currentIdx = idx>=0 ? idx : 0;
   render();
+  if(_previewObjId){
+    const id = _previewObjId; _previewObjId = null;
+    if(okrObjetivos[id]) window._okrOpenDetail(id);
+  }
 }
 
 // Nunca deixa uma slide precisar de scroll (pedido direto: "tem que ser one

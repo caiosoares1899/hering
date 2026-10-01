@@ -20194,6 +20194,44 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.84 · painel-dev — 2026-10-01 · feat(OKR): preview por Objetivo + contador de caracteres recomendado
+
+Pedido direto do usuário: "um preview da apresentação do objetivo para
+cada objetivo na guia okr! e um aviso para as pessoas olharem como
+ficou pq ta ficando com muito texto e acho q eles precisam ver isso e
+a gente precisa tambem calcular quantos caracteres sao maximo para n
+quebrar a leitura".
+
+**1. 👁 Pré-visualizar** — cada card de Objetivo, na aba 🎯 OKR, ganhou
+um botão no canto (`_okrPreviewApresentacao(id)`) que abre
+`okr-apresentacao.slide.html?preview=<id>` numa aba nova, já com o
+detalhe desse Objetivo aberto — sem precisar navegar pelo carrossel/
+índice pra conferir como ficou. Do lado de `okr-apresentacao.slide.html`:
+`_previewObjId` lê o parâmetro da URL e `rebuild()` consome ele UMA
+VEZ, no 1º carregamento de dados completo, chamando
+`window._okrOpenDetail(id)` direto.
+
+**2. Contador de caracteres recomendado** — `OKR_CHAR_LIMITS` define um
+soft cap por campo (não bloqueia salvar, só avisa), calculado a partir
+da largura REAL dos containers em `okr-apresentacao.slide.html` (CSS de
+lá) com uma heurística de ~0.52× o tamanho da fonte por caractere:
+Objetivo (`okr-f-descricao`) ~200 car., item de lista (Indicadores/
+Progressos/Próx. Passos/Riscos/Planos de Ação) ~90 car. cada, nome do
+Marco ~70 car., descrição do Marco ~110 car. Não é limite técnico —
+nada quebra visualmente acima dele, porque o zoom-fit da apresentação
+sempre encolhe o que for preciso pra caber, sem piso mínimo de fonte —
+é um aviso de LEGIBILIDADE: acima do soft cap, o campo passa a dominar
+a seção e encolhe a fonte de tudo ao redor quando a apresentação roda
+num telão/projetor. Contador aparece embaixo de cada campo (texto fixo
+e itens de lista, tanto no "+ Add" quanto editando um item já salvo),
+muda de cor (cinza → amarelo perto do limite → vermelho acima dele).
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` (module +
+clássico) de `painel-dev.html` e nos 2 de `okr-apresentacao.slide.html`
+— OK; balanço de chaves/parênteses de `painel-dev.html` bate com o
+baseline da sessão (braces -1, parens -14); balanço de chaves de
+`okr-apresentacao.slide.html` (0, igual ao baseline anterior).
+
 ### painel-dev.html v3.83 · painel-dev — 2026-10-01 · feat: login com Microsoft (integração Arezzo) — gap que ficou de fora da rodada do kanban
 
 Pedido direto do usuário ("existem coisas que tão ligadas ao usuário

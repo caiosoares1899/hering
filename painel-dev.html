@@ -338,8 +338,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .okr-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;}
 .okr-area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px;}
-.okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;}
+.okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative;}
 .okr-card:hover{border-color:rgba(56,182,255,.4);transform:translateY(-1px);}
+/* 👁 Pré-visualizar (pedido direto: "um preview da apresentação do objetivo
+   para cada objetivo") — abre okr-apresentacao.slide.html?preview=<id> numa
+   aba nova, já focado no detalhe deste Objetivo (ver _okrPreviewApresentacao()
+   e o hook em rebuild() de lá). Canto absoluto fixo pra não disputar espaço
+   com a linha de ▲▼ (que só aparece com podeReordenar), nem com o resto do
+   card — sempre visível, qualquer um pode conferir como ficou. */
+.okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
+.okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
+.okr-char-counter{font-size:10px;text-align:right;color:var(--txt3);}
 /* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
    ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
    continuam funcionando em telas sem mouse). */
@@ -2909,7 +2918,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.83 · painel-dev</div>
+<div class="version">v3.84 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5550,6 +5559,9 @@ function renderOkrObjetivos(){
   }).join('');
 }
 
+function _okrPreviewApresentacao(id){
+  window.open('okr-apresentacao.slide.html?preview='+encodeURIComponent(id), '_blank', 'noopener');
+}
 function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   const status = _okrObjStatus(o.id);
   const marcos = _okrObjMarcos(o.id);
@@ -5561,12 +5573,13 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     draggable="${podeReordenar?'true':'false'}"
     ${podeReordenar?`ondragstart="_okrObjDragStart(event,'${o.id}')" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,'${areaId}','${o.id}')" ondragend="_okrObjDragEnd(event)"`:''}
     onclick="openOkrObjetivo('${o.id}')">
-    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;">
+    <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao('${o.id}')" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
+    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:28px;">
       <span title="Arraste pra reordenar" style="font-size:12px;color:var(--txt3);margin-right:auto;cursor:grab;">⠿</span>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
-    <p class="okr-card-title">${esc(o.titulo||'(sem título)')}</p>
+    <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${okrStatusDot(status)} <span>${esc(okrStatusInfo(status).label)}</span>
       ${_okrTrimestresOf(o).map(t=>`<span class="badge">${esc(t)}</span>`).join('')}
@@ -5578,6 +5591,51 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     </div>
     <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;"></div></div>
   </div>`;
+}
+
+// ── Limites recomendados de caracteres (pedido direto: "a gente precisa
+// calcular quantos caracteres sao maximo para n quebrar a leitura") ──
+// Calculados a partir da largura REAL dos containers em
+// okr-apresentacao.slide.html (CSS lido direto de lá, no zoom base 1x —
+// antes de qualquer encolhimento automático) com uma heurística comum pra
+// fonte proporcional sans-serif: ~0.52× o tamanho da fonte por caractere.
+// NÃO é um limite técnico — nada quebra visualmente acima dele, porque o
+// zoom-fit da apresentação (_zoomFitToHeight()) sempre encolhe o que for
+// preciso pra caber, sem piso mínimo. É um limite de LEGIBILIDADE: acima
+// dele, o campo passa a dominar o espaço da própria seção e empurra a
+// fonte de TUDO ao redor pra baixo quando a apresentação roda num telão/
+// projetor — e isso é exatamente o que motivou o pedido ("ta ficando com
+// muito texto").
+//   - Objetivo (.d2-panel-body, raia esquerda ~264px úteis @ 14px,
+//     line-height 1.55): soft cap ~200 car. — dado real já registrado no
+//     CHANGELOG (2026-09-30): uma descrição de ~270 car. já "ocupa boa
+//     parte da raia sozinha", competindo com os painéis de Responsável e
+//     Indicadores na mesma coluna.
+//   - Item de lista (Indicadores/Progressos/Próx. Passos/Riscos/Planos —
+//     .d2-flist ~254px úteis @ 14px): soft cap ~90 car. por item — mais
+//     apertado que a descrição porque cada coluna do rodapé normalmente
+//     tem VÁRIOS itens, não um só.
+//   - Nome do Marco (.d2-marco-nome, ~557px úteis @ 15px, divide linha com
+//     Status/Prazo): soft cap ~70 car.
+//   - Descrição do Marco (.d2-marco-desc, mesma largura @ 12.5px, 2ª
+//     linha abaixo do nome): soft cap ~110 car.
+const OKR_CHAR_LIMITS = {
+  'okr-f-descricao': 200,
+  'okr-m-nome': 70,
+  'okr-m-descricao': 110,
+  indicadores: 90, progressos: 90, proximosPassos: 90, riscos: 90, planosAcao: 90,
+};
+function _okrCharCounterHtml(fieldId){
+  return `<div class="okr-char-counter" id="${fieldId}-counter"></div>`;
+}
+function _okrUpdateCharCounter(fieldId, limite){
+  const el = document.getElementById(fieldId), counter = document.getElementById(fieldId+'-counter');
+  if(!el || !counter || !limite) return;
+  const n = el.value.length;
+  if(n===0){ counter.textContent=''; return; }
+  const over = n > limite;
+  counter.textContent = `${n}/${limite} caracteres${over?' · pode ficar apertado na apresentação':''}`;
+  counter.style.color = over ? 'var(--danger)' : (n > limite*0.8 ? '#ffb020' : 'var(--txt3)');
 }
 
 // ── Histórico (evolução do Objetivo/Marco a cada edição) — mesmo padrão de
@@ -5967,15 +6025,17 @@ function _okrSyncObjDraftFromDom(){
 
 function _okrListEditorHtml(campo, label, placeholder){
   const itens = _okrObjDraft[campo]||[];
+  const limite = OKR_CHAR_LIMITS[campo];
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div class="okr-list-editable">
       ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,'${campo}',${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove('${campo}',${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
-      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
+      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
       <button type="button" class="btn btn-sm" onclick="_okrListAdd('${campo}')">+ Add</button>
-    </div>`;
+    </div>
+    ${limite?_okrCharCounterHtml('okr-add-'+campo):''}`;
 }
 // Clique pra editar um item já escrito, mesmo padrão do renderCL() do
 // checklist de card no kanban (kanban-dev.html): span vira um <textarea>
@@ -5984,6 +6044,9 @@ function _okrListEditorHtml(campo, label, placeholder){
 // OKR são texto puro).
 function _okrListEditStart(span, campo, i){
   const original = _okrObjDraft[campo][i];
+  const limite = OKR_CHAR_LIMITS[campo];
+  const wrap = document.createElement('div');
+  wrap.style.flex = '1';
   const ta = document.createElement('textarea');
   ta.className = 'okr-input';
   ta.value = original;
@@ -5991,9 +6054,21 @@ function _okrListEditStart(span, campo, i){
   ta.style.resize = 'none';
   ta.style.overflow = 'hidden';
   ta.rows = 1;
-  span.replaceWith(ta);
+  const counter = document.createElement('div');
+  counter.className = 'okr-char-counter';
+  wrap.appendChild(ta);
+  wrap.appendChild(counter);
+  span.replaceWith(wrap);
   const autoResize = ()=>{ ta.style.height='auto'; ta.style.height=(ta.scrollHeight)+'px'; };
+  const updateCounter = ()=>{
+    const n = ta.value.length;
+    if(!limite || n===0){ counter.textContent=''; return; }
+    const over = n > limite;
+    counter.textContent = `${n}/${limite} caracteres${over?' · pode ficar apertado na apresentação':''}`;
+    counter.style.color = over ? 'var(--danger)' : (n > limite*0.8 ? '#ffb020' : 'var(--txt3)');
+  };
   autoResize();
+  updateCounter();
   ta.focus();
   ta.selectionStart = ta.value.length;
   let done = false;
@@ -6013,7 +6088,7 @@ function _okrListEditStart(span, campo, i){
     }
     _okrRerenderCurrentScreen();
   }
-  ta.addEventListener('input', autoResize);
+  ta.addEventListener('input', ()=>{ autoResize(); updateCounter(); });
   ta.addEventListener('blur', ()=>finish(true));
   ta.addEventListener('keydown', e=>{
     if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); finish(true); }
@@ -6247,7 +6322,8 @@ function renderOkrObjConfigBody(){
     <div class="okr-field-label">Pilar Estratégico</div>
     <input type="text" class="okr-input" id="okr-f-pilar" value="${esc(d.pilar||'')}" placeholder="Nome do pilar (opcional)">
     <div class="okr-field-label">Objetivo</div>
-    <textarea class="okr-textarea" id="okr-f-descricao" placeholder="Descreva o objetivo...">${esc(d.descricao||'')}</textarea>
+    <textarea class="okr-textarea" id="okr-f-descricao" placeholder="Descreva o objetivo..." oninput="_okrUpdateCharCounter('okr-f-descricao',${OKR_CHAR_LIMITS['okr-f-descricao']})">${esc(d.descricao||'')}</textarea>
+    ${_okrCharCounterHtml('okr-f-descricao')}
     ${_okrTagPickerHtml()}
     ${_okrPessoaPickerHtml('responsaveis','Responsável(is)')}`;
   footer.innerHTML = `
@@ -6257,6 +6333,7 @@ function renderOkrObjConfigBody(){
     const taDescricao = document.getElementById('okr-f-descricao');
     if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
   }
+  _okrUpdateCharCounter('okr-f-descricao', OKR_CHAR_LIMITS['okr-f-descricao']);
 }
 
 async function saveOkrObjetivo(){
@@ -6614,7 +6691,8 @@ function renderOkrMarcoBody(){
   const respOpts = _okrPessoaOptions();
   body.innerHTML = `
     <div class="okr-field-label">Nome do Marco</div>
-    <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade">
+    <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade" oninput="_okrUpdateCharCounter('okr-m-nome',${OKR_CHAR_LIMITS['okr-m-nome']})">
+    ${_okrCharCounterHtml('okr-m-nome')}
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
       <div><div class="okr-field-label">Responsável</div>
         <select class="okr-select" id="okr-m-resp"><option value="">Ninguém</option>${respOpts.map(p=>`<option value="${p.uid}"${p.uid===d.responsavel?' selected':''}>${esc(p.nome)}</option>`).join('')}</select>
@@ -6625,7 +6703,8 @@ function renderOkrMarcoBody(){
     </div>
     ${_okrStatusPickerHtml()}
     <div class="okr-field-label">Descrição</div>
-    <textarea class="okr-textarea" id="okr-m-descricao" placeholder="Detalhe o marco...">${esc(d.descricao||'')}</textarea>
+    <textarea class="okr-textarea" id="okr-m-descricao" placeholder="Detalhe o marco..." oninput="_okrUpdateCharCounter('okr-m-descricao',${OKR_CHAR_LIMITS['okr-m-descricao']})">${esc(d.descricao||'')}</textarea>
+    ${_okrCharCounterHtml('okr-m-descricao')}
     <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;margin:6px 0;" title="Desligue pra ocultar este marco na apresentação executiva (útil em OKRs contínuos, com muitos marcos acumulados)">
       <input type="checkbox" id="okr-m-mostrar-apresentacao" ${d.mostrarApresentacao!==false?'checked':''}>
       🎬 Aparecer na apresentação
@@ -6641,6 +6720,8 @@ function renderOkrMarcoBody(){
     <button onclick="_okrTryCloseMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
+  _okrUpdateCharCounter('okr-m-nome', OKR_CHAR_LIMITS['okr-m-nome']);
+  _okrUpdateCharCounter('okr-m-descricao', OKR_CHAR_LIMITS['okr-m-descricao']);
 }
 
 async function saveOkrMarco(){
