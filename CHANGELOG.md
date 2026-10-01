@@ -20052,6 +20052,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.79 · painel-dev — 2026-10-01 · fix: ícone da lista de Marcos trocado de 📷 pra 🎬 (consistência com o checkbox do Marco)
+
+Correção pontual da v3.78, mesmo dia: usei 📷 (câmera) por engano — o
+checkbox "Aparecer na apresentação" dentro do próprio Marco já usa 🎬
+(claquete) desde que a feature existe. Troca simples pro mesmo emoji,
+mantendo os 2 pontos consistentes.
+
 ### painel-dev.html v3.78 · painel-dev — 2026-10-01 · feat(OKR): ícone 📷 na lista de Marcos indica quem aparece na apresentação
 
 Pedido direto do usuário. O modal do Objetivo (aba 🎯 OKR) já mostrava
