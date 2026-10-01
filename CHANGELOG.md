@@ -20052,6 +20052,19 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.78 · painel-dev — 2026-10-01 · feat(OKR): ícone 📷 na lista de Marcos indica quem aparece na apresentação
+
+Pedido direto do usuário. O modal do Objetivo (aba 🎯 OKR) já mostrava
+responsável e prazo de cada Marco na lista — mas se um Marco aparece ou
+não em `okr-apresentacao.slide.html` (`mostrarApresentacao`) só dava pra
+ver abrindo o Marco individualmente. Agora a própria linha do Marco na
+lista do Objetivo ganha um 📷 (com tooltip "Aparece na apresentação")
+quando `mostrarApresentacao!==false` — mesmo critério que
+`okr-apresentacao.slide.html` já usa pra filtrar o que mostrar no slide,
+só que visível de relance na lista, sem precisar abrir cada Marco.
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### painel-dev.html v3.77 · painel-dev — 2026-10-01 · fix: cards de OKR/Risco/Bloqueio ilegíveis no tema claro
 
 Relato direto do usuário, com print: "modo claro no okr ta bugadasso de
