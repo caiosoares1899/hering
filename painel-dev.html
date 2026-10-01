@@ -2900,7 +2900,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.79 · painel-dev</div>
+<div class="version">v3.80 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5858,7 +5858,18 @@ function closeOkrConfigBack(){
 async function _okrTryCloseObjetivo(){
   if(_okrObjDraft && _okrObjOpenSnapshot!=null){
     _okrSyncObjDraftFromDom();
-    if(JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+    // Achado real (relato direto, 2026-10-01): os campos "+ Add" de
+    // indicadores/progressos/próximos passos/riscos/planos de ação/
+    // trimestres (_okrListEditorHtml()) só viram item de verdade no
+    // _okrObjDraft quando confirmados (Enter/"+ Add") — texto digitado mas
+    // ainda não confirmado nunca entra em _okrSyncObjDraftFromDom() (só
+    // sincroniza título/gerência/pilar/descrição), então clicar fora com
+    // algo digitado ali (sem confirmar) perdia o texto em silêncio, sem
+    // perguntar nada — o dirty-check comparava um _okrObjDraft que nunca
+    // tinha mudado de verdade.
+    const _camposAdd = ['indicadores','progressos','proximosPassos','riscos','planosAcao','trimestres'];
+    const _temTextoPendente = _camposAdd.some(c => (document.getElementById('okr-add-'+c)?.value||'').trim());
+    if(_temTextoPendente || JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
       if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -6332,7 +6343,12 @@ function closeOkrMarco(){
 async function _okrTryCloseMarco(){
   if(_okrMarcoDraft && _okrMarcoOpenSnapshot!=null){
     _okrSyncMarcoDraftFromDom();
-    if(JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+    // Mesmo achado/mesma causa raiz de _okrTryCloseObjetivo() acima — texto
+    // digitado no "+ Add" do checklist (okr-checklist-add) só vira item de
+    // verdade com Enter/"+ Add"; sem confirmar, nunca entra em
+    // _okrSyncMarcoDraftFromDom() e clicar fora perdia o texto em silêncio.
+    const _temTextoPendente = (document.getElementById('okr-checklist-add')?.value||'').trim();
+    if(_temTextoPendente || JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
       if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }

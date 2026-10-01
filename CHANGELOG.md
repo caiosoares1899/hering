@@ -20122,6 +20122,27 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.80 · painel-dev — 2026-10-01 · fix(OKR): texto digitado no "+ Add" sem confirmar fechava o modal em silêncio
+
+Relato direto do usuário: "precisa colocar aquele ponto de quando clicar
+fora e tiver editando um okr, perguntar se realmente quer sair sem
+salvar" — o modal de Objetivo e o de Marco JÁ tinham esse dirty-check
+(`_okrTryCloseObjetivo()`/`_okrTryCloseMarco()`, clique fora/✕/Cancelar),
+mas com um gap real: os campos "+ Add" (Indicadores/Progressos/Próximos
+Passos/Riscos/Planos de Ação/Trimestres no Objetivo, Checklist no Marco)
+só viram item de verdade no rascunho quando confirmados (Enter/"+ Add")
+— texto digitado mas ainda não confirmado nunca entrava na sincronização
+que o dirty-check compara, então clicar fora com algo digitado ali (sem
+confirmar) fechava o modal e perdia o texto em silêncio, sem perguntar
+nada.
+
+Fix: `_okrTryCloseObjetivo()`/`_okrTryCloseMarco()` agora também checam
+se algum desses campos "+ Add" tem texto digitado e ainda não confirmado
+— se tiver, trata como alteração não salva e pergunta antes de fechar,
+mesmo que o resto do rascunho esteja idêntico ao que foi aberto.
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### painel-dev.html v3.79 · painel-dev — 2026-10-01 · fix: ícone da lista de Marcos trocado de 📷 pra 🎬 (consistência com o checkbox do Marco)
 
 Correção pontual da v3.78, mesmo dia: usei 📷 (câmera) por engano — o
