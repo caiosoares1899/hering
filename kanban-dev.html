@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.769-dev</div>
+<div class="version">v8.30.770-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32639,6 +32639,18 @@ function renderPendingAutoActions(){
   ).join('');
 }
 
+// saveAutoRule()/toggleAutoRule()/delAutoRule() escreviam o array `autoRules`
+// LOCAL inteiro de volta (fbSet — sobrescrita completa), mesmo com
+// fbListen(FB+'/auto_rules',...) sendo um listener ao vivo — igual ao caso já
+// corrigido em addLink()/delLink(): ainda existe uma janela entre o eco do
+// listener e a ação de outra pessoa (ou de outra aba sua) onde o array local
+// fica um passo atrás; nesse intervalo, uma regra criada/alterada por alguém
+// mais é apagada em silêncio pela próxima escrita. Achado real (relato
+// direto do usuário, 2026-10-01 — Vinicius criou uma regra "quando migrar
+// para To Do, adicionar tag" que nunca chegou a disparar e sumiu da lista).
+// runTransaction() recalcula sobre o valor FRESCO do servidor a cada
+// tentativa, mesmo padrão de addKudos()/addLink() — regras já têm `id`
+// estável desde sempre, então toggle/del casam por id, não por índice.
 function saveAutoRule(){
   const trigger=document.getElementById('auto-trigger')?.value;
   const triggerVal=document.getElementById('auto-trigger-val')?.value;
@@ -32650,13 +32662,18 @@ function saveAutoRule(){
   const tLbl=(triggerDef?.label||trigger) + (triggerDef&&_autoValLabel(triggerDef.valueType,triggerVal)?' ('+_autoValLabel(triggerDef.valueType,triggerVal)+')':'');
   const condLbl = condTag ? ' E tag='+(getTag(condTag)?.label||condTag) : '';
   const aLbl=_autoPendingActions.map(a=>a.label).join(' + ');
-  autoRules.push({
+  const novaRegra={
     id:'r'+Date.now(), trigger, triggerVal, condTag,
     actions:_autoPendingActions.map(a=>({action:a.action, actionVal:a.actionVal})),
     active:true,
     label:`${tLbl}${condLbl} → ${aLbl}`,
-  });
-  fbSet(FB+'/auto_rules', autoRules);
+  };
+  autoRules.push(novaRegra); // otimista, só pra resposta instantânea na tela
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(novaRegra);
+    return arr;
+  }).catch(e=>showToast('Erro ao salvar automação: '+e.message));
   renderAutoRules();
   _autoPendingActions=[];
   renderPendingAutoActions();
@@ -32676,8 +32693,26 @@ function renderAutoRules(){
   });
 }
 
-function toggleAutoRule(i){ autoRules[i].active=!autoRules[i].active; fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
-function delAutoRule(i){ autoRules.splice(i,1); fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
+function toggleAutoRule(i){
+  const alvo=autoRules[i]; if(!alvo) return;
+  alvo.active=!alvo.active; // otimista
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    const idx=arr.findIndex(r=>r.id===alvo.id);
+    if(idx>=0) arr[idx]={...arr[idx], active:alvo.active};
+    return arr;
+  }).catch(e=>showToast('Erro: '+e.message));
+  renderAutoRules();
+}
+function delAutoRule(i){
+  const alvo=autoRules[i]; if(!alvo) return;
+  autoRules.splice(i,1); // otimista
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(r=>r.id!==alvo.id);
+  }).catch(e=>showToast('Erro ao remover automação: '+e.message));
+  renderAutoRules();
+}
 
 function testAutoRule(){
   // Abre o AutoLab no Agente Ágil

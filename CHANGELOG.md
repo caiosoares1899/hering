@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.770-dev — 2026-10-01 · fix: automação criada podia sumir sem nunca disparar (corrida de escrita)
+
+Relato direto do usuário: Vinicius criou uma automação ("quando migrar
+para To Do, adicionar tag de pronto para teste") que nunca chegou a
+disparar e sumiu da lista pouco depois.
+
+Causa raiz: `saveAutoRule()`/`toggleAutoRule()`/`delAutoRule()`
+escreviam o array `autoRules` LOCAL inteiro de volta no Firebase
+(`fbSet`, sobrescrita completa) — mesma classe de corrida já corrigida
+em outras áreas (Kudos, Lembretes, Links). Mesmo com um listener ao
+vivo sincronizando `autoRules`, existe uma janela entre o eco do
+listener e a próxima ação (de outra pessoa, ou de outra aba sua) onde
+o array local fica um passo atrás; nesse intervalo, uma regra recém-
+criada por alguém é apagada em silêncio pela próxima escrita de
+qualquer um.
+
+Fix: as 3 funções passam a usar `runTransaction()` (recalcula sobre o
+valor FRESCO do servidor a cada tentativa, mesmo padrão já usado em
+`addKudos()`/`addLink()`) — toggle/exclusão casam a regra por `id`
+estável, não por índice do array.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +3).
+
 ### v8.30.769-dev — 2026-10-01 · fix: foto do Google "sumida" — refresh silencioso periódico do perfil
 
 Relato direto do usuário: "tem usuarios q a foto do Google sumiu! la no
