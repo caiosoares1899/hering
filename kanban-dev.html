@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.773-dev</div>
+<div class="version">v8.30.774-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6455,7 +6455,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6616,6 +6616,50 @@ window._signOut=(reason)=>{
 window._reloadAuthUser=()=>{
   if(!auth.currentUser) return Promise.resolve();
   return reload(auth.currentUser).catch(()=>{}); // silencioso -- tentativa best-effort, nunca interrompe a sessão
+};
+// Releitura FORÇADA do perfil direto no Google (pedido direto, 2026-10-01:
+// "não tem como forçar uma releitura disso?" — foto do Google que aparece
+// como avatar genérico pra algumas contas). reload() acima só re-busca o
+// que o Firebase Auth já tem guardado; ele NUNCA pergunta de novo ao Google
+// (só um login de verdade faz isso). Aqui: popup de login na MESMA conta
+// (sem trocar de usuário) só pra obter um accessToken OAuth fresco, e com
+// ele consulta o Google direto — People API (devolve `default:true` quando a
+// foto é o avatar genérico, a única forma de SABER que é placeholder) e
+// userinfo (`picture`, sem precisar de API habilitada) — e compara com o
+// photoURL que o Firebase tem. Se achar uma URL melhor (não-padrão, ou
+// simplesmente diferente), grava no perfil do Firebase Auth via
+// updateProfile() — o único jeito de o valor sobreviver a um reload(), já
+// que o photoURL de topo do Auth não é sobrescrito por logins seguintes.
+// Devolve um relatório (usado pelo toast e pelo console.table de quem chama).
+const _fotoBase=u=>String(u||'').replace(/=s\d+(-c)?$/,'');
+window._relerFotoGoogle=async()=>{
+  const cu=auth.currentUser;
+  const rel={ok:false, aplicada:null, motivo:'', atual:cu?.photoURL||null, people:null, userinfo:null, providerData:null};
+  if(!cu || !cu.providerData.some(p=>p.providerId==='google.com')){ rel.motivo='Conta não é Google.'; return rel; }
+  const r=await signInWithPopup(auth,provider);
+  const token=GoogleAuthProvider.credentialFromResult(r)?.accessToken;
+  rel.providerData=(cu.providerData.find(p=>p.providerId==='google.com')||{}).photoURL||null;
+  if(!token){ rel.motivo='Google não devolveu um token de acesso.'; return rel; }
+  const get=url=>fetch(url,{headers:{Authorization:'Bearer '+token}}).then(x=>x.json());
+  try{ rel.userinfo=(await get('https://www.googleapis.com/oauth2/v3/userinfo')).picture||null; }catch(e){}
+  try{
+    const pj=await get('https://people.googleapis.com/v1/people/me?personFields=photos');
+    rel.people=(pj.photos||[]).map(x=>({url:x.url, padrao:!!x.default, principal:!!x.metadata?.primary}));
+    if(pj.error) rel.peopleErro=pj.error.message;
+  }catch(e){}
+  const atualBase=_fotoBase(cu.photoURL);
+  const melhor=(rel.people||[]).find(x=>!x.padrao&&x.url)?.url
+    || (rel.userinfo&&_fotoBase(rel.userinfo)!==atualBase ? rel.userinfo : null)
+    || (rel.providerData&&_fotoBase(rel.providerData)!==atualBase ? rel.providerData : null);
+  if(melhor && _fotoBase(melhor)!==atualBase){
+    await updateProfile(cu,{photoURL:melhor});
+    rel.aplicada=melhor; rel.ok=true;
+  } else if(rel.people && rel.people.length && rel.people.every(x=>x.padrao)){
+    rel.motivo='O Google informa que esta conta só tem o avatar PADRÃO (sem foto pública) — não é um erro do Maré Digital.';
+  } else {
+    rel.motivo='O Google devolveu a mesma foto que já estava salva.';
+  }
+  return rel;
 };
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -10946,13 +10990,40 @@ function openStatusMenu(){
     // ganham um atalho de dentro de "⚙ Configurações".
     '<div style="border-top:1px solid var(--glass-b);margin-top:4px;padding-top:4px;">' +
     '<div onclick="openMinhasPrefs()" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);" onmouseover="this.style.background=\'rgba(56,182,255,.08)\'" onmouseout="this.style.background=\'transparent\'">' +
-    '<span style="font-size:14px;">⚙️</span> Minhas Preferências</div></div>';
+    '<span style="font-size:14px;">⚙️</span> Minhas Preferências</div>' +
+    // Só aparece pra quem logou com Google (releitura forçada da foto — ver
+    // window._relerFotoGoogle(), <script type="module">).
+    ((window._currentUser?.providerData||[]).some(p=>p.providerId==='google.com')
+      ? '<div onclick="atualizarFotoGoogle()" title="Pede o perfil de novo ao Google (pode abrir um popup rápido) — útil se sua foto aparece como um quadrado com a inicial" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);" onmouseover="this.style.background=\'rgba(56,182,255,.08)\'" onmouseout="this.style.background=\'\'">' +
+        '<span style="font-size:14px;">🔄</span> Atualizar minha foto do Google</div>'
+      : '') +
+    '</div>';
   document.body.appendChild(m);
   setTimeout(()=>document.addEventListener('click',_closeStatusOnOut),10);
 }
 function _closeStatusOnOut(e){
   const m=document.getElementById('status-menu');
   if(m && !m.contains(e.target) && !e.target.closest('#header-avatar')){ closeStatusMenu(); }
+}
+async function atualizarFotoGoogle(){
+  closeStatusMenu();
+  if(!window._relerFotoGoogle){ showToast('Firebase carregando...'); return; }
+  showToast('🔄 Relendo seu perfil no Google… (pode abrir um popup rápido)', 6000);
+  try{
+    const rel=await window._relerFotoGoogle();
+    console.table([{atual:rel.atual,providerData:rel.providerData,userinfo:rel.userinfo,aplicada:rel.aplicada,motivo:rel.motivo}]);
+    if(rel.people) console.table(rel.people);
+    window._ultimoRelFoto=rel;
+    if(rel.aplicada){
+      await _syncAuthProfileToFirebase(window._currentUser);
+      showToast('✅ Foto atualizada com a versão mais nova do Google.', 5000);
+    } else {
+      showToast('ℹ️ '+(rel.motivo||'Nada mudou.'), 8000);
+    }
+  }catch(e){
+    if(e?.code==='auth/popup-closed-by-user'||e?.code==='auth/popup-blocked'){ showToast('Popup fechado/bloqueado — tente de novo e deixe o popup abrir.', 5000); return; }
+    console.error('[atualizarFotoGoogle]',e); showToast('Não deu pra reler a foto: '+(e?.message||e), 6000);
+  }
 }
 function closeStatusMenu(){
   const m=document.getElementById('status-menu'); if(m) m.remove();

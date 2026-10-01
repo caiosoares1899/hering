@@ -161,6 +161,15 @@ confiar num número aqui se for mexer em `painel.html` prod).
   de `_syncAuthProfileToFirebase()` (atualiza `#user-avatar` junto com o
   banco), mesmo sem resolver o caso do Google-placeholder (são 2
   problemas diferentes, este é só uma inconsistência real à parte).
+  **(2026-10-01, retomado a pedido: "não tem como forçar uma releitura?")
+  — v8.30.774-dev**: `window._relerFotoGoogle()` (`<script type="module">`,
+  logo depois de `_reloadAuthUser`) — popup na mesma conta pra pegar
+  accessToken OAuth fresco, consulta People API (`photos[].default`) +
+  userinfo (`picture`), aplica via `updateProfile()` se achar URL melhor;
+  `atualizarFotoGoogle()` (script clássico, perto de `closeStatusMenu()`)
+  é o wrapper com toast, exposto no menu do avatar (`openStatusMenu()`,
+  só pra `providerData` com `google.com`). Relatório em
+  `window._ultimoRelFoto`.
 - **Login via Microsoft (integração Arezzo, 2026-10-01, pedido direto —
   "time de Arezzo usa Microsoft")**: `msProvider` (`<script
   type="module">`, perto de `calProvider`) — `OAuthProvider('microsoft.com')`
