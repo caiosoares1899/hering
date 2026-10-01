@@ -18,6 +18,51 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.772-dev — 2026-10-01 · feat: login com Microsoft (integração Arezzo)
+
+Pedido direto do usuário: time da Arezzo colabora com a gente, mas usa
+Microsoft/Azure AD, não Google Workspace — precisava de um 2º jeito de
+entrar, "na camada mais segura" (login nativo via provider Microsoft,
+não a whitelist manual de "externos" que já existia).
+
+**Login**: 2º botão "Entrar com Microsoft" na tela de login, usando
+`OAuthProvider('microsoft.com')` (mesmo SDK modular do Firebase Auth já
+usado pro Google) — `tenant: 'organizations'` restringe a contas de
+TRABALHO/ESCOLA Microsoft (bloqueia conta pessoal @outlook/@live/@hotmail
+na raiz). Mesmo fallback de popup→redirect já existente pro Google
+(2 falhas seguidas de popup trocam pra `signInWithRedirect`), com
+contador próprio pra não interferir no do Google.
+
+**Domínio confiável**: `@arezzo.com.br` passa a ser tratado exatamente
+como `@ciahering.com.br` — acesso a qualquer squad (mesmo nível dos dois
+domínios, não entra como "convidado"/externo). Novo array
+`TRUSTED_DOMAINS`/`_isTrustedDomainEmail()` centraliza os 3 pontos que
+antes checavam só `@ciahering.com.br` na mão (gate de login,
+atribuição de papel no 1º cadastro, tela "+ Adicionar externo" — que
+agora recusa email de domínio confiável, já que não precisa de
+whitelist). `database.rules.json` ganhou a mesma checagem em paralelo
+nas 52 regras que já restringiam leitura/escrita a `@ciahering.com.br`.
+
+**⚠️ Pré-requisitos fora do código, antes disso funcionar de verdade**
+(nenhum dos dois pode ser feito deste ambiente — sem credencial de
+Firebase Console/Azure AD aqui):
+1. Registrar um app no Azure AD/Microsoft Entra ID (Azure Portal → Entra
+   ID → App registrations → New registration), redirect URI
+   `https://hering-onboarding.firebaseapp.com/__/auth/handler`.
+2. Firebase Console → Authentication → Sign-in method → adicionar
+   provider "Microsoft", colar o Application (client) ID + client
+   secret gerados no passo 1.
+3. `firebase deploy --only database` (da própria máquina do usuário,
+   `firebase-tools` logado) pra publicar o `database.rules.json`
+   atualizado — sem isso, mesmo com o login funcionando, a leitura/
+   escrita de dados pra `@arezzo.com.br` continua bloqueada pelas regras
+   antigas já publicadas no Firebase.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais (module +
+clássico) — OK; balanço de chaves/parênteses bate com o baseline da
+sessão (braces -1, parens +4); `database.rules.json` validado como JSON
+bem formado após a substituição em lote.
+
 ### v8.30.771 — 2026-10-01 · Promove pra prod — foto do Google, corrida de escrita em Automações, disparo de impedimento
 
 Lote de 3 correções de bug, todas já validadas pelo usuário em dev
