@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.772 — 2026-10-01 · Promove pra prod — login com Microsoft (integração Arezzo)
+
+Pedido direto do usuário: time da Arezzo colabora com a gente, mas usa
+Microsoft/Azure AD, não Google Workspace. Pré-requisitos externos já
+concluídos pelo usuário (app registrado no Azure AD multitenant,
+provider Microsoft habilitado no Firebase Console, `firebase deploy
+--only database` publicando as regras novas) — promovido direto pra
+deixar o pessoal da Arezzo validar o login já em produção.
+
+**Novidade**: 2º botão "Entrar com Microsoft" na tela de login — aceita
+qualquer conta Microsoft de TRABALHO/ESCOLA (conta pessoal continua
+bloqueada), com o mesmo fallback de popup→redirect que o login Google
+já tinha pra instabilidade do Chrome. `@arezzo.com.br` passa a ter o
+mesmo nível de acesso de `@ciahering.com.br` — qualquer squad, não
+entra como "convidado"/externo.
+
+**Correção incidental** (mesma investigação da foto do Google): o
+avatar do cabeçalho nunca atualizava sozinho depois do refresh
+silencioso de foto rodar — só um F5 corrigia. Corrigido junto.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais (module +
+clássico) — OK; balanço de chaves/parênteses bate com o baseline da
+sessão (braces -1, parens +4); `diff kanban.html kanban-dev.html`
+conferido — só as 4 divergências permanentes de ambiente.
+
 ### v8.30.772-dev — 2026-10-01 · feat: login com Microsoft (integração Arezzo)
 
 Pedido direto do usuário: time da Arezzo colabora com a gente, mas usa
