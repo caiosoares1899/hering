@@ -18,6 +18,37 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.771 — 2026-10-01 · Promove pra prod — foto do Google, corrida de escrita em Automações, disparo de impedimento
+
+Lote de 3 correções de bug, todas já validadas pelo usuário em dev
+(sem feature nova — bug fix promove direto, sem esperar o lote de
+features do dia, conforme a cadência de promoção acordada):
+
+- **Foto do Google "sumida"**: refresh silencioso periódico do perfil
+  (`reload(auth.currentUser)` a cada hora, com a aba em primeiro plano)
+  — Google mudou o formato da URL de foto e vem descontinuando o
+  formato antigo; sessões longas sem relogar nunca re-buscavam o
+  perfil sozinhas. Ver v8.30.769-dev.
+- **Automação criada podia sumir sem nunca disparar**: `saveAutoRule()`/
+  `toggleAutoRule()`/`delAutoRule()` escreviam o array `autoRules`
+  inteiro de volta no Firebase (sobrescrita completa) mesmo com um
+  listener ao vivo — uma regra criada por outra pessoa/aba na janela
+  de corrida era apagada em silêncio. Agora usam `runTransaction()`.
+  Ver v8.30.770-dev.
+- **Automações de impedimento não disparavam em 2 caminhos do modal**
+  (botão "✕ Remover impedimento" e marcar/desmarcar a linha de
+  impedimento + 💾 Salvar) — o dado era gravado certinho, só a
+  automação/notificação "Impedimento removido"/"Card bloqueado" ficava
+  pra trás. Também corrigido: 7 ações de Automação (definir
+  prioridade/submarca/canal/tamanho/demandante/padrão/capa) sem o
+  guard de no-op, gravando histórico/toast à toa quando a regra
+  re-disparava num card já no valor-alvo. Ver v8.30.771-dev.
+
+Checks de rotina: `node --check` no bloco `<script>` principal — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +4). Tentativa de criar/empurrar a tag `kanban-v8.30.771` — ver
+nota de ambiente sobre 403 se falhar.
+
 ### v8.30.771-dev — 2026-10-01 · fix: automações de "Card bloqueado"/"Impedimento removido" não disparavam em 3 caminhos do modal
 
 `/monitorarbugs` em Automações, continuação do fix da corrida de escrita
