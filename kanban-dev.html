@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.768-dev</div>
+<div class="version">v8.30.769-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6446,7 +6446,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6567,6 +6567,25 @@ window._signOut=(reason)=>{
   try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
   try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
   signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
+};
+// Refresh silencioso do perfil (achado real, 2026-10-01, relato direto do
+// usuário: foto do Google "sumida" pra algumas pessoas, mesmo a conta
+// continuando com foto normal no Google). Causa raiz: o SDK do Firebase
+// Auth só busca displayName/photoURL do Google numa autenticação de
+// verdade (popup/redirect) — numa sessão restaurada (quem só mantém a aba
+// aberta por dias sem relogar), esses campos ficam CONGELADOS no valor
+// capturado da última vez. Nesse meio tempo o Google trocou o FORMATO da
+// URL de foto (de .../a-/ALV-Uj... pro atual .../a/ACg8oc...) e vem
+// descontinuando o formato antigo aos poucos — URL antiga parava de
+// resolver, mesmo com o dado intacto no nosso Firebase. reload(user) é o
+// jeito oficial do SDK de re-buscar o perfil sem popup/redirect (não troca
+// de conta, não pede permissão de novo) — chamado periodicamente em vez de
+// só no login, pra sessões longas também se autocorrigirem. Mutila o MESMO
+// objeto `user`/`auth.currentUser` em memória — não precisa reatribuir
+// window._currentUser depois.
+window._reloadAuthUser=()=>{
+  if(!auth.currentUser) return Promise.resolve();
+  return reload(auth.currentUser).catch(()=>{}); // silencioso -- tentativa best-effort, nunca interrompe a sessão
 };
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -11222,6 +11241,29 @@ async function _ensureInitRegistryBackfilled(){
     if(Object.keys(updates).length) await window._update(window._ref(window._db), updates);
   }catch(e){ console.warn('[_ensureInitRegistryBackfilled] falhou, segue sem registry:', e); }
 }
+// Auto-cura de foto/nome/email (extraído de dentro de autoRegistrar(),
+// achado real 2026-10-01) — pra também poder rodar sozinho, periodicamente,
+// numa sessão longa, não só na hora do login. `existeJaLido` opcional evita
+// reler kanban/usuarios/{uid} à toa quando quem chama (autoRegistrar()) já
+// tem o snapshot fresco em mãos; sem ele, lê na hora (uso standalone, pelo
+// refresh periódico abaixo).
+async function _syncAuthProfileToFirebase(user, existeJaLido){
+  if(!user || !user.uid) return;
+  const existe = existeJaLido || (await fbGet('kanban/usuarios/'+user.uid)).val();
+  if(!existe) return; // usuário ainda não registrado -- autoRegistrar() cuida disso no próprio login
+  if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
+  if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
+  if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
+}
+// Reaplica o refresh silencioso (reload() do SDK + auto-cura acima) de hora
+// em hora, só com a aba em primeiro plano e alguém logado — cobre quem
+// mantém o board aberto por dias sem relogar, caso em que autoRegistrar()
+// só roda 1x (no boot) e nunca mais detecta uma foto/nome que mudou do
+// lado do Google nesse meio tempo.
+setInterval(()=>{
+  if(document.hidden || !window._currentUser || !window._reloadAuthUser) return;
+  window._reloadAuthUser().then(()=>_syncAuthProfileToFirebase(window._currentUser)).catch(()=>{});
+}, 60*60*1000);
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -11329,18 +11371,14 @@ function autoRegistrar(user){
       if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
-      if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
-      // Achado real (relato direto do usuário, 2026-09-09 — registro
-      // nascido pelo painel, antes do fix em _painelEnsureUserRecord()
-      // lá, ficava sem nome pra sempre): só a foto tinha auto-cura aqui —
-      // nome nunca era escrito de volta em kanban/usuarios/{uid} pra
-      // quem JÁ tinha registro (só no espelho leve usuarios_publicos,
-      // linha 3 acima, que este arquivo nem lê de volta pra si mesmo).
-      // "👥 Pessoas"/Global Users (painel) e qualquer tela que lê
-      // u.nome ficavam com "?" pra sempre, mesmo a pessoa logando aqui
-      // repetidas vezes.
-      if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
-      if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
+      // Auto-cura de foto/nome/email — extraída em _syncAuthProfileToFirebase()
+      // (achado real, 2026-10-01) pra também rodar sozinha, periodicamente,
+      // numa sessão longa sem novo login real. Histórico do achado original
+      // (2026-09-09, registro nascido pelo painel ficava sem nome pra
+      // sempre) e do achado de 2026-10-01 (foto "sumida" — Google trocou o
+      // formato de URL e sessão restaurada nunca re-busca o perfil) ficam
+      // documentados direto no comentário da função.
+      _syncAuthProfileToFirebase(user, existe);
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
