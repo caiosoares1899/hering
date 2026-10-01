@@ -18,6 +18,31 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.774-dev — 2026-10-01 · feat: "🔄 Atualizar minha foto do Google" (releitura forçada direto no Google)
+
+Pedido direto do usuário, retomando o assunto pausado ("tenta resolver
+essa questão da foto do Google! não tem como a gente forçar uma
+releitura disso?"). O refresh silencioso anterior (`reload()`) só
+re-busca o que o Firebase Auth JÁ tem guardado — nunca pergunta de novo
+ao Google, só um login de verdade faz isso. Novo item no menu do avatar
+(clicar na foto/nome no cabeçalho), só pra quem logou com Google:
+abre um popup rápido na MESMA conta pra obter um token OAuth fresco e
+consulta o Google direto — People API (`photos[].default` é a única
+forma de saber que uma foto é o avatar genérico) e userinfo (`picture`)
+— comparando com o `photoURL` salvo. Se houver uma URL melhor, grava via
+`updateProfile()` (único jeito de sobreviver a `reload()`) e re-sincroniza
+o banco/avatar do cabeçalho. Se o Google confirmar que a conta só tem o
+avatar padrão, o toast diz isso claramente (não é erro do Maré Digital).
+Relatório completo em `console.table` e `window._ultimoRelFoto`.
+`window._relerFotoGoogle()` (módulo) + `atualizarFotoGoogle()` (clássico).
+
+**Limite conhecido**: se o Google só entrega o avatar genérico pra apps
+externos (foto visível só dentro da organização), nenhuma releitura
+resolve — o caminho definitivo seria upload de foto própria no Maré
+Digital (não implementado).
+
+Checks de rotina: `node --check` no módulo e no script clássico — OK.
+
 ### v8.30.773 — 2026-10-01 · Promove pra prod — seletor de squad deixa de aparecer ANTES do login
 
 Promoção pontual, validada pelo usuário ("deu bom, pode promover").
