@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.85 · painel-dev</div>
+<div class="version">v3.86 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5855,6 +5855,25 @@ function renderOkrHistory(entity){
     </div>`;
   }).join('');
 }
+// Achado da auditoria de UI/UX do modal OKR (2026-10-01, pedido direto:
+// "agora dentro do modal do okr"): Histórico sempre vinha TOTALMENTE
+// expandido (até OKR_HIST_CAP=80 entradas), sempre no FIM do scroll —
+// num Objetivo com uso real, isso sozinho podia dobrar a altura do modal
+// por uma seção que a maioria das visitas nem olha. Reusa o MESMO padrão
+// `<details class="pt-bucket">`/`.pt-chevron` já usado na Timeline do
+// painel (`_painelTimelineRender()`) em vez de inventar um componente
+// novo — fechado por padrão quando tem bastante coisa (>5), aberto
+// quando é pouco (nada pra esconder).
+function _okrHistorySectionHtml(entity){
+  const hist = Array.isArray(entity?.history) ? entity.history : [];
+  const aberto = hist.length <= 5;
+  return `<details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      <span class="pt-chevron">▸</span> 📜 Histórico${hist.length?` <span class="badge">${hist.length}</span>`:''}
+    </summary>
+    <div style="margin-top:8px;">${renderOkrHistory(entity)}</div>
+  </details>`;
+}
 
 // ── Vínculo de cards com badge OKR (tipo campanha/coleção — mesmo padrão de
 // notaSearchCards()/notaAddCardLink() do kanban-dev.html, adaptado pra
@@ -5904,11 +5923,21 @@ function _okrRenderCardSearch(q){
     ? results.map(r=>`<div class="okr-list-item" style="cursor:pointer;" onclick="_okrCardLinkAdd('${r.squadId}','${esc(r.cardId)}')"><span>${r.squadIcon} ${esc(r.title)}</span></div>`).join('')
     : (q.trim().length>=2 ? '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum card com badge OKR encontrado.</div>' : '');
 }
+// Achado da auditoria de UI/UX do modal OKR (2026-10-01): seção de baixo
+// uso (comparado a Marcos/Riscos/Planos de Ação) que antes ficava SEMPRE
+// aberta, com campo de busca próprio ocupando espaço permanente mesmo
+// vazia. Mesmo padrão `<details class="pt-bucket">` do Histórico acima —
+// aberta de propósito quando já tem link (não esconder o que já existe),
+// fechada quando está vazia (o caso comum).
 function _okrCardLinksHtml(podeEditar){
   const links=_okrObjDraft.cardLinks||[];
+  const aberto = links.length>0;
   return `
-    <div class="okr-field-label">🔗 Cards vinculados (badge 🎯 OKR no board)</div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:6px;">
+    <details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
+      <span class="pt-chevron">▸</span> 🔗 Cards vinculados (badge 🎯 OKR no board)${links.length?` <span class="badge">${links.length}</span>`:''}
+    </summary>
+    <div style="display:flex;flex-direction:column;gap:5px;margin:8px 0 6px;">
       ${links.map((l,i)=>{
         const sq=SQUADS.find(s=>s.id===l.squadId);
         const card=(squadData[l.squadId]?.cards||[]).find(c=>c.id===l.cardId);
@@ -5917,7 +5946,8 @@ function _okrCardLinksHtml(podeEditar){
       }).join('') || '<div style="font-size:11px;color:var(--txt3);">Nenhum ainda.</div>'}
     </div>
     ${podeEditar?`<input type="text" class="okr-input" id="okr-card-search" placeholder="🔎 Buscar card com badge OKR pra vincular…" oninput="_okrRenderCardSearch(this.value)">
-    <div id="okr-card-search-results"></div>`:''}`;
+    <div id="okr-card-search-results"></div>`:''}
+    </details>`;
 }
 
 // ── Notificação "OKR editado" — Responsáveis + Participantes de qualquer
@@ -6246,7 +6276,7 @@ function _okrMarcosListHtml(objId, podeEditar){
   const marcos = _okrMarcosSorted(objId);
   if(!marcos.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum marco ainda.</div>';
   return marcos.map((m,i)=>`
-    <div class="okr-marco-row"
+    <div class="okr-marco-row" style="border-left:3px solid ${okrStatusInfo(m.progresso||'nao_iniciado').dot};"
       draggable="${podeEditar?'true':'false'}"
       ${podeEditar?`ondragstart="_okrMarcoDragStart(event,'${m.id}')" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,'${objId}','${m.id}')" ondragend="_okrMarcoDragEnd(event)"`:''}
       onclick="openOkrMarco('${m.id}','${objId}')">
@@ -6350,8 +6380,7 @@ function renderOkrObjBody(id){
       <div class="okr-field-label">Marcos</div>
       ${_okrMarcosListHtml(id, false)}
       ${_okrCardLinksHtml(false)}
-      <div class="okr-field-label">📜 Histórico</div>
-      ${renderOkrHistory(d)}`;
+      ${_okrHistorySectionHtml(d)}`;
     footer.innerHTML = `<button onclick="closeOkrObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -6379,8 +6408,7 @@ function renderOkrObjBody(id){
     </div>
     ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
-    <div class="okr-field-label">📜 Histórico</div>
-    ${renderOkrHistory(d)}`;
+    ${_okrHistorySectionHtml(d)}`;
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
@@ -6777,8 +6805,7 @@ function renderOkrMarcoBody(){
       ${_okrParticipantesHtml()}
       <div class="okr-field-label">Comentários</div>
       ${_okrCommentsHtml()}
-      <div class="okr-field-label">📜 Histórico</div>
-      ${renderOkrHistory(d)}`;
+      ${_okrHistorySectionHtml(d)}`;
     footer.innerHTML = `<button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
     return;
   }
@@ -6809,8 +6836,7 @@ function renderOkrMarcoBody(){
     ${_okrParticipantesHtml()}
     <div class="okr-field-label">Comentários</div>
     ${_okrCommentsHtml()}
-    <div class="okr-field-label">📜 Histórico</div>
-    ${renderOkrHistory(d)}`;
+    ${_okrHistorySectionHtml(d)}`;
   footer.innerHTML = `
     <button onclick="_okrTryCloseMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${_okrEditingMarcoId?`<button onclick="_okrArquivarMarco()" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`:''}

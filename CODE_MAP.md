@@ -3132,6 +3132,26 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   `--accent` fixo — agora usa `okrStatusInfo(status).dot`, a MESMA cor
   do dot de status, reforçando risco à distância num grid com dezenas
   de cards.
+- **Auditoria de UI/UX DENTRO do modal de Objetivo/Marco** (2026-10-01,
+  continuação direta: "agora dentro do modal do okr") — 3 achados (ver
+  `CHANGELOG.md` v3.86 · painel-dev): (1) `_okrHistorySectionHtml(entity)`
+  — Histórico (até `OKR_HIST_CAP`=80 entradas) parou de vir sempre 100%
+  expandido no fim do modal; reusa `<details class="pt-bucket">`/
+  `.pt-chevron` (mesmo componente da Timeline do painel,
+  `_painelTimelineRender()`) — fechado por padrão com >5 entradas,
+  aberto com poucas. Substituiu o par `<div class="okr-field-label">📜
+  Histórico</div>`+`renderOkrHistory(d)` nos 4 lugares que o usavam
+  (Objetivo/Marco × leitura/edição); (2) `_okrCardLinksHtml(podeEditar)`
+  ganhou o MESMO padrão `<details>` — fechado quando a lista de cards
+  vinculados está vazia (esconde também o campo de busca, que antes
+  ficava sempre visível), aberto quando já tem algo vinculado; (3)
+  `.okr-marco-row` (dentro de `_okrMarcosListHtml()`) ganhou
+  `border-left:3px solid` na cor do status (mesma técnica que
+  `.okr-hist-item` já usa pra tipo de evento) — o dot sozinho era a
+  única pista de status na linha (inconsistente com o card da grid, que
+  mostra dot+texto), mas o modal só tem 560px de largura pra
+  nome+responsável+prazo+🎬, então texto full foi descartado em favor
+  da borda colorida (não gasta largura).
 
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
