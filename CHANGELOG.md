@@ -20160,6 +20160,19 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.82 · painel-dev — 2026-10-01 · feat(OKR): arrastar e soltar pra reordenar Marcos dentro do Objetivo
+
+Pedido direto do usuário. A lista de Marcos, dentro do modal do
+Objetivo, já tinha botões ▲/▼ (`_okrMarcoMover()`) pra reordenar um
+passo de cada vez — agora cada linha também é arrastável
+(`draggable`), soltando em cima de outro Marco pra reinserir na
+posição de uma vez só, sem precisar de vários cliques. Mesmo padrão
+HTML5 DnD nativo (sem lib) já usado pros cards de Objetivo dentro de
+cada Gerência (`_okrObjDragStart()`/`_okrObjReorderTo()`) — os dois
+jeitos de reordenar convivem, arrastar é só o atalho mais rápido.
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### painel-dev.html v3.81 · painel-dev — 2026-10-01 · fix(OKR): tela de Configurações ficava "presa" no 1º Objetivo configurado
 
 Relato direto do usuário: "quando vc clica em configurações de um okr e

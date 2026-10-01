@@ -346,6 +346,9 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-card[draggable="true"]{cursor:grab;}
 .okr-card.okr-dragging{opacity:.4;}
 .okr-card.okr-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,182,255,.35) inset;}
+.okr-marco-row[draggable="true"]{cursor:grab;}
+.okr-marco-row.okr-dragging{opacity:.4;}
+.okr-marco-row.okr-drag-over{border-color:var(--accent);box-shadow:0 0 0 2px rgba(56,182,255,.35) inset;}
 /* "👤 você é responsável" — mesmo tratamento visual de .card-mine no
    kanban(-dev).html (tingimento azul + borda mais forte), pedido direto
    do usuário ("no OKR, faz que nem nos cards"). Mesmas cores exatas do
@@ -2900,7 +2903,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.81 · painel-dev</div>
+<div class="version">v3.82 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6059,7 +6062,10 @@ function _okrMarcosListHtml(objId, podeEditar){
   const marcos = _okrMarcosSorted(objId);
   if(!marcos.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum marco ainda.</div>';
   return marcos.map((m,i)=>`
-    <div class="okr-marco-row" onclick="openOkrMarco('${m.id}','${objId}')">
+    <div class="okr-marco-row"
+      draggable="${podeEditar?'true':'false'}"
+      ${podeEditar?`ondragstart="_okrMarcoDragStart(event,'${m.id}')" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,'${objId}','${m.id}')" ondragend="_okrMarcoDragEnd(event)"`:''}
+      onclick="openOkrMarco('${m.id}','${objId}')">
       ${podeEditar?`<span style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
         <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
         <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',1)" ${i===marcos.length-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===marcos.length-1?'opacity:.25;cursor:default;':''}">▼</button>
@@ -6087,6 +6093,50 @@ async function _okrMarcoMover(objId, marcoId, dir){
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: ordens[i]}; });
   renderOkrObjBody(_okrEditingObjId);
+}
+// Drag-and-drop dos Marcos (pedido direto, mesmo espírito de
+// _okrObjDragStart()/_okrObjReorderTo() acima pros cards de Objetivo — os
+// dois convivem com ▲/▼, arrastar é o atalho rápido pra mover de uma vez
+// pra qualquer posição, não só 1 passo). Mesma técnica de sempre:
+// _okrMarcoDraggedId guarda o que está sendo arrastado entre os eventos;
+// ao soltar em cima de outro marco, reinsere na posição do alvo e
+// materializa `ordem` em TODOS os marcos do Objetivo.
+let _okrMarcoDraggedId = null;
+async function _okrMarcoReorderTo(objId, draggedId, targetId){
+  if(draggedId===targetId) return;
+  const marcos = _okrMarcosSorted(objId);
+  const fromIdx = marcos.findIndex(m=>m.id===draggedId);
+  const toIdx = marcos.findIndex(m=>m.id===targetId);
+  if(fromIdx<0 || toIdx<0) return;
+  const [item] = marcos.splice(fromIdx,1);
+  marcos.splice(toIdx,0,item);
+  const updates = {};
+  marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = i; });
+  await window._update(window._ref(window._db), updates);
+  marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: i}; });
+  renderOkrObjBody(objId);
+}
+function _okrMarcoDragStart(ev, marcoId){
+  _okrMarcoDraggedId = marcoId;
+  ev.dataTransfer.effectAllowed = 'move';
+  try{ ev.dataTransfer.setData('text/plain', marcoId); }catch(e){} // Firefox exige setData pra permitir o drag
+  ev.currentTarget.classList.add('okr-dragging');
+}
+function _okrMarcoDragOver(ev){ ev.preventDefault(); ev.dataTransfer.dropEffect = 'move'; }
+function _okrMarcoDragEnter(ev){ ev.currentTarget.classList.add('okr-drag-over'); }
+function _okrMarcoDragLeave(ev){ ev.currentTarget.classList.remove('okr-drag-over'); }
+async function _okrMarcoDrop(ev, objId, targetMarcoId){
+  ev.preventDefault();
+  ev.currentTarget.classList.remove('okr-drag-over');
+  const draggedId = _okrMarcoDraggedId;
+  _okrMarcoDraggedId = null;
+  if(!draggedId || draggedId===targetMarcoId) return;
+  await _okrMarcoReorderTo(objId, draggedId, targetMarcoId);
+}
+function _okrMarcoDragEnd(ev){
+  ev.currentTarget.classList.remove('okr-dragging');
+  document.querySelectorAll('.okr-marco-row.okr-drag-over').forEach(el=>el.classList.remove('okr-drag-over'));
+  _okrMarcoDraggedId = null;
 }
 
 function renderOkrObjBody(id){

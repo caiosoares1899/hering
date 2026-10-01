@@ -3058,7 +3058,15 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   que só troca 2 adjacentes) e materializa `ordem` igual. Handlers
   `_okrObjDragStart/Over/Enter/Leave/Drop/End` + `_okrDraggedObjId`
   (estado entre os eventos nativos `dragstart`/`drop`), CSS
-  `.okr-dragging`/`.okr-drag-over`.
+  `.okr-dragging`/`.okr-drag-over`. **(2026-10-01) Mesmo drag-and-drop
+  estendido pros Marcos** (pedido direto do usuário) — `_okrMarcoReorderTo
+  (objId,draggedId,targetId)`/`_okrMarcoDragStart/Over/Enter/Leave/Drop/End`
+  + `_okrMarcoDraggedId`, idêntico em estrutura ao par acima, só trocando
+  Objetivo→Marco e `kanban/okr/objetivos`→`kanban/okr/marcos`; convive com
+  os botões ▲/▼ (`_okrMarcoMover()`) já existentes. Reutiliza as MESMAS
+  classes CSS `.okr-dragging`/`.okr-drag-over` (seletor próprio
+  `.okr-marco-row[draggable]`/`.okr-marco-row.okr-dragging`/
+  `.okr-marco-row.okr-drag-over`, mesmo padrão visual do `.okr-card`).
 - **`mostrarApresentacao` por Marco** — booleano novo em
   `kanban/okr/marcos/{id}` (ausente/`true` = visível, só `false` explícito
   esconde — marcos antigos sem o campo continuam aparecendo). Checkbox "🎬
