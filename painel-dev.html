@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.87 · painel-dev</div>
+<div class="version">v3.88 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10670,6 +10670,22 @@ function doSignOut(){ window._signOut(); }
 // este array dali.
 const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
+// Mesmo espelho do pin de provedor de database.rules.json que kanban-dev.html ganhou (ver
+// _loginProviderMismatchMsg() lá) — as regras são UM arquivo só pros dois, então o gate do
+// painel tem o mesmo buraco: domínio certo + botão errado entrava e via tudo vazio.
+function _loginProviderMismatchMsg(user){
+  const email=String(user?.email||'').toLowerCase();
+  const provs=(user?.providerData||[]).map(p=>p.providerId);
+  // Conta sem e-mail (comum em Microsoft/Entra sem o atributo `mail`) escapava do gate: a checagem
+  // do chamador é `if(user.email && !confiável)`, então e-mail vazio era tratado como "ok" — e as
+  // regras (auth.token.email.endsWith) negam tudo, dando o mesmo board em branco sem explicação.
+  if(!email) return 'Sua conta entrou sem um e-mail (comum em contas Microsoft sem caixa de e-mail). Peça a um ADM pra conferir o cadastro da conta.';
+  if(email.endsWith('@ciahering.com.br') && !provs.includes('google.com'))
+    return 'Contas @ciahering.com.br entram pelo botão do Google — clique em "Entrar com Google".';
+  if(email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
+    return 'Contas @arezzo.com.br entram pelo botão da Microsoft — clique em "Entrar com Microsoft".';
+  return '';
+}
 
 // 👁 Visualizadores externos do painel (2026-08-27) — pedido direto: dar
 // acesso de SÓ LEITURA ao painel pra alguém fora de @ciahering.com.br (ex.:
@@ -10696,6 +10712,13 @@ window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
   if(user){
+    const _mismatchMsg=_loginProviderMismatchMsg(user);
+    if(_mismatchMsg){
+      document.getElementById('login-err').textContent=_mismatchMsg;
+      document.getElementById('login-err').style.display='block';
+      window._signOut();
+      return;
+    }
     if(user.email && !_isTrustedDomainEmail(user.email)){
       // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
       // externos: cache curto (evita reconsultar à toa a cada auth-change,

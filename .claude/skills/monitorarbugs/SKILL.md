@@ -2768,6 +2768,28 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   "ainda é a minha vez?"; e todo estado de UI que mora só no HTML gerado se
   perde quando o container é reconstruído.
 
+- **2026-10-01, login com Microsoft — kanban/painel + regras (pedido
+  genérico, "roda outro /monitorarbugs" — área escolhida por prioridade 1:
+  código de hoje, security-adjacent, sem rodada própria)**: 3 achados,
+  técnica 2 (comparar o gate do client contra o das regras) + técnica 3.
+  (1) o pin de provedor das regras (#1152) deixou as regras MAIS estritas
+  que o gate do client (`_isTrustedDomainEmail`, só domínio): conta
+  `@ciahering.com.br` clicando em "Entrar com Microsoft" (ou `@arezzo` no
+  Google) entrava num app em que toda leitura/escrita é negada — board em
+  branco sem explicação. (2) `if(user.email && !confiável)` tratava e-mail
+  vazio como "ok" — comum em Microsoft sem atributo `mail`. (3) a mensagem de
+  recusa ("Acesso restrito... peça ao PO") nunca era lida em kanban:
+  `_signOut()` faz `location.reload()` logo depois de escrevê-la em
+  `#login-err`. Fix: `_loginProviderMismatchMsg()` nos 2 arquivos +
+  `_rejectLoginAfterReload()`/`_showLoginNotice()` no kanban. dev kanban
+  v8.30.776, painel v3.88. Reconfirmado, NÃO corrigido (decisão do usuário em
+  2026-10-01): o `email` do Entra não é verificado (nOAuth) — quem tem tenant
+  próprio consegue emitir um token com `email` terminando em
+  `@arezzo.com.br`; a mitigação real (checar `tid`/exigir e-mail verificado)
+  foi adiada. **Lição**: ao endurecer as regras do banco, procurar TODOS os
+  gates do client que decidem "pode entrar" e alinhar — regra mais estrita
+  que o client vira tela vazia, não erro.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

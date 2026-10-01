@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.775-dev</div>
+<div class="version">v8.30.776-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6797,6 +6797,41 @@ let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br
 // ler este array dali, regra de segurança não executa JS da página).
 const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
+// Espelha o PIN DE PROVEDOR de database.rules.json (PR #1152): @ciahering.com.br só vale
+// logado pelo Google, @arezzo.com.br só pela Microsoft. Sem isso o gate do client (só domínio)
+// deixava passar quem clicasse no botão "errado" — ex.: conta @ciahering.com.br existindo no
+// Entra ID da Arezzo e escolhendo "Entrar com Microsoft" — pra dentro de um app em que as REGRAS
+// negam toda leitura/escrita de dados: board em branco/erros de permissão, sem nenhuma
+// explicação (/monitorarbugs 2026-10-01). Devolve a mensagem de recusa, ou '' se está certo.
+function _loginProviderMismatchMsg(user){
+  const email=String(user?.email||'').toLowerCase();
+  const provs=(user?.providerData||[]).map(p=>p.providerId);
+  // Conta sem e-mail (comum em Microsoft/Entra sem o atributo `mail`) escapava do gate: a checagem
+  // do chamador é `if(user.email && !confiável)`, então e-mail vazio era tratado como "ok" — e as
+  // regras (auth.token.email.endsWith) negam tudo, dando o mesmo board em branco sem explicação.
+  if(!email) return 'Sua conta entrou sem um e-mail (comum em contas Microsoft sem caixa de e-mail). Peça a um ADM pra conferir o cadastro da conta.';
+  if(email.endsWith('@ciahering.com.br') && !provs.includes('google.com'))
+    return 'Contas @ciahering.com.br entram pelo botão do Google — clique em "Entrar com Google".';
+  if(email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
+    return 'Contas @arezzo.com.br entram pelo botão da Microsoft — clique em "Entrar com Microsoft".';
+  return '';
+}
+// window._signOut() termina em location.reload() — qualquer texto escrito em #login-err ANTES
+// dele some junto com a página (achado do mesmo /monitorarbugs: quem era recusado como externo
+// não-autorizado só via a tela de login reaparecer, sem motivo nenhum). Guarda a mensagem e
+// _showLoginNotice() mostra uma vez, no boot seguinte.
+function _rejectLoginAfterReload(msg){ try{ safeLS.setItem('login_notice', JSON.stringify({msg, ts:Date.now()})); }catch(e){} }
+function _showLoginNotice(){
+  try{
+    const raw=safeLS.getItem('login_notice'); if(!raw) return;
+    safeLS.removeItem('login_notice');
+    const n=JSON.parse(raw);
+    if(!n?.msg || Date.now()-n.ts>120000) return;
+    const el=document.getElementById('login-err'); if(!el) return;
+    el.textContent=n.msg; el.style.display='block';
+  }catch(e){}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_showLoginNotice); else _showLoginNotice();
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
@@ -11252,6 +11287,8 @@ function showSquadSelectorFiltered(squadIds) {
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   if(user){
+    const _mismatchMsg=_loginProviderMismatchMsg(user);
+    if(_mismatchMsg){ _rejectLoginAfterReload(_mismatchMsg); window._signOut('provider_mismatch'); return; }
     // Valida domínio: ver TRUSTED_DOMAINS (@ciahering.com.br/@arezzo.com.br) OU email na whitelist de externos
     if(user.email && !_isTrustedDomainEmail(user.email)){
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
@@ -11287,6 +11324,7 @@ window.addEventListener('auth-change',e=>{
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
+          _rejectLoginAfterReload('Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.');
           window._signOut('external_not_authorized');
         } else {
           safeLS.setItem(_extCacheKey, String(Date.now()));
@@ -11298,6 +11336,7 @@ window.addEventListener('auth-change',e=>{
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
         document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
+        _rejectLoginAfterReload(document.getElementById('login-err').textContent);
         window._signOut('external_whitelist_check_error');
       });
       _checkExternos(1);
