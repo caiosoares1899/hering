@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.772-dev</div>
+<div class="version">v8.30.773-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -35231,8 +35231,21 @@ function verNoBoardFromSearch(){
 
 // ── SQUAD SELECTOR ──────────────────────────────────────────────────────
 (function initSquadSelector() {
-  const squadParam = new URLSearchParams(window.location.search).get('squad');
-
+  // Achado real (relato direto, 2026-10-01, print da tela: "no kanban
+  // prod, antes da tela de login vem a tela de escolha de squad... n
+  // deveria ser o contrario?"). Até aqui, sem ?squad= na URL, este IIFE
+  // mostrava um seletor PRÉ-AUTENTICAÇÃO (no DOMContentLoaded, antes de
+  // qualquer login resolver) com TODOS os squads existentes — qualquer
+  // visitante, logado ou não, via nome/emoji de squad que nem é dele.
+  // Removido de propósito: o fluxo pós-login já resolve isso melhor —
+  // resolveSquadAndShow() (chamado depois que a pessoa loga) já decide
+  // sozinho pra onde ir (redireciona direto se só tem 1 squad, ADM entra
+  // direto) e só mostra um seletor quando faz sentido, via
+  // showSquadSelectorFiltered() logo abaixo — que já FILTRA pra mostrar
+  // só os squads que a própria pessoa participa, usando a MESMA
+  // renderSelectorGrid() daqui (por isso ela continua existindo e exposta
+  // em window._renderSelectorGrid, só a exibição PRÉ-login é que saiu).
+  // Login agora é sempre a 1ª tela, sem squad na URL ou com squad na URL.
   function renderSelectorGrid(filterIds) {
     const grid = document.getElementById('squad-sel-grid');
     if (!grid) return;
@@ -35246,28 +35259,6 @@ function verNoBoardFromSearch(){
         <div class="squad-sel-sub">${meta.subtitle || ''}</div>
       </a>`
     ).join('');
-  }
-
-  // Sem squad na URL: mostra seletor
-  if (!squadParam) {
-    document.addEventListener('DOMContentLoaded', function() {
-      const sel = document.getElementById('squad-selector');
-      const app = document.getElementById('app-root');
-      const login = document.getElementById('login-ov');
-      if (sel) sel.classList.add('active');
-      if (app) app.style.display = 'none';
-      if (login) login.style.display = 'none';
-
-      // Renderiza com defaults primeiro; atualiza quando Firebase carregar
-      renderSelectorGrid(null);
-      // Aguarda Firebase estar pronto para incluir squads criados via painel
-      const waitFb = setInterval(() => {
-        if (window._fbReady) {
-          clearInterval(waitFb);
-          loadSquadsFromFirebase(() => renderSelectorGrid(null));
-        }
-      }, 200);
-    });
   }
 
   // Expõe para showSquadSelectorFiltered

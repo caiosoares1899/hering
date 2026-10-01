@@ -18,6 +18,28 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.773-dev — 2026-10-01 · fix(login): seletor de squad deixa de aparecer ANTES do login
+
+Relato direto do usuário, com print: "no kanban prod, antes da tela de
+login vem a tela de escolha de squad... n deveria ser o contrario?".
+
+Causa: `initSquadSelector()` mostrava um seletor com TODOS os squads
+existentes assim que a página carregava (`DOMContentLoaded`), sempre
+que a URL não tinha `?squad=` — ANTES de qualquer login resolver.
+Qualquer visitante, logado ou não, via nome/emoji de squad que nem era
+dele.
+
+Fix: removida a exibição pré-login — login agora é sempre a 1ª tela,
+com ou sem `?squad=` na URL. O caso de verdade (pessoa com mais de 1
+squad, sem squad escolhido na URL) já era coberto por um fluxo melhor
+que já existia PÓS-login (`resolveSquadAndShow()` →
+`showSquadSelectorFiltered()`): mostra só os squads que a própria
+pessoa participa, redireciona sozinho se só tiver 1.
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +4).
+
 ### v8.30.772 — 2026-10-01 · Promove pra prod — login com Microsoft (integração Arezzo)
 
 Pedido direto do usuário: time da Arezzo colabora com a gente, mas usa

@@ -1338,17 +1338,31 @@ listener-ao-vivo + cache local de sempre.
   - **Achado real (mesmo dia, testando a rodada)**: quando não redireciona
     (squad resolvido já era o certo — ex.: `squadPadrao` coincide com o
     `'dados'` hardcoded que a URL cai por padrão), nada desligava o
-    seletor PRÉ-AUTH (`initSquadSelector()`, ~L30585 — mostra
-    `#squad-selector` no `DOMContentLoaded`, antes até do login
-    resolver, sempre que a URL não tem `?squad=`) — ele ficava por
-    cima do board carregado por baixo, dando a impressão de squad
-    padrão "não funcionar". Gap pré-existente (mecanismo já morava aqui
-    antes desta rodada), só ficou visível porque a feature nova
-    incentiva acessar a URL sem squad de propósito. Fix:
-    `showApp(user)` — único ponto que sabe com certeza que o board de
-    verdade vai aparecer — sempre roda
+    seletor PRÉ-AUTH que `initSquadSelector()` mostrava então (ver nota
+    de remoção logo abaixo) — ele ficava por cima do board carregado por
+    baixo, dando a impressão de squad padrão "não funcionar". Gap
+    pré-existente (mecanismo já morava aqui antes desta rodada), só
+    ficou visível porque a feature nova incentiva acessar a URL sem
+    squad de propósito. Fix: `showApp(user)` — único ponto que sabe com
+    certeza que o board de verdade vai aparecer — sempre roda
     `document.getElementById('squad-selector')?.classList.remove('active')`
-    antes de mostrar o app.
+    antes de mostrar o app (continua assim, ainda é o guard que desliga
+    o seletor pós-login — ver nota abaixo).
+  - **`initSquadSelector()` — PRÉ-AUTH removido de vez (2026-10-01,
+    relato direto, print: "no kanban prod, antes da tela de login vem a
+    tela de escolha de squad... n deveria ser o contrario?")**:
+    `initSquadSelector()` (`<script>` clássico, ~L35233) mostrava um
+    seletor com TODOS os squads existentes no `DOMContentLoaded`, ANTES
+    de qualquer login resolver, sempre que a URL não tinha `?squad=` —
+    qualquer visitante, logado ou não, via nome/emoji de squad que nem
+    era dele. Removida a exibição pré-login (o bloco inteiro do
+    `DOMContentLoaded` que dava `.active` em `#squad-selector` antes do
+    auth); `renderSelectorGrid()`/`window._renderSelectorGrid` continuam
+    existindo e expostos, porque `showSquadSelectorFiltered()`
+    (`resolveSquadAndShow()`, ver acima) já cobre o caso de verdade —
+    PÓS-login, FILTRADO só pros squads que a pessoa participa, com
+    auto-redirect quando só tem 1. Login agora é sempre a 1ª tela,
+    com ou sem `?squad=` na URL.
   - `_isPinnedSquad()`/`toggleFixarSquadPadrao()` (~L6682/L6685) — UI
     é a 1ª opção do dropdown de `toggleSquadSwitcher()` (~L6651,
     clique no nome do squad atual no cabeçalho): "📌 Fixar este squad
