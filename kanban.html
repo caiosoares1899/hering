@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.767</div>
+<div class="version">v8.30.771</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6446,7 +6446,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6567,6 +6567,25 @@ window._signOut=(reason)=>{
   try{ if(window._idleLogoutConfigUnsub) window._idleLogoutConfigUnsub(); }catch(e){}
   try{ if(window._forceLogoutUnsub) window._forceLogoutUnsub(); }catch(e){}
   signOut(auth).catch(()=>{}).finally(()=>{ location.reload(); });
+};
+// Refresh silencioso do perfil (achado real, 2026-10-01, relato direto do
+// usuário: foto do Google "sumida" pra algumas pessoas, mesmo a conta
+// continuando com foto normal no Google). Causa raiz: o SDK do Firebase
+// Auth só busca displayName/photoURL do Google numa autenticação de
+// verdade (popup/redirect) — numa sessão restaurada (quem só mantém a aba
+// aberta por dias sem relogar), esses campos ficam CONGELADOS no valor
+// capturado da última vez. Nesse meio tempo o Google trocou o FORMATO da
+// URL de foto (de .../a-/ALV-Uj... pro atual .../a/ACg8oc...) e vem
+// descontinuando o formato antigo aos poucos — URL antiga parava de
+// resolver, mesmo com o dado intacto no nosso Firebase. reload(user) é o
+// jeito oficial do SDK de re-buscar o perfil sem popup/redirect (não troca
+// de conta, não pede permissão de novo) — chamado periodicamente em vez de
+// só no login, pra sessões longas também se autocorrigirem. Mutila o MESMO
+// objeto `user`/`auth.currentUser` em memória — não precisa reatribuir
+// window._currentUser depois.
+window._reloadAuthUser=()=>{
+  if(!auth.currentUser) return Promise.resolve();
+  return reload(auth.currentUser).catch(()=>{}); // silencioso -- tentativa best-effort, nunca interrompe a sessão
 };
 window._fbReady=true;
 window.dispatchEvent(new Event('fb-ready'));
@@ -11222,6 +11241,29 @@ async function _ensureInitRegistryBackfilled(){
     if(Object.keys(updates).length) await window._update(window._ref(window._db), updates);
   }catch(e){ console.warn('[_ensureInitRegistryBackfilled] falhou, segue sem registry:', e); }
 }
+// Auto-cura de foto/nome/email (extraído de dentro de autoRegistrar(),
+// achado real 2026-10-01) — pra também poder rodar sozinho, periodicamente,
+// numa sessão longa, não só na hora do login. `existeJaLido` opcional evita
+// reler kanban/usuarios/{uid} à toa quando quem chama (autoRegistrar()) já
+// tem o snapshot fresco em mãos; sem ele, lê na hora (uso standalone, pelo
+// refresh periódico abaixo).
+async function _syncAuthProfileToFirebase(user, existeJaLido){
+  if(!user || !user.uid) return;
+  const existe = existeJaLido || (await fbGet('kanban/usuarios/'+user.uid)).val();
+  if(!existe) return; // usuário ainda não registrado -- autoRegistrar() cuida disso no próprio login
+  if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
+  if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
+  if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
+}
+// Reaplica o refresh silencioso (reload() do SDK + auto-cura acima) de hora
+// em hora, só com a aba em primeiro plano e alguém logado — cobre quem
+// mantém o board aberto por dias sem relogar, caso em que autoRegistrar()
+// só roda 1x (no boot) e nunca mais detecta uma foto/nome que mudou do
+// lado do Google nesse meio tempo.
+setInterval(()=>{
+  if(document.hidden || !window._currentUser || !window._reloadAuthUser) return;
+  window._reloadAuthUser().then(()=>_syncAuthProfileToFirebase(window._currentUser)).catch(()=>{});
+}, 60*60*1000);
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -11329,18 +11371,14 @@ function autoRegistrar(user){
       if(fabCfg) fabCfg.style.display=isPOorOrg?'':'none';
       if(window._pendingInsc&&!existe.inscrito){ window._pendingInsc=false; mostrarInscricao(user,existe); }
       else window._pendingInsc=false;
-      if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
-      // Achado real (relato direto do usuário, 2026-09-09 — registro
-      // nascido pelo painel, antes do fix em _painelEnsureUserRecord()
-      // lá, ficava sem nome pra sempre): só a foto tinha auto-cura aqui —
-      // nome nunca era escrito de volta em kanban/usuarios/{uid} pra
-      // quem JÁ tinha registro (só no espelho leve usuarios_publicos,
-      // linha 3 acima, que este arquivo nem lê de volta pra si mesmo).
-      // "👥 Pessoas"/Global Users (painel) e qualquer tela que lê
-      // u.nome ficavam com "?" pra sempre, mesmo a pessoa logando aqui
-      // repetidas vezes.
-      if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
-      if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
+      // Auto-cura de foto/nome/email — extraída em _syncAuthProfileToFirebase()
+      // (achado real, 2026-10-01) pra também rodar sozinha, periodicamente,
+      // numa sessão longa sem novo login real. Histórico do achado original
+      // (2026-09-09, registro nascido pelo painel ficava sem nome pra
+      // sempre) e do achado de 2026-10-01 (foto "sumida" — Google trocou o
+      // formato de URL e sessão restaurada nunca re-busca o perfil) ficam
+      // documentados direto no comentário da função.
+      _syncAuthProfileToFirebase(user, existe);
       // Adiciona aos membros locais se inscrito
       if(existe.inscrito&&!members.find(m=>m.email===user.email))
         members.push({init:existe.init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:existe.role||'membro'});
@@ -16097,7 +16135,18 @@ function saveCard(){
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
-    if(blockerMode==='tag') _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+    if(blockerMode==='tag'){
+      _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+      // Achado real (/monitorarbugs, 2026-10-01, escopo Automações): mesmo gap já
+      // corrigido em _doBulkBlockTag()/_doBulkUnblockTag() (2026-08-27) e já
+      // coberto no autosave (scheduleAutoSave()) — faltava aqui, no branch de
+      // edição manual (botão 💾 Salvar), que é o ÚNICO jeito de persistir o
+      // toggle da linha de impedimento em modo tag (ela aparece via
+      // style.display direto, não dispara input/change — ver comentário em
+      // addBlockerTag() — então nem o autosave pega essa mudança sozinho).
+      if(_prevBlockerSave && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
+      else if(!_prevBlockerSave && c.blocker) runAutoRules('blocked', c.id);
+    }
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
@@ -27166,11 +27215,11 @@ const HELP_CONTENT = {
     { icon:'↩', title:'Desfazer (Ctrl+Z)', text:'Qualquer ação no board pode ser desfeita com Ctrl+Z (ou Cmd+Z no Mac) ou clicando no botão ↩ Desfazer que aparece no centro inferior após cada ação. O sistema guarda até 10 estados anteriores. Funciona para: mover card, arquivar, excluir, editar checklist, reordenar, adicionar e remover itens.' },
     { icon:'⎋', title:'Esc fecha a tela aberta', text:'Aperte Esc pra fechar rapidinho qualquer tela aberta no momento — 📊 Dados do Board, ❓ Central de Ajuda, 🎬 Controle de Criativos, o modal do card, e por aí vai — sem precisar procurar o ✕ ou clicar fora. Mesma trava de segurança de sempre: se o card tiver alteração não salva, Esc pede confirmação antes de fechar, igual clicar no ✕ já fazia.\n\nDentro de um campo com seu próprio uso pro Esc (ex.: limpar o texto de uma busca, cancelar a edição de um item, fechar um dropdown de @menção), o Esc cuida disso primeiro — só fecha a tela inteira se apertar de novo (ou se aquele campo não tiver mais nada pra "desfazer" com Esc).' },
     { icon:'⌨️', title:'Atalhos de teclado personalizáveis', text:'Botão "⌨️ Atalhos" na toolbar (ao lado de "❓ Ajuda") abre uma tela com 3 abas — as 2 primeiras pra você escolher SUA própria combinação de teclas pra várias ações:\n\n🗂️ <b>Board</b>: 📊 Dados do Board, 🛤️ Timeline, 🎬 Controle de Criativos (só aparece se o squad usa Ficha Técnica), ❓ Central de Ajuda, 🌙 Alternar tema, 🔄 Recarregar colunas/tags, ⇔ Raia, 🔭 Filtros, ☑️ Selecionar, ⚡ Funções de card, 🔗 Links, ⛓ Mapa de dependências, 📅 Calendários, 📣 Campanhas e 📥 Intake (só aparece se o squad aceita pedidos externos).\n\n📇 <b>Modal do card</b>: 🔗 Copiar link, ⧉ Duplicar, 📋 Salvar como modelo, 📦 Arquivar, 🗑 Excluir, ⏸ Pausar/retomar contagem, 🎨 Menu de capa, ⇕ Expandir/recolher seções e 📜 Mostrar/esconder Histórico — todas essas só funcionam com um card aberto (apertar a combinação com o modal fechado não faz nada).\n\n👤 <b>Atribuir a alguém (dinâmica)</b>: se você atribui cards à mesma pessoa com frequência, o app pode sugerir criar essa ação — aceitar já leva direto pra esta tela, na aba certa, faltando só apertar a combinação que preferir. Aparece na lista só depois de aceita (nunca por padrão).\n\n🔀 <b>Barra</b>: reorganiza a ordem dos botões da toolbar — ver dica "Reorganizar a barra de ferramentas".\n\nComo definir: clique em "Definir" ao lado da ação e aperte a combinação desejada (precisa ter Ctrl/Cmd ou Alt junto — não dá pra usar uma letra/número sozinho, senão atrapalharia digitação normal em qualquer campo de texto). Esc cancela a captura. Clique no ✕ pra remover um atalho já definido.\n\n🔒 Ctrl+K (busca), Ctrl+D (Meu Dia), Ctrl+S (salvar card), Ctrl+Z (desfazer), os clássicos do navegador (Ctrl+C/V/X/A/F/P/R/T/W/N) e as teclas de função que o Chrome já usa (F1 ajuda, F3 buscar na página, F5 recarregar, F6 foco na barra de endereço, F7 navegação por cursor, F11 tela cheia, F12 DevTools) continuam fixos e não podem ser reatribuídos — o app avisa se você tentar usar uma dessas, ou uma combinação já em uso por outra ação personalizada.\n\n⌨️ <b>Teclas de função sozinhas (F2/F4/F8/F9/F10)</b> costumam estar livres no navegador — diferente de uma letra, elas não digitam nada num campo de texto, então dá pra usá-las SEM precisar de Ctrl/Cmd/Alt junto. A própria tela mostra essa dica antes de você definir qualquer atalho.\n\n👤 É preferência 100% sua (fica salva na sua conta, não no navegador) — funciona igual em qualquer computador que você entrar, e não muda nada pros outros.' },
-    { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
+    { icon:'🔀', title:'Reorganizar a barra de ferramentas', text:'Não gosta de onde algum botão da toolbar fica? Dá pra arrastar pra qualquer posição — pedido direto de quem achou estranho ter que "puxar o Calendários pra perto da Fonte".\n\nComo usar: abra "⌨️ Atalhos" → aba "🔀 Barra" → "🔀 Iniciar reorganização". A barra inteira ganha um contorno tracejado — arraste qualquer botão (inclusive os divisores, se quiser reagrupar visualmente) pra onde preferir. Clique em "✅ Pronto" (no aviso que aparece no topo) quando terminar.\n\n↩️ Restaurar padrão: mesma aba, desfaz toda a personalização e volta a barra pra ordem original.\n\n🖱️ <b>A barra rola sozinha perto da borda:</b> se a toolbar não cabe inteira na tela, deixe o mouse parado perto da borda esquerda ou direita (sem precisar clicar) que ela rola na direção sozinha — funciona tanto navegando normal quanto arrastando um botão durante a reorganização.\n\n👤 Preferência 100% sua, salva na sua conta — funciona igual em qualquer computador que você entrar, sem mudar nada pros outros. Se a Hering adicionar um botão novo na toolbar depois de você reorganizar, ele aparece automaticamente no fim, sem bagunçar o resto da sua ordem.' },
     { icon:'🔁', title:'Itens recorrentes', text:'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar:\n1. Abra ⚡ Funções (toolbar) → 🔁 Recorrentes\n2. Clique em "+ Recorrente" no rodapé\n3. Preencha título, tag e, opcionalmente, descrição e responsável\n4. Salve — fica permanente na lista\n\nComo usar na sprint:\n· Clique em "✅ Usar" num item — o card é criado no Backlog\n· O mesmo item pode ser usado sprint após sprint, sem recriar' },
     { icon:'🔄', title:'Recorrência automática', text:'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\n📅 <b>Prazo automático:</b> na mesma tela de Recorrência, ative "Definir prazo automaticamente" e diga quantos dias depois da criação o prazo deve cair — ex.: card entra toda segunda, prazo "1" deixa o vencimento pra terça seguinte. Sem isso, o card nasce sem prazo (como sempre foi).' },
     { icon:'📋', title:'Modelos', text:'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar:\nOpção A — a partir de um card:\n1. Abra o card que quer usar como base\n2. No rodapé do modal → clique em 📋 Modelo\n3. O card vira modelo com todos os campos\n\nOpção B — do zero:\n1. Abra ⚡ Funções → 📋 Modelos → "+ Modelo"\n\nComo usar:\n· Clique em "✅ Usar" — card criado no Backlog com tudo preenchido\n· Campos obrigatórios: ao criar/editar o modelo, marque quais precisam ser preenchidos antes de criar o card\n\n🎬 Ficha Técnica também vai junto: se o squad usa Ficha Técnica (ver dica) e o card salvo como modelo já tinha ela preenchida, essa informação entra no modelo também. Ao usar o modelo — criando um card novo ou aplicando num card já aberto — a Ficha do modelo é aplicada seguindo a mesma regra de sempre: só entra onde o card ainda está vazio, nunca sobrescreve o que já tinha sido preenchido.' },
-    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
+    { icon:'📌', title:'Fixar card no topo da coluna (pin)', text:'Passe o mouse sobre qualquer card — um ícone 📌 aparece no canto superior direito. Clique pra fixar esse card no topo da coluna: ele fica lá em cima não importa o modo de ordenação (prioridade, prazo, manual...) nem a visualização (quadro normal ou raias por responsável/tag/subtime).\n\nSó 1 card fixado por coluna — fixar outro desafixa o anterior automaticamente. Clique de novo no 📌 (sempre visível, não só no hover, enquanto o card estiver fixado) pra desafixar. Duplicar um card fixado NÃO copia o pin pra cópia — evitaria 2 "fixados" na mesma coluna.\n\n📱 No celular/tablet (sem hover): toque e segure o card, ou dê um DUPLO TOQUE nele, pra abrir o menu de contexto — "Fixar no topo da coluna"/"Desafixar" também está lá. No computador, duplo-clique no card faz a mesma coisa que clique com o botão direito.\n\n🏷️ Em squads com Submarca ativa: o "1 por coluna" vira 1 por coluna E por submarca — cada submarca pode ter seu próprio card fixado na mesma coluna, sem atrapalhar as outras.\n\nÓtimo pra manter sempre visível um card-aviso ou um card guia de uma coluna, sem depender de ninguém lembrar de rolar até ele.' },
     { icon:'🔗', title:'Compartilhar card', text:'No topo do card, ao lado do ✕ de fechar, tem um botão de compartilhar (ícone de nós conectados). Clique nele e o link direto pra esse card já é copiado — é só colar (Ctrl+V) onde precisar: Slack, um documento, uma mensagem.\n\nAo abrir o link, o card abre automaticamente já no board certo — quem recebe não precisa procurar nada.\n\n🔗 Copiar link sem abrir o card: no menu de contexto do card (clique direito, ou o botão "⋮" no board), tem o atalho "🔗 Copiar link do card" — copia o mesmo link, sem precisar abrir o card primeiro.\n\n📋 Copiar pro Milanote: no rodapé do card tem o botão "Milanote" (escuro, ao lado de Dependência). Ele copia um resumo do card — título, responsável, prazo, tags, descrição e o link de volta pro Kanban — pra colar (Ctrl+V) direto numa nota do Milanote.\n\n🎨 Vincular peça do Milanote: dentro do card, logo acima de "Anexos e links", tem o campo "Peça no Milanote". Cole ali o link do board/peça já criada no Milanote — o card ganha um botão destacado "🎨 Abrir peça no Milanote" e um selo 🎨 aparece na lista do board, sinalizando de longe que aquele card tem um criativo associado. Ótimo pro time de Criação linkar o card à arte que está sendo desenvolvida.' },
     { icon:'🔗', title:'Links importantes', text:'Centralize os links do dia a dia do time — dashboards, documentos, repos. Acesse em Links na toolbar. Qualquer membro pode adicionar ou remover links.' },
     { icon:'📅', title:'Calendário', text:'Clique em Calendário na toolbar para visualizar e criar eventos do squad. Cada evento tem uma cor por tipo (a legenda embaixo explica: evento geral, sprint/time, prazo, urgente, agendas do Google, etc.). Para excluir um evento próprio, passe o mouse sobre ele e clique no ✕, ou abra o evento e use Excluir. Os eventos ficam visíveis para todos e podem ser filtrados por squad no painel gerencial.' },
@@ -32240,7 +32289,12 @@ const AUTO_ACTIONS = [
     // simplesmente não existia pra essas telas.
     run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordMove(card,rule.actionVal); recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
-    run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-10-01, escopo Automações — mesma
+    // classe já corrigida em assign_owner/add_tag/toggle_okr): faltava o
+    // guard de no-op — sem ele, uma regra "definir prioridade = crítica"
+    // disparando num card JÁ crítico gravava histórico + salvava + mostrava
+    // "Automação aplicada" à toa, toda vez que o trigger batesse de novo.
+    run:(rule,card)=>{ if(rule.actionVal===card.priority) return false; card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
     // Achado real (/monitorarbugs, 2026-09-17): "Adicionar tag" genérico
     // aceita QUALQUER tag no seletor (inclusive as de Tamanho/Submarca/
@@ -32371,15 +32425,20 @@ const AUTO_ACTIONS = [
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
-    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-10-01, escopo Automações — mesma
+    // classe já corrigida em assign_owner/add_tag/toggle_okr, estendida
+    // aqui pros 5 "set_*" que ainda faltavam): sem o guard de no-op, a
+    // regra gravava histórico + salvava + mostrava "Automação aplicada" à
+    // toa toda vez que disparasse de novo com o card já no valor-alvo.
+    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
   { key:'set_canal_venda', label:'Definir canal', valueType:'canal_venda', visible:()=>canalVendaAtivo,
-    run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
   { key:'set_tamanho', label:'Definir tamanho', valueType:'tamanho', visible:()=>tamanhoAtivo,
-    run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
   { key:'set_demandante', label:'Definir demandante', valueType:'member_optional', visible:()=>demandanteAtivo,
-    run:(rule,card)=>{ card.demandante=rule.actionVal||''; recordHistory(card,'definiu demandante (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ if((rule.actionVal||'')===(card.demandante||'')) return false; card.demandante=rule.actionVal||''; recordHistory(card,'definiu demandante (automação)','⚙ Automação'); return true; } },
   { key:'set_padrao', label:'Definir padrão de card', valueType:'padrao', visible:()=>Object.keys(cardPatterns||{}).length>0,
-    run:(rule,card)=>{ card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ if((rule.actionVal||null)===(card.padraoId||null)) return false; card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
   { key:'set_cover', label:'Definir capa de cor', valueType:'cover',
     // Achado real (/monitorarbugs, 2026-09-02): faltava limpar coverImageUrl
     // aqui — os 2 caminhos manuais (setCardCover()/setCardCoverImage()) já
@@ -32389,7 +32448,10 @@ const AUTO_ACTIONS = [
     // nenhum (imagem tem prioridade no render — ver coverStripHtml em
     // makeCardEl()), até alguém trocar a capa manualmente depois e a
     // mudança "fantasma" aparecer do nada.
-    run:(rule,card)=>{ card.coverColor=rule.actionVal||null; card.coverImageUrl=null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
+    // Guard de no-op (/monitorarbugs, 2026-10-01): só considera no-op
+    // quando a cor JÁ bate E não tem capa de imagem pra limpar — senão um
+    // card com capa de IMAGEM nunca teria ela removida por esta ação.
+    run:(rule,card)=>{ if((rule.actionVal||null)===(card.coverColor||null) && !card.coverImageUrl) return false; card.coverColor=rule.actionVal||null; card.coverImageUrl=null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
   { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
     run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
   { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
@@ -32601,6 +32663,18 @@ function renderPendingAutoActions(){
   ).join('');
 }
 
+// saveAutoRule()/toggleAutoRule()/delAutoRule() escreviam o array `autoRules`
+// LOCAL inteiro de volta (fbSet — sobrescrita completa), mesmo com
+// fbListen(FB+'/auto_rules',...) sendo um listener ao vivo — igual ao caso já
+// corrigido em addLink()/delLink(): ainda existe uma janela entre o eco do
+// listener e a ação de outra pessoa (ou de outra aba sua) onde o array local
+// fica um passo atrás; nesse intervalo, uma regra criada/alterada por alguém
+// mais é apagada em silêncio pela próxima escrita. Achado real (relato
+// direto do usuário, 2026-10-01 — Vinicius criou uma regra "quando migrar
+// para To Do, adicionar tag" que nunca chegou a disparar e sumiu da lista).
+// runTransaction() recalcula sobre o valor FRESCO do servidor a cada
+// tentativa, mesmo padrão de addKudos()/addLink() — regras já têm `id`
+// estável desde sempre, então toggle/del casam por id, não por índice.
 function saveAutoRule(){
   const trigger=document.getElementById('auto-trigger')?.value;
   const triggerVal=document.getElementById('auto-trigger-val')?.value;
@@ -32612,13 +32686,18 @@ function saveAutoRule(){
   const tLbl=(triggerDef?.label||trigger) + (triggerDef&&_autoValLabel(triggerDef.valueType,triggerVal)?' ('+_autoValLabel(triggerDef.valueType,triggerVal)+')':'');
   const condLbl = condTag ? ' E tag='+(getTag(condTag)?.label||condTag) : '';
   const aLbl=_autoPendingActions.map(a=>a.label).join(' + ');
-  autoRules.push({
+  const novaRegra={
     id:'r'+Date.now(), trigger, triggerVal, condTag,
     actions:_autoPendingActions.map(a=>({action:a.action, actionVal:a.actionVal})),
     active:true,
     label:`${tLbl}${condLbl} → ${aLbl}`,
-  });
-  fbSet(FB+'/auto_rules', autoRules);
+  };
+  autoRules.push(novaRegra); // otimista, só pra resposta instantânea na tela
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    arr.push(novaRegra);
+    return arr;
+  }).catch(e=>showToast('Erro ao salvar automação: '+e.message));
   renderAutoRules();
   _autoPendingActions=[];
   renderPendingAutoActions();
@@ -32638,8 +32717,26 @@ function renderAutoRules(){
   });
 }
 
-function toggleAutoRule(i){ autoRules[i].active=!autoRules[i].active; fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
-function delAutoRule(i){ autoRules.splice(i,1); fbSet(FB+'/auto_rules',autoRules); renderAutoRules(); }
+function toggleAutoRule(i){
+  const alvo=autoRules[i]; if(!alvo) return;
+  alvo.active=!alvo.active; // otimista
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    const idx=arr.findIndex(r=>r.id===alvo.id);
+    if(idx>=0) arr[idx]={...arr[idx], active:alvo.active};
+    return arr;
+  }).catch(e=>showToast('Erro: '+e.message));
+  renderAutoRules();
+}
+function delAutoRule(i){
+  const alvo=autoRules[i]; if(!alvo) return;
+  autoRules.splice(i,1); // otimista
+  window._runTransaction(window._ref(window._db, FB+'/auto_rules'), current=>{
+    const arr = current ? (Array.isArray(current)?current:Object.values(current)).filter(Boolean) : [];
+    return arr.filter(r=>r.id!==alvo.id);
+  }).catch(e=>showToast('Erro ao remover automação: '+e.message));
+  renderAutoRules();
+}
 
 function testAutoRule(){
   // Abre o AutoLab no Agente Ágil
@@ -33144,6 +33241,14 @@ function removeBlockerTag(){
   // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
   if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
   c.blockerReason='';
+  // Achado real (/monitorarbugs, 2026-10-01, escopo Automações): este botão
+  // salva direto (fbSaveCard(), sem passar pelo saveCard()/scheduleAutoSave())
+  // — igual _doBulkUnblockTag() já faz, mas faltavam aqui os mesmos 2 passos
+  // que aquele já tem: fechar o episódio de tempo bloqueado (⏱️) e disparar a
+  // automação "Impedimento removido"/notificar quem estava acompanhando.
+  _settleBlockedTag(c, true);
+  notifUnblocked(c);
+  runAutoRules('unblocked', c.id);
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';
