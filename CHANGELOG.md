@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.777-dev — 2026-10-01 · fix(seletor de squad): nome/emoji/subtítulo/id injetados crus no HTML
+
+`/monitorarbugs` (seletor de squad pós-login, PR #1148 de hoje).
+`renderSelectorGrid()` montava o grid com `meta.label`/`subtitle`/`emoji` e
+o `id` direto no `innerHTML`/`href` — texto livre digitado no painel
+(`kanban/squads_meta`). O seletor do header (`toggleSquadSwitcher()`) já
+escapava com `esc()`/`encodeURIComponent()`; este era o único que não.
+Um nome de squad com `<`/`&`/aspas quebrava o card (ou injetava HTML).
+
 ### v8.30.776-dev — 2026-10-01 · fix(login): botão errado (Google × Microsoft) entrava em app vazio + mensagem de recusa sumia no reload
 
 `/monitorarbugs` no login com Microsoft (feito hoje). 3 achados:
@@ -20277,6 +20286,20 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.89 · painel-dev — 2026-10-01 · fix(OKR): salvar um Marco e depois o Objetivo apagava a entrada do Marco no histórico
+
+`/monitorarbugs` nas correções de OKR do dia. `saveOkrMarco()`/
+`_okrArquivarMarco()` empurram um resumo ("atualizou o marco X") pro
+`history[]` do Objetivo pai direto no Firebase — mas o Objetivo continua
+aberto por baixo (abrir um Marco só esconde o overlay), com `_okrObjDraft`
+ainda segurando o `history[]` de quando abriu. O 💾 Salvar seguinte do
+Objetivo grava `{...draft}` por cima do nó inteiro e **apagava a entrada
+que o Marco tinha acabado de gravar** (e o 📜 Histórico do próprio
+Objetivo já voltava desatualizado ao fechar o Marco). Fluxo comum: editar
+um Marco dentro do modal do Objetivo e depois salvar o Objetivo.
+`_okrSyncObjDraftHistory()` mantém rascunho e snapshot em sincronia (sem
+acusar "alteração não salva" à toa).
 
 ### painel-dev.html v3.88 · painel-dev — 2026-10-01 · fix(login): mesmo gate de provedor/e-mail do kanban
 

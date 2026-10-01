@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.88 · painel-dev</div>
+<div class="version">v3.89 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6070,6 +6070,18 @@ function closeOkrConfigBack(){
   renderOkrObjBody(_okrEditingObjId);
   document.getElementById('okr-obj-ov').classList.add('open');
 }
+// saveOkrMarco()/_okrArquivarMarco() empurram um resumo pro history[] do Objetivo PAI direto
+// no Firebase + cache (okrObjetivos) — mas o Objetivo continua ABERTO por baixo (abrir um Marco
+// só esconde o overlay dele), com _okrObjDraft ainda segurando o history[] de quando abriu.
+// saveOkrObjetivo() grava `{...draft}` por cima do nó inteiro: o 💾 Salvar seguinte do Objetivo
+// apagava, em silêncio, a entrada que o Marco tinha acabado de gravar (e a seção 📜 Histórico do
+// próprio Objetivo já voltava desatualizada ao fechar o Marco) — achado do /monitorarbugs
+// 2026-10-01. Mantém rascunho e snapshot em sincronia, sem acusar "alteração não salva" à toa.
+function _okrSyncObjDraftHistory(objId, hist){
+  if(!_okrObjDraft || _okrEditingObjId!==objId) return;
+  _okrObjDraft.history = hist.slice();
+  try{ const snap=JSON.parse(_okrObjOpenSnapshot); snap.history=hist.slice(); _okrObjOpenSnapshot=JSON.stringify(snap); }catch(e){}
+}
 // Fecha só depois de confirmar se há alteração não salva — mesmo espírito
 // de _cardIsDirty()/closeOv('card-ov') no kanban.html, que este modal nunca
 // teve. closeOkrObjetivo() continua sendo chamado DIRETO pelos fluxos que
@@ -6889,6 +6901,7 @@ async function saveOkrMarco(){
     if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
     await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
     okrObjetivos[objId] = {...obj, history:objHistory};
+    _okrSyncObjDraftHistory(objId, objHistory);
     await _okrNotifyEditado(objId);
   }
   showToast(isNovo ? '🏁 Marco criado.' : '💾 Marco salvo.');
@@ -6916,6 +6929,7 @@ async function _okrArquivarMarco(){
     if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
     await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
     okrObjetivos[objId] = {...obj, history:objHistory};
+    _okrSyncObjDraftHistory(objId, objHistory);
   }
   showToast('🗑 Marco arquivado.');
   closeOkrMarco();
