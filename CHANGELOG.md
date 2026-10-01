@@ -20194,6 +20194,43 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.86 · painel-dev — 2026-10-01 · UI/UX: auditoria + melhorias DENTRO do modal de Objetivo/Marco (OKR)
+
+Pedido direto, continuação da rodada anterior na aba: "agora dentro do
+modal do okr". Mesmo método (auditoria no código/CSS, sem navegador
+logado nesta sessão) — 3 achados reais, corrigidos:
+
+**1. Histórico sempre 100% expandido, no fim do scroll.** Um Objetivo
+pode acumular até `OKR_HIST_CAP`=80 entradas de histórico — e a tela
+sempre renderizava TODAS, sem colapsar, bem no final de um modal que já
+empilha 5 editores de lista (Indicadores/Progressos/Próximos Passos/
+Riscos/Planos de Ação) + Marcos + Cards vinculados antes dele. Pra um
+Objetivo com uso real, isso sozinho podia dobrar a altura do modal numa
+seção que a maioria das aberturas nem olha. Fix: `_okrHistorySectionHtml()`
+reusa o MESMO padrão `<details class="pt-bucket">`/`.pt-chevron` já
+usado na Timeline do painel (não inventa componente novo) — fechado por
+padrão quando tem bastante coisa (>5 entradas), aberto quando é pouco.
+Aplicado nos 4 lugares que mostravam Histórico (Objetivo e Marco, modo
+leitura e edição).
+
+**2. "🔗 Cards vinculados" sempre aberto, com busca ocupando espaço
+permanente.** Feature de uso bem mais raro que Marcos/Riscos/Planos de
+Ação, mas vinha sempre expandida — inclusive o campo de busca, mesmo
+quando a lista estava vazia (o caso comum). Mesmo padrão `<details>` do
+item acima: fechado quando vazio, aberto quando já tem algo vinculado
+(não esconde o que já existe).
+
+**3. Status do Marco, dentro do modal, comunicado só por um dot
+pequeno** (sem texto, diferente do card na grid da aba, que mostra
+dot+label) — cada linha de `.okr-marco-row` ganhou uma borda esquerda
+de 3px na cor do status (mesma técnica que `.okr-hist-item` já usa pra
+tipo de evento), reforçando o status sem gastar largura — o modal tem
+só 560px e cada linha já tem nome+responsável+prazo+🎬 disputando
+espaço.
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK;
+balanço de chaves do arquivo (-1, igual ao baseline da sessão).
+
 ### painel-dev.html v3.85 · painel-dev — 2026-10-01 · UI/UX: auditoria + melhorias na aba 🎯 OKR
 
 Pedido direto do usuário: "quero q vc faça uma analise de UI/UX e
