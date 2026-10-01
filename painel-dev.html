@@ -706,7 +706,14 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 
 /* ── OKR / BLOQUEIO / RISCO TILE CARDS ────────────────────────── */
 .panel-card{
-  background:rgba(6,20,44,.85);border:1px solid rgba(56,182,255,.12);
+  /* Achado real (relato direto, 2026-10-01, print: "modo claro no okr
+     ta bugadasso de leitura") — fundo era rgba(6,20,44,.85) FIXO (nunca
+     mudava com o tema), enquanto .pc-card-title já usava var(--txt)
+     (corretamente escuro no tema claro) — texto escuro sobre fundo
+     escuro fixo, quase ilegível. Troca pro mesmo padrão já usado em
+     .pt-row/.met/etc. (var(--ink-rgb), tema-aware) — afeta os 3 tipos
+     de tile (.okr/.risco/.blocker), não só OKR. */
+  background:rgba(var(--ink-rgb),.85);border:1px solid rgba(56,182,255,.12);
   border-radius:12px;padding:12px 14px;cursor:pointer;
   transition:border-color .15s,transform .1s,box-shadow .15s;
   display:flex;flex-direction:column;gap:7px;
@@ -2893,7 +2900,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.76 · painel-dev</div>
+<div class="version">v3.77 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

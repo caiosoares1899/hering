@@ -19952,6 +19952,29 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.77 · painel-dev — 2026-10-01 · fix: cards de OKR/Risco/Bloqueio ilegíveis no tema claro
+
+Relato direto do usuário, com print: "modo claro no okr ta bugadasso de
+leitura" — os cards de "🎯 Cards do board com badge OKR" apareciam quase
+ilegíveis no tema claro, título em cinza sobre fundo escuro.
+
+Causa raiz: `.panel-card` (usado pelos 3 tipos de tile — OKR, Risco e
+Bloqueio) tinha o fundo FIXO em `rgba(6,20,44,.85)` (azul-marinho
+escuro, hardcoded), nunca mudava com o tema — enquanto `.pc-card-title`
+já usava `var(--txt)`, corretamente escuro no tema claro. Resultado:
+texto escuro sobre fundo escuro fixo, no meio de uma tela cujo restante
+já tinha virado claro corretamente. Esse componente é mais antigo que o
+tema claro do painel e nunca foi retrofitado (comentário original já
+documentava "Bloqueios/OKR/Risco continuam com o visual próprio deles,
+intocado").
+
+Fix: troca pro mesmo padrão já usado em `.pt-row`/`.met`/etc.
+(`background:rgba(var(--ink-rgb),.85)`, tema-aware) — 1 linha, afeta os
+3 tipos de tile de uma vez.
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK; balanço
+de chaves do `<style>` — 735/735, batendo.
+
 ### painel.html v3.76 · painel — 2026-09-30 · Promove pra prod — fix(OKR): Esc ao cancelar descartava edições não salvas
 
 Quarta promoção do dia, pedido direto do usuário ("sobe tudo pro
