@@ -3090,6 +3090,25 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   — antes não existia, `window._okrOpenDetail(id)` recebia `id` sempre
   por parâmetro sem guardar em nenhum lugar) permite reabrir o mesmo
   Objetivo depois de togglar.
+- **👁 Pré-visualizar por Objetivo + contador de caracteres recomendado**
+  (2026-10-01, pedido direto: "um preview da apresentação do objetivo
+  para cada objetivo... a gente precisa tambem calcular quantos
+  caracteres sao maximo para n quebrar a leitura") —
+  `_okrPreviewApresentacao(id)` (`painel-dev.html`, perto de
+  `_okrObjCardHtml()`) abre `okr-apresentacao.slide.html?preview=<id>`
+  numa aba nova; do lado de lá, `_previewObjId` (lido de
+  `new URLSearchParams(location.search)`) é consumido UMA VEZ dentro de
+  `rebuild()`, chamando `window._okrOpenDetail(id)` assim que os 4
+  listeners (`_loaded`) terminam o 1º carregamento — não reabre a cada
+  atualização ao vivo do Firebase depois disso. `OKR_CHAR_LIMITS`
+  (`painel-dev.html`) + `_okrCharCounterHtml(fieldId)`/
+  `_okrUpdateCharCounter(fieldId,limite)` — soft cap NÃO bloqueante por
+  campo (descrição do Objetivo ~200 car., item de lista ~90 car., nome
+  do Marco ~70 car., descrição do Marco ~110 car.), calculado a partir
+  da largura real dos containers em `okr-apresentacao.slide.html`
+  (~0.52× font-size por caractere) — contador vive em `#okr-f-descricao`/
+  `#okr-m-nome`/`#okr-m-descricao` (campos fixos) e no `okr-add-${campo}`/
+  textarea de edição inline de `_okrListEditStart()` (itens de lista).
 
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
@@ -3589,7 +3608,11 @@ detalhe aberto — ver nota abaixo).
   `titulo`). `startListeners()` — L1264 — os 4 listeners ao vivo, cada um
   chama `scheduleRebuild()` (debounce 150ms) → `rebuild()` — L720
   (preserva o slide atual pela `key`, não pelo índice) → `render()` —
-  L724.
+  L724. **`?preview=<objId>`** (2026-10-01, botão "👁" do painel-dev.html
+  — ver seção OKR acima) — `_previewObjId` lê o parâmetro no boot;
+  `rebuild()` consome ele UMA VEZ no 1º carregamento completo
+  (`window._okrOpenDetail(id)`), nunca de novo depois — senão reabriria o
+  detalhe a cada atualização ao vivo, atropelando navegação real.
 - **Zoom-fit ("nunca cortar, nunca scroll")** — `_zoomFitToHeight(content,
   availH)` — L621 — núcleo compartilhado: busca binária no `zoom` CSS até
   a altura renderizada (medida via `getBoundingClientRect()`, não
