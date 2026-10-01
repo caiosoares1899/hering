@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.89 · painel-dev</div>
+<div class="version">v3.90 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6008,6 +6008,7 @@ function openOkrObjetivo(id){
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
+  ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; }); // sessão nova: nada de texto pendente do Objetivo anterior
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
   // deep-link ?okr=<id> apontar) — "Novo Objetivo" ainda não tem pra onde
   // levar até o 1º Salvar.
@@ -6030,6 +6031,7 @@ function openOkrObjetivo(id){
 function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   document.getElementById('okr-obj-config-ov')?.classList.remove('open');
+  ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; });
   _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
 }
 // Troca pra tela de Configurações (título/gerência/trimestre/pilar/tags/
@@ -6159,6 +6161,29 @@ async function _copyToClipboard(text, successMsg){
 // eram perdidos no 1º "+ Add" clicado (só eram lidos do DOM no Salvar,
 // nunca sincronizados de volta pro draft antes do re-render). Chamada
 // no início de toda função que muda uma lista/pessoa e re-renderiza.
+// Texto digitado numa caixa "+ Add" (Indicadores/Progressos/.../Trimestres, checklist do Marco) só vira
+// item de verdade com Enter/"+ Add" — até lá vive SÓ no <input>. Como todo "+ Add"/remover/editar item
+// reconstrói o corpo inteiro do modal (innerHTML), o texto pendente de OUTRA caixa se perdia em silêncio
+// (e também ao ir pra ⚙ Configurações/abrir um Marco e voltar) — mesma classe do #1147, outros caminhos
+// (/monitorarbugs 2026-10-01). Lê os valores logo antes de reconstruir e devolve logo depois.
+// Cuidado deliberado: lê do DOM VIVO, então o corpo de cada modal é LIMPO ao abrir/fechar a sessão
+// (openOkrObjetivo/closeOkrObjetivo/openOkrMarco/closeOkrMarco) — senão o texto de um Objetivo
+// vazaria pro próximo.
+const _OKR_OBJ_PENDING_IDS = ['okr-add-indicadores','okr-add-progressos','okr-add-proximosPassos','okr-add-riscos','okr-add-planosAcao','okr-add-trimestres'];
+const _OKR_MARCO_PENDING_IDS = ['okr-checklist-add'];
+function _okrReadPending(ids){
+  const o = {};
+  ids.forEach(id=>{ const v = document.getElementById(id)?.value; if(v) o[id] = v; });
+  return o;
+}
+function _okrWritePending(o){
+  Object.entries(o).forEach(([id,v])=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.value = v;
+    const campo = id.replace(/^okr-add-/,'');
+    if(OKR_CHAR_LIMITS[campo]) _okrUpdateCharCounter(id, OKR_CHAR_LIMITS[campo]);
+  });
+}
 function _okrSyncObjDraftFromDom(){
   if(!_okrObjDraft) return;
   const g=id=>document.getElementById(id);
@@ -6251,6 +6276,7 @@ function _okrRerenderCurrentScreen(){
 function _okrListAdd(campo){
   const inp = document.getElementById('okr-add-'+campo);
   const v = (inp?.value||'').trim(); if(!v) return;
+  inp.value = ''; // confirmado: não pode ser recapturado como "pendente" no re-render logo abaixo
   _okrSyncObjDraftFromDom();
   (_okrObjDraft[campo] = _okrObjDraft[campo]||[]).push(v);
   _okrRerenderCurrentScreen();
@@ -6405,6 +6431,7 @@ function renderOkrObjBody(id){
     return;
   }
 
+  const _pendObj = _okrReadPending(_OKR_OBJ_PENDING_IDS);
   // Recap curto de título/gerência/trimestre/pilar — o resto (edição
   // desses campos + tags/responsável) mora agora em ⚙ Configurações
   // (openOkrConfig()/renderOkrObjConfigBody()), pra deixar em foco aqui só
@@ -6429,6 +6456,7 @@ function renderOkrObjBody(id){
     ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
     ${_okrHistorySectionHtml(d)}`;
+  _okrWritePending(_pendObj);
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
@@ -6454,6 +6482,7 @@ function renderOkrObjConfigBody(){
   // arrastada manualmente some no re-render) — vale aqui também, já que
   // #okr-f-descricao mora nesta tela agora.
   const _alturaDescricaoPrevia = document.getElementById('okr-f-descricao')?.style.height || '';
+  const _pendCfg = _okrReadPending(_OKR_OBJ_PENDING_IDS);
 
   body.innerHTML = `
     <div class="okr-field-label">Título do Objetivo</div>
@@ -6477,6 +6506,7 @@ function renderOkrObjConfigBody(){
     if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
   }
   _okrUpdateCharCounter('okr-f-descricao', OKR_CHAR_LIMITS['okr-f-descricao']);
+  _okrWritePending(_pendCfg);
 }
 
 async function saveOkrObjetivo(){
@@ -6625,11 +6655,13 @@ function openOkrMarco(id, objId){
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');
   _okrMarcoComments = [];
+  { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; } // sessão nova: nada de texto pendente do Marco anterior
   renderOkrMarcoBody();
   if(id) _okrLoadMarcoComments(id);
 }
 function closeOkrMarco(){
   document.getElementById('okr-marco-ov').classList.remove('open');
+  { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; }
   const objId = _okrEditingMarcoObjId;
   _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
   if(objId){ document.getElementById('okr-obj-ov').classList.add('open'); renderOkrObjBody(objId); }
@@ -6684,6 +6716,7 @@ function _okrChecklistHtml(){
 function _okrChecklistAdd(){
   const inp = document.getElementById('okr-checklist-add');
   const v = (inp?.value||'').trim(); if(!v) return;
+  inp.value = '';
   _okrSyncMarcoDraftFromDom();
   (_okrMarcoDraft.checklist = _okrMarcoDraft.checklist||[]).push({text:v, done:false});
   renderOkrMarcoBody();
@@ -6831,6 +6864,7 @@ function renderOkrMarcoBody(){
   }
 
   const respOpts = _okrPessoaOptions();
+  const _pendMarco = _okrReadPending(_OKR_MARCO_PENDING_IDS);
   body.innerHTML = `
     <div class="okr-field-label">Nome do Marco</div>
     <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade" oninput="_okrUpdateCharCounter('okr-m-nome',${OKR_CHAR_LIMITS['okr-m-nome']})">
@@ -6863,6 +6897,7 @@ function renderOkrMarcoBody(){
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
   _okrUpdateCharCounter('okr-m-nome', OKR_CHAR_LIMITS['okr-m-nome']);
   _okrUpdateCharCounter('okr-m-descricao', OKR_CHAR_LIMITS['okr-m-descricao']);
+  _okrWritePending(_pendMarco);
 }
 
 async function saveOkrMarco(){
