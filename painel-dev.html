@@ -2900,7 +2900,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.80 · painel-dev</div>
+<div class="version">v3.81 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5830,7 +5830,20 @@ function closeOkrObjetivo(){
 // dirty-check próprio nem fecha o modal (ver closeOkrConfigBack()).
 function openOkrConfig(){
   if(!_okrObjDraft) return;
-  _okrSyncObjDraftFromDom();
+  // Achado real (relato direto, 2026-10-01: "clica em configurações de um
+  // okr e muda para configurar outro, ele fica preso nesse primeiro...
+  // como se tivesse numa espécie de cache"). Causa raiz: _okrSyncObjDraftFromDom()
+  // só lê okr-f-titulo/okr-f-area/okr-f-pilar/okr-f-descricao — campos que
+  // SÓ existem dentro da própria tela de Configurações (#okr-obj-config-body),
+  // nunca na tela principal de onde este botão é clicado. Essa <div> não é
+  // limpa ao fechar o modal, só escondida — então chamar o sync AQUI (com a
+  // tela principal visível, a de Config ainda não renderizada para ESTE
+  // objetivo) lia o que sobrou no DOM da última vez que a Config rodou,
+  // possivelmente de OUTRO Objetivo, e sobrescrevia título/gerência/pilar/
+  // descrição do rascunho atual com lixo antigo antes mesmo de renderizar.
+  // Removida — não existe nada de legítimo pra sincronizar aqui (a tela
+  // principal não tem esses campos); closeOkrConfigBack() já faz o sync de
+  // verdade, na hora certa (com a Config ainda ativa, saindo dela).
   document.getElementById('okr-obj-ov').classList.remove('open');
   renderOkrObjConfigBody();
   document.getElementById('okr-obj-config-title').textContent = _okrEditingObjId ? '⚙ Configurações' : '🎯 Novo Objetivo';

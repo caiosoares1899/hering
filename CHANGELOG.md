@@ -20160,6 +20160,30 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.81 · painel-dev — 2026-10-01 · fix(OKR): tela de Configurações ficava "presa" no 1º Objetivo configurado
+
+Relato direto do usuário: "quando vc clica em configurações de um okr e
+muda para configurar outro, ele fica preso nesse primeiro q vc
+configurou! como se tivesse 'preso' numa espécie de 'cache'" — **já
+confirmado ativo em produção também** (mesmo bug em `painel.html`).
+
+Causa raiz: `openOkrConfig()` chamava `_okrSyncObjDraftFromDom()` antes
+de renderizar a tela de Configurações — mas essa função só lê os campos
+`okr-f-titulo`/`okr-f-area`/`okr-f-pilar`/`okr-f-descricao`, que só
+existem DENTRO da própria tela de Configurações, nunca na tela
+principal (de onde o botão ⚙ é clicado). Essa `<div>` não é limpa ao
+fechar o modal, só escondida — então a chamada lia o que sobrou no DOM
+da ÚLTIMA vez que a Config rodou (possivelmente de outro Objetivo) e
+sobrescrevia título/gerência/pilar/descrição do rascunho atual com
+dado antigo antes mesmo de renderizar a tela nova.
+
+Fix: chamada removida — não havia nada de legítimo pra sincronizar ali
+(a tela principal não tem esses campos); `closeOkrConfigBack()` já faz
+o sync de verdade, no momento certo (saindo da Config, com ela ainda
+ativa).
+
+Checks de rotina: `node --check` no maior bloco `<script>` — OK.
+
 ### painel-dev.html v3.80 · painel-dev — 2026-10-01 · fix(OKR): texto digitado no "+ Add" sem confirmar fechava o modal em silêncio
 
 Relato direto do usuário: "precisa colocar aquele ponto de quando clicar
