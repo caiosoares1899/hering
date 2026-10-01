@@ -349,6 +349,24 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
 .okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
 .okr-char-counter{font-size:10px;text-align:right;color:var(--txt3);}
+/* ── Auditoria de UI/UX da aba OKR (pedido direto: "faça uma analise de
+   UI/UX e melhore") ──
+   1) Tira de resumo clicável (abaixo do toolbar de filtros) — a aba antes
+      ia direto pro grid de cards sem nenhuma visão agregada; pra decidir
+      "como estamos indo" a pessoa tinha que escanear card por card. Cada
+      chip também FUNCIONA como atalho do filtro de status já existente
+      (clica de novo pra limpar) — não duplica lógica nova, só expõe o
+      mesmo _okrSetFilter('status',…) de um jeito mais rápido de bater o
+      olho que abrir o <select>. */
+.okr-stats-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
+  background:var(--glass);border:1px solid var(--glass-b);font-size:11px;color:var(--txt2);
+  cursor:pointer;transition:border-color .15s,background .15s;}
+.okr-stat-chip b{color:var(--txt);font-size:12px;}
+.okr-stat-chip:hover{border-color:rgba(56,182,255,.4);}
+.okr-stat-chip.active{border-color:var(--accent);background:rgba(56,182,255,.12);}
+.okr-stat-chip.total{cursor:default;}
+.okr-stat-chip.total:hover{border-color:var(--glass-b);}
 /* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
    ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
    continuam funcionando em telas sem mouse). */
@@ -1788,21 +1806,47 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
        direto: "seria a coluna do card filho"). Grid "Cards do board com
        badge OKR" abaixo é o renderOKR() que já existia na aba Visão — só
        mudou de casa pra ficar junto do resto do assunto OKR. -->
+  <!-- ── Auditoria de UI/UX da aba OKR (pedido direto: "faça uma analise de
+       UI/UX e melhore") — 4 achados reais, corrigidos juntos:
+       1) 8 botões no MESMO nível/peso visual na linha de cabeçalho,
+          misturando 3 tipos de ação diferentes (referência/ajuda, troca de
+          VISÃO — Central Agente/Anotações/Histórico, que substituem o grid
+          inteiro — e a CTA principal "+ Novo Objetivo") sem nenhum
+          agrupamento. Agora em 3 grupos separados por um traço vertical,
+          com "+ Novo Objetivo" como ÚNICO botão de destaque (.btn-p,
+          preenchido) — o resto fica em segundo plano visual de propósito.
+       2) Essa linha de 8 botões não tinha `flex-wrap` — só o BLOCO inteiro
+          (dentro de .sec-title, que é flex-wrap) ia pra linha de baixo no
+          mobile, mas os botões dentro dele continuavam numa fileira só sem
+          wrap nem scroll, cortando os últimos pra fora da tela. Corrigido
+          com flex-wrap no grupo em si.
+       3) "📦 Ver arquivados" é conceitualmente um FILTRO do que o grid
+          mostra (ativo vs. arquivado), não uma ação de página — movido pra
+          dentro do .okr-toolbar, junto dos outros filtros.
+       4) Resumo agregado (.okr-stats-strip, CSS acima) + "✕ Limpar
+          filtros" (só aparece com algum filtro ativo) — ver
+          renderOkrObjetivos()/_okrClearFilters(). -->
   <div class="ptab-pane" id="ppane-okr">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
       <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
-      <div style="display:flex;gap:6px;">
-        <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
-        <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
-        <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
-        <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
-        <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
-        <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
-        <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
-        <button type="button" class="btn btn-sm" id="okr-novo-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
+          <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
+          <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+        </div>
+        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
+          <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
+          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
+        </div>
+        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
+        <button type="button" class="btn btn-p" id="okr-novo-btn" style="font-size:11px;padding:6px 14px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
       </div>
     </div>
     <div class="okr-toolbar" id="okr-toolbar">
+      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 10px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
       <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
@@ -1814,7 +1858,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <option value="concluido">✅ Concluído</option>
       </select>
       <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="min-width:170px;flex:1;">
+      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="font-size:11px;padding:5px 10px;display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
     </div>
+    <div id="okr-stats-strip"></div>
     <div id="okr-objetivos-wrap"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
 
     <!-- 💬 Central Agente Ágil — chat dedicado (kanban/okr/agente_chat),
@@ -2918,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.84 · painel-dev</div>
+<div class="version">v3.85 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5190,7 +5236,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
   document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
-  ['okr-toolbar','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
+  ['okr-toolbar','okr-stats-strip','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
   });
   const arqBtn = document.getElementById('okr-arquivados-btn'); if(arqBtn) arqBtn.style.display = view==='objetivos' ? '' : 'none';
@@ -5505,6 +5551,46 @@ function _okrObjDragEnd(ev){
   _okrDraggedObjId = null;
 }
 
+function _okrTemFiltroAtivo(){
+  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto);
+}
+function _okrClearFilters(){
+  _okrFilter = {area:'', trimestre:'', status:'', texto:''};
+  const txt = document.getElementById('okr-filter-texto'); if(txt) txt.value = '';
+  renderOkrObjetivos();
+}
+// Resumo agregado clicável, ACHADO #1 da auditoria de UI/UX (2026-10-01):
+// a aba ia direto pro grid de cards sem nenhuma visão de conjunto — pra
+// saber "como estamos indo" a pessoa tinha que escanear card por card.
+// Calculado sobre `lista` (já filtrada por área/trimestre/texto, mas ANTES
+// do filtro de status — senão o próprio resumo sumiria assim que alguém
+// clicasse num chip). Cada chip reusa _okrSetFilter('status',…), o mesmo
+// filtro que o <select> já aplicava — clicar de novo no chip ativo limpa.
+function _okrStatsStripHtml(lista){
+  if(!lista.length) return '';
+  let marcosTotal=0, marcosDone=0;
+  const porStatus = {};
+  lista.forEach(o=>{
+    const st = _okrObjStatus(o.id);
+    porStatus[st] = (porStatus[st]||0)+1;
+    const marcos = _okrObjMarcos(o.id);
+    marcosTotal += marcos.length;
+    marcosDone += marcos.filter(m=>m.progresso==='concluido').length;
+  });
+  const chips = OKR_STATUS.filter(s=>porStatus[s.id]>0).map(s=>{
+    const ativo = _okrFilter.status===s.id;
+    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_okrSetFilter('status','${ativo?'':s.id}')" title="Filtrar por ${esc(s.label)}">
+      <span class="okr-dot" style="background:${s.dot};"></span><b>${porStatus[s.id]}</b> ${esc(s.label)}
+    </div>`;
+  }).join('');
+  const pctMarcos = marcosTotal ? Math.round(marcosDone/marcosTotal*100) : null;
+  return `<div class="okr-stats-strip">
+    <div class="okr-stat-chip total"><b>${lista.length}</b> Objetivo${lista.length===1?'':'s'}</div>
+    ${chips}
+    ${pctMarcos!==null?`<div class="okr-stat-chip total">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
+  </div>`;
+}
+
 function renderOkrObjetivos(){
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
@@ -5514,6 +5600,10 @@ function renderOkrObjetivos(){
   if(arqBtn) arqBtn.textContent = _okrShowArquivados ? '◀ Ver ativos' : '📦 Ver arquivados';
   const tituloAba = document.getElementById('okr-titulo-aba');
   if(tituloAba) tituloAba.textContent = _okrShowArquivados ? '📦 OKR — Objetivos arquivados' : '🎯 OKR — Objetivos estratégicos';
+  const statusSel = document.getElementById('okr-filter-status');
+  if(statusSel) statusSel.value = _okrFilter.status;
+  const clearBtn = document.getElementById('okr-clear-filters-btn');
+  if(clearBtn) clearBtn.style.display = _okrTemFiltroAtivo() ? '' : 'none';
 
   const areaSel = document.getElementById('okr-filter-area');
   if(areaSel && areaSel.options.length <= 1){
@@ -5530,27 +5620,32 @@ function renderOkrObjetivos(){
 
   if(!_okrLoaded){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; return; }
 
-  let objetivos = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
-  if(_okrFilter.area) objetivos = objetivos.filter(o=>o.areaId===_okrFilter.area);
-  if(_okrFilter.trimestre) objetivos = objetivos.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
-  if(_okrFilter.status) objetivos = objetivos.filter(o=>_okrObjStatus(o.id)===_okrFilter.status);
+  let base = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
+  if(_okrFilter.area) base = base.filter(o=>o.areaId===_okrFilter.area);
+  if(_okrFilter.trimestre) base = base.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
   if(_okrFilter.texto){
     const t = _okrFilter.texto.toLowerCase();
-    objetivos = objetivos.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
+    base = base.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
   }
+  const statsStrip = document.getElementById('okr-stats-strip');
+  if(statsStrip) statsStrip.innerHTML = _okrShowArquivados ? '' : _okrStatsStripHtml(base);
+
+  const objetivos = _okrFilter.status ? base.filter(o=>_okrObjStatus(o.id)===_okrFilter.status) : base;
 
   if(!objetivos.length){
     wrap.innerHTML = _okrShowArquivados
       ? '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo arquivado.</div>'
-      : '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo encontrado'
-        + (_okrCanCreate() ? ' — clique em "+ Novo Objetivo" pra começar.' : '.') + '</div>';
+      : _okrTemFiltroAtivo()
+        ? '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo bate com esse filtro. <a href="javascript:void(0)" onclick="_okrClearFilters()" style="color:var(--accent);">✕ Limpar filtros</a></div>'
+        : '<div style="font-size:11px;color:var(--txt3);">Nenhum objetivo encontrado'
+          + (_okrCanCreate() ? ' — clique em "+ Novo Objetivo" pra começar.' : '.') + '</div>';
     return;
   }
 
   const porArea = {};
   objetivos.forEach(o=>{ (porArea[o.areaId||'geral'] = porArea[o.areaId||'geral']||[]).push(o); });
 
-  const podeReordenar = _okrCanCreate() && !_okrShowArquivados && !_okrFilter.area && !_okrFilter.trimestre && !_okrFilter.status && !_okrFilter.texto;
+  const podeReordenar = _okrCanCreate() && !_okrShowArquivados && !_okrTemFiltroAtivo();
   wrap.innerHTML = OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).map(g=>{
     const lista = _okrObjetivosSorted(porArea[g.id]);
     return `
@@ -5589,7 +5684,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
       <span style="font-size:10px;color:var(--txt3);">🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
     </div>
-    <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;"></div></div>
+    <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;background:${okrStatusInfo(status).dot};" title="${pct}% dos marcos concluídos"></div></div>
   </div>`;
 }
 

@@ -20194,6 +20194,58 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.85 · painel-dev — 2026-10-01 · UI/UX: auditoria + melhorias na aba 🎯 OKR
+
+Pedido direto do usuário: "quero q vc faça uma analise de UI/UX e
+melhore a aba de okr do painel!". Auditoria feita direto no código/CSS
+(sem acesso a um navegador logado nesta sessão) — 4 achados reais,
+todos corrigidos juntos:
+
+**1. Toolbar de ações sobrecarregado.** O cabeçalho tinha 8 botões no
+MESMO peso visual, misturando 3 tipos de ação bem diferentes: links de
+referência (❓ Ajuda, 📘 Guia OKR, 🎥 Apresentação), troca de VISÃO
+(💬 Central Agente Ágil, 📋 Anotações, 📈 Histórico — substituem o grid
+inteiro) e a CTA principal (+ Novo Objetivo). Agora em 3 grupos
+separados por um traço vertical, com "+ Novo Objetivo" como ÚNICO
+botão de destaque (preenchido, `.btn-p`) — o resto fica em segundo
+plano de propósito.
+
+**2. Bug de mobile na mesma linha de botões.** A linha de 8 botões não
+tinha `flex-wrap` — só o BLOCO inteiro ia pra linha de baixo (o pai,
+`.sec-title`, é flex-wrap), mas os botões dentro dele continuavam numa
+fileira só sem wrap nem scroll, cortando os últimos pra fora da tela
+num celular. Corrigido com `flex-wrap` nos grupos internos também.
+
+**3. "📦 Ver arquivados" realocado.** Conceitualmente é um FILTRO do
+que o grid mostra (ativo vs. arquivado), não uma ação de página —
+estava isolado no cabeçalho, longe dos outros filtros (área/trimestre/
+status/texto). Movido pra dentro do `.okr-toolbar`.
+
+**4. Sem visão agregada, sem feedback de filtro.** A aba ia direto pro
+grid de cards agrupados por Gerência sem nenhum resumo — pra saber
+"como estamos indo", a pessoa tinha que escanear card por card. Além
+disso, os filtros não davam nenhum feedback de "algo está filtrado" se
+a pessoa esquecesse. Dois adicionados:
+- **Tira de resumo clicável** (`#okr-stats-strip`/`_okrStatsStripHtml()`)
+  logo abaixo do toolbar: total de Objetivos, quantos por status (cada
+  chip clicável filtra por aquele status — mesmo `_okrSetFilter()` que
+  o `<select>` já usava) e % geral de marcos concluídos. Calculada
+  sobre o filtro de área/trimestre/texto já aplicado, mas ANTES do de
+  status (senão o resumo sumiria assim que alguém clicasse num chip).
+- **"✕ Limpar filtros"** (só aparece com algum filtro ativo) +
+  mensagem de vazio diferenciada ("nenhum objetivo bate com esse
+  filtro", com link pra limpar, em vez do genérico "nenhum objetivo
+  encontrado" que também aparecia quando era só um filtro vazio).
+
+**Achado incidental, corrigido junto**: a barra de progresso do card
+(`.okr-progress-fill`) sempre usava a cor `--accent` (azul neutro),
+mesmo num Objetivo 🔴 Atrasado — perdia a chance de reforçar o status
+visualmente à distância, numa tela que escaneia dezenas de cards. Agora
+usa a MESMA cor do dot de status (`okrStatusInfo(status).dot`).
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK;
+balanço de chaves do arquivo (-1, igual ao baseline da sessão).
+
 ### painel-dev.html v3.84 · painel-dev — 2026-10-01 · feat(OKR): preview por Objetivo + contador de caracteres recomendado
 
 Pedido direto do usuário: "um preview da apresentação do objetivo para

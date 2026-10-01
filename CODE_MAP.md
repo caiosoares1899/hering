@@ -3109,6 +3109,29 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   (~0.52× font-size por caractere) — contador vive em `#okr-f-descricao`/
   `#okr-m-nome`/`#okr-m-descricao` (campos fixos) e no `okr-add-${campo}`/
   textarea de edição inline de `_okrListEditStart()` (itens de lista).
+- **Auditoria de UI/UX da aba OKR** (2026-10-01, pedido direto: "faça
+  uma analise de UI/UX e melhore a aba de okr do painel!") — 4 achados
+  corrigidos (ver `CHANGELOG.md` v3.85 · painel-dev pro racional
+  completo de cada um): (1) os 8 botões do cabeçalho da aba agora vivem
+  em 3 grupos visuais (referência/ajuda · troca de visão · CTA
+  "+ Novo Objetivo", este último como único botão preenchido `.btn-p`),
+  separados por `<span>` de 1px (divisor); (2) `flex-wrap` adicionado
+  nos grupos de botões (bug real de mobile: a linha inteira cortava os
+  últimos botões pra fora da tela, sem scroll); (3) "📦 Ver arquivados"
+  (`#okr-arquivados-btn`) movido do cabeçalho pra dentro do
+  `.okr-toolbar` (é um filtro, não uma ação de página); (4) resumo
+  agregado clicável — `_okrStatsStripHtml(lista)`/`#okr-stats-strip`,
+  populado dentro de `renderOkrObjetivos()` — total de Objetivos + 1
+  chip por status (clicável, reusa `_okrSetFilter('status',…)`) + % de
+  marcos concluídos, calculado ANTES do filtro de status (senão o
+  resumo sumiria ao clicar num chip); `_okrTemFiltroAtivo()`/
+  `_okrClearFilters()` — botão "✕ Limpar filtros" (só visível com algo
+  filtrado) + mensagem de vazio diferenciada pra "filtro sem resultado"
+  vs. "nenhum Objetivo ainda". Achado incidental corrigido junto:
+  `.okr-progress-fill` (barra de progresso do card) sempre usava
+  `--accent` fixo — agora usa `okrStatusInfo(status).dot`, a MESMA cor
+  do dot de status, reforçando risco à distância num grid com dezenas
+  de cards.
 
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
