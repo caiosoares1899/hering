@@ -2718,6 +2718,36 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   de calendário de quem saiu antes. Fix: removida a reatribuição
   redundante no módulo. PR #1128, dev v8.30.767-dev.
 
+- **2026-10-01, Automações (escopo nomeado, pedido explícito "roda outro
+  /monitorarbugs em automações", continuação direta do fix de corrida de
+  escrita em `saveAutoRule()`/`toggleAutoRule()`/`delAutoRule()`, PR
+  #1137)**: 2 técnicas, 9 achados reais. Técnica 1 (comparar caminhos
+  paralelos) aplicada aos 16 `AUTO_ACTIONS` contra o padrão de "no-op
+  guard" (`assign_owner`/`toggle_okr`, 2026-09-17) — 7 sem o guard
+  (`set_priority`/`set_submarca`/`set_canal_venda`/`set_tamanho`/
+  `set_demandante`/`set_padrao`/`set_cover`): regra re-disparando num
+  card já no valor-alvo gravava histórico/salvava/mostrava toast à toa.
+  Técnica 1 aplicada de novo a todos os call sites que mudam
+  `card.blocker` (modo tag), comparando contra `_doBulkBlockTag()`/
+  `_doBulkUnblockTag()` (2026-08-27, já corretos) — achado mais severo,
+  2 caminhos sem disparo: botão "✕ Remover impedimento"
+  (`removeBlockerTag()`, salva direto sem passar por `saveCard()`) e
+  marcar/desmarcar a linha de impedimento no modal + 💾 Salvar (linha
+  usa `style.display` direto, não dispara `input`/`change`, autosave
+  nunca pegava) — mesma classe de 2026-08-26/2026-08-27/2026-08-29
+  (mais de um caminho pra mesma mutação, nem todos disparavam).
+  Checado e sem achado: `_runAutoRuleAction()` (já correto, re-busca
+  card fresco antes de aplicar); `fanoutTemplates`/`apply_fanout`
+  (fixes documentados de 2026-09-06 confirmados intactos); fila de
+  pendentes do Agente Ágil (`_claimPendingAuto()`/
+  `_refreshCardFromFirebase()`, consistente com o fix de 2026-08-29);
+  dispatch `runAutoRules(editingId?'edit':'create',...)` no fim de
+  `saveCard()` É código vestigial conhecido e documentado (`'edit'` não
+  bate com nenhum trigger) — não é bug, os triggers que importam
+  (priority/marked_okr/tags) já têm dispatch dedicado logo acima, por
+  design (ver comentário na própria função). PR #1138, dev
+  v8.30.770-dev → v8.30.771-dev.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
