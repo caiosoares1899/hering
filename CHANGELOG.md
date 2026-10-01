@@ -20160,6 +20160,31 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.83 · painel-dev — 2026-10-01 · feat: login com Microsoft (integração Arezzo) — gap que ficou de fora da rodada do kanban
+
+Pedido direto do usuário ("existem coisas que tão ligadas ao usuário
+que são Google e você precisa adaptar pra Microsoft e ainda não fez?
+se sim, pode corrigir") — auditoria encontrou um gap real: `painel.html`/
+`painel-dev.html` nunca receberam o mesmo tratamento que `kanban.html`/
+`kanban-dev.html` ganharam mais cedo no mesmo dia (PR #1144/#1145). Só
+tinha login Google, e o próprio gate de domínio checava só
+`@ciahering.com.br` puro — um email `@arezzo.com.br`, mesmo que
+conseguisse logar via Google de algum jeito, cairia no fluxo de
+"visualizador externo" (só leitura) em vez de ter o mesmo nível de
+acesso combinado pro kanban.
+
+**O que mudou**: 2º botão "Entrar com Microsoft" (mesmo
+`OAuthProvider('microsoft.com')`, `tenant:'organizations'`, só contas
+de trabalho/escola) + `TRUSTED_DOMAINS`/`_isTrustedDomainEmail()`
+substituindo o `endsWith('@ciahering.com.br')` solto no gate de login e
+na tela "Adicionar visualizador". `database.rules.json` já estava
+coberto — o provider-pin feito mais cedo no mesmo dia (PR #1152) é no
+MESMO arquivo compartilhado entre kanban e painel, então já valia pros
+nodes que o painel lê, sem precisar de mudança adicional ali.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` (module +
+clássico) — OK.
+
 ### painel-dev.html v3.82 · painel-dev — 2026-10-01 · feat(OKR): arrastar e soltar pra reordenar Marcos dentro do Objetivo
 
 Pedido direto do usuário. A lista de Marcos, dentro do modal do
