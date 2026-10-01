@@ -1913,26 +1913,36 @@ comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
 - `renderNotasVinculadasNoCard()` — L19402 — seção "Vínculos" dentro do card
 
 ### Automações (Butler-style)
-- `AUTO_TRIGGERS` — L31001 (21 triggers — `agendado_created` adicionado
+- `AUTO_TRIGGERS` — L32189 (21 triggers — `agendado_created` adicionado
   2026-08-30, par de `recorrente_created` que faltava)
-- `AUTO_ACTIONS` — L31078 (16 ações — `notify_po_org` ["Notificar
+- `AUTO_ACTIONS` — L32266 (16 ações — `notify_po_org` ["Notificar
   PO/Organizador"] adicionada 2026-09-17, pedido direto do usuário;
   mesmo padrão de `notify_all` mas filtra `members` por
   `role==='po'||role==='organizador'` antes de montar o `@menção`, sem
   postar nada se o squad não tiver ninguém nesses papéis)
-- `runAutoRules()` — L31972 — só decide QUAIS regras batem (síncrono);
+- `runAutoRules()` — L32877 — só decide QUAIS regras batem (síncrono);
   `_runAutoRuleAction()`/`AUTO_RULE_DELAY_MS` (logo acima) aplicam o efeito
   de verdade depois de ~1.2s (pedido direto: dar um respiro visual antes do
   efeito da automação, e mostrar toast "⚡ Automação ... foi aplicada" —
   antes era instantâneo e silencioso) — re-busca o card no momento de
   aplicar (guarda contra card excluído/arquivado durante o delay)
-- `_autoTrigger()`/`_autoAction()` — L31608/L31609
-- `_autoValLabel()`/`_autoRenderValueOptions()` — L31612/L31636
+- `_autoTrigger()`/`_autoAction()` — L32478/L32479
+- `_autoValLabel()`/`_autoRenderValueOptions()` — L32482/L32506
+- **`saveAutoRule()`/`toggleAutoRule()`/`delAutoRule()`** — L32654/L32696/L32707
+  — CRUD das regras (`kanban/squads/{sq}/dados/auto_rules`, array com `id`
+  estável por regra). **Achado real (relato direto, 2026-10-01 — Vinicius
+  criou uma regra que nunca disparou e sumiu da lista)**: as 3 escreviam o
+  array `autoRules` LOCAL inteiro de volta (`fbSet`, sobrescrita completa)
+  mesmo com um listener ao vivo sincronizando — mesma corrida já corrigida
+  em Kudos/Lembretes/Links (ver aquelas seções): regra criada/alterada por
+  alguém é apagada em silêncio pela próxima escrita de qualquer um, dentro
+  da janela entre o eco do listener e a ação seguinte. Fix: `runTransaction()`
+  nos 3, toggle/exclusão casam por `id`.
 - **Acesso à tela de Automações** (achado real 2026-08-24: só existia via
   `⚙ Configurações → aba ⚡ Auto`, e o botão de Configurações fica
   escondido de quem não é PO/Organizador/ADM — `_applyRoleVisibility()`,
   L9153 — mesmo sem nenhuma trava de permissão nas ações em si) —
-  `openAutoOv()` — L24210 — abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
+  `openAutoOv()` — L24944 — abre o overlay `#auto-ov` (fora de `#cfg-ov`), acessível
   tanto por um atalho em ⚡ Funções de card (`#card-fn-ov`, visível pra
   qualquer papel) quanto pela aba "⚡ Auto" em Configurações (que virou
   um redirecionamento pro mesmo overlay, não mais uma aba inline)
