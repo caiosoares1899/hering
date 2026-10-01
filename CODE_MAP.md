@@ -118,6 +118,28 @@ confiar num número aqui se for mexer em `painel.html` prod).
   que limpa `gcal_token` do `localStorage` ao sair — mesma classe de
   colisão que o comentário acima já evitava pra `doSignIn()`, mas não
   pra `doSignOut()`. Removido, promovido pra prod v8.30.767.
+- **Refresh silencioso do perfil — foto/nome/email (2026-10-01, relato
+  direto: "tem usuarios q a foto do Google sumiu! la no google msm, a
+  pessoa ainda ta c a foto")**: causa raiz confirmada com diagnóstico ao
+  vivo (script de console testando cada URL de foto) — o Google trocou o
+  FORMATO da URL de foto de perfil (de `.../a-/ALV-Uj...` pro atual
+  `.../a/ACg8oc...`) e vem descontinuando o formato antigo; quem registrou
+  a conta há mais tempo ficou com a URL antiga salva, que parou de
+  resolver — não é dado perdido, só desatualizado (o SDK do Firebase Auth
+  só re-busca `photoURL`/`displayName` do Google numa autenticação de
+  VERDADE, popup/redirect; numa sessão restaurada — aba aberta por dias
+  sem relogar — esses campos ficam congelados). `window._reloadAuthUser()`
+  — `<script type="module">`, perto de `window._signOut` — usa `reload()`
+  do SDK (oficial, sem popup, sem novo consentimento) pra re-buscar o
+  perfil. `_syncAuthProfileToFirebase(user, existeJaLido?)` — L11250 (logo
+  antes de `autoRegistrar()`) — a auto-cura de foto/nome/email que já
+  existia DENTRO de `autoRegistrar()` (achado de 2026-09-09, ver
+  histórico de versões), extraída pra função própria reutilizável;
+  `autoRegistrar()` passa o `existe` que já leu (evita 2ª leitura),
+  chamada standalone relê sozinha. `setInterval` de 1h (perto da função,
+  L11263) — só com a aba em primeiro plano e alguém logado — chama
+  `_reloadAuthUser()` então `_syncAuthProfileToFirebase()`, cobrindo
+  sessões longas que nunca mais passam pelo login de verdade.
 - `_onRealAuthChange(fn)` — L34691 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara

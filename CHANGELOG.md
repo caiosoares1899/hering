@@ -18,6 +18,35 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.769-dev — 2026-10-01 · fix: foto do Google "sumida" — refresh silencioso periódico do perfil
+
+Relato direto do usuário: "tem usuarios q a foto do Google sumiu! la no
+google msm, a pessoa ainda ta c a foto". Investigação com diagnóstico ao
+vivo (script de console lendo `kanban/usuarios_publicos` e testando cada
+URL de foto) confirmou a causa: o Google trocou o FORMATO da URL de foto
+de perfil — de `.../a-/ALV-Uj...` (antigo) pro atual `.../a/ACg8oc...` —
+e vem descontinuando o formato antigo aos poucos. A URL salva no Firebase
+pra quem registrou a conta há mais tempo ainda era a antiga, e parou de
+resolver.
+
+Não é um bug de dado perdido: o campo `foto` sempre esteve correto no
+Firebase, só desatualizado. O SDK do Firebase Auth só re-busca
+displayName/photoURL do Google numa autenticação de verdade (popup/
+redirect) — numa sessão restaurada (quem mantém a aba aberta por dias
+sem relogar), esses campos ficam congelados no valor capturado da última
+vez, mesmo com o Google tendo atualizado a URL do lado dele havia tempo.
+
+Fix: `window._reloadAuthUser()` (usa `reload()` do SDK, oficial, sem
+popup/sem pedir permissão de novo) + `_syncAuthProfileToFirebase()`
+(auto-cura de foto/nome/email, extraída de dentro de `autoRegistrar()` —
+mesma lógica de antes, só reutilizável) rodando a cada 1h, só com a aba
+em primeiro plano e alguém logado — cobre sessões longas, não só o
+momento do login.
+
+Checks de rotina: `node --check` nos 2 blocos `<script>` reais — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +3).
+
 ### v8.30.768-dev — 2026-09-30 · docs: sincroniza Central de Ajuda com o auto-scroll da toolbar + menu de contexto por duplo-clique/duplo-toque
 
 Rodada do `/atualizarhelpcontent`, puramente documentação — sem mudança
