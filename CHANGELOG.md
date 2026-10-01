@@ -20254,6 +20254,8 @@ tá acumulado pra prod"). Mudanças pro público de prod, aba 🎯 OKR:
 - **UI/UX do modal**: Histórico e Cards vinculados colapsáveis.
 - Cards de OKR/Risco/Bloqueio no modo claro com fundo legível.
 
+Rascunho do Mural (`seed_okr_lote_foto_2026_10_01`) adicionado em `COMUNICADO_RASCUNHOS_SEED` — fica como rascunho até um ADM publicar.
+
 Checks de rotina: `node --check` nos 3 blocos `<script>` — OK; versão
 `v3.86 · painel`, resto da divergência contra `painel-dev.html` é só
 ambiente (favicon/título/banner dev, nodes `_dev`, squads fictícias).
