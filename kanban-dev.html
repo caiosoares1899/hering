@@ -6426,7 +6426,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.770-dev</div>
+<div class="version">v8.30.771-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -16135,7 +16135,18 @@ function saveCard(){
       updatedBy:window._currentUser?.displayName||window._currentUser?.email||'Usuário'});
     _histDiff(c, _histBefore); // 📜 registra o que mudou
     if(_prevCol!==_newCol) recordMove(c,_newCol); // ← métricas de fluxo (mudança de coluna via modal)
-    if(blockerMode==='tag') _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+    if(blockerMode==='tag'){
+      _settleBlockedTag(c, _prevBlockerSave); // ⏱️ modo tag — coluna já é coberta por recordMove() acima
+      // Achado real (/monitorarbugs, 2026-10-01, escopo Automações): mesmo gap já
+      // corrigido em _doBulkBlockTag()/_doBulkUnblockTag() (2026-08-27) e já
+      // coberto no autosave (scheduleAutoSave()) — faltava aqui, no branch de
+      // edição manual (botão 💾 Salvar), que é o ÚNICO jeito de persistir o
+      // toggle da linha de impedimento em modo tag (ela aparece via
+      // style.display direto, não dispara input/change — ver comentário em
+      // addBlockerTag() — então nem o autosave pega essa mudança sozinho).
+      if(_prevBlockerSave && !c.blocker){ notifUnblocked(c); runAutoRules('unblocked', c.id); }
+      else if(!_prevBlockerSave && c.blocker) runAutoRules('blocked', c.id);
+    }
     // Trigger "Prioridade definida como X" (Automações) — prioridade só é
     // persistida aqui (botão Salvar manual; o autosave não grava esse campo, ver
     // comentário em _manualFieldsNow()), e o runAutoRules(editingId?'edit':...)
@@ -32278,7 +32289,12 @@ const AUTO_ACTIONS = [
     // simplesmente não existia pra essas telas.
     run:(rule,card)=>{ const cn=columns.find(x=>x.id===rule.actionVal); if(!cn) return false; card.col=rule.actionVal; recordMove(card,rule.actionVal); recordHistory(card,'moveu para '+cn.name,'⚙ Automação'); return true; } },
   { key:'set_priority', label:'Definir prioridade', valueType:'priority',
-    run:(rule,card)=>{ card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-10-01, escopo Automações — mesma
+    // classe já corrigida em assign_owner/add_tag/toggle_okr): faltava o
+    // guard de no-op — sem ele, uma regra "definir prioridade = crítica"
+    // disparando num card JÁ crítico gravava histórico + salvava + mostrava
+    // "Automação aplicada" à toa, toda vez que o trigger batesse de novo.
+    run:(rule,card)=>{ if(rule.actionVal===card.priority) return false; card.priority=rule.actionVal; recordHistory(card,'alterou prioridade: '+(rule.actionVal||'—'),'⚙ Automação'); return true; } },
   { key:'add_tag', label:'Adicionar tag', valueType:'tag',
     // Achado real (/monitorarbugs, 2026-09-17): "Adicionar tag" genérico
     // aceita QUALQUER tag no seletor (inclusive as de Tamanho/Submarca/
@@ -32409,15 +32425,20 @@ const AUTO_ACTIONS = [
     } },
   // ── Novas (Fase 1) — fecham o gap com os campos opcionais que o card já tem ──
   { key:'set_submarca', label:'Definir submarca', valueType:'submarca', visible:()=>submarcaAtivo,
-    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
+    // Achado real (/monitorarbugs, 2026-10-01, escopo Automações — mesma
+    // classe já corrigida em assign_owner/add_tag/toggle_okr, estendida
+    // aqui pros 5 "set_*" que ainda faltavam): sem o guard de no-op, a
+    // regra gravava histórico + salvava + mostrava "Automação aplicada" à
+    // toa toda vez que disparasse de novo com o card já no valor-alvo.
+    run:(rule,card)=>{ const ids=SUBMARCA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu submarca (automação)','⚙ Automação'); return true; } },
   { key:'set_canal_venda', label:'Definir canal', valueType:'canal_venda', visible:()=>canalVendaAtivo,
-    run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ const ids=CANAL_VENDA_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu canal (automação)','⚙ Automação'); return true; } },
   { key:'set_tamanho', label:'Definir tamanho', valueType:'tamanho', visible:()=>tamanhoAtivo,
-    run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ const ids=SIZE_TAGS.map(t=>t.id); const atual=getCardTags(card).find(id=>ids.includes(id))||''; if((rule.actionVal||'')===atual) return false; let ct=getCardTags(card).filter(id=>!ids.includes(id)); if(rule.actionVal) ct.push(rule.actionVal); card.tags=ct; card.tag=ct[0]||''; recordHistory(card,'definiu tamanho (automação)','⚙ Automação'); return true; } },
   { key:'set_demandante', label:'Definir demandante', valueType:'member_optional', visible:()=>demandanteAtivo,
-    run:(rule,card)=>{ card.demandante=rule.actionVal||''; recordHistory(card,'definiu demandante (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ if((rule.actionVal||'')===(card.demandante||'')) return false; card.demandante=rule.actionVal||''; recordHistory(card,'definiu demandante (automação)','⚙ Automação'); return true; } },
   { key:'set_padrao', label:'Definir padrão de card', valueType:'padrao', visible:()=>Object.keys(cardPatterns||{}).length>0,
-    run:(rule,card)=>{ card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
+    run:(rule,card)=>{ if((rule.actionVal||null)===(card.padraoId||null)) return false; card.padraoId=rule.actionVal||null; recordHistory(card,'definiu padrão de card (automação)','⚙ Automação'); return true; } },
   { key:'set_cover', label:'Definir capa de cor', valueType:'cover',
     // Achado real (/monitorarbugs, 2026-09-02): faltava limpar coverImageUrl
     // aqui — os 2 caminhos manuais (setCardCover()/setCardCoverImage()) já
@@ -32427,7 +32448,10 @@ const AUTO_ACTIONS = [
     // nenhum (imagem tem prioridade no render — ver coverStripHtml em
     // makeCardEl()), até alguém trocar a capa manualmente depois e a
     // mudança "fantasma" aparecer do nada.
-    run:(rule,card)=>{ card.coverColor=rule.actionVal||null; card.coverImageUrl=null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
+    // Guard de no-op (/monitorarbugs, 2026-10-01): só considera no-op
+    // quando a cor JÁ bate E não tem capa de imagem pra limpar — senão um
+    // card com capa de IMAGEM nunca teria ela removida por esta ação.
+    run:(rule,card)=>{ if((rule.actionVal||null)===(card.coverColor||null) && !card.coverImageUrl) return false; card.coverColor=rule.actionVal||null; card.coverImageUrl=null; recordHistory(card,'definiu capa de cor (automação)','⚙ Automação'); return true; } },
   { key:'toggle_okr', label:'Marcar como OKR', valueType:'none',
     run:(rule,card)=>{ if(card.isOKR) return false; card.isOKR=true; recordHistory(card,'marcou como OKR (automação)','⚙ Automação'); return true; } },
   { key:'add_checklist_item', label:'Adicionar item de checklist', valueType:'text',
@@ -33217,6 +33241,14 @@ function removeBlockerTag(){
   // ver comentário em _doBulkUnblockTag() sobre lastBlockerReason
   if((c.blockerReason||'').trim()) c.lastBlockerReason=c.blockerReason;
   c.blockerReason='';
+  // Achado real (/monitorarbugs, 2026-10-01, escopo Automações): este botão
+  // salva direto (fbSaveCard(), sem passar pelo saveCard()/scheduleAutoSave())
+  // — igual _doBulkUnblockTag() já faz, mas faltavam aqui os mesmos 2 passos
+  // que aquele já tem: fechar o episódio de tempo bloqueado (⏱️) e disparar a
+  // automação "Impedimento removido"/notificar quem estava acompanhando.
+  _settleBlockedTag(c, true);
+  notifUnblocked(c);
+  runAutoRules('unblocked', c.id);
   const okrEl=document.getElementById('m-is-okr'); if(okrEl) okrEl.checked=c.isOKR||false;
   initLinkedCards(c);
   document.getElementById('m-blocker-row').style.display='none';

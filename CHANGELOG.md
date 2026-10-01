@@ -18,6 +18,50 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.771-dev — 2026-10-01 · fix: automações de "Card bloqueado"/"Impedimento removido" não disparavam em 3 caminhos do modal
+
+`/monitorarbugs` em Automações, continuação do fix da corrida de escrita
+(v8.30.770-dev). Auditoria comparando todos os `AUTO_ACTIONS` contra o
+padrão de "no-op guard" (evitar escrita/toast desnecessários quando a
+regra já bate com o estado atual, padrão de `assign_owner`/
+`toggle_okr`/2026-09-17) e todos os caminhos que mudam `card.blocker`
+contra o padrão já estabelecido em `_doBulkBlockTag()`/
+`_doBulkUnblockTag()` (2026-08-27).
+
+**7 ações sem no-op guard** (`set_priority`, `set_submarca`,
+`set_canal_venda`, `set_tamanho`, `set_demandante`, `set_padrao`,
+`set_cover`): uma regra de Automação re-disparando num card que já
+estava no valor-alvo gravava histórico, salvava no Firebase e mostrava
+"⚡ Automação aplicada" à toa, toda vez que o gatilho batesse de novo —
+mesmo sem nenhuma mudança real no card. Fix: cada `run()` agora retorna
+`false` sem mutar quando o valor já bate (mesmo padrão já usado em
+`add_tag`/`remove_tag`/`assign_owner`/`toggle_okr`/`apply_fanout`).
+
+**2 caminhos de "impedimento" (modo tag) nunca disparavam a
+automação correspondente**, achado mais severo porque atinge uso
+comum, não só edge case:
+- Botão **"✕ Remover impedimento"** no card (`removeBlockerTag()`)
+  salva direto no Firebase sem passar pelo `saveCard()`/autosave —
+  nunca fechava o episódio de ⏱️ tempo bloqueado nem disparava
+  "Impedimento removido" (automação) ou a notificação pra quem estava
+  acompanhando.
+- Marcar/desmarcar o impedimento pela linha do modal (checkbox "🚧
+  Impedimento") + clicar **💾 Salvar**: essa linha aparece via
+  `style.display` direto (não dispara `input`/`change`), então nem o
+  autosave pega essa mudança sozinho — o branch de edição manual do
+  `saveCard()` já fazia o acerto de tempo bloqueado (`_settleBlockedTag()`),
+  mas nunca disparava "Card bloqueado"/"Impedimento removido".
+Em ambos os casos, o dado era gravado certinho — só a automação (e, no
+caso do botão, também a notificação) ficava pra trás, mesma classe de
+bug já corrigida 3x nesta área (assigned/move em 2026-08-26, bulk
+actions em 2026-08-27, criação de card em 2026-08-29): existe mais de
+um caminho pra mesma mutação, e cada caminho precisa dos mesmos
+disparos.
+
+Checks de rotina: `node --check` no bloco `<script>` principal — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +4).
+
 ### v8.30.770-dev — 2026-10-01 · fix: automação criada podia sumir sem nunca disparar (corrida de escrita)
 
 Relato direto do usuário: Vinicius criou uma automação ("quando migrar
