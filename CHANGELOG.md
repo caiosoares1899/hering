@@ -18,6 +18,22 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.773 — 2026-10-01 · Promove pra prod — seletor de squad deixa de aparecer ANTES do login
+
+Promoção pontual, validada pelo usuário ("deu bom, pode promover").
+
+**Correção**: a tela de escolha de squad (nomes/emojis de todos os
+squads existentes) aparecia ANTES da tela de login, sempre que a URL
+não tinha `?squad=` — qualquer visitante, logado ou não, via a lista
+inteira. Login agora é sempre a 1ª tela. Quem tem mais de 1 squad
+continua vendo um seletor — só que DEPOIS de logar, filtrado só pros
+squads que participa (fluxo que já existia, mais correto que o antigo).
+
+Checks de rotina: `node --check` no bloco `<script>` clássico — OK;
+balanço de chaves/parênteses bate com o baseline da sessão (braces -1,
+parens +4); `diff kanban.html kanban-dev.html` conferido — só as 4
+divergências permanentes de ambiente.
+
 ### v8.30.773-dev — 2026-10-01 · fix(login): seletor de squad deixa de aparecer ANTES do login
 
 Relato direto do usuário, com print: "no kanban prod, antes da tela de
