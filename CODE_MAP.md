@@ -140,6 +140,49 @@ confiar num número aqui se for mexer em `painel.html` prod).
   L11263) — só com a aba em primeiro plano e alguém logado — chama
   `_reloadAuthUser()` então `_syncAuthProfileToFirebase()`, cobrindo
   sessões longas que nunca mais passam pelo login de verdade.
+  **Correção da causa raiz (2026-10-01, mesmo dia — o fix acima foi
+  promovido mas não resolveu pra Vinicius/André)**: diagnóstico ao vivo
+  mais fundo mostrou que o problema NÃO é formato de URL antigo nem
+  sessão desatualizada — é o próprio Google, em algumas contas, servindo
+  um AVATAR GENÉRICO (quadrado com a inicial) na URL pública de foto
+  (`lh3.googleusercontent.com/a/...`) quando acessada de fora da sessão
+  autenticada da pessoa no Google (cross-origin, como qualquer app de
+  terceiro faz) — mesmo a URL mais NOVA possível, já no formato atual,
+  sofre disso (confirmado abrindo a URL direto no navegador). `reload()`/
+  `_syncAuthProfileToFirebase()` continuam corretos pro que se propõem
+  (manter `photoURL`/banco sincronizados com o que o Firebase Auth
+  devolve) — só não têm como corrigir isso, porque a fonte (Google) já
+  devolve o placeholder. Solução real cogitada, não implementada:
+  permitir upload de foto própria dentro do Maré Digital, independente
+  do Google. **Achado incidental, bug real e já corrigido nesta mesma
+  investigação**: `#user-avatar` (header, `showApp()` — L11048) só é
+  preenchido 1x no login — nunca re-sincroniza com `photoURL` mesmo
+  depois do refresh silencioso rodar e mudar o valor — corrigido dentro
+  de `_syncAuthProfileToFirebase()` (atualiza `#user-avatar` junto com o
+  banco), mesmo sem resolver o caso do Google-placeholder (são 2
+  problemas diferentes, este é só uma inconsistência real à parte).
+- **Login via Microsoft (integração Arezzo, 2026-10-01, pedido direto —
+  "time de Arezzo usa Microsoft")**: `msProvider` (`<script
+  type="module">`, perto de `calProvider`) — `OAuthProvider('microsoft.com')`
+  com `tenant:'organizations'` (só contas de trabalho/escola Microsoft,
+  nunca pessoal). `window._signInMicrosoft`/`window._signInMicrosoftRedirect`
+  — mesmo par popup+fallback-de-redirect que `window._signIn`/
+  `window._signInRedirect` já tinham pro Google (ver bullet acima),
+  contador de falha PRÓPRIO (`login_popup_fail_streak_ms`, não
+  compartilha com o do Google). `doSignInMicrosoft()` — `<script>`
+  clássico, ao lado de `doSignIn()`. `TRUSTED_DOMAINS`/
+  `_isTrustedDomainEmail()` — perto de `ADM_EMAILS` — centraliza os 3
+  pontos que só checavam `@ciahering.com.br` na mão (gate de login no
+  listener `auth-change`, atribuição de papel no 1º cadastro, tela "+
+  Adicionar externo"); `@arezzo.com.br` tratado como domínio confiável
+  de pleno direito (mesmo nível de acesso de `@ciahering.com.br`, não
+  como "externo"/convidado). `database.rules.json` ganhou a mesma
+  checagem em paralelo nas 52 regras que restringiam a
+  `@ciahering.com.br`. **Pré-requisito pendente, fora do código**: só
+  funciona de verdade depois de (1) registrar um app no Azure AD/Entra
+  ID e configurar o provider Microsoft no Firebase Console (nenhum dos
+  dois pode ser feito deste ambiente) e (2) `firebase deploy --only
+  database` publicar o `database.rules.json` atualizado.
 - `_onRealAuthChange(fn)` — L34691 (perto de `_onFbReady()`) — espera o
   PRIMEIRO `auth-change` com usuário de verdade, ignorando qualquer
   disparo com `null` que aconteça antes (`onAuthStateChanged` dispara

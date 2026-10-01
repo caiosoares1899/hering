@@ -3601,16 +3601,25 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="font-size:13px;color:var(--txt2);" id="login-subtitle">Digital Hering</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:340px;width:100%;backdrop-filter:blur(12px);">
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google da Hering.</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google ou Microsoft.</div>
     <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Entrar com Google
+    </button>
+    <!-- Integração Arezzo (2026-10-01, pedido direto do usuário: "time de
+         Arezzo usa Microsoft") — mesmo padrão do botão Google acima,
+         provider/fallback de redirect dedicados (ver <script type="module">),
+         domínio @arezzo.com.br tratado como confiável igual @ciahering.com.br
+         (ver TRUSTED_DOMAINS/_isTrustedDomainEmail() + database.rules.json). -->
+    <button onclick="doSignInMicrosoft()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
+      <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
+      Entrar com Microsoft
     </button>
     <div style="margin-top:10px;font-size:11px;color:var(--txt3);">Primeira vez? <button onclick="doSignIn(true)" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Inscrever-se no quadro</button></div>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
 
-  <div style="font-size:10px;color:var(--txt3);">Acesso restrito ao time Digital Hering</div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br / @arezzo.com.br</div>
 </div>
 
 <!-- INSCRIÇÃO -->
@@ -5025,7 +5034,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🔓 Emails externos autorizados</div>
           <button class="btn btn-sm" onclick="abrirAddExterno()" style="font-size:10px;color:rgba(255,209,102,.9);border-color:rgba(255,209,102,.3);">+ Adicionar externo</button>
         </div>
-        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora do @ciahering.com.br que podem acessar este board. Entram como convidado.</p>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora de @ciahering.com.br/@arezzo.com.br que podem acessar este board. Entram como convidado.</p>
         <div id="externos-list" style="display:flex;flex-direction:column;gap:5px;"></div>
         <div id="add-externo-row" style="display:none;margin-top:8px;gap:6px;" class="frow">
           <input class="fi" id="externo-email-inp" type="email" placeholder="email@dominio.com" style="flex:1;font-size:12px;">
@@ -6426,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.771-dev</div>
+<div class="version">v8.30.772-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6446,7 +6455,7 @@ input[type="date"]{-moz-appearance:textfield;}
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6496,6 +6505,21 @@ const calProvider = new GoogleAuthProvider();
 calProvider.setCustomParameters({ hd: 'ciahering.com.br' });
 calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 
+// Integração Arezzo (2026-10-01, pedido direto do usuário) — time deles usa
+// Microsoft/Azure AD, não Google Workspace. 'organizations' restringe o
+// login a contas de TRABALHO/ESCOLA Microsoft (Entra ID de qualquer
+// empresa) — bloqueia conta pessoal (@outlook.com/@live.com/@hotmail.com)
+// na raiz, camada extra além do filtro de domínio que database.rules.json/
+// TRUSTED_DOMAINS já aplicam depois do login. A Azure AD precisa ter um
+// app registrado (Azure Portal → Entra ID → App registrations) com o
+// redirect URI https://hering-onboarding.firebaseapp.com/__/auth/handler,
+// e o client ID/secret configurados em Firebase Console → Authentication →
+// Sign-in method → Microsoft — isso é feito FORA do código, console/portal
+// (sem credencial de deploy neste ambiente, mesma limitação já documentada
+// pro Firebase Console/Azure em geral).
+const msProvider = new OAuthProvider('microsoft.com');
+msProvider.setCustomParameters({ tenant: 'organizations', prompt: 'select_account' });
+
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
 window._runTransaction=runTransaction;
@@ -6525,7 +6549,7 @@ window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
 // todo ponto de escrita já grava), lexicograficamente ordenável =
 // cronologicamente ordenável, sem essa armadilha.
 window._limitToLast=limitToLast;
-window._auth=auth; window._provider=provider;
+window._auth=auth; window._provider=provider; window._msProvider=msProvider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
 // Isolado num try/catch porque getMessaging() lança em contextos sem
@@ -6553,6 +6577,12 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
   }
   if(insc) window._pendingInsc=true;
   safeLS.removeItem('login_popup_fail_streak'); // login popup deu certo — zera o contador do fallback de redirect (ver window._signInRedirect())
+});
+// Login via Microsoft (Arezzo) — mesmo padrão de window._signIn() acima,
+// sem captura de accessToken (isso é só pro escopo de Google Calendar).
+window._signInMicrosoft=(insc)=>signInWithPopup(auth,msProvider).then(()=>{
+  if(insc) window._pendingInsc=true;
+  safeLS.removeItem('login_popup_fail_streak_ms');
 });
 window._signOut=(reason)=>{
   if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
@@ -6646,6 +6676,13 @@ window._signInRedirect=(insc)=>{
   if(insc) safeLS.setItem('mare_pending_insc','1');
   return signInWithRedirect(auth,provider);
 };
+// Mesmo fallback de redirect, pro provider Microsoft — mesma causa raiz
+// (Cross-Origin-Opener-Policy na página de login de terceiros) pode
+// acontecer com login.microsoftonline.com também.
+window._signInMicrosoftRedirect=(insc)=>{
+  if(insc) safeLS.setItem('mare_pending_insc','1');
+  return signInWithRedirect(auth,msProvider);
+};
 // Restaura _pendingInsc de um redirect que acabou de voltar — SÍNCRONO,
 // antes de registrar onAuthStateChanged (logo abaixo), pra nunca competir
 // em corrida com o primeiro disparo real dele: getRedirectResult() é
@@ -6694,6 +6731,15 @@ const ADM_UIDS = {
   'caio_uid_placeholder': 'Caio Oliveira',  // substituído pelo UID real ao logar
 };
 let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br'];
+// Integração Arezzo (2026-10-01) — domínio tratado como CONFIÁVEL, mesmo
+// nível de @ciahering.com.br (não como "externo"/convidado, que exige
+// whitelist manual por email). Mantém num array só pra nunca esquecer um
+// dos pontos de checagem espalhados (login/registro, atribuição de papel,
+// tela de "+ Adicionar externo") quando um domínio novo entrar aqui no
+// futuro — e porque database.rules.json replica a MESMA lista (não dá pra
+// ler este array dali, regra de segurança não executa JS da página).
+const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
+function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
@@ -10948,7 +10994,32 @@ function doSignIn(insc=false){
     err.style.display='block';
   });
 }
-function doSignOut(){ 
+// Login Microsoft (Arezzo) — mesmo fluxo de doSignIn(), contador de falha de
+// popup PRÓPRIO (login_popup_fail_streak_ms, não compartilha com o do
+// Google) já que são provedores/janelas de popup independentes.
+function doSignInMicrosoft(insc=false){
+  const err=document.getElementById('login-err'); err.style.display='none';
+  if(!window._signInMicrosoft){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
+  if(insc) window._pendingInsc=true;
+  window._signInMicrosoft().catch(e=>{
+    window._pendingInsc=false;
+    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      const n=(parseInt(safeLS.getItem('login_popup_fail_streak_ms'))||0)+1;
+      safeLS.setItem('login_popup_fail_streak_ms', String(n));
+      if(n>=2 && window._signInMicrosoftRedirect){
+        safeLS.removeItem('login_popup_fail_streak_ms');
+        window._signInMicrosoftRedirect(insc).catch(e2=>{ err.textContent='Erro: '+(e2?.message||e2); err.style.display='block'; });
+        return;
+      }
+      err.textContent='Login cancelado. Clique em Entrar com Microsoft para tentar novamente.';
+    } else {
+      safeLS.removeItem('login_popup_fail_streak_ms');
+      err.textContent='Erro: '+(e?.message||e);
+    }
+    err.style.display='block';
+  });
+}
+function doSignOut(){
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
   if(window._signOut) window._signOut('manual'); 
 }
@@ -11097,8 +11168,8 @@ function showSquadSelectorFiltered(squadIds) {
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   if(user){
-    // Valida domínio: @ciahering.com.br OU email na whitelist de externos
-    if(user.email && !user.email.endsWith('@ciahering.com.br')){
+    // Valida domínio: ver TRUSTED_DOMAINS (@ciahering.com.br/@arezzo.com.br) OU email na whitelist de externos
+    if(user.email && !_isTrustedDomainEmail(user.email)){
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
       // Fix bug de desconexão de usuária externa (relatada por Roberta): antes essa consulta ao
       // Firebase rodava de novo toda vez que o auth-change disparava — o que pode acontecer sozinho,
@@ -11130,7 +11201,7 @@ window.addEventListener('auth-change',e=>{
         // inofensivo (short-circuit no primeiro true).
         const allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. Peça ao PO para adicionar seu email como externo.';
+          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
           window._signOut('external_not_authorized');
         } else {
@@ -11141,7 +11212,7 @@ window.addEventListener('auth-change',e=>{
       }).catch((err)=>{
         console.error('[externos check] erro (tentativa '+tentativa+'):', err);
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut('external_whitelist_check_error');
       });
@@ -11251,7 +11322,16 @@ async function _syncAuthProfileToFirebase(user, existeJaLido){
   if(!user || !user.uid) return;
   const existe = existeJaLido || (await fbGet('kanban/usuarios/'+user.uid)).val();
   if(!existe) return; // usuário ainda não registrado -- autoRegistrar() cuida disso no próprio login
-  if(user.photoURL&&existe.foto!==user.photoURL){ fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL}); }
+  if(user.photoURL&&existe.foto!==user.photoURL){
+    fbUpdate('kanban/usuarios/'+user.uid,{foto:user.photoURL}); fbUpdate('kanban/usuarios_publicos/'+user.uid,{foto:user.photoURL});
+    // Achado real (/monitorarbugs, 2026-10-01, investigação da foto do
+    // Google): #user-avatar só é preenchido 1x, em showApp() (no login) —
+    // o refresh silencioso atualizava photoURL/banco, mas nunca esse <img>
+    // na tela, então o avatar do cabeçalho nunca refletia uma foto nova
+    // detectada numa sessão longa (só um F5 corrigia, de forma indireta).
+    const av=document.getElementById('user-avatar');
+    if(av){ av.src=user.photoURL; av.style.display='block'; }
+  }
   if(user.displayName&&existe.nome!==user.displayName){ fbUpdate('kanban/usuarios/'+user.uid,{nome:user.displayName}); }
   if(!existe.email&&user.email){ fbUpdate('kanban/usuarios/'+user.uid,{email:user.email}); }
 }
@@ -11296,7 +11376,7 @@ function autoRegistrar(user){
       // usada em `fbCreateCard()`/fila do orquestrador/Kudos).
       init = await _claimUserInit(user.uid, init);
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
-      const newRole=isAdmUser(user)?'adm':(user.email.endsWith('@ciahering.com.br')?'membro':'convidado'); // externos = convidado
+      const newRole=isAdmUser(user)?'adm':(_isTrustedDomainEmail(user.email)?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
       const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
       fbSet('kanban/usuarios/'+user.uid,{
@@ -16583,9 +16663,10 @@ function abrirDuplicarModal(cardId){
 }
 // Lista todo squad conhecido (SQUAD_META_LIVE, mesma fonte do seletor no
 // header — inclui squads que a pessoa não é "inscrita", igual lá: regra do
-// Firebase já libera escrita pra qualquer squad pra quem tem e-mail
-// @ciahering.com.br, então restringir aqui só esconderia squads de destino
-// válidos sem nenhum ganho real de segurança).
+// Firebase já libera escrita pra qualquer squad pra quem tem e-mail de
+// domínio confiável (TRUSTED_DOMAINS — @ciahering.com.br/@arezzo.com.br),
+// então restringir aqui só esconderia squads de destino válidos sem nenhum
+// ganho real de segurança).
 function _dupPopulateSquadSelect(){
   const render = () => {
     const sel=document.getElementById('dup-squad'); if(!sel) return;
@@ -36626,7 +36707,7 @@ function salvarExterno(){
   const nomeInp = document.getElementById('externo-nome-inp');
   const email = emailInp?.value.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('❌ Email inválido.'); return; }
-  if(email.endsWith('@ciahering.com.br')){ showToast('❌ Emails @ciahering não precisam ser adicionados aqui.'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) não precisam ser adicionados aqui.'); return; }
   const key = _extKey(email);
   const ext = { email, nome: nomeInp?.value.trim()||'', adicionadoEm: new Date().toISOString(), adicionadoPor: window._currentUserInit||'' };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, ext);
