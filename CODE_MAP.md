@@ -1915,7 +1915,7 @@ comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
 ### Automações (Butler-style)
 - `AUTO_TRIGGERS` — L32189 (21 triggers — `agendado_created` adicionado
   2026-08-30, par de `recorrente_created` que faltava)
-- `AUTO_ACTIONS` — L32266 (16 ações — `notify_po_org` ["Notificar
+- `AUTO_ACTIONS` — L32277 (16 ações — `notify_po_org` ["Notificar
   PO/Organizador"] adicionada 2026-09-17, pedido direto do usuário;
   mesmo padrão de `notify_all` mas filtra `members` por
   `role==='po'||role==='organizador'` antes de montar o `@menção`, sem
@@ -1938,6 +1938,21 @@ comum — só um ADM autentica de verdade, o resto lê um cache já pronto:
   alguém é apagada em silêncio pela próxima escrita de qualquer um, dentro
   da janela entre o eco do listener e a ação seguinte. Fix: `runTransaction()`
   nos 3, toggle/exclusão casam por `id`.
+- **Achado real (`/monitorarbugs`, 2026-10-01, escopo Automações)**: 7 ações
+  de `AUTO_ACTIONS` (`set_priority`/`set_submarca`/`set_canal_venda`/
+  `set_tamanho`/`set_demandante`/`set_padrao`/`set_cover`) não tinham o
+  "no-op guard" (padrão já usado em `assign_owner`/`toggle_okr`) — regra
+  re-disparando num card já no valor-alvo gravava histórico/salvava/
+  mostrava toast à toa. Todas corrigidas pra retornar `false` sem mutar
+  quando o valor já bate. Também achado: "Card bloqueado"/"Impedimento
+  removido" nunca disparavam via botão **"✕ Remover impedimento"**
+  (`removeBlockerTag()` — L33237, salva direto no Firebase sem passar por
+  `saveCard()`) nem via marcar/desmarcar a linha de impedimento + 💾 Salvar
+  no modal (branch de edição manual de `saveCard()`, ~L16138) — mesma
+  classe já corrigida em `_doBulkBlockTag()`/`_doBulkUnblockTag()`
+  (2026-08-27). Ambos agora chamam `notifUnblocked()`/`runAutoRules('blocked'/
+  'unblocked', ...)` no mesmo ponto onde já fecham o episódio de ⏱️ tempo
+  bloqueado (`_settleBlockedTag()`).
 - **Acesso à tela de Automações** (achado real 2026-08-24: só existia via
   `⚙ Configurações → aba ⚡ Auto`, e o botão de Configurações fica
   escondido de quem não é PO/Organizador/ADM — `_applyRoleVisibility()`,
@@ -2359,8 +2374,8 @@ derivado do card mudando).
   (`card.blockerReason`) na lista "Mais tempo bloqueado" (`crvBlockRow()`
   — L17439, silencioso quando não preenchido). **`card.lastBlockerReason`**
   (`/monitorarbugs` 2026-09-17): em modo TAG, `blockerReason` é zerado
-  assim que o card é desbloqueado (`_doBulkUnblockTag()` L7871,
-  auto-unblock em `recordMove()`, `removeBlockerTag()` L31993) — sem
+  assim que o card é desbloqueado (`_doBulkUnblockTag()` L8099,
+  auto-unblock em `recordMove()`, `removeBlockerTag()` L33237) — sem
   guardar em outro lugar, todo card já resolvido perdia o motivo no
   dashboard, mesmo preenchido. Cada um dos 3 pontos copia o texto pra
   `lastBlockerReason` antes de limpar `blockerReason`; `crvBlockRow()` lê
