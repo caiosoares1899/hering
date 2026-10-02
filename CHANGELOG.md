@@ -20307,6 +20307,59 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.93 · painel — 2026-10-02 · Promove pra prod — correção do consumo de ~8 GB/dia (v3.91 → v3.93 de dev)
+
+Correção de bug sério promovida na hora (pedido direto do usuário, sem
+avisos): ontem o Realtime Database bateu ~8 GB de download, ~99% vindo do
+próprio painel. Detalhes do diagnóstico e dos números na entrada de dev v3.93
+logo abaixo. Em prod: cards sincronizados de forma incremental (só o que mudou,
+cache persistente em IndexedDB, recarga completa no Shift+clique em "🔄"),
+`kanban/usuarios` deixa de ser listener ao vivo, aba Status com medição em
+cache e visão multi-squad de Campanhas só lendo o que usa. Leva junto o v3.91
+(filtros Hering × Arezzo/papel/squad/Gestor OKR em "🗂 Usuários cadastrados"),
+que estava acumulado em dev. Nenhum aviso (Mural/WhatsApp) — decisão do usuário.
+
+### painel-dev.html v3.93 · painel-dev — 2026-10-02 · fix(banda): painel baixava ~8 GB/dia (cards de todas as squads a cada volta pra aba + usuarios ao vivo)
+
+Diagnóstico de "ontem bateu 8 GB de download" (script hora a hora sobre
+`_debug_bytes_log`, 84 janelas, 7,04 GB medidos): ~99% dos bytes vieram do
+PRÓPRIO painel — `poll:squads/<id>/dados` ~6,5 GB (~180 refreshes completos no
+dia, ~37 MB cada; `outlet-crm` 15 MB, `outlet` 9,7 MB, `midiacriativa` 5 MB) e
+`onValue('kanban/usuarios')` ~0,7 GB (1,1 MB × 621 entregas). Boards somaram
+~40 MB. Uma única sessão de ADM respondeu por 43% do dia (3,1 GB em 9 h). Não
+era loop: era `visibilitychange` — cada volta pra aba rebaixava `dados`
+inteiro de todas as squads (inclui `card_comments`, `ql_items`, `notas`,
+`intake_pending`, `agent_msgs`, `_debug_bytes_log`...).
+
+- **Cards incrementais** (`_fetchSquadDados`/`_fetchCardsDelta`): lê só
+  `cards_index` + `cards_updated_at` (índices leves, o mesmo par que o
+  kanban usa e que as Cloud Functions do Agente Ágil carimbam) e baixa só os
+  cards cujo timestamp mudou. Refresh sem mudança: ~1,9 KB vs ~106 KB num
+  squad de teste de 50 cards (~37 MB → ~0,5 MB no total real).
+- **Cache persistente em IndexedDB** (`painel_cards_cache`): a próxima abertura
+  do painel também começa pelo incremental. Recarga completa de segurança se o
+  cache tem >3 dias, se o delta achar qualquer inconsistência (card sumiu/índice
+  aponta pra outro id), se mudaram >200 cards, se a squad tem card sem
+  id/índice, ou com **Shift+clique em "🔄"** (`window._painelFullRefresh()`).
+- Só os filhos de `dados` que o painel usa (`columns`, `tags`, `agil_cfg`,
+  `flow_baseline`, `lembretes`, `config/{blockerMode,submarca_ativo,
+  canal_venda_ativo}`); volta pra aba só refaz o fetch da squad se o último foi
+  há ≥ 5 min; fetch em andamento não é duplicado.
+- **`usuarios` sem listener ao vivo** (`loadGlobalUsers(force)`): leitura sob
+  demanda — ao abrir, ao abrir "🗂 Usuários", depois de escritas do próprio
+  painel em papel/squads/gestorOkr/nome/foto (wrapper em `_set`/`_update`) e,
+  ao voltar pra aba, se o cache tem >10 min.
+- Aba **Status** ("Peso por squad") baixava `dados` inteiro de todas as squads a
+  cada abertura, sem passar pela telemetria — agora o resultado fica 6 h em
+  cache (botão "🔄 Atualizar" mede de novo) e é registrado em `_dbgTrack`.
+  Visão multi-squad de Campanhas lê só `cards`+`columns`.
+- Telemetria: refresh incremental aparece como `poll:squads/<id>/dados(delta)`,
+  completo continua `poll:squads/<id>/dados`.
+- Testes: 29 cenários com Firebase simulado e IndexedDB falso rodando o código
+  real extraído da página (edição, card novo, inserção no meio, remoção, índice
+  inconsistente, card sem id, cache da sessão anterior, cache expirado, >200
+  mudanças, array esparso, squad vazia, regex de escritas em `usuarios`).
+
 ### painel-dev.html v3.91 · painel-dev — 2026-10-02 · feat: filtros na tela "🗂 Usuários cadastrados" (Hering × Arezzo)
 
 Pedido direto do usuário: "sabe aquele user global dentro de painel? coloca
