@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.90 · painel-dev</div>
+<div class="version">v3.91 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11135,6 +11135,62 @@ function loadGlobalUsers(){
   });
 }
 
+// ── Filtros da tela "🗂 Usuários cadastrados" (pedido direto: "coloca opções de filtros,
+// principalmente de ser Hering ou Arezzo") ──
+// Empresa vem do DOMÍNIO do e-mail (mesma regra de TRUSTED_DOMAINS/database.rules.json):
+// @ciahering.com.br = Hering, @arezzo.com.br = Arezzo, qualquer outro = Externo (freelancer/
+// convidado liberado por whitelist). Nada novo é gravado — é só uma leitura de u.email.
+const GU_EMPRESAS = [
+  {id:'hering',  label:'Hering',  icon:'🏢'},
+  {id:'arezzo',  label:'Arezzo',  icon:'🅰️'},
+  {id:'externo', label:'Externos',icon:'🌐'},
+];
+let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false};
+function _guEmpresa(u){
+  const e = String(u?.email||'').toLowerCase();
+  if(e.endsWith('@ciahering.com.br')) return 'hering';
+  if(e.endsWith('@arezzo.com.br')) return 'arezzo';
+  return 'externo';
+}
+// "Papel" = o global legado OU qualquer papel por squad (squads_roles) — o mesmo conjunto que o
+// dropdown de cada squad mostra; 'adm' também vale pra quem só está na whitelist ADM_EMAILS.
+function _guTemPapel(u, r){
+  if(r==='adm' && ADM_EMAILS.includes(String(u.email||'').toLowerCase())) return true;
+  return u.role===r || Object.values(u.squads_roles||{}).includes(r);
+}
+function _guNoSquad(u, sid){
+  if(sid==='__nenhum') return !Object.values(u.squads||{}).some(v=>v===true);
+  return u.squads?.[sid]===true;
+}
+function _guTemFiltro(){
+  const q = (document.getElementById('gu-search')?.value||'').trim();
+  return !!(q || _guFilter.empresa || _guFilter.role || _guFilter.squad || _guFilter.gestorOkr);
+}
+function _guSetFilter(campo, valor){ _guFilter[campo] = valor; renderGlobalUsers(); }
+function _guClearFilters(){
+  const inp = document.getElementById('gu-search'); if(inp) inp.value = '';
+  _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false};
+  renderGlobalUsers();
+}
+function _guFiltersHtml(contagemEmpresa, totalBase){
+  const chip = (id, icon, label, n)=>{
+    const ativo = _guFilter.empresa===id;
+    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_guSetFilter('empresa','${ativo?'':id}')" title="Filtrar por ${esc(label)}">${icon} ${esc(label)} <b>${n}</b></div>`;
+  };
+  const sel = (campo, placeholder, opts)=>`<select class="pt-filter-input" onchange="_guSetFilter('${campo}', this.value)">`
+    + `<option value="">${placeholder}</option>`
+    + opts.map(([v,l])=>`<option value="${esc(v)}"${_guFilter[campo]===v?' selected':''}>${esc(l)}</option>`).join('')
+    + `</select>`;
+  return `
+    <div class="okr-stat-chip${_guFilter.empresa?'':' active'}" onclick="_guSetFilter('empresa','')" title="Todas as empresas">Todos <b>${totalBase}</b></div>
+    ${GU_EMPRESAS.map(e=>chip(e.id,e.icon,e.label,contagemEmpresa[e.id]||0)).join('')}
+    ${sel('role','Todos os papéis', GLOBAL_ROLES.map(r=>[r,r]))}
+    ${sel('squad','Todos os squads', [...SQUADS.map(sq=>[sq.id,(sq.icon||'')+' '+sq.label]), ['__nenhum','— sem nenhum squad']])}
+    <label class="okr-stat-chip${_guFilter.gestorOkr?' active':''}" style="cursor:pointer;" title="Só quem tem a flag 🎯 Gestor OKR">
+      <input type="checkbox" ${_guFilter.gestorOkr?'checked':''} onchange="_guSetFilter('gestorOkr', this.checked)" style="width:12px;height:12px;accent-color:var(--accent);"> 🎯 Gestor OKR</label>
+    ${_guTemFiltro()?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_guClearFilters()">✕ Limpar filtros</button>':''}`;
+}
+
 function renderGlobalUsers(){
   const list = document.getElementById('global-users-list');
   const countEl = document.getElementById('global-users-count');
@@ -11142,6 +11198,7 @@ function renderGlobalUsers(){
 
   const search = (document.getElementById('gu-search')?.value||'').toLowerCase().trim();
 
+  const totalGeral = Object.keys(_globalUsersCache).length;
   let entries = Object.entries(_globalUsersCache);
   if(search){
     entries = entries.filter(([uid,u])=>
@@ -11150,14 +11207,28 @@ function renderGlobalUsers(){
       (u.init||'').toLowerCase().includes(search)
     );
   }
+  if(_guFilter.role) entries = entries.filter(([uid,u])=>_guTemPapel(u,_guFilter.role));
+  if(_guFilter.squad) entries = entries.filter(([uid,u])=>_guNoSquad(u,_guFilter.squad));
+  if(_guFilter.gestorOkr) entries = entries.filter(([uid,u])=>!!u.gestorOkr);
+
+  // Contagem por empresa calculada ANTES do filtro de empresa (senão os chips das outras
+  // empresas zerariam assim que um fosse escolhido) — mesmo raciocínio do resumo da aba OKR.
+  const contagemEmpresa = {};
+  entries.forEach(([uid,u])=>{ const k=_guEmpresa(u); contagemEmpresa[k]=(contagemEmpresa[k]||0)+1; });
+  const totalBase = entries.length;
+  if(_guFilter.empresa) entries = entries.filter(([uid,u])=>_guEmpresa(u)===_guFilter.empresa);
+
+  const filtersEl = document.getElementById('gu-filters');
+  if(filtersEl) filtersEl.innerHTML = _guFiltersHtml(contagemEmpresa, totalBase);
 
   // Ordena por nome
   entries.sort((a,b)=>(a[1].nome||a[1].email||'').localeCompare(b[1].nome||b[1].email||''));
 
-  if(countEl) countEl.textContent = entries.length;
+  if(countEl) countEl.textContent = _guTemFiltro() ? (entries.length+' / '+totalGeral) : entries.length;
 
   if(!entries.length){
-    list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum usuário encontrado.</div>';
+    list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum usuário encontrado'
+      + (_guTemFiltro() ? ' com esses filtros. <a href="javascript:void(0)" onclick="_guClearFilters()" style="color:var(--accent);">✕ Limpar filtros</a>' : '.') + '</div>';
     return;
   }
 
@@ -11177,6 +11248,12 @@ function renderGlobalUsers(){
     const nome = document.createElement('div');
     nome.style.cssText = 'font-size:12px;font-weight:600;';
     nome.textContent = (u.nome||u.email||'?') + (u.init?' ('+u.init+')':'');
+    const _emp = GU_EMPRESAS.find(e=>e.id===_guEmpresa(u));
+    const empPill = document.createElement('span');
+    empPill.textContent = _emp.icon+' '+_emp.label;
+    empPill.title = 'Empresa pelo domínio do e-mail';
+    empPill.style.cssText = 'margin-left:6px;font-size:9px;font-weight:600;padding:1px 7px;border-radius:999px;border:1px solid var(--glass-b);color:var(--txt2);vertical-align:middle;white-space:nowrap;display:inline-block;';
+    nome.appendChild(empPill);
     const email = document.createElement('div');
     email.style.cssText = 'font-size:9px;color:var(--txt3);';
     email.textContent = u.email||'';
@@ -13394,6 +13471,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
         <div class="cfg-hd-title">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></div>
         <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
           style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
+        <div id="gu-filters" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>
       </div>
       <button class="x-btn" onclick="closeGlobalUsersModal()">✕</button>
     </div>

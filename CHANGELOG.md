@@ -20307,6 +20307,27 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.91 · painel-dev — 2026-10-02 · feat: filtros na tela "🗂 Usuários cadastrados" (Hering × Arezzo)
+
+Pedido direto do usuário: "sabe aquele user global dentro de painel? coloca
+opções de filtros, principalmente de ser Hering ou Arezzo". Barra de filtros
+abaixo da busca em `openGlobalUsersModal()`/`renderGlobalUsers()`:
+- **Empresa** (chips clicáveis com contagem): 🏢 Hering (`@ciahering.com.br`),
+  🅰️ Arezzo (`@arezzo.com.br`) e 🌐 Externos (qualquer outro domínio, ou sem
+  e-mail) — derivado do domínio do e-mail (`_guEmpresa()`), nada novo gravado.
+  A contagem de cada empresa é calculada antes do filtro de empresa (senão as
+  outras zerariam ao escolher uma).
+- **Papel** (adm/po/organizador/membro/convidado — vale o papel global OU por
+  squad; `adm` também pega a whitelist `ADM_EMAILS`), **Squad** (inclui "sem
+  nenhum squad") e **🎯 Gestor OKR**.
+- Todos combinam entre si e com a busca por texto; "✕ Limpar filtros" aparece
+  quando há algo filtrado, o contador vira "X / total" e cada linha ganha uma
+  etiqueta com a empresa.
+
+Validado em Chromium (Playwright) com as funções reais da página: 18
+cenários (cada filtro, combinações, contagens, e-mail em maiúsculas/ausente,
+limpar) + print conferido.
+
 ### painel.html v3.90 · painel — 2026-10-02 · Promove pra prod — lote OKR (v3.87 → v3.90 de dev)
 
 Promoção do acumulado em `painel-dev.html` desde a v3.86 (pedido: "promove tudo
