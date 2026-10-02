@@ -20307,6 +20307,39 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.94 · painel / painel-dev.html v3.94 · painel-dev — 2026-10-02 · fix(banda, /monitorarbugs): cache de cards sobrevivia ao logout + 3 pedidos engolidos/sem retry
+
+Rodada de `/monitorarbugs` sobre o próprio v3.93 (cards incrementais, `usuarios`
+sob demanda). Promovido direto pra prod (bug na mesma área sensível, pedido do
+usuário de subir correções sem esperar), sem avisos.
+
+- **Cache de cards sobrevivia ao logout** (`painel_cards_cache`, IndexedDB): num
+  computador compartilhado ficaria dado de cards da pessoa anterior no disco
+  (mesma preocupação do `gcal_token`). Chave agora inclui o `uid`
+  (`databaseURL|uid|squad`), nunca é lida/gravada sem usuário logado, e é
+  apagada quando `auth-change` chega com `null`. Banco subiu pra v2 pra
+  descartar as entradas órfãs da v1 (sem uid, até ~37 MB por navegador).
+- **Recarga completa engolida:** Shift+clique em "🔄" durante um fetch já em
+  andamento da mesma squad era descartado em silêncio — agora roda assim que o
+  fetch termina.
+- **`usuarios`:** releitura forçada (feita 500 ms depois de o ADM trocar
+  papel/squad) durante outra leitura em andamento era descartada, podendo mostrar
+  o papel ANTIGO; e uma falha de rede na 1ª leitura deixava avatares/responsáveis
+  do OKR vazios a sessão toda (o `onValue` antigo reconectava sozinho) — agora
+  refaz ao terminar e tenta de novo (até 5x, 15 s; também ao voltar pra aba).
+- Falha de permissão no download de cards não gera mais `unhandled rejection`
+  (leituras das folhas já disparadas ficavam sem tratamento).
+- Poll de `snapshots` (~38 KB/squad) ao voltar pra aba entrou no mesmo throttle de
+  5 min do `dados`.
+- Premissa do delta conferida e mantida: `fbSaveAll()` carimba `cards_updated_at`
+  (tocados com timestamp novo, os demais com o próprio); sem `touchedIds` carimba
+  todos, o que no painel vira recarga completa (seguro). O painel não muda
+  objetos de cards em cache no lugar.
+- Testes: 11 cenários novos (uid na chave, logout limpa, sem uid não grava,
+  pedido forçado durante fetch, retry, fila de releitura, sem
+  `unhandledRejection`) + os 29 anteriores; os novos falham no código do v3.93
+  (4 falhas) e passam no v3.94.
+
 ### painel.html v3.93 · painel — 2026-10-02 · Promove pra prod — correção do consumo de ~8 GB/dia (v3.91 → v3.93 de dev)
 
 Correção de bug sério promovida na hora (pedido direto do usuário, sem

@@ -4359,7 +4359,7 @@ As outras 6 functions da integração continuam deployadas normalmente:
 Causa do pico de ~8 GB de download em 2026-10-01 e a correção. Linhas: re-`grep` o nome.
 - `_fetchSquadDados()` / `_pollSquadDados(sqId, full)` — `painel-dev.html` L~11580 — busca por squad só os filhos de `dados` que `_applySquadDados()` usa (`_SQUAD_LEAF_PATHS`) e os cards de forma INCREMENTAL.
 - `_fetchCardsFull()` / `_fetchCardsDelta()` — lê `cards_index` + `cards_updated_at` (índices leves, mesmo par do kanban/Cloud Functions) e baixa só os cards cujo timestamp mudou; qualquer inconsistência lança erro e cai no completo. Squad com card sem id/índice vira `_cardsNoDelta` (sempre completo).
-- `_ccDb()` / `_ccLoad()` / `_ccSaveSoon()` — cache de cards em IndexedDB (`painel_cards_cache`, chave `databaseURL|squad`); recarga de segurança após `_CC_MAX_AGE_MS` (3 dias). `loadAll(true)` / `window._painelFullRefresh()` / Shift+clique em 🔄 ignoram o cache.
+- `_ccDb()` / `_ccLoad()` / `_ccSaveSoon()` / `_ccClearAll()` — cache de cards em IndexedDB (`painel_cards_cache` v2, chave `databaseURL|uid|squad`, limpo no `auth-change` null); recarga de segurança após `_CC_MAX_AGE_MS` (3 dias). `loadAll(true)` / `window._painelFullRefresh()` / Shift+clique em 🔄 ignoram o cache.
 - `_SQUAD_REFRESH_MIN_MS` — volta pra aba só refaz o fetch de uma squad se o último foi há ≥ 5 min.
 - `loadGlobalUsers(force)` / `_guRefreshSoon()` / `_guWrapWrites()` — `kanban/usuarios` deixou de ser `onValue`: leitura sob demanda com TTL 10 min; `_set`/`_update` em campos do perfil (regex `_GU_FIELD_RE`) agendam releitura.
 - `loadStatusData(force)` — "Peso por squad" em cache de 6 h (`_stPesoLoad/_stPesoSave`).

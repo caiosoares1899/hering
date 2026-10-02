@@ -2811,6 +2811,29 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   pai está aberto com rascunho em memória, o salvar do pai sobrescreve o que a
   filha escreveu — sincronizar o rascunho depois de toda escrita do filho no pai.
 
+- **2026-10-02, downloads de bytes do painel — v3.93 recém-promovido (pedido
+  explícito, "roda um /monitorarbugs nessa area de downloads de bytes")**:
+  4 achados reais, técnica 3 (o que a feature promete vs. o que ela deixa
+  acontecer nas bordas). (1) cache de cards em IndexedDB sobrevivia ao logout
+  e não separava usuários — dado de cards de uma conta ficava no disco de um
+  computador compartilhado (chave agora com `uid`, limpo no `auth-change`
+  null, store recriado na v2); (2) recarga completa (Shift+clique em 🔄) pedida
+  durante um fetch em andamento era engolida em silêncio; (3) `loadGlobalUsers()`:
+  releitura forçada durante outra em andamento descartada (papel antigo na
+  tela depois de editar) e sem retry na falha da 1ª leitura (o `onValue`
+  antigo reconectava sozinho — avatares/OKR vazios a sessão toda); (4)
+  `leavesP` sem `.catch` (rejeição sem tratamento quando cards falha). Confirmado
+  e sem achado: `fbSaveAll()` carimba `cards_updated_at` (tocados novos, demais
+  com o próprio; sem `touchedIds` carimba todos → recarga completa, seguro); o
+  painel não muta objetos de cards em cache. Residual reportado, não corrigido:
+  `loadPcfgUsers()`/`addGuestByEmail()`/ações de ADM ainda leem `kanban/usuarios`
+  inteiro (1,1 MB) por ação — admin-only e raro, e usar o cache ali mostraria
+  papel antigo logo depois de uma troca. **Lição**: ao trocar "listener ao vivo"
+  por "leitura sob demanda", o que o listener fazia DE GRAÇA (reconectar,
+  entregar o dado mais novo depois de uma escrita) vira responsabilidade
+  explícita — checar retry e fila de releitura; e todo cache persistente no
+  navegador precisa nascer com chave por usuário e limpeza no logout.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.
