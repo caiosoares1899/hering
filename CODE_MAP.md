@@ -170,6 +170,16 @@ confiar num número aqui se for mexer em `painel.html` prod).
   é o wrapper com toast, exposto no menu do avatar (`openStatusMenu()`,
   só pra `providerData` com `google.com`). Relatório em
   `window._ultimoRelFoto`.
+- **Gate de login alinhado ao pin de provedor das regras (2026-10-01,
+  `/monitorarbugs`, kanban v8.30.776 / painel v3.88)** —
+  `_loginProviderMismatchMsg(user)` (kanban e painel, logo depois de
+  `_isTrustedDomainEmail()`) recusa `@ciahering.com.br` fora do Google,
+  `@arezzo.com.br` fora da Microsoft e conta sem e-mail (as regras do banco
+  só aceitam essas combinações). No kanban, `window._signOut()` termina em
+  `location.reload()`, então a mensagem de recusa passa por
+  `_rejectLoginAfterReload(msg)` (`login_notice` no localStorage) e
+  `_showLoginNotice()` (mostra 1x no boot seguinte); o painel não recarrega,
+  escreve direto em `#login-err`.
 - **Login via Microsoft (integração Arezzo, 2026-10-01, pedido direto —
   "time de Arezzo usa Microsoft")**: `msProvider` (`<script
   type="module">`, perto de `calProvider`) — `OAuthProvider('microsoft.com')`
@@ -3162,6 +3172,21 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   nome+responsável+prazo+🎬, então texto full foi descartado em favor
   da borda colorida (não gasta largura).
 
+- **Rascunho do Objetivo × escritas do Marco / texto pendente / seções
+  recolhíveis (2026-10-01, `/monitorarbugs`, painel v3.87-v3.90)** —
+  `_okrSyncObjDraftHistory(objId,hist)` (perto de `closeOkrConfigBack()`):
+  `saveOkrMarco()`/`_okrArquivarMarco()` gravam um resumo no `history[]` do
+  Objetivo pai, mas o Objetivo segue aberto com `_okrObjDraft` velho — sem
+  isso o 💾 Salvar do Objetivo apagava a entrada do Marco; mantém rascunho e
+  `_okrObjOpenSnapshot` em sincronia. `_okrReadPending()`/`_okrWritePending()`
+  (`_OKR_OBJ_PENDING_IDS`/`_OKR_MARCO_PENDING_IDS`, antes de
+  `_okrSyncObjDraftFromDom()`): texto digitado nas caixas "+ Add" é lido do
+  DOM antes de `renderOkrObjBody()`/`renderOkrObjConfigBody()`/
+  `renderOkrMarcoBody()` e devolvido depois; o corpo de cada modal é limpo em
+  `openOkrObjetivo`/`closeOkrObjetivo`/`openOkrMarco`/`closeOkrMarco` pra não
+  vazar texto entre Objetivos. `_okrDetailsState`/`_okrDetailsAttrs(chave,
+  abertoPadrao)`: lembra aberto/fechado do Histórico/Cards vinculados entre
+  re-renders do corpo.
 #### Extensão (2026-09-04, presente nos dois arquivos — promovido pra prod v3.19): Histórico, vínculo de cards, tags, notificações
 Pedido direto do usuário depois de testar a Fase 1. Ver `CHANGELOG.md`
 v3.19 · painel-dev pro racional completo.

@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.777 — 2026-10-02 · Promove pra prod — login mais claro (Google × Microsoft), foto do Google corrigida, seletor de squad
+
+Promoção do lote acumulado em dev desde a v8.30.774 (pedido: "promove tudo pra
+prod"). Pro público de prod:
+- **Login**: conta `@ciahering.com.br` só entra pelo botão do **Google** e
+  `@arezzo.com.br` só pela **Microsoft** — quem clicar no botão errado agora
+  recebe uma mensagem dizendo qual usar, em vez de cair num board em branco.
+  Conta sem e-mail também é recusada com explicação.
+- **Mensagem de recusa não some mais**: quem era barrado como externo não
+  autorizado via a tela de login voltar sem motivo; o aviso agora aparece.
+- **🔄 Atualizar minha foto do Google**: a releitura agora usa o perfil
+  mais novo devolvido pelo login e avisa corretamente quando uma das fontes
+  do Google falha.
+- **Seletor de squad**: nome/emoji dos squads escapados no HTML.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
+`diff kanban.html kanban-dev.html` conferido — só as divergências
+permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
+`force_logout_after`).
+
 ### v8.30.777-dev — 2026-10-01 · fix(seletor de squad): nome/emoji/subtítulo/id injetados crus no HTML
 
 `/monitorarbugs` (seletor de squad pós-login, PR #1148 de hoje).
@@ -20286,6 +20306,24 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.90 · painel — 2026-10-02 · Promove pra prod — lote OKR (v3.87 → v3.90 de dev)
+
+Promoção do acumulado em `painel-dev.html` desde a v3.86 (pedido: "promove tudo
+pra prod"). Aba 🎯 OKR e login:
+- **Histórico do Objetivo não perde mais a entrada do Marco**: salvar/arquivar
+  um Marco e depois salvar o Objetivo apagava o resumo "atualizou o marco X".
+- **Texto digitado numa caixa "+ Add" não some mais** ao confirmar outra
+  lista, ir pra ⚙ Configurações/abrir um Marco e voltar, ou marcar item do
+  checklist.
+- **Histórico e Cards vinculados** lembram se estavam abertos (não fecham
+  sozinhos a cada "+ Add").
+- **Login**: conta `@ciahering.com.br` só pelo Google e `@arezzo.com.br` só
+  pela Microsoft — botão errado ou conta sem e-mail agora recebe mensagem.
+
+Checks de rotina: `node --check` nos 3 blocos `<script>` — OK; divergência
+restante contra `painel-dev.html` é só ambiente (favicon/título/banner dev,
+nodes `_dev`, squads fictícias).
 
 ### painel-dev.html v3.90 · painel-dev — 2026-10-01 · fix(OKR): texto digitado numa caixa "+ Add" não some mais ao mexer em outra coisa
 
