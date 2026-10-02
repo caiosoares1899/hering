@@ -3003,6 +3003,14 @@ v3.18 · painel-dev pro racional completo das decisões de produto.
   precisa decidir de onde vem "o papel da pessoa" quando ela tem papéis
   DIFERENTES em squads diferentes, e Campanhas É amarrado a squad,
   diferente de OKR).
+- **Filtros da tela "🗂 Usuários cadastrados"** (2026-10-02, pedido direto:
+  "opções de filtros, principalmente de ser Hering ou Arezzo") — `_guFilter`
+  ({empresa,role,squad,gestorOkr}) + `_guEmpresa(u)` (domínio do e-mail →
+  `hering`/`arezzo`/`externo`), `_guTemPapel()`, `_guNoSquad()`,
+  `_guSetFilter()`/`_guClearFilters()`/`_guFiltersHtml()` (logo antes de
+  `renderGlobalUsers()`); a barra mora em `#gu-filters`, abaixo de
+  `#gu-search`. Chips de empresa reusam `.okr-stat-chip`; a contagem por empresa
+  é calculada ANTES do filtro de empresa.
 - **"🎯 Gestor OKR"** (2026-09-30, pedido direto — "tem gente que n vai
   ser PO/ADM e vai mexer em OKR"): flag PROPOSITALMENTE separada de
   `role`/`squads_roles` (`u.gestorOkr:true`), não um 6º valor de
