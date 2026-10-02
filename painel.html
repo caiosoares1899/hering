@@ -3004,7 +3004,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.86 · painel</div>
+<div class="version">v3.90 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5917,10 +5917,19 @@ function renderOkrHistory(entity){
 // painel (`_painelTimelineRender()`) em vez de inventar um componente
 // novo — fechado por padrão quando tem bastante coisa (>5), aberto
 // quando é pouco (nada pra esconder).
+// Estado aberto/fechado das seções recolhíveis — o corpo do modal inteiro é
+// reconstruído a cada "+ Add"/remover/etc., e sem lembrar o que a pessoa
+// abriu, o Histórico/Cards vinculados voltavam a fechar sozinhos no meio do
+// uso (achado do /monitorarbugs 2026-10-01). Chave por seção+entidade, vale
+// só dentro da sessão da página.
+const _okrDetailsState = {};
+function _okrDetailsAttrs(chave, abertoPadrao){
+  const aberto = chave in _okrDetailsState ? _okrDetailsState[chave] : abertoPadrao;
+  return `${aberto?'open':''} ontoggle="_okrDetailsState['${chave}']=this.open"`;
+}
 function _okrHistorySectionHtml(entity){
   const hist = Array.isArray(entity?.history) ? entity.history : [];
-  const aberto = hist.length <= 5;
-  return `<details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+  return `<details class="pt-bucket" style="margin-top:14px;" ${_okrDetailsAttrs('hist:'+(entity?.id||''), hist.length<=5)}>
     <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
       <span class="pt-chevron">▸</span> 📜 Histórico${hist.length?` <span class="badge">${hist.length}</span>`:''}
     </summary>
@@ -5984,9 +5993,8 @@ function _okrRenderCardSearch(q){
 // fechada quando está vazia (o caso comum).
 function _okrCardLinksHtml(podeEditar){
   const links=_okrObjDraft.cardLinks||[];
-  const aberto = links.length>0;
   return `
-    <details class="pt-bucket" style="margin-top:14px;" ${aberto?'open':''}>
+    <details class="pt-bucket" style="margin-top:14px;" ${_okrDetailsAttrs('links:'+(_okrObjDraft?.id||''), links.length>0)}>
     <summary class="okr-field-label" style="margin:0;cursor:pointer;display:flex;align-items:center;gap:5px;">
       <span class="pt-chevron">▸</span> 🔗 Cards vinculados (badge 🎯 OKR no board)${links.length?` <span class="badge">${links.length}</span>`:''}
     </summary>
@@ -6053,6 +6061,7 @@ function openOkrObjetivo(id){
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
+  ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; }); // sessão nova: nada de texto pendente do Objetivo anterior
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
   // deep-link ?okr=<id> apontar) — "Novo Objetivo" ainda não tem pra onde
   // levar até o 1º Salvar.
@@ -6075,6 +6084,7 @@ function openOkrObjetivo(id){
 function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   document.getElementById('okr-obj-config-ov')?.classList.remove('open');
+  ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; });
   _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
 }
 // Troca pra tela de Configurações (título/gerência/trimestre/pilar/tags/
@@ -6114,6 +6124,18 @@ function closeOkrConfigBack(){
   document.getElementById('okr-obj-title').textContent = '🎯 ' + (_okrObjDraft.titulo || 'Editar Objetivo');
   renderOkrObjBody(_okrEditingObjId);
   document.getElementById('okr-obj-ov').classList.add('open');
+}
+// saveOkrMarco()/_okrArquivarMarco() empurram um resumo pro history[] do Objetivo PAI direto
+// no Firebase + cache (okrObjetivos) — mas o Objetivo continua ABERTO por baixo (abrir um Marco
+// só esconde o overlay dele), com _okrObjDraft ainda segurando o history[] de quando abriu.
+// saveOkrObjetivo() grava `{...draft}` por cima do nó inteiro: o 💾 Salvar seguinte do Objetivo
+// apagava, em silêncio, a entrada que o Marco tinha acabado de gravar (e a seção 📜 Histórico do
+// próprio Objetivo já voltava desatualizada ao fechar o Marco) — achado do /monitorarbugs
+// 2026-10-01. Mantém rascunho e snapshot em sincronia, sem acusar "alteração não salva" à toa.
+function _okrSyncObjDraftHistory(objId, hist){
+  if(!_okrObjDraft || _okrEditingObjId!==objId) return;
+  _okrObjDraft.history = hist.slice();
+  try{ const snap=JSON.parse(_okrObjOpenSnapshot); snap.history=hist.slice(); _okrObjOpenSnapshot=JSON.stringify(snap); }catch(e){}
 }
 // Fecha só depois de confirmar se há alteração não salva — mesmo espírito
 // de _cardIsDirty()/closeOv('card-ov') no kanban.html, que este modal nunca
@@ -6192,6 +6214,29 @@ async function _copyToClipboard(text, successMsg){
 // eram perdidos no 1º "+ Add" clicado (só eram lidos do DOM no Salvar,
 // nunca sincronizados de volta pro draft antes do re-render). Chamada
 // no início de toda função que muda uma lista/pessoa e re-renderiza.
+// Texto digitado numa caixa "+ Add" (Indicadores/Progressos/.../Trimestres, checklist do Marco) só vira
+// item de verdade com Enter/"+ Add" — até lá vive SÓ no <input>. Como todo "+ Add"/remover/editar item
+// reconstrói o corpo inteiro do modal (innerHTML), o texto pendente de OUTRA caixa se perdia em silêncio
+// (e também ao ir pra ⚙ Configurações/abrir um Marco e voltar) — mesma classe do #1147, outros caminhos
+// (/monitorarbugs 2026-10-01). Lê os valores logo antes de reconstruir e devolve logo depois.
+// Cuidado deliberado: lê do DOM VIVO, então o corpo de cada modal é LIMPO ao abrir/fechar a sessão
+// (openOkrObjetivo/closeOkrObjetivo/openOkrMarco/closeOkrMarco) — senão o texto de um Objetivo
+// vazaria pro próximo.
+const _OKR_OBJ_PENDING_IDS = ['okr-add-indicadores','okr-add-progressos','okr-add-proximosPassos','okr-add-riscos','okr-add-planosAcao','okr-add-trimestres'];
+const _OKR_MARCO_PENDING_IDS = ['okr-checklist-add'];
+function _okrReadPending(ids){
+  const o = {};
+  ids.forEach(id=>{ const v = document.getElementById(id)?.value; if(v) o[id] = v; });
+  return o;
+}
+function _okrWritePending(o){
+  Object.entries(o).forEach(([id,v])=>{
+    const el = document.getElementById(id); if(!el) return;
+    el.value = v;
+    const campo = id.replace(/^okr-add-/,'');
+    if(OKR_CHAR_LIMITS[campo]) _okrUpdateCharCounter(id, OKR_CHAR_LIMITS[campo]);
+  });
+}
 function _okrSyncObjDraftFromDom(){
   if(!_okrObjDraft) return;
   const g=id=>document.getElementById(id);
@@ -6284,6 +6329,7 @@ function _okrRerenderCurrentScreen(){
 function _okrListAdd(campo){
   const inp = document.getElementById('okr-add-'+campo);
   const v = (inp?.value||'').trim(); if(!v) return;
+  inp.value = ''; // confirmado: não pode ser recapturado como "pendente" no re-render logo abaixo
   _okrSyncObjDraftFromDom();
   (_okrObjDraft[campo] = _okrObjDraft[campo]||[]).push(v);
   _okrRerenderCurrentScreen();
@@ -6438,6 +6484,7 @@ function renderOkrObjBody(id){
     return;
   }
 
+  const _pendObj = _okrReadPending(_OKR_OBJ_PENDING_IDS);
   // Recap curto de título/gerência/trimestre/pilar — o resto (edição
   // desses campos + tags/responsável) mora agora em ⚙ Configurações
   // (openOkrConfig()/renderOkrObjConfigBody()), pra deixar em foco aqui só
@@ -6462,6 +6509,7 @@ function renderOkrObjBody(id){
     ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
     ${_okrHistorySectionHtml(d)}`;
+  _okrWritePending(_pendObj);
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
     ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
@@ -6487,6 +6535,7 @@ function renderOkrObjConfigBody(){
   // arrastada manualmente some no re-render) — vale aqui também, já que
   // #okr-f-descricao mora nesta tela agora.
   const _alturaDescricaoPrevia = document.getElementById('okr-f-descricao')?.style.height || '';
+  const _pendCfg = _okrReadPending(_OKR_OBJ_PENDING_IDS);
 
   body.innerHTML = `
     <div class="okr-field-label">Título do Objetivo</div>
@@ -6510,6 +6559,7 @@ function renderOkrObjConfigBody(){
     if(taDescricao) taDescricao.style.height = _alturaDescricaoPrevia;
   }
   _okrUpdateCharCounter('okr-f-descricao', OKR_CHAR_LIMITS['okr-f-descricao']);
+  _okrWritePending(_pendCfg);
 }
 
 async function saveOkrObjetivo(){
@@ -6658,11 +6708,13 @@ function openOkrMarco(id, objId){
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');
   _okrMarcoComments = [];
+  { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; } // sessão nova: nada de texto pendente do Marco anterior
   renderOkrMarcoBody();
   if(id) _okrLoadMarcoComments(id);
 }
 function closeOkrMarco(){
   document.getElementById('okr-marco-ov').classList.remove('open');
+  { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; }
   const objId = _okrEditingMarcoObjId;
   _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
   if(objId){ document.getElementById('okr-obj-ov').classList.add('open'); renderOkrObjBody(objId); }
@@ -6717,6 +6769,7 @@ function _okrChecklistHtml(){
 function _okrChecklistAdd(){
   const inp = document.getElementById('okr-checklist-add');
   const v = (inp?.value||'').trim(); if(!v) return;
+  inp.value = '';
   _okrSyncMarcoDraftFromDom();
   (_okrMarcoDraft.checklist = _okrMarcoDraft.checklist||[]).push({text:v, done:false});
   renderOkrMarcoBody();
@@ -6864,6 +6917,7 @@ function renderOkrMarcoBody(){
   }
 
   const respOpts = _okrPessoaOptions();
+  const _pendMarco = _okrReadPending(_OKR_MARCO_PENDING_IDS);
   body.innerHTML = `
     <div class="okr-field-label">Nome do Marco</div>
     <input type="text" class="okr-input" id="okr-m-nome" value="${esc(d.nome||'')}" placeholder="Ex.: Estudo de Viabilidade" oninput="_okrUpdateCharCounter('okr-m-nome',${OKR_CHAR_LIMITS['okr-m-nome']})">
@@ -6896,6 +6950,7 @@ function renderOkrMarcoBody(){
     <button class="save-btn" onclick="saveOkrMarco()">💾 Salvar</button>`;
   _okrUpdateCharCounter('okr-m-nome', OKR_CHAR_LIMITS['okr-m-nome']);
   _okrUpdateCharCounter('okr-m-descricao', OKR_CHAR_LIMITS['okr-m-descricao']);
+  _okrWritePending(_pendMarco);
 }
 
 async function saveOkrMarco(){
@@ -6934,6 +6989,7 @@ async function saveOkrMarco(){
     if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
     await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
     okrObjetivos[objId] = {...obj, history:objHistory};
+    _okrSyncObjDraftHistory(objId, objHistory);
     await _okrNotifyEditado(objId);
   }
   showToast(isNovo ? '🏁 Marco criado.' : '💾 Marco salvo.');
@@ -6961,6 +7017,7 @@ async function _okrArquivarMarco(){
     if(objHistory.length>OKR_HIST_CAP) objHistory.splice(0, objHistory.length-OKR_HIST_CAP);
     await window._update(window._ref(window._db,'kanban/okr/objetivos/'+objId), {history:objHistory});
     okrObjetivos[objId] = {...obj, history:objHistory};
+    _okrSyncObjDraftHistory(objId, objHistory);
   }
   showToast('🗑 Marco arquivado.');
   closeOkrMarco();
@@ -9148,6 +9205,17 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_login_historico_okr_2026_10_02',
+    titulo: '🔐 Login mais claro + OKR sem perder o que você digitou',
+    corpo: '<p><b>Login</b>: contas <code>@ciahering.com.br</code> entram pelo botão do <b>Google</b> e contas <code>@arezzo.com.br</code> pelo botão da <b>Microsoft</b>. Se clicar no botão errado, agora aparece uma mensagem dizendo qual usar (antes o board abria em branco).</p>'
+      + '<p><b>Aba OKR</b>:</p><ul>'
+      + '<li>Salvar um Marco e depois o Objetivo não apaga mais o registro do Marco no 📜 Histórico.</li>'
+      + '<li>O que você digitou numa caixa "+ Add" (Riscos, Progressos…) e ainda não confirmou não some mais ao mexer em outra lista, ir pra ⚙ Configurações ou abrir um Marco.</li>'
+      + '<li>Histórico e Cards vinculados lembram se estavam abertos.</li></ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_okr_lote_foto_2026_10_01',
     titulo: '🎯 OKR mais fácil de usar + botão pra atualizar sua foto do Google',
     corpo: '<p>Na aba <b>🎯 OKR</b> do painel:</p>'
@@ -10966,6 +11034,22 @@ function doSignOut(){ window._signOut(); }
 // este array dali.
 const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
+// Mesmo espelho do pin de provedor de database.rules.json que kanban-dev.html ganhou (ver
+// _loginProviderMismatchMsg() lá) — as regras são UM arquivo só pros dois, então o gate do
+// painel tem o mesmo buraco: domínio certo + botão errado entrava e via tudo vazio.
+function _loginProviderMismatchMsg(user){
+  const email=String(user?.email||'').toLowerCase();
+  const provs=(user?.providerData||[]).map(p=>p.providerId);
+  // Conta sem e-mail (comum em Microsoft/Entra sem o atributo `mail`) escapava do gate: a checagem
+  // do chamador é `if(user.email && !confiável)`, então e-mail vazio era tratado como "ok" — e as
+  // regras (auth.token.email.endsWith) negam tudo, dando o mesmo board em branco sem explicação.
+  if(!email) return 'Sua conta entrou sem um e-mail (comum em contas Microsoft sem caixa de e-mail). Peça a um ADM pra conferir o cadastro da conta.';
+  if(email.endsWith('@ciahering.com.br') && !provs.includes('google.com'))
+    return 'Contas @ciahering.com.br entram pelo botão do Google — clique em "Entrar com Google".';
+  if(email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
+    return 'Contas @arezzo.com.br entram pelo botão da Microsoft — clique em "Entrar com Microsoft".';
+  return '';
+}
 
 // 👁 Visualizadores externos do painel (2026-08-27) — pedido direto: dar
 // acesso de SÓ LEITURA ao painel pra alguém fora de @ciahering.com.br (ex.:
@@ -10992,6 +11076,13 @@ window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
   if(user){
+    const _mismatchMsg=_loginProviderMismatchMsg(user);
+    if(_mismatchMsg){
+      document.getElementById('login-err').textContent=_mismatchMsg;
+      document.getElementById('login-err').style.display='block';
+      window._signOut();
+      return;
+    }
     if(user.email && !_isTrustedDomainEmail(user.email)){
       // Mesmo padrão de resiliência que kanban-dev.html usa pro whitelist de
       // externos: cache curto (evita reconsultar à toa a cada auth-change,

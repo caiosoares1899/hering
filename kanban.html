@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.774</div>
+<div class="version">v8.30.777</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6638,7 +6638,12 @@ window._relerFotoGoogle=async()=>{
   if(!cu || !cu.providerData.some(p=>p.providerId==='google.com')){ rel.motivo='Conta não é Google.'; return rel; }
   const r=await signInWithPopup(auth,provider);
   const token=GoogleAuthProvider.credentialFromResult(r)?.accessToken;
-  rel.providerData=(cu.providerData.find(p=>p.providerId==='google.com')||{}).photoURL||null;
+  // `cu` foi capturado ANTES do popup — o login devolve um objeto de usuário
+  // NOVO (r.user) com providerData já atualizado pelo Google; ler o velho
+  // descartava justamente a fonte mais fresca (achado do /monitorarbugs
+  // 2026-10-01).
+  const fresh=r.user;
+  rel.providerData=(fresh.providerData.find(p=>p.providerId==='google.com')||{}).photoURL||null;
   if(!token){ rel.motivo='Google não devolveu um token de acesso.'; return rel; }
   const get=url=>fetch(url,{headers:{Authorization:'Bearer '+token}}).then(x=>x.json());
   try{ rel.userinfo=(await get('https://www.googleapis.com/oauth2/v3/userinfo')).picture||null; }catch(e){}
@@ -6652,10 +6657,18 @@ window._relerFotoGoogle=async()=>{
     || (rel.userinfo&&_fotoBase(rel.userinfo)!==atualBase ? rel.userinfo : null)
     || (rel.providerData&&_fotoBase(rel.providerData)!==atualBase ? rel.providerData : null);
   if(melhor && _fotoBase(melhor)!==atualBase){
-    await updateProfile(cu,{photoURL:melhor});
+    await updateProfile(fresh,{photoURL:melhor});
+    // window._currentUser aponta pro objeto ANTIGO (auth-change não redispara
+    // pro mesmo uid) — mantém ele em sincronia pro _syncAuthProfileToFirebase().
+    if(cu!==fresh) cu.photoURL=melhor;
     rel.aplicada=melhor; rel.ok=true;
   } else if(rel.people && rel.people.length && rel.people.every(x=>x.padrao)){
     rel.motivo='O Google informa que esta conta só tem o avatar PADRÃO (sem foto pública) — não é um erro do Maré Digital.';
+  } else if(rel.peopleErro){
+    // People API (a única que diz se a foto é o avatar padrão) falhou — muito
+    // provável "API não habilitada" no projeto do Google Cloud. Sem isso o
+    // texto "mesma foto" abaixo mentiria: só 2 das 3 fontes foram consultadas.
+    rel.motivo='Não consegui consultar a People API do Google ('+rel.peopleErro+'). Só comparei as outras fontes e a foto é a mesma — não dá pra saber se é o avatar padrão.';
   } else {
     rel.motivo='O Google devolveu a mesma foto que já estava salva.';
   }
@@ -6784,6 +6797,41 @@ let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br
 // ler este array dali, regra de segurança não executa JS da página).
 const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
+// Espelha o PIN DE PROVEDOR de database.rules.json (PR #1152): @ciahering.com.br só vale
+// logado pelo Google, @arezzo.com.br só pela Microsoft. Sem isso o gate do client (só domínio)
+// deixava passar quem clicasse no botão "errado" — ex.: conta @ciahering.com.br existindo no
+// Entra ID da Arezzo e escolhendo "Entrar com Microsoft" — pra dentro de um app em que as REGRAS
+// negam toda leitura/escrita de dados: board em branco/erros de permissão, sem nenhuma
+// explicação (/monitorarbugs 2026-10-01). Devolve a mensagem de recusa, ou '' se está certo.
+function _loginProviderMismatchMsg(user){
+  const email=String(user?.email||'').toLowerCase();
+  const provs=(user?.providerData||[]).map(p=>p.providerId);
+  // Conta sem e-mail (comum em Microsoft/Entra sem o atributo `mail`) escapava do gate: a checagem
+  // do chamador é `if(user.email && !confiável)`, então e-mail vazio era tratado como "ok" — e as
+  // regras (auth.token.email.endsWith) negam tudo, dando o mesmo board em branco sem explicação.
+  if(!email) return 'Sua conta entrou sem um e-mail (comum em contas Microsoft sem caixa de e-mail). Peça a um ADM pra conferir o cadastro da conta.';
+  if(email.endsWith('@ciahering.com.br') && !provs.includes('google.com'))
+    return 'Contas @ciahering.com.br entram pelo botão do Google — clique em "Entrar com Google".';
+  if(email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
+    return 'Contas @arezzo.com.br entram pelo botão da Microsoft — clique em "Entrar com Microsoft".';
+  return '';
+}
+// window._signOut() termina em location.reload() — qualquer texto escrito em #login-err ANTES
+// dele some junto com a página (achado do mesmo /monitorarbugs: quem era recusado como externo
+// não-autorizado só via a tela de login reaparecer, sem motivo nenhum). Guarda a mensagem e
+// _showLoginNotice() mostra uma vez, no boot seguinte.
+function _rejectLoginAfterReload(msg){ try{ safeLS.setItem('login_notice', JSON.stringify({msg, ts:Date.now()})); }catch(e){} }
+function _showLoginNotice(){
+  try{
+    const raw=safeLS.getItem('login_notice'); if(!raw) return;
+    safeLS.removeItem('login_notice');
+    const n=JSON.parse(raw);
+    if(!n?.msg || Date.now()-n.ts>120000) return;
+    const el=document.getElementById('login-err'); if(!el) return;
+    el.textContent=n.msg; el.style.display='block';
+  }catch(e){}
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',_showLoginNotice); else _showLoginNotice();
 function isAdmUser(user){ return !!user && (ADM_EMAILS.includes(user.email) || !!(user.uid && ADM_UIDS[user.uid])); }
 
 // ── Log leve de acesso (instrumentação de uso para o painel/Status) ──
@@ -11239,6 +11287,8 @@ function showSquadSelectorFiltered(squadIds) {
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   if(user){
+    const _mismatchMsg=_loginProviderMismatchMsg(user);
+    if(_mismatchMsg){ _rejectLoginAfterReload(_mismatchMsg); window._signOut('provider_mismatch'); return; }
     // Valida domínio: ver TRUSTED_DOMAINS (@ciahering.com.br/@arezzo.com.br) OU email na whitelist de externos
     if(user.email && !_isTrustedDomainEmail(user.email)){
       // Verifica whitelist de emails externos (gerenciada pelo PO em Configurações)
@@ -11274,6 +11324,7 @@ window.addEventListener('auth-change',e=>{
         if(!allowed){
           document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
           document.getElementById('login-err').style.display='block';
+          _rejectLoginAfterReload('Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.');
           window._signOut('external_not_authorized');
         } else {
           safeLS.setItem(_extCacheKey, String(Date.now()));
@@ -11285,6 +11336,7 @@ window.addEventListener('auth-change',e=>{
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
         document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
+        _rejectLoginAfterReload(document.getElementById('login-err').textContent);
         window._signOut('external_whitelist_check_error');
       });
       _checkExternos(1);
@@ -35317,6 +35369,9 @@ function verNoBoardFromSearch(){
   // renderSelectorGrid() daqui (por isso ela continua existindo e exposta
   // em window._renderSelectorGrid, só a exibição PRÉ-login é que saiu).
   // Login agora é sempre a 1ª tela, sem squad na URL ou com squad na URL.
+  // label/subtitle/emoji/id vêm de kanban/squads_meta (texto livre digitado no painel) — o seletor do
+  // header (toggleSquadSwitcher) já escapava com esc()/encodeURIComponent(); este grid era o único que
+  // injetava cru no innerHTML (/monitorarbugs 2026-10-01).
   function renderSelectorGrid(filterIds) {
     const grid = document.getElementById('squad-sel-grid');
     if (!grid) return;
@@ -35324,10 +35379,10 @@ function verNoBoardFromSearch(){
     const entries = Object.entries(SQUAD_META_LIVE)
       .filter(([id]) => !filterIds || filterIds.includes(id));
     grid.innerHTML = entries.map(([id, meta]) =>
-      `<a class="squad-sel-card" href="${window.location.pathname}?squad=${id}">
-        <span class="squad-sel-emoji">${meta.emoji || '🐟'}</span>
-        <div class="squad-sel-name">${meta.label}</div>
-        <div class="squad-sel-sub">${meta.subtitle || ''}</div>
+      `<a class="squad-sel-card" href="${window.location.pathname}?squad=${encodeURIComponent(id)}">
+        <span class="squad-sel-emoji">${esc(meta.emoji || '🐟')}</span>
+        <div class="squad-sel-name">${esc(meta.label)}</div>
+        <div class="squad-sel-sub">${esc(meta.subtitle || '')}</div>
       </a>`
     ).join('');
   }
