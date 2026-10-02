@@ -1481,7 +1481,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           </div>
         </div>
       </div>
-      <button class="btn" onclick="loadAll()" title="Atualizar dados">🔄</button>
+      <button class="btn" onclick="loadAll(event.shiftKey)" title="Atualizar dados (Shift+clique: recarregar tudo do zero)">🔄</button>
       <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
       <div id="squad-links-wrap" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
       <button class="btn hd-btn-adm" onclick="openGlobalBackup()" title="Backup" style="color:var(--teal);border-color:rgba(29,233,182,.35);">💾</button>
@@ -2124,7 +2124,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <div style="font-family:'DM Sans',sans-serif;font-size:18px;font-weight:600;">🔋 Status do sistema</div>
         <div style="font-size:11px;color:var(--txt3);">Saúde e crescimento dos dados no Firebase (estimativas do lado cliente)</div>
       </div>
-      <button class="btn btn-sm" onclick="loadStatusData()" style="color:var(--teal);border-color:rgba(29,233,182,.3);">🔄 Atualizar</button>
+      <button class="btn btn-sm" onclick="loadStatusData(true)" style="color:var(--teal);border-color:rgba(29,233,182,.3);">🔄 Atualizar</button>
       <button class="btn btn-sm" onclick="deslogarTodos()" style="color:var(--danger);border-color:rgba(255,107,107,.3);" title="Desloga todo mundo de todas as squads agora (util pra economizar Firebase a noite/fim de semana)">🚪 Deslogar todos</button>
     </div>
     <div style="font-size:10px;color:var(--txt3);background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.15);border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.5;">
@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.92 · painel-dev</div>
+<div class="version">v3.93 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3583,8 +3583,9 @@ async function setCampViewMode(mode){
     const outros = (_campAtual.squads||[]).filter(sq=>!squadData[sq]?.cards && !_campCrossData[sq]);
     if(outros.length){
       await Promise.all(outros.map(sq=>
-        window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'))
-          .then(snap=>{ const v=snap.val()||{}; _campCrossData[sq]={
+        // só os 2 filhos que a visão usa (antes baixava /dados inteiro — ver _pollSquadDados)
+        Promise.all(['cards','columns'].map(k=>window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados/'+k))))
+          .then(([cs,cl])=>{ const v={cards:cs.val(), columns:cl.val()}; _campCrossData[sq]={
             cards:   v.cards   ?(Array.isArray(v.cards)   ?v.cards   :Object.values(v.cards))   :[],
             columns: v.columns ?(Array.isArray(v.columns) ?v.columns :Object.values(v.columns)) :[],
           }; })
@@ -8764,7 +8765,23 @@ function _fmtBytes(b){
   if(b<1048576) return (b/1024).toFixed(1)+' KB';
   return (b/1048576).toFixed(2)+' MB';
 }
-async function loadStatusData(){
+// Achado real (diagnóstico de 8 GB de download em 2026-10-01): "Peso por squad"
+// baixava o nó /dados INTEIRO de todas as squads (~37 MB) + campanhas a cada
+// abertura da aba Status — e sem passar pelo _dbgTrack, invisível na telemetria.
+// Medir "quanto pesa" exige baixar (o RTDB não expõe tamanho), então o resultado
+// agora fica em cache por 6h (localStorage); o botão "🔄 Atualizar" mede de novo.
+const _ST_PESO_TTL_MS = 6*60*60*1000;
+function _stPesoLoad(){
+  try{
+    const c = JSON.parse(localStorage.getItem('painel_st_peso')||'null');
+    if(c && c.rows && Date.now()-c.at < _ST_PESO_TTL_MS && c.url===(window._db?.app?.options?.databaseURL||'')) return c;
+  }catch(e){}
+  return null;
+}
+function _stPesoSave(c){
+  try{ localStorage.setItem('painel_st_peso', JSON.stringify({...c, at:Date.now(), url:window._db?.app?.options?.databaseURL||''})); }catch(e){}
+}
+async function loadStatusData(force){
   carregarConfigInatividade();
   const listEl = document.getElementById('st-squad-list');
   if(listEl) listEl.innerHTML='<div style="font-size:11px;color:var(--txt3);">Medindo dados de cada squad...</div>';
@@ -8794,9 +8811,12 @@ async function loadStatusData(){
   const KNOWN = SQUADS.map(s=>s.id);
   let totalBytes = 0, totalCards = 0;
   const rows = [];
-  for(const sq of KNOWN){
+  const _pc = force===true ? null : _stPesoLoad();
+  if(_pc){ _pc.rows.forEach(r=>rows.push(r)); totalBytes=_pc.totalBytes; totalCards=_pc.totalCards; }
+  else for(const sq of KNOWN){
     try{
       const snap = await window._get(window._ref(window._db,'kanban/squads/'+sq+'/dados'));
+      _dbgTrack('status:peso/'+sq+'/dados', snap.val());
       const val = snap.val()||{};
       const bytes = new Blob([JSON.stringify(val)]).size;
       const nCards = val.cards ? (Array.isArray(val.cards)?val.cards.filter(Boolean).length:Object.keys(val.cards).length) : 0;
@@ -8808,11 +8828,15 @@ async function loadStatusData(){
   }
   // Campanhas e grupos (globais)
   let campBytes=0;
-  try{
-    const cs=await window._get(window._ref(window._db,'kanban/campanhas_dev'));
-    campBytes=new Blob([JSON.stringify(cs.val()||{})]).size;
-    totalBytes+=campBytes;
-  }catch(e){}
+  if(_pc){ campBytes=_pc.campBytes||0; }
+  else{
+    try{
+      const cs=await window._get(window._ref(window._db,'kanban/campanhas_dev'));
+      campBytes=new Blob([JSON.stringify(cs.val()||{})]).size;
+      totalBytes+=campBytes;
+    }catch(e){}
+    _stPesoSave({rows, totalBytes, totalCards, campBytes});
+  }
 
   // Resumo
   const pTot=document.getElementById('st-peso-total');
@@ -11110,14 +11134,55 @@ function openGlobalUsersModal(){
   if(_blockIfPainelViewer()) return;
   document.getElementById('global-users-ov').classList.add('open');
   renderGlobalUsers();
+  loadGlobalUsers(true); // tela de gestão: sempre dado fresco (re-renderiza sozinho ao chegar)
 }
 function closeGlobalUsersModal(){
   document.getElementById('global-users-ov').classList.remove('open');
 }
 
-function loadGlobalUsers(){
-  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{
+// Achado real (diagnóstico de 8 GB de download em 2026-10-01): o onValue que
+// ficava aqui em 'kanban/usuarios' reenviava ~1,1 MB (notificações + tokens
+// de push de TODO MUNDO ficam nesse node) pra cada aba aberta a cada mudança
+// em QUALQUER usuário — 621 entregas num dia = ~697 MB, o 2º maior consumo
+// depois do polling de squads. Agora é uma leitura sob demanda: ao abrir o
+// painel, ao abrir "🗂 Usuários", depois de escritas do próprio painel
+// (_guRefreshSoon) e, ao voltar pra aba, só se o último cache tem >10 min.
+const _GU_TTL_MS = 10*60*1000;
+let _guLoadedAt = 0, _guInflight = false, _guSoonTimer = null;
+function _guRefreshSoon(){
+  clearTimeout(_guSoonTimer);
+  _guSoonTimer = setTimeout(()=>loadGlobalUsers(true), 500);
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(!document.hidden && _guLoadedAt && Date.now()-_guLoadedAt >= _GU_TTL_MS) loadGlobalUsers(true);
+});
+// As escritas do próprio painel em kanban/usuarios/{uid} (papel, squads, gestorOkr,
+// nome/foto, exclusão) antes voltavam sozinhas pelo listener ao vivo; sem ele,
+// qualquer _set/_update nesses campos agenda uma releitura. Notificações, tokens
+// e preferências (kanban/usuarios/{uid}/notificacoes|notif_prefs|...) NÃO casam.
+// Instalado no 1º loadGlobalUsers() porque window._set/_update só existem depois
+// que o <script type="module"> roda.
+const _GU_FIELD_RE = /\/kanban\/usuarios\/[^/]+(\/(role|squads|squads_roles|gestorOkr|nome|init|foto|inscrito|email)(\/[^/]+)?)?$/;
+let _guWrapped = false;
+function _guWrapWrites(){
+  if(_guWrapped) return; _guWrapped = true;
+  ['_set','_update'].forEach(n=>{
+    const orig = window[n]; if(typeof orig!=='function') return;
+    window[n] = function(ref){
+      const r = orig.apply(this, arguments);
+      try{ if(_GU_FIELD_RE.test(String(ref))) Promise.resolve(r).then(_guRefreshSoon).catch(()=>{}); }catch(e){}
+      return r;
+    };
+  });
+}
+function loadGlobalUsers(force){
+  _guWrapWrites();
+  if(_guInflight) return;
+  if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
+  _guInflight = true;
+  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
     _dbgTrack('usuarios', snap.val());
+    _guLoadedAt = Date.now();
     _globalUsersCache = snap.val() || {};
     // Re-deriva members (init/nome/foto) de toda squad já carregada — ver
     // comentário de _squadMembersFromGlobalCache() acima. Cobre a corrida
@@ -11132,7 +11197,7 @@ function loadGlobalUsers(){
     if(typeof renderKudosPainel==='function') renderKudosPainel();
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
     renderAll();
-  });
+  }).catch(()=>{}).finally(()=>{ _guInflight = false; });
 }
 
 // ── Filtros da tela "🗂 Usuários cadastrados" (pedido direto: "coloca opções de filtros,
@@ -11489,39 +11554,149 @@ function _applySquadDados(sqId, val){
   // dia. Re-renderiza também quando o overlay está aberto.
   if(document.getElementById('pt-feed-ov')?.classList.contains('open')) _renderPtFeed();
 }
-// Achado real (diagnóstico de 8 GB de download em 2026-10-01): 97% dos bytes
+// Achado real (diagnóstico de 8 GB de download em 2026-10-01): ~99% dos bytes
 // medidos vieram daqui — `poll:squads/<id>/dados`, ~180 refreshes/dia (cada
 // volta pra aba rebaixava `dados` de TODAS as squads, ~37 MB por rodada, só
-// outlet-crm ~15 MB). Dois problemas:
+// outlet-crm ~15 MB). Três camadas de redução:
 //  1) `dados` inteiro traz muito além do que o painel usa (card_comments,
 //     ql_items, notas, intake_pending, agent_msgs, _debug_bytes_log...) —
-//     _applySquadDados() só lê estes filhos, então só eles são buscados;
-//  2) cada volta pra aba disparava o refresh sem olhar quando foi o último
-//     — ver _SQUAD_REFRESH_MIN_MS no listener de visibilitychange.
-// `config` entra só com as 3 folhas que o painel realmente lê (config pode
-// guardar muito mais coisa do kanban).
-const _SQUAD_DADOS_PATHS = {
-  cards:'cards', columns:'columns', tags:'tags', agil_cfg:'agil_cfg',
+//     só os filhos que _applySquadDados() lê são buscados (`config` só com
+//     as 3 folhas usadas);
+//  2) SYNC INCREMENTAL de cards: em vez de rebaixar `cards` inteiro a cada
+//     refresh, lê só os índices leves (cards_index = id→posição,
+//     cards_updated_at = id→timestamp — mesmo par que o kanban.html usa pra
+//     isso, e que as Cloud Functions do Agente Ágil carimbam de propósito)
+//     e baixa só os cards cujo timestamp mudou. Uma rodada típica cai de
+//     ~37 MB pra ~0,5 MB;
+//  3) o cache de cards persiste em IndexedDB — a PRÓXIMA abertura do painel
+//     (outro dia, outra aba) também começa pelo incremental, não pelo
+//     download completo. Rede de segurança: recarga completa se o cache tem
+//     mais de _CC_MAX_AGE_MS, se o delta achar qualquer inconsistência, se a
+//     squad tem card sem id/índice (sem como rastrear), ou no clique manual
+//     com Shift em "🔄" (loadAll(true)).
+const _SQUAD_LEAF_PATHS = {
+  columns:'columns', tags:'tags', agil_cfg:'agil_cfg',
   flow_baseline:'flow_baseline', lembretes:'lembretes',
   blockerMode:'config/blockerMode', submarca_ativo:'config/submarca_ativo', canal_venda_ativo:'config/canal_venda_ativo',
 };
+const _CC_VERSION = 1;
+const _CC_MAX_AGE_MS = 3*24*60*60*1000;  // recarga completa de segurança
+const _CC_DELTA_MAX_STALE = 200;          // mudou muito? mais barato/seguro baixar tudo
+const _cardsCache = {};        // sqId -> {byId:{id:card}, ua:{id:updatedAt}, fullAt}
+const _cardsNoDelta = {};      // sqId -> true: tem card que o índice não rastreia
 const _squadDadosInflight = {}, _squadDadosAt = {};
-function _pollSquadDados(sqId){
+let _ccDbP = null;
+function _ccDb(){
+  if(_ccDbP) return _ccDbP;
+  _ccDbP = new Promise(res=>{
+    try{
+      const rq = indexedDB.open('painel_cards_cache', 1);
+      rq.onupgradeneeded = ()=>{ rq.result.createObjectStore('s'); };
+      rq.onsuccess = ()=>res(rq.result);
+      rq.onerror = ()=>res(null);
+      rq.onblocked = ()=>res(null);
+    }catch(e){ res(null); }
+  });
+  return _ccDbP;
+}
+function _ccKey(sqId){ return (window._db?.app?.options?.databaseURL||'')+'|'+sqId; }
+async function _ccLoad(sqId){
+  try{
+    const db = await _ccDb(); if(!db) return null;
+    return await new Promise(res=>{
+      const rq = db.transaction('s').objectStore('s').get(_ccKey(sqId));
+      rq.onsuccess = ()=>{
+        const c = rq.result;
+        res(c && c.v===_CC_VERSION && c.byId && c.ua && c.fullAt ? c : null);
+      };
+      rq.onerror = ()=>res(null);
+    });
+  }catch(e){ return null; }
+}
+const _ccSaveTimers = {};
+function _ccSaveSoon(sqId){
+  clearTimeout(_ccSaveTimers[sqId]);
+  _ccSaveTimers[sqId] = setTimeout(async ()=>{
+    try{
+      const c = _cardsCache[sqId]; if(!c) return;
+      const db = await _ccDb(); if(!db) return;
+      db.transaction('s','readwrite').objectStore('s').put({v:_CC_VERSION, byId:c.byId, ua:c.ua, fullAt:c.fullAt}, _ccKey(sqId));
+    }catch(e){}
+  }, 4000);
+}
+// Download completo de cards (+ os 2 índices, pra montar o cache). Devolve o
+// array exatamente como `dados/cards` sempre chegou a _applySquadDados().
+async function _fetchCardsFull(sqId, get, tr){
+  const [cs, is, us] = await Promise.all([get('cards'), get('cards_index'), get('cards_updated_at')]);
+  const raw = cs.val(), idx = is.val()||{}, ua = us.val()||{};
+  tr.cards = raw; tr.cards_index = idx; tr.cards_updated_at = ua;
+  const arr = raw ? (Array.isArray(raw)?raw:Object.values(raw)) : [];
+  const byId = {}; let orfaos = 0;
+  arr.forEach(c=>{
+    if(!c) return;
+    if(c.id && idx[c.id]!=null && !byId[c.id]) byId[c.id] = c; else orfaos++;
+  });
+  if(orfaos){ _cardsNoDelta[sqId] = true; delete _cardsCache[sqId]; }
+  else { delete _cardsNoDelta[sqId]; _cardsCache[sqId] = {byId, ua, fullAt:Date.now()}; _ccSaveSoon(sqId); }
+  return arr;
+}
+// Incremental: lança erro em QUALQUER inconsistência (quem chama cai no
+// download completo).
+async function _fetchCardsDelta(sqId, cache, get, tr){
+  const [is, us] = await Promise.all([get('cards_index'), get('cards_updated_at')]);
+  const idx = is.val(), ua = us.val()||{};
+  tr.cards_index = idx; tr.cards_updated_at = ua;
+  if(!idx) throw new Error('sem cards_index');
+  const ids = Object.keys(idx);
+  const stale = ids.filter(id=> !cache.byId[id] || (ua[id]!==undefined && cache.ua[id]!==ua[id]));
+  if(stale.length > _CC_DELTA_MAX_STALE) throw new Error('muita mudança');
+  const fetched = await Promise.all(stale.map(id=>get('cards/'+idx[id]).then(sn=>sn.val())));
+  tr.cards_delta = fetched;
+  const byId = {};
+  ids.forEach(id=>{ if(cache.byId[id]) byId[id] = cache.byId[id]; });
+  stale.forEach((id,i)=>{
+    const v = fetched[i];
+    // posição mudou entre ler o índice e ler o card (ou card sumiu): não confia
+    if(!v || v.id!==id) throw new Error('inconsistente '+id);
+    byId[id] = v;
+  });
+  cache.byId = byId; cache.ua = ua;
+  if(stale.length) _ccSaveSoon(sqId);
+  return ids.sort((a,b)=>Number(idx[a])-Number(idx[b])).map(id=>byId[id]);
+}
+async function _fetchSquadDados(sqId, full){
+  const get = p=>window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados/'+p));
+  const leafKeys = Object.keys(_SQUAD_LEAF_PATHS);
+  const leavesP = Promise.all(leafKeys.map(k=>get(_SQUAD_LEAF_PATHS[k])));
+  const tr = {};   // só o que realmente desceu da rede (telemetria _dbgTrack)
+  let cache = null;
+  if(!full && !_cardsNoDelta[sqId]){
+    cache = _cardsCache[sqId] || await _ccLoad(sqId);
+    if(cache && Date.now()-cache.fullAt > _CC_MAX_AGE_MS) cache = null;
+    if(cache) _cardsCache[sqId] = cache;
+  }
+  let cardsArr = null, modo = 'full';
+  if(cache){
+    try{ cardsArr = await _fetchCardsDelta(sqId, cache, get, tr); modo = 'delta'; }
+    catch(e){ console.warn('[painel] sync incremental de cards falhou em '+sqId+', baixando completo:', e.message); delete _cardsCache[sqId]; tr.cards_delta = null; }
+  }
+  if(!cardsArr) cardsArr = await _fetchCardsFull(sqId, get, tr);
+  const snaps = await leavesP, v = {};
+  leafKeys.forEach((k,i)=>{ v[k] = snaps[i].val(); });
+  tr.leaves = v;
+  return { modo, tr, val:{
+    cards:cardsArr, columns:v.columns, tags:v.tags, agil_cfg:v.agil_cfg,
+    flow_baseline:v.flow_baseline, lembretes:v.lembretes,
+    config:{ blockerMode:v.blockerMode, submarca_ativo:v.submarca_ativo, canal_venda_ativo:v.canal_venda_ativo },
+  }};
+}
+function _pollSquadDados(sqId, full){
   if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
   if(_squadDadosInflight[sqId]) return; // ja tem um fetch desta squad em andamento
   _squadDadosInflight[sqId] = true;
-  const keys = Object.keys(_SQUAD_DADOS_PATHS);
-  Promise.all(keys.map(k=>window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados/'+_SQUAD_DADOS_PATHS[k]))))
-    .then(snaps=>{
-      const v = {};
-      keys.forEach((k,i)=>{ v[k] = snaps[i].val(); });
-      // Remonta o formato que _applySquadDados() sempre recebeu (config aninhado).
-      const val = {
-        cards:v.cards, columns:v.columns, tags:v.tags, agil_cfg:v.agil_cfg,
-        flow_baseline:v.flow_baseline, lembretes:v.lembretes,
-        config:{ blockerMode:v.blockerMode, submarca_ativo:v.submarca_ativo, canal_venda_ativo:v.canal_venda_ativo },
-      };
-      _dbgTrack('poll:squads/'+sqId+'/dados', val);
+  _fetchSquadDados(sqId, full===true)
+    .then(({modo, tr, val})=>{
+      _dbgTrack('poll:squads/'+sqId+'/dados'+(modo==='delta'?'(delta)':''), tr);
       _squadDadosAt[sqId] = Date.now();
       _applySquadDados(sqId, val);
     })
@@ -11546,7 +11721,7 @@ document.addEventListener('visibilitychange', ()=>{
     _pollSquadSnapshots(sqId);
   });
 });
-function loadAll(){
+function loadAll(full){
   // Antes disparava um setInterval por squad a cada POLL_MS (60s), rodando pra
   // sempre enquanto a aba do painel ficasse aberta em primeiro plano — isso
   // buscava o node /dados INTEIRO (cards+colunas+tags) de TODAS as squads a
@@ -11561,10 +11736,12 @@ function loadAll(){
   if(!window._squadListeners) window._squadListeners = {};
   SQUADS.forEach(sq=>{
     window._squadListeners[sq.id] = true;
-    _pollSquadDados(sq.id);
+    _pollSquadDados(sq.id, full===true);
     _pollSquadSnapshots(sq.id);
   });
 }
+// Recarga COMPLETA (ignora o cache incremental de cards) — também no clique com Shift em "🔄".
+window._painelFullRefresh = ()=>loadAll(true);
 
 function renderAll(){
   updateTimestamp();
