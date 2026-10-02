@@ -20307,6 +20307,18 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.93 · painel — 2026-10-02 · Promove pra prod — correção do consumo de ~8 GB/dia (v3.91 → v3.93 de dev)
+
+Correção de bug sério promovida na hora (pedido direto do usuário, sem
+avisos): ontem o Realtime Database bateu ~8 GB de download, ~99% vindo do
+próprio painel. Detalhes do diagnóstico e dos números na entrada de dev v3.93
+logo abaixo. Em prod: cards sincronizados de forma incremental (só o que mudou,
+cache persistente em IndexedDB, recarga completa no Shift+clique em "🔄"),
+`kanban/usuarios` deixa de ser listener ao vivo, aba Status com medição em
+cache e visão multi-squad de Campanhas só lendo o que usa. Leva junto o v3.91
+(filtros Hering × Arezzo/papel/squad/Gestor OKR em "🗂 Usuários cadastrados"),
+que estava acumulado em dev. Nenhum aviso (Mural/WhatsApp) — decisão do usuário.
+
 ### painel-dev.html v3.93 · painel-dev — 2026-10-02 · fix(banda): painel baixava ~8 GB/dia (cards de todas as squads a cada volta pra aba + usuarios ao vivo)
 
 Diagnóstico de "ontem bateu 8 GB de download" (script hora a hora sobre
