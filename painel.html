@@ -3004,7 +3004,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.93 · painel</div>
+<div class="version">v3.94 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11099,6 +11099,7 @@ function _painelViewerKey(email){ return String(email||'').trim().toLowerCase().
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
+  if(!user) _ccClearAll(); // saiu: não deixa dado de cards da conta anterior no disco
   if(user){
     const _mismatchMsg=_loginProviderMismatchMsg(user);
     if(_mismatchMsg){
@@ -11463,13 +11464,14 @@ function closeGlobalUsersModal(){
 // painel, ao abrir "🗂 Usuários", depois de escritas do próprio painel
 // (_guRefreshSoon) e, ao voltar pra aba, só se o último cache tem >10 min.
 const _GU_TTL_MS = 10*60*1000;
-let _guLoadedAt = 0, _guInflight = false, _guSoonTimer = null;
+let _guLoadedAt = 0, _guInflight = false, _guSoonTimer = null, _guQueued = false, _guRetries = 0;
 function _guRefreshSoon(){
   clearTimeout(_guSoonTimer);
   _guSoonTimer = setTimeout(()=>loadGlobalUsers(true), 500);
 }
 document.addEventListener('visibilitychange', ()=>{
-  if(!document.hidden && _guLoadedAt && Date.now()-_guLoadedAt >= _GU_TTL_MS) loadGlobalUsers(true);
+  // !_guLoadedAt: a 1ª leitura falhou (rede) — antes o onValue reconectava sozinho
+  if(!document.hidden && (!_guLoadedAt || Date.now()-_guLoadedAt >= _GU_TTL_MS)) loadGlobalUsers(true);
 });
 // As escritas do próprio painel em kanban/usuarios/{uid} (papel, squads, gestorOkr,
 // nome/foto, exclusão) antes voltavam sozinhas pelo listener ao vivo; sem ele,
@@ -11492,12 +11494,17 @@ function _guWrapWrites(){
 }
 function loadGlobalUsers(force){
   _guWrapWrites();
-  if(_guInflight) return;
+  if(_guInflight){
+    // releitura forçada no meio de outra (ex.: logo depois de o ADM trocar um papel):
+    // a leitura em andamento pode ter começado ANTES da escrita — refaz ao terminar.
+    if(force) _guQueued = true;
+    return;
+  }
   if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
   _guInflight = true;
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
     _dbgTrack('usuarios', snap.val());
-    _guLoadedAt = Date.now();
+    _guLoadedAt = Date.now(); _guRetries = 0;
     _globalUsersCache = snap.val() || {};
     // Re-deriva members (init/nome/foto) de toda squad já carregada — ver
     // comentário de _squadMembersFromGlobalCache() acima. Cobre a corrida
@@ -11513,7 +11520,14 @@ function loadGlobalUsers(force){
     if(typeof renderPushmUsers==='function') renderPushmUsers();
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
     renderAll();
-  }).catch(()=>{}).finally(()=>{ _guInflight = false; });
+  }).catch(()=>{
+    // falha de rede/permissão: tenta de novo (até 5x, 15s) — sem isso avatares e
+    // responsáveis do OKR ficariam vazios a sessão toda
+    if(!_guLoadedAt && _guRetries++ < 5) setTimeout(()=>loadGlobalUsers(true), 15000);
+  }).finally(()=>{
+    _guInflight = false;
+    if(_guQueued){ _guQueued = false; loadGlobalUsers(true); }
+  });
 }
 
 // ── Filtros da tela "🗂 Usuários cadastrados" (pedido direto: "coloca opções de filtros,
@@ -12032,14 +12046,19 @@ const _CC_MAX_AGE_MS = 3*24*60*60*1000;  // recarga completa de segurança
 const _CC_DELTA_MAX_STALE = 200;          // mudou muito? mais barato/seguro baixar tudo
 const _cardsCache = {};        // sqId -> {byId:{id:card}, ua:{id:updatedAt}, fullAt}
 const _cardsNoDelta = {};      // sqId -> true: tem card que o índice não rastreia
-const _squadDadosInflight = {}, _squadDadosAt = {};
+const _squadDadosInflight = {}, _squadDadosAt = {}, _squadDadosRerunFull = {};
 let _ccDbP = null;
 function _ccDb(){
   if(_ccDbP) return _ccDbP;
   _ccDbP = new Promise(res=>{
     try{
-      const rq = indexedDB.open('painel_cards_cache', 1);
-      rq.onupgradeneeded = ()=>{ rq.result.createObjectStore('s'); };
+      // v2: chaves passaram a incluir o uid — recria o store pra descartar as da v1 (órfãs)
+      const rq = indexedDB.open('painel_cards_cache', 2);
+      rq.onupgradeneeded = ()=>{
+        const d = rq.result;
+        if(d.objectStoreNames.contains('s')) d.deleteObjectStore('s');
+        d.createObjectStore('s');
+      };
       rq.onsuccess = ()=>res(rq.result);
       rq.onerror = ()=>res(null);
       rq.onblocked = ()=>res(null);
@@ -12047,12 +12066,28 @@ function _ccDb(){
   });
   return _ccDbP;
 }
-function _ccKey(sqId){ return (window._db?.app?.options?.databaseURL||'')+'|'+sqId; }
+// Chave inclui o uid: dado de cards de uma conta nunca é reaproveitado por outra
+// no mesmo navegador. Sem uid logado, não lê nem grava cache.
+// (/monitorarbugs 2026-10-02: o cache sobrevivia ao logout — num computador
+// compartilhado ficaria dado de cards da pessoa anterior no disco; mesma
+// preocupação do gcal_token.) _ccClearAll() roda quando auth-change chega com null.
+function _ccKey(sqId){
+  const uid = window._currentUser?.uid;
+  return uid ? (window._db?.app?.options?.databaseURL||'')+'|'+uid+'|'+sqId : null;
+}
+async function _ccClearAll(){
+  for(const k in _cardsCache) delete _cardsCache[k];
+  for(const k in _cardsNoDelta) delete _cardsNoDelta[k];
+  for(const k in _squadDadosAt) delete _squadDadosAt[k];
+  for(const k in _ccSaveTimers) clearTimeout(_ccSaveTimers[k]);
+  try{ const db = await _ccDb(); if(db) db.transaction('s','readwrite').objectStore('s').clear(); }catch(e){}
+}
 async function _ccLoad(sqId){
   try{
+    const key = _ccKey(sqId); if(!key) return null;
     const db = await _ccDb(); if(!db) return null;
     return await new Promise(res=>{
-      const rq = db.transaction('s').objectStore('s').get(_ccKey(sqId));
+      const rq = db.transaction('s').objectStore('s').get(key);
       rq.onsuccess = ()=>{
         const c = rq.result;
         res(c && c.v===_CC_VERSION && c.byId && c.ua && c.fullAt ? c : null);
@@ -12066,9 +12101,9 @@ function _ccSaveSoon(sqId){
   clearTimeout(_ccSaveTimers[sqId]);
   _ccSaveTimers[sqId] = setTimeout(async ()=>{
     try{
-      const c = _cardsCache[sqId]; if(!c) return;
+      const c = _cardsCache[sqId], key = _ccKey(sqId); if(!c || !key) return;
       const db = await _ccDb(); if(!db) return;
-      db.transaction('s','readwrite').objectStore('s').put({v:_CC_VERSION, byId:c.byId, ua:c.ua, fullAt:c.fullAt}, _ccKey(sqId));
+      db.transaction('s','readwrite').objectStore('s').put({v:_CC_VERSION, byId:c.byId, ua:c.ua, fullAt:c.fullAt}, key);
     }catch(e){}
   }, 4000);
 }
@@ -12116,6 +12151,7 @@ async function _fetchSquadDados(sqId, full){
   const get = p=>window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados/'+p));
   const leafKeys = Object.keys(_SQUAD_LEAF_PATHS);
   const leavesP = Promise.all(leafKeys.map(k=>get(_SQUAD_LEAF_PATHS[k])));
+  leavesP.catch(()=>{}); // se o download de cards falhar antes do await abaixo, evita rejeição sem tratamento
   const tr = {};   // só o que realmente desceu da rede (telemetria _dbgTrack)
   let cache = null;
   if(!full && !_cardsNoDelta[sqId]){
@@ -12140,7 +12176,12 @@ async function _fetchSquadDados(sqId, full){
 }
 function _pollSquadDados(sqId, full){
   if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
-  if(_squadDadosInflight[sqId]) return; // ja tem um fetch desta squad em andamento
+  if(_squadDadosInflight[sqId]){
+    // ja tem um fetch desta squad em andamento; recarga COMPLETA pedida no meio
+    // (Shift+clique em 🔄) não pode ser engolida — roda assim que ele terminar.
+    if(full===true) _squadDadosRerunFull[sqId] = true;
+    return;
+  }
   _squadDadosInflight[sqId] = true;
   _fetchSquadDados(sqId, full===true)
     .then(({modo, tr, val})=>{
@@ -12149,7 +12190,10 @@ function _pollSquadDados(sqId, full){
       _applySquadDados(sqId, val);
     })
     .catch(()=>{})
-    .finally(()=>{ _squadDadosInflight[sqId] = false; });
+    .finally(()=>{
+      _squadDadosInflight[sqId] = false;
+      if(_squadDadosRerunFull[sqId]){ _squadDadosRerunFull[sqId] = false; _pollSquadDados(sqId, true); }
+    });
 }
 function _pollSquadSnapshots(sqId){
   if(document.hidden) return;
@@ -12165,8 +12209,10 @@ const _SQUAD_REFRESH_MIN_MS = 5*60*1000;
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || !window._squadListeners) return;
   Object.keys(window._squadListeners).forEach(sqId=>{
-    if(Date.now() - (_squadDadosAt[sqId]||0) >= _SQUAD_REFRESH_MIN_MS) _pollSquadDados(sqId);
-    _pollSquadSnapshots(sqId);
+    if(Date.now() - (_squadDadosAt[sqId]||0) >= _SQUAD_REFRESH_MIN_MS){
+      _pollSquadDados(sqId);
+      _pollSquadSnapshots(sqId); // mesmo throttle — antes rodava a cada volta pra aba (~38 KB/squad)
+    }
   });
 });
 function loadAll(full){
