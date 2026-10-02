@@ -20307,6 +20307,31 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.92 · painel-dev — 2026-10-02 · fix(banda): painel baixava `dados` inteiro de todas as squads a cada volta pra aba (8 GB/dia)
+
+Diagnóstico de "ontem bateu 8 GB de download" (script hora a hora sobre
+`_debug_bytes_log`, 84 janelas de log, 7,04 GB medidos): ~97% dos bytes
+vieram de `PAINEL · poll:squads/<id>/dados` — ~180 refreshes completos no
+dia, cada um ~37 MB (só `outlet-crm` ~15 MB, `outlet` ~9,7 MB,
+`midiacriativa` ~5 MB). Uma única sessão de ADM respondeu por 43% do dia
+(3,1 GB em 9 h). Não era loop nem polling: era `visibilitychange` — cada
+volta pra aba do painel rebaixava tudo, e `_pollSquadDados()` buscava o
+nó `dados` INTEIRO (inclui `card_comments`, `ql_items`, `notas`,
+`intake_pending`, `agent_msgs`, `_debug_bytes_log`...) quando
+`_applySquadDados()` só lê `cards/columns/tags/agil_cfg/flow_baseline/
+lembretes` + 3 folhas de `config`.
+
+- `_pollSquadDados()` agora busca só esses filhos (9 `get()` em paralelo,
+  `config` só `blockerMode`/`submarca_ativo`/`canal_venda_ativo`) e remonta
+  o mesmo formato que `_applySquadDados()` sempre recebeu.
+- Volta pra aba só refaz o fetch de uma squad se o último foi há ≥ 5 min
+  (`_SQUAD_REFRESH_MIN_MS`). Abrir a página, "🔄 Atualizar dados" e abrir
+  o Histórico continuam buscando na hora.
+- Fetch em andamento da mesma squad não é duplicado.
+- Achado aberto, NÃO corrigido aqui: `onValue('kanban/usuarios')`
+  (`loadGlobalUsers()`) reenvia ~1,1 MB a cada mudança em qualquer usuário
+  (notificações, tokens...), 621 vezes no dia = ~697 MB (2º maior item).
+
 ### painel-dev.html v3.91 · painel-dev — 2026-10-02 · feat: filtros na tela "🗂 Usuários cadastrados" (Hering × Arezzo)
 
 Pedido direto do usuário: "sabe aquele user global dentro de painel? coloca

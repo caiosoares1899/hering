@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.91 · painel-dev</div>
+<div class="version">v3.92 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11489,11 +11489,44 @@ function _applySquadDados(sqId, val){
   // dia. Re-renderiza também quando o overlay está aberto.
   if(document.getElementById('pt-feed-ov')?.classList.contains('open')) _renderPtFeed();
 }
+// Achado real (diagnóstico de 8 GB de download em 2026-10-01): 97% dos bytes
+// medidos vieram daqui — `poll:squads/<id>/dados`, ~180 refreshes/dia (cada
+// volta pra aba rebaixava `dados` de TODAS as squads, ~37 MB por rodada, só
+// outlet-crm ~15 MB). Dois problemas:
+//  1) `dados` inteiro traz muito além do que o painel usa (card_comments,
+//     ql_items, notas, intake_pending, agent_msgs, _debug_bytes_log...) —
+//     _applySquadDados() só lê estes filhos, então só eles são buscados;
+//  2) cada volta pra aba disparava o refresh sem olhar quando foi o último
+//     — ver _SQUAD_REFRESH_MIN_MS no listener de visibilitychange.
+// `config` entra só com as 3 folhas que o painel realmente lê (config pode
+// guardar muito mais coisa do kanban).
+const _SQUAD_DADOS_PATHS = {
+  cards:'cards', columns:'columns', tags:'tags', agil_cfg:'agil_cfg',
+  flow_baseline:'flow_baseline', lembretes:'lembretes',
+  blockerMode:'config/blockerMode', submarca_ativo:'config/submarca_ativo', canal_venda_ativo:'config/canal_venda_ativo',
+};
+const _squadDadosInflight = {}, _squadDadosAt = {};
 function _pollSquadDados(sqId){
   if(document.hidden) return; // aba em segundo plano: economiza banda, nao busca
-  window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados'))
-    .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/dados', snap.val()); _applySquadDados(sqId, snap.val()); })
-    .catch(()=>{});
+  if(_squadDadosInflight[sqId]) return; // ja tem um fetch desta squad em andamento
+  _squadDadosInflight[sqId] = true;
+  const keys = Object.keys(_SQUAD_DADOS_PATHS);
+  Promise.all(keys.map(k=>window._get(window._ref(window._db,'kanban/squads/'+sqId+'/dados/'+_SQUAD_DADOS_PATHS[k]))))
+    .then(snaps=>{
+      const v = {};
+      keys.forEach((k,i)=>{ v[k] = snaps[i].val(); });
+      // Remonta o formato que _applySquadDados() sempre recebeu (config aninhado).
+      const val = {
+        cards:v.cards, columns:v.columns, tags:v.tags, agil_cfg:v.agil_cfg,
+        flow_baseline:v.flow_baseline, lembretes:v.lembretes,
+        config:{ blockerMode:v.blockerMode, submarca_ativo:v.submarca_ativo, canal_venda_ativo:v.canal_venda_ativo },
+      };
+      _dbgTrack('poll:squads/'+sqId+'/dados', val);
+      _squadDadosAt[sqId] = Date.now();
+      _applySquadDados(sqId, val);
+    })
+    .catch(()=>{})
+    .finally(()=>{ _squadDadosInflight[sqId] = false; });
 }
 function _pollSquadSnapshots(sqId){
   if(document.hidden) return;
@@ -11501,12 +11534,15 @@ function _pollSquadSnapshots(sqId){
     .then(snap=>{ _dbgTrack('poll:squads/'+sqId+'/snapshots', snap.val()); snapshots[sqId]=snap.val()||{}; renderTrend(); })
     .catch(()=>{});
 }
-// Quando a aba volta a ficar visível, faz um refresh imediato de todos os
-// squads já rastreados (em vez de esperar até 60s pra atualizar de novo).
+// Quando a aba volta a ficar visível, refresca os squads já rastreados — mas
+// só os que não foram buscados nos últimos _SQUAD_REFRESH_MIN_MS. Trocar de
+// aba o dia todo (comum) rebaixava tudo a cada volta; abrir a página,
+// "🔄 Atualizar dados" e abrir o Histórico continuam buscando na hora.
+const _SQUAD_REFRESH_MIN_MS = 5*60*1000;
 document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || !window._squadListeners) return;
   Object.keys(window._squadListeners).forEach(sqId=>{
-    _pollSquadDados(sqId);
+    if(Date.now() - (_squadDadosAt[sqId]||0) >= _SQUAD_REFRESH_MIN_MS) _pollSquadDados(sqId);
     _pollSquadSnapshots(sqId);
   });
 });
