@@ -20538,6 +20538,22 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.99 · painel-dev — 2026-10-05 · fix(OKR/Usuários): quem usa só o painel aparece como responsável + chip "🛡️ ADM" em Global Users
+
+Relato direto: o chefe se cadastrou pelo painel e entrou, mas só apareceu na lista de responsáveis do OKR depois que o usuário o colocou em
+um squad — e em "Global Users" não havia como torná-lo ADM (só aparecem Membro/PO/Organizador).
+- **Responsáveis/participantes do OKR**: `_okrPessoaOptions()` só aceitava quem tinha squad, `inscrito` ou `role:'adm'`, mas quem usa SÓ o
+  painel é cadastrado sem squad DE PROPÓSITO (`_painelEnsureUserRecord()`, 2026-09-09: "só abrir o painel não deveria auto-matricular
+  ninguém"). Agora basta o registro ter identidade (nome ou e-mail); registros vazios/parciais (só preferências) continuam de fora.
+- **Lista de pessoas não fica velha**: o cache de usuários (`_GU_TTL_MS`, 10 min) agora é renovado ao renderizar a aba OKR — pessoa
+  recém-cadastrada pelo painel aparece nos seletores sem F5. Só renova depois de uma 1ª carga bem-sucedida (não insiste a cada render
+  se a leitura falhar), então o custo de leitura segue o do resto do painel.
+- **🛡️ ADM em Global Users**: chip em cada pessoa (funciona mesmo sem nenhum squad), no mesmo estilo do "🎯 Gestor OKR". ADM não é papel
+  por squad — é a lista de e-mails de ⚙ Configurações → ADMs, a mesma que o board e as regras usam; o chip só chama o mesmo caminho de
+  `addAdmEmail()`/`removeAdmEmail()` (que também sincroniza `role` do registro). Pede confirmação, fica desabilitado sem e-mail ou para
+  quem não é ADM, e não deixa tirar o PRÓPRIO acesso de ADM.
+- Testado no Chromium com as funções reais (9 cenários novos + 25 anteriores, todos ✅). Ainda em dev.
+
 ### painel-dev.html v3.98 · painel-dev — 2026-10-05 · fix(OKR, UI/UX): seções dos modais na paleta do 🌴 Vice City
 
 A v3.97 só foi conferida nos temas escuro e claro. No Vice City as cores fixas das seções (azul/verde/roxo vivos) ficavam legíveis mas
