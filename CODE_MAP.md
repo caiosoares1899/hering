@@ -4371,4 +4371,8 @@ Causa do pico de ~8 GB de download em 2026-10-01 e a correção. Linhas: re-`gre
 - `functions/rules/rulesSim.js` + `functions/rules/__tests__/databaseRules.test.js` — simulador de `database.rules.json` (o projeto não tem emulador) e matriz ator × operação (`npm test`). Mudou as regras? Rode antes de pedir o `firebase deploy --only database`.
 - `isAllowedReturnUrl(u)` — `functions/spotify/_shared.js` — destino do redirect do `spotifyOauthCallback` (só o próprio site).
 
+### 💬 Indicador de comentários na face do card (2026-10-05)
+- `_commentIndHtml(n)` / `_refreshCommentInd(cardId)` / `window._commentCounts` — `kanban-dev.html` (logo antes de `makeCardEl()`) — desenha/atualiza o 💬 na linha `.card-indicators`; contagem vem de `card_comments_count/{cardId}` (listener junto de `_uaRef`, `_onComCount`). Rede de segurança em `loadComments()`: corrige o índice se divergir da lista real.
+- `contarComentarios` / `recalcularContagem()` — `functions/comentarios/contagem.js` — gatilho que mantém o índice (cobre cliente + Agente Ágil + importação). Deploy: `firebase deploy --only functions:contarComentarios`.
+
 *Retrato do commit `6e30656` (2026-09-30).*

@@ -122,6 +122,14 @@ exports.sendPushOnNotification = onValueCreated(
   }
 );
 
+// 💬 Contagem de comentários por card (kanban/squads/{squad}/dados/card_comments_count/{cardId}) —
+// alimenta o indicador de comentário na face do card (ver functions/comentarios/contagem.js).
+// Cobre TODO escritor de comentário (humano, Agente Ágil, importação). Um único gatilho pra todos os
+// squads: só conta (1 leitura pequena por comentário), diferente dos gatilhos do orquestrador, que
+// são por squad por causa de custo de chamada ao modelo.
+// Deploy isolado: firebase deploy --only functions:contarComentarios
+exports.contarComentarios = require('./comentarios/contagem').contarComentarios;
+
 // Agente Ágil — orquestrador entre o board e agentes especialistas externos
 // (hoje: Databricks). Deploy isolado: firebase deploy --only functions:agenteAgil
 exports.agenteAgil = require('./agente-agil/http').agenteAgil;

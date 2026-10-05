@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.779-dev</div>
+<div class="version">v8.30.780-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -10311,6 +10311,24 @@ let _cardsSyncDebounce = null;
     window._onChildAdded(_uaRef, _onCardsUpdatedAtLive);
     window._onChildChanged(_uaRef, _onCardsUpdatedAtLive);
 
+    // 💬 Contagem de comentários por card (card_comments_count/{cardId} → n). Mantido pela Cloud Function
+    // contarComentarios (functions/comentarios/contagem.js), que cobre TODO escritor de comentário
+    // (humano, Agente Ágil, importação). Índice minúsculo: o board escuta SÓ ele, nunca card_comments
+    // inteiro. Mudou o número → atualiza o indicador do card no lugar (sem re-renderizar o board).
+    const _ccRef = fb(FB+'/card_comments_count');
+    const _onComCount = snap=>{
+      _dbgTrack('/card_comments_count:live', snap.val());
+      window._commentCounts[snap.key] = Number(snap.val())||0;
+      _refreshCommentInd(snap.key);
+    };
+    window._onChildAdded(_ccRef, _onComCount);
+    window._onChildChanged(_ccRef, _onComCount);
+    window._onChildRemoved(_ccRef, snap=>{
+      _dbgTrack('/card_comments_count:live(removed)', null);
+      delete window._commentCounts[snap.key];
+      _refreshCommentInd(snap.key);
+    });
+
     return true;
   }
   // Busca sob demanda os arquivados que este device ainda não tem em
@@ -11808,6 +11826,24 @@ function getDue(due, isDone, paused){
 }
 function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.round(d/cl.length*100)}; }
 
+// 💬 Indicador de comentários na linha de ícones do card (≡ descrição, 📎 anexo). A contagem vem de
+// card_comments_count (ver o listener perto de _uaRef); sem número ainda (índice não chegou / card sem
+// comentário) não desenha nada. Mostra o número só quando há mais de 1, igual ao ≡ de descrições.
+window._commentCounts = window._commentCounts || {};
+function _commentIndHtml(n){
+  n = Number(n)||0; if(!n) return '';
+  return `<span class="ci ci-com" title="${n} comentário${n>1?'s':''}">💬${n>1?'<sup style="font-size:7px;">'+n+'</sup>':''}</span>`;
+}
+// Atualiza o indicador de TODAS as faces desse card (o mesmo card pode aparecer em mais de uma raia).
+function _refreshCommentInd(cardId){
+  try{
+    const sel = '.card[data-id="'+String(cardId).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"] .card-indicators';
+    document.querySelectorAll(sel).forEach(box=>{
+      box.querySelectorAll('.ci-com').forEach(e=>e.remove());
+      box.insertAdjacentHTML('beforeend', _commentIndHtml(window._commentCounts[cardId]));
+    });
+  }catch(e){}
+}
 function makeCardEl(card){
   const isDone=_isColDone(card.col);
   const{cls:dc,lbl:dl}=getDue(card.due,isDone,card.paused);
@@ -11995,6 +12031,8 @@ function makeCardEl(card){
   // coluna (feature nova, ver togglePinCard()). Mesmo emoji que o botão
   // "Abrir peça no Milanote" já usava, agora consistente com o selo.
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">🎨</span>`:'';
+  // Card antigo ainda com o campo legado `comments` (migrado pra card_comments só ao abrir) também conta.
+  const _comInd=_commentIndHtml(window._commentCounts[card.id] || (card.comments&&typeof card.comments==='object'?Object.keys(card.comments).length:0));
   const _anexosInd=(card.links&&card.links.length)?`<span class="ci" title="${card.links.length} anexo${card.links.length>1?'s':''}/link${card.links.length>1?'s':''}">📎</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
@@ -12027,7 +12065,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}${_comInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -35594,6 +35632,16 @@ async function loadComments(cardId){
       }
     }
     _commentsCache[cardId] = val || {};
+    // Rede de segurança do indicador 💬: a lista que acabou de chegar é a verdade. Se o índice
+    // card_comments_count diverge (função ainda não implantada, comentário antigo sem backfill, evento
+    // perdido), corrige aqui — a Cloud Function grava o MESMO número, então os dois nunca brigam.
+    try{
+      const _real = Object.keys(_commentsCache[cardId]).length;
+      if((window._commentCounts[cardId]||0) !== _real){
+        window._commentCounts[cardId] = _real; _refreshCommentInd(cardId);
+        window._set(window._ref(window._db, FB+'/card_comments_count/'+cardId), _real||null).catch(()=>{});
+      }
+    }catch(e){}
     // Trava contra corrida: se a pessoa trocou de card enquanto a leitura
     // estava em voo, não pisa no que já está na tela do card ATUAL.
     if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
