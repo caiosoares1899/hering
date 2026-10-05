@@ -20538,6 +20538,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.105 · painel — 2026-10-05 · Promove pra prod — OKR: 📈 Atingimento (7 tipos + ♾️ Perene) com gráfico de evolução, modal em seções coloridas com atalhos, filtro por pessoa e correções
+
+Lote acumulado do painel-dev v3.96 → v3.105 (validado pelo usuário), mesclado em 3 vias sobre o prod v3.95 (só a linha de versão conflitou; título, favicon, banner e demais divergências de ambiente intactos). Detalhes de cada item nas entradas `painel-dev.html v3.96…v3.105` logo abaixo.
+- **📈 Atingimento por Objetivo**: 7 tipos (Financeira, %, Número, Atingido/Não atingido, Manter acima/abaixo, Data de entrega) + **♾️ Perene** (acompanha pelos marcos); registros datados; a barra do Objetivo (aba e apresentação) anda pelo atingimento. Emoji do tipo no cartão; clicar abre o **gráfico de evolução** (data e valor, dica ao passar o mouse/tocar).
+- **Modal do OKR**: seções coloridas com caixas destacadas, atalhos no topo (2 filas) para pular de seção, também no tema 🌴 Vice City.
+- **Aba**: filtro por pessoa; editar progressos/riscos/próximos passos depois de enviados; quem usa só o painel (sem squad) aparece como responsável; chip 🛡️ ADM em Global Users.
+- **Correções do /monitorarbugs**: clique perdido ao editar a meta, valor digitado descartado ao Salvar, registros de outra pessoa sobrescritos, `undefined` recusado pelo Firebase, e (gráfico/Perene) botão "Evolução" em Perene, dica presa no toque, botão do modal em Objetivo sem id.
+- Rascunho no Mural: `seed_okr_atingimento_visual_2026_10_05`. `okr-apresentacao.slide.html` (sem `-dev`) já estava em prod com o gráfico e o ♾️.
+
 ### painel-dev.html v3.105 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · fix(OKR/Atingimento): /monitorarbugs no gráfico de evolução e no tipo Perene (+3)
 
 Rodada de `/monitorarbugs` nas entregas do dia (emoji do tipo, gráfico de evolução, ♾️ Perene, cópia na apresentação). 3 achados, todos reproduzidos num navegador antes de corrigir.
