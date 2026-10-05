@@ -20538,6 +20538,27 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.97 · painel-dev — 2026-10-05 · feat(OKR, UI/UX): modais com seções coloridas, caixas de texto em destaque e atalhos fixos no cabeçalho
+
+Feedback do chefe: "o layout do modal é muito igual, tudo no mesmo tom — destacar as áreas e as caixas de texto", e pedido de botões no
+cabeçalho que levem direto a cada área (como o atalho de Descrição do card no kanban).
+- **Seções com cor e ícone próprios** no modal do Objetivo: 🎯 Indicadores (azul), ✅ Progressos (verde), ➡️ Próximos passos (índigo),
+  ⚠️ Riscos (âmbar), 🛠️ Planos de ação (roxo), 🏁 Marcos (turquesa). Cada uma é um cartão com barra lateral colorida, título em destaque
+  e contador de itens, no lugar de 5 blocos idênticos com título cinza minúsculo. O resumo do topo (gerência/período/pilar/responsáveis)
+  virou um cartão de destaque. Vale também para o modo somente leitura.
+- **Modal do Marco**: "Detalhes do marco", ☑️ Checklist (com 1/2 concluídos), 🏷️ Tags, 👥 Participantes e 💬 Comentários viraram
+  cartões; checklist e tags/participantes seguem o mesmo padrão.
+- **Caixas de texto em destaque** (todo o OKR): contorno visível e anel de foco na cor da seção em que a caixa está (azul fora de seção);
+  o botão "+ Add" também ganha a cor da seção.
+- **Atalhos fixos no cabeçalho** (fora do corpo que rola, então não somem): Objetivo = Indicadores · Progressos · Próximos passos · Riscos ·
+  Planos de ação · Marcos · Cards vinculados · Histórico; Marco = Detalhes · Checklist · Tags · Participantes · Comentários · Histórico.
+  Cada chip tem a cor da seção e a contagem; clicar rola até lá com um destaque de ~1s, abre a seção se estava recolhida
+  (Histórico/Cards vinculados) e põe o cursor na caixa de "adicionar". Em modo leitura só aparecem atalhos de seções que existem.
+- Tema claro conferido (cores mais escuras pra manter o contraste). Os ids das seções levam o id do Objetivo/Marco, então Objetivo e
+  Marco abertos juntos não duplicam ids.
+- Testado no Chromium com as funções reais: 11 cenários de navegação (rolagem, foco, seção recolhida, leitura, objetivo novo, Objetivo
+  + Marco abertos juntos, ids duplicados) + os 14 de filtro/edição da v3.96, todos ✅. Ainda em dev.
+
 ### painel-dev.html v3.96 · painel-dev — 2026-10-05 · feat(OKR): filtro por pessoa na aba + botão ✏️ visível pra editar itens
 
 Feedback direto do usuário ("falta um filtro por usuário na aba"; "depois que envia só tem como excluir, não tem como editar").
