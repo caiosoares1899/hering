@@ -257,7 +257,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
     <div style="width:100%;max-width:1140px;margin:0 auto;display:flex;flex-direction:column;height:100%;">
       <div class="slide-header" style="flex-shrink:0;">
         <div class="s-tag">📅 Planejamento</div>
-        <h2 class="slide-h2">Calendários <span class="tri-badge">III TRI</span></h2>
+        <h2 class="slide-h2">Calendários <span class="tri-badge">IV TRI</span></h2>
       </div>
       <div class="cal-wrapper">
 
@@ -274,7 +274,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
         <div class="cal-section">
           <div class="cal-head">
             <div class="cal-head-title">🏢 CIA Hering</div>
-            <div class="cal-head-sub">JUL – OUT 2025</div>
+            <div class="cal-head-sub">OUT 2025 – JAN 2026</div>
           </div>
           <!-- Gantt month scale -->
           <div class="gantt-header" id="gantt-header"></div>
@@ -308,7 +308,7 @@ html,body{width:100%;height:100%;font-family:'DM Sans',sans-serif;background:var
 </div>
 
 <div id="bottombar"></div>
-<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v5.0</div>
+<div style="position:fixed;bottom:6px;right:10px;font-size:9px;color:rgba(255,255,255,0.15);font-family:'Syne',sans-serif;letter-spacing:0.08em;z-index:200;pointer-events:none;">v5.2</div>
 
 <!-- AI PANEL -->
 <div class="ai-panel" id="ai-panel">
@@ -338,32 +338,37 @@ let DATA = {
     fonteCal: 15
   },
   squads:[
-    {name:"SITE & APP",impedimentos:[
-      "KVs do Ciclo 3 Verão (Preview AV) não vieram com as peças mais fortes vistas no showroom. Times Comercial e Criação vão produzir novas fotos com IA para aprovação do Nadale."
+    {name:"MÍDIA PERFORMANCE",impedimentos:[
+      "🟡 <strong>UTMs/Parâmetros (Rakuten e GA4)</strong> — Rollback GTM (29/09) reduziu sessões (not set) para ~5,7% (meta ~2%), mas receita sem origem segue alta (~35%). Time investiga pico atípico de 30/09. ROAS retomando — Performance em 7,79 hoje.",
+      "🔄 <strong>Atribuição Meta iOS 14+ e TikTok</strong> — Ajuste GTM revertido em 02/10 para estancar queda de tags RTB no APP. Envio de dados Meta (IP/IDFV) bloqueado aguardando testes de código. TikTok ativo para validação.",
+      "⏸ <strong>Queda de Afiliados no APP</strong> — Pausado. Análise adiada para próxima sprint — capacidade técnica 100% em (not set) GA4.",
+      "🔴 <strong>Awin sem vendas na VTEX</strong> — Perda total de visibilidade de vendas em setembro, inviabilizando validação e pagamento de comissão. TI com análise prevista para essa semana.",
+      "📋 <strong>Setup OpenAI + Custom Attribution Meta</strong> — Ambos em backlog de TI. OpenAI pendente de Pixel/CAPI/feed (previsto out). Custom Attribution previsto para 2ª quinzena de outubro (pós-planejamento BF)."
     ]},
-    {name:"PERFORMANCE",impedimentos:[
-      "<strong>Perda de UTMs/Parâmetros (Rakuten e GA4)</strong> — Chamados abertos em 26/08 (Afiliados) e 04/09 (Todos os canais). Impacto: queda de 20 p.p. no share de mídia, excesso de 'not set', prejuízo na validação de afiliados e nos sinais para veículos de mídia. Sem previsão de resolução — gargalo ainda não identificado.",
-      "<strong>Queda de Afiliados no APP</strong> — Chamado aberto 22/09. Redução de 41% no tráfego e receita mobile (ago). Diagnóstico técnico GA4 previsto para 01/10.",
-      "<strong>Atribuição Meta iOS 14+ e TikTok</strong> — Chamado aberto 07/08. Limitação em campanhas App (iOS) e falhas no catálogo dinâmico TikTok. Publicação de código e atualização GTM previstas para 29–30/09.",
-      "<strong>Setup Mídia OpenAI</strong> — Adiamento de novo canal com potencial de +3% a +8% em receita incremental. Pendente: implementação de Pixel e CAPI (com deduplicação).",
-      "<strong>Custom Attribution Meta</strong> — Perda estimada de até 30% em performance por falta de otimização baseada na VTEX. Análise em backlog — revisão prevista para 2ª quinzena de outubro (fila BF)."
+    {name:"SITE & APP",impedimentos:[
+      "KV de Alto Verão não veio como esperado — lista de remarcação principalmente.",
+      "PIM com instabilidades pontuais — algumas movimentações não estão refletindo corretamente."
     ]},
     {name:"CRIAÇÃO",impedimentos:[
-      "<strong>Content AV27:</strong> aguardando orçamento final da MK para aprovação com Thais e start na produção (MK disse que enviaria hoje).",
-      "<strong>Camiseta Brasil:</strong> aguardando assets masterbrand para desdobramento das peças da 3ª fase (início da campanha: 05/10)."
+      "Ação 'Tudo com 60': aguardando lista de produtos (iscas) do time Comercial para inserção nos criativos."
     ]}
   ],
   insights:[
-    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Geral, Mkt Performance, Comercial e Dados.<br><small style='color:rgba(255,255,255,.4);font-size:13px;'>Vamos migrar o OKR para o Maré Digital 🐟</small>"}
+    {tipo:"event",tag:"CHECK-IN OKR",texto:"OKR da semana: Tech, CRM e CX."},
+    {tipo:"alert",tag:"TERÇA · 07/10",texto:"Reunião V2 de Black Friday."}
   ],
   calDigital:[
-    {day:"29",mon:"SET",name:"Alinhamento Fritos *",type:"* data a confirmar"}
+    {day:"07",mon:"OUT",name:"Reunião V2 Black Friday",type:"Evento"},
+    {day:"14",mon:"OUT",name:"Big Review *",type:"* data a confirmar"},
+    {day:"21",mon:"OUT",name:"Se Liga no Cardume",type:"Evento"},
+    {day:"--",mon:"---",name:"Conexão Digital",type:"a marcar"},
+    {day:"--",mon:"---",name:"Alinhamento Fritos",type:"a marcar"}
   ],
   calCIA:[
-    {name:"Verão",            start:"2025-07-16",end:"2025-10-01"},
-    {name:"Verão I",          start:"2025-08-10",end:"2025-09-02"},
-    {name:"Camiseta Brasil",  start:"2025-09-03",end:"2025-10-01"},
-    {name:"Ciclo 3: Preview Alto Verão", start:"2025-10-01",end:"2025-10-31"}
+    {name:"Alto Verão",       start:"2025-10-04",end:"2027-01-01"},
+    {name:"Ciclo 3: Preview Alto Verão", start:"2025-10-01",end:"2025-10-31"},
+    {name:"Black Friday",     start:"2025-10-30",end:"2025-12-01"},
+    {name:"Natal",            start:"2025-12-02",end:"2027-01-01"}
   ]
 };
 
@@ -377,8 +382,8 @@ function updateClock(){
 updateClock();setInterval(updateClock,1000);
 
 /* ====== GANTT HELPERS ====== */
-const WIN_START=new Date('2025-06-01');
-const WIN_END  =new Date('2025-11-01');
+const WIN_START=new Date('2025-10-01');
+const WIN_END  =new Date('2026-01-02');
 const WIN_DAYS =(WIN_END-WIN_START)/(864e5);
 
 const GANTT_COLORS=[
@@ -390,11 +395,9 @@ function pct(d){return Math.max(0,Math.min(100,(new Date(d)-WIN_START)/864e5/WIN
 
 function buildGanttHeader(){
   const months=[
-    {label:'JUN',left:pct('2025-06-01'),right:pct('2025-07-01')},
-    {label:'JUL',left:pct('2025-07-01'),right:pct('2025-08-01')},
-    {label:'AGO',left:pct('2025-08-01'),right:pct('2025-09-01')},
-    {label:'SET',left:pct('2025-09-01'),right:pct('2025-10-01')},
-    {label:'OUT',left:pct('2025-10-01'),right:100},
+    {label:'OUT',left:pct('2025-10-01'),right:pct('2025-11-01')},
+    {label:'NOV',left:pct('2025-11-01'),right:pct('2025-12-01')},
+    {label:'DEZ',left:pct('2025-12-01'),right:100},
   ];
   const h=document.getElementById('gantt-header');
   if(!h)return;
@@ -424,7 +427,7 @@ function render(){
   // SQUADS
   const sc=document.getElementById('squads-container');
   const sc2=document.getElementById('squads-container-2');
-  const half=Math.ceil(DATA.squads.length/2);
+  const half=1;
   const renderSquad=s=>`
     <div class="squad-card">
       <div class="squad-name">${s.name}</div>
