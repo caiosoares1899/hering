@@ -1132,6 +1132,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
+/* "Complete seu cadastro": classe PRÓPRIA (não .ov) de propósito — fica acima do login-ov (z 200, ainda visível durante o
+   cadastro) e o Esc/fechar-tudo global ('.ov.open') não pode fechá-la sem resolver a pergunta que o login está aguardando. */
+.cad-ov{position:fixed;inset:0;z-index:205;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.cad-ov.open{display:flex;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
 /* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
    no mobile, ver @media(max-width:768px) .card-sheet-handle. */
@@ -3615,7 +3619,10 @@ input[type="date"]{-moz-appearance:textfield;}
       <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
       Entrar com Microsoft
     </button>
-    <div style="margin-top:10px;font-size:11px;color:var(--txt3);">Primeira vez? <button onclick="doSignIn(true)" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Inscrever-se no quadro</button></div>
+    <!-- "Primeira vez? Inscrever-se no quadro" removido (2026-10-05): o atalho sempre abria o login do GOOGLE, então quem
+         entrava direto por Microsoft/conta pessoal nunca via a tela de inscrição. Agora o próprio login detecta usuário
+         novo e abre a inscrição (ver autoRegistrar()), com qualquer provedor. -->
+    <div style="margin-top:8px;font-size:11px;color:var(--txt3);">Externo autorizado com hotmail/outlook? <button onclick="doSignInMicrosoftPessoal()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Entrar com conta pessoal Microsoft</button></div>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
 
@@ -3635,11 +3642,32 @@ input[type="date"]{-moz-appearance:textfield;}
       <label class="fl">Suas iniciais no board</label>
       <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;" oninput="this.value=this.value.toUpperCase();document.getElementById('insc-init-err').style.display='none'">
     </div>
-    <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong>Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
+    <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong id="insc-role">Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
       <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
       <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMPLETE SEU CADASTRO (2026-10-05): pergunta em qual squad a pessoa entra quando o cadastro não diz — antes o app
+     assumia 'dados' em silêncio (sem ?squad= na URL) ou deixava o board vazio. Ver _pedirSquadCadastro(). -->
+<div class="cad-ov" id="cadastro-ov">
+<div class="panel" style="max-width:400px;">
+  <div class="panel-hd"><div class="panel-title">👋 Complete seu cadastro</div></div>
+  <div style="padding:18px 16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img id="cad-foto" width="44" height="44" style="border-radius:50%;display:none;" alt="">
+      <div><div id="cad-nome" style="font-size:14px;font-weight:500;"></div><div id="cad-email" style="font-size:11px;color:var(--txt2);"></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;" id="cad-msg">Não deu pra saber em qual squad você trabalha. Em qual você quer entrar?</div>
+    <div id="cad-squads" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;"></div>
+    <div id="cad-err" style="display:none;font-size:11px;color:var(--danger);"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn" id="cad-skip" style="display:none;">Agora não</button>
+      <button class="btn btn-p" id="cad-ok">Confirmar</button>
     </div>
   </div>
 </div>
@@ -6435,7 +6463,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.777</div>
+<div class="version">v8.30.786</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6519,6 +6547,15 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 // pro Firebase Console/Azure em geral).
 const msProvider = new OAuthProvider('microsoft.com');
 msProvider.setCustomParameters({ tenant: 'organizations', prompt: 'select_account' });
+// Conta Microsoft PESSOAL (hotmail/outlook/live) de EXTERNO autorizado (kanban/squads/{sq}/externos).
+// Provider separado de propósito: o botão corporativo fica com tenant 'organizations' (Arezzo).
+// NÃO usar 'common' num botão único — contas corporativas de QUALQUER tenant entrariam por ele, e o
+// e-mail de uma conta corporativa não é verificado pela Microsoft (dá pra criar um tenant próprio com
+// o e-mail de um externo autorizado). Com 'consumers' só entra conta pessoal, e esse e-mail a Microsoft
+// verifica. Pré-requisito FORA do código: no Azure (registro do app), "Tipos de conta com suporte"
+// = "Contas em qualquer diretório organizacional E contas Microsoft pessoais".
+const msPersonalProvider = new OAuthProvider('microsoft.com');
+msPersonalProvider.setCustomParameters({ tenant: 'consumers', prompt: 'select_account' });
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
@@ -6549,7 +6586,7 @@ window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
 // todo ponto de escrita já grava), lexicograficamente ordenável =
 // cronologicamente ordenável, sem essa armadilha.
 window._limitToLast=limitToLast;
-window._auth=auth; window._provider=provider; window._msProvider=msProvider;
+window._auth=auth; window._provider=provider; window._msProvider=msProvider; window._msPersonalProvider=msPersonalProvider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
 // Isolado num try/catch porque getMessaging() lança em contextos sem
@@ -6583,6 +6620,11 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
 window._signInMicrosoft=(insc)=>signInWithPopup(auth,msProvider).then(()=>{
   if(insc) window._pendingInsc=true;
   safeLS.removeItem('login_popup_fail_streak_ms');
+});
+// Conta Microsoft pessoal (externo autorizado) — mesmo fluxo, provider 'consumers'.
+window._signInMicrosoftPessoal=(insc)=>signInWithPopup(auth,msPersonalProvider).then(()=>{
+  if(insc) window._pendingInsc=true;
+  safeLS.removeItem('login_popup_fail_streak_msp');
 });
 window._signOut=(reason)=>{
   if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
@@ -6739,6 +6781,10 @@ window._signInRedirect=(insc)=>{
 window._signInMicrosoftRedirect=(insc)=>{
   if(insc) safeLS.setItem('mare_pending_insc','1');
   return signInWithRedirect(auth,msProvider);
+};
+window._signInMicrosoftPessoalRedirect=(insc)=>{
+  if(insc) safeLS.setItem('mare_pending_insc','1');
+  return signInWithRedirect(auth,msPersonalProvider);
 };
 // Restaura _pendingInsc de um redirect que acabou de voltar — SÍNCRONO,
 // antes de registrar onAuthStateChanged (logo abaixo), pra nunca competir
@@ -7126,6 +7172,15 @@ function renderHdMoreDD(){
 const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
+// (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —
+// esc() troca ' por &#39;, que o navegador decodifica de volta pra ' ANTES do JS do
+// atributo rodar, então um id como  x');alert(1);//  escapa da string e executa
+// (XSS armazenado: qualquer pessoa com escrita no dado — membro de squad, freelancer
+// da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
+// gera um literal JS válido e esc() protege o atributo HTML.
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
 // Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
@@ -7234,7 +7289,7 @@ function renderDadosPainel(){
   if(dadosApresentacoesBoard.length){
     html += `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
       ${dadosApresentacoesBoard.map(a=>`<div>
-        <button class="btn btn-sm" id="dados-apres-btn-${a.id}" onclick="toggleDadosApres('${a.id}')" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ ${esc(a.title)}</button>
+        <button class="btn btn-sm" id="dados-apres-btn-${a.id}" onclick="toggleDadosApres(${jsq(a.id)})" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ ${esc(a.title)}</button>
         <div id="dados-apres-embed-${a.id}" style="display:none;margin-top:10px;"></div>
       </div>`).join('')}
     </div>`;
@@ -7327,7 +7382,7 @@ function renderCoverSwatches(){
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   const current = editingId ? (card?.coverColor||'') : (_pendingCoverColor||'');
   const html = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
-    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
+    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover(${jsq(c.id)})"></button>`).join('');
   targets.forEach(el=>el.innerHTML=html);
   const imgInp=document.getElementById('m-cover-img-inp');
   if(imgInp && document.activeElement!==imgInp){ // não pisa no que a pessoa tá digitando
@@ -7963,7 +8018,7 @@ function _bulkFinish(msg, keepSelection, extraIds){
 }
 function bulkMove(){
   if(!selectedCards.size) return;
-  const opts=columns.map(c=>`<button class="bulk-pop-item" onclick="_doBulkMove('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  const opts=columns.map(c=>`<button class="bulk-pop-item" onclick="_doBulkMove(${jsq(c.id)})"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
   _bulkPopover(`<div class="bulk-pop-title">Mover ${selectedCards.size} card(s) para:</div>${opts}`);
 }
 function _doBulkMove(colId){
@@ -7990,7 +8045,7 @@ function _doBulkMove(colId){
 }
 function bulkAssign(){
   if(!selectedCards.size) return;
-  const opts=members.filter(m=>m.init).map(m=>`<button class="bulk-pop-item" onclick="_doBulkAssign('${esc(m.init)}')">${esc(m.init)} · ${esc(m.name)}</button>`).join('');
+  const opts=members.filter(m=>m.init).map(m=>`<button class="bulk-pop-item" onclick="_doBulkAssign(${jsq(m.init)})">${esc(m.init)} · ${esc(m.name)}</button>`).join('');
   _bulkPopover(`<div class="bulk-pop-title">Atribuir ${selectedCards.size} card(s) a:</div><button class="bulk-pop-item" onclick="_doBulkAssign('')">— sem responsável —</button>${opts}`);
 }
 function _doBulkAssign(init){
@@ -8057,7 +8112,7 @@ function _renderBulkTagPicker(){
     wrap.innerHTML = tags.map(t=>{
       const sel = window._bulkSelectedTags.includes(t.id);
       const p = getPal(t);
-      return `<span onclick="_bulkToggleTag('${esc(t.id)}')" style="
+      return `<span onclick="_bulkToggleTag(${jsq(t.id)})" style="
         padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
         background:${sel?p.bg:'rgba(var(--surface2-rgb),.6)'};
         border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
@@ -8173,7 +8228,7 @@ function bulkBlocker(){
     _bulkPopover(title+(partes||'<div class="bulk-pop-sec">Nenhum card selecionado pode ter o impedimento alterado.</div>'));
     return;
   }
-  const destOpts=columns.filter(c=>c.id!=='blocker').map(c=>`<button class="bulk-pop-item" onclick="_doBulkUnblockCol('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  const destOpts=columns.filter(c=>c.id!=='blocker').map(c=>`<button class="bulk-pop-item" onclick="_doBulkUnblockCol(${jsq(c.id)})"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
   const partes=[
     naoBlocked.length?`<button class="bulk-pop-item" onclick="_doBulkBlockCol()">🚧 Marcar ${naoBlocked.length} card(s) como impedidos (mover pra Impedimentos)</button>`:'',
     blocked.length?`<div class="bulk-pop-sec">Remover impedimento de ${blocked.length} card(s) — mover pra:</div>${destOpts}`:'',
@@ -10302,6 +10357,24 @@ let _cardsSyncDebounce = null;
     window._onChildAdded(_uaRef, _onCardsUpdatedAtLive);
     window._onChildChanged(_uaRef, _onCardsUpdatedAtLive);
 
+    // 💬 Contagem de comentários por card (card_comments_count/{cardId} → n). Mantido pela Cloud Function
+    // contarComentarios (functions/comentarios/contagem.js), que cobre TODO escritor de comentário
+    // (humano, Agente Ágil, importação). Índice minúsculo: o board escuta SÓ ele, nunca card_comments
+    // inteiro. Mudou o número → atualiza o indicador do card no lugar (sem re-renderizar o board).
+    const _ccRef = fb(FB+'/card_comments_count');
+    const _onComCount = snap=>{
+      _dbgTrack('/card_comments_count:live', snap.val());
+      window._commentCounts[snap.key] = Number(snap.val())||0;
+      _refreshCommentInd(snap.key);
+    };
+    window._onChildAdded(_ccRef, _onComCount);
+    window._onChildChanged(_ccRef, _onComCount);
+    window._onChildRemoved(_ccRef, snap=>{
+      _dbgTrack('/card_comments_count:live(removed)', null);
+      delete window._commentCounts[snap.key];
+      _refreshCommentInd(snap.key);
+    });
+
     return true;
   }
   // Busca sob demanda os arquivados que este device ainda não tem em
@@ -11029,7 +11102,7 @@ function openStatusMenu(){
   m.innerHTML='<div style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);padding:6px 10px 4px;">Meu status</div>'+
     opts.map(([v,e,l])=>{
       const active=(window._myStatus||'')===v;
-      return `<div onclick="setMyStatus('${v}')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='${active?'rgba(56,182,255,.12)':'transparent'}'">
+      return `<div onclick="setMyStatus(${jsq(v)})" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background=${jsq(active?'rgba(56,182,255,.12)':'transparent')}">
         <span style="font-size:14px;">${e}</span> ${l} ${active?'<span style="margin-left:auto;color:var(--teal);">●</span>':''}
       </div>`;
     }).join('') +
@@ -11138,6 +11211,29 @@ function doSignInMicrosoft(insc=false){
     err.style.display='block';
   });
 }
+// Externo autorizado com conta Microsoft pessoal (hotmail/outlook) — contador de falha de popup próprio.
+function doSignInMicrosoftPessoal(insc=false){
+  const err=document.getElementById('login-err'); err.style.display='none';
+  if(!window._signInMicrosoftPessoal){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
+  if(insc) window._pendingInsc=true;
+  window._signInMicrosoftPessoal().catch(e=>{
+    window._pendingInsc=false;
+    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      const n=(parseInt(safeLS.getItem('login_popup_fail_streak_msp'))||0)+1;
+      safeLS.setItem('login_popup_fail_streak_msp', String(n));
+      if(n>=2 && window._signInMicrosoftPessoalRedirect){
+        safeLS.removeItem('login_popup_fail_streak_msp');
+        window._signInMicrosoftPessoalRedirect(insc).catch(e2=>{ err.textContent='Erro: '+(e2?.message||e2); err.style.display='block'; });
+        return;
+      }
+      err.textContent='Login cancelado. Clique em "conta pessoal Microsoft" para tentar novamente.';
+    } else {
+      safeLS.removeItem('login_popup_fail_streak_msp');
+      err.textContent='Erro: '+(e?.message||e);
+    }
+    err.style.display='block';
+  });
+}
 function doSignOut(){
   safeLS.removeItem('gcal_token'); // Limpa a credencial do calendário ao deslogar
   if(window._signOut) window._signOut('manual'); 
@@ -11181,7 +11277,9 @@ async function resolveSquadAndShow(user, userSquads) {
   }
 
   if (inscritosNosBoards.length === 0) {
-    // Não inscrito em nenhum squad — fluxo normal (convidado)
+    // Não inscrito em nenhum squad. Antes: abria como convidado sem perguntar (externo = board vazio). Agora
+    // oferece os squads elegíveis; se pular/falhar, segue como convidado como sempre foi.
+    if (await _completarSquadFaltando(user)) return;
     showApp(user);
     return;
   }
@@ -11314,17 +11412,27 @@ window.addEventListener('auth-change',e=>{
         autoRegistrar(user);
         return;
       }
-      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(async snap=>{
         const externos = snap.val()||{};
         // Lookup direto pela chave (email sanitizado) — ver _extKey(). Mantém
         // fallback pro formato antigo (Object.values escaneando por e.email)
         // só até a migração de dados rodar; depois disso vira redundante mas
         // inofensivo (short-circuit no primeiro true).
-        const allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
+        let allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
+        // Não autorizado NESTE squad: antes recusava direto. Se a URL nem pedia squad (cai no 'dados' hardcoded) ou
+        // se a pessoa está autorizada em OUTRO squad, ajuda em vez de só recusar.
+        let _msgNegado='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
+          let outros=[]; try{ outros=await _squadsDoExterno(user); }catch(e){}
+          if(outros.length){
+            if(!_urlParams.get('squad')) allowed=true; // o cadastro guiado pergunta/redireciona pro squad certo
+            else _msgNegado='Você não está autorizado(a) neste squad, mas está em: '+outros.map(id=>(SQUAD_META_LIVE[id]?.label||id)).join(', ')+'. Abra o link de um deles.';
+          }
+        }
+        if(!allowed){
+          document.getElementById('login-err').textContent=_msgNegado;
           document.getElementById('login-err').style.display='block';
-          _rejectLoginAfterReload('Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.');
+          _rejectLoginAfterReload(_msgNegado);
           window._signOut('external_not_authorized');
         } else {
           safeLS.setItem(_extCacheKey, String(Date.now()));
@@ -11467,6 +11575,77 @@ setInterval(()=>{
   if(document.hidden || !window._currentUser || !window._reloadAuthUser) return;
   window._reloadAuthUser().then(()=>_syncAuthProfileToFirebase(window._currentUser)).catch(()=>{});
 }, 60*60*1000);
+// ── Cadastro guiado (2026-10-05) ──────────────────────────────────────────────────────────────────────
+// Antes: sem ?squad= na URL o app assumia 'dados' (ACTIVE_SQUAD) e matriculava a pessoa lá sem perguntar; e quando
+// o cadastro estava incompleto/incoerente o resultado era um board vazio com permission_denied e nenhuma saída.
+// Agora: se falta a informação de QUAL squad, pergunta; se a gravação do cadastro falha, avisa com a causa.
+function _loadSquadMetaP(){ return new Promise(r=>loadSquadsFromFirebase(r)); }
+// Squads em que este e-mail está na lista de externos (a mesma chave que as regras do banco conferem).
+async function _squadsDoExterno(user){
+  await _loadSquadMetaP();
+  const k=_extKey(user.email);
+  const res=await Promise.all(Object.keys(SQUAD_META_LIVE).map(id=>
+    fbGet('kanban/squads/'+id+'/externos/'+k).then(sn=>sn.exists()?id:null).catch(()=>null)));
+  return res.filter(Boolean);
+}
+// Squads que esta pessoa PODE escolher: domínio confiável = todos os conhecidos; externo = só onde foi autorizado.
+async function _squadsElegiveis(user){
+  if(_isTrustedDomainEmail(user.email)){ await _loadSquadMetaP(); return Object.keys(SQUAD_META_LIVE); }
+  return _squadsDoExterno(user);
+}
+// Mostra a tela "Complete seu cadastro" e devolve (Promise) o id do squad escolhido, ou null se pulou.
+function _pedirSquadCadastro(user, ids, opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    const ov=document.getElementById('cadastro-ov'); if(!ov){ resolve(null); return; }
+    document.getElementById('cad-nome').textContent=user.displayName||user.email;
+    document.getElementById('cad-email').textContent=user.email;
+    const f=document.getElementById('cad-foto');
+    if(user.photoURL){ f.src=user.photoURL; f.style.display='block'; } else f.style.display='none';
+    if(opts.msg) document.getElementById('cad-msg').textContent=opts.msg;
+    const errEl=document.getElementById('cad-err'); errEl.style.display='none';
+    document.getElementById('cad-squads').innerHTML=ids.map(id=>{
+      const m=SQUAD_META_LIVE[id]||{};
+      return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--glass-b);border-radius:var(--r);cursor:pointer;font-size:13px;">`
+        +`<input type="radio" name="cad-squad" value="${esc(id)}"> <span>${esc(m.emoji||'🐟')}</span> <span>${esc(m.label||id)}</span></label>`;
+    }).join('');
+    const skip=document.getElementById('cad-skip'); skip.style.display=opts.permitirPular?'':'none';
+    const fim=(v)=>{ ov.classList.remove('open'); resolve(v); };
+    document.getElementById('cad-ok').onclick=()=>{
+      const sel=ov.querySelector('input[name="cad-squad"]:checked');
+      if(!sel || !ids.includes(sel.value)){ errEl.textContent='Escolha um squad pra continuar.'; errEl.style.display='block'; return; }
+      fim(sel.value);
+    };
+    skip.onclick=()=>fim(null);
+    ov.classList.add('open');
+  });
+}
+// Cadastro que NÃO diz em qual squad a pessoa está (nenhum squad em usuarios/{uid}/squads): em vez de assumir
+// "convidado sem squad" (board vazio pra externo), oferece os squads elegíveis. true = vai navegar/recarregar.
+async function _completarSquadFaltando(user){
+  try{
+    const skipKey='cad_skip_'+user.uid, skipTs=parseInt(safeLS.getItem(skipKey)||'0',10);
+    if(skipTs && Date.now()-skipTs<7*86400000) return false; // "Agora não" vale por 7 dias
+    const ops=await _squadsElegiveis(user);
+    if(!ops.length) return false;
+    const trusted=_isTrustedDomainEmail(user.email);
+    let alvo=null;
+    if(ops.length===1 && !trusted) alvo=ops[0]; // externo autorizado em 1 só squad: não há o que escolher
+    else alvo=await _pedirSquadCadastro(user,ops,{permitirPular:trusted,
+      msg:'Seu cadastro ainda não está em nenhum squad. Em qual você trabalha?'});
+    if(!alvo){ safeLS.setItem(skipKey,String(Date.now())); return false; }
+    const upd={}; upd['squads/'+alvo]=true;
+    await Promise.all([fbUpdate('kanban/usuarios/'+user.uid,upd), fbUpdate('kanban/usuarios_publicos/'+user.uid,upd)]);
+    const _f=location.pathname.split('/').pop()||'kanban.html';
+    if(alvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(alvo)); else location.reload();
+    return true;
+  }catch(e){
+    console.warn('[cadastro] não foi possível completar o squad:', e);
+    showToast('⚠ Não consegui concluir seu cadastro ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.');
+    return false;
+  }
+}
+
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -11484,7 +11663,18 @@ function autoRegistrar(user){
   fbGet('kanban/usuarios/'+user.uid).then(async (snap)=>{
     const existe=snap.val();
     let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    if(!existe){
+    // Registro PARCIAL (achado real, 2026-10-05, 1º login de externo com conta Microsoft pessoal): outros
+    // pontos do app gravam filhos de kanban/usuarios/{uid} (board_prefs, temasDescobertos, nome/email via
+    // _syncAuthProfileToFirebase) ANTES deste cadastro rodar, então o nó já "existe" — mas sem init, role,
+    // squads nem inscrito. Caía no ramo "usuário antigo" abaixo, que nunca grava squads/{squad}=true, e
+    // pra externo as regras só liberam a leitura do squad com esse valor: board vazio + permission_denied,
+    // sem saída. Trata como cadastro novo, mas com UPDATE (preserva board_prefs etc.), não set.
+    const _parcial = !!existe && !existe.init && !existe.squads && !existe.role && !existe.inscrito;
+    if(!existe || _parcial){
+      // auth-change pode refirar sozinho (instabilidade do SDK): com o cadastro agora demorando (pergunta de squad +
+      // gravação aguardada), a 2ª execução abria uma 2ª tela e uma 2ª reivindicação de iniciais em paralelo.
+      if(window._regEmAndamento) return;
+      window._regEmAndamento=true;
       // Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário —
       // um card da Marina Saran Bernardo aparecia no Histórico do painel
       // como se fosse do Marciel Santos Alexandrino): as iniciais dos dois
@@ -11500,20 +11690,58 @@ function autoRegistrar(user){
       init = await _claimUserInit(user.uid, init);
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(_isTrustedDomainEmail(user.email)?'membro':'convidado'); // externos = convidado
-      const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
-      const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
-      fbSet('kanban/usuarios/'+user.uid,{
+      // Sem ?squad= na URL, ACTIVE_SQUAD é só o 'dados' hardcoded — matricular lá era um chute. Pergunta.
+      let _sqAlvo=ACTIVE_SQUAD;
+      if(!_urlParams.get('squad')){
+        try{
+          const ops=await _squadsElegiveis(user);
+          if(ops.length===1) _sqAlvo=ops[0];
+          else if(ops.length>1){ _sqAlvo=(await _pedirSquadCadastro(user,ops,{permitirPular:false}))||ACTIVE_SQUAD; }
+        }catch(e){ console.warn('[cadastro] não deu pra listar squads elegíveis, mantendo',ACTIVE_SQUAD,e); }
+      }
+      // O papel GRAVADO no 1º cadastro nunca é 'adm': as regras (usuarios/$uid/role .validate) só deixam quem já é po/adm
+      // — ou o Caio — atribuir 'adm'; num 1º login 'adm' é NEGADO e derrubava o cadastro inteiro (antes em silêncio,
+      // desde que a gravação passou a ser aguardada, travando o ADM novo na tela de login). ADM por e-mail
+      // continua ADM pelo isAdmUser() (getEffectiveRole() olha isso primeiro), então grava 'membro'.
+      const _roleGravar=(newRole==='adm')?'membro':newRole;
+      const newSquads={}; newSquads[_sqAlvo]=true;
+      const newSquadsRoles={}; newSquadsRoles[_sqAlvo]=_roleGravar;
+      const _regNovo={
         uid:user.uid, nome:user.displayName||'', email:user.email,
-        init, foto:user.photoURL||'', role:newRole,
+        init, foto:user.photoURL||'', role:_roleGravar,
         inscrito:true, inscritoEm:new Date().toISOString(),
         squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
-      });
+      };
+      // AGUARDA a gravação (antes era fire-and-forget): sem isso, se as regras recusassem o cadastro o board abria
+      // vazio sem explicação. Falhou → avisa a causa e não segue como se estivesse tudo certo.
+      let _regOk=true;
+      try{
+        await (_parcial ? fbUpdate('kanban/usuarios/'+user.uid,_regNovo) : fbSet('kanban/usuarios/'+user.uid,_regNovo));
+      }catch(e){
+        // NÃO dá return: travar aqui deixaria quem lê por domínio (que funcionaria sem o cadastro) preso no login.
+        // Avisa a causa e segue o fluxo antigo, sem recarregar nem trocar de squad (a matrícula não gravou).
+        _regOk=false; window._regEmAndamento=false;
+        console.error('[cadastro] gravação do cadastro recusada:', e);
+        showToast('⚠ Não consegui concluir seu cadastro ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.');
+      }
+      // Externo: as regras só liberam a leitura do squad DEPOIS desse cadastro gravado, mas os listeners dos
+      // cards já tinham sido disparados antes (→ permission_denied, board vazio até o 1º F5). Recarrega UMA vez.
+      // Também recarrega/redireciona se o squad escolhido não é o da URL. Domínio confiável lê por domínio, não precisa.
+      if(_regOk && (_sqAlvo!==ACTIVE_SQUAD || !_isTrustedDomainEmail(user.email))){
+        try{ await fbSet('kanban/usuarios_publicos/'+user.uid,{
+          nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
+          role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
+        try{ safeLS.setItem('cad_welcome', newRole); safeLS.setItem('cad_insc','1'); }catch(e){}
+        const _f=location.pathname.split('/').pop()||'kanban.html';
+        if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)); else location.reload();
+        return;
+      }
       // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
       // qualquer board pode escutar em tempo real (onValue) sem baixar
       // notificações/tokens de push de todo mundo (ver kanban/usuarios).
       fbSet('kanban/usuarios_publicos/'+user.uid,{
         nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
-        role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
+        role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
@@ -11522,8 +11750,32 @@ function autoRegistrar(user){
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
-      if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
+      // Usuário NOVO sempre vê a inscrição (iniciais), com qualquer provedor — antes só quem clicava em "Primeira vez?".
+      window._pendingInsc=false; mostrarInscricao(user,{init,role:newRole});
     } else {
+      // Boas-vindas adiadas pelo reload do 1º cadastro (ver ramo acima)
+      try{ const _w=safeLS.getItem('cad_welcome'); if(_w){ safeLS.removeItem('cad_welcome');
+        setTimeout(()=>showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+_w+'.'),1500); } }catch(e){}
+      // Inscrição (iniciais) do usuário novo, adiada pelo reload do 1º cadastro
+      try{ if(safeLS.getItem('cad_insc')){ safeLS.removeItem('cad_insc'); setTimeout(()=>mostrarInscricao(user,existe),1200); } }catch(e){}
+      // Externo autorizado NESTE squad (o gate de auth-change já conferiu a lista) mas sem a matrícula nele em
+      // usuarios/{uid}/squads: as regras negam a leitura do squad → board vazio. Matricula e recarrega 1x.
+      if(_urlParams.get('squad') && !isAdmUser(user) && !_isTrustedDomainEmail(user.email)
+         && !(existe.squads && existe.squads[ACTIVE_SQUAD]===true) && !safeLS.getItem('cad_enroll_try')){
+        try{ safeLS.setItem('cad_enroll_try','1'); }catch(e){}
+        const _u={}; _u['squads/'+ACTIVE_SQUAD]=true;
+        // O cache 'ext_ok_' do gate (15 min) vale pro e-mail, não pro squad: quem foi validado num squad e abre outro dentro
+        // da janela chegava aqui sem ter sido conferido NESTE — confere a lista antes de tentar matricular.
+        fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+_extKey(user.email))
+          .then(sn=>{ if(!sn.exists()) throw {code:'NAO_AUTORIZADO_NESTE_SQUAD'};
+            return Promise.all([fbUpdate('kanban/usuarios/'+user.uid,_u), fbUpdate('kanban/usuarios_publicos/'+user.uid,_u)]); })
+          .then(()=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(e){} location.reload(); })
+          .catch(e=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(_){} console.error('[cadastro] matrícula no squad recusada:', e);
+            showToast(e?.code==='NAO_AUTORIZADO_NESTE_SQUAD'
+              ? '⚠ Você não está na lista de externos deste squad. Peça ao PO para te adicionar.'
+              : '⚠ Você está autorizado(a) neste squad, mas não consegui concluir sua matrícula ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.'); });
+        return;
+      }
       // BUGFIX "Meus cards" destacando card de outra pessoa: window._currentUserInit
       // era calculado só pela fórmula ingênua (1ª letra de cada palavra do nome) lá em
       // cima no auth-change, e NUNCA corrigido pro `init` de verdade registrado no
@@ -11597,6 +11849,8 @@ function mostrarInscricao(user,dados){
   document.getElementById('insc-nome').textContent=user.displayName||user.email;
   document.getElementById('insc-email').textContent=user.email;
   document.getElementById('insc-init').value=init;
+  const _rl=window._currentUserRole||dados?.role||'membro';
+  document.getElementById('insc-role').textContent=({membro:'Membro',convidado:'Convidado',po:'PO',organizador:'Organizador',adm:'ADM'})[_rl]||_rl;
   const f=document.getElementById('insc-foto'); if(user.photoURL){f.src=user.photoURL;f.style.display='block';}
   document.getElementById('insc-ov').classList.add('open');
 }
@@ -11652,12 +11906,18 @@ async function confirmarInscricao(){
     console.warn('[confirmarInscricao] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
   }
 
-  const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
+  // Papel: mantém o que o cadastro já definiu (convidado p/ externo, membro p/ domínio confiável, adm...). Antes gravava
+  // 'membro' SEMPRE — com a inscrição agora aberta pra todo usuário novo, isso promoveria externo a membro sozinho.
+  const _papelIns=window._currentUserRole||'membro';
+  const sqUpd={init,inscrito:true,inscritoEm:new Date().toISOString()};
+  // NÃO regrava `role` quando já há um papel efetivo: ele pode vir de squads_roles ou do isAdmUser() (≠ do role global), e
+  // as regras negam a mudança de role global por quem não é po/adm — o update INTEIRO (iniciais incluídas) era recusado.
+  if(!window._currentUserRole) sqUpd.role='membro';
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
-    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
+    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});
   window._currentUserInit=init;
   fbSaveAll(undefined, []); // só inscreve membro, nenhum card muda
   closeOv('insc-ov');
@@ -11799,6 +12059,24 @@ function getDue(due, isDone, paused){
 }
 function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.round(d/cl.length*100)}; }
 
+// 💬 Indicador de comentários na linha de ícones do card (≡ descrição, 📎 anexo). A contagem vem de
+// card_comments_count (ver o listener perto de _uaRef); sem número ainda (índice não chegou / card sem
+// comentário) não desenha nada. Mostra o número só quando há mais de 1, igual ao ≡ de descrições.
+window._commentCounts = window._commentCounts || {};
+function _commentIndHtml(n){
+  n = Number(n)||0; if(!n) return '';
+  return `<span class="ci ci-com" title="${n} comentário${n>1?'s':''}">💬${n>1?'<sup style="font-size:7px;">'+n+'</sup>':''}</span>`;
+}
+// Atualiza o indicador de TODAS as faces desse card (o mesmo card pode aparecer em mais de uma raia).
+function _refreshCommentInd(cardId){
+  try{
+    const sel = '.card[data-id="'+String(cardId).replace(/\\/g,'\\\\').replace(/"/g,'\\"')+'"] .card-indicators';
+    document.querySelectorAll(sel).forEach(box=>{
+      box.querySelectorAll('.ci-com').forEach(e=>e.remove());
+      box.insertAdjacentHTML('beforeend', _commentIndHtml(window._commentCounts[cardId]));
+    });
+  }catch(e){}
+}
 function makeCardEl(card){
   const isDone=_isColDone(card.col);
   const{cls:dc,lbl:dl}=getDue(card.due,isDone,card.paused);
@@ -11937,9 +12215,16 @@ function makeCardEl(card){
   const _asInfo=_execInfo?_agentStatusMap[card.agentStatus]:null;
   let execChip='';
   if(_execInfo){
-    const _statusPart=_asInfo?` · ${_asInfo.ico} ${_asInfo.lbl}`:'';
+    // COMPACTO (2026-10-05, pedido direto: "será que esse 🤝 Híbrido não cabe na
+    // linha de cima? deixando o layout mais limpo?"): só o emoji do executor (+ o
+    // emoji do status, quando há) — medido num card real de 258px (234 úteis) com
+    // tag + 👕 + OKR + prioridade + risco + 🎯 + 🚧, a 1ª linha deixava 47px livres
+    // e o chip com texto precisava de 61px, então caía sozinho pra uma linha
+    // inteira só dele. O nome por extenso continua no tooltip (title) e no campo
+    // "Executor" do modal; 🤖/🤝 já se distinguem sem o texto.
+    const _statusPart=_asInfo?` ${_asInfo.ico}`:'';
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
-    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
+    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}" aria-label="${_chipTitle}">${_execInfo.ico}${_statusPart}</span>`;
   }
   // "🤖 pensando..." (ver _startAgenteAgilThinking) — diferente do execChip
   // acima (card ATRIBUÍDO a um Agente de IA cadastrado, campo persistido),
@@ -11971,7 +12256,7 @@ function makeCardEl(card){
   // independente do modo de visualização" — some durante seleção em massa
   // (o card inteiro já muda de semântica de clique nesse modo, ver
   // div.onclick acima).
-  const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
+  const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard(${jsq(card.id)})">📌</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   // Ícone próprio (🎨), não mais 📌 — pedido direto do usuário: colidia
@@ -11979,6 +12264,8 @@ function makeCardEl(card){
   // coluna (feature nova, ver togglePinCard()). Mesmo emoji que o botão
   // "Abrir peça no Milanote" já usava, agora consistente com o selo.
   const _milanoteInd=card.milanoteLink?`<span class="ci" title="Tem peça vinculada no Milanote" style="color:#ff8080;">🎨</span>`:'';
+  // Card antigo ainda com o campo legado `comments` (migrado pra card_comments só ao abrir) também conta.
+  const _comInd=_commentIndHtml(window._commentCounts[card.id] || (card.comments&&typeof card.comments==='object'?Object.keys(card.comments).length:0));
   const _anexosInd=(card.links&&card.links.length)?`<span class="ci" title="${card.links.length} anexo${card.links.length>1?'s':''}/link${card.links.length>1?'s':''}">📎</span>`:'';
   const _coverCol=card.coverColor?CARD_COVER_COLORS.find(cc=>cc.id===card.coverColor):null;
   // Capa de imagem (Fase 5.6) tem prioridade sobre a de cor (mutuamente
@@ -12002,7 +12289,7 @@ function makeCardEl(card){
     const doneN=_superChildren.filter(c=>_isColDone(c.col)).length;
     const rows=_superChildren.slice(0,6).map(c=>{
       const col=columns.find(x=>x.id===c.col);
-      return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard('${esc(c.id)}')">`
+      return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard(${jsq(c.id)})">`
         +`<span class="super-rollup-dot" style="background:${col?.color||'#888'};"></span>`
         +`<span class="super-rollup-title">${esc(c.title)}</span>`
         +`</div>`;
@@ -12011,7 +12298,7 @@ function makeCardEl(card){
     const moreHtml=moreN>0?`<div style="font-size:9.5px;color:var(--txt3);padding-top:2px;">+${moreN} mais...</div>`:'';
     superHtml=`<div class="super-rollup"><div class="super-rollup-hd">🧩 ${doneN}/${_superChildren.length} concluído(s)</div>${rows}${moreHtml}</div>`;
   }
-  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
+  div.innerHTML=`${coverStripHtml}${selBox}${pinBtn}${tagsHtml(card)}${prioBadge}${riscoBadge}${agingColBadge}${okrBadge}${direcionalBadge}${intakeBadge}${blockedBadge}${execChip}${agenteThinkingChip}<div class="card-title">${esc(card.title)}</div><div class="card-indicators">${_descInd}${_milanoteInd}${_anexosInd}${_comInd}</div><div class="card-footer"><div style="display:flex;align-items:center;gap:2px;">${avHtml}${partHtml}</div>${dueHtml}</div>${clHtml}${superHtml}`;
   return div;
 }
 
@@ -12478,8 +12765,8 @@ function renderTimelineView(activeCards){
   const secao=(key,titulo,icone,lista,corBorda,dateStr,eventos)=>{
     if(!lista.length && !(eventos&&eventos.length)) return '';
     const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
-    const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
-    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen('${key}', this.open)">
+    const dbl=dateStr?` ondblclick="openTimelineFeed(${jsq(dateStr)},${jsq(dateStr)},${jsq(titulo)})" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
+    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen(${jsq(key)}, this.open)">
     <summary class="meudia-sec-hd" style="${hdStyle}"${dbl}><span class="timeline-chevron">▸</span> ${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></summary>
     ${comMarcos(lista,eventos)}
   </details>`;
@@ -12591,16 +12878,16 @@ function _timelineCardRow(card, hojeStr){
   if(!_isColDone(card.col)){
     if(!card.due){
       acaoHtml=`<div style="margin-top:6px;" onclick="event.stopPropagation();">
-        <input type="date" onchange="_timelineSetPrazoInline('${esc(card.id)}', this.value)" title="Definir prazo" style="padding:3px 6px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+        <input type="date" onchange="_timelineSetPrazoInline(${jsq(card.id)}, this.value)" title="Definir prazo" style="padding:3px 6px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
       </div>`;
     } else if(card.due<hojeStr){
       acaoHtml=`<div style="margin-top:6px;display:flex;gap:6px;" onclick="event.stopPropagation();">
-        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',1)" title="Adiar o prazo em 1 dia">+1d</button>
-        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',7)" title="Adiar o prazo em 1 semana">+1 sem</button>
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard(${jsq(card.id)},1)" title="Adiar o prazo em 1 dia">+1d</button>
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard(${jsq(card.id)},7)" title="Adiar o prazo em 1 semana">+1 sem</button>
       </div>`;
     }
   }
-  return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard('${esc(card.id)}')">
+  return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard(${jsq(card.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
@@ -12765,7 +13052,7 @@ function _timelineFeedRow(m){
   const superN=(card.childCardIds||[]).filter(id=>cards.find(c=>c.id===id&&!c.archived)).length;
   const superBadge=superN?`<span style="font-size:10px;margin-left:4px;" title="Supercard — ${superN} card${superN>1?'s':''} filho${superN>1?'s':''}">🧩</span>`:'';
   const tagsRow=tagsHtml(card);
-  return `<div class="meudia-row" style="border-left:3px solid ${TIMELINE_FEED_COR[m.tipo]};padding-left:9px;" onclick="closeOv('timeline-feed-ov');openCard('${esc(card.id)}')">
+  return `<div class="meudia-row" style="border-left:3px solid ${TIMELINE_FEED_COR[m.tipo]};padding-left:9px;" onclick="closeOv('timeline-feed-ov');openCard(${jsq(card.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
@@ -12915,7 +13202,7 @@ function _renderTimelineFeed(){
   const chip=(tipo,icone,n,label)=>{
     if(!n) return '';
     const ativo=f.tipos[tipo];
-    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${TIMELINE_FEED_COR[tipo]};color:${TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="timelineFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${TIMELINE_FEED_COR[tipo]};color:${TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="timelineFeedToggleTipo(${jsq(tipo)})" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
   };
   const temFiltro = f.owner||f.subteam||f.tag||f.onlyMine||!f.tipos.criado||!f.tipos.movido||!f.tipos.concluido||!f.tipos.prioridade||!f.tipos.impedido||!f.tipos.desimpedido||!f.tipos.checklist;
   const filtrosHtml=`<div class="timeline-feed-filters" style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
@@ -13012,17 +13299,17 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
-        ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn('${col.id}')" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
+        ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn(${jsq(col.id)})" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
         <span class="col-cnt" id="cnt-${col.id}" style="${wipLim&&colCards.length>wipLim?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
           ${wipLim ? colCards.length+'/'+wipLim : colCards.length}
         </span>
-        ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio('${col.id}')" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
-        <button class="col-cfg-btn" onclick="openColCfg('${col.id}')" title="Configurar esta coluna: nome, cor, WIP, visualização e posição na prioridade" style="background:none;border:none;cursor:pointer;font-size:12px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">⚙</button>
-        ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
+        ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio(${jsq(col.id)})" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
+        <button class="col-cfg-btn" onclick="openColCfg(${jsq(col.id)})" title="Configurar esta coluna: nome, cor, WIP, visualização e posição na prioridade" style="background:none;border:none;cursor:pointer;font-size:12px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">⚙</button>
+        ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol(${jsq(col.id)})" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
     </div>
     <div class="col-body" id="body-${col.id}" data-col-id="${col.id}"></div>
-    <button class="add-btn" onclick="openNewCard('${col.id}')">+ Card</button>`;
+    <button class="add-btn" onclick="openNewCard(${jsq(col.id)})">+ Card</button>`;
     board.appendChild(div);
     const body=div.querySelector('.col-body');
     // ⚡ Performance: em colunas gigantes, renderiza só os primeiros N e mostra "ver mais"
@@ -13085,10 +13372,10 @@ function renderRaiaOwner(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${rColId}')">${rCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(rColId)})">${rCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${safeId}-${col.id}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}'${owner?`,'${owner}'`:''})" title="${owner?'Novo card, já atribuído a '+esc(nomeCompleto):'Novo card'}">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)}${owner?`,${jsq(owner)}`:''})" title="${owner?'Novo card, já atribuído a '+esc(nomeCompleto):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!rCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -13147,10 +13434,10 @@ function renderRaiaTag(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(tColId)})">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${tColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}',null${tagId?`,'${tagId}'`:''})" title="${t?'Novo card, já com a tag '+esc(t.label):'Novo card'}">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)},null${tagId?`,${jsq(tagId)}`:''})" title="${t?'Novo card, já com a tag '+esc(t.label):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -13205,10 +13492,10 @@ function renderRaiaSubteam(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(sColId)})">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${sColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}')" title="Novo card">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)})" title="Novo card">+ Card</button>`;
       // "+ Card" aqui não pré-preenche o subtime de propósito — ver
       // comentário em openNewCard(): subtime é derivado de owner/
       // participants, sem um único membro "certo" pra chutar.
@@ -13438,7 +13725,7 @@ function loadFilterPresets(){
 function renderFilterPresets(){
   const wrap = document.getElementById('filter-presets-list'); if(!wrap) return;
   wrap.innerHTML = _filterPresets.map(p=>
-    `<span class="auto-action-chip" style="cursor:pointer;" onclick="applyFilterPreset('${esc(p.id)}')" title="Aplicar o preset &quot;${esc(p.nome)}&quot;">${esc(p.nome)}<button onclick="event.stopPropagation();removeFilterPreset('${esc(p.id)}')" title="Remover este preset">✕</button></span>`
+    `<span class="auto-action-chip" style="cursor:pointer;" onclick="applyFilterPreset(${jsq(p.id)})" title="Aplicar o preset &quot;${esc(p.nome)}&quot;">${esc(p.nome)}<button onclick="event.stopPropagation();removeFilterPreset(${jsq(p.id)})" title="Remover este preset">✕</button></span>`
   ).join('');
 }
 async function saveFilterPresetPrompt(){
@@ -13657,7 +13944,7 @@ function _mostrarSugestaoRotina(id, mensagemHtml, respostaSim, labelSim, aoAceit
     <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
       <button class="btn btn-sm" style="font-size:10.5px;color:var(--txt3);" onclick="_sugestaoRotinaResponder('nunca')">Não sugerir mais</button>
       <button class="btn btn-sm" style="font-size:10.5px;" onclick="_sugestaoRotinaResponder('agora_nao')">Agora não</button>
-      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder('${respostaSim}')">${esc(labelSim)}</button>
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder(${jsq(respostaSim)})">${esc(labelSim)}</button>
     </div>`;
   card.style.display = 'flex';
   window._sugestaoRotinaAtual = {id, respostaSim, aoAceitar};
@@ -13790,9 +14077,9 @@ function renderMinhasPrefsBody(){
 
     <div class="cfg-sec-title">🔍 Fonte e densidade dos cards</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 0 12px;">
-      ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+      ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
       <span style="width:1px;align-self:stretch;background:var(--glass-b);margin:0 4px;"></span>
-      ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+      ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
     </div>
 
     <div class="cfg-sec-title">📌 Squad padrão</div>
@@ -13828,7 +14115,7 @@ function renderMinhasPrefsBody(){
       const m=members.find(x=>x.init===init);
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
         <div style="font-size:12px;color:var(--txt);">👤 Atalho de atribuição rápida — ${esc(m?_shortName(m.name):init)}</div>
-        <button class="btn btn-sm" style="color:var(--danger);" onclick="_removerAtalhoAtribuicaoRapida('${esc(init)}')">Remover</button>
+        <button class="btn btn-sm" style="color:var(--danger);" onclick="_removerAtalhoAtribuicaoRapida(${jsq(init)})">Remover</button>
       </div>`;
     }).join('') : ''}
     <div style="padding:8px 0 0;">
@@ -13840,7 +14127,7 @@ function renderMinhasPrefsBody(){
       ${_sugestoesRecusadas.length ? _sugestoesRecusadas.map(id=>`
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
           <div style="font-size:12px;color:var(--txt2);">${esc(_sugestaoRecusaLabel(id))}</div>
-          <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa('${esc(id)}')">🔄 Esquecer recusa</button>
+          <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa(${jsq(id)})">🔄 Esquecer recusa</button>
         </div>`).join('')
         : '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhuma sugestão recusada — tudo pode aparecer normalmente.</div>'}
     </div>
@@ -14455,7 +14742,7 @@ let _archCfgExcludedColsPending = new Set();
 function _archCfgExcludedColsChips(){
   return columns.map(col=>{
     const ex = _archCfgExcludedColsPending.has(col.id);
-    return `<span onclick="_archCfgToggleExcludedCol('${esc(col.id)}')" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
+    return `<span onclick="_archCfgToggleExcludedCol(${jsq(col.id)})" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
       +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
       +`border:1px solid ${ex?'rgba(255,209,102,.4)':'rgba(255,255,255,.1)'};background:${ex?'rgba(255,209,102,.12)':'transparent'};color:${ex?'var(--warn)':'var(--txt3)'};">`
       +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${ex?1:.35};"></span>${esc(col.name)}</span>`;
@@ -15113,7 +15400,7 @@ function renderExtraDescs(){
             <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
               oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
             <span class="xdesc-color-picker" title="Cor de destaque do rótulo">
-              ${_XDESC_COLORS.map(c=>`<button type="button" class="xdesc-color-dot${d.color===c?' active':''}" style="background:${c}" onclick="_setDescColor(${i},'${c}')"></button>`).join('')}
+              ${_XDESC_COLORS.map(c=>`<button type="button" class="xdesc-color-dot${d.color===c?' active':''}" style="background:${c}" onclick="_setDescColor(${i},${jsq(c)})"></button>`).join('')}
               <button type="button" class="xdesc-color-dot xdesc-color-none${!d.color?' active':''}" onclick="_setDescColor(${i},'')" title="Sem cor">✕</button>
             </span>
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
@@ -15122,23 +15409,23 @@ function renderExtraDescs(){
             <div class="fmt-heading-dd">
               <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
               <div class="fmt-heading-menu">
-                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','0');_closeHeadingDD(this)">Texto normal</div>
-                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','1');_closeHeadingDD(this)">Título 1</div>
-                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','2');_closeHeadingDD(this)">Título 2</div>
-                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','3');_closeHeadingDD(this)">Título 3</div>
+                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','0');_closeHeadingDD(this)">Texto normal</div>
+                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','1');_closeHeadingDD(this)">Título 1</div>
+                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','2');_closeHeadingDD(this)">Título 2</div>
+                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','3');_closeHeadingDD(this)">Título 3</div>
               </div>
             </div>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'underline')" title="Sublinhado"><u>U</u></button>
             <span class="fmt-colors">
-              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ff6b6b')"></button>
-              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ffd166')"></button>
-              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#1de9b6')"></button>
-              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
+              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#ff6b6b')"></button>
+              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#ffd166')"></button>
+              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#1de9b6')"></button>
+              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#38b6ff')"></button>
             </span>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('${taId}')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'link')" title="Link">🔗</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted(${jsq(taId)})" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
           </div>
           <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
             oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})" onpaste="_eocPasteHandler(event)"
@@ -15306,7 +15593,7 @@ function renderTagAddDropdown(){
   const avail=_tagAddAvail();
   const q=inp.value.trim();
   list.innerHTML = avail.length
-    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag('${esc(t.id)}')">${esc(t.label)}</div>`).join('')
+    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag(${jsq(t.id)})">${esc(t.label)}</div>`).join('')
     : `<div class="m-tag-add-empty">${q?'Nenhuma tag encontrada.':'Todas as tags disponíveis já foram adicionadas.'}</div>`;
   const r=inp.getBoundingClientRect();
   list.style.top=(r.bottom+4)+'px';
@@ -15343,7 +15630,7 @@ function renderEditingTags(){
     if(t.isOKR||t.id==='okr'){ bg='rgba(255,215,0,.15)';bc='rgba(255,215,0,.5)';col='#ffd700'; }
     else if(t.isCalGestao||t.id==='cal_gestao'){ bg='rgba(150,80,220,.15)';bc='rgba(150,80,220,.4)';col='#d67fff'; }
     else { const p=getPal(t); bg=p.bg;bc=p.b;col=p.c; }
-    return `<span class="m-tag-chip" style="background:${bg};border-color:${bc};color:${col};"><span>${esc(t.label)}</span><span class="x" onclick="removeCardTag('${esc(id)}')">×</span></span>`;
+    return `<span class="m-tag-chip" style="background:${bg};border-color:${bc};color:${col};"><span>${esc(t.label)}</span><span class="x" onclick="removeCardTag(${jsq(id)})">×</span></span>`;
   }).join('');
 }
 function addCardTag(id){
@@ -17961,7 +18248,7 @@ function renderSubmarcaQuickFilters(){
     ${groups.map(g=>`<div class="sm-dd-group">
       <div class="sm-dd-group-label">${esc(g.marca)}</div>
       ${g.items.map(it=>`<label class="sm-dd-row sm-dd-row-sub">
-        <input type="checkbox" ${cur.includes(it.id)?'checked':''} onchange="toggleSubmarcaDropdownItem('${it.id}')"> ${esc(it.time||g.marca)}
+        <input type="checkbox" ${cur.includes(it.id)?'checked':''} onchange="toggleSubmarcaDropdownItem(${jsq(it.id)})"> ${esc(it.time||g.marca)}
       </label>`).join('')}
     </div>`).join('')}`;
 }
@@ -18043,7 +18330,7 @@ function renderSubmarcaCfgList(){
   const body=document.getElementById('submarca-visiveis-cfg-body'); if(!body) return;
   body.innerHTML = SUBMARCA_TAGS.map(st=>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
-    +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel('${st.id}',this.checked)"> ${esc(st.label)}`
+    +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel(${jsq(st.id)},this.checked)"> ${esc(st.label)}`
     +`</label>`
   ).join('');
 }
@@ -18163,7 +18450,7 @@ function renderCanalVendaQuickFilters(){
     </label>
     <div class="sm-dd-sep"></div>
     ${visiveis.map(cv=>`<label class="sm-dd-row sm-dd-row-sub">
-      <input type="checkbox" ${cur.includes(cv.id)?'checked':''} onchange="toggleCanalVendaDropdownItem('${cv.id}')"> ${esc(cv.label)}
+      <input type="checkbox" ${cur.includes(cv.id)?'checked':''} onchange="toggleCanalVendaDropdownItem(${jsq(cv.id)})"> ${esc(cv.label)}
     </label>`).join('')}`;
 }
 // Mesmo padrão de position:fixed do menu de Submarcas (toggleSubmarcaDropdown).
@@ -18228,7 +18515,7 @@ function renderCanalVendaCfgList(){
   const body=document.getElementById('canalvenda-visiveis-cfg-body'); if(!body) return;
   body.innerHTML = CANAL_VENDA_TAGS.map(cv=>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
-    +`<input type="checkbox" ${_canalVendaIsVisivel(cv.id)?'checked':''} onchange="toggleCanalVendaVisivel('${cv.id}',this.checked)"> ${esc(cv.label)}`
+    +`<input type="checkbox" ${_canalVendaIsVisivel(cv.id)?'checked':''} onchange="toggleCanalVendaVisivel(${jsq(cv.id)},this.checked)"> ${esc(cv.label)}`
     +`</label>`
   ).join('');
 }
@@ -19468,12 +19755,12 @@ function renderLembretes(){
       const canDelete = isOwner || window._currentUserRole==='adm';
       let btns='';
       if(l.tipo!=='proprio'){
-        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();dismissLembrete('${esc(l.id||'')}')" title="Resolver (some só pra você)">✓</button>`;
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();dismissLembrete(${jsq(l.id||'')})" title="Resolver (some só pra você)">✓</button>`;
       } else {
-        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();delLembrete('proprio','${esc(l.id||'')}')" title="Resolver (concluir lembrete)">✓</button>`;
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();delLembrete('proprio',${jsq(l.id||'')})" title="Resolver (concluir lembrete)">✓</button>`;
       }
       if(canDelete && l.tipo!=='proprio'){
-        btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Excluir para todos">🗑</button>`;
+        btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete(${jsq(l.tipo)},${jsq(l.id||'')})" title="Excluir para todos">🗑</button>`;
       }
       delBtn=btns;
     }
@@ -19494,7 +19781,7 @@ function renderLembretes(){
       const verCard = l.cardId ? ' · ver card →' : '';
       meta=`<div class="pi-meta"><span class="pi-author">✎ ${esc(autorNome)}${alvo}</span><span>${quando}${verCard}</span></div>`;
     }
-    const clickAttr = (l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
+    const clickAttr = (l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard(${jsq(l.cardId)})"` : ` style="--rot:${rot}deg;"`;
     return `<div class="postit ${t.cls}${urgent}"${clickAttr}>
       ${delBtn}
       <div class="pi-type">${t.emoji} ${t.label}</div>
@@ -19634,7 +19921,7 @@ function renderLemCfg(){
         <div style="font-size:12px;color:var(--txt);">${esc(l.text)}</div>
         <div style="font-size:9px;color:var(--txt3);margin-top:3px;">${esc(alvo)} · ${esc(l.autor||'')} · ${quando}</div>
       </div>
-      <button class="btn btn-sm" onclick="delLembrete('po','${esc(l.id)}');renderLemCfg();" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);flex-shrink:0;">✕</button>
+      <button class="btn btn-sm" onclick="delLembrete('po',${jsq(l.id)});renderLemCfg();" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);flex-shrink:0;">✕</button>
     </div>`;
   }).join('');
 }
@@ -19780,7 +20067,7 @@ function renderKudos(){
     const av=k.fromFoto? `<img src="${safeUrl(k.fromFoto)||''}">` : esc((k.fromInit||'?').substring(0,2));
     const quando=k.ts? new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const podeApagar = k.fromUid===window._currentUser?.uid || window._currentUserRole==='adm';
-    const del = podeApagar? `<button class="kc-del" onclick="event.stopPropagation();delKudos('${esc(k.id)}','${k.scope||'squad'}')" title="Remover">🗑</button>`:'';
+    const del = podeApagar? `<button class="kc-del" onclick="event.stopPropagation();delKudos(${jsq(k.id)},${jsq(k.scope||'squad')})" title="Remover">🗑</button>`:'';
     return `<div class="kudos-card">
       <div class="kc-head">
         <div class="kc-av">${av}</div>
@@ -19809,9 +20096,9 @@ function _renderKudosReactions(k){
   const myReact=r[myUid];
   const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
-    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')" title="${n}">${e} ${n}</span>`;
+    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudosReaction(${jsq(k.id)},${jsq(k.scope||'squad')},${jsq(e)})" title="${n}">${e} ${n}</span>`;
   }).join('');
-  const picker=KUDOS_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')">${e}</span>`).join('');
+  const picker=KUDOS_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudosReaction(${jsq(k.id)},${jsq(k.scope||'squad')},${jsq(e)})">${e}</span>`).join('');
   const addBtn=`<button class="kr-add" title="Reagir">😊<span class="kr-picker">${picker}</span></button>`;
   return `<div class="kr-row">${chips}${addBtn}</div>`;
 }
@@ -20146,11 +20433,11 @@ function renderNotasList(){
     const nBlocos = Object.keys(n.blocos||{}).length;
     const quando = n.atualizadoEm ? new Date(n.atualizadoEm).toLocaleDateString('pt-BR') : '';
     const snippet = q ? _notaSearchSnippet(n,q) : null;
-    return `<div class="notas-item" onclick="openNota('${esc(n.id)}')">
+    return `<div class="notas-item" onclick="openNota(${jsq(n.id)})">
       <div class="notas-item-title">📄 ${q?_notaHighlight(n.titulo||'Sem título',q):esc(n.titulo||'Sem título')}</div>
       <div class="notas-item-meta">${nBlocos} bloco${nBlocos===1?'':'s'} · ${esc(quando)}${n.criadoPor?' · '+esc(n.criadoPor):''}</div>
       ${snippet?`<div class="notas-item-snippet">${_notaHighlight(snippet,q)}</div>`:''}
-      <button class="notas-item-del" onclick="event.stopPropagation();deleteNota('${esc(n.id)}')" title="Excluir nota">✕</button>
+      <button class="notas-item-del" onclick="event.stopPropagation();deleteNota(${jsq(n.id)})" title="Excluir nota">✕</button>
     </div>`;
   }).join('');
 }
@@ -20478,11 +20765,11 @@ function renderNotaEditor(){
     const isEditing = (b.id===focusedId);
     tree.innerHTML = isEditing
       ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text nb-livre-ta" rows="8"
-          oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
-          onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+          oninput="onBlocoInput(${jsq(b.id)},this)" onfocus="_notasFocusedBlockId=${jsq(b.id)}"
+          onblur="onBlocoBlur(${jsq(b.id)})" onkeydown="onBlocoKeydown(event,${jsq(b.id)})">${esc(b.texto||'')}</textarea>`
       : (b.texto
-          ? `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
-          : `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva à vontade...</span></div>`);
+          ? `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco(${jsq(b.id)})">${renderMd(b.texto)}</div>`
+          : `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco(${jsq(b.id)})"><span class="nb-placeholder">Escreva à vontade...</span></div>`);
     const taLivre=tree.querySelector('textarea.nb-text');
     if(taLivre){ taLivre.style.height='auto'; taLivre.style.height=Math.max(taLivre.scrollHeight,160)+'px'; }
     if(focusedId){
@@ -20508,9 +20795,9 @@ function renderNotaEditor(){
     return kids.map(b=>{
       const hasKids = (byParent[b.id]||[]).length>0;
       const childrenHtml = (hasKids && !b.colapsado) ? `<div class="nb-children">${renderLevel(b.id, depth+1)}</div>` : '';
-      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso('${esc(b.id)}')" title="Recolher/expandir">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
+      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso(${jsq(b.id)})" title="Recolher/expandir">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
       const marker = b.checklist
-        ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone('${esc(b.id)}')">`
+        ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone(${jsq(b.id)})">`
         : `<span class="nb-bullet">•</span>`;
       // Bloco focado (sendo editado) mostra a sintaxe crua num textarea;
       // os demais mostram RENDERIZADO (renderMd — mesmo motor de Descrição/
@@ -20520,11 +20807,11 @@ function renderNotaEditor(){
       const isEditing = (b.id===focusedId);
       const body = isEditing
         ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text ${b.checklist&&b.done?'nb-done':''}" rows="1"
-            oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
-            onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+            oninput="onBlocoInput(${jsq(b.id)},this)" onfocus="_notasFocusedBlockId=${jsq(b.id)}"
+            onblur="onBlocoBlur(${jsq(b.id)})" onkeydown="onBlocoKeydown(event,${jsq(b.id)})">${esc(b.texto||'')}</textarea>`
         : (b.texto
-            ? `<div class="nb-text nb-view ${b.checklist&&b.done?'nb-done':''}" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
-            : `<div class="nb-text nb-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva algo...</span></div>`);
+            ? `<div class="nb-text nb-view ${b.checklist&&b.done?'nb-done':''}" onclick="focarBloco(${jsq(b.id)})">${renderMd(b.texto)}</div>`
+            : `<div class="nb-text nb-view" onclick="focarBloco(${jsq(b.id)})"><span class="nb-placeholder">Escreva algo...</span></div>`);
       return `<div class="nb-row" style="padding-left:${depth*20}px;" data-bid="${esc(b.id)}">
         ${collapseArrow}${marker}${body}
       </div>${childrenHtml}`;
@@ -20943,7 +21230,7 @@ function _renderSpotifyOuvindo(){
       // (ver _spotifyPlaybackAction() — evita uma chamada de API extra
       // só pra decidir se desabilita o botão).
       const playback = _spotifySelfConnected
-        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction('${(status&&status.playing)?'pause':'play'}')" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
+        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction(${jsq((status&&status.playing)?'pause':'play')})" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
         : '';
       const actions = _spotifySelfConnected
         ? `<div class="sp-actions"><div class="sp-actions-row"><button class="sp-connect-btn" onclick="connectSpotify()">🔁 Trocar</button><button class="sp-connect-btn sp-disconnect-btn" onclick="desconectarSpotify()">❌ Desconectar</button></div><a class="sp-manage-link" href="https://www.spotify.com/account/apps/" target="_blank" rel="noopener">Gerenciar no Spotify ↗</a></div>`
@@ -21392,7 +21679,7 @@ function _dpRender(){
   for(let d=1; d<=daysInMonth; d++){
     const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     let cls='dp-day'; if(ds===todayStr) cls+=' dp-today'; if(ds===selStr) cls+=' dp-sel';
-    cells += `<div class="${cls}" onclick="_dpPick('${ds}')">${d}</div>`;
+    cells += `<div class="${cls}" onclick="_dpPick(${jsq(ds)})">${d}</div>`;
   }
   const totalCells = startDow+daysInMonth;
   const trailing = (7-(totalCells%7))%7;
@@ -21438,7 +21725,7 @@ function _bdToggleCol(colId){
 function _bdColToggleChips(){
   return columns.map(col=>{
     const hid = _bdHiddenCols.has(col.id);
-    return `<span onclick="_bdToggleCol('${esc(col.id)}')" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
+    return `<span onclick="_bdToggleCol(${jsq(col.id)})" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
       +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
       +`border:1px solid ${hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)'};background:${hid?'transparent':'rgba(56,182,255,.08)'};color:${hid?'rgba(255,255,255,.2)':'var(--txt2)'};">`
       +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${hid?0.2:1};"></span>${esc(col.name)}</span>`;
@@ -22580,7 +22867,7 @@ function renderCampList(){
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
     const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':(c.grupoId?'<span class="camp-ms-badge" title="Agrupada manualmente no painel com campanhas de outras squads (cada squad mantém seu próprio nome)">🔗 Grupo multi-squad</span>':'');
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
-    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
+    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe(${jsq(c.id)})">
       <div class="camp-card-icon">${tema.emoji}</div>
       <div>
         <div class="camp-card-name">${esc(c.nome||'Sem nome')} ${msBadge}</div>
@@ -22697,7 +22984,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${esc(_sqLabel(sq))}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter(${jsq(sq)})">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todos</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -22718,21 +23005,21 @@ function renderCampDetalhe(c){
           <div class="camp-fixed-links" id="camp-kvs-list">
             ${_renderFixedLinks(c.kvs||[],'kvs',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','kvs')" style="margin-top:6px;">+ Adicionar KV</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'kvs')" style="margin-top:6px;">+ Adicionar KV</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">📋 ${c.tipo==='colecao'?'Lista de produtos':'Lista de criativos'}</div>
           <div class="camp-fixed-links" id="camp-lista-list">
             ${_renderFixedLinks(c.lista||[],'lista',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">🔗 Links importantes</div>
           <div class="camp-fixed-links" id="camp-links-list">
             ${_renderFixedLinks(c.links||[],'links',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','links')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'links')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">Cards vinculados</div>
@@ -23080,7 +23367,7 @@ function _meuDiaCardRow(card){
   const colName = cols.find(c=>c.id===card.col)?.name || card.col;
   const sqLabel = SQUAD_META_LIVE[card._squad]?.label || card._squad;
   const dueLbl = card.due ? new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
-  return `<div class="meudia-row" onclick="_meuDiaOpenCard('${esc(card._squad)}','${esc(card.id)}')">
+  return `<div class="meudia-row" onclick="_meuDiaOpenCard(${jsq(card._squad)},${jsq(card.id)})">
     <div class="meudia-row-main">
       <div class="meudia-row-title">${esc(card.title)}</div>
       <div class="meudia-row-meta">${esc(sqLabel)} · ${esc(colName)}${dueLbl?' · 📅 '+dueLbl:''}</div>
@@ -23137,7 +23424,7 @@ function renderMeuDia(){
   };
   const mencoesSecao = mencoes.length ? `<div class="meudia-sec">
     <div class="meudia-sec-hd" style="border-left-color:#a78bfa;">💬 Menções não lidas <span class="meudia-sec-n">${mencoes.length}</span></div>
-    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif('${esc(n.id)}','${esc(n.cardId||'')}','${esc(n.squad||ACTIVE_SQUAD)}','${esc(n.commentId||'')}')">
+    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')})">
       <div class="meudia-row-main">
         <div class="meudia-row-title">${esc(n.title)}</div>
         <div class="meudia-row-meta">${esc(n.sub||'')}</div>
@@ -23359,11 +23646,11 @@ function _intakeItemHtml(item, opts){
   const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
   const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
   const botoes = [
-    `<button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
-    `<button class="btn btn-sm" onclick="_intakeToggleLink('${esc(item.id)}')" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeCriarCard(${jsq(item.id)})" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeToggleLink(${jsq(item.id)})" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
   ];
-  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar('${esc(item.id)}')" style="color:var(--txt2);">🗂 Guardar</button>`);
-  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
+  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar(${jsq(item.id)})" style="color:var(--txt2);">🗂 Guardar</button>`);
+  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar(${jsq(item.id)})" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
   return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
@@ -23518,15 +23805,15 @@ function _intakeLinkUIHtml(id){
     const card=cards.find(c=>c.id===sel.cardId);
     const titulo=card?card.title:sel.cardTitle;
     return `<div class="link-search" style="margin-top:8px;">
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel('${esc(id)}')" style="color:var(--accent,#2596e8);">trocar</a></div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel(${jsq(id)})" style="color:var(--accent,#2596e8);">trocar</a></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','comment')">💬 Virar comentário</button>
-        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','checklist')">☑ Virar item de checklist</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink(${jsq(id)},'comment')">💬 Virar comentário</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink(${jsq(id)},'checklist')">☑ Virar item de checklist</button>
       </div>
     </div>`;
   }
   return `<div class="link-search" style="margin-top:8px;">
-    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink('${esc(id)}',this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink('${esc(id)}');}">
+    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink(${jsq(id)},this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink(${jsq(id)});}">
     <div class="link-dropdown" id="intake-link-dd-${esc(id)}"></div>
   </div>`;
 }
@@ -23652,12 +23939,12 @@ function _renderEntrada(e, campId){
     </div>`;
   }
   return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'} ${e._squad==='gestao'?'camp-entry-gestao-sq':''}" data-icon="${icon}" data-entry-id="${esc(e.id)}" ${isMulti?`style="border-left-color:${_sqColor(e._squad).text};"`:''}>
-    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
+    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada(${jsq(campId)},${jsq(e.id)})" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
     <div class="camp-entry-corpo">${typeof renderMd==='function'?renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
-    <div class="camp-entry-meta">${esc(e.autor||'?')} · <span class="camp-entry-date">${quando}</span>${podeApagar?` <span class="camp-entry-edit-date" onclick="editEntradaData('${esc(campId)}','${esc(e.id)}')" title="Editar data">✏️</span>`:''} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
+    <div class="camp-entry-meta">${esc(e.autor||'?')} · <span class="camp-entry-date">${quando}</span>${podeApagar?` <span class="camp-entry-edit-date" onclick="editEntradaData(${jsq(campId)},${jsq(e.id)})" title="Editar data">✏️</span>`:''} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
 }
 
@@ -23689,7 +23976,7 @@ async function _campInsertMention(kind){
     const mems = (typeof members!=='undefined'?members:[]).filter(m=>m.init);
     if(!mems.length){ uiAlert('Nenhum membro disponível para mencionar neste squad.'); return; }
     // monta lista pra escolher
-    const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user','${esc(getMemberHandle(m))}')" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
+    const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user',${jsq(getMemberHandle(m))})" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
     _showMentionPicker('Mencionar pessoa', opts);
   } else {
     const cs = (typeof cards!=='undefined'?cards:[]).filter(c=>!c.archived);
@@ -23774,7 +24061,7 @@ function editEntradaData(campId, entradaId){
   const cur = e.ts ? new Date(e.ts) : new Date();
   const pad = n=>String(n).padStart(2,'0');
   const dStr = cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate());
-  metaEl.innerHTML = `<input type="date" class="camp-entry-date-inp" value="${dStr}" onchange="saveEntradaData('${esc(campId)}','${esc(entradaId)}', this.value)" onclick="event.stopPropagation()">`;
+  metaEl.innerHTML = `<input type="date" class="camp-entry-date-inp" value="${dStr}" onchange="saveEntradaData(${jsq(campId)},${jsq(entradaId)}, this.value)" onclick="event.stopPropagation()">`;
   metaEl.querySelector('input')?.focus();
 }
 async function saveEntradaData(campId, entradaId, dateStr){
@@ -23832,7 +24119,7 @@ function _renderCampTagPicker(){
   wrap.innerHTML = tags.map(t=>{
     const sel = _campEditTags.includes(t.id);
     const p   = getPal ? getPal(t) : {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.3)',c:'#38b6ff'};
-    return `<span onclick="campToggleTag('${esc(t.id)}')" style="
+    return `<span onclick="campToggleTag(${jsq(t.id)})" style="
       padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
       background:${sel?p.bg:'rgba(var(--surface2-rgb),.6)'};
       border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
@@ -23959,7 +24246,7 @@ function _renderFixedLinks(links, tipo, campId){
   return links.map((l,i)=>`
     <div class="camp-fixed-link-item">
       <a href="${safeUrl(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
-      <button class="camp-fixed-link-del" onclick="campDelFixedLink('${esc(campId)}','${tipo}',${i})" title="Remover">✕</button>
+      <button class="camp-fixed-link-del" onclick="campDelFixedLink(${jsq(campId)},${jsq(tipo)},${i})" title="Remover">✕</button>
     </div>`).join('');
 }
 
@@ -24124,7 +24411,7 @@ function _renderArquivadosBody(){
     // branco/errado na lista.
     const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard('${c.id}');closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard(${jsq(c.id)});closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar(${jsq(c.id)})">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado(${jsq(c.id)})">Excluir</button>`;
     body.appendChild(row);
   });
 }
@@ -25127,7 +25414,7 @@ async function renderAgenteLog(){
   box.innerHTML=entries.slice(0,LIMIT).map(e=>{
     const card=cards.find(c=>c.id===e.cardId);
     const cardTitle=card?esc(card.title):'(card não encontrado — arquivado ou excluído)';
-    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard('${esc(e.cardId)}');" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
+    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard(${jsq(e.cardId)});" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
     const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     // Achado real (skill /monitorarbugs, 2026-08-27): `origem` é campo novo
     // (backend, agenteLog.js) — entradas gravadas ANTES desse fix só têm
@@ -25394,9 +25681,9 @@ function renderUsuarios(){
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
       // ⚠ Detecta colisão de iniciais com outro membro do squad
       const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
-      const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}','${esc(u.email||'')}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
-<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+      const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial(${jsq(uid)},${jsq(u.init||'')},${jsq((u.nome||u.email||'').replace(/'/g,''))})" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro(${jsq(uid)},${jsq(u.nome||u.email)},${jsq(u.email||'')})" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
+<select onchange="alterarRole(${jsq(uid)},this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${role==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${role==='organizador'?' selected':''}>Organizador</option>
         <option value="po"${role==='po'?' selected':''}>PO</option>
@@ -25430,8 +25717,8 @@ function renderAgentesList(){
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
       <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
       <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
-      <button onclick="editarAgente('${a._fbKey}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
-      <button onclick="excluirAgente('${a._fbKey}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
+      <button onclick="editarAgente(${jsq(a._fbKey)})" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
+      <button onclick="excluirAgente(${jsq(a._fbKey)},${jsq((a.nome||a.id).replace(/'/g,''))})" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
     </div>`;
   }).join('');
 }
@@ -25888,16 +26175,16 @@ function renderCardPatternsCfg(){
     const aberto=_padroesCfgAberto===id;
     const secoesHtml = CARD_SECTIONS.map(s=>
       `<label class="reqf-row" style="padding:6px 10px;font-size:12px;">
-        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao('${id}','${s.key}',this.checked)">
+        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao(${jsq(id)},${jsq(s.key)},this.checked)">
         ${esc(s.label)}
       </label>`
     ).join('');
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto==='${id}'?null:'${id}';renderCardPatternsCfg();">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto===${jsq(id)}?null:${jsq(id)};renderCardPatternsCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">📐 ${esc(p.nome||'Sem nome')}${p.isDefault?' <span style="font-size:9px;color:var(--teal);font-weight:700;">★ PADRÃO DA SQUAD</span>':''}</span>
-        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard('${id}')" title="Renomear" style="font-size:10px;">✎</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault('${id}')" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard('${id}')" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard(${jsq(id)})" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault(${jsq(id)})" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard(${jsq(id)})" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
       ${aberto?`<div style="padding:0 12px 10px;border-top:1px solid var(--glass-b);">${secoesHtml}</div>`:''}
@@ -26012,7 +26299,7 @@ function renderSubteamEditor(){
   box.innerHTML=subteams.map((st,i)=>{
     const membersChips=(st.members||[]).map(init=>{
       const m=members.find(x=>x.init===init);
-      return `<span class="st-mchip" onclick="toggleSubteamMember(${i},'${esc(init)}')" title="Remover">${esc(m?m.name.split(' ')[0]:init)} ×</span>`;
+      return `<span class="st-mchip" onclick="toggleSubteamMember(${i},${jsq(init)})" title="Remover">${esc(m?m.name.split(' ')[0]:init)} ×</span>`;
     }).join('');
     // dropdown de membros disponíveis (todos os members do squad, mesmo já adicionados não duplicam)
     const opts=members.filter(m=>m.init&&!(st.members||[]).includes(m.init))
@@ -27793,7 +28080,7 @@ function renderHelp(){
 // independente do contexto do container pai.
 function helpTip(tip, term, variant){
   const v = variant ? ' '+variant : '';
-  const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,'${term.replace(/'/g,"\\'")}')">Saiba mais →</a>` : '';
+  const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,${jsq(term.replace(/'/g,"\\'"))})">Saiba mais →</a>` : '';
   return `<span class="help-tip${v}" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">${tip}${link}</span></span>`;
 }
 
@@ -28994,14 +29281,14 @@ function renderAtalhosBody(){
       <div style="font-size:12.5px;color:var(--txt);">${def.label}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <span style="font-size:11px;font-family:monospace;background:rgba(var(--surface2-rgb),.8);padding:3px 8px;border-radius:6px;color:${combo?'var(--txt)':'var(--txt3)'};min-width:34px;text-align:center;">${capturando?'…':_atalhoComboLabel(combo)}</span>
-        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura('${id}')" onkeydown="_atalhoCapturaKeydown(event,'${id}')" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
-        ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar('${id}')" title="Remover este atalho">✕</button>`:''}
+        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura(${jsq(id)})" onkeydown="_atalhoCapturaKeydown(event,${jsq(id)})" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
+        ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar(${jsq(id)})" title="Remover este atalho">✕</button>`:''}
       </div>
     </div>`;
   }).join('');
   body.innerHTML = rows || '<div style="font-size:11px;color:var(--txt3);">Nenhuma ação disponível pra personalizar neste squad.</div>';
   if(_atalhoCapturando){
-    document.querySelector(`[onclick="_atalhoIniciarCaptura('${_atalhoCapturando}')"]`)?.focus();
+    document.querySelector(`[onclick="_atalhoIniciarCaptura(${jsq(_atalhoCapturando)})"]`)?.focus();
   }
 }
 function _atalhoIniciarCaptura(id){
@@ -29501,14 +29788,14 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}','${n.okrObjId||''}','${encodeURIComponent(n.meetingLink||'')}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}</div>
       </div>
-      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissNotif('${n.id}')">✕</button>
+      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissNotif(${jsq(n.id)})">✕</button>
     </div>`).join('');
 }
 
@@ -30567,19 +30854,19 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
         const col=ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0]);
-        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById(${jsq(ev.id)})" title="Excluir evento">✕</button>`:'';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' ' : '';
-        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${horaLbl}${esc(ev.title)}${delBtn}</div>`;
+        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent(${jsq(ev.id)})" title="${esc(ev.title)}">${horaLbl}${esc(ev.title)}${delBtn}</div>`;
       } else {
         const c = item.data;
         const colInfo = columns.find(x => x.id === c.col);
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
-        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
+        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard(${jsq(c.id)})" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
       }
     }).join('')
     +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
-    +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
+    +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal(${jsq(ds)})">+</button>`;
     
   // Ao clicar no dia, abre a janela flutuante com a lista completa estilo Google Calendar
   div.onclick=()=> openCalDayPopover(date, dayItems);
@@ -30604,11 +30891,11 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
         const col = ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0]);
-        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById(${jsq(ev.id)})" title="Excluir evento">✕</button>` : '';
         const meetBtn = ev.meetingLink ? `<a href="${esc(ev.meetingLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião" style="flex-shrink:0;font-size:13px;text-decoration:none;">🎥</a>` : '';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? `<span style="flex-shrink:0;font-size:10px;opacity:.8;font-weight:600;">${new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>` : '';
         return `
-          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
+          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent(${jsq(ev.id)})">
             ${horaLbl}
             <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
             ${meetBtn}
@@ -30620,7 +30907,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
         return `
-          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard(${jsq(c.id)})">
             📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
           </div>`;
       }
@@ -30628,7 +30915,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
   }
 
   if (canEdit) {
-    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal('${ds}')">+ Novo Evento</button>`;
+    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal(${jsq(ds)})">+ Novo Evento</button>`;
     ft.style.display = 'flex';
   } else {
     ft.style.display = 'none';
@@ -30707,7 +30994,7 @@ function closeEvModal(){ document.getElementById('ev-modal-ov').classList.remove
 
 function renderEvColors(sel){
   document.getElementById('ev-colors').innerHTML=EV_COLORS.map(col=>
-    `<button class="ev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};" onclick="selectEvColor('${col.id}')"></button>`
+    `<button class="ev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};" onclick="selectEvColor(${jsq(col.id)})"></button>`
   ).join('');
 }
 function selectEvColor(id){ renderEvColors(id); }
@@ -31004,8 +31291,8 @@ function renderCalendarList() {
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
         ${statusMsg}
       </div>
-      <input type="color" value="${corAtual}" onchange="setCalendarColor('${esc(key)}', this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
-      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
+      <input type="color" value="${corAtual}" onchange="setCalendarColor(${jsq(key)}, this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
+      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList(${jsq(cal.id)})" title="Remover sincronização">✕</button>
     </div>
   `; }).join('');
 }
@@ -32186,11 +32473,11 @@ function renderFanoutCfg(){
       ? (f.filhos||[]).map((filho,i)=>
           `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:12px;color:var(--txt2);">
             <span style="flex:1;">🧩 ${esc(filho.sufixo)}</span>
-            <select class="fi" onchange="setFanoutFilhoModelo('${id}',${i},this.value)" title="Modelo (opcional) — deixa o card filho mais estruturado: descrição, checklist, tags e riscos vêm do modelo escolhido" style="font-size:10px;padding:3px 6px;max-width:160px;">
+            <select class="fi" onchange="setFanoutFilhoModelo(${jsq(id)},${i},this.value)" title="Modelo (opcional) — deixa o card filho mais estruturado: descrição, checklist, tags e riscos vêm do modelo escolhido" style="font-size:10px;padding:3px 6px;max-width:160px;">
               <option value="">— sem modelo —</option>
               ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${filho.modeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
             </select>
-            <button class="btn btn-sm" onclick="removeFanoutFilho('${id}',${i})" title="Remover" style="font-size:9px;color:var(--danger);border-color:rgba(255,107,107,.3);">✕</button>
+            <button class="btn btn-sm" onclick="removeFanoutFilho(${jsq(id)},${i})" title="Remover" style="font-size:9px;color:var(--danger);border-color:rgba(255,107,107,.3);">✕</button>
           </div>`
         ).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:6px 10px;">Nenhum card filho ainda — adicione abaixo.</div>';
@@ -32200,7 +32487,7 @@ function renderFanoutCfg(){
     // si; pedido direto: "tem que conseguir alterar o card todo!".
     const paiHtml=`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;">
       <span style="flex:1;">👑 Card pai <span style="color:var(--txt3);">(este card, ao gerar a receita)</span></span>
-      <select class="fi" onchange="setFanoutPaiModelo('${id}',this.value)" title="Modelo (opcional) — mescla descrição/checklist/tags/riscos no card pai sem apagar o que ele já tiver (mesma regra do 📥 Usar modelo)" style="font-size:10px;padding:3px 6px;max-width:160px;">
+      <select class="fi" onchange="setFanoutPaiModelo(${jsq(id)},this.value)" title="Modelo (opcional) — mescla descrição/checklist/tags/riscos no card pai sem apagar o que ele já tiver (mesma regra do 📥 Usar modelo)" style="font-size:10px;padding:3px 6px;max-width:160px;">
         <option value="">— sem modelo —</option>
         ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${f.paiModeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
       </select>
@@ -32212,18 +32499,18 @@ function renderFanoutCfg(){
     const tagsAtuais=f.tags||[];
     const tagsHtml=`<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;flex-wrap:wrap;">
       <span style="flex:0 0 auto;padding-top:3px;">🏷 Tags</span>
-      <select class="fi" multiple onchange="setFanoutTags('${id}',this)" title="Segure Ctrl (ou Cmd) pra marcar mais de uma — usadas só pra filtrar esta receita no botão 🧩 Aplicar receita dentro do card" style="font-size:10px;padding:3px 6px;min-width:140px;max-width:220px;height:58px;">
+      <select class="fi" multiple onchange="setFanoutTags(${jsq(id)},this)" title="Segure Ctrl (ou Cmd) pra marcar mais de uma — usadas só pra filtrar esta receita no botão 🧩 Aplicar receita dentro do card" style="font-size:10px;padding:3px 6px;min-width:140px;max-width:220px;height:58px;">
         ${tags.map(t=>`<option value="${esc(t.id)}" ${tagsAtuais.includes(t.id)?'selected':''}>${esc(t.label)}</option>`).join('')}
       </select>
     </div>`;
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto==='${id}'?null:'${id}';renderFanoutCfg();">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto===${jsq(id)}?null:${jsq(id)};renderFanoutCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">🧩 ${esc(f.nome||'Sem nome')} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${(f.filhos||[]).length} card(s))</span></span>
-        <button class="btn btn-sm" onclick="event.stopPropagation();renomearFanoutTemplate('${id}')" title="Renomear" style="font-size:10px;">✎</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate('${id}')" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearFanoutTemplate(${jsq(id)})" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate(${jsq(id)})" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
-      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${tagsHtml}${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
+      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${tagsHtml}${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho(${jsq(id)})" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
     </div>`;
   }).join('');
 }
@@ -33583,7 +33870,7 @@ function showCtxMenu(e, cardId){
   // Monta itens do menu
   const colOptions = columns
     .filter(col=>col.id!==card.col)
-    .map(col=>`<div class="ctx-item" onclick="ctxMove('${col.id}')">
+    .map(col=>`<div class="ctx-item" onclick="ctxMove(${jsq(col.id)})">
       <span class="ctx-item-icon"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${col.color};"></span></span>
       Mover para ${esc(col.name)}
     </div>`).join('');
@@ -33626,7 +33913,7 @@ function showCtxMenu(e, cardId){
     ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
       <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
     </div>` : ''}
-    <div class="ctx-item" onclick="togglePauseCard('${cardId}')">
+    <div class="ctx-item" onclick="togglePauseCard(${jsq(cardId)})">
       <span class="ctx-item-icon">${card.paused?'▶':'⏸'}</span> ${card.paused?'Retomar contagem de tempo':'Pausar contagem de tempo'}
     </div>
 
@@ -33642,19 +33929,19 @@ function showCtxMenu(e, cardId){
     <div class="ctx-item" onclick="ctxToggleOKR()">
       <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
     </div>
-    <div class="ctx-item" onclick="toggleContinuo('${cardId}')">
+    <div class="ctx-item" onclick="toggleContinuo(${jsq(cardId)})">
       <span class="ctx-item-icon">♾️</span> ${card.continuo ? 'Remover Contínuo' : 'Marcar como Contínuo'}
     </div>
-    <div class="ctx-item" onclick="togglePinCard('${cardId}')">
+    <div class="ctx-item" onclick="togglePinCard(${jsq(cardId)})">
       <span class="ctx-item-icon">📌</span> ${card.pinned ? 'Desafixar do topo da coluna' : 'Fixar no topo da coluna'}
     </div>
-    <div class="ctx-item" onclick="openCard('${cardId}')">
+    <div class="ctx-item" onclick="openCard(${jsq(cardId)})">
       <span class="ctx-item-icon">✏️</span> Editar card
     </div>
     <div class="ctx-item" onclick="ctxInsights()">
       <span class="ctx-item-icon">🤖</span> Insights do Agente Ágil
     </div>
-    <div class="ctx-item" onclick="ctxCopyLink('${cardId}')">
+    <div class="ctx-item" onclick="ctxCopyLink(${jsq(cardId)})">
       <span class="ctx-item-icon">🔗</span> Copiar link do card
     </div>
 
@@ -35062,7 +35349,9 @@ _onFbReady(()=>{
     setTimeout(()=>_tryOpenCard(8), 1000);
   }
   // Carrega ADMs extras do Firebase
-  fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
+  // .catch: externo (sem @ciahering/@arezzo) não tem leitura de kanban/config pelas regras — sem o catch
+  // virava "Uncaught (in promise)" + tentativa de gravar em error_logs (também negada), a cada login.
+  fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; }).catch(()=>{});
   // Presença online
   // Guard: se essa função (fbLoadAll) rodar mais de uma vez na sessão,
   // não queremos registrar múltiplos listeners de auth-change/beforeunload —
@@ -35309,7 +35598,7 @@ function renderSearchResults(){
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
     const ownerTxt = owner ? owner.name : (c.owner||'');
-    return `<div class="search-result${i===0?' active':''}" data-id="${esc(c.id)}" onclick="openSearchCard('${esc(c.id)}')" onmouseover="setSearchIdx(${i})">
+    return `<div class="search-result${i===0?' active':''}" data-id="${esc(c.id)}" onclick="openSearchCard(${jsq(c.id)})" onmouseover="setSearchIdx(${i})">
       <span class="sr-col-dot" style="background:${col.color};" title="${esc(col.name)}"></span>
       <span class="sr-title">${esc(c.title)}</span>
       ${tagHtml}
@@ -35578,6 +35867,16 @@ async function loadComments(cardId){
       }
     }
     _commentsCache[cardId] = val || {};
+    // Rede de segurança do indicador 💬: a lista que acabou de chegar é a verdade. Se o índice
+    // card_comments_count diverge (função ainda não implantada, comentário antigo sem backfill, evento
+    // perdido), corrige aqui — a Cloud Function grava o MESMO número, então os dois nunca brigam.
+    try{
+      const _real = Object.keys(_commentsCache[cardId]).length;
+      if((window._commentCounts[cardId]||0) !== _real){
+        window._commentCounts[cardId] = _real; _refreshCommentInd(cardId);
+        window._set(window._ref(window._db, FB+'/card_comments_count/'+cardId), _real||null).catch(()=>{});
+      }
+    }catch(e){}
     // Trava contra corrida: se a pessoa trocou de card enquanto a leitura
     // estava em voo, não pisa no que já está na tela do card ATUAL.
     if(_commentCardId===cardId) renderCommentList(_sortedComments(_commentsCache[cardId]));
@@ -35766,8 +36065,8 @@ function startEditComment(cid){
         else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
-      <button class="eoc-save" onclick="saveEditComment('${cid}')">Salvar</button>
-      <button class="eoc-cancel" onclick="cancelEditComment('${cid}')">Cancelar</button>
+      <button class="eoc-save" onclick="saveEditComment(${jsq(cid)})">Salvar</button>
+      <button class="eoc-cancel" onclick="cancelEditComment(${jsq(cid)})">Cancelar</button>
       <span class="eoc-hint">Ctrl+Enter salva · Esc cancela</span>
     </div>`;
   const ta = document.getElementById('cedit-ta-'+cid);
@@ -35839,12 +36138,12 @@ function _renderReactions(c){
   const myReact=r[myUid];
   const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
-    return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction('${esc(c.id)}','${e}')" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
+    return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction(${jsq(c.id)},${jsq(e)})" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
   }).join('');
   return chips ? `<div class="rx-row">${chips}</div>` : '';
 }
 function _reactPicker(c){
-  return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
+  return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction(${jsq(c.id)},${jsq(e)})">${e}</span>`).join('');
 }
 
 function renderDescPreview(){
@@ -37156,7 +37455,7 @@ function renderBackupHistory(){
         return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
           background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;"
-            onclick="downloadSnapshotFromFirebase('${date}')"
+            onclick="downloadSnapshotFromFirebase(${jsq(date)})"
             title="Clique para baixar o JSON deste snapshot">
             <span style="font-size:16px;">💾</span>
             <div style="flex:1;min-width:0;">
@@ -37164,7 +37463,7 @@ function renderBackupHistory(){
               <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
             </div>
           </div>
-          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot('${date}')" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
+          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot(${jsq(date)})" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
         </div>`;
       }).join('');
     })
@@ -37808,7 +38107,7 @@ function renderMuralLista(){
     // efeito de post-it colado à mão, sem ficar torto igual a cada atualização.
     const seed = (c.id||'').split('').reduce((a,ch)=>a+ch.charCodeAt(0),0);
     const rot = (seed % 9) - 4;
-    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural('${c.id}')">
+    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural(${jsq(c.id)})">
       <span class="mn-pin" style="background:${tipo.pin};"></span>
       ${naoLido?'<span class="mn-dot"></span>':''}
       <div class="mn-icon">${tipo.icon}</div>

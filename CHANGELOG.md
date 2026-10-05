@@ -18,6 +18,26 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.786 — 2026-10-05 · Promove pra prod — externos com conta Microsoft pessoal, cadastro guiado, 💬 de comentários, chip Híbrido, reforço de segurança
+
+Promoção do lote acumulado em dev desde a v8.30.777 (v8.30.778 a v8.30.786-dev; pedido: "uma promoção agora com tudo
+acumulado, vou pedir pras pessoas de Microsoft testarem"). Pro público de prod:
+- **Externos autorizados com hotmail/outlook**: novo link "Entrar com conta pessoal Microsoft" na tela de login (o botão
+  corporativo da Arezzo continua igual). Depende do registro do app no Azure aceitar contas pessoais (já configurado).
+- **Cadastro guiado**: usuário novo agora cai sozinho na tela "🙋 Inscrever-se no quadro" com qualquer provedor (o link "Primeira
+  vez?" saiu — ele sempre abria o login do Google). Quando não dá pra saber o squad (URL sem `?squad=`, ou cadastro sem squad
+  nenhum), a tela "👋 Complete seu cadastro" pergunta em vez de assumir. Externo recém-cadastrado recarrega uma vez sozinho (antes
+  ficava com o board vazio até o 1º F5) e, se o cadastro for recusado, aparece o aviso com a causa.
+- **Externo autorizado só em outro squad** não é mais recusado; a mensagem de recusa lista os squads onde ele está autorizado.
+- **Correções de cadastro**: ADM novo não fica preso no login; confirmar a inscrição não regrava o papel; "Primeira vez?" não
+  promove mais externo a membro sozinho; erro de "Permission denied" no console de externo silenciado.
+- **💬 Comentários no card**: indicador na linha de ícones (ao lado de ≡ e 📎), com a contagem quando há mais de 1. Alimentado por
+  uma Cloud Function (`contarComentarios`, já no ar); cards antigos passam a mostrar depois que alguém comenta ou abre o card.
+- **🤝 Híbrido**: o chip do executor ficou compacto e cabe na linha das tags.
+- **Segurança**: nomes/títulos/ids com aspas ou HTML (intake, notificações, listas) não executam mais script no navegador de quem
+  abre a tela (332 pontos no kanban, mais OKR/onboarding).
+Detalhes técnicos nas entradas `-dev` v8.30.778 a v8.30.786-dev logo abaixo.
+
 ### v8.30.777 — 2026-10-02 · Promove pra prod — login mais claro (Google × Microsoft), foto do Google corrigida, seletor de squad
 
 Promoção do lote acumulado em dev desde a v8.30.774 (pedido: "promove tudo pra
@@ -20517,6 +20537,13 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel.html v3.95 · painel — 2026-10-05 · Promove pra prod — reforço de segurança (XSS via id em handler inline)
+
+Promoção do v3.95 de dev (pedido: "uma promoção agora com tudo acumulado"). Só a correção de segurança: 137 pontos do painel
+onde um id/texto com aspas ou HTML podia executar script no navegador de quem abre a tela (inclusive ADM) foram trocados por uma
+escapada própria de string JS. Sem mudança de tela. Cenário e verificação em `kanban-dev.html` v8.30.779-dev e na entrada
+`painel-dev.html` v3.95 logo abaixo.
 
 ### painel-dev.html v3.95 · painel-dev — 2026-10-05 · fix(segurança): XSS armazenado via id em handler inline
 
