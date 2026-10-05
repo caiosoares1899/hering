@@ -6436,7 +6436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.781-dev</div>
+<div class="version">v8.30.782-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11553,7 +11553,14 @@ function autoRegistrar(user){
   fbGet('kanban/usuarios/'+user.uid).then(async (snap)=>{
     const existe=snap.val();
     let init=(user.displayName||user.email).split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
-    if(!existe){
+    // Registro PARCIAL (achado real, 2026-10-05, 1º login de externo com conta Microsoft pessoal): outros
+    // pontos do app gravam filhos de kanban/usuarios/{uid} (board_prefs, temasDescobertos, nome/email via
+    // _syncAuthProfileToFirebase) ANTES deste cadastro rodar, então o nó já "existe" — mas sem init, role,
+    // squads nem inscrito. Caía no ramo "usuário antigo" abaixo, que nunca grava squads/{squad}=true, e
+    // pra externo as regras só liberam a leitura do squad com esse valor: board vazio + permission_denied,
+    // sem saída. Trata como cadastro novo, mas com UPDATE (preserva board_prefs etc.), não set.
+    const _parcial = !!existe && !existe.init && !existe.squads && !existe.role && !existe.inscrito;
+    if(!existe || _parcial){
       // Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário —
       // um card da Marina Saran Bernardo aparecia no Histórico do painel
       // como se fosse do Marciel Santos Alexandrino): as iniciais dos dois
@@ -11571,12 +11578,13 @@ function autoRegistrar(user){
       const newRole=isAdmUser(user)?'adm':(_isTrustedDomainEmail(user.email)?'membro':'convidado'); // externos = convidado
       const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
       const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
-      fbSet('kanban/usuarios/'+user.uid,{
+      const _regNovo={
         uid:user.uid, nome:user.displayName||'', email:user.email,
         init, foto:user.photoURL||'', role:newRole,
         inscrito:true, inscritoEm:new Date().toISOString(),
         squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
-      });
+      };
+      if(_parcial) fbUpdate('kanban/usuarios/'+user.uid,_regNovo); else fbSet('kanban/usuarios/'+user.uid,_regNovo);
       // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
       // qualquer board pode escutar em tempo real (onValue) sem baixar
       // notificações/tokens de push de todo mundo (ver kanban/usuarios).
