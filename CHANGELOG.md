@@ -38,6 +38,24 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.781-dev — 2026-10-05 · feat(login): "Entrar com conta pessoal Microsoft" para externos autorizados (hotmail/outlook)
+
+**Problema:** externo autorizado tentou entrar com conta Microsoft pessoal (hotmail) e a própria Microsoft
+recusou: "Você não pode entrar aqui com uma conta pessoal. Use sua conta corporativa ou de estudante."
+Causa: o botão "Entrar com Microsoft" (integração Arezzo) fixa `tenant: 'organizations'`, que por
+definição rejeita contas pessoais — a recusa vem da Microsoft, antes de voltar pro app.
+
+**Correção:** link novo na tela de login, **"Externo autorizado com hotmail/outlook? Entrar com conta pessoal
+Microsoft"**, com provider próprio (`tenant: 'consumers'`), mesmo fluxo de popup + fallback de redirect do botão
+corporativo. O botão corporativo não mudou. Não foi usado `tenant: 'common'` num botão só de propósito: aceitaria
+contas corporativas de qualquer empresa, e o e-mail dessas contas não é verificado pela Microsoft (um tenant
+próprio poderia reutilizar o e-mail de um externo autorizado). Com `consumers` só entra conta pessoal, e a
+Microsoft verifica esse e-mail. A autorização continua sendo a lista de externos do squad (gate do client +
+regras do banco, inalterados). Só `kanban-dev.html`; `painel` não tem externos.
+
+**Pré-requisito fora do código:** no Azure (registro do app), "Tipos de conta com suporte" precisa incluir
+"contas Microsoft pessoais" — sem isso a Microsoft recusa também por este link.
+
 ### v8.30.780-dev — 2026-10-05 · feat(card): indicador 💬 de comentários na linha de ícones (ao lado de ≡ e 📎)
 
 Pedido direto do usuário (com print de um card): na segunda linha, a que tem o ícone de
