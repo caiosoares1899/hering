@@ -38,6 +38,21 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.782-dev — 2026-10-05 · fix(login): 1º login de externo caía em registro parcial e ficava com o board vazio
+
+**Cenário real:** externo autorizado (conta Microsoft pessoal) entrou, mas o board abriu vazio com
+`permission_denied` na leitura dos cards. O nó `kanban/usuarios/{uid}` dele tinha só `board_prefs`,
+`temasDescobertos`, `nome` e `email` — sem `init`, `role`, `squads` nem `inscrito`.
+
+**Causa:** outros pontos do app gravam filhos de `usuarios/{uid}` (preferências, descoberta de tema, sincronização
+de perfil) antes de `autoRegistrar()` rodar, então o nó já "existia" e o login seguia pelo ramo de usuário antigo,
+que nunca grava `squads/{squad}: true`. Para externos as regras só liberam a leitura do squad com esse valor.
+Sem ele: board vazio, sem mensagem e sem saída. Também afetava usuário novo de domínio confiável (ficava sem `init`/`role`).
+
+**Correção:** registro sem `init`/`squads`/`role`/`inscrito` é tratado como cadastro novo, gravado com UPDATE
+(preserva `board_prefs` e demais campos) em vez de SET. Quem já estava nesse estado se conserta sozinho no próximo
+login (F5).
+
 ### v8.30.781-dev — 2026-10-05 · feat(login): "Entrar com conta pessoal Microsoft" para externos autorizados (hotmail/outlook)
 
 **Problema:** externo autorizado tentou entrar com conta Microsoft pessoal (hotmail) e a própria Microsoft
