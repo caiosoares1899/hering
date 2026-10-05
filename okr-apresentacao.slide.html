@@ -407,6 +407,34 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    verdade continua sendo feito no modal do Marco dentro de painel.html;
    aqui é só pra quem está acompanhando a apresentação ver o que já foi
    dito, sem precisar abrir o painel noutra aba. */
+/* 📈 Evolução do atingimento (gráfico) — mesmo visual do painel; abre por cima do detalhe do Objetivo */
+#ating-ov{position:fixed;inset:0;z-index:480;display:none;align-items:center;justify-content:center;background:rgba(3,13,26,.6);backdrop-filter:blur(4px);padding:1rem;}
+#ating-ov.open{display:flex;}
+.ating-panel{width:min(760px,94vw);max-height:92vh;display:flex;flex-direction:column;background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;backdrop-filter:blur(18px);box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;}
+.ating-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid var(--glass-b);}
+.ating-hd h3{font-size:15px;font-weight:800;font-family:'Syne',sans-serif;line-height:1.35;}
+.ating-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);cursor:pointer;font-size:14px;flex-shrink:0;}
+.ating-close:hover{background:var(--glass-hover);}
+.ating-body{padding:16px 20px 20px;overflow-y:auto;}
+.ating-ico{background:rgba(255,115,175,.12);border:1px solid rgba(255,115,175,.45);border-radius:6px;padding:0 5px;cursor:pointer;font-size:13px;line-height:1.5;color:var(--txt);font-family:inherit;vertical-align:middle;}
+.ating-ico:hover{background:rgba(255,115,175,.28);}
+.okr-ating-chartpanel{--sec-rgb:255,115,175;--ink-rgb:3,13,26;--ating-c:rgb(var(--sec-rgb));}
+.okr-ating-tipo-ro{font-size:11px;color:var(--txt2);margin:0 0 6px;}
+.okr-ating-resumo{margin:6px 0 10px;}
+.okr-ating-resumo-txt{font-size:12.5px;color:var(--txt2);margin-bottom:6px;line-height:1.5;}
+.okr-ating-resumo-txt b{color:var(--txt);}
+.okr-ating-bar{height:9px;border-radius:99px;background:rgba(var(--ink-rgb),.7);overflow:hidden;border:1px solid rgba(var(--sec-rgb),.35);}
+.okr-ating-bar-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,rgba(var(--sec-rgb),.55),rgb(var(--sec-rgb)));}
+.okr-ating-hist-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0 6px;font-size:11px;font-weight:700;color:rgb(var(--sec-rgb));}
+.okr-ating-row{display:grid;grid-template-columns:86px 1fr auto minmax(0,auto);gap:8px;align-items:center;font-size:12px;padding:5px 8px;border-radius:7px;background:rgba(var(--ink-rgb),.6);border:1px solid rgba(var(--sec-rgb),.22);margin-bottom:4px;}
+.okr-ating-data{color:var(--txt3);} .okr-ating-pct{color:rgb(var(--sec-rgb));min-width:38px;text-align:right;}
+.okr-ating-por{color:var(--txt3);font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px;}
+.okr-ating-chart{position:relative;margin:10px 0;color:var(--txt2);}
+.okr-ating-chart-svg{width:100%;height:auto;display:block;overflow:visible;}
+.okr-ating-chart-vazio{font-size:12px;color:var(--txt3);padding:18px 4px;text-align:center;}
+.okr-ating-pt{cursor:pointer;outline:none;} .okr-ating-pt:hover .okr-ating-dot,.okr-ating-pt:focus .okr-ating-dot{r:6.8;}
+.okr-ating-tip{display:none;position:absolute;transform:translate(-50%,calc(-100% - 10px));background:rgba(3,13,26,.97);border:1px solid rgba(var(--sec-rgb,255,115,175),.65);border-radius:8px;padding:6px 10px;font-size:11.5px;line-height:1.5;color:var(--txt);white-space:pre-line;pointer-events:none;z-index:5;max-width:260px;box-shadow:0 6px 18px rgba(0,0,0,.45);}
+.okr-ating-tip.below{transform:translate(-50%,10px);}
 #mc-ov{position:fixed;inset:0;z-index:470;display:none;background:rgba(3,13,26,.55);backdrop-filter:blur(4px);}
 #mc-ov.open{display:flex;justify-content:flex-end;}
 .mc-panel{width:min(420px,92vw);height:100%;background:var(--glass);border-left:1px solid var(--glass-b);
@@ -538,6 +566,14 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
       <button class="mc-close" onclick="window._okrCloseMarcoComments()">✕</button>
     </div>
     <div class="mc-list" id="mc-list"></div>
+  </div>
+</div>
+
+<!-- 📈 Evolução do atingimento — sibling na raiz (mesmo motivo de #mc-ov): precisa abrir por CIMA do #detail-ov. -->
+<div id="ating-ov" onclick="if(event.target===this) window._okrCloseAting()">
+  <div class="ating-panel">
+    <div class="ating-hd"><h3 id="ating-title">📈 Evolução do atingimento</h3><button class="ating-close" onclick="window._okrCloseAting()">✕</button></div>
+    <div class="ating-body" id="ating-body"></div>
   </div>
 </div>
 
@@ -673,33 +709,8 @@ function objStatus(objId){
 }
 // 📈 Atingimento — CÓPIA MÍNIMA do cálculo de painel-dev.html (bloco ATING-ENGINE): manter igual. O Objetivo com meta configurada anda a
 // barra por ele; sem meta, continua pela entrega dos marcos.
-const OKR_ATING_TIPOS_IDS = ['financeira','porcentagem','numero','binario','acima','abaixo','data'];
-function _okrAtingConfigurado(at){ return !!(at && at.tipo && OKR_ATING_TIPOS_IDS.includes(at.tipo)); }
+function _okrAtingConfigurado(at){ return !!(at && at.tipo && OKR_ATING_TIPOS.some(t=>t.id===at.tipo)); }
 // % (0–100, inteiro) de UM registro, segundo a configuração. Valores além da meta travam em 100; abaixo do início, em 0.
-function _okrAtingPctDe(at, l){
-  if(!_okrAtingConfigurado(at) || !l) return 0;
-  const clamp = x => Math.max(0, Math.min(100, Math.round(x)));
-  const v = Number(l.valor), ini = Number(at.inicial)||0, meta = Number(at.meta);
-  switch(at.tipo){
-    case 'financeira': case 'porcentagem': case 'numero':
-      if(!isFinite(v) || !isFinite(meta)) return 0;
-      if(meta===ini) return v>=meta ? 100 : 0;
-      return clamp((v-ini)/(meta-ini)*100);             // meta < início (reduzir custo, por ex.) também funciona
-    case 'binario':
-      return (l.atingido===true || v>=100) ? 100 : 0;
-    case 'acima':
-      return (isFinite(v) && isFinite(meta) && v>=meta) ? 100 : 0;
-    case 'abaixo':
-      return (isFinite(v) && isFinite(meta) && v<=meta) ? 100 : 0;
-    case 'data': {                                       // entrega fora de TODAS as faixas = 0%; em mais de uma, vale a maior
-      const d = l.em || '';
-      let best = 0;
-      (at.datas||[]).forEach(f=>{ if(f && f.de && f.ate && d>=f.de && d<=f.ate) best = Math.max(best, Number(f.pct)||0); });
-      return clamp(best);
-    }
-  }
-  return 0;
-}
 function _okrAtingPctDe(at, l){
   if(!_okrAtingConfigurado(at) || !l) return 0;
   const clamp = x => Math.max(0, Math.min(100, Math.round(x)));
@@ -737,6 +748,155 @@ function _okrAtingPctObj(o){
   return l ? _okrAtingPctDe(at, l) : 0;
 }
 
+// Helpers de apresentação do atingimento (copiados de painel-dev.html, manter iguais) + gráfico de evolução.
+const OKR_ATING_TIPOS = [
+  {id:'financeira', ico:'💰', label:'Financeira'},
+  {id:'porcentagem', ico:'📊', label:'Porcentagem (%)'},
+  {id:'numero', ico:'🔢', label:'Número (#)'},
+  {id:'binario', ico:'✅', label:'Atingido/Não atingido (0%/100%)'},
+  {id:'acima', ico:'⬆️', label:'Manter acima de'},
+  {id:'abaixo', ico:'⬇️', label:'Manter abaixo de'},
+  {id:'data', ico:'📅', label:'Data de entrega'},
+];
+const OKR_ATING_MOEDAS = {
+  BRL:{label:'Real (R$)', sym:'R$', cur:'BRL'}, USD:{label:'Dólar (US$)', sym:'US$', cur:'USD'}, EUR:{label:'Euro (€)', sym:'€', cur:'EUR'},
+  PCT:{label:'Porcentagem (%)', sym:'%'}, NUM:{label:'Número (#)', sym:'#'},
+};
+function _okrAtingUnidade(at){
+  if(!at) return 'NUM';
+  if(at.tipo==='financeira') return OKR_ATING_MOEDAS[at.moeda] && OKR_ATING_MOEDAS[at.moeda].cur ? at.moeda : 'BRL';
+  if(at.tipo==='porcentagem') return 'PCT';
+  if(at.tipo==='acima' || at.tipo==='abaixo') return OKR_ATING_MOEDAS[at.moeda] ? at.moeda : 'PCT';
+  return 'NUM';
+}
+function _okrFmtNum(n, unidade){
+  if(n==null || !isFinite(n)) return '—';
+  const m = OKR_ATING_MOEDAS[unidade];
+  if(m && m.cur) return new Intl.NumberFormat('pt-BR',{style:'currency',currency:m.cur}).format(n);
+  if(unidade==='PCT') return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' %';
+  return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(n);
+}
+function _okrAtingTipoIco(t){ return (OKR_ATING_TIPOS.find(x=>x.id===t)||{}).ico||'📈'; }
+function _okrAtingTipoLabel(t){ return (OKR_ATING_TIPOS.find(x=>x.id===t)||{}).label||t; }
+function _okrAtingDataBR(d){ return d ? new Date(d+'T00:00:00').toLocaleDateString('pt-BR') : '—'; }
+function _okrAtingLancTxt(at, l){
+  if(at.tipo==='binario') return l.atingido ? '✅ Atingido' : '⏳ Não atingido';
+  if(at.tipo==='data') return '📦 Entregue em '+_okrAtingDataBR(l.em);
+  return _okrFmtNum(Number(l.valor), _okrAtingUnidade(at));
+}
+function _okrAtingResumoHtml(at){
+  const pct = _okrAtingPctObj({atingimento:at}); const un = _okrAtingUnidade(at); const l = _okrAtingAtual(at);
+  let linha;
+  if(!l) linha = 'Nenhum registro ainda.';
+  else if(at.tipo==='data') linha = `Última entrega: <b>${_okrAtingDataBR(l.em)}</b>`;
+  else if(at.tipo==='binario') linha = l.atingido ? 'Meta <b>atingida</b>' : 'Meta ainda <b>não atingida</b>';
+  else if(at.tipo==='acima' || at.tipo==='abaixo') linha = `Atual <b>${esc(_okrFmtNum(Number(l.valor),un))}</b> · deve ficar ${at.tipo==='acima'?'acima':'abaixo'} de <b>${esc(_okrFmtNum(Number(at.meta),un))}</b>`;
+  else linha = `Atual <b>${esc(_okrFmtNum(Number(l.valor),un))}</b> · início ${esc(_okrFmtNum(Number(at.inicial)||0,un))} → meta <b>${esc(_okrFmtNum(Number(at.meta),un))}</b>`;
+  return `<div class="okr-ating-resumo"><div class="okr-ating-resumo-txt">${linha}</div>
+    <div class="okr-ating-bar"><div class="okr-ating-bar-fill" style="width:${pct}%;"></div></div></div>`;
+}
+function _okrAtingHistoricoHtml(at, podeEditar){
+  const ls = (at.lancamentos||[]).filter(Boolean).slice().sort((a,b)=>String(b.em).localeCompare(String(a.em))||String(b.criadoEm).localeCompare(String(a.criadoEm)));
+  if(!ls.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum registro ainda — o atingimento fica em 0% até o primeiro.</div>';
+  return `<div class="okr-ating-hist">${ls.map(l=>`<div class="okr-ating-row">
+      <span class="okr-ating-data">${_okrAtingDataBR(l.em)}</span>
+      <span class="okr-ating-val">${esc(_okrAtingLancTxt(at,l))}</span>
+      <b class="okr-ating-pct">${_okrAtingPctDe(at,l)}%</b>
+      <span class="okr-ating-por" title="${esc(l.por||'')}">${esc((l.por||'').split(' ')[0])}${l.nota?` · <i>${esc(l.nota)}</i>`:''}</span>
+      ${podeEditar?`<button type="button" class="okr-ating-x" onclick="_okrAtingRemove(${jsq(l.id)})" title="Remover este registro">✕</button>`:''}
+    </div>`).join('')}</div>`;
+}
+// ── 📈 Gráfico de evolução do atingimento (MESMO código em painel-dev.html e okr-apresentacao.slide.html — manter igual) ──
+// Tipos numéricos (Financeira/%/Número/Manter acima/abaixo) plotam o VALOR registrado, com a linha da meta; Atingido/Não atingido e
+// Data de entrega plotam o % (0–100). Passar o mouse (ou tocar) num ponto mostra data · valor · %.
+function _okrAtingFmtEixo(v, un){
+  if(v==null || !isFinite(v)) return '';
+  const m = OKR_ATING_MOEDAS[un];
+  try{
+    if(m && m.cur) return new Intl.NumberFormat('pt-BR',{style:'currency',currency:m.cur,notation:'compact',maximumFractionDigits:1}).format(v);
+    const s = new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v);
+    return un==='PCT' ? s+' %' : s;
+  }catch(e){ return String(Math.round(v)); }
+}
+function _okrAtingChartHtml(at){
+  const NUM = ['financeira','porcentagem','numero','acima','abaixo'].includes(at && at.tipo);
+  const un = _okrAtingUnidade(at);
+  let ls = ((at && at.lancamentos)||[]).filter(Boolean).slice().sort((a,b)=>String(a.em||'').localeCompare(String(b.em||''))||String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  if(NUM) ls = ls.filter(l=>isFinite(Number(l.valor)));
+  if(!ls.length) return '<div class="okr-ating-chart-vazio">Nenhum registro ainda — o gráfico aparece com o primeiro.</div>';
+  const ys = ls.map(l=> NUM ? Number(l.valor) : _okrAtingPctDe(at,l));
+  const meta = Number(at.meta), ini = Number(at.inicial)||0;
+  const refs = [];
+  if(NUM){ if(isFinite(meta)) refs.push({v:meta, rot:'🎯 meta'}); if(at.tipo!=='acima' && at.tipo!=='abaixo') refs.push({v:ini, rot:'início'}); }
+  else refs.push({v:100, rot:'🎯 100%'});
+  let mn = Math.min(...ys, ...refs.map(r=>r.v)), mx = Math.max(...ys, ...refs.map(r=>r.v));
+  if(!NUM){ mn = 0; mx = 100; }
+  if(mn===mx){ mn -= 1; mx += 1; }
+  if(NUM){ const g=(mx-mn)*.08, nn=mn>=0; mn -= g; mx += g; if(nn && mn<0) mn = 0; }   // valores não negativos: o eixo não desce abaixo de zero
+  const W=560, H=270, pl=62, pr=20, pt=22, pb=44, iw=W-pl-pr, ih=H-pt-pb, n=ls.length;
+  const ts = ls.map(l=>Date.parse((l.em||'')+'T00:00:00'));
+  const tOk = n>1 && ts.every(isFinite) && Math.max(...ts)>Math.min(...ts);
+  const tMin = tOk?Math.min(...ts):0, tMax = tOk?Math.max(...ts):1;
+  const X = i => n===1 ? pl+iw/2 : pl + iw*(tOk ? (ts[i]-tMin)/(tMax-tMin) : i/(n-1));
+  const Y = v => pt + ih*(1-(v-mn)/(mx-mn));
+  const fmtY = v => NUM ? _okrAtingFmtEixo(v, un) : Math.round(v)+'%';
+  const ticks = [0,1,2,3].map(k=>mn+(mx-mn)*k/3);
+  const grid = ticks.map(v=>`<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
+    <text x="${pl-8}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".6">${esc(fmtY(v))}</text>`).join('');
+  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='início'?'.35':'.8'}" stroke-dasharray="5 4"/>
+    <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='início'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
+  const pts = ls.map((l,i)=>[X(i), Y(ys[i])]);
+  const linha = n>1 ? `<polyline fill="none" stroke="var(--ating-c,#ff73af)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>
+    <path d="M${pts[0][0].toFixed(1)},${(pt+ih).toFixed(1)} L${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')} L${pts[n-1][0].toFixed(1)},${(pt+ih).toFixed(1)} Z" fill="var(--ating-c,#ff73af)" fill-opacity=".1"/>` : '';
+  const ptsHtml = ls.map((l,i)=>{
+    const tip = [ _okrAtingDataBR(l.em)+' · '+_okrAtingPctDe(at,l)+'%', _okrAtingLancTxt(at,l), (l.por?'por '+l.por:'')+(l.nota?(l.por?' — ':'')+l.nota:'') ].filter(Boolean).join('\n');
+    return `<g class="okr-ating-pt" tabindex="0" role="img" aria-label="${esc(tip.replace(/\n/g,'; '))}" data-tip="${esc(tip)}" onmouseenter="_okrAtingTip(this)" onfocus="_okrAtingTip(this)" onclick="_okrAtingTip(this)" onmouseleave="_okrAtingTipOff(this)" onblur="_okrAtingTipOff(this)">
+      <circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="14" fill="transparent"/>
+      <circle class="okr-ating-dot" cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="4.8" fill="var(--ating-c,#ff73af)" stroke="rgba(255,255,255,.85)" stroke-width="1.4"/></g>`;
+  }).join('');
+  // Rótulos de data no eixo X: primeiro, último e (se couber) até 2 do meio, sem encavalar.
+  const idx = [...new Set(n<=2?[0,n-1]:[0,Math.round((n-1)/3),Math.round(2*(n-1)/3),n-1])];
+  let ultX = -1e9; const xl = [];
+  idx.forEach((i,k)=>{ const x=X(i); if(x-ultX>=70 || k===idx.length-1){ if(k===idx.length-1 && xl.length && x-ultX<70) xl.pop(); xl.push(i); ultX=x; } });
+  const xHtml = xl.map(i=>`<text x="${X(i).toFixed(1)}" y="${H-pb+18}" text-anchor="${i===0&&n>1?'start':(i===n-1&&n>1?'end':'middle')}" font-size="10" fill="currentColor" fill-opacity=".6">${esc(_okrAtingDataBR(ls[i].em))}</text>`).join('');
+  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
+}
+function _okrAtingTip(el){
+  const box = el.closest('.okr-ating-chart'); if(!box) return;
+  const tip = box.querySelector('.okr-ating-tip'); if(!tip) return;
+  tip.textContent = el.getAttribute('data-tip')||''; tip.style.display = 'block'; tip.classList.remove('below');
+  const b = box.getBoundingClientRect(), r = el.getBoundingClientRect(), tw = tip.offsetWidth, th = tip.offsetHeight;
+  let x = r.left + r.width/2 - b.left, y = r.top - b.top;
+  x = Math.max(tw/2+4, Math.min(b.width-tw/2-4, x));
+  if(y - th - 10 < 0){ tip.classList.add('below'); y = r.bottom - b.top; }
+  tip.style.left = x+'px'; tip.style.top = y+'px';
+}
+function _okrAtingTipOff(el){
+  const box = el.closest('.okr-ating-chart'); const tip = box && box.querySelector('.okr-ating-tip'); if(tip) tip.style.display = 'none';
+}
+// Conteúdo do painel "📈 Evolução" (mesmo nos dois lugares): tipo, resumo, gráfico e a lista de registros (só leitura).
+function _okrAtingChartPanelHtml(o){
+  const at = o && o.atingimento;
+  if(!_okrAtingConfigurado(at)) return '<div class="okr-ating-chart-vazio">Este Objetivo ainda não tem atingimento configurado.</div>';
+  return `<div class="okr-ating-chartpanel okr-sec-ating">
+    <div class="okr-ating-tipo-ro">${_okrAtingTipoIco(at.tipo)} ${esc(_okrAtingTipoLabel(at.tipo))}</div>
+    ${_okrAtingResumoHtml(at)}
+    <div class="okr-ating-chart">${_okrAtingChartHtml(at)}</div>
+    <div class="okr-ating-hist-hd"><span>Registros</span></div>
+    ${_okrAtingHistoricoHtml(at,false)}
+  </div>`;
+}
+
+window._okrAtingTip = _okrAtingTip; window._okrAtingTipOff = _okrAtingTipOff;   // handlers inline do gráfico (o script é um módulo)
+window._okrOpenAting = id => {
+  const o = okrObjetivos[id]; if(!o) return;
+  const at = o.atingimento;
+  document.getElementById('ating-title').textContent = (_okrAtingConfigurado(at)?_okrAtingTipoIco(at.tipo):'📈')+' Evolução do atingimento — '+(o.titulo||'Objetivo');
+  document.getElementById('ating-body').innerHTML = _okrAtingChartPanelHtml(o);
+  document.getElementById('ating-ov').classList.add('open');
+};
+window._okrCloseAting = () => document.getElementById('ating-ov').classList.remove('open');
+
 function objProgressoPct(objId){
   const viaAting = _okrAtingPctObj(okrObjetivos[objId]);
   if(viaAting!==null) return viaAting;
@@ -769,7 +929,7 @@ function objCardHtml(o){
     <div class="obj-title">${esc(o.titulo||'—')}</div>
     ${o.pilar?`<div class="obj-pilar">${esc(o.pilar)}</div>`:''}
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;"></div></div>
-    <div class="prog-label">${_okrAtingPctObj(o)!==null?`📈 ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
+    <div class="prog-label">${_okrAtingPctObj(o)!==null?`<button type="button" class="ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução (data e valor)" onclick="event.stopPropagation();window._okrOpenAting(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
     ${(o.tagIds||[]).length?`<div class="obj-tags">${(o.tagIds||[]).map(tid=>{
       const t=okrTags[tid]; if(!t) return '';
       const p=PT_PALETTE[t.colorIdx % PT_PALETTE.length]||PT_PALETTE[0];
@@ -1059,6 +1219,10 @@ document.addEventListener('keydown', e=>{
   // ainda aberto por baixo; Escape precisa fechar o painel de cima
   // primeiro, não pular direto pro de baixo (mesmo padrão de prioridade
   // que #notes-ov/#agenda-cfg-ov já seguem logo abaixo).
+  if(document.getElementById('ating-ov').classList.contains('open')){
+    if(e.key==='Escape'){ e.preventDefault(); window._okrCloseAting(); }
+    return;
+  }
   if(document.getElementById('mc-ov').classList.contains('open')){
     if(e.key==='Escape'){ e.preventDefault(); window._okrCloseMarcoComments(); }
     return;
@@ -1120,6 +1284,7 @@ window._okrOpenDetail = id => {
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
           ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
+          ${_okrAtingConfigurado(o.atingimento)?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>

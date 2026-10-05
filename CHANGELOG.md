@@ -20538,6 +20538,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.103 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): 📈 gráfico de evolução do atingimento (data e valor, com dica ao passar o mouse)
+
+Pedido: o emoji do tipo no cartão do Objetivo passa a ser um **botão que abre o gráfico de evolução** do atingimento, com data e valor, e a dica ao passar o mouse.
+- **Gráfico**: tipos numéricos (Financeira, %, Número, Manter acima/abaixo) plotam o **valor** registrado ao longo do tempo, com a linha tracejada da **🎯 meta** (e do início, quando existe); *Atingido/Não atingido* e *Data de entrega* plotam o **%** (0–100). Pontos distribuídos pela data real; eixo em formato compacto (R$ 72 mil) e sem descer abaixo de zero quando os valores não são negativos. Abaixo do gráfico, o resumo (atual → meta), a barra e a lista de registros.
+- **Dica ao passar o mouse (ou tocar/focar com Tab)** em cada ponto: `data · % de atingimento`, valor formatado (R$, %, número…), quem registrou e a nota.
+- **Onde abre**: no **painel**, clicando no emoji do tipo no cartão do Objetivo (não abre o modal do Objetivo junto) ou no botão **📈 Gráfico** do histórico dentro do modal (mostra também o registro ainda não salvo); na **apresentação**, no emoji do cartão ou no botão **Evolução** do cabeçalho do detalhe do Objetivo. Esc fecha só o gráfico. Funciona nos 3 temas.
+- Apresentação: o gráfico é só leitura; o cálculo e o código do gráfico são cópia fiel do painel (mantidos iguais). Removida uma função duplicada que sobrou da cópia do cálculo (sem efeito no resultado).
+- Testes: 14 cenários do gráfico no painel (7 tipos de situação: 1 ponto, mesma data, binário, sem atingimento, borda, Esc, rascunho) + 4 na apresentação; suítes anteriores verdes.
+
 ### painel-dev.html v3.102 · painel-dev — 2026-10-05 · feat(OKR): emoji do tipo de atingimento no cartão do Objetivo
 
 Pedido: na aba, o cartão do Objetivo passa a mostrar um emoji do **tipo de atingimento** configurado, no lugar do 📈 genérico ao lado do %: 💰 Financeira · 📊 Porcentagem · 🔢 Número · ✅ Atingido/Não atingido · ⬆️ Manter acima · ⬇️ Manter abaixo · 📅 Data de entrega (passar o mouse mostra o nome do tipo). O mesmo emoji aparece nas opções do seletor "Tipo de meta" no modal. Objetivo sem atingimento segue sem emoji (barra pelos marcos).
