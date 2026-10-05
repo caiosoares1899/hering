@@ -20538,6 +20538,20 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.96 · painel-dev — 2026-10-05 · feat(OKR): filtro por pessoa na aba + botão ✏️ visível pra editar itens
+
+Feedback direto do usuário ("falta um filtro por usuário na aba"; "depois que envia só tem como excluir, não tem como editar").
+- **Filtro por pessoa** na barra da aba 🎯 OKR (ao lado de Gerência/Período/Status): lista as pessoas que aparecem como responsáveis
+  na visão atual, mais "⭐ Eu". Um objetivo bate se a pessoa é responsável POR ELE ou por algum marco ATIVO dele (marco arquivado
+  não conta). Respeita "Ver arquivados", aparece em "✕ Limpar filtros" e a pessoa escolhida continua selecionada ao alternar entre
+  ativos e arquivados (senão o select mostraria "Todas" com filtro ainda ativo).
+- **Editar item**: a edição por clique no texto já existia (v3.68+), mas só aparecia como dica ao passar o mouse — no celular nem isso
+  — e o botão visível era só o ✕. Agora cada item das listas do Objetivo (indicadores, progressos, próximos passos, riscos, planos de
+  ação, trimestres) e do checklist do Marco ganhou um **✏️ Editar** ao lado do ✕, e o texto sublinha ao passar o mouse. Enter salva,
+  Esc cancela, igual antes.
+- Testado no Chromium com as funções reais (14 cenários: filtro incl. "Eu"/marco arquivado/arquivados/limpar, editor de lista e de
+  checklist, Esc). Ainda em dev.
+
 ### painel.html v3.95 · painel — 2026-10-05 · Promove pra prod — reforço de segurança (XSS via id em handler inline)
 
 Promoção do v3.95 de dev (pedido: "uma promoção agora com tudo acumulado"). Só a correção de segurança: 137 pontos do painel

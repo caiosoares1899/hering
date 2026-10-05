@@ -407,6 +407,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-list-item span{flex:1;}
 .okr-list-item button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;line-height:1;padding:2px 4px;}
 .okr-list-item button:hover{color:var(--danger);}
+.okr-list-item .okr-edit-btn:hover,.okr-checklist-row .okr-edit-btn:hover{color:var(--accent);}
+.okr-list-item-text:hover,.okr-checklist-item-text:hover{text-decoration:underline dotted;text-underline-offset:3px;}
 .okr-list-add{display:flex;gap:6px;margin-top:6px;}
 .okr-list-add input{flex:1;}
 .okr-marco-row{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);margin-bottom:6px;cursor:pointer;transition:background .15s;}
@@ -1849,6 +1851,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 10px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
       <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
+      <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
         <option value="">Todos os status</option>
         <option value="nao_iniciado">⚪ Não iniciado</option>
@@ -2964,7 +2967,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.95 · painel-dev</div>
+<div class="version">v3.96 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5032,7 +5035,7 @@ function okrStatusDot(id){ const s=okrStatusInfo(id); return `<span class="okr-d
 // ── Estado local (populado via _onValue, mesmo padrão de _globalUsersCache) ──
 let okrObjetivos = {};   // {id: objetivo}
 let okrMarcos = {};      // {id: marco}, marco.objetivoId aponta pro pai
-let _okrFilter = {area:'', trimestre:'', status:'', texto:''};
+let _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:''};
 // "Tem que ser possível arquivar OKRs e depois acessar eles por essa
 // guia" — pedido direto. Alterna a lista inteira entre ativos/arquivados
 // (não mistura os dois numa lista só) — mesmo espírito do filtro de
@@ -5570,11 +5573,19 @@ function _okrObjDragEnd(ev){
   _okrDraggedObjId = null;
 }
 
+// Filtro por pessoa (2026-10-05, feedback: "falta um filtro por usuário na aba"): o objetivo bate se a pessoa é
+// responsável POR ELE ou por algum marco ATIVO dele. '__eu' = quem está logado.
+function _okrFiltroPessoaUid(){ return _okrFilter.pessoa==='__eu' ? (window._currentUser?.uid||'') : _okrFilter.pessoa; }
+function _okrObjTemPessoa(o, uid){
+  if(!uid) return false;
+  if((o.responsaveis||[]).includes(uid)) return true;
+  return _okrObjMarcos(o.id).some(m=>m.responsavel===uid);
+}
 function _okrTemFiltroAtivo(){
-  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto);
+  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto || _okrFilter.pessoa);
 }
 function _okrClearFilters(){
-  _okrFilter = {area:'', trimestre:'', status:'', texto:''};
+  _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:''};
   const txt = document.getElementById('okr-filter-texto'); if(txt) txt.value = '';
   renderOkrObjetivos();
 }
@@ -5637,11 +5648,28 @@ function renderOkrObjetivos(){
       + trimestres.map(t=>`<option value="${esc(t)}"${t===cur?' selected':''}>${esc(t)}</option>`).join('');
   }
 
+  const pesSel = document.getElementById('okr-filter-pessoa');
+  if(pesSel){
+    // Só pessoas que aparecem como responsáveis na visão atual (ativos × arquivados); a escolhida entra sempre, senão o
+    // select mostraria "Todas" com um filtro ainda ativo ao alternar entre ativos e arquivados.
+    const uids = new Set();
+    Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados).forEach(o=>{
+      (o.responsaveis||[]).forEach(u=>{ if(u) uids.add(u); });
+      _okrObjMarcos(o.id).forEach(m=>{ if(m.responsavel) uids.add(m.responsavel); });
+    });
+    if(_okrFilter.pessoa && _okrFilter.pessoa!=='__eu') uids.add(_okrFilter.pessoa);
+    const pessoas = [...uids].map(u=>({uid:u, nome:_okrPessoaInfo(u).nome})).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+    pesSel.innerHTML = '<option value="">Todas as pessoas</option><option value="__eu">⭐ Eu</option>'
+      + pessoas.map(x=>`<option value="${esc(x.uid)}">${esc(x.nome)}</option>`).join('');
+    pesSel.value = _okrFilter.pessoa;
+  }
+
   if(!_okrLoaded){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; return; }
 
   let base = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
   if(_okrFilter.area) base = base.filter(o=>o.areaId===_okrFilter.area);
   if(_okrFilter.trimestre) base = base.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
+  if(_okrFilter.pessoa){ const _pu=_okrFiltroPessoaUid(); base = base.filter(o=>_okrObjTemPessoa(o,_pu)); }
   if(_okrFilter.texto){
     const t = _okrFilter.texto.toLowerCase();
     base = base.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
@@ -6218,7 +6246,7 @@ function _okrListEditorHtml(campo, label, placeholder){
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div class="okr-list-editable">
-      ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,${jsq(campo)},${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove(${jsq(campo)},${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
+      ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,${jsq(campo)},${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" class="okr-edit-btn" onclick="_okrListEditStart(this.closest('.okr-list-item').querySelector('.okr-list-item-text'),${jsq(campo)},${i})" title="Editar">✏️</button><button type="button" onclick="_okrListRemove(${jsq(campo)},${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd(${jsq(campo)});}">
@@ -6725,7 +6753,8 @@ function _okrChecklistHtml(){
       <div class="okr-checklist-row${it.done?' done':''}">
         <input type="checkbox" ${it.done?'checked':''} onchange="_okrChecklistToggle(${i})">
         <span class="okr-checklist-item-text" onclick="_okrChecklistEditStart(this,${i})" title="Clique para editar" style="cursor:pointer;">${esc(it.text)}</span>
-        <button type="button" onclick="_okrChecklistRemove(${i})" style="margin-left:auto;background:none;border:none;color:var(--txt3);cursor:pointer;">✕</button>
+        <button type="button" class="okr-edit-btn" onclick="_okrChecklistEditStart(this.closest('.okr-checklist-row').querySelector('.okr-checklist-item-text'),${i})" title="Editar" style="margin-left:auto;background:none;border:none;color:var(--txt3);cursor:pointer;">✏️</button>
+        <button type="button" onclick="_okrChecklistRemove(${i})" title="Remover" style="background:none;border:none;color:var(--txt3);cursor:pointer;">✕</button>
       </div>`).join('')}
     <div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-checklist-add" placeholder="Novo item…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrChecklistAdd();}">
