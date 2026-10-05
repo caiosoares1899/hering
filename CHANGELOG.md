@@ -20549,6 +20549,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.107 · painel-dev (+ guia-okr.html) — 2026-10-05 · docs(OKR): ❓ Ajuda do OKR e 📘 Guia OKR atualizados (atingimento, gráfico, modal por seções, filtros)
+
+Só documentação (nenhuma mudança de comportamento). Ajuda in-app (`okr-help-ov`, "❓ Ajuda" da aba OKR) e o guia standalone `guia-okr.html` (slides) passam a cobrir o que entrou nos últimos lotes.
+- **Ajuda in-app**: novos blocos **📈 Atingimento — a meta do Objetivo** (os 8 tipos, a fórmula do %, como registrar, quem pode), **📊 Gráfico de evolução**, **🎨 O modal do Objetivo** (seções coloridas + atalhos) e **🔎 Filtros e resumo da aba** (filtro por pessoa, % médio); ajustes em *Marcos e status* (cor = Marcos, barra = Atingimento), *Quem pode editar* (qualquer pessoa cadastrada no painel é responsável possível; chip 🛡️ ADM), *Histórico semanal* (mesmo % da barra) e *Apresentação* (emoji/gráfico). O bloco da Central Agente Ágil já dizia que ele lê/registra atingimento (v3.106).
+- **Guia OKR** (`guia-okr.html`, página sem `-dev`, vai direto ao ar ao mergear): 4 slides novos — **modal do Objetivo por seções**, **Escolha como o Objetivo é medido** (tabela dos tipos e do %), **Registrar o valor ao longo do tempo** e **Veja a evolução com data e valor** — com screenshots reais; ajustes na capa (badge 📈, ~12 min), visão geral, semáforo (cor × barra), lista de Objetivos (filtro por pessoa, resumo, emoji do tipo; o gif antigo foi trocado por screenshot atual), Marcos, Histórico, Agente Ágil (atingimento por chat), Apresentação e Permissões (+ linha de atingimento). O arquivo ficou ~1,2 MB menor (um gif antigo de 1,5 MB saiu).
+- O texto do guia sobre o **Agente Ágil registrar atingimento** vale depois do deploy das Cloud Functions `okrAgenteChat`/`okrWeeklySnapshot` (PR #1192).
+
 ### painel-dev.html v3.106 · painel-dev — 2026-10-05 · docs(OKR): Central Agente Ágil e ajuda dizem que o agente lê/registra o 📈 Atingimento
 
 Só texto: a introdução da 💬 Central Agente Ágil e a ajuda do OKR passam a explicar o que o agente faz com atingimento (ler, registrar, configurar; nunca inventa valor; confirma antes de trocar o tipo). Acompanha o deploy das Cloud Functions acima — antes do deploy o agente ainda responde só sobre marcos.
