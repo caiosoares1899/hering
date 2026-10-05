@@ -20538,6 +20538,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.101 · painel-dev — 2026-10-05 · fix(OKR/Atingimento): /monitorarbugs no 📈 Atingimento — clique perdido, valor digitado descartado ao Salvar, registros alheios sobrescritos (+4)
+
+Rodada de `/monitorarbugs` no código do atingimento (v3.100), horas depois de ele ir ao ar. 2 bugs reproduzidos num navegador de verdade antes de corrigir + 2 riscos achados lendo o fluxo de salvar.
+- **O clique no botão se perdia depois de editar um campo de configuração** (🐞 reproduzido): alterar a meta/valor inicial/uma data da faixa disparava `change` ao sair do campo, que **redesenhava a seção inteira** — o botão que a pessoa estava clicando (`+ Registrar`, `+ Adicionar data`) sumia no meio do clique e nada acontecia; só no 2º clique funcionava. Agora esses campos só atualizam o **%, o resumo e o histórico no lugar** (sem trocar o campo, foco e cursor preservados); só a troca de moeda redesenha.
+- **Digitar o valor e clicar em 💾 Salvar descartava o atingimento em silêncio** (🐞 reproduzido): "Objetivo salvo" aparecia, mas o valor digitado ficava só no campo e nunca virava registro. Agora o Salvar pergunta *"Você digitou um atingimento (65) que ainda não foi registrado. Registrar agora e salvar?"* — confirmando, registra e salva; valor inválido ou "cancelar" **não salva** e deixa o que foi digitado lá.
+- **Dois responsáveis lançando registros ao mesmo tempo se sobrescreviam**: o Salvar gravava o rascunho inteiro, então um registro lançado por outra pessoa enquanto o modal estava aberto era apagado. Agora faz *merge de 3 vias* (o que **eu** adicionei/removi vale; o que **outra pessoa** lançou é mantido, com aviso "📈 N registro(s) lançados por outra pessoa foram mantidos"), e o 📜 Histórico não atribui a registro alheio a quem salvou.
+- **Campo `undefined` no atingimento fazia o Firebase recusar a gravação do Objetivo inteiro**: o rascunho agora é sanitizado antes de gravar.
+- Testes: `bug_ating.js` (reprodução) + 12 cenários novos de regressão (clique logo após editar meta/faixa, % ao vivo, Salvar com valor pendente confirmar/cancelar/inválido, sem pendente, merge com registro alheio, `undefined`); suítes anteriores (27 UI, 4 apresentação, 50 motor, nav, filtro, pessoas) seguem verdes.
+
 ### painel-dev.html v3.100 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): 📈 Atingimento por tipo de meta, com histórico datado — a barra do Objetivo passa a andar por ele
 
 Pedido do chefe (benchmark: Feedz): um "atingimento" com tipos de meta; o % sai do tipo escolhido e dos registros lançados, e o histórico com

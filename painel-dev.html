@@ -3055,7 +3055,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.100 · painel-dev</div>
+<div class="version">v3.101 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6541,10 +6541,21 @@ async function _okrAtingOnTipo(){
   }
   _okrRerenderCurrentScreen();
 }
+// Mudou a MOEDA (select): re-renderiza tudo (os símbolos nos campos mudam).
 function _okrAtingCfgChange(){ _okrSyncObjDraftFromDom(); _okrRerenderCurrentScreen(); }
+// Mudou um campo de TEXTO/DATA da meta (inicial, meta, faixas): atualiza só o que depende dele (%, resumo, histórico) — NÃO re-renderiza o
+// formulário. O `change` dispara no blur, que acontece no mousedown do botão que a pessoa estava indo apertar ("+ Registrar", "+ Adicionar
+// data"); re-renderizar ali trocava o botão antes do `click` e o 1º clique se perdia (/monitorarbugs 2026-10-05).
+function _okrAtingCfgInput(){
+  _okrSyncObjDraftFromDom();
+  const at = _okrObjDraft && _okrObjDraft.atingimento; if(!_okrAtingConfigurado(at)) return;
+  const big = document.querySelector('#okr-sec-obj-atingimento .okr-ating-big'); if(big) big.textContent = _okrAtingPctObj(_okrObjDraft)+'%';
+  const res = document.getElementById('okr-ating-resumo-wrap'); if(res) res.innerHTML = _okrAtingResumoHtml(at);
+  const his = document.getElementById('okr-ating-hist-wrap'); if(his) his.innerHTML = _okrAtingHistWrapInner(at, true);
+}
 function _okrAtingFaixaAdd(){ _okrSyncObjDraftFromDom(); const at=_okrObjDraft.atingimento; if(!at) return; (at.datas=at.datas||[]).push({de:'',ate:'',pct:100}); _okrRerenderCurrentScreen(); }
 function _okrAtingFaixaRemove(i){ _okrSyncObjDraftFromDom(); const at=_okrObjDraft.atingimento; if(!at) return; at.datas.splice(i,1); _okrRerenderCurrentScreen(); }
-function _okrAtingAdd(){
+function _okrAtingAdd(quiet){
   _okrSyncObjDraftFromDom();
   const at = _okrObjDraft.atingimento; if(!_okrAtingConfigurado(at)) return;
   const f = _okrAtingForm;
@@ -6561,7 +6572,7 @@ function _okrAtingAdd(){
   (at.lancamentos = at.lancamentos||[]).push(l);
   _okrAtingForm = {data:'', valor:'', atingido:false, nota:''};
   _okrRerenderCurrentScreen();
-  showToast('📈 Atingimento registrado: '+_okrAtingPctDe(at,l)+'% — clique em 💾 Salvar pra publicar.');
+  if(!quiet) showToast('📈 Atingimento registrado: '+_okrAtingPctDe(at,l)+'% — clique em 💾 Salvar pra publicar.');
 }
 function _okrAtingRemove(id){
   _okrSyncObjDraftFromDom();
@@ -6597,6 +6608,9 @@ function _okrAtingHistoricoHtml(at, podeEditar){
       ${podeEditar?`<button type="button" class="okr-ating-x" onclick="_okrAtingRemove(${jsq(l.id)})" title="Remover este registro">✕</button>`:''}
     </div>`).join('')}</div>`;
 }
+function _okrAtingHistWrapInner(at, podeEditar){
+  return `<div class="okr-ating-hist-hd"><span>Histórico de atingimentos</span>${_okrAtingSparkHtml(at)}</div>` + _okrAtingHistoricoHtml(at, podeEditar);
+}
 function _okrAtingResumoHtml(at){
   const pct = _okrAtingPctObj({atingimento:at}); const un = _okrAtingUnidade(at); const l = _okrAtingAtual(at);
   let linha;
@@ -6612,7 +6626,7 @@ function _okrAtingConfigHtml(at){
   const t = at.tipo, un = _okrAtingUnidade(at), sym = (OKR_ATING_MOEDAS[un]||{}).sym||'';
   const moedaOpts = ks => ks.map(k=>`<option value="${k}"${at.moeda===k?' selected':''}>${esc(OKR_ATING_MOEDAS[k].label)}</option>`).join('');
   const campo = (rotulo, corpo)=>`<div class="okr-ating-f"><label class="okr-ating-lbl">${rotulo}</label>${corpo}</div>`;
-  const num = (id, val, off)=>`<div class="okr-ating-num"><input type="text" inputmode="decimal" class="okr-input" id="${id}" value="${esc(_okrAtingNumInput(val))}" ${off?'disabled':''} onchange="_okrAtingCfgChange()"><span class="okr-ating-sym">${esc(sym)}</span></div>`;
+  const num = (id, val, off)=>`<div class="okr-ating-num"><input type="text" inputmode="decimal" class="okr-input" id="${id}" value="${esc(_okrAtingNumInput(val))}" ${off?'disabled':''} onchange="_okrAtingCfgInput()"><span class="okr-ating-sym">${esc(sym)}</span></div>`;
   let h = '';
   if(t==='financeira') h += campo('Tipo de moeda', `<select class="okr-select" id="okr-ating-moeda" onchange="_okrAtingCfgChange()">${moedaOpts(['BRL','USD','EUR'])}</select>`);
   if(t==='porcentagem') h += campo('Tipo de moeda', `<select class="okr-select" id="okr-ating-moeda" disabled><option>Porcentagem (%)</option></select>`);
@@ -6626,8 +6640,8 @@ function _okrAtingConfigHtml(at){
     datas = `<div class="okr-ating-datas"><div class="okr-ating-datas-t">Definição das datas</div>
       <div class="okr-ating-hint">Configure as faixas de data que definem o status desta meta. Qualquer entrega fora das faixas vale <b>0%</b>.</div>
       ${(at.datas||[]).map((f,i)=>`<div class="okr-ating-faixa"><div class="okr-ating-faixa-hd"><b>${i+1}ª data</b>${(at.datas.length>1)?`<button type="button" class="okr-ating-x" onclick="_okrAtingFaixaRemove(${i})" title="Remover esta faixa">✕</button>`:''}</div>
-        <div class="okr-ating-faixa-g"><div class="okr-ating-f"><label class="okr-ating-lbl">Se atingido entre as datas</label><div class="okr-ating-entre"><input type="date" class="okr-input" id="okr-ating-fx-de-${i}" value="${esc(f.de||'')}" onchange="_okrAtingCfgChange()"><span>e</span><input type="date" class="okr-input" id="okr-ating-fx-ate-${i}" value="${esc(f.ate||'')}" onchange="_okrAtingCfgChange()"></div></div>
-        <div class="okr-ating-f"><label class="okr-ating-lbl">O status (%) da meta será</label><div class="okr-ating-num"><input type="text" inputmode="decimal" class="okr-input" id="okr-ating-fx-pct-${i}" value="${esc(_okrAtingNumInput(f.pct))}" onchange="_okrAtingCfgChange()"><span class="okr-ating-sym">%</span></div></div></div></div>`).join('')}
+        <div class="okr-ating-faixa-g"><div class="okr-ating-f"><label class="okr-ating-lbl">Se atingido entre as datas</label><div class="okr-ating-entre"><input type="date" class="okr-input" id="okr-ating-fx-de-${i}" value="${esc(f.de||'')}" onchange="_okrAtingCfgInput()"><span>e</span><input type="date" class="okr-input" id="okr-ating-fx-ate-${i}" value="${esc(f.ate||'')}" onchange="_okrAtingCfgInput()"></div></div>
+        <div class="okr-ating-f"><label class="okr-ating-lbl">O status (%) da meta será</label><div class="okr-ating-num"><input type="text" inputmode="decimal" class="okr-input" id="okr-ating-fx-pct-${i}" value="${esc(_okrAtingNumInput(f.pct))}" onchange="_okrAtingCfgInput()"><span class="okr-ating-sym">%</span></div></div></div></div>`).join('')}
       <button type="button" class="btn btn-sm okr-ating-addfx" onclick="_okrAtingFaixaAdd()">+ Adicionar data</button></div>`;
   }
   return `<div class="okr-ating-grid">${h}</div>${datas}`;
@@ -6660,8 +6674,8 @@ function _okrAtingSectionHtml(podeEditar){
     const tl = (OKR_ATING_TIPOS.find(x=>x.id===at.tipo)||{}).label||at.tipo;
     return head + `<div class="okr-ating-tipo-ro">${esc(tl)}</div>` + _okrAtingResumoHtml(at) + _okrAtingSparkHtml(at) + _okrAtingHistoricoHtml(at,false) + '</section>';
   }
-  return head + tipoSel + _okrAtingConfigHtml(at) + _okrAtingResumoHtml(at) + _okrAtingFormHtml(at)
-    + `<div class="okr-ating-hist-hd"><span>Histórico de atingimentos</span>${_okrAtingSparkHtml(at)}</div>` + _okrAtingHistoricoHtml(at,true) + '</section>';
+  return head + tipoSel + _okrAtingConfigHtml(at) + `<div id="okr-ating-resumo-wrap">${_okrAtingResumoHtml(at)}</div>` + _okrAtingFormHtml(at)
+    + `<div id="okr-ating-hist-wrap">${_okrAtingHistWrapInner(at,true)}</div></section>`;
 }
 // Diff do atingimento pro 📜 Histórico do Objetivo (configuração + registros que entraram/saíram).
 function _okrDiffAtingimento(draft, before){
@@ -7009,6 +7023,28 @@ function renderOkrObjConfigBody(){
 async function saveOkrObjetivo(){
   _okrSyncObjDraftFromDom();
   const d = _okrObjDraft;
+  // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
+  if(_okrAtingConfigurado(d.atingimento) && _okrAtingForm){
+    const f=_okrAtingForm, t=d.atingimento.tipo;
+    const pend = t==='binario' ? !!f.atingido : (t==='data' ? false : String(f.valor||'').trim()!=='');
+    if(pend){
+      const desc = t==='binario' ? 'Meta atingida' : f.valor;
+      if(!await uiConfirm('Você digitou um atingimento ('+desc+') que ainda não foi registrado. Registrar agora e salvar?', {okText:'Registrar e salvar'})) return;
+      const antes=(d.atingimento.lancamentos||[]).length;
+      _okrAtingAdd(true);
+      if(((_okrObjDraft.atingimento&&_okrObjDraft.atingimento.lancamentos)||[]).length<=antes) return;   // valor inválido: _okrAtingAdd já avisou; não salva
+      return saveOkrObjetivo();                                                                          // reentra já com o registro no rascunho e o formulário limpo
+    }
+  }
+  // Registros lançados por OUTRA pessoa enquanto este modal estava aberto (o listener ao vivo já os trouxe pra okrObjetivos): o Salvar grava o
+  // rascunho INTEIRO e os apagaria. Mantém o que não existia na abertura e não é meu; remoções que EU fiz continuam valendo.
+  if(_okrEditingObjId && _okrAtingConfigurado(d.atingimento)){
+    let baseIds=new Set(); try{ baseIds=new Set(((JSON.parse(_okrObjOpenSnapshot||'{}').atingimento||{}).lancamentos||[]).map(l=>l&&l.id)); }catch(e){}
+    const meus=new Set((d.atingimento.lancamentos||[]).map(l=>l&&l.id));
+    const alheios=(((okrObjetivos[_okrEditingObjId]||{}).atingimento||{}).lancamentos||[]).filter(l=>l&&l.id&&!baseIds.has(l.id)&&!meus.has(l.id));
+    if(alheios.length){ d.atingimento.lancamentos=(d.atingimento.lancamentos||[]).concat(JSON.parse(JSON.stringify(alheios))); showToast('📈 '+alheios.length+' registro(s) de atingimento lançado(s) por outra pessoa foram mantidos.'); }
+  }
+  if(_okrAtingConfigurado(d.atingimento)) d.atingimento = JSON.parse(JSON.stringify(d.atingimento));   // tira `undefined` (o Firebase recusa a gravação INTEIRA com um só)
   d.titulo = (d.titulo||'').trim();
   d.pilar = (d.pilar||'').trim();
   d.descricao = (d.descricao||'').trim();

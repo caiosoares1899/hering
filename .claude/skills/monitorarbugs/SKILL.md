@@ -2884,6 +2884,18 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   falha, listar primeiro TODO caso que hoje falha em silêncio de propósito (ou por acidente) — "falhar em
   silêncio" e "funcionar" são indistinguíveis até alguém passar a olhar o resultado. E o simulador de
   regras precisa avaliar `.validate`, não só `.read`/`.write`, antes de ser tratado como prova.
+- **2026-10-05, 📈 Atingimento + modal do OKR (v3.98–3.100, pedido "ficou MUITO foda... roda um
+  /monitorarbugs", minutos depois de a feature ir ao ar)**: 4 achados, 2 reproduzidos em Playwright
+  ANTES de corrigir. (1) `change` num campo de config re-renderizava a seção inteira no blur — comeu o
+  clique do botão que a pessoa ia apertar (`+ Registrar`/`+ Adicionar data`): precisava de 2 cliques;
+  (2) digitar valor + Salvar dizia "salvo" e descartava o valor (nunca virou registro); (3) Salvar grava o
+  rascunho inteiro → registro lançado por OUTRO responsável com o modal aberto era sobrescrito
+  (lista colaborativa em save de documento inteiro → merge de 3 vias com o snapshot de abertura);
+  (4) `undefined` no rascunho faz o RTDB recusar o objeto todo. painel-dev v3.101. **Lição**: handler
+  `change` que re-renderiza no blur come o clique do botão seguinte (atualizar no lugar, não redesenhar);
+  valor digitado e ainda não "adicionado" precisa ser registrado/confirmado no Salvar; save de
+  documento inteiro precisa mesclar listas que mais de uma pessoa acrescenta.
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
