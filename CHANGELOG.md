@@ -20538,6 +20538,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.98 · painel-dev — 2026-10-05 · fix(OKR, UI/UX): seções dos modais na paleta do 🌴 Vice City
+
+A v3.97 só foi conferida nos temas escuro e claro. No Vice City as cores fixas das seções (azul/verde/roxo vivos) ficavam legíveis mas
+brigavam com a paleta quente do tema (pêssego/lavanda/rosa/laranja — o próprio tema proíbe "azul genérico"), e o cartão de resumo e o brilho
+de foco das caixas de texto usavam azul fixo. Agora o Vice City tem a própria paleta de seções (Indicadores pêssego, Progressos menta,
+Próximos passos lavanda, Riscos laranja, Planos de ação rosa, Marcos areia, Comentários pêssego, neutros malva — pastéis sobre o vinho,
+cada tipo ainda distinto) e o foco/resumo usam o token `--okr-focus-rgb` por tema (azul no escuro, azul-petróleo no claro, pêssego no
+Vice City). Só CSS. Conferido nos 3 temas por captura de tela; os 25 cenários de teste seguem ✅.
+
 ### painel-dev.html v3.97 · painel-dev — 2026-10-05 · feat(OKR, UI/UX): modais com seções coloridas, caixas de texto em destaque e atalhos fixos no cabeçalho
 
 Feedback do chefe: "o layout do modal é muito igual, tudo no mesmo tom — destacar as áreas e as caixas de texto", e pedido de botões no
