@@ -3075,7 +3075,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.103 · painel-dev</div>
+<div class="version">v3.104 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5616,6 +5616,7 @@ const OKR_ATING_TIPOS = [
   {id:'acima', ico:'⬆️', label:'Manter acima de'},
   {id:'abaixo', ico:'⬇️', label:'Manter abaixo de'},
   {id:'data', ico:'📅', label:'Data de entrega'},
+  {id:'perene', ico:'♾️', label:'Perene (acompanha pelos marcos)'},
 ];
 const OKR_ATING_MOEDAS = {
   BRL:{label:'Real (R$)', sym:'R$', cur:'BRL'}, USD:{label:'Dólar (US$)', sym:'US$', cur:'USD'}, EUR:{label:'Euro (€)', sym:'€', cur:'EUR'},
@@ -5686,6 +5687,7 @@ function _okrAtingAtual(at){
 function _okrAtingPctObj(o){
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at)) return null;
+  if(at.tipo==='perene') return null;          // ♾️ perene: sem meta nem registros — a barra continua pelos marcos
   const l = _okrAtingAtual(at);
   return l ? _okrAtingPctDe(at, l) : 0;
 }
@@ -5937,7 +5939,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
-      <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`<button type="button" class="okr-ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução" onclick="event.stopPropagation();openOkrAtingChart(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> <b>${viaAting}%</b> · `:''}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
+      <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`<button type="button" class="okr-ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução" onclick="event.stopPropagation();openOkrAtingChart(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> <b>${viaAting}%</b> · `:(o.atingimento&&o.atingimento.tipo==='perene'?`<span title="Perene — a barra acompanha os marcos">♾️</span> `:'')}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
     </div>
     <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;background:${okrStatusInfo(status).dot};" title="${viaAting!==null?pct+'% de atingimento':pct+'% dos marcos concluídos'}"></div></div>
   </div>`;
@@ -6558,7 +6560,7 @@ async function _okrAtingOnTipo(){
   } else if(!_okrAtingConfigurado(at)){
     _okrObjDraft.atingimento = _okrAtingNovo(novo);
   } else if(at.tipo!==novo){
-    if(nReg && !await uiConfirm('Trocar o tipo recalcula o % dos '+nReg+' registro(s) já lançado(s) pelas regras do novo tipo. Continuar?', {okText:'Trocar tipo'})){ _okrRerenderCurrentScreen(); return; }
+    if(nReg && !await uiConfirm(novo==='perene' ? 'O tipo Perene não usa registros: os '+nReg+' já lançado(s) ficam guardados, mas a barra passa a andar pelos marcos. Continuar?' : 'Trocar o tipo recalcula o % dos '+nReg+' registro(s) já lançado(s) pelas regras do novo tipo. Continuar?', {okText:'Trocar tipo'})){ _okrRerenderCurrentScreen(); return; }
     _okrAtingAplicarTipo(at, novo);
   }
   _okrRerenderCurrentScreen();
@@ -6705,6 +6707,7 @@ function _okrAtingTipOff(el){
 function _okrAtingChartPanelHtml(o){
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at)) return '<div class="okr-ating-chart-vazio">Este Objetivo ainda não tem atingimento configurado.</div>';
+  if(at.tipo==='perene') return '<div class="okr-ating-chart-vazio">♾️ Objetivo perene — a barra acompanha as entregas dos Marcos; não há gráfico de atingimento.</div>';
   return `<div class="okr-ating-chartpanel okr-sec-ating">
     <div class="okr-ating-tipo-ro">${_okrAtingTipoIco(at.tipo)} ${esc(_okrAtingTipoLabel(at.tipo))}</div>
     ${_okrAtingResumoHtml(at)}
@@ -6713,7 +6716,6 @@ function _okrAtingChartPanelHtml(o){
     ${_okrAtingHistoricoHtml(at,false)}
   </div>`;
 }
-
 function openOkrAtingChart(objId){
   const ov = document.getElementById('okr-ating-chart-ov'); if(!ov) return;
   const emEdicao = _okrEditingObjId===objId && _okrObjDraft && document.getElementById('okr-obj-ov').classList.contains('open');
@@ -6778,16 +6780,26 @@ function _okrAtingFormHtml(at){
     </div>
     <div style="display:flex;justify-content:flex-end;margin-top:8px;"><button type="button" class="btn btn-sm okr-ating-addbtn" onclick="_okrAtingAdd()">+ Registrar</button></div></div>`;
 }
+// ♾️ Perene: objetivo contínuo, sem meta final nem registros de valor — a barra do Objetivo acompanha as entregas dos Marcos.
+function _okrAtingPereneHtml(objId){
+  const marcos = objId ? _okrObjMarcos(objId) : [];
+  const conc = marcos.filter(m=>m.progresso==='concluido').length, pct = marcos.length ? Math.round(conc/marcos.length*100) : 0;
+  return `<div class="okr-ating-tipo-ro">♾️ Perene — sem meta final nem registros de valor</div>
+    <div class="okr-ating-resumo"><div class="okr-ating-resumo-txt">A barra do Objetivo <b>acompanha as entregas dos Marcos</b> e volta a ser analisada a cada marco que avança. ${marcos.length?`Agora: <b>${conc}/${marcos.length}</b> marco(s) concluído(s) · <b>${pct}%</b>.`:'Ainda não há Marcos cadastrados.'}</div>
+    <div class="okr-ating-bar"><div class="okr-ating-bar-fill" style="width:${pct}%;"></div></div></div>`;
+}
 function _okrAtingSectionHtml(podeEditar){
   const d = _okrObjDraft, at = d.atingimento, cfg = _okrAtingConfigurado(at);
   if(!podeEditar && !cfg) return '';
-  const pct = cfg ? _okrAtingPctObj(d) : null;
-  const n = cfg ? (at.lancamentos||[]).length : 0;
-  const head = `<section class="okr-sec okr-sec-ating" id="okr-sec-obj-atingimento"><div class="okr-sec-hd"><span class="okr-sec-ico">📈</span><span>Atingimento</span>${n?`<span class="okr-sec-count">${n}</span>`:''}${cfg?`<span class="okr-ating-big">${pct}%</span>`:''}</div>`;
+  const perene = cfg && at.tipo==='perene';
+  const pct = cfg && !perene ? _okrAtingPctObj(d) : null;
+  const n = cfg && !perene ? (at.lancamentos||[]).length : 0;
+  const head = `<section class="okr-sec okr-sec-ating" id="okr-sec-obj-atingimento"><div class="okr-sec-hd"><span class="okr-sec-ico">📈</span><span>Atingimento</span>${n?`<span class="okr-sec-count">${n}</span>`:''}${cfg&&!perene?`<span class="okr-ating-big">${pct}%</span>`:''}${perene?`<span class="okr-sec-count">♾️ perene</span>`:''}</div>`;
   const tipoSel = podeEditar ? `<div class="okr-ating-f" style="margin-bottom:8px;"><label class="okr-ating-lbl">Tipo de meta</label>
       <select class="okr-select" id="okr-ating-tipo" onchange="_okrAtingOnTipo()"><option value="">Sem atingimento — a barra anda pelos marcos</option>
       ${OKR_ATING_TIPOS.map(x=>`<option value="${x.id}"${cfg&&at.tipo===x.id?' selected':''}>${x.ico} ${esc(x.label)}</option>`).join('')}</select></div>` : '';
   if(!cfg) return head + tipoSel + `<div style="font-size:11px;color:var(--txt3);line-height:1.5;">Defina uma meta (financeira, %, número, atingido/não atingido, manter acima/abaixo ou data de entrega) e registre o atingimento ao longo do tempo: a barra do Objetivo passa a andar por ele.</div></section>`;
+  if(perene) return head + tipoSel + _okrAtingPereneHtml(d.id) + '</section>';
   if(!podeEditar){
     const tl = (OKR_ATING_TIPOS.find(x=>x.id===at.tipo)||{}).label||at.tipo;
     return head + `<div class="okr-ating-tipo-ro">${esc(tl)}</div>` + _okrAtingResumoHtml(at) + _okrAtingSparkHtml(at) + _okrAtingHistoricoHtml(at,false) + '</section>';
@@ -7144,7 +7156,7 @@ async function saveOkrObjetivo(){
   // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
   if(_okrAtingConfigurado(d.atingimento) && _okrAtingForm){
     const f=_okrAtingForm, t=d.atingimento.tipo;
-    const pend = t==='binario' ? !!f.atingido : (t==='data' ? false : String(f.valor||'').trim()!=='');
+    const pend = t==='binario' ? !!f.atingido : ((t==='data'||t==='perene') ? false : String(f.valor||'').trim()!=='');
     if(pend){
       const desc = t==='binario' ? 'Meta atingida' : f.valor;
       if(!await uiConfirm('Você digitou um atingimento ('+desc+') que ainda não foi registrado. Registrar agora e salvar?', {okText:'Registrar e salvar'})) return;
