@@ -3619,7 +3619,9 @@ input[type="date"]{-moz-appearance:textfield;}
       <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
       Entrar com Microsoft
     </button>
-    <div style="margin-top:10px;font-size:11px;color:var(--txt3);">Primeira vez? <button onclick="doSignIn(true)" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Inscrever-se no quadro</button></div>
+    <!-- "Primeira vez? Inscrever-se no quadro" removido (2026-10-05): o atalho sempre abria o login do GOOGLE, então quem
+         entrava direto por Microsoft/conta pessoal nunca via a tela de inscrição. Agora o próprio login detecta usuário
+         novo e abre a inscrição (ver autoRegistrar()), com qualquer provedor. -->
     <div style="margin-top:8px;font-size:11px;color:var(--txt3);">Externo autorizado com hotmail/outlook? <button onclick="doSignInMicrosoftPessoal()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Entrar com conta pessoal Microsoft</button></div>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
@@ -3640,7 +3642,7 @@ input[type="date"]{-moz-appearance:textfield;}
       <label class="fl">Suas iniciais no board</label>
       <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;" oninput="this.value=this.value.toUpperCase();document.getElementById('insc-init-err').style.display='none'">
     </div>
-    <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong>Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
+    <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong id="insc-role">Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
       <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
@@ -6461,7 +6463,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.784-dev</div>
+<div class="version">v8.30.785-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11717,7 +11719,7 @@ function autoRegistrar(user){
         try{ await fbSet('kanban/usuarios_publicos/'+user.uid,{
           nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
           role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
-        try{ safeLS.setItem('cad_welcome', newRole); }catch(e){}
+        try{ safeLS.setItem('cad_welcome', newRole); safeLS.setItem('cad_insc','1'); }catch(e){}
         const _f=location.pathname.split('/').pop()||'kanban.html';
         if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)); else location.reload();
         return;
@@ -11736,11 +11738,14 @@ function autoRegistrar(user){
       members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:newRole});
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
-      if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
+      // Usuário NOVO sempre vê a inscrição (iniciais), com qualquer provedor — antes só quem clicava em "Primeira vez?".
+      window._pendingInsc=false; mostrarInscricao(user,{init,role:newRole});
     } else {
       // Boas-vindas adiadas pelo reload do 1º cadastro (ver ramo acima)
       try{ const _w=safeLS.getItem('cad_welcome'); if(_w){ safeLS.removeItem('cad_welcome');
         setTimeout(()=>showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+_w+'.'),1500); } }catch(e){}
+      // Inscrição (iniciais) do usuário novo, adiada pelo reload do 1º cadastro
+      try{ if(safeLS.getItem('cad_insc')){ safeLS.removeItem('cad_insc'); setTimeout(()=>mostrarInscricao(user,existe),1200); } }catch(e){}
       // Externo autorizado NESTE squad (o gate de auth-change já conferiu a lista) mas sem a matrícula nele em
       // usuarios/{uid}/squads: as regras negam a leitura do squad → board vazio. Matricula e recarrega 1x.
       if(_urlParams.get('squad') && !isAdmUser(user) && !_isTrustedDomainEmail(user.email)
@@ -11826,6 +11831,8 @@ function mostrarInscricao(user,dados){
   document.getElementById('insc-nome').textContent=user.displayName||user.email;
   document.getElementById('insc-email').textContent=user.email;
   document.getElementById('insc-init').value=init;
+  const _rl=window._currentUserRole||dados?.role||'membro';
+  document.getElementById('insc-role').textContent=({membro:'Membro',convidado:'Convidado',po:'PO',organizador:'Organizador',adm:'ADM'})[_rl]||_rl;
   const f=document.getElementById('insc-foto'); if(user.photoURL){f.src=user.photoURL;f.style.display='block';}
   document.getElementById('insc-ov').classList.add('open');
 }
@@ -11881,12 +11888,15 @@ async function confirmarInscricao(){
     console.warn('[confirmarInscricao] kanban/init_registry indisponível, seguindo só com a checagem local:', e);
   }
 
-  const sqUpd={init,inscrito:true,role:'membro',inscritoEm:new Date().toISOString()};
+  // Papel: mantém o que o cadastro já definiu (convidado p/ externo, membro p/ domínio confiável, adm...). Antes gravava
+  // 'membro' SEMPRE — com a inscrição agora aberta pra todo usuário novo, isso promoveria externo a membro sozinho.
+  const _papelIns=window._currentUserRole||'membro';
+  const sqUpd={init,inscrito:true,role:_papelIns,inscritoEm:new Date().toISOString()};
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
-    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:'membro'});
+    members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});
   window._currentUserInit=init;
   fbSaveAll(undefined, []); // só inscreve membro, nenhum card muda
   closeOv('insc-ov');
