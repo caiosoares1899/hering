@@ -38,6 +38,13 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.783-dev — 2026-10-05 · fix(login): externo não vê mais "Uncaught Permission denied" ao ler ADMs extras
+
+A leitura de `kanban/config/adm_emails` no boot não tinha `.catch`. Externo não tem leitura de `kanban/config`
+pelas regras, então todo login dele gerava um "Uncaught (in promise): Permission denied" e uma tentativa de gravar
+em `error_logs` (também negada). Sem efeito funcional, só ruído no console. Adicionado `.catch` vazio. Os avisos
+de `presence` continuam: pelas regras, gravar presença é só para `@ciahering`/`@arezzo`.
+
 ### v8.30.782-dev — 2026-10-05 · fix(login): 1º login de externo caía em registro parcial e ficava com o board vazio
 
 **Cenário real:** externo autorizado (conta Microsoft pessoal) entrou, mas o board abriu vazio com
