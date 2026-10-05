@@ -20538,6 +20538,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.105 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · fix(OKR/Atingimento): /monitorarbugs no gráfico de evolução e no tipo Perene (+3)
+
+Rodada de `/monitorarbugs` nas entregas do dia (emoji do tipo, gráfico de evolução, ♾️ Perene, cópia na apresentação). 3 achados, todos reproduzidos num navegador antes de corrigir.
+- **Apresentação: Objetivo Perene mostrava o botão "♾️ Evolução"** no cabeçalho do detalhe, que abria um painel sem gráfico (Perene não tem registros). Agora o botão só aparece quando há gráfico a mostrar.
+- **Dica do gráfico ficava presa em tela de toque**: tocar num ponto mostra a dica, mas toque não dispara "mouse saiu", então ela só sumia ao tocar em outro ponto. Agora tocar em área vazia do gráfico esconde a dica (painel e apresentação).
+- **Botão "📈 Gráfico" do modal em Objetivo ainda sem id** (rascunho) não abria nada, porque dependia do id do Objetivo. Agora, chamado de dentro do modal, sempre usa o rascunho (inclusive o registro ainda não salvo).
+- Verificado e sem achado: fuzz de 600 atingimentos com valores/datas estranhos (texto, `NaN`, `null`, 1e12, datas vazias/ausentes) e texto hostil em nota/autor — sem exceção, `NaN`/`undefined` no SVG nem XSS; o bloco do gráfico e as 12 funções copiadas ficaram **idênticos** no painel e na apresentação (virou teste permanente de paridade).
+
 ### painel-dev.html v3.104 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): ♾️ tipo de atingimento "Perene" — a barra volta a andar pelos marcos
 
 Pedido: um tipo **perene**, para objetivo contínuo (sem meta final nem data de entrega), que **volta a ser analisado a partir dos marcos**.

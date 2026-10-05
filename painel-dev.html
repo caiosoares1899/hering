@@ -3075,7 +3075,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.104 · painel-dev</div>
+<div class="version">v3.105 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6633,7 +6633,7 @@ function _okrAtingHistoricoHtml(at, podeEditar){
     </div>`).join('')}</div>`;
 }
 function _okrAtingHistWrapInner(at, podeEditar){
-  return `<div class="okr-ating-hist-hd"><span>Histórico de atingimentos</span>${_okrAtingSparkHtml(at)}${(at.lancamentos||[]).length?`<button type="button" class="okr-ating-ico" onclick="openOkrAtingChart(${jsq(_okrEditingObjId)})" title="Abrir o gráfico de evolução (data e valor)">📈 Gráfico</button>`:''}</div>` + _okrAtingHistoricoHtml(at, podeEditar);
+  return `<div class="okr-ating-hist-hd"><span>Histórico de atingimentos</span>${_okrAtingSparkHtml(at)}${(at.lancamentos||[]).length?`<button type="button" class="okr-ating-ico" onclick="openOkrAtingChart(null,true)" title="Abrir o gráfico de evolução (data e valor)">📈 Gráfico</button>`:''}</div>` + _okrAtingHistoricoHtml(at, podeEditar);
 }
 // ── 📈 Gráfico de evolução do atingimento (MESMO código em painel-dev.html e okr-apresentacao.slide.html — manter igual) ──
 // Tipos numéricos (Financeira/%/Número/Manter acima/abaixo) plotam o VALOR registrado, com a linha da meta; Atingido/Não atingido e
@@ -6688,7 +6688,7 @@ function _okrAtingChartHtml(at){
   let ultX = -1e9; const xl = [];
   idx.forEach((i,k)=>{ const x=X(i); if(x-ultX>=70 || k===idx.length-1){ if(k===idx.length-1 && xl.length && x-ultX<70) xl.pop(); xl.push(i); ultX=x; } });
   const xHtml = xl.map(i=>`<text x="${X(i).toFixed(1)}" y="${H-pb+18}" text-anchor="${i===0&&n>1?'start':(i===n-1&&n>1?'end':'middle')}" font-size="10" fill="currentColor" fill-opacity=".6">${esc(_okrAtingDataBR(ls[i].em))}</text>`).join('');
-  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
+  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo" onclick="if(!event.target.closest('.okr-ating-pt'))_okrAtingTipOff(this)">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
 }
 function _okrAtingTip(el){
   const box = el.closest('.okr-ating-chart'); if(!box) return;
@@ -6716,9 +6716,9 @@ function _okrAtingChartPanelHtml(o){
     ${_okrAtingHistoricoHtml(at,false)}
   </div>`;
 }
-function openOkrAtingChart(objId){
+function openOkrAtingChart(objId, doRascunho){
   const ov = document.getElementById('okr-ating-chart-ov'); if(!ov) return;
-  const emEdicao = _okrEditingObjId===objId && _okrObjDraft && document.getElementById('okr-obj-ov').classList.contains('open');
+  const emEdicao = !!_okrObjDraft && (doRascunho || (_okrEditingObjId===objId && document.getElementById('okr-obj-ov').classList.contains('open')));   // doRascunho = chamado de dentro do modal (vale até pra Objetivo ainda sem id)
   const o = emEdicao ? _okrObjDraft : okrObjetivos[objId]; if(!o) return;     // com o modal aberto, mostra o rascunho (inclui registro ainda não salvo)
   const at = o.atingimento;
   document.getElementById('okr-ating-chart-title').textContent = (_okrAtingConfigurado(at)?_okrAtingTipoIco(at.tipo):'📈')+' Evolução do atingimento — '+(o.titulo||'Objetivo');
