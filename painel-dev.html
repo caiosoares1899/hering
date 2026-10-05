@@ -3055,7 +3055,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.101 · painel-dev</div>
+<div class="version">v3.102 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5589,13 +5589,13 @@ function _okrObjStatus(objId){
 // Esta seção é PURA (sem DOM) e tem uma cópia mínima em okr-apresentacao.slide.html (atingPct) — manter as duas iguais.
 /* ATING-ENGINE-BEGIN */
 const OKR_ATING_TIPOS = [
-  {id:'financeira', label:'Financeira'},
-  {id:'porcentagem', label:'Porcentagem (%)'},
-  {id:'numero', label:'Número (#)'},
-  {id:'binario', label:'Atingido/Não atingido (0%/100%)'},
-  {id:'acima', label:'Manter acima de'},
-  {id:'abaixo', label:'Manter abaixo de'},
-  {id:'data', label:'Data de entrega'},
+  {id:'financeira', ico:'💰', label:'Financeira'},
+  {id:'porcentagem', ico:'📊', label:'Porcentagem (%)'},
+  {id:'numero', ico:'🔢', label:'Número (#)'},
+  {id:'binario', ico:'✅', label:'Atingido/Não atingido (0%/100%)'},
+  {id:'acima', ico:'⬆️', label:'Manter acima de'},
+  {id:'abaixo', ico:'⬇️', label:'Manter abaixo de'},
+  {id:'data', ico:'📅', label:'Data de entrega'},
 ];
 const OKR_ATING_MOEDAS = {
   BRL:{label:'Real (R$)', sym:'R$', cur:'BRL'}, USD:{label:'Dólar (US$)', sym:'US$', cur:'USD'}, EUR:{label:'Euro (€)', sym:'€', cur:'EUR'},
@@ -5627,6 +5627,8 @@ function _okrFmtNum(n, unidade){
   if(unidade==='PCT') return new Intl.NumberFormat('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}).format(n)+' %';
   return new Intl.NumberFormat('pt-BR',{maximumFractionDigits:2}).format(n);
 }
+function _okrAtingTipoIco(t){ return (OKR_ATING_TIPOS.find(x=>x.id===t)||{}).ico||'📈'; }
+function _okrAtingTipoLabel(t){ return (OKR_ATING_TIPOS.find(x=>x.id===t)||{}).label||t; }
 function _okrAtingConfigurado(at){ return !!(at && at.tipo && OKR_ATING_TIPOS.some(t=>t.id===at.tipo)); }
 // % (0–100, inteiro) de UM registro, segundo a configuração. Valores além da meta travam em 100; abaixo do início, em 0.
 function _okrAtingPctDe(at, l){
@@ -5915,7 +5917,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     </div>
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
-      <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`📈 <b>${viaAting}%</b> · `:''}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
+      <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`<span title="Atingimento: ${esc(_okrAtingTipoLabel(o.atingimento.tipo))}">${_okrAtingTipoIco(o.atingimento.tipo)}</span> <b>${viaAting}%</b> · `:''}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
     </div>
     <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;background:${okrStatusInfo(status).dot};" title="${viaAting!==null?pct+'% de atingimento':pct+'% dos marcos concluídos'}"></div></div>
   </div>`;
@@ -6668,7 +6670,7 @@ function _okrAtingSectionHtml(podeEditar){
   const head = `<section class="okr-sec okr-sec-ating" id="okr-sec-obj-atingimento"><div class="okr-sec-hd"><span class="okr-sec-ico">📈</span><span>Atingimento</span>${n?`<span class="okr-sec-count">${n}</span>`:''}${cfg?`<span class="okr-ating-big">${pct}%</span>`:''}</div>`;
   const tipoSel = podeEditar ? `<div class="okr-ating-f" style="margin-bottom:8px;"><label class="okr-ating-lbl">Tipo de meta</label>
       <select class="okr-select" id="okr-ating-tipo" onchange="_okrAtingOnTipo()"><option value="">Sem atingimento — a barra anda pelos marcos</option>
-      ${OKR_ATING_TIPOS.map(x=>`<option value="${x.id}"${cfg&&at.tipo===x.id?' selected':''}>${esc(x.label)}</option>`).join('')}</select></div>` : '';
+      ${OKR_ATING_TIPOS.map(x=>`<option value="${x.id}"${cfg&&at.tipo===x.id?' selected':''}>${x.ico} ${esc(x.label)}</option>`).join('')}</select></div>` : '';
   if(!cfg) return head + tipoSel + `<div style="font-size:11px;color:var(--txt3);line-height:1.5;">Defina uma meta (financeira, %, número, atingido/não atingido, manter acima/abaixo ou data de entrega) e registre o atingimento ao longo do tempo: a barra do Objetivo passa a andar por ele.</div></section>`;
   if(!podeEditar){
     const tl = (OKR_ATING_TIPOS.find(x=>x.id===at.tipo)||{}).label||at.tipo;
