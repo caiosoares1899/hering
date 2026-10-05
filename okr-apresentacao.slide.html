@@ -744,6 +744,7 @@ function _okrAtingAtual(at){
 function _okrAtingPctObj(o){
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at)) return null;
+  if(at.tipo==='perene') return null;          // ♾️ perene: sem meta nem registros — a barra continua pelos marcos
   const l = _okrAtingAtual(at);
   return l ? _okrAtingPctDe(at, l) : 0;
 }
@@ -757,6 +758,7 @@ const OKR_ATING_TIPOS = [
   {id:'acima', ico:'⬆️', label:'Manter acima de'},
   {id:'abaixo', ico:'⬇️', label:'Manter abaixo de'},
   {id:'data', ico:'📅', label:'Data de entrega'},
+  {id:'perene', ico:'♾️', label:'Perene (acompanha pelos marcos)'},
 ];
 const OKR_ATING_MOEDAS = {
   BRL:{label:'Real (R$)', sym:'R$', cur:'BRL'}, USD:{label:'Dólar (US$)', sym:'US$', cur:'USD'}, EUR:{label:'Euro (€)', sym:'€', cur:'EUR'},
@@ -878,6 +880,7 @@ function _okrAtingTipOff(el){
 function _okrAtingChartPanelHtml(o){
   const at = o && o.atingimento;
   if(!_okrAtingConfigurado(at)) return '<div class="okr-ating-chart-vazio">Este Objetivo ainda não tem atingimento configurado.</div>';
+  if(at.tipo==='perene') return '<div class="okr-ating-chart-vazio">♾️ Objetivo perene — a barra acompanha as entregas dos Marcos; não há gráfico de atingimento.</div>';
   return `<div class="okr-ating-chartpanel okr-sec-ating">
     <div class="okr-ating-tipo-ro">${_okrAtingTipoIco(at.tipo)} ${esc(_okrAtingTipoLabel(at.tipo))}</div>
     ${_okrAtingResumoHtml(at)}
@@ -886,7 +889,6 @@ function _okrAtingChartPanelHtml(o){
     ${_okrAtingHistoricoHtml(at,false)}
   </div>`;
 }
-
 window._okrAtingTip = _okrAtingTip; window._okrAtingTipOff = _okrAtingTipOff;   // handlers inline do gráfico (o script é um módulo)
 window._okrOpenAting = id => {
   const o = okrObjetivos[id]; if(!o) return;
@@ -929,7 +931,7 @@ function objCardHtml(o){
     <div class="obj-title">${esc(o.titulo||'—')}</div>
     ${o.pilar?`<div class="obj-pilar">${esc(o.pilar)}</div>`:''}
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;"></div></div>
-    <div class="prog-label">${_okrAtingPctObj(o)!==null?`<button type="button" class="ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução (data e valor)" onclick="event.stopPropagation();window._okrOpenAting(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
+    <div class="prog-label">${_okrAtingPctObj(o)!==null?`<button type="button" class="ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução (data e valor)" onclick="event.stopPropagation();window._okrOpenAting(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${o.atingimento&&o.atingimento.tipo==='perene'?'<span title="Perene — a barra acompanha os marcos">♾️</span> ':''}${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
     ${(o.tagIds||[]).length?`<div class="obj-tags">${(o.tagIds||[]).map(tid=>{
       const t=okrTags[tid]; if(!t) return '';
       const p=PT_PALETTE[t.colorIdx % PT_PALETTE.length]||PT_PALETTE[0];

@@ -20538,6 +20538,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.104 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): ♾️ tipo de atingimento "Perene" — a barra volta a andar pelos marcos
+
+Pedido: um tipo **perene**, para objetivo contínuo (sem meta final nem data de entrega), que **volta a ser analisado a partir dos marcos**.
+- Novo tipo **♾️ Perene (acompanha pelos marcos)** no seletor "Tipo de meta". Não tem meta, nem campo de valor, nem histórico de registros: a barra do Objetivo (aba, resumo e apresentação) anda pelas entregas dos **Marcos**, como antes de existir atingimento — a diferença é que agora isso fica **explícito**: ♾️ no cartão e na seção do modal, com "X/Y marco(s) concluído(s) · N%".
+- Diferente de "Sem atingimento" (que só não configura nada), o Perene é uma escolha registrada no 📜 Histórico ("configurou o atingimento (Perene…)") e exibida no cartão.
+- Trocar um tipo com registros para Perene **não apaga nada**: o aviso diz que os registros ficam guardados; ao voltar para o tipo anterior eles reaparecem. Salvar um Perene não pergunta por "valor pendente".
+- Cartão e apresentação mostram ♾️ no lugar do emoji de gráfico (não há gráfico em Perene).
+- Testes: 12 cenários novos (motor, cartão, seção do modal, salvar, escolher/trocar/voltar de tipo, histórico, gráfico, apresentação); suítes anteriores verdes.
+
 ### painel-dev.html v3.103 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): 📈 gráfico de evolução do atingimento (data e valor, com dica ao passar o mouse)
 
 Pedido: o emoji do tipo no cartão do Objetivo passa a ser um **botão que abre o gráfico de evolução** do atingimento, com data e valor, e a dica ao passar o mouse.
