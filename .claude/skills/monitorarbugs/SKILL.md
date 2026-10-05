@@ -2896,6 +2896,17 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   valor digitado e ainda não "adicionado" precisa ser registrado/confirmado no Salvar; save de
   documento inteiro precisa mesclar listas que mais de uma pessoa acrescenta.
 
+- **2026-10-05, 📈 gráfico de evolução + ♾️ Perene + emoji do tipo (v3.102–3.104, pedido "roda um
+  /monitorarbugs nisso tudo", horas depois de irem ao ar)**: 3 achados reproduzidos antes de corrigir.
+  (1) apresentação mostrava o botão "Evolução" também pra Perene (abria painel sem gráfico) — o gate era
+  `_okrAtingConfigurado` (tipo válido) em vez de "tem % de atingimento"; (2) dica por clique/toque nunca
+  sumia em tela de toque (não há `mouseleave`) — toque em área vazia agora esconde; (3) "📈 Gráfico" do
+  modal dependia de `_okrEditingObjId` e não abria em Objetivo sem id. Sem achado: fuzz de 600 casos
+  (valores/datas estranhos + HTML hostil), 12 funções + bloco do gráfico idênticos nos 2 arquivos (teste de
+  paridade). painel-dev v3.105. **Lição**: ao introduzir um tipo "especial" numa enumeração (Perene), grepar
+  TODO lugar que testa "está configurado" e perguntar se a decisão ali é "tem tipo" ou "tem valor a mostrar";
+  e todo tooltip por hover precisa de equivalente de toque (fechar ao tocar fora).
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

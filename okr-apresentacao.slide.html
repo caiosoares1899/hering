@@ -861,7 +861,7 @@ function _okrAtingChartHtml(at){
   let ultX = -1e9; const xl = [];
   idx.forEach((i,k)=>{ const x=X(i); if(x-ultX>=70 || k===idx.length-1){ if(k===idx.length-1 && xl.length && x-ultX<70) xl.pop(); xl.push(i); ultX=x; } });
   const xHtml = xl.map(i=>`<text x="${X(i).toFixed(1)}" y="${H-pb+18}" text-anchor="${i===0&&n>1?'start':(i===n-1&&n>1?'end':'middle')}" font-size="10" fill="currentColor" fill-opacity=".6">${esc(_okrAtingDataBR(ls[i].em))}</text>`).join('');
-  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
+  return `<svg class="okr-ating-chart-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução do atingimento ao longo do tempo" onclick="if(!event.target.closest('.okr-ating-pt'))_okrAtingTipOff(this)">${grid}${refHtml}${linha}${xHtml}${ptsHtml}</svg><div class="okr-ating-tip" role="tooltip"></div>`;
 }
 function _okrAtingTip(el){
   const box = el.closest('.okr-ating-chart'); if(!box) return;
@@ -1286,7 +1286,7 @@ window._okrOpenDetail = id => {
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
           ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
-          ${_okrAtingConfigurado(o.atingimento)?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
+          ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>
