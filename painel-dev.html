@@ -2964,7 +2964,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.94 · painel-dev</div>
+<div class="version">v3.95 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2974,6 +2974,15 @@ import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWith
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
+// (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —
+// esc() troca ' por &#39;, que o navegador decodifica de volta pra ' ANTES do JS do
+// atributo rodar, então um id como  x');alert(1);//  escapa da string e executa
+// (XSS armazenado: qualquer pessoa com escrita no dado — membro de squad, freelancer
+// da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
+// gera um literal JS válido e esc() protege o atributo HTML.
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 
 const firebaseConfig = {
   // Achado real (/monitorarbugs 2026-09-15): esta página lia o override
@@ -3308,6 +3317,15 @@ window.debugBytesExportCSV=function(daysBack){
 // esc(): escape de HTML. Redefinido aqui porque a versão do <script type="module">
 // fica encapsulada no escopo do módulo e NÃO é visível neste script clássico.
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
+// (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —
+// esc() troca ' por &#39;, que o navegador decodifica de volta pra ' ANTES do JS do
+// atributo rodar, então um id como  x');alert(1);//  escapa da string e executa
+// (XSS armazenado: qualquer pessoa com escrita no dado — membro de squad, freelancer
+// da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
+// gera um literal JS válido e esc() protege o atributo HTML.
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 // ── FILTRO DE SQUAD ────────────────────────────────────────────────
 let activeFilter = 'all';
@@ -3349,7 +3367,7 @@ function renderGerenciaBar(){
   if(!bar) return;
   bar.innerHTML = GERENCIAS.map(g=>{
     const n = gerenciaSquadIds(g.id).length;
-    return `<button class="filter-btn${activeFilter===g.id?' active':''}" id="fb-${esc(g.id)}" onclick="setFilter('${esc(g.id)}')" title="${n} squad(s) nesta gerência">${g.icon} ${esc(g.label)}</button>`;
+    return `<button class="filter-btn${activeFilter===g.id?' active':''}" id="fb-${esc(g.id)}" onclick="setFilter(${jsq(g.id)})" title="${n} squad(s) nesta gerência">${g.icon} ${esc(g.label)}</button>`;
   }).join('');
 }
 
@@ -3773,7 +3791,7 @@ function _dpRender(){
   for(let d=1; d<=daysInMonth; d++){
     const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     let cls='dp-day'; if(ds===todayStr) cls+=' dp-today'; if(ds===selStr) cls+=' dp-sel';
-    cells += `<div class="${cls}" onclick="_dpPick('${ds}')">${d}</div>`;
+    cells += `<div class="${cls}" onclick="_dpPick(${jsq(ds)})">${d}</div>`;
   }
   const totalCells = startDow+daysInMonth;
   const trailing = (7-(totalCells%7))%7;
@@ -3892,7 +3910,7 @@ function renderCampList(){
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
     const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':'';
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
-    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
+    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe(${jsq(c.id)})">
       <div class="camp-card-icon">${tema.emoji}</div>
       <div>
         <div class="camp-card-name">${esc(c.nome||'Sem nome')} ${msBadge}</div>
@@ -4020,7 +4038,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${esc(_sqLabel(sq))}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter(${jsq(sq)})">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todas</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -4038,21 +4056,21 @@ function renderCampDetalhe(c){
           <div class="camp-fixed-links" id="camp-kvs-list">
             ${_renderFixedLinks(c.kvs||[],'kvs',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','kvs')" style="margin-top:6px;">+ Adicionar KV</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'kvs')" style="margin-top:6px;">+ Adicionar KV</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">📋 ${c.tipo==='colecao'?'Lista de produtos':'Lista de criativos'}</div>
           <div class="camp-fixed-links" id="camp-lista-list">
             ${_renderFixedLinks(c.lista||[],'lista',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">🔗 Links importantes</div>
           <div class="camp-fixed-links" id="camp-links-list">
             ${_renderFixedLinks(c.links||[],'links',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','links')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'links')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">Cards vinculados</div>
@@ -4176,7 +4194,7 @@ function _renderEntrada(e, campId){
   }
   const sqcBorder = isMulti ? `style="border-left-color:${_sqColor(e._squad).text};"` : '';
   return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'}" data-icon="${icon}" ${sqcBorder}>
-    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
+    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada(${jsq(campId)},${jsq(e.id)})" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
     <div class="camp-entry-corpo">${typeof _renderMd==='function'?_renderMd(e.corpo||''):esc(e.corpo||'')}</div>
@@ -4285,7 +4303,7 @@ function _renderCampTagPicker(){
     const _pi = (typeof t.pi !== 'undefined') ? t.pi : 0;
   const _pals = [{bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.3)',c:'#38b6ff'},{bg:'rgba(29,233,182,.15)',b:'rgba(29,233,182,.3)',c:'#1de9b6'},{bg:'rgba(255,209,102,.15)',b:'rgba(255,209,102,.3)',c:'#ffd166'},{bg:'rgba(255,107,107,.15)',b:'rgba(255,107,107,.3)',c:'#ff6b6b'},{bg:'rgba(167,139,250,.15)',b:'rgba(167,139,250,.3)',c:'#a78bfa'},{bg:'rgba(244,168,200,.15)',b:'rgba(244,168,200,.3)',c:'#f4a8c8'}];
   const p = _pals[_pi%_pals.length]||_pals[0];
-    return `<span onclick="campToggleTag('${esc(t.id)}')" style="
+    return `<span onclick="campToggleTag(${jsq(t.id)})" style="
       padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
       background:${sel?p.bg:'rgba(var(--ink-rgb),.6)'};
       border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
@@ -4405,7 +4423,7 @@ function _renderCampCardsGrid(){
       ? `<span class="camp-sq-tag" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};">${sqEmoji} ${esc(sqLabel)}</span>`
       : '';
     const dueStr = card.due ? '📅 '+new Date(card.due).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) : '';
-    return `<div class="camp-grid-card" onclick="_pOpenCard('${esc(card.id)}','${esc(sq_)}')">
+    return `<div class="camp-grid-card" onclick="_pOpenCard(${jsq(card.id)},${jsq(sq_)})">
       <div class="camp-grid-card-top">
         ${sqBadge}
         <span class="camp-card-item-col" style="background:${colColor}22;color:${colColor};border:1px solid ${colColor}44;">${esc(col?.name||card.col)}</span>
@@ -4472,7 +4490,7 @@ function _renderFixedLinks(links, tipo, campId){
   return links.map((l,i)=>`
     <div class="camp-fixed-link-item">
       <a href="${_pSafeUrl(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
-      <button class="camp-fixed-link-del" onclick="campDelFixedLink('${esc(campId)}','${tipo}',${i})" title="Remover">✕</button>
+      <button class="camp-fixed-link-del" onclick="campDelFixedLink(${jsq(campId)},${jsq(tipo)},${i})" title="Remover">✕</button>
     </div>`).join('');
 }
 
@@ -4631,7 +4649,7 @@ function renderPainelCamp(){
               ${[...new Map(kvs.map(l=>[l.url,l])).values()].map(l=>`<a href="${l.url}" target="_blank" style="font-size:10px;color:var(--teal);text-decoration:none;display:block;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">↗ ${esc(l.label||l.url)}</a>`).join('')}
             </div>`:''}
             <div style="margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,209,102,.1);">
-              <button onclick="event.stopPropagation();_pCampActiveSquad='${esc(allSquads[0]||'dados')}';window._campViewMode='multi';openCampDetalhe('${esc(c0.id)}')"
+              <button onclick="event.stopPropagation();_pCampActiveSquad=${jsq(allSquads[0]||'dados')};window._campViewMode='multi';openCampDetalhe(${jsq(c0.id)})"
                 style="width:100%;padding:7px;background:rgba(255,209,102,.1);border:1px solid rgba(255,209,102,.3);border-radius:8px;color:#ffd166;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;">
                 📋 Abrir visão completa →
               </button>
@@ -4669,7 +4687,7 @@ function renderPainelCamp(){
     const tipoPill  = c.tipo==='colecao'?'👗 Coleção':'📣 Campanha';
     const kvs       = c.kvs||[];
     const sqBadges  = squads.map(sq=>{ const sqc=_painelSqColor(sq); return `<span style="font-size:9px;padding:1px 7px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(sq))}</span>`; }).join('');
-    return `<div class="card pcamp-individual" style="padding:10px 14px;cursor:pointer;" onclick="_pCampActiveSquad='${esc((squads[0]||'dados'))}';window._campViewMode='squad';openCampDetalhe('${esc(c.id)}')">
+    return `<div class="card pcamp-individual" style="padding:10px 14px;cursor:pointer;" onclick="_pCampActiveSquad=${jsq((squads[0]||'dados'))};window._campViewMode='squad';openCampDetalhe(${jsq(c.id)})">
       <div style="display:flex;align-items:flex-start;gap:8px;">
         <span style="font-size:18px;line-height:1;flex-shrink:0;">${tema.emoji}</span>
         <div style="flex:1;min-width:0;">
@@ -4791,8 +4809,8 @@ function openPainelCampMsEdit(){
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
             <span style="font-size:14px;">🗂</span>
             <span style="font-size:13px;font-weight:600;flex:1;">${esc(g.nome||'Grupo')}</span>
-            <button class="btn btn-sm" onclick="_pmsEditGrupo('${esc(g.id)}')" style="font-size:10px;padding:3px 9px;">✏️</button>
-            <button class="btn btn-sm" onclick="_pmsDelGrupo('${esc(g.id)}')" style="font-size:10px;padding:3px 9px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Desagrupar</button>
+            <button class="btn btn-sm" onclick="_pmsEditGrupo(${jsq(g.id)})" style="font-size:10px;padding:3px 9px;">✏️</button>
+            <button class="btn btn-sm" onclick="_pmsDelGrupo(${jsq(g.id)})" style="font-size:10px;padding:3px 9px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Desagrupar</button>
           </div>
           <div style="display:flex;flex-direction:column;gap:4px;padding-left:24px;">
             ${camps.length?camps.map(c=>`<div style="font-size:11px;color:var(--txt2);">• ${esc(c.nome||'—')} <span style="color:var(--txt3);">(${(c.squads||[]).join(', ')})</span></div>`).join(''):'<div style="font-size:11px;color:var(--txt3);">Nenhuma campanha.</div>'}
@@ -4871,7 +4889,7 @@ async function _pmsEditGrupoCampanhas(gid, nome, selecionadas=[]){
     </label>`).join('')}
     <div style="display:flex;gap:8px;margin-top:14px;">
       <button class="btn btn-sm" onclick="_pmsSwitchTab('manual')">← Voltar</button>
-      <button class="btn btn-sm" onclick="_pmsSalvarGrupo('${gid||''}','${esc(nome).replace(/'/g,"\\'")}')" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-left:auto;">💾 Salvar grupo</button>
+      <button class="btn btn-sm" onclick="_pmsSalvarGrupo(${jsq(gid||'')},${jsq(esc(nome).replace(/'/g,"\\'"))})" style="color:var(--teal);border-color:rgba(29,233,182,.3);margin-left:auto;">💾 Salvar grupo</button>
     </div>
   `;
 }
@@ -5196,7 +5214,7 @@ function renderOkrNotas(){
   list.innerHTML = notas.map(([id,n])=>{
     const p = _okrPessoaInfo(n.autorUid);
     const dt = n.ts ? new Date(n.ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
-    const delBtn = (isHoje && n.autorUid===meuUid) ? `<span style="cursor:pointer;margin-left:6px;" title="Excluir" onclick="window._okrNotaDel('${id}')">✕</span>` : '';
+    const delBtn = (isHoje && n.autorUid===meuUid) ? `<span style="cursor:pointer;margin-left:6px;" title="Excluir" onclick="window._okrNotaDel(${jsq(id)})">✕</span>` : '';
     return `<div class="okr-comment"><span class="okr-comment-ts">${dt}${delBtn}</span><b>${esc(p.nome.split(' ')[0]||'—')}</b><br>${esc(n.texto||'').replace(/\n/g,'<br>')}</div>`;
   }).join('');
 }
@@ -5580,7 +5598,7 @@ function _okrStatsStripHtml(lista){
   });
   const chips = OKR_STATUS.filter(s=>porStatus[s.id]>0).map(s=>{
     const ativo = _okrFilter.status===s.id;
-    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_okrSetFilter('status','${ativo?'':s.id}')" title="Filtrar por ${esc(s.label)}">
+    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_okrSetFilter('status',${jsq(ativo?'':s.id)})" title="Filtrar por ${esc(s.label)}">
       <span class="okr-dot" style="background:${s.dot};"></span><b>${porStatus[s.id]}</b> ${esc(s.label)}
     </div>`;
   }).join('');
@@ -5667,13 +5685,13 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   return `
   <div class="okr-card${souResponsavel?' okr-mine':''}"
     draggable="${podeReordenar?'true':'false'}"
-    ${podeReordenar?`ondragstart="_okrObjDragStart(event,'${o.id}')" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,'${areaId}','${o.id}')" ondragend="_okrObjDragEnd(event)"`:''}
-    onclick="openOkrObjetivo('${o.id}')">
-    <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao('${o.id}')" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
+    ${podeReordenar?`ondragstart="_okrObjDragStart(event,${jsq(o.id)})" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,${jsq(areaId)},${jsq(o.id)})" ondragend="_okrObjDragEnd(event)"`:''}
+    onclick="openOkrObjetivo(${jsq(o.id)})">
+    <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao(${jsq(o.id)})" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
     ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:28px;">
       <span title="Arraste pra reordenar" style="font-size:12px;color:var(--txt3);margin-right:auto;cursor:grab;">⠿</span>
-      <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
-      <button type="button" onclick="event.stopPropagation();_okrObjMover('${areaId}','${o.id}',1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
+      <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
+      <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
     <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
@@ -5873,7 +5891,7 @@ function renderOkrHistory(entity){
 const _okrDetailsState = {};
 function _okrDetailsAttrs(chave, abertoPadrao){
   const aberto = chave in _okrDetailsState ? _okrDetailsState[chave] : abertoPadrao;
-  return `${aberto?'open':''} ontoggle="_okrDetailsState['${chave}']=this.open"`;
+  return `${aberto?'open':''} ontoggle="_okrDetailsState[${jsq(chave)}]=this.open"`;
 }
 function _okrHistorySectionHtml(entity){
   const hist = Array.isArray(entity?.history) ? entity.history : [];
@@ -5930,7 +5948,7 @@ function _okrRenderCardSearch(q){
   const linked=_okrObjDraft.cardLinks||[];
   const results=_okrCardSearchResults(q).filter(r=>!linked.some(l=>l.squadId===r.squadId&&l.cardId===r.cardId));
   el.innerHTML = results.length
-    ? results.map(r=>`<div class="okr-list-item" style="cursor:pointer;" onclick="_okrCardLinkAdd('${r.squadId}','${esc(r.cardId)}')"><span>${r.squadIcon} ${esc(r.title)}</span></div>`).join('')
+    ? results.map(r=>`<div class="okr-list-item" style="cursor:pointer;" onclick="_okrCardLinkAdd(${jsq(r.squadId)},${jsq(r.cardId)})"><span>${r.squadIcon} ${esc(r.title)}</span></div>`).join('')
     : (q.trim().length>=2 ? '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum card com badge OKR encontrado.</div>' : '');
 }
 // Achado da auditoria de UI/UX do modal OKR (2026-10-01): seção de baixo
@@ -5951,7 +5969,7 @@ function _okrCardLinksHtml(podeEditar){
         const sq=SQUADS.find(s=>s.id===l.squadId);
         const card=(squadData[l.squadId]?.cards||[]).find(c=>c.id===l.cardId);
         const titulo=card?card.title:'(card não encontrado)';
-        return `<div class="okr-list-item"><span style="cursor:pointer;" onclick="openPcModal('${l.squadId}','${esc(l.cardId)}')">${sq?sq.icon:''} ${esc(titulo)}</span>${podeEditar?`<button type="button" onclick="_okrCardLinkRemove(${i})" title="Desvincular">✕</button>`:''}</div>`;
+        return `<div class="okr-list-item"><span style="cursor:pointer;" onclick="openPcModal(${jsq(l.squadId)},${jsq(l.cardId)})">${sq?sq.icon:''} ${esc(titulo)}</span>${podeEditar?`<button type="button" onclick="_okrCardLinkRemove(${i})" title="Desvincular">✕</button>`:''}</div>`;
       }).join('') || '<div style="font-size:11px;color:var(--txt3);">Nenhum ainda.</div>'}
     </div>
     ${podeEditar?`<input type="text" class="okr-input" id="okr-card-search" placeholder="🔎 Buscar card com badge OKR pra vincular…" oninput="_okrRenderCardSearch(this.value)">
@@ -6200,11 +6218,11 @@ function _okrListEditorHtml(campo, label, placeholder){
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div class="okr-list-editable">
-      ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,'${campo}',${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove('${campo}',${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
+      ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,${jsq(campo)},${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" onclick="_okrListRemove(${jsq(campo)},${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
-      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd('${campo}');}">
-      <button type="button" class="btn btn-sm" onclick="_okrListAdd('${campo}')">+ Add</button>
+      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd(${jsq(campo)});}">
+      <button type="button" class="btn btn-sm" onclick="_okrListAdd(${jsq(campo)})">+ Add</button>
     </div>
     ${limite?_okrCharCounterHtml('okr-add-'+campo):''}`;
 }
@@ -6295,9 +6313,9 @@ function _okrPessoaPickerHtml(campo, label){
   return `
     <div class="okr-field-label">${esc(label)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)} <span style="cursor:pointer;" onclick="_okrPessoaRemove('${campo}','${uid}')">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
+      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)} <span style="cursor:pointer;" onclick="_okrPessoaRemove(${jsq(campo)},${jsq(uid)})">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
     </div>
-    <select class="okr-select" onchange="if(this.value){_okrPessoaAdd('${campo}',this.value);this.value='';}">
+    <select class="okr-select" onchange="if(this.value){_okrPessoaAdd(${jsq(campo)},this.value);this.value='';}">
       <option value="">+ Adicionar pessoa…</option>
       ${opts.filter(p=>!sel.includes(p.uid)).map(p=>`<option value="${p.uid}">${esc(p.nome)}</option>`).join('')}
     </select>`;
@@ -6325,11 +6343,11 @@ function _okrMarcosListHtml(objId, podeEditar){
   return marcos.map((m,i)=>`
     <div class="okr-marco-row" style="border-left:3px solid ${okrStatusInfo(m.progresso||'nao_iniciado').dot};"
       draggable="${podeEditar?'true':'false'}"
-      ${podeEditar?`ondragstart="_okrMarcoDragStart(event,'${m.id}')" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,'${objId}','${m.id}')" ondragend="_okrMarcoDragEnd(event)"`:''}
-      onclick="openOkrMarco('${m.id}','${objId}')">
+      ${podeEditar?`ondragstart="_okrMarcoDragStart(event,${jsq(m.id)})" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,${jsq(objId)},${jsq(m.id)})" ondragend="_okrMarcoDragEnd(event)"`:''}
+      onclick="openOkrMarco(${jsq(m.id)},${jsq(objId)})">
       ${podeEditar?`<span style="display:flex;flex-direction:column;gap:1px;flex-shrink:0;">
-        <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
-        <button type="button" onclick="event.stopPropagation();_okrMarcoMover('${objId}','${m.id}',1)" ${i===marcos.length-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===marcos.length-1?'opacity:.25;cursor:default;':''}">▼</button>
+        <button type="button" onclick="event.stopPropagation();_okrMarcoMover(${jsq(objId)},${jsq(m.id)},-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
+        <button type="button" onclick="event.stopPropagation();_okrMarcoMover(${jsq(objId)},${jsq(m.id)},1)" ${i===marcos.length-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0;line-height:1;font-size:9px;color:var(--txt3);cursor:pointer;${i===marcos.length-1?'opacity:.25;cursor:default;':''}">▼</button>
       </span>`:''}
       ${okrStatusDot(m.progresso||'nao_iniciado')}
       <span class="okr-marco-nome">${esc(m.nome||'(sem nome)')}</span>
@@ -6452,7 +6470,7 @@ function renderOkrObjBody(id){
     ${_okrListEditorHtml('planosAcao','Planos de Ação','Ação prevista…')}
     <div class="okr-field-label" style="display:flex;align-items:center;justify-content:space-between;">
       <span>Marcos</span>
-      ${id?`<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;" onclick="openOkrMarco(null,'${id}')">+ Novo marco</button>`:''}
+      ${id?`<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;" onclick="openOkrMarco(null,${jsq(id)})">+ Novo marco</button>`:''}
     </div>
     ${id ? _okrMarcosListHtml(id, true) : '<div style="font-size:11px;color:var(--txt3);">Salve o objetivo primeiro pra poder adicionar marcos.</div>'}
     ${_okrCardLinksHtml(true)}
@@ -6460,11 +6478,11 @@ function renderOkrObjBody(id){
   _okrWritePending(_pendObj);
   footer.innerHTML = `
     <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
-    ${id?`<button onclick="_okrDuplicarObjetivo('${id}')" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
-    ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo('${id}')" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
+    ${id?`<button onclick="_okrDuplicarObjetivo(${jsq(id)})" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
+    ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo(${jsq(id)})" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
-      ? `<button onclick="_okrDesarquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
-      : `<button onclick="_okrArquivarObjetivo('${id}')" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
+      ? `<button onclick="_okrDesarquivarObjetivo(${jsq(id)})" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
+      : `<button onclick="_okrArquivarObjetivo(${jsq(id)})" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
     ):''}
     <button class="save-btn" onclick="saveOkrObjetivo()">💾 Salvar</button>`;
 }
@@ -6789,7 +6807,7 @@ function _okrParticipantesHtml(){
   return `
     <div class="okr-field-label">Participantes</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)} <span style="cursor:pointer;" onclick="_okrParticipanteRemove('${uid}')">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
+      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)} <span style="cursor:pointer;" onclick="_okrParticipanteRemove(${jsq(uid)})">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
     </div>
     <select class="okr-select" onchange="if(this.value){_okrParticipanteAdd(this.value);this.value='';}">
       <option value="">+ Adicionar participante…</option>
@@ -6803,7 +6821,7 @@ function _okrStatusPickerHtml(){
   return `
     <div class="okr-field-label">Progresso</div>
     <div class="okr-status-select">
-      ${OKR_STATUS.map(s=>`<span class="okr-status-opt${_okrMarcoDraft.progresso===s.id?' active':''}" onclick="_okrSetMarcoStatus('${s.id}')"><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')}
+      ${OKR_STATUS.map(s=>`<span class="okr-status-opt${_okrMarcoDraft.progresso===s.id?' active':''}" onclick="_okrSetMarcoStatus(${jsq(s.id)})"><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')}
     </div>`;
 }
 function _okrSetMarcoStatus(id){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraft.progresso = id; renderOkrMarcoBody(); }
@@ -6998,7 +7016,7 @@ function renderOKR(){
       const sq=c._squad;
       const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
       return `
-    <div class="panel-card okr" onclick="openPcModal('${sq.id}','${c.id}')">
+    <div class="panel-card okr" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
         <span class="pc-chip pc-chip-okr">🎯 OKR</span>
         <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
@@ -7032,7 +7050,7 @@ function renderRiscos(){
       const sq=c._squad;
       const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
       return `
-    <div class="panel-card risco" onclick="openPcModal('${sq.id}','${c.id}')">
+    <div class="panel-card risco" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
         <span class="pc-chip" style="background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.3);color:var(--warn);">⚠ ${c.riscos.length} risco${c.riscos.length>1?'s':''}</span>
         <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
@@ -7372,7 +7390,7 @@ function renderLembretesPainel(){
         let del='';
         if(l.tipo!=='quadro' && _isAdmPainel()){
           const sid = l.sq? l.sq.id : '__gestao__';
-          del=`<button class="pit-del" onclick="delLembretePainel('${sid}','${esc(l.id||'')}')" title="Remover">✕</button>`;
+          del=`<button class="pit-del" onclick="delLembretePainel(${jsq(sid)},${jsq(l.id||'')})" title="Remover">✕</button>`;
         }
         let meta='';
         if(l.tipo==='quadro'){
@@ -7738,7 +7756,7 @@ function renderPcalSquadFilterBar(){
   el.innerHTML = items.map(sq=>{
     const col = _squadColorFor(sq.id);
     const on = pcalSquadFilter.has(sq.id);
-    return `<button onclick="togglePcalSquadFilter('${sq.id}')" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(var(--ink-rgb),.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
+    return `<button onclick="togglePcalSquadFilter(${jsq(sq.id)})" style="display:flex;align-items:center;gap:5px;padding:4px 10px;font-size:10.5px;border-radius:999px;cursor:pointer;font-family:'DM Sans',sans-serif;border:1px solid ${on?col.bg:'var(--glass-b)'};background:${on?col.bg:'rgba(var(--ink-rgb),.5)'};color:${on?col.txt:'var(--txt3)'};transition:all .15s;">
       ${sq.icon} ${esc(sq.label)}
     </button>`;
   }).join('');
@@ -8105,22 +8123,22 @@ function makePcalDay(date,otherMonth,evs,isToday=false){
         // Card com prazo — cor por squad, ícone 📎, clique abre o board do squad
         const col=_squadColorFor(ev._squad);
         return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};opacity:.9;"
-          onclick="event.stopPropagation();window.open(squadBoardUrl('${ev._squad}','${ev._cardId||''}'),'_blank')"
+          onclick="event.stopPropagation();window.open(squadBoardUrl(${jsq(ev._squad)},${jsq(ev._cardId||'')}),'_blank')"
           title="${esc(ev.title)} — abrir card">${esc(ev.title)}</div>`;
       }
       if(ev._gcal){
         const col=_gcalColorFor(ev._calId||ev.id);
-        const del = _isAdmPainel() ? `<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalGcalEvent('${ev.id}')" title="Excluir (oculta permanentemente)">✕</button>` : '';
+        const del = _isAdmPainel() ? `<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalGcalEvent(${jsq(ev.id)})" title="Excluir (oculta permanentemente)">✕</button>` : '';
         return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
           title="${esc(ev.title)} (${esc(ev._calLabel||'')})">${esc(ev.title)}${del}</div>`;
       }
       const squad=ev._squad||ev.squad||'geral';
       const col=_squadColorFor(squad);
       return `<div class="pcal-event" style="background:${col.bg};color:${col.txt};"
-        onclick="event.stopPropagation();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')"
-        title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent('${ev.id||''}','${ev._source||'painel'}')" title="Excluir">✕</button></div>`;
+        onclick="event.stopPropagation();openPevModal(${jsq(ds)},${jsq(ev.id||'')},${jsq(ev._source||'painel')})"
+        title="${ev.title}">${ev.title}<button class="pcal-ev-del" onclick="event.stopPropagation();deletePcalEvent(${jsq(ev.id||'')},${jsq(ev._source||'painel')})" title="Excluir">✕</button></div>`;
     }).join('')
-    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);cursor:pointer;" onclick="event.stopPropagation();openPcalDayPopover('${ds}')">+${dayEvs.length-3} mais</div>`:'');
+    +(dayEvs.length>3?`<div style="font-size:9px;color:var(--txt3);cursor:pointer;" onclick="event.stopPropagation();openPcalDayPopover(${jsq(ds)})">+${dayEvs.length-3} mais</div>`:'');
   div.onclick=()=>openPcalDayPopover(ds);
   return div;
 }
@@ -8152,13 +8170,13 @@ function openPcalDayPopover(ds){
       if(ev._type==='prazo'){
         const col=_squadColorFor(ev._squad);
         return `<div style="background:${col.bg};color:${col.txt};padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;"
-          onclick="window.open(squadBoardUrl('${ev._squad}','${ev._cardId||''}'),'_blank')">
+          onclick="window.open(squadBoardUrl(${jsq(ev._squad)},${jsq(ev._cardId||'')}),'_blank')">
           <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
         </div>`;
       }
       if(ev._gcal){
         const col=_gcalColorFor(ev._calId||ev.id);
-        const del = _isAdmPainel() ? `<button onclick="event.stopPropagation();deletePcalGcalEvent('${ev.id}')" style="background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:4px;width:18px;height:18px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Excluir">✕</button>` : '';
+        const del = _isAdmPainel() ? `<button onclick="event.stopPropagation();deletePcalGcalEvent(${jsq(ev.id)})" style="background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:4px;width:18px;height:18px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Excluir">✕</button>` : '';
         return `<div style="background:${col.bg};color:${col.txt};padding:7px 10px;border-radius:8px;font-size:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
           <span style="flex:1;min-width:0;word-break:break-word;" title="${esc(ev._calLabel||'')}">${esc(ev.title)}</span>
           ${del}
@@ -8167,14 +8185,14 @@ function openPcalDayPopover(ds){
       const squad=ev._squad||ev.squad||'geral';
       const col=_squadColorFor(squad);
       return `<div style="background:${col.bg};color:${col.txt};padding:7px 10px;border-radius:8px;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;"
-        onclick="closePcalDayPopover();openPevModal('${ds}','${ev.id||''}','${ev._source||'painel'}')">
+        onclick="closePcalDayPopover();openPevModal(${jsq(ds)},${jsq(ev.id||'')},${jsq(ev._source||'painel')})">
         <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
-        <button onclick="event.stopPropagation();deletePcalEvent('${ev.id||''}','${ev._source||'painel'}')" style="background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:4px;width:18px;height:18px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Excluir">✕</button>
+        <button onclick="event.stopPropagation();deletePcalEvent(${jsq(ev.id||'')},${jsq(ev._source||'painel')})" style="background:rgba(0,0,0,.3);border:none;color:#fff;border-radius:4px;width:18px;height:18px;font-size:10px;cursor:pointer;flex-shrink:0;" title="Excluir">✕</button>
       </div>`;
     }).join('');
   }
 
-  ft.innerHTML = `<button onclick="closePcalDayPopover();openPevModal('${ds}')" style="width:100%;justify-content:center;padding:8px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">+ Novo Evento</button>`;
+  ft.innerHTML = `<button onclick="closePcalDayPopover();openPevModal(${jsq(ds)})" style="width:100%;justify-content:center;padding:8px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">+ Novo Evento</button>`;
 
   document.getElementById('pcal-day-pop-ov').classList.add('open');
 }
@@ -8238,7 +8256,7 @@ function deletePcalEvent(evId, source){
 function renderPevColors(sel){
   document.getElementById('pev-colors').innerHTML=PCAL_COLORS.map(col=>
     `<button class="pev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};"
-      onclick="selectPevColor('${col.id}')" title="${col.label}"></button>`
+      onclick="selectPevColor(${jsq(col.id)})" title="${col.label}"></button>`
   ).join('');
 }
 function selectPevColor(id){ renderPevColors(id); }
@@ -8371,7 +8389,7 @@ function renderPcalAgendasList(){
         <div style="font-size:11px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(cal.label)}</div>
         ${err?`<div style="font-size:9.5px;color:var(--danger);">${esc(err.msg)}</div>`:''}
       </div>
-      <button onclick="removePcalAgenda('${esc(cal.id)}')" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;" title="Remover">✕</button>
+      <button onclick="removePcalAgenda(${jsq(cal.id)})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;" title="Remover">✕</button>
     </div>`;
   }).join('');
 }
@@ -8719,7 +8737,7 @@ function renderErrChart(){
     const lbl=day.split('-').slice(1).join('/');
     const isFiltered=errFilterDate===day;
     svg+=`<rect class="tp-bar" x="${x}" y="${y}" width="${barW}" height="${barH_}" rx="3"
-      fill="${color}" data-val="${n}" onclick="setDateFilter('${day}')" style="cursor:pointer;${isFiltered?'stroke:#fff;stroke-width:1.5;':''}" title="${day}: ${n} erros — clique p/ filtrar"/>`;
+      fill="${color}" data-val="${n}" onclick="setDateFilter(${jsq(day)})" style="cursor:pointer;${isFiltered?'stroke:#fff;stroke-width:1.5;':''}" title="${day}: ${n} erros — clique p/ filtrar"/>`;
     if(n>0){
       svg+=`<text class="tp-bar-lbl" x="${x+barW/2}" y="${y-3}" text-anchor="middle" fill="${color}">${n}</text>`;
     }
@@ -9069,8 +9087,8 @@ function renderPainelNotifs(){
     const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
     const openAttr = n.link
-      ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}swPtab('${n.link}');togglePainelNotif(event);" style="cursor:pointer;"`
-      : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead('${esc(n.id)}');`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
+      ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
+      : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(var(--slate-rgb),.4)\'"':''}>
       <span style="font-size:13px;flex-shrink:0;">${icon}</span>
       <div style="flex:1;min-width:0;">
@@ -9235,15 +9253,15 @@ function renderComunicadosLista(){
       : '<span style="color:var(--teal);">ativo</span>';
     const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
-      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;">${tipo.icon}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:12px;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
           <div style="font-size:10px;color:var(--txt3);">${alvo} · ${status} · ${ondeAparece}${c.insistente?' · insistente':''}</div>
         </div>
       </div>
-      <button onclick="event.stopPropagation();arquivarComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Arquivar (desativa sem excluir — pode reativar depois)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--txt3)'">🗄</button>
-      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
+      <button onclick="event.stopPropagation();arquivarComunicado(${jsq(c.id)},${jsq(esc(c.titulo||'').replace(/'/g,"\\'"))})" title="Arquivar (desativa sem excluir — pode reativar depois)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:13px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--cyan)'" onmouseout="this.style.color='var(--txt3)'">🗄</button>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto(${jsq(c.id)},${jsq(esc(c.titulo||'').replace(/'/g,"\\'"))})" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
     </div>`;
   }).join('');
 }
@@ -9272,15 +9290,15 @@ function renderArquivadosComunicado(arquivados){
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
     const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
-      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose('${c.id}')">
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;filter:grayscale(1);">${tipo.icon}</span>
         <div style="flex:1;min-width:0;">
           <div style="font-size:12px;font-weight:600;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(c.titulo||'(sem título)')}</div>
           <div style="font-size:10px;color:var(--txt3);">${alvo} · ${ondeAparece} · arquivado</div>
         </div>
       </div>
-      <button onclick="event.stopPropagation();reativarComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Reativar" style="background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);cursor:pointer;font-size:11px;padding:5px 10px;border-radius:7px;flex-shrink:0;font-weight:600;">↩ Reativar</button>
-      <button onclick="event.stopPropagation();deleteComunicadoDireto('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
+      <button onclick="event.stopPropagation();reativarComunicado(${jsq(c.id)},${jsq(esc(c.titulo||'').replace(/'/g,"\\'"))})" title="Reativar" style="background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);cursor:pointer;font-size:11px;padding:5px 10px;border-radius:7px;flex-shrink:0;font-weight:600;">↩ Reativar</button>
+      <button onclick="event.stopPropagation();deleteComunicadoDireto(${jsq(c.id)},${jsq(esc(c.titulo||'').replace(/'/g,"\\'"))})" title="Excluir definitivamente" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px;flex-shrink:0;" onmouseover="this.style.color='var(--danger)'" onmouseout="this.style.color='var(--txt3)'">🗑</button>
     </div>`;
   }).join('');
 }
@@ -9331,8 +9349,8 @@ function renderRascunhosComunicado(rascunhos){
       <div style="font-size:10.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;max-height:60px;overflow:hidden;">${(c.corpo||'').replace(/<[^>]+>/g,' ').trim().slice(0,180)}${(c.corpo||'').length>180?'…':''}</div>
       <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">${alvo} · ${ondeAparece}</div>
       <div style="display:flex;gap:6px;">
-        <button onclick="openComunicadoCompose('${c.id}')" style="flex:1;padding:6px;font-size:11px;background:rgba(255,209,102,.15);color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:7px;cursor:pointer;font-weight:600;">👀 Revisar e publicar</button>
-        <button onclick="descartarRascunhoComunicado('${c.id}','${esc(c.titulo||'').replace(/'/g,"\\'")}')" style="padding:6px 12px;font-size:11px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:7px;cursor:pointer;">Descartar</button>
+        <button onclick="openComunicadoCompose(${jsq(c.id)})" style="flex:1;padding:6px;font-size:11px;background:rgba(255,209,102,.15);color:#ffd166;border:1px solid rgba(255,209,102,.35);border-radius:7px;cursor:pointer;font-weight:600;">👀 Revisar e publicar</button>
+        <button onclick="descartarRascunhoComunicado(${jsq(c.id)},${jsq(esc(c.titulo||'').replace(/'/g,"\\'"))})" style="padding:6px 12px;font-size:11px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:7px;cursor:pointer;">Descartar</button>
       </div>
     </div>`;
   }).join('');
@@ -9599,9 +9617,9 @@ function renderFbLista(){
       <div style="font-size:12.5px;color:var(--txt2);line-height:1.5;margin-bottom:8px;white-space:pre-wrap;">${esc(f.texto||'')}</div>
       <div style="display:flex;gap:6px;">
         ${isNovo
-          ? `<button onclick="_fbSetStatus('${f.id}','resolvido')" style="padding:4px 10px;font-size:10px;background:rgba(29,233,182,.12);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">✅ Marcar resolvida</button>`
-          : `<button onclick="_fbSetStatus('${f.id}','novo')" style="padding:4px 10px;font-size:10px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;">↩️ Reabrir</button>`}
-        <button onclick="_fbDelete('${f.id}')" style="padding:4px 10px;font-size:10px;background:none;color:var(--danger);border:1px solid rgba(255,107,107,.3);border-radius:6px;cursor:pointer;">🗑 Excluir</button>
+          ? `<button onclick="_fbSetStatus(${jsq(f.id)},'resolvido')" style="padding:4px 10px;font-size:10px;background:rgba(29,233,182,.12);color:var(--teal);border:1px solid rgba(29,233,182,.3);border-radius:6px;cursor:pointer;">✅ Marcar resolvida</button>`
+          : `<button onclick="_fbSetStatus(${jsq(f.id)},'novo')" style="padding:4px 10px;font-size:10px;background:none;color:var(--txt3);border:1px solid var(--glass-b);border-radius:6px;cursor:pointer;">↩️ Reabrir</button>`}
+        <button onclick="_fbDelete(${jsq(f.id)})" style="padding:4px 10px;font-size:10px;background:none;color:var(--danger);border:1px solid rgba(255,107,107,.3);border-radius:6px;cursor:pointer;">🗑 Excluir</button>
       </div>
     </div>`;
   }).join('');
@@ -9808,7 +9826,7 @@ function renderErrSquadFilterRow(){
   row.innerHTML = '<span class="err-filter-label">Squad</span>'
     + `<button class="err-filter-btn${active==='all'?' active':''}" onclick="setErrFilter('squad','all')" id="ef-squad-all" data-sq="all">Todos</button>`
     + SQUADS.map(sq=>
-        `<button class="err-filter-btn${active===sq.id?' active':''}" onclick="setErrFilter('squad','${esc(sq.id)}')" id="ef-squad-${esc(sq.id)}" data-sq="${esc(sq.id)}">${esc(sq.icon)} ${esc(_errSqShort(sq))}</button>`
+        `<button class="err-filter-btn${active===sq.id?' active':''}" onclick="setErrFilter('squad',${jsq(sq.id)})" id="ef-squad-${esc(sq.id)}" data-sq="${esc(sq.id)}">${esc(sq.icon)} ${esc(_errSqShort(sq))}</button>`
       ).join('');
 }
 
@@ -9994,13 +10012,13 @@ function renderAgentesExternosPainel(){
     const squadsChips=SQUADS.map(sq=>{
       const on=squadsSel[sq.id]===true;
       return `<label style="display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;border:1px solid ${on?'rgba(56,182,255,.4)':'var(--glass-b)'};background:${on?'rgba(56,182,255,.12)':'rgba(var(--ink-rgb),.4)'};color:${on?'var(--accent)':'var(--txt3)'};cursor:pointer;">
-        <input type="checkbox" ${on?'checked':''} onchange="toggleAgenteExternoSquad('${id}','${sq.id}',this.checked)" style="accent-color:var(--accent);"> ${sq.icon||''} ${esc(sq.label||sq.id)}
+        <input type="checkbox" ${on?'checked':''} onchange="toggleAgenteExternoSquad(${jsq(id)},${jsq(sq.id)},this.checked)" style="accent-color:var(--accent);"> ${sq.icon||''} ${esc(sq.label||sq.id)}
       </label>`;
     }).join('');
     return `<div style="background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:10px;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;" onclick="_agentesExtPainelAberto=_agentesExtPainelAberto==='${id}'?null:'${id}';renderAgentesExternosPainel();">
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;cursor:pointer;" onclick="_agentesExtPainelAberto=_agentesExtPainelAberto===${jsq(id)}?null:${jsq(id)};renderAgentesExternosPainel();">
         <span style="flex:1;font-size:12px;font-weight:600;">${esc(a.avatarEmoji||'🔌')} ${esc(a.nome||id)} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${esc(id)})</span>${a.init?` <span title="Selecionável como Responsável/Participante de card nos squads marcados" style="display:inline-flex;font-size:9.5px;font-weight:700;color:var(--accent);background:rgba(56,182,255,.1);border:1px solid rgba(56,182,255,.25);padding:1px 7px;border-radius:999px;margin-left:2px;">${esc(a.init)}</span>`:''}${a.descricao?'':' <span style="font-size:9px;color:var(--warn);font-weight:700;">SEM DESCRIÇÃO</span>'}</span>
-        <button onclick="event.stopPropagation();excluirAgenteExternoPainel('${id}')" title="Excluir" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">🗑</button>
+        <button onclick="event.stopPropagation();excluirAgenteExternoPainel(${jsq(id)})" title="Excluir" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;">🗑</button>
         <span style="font-size:10px;color:var(--txt3);">${aberto?'▾':'▸'}</span>
       </div>
       ${aberto?`<div style="padding:0 11px 11px;border-top:1px solid var(--glass-b);">
@@ -10017,7 +10035,7 @@ function renderAgentesExternosPainel(){
         <div style="font-size:9px;color:var(--txt3);margin:8px 0 4px;">Vale nos squads:</div>
         <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">${squadsChips}</div>
         <div style="display:flex;justify-content:flex-end;">
-          <button class="save-btn" onclick="salvarAgenteExternoPainel('${id}')" style="font-size:11px;padding:5px 12px;">💾 Salvar</button>
+          <button class="save-btn" onclick="salvarAgenteExternoPainel(${jsq(id)})" style="font-size:11px;padding:5px 12px;">💾 Salvar</button>
         </div>
       </div>`:''}
     </div>`;
@@ -10369,7 +10387,7 @@ function renderDadosApresList(){
   list.innerHTML = dadosApresentacoes.map(a=>`<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;">
     <span style="font-size:14px;">🖥️</span>
     <a href="${esc(a.url)}" target="_blank" rel="noopener" style="flex:1;font-size:11px;color:#e8f4fd;text-decoration:none;font-weight:600;" title="${esc(a.url)}">${esc(a.title||'Apresentação')}</a>
-    ${editor?`<button onclick="removeDadosApresentacao('${a.id}')" title="Remover" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;">✕</button>`:''}
+    ${editor?`<button onclick="removeDadosApresentacao(${jsq(a.id)})" title="Remover" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;">✕</button>`:''}
   </div>`).join('');
 }
 function addDadosApresentacao(){
@@ -10459,7 +10477,7 @@ function renderDadosHistorico(){
           ${pct!=null?`<span class="badge" style="background:${ok?'rgba(29,233,182,.2)':'rgba(255,107,107,.2)'};color:${ok?'var(--teal)':'var(--danger)'};border:1px solid ${ok?'rgba(29,233,182,.3)':'rgba(255,107,107,.3)'};">${pct}% da meta do dia</span>`:''}
           ${pctAcum!=null?`<span class="badge" style="background:rgba(56,182,255,.15);color:var(--blue);border:1px solid rgba(56,182,255,.3);">${pctAcum}% acum.</span>`:''}
           ${d.relatorioUrl?`<a href="${esc(d.relatorioUrl)}" target="_blank" rel="noopener" class="btn btn-sm" style="color:var(--cyan);border-color:rgba(126,200,227,.35);text-decoration:none;" title="${esc(d.relatorioTitulo||'Relatório Databricks')}">🤖 Relatório</a>`:''}
-          ${editor?`<button class="btn btn-sm" onclick="editDadosPost('${date}')" style="font-size:10px;" title="Carregar no formulário pra editar">✏️</button><button class="btn btn-sm" onclick="deleteDadosPost('${date}')" style="font-size:10px;color:var(--danger);" title="Excluir">🗑</button>`:''}
+          ${editor?`<button class="btn btn-sm" onclick="editDadosPost(${jsq(date)})" style="font-size:10px;" title="Carregar no formulário pra editar">✏️</button><button class="btn btn-sm" onclick="deleteDadosPost(${jsq(date)})" style="font-size:10px;color:var(--danger);" title="Excluir">🗑</button>`:''}
         </div>
       </div>
       ${d.texto?`<div style="font-size:11px;color:var(--txt2);margin-top:6px;white-space:pre-wrap;">${esc(d.texto)}</div>`:''}
@@ -10711,7 +10729,7 @@ function renderFilterBar(){
   const bar = document.querySelector('.filter-bar');
   if(!bar) return;
   bar.innerHTML = `<button class="filter-btn${activeFilter==='all'?' active':''}" id="fb-all" onclick="setFilter('all')">🏠 Todos</button>`
-    + SQUADS.map(sq=>`<button class="filter-btn${activeFilter===sq.id?' active':''}" id="fb-${esc(sq.id)}" onclick="setFilter('${esc(sq.id)}')">${sq.icon} ${esc(sq.label.replace('Squad ',''))}</button>`).join('');
+    + SQUADS.map(sq=>`<button class="filter-btn${activeFilter===sq.id?' active':''}" id="fb-${esc(sq.id)}" onclick="setFilter(${jsq(sq.id)})">${sq.icon} ${esc(sq.label.replace('Squad ',''))}</button>`).join('');
 }
 const DEFAULT_COLUMNS = ['backlog','todo','progress','blocker','done'];
 const COL_NAMES = {backlog:'Backlog',todo:'A Fazer',progress:'Em Progresso',blocker:'Impedimentos',done:'Concluído'};
@@ -11014,7 +11032,7 @@ function renderKudosPainel(){
       grid.innerHTML=list.map(k=>{
         const quando=k.ts?new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}):'';
         const podeApagar = k.fromUid===window._currentUser?.uid || isAdmUser(window._currentUser);
-        const del=podeApagar?`<button class="kudosp-del" onclick="delKudosPainel('${esc(k.id)}')" title="Remover">🗑</button>`:'<span></span>';
+        const del=podeApagar?`<button class="kudosp-del" onclick="delKudosPainel(${jsq(k.id)})" title="Remover">🗑</button>`:'<span></span>';
         return `<div class="kudosp-card">
           <div class="kudosp-from"><b>${esc(k.fromNome||k.fromInit||'?')}</b> reconheceu <span class="kudosp-to">@${esc(k.toInit||'')}</span>${k.toNome?' ('+esc(k.toNome)+')':''}</div>
           <div class="kudosp-text">${esc(k.texto||'')}</div>
@@ -11089,9 +11107,9 @@ function _renderKudospReactions(k){
   const myReact=r[myUid];
   const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
-    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudospReaction('${esc(k.id)}','${e}')" title="${n}">${e} ${n}</span>`;
+    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudospReaction(${jsq(k.id)},${jsq(e)})" title="${n}">${e} ${n}</span>`;
   }).join('');
-  const picker=KUDOSP_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudospReaction('${esc(k.id)}','${e}')">${e}</span>`).join('');
+  const picker=KUDOSP_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudospReaction(${jsq(k.id)},${jsq(e)})">${e}</span>`).join('');
   const addBtn=`<button class="kr-add" title="Reagir">😊<span class="kr-picker">${picker}</span></button>`;
   return `<div class="kr-row">${chips}${addBtn}</div>`;
 }
@@ -11254,9 +11272,9 @@ function _guClearFilters(){
 function _guFiltersHtml(contagemEmpresa, totalBase){
   const chip = (id, icon, label, n)=>{
     const ativo = _guFilter.empresa===id;
-    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_guSetFilter('empresa','${ativo?'':id}')" title="Filtrar por ${esc(label)}">${icon} ${esc(label)} <b>${n}</b></div>`;
+    return `<div class="okr-stat-chip${ativo?' active':''}" onclick="_guSetFilter('empresa',${jsq(ativo?'':id)})" title="Filtrar por ${esc(label)}">${icon} ${esc(label)} <b>${n}</b></div>`;
   };
-  const sel = (campo, placeholder, opts)=>`<select class="pt-filter-input" onchange="_guSetFilter('${campo}', this.value)">`
+  const sel = (campo, placeholder, opts)=>`<select class="pt-filter-input" onchange="_guSetFilter(${jsq(campo)}, this.value)">`
     + `<option value="">${placeholder}</option>`
     + opts.map(([v,l])=>`<option value="${esc(v)}"${_guFilter[campo]===v?' selected':''}>${esc(l)}</option>`).join('')
     + `</select>`;
@@ -12407,7 +12425,7 @@ function renderBlockers(){
     const sq=c._squad;
     const colName=squadData[sq.id]?.columns?.find(col=>col.id===c.col)?.name||c.col;
     return `
-    <div class="panel-card blocker" onclick="openPcModal('${sq.id}','${c.id}')">
+    <div class="panel-card blocker" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
       <div class="pc-card-chips">
         <span class="pc-chip pc-chip-squad">${sq.icon} ${sq.label.replace('Squad ','')}</span>
         <span class="pc-col-badge">${colName}</span>
@@ -12611,7 +12629,7 @@ function _painelTimelineRow(c, sq, hojeStr){
     }
   }
   const tagsRow=_ptTagsHtml(sq.id, c);
-  return `<div class="pt-row" onclick="openPcModal('${sq.id}','${c.id}')">
+  return `<div class="pt-row" onclick="openPcModal(${jsq(sq.id)},${jsq(c.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_painelOwnerAvatarHtml(c.owner, sq.id)}
       <div style="flex:1;min-width:0;">
@@ -12712,12 +12730,12 @@ function renderPainelTimeline(){
     const expandido=_painelTimelineExpanded[key];
     const mostrar=expandido?ordenados:ordenados.slice(0,PT_BUCKET_CAP);
     const restante=ordenados.length-mostrar.length;
-    return `<details class="pt-bucket" style="margin-top:10px;" ${aberto?'open':''} ontoggle="_painelTimelineSetOpen('${key}', this.open)">
+    return `<details class="pt-bucket" style="margin-top:10px;" ${aberto?'open':''} ontoggle="_painelTimelineSetOpen(${jsq(key)}, this.open)">
       <summary class="sec-title" style="border-left:3px solid ${corBorda};padding-left:8px;">
         <span class="pt-chevron">▸</span> ${icone} ${titulo} <span class="badge">${lista.length}</span>
       </summary>
       <div style="margin-top:8px;">${mostrar.map(c=>_painelTimelineRow(c,c._squad,hojeStr)).join('')}</div>
-      ${restante>0?`<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 12px;margin-top:6px;width:100%;justify-content:center;" onclick="_painelTimelineExpandBucket('${key}')">Mostrar mais ${restante}</button>`:''}
+      ${restante>0?`<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 12px;margin-top:6px;width:100%;justify-content:center;" onclick="_painelTimelineExpandBucket(${jsq(key)})">Mostrar mais ${restante}</button>`:''}
     </details>`;
   };
   let html='';
@@ -12816,7 +12834,7 @@ function _ptFeedRow(m){
   const isBlocked=bmode==='col' ? card.col==='blocker' : !!card.blocker;
   const blockedBadge=isBlocked?'<span style="font-size:10px;margin-left:4px;" title="Impedido">🚧</span>':'';
   const tagsRow=_ptTagsHtml(sq.id, card);
-  return `<div class="pt-row" style="border-left:3px solid ${PT_TIMELINE_FEED_COR[m.tipo]};" onclick="closePainelFeed();openPcModal('${sq.id}','${esc(card.id)}')">
+  return `<div class="pt-row" style="border-left:3px solid ${PT_TIMELINE_FEED_COR[m.tipo]};" onclick="closePainelFeed();openPcModal(${jsq(sq.id)},${jsq(card.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_painelOwnerAvatarHtml(card.owner, sq.id)}
       <div style="flex:1;min-width:0;">
@@ -12926,7 +12944,7 @@ function _renderPtFeed(){
   const chip=(tipo,icone,label)=>{
     const n=paraContagem.filter(m=>m.tipo===tipo).length; if(!n) return '';
     const ativo=f.tipos[tipo];
-    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${PT_TIMELINE_FEED_COR[tipo]};color:${PT_TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="ptFeedToggleTipo(${jsq(tipo)})" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
   };
   const temFiltro = f.squad||f.owner||f.tagLabel||Object.values(f.tipos).some(v=>!v);
   const filtrosHtml=`<div style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
@@ -13078,7 +13096,7 @@ function bsRenderExisting(){
            style="font-size:11px;color:var(--accent);text-decoration:none;padding:3px 8px;border:1px solid rgba(56,182,255,.3);border-radius:6px;">
           Abrir ↗
         </a>
-        ${!PROTECTED_SQUADS.includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard('${sq.id}','${sq.label}')" title="Excluir board">&#128465;</button>` : ''}
+        ${!PROTECTED_SQUADS.includes(sq.id) ? `<button class="bs-del-btn" onclick="bsDeleteBoard(${jsq(sq.id)},${jsq(sq.label)})" title="Excluir board">&#128465;</button>` : ''}
       </div>
     </div>`
   ).join('');

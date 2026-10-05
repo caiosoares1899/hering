@@ -1388,6 +1388,10 @@ html, body {
 </div>
 
 <script>
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})") — ver jsq() em kanban-dev.html
+// (/monitorarbugs 2026-10-05): '${x}' dentro de on*="..." deixava um valor com aspa escapar da
+// string e executar. Esta página não tem esc(), então escapa o HTML aqui mesmo.
+function jsq(s){ return JSON.stringify(String(s==null?'':s)).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
 // ── RELÓGIO BRASÍLIA ──
 function updateClock() {
   const el = document.getElementById('brtClock');
@@ -1667,7 +1671,7 @@ function renderAllCards(data) {
 
 function buildCardHTML(card, fish, key) {
   const delBtn = FIREBASE_READY
-    ? `<button class="pcard-delete" onclick="deleteCard('${key}')" title="Remover">✕</button>`
+    ? `<button class="pcard-delete" onclick="deleteCard(${jsq(key)})" title="Remover">✕</button>`
     : `<button class="pcard-delete" onclick="this.closest('.pres-card').remove()" title="Remover">✕</button>`;
   return `
     ${delBtn}

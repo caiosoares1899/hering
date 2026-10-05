@@ -38,6 +38,30 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.779-dev — 2026-10-05 · fix(segurança, /monitorarbugs "áreas sensíveis"): XSS armazenado via id em handler inline (`on*="f('${esc(x)}')"`)
+
+`on*="f('${esc(x)}')"` **não é seguro**: `esc()` troca `'` por `&#39;`, que o
+navegador decodifica de volta pra `'` ANTES de o JavaScript do atributo rodar. Um
+id como `x');window.__pwn=1;//` escapa da string e executa. Reproduzido no
+Chromium com o `_intakeItemHtml()` real: os 4 botões do item de intake rodaram o
+código injetado. Quem controla o dado (`intake_pending` aceita escrita de
+qualquer membro de squad, inclusive freelancer da whitelist `externos`) roda JS na
+sessão de quem abrir a tela — inclusive de um ADM, que pode então trocar papéis.
+Havia também ~110 casos em que o id entrava no `onclick` **sem nem passar pelo
+`esc()`**.
+
+- Novo `jsq(x)` (junto de `esc()`): `esc(JSON.stringify(String(x)))` — literal JS
+  válido, protegido pro atributo HTML.
+- 195 interpolações `'${…}'` em atributos `on*=` convertidas pra `${jsq(…)}`
+  (transformação mecânica, restrita ao interior dos atributos). Não sobrou nenhuma
+  entre aspas simples em atributo `on*`.
+- Verificação no Chromium: 5.020 textos hostis (aspas, barra invertida, `</script>`,
+  `&#39;`, quebras de linha, U+2028, `${…}`, crases, emoji...) — o handler recebe
+  **exatamente** a string original, 1 chamada, 0 execuções injetadas; PoC do intake
+  neutralizado e caso benigno intacto; sem erro de página no boot.
+- Mesma correção em `painel-dev.html` (v3.95), `okr-apresentacao.slide.html`
+  (4 ids crus) e `onboarding.slide.html` (1) — ver as entradas deles.
+
 ### v8.30.778-dev — 2026-10-05 · ui(card): chip de executor ("🤝 Híbrido") compacto pra caber na linha das tags
 
 Pedido direto do usuário (com print de um card): "será que esse 🤝 Híbrido não
@@ -19395,6 +19419,39 @@ inicial (URL relativa) tanto na Cloud Function quanto no fallback do
 manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
 
+## Cloud Functions públicas — identidade do rate limit + redirect do Spotify (`functions/common/clientIp.js`, `functions/intake/submit.js`, `functions/agente-agil/http.js`, `functions/spotify/oauth.js`)
+
+### 2026-10-05 · fix(segurança, /monitorarbugs "áreas sensíveis")
+
+**1. Rate limit contornável por cabeçalho (`intakeSubmit` e `agenteAgil`).** A chave de
+IP era `req.headers['fastly-client-ip'] || req.headers['x-forwarded-for']` com
+`split(',')[0]` — os dois são escolhidos pelo CLIENTE. O formulário chama
+`us-central1-hering-onboarding.cloudfunctions.net/intakeSubmit` direto (sem o
+Firebase Hosting/Fastly na frente) e o Google só ACRESCENTA o IP real no fim do
+`x-forwarded-for`. Mandar um valor novo a cada requisição dava uma chave nova a cada
+vez: o limite de 5 envios/hora do formulário público (sem CAPTCHA — cada envio ainda
+notifica/dispara push pro squad inteiro) e o de 20 tentativas/hora de autenticação do
+Agente Ágil eram contornáveis com um cabeçalho. Novo `common/clientIp.js`: ignora
+`fastly-client-ip`, usa a entrada MAIS À DIREITA de `x-forwarded-for` (a do Google) e
+pula endereços internos. Teto por SQUAD (40/hora, independente de IP) no
+`intakeSubmit` como backstop que não depende de nenhuma suposição sobre cabeçalho.
+Testes rodando o handler REAL (fakes de `firebase-functions`/`firebase-admin`, db com
+`transaction()` de verdade): 20 requisições com `x-forwarded-for` diferente a cada
+uma — antes 20/20 passavam, agora só 5; 3 dos 4 testes novos falham no código antigo.
+
+**2. Redirecionamento aberto em `spotifyOauthCallback`.** `returnUrl` é gravado pelo
+cliente em `kanban/oauth_pending/{state}` (a regra só exige `uid === auth.uid`) e a
+function fazia `res.redirect(pending.returnUrl + …)` sem validar. Qualquer conta
+autenticada podia gravar um `returnUrl` qualquer e mandar um link
+`…cloudfunctions.net/spotifyOauthCallback?state=X&error=1` que devolve 302 pra onde ela
+quisesse, a partir de um domínio confiável. Novo `isAllowedReturnUrl()` (`_shared.js`):
+só `https://caiosoares1899.github.io`, sem credenciais embutidas. A function segue no ar
+mesmo com o Spotify pausado.
+
+Suíte `functions/`: 536/536 (521 + 15 novos). **⚠️ Requer deploy manual**:
+`firebase deploy --only functions:intakeSubmit`, `functions:agenteAgil` e
+`functions:spotifyOauthCallback` (resincronizar o clone antes — ver `CLAUDE.md`).
+
 ## Cloud Function — `intakeSubmit` (`functions/intake/submit.js`, sem versão própria em `version.json`)
 
 ### 2026-09-11 — Fix: rate limiter não era atômico (race condition)
@@ -19819,6 +19876,15 @@ só sugerindo texto.
   functions:okrAgenteChat` (resync do clone primeiro, ver `CLAUDE.md`).
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
+
+### 2026-10-05 · fix(segurança, /monitorarbugs): ids crus em handler inline
+
+4 ids (`o.id`, `nextObj.id`, `m.id`, `id` da anotação) entravam direto em
+`onclick="window._okr…('${x}')"` — sem `esc()` e, mesmo com `esc()`, escapável (ver
+kanban-dev.html v8.30.779-dev). Objetivos, Marcos e anotações são gravados por
+qualquer pessoa da empresa e lidos por quem abre a apresentação. Agora
+`onclick="…(${jsq(x)})"`. 3.012 textos hostis no Chromium, 0 falhas. Mesma correção em
+`onboarding.slide.html` (`deleteCard(${jsq(key)})`, helper próprio — a página não tem `esc()`).
 
 ### 2026-10-01 (3ª rodada) — fix: comentários do Marco podiam aparecer sob o Marco errado
 
@@ -20324,6 +20390,14 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.95 · painel-dev — 2026-10-05 · fix(segurança): XSS armazenado via id em handler inline
+
+Mesma classe de `kanban-dev.html` v8.30.779-dev (ver lá o cenário e a verificação):
+137 interpolações `'${…}'` em atributos `on*=` do painel (a ferramenta de ADM — alvo
+mais valioso) convertidas pra `${jsq(…)}`; `jsq()` definido junto de cada `esc()`.
+Verificado no Chromium com 5.020 textos hostis, 0 falhas. Ainda em dev — promover
+junto do kanban depois da validação.
 
 ### painel.html v3.94 · painel / painel-dev.html v3.94 · painel-dev — 2026-10-02 · fix(banda, /monitorarbugs): cache de cards sobrevivia ao logout + 3 pedidos engolidos/sem retry
 

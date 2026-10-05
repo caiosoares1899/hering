@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.778-dev</div>
+<div class="version">v8.30.779-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7126,6 +7126,15 @@ function renderHdMoreDD(){
 const today = new Date(); today.setHours(0,0,0,0);
 // ── Seguranca: escape de HTML e validacao de URL ──
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
+// (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —
+// esc() troca ' por &#39;, que o navegador decodifica de volta pra ' ANTES do JS do
+// atributo rodar, então um id como  x');alert(1);//  escapa da string e executa
+// (XSS armazenado: qualquer pessoa com escrita no dado — membro de squad, freelancer
+// da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
+// gera um literal JS válido e esc() protege o atributo HTML.
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
 // Achado real (/monitorarbugs 2026-09-17, técnica 1 — comparar caminhos
@@ -7234,7 +7243,7 @@ function renderDadosPainel(){
   if(dadosApresentacoesBoard.length){
     html += `<div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
       ${dadosApresentacoesBoard.map(a=>`<div>
-        <button class="btn btn-sm" id="dados-apres-btn-${a.id}" onclick="toggleDadosApres('${a.id}')" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ ${esc(a.title)}</button>
+        <button class="btn btn-sm" id="dados-apres-btn-${a.id}" onclick="toggleDadosApres(${jsq(a.id)})" style="width:100%;justify-content:center;color:var(--cyan);border-color:rgba(126,200,227,.35);">🖥️ ${esc(a.title)}</button>
         <div id="dados-apres-embed-${a.id}" style="display:none;margin-top:10px;"></div>
       </div>`).join('')}
     </div>`;
@@ -7327,7 +7336,7 @@ function renderCoverSwatches(){
   const card=editingId ? cards.find(c=>c.id===editingId) : null;
   const current = editingId ? (card?.coverColor||'') : (_pendingCoverColor||'');
   const html = `<button type="button" class="cover-swatch none${!current?' on':''}" title="Sem capa" onclick="setCardCover('')">⊘</button>`
-    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover('${c.id}')"></button>`).join('');
+    + CARD_COVER_COLORS.map(c=>`<button type="button" class="cover-swatch${c.id===current?' on':''}" style="background:${c.hex};" title="${esc(c.label)}" onclick="setCardCover(${jsq(c.id)})"></button>`).join('');
   targets.forEach(el=>el.innerHTML=html);
   const imgInp=document.getElementById('m-cover-img-inp');
   if(imgInp && document.activeElement!==imgInp){ // não pisa no que a pessoa tá digitando
@@ -7963,7 +7972,7 @@ function _bulkFinish(msg, keepSelection, extraIds){
 }
 function bulkMove(){
   if(!selectedCards.size) return;
-  const opts=columns.map(c=>`<button class="bulk-pop-item" onclick="_doBulkMove('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  const opts=columns.map(c=>`<button class="bulk-pop-item" onclick="_doBulkMove(${jsq(c.id)})"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
   _bulkPopover(`<div class="bulk-pop-title">Mover ${selectedCards.size} card(s) para:</div>${opts}`);
 }
 function _doBulkMove(colId){
@@ -7990,7 +7999,7 @@ function _doBulkMove(colId){
 }
 function bulkAssign(){
   if(!selectedCards.size) return;
-  const opts=members.filter(m=>m.init).map(m=>`<button class="bulk-pop-item" onclick="_doBulkAssign('${esc(m.init)}')">${esc(m.init)} · ${esc(m.name)}</button>`).join('');
+  const opts=members.filter(m=>m.init).map(m=>`<button class="bulk-pop-item" onclick="_doBulkAssign(${jsq(m.init)})">${esc(m.init)} · ${esc(m.name)}</button>`).join('');
   _bulkPopover(`<div class="bulk-pop-title">Atribuir ${selectedCards.size} card(s) a:</div><button class="bulk-pop-item" onclick="_doBulkAssign('')">— sem responsável —</button>${opts}`);
 }
 function _doBulkAssign(init){
@@ -8057,7 +8066,7 @@ function _renderBulkTagPicker(){
     wrap.innerHTML = tags.map(t=>{
       const sel = window._bulkSelectedTags.includes(t.id);
       const p = getPal(t);
-      return `<span onclick="_bulkToggleTag('${esc(t.id)}')" style="
+      return `<span onclick="_bulkToggleTag(${jsq(t.id)})" style="
         padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
         background:${sel?p.bg:'rgba(var(--surface2-rgb),.6)'};
         border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
@@ -8173,7 +8182,7 @@ function bulkBlocker(){
     _bulkPopover(title+(partes||'<div class="bulk-pop-sec">Nenhum card selecionado pode ter o impedimento alterado.</div>'));
     return;
   }
-  const destOpts=columns.filter(c=>c.id!=='blocker').map(c=>`<button class="bulk-pop-item" onclick="_doBulkUnblockCol('${c.id}')"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
+  const destOpts=columns.filter(c=>c.id!=='blocker').map(c=>`<button class="bulk-pop-item" onclick="_doBulkUnblockCol(${jsq(c.id)})"><span class="dot" style="background:${c.color||'#38b6ff'}"></span>${esc(c.name)}</button>`).join('');
   const partes=[
     naoBlocked.length?`<button class="bulk-pop-item" onclick="_doBulkBlockCol()">🚧 Marcar ${naoBlocked.length} card(s) como impedidos (mover pra Impedimentos)</button>`:'',
     blocked.length?`<div class="bulk-pop-sec">Remover impedimento de ${blocked.length} card(s) — mover pra:</div>${destOpts}`:'',
@@ -11029,7 +11038,7 @@ function openStatusMenu(){
   m.innerHTML='<div style="font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);padding:6px 10px 4px;">Meu status</div>'+
     opts.map(([v,e,l])=>{
       const active=(window._myStatus||'')===v;
-      return `<div onclick="setMyStatus('${v}')" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background='${active?'rgba(56,182,255,.12)':'transparent'}'">
+      return `<div onclick="setMyStatus(${jsq(v)})" style="display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--txt);${active?'background:rgba(56,182,255,.12);':''}" onmouseover="this.style.background='rgba(56,182,255,.08)'" onmouseout="this.style.background=${jsq(active?'rgba(56,182,255,.12)':'transparent')}">
         <span style="font-size:14px;">${e}</span> ${l} ${active?'<span style="margin-left:auto;color:var(--teal);">●</span>':''}
       </div>`;
     }).join('') +
@@ -11978,7 +11987,7 @@ function makeCardEl(card){
   // independente do modo de visualização" — some durante seleção em massa
   // (o card inteiro já muda de semântica de clique nesse modo, ver
   // div.onclick acima).
-  const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard('${esc(card.id)}')">📌</button>`;
+  const pinBtn=selectMode?'':`<button type="button" class="card-pin-btn" title="${card.pinned?'Desafixar do topo da coluna':'Fixar no topo da coluna'}" onclick="event.stopPropagation();togglePinCard(${jsq(card.id)})">📌</button>`;
   const _nDescs=getExtraDescs(card).filter(d=>d.text&&d.text.trim()).length + ((card.desc&&card.desc.trim())?1:0);
   const _descInd=_nDescs?`<span class="ci ci-desc" title="${_nDescs} descriç${_nDescs>1?'ões':'ão'}">≡${_nDescs>1?'<sup style="font-size:7px;">'+_nDescs+'</sup>':''}</span>`:'';
   // Ícone próprio (🎨), não mais 📌 — pedido direto do usuário: colidia
@@ -12009,7 +12018,7 @@ function makeCardEl(card){
     const doneN=_superChildren.filter(c=>_isColDone(c.col)).length;
     const rows=_superChildren.slice(0,6).map(c=>{
       const col=columns.find(x=>x.id===c.col);
-      return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard('${esc(c.id)}')">`
+      return `<div class="super-rollup-row" onclick="event.stopPropagation();openCard(${jsq(c.id)})">`
         +`<span class="super-rollup-dot" style="background:${col?.color||'#888'};"></span>`
         +`<span class="super-rollup-title">${esc(c.title)}</span>`
         +`</div>`;
@@ -12485,8 +12494,8 @@ function renderTimelineView(activeCards){
   const secao=(key,titulo,icone,lista,corBorda,dateStr,eventos)=>{
     if(!lista.length && !(eventos&&eventos.length)) return '';
     const hdStyle=`border-left-color:${corBorda};`+(dateStr?'cursor:pointer;':'');
-    const dbl=dateStr?` ondblclick="openTimelineFeed('${esc(dateStr)}','${esc(dateStr)}','${esc(titulo)}')" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
-    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen('${key}', this.open)">
+    const dbl=dateStr?` ondblclick="openTimelineFeed(${jsq(dateStr)},${jsq(dateStr)},${jsq(titulo)})" title="Duplo clique: ver o que foi feito no board nesse dia"`:'';
+    return `<details class="timeline-collapse meudia-sec" ${_timelineCollapseOpen[key]?'open':''} ontoggle="_timelineSetCollapseOpen(${jsq(key)}, this.open)">
     <summary class="meudia-sec-hd" style="${hdStyle}"${dbl}><span class="timeline-chevron">▸</span> ${icone} ${titulo} <span class="meudia-sec-n">${lista.length}</span></summary>
     ${comMarcos(lista,eventos)}
   </details>`;
@@ -12598,16 +12607,16 @@ function _timelineCardRow(card, hojeStr){
   if(!_isColDone(card.col)){
     if(!card.due){
       acaoHtml=`<div style="margin-top:6px;" onclick="event.stopPropagation();">
-        <input type="date" onchange="_timelineSetPrazoInline('${esc(card.id)}', this.value)" title="Definir prazo" style="padding:3px 6px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+        <input type="date" onchange="_timelineSetPrazoInline(${jsq(card.id)}, this.value)" title="Definir prazo" style="padding:3px 6px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
       </div>`;
     } else if(card.due<hojeStr){
       acaoHtml=`<div style="margin-top:6px;display:flex;gap:6px;" onclick="event.stopPropagation();">
-        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',1)" title="Adiar o prazo em 1 dia">+1d</button>
-        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard('${esc(card.id)}',7)" title="Adiar o prazo em 1 semana">+1 sem</button>
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard(${jsq(card.id)},1)" title="Adiar o prazo em 1 dia">+1d</button>
+        <button type="button" class="btn btn-sm" style="font-size:10px;padding:2px 8px;" onclick="_timelineAdiarCard(${jsq(card.id)},7)" title="Adiar o prazo em 1 semana">+1 sem</button>
       </div>`;
     }
   }
-  return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard('${esc(card.id)}')">
+  return `<div class="meudia-row timeline-row" data-id="${esc(card.id)}" onclick="openCard(${jsq(card.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
@@ -12772,7 +12781,7 @@ function _timelineFeedRow(m){
   const superN=(card.childCardIds||[]).filter(id=>cards.find(c=>c.id===id&&!c.archived)).length;
   const superBadge=superN?`<span style="font-size:10px;margin-left:4px;" title="Supercard — ${superN} card${superN>1?'s':''} filho${superN>1?'s':''}">🧩</span>`:'';
   const tagsRow=tagsHtml(card);
-  return `<div class="meudia-row" style="border-left:3px solid ${TIMELINE_FEED_COR[m.tipo]};padding-left:9px;" onclick="closeOv('timeline-feed-ov');openCard('${esc(card.id)}')">
+  return `<div class="meudia-row" style="border-left:3px solid ${TIMELINE_FEED_COR[m.tipo]};padding-left:9px;" onclick="closeOv('timeline-feed-ov');openCard(${jsq(card.id)})">
     <div style="display:flex;gap:9px;align-items:flex-start;">
       ${_ownerAvatarHtml(card.owner)}
       <div class="meudia-row-main" style="flex:1;min-width:0;">
@@ -12922,7 +12931,7 @@ function _renderTimelineFeed(){
   const chip=(tipo,icone,n,label)=>{
     if(!n) return '';
     const ativo=f.tipos[tipo];
-    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${TIMELINE_FEED_COR[tipo]};color:${TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="timelineFeedToggleTipo('${tipo}')" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
+    return `<button type="button" class="btn btn-sm" style="font-size:11px;padding:3px 9px;${ativo?`border-color:${TIMELINE_FEED_COR[tipo]};color:${TIMELINE_FEED_COR[tipo]};`:'opacity:.45;'}" onclick="timelineFeedToggleTipo(${jsq(tipo)})" title="Clique pra ${ativo?'esconder':'mostrar'} marcos de ${label}">${icone} <b>${n}</b> ${label}${n>1?'s':''}</button>`;
   };
   const temFiltro = f.owner||f.subteam||f.tag||f.onlyMine||!f.tipos.criado||!f.tipos.movido||!f.tipos.concluido||!f.tipos.prioridade||!f.tipos.impedido||!f.tipos.desimpedido||!f.tipos.checklist;
   const filtrosHtml=`<div class="timeline-feed-filters" style="padding-bottom:12px;margin-bottom:12px;border-bottom:1px solid var(--glass-b);">
@@ -13019,17 +13028,17 @@ function renderNormal(board,activeCards){
     div.innerHTML=`<div class="col-hd" style="--col-accent:${col.color||'#38b6ff'};">
       <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
       <div style="display:flex;align-items:center;gap:5px;">
-        ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn('${col.id}')" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
+        ${selectMode?`<button class="col-selectall" onclick="selectAllInColumn(${jsq(col.id)})" title="Selecionar/desmarcar todos desta coluna">☑️ Todos</button>`:''}
         <span class="col-cnt" id="cnt-${col.id}" style="${wipLim&&colCards.length>wipLim?'background:rgba(255,107,107,.2);border-color:var(--danger);color:var(--danger);':''}">
           ${wipLim ? colCards.length+'/'+wipLim : colCards.length}
         </span>
-        ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio('${col.id}')" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
-        <button class="col-cfg-btn" onclick="openColCfg('${col.id}')" title="Configurar esta coluna: nome, cor, WIP, visualização e posição na prioridade" style="background:none;border:none;cursor:pointer;font-size:12px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">⚙</button>
-        ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol('${col.id}')" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
+        ${hasManualOrder?`<button class="col-manual-badge" onclick="event.stopPropagation();resetColSubPrio(${jsq(col.id)})" title="Esta coluna tem cards com posição manual dentro da prioridade. Clique pra voltar à ordem padrão.">🔀 manual</button>`:''}
+        <button class="col-cfg-btn" onclick="openColCfg(${jsq(col.id)})" title="Configurar esta coluna: nome, cor, WIP, visualização e posição na prioridade" style="background:none;border:none;cursor:pointer;font-size:12px;color:${colSortOverrides[col.id]?'var(--teal)':'var(--txt3)'};padding:2px 4px;line-height:1;">⚙</button>
+        ${canCollapse?`<button class="col-collapse-btn" onclick="toggleCol(${jsq(col.id)})" title="${isCollapsed?'Expandir':'Minimizar'}">${isCollapsed?'▶':'▼'}</button>`:''}
       </div>
     </div>
     <div class="col-body" id="body-${col.id}" data-col-id="${col.id}"></div>
-    <button class="add-btn" onclick="openNewCard('${col.id}')">+ Card</button>`;
+    <button class="add-btn" onclick="openNewCard(${jsq(col.id)})">+ Card</button>`;
     board.appendChild(div);
     const body=div.querySelector('.col-body');
     // ⚡ Performance: em colunas gigantes, renderiza só os primeiros N e mostra "ver mais"
@@ -13092,10 +13101,10 @@ function renderRaiaOwner(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${rColId}')">${rCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(rColId)})">${rCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${safeId}-${col.id}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}'${owner?`,'${owner}'`:''})" title="${owner?'Novo card, já atribuído a '+esc(nomeCompleto):'Novo card'}">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)}${owner?`,${jsq(owner)}`:''})" title="${owner?'Novo card, já atribuído a '+esc(nomeCompleto):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!rCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -13154,10 +13163,10 @@ function renderRaiaTag(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${tColId}')">${tCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(tColId)})">${tCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${tColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}',null${tagId?`,'${tagId}'`:''})" title="${t?'Novo card, já com a tag '+esc(t.label):'Novo card'}">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)},null${tagId?`,${jsq(tagId)}`:''})" title="${t?'Novo card, já com a tag '+esc(t.label):'Novo card'}">+ Card</button>`;
       raiaBoard.appendChild(div);
       const body=div.querySelector('.col-body');
       if(!tCollapsed) colCards.forEach(c=>body.appendChild(makeCardEl(c)));
@@ -13212,10 +13221,10 @@ function renderRaiaSubteam(board,activeCards){
         <div class="col-title"><span class="dot" style="background:${col.color}"></span>${esc(col.name)}</div>
         <div style="display:flex;align-items:center;gap:5px;">
           <span class="col-cnt">${colCards.length}</span>
-          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol('${sColId}')">${sCollapsed?'▶':'▼'}</button>`:''}
+          ${col.collapsible!==false?`<button class="col-collapse-btn" onclick="toggleRaiaCol(${jsq(sColId)})">${sCollapsed?'▶':'▼'}</button>`:''}
         </div>
       </div><div class="col-body" id="rbody-${sColId}" data-col-id="${col.id}"></div>
-      <button class="add-btn" onclick="openNewCard('${col.id}')" title="Novo card">+ Card</button>`;
+      <button class="add-btn" onclick="openNewCard(${jsq(col.id)})" title="Novo card">+ Card</button>`;
       // "+ Card" aqui não pré-preenche o subtime de propósito — ver
       // comentário em openNewCard(): subtime é derivado de owner/
       // participants, sem um único membro "certo" pra chutar.
@@ -13445,7 +13454,7 @@ function loadFilterPresets(){
 function renderFilterPresets(){
   const wrap = document.getElementById('filter-presets-list'); if(!wrap) return;
   wrap.innerHTML = _filterPresets.map(p=>
-    `<span class="auto-action-chip" style="cursor:pointer;" onclick="applyFilterPreset('${esc(p.id)}')" title="Aplicar o preset &quot;${esc(p.nome)}&quot;">${esc(p.nome)}<button onclick="event.stopPropagation();removeFilterPreset('${esc(p.id)}')" title="Remover este preset">✕</button></span>`
+    `<span class="auto-action-chip" style="cursor:pointer;" onclick="applyFilterPreset(${jsq(p.id)})" title="Aplicar o preset &quot;${esc(p.nome)}&quot;">${esc(p.nome)}<button onclick="event.stopPropagation();removeFilterPreset(${jsq(p.id)})" title="Remover este preset">✕</button></span>`
   ).join('');
 }
 async function saveFilterPresetPrompt(){
@@ -13664,7 +13673,7 @@ function _mostrarSugestaoRotina(id, mensagemHtml, respostaSim, labelSim, aoAceit
     <div style="display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap;">
       <button class="btn btn-sm" style="font-size:10.5px;color:var(--txt3);" onclick="_sugestaoRotinaResponder('nunca')">Não sugerir mais</button>
       <button class="btn btn-sm" style="font-size:10.5px;" onclick="_sugestaoRotinaResponder('agora_nao')">Agora não</button>
-      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder('${respostaSim}')">${esc(labelSim)}</button>
+      <button class="btn btn-sm" style="font-size:10.5px;color:var(--teal);border-color:rgba(29,233,182,.3);" onclick="_sugestaoRotinaResponder(${jsq(respostaSim)})">${esc(labelSim)}</button>
     </div>`;
   card.style.display = 'flex';
   window._sugestaoRotinaAtual = {id, respostaSim, aoAceitar};
@@ -13797,9 +13806,9 @@ function renderMinhasPrefsBody(){
 
     <div class="cfg-sec-title">🔍 Fonte e densidade dos cards</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:4px 0 12px;">
-      ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+      ${Object.entries(FONTSIZE_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardFontSize===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardFontSize(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
       <span style="width:1px;align-self:stretch;background:var(--glass-b);margin:0 4px;"></span>
-      ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity('${k}');renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
+      ${Object.entries(DENSITY_LABELS).map(([k,l])=>`<button class="btn btn-sm" style="${boardCardDensity===k?'color:var(--teal);border-color:rgba(29,233,182,.35);':''}" onclick="setBoardCardDensity(${jsq(k)});renderMinhasPrefsBody();">${esc(l)}</button>`).join('')}
     </div>
 
     <div class="cfg-sec-title">📌 Squad padrão</div>
@@ -13835,7 +13844,7 @@ function renderMinhasPrefsBody(){
       const m=members.find(x=>x.init===init);
       return `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
         <div style="font-size:12px;color:var(--txt);">👤 Atalho de atribuição rápida — ${esc(m?_shortName(m.name):init)}</div>
-        <button class="btn btn-sm" style="color:var(--danger);" onclick="_removerAtalhoAtribuicaoRapida('${esc(init)}')">Remover</button>
+        <button class="btn btn-sm" style="color:var(--danger);" onclick="_removerAtalhoAtribuicaoRapida(${jsq(init)})">Remover</button>
       </div>`;
     }).join('') : ''}
     <div style="padding:8px 0 0;">
@@ -13847,7 +13856,7 @@ function renderMinhasPrefsBody(){
       ${_sugestoesRecusadas.length ? _sugestoesRecusadas.map(id=>`
         <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--glass-b);">
           <div style="font-size:12px;color:var(--txt2);">${esc(_sugestaoRecusaLabel(id))}</div>
-          <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa('${esc(id)}')">🔄 Esquecer recusa</button>
+          <button class="btn btn-sm" onclick="_sugestaoEsquecerRecusa(${jsq(id)})">🔄 Esquecer recusa</button>
         </div>`).join('')
         : '<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhuma sugestão recusada — tudo pode aparecer normalmente.</div>'}
     </div>
@@ -14462,7 +14471,7 @@ let _archCfgExcludedColsPending = new Set();
 function _archCfgExcludedColsChips(){
   return columns.map(col=>{
     const ex = _archCfgExcludedColsPending.has(col.id);
-    return `<span onclick="_archCfgToggleExcludedCol('${esc(col.id)}')" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
+    return `<span onclick="_archCfgToggleExcludedCol(${jsq(col.id)})" title="${ex?'Nunca é arquivada automaticamente — clique pra voltar a permitir':'Clique pra nunca arquivar automaticamente cards desta coluna'}" `
       +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
       +`border:1px solid ${ex?'rgba(255,209,102,.4)':'rgba(255,255,255,.1)'};background:${ex?'rgba(255,209,102,.12)':'transparent'};color:${ex?'var(--warn)':'var(--txt3)'};">`
       +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${ex?1:.35};"></span>${esc(col.name)}</span>`;
@@ -15120,7 +15129,7 @@ function renderExtraDescs(){
             <input class="xdesc-label" value="${esc(d.label||'')}" placeholder="Rótulo (ex.: Brief Design, Specs Dev)"
               oninput="editingDescs[${i}].label=this.value;_touchDesc(${i})">
             <span class="xdesc-color-picker" title="Cor de destaque do rótulo">
-              ${_XDESC_COLORS.map(c=>`<button type="button" class="xdesc-color-dot${d.color===c?' active':''}" style="background:${c}" onclick="_setDescColor(${i},'${c}')"></button>`).join('')}
+              ${_XDESC_COLORS.map(c=>`<button type="button" class="xdesc-color-dot${d.color===c?' active':''}" style="background:${c}" onclick="_setDescColor(${i},${jsq(c)})"></button>`).join('')}
               <button type="button" class="xdesc-color-dot xdesc-color-none${!d.color?' active':''}" onclick="_setDescColor(${i},'')" title="Sem cor">✕</button>
             </span>
             <button class="xdesc-del" title="Remover esta descrição" onclick="removeExtraDesc(${i})">🗑</button>
@@ -15129,23 +15138,23 @@ function renderExtraDescs(){
             <div class="fmt-heading-dd">
               <button type="button" class="fmt-btn fmt-heading-btn" onmousedown="event.preventDefault()" onclick="_toggleHeadingDD(this)" title="Tamanho do texto">Tt ▾</button>
               <div class="fmt-heading-menu">
-                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','0');_closeHeadingDD(this)">Texto normal</div>
-                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','1');_closeHeadingDD(this)">Título 1</div>
-                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','2');_closeHeadingDD(this)">Título 2</div>
-                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','heading','3');_closeHeadingDD(this)">Título 3</div>
+                <div class="fmt-heading-opt" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','0');_closeHeadingDD(this)">Texto normal</div>
+                <div class="fmt-heading-opt fmt-h1" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','1');_closeHeadingDD(this)">Título 1</div>
+                <div class="fmt-heading-opt fmt-h2" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','2');_closeHeadingDD(this)">Título 2</div>
+                <div class="fmt-heading-opt fmt-h3" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'heading','3');_closeHeadingDD(this)">Título 3</div>
               </div>
             </div>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','bold')" title="Negrito"><b>B</b></button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','italic')" title="Itálico"><i>I</i></button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','underline')" title="Sublinhado"><u>U</u></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'bold')" title="Negrito"><b>B</b></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'italic')" title="Itálico"><i>I</i></button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'underline')" title="Sublinhado"><u>U</u></button>
             <span class="fmt-colors">
-              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ff6b6b')"></button>
-              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#ffd166')"></button>
-              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#1de9b6')"></button>
-              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','color','#38b6ff')"></button>
+              <button type="button" class="fmt-color" style="background:#ff6b6b" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#ff6b6b')"></button>
+              <button type="button" class="fmt-color" style="background:#ffd166" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#ffd166')"></button>
+              <button type="button" class="fmt-color" style="background:#1de9b6" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#1de9b6')"></button>
+              <button type="button" class="fmt-color" style="background:#38b6ff" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'color','#38b6ff')"></button>
             </span>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText('${taId}','link')" title="Link">🔗</button>
-            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted('${taId}')" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="_fmtText(${jsq(taId)},'link')" title="Link">🔗</button>
+            <button type="button" class="fmt-btn" onmousedown="event.preventDefault()" onclick="copyFormatted(${jsq(taId)})" title="Copiar com formatação (pra colar no Milanote, Word, Docs...)">📋</button>
           </div>
           <textarea class="xdesc-text" id="${taId}" rows="3" placeholder="Descrição deste time/pessoa... (Ctrl+Enter salva)"
             oninput="editingDescs[${i}].text=this.value;_touchDesc(${i})" onpaste="_eocPasteHandler(event)"
@@ -15313,7 +15322,7 @@ function renderTagAddDropdown(){
   const avail=_tagAddAvail();
   const q=inp.value.trim();
   list.innerHTML = avail.length
-    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag('${esc(t.id)}')">${esc(t.label)}</div>`).join('')
+    ? avail.map(t=>`<div class="m-tag-add-item" onmousedown="event.preventDefault();addCardTag(${jsq(t.id)})">${esc(t.label)}</div>`).join('')
     : `<div class="m-tag-add-empty">${q?'Nenhuma tag encontrada.':'Todas as tags disponíveis já foram adicionadas.'}</div>`;
   const r=inp.getBoundingClientRect();
   list.style.top=(r.bottom+4)+'px';
@@ -15350,7 +15359,7 @@ function renderEditingTags(){
     if(t.isOKR||t.id==='okr'){ bg='rgba(255,215,0,.15)';bc='rgba(255,215,0,.5)';col='#ffd700'; }
     else if(t.isCalGestao||t.id==='cal_gestao'){ bg='rgba(150,80,220,.15)';bc='rgba(150,80,220,.4)';col='#d67fff'; }
     else { const p=getPal(t); bg=p.bg;bc=p.b;col=p.c; }
-    return `<span class="m-tag-chip" style="background:${bg};border-color:${bc};color:${col};"><span>${esc(t.label)}</span><span class="x" onclick="removeCardTag('${esc(id)}')">×</span></span>`;
+    return `<span class="m-tag-chip" style="background:${bg};border-color:${bc};color:${col};"><span>${esc(t.label)}</span><span class="x" onclick="removeCardTag(${jsq(id)})">×</span></span>`;
   }).join('');
 }
 function addCardTag(id){
@@ -17968,7 +17977,7 @@ function renderSubmarcaQuickFilters(){
     ${groups.map(g=>`<div class="sm-dd-group">
       <div class="sm-dd-group-label">${esc(g.marca)}</div>
       ${g.items.map(it=>`<label class="sm-dd-row sm-dd-row-sub">
-        <input type="checkbox" ${cur.includes(it.id)?'checked':''} onchange="toggleSubmarcaDropdownItem('${it.id}')"> ${esc(it.time||g.marca)}
+        <input type="checkbox" ${cur.includes(it.id)?'checked':''} onchange="toggleSubmarcaDropdownItem(${jsq(it.id)})"> ${esc(it.time||g.marca)}
       </label>`).join('')}
     </div>`).join('')}`;
 }
@@ -18050,7 +18059,7 @@ function renderSubmarcaCfgList(){
   const body=document.getElementById('submarca-visiveis-cfg-body'); if(!body) return;
   body.innerHTML = SUBMARCA_TAGS.map(st=>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
-    +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel('${st.id}',this.checked)"> ${esc(st.label)}`
+    +`<input type="checkbox" ${_submarcaIsVisivel(st.id)?'checked':''} onchange="toggleSubmarcaVisivel(${jsq(st.id)},this.checked)"> ${esc(st.label)}`
     +`</label>`
   ).join('');
 }
@@ -18170,7 +18179,7 @@ function renderCanalVendaQuickFilters(){
     </label>
     <div class="sm-dd-sep"></div>
     ${visiveis.map(cv=>`<label class="sm-dd-row sm-dd-row-sub">
-      <input type="checkbox" ${cur.includes(cv.id)?'checked':''} onchange="toggleCanalVendaDropdownItem('${cv.id}')"> ${esc(cv.label)}
+      <input type="checkbox" ${cur.includes(cv.id)?'checked':''} onchange="toggleCanalVendaDropdownItem(${jsq(cv.id)})"> ${esc(cv.label)}
     </label>`).join('')}`;
 }
 // Mesmo padrão de position:fixed do menu de Submarcas (toggleSubmarcaDropdown).
@@ -18235,7 +18244,7 @@ function renderCanalVendaCfgList(){
   const body=document.getElementById('canalvenda-visiveis-cfg-body'); if(!body) return;
   body.innerHTML = CANAL_VENDA_TAGS.map(cv=>
     `<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt2);cursor:pointer;">`
-    +`<input type="checkbox" ${_canalVendaIsVisivel(cv.id)?'checked':''} onchange="toggleCanalVendaVisivel('${cv.id}',this.checked)"> ${esc(cv.label)}`
+    +`<input type="checkbox" ${_canalVendaIsVisivel(cv.id)?'checked':''} onchange="toggleCanalVendaVisivel(${jsq(cv.id)},this.checked)"> ${esc(cv.label)}`
     +`</label>`
   ).join('');
 }
@@ -19475,12 +19484,12 @@ function renderLembretes(){
       const canDelete = isOwner || window._currentUserRole==='adm';
       let btns='';
       if(l.tipo!=='proprio'){
-        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();dismissLembrete('${esc(l.id||'')}')" title="Resolver (some só pra você)">✓</button>`;
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();dismissLembrete(${jsq(l.id||'')})" title="Resolver (some só pra você)">✓</button>`;
       } else {
-        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();delLembrete('proprio','${esc(l.id||'')}')" title="Resolver (concluir lembrete)">✓</button>`;
+        btns+=`<button class="pi-resolve" onclick="event.stopPropagation();delLembrete('proprio',${jsq(l.id||'')})" title="Resolver (concluir lembrete)">✓</button>`;
       }
       if(canDelete && l.tipo!=='proprio'){
-        btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete('${l.tipo}','${esc(l.id||'')}')" title="Excluir para todos">🗑</button>`;
+        btns+=`<button class="pi-del" onclick="event.stopPropagation();delLembrete(${jsq(l.tipo)},${jsq(l.id||'')})" title="Excluir para todos">🗑</button>`;
       }
       delBtn=btns;
     }
@@ -19501,7 +19510,7 @@ function renderLembretes(){
       const verCard = l.cardId ? ' · ver card →' : '';
       meta=`<div class="pi-meta"><span class="pi-author">✎ ${esc(autorNome)}${alvo}</span><span>${quando}${verCard}</span></div>`;
     }
-    const clickAttr = (l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard('${esc(l.cardId)}')"` : ` style="--rot:${rot}deg;"`;
+    const clickAttr = (l.cardId)? ` style="cursor:pointer;--rot:${rot}deg;" onclick="_lemGoCard(${jsq(l.cardId)})"` : ` style="--rot:${rot}deg;"`;
     return `<div class="postit ${t.cls}${urgent}"${clickAttr}>
       ${delBtn}
       <div class="pi-type">${t.emoji} ${t.label}</div>
@@ -19641,7 +19650,7 @@ function renderLemCfg(){
         <div style="font-size:12px;color:var(--txt);">${esc(l.text)}</div>
         <div style="font-size:9px;color:var(--txt3);margin-top:3px;">${esc(alvo)} · ${esc(l.autor||'')} · ${quando}</div>
       </div>
-      <button class="btn btn-sm" onclick="delLembrete('po','${esc(l.id)}');renderLemCfg();" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);flex-shrink:0;">✕</button>
+      <button class="btn btn-sm" onclick="delLembrete('po',${jsq(l.id)});renderLemCfg();" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);flex-shrink:0;">✕</button>
     </div>`;
   }).join('');
 }
@@ -19787,7 +19796,7 @@ function renderKudos(){
     const av=k.fromFoto? `<img src="${safeUrl(k.fromFoto)||''}">` : esc((k.fromInit||'?').substring(0,2));
     const quando=k.ts? new Date(k.ts).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'';
     const podeApagar = k.fromUid===window._currentUser?.uid || window._currentUserRole==='adm';
-    const del = podeApagar? `<button class="kc-del" onclick="event.stopPropagation();delKudos('${esc(k.id)}','${k.scope||'squad'}')" title="Remover">🗑</button>`:'';
+    const del = podeApagar? `<button class="kc-del" onclick="event.stopPropagation();delKudos(${jsq(k.id)},${jsq(k.scope||'squad')})" title="Remover">🗑</button>`:'';
     return `<div class="kudos-card">
       <div class="kc-head">
         <div class="kc-av">${av}</div>
@@ -19816,9 +19825,9 @@ function _renderKudosReactions(k){
   const myReact=r[myUid];
   const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
-    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')" title="${n}">${e} ${n}</span>`;
+    return `<span class="kr-chip${mine?' kr-mine':''}" onclick="toggleKudosReaction(${jsq(k.id)},${jsq(k.scope||'squad')},${jsq(e)})" title="${n}">${e} ${n}</span>`;
   }).join('');
-  const picker=KUDOS_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudosReaction('${esc(k.id)}','${k.scope||'squad'}','${e}')">${e}</span>`).join('');
+  const picker=KUDOS_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleKudosReaction(${jsq(k.id)},${jsq(k.scope||'squad')},${jsq(e)})">${e}</span>`).join('');
   const addBtn=`<button class="kr-add" title="Reagir">😊<span class="kr-picker">${picker}</span></button>`;
   return `<div class="kr-row">${chips}${addBtn}</div>`;
 }
@@ -20153,11 +20162,11 @@ function renderNotasList(){
     const nBlocos = Object.keys(n.blocos||{}).length;
     const quando = n.atualizadoEm ? new Date(n.atualizadoEm).toLocaleDateString('pt-BR') : '';
     const snippet = q ? _notaSearchSnippet(n,q) : null;
-    return `<div class="notas-item" onclick="openNota('${esc(n.id)}')">
+    return `<div class="notas-item" onclick="openNota(${jsq(n.id)})">
       <div class="notas-item-title">📄 ${q?_notaHighlight(n.titulo||'Sem título',q):esc(n.titulo||'Sem título')}</div>
       <div class="notas-item-meta">${nBlocos} bloco${nBlocos===1?'':'s'} · ${esc(quando)}${n.criadoPor?' · '+esc(n.criadoPor):''}</div>
       ${snippet?`<div class="notas-item-snippet">${_notaHighlight(snippet,q)}</div>`:''}
-      <button class="notas-item-del" onclick="event.stopPropagation();deleteNota('${esc(n.id)}')" title="Excluir nota">✕</button>
+      <button class="notas-item-del" onclick="event.stopPropagation();deleteNota(${jsq(n.id)})" title="Excluir nota">✕</button>
     </div>`;
   }).join('');
 }
@@ -20485,11 +20494,11 @@ function renderNotaEditor(){
     const isEditing = (b.id===focusedId);
     tree.innerHTML = isEditing
       ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text nb-livre-ta" rows="8"
-          oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
-          onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+          oninput="onBlocoInput(${jsq(b.id)},this)" onfocus="_notasFocusedBlockId=${jsq(b.id)}"
+          onblur="onBlocoBlur(${jsq(b.id)})" onkeydown="onBlocoKeydown(event,${jsq(b.id)})">${esc(b.texto||'')}</textarea>`
       : (b.texto
-          ? `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
-          : `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva à vontade...</span></div>`);
+          ? `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco(${jsq(b.id)})">${renderMd(b.texto)}</div>`
+          : `<div class="nb-text nb-view nb-livre-view" onclick="focarBloco(${jsq(b.id)})"><span class="nb-placeholder">Escreva à vontade...</span></div>`);
     const taLivre=tree.querySelector('textarea.nb-text');
     if(taLivre){ taLivre.style.height='auto'; taLivre.style.height=Math.max(taLivre.scrollHeight,160)+'px'; }
     if(focusedId){
@@ -20515,9 +20524,9 @@ function renderNotaEditor(){
     return kids.map(b=>{
       const hasKids = (byParent[b.id]||[]).length>0;
       const childrenHtml = (hasKids && !b.colapsado) ? `<div class="nb-children">${renderLevel(b.id, depth+1)}</div>` : '';
-      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso('${esc(b.id)}')" title="Recolher/expandir">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
+      const collapseArrow = hasKids ? `<span class="nb-collapse" onclick="toggleBlocoColapso(${jsq(b.id)})" title="Recolher/expandir">${b.colapsado?'▸':'▾'}</span>` : `<span class="nb-collapse nb-collapse-spacer"></span>`;
       const marker = b.checklist
-        ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone('${esc(b.id)}')">`
+        ? `<input type="checkbox" class="nb-chk" ${b.done?'checked':''} onchange="toggleBlocoChecklistDone(${jsq(b.id)})">`
         : `<span class="nb-bullet">•</span>`;
       // Bloco focado (sendo editado) mostra a sintaxe crua num textarea;
       // os demais mostram RENDERIZADO (renderMd — mesmo motor de Descrição/
@@ -20527,11 +20536,11 @@ function renderNotaEditor(){
       const isEditing = (b.id===focusedId);
       const body = isEditing
         ? `<textarea id="nb-ta-${esc(b.id)}" class="nb-text ${b.checklist&&b.done?'nb-done':''}" rows="1"
-            oninput="onBlocoInput('${esc(b.id)}',this)" onfocus="_notasFocusedBlockId='${esc(b.id)}'"
-            onblur="onBlocoBlur('${esc(b.id)}')" onkeydown="onBlocoKeydown(event,'${esc(b.id)}')">${esc(b.texto||'')}</textarea>`
+            oninput="onBlocoInput(${jsq(b.id)},this)" onfocus="_notasFocusedBlockId=${jsq(b.id)}"
+            onblur="onBlocoBlur(${jsq(b.id)})" onkeydown="onBlocoKeydown(event,${jsq(b.id)})">${esc(b.texto||'')}</textarea>`
         : (b.texto
-            ? `<div class="nb-text nb-view ${b.checklist&&b.done?'nb-done':''}" onclick="focarBloco('${esc(b.id)}')">${renderMd(b.texto)}</div>`
-            : `<div class="nb-text nb-view" onclick="focarBloco('${esc(b.id)}')"><span class="nb-placeholder">Escreva algo...</span></div>`);
+            ? `<div class="nb-text nb-view ${b.checklist&&b.done?'nb-done':''}" onclick="focarBloco(${jsq(b.id)})">${renderMd(b.texto)}</div>`
+            : `<div class="nb-text nb-view" onclick="focarBloco(${jsq(b.id)})"><span class="nb-placeholder">Escreva algo...</span></div>`);
       return `<div class="nb-row" style="padding-left:${depth*20}px;" data-bid="${esc(b.id)}">
         ${collapseArrow}${marker}${body}
       </div>${childrenHtml}`;
@@ -20950,7 +20959,7 @@ function _renderSpotifyOuvindo(){
       // (ver _spotifyPlaybackAction() — evita uma chamada de API extra
       // só pra decidir se desabilita o botão).
       const playback = _spotifySelfConnected
-        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction('${(status&&status.playing)?'pause':'play'}')" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
+        ? `<div class="sp-playback"><button class="sp-play-btn" onclick="_spotifyPlaybackAction(${jsq((status&&status.playing)?'pause':'play')})" title="${(status&&status.playing)?'Pausar':'Tocar'}">${(status&&status.playing)?'⏸️':'▶️'}</button><button class="sp-play-btn" onclick="_spotifyPlaybackAction('next')" title="Próxima">⏭️</button></div>`
         : '';
       const actions = _spotifySelfConnected
         ? `<div class="sp-actions"><div class="sp-actions-row"><button class="sp-connect-btn" onclick="connectSpotify()">🔁 Trocar</button><button class="sp-connect-btn sp-disconnect-btn" onclick="desconectarSpotify()">❌ Desconectar</button></div><a class="sp-manage-link" href="https://www.spotify.com/account/apps/" target="_blank" rel="noopener">Gerenciar no Spotify ↗</a></div>`
@@ -21399,7 +21408,7 @@ function _dpRender(){
   for(let d=1; d<=daysInMonth; d++){
     const ds = y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
     let cls='dp-day'; if(ds===todayStr) cls+=' dp-today'; if(ds===selStr) cls+=' dp-sel';
-    cells += `<div class="${cls}" onclick="_dpPick('${ds}')">${d}</div>`;
+    cells += `<div class="${cls}" onclick="_dpPick(${jsq(ds)})">${d}</div>`;
   }
   const totalCells = startDow+daysInMonth;
   const trailing = (7-(totalCells%7))%7;
@@ -21445,7 +21454,7 @@ function _bdToggleCol(colId){
 function _bdColToggleChips(){
   return columns.map(col=>{
     const hid = _bdHiddenCols.has(col.id);
-    return `<span onclick="_bdToggleCol('${esc(col.id)}')" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
+    return `<span onclick="_bdToggleCol(${jsq(col.id)})" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
       +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
       +`border:1px solid ${hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)'};background:${hid?'transparent':'rgba(56,182,255,.08)'};color:${hid?'rgba(255,255,255,.2)':'var(--txt2)'};">`
       +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${hid?0.2:1};"></span>${esc(col.name)}</span>`;
@@ -22587,7 +22596,7 @@ function renderCampList(){
     const statusLabel = {ativa:'✅ Ativa',planejamento:'📋 Planejamento',encerrada:'🔒 Encerrada'}[c.status]||c.status;
     const msBadge = c.multiSquad?'<span class="camp-ms-badge">🔗 Multi-squad</span>':(c.grupoId?'<span class="camp-ms-badge" title="Agrupada manualmente no painel com campanhas de outras squads (cada squad mantém seu próprio nome)">🔗 Grupo multi-squad</span>':'');
     const periodo = [c.dataInicio,c.dataFim].filter(Boolean).join(' → ') || '—';
-    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe('${esc(c.id)}')">
+    return `<div class="camp-card ${tema.cls}" onclick="openCampDetalhe(${jsq(c.id)})">
       <div class="camp-card-icon">${tema.emoji}</div>
       <div>
         <div class="camp-card-name">${esc(c.nome||'Sem nome')} ${msBadge}</div>
@@ -22704,7 +22713,7 @@ function renderCampDetalhe(c){
       ${viewMode==='multi'?`
       <div class="camp-sq-filter" style="margin-left:8px;">
         <span style="font-size:10px;color:var(--txt3);">Filtrar:</span>
-        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter('${sq}')">${esc(_sqLabel(sq))}</span>`;}).join('')}
+        ${msSquads.map(sq=>{const sqc=_sqColor(sq);return `<span class="camp-sq-pill camp-sq-${sq} ${_sqFilter===sq?'on':''}" style="--sqc:${sqc.text};--sqb:${sqc.border};--sqbg:${sqc.bg};" onclick="setCampSqFilter(${jsq(sq)})">${esc(_sqLabel(sq))}</span>`;}).join('')}
         ${_sqFilter!=='all'?`<span class="camp-sq-pill" style="color:var(--txt3);border-color:rgba(255,255,255,.15);" onclick="setCampSqFilter('all')">✕ todos</span>`:''}
       </div>`:''}
     </div>`:''}
@@ -22725,21 +22734,21 @@ function renderCampDetalhe(c){
           <div class="camp-fixed-links" id="camp-kvs-list">
             ${_renderFixedLinks(c.kvs||[],'kvs',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','kvs')" style="margin-top:6px;">+ Adicionar KV</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'kvs')" style="margin-top:6px;">+ Adicionar KV</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">📋 ${c.tipo==='colecao'?'Lista de produtos':'Lista de criativos'}</div>
           <div class="camp-fixed-links" id="camp-lista-list">
             ${_renderFixedLinks(c.lista||[],'lista',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','lista')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'lista')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">🔗 Links importantes</div>
           <div class="camp-fixed-links" id="camp-links-list">
             ${_renderFixedLinks(c.links||[],'links',c.id)}
           </div>
-          <button class="camp-fixed-add-btn" onclick="campAddFixedLink('${esc(c.id)}','links')" style="margin-top:6px;">+ Adicionar link</button>
+          <button class="camp-fixed-add-btn" onclick="campAddFixedLink(${jsq(c.id)},'links')" style="margin-top:6px;">+ Adicionar link</button>
         </div>
         <div>
           <div class="camp-sidebar-sec">Cards vinculados</div>
@@ -23087,7 +23096,7 @@ function _meuDiaCardRow(card){
   const colName = cols.find(c=>c.id===card.col)?.name || card.col;
   const sqLabel = SQUAD_META_LIVE[card._squad]?.label || card._squad;
   const dueLbl = card.due ? new Date(card.due+'T12:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '';
-  return `<div class="meudia-row" onclick="_meuDiaOpenCard('${esc(card._squad)}','${esc(card.id)}')">
+  return `<div class="meudia-row" onclick="_meuDiaOpenCard(${jsq(card._squad)},${jsq(card.id)})">
     <div class="meudia-row-main">
       <div class="meudia-row-title">${esc(card.title)}</div>
       <div class="meudia-row-meta">${esc(sqLabel)} · ${esc(colName)}${dueLbl?' · 📅 '+dueLbl:''}</div>
@@ -23144,7 +23153,7 @@ function renderMeuDia(){
   };
   const mencoesSecao = mencoes.length ? `<div class="meudia-sec">
     <div class="meudia-sec-hd" style="border-left-color:#a78bfa;">💬 Menções não lidas <span class="meudia-sec-n">${mencoes.length}</span></div>
-    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif('${esc(n.id)}','${esc(n.cardId||'')}','${esc(n.squad||ACTIVE_SQUAD)}','${esc(n.commentId||'')}')">
+    ${mencoes.map(n=>`<div class="meudia-row" onclick="closeOv('meudia-ov');openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')})">
       <div class="meudia-row-main">
         <div class="meudia-row-title">${esc(n.title)}</div>
         <div class="meudia-row-meta">${esc(n.sub||'')}</div>
@@ -23366,11 +23375,11 @@ function _intakeItemHtml(item, opts){
   const quando = item.createdAt ? new Date(item.createdAt).toLocaleDateString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) : '';
   const prazo = item.prazo ? ' · prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR') : '';
   const botoes = [
-    `<button class="btn btn-sm" onclick="_intakeCriarCard('${esc(item.id)}')" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
-    `<button class="btn btn-sm" onclick="_intakeToggleLink('${esc(item.id)}')" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeCriarCard(${jsq(item.id)})" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">✅ Criar card</button>`,
+    `<button class="btn btn-sm" onclick="_intakeToggleLink(${jsq(item.id)})" style="color:var(--accent,#2596e8);border-color:rgba(37,150,232,.3);">🔗 Vincular a card</button>`,
   ];
-  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar('${esc(item.id)}')" style="color:var(--txt2);">🗂 Guardar</button>`);
-  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar('${esc(item.id)}')" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
+  if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar(${jsq(item.id)})" style="color:var(--txt2);">🗂 Guardar</button>`);
+  botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar(${jsq(item.id)})" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
   return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
       <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
@@ -23525,15 +23534,15 @@ function _intakeLinkUIHtml(id){
     const card=cards.find(c=>c.id===sel.cardId);
     const titulo=card?card.title:sel.cardTitle;
     return `<div class="link-search" style="margin-top:8px;">
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel('${esc(id)}')" style="color:var(--accent,#2596e8);">trocar</a></div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:6px;">Vincular a: <b>${esc(titulo)}</b> · <a href="javascript:void(0)" onclick="_intakeCancelLinkSel(${jsq(id)})" style="color:var(--accent,#2596e8);">trocar</a></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','comment')">💬 Virar comentário</button>
-        <button class="btn btn-sm" onclick="_intakeConfirmLink('${esc(id)}','checklist')">☑ Virar item de checklist</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink(${jsq(id)},'comment')">💬 Virar comentário</button>
+        <button class="btn btn-sm" onclick="_intakeConfirmLink(${jsq(id)},'checklist')">☑ Virar item de checklist</button>
       </div>
     </div>`;
   }
   return `<div class="link-search" style="margin-top:8px;">
-    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink('${esc(id)}',this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink('${esc(id)}');}">
+    <input class="link-search-input" id="intake-link-inp-${esc(id)}" placeholder="Buscar card pelo título..." autocomplete="off" oninput="_intakeSearchLink(${jsq(id)},this.value)" onkeydown="if(event.key==='Escape'){_intakeToggleLink(${jsq(id)});}">
     <div class="link-dropdown" id="intake-link-dd-${esc(id)}"></div>
   </div>`;
 }
@@ -23659,12 +23668,12 @@ function _renderEntrada(e, campId){
     </div>`;
   }
   return `<div class="camp-entry camp-entry-tipo-${e.tipo||'registro'} ${e._squad==='gestao'?'camp-entry-gestao-sq':''}" data-icon="${icon}" data-entry-id="${esc(e.id)}" ${isMulti?`style="border-left-color:${_sqColor(e._squad).text};"`:''}>
-    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada('${esc(campId)}','${esc(e.id)}')" title="Remover">✕</button>`:''}
+    ${podeApagar?`<button class="camp-entry-del" onclick="delCampEntrada(${jsq(campId)},${jsq(e.id)})" title="Remover">✕</button>`:''}
     ${sqHeader}
     ${e.titulo?`<div class="camp-entry-titulo">${esc(e.titulo)}</div>`:''}
     <div class="camp-entry-corpo">${typeof renderMd==='function'?renderMd(e.corpo||''):esc(e.corpo||'')}</div>
     ${links?`<div class="camp-entry-links">${links}</div>`:''}
-    <div class="camp-entry-meta">${esc(e.autor||'?')} · <span class="camp-entry-date">${quando}</span>${podeApagar?` <span class="camp-entry-edit-date" onclick="editEntradaData('${esc(campId)}','${esc(e.id)}')" title="Editar data">✏️</span>`:''} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
+    <div class="camp-entry-meta">${esc(e.autor||'?')} · <span class="camp-entry-date">${quando}</span>${podeApagar?` <span class="camp-entry-edit-date" onclick="editEntradaData(${jsq(campId)},${jsq(e.id)})" title="Editar data">✏️</span>`:''} · <b>${CAMP_TIPO_LABELS[e.tipo]||e.tipo}</b></div>
   </div>`;
 }
 
@@ -23696,7 +23705,7 @@ async function _campInsertMention(kind){
     const mems = (typeof members!=='undefined'?members:[]).filter(m=>m.init);
     if(!mems.length){ uiAlert('Nenhum membro disponível para mencionar neste squad.'); return; }
     // monta lista pra escolher
-    const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user','${esc(getMemberHandle(m))}')" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
+    const opts = mems.map(m=>`<div onclick="_campDoInsertMention('user',${jsq(getMemberHandle(m))})" style="padding:8px 12px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:8px;border-radius:7px;" onmouseover="this.style.background='rgba(56,182,255,.12)'" onmouseout="this.style.background='none'"><span style="width:22px;height:22px;border-radius:999px;background:rgba(56,182,255,.2);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;">${esc(m.init)}</span>${esc(m.name||m.init)}</div>`).join('');
     _showMentionPicker('Mencionar pessoa', opts);
   } else {
     const cs = (typeof cards!=='undefined'?cards:[]).filter(c=>!c.archived);
@@ -23781,7 +23790,7 @@ function editEntradaData(campId, entradaId){
   const cur = e.ts ? new Date(e.ts) : new Date();
   const pad = n=>String(n).padStart(2,'0');
   const dStr = cur.getFullYear()+'-'+pad(cur.getMonth()+1)+'-'+pad(cur.getDate());
-  metaEl.innerHTML = `<input type="date" class="camp-entry-date-inp" value="${dStr}" onchange="saveEntradaData('${esc(campId)}','${esc(entradaId)}', this.value)" onclick="event.stopPropagation()">`;
+  metaEl.innerHTML = `<input type="date" class="camp-entry-date-inp" value="${dStr}" onchange="saveEntradaData(${jsq(campId)},${jsq(entradaId)}, this.value)" onclick="event.stopPropagation()">`;
   metaEl.querySelector('input')?.focus();
 }
 async function saveEntradaData(campId, entradaId, dateStr){
@@ -23839,7 +23848,7 @@ function _renderCampTagPicker(){
   wrap.innerHTML = tags.map(t=>{
     const sel = _campEditTags.includes(t.id);
     const p   = getPal ? getPal(t) : {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.3)',c:'#38b6ff'};
-    return `<span onclick="campToggleTag('${esc(t.id)}')" style="
+    return `<span onclick="campToggleTag(${jsq(t.id)})" style="
       padding:3px 10px;border-radius:999px;font-size:11px;cursor:pointer;
       background:${sel?p.bg:'rgba(var(--surface2-rgb),.6)'};
       border:1px solid ${sel?p.b:'rgba(56,182,255,.15)'};
@@ -23966,7 +23975,7 @@ function _renderFixedLinks(links, tipo, campId){
   return links.map((l,i)=>`
     <div class="camp-fixed-link-item">
       <a href="${safeUrl(l.url)}" target="_blank" rel="noopener" title="${esc(l.url)}">${esc(l.label||l.url)}</a>
-      <button class="camp-fixed-link-del" onclick="campDelFixedLink('${esc(campId)}','${tipo}',${i})" title="Remover">✕</button>
+      <button class="camp-fixed-link-del" onclick="campDelFixedLink(${jsq(campId)},${jsq(tipo)},${i})" title="Remover">✕</button>
     </div>`).join('');
 }
 
@@ -24131,7 +24140,7 @@ function _renderArquivadosBody(){
     // branco/errado na lista.
     const t=getTag(getCardTags(c)[0])||{label:'',pi:0}; const p=getPal(t);
     const row=document.createElement('div'); row.className='ql-item';
-    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard('${c.id}');closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar('${c.id}')">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado('${c.id}')">Excluir</button>`;
+    row.innerHTML=`<input type="checkbox" class="arch-chk" data-id="${c.id}" style="accent-color:var(--teal);margin-right:2px;"><span class="ql-item-tag" style="background:${p.bg};border-color:${p.b};color:${p.c}">${esc(t.label)}</span><span class="ql-item-title" style="cursor:pointer;" title="Abrir card (continua arquivado)" onclick="openCard(${jsq(c.id)});closeOv('arch-ov')">${esc(c.title)}</span><button class="btn btn-sm btn-teal" onclick="desarquivar(${jsq(c.id)})">Restaurar</button><button class="btn btn-sm" style="color:var(--danger);border-color:rgba(255,107,107,.3);" onclick="excluirArquivado(${jsq(c.id)})">Excluir</button>`;
     body.appendChild(row);
   });
 }
@@ -25134,7 +25143,7 @@ async function renderAgenteLog(){
   box.innerHTML=entries.slice(0,LIMIT).map(e=>{
     const card=cards.find(c=>c.id===e.cardId);
     const cardTitle=card?esc(card.title):'(card não encontrado — arquivado ou excluído)';
-    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard('${esc(e.cardId)}');" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
+    const cardLink=card?`<a href="#" onclick="event.preventDefault();closeOv('cfg-ov');openCard(${jsq(e.cardId)});" style="color:var(--cyan);">${cardTitle}</a>`:`<span style="color:var(--txt3);">${cardTitle}</span>`;
     const dt=e.ts?new Date(e.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
     // Achado real (skill /monitorarbugs, 2026-08-27): `origem` é campo novo
     // (backend, agenteLog.js) — entradas gravadas ANTES desse fix só têm
@@ -25401,9 +25410,9 @@ function renderUsuarios(){
       const badge=u.inscrito?`<span style="font-size:9px;background:${roleColors[role]||roleColors.membro};color:${roleTextColors[role]||roleTextColors.membro};border:1px solid ${roleBorderColors[role]||roleBorderColors.membro};padding:1px 6px;border-radius:999px;">${roleLabels[role]||role}</span>`:'';
       // ⚠ Detecta colisão de iniciais com outro membro do squad
       const dupInit = entries.some(([uid2,u2])=>uid2!==uid && (u2.init||'').toUpperCase()===(u.init||'').toUpperCase() && u.init);
-      const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial('${uid}','${esc(u.init||'')}','${esc((u.nome||u.email||'').replace(/'/g,''))}')" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
-      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro('${uid}','${esc(u.nome||u.email)}','${esc(u.email||'')}')" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
-<select onchange="alterarRole('${uid}',this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
+      const initBadge = `<span class="init-pill${dupInit?' init-dup':''}" onclick="editarInicial(${jsq(uid)},${jsq(u.init||'')},${jsq((u.nome||u.email||'').replace(/'/g,''))})" title="${dupInit?'⚠ Iniciais repetidas! Clique para corrigir':'Editar iniciais'}">${esc(u.init||'?')}${dupInit?' ⚠':' ✎'}</span>`;
+      row.innerHTML=`${foto}<div style="flex:1;"><div style="font-size:12px;font-weight:500;">${esc(u.nome||u.email)} ${initBadge}</div><div style="font-size:10px;color:var(--txt2);">${esc(u.email)}</div></div>${badge}<button onclick="removerMembro(${jsq(uid)},${jsq(u.nome||u.email)},${jsq(u.email||'')})" title="Remover do squad" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✕</button>
+<select onchange="alterarRole(${jsq(uid)},this.value)" style="padding:3px 7px;font-size:11px;border:1px solid var(--glass-b);border-radius:var(--r);background:rgba(var(--surface2-rgb),.8);color:var(--txt);font-family:DM Sans,sans-serif;">
         <option value="membro"${role==='membro'?' selected':''}>Membro</option>
         <option value="organizador"${role==='organizador'?' selected':''}>Organizador</option>
         <option value="po"${role==='po'?' selected':''}>PO</option>
@@ -25437,8 +25446,8 @@ function renderAgentesList(){
     return `<div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:rgba(167,139,250,.06);border:1px solid rgba(167,139,250,.2);border-radius:8px;">
       <div style="width:28px;height:28px;border-radius:50%;background:${_hexA(a.cor||'#a78bfa',.25)};border:1px solid ${_hexA(a.cor||'#a78bfa',.5)};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${esc(a.avatarEmoji||'🤖')}</div>
       <div style="flex:1;min-width:0;"><div style="font-size:12px;color:var(--txt);">${esc(a.nome||a.id)} <span class="init-pill${dupInit?' init-dup':''}" title="${dupInit?'⚠ Iniciais colidem com outra pessoa/agente deste squad':'Iniciais'}">${esc(a.init||a.id)}${dupInit?' ⚠':''}</span></div></div>
-      <button onclick="editarAgente('${a._fbKey}')" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
-      <button onclick="excluirAgente('${a._fbKey}','${esc((a.nome||a.id).replace(/'/g,''))}')" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
+      <button onclick="editarAgente(${jsq(a._fbKey)})" title="Editar agente" style="background:none;border:1px solid rgba(167,139,250,.3);border-radius:6px;color:#c4b5fd;font-size:11px;padding:2px 8px;cursor:pointer;margin-right:4px;">✎</button>
+      <button onclick="excluirAgente(${jsq(a._fbKey)},${jsq((a.nome||a.id).replace(/'/g,''))})" title="Excluir agente" style="background:none;border:1px solid rgba(255,107,107,.25);border-radius:6px;color:rgba(255,107,107,.6);font-size:11px;padding:2px 8px;cursor:pointer;">✕</button>
     </div>`;
   }).join('');
 }
@@ -25895,16 +25904,16 @@ function renderCardPatternsCfg(){
     const aberto=_padroesCfgAberto===id;
     const secoesHtml = CARD_SECTIONS.map(s=>
       `<label class="reqf-row" style="padding:6px 10px;font-size:12px;">
-        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao('${id}','${s.key}',this.checked)">
+        <input type="checkbox" ${_cardSectionVisible2(p,s.key)?'checked':''} onchange="togglePadraoSecao(${jsq(id)},${jsq(s.key)},this.checked)">
         ${esc(s.label)}
       </label>`
     ).join('');
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto==='${id}'?null:'${id}';renderCardPatternsCfg();">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_padroesCfgAberto=_padroesCfgAberto===${jsq(id)}?null:${jsq(id)};renderCardPatternsCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">📐 ${esc(p.nome||'Sem nome')}${p.isDefault?' <span style="font-size:9px;color:var(--teal);font-weight:700;">★ PADRÃO DA SQUAD</span>':''}</span>
-        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard('${id}')" title="Renomear" style="font-size:10px;">✎</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault('${id}')" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard('${id}')" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearPadraoCard(${jsq(id)})" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();definirPadraoDefault(${jsq(id)})" title="Marcar como padrão da squad" style="font-size:10px;${p.isDefault?'color:var(--teal);border-color:rgba(29,233,182,.4);':''}">★</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirPadraoCard(${jsq(id)})" title="Excluir padrão" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
       ${aberto?`<div style="padding:0 12px 10px;border-top:1px solid var(--glass-b);">${secoesHtml}</div>`:''}
@@ -26019,7 +26028,7 @@ function renderSubteamEditor(){
   box.innerHTML=subteams.map((st,i)=>{
     const membersChips=(st.members||[]).map(init=>{
       const m=members.find(x=>x.init===init);
-      return `<span class="st-mchip" onclick="toggleSubteamMember(${i},'${esc(init)}')" title="Remover">${esc(m?m.name.split(' ')[0]:init)} ×</span>`;
+      return `<span class="st-mchip" onclick="toggleSubteamMember(${i},${jsq(init)})" title="Remover">${esc(m?m.name.split(' ')[0]:init)} ×</span>`;
     }).join('');
     // dropdown de membros disponíveis (todos os members do squad, mesmo já adicionados não duplicam)
     const opts=members.filter(m=>m.init&&!(st.members||[]).includes(m.init))
@@ -27800,7 +27809,7 @@ function renderHelp(){
 // independente do contexto do container pai.
 function helpTip(tip, term, variant){
   const v = variant ? ' '+variant : '';
-  const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,'${term.replace(/'/g,"\\'")}')">Saiba mais →</a>` : '';
+  const link = term ? `<br><a href="#" onclick="event.preventDefault();openHelp(null,${jsq(term.replace(/'/g,"\\'"))})">Saiba mais →</a>` : '';
   return `<span class="help-tip${v}" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon">${tip}${link}</span></span>`;
 }
 
@@ -29001,14 +29010,14 @@ function renderAtalhosBody(){
       <div style="font-size:12.5px;color:var(--txt);">${def.label}</div>
       <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
         <span style="font-size:11px;font-family:monospace;background:rgba(var(--surface2-rgb),.8);padding:3px 8px;border-radius:6px;color:${combo?'var(--txt)':'var(--txt3)'};min-width:34px;text-align:center;">${capturando?'…':_atalhoComboLabel(combo)}</span>
-        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura('${id}')" onkeydown="_atalhoCapturaKeydown(event,'${id}')" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
-        ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar('${id}')" title="Remover este atalho">✕</button>`:''}
+        <button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;" onclick="_atalhoIniciarCaptura(${jsq(id)})" onkeydown="_atalhoCapturaKeydown(event,${jsq(id)})" title="${capturando?'Aperte a combinação desejada (Esc cancela)':'Definir atalho'}">${capturando?'Aperte a tecla…':'Definir'}</button>
+        ${combo?`<button type="button" class="btn btn-sm" style="font-size:10.5px;padding:3px 8px;color:var(--danger);" onclick="_atalhoLimpar(${jsq(id)})" title="Remover este atalho">✕</button>`:''}
       </div>
     </div>`;
   }).join('');
   body.innerHTML = rows || '<div style="font-size:11px;color:var(--txt3);">Nenhuma ação disponível pra personalizar neste squad.</div>';
   if(_atalhoCapturando){
-    document.querySelector(`[onclick="_atalhoIniciarCaptura('${_atalhoCapturando}')"]`)?.focus();
+    document.querySelector(`[onclick="_atalhoIniciarCaptura(${jsq(_atalhoCapturando)})"]`)?.focus();
   }
 }
 function _atalhoIniciarCaptura(id){
@@ -29508,14 +29517,14 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif('${n.id}','${n.cardId||''}','${n.squad||ACTIVE_SQUAD}','${n.commentId||''}','${n.type||''}','${n.okrObjId||''}','${encodeURIComponent(n.meetingLink||'')}')">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
         ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
         <div class="notif-time">${timeAgo(n.ts)}</div>
       </div>
-      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissNotif('${n.id}')">✕</button>
+      <button class="notif-dismiss" title="Remover notificação" onclick="event.stopPropagation();dismissNotif(${jsq(n.id)})">✕</button>
     </div>`).join('');
 }
 
@@ -30574,19 +30583,19 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor=ev._gestao?'purple':(ev.color||'blue');
         const col=ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c=>c.id===evColor)||EV_COLORS[0]);
-        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById('${ev.id}')" title="Excluir evento">✕</button>`:'';
+        const delBtn=(canEdit && !ev._gestao)?`<button class="cal-ev-del" onclick="event.stopPropagation();deleteEventById(${jsq(ev.id)})" title="Excluir evento">✕</button>`:'';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})+' ' : '';
-        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent('${ev.id}')" title="${esc(ev.title)}">${horaLbl}${esc(ev.title)}${delBtn}</div>`;
+        return `<div class="cal-event" style="background:${col.bg};color:${col.txt};" onclick="event.stopPropagation();editEvent(${jsq(ev.id)})" title="${esc(ev.title)}">${horaLbl}${esc(ev.title)}${delBtn}</div>`;
       } else {
         const c = item.data;
         const colInfo = columns.find(x => x.id === c.col);
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
-        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard('${c.id}')" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
+        return `<div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};" onclick="event.stopPropagation();closeOv('cal-ov');openCard(${jsq(c.id)})" title="Prazo: ${esc(c.title)}">📎 ${esc(c.title)}</div>`;
       }
     }).join('')
     +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
-    +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal('${ds}')">+</button>`;
+    +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal(${jsq(ds)})">+</button>`;
     
   // Ao clicar no dia, abre a janela flutuante com a lista completa estilo Google Calendar
   div.onclick=()=> openCalDayPopover(date, dayItems);
@@ -30611,11 +30620,11 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const ev = item.data;
         const evColor = ev._gestao ? 'purple' : (ev.color || 'blue');
         const col = ev._gcal ? _gcalColorFor(ev._calId||ev.id) : (EV_COLORS.find(c => c.id === evColor) || EV_COLORS[0]);
-        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById('${ev.id}')" title="Excluir evento">✕</button>` : '';
+        const delBtn = (canEdit && !ev._gestao) ? `<button class="cal-ev-del" style="position:static; opacity:1; display:flex;" onclick="event.stopPropagation();closeOv('cal-day-pop-ov');deleteEventById(${jsq(ev.id)})" title="Excluir evento">✕</button>` : '';
         const meetBtn = ev.meetingLink ? `<a href="${esc(ev.meetingLink)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" title="Entrar na reunião" style="flex-shrink:0;font-size:13px;text-decoration:none;">🎥</a>` : '';
         const horaLbl = (ev._gcal && !ev.isAllDay && ev.startDateTime) ? `<span style="flex-shrink:0;font-size:10px;opacity:.8;font-weight:600;">${new Date(ev.startDateTime).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</span>` : '';
         return `
-          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent('${ev.id}')">
+          <div class="cal-event" style="background:${col.bg};color:${col.txt};padding:6px 10px;font-size:11.5px;display:flex;align-items:center;justify-content:space-between;gap:8px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');editEvent(${jsq(ev.id)})">
             ${horaLbl}
             <span style="flex:1;min-width:0;word-break:break-word;">${esc(ev.title)}</span>
             ${meetBtn}
@@ -30627,7 +30636,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
         const cardColor = colInfo ? colInfo.color : '#38b6ff';
         const bg = _hexA(cardColor, 0.15);
         return `
-          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard('${c.id}')">
+          <div class="cal-event cal-event-prazo" style="background:${bg};color:${cardColor};border-left:3px solid ${cardColor};padding:6px 10px;font-size:11.5px;white-space:normal;text-overflow:unset;overflow:visible;" onclick="closeOv('cal-day-pop-ov');closeOv('cal-ov');openCard(${jsq(c.id)})">
             📎 ${esc(c.title)} <span style="font-size:9.5px;color:var(--txt3);margin-left:4px;">(${esc(colInfo?.name||c.col)})</span>
           </div>`;
       }
@@ -30635,7 +30644,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
   }
 
   if (canEdit) {
-    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal('${ds}')">+ Novo Evento</button>`;
+    ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal(${jsq(ds)})">+ Novo Evento</button>`;
     ft.style.display = 'flex';
   } else {
     ft.style.display = 'none';
@@ -30714,7 +30723,7 @@ function closeEvModal(){ document.getElementById('ev-modal-ov').classList.remove
 
 function renderEvColors(sel){
   document.getElementById('ev-colors').innerHTML=EV_COLORS.map(col=>
-    `<button class="ev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};" onclick="selectEvColor('${col.id}')"></button>`
+    `<button class="ev-color-btn${col.id===sel?' sel':''}" style="background:${col.bg};" onclick="selectEvColor(${jsq(col.id)})"></button>`
   ).join('');
 }
 function selectEvColor(id){ renderEvColors(id); }
@@ -31011,8 +31020,8 @@ function renderCalendarList() {
         <div style="font-size:10px; color:var(--txt3); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cal.id)}</div>
         ${statusMsg}
       </div>
-      <input type="color" value="${corAtual}" onchange="setCalendarColor('${esc(key)}', this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
-      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList('${esc(cal.id)}')" title="Remover sincronização">✕</button>
+      <input type="color" value="${corAtual}" onchange="setCalendarColor(${jsq(key)}, this.value)" title="Escolher a cor desta agenda no calendário" style="width:24px;height:24px;border:none;background:none;cursor:pointer;padding:0;flex-shrink:0;">
+      <button class="icon-btn" style="color:var(--danger); padding:4px;" onclick="removeCalendarFromList(${jsq(cal.id)})" title="Remover sincronização">✕</button>
     </div>
   `; }).join('');
 }
@@ -32193,11 +32202,11 @@ function renderFanoutCfg(){
       ? (f.filhos||[]).map((filho,i)=>
           `<div style="display:flex;align-items:center;gap:8px;padding:5px 10px;font-size:12px;color:var(--txt2);">
             <span style="flex:1;">🧩 ${esc(filho.sufixo)}</span>
-            <select class="fi" onchange="setFanoutFilhoModelo('${id}',${i},this.value)" title="Modelo (opcional) — deixa o card filho mais estruturado: descrição, checklist, tags e riscos vêm do modelo escolhido" style="font-size:10px;padding:3px 6px;max-width:160px;">
+            <select class="fi" onchange="setFanoutFilhoModelo(${jsq(id)},${i},this.value)" title="Modelo (opcional) — deixa o card filho mais estruturado: descrição, checklist, tags e riscos vêm do modelo escolhido" style="font-size:10px;padding:3px 6px;max-width:160px;">
               <option value="">— sem modelo —</option>
               ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${filho.modeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
             </select>
-            <button class="btn btn-sm" onclick="removeFanoutFilho('${id}',${i})" title="Remover" style="font-size:9px;color:var(--danger);border-color:rgba(255,107,107,.3);">✕</button>
+            <button class="btn btn-sm" onclick="removeFanoutFilho(${jsq(id)},${i})" title="Remover" style="font-size:9px;color:var(--danger);border-color:rgba(255,107,107,.3);">✕</button>
           </div>`
         ).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:6px 10px;">Nenhum card filho ainda — adicione abaixo.</div>';
@@ -32207,7 +32216,7 @@ function renderFanoutCfg(){
     // si; pedido direto: "tem que conseguir alterar o card todo!".
     const paiHtml=`<div style="display:flex;align-items:center;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;">
       <span style="flex:1;">👑 Card pai <span style="color:var(--txt3);">(este card, ao gerar a receita)</span></span>
-      <select class="fi" onchange="setFanoutPaiModelo('${id}',this.value)" title="Modelo (opcional) — mescla descrição/checklist/tags/riscos no card pai sem apagar o que ele já tiver (mesma regra do 📥 Usar modelo)" style="font-size:10px;padding:3px 6px;max-width:160px;">
+      <select class="fi" onchange="setFanoutPaiModelo(${jsq(id)},this.value)" title="Modelo (opcional) — mescla descrição/checklist/tags/riscos no card pai sem apagar o que ele já tiver (mesma regra do 📥 Usar modelo)" style="font-size:10px;padding:3px 6px;max-width:160px;">
         <option value="">— sem modelo —</option>
         ${(qlItems.modelos||[]).map((m,mi)=>`<option value="${mi}" ${f.paiModeloIdx===mi?'selected':''}>📋 ${esc(m.title)}</option>`).join('')}
       </select>
@@ -32219,18 +32228,18 @@ function renderFanoutCfg(){
     const tagsAtuais=f.tags||[];
     const tagsHtml=`<div style="display:flex;align-items:flex-start;gap:8px;padding:5px 10px 8px;font-size:12px;color:var(--txt2);border-bottom:1px dashed var(--glass-b);margin-bottom:4px;flex-wrap:wrap;">
       <span style="flex:0 0 auto;padding-top:3px;">🏷 Tags</span>
-      <select class="fi" multiple onchange="setFanoutTags('${id}',this)" title="Segure Ctrl (ou Cmd) pra marcar mais de uma — usadas só pra filtrar esta receita no botão 🧩 Aplicar receita dentro do card" style="font-size:10px;padding:3px 6px;min-width:140px;max-width:220px;height:58px;">
+      <select class="fi" multiple onchange="setFanoutTags(${jsq(id)},this)" title="Segure Ctrl (ou Cmd) pra marcar mais de uma — usadas só pra filtrar esta receita no botão 🧩 Aplicar receita dentro do card" style="font-size:10px;padding:3px 6px;min-width:140px;max-width:220px;height:58px;">
         ${tags.map(t=>`<option value="${esc(t.id)}" ${tagsAtuais.includes(t.id)?'selected':''}>${esc(t.label)}</option>`).join('')}
       </select>
     </div>`;
     return `<div style="background:rgba(var(--surface2-rgb),.4);border:1px solid var(--glass-b);border-radius:var(--r);margin-bottom:8px;overflow:hidden;">
-      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto==='${id}'?null:'${id}';renderFanoutCfg();">
+      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;" onclick="_fanoutCfgAberto=_fanoutCfgAberto===${jsq(id)}?null:${jsq(id)};renderFanoutCfg();">
         <span style="flex:1;font-size:13px;font-weight:600;color:var(--txt);">🧩 ${esc(f.nome||'Sem nome')} <span style="font-size:9px;color:var(--txt3);font-weight:400;">(${(f.filhos||[]).length} card(s))</span></span>
-        <button class="btn btn-sm" onclick="event.stopPropagation();renomearFanoutTemplate('${id}')" title="Renomear" style="font-size:10px;">✎</button>
-        <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate('${id}')" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();renomearFanoutTemplate(${jsq(id)})" title="Renomear" style="font-size:10px;">✎</button>
+        <button class="btn btn-sm" onclick="event.stopPropagation();excluirFanoutTemplate(${jsq(id)})" title="Excluir receita" style="font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.3);">🗑</button>
         <span style="font-size:10px;color:var(--txt3);transition:transform .2s;transform:rotate(${aberto?'180':'0'}deg);">▾</span>
       </div>
-      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${tagsHtml}${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho('${id}')" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
+      ${aberto?`<div style="padding:4px 0 10px;border-top:1px solid var(--glass-b);">${tagsHtml}${paiHtml}${filhosHtml}<div style="padding:6px 10px 0;"><button class="btn btn-sm" onclick="addFanoutFilho(${jsq(id)})" style="font-size:10px;color:var(--teal);border-color:rgba(29,233,182,.3);">+ Card filho</button></div></div>`:''}
     </div>`;
   }).join('');
 }
@@ -33590,7 +33599,7 @@ function showCtxMenu(e, cardId){
   // Monta itens do menu
   const colOptions = columns
     .filter(col=>col.id!==card.col)
-    .map(col=>`<div class="ctx-item" onclick="ctxMove('${col.id}')">
+    .map(col=>`<div class="ctx-item" onclick="ctxMove(${jsq(col.id)})">
       <span class="ctx-item-icon"><span style="width:8px;height:8px;border-radius:50%;display:inline-block;background:${col.color};"></span></span>
       Mover para ${esc(col.name)}
     </div>`).join('');
@@ -33633,7 +33642,7 @@ function showCtxMenu(e, cardId){
     ${blockerMode==='tag' ? `<div class="ctx-item ${card.blocker?'':'warn'}" onclick="ctxBlockTag()">
       <span class="ctx-item-icon">${card.blocker?'✅':'🚧'}</span> ${card.blocker?'Desmarcar impedimento':'Marcar como impedido'}
     </div>` : ''}
-    <div class="ctx-item" onclick="togglePauseCard('${cardId}')">
+    <div class="ctx-item" onclick="togglePauseCard(${jsq(cardId)})">
       <span class="ctx-item-icon">${card.paused?'▶':'⏸'}</span> ${card.paused?'Retomar contagem de tempo':'Pausar contagem de tempo'}
     </div>
 
@@ -33649,19 +33658,19 @@ function showCtxMenu(e, cardId){
     <div class="ctx-item" onclick="ctxToggleOKR()">
       <span class="ctx-item-icon">${card.isOKR ? '⭐' : '🎯'}</span> ${card.isOKR ? 'Remover OKR' : 'Marcar como OKR'}
     </div>
-    <div class="ctx-item" onclick="toggleContinuo('${cardId}')">
+    <div class="ctx-item" onclick="toggleContinuo(${jsq(cardId)})">
       <span class="ctx-item-icon">♾️</span> ${card.continuo ? 'Remover Contínuo' : 'Marcar como Contínuo'}
     </div>
-    <div class="ctx-item" onclick="togglePinCard('${cardId}')">
+    <div class="ctx-item" onclick="togglePinCard(${jsq(cardId)})">
       <span class="ctx-item-icon">📌</span> ${card.pinned ? 'Desafixar do topo da coluna' : 'Fixar no topo da coluna'}
     </div>
-    <div class="ctx-item" onclick="openCard('${cardId}')">
+    <div class="ctx-item" onclick="openCard(${jsq(cardId)})">
       <span class="ctx-item-icon">✏️</span> Editar card
     </div>
     <div class="ctx-item" onclick="ctxInsights()">
       <span class="ctx-item-icon">🤖</span> Insights do Agente Ágil
     </div>
-    <div class="ctx-item" onclick="ctxCopyLink('${cardId}')">
+    <div class="ctx-item" onclick="ctxCopyLink(${jsq(cardId)})">
       <span class="ctx-item-icon">🔗</span> Copiar link do card
     </div>
 
@@ -35316,7 +35325,7 @@ function renderSearchResults(){
     const tagHtml = tag ? `<span class="sr-tag" style="color:${getPal(tag).c};border-color:${getPal(tag).c};background:${getPal(tag).bg};">${esc(tag.label)}</span>` : '';
     const owner = members.find(m=>m.init===c.owner);
     const ownerTxt = owner ? owner.name : (c.owner||'');
-    return `<div class="search-result${i===0?' active':''}" data-id="${esc(c.id)}" onclick="openSearchCard('${esc(c.id)}')" onmouseover="setSearchIdx(${i})">
+    return `<div class="search-result${i===0?' active':''}" data-id="${esc(c.id)}" onclick="openSearchCard(${jsq(c.id)})" onmouseover="setSearchIdx(${i})">
       <span class="sr-col-dot" style="background:${col.color};" title="${esc(col.name)}"></span>
       <span class="sr-title">${esc(c.title)}</span>
       ${tagHtml}
@@ -35773,8 +35782,8 @@ function startEditComment(cid){
         else if((event.ctrlKey||event.metaKey)&&event.key==='Enter'){event.preventDefault();saveEditComment('${cid}');}"
       oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px';">${esc(comment.text||'')}</textarea>
     <div style="display:flex;gap:8px;margin-top:6px;align-items:center;">
-      <button class="eoc-save" onclick="saveEditComment('${cid}')">Salvar</button>
-      <button class="eoc-cancel" onclick="cancelEditComment('${cid}')">Cancelar</button>
+      <button class="eoc-save" onclick="saveEditComment(${jsq(cid)})">Salvar</button>
+      <button class="eoc-cancel" onclick="cancelEditComment(${jsq(cid)})">Cancelar</button>
       <span class="eoc-hint">Ctrl+Enter salva · Esc cancela</span>
     </div>`;
   const ta = document.getElementById('cedit-ta-'+cid);
@@ -35846,12 +35855,12 @@ function _renderReactions(c){
   const myReact=r[myUid];
   const chips=Object.entries(counts).map(([e,n])=>{
     const mine=myReact===e;
-    return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction('${esc(c.id)}','${e}')" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
+    return `<span class="rx-chip${mine?' rx-mine':''}" onclick="toggleReaction(${jsq(c.id)},${jsq(e)})" title="${n} reaç${n>1?'ões':'ão'}">${e} ${n}</span>`;
   }).join('');
   return chips ? `<div class="rx-row">${chips}</div>` : '';
 }
 function _reactPicker(c){
-  return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction('${esc(c.id)}','${e}')">${e}</span>`).join('');
+  return REACT_EMOJIS.map(e=>`<span onclick="event.stopPropagation();toggleReaction(${jsq(c.id)},${jsq(e)})">${e}</span>`).join('');
 }
 
 function renderDescPreview(){
@@ -37163,7 +37172,7 @@ function renderBackupHistory(){
         return `<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;
           background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;">
           <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0;cursor:pointer;"
-            onclick="downloadSnapshotFromFirebase('${date}')"
+            onclick="downloadSnapshotFromFirebase(${jsq(date)})"
             title="Clique para baixar o JSON deste snapshot">
             <span style="font-size:16px;">💾</span>
             <div style="flex:1;min-width:0;">
@@ -37171,7 +37180,7 @@ function renderBackupHistory(){
               <div style="font-size:10px;color:rgba(150,200,240,.6);">${meta.cards||'?'} cards · ${meta.cols||'?'} colunas · por ${meta.by||'?'}</div>
             </div>
           </div>
-          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot('${date}')" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
+          ${_podeRestaurar ? `<button class="btn btn-sm" style="padding:3px 8px;font-size:10px;color:var(--danger);border-color:rgba(255,107,107,.35);flex-shrink:0;" onclick="event.stopPropagation();restoreFromFirebaseSnapshot(${jsq(date)})" title="Restaurar este snapshot no board">🧯 restaurar</button>` : ''}
         </div>`;
       }).join('');
     })
@@ -37815,7 +37824,7 @@ function renderMuralLista(){
     // efeito de post-it colado à mão, sem ficar torto igual a cada atualização.
     const seed = (c.id||'').split('').reduce((a,ch)=>a+ch.charCodeAt(0),0);
     const rot = (seed % 9) - 4;
-    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural('${c.id}')">
+    return `<div class="mural-note${expirado?' mn-expired':''}" style="background:${tipo.paper};transform:rotate(${rot}deg);" onclick="_abrirComunicadoDoMural(${jsq(c.id)})">
       <span class="mn-pin" style="background:${tipo.pin};"></span>
       ${naoLido?'<span class="mn-dot"></span>':''}
       <div class="mn-icon">${tipo.icon}</div>

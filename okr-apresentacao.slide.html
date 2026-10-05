@@ -586,6 +586,15 @@ onAuthStateChanged(auth, user => window._okrHandleAuth(user));
 // acima fica encapsulada no escopo do módulo e não é visível neste script
 // clássico — mesmo padrão/mesmo comentário já usado em painel.html.
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// Argumento STRING seguro pra handler inline (on*="f(${jsq(x)})"). Achado real
+// (/monitorarbugs 2026-10-05, áreas sensíveis): `on*="f('${esc(x)}')"` NÃO é seguro —
+// esc() troca ' por &#39;, que o navegador decodifica de volta pra ' ANTES do JS do
+// atributo rodar, então um id como  x');alert(1);//  escapa da string e executa
+// (XSS armazenado: qualquer pessoa com escrita no dado — membro de squad, freelancer
+// da whitelist — roda JS na sessão de quem abrir a tela, inclusive ADM). JSON.stringify
+// gera um literal JS válido e esc() protege o atributo HTML.
+function jsq(s){ return esc(JSON.stringify(String(s==null?'':s))); }
 function safeUrl(u){u=String(u||'');return /^https:\/\//i.test(u)?u:'';}
 
 // ── Mesmo modelo de dados/constantes de painel.html (kanban/okr/*) ──
@@ -684,7 +693,7 @@ function objCardHtml(o){
   const st = okrStatusInfo(objStatus(o.id));
   const marcos = objMarcos(o.id);
   const pct = objProgressoPct(o.id);
-  return `<div class="obj-card" style="border-left-color:${st.dot};" onclick="window._okrOpenDetail('${o.id}')">
+  return `<div class="obj-card" style="border-left-color:${st.dot};" onclick="window._okrOpenDetail(${jsq(o.id)})">
     <div class="obj-top">
       <span class="status-chip"><span class="status-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
       <div class="obj-trims">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
@@ -1042,7 +1051,7 @@ window._okrOpenDetail = id => {
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
           ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
-          <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail('${nextObj.id}')" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
+          <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
       </div>
@@ -1063,7 +1072,7 @@ window._okrOpenDetail = id => {
           <div class="d2-table-rows">${marcos.length ? marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
             const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
-            return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments('${m.id}')" title="Ver comentários">
+            return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments(${jsq(m.id)})" title="Ver comentários">
               <span class="d2-marco-num">${i+1}.</span>
               <div class="d2-marco-main">
                 <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
@@ -1232,7 +1241,7 @@ function renderNotas(){
         <div class="note-author">${_notaAvatarHtml(n.autorUid)}<span>${esc(pessoaInfo(n.autorUid).nome.split(' ')[0]||'—')}</span></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="note-time">${_notaTempoFmt(n.ts)}</span>
-          ${(isHoje && n.autorUid===meuUid)?`<button class="note-del" onclick="window._okrDelNota('${id}')" title="Excluir">✕</button>`:''}
+          ${(isHoje && n.autorUid===meuUid)?`<button class="note-del" onclick="window._okrDelNota(${jsq(id)})" title="Excluir">✕</button>`:''}
         </div>
       </div>
       <div class="note-text">${esc(n.texto)}</div>
