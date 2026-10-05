@@ -400,7 +400,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-input,.okr-textarea,.okr-select{width:100%;padding:8px 10px;font-size:12px;border:1px solid rgba(var(--sec-rgb,140,165,190),.42);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;box-sizing:border-box;transition:border-color .15s,box-shadow .15s;}
 /* Caixas de texto mais evidentes (2026-10-05, feedback do chefe: "o modal é tudo no mesmo tom"): contorno visível e anel de foco na
    cor da seção em que a caixa está (--sec-rgb), ou no azul de destaque fora de uma seção. */
-.okr-input:focus,.okr-textarea:focus,.okr-select:focus{outline:none;border-color:rgb(var(--sec-rgb,56,182,255));box-shadow:0 0 0 3px rgba(var(--sec-rgb,56,182,255),.2);}
+.okr-input:focus,.okr-textarea:focus,.okr-select:focus{outline:none;border-color:rgb(var(--sec-rgb,var(--okr-focus-rgb)));box-shadow:0 0 0 3px rgba(var(--sec-rgb,var(--okr-focus-rgb)),.2);}
+:root{--okr-focus-rgb:56,182,255;}
+:root[data-theme="light"]{--okr-focus-rgb:0,119,173;}
+:root[data-theme="vice"]{--okr-focus-rgb:229,159,124;}
 /* ═══ OKR — seções coloridas dos modais (2026-10-05) ═══
    Cada tipo de ponto tem cor e ícone próprios (Indicadores azul, Progressos verde, Próximos passos índigo, Riscos âmbar,
    Planos de ação roxo, Marcos turquesa) — antes eram 5 blocos idênticos, só com um título cinza minúsculo. A cor vem por
@@ -433,8 +436,18 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-sec .okr-list-add .btn:hover{background:rgba(var(--sec-rgb),.22);}
 .okr-sec .okr-checklist-row{border-bottom:1px dashed rgba(var(--sec-rgb),.18);}
 .okr-sec .okr-checklist-row:last-of-type{border-bottom:none;}
-.okr-recap{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-radius:12px;padding:10px 12px;margin-bottom:4px;border:1px solid rgba(56,182,255,.35);border-left:4px solid var(--accent);background:linear-gradient(135deg,rgba(56,182,255,.13),rgba(56,182,255,.03));}
-[data-theme="light"] .okr-recap{border-color:rgba(0,119,173,.4);background:linear-gradient(135deg,rgba(0,119,173,.12),rgba(0,119,173,.03));}
+.okr-recap{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;border-radius:12px;padding:10px 12px;margin-bottom:4px;border:1px solid rgba(var(--okr-focus-rgb),.38);border-left:4px solid var(--accent);background:linear-gradient(135deg,rgba(var(--okr-focus-rgb),.13),rgba(var(--okr-focus-rgb),.03));}
+/* 🌴 Vice City: as cores das seções ficam na MESMA família do tema (pêssego/lavanda/rosa/laranja/areia, pastéis sobre o vinho) — as do tema
+   escuro (azul/verde/roxo vivos) brigavam com a paleta e o próprio tema proíbe "azul genérico". Cada tipo continua com uma cor distinta. */
+[data-theme="vice"] .okr-sec{--sec-rgb:205,165,195;}
+[data-theme="vice"] .okr-sec-neutro{--sec-rgb:205,165,195;}
+[data-theme="vice"] .okr-sec-ind{--sec-rgb:240,172,130;}
+[data-theme="vice"] .okr-sec-prog{--sec-rgb:160,215,180;}
+[data-theme="vice"] .okr-sec-next{--sec-rgb:190,165,240;}
+[data-theme="vice"] .okr-sec-risco{--sec-rgb:255,138,92;}
+[data-theme="vice"] .okr-sec-plano{--sec-rgb:245,135,175;}
+[data-theme="vice"] .okr-sec-marco{--sec-rgb:240,205,125;}
+[data-theme="vice"] .okr-sec-coment{--sec-rgb:240,172,130;}
 /* min-height default aumentado (era 52px — pedido direto: "essa parte do
    objetivo ta pequeno demais"): 130px já mostra ~5-6 linhas sem precisar
    redimensionar na maioria dos objetivos reais. */
@@ -3006,7 +3019,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.97 · painel-dev</div>
+<div class="version">v3.98 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
