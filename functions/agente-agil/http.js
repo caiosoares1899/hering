@@ -58,6 +58,7 @@ const crypto = require('crypto');
 const { intakeEnvelope } = require('./schema');
 const { SQUAD_ID } = require('./board');
 const { resolveReferencia } = require('./resolver');
+const { clientIp } = require('../common/clientIp');
 
 const AGENTE_AGIL_KEY = defineSecret('AGENTE_AGIL_KEY');
 
@@ -99,8 +100,7 @@ function timingSafeEqualStr(a, b) {
 // usado no rate limiter de intake/submit.js, pro mesmo motivo (get()+set()
 // não-atômico deixava um script concorrente furar o limite).
 async function checkAuthRateLimit(db, req) {
-  const ip = req.headers['fastly-client-ip'] || req.headers['x-forwarded-for'] || req.ip || 'unknown';
-  const ipKey = hashIp(String(ip).split(',')[0].trim());
+  const ipKey = hashIp(clientIp(req)); // ver common/clientIp.js — não confia em cabeçalho escolhido pelo cliente
   const rateRef = db.ref(`${AUTH_RATE_LIMIT_PATH}/${ipKey}`);
   const now = Date.now();
   let limited = false;

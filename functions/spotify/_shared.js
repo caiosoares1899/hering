@@ -24,4 +24,20 @@ async function buildDisconnectUpdates(db, uid) {
   return updates;
 }
 
-module.exports = { buildDisconnectUpdates };
+// Destino do redirect de volta do OAuth do Spotify. Achado real (/monitorarbugs
+// 2026-10-05, áreas sensíveis): `returnUrl` é gravado pelo CLIENTE em
+// kanban/oauth_pending/{state} (a regra só exige que o `uid` seja o do próprio
+// usuário) e spotifyOauthCallback fazia `res.redirect(pending.returnUrl + ...)`
+// sem validar nada — qualquer conta autenticada gravava um `returnUrl` qualquer e
+// passava a ter um redirecionamento aberto servido de um domínio confiável
+// (`...cloudfunctions.net/spotifyOauthCallback?state=X&error=1` → 302 pra onde ela
+// quisesse), útil pra phishing. Só aceita páginas do próprio site.
+const ALLOWED_RETURN_ORIGIN = 'https://caiosoares1899.github.io';
+function isAllowedReturnUrl(u) {
+  if (typeof u !== 'string' || u.length > 500) return false;
+  let parsed;
+  try { parsed = new URL(u); } catch (_) { return false; }
+  return parsed.origin === ALLOWED_RETURN_ORIGIN && parsed.protocol === 'https:' && !parsed.username && !parsed.password;
+}
+
+module.exports = { buildDisconnectUpdates, isAllowedReturnUrl, ALLOWED_RETURN_ORIGIN };

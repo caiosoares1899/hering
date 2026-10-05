@@ -20,6 +20,7 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
+const { isAllowedReturnUrl } = require('./_shared');
 
 const SPOTIFY_CLIENT_SECRET = defineSecret('SPOTIFY_CLIENT_SECRET');
 
@@ -54,6 +55,14 @@ exports.spotifyOauthCallback = onRequest(
 
     if (!pending || !pending.uid || !pending.returnUrl) {
       res.status(400).send('Sessão de conexão com o Spotify expirada ou inválida — tente conectar de novo.');
+      return;
+    }
+
+    // returnUrl vem do CLIENTE (oauth_pending/{state}) — só redireciona de volta pro
+    // próprio site (ver isAllowedReturnUrl em _shared.js): sem isso era um
+    // redirecionamento aberto servido de um domínio confiável.
+    if (!isAllowedReturnUrl(pending.returnUrl)) {
+      res.status(400).send('Destino de retorno inválido — tente conectar de novo pelo Maré Digital.');
       return;
     }
 

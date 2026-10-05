@@ -2834,6 +2834,34 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   explícita — checar retry e fila de releitura; e todo cache persistente no
   navegador precisa nascer com chave por usuário e limpeza no logout.
 
+- **2026-10-05, áreas sensíveis (pedido genérico, "roda um /monitorarbugs nas
+  áreas sensíveis" — priorizado o que o histórico ainda NÃO cobria: lado de
+  ESCRITA das regras, formulário público de intake de ponta a ponta,
+  `functions/spotify/`)**: 3 achados reais + 1 decisão adiada. (1) **severo,
+  técnica 3** — `on*="f('${esc(x)}')"` não é seguro (`esc()` → `&#39;`, decodificado
+  antes do JS do atributo): XSS armazenado reproduzido no Chromium com o
+  `_intakeItemHtml()` real; qualquer membro/freelancer com escrita em
+  `intake_pending` roda JS na sessão de quem abrir a tela (inclusive ADM). 332
+  interpolações (195 kanban + 137 painel; ~110 NEM passavam por `esc()`) + 4
+  (`okr-apresentacao`) + 1 (`onboarding`, sem `esc()` na página) convertidas pra
+  `jsq()`; 5.020 textos hostis, 0 falhas. (2) rate limit de `intakeSubmit` e
+  `agenteAgil` usava `fastly-client-ip`/1º `x-forwarded-for` — o cliente escolhe
+  os dois (function chamada direto, sem Hosting); rotacionar o cabeçalho
+  contornava o limite de 5/h e o de 20 tentativas/h de auth. Fix: `clientIp()`
+  (mais à direita, pula interno) + teto por squad de 40/h; teste com o handler real.
+  (3) `spotifyOauthCallback` redirecionava pra `pending.returnUrl` (gravado pelo
+  cliente) sem validar — redirecionamento aberto servido de domínio confiável; a
+  function segue no ar com o Spotify pausado. Fix: `isAllowedReturnUrl()`. **Decisão
+  adiada (pedido ao usuário)**: `usuarios.read` e `notificacoes.write` abertos a
+  qualquer conta autenticada — juntos permitem ler todos os uids/e-mails e criar
+  notificação com título/texto arbitrários que a function transforma em push (a URL
+  do clique é fixa, então não há redirect, mas é phishing por push); `feedback`/
+  `access_log` `.write: auth != null` (itens já listados da análise de 2026-10-01).
+  **Lição**: `esc()` é escape de HTML, não de string JS — qualquer valor que vá
+  PARA DENTRO de um literal JS num atributo precisa de `JSON.stringify` + `esc`;
+  e quando o fix de uma rodada anterior dá "atômico" a um rate limiter, perguntar
+  também de ONDE vem a identidade que ele conta.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

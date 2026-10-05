@@ -28,10 +28,16 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const { getDatabase } = require('firebase-admin/database');
 const crypto = require('crypto');
+const { clientIp } = require('../common/clientIp');
 
 const ALLOWED_ORIGIN = 'https://caiosoares1899.github.io';
 const RATE_LIMIT_MAX = 5; // envios por IP
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // por hora
+// Teto por SQUAD, independente de IP (/monitorarbugs 2026-10-05): o limite por IP
+// só vale enquanto a identidade do cliente é confiável; este é o backstop que não
+// depende disso — inunda a caixa de entrada (e dispara push pra todo o squad a cada
+// envio) no máximo SQUAD_RATE_LIMIT_MAX vezes por hora, mesmo com muitos IPs.
+const SQUAD_RATE_LIMIT_MAX = 40;
 
 function setCors(res) {
   res.set('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
@@ -156,8 +162,7 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
   const contato = clean(body.contato, 200);
   const prazo = /^\d{4}-\d{2}-\d{2}$/.test(body.prazo) ? body.prazo : '';
 
-  const ip = req.headers['fastly-client-ip'] || req.headers['x-forwarded-for'] || req.ip || 'unknown';
-  const ipKey = hashIp(String(ip).split(',')[0].trim());
+  const ipKey = hashIp(clientIp(req)); // ver common/clientIp.js — não confia em cabeçalho escolhido pelo cliente
   const rateRef = db.ref(`kanban/_intake_rate/${ipKey}`);
   const now = Date.now();
   // Achado real (/monitorarbugs, áreas sensíveis, 2026-09-11): get()+update()
@@ -181,6 +186,24 @@ const intakeSubmit = onRequest({ region: 'us-central1' }, async (req, res) => {
     return { count: current.count + 1, resetAt: current.resetAt };
   });
   if (limited) {
+    res.status(429).json({ error: 'rate_limited' });
+    return;
+  }
+
+  const squadRateRef = db.ref(`kanban/_intake_rate/sq_${hashIp(squad)}`);
+  let squadLimited = false;
+  await squadRateRef.transaction((current) => {
+    squadLimited = false;
+    if (!current || current.resetAt <= now) {
+      return { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS };
+    }
+    if (current.count >= SQUAD_RATE_LIMIT_MAX) {
+      squadLimited = true;
+      return;
+    }
+    return { count: current.count + 1, resetAt: current.resetAt };
+  });
+  if (squadLimited) {
     res.status(429).json({ error: 'rate_limited' });
     return;
   }
