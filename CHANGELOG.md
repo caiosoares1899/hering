@@ -38,6 +38,24 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.784-dev — 2026-10-05 · feat(cadastro): cadastro guiado — pergunta o squad quando falta e recarrega o 1º login de externo
+
+**Pedido:** "em vez de assumir esse erro, o código deve tentar corrigir com o usuário — se faltar qual squad é, pergunta".
+
+- **Reload automático:** externo recém-cadastrado recarrega 1x assim que o cadastro é gravado (os listeners dos cards disparavam
+  antes e levavam `permission_denied`, deixando o board vazio até o 1º F5). A mensagem de boas-vindas é mostrada depois do reload.
+- **Tela nova "👋 Complete seu cadastro":** sem `?squad=` na URL o app matriculava a pessoa em `dados` sem perguntar (o seletor
+  pré-login foi removido em 2026-10-01). Agora lista os squads elegíveis (externo = só onde foi autorizado; domínio confiável =
+  todos) e pergunta. Se há só 1 opção para um externo, vai direto. Usuário que já tem cadastro mas **nenhum** squad também é
+  perguntado (domínio confiável pode "Agora não": vale 7 dias).
+- **Gate de externos mais útil:** autorizado em outro squad (ou sem `?squad=`) deixa de ser recusado; quando a URL pede um squad
+  em que ele não está, a mensagem lista os squads em que ele ESTÁ autorizado.
+- **Cadastro não é mais fire-and-forget:** se as regras recusarem a gravação, aparece o aviso com a causa em vez de board vazio.
+- **Externo já cadastrado sem matrícula no squad da URL:** matricula e recarrega 1x.
+- Achado durante o teste: a tela nova ficaria por baixo do login (z-index) e o Esc global a fecharia sem resolver a pergunta;
+  usa classe própria (`.cad-ov`, z-index acima do login, fora do `.ov.open`).
+- Testado com a página real e banco simulado (Playwright): 16 cenários de cadastro + 4 do gate, todos ✅. Não testado com Firebase real.
+
 ### v8.30.783-dev — 2026-10-05 · fix(login): externo não vê mais "Uncaught Permission denied" ao ler ADMs extras
 
 A leitura de `kanban/config/adm_emails` no boot não tinha `.catch`. Externo não tem leitura de `kanban/config`

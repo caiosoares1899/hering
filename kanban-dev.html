@@ -1132,6 +1132,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 /* overlays */
 .ov{position:fixed;inset:0;z-index:60;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .ov.open{display:flex;}
+/* "Complete seu cadastro": classe PRÓPRIA (não .ov) de propósito — fica acima do login-ov (z 200, ainda visível durante o
+   cadastro) e o Esc/fechar-tudo global ('.ov.open') não pode fechá-la sem resolver a pergunta que o login está aguardando. */
+.cad-ov{position:fixed;inset:0;z-index:205;background:rgba(1,8,16,.88);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
+.cad-ov.open{display:flex;}
 .panel{background:rgba(var(--surface-rgb),.97);border:1px solid var(--glass-b);border-radius:var(--r2);width:100%;}
 /* Alça de arrastar do bottom-sheet do card (Fase 3.1) — só existe visualmente
    no mobile, ver @media(max-width:768px) .card-sheet-handle. */
@@ -3641,6 +3645,27 @@ input[type="date"]{-moz-appearance:textfield;}
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
       <div id="insc-init-err" style="display:none;font-size:11px;color:var(--danger);margin-bottom:6px;"></div>
       <button class="btn btn-p" onclick="confirmarInscricao()">Confirmar inscrição</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- COMPLETE SEU CADASTRO (2026-10-05): pergunta em qual squad a pessoa entra quando o cadastro não diz — antes o app
+     assumia 'dados' em silêncio (sem ?squad= na URL) ou deixava o board vazio. Ver _pedirSquadCadastro(). -->
+<div class="cad-ov" id="cadastro-ov">
+<div class="panel" style="max-width:400px;">
+  <div class="panel-hd"><div class="panel-title">👋 Complete seu cadastro</div></div>
+  <div style="padding:18px 16px;display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <img id="cad-foto" width="44" height="44" style="border-radius:50%;display:none;" alt="">
+      <div><div id="cad-nome" style="font-size:14px;font-weight:500;"></div><div id="cad-email" style="font-size:11px;color:var(--txt2);"></div></div>
+    </div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;" id="cad-msg">Não deu pra saber em qual squad você trabalha. Em qual você quer entrar?</div>
+    <div id="cad-squads" style="display:flex;flex-direction:column;gap:6px;max-height:260px;overflow:auto;"></div>
+    <div id="cad-err" style="display:none;font-size:11px;color:var(--danger);"></div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="btn" id="cad-skip" style="display:none;">Agora não</button>
+      <button class="btn btn-p" id="cad-ok">Confirmar</button>
     </div>
   </div>
 </div>
@@ -6436,7 +6461,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.783-dev</div>
+<div class="version">v8.30.784-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11250,7 +11275,9 @@ async function resolveSquadAndShow(user, userSquads) {
   }
 
   if (inscritosNosBoards.length === 0) {
-    // Não inscrito em nenhum squad — fluxo normal (convidado)
+    // Não inscrito em nenhum squad. Antes: abria como convidado sem perguntar (externo = board vazio). Agora
+    // oferece os squads elegíveis; se pular/falhar, segue como convidado como sempre foi.
+    if (await _completarSquadFaltando(user)) return;
     showApp(user);
     return;
   }
@@ -11383,17 +11410,27 @@ window.addEventListener('auth-change',e=>{
         autoRegistrar(user);
         return;
       }
-      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(snap=>{
+      const _checkExternos = (tentativa)=> fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos').then(async snap=>{
         const externos = snap.val()||{};
         // Lookup direto pela chave (email sanitizado) — ver _extKey(). Mantém
         // fallback pro formato antigo (Object.values escaneando por e.email)
         // só até a migração de dados rodar; depois disso vira redundante mas
         // inofensivo (short-circuit no primeiro true).
-        const allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
+        let allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
+        // Não autorizado NESTE squad: antes recusava direto. Se a URL nem pedia squad (cai no 'dados' hardcoded) ou
+        // se a pessoa está autorizada em OUTRO squad, ajuda em vez de só recusar.
+        let _msgNegado='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
+          let outros=[]; try{ outros=await _squadsDoExterno(user); }catch(e){}
+          if(outros.length){
+            if(!_urlParams.get('squad')) allowed=true; // o cadastro guiado pergunta/redireciona pro squad certo
+            else _msgNegado='Você não está autorizado(a) neste squad, mas está em: '+outros.map(id=>(SQUAD_META_LIVE[id]?.label||id)).join(', ')+'. Abra o link de um deles.';
+          }
+        }
+        if(!allowed){
+          document.getElementById('login-err').textContent=_msgNegado;
           document.getElementById('login-err').style.display='block';
-          _rejectLoginAfterReload('Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.');
+          _rejectLoginAfterReload(_msgNegado);
           window._signOut('external_not_authorized');
         } else {
           safeLS.setItem(_extCacheKey, String(Date.now()));
@@ -11536,6 +11573,77 @@ setInterval(()=>{
   if(document.hidden || !window._currentUser || !window._reloadAuthUser) return;
   window._reloadAuthUser().then(()=>_syncAuthProfileToFirebase(window._currentUser)).catch(()=>{});
 }, 60*60*1000);
+// ── Cadastro guiado (2026-10-05) ──────────────────────────────────────────────────────────────────────
+// Antes: sem ?squad= na URL o app assumia 'dados' (ACTIVE_SQUAD) e matriculava a pessoa lá sem perguntar; e quando
+// o cadastro estava incompleto/incoerente o resultado era um board vazio com permission_denied e nenhuma saída.
+// Agora: se falta a informação de QUAL squad, pergunta; se a gravação do cadastro falha, avisa com a causa.
+function _loadSquadMetaP(){ return new Promise(r=>loadSquadsFromFirebase(r)); }
+// Squads em que este e-mail está na lista de externos (a mesma chave que as regras do banco conferem).
+async function _squadsDoExterno(user){
+  await _loadSquadMetaP();
+  const k=_extKey(user.email);
+  const res=await Promise.all(Object.keys(SQUAD_META_LIVE).map(id=>
+    fbGet('kanban/squads/'+id+'/externos/'+k).then(sn=>sn.exists()?id:null).catch(()=>null)));
+  return res.filter(Boolean);
+}
+// Squads que esta pessoa PODE escolher: domínio confiável = todos os conhecidos; externo = só onde foi autorizado.
+async function _squadsElegiveis(user){
+  if(_isTrustedDomainEmail(user.email)){ await _loadSquadMetaP(); return Object.keys(SQUAD_META_LIVE); }
+  return _squadsDoExterno(user);
+}
+// Mostra a tela "Complete seu cadastro" e devolve (Promise) o id do squad escolhido, ou null se pulou.
+function _pedirSquadCadastro(user, ids, opts){
+  opts=opts||{};
+  return new Promise(resolve=>{
+    const ov=document.getElementById('cadastro-ov'); if(!ov){ resolve(null); return; }
+    document.getElementById('cad-nome').textContent=user.displayName||user.email;
+    document.getElementById('cad-email').textContent=user.email;
+    const f=document.getElementById('cad-foto');
+    if(user.photoURL){ f.src=user.photoURL; f.style.display='block'; } else f.style.display='none';
+    if(opts.msg) document.getElementById('cad-msg').textContent=opts.msg;
+    const errEl=document.getElementById('cad-err'); errEl.style.display='none';
+    document.getElementById('cad-squads').innerHTML=ids.map(id=>{
+      const m=SQUAD_META_LIVE[id]||{};
+      return `<label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--glass-b);border-radius:var(--r);cursor:pointer;font-size:13px;">`
+        +`<input type="radio" name="cad-squad" value="${esc(id)}"> <span>${esc(m.emoji||'🐟')}</span> <span>${esc(m.label||id)}</span></label>`;
+    }).join('');
+    const skip=document.getElementById('cad-skip'); skip.style.display=opts.permitirPular?'':'none';
+    const fim=(v)=>{ ov.classList.remove('open'); resolve(v); };
+    document.getElementById('cad-ok').onclick=()=>{
+      const sel=ov.querySelector('input[name="cad-squad"]:checked');
+      if(!sel || !ids.includes(sel.value)){ errEl.textContent='Escolha um squad pra continuar.'; errEl.style.display='block'; return; }
+      fim(sel.value);
+    };
+    skip.onclick=()=>fim(null);
+    ov.classList.add('open');
+  });
+}
+// Cadastro que NÃO diz em qual squad a pessoa está (nenhum squad em usuarios/{uid}/squads): em vez de assumir
+// "convidado sem squad" (board vazio pra externo), oferece os squads elegíveis. true = vai navegar/recarregar.
+async function _completarSquadFaltando(user){
+  try{
+    const skipKey='cad_skip_'+user.uid, skipTs=parseInt(safeLS.getItem(skipKey)||'0',10);
+    if(skipTs && Date.now()-skipTs<7*86400000) return false; // "Agora não" vale por 7 dias
+    const ops=await _squadsElegiveis(user);
+    if(!ops.length) return false;
+    const trusted=_isTrustedDomainEmail(user.email);
+    let alvo=null;
+    if(ops.length===1 && !trusted) alvo=ops[0]; // externo autorizado em 1 só squad: não há o que escolher
+    else alvo=await _pedirSquadCadastro(user,ops,{permitirPular:trusted,
+      msg:'Seu cadastro ainda não está em nenhum squad. Em qual você trabalha?'});
+    if(!alvo){ safeLS.setItem(skipKey,String(Date.now())); return false; }
+    const upd={}; upd['squads/'+alvo]=true;
+    await Promise.all([fbUpdate('kanban/usuarios/'+user.uid,upd), fbUpdate('kanban/usuarios_publicos/'+user.uid,upd)]);
+    const _f=location.pathname.split('/').pop()||'kanban.html';
+    if(alvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(alvo)); else location.reload();
+    return true;
+  }catch(e){
+    console.warn('[cadastro] não foi possível completar o squad:', e);
+    showToast('⚠ Não consegui concluir seu cadastro ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.');
+    return false;
+  }
+}
+
 function autoRegistrar(user){
   if(!window._fbReady) return;
   // ⚡ Se é ADM, seta o papel IMEDIATAMENTE (evita race: UI renderiza antes do fbGet resolver)
@@ -11576,15 +11684,44 @@ function autoRegistrar(user){
       init = await _claimUserInit(user.uid, init);
       // Novo usuário: freelancers (email não-ciahering) entram como convidado
       const newRole=isAdmUser(user)?'adm':(_isTrustedDomainEmail(user.email)?'membro':'convidado'); // externos = convidado
-      const newSquads={}; newSquads[ACTIVE_SQUAD]=true;
-      const newSquadsRoles={}; newSquadsRoles[ACTIVE_SQUAD]=newRole;
+      // Sem ?squad= na URL, ACTIVE_SQUAD é só o 'dados' hardcoded — matricular lá era um chute. Pergunta.
+      let _sqAlvo=ACTIVE_SQUAD;
+      if(!_urlParams.get('squad')){
+        try{
+          const ops=await _squadsElegiveis(user);
+          if(ops.length===1) _sqAlvo=ops[0];
+          else if(ops.length>1){ _sqAlvo=(await _pedirSquadCadastro(user,ops,{permitirPular:false}))||ACTIVE_SQUAD; }
+        }catch(e){ console.warn('[cadastro] não deu pra listar squads elegíveis, mantendo',ACTIVE_SQUAD,e); }
+      }
+      const newSquads={}; newSquads[_sqAlvo]=true;
+      const newSquadsRoles={}; newSquadsRoles[_sqAlvo]=newRole;
       const _regNovo={
         uid:user.uid, nome:user.displayName||'', email:user.email,
         init, foto:user.photoURL||'', role:newRole,
         inscrito:true, inscritoEm:new Date().toISOString(),
         squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
       };
-      if(_parcial) fbUpdate('kanban/usuarios/'+user.uid,_regNovo); else fbSet('kanban/usuarios/'+user.uid,_regNovo);
+      // AGUARDA a gravação (antes era fire-and-forget): sem isso, se as regras recusassem o cadastro o board abria
+      // vazio sem explicação. Falhou → avisa a causa e não segue como se estivesse tudo certo.
+      try{
+        await (_parcial ? fbUpdate('kanban/usuarios/'+user.uid,_regNovo) : fbSet('kanban/usuarios/'+user.uid,_regNovo));
+      }catch(e){
+        console.error('[cadastro] gravação do cadastro recusada:', e);
+        showToast('⚠ Não consegui concluir seu cadastro ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.');
+        return;
+      }
+      // Externo: as regras só liberam a leitura do squad DEPOIS desse cadastro gravado, mas os listeners dos
+      // cards já tinham sido disparados antes (→ permission_denied, board vazio até o 1º F5). Recarrega UMA vez.
+      // Também recarrega/redireciona se o squad escolhido não é o da URL. Domínio confiável lê por domínio, não precisa.
+      if(_sqAlvo!==ACTIVE_SQUAD || !_isTrustedDomainEmail(user.email)){
+        try{ await fbSet('kanban/usuarios_publicos/'+user.uid,{
+          nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
+          role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
+        try{ safeLS.setItem('cad_welcome', newRole); }catch(e){}
+        const _f=location.pathname.split('/').pop()||'kanban.html';
+        if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)); else location.reload();
+        return;
+      }
       // Espelha só os campos leves em usuarios_publicos/{uid} — node magro que
       // qualquer board pode escutar em tempo real (onValue) sem baixar
       // notificações/tokens de push de todo mundo (ver kanban/usuarios).
@@ -11601,6 +11738,21 @@ function autoRegistrar(user){
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       if(window._pendingInsc){ window._pendingInsc=false; mostrarInscricao(user,{init}); }
     } else {
+      // Boas-vindas adiadas pelo reload do 1º cadastro (ver ramo acima)
+      try{ const _w=safeLS.getItem('cad_welcome'); if(_w){ safeLS.removeItem('cad_welcome');
+        setTimeout(()=>showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+_w+'.'),1500); } }catch(e){}
+      // Externo autorizado NESTE squad (o gate de auth-change já conferiu a lista) mas sem a matrícula nele em
+      // usuarios/{uid}/squads: as regras negam a leitura do squad → board vazio. Matricula e recarrega 1x.
+      if(_urlParams.get('squad') && !isAdmUser(user) && !_isTrustedDomainEmail(user.email)
+         && !(existe.squads && existe.squads[ACTIVE_SQUAD]===true) && !safeLS.getItem('cad_enroll_try')){
+        try{ safeLS.setItem('cad_enroll_try','1'); }catch(e){}
+        const _u={}; _u['squads/'+ACTIVE_SQUAD]=true;
+        Promise.all([fbUpdate('kanban/usuarios/'+user.uid,_u), fbUpdate('kanban/usuarios_publicos/'+user.uid,_u)])
+          .then(()=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(e){} location.reload(); })
+          .catch(e=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(_){} console.error('[cadastro] matrícula no squad recusada:', e);
+            showToast('⚠ Você está autorizado(a) neste squad, mas não consegui concluir sua matrícula ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.'); });
+        return;
+      }
       // BUGFIX "Meus cards" destacando card de outra pessoa: window._currentUserInit
       // era calculado só pela fórmula ingênua (1ª letra de cada palavra do nome) lá em
       // cima no auth-change, e NUNCA corrigido pro `init` de verdade registrado no

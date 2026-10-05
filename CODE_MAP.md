@@ -55,6 +55,11 @@ confiar num número aqui se for mexer em `painel.html` prod).
   kanban.html/kanban-dev.html na promoção dev→prod** (além de versão/
   `VERSION_KEY`) — nunca copiar essa linha ao promover.
 - `autoRegistrar()` — L11225 — cria/atualiza o doc do usuário no login.
+- Cadastro guiado (2026-10-05) — `_squadsDoExterno()`/`_squadsElegiveis()` (squads onde o e-mail é externo / todos p/ domínio
+  confiável), `_pedirSquadCadastro()` (tela `#cadastro-ov` "Complete seu cadastro", classe própria `.cad-ov` acima do login-ov),
+  `_completarSquadFaltando()` (usuário sem nenhum squad, chamado por `resolveSquadAndShow()`). `autoRegistrar()` trata registro
+  parcial (`_parcial`), aguarda a gravação, e recarrega 1x o externo recém-cadastrado; o gate de externos no listener
+  `auth-change` consulta outros squads (`_squadsDoExterno`) antes de recusar.
   (2026-09-09) Branch de usuário JÁ EXISTENTE agora também cura `nome`
   (sincroniza sempre que diverge do Auth, mesmo padrão que `foto` já
   tinha) e `email` (cura só se vazio) de volta em `kanban/usuarios/{uid}`
