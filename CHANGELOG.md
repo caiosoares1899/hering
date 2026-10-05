@@ -20549,6 +20549,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.109 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): escolher a cor da tag (ao criar e ao editar)
+
+Pedido: poder definir a cor da tag, no mesmo lugar em que ela é criada. Antes, "+ Nova" (⚙ Configurações do Objetivo) pedia só o nome num `prompt` e a cor saía automática (rodízio da paleta).
+- **"+ Nova" agora abre um formulário** (nome + cor): 6 cores prontas da paleta **ou qualquer cor** pelo seletor 🎨, com prévia de como a tag vai aparecer. Enter cria, Esc/clique fora cancela. Nome em branco é recusado; nome que já existe **não duplica** (aplica a existente); se a gravação falhar, o erro aparece e a tag não é aplicada.
+- **🎨 ao lado de cada tag aplicada** edita **nome e cor** (a mudança vale pra todos os Objetivos que usam a tag); renomear para o nome de outra tag é recusado. Voltar a uma cor da paleta remove a cor própria.
+- A cor própria é guardada em `kanban/okr/tags/{id}.cor` (`#rrggbb`, validado) **além** do `colorIdx` antigo — tags existentes e clientes antigos seguem na paleta. Painel (modal, cartões da lista, filtro) e **apresentação** (`okr-apresentacao.slide.html`, prod) leem os dois campos.
+- Testes: 17 cenários novos (formulário, paleta × cor própria, Enter, duplicada, edição, renomear para nome existente, Esc, cor inválida, nome com HTML hostil, falha de gravação, apresentação); suítes anteriores verdes.
+
 ### painel-dev.html v3.108 · painel-dev (+ guia-okr.html) — 2026-10-05 · feat(OKR): 🏷️ tags nos cartões da aba e filtro por tag
 
 Pergunta do usuário: "se eu colocar uma tag num Objetivo, aparece na aba? E tem que ter filtro por tag." Não aparecia — as tags só eram vistas dentro do modal (e na apresentação).
