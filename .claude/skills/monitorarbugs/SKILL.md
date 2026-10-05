@@ -2852,11 +2852,17 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   (3) `spotifyOauthCallback` redirecionava pra `pending.returnUrl` (gravado pelo
   cliente) sem validar — redirecionamento aberto servido de domínio confiável; a
   function segue no ar com o Spotify pausado. Fix: `isAllowedReturnUrl()`. **Decisão
-  adiada (pedido ao usuário)**: `usuarios.read` e `notificacoes.write` abertos a
-  qualquer conta autenticada — juntos permitem ler todos os uids/e-mails e criar
+  (aprovada pelo usuário, mesmo dia)**: `usuarios.read` e `notificacoes.write` abertos a
+  qualquer conta autenticada — juntos permitiam ler todos os uids/e-mails/tokens e criar
   notificação com título/texto arbitrários que a function transforma em push (a URL
   do clique é fixa, então não há redirect, mas é phishing por push); `feedback`/
-  `access_log` `.write: auth != null` (itens já listados da análise de 2026-10-01).
+  `access_log` `.write: auth != null`. Regras novas preparadas (aguardam o deploy manual
+  do usuário): leitura de `usuarios` só pra empresa/visualizador + cada um lê o próprio
+  registro; criar notificação em caixa alheia só membro real, com `type`, e
+  `painel_broadcast` só PO/ADM (restringir TODA notificação a ADM quebraria
+  @menção/atribuição — o app cria no navegador de quem age); `feedback`/`access_log`
+  só membro. Verificado com simulador de regras novo (`functions/rules/`): 1.012
+  combinações antigo × novo, nada ficou mais permissivo; vira teste permanente.
   **Lição**: `esc()` é escape de HTML, não de string JS — qualquer valor que vá
   PARA DENTRO de um literal JS num atributo precisa de `JSON.stringify` + `esc`;
   e quando o fix de uma rodada anterior dá "atômico" a um rate limiter, perguntar

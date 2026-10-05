@@ -4368,6 +4368,7 @@ Causa do pico de ~8 GB de download em 2026-10-01 e a correção. Linhas: re-`gre
 ### Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
 - `jsq(x)` — `kanban-dev.html`/`painel-dev.html` (junto de `esc()`), `okr-apresentacao.slide.html`, `onboarding.slide.html` (helper próprio) — argumento STRING seguro pra `on*="f(${jsq(x)})"`. **Nunca** `on*="f('${esc(x)}')"` nem `'${x}'`: `esc()` vira `&#39;`, que o navegador decodifica antes de o JS do atributo rodar (XSS armazenado via id).
 - `clientIp(req)` / `isPrivateIp()` — `functions/common/clientIp.js` — chave de rate limit de endpoint HTTP público (usada por `intakeSubmit` e `agenteAgil`). Ignora `fastly-client-ip`, usa a entrada mais à direita de `x-forwarded-for`.
+- `functions/rules/rulesSim.js` + `functions/rules/__tests__/databaseRules.test.js` — simulador de `database.rules.json` (o projeto não tem emulador) e matriz ator × operação (`npm test`). Mudou as regras? Rode antes de pedir o `firebase deploy --only database`.
 - `isAllowedReturnUrl(u)` — `functions/spotify/_shared.js` — destino do redirect do `spotifyOauthCallback` (só o próprio site).
 
 *Retrato do commit `6e30656` (2026-09-30).*

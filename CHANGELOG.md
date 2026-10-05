@@ -27404,6 +27404,50 @@ divergência.
 
 ## `database.rules.json` (regras do Realtime Database, sem versão própria em `version.json`)
 
+### 2026-10-05 — Hardening: `usuarios` (leitura), notificações (criação), `feedback` e `access_log` (escrita)
+
+Segue da rodada `/monitorarbugs` "áreas sensíveis" (a "rodada de hardening separada" que a entrada de
+2026-10-01 deixou pra depois) e foi **pedida pelo usuário**: "pode preparar a mudança nas regras! se quiser na
+vdd pode acrescentar a regra que só ADM pode emitir notificado".
+
+**O problema (cadeia):** `kanban/usuarios` tinha `.read: auth != null` — qualquer conta Google/Microsoft
+autenticada, mesmo de fora da empresa, lia o nó INTEIRO: e-mails, **notificações** (títulos de card, menções) e
+**tokens de push** de todo mundo. O CHANGELOG de 2026-09-18 aceitou esse trade-off descrevendo o nó como "nome/e-mail/
+foto/role" — mas ele guarda também notificações e `fcm_tokens`. Além disso, `notificacoes/$id` aceitava criação por
+`!data.exists()` pra qualquer autenticado, e `sendPushOnNotification` transforma título/texto da notificação em push:
+uma conta de fora conseguia ler todos os uids/e-mails e mandar push de phishing pra todo mundo (a URL do clique é
+fixa — sem redirect —, mas o texto é livre). `feedback` e `squads/*/access_log` tinham `.write: auth != null`.
+
+**Regras novas (5 trocas + 1 nó):**
+1. `usuarios.read` → empresa (`@ciahering` via Google / `@arezzo` via Microsoft) **ou** visualizador do painel
+   (`painel_viewers`). Cada pessoa lê o PRÓPRIO registro (`usuarios/$uid.read: auth.uid === $uid`) — é o que o
+   login do freelancer usa. `usuarios_publicos` (diretório magro) e `squads/*/externos.read` seguem abertos de
+   propósito (o fluxo de login dos externos depende deles).
+2. `notificacoes/$id.write` — a própria caixa e PO/ADM continuam como antes. Criar na caixa de OUTRA pessoa agora
+   exige: nó novo + campo `type` (texto) + `type !== 'painel_broadcast'` + ser da empresa **ou** ter algum squad
+   (`usuarios/{uid}/squads` existe — o `validate` de `squads/$squadId` só deixa um externo ter squad se ele estiver
+   na whitelist). **`painel_broadcast` (aviso geral do Mural) só PO/ADM** — esta é a "regra de só ADM emite" pedida,
+   no nível certo: restringir TODA notificação a ADM quebraria @menção/atribuição/comentário/prazo, que o app cria no
+   navegador de quem faz a ação. Exigir `type` fecha o atalho de mandar notificação sem tipo (a function só filtra por
+   `PUSH_TYPES` quando há `type`).
+3. `feedback.write` → empresa ou membro de algum squad. 4. `squads/$squadId/access_log.write` → empresa ou membro
+   DAQUELE squad.
+
+**Verificação** (sem emulador no ambiente → simulador de regras novo, `functions/rules/rulesSim.js`, que avalia as
+expressões reais do arquivo com a cascata do Firebase): matriz de 10 atores × 17 operações; comparação antigo × novo
+em TODOS os 46 caminhos × 11 atores × leitura/escrita (1.012 combinações) — só mudaram `usuarios/**`, `feedback` e
+`access_log`, e **nenhum caminho ficou mais permissivo pra ninguém**. A matriz virou teste permanente
+(`functions/rules/__tests__/databaseRules.test.js`, 18 casos; 10 falham contra as regras antigas). Suíte `functions/`:
+554/554. **Não testado contra o Firebase real** — a linguagem de regras tem diferenças sutis do JS que o simulador usa.
+
+**Não mudou (conhecido):** `init_registry` ainda aceita qualquer autenticado reivindicar uma sigla (precisa ser assim:
+o freela reivindica ANTES de ter registro); `usuarios_publicos` segue legível por qualquer autenticado (e-mails de
+funcionários, sem notificações/tokens).
+
+**⚠️ Requer deploy manual** (`firebase deploy --only database`, resincronizar o clone antes — ver `CLAUDE.md`) e um
+teste com uma conta de freelancer logo depois. Rollback: Firebase Console → Realtime Database → Regras → Histórico
+(ou `git show <commit anterior>:database.rules.json`).
+
 ### 2026-10-01 — Pin de provedor por domínio corporativo (Arezzo só Microsoft, Hering só Google)
 
 Segue direto da integração de login com Microsoft (PR #1144/#1145,
