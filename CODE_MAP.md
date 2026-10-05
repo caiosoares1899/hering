@@ -20,9 +20,9 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção (última confirmada: v8.30.767, 2026-09-30 —
-auto-scroll da toolbar + fix de logout não limpando o token do Google
-Calendar — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
+DEPOIS de uma promoção (última confirmada: v8.30.786, 2026-10-05 —
+externos com conta Microsoft pessoal + cadastro guiado + 💬 de comentários
++ chip Híbrido + jsq anti-XSS — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
 tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
