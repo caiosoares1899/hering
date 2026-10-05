@@ -19968,6 +19968,17 @@ alguém pedir).
 
 ## Cloud Function — `okrAgenteChat` (`functions/okr/agenteChat.js`, sem versão própria em `version.json`)
 
+### 2026-10-05 — Agente Ágil passa a LER e ATUAR no 📈 Atingimento dos Objetivos (`functions/okr/`)
+
+Pedido (pendência do release do Atingimento): o chat de OKR do Agente Ágil só conhecia marcos; agora conhece a meta de cada Objetivo.
+- **Leitura**: `ler_objetivo`/`listar_objetivos` devolvem o **% da barra** (`progresso_pct`) e **de onde ele vem** (`progresso_origem`: atingimento ou marcos) e `ler_objetivo` traz o **atingimento** (tipo, moeda, inicial, meta, valor atual, % e últimos 5 registros). Ferramenta nova **`resumo_atingimentos`**: visão geral de todos os Objetivos com meta (% atual, meta, valor, último registro e há quantos dias), com filtro por gerência e por **"sem registro há N dias"** (inclui quem nunca registrou).
+- **Atuação**: **`registrar_atingimento`** (valor, `atingido` no tipo binário, `data` da entrega no tipo Data de entrega, nota; data padrão = hoje em São Paulo) e **`configurar_atingimento`** (tipo, moeda, valor inicial, meta, faixas de data; inclui ♾️ Perene). Mesma regra de permissão do painel (ADM ou Responsável do Objetivo). O registro entra por **transação sobre a lista** (quem registra pelo painel ao mesmo tempo não é sobrescrito) e a configuração por `update()` (nunca apaga registros). Grava 📜 Histórico no mesmo formato do painel (`registrou atingimento de DD/MM/AAAA: … → N% (via chat)`, `configurou o atingimento (…)`, `alterou a meta/tipo…`), avisa Responsáveis/participantes (`okr_editado`) e marca `por:'🤖 Agente Ágil'` + `pedidoPor` (uid de quem pediu).
+- **Salvaguardas**: nunca inventa valor/meta/data (o prompt manda perguntar); **trocar o tipo** de um atingimento que já tem registros exige `confirmar_recalculo` depois de perguntar à pessoa; o agente **não apaga registro nem remove atingimento** (só pela tela do Objetivo); Perene não aceita registro (a barra anda pelos marcos); entrada validada com zod dentro do handler (o loop não valida).
+- **Mesmo %, sempre**: `functions/okr/atingimento.js` contém uma **cópia literal** do motor de cálculo do painel (bloco `ATING-ENGINE`); `__tests__/atingimento.test.js` falha se divergir de `painel-dev.html`/`painel.html` e compara 1.000 casos aleatórios (8 tipos) entre o motor do painel e o do servidor.
+- **`okrWeeklySnapshot`**: o `progressoPct` de cada Objetivo no snapshot passa a seguir a mesma conta da barra (atingimento quando há meta, senão marcos) + campos novos `atingimentoTipo`/`atingimentoPct`/`atingimentoRegistros` (o histórico do painel ignora o que não conhece).
+- Testes: `agenteAtingimento.test.js` (28 casos: leitura, registrar por tipo, configurar, permissões, dryRun, concorrência, histórico, notificação), 2 ponta a ponta no `agenteChat.test.js` (pedido em texto → ferramentas → resposta) e 2 no `weeklySnapshot.test.js`. Suíte de `functions/`: **601/601** (era 521).
+- **Requer redeploy manual** (resync antes, ver `CLAUDE.md`): `firebase deploy --only functions:okrAgenteChat` e `--only functions:okrWeeklySnapshot`. Sem mudança em `database.rules.json`.
+
 ### 2026-09-05 — Nova function: chat dedicado com o Agente Ágil pra ajudar a preencher OKRs
 
 Pedido direto ("usar o agente ágil para ajudar o pessoal a preencher, igual
@@ -20537,6 +20548,10 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v3.106 · painel-dev — 2026-10-05 · docs(OKR): Central Agente Ágil e ajuda dizem que o agente lê/registra o 📈 Atingimento
+
+Só texto: a introdução da 💬 Central Agente Ágil e a ajuda do OKR passam a explicar o que o agente faz com atingimento (ler, registrar, configurar; nunca inventa valor; confirma antes de trocar o tipo). Acompanha o deploy das Cloud Functions acima — antes do deploy o agente ainda responde só sobre marcos.
 
 ### painel.html v3.105 · painel — 2026-10-05 · Promove pra prod — OKR: 📈 Atingimento (7 tipos + ♾️ Perene) com gráfico de evolução, modal em seções coloridas com atalhos, filtro por pessoa e correções
 

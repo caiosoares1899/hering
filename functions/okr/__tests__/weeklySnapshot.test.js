@@ -138,3 +138,39 @@ test('rodar 2x no mesmo dia SOBRESCREVE o snapshot do dia (não duplica)', async
   const todosSnapshots = (await db.ref('kanban/okr/snapshots').get()).val();
   assert.equal(Object.keys(todosSnapshots).length, 1);
 });
+
+// ── 📈 Atingimento no snapshot (barra do Objetivo = atingimento quando há meta) ──
+
+const temUndefinedSnap = (v) => v === undefined || (v && typeof v === 'object' && Object.values(v).some(temUndefinedSnap));
+
+test('objProgressoPct com o Objetivo: atingimento manda; sem o 3º argumento segue só pelos marcos (legado)', () => {
+  const marcos = { m1: { objetivoId: 'o1', progresso: 'concluido' }, m2: { objetivoId: 'o1', progresso: 'no_prazo' } };
+  const obj = { atingimento: { tipo: 'numero', inicial: 0, meta: 10, lancamentos: [{ id: 'a', em: '2026-10-01', valor: 8, criadoEm: 'x' }] } };
+  assert.equal(objProgressoPct(marcos, 'o1', obj), 80);
+  assert.equal(objProgressoPct(marcos, 'o1'), 50);
+  assert.equal(objProgressoPct(marcos, 'o1', { atingimento: { tipo: 'perene' } }), 50);
+});
+
+test('snapshot semanal: Objetivo com atingimento grava progressoPct do atingimento + tipo/pct/nº de registros; sem Firebase undefined', async () => {
+  const db = seedDb({
+    objetivos: {
+      o1: { id: 'o1', titulo: 'Receita', areaId: 'comercial', arquivado: false, atingimento: { tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100000, lancamentos: [{ id: 'a', em: '2026-10-01', valor: 62000, criadoEm: 'x' }] } },
+      o2: { id: 'o2', titulo: 'Sem meta', areaId: 'tech', arquivado: false },
+      o3: { id: 'o3', titulo: 'Perene', areaId: 'tech', arquivado: false, atingimento: { tipo: 'perene' } },
+    },
+    marcos: {
+      m1: { objetivoId: 'o1', progresso: 'concluido' }, m2: { objetivoId: 'o1', progresso: 'no_prazo' },
+      m3: { objetivoId: 'o2', progresso: 'concluido' },
+      m4: { objetivoId: 'o3', progresso: 'concluido' }, m5: { objetivoId: 'o3', progresso: 'risco' },
+    },
+  });
+  const snap = await runOkrWeeklySnapshot(db);
+  assert.equal(snap.objetivos.o1.progressoPct, 62);          // atingimento, não os 50% dos marcos
+  assert.equal(snap.objetivos.o1.marcosConcluidos, 1);       // marcos continuam registrados
+  assert.deepEqual([snap.objetivos.o1.atingimentoTipo, snap.objetivos.o1.atingimentoPct, snap.objetivos.o1.atingimentoRegistros], ['financeira', 62, 1]);
+  assert.equal(snap.objetivos.o2.progressoPct, 100);         // sem atingimento: marcos, como sempre
+  assert.equal(snap.objetivos.o2.atingimentoTipo, undefined);
+  assert.equal(snap.objetivos.o3.progressoPct, 50);          // perene: marcos
+  assert.equal(snap.objetivos.o3.atingimentoTipo, 'perene');
+  assert.ok(!temUndefinedSnap(snap));
+});

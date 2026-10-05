@@ -15,6 +15,7 @@
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
+const ating = require('./atingimento');
 
 // Mesmo formato (YYYY-MM-DD) que dueOverdueTrigger.js/dailyScan.js já usam.
 function todaySP() {
@@ -36,8 +37,11 @@ function objStatus(marcos, objId) {
   }
   return 'nao_iniciado';
 }
-function objProgressoPct(marcos, objId) {
+// Com o 3º argumento (o Objetivo), segue a MESMA conta de _okrObjProgressoPct() do painel: se o Objetivo tem atingimento
+// configurado (e não é perene), o % é o do atingimento; senão, % de marcos concluídos. Sem o 3º argumento: só marcos (legado).
+function objProgressoPct(marcos, objId, objetivo) {
   const ms = objMarcosAtivos(marcos, objId);
+  if (objetivo) return ating.progressoDoObjetivo(objetivo, ms).pct;
   if (!ms.length) return 0;
   return Math.round((ms.filter((m) => m.progresso === 'concluido').length / ms.length) * 100);
 }
@@ -58,14 +62,24 @@ async function runOkrWeeklySnapshot(db) {
     if (!o || o.arquivado) continue;
     const status = objStatus(marcos, objId);
     const marcosAtivos = objMarcosAtivos(marcos, objId);
+    const prog = ating.progressoDoObjetivo(o, marcosAtivos);
     snapshotObjetivos[objId] = {
       titulo: o.titulo || '',
       areaId: o.areaId || 'geral',
       status,
-      progressoPct: objProgressoPct(marcos, objId),
+      progressoPct: prog.pct,
       totalMarcos: marcosAtivos.length,
       marcosConcluidos: marcosAtivos.filter((m) => m.progresso === 'concluido').length,
     };
+    // 📈 foto do atingimento (só se configurado) — campos novos, o histórico do painel ignora o que não conhece
+    if (prog.origem === 'atingimento') {
+      const at = ating.normalizar(o).atingimento;
+      snapshotObjetivos[objId].atingimentoTipo = at.tipo;
+      snapshotObjetivos[objId].atingimentoPct = prog.pct;
+      snapshotObjetivos[objId].atingimentoRegistros = at.lancamentos.length;
+    } else if (o.atingimento && o.atingimento.tipo === 'perene') {
+      snapshotObjetivos[objId].atingimentoTipo = 'perene';
+    }
     resumoGeral.total += 1;
     resumoGeral[status] = (resumoGeral[status] || 0) + 1;
   }
