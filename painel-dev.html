@@ -533,6 +533,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-hist-who{font-weight:700;color:var(--txt);}
 .okr-hist-when{font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;}
 .okr-hist-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
+.okr-tag-swatches{display:flex;flex-wrap:wrap;gap:8px;align-items:center;}
+.okr-tag-sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center;font-size:13px;position:relative;overflow:hidden;}
+.okr-tag-sw.on{border-color:var(--txt);box-shadow:0 0 0 2px rgba(255,255,255,.18);}
+.okr-tag-sw-custom{background:conic-gradient(#ff6b6b,#ffd166,#1de9b6,#38b6ff,#d67fff,#ff6b6b);color:#fff;text-shadow:0 0 3px rgba(0,0,0,.7);}
+.okr-tag-sw-custom input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;border:0;padding:0;}
+.okr-tag-edit{background:none;border:none;cursor:pointer;font-size:11px;padding:0 2px;opacity:.7;}
+.okr-tag-edit:hover{opacity:1;}
 .okr-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;}
 .okr-tag-chip.sel{box-shadow:0 0 0 2px currentColor;}
 .okr-tag-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap;cursor:pointer;}
@@ -2567,7 +2574,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
-          Dá pra marcar Tags num Objetivo (em ⚙ Configurações) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).
+          Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).
         </div>
         <div>
           <b style="color:var(--txt);">📈 Histórico semanal</b><br>
@@ -3063,6 +3070,21 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
+<!-- 🏷️ Nova tag / Editar tag (nome + cor) — aberto por "+ Nova" ou pelo 🎨 no seletor de tags do ⚙ Configurações do Objetivo. -->
+<div class="pc-modal-ov" id="okr-tag-ov" style="z-index:240;" onclick="if(event.target===this) _okrTagFormClose()">
+  <div class="pc-modal" style="width:min(400px,94vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title" id="okr-tag-title">🏷️ Nova tag</div>
+      <button class="x-btn" onclick="_okrTagFormClose()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-tag-body"></div>
+    <div class="pc-footer" style="display:flex;justify-content:flex-end;gap:8px;">
+      <button type="button" class="btn btn-sm" onclick="_okrTagFormClose()">Cancelar</button>
+      <button type="button" class="btn btn-sm" id="okr-tag-ok" onclick="_okrTagFormSalvar()" style="background:var(--accent);color:#031a2e;font-weight:700;">Criar e aplicar</button>
+    </div>
+  </div>
+</div>
+
 <!-- 📈 Evolução do atingimento (gráfico com data e valor) — aberto pelo emoji do tipo no cartão do Objetivo ou pelo botão do modal; fica por cima do modal do Objetivo. -->
 <div class="pc-modal-ov" id="okr-ating-chart-ov" style="z-index:230;" onclick="if(event.target===this) closeOkrAtingChart()">
   <div class="pc-modal" style="width:min(640px,94vw);">
@@ -3104,7 +3126,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.108 · painel-dev</div>
+<div class="version">v3.109 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5509,9 +5531,16 @@ function loadOkrTags(){
     else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
   });
 }
+// Cor da tag: `cor` ('#rrggbb', escolhida no seletor de cor) manda; senão a paleta por `colorIdx` (tags antigas e do
+// okr-apresentacao.slide.html, que lê os dois campos).
+const OKR_TAG_COR_RE = /^#[0-9a-fA-F]{6}$/;
+function _okrTagCor(t){
+  if(t && OKR_TAG_COR_RE.test(t.cor||'')) return {bg:_ptHexA(t.cor,.15), b:_ptHexA(t.cor,.4), c:t.cor};
+  return PT_PALETTE[((t&&t.colorIdx)||0) % PT_PALETTE.length] || PT_PALETTE[0];
+}
 function _okrTagChipHtml(tagId, removable, onRemove, onClick, selecionada){
   const t = okrTags[tagId]; if(!t) return '';
-  const p = PT_PALETTE[t.colorIdx % PT_PALETTE.length] || PT_PALETTE[0];
+  const p = _okrTagCor(t);
   const clique = removable ? onRemove : onClick;
   return `<span class="okr-tag-chip${selecionada?' sel':''}" style="background:${p.bg};border-color:${p.b};color:${p.c};" ${clique?`onclick="${clique}"`:''}${onClick&&!removable?` title="Filtrar por esta tag"`:''}>${esc(t.label)}${removable?' ✕':''}</span>`;
 }
@@ -5522,16 +5551,80 @@ function _okrCardTagsHtml(o){
   const mostra = ids.slice(0,4), resto = ids.length-mostra.length;
   return `<div class="okr-card-tags">${mostra.map(t=>_okrTagChipHtml(t,false,'',`event.stopPropagation();_okrSetFilter('tag',${jsq(_okrFilter.tag===t?'':t)})`,_okrFilter.tag===t)).join('')}${resto>0?`<span class="okr-tag-chip" style="opacity:.7;cursor:default;" title="${esc(ids.slice(4).map(t=>okrTags[t].label).join(', '))}">+${resto}</span>`:''}</div>`;
 }
-async function _okrTagCriar(){
-  const label = (prompt('Nome da tag nova:')||'').trim();
-  if(!label) return;
-  const id = 'tag_'+Date.now()+'_'+Math.random().toString(36).slice(2,6);
-  const colorIdx = Object.keys(okrTags).length % PT_PALETTE.length;
-  await window._set(window._ref(window._db,'kanban/okr/tags/'+id), {id, label, colorIdx});
-  _okrSyncObjDraftFromDom();
-  (_okrObjDraft.tagIds = _okrObjDraft.tagIds||[]).push(id);
-  renderOkrObjConfigBody();
+// 🏷️ Nova tag / Editar tag — formulário com nome + cor (6 da paleta ou qualquer cor, pelo seletor). Mesmo lugar de sempre:
+// "+ Nova" no seletor de tags do ⚙ Configurações do Objetivo; o 🎨 ao lado de cada tag aplicada edita nome/cor dela.
+let _okrTagForm = null;   // {id|null, label, colorIdx, cor:''}
+function _okrTagCriar(){ _okrTagFormOpen(null); }
+function _okrTagFormOpen(tagId){
+  const t = tagId ? okrTags[tagId] : null;
+  if(tagId && !t) return;
+  _okrTagForm = t ? {id:tagId, label:t.label||'', colorIdx:t.colorIdx||0, cor:OKR_TAG_COR_RE.test(t.cor||'')?t.cor:''}
+                  : {id:null, label:'', colorIdx:Object.keys(okrTags).length % PT_PALETTE.length, cor:''};
+  document.getElementById('okr-tag-title').textContent = t ? '🏷️ Editar tag' : '🏷️ Nova tag';
+  document.getElementById('okr-tag-ok').textContent = t ? '💾 Salvar' : 'Criar e aplicar';
+  const corAtual = _okrTagCor(_okrTagForm.cor?{cor:_okrTagForm.cor}:{colorIdx:_okrTagForm.colorIdx}).c;
+  document.getElementById('okr-tag-body').innerHTML = `
+    <div class="okr-field-label">Nome</div>
+    <input type="text" class="okr-input" id="okr-tag-nome" maxlength="30" placeholder="Ex.: Prioridade" value="${esc(_okrTagForm.label)}" oninput="_okrTagFormNome(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrTagFormSalvar();}">
+    <div class="okr-field-label" style="margin-top:10px;">Cor</div>
+    <div class="okr-tag-swatches">
+      ${PT_PALETTE.map((p,i)=>`<button type="button" class="okr-tag-sw" data-i="${i}" style="background:${p.c};" onclick="_okrTagFormPaleta(${i})" title="Cor ${i+1}"></button>`).join('')}
+      <label class="okr-tag-sw okr-tag-sw-custom" title="Escolher outra cor"><input type="color" id="okr-tag-cor" value="${esc(corAtual.length===7?corAtual:'#38b6ff')}" oninput="_okrTagFormCor(this.value)">🎨</label>
+    </div>
+    <div class="okr-field-label" style="margin-top:10px;">Como vai aparecer</div>
+    <div id="okr-tag-preview"></div>
+    <div id="okr-tag-erro" style="font-size:11px;color:var(--danger);min-height:14px;margin-top:6px;"></div>`;
+  _okrTagFormPintar();
+  document.getElementById('okr-tag-ov').classList.add('open');
+  setTimeout(()=>{ const i=document.getElementById('okr-tag-nome'); if(i){ i.focus(); i.select(); } },30);
 }
+function _okrTagFormPintar(){
+  const f=_okrTagForm; if(!f) return;
+  const p=_okrTagCor(f.cor?{cor:f.cor}:{colorIdx:f.colorIdx});
+  const pv=document.getElementById('okr-tag-preview');
+  if(pv) pv.innerHTML=`<span class="okr-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c};cursor:default;">${esc(f.label.trim()||'Nome da tag')}</span>`;
+  document.querySelectorAll('#okr-tag-body .okr-tag-sw[data-i]').forEach(b=>b.classList.toggle('on', !f.cor && Number(b.dataset.i)===f.colorIdx));
+  const cu=document.querySelector('#okr-tag-body .okr-tag-sw-custom'); if(cu) cu.classList.toggle('on', !!f.cor);
+}
+function _okrTagFormNome(v){ if(_okrTagForm){ _okrTagForm.label=v; _okrTagFormPintar(); } }
+function _okrTagFormPaleta(i){ if(_okrTagForm){ _okrTagForm.colorIdx=i; _okrTagForm.cor=''; const ci=document.getElementById('okr-tag-cor'); if(ci) ci.value=PT_PALETTE[i].c.length===7?PT_PALETTE[i].c:ci.value; _okrTagFormPintar(); } }
+function _okrTagFormCor(hex){ if(_okrTagForm && OKR_TAG_COR_RE.test(hex)){ _okrTagForm.cor=hex.toLowerCase(); _okrTagFormPintar(); } }
+function _okrTagFormClose(){ _okrTagForm=null; document.getElementById('okr-tag-ov')?.classList.remove('open'); }
+async function _okrTagFormSalvar(){
+  const f=_okrTagForm; if(!f) return;
+  const erro=m=>{ const e=document.getElementById('okr-tag-erro'); if(e) e.textContent=m; };
+  const label=f.label.trim().slice(0,30);
+  if(!label) return erro('Informe o nome da tag.');
+  const dup=Object.values(okrTags).find(t=>t && t.id!==f.id && String(t.label||'').trim().toLowerCase()===label.toLowerCase());
+  if(dup){
+    if(f.id) return erro('Já existe outra tag com esse nome.');
+    // criando uma tag que já existe: não duplica — só aplica a existente ao Objetivo
+    _okrTagFormClose(); showToast('🏷️ Já existia uma tag "'+dup.label+'" — apliquei ela.');
+    _okrTagAddToObj(dup.id); return;
+  }
+  const id=f.id||('tag_'+Date.now()+'_'+Math.random().toString(36).slice(2,6));
+  const reg={id, label, colorIdx:f.colorIdx};
+  if(f.cor && OKR_TAG_COR_RE.test(f.cor)) reg.cor=f.cor;
+  try{ await window._set(window._ref(window._db,'kanban/okr/tags/'+id), reg); }
+  catch(e){ return erro('Não consegui salvar a tag: '+(e&&e.message||'erro')); }
+  okrTags[id]=reg;   // não espera o listener: chip e filtro já saem com a cor certa
+  const eraNova=!f.id;
+  _okrTagFormClose();
+  if(eraNova){
+    _okrSyncObjDraftFromDom();
+    (_okrObjDraft.tagIds = _okrObjDraft.tagIds||[]).push(id);
+    renderOkrObjConfigBody();
+  }else{
+    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
+    else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+    renderOkrObjetivos();
+  }
+  showToast(eraNova?'🏷️ Tag criada e aplicada.':'🏷️ Tag atualizada.');
+}
+document.addEventListener('keydown', e=>{
+  const ov=document.getElementById('okr-tag-ov');
+  if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrTagFormClose(); }
+}, true);
 async function _okrTagApagar(tagId){
   if(!await uiConfirm('Apagar essa tag? Ela some de todos os objetivos que a usam.', {danger:true, okText:'Apagar'})) return;
   await window._set(window._ref(window._db,'kanban/okr/tags/'+tagId), null);
@@ -5554,14 +5647,14 @@ function _okrTagPickerHtml(){
   return `
     <div class="okr-field-label">Tags</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
-      ${sel.map(id=>_okrTagChipHtml(id, true, `_okrTagRemoveFromObj('${id}')`)).join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
+      ${sel.map(id=>okrTags[id]?`<span style="display:inline-flex;align-items:center;gap:2px;">${_okrTagChipHtml(id, true, `_okrTagRemoveFromObj('${id}')`)}<button type="button" class="okr-tag-edit" onclick="_okrTagFormOpen(${jsq(id)})" title="Editar nome e cor desta tag">🎨</button></span>`:'').join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
     </div>
     <div style="display:flex;gap:6px;">
       <select class="okr-select" onchange="_okrTagAddToObj(this.value);this.value='';">
         <option value="">+ Adicionar tag existente…</option>
         ${opts.map(id=>`<option value="${id}">${esc(okrTags[id].label)}</option>`).join('')}
       </select>
-      <button type="button" class="btn btn-sm" style="white-space:nowrap;" onclick="_okrTagCriar()" title="Cria uma tag nova e já aplica nesse objetivo">+ Nova</button>
+      <button type="button" class="btn btn-sm" style="white-space:nowrap;" onclick="_okrTagCriar()" title="Cria uma tag nova (nome e cor) e já aplica nesse objetivo">+ Nova</button>
     </div>`;
 }
 

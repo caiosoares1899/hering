@@ -658,6 +658,12 @@ function _okrTrimestresOf(o){
   if(Array.isArray(o.trimestres) && o.trimestres.length) return o.trimestres;
   return o.trimestre ? [o.trimestre] : [];
 }
+// Cor da tag: `cor` ('#rrggbb', escolhida no painel) manda; senão a paleta por colorIdx (mesma regra do painel).
+function _tagCor(t){
+  if(t && /^#[0-9a-fA-F]{6}$/.test(t.cor||'')){ const n=parseInt(t.cor.slice(1),16), r=(n>>16)&255, g=(n>>8)&255, b=n&255;
+    return {bg:`rgba(${r},${g},${b},.15)`, b:`rgba(${r},${g},${b},.4)`, c:t.cor}; }
+  return PT_PALETTE[((t&&t.colorIdx)||0) % PT_PALETTE.length]||PT_PALETTE[0];
+}
 const PT_PALETTE=[
   {bg:'rgba(56,182,255,.15)',b:'rgba(56,182,255,.35)',c:'#38b6ff'},
   {bg:'rgba(29,233,182,.12)',b:'rgba(29,233,182,.3)',c:'#1de9b6'},
@@ -934,7 +940,7 @@ function objCardHtml(o){
     <div class="prog-label">${_okrAtingPctObj(o)!==null?`<button type="button" class="ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução (data e valor)" onclick="event.stopPropagation();window._okrOpenAting(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${o.atingimento&&o.atingimento.tipo==='perene'?'<span title="Perene — a barra acompanha os marcos">♾️</span> ':''}${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
     ${(o.tagIds||[]).length?`<div class="obj-tags">${(o.tagIds||[]).map(tid=>{
       const t=okrTags[tid]; if(!t) return '';
-      const p=PT_PALETTE[t.colorIdx % PT_PALETTE.length]||PT_PALETTE[0];
+      const p=_tagCor(t);
       return `<span class="tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c};">${esc(t.label)}</span>`;
     }).join('')}</div>`:''}
     <div class="obj-bottom">${(o.responsaveis||[]).slice(0,4).map(uid=>avatarHtml(uid)).join('')}</div>
