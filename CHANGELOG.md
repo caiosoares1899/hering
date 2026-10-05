@@ -38,6 +38,34 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.780-dev — 2026-10-05 · feat(card): indicador 💬 de comentários na linha de ícones (ao lado de ≡ e 📎)
+
+Pedido direto do usuário (com print de um card): na segunda linha, a que tem o ícone de
+descrição (≡) e de anexo (📎), "podia criar o símbolo de comentários também".
+
+O board não sabia quais cards têm comentário: eles vivem em `card_comments/{cardId}/…`, path
+próprio que nunca vem junto do card (ler todos só pra desenhar um ícone seria caro). E comentário é
+escrito por MAIS DE UM caminho — o cliente (3 pontos + importar/duplicar) **e as Cloud Functions do
+Agente Ágil** (respostas, resumos) —, então um contador só no navegador perderia justamente as
+respostas do agente.
+
+- Nova Cloud Function `contarComentarios` (`functions/comentarios/contagem.js`): a cada escrita em
+  `card_comments/{cardId}/{id}` recalcula (contando os filhos — idempotente, tolera reentrega e
+  ordem trocada) e grava `card_comments_count/{cardId}` = n (remove quando chega a 0). Só escreve no
+  índice, nunca em `card_comments`: sem risco de loop. 7 testes novos (561/561 na suíte).
+- Board escuta só esse índice minúsculo (id → n, `_dbgTrack('/card_comments_count:live')`) e desenha
+  `💬` na linha de ícones; mostra o número só quando há mais de 1 (igual ao ≡ de descrições). Mudou a
+  contagem → atualiza o ícone no lugar, em todas as faces do card (raias), sem re-renderizar o board.
+  Fica oculto na densidade compacta, como os outros ícones. Card antigo com o campo legado
+  `comments` também conta.
+- Rede de segurança no cliente: ao abrir um card, se o índice diverge da lista real que acabou de
+  chegar, corrige o índice — o recurso funciona (e se cura sozinho) mesmo antes do deploy da function.
+- Chromium com o `makeCardEl()` real: sem contagem não desenha; 1 → `💬`; 7 → `💬⁷`; troca/remoção no
+  lugar; mesmo card em 2 faces; id com aspas no seletor não lança e não afeta outros cards.
+- **⚠️ Requer** `firebase deploy --only functions:contarComentarios` (resincronizar o clone antes) e,
+  **uma vez**, o backfill dos comentários que já existem (script de console no painel, ver o chat).
+  Sem o deploy, o ícone só aparece nos cards que alguém abrir (a rede de segurança acima).
+
 ### v8.30.779-dev — 2026-10-05 · fix(segurança, /monitorarbugs "áreas sensíveis"): XSS armazenado via id em handler inline (`on*="f('${esc(x)}')"`)
 
 `on*="f('${esc(x)}')"` **não é seguro**: `esc()` troca `'` por `&#39;`, que o
@@ -19418,6 +19446,15 @@ inicial (URL relativa) tanto na Cloud Function quanto no fallback do
 `firebase-messaging-sw.js`. **Requer `firebase deploy --only functions`
 manual** (feito no mesmo dia) — pushes entregues antes do redeploy mantêm
 o link antigo quebrado.
+
+## Cloud Function — `contarComentarios` (`functions/comentarios/contagem.js`, sem versão própria em `version.json`)
+
+### 2026-10-05 · nova: mantém `card_comments_count/{cardId}` (indicador 💬 do card)
+
+Gatilho `onValueWritten` em `kanban/squads/{squadId}/dados/card_comments/{cardId}/{commentId}` (um só pra
+todos os squads — só conta, diferente dos gatilhos do orquestrador, que são por squad por causa de custo de
+chamada ao modelo). Recalcula lendo os filhos (idempotente) e grava/remove o índice. Detalhes e motivação em
+`kanban-dev.html` v8.30.780-dev. **Deploy isolado:** `firebase deploy --only functions:contarComentarios`.
 
 ## Cloud Functions públicas — identidade do rate limit + redirect do Spotify (`functions/common/clientIp.js`, `functions/intake/submit.js`, `functions/agente-agil/http.js`, `functions/spotify/oauth.js`)
 
