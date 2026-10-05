@@ -3019,7 +3019,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.98 · painel-dev</div>
+<div class="version">v3.99 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5523,7 +5523,10 @@ function _okrAvatarHtml(uid){
 }
 function _okrPessoaOptions(){
   return Object.entries(_globalUsersCache)
-    .filter(([uid,u])=>u.inscrito || u.squads || u.role==='adm')
+    // Antes só entrava quem tinha squad/inscrito/ADM — mas quem usa SÓ o painel (ex.: diretoria que acompanha o OKR) é cadastrado
+    // SEM squad de propósito (_painelEnsureUserRecord(), 2026-09-09) e só aparecia aqui depois de um ADM matriculá-lo em um squad.
+    // Basta o registro ter identidade (nome ou e-mail); registros vazios/parciais (só preferências) continuam de fora.
+    .filter(([uid,u])=>u && (u.inscrito || u.squads || u.role==='adm' || u.nome || u.email))
     .map(([uid,u])=>({uid, nome:u.nome||u.email||uid}))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 }
@@ -5674,6 +5677,7 @@ function _okrStatsStripHtml(lista){
 }
 
 function renderOkrObjetivos(){
+  if(_guLoadedAt) loadGlobalUsers(); // só RENOVA (TTL de 10 min, _GU_TTL_MS): pessoa recém-cadastrada pelo painel aparece nos seletores de responsável sem F5; sem 1ª carga não insiste (evita leitura a cada render se a rede/permissão falhar)
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
   const novoBtn = document.getElementById('okr-novo-btn');
@@ -10042,8 +10046,9 @@ function renderAdmList(){
   });
 }
 
-function addAdmEmail(){
-  const email=document.getElementById('pcfg-adm-email')?.value?.trim();
+function addAdmEmail(emailArg){
+  // Sem argumento lê o campo de ⚙ Configurações → ADMs; com argumento (chip "🛡️ ADM" de Global Users) usa o e-mail passado.
+  const email=(typeof emailArg==='string' ? emailArg : document.getElementById('pcfg-adm-email')?.value)?.trim();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
   if(ADM_EMAILS.includes(email)){ showToast('Já é ADM'); return; }
   ADM_EMAILS.push(email);
@@ -10057,7 +10062,7 @@ function addAdmEmail(){
           .catch(e=>console.warn('Não foi possível setar role ADM (Firebase Rules):',e.message));
       }
   });
-  document.getElementById('pcfg-adm-email').value='';
+  const _admInp=document.getElementById('pcfg-adm-email'); if(_admInp) _admInp.value='';
 }
 
 function removeAdmEmail(email){
@@ -10084,7 +10089,7 @@ function removeAdmEmail(email){
 
 function saveAdmEmails(){
   window._set(window._ref(window._db,'kanban/config/adm_emails'), ADM_EMAILS)
-    .then(()=>{ showToast('✅ ADMs atualizados'); renderAdmList(); })
+    .then(()=>{ showToast('✅ ADMs atualizados'); renderAdmList(); if(typeof renderGlobalUsers==='function') renderGlobalUsers(); })
     .catch(e=>showToast('❌ '+e.message));
 }
 // ── FIM GERENCIAMENTO ADMs ────────────────────────────────────────
@@ -11544,6 +11549,22 @@ function renderGlobalUsers(){
       squadsWrap.appendChild(chip);
     });
 
+    // 🛡️ ADM — NÃO é papel por squad: é a lista de e-mails de ADMs (⚙ Configurações → ADMs), a mesma que o board e as regras usam.
+    // Chip aqui só pra não precisar sair da tela de usuários pra promover/rebaixar; funciona pra quem não tem squad nenhum também.
+    const ehAdm = !!u.email && ADM_EMAILS.includes(u.email);
+    const admChip = document.createElement('label');
+    admChip.title = 'ADM = acesso total a todos os boards e ao painel. É a mesma lista de ⚙ Configurações → ADMs, não um papel por squad.';
+    admChip.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'+
+      (ehAdm ? 'background:rgba(255,209,102,.16);border:1px solid rgba(255,209,102,.45);color:var(--txt);'
+             : 'background:rgba(255,255,255,.03);border:1px solid var(--glass-b);color:var(--txt3);');
+    const admCb = document.createElement('input');
+    admCb.type = 'checkbox'; admCb.checked = ehAdm; admCb.disabled = !u.email || !_isAdmPainel();
+    admCb.style.cssText = 'width:12px;height:12px;cursor:pointer;accent-color:var(--warn);';
+    admCb.onchange = ()=>toggleAdmUser(uid, admCb.checked);
+    const admLbl = document.createElement('span'); admLbl.textContent = '🛡️ ADM';
+    admChip.appendChild(admCb); admChip.appendChild(admLbl);
+    squadsWrap.appendChild(admChip);
+
     // 🎯 Gestor OKR — flag independente de squad/role (ver comentário
     // grande em _isGestorOkr(), acima no arquivo): deixa criar/editar
     // QUALQUER Objetivo do OKR sem precisar ser PO/Organizador/ADM nem
@@ -11587,6 +11608,21 @@ function renderGlobalUsers(){
 // foto/role/squads), e gestorOkr não tem nenhum efeito lá — só o OKR em
 // painel-dev.html lê esse campo (via _globalUsersCache, já a mesma fonte
 // de _isGestorOkr() acima).
+async function toggleAdmUser(uid, checked){
+  const u = _globalUsersCache[uid] || {};
+  const email = u.email;
+  if(!email){ showToast('⚠ Essa pessoa não tem e-mail cadastrado.'); renderGlobalUsers(); return; }
+  if(!_isAdmPainel()){ showToast('⚠ Só ADM pode mudar quem é ADM.'); renderGlobalUsers(); return; }
+  const nome = u.nome || email;
+  if(checked){
+    if(!await uiConfirm('Dar acesso total (ADM) a '+nome+'? ADMs veem e editam todos os boards e o painel.', {okText:'Tornar ADM'})){ renderGlobalUsers(); return; }
+    addAdmEmail(email);
+  } else {
+    if(email===window._currentUser?.email){ showToast('⚠ Você não pode tirar o seu próprio acesso de ADM por aqui.'); renderGlobalUsers(); return; }
+    removeAdmEmail(email); // já pede confirmação própria
+  }
+  setTimeout(()=>{ if(typeof renderGlobalUsers==='function') renderGlobalUsers(); }, 600);
+}
 function toggleGestorOkr(uid, checked){
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {gestorOkr: checked?true:null})
     .then(()=>{ showToast(checked?'🎯 Agora é Gestor OKR.':'Deixou de ser Gestor OKR.'); if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); })
