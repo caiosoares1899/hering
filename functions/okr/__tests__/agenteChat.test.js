@@ -248,3 +248,37 @@ test('resumirResultadoParaLog: mostra as ferramentas chamadas na ordem', () => {
 test('agenteChat.js exporta DRY_RUN_OKR_CHAT=false (escrita real desde o 1º deploy)', () => {
   assert.equal(DRY_RUN_OKR_CHAT, false);
 });
+
+// ── 📈 Atingimento ponta a ponta: pedido em texto corrido → ferramentas → resposta ──
+
+test('chat: "registra 48 mil" — o agente lê o Objetivo, registra o atingimento e responde; o registro vira dado real', async () => {
+  const db = seedDb();
+  await db.ref('kanban/okr/objetivos/o1/atingimento').set({ tipo: 'financeira', moeda: 'BRL', inicial: 0, meta: 100000, lancamentos: [] });
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: 't1', name: 'ler_objetivo', input: { objetivo_id: 'o1' } }], text: '' },
+    { toolCalls: [{ id: 't2', name: 'registrar_atingimento', input: { objetivo_id: 'o1', valor: 48000, data: '2026-10-05' } }], text: '' },
+    { toolCalls: [{ id: 't3', name: 'responder', input: { texto: 'Registrei R$ 48.000 em 05/10 — 48% da meta.' } }], text: '' },
+    { toolCalls: [], text: 'ok' },
+  ]);
+  const outcome = await processarMensagem(db, { msgId: 'mat1', message: { uid: 'uid-humano', text: 'fechamos setembro em 48 mil no custo do Firebase' }, llmClient, dryRun: false });
+  assert.equal(outcome.processed, true);
+  const ls = (await db.ref('kanban/okr/objetivos/o1/atingimento/lancamentos').get()).val();
+  assert.equal(ls.length, 1);
+  assert.equal(ls[0].valor, 48000);
+  assert.equal(ls[0].pedidoPor, 'uid-humano');
+  const chat = (await db.ref('kanban/okr/agente_chat').get()).val();
+  assert.match(Object.values(chat)[0].text, /48%/);
+});
+
+test('chat em dryRun: o agente "registra" mas nada é gravado no Objetivo', async () => {
+  const db = seedDb();
+  await db.ref('kanban/okr/objetivos/o1/atingimento').set({ tipo: 'numero', moeda: 'NUM', inicial: 0, meta: 10, lancamentos: [] });
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: 't1', name: 'registrar_atingimento', input: { objetivo_id: 'o1', valor: 5 } }], text: '' },
+    { toolCalls: [{ id: 't2', name: 'responder', input: { texto: 'simulado' } }], text: '' },
+    { toolCalls: [], text: 'ok' },
+  ]);
+  await processarMensagem(db, { msgId: 'mat2', message: { uid: 'uid-humano', text: 'registra 5' }, llmClient, dryRun: true });
+  const ls = (await db.ref('kanban/okr/objetivos/o1/atingimento/lancamentos').get()).val();
+  assert.equal((ls || []).length, 0);
+});

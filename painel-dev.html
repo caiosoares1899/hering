@@ -1972,7 +1972,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
          (nunca os dois juntos), mesmo padrão de _okrToggleHistorico. -->
     <div id="okr-agente-wrap" style="display:none;">
       <div class="sec-title" style="margin-top:4px;">💬 Central Agente Ágil</div>
-      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px;">Conte a situação com suas palavras — o Agente Ágil separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b> e já escreve direto no Objetivo certo. Ele só edita o que você é Responsável (ou se você for ADM).</div>
+      <div style="font-size:11px;color:var(--txt2);margin-bottom:10px;">Conte a situação com suas palavras — o Agente Ágil separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b> e já escreve direto no Objetivo certo. Ele também <b>lê e registra o 📈 Atingimento</b> (ex.: “fechamos setembro em R$ 48 mil”, “como estão os atingimentos?”). Ele só edita o que você é Responsável (ou se você for ADM).</div>
       <div id="okr-agente-chat-list" style="max-height:440px;overflow-y:auto;margin-bottom:10px;padding-right:2px;"></div>
       <div class="okr-list-add">
         <input type="text" class="okr-input" id="okr-agente-inp" placeholder="Ex.: já validamos a viabilidade do OMNI, falta apresentar pro conselho…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrAgenteChatSend();}">
@@ -2559,6 +2559,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <ul style="margin:6px 0 0;padding-left:18px;">
             <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
             <li>Também cria Objetivo novo (só se você for ADM) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído").</li>
+            <li><b>📈 Atingimento</b>: ele consegue <b>ler</b> a meta, o valor atual e o % de cada Objetivo ("como estão os atingimentos?", "quem está sem registro há mais de 15 dias?"), <b>registrar</b> um valor ("fechamos setembro em R$ 48 mil" — ele usa a data de hoje se você não disser outra) e <b>configurar</b> o tipo/meta de um Objetivo que ainda não tem. Ele nunca inventa valor (pergunta se faltar), não apaga registro nem remove atingimento (isso é pela tela do Objetivo) e, se for trocar o tipo de um atingimento que já tem registros, confirma com você antes. O % é calculado igual ao da barra do Objetivo.</li>
             <li>Respeita a mesma regra de permissão de cima: se você não for Responsável nem ADM daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou.</li>
             <li>A conversa fica salva ali, pra sempre — dá pra rolar pra cima e ver os pedidos e respostas anteriores, de qualquer pessoa.</li>
           </ul>
@@ -3075,7 +3076,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.105 · painel-dev</div>
+<div class="version">v3.106 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">

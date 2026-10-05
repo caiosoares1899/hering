@@ -4323,6 +4323,16 @@ detalhe aberto — ver nota abaixo).
   Objetivo, via `agenteHelpers.canEditObjetivo()`), `responder` (sempre a
   última ferramenta chamada). Campos de lista (Indicadores/Progressos/
   Próximos Passos/Riscos/Planos de Ação) só SOMAM, nunca substituem.
+  **📈 Atingimento (2026-10-05)**: `resumo_atingimentos` (leitura geral, filtro
+  por gerência e `sem_registro_ha_dias`), `registrar_atingimento` (transação
+  sobre `…/atingimento/lancamentos`), `configurar_atingimento` (`update()`,
+  nunca apaga registros; trocar tipo com registros exige
+  `confirmar_recalculo`); `ler_objetivo`/`listar_objetivos` trazem
+  `progresso_pct`/`progresso_origem`/`atingimento`. Motor de cálculo em
+  `okr/atingimento.js` — bloco `ATING-ENGINE` é CÓPIA LITERAL de
+  `painel-dev.html`/`painel.html` (testado em `atingimento.test.js`); helpers
+  só do servidor fora do bloco (`resumoAtingimento()`/`progressoDoObjetivo()`/
+  `lancamentosDe()`). `weeklySnapshot.js` usa o mesmo `progressoDoObjetivo()`.
   `resolveMarco()` exportado (resolve por id ou nome dentro do Objetivo,
   erro `marco_ambiguo` se mais de 1 bater). `okr/__tests__/agenteTools.test.js`,
   20 casos.
