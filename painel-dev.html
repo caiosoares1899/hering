@@ -533,6 +533,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-hist-who{font-weight:700;color:var(--txt);}
 .okr-hist-when{font-size:10px;color:var(--txt3);white-space:nowrap;flex-shrink:0;}
 .okr-hist-empty{font-size:11px;color:var(--txt3);padding:4px 0;}
+.okr-card-tags{display:flex;flex-wrap:wrap;gap:4px;margin:0 0 8px;}
+.okr-tag-chip.sel{box-shadow:0 0 0 2px currentColor;}
 .okr-tag-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap;cursor:pointer;}
 .okr-tag-swatch{display:flex;flex-wrap:wrap;gap:5px;margin:4px 0;}
 .okr-tag-swatch span{width:18px;height:18px;border-radius:50%;cursor:pointer;border:2px solid transparent;}
@@ -1947,6 +1949,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
       <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
       <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
+      <select id="okr-filter-tag" class="pt-filter-input" onchange="_okrSetFilter('tag', this.value)" title="Filtra pelas tags aplicadas ao objetivo (também dá pra clicar numa tag no cartão)" style="display:none;"><option value="">Todas as tags</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
         <option value="">Todos os status</option>
         <option value="nao_iniciado">⚪ Não iniciado</option>
@@ -2544,7 +2547,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">🔎 Filtros e resumo da aba</b><br>
-          No topo: <b>gerência</b>, <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele), <b>status</b> e busca por nome. Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.
+          No topo: <b>gerência</b>, <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele), <b>🏷️ tag</b> (só aparece quando há tags em uso), <b>status</b> e busca por nome. Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.
         </div>
         <div>
           <b style="color:var(--txt);">✏️ Quem pode editar</b><br>
@@ -2564,7 +2567,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
-          Dá pra marcar Tags num Objetivo e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba.
+          Dá pra marcar Tags num Objetivo (em ⚙ Configurações) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).
         </div>
         <div>
           <b style="color:var(--txt);">📈 Histórico semanal</b><br>
@@ -3101,7 +3104,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.107 · painel-dev</div>
+<div class="version">v3.108 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5169,7 +5172,7 @@ function okrStatusDot(id){ const s=okrStatusInfo(id); return `<span class="okr-d
 // ── Estado local (populado via _onValue, mesmo padrão de _globalUsersCache) ──
 let okrObjetivos = {};   // {id: objetivo}
 let okrMarcos = {};      // {id: marco}, marco.objetivoId aponta pro pai
-let _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:''};
+let _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:'', tag:''};
 // "Tem que ser possível arquivar OKRs e depois acessar eles por essa
 // guia" — pedido direto. Alterna a lista inteira entre ativos/arquivados
 // (não mistura os dois numa lista só) — mesmo espírito do filtro de
@@ -5501,14 +5504,23 @@ let okrTags = {};
 function loadOkrTags(){
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{
     okrTags = snap.val() || {};
+    if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // chips e filtro por tag dependem das tags carregadas
     if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
     else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
   });
 }
-function _okrTagChipHtml(tagId, removable, onRemove){
+function _okrTagChipHtml(tagId, removable, onRemove, onClick, selecionada){
   const t = okrTags[tagId]; if(!t) return '';
   const p = PT_PALETTE[t.colorIdx % PT_PALETTE.length] || PT_PALETTE[0];
-  return `<span class="okr-tag-chip" style="background:${p.bg};border-color:${p.b};color:${p.c};" ${removable?`onclick="${onRemove}"`:''}>${esc(t.label)}${removable?' ✕':''}</span>`;
+  const clique = removable ? onRemove : onClick;
+  return `<span class="okr-tag-chip${selecionada?' sel':''}" style="background:${p.bg};border-color:${p.b};color:${p.c};" ${clique?`onclick="${clique}"`:''}${onClick&&!removable?` title="Filtrar por esta tag"`:''}>${esc(t.label)}${removable?' ✕':''}</span>`;
+}
+// Tags do Objetivo no cartão da aba (clicar filtra a lista por ela; clicar de novo limpa). Até 4; o resto vira "+N".
+function _okrCardTagsHtml(o){
+  const ids = (o.tagIds||[]).filter(t=>okrTags[t]);
+  if(!ids.length) return '';
+  const mostra = ids.slice(0,4), resto = ids.length-mostra.length;
+  return `<div class="okr-card-tags">${mostra.map(t=>_okrTagChipHtml(t,false,'',`event.stopPropagation();_okrSetFilter('tag',${jsq(_okrFilter.tag===t?'':t)})`,_okrFilter.tag===t)).join('')}${resto>0?`<span class="okr-tag-chip" style="opacity:.7;cursor:default;" title="${esc(ids.slice(4).map(t=>okrTags[t].label).join(', '))}">+${resto}</span>`:''}</div>`;
 }
 async function _okrTagCriar(){
   const label = (prompt('Nome da tag nova:')||'').trim();
@@ -5814,10 +5826,10 @@ function _okrObjTemPessoa(o, uid){
   return _okrObjMarcos(o.id).some(m=>m.responsavel===uid);
 }
 function _okrTemFiltroAtivo(){
-  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto || _okrFilter.pessoa);
+  return !!(_okrFilter.area || _okrFilter.trimestre || _okrFilter.status || _okrFilter.texto || _okrFilter.pessoa || _okrFilter.tag);
 }
 function _okrClearFilters(){
-  _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:''};
+  _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:'', tag:''};
   const txt = document.getElementById('okr-filter-texto'); if(txt) txt.value = '';
   renderOkrObjetivos();
 }
@@ -5899,12 +5911,26 @@ function renderOkrObjetivos(){
     pesSel.value = _okrFilter.pessoa;
   }
 
+  // 🏷️ Filtro por tag: só tags que existem E estão em uso na visão atual (ativos × arquivados); a escolhida entra sempre.
+  if(_okrFilter.tag && _okrLoaded && !okrTags[_okrFilter.tag]) _okrFilter.tag = '';   // a tag filtrada foi apagada: sem isso a lista ficaria vazia com um filtro invisível
+  const tagSel = document.getElementById('okr-filter-tag');
+  if(tagSel){
+    const usadas = new Set();
+    Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) usadas.add(t); }));
+    if(_okrFilter.tag && okrTags[_okrFilter.tag]) usadas.add(_okrFilter.tag);
+    const tags = [...usadas].map(id=>({id, label:okrTags[id].label||''})).sort((a,b)=>String(a.label).localeCompare(String(b.label)));
+    tagSel.innerHTML = '<option value="">Todas as tags</option>' + tags.map(t=>`<option value="${esc(t.id)}">🏷️ ${esc(t.label)}</option>`).join('');
+    tagSel.value = _okrFilter.tag;
+    tagSel.style.display = tags.length ? '' : 'none';
+  }
+
   if(!_okrLoaded){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; return; }
 
   let base = Object.values(okrObjetivos).filter(o=>o && !!o.arquivado===_okrShowArquivados);
   if(_okrFilter.area) base = base.filter(o=>o.areaId===_okrFilter.area);
   if(_okrFilter.trimestre) base = base.filter(o=>_okrTrimestresOf(o).includes(_okrFilter.trimestre));
   if(_okrFilter.pessoa){ const _pu=_okrFiltroPessoaUid(); base = base.filter(o=>_okrObjTemPessoa(o,_pu)); }
+  if(_okrFilter.tag) base = base.filter(o=>(o.tagIds||[]).includes(_okrFilter.tag));
   if(_okrFilter.texto){
     const t = _okrFilter.texto.toLowerCase();
     base = base.filter(o=>(o.titulo||'').toLowerCase().includes(t) || (o.pilar||'').toLowerCase().includes(t));
@@ -5963,6 +5989,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       ${_okrTrimestresOf(o).map(t=>`<span class="badge">${esc(t)}</span>`).join('')}
       ${o.pilar?`<span class="badge">${esc(o.pilar)}</span>`:''}
     </div>
+    ${_okrCardTagsHtml(o)}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
       <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`<button type="button" class="okr-ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução" onclick="event.stopPropagation();openOkrAtingChart(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> <b>${viaAting}%</b> · `:(o.atingimento&&o.atingimento.tipo==='perene'?`<span title="Perene — a barra acompanha os marcos">♾️</span> `:'')}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
