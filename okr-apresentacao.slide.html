@@ -671,7 +671,75 @@ function objStatus(objId){
   for(const sev of OKR_SEVERIDADE){ if(ativos.some(m=>(m.progresso||'nao_iniciado')===sev)) return sev; }
   return 'nao_iniciado';
 }
+// 📈 Atingimento — CÓPIA MÍNIMA do cálculo de painel-dev.html (bloco ATING-ENGINE): manter igual. O Objetivo com meta configurada anda a
+// barra por ele; sem meta, continua pela entrega dos marcos.
+const OKR_ATING_TIPOS_IDS = ['financeira','porcentagem','numero','binario','acima','abaixo','data'];
+function _okrAtingConfigurado(at){ return !!(at && at.tipo && OKR_ATING_TIPOS_IDS.includes(at.tipo)); }
+// % (0–100, inteiro) de UM registro, segundo a configuração. Valores além da meta travam em 100; abaixo do início, em 0.
+function _okrAtingPctDe(at, l){
+  if(!_okrAtingConfigurado(at) || !l) return 0;
+  const clamp = x => Math.max(0, Math.min(100, Math.round(x)));
+  const v = Number(l.valor), ini = Number(at.inicial)||0, meta = Number(at.meta);
+  switch(at.tipo){
+    case 'financeira': case 'porcentagem': case 'numero':
+      if(!isFinite(v) || !isFinite(meta)) return 0;
+      if(meta===ini) return v>=meta ? 100 : 0;
+      return clamp((v-ini)/(meta-ini)*100);             // meta < início (reduzir custo, por ex.) também funciona
+    case 'binario':
+      return (l.atingido===true || v>=100) ? 100 : 0;
+    case 'acima':
+      return (isFinite(v) && isFinite(meta) && v>=meta) ? 100 : 0;
+    case 'abaixo':
+      return (isFinite(v) && isFinite(meta) && v<=meta) ? 100 : 0;
+    case 'data': {                                       // entrega fora de TODAS as faixas = 0%; em mais de uma, vale a maior
+      const d = l.em || '';
+      let best = 0;
+      (at.datas||[]).forEach(f=>{ if(f && f.de && f.ate && d>=f.de && d<=f.ate) best = Math.max(best, Number(f.pct)||0); });
+      return clamp(best);
+    }
+  }
+  return 0;
+}
+function _okrAtingPctDe(at, l){
+  if(!_okrAtingConfigurado(at) || !l) return 0;
+  const clamp = x => Math.max(0, Math.min(100, Math.round(x)));
+  const v = Number(l.valor), ini = Number(at.inicial)||0, meta = Number(at.meta);
+  switch(at.tipo){
+    case 'financeira': case 'porcentagem': case 'numero':
+      if(!isFinite(v) || !isFinite(meta)) return 0;
+      if(meta===ini) return v>=meta ? 100 : 0;
+      return clamp((v-ini)/(meta-ini)*100);             // meta < início (reduzir custo, por ex.) também funciona
+    case 'binario':
+      return (l.atingido===true || v>=100) ? 100 : 0;
+    case 'acima':
+      return (isFinite(v) && isFinite(meta) && v>=meta) ? 100 : 0;
+    case 'abaixo':
+      return (isFinite(v) && isFinite(meta) && v<=meta) ? 100 : 0;
+    case 'data': {                                       // entrega fora de TODAS as faixas = 0%; em mais de uma, vale a maior
+      const d = l.em || '';
+      let best = 0;
+      (at.datas||[]).forEach(f=>{ if(f && f.de && f.ate && d>=f.de && d<=f.ate) best = Math.max(best, Number(f.pct)||0); });
+      return clamp(best);
+    }
+  }
+  return 0;
+}
+function _okrAtingAtual(at){
+  const ls = (at && at.lancamentos || []).filter(Boolean).slice();
+  if(!ls.length) return null;
+  ls.sort((a,b)=> String(a.em||'').localeCompare(String(b.em||'')) || String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+  return ls[ls.length-1];
+}
+function _okrAtingPctObj(o){
+  const at = o && o.atingimento;
+  if(!_okrAtingConfigurado(at)) return null;
+  const l = _okrAtingAtual(at);
+  return l ? _okrAtingPctDe(at, l) : 0;
+}
+
 function objProgressoPct(objId){
+  const viaAting = _okrAtingPctObj(okrObjetivos[objId]);
+  if(viaAting!==null) return viaAting;
   const marcos = objMarcos(objId);
   if(!marcos.length) return 0;
   return Math.round(marcos.filter(m=>m.progresso==='concluido').length / marcos.length * 100);
@@ -701,7 +769,7 @@ function objCardHtml(o){
     <div class="obj-title">${esc(o.titulo||'—')}</div>
     ${o.pilar?`<div class="obj-pilar">${esc(o.pilar)}</div>`:''}
     <div class="prog-bar"><div class="prog-fill" style="width:${pct}%;"></div></div>
-    <div class="prog-label">${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%</div>
+    <div class="prog-label">${_okrAtingPctObj(o)!==null?`📈 ${pct}% de atingimento · ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s)`:`${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length||0} marco(s) concluído(s) · ${pct}%`}</div>
     ${(o.tagIds||[]).length?`<div class="obj-tags">${(o.tagIds||[]).map(tid=>{
       const t=okrTags[tid]; if(!t) return '';
       const p=PT_PALETTE[t.colorIdx % PT_PALETTE.length]||PT_PALETTE[0];
