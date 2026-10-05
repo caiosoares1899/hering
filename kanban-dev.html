@@ -6435,7 +6435,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.777-dev</div>
+<div class="version">v8.30.778-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11937,9 +11937,16 @@ function makeCardEl(card){
   const _asInfo=_execInfo?_agentStatusMap[card.agentStatus]:null;
   let execChip='';
   if(_execInfo){
-    const _statusPart=_asInfo?` · ${_asInfo.ico} ${_asInfo.lbl}`:'';
+    // COMPACTO (2026-10-05, pedido direto: "será que esse 🤝 Híbrido não cabe na
+    // linha de cima? deixando o layout mais limpo?"): só o emoji do executor (+ o
+    // emoji do status, quando há) — medido num card real de 258px (234 úteis) com
+    // tag + 👕 + OKR + prioridade + risco + 🎯 + 🚧, a 1ª linha deixava 47px livres
+    // e o chip com texto precisava de 61px, então caía sozinho pra uma linha
+    // inteira só dele. O nome por extenso continua no tooltip (title) e no campo
+    // "Executor" do modal; 🤖/🤝 já se distinguem sem o texto.
+    const _statusPart=_asInfo?` ${_asInfo.ico}`:'';
     const _chipTitle=_asInfo?`Executor: ${_execInfo.lbl} — ${_asInfo.lbl}`:`Executor: ${_execInfo.lbl}`;
-    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}">${_execInfo.ico} ${_execInfo.lbl}${_statusPart}</span>`;
+    execChip=`<span class="exec-chip" style="display:inline-block;font-size:9px;background:${_execInfo.bg};color:${_execInfo.tx};border:1px solid ${_execInfo.bd};padding:1px 6px;border-radius:999px;margin-left:4px;margin-bottom:4px;white-space:nowrap;" title="${_chipTitle}" aria-label="${_chipTitle}">${_execInfo.ico}${_statusPart}</span>`;
   }
   // "🤖 pensando..." (ver _startAgenteAgilThinking) — diferente do execChip
   // acima (card ATRIBUÍDO a um Agente de IA cadastrado, campo persistido),

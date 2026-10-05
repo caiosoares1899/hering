@@ -38,6 +38,24 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.778-dev — 2026-10-05 · ui(card): chip de executor ("🤝 Híbrido") compacto pra caber na linha das tags
+
+Pedido direto do usuário (com print de um card): "será que esse 🤝 Híbrido não
+cabe na linha de cima? deixando o layout mais limpo?". Medido no Chromium com o
+`makeCardEl()` real, num card de 258 px (234 úteis) com tag + 👕 M + OKR +
+prioridade + risco + 🎯 + 🚧: a 1ª linha deixava **47 px** livres e o chip com
+texto precisava de **61 px**, então ele caía sozinho pra uma linha só dele
+(falta ~14 px — não dava pra resolver só apertando margem).
+
+- O chip de executor (`.exec-chip`, só aparece pra Agente/Híbrido) mostra só o
+  emoji (🤖/🤝) + o emoji do status do agente quando existe (ex.: `🤝 👀`),
+  ~25 px (39 px com status) — cabe na linha das tags e o card perde uma linha de
+  altura. O nome por extenso continua no tooltip (`title`/`aria-label`:
+  "Executor: Híbrido — Aguardando validação") e no campo "Executor" do modal.
+- Cards com ainda mais selos continuam quebrando de linha normalmente (é flex de
+  inline-blocks). O chip efêmero "🤖 pensando…" não mudou.
+- Só `kanban-dev.html`; prod (`kanban.html`) fica pra depois da sua validação.
+
 ### v8.30.777-dev — 2026-10-01 · fix(seletor de squad): nome/emoji/subtítulo/id injetados crus no HTML
 
 `/monitorarbugs` (seletor de squad pós-login, PR #1148 de hoje).
