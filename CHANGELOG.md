@@ -20538,6 +20538,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.102 · painel-dev — 2026-10-05 · feat(OKR): emoji do tipo de atingimento no cartão do Objetivo
+
+Pedido: na aba, o cartão do Objetivo passa a mostrar um emoji do **tipo de atingimento** configurado, no lugar do 📈 genérico ao lado do %: 💰 Financeira · 📊 Porcentagem · 🔢 Número · ✅ Atingido/Não atingido · ⬆️ Manter acima · ⬇️ Manter abaixo · 📅 Data de entrega (passar o mouse mostra o nome do tipo). O mesmo emoji aparece nas opções do seletor "Tipo de meta" no modal. Objetivo sem atingimento segue sem emoji (barra pelos marcos).
+
 ### painel-dev.html v3.101 · painel-dev — 2026-10-05 · fix(OKR/Atingimento): /monitorarbugs no 📈 Atingimento — clique perdido, valor digitado descartado ao Salvar, registros alheios sobrescritos (+4)
 
 Rodada de `/monitorarbugs` no código do atingimento (v3.100), horas depois de ele ir ao ar. 2 bugs reproduzidos num navegador de verdade antes de corrigir + 2 riscos achados lendo o fluxo de salvar.
