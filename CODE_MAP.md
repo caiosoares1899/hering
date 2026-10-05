@@ -3156,7 +3156,8 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   populado dentro de `renderOkrObjetivos()` — total de Objetivos + 1
   chip por status (clicável, reusa `_okrSetFilter('status',…)`) + % de
   marcos concluídos, calculado ANTES do filtro de status (senão o
-  resumo sumiria ao clicar num chip); `_okrTemFiltroAtivo()`/
+  resumo sumiria ao clicar num chip); `_okrFiltroPessoaUid()`/`_okrObjTemPessoa()` (filtro por pessoa,
+  v3.96: responsável do Objetivo OU de marco ativo; `'__eu'` = logado) + `_okrTemFiltroAtivo()`/
   `_okrClearFilters()` — botão "✕ Limpar filtros" (só visível com algo
   filtrado) + mensagem de vazio diferenciada pra "filtro sem resultado"
   vs. "nenhum Objetivo ainda". Achado incidental corrigido junto:
