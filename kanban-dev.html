@@ -6436,7 +6436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.782-dev</div>
+<div class="version">v8.30.783-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -35166,7 +35166,9 @@ _onFbReady(()=>{
     setTimeout(()=>_tryOpenCard(8), 1000);
   }
   // Carrega ADMs extras do Firebase
-  fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; });
+  // .catch: externo (sem @ciahering/@arezzo) não tem leitura de kanban/config pelas regras — sem o catch
+  // virava "Uncaught (in promise)" + tentativa de gravar em error_logs (também negada), a cada login.
+  fbGet('kanban/config/adm_emails').then(s=>{ if(s.val()&&Array.isArray(s.val())) ADM_EMAILS=[...new Set([...ADM_EMAILS,...s.val()])]; }).catch(()=>{});
   // Presença online
   // Guard: se essa função (fbLoadAll) rodar mais de uma vez na sessão,
   // não queremos registrar múltiplos listeners de auth-change/beforeunload —
