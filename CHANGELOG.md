@@ -38,6 +38,19 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.785-dev — 2026-10-05 · fix(cadastro): usuário novo cai na inscrição sozinho — some o "Primeira vez?" (que só entrava pelo Google)
+
+**Cenário real:** externo entrou direto pelo link "Entrar com conta pessoal Microsoft" (1º acesso) sem clicar em "Primeira vez?
+Inscrever-se no quadro" — esse atalho chamava o login do **Google**, então por Microsoft/conta pessoal a tela de inscrição
+nunca aparecia (o cadastro era feito em silêncio, sem a pessoa confirmar nada).
+
+- Link "Primeira vez?" removido. O próprio login detecta usuário novo (sem cadastro, ou com cadastro parcial) e abre a tela
+  "🙋 Inscrever-se no quadro" (iniciais), com qualquer provedor. Para externo, a inscrição abre depois do reload do 1º cadastro.
+- A tela mostra o papel real ("Convidado" para externo, "Membro" para domínio confiável) em vez de sempre "Membro".
+- `confirmarInscricao()` não grava mais `role: 'membro'` fixo — mantém o papel do cadastro. Com a inscrição agora aberta para todo
+  usuário novo, o valor fixo promoveria externo a membro sozinho (as regras permitem convidado → membro pelo próprio uid).
+- Testado com a página real e banco simulado (Playwright): 21 cenários de cadastro + 4 do gate. Não testado com Firebase real.
+
 ### v8.30.784-dev — 2026-10-05 · feat(cadastro): cadastro guiado — pergunta o squad quando falta e recarrega o 1º login de externo
 
 **Pedido:** "em vez de assumir esse erro, o código deve tentar corrigir com o usuário — se faltar qual squad é, pergunta".
