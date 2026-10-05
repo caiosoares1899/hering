@@ -3616,6 +3616,7 @@ input[type="date"]{-moz-appearance:textfield;}
       Entrar com Microsoft
     </button>
     <div style="margin-top:10px;font-size:11px;color:var(--txt3);">Primeira vez? <button onclick="doSignIn(true)" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Inscrever-se no quadro</button></div>
+    <div style="margin-top:8px;font-size:11px;color:var(--txt3);">Externo autorizado com hotmail/outlook? <button onclick="doSignInMicrosoftPessoal()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Entrar com conta pessoal Microsoft</button></div>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
 
@@ -6435,7 +6436,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.780-dev</div>
+<div class="version">v8.30.781-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6519,6 +6520,15 @@ calProvider.addScope('https://www.googleapis.com/auth/calendar.readonly');
 // pro Firebase Console/Azure em geral).
 const msProvider = new OAuthProvider('microsoft.com');
 msProvider.setCustomParameters({ tenant: 'organizations', prompt: 'select_account' });
+// Conta Microsoft PESSOAL (hotmail/outlook/live) de EXTERNO autorizado (kanban/squads/{sq}/externos).
+// Provider separado de propósito: o botão corporativo fica com tenant 'organizations' (Arezzo).
+// NÃO usar 'common' num botão único — contas corporativas de QUALQUER tenant entrariam por ele, e o
+// e-mail de uma conta corporativa não é verificado pela Microsoft (dá pra criar um tenant próprio com
+// o e-mail de um externo autorizado). Com 'consumers' só entra conta pessoal, e esse e-mail a Microsoft
+// verifica. Pré-requisito FORA do código: no Azure (registro do app), "Tipos de conta com suporte"
+// = "Contas em qualquer diretório organizacional E contas Microsoft pessoais".
+const msPersonalProvider = new OAuthProvider('microsoft.com');
+msPersonalProvider.setCustomParameters({ tenant: 'consumers', prompt: 'select_account' });
 
 window._db=db; window._ref=ref; window._set=set; window._get=get;
 window._onValue=onValue; window._update=update; window._remove=remove;
@@ -6549,7 +6559,7 @@ window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
 // todo ponto de escrita já grava), lexicograficamente ordenável =
 // cronologicamente ordenável, sem essa armadilha.
 window._limitToLast=limitToLast;
-window._auth=auth; window._provider=provider; window._msProvider=msProvider;
+window._auth=auth; window._provider=provider; window._msProvider=msProvider; window._msPersonalProvider=msPersonalProvider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
 // Isolado num try/catch porque getMessaging() lança em contextos sem
@@ -6583,6 +6593,11 @@ window._signIn=(insc)=>signInWithPopup(auth,provider).then(r=>{
 window._signInMicrosoft=(insc)=>signInWithPopup(auth,msProvider).then(()=>{
   if(insc) window._pendingInsc=true;
   safeLS.removeItem('login_popup_fail_streak_ms');
+});
+// Conta Microsoft pessoal (externo autorizado) — mesmo fluxo, provider 'consumers'.
+window._signInMicrosoftPessoal=(insc)=>signInWithPopup(auth,msPersonalProvider).then(()=>{
+  if(insc) window._pendingInsc=true;
+  safeLS.removeItem('login_popup_fail_streak_msp');
 });
 window._signOut=(reason)=>{
   if(window._signOutInProgress) return; // evita loop: chamadas repetidas do idle-check apos o primeiro logout
@@ -6739,6 +6754,10 @@ window._signInRedirect=(insc)=>{
 window._signInMicrosoftRedirect=(insc)=>{
   if(insc) safeLS.setItem('mare_pending_insc','1');
   return signInWithRedirect(auth,msProvider);
+};
+window._signInMicrosoftPessoalRedirect=(insc)=>{
+  if(insc) safeLS.setItem('mare_pending_insc','1');
+  return signInWithRedirect(auth,msPersonalProvider);
 };
 // Restaura _pendingInsc de um redirect que acabou de voltar — SÍNCRONO,
 // antes de registrar onAuthStateChanged (logo abaixo), pra nunca competir
@@ -11160,6 +11179,29 @@ function doSignInMicrosoft(insc=false){
       err.textContent='Login cancelado. Clique em Entrar com Microsoft para tentar novamente.';
     } else {
       safeLS.removeItem('login_popup_fail_streak_ms');
+      err.textContent='Erro: '+(e?.message||e);
+    }
+    err.style.display='block';
+  });
+}
+// Externo autorizado com conta Microsoft pessoal (hotmail/outlook) — contador de falha de popup próprio.
+function doSignInMicrosoftPessoal(insc=false){
+  const err=document.getElementById('login-err'); err.style.display='none';
+  if(!window._signInMicrosoftPessoal){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
+  if(insc) window._pendingInsc=true;
+  window._signInMicrosoftPessoal().catch(e=>{
+    window._pendingInsc=false;
+    if(e?.code === 'auth/popup-blocked' || e?.code === 'auth/popup-closed-by-user'){
+      const n=(parseInt(safeLS.getItem('login_popup_fail_streak_msp'))||0)+1;
+      safeLS.setItem('login_popup_fail_streak_msp', String(n));
+      if(n>=2 && window._signInMicrosoftPessoalRedirect){
+        safeLS.removeItem('login_popup_fail_streak_msp');
+        window._signInMicrosoftPessoalRedirect(insc).catch(e2=>{ err.textContent='Erro: '+(e2?.message||e2); err.style.display='block'; });
+        return;
+      }
+      err.textContent='Login cancelado. Clique em "conta pessoal Microsoft" para tentar novamente.';
+    } else {
+      safeLS.removeItem('login_popup_fail_streak_msp');
       err.textContent='Erro: '+(e?.message||e);
     }
     err.style.display='block';
