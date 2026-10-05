@@ -3156,7 +3156,7 @@ ideias próprias, ver `CHANGELOG.md` v3.71 · painel-dev pro racional):
   populado dentro de `renderOkrObjetivos()` — total de Objetivos + 1
   chip por status (clicável, reusa `_okrSetFilter('status',…)`) + % de
   marcos concluídos, calculado ANTES do filtro de status (senão o
-  resumo sumiria ao clicar num chip); `_okrSecOpen()`/`OKR_SEC_TEMAS` (seções coloridas, classe `.okr-sec-*`, v3.97) + `_okrIrParaSecao()`/`_okrRenderObjNav()`/
+  resumo sumiria ao clicar num chip); 📈 Atingimento (v3.100): motor PURO entre `/* ATING-ENGINE-BEGIN/END */` (`_okrAtingPctDe()`/`_okrAtingAtual()`/`_okrAtingPctObj()`/`_okrParseNum()`/`_okrFmtNum()`, 7 tipos em `OKR_ATING_TIPOS`; cópia mínima do cálculo em `okr-apresentacao.slide.html` — manter igual) + interface `_okrAtingSectionHtml()`/`_okrAtingAdd()`/`_okrAtingOnTipo()` + `_okrDiffAtingimento()`; `_okrObjProgressoPct()` usa o atingimento quando configurado + `_okrSecOpen()`/`OKR_SEC_TEMAS` (seções coloridas, classe `.okr-sec-*`, v3.97) + `_okrIrParaSecao()`/`_okrRenderObjNav()`/
   `_okrRenderMarcoNav()` (atalhos fixos `#okr-obj-nav`/`#okr-marco-nav` no cabeçalho dos modais; ids `okr-sec-obj-*`/`okr-sec-marco-*`) + `_okrFiltroPessoaUid()`/`_okrObjTemPessoa()` (filtro por pessoa,
   v3.96: responsável do Objetivo OU de marco ativo; `'__eu'` = logado) + `_okrTemFiltroAtivo()`/
   `_okrClearFilters()` — botão "✕ Limpar filtros" (só visível com algo

@@ -20538,6 +20538,32 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.100 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): 📈 Atingimento por tipo de meta, com histórico datado — a barra do Objetivo passa a andar por ele
+
+Pedido do chefe (benchmark: Feedz): um "atingimento" com tipos de meta; o % sai do tipo escolhido e dos registros lançados, e o histórico com
+data mostra a evolução. A barra da aba, que andava pela entrega dos marcos, passa a andar pelo atingimento. Também: atalhos do modal em 2 filas.
+- **7 tipos de meta** (os mesmos do Feedz): **Financeira** (moeda R$/US$/€, valor inicial, meta) · **Porcentagem (%)** · **Número (#)** — todos por
+  `(atual − inicial) ÷ (meta − inicial)`, travado entre 0% e 100% (meta menor que o início também funciona, ex.: reduzir custo) ·
+  **Atingido/Não atingido** (0%/100%, inicial e meta fixos) · **Manter acima de** / **Manter abaixo de** (unidade escolhível, só a meta: 100%
+  se o valor medido cumpre o limite, 0% se não) · **Data de entrega** (faixas "se atingido entre X e Y, o status será Z%"; entrega fora de todas
+  as faixas = 0%; faixas sobrepostas valem a maior).
+- **Seção 📈 Atingimento** no modal do Objetivo (1º atalho do cabeçalho): tipo, campos do tipo, resumo com barra, **Registrar atingimento**
+  (data + valor + nota) e **histórico em ordem decrescente de data** com valor, % e autor, mais um gráfico de evolução com 2+ registros.
+  O "atual" é o registro de data mais recente. Trocar o tipo ou remover o atingimento com registros pede confirmação.
+- **Barra do Objetivo**: cartão da aba, resumo da aba (novo chip "📈 N% de atingimento médio") e cartão da `okr-apresentacao.slide.html` usam o
+  atingimento quando há meta configurada; **Objetivo sem meta segue pelos marcos, como sempre** (nada muda pra quem não usar).
+- O 📜 Histórico do Objetivo registra configuração, mudança de tipo/meta e cada registro adicionado/removido. Duplicar Objetivo copia a meta e
+  zera os registros (como os marcos). A chave `atingimento` só é gravada quando há meta.
+- **Atalhos do cabeçalho em 2 filas** (a rolagem lateral não funcionava bem).
+- **Decisões a confirmar** (assumidas pelos prints, fáceis de mudar — um `case` cada): "Manter acima/abaixo de" é tudo-ou-nada (100% ou 0%), não
+  proporcional; o atingimento é **por Objetivo** (não por Marco); mudar a meta recalcula o % dos registros antigos pelas regras novas.
+- Não cobertos nesta versão: o resumo semanal/diário das Cloud Functions (`weeklySnapshot`/`dailyScan`) e as ferramentas do Agente Ágil de OKR
+  continuam olhando só marcos; o status (no prazo/risco/atrasado) do Objetivo continua vindo dos marcos.
+- Testes: 50 de fórmula (Node, incl. os exemplos dos prints), 27 de interface (Chromium, funções reais: cada tipo, registrar, histórico, trocar tipo,
+  remover, salvar, duplicar, leitura, dirty-check, 2 filas), 4 da apresentação (cópia do cálculo = painel em 400 casos aleatórios) + os 25 dos
+  recursos anteriores; 3 temas conferidos por captura. `okr-apresentacao.slide.html` não tem versão -dev: vai ao ar junto deste merge, mas só
+  muda o que é mostrado para Objetivos que tenham atingimento configurado.
+
 ### painel-dev.html v3.99 · painel-dev — 2026-10-05 · fix(OKR/Usuários): quem usa só o painel aparece como responsável + chip "🛡️ ADM" em Global Users
 
 Relato direto: o chefe se cadastrou pelo painel e entrou, mas só apareceu na lista de responsáveis do OKR depois que o usuário o colocou em
