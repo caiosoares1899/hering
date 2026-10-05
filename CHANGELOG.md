@@ -20549,6 +20549,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.108 · painel-dev (+ guia-okr.html) — 2026-10-05 · feat(OKR): 🏷️ tags nos cartões da aba e filtro por tag
+
+Pergunta do usuário: "se eu colocar uma tag num Objetivo, aparece na aba? E tem que ter filtro por tag." Não aparecia — as tags só eram vistas dentro do modal (e na apresentação).
+- **Cartão do Objetivo** na lista passa a mostrar as **tags** (até 4, com "+N" e a lista completa no tooltip). Tag apagada ou inexistente não aparece. **Clicar numa tag do cartão filtra a lista por ela** (sem abrir o Objetivo); clicar de novo limpa; a tag ativa fica destacada.
+- **Filtro 🏷️ por tag** na barra da aba, ao lado de pessoa/status: lista só as tags **em uso** na visão atual (ativos × arquivados), combina com os outros filtros, o resumo da aba acompanha, "✕ Limpar filtros" também limpa a tag, e o seletor some quando nenhum Objetivo tem tag. Se a tag filtrada for apagada, o filtro se desfaz sozinho (em vez de deixar a lista vazia com um filtro invisível). A lista também se atualiza quando as tags terminam de carregar.
+- Rótulo de tag é escapado (testado com HTML hostil) nos cartões e no seletor.
+- Ajuda do OKR e Guia OKR atualizados (filtros e tags nos cartões).
+- Testes: 13 cenários novos (chips, limite 4+N, tag fantasma, escape, seletor só com tags em uso, filtro + resumo + destaque, combinação com pessoa, limpar, clique no cartão sem abrir modal, apagar tag filtrada, visão de arquivados); suítes anteriores verdes.
+
 ### painel-dev.html v3.107 · painel-dev (+ guia-okr.html) — 2026-10-05 · docs(OKR): ❓ Ajuda do OKR e 📘 Guia OKR atualizados (atingimento, gráfico, modal por seções, filtros)
 
 Só documentação (nenhuma mudança de comportamento). Ajuda in-app (`okr-help-ov`, "❓ Ajuda" da aba OKR) e o guia standalone `guia-okr.html` (slides) passam a cobrir o que entrou nos últimos lotes.
