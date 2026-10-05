@@ -2868,6 +2868,23 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   e quando o fix de uma rodada anterior dá "atômico" a um rate limiter, perguntar
   também de ONDE vem a identidade que ele conta.
 
+- **2026-10-05, login/cadastro do dia — v8.30.781–785 (pedido genérico, "roda um
+  /monitorarbugs" — área escolhida por prioridade 1: código escrito sob iteração ao vivo, algumas
+  horas antes, sem rodada própria)**: 5 achados, o mais sério é REGRESSÃO MINHA da v8.30.784,
+  técnica 3 (o que o código promete vs. o que as regras permitem). Ao trocar a gravação do cadastro de
+  fire-and-forget por `await` + `return` na falha, um caso que antes falhava em silêncio e deixava o
+  app abrir passou a travar o login: ADM por e-mail (não-Caio) no 1º login grava `role:'adm'`, e as regras
+  (`usuarios/$uid/role` `.validate`) só deixam po/adm/Caio atribuir `adm` — NEGADO, cadastro inteiro
+  recusado. Validado avaliando a expressão REAL da regra (o simulador `functions/rules/` só avalia
+  `.read`/`.write`, não `.validate` — um "NEGA esperado" dele passou por engano e quase virou falso
+  OK). Fix: grava `membro` (ADM segue ADM por `isAdmUser()`), falha de gravação avisa mas não trava.
+  Também: `confirmarInscricao()` regravava `role` (recusa o update inteiro, iniciais perdidas); cache
+  `ext_ok_` do gate vale pro e-mail e não pro squad; auth-change refirado abria 2 telas/2 reivindicações.
+  dev v8.30.786-dev. **Lição**: ao transformar uma escrita silenciosa em escrita que BLOQUEIA o fluxo na
+  falha, listar primeiro TODO caso que hoje falha em silêncio de propósito (ou por acidente) — "falhar em
+  silêncio" e "funcionar" são indistinguíveis até alguém passar a olhar o resultado. E o simulador de
+  regras precisa avaliar `.validate`, não só `.read`/`.write`, antes de ser tratado como prova.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

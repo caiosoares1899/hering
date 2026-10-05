@@ -38,6 +38,25 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.786-dev — 2026-10-05 · fix(cadastro): /monitorarbugs no login/cadastro do dia — ADM novo não fica mais preso no login (+3)
+
+Rodada de `/monitorarbugs` sobre o código de hoje (v8.30.781–785). 5 achados, o 1º é regressão da v8.30.784.
+
+- **ADM novo (não-Caio) preso na tela de login (regressão da v8.30.784):** o 1º cadastro grava `role: 'adm'` para quem está em `ADM_EMAILS`,
+  mas as regras (`usuarios/$uid/role` `.validate`) só deixam quem já é po/adm, ou o Caio, atribuir `adm` — num 1º login isso é NEGADO e derruba
+  o cadastro inteiro. Antes a gravação era fire-and-forget (falhava em silêncio e o app abria); a v8.30.784 passou a aguardar e dar `return` na
+  falha, então o ADM novo via só um aviso e nunca entrava. Agora grava `membro` (o ADM por e-mail segue ADM via `isAdmUser()`), e uma falha de
+  gravação avisa a causa mas **não trava** o app.
+- **`confirmarInscricao()` regravava `role`:** papel efetivo pode vir de `squads_roles`/`isAdmUser()` (≠ role global) e as regras negam mudar o
+  role global de quem não é po/adm — o update INTEIRO era recusado e as iniciais se perdiam. Só grava `role` se não há papel nenhum.
+- **Cache do gate de externos (15 min) vale pro e-mail, não pro squad:** externo validado num squad e abrindo outro dentro da janela chegava na
+  matrícula sem ter sido conferido NESTE squad e levava um erro de regra com mensagem enganosa. Agora confere a lista de externos antes e avisa
+  "peça ao PO para te adicionar".
+- **auth-change refirado durante o cadastro:** com a pergunta de squad e a gravação aguardada, a 2ª execução abria uma 2ª tela e uma 2ª
+  reivindicação de iniciais em paralelo. Guard `_regEmAndamento`.
+- Testado com a página real e banco simulado (Playwright): 24 cenários de cadastro + 4 do gate; script de console em português (8 verificações,
+  restaura o estado da página no fim). Não testado com Firebase real.
+
 ### v8.30.785-dev — 2026-10-05 · fix(cadastro): usuário novo cai na inscrição sozinho — some o "Primeira vez?" (que só entrava pelo Google)
 
 **Cenário real:** externo entrou direto pelo link "Entrar com conta pessoal Microsoft" (1º acesso) sem clicar em "Primeira vez?
