@@ -6463,7 +6463,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.785-dev</div>
+<div class="version">v8.30.786-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11671,6 +11671,10 @@ function autoRegistrar(user){
     // sem saída. Trata como cadastro novo, mas com UPDATE (preserva board_prefs etc.), não set.
     const _parcial = !!existe && !existe.init && !existe.squads && !existe.role && !existe.inscrito;
     if(!existe || _parcial){
+      // auth-change pode refirar sozinho (instabilidade do SDK): com o cadastro agora demorando (pergunta de squad +
+      // gravação aguardada), a 2ª execução abria uma 2ª tela e uma 2ª reivindicação de iniciais em paralelo.
+      if(window._regEmAndamento) return;
+      window._regEmAndamento=true;
       // Achado real (/monitorarbugs, 2026-09-17, relato direto do usuário —
       // um card da Marina Saran Bernardo aparecia no Histórico do painel
       // como se fosse do Marciel Santos Alexandrino): as iniciais dos dois
@@ -11695,30 +11699,38 @@ function autoRegistrar(user){
           else if(ops.length>1){ _sqAlvo=(await _pedirSquadCadastro(user,ops,{permitirPular:false}))||ACTIVE_SQUAD; }
         }catch(e){ console.warn('[cadastro] não deu pra listar squads elegíveis, mantendo',ACTIVE_SQUAD,e); }
       }
+      // O papel GRAVADO no 1º cadastro nunca é 'adm': as regras (usuarios/$uid/role .validate) só deixam quem já é po/adm
+      // — ou o Caio — atribuir 'adm'; num 1º login 'adm' é NEGADO e derrubava o cadastro inteiro (antes em silêncio,
+      // desde que a gravação passou a ser aguardada, travando o ADM novo na tela de login). ADM por e-mail
+      // continua ADM pelo isAdmUser() (getEffectiveRole() olha isso primeiro), então grava 'membro'.
+      const _roleGravar=(newRole==='adm')?'membro':newRole;
       const newSquads={}; newSquads[_sqAlvo]=true;
-      const newSquadsRoles={}; newSquadsRoles[_sqAlvo]=newRole;
+      const newSquadsRoles={}; newSquadsRoles[_sqAlvo]=_roleGravar;
       const _regNovo={
         uid:user.uid, nome:user.displayName||'', email:user.email,
-        init, foto:user.photoURL||'', role:newRole,
+        init, foto:user.photoURL||'', role:_roleGravar,
         inscrito:true, inscritoEm:new Date().toISOString(),
         squads:newSquads, squads_roles:newSquadsRoles, criadoEm:new Date().toISOString()
       };
       // AGUARDA a gravação (antes era fire-and-forget): sem isso, se as regras recusassem o cadastro o board abria
       // vazio sem explicação. Falhou → avisa a causa e não segue como se estivesse tudo certo.
+      let _regOk=true;
       try{
         await (_parcial ? fbUpdate('kanban/usuarios/'+user.uid,_regNovo) : fbSet('kanban/usuarios/'+user.uid,_regNovo));
       }catch(e){
+        // NÃO dá return: travar aqui deixaria quem lê por domínio (que funcionaria sem o cadastro) preso no login.
+        // Avisa a causa e segue o fluxo antigo, sem recarregar nem trocar de squad (a matrícula não gravou).
+        _regOk=false; window._regEmAndamento=false;
         console.error('[cadastro] gravação do cadastro recusada:', e);
         showToast('⚠ Não consegui concluir seu cadastro ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.');
-        return;
       }
       // Externo: as regras só liberam a leitura do squad DEPOIS desse cadastro gravado, mas os listeners dos
       // cards já tinham sido disparados antes (→ permission_denied, board vazio até o 1º F5). Recarrega UMA vez.
       // Também recarrega/redireciona se o squad escolhido não é o da URL. Domínio confiável lê por domínio, não precisa.
-      if(_sqAlvo!==ACTIVE_SQUAD || !_isTrustedDomainEmail(user.email)){
+      if(_regOk && (_sqAlvo!==ACTIVE_SQUAD || !_isTrustedDomainEmail(user.email))){
         try{ await fbSet('kanban/usuarios_publicos/'+user.uid,{
           nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
-          role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
+          role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles }); }catch(e){}
         try{ safeLS.setItem('cad_welcome', newRole); safeLS.setItem('cad_insc','1'); }catch(e){}
         const _f=location.pathname.split('/').pop()||'kanban.html';
         if(_sqAlvo!==ACTIVE_SQUAD) location.replace(_f+'?squad='+encodeURIComponent(_sqAlvo)); else location.reload();
@@ -11729,7 +11741,7 @@ function autoRegistrar(user){
       // notificações/tokens de push de todo mundo (ver kanban/usuarios).
       fbSet('kanban/usuarios_publicos/'+user.uid,{
         nome:user.displayName||'', email:user.email, init, foto:user.photoURL||'',
-        role:newRole, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
+        role:_roleGravar, inscrito:true, squads:newSquads, squads_roles:newSquadsRoles,
       });
       window._currentUserRole=newRole;
       _applyRoleVisibility(); // ⚡ aplica visibilidade
@@ -11752,10 +11764,16 @@ function autoRegistrar(user){
          && !(existe.squads && existe.squads[ACTIVE_SQUAD]===true) && !safeLS.getItem('cad_enroll_try')){
         try{ safeLS.setItem('cad_enroll_try','1'); }catch(e){}
         const _u={}; _u['squads/'+ACTIVE_SQUAD]=true;
-        Promise.all([fbUpdate('kanban/usuarios/'+user.uid,_u), fbUpdate('kanban/usuarios_publicos/'+user.uid,_u)])
+        // O cache 'ext_ok_' do gate (15 min) vale pro e-mail, não pro squad: quem foi validado num squad e abre outro dentro
+        // da janela chegava aqui sem ter sido conferido NESTE — confere a lista antes de tentar matricular.
+        fbGet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+_extKey(user.email))
+          .then(sn=>{ if(!sn.exists()) throw {code:'NAO_AUTORIZADO_NESTE_SQUAD'};
+            return Promise.all([fbUpdate('kanban/usuarios/'+user.uid,_u), fbUpdate('kanban/usuarios_publicos/'+user.uid,_u)]); })
           .then(()=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(e){} location.reload(); })
           .catch(e=>{ try{ safeLS.removeItem('cad_enroll_try'); }catch(_){} console.error('[cadastro] matrícula no squad recusada:', e);
-            showToast('⚠ Você está autorizado(a) neste squad, mas não consegui concluir sua matrícula ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.'); });
+            showToast(e?.code==='NAO_AUTORIZADO_NESTE_SQUAD'
+              ? '⚠ Você não está na lista de externos deste squad. Peça ao PO para te adicionar.'
+              : '⚠ Você está autorizado(a) neste squad, mas não consegui concluir sua matrícula ('+(e?.code||e?.message||'erro')+'). Avise o PO/ADM.'); });
         return;
       }
       // BUGFIX "Meus cards" destacando card de outra pessoa: window._currentUserInit
@@ -11891,7 +11909,10 @@ async function confirmarInscricao(){
   // Papel: mantém o que o cadastro já definiu (convidado p/ externo, membro p/ domínio confiável, adm...). Antes gravava
   // 'membro' SEMPRE — com a inscrição agora aberta pra todo usuário novo, isso promoveria externo a membro sozinho.
   const _papelIns=window._currentUserRole||'membro';
-  const sqUpd={init,inscrito:true,role:_papelIns,inscritoEm:new Date().toISOString()};
+  const sqUpd={init,inscrito:true,inscritoEm:new Date().toISOString()};
+  // NÃO regrava `role` quando já há um papel efetivo: ele pode vir de squads_roles ou do isAdmUser() (≠ do role global), e
+  // as regras negam a mudança de role global por quem não é po/adm — o update INTEIRO (iniciais incluídas) era recusado.
+  if(!window._currentUserRole) sqUpd.role='membro';
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
   fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
