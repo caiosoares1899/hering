@@ -3368,6 +3368,9 @@ campos `atingimento*` do snapshot). Só leitura — nenhum campo novo no snapsho
 **v4.5**: clique no KPI "Progresso médio" abre `#okr-hmedia-ov` (`_okrHistMediaOpen()`/`_okrHistMediaRender()`): contribuição
 de cada Objetivo (progresso ÷ N), efeito de sair da conta, filtro de gerência (`_okrHistMArea`) e exclusão por checkbox —
 `_okrHistExcl` (Set, `localStorage` `okr_hist_excl`, só simulação local) alimenta `_okrHistMedia()` (KPI + linha do gráfico).
+**v4.6**: janela maior (1400px); Objetivos viram **chips** (`.okr-hm-chip`, agrupados por gerência) no lugar da lista com checkbox; gráfico de linhas
+`_okrHistMediaChartHtml()` (1 linha por Objetivo ou por gerência, ou só a média com faixa mín–máx; hover `_okrHistMLine()`), chips de visão
+(`_okrHistMRange()`, `_okrHistMModo`, `_okrHistMStatus`/`_okrHistMStatusToggle()`, gerência `_okrHistMArea`) e destaques "puxam pra baixo / sustentam".
 
 #### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 `_okrExcluirObjetivo(id)` — botão "🗑 Excluir" no rodapé do modal

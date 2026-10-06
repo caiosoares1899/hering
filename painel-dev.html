@@ -384,15 +384,39 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-h-kpi.click{cursor:pointer;transition:border-color .15s,transform .15s;} .okr-h-kpi.click:hover,.okr-h-kpi.click:focus-visible{border-color:var(--accent);outline:none;transform:translateY(-1px);}
 .okr-h-kpi-go{display:none;text-transform:none;letter-spacing:0;color:var(--accent);font-weight:600;} .okr-h-kpi.click:hover .okr-h-kpi-go,.okr-h-kpi.click:focus-visible .okr-h-kpi-go{display:inline;}
 .okr-h-sim{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;border-radius:10px;border:1px dashed rgba(255,176,32,.55);background:rgba(255,176,32,.08);font-size:11.5px;color:var(--txt2);}
-.okr-hm-resumo{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:8px;} .okr-hm-big{font-family:"Syne","DM Sans",sans-serif;font-size:34px;font-weight:800;color:var(--txt);line-height:1.1;}
-.okr-hm-meta{font-size:11.5px;display:flex;flex-direction:column;gap:3px;color:var(--txt2);} .okr-hm-meta .okr-h-delta{align-self:flex-start;} .okr-hm-meta .mut{color:var(--txt3);}
-.okr-hm-como{font-size:11px;color:var(--txt3);line-height:1.55;margin-bottom:10px;padding:8px 10px;border-radius:10px;background:rgba(var(--ink-rgb),.4);} .okr-hm-como b{color:var(--txt2);}
-.okr-hm-lista{max-height:46vh;overflow:auto;border-top:1px solid var(--glass-b);}
-.okr-hm-row{display:grid;grid-template-columns:22px minmax(170px,2.4fr) minmax(120px,1.2fr) 78px minmax(120px,1.1fr) 76px;gap:10px;align-items:center;padding:7px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:var(--txt2);cursor:pointer;}
-.okr-hm-row.head{position:sticky;top:0;z-index:1;background:rgb(var(--ink-rgb));font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);font-weight:700;cursor:default;}
-.okr-hm-row:not(.head):hover{background:rgba(56,182,255,.07);} .okr-hm-row.fora{opacity:.5;} .okr-hm-row.fora .okr-h-tit{text-decoration:line-through;}
-.okr-hm-row input[type=checkbox]{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;} .okr-hm-row .mut{color:var(--txt3);}
-@media (max-width:760px){ .okr-hm-row{grid-template-columns:22px 1fr 96px;} .okr-hm-row.head{display:none;} .okr-hm-row>span:nth-child(4),.okr-hm-row>span:nth-child(6){display:none;} }
+.okr-hm-top3{display:grid;grid-template-columns:minmax(260px,1.2fr) 1fr 1fr;gap:14px;margin-bottom:16px;}
+.okr-hm-sum{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.35);}
+.okr-hm-big{font-family:"Syne","DM Sans",sans-serif;font-size:42px;font-weight:800;color:var(--txt);line-height:1.05;}
+.okr-hm-meta{font-size:11.5px;display:flex;flex-direction:column;gap:3px;color:var(--txt2);margin-top:6px;align-items:flex-start;} .okr-hm-meta .mut,.okr-hm-box .mut,.okr-hm-grp-h .mut,.okr-hm-sec-h .mut{color:var(--txt3);}
+.okr-hm-como{font-size:10.5px;color:var(--txt3);line-height:1.5;margin-top:8px;} .okr-hm-como b{color:var(--txt2);}
+.okr-hm-box{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.25);display:flex;flex-direction:column;gap:6px;}
+.okr-hm-box-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:2px;}
+.okr-hm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--txt2);} .okr-hm-top .okr-h-tit{min-width:0;}
+.okr-hm-sec{margin-bottom:16px;} .okr-hm-sec-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.okr-hm-sec-h .mut{font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;} .okr-hm-sec-t{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;}
+.okr-hm-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.okr-hm-chip{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 12px;border-radius:999px;cursor:pointer;font-size:12px;border:1px solid rgba(56,182,255,.3);background:rgba(56,182,255,.09);color:var(--txt2);transition:all .15s;user-select:none;}
+.okr-hm-chip:hover,.okr-hm-chip:focus-visible{border-color:rgba(56,182,255,.65);outline:none;}
+.okr-hm-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;} .okr-hm-chip-ln{display:inline-block;width:14px;height:3px;border-radius:2px;flex-shrink:0;margin-right:-2px;} .okr-hm-chip-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;} .okr-hm-chip b{color:var(--txt);font-size:11px;}
+.okr-hm-chip.off{border-color:rgba(255,255,255,.1);background:transparent;color:var(--txt3);} .okr-hm-chip.off .okr-hm-chip-t{text-decoration:line-through;} .okr-hm-chip.off i{opacity:.3;} .okr-hm-chip.off b{color:var(--txt3);}
+.okr-hm-chip.sel{border-color:var(--glass-b);background:transparent;} .okr-hm-chip.sel.on{border-color:var(--accent);background:rgba(56,182,255,.16);color:var(--txt);font-weight:600;}
+.okr-hm-grps{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;}
+.okr-hm-grp{padding:10px 12px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(255,255,255,.02);}
+.okr-hm-grp-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--txt2);margin-bottom:8px;} .okr-hm-grp-h b{color:var(--txt);}
+.okr-hm-grp-a{display:flex;gap:4px;} .okr-hm-lnk{background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit;} .okr-hm-lnk:hover{background:rgba(56,182,255,.12);}
+.okr-hm-chartbox{position:relative;padding:6px 4px 0;border:1px solid var(--glass-b);border-radius:12px;background:rgba(var(--ink-rgb),.25);}
+.okr-hm-legend{display:flex;gap:6px 20px;flex-wrap:wrap;font-size:10.5px;color:var(--txt3);margin-top:8px;} .okr-hm-legend>span{display:flex;align-items:center;gap:6px;}
+.okr-hm-lg-avg{display:inline-block;width:20px;border-top:3.5px solid var(--txt);border-radius:2px;} .okr-hm-lg-ln{display:inline-block;width:20px;height:2px;border-radius:2px;background:linear-gradient(90deg,hsl(10,68%,62%),hsl(140,68%,62%),hsl(260,68%,62%));}
+.okr-hm-ln{transition:stroke-opacity .12s,stroke-width .12s;}
+.okr-hm-visao{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.25);}
+.okr-hm-visao-g{display:grid;grid-template-columns:auto auto 1fr;gap:10px 28px;align-items:start;} .okr-hm-sub{font-size:10.5px;color:var(--txt3);font-weight:600;margin-bottom:5px;} .okr-hm-sub .mut{font-weight:500;}
+.okr-hm-chip.sel i{width:8px;height:8px;border-radius:50%;display:inline-block;} .okr-hm-lg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;} .okr-hm-lg-band{display:inline-block;width:20px;height:9px;border-radius:3px;background:rgba(56,182,255,.2);border:1px dashed rgba(56,182,255,.55);}
+@media (max-width:980px){ .okr-hm-visao-g{grid-template-columns:1fr;} }
+.okr-hm-lista{border-top:1px solid var(--glass-b);}
+.okr-hm-row{display:grid;grid-template-columns:minmax(220px,2.6fr) minmax(150px,1.3fr) 90px minmax(130px,1.1fr) 90px 60px;gap:12px;align-items:center;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:var(--txt2);}
+.okr-hm-row.head{position:sticky;top:0;z-index:1;background:rgb(var(--ink-rgb));font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);font-weight:700;}
+.okr-hm-row:not(.head):hover{background:rgba(56,182,255,.06);} .okr-hm-row.fora{opacity:.5;} .okr-hm-row.fora .okr-h-tit{text-decoration:line-through;} .okr-hm-row .mut{color:var(--txt3);}
+@media (max-width:980px){ .okr-hm-top3{grid-template-columns:1fr;} .okr-hm-grps{grid-template-columns:1fr;} .okr-hm-row{grid-template-columns:1fr 110px 70px;} .okr-hm-row.head{display:none;} .okr-hm-row>span:nth-child(3),.okr-hm-row>span:nth-child(4),.okr-hm-row>span:nth-child(6){display:none;} }
 @media (max-width:760px){
   .okr-h-tr{grid-template-columns:1fr 92px 60px;} .okr-h-tr.head{display:none;}
   .okr-h-tr>span:nth-child(3),.okr-h-tr>span:nth-child(5),.okr-h-tr>span:nth-child(6){display:none;} .okr-h-tr>span:nth-child(1){grid-column:1/-1;}
@@ -2660,7 +2684,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <ul style="margin:6px 0 0;padding-left:18px;">
             <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
             <li><b>6 indicadores</b> do último snapshot (Objetivos ativos, Concluídos, No prazo, Risco, Atrasados e Progresso médio), cada um com a <b>variação</b> em relação à semana anterior — verde é melhora, vermelho é piora.</li>
-            <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela mostrando <b>como cada Objetivo contribui</b> (progresso ÷ nº de Objetivos), o quanto a média mudaria <b>se aquele Objetivo saísse da conta</b> e a variação de cada um na semana. Dá pra filtrar por <b>gerência</b> e <b>desmarcar</b> Objetivos pra tirá-los da conta: a média recalcula na hora, e o indicador e a linha do gráfico por trás acompanham (com um aviso de simulação e o botão <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
+            <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um <b>gráfico de linhas</b> — uma linha por Objetivo (cada um com o próprio progresso ao longo das semanas) e a <b>média como linha grossa no meio delas</b>. Use os <b>chips</b> pra personalizar a visão: <b>período</b> (4/8/12 semanas ou tudo), <b>linhas</b> (por Objetivo, por gerência ou só a média, com a faixa do menor ao maior), <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Histórico e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). A tabela mostra quanto cada um contribui e o que acontece com a média se ele sair. É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
             <li><b>Gráfico de evolução</b>: barras com os Objetivos por status e uma linha com o progresso médio. Passe o mouse (ou toque) numa semana pra ver os números dela.</li>
             <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
             <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
@@ -3180,12 +3204,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 
 <!-- 🧮 Como cada Objetivo contribui para o progresso médio (Histórico semanal do OKR) -->
 <div class="pc-modal-ov" id="okr-hmedia-ov" style="z-index:235;" onclick="if(event.target===this) _okrHistMediaClose()">
-  <div class="pc-modal" style="width:min(820px,96vw);">
+  <div class="pc-modal" style="width:min(1400px,97vw);max-height:94vh;display:flex;flex-direction:column;">
     <div class="pc-modal-hd">
       <div class="pc-modal-hd-title">🧮 Como cada Objetivo contribui para o progresso médio</div>
       <button class="x-btn" onclick="_okrHistMediaClose()">✕</button>
     </div>
-    <div class="pc-modal-body" id="okr-hmedia-body"></div>
+    <div class="pc-modal-body" id="okr-hmedia-body" style="flex:1;min-height:0;overflow-y:auto;max-height:none;"></div>
     <div class="pc-footer" style="display:flex;justify-content:flex-end;gap:8px;">
       <button type="button" class="btn btn-sm" onclick="_okrHistMediaClose()">Fechar</button>
     </div>
@@ -3248,7 +3272,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v4.5 · painel-dev</div>
+<div class="version">v4.6 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5671,25 +5695,94 @@ function _okrHistKpisHtml(L, P){
 // Média = soma dos progressos ÷ nº de Objetivos considerados, sobre o ÚLTIMO snapshot. Cada Objetivo contribui com (progresso ÷ N) pontos. Marcar/desmarcar tira da conta e recalcula na hora
 // (inclusive o indicador e a linha do gráfico por trás). O filtro de gerência vale só dentro da janela.
 let _okrHistMArea = '', _okrHistMOrd = 'baixo';
+let _okrHistMModo = 'obj';          // linhas do gráfico: 'obj' (1 por Objetivo) | 'ger' (1 por gerência) | 'media' (só a média, com a faixa mín–máx)
+let _okrHistMStatus = new Set();   // filtro por status atual do Objetivo (vazio = todos)
 function _okrHistMediaOpen(){ _okrHistMArea = ''; document.getElementById('okr-hmedia-ov')?.classList.add('open'); _okrHistMediaRender(); }
 function _okrHistMediaClose(){ document.getElementById('okr-hmedia-ov')?.classList.remove('open'); }
 function _okrHistExclReset(){ _okrHistExcl.clear(); _okrHistExclSave(); renderOkrHistorico(); if(document.getElementById('okr-hmedia-ov')?.classList.contains('open')) _okrHistMediaRender(); }
 function _okrHistExclToggle(id){ if(_okrHistExcl.has(id)) _okrHistExcl.delete(id); else _okrHistExcl.add(id); _okrHistExclSave(); renderOkrHistorico(); _okrHistMediaRender(id); }
-function _okrHistExclVisiveis(tirar){   // marca/desmarca todos os Objetivos visíveis (filtro de gerência) de uma vez
+function _okrHistMediaSet(campo, v){
+  if(campo==='area') _okrHistMArea = v; else if(campo==='modo') _okrHistMModo = v; else _okrHistMOrd = v;
+  _okrHistMediaRender();
+}
+function _okrHistMStatusToggle(id){ if(_okrHistMStatus.has(id)) _okrHistMStatus.delete(id); else _okrHistMStatus.add(id); _okrHistMediaRender(); }
+function _okrHistMRange(v){ _okrHistRange = v; renderOkrHistorico(); _okrHistMediaRender(); }
+function _okrHistFmtN(n){ return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0, maximumFractionDigits:1}); }
+function _okrHistExclGerencia(areaId, tirar){   // marca/desmarca todos os Objetivos de UMA gerência (botões do cartão da gerência)
   const d = _okrHistDatas(); if(!d.length) return; const L = (okrSnapshots[d[d.length-1]]||{}).objetivos||{};
-  Object.keys(L).filter(id=>!_okrHistMArea || (L[id].areaId||'geral')===_okrHistMArea).forEach(id=>{ if(tirar) _okrHistExcl.add(id); else _okrHistExcl.delete(id); });
+  Object.keys(L).filter(id=>(L[id].areaId||'geral')===areaId).forEach(id=>{ if(tirar) _okrHistExcl.add(id); else _okrHistExcl.delete(id); });
   _okrHistExclSave(); renderOkrHistorico(); _okrHistMediaRender();
 }
-function _okrHistMediaSet(campo, v){ if(campo==='area') _okrHistMArea = v; else _okrHistMOrd = v; _okrHistMediaRender(); }
-function _okrHistFmtN(n){ return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0, maximumFractionDigits:1}); }
+// Cor estável de cada Objetivo no gráfico (ângulo áureo no matiz, a partir do id) — a mesma cor aparece na borda do chip do Objetivo.
+function _okrHistCorObj(id){ let h = 0; for(const ch of String(id)) h = (h*31 + ch.charCodeAt(0)) % 360; return 'hsl('+((h*137.5)%360).toFixed(0)+',68%,62%)'; }
+let _okrHistMChart = null;
+// 📈 Gráfico de linhas da janela: 1 linha por Objetivo (progresso por snapshot) + a MÉDIA em destaque no "meio" delas. Usa só os Objetivos que estão na conta
+// (chips) e na gerência escolhida — tirar um Objetivo some a linha dele e a média se recalcula.
+function _okrHistCorGer(g){ const i = Math.max(0, OKR_GERENCIAS.findIndex(x=>x.id===g)); return 'hsl('+((i*57+200)%360)+',70%,62%)'; }
+function _okrHistMediaChartHtml(inc, datas, largura){
+  if(!inc.length) return '<div class="okr-h-vazio-t">Nenhum Objetivo na conta — marque algum nos chips abaixo pra ver o gráfico.</div>';
+  if(datas.length<2) return '<div class="okr-h-vazio-t">O gráfico de linhas aparece a partir do 2º snapshot (sexta que vem).</div>';
+  const W = Math.max(520, largura||900), H = 300, pl = 38, pr = 16, pt = 14, pb = 28, cw = W-pl-pr, ch = H-pt-pb, n = datas.length;
+  const X = i=>pl + cw*i/(n-1), Y = v=>pt + ch - (Math.max(0,Math.min(100,v))/100)*ch;
+  const valsDe = id=>datas.map(d=>{ const x = ((okrSnapshots[d]||{}).objetivos||{})[id]; return x ? (Number(x.progressoPct)||0) : null; });
+  const porObj = inc.map(r=>({id:r.id, titulo:r.o.titulo||'(sem título)', cor:_okrHistCorObj(r.id), vals:valsDe(r.id)}));
+  const media = arr=>datas.map((d,i)=>{ const v = arr.map(x=>x.vals[i]).filter(x=>x!==null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; });
+  const avg = media(porObj);
+  let series = [];
+  if(_okrHistMModo==='obj') series = porObj;
+  else if(_okrHistMModo==='ger'){
+    const gs = [...new Set(inc.map(r=>r.area))];
+    series = gs.map(g=>{ const mem = porObj.filter(x=>inc.find(r=>r.id===x.id).area===g); return {id:'g:'+g, titulo:okrGerenciaLabel(g)+' (média)', cor:_okrHistCorGer(g), vals:media(mem)}; });
+  }
+  const faixa = _okrHistMModo==='media' ? datas.map((d,i)=>{ const v = porObj.map(x=>x.vals[i]).filter(x=>x!==null); return v.length ? [Math.min(...v), Math.max(...v)] : null; }) : null;
+  const trechos = vals=>{ const out=[]; let cur=[]; vals.forEach((v,i)=>{ if(v===null){ if(cur.length) out.push(cur); cur=[]; } else cur.push(X(i).toFixed(1)+','+Y(v).toFixed(1)); }); if(cur.length) out.push(cur); return out; };
+  _okrHistMChart = {datas, series, avg, faixa, W, H, pl, pr, pt, ch, cw, n, X, Y};
+  let svg = `<svg id="okr-hm-svg" viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:${H}px;" role="img" aria-label="Progresso ao longo das semanas, com a média em destaque" onmousemove="_okrHistMLine(event)" onmouseleave="_okrHistMLineOff()" onclick="_okrHistMLine(event)">`;
+  [0,25,50,75,100].forEach(v=>{ svg += `<line class="tp-grid-line" x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}"/><text class="tp-axis-lbl" x="${pl-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end">${v}%</text>`; });
+  datas.forEach((d,i)=>{ if(n<=12 || i%2===0 || i===n-1) svg += `<text class="tp-axis-lbl" x="${X(i).toFixed(1)}" y="${H-9}" text-anchor="middle">${esc(_okrHistFmt(d))}</text>`; });
+  if(faixa){ const ok = faixa.map((f,i)=>f?[i,f]:null).filter(Boolean); if(ok.length>1) svg += `<path d="M${ok.map(([i,f])=>X(i).toFixed(1)+','+Y(f[1]).toFixed(1)).join(' L')} L${ok.slice().reverse().map(([i,f])=>X(i).toFixed(1)+','+Y(f[0]).toFixed(1)).join(' L')} Z" fill="var(--accent)" fill-opacity=".13" stroke="var(--accent)" stroke-opacity=".35" stroke-dasharray="4 3"/>`; }
+  series.forEach(x=>{ trechos(x.vals).forEach(t=>{ svg += `<polyline class="okr-hm-ln" data-id="${esc(x.id)}" fill="none" stroke="${x.cor}" stroke-width="${_okrHistMModo==='ger'?2.4:1.6}" stroke-opacity="${_okrHistMModo==='ger'?.9:.75}" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/>`; }); });
+  trechos(avg).forEach(t=>{ svg += `<polyline fill="none" stroke="rgb(var(--ink-rgb))" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/><polyline class="okr-hm-avg" fill="none" stroke="var(--txt)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/>`; });
+  avg.forEach((v,i)=>{ if(v!==null) svg += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="3.8" fill="var(--txt)" stroke="rgb(var(--ink-rgb))" stroke-width="1.4"/>`; });
+  const ult = avg[n-1]; if(ult!==null) svg += `<text x="${(X(n-1)-8).toFixed(1)}" y="${(Y(ult)-10).toFixed(1)}" text-anchor="end" font-size="11" font-weight="800" fill="var(--txt)">média ${_okrHistFmtN(ult)}%</text>`;
+  svg += `<line id="okr-hm-cross" x1="0" y1="${pt}" x2="0" y2="${pt+ch}" stroke="var(--txt3)" stroke-dasharray="3 3" style="display:none;"/></svg>`;
+  const leg = _okrHistMModo==='ger' ? series.map(x=>`<span><i class="okr-hm-lg-dot" style="background:${x.cor};"></i>${esc(x.titulo)}</span>`).join('')
+    : _okrHistMModo==='media' ? `<span><i class="okr-hm-lg-band"></i>Faixa do menor ao maior progresso entre os Objetivos</span>`
+    : `<span><span class="okr-hm-lg-ln"></span>Cada linha colorida é um Objetivo (a mesma cor aparece no tracinho do chip dele)</span>`;
+  return `<div class="okr-hm-chartbox">${svg}<div id="okr-hm-tip" class="okr-h-tip" role="tooltip"></div></div>
+    <div class="okr-hm-legend"><span><span class="okr-hm-lg-avg"></span>Média (${inc.length} Objetivo${inc.length===1?'':'s'} na conta)</span>${leg}</div>`;
+}
+function _okrHistMLine(ev){
+  const c = _okrHistMChart, svg = document.getElementById('okr-hm-svg'), tip = document.getElementById('okr-hm-tip'); if(!c || !svg || !tip) return;
+  const r = svg.getBoundingClientRect(), k = c.W/r.width, x = (ev.clientX-r.left)*k, y = (ev.clientY-r.top)*k;
+  const i = Math.max(0, Math.min(c.n-1, Math.round((x-c.pl)/(c.cw/(c.n-1)))));
+  let melhor = null, dist = Infinity;
+  c.series.forEach(s=>{ const v = s.vals[i]; if(v===null) return; const d = Math.abs(c.Y(v)-y); if(d<dist){ dist = d; melhor = s; } });
+  const alvo = (melhor && dist<26) ? melhor : null;
+  svg.querySelectorAll('.okr-hm-ln').forEach(l=>{ const on = alvo && l.dataset.id===alvo.id; l.setAttribute('stroke-width', on?'3.4':'1.6'); l.setAttribute('stroke-opacity', alvo ? (on?'1':'.18') : '.75'); });
+  const cross = document.getElementById('okr-hm-cross'); if(cross){ cross.setAttribute('x1', c.X(i)); cross.setAttribute('x2', c.X(i)); cross.style.display = ''; }
+  tip.innerHTML = `<b>${esc(_okrHistFmt(c.datas[i],true))}</b>
+    <div class="okr-h-tip-l">${alvo?`<div><span class="okr-dot" style="background:${alvo.cor};"></span>${esc(alvo.titulo)}: <b>${alvo.vals[i]}%</b></div>`:''}</div>
+    <div class="okr-h-tip-m">Média: <b>${c.avg[i]===null?'—':_okrHistFmtN(c.avg[i])+'%'}</b>${c.faixa&&c.faixa[i]?` <span class="mut">· de ${c.faixa[i][0]}% a ${c.faixa[i][1]}%</span>`:''}</div>`;
+  tip.style.display = 'block';
+  const box = tip.parentElement.getBoundingClientRect(); let tx = ev.clientX-box.left+14; if(tx+tip.offsetWidth > box.width) tx = ev.clientX-box.left-tip.offsetWidth-14;
+  tip.style.left = Math.max(0,tx)+'px'; tip.style.top = Math.max(0, Math.min(ev.clientY-box.top-10, box.height-tip.offsetHeight))+'px';
+}
+function _okrHistMLineOff(){
+  const svg = document.getElementById('okr-hm-svg'), tip = document.getElementById('okr-hm-tip'), cross = document.getElementById('okr-hm-cross');
+  if(tip) tip.style.display = 'none'; if(cross) cross.style.display = 'none';
+  if(svg) svg.querySelectorAll('.okr-hm-ln').forEach(l=>{ l.setAttribute('stroke-width','1.6'); l.setAttribute('stroke-opacity','.75'); });
+}
 function _okrHistMediaRender(focoId){
   const body = document.getElementById('okr-hmedia-body'); if(!body) return;
   const todas = _okrHistDatas();
   if(!todas.length){ body.innerHTML = '<div class="okr-h-vazio-t">Ainda não há snapshot.</div>'; return; }
   const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
   const L = (okrSnapshots[ult]||{}).objetivos||{}, P = ant ? ((okrSnapshots[ant]||{}).objetivos||{}) : {};
-  const todos = Object.keys(L).map(id=>({id, o:L[id], pct:Number(L[id].progressoPct)||0, p:P[id]?(Number(P[id].progressoPct)||0):null}));
-  const vis = todos.filter(r=>!_okrHistMArea || (r.o.areaId||'geral')===_okrHistMArea);
+  const todos = Object.keys(L).map(id=>({id, o:L[id], pct:Number(L[id].progressoPct)||0, p:P[id]?(Number(P[id].progressoPct)||0):null, area:L[id].areaId||'geral'}));
+  const gerencias = [...new Set(todos.map(r=>r.area))].sort((a,b)=>OKR_GERENCIAS.findIndex(g=>g.id===a)-OKR_GERENCIAS.findIndex(g=>g.id===b));
+  if(_okrHistMArea && !gerencias.includes(_okrHistMArea)) _okrHistMArea = '';
+  const vis = todos.filter(r=>(!_okrHistMArea || r.area===_okrHistMArea) && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status)));
   const inc = vis.filter(r=>!_okrHistExcl.has(r.id)), exc = vis.filter(r=>_okrHistExcl.has(r.id));
   const n = inc.length, soma = inc.reduce((a,r)=>a+r.pct,0), media = n ? soma/n : null;
   const comP = inc.filter(r=>r.p!==null);
@@ -5700,36 +5793,75 @@ function _okrHistMediaRender(focoId){
   };
   const ord = {baixo:(a,b)=>(efeito(b)??-999)-(efeito(a)??-999), alto:(a,b)=>b.pct-a.pct, az:(a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||''))}[_okrHistMOrd] || (()=>0);
   const lista = inc.slice().sort(ord).concat(exc.slice().sort((a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||''))));
-  const antesScroll = (document.getElementById('okr-hm-lista')||{}).scrollTop||0;
-  const gerencias = [...new Set(todos.map(r=>r.o.areaId||'geral'))];
+  const antesScroll = body.scrollTop;
+  const per = _okrHistRange==='all' ? todas : todas.slice(-Number(_okrHistRange));
+  const graficoW = Math.max(520, (body.clientWidth||960) - 50);
+  const top3 = (arr, f)=> arr.slice(0,3).map(r=>`<div class="okr-hm-top"><span class="okr-h-tit">${okrGerenciaIcon(r.area)} ${esc(r.o.titulo||'(sem título)')}</span>${f(r)}</div>`).join('') || '<div class="mut">—</div>';
+  const puxamBaixo = n>1 ? inc.slice().sort((a,b)=>efeito(b)-efeito(a)).filter(r=>efeito(r)>0.05) : [];
+  const sustentam = inc.slice().sort((a,b)=>b.pct-a.pct).filter(r=>r.pct>0);
+  const chip = r=>{
+    const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status);
+    return `<span class="okr-hm-chip${fora?' off':''}" role="button" tabindex="0" aria-pressed="${fora?'false':'true'}" data-id="${esc(r.id)}" title="${fora?'Voltar pra conta':'Tirar da conta'} — ${esc(r.o.titulo||'')} (${r.pct}%)" onclick="_okrHistExclToggle(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistExclToggle(${jsq(r.id)});}"><em class="okr-hm-chip-ln" style="background:${fora?'transparent':_okrHistCorObj(r.id)};" title="Cor da linha deste Objetivo no gráfico"></em><i style="background:${st.dot};"></i><span class="okr-hm-chip-t">${esc(r.o.titulo||'(sem título)')}</span><b>${r.pct}%</b></span>`;
+  };
+  const grupos = gerencias.filter(g=>!_okrHistMArea || g===_okrHistMArea).map(g=>{
+    const rs = todos.filter(r=>r.area===g && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status))).sort((a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')));
+    const rin = rs.filter(r=>!_okrHistExcl.has(r.id)); const mg = rin.length ? Math.round(rin.reduce((a,r)=>a+r.pct,0)/rin.length) : null;
+    if(!rs.length) return '';
+    return `<div class="okr-hm-grp"><div class="okr-hm-grp-h"><span>${okrGerenciaIcon(g)} <b>${esc(okrGerenciaLabel(g))}</b> <span class="mut">· ${rin.length}/${rs.length} na conta${mg===null?'':' · média '+mg+'%'}</span></span>
+      <span class="okr-hm-grp-a"><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},false)">todos</button><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},true)">nenhum</button></span></div>
+      <div class="okr-hm-chips">${rs.map(chip).join('')}</div></div>`;
+  }).join('');
   body.innerHTML = `
-    <div class="okr-hm-resumo">
-      <div><div class="okr-hm-big">${media===null?'—':_okrHistFmtN(media)+'%'}</div><div class="okr-h-kpi-l">progresso médio${_okrHistMArea?' · '+esc(okrGerenciaLabel(_okrHistMArea)):''}</div></div>
-      <div class="okr-hm-meta">${dMedia===null?'<span class="mut">sem comparação com o snapshot anterior</span>':_okrHistDeltaHtml(Math.round(dMedia*10)/10,true,' pp')+` <span class="mut">vs. ${esc(_okrHistFmt(ant,true))} (mesmos Objetivos)</span>`}
-        <div class="mut">${n} de ${vis.length} Objetivo${vis.length===1?'':'s'} na conta · snapshot de ${esc(_okrHistFmt(ult,true))}</div></div>
+    <div class="okr-hm-top3">
+      <div class="okr-hm-sum">
+        <div class="okr-hm-big">${media===null?'—':_okrHistFmtN(media)+'%'}</div>
+        <div class="okr-h-kpi-l">progresso médio${_okrHistMArea?' · '+esc(okrGerenciaLabel(_okrHistMArea)):''}</div>
+        <div class="okr-hm-meta">${dMedia===null?'<span class="mut">sem comparação com o snapshot anterior</span>':_okrHistDeltaHtml(Math.round(dMedia*10)/10,true,' pp')+` <span class="mut">vs. ${esc(_okrHistFmt(ant,true))} (mesmos Objetivos)</span>`}
+          <div class="mut"><b>${n}</b> de ${vis.length} Objetivo${vis.length===1?'':'s'} na conta · snapshot de ${esc(_okrHistFmt(ult,true))}</div></div>
+        <div class="okr-hm-como">Média = soma dos progressos ÷ nº de Objetivos na conta. Cada um contribui com <b>progresso ÷ ${n||'N'}</b> ponto(s).</div>
+      </div>
+      <div class="okr-hm-box"><div class="okr-hm-box-t">⬇ Mais puxam a média pra baixo</div>${top3(puxamBaixo, r=>`<span>${_okrHistDeltaHtml(Math.round(efeito(r)*10)/10,true,' pp')} <span class="mut">se saísse · ${r.pct}%</span></span>`)}</div>
+      <div class="okr-hm-box"><div class="okr-hm-box-t">⬆ Mais sustentam a média</div>${top3(sustentam, r=>`<span><b>${_okrHistFmtN(r.pct/n)} pp</b> <span class="mut">· ${r.pct}%</span></span>`)}</div>
     </div>
-    <div class="okr-hm-como">Média = soma dos progressos ÷ nº de Objetivos na conta. Cada Objetivo contribui com <b>progresso ÷ ${n||'N'}</b> ponto(s). <b>Desmarque</b> um Objetivo pra tirá-lo da conta — a média recalcula na hora (e o indicador e o gráfico por trás também).</div>
-    <div class="okr-h-filtros">
-      <select class="pt-filter-input" onchange="_okrHistMediaSet('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${gerencias.map(g=>`<option value="${esc(g)}"${_okrHistMArea===g?' selected':''}>${okrGerenciaIcon(g)} ${esc(okrGerenciaLabel(g))}</option>`).join('')}</select>
-      <select class="pt-filter-input" onchange="_okrHistMediaSet('ord',this.value)" aria-label="Ordenar por"><option value="baixo"${_okrHistMOrd==='baixo'?' selected':''}>Ordenar: puxam a média pra baixo</option><option value="alto"${_okrHistMOrd==='alto'?' selected':''}>Ordenar: maior progresso</option><option value="az"${_okrHistMOrd==='az'?' selected':''}>Ordenar: A–Z</option></select>
-      <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistExclVisiveis(false)">Marcar todos</button>
-      <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistExclVisiveis(true)">Desmarcar todos</button>
-      ${_okrHistExcl.size?`<button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistExclReset()">Restaurar tudo</button>`:''}
+    <div class="okr-hm-sec okr-hm-visao">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🎛 Personalizar a visão</span>${(_okrHistMStatus.size||_okrHistMModo!=='obj'||_okrHistMArea)?`<button type="button" class="okr-hm-lnk" onclick="_okrHistMStatus.clear();_okrHistMModo='obj';_okrHistMArea='';_okrHistMediaRender()">limpar filtros</button>`:''}</div>
+      <div class="okr-hm-visao-g">
+        <div><div class="okr-hm-sub">⏱ Período</div><div class="okr-hm-chips">${[['4','4 sem'],['8','8 sem'],['12','12 sem'],['all','Tudo']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistRange===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistRange===v}" onclick="_okrHistMRange('${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMRange('${v}');}">${l}</span>`).join('')}</div></div>
+        <div><div class="okr-hm-sub">📈 Linhas do gráfico</div><div class="okr-hm-chips">${[['obj','Por Objetivo'],['ger','Por gerência'],['media','Só a média']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistMModo===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMModo===v}" onclick="_okrHistMediaSet('modo','${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('modo','${v}');}">${l}</span>`).join('')}</div></div>
+        <div><div class="okr-hm-sub">🚦 Status do Objetivo <span class="mut">(vazio = todos)</span></div><div class="okr-hm-chips">${OKR_STATUS.map(st=>{ const c = todos.filter(r=>(!_okrHistMArea||r.area===_okrHistMArea)&&r.o.status===st.id).length; return `<span class="okr-hm-chip sel${_okrHistMStatus.has(st.id)?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMStatus.has(st.id)}" onclick="_okrHistMStatusToggle(${jsq(st.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMStatusToggle(${jsq(st.id)});}"><i style="background:${st.dot};"></i>${esc(st.label)} <b>${c}</b></span>`; }).join('')}</div></div>
+      </div>
     </div>
-    <div class="okr-hm-lista" id="okr-hm-lista">
-      <div class="okr-hm-row head"><span></span><span>Objetivo</span><span>Progresso</span><span>Contribui</span><span>Se sair da conta</span><span>Δ semana</span></div>
-      ${lista.length?lista.map(r=>{
-        const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status), ef = efeito(r), dp = r.p===null?null:r.pct-r.p;
-        return `<label class="okr-hm-row${fora?' fora':''}">
-          <input type="checkbox" data-id="${esc(r.id)}"${fora?'':' checked'} onchange="_okrHistExclToggle(${jsq(r.id)})" aria-label="Considerar na média">
-          <span class="okr-h-tr-t">${okrGerenciaIcon(r.o.areaId)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> <span class="okr-dot" style="background:${st.dot};" title="${esc(st.label)}"></span></span>
-          <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
-          <span>${fora?'<span class="mut">fora da conta</span>':`<b>${_okrHistFmtN(r.pct/n)}</b> pp`}</span>
-          <span>${ef===null?'<span class="mut">—</span>':fora?`voltando: ${_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}`:_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}</span>
-          <span>${dp===null?'<span class="mut">novo</span>':_okrHistDeltaHtml(dp,true,' pp')}</span></label>`; }).join(''):'<div class="okr-h-vazio-t">Nenhum Objetivo nessa gerência.</div>'}
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${_okrHistMModo==='ger'?'cada gerência e a média':_okrHistMModo==='media'?'a média':'cada Objetivo e a média'}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Histórico)'}</span></div>
+      ${_okrHistMediaChartHtml(inc, per, graficoW)}
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🏢 Gerência</span>
+        <div class="okr-hm-chips"><span class="okr-hm-chip sel${_okrHistMArea?'':' on'}" role="button" tabindex="0" aria-pressed="${_okrHistMArea?'false':'true'}" onclick="_okrHistMediaSet('area','')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area','');}">Todas <b>${todos.length}</b></span>${gerencias.map(g=>`<span class="okr-hm-chip sel${_okrHistMArea===g?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMArea===g}" onclick="_okrHistMediaSet('area',${jsq(g)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area',${jsq(g)});}">${okrGerenciaIcon(g)} ${esc(okrGerenciaLabel(g))} <b>${todos.filter(r=>r.area===g).length}</b></span>`).join('')}</div></div>
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📍 Objetivos na conta <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:500;">— clique num Objetivo pra tirá-lo (ou trazê-lo de volta) e a média recalcula na hora</span></span>
+        ${_okrHistExcl.size?`<button type="button" class="btn btn-sm" style="font-size:11px;margin-left:auto;" onclick="_okrHistExclReset()">↩ Restaurar tudo</button>`:''}</div>
+      <div class="okr-hm-grps">${grupos}</div>
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🧮 Contribuição de cada Objetivo</span>
+        <select class="pt-filter-input" style="margin-left:auto;max-width:260px;" onchange="_okrHistMediaSet('ord',this.value)" aria-label="Ordenar por"><option value="baixo"${_okrHistMOrd==='baixo'?' selected':''}>Ordenar: puxam a média pra baixo</option><option value="alto"${_okrHistMOrd==='alto'?' selected':''}>Ordenar: maior progresso</option><option value="az"${_okrHistMOrd==='az'?' selected':''}>Ordenar: A–Z</option></select></div>
+      <div class="okr-hm-lista" id="okr-hm-lista">
+        <div class="okr-hm-row head"><span>Objetivo</span><span>Progresso</span><span>Contribui</span><span>Se sair da conta</span><span>Δ semana</span><span>Marcos</span></div>
+        ${lista.length?lista.map(r=>{
+          const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status), ef = efeito(r), dp = r.p===null?null:r.pct-r.p;
+          return `<div class="okr-hm-row${fora?' fora':''}">
+            <span class="okr-h-tr-t">${okrGerenciaIcon(r.area)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> <span class="okr-dot" style="background:${st.dot};" title="${esc(st.label)}"></span></span>
+            <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
+            <span>${fora?'<span class="mut">fora da conta</span>':`<b>${_okrHistFmtN(r.pct/n)}</b> pp`}</span>
+            <span>${ef===null?'<span class="mut">—</span>':fora?`voltando: ${_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}`:_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}</span>
+            <span>${dp===null?'<span class="mut">novo</span>':_okrHistDeltaHtml(dp,true,' pp')}</span>
+            <span class="mut">${r.o.marcosConcluidos||0}/${r.o.totalMarcos||0}</span></div>`; }).join(''):'<div class="okr-h-vazio-t">Nenhum Objetivo na conta.</div>'}
+      </div>
     </div>`;
-  const li = document.getElementById('okr-hm-lista'); if(li) li.scrollTop = antesScroll;
-  if(focoId){ const cb = body.querySelector('input[data-id="'+(window.CSS&&CSS.escape?CSS.escape(focoId):focoId)+'"]'); if(cb) cb.focus({preventScroll:true}); }
+  body.scrollTop = antesScroll;
+  if(focoId){ const cb = body.querySelector('.okr-hm-chip[data-id="'+(window.CSS&&CSS.escape?CSS.escape(focoId):focoId)+'"]'); if(cb) cb.focus({preventScroll:true}); }
 }
 document.addEventListener('keydown', e=>{
   const ov = document.getElementById('okr-hmedia-ov');
