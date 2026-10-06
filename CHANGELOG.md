@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.790-dev — 2026-10-06 · ajuste: Histórico do card mostra sempre a data (sem "3d/4d/5d") (só kanban-dev)
+
+Pedido direto: no **Histórico** do card (a lista no fim do modal), cada linha mostrava o tempo relativo ("agora", "5min", "3h", "4d") e só passava pra data depois de 7 dias. Agora **toda linha mostra a data
+completa e a hora** (`06/10/2026 14:32`); o tooltip continua com segundos. Só `_histRelTime()`. Só dev.
+
 ### v8.30.789-dev — 2026-10-06 · feat: ordenação "Data de criação (mais recentes primeiro)" (só kanban-dev)
 
 Pedido direto (continuação da v8.30.788-dev): "Data de criação" só ordenava do mais antigo pro mais novo, enquanto "Movimentação" é do mais recente pro mais antigo. Nova opção **🕐 Data de criação (mais recentes primeiro)** no
@@ -20639,6 +20644,11 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v4.4 · painel-dev — 2026-10-06 · ajuste(OKR): Histórico do Objetivo/Marco mostra sempre a data (sem "3d/4d/5d")
+
+Pedido direto, mesma mudança do Histórico do card no kanban (v8.30.790-dev): a linha do tempo no fim do Objetivo/Marco mostrava "agora / 5min / 3h / 4d" e só depois de 7 dias a data. Agora toda linha mostra **data e hora completas**
+(`06/10/2026 14:32`). Só `_okrHistRelTime()`. A tela 📈 Histórico semanal não muda ("há N dias" no cabeçalho do último snapshot continua, porque ali é um aviso de frescor, não a data de um evento). Só dev.
 
 ### painel-dev.html v4.3 · painel-dev — 2026-10-06 · feat(OKR): 📈 Histórico semanal redesenhado (mais informação, UI/UX e design)
 
