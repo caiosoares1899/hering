@@ -20640,6 +20640,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v4.1 · painel — 2026-10-06 · Promove pra prod — painel v4 (lote OKR: menu de ações, ajustes de gráfico, help)
+
+Promoção do lote acumulado de `painel-dev.html` desde a v3.110 (prod anterior): **v3.111** menu de contexto (clique direito) nos Objetivos e nos Marcos — registrar atingimento (modal rápido), status do Marco,
+tags, mover, duplicar, arquivar (só ADM), copiar link, com atalhos de teclado e gravação por transação; **v3.112** o botão Registrar do modal rápido não lança o mesmo registro duas vezes (duplo clique / Enter repetido);
+**v3.113** sem o botão ⋯ (o menu abre pelo clique direito) + Ajuda do OKR atualizada (ordem, tags, filtro por tag, ← Anterior, texto que rola na apresentação); **v4.0** marco de versão; **v4.1** gráfico de evolução:
+a linha "início" virou "valor inicial" e some quando é 0. A promoção usou merge de 3 vias com o dev da v3.110 como base; a diferença entre o prod novo e o antigo é exatamente a diferença do dev no período (só a linha de versão difere
+do dev). Mural: rascunho `seed_okr_v4_2026_10_06`. Smoke test no `painel.html` real (menu 36/37 — o 37º é só o URL esperado pelo teste —, duplo clique, gráfico 17/17, "valor inicial").
+
 ### painel-dev.html v4.1 · painel-dev — 2026-10-06 · fix(OKR): gráfico de evolução — a linha "início" virou "valor inicial" (e some quando é 0)
 
 Relato do usuário (print do gráfico): a linha pontilhada rotulada **"início"** parecia o começo do período, e a primeira bolinha (14/09, acima da linha) parecia "não ser o início". Na verdade era o **valor
