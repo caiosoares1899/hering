@@ -739,7 +739,10 @@ function _okrAtualizaFiltroTag(){
   const ids = Object.keys(uso).sort((a,b)=>String(okrTags[a].label||'').localeCompare(String(okrTags[b].label||'')));
   const sel = document.getElementById('tb-tag'), box = document.getElementById('tb-filter');
   if(!sel || !box) return;
-  sel.innerHTML = '<option value="">🏷️ Todas as tags</option>' + ids.map(id=>`<option value="${esc(id)}">🏷️ ${esc(okrTags[id].label||'')} (${uso[id]})</option>`).join('');
+  // Só reescreve as opções quando o conteúdo mudou: rebuild() roda a cada atualização ao vivo do Firebase (a equipe editando o painel durante a
+  // reunião), e trocar o innerHTML com o dropdown aberto fecha ele no meio da escolha (/monitorarbugs 2026-10-06).
+  const html = '<option value="">🏷️ Todas as tags</option>' + ids.map(id=>`<option value="${esc(id)}">🏷️ ${esc(okrTags[id].label||'')} (${uso[id]})</option>`).join('');
+  if(sel.dataset.sig !== html){ sel.innerHTML = html; sel.dataset.sig = html; }
   sel.value = _okrFiltroTag;
   sel.classList.toggle('on', !!_okrFiltroTag);
   box.hidden = !ids.length;

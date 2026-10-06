@@ -20043,6 +20043,14 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 (5ª) · fix(/monitorarbugs): filtro por tag fechava o dropdown em atualização ao vivo
+
+Auditoria do filtro por tag/botão Anterior feitos minutos antes. `rebuild()` roda a cada atualização ao vivo do Firebase (a equipe
+editando o painel durante a reunião) e `_okrAtualizaFiltroTag()` reescrevia o `innerHTML` do `<select>` toda vez — com o dropdown aberto,
+ele fechava no meio da escolha. Reproduzido no Chromium (o `<option>` era um nó novo a cada rebuild). Agora só reescreve quando as opções
+mudam de verdade (assinatura do conteúdo); contagem nova ainda atualiza. Checado também: barra superior não estoura a largura em
+1366 e 1024 px com o filtro. Sem versão própria (vale no deploy).
+
 ### 2026-10-06 (4ª) · feat: botão "← Anterior" no detalhe do Objetivo + filtro por tag na barra
 
 Pedido direto (manhã da reunião de OKR): alguém vai pegar alguns Objetivos desta apresentação pra preencher outra, e vão ser marcados com
