@@ -20613,6 +20613,21 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.111 · painel-dev — 2026-10-06 · feat(OKR): menu de contexto (clique direito / ⋯) nos Objetivos e nos Marcos
+
+Pedido direto ("um menu de contexto nessa página de OKR"): quase tudo num cartão exigia abrir o modal. Agora **clique direito** no cartão de Objetivo — ou o novo
+botão **⋯** (ao lado do 👁; serve pro toque/tablet) — abre um menu:
+- **Objetivo**: 📂 Abrir · 📈 Registrar atingimento… (modal rápido: data, valor, nota, com prévia do % que vai ficar) · 📊 Ver evolução · 👁 Ver na apresentação ·
+  🏷️ Tags ▸ (marca/desmarca na hora, ✓ nas aplicadas) · ⬆⬇ Mover · ⧉ Duplicar · 📦 Arquivar/♻️ Desarquivar (só ADM) · 🔗 Copiar link (`?okr=<id>`).
+- **Marco** (dentro do Objetivo, clique direito ou ⋯ na linha): 📂 Abrir · 🚦 Status ▸ · 🎬 Mostrar/Ocultar na apresentação · ⬆⬇ Mover · 📦 Arquivar.
+- Cada item mostra a **tecla de atalho** (R, E, P, T, D, A, L…); ↑↓ navegam, → abre submenu, Enter executa, Esc fecha. Itens sem permissão ficam apagados (mesmas regras do modal);
+  **Excluir fica de fora de propósito**. Tag, status, apresentação e registro gravam **por transação** (não pisam em registro lançado por outra pessoa nem no rascunho de um modal
+  aberto) e entram no Histórico do Objetivo, como no Salvar; registrar atingimento e mudar status avisam os Responsáveis como o Salvar faz.
+- Bugs achados pelos testes antes de entregar: "clicar fora" fechava o menu no `mousedown` mesmo dentro dele (clique de mouse nos itens não executava); um `scroll` espúrio do corpo do
+  modal fechava o menu do Marco logo ao abrir.
+- Ajuda do OKR ganhou o bloco "⋯ Menu de ações". 37 cenários no Chromium (menu, teclado, permissões, atingimento financeiro/binário/perene, tags, mover com filtro, Marco, XSS por nome/id de tag).
+  Só dev; o prod espera validação.
+
 ### painel.html v3.110 · painel — 2026-10-06 · Promove pra prod — fix de segurança no seletor de tags do OKR
 
 Promoção do painel-dev v3.110 sobre o prod v3.109 (merge de 3 vias; só a linha de versão conflitou). Única mudança: o seletor de tags do ⚙ Configurações
