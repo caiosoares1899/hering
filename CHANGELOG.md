@@ -20653,6 +20653,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.7 · painel-dev — 2026-10-06 · fix(OKR): gráfico da janela do Progresso médio menos confuso (Destaques, destaque por hover, mini-gráficos)
+
+Feedback direto (print com 25 linhas coloridas, "tá muito confuso, pensa melhor"): com muitos Objetivos, 1 linha colorida por Objetivo vira um emaranhado. Agora o padrão é **⭐ Destaques**: a **média numa linha branca grossa**, os **3 Objetivos que mais subiram (verde) e os 3 que mais caíram (vermelho)** com o nome e o valor no fim da linha
+(rótulos sem sobreposição), e **todos os demais em cinza de fundo**; há também linhas verticais por snapshot. **Passar o mouse** numa linha, **num chip** ou **numa linha da tabela** destaca só aquele Objetivo (cor, espessura e nome no gráfico) e esmaece o resto.
+Novos modos nos chips "Linhas do gráfico": **Todas coloridas** (o desenho antigo), **Por gerência**, **Só a média** (com a faixa mín–máx) e **📊 Mini-gráficos** — um cartão por Objetivo, com a linha dele, a média tracejada ao fundo e a variação no período, ordenados do que mais caiu pro que mais subiu.
+Ajuda e CODE_MAP atualizados. 35 cenários no Chromium (Destaques, hover em chip/tabela/linha, mini-gráficos, modos, filtros, recálculo, teclado, XSS). Só dev.
+
 ### painel-dev.html v4.6 · painel-dev — 2026-10-06 · feat(OKR): janela do Progresso médio maior, com chips e gráfico de linhas (cada Objetivo + a média)
 
 Pedido direto sobre a janela do v4.5 ("tá pequena", "no estilo do Dados do Board, chips de filtros", "gráfico de linha com cada Objetivo e a média no meio", "média em destaque + chips pra personalizar a visão"):
