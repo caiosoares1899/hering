@@ -20670,6 +20670,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.8 · painel-dev — 2026-10-06 · feat(OKR): Histórico com duas abas — 🎯 Atingimento (padrão) e 🏁 Marcos
+
+Pergunta direta ("como você calculou esse progresso? é com base no atingimento?"). Resposta: o `% de progresso` do snapshot semanal era **misto** — o mesmo da barra do cartão: **atingimento quando o Objetivo tem meta, senão % de Marcos concluídos** (`progressoDoObjetivo()` em `weeklySnapshot.js`) —, então a média misturava
+2 réguas e um Objetivo que passava a ter meta "caía/subia" de repente na curva (ex.: −75 pp na semana em que a origem do número mudou). Agora o Histórico tem **duas abas**: **🎯 Atingimento** (padrão: só Objetivos com 📈 meta configurada; o ♾️ perene fica de fora) e **🏁 Marcos** (marcosConcluidos ÷ totalMarcos; sem Marcos, fora).
+Indicadores, gráfico, "O que mudou", tabela por Objetivo, detalhe semanal e a janela do progresso médio **seguem a aba**, e cada aba mostra quantos Objetivos tem. Na aba Atingimento vale o `atingimentoPct` gravado no snapshot; se o snapshot é de antes do atingimento existir, a curva é **reconstruída pelos registros de valor** (data ≤ data do snapshot) do Objetivo
+atual — assim já nasce com histórico. Sem dados na aba: estado vazio explicando e botão "Ver por Marcos". Nenhum campo novo no snapshot (nenhum deploy de Cloud Function). Ajuda e CODE_MAP atualizados. 12 cenários novos no Chromium (contagem nas abas, filtro por visão, reconstrução, valor gravado × reconstruído, média de Marcos, janela acompanhando a aba, estado vazio) + as suítes anteriores (17, 35, 42). Só dev.
+
 ### painel-dev.html v4.7 · painel-dev — 2026-10-06 · fix(OKR): gráfico da janela do Progresso médio menos confuso (Destaques, destaque por hover, mini-gráficos)
 
 Feedback direto (print com 25 linhas coloridas, "tá muito confuso, pensa melhor"): com muitos Objetivos, 1 linha colorida por Objetivo vira um emaranhado. Agora o padrão é **⭐ Destaques**: a **média numa linha branca grossa**, os **3 Objetivos que mais subiram (verde) e os 3 que mais caíram (vermelho)** com o nome e o valor no fim da linha
