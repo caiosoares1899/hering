@@ -20653,6 +20653,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.6 · painel-dev — 2026-10-06 · feat(OKR): janela do Progresso médio maior, com chips e gráfico de linhas (cada Objetivo + a média)
+
+Pedido direto sobre a janela do v4.5 ("tá pequena", "no estilo do Dados do Board, chips de filtros", "gráfico de linha com cada Objetivo e a média no meio", "média em destaque + chips pra personalizar a visão"):
+- **Janela grande** (até 1400px, 97% da tela) e reorganizada: **média em destaque** (número grande, variação vs. semana anterior com os mesmos Objetivos) + caixas **"Mais puxam a média pra baixo"** e **"Mais sustentam a média"**.
+- **Chips de visão**: ⏱ período (4/8/12 sem/Tudo — o mesmo do Histórico), 📈 linhas do gráfico (**Por Objetivo / Por gerência / Só a média**, esta com a **faixa do menor ao maior**), 🚦 **status** do Objetivo e 🏢 **gerência**; "limpar filtros".
+- **Gráfico de linhas**: uma linha por Objetivo na conta (cor própria, que aparece também num tracinho no chip dele) e a **média como linha grossa em destaque no meio delas**, com rótulo "média N%" no fim; passar o mouse destaca a linha mais próxima e mostra data, Objetivo, valor e média.
+- **Objetivos como chips** agrupados por gerência (com média da gerência e "todos/nenhum"), no lugar da lista com checkbox: clicar tira da conta e **tudo recalcula** (média, gráfico, indicador e tabela). A tabela "Contribuição de cada Objetivo" (contribui, efeito se sair, Δ semana, marcos) continua abaixo.
+- Ajuda, CODE_MAP atualizados. 30 cenários no Chromium (chips, linhas, modos, status, período, hover, teclado, XSS, persistência). Só dev.
+
 ### painel-dev.html v4.5 · painel-dev — 2026-10-06 · feat(OKR): Histórico — clique no "Progresso médio" mostra a contribuição de cada Objetivo (com filtro de gerência e simulação)
 
 Pedido direto: ao clicar no indicador **Progresso médio** do 📈 Histórico, abre a janela **🧮 Como cada Objetivo contribui para o progresso médio**, sobre o último snapshot:
