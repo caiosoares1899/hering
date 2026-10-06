@@ -348,6 +348,23 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    card — sempre visível, qualquer um pode conferir como ficou. */
 .okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
 .okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
+/* ⋯ Menu de contexto da aba OKR (v3.111) */
+.okr-ctx{position:fixed;z-index:9100;min-width:236px;max-width:320px;padding:5px;border-radius:11px;background:rgba(var(--ink-rgb),.97);border:1px solid var(--glass-b);box-shadow:0 12px 36px rgba(0,0,0,.45);backdrop-filter:blur(10px);font-size:12.5px;color:var(--txt);}
+.okr-ctx-item{position:relative;user-select:none;}
+.okr-ctx-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;}
+.okr-ctx-item:hover>.okr-ctx-row,.okr-ctx-item.foco>.okr-ctx-row{background:rgba(var(--okr-focus-rgb),.16);}
+.okr-ctx-item.off>.okr-ctx-row{opacity:.38;cursor:default;}
+.okr-ctx-item.off:hover>.okr-ctx-row{background:none;}
+.okr-ctx-item.danger>.okr-ctx-row{color:var(--danger);}
+.okr-ctx-ico{width:18px;text-align:center;flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;}
+.okr-ctx-lbl{flex:1;overflow:hidden;text-overflow:ellipsis;}
+.okr-ctx-key{font:inherit;font-size:10px;color:var(--txt3);border:1px solid var(--glass-b);border-radius:4px;padding:0 5px;min-width:16px;text-align:center;}
+.okr-ctx-arrow{color:var(--txt3);font-size:11px;}
+.okr-ctx-sep{height:1px;background:var(--glass-b);margin:4px 3px;}
+.okr-ctx-sub{display:none;position:absolute;left:calc(100% + 4px);top:-6px;min-width:200px;padding:5px;border-radius:11px;background:rgba(var(--ink-rgb),.98);border:1px solid var(--glass-b);box-shadow:0 12px 36px rgba(0,0,0,.45);}
+.okr-ctx-sub.flip{left:auto;right:calc(100% + 4px);}
+.okr-ctx-item.has-sub:hover>.okr-ctx-sub,.okr-ctx-item.has-sub.open>.okr-ctx-sub{display:block;}
+.okr-ctx-item.has-sub.off:hover>.okr-ctx-sub{display:none;}
 .okr-char-counter{font-size:10px;text-align:right;color:var(--txt3);}
 /* ── Auditoria de UI/UX da aba OKR (pedido direto: "faça uma analise de
    UI/UX e melhore") ──
@@ -2606,11 +2623,19 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">↕️ Reordenar Objetivos e Marcos</b><br>
-          Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada.
+          Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).
         </div>
         <div>
           <b style="color:var(--txt);">📦 Arquivar × 🗑 Excluir</b><br>
           <b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.
+        </div>
+        <div>
+          <b style="color:var(--txt);">🖱 Menu de ações (clique direito)</b><br>
+          Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo:
+          <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas),
+          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> (só ADM) e <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
+          Cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); dá pra navegar com <b>↑ ↓</b>, abrir submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).
+          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>Excluir</b> não está no menu de propósito — continua só dentro do Objetivo.
         </div>
         <div>
           <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
@@ -2627,6 +2652,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <div>
           <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
           Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, setas/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe. Cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Painel) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso. A barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.
+          <ul style="margin:6px 0 0;padding-left:18px;">
+            <li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no painel (dentro de cada gerência) — sem ordem manual, vai por título.</li>
+            <li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li>
+            <li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último.</li>
+            <li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li>
+            <li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no painel) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li>
+          </ul>
         </div>
         <div>
           <b style="color:var(--txt);">💬 Central Agente Ágil</b><br>
@@ -3125,6 +3157,21 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
+<!-- 📈 Registrar atingimento (rápido) — aberto pelo menu de contexto do cartão do Objetivo; só pede data, valor e nota. -->
+<div class="pc-modal-ov" id="okr-aq-ov" style="z-index:235;" onclick="if(event.target===this) _okrAtingQuickClose()">
+  <div class="pc-modal" style="width:min(420px,94vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title" id="okr-aq-title">📈 Registrar atingimento</div>
+      <button class="x-btn" onclick="_okrAtingQuickClose()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-aq-body"></div>
+    <div class="pc-footer" style="display:flex;justify-content:flex-end;gap:8px;">
+      <button type="button" class="btn btn-sm" onclick="_okrAtingQuickClose()">Cancelar</button>
+      <button type="button" class="btn btn-sm" id="okr-aq-ok" onclick="_okrAtingQuickSalvar()" style="background:var(--accent);color:#031a2e;font-weight:700;">Registrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- 📈 Evolução do atingimento (gráfico com data e valor) — aberto pelo emoji do tipo no cartão do Objetivo ou pelo botão do modal; fica por cima do modal do Objetivo. -->
 <div class="pc-modal-ov" id="okr-ating-chart-ov" style="z-index:230;" onclick="if(event.target===this) closeOkrAtingChart()">
   <div class="pc-modal" style="width:min(640px,94vw);">
@@ -3166,7 +3213,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.110 · painel</div>
+<div class="version">v4.1 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6122,6 +6169,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
   <div class="okr-card${souResponsavel?' okr-mine':''}"
     draggable="${podeReordenar?'true':'false'}"
     ${podeReordenar?`ondragstart="_okrObjDragStart(event,${jsq(o.id)})" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,${jsq(areaId)},${jsq(o.id)})" ondragend="_okrObjDragEnd(event)"`:''}
+    oncontextmenu="return _okrCtxObjEv(event,${jsq(o.id)})"
     onclick="openOkrObjetivo(${jsq(o.id)})">
     <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao(${jsq(o.id)})" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
     ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:28px;">
@@ -6143,6 +6191,316 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     <div class="okr-progress-track"><div class="okr-progress-fill" style="width:${pct}%;background:${okrStatusInfo(status).dot};" title="${viaAting!==null?pct+'% de atingimento':pct+'% dos marcos concluídos'}"></div></div>
   </div>`;
 }
+
+// ═══ ⋯ Menu de contexto da aba OKR (painel-dev v3.111) ═══
+// Clique direito num cartão de Objetivo ou numa linha de Marco abre um menu com as ações mais usadas, sem abrir o modal.
+// Itens com tecla de atalho (R, E, P, T...), setas ↑↓ ←→ + Enter, Esc fecha. Edições rápidas escrevem por TRANSAÇÃO no nó do Objetivo/Marco
+// (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo fica de fora de propósito.
+let _okrCtxState = null;   // {root, items, trigger}
+// Escreve `mutate(n)` no nó por transação. `mutate` recebe uma CÓPIA e devolve false pra abortar. Devolve o valor gravado ou null (abortou/sumiu).
+async function _okrTx(path, mutate){
+  let out = null;
+  const r = await window._runTransaction(window._ref(window._db, path), cur=>{
+    out = null;
+    if(cur==null) return cur;                      // sem cache local ainda: devolver o mesmo valor faz o SDK repetir com o dado do servidor
+    const n = JSON.parse(JSON.stringify(cur));     // clone sem `undefined` (o Firebase recusa a gravação inteira com um só)
+    if(mutate(n)===false) return;                  // aborta
+    out = n; return n;
+  });
+  return (r && r.committed) ? out : null;
+}
+function _okrCtxClose(){
+  if(!_okrCtxState) return;
+  _okrCtxState.root.remove(); _okrCtxState = null;
+}
+function _okrCtxHtml(items, path){
+  return items.map((it,i)=>{
+    if(it.sep) return '<div class="okr-ctx-sep"></div>';
+    const p = path.concat(i).join('.');
+    const cls = 'okr-ctx-item'+(it.disabled?' off':'')+(it.danger?' danger':'')+(it.sub?' has-sub':'');
+    return `<div class="${cls}" role="menuitem" tabindex="-1" data-p="${p}"${it.title?` title="${esc(it.title)}"`:''}>
+      <div class="okr-ctx-row"><span class="okr-ctx-ico">${it.ico||''}</span><span class="okr-ctx-lbl">${esc(it.label)}</span>
+      ${it.key?`<kbd class="okr-ctx-key">${esc(it.key)}</kbd>`:''}${it.on?'<span class="okr-ctx-arrow" style="color:var(--accent);">✓</span>':''}${it.sub?'<span class="okr-ctx-arrow">▸</span>':''}</div>
+      ${it.sub?`<div class="okr-ctx-sub" role="menu">${_okrCtxHtml(it.sub, path.concat(i))}</div>`:''}</div>`;
+  }).join('');
+}
+function _okrCtxItem(p){
+  let list = _okrCtxState && _okrCtxState.items, it = null;
+  String(p).split('.').forEach(i=>{ it = list && list[Number(i)]; list = it && it.sub; });
+  return it;
+}
+function _okrCtxFitSub(item){
+  const sub = item && item.querySelector(':scope > .okr-ctx-sub'); if(!sub) return;
+  sub.classList.remove('flip'); sub.style.top = '';
+  const r = sub.getBoundingClientRect();
+  if(r.right > innerWidth-8) sub.classList.add('flip');
+  const r2 = sub.getBoundingClientRect();
+  if(r2.bottom > innerHeight-8) sub.style.top = (-6 - (r2.bottom-(innerHeight-8)))+'px';
+}
+function _okrCtxOpen(items, x, y, trigger){
+  _okrCtxClose();
+  if(!items || !items.length) return;
+  const root = document.createElement('div');
+  root.className = 'okr-ctx'; root.id = 'okr-ctx'; root.setAttribute('role','menu');
+  root.innerHTML = _okrCtxHtml(items, []);
+  document.body.appendChild(root);
+  _okrCtxState = {root, items, trigger: trigger||null, t0: Date.now()};
+  const r = root.getBoundingClientRect();
+  root.style.left = Math.max(8, Math.min(x, innerWidth-r.width-8))+'px';
+  root.style.top  = Math.max(8, Math.min(y, innerHeight-r.height-8))+'px';
+  root.addEventListener('mousedown', e=>e.stopPropagation());
+  root.addEventListener('contextmenu', e=>e.preventDefault());
+  root.addEventListener('mouseover', e=>{
+    const el = e.target.closest('.okr-ctx-item'); if(!el) return;
+    root.querySelectorAll('.okr-ctx-item.foco').forEach(f=>f.classList.remove('foco'));
+    if(!el.classList.contains('off')) el.classList.add('foco');
+    if(el.classList.contains('has-sub')) _okrCtxFitSub(el);
+  });
+  root.addEventListener('click', e=>{
+    const el = e.target.closest('.okr-ctx-item'); if(!el) return;
+    e.stopPropagation(); _okrCtxActivate(el);
+  });
+}
+function _okrCtxActivate(el){
+  if(!el || el.classList.contains('off')) return;
+  const it = _okrCtxItem(el.dataset.p); if(!it) return;
+  if(it.sub){ el.classList.add('open'); _okrCtxFitSub(el); const f = el.querySelector(':scope > .okr-ctx-sub > .okr-ctx-item:not(.off)'); if(f){ _okrCtxState.root.querySelectorAll('.foco').forEach(x=>x.classList.remove('foco')); f.classList.add('foco'); } return; }
+  _okrCtxClose();
+  try{ const r = it.run && it.run(); if(r && r.catch) r.catch(err=>{ console.error('[okr-ctx]', err); showToast('⚠ Não consegui concluir a ação: '+((err&&err.message)||'erro')); }); }
+  catch(err){ console.error('[okr-ctx]', err); showToast('⚠ Não consegui concluir a ação: '+((err&&err.message)||'erro')); }
+}
+// Teclado enquanto o menu está aberto (captura: ganha dos atalhos da página e do modal por baixo).
+document.addEventListener('keydown', e=>{
+  if(!_okrCtxState) return;
+  const root = _okrCtxState.root, k = e.key;
+  const cur = root.querySelector('.okr-ctx-item.foco');
+  const level = cur ? cur.parentElement : root;
+  const irmaos = ()=>[...level.children].filter(c=>c.classList.contains('okr-ctx-item') && !c.classList.contains('off'));
+  const foca = el=>{ root.querySelectorAll('.okr-ctx-item.foco').forEach(f=>f.classList.remove('foco')); if(el) el.classList.add('foco'); };
+  const parar = ()=>{ e.preventDefault(); e.stopPropagation(); };
+  if(k==='Escape'){ parar(); if(cur && level!==root){ const pai = level.parentElement; pai.classList.remove('open'); foca(pai); } else _okrCtxClose(); return; }
+  if(k==='Tab'){ _okrCtxClose(); return; }
+  if(k==='ArrowDown' || k==='ArrowUp'){
+    parar(); const l = irmaos(); if(!l.length) return;
+    const i = cur ? l.indexOf(cur) : -1;
+    foca(l[k==='ArrowDown' ? (i+1)%l.length : (i<=0 ? l.length-1 : i-1)]); return;
+  }
+  if(k==='ArrowRight'){ parar(); if(cur && cur.classList.contains('has-sub')) _okrCtxActivate(cur); else if(!cur){ const l = irmaos(); if(l[0]) foca(l[0]); } return; }
+  if(k==='ArrowLeft'){ parar(); if(cur && level!==root){ const pai = level.parentElement; pai.classList.remove('open'); foca(pai); } return; }
+  if(k==='Enter' || k===' '){
+    parar();
+    if(cur) return _okrCtxActivate(cur);
+    const padrao = [...root.children].find(c=>c.classList.contains('okr-ctx-item') && !c.classList.contains('off') && (_okrCtxItem(c.dataset.p)||{}).key==='↵');
+    if(padrao) _okrCtxActivate(padrao); return;
+  }
+  if(k.length===1 && !e.ctrlKey && !e.metaKey && !e.altKey){
+    const l = irmaos().filter(c=>String((_okrCtxItem(c.dataset.p)||{}).key||'').toLowerCase()===k.toLowerCase());
+    if(l[0]){ parar(); _okrCtxActivate(l[0]); }
+  }
+}, true);
+// Fecha ao clicar fora, rolar, redimensionar ou trocar de janela.
+document.addEventListener('mousedown', e=>{ if(_okrCtxState && !e.target.closest('.okr-ctx')) _okrCtxClose(); }, true);
+// (rolagem nos primeiros 300 ms é ignorada: o corpo do modal do Objetivo dispara um `scroll` espúrio logo depois de abrir o menu, o que o fechava na hora)
+document.addEventListener('scroll', e=>{ if(_okrCtxState && Date.now()-_okrCtxState.t0>300 && !(e.target && e.target.closest && e.target.closest('.okr-ctx'))) _okrCtxClose(); }, true);
+window.addEventListener('resize', _okrCtxClose);
+window.addEventListener('blur', _okrCtxClose);
+
+// ── Quem dispara ──
+function _okrCtxObjEv(ev, id){ ev.preventDefault(); ev.stopPropagation(); _okrCtxOpen(_okrCtxObjItems(id), ev.clientX, ev.clientY, null); return false; }
+function _okrCtxMarcoEv(ev, id){ ev.preventDefault(); ev.stopPropagation(); _okrCtxOpen(_okrCtxMarcoItems(id), ev.clientX, ev.clientY, null); return false; }
+
+// ── Itens ──
+function _okrCtxTagDot(t){ const p = _okrTagCor(t); return `<span style="width:9px;height:9px;border-radius:50%;background:${p.c};display:inline-block;"></span>`; }
+function _okrCtxObjItems(id){
+  const o = okrObjetivos[id]; if(!o) return [];
+  const pode = _okrCanEdit(o), arq = !!o.arquivado;
+  const at = o.atingimento, cfg = _okrAtingConfigurado(at), perene = cfg && at.tipo==='perene';
+  const area = o.areaId||'geral';
+  const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(x=>x && !x.arquivado && (x.areaId||'geral')===area));
+  const idx = lista.findIndex(x=>x.id===id);
+  const reord = _okrCanCreate() && !_okrShowArquivados && !_okrTemFiltroAtivo() && idx>=0;
+  const tagIds = Object.keys(okrTags).filter(t=>okrTags[t]).sort((a,b)=>String(okrTags[a].label||'').localeCompare(String(okrTags[b].label||'')));
+  const aplicadas = o.tagIds||[];
+  const motivoReg = !pode ? 'Só quem edita este Objetivo registra atingimento.' : (arq ? 'Objetivo arquivado.' : (!cfg ? 'Configure o atingimento do Objetivo primeiro (⚙ Configurações → 📈).' : (perene ? 'Perene acompanha pelos marcos, sem registros de valor.' : '')));
+  const it = [
+    {ico:'📂', label:'Abrir', key:'↵', run:()=>openOkrObjetivo(id)},
+    {sep:true},
+    {ico:'📈', label:'Registrar atingimento…', key:'R', disabled:!!motivoReg, title:motivoReg, run:()=>_okrAtingQuickOpen(id)},
+    {ico:'📊', label:'Ver evolução', key:'E', disabled:!(cfg&&!perene), title:(cfg&&!perene)?'':'Este Objetivo não tem atingimento com registros.', run:()=>openOkrAtingChart(id)},
+    {ico:'👁', label:'Ver na apresentação', key:'P', run:()=>_okrPreviewApresentacao(id)},
+    {sep:true},
+    {ico:'🏷️', label:'Tags', key:'T', disabled:!pode||!tagIds.length, title:!pode?'Só quem edita este Objetivo muda as tags.':(!tagIds.length?'Ainda não há tags (crie em ⚙ Configurações → Tags).':''),
+      sub: tagIds.map(t=>({ico:_okrCtxTagDot(okrTags[t]), label:okrTags[t].label||'(sem nome)', on:aplicadas.includes(t), run:()=>_okrCtxTagToggle(id,t)}))},
+    {sep:true},
+    {ico:'⬆', label:'Mover pra cima', disabled:!reord||idx<=0, title:reord?'':'Reordenar só vale na lista completa (sem filtros), para quem cria Objetivos.', run:()=>_okrObjMover(area,id,-1)},
+    {ico:'⬇', label:'Mover pra baixo', disabled:!reord||idx>=lista.length-1, run:()=>_okrObjMover(area,id,1)},
+    {sep:true},
+    {ico:'⧉', label:'Duplicar', key:'D', disabled:!pode, title:pode?'':'Só quem edita este Objetivo duplica.', run:()=>_okrDuplicarObjetivo(id)},
+  ];
+  if(_isAdmPainel()) it.push(arq ? {ico:'♻️', label:'Desarquivar', key:'A', run:()=>_okrDesarquivarObjetivo(id)}
+                                 : {ico:'📦', label:'Arquivar', key:'A', danger:true, run:()=>_okrArquivarObjetivo(id)});
+  it.push({sep:true}, {ico:'🔗', label:'Copiar link do Objetivo', key:'L', run:()=>_okrCtxCopiarLink(id)});
+  return it;
+}
+function _okrCtxMarcoItems(marcoId){
+  const m = okrMarcos[marcoId]; if(!m) return [];
+  const objId = m.objetivoId, obj = okrObjetivos[objId] || {};
+  const pode = _okrCanEdit(obj), atual = m.progresso||'nao_iniciado';
+  const lista = _okrMarcosSorted(objId), idx = lista.findIndex(x=>x.id===marcoId);
+  const visivel = m.mostrarApresentacao!==false;
+  const so = pode ? '' : 'Só quem edita este Objetivo muda os marcos.';
+  return [
+    {ico:'📂', label:'Abrir', key:'↵', run:()=>openOkrMarco(marcoId, objId)},
+    {sep:true},
+    {ico:'🚦', label:'Status', key:'S', disabled:!pode, title:so,
+      sub: OKR_STATUS.map(s=>({ico:okrStatusDot(s.id), label:s.label, on:s.id===atual, run:()=>_okrCtxMarcoStatus(marcoId, s.id)}))},
+    {ico:'🎬', label:visivel?'Ocultar na apresentação':'Mostrar na apresentação', key:'P', disabled:!pode, title:so, run:()=>_okrCtxMarcoApresentacao(marcoId)},
+    {sep:true},
+    {ico:'⬆', label:'Mover pra cima', disabled:!pode||idx<=0, run:()=>{ _okrSyncObjDraftFromDom(); return _okrMarcoMover(objId, marcoId, -1); }},
+    {ico:'⬇', label:'Mover pra baixo', disabled:!pode||idx<0||idx>=lista.length-1, run:()=>{ _okrSyncObjDraftFromDom(); return _okrMarcoMover(objId, marcoId, 1); }},
+    {sep:true},
+    {ico:'📦', label:'Arquivar', key:'A', danger:true, disabled:!pode, title:so, run:()=>_okrArquivarMarco(marcoId)},
+  ];
+}
+
+// ── Ações ──
+function _okrCtxCopiarLink(id){
+  const url = location.origin + location.pathname + '?okr=' + encodeURIComponent(id);
+  const ok = ()=>showToast('🔗 Link do Objetivo copiado.');
+  const fallback = ()=>{ const t=document.createElement('textarea'); t.value=url; t.style.cssText='position:fixed;opacity:0;'; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); ok(); }catch(e){ showToast('Copie manualmente: '+url); } t.remove(); };
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(ok, fallback); else fallback();
+}
+function _okrCtxStamp(n){ n.atualizadoEm = new Date().toISOString(); n.atualizadoPor = _okrHistWho(); }
+// Empurra um resumo no history[] do Objetivo PAI (mesma regra de saveOkrMarco()/_okrArquivarMarco()) por transação e sincroniza o rascunho aberto.
+async function _okrCtxResumoNoObjetivo(objId, texto){
+  if(!objId || !okrObjetivos[objId]) return;
+  const out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{ _okrRecordHistory(n, texto, 'marco'); });
+  if(out){ okrObjetivos[objId] = out; _okrSyncObjDraftHistory(objId, out.history); }
+}
+async function _okrCtxTagToggle(objId, tagId){
+  const o = okrObjetivos[objId]; if(!o || !_okrCanEdit(o)) return;
+  const label = (okrTags[tagId]||{}).label || '?'; let aplicou = false;
+  const out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{
+    const tags = Array.isArray(n.tagIds) ? n.tagIds.slice() : [], i = tags.indexOf(tagId);
+    if(i>=0){ tags.splice(i,1); aplicou = false; } else { tags.push(tagId); aplicou = true; }
+    n.tagIds = tags; _okrRecordHistory(n, `${aplicou?'aplicou':'removeu'} a tag "${label}"`, 'tag'); _okrCtxStamp(n);
+  });
+  if(!out){ showToast('⚠ Não consegui mudar a tag (o Objetivo mudou ou sumiu). Tente de novo.'); return; }
+  okrObjetivos[objId] = out; renderOkrObjetivos();
+  showToast(`🏷️ Tag "${label}" ${aplicou?'aplicada':'removida'}.`);
+}
+async function _okrCtxMarcoStatus(marcoId, novo){
+  const m = okrMarcos[marcoId]; if(!m) return;
+  const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
+  let resumo = '';
+  const out = await _okrTx('kanban/okr/marcos/'+marcoId, n=>{
+    const antes = JSON.parse(JSON.stringify(n)), de = n.progresso||'nao_iniciado';
+    if(de===novo) return false;
+    n.progresso = novo; _okrHistDiffMarco(n, antes); _okrCtxStamp(n);
+    resumo = `marco "${n.nome||'?'}": progresso mudou de ${okrStatusInfo(de).label} para ${okrStatusInfo(novo).label}`;
+  });
+  if(!out){ showToast('Esse marco já está com esse status.'); return; }
+  okrMarcos[marcoId] = out;
+  await _okrCtxResumoNoObjetivo(m.objetivoId, resumo);
+  await _okrNotifyEditado(m.objetivoId);
+  _okrCtxRefazTela(); showToast('🚦 Status do marco: '+okrStatusInfo(novo).label+'.');
+}
+async function _okrCtxMarcoApresentacao(marcoId){
+  const m = okrMarcos[marcoId]; if(!m) return;
+  const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
+  let agora = true, nome = m.nome||'?';
+  const out = await _okrTx('kanban/okr/marcos/'+marcoId, n=>{
+    agora = (n.mostrarApresentacao===false); n.mostrarApresentacao = agora; nome = n.nome||'?';
+    _okrRecordHistory(n, agora ? 'passou a aparecer na apresentação' : 'deixou de aparecer na apresentação', 'campo'); _okrCtxStamp(n);
+  });
+  if(!out){ showToast('⚠ Não consegui mudar o marco (ele mudou ou sumiu). Tente de novo.'); return; }
+  okrMarcos[marcoId] = out;
+  await _okrCtxResumoNoObjetivo(m.objetivoId, `marco "${nome}": ${agora?'passou a aparecer':'deixou de aparecer'} na apresentação`);
+  _okrCtxRefazTela(); showToast(agora ? '🎬 Marco aparece na apresentação.' : '🎬 Marco oculto na apresentação.');
+}
+// Redesenha o que estiver na tela depois de uma edição rápida (a lista de Objetivos por trás e o modal aberto, sem perder o que foi digitado nele).
+function _okrCtxRefazTela(){
+  try{ renderOkrObjetivos(); }catch(e){}
+  try{ if(_okrObjDraft && _okrEditingObjId){ _okrSyncObjDraftFromDom(); _okrRerenderCurrentScreen(); } }catch(e){}
+}
+
+// ── 📈 Registrar atingimento (modal pequeno, a partir do menu) ──
+let _okrAQ = null;   // {objId}
+function _okrAtingQuickOpen(objId){
+  const o = okrObjetivos[objId]; if(!o) return;
+  const at = o.atingimento;
+  if(!_okrAtingConfigurado(at) || at.tipo==='perene' || !_okrCanEdit(o)){ showToast('Este Objetivo não aceita registro de atingimento por aqui.'); return; }
+  _okrAQ = {objId}; const t = at.tipo, un = _okrAtingUnidade(at), sym = (OKR_ATING_MOEDAS[un]||{}).sym||'';
+  const atual = _okrAtingAtual(at);
+  document.getElementById('okr-aq-title').textContent = _okrAtingTipoIco(t)+' Registrar atingimento';
+  const campo = (r,c)=>`<div class="okr-ating-f"><label class="okr-ating-lbl">${r}</label>${c}</div>`;
+  let valor = '';
+  if(t==='binario') valor = campo('Resultado', `<label class="okr-ating-chk"><input type="checkbox" id="okr-aq-atingido" oninput="_okrAtingQuickPrev()"> ✅ Meta atingida</label>`);
+  else if(t!=='data') valor = campo('Valor atual', `<div class="okr-ating-num"><input type="text" inputmode="decimal" class="okr-input" id="okr-aq-valor" placeholder="${t==='acima'||t==='abaixo'?'Valor medido':'Ex.: 48000'}" oninput="_okrAtingQuickPrev()" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrAtingQuickSalvar();}">${sym?`<span class="okr-ating-sym">${esc(sym)}</span>`:''}</div>`);
+  const resumo = `<div class="okr-ating-hint" style="margin-bottom:8px;"><b>${esc(o.titulo||'(sem título)')}</b><br>${esc(_okrAtingTipoLabel(t))}${(t==='financeira'||t==='porcentagem'||t==='numero'||t==='acima'||t==='abaixo')?` · meta ${esc(_okrFmtNum(Number(at.meta), un))}`:''}${atual?` · atual ${esc(_okrAtingLancTxt(at, atual))} (${_okrAtingPctDe(at, atual)}%)`:' · sem registros ainda'}</div>`;
+  document.getElementById('okr-aq-body').innerHTML = `${resumo}<div class="okr-ating-grid">
+    ${campo(t==='data'?'Data da entrega':'Data do atingimento', `<input type="date" class="okr-input" id="okr-aq-data" value="${esc(_todayStr())}" oninput="_okrAtingQuickPrev()">`)}
+    ${valor}
+    ${campo('Nota (opcional)', `<input type="text" class="okr-input" id="okr-aq-nota" maxlength="200" placeholder="Ex.: fechamento do mês" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrAtingQuickSalvar();}">`)}
+  </div>
+  <div id="okr-aq-prev" style="margin-top:8px;font-size:12px;color:var(--txt2);min-height:16px;"></div>
+  <div id="okr-aq-erro" style="font-size:11px;color:var(--danger);min-height:14px;margin-top:4px;"></div>`;
+  document.getElementById('okr-aq-ov').classList.add('open');
+  _okrAtingQuickPrev();
+  setTimeout(()=>{ const i = document.getElementById('okr-aq-valor') || document.getElementById('okr-aq-atingido') || document.getElementById('okr-aq-data'); if(i) i.focus(); }, 30);
+}
+function _okrAtingQuickClose(){ _okrAQ = null; document.getElementById('okr-aq-ov')?.classList.remove('open'); }
+// Lê o formulário; devolve {l} (registro novo, sem id/autor) ou {erro}.
+function _okrAtingQuickLer(at){
+  const t = at.tipo, em = (document.getElementById('okr-aq-data')||{}).value || '';
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(em)) return {erro:'Informe a data.'};
+  const l = {em};
+  if(t==='binario'){ l.atingido = !!(document.getElementById('okr-aq-atingido')||{}).checked; l.valor = l.atingido ? 100 : 0; }
+  else if(t!=='data'){
+    const bruto = (document.getElementById('okr-aq-valor')||{}).value || '';
+    if(!String(bruto).trim()) return {erro:'Informe o valor atual.', vazio:true};
+    const v = _okrParseNum(bruto); if(isNaN(v)) return {erro:'Esse valor não é um número.'};
+    l.valor = v;
+  }
+  const nota = ((document.getElementById('okr-aq-nota')||{}).value || '').trim(); if(nota) l.nota = nota.slice(0,200);
+  return {l};
+}
+function _okrAtingQuickPrev(){
+  const pv = document.getElementById('okr-aq-prev'); if(!pv || !_okrAQ) return;
+  const at = (okrObjetivos[_okrAQ.objId]||{}).atingimento; if(!at) return;
+  const r = _okrAtingQuickLer(at);
+  pv.textContent = r.l ? `Vai ficar em ${_okrAtingPctDe(at, r.l)}% (${_okrAtingLancTxt(at, r.l)}).` : '';
+  const e = document.getElementById('okr-aq-erro'); if(e) e.textContent = '';
+}
+let _okrAQBusy = false;   // gravação em andamento: duplo clique / Enter repetido não pode lançar o mesmo registro duas vezes (cada chamada gera um id novo)
+async function _okrAtingQuickSalvar(){
+  if(!_okrAQ || _okrAQBusy) return;
+  const objId = _okrAQ.objId, o = okrObjetivos[objId]; if(!o) return _okrAtingQuickClose();
+  const at = o.atingimento, erro = m=>{ const e = document.getElementById('okr-aq-erro'); if(e) e.textContent = m; };
+  const r = _okrAtingQuickLer(at); if(r.erro) return erro(r.erro);
+  const user = window._currentUser;
+  const l = {id:'at_'+Date.now()+Math.random().toString(36).slice(2,6), ...r.l, criadoEm:new Date().toISOString(), por:_okrHistWho(), uid:user?.uid||''};
+  let pct = 0;
+  let out;
+  _okrAQBusy = true; const btn = document.getElementById('okr-aq-ok'); if(btn) btn.disabled = true;
+  try{
+    out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{
+      if(!_okrAtingConfigurado(n.atingimento) || n.atingimento.tipo==='perene') return false;
+      (n.atingimento.lancamentos = n.atingimento.lancamentos||[]).push(l);
+      pct = _okrAtingPctDe(n.atingimento, l);
+      _okrRecordHistory(n, `registrou atingimento de ${_okrAtingDataBR(l.em)}: ${_okrAtingLancTxt(n.atingimento, l)} → ${pct}%`, 'ating'); _okrCtxStamp(n);
+    });
+  }catch(e){ return erro('Não consegui registrar: '+(e&&e.message||'erro')); }
+  finally{ _okrAQBusy = false; if(btn) btn.disabled = false; }
+  if(!out) return erro('Não consegui registrar (o atingimento mudou ou o Objetivo sumiu). Feche e tente de novo.');
+  okrObjetivos[objId] = out; _okrAtingQuickClose();
+  await _okrNotifyEditado(objId);
+  _okrCtxRefazTela(); showToast('📈 Atingimento registrado: '+pct+'%.');
+}
+document.addEventListener('keydown', e=>{
+  const ov = document.getElementById('okr-aq-ov');
+  if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrAtingQuickClose(); }
+}, true);
 
 // ── Limites recomendados de caracteres (pedido direto: "a gente precisa
 // calcular quantos caracteres sao maximo para n quebrar a leitura") ──
@@ -6855,7 +7213,7 @@ function _okrAtingChartHtml(at){
   const ys = ls.map(l=> NUM ? Number(l.valor) : _okrAtingPctDe(at,l));
   const meta = Number(at.meta), ini = Number(at.inicial)||0;
   const refs = [];
-  if(NUM){ if(isFinite(meta)) refs.push({v:meta, rot:'🎯 meta'}); if(at.tipo!=='acima' && at.tipo!=='abaixo') refs.push({v:ini, rot:'início'}); }
+  if(NUM){ if(isFinite(meta)) refs.push({v:meta, rot:'🎯 meta'}); if(at.tipo!=='acima' && at.tipo!=='abaixo' && ini!==0) refs.push({v:ini, rot:'valor inicial'}); }   // 'valor inicial' (não 'início': parecia o começo do período); com valor inicial 0 a linha só repetiria o eixo, então some
   else refs.push({v:100, rot:'🎯 100%'});
   let mn = Math.min(...ys, ...refs.map(r=>r.v)), mx = Math.max(...ys, ...refs.map(r=>r.v));
   if(!NUM){ mn = 0; mx = 100; }
@@ -6871,8 +7229,8 @@ function _okrAtingChartHtml(at){
   const ticks = [0,1,2,3].map(k=>mn+(mx-mn)*k/3);
   const grid = ticks.map(v=>`<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
     <text x="${pl-8}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".6">${esc(fmtY(v))}</text>`).join('');
-  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='início'?'.35':'.8'}" stroke-dasharray="5 4"/>
-    <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='início'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
+  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='valor inicial'?'.35':'.8'}" stroke-dasharray="5 4"/>
+    <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='valor inicial'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
   const pts = ls.map((l,i)=>[X(i), Y(ys[i])]);
   const linha = n>1 ? `<polyline fill="none" stroke="var(--ating-c,#ff73af)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>
     <path d="M${pts[0][0].toFixed(1)},${(pt+ih).toFixed(1)} L${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')} L${pts[n-1][0].toFixed(1)},${(pt+ih).toFixed(1)} Z" fill="var(--ating-c,#ff73af)" fill-opacity=".1"/>` : '';
@@ -7156,6 +7514,7 @@ function _okrMarcosListHtml(objId, podeEditar){
   if(!marcos.length) return '<div style="font-size:11px;color:var(--txt3);">Nenhum marco ainda.</div>';
   return marcos.map((m,i)=>`
     <div class="okr-marco-row" style="border-left:3px solid ${okrStatusInfo(m.progresso||'nao_iniciado').dot};"
+      oncontextmenu="return _okrCtxMarcoEv(event,${jsq(m.id)})"
       draggable="${podeEditar?'true':'false'}"
       ${podeEditar?`ondragstart="_okrMarcoDragStart(event,${jsq(m.id)})" ondragover="_okrMarcoDragOver(event)" ondragenter="_okrMarcoDragEnter(event)" ondragleave="_okrMarcoDragLeave(event)" ondrop="_okrMarcoDrop(event,${jsq(objId)},${jsq(m.id)})" ondragend="_okrMarcoDragEnd(event)"`:''}
       onclick="openOkrMarco(${jsq(m.id)},${jsq(objId)})">
@@ -7815,14 +8174,16 @@ async function saveOkrMarco(){
 // resumo no Objetivo pai que toda outra edição de Marco sempre empurra
 // (ver saveOkrMarco() logo acima). Diferente de arquivar um Objetivo, que
 // já grava "arquivou o Objetivo". Corrigido pro mesmo padrão dos dois.
-async function _okrArquivarMarco(){
-  if(!_okrEditingMarcoId) return;
+async function _okrArquivarMarco(idParam){
+  // idParam: arquivar a partir do menu de contexto da lista (sem o modal do Marco aberto); sem ele, é o Marco aberto no modal.
+  const mid = (typeof idParam==='string' && idParam) ? idParam : _okrEditingMarcoId;
+  if(!mid) return;
   if(!await uiConfirm('Arquivar este marco?', {danger:true, okText:'Arquivar'})) return;
-  const m = okrMarcos[_okrEditingMarcoId] || {};
+  const m = okrMarcos[mid] || {};
   const hist = Array.isArray(m.history) ? m.history.slice() : [];
   hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'arquivou o marco', tipo:'arquivado', at:new Date().toISOString()});
-  await window._update(window._ref(window._db,'kanban/okr/marcos/'+_okrEditingMarcoId), {arquivado:true, history:hist});
-  if(okrMarcos[_okrEditingMarcoId]){ okrMarcos[_okrEditingMarcoId].arquivado = true; okrMarcos[_okrEditingMarcoId].history = hist; }
+  await window._update(window._ref(window._db,'kanban/okr/marcos/'+mid), {arquivado:true, history:hist});
+  if(okrMarcos[mid]){ okrMarcos[mid].arquivado = true; okrMarcos[mid].history = hist; }
   const objId = m.objetivoId;
   const obj = okrObjetivos[objId];
   if(obj){
@@ -7834,7 +8195,7 @@ async function _okrArquivarMarco(){
     _okrSyncObjDraftHistory(objId, objHistory);
   }
   showToast('🗑 Marco arquivado.');
-  closeOkrMarco();
+  if(typeof idParam==='string' && idParam) _okrCtxRefazTela(); else closeOkrMarco();
 }
 
 function renderOKR(){
@@ -10306,6 +10667,20 @@ const COMUNICADO_RASCUNHOS_SEED = [
       + '<li>Reúne: <b>🎨 Tema</b> (claro/escuro/automático), <b>🔍 Fonte e densidade</b> dos cards, <b>📌 Squad padrão</b>, <b>🔔 Não Perturbe</b>, acesso direto aos <b>⌨️ Atalhos de teclado</b>, e as sugestões que o board aprende com o seu uso.</li>'
       + '<li><b>Sugestões de rotina agora são reversíveis</b>: Timeline como visão inicial, "Meus cards" fixado, filtro de atrasados automático e atalhos de atribuição rápida — liga ou desliga a qualquer momento, sem precisar esperar a sugestão aparecer de novo.</li>'
       + '<li><b>"Não sugerir mais" agora sincroniza com a sua conta</b>: se você recusou uma sugestão sem querer, tem uma lista pra desfazer isso — e não fica mais presa só no navegador onde você clicou.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_okr_v4_2026_10_06',
+    titulo: '🎯 Painel v4 — OKR com atingimento, gráfico, tags e menu de ações',
+    corpo: '<p>O Painel foi pra <b>v4</b> com um lote grande de novidades na aba 🎯 OKR:</p>'
+      + '<ul>'
+      + '<li><b>📈 Atingimento</b>: cada Objetivo pode ter uma meta (financeira, %, número, atingido/não, manter acima/abaixo, data de entrega ou ♾️ perene) e a barra de progresso passa a andar por ela. Clique no emoji do tipo pra ver o <b>gráfico de evolução</b>, com data, valor e a linha da meta.</li>'
+      + '<li><b>🏷️ Tags com cor</b> nos cartões, com <b>filtro por tag</b> e por <b>👤 pessoa</b>.</li>'
+      + '<li><b>🖱 Menu de ações</b>: clique com o botão direito num Objetivo (ou numa linha de Marco) pra registrar atingimento, mudar status, marcar tags, mover, duplicar ou copiar o link — sem abrir o Objetivo.</li>'
+      + '<li><b>🖥️ Apresentação</b>: segue a ordem que você montou no painel, mostra as tags, tem filtro por tag e botão <b>← Anterior</b>. Texto longo agora <b>rola</b> em vez de a letra diminuir.</li>'
+      + '<li>Também: Configurações do Objetivo em tela própria, reordenar e duplicar Objetivos, e o Agente Ágil que lê e registra atingimento.</li>'
       + '</ul>',
     tipo: 'novidade',
     squad: '*',
