@@ -20043,6 +20043,15 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 (3ª) · fix: colunas STATUS/PRAZO da tabela de Marcos desalinhadas do cabeçalho
+
+Relato direto: em alguns Objetivos as linhas dos Marcos ficavam coladas à esquerda, fora de alinhamento com o cabeçalho
+STATUS/PRAZO. Só acontecia nos Objetivos com Marcos suficientes pra tabela precisar encolher (≥14 em 1366x768): `_zoomFitToHeight()`
+ligava `align-self:start` ANTES de medir a largura, e como a tabela é item de um flex em coluna isso encolhia a largura pro
+conteúdo (767px contra 908px do cabeçalho em 1366x768; Δ de 139px no STATUS). Agora a largura é medida antes de mexer no estilo, e o
+cabeçalho acompanha o zoom das linhas (as colunas de 160/95px encolhem juntas). Medido em 1366x768, 1920x1080 e 1280x720 com 3 a 24
+Marcos (nomes longos): 9 de 18 casos desalinhados antes, 0 depois. Sem versão própria (vale no deploy).
+
 ### 2026-10-06 (2ª) · fix(/monitorarbugs): rodapé do detalhe do Objetivo ilegível com muitos Marcos
 
 No modal de detalhe, rodapé (Progressos / Próximos passos / Riscos / Planos de ação) e corpo (Marcos + raia esquerda)

@@ -2932,6 +2932,13 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   `_okrTagApagar()` (sem UI pra apagar tag). painel-dev v3.110. **Lição**: depois de uma varredura em lote de uma classe de bug, a
   PRÓXIMA feature escrita já nasce com o padrão antigo — reexecutar o grep da classe a cada feature nova.
 
+- **2026-10-06 (3ª), apresentação — colunas STATUS/PRAZO desalinhadas (relato direto do usuário na manhã da reunião)**: 1 achado real. `_zoomFitToHeight()`
+  setava `align-self:start` antes de medir `targetW`; em `.d2-table-rows` (item de flex em COLUNA) o eixo cruzado é o horizontal, então a tabela
+  encolhia pra largura do conteúdo e esse valor virava a largura "a manter" (767 vs 908px). Só dispara quando a tabela precisa encolher (≥14 Marcos
+  em 1366x768), por isso "uns objetivos". Fix: medir a largura antes + cabeçalho com o mesmo zoom das linhas. **Lição**: `align-self` muda de eixo
+  conforme a direção do flex pai — ao desligar esticamento, medir antes de mexer; e teste de alinhamento deve comparar coordenadas reais (cabeçalho × linha),
+  não só "sem overflow" (o teste da rodada anterior passou com o bug presente).
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
