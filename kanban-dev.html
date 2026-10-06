@@ -6463,7 +6463,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.787-dev</div>
+<div class="version">v8.30.788-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8890,6 +8890,13 @@ function _flowDoneColIds(){
   const d=_flowDoneColId(); return d?[d]:[];
 }
 // Marca a entrada de um card numa coluna (chamado em TODA movimentação).
+// `_lastFlowCol` = "em que coluna o fluxo achava que o card estava" (recordMove() compara contra ele pra saber o `from` e se é uma
+// movimentação de verdade). É gravado junto com o card, então um card movido FORA do navegador — o Agente Ágil no servidor atualiza
+// col/flow/log mas nunca soube desse campo — chegava aqui com o valor VELHO. /monitorarbugs 2026-10-06: ao arrastar esse card de volta
+// pra coluna que o campo velho dizia, recordMove() achava que "já estava lá" e saía sem atualizar enteredAt/log (o card não subia em
+// "Movimentação", métricas de fluxo ficavam paradas) e, indo pra uma 3ª coluna, o log registrava o `from` errado. Depois de CADA
+// sincronização com o banco, a coluna do card no banco é a verdade: o campo é reposto a partir dela (antes só quando vinha vazio).
+function _syncLastFlowCol(list){ (list||[]).forEach(c=>{ if(c) c._lastFlowCol=c.col; }); }
 function recordMove(card, toCol, atISO){
   if(!card) return;
   const at = atISO || new Date().toISOString();
@@ -9986,7 +9993,7 @@ let _cardsSyncDebounce = null;
       // Backfill de fluxo p/ cards legados ou importados (ex.: Trello)
       const _bf = backfillAllFlow();
       // Garante que _lastFlowCol esteja consistente com a coluna atual
-      cards.forEach(c=>{ if(c && c._lastFlowCol==null) c._lastFlowCol=c.col; });
+      _syncLastFlowCol(cards);
       renderBoard();
       // Persiste o backfill (1x) sem disparar loop de echo
       // Achado real (/monitorarbugs 2026-09-22, técnica 2 — comparado
@@ -12379,6 +12386,8 @@ function togglePinCard(cardId){
   }
   renderBoard();
 }
+// Instante de criação embutido no id do card ('c1785199972010_nd0' → 1785199972010); 0 se o id não segue esse formato (então só empata).
+function _cardIdTs(card){ const m=/^c(\d{10,})/.exec(String((card&&card.id)||'')); return m ? Number(m[1]) : 0; }
 function _sortCardsByMode(arr, colId){
   const mode = (colId && colSortOverrides[colId]) || colSortMode;
   if(mode==='size'){
@@ -12391,7 +12400,18 @@ function _sortCardsByMode(arr, colId){
     });
   }
   if(mode==='createdAt'){
-    return arr.slice().sort((a,b)=>String(a.createdAt||'').localeCompare(String(b.createdAt||'')));
+    // /monitorarbugs 2026-10-06 (relato: "ordenação por data tá bugada"): `createdAt` é só o DIA (YYYY-MM-DD), então (1) vários cards do mesmo
+    // dia ficavam na ordem do array (aleatória pra quem olha) — desempata pela hora embutida no id ('c'+Date.now()...), a criação de verdade;
+    // (2) card SEM data (legado/importado, ou '—' dos temporários) vinha PRIMEIRO ('' < qualquer data), ao contrário do que "Movimentação"
+    // e "Prazo" fazem — agora vai pro fim, nunca no topo da coluna.
+    return arr.slice().sort((a,b)=>{
+      const da=String(a.createdAt||''), db=String(b.createdAt||'');
+      const va=/^\d{4}-\d{2}-\d{2}/.test(da), vb=/^\d{4}-\d{2}-\d{2}/.test(db);
+      if(va && vb){ const d=da.slice(0,10).localeCompare(db.slice(0,10)); return d || (_cardIdTs(a)-_cardIdTs(b)); }
+      if(va) return -1;
+      if(vb) return 1;
+      return 0;
+    });
   }
   if(mode==='movedAt'){
     // Data da última movimentação de coluna (card.flow.enteredAt na coluna atual);
@@ -12413,7 +12433,8 @@ function _sortCardsByMode(arr, colId){
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     return arr.slice().sort((a,b)=>{
       const da=a.due, db=b.due;
-      if(da && db) return da.localeCompare(db); // prazo mais próximo primeiro
+      // mesmo prazo: o mais prioritário primeiro (antes ficava na ordem do array — /monitorarbugs 2026-10-06)
+      if(da && db) return da.localeCompare(db) || ((PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4)); // prazo mais próximo primeiro
       if(da && !db) return -1;
       if(!da && db) return 1;
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
@@ -12427,7 +12448,7 @@ function _sortCardsByMode(arr, colId){
     const PRIO={'critical':0,'high':1,'medium':2,'low':3,'':4};
     return arr.slice().sort((a,b)=>{
       const da=a.due, db=b.due;
-      if(da && db) return db.localeCompare(da); // prazo mais distante primeiro
+      if(da && db) return db.localeCompare(da) || ((PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4)); // prazo mais distante primeiro
       if(da && !db) return -1;
       if(!da && db) return 1;
       return (PRIO[a.priority||'']??4)-(PRIO[b.priority||'']??4);
