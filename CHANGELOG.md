@@ -20640,6 +20640,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.0 · painel-dev — 2026-10-06 · marco: painel passa pra v4 (OKR: atingimento, gráfico, tags, menu de contexto, ordem/duplicar/configurações em tela própria) + guia atualizado
+
+Sem mudança de código além do número: o painel pula de v3.113 para **v4.0** porque o OKR ganhou muito desde a v3.x (📈 atingimento com 8 tipos e gráfico de evolução, modal por seções, tags com cor e filtro,
+filtro por pessoa, reordenar/duplicar/Configurações em tela própria, menu de contexto, Agente Ágil lendo e registrando atingimento). Quando for promovido, o prod sai como **v4.0 · painel**.
+`guia-okr.html` (sem versão própria; vale na hora): o slide "Apresentação ao vivo" deixou de dizer "sem precisar rolar" para o detalhe, ganhou **ordem manual**, **tags + filtro por tag**, e um slide
+novo "Dentro do detalhe do Objetivo" (**← Anterior / Próximo →**, **texto longo rola**, contadores de caracteres, "Aparecer na apresentação", "Colapsar concluídos"). O slide do **menu de contexto** entra no guia
+junto com a promoção do painel v4.0 (hoje o menu só existe no dev).
+
 ### painel-dev.html v3.113 · painel-dev — 2026-10-06 · ajuste(OKR): tira o botão ⋯ dos cartões e das linhas de Marco + atualiza o help de OKR
 
 Pedido direto: o menu de contexto já abre com o clique direito, então o botão **⋯** do cartão de Objetivo e o das linhas de Marco saíram (o canto do cartão volta a ter só o 👁, e a barra
