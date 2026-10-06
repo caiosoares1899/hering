@@ -20575,6 +20575,18 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.110 · painel-dev — 2026-10-06 · fix(segurança, /monitorarbugs): id de tag/objetivo cru em atributo HTML
+
+O seletor de tags do ⚙ Configurações do Objetivo (v3.108, depois da varredura de 05/10) montava o botão ✕ da tag como
+`onclick="_okrTagRemoveFromObj('${id}')"` e o `<option value="${id}">` sem escape — mesma classe de XSS armazenado já
+corrigida em 332 pontos no dia 05/10 (`esc()` não protege string JS dentro de atributo). O id vem da chave do nó
+`kanban/okr/tags`, gravável por qualquer pessoa da empresa: uma chave como `x');alert(1);//` rodava JS na sessão de quem abrisse
+a configuração de um Objetivo (inclusive ADM). Reproduzido no Chromium antes de corrigir (JS executado + `<img>` injetado);
+agora `jsq(id)` no ✕ e `esc(id)` nos `value=` (também o seletor de Objetivo do Feed, `o.id`). A apresentação não tinha o problema
+(só renderiza o nome da tag, escapado). Achado incidental, não corrigido: `_okrTagApagar()` nunca é chamada — não existe
+UI pra apagar uma tag (código morto; a tag só some se alguém apagar o nó no Firebase, e o filtro já trata esse caso).
+Promoção pro prod aguarda validação (fix de baixo risco, mas fora do lote de hoje por ser a manhã da reunião de OKR).
+
 ### painel.html v3.109 · painel — 2026-10-06 · Promove pra prod — OKR: tags nos cartões + filtro por tag + cor da tag; Ajuda do OKR atualizada
 
 Lote acumulado do painel-dev v3.106 → v3.109 sobre o prod v3.105, mesclado em 3 vias (só a linha de versão conflitou; título, favicon, banner e demais divergências de ambiente intactos). Sem avisos (pedido do usuário). Detalhes nas entradas `painel-dev.html v3.106…v3.109` logo abaixo.
