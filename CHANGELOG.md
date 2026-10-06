@@ -20043,6 +20043,15 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 · fix(/monitorarbugs): a apresentação ignorava a ordem manual dos Objetivos
+
+Na aba 🎯 OKR do painel dá pra reordenar os Objetivos de uma Gerência (▲/▼ ou arrastar), e o painel respeita
+essa ordem (`ordem` numérico). A apresentação, porém, sempre ordenava por título (alfabético) — então a
+sequência dos slides, a grade de cards e o botão "Próximo objetivo" saíam diferentes da que o time montou pra
+reunião. Agora usa a mesma regra do painel: com algum `ordem` definido ele manda (quem ainda não tem vai pro
+fim); sem nenhum, continua alfabético. Grade e "Próximo objetivo" usam a mesma função, então seguem a mesma ordem.
+Sem versão própria (página de prod sem `-dev`): vale assim que o deploy do Pages terminar.
+
 ### 2026-10-05 · fix(segurança, /monitorarbugs): ids crus em handler inline
 
 4 ids (`o.id`, `nextObj.id`, `m.id`, `id` da anotação) entravam direto em
