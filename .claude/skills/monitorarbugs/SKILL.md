@@ -2939,6 +2939,13 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   conforme a direção do flex pai — ao desligar esticamento, medir antes de mexer; e teste de alinhamento deve comparar coordenadas reais (cabeçalho × linha),
   não só "sem overflow" (o teste da rodada anterior passou com o bug presente).
 
+- **2026-10-06 (4ª, "um último só pra garantir"), apresentação — botão Anterior + filtro por tag (#1202, código de minutos antes)**: 1 achado real, técnica 3
+  (o que a tela promete vs. o que acontece ao vivo). `rebuild()` roda a cada atualização do Firebase e `_okrAtualizaFiltroTag()` refazia o `innerHTML` do
+  `<select>` toda vez: dropdown aberto fechava no meio da escolha enquanto o time editava o painel. Reproduzido (nó `<option>` novo a cada rebuild) e corrigido
+  com assinatura do conteúdo. Sem achado: Anterior/Próximo seguem a mesma lista filtrada/ordenada da grade, teclado no select, tag apagada, filtro sem resultado,
+  barra superior em 1366/1024 px. **Lição**: todo controle que vive FORA da área que o rebuild redesenha (barra, filtros) e é preenchido por ele precisa de
+  "só mexe no DOM se mudou" — senão o estado nativo (dropdown aberto, foco, seleção) se perde a cada evento ao vivo.
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
