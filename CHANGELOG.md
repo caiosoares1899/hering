@@ -20645,6 +20645,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.5 · painel-dev — 2026-10-06 · feat(OKR): Histórico — clique no "Progresso médio" mostra a contribuição de cada Objetivo (com filtro de gerência e simulação)
+
+Pedido direto: ao clicar no indicador **Progresso médio** do 📈 Histórico, abre a janela **🧮 Como cada Objetivo contribui para o progresso médio**, sobre o último snapshot:
+- média grande + variação vs. o snapshot anterior (**só com os mesmos Objetivos** nos dois, pra comparar igual com igual) e "N de M Objetivos na conta";
+- uma linha por Objetivo: progresso, **quanto contribui** (progresso ÷ N, em pp), **o que acontece com a média se ele sair da conta** e a variação da semana;
+- **filtro por gerência**, ordenação (puxam a média pra baixo / maior progresso / A–Z), **Marcar todos / Desmarcar todos** (da gerência filtrada) e **Restaurar tudo**;
+- **desmarcar um Objetivo tira ele da conta e a média recalcula sozinha**; o indicador e a linha do gráfico por trás acompanham, com um aviso "Simulação: sem N Objetivos" e botão para restaurar. A exclusão é só uma simulação local (fica no `localStorage`, não grava no Firebase nem
+  muda pra outras pessoas), no mesmo espírito dos toggles de colunas em Dados do Board. Também: variações com vírgula decimal. Ajuda e CODE_MAP atualizados. 19 cenários no Chromium (abrir, contas, efeito de sair, desmarcar/recalcular, filtro, marcar/desmarcar todos, ordenar, Esc, restaurar, persistência, teclado, XSS). Só dev.
+
 ### painel-dev.html v4.4 · painel-dev — 2026-10-06 · ajuste(OKR): Histórico do Objetivo/Marco mostra sempre a data (sem "3d/4d/5d")
 
 Pedido direto, mesma mudança do Histórico do card no kanban (v8.30.790-dev): a linha do tempo no fim do Objetivo/Marco mostrava "agora / 5min / 3h / 4d" e só depois de 7 dias a data. Agora toda linha mostra **data e hora completas**
