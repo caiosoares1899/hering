@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.792-dev — 2026-10-06 · fix: "Marcar todas como lidas" do sino não gravava nada (e por isso "Limpar antigas" não achava nada pra apagar)
+
+Relato de usuária ("não consigo apagar as notificações já lidas"). Causa raiz: `markAllRead()` achava o id de cada notificação com um regex `/'([^']+)'/` em cima do atributo `onclick` — mas desde a conversão do `onclick` do sino para `jsq()` (correção de XSS, v8.30.786) os
+ids vão entre aspas **duplas**, e o regex nunca mais casou: **"Marcar todas como lidas" virou um botão que não faz nada** (nem erro, nem toast). Como abrir o painel não marca nada como lido, a única forma de uma notificação virar "lida" em lote estava quebrada, e **"Limpar antigas"**
+(que só apaga as já lidas) respondia "Nenhuma notificação lida para remover" — ou só limpava as que a pessoa tinha aberto uma a uma. Presente também no prod (kanban v8.30.786/787). Fix: os dois botões leem o id de `data-notif-id` (agora com `esc()`), gravam **numa escrita só** (`update` multi-path, em vez de uma por notificação, que re-disparava o sino a cada item) e
+mostram toast de sucesso/erro; o plural do toast também estava errado ("notificaçãoões"). Reproduzido antes (0 escritas) e depois (1 escrita com todos os ids, inclusive um id com apóstrofo). Só dev nesta versão; o prod recebe o hotfix isolado.
+
 ### v8.30.791-dev — 2026-10-06 · feat: popup 📊 Dados do Board maior, com barra única de colunas e gráficos que preenchem a tela (só kanban-dev)
 
 Pedido direto (print da aba CFD & Burndown: popup estreito, gráfico encolhido num canto, "Colunas na conta" repetida em cada aba): o popup passa de 860px para **até 1500px (97% da tela)**; o toggle **📍 Colunas na conta**

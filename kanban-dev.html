@@ -6481,7 +6481,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.791-dev</div>
+<div class="version">v8.30.792-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -29830,7 +29830,7 @@ function renderNotifs(notifs){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
   list.innerHTML = notifs.map(n=>`
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${n.id}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -29976,27 +29976,30 @@ async function _commentStillExists(cardId, commentId, card){
 
 function markAllRead(){
   const user=window._currentUser; if(!user) return;
-  const list=document.querySelectorAll('.notif-item.unread');
-  list.forEach(el=>{
-    const onclick=el.getAttribute('onclick')||'';
-    const m=onclick.match(/'([^']+)'/);
-    if(m) window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+m[1]+'/read'),true).catch(()=>{});
-  });
+  // Os ids vêm de data-notif-id (e não mais de um regex em cima do onclick: desde que o onclick passou a usar jsq() — aspas DUPLAS —
+  // o regex /'([^']+)'/ nunca casava e "Marcar todas como lidas" não gravava nada; sem isso nenhuma notificação virava "lida" em lote,
+  // e "Limpar antigas" (que só apaga as lidas) respondia "Nenhuma notificação lida para remover"). Uma escrita só (multi-path).
+  const ups = {};
+  document.querySelectorAll('.notif-item.unread').forEach(el=>{ const nid = el.dataset.notifId; if(nid) ups[nid+'/read'] = true; });
+  const n = Object.keys(ups).length;
+  if(!n){ showToast('Nenhuma notificação não lida.'); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), ups)
+    .then(()=>showToast('✓ '+n+' notificaç'+(n>1?'ões marcadas':'ão marcada')+' como lida'+(n>1?'s':'')+'.'))
+    .catch(()=>showToast('⚠ Não consegui marcar como lidas. Tente de novo.'));
 }
 
 function clearOldNotifs(){
   const user=window._currentUser; if(!user) return;
   // "Limpar antigas" remove todas as notificações já lidas (read:true)
-  // — mais útil do que filtrar por tempo, já que o painel as marca como lidas ao abrir
-  let count=0;
-  document.querySelectorAll('.notif-item:not(.unread)').forEach(el=>{
-    const nid = el.dataset.notifId;
-    if(!nid) return;
-    window._set(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes/'+nid),null).catch(()=>{});
-    count++;
-  });
-  if(count===0) showToast('Nenhuma notificação lida para remover.');
-  else showToast('🧹 '+count+' notificação'+(count>1?'ões':'')+' lida'+(count>1?'s':'')+' removida'+(count>1?'s':'')+'.');
+  // — mais útil do que filtrar por tempo. Uma escrita só (update multi-path), não um set(null) por item: cada delete
+  // individual re-disparava o onValue do sino com a lista inteira de novo.
+  const ups = {};
+  document.querySelectorAll('.notif-item:not(.unread)').forEach(el=>{ const nid = el.dataset.notifId; if(nid) ups[nid] = null; });
+  const count = Object.keys(ups).length;
+  if(!count){ showToast('Nenhuma notificação lida para remover.'); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), ups)
+    .then(()=>showToast('🧹 '+count+' notificaç'+(count>1?'ões lidas removidas':'ão lida removida')+'.'))
+    .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
 }
 
 function dismissNotif(notifId){
