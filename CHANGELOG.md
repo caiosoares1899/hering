@@ -18,6 +18,19 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.788-dev — 2026-10-06 · fix(/monitorarbugs): ordenação por data de criação, prazo e movimentação (só kanban-dev; prod espera validação)
+
+Relato de usuários: "a ordenação do kanban tá com bug, especialmente a por data e a por movimentação". Reproduzido no Chromium com as funções reais (6 de 6 cenários falhavam):
+- **Movimentação / métricas de fluxo — card movido pelo Agente Ágil e depois arrastado de volta**: `card._lastFlowCol` ("onde o fluxo achava que o card estava") é gravado junto com o card, mas
+  o Agente Ágil move cards no servidor (atualiza col/flow/log) sem conhecer esse campo — o card chegava com o valor VELHO e `_applyCardsSync()` só o repunha quando vinha vazio. Arrastar esse card de
+  volta pra coluna que o campo velho dizia fazia `recordMove()` achar que "já estava lá" e sair sem atualizar `enteredAt`/log: o card NÃO subia em "Movimentação (mais recente)", cycle/lead time e Timeline
+  ficavam parados; indo pra uma 3ª coluna, o log gravava o `from` errado. Agora `_syncLastFlowCol()` repõe o campo a partir da coluna que veio do banco depois de TODA sincronização.
+- **Data de criação**: o card SEM data (legado/importado) vinha PRIMEIRO na coluna ('' < qualquer data), ao contrário de "Movimentação"/"Prazo" — agora vai pro fim; e como `createdAt` é só o dia, vários cards do
+  mesmo dia ficavam na ordem do array — agora desempata pela hora embutida no id (`_cardIdTs()`), a criação de verdade.
+- **Prazo (antigos/novos primeiro)**: cards com o MESMO prazo ficavam na ordem do array — agora o mais prioritário primeiro.
+Verificado também na tela (`renderBoard()`). Sem mudança no que já funcionava (prioridade, tamanho, alfabética, manual, pin). `node --check` OK; chaves/parênteses -1/3 (baseline).
+Em aberto (decisão de produto, perguntado): "Data de criação" só ordena do mais antigo pro mais novo, enquanto "Movimentação" é do mais recente pro mais antigo — falta a opção inversa.
+
 ### v8.30.787 — 2026-10-06 · Promove pra prod — mobile: passar o dedo na lista de cards não abre mais um card
 
 Promoção do kanban-dev v8.30.787 sobre o prod v8.30.786 (merge de 3 vias; só a linha de versão conflitou; diff dev × prod continua só nas 28 linhas de ambiente).

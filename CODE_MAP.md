@@ -900,6 +900,7 @@ não introduziu função nenhuma.
 - `addTouchDnD()` — L30832 — drag-and-drop por toque (mobile)
 - `makeCardEl()` — L11308 — monta o HTML de um card no board (tags, badges,
   avatar, capa, ícone de pin...).
+- `_cardIdTs()` (hora de criação embutida no id, desempate de "Data de criação") e `_syncLastFlowCol()` (repõe `_lastFlowCol` a partir da coluna do banco em toda sync — corrige card movido pelo Agente Ágil, 2026-10-06) ficam junto de `_sortCardsByMode()`/`recordMove()`.
 - `_sortCards()` / `_sortCardsByMode()` — L11511/L11565 — ordena os cards de
   uma coluna; `_sortCards()` resolve o pin (card fixado sempre no topo,
   ver `togglePinCard()`) por cima do resultado de `_sortCardsByMode()`
