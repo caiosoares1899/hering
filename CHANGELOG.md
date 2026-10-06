@@ -20070,6 +20070,14 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 (6ª) · Detalhe do Objetivo: texto que passa da área rola, em vez de diminuir a letra
+
+Pedido direto: a letra do rodapé (Progressos / Próximos passos / Riscos / Planos de ação) e da tabela de Marcos encolhia sozinha quando o texto não cabia, e ficava pequena
+demais no telão. Agora **a fonte mantém o tamanho e a área rola** (barra de rolagem visível). Vale para a tabela de Marcos, as 4 colunas do rodapé e a raia da esquerda
+(Objetivo/Responsável/Indicadores). O piso de 30% da altura para o rodapé continua; o cabeçalho STATUS/PRAZO ganha o mesmo recuo da barra de rolagem para seguir alinhado com as linhas.
+Conteúdo curto não ganha barra. Testado no Chromium em 1366x768, 1920x1080 e 1280x720 (muitos Marcos, rodapé longo, tudo longo, curto): fonte 15px/14px intacta, alinhamento 0px,
+primeiro Marco visível, nada vaza da tela. O carrossel de slides continua com o ajuste automático.
+
 ### 2026-10-06 (5ª) · fix(/monitorarbugs): filtro por tag fechava o dropdown em atualização ao vivo
 
 Auditoria do filtro por tag/botão Anterior feitos minutos antes. `rebuild()` roda a cada atualização ao vivo do Firebase (a equipe

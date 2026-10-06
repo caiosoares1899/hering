@@ -245,7 +245,11 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    qualquer mecanismo de fit), cada seção internamente comprimida se
    ajusta sozinha via _okrFitDetailSections(). */
 .d2-body{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:300px 1.5fr;gap:20px;}
-.d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;}
+.d2-left{display:flex;flex-direction:column;gap:12px;min-height:0;overflow-y:auto;}
+/* 2026-10-06 (pedido direto: "se o texto passar da área, em vez de diminuir a letra, prefiro que tenha scroll"): Marcos, rodapé e raia da
+   esquerda NÃO encolhem mais a fonte — mantêm o tamanho e rolam quando não cabem. Itens da raia não podem ser espremidos (flex-shrink:0);
+   o painel "grow" cresce pra ocupar a sobra, mas nunca abaixo do conteúdo. */
+.d2-left > .d2-panel{flex-shrink:0;}
 .d2-panel{background:var(--glass);border:1px solid var(--glass-b);border-radius:16px;padding:14px 18px;
   backdrop-filter:blur(12px);}
 /* SEM overflow:hidden aqui de propósito (agora que .d2-body voltou a ter
@@ -257,7 +261,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    déficit de verdade). Sem overflow:hidden, o painel mantém seu tamanho
    mínimo real na conta do layout, e _okrFitDetailSections() consegue medir e
    encolher a fonte certinho quando precisa. */
-.d2-panel.grow{flex:1;min-height:0;display:flex;flex-direction:column;}
+.d2-panel.grow{flex:1 0 auto;display:flex;flex-direction:column;}
 .d2-panel-label{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:7px;flex-shrink:0;}
 .d2-panel-body{font-size:14px;color:var(--txt2);line-height:1.55;}
 
@@ -269,7 +273,11 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .d2-table-header .c-nome{flex:1;}
 .d2-table-header .c-status{width:160px;}
 .d2-table-header .c-prazo{width:95px;text-align:right;}
-.d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;}
+/* Rola quando não cabe. Centralizar com `justify-content:center` cortaria o topo de um conteúdo mais alto que a área (não dá pra rolar pra cima do
+   início); as margens automáticas nas pontas centralizam só quando SOBRA espaço. */
+.d2-table-rows{flex:1;min-height:0;display:flex;flex-direction:column;overflow-y:auto;overscroll-behavior:contain;}
+.d2-table-rows > :first-child{margin-top:auto;}
+.d2-table-rows > :last-child{margin-bottom:auto;}
 .d2-marco-row{display:flex;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:15px;cursor:pointer;border-radius:8px;transition:background .15s;}
 .d2-marco-row:last-child{border-bottom:none;}
 .d2-marco-row:hover{background:rgba(255,255,255,.05);}
@@ -332,13 +340,18 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
    último item, escondido fora da borda do card, sem nenhum overflow:hidden
    pra sequer escondê-lo — só ficava fora de vista). */
 .d2-flist{list-style:none;font-size:14px;color:var(--txt2);line-height:1.65;margin:0;padding:0;
-  flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:8px;}
+  flex:1;min-height:0;display:flex;flex-direction:column;gap:8px;overflow-y:auto;overscroll-behavior:contain;}
+.d2-flist > :first-child{margin-top:auto;}
+.d2-flist > :last-child{margin-bottom:auto;}
 .d2-flist li{padding-left:13px;position:relative;}
 .d2-flist li::before{content:'•';position:absolute;left:0;color:var(--txt3);}
 .d2-empty{font-size:12.5px;color:var(--txt3);font-style:italic;}
 
 ::-webkit-scrollbar{width:8px;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:8px;}
+/* Áreas que rolam no detalhe do Objetivo: barra mais visível (sem ela, o texto cortado na borda é o único sinal de que há mais conteúdo). */
+.d2-table-rows::-webkit-scrollbar-thumb,.d2-flist::-webkit-scrollbar-thumb,.d2-left::-webkit-scrollbar-thumb{background:rgba(120,200,255,.45);}
+.d2-table-rows::-webkit-scrollbar-track,.d2-flist::-webkit-scrollbar-track,.d2-left::-webkit-scrollbar-track{background:rgba(255,255,255,.05);border-radius:8px;}
 
 /* ── Anotações da reunião (📋 flutuante) — pedido direto do usuário: um
    jeito rápido de registrar o que se discute durante a apresentação ao
@@ -1454,17 +1467,13 @@ function _okrFitDetailSections(){
   fcols.forEach(fcol=>{ fcol.style.alignSelf = 'start'; fcol.style.height = dFooterH+'px'; });
   const fcolLists = fcols.map(fcol=>fcol.querySelector('.d2-flist, .d2-empty'));
 
-  const availMarcos = marcosRows.clientHeight;
-  const availLeft = dLeft.clientHeight;
-  const availFcols = fcolLists.map(el=>el ? el.clientHeight : 0);
-
-  _zoomFitToHeight(marcosRows, availMarcos);
-  // Cabeçalho (MARCOS / STATUS / PRAZO) acompanha o zoom das linhas: as colunas de largura fixa (160/95px) das linhas encolhem
-  // com o zoom, as do cabeçalho não — STATUS ficava deslocado pra esquerda do status das linhas (bug do usuário, 2026-10-06).
+  // Sem encolher a fonte (2026-10-06, pedido direto: "em vez de diminuir a letra, prefiro scroll"): cada seção mantém o tamanho e rola
+  // quando o conteúdo passa da área (overflow-y:auto no CSS). Limpa qualquer zoom de uma abertura anterior, por segurança.
+  [marcosRows, dLeft, ...fcolLists].forEach(el=>{ if(el){ el.style.zoom=''; el.style.width=''; el.style.height=''; el.style.flex=''; el.style.alignSelf=''; } });
+  // A barra de rolagem ocupa ~8px da largura das linhas; o cabeçalho (MARCOS / STATUS / PRAZO) ganha o mesmo recuo à direita, senão STATUS/PRAZO
+  // ficam deslocados em relação às linhas (mesmo sintoma do bug de alinhamento de 2026-10-06).
   const tHead = document.querySelector('.d2-table-header');
-  if(tHead) tHead.style.zoom = marcosRows.style.zoom || '';
-  _zoomFitToHeight(dLeft, availLeft);
-  fcolLists.forEach((el,i)=>{ if(el) _zoomFitToHeight(el, availFcols[i]); });
+  if(tHead){ tHead.style.zoom = ''; tHead.style.paddingRight = (marcosRows.offsetWidth - marcosRows.clientWidth)+'px'; }
 }
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
 window._okrToggleColapsarConcluidos = () => {
