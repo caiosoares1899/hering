@@ -20640,6 +20640,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.2 · painel-dev — 2026-10-06 · feat(OKR): 🗑 Excluir no menu de contexto do Objetivo (só ADM)
+
+Pedido direto ("no menu de contexto okr faltou a opção excluir"): na v3.111 o Excluir tinha ficado de fora de propósito; agora o menu do **Objetivo** tem **🗑 Excluir** (tecla **X**), logo depois de Arquivar. Mesma regra do botão do
+modal: **só ADM**, com a mesma confirmação ("apaga também N marco(s)… não dá pra desfazer") e o mesmo apagamento definitivo (Objetivo, Marcos e comentários dos Marcos). Como pelo menu não há modal pra fechar, a lista de Objetivos
+é redesenhada na hora. Marco continua só com **Arquivar** (não existe exclusão de Marco em lugar nenhum). Ajuda do OKR e CODE_MAP atualizados. 42 cenários no Chromium (4 novos: ADM vê e usa X, apaga em cascata, recusar não apaga, não-ADM não vê).
+Só dev; o guia ganha a mudança quando for promovido.
+
 ### painel.html v4.1 · painel — 2026-10-06 · Promove pra prod — painel v4 (lote OKR: menu de ações, ajustes de gráfico, help)
 
 Promoção do lote acumulado de `painel-dev.html` desde a v3.110 (prod anterior): **v3.111** menu de contexto (clique direito) nos Objetivos e nos Marcos — registrar atingimento (modal rápido), status do Marco,

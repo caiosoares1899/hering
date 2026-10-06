@@ -2593,9 +2593,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <b style="color:var(--txt);">🖱 Menu de ações (clique direito)</b><br>
           Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo:
           <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas),
-          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> (só ADM) e <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
+          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> e <b>🗑 Excluir</b> (só ADM), <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
           Cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); dá pra navegar com <b>↑ ↓</b>, abrir submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).
-          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>Excluir</b> não está no menu de propósito — continua só dentro do Objetivo.
+          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.
         </div>
         <div>
           <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
@@ -3173,7 +3173,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v4.1 · painel-dev</div>
+<div class="version">v4.2 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6142,7 +6142,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
 // ═══ ⋯ Menu de contexto da aba OKR (painel-dev v3.111) ═══
 // Clique direito num cartão de Objetivo ou numa linha de Marco abre um menu com as ações mais usadas, sem abrir o modal.
 // Itens com tecla de atalho (R, E, P, T...), setas ↑↓ ←→ + Enter, Esc fecha. Edições rápidas escrevem por TRANSAÇÃO no nó do Objetivo/Marco
-// (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo fica de fora de propósito.
+// (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo só aparece pra ADM (igual ao botão do modal) e pede confirmação.
 let _okrCtxState = null;   // {root, items, trigger}
 // Escreve `mutate(n)` no nó por transação. `mutate` recebe uma CÓPIA e devolve false pra abortar. Devolve o valor gravado ou null (abortou/sumiu).
 async function _okrTx(path, mutate){
@@ -6286,6 +6286,7 @@ function _okrCtxObjItems(id){
   ];
   if(_isAdmPainel()) it.push(arq ? {ico:'♻️', label:'Desarquivar', key:'A', run:()=>_okrDesarquivarObjetivo(id)}
                                  : {ico:'📦', label:'Arquivar', key:'A', danger:true, run:()=>_okrArquivarObjetivo(id)});
+  if(_isAdmPainel()) it.push({ico:'🗑', label:'Excluir', key:'X', danger:true, title:'Exclusão definitiva (apaga também os Marcos) — pede confirmação', run:()=>_okrExcluirObjetivo(id)});   // mesma regra do botão do modal: só ADM
   it.push({sep:true}, {ico:'🔗', label:'Copiar link do Objetivo', key:'L', run:()=>_okrCtxCopiarLink(id)});
   return it;
 }
@@ -7801,6 +7802,7 @@ async function _okrExcluirObjetivo(id){
   marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
   showToast('🗑 Objetivo excluído.');
   closeOkrObjetivo();
+  try{ renderOkrObjetivos(); }catch(e){}   // pelo menu de contexto não há modal pra fechar: redesenha a lista na hora
 }
 
 // ── Modal de Marco (dentro de um Objetivo) ────────────────────────────
