@@ -20549,6 +20549,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.109 · painel — 2026-10-06 · Promove pra prod — OKR: tags nos cartões + filtro por tag + cor da tag; Ajuda do OKR atualizada
+
+Lote acumulado do painel-dev v3.106 → v3.109 sobre o prod v3.105, mesclado em 3 vias (só a linha de versão conflitou; título, favicon, banner e demais divergências de ambiente intactos). Sem avisos (pedido do usuário). Detalhes nas entradas `painel-dev.html v3.106…v3.109` logo abaixo.
+- **🏷️ Tags nos cartões da aba OKR** (até 4 + "+N"); clicar numa tag filtra a lista por ela. **Filtro por tag** na barra (só tags em uso, combina com os outros filtros, some sem tags; apagar a tag filtrada desfaz o filtro).
+- **Cor da tag**: "+ Nova" abre formulário com nome e cor (6 da paleta ou qualquer cor); 🎨 ao lado da tag aplicada edita nome/cor. A cor vale também na apresentação (`okr-apresentacao.slide.html`, já em prod).
+- **❓ Ajuda do OKR** atualizada (atingimento, gráfico de evolução, modal por seções, filtros, tags, Central Agente Ágil com atingimento).
+- Teste de fumaça contra o `painel.html` real: tags 13, cor da tag 17, gráfico 17, bugs 12, UI 27, Perene 13, nav, filtro, pessoas — todos verdes.
+
 ### painel-dev.html v3.109 · painel-dev (+ okr-apresentacao.slide.html) — 2026-10-05 · feat(OKR): escolher a cor da tag (ao criar e ao editar)
 
 Pedido: poder definir a cor da tag, no mesmo lugar em que ela é criada. Antes, "+ Nova" (⚙ Configurações do Objetivo) pedia só o nome num `prompt` e a cor saía automática (rodízio da paleta).
