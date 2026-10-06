@@ -3307,14 +3307,7 @@ v3.19 · painel-dev pro racional completo.
   nesse caso — `okr.html` (raiz do repo, ver abaixo) é fixo, sempre
   aponta pra `painel.html` (prod), não serve como atalho a partir do
   dev.
-- **`okr.html` (2026-09-09, raiz do repo, sem `-dev`)** — pedido direto:
-  "n tem como o okr ganhar uma pagina tipo /okr?". Redirect estático
-  puro (`location.replace`) pra `painel.html?tab=okr`, repassando
-  qualquer param da URL (`?okr=<id>` incluso) — usa o mesmo mecanismo
-  de deep-link `?tab=<id>` (`_painelTryOpenTabFromUrl()`) e `?okr=<id>`
-  já existentes em `painel.html`, não duplica lógica nenhuma. Continua
-  exigindo login @ciahering normal — decisão explícita do usuário, só
-  encurta o endereço, não é exceção de acesso.
+- **`okr.html` (prod, v1.0 · okr, 2026-10-06)** — era um redirect estático pra `painel.html?tab=okr` (2026-09-09); agora é a PÁGINA do OKR (promoção do `okr-dev.html`, ver a seção "🎯 `okr-dev.html`" abaixo — mesmas âncoras, `VERSION_KEY='okr'`, links pra `kanban.html`/`painel.html`). Links antigos `/okr?okr=<id>` continuam abrindo o Objetivo.
 - Achado (mesma classe do já documentado acima pra
   `_okrSyncObjDraftFromDom()`): `_okrTagCriar()` e as novas seções
   também re-renderizam o modal inteiro — todas as novas mutações
@@ -3475,7 +3468,7 @@ duas fontes devem contar a MESMA história, mesmo princípio da skill
 `HELP_CONTENT`, não este arquivo — considerar estender o escopo dela
 se este gap se repetir).
 
-### 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; sem prod ainda)
+### 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
 Extração mecânica (AST) da aba OKR do `painel-dev.html` v4.8 — todas as âncoras de OKR da seção acima (funções `_okr*`/`*Okr*`, `OKR_*`, `ATING-ENGINE`, `_okrCtx*`, `_okrHist*`) valem aqui com os mesmos nomes; **re-`grep` o nome em `okr-dev.html`**. Só a INFRA em volta é nova:
 - Bloco "🎯 OKR — página própria" no início do `<script>`: `SQUADS`/`squadBoardUrl()`/`loadExtraSquads()` (squads base + `kanban/squads_meta`), `loadAdmList()`, `loadGlobalUsers()` (enxuto, só popula `_globalUsersCache` e re-renderiza o OKR).
 - **Cards vinculados sob demanda**: `_okrCardCache`/`_okrCardFetchOne()`/`_okrCardEnsure()`/`_okrCardPaint()` (título por vínculo via `cards_index` → `cards/{chave}`), `_okrSquadOkrCards()` (carga única por squad na 1ª busca, só cards com badge OKR), `_okrCardSearchResults()`/`_okrRenderCardSearch()` (assíncrona) e `_okrCardLinksHtml()` — substituem as versões do painel, que liam `squadData` (todos os cards). `_okrOpenLinkedCard()` abre `kanban(-dev).html?squad=&card=` em aba nova.

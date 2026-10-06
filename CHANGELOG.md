@@ -20670,6 +20670,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v1.0 · okr — 2026-10-06 · Promove pra prod — o OKR agora tem página própria (`/okr`), separada do painel
+
+Promoção do `okr-dev.html` v1.0 (PR #1226) como **`okr.html`**, que deixa de ser só um redirect pro painel e passa a ser a própria tela de OKR: Objetivos, Marcos, Atingimento, tags, menu de ações, Histórico semanal com a janela de contribuição, Central Agente Ágil, Anotações da reunião, Ajuda, Guia e Apresentação. Mesmos dados (`kanban/okr/...`), mesmas regras de acesso (Google @ciahering, Microsoft @arezzo, visualizadores de `painel_viewers` só leitura) e de edição. Links antigos continuam valendo: `/okr?okr=<id>` abre o Objetivo e `/okr?okr=chat` a Central Agente Ágil; o "🔗 Copiar link" do painel já gerava `okr.html?okr=<id>`. Cards vinculados sob demanda (título por vínculo, busca só baixa os cards na 1ª digitação, clique abre o board no card em aba nova). Diferenças do dev: sem a faixa laranja, links pra `kanban.html`/`painel.html`, `VERSION_KEY = 'okr'`, config do Firebase sob o sufixo `_okr`. **O painel não foi alterado**: a aba 🎯 OKR continua lá; atalho "🎯 OKR →" e troca dos links (kanban, sino do painel, guia) ficam pra próxima etapa (dev-first). Smoke test no `okr.html` real: 29 cenários da página + suítes de OKR do painel (menu 42, histórico 17, janela 35, abas 12, duplo clique) verdes; `node --check`/`no-undef` OK. Mural: rascunho `seed_okr_pagina_propria_2026_10_06`.
+
 ### okr-dev.html v1.0 · okr-dev — 2026-10-06 · OKR numa página só dele, separada do painel (ambiente de teste)
 
 Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`** — a MESMA tela da aba 🎯 OKR do `painel-dev.html` v4.8 (Objetivos, Marcos, Atingimento, tags, menu de contexto, Histórico semanal com a janela de contribuição, Central Agente Ágil, Anotações da reunião, Ajuda, deep links `?okr=<id>` / `?okr=chat`), em página própria. O `painel-dev.html` **não foi alterado** nesta etapa (o atalho 🎯 OKR → página e a troca dos links vêm só depois da validação).
