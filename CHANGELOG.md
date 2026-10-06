@@ -20043,6 +20043,15 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 (2ª) · fix(/monitorarbugs): rodapé do detalhe do Objetivo ilegível com muitos Marcos
+
+No modal de detalhe, rodapé (Progressos / Próximos passos / Riscos / Planos de ação) e corpo (Marcos + raia esquerda)
+dividiam o aperto proporcionalmente ao tamanho natural — um Objetivo com muitos Marcos (≥14 em 1366x768, ≥24 em
+1920x1080) levava o rodapé junto: zoom de 0,66 com 16 Marcos e 0,2 com 24. Agora o rodapé tem um piso (o menor entre
+o tamanho natural e 30% da altura da tela) e quem cede é a tabela de Marcos, que já encolhia sozinha. Medido em
+1366x768: rodapé 93→111 px com 16 Marcos e 68→111 px com 24, sem zoom nas listas; tabela 0,81→0,79 e 0,55→0,50.
+Objetivos com poucos Marcos ficam exatamente como antes. Sem versão própria (vale no deploy).
+
 ### 2026-10-06 · fix(/monitorarbugs): a apresentação ignorava a ordem manual dos Objetivos
 
 Na aba 🎯 OKR do painel dá pra reordenar os Objetivos de uma Gerência (▲/▼ ou arrastar), e o painel respeita
