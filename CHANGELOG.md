@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.787 — 2026-10-06 · Promove pra prod — mobile: passar o dedo na lista de cards não abre mais um card
+
+Promoção do kanban-dev v8.30.787 sobre o prod v8.30.786 (merge de 3 vias; só a linha de versão conflitou; diff dev × prod continua só nas 28 linhas de ambiente).
+Pro público de prod: no celular/tablet, passar o dedo rápido sobre a lista de cards (pra rolar) abria um card por engano — e tocar pra parar uma rolagem em
+andamento também. Agora só toque de verdade abre o card: o dedo que andou mais de 10 px conta como rolagem, e um toque que começa até 160 ms depois do último scroll
+só interrompe a inércia. Duplo toque (menu de contexto) e toque normal seguem iguais. Testado em Chromium com toque emulado contra o `kanban.html` real: 9 de 9 cenários.
+Checks: `node --check` OK; chaves/parênteses -1/3 (mesmo baseline da v8.30.786). Sem avisos (correção de bug).
+
 ### v8.30.786 — 2026-10-05 · Promove pra prod — externos com conta Microsoft pessoal, cadastro guiado, 💬 de comentários, chip Híbrido, reforço de segurança
 
 Promoção do lote acumulado em dev desde a v8.30.777 (v8.30.778 a v8.30.786-dev; pedido: "uma promoção agora com tudo
