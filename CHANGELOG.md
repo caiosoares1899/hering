@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.791-dev — 2026-10-06 · feat: popup 📊 Dados do Board maior, com barra única de colunas e gráficos que preenchem a tela (só kanban-dev)
+
+Pedido direto (print da aba CFD & Burndown: popup estreito, gráfico encolhido num canto, "Colunas na conta" repetida em cada aba): o popup passa de 860px para **até 1500px (97% da tela)**; o toggle **📍 Colunas na conta**
+virou uma **barra única fixa no topo, com botãozinhos (chips) maiores e acessíveis por teclado**, valendo para as 3 abas (já valia no cálculo; saem as 3 cópias, uma em cada aba). Junto na barra fica o botão ⏱ Relatórios de Tempo.
+**Visão Geral**: indicadores em grade mais larga e, abaixo, "Cards ativos por coluna" e "Tendência — 14 dias" **lado a lado** em cartões. **CFD & Burndown**: os dois gráficos lado a lado (CFD 60%, Burndown 40%).
+Todos os gráficos (barras, tendência, CFD, burndown) agora **medem a largura do container** e se redesenham ao redimensionar a janela, em vez de ficarem num viewBox fixo de ~540px; rótulos de data um pouco maiores. Em tela estreita (<980px) os cartões empilham.
+Ajuda ("CFD & Burndown") atualizada. 12 cenários no Chromium (tamanho do popup, gráficos preenchendo, chips únicos, toggle valendo nas 3 abas, teclado, resize, celular). Só dev.
+
 ### v8.30.790-dev — 2026-10-06 · ajuste: Histórico do card mostra sempre a data (sem "3d/4d/5d") (só kanban-dev)
 
 Pedido direto: no **Histórico** do card (a lista no fim do modal), cada linha mostrava o tempo relativo ("agora", "5min", "3h", "4d") e só passava pra data depois de 7 dias. Agora **toda linha mostra a data
