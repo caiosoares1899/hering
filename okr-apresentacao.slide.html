@@ -1097,6 +1097,11 @@ function _zoomFitToHeight(content, availH){
   content.style.flex = '';
   content.style.alignSelf = '';
   if(!availH) return;
+  // Largura real a manter: medida ANTES de mexer em flex/align-self (2026-10-06, bug do usuário: linhas dos Marcos coladas
+  // à esquerda e desalinhadas do cabeçalho STATUS/PRAZO). Em .d2-table-rows (item de um flex em COLUNA) o eixo cruzado é o
+  // horizontal: align-self:start abaixo encolhe a largura pro tamanho do conteúdo, e medir depois disso fixava a tabela
+  // estreita. Só aparecia nos Objetivos com Marcos suficientes pra disparar o encolhimento.
+  const targetW = content.getBoundingClientRect().width;
   // scrollHeight continua confiável aqui (zoom:1, sem override de height):
   // revela o overflow de verdade mesmo o content tendo height:100% no CSS.
   if(content.scrollHeight <= availH) return; // já cabe no tamanho normal, não mexe
@@ -1118,7 +1123,6 @@ function _zoomFitToHeight(content, availH){
   content.style.flex = 'none';
   content.style.alignSelf = 'start';
   content.style.height = 'auto';
-  const targetW = content.getBoundingClientRect().width; // largura real a manter em qualquer nível de zoom
   let lo = 0.15, hi = 1;
   for(let i=0;i<16;i++){
     const mid = (lo+hi)/2;
@@ -1415,6 +1419,10 @@ function _okrFitDetailSections(){
   const availFcols = fcolLists.map(el=>el ? el.clientHeight : 0);
 
   _zoomFitToHeight(marcosRows, availMarcos);
+  // Cabeçalho (MARCOS / STATUS / PRAZO) acompanha o zoom das linhas: as colunas de largura fixa (160/95px) das linhas encolhem
+  // com o zoom, as do cabeçalho não — STATUS ficava deslocado pra esquerda do status das linhas (bug do usuário, 2026-10-06).
+  const tHead = document.querySelector('.d2-table-header');
+  if(tHead) tHead.style.zoom = marcosRows.style.zoom || '';
   _zoomFitToHeight(dLeft, availLeft);
   fcolLists.forEach((el,i)=>{ if(el) _zoomFitToHeight(el, availFcols[i]); });
 }
