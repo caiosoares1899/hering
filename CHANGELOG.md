@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.792 — 2026-10-06 · Promove pra prod — ordenação de colunas corrigida (+ "mais recentes primeiro"), "Marcar todas como lidas" do sino, data nos históricos e popup Dados do Board maior
+
+Promoção do lote acumulado de `kanban-dev.html` desde a v8.30.787 (merge de 3 vias; a diferença prod novo × antigo é exatamente a diferença do dev no período, e dev × prod só diferem nas 7 linhas de ambiente de sempre: favicons, versão, `VERSION_KEY`, chave de logout forçado):
+- **Ordenação nas colunas** (v8.30.788/789): "Data de criação" mandava cards sem data pro topo e empates do mesmo dia ficavam na ordem do array (agora: sem data por último, desempate pela hora de criação do id); "Prazo" desempata por prioridade; e o campo `_lastFlowCol` — que o Agente Ágil não atualiza ao mover cards no servidor — é reposto a partir da coluna real a cada sincronização, então
+  arrastar um card de volta à coluna antiga volta a subir em "Movimentação". Nova opção **🕐 Data de criação (mais recentes primeiro)** (a antiga virou "mais antigos primeiro").
+- **Histórico do card mostra sempre a data completa e a hora** (`06/10/2026 14:32`), sem "3d/4d/5d" (v8.30.790).
+- **📊 Dados do Board** (v8.30.791): popup de até 1500px, **barra única "Colunas na conta"** com chips (vale pras 3 abas), cartões lado a lado e gráficos (barras, tendência, CFD, burndown) que preenchem a largura e se redesenham ao redimensionar.
+- **Fix do sino** (v8.30.792): "Marcar todas como lidas" não gravava nada desde a v8.30.786 (regex sobre o `onclick`, que passou a usar aspas duplas), e por isso "Limpar antigas" não achava notificação lida pra apagar; agora ambos gravam numa escrita só, com toast de sucesso/erro.
+Smoke test no `kanban.html` real: Dados do Board 12/12, ordenação OK, sino (1 escrita com todos os ids), data do histórico OK. `node --check` OK; balanço -1/3 no baseline. Mural: rascunho `seed_kanban_v8_30_792_2026_10_06`.
+
 ### v8.30.792-dev — 2026-10-06 · fix: "Marcar todas como lidas" do sino não gravava nada (e por isso "Limpar antigas" não achava nada pra apagar)
 
 Relato de usuária ("não consigo apagar as notificações já lidas"). Causa raiz: `markAllRead()` achava o id de cada notificação com um regex `/'([^']+)'/` em cima do atributo `onclick` — mas desde a conversão do `onclick` do sino para `jsq()` (correção de XSS, v8.30.786) os
