@@ -20640,6 +20640,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.113 · painel-dev — 2026-10-06 · ajuste(OKR): tira o botão ⋯ dos cartões e das linhas de Marco + atualiza o help de OKR
+
+Pedido direto: o menu de contexto já abre com o clique direito, então o botão **⋯** do cartão de Objetivo e o das linhas de Marco saíram (o canto do cartão volta a ter só o 👁, e a barra
+▲/▼ e o título recuperam o espaço de antes). O menu em si não mudou. **Help do OKR** (❓): o bloco do menu de ações deixa de citar o ⋯, e o bloco "Apresentação em slides" ganhou
+**ordem manual** igual à do painel, **tags + filtro por tag**, botões **← Anterior / Próximo →**, **texto longo rola** (a letra não diminui mais no detalhe), e o 👁 do cartão; o bloco de
+reordenar lembra que a ordem vale na apresentação e que filtros desativam a reordenação. Só dev.
+
 ### painel-dev.html v3.112 · painel-dev — 2026-10-06 · fix(OKR): "Registrar atingimento" do menu rápido não lança o mesmo registro duas vezes
 
 Achado por `/monitorarbugs` (rodada no menu de contexto do OKR, v3.111): o botão **Registrar** do modal rápido de atingimento (aberto por *Registrar atingimento…* no menu ⋯) não tinha trava

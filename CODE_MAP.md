@@ -3393,10 +3393,10 @@ sempre `new Date().toISOString()`). Central geral, não presa a um
 Objetivo — a conversa inteira (pedidos + respostas) É o histórico de
 pedidos, sem viewer de log separado.
 
-#### ⋯ Menu de contexto da aba OKR (2026-10-06, painel-dev.html v3.111) — clique direito / botão ⋯ no cartão de Objetivo e na linha de Marco
+#### ⋯ Menu de contexto da aba OKR (2026-10-06, painel-dev.html v3.111) — clique direito no cartão de Objetivo e na linha de Marco (o botão ⋯ foi removido na v3.113)
 - Motor genérico: `_okrCtxOpen(items,x,y,trigger)`/`_okrCtxClose()`/`_okrCtxHtml()`/`_okrCtxActivate()`; itens `{ico,label,key,run,disabled,title,danger,on,sub:[...]}` ou `{sep:true}`.
-  Teclado por listener de captura (↑↓ ←→ Enter Esc + tecla de atalho de cada item); fecha ao clicar fora (exceto o próprio ⋯), rolar (após 300 ms),
-  redimensionar, perder o foco. Disparo: `_okrCtxObjEv/_okrCtxObjBtn` (Objetivo), `_okrCtxMarcoEv/_okrCtxMarcoBtn` (Marco).
+  Teclado por listener de captura (↑↓ ←→ Enter Esc + tecla de atalho de cada item); fecha ao clicar fora, rolar (após 300 ms),
+  redimensionar, perder o foco. Disparo: `_okrCtxObjEv` (Objetivo), `_okrCtxMarcoEv` (Marco) — só `oncontextmenu`.
 - Itens: `_okrCtxObjItems(id)` / `_okrCtxMarcoItems(id)` (mesmas permissões do modal: `_okrCanEdit`/`_okrCanCreate`/`_isAdmPainel`). Excluir NÃO está no menu (decisão).
 - Escritas rápidas por TRANSAÇÃO no nó (`_okrTx(path,mutate)` — clone, aborta com `false`): `_okrCtxTagToggle`, `_okrCtxMarcoStatus`, `_okrCtxMarcoApresentacao`,
   `_okrAtingQuickSalvar` (modal `#okr-aq-ov`: `_okrAtingQuickOpen/Ler/Prev/Close`); resumo no Histórico do Objetivo pai: `_okrCtxResumoNoObjetivo`; redesenho: `_okrCtxRefazTela`.

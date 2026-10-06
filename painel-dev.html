@@ -349,10 +349,6 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
 .okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
 /* ⋯ Menu de contexto da aba OKR (v3.111) */
-.okr-ctx-btn{position:absolute;top:8px;right:38px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:15px;line-height:1;color:var(--txt2);cursor:pointer;padding:0;font-family:inherit;}
-.okr-ctx-btn:hover,.okr-ctx-btn:focus-visible{border-color:var(--accent);color:var(--accent);outline:none;}
-.okr-ctx-btn-sm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;line-height:1;padding:0 4px;font-family:inherit;flex-shrink:0;}
-.okr-ctx-btn-sm:hover{color:var(--accent);}
 .okr-ctx{position:fixed;z-index:9100;min-width:236px;max-width:320px;padding:5px;border-radius:11px;background:rgba(var(--ink-rgb),.97);border:1px solid var(--glass-b);box-shadow:0 12px 36px rgba(0,0,0,.45);backdrop-filter:blur(10px);font-size:12.5px;color:var(--txt);}
 .okr-ctx-item{position:relative;user-select:none;}
 .okr-ctx-row{display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:7px;cursor:pointer;white-space:nowrap;}
@@ -2587,17 +2583,17 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">↕️ Reordenar Objetivos e Marcos</b><br>
-          Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada.
+          Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).
         </div>
         <div>
           <b style="color:var(--txt);">📦 Arquivar × 🗑 Excluir</b><br>
           <b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.
         </div>
         <div>
-          <b style="color:var(--txt);">⋯ Menu de ações (clique direito)</b><br>
-          Clique com o <b>botão direito</b> num cartão de Objetivo — ou no <b>⋯</b> do cartão (funciona também no celular/tablet) — pra abrir o menu, sem precisar abrir o Objetivo:
+          <b style="color:var(--txt);">🖱 Menu de ações (clique direito)</b><br>
+          Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo:
           <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas),
-          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> (só ADM) e <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu (também no ⋯ da linha): <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
+          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> (só ADM) e <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
           Cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); dá pra navegar com <b>↑ ↓</b>, abrir submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).
           As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>Excluir</b> não está no menu de propósito — continua só dentro do Objetivo.
         </div>
@@ -2616,6 +2612,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         <div>
           <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
           Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, setas/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe. Cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Painel) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso. A barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.
+          <ul style="margin:6px 0 0;padding-left:18px;">
+            <li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no painel (dentro de cada gerência) — sem ordem manual, vai por título.</li>
+            <li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li>
+            <li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último.</li>
+            <li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li>
+            <li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no painel) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li>
+          </ul>
         </div>
         <div>
           <b style="color:var(--txt);">💬 Central Agente Ágil</b><br>
@@ -3170,7 +3173,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.112 · painel-dev</div>
+<div class="version">v3.113 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6115,14 +6118,13 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
     ${podeReordenar?`ondragstart="_okrObjDragStart(event,${jsq(o.id)})" ondragover="_okrObjDragOver(event)" ondragenter="_okrObjDragEnter(event)" ondragleave="_okrObjDragLeave(event)" ondrop="_okrObjDrop(event,${jsq(areaId)},${jsq(o.id)})" ondragend="_okrObjDragEnd(event)"`:''}
     oncontextmenu="return _okrCtxObjEv(event,${jsq(o.id)})"
     onclick="openOkrObjetivo(${jsq(o.id)})">
-    <button type="button" class="okr-ctx-btn" onclick="_okrCtxObjBtn(event,${jsq(o.id)})" title="Mais ações (também com o botão direito do mouse no card)" aria-haspopup="menu">⋯</button>
     <button type="button" class="okr-preview-btn" onclick="event.stopPropagation();_okrPreviewApresentacao(${jsq(o.id)})" title="Ver como este Objetivo aparece na apresentação (okr-apresentacao.slide.html)">👁</button>
-    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:58px;">
+    ${podeReordenar?`<div style="display:flex;gap:4px;justify-content:flex-end;padding-right:28px;">
       <span title="Arraste pra reordenar" style="font-size:12px;color:var(--txt3);margin-right:auto;cursor:grab;">⠿</span>
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
-    <p class="okr-card-title"${podeReordenar?'':' style="padding-right:58px;"'}>${esc(o.titulo||'(sem título)')}</p>
+    <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${okrStatusDot(status)} <span>${esc(okrStatusInfo(status).label)}</span>
       ${_okrTrimestresOf(o).map(t=>`<span class="badge">${esc(t)}</span>`).join('')}
@@ -6138,7 +6140,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
 }
 
 // ═══ ⋯ Menu de contexto da aba OKR (painel-dev v3.111) ═══
-// Clique direito (ou o botão ⋯) num cartão de Objetivo ou numa linha de Marco abre um menu com as ações mais usadas, sem abrir o modal.
+// Clique direito num cartão de Objetivo ou numa linha de Marco abre um menu com as ações mais usadas, sem abrir o modal.
 // Itens com tecla de atalho (R, E, P, T...), setas ↑↓ ←→ + Enter, Esc fecha. Edições rápidas escrevem por TRANSAÇÃO no nó do Objetivo/Marco
 // (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo fica de fora de propósito.
 let _okrCtxState = null;   // {root, items, trigger}
@@ -6243,8 +6245,8 @@ document.addEventListener('keydown', e=>{
     if(l[0]){ parar(); _okrCtxActivate(l[0]); }
   }
 }, true);
-// Fecha ao clicar fora (o próprio ⋯ não conta: ele decide abrir/fechar), rolar, redimensionar ou trocar de janela.
-document.addEventListener('mousedown', e=>{ if(_okrCtxState && !e.target.closest('.okr-ctx-btn') && !e.target.closest('.okr-ctx')) _okrCtxClose(); }, true);
+// Fecha ao clicar fora, rolar, redimensionar ou trocar de janela.
+document.addEventListener('mousedown', e=>{ if(_okrCtxState && !e.target.closest('.okr-ctx')) _okrCtxClose(); }, true);
 // (rolagem nos primeiros 300 ms é ignorada: o corpo do modal do Objetivo dispara um `scroll` espúrio logo depois de abrir o menu, o que o fechava na hora)
 document.addEventListener('scroll', e=>{ if(_okrCtxState && Date.now()-_okrCtxState.t0>300 && !(e.target && e.target.closest && e.target.closest('.okr-ctx'))) _okrCtxClose(); }, true);
 window.addEventListener('resize', _okrCtxClose);
@@ -6252,17 +6254,7 @@ window.addEventListener('blur', _okrCtxClose);
 
 // ── Quem dispara ──
 function _okrCtxObjEv(ev, id){ ev.preventDefault(); ev.stopPropagation(); _okrCtxOpen(_okrCtxObjItems(id), ev.clientX, ev.clientY, null); return false; }
-function _okrCtxObjBtn(ev, id){
-  ev.stopPropagation(); const b = ev.currentTarget;
-  if(_okrCtxState && _okrCtxState.trigger===b){ _okrCtxClose(); return; }
-  const r = b.getBoundingClientRect(); _okrCtxOpen(_okrCtxObjItems(id), r.left, r.bottom+4, b);
-}
 function _okrCtxMarcoEv(ev, id){ ev.preventDefault(); ev.stopPropagation(); _okrCtxOpen(_okrCtxMarcoItems(id), ev.clientX, ev.clientY, null); return false; }
-function _okrCtxMarcoBtn(ev, id){
-  ev.stopPropagation(); const b = ev.currentTarget;
-  if(_okrCtxState && _okrCtxState.trigger===b){ _okrCtxClose(); return; }
-  const r = b.getBoundingClientRect(); _okrCtxOpen(_okrCtxMarcoItems(id), r.left, r.bottom+4, b);
-}
 
 // ── Itens ──
 function _okrCtxTagDot(t){ const p = _okrTagCor(t); return `<span style="width:9px;height:9px;border-radius:50%;background:${p.c};display:inline-block;"></span>`; }
@@ -7482,7 +7474,6 @@ function _okrMarcosListHtml(objId, podeEditar){
       ${m.responsavel?`<span class="okr-marco-meta">${esc(_okrPessoaInfo(m.responsavel).nome)}</span>`:''}
       ${m.prazo?`<span class="okr-marco-meta">📅 ${new Date(m.prazo+'T00:00:00').toLocaleDateString('pt-BR')}</span>`:''}
       ${m.mostrarApresentacao!==false?`<span class="okr-marco-meta" title="Aparece na apresentação (okr-apresentacao.slide.html)">🎬</span>`:''}
-      <button type="button" class="okr-ctx-btn-sm" onclick="_okrCtxMarcoBtn(event,${jsq(m.id)})" title="Mais ações do marco (também com o botão direito)" aria-haspopup="menu">⋯</button>
     </div>`).join('');
 }
 // Move um marco 1 posição pra cima/baixo (dir -1/1) dentro do Objetivo.
