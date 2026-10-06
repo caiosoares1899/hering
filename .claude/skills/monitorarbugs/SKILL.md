@@ -2907,6 +2907,15 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   TODO lugar que testa "está configurado" e perguntar se a decisão ali é "tem tipo" ou "tem valor a mostrar";
   e todo tooltip por hover precisa de equivalente de toque (fechar ao tocar fora).
 
+- **2026-10-06, toque no card no mobile (relato direto: "passo o dedo rápido na lista e abre um card")**: 1 achado
+  real, técnica 3 + regressão de rework. `addTouchDnD()` (v8.30.739, duplo-toque contado no `touchend`) tratava todo gesto
+  que não virou arrasto como toque simples — o `touchmove` só cancelava o long-press e nunca marcava "foi rolagem". A proteção
+  que o navegador dava de graça (não gera `click` depois de scroll) se perdeu ao contar os toques à mão. Também abria o card
+  ao tocar pra PARAR a inércia de um flick. Fix: `moved` (>10 px) + `ignoreTap` (toque até 160 ms depois do último `scroll`).
+  Reproduzido em Chromium com toque emulado antes de corrigir (3 de 9 cenários falhavam). dev v8.30.787. **Lição**: ao
+  substituir um evento nativo (`click`) por detecção manual (`touchstart/touchend`), listar tudo que o navegador filtrava
+  sozinho — movimento, rolagem em curso, long-press — e reimplementar cada um; "toque" não é "touchend sem arrasto".
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,

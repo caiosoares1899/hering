@@ -6463,7 +6463,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.786-dev</div>
+<div class="version">v8.30.787-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -32117,8 +32117,20 @@ function getDragAfterElement(container, y){
 
 
 // Touch drag and drop (mobile)
+// Última vez que ALGUM elemento rolou (captura, pq `scroll` não borbulha) — usado por addTouchDnD() pra distinguir um toque de
+// verdade de um toque que só PAROU uma rolagem em andamento (inércia depois de um flick).
+let _lastScrollTs = 0;
+document.addEventListener('scroll', ()=>{ _lastScrollTs = Date.now(); }, {capture:true, passive:true});
+const TAP_SLOP_PX = 10;        // o dedo andou mais que isso entre o toque e o soltar = foi rolagem, nunca um toque
+const TAP_SCROLL_GRACE_MS = 160; // toque que COMEÇA até isso depois do último scroll só parou a rolagem
 function addTouchDnD(el, cardId){
   let startX,startY,clone,dragging,longPressTimer,armed;
+  // Achado real (relato direto do usuário no mobile: "quando eu passo o dedo rápido na lista de card, ele abre um card"):
+  // o `touchend` abaixo tratava QUALQUER gesto que não virou arrasto como "toque simples" e abria o card — sem checar se o dedo
+  // andou. Até a v8.30.738 isso não aparecia porque o abrir vinha do `click`, que o navegador NÃO sintetiza depois de uma
+  // rolagem; ao contar os toques aqui mesmo (v8.30.739, duplo-toque), essa proteção nativa se perdeu. `moved` (dedo andou mais
+  // que TAP_SLOP_PX) e `ignoreTap` (toque que só interrompeu uma rolagem/inércia) devolvem a distinção.
+  let moved=false, ignoreTap=false;
   // Duplo-toque abre o menu de contexto (showCtxMenu()) — ver comentário
   // longo em makeCardEl() sobre por que "⋯" foi removido e por que a
   // 1ª e a 2ª tentativa (v8.30.737-dev/v8.30.738-dev, baseadas em
@@ -32142,7 +32154,8 @@ function addTouchDnD(el, cardId){
   el.addEventListener('touchstart',e=>{
     if(e.touches.length>1) return;
     startX=e.touches[0].clientX; startY=e.touches[0].clientY;
-    dragging=false; armed=false;
+    dragging=false; armed=false; moved=false;
+    ignoreTap = (Date.now()-_lastScrollTs) < TAP_SCROLL_GRACE_MS;   // a lista ainda estava rolando: este toque só a parou
     // arma o drag depois de segurar parado por 400ms
     longPressTimer=setTimeout(()=>{
       armed=true;
@@ -32153,6 +32166,7 @@ function addTouchDnD(el, cardId){
   el.addEventListener('touchmove',e=>{
     const dx=e.touches[0].clientX-startX, dy=e.touches[0].clientY-startY;
     const dist=Math.sqrt(dx*dx+dy*dy);
+    if(dist>TAP_SLOP_PX) moved=true;   // rolou/arrastou: no soltar, isto NÃO é um toque
     // Se moveu ANTES de armar (long-press não completou) → é scroll, cancela o drag
     if(!armed){
       if(dist>8){ clearTimeout(longPressTimer); el.classList.remove('card-armed'); }
@@ -32189,6 +32203,9 @@ function addTouchDnD(el, cardId){
       // duplo-toque (abre o menu de contexto) ou o 1º (abre o card, com
       // pequeno atraso pra dar chance ao 2º toque chegar). preventDefault
       // suprime o clique sintético que o navegador dispararia em seguida.
+      // Rolagem (dedo andou) ou toque que só parou uma rolagem: nunca abre card nem conta pro duplo-toque. preventDefault (quando
+      // permitido) ainda suprime um clique sintético que o navegador poderia gerar dentro da folga dele.
+      if(moved || ignoreTap){ if(e.cancelable) e.preventDefault(); return; }
       e.preventDefault();
       const now=Date.now();
       if(now<_tapLockUntil) return;
