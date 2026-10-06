@@ -3173,7 +3173,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v4.0 · painel-dev</div>
+<div class="version">v4.1 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7160,7 +7160,7 @@ function _okrAtingChartHtml(at){
   const ys = ls.map(l=> NUM ? Number(l.valor) : _okrAtingPctDe(at,l));
   const meta = Number(at.meta), ini = Number(at.inicial)||0;
   const refs = [];
-  if(NUM){ if(isFinite(meta)) refs.push({v:meta, rot:'🎯 meta'}); if(at.tipo!=='acima' && at.tipo!=='abaixo') refs.push({v:ini, rot:'início'}); }
+  if(NUM){ if(isFinite(meta)) refs.push({v:meta, rot:'🎯 meta'}); if(at.tipo!=='acima' && at.tipo!=='abaixo' && ini!==0) refs.push({v:ini, rot:'valor inicial'}); }   // 'valor inicial' (não 'início': parecia o começo do período); com valor inicial 0 a linha só repetiria o eixo, então some
   else refs.push({v:100, rot:'🎯 100%'});
   let mn = Math.min(...ys, ...refs.map(r=>r.v)), mx = Math.max(...ys, ...refs.map(r=>r.v));
   if(!NUM){ mn = 0; mx = 100; }
@@ -7176,8 +7176,8 @@ function _okrAtingChartHtml(at){
   const ticks = [0,1,2,3].map(k=>mn+(mx-mn)*k/3);
   const grid = ticks.map(v=>`<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".12"/>
     <text x="${pl-8}" y="${(Y(v)+3.5).toFixed(1)}" text-anchor="end" font-size="10" fill="currentColor" fill-opacity=".6">${esc(fmtY(v))}</text>`).join('');
-  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='início'?'.35':'.8'}" stroke-dasharray="5 4"/>
-    <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='início'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
+  const refHtml = refs.map(r=>`<line x1="${pl}" y1="${Y(r.v).toFixed(1)}" x2="${W-pr}" y2="${Y(r.v).toFixed(1)}" stroke="var(--ating-c,#ff73af)" stroke-opacity="${r.rot==='valor inicial'?'.35':'.8'}" stroke-dasharray="5 4"/>
+    <text x="${W-pr}" y="${(Y(r.v)-4).toFixed(1)}" text-anchor="end" font-size="10" font-weight="700" fill="var(--ating-c,#ff73af)" fill-opacity="${r.rot==='valor inicial'?'.6':'1'}">${esc(r.rot)}</text>`).join('');
   const pts = ls.map((l,i)=>[X(i), Y(ys[i])]);
   const linha = n>1 ? `<polyline fill="none" stroke="var(--ating-c,#ff73af)" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>
     <path d="M${pts[0][0].toFixed(1)},${(pt+ih).toFixed(1)} L${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')} L${pts[n-1][0].toFixed(1)},${(pt+ih).toFixed(1)} Z" fill="var(--ating-c,#ff73af)" fill-opacity=".1"/>` : '';

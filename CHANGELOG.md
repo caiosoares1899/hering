@@ -20640,6 +20640,12 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.1 · painel-dev — 2026-10-06 · fix(OKR): gráfico de evolução — a linha "início" virou "valor inicial" (e some quando é 0)
+
+Relato do usuário (print do gráfico): a linha pontilhada rotulada **"início"** parecia o começo do período, e a primeira bolinha (14/09, acima da linha) parecia "não ser o início". Na verdade era o **valor
+inicial** configurado no Objetivo (ponto de partida da fórmula do %). Agora o rótulo é **"valor inicial"** e, quando esse valor é **0**, a linha não é desenhada (só repetia o eixo). A mesma mudança vale na
+**apresentação** (`okr-apresentacao.slide.html`, o gráfico é o mesmo bloco — vale assim que o Pages publicar). Teste de paridade painel × apresentação, 17 cenários do gráfico e fuzz de 600 casos continuam OK.
+
 ### painel-dev.html v4.0 · painel-dev — 2026-10-06 · marco: painel passa pra v4 (OKR: atingimento, gráfico, tags, menu de contexto, ordem/duplicar/configurações em tela própria) + guia atualizado
 
 Sem mudança de código além do número: o painel pula de v3.113 para **v4.0** porque o OKR ganhou muito desde a v3.x (📈 atingimento com 8 tipos e gráfico de evolução, modal por seções, tags com cor e filtro,
