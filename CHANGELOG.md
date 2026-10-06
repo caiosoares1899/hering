@@ -20668,6 +20668,17 @@ marcos + listas longas — antes do fix, tabela mostrava 1/14 linhas e 3
 das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
+## okr.html / okr-dev.html (página própria do OKR)
+
+### okr-dev.html v1.0 · okr-dev — 2026-10-06 · OKR numa página só dele, separada do painel (ambiente de teste)
+
+Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`** — a MESMA tela da aba 🎯 OKR do `painel-dev.html` v4.8 (Objetivos, Marcos, Atingimento, tags, menu de contexto, Histórico semanal com a janela de contribuição, Central Agente Ágil, Anotações da reunião, Ajuda, deep links `?okr=<id>` / `?okr=chat`), em página própria. O `painel-dev.html` **não foi alterado** nesta etapa (o atalho 🎯 OKR → página e a troca dos links vêm só depois da validação).
+- **Como foi feito:** o código de OKR veio do painel por extração mecânica (análise de AST: as ~280 funções/consts de OKR + o mínimo de infra de que elas dependem — tema, `esc`/`jsq`, toasts/confirmações, o motor de atingimento, etc.), sem reescrever comportamento. Mesmos caminhos do Firebase (`kanban/okr/...`, **os mesmos dados do painel de produção** — por isso a faixa laranja no topo), mesmas regras de edição (ADM / PO / Organizador / 🎯 Gestor OKR / Responsável).
+- **Acesso idêntico ao do painel:** @ciahering.com.br só pelo Google, @arezzo.com.br só pela Microsoft (mesma mensagem de "botão errado"), qualquer outro e-mail só como visualizador de `kanban/painel_viewers` (somente leitura, cache de 15 min, 3 tentativas). Quem só usa o OKR ganha o registro em `kanban/usuarios/{uid}` no 1º login (sem squad/papel), como no painel. Os listeners só sobem **depois** do login.
+- **Cards vinculados sob demanda** (o painel baixava os cards de TODOS os squads só pra isso): o título de cada vínculo vem de 2 leituras pontuais (`dados/cards_index/{id}` → `dados/cards/{chave}`), e a busca "🔎 Buscar card com badge OKR" só baixa `cards`+`tags` de cada squad **na 1ª vez que alguém digita** (guarda só os cards com badge OKR, em memória). Clicar num vínculo abre o board no card (aba nova, `kanban-dev.html?squad=…&card=…`); card removido/sem acesso aparece como "(card não encontrado)" / "(sem acesso ao card)". A lista "Cards do board com badge OKR" continua só no painel.
+- **Mudanças de infra** (única diferença de comportamento): link "🔗 Copiar link" gera `okr-dev.html?okr=<id>`; `?okr=<id>` não precisa trocar de aba; lista de usuários (`loadGlobalUsers`) e de ADMs (`kanban/config/adm_emails`) enxutas; auto-atualização por `version.json` (chave `okr_dev`).
+- **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
+
 ## painel.html / painel-dev.html
 
 ### painel.html v4.8 · painel — 2026-10-06 · Promove pra prod — Histórico semanal redesenhado (abas Atingimento/Marcos), janela do progresso médio, Excluir no menu e datas nos históricos

@@ -3475,6 +3475,14 @@ duas fontes devem contar a MESMA história, mesmo princípio da skill
 `HELP_CONTENT`, não este arquivo — considerar estender o escopo dela
 se este gap se repetir).
 
+### 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; sem prod ainda)
+Extração mecânica (AST) da aba OKR do `painel-dev.html` v4.8 — todas as âncoras de OKR da seção acima (funções `_okr*`/`*Okr*`, `OKR_*`, `ATING-ENGINE`, `_okrCtx*`, `_okrHist*`) valem aqui com os mesmos nomes; **re-`grep` o nome em `okr-dev.html`**. Só a INFRA em volta é nova:
+- Bloco "🎯 OKR — página própria" no início do `<script>`: `SQUADS`/`squadBoardUrl()`/`loadExtraSquads()` (squads base + `kanban/squads_meta`), `loadAdmList()`, `loadGlobalUsers()` (enxuto, só popula `_globalUsersCache` e re-renderiza o OKR).
+- **Cards vinculados sob demanda**: `_okrCardCache`/`_okrCardFetchOne()`/`_okrCardEnsure()`/`_okrCardPaint()` (título por vínculo via `cards_index` → `cards/{chave}`), `_okrSquadOkrCards()` (carga única por squad na 1ª busca, só cards com badge OKR), `_okrCardSearchResults()`/`_okrRenderCardSearch()` (assíncrona) e `_okrCardLinksHtml()` — substituem as versões do painel, que liam `squadData` (todos os cards). `_okrOpenLinkedCard()` abre `kanban(-dev).html?squad=&card=` em aba nova.
+- Bloco "🔐 Login / portão de acesso" (cópia do painel): `doSignIn()`/`doSignInMicrosoft()`, `_loginProviderMismatchMsg()`, handler de `auth-change` (viewers com cache de 15 min), `_okrEnsureUserRecord()`, `_finishOkrLogin()` (sobe `loadOkr()` & cia. 1x por usuário; outra conta na mesma aba recarrega).
+- `_okrObjShareUrl()` = `location.pathname + '?okr=<id>'`; `_okrTryOpenFromUrl()` sem `swPtab`. Auto-atualização: `VERSION_KEY = 'okr_dev'`.
+- Módulo Firebase próprio: override de config em `localStorage` sob o sufixo `_okr_dev`.
+
 ### Tema claro/escuro/🌴 Vice City (2026-09-03, presente nos dois arquivos — promovido pra prod v3.08)
 Porta do mecanismo de tema do `kanban-dev.html` — os 3 temas, sem a
 variante B do claro (duplo-clique) do kanban, que o painel não tem.
