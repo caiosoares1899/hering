@@ -701,9 +701,17 @@ function objMarcos(objId){ return Object.values(okrMarcos).filter(m=>m && m.obje
 // Mesma ordenação usada pra montar os cards de cada gerência em buildSlides()
 // (alfabética por título) — garante que "Próximo objetivo" (ver
 // _okrOpenDetail) segue a MESMA ordem que a pessoa já viu na grade de cards.
+// Ordem dos Objetivos dentro de uma Gerência — CÓPIA de _okrObjetivosSorted() (painel-dev.html/painel.html): por padrão
+// alfabético; assim que alguém reordena (▲/▼ ou arrastar no painel), `ordem` numérico manda e quem ainda não tem vai pro fim.
+// Sem isto os slides mostravam sempre a ordem alfabética, diferente da que o time montou no painel pra reunião.
+function _okrObjetivosSorted(lista){
+  const temOrdem = lista.some(o=>typeof o.ordem==='number');
+  return temOrdem
+    ? lista.slice().sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
+    : lista.slice().sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+}
 function _okrGerenciaObjetivos(areaId){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId)
-    .sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+  return _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId));
 }
 function objStatus(objId){
   const marcos = objMarcos(objId);
@@ -979,7 +987,7 @@ function buildSlides(){
       <div>Nenhum Objetivo ativo cadastrado ainda no painel.</div></div>`});
   } else {
     OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).forEach(g=>{
-      const lista = porArea[g.id].sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
+      const lista = _okrObjetivosSorted(porArea[g.id]);
       list.push({key:'ger:'+g.id, title:g.label, html:`
         <div class="slide-inner">
           <div class="ger-header"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>

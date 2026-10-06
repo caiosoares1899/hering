@@ -2916,6 +2916,13 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   substituir um evento nativo (`click`) por detecção manual (`touchstart/touchend`), listar tudo que o navegador filtrava
   sozinho — movimento, rolagem em curso, long-press — e reimplementar cada um; "toque" não é "touchend sem arrasto".
 
+- **2026-10-06, OKR antes de reunião importante (apresentação)**: 1 achado real, técnica 1 (caminhos paralelos) —
+  `okr-apresentacao.slide.html` ordenava Objetivos sempre por título, ignorando `ordem` manual que o painel respeita
+  (`_okrObjetivosSorted`); grade, slides e "Próximo objetivo" saíam em ordem diferente da montada pro encontro. Fix: cópia da
+  função do painel + `_okrGerenciaObjetivos`. Achado de layout NÃO corrigido (decisão de produto): no modal de detalhe, com
+  >=14-16 marcos em tela 1366x768 (>=24 em 1920x1080) o rodapé (Progressos/Próximos passos/Riscos/Planos) encolhe via
+  `_zoomFitToHeight` até ficar ilegível; mitigação: "Colapsar concluídos" / "Aparecer na apresentação" por Marco.
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
