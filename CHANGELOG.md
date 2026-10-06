@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.789-dev — 2026-10-06 · feat: ordenação "Data de criação (mais recentes primeiro)" (só kanban-dev)
+
+Pedido direto (continuação da v8.30.788-dev): "Data de criação" só ordenava do mais antigo pro mais novo, enquanto "Movimentação" é do mais recente pro mais antigo. Nova opção **🕐 Data de criação (mais recentes primeiro)** no
+botão ↕ Ordenação e em ⚙ da coluna → Visualização; a antiga virou "(mais antigos primeiro)". Mesmas regras da v8.30.788: no mesmo dia vale a hora de criação embutida no id (a mais nova primeiro neste modo), e card SEM data de
+criação fica no FIM nos dois sentidos. Central de Ajuda (Ordenar cards nas colunas) atualizada. Verificado no Chromium (ordem pura e `renderBoard()`, menu e config da coluna).
+
 ### v8.30.788-dev — 2026-10-06 · fix(/monitorarbugs): ordenação por data de criação, prazo e movimentação (só kanban-dev; prod espera validação)
 
 Relato de usuários: "a ordenação do kanban tá com bug, especialmente a por data e a por movimentação". Reproduzido no Chromium com as funções reais (6 de 6 cenários falhavam):
