@@ -10685,6 +10685,19 @@ const COMUNICADO_RASCUNHOS_SEED = [
     tipo: 'novidade',
     squad: '*',
   },
+  {
+    id: 'seed_kanban_v8_30_792_2026_10_06',
+    titulo: '🔧 Board: ordenação corrigida, sino de notificações e Dados do Board maior',
+    corpo: '<p>Atualização do board com correções e melhorias:</p>'
+      + '<ul>'
+      + '<li><b>↕ Ordenação por data e por movimentação corrigida</b>: cards sem data de criação não vão mais pro topo, empates no mesmo dia se desempatam pela hora de criação, e "Movimentação" volta a subir um card que foi arrastado de volta pra uma coluna antiga. Nova opção <b>🕐 Data de criação (mais recentes primeiro)</b>.</li>'
+      + '<li><b>🔔 "Marcar todas como lidas" voltou a funcionar</b> — e com isso o <b>"Limpar antigas"</b> volta a apagar as já lidas.</li>'
+      + '<li><b>📜 Histórico do card</b> agora mostra sempre a data e a hora (nada de "3d", "4d").</li>'
+      + '<li><b>📊 Dados do Board maior</b>: usa mais a tela, os gráficos preenchem o espaço e as <b>colunas na conta</b> ficam numa barra única no topo, valendo pras 3 abas.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
 ];
 async function _seedComunicadoRascunhos(){
   if(!_isAdmPainel()) return; // só o ADM autenticado grava as sementes
