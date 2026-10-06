@@ -20632,6 +20632,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v3.112 · painel-dev — 2026-10-06 · fix(OKR): "Registrar atingimento" do menu rápido não lança o mesmo registro duas vezes
+
+Achado por `/monitorarbugs` (rodada no menu de contexto do OKR, v3.111): o botão **Registrar** do modal rápido de atingimento (aberto por *Registrar atingimento…* no menu ⋯) não tinha trava
+enquanto a gravação por transação rodava. **Duplo clique** em Registrar — ou **Enter** apertado duas vezes no campo de valor/nota — chamava a função duas vezes, e cada chamada gera um
+id novo: o Objetivo ficava com **dois registros idênticos** (valor, data, nota), duas linhas "registrou atingimento…" no Histórico e duas notificações pros Responsáveis; no gráfico de
+evolução o ponto contava em dobro. Reproduzido no Chromium com latência de rede simulada (2 registros após duplo clique, 4 após dois Enter em sequência). Agora a gravação em andamento
+ignora novos disparos e o botão fica desabilitado até a transação responder (se falhar, reabilita pra tentar de novo). Só dev; o prod espera validação do menu de contexto.
+
 ### painel-dev.html v3.111 · painel-dev — 2026-10-06 · feat(OKR): menu de contexto (clique direito / ⋯) nos Objetivos e nos Marcos
 
 Pedido direto ("um menu de contexto nessa página de OKR"): quase tudo num cartão exigia abrir o modal. Agora **clique direito** no cartão de Objetivo — ou o novo
