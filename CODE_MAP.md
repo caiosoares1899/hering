@@ -3365,6 +3365,9 @@ status + linha do progresso médio, dica `_okrHistTip()`/`_okrHistTipOff()`), "�
 (`_okrHistTabelaRender()`, filtros em `_okrHistFiltro`/`_okrHistFiltra()`, mini-tendência `_okrHistSpark()`) e
 detalhe expansível `_okrHistoricoSelectObj(id)`/`_okrHistDetalheHtml()` (curva + quadro semana a semana, com os
 campos `atingimento*` do snapshot). Só leitura — nenhum campo novo no snapshot.
+**v4.5**: clique no KPI "Progresso médio" abre `#okr-hmedia-ov` (`_okrHistMediaOpen()`/`_okrHistMediaRender()`): contribuição
+de cada Objetivo (progresso ÷ N), efeito de sair da conta, filtro de gerência (`_okrHistMArea`) e exclusão por checkbox —
+`_okrHistExcl` (Set, `localStorage` `okr_hist_excl`, só simulação local) alimenta `_okrHistMedia()` (KPI + linha do gráfico).
 
 #### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 `_okrExcluirObjetivo(id)` — botão "🗑 Excluir" no rodapé do modal
