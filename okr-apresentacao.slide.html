@@ -85,6 +85,12 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .tb-bar{width:min(280px,40vw);height:3px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
 .tb-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--accent));transition:width .35s ease;}
 .tb-nav{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.tb-filter{flex-shrink:0;display:flex;align-items:center;}
+.tb-filter[hidden]{display:none;}
+.tb-filter select{background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);padding:7px 10px;font-size:12.5px;
+  font-family:inherit;cursor:pointer;max-width:200px;}
+.tb-filter select.on{border-color:var(--accent);color:var(--accent);}
+.tb-filter select option{background:#0a1a2e;color:#e8f4ff;}
 .tb-btn{background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);
   padding:7px 12px;font-size:14px;cursor:pointer;line-height:1;font-family:inherit;}
 .tb-btn:hover{background:var(--glass-hover);}
@@ -480,6 +486,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
       <div class="tb-title" id="tb-title">—</div>
       <div class="tb-bar"><div class="tb-bar-fill" id="tb-bar-fill" style="width:0%;"></div></div>
     </div>
+    <label class="tb-filter" id="tb-filter" hidden title="Mostrar só os Objetivos com uma tag">
+      <select id="tb-tag" onchange="window._okrSetTag(this.value);this.blur();"><option value="">🏷️ Todas as tags</option></select>
+    </label>
     <div class="tb-nav">
       <button class="tb-btn" id="btn-prev" onclick="window._okrPrev()" title="Anterior (←)">◀</button>
       <button class="tb-btn" id="btn-next" onclick="window._okrNext()" title="Próximo (→)">▶</button>
@@ -710,9 +719,32 @@ function _okrObjetivosSorted(lista){
     ? lista.slice().sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
     : lista.slice().sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
 }
-function _okrGerenciaObjetivos(areaId){
-  return _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (o.areaId||'geral')===areaId));
+// 🏷️ Filtro por tag (pedido do usuário, 2026-10-06: quem for preencher OUTRA apresentação com alguns dos Objetivos daqui filtra pela
+// tag combinada). Vale pra TUDO que a tela mostra — capa, grade das gerências, panorama e o Anterior/Próximo do detalhe —, então tudo
+// parte de _okrObjetivosAtivos() em vez de refiltrar `!arquivado` em cada lugar. Só em memória: reabrir a apresentação volta pra "todas".
+let _okrFiltroTag = '';
+function _okrObjetivosAtivos(){
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)));
 }
+function _okrGerenciaObjetivos(areaId){
+  return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId));
+}
+// Mantém o <select> da barra em dia: só tags que existem E estão em uso por algum Objetivo ativo (com a contagem); a escolhida entra
+// sempre. Escondido enquanto ninguém usa tag. Tag apagada no painel com o filtro ligado => limpa o filtro (senão a tela ficava vazia).
+function _okrAtualizaFiltroTag(){
+  if(_okrFiltroTag && !okrTags[_okrFiltroTag]) _okrFiltroTag = '';
+  const uso = {};
+  Object.values(okrObjetivos).filter(o=>o && !o.arquivado).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) uso[t]=(uso[t]||0)+1; }));
+  if(_okrFiltroTag && !uso[_okrFiltroTag]) uso[_okrFiltroTag]=0;
+  const ids = Object.keys(uso).sort((a,b)=>String(okrTags[a].label||'').localeCompare(String(okrTags[b].label||'')));
+  const sel = document.getElementById('tb-tag'), box = document.getElementById('tb-filter');
+  if(!sel || !box) return;
+  sel.innerHTML = '<option value="">🏷️ Todas as tags</option>' + ids.map(id=>`<option value="${esc(id)}">🏷️ ${esc(okrTags[id].label||'')} (${uso[id]})</option>`).join('');
+  sel.value = _okrFiltroTag;
+  sel.classList.toggle('on', !!_okrFiltroTag);
+  box.hidden = !ids.length;
+}
+window._okrSetTag = v => { _okrFiltroTag = v||''; rebuild(); };
 function objStatus(objId){
   const marcos = objMarcos(objId);
   if(!marcos.length) return 'nao_iniciado';
@@ -956,7 +988,7 @@ function objCardHtml(o){
 }
 
 function buildSlides(){
-  const ativos = Object.values(okrObjetivos).filter(o=>o && !o.arquivado);
+  const ativos = _okrObjetivosAtivos();
   const porArea = {};
   ativos.forEach(o=>{ (porArea[o.areaId||'geral']=porArea[o.areaId||'geral']||[]).push(o); });
 
@@ -971,6 +1003,7 @@ function buildSlides(){
       <div class="cover-ico">🎯</div>
       <div class="cover-title">OKRs — Maré Digital</div>
       <div class="cover-sub">Panorama por gerência · ${esc(hoje)}</div>
+      ${_okrFiltroTag&&okrTags[_okrFiltroTag]?`<div class="cover-sub" style="margin-top:6px;">Filtrando pela tag 🏷️ <b>${esc(okrTags[_okrFiltroTag].label||'')}</b></div>`:''}
       <div class="stat-row">
         <div class="stat-chip"><b>${ativos.length}</b><span>Objetivos ativos</span></div>
         <div class="stat-chip"><b style="color:var(--teal);">${counts.no_prazo}</b><span>No prazo</span></div>
@@ -984,7 +1017,7 @@ function buildSlides(){
   if(!ativos.length){
     list.push({key:'empty', title:'Sem objetivos', html:`
       <div class="empty-state"><div class="ico">🌊</div>
-      <div>Nenhum Objetivo ativo cadastrado ainda no painel.</div></div>`});
+      <div>${_okrFiltroTag?'Nenhum Objetivo ativo com essa tag.':'Nenhum Objetivo ativo cadastrado ainda no painel.'}</div></div>`});
   } else {
     OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).forEach(g=>{
       const lista = _okrObjetivosSorted(porArea[g.id]);
@@ -1032,6 +1065,7 @@ function scheduleRebuild(){
 function rebuild(){
   if(!Object.values(_loaded).every(Boolean)) return;
   const prevKey = slides[currentIdx]?.key;
+  _okrAtualizaFiltroTag();
   slides = buildSlides();
   _lastUpdate = new Date();
   let idx = slides.findIndex(s=>s.key===prevKey);
@@ -1266,6 +1300,7 @@ document.addEventListener('keydown', e=>{
     if(e.key==='Escape'){ e.preventDefault(); window._okrCloseAgendaCfg(); }
     return;
   }
+  if(e.target && e.target.tagName==='SELECT') return;   // setas/espaço no filtro de tag mudam a opção, não o slide
   if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
   else if(e.key==='ArrowLeft') window._okrPrev();
   else if(e.key.toLowerCase()==='f') window._okrFullscreen();
@@ -1295,6 +1330,7 @@ window._okrOpenDetail = id => {
   const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral');
   const gerIdx = gerObjs.findIndex(x=>x.id===id);
   const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
+  const prevObj = gerIdx>0 ? gerObjs[gerIdx-1] : null;
   document.getElementById('detail-modal').innerHTML = `
     <div class="d2-wrap" id="d2-wrap">
       <div class="d2-header">
@@ -1303,6 +1339,7 @@ window._okrOpenDetail = id => {
         <div class="d2-brand-row">
           <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
           ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
+          <button class="detail-next" ${prevObj?`onclick="window._okrOpenDetail(${jsq(prevObj.id)})" title="Objetivo anterior de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Primeiro objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`}>← Anterior</button>
           <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
           ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>

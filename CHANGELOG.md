@@ -20043,6 +20043,19 @@ só sugerindo texto.
 
 ## okr-apresentacao.slide.html (raiz do domínio, sem versão própria em `version.json`)
 
+### 2026-10-06 (4ª) · feat: botão "← Anterior" no detalhe do Objetivo + filtro por tag na barra
+
+Pedido direto (manhã da reunião de OKR): alguém vai pegar alguns Objetivos desta apresentação pra preencher outra, e vão ser marcados com
+uma tag.
+- **← Anterior** ao lado de "Próximo →" no detalhe do Objetivo (mesma ordem da grade; desabilitado no primeiro da gerência).
+- **🏷️ Filtro por tag** na barra superior (só aparece quando há tag em uso; lista só tags em uso, com a contagem). Vale pra tudo: capa
+  (contagens e aviso "Filtrando pela tag…"), grade das gerências (gerência sem Objetivo com a tag some), panorama e o Anterior/Próximo do
+  detalhe. "Todas as tags" desfaz; tag apagada no painel com o filtro ligado limpa o filtro; só em memória (reabrir volta pra todas).
+  Setas/espaço com o foco no filtro mudam a opção em vez de trocar de slide.
+- As tags já apareciam nos cards da grade (v3.108/3.109); nada mudou ali. Não há tag no detalhe, como pedido.
+Testado no Chromium (16 cenários: contagens, ordem manual, Anterior/Próximo pulando quem não tem a tag, teclado, tag apagada, sem resultado).
+Sem versão própria (vale no deploy).
+
 ### 2026-10-06 (3ª) · fix: colunas STATUS/PRAZO da tabela de Marcos desalinhadas do cabeçalho
 
 Relato direto: em alguns Objetivos as linhas dos Marcos ficavam coladas à esquerda, fora de alinhamento com o cabeçalho
