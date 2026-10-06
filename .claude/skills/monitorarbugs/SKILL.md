@@ -2946,6 +2946,14 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   barra superior em 1366/1024 px. **Lição**: todo controle que vive FORA da área que o rebuild redesenha (barra, filtros) e é preenchido por ele precisa de
   "só mexe no DOM se mudou" — senão o estado nativo (dropdown aberto, foco, seleção) se perde a cada evento ao vivo.
 
+- **2026-10-06 (5ª), ordenação do kanban — por data e por movimentação (relato de usuários)**: 3 achados reais, reproduzidos no Chromium antes (6/6 cenários falhavam).
+  (1) **severo, técnica 1/3** — `_lastFlowCol` é PERSISTIDO com o card, mas o Agente Ágil move cards no servidor (`moverColuna.js` atualiza col/flow/log) sem conhecer o campo; o client só o repunha
+  quando vinha vazio, então um card movido pelo agente chegava com o valor velho e `recordMove()` ("from===toCol && enteredAt[toCol]") saía sem atualizar `enteredAt`/log ao arrastar de volta pra
+  coluna antiga — não subia em "Movimentação", métricas de fluxo paradas; pra uma 3ª coluna, `from` errado no log. Fix: `_syncLastFlowCol()` repõe a partir de `card.col` do banco depois de toda sync.
+  (2) `createdAt` (só o dia) — card sem data vinha primeiro, e empates do mesmo dia na ordem do array; fix: sem data no fim + desempate pela hora do id (`_cardIdTs()`). (3) Prazo com mesma data sem
+  desempate; fix: prioridade. dev v8.30.788. Em aberto: "Data de criação" só do mais antigo pro mais novo (inverso de "Movimentação"). **Lição**: campo de controle gravado junto com o dado
+  e escrito por DOIS escritores (client e Cloud Function) só é confiável se o escritor que o desconhece for compensado na leitura — reidratar a partir da fonte de verdade a cada sync.
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
