@@ -20670,6 +20670,14 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v4.8 · painel — 2026-10-06 · Promove pra prod — Histórico semanal redesenhado (abas Atingimento/Marcos), janela do progresso médio, Excluir no menu e datas nos históricos
+
+Promoção do lote acumulado de `painel-dev.html` desde a v4.1 (prod anterior): **v4.2** 🗑 Excluir no menu de contexto do Objetivo (só ADM, com confirmação); **v4.3** 📈 Histórico semanal redesenhado (cabeçalho com último/próximo snapshot e período, 6 indicadores com variação, gráfico de barras + linha, "O que mudou", tabela Por Objetivo com
+filtros, mini-tendência e detalhe semanal); **v4.4** Histórico do Objetivo/Marco com data e hora completas (sem "3d/4d/5d"); **v4.5–v4.7** janela "Como cada Objetivo contribui" (clique no indicador médio): média em destaque, quem puxa pra baixo/sustenta, filtros em chips (período, linhas, status, gerência), Objetivos como chips que
+tiram da conta e recalculam, gráfico de linhas (⭐ Destaques, todas coloridas, por gerência, só a média, mini-gráficos) e destaque por hover; **v4.8** o Histórico ganha duas abas — **🎯 Atingimento** (padrão; curva reconstruída pelos registros quando o snapshot é antigo) e **🏁 Marcos**. `guia-okr.html` ganhou o slide "📈 Histórico semanal"
+e o menu de ações com Excluir. Merge de 3 vias (prod atual, dev da v4.1 como base, dev atual); a diferença prod novo × antigo é a do dev no período (só a linha de versão difere do dev). Smoke test no `painel.html` real: Histórico 17/17, janela 35/35, abas 12/12, menu 41/42 (o 1 é só o URL esperado pelo teste), duplo clique OK. `node --check` OK; balanço -1/-16 no baseline.
+Mural: rascunho `seed_okr_historico_2026_10_06`.
+
 ### painel-dev.html v4.8 · painel-dev — 2026-10-06 · feat(OKR): Histórico com duas abas — 🎯 Atingimento (padrão) e 🏁 Marcos
 
 Pergunta direta ("como você calculou esse progresso? é com base no atingimento?"). Resposta: o `% de progresso` do snapshot semanal era **misto** — o mesmo da barra do cartão: **atingimento quando o Objetivo tem meta, senão % de Marcos concluídos** (`progressoDoObjetivo()` em `weeklySnapshot.js`) —, então a média misturava

@@ -336,6 +336,102 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    tema Vice City (var(--cyan) quase idêntico a var(--glass) lá): o dot é
    só um swatch decorativo, o texto do lado sempre usa var(--txt)/var(--txt2). */
 .okr-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* 📈 Histórico semanal do OKR (v4.3) */
+.okr-h-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.okr-h-card-t{font-family:"DM Sans",sans-serif;font-size:12.5px;font-weight:700;color:var(--txt);margin-bottom:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.okr-h-card-t .mut,.okr-h-head .mut,.okr-h-kpi-d .mut{color:var(--txt3);font-weight:500;font-size:11px;}
+.okr-h-tabs{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+.okr-h-mtab{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:12px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;}
+.okr-h-mtab:hover{border-color:rgba(56,182,255,.45);} .okr-h-mtab.on{border-color:var(--accent);background:rgba(56,182,255,.14);color:var(--txt);}
+.okr-h-mtab .n{font-size:10.5px;padding:1px 7px;border-radius:999px;background:rgba(var(--ink-rgb),.6);color:var(--txt3);font-weight:700;} .okr-h-mtab.on .n{color:var(--accent);}
+.okr-h-tabs-d{flex:1 1 320px;font-size:11px;color:var(--txt3);line-height:1.5;} .okr-h-tabs-d b{color:var(--txt2);}
+.okr-h-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--txt2);}
+.okr-h-quando b{color:var(--txt);}
+.okr-h-range{display:flex;gap:5px;}
+.okr-h-chip{padding:5px 12px;font-size:11px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.5);color:var(--txt2);cursor:pointer;font-family:inherit;}
+.okr-h-chip:hover{border-color:rgba(56,182,255,.4);}
+.okr-h-chip.on{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.14);font-weight:600;}
+.okr-h-kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;margin-bottom:14px;}
+.okr-h-kpi{background:var(--glass);border:1px solid var(--glass-b);border-top:3px solid var(--kc,var(--accent));border-radius:12px;padding:10px 12px;}
+.okr-h-kpi-l{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);font-weight:600;}
+.okr-h-kpi-v{font-family:"Syne","DM Sans",sans-serif;font-size:26px;font-weight:800;color:var(--kc,var(--txt));line-height:1.15;margin:2px 0;}
+.okr-h-kpi-d{font-size:11px;min-height:16px;}
+.okr-h-delta{display:inline-block;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:999px;white-space:nowrap;}
+.okr-h-delta.bom{color:var(--teal);background:rgba(29,233,182,.12);} .okr-h-delta.ruim{color:var(--danger);background:rgba(255,107,107,.13);} .okr-h-delta.nada{color:var(--txt3);background:rgba(var(--ink-rgb),.5);}
+.okr-h-legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:10.5px;color:var(--txt2);margin-bottom:6px;}
+.okr-h-legend>span{display:flex;align-items:center;gap:5px;}
+.okr-h-linha-ico{display:inline-block;width:16px;height:0;border-top:2.5px solid var(--ating-h,#ff73af);border-radius:2px;}
+.okr-h-chartbox{position:relative;}
+.okr-h-bar{transition:opacity .12s;} .okr-h-hit:hover{fill:rgba(56,182,255,.07);}
+.okr-h-tip{display:none;position:absolute;z-index:5;pointer-events:none;min-width:150px;background:rgb(var(--ink-rgb));border:1px solid var(--glass-b);border-radius:10px;padding:8px 10px;font-size:11px;color:var(--txt2);box-shadow:0 6px 22px rgba(0,0,0,.35);}
+.okr-h-tip b{color:var(--txt);} .okr-h-tip-l{margin:5px 0;display:flex;flex-direction:column;gap:2px;} .okr-h-tip-l .okr-dot{margin-right:6px;} .okr-h-tip-m{border-top:1px solid var(--glass-b);padding-top:5px;}
+.okr-h-vazio{text-align:center;padding:34px 20px;color:var(--txt2);font-size:12px;line-height:1.6;display:flex;flex-direction:column;gap:6px;align-items:center;}
+.okr-h-vazio-ico{font-size:34px;} .okr-h-vazio-t{font-size:11.5px;color:var(--txt3);padding:6px 2px;line-height:1.55;}
+.okr-h-mud-lista{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:8px;}
+.okr-h-mud{display:flex;gap:9px;padding:8px 10px;border-radius:10px;border:1px solid var(--glass-b);border-left:3px solid var(--txt3);background:rgba(var(--ink-rgb),.35);cursor:pointer;}
+.okr-h-mud:hover{border-color:rgba(56,182,255,.45);} .okr-h-mud.saiu{cursor:default;opacity:.8;}
+.okr-h-mud.piorou,.okr-h-mud.caiu{border-left-color:var(--danger);} .okr-h-mud.melhorou,.okr-h-mud.subiu{border-left-color:var(--teal);} .okr-h-mud.novo{border-left-color:var(--accent);}
+.okr-h-mud-ic{font-size:15px;line-height:1.3;} .okr-h-mud-b{min-width:0;} .okr-h-mud-t{font-size:12px;font-weight:600;color:var(--txt);overflow-wrap:anywhere;}
+.okr-h-mud-d{font-size:11px;color:var(--txt2);margin-top:2px;} .okr-h-mud-lb{font-weight:700;}
+.okr-h-filtros{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;} .okr-h-filtros .pt-filter-input{flex:1 1 150px;max-width:240px;}
+.okr-h-tab{display:flex;flex-direction:column;}
+.okr-h-tr{display:grid;grid-template-columns:minmax(180px,2.6fr) minmax(112px,1fr) minmax(130px,1.2fr) 74px 98px 58px;gap:10px;align-items:center;padding:8px 8px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:var(--txt2);}
+.okr-h-tr.head{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);font-weight:700;padding-top:2px;}
+.okr-h-tr.row{cursor:pointer;border-radius:8px;} .okr-h-tr.row:hover,.okr-h-tr.row:focus-visible{background:rgba(56,182,255,.07);outline:none;} .okr-h-tr.row.aberto{background:rgba(56,182,255,.1);}
+.okr-h-tr-t{display:flex;align-items:center;gap:6px;min-width:0;} .okr-h-tit{color:var(--txt);font-weight:600;overflow-wrap:anywhere;} .okr-h-seta{color:var(--txt3);width:10px;flex-shrink:0;}
+.okr-h-st{display:flex;align-items:center;gap:6px;} .okr-h-pct{display:flex;align-items:center;gap:7px;} .okr-h-pct b{color:var(--txt);min-width:34px;text-align:right;}
+.okr-h-barra{flex:1;height:6px;border-radius:99px;background:rgba(var(--ink-rgb),.7);overflow:hidden;} .okr-h-barra i{display:block;height:100%;border-radius:99px;}
+.okr-h-mc{text-align:right;color:var(--txt3);} .okr-h-spark{display:block;} .okr-h-ating{font-size:12px;}
+.okr-h-det{padding:10px 12px 14px 22px;border-bottom:1px solid rgba(255,255,255,.05);background:rgba(var(--ink-rgb),.3);border-radius:0 0 10px 10px;}
+.okr-h-det-top{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px;} .okr-h-curva{width:100%;max-width:560px;height:auto;flex:1 1 320px;}
+.okr-h-semanas{width:100%;border-collapse:collapse;font-size:11.5px;} .okr-h-semanas th{text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:5px 8px;border-bottom:1px solid var(--glass-b);}
+.okr-h-semanas td{padding:6px 8px;border-bottom:1px solid rgba(255,255,255,.05);color:var(--txt2);} .okr-h-semanas td b{color:var(--txt);} .okr-h-semanas .mut{color:var(--txt3);}
+.okr-h-kpi.click{cursor:pointer;transition:border-color .15s,transform .15s;} .okr-h-kpi.click:hover,.okr-h-kpi.click:focus-visible{border-color:var(--accent);outline:none;transform:translateY(-1px);}
+.okr-h-kpi-go{display:none;text-transform:none;letter-spacing:0;color:var(--accent);font-weight:600;} .okr-h-kpi.click:hover .okr-h-kpi-go,.okr-h-kpi.click:focus-visible .okr-h-kpi-go{display:inline;}
+.okr-h-sim{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;border-radius:10px;border:1px dashed rgba(255,176,32,.55);background:rgba(255,176,32,.08);font-size:11.5px;color:var(--txt2);}
+.okr-hm-top3{display:grid;grid-template-columns:minmax(260px,1.2fr) 1fr 1fr;gap:14px;margin-bottom:16px;}
+.okr-hm-sum{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.35);}
+.okr-hm-big{font-family:"Syne","DM Sans",sans-serif;font-size:42px;font-weight:800;color:var(--txt);line-height:1.05;}
+.okr-hm-meta{font-size:11.5px;display:flex;flex-direction:column;gap:3px;color:var(--txt2);margin-top:6px;align-items:flex-start;} .okr-hm-meta .mut,.okr-hm-box .mut,.okr-hm-grp-h .mut,.okr-hm-sec-h .mut{color:var(--txt3);}
+.okr-hm-como{font-size:10.5px;color:var(--txt3);line-height:1.5;margin-top:8px;} .okr-hm-como b{color:var(--txt2);}
+.okr-hm-box{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.25);display:flex;flex-direction:column;gap:6px;}
+.okr-hm-box-t{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;margin-bottom:2px;}
+.okr-hm-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;color:var(--txt2);} .okr-hm-top .okr-h-tit{min-width:0;}
+.okr-hm-sec{margin-bottom:16px;} .okr-hm-sec-h{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;}
+.okr-hm-sec-h .mut{font-size:11px;font-weight:500;text-transform:none;letter-spacing:0;} .okr-hm-sec-t{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);font-weight:700;}
+.okr-hm-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.okr-hm-chip{display:inline-flex;align-items:center;gap:7px;max-width:100%;padding:5px 12px;border-radius:999px;cursor:pointer;font-size:12px;border:1px solid rgba(56,182,255,.3);background:rgba(56,182,255,.09);color:var(--txt2);transition:all .15s;user-select:none;}
+.okr-hm-chip:hover,.okr-hm-chip:focus-visible{border-color:rgba(56,182,255,.65);outline:none;}
+.okr-hm-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;} .okr-hm-chip-ln{display:inline-block;width:14px;height:3px;border-radius:2px;flex-shrink:0;margin-right:-2px;} .okr-hm-chip-t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:300px;} .okr-hm-chip b{color:var(--txt);font-size:11px;}
+.okr-hm-chip.off{border-color:rgba(255,255,255,.1);background:transparent;color:var(--txt3);} .okr-hm-chip.off .okr-hm-chip-t{text-decoration:line-through;} .okr-hm-chip.off i{opacity:.3;} .okr-hm-chip.off b{color:var(--txt3);}
+.okr-hm-chip.sel{border-color:var(--glass-b);background:transparent;} .okr-hm-chip.sel.on{border-color:var(--accent);background:rgba(56,182,255,.16);color:var(--txt);font-weight:600;}
+.okr-hm-grps{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:12px;}
+.okr-hm-grp{padding:10px 12px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(255,255,255,.02);}
+.okr-hm-grp-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--txt2);margin-bottom:8px;} .okr-hm-grp-h b{color:var(--txt);}
+.okr-hm-grp-a{display:flex;gap:4px;} .okr-hm-lnk{background:none;border:none;color:var(--accent);font-size:11px;cursor:pointer;padding:2px 6px;border-radius:6px;font-family:inherit;} .okr-hm-lnk:hover{background:rgba(56,182,255,.12);}
+.okr-hm-chartbox{position:relative;padding:6px 4px 0;border:1px solid var(--glass-b);border-radius:12px;background:rgba(var(--ink-rgb),.25);}
+.okr-hm-legend{display:flex;gap:6px 20px;flex-wrap:wrap;font-size:10.5px;color:var(--txt3);margin-top:8px;} .okr-hm-legend>span{display:flex;align-items:center;gap:6px;}
+.okr-hm-lg-avg{display:inline-block;width:20px;border-top:3.5px solid var(--txt);border-radius:2px;} .okr-hm-lg-ln{display:inline-block;width:20px;height:2px;border-radius:2px;background:linear-gradient(90deg,hsl(10,68%,62%),hsl(140,68%,62%),hsl(260,68%,62%));}
+.okr-hm-ln{transition:stroke-opacity .12s,stroke-width .12s;}
+.okr-hm-visao{padding:12px 14px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.25);}
+.okr-hm-visao-g{display:grid;grid-template-columns:auto auto 1fr;gap:10px 28px;align-items:start;} .okr-hm-sub{font-size:10.5px;color:var(--txt3);font-weight:600;margin-bottom:5px;} .okr-hm-sub .mut{font-weight:500;}
+.okr-hm-chip.sel i{width:8px;height:8px;border-radius:50%;display:inline-block;} .okr-hm-lg-dot{display:inline-block;width:9px;height:9px;border-radius:50%;} .okr-hm-lg-band{display:inline-block;width:20px;height:9px;border-radius:3px;background:rgba(56,182,255,.2);border:1px dashed rgba(56,182,255,.55);}
+@media (max-width:980px){ .okr-hm-visao-g{grid-template-columns:1fr;} }
+.okr-hm-minis{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;}
+.okr-hm-mini{padding:8px 10px 6px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.3);min-width:0;}
+.okr-hm-mini-h{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;margin-bottom:2px;} .okr-hm-mini-h .okr-h-tit{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;}
+.okr-hm-mini-f{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:10.5px;margin-top:2px;} .okr-hm-mini-f .mut{color:var(--txt3);}
+.okr-hm-lista{border-top:1px solid var(--glass-b);}
+.okr-hm-row{display:grid;grid-template-columns:minmax(220px,2.6fr) minmax(150px,1.3fr) 90px minmax(130px,1.1fr) 90px 60px;gap:12px;align-items:center;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;color:var(--txt2);}
+.okr-hm-row.head{position:sticky;top:0;z-index:1;background:rgb(var(--ink-rgb));font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--txt3);font-weight:700;}
+.okr-hm-row:not(.head):hover{background:rgba(56,182,255,.06);} .okr-hm-row.fora{opacity:.5;} .okr-hm-row.fora .okr-h-tit{text-decoration:line-through;} .okr-hm-row .mut{color:var(--txt3);}
+@media (max-width:980px){ .okr-hm-top3{grid-template-columns:1fr;} .okr-hm-grps{grid-template-columns:1fr;} .okr-hm-row{grid-template-columns:1fr 110px 70px;} .okr-hm-row.head{display:none;} .okr-hm-row>span:nth-child(3),.okr-hm-row>span:nth-child(4),.okr-hm-row>span:nth-child(6){display:none;} }
+@media (max-width:760px){
+  .okr-h-tr{grid-template-columns:1fr 92px 60px;} .okr-h-tr.head{display:none;}
+  .okr-h-tr>span:nth-child(3),.okr-h-tr>span:nth-child(5),.okr-h-tr>span:nth-child(6){display:none;} .okr-h-tr>span:nth-child(1){grid-column:1/-1;}
+  .okr-h-tr>span:nth-child(2),.okr-h-tr>span:nth-child(4){grid-row:2;} .okr-h-semanas{display:block;overflow-x:auto;}
+}
+
 .okr-toolbar{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px;}
 .okr-area-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px;margin-bottom:18px;}
 .okr-card{background:var(--glass);border:1px solid var(--glass-b);border-radius:11px;padding:14px;cursor:pointer;transition:border-color .15s,transform .15s;position:relative;}
@@ -2029,17 +2125,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
          de tendência (contagem por status ao longo das semanas) + consulta
          por Objetivo. Escondido por padrão, mesmo padrão de toggle de
          _okrShowArquivados (nunca junto com a lista de objetivos). -->
-    <div id="okr-historico-wrap" style="display:none;">
-      <div class="sec-title" style="margin-top:4px;">📈 Tendência semanal (status agregado dos Objetivos ativos)</div>
-      <div id="okr-hist-chart-legend" style="display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--txt2);margin-bottom:8px;"></div>
-      <div class="tp-chart-wrap" id="okr-hist-chart" style="margin-bottom:20px;"></div>
-
-      <div class="sec-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-        <span>Por Objetivo</span>
-        <select id="okr-hist-obj-select" class="pt-filter-input" onchange="_okrHistoricoSelectObj(this.value)" style="max-width:340px;"><option value="">Escolha um objetivo…</option></select>
-      </div>
-      <div id="okr-hist-obj-wrap"><div style="font-size:11px;color:var(--txt3);">Escolha um Objetivo acima pra ver a evolução dele.</div></div>
-    </div>
+    <div id="okr-historico-wrap" style="display:none;"><div id="okr-h-root"></div></div>
 
     <div class="sec-title" id="okr-section-title" style="margin-top:26px;">🎯 Cards do board com badge OKR <span class="badge" id="okr-count">0</span></div>
     <div id="okr-list" style="margin-bottom:20px;"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
@@ -2633,9 +2719,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <b style="color:var(--txt);">🖱 Menu de ações (clique direito)</b><br>
           Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo:
           <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas),
-          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> (só ADM) e <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
+          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> e <b>🗑 Excluir</b> (só ADM), <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
           Cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); dá pra navegar com <b>↑ ↓</b>, abrir submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).
-          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>Excluir</b> não está no menu de propósito — continua só dentro do Objetivo.
+          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.
         </div>
         <div>
           <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
@@ -2643,7 +2729,16 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
         </div>
         <div>
           <b style="color:var(--txt);">📈 Histórico semanal</b><br>
-          Toda sexta-feira um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão "📈 Histórico" mostra a evolução — gráfico de tendência geral e uma tabela de evolução por Objetivo.
+          Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📈 Histórico</b> mostra:
+          <ul style="margin:6px 0 0;padding-left:18px;">
+            <li><b>Duas abas</b> no topo: <b>🎯 Atingimento</b> (padrão) e <b>🏁 Marcos</b>. <b>Atingimento</b> mede quanto de cada <b>meta</b> foi atingido — só entram Objetivos com 📈 Atingimento configurado (o ♾️ perene fica de fora); se o snapshot é de antes do atingimento existir, a curva é reconstruída pelos registros de valor do Objetivo. <b>Marcos</b> mede a % de <b>Marcos concluídos</b> (Objetivos sem Marcos ficam de fora). Tudo abaixo — indicadores, gráfico, "O que mudou", tabela e a janela do progresso médio — segue a aba escolhida.</li>
+            <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
+            <li><b>6 indicadores</b> do último snapshot (Objetivos ativos, Concluídos, No prazo, Risco, Atrasados e Progresso médio), cada um com a <b>variação</b> em relação à semana anterior — verde é melhora, vermelho é piora.</li>
+            <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Histórico e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
+            <li><b>Gráfico de evolução</b>: barras com os Objetivos por status e uma linha com o progresso médio. Passe o mouse (ou toque) numa semana pra ver os números dela.</li>
+            <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
+            <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
+          </ul>
         </div>
         <div>
           <b style="color:var(--txt);">🔗 Link direto do Objetivo</b><br>
@@ -3157,6 +3252,20 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
+<!-- 🧮 Como cada Objetivo contribui para o progresso médio (Histórico semanal do OKR) -->
+<div class="pc-modal-ov" id="okr-hmedia-ov" style="z-index:235;" onclick="if(event.target===this) _okrHistMediaClose()">
+  <div class="pc-modal" style="width:min(1400px,97vw);max-height:94vh;display:flex;flex-direction:column;">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title" id="okr-hmedia-title">🧮 Como cada Objetivo contribui para o progresso médio</div>
+      <button class="x-btn" onclick="_okrHistMediaClose()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-hmedia-body" style="flex:1;min-height:0;overflow-y:auto;max-height:none;"></div>
+    <div class="pc-footer" style="display:flex;justify-content:flex-end;gap:8px;">
+      <button type="button" class="btn btn-sm" onclick="_okrHistMediaClose()">Fechar</button>
+    </div>
+  </div>
+</div>
+
 <!-- 📈 Registrar atingimento (rápido) — aberto pelo menu de contexto do cartão do Objetivo; só pede data, valor e nota. -->
 <div class="pc-modal-ov" id="okr-aq-ov" style="z-index:235;" onclick="if(event.target===this) _okrAtingQuickClose()">
   <div class="pc-modal" style="width:min(420px,94vw);">
@@ -3213,7 +3322,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v4.1 · painel</div>
+<div class="version">v4.8 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5533,89 +5642,529 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
 function _okrToggleHistorico(){ _okrSetView(_okrShowHistorico ? 'objetivos' : 'historico'); }
 function _okrToggleAgenteChat(){ _okrSetView(_okrShowAgenteChat ? 'objetivos' : 'agente'); }
 function _okrToggleNotas(){ _okrSetView(_okrShowNotas ? 'objetivos' : 'notas'); }
-function renderOkrHistorico(){
-  const sel = document.getElementById('okr-hist-obj-select');
-  if(sel){
-    const ativos = Object.values(okrObjetivos).filter(o=>o && !o.arquivado).sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
-    const cur = sel.value;
-    sel.innerHTML = '<option value="">Escolha um objetivo…</option>'
-      + ativos.map(o=>`<option value="${esc(o.id)}"${o.id===cur?' selected':''}>${okrGerenciaIcon(o.areaId)} ${esc(o.titulo||'—')}</option>`).join('');
-  }
-  renderOkrHistoricoChart();
-  if(_okrHistoricoObjId) _okrHistoricoSelectObj(_okrHistoricoObjId);
+// ═══ 📈 Histórico semanal da aba OKR (redesenho painel-dev v4.3) ═══
+// Fonte: kanban/okr/snapshots/{data} (foto toda sexta 17h por functions/okr/weeklySnapshot.js): resumoGeral {total, status…} e objetivos {id:{titulo, areaId, status,
+// progressoPct, totalMarcos, marcosConcluidos, atingimentoTipo/Pct/Registros}}. Tudo aqui é leitura — nada grava.
+// Blocos: 📅 cabeçalho (último/próximo snapshot + período) · KPIs com variação vs. semana anterior · gráfico (barras por status + linha do progresso médio, com dica ao passar o mouse/tocar) ·
+// 🔄 o que mudou desde o snapshot anterior · tabela "Por Objetivo" (filtros, ordenação, mini-tendência e detalhe expansível por semana).
+let _okrHistRange = '8';                      // '4' | '8' | '12' | 'all'
+let _okrHistFiltro = {area:'', status:'', texto:'', ordem:'titulo'};
+let _okrHistMudMais = false;
+let _okrHistChartData = [];
+const OKR_STATUS_RANK = {concluido:0, no_prazo:1, nao_iniciado:2, risco:3, atrasado:4};   // maior = pior
+function _okrHistDatas(){ return Object.keys(okrSnapshots||{}).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort(); }
+function _okrHistFmt(d, longo){
+  const dt = new Date(d+'T00:00:00');
+  return longo ? dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','') : dt.getDate()+'/'+(dt.getMonth()+1);
 }
+// Objetivos tirados da conta do progresso médio (simulação só no seu navegador — nada é gravado no Firebase). Vale pro indicador, pro gráfico e pra janela "Como cada Objetivo contribui".
+let _okrHistExcl = new Set(); try{ _okrHistExcl = new Set(JSON.parse(localStorage.getItem('okr_hist_excl')||'[]')); }catch(e){}
+function _okrHistExclSave(){ try{ localStorage.setItem('okr_hist_excl', JSON.stringify([..._okrHistExcl])); }catch(e){} }
+// ── Duas visões do "progresso" (pedido direto: "uma aba sobre atingimento, padrão, e outra de marcos") ──
+// 🎯 Atingimento (padrão): % da META do Objetivo (só os que têm atingimento configurado, fora os ♾️ perenes). Vale o `atingimentoPct` gravado no snapshot (retrato da época); se o snapshot é de antes
+//    do atingimento existir (ou o Objetivo ainda não tinha registro), reconstrói pelos registros (lancamentos com data ≤ data do snapshot) do Objetivo atual — assim o histórico já nasce com a curva.
+// 🏁 Marcos: % de Marcos concluídos (marcosConcluidos ÷ totalMarcos do snapshot); Objetivo sem Marco fica de fora (não dá pra medir).
+// `_okrHistSnap(data)` devolve o snapshot JÁ normalizado pra visão escolhida (só Objetivos com valor, `progressoPct` = valor da visão, `resumoGeral` recontado) — o resto da tela só lê dele.
+let _okrHistMetrica = 'ating';   // 'ating' | 'marcos'
+function _okrHistPctDe(d, id, o){
+  if(_okrHistMetrica==='marcos'){ const t = Number(o.totalMarcos)||0; return t ? Math.round((Number(o.marcosConcluidos)||0)/t*100) : null; }
+  if(typeof o.atingimentoPct==='number') return o.atingimentoPct;
+  if(o.atingimentoTipo==='perene') return null;
+  const at = (okrObjetivos[id]||{}).atingimento;
+  if(!_okrAtingConfigurado(at) || at.tipo==='perene') return null;
+  const ls = (at.lancamentos||[]).filter(l=>l && String(l.em||'')<=d);
+  return ls.length ? _okrAtingPctObj({atingimento:{...at, lancamentos:ls}}) : null;
+}
+function _okrHistSnap(d){
+  const sn = okrSnapshots[d]; if(!sn) return null;
+  const objs = {}, rg = {total:0, nao_iniciado:0, no_prazo:0, risco:0, atrasado:0, concluido:0};
+  Object.entries(sn.objetivos||{}).forEach(([id,o])=>{ const pct = _okrHistPctDe(d,id,o); if(pct===null) return; objs[id] = {...o, progressoPct:pct}; rg.total++; rg[o.status] = (rg[o.status]||0)+1; });
+  return {...sn, resumoGeral:rg, objetivos:objs};
+}
+function _okrHistRot(){ return _okrHistMetrica==='marcos' ? {kpi:'Marcos concluídos (média)', nome:'Marcos concluídos', col:'Marcos concluídos', gerais:'% médio de marcos concluídos'} : {kpi:'Atingimento médio', nome:'Atingimento', col:'Atingimento', gerais:'atingimento médio (%)'}; }
+function _okrHistContaMetrica(m){   // quantos Objetivos o último snapshot tem em cada visão (pro número na aba)
+  const ant = _okrHistMetrica; _okrHistMetrica = m;
+  try{ const d = _okrHistDatas(); return d.length ? ((_okrHistSnap(d[d.length-1])||{}).resumoGeral||{}).total||0 : 0; } finally { _okrHistMetrica = ant; }
+}
+function _okrHistTabsHtml(){
+  const t = (m, ico, nome)=>`<button type="button" class="okr-h-mtab${_okrHistMetrica===m?' on':''}" role="tab" aria-selected="${_okrHistMetrica===m}" onclick="_okrHistSetMetrica('${m}')">${ico} ${nome} <span class="n">${_okrHistContaMetrica(m)}</span></button>`;
+  return `<div class="okr-h-tabs" role="tablist" aria-label="O que medir">${t('ating','🎯','Atingimento')}${t('marcos','🏁','Marcos')}
+    <span class="okr-h-tabs-d">${_okrHistMetrica==='ating'
+      ? 'Quanto de cada <b>meta</b> foi atingido — só Objetivos com 📈 Atingimento configurado e com registro (♾️ perene fica de fora).'
+      : 'Quantos <b>Marcos</b> de cada Objetivo estão concluídos (Objetivos sem Marcos ficam de fora).'}</span></div>`;
+}
+function _okrHistSetMetrica(m){ _okrHistMetrica = m; _okrHistMArea=''; _okrHistMStatus.clear(); renderOkrHistorico(); if(document.getElementById('okr-hmedia-ov')?.classList.contains('open')) _okrHistMediaRender(); }
+function _okrHistMedia(snap){
+  const ls = Object.entries((snap && snap.objetivos) || {}).filter(([id])=>!_okrHistExcl.has(id)).map(([,o])=>o); if(!ls.length) return null;
+  return Math.round(ls.reduce((a,o)=>a+(Number(o.progressoPct)||0),0)/ls.length);
+}
+function _okrHistExclNoUltimo(){   // quantos Objetivos tirados da conta existem no último snapshot
+  const d = _okrHistDatas(); if(!d.length) return 0; const L = (_okrHistSnap(d[d.length-1])||{}).objetivos||{};
+  return Object.keys(L).filter(id=>_okrHistExcl.has(id)).length;
+}
+function _okrHistProxSexta(){
+  const now = new Date(), d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let add = (5-d.getDay()+7)%7; if(add===0 && now.getHours()>=17) add = 7;     // sexta 17h: horário do snapshot
+  d.setDate(d.getDate()+add); return d;
+}
+function _okrHistDiasAtras(d){
+  const n = Math.round((new Date(_todayStr()+'T00:00:00') - new Date(d+'T00:00:00'))/86400000);
+  return n<=0 ? 'hoje' : n===1 ? 'ontem' : 'há '+n+' dias';
+}
+// Variação (pp ou unidades): boaSubindo = aumentar é bom (concluídos, progresso) ou ruim (atrasados, risco).
+function _okrHistDeltaHtml(n, boaSubindo, un){
+  if(n===null || n===undefined || isNaN(n)) return '';
+  if(n===0) return `<span class="okr-h-delta nada" title="Igual ao snapshot anterior">＝ 0${un||''}</span>`;
+  const bom = (n>0)===!!boaSubindo;
+  return `<span class="okr-h-delta ${bom?'bom':'ruim'}" title="Variação em relação ao snapshot anterior">${n>0?'▲ +':'▼ '}${String(n).replace('.',',')}${un||''}</span>`;
+}
+function _okrHistSpark(vals, w, h){
+  const pts = vals.map((v,i)=>({v,i})).filter(p=>p.v!==null && p.v!==undefined);
+  if(!pts.length) return '';
+  const n = Math.max(1, vals.length-1), X = i=>2+(w-4)*(vals.length===1?.5:i/n), Y = v=>h-3-(h-6)*(Math.max(0,Math.min(100,v))/100);
+  const subiu = pts[pts.length-1].v >= pts[0].v, cor = subiu ? 'var(--teal)' : 'var(--danger)';
+  const ult = pts[pts.length-1];
+  return `<svg class="okr-h-spark" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+    ${pts.length>1?`<polyline fill="none" stroke="${cor}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>X(p.i).toFixed(1)+','+Y(p.v).toFixed(1)).join(' ')}"/>`:''}
+    <circle cx="${X(ult.i).toFixed(1)}" cy="${Y(ult.v).toFixed(1)}" r="2.6" fill="${cor}"/></svg>`;
+}
+
+function renderOkrHistorico(){
+  const root = document.getElementById('okr-h-root'); if(!root) return;
+  const todas = _okrHistDatas();
+  const prox = _okrHistProxSexta().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  if(!todas.length){
+    root.innerHTML = `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">📈</div><b>Ainda não há nenhum snapshot</b>
+      <div>Toda <b>sexta-feira, às 17h</b>, o painel guarda uma foto do status e do progresso de cada Objetivo ativo. O primeiro sai <b>${esc(prox)}</b> — depois disso esta tela mostra a evolução semana a semana.</div></div>`;
+    return;
+  }
+  const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
+  const L = _okrHistSnap(ult) || {}, P = ant ? (_okrHistSnap(ant)||{}) : null;
+  if(!todas.some(d=>((_okrHistSnap(d)||{}).resumoGeral||{}).total>0)){
+    root.innerHTML = _okrHistTabsHtml() + `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">${_okrHistMetrica==='ating'?'🎯':'🏁'}</div><b>${_okrHistMetrica==='ating'?'Nenhum Objetivo com atingimento registrado nos snapshots':'Nenhum Objetivo com Marcos nos snapshots'}</b>
+      <div>${_okrHistMetrica==='ating'?'Configure a meta em <b>⚙ Configurações do Objetivo → 📈 Atingimento</b> e registre valores — o histórico monta a curva a partir dos registros. Enquanto isso, a aba <b>🏁 Marcos</b> mostra o andamento pelos Marcos concluídos.':'Crie Marcos nos Objetivos pra acompanhar a % concluída semana a semana.'}</div>
+      ${_okrHistMetrica==='ating'?`<button type="button" class="btn btn-sm" style="margin-top:8px;" onclick="_okrHistSetMetrica('marcos')">Ver por Marcos</button>`:''}</div>`;
+    return;
+  }
+  const rot = _okrHistRot();
+  root.innerHTML = _okrHistTabsHtml() + `
+    <div class="okr-h-head">
+      <div class="okr-h-quando">
+        <div><b>Último snapshot:</b> ${esc(_okrHistFmt(ult,true))} <span class="mut">(${_okrHistDiasAtras(ult)})</span></div>
+        <div class="mut">Próximo: ${esc(prox)}, 17h · ${todas.length} snapshot${todas.length===1?'':'s'} guardado${todas.length===1?'':'s'}</div>
+      </div>
+      <div class="okr-h-range" role="group" aria-label="Período do gráfico">
+        ${[['4','4 sem'],['8','8 sem'],['12','12 sem'],['all','Tudo']].map(([v,l])=>`<button type="button" class="okr-h-chip${_okrHistRange===v?' on':''}" onclick="_okrHistSetRange('${v}')">${l}</button>`).join('')}
+      </div>
+    </div>
+    ${_okrHistExclNoUltimo()?`<div class="okr-h-sim">🧮 <span>Simulação: o <b>${rot.gerais}</b> (indicador e gráfico) está calculado <b>sem ${_okrHistExclNoUltimo()} Objetivo${_okrHistExclNoUltimo()===1?'':'s'}</b> — só no seu navegador.</span> <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistMediaOpen()">Ver</button> <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistExclReset()">Restaurar tudo</button></div>`:''}
+    <div class="okr-h-kpis">${_okrHistKpisHtml(L,P)}</div>
+    <div class="okr-h-card"><div class="okr-h-card-t">Evolução semanal <span class="mut">— barras: Objetivos por status · linha: ${rot.gerais}</span></div>
+      <div id="okr-hist-chart-legend" class="okr-h-legend"></div>
+      <div class="okr-h-chartbox"><div id="okr-hist-chart" class="tp-chart-wrap"></div><div id="okr-h-tip" class="okr-h-tip" role="tooltip"></div></div></div>
+    <div id="okr-h-mud"></div>
+    <div class="okr-h-card"><div class="okr-h-card-t">Por Objetivo</div>
+      <div class="okr-h-filtros">
+        <input type="text" class="pt-filter-input" id="okr-h-f-texto" placeholder="Buscar Objetivo…" value="${esc(_okrHistFiltro.texto)}" oninput="_okrHistFiltra('texto',this.value)">
+        <select class="pt-filter-input" onchange="_okrHistFiltra('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${OKR_GERENCIAS.map(g=>`<option value="${esc(g.id)}"${_okrHistFiltro.area===g.id?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>
+        <select class="pt-filter-input" onchange="_okrHistFiltra('status',this.value)" aria-label="Status"><option value="">Todos os status</option>${OKR_STATUS.map(s=>`<option value="${s.id}"${_okrHistFiltro.status===s.id?' selected':''}>${esc(s.label)}</option>`).join('')}</select>
+        <select class="pt-filter-input" onchange="_okrHistFiltra('ordem',this.value)" aria-label="Ordenar por">${[['titulo','A–Z'],['alta','Maior alta'],['queda','Maior queda'],['pior','Pior status'],['pct','Maior progresso']].map(([v,l])=>`<option value="${v}"${_okrHistFiltro.ordem===v?' selected':''}>Ordenar: ${l}</option>`).join('')}</select>
+      </div>
+      <div id="okr-h-tbl"></div></div>`;
+  renderOkrHistoricoChart();
+  _okrHistMudancasRender(L,P,ant,ult);
+  _okrHistTabelaRender();
+}
+function _okrHistSetRange(v){ _okrHistRange = v; renderOkrHistorico(); }
+function _okrHistFiltra(campo, v){ _okrHistFiltro[campo] = v; _okrHistTabelaRender(); }
+
+function _okrHistKpisHtml(L, P){
+  const rg = (L && L.resumoGeral) || {}, pr = P ? (P.resumoGeral||{}) : null;
+  const mL = _okrHistMedia(L), mP = P ? _okrHistMedia(P) : null;
+  const d = (k)=> pr ? (rg[k]||0)-(pr[k]||0) : null;
+  const k = [
+    {l:'Objetivos ativos', v:rg.total||0, dl:_okrHistDeltaHtml(d('total'),true), cor:'var(--txt)'},
+    {l:'Concluídos', v:rg.concluido||0, dl:_okrHistDeltaHtml(d('concluido'),true), cor:'var(--accent)'},
+    {l:'No prazo', v:rg.no_prazo||0, dl:_okrHistDeltaHtml(d('no_prazo'),true), cor:'var(--teal)'},
+    {l:'Risco identificado', v:rg.risco||0, dl:_okrHistDeltaHtml(d('risco'),false), cor:'var(--warn)'},
+    {l:'Atrasados', v:rg.atrasado||0, dl:_okrHistDeltaHtml(d('atrasado'),false), cor:'var(--danger)'},
+    {l:_okrHistRot().kpi, v:(mL===null?'—':mL+'%'), dl:_okrHistDeltaHtml(mL!==null&&mP!==null?mL-mP:null,true,' pp'), cor:'var(--txt)', click:true},
+  ];
+  return k.map(x=>x.click
+    ? `<div class="okr-h-kpi click" style="--kc:${x.cor};" role="button" tabindex="0" title="Ver como cada Objetivo contribui (e tirar algum da conta)" onclick="_okrHistMediaOpen()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaOpen();}"><div class="okr-h-kpi-l">${x.l} <span class="okr-h-kpi-go">ver detalhes ›</span></div><div class="okr-h-kpi-v">${x.v}</div><div class="okr-h-kpi-d">${x.dl||'<span class="mut">sem comparação</span>'}</div></div>`
+    : `<div class="okr-h-kpi" style="--kc:${x.cor};"><div class="okr-h-kpi-l">${x.l}</div><div class="okr-h-kpi-v">${x.v}</div><div class="okr-h-kpi-d">${x.dl||'<span class="mut">sem comparação</span>'}</div></div>`).join('');
+}
+
+// ── 🧮 Janela "Como cada Objetivo contribui para o progresso médio" (clique no indicador) ──
+// Média = soma dos progressos ÷ nº de Objetivos considerados, sobre o ÚLTIMO snapshot. Cada Objetivo contribui com (progresso ÷ N) pontos. Marcar/desmarcar tira da conta e recalcula na hora
+// (inclusive o indicador e a linha do gráfico por trás). O filtro de gerência vale só dentro da janela.
+let _okrHistMArea = '', _okrHistMOrd = 'baixo';
+let _okrHistMModo = 'dest';         // gráfico: 'dest' (destaques: média + quem mais subiu/caiu, resto em cinza) | 'obj' (1 linha colorida por Objetivo) | 'ger' (1 por gerência) | 'media' (só a média + faixa mín–máx) | 'mini' (um mini-gráfico por Objetivo)
+let _okrHistMStatus = new Set();   // filtro por status atual do Objetivo (vazio = todos)
+function _okrHistMediaOpen(){ _okrHistMArea = ''; document.getElementById('okr-hmedia-ov')?.classList.add('open'); _okrHistMediaRender(); }
+function _okrHistMediaClose(){ document.getElementById('okr-hmedia-ov')?.classList.remove('open'); }
+function _okrHistExclReset(){ _okrHistExcl.clear(); _okrHistExclSave(); renderOkrHistorico(); if(document.getElementById('okr-hmedia-ov')?.classList.contains('open')) _okrHistMediaRender(); }
+function _okrHistExclToggle(id){ if(_okrHistExcl.has(id)) _okrHistExcl.delete(id); else _okrHistExcl.add(id); _okrHistExclSave(); renderOkrHistorico(); _okrHistMediaRender(id); }
+function _okrHistMediaSet(campo, v){
+  if(campo==='area') _okrHistMArea = v; else if(campo==='modo') _okrHistMModo = v; else _okrHistMOrd = v;
+  _okrHistMediaRender();
+}
+function _okrHistMStatusToggle(id){ if(_okrHistMStatus.has(id)) _okrHistMStatus.delete(id); else _okrHistMStatus.add(id); _okrHistMediaRender(); }
+function _okrHistMRange(v){ _okrHistRange = v; renderOkrHistorico(); _okrHistMediaRender(); }
+function _okrHistFmtN(n){ return Number(n).toLocaleString('pt-BR',{minimumFractionDigits:0, maximumFractionDigits:1}); }
+function _okrHistExclGerencia(areaId, tirar){   // marca/desmarca todos os Objetivos de UMA gerência (botões do cartão da gerência)
+  const d = _okrHistDatas(); if(!d.length) return; const L = (_okrHistSnap(d[d.length-1])||{}).objetivos||{};
+  Object.keys(L).filter(id=>(L[id].areaId||'geral')===areaId).forEach(id=>{ if(tirar) _okrHistExcl.add(id); else _okrHistExcl.delete(id); });
+  _okrHistExclSave(); renderOkrHistorico(); _okrHistMediaRender();
+}
+// Cor estável de cada Objetivo no gráfico (ângulo áureo no matiz, a partir do id) — a mesma cor aparece na borda do chip do Objetivo.
+function _okrHistCorObj(id){ let h = 0; for(const ch of String(id)) h = (h*31 + ch.charCodeAt(0)) % 360; return 'hsl('+((h*137.5)%360).toFixed(0)+',68%,62%)'; }
+let _okrHistMChart = null;
+// 📈 Gráfico de linhas da janela: 1 linha por Objetivo (progresso por snapshot) + a MÉDIA em destaque no "meio" delas. Usa só os Objetivos que estão na conta
+// (chips) e na gerência escolhida — tirar um Objetivo some a linha dele e a média se recalcula.
+function _okrHistCorGer(g){ const i = Math.max(0, OKR_GERENCIAS.findIndex(x=>x.id===g)); return 'hsl('+((i*57+200)%360)+',70%,62%)'; }
+function _okrHistMediaChartHtml(inc, datas, largura){
+  if(!inc.length) return '<div class="okr-h-vazio-t">Nenhum Objetivo na conta — marque algum nos chips abaixo pra ver o gráfico.</div>';
+  if(datas.length<2) return '<div class="okr-h-vazio-t">O gráfico de linhas aparece a partir do 2º snapshot (sexta que vem).</div>';
+  const modo = _okrHistMModo, n = datas.length;
+  const valsDe = id=>datas.map(d=>{ const x = ((_okrHistSnap(d)||{}).objetivos||{})[id]; return x ? (Number(x.progressoPct)||0) : null; });
+  const porObj = inc.map(r=>({id:r.id, titulo:r.o.titulo||'(sem título)', cor:_okrHistCorObj(r.id), vals:valsDe(r.id), area:r.area}));
+  const media = arr=>datas.map((d,i)=>{ const v = arr.map(x=>x.vals[i]).filter(x=>x!==null); return v.length ? v.reduce((a,b)=>a+b,0)/v.length : null; });
+  const avg = media(porObj);
+  const delta = x=>{ const v = x.vals.filter(y=>y!==null); return v.length>1 ? v[v.length-1]-v[0] : 0; };
+  // ── Mini-gráficos: 1 cartão por Objetivo (linha dele + média tracejada de fundo), do que mais caiu pro que mais subiu ──
+  if(modo==='mini'){
+    const W = 230, H = 64, X = i=>6+(W-12)*i/(n-1), Y = v=>H-6-(H-12)*(Math.max(0,Math.min(100,v))/100);
+    const linha = vals=>{ const out=[]; let cur=[]; vals.forEach((v,i)=>{ if(v===null){ if(cur.length) out.push(cur); cur=[]; } else cur.push(X(i).toFixed(1)+','+Y(v).toFixed(1)); }); if(cur.length) out.push(cur); return out; };
+    const mediaLn = linha(avg).map(t=>`<polyline points="${t.join(' ')}" fill="none" stroke="var(--txt3)" stroke-width="1.4" stroke-dasharray="3 3" stroke-opacity=".8"/>`).join('');
+    const cards = porObj.slice().sort((a,b)=>delta(a)-delta(b)).map(x=>{
+      const dl = delta(x), cor = dl>0?'var(--teal)':dl<0?'var(--danger)':'var(--txt3)', ult = x.vals[n-1];
+      const ln = linha(x.vals).map(t=>`<polyline points="${t.join(' ')}" fill="none" stroke="${cor}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
+      const pontos = x.vals.map((v,i)=>v===null?'':`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===n-1?3.2:2}" fill="${cor}"/>`).join('');
+      return `<div class="okr-hm-mini"><div class="okr-hm-mini-h"><span class="okr-h-tit" title="${esc(x.titulo)}">${okrGerenciaIcon(x.area)} ${esc(x.titulo)}</span><b style="color:${cor};">${ult===null?'—':ult+'%'}</b></div>
+        <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" aria-hidden="true">${mediaLn}${ln}${pontos}</svg>
+        <div class="okr-hm-mini-f">${_okrHistDeltaHtml(dl,true,' pp')}<span class="mut">${esc(_okrHistFmt(datas[0]))} → ${esc(_okrHistFmt(datas[n-1]))}</span></div></div>`; }).join('');
+    _okrHistMChart = null;
+    return `<div class="okr-hm-minis">${cards}</div><div class="okr-hm-legend"><span><span class="okr-hm-lg-avg" style="border-top:2px dashed var(--txt3);"></span>Linha tracejada = média dos ${inc.length} Objetivos na conta</span><span>Ordenados do que mais caiu para o que mais subiu no período</span></div>`;
+  }
+  // ── Gráfico único ──
+  let series = [];
+  if(modo==='ger'){
+    series = [...new Set(inc.map(r=>r.area))].map(g=>({id:'g:'+g, titulo:okrGerenciaLabel(g), cor:_okrHistCorGer(g), vals:media(porObj.filter(x=>x.area===g)), w:2.6, op:.95, rot:true}));
+  } else if(modo==='dest'){
+    // só ~6 linhas ganham cor e nome (as que mais subiram em verde, as que mais caíram em vermelho); o resto vira fundo cinza
+    const mov = porObj.filter(x=>delta(x)!==0);
+    const sobem = mov.filter(x=>delta(x)>0).sort((a,b)=>delta(b)-delta(a)).slice(0,3).map(x=>x.id), caem = mov.filter(x=>delta(x)<0).sort((a,b)=>delta(a)-delta(b)).slice(0,3).map(x=>x.id);
+    series = porObj.map(x=>{ const s1 = sobem.includes(x.id), c1 = caem.includes(x.id);
+      return {...x, cor:s1?'var(--teal)':c1?'var(--danger)':'var(--txt3)', w:(s1||c1)?2.4:1.2, op:(s1||c1)?.95:.32, rot:(s1||c1), base:!(s1||c1), delta:delta(x)}; });
+    series.sort((a,b)=>(b.base?1:0)-(a.base?1:0));   // cinzas por baixo, destaques por cima
+  } else if(modo==='obj') series = porObj.map(x=>({...x, w:1.6, op:.75, rot:false}));
+  const comRot = series.filter(x=>x.rot);
+  const W = Math.max(520, largura||900), H = 320, pl = 38, pr = comRot.length||modo==='dest' ? 190 : 16, pt = 14, pb = 28, cw = W-pl-pr, ch = H-pt-pb;
+  const X = i=>pl + cw*i/(n-1), Y = v=>pt + ch - (Math.max(0,Math.min(100,v))/100)*ch;
+  const faixa = modo==='media' ? datas.map((d,i)=>{ const v = porObj.map(x=>x.vals[i]).filter(x=>x!==null); return v.length ? [Math.min(...v), Math.max(...v)] : null; }) : null;
+  const trechos = vals=>{ const out=[]; let cur=[]; vals.forEach((v,i)=>{ if(v===null){ if(cur.length) out.push(cur); cur=[]; } else cur.push(X(i).toFixed(1)+','+Y(v).toFixed(1)); }); if(cur.length) out.push(cur); return out; };
+  _okrHistMChart = {datas, series, avg, faixa, W, H, pl, pr, pt, ch, cw, n, X, Y};
+  let svg = `<svg id="okr-hm-svg" viewBox="0 0 ${W} ${H}" width="100%" style="display:block;height:${H}px;" role="img" aria-label="Progresso ao longo das semanas, com a média em destaque" onmousemove="_okrHistMLine(event)" onmouseleave="_okrHistMLineOff()" onclick="_okrHistMLine(event)">`;
+  [0,25,50,75,100].forEach(v=>{ svg += `<line class="tp-grid-line" x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${pl+cw}" y2="${Y(v).toFixed(1)}"/><text class="tp-axis-lbl" x="${pl-6}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end">${v}%</text>`; });
+  datas.forEach((d,i)=>{ svg += `<line x1="${X(i).toFixed(1)}" y1="${pt}" x2="${X(i).toFixed(1)}" y2="${pt+ch}" stroke="var(--txt3)" stroke-opacity=".12"/>`; if(n<=12 || i%2===0 || i===n-1) svg += `<text class="tp-axis-lbl" x="${X(i).toFixed(1)}" y="${H-9}" text-anchor="middle">${esc(_okrHistFmt(d))}</text>`; });
+  if(faixa){ const ok = faixa.map((f,i)=>f?[i,f]:null).filter(Boolean); if(ok.length>1) svg += `<path d="M${ok.map(([i,f])=>X(i).toFixed(1)+','+Y(f[1]).toFixed(1)).join(' L')} L${ok.slice().reverse().map(([i,f])=>X(i).toFixed(1)+','+Y(f[0]).toFixed(1)).join(' L')} Z" fill="var(--accent)" fill-opacity=".13" stroke="var(--accent)" stroke-opacity=".35" stroke-dasharray="4 3"/>`; }
+  series.forEach(x=>{ trechos(x.vals).forEach(t=>{ svg += `<polyline class="okr-hm-ln" data-id="${esc(x.id)}" data-cor="${esc(x.cor)}" data-w="${x.w}" data-op="${x.op}" fill="none" stroke="${x.cor}" stroke-width="${x.w}" stroke-opacity="${x.op}" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/>`; }); });
+  if(modo==='dest' || modo==='ger') series.filter(x=>x.rot).forEach(x=>{ x.vals.forEach((v,i)=>{ if(v!==null) svg += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="2.6" fill="${x.cor}"/>`; }); });
+  trechos(avg).forEach(t=>{ svg += `<polyline fill="none" stroke="rgb(var(--ink-rgb))" stroke-width="6.5" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/><polyline class="okr-hm-avg" fill="none" stroke="var(--txt)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round" points="${t.join(' ')}"/>`; });
+  avg.forEach((v,i)=>{ if(v!==null) svg += `<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="4" fill="var(--txt)" stroke="rgb(var(--ink-rgb))" stroke-width="1.4"/>`; });
+  // rótulos no fim das linhas (sem sobreposição): a média + as linhas de destaque
+  const rots = [{y:avg[n-1]===null?null:Y(avg[n-1]), t:'média '+(avg[n-1]===null?'—':_okrHistFmtN(avg[n-1])+'%'), cor:'var(--txt)', bold:true}]
+    .concat(comRot.map(x=>{ const v = x.vals[n-1]; return {y:v===null?null:Y(v), t:(x.titulo.length>22?x.titulo.slice(0,21)+'…':x.titulo)+(v===null?'':' '+v+'%'), cor:x.cor, bold:false}; })).filter(r=>r.y!==null).sort((a,b)=>a.y-b.y);
+  for(let i=1;i<rots.length;i++) if(rots[i].y-rots[i-1].y<13) rots[i].y = rots[i-1].y+13;
+  rots.forEach(r=>{ svg += `<text x="${(pl+cw+10).toFixed(1)}" y="${(r.y+4).toFixed(1)}" font-size="${r.bold?12:11}" font-weight="${r.bold?800:600}" fill="${r.cor}">${esc(r.t)}</text>`; });
+  svg += `<line id="okr-hm-cross" x1="0" y1="${pt}" x2="0" y2="${pt+ch}" stroke="var(--txt3)" stroke-dasharray="3 3" style="display:none;"/><g id="okr-hm-foco"></g></svg>`;
+  const leg = modo==='ger' ? series.map(x=>`<span><i class="okr-hm-lg-dot" style="background:${x.cor};"></i>${esc(x.titulo)}</span>`).join('')
+    : modo==='media' ? `<span><i class="okr-hm-lg-band"></i>Faixa do menor ao maior progresso entre os Objetivos</span>`
+    : modo==='dest' ? `<span><i class="okr-hm-lg-dot" style="background:var(--teal);"></i>mais subiram</span><span><i class="okr-hm-lg-dot" style="background:var(--danger);"></i>mais caíram</span><span><i class="okr-hm-lg-dot" style="background:var(--txt3);opacity:.5;"></i>demais (passe o mouse numa linha, num chip ou numa linha da tabela pra destacar)</span>`
+    : `<span><span class="okr-hm-lg-ln"></span>Cada linha colorida é um Objetivo (a mesma cor aparece no tracinho do chip dele)</span>`;
+  return `<div class="okr-hm-chartbox">${svg}<div id="okr-hm-tip" class="okr-h-tip" role="tooltip"></div></div>
+    <div class="okr-hm-legend"><span><span class="okr-hm-lg-avg"></span>Média (${inc.length} Objetivo${inc.length===1?'':'s'} na conta)</span>${leg}</div>`;
+}
+// Destaca 1 Objetivo no gráfico (hover no chip / na linha da tabela / na própria linha): ele ganha cor e espessura, o resto some um pouco.
+function _okrHistMDestaca(id){
+  const svg = document.getElementById('okr-hm-svg'), c = _okrHistMChart; if(!svg || !c) return;
+  const g = document.getElementById('okr-hm-foco'); if(g) g.innerHTML = '';
+  const ok = !!id && c.series.some(x=>x.id===id);
+  svg.querySelectorAll('.okr-hm-ln').forEach(l=>{
+    const on = ok && l.dataset.id===id;
+    l.setAttribute('stroke', on ? (id.startsWith('g:')?l.dataset.cor:_okrHistCorObj(id)) : l.dataset.cor);
+    l.setAttribute('stroke-width', on ? '3.6' : l.dataset.w);
+    l.setAttribute('stroke-opacity', ok ? (on?'1':'.12') : l.dataset.op);
+    if(on && l.parentNode) l.parentNode.appendChild(l);   // traz pra frente
+  });
+  if(ok && g){ const s = c.series.find(x=>x.id===id), v = s.vals[c.n-1]; if(v!==null) g.innerHTML = `<text x="${(c.pl+c.cw-6).toFixed(1)}" y="${(c.Y(v)-9).toFixed(1)}" text-anchor="end" font-size="11.5" font-weight="800" fill="${id.startsWith('g:')?s.cor:_okrHistCorObj(id)}" stroke="rgb(var(--ink-rgb))" stroke-width="3" paint-order="stroke">${esc(s.titulo)} ${v}%</text>`; }
+}
+function _okrHistMLine(ev){
+  const c = _okrHistMChart, svg = document.getElementById('okr-hm-svg'), tip = document.getElementById('okr-hm-tip'); if(!c || !svg || !tip) return;
+  const r = svg.getBoundingClientRect(), k = c.W/r.width, x = (ev.clientX-r.left)*k, y = (ev.clientY-r.top)*k;
+  if(x < c.pl-10 || x > c.pl+c.cw+10){ _okrHistMLineOff(); return; }
+  const i = Math.max(0, Math.min(c.n-1, Math.round((x-c.pl)/(c.cw/(c.n-1)))));
+  let melhor = null, dist = Infinity;
+  c.series.forEach(s=>{ const v = s.vals[i]; if(v===null) return; const d = Math.abs(c.Y(v)-y); if(d<dist){ dist = d; melhor = s; } });
+  const alvo = (melhor && dist<22) ? melhor : null;
+  _okrHistMDestaca(alvo ? alvo.id : '');
+  const cross = document.getElementById('okr-hm-cross'); if(cross){ cross.setAttribute('x1', c.X(i)); cross.setAttribute('x2', c.X(i)); cross.style.display = ''; }
+  const corA = alvo ? (alvo.id.startsWith('g:')?alvo.cor:_okrHistCorObj(alvo.id)) : '';
+  tip.innerHTML = `<b>${esc(_okrHistFmt(c.datas[i],true))}</b>
+    <div class="okr-h-tip-l">${alvo?`<div><span class="okr-dot" style="background:${corA};"></span>${esc(alvo.titulo)}: <b>${alvo.vals[i]}%</b></div>`:''}</div>
+    <div class="okr-h-tip-m">Média: <b>${c.avg[i]===null?'—':_okrHistFmtN(c.avg[i])+'%'}</b>${c.faixa&&c.faixa[i]?` <span class="mut">· de ${c.faixa[i][0]}% a ${c.faixa[i][1]}%</span>`:''}</div>`;
+  tip.style.display = 'block';
+  const box = tip.parentElement.getBoundingClientRect(); let tx = ev.clientX-box.left+14; if(tx+tip.offsetWidth > box.width) tx = ev.clientX-box.left-tip.offsetWidth-14;
+  tip.style.left = Math.max(0,tx)+'px'; tip.style.top = Math.max(0, Math.min(ev.clientY-box.top-10, box.height-tip.offsetHeight))+'px';
+}
+function _okrHistMLineOff(){
+  const tip = document.getElementById('okr-hm-tip'), cross = document.getElementById('okr-hm-cross');
+  if(tip) tip.style.display = 'none'; if(cross) cross.style.display = 'none';
+  _okrHistMDestaca('');
+}
+function _okrHistMediaRender(focoId){
+  const body = document.getElementById('okr-hmedia-body'); if(!body) return;
+  const tt = document.getElementById('okr-hmedia-title'); if(tt) tt.textContent = '🧮 Como cada Objetivo contribui para o '+_okrHistRot().gerais.replace(' (%)','');
+  const todas = _okrHistDatas();
+  if(!todas.length){ body.innerHTML = '<div class="okr-h-vazio-t">Ainda não há snapshot.</div>'; return; }
+  const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
+  const L = (_okrHistSnap(ult)||{}).objetivos||{}, P = ant ? ((_okrHistSnap(ant)||{}).objetivos||{}) : {};
+  const todos = Object.keys(L).map(id=>({id, o:L[id], pct:Number(L[id].progressoPct)||0, p:P[id]?(Number(P[id].progressoPct)||0):null, area:L[id].areaId||'geral'}));
+  const gerencias = [...new Set(todos.map(r=>r.area))].sort((a,b)=>OKR_GERENCIAS.findIndex(g=>g.id===a)-OKR_GERENCIAS.findIndex(g=>g.id===b));
+  if(_okrHistMArea && !gerencias.includes(_okrHistMArea)) _okrHistMArea = '';
+  const vis = todos.filter(r=>(!_okrHistMArea || r.area===_okrHistMArea) && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status)));
+  const inc = vis.filter(r=>!_okrHistExcl.has(r.id)), exc = vis.filter(r=>_okrHistExcl.has(r.id));
+  const n = inc.length, soma = inc.reduce((a,r)=>a+r.pct,0), media = n ? soma/n : null;
+  const comP = inc.filter(r=>r.p!==null);
+  const dMedia = comP.length ? (comP.reduce((a,r)=>a+r.pct,0)-comP.reduce((a,r)=>a+r.p,0))/comP.length : null;   // mesmos Objetivos nos dois snapshots
+  const efeito = r=>{   // quanto a média muda se este Objetivo SAIR (incluído) ou VOLTAR (tirado)
+    if(!_okrHistExcl.has(r.id)) return n>1 ? (soma-r.pct)/(n-1)-media : null;
+    return n ? (soma+r.pct)/(n+1)-media : r.pct;
+  };
+  const ord = {baixo:(a,b)=>(efeito(b)??-999)-(efeito(a)??-999), alto:(a,b)=>b.pct-a.pct, az:(a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||''))}[_okrHistMOrd] || (()=>0);
+  const lista = inc.slice().sort(ord).concat(exc.slice().sort((a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||''))));
+  const antesScroll = body.scrollTop;
+  const per = _okrHistRange==='all' ? todas : todas.slice(-Number(_okrHistRange));
+  const graficoW = Math.max(520, (body.clientWidth||960) - 50);
+  const top3 = (arr, f)=> arr.slice(0,3).map(r=>`<div class="okr-hm-top"><span class="okr-h-tit">${okrGerenciaIcon(r.area)} ${esc(r.o.titulo||'(sem título)')}</span>${f(r)}</div>`).join('') || '<div class="mut">—</div>';
+  const puxamBaixo = n>1 ? inc.slice().sort((a,b)=>efeito(b)-efeito(a)).filter(r=>efeito(r)>0.05) : [];
+  const sustentam = inc.slice().sort((a,b)=>b.pct-a.pct).filter(r=>r.pct>0);
+  const chip = r=>{
+    const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status);
+    return `<span class="okr-hm-chip${fora?' off':''}" role="button" tabindex="0" aria-pressed="${fora?'false':'true'}" data-id="${esc(r.id)}" title="${fora?'Voltar pra conta':'Tirar da conta'} — ${esc(r.o.titulo||'')} (${r.pct}%)" onmouseenter="_okrHistMDestaca(${jsq(r.id)})" onmouseleave="_okrHistMDestaca('')" onfocus="_okrHistMDestaca(${jsq(r.id)})" onblur="_okrHistMDestaca('')" onclick="_okrHistExclToggle(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistExclToggle(${jsq(r.id)});}"><em class="okr-hm-chip-ln" style="background:${fora?'transparent':_okrHistCorObj(r.id)};" title="Cor da linha deste Objetivo no gráfico"></em><i style="background:${st.dot};"></i><span class="okr-hm-chip-t">${esc(r.o.titulo||'(sem título)')}</span><b>${r.pct}%</b></span>`;
+  };
+  const grupos = gerencias.filter(g=>!_okrHistMArea || g===_okrHistMArea).map(g=>{
+    const rs = todos.filter(r=>r.area===g && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status))).sort((a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')));
+    const rin = rs.filter(r=>!_okrHistExcl.has(r.id)); const mg = rin.length ? Math.round(rin.reduce((a,r)=>a+r.pct,0)/rin.length) : null;
+    if(!rs.length) return '';
+    return `<div class="okr-hm-grp"><div class="okr-hm-grp-h"><span>${okrGerenciaIcon(g)} <b>${esc(okrGerenciaLabel(g))}</b> <span class="mut">· ${rin.length}/${rs.length} na conta${mg===null?'':' · média '+mg+'%'}</span></span>
+      <span class="okr-hm-grp-a"><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},false)">todos</button><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},true)">nenhum</button></span></div>
+      <div class="okr-hm-chips">${rs.map(chip).join('')}</div></div>`;
+  }).join('');
+  body.innerHTML = `
+    <div class="okr-hm-top3">
+      <div class="okr-hm-sum">
+        <div class="okr-hm-big">${media===null?'—':_okrHistFmtN(media)+'%'}</div>
+        <div class="okr-h-kpi-l">${_okrHistRot().gerais.replace(' (%)','')}${_okrHistMArea?' · '+esc(okrGerenciaLabel(_okrHistMArea)):''}</div>
+        <div class="okr-hm-meta">${dMedia===null?'<span class="mut">sem comparação com o snapshot anterior</span>':_okrHistDeltaHtml(Math.round(dMedia*10)/10,true,' pp')+` <span class="mut">vs. ${esc(_okrHistFmt(ant,true))} (mesmos Objetivos)</span>`}
+          <div class="mut"><b>${n}</b> de ${vis.length} Objetivo${vis.length===1?'':'s'} na conta · snapshot de ${esc(_okrHistFmt(ult,true))}</div></div>
+        <div class="okr-hm-como">Média = soma dos progressos ÷ nº de Objetivos na conta. Cada um contribui com <b>progresso ÷ ${n||'N'}</b> ponto(s).</div>
+      </div>
+      <div class="okr-hm-box"><div class="okr-hm-box-t">⬇ Mais puxam a média pra baixo</div>${top3(puxamBaixo, r=>`<span>${_okrHistDeltaHtml(Math.round(efeito(r)*10)/10,true,' pp')} <span class="mut">se saísse · ${r.pct}%</span></span>`)}</div>
+      <div class="okr-hm-box"><div class="okr-hm-box-t">⬆ Mais sustentam a média</div>${top3(sustentam, r=>`<span><b>${_okrHistFmtN(r.pct/n)} pp</b> <span class="mut">· ${r.pct}%</span></span>`)}</div>
+    </div>
+    <div class="okr-hm-sec okr-hm-visao">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🎛 Personalizar a visão</span>${(_okrHistMStatus.size||_okrHistMModo!=='dest'||_okrHistMArea)?`<button type="button" class="okr-hm-lnk" onclick="_okrHistMStatus.clear();_okrHistMModo='dest';_okrHistMArea='';_okrHistMediaRender()">limpar filtros</button>`:''}</div>
+      <div class="okr-hm-visao-g">
+        <div><div class="okr-hm-sub">⏱ Período</div><div class="okr-hm-chips">${[['4','4 sem'],['8','8 sem'],['12','12 sem'],['all','Tudo']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistRange===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistRange===v}" onclick="_okrHistMRange('${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMRange('${v}');}">${l}</span>`).join('')}</div></div>
+        <div><div class="okr-hm-sub">📈 Linhas do gráfico</div><div class="okr-hm-chips">${[['dest','⭐ Destaques'],['obj','Todas coloridas'],['ger','Por gerência'],['media','Só a média'],['mini','Mini-gráficos']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistMModo===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMModo===v}" onclick="_okrHistMediaSet('modo','${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('modo','${v}');}">${l}</span>`).join('')}</div></div>
+        <div><div class="okr-hm-sub">🚦 Status do Objetivo <span class="mut">(vazio = todos)</span></div><div class="okr-hm-chips">${OKR_STATUS.map(st=>{ const c = todos.filter(r=>(!_okrHistMArea||r.area===_okrHistMArea)&&r.o.status===st.id).length; return `<span class="okr-hm-chip sel${_okrHistMStatus.has(st.id)?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMStatus.has(st.id)}" onclick="_okrHistMStatusToggle(${jsq(st.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMStatusToggle(${jsq(st.id)});}"><i style="background:${st.dot};"></i>${esc(st.label)} <b>${c}</b></span>`; }).join('')}</div></div>
+      </div>
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${{dest:'a média e os Objetivos que mais mudaram',obj:'cada Objetivo e a média',ger:'cada gerência e a média',media:'a média',mini:'um mini-gráfico por Objetivo'}[_okrHistMModo]}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Histórico)'}</span></div>
+      ${_okrHistMediaChartHtml(inc, per, graficoW)}
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🏢 Gerência</span>
+        <div class="okr-hm-chips"><span class="okr-hm-chip sel${_okrHistMArea?'':' on'}" role="button" tabindex="0" aria-pressed="${_okrHistMArea?'false':'true'}" onclick="_okrHistMediaSet('area','')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area','');}">Todas <b>${todos.length}</b></span>${gerencias.map(g=>`<span class="okr-hm-chip sel${_okrHistMArea===g?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMArea===g}" onclick="_okrHistMediaSet('area',${jsq(g)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area',${jsq(g)});}">${okrGerenciaIcon(g)} ${esc(okrGerenciaLabel(g))} <b>${todos.filter(r=>r.area===g).length}</b></span>`).join('')}</div></div>
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📍 Objetivos na conta <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:500;">— clique num Objetivo pra tirá-lo (ou trazê-lo de volta) e a média recalcula na hora</span></span>
+        ${_okrHistExcl.size?`<button type="button" class="btn btn-sm" style="font-size:11px;margin-left:auto;" onclick="_okrHistExclReset()">↩ Restaurar tudo</button>`:''}</div>
+      <div class="okr-hm-grps">${grupos}</div>
+    </div>
+    <div class="okr-hm-sec">
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🧮 Contribuição de cada Objetivo</span>
+        <select class="pt-filter-input" style="margin-left:auto;max-width:260px;" onchange="_okrHistMediaSet('ord',this.value)" aria-label="Ordenar por"><option value="baixo"${_okrHistMOrd==='baixo'?' selected':''}>Ordenar: puxam a média pra baixo</option><option value="alto"${_okrHistMOrd==='alto'?' selected':''}>Ordenar: maior progresso</option><option value="az"${_okrHistMOrd==='az'?' selected':''}>Ordenar: A–Z</option></select></div>
+      <div class="okr-hm-lista" id="okr-hm-lista">
+        <div class="okr-hm-row head"><span>Objetivo</span><span>${_okrHistRot().col}</span><span>Contribui</span><span>Se sair da conta</span><span>Δ semana</span><span>Marcos</span></div>
+        ${lista.length?lista.map(r=>{
+          const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status), ef = efeito(r), dp = r.p===null?null:r.pct-r.p;
+          return `<div class="okr-hm-row${fora?' fora':''}" onmouseenter="_okrHistMDestaca(${jsq(r.id)})" onmouseleave="_okrHistMDestaca('')">
+            <span class="okr-h-tr-t">${okrGerenciaIcon(r.area)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> <span class="okr-dot" style="background:${st.dot};" title="${esc(st.label)}"></span></span>
+            <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
+            <span>${fora?'<span class="mut">fora da conta</span>':`<b>${_okrHistFmtN(r.pct/n)}</b> pp`}</span>
+            <span>${ef===null?'<span class="mut">—</span>':fora?`voltando: ${_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}`:_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}</span>
+            <span>${dp===null?'<span class="mut">novo</span>':_okrHistDeltaHtml(dp,true,' pp')}</span>
+            <span class="mut">${r.o.marcosConcluidos||0}/${r.o.totalMarcos||0}</span></div>`; }).join(''):'<div class="okr-h-vazio-t">Nenhum Objetivo na conta.</div>'}
+      </div>
+    </div>`;
+  body.scrollTop = antesScroll;
+  if(focoId){ const cb = body.querySelector('.okr-hm-chip[data-id="'+(window.CSS&&CSS.escape?CSS.escape(focoId):focoId)+'"]'); if(cb) cb.focus({preventScroll:true}); }
+}
+document.addEventListener('keydown', e=>{
+  const ov = document.getElementById('okr-hmedia-ov');
+  if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrHistMediaClose(); }
+}, true);
+
 function renderOkrHistoricoChart(){
   const legend = document.getElementById('okr-hist-chart-legend');
   const wrap = document.getElementById('okr-hist-chart');
   if(!wrap) return;
   if(legend){
-    legend.innerHTML = OKR_STATUS.map(s=>`<span style="display:flex;align-items:center;gap:5px;"><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('');
+    legend.innerHTML = OKR_STATUS.map(s=>`<span><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')
+      + `<span><span class="okr-h-linha-ico"></span>${_okrHistRot().gerais}</span>`;
   }
-  const dates = Object.keys(okrSnapshots).sort().slice(-12); // últimas ~12 semanas
-  if(!dates.length){
-    wrap.innerHTML = '<div class="bar-empty">Ainda sem snapshot registrado — o primeiro sai na próxima sexta-feira (okrWeeklySnapshot roda 1x por semana).</div>';
-    return;
-  }
-  const buckets = dates.map(d=>{
-    const rg = okrSnapshots[d]?.resumoGeral || {};
-    const dt = new Date(d+'T00:00:00');
-    return { lbl:dt.getDate()+'/'+(dt.getMonth()+1), total:rg.total||0, rg };
-  });
+  let datas = _okrHistDatas();
+  if(_okrHistRange!=='all') datas = datas.slice(-Number(_okrHistRange));
+  const buckets = datas.map(d=>{ const s = _okrHistSnap(d)||{}; return {d, rg:s.resumoGeral||{}, total:(s.resumoGeral||{}).total||0, media:_okrHistMedia(s)}; });
+  _okrHistChartData = buckets;
   const max = Math.max(1, ...buckets.map(b=>b.total));
-  const W=760,H=140,padL=8,padR=8,padT=18,padB=22;
-  const chartW=W-padL-padR, chartH=H-padT-padB;
-  const bw=Math.floor(chartW/buckets.length);
-  const gap=Math.max(3,Math.floor(bw*0.28));
-  const barW=bw-gap;
-  const gridLines=[0.5,1].map(f=>Math.round(max*f)).filter((v,i,a)=>a.indexOf(v)===i&&v>0);
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  gridLines.forEach(v=>{
-    const y=padT+chartH-Math.round((v/max)*chartH);
-    svg+=`<line class="tp-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
-    svg+=`<text class="tp-axis-lbl" x="${padL}" y="${y-3}" text-anchor="start">${v}</text>`;
-  });
+  const W=780,H=176,pl=30,pr=34,pt=18,pb=24, cw=W-pl-pr, ch=H-pt-pb;
+  const slot = cw/buckets.length, barW = Math.max(6, Math.min(46, slot*0.62));
+  const yN = v=>pt+ch-(v/max)*ch, yP = v=>pt+ch-(v/100)*ch;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Evolução semanal dos Objetivos por status e progresso médio">`;
+  const g1 = [...new Set([0, Math.round(max/2), max])].filter(v=>v>=0);
+  g1.forEach(v=>{ const y = yN(v); svg += `<line class="tp-grid-line" x1="${pl}" y1="${y.toFixed(1)}" x2="${W-pr}" y2="${y.toFixed(1)}"/><text class="tp-axis-lbl" x="${pl-5}" y="${(y+3).toFixed(1)}" text-anchor="end">${v}</text>`; });
+  [0,50,100].forEach(v=>{ svg += `<text class="tp-axis-lbl" x="${W-pr+5}" y="${(yP(v)+3).toFixed(1)}" text-anchor="start" fill-opacity=".8">${v}%</text>`; });
+  const pts = [];
   buckets.forEach((b,i)=>{
-    const x=padL+i*bw+gap/2;
-    let yCursor=padT+chartH;
-    OKR_STATUS.forEach(s=>{
-      const n=b.rg[s.id]||0; if(!n) return;
-      const segH=Math.max(2,Math.round((n/max)*chartH));
-      yCursor-=segH;
-      svg+=`<rect class="tp-bar" x="${x}" y="${yCursor}" width="${barW}" height="${segH}" fill="${s.dot}"><title>${esc(s.label)}: ${n}</title></rect>`;
+    const cx = pl+slot*i+slot/2, x = cx-barW/2;
+    let y0 = pt+ch;
+    ['concluido','no_prazo','nao_iniciado','risco','atrasado'].forEach(id=>{
+      const n = b.rg[id]||0; if(!n) return;
+      const h = Math.max(2,(n/max)*ch); y0 -= h;
+      svg += `<rect class="okr-h-bar" x="${x.toFixed(1)}" y="${y0.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="2" fill="${okrStatusInfo(id).dot}"/>`;
     });
-    if(b.total>0) svg+=`<text class="tp-bar-lbl" x="${x+barW/2}" y="${padT+chartH-Math.round((b.total/max)*chartH)-4}" text-anchor="middle" fill="var(--txt2)">${b.total}</text>`;
-    svg+=`<text class="tp-axis-lbl" x="${x+barW/2}" y="${H-4}" text-anchor="middle">${esc(b.lbl)}</text>`;
+    if(b.total>0) svg += `<text class="tp-bar-lbl" x="${cx.toFixed(1)}" y="${(yN(b.total)-5).toFixed(1)}" text-anchor="middle" fill="var(--txt2)">${b.total}</text>`;
+    if(buckets.length<=14 || i%2===0 || i===buckets.length-1) svg += `<text class="tp-axis-lbl" x="${cx.toFixed(1)}" y="${H-8}" text-anchor="middle"${i===buckets.length-1?' font-weight="700"':''}>${esc(_okrHistFmt(b.d))}</text>`;
+    if(b.media!==null) pts.push([cx, yP(b.media)]);
   });
-  svg+='</svg>';
-  wrap.innerHTML=svg;
+  if(pts.length>1) svg += `<polyline fill="none" stroke="var(--ating-h,#ff73af)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
+  pts.forEach(p=>{ svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="var(--ating-h,#ff73af)" stroke="rgb(var(--ink-rgb))" stroke-width="1.2"/>`; });
+  buckets.forEach((b,i)=>{
+    svg += `<rect class="okr-h-hit" x="${(pl+slot*i).toFixed(1)}" y="${pt-8}" width="${slot.toFixed(1)}" height="${ch+8}" fill="transparent" onmousemove="_okrHistTip(event,${i})" onmouseleave="_okrHistTipOff()" onclick="_okrHistTip(event,${i})"/>`;
+  });
+  wrap.innerHTML = svg + '</svg>';
 }
-function _okrHistoricoSelectObj(objId){
-  _okrHistoricoObjId = objId||'';
-  const wrap = document.getElementById('okr-hist-obj-wrap');
-  if(!wrap) return;
-  if(!objId){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Escolha um Objetivo acima pra ver a evolução dele.</div>'; return; }
-  const linhas = Object.keys(okrSnapshots).sort().reverse()
-    .map(d=>({d, o:okrSnapshots[d]?.objetivos?.[objId]}))
-    .filter(x=>x.o);
-  if(!linhas.length){ wrap.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Esse Objetivo ainda não apareceu em nenhum snapshot.</div>'; return; }
-  wrap.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:8px;">
-    <thead><tr>
-      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Semana</th>
-      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Status</th>
-      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Progresso</th>
-      <th style="text-align:left;color:var(--txt3);font-weight:600;font-size:10px;text-transform:uppercase;padding:6px 10px;border-bottom:1px solid var(--glass-b);">Marcos</th>
-    </tr></thead>
-    <tbody>${linhas.map(({d,o})=>{
-      const st = okrStatusInfo(o.status);
-      const dt = new Date(d+'T00:00:00').toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
-      return `<tr>
-        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${esc(dt)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);"><span class="okr-dot" style="background:${st.dot};"></span> ${esc(st.label)}</td>
-        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${o.progressoPct||0}%</td>
-        <td style="padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.05);">${o.marcosConcluidos||0}/${o.totalMarcos||0}</td>
-      </tr>`;
-    }).join('')}</tbody>
-  </table>`;
+function _okrHistTip(ev, i){
+  const b = _okrHistChartData[i], tip = document.getElementById('okr-h-tip'), box = tip && tip.parentElement; if(!b || !tip) return;
+  tip.innerHTML = `<b>${esc(_okrHistFmt(b.d,true))}</b>
+    <div class="okr-h-tip-l">${OKR_STATUS.map(s=>(b.rg[s.id]||0)?`<div><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}: <b>${b.rg[s.id]}</b></div>`:'').join('')}</div>
+    <div class="okr-h-tip-m">Total: <b>${b.total}</b>${b.media!==null?` · ${_okrHistRot().gerais.replace(' (%)','')} <b>${b.media}%</b>`:''}</div>`;
+  tip.style.display = 'block';
+  const r = box.getBoundingClientRect(); let x = ev.clientX-r.left+14;
+  if(x+tip.offsetWidth > r.width) x = ev.clientX-r.left-tip.offsetWidth-14;
+  tip.style.left = Math.max(0,x)+'px'; tip.style.top = Math.max(0, Math.min(ev.clientY-r.top-10, r.height-tip.offsetHeight))+'px';
+}
+function _okrHistTipOff(){ const t = document.getElementById('okr-h-tip'); if(t) t.style.display = 'none'; }
+document.addEventListener('touchstart', e=>{ if(!e.target.closest || !e.target.closest('.okr-h-chartbox')) _okrHistTipOff(); }, {passive:true});
+
+// 🔄 O que mudou entre o snapshot anterior (P) e o último (L).
+function _okrHistMudancas(L, P){
+  const a = (L&&L.objetivos)||{}, b = (P&&P.objetivos)||{}, out = [];
+  Object.keys(a).forEach(id=>{
+    const n = a[id], o = b[id];
+    if(!o){ out.push({id, t:n.titulo, area:n.areaId, tipo:'novo', ord:3}); return; }
+    const rn = OKR_STATUS_RANK[n.status]??2, ro = OKR_STATUS_RANK[o.status]??2;
+    const dp = (Number(n.progressoPct)||0)-(Number(o.progressoPct)||0);
+    if(n.status!==o.status) out.push({id, t:n.titulo, area:n.areaId, tipo:rn>ro?'piorou':'melhorou', de:o.status, para:n.status, dp, ord:rn>ro?0:1});
+    else if(dp!==0) out.push({id, t:n.titulo, area:n.areaId, tipo:dp>0?'subiu':'caiu', dp, status:n.status, ord:dp>0?2:1.5});
+  });
+  Object.keys(b).forEach(id=>{ if(!a[id]) out.push({id, t:b[id].titulo, area:b[id].areaId, tipo:'saiu', ord:4}); });
+  return out.sort((x,y)=>x.ord-y.ord || Math.abs(y.dp||0)-Math.abs(x.dp||0) || String(x.t).localeCompare(String(y.t)));
+}
+function _okrHistMudancasRender(L, P, ant, ult){
+  const el = document.getElementById('okr-h-mud'); if(!el) return;
+  if(!P){ el.innerHTML = `<div class="okr-h-card"><div class="okr-h-card-t">🔄 O que mudou</div><div class="okr-h-vazio-t">Só existe 1 snapshot por enquanto. Depois do próximo (sexta), aqui aparece o que mudou de uma semana para outra: status, progresso, Objetivos novos e os que saíram.</div></div>`; return; }
+  const ms = _okrHistMudancas(L,P);
+  const rot = {piorou:['⚠️','Piorou'], melhorou:['✅','Melhorou'], subiu:['📈','Progresso subiu'], caiu:['📉','Progresso caiu'], novo:['🆕','Novo Objetivo'], saiu:['📦','Saiu (arquivado/excluído)']};
+  const mostra = _okrHistMudMais ? ms : ms.slice(0,8);
+  el.innerHTML = `<div class="okr-h-card"><div class="okr-h-card-t">🔄 O que mudou <span class="mut">— de ${esc(_okrHistFmt(ant,true))} para ${esc(_okrHistFmt(ult,true))}</span> ${ms.length?`<span class="badge">${ms.length}</span>`:''}</div>
+    ${ms.length ? `<div class="okr-h-mud-lista">${mostra.map(m=>{
+      const [ic,lb] = rot[m.tipo];
+      const det = m.tipo==='piorou'||m.tipo==='melhorou' ? `${okrStatusInfo(m.de).label} → <b>${esc(okrStatusInfo(m.para).label)}</b>${m.dp?` · ${m.dp>0?'+':''}${m.dp} pp`:''}`
+        : m.tipo==='subiu'||m.tipo==='caiu' ? `${m.dp>0?'+':''}${m.dp} pp de progresso` : '';
+      return `<div class="okr-h-mud ${m.tipo}" ${m.tipo==='saiu'?'':`role="button" tabindex="0" onclick="_okrHistoricoSelectObj(${jsq(m.id)},true)" onkeydown="if(event.key==='Enter')_okrHistoricoSelectObj(${jsq(m.id)},true)"`}>
+        <span class="okr-h-mud-ic">${ic}</span><div class="okr-h-mud-b"><div class="okr-h-mud-t">${okrGerenciaIcon(m.area)} ${esc(m.t||'(sem título)')}</div><div class="okr-h-mud-d"><span class="okr-h-mud-lb">${lb}</span>${det?' · '+det:''}</div></div></div>`;
+    }).join('')}</div>${ms.length>8?`<button type="button" class="btn btn-sm" style="margin-top:8px;font-size:11px;" onclick="_okrHistMudMais=!_okrHistMudMais;renderOkrHistorico()">${_okrHistMudMais?'Mostrar menos':'Ver todas as '+ms.length+' mudanças'}</button>`:''}`
+    : `<div class="okr-h-vazio-t">Nenhuma mudança de status ou de progresso entre os dois últimos snapshots.</div>`}</div>`;
+}
+
+// Tabela "Por Objetivo": 1 linha por Objetivo do último snapshot, com Δ vs. snapshot anterior e mini-tendência do período.
+function _okrHistTabelaRender(){
+  const el = document.getElementById('okr-h-tbl'); if(!el) return;
+  const todas = _okrHistDatas(); if(!todas.length) return;
+  const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
+  const L = (_okrHistSnap(ult)||{}).objetivos||{}, P = ant ? ((_okrHistSnap(ant)||{}).objetivos||{}) : {};
+  const per = (_okrHistRange==='all' ? todas : todas.slice(-Number(_okrHistRange)));
+  const f = _okrHistFiltro, q = (f.texto||'').trim().toLowerCase();
+  let rows = Object.keys(L).map(id=>{
+    const o = L[id], p = P[id], pct = Number(o.progressoPct)||0;
+    return {id, o, pct, dp: p ? pct-(Number(p.progressoPct)||0) : null, serie: per.map(d=>{ const x = ((_okrHistSnap(d)||{}).objetivos||{})[id]; return x ? (Number(x.progressoPct)||0) : null; })};
+  }).filter(r=>(!f.area || (r.o.areaId||'geral')===f.area) && (!f.status || r.o.status===f.status) && (!q || String(r.o.titulo||'').toLowerCase().includes(q)));
+  const ord = {
+    titulo:(a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')),
+    alta:(a,b)=>(b.dp??-999)-(a.dp??-999), queda:(a,b)=>(a.dp??999)-(b.dp??999),
+    pior:(a,b)=>(OKR_STATUS_RANK[b.o.status]??2)-(OKR_STATUS_RANK[a.o.status]??2) || a.pct-b.pct, pct:(a,b)=>b.pct-a.pct,
+  }[f.ordem] || ((a,b)=>0);
+  rows.sort(ord);
+  if(!rows.length){ el.innerHTML = '<div class="okr-h-vazio-t">Nenhum Objetivo com esses filtros.</div>'; return; }
+  el.innerHTML = `<div class="okr-h-tab">
+    <div class="okr-h-tr head"><span>Objetivo</span><span>Status</span><span>${_okrHistRot().col}</span><span>Δ</span><span>Tendência</span><span>Marcos</span></div>
+    ${rows.map(r=>{
+      const st = okrStatusInfo(r.o.status), aberto = _okrHistoricoObjId===r.id;
+      const ating = r.o.atingimentoTipo ? `<span class="okr-h-ating" title="${esc(_okrAtingTipoLabel(r.o.atingimentoTipo))}">${_okrAtingTipoIco(r.o.atingimentoTipo)}</span>` : '';
+      return `<div class="okr-h-tr row${aberto?' aberto':''}" role="button" tabindex="0" aria-expanded="${aberto}" onclick="_okrHistoricoSelectObj(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistoricoSelectObj(${jsq(r.id)});}">
+        <span class="okr-h-tr-t"><span class="okr-h-seta">${aberto?'▾':'▸'}</span> ${okrGerenciaIcon(r.o.areaId)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> ${ating}</span>
+        <span class="okr-h-st"><span class="okr-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
+        <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
+        <span>${r.dp===null?'<span class="okr-h-delta nada" title="Não estava no snapshot anterior">novo</span>':_okrHistDeltaHtml(r.dp,true,' pp')}</span>
+        <span>${_okrHistSpark(r.serie,84,24)}</span>
+        <span class="okr-h-mc">${r.o.marcosConcluidos||0}/${r.o.totalMarcos||0}</span>
+      </div>${aberto?`<div class="okr-h-det">${_okrHistDetalheHtml(r.id)}</div>`:''}`;
+    }).join('')}</div>`;
+}
+function _okrHistoricoSelectObj(objId, rolar){
+  _okrHistoricoObjId = (!rolar && _okrHistoricoObjId===objId) ? '' : (objId||'');
+  if(rolar){ _okrHistFiltro = {area:'', status:'', texto:'', ordem:_okrHistFiltro.ordem}; renderOkrHistorico(); }
+  else _okrHistTabelaRender();
+  if(rolar && _okrHistoricoObjId){ const r = document.querySelector('#okr-h-tbl .okr-h-tr.aberto'); if(r && r.scrollIntoView) r.scrollIntoView({block:'center', behavior:'smooth'}); }
+}
+// Detalhe de 1 Objetivo: curva de progresso em todos os snapshots + tabela semana a semana (mais recente primeiro).
+function _okrHistDetalheHtml(objId){
+  const linhas = _okrHistDatas().map(d=>({d, o:((_okrHistSnap(d)||{}).objetivos||{})[objId]})).filter(x=>x.o);
+  if(!linhas.length) return '<div class="okr-h-vazio-t">Esse Objetivo ainda não apareceu em nenhum snapshot.</div>';
+  const W=560,H=120,pl=28,pr=10,pt=10,pb=22, cw=W-pl-pr, ch=H-pt-pb, n=linhas.length;
+  const X = i=>pl+(n===1?cw/2:cw*i/(n-1)), Y = v=>pt+ch-(Math.max(0,Math.min(100,v))/100)*ch;
+  const pts = linhas.map((x,i)=>[X(i),Y(Number(x.o.progressoPct)||0)]);
+  let svg = `<svg viewBox="0 0 ${W} ${H}" class="okr-h-curva" role="img" aria-label="Progresso do Objetivo ao longo das semanas">`;
+  [0,50,100].forEach(v=>{ svg += `<line class="tp-grid-line" x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W-pr}" y2="${Y(v).toFixed(1)}"/><text class="tp-axis-lbl" x="${pl-4}" y="${(Y(v)+3).toFixed(1)}" text-anchor="end">${v}%</text>`; });
+  if(n>1) svg += `<path d="M${pts[0][0].toFixed(1)},${(pt+ch)} L${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' L')} L${pts[n-1][0].toFixed(1)},${(pt+ch)} Z" fill="var(--ating-h,#ff73af)" fill-opacity=".1"/>
+    <polyline fill="none" stroke="var(--ating-h,#ff73af)" stroke-width="2.2" stroke-linejoin="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
+  linhas.forEach((x,i)=>{ svg += `<circle cx="${pts[i][0].toFixed(1)}" cy="${pts[i][1].toFixed(1)}" r="3.6" fill="${okrStatusInfo(x.o.status).dot}" stroke="rgb(var(--ink-rgb))" stroke-width="1.2"><title>${esc(_okrHistFmt(x.d,true))}: ${x.o.progressoPct||0}% · ${esc(okrStatusInfo(x.o.status).label)}</title></circle>`;
+    if(n<=12 || i%2===0 || i===n-1) svg += `<text class="tp-axis-lbl" x="${pts[i][0].toFixed(1)}" y="${H-7}" text-anchor="middle">${esc(_okrHistFmt(x.d))}</text>`; });
+  svg += '</svg>';
+  const desc = [...linhas].reverse();
+  const viva = okrObjetivos[objId];
+  return `<div class="okr-h-det-top">${svg}${viva?`<button type="button" class="btn btn-sm" style="font-size:11px;align-self:flex-start;" onclick="event.stopPropagation();openOkrObjetivo(${jsq(objId)})">📂 Abrir Objetivo</button>`:'<span class="mut" style="font-size:11px;">Objetivo arquivado ou excluído — só os snapshots restam.</span>'}</div>
+    <table class="okr-h-semanas"><thead><tr><th>Semana</th><th>Status</th><th>${_okrHistRot().col}</th><th>Δ</th><th>Marcos</th><th>Atingimento</th></tr></thead><tbody>${desc.map((x,i)=>{
+      const st = okrStatusInfo(x.o.status), ant = desc[i+1], dp = ant ? (Number(x.o.progressoPct)||0)-(Number(ant.o.progressoPct)||0) : null;
+      return `<tr><td>${esc(_okrHistFmt(x.d,true))}</td><td><span class="okr-dot" style="background:${st.dot};"></span> ${esc(st.label)}</td><td><b>${x.o.progressoPct||0}%</b></td><td>${dp===null?'<span class="mut">—</span>':_okrHistDeltaHtml(dp,true,' pp')}</td><td>${x.o.marcosConcluidos||0}/${x.o.totalMarcos||0}</td>
+        <td>${x.o.atingimentoTipo?`${_okrAtingTipoIco(x.o.atingimentoTipo)} ${x.o.atingimentoPct!==undefined?x.o.atingimentoPct+'%':'<span class="mut">perene</span>'}${x.o.atingimentoRegistros?` <span class="mut">(${x.o.atingimentoRegistros} reg.)</span>`:''}`:'<span class="mut">—</span>'}</td></tr>`;
+    }).join('')}</tbody></table>`;
 }
 
 // ── Tags gerenciáveis do OKR (só nível Objetivo — Marco continua com texto
@@ -6195,7 +6744,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
 // ═══ ⋯ Menu de contexto da aba OKR (painel-dev v3.111) ═══
 // Clique direito num cartão de Objetivo ou numa linha de Marco abre um menu com as ações mais usadas, sem abrir o modal.
 // Itens com tecla de atalho (R, E, P, T...), setas ↑↓ ←→ + Enter, Esc fecha. Edições rápidas escrevem por TRANSAÇÃO no nó do Objetivo/Marco
-// (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo fica de fora de propósito.
+// (nunca regravam o rascunho de outro modal aberto) e registram no Histórico, igual ao Salvar. Excluir Objetivo só aparece pra ADM (igual ao botão do modal) e pede confirmação.
 let _okrCtxState = null;   // {root, items, trigger}
 // Escreve `mutate(n)` no nó por transação. `mutate` recebe uma CÓPIA e devolve false pra abortar. Devolve o valor gravado ou null (abortou/sumiu).
 async function _okrTx(path, mutate){
@@ -6339,6 +6888,7 @@ function _okrCtxObjItems(id){
   ];
   if(_isAdmPainel()) it.push(arq ? {ico:'♻️', label:'Desarquivar', key:'A', run:()=>_okrDesarquivarObjetivo(id)}
                                  : {ico:'📦', label:'Arquivar', key:'A', danger:true, run:()=>_okrArquivarObjetivo(id)});
+  if(_isAdmPainel()) it.push({ico:'🗑', label:'Excluir', key:'X', danger:true, title:'Exclusão definitiva (apaga também os Marcos) — pede confirmação', run:()=>_okrExcluirObjetivo(id)});   // mesma regra do botão do modal: só ADM
   it.push({sep:true}, {ico:'🔗', label:'Copiar link do Objetivo', key:'L', run:()=>_okrCtxCopiarLink(id)});
   return it;
 }
@@ -6647,12 +7197,10 @@ function _okrHistDiffMarco(draft, before){
   else if(nd!==bnd) _okrRecordHistory(draft, `checklist: ${nd}/${nt} concluídos`, 'checklist');
 }
 function _okrHistRelTime(iso){
-  const d=new Date(iso), diff=(Date.now()-d.getTime())/1000;
-  if(diff<60) return 'agora';
-  if(diff<3600) return Math.floor(diff/60)+'min';
-  if(diff<86400) return Math.floor(diff/3600)+'h';
-  if(diff<604800) return Math.floor(diff/86400)+'d';
-  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
+  const d=new Date(iso); if(isNaN(d.getTime())) return '';
+  const p=n=>String(n).padStart(2,'0');
+  // sempre a data completa (pedido direto: nada de "3d/4d/5d"); o title do item mostra também os segundos
+  return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes());
 }
 // Visual "tipo timeline de rede social" (pedido direto) — ícone por tipo,
 // avatar de quem fez (reusa _okrAvatarHtml, mesmo componente da Fase 1),
@@ -7854,6 +8402,7 @@ async function _okrExcluirObjetivo(id){
   marcosDoObjetivo.forEach(mid=>delete okrMarcos[mid]);
   showToast('🗑 Objetivo excluído.');
   closeOkrObjetivo();
+  try{ renderOkrObjetivos(); }catch(e){}   // pelo menu de contexto não há modal pra fechar: redesenha a lista na hora
 }
 
 // ── Modal de Marco (dentro de um Objetivo) ────────────────────────────
@@ -10694,6 +11243,19 @@ const COMUNICADO_RASCUNHOS_SEED = [
       + '<li><b>🔔 "Marcar todas como lidas" voltou a funcionar</b> — e com isso o <b>"Limpar antigas"</b> volta a apagar as já lidas.</li>'
       + '<li><b>📜 Histórico do card</b> agora mostra sempre a data e a hora (nada de "3d", "4d").</li>'
       + '<li><b>📊 Dados do Board maior</b>: usa mais a tela, os gráficos preenchem o espaço e as <b>colunas na conta</b> ficam numa barra única no topo, valendo pras 3 abas.</li>'
+      + '</ul>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_okr_historico_2026_10_06',
+    titulo: '📈 OKR: Histórico semanal renovado',
+    corpo: '<p>O botão <b>📈 Histórico</b> da aba OKR ficou bem mais completo:</p>'
+      + '<ul>'
+      + '<li><b>Duas abas</b>: <b>🎯 Atingimento</b> (quanto de cada meta foi atingido) e <b>🏁 Marcos</b> (quantos Marcos estão concluídos).</li>'
+      + '<li><b>Indicadores com variação</b> desde a semana passada, gráfico de evolução e a lista do <b>que mudou</b> (piorou, melhorou, subiu, caiu).</li>'
+      + '<li><b>Clique no indicador médio</b> pra ver como cada Objetivo contribui — com gráfico de linhas, filtros em chips e a opção de <b>tirar um Objetivo da conta</b> e ver a média recalcular na hora.</li>'
+      + '<li>No menu de ações (botão direito), ADMs agora também têm <b>🗑 Excluir</b>; e os históricos mostram sempre a <b>data e a hora</b>.</li>'
       + '</ul>',
     tipo: 'novidade',
     squad: '*',
