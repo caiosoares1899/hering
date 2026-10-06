@@ -58,6 +58,14 @@ Checks de rotina: `node --check` nos 3 blocos `<script>` — OK;
 permanentes de ambiente (favicon, versão/`VERSION_KEY`, `_faviconDefaultHref`,
 `force_logout_after`).
 
+### v8.30.787-dev — 2026-10-06 · fix(mobile): passar o dedo na lista de cards (rolar) não abre mais um card
+
+Relato direto: "no mobile, quando eu passo o dedo rápido na lista de card, para descer ou subir, ele abre um card! Deveria só correr a lista."
+- **Causa**: desde o duplo-toque por `touchend` (v8.30.739-dev), o `addTouchDnD()` tratava **qualquer gesto que não virou arrasto como "toque simples"** e abria o card após 350 ms — sem checar se o dedo andou. Antes, o abrir vinha do `click`, que o navegador **não** gera depois de uma rolagem; ao contar os toques manualmente essa proteção nativa se perdeu. Qualquer rolagem que **começasse em cima de um card** abria um card; o mesmo acontecia ao **tocar para parar** a lista que ainda rolava por inércia.
+- **Correção**: um gesto só é "toque" se o dedo andou **≤ 10 px** (`TAP_SLOP_PX`) **e** o toque não começou até 160 ms depois do último scroll (`TAP_SCROLL_GRACE_MS`, que cobre a inércia). Rolagem e "toque que só parou a rolagem" não abrem card nem contam para o duplo-toque. Toque simples, tremida de poucos pixels, duplo-toque (menu de contexto) e arrastar-para-mover (long-press) continuam como antes.
+- Testes (Chromium com toque emulado, função real `addTouchDnD`): 9 cenários — flick rápido, arrasto lento, tremida, parar a inércia, duplo-toque, e "nada ficou travado depois de um swipe"; 3 deles falhavam antes da correção.
+- **Para validar**: no celular, abra o board (a tela pede "atualizar agora" ao detectar a v8.30.787-dev) e role a lista de cards com o dedo, rápido e devagar, começando em cima de um card; depois toque normalmente e dê um duplo-toque.
+
 ### v8.30.786-dev — 2026-10-05 · fix(cadastro): /monitorarbugs no login/cadastro do dia — ADM novo não fica mais preso no login (+3)
 
 Rodada de `/monitorarbugs` sobre o código de hoje (v8.30.781–785). 5 achados, o 1º é regressão da v8.30.784.
