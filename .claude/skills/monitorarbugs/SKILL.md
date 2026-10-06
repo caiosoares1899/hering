@@ -2919,7 +2919,7 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
 - **2026-10-06, OKR antes de reunião importante (apresentação)**: 1 achado real, técnica 1 (caminhos paralelos) —
   `okr-apresentacao.slide.html` ordenava Objetivos sempre por título, ignorando `ordem` manual que o painel respeita
   (`_okrObjetivosSorted`); grade, slides e "Próximo objetivo" saíam em ordem diferente da montada pro encontro. Fix: cópia da
-  função do painel + `_okrGerenciaObjetivos`. Achado de layout NÃO corrigido (decisão de produto): no modal de detalhe, com
+  função do painel + `_okrGerenciaObjetivos`. Achado de layout (CORRIGIDO na 2ª passada do mesmo dia, piso de 30% pro rodapé em `_okrFitDetailSections`): no modal de detalhe, com
   >=14-16 marcos em tela 1366x768 (>=24 em 1920x1080) o rodapé (Progressos/Próximos passos/Riscos/Planos) encolhe via
   `_zoomFitToHeight` até ficar ilegível; mitigação: "Colapsar concluídos" / "Aparecer na apresentação" por Marco.
 

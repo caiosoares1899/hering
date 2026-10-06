@@ -1380,7 +1380,19 @@ function _okrFitDetailSections(){
   const dBody = document.querySelector('.d2-body');
   const dFooter = document.querySelector('.d2-footer');
   dBody.style.flex = ''; dBody.style.height = '';
-  dFooter.style.flex = ''; dFooter.style.height = '';
+  dFooter.style.flex = ''; dFooter.style.height = ''; dFooter.style.minHeight = '';
+  // Piso do rodapé (2026-10-06, achado de /monitorarbugs): rodapé e corpo dividem o aperto
+  // proporcionalmente ao tamanho natural de cada um — um Objetivo com MUITOS Marcos (>=14 em
+  // 1366x768) tem corpo natural enorme, então levava o rodapé junto: Progressos/Próximos
+  // passos/Riscos/Planos viravam letra ilegível (zoom 0,2 com 24 Marcos). A tabela de Marcos já
+  // sabe encolher sozinha (_zoomFitToHeight), então o rodapé recebe um piso: o menor entre o
+  // tamanho natural dele e 30% da altura do d2-wrap. Rodapé curto continua curto; rodapé com
+  // texto real nunca fica abaixo de 30% por causa dos Marcos.
+  const wrapEl = dBody.parentElement;
+  dFooter.style.flex = 'none';
+  const footerNatural = dFooter.offsetHeight;
+  dFooter.style.flex = '';
+  dFooter.style.minHeight = Math.min(footerNatural, Math.round(wrapEl.clientHeight * 0.30)) + 'px';
   const dBodyH = dBody.clientHeight, dFooterH = dFooter.clientHeight;
   dBody.style.flex = 'none'; dBody.style.height = dBodyH+'px';
   dFooter.style.flex = 'none'; dFooter.style.height = dFooterH+'px';
