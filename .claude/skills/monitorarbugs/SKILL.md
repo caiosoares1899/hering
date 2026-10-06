@@ -2955,6 +2955,8 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   e escrito por DOIS escritores (client e Cloud Function) só é confiável se o escritor que o desconhece for compensado na leitura — reidratar a partir da fonte de verdade a cada sync.
 
 
+- **2026-10-06 (6ª), OKR — menu de contexto (⋯/clique direito) + modal rápido de atingimento (painel-dev v3.111, pedido "roda um /monitorarbugs nos okrs")**: 1 achado real, técnica 1/3 (o que o botão promete — 1 clique = 1 registro — vs. o que o código deixa acontecer com cliques repetidos). `_okrAtingQuickSalvar()` gera um id novo por chamada e não tinha trava durante a transação: duplo clique em "Registrar" ou Enter repetido gravava 2 registros iguais (+2 linhas de histórico, +2 notificações). Reproduzido com transação de 200 ms antes de corrigir (2 e 4 registros). Fix: `_okrAQBusy` + botão desabilitado. Sem achado: ações do menu que fecham o menu ao disparar (tag/status/apresentação/mover/arquivar — não repetem), gating de permissão igual ao do modal (menu só mais estrito), `_okrTx` com dado ausente, Esc em camadas (menu → modal rápido → gráfico), "Ver evolução" em Objetivo sem registros. painel-dev v3.112. **Lição**: todo botão que gera um id novo a cada chamada e grava de forma assíncrona precisa de trava "em andamento" — o clique repetido é o caso comum, não o raro.
+
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
 não preservar a narrativa completa de cada investigação.

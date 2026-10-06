@@ -3170,7 +3170,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.111 · painel-dev</div>
+<div class="version">v3.112 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6427,8 +6427,9 @@ function _okrAtingQuickPrev(){
   pv.textContent = r.l ? `Vai ficar em ${_okrAtingPctDe(at, r.l)}% (${_okrAtingLancTxt(at, r.l)}).` : '';
   const e = document.getElementById('okr-aq-erro'); if(e) e.textContent = '';
 }
+let _okrAQBusy = false;   // gravação em andamento: duplo clique / Enter repetido não pode lançar o mesmo registro duas vezes (cada chamada gera um id novo)
 async function _okrAtingQuickSalvar(){
-  if(!_okrAQ) return;
+  if(!_okrAQ || _okrAQBusy) return;
   const objId = _okrAQ.objId, o = okrObjetivos[objId]; if(!o) return _okrAtingQuickClose();
   const at = o.atingimento, erro = m=>{ const e = document.getElementById('okr-aq-erro'); if(e) e.textContent = m; };
   const r = _okrAtingQuickLer(at); if(r.erro) return erro(r.erro);
@@ -6436,6 +6437,7 @@ async function _okrAtingQuickSalvar(){
   const l = {id:'at_'+Date.now()+Math.random().toString(36).slice(2,6), ...r.l, criadoEm:new Date().toISOString(), por:_okrHistWho(), uid:user?.uid||''};
   let pct = 0;
   let out;
+  _okrAQBusy = true; const btn = document.getElementById('okr-aq-ok'); if(btn) btn.disabled = true;
   try{
     out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{
       if(!_okrAtingConfigurado(n.atingimento) || n.atingimento.tipo==='perene') return false;
@@ -6444,6 +6446,7 @@ async function _okrAtingQuickSalvar(){
       _okrRecordHistory(n, `registrou atingimento de ${_okrAtingDataBR(l.em)}: ${_okrAtingLancTxt(n.atingimento, l)} → ${pct}%`, 'ating'); _okrCtxStamp(n);
     });
   }catch(e){ return erro('Não consegui registrar: '+(e&&e.message||'erro')); }
+  finally{ _okrAQBusy = false; if(btn) btn.disabled = false; }
   if(!out) return erro('Não consegui registrar (o atingimento mudou ou o Objetivo sumiu). Feche e tente de novo.');
   okrObjetivos[objId] = out; _okrAtingQuickClose();
   await _okrNotifyEditado(objId);
