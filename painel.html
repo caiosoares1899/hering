@@ -3166,7 +3166,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   </div>
 </div>
 
-<div class="version">v3.109 · painel</div>
+<div class="version">v3.110 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5492,7 +5492,7 @@ function renderOkrHistorico(){
     const ativos = Object.values(okrObjetivos).filter(o=>o && !o.arquivado).sort((a,b)=>(a.titulo||'').localeCompare(b.titulo||''));
     const cur = sel.value;
     sel.innerHTML = '<option value="">Escolha um objetivo…</option>'
-      + ativos.map(o=>`<option value="${o.id}"${o.id===cur?' selected':''}>${okrGerenciaIcon(o.areaId)} ${esc(o.titulo||'—')}</option>`).join('');
+      + ativos.map(o=>`<option value="${esc(o.id)}"${o.id===cur?' selected':''}>${okrGerenciaIcon(o.areaId)} ${esc(o.titulo||'—')}</option>`).join('');
   }
   renderOkrHistoricoChart();
   if(_okrHistoricoObjId) _okrHistoricoSelectObj(_okrHistoricoObjId);
@@ -5700,12 +5700,12 @@ function _okrTagPickerHtml(){
   return `
     <div class="okr-field-label">Tags</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
-      ${sel.map(id=>okrTags[id]?`<span style="display:inline-flex;align-items:center;gap:2px;">${_okrTagChipHtml(id, true, `_okrTagRemoveFromObj('${id}')`)}<button type="button" class="okr-tag-edit" onclick="_okrTagFormOpen(${jsq(id)})" title="Editar nome e cor desta tag">🎨</button></span>`:'').join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
+      ${sel.map(id=>okrTags[id]?`<span style="display:inline-flex;align-items:center;gap:2px;">${_okrTagChipHtml(id, true, `_okrTagRemoveFromObj(${jsq(id)})`)}<button type="button" class="okr-tag-edit" onclick="_okrTagFormOpen(${jsq(id)})" title="Editar nome e cor desta tag">🎨</button></span>`:'').join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
     </div>
     <div style="display:flex;gap:6px;">
       <select class="okr-select" onchange="_okrTagAddToObj(this.value);this.value='';">
         <option value="">+ Adicionar tag existente…</option>
-        ${opts.map(id=>`<option value="${id}">${esc(okrTags[id].label)}</option>`).join('')}
+        ${opts.map(id=>`<option value="${esc(id)}">${esc(okrTags[id].label)}</option>`).join('')}
       </select>
       <button type="button" class="btn btn-sm" style="white-space:nowrap;" onclick="_okrTagCriar()" title="Cria uma tag nova (nome e cor) e já aplica nesse objetivo">+ Nova</button>
     </div>`;

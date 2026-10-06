@@ -20605,6 +20605,13 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel.html v3.110 · painel — 2026-10-06 · Promove pra prod — fix de segurança no seletor de tags do OKR
+
+Promoção do painel-dev v3.110 sobre o prod v3.109 (merge de 3 vias; só a linha de versão conflitou). Única mudança: o seletor de tags do ⚙ Configurações
+do Objetivo (e o seletor de Objetivo do Feed) passa a escapar o id da tag/Objetivo em `onclick`/`value=` — antes, uma chave hostil gravada em
+`kanban/okr/tags` executava JS na sessão de quem abrisse a configuração (detalhes na entrada do v3.110 · painel-dev). Nada muda visualmente. Smoke contra o
+`painel.html` real: XSS de tag 4 cenários, tags 13, cor da tag 17, filtro, UI do atingimento 27, gráfico 17 — todos verdes. Sem avisos (correção interna).
+
 ### painel-dev.html v3.110 · painel-dev — 2026-10-06 · fix(segurança, /monitorarbugs): id de tag/objetivo cru em atributo HTML
 
 O seletor de tags do ⚙ Configurações do Objetivo (v3.108, depois da varredura de 05/10) montava o botão ✕ da tag como
