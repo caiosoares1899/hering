@@ -2923,6 +2923,15 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   >=14-16 marcos em tela 1366x768 (>=24 em 1920x1080) o rodapé (Progressos/Próximos passos/Riscos/Planos) encolhe via
   `_zoomFitToHeight` até ficar ilegível; mitigação: "Colapsar concluídos" / "Aparecer na apresentação" por Marco.
 
+- **2026-10-06 (2ª), OKR pré-reunião — tags (painel-dev v3.108/3.109) (pedido "roda outro /monitorarbugs")**: 1 achado real, técnica 1
+  (varrer o MESMO padrão de uma rodada antiga no código escrito depois dela). `_okrTagPickerHtml()` montava `onclick="…('${id}')"` e
+  `<option value="${id}">` crus — XSS armazenado pela chave de `kanban/okr/tags` (a varredura de 05/10 já tinha convertido 332
+  pontos, mas a feature de tags nasceu depois). Reproduzido no Chromium antes (JS rodou, `<img>` injetado). Fix: `jsq(id)`/`esc(id)`
+  (+ `o.id` no seletor do Feed). Varredura automática de todo `on*="…${x}…"` sem `jsq/esc` em painel-dev e okr-apresentacao: só sobraram
+  constantes. Sem achado: apresentação (tags só mostram `esc(label)`), filtro por tag, formulário de tag. Código morto reportado:
+  `_okrTagApagar()` (sem UI pra apagar tag). painel-dev v3.110. **Lição**: depois de uma varredura em lote de uma classe de bug, a
+  PRÓXIMA feature escrita já nasce com o padrão antigo — reexecutar o grep da classe a cada feature nova.
+
 
 Atualize esta seção a cada rodada nova (1-3 linhas: área, achados,
 versão/PR) — o objetivo é não reanalisar do zero uma área já varrida,
