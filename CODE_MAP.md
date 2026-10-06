@@ -3727,9 +3727,14 @@ detalhe aberto — ver nota abaixo).
   `fitSlideContent(containerEl, contentEl)` — L856 — o carrossel de
   slides (dispara no `resize` e depois que a webfont troca de verdade,
   `document.fonts.ready`); `_okrFitDetailSections()` — L1032 — o modal de
-  detalhe de 1 Objetivo (trava a divisão `.d2-body`/`.d2-footer` ANTES de
-  ajustar cada seção interna — ver comentário grande sobre a raiz de 2
-  bugs reais anteriores nisso).
+  detalhe de 1 Objetivo (trava a divisão `.d2-body`/`.d2-footer` e dá piso
+  de 30% ao rodapé). **Desde 2026-10-06 NÃO usa mais `_zoomFitToHeight`
+  nas seções do detalhe**: Marcos (`.d2-table-rows`), colunas do rodapé
+  (`.d2-flist`) e raia esquerda (`.d2-left`) mantêm a fonte e ROLAM
+  (`overflow-y:auto`; margens automáticas nas pontas em vez de
+  `justify-content:center`, que cortaria o topo). O recuo à direita do
+  cabeçalho `.d2-table-header` acompanha a largura da barra de rolagem.
+  O carrossel de slides continua com zoom-fit.
 - **Modal de detalhe** (drill-down de 1 Objetivo) — `window._okrOpenDetail
   = id => {...}` — L777 — reescreve `#detail-modal` do zero a cada
   chamada (sem preservar zoom entre re-abertura, mas cada abertura já
