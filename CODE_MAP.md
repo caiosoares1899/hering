@@ -4413,4 +4413,9 @@ Causa do pico de ~8 GB de download em 2026-10-01 e a correção. Linhas: re-`gre
 - `_commentIndHtml(n)` / `_refreshCommentInd(cardId)` / `window._commentCounts` — `kanban-dev.html` (logo antes de `makeCardEl()`) — desenha/atualiza o 💬 na linha `.card-indicators`; contagem vem de `card_comments_count/{cardId}` (listener junto de `_uaRef`, `_onComCount`). Rede de segurança em `loadComments()`: corrige o índice se divergir da lista real.
 - `contarComentarios` / `recalcularContagem()` — `functions/comentarios/contagem.js` — gatilho que mantém o índice (cobre cliente + Agente Ágil + importação). Deploy: `firebase deploy --only functions:contarComentarios`.
 
+#### 📊 Dados do Board — layout (2026-10-06, kanban-dev v8.30.791)
+Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdRenderColBar()`/`_bdColToggleChips()`, classes `.bd-chip`/`.bd-colbar`) valendo pras 3 abas
+(`_bdToggleCol()`); cartões `.bd-grid2`/`.bd-card`. Gráficos medem o container via `_bdChartW(el,min)` (barras/tendência/CFD/burndown) e redesenham no `resize` (`_bdResizeT`);
+`openBoardData()` abre o overlay ANTES de desenhar (largura 0 se fechado).
+
 *Retrato do commit `6e30656` (2026-09-30).*

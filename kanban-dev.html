@@ -5989,43 +5989,44 @@ input[type="date"]{-moz-appearance:textfield;}
 </div>
 </div>
 
-<!-- DADOS DO BOARD (mini painel pros PO's) -->
+<!-- DADOS DO BOARD (mini painel pros PO's) — v8.30.791: popup maior (usa a tela), barra única "Colunas na conta" valendo pras 3 abas e gráficos que preenchem a largura -->
 <div class="ov" id="boarddata-ov">
-<div class="panel" style="width:min(860px,94vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden;">
+<div class="panel" style="width:min(1500px,97vw);max-height:94vh;display:flex;flex-direction:column;overflow:hidden;">
   <div class="panel-hd">
     <div class="panel-title">📊 Dados do Board</div>
     <button class="x-btn" onclick="closeOv('boarddata-ov')">✕</button>
   </div>
-  <div style="padding:6px 20px 20px;overflow-y:auto;flex:1;">
-    <!-- Visão Geral / Insights — mesmo padrão de abas do Controle de Criativos
-         (crv-tabs/_crvSwitchTab), reaproveitado aqui de propósito pra manter a
-         mesma linguagem visual em vez de inventar um padrão novo. -->
-    <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;">
+  <div style="padding:6px 22px 22px;overflow-y:auto;flex:1;">
+    <!-- Abas — mesmo padrão do Controle de Criativos (crv-tabs/_crvSwitchTab). -->
+    <div class="crv-tabs" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
       <button class="btn btn-sm crv-tab-btn active" id="boarddata-tab-geral" onclick="_boardDataSwitchTab('geral')">📊 Visão Geral</button>
       <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-insights" onclick="_boardDataSwitchTab('insights')">💡 Insights</button>
       <button class="btn btn-sm crv-tab-btn" id="boarddata-tab-fluxo" onclick="_boardDataSwitchTab('fluxo')">📈 CFD &amp; Burndown</button>
     </div>
+    <!-- Barra única: o toggle de coluna vale pras 3 abas (_bdHiddenCols), então fica fixa no topo em vez de repetida em cada aba. -->
+    <div class="bd-colbar">
+      <span class="bd-colbar-l">📍 Colunas na conta</span>
+      <div id="boarddata-colbar-chips" class="bd-chips" title="Clique numa coluna pra tirá-la (ou trazê-la de volta) da conta de todos os números, nas 3 abas"></div>
+      <button class="btn btn-sm" onclick="closeOv('boarddata-ov');openTempoReport();" title="Lead/cycle time por tag" style="margin-left:auto;color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo (lead/cycle time por tag) ▸</button>
+    </div>
     <div id="boarddata-view-geral">
     <div style="font-size:11px;color:var(--txt3);margin-bottom:12px;">Indicadores do board em tempo real. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> de cada um pra entender o que significa e como interpretar.</div>
-    <!-- Antes era um botão próprio na toolbar (⏱ Relatórios de Tempo) — movido pra
-         dentro daqui pra desafogar a toolbar (pedido direto). Fecha este modal e abre
-         o relatório por cima, mesmo padrão de "entrar" em outra tela a partir desta. -->
-    <button class="btn btn-sm" onclick="closeOv('boarddata-ov');openTempoReport();" title="Lead/cycle time por tag" style="margin-bottom:16px;color:var(--warn);border-color:rgba(255,209,102,.3);">⏱ Relatórios de Tempo (lead/cycle time por tag) ▸</button>
-    <div class="met-g" id="boarddata-met-grid" style="grid-template-columns:repeat(auto-fit,minmax(148px,1fr));"></div>
-    <div style="margin-top:22px;">
-      <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📊 Cards ativos por coluna</div>
-      <div id="boarddata-bar-chart"></div>
-      <div id="boarddata-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;" title="Clique numa coluna pra tirá-la (ou trazê-la de volta) da conta de todos os números acima"></div>
+    <div class="met-g" id="boarddata-met-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));"></div>
+    <div class="bd-grid2">
+      <div class="bd-card">
+        <div class="bd-card-t">📊 Cards ativos por coluna</div>
+        <div id="boarddata-bar-chart"></div>
+      </div>
+      <div class="bd-card">
+        <div class="bd-card-t">📈 Tendência — últimos 14 dias</div>
+        <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
+      </div>
     </div>
     <!-- Submarca/Canal de venda por coluna — pedido direto do usuário
          (2026-09-11): "quero canal/submarca quebrado por coluna também".
          Só entra se o squad usa algum dos 2 campos (mesmo guard condicional
          do donut irmão em Insights) — ver _boardDataSmCvPorColuna(). -->
     <div id="boarddata-smcv-col"></div>
-    <div style="margin-top:22px;">
-      <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">📈 Tendência — últimos 14 dias</div>
-      <div id="boarddata-trend"><div style="font-size:10.5px;color:var(--txt3);">Carregando…</div></div>
-    </div>
     </div>
     <div id="boarddata-view-insights" style="display:none;">
       <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Leitura pra PO/ADM/Organizador entenderem rápido como a squad está — tudo calculado a partir dos dados que o board já tem carregado (nenhuma leitura extra do Firebase).</div>
@@ -6034,17 +6035,15 @@ input[type="date"]{-moz-appearance:textfield;}
     </div>
     <div id="boarddata-view-fluxo" style="display:none;">
       <div style="font-size:11px;color:var(--txt3);margin-bottom:14px;">Reconstruído a partir do histórico de movimentação já gravado em cada card (<code>flow.log</code>) — nenhuma coleta nova, mas cards com muitas movimentações guardam só as últimas 40 (histórico bem antigo pode ficar incompleto).</div>
-      <div style="margin-bottom:14px;">
-        <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;">📍 Colunas na conta</div>
-        <div id="boarddata-fluxo-col-chips" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
-      </div>
-      <div style="margin-bottom:22px;">
-        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;display:flex;align-items:center;gap:4px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon"><b>O que é:</b> cada faixa colorida é uma coluna do board, empilhada — de baixo (início do fluxo) pra cima (fim). No eixo horizontal, o dia; no vertical, quantos cards estavam em cada coluna naquele dia.<br><br><b>Como ler:</b> a altura de uma faixa num dia = quantos cards estão parados ali. Se uma faixa vai engordando com o tempo, cards estão entrando mais rápido do que saindo — é o gargalo. Faixa larga (na direção vertical) = etapa demorada.<br><br><b>Resultado satisfatório:</b> faixas com largura estável ou encolhendo (não crescendo sem parar), nenhuma faixa muito mais grossa que as outras, e a faixa de "Concluído" crescendo de forma constante — mostra entrega real, não só início de trabalho novo.</span></span></div>
+      <div class="bd-grid2 bd-grid-fluxo">
+        <div class="bd-card">
+        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:10px;display:flex;align-items:center;gap:4px;">📊 Cumulative Flow Diagram — últimos <span id="cfd-dias-lbl">21</span> dias <span class="help-tip" role="note"><button class="help-tip-btn" tabindex="-1" aria-label="Ajuda">?</button><span class="help-tip-balloon"><b>O que é:</b> cada faixa colorida é uma coluna do board, empilhada — de baixo (início do fluxo) pra cima (fim). No eixo horizontal, o dia; no vertical, quantos cards estavam em cada coluna naquele dia.<br><br><b>Como ler:</b> a altura de uma faixa num dia = quantos cards estão parados ali. Se uma faixa vai engordando com o tempo, cards estão entrando mais rápido do que saindo — é o gargalo. Faixa larga (na direção vertical) = etapa demorada.<br><br><b>Resultado satisfatório:</b> faixas com largura estável ou encolhendo (não crescendo sem parar), nenhuma faixa muito mais grossa que as outras, e a faixa de "Concluído" crescendo de forma constante — mostra entrega real, não só início de trabalho novo.</span></span></div>
         <div id="boarddata-cfd"></div>
-      </div>
-      <div>
-        <div style="font-size:12px;font-weight:700;color:var(--txt);margin-bottom:8px;">🔥 Burndown — sprint ativa</div>
-        <div id="boarddata-burndown"></div>
+        </div>
+        <div class="bd-card">
+          <div class="bd-card-t">🔥 Burndown — sprint ativa</div>
+          <div id="boarddata-burndown"></div>
+        </div>
       </div>
     </div>
   </div>
@@ -6164,6 +6163,20 @@ input[type="date"]{-moz-appearance:textfield;}
 .crv-row td[ondblclick]:hover{background:rgba(255,179,217,.14);outline:1px dashed rgba(255,179,217,.35);outline-offset:-2px;}
 .crv-fh{font-size:10.5px !important;padding:3px 5px !important;width:100%;}
 .crv-edit-input,.crv-edit-select{font-size:11px;padding:3px 6px;}
+/* 📊 Dados do Board (v8.30.791): popup grande, barra única de colunas, cartões lado a lado */
+.bd-colbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:9px 12px;border:1px solid var(--glass-b);border-radius:12px;background:rgba(255,255,255,.03);}
+.bd-colbar-l{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);white-space:nowrap;}
+.bd-chips{display:flex;flex-wrap:wrap;gap:6px;flex:1 1 280px;}
+.bd-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;cursor:pointer;font-size:11.5px;border:1px solid rgba(56,182,255,.3);background:rgba(56,182,255,.09);color:var(--txt2);transition:all .15s;user-select:none;}
+.bd-chip:hover{border-color:rgba(56,182,255,.6);}
+.bd-chip.off{border-color:rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.28);text-decoration:line-through;}
+.bd-chip i{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block;}
+.bd-chip.off i{opacity:.25;}
+.bd-grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:20px;align-items:start;}
+.bd-grid-fluxo{grid-template-columns:1.6fr 1fr;margin-top:6px;}
+.bd-card{background:rgba(255,255,255,.025);border:1px solid var(--glass-b);border-radius:14px;padding:14px 16px;min-width:0;}
+.bd-card-t{font-size:12px;font-weight:700;color:var(--txt);margin-bottom:10px;}
+@media (max-width:980px){ .bd-grid2,.bd-grid-fluxo{grid-template-columns:1fr;} }
 .crv-tab-btn{opacity:.6;}
 .crv-tab-btn.active{opacity:1;background:rgba(255,179,217,.15);border-color:rgba(255,179,217,.4);color:#ffb3d9;}
 .crv-dash-donut{border-radius:50%;flex-shrink:0;position:relative;}
@@ -6468,7 +6481,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.790-dev</div>
+<div class="version">v8.30.791-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -21739,6 +21752,7 @@ function _bdToggleCol(colId){
   if(_bdHiddenCols.has(colId)) _bdHiddenCols.delete(colId); else _bdHiddenCols.add(colId);
   localStorage.setItem('bd_hcols_'+ACTIVE_SQUAD, JSON.stringify([..._bdHiddenCols]));
   _saveBoardPref('dashboard_hidden_cols', [..._bdHiddenCols]);
+  _bdRenderColBar();
   renderBoardDataGrid();
   _boardDataBarChart();
   // Pedido direto: o mesmo toggle passa a valer também nas abas Insights e
@@ -21750,21 +21764,34 @@ function _bdToggleCol(colId){
 function _bdColToggleChips(){
   return columns.map(col=>{
     const hid = _bdHiddenCols.has(col.id);
-    return `<span onclick="_bdToggleCol(${jsq(col.id)})" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta" `
-      +`style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;cursor:pointer;font-size:10px;transition:all .15s;`
-      +`border:1px solid ${hid?'rgba(255,255,255,.06)':'rgba(56,182,255,.28)'};background:${hid?'transparent':'rgba(56,182,255,.08)'};color:${hid?'rgba(255,255,255,.2)':'var(--txt2)'};">`
-      +`<span style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:${col.color||'#38b6ff'};opacity:${hid?0.2:1};"></span>${esc(col.name)}</span>`;
+    return `<span class="bd-chip${hid?' off':''}" role="button" tabindex="0" aria-pressed="${hid?'false':'true'}" onclick="_bdToggleCol(${jsq(col.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_bdToggleCol(${jsq(col.id)});}" title="${hid?'Mostrar':'Ocultar'} ${esc(col.name)} na conta">`
+      +`<i style="background:${esc(col.color||'#38b6ff')};"></i>${esc(col.name)}</span>`;
   }).join('');
 }
+// Barra única "📍 Colunas na conta" (topo do popup, vale pras 3 abas — antes era repetida em cada uma).
+function _bdRenderColBar(){ const el=document.getElementById('boarddata-colbar-chips'); if(el) el.innerHTML=_bdColToggleChips(); }
+// Largura útil (px) do container de um gráfico: o viewBox acompanha, então o gráfico preenche a área em vez de ficar encolhido num canto.
+function _bdChartW(el, min){ const w = (el && el.clientWidth) || 0; return Math.max(min||320, w); }
 function openBoardData(){
   _insightsPeriodDays = 0; _insightsTagFilter.clear(); // reseta filtros da aba Insights a cada abertura
   _bdLoadHiddenCols();
+  document.getElementById('boarddata-ov').classList.add('open');   // abre ANTES de desenhar: os gráficos medem a largura do container
+  _bdRenderColBar();
   _boardDataSwitchTab('geral'); // sempre abre na Visão Geral, mesmo se ficou em Insights da última vez
   renderBoardDataGrid();
   _boardDataBarChart();
   _boardDataTrendChart();
-  document.getElementById('boarddata-ov').classList.add('open');
 }
+// Janela redimensionada com o popup aberto: redesenha os gráficos da aba visível na nova largura.
+let _bdResizeT = null;
+window.addEventListener('resize', ()=>{
+  if(!document.getElementById('boarddata-ov')?.classList.contains('open')) return;
+  clearTimeout(_bdResizeT);
+  _bdResizeT = setTimeout(()=>{
+    if(document.getElementById('boarddata-view-geral')?.style.display!=='none'){ _boardDataBarChart(); _boardDataTrendChart(); }
+    else if(document.getElementById('boarddata-view-fluxo')?.style.display!=='none') renderBoardDataFluxo();
+  }, 160);
+});
 // Abas Visão Geral / Insights — mesmo padrão de _crvSwitchTab (Controle de
 // Criativos): troca display + classe .active dos botões, e só renderiza
 // Insights na hora de entrar nela (lazy, evita recalcular à toa quando a
@@ -21818,14 +21845,8 @@ function _renderInsightsFilterBar(){
         return '<span onclick="_insightsToggleTag(\''+t.id+'\')" style="'+chipStyle(on,p.c)+'">'+esc(t.label)+'</span>';
       }).join('')
     + '</div></div>') : '';
-  // Mesmo toggle de coluna de 📊 Dados do Board → Visão Geral (_bdHiddenCols)
-  // — pedido direto pra dar pra ligar/desligar direto daqui também, sem
-  // precisar trocar de aba (o efeito no cálculo já valia desde antes, só
-  // faltava o controle visível nesta aba).
-  const colHtml = '<div>'
-    + '<div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);margin-bottom:6px;">📍 Colunas na conta</div>'
-    + '<div style="display:flex;flex-wrap:wrap;gap:5px;max-width:280px;">' + _bdColToggleChips() + '</div></div>';
-  el.innerHTML = periodHtml + tagHtml + colHtml;
+  // (o toggle de colunas fica na barra única do topo do popup — vale pras 3 abas)
+  el.innerHTML = periodHtml + tagHtml;
 }
 // ── Insights pra PO/ADM/Organizador (Dados do Board → aba 💡 Insights) ──
 // Pedido direto: "faça um match com as funcionalidades que temos hoje e
@@ -22075,28 +22096,26 @@ function renderBoardDataInsights(){
 // o rótulo INTEIRO + valor, sem depender do texto cortado do SVG.
 function _boardDataBarChart(){
   const el = document.getElementById('boarddata-bar-chart'); if(!el) return;
-  const chipsEl = document.getElementById('boarddata-col-chips');
-  if(chipsEl) chipsEl.innerHTML = _bdColToggleChips();
   const activeCards = cards.filter(c=>!c.archived&&!c.agenteHotline&&!_bdHiddenCols.has(c.col));
   const data = columns.filter(col=>!_bdHiddenCols.has(col.id)).map(col=>({
     label: col.name||col.id, color: col.color||'#38b6ff',
     count: activeCards.filter(c=>c.col===col.id).length
   }));
   const max = Math.max(1, ...data.map(d=>d.count));
-  const W = Math.max(320, data.length*72), H = 150, barW = Math.min(56, (W-20)/Math.max(1,data.length) - 12);
-  let x = 14, bars = '', bares = [];
+  const W = _bdChartW(el, 320), H = 190, slot = Math.min(150, (W-28)/Math.max(1,data.length)), barW = Math.min(76, slot*0.62);
+  let x = 14 + (slot-barW)/2, bars = '', bares = [];
   data.forEach(d=>{
-    const h = Math.round((d.count/max) * (H-46));
-    const y = H-30-h;
-    bars += `<rect x="${x}" y="${y}" width="${barW}" height="${Math.max(h,d.count>0?2:0)}" rx="4" fill="${d.color}" opacity=".85"/>
-      <text x="${x+barW/2}" y="${y-6}" text-anchor="middle" font-size="11" fill="var(--txt)" font-weight="700">${d.count}</text>
-      <text x="${x+barW/2}" y="${H-14}" text-anchor="middle" font-size="9" fill="var(--txt3)">${esc((d.label||'').substring(0,9))}</text>`;
-    bares.push({x: x-8, w: barW+16, label: d.label, count: d.count, color: d.color});
-    x += barW+16;
+    const h = Math.round((d.count/max) * (H-50));
+    const y = H-32-h;
+    bars += `<rect x="${x.toFixed(1)}" y="${y}" width="${barW.toFixed(1)}" height="${Math.max(h,d.count>0?2:0)}" rx="5" fill="${d.color}" opacity=".85"/>
+      <text x="${(x+barW/2).toFixed(1)}" y="${y-7}" text-anchor="middle" font-size="12" fill="var(--txt)" font-weight="700">${d.count}</text>
+      <text x="${(x+barW/2).toFixed(1)}" y="${H-14}" text-anchor="middle" font-size="10" fill="var(--txt3)">${esc((d.label||'').substring(0,slot>=100?16:10))}</text>`;
+    bares.push({x: x-(slot-barW)/2, w: slot, label: d.label, count: d.count, color: d.color});
+    x += slot;
   });
   window._bdBarChartState = {bares, H};
   el.innerHTML = `<div id="bd-bar-wrap" style="position:relative;">
-    <svg id="bd-bar-svg" viewBox="0 0 ${Math.max(W,x)} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:pointer;" onmousemove="_bdBarHover(event)" onmouseleave="_bdBarHoverOut()">${bars}<rect id="bd-bar-highlight" x="0" y="0" width="0" height="${H}" fill="#fff" opacity="0" style="pointer-events:none;"/></svg>
+    <svg id="bd-bar-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:${H}px;display:block;cursor:pointer;" onmousemove="_bdBarHover(event)" onmouseleave="_bdBarHoverOut()">${bars}<rect id="bd-bar-highlight" x="0" y="0" width="0" height="${H}" fill="#fff" opacity="0" style="pointer-events:none;"/></svg>
     <div id="bd-bar-tooltip" style="position:absolute;display:none;top:4px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;font-size:11px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
   </div>`;
   _boardDataSmCvPorColuna();
@@ -22202,16 +22221,16 @@ async function _boardDataTrendChart(){
     const wipVals = dias.map(d=>val[d]?.wip||0);
     const doneVals = dias.map(d=>val[d]?.done||0);
     const maxV = Math.max(1,...wipVals,...doneVals);
-    const W=Math.max(320,dias.length*40), H=150, padL=8, padR=8, padT=14, padB=22;
+    const W=_bdChartW(el,320), H=190, padL=8, padR=8, padT=14, padB=24;
     const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
     const toY = v => padT + (H-padT-padB) - (v/maxV)*(H-padT-padB);
     const ptsWip = wipVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
     const ptsDone = doneVals.map((v,i)=>`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).join(' ');
     const everyN = Math.max(1, Math.ceil(dias.length/6));
-    const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+    const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-7}" font-size="9.5" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
     window._bdTrendChartState = {dias, wipVals, doneVals, stepX, padL, padT, padB, H};
     el.innerHTML = `<div id="bd-trend-wrap" style="position:relative;">
-      <svg id="bd-trend-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:150px;display:block;cursor:crosshair;" onmousemove="_bdTrendHover(event)" onmouseleave="_bdTrendHoverOut()">
+      <svg id="bd-trend-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:${H}px;display:block;cursor:crosshair;" onmousemove="_bdTrendHover(event)" onmouseleave="_bdTrendHoverOut()">
         <polyline points="${ptsDone}" fill="none" stroke="var(--teal)" stroke-width="2"/>
         <polyline points="${ptsWip}" fill="none" stroke="var(--warn)" stroke-width="2"/>
         ${labels}
@@ -22296,8 +22315,6 @@ function _cardColunaEmDia(card, diaStr){
   return colunaAtual;
 }
 function renderBoardDataFluxo(){
-  const chipsEl=document.getElementById('boarddata-fluxo-col-chips');
-  if(chipsEl) chipsEl.innerHTML=_bdColToggleChips();
   _renderCFD();
   _renderBurndown();
 }
@@ -22349,7 +22366,7 @@ function _renderCFD(){
     totalAtual: colIds.reduce((s,id)=>s+(serie[id][serie[id].length-1]||0),0),
   };
   const maxTotal = Math.max(1, ...dias.map((_,i)=>colIds.reduce((s,id)=>s+serie[id][i],0)));
-  const W=Math.max(360,dias.length*26), H=180, padL=6, padR=6, padT=10, padB=22;
+  const W=_bdChartW(el,360), H=Math.round(Math.max(200,Math.min(300,W*0.24))), padL=6, padR=6, padT=10, padB=24;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
   const toY = v => padT + (H-padT-padB) - (v/maxTotal)*(H-padT-padB);
   // Áreas empilhadas na ordem das colunas do board (a "de trás" acumula por
@@ -22366,7 +22383,7 @@ function _renderCFD(){
     return `<path d="M ${pathTop} L ${pathBottom} Z" fill="${colInfo[id]?.color||'#38b6ff'}" opacity=".72" stroke="rgba(0,0,0,.15)" stroke-width=".5"/>`;
   }).join('');
   const everyN = Math.max(1, Math.ceil(dias.length/7));
-  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-7}" font-size="9.5" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
   const legenda = visibleCols.map(c=>`<span style="display:inline-flex;align-items:center;gap:4px;"><span style="display:inline-block;width:8px;height:8px;background:${c.color||'#38b6ff'};border-radius:2px;"></span>${esc(c.name)}</span>`).join('');
   // Crosshair + tooltip ao passar o mouse (pedido direto: "ver os números e
   // a data" ao passear pelo gráfico) — estado guardado em window._cfdChartState
@@ -22376,7 +22393,7 @@ function _renderCFD(){
   // preserveAspectRatio esticando/centralizando o viewBox.
   window._cfdChartState = {dias, stepX, padL, padT, padB, H, colIds, colInfo, serie, cumTop, toY};
   el.innerHTML = `<div id="cfd-chart-wrap" style="position:relative;">
-    <svg id="cfd-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:180px;display:block;cursor:crosshair;" onmousemove="_cfdHover(event)" onmouseleave="_cfdHoverOut()">${areas}${labels}<line id="cfd-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/><g id="cfd-dots" style="opacity:0;pointer-events:none;"></g></svg>
+    <svg id="cfd-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:${H}px;display:block;cursor:crosshair;" onmousemove="_cfdHover(event)" onmouseleave="_cfdHoverOut()">${areas}${labels}<line id="cfd-crosshair" x1="0" x2="0" y1="${padT}" y2="${H-padB}" stroke="var(--txt2)" stroke-width="1" stroke-dasharray="3,3" style="opacity:0;pointer-events:none;"/><g id="cfd-dots" style="opacity:0;pointer-events:none;"></g></svg>
     <div id="cfd-tooltip" style="position:absolute;display:none;top:4px;min-width:120px;background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:8px;padding:7px 10px;font-size:10.5px;backdrop-filter:blur(12px);box-shadow:0 6px 20px rgba(0,0,0,.5);pointer-events:none;z-index:5;white-space:nowrap;"></div>
   </div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10px;color:var(--txt2);margin-top:8px;">${legenda}</div>`;
@@ -22493,14 +22510,14 @@ function _renderBurndown(){
       status,
     };
   }
-  const W=Math.max(360,dias.length*30), H=170, padL=8, padR=8, padT=14, padB=22;
+  const W=_bdChartW(el,320), H=210, padL=8, padR=8, padT=14, padB=24;
   const stepX = dias.length>1 ? (W-padL-padR)/(dias.length-1) : 0;
   const toY = v => padT + (H-padT-padB) - (v/total)*(H-padT-padB);
   const ptsReal = restantes.map((v,i)=>v==null?null:`${(padL+i*stepX).toFixed(1)},${toY(v).toFixed(1)}`).filter(Boolean).join(' ');
   const ptsIdeal = dias.map((_,i)=>`${(padL+i*stepX).toFixed(1)},${toY(total - (total/(dias.length-1||1))*i).toFixed(1)}`).join(' ');
   const everyN = Math.max(1, Math.ceil(dias.length/7));
-  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-6}" font-size="8" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
-  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:170px;display:block;">
+  const labels = dias.map((d,i)=> i%everyN===0 ? `<text x="${(padL+i*stepX).toFixed(1)}" y="${H-7}" font-size="9.5" fill="var(--txt3)" text-anchor="middle">${d.slice(5)}</text>` : '').join('');
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMinYMid meet" style="width:100%;height:${H}px;display:block;">
       <polyline points="${ptsIdeal}" fill="none" stroke="var(--txt3)" stroke-width="1.5" stroke-dasharray="4,3"/>
       <polyline points="${ptsReal}" fill="none" stroke="var(--warn)" stroke-width="2.5"/>
     </svg>
@@ -27751,7 +27768,7 @@ const HELP_CONTENT = {
     { icon:'⚡', title:'Performance — ver mais cards', text:'Por padrão cada coluna exibe até 80 cards para manter o board rápido. Se uma coluna tiver mais, aparece um botão “Ver mais” no rodapé dela. Clique para carregar todos os cards da coluna. O limite volta a 80 ao recarregar a página.' },
     { icon:'⏱', title:'Relatório Tempo por Tag', text:'Abra 📊 Dados do Board na toolbar e clique em "⏱ Relatórios de Tempo" no topo do painel (saiu da toolbar pra desafogar espaço) para ver quanto tempo o time gastou em cada tipo de trabalho. O relatório agrupa cards por tag e mostra lead time (criação até Concluído) e cycle time (início até Concluído) em dias. Filtre por período, escopo (todos ou só concluídos) e tag específica. Exporte para CSV com separador ; para abrir no Excel.' },
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
-    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
+    { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\n📍 Colunas na conta: o popup 📊 Dados do Board é grande (usa a tela) e tem, logo abaixo das abas, uma barra única com um botãozinho por coluna — clique numa pra tirá-la da conta (ou trazê-la de volta) e todos os números das <b>3 abas</b> (Visão Geral, Insights e CFD) recalculam juntos. Os gráficos preenchem a largura disponível e, no celular, os blocos empilham.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
     { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
