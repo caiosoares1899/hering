@@ -20640,6 +20640,16 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v4.3 · painel-dev — 2026-10-06 · feat(OKR): 📈 Histórico semanal redesenhado (mais informação, UI/UX e design)
+
+Pedido direto ("falta informação, UI/UX, melhorar design"). Antes: um gráfico de barras e um dropdown que abria uma tabela. Agora, tudo só com os dados que o snapshot semanal já guarda (nada novo na Cloud Function):
+- **Cabeçalho**: data do último snapshot ("há N dias"), quando sai o próximo (sexta 17h), quantos snapshots existem e período do gráfico (**4 / 8 / 12 sem / Tudo**).
+- **6 indicadores** (Objetivos ativos, Concluídos, No prazo, Risco, Atrasados, Progresso médio) com a **variação vs. a semana anterior** (verde = melhora, vermelho = piora; para Risco/Atrasados, subir é ruim).
+- **Gráfico**: barras por status + **linha do progresso médio (%)**, eixos dos dois lados, dica ao passar o mouse/tocar com data, contagem por status e média.
+- **🔄 O que mudou** entre os dois últimos snapshots: piorou/melhorou de status, progresso subiu/caiu, Objetivos novos e os que saíram; clicar leva ao Objetivo na tabela.
+- **Por Objetivo**: tabela com status, barra de progresso, Δ pp, mini-tendência, marcos e ícone do atingimento; **busca, filtros de gerência e status e ordenação** (A–Z, maior alta, maior queda, pior status, maior progresso). Clique (ou Enter) expande a **curva de progresso** + quadro semana a semana (status, progresso, Δ, marcos, atingimento) e o botão 📂 Abrir Objetivo.
+- Estados vazios explicados (sem snapshot / só 1 snapshot), layout para celular, 3 temas, títulos escapados. 17 cenários no Chromium (filtros mantêm o foco, dica, expandir, teclado, XSS, temas e mobile). Ajuda do OKR atualizada. Só dev.
+
 ### painel-dev.html v4.2 · painel-dev — 2026-10-06 · feat(OKR): 🗑 Excluir no menu de contexto do Objetivo (só ADM)
 
 Pedido direto ("no menu de contexto okr faltou a opção excluir"): na v3.111 o Excluir tinha ficado de fora de propósito; agora o menu do **Objetivo** tem **🗑 Excluir** (tecla **X**), logo depois de Arquivar. Mesma regra do botão do

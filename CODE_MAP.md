@@ -3357,12 +3357,14 @@ Functions). `okrSnapshots` (estado local, `loadOkrSnapshots()`),
 `_okrShowArquivados`, alterna a aba OKR inteira entre lista de
 Objetivos e histórico (esconde `#okr-toolbar`/`#okr-objetivos-wrap`/
 `#okr-section-title`/`#okr-list`, mostra `#okr-historico-wrap`).
-`renderOkrHistorico()` popula o `<select>` de Objetivo (só ativos) e
-chama `renderOkrHistoricoChart()` — gráfico de barras empilhadas por
-status (SVG, mesmo padrão de `renderThroughputChart()`/`.tp-bar` já
-usado na aba Fluxo), últimas ~12 semanas. `_okrHistoricoSelectObj(id)`
-— tabela de evolução de 1 Objetivo (status/%/marcos por semana, mais
-recente primeiro).
+**Redesenhado na v4.3 (2026-10-06)**: `renderOkrHistorico()` monta tudo dentro de `#okr-h-root` —
+cabeçalho (último/próximo snapshot, `_okrHistSetRange()`: 4/8/12/tudo), 6 KPIs com variação vs. snapshot
+anterior (`_okrHistKpisHtml()`, `_okrHistDeltaHtml()`), gráfico `renderOkrHistoricoChart()` (barras por
+status + linha do progresso médio, dica `_okrHistTip()`/`_okrHistTipOff()`), "🔄 O que mudou"
+(`_okrHistMudancas()`/`_okrHistMudancasRender()`, ranking `OKR_STATUS_RANK`), tabela "Por Objetivo"
+(`_okrHistTabelaRender()`, filtros em `_okrHistFiltro`/`_okrHistFiltra()`, mini-tendência `_okrHistSpark()`) e
+detalhe expansível `_okrHistoricoSelectObj(id)`/`_okrHistDetalheHtml()` (curva + quadro semana a semana, com os
+campos `atingimento*` do snapshot). Só leitura — nenhum campo novo no snapshot.
 
 #### 🗑 Excluir Objetivo (2026-09-05, v3.23 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
 `_okrExcluirObjetivo(id)` — botão "🗑 Excluir" no rodapé do modal
