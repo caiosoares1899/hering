@@ -2951,7 +2951,7 @@ Formato: data — área — achados reais (gist) — versão/PR. Áreas
   quando vinha vazio, então um card movido pelo agente chegava com o valor velho e `recordMove()` ("from===toCol && enteredAt[toCol]") saía sem atualizar `enteredAt`/log ao arrastar de volta pra
   coluna antiga — não subia em "Movimentação", métricas de fluxo paradas; pra uma 3ª coluna, `from` errado no log. Fix: `_syncLastFlowCol()` repõe a partir de `card.col` do banco depois de toda sync.
   (2) `createdAt` (só o dia) — card sem data vinha primeiro, e empates do mesmo dia na ordem do array; fix: sem data no fim + desempate pela hora do id (`_cardIdTs()`). (3) Prazo com mesma data sem
-  desempate; fix: prioridade. dev v8.30.788. Em aberto: "Data de criação" só do mais antigo pro mais novo (inverso de "Movimentação"). **Lição**: campo de controle gravado junto com o dado
+  desempate; fix: prioridade. dev v8.30.788. "Data de criação" só ia do mais antigo pro mais novo (inverso de "Movimentação") — opção "mais recentes primeiro" adicionada a pedido (dev v8.30.789). **Lição**: campo de controle gravado junto com o dado
   e escrito por DOIS escritores (client e Cloud Function) só é confiável se o escritor que o desconhece for compensado na leitura — reidratar a partir da fonte de verdade a cada sync.
 
 
