@@ -78,7 +78,13 @@
       },
       "painel": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        "okr_presence": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()",
+            ".validate": "newData.hasChildren(['ts','nome']) && newData.child('ts').isNumber() && newData.child('nome').isString() && newData.child('nome').val().length <= 120 && (!newData.child('foto').exists() || (newData.child('foto').isString() && newData.child('foto').val().length <= 600)) && (!newData.child('externo').exists() || newData.child('externo').isBoolean())"
+          }
+        }
       },
       "okr": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
