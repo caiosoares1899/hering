@@ -1427,6 +1427,12 @@ document.fonts?.ready?.then(() => {
 });
 
 window._okrGoTo = i => { if(i>=0 && i<slides.length){ currentIdx=i; render(); } };
+// Objetivo vizinho DENTRO da mesma gerência (mesma lista e ordem dos botões "← Anterior"/"Próximo →" do detalhe). Nas pontas não faz nada (o botão fica desabilitado).
+window._okrDetailVizinho = dir => {
+  const o = okrObjetivos[_okrDetailCurrentId]; if(!o) return;
+  const lista = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o)), i = lista.findIndex(x=>x.id===_okrDetailCurrentId), alvo = lista[i+dir];
+  if(i>=0 && alvo) window._okrOpenDetail(alvo.id);
+};
 window._okrNext = () => window._okrGoTo(currentIdx+1);
 window._okrPrev = () => window._okrGoTo(currentIdx-1);
 window._okrFullscreen = () => {
@@ -1434,6 +1440,7 @@ window._okrFullscreen = () => {
   else document.exitFullscreen?.();
 };
 
+const _okrEhCampo = t => !!t && (t.tagName==='INPUT' || t.tagName==='TEXTAREA' || t.isContentEditable);
 document.addEventListener('keydown', e=>{
   // Checado ANTES de #detail-ov de propósito — #mc-ov abre POR CIMA dele
   // (z-index 470 > 400, ver CSS), tipicamente com o Objetivo detalhado
@@ -1450,6 +1457,8 @@ document.addEventListener('keydown', e=>{
   }
   if(document.getElementById('detail-ov').classList.contains('open')){
     if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
+    // ← / → passam pro Objetivo anterior/seguinte da gerência (antes não faziam nada com o detalhe aberto)
+    else if((e.key==='ArrowRight' || e.key==='ArrowLeft') && !_okrEhCampo(e.target)){ e.preventDefault(); window._okrDetailVizinho(e.key==='ArrowRight' ? 1 : -1); }
     return;
   }
   // Mesmo guard do detail-ov acima — sem isso, abrir o painel de Anotações
@@ -1468,7 +1477,10 @@ document.addEventListener('keydown', e=>{
     return;
   }
   if(e.target && e.target.tagName==='SELECT') return;   // setas/espaço no filtro de tag mudam a opção, não o slide
-  if(e.key==='ArrowRight' || e.key===' ') window._okrNext();
+  if(_okrEhCampo(e.target)) return;   // digitando (campo de texto): espaço/setas são do campo
+  // Espaço: preventDefault também impede o clique nativo do botão que está com foco (depois de clicar em ▶/◀ o foco fica nele — o Espaço avançava 2 slides: o clique + este atalho)
+  if(e.key===' '){ e.preventDefault(); window._okrNext(); }
+  else if(e.key==='ArrowRight') window._okrNext();
   else if(e.key==='ArrowLeft') window._okrPrev();
   else if(e.key.toLowerCase()==='f') window._okrFullscreen();
 });
