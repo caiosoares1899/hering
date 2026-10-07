@@ -20674,6 +20674,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v1.1 · okr-dev — 2026-10-07 · colar lista em tópicos nas caixas "+ Add" cria um item por linha
+
+Mesma correção do checklist do kanban (v8.30.793-dev), agora no OKR: colar 2+ linhas nas caixas "+ Add" de **Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação, Trimestres** e do **checklist do Marco** cria um item por linha (marcadores `-`/`•`/`1.`/`a)`/`☐` removidos; `[x]`/`[ ]` viram marcado/desmarcado no checklist do Marco). 1 linha só cola normal. Gerado a partir do `painel-dev.html` v4.9 (mesmo código). Chromium: 8 cenários novos + suítes de contexto/abas/página (29) verdes.
+
 ### okr.html v1.0 · okr — 2026-10-06 · Promove pra prod — o OKR agora tem página própria (`/okr`), separada do painel
 
 Promoção do `okr-dev.html` v1.0 (PR #1226) como **`okr.html`**, que deixa de ser só um redirect pro painel e passa a ser a própria tela de OKR: Objetivos, Marcos, Atingimento, tags, menu de ações, Histórico semanal com a janela de contribuição, Central Agente Ágil, Anotações da reunião, Ajuda, Guia e Apresentação. Mesmos dados (`kanban/okr/...`), mesmas regras de acesso (Google @ciahering, Microsoft @arezzo, visualizadores de `painel_viewers` só leitura) e de edição. Links antigos continuam valendo: `/okr?okr=<id>` abre o Objetivo e `/okr?okr=chat` a Central Agente Ágil; o "🔗 Copiar link" do painel já gerava `okr.html?okr=<id>`. Cards vinculados sob demanda (título por vínculo, busca só baixa os cards na 1ª digitação, clique abre o board no card em aba nova). Diferenças do dev: sem a faixa laranja, links pra `kanban.html`/`painel.html`, `VERSION_KEY = 'okr'`, config do Firebase sob o sufixo `_okr`. **O painel não foi alterado**: a aba 🎯 OKR continua lá; atalho "🎯 OKR →" e troca dos links (kanban, sino do painel, guia) ficam pra próxima etapa (dev-first). Smoke test no `okr.html` real: 29 cenários da página + suítes de OKR do painel (menu 42, histórico 17, janela 35, abas 12, duplo clique) verdes; `node --check`/`no-undef` OK. Mural: rascunho `seed_okr_pagina_propria_2026_10_06`.
@@ -20688,6 +20692,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v4.9 · painel-dev — 2026-10-07 · colar lista em tópicos nas caixas "+ Add" do OKR cria um item por linha (só painel-dev)
+
+Mesma correção do checklist do kanban (v8.30.793-dev): o `<input>` de uma linha achatava as quebras e a lista colada virava UM item. `_okrParsePasted()` + `_okrPasteList()`/`_okrPasteChecklist()` (`onpaste` nas caixas de Indicadores/Progressos/Próximos Passos/Riscos/Planos de Ação/Trimestres e no checklist do Marco): 2+ linhas → um item por linha, sem marcadores do começo, `[x]`/`[ ]` entendidos no checklist do Marco; 1 linha cola normal; toast com a contagem. Chromium (8 cenários) em `painel-dev.html` e `okr-dev.html`. Só dev; o prod recebe quando validado.
 
 ### painel.html v4.8 · painel — 2026-10-06 · Promove pra prod — Histórico semanal redesenhado (abas Atingimento/Marcos), janela do progresso médio, Excluir no menu e datas nos históricos
 
