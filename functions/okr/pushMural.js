@@ -16,6 +16,10 @@ const { SITE_BASE_URL } = require('../common/pushUrl');
 
 const DEFAULT_ADM_EMAILS = ['caio.soares@ciahering.com.br', 'rafael.passos@ciahering.com.br'];
 
+// O feed do sino só é legível pela empresa (e visualizadores) — o push não pode furar isso: freelancer/parceiro com push ativo (a conta existe em
+// usuarios_publicos e pode ter token) NÃO recebe o texto de um aviso interno do OKR. Mesmo critério do domínio de confiança do app.
+const empresa = (email) => /@(ciahering|arezzo)\.com\.br$/i.test(String(email || ''));
+
 function alvoTorres(ev) {
   const t = ev && ev.torres;
   const arr = Array.isArray(t) ? t : t && typeof t === 'object' ? Object.values(t) : [];
@@ -61,7 +65,9 @@ async function runPushMural(db, messaging, ev, { agora = Date.now(), log = conso
         db.ref(`kanban/usuarios/${uid}/email`).get(),
       ]);
       if (dndAtivo(dndSnap.val(), agora)) return;
-      const ehAdm = admEmails.includes(String(emailSnap.val() || '').toLowerCase());
+      const emailU = String(emailSnap.val() || '').toLowerCase();
+      const ehAdm = admEmails.includes(emailU);
+      if (!ehAdm && !empresa(emailU)) return;                         // conta de fora da empresa: sem push do Mural
       if (!deveReceber({ ev, uid, torre: torreSnap.val(), ehAdm, agora })) return;
       alvos++;
       // Só "data" (sem "notification"): quem mostra é o Service Worker, 1 vez — ver comentário em index.js
@@ -94,4 +100,4 @@ function criaTrigger() {
   });
 }
 
-module.exports = { runPushMural, deveReceber, alvoTorres, dndAtivo, criaTrigger };
+module.exports = { runPushMural, deveReceber, alvoTorres, dndAtivo, empresa, criaTrigger };

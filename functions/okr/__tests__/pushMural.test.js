@@ -99,6 +99,18 @@ test('falha com 1 pessoa não derruba as outras', async () => {
   await runPushMural(seed(), m, EV(), silencio);
   assert.deepEqual(quem(m), ['T-ana', 'T-gia']);
 });
+test('conta de FORA da empresa (freelancer/parceiro) com push ativo NÃO recebe aviso do Mural; @arezzo recebe', async () => {
+  const db = seed({
+    freela: { email: 'freela@gmail.com', role: 'convidado', torre: 'digital', fcm_tokens: tok('T-freela') },
+    parc: { email: 'x@parceiro.com', fcm_tokens: tok('T-parc') },
+    az: { email: 'az@arezzo.com.br', torre: 'digital', fcm_tokens: tok('T-az') },
+  });
+  await db.ref('kanban/usuarios_publicos').update({ freela: {}, parc: {}, az: {} });
+  const m = fakeMessaging(); await runPushMural(db, m, EV({ torres: ['*'] }), silencio);
+  const q = quem(m);
+  assert.ok(!q.includes('T-freela') && !q.includes('T-parc'), 'vazou: ' + q.join(','));
+  assert.ok(q.includes('T-az') && q.includes('T-ana'));
+});
 test('deveReceber / alvoTorres (puras)', () => {
   assert.deepEqual(alvoTorres({ torres: { 0: 'a' } }), ['a']);
   assert.equal(deveReceber({ ev: EV(), uid: 'aut', torre: 'comercial', ehAdm: true }), false);
