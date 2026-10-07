@@ -2722,7 +2722,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.3 · painel-dev</div>
+<div class="version">v5.4 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8916,6 +8916,8 @@ function _guWrapWrites(){
     };
   });
 }
+// Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
+function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
 function loadGlobalUsers(force){
   _guWrapWrites();
   if(_guInflight){
@@ -8926,7 +8928,7 @@ function loadGlobalUsers(force){
   }
   if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
   _guInflight = true;
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
     _dbgTrack('usuarios', snap.val());
     _guLoadedAt = Date.now(); _guRetries = 0;
     _globalUsersCache = snap.val() || {};
@@ -10992,7 +10994,7 @@ function loadSquadData(sqId){
       members: squadData[sqId]?.members||[], // populated separately below
     };
     // Load members (usuarios inscritos neste squad) for owner name resolution
-    window._get(window._ref(window._db,'kanban/usuarios')).then(us=>{
+    window._get(window._ref(window._db,_usuariosNode())).then(us=>{
       const usVal=us.val()||{};
       squadData[sqId].members=Object.values(usVal).filter(u=>
         u.inscrito||u.squads?.[sqId]||u.role==='adm'

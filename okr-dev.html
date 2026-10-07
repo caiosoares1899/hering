@@ -1512,7 +1512,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.4 · okr-dev</div>
+<div class="version">v2.5 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1614,11 +1614,13 @@ function loadAdmList(){
 // ── Usuários globais (kanban/usuarios) — versão enxuta do loadGlobalUsers() do painel:
 // só popula o cache que o OKR lê (nomes/fotos/papéis) e re-renderiza o OKR. ──
 const _GU_TTL_MS = 10*60*1000;
+// Visualizador externo (painel_viewers) NÃO lê kanban/usuarios (e-mails, notificações e tokens de push de todo mundo — as regras fecham, 2026-10-07): lê o diretório magro usuarios_publicos (nome/foto/sigla/papel).
+function _usuariosNode(){ return window._isPainelViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'; }
 function loadGlobalUsers(force){
   if(_guInflight){ if(force) _guQueued = true; return; }
   if(!force && _guLoadedAt && Date.now()-_guLoadedAt < _GU_TTL_MS) return;
   _guInflight = true;
-  window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
+  window._get(window._ref(window._db,_usuariosNode())).then(snap=>{
     _guLoadedAt = Date.now(); _guRetries = 0;
     _globalUsersCache = snap.val() || {};
     if(window._currentUser && typeof _okrSetCurrentInit==='function') _okrSetCurrentInit(window._currentUser); // sigla do kanban, se a pessoa já tiver

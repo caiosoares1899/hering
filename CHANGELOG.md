@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.5 · okr-dev — 2026-10-07 · 🔒 visualizador externo (só acompanhar) lê o diretório público, não `kanban/usuarios`
+
+Pedido direto: liberar um externo só pra **acompanhar** o OKR e fechar a leitura de `usuarios` pra ele. Visualizador (`kanban/painel_viewers`, só leitura) agora lê `kanban/usuarios_publicos` (nome/foto/sigla/papel) pra mostrar responsáveis e avatares — as regras (`database.rules.json`) deixam de liberar `kanban/usuarios` pra ele (e-mails, notificações e tokens de push de todos). Quem é da empresa segue lendo `kanban/usuarios` (papéis, torre, Gestor OKR). O mesmo vale pra `okr-apresentacao.slide.html` (compartilhada, sem versão: o visualizador lê `usuarios_publicos`; antes, sem isso, a negativa de leitura da regra nova derrubaria a apresentação inteira pra ele). **Ordem de deploy:** promover `okr.html`/`painel.html` ANTES de publicar as regras (prod ainda lê `kanban/usuarios` como visualizador). Testes (Chromium): visualizador lê só `usuarios_publicos` (sem tokens), membro segue em `usuarios`; regras: 22/22 no simulador (`functions/rules`, visualizador lê o OKR, não escreve, não lê `usuarios`).
+
 ### okr-dev.html v2.4 · okr-dev — 2026-10-07 · 📈 Histórico abre direto na aba que tem dados
 
 Pedido direto: com a aba 🎯 Atingimento vazia (nenhum Objetivo com meta registrada nos snapshots) e a 🏁 Marcos com dados, o Histórico abria numa tela de "nenhum Objetivo" e a pessoa tinha que descobrir a outra aba (caso real: Atingimento 0, Marcos 25). Agora abre em **Marcos**, com uma dica ("Abrimos aqui porque ainda não há Objetivos com Atingimento registrado nesta visão"). A escolha acompanha a visão: trocar de torre/visão global reavalia (Comercial com atingimento volta pra Atingimento). Clicar numa aba na mão vale até sair do Histórico — a tela não "foge" da escolha da pessoa, nem num re-render por dado novo. 10 cenários no Chromium.
@@ -20764,6 +20768,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v5.4 · painel-dev — 2026-10-07 · visualizador externo lê `usuarios_publicos` (a leitura de `kanban/usuarios` fecha pra ele)
+
+Mesmo motivo do okr-dev v2.5: `loadGlobalUsers()` e a lista de membros por squad usam `kanban/usuarios_publicos` quando `window._isPainelViewer` (o painel do visualizador só precisa de nome/foto/sigla); quem é da empresa segue em `kanban/usuarios`. Regras: ver okr-dev v2.5.
 
 ### painel-dev.html v5.3 · painel-dev — 2026-10-07 · fix(/monitorarbugs): nome na lista "Online" era injetado como HTML (XSS armazenado)
 

@@ -40,10 +40,10 @@ const notif = (type) => Object.assign({ id: 'n1', title: 'Oi', sub: 'x', ts: '20
 // [descrição, op, caminho, valor novo, { ator: permitido? }]
 const CASOS = [
   ['ler kanban/usuarios inteiro (e-mails, tokens, notificações de todos)', 'read', 'kanban/usuarios', undefined,
-    { forasteiro: 0, arezzo_provedor_errado: 0, freela_cadastrado: 0, freela_novo: 0, membro: 1, po: 1, adm: 1, caio: 1, arezzo: 1, visualizador: 1 }],
+    { forasteiro: 0, arezzo_provedor_errado: 0, freela_cadastrado: 0, freela_novo: 0, membro: 1, po: 1, adm: 1, caio: 1, arezzo: 1, visualizador: 0 }],
   ['ler o próprio registro em usuarios', 'read', 'kanban/usuarios/ext1', undefined, { freela_cadastrado: 1 }],
   ['ler o próprio registro no 1º login (ainda não existe)', 'read', 'kanban/usuarios/ext2', undefined, { freela_novo: 1 }],
-  ['ler o registro de OUTRA pessoa', 'read', 'kanban/usuarios/victim', undefined, { forasteiro: 0, freela_cadastrado: 0, membro: 1, visualizador: 1 }],
+  ['ler o registro de OUTRA pessoa', 'read', 'kanban/usuarios/victim', undefined, { forasteiro: 0, freela_cadastrado: 0, membro: 1, visualizador: 0 }],
   ['ler as notificações de OUTRA pessoa', 'read', 'kanban/usuarios/victim/notificacoes', undefined, { forasteiro: 0, freela_cadastrado: 0, membro: 1 }],
   ['ler os tokens de push de OUTRA pessoa', 'read', 'kanban/usuarios/victim/fcm_tokens', undefined, { forasteiro: 0, freela_cadastrado: 0 }],
   ['criar notificação (@menção) na caixa de outra pessoa', 'write', 'kanban/usuarios/victim/notificacoes/n1', notif('mention'),
@@ -62,6 +62,10 @@ const CASOS = [
     { forasteiro: 0, visualizador: 0, freela_novo: 0, membro: 1, arezzo: 1, freela_cadastrado: 1 }],
   ['escrever access_log de squad em que o freela NÃO está', 'write', 'kanban/squads/prf/access_log/l1', { ts: 1 }, { freela_cadastrado: 0, membro: 1 }],
   ['freela cria o próprio registro (cadastro)', 'write', 'kanban/usuarios/ext2', { role: 'membro', nome: 'Novo' }, { freela_novo: 1 }],
+  ['visualizador externo (painel_viewers) NÃO lê o registro de ninguém em usuarios (e-mail/notificações/tokens)', 'read', 'kanban/usuarios/victim/fcm_tokens', undefined, { visualizador: 0, membro: 1 }],
+  ['visualizador externo segue lendo o OKR (só acompanhar)', 'read', 'kanban/okr/objetivos', undefined, { visualizador: 1, membro: 1, forasteiro: 0, freela_cadastrado: 0 }],
+  ['visualizador externo NÃO escreve no OKR', 'write', 'kanban/okr/objetivos/o1', { titulo: 'x' }, { visualizador: 0, forasteiro: 0, freela_cadastrado: 0, membro: 1 }],
+  ['visualizador externo lê o diretório magro (usuarios_publicos) — é de onde vêm nome/foto no OKR', 'read', 'kanban/usuarios_publicos', undefined, { visualizador: 1, forasteiro: 1, membro: 1 }],
   ['ler usuarios_publicos (diretório magro — segue aberto, é o que o login dos freelas usa)', 'read', 'kanban/usuarios_publicos', undefined,
     { forasteiro: 1, freela_novo: 1, membro: 1 }],
 ];
