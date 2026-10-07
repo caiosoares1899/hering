@@ -2963,6 +2963,8 @@ painel-dev pro detalhamento completo. Resumo:
   `rgba(var(--ink-rgb),...)`/`var(--glass-b)`. Afeta os DOIS modais que
   usam essas classes (card + 📜 Histórico).
 
+> ⚠️ **2026-10-07 (painel-dev v5.0):** todo o código desta seção (e das sub-seções `####` abaixo até "`guia-okr.html`") **saiu do `painel-dev.html`** e vive em **`okr-dev.html`/`okr.html`** com os MESMOS nomes de função/const — re-`grep` o nome lá (as linhas aqui são de antes da mudança). No painel sobraram só: `renderOKR()` (lista "🎯 Cards do board com badge OKR", agora na aba Visão — lê `squadData`), `toggleGestorOkr()` (toggle no 👥 Global Users), `OKR_PAGE` + `swPtab('okr')` (redireciona pra `okr-dev.html`) + o `<a id="ptab-okr">` da barra de abas + um `<script>` no `<head>` que repassa `?okr=<id>`/`?okr=chat`/`?tab=okr` pra página nova. Prod (`painel.html`) ganha isso na promoção.
+
 ### Aba "🎯 OKR" (Objetivos/Marcos, Fase 1 — 2026-09-04, presente nos dois arquivos — promovido pra prod v3.18)
 Internalização do PDF trimestral "Iniciativas Estratégicas" (Azzas/Hering)
 direto no painel — pedido do chefe do usuário depois de ver o Supercard,
