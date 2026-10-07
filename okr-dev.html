@@ -1580,6 +1580,7 @@ body{min-height:100vh;}
     </div>
     <div class="pc-modal-body">
       <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Dashboard, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:8px;">Cada pessoa mostra se <b>já entrou</b> (🟢 online agora · ✅ entrou, com o último sinal · ⏳ ainda não entrou). Passe o mouse no status pra ver o primeiro acesso. O registro começa a valer no próximo login de cada uma.</div>
       <div id="okr-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
       <div class="okr-field-label">Adicionar por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1649,7 +1650,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.22 · okr-dev</div>
+<div class="version">v2.23 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1806,7 +1807,7 @@ function _okrSendHeartbeat(){
   const u = window._currentUser;
   if(!u || !window._fbReady) return;
   const dado = {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''};
-  if(window._isPainelViewer) dado.externo = true;   // selo 👁 na lista; sem o campo = pessoa da empresa
+  if(window._isPainelViewer){ dado.externo = true; _viewerRegistrarAcesso('okr'); }   // selo 👁 na lista; sem o campo = pessoa da empresa. + registro de acesso (primeiro/último) pro ADM ver quem já entrou
   window._update(window._ref(window._db, OKR_PRESENCE_PATH+'/'+u.uid), dado).catch(()=>{});
 }
 function _okrPresenceStart(){
@@ -4649,30 +4650,68 @@ function _okrGerNova(){
 
 
 // ═══ 👁 Visualizadores externos (só ADM) ═══════════════════════════════════════════════════════════
+// ── 👁 Acesso do visualizador externo (quem JÁ entrou / quem está ativo) ──────────────────────────────────
+// O ADM cadastra o e-mail em kanban/painel_viewers/{emailKey} mas não tinha como saber se a pessoa chegou a entrar. O próprio visualizador grava
+// (só no próprio nó — regra em database.rules.json) kanban/painel_viewers/{emailKey}/acesso = {primeiro, ultimo, uid, pagina}. `ultimo` é renovado a cada ~5 min
+// de uso com a aba visível; some junto com o visualizador se o ADM remover (o nó mora dentro dele).
+const VIEWER_ACESSO_EVERY_MS = 5*60*1000, VIEWER_ATIVO_MS = 6*60*1000;
+function _viewerRegistrarAcesso(pagina){
+  const u = window._currentUser; if(!u || !u.email || !window._isPainelViewer || !window._db) return;
+  const agora = Date.now(); if(agora - (window._viewerAcessoTs||0) < VIEWER_ACESSO_EVERY_MS) return;
+  window._viewerAcessoTs = agora;
+  const ref = p=>window._ref(window._db, 'kanban/painel_viewers/'+_painelViewerKey(u.email)+'/acesso'+(p||''));
+  window._get(ref('/primeiro')).then(s=>{
+    const d = {ultimo:agora, uid:u.uid, pagina};
+    if(!s.exists()) d.primeiro = agora;
+    return window._update(ref(), d);
+  }).catch(()=>{ window._viewerAcessoTs = agora - VIEWER_ACESSO_EVERY_MS + 60000; });   // falhou (rede/regra ainda não publicada): tenta de novo em ~1 min, não a cada tick
+}
+function _viewerTempoRel(ms){
+  const m = Math.max(0, Math.round((Date.now()-ms)/60000));
+  if(m < 1) return 'agora há pouco'; if(m < 60) return 'há '+m+' min';
+  const h = Math.round(m/60); if(h < 24) return 'há '+h+' h';
+  const d = Math.round(h/24); return d < 60 ? 'há '+d+(d===1?' dia':' dias') : 'há mais de 2 meses';
+}
+function _viewerDataBR(ms){ const d = new Date(ms); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+// presence = mapa de kanban/painel/okr_presence (opcional). Retorna {ord, txt, cor, title}.
+function _viewerStatus(v, presence){
+  const a = v && v.acesso, now = Date.now();
+  if(!a || !a.ultimo) return {ord:2, txt:'⏳ ainda não entrou', cor:'var(--txt3)', title:'Nenhum acesso registrado. Quem foi adicionado antes deste registro existir só aparece como "entrou" depois do próximo login.'};
+  const p = presence && a.uid && presence[a.uid];
+  const online = (p && now-(+p.ts||0) < OKR_PRESENCE_TTL_MS) || now-a.ultimo < VIEWER_ATIVO_MS;
+  const quando = 'Primeiro acesso: '+(a.primeiro ? _viewerDataBR(a.primeiro) : '—')+' · Último sinal: '+_viewerDataBR(a.ultimo)+(a.pagina ? ' ('+(a.pagina==='okr'?'OKR':'Painel')+')' : '');
+  return online ? {ord:0, txt:'🟢 online agora'+(a.pagina?' · '+(a.pagina==='okr'?'OKR':'Painel'):''), cor:'#4ade80', title:quando}
+                : {ord:1, txt:'✅ entrou · visto '+_viewerTempoRel(a.ultimo), cor:'var(--accent)', title:quando};
+}
+function _viewerOrdena(entries, presence){
+  return entries.map(([k,v])=>[k,v,_viewerStatus(v,presence)]).sort((x,y)=> x[2].ord-y[2].ord || ((y[1].acesso&&y[1].acesso.ultimo)||0)-((x[1].acesso&&x[1].acesso.ultimo)||0) || String(x[1].email||x[0]).localeCompare(String(y[1].email||y[0])));
+}
 // Gerencia kanban/painel_viewers/{emailKey} (a mesma lista do painel): quem está aí entra em okr.html/painel.html só pra LER (as regras
 // nunca liberam escrita). Atalho pra não precisar sair do OKR e achar ⚙ Configurações → 🔑 ADMs no painel.
 function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'inline-flex' : 'none'; }
 function openOkrViewers(){
   if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM gerencia visualizadores externos.'); return; }
   document.getElementById('okr-viewers-ov')?.classList.add('open'); renderOkrViewers();
+  clearInterval(window._okrViewersTick); window._okrViewersTick = setInterval(()=>renderOkrViewers(true), 20000);   // status "online agora" se atualiza com o modal aberto
 }
-function closeOkrViewers(){ document.getElementById('okr-viewers-ov')?.classList.remove('open'); }
+function closeOkrViewers(){ document.getElementById('okr-viewers-ov')?.classList.remove('open'); clearInterval(window._okrViewersTick); }
 document.addEventListener('keydown', e=>{ const ov = document.getElementById('okr-viewers-ov'); if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrViewers(); } }, true);
-function renderOkrViewers(){
+function renderOkrViewers(silencioso){
   const list = document.getElementById('okr-viewers-list'); if(!list) return;
-  list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  if(!silencioso) list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
-    const entries = Object.entries(snap.val()||{});
+    const entries = _viewerOrdena(Object.entries(snap.val()||{}), _okrPresenceMap);
     if(!entries.length){ list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
     list.innerHTML = '';
-    entries.forEach(([key,v])=>{
+    entries.forEach(([key,v,st])=>{
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
-      const lbl = document.createElement('span'); lbl.style.cssText = 'flex:1;font-size:12px;'; lbl.textContent = (v.nome ? v.nome+' — ' : '') + (v.email||key);
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;flex-wrap:wrap;';
+      const lbl = document.createElement('span'); lbl.style.cssText = 'flex:1;font-size:12px;min-width:140px;'; lbl.textContent = (v.nome ? v.nome+' — ' : '') + (v.email||key);
+      const stEl = document.createElement('span'); stEl.className = 'viewer-status'; stEl.style.cssText = 'font-size:10px;font-weight:600;color:'+st.cor+';white-space:nowrap;'; stEl.textContent = st.txt; stEl.title = st.title;
       const badge = document.createElement('span'); badge.style.cssText = 'font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent = 'só leitura';
       const rm = document.createElement('button'); rm.type = 'button'; rm.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;'; rm.textContent = '✕'; rm.title = 'Remover visualizador';
       rm.onclick = ()=>removeOkrViewer(key);
-      row.append(lbl, badge, rm); list.appendChild(row);
+      row.append(lbl, stEl, badge, rm); list.appendChild(row);
     });
   }).catch(e=>{ list.innerHTML = '<div style="font-size:11px;color:var(--danger);">Não consegui ler a lista ('+esc(e?.message||e)+').</div>'; });
 }

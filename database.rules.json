@@ -100,7 +100,13 @@
       },
       "painel_viewers": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
-        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        "$k": {
+          "acesso": {
+            ".write": "auth != null && $k === auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',') && root.child('kanban/painel_viewers/' + $k).exists()",
+            ".validate": "newData.hasChildren(['ultimo','uid']) && newData.child('ultimo').isNumber() && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && (!newData.child('primeiro').exists() || (newData.child('primeiro').isNumber() && (!data.child('primeiro').exists() || newData.child('primeiro').val() === data.child('primeiro').val()))) && (!newData.child('pagina').exists() || (newData.child('pagina').isString() && newData.child('pagina').val().length <= 20))"
+          }
+        }
       },
       "config": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
