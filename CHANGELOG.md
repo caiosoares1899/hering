@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.6 · okr-dev — 2026-10-07 · 👁 ADM autoriza visualizador externo sem sair do OKR
+
+Pedido direto ("só em kanban dá pra autorizar um externo — tem que ter no painel/OKR também"): botão **👁 Visualizadores** (só ADM, ao lado de "Anotações da reunião") abre um modal com a lista de quem só acompanha, e-mail + nome + "+ Visualizador" e ✕ pra remover (confirmação). É a mesma lista de `kanban/painel_viewers` do painel (e-mail da empresa é recusado — já tem acesso; e-mail inválido também). Esc e clique fora fecham; visualizador e não-ADM não veem o botão nem abrem o modal. Texto na Ajuda do OKR. Testes no Chromium: 18 cenários (OKR + painel).
+
 ### okr.html v2.5 · okr — 2026-10-07 · Promove pra prod — 🏛️ Torres, Histórico por torre, visualizador externo só leitura
 
 Promoção do `okr-dev.html` v1.4–v2.5 sobre a v1.3 de prod (merge de 3 vias a partir da v1.3-dev; dev × prod só diferem nas 27 linhas de ambiente). O que chega:
@@ -20777,6 +20781,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v5.5 · painel-dev — 2026-10-07 · 👁 Visualizadores externos mais fáceis de achar (e dizem que valem pro OKR)
+
+Os visualizadores externos (`kanban/painel_viewers`) só eram gerenciáveis em ⚙ Configurações → 🔑 ADMs (precisa escolher um squad antes) e o texto só falava do painel. Agora: (1) a seção se chama **"Visualizadores externos (painel e OKR)"** e explica que a pessoa só acompanha, vê as 3 torres, não edita e entra com o Google direto em okr.html; (2) botão **👁 Visualizadores externos** no topo de 👥 Global Users (só ADM) abre um modal com a mesma lista e o formulário de adicionar, sem passar por squad nenhum (`renderPainelViewers()` agora renderiza nos 2 lugares; `addPainelViewer('modal')`). A aba ADMs segue igual.
 
 ### painel.html v5.4 · painel — 2026-10-07 · Promove pra prod — a aba 🎯 OKR vira atalho pra página própria (okr.html), torre no Global Users, correção do nome em "Online", visualizador sem `usuarios`
 
