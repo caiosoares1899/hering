@@ -674,7 +674,41 @@ const OKR_STATUS = [
 ];
 const OKR_SEVERIDADE = ['atrasado','risco','no_prazo','nao_iniciado'];
 function okrStatusInfo(id){ return OKR_STATUS.find(s=>s.id===id) || OKR_STATUS[0]; }
-function okrGerenciaLabel(id){ return OKR_GERENCIAS.find(g=>g.id===id)?.label || id || '—'; }
+// ── 🏛️ Torres + 🧭 gerências configuráveis (mesmo modelo do okr.html: kanban/okr/gerencias/{torre}/{id} = {label, icon, ordem, oculta?}) ──
+// Sem nada configurado vale o padrão (Digital: as 7 acima; Comercial/Corporativa: só "Geral"). Os slides agrupam por TORRE + gerência: o "Geral"
+// das 3 torres não se mistura, e uma gerência criada pela torre (que não está na lista fixa) também ganha o seu slide.
+const OKR_TORRES = [
+  {id:'digital',     label:'Digital',     icon:'🌐'},
+  {id:'comercial',   label:'Comercial',   icon:'🛍️'},
+  {id:'corporativa', label:'Corporativa', icon:'🏛️'},
+];
+const OKR_GERENCIAS_PADRAO = { digital: OKR_GERENCIAS, comercial:[{id:'geral',label:'Geral',icon:'🧭'}], corporativa:[{id:'geral',label:'Geral',icon:'🧭'}] };
+let okrGerenciasCfg = {};
+function _okrTorreDe(o){ return (o && OKR_TORRES.some(t=>t.id===o.torre)) ? o.torre : 'digital'; }
+function _okrGerenciasBase(torre){
+  const t = OKR_TORRES.some(x=>x.id===torre) ? torre : 'digital';
+  const cfg = okrGerenciasCfg && okrGerenciasCfg[t];
+  const ids = (cfg && typeof cfg==='object') ? Object.keys(cfg).filter(id=>cfg[id] && typeof cfg[id]==='object' && cfg[id].label) : [];
+  if(!ids.length) return OKR_GERENCIAS_PADRAO[t].map(g=>({...g}));
+  return ids.map(id=>({id, label:String(cfg[id].label), icon:cfg[id].icon||'🧭', ordem:Number(cfg[id].ordem)}))
+    .sort((a,b)=>(isFinite(a.ordem)?a.ordem:1e9)-(isFinite(b.ordem)?b.ordem:1e9) || a.label.localeCompare(b.label));
+}
+function okrGerenciaLabel(id, torre){ const g = _okrGerenciasBase(torre||'digital').find(x=>x.id===id); return g ? g.label : (id || '—'); }
+// Rótulo no slide: Digital fica como sempre (só a gerência); as outras levam a torre na frente.
+function _okrGerRotulo(torre, g){ const t = OKR_TORRES.find(x=>x.id===torre); return torre==='digital' ? g.label : (t.icon+' '+t.label+' · '+g.label); }
+// Grupos (torre+gerência) com Objetivos, na ordem das torres e das gerências; áreas desconhecidas entram no fim da torre em vez de sumir.
+function _okrGruposGerencia(ativos){
+  const out = [];
+  OKR_TORRES.forEach(t=>{
+    const doTorre = ativos.filter(o=>_okrTorreDe(o)===t.id); if(!doTorre.length) return;
+    const porArea = {}; doTorre.forEach(o=>{ (porArea[o.areaId||'geral'] = porArea[o.areaId||'geral']||[]).push(o); });
+    const conhecidas = _okrGerenciasBase(t.id);
+    const ids = conhecidas.map(g=>g.id).filter(id=>porArea[id]?.length);
+    Object.keys(porArea).forEach(id=>{ if(!ids.includes(id)) ids.push(id); });
+    ids.forEach(id=>{ const g = conhecidas.find(x=>x.id===id) || {id, label:id, icon:'🎯'}; out.push({key:t.id+':'+id, torre:t.id, g, rotulo:_okrGerRotulo(t.id,g), lista:porArea[id]}); });
+  });
+  return out;
+}
 function _okrTrimestresOf(o){
   if(!o) return [];
   if(Array.isArray(o.trimestres) && o.trimestres.length) return o.trimestres;
@@ -696,7 +730,7 @@ const PT_PALETTE=[
 ];
 
 let okrObjetivos = {}, okrMarcos = {}, okrTags = {}, usersCache = {}, okrNotas = {};
-let _loaded = {obj:false, marco:false, tag:false, users:false};
+let _loaded = {obj:false, marco:false, tag:false, users:false, ger:false};
 let _lastUpdate = null;
 // Preview direto de 1 Objetivo (botão "👁" no card do painel-dev.html, aba
 // OKR) — ?preview=<id> abre esta apresentação já com o detalhe desse
@@ -739,8 +773,8 @@ let _okrFiltroTag = '';
 function _okrObjetivosAtivos(){
   return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)));
 }
-function _okrGerenciaObjetivos(areaId){
-  return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId));
+function _okrGerenciaObjetivos(areaId, torre){
+  return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));
 }
 // Mantém o <select> da barra em dia: só tags que existem E estão em uso por algum Objetivo ativo (com a contagem); a escolhida entra
 // sempre. Escondido enquanto ninguém usa tag. Tag apagada no painel com o filtro ligado => limpa o filtro (senão a tela ficava vazia).
@@ -1005,8 +1039,7 @@ function objCardHtml(o){
 
 function buildSlides(){
   const ativos = _okrObjetivosAtivos();
-  const porArea = {};
-  ativos.forEach(o=>{ (porArea[o.areaId||'geral']=porArea[o.areaId||'geral']||[]).push(o); });
+  const grupos = _okrGruposGerencia(ativos);
 
   const list = [];
 
@@ -1035,11 +1068,11 @@ function buildSlides(){
       <div class="empty-state"><div class="ico">🌊</div>
       <div>${_okrFiltroTag?'Nenhum Objetivo ativo com essa tag.':'Nenhum Objetivo ativo cadastrado ainda no painel.'}</div></div>`});
   } else {
-    OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).forEach(g=>{
-      const lista = _okrObjetivosSorted(porArea[g.id]);
-      list.push({key:'ger:'+g.id, title:g.label, html:`
+    grupos.forEach(gr=>{
+      const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
+      list.push({key:'ger:'+gr.key, title:gr.rotulo, html:`
         <div class="slide-inner">
-          <div class="ger-header"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
+          <div class="ger-header"><span class="ico">${g.icon}</span><h2>${esc(gr.rotulo)}</h2><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
           <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
         </div>`});
     });
@@ -1054,11 +1087,11 @@ function buildSlides(){
         <div class="sum-bar-count">${n}</div>
       </div>`;
     }).join('');
-    const tableRows = OKR_GERENCIAS.filter(g=>porArea[g.id]?.length).map(g=>{
-      const lista = porArea[g.id];
+    const tableRows = grupos.map(gr=>{
+      const g = gr.g, lista = gr.lista;
       const c = {nao_iniciado:0,no_prazo:0,risco:0,atrasado:0,concluido:0};
       lista.forEach(o=>{ c[objStatus(o.id)]=(c[objStatus(o.id)]||0)+1; });
-      return `<tr><td>${g.icon} ${esc(g.label)}</td><td>${lista.length}</td>
+      return `<tr><td>${g.icon} ${esc(gr.rotulo)}</td><td>${lista.length}</td>
         <td style="color:var(--teal);">${c.no_prazo}</td><td style="color:var(--warn);">${c.risco}</td>
         <td style="color:var(--danger);">${c.atrasado}</td><td style="color:var(--accent);">${c.concluido}</td></tr>`;
     }).join('');
@@ -1343,7 +1376,7 @@ window._okrOpenDetail = id => {
   const marcos = temOrdem
     ? objMarcosOrdenados.sort((a,b)=>(typeof a.ordem==='number'?a.ordem:Infinity)-(typeof b.ordem==='number'?b.ordem:Infinity))
     : objMarcosOrdenados.sort((a,b)=>(a.prazo||'').localeCompare(b.prazo||''));
-  const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral');
+  const gerObjs = _okrGerenciaObjetivos(o.areaId||'geral', _okrTorreDe(o));
   const gerIdx = gerObjs.findIndex(x=>x.id===id);
   const nextObj = gerIdx>=0 && gerIdx<gerObjs.length-1 ? gerObjs[gerIdx+1] : null;
   const prevObj = gerIdx>0 ? gerObjs[gerIdx-1] : null;
@@ -1353,10 +1386,10 @@ window._okrOpenDetail = id => {
         <div class="d2-title">${esc(o.titulo||'—')}</div>
         <div class="d2-trim">${_okrTrimestresOf(o).map(t=>`<span class="pill">${esc(t)}</span>`).join('')}</div>
         <div class="d2-brand-row">
-          <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId))}</div>
+          <div class="d2-brand">🎯 ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}</div>
           ${marcos.some(m=>m.progresso==='concluido')?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrToggleColapsarConcluidos()" title="Não muda a contagem de progresso — só esconde a linha nesta tela">${_okrColapsarConcluidos?'▾ Mostrar concluídos':'▴ Colapsar concluídos'}</button>`:''}
-          <button class="detail-next" ${prevObj?`onclick="window._okrOpenDetail(${jsq(prevObj.id)})" title="Objetivo anterior de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Primeiro objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`}>← Anterior</button>
-          <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
+          <button class="detail-next" ${prevObj?`onclick="window._okrOpenDetail(${jsq(prevObj.id)})" title="Objetivo anterior de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Primeiro objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`}>← Anterior</button>
+          <button class="detail-next" ${nextObj?`onclick="window._okrOpenDetail(${jsq(nextObj.id)})" title="Próximo objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))}"`:`disabled title="Último objetivo de ${esc(okrGerenciaLabel(o.areaId, _okrTorreDe(o)))} — feche e abra o próximo pela grade da gerência seguinte"`}>Próximo →</button>
           ${_okrAtingPctObj(o)!==null?`<button class="detail-next" style="height:26px;padding:0 10px;font-size:11px;" onclick="window._okrOpenAting(${jsq(id)})" title="Evolução do atingimento — gráfico com data e valor">${_okrAtingTipoIco(o.atingimento.tipo)} Evolução</button>`:''}
           <button class="detail-close" onclick="window._okrCloseDetail()">✕</button>
         </div>
@@ -1736,6 +1769,7 @@ function startListeners(){
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{ okrObjetivos = snap.val()||{}; _loaded.obj=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db,'kanban/okr/gerencias'), snap=>{ okrGerenciasCfg = snap.val()||{}; _loaded.ger=true; scheduleRebuild(); }, ()=>{ _loaded.ger=true; scheduleRebuild(); });   // sem leitura: segue com o padrão
   // Visualizador externo lê o diretório magro (usuarios_publicos): as regras fecham kanban/usuarios (e-mails/tokens de push) pra ele — 2026-10-07.
   window._onValue(window._ref(window._db, window._okrIsViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
   // Anotações da reunião — independente do carrossel de slides (não entra

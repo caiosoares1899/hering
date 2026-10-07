@@ -151,7 +151,11 @@ async function runOkrDailyScan(db, hojeOverride) {
     const alvos = o.responsaveis || [];
     if (!alvos.length) continue;
 
-    const bloco = blocoDaArea(o.areaId);
+    // Gerências agora são configuráveis por torre (2026-10-07): uma criada depois NÃO tem bloco quinzenal — só as originais (OKR_BLOCO_AREAS) têm reunião.
+    // Sem areaId = 'geral' (mesma regra do client).
+    const area = o.areaId || 'geral';
+    if (!OKR_BLOCO_AREAS[1].includes(area) && !OKR_BLOCO_AREAS[2].includes(area)) continue;
+    const bloco = blocoDaArea(area);
     if (!ehDiaDeReuniao(amanhaStr, bloco)) continue;
 
     for (const uid of alvos) {

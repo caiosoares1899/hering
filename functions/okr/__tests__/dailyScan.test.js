@@ -268,3 +268,17 @@ test('prazo de marco continua notificando em qualquer torre', async () => {
   assert.equal(n.filter((x) => x.type === 'okr_prazo').length, 1);
   assert.equal(n.filter((x) => x.type === 'okr_reuniao').length, 0);
 });
+
+test('véspera de reunião NÃO notifica Objetivo de gerência criada depois (sem bloco quinzenal)', async () => {
+  const db = seedDb({
+    objetivos: {
+      n1: { id: 'n1', titulo: 'Gerência nova', areaId: 'g1k2abc', responsaveis: ['u1'] },
+      o1: { id: 'o1', titulo: 'Geral', areaId: 'geral', responsaveis: ['u2'] },
+      o2: { id: 'o2', titulo: 'Sem areaId (= geral)', responsaveis: ['u3'] },
+    },
+  });
+  await runOkrDailyScan(db, '2026-09-02'); // amanhã = quinta do bloco 1 ('geral' está nele)
+  assert.equal((await notifsDe(db, 'u1')).length, 0);
+  assert.equal((await notifsDe(db, 'u2')).length, 1);
+  assert.equal((await notifsDe(db, 'u3')).length, 1);
+});
