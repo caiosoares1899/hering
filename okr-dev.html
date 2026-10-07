@@ -1633,7 +1633,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.12 · okr-dev</div>
+<div class="version">v2.13 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1675,7 +1675,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=1"></script>
+<script src="mare-notif-dev.js?v=3"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -2763,7 +2763,7 @@ function loadOkrFeed(){
   if(window._isPainelViewer) return;   // externo não lê kanban/usuarios: sem notificações pessoais
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
-    _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type))
+    _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))   // mesmo TTL do sino do kanban
       .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
     _okrBellRender();
   });
@@ -2782,7 +2782,7 @@ function _okrBellRender(){
   _okrMuralBadge();
   const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
   drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
-    <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${i.icon}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')
+    <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${esc(i.icon)}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:24px 12px;text-align:center;">Nada por aqui ainda.</div>'}
       ${window._isPainelViewer?'<div style="font-size:10px;color:var(--txt3);text-align:center;padding:4px 8px 8px;">👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.</div>':''}</div>`;
 }
@@ -2813,13 +2813,14 @@ function _okrBellClick(k, id){
   const drop = document.getElementById('okr-bell-drop'); if(drop) drop.style.display = 'none';
   if(k==='p'){
     const n = _okrNotifPessoais.find(x=>x.id===id); if(!n) return;
-    if(!n.read){ n.read = true; window._set(window._ref(window._db,'kanban/usuarios/'+window._currentUser.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
+    let w = Promise.resolve();
+    if(!n.read){ n.read = true; w = window._set(window._ref(window._db,'kanban/usuarios/'+window._currentUser.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
     _okrBellRender();
     if(n.type==='okr_agente') return _okrIrParaChat();
     if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
     if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
     const alvo = MareNotif.urlPessoal(n);   // card, Kudos, reunião, intake… vivem em outras páginas: o roteador compartilhado sabe pra onde ir
-    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else location.href = alvo.url; }
+    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else Promise.race([w, new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = alvo.url; }); }   // deixa o "lido" sair antes de trocar de página
     return;
   }
   MareNotif.abrirFeed(id); _okrBellRender();
