@@ -20021,6 +20021,10 @@ essa informação de novo no futuro.
 
 **Requer `firebase deploy --only functions:okrWeeklySnapshot` (resync do clone antes, ver `CLAUDE.md`).** Cada Objetivo do snapshot semanal ganha `torre` (`digital`/`comercial`/`corporativa`; sem o campo ou inválido = `digital`) — o Histórico da visão global do OKR usa pra manter um Objetivo apagado/movido na torre certa. Campo novo e opcional: o client antigo ignora e o novo cai na torre atual do Objetivo enquanto o deploy não sai (snapshots antigos também não têm). +1 teste (16/16 no arquivo).
 
+## Cloud Function — `okrDailyScan` — 2026-10-07 (gerências configuráveis): só as gerências ORIGINAIS têm bloco quinzenal
+
+**Requer `firebase deploy --only functions:okrDailyScan` (resync do clone antes).** Com gerências criadas pelas torres, uma `areaId` nova caía no fallback "bloco 2" e a responsável recebia "reunião amanhã" de uma reunião que não existe pra ela. Agora a véspera só vale pras áreas de `OKR_BLOCO_AREAS` (sem `areaId` = `geral`). +1 teste.
+
 ## Cloud Function — `okrDailyScan` (`functions/okr/dailyScan.js`) — fix 2026-10-07 (Torres)
 
 **Sem versão própria — requer `firebase deploy --only functions:okrDailyScan` (resync do clone antes, ver `CLAUDE.md`).** A "véspera da reunião de bloco quinzenal" notificava os responsáveis de TODO Objetivo ativo; os blocos (CX/Tech/CRM…) são da torre Digital, então Objetivos de Comercial/Corporativa (`areaId:'geral'`, que cai no bloco 1) recebiam "Reunião de X é amanhã" de uma reunião que não é deles. Agora pula `torre` ≠ digital (sem o campo = Digital, compatível com tudo que já existia). Prazo de marco segue em qualquer torre. +2 testes; 2 testes antigos (`marco … notifica`) dependiam da data real de hoje (falhavam na véspera de uma quinta de bloco) e passaram a filtrar por tipo; `atingimento.test.js` comparava o motor com `painel-dev.html`, de onde o OKR saiu na v5.0 (falhava desde então) — agora compara com `okr-dev.html`/`okr.html` ignorando linhas em branco. Suíte 604/604.
@@ -20693,6 +20697,10 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
+
+### okr-dev.html v2.9 · okr-dev — 2026-10-07 · ⚙ Gerências configuráveis por torre
+
+Pedido direto: "as torres configuram as próprias gerências, porque elas variam". Dentro de uma torre, o botão **⚙ Gerências** (barra de torres) abre um modal pra **criar, renomear, trocar o ícone, reordenar (▲▼) e ocultar** gerências. Dados em `kanban/okr/gerencias/{torre}/{id}` = `{label, icon, ordem, oculta?}`; enquanto a torre não configura nada vale o padrão (Digital: as 7 de sempre; Comercial/Corporativa: só "Geral"), e na 1ª edição o padrão é copiado e passa a mandar (a Digital também é editável). **Quem edita**: o mesmo que cria Objetivo na torre — ADM; PO/Organizador, 🎯 Gestor OKR e a torre ⭐ Geral. **Nunca apaga gerência em uso**: com Objetivos (ativos ou arquivados) só dá pra **ocultar** (some dos seletores de Objetivos novos; os existentes continuam nela e ela segue no filtro, marcada "oculta"); só gerência vazia exclui; a torre sempre mantém ao menos uma visível. Cada mudança é uma transação (duas pessoas editando juntas não se sobrescrevem). O rótulo agora depende da torre (o id `geral` existe em todas e pode ter nome diferente em cada). O bloco quinzenal continua só nas gerências originais da Digital (uma criada depois não tem bloco). **`okr-apresentacao.slide.html`** (compartilhada, já no ar): passou a ler as gerências configuradas e a agrupar por **torre + gerência** — antes, um Objetivo numa gerência fora da lista fixa sumia da apresentação e o "Geral" das 3 torres se misturava; agora Digital segue como sempre e as outras levam "🛍️ Comercial · Matriz". Também corrigido: o filtro de gerência da lista não refazia as opções quando a lista da torre mudava. Testes no Chromium: 30 cenários (criar/renomear/mover/ocultar/excluir, permissões por papel e torre, Digital, apresentação).
 
 ### okr.html v2.8 · okr — 2026-10-07 · Promove pra prod — torre "⭐ Geral" (ADMs de OKR editam todas as torres)
 

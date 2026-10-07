@@ -1298,7 +1298,7 @@ body{min-height:100vh;}
       <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
         <div>
           <b style="color:var(--txt);">🏛️ Torres</b><br>
-          O OKR se divide em <b>torres</b>: <b>🌐 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🔭 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de Gerências.
+          O OKR se divide em <b>torres</b>: <b>🌐 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🔭 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de <b>Gerências</b> — quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres; gerência com Objetivos nunca é apagada, só oculta.
         </div>
         <div>
           <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
@@ -1459,6 +1459,17 @@ body{min-height:100vh;}
   </div>
 </div>
 
+<!-- ⚙ Gerências da torre — quem edita a torre (ADM, PO/Organizador, Gestor OKR, torre Geral). Dados: kanban/okr/gerencias/{torre}/{id}. -->
+<div class="pc-modal-ov" id="okr-ger-ov" style="z-index:290;" onclick="if(event.target===this) closeOkrGerencias()">
+  <div class="pc-modal" style="width:min(640px,96vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title" id="okr-ger-title">⚙ Gerências</div>
+      <button class="x-btn" onclick="closeOkrGerencias()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-ger-body"></div>
+  </div>
+</div>
+
 <!-- 👁 Visualizadores externos — só ADM. Mesma lista do painel (⚙ Configurações → 🔑 ADMs / 👥 Global Users): kanban/painel_viewers. -->
 <div class="pc-modal-ov" id="okr-viewers-ov" style="z-index:300;" onclick="if(event.target===this) closeOkrViewers()">
   <div class="pc-modal" style="width:min(560px,94vw);">
@@ -1537,7 +1548,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.8 · okr-dev</div>
+<div class="version">v2.9 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2020,12 +2031,33 @@ const OKR_GERENCIAS_POR_TORRE = {
   comercial:   [{id:'geral', label:'Geral', icon:'🧭'}],
   corporativa: [{id:'geral', label:'Geral', icon:'🧭'}],
 };
-// União (sem repetir id) — só pra achar rótulo/ícone/ordem de uma gerência quando a torre não é conhecida.
-const OKR_GERENCIAS_TODAS = (()=>{ const v=new Set(), out=[]; Object.values(OKR_GERENCIAS_POR_TORRE).forEach(l=>l.forEach(g=>{ if(!v.has(g.id)){ v.add(g.id); out.push(g); } })); return out; })();
+// ── 🧭 Gerências CONFIGURÁVEIS por torre (2026-10-07) ──────────────────────────────────────────────────────
+// As listas acima são só o PADRÃO. Cada torre pode ter a sua em kanban/okr/gerencias/{torre}/{id} = {label, icon, ordem, oculta?}: enquanto a torre
+// não tiver nada lá, vale o padrão (Digital: as 7 de sempre; as outras: só "Geral"); na 1ª edição o padrão é copiado pra lá e passa a mandar.
+// Gerência em uso nunca é apagada — só OCULTA (some dos seletores de novos Objetivos; os existentes continuam nela).
+let okrGerenciasCfg = {};
+function _okrGerenciasBase(torre){
+  const t = _okrTorreValida(torre) ? torre : OKR_TORRE_PADRAO;
+  const cfg = okrGerenciasCfg && okrGerenciasCfg[t];
+  const ids = (cfg && typeof cfg==='object') ? Object.keys(cfg).filter(id=>cfg[id] && typeof cfg[id]==='object' && cfg[id].label) : [];
+  if(!ids.length) return OKR_GERENCIAS_POR_TORRE[t].map(g=>({...g, oculta:false}));
+  return ids.map(id=>({id, label:String(cfg[id].label), icon:cfg[id].icon||'🧭', ordem:Number(cfg[id].ordem), oculta:!!cfg[id].oculta}))
+    .sort((a,b)=>(isFinite(a.ordem)?a.ordem:1e9)-(isFinite(b.ordem)?b.ordem:1e9) || a.label.localeCompare(b.label));
+}
+// `comOcultas` só pra agrupar/rotular Objetivos que já estão numa gerência oculta; seletores usam a lista sem elas (nunca vazia).
+function okrGerenciasDa(torre, comOcultas){ const l = _okrGerenciasBase(torre); if(comOcultas) return l; const v = l.filter(g=>!g.oculta); return v.length ? v : l; }
+// União (sem repetir id) — pra ordem/cor no Histórico quando a torre não é uma só.
+function okrGerenciasTodas(){ const v=new Set(), out=[]; OKR_TORRES.forEach(t=>_okrGerenciasBase(t.id).forEach(g=>{ if(!v.has(g.id)){ v.add(g.id); out.push(g); } })); return out; }
+// O id sozinho é ambíguo entre torres ('geral' existe em todas): passe a torre do Objetivo sempre que souber.
+function _okrGerenciaDe(id, torre){
+  const t = torre || (_okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : null);
+  if(t){ const g = _okrGerenciasBase(t).find(x=>x.id===id); if(g) return g; }
+  for(const x of OKR_TORRES){ const g = _okrGerenciasBase(x.id).find(y=>y.id===id); if(g) return g; }
+  return null;
+}
 function okrTorreInfo(id){ return OKR_TORRES.find(t=>t.id===id) || OKR_TORRES[0]; }
 function _okrTorreValida(id){ return OKR_TORRES.some(t=>t.id===id); }
 function _okrTorreDe(o){ return (o && _okrTorreValida(o.torre)) ? o.torre : OKR_TORRE_PADRAO; }
-function okrGerenciasDa(torre){ return OKR_GERENCIAS_POR_TORRE[_okrTorreValida(torre)?torre:OKR_TORRE_PADRAO]; }
 // 'geral' só existe como torre de PESSOA (nunca de Objetivo): quem tem — ADMs de OKR — cria/edita em TODAS as torres (continua precisando do papel: PO/Organizador ou 🎯 Gestor OKR).
 const OKR_TORRE_GERAL = 'geral';
 function _okrTorreDoUsuario(uid){ const t = uid && _globalUsersCache[uid]?.torre; return t===OKR_TORRE_GERAL ? t : (_okrTorreValida(t) ? t : OKR_TORRE_PADRAO); }
@@ -2034,10 +2066,10 @@ function _okrMinhaEhGeral(){ return _okrMinhaTorre()===OKR_TORRE_GERAL; }
 // Quem muda a torre de um Objetivo (e escolhe a torre ao criar na visão global): ADM e quem tem a torre Geral.
 function _okrPodeMudarTorre(){ return isAdmUser(window._currentUser) || _okrMinhaEhGeral(); }
 
-function okrGerenciaLabel(id){ return OKR_GERENCIAS_TODAS.find(g=>g.id===id)?.label || id || '—'; }
+function okrGerenciaLabel(id, torre){ return _okrGerenciaDe(id, torre)?.label || id || '—'; }
 
 
-function okrGerenciaIcon(id){ return OKR_GERENCIAS_TODAS.find(g=>g.id===id)?.icon || '🎯'; }
+function okrGerenciaIcon(id, torre){ return _okrGerenciaDe(id, torre)?.icon || '🎯'; }
 
 
 
@@ -2089,8 +2121,9 @@ function _okrProximaReuniaoDoBloco(bloco, hojeStr){
 
 function _okrBlocoInfoHtml(areaId, torre){
   if(torre && torre!=='digital') return '';   // os blocos quinzenais (CX/Tech/CRM etc.) são da torre Digital
+  if(!OKR_BLOCO_AREAS[1].includes(areaId) && !OKR_BLOCO_AREAS[2].includes(areaId)) return '';   // gerência criada depois (configurável) não tem bloco
   const bloco = _okrBlocoDaArea(areaId);
-  const areasDoBloco = OKR_BLOCO_AREAS[bloco].map(okrGerenciaLabel).join(', ');
+  const areasDoBloco = OKR_BLOCO_AREAS[bloco].map(a=>okrGerenciaLabel(a,'digital')).join(', ');
   const proxima = _okrProximaReuniaoDoBloco(bloco, todaySPStr());
   const dataFmt = proxima ? proxima.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'}) : '—';
   return `<div class="okr-field-label">🗓️ Bloco quinzenal de apresentação</div>
@@ -2228,6 +2261,7 @@ function loadOkr(){
     }
   });
   loadOkrTags();
+  loadOkrGerencias();
   loadOkrSnapshots();
   loadOkrAgenteChat();
   loadOkrReuniaoNotas();
@@ -2525,7 +2559,7 @@ function _okrHistGrupoDe(id, o){ return _okrHistGlobal() ? _okrHistTorreDe(id,o)
 function _okrHistGrupoLabel(k){ return _okrHistGlobal() ? okrTorreInfo(k).label : okrGerenciaLabel(k); }
 function _okrHistGrupoIcon(k){ return _okrHistGlobal() ? okrTorreInfo(k).icon : okrGerenciaIcon(k); }
 function _okrHistGrupoCor(k){ return _okrHistGlobal() ? 'rgb('+okrTorreInfo(k).rgb+')' : _okrHistCorGer(k); }
-function _okrHistGrupoPos(k){ return _okrHistGlobal() ? OKR_TORRES.findIndex(t=>t.id===k) : OKR_GERENCIAS_TODAS.findIndex(g=>g.id===k); }
+function _okrHistGrupoPos(k){ return _okrHistGlobal() ? OKR_TORRES.findIndex(t=>t.id===k) : okrGerenciasTodas().findIndex(g=>g.id===k); }
 // Sub-snapshot só com os Objetivos de UMA torre (mesma forma de _okrHistSnap, pra reaproveitar _okrHistMedia).
 function _okrHistSub(snap, torre){
   const objs = {}; Object.entries((snap&&snap.objetivos)||{}).forEach(([id,o])=>{ if((o.torre||_okrHistTorreDe(id,o))===torre) objs[id] = o; });
@@ -2673,7 +2707,7 @@ function renderOkrHistorico(){
       <div class="okr-h-filtros">
         <input type="text" class="pt-filter-input" id="okr-h-f-texto" placeholder="Buscar Objetivo…" value="${esc(_okrHistFiltro.texto)}" oninput="_okrHistFiltra('texto',this.value)">
         ${_okrHistGlobal()?`<select class="pt-filter-input" onchange="_okrHistFiltraTorre(this.value)" aria-label="Torre"><option value="">Todas as torres</option>${OKR_TORRES.map(t=>`<option value="${t.id}"${_okrHistFiltro.torre===t.id?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`:''}
-        ${(()=>{ const lg = _okrHistGlobal() ? (_okrHistFiltro.torre?okrGerenciasDa(_okrHistFiltro.torre):[]) : (_okrTorreValida(_okrTorreAtual)?okrGerenciasDa(_okrTorreAtual):OKR_GERENCIAS_TODAS); return (_okrHistGlobal() && lg.length<2) ? '' : `<select class="pt-filter-input" onchange="_okrHistFiltra('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${lg.map(g=>`<option value="${esc(g.id)}"${_okrHistFiltro.area===g.id?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>`; })()}
+        ${(()=>{ const lg = _okrHistGlobal() ? (_okrHistFiltro.torre?okrGerenciasDa(_okrHistFiltro.torre):[]) : (_okrTorreValida(_okrTorreAtual)?okrGerenciasDa(_okrTorreAtual,true):okrGerenciasTodas()); return (_okrHistGlobal() && lg.length<2) ? '' : `<select class="pt-filter-input" onchange="_okrHistFiltra('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${lg.map(g=>`<option value="${esc(g.id)}"${_okrHistFiltro.area===g.id?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>`; })()}
         <select class="pt-filter-input" onchange="_okrHistFiltra('status',this.value)" aria-label="Status"><option value="">Todos os status</option>${OKR_STATUS.map(s=>`<option value="${s.id}"${_okrHistFiltro.status===s.id?' selected':''}>${esc(s.label)}</option>`).join('')}</select>
         <select class="pt-filter-input" onchange="_okrHistFiltra('ordem',this.value)" aria-label="Ordenar por">${[['titulo','A–Z'],['alta','Maior alta'],['queda','Maior queda'],['pior','Pior status'],['pct','Maior progresso']].map(([v,l])=>`<option value="${v}"${_okrHistFiltro.ordem===v?' selected':''}>Ordenar: ${l}</option>`).join('')}</select>
       </div>
@@ -2765,7 +2799,7 @@ let _okrHistMChart = null;
 
 // 📈 Gráfico de linhas da janela: 1 linha por Objetivo (progresso por snapshot) + a MÉDIA em destaque no "meio" delas. Usa só os Objetivos que estão na conta
 // (chips) e na gerência escolhida — tirar um Objetivo some a linha dele e a média se recalcula.
-function _okrHistCorGer(g){ const i = Math.max(0, OKR_GERENCIAS_TODAS.findIndex(x=>x.id===g)); return 'hsl('+((i*57+200)%360)+',70%,62%)'; }
+function _okrHistCorGer(g){ const i = Math.max(0, okrGerenciasTodas().findIndex(x=>x.id===g)); return 'hsl('+((i*57+200)%360)+',70%,62%)'; }
 
 
 function _okrHistMediaChartHtml(inc, datas, largura){
@@ -3076,7 +3110,7 @@ function _okrHistMudancasRender(L, P, ant, ult){
       const det = m.tipo==='piorou'||m.tipo==='melhorou' ? `${okrStatusInfo(m.de).label} → <b>${esc(okrStatusInfo(m.para).label)}</b>${m.dp?` · ${m.dp>0?'+':''}${m.dp} pp`:''}`
         : m.tipo==='subiu'||m.tipo==='caiu' ? `${m.dp>0?'+':''}${m.dp} pp de progresso` : '';
       return `<div class="okr-h-mud ${m.tipo}" ${m.tipo==='saiu'?'':`role="button" tabindex="0" onclick="_okrHistoricoSelectObj(${jsq(m.id)},true)" onkeydown="if(event.key==='Enter')_okrHistoricoSelectObj(${jsq(m.id)},true)"`}>
-        <span class="okr-h-mud-ic">${ic}</span><div class="okr-h-mud-b"><div class="okr-h-mud-t">${_okrHistGlobal()?`<span class="okr-torre-chip okr-t-${m.torre}" title="Torre ${esc(okrTorreInfo(m.torre).label)}">${okrTorreInfo(m.torre).icon}</span> `:''}${okrGerenciaIcon(m.area)} ${esc(m.t||'(sem título)')}</div><div class="okr-h-mud-d"><span class="okr-h-mud-lb">${lb}</span>${det?' · '+det:''}</div></div></div>`;
+        <span class="okr-h-mud-ic">${ic}</span><div class="okr-h-mud-b"><div class="okr-h-mud-t">${_okrHistGlobal()?`<span class="okr-torre-chip okr-t-${m.torre}" title="Torre ${esc(okrTorreInfo(m.torre).label)}">${okrTorreInfo(m.torre).icon}</span> `:''}${okrGerenciaIcon(m.area, m.torre)} ${esc(m.t||'(sem título)')}</div><div class="okr-h-mud-d"><span class="okr-h-mud-lb">${lb}</span>${det?' · '+det:''}</div></div></div>`;
     }).join('')}</div>${ms.length>8?`<button type="button" class="btn btn-sm" style="margin-top:8px;font-size:11px;" onclick="_okrHistMudMais=!_okrHistMudMais;renderOkrHistorico()">${_okrHistMudMais?'Mostrar menos':'Ver todas as '+ms.length+' mudanças'}</button>`:''}`
     : `<div class="okr-h-vazio-t">Nenhuma mudança de status ou de progresso entre os dois últimos snapshots.</div>`}</div>`;
 }
@@ -3114,7 +3148,7 @@ function _okrHistTabelaRender(){
       const st = okrStatusInfo(r.o.status), aberto = _okrHistoricoObjId===r.id;
       const ating = r.o.atingimentoTipo ? `<span class="okr-h-ating" title="${esc(_okrAtingTipoLabel(r.o.atingimentoTipo))}">${_okrAtingTipoIco(r.o.atingimentoTipo)}</span>` : '';
       return cab + `<div class="okr-h-tr row${aberto?' aberto':''}" role="button" tabindex="0" aria-expanded="${aberto}" onclick="_okrHistoricoSelectObj(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistoricoSelectObj(${jsq(r.id)});}">
-        <span class="okr-h-tr-t"><span class="okr-h-seta">${aberto?'▾':'▸'}</span> ${okrGerenciaIcon(r.o.areaId)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> ${ating}</span>
+        <span class="okr-h-tr-t"><span class="okr-h-seta">${aberto?'▾':'▸'}</span> ${okrGerenciaIcon(r.o.areaId, r.o.torre)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> ${ating}</span>
         <span class="okr-h-st"><span class="okr-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
         <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
         <span>${r.dp===null?'<span class="okr-h-delta nada" title="Não estava no snapshot anterior">novo</span>':_okrHistDeltaHtml(r.dp,true,' pp')}</span>
@@ -3164,6 +3198,17 @@ function _okrHistDetalheHtml(objId){
 // muitos marcos). Nó próprio kanban/okr/tags/{id} = {label, colorIdx},
 // colorIdx indexa PT_PALETTE (mesma paleta já usada nas tags da Timeline). ──
 let okrTags = {};
+
+
+function loadOkrGerencias(){
+  window._onValue(window._ref(window._db,'kanban/okr/gerencias'), snap=>{
+    okrGerenciasCfg = snap.val() || {};
+    if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // seletores, agrupamento e rótulos dependem da lista
+    if(document.getElementById('okr-ger-ov')?.classList.contains('open')) renderOkrGerencias();
+    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
+    if(_okrShowHistorico) renderOkrHistorico();
+  }, ()=>{});   // sem permissão de leitura: segue com o padrão
+}
 
 
 function loadOkrTags(){
@@ -3754,13 +3799,16 @@ function renderOkrObjetivos(){
   const areaSel = document.getElementById('okr-filter-area');
   if(areaSel){
     // gerências são POR TORRE: refaz a lista ao trocar de torre; na visão global (várias listas) o filtro some — os Objetivos já vêm agrupados por torre
-    if(areaSel.dataset.torre !== _okrTorreAtual){
-      areaSel.dataset.torre = _okrTorreAtual;
+    // Filtro de gerência: as visíveis + as ocultas que ainda têm Objetivos (senão eles ficariam sem como filtrar) — e refaz as opções quando a lista muda.
+    const _listaGer = _okrTorreAtual==='global' ? [] : okrGerenciasDa(_okrTorreAtual, true).filter(g=>!g.oculta || _okrGerUsos(_okrTorreAtual, g.id)>0 || g.id===_okrFilter.area);
+    const _sigGer = _okrTorreAtual+'|'+_listaGer.map(g=>g.id+':'+g.label+':'+g.icon+':'+(g.oculta?1:0)).join(',');
+    if(areaSel.dataset.torre !== _sigGer){
+      areaSel.dataset.torre = _sigGer;
       areaSel.innerHTML = '<option value="">Todas as gerências</option>'
-        + (_okrTorreAtual==='global' ? '' : okrGerenciasDa(_okrTorreAtual).map(g=>`<option value="${g.id}">${g.icon} ${esc(g.label)}</option>`).join(''));
+        + _listaGer.map(g=>`<option value="${g.id}">${g.icon} ${esc(g.label)}${g.oculta?' (oculta)':''}</option>`).join('');
     }
     areaSel.value = _okrFilter.area;
-    areaSel.style.display = (_okrTorreAtual==='global' || okrGerenciasDa(_okrTorreAtual).length<=1) ? 'none' : '';
+    areaSel.style.display = (_okrTorreAtual==='global' || _listaGer.length<=1) ? 'none' : '';
   }
   const trimSel = document.getElementById('okr-filter-trimestre');
   if(trimSel){
@@ -3829,12 +3877,12 @@ function renderOkrObjetivos(){
   const secaoGerencias = (lista, torre)=>{
     const porArea = {};
     lista.forEach(o=>{ (porArea[o.areaId||'geral'] = porArea[o.areaId||'geral']||[]).push(o); });
-    const conhecidas = okrGerenciasDa(torre);
+    const conhecidas = okrGerenciasDa(torre, true);
     const ids = conhecidas.map(g=>g.id).filter(id=>porArea[id]?.length);
     Object.keys(porArea).forEach(id=>{ if(!ids.includes(id)) ids.push(id); });
     const podeReordenar = _okrCanCreate(torre) && !_okrShowArquivados && !_okrTemFiltroAtivo();
     return ids.map(id=>{
-      const g = conhecidas.find(x=>x.id===id) || {id, label:okrGerenciaLabel(id), icon:okrGerenciaIcon(id)};
+      const g = conhecidas.find(x=>x.id===id) || {id, label:okrGerenciaLabel(id, torre), icon:okrGerenciaIcon(id, torre)};
       const l = _okrObjetivosSorted(porArea[id]);
       return `
     <div class="sec-title" style="margin-top:16px;">${g.icon} ${esc(g.label)} <span class="badge">${l.length}</span></div>
@@ -3905,7 +3953,8 @@ function _okrRenderNav(){
   const el = document.getElementById('okr-torre-nav'); if(!el) return;
   const chip = (id, ico, label, rgb)=>`<button type="button" class="okr-tn${_okrTorreAtual===id?' on':''}" ${rgb?`style="--torre:${rgb}"`:''} onclick="_okrEntrarTorre(${jsq(id)})" aria-pressed="${_okrTorreAtual===id}">${ico} ${esc(label)}</button>`;
   el.innerHTML = `<button type="button" class="btn btn-sm" onclick="_okrEntrarTorre('')" style="font-size:11px;padding:5px 12px;" title="Voltar à tela inicial das torres">← Torres</button>`
-    + OKR_TORRES.map(t=>chip(t.id, t.icon, t.label, t.rgb)).join('') + chip('global','🔭','Visão global','140,165,190');
+    + OKR_TORRES.map(t=>chip(t.id, t.icon, t.label, t.rgb)).join('') + chip('global','🔭','Visão global','140,165,190')
+    + (_okrPodeEditarGerencias(_okrTorreAtual) ? `<button type="button" class="btn btn-sm" onclick="openOkrGerencias(${jsq(_okrTorreAtual)})" style="font-size:11px;padding:5px 12px;margin-left:auto;" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências</button>` : '');
 }
 
 
@@ -3934,6 +3983,112 @@ function _okrAplicarTorreModal(torre){
     OKR_TORRES.forEach(x=>m.classList.remove('okr-t-'+x.id)); m.classList.add('okr-t-'+t.id);
     const c = m.querySelector('.okr-modal-torre-chip'); if(c) c.textContent = t.icon+' '+t.label;
   });
+}
+
+
+// ═══ ⚙ Gerências da torre ═══════════════════════════════════════════════════════════════════════════════════
+// Quem pode: o mesmo que cria Objetivo na torre (ADM; PO/Organizador, 🎯 Gestor OKR e torre ⭐ Geral — esses só na torre deles/em todas).
+// Cada mudança é UMA transação em kanban/okr/gerencias/{torre} (duas pessoas editando juntas não se sobrescrevem); na 1ª, o padrão da torre é copiado pra lá.
+let _okrGerTorre = '';
+function _okrPodeEditarGerencias(torre){ return _okrTorreValida(torre) && _okrCanCreate(torre); }
+function _okrGerUsos(torre, id){ return Object.values(okrObjetivos).filter(o=>o && _okrTorreDe(o)===torre && (o.areaId||'geral')===id).length; }   // inclui arquivados
+async function _okrGerTx(torre, mutate){
+  let out = null;
+  const r = await window._runTransaction(window._ref(window._db,'kanban/okr/gerencias/'+torre), cur=>{
+    out = null;
+    let n = (cur && typeof cur==='object' && Object.keys(cur).length) ? JSON.parse(JSON.stringify(cur)) : null;
+    if(!n){ n = {}; OKR_GERENCIAS_POR_TORRE[torre].forEach((g,i)=>{ n[g.id] = {label:g.label, icon:g.icon, ordem:i}; }); }
+    if(mutate(n)===false) return;   // aborta
+    out = n; return n;
+  });
+  return (r && r.committed) ? out : null;
+}
+async function _okrGerAplicar(mutate, okMsg){
+  const torre = _okrGerTorre; if(!_okrPodeEditarGerencias(torre)){ showToast('⚠ Você não edita as gerências desta torre.'); return; }
+  let motivo = '';
+  const out = await _okrGerTx(torre, n=>{ const r = mutate(n); if(typeof r==='string'){ motivo = r; return false; } return r; });
+  if(!out){ if(motivo) showToast('⚠ '+motivo); renderOkrGerencias(); return; }
+  okrGerenciasCfg[torre] = out; renderOkrGerencias(); renderOkrObjetivos();
+  if(okMsg) showToast(okMsg);
+}
+function openOkrGerencias(torre){
+  if(!_okrPodeEditarGerencias(torre)){ showToast('⚠ Você não edita as gerências desta torre.'); return; }
+  _okrGerTorre = torre; document.getElementById('okr-ger-ov')?.classList.add('open'); renderOkrGerencias();
+}
+function closeOkrGerencias(){ document.getElementById('okr-ger-ov')?.classList.remove('open'); }
+document.addEventListener('keydown', e=>{ const ov = document.getElementById('okr-ger-ov'); if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrGerencias(); } }, true);
+function renderOkrGerencias(){
+  const body = document.getElementById('okr-ger-body'); if(!body) return;
+  const t = _okrGerTorre, ti = okrTorreInfo(t), lista = okrGerenciasDa(t, true), visiveis = lista.filter(g=>!g.oculta).length;
+  const tt = document.getElementById('okr-ger-title'); if(tt) tt.textContent = '⚙ Gerências — '+ti.icon+' Torre '+ti.label;
+  body.innerHTML = `
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">As gerências da <b>${esc(ti.label)}</b> aparecem nos seletores e agrupam os Objetivos da torre. <b>Gerência com Objetivos não é apagada</b> — fica <b>oculta</b> (some dos seletores de Objetivos novos; os que já estão nela continuam). Só dá pra excluir de vez uma gerência vazia.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">${lista.map((g,i)=>{
+      const n = _okrGerUsos(t, g.id);
+      return `<div class="okr-ger-row${g.oculta?' oculta':''}" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:9px;${g.oculta?'opacity:.6;':''}">
+        <input type="text" class="okr-input" value="${esc(g.icon)}" maxlength="4" style="width:46px;text-align:center;padding:5px 4px;" aria-label="Ícone" onchange="_okrGerIcone(${jsq(g.id)},this.value)">
+        <input type="text" class="okr-input" value="${esc(g.label)}" maxlength="40" style="flex:1;min-width:120px;padding:5px 8px;" aria-label="Nome da gerência" onchange="_okrGerRenomear(${jsq(g.id)},this.value)">
+        <span class="mut" style="font-size:11px;min-width:64px;text-align:right;" title="Objetivos (ativos e arquivados) nesta gerência">${n} Obj.${g.oculta?' · oculta':''}</span>
+        <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===0?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},-1)" title="Subir">▲</button>
+        <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===lista.length-1?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},1)" title="Descer">▼</button>
+        <button type="button" class="btn btn-sm" style="padding:3px 8px;font-size:11px;" onclick="_okrGerOcultar(${jsq(g.id)},${g.oculta?'false':'true'})" title="${g.oculta?'Voltar a aparecer nos seletores':'Esconder dos seletores de Objetivos novos'}">${g.oculta?'👁 Mostrar':'🙈 Ocultar'}</button>
+        <button type="button" class="btn btn-sm" style="padding:3px 7px;color:var(--danger);" ${n>0||lista.length<=1?'disabled':''} onclick="_okrGerExcluir(${jsq(g.id)})" title="${n>0?'Tem Objetivos — só dá pra ocultar':'Excluir gerência vazia'}">🗑</button>
+      </div>`; }).join('')}</div>
+    <div class="okr-field-label" style="margin-top:14px;">Nova gerência</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+      <input type="text" class="okr-input" id="okr-ger-novo-icone" placeholder="🧭" maxlength="4" style="width:56px;text-align:center;">
+      <input type="text" class="okr-input" id="okr-ger-novo-nome" placeholder="Ex.: Lojas, Atacado, Financeiro…" maxlength="40" style="flex:1;min-width:160px;" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrGerNova();}">
+      <button type="button" class="btn btn-sm" onclick="_okrGerNova()" style="background:var(--accent);color:#031a2e;font-weight:700;">+ Adicionar</button>
+    </div>`;
+}
+const _okrGerIconeOk = v=>Array.from(String(v||'').trim()).slice(0,2).join('') || '🧭';
+function _okrGerRenomear(id, v){
+  const nome = String(v||'').trim().slice(0,40);
+  _okrGerAplicar(n=>{
+    if(!n[id]) return 'Essa gerência não existe mais.';
+    if(!nome) return 'O nome da gerência não pode ficar vazio.';
+    if(Object.keys(n).some(k=>k!==id && String(n[k].label||'').toLowerCase()===nome.toLowerCase())) return 'Já existe uma gerência com esse nome nesta torre.';
+    n[id].label = nome;
+  }, '✅ Gerência renomeada.');
+}
+function _okrGerIcone(id, v){ _okrGerAplicar(n=>{ if(!n[id]) return 'Essa gerência não existe mais.'; n[id].icon = _okrGerIconeOk(v); }); }
+function _okrGerMover(id, dir){
+  _okrGerAplicar(n=>{
+    const ordem = Object.keys(n).sort((a,b)=>(Number(n[a].ordem)||0)-(Number(n[b].ordem)||0)); const i = ordem.indexOf(id), j = i+dir;
+    if(i<0 || j<0 || j>=ordem.length) return false;
+    [ordem[i], ordem[j]] = [ordem[j], ordem[i]]; ordem.forEach((k,x)=>{ n[k].ordem = x; });
+  });
+}
+function _okrGerOcultar(id, oculta){
+  _okrGerAplicar(n=>{
+    if(!n[id]) return 'Essa gerência não existe mais.';
+    if(oculta && Object.keys(n).filter(k=>k!==id && !n[k].oculta).length<1) return 'A torre precisa ter ao menos uma gerência visível.';
+    if(oculta) n[id].oculta = true; else delete n[id].oculta;
+  }, oculta ? '🙈 Gerência oculta dos seletores (os Objetivos dela continuam nela).' : '👁 Gerência visível de novo.');
+}
+function _okrGerExcluir(id){
+  const t = _okrGerTorre, nUso = _okrGerUsos(t, id);
+  if(nUso>0){ showToast('⚠ Essa gerência tem '+nUso+' Objetivo(s) — só dá pra ocultar.'); return; }
+  uiConfirm('Excluir esta gerência vazia?', {danger:true, okText:'Excluir'}).then(okc=>{
+    if(!okc) return;
+    _okrGerAplicar(n=>{
+      if(!n[id]) return 'Essa gerência não existe mais.';
+      if(Object.keys(n).length<=1) return 'A torre precisa ter ao menos uma gerência.';
+      if(_okrGerUsos(t, id)>0) return 'Essa gerência ganhou Objetivos agora — só dá pra ocultar.';
+      delete n[id];
+      if(!Object.keys(n).some(k=>!n[k].oculta)) return 'A torre precisa ter ao menos uma gerência visível.';
+    }, '🗑 Gerência excluída.');
+  });
+}
+function _okrGerNova(){
+  const nome = String(document.getElementById('okr-ger-novo-nome')?.value||'').trim().slice(0,40), icone = _okrGerIconeOk(document.getElementById('okr-ger-novo-icone')?.value);
+  if(!nome){ showToast('Dê um nome pra gerência.'); return; }
+  const id = 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,4);
+  _okrGerAplicar(n=>{
+    if(Object.keys(n).some(k=>String(n[k].label||'').toLowerCase()===nome.toLowerCase())) return 'Já existe uma gerência com esse nome nesta torre.';
+    const max = Math.max(-1, ...Object.keys(n).map(k=>Number(n[k].ordem)||0));
+    n[id] = {label:nome, icon:icone, ordem:max+1};
+  }, '✅ Gerência criada.').then(()=>{ const i = document.getElementById('okr-ger-novo-nome'); if(i) i.value=''; });
 }
 
 
@@ -4534,7 +4689,7 @@ function _okrHistWho(){ return window._currentUser?.displayName || window._curre
 
 function _okrHistValObj(field, val){
   if(val==null||val==='') return '—';
-  if(field==='areaId') return okrGerenciaLabel(val);
+  if(field==='areaId') return okrGerenciaLabel(val, _okrObjDraft ? _okrTorreDe(_okrObjDraft) : undefined);
   if(field==='torre') return okrTorreInfo(val).label;
   if(typeof val==='string' && val.length>40) return val.substring(0,40)+'…';
   return String(val);
@@ -5780,7 +5935,7 @@ function renderOkrObjBody(id){
   if(!podeEditar){
     body.innerHTML = `
       <div class="okr-field-label">Torre / Gerência / Trimestre</div>
-      <div style="font-size:12px;color:var(--txt2);"><span class="okr-torre-chip">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> ${okrGerenciaIcon(d.areaId)} ${esc(okrGerenciaLabel(d.areaId))} ${_okrTrimestresOf(d).length?'· '+_okrTrimestresOf(d).map(esc).join(', '):''}</div>
+      <div style="font-size:12px;color:var(--txt2);"><span class="okr-torre-chip">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> ${okrGerenciaIcon(d.areaId, _okrTorreDe(d))} ${esc(okrGerenciaLabel(d.areaId, _okrTorreDe(d)))} ${_okrTrimestresOf(d).length?'· '+_okrTrimestresOf(d).map(esc).join(', '):''}</div>
       ${_okrBlocoInfoHtml(d.areaId, _okrTorreDe(d))}
       ${_okrAtingSectionHtml(false)}
       ${d.pilar?`<div class="okr-field-label">Pilar Estratégico</div><div style="font-size:12px;color:var(--txt2);">${esc(d.pilar)}</div>`:''}
@@ -5812,7 +5967,7 @@ function renderOkrObjBody(id){
   body.innerHTML = `
     <div class="okr-recap">
       <div style="font-size:12px;color:var(--txt2);line-height:1.6;">
-        ${okrGerenciaIcon(d.areaId)} ${esc(okrGerenciaLabel(d.areaId))}${_okrTrimestresOf(d).length?' · '+_okrTrimestresOf(d).map(esc).join(', '):''}${d.pilar?' · '+esc(d.pilar):''}
+        ${okrGerenciaIcon(d.areaId, _okrTorreDe(d))} ${esc(okrGerenciaLabel(d.areaId, _okrTorreDe(d)))}${_okrTrimestresOf(d).length?' · '+_okrTrimestresOf(d).map(esc).join(', '):''}${d.pilar?' · '+esc(d.pilar):''}
         ${(d.responsaveis||[]).length?`<br>👤 ${(d.responsaveis||[]).map(uid=>esc(_okrPessoaInfo(uid).nome)).join(', ')}`:''}
       </div>
       <button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;flex-shrink:0;" onclick="openOkrConfig()">⚙ Configurações</button>
@@ -5871,7 +6026,7 @@ function renderOkrObjConfigBody(){
       ? `<select class="okr-select" id="okr-f-torre" onchange="_okrMudarTorreDraft(this.value)">${OKR_TORRES.map(t=>`<option value="${t.id}"${t.id===_okrTorreDe(d)?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`
       : `<div><span class="okr-torre-chip okr-t-${_okrTorreDe(d)}">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> <span style="font-size:10px;color:var(--txt3);">só um ADM (ou quem tem a torre Geral) muda a torre de um Objetivo</span></div>`}
     <div class="okr-field-label">Gerência</div>
-    <select class="okr-select" id="okr-f-area" onchange="_okrSyncObjDraftFromDom();renderOkrObjConfigBody();">${okrGerenciasDa(_okrTorreDe(d)).map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}${okrGerenciasDa(_okrTorreDe(d)).some(g=>g.id===d.areaId)?'':`<option value="${esc(d.areaId||'')}" selected>${esc(okrGerenciaLabel(d.areaId))} (fora da lista)</option>`}</select>
+    <select class="okr-select" id="okr-f-area" onchange="_okrSyncObjDraftFromDom();renderOkrObjConfigBody();">${okrGerenciasDa(_okrTorreDe(d)).map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}${okrGerenciasDa(_okrTorreDe(d)).some(g=>g.id===d.areaId)?'':`<option value="${esc(d.areaId||'')}" selected>${esc(okrGerenciaLabel(d.areaId, _okrTorreDe(d)))} (${okrGerenciasDa(_okrTorreDe(d), true).some(g=>g.id===d.areaId)?'oculta':'fora da lista'})</option>`}</select>
     ${_okrBlocoInfoHtml(d.areaId, _okrTorreDe(d))}
     ${_okrListEditorHtml('trimestres','Trimestre(s) / Período(s)','Ex.: 2T, 3T, 1S27…')}
     <div class="okr-field-label">Pilar Estratégico</div>
