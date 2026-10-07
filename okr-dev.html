@@ -1412,7 +1412,7 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">📅 Calendário</b><br>
-          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências e Objetivos</b>: o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. No celular a visão abre como <b>Agenda</b>.
+          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag): o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. No celular a visão abre como <b>Agenda</b>.
         </div>
         <div>
           <b style="color:var(--txt);">📢 Mural do OKR</b><br>
@@ -1740,7 +1740,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.26 · okr-dev</div>
+<div class="version">v2.27 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4775,7 +4775,7 @@ const OKR_CAL_REC = [
 ];
 const OKR_CAL_DOW = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'], OKR_CAL_DOW_S = ['dom','seg','ter','qua','qui','sex','sáb'];
 let okrEventos = {}, _okrCalLoaded = false;
-let _okrShowCal = false, _okrCalMes = null, _okrCalSel = null, _okrCalTorreF = null, _okrCalAgendaDias = 60, _okrCalIncluiGlobal = true;   // filtro: '' = todas as agendas · 'global' = só a global · id da torre = a local dela (+ a global, se _okrCalIncluiGlobal)
+let _okrShowCal = false, _okrCalMes = null, _okrCalSel = null, _okrCalTorreF = null, _okrCalAgendaDias = 60, _okrCalIncluiGlobal = true, _okrCalTagF = '';   // filtro: '' = todas as agendas · 'global' = só a global · id da torre = a local dela (+ a global, se _okrCalIncluiGlobal)
 let _okrCalVista = (()=>{ try{ const v = localStorage.getItem('okr_cal_vista'); if(v==='mes'||v==='agenda') return v; }catch(e){} return (window.innerWidth<760) ? 'agenda' : 'mes'; })();
 
 // ── datas (tudo em string local 'YYYY-MM-DD'; nada de UTC pra não "pular" de dia) ──
@@ -4831,14 +4831,16 @@ function _okrCalPodeCriar(torre){
   return !!torre && _okrTorreValida(torre) && _okrCanCreate(torre);   // "todas as torres" só ADM
 }
 function _okrCalPodeEditar(ev){ return !!ev && _okrCalPodeCriar(ev.torre||''); }
-// O evento diz respeito a este Objetivo? Vínculo explícito vence; senão vale a torre/gerência (reunião sem recorte = a torre toda; evento/lembrete só se vinculado).
+// O evento diz respeito a este Objetivo? Vínculo explícito vence (em qualquer torre); senão, dentro da torre do evento (global = todas), vale o recorte: TAGS (o Objetivo
+// tem alguma) ou GERÊNCIAS (está numa) — uma OU a outra. Com algum recorte (Objetivos/tags/gerências) e nenhum acerto = fora (não vira "a torre toda").
+// Sem recorte nenhum: reunião = a torre toda; evento/lembrete só se vinculado. Espelho: functions/okr/calendario.js (abrange).
 function _okrCalAbrange(ev, o, oid){
-  const id = oid || o.id, ids = _okrCalLista(ev.objetivoIds);
+  const id = oid || o.id, ids = _okrCalLista(ev.objetivoIds), tags = _okrCalLista(ev.tagIds), areas = _okrCalLista(ev.areaIds);
   if(ids.includes(id)) return 'vinculo';
-  if(ids.length) return '';
   if(ev.torre && ev.torre!==_okrTorreDe(o)) return '';
-  const areas = _okrCalLista(ev.areaIds);
-  if(areas.length) return areas.includes(o.areaId||'geral') ? 'gerencia' : '';
+  if(tags.length && _okrCalLista(o.tagIds).some(t=>tags.includes(t))) return 'tag';
+  if(areas.length && areas.includes(o.areaId||'geral')) return 'gerencia';
+  if(ids.length || tags.length || areas.length) return '';
   return ev.tipo==='reuniao' ? 'torre' : '';
 }
 function _okrCalProximasDoObjetivo(o, n, dias, oid){
@@ -4863,11 +4865,8 @@ function _okrCalCardChip(o){
 
 // ── pauta sugerida (a parte "inteligente"): quem merece a conversa nesta reunião ──
 function _okrCalPauta(ev, dataOc){
-  const ids = _okrCalLista(ev.objetivoIds);
-  let objs;
-  if(ids.length) objs = ids.map(id=>okrObjetivos[id]).filter(o=>o && !o.arquivado);
-  else if(ev.tipo!=='reuniao') objs = [];
-  else objs = Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrCalAbrange(ev, o));
+  // mesma regra do escopo do Objetivo (vínculo, tag ou gerência; reunião sem recorte = a torre toda) — assim a pauta, o selo e os avisos concordam
+  const objs = Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrCalAbrange(ev, o));
   const hoje = todaySPStr(), ref = (dataOc && dataOc>hoje) ? dataOc : hoje, lim = _calSomaDias(ref, 7);
   return objs.map(o=>{
     const st = _okrObjStatus(o.id), marcos = _okrObjMarcos(o.id).filter(m=>m.progresso!=='concluido'), flags = [];
@@ -4889,6 +4888,7 @@ function _okrCalPauta(ev, dataOc){
 
 // ── itens do calendário num intervalo (eventos expandidos + prazos de Marcos) ──
 function _okrCalTorreFiltro(){ return _okrCalTorreF!==null ? _okrCalTorreF : (_okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : ''); }
+function _okrCalSetTag(v){ _okrCalTagF = okrTags[v] ? v : ''; renderOkrCalendario(); }
 function _okrCalSetGlobal(v){ _okrCalIncluiGlobal = !!v; renderOkrCalendario(); }
 // Filtro de agenda: '' = tudo · 'global' = só a global · torre = a local dela (+ a global, se marcado).
 function _okrCalVisivel(ev, torreF){
@@ -4903,12 +4903,14 @@ function _okrCalItens(de, ate, torreF){
   const out = [];
   Object.values(okrEventos).forEach(ev=>{
     if(!ev || !ev.id || !_okrCalVisivel(ev, torreF)) return;
+    if(_okrCalTagF && !_okrCalLista(ev.tagIds).includes(_okrCalTagF)) return;
     _okrCalOcorrencias(ev, de, ate).forEach(d=>out.push({k:'ev', ev, data:d, hi:ev.diaInteiro ? '' : (ev.hi||''), torre:ev.torre||''}));
   });
   Object.values(okrMarcos).forEach(m=>{
     if(!m || m.arquivado || !m.prazo || m.progresso==='concluido' || m.prazo<de || m.prazo>ate) return;
     const o = okrObjetivos[m.objetivoId]; if(!o || o.arquivado) return;
     const t = _okrTorreDe(o); if(torreF==='global' || (torreF && t!==torreF)) return;   // prazo de Marco é sempre de uma torre
+    if(_okrCalTagF && !_okrCalLista(o.tagIds).includes(_okrCalTagF)) return;   // filtro por tag: o Marco entra pela tag do Objetivo dele
     out.push({k:'prazo', m, o, data:m.prazo, hi:'', torre:t});
   });
   out.sort((a,b)=>a.data.localeCompare(b.data) || (a.k===b.k ? 0 : (a.k==='ev' ? -1 : 1)) || String(a.hi).localeCompare(String(b.hi)));
@@ -4929,7 +4931,7 @@ function _okrAbrirEvento(id, data){
   if(!_okrCalLoaded){ _okrCalPendente = {id, data}; return; }   // chega quando o calendário carregar
   const ev = okrEventos[id]; if(!ev){ showToast('⚠ Esse evento não existe mais — pode ter sido cancelado.'); return; }
   const d = /^\d{4}-\d{2}-\d{2}$/.test(data||'') ? data : _okrCalProxData(ev), t = _calParse(d);
-  _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = d; _okrCalTorreF = ''; 
+  _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = d; _okrCalTorreF = ''; _okrCalTagF = '';
   _okrSetView('calendario'); openOkrEvento(id, d);
 }
 let _okrCalPendente = null;
@@ -4957,7 +4959,7 @@ function _okrCalItemHtml(it, comData){
       <div><div class="tt">◆ ${esc(it.m.nome||'Marco')}</div><div class="sb">Prazo do Marco · 🎯 ${esc(it.o.titulo||'')}</div></div></div>`;
   }
   const ev = it.ev, tp = OKR_CAL_TIPOS[ev.tipo] || OKR_CAL_TIPOS.evento, ti = ev.torre ? okrTorreInfo(ev.torre) : null;
-  const sub = [ti ? ti.icon+' '+_okrCalAgendaNome(ev.torre) : '🌐 Agenda global (todas as torres)', _okrCalRecNorm(ev) ? '↻ '+_okrCalRecTexto(ev) : '', ev.local||''].filter(Boolean).join(' · ');
+  const sub = [ti ? ti.icon+' '+_okrCalAgendaNome(ev.torre) : '🌐 Agenda global (todas as torres)', _okrCalRecNorm(ev) ? '↻ '+_okrCalRecTexto(ev) : '', ev.local||'', _okrCalLista(ev.tagIds).filter(t=>okrTags[t]).map(t=>'🏷️ '+okrTags[t].label).join(' ')].filter(Boolean).join(' · ');
   return `<div class="okr-cal-item ${torreCls}" onclick="openOkrEvento(${jsq(ev.id)},${jsq(it.data)})"><div class="hr">${comData?esc(_okrCalDataBR(it.data,true))+'<br>':''}${esc(_okrCalHoraTxt(ev))}</div>
     <div><div class="tt">${tp.ico} ${esc(ev.titulo||'(sem título)')}</div><div class="sb">${esc(sub)}</div></div></div>`;
 }
@@ -4977,6 +4979,7 @@ function renderOkrCalendario(){
       <select class="pt-filter-input" onchange="_okrCalSetTorre(this.value)" title="Filtra por torre" aria-label="Torre">
         <option value=""${torreF===''?' selected':''}>📅 Todas as agendas</option><option value="global"${torreF==='global'?' selected':''}>🌐 Agenda global</option>${OKR_TORRES.map(t=>`<option value="${t.id}"${torreF===t.id?' selected':''}>${t.icon} Agenda ${esc(t.label)}</option>`).join('')}</select>
       ${_okrTorreValida(torreF)?`<label class="okr-cal-gl" title="Mostra junto os eventos da agenda global (que envolvem todas as torres)"><input type="checkbox" ${_okrCalIncluiGlobal?'checked':''} onchange="_okrCalSetGlobal(this.checked)"> + global</label>`:''}
+      ${Object.keys(okrTags).length?`<select class="pt-filter-input" onchange="_okrCalSetTag(this.value)" title="Filtra por tag (eventos com a tag e prazos de Marcos de Objetivos com a tag)" aria-label="Tag"><option value="">🏷️ Todas as tags</option>${Object.entries(okrTags).sort((a,b)=>String(a[1].label||'').localeCompare(String(b[1].label||''))).map(([id,t])=>`<option value="${esc(id)}"${_okrCalTagF===id?' selected':''}>🏷️ ${esc(t.label||'')}</option>`).join('')}</select>`:''}
       <span style="flex:1;"></span>
       ${podeCriar?`<button type="button" class="btn btn-p btn-sm" onclick="openOkrEventoEditor(null)">+ Novo evento</button>`:''}
     </div>`;
@@ -5127,11 +5130,12 @@ function renderOkrEventoDetalhe(){
     <div class="okr-evd-quando">🗓️ ${esc(_calParse(_okrEvdData).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}${_okrCalHoraTxt(ev)?' · '+esc(_okrCalHoraTxt(ev)):''}</div>
     ${_okrCalRecNorm(ev)?`<div class="okr-evd-linha">↻ Repete ${esc(_okrCalRecTexto(ev))}</div>`:''}
     <div class="okr-evd-linha">${ti?`<span class="okr-torre-chip okr-t-${ti.id}">${ti.icon} ${esc(_okrCalAgendaNome(ev.torre))}</span>`:'<span class="okr-torre-chip okr-t-todas">🌐 Agenda global · todas as torres</span>'}${areas.map(a=>` <span class="badge">${esc(a)}</span>`).join('')}</div>
+    ${_okrCalLista(ev.tagIds).filter(t=>okrTags[t]).length?`<div class="okr-evd-linha" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">🏷️ ${_okrCalLista(ev.tagIds).map(t=>_okrTagChipHtml(t)).join('')}</div>`:''}
     ${ev.local?`<div class="okr-evd-linha">📍 ${esc(ev.local)}</div>`:''}
     ${link?`<div class="okr-evd-linha">🔗 <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${esc(link.length>60?link.slice(0,58)+'…':link)}</a></div>`:''}
     ${_okrCalLista(ev.convidados).length?`<div class="okr-field-label" style="margin-top:10px;">👥 Convidados</div><div class="okr-evd-pessoas">${_okrCalLista(ev.convidados).map(u=>_okrCalPessoaChip(u,false)).join('')}</div>`:''}
     ${ev.descricao?`<div class="okr-evd-desc">${esc(ev.descricao).replace(/\n/g,'<br>')}</div>`:''}
-    ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
+    ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length&&!_okrCalLista(ev.tagIds).length&&!_okrCalLista(ev.areaIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
       ${vis.map(p=>`<div class="okr-cal-pauta-row" onclick="closeOkrEvento();openOkrObjetivo(${jsq(p.o.id)})" title="Abrir o Objetivo">${okrStatusDot(p.st)}<span style="flex:1;min-width:0;">${esc(p.o.titulo||'(sem título)')}</span>${p.flags.map(f=>`<span class="okr-cal-flag${f.w?' w':''}">${esc(f.t)}</span>`).join('')}</div>`).join('')}
       ${pauta.length>vis.length?`<button type="button" class="btn btn-sm" style="margin-top:4px;" onclick="_okrEvdPautaTodos=true;renderOkrEventoDetalhe()">Mostrar todos (${pauta.length})</button>`:''}`:''}
     ${_okrEvdNotasHtml(ev)}
@@ -5190,8 +5194,8 @@ function openOkrEventoEditor(id, dataPadrao){
   const rn = ev ? _okrCalRecNorm(ev) : null, pre = rn && OKR_CAL_REC.find(x=>x.id===rn.tipo && x.unidade===rn.unidade && x.intervalo===rn.intervalo);
   _okrEvEditId = id || null;
   _okrEvDraft = ev ? { ...JSON.parse(JSON.stringify(ev)), areaIds:_okrCalLista(ev.areaIds), objetivoIds:_okrCalLista(ev.objetivoIds) }
-    : { tipo:'reuniao', titulo:'', data:dataPadrao || _okrCalSel || todaySPStr(), diaInteiro:false, hi:'10:00', hf:'11:00', torre, areaIds:[], objetivoIds:[], convidados:[], local:'', link:'', descricao:'' };
-  _okrEvDraft.convidados = _okrCalLista(_okrEvDraft.convidados);
+    : { tipo:'reuniao', titulo:'', data:dataPadrao || _okrCalSel || todaySPStr(), diaInteiro:false, hi:'10:00', hf:'11:00', torre, areaIds:[], objetivoIds:[], tagIds:[], convidados:[], local:'', link:'', descricao:'' };
+  _okrEvDraft.convidados = _okrCalLista(_okrEvDraft.convidados); _okrEvDraft.tagIds = _okrCalLista(_okrEvDraft.tagIds);
   { const l = (ev && ev.lembrar) || {}; _okrEvDraft._lvesp = l.vespera!==undefined ? !!l.vespera : true; _okrEvDraft._ldia = l.dia!==undefined ? !!l.dia : true; _okrEvDraft._avisar = true; }
   _okrEvDraft._recTipo = rn ? (pre ? pre.id : 'personalizada') : 'nenhuma';
   _okrEvDraft._recN = rn ? rn.intervalo : 1; _okrEvDraft._recU = rn ? rn.unidade : 'semana'; _okrEvDraft._recAte = rn ? rn.ate : '';
@@ -5209,6 +5213,7 @@ function _okrEvSync(){
   d._recTipo = g('okr-ev-rec').value; if(g('okr-ev-recn')){ d._recN = g('okr-ev-recn').value; d._recU = g('okr-ev-recu').value; } d._recAte = g('okr-ev-recate') ? g('okr-ev-recate').value : '';
 }
 function _okrEvRerender(){ _okrEvSync(); const d = _okrEvDraft; const ok = new Set(d.torre ? okrGerenciasDa(d.torre).map(x=>x.id) : []); d.areaIds = d.areaIds.filter(a=>ok.has(a)); renderOkrEventoEditor(); }
+function _okrEvToggleTag(id){ _okrEvSync(); const d = _okrEvDraft, i = d.tagIds.indexOf(id); if(i>=0) d.tagIds.splice(i,1); else d.tagIds.push(id); renderOkrEventoEditor(); }
 function _okrEvAddConv(uid){ _okrEvSync(); const d = _okrEvDraft; if(uid && !d.convidados.includes(uid)) d.convidados.push(uid); renderOkrEventoEditor(); }
 function _okrEvDelConv(uid){ _okrEvSync(); const d = _okrEvDraft; d.convidados = d.convidados.filter(x=>x!==uid); renderOkrEventoEditor(); }
 function _okrEvToggleArea(a){ _okrEvSync(); const d = _okrEvDraft, i = d.areaIds.indexOf(a); if(i>=0) d.areaIds.splice(i,1); else d.areaIds.push(a); renderOkrEventoEditor(); }
@@ -5245,8 +5250,11 @@ function renderOkrEventoEditor(){
     ${rec?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;"><span style="font-size:12px;color:var(--txt2);">Termina em</span><input type="date" class="okr-input" id="okr-ev-recate" value="${esc(d._recAte||'')}" style="width:160px;"><span class="mut" style="font-size:11px;">(vazio = sem fim) · mudanças valem pra toda a série</span></div>`:''}
     <div class="okr-field-label" style="margin-top:12px;">Agenda <span class="mut" style="text-transform:none;letter-spacing:0;">(global = todas as torres, só ADM · local = só a torre)</span></div>
     <select class="okr-select" id="okr-ev-torre" onchange="_okrEvRerender()">${torres.map(t=>`<option value="${t.id}"${d.torre===t.id?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>
-    ${d.torre?`<div class="okr-field-label" style="margin-top:10px;">Gerências <span class="mut" style="text-transform:none;letter-spacing:0;">(nenhuma marcada = a torre toda)</span></div>
+    ${d.torre?`<div class="okr-field-label" style="margin-top:10px;">Gerências <span class="mut" style="text-transform:none;letter-spacing:0;">(nenhuma marcada = a torre toda; com tags, vale uma OU a outra)</span></div>
       <div style="display:flex;flex-wrap:wrap;gap:6px;">${okrGerenciasDa(d.torre).map(g=>`<button type="button" class="okr-ev-chip${d.areaIds.includes(g.id)?' on':''}" onclick="_okrEvToggleArea(${jsq(g.id)})">${g.icon} ${esc(g.label)}</button>`).join('')}</div>`:''}
+    <div class="okr-field-label" style="margin-top:12px;">🏷️ Tags <span class="mut" style="text-transform:none;letter-spacing:0;">(opcional — os Objetivos com essas tags entram na pauta, nas próximas reuniões deles e nos avisos)</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${Object.keys(okrTags).length ? Object.entries(okrTags).sort((a,b)=>String(a[1].label||'').localeCompare(String(b[1].label||''))).map(([id])=>_okrTagChipHtml(id,false,'',`_okrEvToggleTag(${jsq(id)})`,d.tagIds.includes(id))).join('') : '<span class="mut" style="font-size:11px;">Ainda não há tags — crie em ⚙ Configurações de um Objetivo.</span>'}</div>
+    ${d.tagIds.some(t=>!okrTags[t])?'<div class="mut" style="font-size:10.5px;margin-top:4px;">Há uma tag que foi apagada neste evento — desmarque pra limpar.</div>':''}
     <div class="okr-field-label" style="margin-top:12px;">Objetivos vinculados <span class="mut" style="text-transform:none;letter-spacing:0;">(opcional — vira a pauta e aparece no Objetivo)</span></div>
     <input type="text" class="okr-input" id="okr-ev-objq" placeholder="🔎 Buscar Objetivo…" oninput="_okrEvRenderObjList()" style="margin-bottom:6px;">
     <div id="okr-ev-objlist" class="okr-ev-objlist"></div>
@@ -5289,7 +5297,7 @@ async function saveOkrEvento(){
   }
   const ts = new Date().toISOString(), id = _okrEvEditId || ('ev'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
   const ev = { id, titulo, tipo:d.tipo, data:d.data, diaInteiro:!!d.diaInteiro, hi:d.diaInteiro?'':(d.hi||''), hf:d.diaInteiro?'':(d.hf||''), torre:d.torre||'',
-    areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), convidados:d.convidados.slice(), lembrar:{vespera:!!d._lvesp, dia:!!d._ldia}, local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
+    areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), tagIds:d.tagIds.slice(), convidados:d.convidados.slice(), lembrar:{vespera:!!d._lvesp, dia:!!d._ldia}, local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
     excecoes:(antigo && antigo.excecoes) || {}, criadoPor:(antigo && antigo.criadoPor) || {uid:u.uid, nome:u.displayName||u.email||'?'}, criadoEm:(antigo && antigo.criadoEm) || ts, atualizadoEm:ts };
   try{
     await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+id), ev);

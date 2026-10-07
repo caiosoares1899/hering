@@ -44,15 +44,17 @@ function ocorrencias(ev, de, ate) {
   return out;
 }
 
-// O evento diz respeito a este Objetivo? Vínculo explícito vence; senão vale a torre/gerência (reunião sem recorte = a torre toda; evento/lembrete só se vinculado).
+// O evento diz respeito a este Objetivo? Vínculo explícito vence (vale em qualquer torre); senão, dentro da torre do evento (global = todas), vale o recorte:
+// TAGS (Objetivo com alguma das tags) ou GERÊNCIAS (Objetivo numa delas) — um OU o outro. Com algum recorte (Objetivos/tags/gerências) e nenhum acerto = fora.
+// Sem nenhum recorte: reunião = a torre toda; evento/lembrete só se vinculado.
 function abrange(ev, o) {
-  const ids = lista(ev.objetivoIds);
+  const ids = lista(ev.objetivoIds), tags = lista(ev.tagIds), areas = lista(ev.areaIds);
   if (ids.includes(o.id)) return 'vinculo';
-  if (ids.length) return '';
   const torre = o.torre || 'digital';
   if (ev.torre && ev.torre !== torre) return '';
-  const areas = lista(ev.areaIds);
-  if (areas.length) return areas.includes(o.areaId || 'geral') ? 'gerencia' : '';
+  if (tags.length && lista(o.tagIds).some((t) => tags.includes(t))) return 'tag';
+  if (areas.length && areas.includes(o.areaId || 'geral')) return 'gerencia';
+  if (ids.length || tags.length || areas.length) return '';
   return ev.tipo === 'reuniao' ? 'torre' : '';
 }
 
