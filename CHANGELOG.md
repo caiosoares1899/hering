@@ -20734,6 +20734,15 @@ Rodada de auditoria em tudo que foi feito hoje no OKR (trava, visualizadores, ge
 
 Reportado, não corrigido: apagar um evento deixa as anotações pós-reunião e vínculos dele órfãos no banco (só o "↩ Voltar ao bloco fixo" apaga junto) — apagar anotações é destrutivo, fica como decisão de produto.
 
+
+### okr-dev.html v2.32 · okr-dev — 2026-10-07 · /monitorarbugs (2ª rodada) do editor de eventos e dos diálogos
+
+Segunda rodada no calendário, agora no que acontece com rede lenta e janelas empilhadas. 3 achados reais, reproduzidos no Chromium (com atraso de 400 ms nas gravações) antes de corrigir.
+
+1. **Duplo clique em "💾 Salvar" criava 2 eventos e 2 avisos no sino.** Evento novo gera um id novo a cada chamada e a gravação é assíncrona — o clique repetido (ou Enter) passava de novo antes de o editor fechar. Agora há trava "salvando" (`_okrEvSalvando`). Mesma lição de 06/10 (`_okrAtingQuickSalvar`) e do 📢 Publicar.
+2. **Esc com um diálogo aberto fechava a janela de trás.** Em "Excluir → Só esta / Toda a série" (e nos `uiConfirm`/`uiAviso` do OKR), o Esc fechava o detalhe/editor por baixo e deixava o diálogo órfão na tela. Agora o Esc fecha só o diálogo (`_uiEscFecha`, ouvinte na `window` em captura).
+3. **Salvar um editor aberto sobre um evento apagado por outra pessoa o ressuscitava em silêncio** (com aviso de "nova reunião" no sino). Agora avisa "foi excluído por outra pessoa enquanto você editava — nada foi salvo" e fecha o editor.
+
 ### okr-dev.html v2.29 · okr-dev — 2026-10-07 · 🧭 cabeçalho do OKR reorganizado (menos poluído, com hierarquia e divisões)
 
 Relato direto: a barra do OKR estava "poluída, cheia, com cores parecidas, sem divisão" — tudo (ajuda, guia, apresentação, 5 telas, visualizadores, filtros) tinha o mesmo peso visual, na mesma linha. Agora em **3 níveis**: (1) **título da torre** ("🛒 Torre Digital", com o kicker "Objetivos estratégicos") + 3 ações — **🎥 Apresentação** (contorno), **⋯ Mais** e **+ Novo Objetivo** (o único botão preenchido); (2) **abas** com sublinhado — **Objetivos · Calendário · Dashboard · Anotações · Agente Ágil** — que trocam de tela uma de cada vez (antes eram botões que viravam "◀ Ver Objetivos"; clicar na aba ativa não volta mais); (3) **filtros** só na aba Objetivos: busca (larga), gerência e status à vista, **⚙ Mais filtros** (período, pessoa, tag — abre sozinho com contador quando um deles está aplicado, p.ex. ao clicar numa tag do cartão) e 📦 arquivados; os **chips de estatística** ficaram leves (sem caixa até o mouse/seleção) e as métricas (atingimento médio, marcos) vão à direita como texto. No menu **⋯ Mais**: ❓ Ajuda, 📘 Guia visual, ⚙ Gerências da torre (quem edita a torre) e 👁 Visualizadores externos (só ADM) — o ⚙ Gerências saiu da barra de torres. Mesmos ids e funções (nada de dados mexido); no celular as abas rolam na horizontal e o cabeçalho quebra em linhas, sem rolagem lateral. Testes: `test_okr_head` novo (30 checagens: abas, menu por perfil, filtros, celular) + 2 testes antigos ajustados ao novo lugar dos botões.
