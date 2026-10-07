@@ -20690,6 +20690,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.2 · okr-dev — 2026-10-07 · fix(/monitorarbugs): filtro de gerência do 📈 Histórico sobrevivia à troca de torre
+
+Mesma classe do bug da v2.1, agora no Histórico semanal: escolher "CX" na tabela "Por Objetivo" na torre Digital e entrar na Comercial deixava o filtro `CX` ativo enquanto o select (que só lista as gerências da Comercial) mostrava "Todas as gerências" — tabela vazia ("Nenhum Objetivo com esses filtros") sem pista do motivo. Reproduzido antes; agora o filtro de gerência do Histórico zera ao trocar de torre (como o da lista de Objetivos já fazia).
+
 ### okr-dev.html v2.1 · okr-dev — 2026-10-07 · fix(/monitorarbugs): trocar de torre mantinha o filtro de período da torre anterior
 
 Achado da auditoria das Torres. O filtro "Todos os períodos" guardava o trimestre escolhido numa torre ao entrar em outra: se a nova torre não tinha nenhum Objetivo daquele período, a lista ficava vazia ("Nenhum objetivo bate com esse filtro") enquanto o select mostrava "Todos os períodos" — filtro ativo e invisível. Reproduzido antes (Digital com 2026-Q3 → Comercial só com 2026-Q4: 0 cartões, select em branco). Agora o filtro de período zera ao trocar de torre (como a gerência já fazia) e o período escolhido entra sempre nas opções do select (como pessoa/tag).
