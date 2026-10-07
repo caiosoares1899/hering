@@ -1636,7 +1636,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.16 · okr-dev</div>
+<div class="version">v2.17 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3001,10 +3001,36 @@ let _okrHistChartData = [];
 const OKR_STATUS_RANK = {concluido:0, no_prazo:1, nao_iniciado:2, risco:3, atrasado:4};
 
    // maior = pior
-function _okrHistDatas(){ return Object.keys(okrSnapshots||{}).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort(); }
+// 📍 Ponto de HOJE (ao vivo): o Histórico é feito das fotos de sexta 17h, então um Objetivo criado — ou com o 1º registro de atingimento — DEPOIS da última foto não aparecia
+// em nada até a próxima sexta (a torre dele ficava "sem Objetivos"). Quando já existe ao menos 1 snapshot e hoje é depois do último, soma-se um ponto virtual "hoje" montado dos
+// dados atuais, mas só se houver novidade (ver _okrHistDatas) (só em memória — nada é gravado; o snapshot de verdade de sexta continua sendo o registro oficial, e quando existir um snapshot com a data de hoje ele vale no lugar).
+function _okrHistEhLive(d){ return d===_todayStr() && !(okrSnapshots||{})[d]; }
+function _okrHistLiveSnap(){
+  const objs = {}, rg = {total:0, nao_iniciado:0, no_prazo:0, risco:0, atrasado:0, concluido:0};
+  Object.entries(okrObjetivos||{}).forEach(([id,o])=>{
+    if(!o || o.arquivado) return;
+    const st = _okrObjStatus(id), ms = _okrObjMarcos(id), ap = _okrAtingPctObj(o);
+    const x = {titulo:o.titulo||'', areaId:o.areaId||'geral', torre:_okrTorreDe(o), status:st, progressoPct:_okrObjProgressoPct(id), totalMarcos:ms.length, marcosConcluidos:ms.filter(m=>m.progresso==='concluido').length};
+    if(ap!==null && (o.atingimento.lancamentos||[]).some(Boolean)){ x.atingimentoTipo = o.atingimento.tipo; x.atingimentoPct = ap; }   // como o snapshot: só com registro
+    else if(o.atingimento && o.atingimento.tipo==='perene') x.atingimentoTipo = 'perene';
+    objs[id] = x; rg.total++; rg[st] = (rg[st]||0)+1;
+  });
+  return {date:_todayStr(), live:true, resumoGeral:rg, objetivos:objs};
+}
+function _okrHistDatas(){
+  const r = Object.keys(okrSnapshots||{}).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d)).sort();
+  const hoje = _todayStr();
+  // Só entra quando TRAZ novidade na visão atual: algum Objetivo com valor hoje que ainda não está (com valor) no último snapshot. Sem novidade o último snapshot segue sendo o "último" — nada muda na tela.
+  if(r.length && _okrLoaded && hoje>r[r.length-1] && Object.values(okrObjetivos||{}).some(o=>o && !o.arquivado)){
+    const S = (_okrHistSnap(r[r.length-1])||{}).objetivos||{}, Lv = (_okrHistSnap(hoje)||{}).objetivos||{};
+    if(Object.keys(Lv).some(id=>!S[id])) r.push(hoje);
+  }
+  return r;
+}
 
 
 function _okrHistFmt(d, longo){
+  if(_okrHistEhLive(d)) return longo ? 'hoje (ao vivo)' : 'hoje';
   const dt = new Date(d+'T00:00:00');
   return longo ? dt.toLocaleDateString('pt-BR',{weekday:'short',day:'2-digit',month:'short'}).replace('.','') : dt.getDate()+'/'+(dt.getMonth()+1);
 }
@@ -3039,7 +3065,7 @@ function _okrHistPctDe(d, id, o){
 
 
 function _okrHistSnap(d){
-  const sn = okrSnapshots[d]; if(!sn) return null;
+  const sn = _okrHistEhLive(d) ? _okrHistLiveSnap() : okrSnapshots[d]; if(!sn) return null;
   const objs = {}, rg = {total:0, nao_iniciado:0, no_prazo:0, risco:0, atrasado:0, concluido:0};
   Object.entries(sn.objetivos||{}).forEach(([id,o])=>{ const torre = _okrHistTorreDe(id,o); if(_okrTorreValida(_okrTorreAtual) && torre!==_okrTorreAtual) return; const pct = _okrHistPctDe(d,id,o); if(pct===null) return; objs[id] = {...o, torre, progressoPct:pct}; rg.total++; rg[o.status] = (rg[o.status]||0)+1; });
   return {...sn, resumoGeral:rg, objetivos:objs};
@@ -3199,8 +3225,10 @@ function renderOkrHistorico(){
   root.innerHTML = _okrHistTabsHtml() + `
     <div class="okr-h-head">
       <div class="okr-h-quando">
-        <div><b>Último snapshot:</b> ${esc(_okrHistFmt(ult,true))} <span class="mut">(${_okrHistDiasAtras(ult)})</span></div>
-        <div class="mut">Próximo: ${esc(prox)}, 17h · ${todas.length} snapshot${todas.length===1?'':'s'} guardado${todas.length===1?'':'s'}</div>
+        ${(()=>{ const reais = todas.filter(d=>!_okrHistEhLive(d)), ur = reais[reais.length-1], live = _okrHistEhLive(ult);
+          return (live ? `<div><b>📍 Hoje, ao vivo</b> <span class="mut">· último snapshot guardado: ${esc(_okrHistFmt(ur,true))} (${_okrHistDiasAtras(ur)})</span></div>`
+                       : `<div><b>Último snapshot:</b> ${esc(_okrHistFmt(ult,true))} <span class="mut">(${_okrHistDiasAtras(ult)})</span></div>`)
+            + `<div class="mut">Próximo: ${esc(prox)}, 17h · ${reais.length} snapshot${reais.length===1?'':'s'} guardado${reais.length===1?'':'s'}${live?' · o ponto de hoje é calculado agora, ainda não é um snapshot':''}</div>`; })()}
       </div>
       <div class="okr-h-range" role="group" aria-label="Período do gráfico">
         ${[['4','4 sem'],['8','8 sem'],['12','12 sem'],['all','Tudo']].map(([v,l])=>`<button type="button" class="okr-h-chip${_okrHistRange===v?' on':''}" onclick="_okrHistSetRange('${v}')">${l}</button>`).join('')}
