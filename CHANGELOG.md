@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.795-dev — 2026-10-07 · feat: cadastro novo pergunta a torre (Digital / Comercial / Corporativa) na inscrição (só kanban-dev)
+
+Parte do recurso **Torres** do OKR (ver `okr-dev.html` v2.0). A tela "🙋 Inscrever-se no quadro" — que todo usuário **novo** já vê, pra confirmar as iniciais — ganhou o campo obrigatório **Sua torre** (começa em "Escolha…"; sem escolher, "⚠ Escolha a sua torre."). A escolha é gravada só em `kanban/usuarios/{uid}/torre` (o board não lê esse campo; `usuarios_publicos` fica como está). Também vale pro caminho "cadastro com recarga" (externos), que reabre a inscrição depois do reload. Quem já existia **não** é perguntado aqui: sem o campo = Digital. A inscrição antiga ("Primeira vez?") também não pergunta.
+
 ### v8.30.794 — 2026-10-07 · Promove pra prod — colar uma lista em tópicos no checklist cria um item por linha
 
 Promoção de `kanban-dev.html` v8.30.793 + v8.30.794 (merge de 3 vias a partir da v8.30.792-dev; dev × prod só diferem nas 7 linhas de ambiente). Sugestão de usuária: colar uma mensagem escrita em tópicos no "Novo item..." do checklist jogava tudo num item só (o `<input>` de uma linha achata as quebras). Agora, com 2+ linhas, cada linha vira um item: marcadores do começo (`-`, `•`, `*`, `1.`, `1)`, `a)`, `☐`…) são removidos, `[x]`/`[ ]` entram marcados/desmarcados (formato do "📋 Copiar checklist"), sub-itens recuados viram itens, iniciais de nome ("J. Silva") e sinais ("-5 pontos") ficam intactos, 1 linha cola normal. Smoke test no `kanban.html` real: 15 cenários verdes; `node --check` OK; balanço -1/-1 (baseline novo: +4 parênteses de regex/comentário, não de sintaxe). Mural: rascunho `seed_colar_lista_checklist_2026_10_07`.
@@ -20682,6 +20686,16 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.0 · okr-dev — 2026-10-07 · 🏛️ Torres: o OKR passa a ter 3 visões (Digital, Comercial, Corporativa) + Visão global colorida
+
+Pedido direto: vários times vão usar o OKR, então as visões precisam ser divididas. A página inicial agora é uma **home com 3 botões de torre** (🌐 Digital, 🛍️ Comercial, 🏛️ Corporativa) e o botão **🔭 Visão global**; clicar entra nos Objetivos daquela torre, separados (`?torre=` na URL, botão Voltar do navegador funciona). Tudo que já existia vira **Digital** automaticamente (objetivo sem `torre` = Digital, sem migração). Visão global: todos os Objetivos juntos, agrupados por torre e **coloridos** (card do objetivo e chip no modal).
+- **Gerências por torre**: cada torre tem a sua lista (Comercial e Corporativa começam só com "Geral"); trocar a torre de um Objetivo na tela ⚙ (só ADM) recarrega as gerências da torre nova.
+- **Permissões**: todo mundo **vê** todas as torres; edita só a própria. ADM edita qualquer torre; PO/Gestor OKR só na própria; Responsável sempre edita o que é seu. Criar Objetivo cai na torre aberta (na global, na torre da pessoa).
+- **Torre da pessoa**: flag `kanban/usuarios/{uid}/torre`; sem ela = Digital. Quem se cadastrou a partir de 07/10/2026 sem torre vê um aviso ao entrar na página pra escolher (existentes não são perguntados). ADM muda em 👥 Global Users (painel-dev v5.2); o kanban-dev pergunta na inscrição (v8.30.795-dev).
+- Histórico/Resumos/estatísticas respeitam a torre aberta; mover e reordenar Objetivos agrupam por torre+gerência; bloco quinzenal continua só pra Digital.
+- Fica pra um PR separado (precisa deploy de `functions/`): Agente Ágil, snapshot semanal, resumo diário e apresentação por torre.
+Testes no Chromium (fakefb): 35 cenários novos + suítes anteriores verdes.
+
 ### okr-dev.html v1.5 · okr-dev — 2026-10-07 · 🟢 Online no OKR: quem está com a página aberta agora
 
 Pedido direto: a página do OKR precisa mostrar quem está online, como o painel faz. Faixa "🟢 Online no OKR (N)" logo abaixo do cabeçalho, com uma pílula por pessoa (foto, ou iniciais quando não há; "(você)" destacada e sempre primeira; até 12 visíveis + "+N" com os nomes no tooltip). Mesmo padrão do "Online no painel" (heartbeat de 15 s, pausado em aba oculta e imediato ao voltar, sem `onDisconnect` — quem some é cortado pelo prazo de 30 s) mas em **node próprio**, `kanban/painel/okr_presence/{uid}` (`{ts, nome, foto}`), pra mostrar só quem está NESTA página — já coberto pelas regras de `kanban/painel` (escrita só da empresa, leitura também do visualizador; **nenhuma mudança de regras nem deploy**). Um relógio de 10 s redesenha a lista (sair não gera evento — sem isso um visualizador sozinho veria fantasmas). Visualizador externo vê a lista mas não aparece nela. Nomes vêm escapados (`esc()`); o "Online no painel" original insere o nome cru e não tem CSS próprio — corrigido só aqui. 10 cenários novos no Chromium (49 na suíte da página): lista com eu primeiro, prazo de 30 s, heartbeat gravado, HTML escapado, saída por tempo, entrada ao vivo, +N, visualizador; E2E 11 e menu 42 verdes; 3 temas/390 px conferidos por captura.
@@ -20720,6 +20734,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v5.2 · painel-dev — 2026-10-07 · 👥 Global Users: ADM define a Torre de cada pessoa (+ filtro)
+
+Recurso **Torres**: cada pessoa ganha a flag `torre` em `kanban/usuarios/{uid}` (`digital` | `comercial` | `corporativa`; sem o campo = Digital, então todo mundo que existe hoje já é Digital sem nenhuma gravação em massa). Na lista do 👥 Global Users, cada linha ganhou um seletor de torre (só ADM altera; grava apenas em `usuarios/{uid}`, mesmo critério do toggle "Gestor OKR") e a barra de filtros ganhou **Todas as torres**. O chip "Gestor OKR" agora vale na torre da própria pessoa. `torre` entrou na regex `_GU_FIELD_RE` (mudança remota da flag re-renderiza a lista).
 
 ### painel-dev.html v5.1 · painel-dev — 2026-10-07 · fix (relato direto): o painel inteiro redirecionava pro OKR a cada carregamento
 

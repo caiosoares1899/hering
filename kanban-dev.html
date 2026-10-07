@@ -3642,6 +3642,16 @@ input[type="date"]{-moz-appearance:textfield;}
       <label class="fl">Suas iniciais no board</label>
       <input class="fi" id="insc-init" maxlength="3" placeholder="Ex: CS" style="text-transform:uppercase;max-width:100px;" oninput="this.value=this.value.toUpperCase();document.getElementById('insc-init-err').style.display='none'">
     </div>
+    <div class="field" id="insc-torre-wrap" style="display:none;">
+      <label class="fl">Sua torre</label>
+      <select class="fi" id="insc-torre" onchange="document.getElementById('insc-init-err').style.display='none'">
+        <option value="">Escolha…</option>
+        <option value="digital">🌐 Digital</option>
+        <option value="comercial">🛍️ Comercial</option>
+        <option value="corporativa">🏛️ Corporativa</option>
+      </select>
+      <div style="font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.5;">A torre define onde você cria e edita Objetivos no OKR. Dá pra mudar depois com um ADM.</div>
+    </div>
     <div style="background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.2);border-radius:var(--r);padding:10px;font-size:11px;color:var(--teal);line-height:1.6;">Você entrará como <strong id="insc-role">Membro</strong>. O PO pode alterar sua função nas Configurações.</div>
     <div style="display:flex;justify-content:flex-end;gap:8px;">
       <button class="btn" onclick="closeOv('insc-ov')">Agora não</button>
@@ -6481,7 +6491,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.794-dev</div>
+<div class="version">v8.30.795-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -11774,13 +11784,13 @@ function autoRegistrar(user){
       resolveSquadAndShow(user, newSquads);
       showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+newRole+'.');
       // Usuário NOVO sempre vê a inscrição (iniciais), com qualquer provedor — antes só quem clicava em "Primeira vez?".
-      window._pendingInsc=false; mostrarInscricao(user,{init,role:newRole});
+      window._pendingInsc=false; mostrarInscricao(user,{init,role:newRole},{pedirTorre:true});
     } else {
       // Boas-vindas adiadas pelo reload do 1º cadastro (ver ramo acima)
       try{ const _w=safeLS.getItem('cad_welcome'); if(_w){ safeLS.removeItem('cad_welcome');
         setTimeout(()=>showToast('✅ Bem-vindo(a) ao Maré Digital! Você foi inscrito(a) como '+_w+'.'),1500); } }catch(e){}
       // Inscrição (iniciais) do usuário novo, adiada pelo reload do 1º cadastro
-      try{ if(safeLS.getItem('cad_insc')){ safeLS.removeItem('cad_insc'); setTimeout(()=>mostrarInscricao(user,existe),1200); } }catch(e){}
+      try{ if(safeLS.getItem('cad_insc')){ safeLS.removeItem('cad_insc'); setTimeout(()=>mostrarInscricao(user,existe,{pedirTorre:!existe.torre}),1200); } }catch(e){}
       // Externo autorizado NESTE squad (o gate de auth-change já conferiu a lista) mas sem a matrícula nele em
       // usuarios/{uid}/squads: as regras negam a leitura do squad → board vazio. Matricula e recarrega 1x.
       if(_urlParams.get('squad') && !isAdmUser(user) && !_isTrustedDomainEmail(user.email)
@@ -11866,7 +11876,12 @@ function autoRegistrar(user){
   });
 }
 let _inscOriginalInit = '';
-function mostrarInscricao(user,dados){
+// 🏛️ Torre (OKR): só a inscrição de cadastro NOVO pergunta (opts.pedirTorre). Quem já existia fica Digital (sem campo = Digital).
+let _inscPedirTorre = false;
+function mostrarInscricao(user,dados,opts){
+  _inscPedirTorre = !!(opts && opts.pedirTorre);
+  const _tw=document.getElementById('insc-torre-wrap'); if(_tw) _tw.style.display=_inscPedirTorre?'':'none';
+  const _ts=document.getElementById('insc-torre'); if(_ts) _ts.value='';
   const init=dados?.init||window._currentUserInit||'';
   _inscOriginalInit = init;
   document.getElementById('insc-nome').textContent=user.displayName||user.email;
@@ -11881,6 +11896,8 @@ async function confirmarInscricao(){
   const user=window._currentUser; if(!user) return;
   const init=document.getElementById('insc-init').value.trim().toUpperCase().substring(0,3);
   if(!init){ showToast('⚠ Defina suas iniciais.'); return; }
+  const _torreSel=_inscPedirTorre ? (document.getElementById('insc-torre')?.value||'') : '';
+  if(_inscPedirTorre && !_torreSel){ showToast('⚠ Escolha a sua torre.'); return; }
   // Iniciais são um campo GLOBAL por uid (kanban/usuarios/{uid}.init) —
   // checar só `members` (squad atual) deixava passar gente de OUTRO squad
   // com a mesma sigla, sem aviso nenhum (achado real: "GS" duplicado entre
@@ -11937,7 +11954,8 @@ async function confirmarInscricao(){
   // as regras negam a mudança de role global por quem não é po/adm — o update INTEIRO (iniciais incluídas) era recusado.
   if(!window._currentUserRole) sqUpd.role='membro';
   sqUpd['squads/'+ACTIVE_SQUAD]=true;
-  fbUpdate('kanban/usuarios/'+user.uid,sqUpd);
+  // Torre só em usuarios/{uid} (o board não lê; usuarios_publicos fica como está).
+  fbUpdate('kanban/usuarios/'+user.uid, _torreSel ? {...sqUpd, torre:_torreSel} : sqUpd);
   fbUpdate('kanban/usuarios_publicos/'+user.uid,sqUpd);
   if(!members.find(m=>m.email===user.email))
     members.push({init,name:user.displayName||user.email,email:user.email,foto:user.photoURL||'',uid:user.uid,role:_papelIns});
