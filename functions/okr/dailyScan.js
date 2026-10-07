@@ -14,7 +14,8 @@
 //     rodando 1x/dia — um marco só bate "faltam 3 dias" num único dia.
 //     Alvo: marco.responsavel; sem responsável no marco, cai pros
 //     responsaveis[] do Objetivo.
-//  2. Véspera da reunião de bloco quinzenal — 1 dia antes (quarta) da
+//  2. Véspera da reunião de bloco quinzenal — (LEGADO: se cala quando o bloco foi importado pro calendário do OKR — eventos com
+//     `origem:'bloco_quinzenal'` —, que passa a avisar pelo gatilho 3) — 1 dia antes (quarta) da
 //     quinta-feira de check-in OKR do bloco da gerência do Objetivo.
 //     Substitui o antigo mecanismo de gcalReuniaoEventId/gcalPeriodoEventId
 //     (evento específico do Google Agenda escolhido manualmente): cada
@@ -145,7 +146,11 @@ async function runOkrDailyScan(db, hojeOverride) {
   amanha.setDate(amanha.getDate() + 1);
   const amanhaStr = amanha.toLocaleDateString('en-CA');
 
-  for (const objId of Object.keys(objetivos)) {
+  // Migração (2026-10-07): quando o ADM importa o bloco quinzenal pro calendário do OKR, existem eventos com `origem:'bloco_quinzenal'` e a véspera passa a
+  // vir do gatilho 3 (calendário). Este gatilho fixo então se cala — sem aviso duplicado e sem "dia da virada": enquanto não importar, nada muda.
+  const blocoMigrado = Object.values(eventos).some((e) => e && e.origem === 'bloco_quinzenal');
+
+  for (const objId of blocoMigrado ? [] : Object.keys(objetivos)) {
     const o = objetivos[objId];
     if (!o || o.arquivado) continue;
     // Torres (2026-10-07, /monitorarbugs): os blocos quinzenais (CX/Tech/CRM...) são da torre Digital — Objetivo de

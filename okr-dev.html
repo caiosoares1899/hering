@@ -523,6 +523,8 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-cal-dots{display:none;gap:3px;flex-wrap:wrap;justify-content:center;}
 .okr-cal-dot{width:7px;height:7px;border-radius:50%;background:rgb(var(--torre,56,182,255));}
 .okr-cal-dot.prazo{background:#ffc107;}
+.okr-cal-migra{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:rgba(56,182,255,.10);border:1px solid rgba(56,182,255,.35);border-radius:11px;padding:11px 14px;margin:0 0 12px;font-size:12px;color:var(--txt2);line-height:1.55;}
+.okr-cal-migra>div{flex:1;min-width:240px;}
 .okr-cal-agday{font-size:12px;font-weight:700;color:var(--txt2);margin:14px 0 6px;}
 .okr-cal-item{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border:1px solid var(--glass-b);border-left:4px solid rgb(var(--torre,56,182,255));border-radius:9px;background:rgba(var(--ink-rgb),.4);cursor:pointer;margin-bottom:6px;}
 .okr-cal-item:hover{background:rgba(var(--torre,56,182,255),.1);}
@@ -1412,7 +1414,7 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">📅 Calendário</b><br>
-          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag): o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. No celular a visão abre como <b>Agenda</b>.
+          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag): o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita. No celular a visão abre como <b>Agenda</b>.
         </div>
         <div>
           <b style="color:var(--txt);">📢 Mural do OKR</b><br>
@@ -1740,7 +1742,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.27 · okr-dev</div>
+<div class="version">v2.28 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2326,6 +2328,7 @@ function _okrProximaReuniaoDoBloco(bloco, hojeStr){
 
 
 function _okrBlocoInfoHtml(areaId, torre){
+  if(typeof _okrBlocoMigrado==='function' && _okrCalLoaded && _okrBlocoMigrado()) return '';   // já importado pro calendário: "Próximas reuniões e eventos" mostra a reunião (e dá pra editar lá)
   if(torre && torre!=='digital') return '';   // os blocos quinzenais (CX/Tech/CRM etc.) são da torre Digital
   if(!OKR_BLOCO_AREAS[1].includes(areaId) && !OKR_BLOCO_AREAS[2].includes(areaId)) return '';   // gerência criada depois (configurável) não tem bloco
   const bloco = _okrBlocoDaArea(areaId);
@@ -4983,6 +4986,10 @@ function renderOkrCalendario(){
       <span style="flex:1;"></span>
       ${podeCriar?`<button type="button" class="btn btn-p btn-sm" onclick="openOkrEventoEditor(null)">+ Novo evento</button>`:''}
     </div>`;
+  const ehAdm = !window._isPainelViewer && isAdmUser(window._currentUser);
+  const migra = (ehAdm && _okrCalLoaded && !_okrBlocoMigrado())
+    ? `<div class="okr-cal-migra"><div>🗓️ <b>O bloco quinzenal do OKR</b> (Bloco 1: ${esc(OKR_BLOCO_AREAS[1].map(a=>okrGerenciaLabel(a,'digital')).join(', '))} · Bloco 2: ${esc(OKR_BLOCO_AREAS[2].map(a=>okrGerenciaLabel(a,'digital')).join(', '))} — quinta, de 15 em 15 dias) ainda está fixo no sistema e não aparece aqui. Importe pro calendário: viram 2 reuniões recorrentes que você edita (horário, link, convidados) e os avisos de véspera passam a vir daqui, sem duplicar.</div>
+        <button type="button" class="btn btn-p btn-sm" onclick="_okrCalImportarBloco()">📥 Importar bloco quinzenal</button></div>` : '';
   let corpo = '';
   if(_okrCalVista==='mes'){
     const primeiro = new Date(_okrCalMes.getFullYear(), _okrCalMes.getMonth(), 1), ini = new Date(primeiro); ini.setDate(1-primeiro.getDay());
@@ -5012,7 +5019,43 @@ function renderOkrCalendario(){
       : `<div class="mut" style="font-size:12px;padding:14px 2px;">Nada marcado nos próximos ${_okrCalAgendaDias} dias.</div>`;
     corpo += `<div style="text-align:center;margin-top:10px;"><button type="button" class="btn btn-sm" onclick="_okrCalMais()">Ver mais 60 dias</button></div>`;
   }
-  root.innerHTML = bar+corpo+`<div class="mut" style="font-size:10.5px;margin-top:12px;">◆ = prazo de Marco (vem dos próprios Marcos, só leitura). Reuniões da torre mostram a pauta sugerida ao abrir.</div>`;
+  root.innerHTML = bar+migra+corpo+`<div class="mut" style="font-size:10.5px;margin-top:12px;">◆ = prazo de Marco (vem dos próprios Marcos, só leitura). Reuniões da torre mostram a pauta sugerida ao abrir.${(ehAdm && _okrBlocoMigrado())?` · <a href="#" style="color:var(--txt3);" onclick="event.preventDefault();_okrCalDesfazerBloco()" title="Apaga os 2 eventos do bloco quinzenal e volta ao aviso fixo">↩ Voltar ao bloco quinzenal fixo</a>`:''}</div>`;
+}
+
+// ── 🗓️ Migração do "bloco quinzenal" fixo pro calendário ──
+// O bloco (OKR_BLOCO_AREAS/OKR_BLOCO_ANCHOR, mais functions/okr/dailyScan.js) vira 2 eventos recorrentes de verdade — "Check-in OKR — Bloco 1/2", torre Digital, a cada 2 semanas
+// na quinta, ligados às gerências de cada bloco, véspera ligada (igual ao aviso antigo). Marca `origem:'bloco_quinzenal'`: com ela, o modal do Objetivo deixa de mostrar o
+// bloco fixo e o dailyScan cala o gatilho fixo (sem aviso duplicado). Idempotente (ids fixos) e reversível ("↩ Voltar ao bloco fixo" apaga os 2 eventos).
+const OKR_BLOCO_ORIGEM = 'bloco_quinzenal';
+function _okrBlocoMigrado(){ return Object.values(okrEventos).some(e=>e && e.origem===OKR_BLOCO_ORIGEM); }
+function _okrBlocoEventos(){
+  const u = window._currentUser || {}, ts = new Date().toISOString();
+  const mk = (n, data)=>({
+    id:'bloco_quinzenal_'+n, titulo:'Check-in OKR — Bloco '+n, tipo:'reuniao', data, diaInteiro:false, hi:'', hf:'', torre:'digital',
+    areaIds:OKR_BLOCO_AREAS[n].slice(), objetivoIds:[], tagIds:[], convidados:[], lembrar:{vespera:true, dia:false}, local:'', link:'',
+    descricao:'Reunião quinzenal de check-in dos OKRs — '+OKR_BLOCO_AREAS[n].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+'. Criada a partir do "bloco quinzenal" fixo (os 2 blocos se alternam toda quinta). Edite aqui o horário, o link e os convidados.',
+    rec:{tipo:'quinzenal', unidade:'semana', intervalo:2, ate:''}, excecoes:{}, origem:OKR_BLOCO_ORIGEM,
+    criadoPor:{uid:u.uid||'', nome:u.displayName||u.email||'?'}, criadoEm:ts, atualizadoEm:ts });
+  return [mk(1, OKR_BLOCO_ANCHOR), mk(2, _calSomaDias(OKR_BLOCO_ANCHOR, 7))];   // âncora = quinta do Bloco 1; o Bloco 2 é a quinta seguinte
+}
+async function _okrCalImportarBloco(){
+  if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM importa o bloco quinzenal.'); return; }
+  if(_okrBlocoMigrado()){ showToast('✅ O bloco quinzenal já está no calendário.'); return; }
+  if(!await uiConfirm('Importar o bloco quinzenal pro calendário?\n\nViram 2 reuniões recorrentes (a cada 2 semanas, às quintas, torre Digital): Bloco 1 — '+OKR_BLOCO_AREAS[1].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+' · Bloco 2 — '+OKR_BLOCO_AREAS[2].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+'.\n\nOs avisos de véspera passam a vir do calendário (sem duplicar) e o aviso fixo se desliga. Você pode editar horário, link e convidados depois — e voltar ao bloco fixo quando quiser.', {okText:'Importar'})) return;
+  try{
+    for(const ev of _okrBlocoEventos()) if(!okrEventos[ev.id]) await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+ev.id), ev);
+    showToast('✅ Bloco quinzenal importado pro calendário.');
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
+}
+async function _okrCalDesfazerBloco(){
+  if(window._isPainelViewer || !isAdmUser(window._currentUser)) return;
+  const ids = Object.values(okrEventos).filter(e=>e && e.origem===OKR_BLOCO_ORIGEM).map(e=>e.id);
+  if(!ids.length) return;
+  if(!await uiConfirm('Voltar ao bloco quinzenal fixo?\n\nOs eventos "Check-in OKR — Bloco 1/2" são apagados (com as anotações e vínculos deles) e o aviso fixo de véspera volta a valer.', {danger:true, okText:'Voltar ao bloco fixo'})) return;
+  try{
+    for(const id of ids){ await window._remove(window._ref(window._db, OKR_CAL_PATH+'/'+id)); await window._remove(window._ref(window._db, OKR_CAL_NOTAS+'/'+id)).catch(()=>{}); await window._remove(window._ref(window._db, OKR_CAL_VINC+'/'+id)).catch(()=>{}); }
+    showToast('↩ Voltou ao bloco quinzenal fixo.');
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
 }
 
 // ── 🔔 avisos no sino ──
@@ -5298,6 +5341,7 @@ async function saveOkrEvento(){
   const ts = new Date().toISOString(), id = _okrEvEditId || ('ev'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
   const ev = { id, titulo, tipo:d.tipo, data:d.data, diaInteiro:!!d.diaInteiro, hi:d.diaInteiro?'':(d.hi||''), hf:d.diaInteiro?'':(d.hf||''), torre:d.torre||'',
     areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), tagIds:d.tagIds.slice(), convidados:d.convidados.slice(), lembrar:{vespera:!!d._lvesp, dia:!!d._ldia}, local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
+    ...(antigo && antigo.origem ? {origem:antigo.origem} : {}),   // eventos importados do bloco quinzenal mantêm a origem (senão o aviso fixo voltaria e duplicaria)
     excecoes:(antigo && antigo.excecoes) || {}, criadoPor:(antigo && antigo.criadoPor) || {uid:u.uid, nome:u.displayName||u.email||'?'}, criadoEm:(antigo && antigo.criadoEm) || ts, atualizadoEm:ts };
   try{
     await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+id), ev);

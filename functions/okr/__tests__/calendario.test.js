@@ -132,3 +132,50 @@ test('tags + gerências: vale uma OU a outra; vínculo explícito vale em qualqu
   assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'comercial', objetivoIds: ['a'] }, o), 'vinculo');
   assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'digital' }, o), 'torre');
 });
+
+// ── migração do bloco quinzenal pro calendário ──
+const OBJ_BLOCO = {
+  b1: { id: 'b1', titulo: 'Obj Comercial Dig', torre: 'digital', areaId: 'comercial', responsaveis: ['ana'] },   // Bloco 1
+  b2: { id: 'b2', titulo: 'Obj CX', areaId: 'cx', responsaveis: ['bia'] },                                          // Bloco 2 (sem `torre` = digital)
+  c1: { id: 'c1', titulo: 'Obj Comercial torre', torre: 'comercial', responsaveis: ['caio'] },                       // outra torre: nunca teve bloco
+};
+const BLOCO1 = { id: 'bloco_quinzenal_1', titulo: 'Check-in OKR — Bloco 1', tipo: 'reuniao', data: '2026-09-03', torre: 'digital', areaIds: ['geral', 'comercial', 'performance', 'dadosia'], origem: 'bloco_quinzenal', lembrar: { vespera: true, dia: false }, rec: { tipo: 'quinzenal', unidade: 'semana', intervalo: 2, ate: '' } };
+const BLOCO2 = { id: 'bloco_quinzenal_2', titulo: 'Check-in OKR — Bloco 2', tipo: 'reuniao', data: '2026-09-10', torre: 'digital', areaIds: ['cx', 'tech', 'crm'], origem: 'bloco_quinzenal', lembrar: { vespera: true, dia: false }, rec: { tipo: 'quinzenal', unidade: 'semana', intervalo: 2, ate: '' } };
+const todasNotifs = async (db, uid) => Object.values((await db.ref(`kanban/usuarios/${uid}/notificacoes`).get()).val() || {}).filter((n) => n.type === 'okr_reuniao');
+
+test('migração: as ocorrências dos 2 eventos recorrentes batem com a fórmula fixa do bloco quinzenal (alternam toda quinta, a partir de 03/09)', () => {
+  const { ehDiaDeReuniao } = require('../dailyScan');
+  const de = '2026-09-01', ate = '2027-03-31';
+  const d1 = cal.ocorrencias(BLOCO1, de, ate), d2 = cal.ocorrencias(BLOCO2, de, ate);
+  // toda quinta entre as datas: pertence a exatamente um dos blocos, o mesmo que a fórmula antiga diz
+  let n = 0;
+  for (let d = new Date(de + 'T00:00:00'); d <= new Date(ate + 'T00:00:00'); d.setDate(d.getDate() + 1)) {
+    const s = d.toLocaleDateString('en-CA');
+    if (d.getDay() !== 4) { assert.ok(!d1.includes(s) && !d2.includes(s), 'só quinta: ' + s); continue; }
+    n++;
+    assert.equal(d1.includes(s), ehDiaDeReuniao(s, 1), 'bloco 1 em ' + s);
+    assert.equal(d2.includes(s), ehDiaDeReuniao(s, 2), 'bloco 2 em ' + s);
+  }
+  assert.ok(n > 25);
+});
+test('migração: com os eventos importados, a véspera vem do calendário (1 aviso por pessoa) e o gatilho fixo se cala — sem duplicar', async () => {
+  const db = makeFakeDb({ kanban: { okr: { objetivos: OBJ_BLOCO, marcos: {}, calendario: { eventos: { bloco_quinzenal_1: BLOCO1, bloco_quinzenal_2: BLOCO2 } } } } });
+  await runOkrDailyScan(db, '2026-09-30');   // amanhã (01/10) é quinta do Bloco 1
+  const a = await todasNotifs(db, 'ana');
+  assert.equal(a.length, 1); assert.equal(a[0].okrEventoId, 'bloco_quinzenal_1'); assert.match(a[0].title, /Amanhã: Check-in OKR — Bloco 1/); assert.match(a[0].sub, /Na pauta: Obj Comercial Dig/);
+  assert.equal((await todasNotifs(db, 'bia')).length, 0);      // CX é do Bloco 2: não é essa semana
+  assert.equal((await todasNotifs(db, 'caio')).length, 0);     // outra torre
+  await runOkrDailyScan(db, '2026-10-07');   // amanhã (08/10) é quinta do Bloco 2
+  const b = await todasNotifs(db, 'bia'); assert.equal(b.length, 1); assert.equal(b[0].okrEventoId, 'bloco_quinzenal_2');
+});
+test('migração: SEM os eventos importados o gatilho fixo continua avisando como sempre (nada muda até o ADM importar)', async () => {
+  const db = makeFakeDb({ kanban: { okr: { objetivos: OBJ_BLOCO, marcos: {}, calendario: { eventos: {} } } } });
+  await runOkrDailyScan(db, '2026-09-30');
+  const a = await todasNotifs(db, 'ana');
+  assert.equal(a.length, 1); assert.match(a[0].title, /Reunião de "Obj Comercial Dig" é amanhã/); assert.ok(!a[0].okrEventoId);
+});
+test('migração: um evento qualquer do calendário (sem origem) NÃO desliga o bloco fixo', async () => {
+  const db = makeFakeDb({ kanban: { okr: { objetivos: OBJ_BLOCO, marcos: {}, calendario: { eventos: { x: { id: 'x', titulo: 'Outra', tipo: 'reuniao', data: '2026-10-20', torre: 'comercial' } } } } } });
+  await runOkrDailyScan(db, '2026-09-30');
+  const a = await todasNotifs(db, 'ana'); assert.equal(a.length, 1); assert.match(a[0].title, /é amanhã/);
+});
