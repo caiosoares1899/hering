@@ -33,6 +33,13 @@
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
+  // Quanto tempo uma notificação PESSOAL continua na lista — o MESMO critério do sino do kanban (NOTIF_TTL_DAYS/NOTIF_TTL_UNREAD_DAYS em
+  // kanban-dev.html; mantenha os dois em sincronia): lida some em 3 dias, não lida em 30. Sem isto, OKR/painel mostravam (e contavam no selo)
+  // notificações que o kanban já escondia — o "sino único" mostrava listas diferentes.
+  const TTL_LIDA_MS = 3*86400000, TTL_NAO_LIDA_MS = 30*86400000;
+  function viva(n){ const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS); }
+  // O ícone do evento vem do banco (qualquer pessoa da empresa grava no feed): só texto curto, sem nada que vire HTML.
+  function iconeSeguro(x){ return String(x||'').replace(/[<>&"'`\\]/g,'').slice(0,16); }
 
   const st = {uid:null, viewer:false, opts:null, feed:{}, seen:{ts:'', lidos:{}}, seenReady:false, torre:'digital', started:false};
 
@@ -84,7 +91,7 @@
     Object.entries(st.feed).forEach(([id,f0])=>{
       if(!f0) return; const f = {...f0, id};
       if(f.autorUid===eu || !paraMim(alvoTorres(f))) return;
-      out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon:f.icone || ICONS[f.tipo] || '🔔', title:f.titulo||'', sub:f.sub||'', autor:f.autor||'',
+      out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon:iconeSeguro(f.icone) || ICONS[f.tipo] || '🔔', title:f.titulo||'', sub:f.sub||'', autor:f.autor||'',
         objId:f.objId||'', muralId:f.muralId||'', unread: st.seenReady && !lido(f)});
     });
     return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
@@ -93,14 +100,21 @@
 
   function markOne(id){
     st.seen = {ts:st.seen.ts, lidos:{...(st.seen.lidos||{}), [id]:true}};
+    let w = Promise.resolve();
     if(st.viewer) seenLocalSalvar();
-    else window._update(window._ref(window._db, SEEN+'/'+st.uid), {['lidos/'+id]:true}).catch(()=>{});
+    else w = window._update(window._ref(window._db, SEEN+'/'+st.uid), {['lidos/'+id]:true}).catch(()=>{});
     emitir();
+    return w;   // quem navega logo em seguida espera isto (com teto) pra a escrita não ser cortada pela troca de página
   }
+  // "Marcar tudo": marca como lido CADA evento carregado (por id), NÃO avança o watermark pra "agora". Comparar o ts do evento (relógio de quem
+  // publicou) com o "agora" de quem clicou escondia pra sempre um evento publicado segundos ANTES do clique mas entregue DEPOIS (latência) ou vindo
+  // de um relógio atrasado — marcado como lido sem nunca ter sido visto. A lista de ids fica limitada à janela de 60 eventos lida do banco.
   function markAll(){
-    st.seen = {ts:new Date().toISOString(), lidos:{}};
+    const lidos = {}; Object.keys(st.feed).forEach(id=>{ lidos[id] = true; });
+    const ts = st.seen.ts || new Date().toISOString();
+    st.seen = {ts, lidos};
     if(st.viewer) seenLocalSalvar();
-    else window._set(window._ref(window._db, SEEN+'/'+st.uid), {ts:st.seen.ts}).catch(()=>{});
+    else window._set(window._ref(window._db, SEEN+'/'+st.uid), {ts, lidos}).catch(()=>{});
     emitir();
   }
 
@@ -131,7 +145,7 @@
     if(t==='okr_mencao') return {url:urlOkr('okr','notas')};
     if(t.startsWith('okr_')) return {url:urlOkr('okr', n.okrObjId||'')};
     if(t==='feedback') return {url:PAGES.painel+'?tab=monitor'};
-    if(t==='reuniao') return n.meetingLink ? {url:n.meetingLink, externo:true} : null;
+    if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open
     if(t==='painel_broadcast') return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};
     if(n.cardId) return {url:PAGES.kanban+'?squad='+encodeURIComponent(n.squad||'')+'&card='+encodeURIComponent(n.cardId)};
     return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};
@@ -140,13 +154,14 @@
   function abrirFeed(id){
     const it = items().find(x=>x.id===id) || (st.feed[id] ? {id, muralId:st.feed[id].muralId, objId:st.feed[id].objId} : null);
     if(!it) return false;
-    markOne(id);
+    const w = markOne(id);
     try{ if(st.opts && st.opts.abrirFeed && st.opts.abrirFeed(it)) return true; }catch(e){ console.warn('[MareNotif] abrirFeed:', e); }
-    const u = urlFeed(it); if(u) location.href = u;
+    const u = urlFeed(it);
+    if(u) Promise.race([w, new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = u; });   // deixa o "lido" sair antes de trocar de página (no máx. 0,8 s)
     return true;
   }
 
-  window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, FEED, SEEN,
+  window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     // para os testes
     _estado: ()=>st};
 })();
