@@ -1448,7 +1448,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v1.0 · okr-dev</div>
+<div class="version">v1.1 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4991,7 +4991,7 @@ function _okrListEditorHtml(campo, label, placeholder){
       ${itens.map((txt,i)=>`<div class="okr-list-item"><span class="okr-list-item-text" onclick="_okrListEditStart(this,${jsq(campo)},${i})" title="Clique para editar" style="cursor:pointer;">${esc(txt)}</span><button type="button" class="okr-edit-btn" onclick="_okrListEditStart(this.closest('.okr-list-item').querySelector('.okr-list-item-text'),${jsq(campo)},${i})" title="Editar">✏️</button><button type="button" onclick="_okrListRemove(${jsq(campo)},${i})" title="Remover">✕</button></div>`).join('') || '<div style="font-size:11px;color:var(--txt3);">Nada ainda.</div>'}
     </div>
     <div class="okr-list-add">
-      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd(${jsq(campo)});}">
+      <input type="text" class="okr-input" id="okr-add-${campo}" placeholder="${esc(placeholder)}" onpaste="_okrPasteList(event,${jsq(campo)})" ${limite?`oninput="_okrUpdateCharCounter('okr-add-${campo}',${limite})"`:''} onkeydown="if(event.key==='Enter'){event.preventDefault();_okrListAdd(${jsq(campo)});}">
       <button type="button" class="btn btn-sm" onclick="_okrListAdd(${jsq(campo)})">+ Add</button>
     </div>
     ${limite?_okrCharCounterHtml('okr-add-'+campo):''}
@@ -5076,6 +5076,46 @@ function _okrListAdd(campo){
   _okrSyncObjDraftFromDom();
   (_okrObjDraft[campo] = _okrObjDraft[campo]||[]).push(v);
   _okrRerenderCurrentScreen();
+}
+
+
+// Colar uma lista (WhatsApp/Slack/e-mail/outro card) numa caixa "+ Add" — o <input> é de UMA linha, então
+// o navegador achata as quebras e a lista inteira virava UM item só (mesmo relato da usuária do checklist do
+// kanban, v8.30.793-dev: ver _clParsePasted() lá). Com 2+ linhas: um item por linha, sem os marcadores do começo
+// ("-", "•", "*", "1.", "1)", "a)", "☐"…); "[x]"/"[ ]" viram marcado/desmarcado (só o checklist do Marco usa o
+// done). 1 linha só cola normal.
+function _okrParsePasted(txt){
+  return String(txt||'').split(/\r\n|\n|\r|\u2028|\u2029/).map(l=>{
+    let t=l.trim(), done=false;
+    t=t.replace(/^(?:[-*•–—·▪●○◦■□☐☑✓✔➤➢▶►]|\d{1,3}[.)]|[a-zA-Z][.)])\s+/,'');
+    const m=t.match(/^\[([ xX✓])?\]\s*/);
+    if(m){ done=/[xX✓]/.test(m[1]||''); t=t.slice(m[0].length).trim(); }
+    return {t:t.trim(), done};
+  }).filter(x=>x.t);
+}
+
+
+function _okrPasteList(e, campo){
+  const itens=_okrParsePasted((e.clipboardData||window.clipboardData)?.getData('text'));
+  if(itens.length<2) return; // 1 linha: cola normal no campo
+  e.preventDefault();
+  _okrSyncObjDraftFromDom();
+  const lista=(_okrObjDraft[campo] = _okrObjDraft[campo]||[]);
+  itens.forEach(it=>lista.push(it.t));
+  _okrRerenderCurrentScreen();
+  showToast('📋 '+itens.length+' itens adicionados.');
+}
+
+
+function _okrPasteChecklist(e){
+  const itens=_okrParsePasted((e.clipboardData||window.clipboardData)?.getData('text'));
+  if(itens.length<2) return;
+  e.preventDefault();
+  _okrSyncMarcoDraftFromDom();
+  const lista=(_okrMarcoDraft.checklist = _okrMarcoDraft.checklist||[]);
+  itens.forEach(it=>lista.push({text:it.t, done:!!it.done}));
+  renderOkrMarcoBody();
+  showToast('📋 '+itens.length+' itens adicionados ao checklist.');
 }
 
 
@@ -5605,7 +5645,7 @@ function _okrChecklistHtml(){
         <button type="button" onclick="_okrChecklistRemove(${i})" title="Remover" style="background:none;border:none;color:var(--txt3);cursor:pointer;">✕</button>
       </div>`).join('')}
     <div class="okr-list-add">
-      <input type="text" class="okr-input" id="okr-checklist-add" placeholder="Novo item…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrChecklistAdd();}">
+      <input type="text" class="okr-input" id="okr-checklist-add" placeholder="Novo item…" onpaste="_okrPasteChecklist(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrChecklistAdd();}">
       <button type="button" class="btn btn-sm" onclick="_okrChecklistAdd()">+ Add</button>
     </div></section>`;
 }
