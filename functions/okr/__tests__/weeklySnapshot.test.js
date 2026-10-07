@@ -174,3 +174,20 @@ test('snapshot semanal: Objetivo com atingimento grava progressoPct do atingimen
   assert.equal(snap.objetivos.o3.atingimentoTipo, 'perene');
   assert.ok(!temUndefinedSnap(snap));
 });
+
+test('grava a torre de cada Objetivo (sem o campo ou inválida = digital)', async () => {
+  const db = seedDb({
+    objetivos: {
+      o1: { id: 'o1', titulo: 'A', areaId: 'geral', torre: 'comercial', arquivado: false },
+      o2: { id: 'o2', titulo: 'B', areaId: 'geral', torre: 'corporativa', arquivado: false },
+      o3: { id: 'o3', titulo: 'C', areaId: 'tech', arquivado: false },
+      o4: { id: 'o4', titulo: 'D', areaId: 'tech', torre: 'lixo', arquivado: false },
+    },
+    marcos: {},
+  });
+  const snap = await runOkrWeeklySnapshot(db);
+  assert.equal(snap.objetivos.o1.torre, 'comercial');
+  assert.equal(snap.objetivos.o2.torre, 'corporativa');
+  assert.equal(snap.objetivos.o3.torre, 'digital');
+  assert.equal(snap.objetivos.o4.torre, 'digital');
+});
