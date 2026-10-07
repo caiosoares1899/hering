@@ -127,6 +127,53 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .stat-chip span{font-size:14px;color:var(--txt2);}
 .cover-updated{margin-top:36px;font-size:13px;color:var(--txt3);}
 
+/* ── Torres (2026-10-07): cartões na capa, slide-capa de cada torre, chip na gerência, bolinhas coloridas ── */
+.t-digital{--torre:56,182,255;} .t-comercial{--torre:255,152,0;} .t-corporativa{--torre:167,139,250;}
+.sbar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.08);}
+.sbar i{display:block;height:100%;}
+.torre-tiles{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;margin-top:34px;}
+.torre-tile{flex:1 1 270px;max-width:340px;text-align:left;cursor:pointer;border-radius:18px;padding:20px 24px;border:1px solid rgba(var(--torre),.35);
+  border-top:4px solid rgb(var(--torre));background:linear-gradient(160deg,rgba(var(--torre),.18),var(--glass) 62%);backdrop-filter:blur(12px);
+  transition:transform .15s,background .15s;}
+.torre-tile:hover{transform:translateY(-3px);}
+.tt-head{display:flex;align-items:center;gap:12px;font-family:'Syne',sans-serif;font-weight:800;font-size:22px;}
+.tt-head .tt-ico{font-size:32px;}
+.tt-nums{display:flex;gap:22px;margin:14px 0 12px;}
+.tt-nums b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:28px;line-height:1.1;}
+.tt-nums span{font-size:12px;color:var(--txt3);}
+.tt-sub{font-size:12.5px;color:var(--txt3);margin-top:8px;}
+.torre-hd{display:flex;align-items:center;gap:20px;margin-bottom:26px;padding:22px 30px;border-radius:22px;border:1px solid rgba(var(--torre),.4);
+  background:linear-gradient(120deg,rgba(var(--torre),.24),transparent 75%);flex-shrink:0;}
+.torre-hd .big{font-size:60px;line-height:1;}
+.torre-hd h2{font-size:clamp(1.9rem,3.6vw,2.9rem);font-weight:800;line-height:1.1;}
+.torre-hd .sub{font-size:14px;color:var(--txt2);margin-top:4px;}
+.torre-kpis{display:flex;gap:12px;margin-left:auto;flex-wrap:wrap;justify-content:flex-end;}
+.torre-kpis .stat-chip{padding:12px 20px;min-width:96px;border-radius:14px;}
+.torre-kpis .stat-chip b{font-size:26px;margin-bottom:2px;}
+.torre-kpis .stat-chip span{font-size:12px;}
+.torre-sbar{margin:-6px 0 0;} .torre-sbar .sbar{height:14px;}
+.ger-rows{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;}
+.ger-row{display:flex;align-items:center;gap:16px;padding:18px 22px;background:var(--glass);border:1px solid var(--glass-b);border-left:5px solid rgb(var(--torre));
+  border-radius:16px;cursor:pointer;backdrop-filter:blur(12px);transition:transform .15s,background .15s;}
+.ger-row:hover{transform:translateY(-2px);background:var(--glass-hover);}
+.ger-row .gr-ico{font-size:30px;flex-shrink:0;}
+.ger-row .gr-main{flex:1;min-width:0;}
+.ger-row .gr-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ger-row .gr-num{text-align:right;flex-shrink:0;}
+.ger-row .gr-num b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;line-height:1;}
+.ger-row .gr-num span{font-size:11.5px;color:var(--txt3);}
+.torre-chip{display:inline-flex;align-items:center;gap:7px;font-size:14px;font-weight:700;border-radius:999px;padding:5px 16px;
+  color:rgb(var(--torre));background:rgba(var(--torre),.14);border:1px solid rgba(var(--torre),.4);}
+.ger-header.com-torre{padding-bottom:18px;border-bottom:2px solid rgba(var(--torre),.4);}
+.sleg{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 26px;font-size:13.5px;color:var(--txt2);}
+.sleg span{display:inline-flex;align-items:center;gap:7px;}
+.sum-torre td{background:rgba(var(--torre),.12);font-weight:700;border-bottom:1px solid rgba(var(--torre),.35);}
+.sum-torre td:first-child{border-left:4px solid rgb(var(--torre));}
+.sum-ger td:first-child{padding-left:30px;}
+.dot[class*="t-"]:not(.active){background:rgba(var(--torre),.6);}
+.dot.torre-dot{width:12px;height:12px;}
+.dot.sep{margin-left:12px;}
+
 /* ── Gerência slide ── */
 .ger-header{display:flex;align-items:center;gap:16px;margin-bottom:28px;flex-shrink:0;}
 .ger-header .ico{font-size:40px;}
@@ -502,6 +549,9 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
     <label class="tb-filter" id="tb-filter" hidden title="Mostrar só os Objetivos com uma tag">
       <select id="tb-tag" onchange="window._okrSetTag(this.value);this.blur();"><option value="">🏷️ Todas as tags</option></select>
     </label>
+    <label class="tb-filter" id="tb-filter-torre" hidden title="Apresentar só uma torre">
+      <select id="tb-torre" onchange="window._okrSetTorre(this.value);this.blur();"><option value="">🏛️ Todas as torres</option></select>
+    </label>
     <div class="tb-nav">
       <button class="tb-btn" id="btn-prev" onclick="window._okrPrev()" title="Anterior (←)">◀</button>
       <button class="tb-btn" id="btn-next" onclick="window._okrNext()" title="Próximo (→)">▶</button>
@@ -770,8 +820,11 @@ function _okrObjetivosSorted(lista){
 // tag combinada). Vale pra TUDO que a tela mostra — capa, grade das gerências, panorama e o Anterior/Próximo do detalhe —, então tudo
 // parte de _okrObjetivosAtivos() em vez de refiltrar `!arquivado` em cada lugar. Só em memória: reabrir a apresentação volta pra "todas".
 let _okrFiltroTag = '';
-function _okrObjetivosAtivos(){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)));
+// 🏛️ Filtro por torre (2026-10-07): apresentar só UMA torre (reunião da Comercial, por ex.). Também por URL: ?torre=comercial. Mesma regra da tag — vale pra
+// capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
+let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
+function _okrObjetivosAtivos(ignorarTorre){
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
 function _okrGerenciaObjetivos(areaId, torre){
   return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));
@@ -795,6 +848,18 @@ function _okrAtualizaFiltroTag(){
   box.hidden = !ids.length;
 }
 window._okrSetTag = v => { _okrFiltroTag = v||''; rebuild(); };
+// <select> de torre da barra: aparece quando há Objetivos em 2+ torres (ou já tem filtro ligado). Conta pelos Objetivos ativos SEM o filtro de torre.
+function _okrAtualizaFiltroTorre(){
+  const sel = document.getElementById('tb-torre'), box = document.getElementById('tb-filter-torre'); if(!sel || !box) return;
+  const todos = _okrObjetivosAtivos(true), cont = {}; todos.forEach(o=>{ const t=_okrTorreDe(o); cont[t]=(cont[t]||0)+1; });
+  const comObj = OKR_TORRES.filter(t=>cont[t.id]);
+  if(_okrFiltroTorre && !cont[_okrFiltroTorre]) cont[_okrFiltroTorre]=0;
+  const html = '<option value="">🏛️ Todas as torres ('+todos.length+')</option>' + OKR_TORRES.filter(t=>cont[t.id]!==undefined).map(t=>`<option value="${t.id}">${t.icon} ${esc(t.label)} (${cont[t.id]})</option>`).join('');
+  if(sel.dataset.sig !== html){ sel.innerHTML = html; sel.dataset.sig = html; }   // só reescreve quando muda (rebuild roda a cada atualização ao vivo e fecharia o dropdown aberto)
+  sel.value = _okrFiltroTorre; sel.classList.toggle('on', !!_okrFiltroTorre);
+  box.hidden = !(comObj.length>1 || _okrFiltroTorre);
+}
+window._okrSetTorre = v => { _okrFiltroTorre = OKR_TORRES.some(t=>t.id===v) ? v : ''; currentIdx = 0; rebuild(); };
 function objStatus(objId){
   const marcos = objMarcos(objId);
   if(!marcos.length) return 'nao_iniciado';
@@ -1037,9 +1102,26 @@ function objCardHtml(o){
   </div>`;
 }
 
+const OKR_SBAR_ORDEM = ['concluido','no_prazo','risco','atrasado','nao_iniciado'];
+function _okrStatsDe(lista){
+  const c = {nao_iniciado:0,no_prazo:0,risco:0,atrasado:0,concluido:0}; let soma = 0;
+  lista.forEach(o=>{ c[objStatus(o.id)] = (c[objStatus(o.id)]||0)+1; soma += objProgressoPct(o.id); });
+  return {c, n:lista.length, media: lista.length ? Math.round(soma/lista.length) : 0};
+}
+// Barra empilhada dos status (verde/azul/amarelo/vermelho/cinza) — mesma cor dos chips dos cartões.
+function _okrSbarHtml(st){
+  const n = st.n || 1, tip = OKR_STATUS.map(s=>st.c[s.id]?st.c[s.id]+' '+s.label.toLowerCase():'').filter(Boolean).join(' · ');
+  return `<div class="sbar" title="${esc(tip)}">${OKR_SBAR_ORDEM.map(id=>st.c[id]?`<i style="width:${st.c[id]/n*100}%;background:${okrStatusInfo(id).dot};"></i>`:'').join('')}</div>`;
+}
+function _okrLegendaHtml(st){
+  return `<div class="sleg">${OKR_SBAR_ORDEM.filter(id=>st.c[id]).map(id=>{ const si = okrStatusInfo(id); return `<span><span class="status-dot" style="background:${si.dot};"></span>${st.c[id]} ${esc(si.label.toLowerCase())}</span>`; }).join('')}</div>`;
+}
+window._okrGoToKey = k => { const i = slides.findIndex(x=>x.key===k); if(i>=0) window._okrGoTo(i); };
+
 function buildSlides(){
   const ativos = _okrObjetivosAtivos();
   const grupos = _okrGruposGerencia(ativos);
+  const torresComObj = OKR_TORRES.filter(t=>ativos.some(o=>_okrTorreDe(o)===t.id));
 
   const list = [];
 
@@ -1051,7 +1133,8 @@ function buildSlides(){
     <div class="cover-wrap">
       <div class="cover-ico">🎯</div>
       <div class="cover-title">OKRs — Maré Digital</div>
-      <div class="cover-sub">Panorama por gerência · ${esc(hoje)}</div>
+      <div class="cover-sub">Panorama por torre e gerência · ${esc(hoje)}</div>
+      ${_okrFiltroTorre?`<div class="cover-sub" style="margin-top:-30px;margin-bottom:34px;">Apresentando só a torre ${OKR_TORRES.find(t=>t.id===_okrFiltroTorre).icon} <b>${esc(OKR_TORRES.find(t=>t.id===_okrFiltroTorre).label)}</b></div>`:''}
       ${_okrFiltroTag&&okrTags[_okrFiltroTag]?`<div class="cover-sub" style="margin-top:6px;">Filtrando pela tag 🏷️ <b>${esc(okrTags[_okrFiltroTag].label||'')}</b></div>`:''}
       <div class="stat-row">
         <div class="stat-chip"><b>${ativos.length}</b><span>Objetivos ativos</span></div>
@@ -1060,6 +1143,14 @@ function buildSlides(){
         <div class="stat-chip"><b style="color:var(--danger);">${counts.atrasado}</b><span>Atrasados</span></div>
         <div class="stat-chip"><b style="color:var(--accent);">${counts.concluido}</b><span>Concluídos</span></div>
       </div>
+      ${torresComObj.length?`<div class="torre-tiles">${torresComObj.map(t=>{
+        const l = ativos.filter(o=>_okrTorreDe(o)===t.id), st = _okrStatsDe(l), ng = grupos.filter(g=>g.torre===t.id).length;
+        return `<div class="torre-tile t-${t.id}" role="button" tabindex="0" onclick="window._okrGoToKey('torre:${t.id}')" title="Abrir a torre ${esc(t.label)}">
+          <div class="tt-head"><span class="tt-ico">${t.icon}</span>${esc(t.label)}</div>
+          <div class="tt-nums"><div><b>${l.length}</b><span>Objetivo${l.length===1?'':'s'}</span></div><div><b>${st.media}%</b><span>progresso médio</span></div></div>
+          ${_okrSbarHtml(st)}
+          <div class="tt-sub">${ng} gerência${ng===1?'':'s'}${st.c.atrasado?` · <span style="color:var(--danger);">${st.c.atrasado} atrasado${st.c.atrasado===1?'':'s'}</span>`:''}${st.c.risco?` · <span style="color:var(--warn);">${st.c.risco} em risco</span>`:''}</div>
+        </div>`; }).join('')}</div>`:''}
       <div class="cover-updated" id="cover-updated"></div>
     </div>`});
 
@@ -1068,13 +1159,37 @@ function buildSlides(){
       <div class="empty-state"><div class="ico">🌊</div>
       <div>${_okrFiltroTag?'Nenhum Objetivo ativo com essa tag.':'Nenhum Objetivo ativo cadastrado ainda no painel.'}</div></div>`});
   } else {
-    grupos.forEach(gr=>{
-      const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
-      list.push({key:'ger:'+gr.key, title:gr.rotulo, html:`
-        <div class="slide-inner">
-          <div class="ger-header"><span class="ico">${g.icon}</span><h2>${esc(gr.rotulo)}</h2><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
-          <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
+    torresComObj.forEach(t=>{
+      const lt = ativos.filter(o=>_okrTorreDe(o)===t.id), st = _okrStatsDe(lt), grs = grupos.filter(g=>g.torre===t.id);
+      // Slide-capa da torre: resumo + as gerências (clicáveis) com contagem, barra de status e média.
+      list.push({key:'torre:'+t.id, title:t.icon+' Torre '+t.label, torre:t.id, torreDot:true, html:`
+        <div class="slide-inner t-${t.id}">
+          <div class="torre-hd">
+            <span class="big">${t.icon}</span>
+            <div><h2>Torre ${esc(t.label)}</h2><div class="sub">${lt.length} Objetivo${lt.length===1?'':'s'} · ${grs.length} gerência${grs.length===1?'':'s'}</div></div>
+            <div class="torre-kpis">
+              <div class="stat-chip"><b>${st.media}%</b><span>progresso médio</span></div>
+              <div class="stat-chip"><b style="color:var(--teal);">${st.c.no_prazo}</b><span>No prazo</span></div>
+              <div class="stat-chip"><b style="color:var(--warn);">${st.c.risco}</b><span>Em risco</span></div>
+              <div class="stat-chip"><b style="color:var(--danger);">${st.c.atrasado}</b><span>Atrasados</span></div>
+              <div class="stat-chip"><b style="color:var(--accent);">${st.c.concluido}</b><span>Concluídos</span></div>
+            </div>
+          </div>
+          <div class="torre-sbar">${_okrSbarHtml(st)}</div>${_okrLegendaHtml(st)}
+          <div class="ger-rows">${grs.map(gr=>{ const sg = _okrStatsDe(gr.lista); return `<div class="ger-row" role="button" tabindex="0" onclick="window._okrGoToKey(${jsq('ger:'+gr.key)})" title="Abrir ${esc(gr.g.label)}">
+            <span class="gr-ico">${gr.g.icon}</span>
+            <div class="gr-main"><div class="gr-name">${esc(gr.g.label)}</div>${_okrSbarHtml(sg)}</div>
+            <div class="gr-num"><b>${gr.lista.length}</b><span>${sg.media}% médio</span></div>
+          </div>`; }).join('')}</div>
         </div>`});
+      grs.forEach((gr,gi)=>{
+        const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
+        list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, html:`
+          <div class="slide-inner t-${t.id}">
+            <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon} ${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
+            <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
+          </div>`});
+      });
     });
 
     // Summary
@@ -1087,20 +1202,21 @@ function buildSlides(){
         <div class="sum-bar-count">${n}</div>
       </div>`;
     }).join('');
-    const tableRows = grupos.map(gr=>{
-      const g = gr.g, lista = gr.lista;
-      const c = {nao_iniciado:0,no_prazo:0,risco:0,atrasado:0,concluido:0};
-      lista.forEach(o=>{ c[objStatus(o.id)]=(c[objStatus(o.id)]||0)+1; });
-      return `<tr><td>${g.icon} ${esc(gr.rotulo)}</td><td>${lista.length}</td>
-        <td style="color:var(--teal);">${c.no_prazo}</td><td style="color:var(--warn);">${c.risco}</td>
-        <td style="color:var(--danger);">${c.atrasado}</td><td style="color:var(--accent);">${c.concluido}</td></tr>`;
+    const linhaTab = (cls, nome, st)=>`<tr class="${cls}"><td>${nome}</td><td>${st.n}</td>
+        <td style="color:var(--teal);">${st.c.no_prazo}</td><td style="color:var(--warn);">${st.c.risco}</td>
+        <td style="color:var(--danger);">${st.c.atrasado}</td><td style="color:var(--accent);">${st.c.concluido}</td><td>${st.media}%</td></tr>`;
+    // Uma faixa por torre (com o subtotal) e, embaixo, as gerências dela.
+    const tableRows = torresComObj.map(t=>{
+      const lt = ativos.filter(o=>_okrTorreDe(o)===t.id);
+      return `<tbody class="t-${t.id}">`+linhaTab('sum-torre', t.icon+' Torre '+esc(t.label), _okrStatsDe(lt))
+        + grupos.filter(g=>g.torre===t.id).map(gr=>linhaTab('sum-ger', gr.g.icon+' '+esc(gr.g.label), _okrStatsDe(gr.lista))).join('')+`</tbody>`;
     }).join('');
     list.push({key:'summary', title:'Panorama geral', html:`
       <div class="slide-inner">
         <div class="sum-title">📊 Panorama geral</div>
         <div class="sum-bars">${barsHtml}</div>
-        <table class="sum-table"><thead><tr><th>Gerência</th><th>Ativos</th><th>No prazo</th><th>Risco</th><th>Atrasado</th><th>Concluído</th></tr></thead>
-        <tbody>${tableRows}</tbody></table>
+        <table class="sum-table"><thead><tr><th>Torre / Gerência</th><th>Ativos</th><th>No prazo</th><th>Risco</th><th>Atrasado</th><th>Concluído</th><th>Média</th></tr></thead>
+        ${tableRows}</table>
       </div>`});
   }
 
@@ -1115,6 +1231,7 @@ function rebuild(){
   if(!Object.values(_loaded).every(Boolean)) return;
   const prevKey = slides[currentIdx]?.key;
   _okrAtualizaFiltroTag();
+  _okrAtualizaFiltroTorre();
   slides = buildSlides();
   _lastUpdate = new Date();
   let idx = slides.findIndex(s=>s.key===prevKey);
@@ -1283,8 +1400,9 @@ function fitSlideContent(containerEl, contentEl){
 function render(){
   const wrap = document.getElementById('slides');
   wrap.innerHTML = slides.map((s,i)=>`<div class="slide${i===currentIdx?' active':(i<currentIdx?' prev':'')}" data-idx="${i}">${s.html}</div>`).join('');
+  // Bolinhas na cor da torre; a capa de cada torre é maior e abre um respiro (fica fácil ver onde uma torre começa).
   document.getElementById('bottombar').innerHTML = slides.map((s,i)=>
-    `<span class="dot${i===currentIdx?' active':''}" onclick="window._okrGoTo(${i})" title="${esc(s.title)}"></span>`).join('');
+    `<span class="dot${i===currentIdx?' active':''}${s.torre?' t-'+s.torre:''}${s.torreDot?' torre-dot sep':''}${s.key==='summary'?' sep':''}" onclick="window._okrGoTo(${i})" title="${esc(s.title)}"></span>`).join('');
   document.getElementById('tb-title').textContent = slides[currentIdx]?.title || '—';
   document.getElementById('tb-bar-fill').style.width = slides.length ? ((currentIdx+1)/slides.length*100)+'%' : '0%';
   document.getElementById('btn-prev').disabled = currentIdx<=0;
