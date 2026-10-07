@@ -3452,9 +3452,9 @@ visual em slides estáticos, gifs embutidos em base64; **linhas MUITO
 longas** — algumas passam de 3 milhões de caracteres, nunca usar `Read`
 sem `grep`/`awk` filtrando por tamanho de linha antes)
 Criado 2026-09-25 (v3.65 · painel-dev), nunca tinha ganhado seção
-própria neste mapa até agora. Botão "📘 Guia OKR" no cabeçalho da aba
-🎯 OKR abre em nova aba. Estrutura: `<section class="slide">` (18 no
-retrato deste rodapé) navegadas por JS simples no fim do arquivo
+própria neste mapa até agora. Botão "📘 Guia OKR" na página do OKR (e na tela inicial das torres)
+abre em nova aba. Estrutura: `<section class="slide">` (30 desde
+2026-10-07; eram 18) navegadas por JS simples no fim do arquivo
 (`document.querySelectorAll('.slide')`, dots + contador — some conta
 sozinha, nunca precisa hardcodar o total ao adicionar/remover slide).
 Conteúdo: conceito Objetivo/Marco, semáforo de status, criar Objetivo/
@@ -3464,7 +3464,12 @@ arquivar/excluir/vincular, histórico/reuniões, notificações/Agente
 Ágil, apresentação ao vivo (incl. "🎬 Aparecer na apresentação"/
 "Colapsar concluídos", 2026-09-30), e uma tabela comparativa de
 Permissões (`.cmp-row`, grid CSS — 5 colunas desde 2026-09-30: Ação/
-ADM/PO-Org-Gestor OKR/Responsável/Outros, era 4). Sincronizado com a
+ADM/PO-Org-Gestor OKR/Responsável/Outros, era 4). **2026-10-07**: +5
+slides — 🏛️ Torres e gerências, ⚙ Gerências configuráveis, 📢 Mural do
+OKR, 🔔 O sino do OKR (com @menção) e 👁 Visualizadores externos —
+com prints reais (JPEG em base64) de uma página rodando com dados
+fictícios; a tabela de Permissões ganhou a linha "Gerências e Mural"
+e a ressalva "dentro da sua torre". Sincronizado com a
 "❓ Ajuda" do painel (ver entrada acima) e com o `CHANGELOG.md` — as
 duas fontes devem contar a MESMA história, mesmo princípio da skill
 `/atualizarhelpcontent` (essa skill hoje só cobre `kanban-dev.html`
@@ -3472,6 +3477,7 @@ duas fontes devem contar a MESMA história, mesmo princípio da skill
 se este gap se repetir).
 
 ### 🎯 `okr-dev.html` — OKR em página própria (2026-10-06, v1.0 · okr-dev; promovido como `okr.html` v1.0 · okr)
+> 👁 **Visualizadores externos (v2.5+ · okr-dev)** — `window._isPainelViewer`, `_usuariosNode()` (visualizador lê `kanban/usuarios_publicos`, nunca `kanban/usuarios`), `openOkrViewers()`/`addOkrViewer()`/`removeOkrViewer()`/`_okrApplyViewersBtn()` (botão só ADM; lista `kanban/painel_viewers`), `_okrApplyViewerLock()` (campos de escrita travados); o sino/Mural do externo usa `localStorage` (`okr_feed_seen_<emailKey>`, `okr_mural_visto_<uid>`).
 > 📢🔔 **Mural + sino do OKR (v2.10 · okr-dev)** — `okrMural`/`loadOkrMural()` (`kanban/okr/mural`), `_okrMuralRender()` (faixa), `openOkrMuralModal()`/`saveOkrMural()`/`okrMuralArquivar()`, `_okrMuralChecaPopup()`/`_okrMuralAbrir()` (popup do 🚨 urgente), `_okrMuralPodePublicar()`/`_okrMuralPodeGerir()`; feed `okrFeed`/`loadOkrFeed()` (`kanban/okr/feed`, lido em `kanban/okr/feed_seen/{uid}`), `_okrFeedPush()`/`_okrFeedMarcoConcluido()`; sino `_okrBellItens()`/`_okrBellRender()`/`_okrBellToggle()`/`_okrBellClick()`; visibilidade `_okrAlvoParaMim()`; @menção `_okrMencaoInput()`/`_okrMencoesDoTexto()`/`_okrNotifyMencao()`/`_okrMencaoHtml()` (Anotações da reunião), deep link `?okr=notas`.
 
 > ⚙ **Gerências configuráveis (v2.9 · okr-dev)** — `okrGerenciasCfg` (listener `loadOkrGerencias()` em `kanban/okr/gerencias`), `_okrGerenciasBase(torre)`/`okrGerenciasDa(torre, comOcultas)`/`okrGerenciasTodas()`/`_okrGerenciaDe(id, torre)`; `okrGerenciaLabel/Icon(id, torre)` agora recebem a torre; modal `openOkrGerencias()`/`renderOkrGerencias()`/`_okrGerTx()`/`_okrGerAplicar()`; `okr-apresentacao.slide.html`: `_okrGruposGerencia()`/`_okrGerenciasBase()`.
@@ -4432,4 +4438,4 @@ Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdR
 (`_bdToggleCol()`); cartões `.bd-grid2`/`.bd-card`. Gráficos medem o container via `_bdChartW(el,min)` (barras/tendência/CFD/burndown) e redesenham no `resize` (`_bdResizeT`);
 `openBoardData()` abre o overlay ANTES de desenhar (largura 0 se fechado).
 
-*Retrato do commit `6e30656` (2026-09-30).*
+*Retrato do commit `6e30656` (2026-09-30); seção `okr-dev.html` atualizada em 2026-10-07 (v2.10).*

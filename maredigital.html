@@ -190,7 +190,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('firebase-db')"><span class="nd" style="background:var(--teal)"></span>🔥 Estrutura Firebase</a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.631</div>
+  <div class="ng"><div class="ng-lbl">kanban.html · v8.30.794</div>
     <a class="nl" onclick="goTo('auth')"><span class="nd" style="background:var(--purple)"></span>🔐 Autenticação & papéis</a>
     <a class="nl" onclick="goTo('board')"><span class="nd" style="background:var(--accent)"></span>📋 Board & visualizações</a>
     <a class="nl" onclick="goTo('cards')"><span class="nd" style="background:var(--cyan)"></span>🗃️ Sistema de cards</a>
@@ -204,11 +204,11 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <a class="nl" onclick="goTo('personalizacao')"><span class="nd" style="background:var(--warn)"></span>🎛️ Personalização <span class="nb nb-t">novo</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.639-dev</div>
+  <div class="ng"><div class="ng-lbl">kanban-dev.html · v8.30.796-dev</div>
     <a class="nl" onclick="goTo('dev')"><span class="nd" style="background:var(--orange)"></span>🧪 Sandbox & Dev Seed <span class="nb nb-p">dev</span></a>
   </div>
 
-  <div class="ng"><div class="ng-lbl">painel.html · v3.38</div>
+  <div class="ng"><div class="ng-lbl">painel.html · v5.9</div>
     <a class="nl" onclick="goTo('painel-overview')"><span class="nd" style="background:var(--teal)"></span>📊 Visão geral</a>
     <a class="nl" onclick="goTo('painel-sections')"><span class="nd" style="background:var(--cyan)"></span>📈 Seções & métricas</a>
     <a class="nl" onclick="goTo('painel-setup')"><span class="nd" style="background:var(--purple)"></span>⚙️ Board Setup</a>
@@ -233,9 +233,9 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <h1>Maré Digital<br><span>Documentação Técnica</span></h1>
   <p class="hdesc">Sistema Kanban desenvolvido internamente. Páginas HTML autocontidas (sem build, sem servidor próprio), sincronização em tempo real via Firebase, um orquestrador de IA rodando em Cloud Functions e suporte a múltiplos squads.</p>
   <div class="pills">
-    <span class="pill pb">kanban.html · v8.30.631</span>
-    <span class="pill pp">kanban-dev.html · v8.30.639-dev</span>
-    <span class="pill pt">painel.html · v3.38</span>
+    <span class="pill pb">kanban.html · v8.30.794</span>
+    <span class="pill pp">kanban-dev.html · v8.30.796-dev</span>
+    <span class="pill pt">painel.html · v5.9</span>
     <span class="pill pw">🤖 Agente Ágil · Claude</span>
     <span class="pill po">☁ Firebase RTDB + Functions</span>
   </div>
@@ -317,9 +317,10 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   <table class="tbl">
     <thead><tr><th>Arquivo</th><th>Versão</th><th>URL / squad padrão</th><th>Para quem</th></tr></thead>
     <tbody>
-      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.631 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
-      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.639-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
-      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v3.38</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads, incluindo a aba 🎯 OKR. Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>kanban.html</td><td><span class="bdg done-b">v8.30.794 prod</span></td><td><code class="hl">?squad=dados</code> · <code class="hl">?squad=prf</code> · <code class="hl">?squad=midiacriativa</code></td><td>Time inteiro — membros, POs, organizadores</td></tr>
+      <tr><td>kanban-dev.html</td><td><span class="bdg nb-p">v8.30.796-dev</span></td><td><code class="hl">?squad=dev</code></td><td>Desenvolvimento — features novas, seed de dados fictícios, sandbox do Agente Ágil</td></tr>
+      <tr><td>painel.html / painel-dev.html</td><td><span class="bdg nb-t">v5.9</span></td><td>acesso direto</td><td>Gestão / diretoria — visão consolidada de todos os squads (o 🎯 OKR agora é uma página própria, linha abaixo). Os dois <strong>divergem</strong> (dev tem instrumentação extra e banner de aviso)</td></tr>
+      <tr><td>okr.html / okr-dev.html</td><td><span class="bdg nb-t">v2.8 prod · v2.10-dev</span></td><td><code class="hl">?torre=comercial</code> · <code class="hl">?okr=&lt;id&gt;</code> · <code class="hl">?okr=chat</code> · <code class="hl">?okr=notas</code></td><td>Página própria do 🎯 OKR (saiu do painel na v5.0): torres, Objetivos/Marcos, Mural, sino, Histórico, Anotações e Central Agente Ágil — ver seção "🎯 OKR". Os dois <strong>divergem</strong> (dev tem banner e usa a mesma base de dados). Aceita <strong>visualizadores externos</strong> (só leitura)</td></tr>
       <tr><td>okr-apresentacao.slide.html</td><td>sem versão própria</td><td>acesso direto</td><td>Apresentação em slides dos Objetivos estratégicos (1 Objetivo = 1 slide) — ver seção "🎯 OKR"</td></tr>
       <tr><td>firebase-messaging-sw.js</td><td>sem versão própria</td><td>raiz do domínio</td><td>Service Worker — cache offline + exibição de push com a aba fechada</td></tr>
       <tr><td>maredigital.html</td><td>sem versão própria</td><td>acesso direto</td><td>Esta página — documentação técnica, fora do ciclo de release versionado</td></tr>
@@ -398,10 +399,16 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 │   └── notif_prefs/dnd         <span class="n">← janela "Não Perturbe"</span>
 ├── <span class="sh2">notas/{squadId ou uid}/{notaId}</span> <span class="n">← Notas pessoais/de squad, com cardIds vinculados</span>
 ├── <span class="sh2">okr/</span>                       <span class="n">← Objetivos/Marcos estratégicos, ver seção "🎯 OKR"</span>
-│   ├── <span class="p">objetivos/{id}</span>             <span class="n">← título, gerência, listas, responsáveis</span>
+│   ├── <span class="p">objetivos/{id}</span>             <span class="n">← título, torre, gerência, listas, responsáveis, atingimento</span>
 │   ├── <span class="p">marcos/{id}</span>                <span class="n">← status/prazo, objetivoId aponta pro pai</span>
-│   ├── <span class="p">snapshots/{data}</span>           <span class="n">← foto semanal (okrWeeklySnapshot)</span>
+│   ├── <span class="p">gerencias/{torre}/{id}</span>     <span class="n">← gerências configuráveis por torre {label, icon, ordem, oculta?}</span>
+│   ├── <span class="p">mural/{id}</span>                 <span class="n">← avisos do Mural do OKR (tipo, torres, expiraEm, arquivado)</span>
+│   ├── <span class="p">feed/{id}</span>                  <span class="n">← eventos da torre pro sino (mural / obj_criado / marco_concluido)</span>
+│   ├── <span class="p">feed_seen/{uid}</span>            <span class="n">← "lido" do sino: {ts, lidos:{id:true}}</span>
+│   ├── <span class="p">reuniao_notas/{data}/{id}</span>  <span class="n">← Anotações da reunião (com @menção)</span>
+│   ├── <span class="p">snapshots/{data}</span>           <span class="n">← foto semanal (okrWeeklySnapshot), com a torre de cada Objetivo</span>
 │   └── <span class="p">agente_chat</span>                <span class="n">← chat dedicado com o Agente Ágil</span>
+├── <span class="sh2">painel_viewers/{emailKey}</span>   <span class="n">← visualizadores externos (só leitura no OKR/painel; e-mail com "." → ",")</span>
 ├── <span class="sh2">squads_meta/</span>               <span class="n">← squads criados dinamicamente via Painel</span>
 └── <span class="sh2">presence/{uid}</span>             <span class="n">← presença global (usada pelo Painel)</span>
   </div>
@@ -796,7 +803,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
   </div></div>
   <div class="wc">
     <div class="wch"><div class="wci">🔭</div><div class="wct">O que o Painel faz que o Kanban não faz</div></div>
-    <div class="wcb">O kanban foca em <strong>um squad por vez</strong>. O painel lê <strong>todos os squads simultaneamente</strong> e entrega: visão consolidada de OKRs, blockers e riscos; calendário unificado; log de erros de todos os boards; gestão global de usuários; Board Setup para criar novos squads; backup global em um clique.</div>
+    <div class="wcb">O kanban foca em <strong>um squad por vez</strong>. O painel lê <strong>todos os squads simultaneamente</strong> e entrega: visão consolidada de blockers e riscos (o OKR tem página própria); calendário unificado; log de erros de todos os boards; gestão global de usuários; Board Setup para criar novos squads; backup global em um clique.</div>
   </div>
   <div class="flow" style="margin:1rem 0;">
     <div class="fb p">Login ADM</div><div class="fa">→</div>
@@ -818,7 +825,7 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
     <thead><tr><th>Seção</th><th>O que mostra</th></tr></thead>
     <tbody>
       <tr><td>Cards por squad</td><td>Cards de todos os squads. Filtro por squad. Abre card em modal sem sair do painel.</td></tr>
-      <tr><td>OKRs (cards) — renderOKR()</td><td>Todos os cards flagados como OKR de qualquer squad, agrupados com progresso de checklist — leve, embutido no card. Diferente da aba "🎯 OKR" (Objetivos/Marcos estruturados), ver seção própria.</td></tr>
+      <tr><td>OKRs (cards) — renderOKR()</td><td>Todos os cards flagados como OKR de qualquer squad, agrupados com progresso de checklist — leve, embutido no card. Diferente da página "🎯 OKR" (Objetivos/Marcos estruturados), ver seção própria.</td></tr>
       <tr><td>Blockers — renderBlockers()</td><td>Cards na coluna blocker de todos os squads. resolveAllBlockers() move todos de volta para "Em Progresso".</td></tr>
       <tr><td>Riscos — renderRiscos()</td><td>Todos os cards com riscos mapeados, de todos os squads.</td></tr>
       <tr><td>Throughput — renderTrend()</td><td>Gráfico de barras de cards concluídos por dia nos últimos 14 dias.</td></tr>
@@ -870,34 +877,46 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
 <!-- 22 OKR -->
 <section class="section" id="okr">
   <div class="sh"><div class="sn">22</div><div>
-    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>painel.html</div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>okr.html</div>
     <h2>🎯 OKR — Objetivos e Marcos estratégicos</h2>
-    <p class="slead">Aba dedicada em painel.html/painel-dev.html — modelo estruturado de metas estratégicas por gerência, diferente (e mais completo) do que a flag <code class="hl">card.isOKR</code> embutida no card (seção 08/18) resolve sozinha.</p>
+    <p class="slead">Página própria (<code class="hl">okr.html</code> / <code class="hl">okr-dev.html</code>, extraída do painel na v5.0; o painel só tem um atalho e o redirect de <code class="hl">?okr=</code>) — modelo estruturado de metas estratégicas por <strong>torre</strong> e gerência, diferente (e mais completo) do que a flag <code class="hl">card.isOKR</code> embutida no card (seção 08/18) resolve sozinha.</p>
   </div></div>
 
   <div class="cl">estrutura de um Objetivo</div>
-  <div class="code">{ <span class="k">id</span>:<span class="v">"obj_..."</span>, <span class="k">titulo</span>:<span class="v">"Reduzir custo Firebase"</span>, <span class="k">areaId</span>:<span class="v">"dadosia"</span>, <span class="k">pilar</span>:<span class="v">"..."</span>,
-  <span class="k">trimestres</span>:<span class="v">["2026-Q3"]</span>, <span class="k">descricao</span>:<span class="v">"..."</span>, <span class="k">responsaveis</span>:<span class="v">["uid1"]</span>, <span class="k">tagIds</span>:<span class="v">[]</span>,
+  <div class="code">{ <span class="k">id</span>:<span class="v">"obj_..."</span>, <span class="k">titulo</span>:<span class="v">"Reduzir custo Firebase"</span>, <span class="k">torre</span>:<span class="v">"digital"</span>, <span class="k">areaId</span>:<span class="v">"dadosia"</span>, <span class="k">pilar</span>:<span class="v">"..."</span>,
+  <span class="k">trimestres</span>:<span class="v">["2026-Q4"]</span>, <span class="k">descricao</span>:<span class="v">"..."</span>, <span class="k">responsaveis</span>:<span class="v">["uid1"]</span>, <span class="k">tagIds</span>:<span class="v">[]</span>,
+  <span class="k">atingimento</span>:<span class="v">{tipo, meta, lancamentos:[...]}</span>, <span class="cm">// 📈 meta medida: faz a barra de % andar</span>
   <span class="k">indicadores</span>:<span class="v">[...]</span>, <span class="k">progressos</span>:<span class="v">[...]</span>, <span class="k">proximosPassos</span>:<span class="v">[...]</span>, <span class="cm">// listas, só somam item</span>
   <span class="k">riscos</span>:<span class="v">[...]</span>, <span class="k">planosAcao</span>:<span class="v">[...]</span>, <span class="k">cardLinks</span>:<span class="v">[{squadId,cardId}]</span>,
   <span class="k">arquivado</span>:<span class="v">false</span>, <span class="k">history</span>:<span class="v">[{who,uid,what,tipo,at}]</span> }</div>
 
   <div class="grid">
+    <div class="card"><div class="ci">🏛️</div><div class="ct">Torres</div><div class="cd">3 torres — <strong>🌐 Digital · 🛍️ Comercial · 🏛️ Corporativa</strong> (<code class="hl">OKR_TORRES</code>). Objetivo sem <code class="hl">torre</code> = Digital. A pessoa tem a flag <code class="hl">kanban/usuarios/{uid}/torre</code> (perguntada no cadastro; ADM troca em 👥 Global Users); o valor especial <strong>⭐ geral</strong> edita todas. Todo mundo <strong>vê</strong> tudo; edita só a sua torre.</div></div>
+    <div class="card"><div class="ci">⚙</div><div class="ct">Gerências por torre</div><div class="cd"><code class="hl">kanban/okr/gerencias/{torre}/{id}</code>. Sem configuração vale o padrão (Digital: 7 de sempre; as outras: só "Geral"); na 1ª edição o padrão é copiado e passa a mandar. Cria/renomeia/reordena/<strong>oculta</strong>; com Objetivos nunca apaga. Cada mudança é uma transação. O bloco quinzenal só existe nas gerências originais da Digital.</div></div>
+    <div class="card"><div class="ci">✏️</div><div class="ct">Permissão</div><div class="cd"><strong>ADM</strong> cria/edita em qualquer torre; <strong>PO/Organizador</strong> de squad e <strong>🎯 Gestor OKR</strong> só na própria torre (a torre ⭐ Geral vale pra todas); o <strong>Responsável</strong> sempre edita o seu Objetivo. Mesma regra replicada no Agente Ágil. Só ADM arquiva/exclui.</div></div>
     <div class="card"><div class="ci">🏁</div><div class="ct">Marcos</div><div class="cd">Atividade macro dentro de um Objetivo, com prazo e status: ⚪ Não iniciado · 🟢 No prazo · 🟡 Risco · 🔴 Atrasado · ✅ Concluído. O status do Objetivo é sempre o <strong>pior status entre os Marcos ativos</strong>.</div></div>
-    <div class="card"><div class="ci">✏️</div><div class="ct">Permissão</div><div class="cd">Só <strong>ADM</strong> cria um Objetivo novo. Editar Objetivo/Marco exige ser <strong>ADM ou Responsável</strong> daquele Objetivo — mesma regra replicada no Agente Ágil (ver abaixo).</div></div>
+    <div class="card"><div class="ci">👁</div><div class="ct">Visualizadores externos</div><div class="cd"><code class="hl">kanban/painel_viewers/{emailKey}</code> (botão 👁 Visualizadores, só ADM; mesma lista do painel). Entram com o Google do e-mail cadastrado; <strong>só leitura</strong> garantida pelas Rules; leem o diretório magro <code class="hl">usuarios_publicos</code> — a leitura de <code class="hl">kanban/usuarios</code> (e-mails, tokens de push, notificações) é só da empresa. Não são usuários (sem presença, fora do Global Users).</div></div>
     <div class="card"><div class="ci">📦</div><div class="ct">Arquivar × 🗑 Excluir</div><div class="cd">Arquivar esconde da lista de ativos (reversível, "📦 Ver arquivados"). Excluir (só ADM) é definitivo — apaga o Objetivo e todos os Marcos dele, sem desfazer.</div></div>
-    <div class="card"><div class="ci">🏷️</div><div class="ct">Tags & cards vinculados</div><div class="cd">Tags próprias do Objetivo, e vínculo com cards do board (<code class="hl">cardLinks</code>) — o card ganha um badge 🎯 e aparece na lista "Cards com badge OKR".</div></div>
-    <div class="card"><div class="ci">📈</div><div class="ct">Histórico semanal</div><div class="cd">Toda sexta 17h, <code class="hl">okrWeeklySnapshot</code> grava o status/progresso de cada Objetivo ativo. Aba "📈 Histórico": gráfico de tendência + evolução por Objetivo.</div></div>
-    <div class="card"><div class="ci">🖥️</div><div class="ct">Apresentação em slides</div><div class="cd"><code class="hl">okr-apresentacao.slide.html</code> — 1 slide por Objetivo (nunca 2 telas), visual Marine Glass. <code class="hl">F</code> tela cheia, setas/espaço navega, <code class="hl">Backspace</code>/<code class="hl">Esc</code> fecha o detalhe.</div></div>
+    <div class="card"><div class="ci">🏷️</div><div class="ct">Tags & cards vinculados</div><div class="cd">Tags próprias do Objetivo, e vínculo com cards do board (<code class="hl">cardLinks</code>, carregados sob demanda) — o card ganha um badge 🎯 e aparece na lista "Cards com badge OKR".</div></div>
+    <div class="card"><div class="ci">📈</div><div class="ct">Histórico semanal</div><div class="cd">Toda sexta 17h, <code class="hl">okrWeeklySnapshot</code> grava status/progresso/atingimento de cada Objetivo ativo <strong>e a torre dele</strong>. "📈 Histórico": na visão global, comparativo por torre; dentro de uma torre, por gerência. Abre sozinho na aba que tem dados.</div></div>
+    <div class="card"><div class="ci">🖥️</div><div class="ct">Apresentação em slides</div><div class="cd"><code class="hl">okr-apresentacao.slide.html</code> (compartilhada, sem versão) — 1 slide por Objetivo, agrupado por <strong>torre + gerência</strong>, visual Marine Glass. <code class="hl">F</code> tela cheia, setas/espaço navega, <code class="hl">Backspace</code>/<code class="hl">Esc</code> fecha o detalhe.</div></div>
+  </div>
+
+  <div class="cl">📢 Mural exclusivo + 🔔 sino (okr-dev v2.10)</div>
+  <div class="grid">
+    <div class="card"><div class="ci">📢</div><div class="ct">Mural do OKR</div><div class="cd"><code class="hl">kanban/okr/mural/{id}</code> = tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <code class="hl">torres</code> (ids ou <code class="hl">["*"]</code>), expiração, <code class="hl">arquivado</code>. Faixa fixa no alto da página; o 🚨 urgente também abre em popup 1x por pessoa (visto guardado no navegador). Publica ADM e quem edita a torre, só nas torres que edita ("todas" = ADM/⭐ Geral).</div></div>
+    <div class="card"><div class="ci">🔔</div><div class="ct">Sino do OKR</div><div class="cd">Junta as notificações pessoais <code class="hl">okr_*</code> (<code class="hl">kanban/usuarios/{uid}/notificacoes</code>, as mesmas do sino do kanban/painel) com o <strong>feed da torre</strong> <code class="hl">kanban/okr/feed/{id}</code> — <em>1 escrita por evento, sem fan-out por pessoa</em>: aviso novo, 🆕 Objetivo criado, ✅ Marco concluído. Cada pessoa filtra pela própria torre; "lido" por item em <code class="hl">feed_seen/{uid}</code>.</div></div>
+    <div class="card"><div class="ci">💬</div><div class="ct">@menção nas Anotações</div><div class="cd">Digitar <code class="hl">@</code> nas 📋 Anotações da reunião lista as pessoas; ao enviar, cada mencionado (nome completo) recebe <code class="hl">okr_mencao</code> → deep link <code class="hl">?okr=notas</code>. Push no celular ainda não (<code class="hl">okr_mencao</code> fora de <code class="hl">PUSH_TYPES</code>).</div></div>
+    <div class="card"><div class="ci">👁</div><div class="ct">Sino do visualizador externo</div><div class="cd">Lê o feed e o Mural (<code class="hl">kanban/okr/*</code> é legível por ele) mas não escreve nada: o "lido" fica no <code class="hl">localStorage</code>. Sem notificações pessoais (ele não é usuário).</div></div>
   </div>
 
   <div class="wc" style="margin-top:8px;border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.05);">
     <div class="wch"><div class="wci">💬</div><div class="wct">Central Agente Ágil — chat dedicado</div></div>
-    <div class="wcb">Botão "💬 Central Agente Ágil" na aba OKR — chat central (não preso a 1 Objetivo), sem @menção: toda mensagem já é um pedido pro agente. Conta a situação em texto corrido ("já validamos a viabilidade do OMNI, falta apresentar pro conselho") e o agente identifica o Objetivo certo, separa <strong>Progresso/Próximo Passo/Risco</strong> e escreve direto nos campos (só soma item, nunca substitui) — ou cria/atualiza Marco. Respeita a mesma regra de permissão de edição manual (ADM/Responsável), explicando em vez de fingir que funcionou quando não tem acesso. Cloud Function <code class="hl">okrAgenteChat</code>, escrita real desde o 1º deploy. A própria conversa, permanente, já é o histórico de pedidos — sem log separado.</div>
+    <div class="wcb">Botão "💬 Central Agente Ágil" na página do OKR — chat central (não preso a 1 Objetivo), sem @menção: toda mensagem já é um pedido pro agente. Conta a situação em texto corrido ("já validamos a viabilidade do OMNI, falta apresentar pro conselho") e o agente identifica o Objetivo certo, separa <strong>Progresso/Próximo Passo/Risco</strong> e escreve direto nos campos (só soma item, nunca substitui) — ou cria/atualiza Marco, e registra o <strong>📈 atingimento</strong> (nunca inventa valor). Respeita a mesma regra de permissão de edição manual, explicando em vez de fingir que funcionou quando não tem acesso. Cloud Function <code class="hl">okrAgenteChat</code>, escrita real desde o 1º deploy. <em>Ainda não conhece torre/gerência</em> (fase 2): o <code class="hl">area_id</code> que ele grava é livre.</div>
   </div>
   <div class="wc" style="margin-top:8px;">
-    <div class="wch"><div class="wci">❓</div><div class="wct">Ajuda in-app</div></div>
-    <div class="wcb">Botão "❓ Ajuda" no cabeçalho da aba explica todo o modelo (Objetivo/Marco/status, permissão, Arquivar×Excluir, Tags, Histórico, apresentação e a Central Agente Ágil) — mesmo padrão do help já existente na aba Agentes.</div>
+    <div class="wch"><div class="wci">❓</div><div class="wct">Ajuda in-app e guia</div></div>
+    <div class="wcb">Botão "❓ Ajuda" no cabeçalho explica todo o modelo (torres, gerências, visualizadores, Mural, sino, Objetivo/Marco/status, atingimento, Histórico e a Central Agente Ágil); o <strong>📘 Guia OKR</strong> (<code class="hl">guia-okr.html</code>) é o passo a passo ilustrado.</div>
   </div>
 </section>
 
@@ -981,8 +1000,8 @@ code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56
       <tr><td>agenteAgil</td><td>HTTP público, autenticado por chave</td><td>Geração mais antiga (v0-v3) — hoje só o ponto de entrada que especialistas externos usam pra enfileirar informação; não decide mais ação nenhuma sozinha (ver "Agente Ágil").</td></tr>
       <tr><td>intakeSubmit</td><td>HTTP público, sem login</td><td>Único ponto de escrita anônima do sistema — formulário de intake por squad grava em <code class="hl">intake_pending</code> (nunca direto em <code class="hl">/cards</code>); alguém do squad confirma e cria o card de verdade. Protegido por honeypot + rate limit por IP.</td></tr>
       <tr><td>weeklyBackup</td><td><code class="hl">onSchedule</code> todo domingo 04:00 (Brasília)</td><td>Backup automático de cada squad pro Cloud Storage, sem depender de ninguém abrir o board — mesmo formato do "Baixar JSON agora", restaurável direto pela UI. Retenção de 60 dias (~8-9 backups semanais por squad).</td></tr>
-      <tr><td>okrDailyScan</td><td><code class="hl">onSchedule</code> diário 07:00 (Brasília)</td><td>Prazo de Marco chegando (3/1 dia antes), período de editar e véspera de reunião de um Objetivo — lê o mesmo cache de Google Agenda que o painel já sincroniza, zero chamada nova à API.</td></tr>
-      <tr><td>okrWeeklySnapshot</td><td><code class="hl">onSchedule</code> toda sexta 17:00 (Brasília)</td><td>Grava o status/progresso agregado de cada Objetivo ativo em <code class="hl">kanban/okr/snapshots/{data}</code> — só arquivo histórico, não notifica ninguém. Alimenta o "📈 Histórico" da aba OKR.</td></tr>
+      <tr><td>okrDailyScan</td><td><code class="hl">onSchedule</code> diário 07:00 (Brasília)</td><td>Prazo de Marco chegando (3/1 dia antes), período de editar e véspera de reunião de um Objetivo — lê o mesmo cache de Google Agenda que o painel já sincroniza, zero chamada nova à API. A véspera de reunião vale só pra Objetivos da <strong>torre Digital</strong> em gerências com bloco quinzenal (as originais).</td></tr>
+      <tr><td>okrWeeklySnapshot</td><td><code class="hl">onSchedule</code> toda sexta 17:00 (Brasília)</td><td>Grava o status/progresso/atingimento agregado de cada Objetivo ativo (com a <strong>torre</strong> dele) em <code class="hl">kanban/okr/snapshots/{data}</code> — só arquivo histórico, não notifica ninguém. Alimenta o "📈 Histórico" do OKR.</td></tr>
       <tr><td>okrAgenteChat</td><td><code class="hl">onValueCreated</code> em <code class="hl">kanban/okr/agente_chat</code></td><td>Chat dedicado com o Agente Ágil pra ajudar a preencher OKRs (ver seção "🎯 OKR") — vocabulário de 7 ferramentas próprio, sem @menção (nó é dedicado). Escrita real desde o 1º deploy.</td></tr>
       <tr><td>Integração Spotify <span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);">pausada</span></td><td><code class="hl">onSchedule</code> a cada minuto (comentado, não deployado)</td><td>"Ouvindo agora" (presença ao vivo por squad) + "Rádio do Maré" (playlist colaborativa). O sync periódico era a única function agendada rodando 24h/dia e custou mais do que o esperado — pausado em 2026-08-04, painel escondido no board (<code class="hl">#spotify-tab</code>). As demais functions da integração (conectar/desconectar, sync sob demanda, playback, rádio) continuam deployadas, só sem o sync alimentando dado fresco.</td></tr>
     </tbody>
