@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.8 · okr — 2026-10-07 · Promove pra prod — torre "⭐ Geral" (ADMs de OKR editam todas as torres)
+
+Promoção do `okr-dev.html` v2.8 sobre a v2.7 de prod (merge de 3 vias; dev × prod só diferem nas 27 linhas de ambiente): quem tem `torre='geral'` em `kanban/usuarios/{uid}` cria/edita em todas as torres (continua precisando do papel PO/Organizador ou 🎯 Gestor OKR), escolhe a torre ao criar na Visão global e muda a torre de um Objetivo; a home marca "⭐ sua torre: Geral (edita todas)". Smoke test no `okr.html` real: página 49/49, torres 35/35, Histórico 15/15, torre Geral 15/15, visualizadores 22/22 + 5/5.
+
 ### okr-dev.html v2.8 · okr-dev — 2026-10-07 · 🏛️ Torre "⭐ Geral": ADMs de OKR editam todas as torres
 
 Pedido direto: uma torre **Geral** na flag do usuário pra colocar nos ADMs de OKR, que editam qualquer torre quando precisar. `kanban/usuarios/{uid}/torre = 'geral'` (só vale pra PESSOA — Objetivo continua sendo Digital/Comercial/Corporativa). Quem tem a Geral **cria e edita em todas as torres**, mas continua precisando do papel (PO/Organizador ou 🎯 Gestor OKR): a Geral sozinha não dá edição (o Responsável de um Objetivo segue editando o seu). Também: o seletor de torre na ⚙ do Objetivo (e a escolha da torre ao criar na Visão global, que nasce em Digital) vale pra ADM **e** pra quem tem a Geral; a home marca "⭐ sua torre: Geral (edita todas)" na Visão global; `?okr=chat` abre na global; cadastro novo com a Geral não recebe a pergunta de torre. A Ajuda do OKR explica. Testes no Chromium: 15 cenários (Gestor Geral, Geral sem papel, PO da Digital, ADM, home, deep link, painel).
@@ -20797,6 +20801,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.9 · painel — 2026-10-07 · Promove pra prod — menu de páginas do Maré (clique no título) + torre "⭐ Geral" no Global Users
+
+Promoção do `painel-dev.html` v5.9 sobre a v5.8 de prod (merge de 3 vias; dev × prod só diferem nas linhas de ambiente e nos blocos já divergentes de sempre): (1) clicar em "🐟 Maré Digital Painel ▾" abre a lista de páginas — OKR, OKR dev, Kanban, Kanban dev, Painel, Painel dev —, atual marcada "você está aqui"; (2) 👥 Global Users: seletor e filtro de torre ganham **⭐ Geral (todas)**. Smoke test no `painel.html` real: menu 10/10 (página atual = painel.html), Global Users/torre Geral 15/15, redirecionamentos 17/17, Online no OKR 7/7.
 
 ### painel-dev.html v5.9 · painel-dev — 2026-10-07 · menu de páginas do Maré (clique no título) + torre "⭐ Geral" no Global Users
 
