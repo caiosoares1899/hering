@@ -1150,6 +1150,9 @@ body{min-height:100vh;}
 .okr-tn.on{color:var(--txt);font-weight:700;background:rgba(var(--torre,140,165,190),.24);border-color:rgb(var(--torre,140,165,190));box-shadow:0 0 0 1px rgba(var(--torre,140,165,190),.35);}
 .okr-torre-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:600;padding:1px 9px;border-radius:999px;color:rgb(var(--torre,140,165,190));background:rgba(var(--torre,140,165,190),.14);border:1px solid rgba(var(--torre,140,165,190),.5);white-space:nowrap;}
 .okr-card.okr-t-digital,.okr-card.okr-t-comercial,.okr-card.okr-t-corporativa{border-left:4px solid rgb(var(--torre));background-image:linear-gradient(120deg,rgba(var(--torre),.10),transparent 55%);}
+/* 👤 "você é responsável" por cima da cor da torre: sem isto o gradiente da torre (acima, mesma especificidade e mais abaixo no arquivo) apagava o tingimento de .okr-mine e os Objetivos "meus" ficavam iguais aos outros. Empilha o tingimento azul + o gradiente da torre. */
+.okr-card.okr-mine[class*="okr-t-"]{background-image:linear-gradient(rgba(56,182,255,.28),rgba(56,182,255,.28)),linear-gradient(120deg,rgba(var(--torre),.10),transparent 55%);}
+[data-theme="light"] .okr-card.okr-mine[class*="okr-t-"]{background-image:linear-gradient(rgba(0,120,175,.38),rgba(0,120,175,.38)),linear-gradient(120deg,rgba(var(--torre),.10),transparent 55%);}
 .okr-torre-sec{margin:18px 0 6px;padding:2px 14px 12px;border-radius:16px;border:1px solid rgba(var(--torre),.35);background:linear-gradient(180deg,rgba(var(--torre),.08),transparent 120px);}
 .okr-torre-hd{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:rgb(var(--torre));}
 .pc-modal.okr-t-digital,.pc-modal.okr-t-comercial,.pc-modal.okr-t-corporativa{border-top:4px solid rgb(var(--torre));box-shadow:0 0 0 1px rgba(var(--torre),.28),0 18px 60px rgba(0,0,0,.45);}
@@ -1633,7 +1636,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.15 · okr-dev</div>
+<div class="version">v2.16 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3080,6 +3083,18 @@ function _okrHistTorresHtml(L, P){
 }
 
 
+// O Histórico só enxerga o que já entrou num snapshot (foto de sexta, 17h). Um Objetivo criado/configurado depois da última foto — ou com o 1º registro de atingimento
+// DEPOIS dela — não aparece na curva até a próxima. Pra tela vazia não parecer "não existe nenhum Objetivo com atingimento", lista aqui o que já está cadastrado ao vivo.
+function _okrHistAoVivoHtml(){
+  const lista = Object.values(okrObjetivos||{}).filter(o=>o && !o.arquivado && (!_okrTorreValida(_okrTorreAtual) || _okrTorreDe(o)===_okrTorreAtual))
+    .map(o=>({o, pct:_okrAtingPctObj(o)})).filter(x=>x.pct!==null && (x.o.atingimento.lancamentos||[]).some(Boolean));
+  if(!lista.length) return '';
+  const prox = _okrHistProxSexta().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
+  return `<div class="okr-h-aovivo" style="margin-top:12px;text-align:left;font-size:12px;"><b>📌 Já cadastrado${lista.length===1?'':'s'} agora (ao vivo)</b> <span class="mut">— entra${lista.length===1?'':'m'} na curva no próximo snapshot (${esc(prox)}, 17h)</span>
+    <ul style="margin:6px 0 0;padding-left:18px;">${lista.map(x=>`<li>${esc(x.o.titulo||'(sem título)')} — <b>${x.pct}%</b> <span class="mut">(${esc(okrTorreInfo(_okrTorreDe(x.o)).label)})</span></li>`).join('')}</ul></div>`;
+}
+
+
 function _okrHistRot(){ return _okrHistMetrica==='marcos' ? {kpi:'Marcos concluídos (média)', nome:'Marcos concluídos', col:'Marcos concluídos', gerais:'% médio de marcos concluídos'} : {kpi:'Atingimento médio', nome:'Atingimento', col:'Atingimento', gerais:'atingimento médio (%)'}; }
 
 
@@ -3168,7 +3183,7 @@ function renderOkrHistorico(){
   const prox = _okrHistProxSexta().toLocaleDateString('pt-BR',{weekday:'long',day:'2-digit',month:'long'});
   if(!todas.length){
     root.innerHTML = `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">📈</div><b>Ainda não há nenhum snapshot</b>
-      <div>Toda <b>sexta-feira, às 17h</b>, o painel guarda uma foto do status e do progresso de cada Objetivo ativo. O primeiro sai <b>${esc(prox)}</b> — depois disso esta tela mostra a evolução semana a semana.</div></div>`;
+      <div>Toda <b>sexta-feira, às 17h</b>, o painel guarda uma foto do status e do progresso de cada Objetivo ativo. O primeiro sai <b>${esc(prox)}</b> — depois disso esta tela mostra a evolução semana a semana.</div>${_okrHistAoVivoHtml()}</div>`;
     return;
   }
   _okrHistAutoMetrica();
@@ -3177,7 +3192,7 @@ function renderOkrHistorico(){
   if(!todas.some(d=>((_okrHistSnap(d)||{}).resumoGeral||{}).total>0)){
     root.innerHTML = _okrHistTabsHtml() + `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">${_okrHistMetrica==='ating'?'🎯':'🏁'}</div><b>${_okrHistMetrica==='ating'?'Nenhum Objetivo com atingimento registrado nos snapshots':'Nenhum Objetivo com Marcos nos snapshots'}</b>
       <div>${_okrHistMetrica==='ating'?'Configure a meta em <b>⚙ Configurações do Objetivo → 📈 Atingimento</b> e registre valores — o histórico monta a curva a partir dos registros. Enquanto isso, a aba <b>🏁 Marcos</b> mostra o andamento pelos Marcos concluídos.':'Crie Marcos nos Objetivos pra acompanhar a % concluída semana a semana.'}</div>
-      ${_okrHistMetrica==='ating'?`<button type="button" class="btn btn-sm" style="margin-top:8px;" onclick="_okrHistSetMetrica('marcos')">Ver por Marcos</button>`:''}</div>`;
+      ${_okrHistMetrica==='ating'?_okrHistAoVivoHtml()+`<button type="button" class="btn btn-sm" style="margin-top:8px;" onclick="_okrHistSetMetrica('marcos')">Ver por Marcos</button>`:''}</div>`;
     return;
   }
   const rot = _okrHistRot();

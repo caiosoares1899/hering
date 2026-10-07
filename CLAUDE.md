@@ -177,6 +177,13 @@ letting them hit the error first.
   across `kanban.html`/`kanban-dev.html`/`painel.html`/`functions/`, not
   just open-ended exploration.
 
+## Pendências conhecidas de documentação
+
+Registradas a pedido do usuário (2026-10-07) pra não se perderem — tratar como uma rodada de revisão da documentação ("guia/base"), não como correção avulsa:
+
+- **`guia-okr.html`**: os prints embutidos (slides da home, Mural, sino, Gerências — JPEGs base64) ainda mostram os símbolos antigos das torres (🌐 Digital / 🔭 Visão global; agora 🛒 Digital / 🌐 Visão global) e o sino sem o rodapé novo (Limpar antigas · som · permissão do aparelho · Não Perturbe). Refazer os prints (há um script de capturas com o fake do Firebase na sessão — `shots_guia.js`) junto com a revisão do texto.
+- Revisar **toda a documentação** (guia do OKR, `maredigital.html`, ajuda in-app do OKR/painel/kanban, `CODE_MAP.md`) contra o que existe hoje — Torres, Gerências, Mural, sino único, Não Perturbe, push de menção/Mural.
+
 ## Release process
 
 Since deploy is automatic on push to `main` and there's no staging/CI gate,
