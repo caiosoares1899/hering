@@ -1,8 +1,9 @@
 // functions/okr/__tests__/atingimento.test.js
 //
 // O motor de atingimento do servidor (okr/atingimento.js) é uma CÓPIA do painel — o agente tem que dizer o MESMO % que a barra.
-// Estes testes (1) comparam o bloco ATING-ENGINE texto a texto com painel-dev.html e painel.html e (2) rodam o motor do painel
-// (extraído do HTML) contra o do servidor em centenas de casos aleatórios.
+// Estes testes (1) comparam o bloco ATING-ENGINE texto a texto com okr-dev.html (e okr.html / painel.html, enquanto o prod ainda
+// o tiver) e (2) rodam o motor da página (extraído do HTML) contra o do servidor em centenas de casos aleatórios.
+// (O OKR saiu do painel-dev.html na v5.0 · 2026-10-07 — o motor mora agora em okr-dev.html/okr.html.)
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -19,18 +20,26 @@ const blocoDe = (arquivo) => {
   return s.slice(a, b + END.length);
 };
 
-test('motor do servidor: bloco idêntico ao de painel-dev.html', () => {
+// A extração do OKR pra página própria dobrou as linhas em branco entre declarações: compara só o código (sem linhas em branco).
+const norm = (t) => t.split('\n').map((l) => l.trimEnd()).filter((l) => l.trim() !== '').join('\n');
+const temMotor = (arquivo) => fs.readFileSync(path.join(ROOT, arquivo), 'utf8').includes(BEGIN);
+
+test('motor do servidor: bloco idêntico ao de okr-dev.html', () => {
   const srv = fs.readFileSync(path.join(__dirname, '..', 'atingimento.js'), 'utf8');
-  assert.ok(srv.includes(blocoDe('painel-dev.html')), 'okr/atingimento.js divergiu do motor de painel-dev.html — copie o bloco ATING-ENGINE de novo');
+  assert.ok(norm(srv).includes(norm(blocoDe('okr-dev.html'))), 'okr/atingimento.js divergiu do motor de okr-dev.html — copie o bloco ATING-ENGINE de novo');
 });
 
-test('motor do servidor: bloco idêntico ao de painel.html (prod)', () => {
-  const srv = fs.readFileSync(path.join(__dirname, '..', 'atingimento.js'), 'utf8');
-  assert.ok(srv.includes(blocoDe('painel.html')), 'okr/atingimento.js divergiu do motor de painel.html');
-});
+// okr.html (prod) e painel.html (prod, até a promoção do painel v5) — só comparam enquanto ainda trazem o motor
+for (const arquivo of ['okr.html', 'painel.html']) {
+  test('motor do servidor: bloco idêntico ao de ' + arquivo + ' (prod)', (t) => {
+    if (!temMotor(arquivo)) return t.skip(arquivo + ' não tem o motor (OKR saiu desta página)');
+    const srv = fs.readFileSync(path.join(__dirname, '..', 'atingimento.js'), 'utf8');
+    assert.ok(norm(srv).includes(norm(blocoDe(arquivo))), 'okr/atingimento.js divergiu do motor de ' + arquivo);
+  });
+}
 
 // motor do painel, avaliado a partir do HTML (nunca uma reimplementação)
-const painel = new Function(blocoDe('painel-dev.html') + '\nreturn {_okrAtingPctDe,_okrAtingPctObj,_okrAtingAtual,_okrParseNum,_okrFmtNum};')();
+const painel = new Function(blocoDe('okr-dev.html') + '\nreturn {_okrAtingPctDe,_okrAtingPctObj,_okrAtingAtual,_okrParseNum,_okrFmtNum};')();
 
 test('paridade: 1000 atingimentos aleatórios (8 tipos) dão o mesmo % no painel e no servidor', () => {
   let seed = 4242;

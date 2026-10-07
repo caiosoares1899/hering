@@ -50,8 +50,9 @@ test('marco com prazo em 3 dias notifica o responsável do marco', async () => {
     marcos: { m1: { id: 'm1', objetivoId: 'o1', nome: 'Marco A', prazo: addDias(3), progresso: 'no_prazo', responsavel: 'uidMarco' } },
   });
   await runOkrDailyScan(db);
-  const notifsMarco = await notifsDe(db, 'uidMarco');
-  const notifsObj = await notifsDe(db, 'uidResp');
+  const soPrazo = async (uid) => (await notifsDe(db, uid)).filter((n) => n.type === 'okr_prazo');   // o "okr_reuniao" também pode cair, conforme a data real de hoje
+  const notifsMarco = await soPrazo('uidMarco');
+  const notifsObj = await soPrazo('uidResp');
   assert.equal(notifsMarco.length, 1);
   assert.equal(notifsMarco[0].type, 'okr_prazo');
   assert.match(notifsMarco[0].title, /Marco A/);
@@ -64,8 +65,9 @@ test('marco sem responsável próprio cai pros responsaveis[] do Objetivo', asyn
     marcos: { m1: { id: 'm1', objetivoId: 'o1', nome: 'Marco A', prazo: addDias(1), progresso: 'no_prazo' } },
   });
   await runOkrDailyScan(db);
-  assert.equal((await notifsDe(db, 'uidResp1')).length, 1);
-  assert.equal((await notifsDe(db, 'uidResp2')).length, 1);
+  const soPrazo = async (uid) => (await notifsDe(db, uid)).filter((n) => n.type === 'okr_prazo');
+  assert.equal((await soPrazo('uidResp1')).length, 1);
+  assert.equal((await soPrazo('uidResp2')).length, 1);
 });
 
 test('marco concluído NÃO notifica mesmo com prazo batendo', async () => {
@@ -238,4 +240,31 @@ test('notificação escrita tem o formato esperado (ts ISO, read false, okrObjId
   assert.equal(n.type, 'okr_reuniao');
   assert.equal(typeof n.ts, 'string');
   assert.ok(n.ts.includes('T'), 'ts deve ser ISO string, nunca Date.now()');
+});
+
+test('véspera de reunião NÃO notifica Objetivo de outra torre (os blocos quinzenais são da Digital)', async () => {
+  const db = seedDb({
+    objetivos: {
+      c1: { id: 'c1', titulo: 'Obj Comercial', torre: 'comercial', areaId: 'geral', responsaveis: ['u1'] },
+      k1: { id: 'k1', titulo: 'Obj Corporativa', torre: 'corporativa', areaId: 'geral', responsaveis: ['u2'] },
+      d1: { id: 'd1', titulo: 'Obj Digital explícito', torre: 'digital', areaId: 'geral', responsaveis: ['u3'] },
+      d2: { id: 'd2', titulo: 'Obj sem campo torre', areaId: 'geral', responsaveis: ['u4'] },
+    },
+  });
+  await runOkrDailyScan(db, '2026-09-02'); // amanhã = bloco 1, onde 'geral' cai
+  assert.equal((await notifsDe(db, 'u1')).length, 0);
+  assert.equal((await notifsDe(db, 'u2')).length, 0);
+  assert.equal((await notifsDe(db, 'u3')).length, 1);
+  assert.equal((await notifsDe(db, 'u4')).length, 1);   // sem torre = Digital (compatível com tudo que já existia)
+});
+
+test('prazo de marco continua notificando em qualquer torre', async () => {
+  const db = seedDb({
+    objetivos: { c1: { id: 'c1', titulo: 'Obj Comercial', torre: 'comercial', areaId: 'geral', responsaveis: ['u1'] } },
+    marcos: { m1: { id: 'm1', objetivoId: 'c1', nome: 'Marco C', prazo: addDias(1), progresso: 'no_prazo' } },
+  });
+  await runOkrDailyScan(db, '2026-09-01');   // terça: amanhã não é quinta de reunião de bloco nenhum
+  const n = await notifsDe(db, 'u1');
+  assert.equal(n.filter((x) => x.type === 'okr_prazo').length, 1);
+  assert.equal(n.filter((x) => x.type === 'okr_reuniao').length, 0);
 });

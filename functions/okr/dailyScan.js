@@ -144,6 +144,10 @@ async function runOkrDailyScan(db, hojeOverride) {
   for (const objId of Object.keys(objetivos)) {
     const o = objetivos[objId];
     if (!o || o.arquivado) continue;
+    // Torres (2026-10-07, /monitorarbugs): os blocos quinzenais (CX/Tech/CRM...) são da torre Digital — Objetivo de
+    // Comercial/Corporativa (areaId 'geral', que cai no fallback do bloco 2) recebia "reunião amanhã" de uma reunião
+    // que não é dele. Sem o campo `torre` = Digital (mesma regra do client, `_okrTorreDe()`).
+    if (o.torre && o.torre !== 'digital') continue;
     const alvos = o.responsaveis || [];
     if (!alvos.length) continue;
 

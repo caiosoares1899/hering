@@ -2722,7 +2722,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.2 · painel-dev</div>
+<div class="version">v5.3 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3238,8 +3238,8 @@ function renderOnline(){
     return '<div class="online-pill">'
       +'<span class="online-pip"></span>'
       +foto
-      +'<span>'+(u.nome||u.init||'?')+'</span>'
-      +'<span style="font-size:9px;color:var(--txt3);background:rgba(56,182,255,.1);padding:1px 6px;border-radius:999px;">'+u._squad.icon+'</span>'
+      +'<span>'+esc(u.nome||u.init||'?')+'</span>'
+      +'<span style="font-size:9px;color:var(--txt3);background:rgba(56,182,255,.1);padding:1px 6px;border-radius:999px;">'+esc(u._squad.icon)+'</span>'
       +'</div>';
   }).join('');
   if(activeFilter!=='all'){
@@ -3294,7 +3294,7 @@ function renderPainelOnline(){
     return '<div class="online-pill">'
       + '<span class="online-pip"></span>'
       + foto
-      + '<span>'+u.nome+'</span>'
+      + '<span>'+esc(u.nome)+'</span>'
       + '</div>';
   }).join('');
 }
