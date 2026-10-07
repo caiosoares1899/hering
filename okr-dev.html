@@ -1448,7 +1448,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v1.2 · okr-dev</div>
+<div class="version">v1.3 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1567,6 +1567,13 @@ function loadGlobalUsers(force){
     if(_guQueued){ _guQueued = false; loadGlobalUsers(true); }
   });
 }
+
+// Voltar pra aba depois de um tempo: renova a lista de usuários (papéis/fotos) e retoma uma 1ª leitura que falhou
+// (o listener antigo reconectava sozinho). Só depois do login — antes disso a leitura seria negada.
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden || typeof _okrBootedUid==='undefined' || !_okrBootedUid) return;
+  if(!_guLoadedAt || Date.now()-_guLoadedAt >= _GU_TTL_MS) loadGlobalUsers(true);
+});
 
 // ── 🔗 Cards vinculados — sob demanda ─────────────────────────────────
 // objetivo.cardLinks: [{squadId, cardId}]. No painel os cards de todos os
@@ -6130,6 +6137,19 @@ function _okrEnsureUserRecord(user){
   }).catch(err=>console.error('[okr] falha ao checar registro de usuário:', err));
 }
 
+// Visualizador externo só LÊ (as regras negam toda escrita): sem isto, as caixas de Anotações da reunião e da
+// Central Agente Ágil aceitavam o texto, limpavam o campo e a gravação era negada em silêncio — a pessoa perdia
+// o que digitou sem aviso (/monitorarbugs 2026-10-07). Desabilita com a explicação em vez de enganar.
+function _okrApplyViewerLock(){
+  const ro = !!window._isPainelViewer;
+  const msg = '👁 Modo visualização — convidado sem permissão de escrita.';
+  ['okr-notas-inp','okr-notas-send-btn','okr-agente-inp','okr-agente-send-btn'].forEach(id=>{
+    const el=document.getElementById(id); if(!el) return;
+    el.disabled = ro;
+    if(ro){ el.title = msg; if(el.tagName==='INPUT') el.placeholder = msg; }
+  });
+}
+
 // Listeners só DEPOIS de autenticado (as regras exigem auth) e 1x por usuário. Se
 // outra conta entrar nesta mesma aba, recarrega (listeners antigos eram da conta anterior).
 let _okrBootedUid = null;
@@ -6144,6 +6164,7 @@ function _finishOkrLogin(user){
   const banner=document.getElementById('painel-viewer-banner');
   if(banner) banner.style.display = window._isPainelViewer ? 'block' : 'none';
   if(!window._isPainelViewer) _okrEnsureUserRecord(user);
+  _okrApplyViewerLock();
   if(_okrBootedUid) return;
   _okrBootedUid = user.uid;
   loadExtraSquads();
