@@ -1339,7 +1339,7 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">🔔 Notificações do OKR</b><br>
-          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b> e <b>✅ Marco concluído</b>. Clique pra ir direto ao Objetivo/aviso/anotação; <b>✓ Marcar tudo como lido</b> zera. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
+          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b> e <b>✅ Marco concluído</b>. Clique pra ir direto ao Objetivo/aviso/anotação; <b>✓ Marcar tudo como lido</b> zera. No rodapé do sino: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
         </div>
         <div>
           <b style="color:var(--txt);">💬 @menção nas Anotações da reunião</b><br>
@@ -1633,13 +1633,14 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.13 · okr-dev</div>
+<div class="version">v2.14 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, onValue, set, get, update, remove, runTransaction, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 const firebaseConfig = {
   // Override manual de config do Firebase sob chave PRÓPRIA desta página (sufixo
@@ -1668,6 +1669,14 @@ window._signInMicrosoft = () => signInWithPopup(auth, msProvider);
 
 window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window._get=get; window._update=update; window._remove=remove; window._runTransaction=runTransaction;
 window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast;
+// Push (FCM) deste aparelho — o rodapé do sino (mare-notif-dev.js) usa estes hooks pra ativar/desativar o push; sem suporte, _fcmReady fica false.
+window._fcmReady = false;
+fcmIsSupported().then(ok=>{ if(!ok) return; try{
+  const messaging = getMessaging(app);
+  window._fcmGetToken = (vapidKey, swReg)=>fcmGetToken(messaging, {vapidKey, serviceWorkerRegistration:swReg});
+  window._fcmDeleteToken = ()=>fcmDeleteToken(messaging); window._fcmOnMessage = cb=>fcmOnMessage(messaging, cb); window._fcmReady = true;
+  if(window.MareNotif) MareNotif.rodapeRender();
+}catch(e){ console.warn('[FCM] não inicializado:', e); } }).catch(()=>{});
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -1675,7 +1684,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=3"></script>
+<script src="mare-notif-dev.js?v=4"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -2714,6 +2723,7 @@ async function okrMuralArquivar(id){
 // Esc fecha a camada de cima: aviso em destaque → painel do sino → modal de publicar (capture + stopPropagation, como os outros modais da página).
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
+  if(MareNotif.menusFechar()){ e.preventDefault(); e.stopPropagation(); return; }   // menu do Não Perturbe aberto: fecha só ele
   const pop = document.getElementById('okr-mural-pop-ov'), drop = document.getElementById('okr-bell-drop'), mod = document.getElementById('okr-mural-ov'), lst = document.getElementById('okr-mural-list-ov');
   if(pop && pop.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrMuralPopFecha(); }
   else if(drop && drop.style.display==='flex'){ e.preventDefault(); e.stopPropagation(); drop.style.display = 'none'; }
@@ -2780,11 +2790,24 @@ function _okrBellRender(){
   const b = document.getElementById('okr-bell-n');
   if(b){ if(n>0){ b.textContent = n>99?'99+':String(n); b.style.display='flex'; } else b.style.display='none'; }
   _okrMuralBadge();
+  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id));   // som quando chega uma notificação nova (respeita 🔇 e o Não Perturbe)
   const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
   drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
     <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${esc(i.icon)}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:24px 12px;text-align:center;">Nada por aqui ainda.</div>'}
-      ${window._isPainelViewer?'<div style="font-size:10px;color:var(--txt3);text-align:center;padding:4px 8px 8px;">👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.</div>':''}</div>`;
+      ${window._isPainelViewer?'<div style="font-size:10px;color:var(--txt3);text-align:center;padding:4px 8px 8px;">👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.</div>':''}</div>
+    ${MareNotif.rodapeHtml(window._isPainelViewer ? '' : '<button type="button" class="mn-link" onclick="_okrBellLimpar()">Limpar antigas</button>')}`;
+  MareNotif.rodapeRender();
+}
+// "Limpar antigas": remove as notificações PESSOAIS já lidas, numa escrita só (o feed da torre é compartilhado e não se apaga — o que foi lido já fica sem destaque).
+function _okrBellLimpar(){
+  const u = window._currentUser; if(!u || window._isPainelViewer) return;
+  const up = {}; _okrNotifPessoais.filter(n=>n.read).forEach(n=>{ up[n.id] = null; });
+  const q = Object.keys(up).length;
+  if(!q){ showToast('Nenhuma notificação lida para remover.'); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up)
+    .then(()=>showToast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.'))
+    .catch(()=>showToast('⚠ Não consegui remover as notificações. Tente de novo.'));
 }
 function _okrBellToggle(e){
   if(e) e.stopPropagation();
