@@ -72,6 +72,8 @@ const CASOS = [
     { visualizador: 1, membro: 1, forasteiro: 0, freela_cadastrado: 0, freela_novo: 0 }],
   ['presença do OKR: o visualizador NÃO escreve a presença de OUTRA pessoa', 'write', 'kanban/painel/okr_presence/int1', { ts: 1, nome: 'Fake' }, { visualizador: 0, forasteiro: 0, membro: 1 }],
   ['presença do OKR: abrir a escrita pro visualizador não vaza pro resto de kanban/painel', 'write', 'kanban/painel/comunicados_x', { a: 1 }, { visualizador: 0, forasteiro: 0, membro: 1 }],
+  ['trava de edição do Objetivo (okr/obj_locks): a empresa escreve (segura/solta); o visualizador externo só lê', 'write', 'kanban/okr/obj_locks/o1', { uid: 'int1', who: 'A', ts: 1 }, { membro: 1, visualizador: 0, forasteiro: 0, freela_cadastrado: 0 }],
+  ['trava de edição do Objetivo: o visualizador externo lê (vê o selo 🔒)', 'read', 'kanban/okr/obj_locks', undefined, { visualizador: 1, membro: 1, forasteiro: 0 }],
   ['visualizador externo lê o diretório magro (usuarios_publicos) — é de onde vêm nome/foto no OKR', 'read', 'kanban/usuarios_publicos', undefined, { visualizador: 1, forasteiro: 1, membro: 1 }],
   ['ler usuarios_publicos (diretório magro — segue aberto, é o que o login dos freelas usa)', 'read', 'kanban/usuarios_publicos', undefined,
     { forasteiro: 1, freela_novo: 1, membro: 1 }],

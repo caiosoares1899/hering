@@ -500,6 +500,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    e o hook em rebuild() de lá). Canto absoluto fixo pra não disputar espaço
    com a linha de ▲▼ (que só aparece com podeReordenar), nem com o resto do
    card — sempre visível, qualquer um pode conferir como ficou. */
+.okr-lock-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:1px 8px;border-radius:999px;background:rgba(255,209,102,.14);border:1px solid rgba(255,209,102,.4);color:var(--warn);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
 
 .okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -1338,6 +1339,10 @@ body{min-height:100vh;}
           O OKR se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de <b>Gerências</b> — quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres; gerência com Objetivos nunca é apagada, só oculta.
         </div>
         <div>
+          <b style="color:var(--txt);">🔒 Edição simultânea do mesmo Objetivo</b><br>
+          Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban. <b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>. Em leitura dá pra clicar em <b>🔔 Pedir o Objetivo</b>: quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume. A trava solta sozinha ao fechar o Objetivo, ao sair da página, e vence sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo. As ações rápidas do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo. O Agente Ágil não é travado.
+        </div>
+        <div>
           <b style="color:var(--txt);">📢 Mural do OKR</b><br>
           Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.
         </div>
@@ -1474,6 +1479,13 @@ body{min-height:100vh;}
       <button class="x-btn" onclick="_okrTryCloseObjetivo()">✕</button>
     </div>
     <div class="okr-nav" id="okr-obj-nav"></div>
+    <!-- 🔒 Trava de edição concorrente (mesmo desenho da trava de card do kanban): quem abriu depois vê em modo leitura + este aviso; quem segura vê o pedido chegando. -->
+    <div id="okr-obj-lock-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--glass-b);background:rgba(255,209,102,.1);font-size:11px;color:var(--warn);flex-shrink:0;">
+      <span id="okr-lock-text" style="flex:1;min-width:200px;"></span><span id="okr-lock-req-action"></span>
+    </div>
+    <div id="okr-lock-request-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--glass-b);background:rgba(56,182,255,.1);font-size:11px;color:var(--accent);flex-shrink:0;">
+      <span id="okr-lock-request-text" style="flex:1;min-width:200px;"></span><button type="button" class="btn btn-sm" onclick="_okrLockLiberarAgora()">✅ Liberar agora</button>
+    </div>
     <div class="pc-modal-body" id="okr-obj-body"></div>
     <div class="pc-footer" id="okr-obj-footer"></div>
   </div>
@@ -1637,7 +1649,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.20 · okr-dev</div>
+<div class="version">v2.21 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2369,6 +2381,7 @@ function loadOkr(){
   loadOkrAgenteChat();
   loadOkrReuniaoNotas();
   loadOkrMural();
+  loadOkrLocks();
   loadOkrFeed();
 }
 
@@ -4178,6 +4191,7 @@ function _okrObjetivosSorted(lista){
 // Gerência. Mesma técnica de _okrMarcoMover(): reescreve `ordem` de TODOS
 // os objetivos ativos daquela Gerência a cada clique (lista curta).
 async function _okrObjMover(areaId, objId, dir){
+  if(_okrLockBloqueia(objId)) return;
   const torre = _okrTorreDe(okrObjetivos[objId]);
   const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrTorreDe(o)===torre && (o.areaId||'geral')===areaId));
   const idx = lista.findIndex(o=>o.id===objId);
@@ -4205,6 +4219,7 @@ let _okrDraggedObjId = null;
 
 
 async function _okrObjReorderTo(areaId, draggedId, targetId){
+  if(_okrLockBloqueia(draggedId)) return;
   if(draggedId===targetId) return;
   const torre = _okrTorreDe(okrObjetivos[draggedId]);
   const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrTorreDe(o)===torre && (o.areaId||'geral')===areaId));
@@ -4743,6 +4758,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
+    ${(()=>{ const lk=_okrLockInfo(o.id); return lk?`<div style="margin-bottom:4px;"><span class="okr-lock-chip" title="${esc(lk.who||'Alguém')} está editando este Objetivo agora — abre em modo leitura">🔒 ${esc(lk.who||'Alguém')} editando</span></div>`:''; })()}
     <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${_okrTorreAtual==='global'?`<span class="okr-torre-chip" title="Torre ${esc(torreInfo.label)}">${torreInfo.icon} ${esc(torreInfo.label)}</span>`:''}
@@ -4990,6 +5006,7 @@ async function _okrCtxResumoNoObjetivo(objId, texto){
 
 
 async function _okrCtxTagToggle(objId, tagId){
+  if(_okrLockBloqueia(objId)) return;
   const o = okrObjetivos[objId]; if(!o || !_okrCanEdit(o)) return;
   const label = (okrTags[tagId]||{}).label || '?'; let aplicou = false;
   const out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{
@@ -5004,6 +5021,7 @@ async function _okrCtxTagToggle(objId, tagId){
 
 
 async function _okrCtxMarcoStatus(marcoId, novo){
+  if(_okrLockBloqueia((okrMarcos[marcoId]||{}).objetivoId)) return;
   const m = okrMarcos[marcoId]; if(!m) return;
   const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
   let resumo = '';
@@ -5023,6 +5041,7 @@ async function _okrCtxMarcoStatus(marcoId, novo){
 
 
 async function _okrCtxMarcoApresentacao(marcoId){
+  if(_okrLockBloqueia((okrMarcos[marcoId]||{}).objetivoId)) return;
   const m = okrMarcos[marcoId]; if(!m) return;
   const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
   let agora = true, nome = m.nome||'?';
@@ -5489,6 +5508,154 @@ let _okrObjDraft = null;
 // estado atual antes de fechar de verdade.
 let _okrObjOpenSnapshot = null;
 
+// ═══ 🔒 TRAVA DE EDIÇÃO CONCORRENTE DO OBJETIVO (okr-dev v2.21) ═══════════════════════════════════════════════════════════
+// Pedido direto: "trave edição simultânea do mesmo objetivo, estilo o que já temos no kanban em cards". Mesmo desenho da trava de card
+// (kanban-dev.html, _checkCardLock()): 1 nó por Objetivo em kanban/okr/obj_locks/{objId} = {uid, who, ts[, request:{byUid,byWho,at}]}.
+//  • Quem abre primeiro segura. Quem abre depois vê o Objetivo em MODO LEITURA + aviso de quem está editando (e os Marcos dele também).
+//  • Heartbeat de 1 min; trava sem heartbeat há 10 min conta como abandonada (aba fechada/navegador caiu) — quem abrir assume.
+//  • "🔔 Pedir o Objetivo": quem segura tem 5 min de carência pra salvar e sair (ou "✅ Liberar agora"); estourou, o sistema salva e fecha
+//    pra ele e quem pediu assume.
+//  • O MESMO usuário em outra aba não é travado contra si mesmo (checagem por uid).
+//  • Só quem pode editar o Objetivo pega a trava (quem só lê já está em modo leitura). Visualizador externo nunca escreve.
+//  • As ações rápidas do menu ⋯ / arrastar que escrevem no nó do Objetivo (tags, ordem, arquivar, excluir, status/apresentação/arquivar de Marco)
+//    também respeitam a trava — senão o Salvar de quem segura (que grava o rascunho inteiro) apagaria a mudança em silêncio.
+//  • Limite conhecido: o Agente Ágil (servidor) edita Objetivo sem passar por aqui e não é travado.
+// Um único listener no nó inteiro (pequeno) mantém `okrObjLocks` ao vivo: serve ao modal, ao selo 🔒 dos cartões e às ações rápidas.
+const OKR_LOCK_PATH = 'kanban/okr/obj_locks';
+const OKR_LOCK_STALE_MS = 10*60*1000, OKR_LOCK_HEARTBEAT_MS = 60*1000, OKR_LOCK_REQUEST_GRACE_MS = 5*60*1000;
+let okrObjLocks = {}, _okrLocksLoaded = false;
+let _okrLockOwned = null;         // id do Objetivo cuja trava ESTE cliente segura agora (null = nenhuma)
+let _okrLockRO = false;           // o Objetivo aberto está travado por OUTRA pessoa (modo leitura)
+let _okrLockHb = null, _okrLockUiTick = null, _okrLockForceTimer = null, _okrLockStealTimer = null, _okrLockReqHandledAt = null, _okrLockSig = '';
+const _okrLockRef = id => window._ref(window._db, OKR_LOCK_PATH+'/'+id);
+function _okrLockPayload(){ const u = window._currentUser||{}; return {uid:u.uid||'', who:u.displayName||u.email||'?', ts:Date.now()}; }
+function _okrLockFresh(l){ return !!(l && l.ts && Date.now()-l.ts < OKR_LOCK_STALE_MS); }
+// Trava VIVA de OUTRA pessoa neste Objetivo (null = livre pra mim, inclusive a minha própria e a de outra aba minha).
+function _okrLockInfo(id){ const l = okrObjLocks[id], me = window._currentUser?.uid; return (id && l && _okrLockFresh(l) && l.uid!==me) ? l : null; }
+function _okrLockBloqueia(id){   // pra ações rápidas: true = travado por outra pessoa (já avisou)
+  const l = _okrLockInfo(id); if(!l) return false;
+  showToast('🔒 '+(l.who||'Alguém')+' está editando este Objetivo agora — tente de novo quando ela(e) fechar.'); return true;
+}
+function loadOkrLocks(){
+  window._onValue(window._ref(window._db, OKR_LOCK_PATH), snap=>{ okrObjLocks = snap.val()||{}; _okrLocksLoaded = true; _okrLockOnChange(); }, ()=>{ _okrLocksLoaded = true; });
+  clearInterval(window._okrLockPoll); window._okrLockPoll = setInterval(()=>{ if(!document.hidden) _okrLockOnChange(); }, 30000);   // trava sem heartbeat vence sem gerar evento nenhum
+}
+function _okrLockStopHb(){ clearInterval(_okrLockHb); _okrLockHb = null; }
+function _okrLockStopReq(){
+  clearTimeout(_okrLockForceTimer); _okrLockForceTimer = null; clearTimeout(_okrLockStealTimer); _okrLockStealTimer = null;
+  clearInterval(_okrLockUiTick); _okrLockUiTick = null; _okrLockReqHandledAt = null;
+}
+function _okrLockTomar(id){
+  const lk = okrObjLocks[id], minha = !!(lk && lk.uid===window._currentUser?.uid);
+  _okrLockOwned = id; _okrLockRO = false;
+  if(minha) window._update(_okrLockRef(id), _okrLockPayload()).catch(()=>{});   // update (não set): não apaga um pedido pendente
+  else window._set(_okrLockRef(id), _okrLockPayload()).catch(()=>{});
+  _okrLockStopHb();
+  _okrLockHb = setInterval(()=>{ if(_okrLockOwned===id && window._fbReady) window._update(_okrLockRef(id), _okrLockPayload()).catch(()=>{}); }, OKR_LOCK_HEARTBEAT_MS);
+}
+// Solta a trava (fechar o modal, sair da página) — só remove se ainda for MINHA (não apaga a de quem assumiu depois de mim).
+function _okrLockSoltar(){
+  _okrLockStopHb(); _okrLockStopReq();
+  const id = _okrLockOwned; _okrLockOwned = null; _okrLockRO = false;
+  _okrLockUI();
+  if(!id || !window._fbReady) return;
+  const lk = okrObjLocks[id];
+  if(!lk || lk.uid===window._currentUser?.uid){ delete okrObjLocks[id]; window._remove(_okrLockRef(id)).catch(()=>{}); }
+}
+window.addEventListener('beforeunload', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
+window.addEventListener('pagehide', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
+
+// Aviso do modal (nos dois lados) + botão de pedir.
+function _okrLockUI(){
+  const row = document.getElementById('okr-obj-lock-row'); if(!row) return;
+  const id = _okrEditingObjId, l = id ? _okrLockInfo(id) : null, ro = !!(id && _okrLockRO && l);
+  row.style.display = ro ? 'flex' : 'none';
+  if(ro){ const t = document.getElementById('okr-lock-text'); if(t) t.textContent = '🔒 '+(l.who||'Alguém')+' está editando este Objetivo agora — modo leitura até liberar.'; }
+  if(!ro){ const a = document.getElementById('okr-lock-req-action'); if(a) a.innerHTML = ''; const o = document.getElementById('okr-lock-request-row'); if(o) o.style.display = 'none'; }
+}
+function _okrLockRenderReq(req, iOwn){
+  clearInterval(_okrLockUiTick); _okrLockUiTick = null;
+  const ask = document.getElementById('okr-lock-req-action'), ownRow = document.getElementById('okr-lock-request-row'), ownTxt = document.getElementById('okr-lock-request-text');
+  if(!req){
+    if(ask) ask.innerHTML = iOwn ? '' : '<button type="button" class="btn btn-sm" onclick="_okrLockPedir()">🔔 Pedir o Objetivo</button>';
+    if(ownRow) ownRow.style.display = 'none'; return;
+  }
+  const me = window._currentUser?.uid;
+  const tick = ()=>{
+    const restam = Math.max(0, req.at+OKR_LOCK_REQUEST_GRACE_MS-Date.now());
+    const mm = String(Math.floor(restam/60000)).padStart(2,'0'), ss = String(Math.floor((restam%60000)/1000)).padStart(2,'0');
+    if(iOwn){ if(ownRow) ownRow.style.display = 'flex'; if(ownTxt) ownTxt.textContent = '🔔 '+(req.byWho||'Alguém')+' está esperando este Objetivo — salve e feche em até '+mm+':'+ss+', ou libere agora.'; if(ask) ask.innerHTML = ''; }
+    else if(req.byUid===me){ if(ask) ask.innerHTML = '<span style="opacity:.85;">⏳ Pedido enviado — expira em '+mm+':'+ss+'</span>'; }
+    else { if(ask) ask.innerHTML = '<span style="opacity:.85;">⏳ '+esc(req.byWho||'Alguém')+' já pediu este Objetivo (expira em '+mm+':'+ss+')</span>'; }
+  };
+  tick(); _okrLockUiTick = setInterval(tick, 1000);
+}
+async function _okrLockPedir(){
+  const id = _okrEditingObjId; if(!id || !window._fbReady) return;
+  const ex = (await window._get(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request')).catch(()=>null)); const r = ex && ex.val();
+  if(r && r.at && Date.now()-r.at < OKR_LOCK_REQUEST_GRACE_MS) return;                       // já tem pedido em andamento
+  const u = window._currentUser||{};
+  window._set(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request'), {byUid:u.uid||'', byWho:u.displayName||u.email||'?', at:Date.now()}).catch(()=>{});
+}
+// "Liberar agora" e o estouro do prazo fazem a MESMA coisa: salva o que está na tela (Marco aberto primeiro) e fecha — a trava sai junto.
+async function _okrLockLiberarAgora(){
+  try{
+    if(document.getElementById('okr-marco-ov')?.classList.contains('open')) await saveOkrMarco();
+    if(_okrLockOwned && _okrEditingObjId===_okrLockOwned) await saveOkrObjetivo();
+  }catch(e){ console.warn('[okr-lock] liberar:', e); }
+}
+function _okrLockHandleReq(id, lock, iOwn){
+  const req = lock && lock.request;
+  if(!req || !req.at || Date.now()-req.at >= OKR_LOCK_REQUEST_GRACE_MS){
+    clearTimeout(_okrLockForceTimer); _okrLockForceTimer = null; clearTimeout(_okrLockStealTimer); _okrLockStealTimer = null; _okrLockReqHandledAt = null;
+    _okrLockRenderReq(null, iOwn); return;
+  }
+  _okrLockRenderReq(req, iOwn);
+  const restam = req.at+OKR_LOCK_REQUEST_GRACE_MS-Date.now();
+  if(iOwn){
+    if(_okrLockReqHandledAt===req.at) return; _okrLockReqHandledAt = req.at;
+    showToast('🔔 '+(req.byWho||'Alguém')+' está esperando este Objetivo — salve e feche em até 5 min.');
+    clearTimeout(_okrLockForceTimer); _okrLockForceTimer = setTimeout(_okrLockLiberarAgora, Math.max(0,restam));
+  } else if(req.byUid===window._currentUser?.uid){
+    if(_okrLockReqHandledAt===req.at) return; _okrLockReqHandledAt = req.at;
+    clearTimeout(_okrLockStealTimer);
+    // Rede de segurança: se quem segurava não liberou a tempo (aba travada, sem internet…), assume à força (+2 s de folga pro dono salvar na hora do estouro).
+    _okrLockStealTimer = setTimeout(()=>{
+      if(_okrEditingObjId!==id || !window._fbReady) return;
+      window._set(_okrLockRef(id), _okrLockPayload()).catch(()=>{}); window._remove(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request')).catch(()=>{});
+    }, Math.max(0,restam)+2000);
+  }
+}
+function _okrLockRerender(){   // o Objetivo aberto mudou de estado (travou/liberou): redesenha mantendo o que foi digitado
+  const id = _okrEditingObjId; if(!id || !_okrObjDraft) return;
+  if(document.getElementById('okr-marco-ov')?.classList.contains('open')){ try{ _okrSyncMarcoDraftFromDom(); }catch(e){} renderOkrMarcoBody(); return; }
+  try{ _okrSyncObjDraftFromDom(); }catch(e){}
+  if(document.getElementById('okr-obj-config-ov')?.classList.contains('open') && _okrLockRO) closeOkrConfigBack();   // travou: a Config não é acessível em leitura
+  else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(id);
+}
+// Reconcilia o estado da trava do Objetivo aberto com o que está no banco — chamado a cada mudança do nó, a cada 30 s e ao abrir.
+function _okrLockOnChange(silencioso){
+  // 1) selo 🔒 nos cartões: só redesenha a lista quando QUEM está travado muda (heartbeat sozinho não conta)
+  const sig = Object.keys(okrObjLocks).filter(i=>_okrLockInfo(i)).sort().map(i=>i+':'+okrObjLocks[i].uid).join('|');
+  if(sig!==_okrLockSig){ _okrLockSig = sig; if(!silencioso && !_okrShowHistorico && typeof renderOkrObjetivos==='function') try{ renderOkrObjetivos(); }catch(e){} }
+  // 2) o Objetivo aberto
+  const id = _okrEditingObjId;
+  if(!id || !_okrObjDraft){ return; }
+  if(window._isPainelViewer || !_okrCanEdit(okrObjetivos[id]||{})){ _okrLockUI(); return; }   // quem só lê não pega trava
+  const lock = okrObjLocks[id], outro = _okrLockInfo(id);
+  if(_okrLockOwned===id){
+    if(outro){ _okrLockStopHb(); _okrLockOwned = null; _okrLockRO = true; _okrLockUI(); _okrLockRenderReq(null,false); if(!silencioso) _okrLockRerender(); showToast('🔒 '+(outro.who||'Alguém')+' assumiu este Objetivo — você passou a modo leitura.'); }   // perdi a corrida
+    else _okrLockHandleReq(id, lock, true);
+  } else if(outro){
+    const virouRO = !_okrLockRO; _okrLockRO = true; _okrLockUI(); _okrLockHandleReq(id, lock, false);
+    if(virouRO && !silencioso) _okrLockRerender();
+  } else {
+    const eraRO = _okrLockRO; _okrLockTomar(id); _okrLockUI(); _okrLockHandleReq(id, okrObjLocks[id], true);
+    // herdei a trava de quem saiu/liberou: os campos na tela são os de quando abri — reabre com o dado fresco, como o kanban faz
+    if(eraRO && !silencioso) setTimeout(()=>{ if(_okrEditingObjId===id && _okrLockOwned===id) openOkrObjetivo(id); }, 0);
+  }
+}
+
 
 
 function openOkrObjetivo(id){
@@ -5504,6 +5671,9 @@ function openOkrObjetivo(id){
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
+  if(_okrLockOwned!==id) _okrLockSoltar();   // trava de OUTRO Objetivo (sessão anterior) sai antes; reabrir o mesmo (herdar trava) não solta pra não abrir janela
+  _okrLockRO = false;
+  if(id){ if(_okrLocksLoaded) _okrLockOnChange(true); else window._get(_okrLockRef(id)).then(sn=>{ const v=sn.val(); if(v) okrObjLocks[id]=v; else delete okrObjLocks[id]; _okrLocksLoaded = true; if(_okrEditingObjId===id) _okrLockOnChange(); }).catch(()=>{}); }
   _okrAtingForm = {data:'', valor:'', atingido:false, nota:''};
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; }); // sessão nova: nada de texto pendente do Objetivo anterior
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
@@ -5523,6 +5693,7 @@ function openOkrObjetivo(id){
     document.getElementById('okr-obj-title').textContent = '🎯 ' + (_okrObjDraft.titulo || 'Editar Objetivo');
     renderOkrObjBody(id);
     document.getElementById('okr-obj-ov').classList.add('open');
+    _okrLockUI(); if(_okrLockRO) _okrLockHandleReq(id, okrObjLocks[id], false);
   }
 }
 
@@ -5531,6 +5702,7 @@ function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   document.getElementById('okr-obj-config-ov')?.classList.remove('open');
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; });
+  _okrLockSoltar();
   _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
 }
 
@@ -6469,7 +6641,7 @@ function renderOkrObjBody(id){
   const footer = document.getElementById('okr-obj-footer');
   if(!body || !_okrObjDraft) return;
   _okrAplicarTorreModal(_okrTorreDe(_okrObjDraft));
-  const podeEditar = id ? _okrCanEdit(okrObjetivos[id]||{}) : _okrCanCreate();
+  const podeEditar = id ? (_okrCanEdit(okrObjetivos[id]||{}) && !_okrLockRO) : _okrCanCreate();   // travado por outra pessoa = leitura
   const d = _okrObjDraft;
   const cfgBtn = document.getElementById('okr-obj-config-btn');
   if(cfgBtn) cfgBtn.style.display = podeEditar ? '' : 'none';
@@ -6592,6 +6764,7 @@ function renderOkrObjConfigBody(){
 
 
 async function saveOkrObjetivo(){
+  if(_okrEditingObjId && _okrLockBloqueia(_okrEditingObjId)) return;   // outra pessoa assumiu a trava (corrida/pedido): não grava por cima
   _okrSyncObjDraftFromDom();
   const d = _okrObjDraft;
   // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
@@ -6639,6 +6812,7 @@ async function saveOkrObjetivo(){
 
 
 async function _okrArquivarObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   if(!await uiConfirm('Arquivar este objetivo? Ele some da lista de ativos, mas continua acessível em "📦 Ver arquivados".', {danger:true, okText:'Arquivar'})) return;
   const hist = Array.isArray(okrObjetivos[id]?.history) ? okrObjetivos[id].history.slice() : [];
   hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'arquivou o Objetivo', tipo:'arquivado', at:new Date().toISOString()});
@@ -6650,6 +6824,7 @@ async function _okrArquivarObjetivo(id){
 
 
 async function _okrDesarquivarObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   const hist = Array.isArray(okrObjetivos[id]?.history) ? okrObjetivos[id].history.slice() : [];
   hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'desarquivou o Objetivo', tipo:'arquivado', at:new Date().toISOString()});
   await window._update(window._ref(window._db,'kanban/okr/objetivos/'+id), {arquivado:false, history:hist});
@@ -6733,6 +6908,7 @@ async function _okrDuplicarObjetivo(id){
 // kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
 // espaço no Firebase pra sempre.
 async function _okrExcluirObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   const obj = okrObjetivos[id];
   if(!obj) return;
   const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
@@ -7014,7 +7190,7 @@ function renderOkrMarcoBody(){
   if(!body || !_okrMarcoDraft) return;
   const obj = okrObjetivos[_okrMarcoDraft.objetivoId] || {};
   _okrAplicarTorreModal(_okrTorreDe(obj));
-  const podeEditar = _okrCanEdit(obj);
+  const podeEditar = _okrCanEdit(obj) && !_okrLockInfo(_okrMarcoDraft.objetivoId);   // Objetivo travado por outra pessoa: Marco em leitura também
   const d = _okrMarcoDraft;
 
   if(!podeEditar){
@@ -7077,6 +7253,7 @@ function renderOkrMarcoBody(){
 
 
 async function saveOkrMarco(){
+  if(_okrMarcoDraft && _okrLockBloqueia(_okrMarcoDraft.objetivoId)) return;   // Objetivo travado por outra pessoa
   const d = _okrMarcoDraft;
   d.nome = document.getElementById('okr-m-nome').value.trim();
   if(!d.nome){ showToast('Dá um nome pro marco antes de salvar.'); return; }
@@ -7132,6 +7309,7 @@ async function _okrArquivarMarco(idParam){
   // idParam: arquivar a partir do menu de contexto da lista (sem o modal do Marco aberto); sem ele, é o Marco aberto no modal.
   const mid = (typeof idParam==='string' && idParam) ? idParam : _okrEditingMarcoId;
   if(!mid) return;
+  if(_okrLockBloqueia((okrMarcos[mid]||{}).objetivoId)) return;
   if(!await uiConfirm('Arquivar este marco?', {danger:true, okText:'Arquivar'})) return;
   const m = okrMarcos[mid] || {};
   const hist = Array.isArray(m.history) ? m.history.slice() : [];
