@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.800 — 2026-10-07 · Promove pra prod — sino único, torre na inscrição, Central de Ajuda em dia
+
+Promove o lote de dev v8.30.795 → v8.30.800: (1) **sino único** — o 🔔 do kanban passa a mostrar também as novidades da torre (aviso do Mural do OKR, Objetivo criado, Marco concluído, reuniões do calendário) via `mare-notif.js`, e entende as notificações do OKR (@menção, reunião) levando ao lugar certo; link de reunião só abre http(s); (2) **cadastro novo pergunta a torre** (Digital/Comercial/Corporativa) — só vale pro OKR; (3) **Central de Ajuda** com colar lista no checklist, sino único, "Sua torre" e a Central do OKR. Diff vs. prod = só essas mudanças + as divergências de ambiente de sempre (favicon, `VERSION_KEY`, chave de "Deslogar todos"). Mesmo lote em dev: v8.30.795–800-dev.
+
 ### v8.30.800-dev — 2026-10-07 · docs: Central de Ajuda (❓) em dia com o dia — colar lista, sino único, "Sua torre", Agente do OKR (só kanban-dev)
 
 Só texto da `HELP_CONTENT`, sem mudança de comportamento. **☑ Checklist** ganhou "📋 Colar uma lista" (tópicos `-`/`•`/`*`/`1.`/`1)`/`a)`, `[x]` marca feito, só com 2+ linhas, iniciais tipo "J. Silva" ficam no texto). **🔔 Notificações** agora conta que o sino é único: além dos avisos pessoais, mostra as novidades da torre (📢 Mural do OKR, 🆕 Objetivo criado, ✅ Marco concluído, 🗓️ reuniões do calendário) e que clicar leva ao lugar certo. Entrada nova **🏛️ Sua torre** (Digital/Comercial/Corporativa — perguntada na inscrição, só vale pro OKR, ADM troca em 👥 Global Users). **🎯 OKR** (o marcador do card) aponta pra página própria do OKR e **🤖 O que é o Agente Ágil** cita a Central do OKR. Visualmente nada mudou.
@@ -20728,6 +20732,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.33 · okr — 2026-10-07 · Promove pra prod — 📅 Calendário, 🔒 trava de edição, cabeçalho em níveis, apresentação por torre e correções do dia
+
+Promove okr-dev v2.20 → v2.33 (prod estava na v2.19): **🔒 trava de edição** do Objetivo (e pedir o Objetivo), **📅 Calendário** (agenda global + de cada torre, recorrências, pauta sugerida, convidados, avisos no sino/push, anotações pós-reunião, tags; **bloco quinzenal importável**), **cabeçalho reorganizado** (abas + ⋯ Mais + filtros recolhíveis, títulos em DM Sans), **ADM vê se o visualizador externo já entrou/está online**, aviso ao excluir gerência com Objetivos, rodapé do sino respeitando o Não Perturbe desde o boot, e as 2 rodadas de `/monitorarbugs` (XSS por torre do evento, duplo clique em Salvar, Esc nos diálogos, série apagada a partir de ocorrência passada, evento apagado por outra pessoa). `mare-notif.js` v6 (reuniões no sino). **Requer deploy das functions** `okrDailyScan`, `sendPushOnNotification` e `okrAgenteChat` pra reuniões/push/Agente funcionarem por completo (a página funciona sem). Antes de usar o aviso de véspera do bloco quinzenal, importar o bloco pelo banner do ADM.
+
 ### okr-dev.html v2.11 · okr-dev + painel-dev v5.10 — 2026-10-07 · /monitorarbugs do Mural + sino
 
 Rodada de auditoria no que subiu em v2.10, 4 achados reais, todos reproduzidos no Chromium antes de corrigir. (1) **Duplo clique em "📢 Publicar"** (ou Enter repetido) criava **2 avisos e 2 eventos no sino**: cada chamada gera um id novo e a gravação é assíncrona, sem trava de "em andamento" — agora `_okrMuralSaving`. (2) **Esc não fechava nada novo**: nem o modal de publicar, nem o aviso em destaque, nem o painel do sino (e, com o aviso aberto por cima de um Objetivo, o Esc ia pro modal de baixo) — as outras janelas da página já fechavam com Esc; agora fecha a camada de cima (aviso → sino → publicar). (3) **⧉ Duplicar Objetivo** criava um Objetivo novo sem o evento "🆕 Objetivo criado" (só o "+ Novo Objetivo" gerava) — a torre não era avisada; agora gera o mesmo evento. (4) **Sino do painel** (só ADM, `painel-dev.html`): as notificações do OKR (`okr_editado`/`okr_prazo`/`okr_reuniao`/`okr_agente` e a nova `okr_mencao`) não tinham nenhuma ação ao clicar — o painel descartava o `okrObjId`; agora levam à página do OKR (Objetivo, Central do Agente ou Anotações) e marcam como lida, o mesmo mapa do sino do kanban. Testes: 6 cenários (OKR) + 5 (sino do painel) novos; suítes anteriores sem regressão.
@@ -20971,6 +20979,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.19 · painel — 2026-10-07 · Promove pra prod — reuniões do OKR no sino do painel, status dos visualizadores
+
+Promove painel-dev v5.17 → v5.19 (prod estava na v5.16): o sino do painel abre a reunião do calendário do OKR ao clicar, a lista de 👁 Visualizadores externos mostra "já entrou / online agora" (o painel também registra o acesso do visualizador) e `mare-notif.js` v6.
 
 ### painel.html v5.16 · painel — 2026-10-07 · Promove pra prod — sino único (todos veem), rodapé do sino e visualizadores no Online
 
