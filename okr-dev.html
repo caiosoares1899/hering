@@ -1247,7 +1247,7 @@ body{min-height:100vh;}
           <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
           <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
           <button type="button" class="btn btn-sm" id="okr-viewers-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores</button>
-          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
+          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📊 Dashboard</button>
         </div>
         <span style="width:1px;height:18px;background:var(--glass-b);"></span>
         <button type="button" class="btn btn-p" id="okr-novo-btn" style="font-size:11px;padding:6px 14px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
@@ -1350,7 +1350,7 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
-          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (ao lado de Anotações da reunião) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Histórico, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos.
+          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (ao lado de Anotações da reunião) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos.
         </div>
         <div>
           <b style="color:var(--txt);">🎯 O que é um Objetivo</b><br>
@@ -1414,14 +1414,14 @@ body{min-height:100vh;}
           Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).
         </div>
         <div>
-          <b style="color:var(--txt);">📈 Histórico semanal</b><br>
-          Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📈 Histórico</b> mostra:
+          <b style="color:var(--txt);">📊 Dashboard (histórico semanal)</b><br>
+          Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📊 Dashboard</b> mostra:
           <ul style="margin:6px 0 0;padding-left:18px;">
             <li><b>Duas abas</b> no topo: <b>🎯 Atingimento</b> (padrão) e <b>🏁 Marcos</b>. <b>Atingimento</b> mede quanto de cada <b>meta</b> foi atingido — só entram Objetivos com 📈 Atingimento configurado (o ♾️ perene fica de fora); se o snapshot é de antes do atingimento existir, a curva é reconstruída pelos registros de valor do Objetivo. <b>Marcos</b> mede a % de <b>Marcos concluídos</b> (Objetivos sem Marcos ficam de fora). Tudo abaixo — indicadores, gráfico, "O que mudou", tabela e a janela do progresso médio — segue a aba escolhida.</li>
             <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
-            <li><b>🏛️ Por torre</b>: dentro de uma torre, o Histórico mostra só os Objetivos dela. Na <b>🌐 Visão global</b> ele <b>compara as torres</b>: um cartão por torre (nº de Objetivos, atingimento médio, variação e status — clique pra filtrar a tabela), uma <b>linha colorida por torre</b> no gráfico (a tracejada é o total), a torre de cada item em "O que mudou", a tabela em faixas por torre e a janela "Como cada Objetivo contribui" agrupada por torre.</li>
+            <li><b>🏛️ Por torre</b>: dentro de uma torre, o Dashboard mostra só os Objetivos dela. Na <b>🌐 Visão global</b> ele <b>compara as torres</b>: um cartão por torre (nº de Objetivos, atingimento médio, variação e status — clique pra filtrar a tabela), uma <b>linha colorida por torre</b> no gráfico (a tracejada é o total), a torre de cada item em "O que mudou", a tabela em faixas por torre e a janela "Como cada Objetivo contribui" agrupada por torre.</li>
             <li><b>6 indicadores</b> do último snapshot (Objetivos ativos, Concluídos, No prazo, Risco, Atrasados e Progresso médio), cada um com a <b>variação</b> em relação à semana anterior — verde é melhora, vermelho é piora.</li>
-            <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Histórico e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
+            <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Dashboard e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
             <li><b>Gráfico de evolução</b>: barras com os Objetivos por status e uma linha com o progresso médio. Passe o mouse (ou toque) numa semana pra ver os números dela.</li>
             <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
             <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
@@ -1566,7 +1566,7 @@ body{min-height:100vh;}
       <button class="x-btn" onclick="closeOkrViewers()">✕</button>
     </div>
     <div class="pc-modal-body">
-      <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Histórico, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Dashboard, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
       <div id="okr-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
       <div class="okr-field-label">Adicionar por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1636,7 +1636,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.17 · okr-dev</div>
+<div class="version">v2.18 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2949,7 +2949,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   _okrShowNotas = view==='notas';
   if(!_okrShowHistorico) _okrHistMetricaManual = false;   // saiu do Histórico: na próxima abertura a aba é escolhida de novo
   const histBtn = document.getElementById('okr-historico-btn');
-  if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📈 Histórico';
+  if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📊 Dashboard';
   const agBtn = document.getElementById('okr-agente-btn');
   if(agBtn) agBtn.textContent = _okrShowAgenteChat ? '◀ Ver Objetivos' : '💬 Central Agente Ágil';
   const notasBtn = document.getElementById('okr-notas-btn');
@@ -3217,7 +3217,7 @@ function renderOkrHistorico(){
   const L = _okrHistSnap(ult) || {}, P = ant ? (_okrHistSnap(ant)||{}) : null;
   if(!todas.some(d=>((_okrHistSnap(d)||{}).resumoGeral||{}).total>0)){
     root.innerHTML = _okrHistTabsHtml() + `<div class="okr-h-card okr-h-vazio"><div class="okr-h-vazio-ico">${_okrHistMetrica==='ating'?'🎯':'🏁'}</div><b>${_okrHistMetrica==='ating'?'Nenhum Objetivo com atingimento registrado nos snapshots':'Nenhum Objetivo com Marcos nos snapshots'}</b>
-      <div>${_okrHistMetrica==='ating'?'Configure a meta em <b>⚙ Configurações do Objetivo → 📈 Atingimento</b> e registre valores — o histórico monta a curva a partir dos registros. Enquanto isso, a aba <b>🏁 Marcos</b> mostra o andamento pelos Marcos concluídos.':'Crie Marcos nos Objetivos pra acompanhar a % concluída semana a semana.'}</div>
+      <div>${_okrHistMetrica==='ating'?'Configure a meta em <b>⚙ Configurações do Objetivo → 📈 Atingimento</b> e registre valores — o Dashboard monta a curva a partir dos registros. Enquanto isso, a aba <b>🏁 Marcos</b> mostra o andamento pelos Marcos concluídos.':'Crie Marcos nos Objetivos pra acompanhar a % concluída semana a semana.'}</div>
       ${_okrHistMetrica==='ating'?_okrHistAoVivoHtml()+`<button type="button" class="btn btn-sm" style="margin-top:8px;" onclick="_okrHistSetMetrica('marcos')">Ver por Marcos</button>`:''}</div>`;
     return;
   }
@@ -3508,7 +3508,7 @@ function _okrHistMediaRender(focoId){
       </div>
     </div>
     <div class="okr-hm-sec">
-      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${{dest:'a média e os Objetivos que mais mudaram',obj:'cada Objetivo e a média',ger:_okrHistGlobal()?'cada torre e a média':'cada gerência e a média',media:'a média',mini:'um mini-gráfico por Objetivo'}[_okrHistMModo]}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Histórico)'}</span></div>
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${{dest:'a média e os Objetivos que mais mudaram',obj:'cada Objetivo e a média',ger:_okrHistGlobal()?'cada torre e a média':'cada gerência e a média',media:'a média',mini:'um mini-gráfico por Objetivo'}[_okrHistMModo]}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Dashboard)'}</span></div>
       ${_okrHistMediaChartHtml(inc, per, graficoW)}
     </div>
     <div class="okr-hm-sec">
