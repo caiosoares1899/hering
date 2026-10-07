@@ -1496,6 +1496,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <div style="flex:1;overflow-y:auto;padding:8px;" id="painel-notif-list">
             <div style="font-size:11px;color:var(--txt3);padding:16px;text-align:center;">Carregando...</div>
           </div>
+          <div id="painel-notif-ft" style="flex-shrink:0;"></div>
         </div>
       </div>
       <button class="btn" onclick="loadAll(event.shiftKey)" title="Atualizar dados (Shift+clique: recarregar tudo do zero)">🔄</button>
@@ -2681,7 +2682,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
              squad, um conceito diferente). Ver _finishPainelLogin()/
              _blockIfPainelViewer() no <script> pro resto do mecanismo. -->
         <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos (painel e OKR)</div>
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br/@arezzo.com.br) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (as 3 torres, Histórico, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br/@arezzo.com.br) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (as 3 torres, Dashboard, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
         <div id="pcfg-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
         <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por email</div>
         <div style="display:flex;gap:6px;">
@@ -2784,7 +2785,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.9 · painel</div>
+<div class="version">v5.16 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2792,6 +2793,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
@@ -2864,6 +2866,14 @@ window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window
 // presente) é lexicograficamente ordenável = cronologicamente ordenável.
 window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast;
 window._storage=storage; window._sRef=sRef; window._uploadBytes=uploadBytes; window._getDownloadURL=getDownloadURL; window._deleteObject=deleteObject;
+// Push (FCM) deste aparelho — o rodapé do sino (mare-notif-dev.js) usa estes hooks pra ativar/desativar o push; sem suporte, _fcmReady fica false.
+window._fcmReady = false;
+fcmIsSupported().then(ok=>{ if(!ok) return; try{
+  const messaging = getMessaging(app);
+  window._fcmGetToken = (vapidKey, swReg)=>fcmGetToken(messaging, {vapidKey, serviceWorkerRegistration:swReg});
+  window._fcmDeleteToken = ()=>fcmDeleteToken(messaging); window._fcmOnMessage = cb=>fcmOnMessage(messaging, cb); window._fcmReady = true;
+  if(window.MareNotif) MareNotif.rodapeRender();
+}catch(e){ console.warn('[FCM] não inicializado:', e); } }).catch(()=>{});
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -2878,6 +2888,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
+<script src="mare-notif.js?v=4"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -3369,7 +3380,7 @@ function renderOkrOnlineVisao(){
   if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no OKR no momento.</div>'; return; }
   el.innerHTML = all.map(u=>{
     const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
-    return '<div class="online-pill"><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span></div>';
+    return '<div class="online-pill"'+(u.externo===true?' title="Visualizador externo"':'')+'><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span>'+(u.externo===true?'<span style="font-size:10px;opacity:.8;">👁</span>':'')+'</div>';
   }).join('');
 }
 function renderPainelOnline(){
@@ -6779,12 +6790,19 @@ let _painelNotifListeners = false;
 
 function loadPainelNotifs(){
   const user = window._currentUser; if(!user) return;
-  // Sininho é para o ADM logado — esconde para não-ADM
+  // SINO ÚNICO (2026-10-07): o sino aparece pra todo mundo (antes só ADM) — é o mesmo do kanban e do OKR: notificações pessoais + feed da
+  // torre (mare-notif-dev.js). Só os LEMBRETES de squad seguem exclusivos de ADM (leem dados de todos os squads).
   const btn = document.getElementById('painel-notif-btn');
-  if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
-  if(!_isAdmPainel()) return;
+  if(btn) btn.style.display = 'inline-flex';
+  if(!window._isPainelViewer) _painelLoadLembretes(user);
   if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
   _painelNotifListeners = true;
+  if(window.MareNotif){
+    MareNotif.start({user, isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), onChange:_painelSyncFeed});
+    const ft = document.getElementById('painel-notif-ft');   // rodapé do sino: 🔊 som · permissão deste aparelho · 🔕 Não Perturbe (igual ao kanban)
+    if(ft){ ft.innerHTML = MareNotif.rodapeHtml(''); MareNotif.rodapeRender(); }
+  }
+  if(window._isPainelViewer) { renderPainelNotifs(); return; }   // visualizador externo: só o feed (não lê notificações pessoais)
   // Limpa o "Carregando..." de cara — se não houver nada, renderPainelNotifs
   // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
   renderPainelNotifs();
@@ -6804,13 +6822,20 @@ function loadPainelNotifs(){
     // notificacoes/undefined/read, criando mais lixo). loadNotifs() do
     // kanban-dev.html já resolve isso certo (Object.entries + spread com a
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
-    const notifs = Object.entries(val).filter(([,n])=>n).map(([nid,n])=>({
+    const notifs = Object.entries(val).filter(([,n])=>n && (!window.MareNotif || MareNotif.viva(n))).map(([nid,n])=>({   // mesmo TTL do sino do kanban/OKR
       _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
-  // 2) Lembretes próprios em cada squad
+}
+
+// 2) Lembretes próprios em cada squad — só ADM. Guarda PRÓPRIA (não a das notificações): a lista de ADMs extras chega depois do 1º login,
+// então esta função roda de novo a cada loadPainelNotifs() até a pessoa ser reconhecida como ADM (antes o `return` do não-ADM fazia isso de graça).
+let _painelLembretesOn = false;
+function _painelLoadLembretes(user){
+  if(_painelLembretesOn || !_isAdmPainel()) return;
+  _painelLembretesOn = true;
   SQUADS.forEach(sq=>{
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/lembretes_prop/'+user.uid), snap=>{
       const val = snap.val();
@@ -6823,6 +6848,11 @@ function loadPainelNotifs(){
   });
 }
 
+// Feed da torre (módulo compartilhado) → grupo 'feed' do sino
+function _painelSyncFeed(){
+  if(!window.MareNotif) return;
+  _mergePainelNotifs('feed', MareNotif.items().map(i=>({_kind:'feed', id:i.id, title:i.title, sub:i.sub, ts:i.ts, read:!i.unread, icon:i.icon, autor:i.autor, squad:'', cardId:'', type:i.tipo})));
+}
 // Mantém grupos separados por fonte e reconcilia em _painelNotifs
 const _painelNotifGroups = {};
 function _mergePainelNotifs(groupKey, items){
@@ -6844,7 +6874,9 @@ function _markOnePainelNotifRead(id){
 async function markAllPainelNotifsRead(){
   const user = window._currentUser; if(!user) return;
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
-  if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
+  const nFeed = _painelNotifs.filter(n=>n._kind==='feed' && !n.read).length;
+  if(nFeed && window.MareNotif) MareNotif.markAll();   // feed da torre (sino único)
+  if(!naoLidas.length){ showToast(nFeed ? '✅ '+nFeed+' novidade'+(nFeed>1?'s':'')+' da torre marcada'+(nFeed>1?'s':'')+' como lida'+(nFeed>1?'s':'')+'.' : 'Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   const idsNaoLidas = new Set(naoLidas.map(n=>n.id));
   try {
@@ -6889,11 +6921,12 @@ async function clearReadPainelNotifs(){
 
 function renderPainelNotifs(){
   const badge = document.getElementById('painel-notif-badge');
-  const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read).length + _painelNotifs.filter(n=>n._kind==='lembrete').length;
+  const naoLidas = _painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).length + _painelNotifs.filter(n=>n._kind==='lembrete').length;
   if(badge){
     if(naoLidas>0){ badge.textContent = naoLidas>99?'99+':naoLidas; badge.style.display='flex'; }
     else badge.style.display='none';
   }
+  if(window.MareNotif) MareNotif.novas(_painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).map(n=>n._kind+':'+n.id));   // som quando chega notificação nova (respeita 🔇 e o Não Perturbe)
   const list = document.getElementById('painel-notif-list'); if(!list) return;
   if(!_painelNotifs.length){
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:24px 16px;text-align:center;">Nenhuma notificação ou lembrete.</div>';
@@ -6902,11 +6935,17 @@ function renderPainelNotifs(){
   list.innerHTML = _painelNotifs.slice(0,50).map(n=>{
     const sqc = n.squad ? _painelSqColor(n.squad) : null;
     const sqBadge = n.squad ? `<span style="font-size:8px;padding:1px 6px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(n.squad))}</span>` : '';
-    const icon = n._kind==='lembrete' ? '✎' : '🔔';
+    const icon = n._kind==='lembrete' ? '✎' : (n._kind==='feed' ? esc(n.icon||'🔔') : '🔔');
     const quando = n.ts ? _relTime(n.ts) : '';
-    const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
+    const dotRead = ((n._kind==='notif'||n._kind==='feed') && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
-    const openAttr = n.link
+    // Notificações do OKR (okr_*) não têm card nem aba: levam à página do OKR (Objetivo / Central do Agente / Anotações) — mesmo mapa do openNotif() do kanban.
+    const _okrAlvo = n._kind==='feed' ? '' : String(n.type||'').startsWith('okr_') ? (n.type==='okr_agente' ? 'chat' : (n.type==='okr_mencao' ? 'notas' : n.okrObjId)) : '';
+    const openAttr = n._kind==='feed'
+      ? `onclick="MareNotif.abrirFeed(${jsq(n.id)});togglePainelNotif(event);" style="cursor:pointer;"`
+      : _okrAlvo
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)});" style="cursor:pointer;"`
+      : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(var(--slate-rgb),.4)\'"':''}>
@@ -9455,7 +9494,7 @@ const GU_EMPRESAS = [
   {id:'externo', label:'Externos',icon:'🌐'},
 ];
 // 🏛️ Torres do OKR (mesma lista de okr.html/okr-dev.html — manter igual): flag em kanban/usuarios/{uid}/torre; sem o campo = Digital.
-const GU_TORRES = [{id:'digital',label:'Digital',icon:'🌐'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'},
+const GU_TORRES = [{id:'digital',label:'Digital',icon:'🛒'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'},
   {id:'geral',label:'Geral (todas)',icon:'⭐'}];   // 'geral' = ADMs de OKR: criam/editam em TODAS as torres (só vale pra pessoa, nunca pra Objetivo)
 function _guTorreDe(u){ return GU_TORRES.some(t=>t.id===(u&&u.torre)) ? u.torre : 'digital'; }
 let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:''};
@@ -12116,7 +12155,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
   <div class="cfg-panel" style="max-width:560px;">
     <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
     <div class="cfg-body">
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o painel e o <b>OKR</b> (as 3 torres, Histórico, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o painel e o <b>OKR</b> (as 3 torres, Dashboard, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
       <div id="pv-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
       <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
