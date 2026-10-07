@@ -223,6 +223,7 @@
   // O que chega nos primeiros 3 s da página (carga inicial) só entra na lista, sem som.
   const idsVistos = new Set(); let t0Novas = 0;
   function novas(ids){
+    prefsStart();   // o Não Perturbe precisa estar carregado ANTES do 1º ding — não pode depender de o sino ter sido aberto
     if(!t0Novas) t0Novas = Date.now();
     const quente = Date.now() - t0Novas > 3000; let achou = false;
     (ids||[]).forEach(id=>{ if(!idsVistos.has(id)){ idsVistos.add(id); if(quente) achou = true; } });
