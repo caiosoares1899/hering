@@ -17,3 +17,8 @@ test('tag: duas menções do OKR seguidas não se substituem; as demais mantêm 
   assert.equal(tagDoPush({ type: 'risk', cardId: 'c9' }, 'n1'), 'risk_c9');
   assert.equal(tagDoPush({}, 'n1'), 'geral_');
 });
+test('okr_reuniao do calendário abre o evento (id + data da ocorrência), não a home do OKR', () => {
+  assert.equal(urlDoPush({ type: 'okr_reuniao', okrEventoId: 'ev1', okrEventoData: '2026-10-15' }), SITE_BASE_URL + 'okr.html?evento=ev1&data=2026-10-15');
+  assert.equal(urlDoPush({ type: 'okr_reuniao', okrEventoId: 'a b' }), SITE_BASE_URL + 'okr.html?evento=a%20b');
+  assert.equal(urlDoPush({ type: 'okr_reuniao', okrObjId: 'o1' }), SITE_BASE_URL + 'okr.html?okr=o1');   // bloco fixo (legado) segue levando ao Objetivo
+});
