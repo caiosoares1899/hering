@@ -2722,7 +2722,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.0 · painel-dev</div>
+<div class="version">v5.1 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5415,6 +5415,10 @@ function swPtab(tab){
 function _restoreTab(){
   try{
     const saved=localStorage.getItem('_painel_tab');
+    // 'okr' foi salvo por quem usava a aba OKR antes dela virar atalho pra página própria: restaurar chamaria
+    // swPtab('okr') — que NAVEGA pra okr(-dev).html — e o painel inteiro redirecionaria sozinho a cada carregamento
+    // (relato direto, painel-dev v5.0). Abrir o OKR só por clique/link explícito, nunca por restauração automática.
+    if(saved==='okr'){ localStorage.removeItem('_painel_tab'); return; }
     if(saved && document.getElementById('ptab-'+saved)) swPtab(saved);
   } catch(e){}
 }
