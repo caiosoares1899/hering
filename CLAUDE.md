@@ -96,7 +96,7 @@ letting them hit the error first.
   page instead of being unrelated to it.
 - `mare-notif-dev.js` / `mare-notif.js` — **sino único**: módulo compartilhado (raiz do domínio, único arquivo
   carregado por mais de uma página) que mantém o **feed da torre** (`kanban/notif_feed`, "lido" em
-  `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), usado pelo sino de
+  `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), além do rodapé do sino (🔊 som · permissão deste aparelho/push · 🔕 Não Perturbe) usado pelo OKR e pelo painel, usado pelo sino de
   `kanban`, `painel` e `okr` — a notificação tem que aparecer igual em qualquer página. Segue o mesmo ciclo dev→prod
   (as páginas `-dev` carregam `mare-notif-dev.js?v=N`, as de prod `mare-notif.js?v=N`; ao mudar o módulo, bump o `?v=` nas páginas).
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
@@ -150,7 +150,7 @@ letting them hit the error first.
   (`functions/index.js`) only decides whether that notification should also
   become a push — it does this by checking `notif.type` against the
   `PUSH_TYPES` allow-list (currently `assigned`, `mention`, `unblocked`,
-  `risk`, `recorrente`, `painel_broadcast`). **To make a new notification
+  `risk`, `recorrente`, `painel_broadcast`, `okr_mencao`, …; see the constant). The Mural do OKR's new-notice push is a separate function, `sendPushOnMural`, because that notice is one `kanban/notif_feed` event rather than a per-user notification. **To make a new notification
   type trigger push, add it to `PUSH_TYPES` and redeploy the function** — a
   front-end-only change is not enough. The function also respects each
   user's "Não Perturbe" (do-not-disturb) window at

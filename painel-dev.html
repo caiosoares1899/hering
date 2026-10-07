@@ -1498,6 +1498,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
           <div style="flex:1;overflow-y:auto;padding:8px;" id="painel-notif-list">
             <div style="font-size:11px;color:var(--txt3);padding:16px;text-align:center;">Carregando...</div>
           </div>
+          <div id="painel-notif-ft" style="flex-shrink:0;"></div>
         </div>
       </div>
       <button class="btn" onclick="loadAll(event.shiftKey)" title="Atualizar dados (Shift+clique: recarregar tudo do zero)">🔄</button>
@@ -2744,7 +2745,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.11 · painel-dev</div>
+<div class="version">v5.13 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2752,6 +2753,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, onValue, set, get, update, remove, query, orderByChild, limitToLast, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js';
+import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 
@@ -2824,6 +2826,14 @@ window._db=db; window._ref=ref; window._onValue=onValue; window._set=set; window
 // presente) é lexicograficamente ordenável = cronologicamente ordenável.
 window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast;
 window._storage=storage; window._sRef=sRef; window._uploadBytes=uploadBytes; window._getDownloadURL=getDownloadURL; window._deleteObject=deleteObject;
+// Push (FCM) deste aparelho — o rodapé do sino (mare-notif-dev.js) usa estes hooks pra ativar/desativar o push; sem suporte, _fcmReady fica false.
+window._fcmReady = false;
+fcmIsSupported().then(ok=>{ if(!ok) return; try{
+  const messaging = getMessaging(app);
+  window._fcmGetToken = (vapidKey, swReg)=>fcmGetToken(messaging, {vapidKey, serviceWorkerRegistration:swReg});
+  window._fcmDeleteToken = ()=>fcmDeleteToken(messaging); window._fcmOnMessage = cb=>fcmOnMessage(messaging, cb); window._fcmReady = true;
+  if(window.MareNotif) MareNotif.rodapeRender();
+}catch(e){ console.warn('[FCM] não inicializado:', e); } }).catch(()=>{});
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 window._fbReady=true;
@@ -2838,7 +2848,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=1"></script>
+<script src="mare-notif-dev.js?v=4"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -6732,7 +6742,11 @@ function loadPainelNotifs(){
   if(!window._isPainelViewer) _painelLoadLembretes(user);
   if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
   _painelNotifListeners = true;
-  if(window.MareNotif) MareNotif.start({user, isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), onChange:_painelSyncFeed});
+  if(window.MareNotif){
+    MareNotif.start({user, isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), onChange:_painelSyncFeed});
+    const ft = document.getElementById('painel-notif-ft');   // rodapé do sino: 🔊 som · permissão deste aparelho · 🔕 Não Perturbe (igual ao kanban)
+    if(ft){ ft.innerHTML = MareNotif.rodapeHtml(''); MareNotif.rodapeRender(); }
+  }
   if(window._isPainelViewer) { renderPainelNotifs(); return; }   // visualizador externo: só o feed (não lê notificações pessoais)
   // Limpa o "Carregando..." de cara — se não houver nada, renderPainelNotifs
   // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
@@ -6753,7 +6767,7 @@ function loadPainelNotifs(){
     // notificacoes/undefined/read, criando mais lixo). loadNotifs() do
     // kanban-dev.html já resolve isso certo (Object.entries + spread com a
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
-    const notifs = Object.entries(val).filter(([,n])=>n).map(([nid,n])=>({
+    const notifs = Object.entries(val).filter(([,n])=>n && (!window.MareNotif || MareNotif.viva(n))).map(([nid,n])=>({   // mesmo TTL do sino do kanban/OKR
       _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
       ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'',
     }));
@@ -6857,6 +6871,7 @@ function renderPainelNotifs(){
     if(naoLidas>0){ badge.textContent = naoLidas>99?'99+':naoLidas; badge.style.display='flex'; }
     else badge.style.display='none';
   }
+  if(window.MareNotif) MareNotif.novas(_painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).map(n=>n._kind+':'+n.id));   // som quando chega notificação nova (respeita 🔇 e o Não Perturbe)
   const list = document.getElementById('painel-notif-list'); if(!list) return;
   if(!_painelNotifs.length){
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:24px 16px;text-align:center;">Nenhuma notificação ou lembrete.</div>';

@@ -49,6 +49,9 @@ function makeFakeDb(initialData) {
       async set(value) {
         setAt(path, value);
       },
+      async remove() {
+        setAt(path, null);
+      },
       async transaction(transform) {
         const cur = getAt(path);
         const newVal = transform(cur === undefined ? null : cur);
