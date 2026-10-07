@@ -1650,7 +1650,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.23 · okr-dev</div>
+<div class="version">v2.24 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2072,6 +2072,7 @@ function _uiModalPainel({message, kind, defaultValue, placeholder, okText, dange
 
 
 function uiConfirm(message, opts={}){ return _uiModalPainel({message, kind:'confirm', ...opts}); }
+function uiAviso(message, opts={}){ return _uiModalPainel({message, kind:'info', okText:'Entendi', ...opts}); }   // só o botão de OK (sem Cancelar): explica por que algo não pôde ser feito
 
 
 
@@ -4579,7 +4580,7 @@ function renderOkrGerencias(){
   const t = _okrGerTorre, ti = okrTorreInfo(t), lista = okrGerenciasDa(t, true), visiveis = lista.filter(g=>!g.oculta).length;
   const tt = document.getElementById('okr-ger-title'); if(tt) tt.textContent = '⚙ Gerências — '+ti.icon+' Torre '+ti.label;
   body.innerHTML = `
-    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">As gerências da <b>${esc(ti.label)}</b> aparecem nos seletores e agrupam os Objetivos da torre. <b>Gerência com Objetivos não é apagada</b> — fica <b>oculta</b> (some dos seletores de Objetivos novos; os que já estão nela continuam). Só dá pra excluir de vez uma gerência vazia.</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">As gerências da <b>${esc(ti.label)}</b> aparecem nos seletores e agrupam os Objetivos da torre. <b>Gerência com Objetivos não é apagada</b> — fica <b>oculta</b> (some dos seletores de Objetivos novos; os que já estão nela continuam). Só dá pra excluir de vez uma gerência vazia — clique em 🗑 numa que tem Objetivos pra ver como esvaziar.</div>
     <div style="display:flex;flex-direction:column;gap:6px;">${lista.map((g,i)=>{
       const n = _okrGerUsos(t, g.id);
       return `<div class="okr-ger-row${g.oculta?' oculta':''}" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:9px;${g.oculta?'opacity:.6;':''}">
@@ -4589,7 +4590,7 @@ function renderOkrGerencias(){
         <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===0?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},-1)" title="Subir">▲</button>
         <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===lista.length-1?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},1)" title="Descer">▼</button>
         <button type="button" class="btn btn-sm" style="padding:3px 8px;font-size:11px;" onclick="_okrGerOcultar(${jsq(g.id)},${g.oculta?'false':'true'})" title="${g.oculta?'Voltar a aparecer nos seletores':'Esconder dos seletores de Objetivos novos'}">${g.oculta?'👁 Mostrar':'🙈 Ocultar'}</button>
-        <button type="button" class="btn btn-sm" style="padding:3px 7px;color:var(--danger);" ${n>0||lista.length<=1?'disabled':''} onclick="_okrGerExcluir(${jsq(g.id)})" title="${n>0?'Tem Objetivos — só dá pra ocultar':'Excluir gerência vazia'}">🗑</button>
+        <button type="button" class="btn btn-sm" style="padding:3px 7px;color:var(--danger);${n>0||lista.length<=1?'opacity:.6;':''}" onclick="_okrGerExcluir(${jsq(g.id)})" title="${lista.length<=1?'A torre precisa de ao menos uma gerência':(n>0?'Tem Objetivos — clique pra ver como excluir':'Excluir gerência vazia')}">🗑</button>
       </div>`; }).join('')}</div>
     <div class="okr-field-label" style="margin-top:14px;">Nova gerência</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -4625,7 +4626,12 @@ function _okrGerOcultar(id, oculta){
 }
 function _okrGerExcluir(id){
   const t = _okrGerTorre, nUso = _okrGerUsos(t, id);
-  if(nUso>0){ showToast('⚠ Essa gerência tem '+nUso+' Objetivo(s) — só dá pra ocultar.'); return; }
+  if(okrGerenciasDa(t, true).length<=1){ uiAviso('A torre precisa ter ao menos uma gerência — crie outra antes de excluir esta.'); return; }
+  if(nUso>0){
+    const nome = okrGerenciaLabel(id, t), arq = Object.values(okrObjetivos).filter(o=>o && _okrTorreDe(o)===t && (o.areaId||'geral')===id && o.arquivado).length;
+    uiAviso('Não dá pra excluir "'+nome+'": ela ainda tem '+nUso+' Objetivo'+(nUso===1?'':'s')+(arq?' ('+arq+' arquivado'+(arq===1?'':'s')+')':'')+'.\n\nPara excluir a gerência, primeiro esvazie ela:\n• ➡️ envie os Objetivos pra outra gerência — abra o Objetivo → ⚙ Configurações → campo Gerência; ou\n• 🗑 exclua os Objetivos dela'+(arq?' (os arquivados estão em 📦 Ver arquivados)':'')+'.\n\nSe só quer tirar a gerência dos seletores, use 🙈 Ocultar: os Objetivos continuam nela.');
+    return;
+  }
   uiConfirm('Excluir esta gerência vazia?', {danger:true, okText:'Excluir'}).then(okc=>{
     if(!okc) return;
     _okrGerAplicar(n=>{
