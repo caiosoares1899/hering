@@ -20694,6 +20694,15 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.5 · okr — 2026-10-07 · Promove pra prod — 🏛️ Torres, Histórico por torre, visualizador externo só leitura
+
+Promoção do `okr-dev.html` v1.4–v2.5 sobre a v1.3 de prod (merge de 3 vias a partir da v1.3-dev; dev × prod só diferem nas 27 linhas de ambiente). O que chega:
+- **🏛️ Torres** (v2.0): home com os botões Digital/Comercial/Corporativa + 🔭 Visão global colorida; Objetivo sem torre = Digital; gerências por torre; todos veem tudo, edita só a própria torre (ADM qualquer; Responsável o que é seu); a torre da pessoa vem de `kanban/usuarios/{uid}/torre` (sem o campo = Digital) e cadastro novo sem torre escolhe ao entrar.
+- **📈 Histórico por torre** (v2.3/2.4): na visão global compara as torres (cartões, linha por torre + total tracejado, faixas na tabela); abre direto na aba que tem dados (Marcos quando Atingimento está vazio); filtros de período/gerência zeram ao trocar de torre (v2.1/2.2).
+- **Cadastro de quem só usa o OKR** (v1.4) e **🟢 Online no OKR** (v1.5).
+- **🔒 Visualizador externo só acompanha** (v2.5): lê `kanban/usuarios_publicos`, não mais `kanban/usuarios` (as regras novas fecham essa leitura).
+Smoke test no `okr.html` real: página 49/49 (URLs de prod), torres 35/35, Histórico 15 + 10, e2e 11/11, visualizador 5/5. `node --check` OK.
+
 ### okr-dev.html v2.5 · okr-dev — 2026-10-07 · 🔒 visualizador externo (só acompanhar) lê o diretório público, não `kanban/usuarios`
 
 Pedido direto: liberar um externo só pra **acompanhar** o OKR e fechar a leitura de `usuarios` pra ele. Visualizador (`kanban/painel_viewers`, só leitura) agora lê `kanban/usuarios_publicos` (nome/foto/sigla/papel) pra mostrar responsáveis e avatares — as regras (`database.rules.json`) deixam de liberar `kanban/usuarios` pra ele (e-mails, notificações e tokens de push de todos). Quem é da empresa segue lendo `kanban/usuarios` (papéis, torre, Gestor OKR). O mesmo vale pra `okr-apresentacao.slide.html` (compartilhada, sem versão: o visualizador lê `usuarios_publicos`; antes, sem isso, a negativa de leitura da regra nova derrubaria a apresentação inteira pra ele). **Ordem de deploy:** promover `okr.html`/`painel.html` ANTES de publicar as regras (prod ainda lê `kanban/usuarios` como visualizador). Testes (Chromium): visualizador lê só `usuarios_publicos` (sem tokens), membro segue em `usuarios`; regras: 22/22 no simulador (`functions/rules`, visualizador lê o OKR, não escreve, não lê `usuarios`).
@@ -20768,6 +20777,14 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.4 · painel — 2026-10-07 · Promove pra prod — a aba 🎯 OKR vira atalho pra página própria (okr.html), torre no Global Users, correção do nome em "Online", visualizador sem `usuarios`
+
+Promoção do `painel-dev.html` v4.10 → v5.4 (merge de 3 vias a partir da v4.10-dev; dev × prod só diferem nas linhas de ambiente e nos blocos já divergentes de sempre). **As versões 5.0–5.4 vão juntas** (a v5.0 sozinha redirecionava o painel inteiro pro OKR; a v5.1 corrige):
+- **OKR em página própria**: o conteúdo da aba sai do painel e o botão leva a `okr.html` (links antigos `?okr=<id>`/`?tab=okr` repassam). A aba salva no navegador como "okr" é descartada (não redireciona sozinho). A lista "Cards do board com badge OKR" voltou pra aba Visão.
+- **👥 Global Users**: seletor de **torre** por pessoa (ADM) + filtro "Todas as torres"; o chip Gestor OKR vale na torre da pessoa.
+- **Segurança**: nome na lista "Online" (board e painel) agora é escapado (antes um nome malicioso rodava JS na sessão de quem abrisse o painel — reproduzido em prod antes do fix); visualizador externo lê `usuarios_publicos` em vez de `kanban/usuarios`.
+Smoke test no `painel.html` real: redirecionamentos e abas 17/17. `node --check` OK; balanço de parênteses -17 (era -21 em prod: o código do OKR saiu).
 
 ### painel-dev.html v5.4 · painel-dev — 2026-10-07 · visualizador externo lê `usuarios_publicos` (a leitura de `kanban/usuarios` fecha pra ele)
 
