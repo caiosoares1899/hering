@@ -615,10 +615,40 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       (clica de novo pra limpar) — não duplica lógica nova, só expõe o
       mesmo _okrSetFilter('status',…) de um jeito mais rápido de bater o
       olho que abrir o <select>. */
-.okr-stats-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+/* ── Cabeçalho do OKR em níveis (redesenho 2026-10-07): título + ações · abas · filtros ── */
+.okr-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 10px;}
+.okr-head-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);margin-bottom:2px;}
+.okr-head-t{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;margin:0;line-height:1.15;}
+.okr-head-acoes{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.okr-head-acoes .btn{font-size:12px;padding:7px 14px;}
+.okr-btn-apr{text-decoration:none;display:inline-flex;align-items:center;color:var(--accent);border-color:rgba(56,182,255,.35);}
+.okr-more{position:relative;}
+.okr-more-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:rgba(var(--ink-rgb),.98);border:1px solid var(--glass-b);border-radius:12px;padding:6px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:60;display:flex;flex-direction:column;gap:1px;}
+.okr-more-menu[hidden]{display:none;}
+.okr-more-menu>*{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--txt2);padding:9px 12px;border-radius:8px;font-size:12px;text-align:left;cursor:pointer;text-decoration:none;font-family:inherit;width:100%;box-sizing:border-box;}
+.okr-more-menu>*:hover{background:rgba(56,182,255,.12);color:var(--txt);}
+.okr-tabs{display:flex;gap:2px;border-bottom:1px solid var(--glass-b);margin:0 0 14px;overflow-x:auto;scrollbar-width:none;}
+.okr-tabs::-webkit-scrollbar{display:none;}
+.okr-tabs button{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--txt2);padding:10px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s,border-color .15s;}
+.okr-tabs button:hover{color:var(--txt);}
+.okr-tabs button.on{color:var(--accent);border-bottom-color:var(--accent);}
+.okr-toolbar .btn{font-size:11.5px;padding:6px 11px;}
+#okr-filtros-mais-btn.on{border-color:var(--accent);color:var(--accent);}
+.okr-badge-n{display:inline-block;min-width:16px;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--accent);color:#031a2e;font-size:10px;font-weight:800;line-height:16px;text-align:center;}
+.okr-badge-n:empty{display:none;}
+.okr-filtros-mais{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 2px;}
+.okr-filtros-mais[hidden]{display:none;}
+@media(max-width:760px){
+  .okr-head-t{font-size:18px;}
+  .okr-head-acoes{width:100%;}
+  .okr-head-acoes #okr-novo-btn{margin-left:auto;}
+  .okr-tabs button{padding:10px 12px;}
+}
+/* Chips de estatística: mais leves (sem caixa até passar o mouse/estar ativo) e as métricas (atingimento, marcos) à direita, como texto */
+.okr-stats-strip{display:flex;flex-wrap:wrap;gap:4px 6px;margin-bottom:14px;align-items:center;}
 
-.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
-  background:var(--glass);border:1px solid var(--glass-b);font-size:11px;color:var(--txt2);
+.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;
+  background:transparent;border:1px solid transparent;font-size:11.5px;color:var(--txt2);
   cursor:pointer;transition:border-color .15s,background .15s;}
 
 .okr-stat-chip b{color:var(--txt);font-size:12px;}
@@ -628,8 +658,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-stat-chip.active{border-color:var(--accent);background:rgba(56,182,255,.12);}
 
 .okr-stat-chip.total{cursor:default;}
+.okr-stat-chip.total:first-child{background:var(--glass);border-color:var(--glass-b);}
+.okr-stat-chip.metric{color:var(--txt3);}
+.okr-stat-chip.metric:first-of-type{margin-left:auto;}
+.okr-stat-chip:not(.total):not(.active):hover{background:var(--glass);}
 
-.okr-stat-chip.total:hover{border-color:var(--glass-b);}
+.okr-stat-chip.total:hover{border-color:transparent;}
+.okr-stat-chip.total:first-child:hover{border-color:var(--glass-b);}
 
 /* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
    ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
@@ -1302,32 +1337,35 @@ body{min-height:100vh;}
 
   <!-- 🎯 OKR — mesma tela que vivia na aba OKR do painel (extraída; ver comentário no <script>) -->
   <div id="ppane-okr">
-    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
-      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
-          <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
-          <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+    <!-- Cabeçalho em 3 níveis (2026-10-07, redesenho): (1) título da torre + ações (🎥 Apresentação, ⋯ Mais, + Novo Objetivo — só este é preenchido), (2) ABAS das telas do
+         OKR (Objetivos · Calendário · Dashboard · Anotações · Agente Ágil — uma por vez, via _okrSetView), (3) filtros/estatísticas (só na aba Objetivos). Ajuda, guia, visualizadores e gerências
+         ficam no menu ⋯ Mais. Os ids dos botões foram mantidos (okr-cal-btn, okr-historico-btn, okr-notas-btn, okr-agente-btn, okr-novo-btn, okr-viewers-btn). -->
+    <div class="okr-head">
+      <div class="okr-head-tit"><div class="okr-head-k">🎯 Objetivos estratégicos</div><h2 id="okr-titulo-aba" class="okr-head-t">🎯 OKR — Objetivos estratégicos</h2></div>
+      <div class="okr-head-acoes">
+        <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm okr-btn-apr" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+        <div class="okr-more">
+          <button type="button" class="btn btn-sm" id="okr-more-btn" onclick="_okrMoreToggle(event)" aria-haspopup="menu" aria-expanded="false" title="Ajuda, guia visual, visualizadores externos e gerências">⋯ Mais</button>
+          <div class="okr-more-menu" id="okr-more-menu" role="menu" hidden>
+            <button type="button" role="menuitem" onclick="_okrMoreFecha();openOkrHelp()">❓ Ajuda</button>
+            <a role="menuitem" href="guia-okr.html" target="_blank" rel="noopener" onclick="_okrMoreFecha()" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia visual do OKR</a>
+            <button type="button" role="menuitem" id="okr-ger-btn" style="display:none;" onclick="_okrMoreFecha();openOkrGerencias(_okrTorreAtual)" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências da torre</button>
+            <button type="button" role="menuitem" id="okr-viewers-btn" style="display:none;" onclick="_okrMoreFecha();openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores externos</button>
+          </div>
         </div>
-        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
-          <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
-          <button type="button" class="btn btn-sm" id="okr-viewers-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores</button>
-          <button type="button" class="btn btn-sm" id="okr-cal-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleCal()">📅 Calendário</button>
-          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📊 Dashboard</button>
-        </div>
-        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
-        <button type="button" class="btn btn-p" id="okr-novo-btn" style="font-size:11px;padding:6px 14px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
+        <button type="button" class="btn btn-p" id="okr-novo-btn" style="display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
       </div>
     </div>
+    <div class="okr-tabs" id="okr-tabs" role="tablist" aria-label="Telas do OKR">
+      <button type="button" role="tab" id="okr-tab-obj" class="on" aria-selected="true" onclick="_okrSetView('objetivos')">🎯 Objetivos</button>
+      <button type="button" role="tab" id="okr-cal-btn" aria-selected="false" onclick="_okrSetView('calendario')">📅 Calendário</button>
+      <button type="button" role="tab" id="okr-historico-btn" aria-selected="false" onclick="_okrSetView('historico')">📊 Dashboard</button>
+      <button type="button" role="tab" id="okr-notas-btn" aria-selected="false" onclick="_okrSetView('notas')">📋 Anotações</button>
+      <button type="button" role="tab" id="okr-agente-btn" aria-selected="false" onclick="_okrSetView('agente')">💬 Agente Ágil</button>
+    </div>
     <div class="okr-toolbar" id="okr-toolbar">
-      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 10px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
+      <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="flex:1;min-width:200px;">
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
-      <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
-      <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
-      <select id="okr-filter-tag" class="pt-filter-input" onchange="_okrSetFilter('tag', this.value)" title="Filtra pelas tags aplicadas ao objetivo (também dá pra clicar numa tag no cartão)" style="display:none;"><option value="">Todas as tags</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
         <option value="">Todos os status</option>
         <option value="nao_iniciado">⚪ Não iniciado</option>
@@ -1336,8 +1374,14 @@ body{min-height:100vh;}
         <option value="atrasado">🔴 Atrasado / impacto</option>
         <option value="concluido">✅ Concluído</option>
       </select>
-      <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="min-width:170px;flex:1;">
-      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="font-size:11px;padding:5px 10px;display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
+      <button type="button" class="btn btn-sm" id="okr-filtros-mais-btn" onclick="_okrFiltrosMaisToggle()" aria-expanded="false" title="Período, pessoa e tag">⚙ Mais filtros<span class="okr-badge-n" id="okr-filtros-mais-n"></span></button>
+      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
+      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
+      <div class="okr-filtros-mais" id="okr-filtros-mais" hidden>
+      <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
+      <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
+      <select id="okr-filter-tag" class="pt-filter-input" onchange="_okrSetFilter('tag', this.value)" title="Filtra pelas tags aplicadas ao objetivo (também dá pra clicar numa tag no cartão)" style="display:none;"><option value="">Todas as tags</option></select>
+      </div>
     </div>
     <div id="okr-stats-strip"></div>
     <div id="okr-objetivos-wrap"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
@@ -1742,7 +1786,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.28 · okr-dev</div>
+<div class="version">v2.29 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3061,15 +3105,10 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas' | 
   _okrShowAgenteChat = view==='agente';
   _okrShowNotas = view==='notas';
   if(!_okrShowHistorico) _okrHistMetricaManual = false;   // saiu do Histórico: na próxima abertura a aba é escolhida de novo
-  const histBtn = document.getElementById('okr-historico-btn');
-  if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📊 Dashboard';
-  const agBtn = document.getElementById('okr-agente-btn');
-  if(agBtn) agBtn.textContent = _okrShowAgenteChat ? '◀ Ver Objetivos' : '💬 Central Agente Ágil';
-  const calBtn = document.getElementById('okr-cal-btn');
-  if(calBtn) calBtn.textContent = _okrShowCal ? '◀ Ver Objetivos' : '📅 Calendário';
+  // abas: a ativa fica marcada (os textos dos botões não mudam mais — antes viravam "◀ Ver Objetivos")
+  const abas = {objetivos:'okr-tab-obj', calendario:'okr-cal-btn', historico:'okr-historico-btn', notas:'okr-notas-btn', agente:'okr-agente-btn'};
+  Object.entries(abas).forEach(([v,id])=>{ const b = document.getElementById(id); if(b){ b.classList.toggle('on', v===view); b.setAttribute('aria-selected', v===view ? 'true' : 'false'); } });
   const calWrap = document.getElementById('okr-cal-wrap'); if(calWrap) calWrap.style.display = _okrShowCal ? '' : 'none';
-  const notasBtn = document.getElementById('okr-notas-btn');
-  if(notasBtn) notasBtn.textContent = _okrShowNotas ? '◀ Ver Objetivos' : '📋 Anotações da reunião';
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
   document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
@@ -3089,6 +3128,21 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas' | 
 }
 
 
+// ⋯ Mais (menu do cabeçalho) e ⚙ Mais filtros (período/pessoa/tag).
+function _okrMoreToggle(e){ if(e) e.stopPropagation(); const m = document.getElementById('okr-more-menu'), b = document.getElementById('okr-more-btn'); if(!m) return; const abre = m.hidden; m.hidden = !abre; if(b) b.setAttribute('aria-expanded', abre ? 'true' : 'false'); }
+function _okrMoreFecha(){ const m = document.getElementById('okr-more-menu'), b = document.getElementById('okr-more-btn'); if(m) m.hidden = true; if(b) b.setAttribute('aria-expanded','false'); }
+document.addEventListener('click', e=>{ if(!e.target.closest || !e.target.closest('.okr-more')) _okrMoreFecha(); });
+document.addEventListener('keydown', e=>{ const m = document.getElementById('okr-more-menu'); if(e.key==='Escape' && m && !m.hidden){ e.preventDefault(); e.stopPropagation(); _okrMoreFecha(); document.getElementById('okr-more-btn')?.focus(); } }, true);
+let _okrFiltrosMaisAberto = false, _okrFiltrosMaisN0 = 0;
+function _okrFiltrosMaisToggle(){ _okrFiltrosMaisAberto = !_okrFiltrosMaisAberto; _okrFiltrosMaisSync(); }
+function _okrFiltrosMaisSync(){
+  const box = document.getElementById('okr-filtros-mais'), btn = document.getElementById('okr-filtros-mais-btn'), nEl = document.getElementById('okr-filtros-mais-n'); if(!box || !btn) return;
+  const n = ['trimestre','pessoa','tag'].filter(k=>_okrFilter[k]).length;
+  if(n>0 && _okrFiltrosMaisN0===0) _okrFiltrosMaisAberto = true;   // aplicou um filtro escondido (ex.: clicando numa tag do cartão): mostra, pra não parecer que sumiu algo
+  _okrFiltrosMaisN0 = n;
+  box.hidden = !_okrFiltrosMaisAberto; btn.classList.toggle('on', _okrFiltrosMaisAberto || n>0); btn.setAttribute('aria-expanded', _okrFiltrosMaisAberto ? 'true' : 'false');
+  if(nEl) nEl.textContent = n ? String(n) : '';
+}
 function _okrToggleHistorico(){ _okrSetView(_okrShowHistorico ? 'objetivos' : 'historico'); }
 
 
@@ -4426,8 +4480,8 @@ function _okrStatsStripHtml(lista){
   return `<div class="okr-stats-strip">
     <div class="okr-stat-chip total"><b>${lista.length}</b> Objetivo${lista.length===1?'':'s'}</div>
     ${chips}
-    ${atingN?`<div class="okr-stat-chip total" title="Média do atingimento dos ${atingN} Objetivo(s) que têm meta configurada">📈 <b>${Math.round(atingSoma/atingN)}%</b> de atingimento médio <span style="opacity:.6;">(${atingN}/${lista.length})</span></div>`:''}
-    ${pctMarcos!==null?`<div class="okr-stat-chip total">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
+    ${atingN?`<div class="okr-stat-chip total metric" title="Média do atingimento dos ${atingN} Objetivo(s) que têm meta configurada">📈 <b>${Math.round(atingSoma/atingN)}%</b> de atingimento médio <span style="opacity:.6;">(${atingN}/${lista.length})</span></div>`:''}
+    ${pctMarcos!==null?`<div class="okr-stat-chip total metric">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
   </div>`;
 }
 
@@ -4447,12 +4501,13 @@ function renderOkrObjetivos(){
   const tituloAba = document.getElementById('okr-titulo-aba');
   if(tituloAba){
     const tn = _okrTorreAtual==='global' ? '🌐 Visão global' : (okrTorreInfo(_okrTorreAtual).icon+' Torre '+okrTorreInfo(_okrTorreAtual).label);
-    tituloAba.textContent = (_okrShowArquivados ? '📦 Objetivos arquivados' : '🎯 Objetivos estratégicos') + ' — ' + tn;
+    tituloAba.textContent = tn + (_okrShowArquivados ? ' · 📦 arquivados' : '');
   }
   const statusSel = document.getElementById('okr-filter-status');
   if(statusSel) statusSel.value = _okrFilter.status;
   const clearBtn = document.getElementById('okr-clear-filters-btn');
   if(clearBtn) clearBtn.style.display = _okrTemFiltroAtivo() ? '' : 'none';
+  _okrFiltrosMaisSync();
 
   const areaSel = document.getElementById('okr-filter-area');
   if(areaSel){
@@ -4612,7 +4667,8 @@ function _okrRenderNav(){
   const chip = (id, ico, label, rgb)=>`<button type="button" class="okr-tn${_okrTorreAtual===id?' on':''}" ${rgb?`style="--torre:${rgb}"`:''} onclick="_okrEntrarTorre(${jsq(id)})" aria-pressed="${_okrTorreAtual===id}">${ico} ${esc(label)}</button>`;
   el.innerHTML = `<button type="button" class="btn btn-sm" onclick="_okrEntrarTorre('')" style="font-size:11px;padding:5px 12px;" title="Voltar à tela inicial das torres">← Torres</button>`
     + OKR_TORRES.map(t=>chip(t.id, t.icon, t.label, t.rgb)).join('') + chip('global','🌐','Visão global','140,165,190')
-    + (_okrPodeEditarGerencias(_okrTorreAtual) ? `<button type="button" class="btn btn-sm" onclick="openOkrGerencias(${jsq(_okrTorreAtual)})" style="font-size:11px;padding:5px 12px;margin-left:auto;" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências</button>` : '');
+  ;
+  const gb = document.getElementById('okr-ger-btn'); if(gb) gb.style.display = _okrPodeEditarGerencias(_okrTorreAtual) ? 'flex' : 'none';   // ⚙ Gerências mora no menu ⋯ Mais
 }
 
 
@@ -5397,7 +5453,7 @@ function _viewerOrdena(entries, presence){
 }
 // Gerencia kanban/painel_viewers/{emailKey} (a mesma lista do painel): quem está aí entra em okr.html/painel.html só pra LER (as regras
 // nunca liberam escrita). Atalho pra não precisar sair do OKR e achar ⚙ Configurações → 🔑 ADMs no painel.
-function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'inline-flex' : 'none'; }
+function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'flex' : 'none'; }
 function openOkrViewers(){
   if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM gerencia visualizadores externos.'); return; }
   document.getElementById('okr-viewers-ov')?.classList.add('open'); renderOkrViewers();
