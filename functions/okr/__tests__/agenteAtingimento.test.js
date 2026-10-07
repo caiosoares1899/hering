@@ -116,7 +116,9 @@ test('resumo_atingimentos: filtra por gerência e trata perene com o % dos marco
   assert.equal(r.atingimentos[0].perene, true);
   assert.equal(r.atingimentos[0].progresso_pct_por_marcos, 50);
   assert.equal((await tool(db, OUTRO, 'resumo_atingimentos').handler({ area_id: 'tech' })).total, 0);
-  const ruim = await tool(db, OUTRO, 'resumo_atingimentos').handler({ area_id: 'inexistente' });
+  // gerência é livre por torre (2026-10-07): id desconhecido no filtro = 0 resultados; a entrada inválida agora é o resto do schema
+  assert.equal((await tool(db, OUTRO, 'resumo_atingimentos').handler({ area_id: 'inexistente' })).total, 0);
+  const ruim = await tool(db, OUTRO, 'resumo_atingimentos').handler({ sem_registro_ha_dias: 0 });
   assert.equal(ruim.ok, false);
   assert.equal(ruim.error, 'entrada_invalida');
 });

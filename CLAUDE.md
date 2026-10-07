@@ -179,10 +179,7 @@ letting them hit the error first.
 
 ## Pendências conhecidas de documentação
 
-Registradas a pedido do usuário (2026-10-07) pra não se perderem — tratar como uma rodada de revisão da documentação ("guia/base"), não como correção avulsa:
-
-- **`guia-okr.html`**: os prints embutidos (slides da home, Mural, sino, Gerências — JPEGs base64) ainda mostram os símbolos antigos das torres (🌐 Digital / 🔭 Visão global; agora 🛒 Digital / 🌐 Visão global) e o sino sem o rodapé novo (Limpar antigas · som · permissão do aparelho · Não Perturbe). Refazer os prints (há um script de capturas com o fake do Firebase na sessão — `shots_guia.js`) junto com a revisão do texto.
-- Revisar **toda a documentação** (guia do OKR, `maredigital.html`, ajuda in-app do OKR/painel/kanban, `CODE_MAP.md`) contra o que existe hoje — Torres, Gerências, Mural, sino único, Não Perturbe, push de menção/Mural.
+Rodada de revisão feita em 2026-10-07 (noite): `guia-okr.html` (prints refeitos com 🛒/🌐 e o sino com rodapé; +3 slides: trava, calendário, pauta/convidados/anotações), `maredigital.html`, `CODE_MAP.md`, ajuda in-app do OKR (`#okr-help-ov`) e `HELP_CONTENT` do kanban (Checklist/colar lista, Notificações/sino único, "Sua torre"), mais o prompt/ferramentas do Agente Ágil do OKR (torres, gerências, trava, agenda). **Nenhuma pendência aberta.** Ao mudar o OKR de novo, lembrar que o guia é compartilhado (sem cópia dev) e que seus prints envelhecem a cada mudança de cabeçalho/símbolo — refazê-los com um harness de Playwright + Firebase fake (copiar de uma rodada anterior) em vez de editar o base64 à mão.
 
 ## Release process
 

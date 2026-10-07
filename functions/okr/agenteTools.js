@@ -8,9 +8,11 @@
 // falam de card/board), então nada é reaproveitado além do MOTOR.
 //
 // Permissão replica a MESMA regra client-side (_okrCanEdit()/
-// _okrCanCreate() em painel.html): ADM (kanban/config/adm_emails) pode
-// criar Objetivo novo; ADM ou Responsável do Objetivo pode editá-lo/
-// adicionar Marco. `requestingUid` (quem mandou a mensagem no chat) é
+// _okrCanCreate() em okr-dev.html, por TORRE desde 2026-10-07): ADM
+// (kanban/config/adm_emails) cria/edita em qualquer torre; PO/Organizador e
+// 🎯 Gestor OKR só na própria torre; o Responsável do Objetivo sempre edita o
+// seu. Objetivo com a 🔒 trava de edição de OUTRA pessoa viva não é alterado.
+// `requestingUid` (quem mandou a mensagem no chat) é
 // resolvido UMA VEZ ao montar o toolset — nunca um campo que o próprio
 // modelo preenche, senão ele poderia "se autorizar".
 //
@@ -21,17 +23,39 @@
 
 const { z } = require('zod');
 const { zodToJsonSchema } = require('zod-to-json-schema');
-const { resolveObjetivo, canEditObjetivo, isAdmUid, pushHistory, notifyObjetivoEditado, AGENTE_UID, AGENTE_NOME } = require('./agenteHelpers');
+const {
+  resolveObjetivo, canEditObjetivo, canCreateObjetivo, torreParaCriar, pushHistory, notifyObjetivoEditado, AGENTE_UID, AGENTE_NOME,
+  TORRES, TORRE_INFO, torreDe, gerenciasDeCfg, rotuloGerencia, travaDeOutro, msgTrava, publicaFeed,
+} = require('./agenteHelpers');
 const ating = require('./atingimento');
+const cal = require('./calendario');
 
+// As 7 gerências ORIGINAIS (Digital). Desde 2026-10-07 as gerências são configuráveis por torre (kanban/okr/gerencias/{torre}) — o schema aceita qualquer id e
+// cada handler valida contra a lista da torre do Objetivo (listar_gerencias mostra as que existem). A constante fica exportada pra compatibilidade.
 const OKR_GERENCIA_IDS = ['geral', 'comercial', 'performance', 'dadosia', 'cx', 'tech', 'crm'];
+const gerenciaId = () => z.string().min(1).max(60);
+const torreEnum = () => z.enum(TORRES);
 const OKR_STATUS_IDS = ['nao_iniciado', 'no_prazo', 'risco', 'atrasado', 'concluido'];
 const listaDeTexto = () => z.array(z.string().min(1)).max(20).optional();
 
 // ── Schemas ──────────────────────────────────────────────────────────────
 
 const listarObjetivosSchema = z.object({
-  area_id: z.enum(OKR_GERENCIA_IDS).optional(),
+  torre: torreEnum().optional(),
+  area_id: gerenciaId().optional(),
+});
+
+const listarGerenciasSchema = z.object({
+  torre: torreEnum().optional(),
+});
+
+// 📅 Agenda: reuniões/eventos/lembretes do calendário do OKR (kanban/okr/calendario/eventos) — só leitura.
+const listarAgendaSchema = z.object({
+  dias: z.number().int().min(1).max(120).optional(),
+  torre: z.enum([...TORRES, 'global']).optional(),
+  objetivo_id: z.string().min(1).optional(),
+  titulo_objetivo: z.string().min(1).optional(),
+  evento_id: z.string().min(1).optional(),
 });
 
 const lerObjetivoSchema = z.object({
@@ -41,7 +65,8 @@ const lerObjetivoSchema = z.object({
 
 const criarObjetivoSchema = z.object({
   titulo: z.string().min(1),
-  area_id: z.enum(OKR_GERENCIA_IDS),
+  torre: torreEnum().optional(),
+  area_id: gerenciaId(),
   pilar: z.string().min(1).optional(),
   descricao: z.string().min(1).optional(),
   trimestres: z.array(z.string().min(1)).max(6).optional(),
@@ -52,7 +77,7 @@ const editarCamposOkrSchema = z.object({
   objetivo_id: z.string().min(1).optional(),
   titulo_objetivo: z.string().min(1).optional(),
   novo_titulo: z.string().min(1).optional(),
-  area_id: z.enum(OKR_GERENCIA_IDS).optional(),
+  area_id: gerenciaId().optional(),
   pilar: z.string().min(1).optional(),
   descricao: z.string().min(1).optional(),
   trimestres_adicionar: z.array(z.string().min(1)).max(6).optional(),
@@ -93,7 +118,8 @@ const dataIso = () => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'use o formato YYY
 const numeroOuTexto = () => z.union([z.number(), z.string().min(1)]); // aceita "1.234,56", "R$ 100", "50 %" (mesmo parse do painel)
 
 const resumoAtingimentosSchema = z.object({
-  area_id: z.enum(OKR_GERENCIA_IDS).optional(),
+  torre: torreEnum().optional(),
+  area_id: gerenciaId().optional(),
   sem_registro_ha_dias: z.number().int().min(1).max(365).optional(),
 });
 
@@ -131,18 +157,22 @@ function fake(name) {
 
 function makeListarObjetivosHandler({ db }) {
   return async (input) => {
-    const [snap, marcosSnap] = await Promise.all([db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/marcos').get()]);
+    const [snap, marcosSnap, gerSnap] = await Promise.all([db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/marcos').get(), db.ref('kanban/okr/gerencias').get()]);
     const todos = snap.val() || {};
+    const cfgGer = gerSnap.val() || {};
     const marcos = Object.values(marcosSnap.val() || {}).filter((m) => m && !m.arquivado);
     let ativos = Object.entries(todos).filter(([, o]) => o && !o.arquivado);
-    if (input?.area_id) ativos = ativos.filter(([, o]) => o.areaId === input.area_id);
+    if (input?.torre) ativos = ativos.filter(([, o]) => torreDe(o) === input.torre);
+    if (input?.area_id) ativos = ativos.filter(([, o]) => (o.areaId || 'geral') === input.area_id);
     const lista = ativos.map(([id, o]) => {
       const prog = ating.progressoDoObjetivo(o, marcos.filter((m) => m.objetivoId === id));
       const resumo = ating.resumoAtingimento(o);
       return {
         id,
         titulo: o.titulo || '',
+        torre: torreDe(o),
         area_id: o.areaId || 'geral',
+        gerencia: rotuloGerencia(cfgGer, torreDe(o), o.areaId || 'geral'),
         trimestres: Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : o.trimestre ? [o.trimestre] : [],
         pilar: o.pilar || '',
         progresso_pct: prog.pct,
@@ -159,7 +189,10 @@ function makeLerObjetivoHandler({ db }) {
     const resolved = await resolveObjetivo(db, input);
     if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
     const { id, objetivo: o } = resolved;
-    const marcosSnap = await db.ref('kanban/okr/marcos').get();
+    const [marcosSnap, gerSnap, tagsSnap, trava] = await Promise.all([
+      db.ref('kanban/okr/marcos').get(), db.ref('kanban/okr/gerencias').get(), db.ref('kanban/okr/tags').get(), travaDeOutro(db, id, null),
+    ]);
+    const tagsCfg = tagsSnap.val() || {};
     const marcosAtivos = Object.entries(marcosSnap.val() || {}).filter(([, m]) => m && m.objetivoId === id && !m.arquivado);
     const marcos = marcosAtivos.map(([mid, m]) => ({ id: mid, nome: m.nome || '', progresso: m.progresso || 'nao_iniciado', prazo: m.prazo || '' }));
     const prog = ating.progressoDoObjetivo(o, marcosAtivos.map(([, m]) => m));
@@ -167,7 +200,11 @@ function makeLerObjetivoHandler({ db }) {
       ok: true,
       id,
       titulo: o.titulo || '',
+      torre: torreDe(o),
       area_id: o.areaId || 'geral',
+      gerencia: rotuloGerencia(gerSnap.val() || {}, torreDe(o), o.areaId || 'geral'),
+      tags: (Array.isArray(o.tagIds) ? o.tagIds : []).map((t) => (tagsCfg[t] && tagsCfg[t].label) || null).filter(Boolean),
+      em_edicao_por: trava ? trava.who || 'alguém' : null,
       pilar: o.pilar || '',
       descricao: o.descricao || '',
       trimestres: Array.isArray(o.trimestres) && o.trimestres.length ? o.trimestres : o.trimestre ? [o.trimestre] : [],
@@ -193,12 +230,13 @@ function makeResumoAtingimentosHandler({ db }) {
   return async (input) => {
     const parsed = resumoAtingimentosSchema.safeParse(input || {});
     if (!parsed.success) return { ok: false, error: 'entrada_invalida', message: parsed.error.issues.map((i) => i.message).join('; ') };
-    const { area_id, sem_registro_ha_dias } = parsed.data;
+    const { torre, area_id, sem_registro_ha_dias } = parsed.data;
     const [snap, marcosSnap] = await Promise.all([db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/marcos').get()]);
     const marcos = Object.values(marcosSnap.val() || {}).filter((m) => m && !m.arquivado);
     const hoje = todaySP();
     let ativos = Object.entries(snap.val() || {}).filter(([, o]) => o && !o.arquivado);
-    if (area_id) ativos = ativos.filter(([, o]) => o.areaId === area_id);
+    if (torre) ativos = ativos.filter(([, o]) => torreDe(o) === torre);
+    if (area_id) ativos = ativos.filter(([, o]) => (o.areaId || 'geral') === area_id);
     const linhas = [];
     let semAtingimento = 0;
     for (const [id, o] of ativos) {
@@ -208,7 +246,7 @@ function makeResumoAtingimentosHandler({ db }) {
         const dias = resumo.dias_desde_ultimo_registro;
         if (dias !== undefined && dias !== null && dias < sem_registro_ha_dias) continue; // tem registro recente — não é o que foi pedido
       }
-      const linha = { id, titulo: o.titulo || '', area_id: o.areaId || 'geral', tipo: resumo.tipo, tipo_rotulo: resumo.tipo_rotulo, perene: resumo.perene };
+      const linha = { id, titulo: o.titulo || '', torre: torreDe(o), area_id: o.areaId || 'geral', tipo: resumo.tipo, tipo_rotulo: resumo.tipo_rotulo, perene: resumo.perene };
       if (resumo.perene) {
         const prog = ating.progressoDoObjetivo(o, marcos.filter((m) => m.objetivoId === id));
         linha.progresso_pct_por_marcos = prog.pct;
@@ -228,15 +266,25 @@ function makeResumoAtingimentosHandler({ db }) {
 
 function makeCriarObjetivoHandler({ db, requestingUid, dryRun }) {
   return async (input) => {
-    if (!(await isAdmUid(db, requestingUid))) {
-      return { ok: false, error: 'sem_permissao', message: 'Só ADM pode criar um Objetivo novo. Peça pra um ADM criar, ou eu ajudo a preencher um Objetivo que já existe.' };
+    // Torre: a pedida, senão a da pessoa (a ⭐ Geral cai em Digital). ADM cria em qualquer; PO/Organizador/Gestor OKR só na própria.
+    const torre = input.torre || (await torreParaCriar(db, requestingUid));
+    if (!(await canCreateObjetivo(db, requestingUid, torre))) {
+      return { ok: false, error: 'sem_permissao', message: `Só ADM, PO/Organizador ou 🎯 Gestor OKR da torre ${TORRE_INFO[torre].label} cria um Objetivo nela. Peça pra quem tem esse papel, ou eu ajudo a preencher um Objetivo que já existe.` };
     }
-    if (dryRun) return { ok: true, dryRun: true, tool: 'criar_objetivo', wouldHaveExecuted: input };
+    const gerSnap = await db.ref('kanban/okr/gerencias').get();
+    const gerencias = gerenciasDeCfg(gerSnap.val() || {}, torre);
+    const g = gerencias.find((x) => x.id === input.area_id);
+    if (!g) {
+      return { ok: false, error: 'gerencia_invalida', message: `A torre ${TORRE_INFO[torre].label} não tem a gerência "${input.area_id}". As que existem: ${gerencias.filter((x) => !x.oculta).map((x) => `${x.label} (${x.id})`).join(', ')}.` };
+    }
+    if (g.oculta) return { ok: false, error: 'gerencia_oculta', message: `A gerência "${g.label}" está oculta na torre ${TORRE_INFO[torre].label} (não recebe Objetivos novos). Escolha outra.` };
+    if (dryRun) return { ok: true, dryRun: true, tool: 'criar_objetivo', wouldHaveExecuted: { ...input, torre } };
 
     const id = 'obj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
     const payload = {
       id,
       titulo: input.titulo,
+      torre,
       areaId: input.area_id,
       pilar: input.pilar || '',
       descricao: input.descricao || '',
@@ -257,7 +305,9 @@ function makeCriarObjetivoHandler({ db, requestingUid, dryRun }) {
     };
     await db.ref('kanban/okr/objetivos/' + id).set(payload);
     await pushHistory(db, 'kanban/okr/objetivos/' + id, { what: 'criou o Objetivo (via chat com o Agente Ágil)', tipo: 'criado' });
-    return { ok: true, dryRun: false, tool: 'criar_objetivo', objetivo_id: id, message: `Objetivo "${input.titulo}" criado.` };
+    // 🔔 mesmo evento do "+ Novo Objetivo" da tela
+    await publicaFeed(db, { tipo: 'obj_criado', torres: [torre], titulo: `🆕 Novo Objetivo: "${input.titulo}"`, sub: `${TORRE_INFO[torre].icon} Torre ${TORRE_INFO[torre].label} · por ${AGENTE_NOME}`, extra: { objId: id } });
+    return { ok: true, dryRun: false, tool: 'criar_objetivo', objetivo_id: id, torre, message: `Objetivo "${input.titulo}" criado na torre ${TORRE_INFO[torre].label} (gerência ${g.label}).` };
   };
 }
 
@@ -267,14 +317,23 @@ function makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) {
     if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
     const { id, objetivo } = resolved;
     if (!(await canEditObjetivo(db, requestingUid, objetivo))) {
-      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}" (ou ADM) pode editar esse Objetivo.` };
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivo)].label} pode editar esse Objetivo.` };
+    }
+    const trava = await travaDeOutro(db, id, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
+    let rotuloArea = input.area_id;
+    if (input.area_id) {
+      const gerencias = gerenciasDeCfg((await db.ref('kanban/okr/gerencias').get()).val() || {}, torreDe(objetivo));
+      const g = gerencias.find((x) => x.id === input.area_id);
+      if (!g) return { ok: false, error: 'gerencia_invalida', message: `A torre ${TORRE_INFO[torreDe(objetivo)].label} não tem a gerência "${input.area_id}". As que existem: ${gerencias.filter((x) => !x.oculta).map((x) => `${x.label} (${x.id})`).join(', ')}.` };
+      rotuloArea = g.label;
     }
     if (dryRun) return { ok: true, dryRun: true, tool: 'editar_campos_okr', objetivo_id: id, wouldHaveExecuted: input };
 
     const patch = {};
     const historicos = [];
     if (input.novo_titulo) { patch.titulo = input.novo_titulo; historicos.push({ what: `alterou o título para "${input.novo_titulo}"`, tipo: 'campo' }); }
-    if (input.area_id) { patch.areaId = input.area_id; historicos.push({ what: `alterou a gerência para "${input.area_id}"`, tipo: 'campo' }); }
+    if (input.area_id) { patch.areaId = input.area_id; historicos.push({ what: `alterou a gerência para "${rotuloArea}"`, tipo: 'campo' }); }
     if (input.pilar) { patch.pilar = input.pilar; historicos.push({ what: `definiu o pilar estratégico: "${input.pilar}"`, tipo: 'campo' }); }
     if (input.descricao) { patch.descricao = input.descricao; historicos.push({ what: 'alterou a descrição do objetivo', tipo: 'campo' }); }
 
@@ -313,8 +372,10 @@ function makeCriarMarcoHandler({ db, requestingUid, dryRun }) {
     if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
     const { id: objetivoId, objetivo } = resolved;
     if (!(await canEditObjetivo(db, requestingUid, objetivo))) {
-      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}" (ou ADM) pode adicionar Marco nele.` };
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivo)].label} pode adicionar Marco nele.` };
     }
+    const trava = await travaDeOutro(db, objetivoId, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
     if (dryRun) return { ok: true, dryRun: true, tool: 'criar_marco', objetivo_id: objetivoId, wouldHaveExecuted: input };
 
     const marcoId = 'marco_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -373,8 +434,10 @@ function makeEditarMarcoHandler({ db, requestingUid, dryRun }) {
     const objetivoResolved = await resolveObjetivo(db, { objetivo_id: objetivoId });
     if (objetivoResolved.error) return { ok: false, error: objetivoResolved.error, message: objetivoResolved.message };
     if (!(await canEditObjetivo(db, requestingUid, objetivoResolved.objetivo))) {
-      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivoResolved.objetivo.titulo}" (ou ADM) pode editar esse marco.` };
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivoResolved.objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivoResolved.objetivo)].label} pode editar esse marco.` };
     }
+    const trava = await travaDeOutro(db, objetivoId, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivoResolved.objetivo.titulo) };
     if (dryRun) return { ok: true, dryRun: true, tool: 'editar_marco', marco_id: marcoId, wouldHaveExecuted: input };
 
     const patch = {};
@@ -390,6 +453,11 @@ function makeEditarMarcoHandler({ db, requestingUid, dryRun }) {
     for (const h of historicos) await pushHistory(db, 'kanban/okr/marcos/' + marcoId, h);
     await pushHistory(db, 'kanban/okr/objetivos/' + objetivoId, { what: `atualizou o marco "${marco.nome}" (via chat)`, tipo: 'marco' });
     await notifyObjetivoEditado(db, objetivoId, requestingUid);
+    // 🔔 Marco que acabou de ser concluído → feed da torre (mesmo evento da tela)
+    if (input.progresso === 'concluido' && marco.progresso !== 'concluido') {
+      const t = torreDe(objetivoResolved.objetivo);
+      await publicaFeed(db, { tipo: 'marco_concluido', torres: [t], titulo: `✅ Marco concluído: "${input.novo_nome || marco.nome || '?'}"`, sub: `Objetivo: ${objetivoResolved.objetivo.titulo || '?'} · ${TORRE_INFO[t].icon} ${TORRE_INFO[t].label}`, extra: { objId: objetivoId, marcoId } });
+    }
     return { ok: true, dryRun: false, tool: 'editar_marco', marco_id: marcoId, objetivo_id: objetivoId, campos_alterados: Object.keys(patch), message: `Marco "${marco.nome}" atualizado.` };
   };
 }
@@ -407,8 +475,10 @@ function makeRegistrarAtingimentoHandler({ db, requestingUid, dryRun }) {
     if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
     const { id, objetivo } = resolved;
     if (!(await canEditObjetivo(db, requestingUid, objetivo))) {
-      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}" (ou ADM) pode registrar atingimento nele.` };
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivo)].label} pode registrar atingimento nele.` };
     }
+    const trava = await travaDeOutro(db, id, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
     const at = ating.normalizar(objetivo).atingimento;
     if (!ating._okrAtingConfigurado(at)) {
       return { ok: false, error: 'sem_atingimento', message: `"${objetivo.titulo}" ainda não tem atingimento configurado. Use configurar_atingimento (tipo e meta) antes de registrar um valor.` };
@@ -466,8 +536,10 @@ function makeConfigurarAtingimentoHandler({ db, requestingUid, dryRun }) {
     if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
     const { id, objetivo } = resolved;
     if (!(await canEditObjetivo(db, requestingUid, objetivo))) {
-      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}" (ou ADM) pode configurar o atingimento dele.` };
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivo)].label} pode configurar o atingimento dele.` };
     }
+    const trava = await travaDeOutro(db, id, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
     const antes = ating.normalizar(objetivo).atingimento;
     const cfgAntes = ating._okrAtingConfigurado(antes);
     const tipo = inp.tipo;
@@ -544,6 +616,71 @@ function makeConfigurarAtingimentoHandler({ db, requestingUid, dryRun }) {
   };
 }
 
+// ── 🧭 Gerências por torre + 📅 Agenda (só leitura) ─────────────────────────────────────────────────────────────
+
+function makeListarGerenciasHandler({ db }) {
+  return async (input) => {
+    const cfg = (await db.ref('kanban/okr/gerencias').get()).val() || {};
+    const torres = input?.torre ? [input.torre] : TORRES;
+    return {
+      ok: true,
+      torres: torres.map((t) => ({ torre: t, rotulo: TORRE_INFO[t].label, gerencias: gerenciasDeCfg(cfg, t).map((g) => ({ id: g.id, nome: g.label, oculta: g.oculta })) })),
+    };
+  };
+}
+
+// Próximos eventos do calendário do OKR (agenda GLOBAL + agenda de cada torre). Mesmo escopo da pauta da tela (cal.abrange): vínculo explícito → tag OU gerência →
+// reunião sem recorte = a torre toda. Com evento_id devolve o detalhe (descrição + pauta) da próxima ocorrência. Nunca escreve.
+function makeListarAgendaHandler({ db }) {
+  return async (input) => {
+    const parsed = listarAgendaSchema.safeParse(input || {});
+    if (!parsed.success) return { ok: false, error: 'entrada_invalida', message: msgZod(parsed) };
+    const inp = parsed.data;
+    const [evSnap, objSnap, tagsSnap] = await Promise.all([db.ref('kanban/okr/calendario/eventos').get(), db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/tags').get()]);
+    const objetivos = Object.fromEntries(Object.entries(objSnap.val() || {}).filter(([, o]) => o && !o.arquivado).map(([id, o]) => [id, { ...o, id: o.id || id }]));
+    const tagsCfg = tagsSnap.val() || {};
+    const hoje = todaySP();
+    const dias = inp.dias || 14;
+    const ate = (() => { const d = new Date(hoje + 'T00:00:00'); d.setDate(d.getDate() + dias); return d.toLocaleDateString('en-CA'); })();
+
+    let alvoObj = null;
+    if (inp.objetivo_id || inp.titulo_objetivo) {
+      const r = await resolveObjetivo(db, { objetivo_id: inp.objetivo_id, titulo: inp.titulo_objetivo });
+      if (r.error) return { ok: false, error: r.error, message: r.message };
+      alvoObj = { ...r.objetivo, id: r.id };
+    }
+
+    const eventos = Object.entries(evSnap.val() || {}).filter(([, e]) => e && e.data).map(([id, e]) => ({ ...e, id: e.id || id }));
+    const linhas = [];
+    for (const ev of eventos) {
+      if (inp.evento_id && ev.id !== inp.evento_id) continue;
+      if (inp.torre === 'global' && ev.torre) continue;
+      if (inp.torre && inp.torre !== 'global' && ev.torre && ev.torre !== inp.torre) continue;   // numa torre: a agenda dela + a global
+      if (alvoObj && !cal.abrange(ev, alvoObj)) continue;
+      for (const data of cal.ocorrencias(ev, hoje, ate)) {
+        linhas.push({
+          evento_id: ev.id, data, hora: cal.horaTxt(ev) || null, titulo: ev.titulo || '', tipo: ev.tipo || 'evento', agenda: cal.agendaNome(ev),
+          repete: cal.recTexto(ev) || null, local: ev.local || null, tags: cal.lista(ev.tagIds).map((t) => tagsCfg[t] && tagsCfg[t].label).filter(Boolean),
+          convidados: cal.convidadosDe(ev).length,
+        });
+      }
+    }
+    linhas.sort((a, b) => a.data.localeCompare(b.data) || String(a.hora || '').localeCompare(String(b.hora || '')));
+    const lim = inp.evento_id ? 1 : 40;
+    const out = { ok: true, de: hoje, ate, total: linhas.length, eventos: linhas.slice(0, lim), truncado: linhas.length > lim };
+    if (inp.evento_id) {
+      const ev = eventos.find((e) => e.id === inp.evento_id);
+      if (!ev) return { ok: false, error: 'evento_nao_encontrado', message: `Nenhum evento com id "${inp.evento_id}".` };
+      out.detalhe = {
+        descricao: String(ev.descricao || '').slice(0, 800) || null, link: ev.link || null,
+        pauta: Object.values(objetivos).filter((o) => cal.abrange(ev, o)).slice(0, 15).map((o) => ({ id: o.id, titulo: o.titulo || '', torre: torreDe(o) })),
+      };
+      if (!linhas.length) out.message = `Esse evento não tem ocorrência nos próximos ${dias} dias.`;
+    }
+    return out;
+  };
+}
+
 function makeResponderHandler({ db, dryRun }) {
   return async (input) => {
     if (dryRun) return { ok: true, dryRun: true, tool: 'responder', wouldHaveExecuted: input };
@@ -574,55 +711,67 @@ function buildOkrTools(options = {}) {
   const defs = [
     {
       name: 'listar_objetivos',
-      description: 'Lista os Objetivos ATIVOS (não arquivados), com id/título/gerência/trimestres/pilar e o % de progresso da barra (progresso_pct) + tipo de atingimento, se houver. Aceita area_id opcional pra filtrar por gerência. Use pra descobrir o id de um Objetivo antes de editar/adicionar marco, ou pra responder "quais OKRs a gente tem".',
+      description: 'Lista os Objetivos ATIVOS (não arquivados), com id/título/torre/gerência/trimestres/pilar e o % de progresso da barra (progresso_pct) + tipo de atingimento, se houver. Aceita torre e area_id (gerência) opcionais pra filtrar — o id da gerência só vale dentro da torre ("geral" existe em todas). Use pra descobrir o id de um Objetivo antes de editar/adicionar marco, ou pra responder "quais OKRs a gente tem".',
       input_schema: zodToJsonSchema(listarObjetivosSchema),
       handler: mode === 'real' ? makeListarObjetivosHandler({ db }) : fake('listar_objetivos'),
     },
     {
+      name: 'listar_gerencias',
+      description: 'Lista as gerências de cada torre (Digital, Comercial, Corporativa) com id e nome — são CONFIGURÁVEIS por torre, então confira aqui antes de criar um Objetivo ou mudar a gerência dele. "oculta" = já não recebe Objetivos novos. Aceita torre opcional.',
+      input_schema: zodToJsonSchema(listarGerenciasSchema),
+      handler: mode === 'real' ? makeListarGerenciasHandler({ db }) : fake('listar_gerencias'),
+    },
+    {
+      name: 'listar_agenda',
+      description: 'Lê o CALENDÁRIO do OKR (reuniões, eventos e lembretes; agenda global + agenda de cada torre): próximas ocorrências nos próximos `dias` (padrão 14, máx. 120) com data, hora, título, tipo, agenda, repetição, local, tags e nº de convidados. Filtros: torre ("global" = só a agenda global; uma torre = a dela + a global), objetivo (só o que diz respeito àquele Objetivo, pelo mesmo escopo da pauta: vínculo, tag ou gerência) e evento_id (detalhe: descrição e a pauta de Objetivos). SÓ LEITURA — criar/editar evento é pela tela 📅 Calendário do OKR. Use pra "quando é a próxima reunião de X", "o que tem na agenda essa semana".',
+      input_schema: zodToJsonSchema(listarAgendaSchema),
+      handler: mode === 'real' ? makeListarAgendaHandler({ db }) : fake('listar_agenda'),
+    },
+    {
       name: 'ler_objetivo',
-      description: 'Lê um Objetivo específico por id ou por título (busca aproximada) — todos os campos (Objetivo, Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação), a lista de Marcos com status/prazo, o % de progresso da barra (progresso_pct, e se vem do atingimento ou dos marcos) e o ATINGIMENTO (tipo, meta, valor atual, % e últimos registros; null se não tiver). Use antes de editar, pra saber o que já existe e não repetir conteúdo.',
+      description: 'Lê um Objetivo específico por id ou por título (busca aproximada) — torre, gerência, tags, todos os campos (Objetivo, Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação), a lista de Marcos com status/prazo, o % de progresso da barra (progresso_pct, e se vem do atingimento ou dos marcos) e o ATINGIMENTO (tipo, meta, valor atual, % e últimos registros; null se não tiver). Use antes de editar, pra saber o que já existe e não repetir conteúdo.',
       input_schema: zodToJsonSchema(lerObjetivoSchema),
       handler: mode === 'real' ? makeLerObjetivoHandler({ db }) : fake('ler_objetivo'),
     },
     {
       name: 'criar_objetivo',
-      description: `Cria um Objetivo (OKR) novo. SÓ ADM pode usar esta ferramenta — se quem pediu não for ADM, a ferramenta recusa e explica. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE em kanban/okr/objetivos.'}`,
+      description: `Cria um Objetivo (OKR) novo numa TORRE (torre: digital, comercial ou corporativa; sem informar, vale a torre de quem pediu) e numa gerência dela (area_id — confira com listar_gerencias; as gerências mudam por torre). Só ADM, ou PO/Organizador/🎯 Gestor OKR da torre — senão a ferramenta recusa e explica. O evento "Novo Objetivo" aparece no sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE em kanban/okr/objetivos.'}`,
       input_schema: zodToJsonSchema(criarObjetivoSchema),
       handler: mode === 'real' ? makeCriarObjetivoHandler({ db, requestingUid, dryRun }) : fake('criar_objetivo'),
     },
     {
       name: 'editar_campos_okr',
-      description: `Edita campos de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Campos de lista (indicadores_adicionar, progressos_adicionar, proximos_passos_adicionar, riscos_adicionar, planos_acao_adicionar) só SOMAM item novo — nunca apagam o que já tinha. Só quem é Responsável do Objetivo (ou ADM) pode editar. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Edita campos de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Campos de lista (indicadores_adicionar, progressos_adicionar, proximos_passos_adicionar, riscos_adicionar, planos_acao_adicionar) só SOMAM item novo — nunca apagam o que já tinha. area_id muda a gerência (precisa existir na torre do Objetivo). Só quem é Responsável do Objetivo, ADM ou PO/Organizador/Gestor OKR da torre pode editar; se outra pessoa está com o Objetivo aberto pra editar (🔒), a ferramenta recusa e diz quem. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(editarCamposOkrSchema),
       handler: mode === 'real' ? makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) : fake('editar_campos_okr'),
     },
     {
       name: 'criar_marco',
-      description: `Cria um Marco (atividade macro) dentro de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Só quem é Responsável do Objetivo (ou ADM) pode usar. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Cria um Marco (atividade macro) dentro de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(criarMarcoSchema),
       handler: mode === 'real' ? makeCriarMarcoHandler({ db, requestingUid, dryRun }) : fake('criar_marco'),
     },
     {
       name: 'editar_marco',
-      description: `Edita um Marco já existente (identifique por marco_id, ou por objetivo_id/titulo_objetivo + nome_marco). Muda status (progresso), prazo ou nome. Só quem é Responsável do Objetivo pai (ou ADM) pode usar. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Edita um Marco já existente (identifique por marco_id, ou por objetivo_id/titulo_objetivo + nome_marco). Muda status (progresso), prazo ou nome. Mesma regra de permissão e de trava 🔒 de editar_campos_okr; concluir um Marco também avisa o sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(editarMarcoSchema),
       handler: mode === 'real' ? makeEditarMarcoHandler({ db, requestingUid, dryRun }) : fake('editar_marco'),
     },
     {
       name: 'resumo_atingimentos',
-      description: 'Visão geral dos ATINGIMENTOS (metas com % de cumprimento) dos Objetivos ativos: tipo, % atual, meta, valor atual, data do último registro e há quantos dias foi. Filtros opcionais: area_id (gerência) e sem_registro_ha_dias (só os que estão sem registro há N dias ou mais — ou que nunca tiveram). Use pra responder "como estão os atingimentos", "quem está desatualizado", "qual Objetivo está mais perto/longe da meta". Objetivos perenes aparecem com o % dos marcos.',
+      description: 'Visão geral dos ATINGIMENTOS (metas com % de cumprimento) dos Objetivos ativos: tipo, % atual, meta, valor atual, data do último registro e há quantos dias foi. Filtros opcionais: torre, area_id (gerência) e sem_registro_ha_dias (só os que estão sem registro há N dias ou mais — ou que nunca tiveram). Use pra responder "como estão os atingimentos", "quem está desatualizado", "qual Objetivo está mais perto/longe da meta". Objetivos perenes aparecem com o % dos marcos.',
       input_schema: zodToJsonSchema(resumoAtingimentosSchema),
       handler: mode === 'real' ? makeResumoAtingimentosHandler({ db }) : fake('resumo_atingimentos'),
     },
     {
       name: 'registrar_atingimento',
-      description: `Registra um valor no atingimento de um Objetivo (identifique por objetivo_id ou titulo_objetivo) — o mesmo que "+ Registrar" no painel. valor: número ("48000", "R$ 48.000", "75 %"); no tipo Atingido/Não atingido use atingido (true/false); no tipo Data de entrega informe data (YYYY-MM-DD) da entrega. data = data do registro (padrão: hoje). nota opcional. O Objetivo precisa já ter atingimento configurado (senão use configurar_atingimento) e não pode ser perene. Só quem é Responsável (ou ADM). NUNCA invente o valor — se a pessoa não disse, pergunte. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Registra um valor no atingimento de um Objetivo (identifique por objetivo_id ou titulo_objetivo) — o mesmo que "+ Registrar" no painel. valor: número ("48000", "R$ 48.000", "75 %"); no tipo Atingido/Não atingido use atingido (true/false); no tipo Data de entrega informe data (YYYY-MM-DD) da entrega. data = data do registro (padrão: hoje). nota opcional. O Objetivo precisa já ter atingimento configurado (senão use configurar_atingimento) e não pode ser perene. Mesma regra de permissão e de trava 🔒 de editar_campos_okr. NUNCA invente o valor — se a pessoa não disse, pergunte. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(registrarAtingimentoSchema),
       handler: mode === 'real' ? makeRegistrarAtingimentoHandler({ db, requestingUid, dryRun }) : fake('registrar_atingimento'),
     },
     {
       name: 'configurar_atingimento',
-      description: `Cria ou ajusta o atingimento (a meta) de um Objetivo. tipo: financeira (moeda BRL/USD/EUR), porcentagem, numero, binario (atingido/não atingido), acima ("manter acima de"), abaixo ("manter abaixo de"), data (faixas de data de entrega) ou perene (sem meta, a barra anda pelos marcos). Tipos financeira/porcentagem/numero/acima/abaixo exigem meta (e opcionalmente valor_inicial, só nos 3 primeiros); data exige faixas [{de, ate, pct}]. Nunca apaga registros já lançados; trocar o tipo de um atingimento que já tem registros exige confirmar_recalculo = true DEPOIS de perguntar pra pessoa. Só quem é Responsável (ou ADM). ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Cria ou ajusta o atingimento (a meta) de um Objetivo. tipo: financeira (moeda BRL/USD/EUR), porcentagem, numero, binario (atingido/não atingido), acima ("manter acima de"), abaixo ("manter abaixo de"), data (faixas de data de entrega) ou perene (sem meta, a barra anda pelos marcos). Tipos financeira/porcentagem/numero/acima/abaixo exigem meta (e opcionalmente valor_inicial, só nos 3 primeiros); data exige faixas [{de, ate, pct}]. Nunca apaga registros já lançados; trocar o tipo de um atingimento que já tem registros exige confirmar_recalculo = true DEPOIS de perguntar pra pessoa. Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(configurarAtingimentoSchema),
       handler: mode === 'real' ? makeConfigurarAtingimentoHandler({ db, requestingUid, dryRun }) : fake('configurar_atingimento'),
     },
