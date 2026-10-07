@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.794-dev — 2026-10-07 · fix: colar lista no checklist não come iniciais de nome ("J. Silva") (só kanban-dev)
+
+Achado de `/monitorarbugs` no parser da v8.30.793-dev: o marcador de letra aceitava `A.` além de `a)`, então "J. Silva enviou a proposta" colado no checklist virava "Silva enviou a proposta". Agora só `a)`/`B)` conta como marcador. Chromium: parser + colar de verdade (15 cenários).
+
 ### v8.30.792 — 2026-10-06 · Promove pra prod — ordenação de colunas corrigida (+ "mais recentes primeiro"), "Marcar todas como lidas" do sino, data nos históricos e popup Dados do Board maior
 
 Promoção do lote acumulado de `kanban-dev.html` desde a v8.30.787 (merge de 3 vias; a diferença prod novo × antigo é exatamente a diferença do dev no período, e dev × prod só diferem nas 7 linhas de ambiente de sempre: favicons, versão, `VERSION_KEY`, chave de logout forçado):
@@ -20674,6 +20678,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v1.2 · okr-dev — 2026-10-07 · fix(/monitorarbugs): deep link só abre depois dos papéis chegarem; sair recarrega; sem leitura repetida de cards
+
+Rodada de `/monitorarbugs` na página nova. (1) **`?okr=<id>` abria o Objetivo antes da lista de usuários/ADMs chegar**: a permissão de editar é calculada uma vez ao abrir o modal, então quem edita só por papel (PO/Organizador, 🎯 Gestor OKR, ADM extra) via o Objetivo SEM o 💾 Salvar mesmo depois dos dados chegarem (reproduzido com leitura de usuários de 500 ms: modal aberto aos 250 ms sem Salvar; agora abre aos ~500 ms já editável). O link vem das notificações, então é o caminho mais comum. `_okrTryOpenFromUrl()` só roda depois de objetivos + ADMs + usuários (prazo de 6 s se uma leitura falhar). (2) **Sair e entrar de novo com a mesma conta não reanexava os listeners** (o Firebase cancela os listeners quando a conta perde acesso; a tela ficaria parada sem receber nada ao vivo) — sair depois de logado agora recarrega a página, como o kanban. (3) O título de um card vinculado era lido várias vezes enquanto o modal re-renderizava (leitura em andamento não era rastreada). 2 cenários novos no Chromium (31 no total). Gerado do `painel-dev.html` v4.10.
+
 ### okr-dev.html v1.1 · okr-dev — 2026-10-07 · colar lista em tópicos nas caixas "+ Add" cria um item por linha
 
 Mesma correção do checklist do kanban (v8.30.793-dev), agora no OKR: colar 2+ linhas nas caixas "+ Add" de **Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação, Trimestres** e do **checklist do Marco** cria um item por linha (marcadores `-`/`•`/`1.`/`a)`/`☐` removidos; `[x]`/`[ ]` viram marcado/desmarcado no checklist do Marco). 1 linha só cola normal. Gerado a partir do `painel-dev.html` v4.9 (mesmo código). Chromium: 8 cenários novos + suítes de contexto/abas/página (29) verdes.
@@ -20692,6 +20700,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v4.10 · painel-dev — 2026-10-07 · fix: colar lista com iniciais de nome ("J. Silva") não perde a inicial (só painel-dev)
+
+O marcador de letra do parser de colagem (v4.9) aceitava `A.` além de `a)` e comia a inicial de nomes: a linha "J. Silva enviou a proposta" virava "Silva enviou a proposta". Agora só `a)`/`B)` conta como marcador. (O mesmo vale pro checklist do kanban, v8.30.794-dev.)
 
 ### painel-dev.html v4.9 · painel-dev — 2026-10-07 · colar lista em tópicos nas caixas "+ Add" do OKR cria um item por linha (só painel-dev)
 

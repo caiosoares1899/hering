@@ -1448,7 +1448,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v1.1 · okr-dev</div>
+<div class="version">v1.2 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1527,13 +1527,24 @@ function loadExtraSquads(){
   }).catch(()=>{});
 }
 
+// ── Deep link `?okr=<id>` só abre o Objetivo depois que ADMs extras e usuários (papéis PO/Organizador/
+// 🎯 Gestor OKR) chegaram: a permissão de editar depende deles, e o modal calcula isso UMA vez ao abrir —
+// abrir antes deixava quem edita só por papel com o modal sem 💾 Salvar mesmo depois dos dados chegarem
+// (/monitorarbugs 2026-10-07). Há um prazo (6 s, ver _finishOkrLogin) pra não travar se a leitura falhar. ──
+let _okrAccessReady = false, _okrUsersOk = false, _okrAdmOk = false;
+function _okrCheckAccessReady(){
+  if(_okrAccessReady || !(_okrUsersOk && _okrAdmOk)) return;
+  _okrAccessReady = true;
+  if(typeof _okrTryOpenFromUrl==='function') _okrTryOpenFromUrl();
+}
+
 // ── ADMs extras (kanban/config/adm_emails) — mesma fonte do painel ──
 function loadAdmList(){
   window._get(window._ref(window._db,'kanban/config/adm_emails')).then(snap=>{
     const saved=snap.val();
     if(saved&&Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // permissão de editar depende de ser ADM
-  }).catch(()=>{});
+  }).catch(()=>{}).finally(()=>{ _okrAdmOk = true; _okrCheckAccessReady(); });
 }
 
 // ── Usuários globais (kanban/usuarios) — versão enxuta do loadGlobalUsers() do painel:
@@ -1547,6 +1558,7 @@ function loadGlobalUsers(force){
     _guLoadedAt = Date.now(); _guRetries = 0;
     _globalUsersCache = snap.val() || {};
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
+    _okrUsersOk = true; _okrCheckAccessReady();
   }).catch(()=>{
     // falha de rede/permissão: tenta de novo (até 5x, 15s) — sem isso avatares e responsáveis ficariam vazios a sessão toda
     if(!_guLoadedAt && _guRetries++ < 5) setTimeout(()=>loadGlobalUsers(true), 15000);
@@ -1569,6 +1581,7 @@ function loadGlobalUsers(force){
 const _okrCardCache = {};   // 'squad::card' -> {state:'ok'|'missing'|'denied', title}
 const _okrSqOkrCards = {};  // squadId -> [{id,title}] (só cards com badge OKR, não arquivados)
 const _okrSqLoading = {};   // squadId -> Promise
+const _okrCardInflight = {}; // 'squad::card' -> true (leitura em andamento — evita repetir a cada re-render do modal)
 function _okrCardKey(l){ return l.squadId+'::'+l.cardId; }
 function _okrCardTitleKnown(l){ const c=_okrCardCache[_okrCardKey(l)]; return (c&&c.state==='ok') ? c.title : ''; }
 function _okrCardLabel(l){
@@ -1595,9 +1608,10 @@ async function _okrCardFetchOne(l){
   }catch(e){ _okrCardCache[k]={state:'denied',title:''}; }
 }
 function _okrCardEnsure(links){
-  const faltam=(links||[]).filter(l=>l&&l.squadId&&l.cardId&&!_okrCardCache[_okrCardKey(l)]);
+  const faltam=(links||[]).filter(l=>l&&l.squadId&&l.cardId&&!_okrCardCache[_okrCardKey(l)]&&!_okrCardInflight[_okrCardKey(l)]);
   if(!faltam.length) return;
-  Promise.all(faltam.map(_okrCardFetchOne)).then(_okrCardPaint);
+  faltam.forEach(l=>{ _okrCardInflight[_okrCardKey(l)]=true; });
+  Promise.all(faltam.map(l=>_okrCardFetchOne(l).finally(()=>{ delete _okrCardInflight[_okrCardKey(l)]; }))).then(_okrCardPaint);
 }
 function _okrOpenLinkedCard(squadId, cardId){
   window.open(squadBoardUrl(squadId, cardId), '_blank', 'noopener');
@@ -1986,7 +2000,7 @@ let _okrUrlOpenAttempted = false;
 
 
 function _okrTryOpenFromUrl(){
-  if(_okrUrlOpenAttempted) return;
+  if(_okrUrlOpenAttempted || !_okrAccessReady || !_okrLoaded) return; // só depois de objetivos + ADMs + usuários (ver _okrCheckAccessReady)
   const alvo = new URLSearchParams(location.search).get('okr');
   if(!alvo) return;
   _okrUrlOpenAttempted = true;
@@ -5087,7 +5101,7 @@ function _okrListAdd(campo){
 function _okrParsePasted(txt){
   return String(txt||'').split(/\r\n|\n|\r|\u2028|\u2029/).map(l=>{
     let t=l.trim(), done=false;
-    t=t.replace(/^(?:[-*•–—·▪●○◦■□☐☑✓✔➤➢▶►]|\d{1,3}[.)]|[a-zA-Z][.)])\s+/,'');
+    t=t.replace(/^(?:[-*•–—·▪●○◦■□☐☑✓✔➤➢▶►]|\d{1,3}[.)]|[a-zA-Z]\))\s+/,'');
     const m=t.match(/^\[([ xX✓])?\]\s*/);
     if(m){ done=/[xX✓]/.test(m[1]||''); t=t.slice(m[0].length).trim(); }
     return {t:t.trim(), done};
@@ -6084,6 +6098,10 @@ window.addEventListener('auth-change',e=>{
     window._isPainelViewer = false;
     _finishOkrLogin(user);
   } else {
+    // Saiu DEPOIS de já ter carregado: o Firebase cancela os listeners quando a conta perde acesso, e um novo
+    // login do mesmo usuário não os reanexaria (a tela ficaria parada, sem receber nada ao vivo). Recarrega,
+    // como o kanban faz no logout (/monitorarbugs 2026-10-07).
+    if(typeof _okrBootedUid!=='undefined' && _okrBootedUid){ location.reload(); return; }
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
   }
@@ -6132,6 +6150,7 @@ function _finishOkrLogin(user){
   loadGlobalUsers();
   loadAdmList();
   loadOkr();
+  setTimeout(()=>{ _okrAccessReady = true; if(typeof _okrTryOpenFromUrl==='function') _okrTryOpenFromUrl(); }, 6000); // prazo se usuários/ADMs não chegarem
 }
 
 
