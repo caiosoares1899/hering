@@ -79,6 +79,15 @@ function lembretesDe(ev) {
   return { vespera: ev && ev.tipo === 'lembrete' ? false : vespera, dia };
 }
 
+// "toda semana" / "a cada 2 semanas · até 2026-12-31" — texto curto da repetição (pro agente; o cliente tem a versão completa em _okrCalRecTexto).
+function recTexto(ev) {
+  const r = recNorm(ev);
+  if (!r) return '';
+  const un = { dia: 'dias', semana: 'semanas', mes: 'meses', ano: 'anos' }[r.unidade];
+  const t = r.intervalo === 1 ? { dia: 'todo dia', semana: 'toda semana', mes: 'todo mês', ano: 'todo ano' }[r.unidade] : `a cada ${r.intervalo} ${un}`;
+  return t + (r.ate ? ` · até ${r.ate}` : '');
+}
+
 const DOW = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
 function horaTxt(ev) { return ev.diaInteiro ? 'dia todo' : (ev.hi ? ev.hi + (ev.hf ? '–' + ev.hf : '') : ''); }
 function agendaNome(ev) {
@@ -86,4 +95,4 @@ function agendaNome(ev) {
   return ev.torre ? 'Agenda ' + (nomes[ev.torre] || ev.torre) : 'Agenda global';
 }
 
-module.exports = { ocorrencia, recNorm, ocorrencias, abrange, alvosDoEvento, convidadosDe, lembretesDe, horaTxt, agendaNome, lista, DOW };
+module.exports = { ocorrencia, recNorm, ocorrencias, abrange, alvosDoEvento, convidadosDe, lembretesDe, horaTxt, agendaNome, recTexto, lista, DOW };
