@@ -1769,6 +1769,7 @@ padrão — aqui, todo handler de `Escape` do arquivo) e técnica 3
 - `renderCL()` — L16170
 - `_clGroupsInit()` — L16135
 - `toggleChecklistGroupCollapse()` — L16148
+- `_clParsePasted()`/`addCIsToGroup()` — colar lista (2+ linhas) no "Novo item..." (listener `paste` do input em `renderCL()`): 1 item por linha, tira marcadores, entende `[x]`/`[ ]` (formato de `copyAllChecklist()`); 1 linha cola normal (v8.30.793-dev).
 
 ### Campanhas (`openCamp()`, botão "📣 Campanhas")
 - `renderCampDashboard()` — L21956 — aba "📊 Dados de Produção" do detalhe
