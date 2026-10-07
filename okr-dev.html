@@ -1512,7 +1512,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.3 · okr-dev</div>
+<div class="version">v2.4 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2383,6 +2383,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   _okrShowHistorico = view==='historico';
   _okrShowAgenteChat = view==='agente';
   _okrShowNotas = view==='notas';
+  if(!_okrShowHistorico) _okrHistMetricaManual = false;   // saiu do Histórico: na próxima abertura a aba é escolhida de novo
   const histBtn = document.getElementById('okr-historico-btn');
   if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📈 Histórico';
   const agBtn = document.getElementById('okr-agente-btn');
@@ -2532,11 +2533,25 @@ function _okrHistTabsHtml(){
   return `<div class="okr-h-tabs" role="tablist" aria-label="O que medir">${t('ating','🎯','Atingimento')}${t('marcos','🏁','Marcos')}
     <span class="okr-h-tabs-d">${_okrHistMetrica==='ating'
       ? 'Quanto de cada <b>meta</b> foi atingido — só Objetivos com 📈 Atingimento configurado e com registro (♾️ perene fica de fora).'
-      : 'Quantos <b>Marcos</b> de cada Objetivo estão concluídos (Objetivos sem Marcos ficam de fora).'}</span></div>`;
+      : 'Quantos <b>Marcos</b> de cada Objetivo estão concluídos (Objetivos sem Marcos ficam de fora).'+(_okrHistAutoMarcos?' <span class="mut">Abrimos aqui porque ainda não há Objetivos com 📈 Atingimento registrado nesta visão.</span>':'')}</span></div>`;
 }
 
 
-function _okrHistSetMetrica(m){ _okrHistMetrica = m; _okrHistMArea=''; _okrHistMStatus.clear(); renderOkrHistorico(); if(document.getElementById('okr-hmedia-ov')?.classList.contains('open')) _okrHistMediaRender(); }
+// Abre na aba que TEM dados: se 🎯 Atingimento está vazia (nenhum Objetivo da visão com atingimento registrado nos snapshots) e 🏁 Marcos tem, vai direto pra Marcos
+// (e volta pra Atingimento quando a visão/torre tem dados nela). Só enquanto a pessoa não escolheu uma aba na mão — escolher manualmente vale até sair do Histórico.
+let _okrHistMetricaManual = false, _okrHistAutoMarcos = false;
+function _okrHistTemDados(m){
+  const ant = _okrHistMetrica; _okrHistMetrica = m;
+  try{ return _okrHistDatas().some(d=>((_okrHistSnap(d)||{}).resumoGeral||{}).total>0); } finally { _okrHistMetrica = ant; }
+}
+function _okrHistAutoMetrica(){
+  _okrHistAutoMarcos = false;
+  if(_okrHistMetricaManual) return;
+  const alvo = _okrHistTemDados('ating') ? 'ating' : (_okrHistTemDados('marcos') ? 'marcos' : _okrHistMetrica);
+  if(alvo!==_okrHistMetrica){ _okrHistMetrica = alvo; _okrHistMArea = ''; _okrHistMStatus.clear(); }
+  _okrHistAutoMarcos = (alvo==='marcos' && !_okrHistTemDados('ating'));
+}
+function _okrHistSetMetrica(m){ _okrHistMetricaManual = true; _okrHistMetrica = m; _okrHistMArea=''; _okrHistMStatus.clear(); renderOkrHistorico(); if(document.getElementById('okr-hmedia-ov')?.classList.contains('open')) _okrHistMediaRender(); }
 
 
 function _okrHistMedia(snap){
@@ -2595,6 +2610,7 @@ function renderOkrHistorico(){
       <div>Toda <b>sexta-feira, às 17h</b>, o painel guarda uma foto do status e do progresso de cada Objetivo ativo. O primeiro sai <b>${esc(prox)}</b> — depois disso esta tela mostra a evolução semana a semana.</div></div>`;
     return;
   }
+  _okrHistAutoMetrica();
   const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
   const L = _okrHistSnap(ult) || {}, P = ant ? (_okrHistSnap(ant)||{}) : null;
   if(!todas.some(d=>((_okrHistSnap(d)||{}).resumoGeral||{}).total>0)){

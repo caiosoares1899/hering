@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.4 · okr-dev — 2026-10-07 · 📈 Histórico abre direto na aba que tem dados
+
+Pedido direto: com a aba 🎯 Atingimento vazia (nenhum Objetivo com meta registrada nos snapshots) e a 🏁 Marcos com dados, o Histórico abria numa tela de "nenhum Objetivo" e a pessoa tinha que descobrir a outra aba (caso real: Atingimento 0, Marcos 25). Agora abre em **Marcos**, com uma dica ("Abrimos aqui porque ainda não há Objetivos com Atingimento registrado nesta visão"). A escolha acompanha a visão: trocar de torre/visão global reavalia (Comercial com atingimento volta pra Atingimento). Clicar numa aba na mão vale até sair do Histórico — a tela não "foge" da escolha da pessoa, nem num re-render por dado novo. 10 cenários no Chromium.
+
 ### okr-dev.html v2.3 · okr-dev — 2026-10-07 · 📈 Histórico pensado nas torres: comparativo por torre na 🔭 Visão global
 
 Pedido direto ("esse histórico é bom você repensar pensando nas torres, na visão global"). Dentro de uma torre nada muda (só os Objetivos dela). Na **Visão global** o Histórico passa a **comparar as torres**:
