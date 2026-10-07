@@ -1211,6 +1211,7 @@ body{min-height:100vh;}
         <div style="display:flex;flex-wrap:wrap;gap:6px;">
           <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
           <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
+          <button type="button" class="btn btn-sm" id="okr-viewers-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores</button>
           <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📈 Histórico</button>
         </div>
         <span style="width:1px;height:18px;background:var(--glass-b);"></span>
@@ -1298,6 +1299,10 @@ body{min-height:100vh;}
         <div>
           <b style="color:var(--txt);">🏛️ Torres</b><br>
           O OKR se divide em <b>torres</b>: <b>🌐 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🔭 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel. Cada torre tem a sua lista de Gerências.
+        </div>
+        <div>
+          <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
+          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (ao lado de Anotações da reunião) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Histórico, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações de ninguém. A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos.
         </div>
         <div>
           <b style="color:var(--txt);">🎯 O que é um Objetivo</b><br>
@@ -1454,6 +1459,26 @@ body{min-height:100vh;}
   </div>
 </div>
 
+<!-- 👁 Visualizadores externos — só ADM. Mesma lista do painel (⚙ Configurações → 🔑 ADMs / 👥 Global Users): kanban/painel_viewers. -->
+<div class="pc-modal-ov" id="okr-viewers-ov" style="z-index:300;" onclick="if(event.target===this) closeOkrViewers()">
+  <div class="pc-modal" style="width:min(560px,94vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title">👁 Visualizadores externos</div>
+      <button class="x-btn" onclick="closeOkrViewers()">✕</button>
+    </div>
+    <div class="pc-modal-body">
+      <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Histórico, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações de outras pessoas. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
+      <div id="okr-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
+      <div class="okr-field-label">Adicionar por e-mail</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input type="text" class="okr-input" id="okr-viewer-email" placeholder="email@dominio.com" style="flex:1;min-width:170px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addOkrViewer();}">
+        <input type="text" class="okr-input" id="okr-viewer-nome" placeholder="Nome (opcional)" style="flex:1;min-width:130px;" onkeydown="if(event.key==='Enter'){event.preventDefault();addOkrViewer();}">
+        <button type="button" class="btn btn-sm" onclick="addOkrViewer()" style="background:var(--accent);color:#031a2e;font-weight:700;">+ Visualizador</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 📈 Registrar atingimento (rápido) — aberto pelo menu de contexto do cartão do Objetivo; só pede data, valor e nota. -->
 <div class="pc-modal-ov" id="okr-aq-ov" style="z-index:235;" onclick="if(event.target===this) _okrAtingQuickClose()">
   <div class="pc-modal" style="width:min(420px,94vw);">
@@ -1512,7 +1537,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.5 · okr-dev</div>
+<div class="version">v2.6 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3702,6 +3727,7 @@ function _okrStatsStripHtml(lista){
 
 
 function renderOkrObjetivos(){
+  _okrApplyViewersBtn();
   if(_guLoadedAt) loadGlobalUsers(); // só RENOVA (TTL de 10 min, _GU_TTL_MS): pessoa recém-cadastrada pelo painel aparece nos seletores de responsável sem F5; sem 1ª carga não insiste (evita leitura a cada render se a rede/permissão falhar)
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
@@ -3902,6 +3928,54 @@ function _okrAplicarTorreModal(torre){
     const m = document.querySelector('#'+id+' .pc-modal'); if(!m) return;
     OKR_TORRES.forEach(x=>m.classList.remove('okr-t-'+x.id)); m.classList.add('okr-t-'+t.id);
     const c = m.querySelector('.okr-modal-torre-chip'); if(c) c.textContent = t.icon+' '+t.label;
+  });
+}
+
+
+// ═══ 👁 Visualizadores externos (só ADM) ═══════════════════════════════════════════════════════════
+// Gerencia kanban/painel_viewers/{emailKey} (a mesma lista do painel): quem está aí entra em okr.html/painel.html só pra LER (as regras
+// nunca liberam escrita). Atalho pra não precisar sair do OKR e achar ⚙ Configurações → 🔑 ADMs no painel.
+function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'inline-flex' : 'none'; }
+function openOkrViewers(){
+  if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM gerencia visualizadores externos.'); return; }
+  document.getElementById('okr-viewers-ov')?.classList.add('open'); renderOkrViewers();
+}
+function closeOkrViewers(){ document.getElementById('okr-viewers-ov')?.classList.remove('open'); }
+document.addEventListener('keydown', e=>{ const ov = document.getElementById('okr-viewers-ov'); if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrViewers(); } }, true);
+function renderOkrViewers(){
+  const list = document.getElementById('okr-viewers-list'); if(!list) return;
+  list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
+    const entries = Object.entries(snap.val()||{});
+    if(!entries.length){ list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
+    list.innerHTML = '';
+    entries.forEach(([key,v])=>{
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
+      const lbl = document.createElement('span'); lbl.style.cssText = 'flex:1;font-size:12px;'; lbl.textContent = (v.nome ? v.nome+' — ' : '') + (v.email||key);
+      const badge = document.createElement('span'); badge.style.cssText = 'font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent = 'só leitura';
+      const rm = document.createElement('button'); rm.type = 'button'; rm.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;'; rm.textContent = '✕'; rm.title = 'Remover visualizador';
+      rm.onclick = ()=>removeOkrViewer(key);
+      row.append(lbl, badge, rm); list.appendChild(row);
+    });
+  }).catch(e=>{ list.innerHTML = '<div style="font-size:11px;color:var(--danger);">Não consegui ler a lista ('+esc(e?.message||e)+').</div>'; });
+}
+function addOkrViewer(){
+  const emailInp = document.getElementById('okr-viewer-email'), nomeInp = document.getElementById('okr-viewer-nome');
+  const email = (emailInp?.value||'').trim().toLowerCase();
+  if(!email || !email.includes('@')){ showToast('⚠ E-mail inválido'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ E-mails @ciahering.com.br/@arezzo.com.br já têm acesso — não precisam ser adicionados aqui.'); return; }
+  const entry = { email, nome:(nomeInp?.value||'').trim(), addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
+  window._set(window._ref(window._db,'kanban/painel_viewers/'+_painelViewerKey(email)), entry)
+    .then(()=>{ showToast('✅ '+email+' autorizado como visualizador.'); emailInp.value=''; if(nomeInp) nomeInp.value=''; renderOkrViewers(); })
+    .catch(e=>showToast('❌ '+(e?.message||e)));
+}
+function removeOkrViewer(key){
+  uiConfirm('Remover este visualizador externo? Ela perde o acesso em até 15 minutos.', {danger:true, okText:'Remover'}).then(okc=>{
+    if(!okc) return;
+    window._set(window._ref(window._db,'kanban/painel_viewers/'+key), null)
+      .then(()=>{ showToast('✅ Visualizador removido.'); renderOkrViewers(); })
+      .catch(e=>showToast('❌ '+(e?.message||e)));
   });
 }
 
