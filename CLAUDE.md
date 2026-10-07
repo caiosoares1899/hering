@@ -96,7 +96,7 @@ letting them hit the error first.
   page instead of being unrelated to it.
 - `mare-notif-dev.js` / `mare-notif.js` — **sino único**: módulo compartilhado (raiz do domínio, único arquivo
   carregado por mais de uma página) que mantém o **feed da torre** (`kanban/notif_feed`, "lido" em
-  `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), usado pelo sino de
+  `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), além do rodapé do sino (🔊 som · permissão deste aparelho/push · 🔕 Não Perturbe) usado pelo OKR e pelo painel, usado pelo sino de
   `kanban`, `painel` e `okr` — a notificação tem que aparecer igual em qualquer página. Segue o mesmo ciclo dev→prod
   (as páginas `-dev` carregam `mare-notif-dev.js?v=N`, as de prod `mare-notif.js?v=N`; ao mudar o módulo, bump o `?v=` nas páginas).
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
