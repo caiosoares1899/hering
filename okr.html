@@ -1297,7 +1297,7 @@ body{min-height:100vh;}
       <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
         <div>
           <b style="color:var(--txt);">🏛️ Torres</b><br>
-          O OKR se divide em <b>torres</b>: <b>🌐 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🔭 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel. Cada torre tem a sua lista de Gerências.
+          O OKR se divide em <b>torres</b>: <b>🌐 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🔭 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de Gerências.
         </div>
         <div>
           <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
@@ -1536,7 +1536,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.7 · okr</div>
+<div class="version">v2.8 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2025,8 +2025,13 @@ function okrTorreInfo(id){ return OKR_TORRES.find(t=>t.id===id) || OKR_TORRES[0]
 function _okrTorreValida(id){ return OKR_TORRES.some(t=>t.id===id); }
 function _okrTorreDe(o){ return (o && _okrTorreValida(o.torre)) ? o.torre : OKR_TORRE_PADRAO; }
 function okrGerenciasDa(torre){ return OKR_GERENCIAS_POR_TORRE[_okrTorreValida(torre)?torre:OKR_TORRE_PADRAO]; }
-function _okrTorreDoUsuario(uid){ const t = uid && _globalUsersCache[uid]?.torre; return _okrTorreValida(t) ? t : OKR_TORRE_PADRAO; }
+// 'geral' só existe como torre de PESSOA (nunca de Objetivo): quem tem — ADMs de OKR — cria/edita em TODAS as torres (continua precisando do papel: PO/Organizador ou 🎯 Gestor OKR).
+const OKR_TORRE_GERAL = 'geral';
+function _okrTorreDoUsuario(uid){ const t = uid && _globalUsersCache[uid]?.torre; return t===OKR_TORRE_GERAL ? t : (_okrTorreValida(t) ? t : OKR_TORRE_PADRAO); }
 function _okrMinhaTorre(){ return _okrTorreDoUsuario(window._currentUser?.uid); }
+function _okrMinhaEhGeral(){ return _okrMinhaTorre()===OKR_TORRE_GERAL; }
+// Quem muda a torre de um Objetivo (e escolhe a torre ao criar na visão global): ADM e quem tem a torre Geral.
+function _okrPodeMudarTorre(){ return isAdmUser(window._currentUser) || _okrMinhaEhGeral(); }
 
 function okrGerenciaLabel(id){ return OKR_GERENCIAS_TODAS.find(g=>g.id===id)?.label || id || '—'; }
 
@@ -2185,7 +2190,7 @@ function _okrTryOpenFromUrl(){
   _okrUrlOpenAttempted = true;
   if(alvo==='chat'){
     const tq = new URLSearchParams(location.search).get('torre');
-    _okrEntrarTorre(_okrTorreValida(tq) ? tq : _okrMinhaTorre(), false);   // a Central é uma só pra todas as torres — abre dentro da torre da pessoa
+    _okrEntrarTorre(_okrTorreValida(tq) ? tq : (_okrMinhaEhGeral() ? 'global' : _okrMinhaTorre()), false);   // a Central é uma só pra todas as torres — abre dentro da torre da pessoa
     if(!_okrShowAgenteChat) _okrToggleAgenteChat();
     return;
   }
@@ -3381,7 +3386,7 @@ function _isGestorOkr(uid){ return !!(uid && _globalUsersCache[uid]?.gestorOkr);
 function _okrCanEdit(obj){
   const uid = window._currentUser?.uid;
   if(isAdmUser(window._currentUser) || _okrIsResponsavel(obj)) return true;
-  return _okrTorreDe(obj)===_okrMinhaTorre() && (_isPOouOrgEmAlgumSquad(uid) || _isGestorOkr(uid));
+  return (_okrMinhaEhGeral() || _okrTorreDe(obj)===_okrMinhaTorre()) && (_isPOouOrgEmAlgumSquad(uid) || _isGestorOkr(uid));
 }
 
 
@@ -3389,9 +3394,9 @@ function _okrCanEdit(obj){
 function _okrCanCreate(torre){
   const uid = window._currentUser?.uid, t = torre || _okrTorreParaCriar();
   if(isAdmUser(window._currentUser)) return true;
-  return t===_okrMinhaTorre() && (_isPOouOrgEmAlgumSquad(uid) || _isGestorOkr(uid));
+  return (_okrMinhaEhGeral() || t===_okrMinhaTorre()) && (_isPOouOrgEmAlgumSquad(uid) || _isGestorOkr(uid));
 }
-function _okrTorreParaCriar(){ return _okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : _okrMinhaTorre(); }
+function _okrTorreParaCriar(){ return _okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : (_okrMinhaEhGeral() ? OKR_TORRE_PADRAO : _okrMinhaTorre()); }
 
 
 
@@ -3875,7 +3880,7 @@ function _okrRenderHome(){
   const tile = (t, lista, global)=>{
     const r = resumo(lista);
     return `<button type="button" class="okr-home-tile ${global?'okr-home-global':'okr-t-'+t.id}" onclick="_okrEntrarTorre(${jsq(global?'global':t.id)})" aria-label="${global?'Visão global':'Torre '+esc(t.label)}">
-      ${!global && t.id===minha?'<span class="okr-home-voce">⭐ sua torre</span>':''}
+      ${(!global && t.id===minha) || (global && minha===OKR_TORRE_GERAL) ? '<span class="okr-home-voce">⭐ '+(global?'sua torre: Geral (edita todas)':'sua torre')+'</span>':''}
       <span class="okr-home-ico">${t.icon}</span>
       <span class="okr-home-nome">${global?'Visão global':esc(t.label)}</span>
       <span class="okr-home-n"><b>${r.n}</b> objetivo${r.n===1?'':'s'} ativo${r.n===1?'':'s'}</span>
@@ -3985,7 +3990,7 @@ function removeOkrViewer(key){
 // escolhe aqui, numa tela obrigatória (não dá pra fechar). ADM troca a de qualquer pessoa em 👥 Global Users (painel).
 function _okrCheckTorrePrompt(){
   const u = window._currentUser; if(!u || window._isPainelViewer || document.getElementById('okr-torre-ov')) return;
-  const rec = _globalUsersCache[u.uid]; if(!rec || _okrTorreValida(rec.torre)) return;
+  const rec = _globalUsersCache[u.uid]; if(!rec || _okrTorreValida(rec.torre) || rec.torre===OKR_TORRE_GERAL) return;
   if(!(String(rec.criadoEm||'') >= OKR_TORRES_CORTE)) return;   // já existia antes: conta como Digital, ninguém é perguntado
   _okrAbrirPromptTorre();
 }
@@ -5861,9 +5866,9 @@ function renderOkrObjConfigBody(){
     <div class="okr-field-label">Título do Objetivo</div>
     <input type="text" class="okr-input" id="okr-f-titulo" value="${esc(d.titulo||'')}" placeholder="Ex.: Definir o modelo e viabilidade do OMNI Hering">
     <div class="okr-field-label">Torre</div>
-    ${isAdmUser(window._currentUser)
+    ${_okrPodeMudarTorre()
       ? `<select class="okr-select" id="okr-f-torre" onchange="_okrMudarTorreDraft(this.value)">${OKR_TORRES.map(t=>`<option value="${t.id}"${t.id===_okrTorreDe(d)?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`
-      : `<div><span class="okr-torre-chip okr-t-${_okrTorreDe(d)}">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> <span style="font-size:10px;color:var(--txt3);">só um ADM muda a torre de um Objetivo</span></div>`}
+      : `<div><span class="okr-torre-chip okr-t-${_okrTorreDe(d)}">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> <span style="font-size:10px;color:var(--txt3);">só um ADM (ou quem tem a torre Geral) muda a torre de um Objetivo</span></div>`}
     <div class="okr-field-label">Gerência</div>
     <select class="okr-select" id="okr-f-area" onchange="_okrSyncObjDraftFromDom();renderOkrObjConfigBody();">${okrGerenciasDa(_okrTorreDe(d)).map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}${okrGerenciasDa(_okrTorreDe(d)).some(g=>g.id===d.areaId)?'':`<option value="${esc(d.areaId||'')}" selected>${esc(okrGerenciaLabel(d.areaId))} (fora da lista)</option>`}</select>
     ${_okrBlocoInfoHtml(d.areaId, _okrTorreDe(d))}

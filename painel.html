@@ -195,6 +195,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .app{position:relative;z-index:2;padding:1rem 1.4rem 2rem;}
 .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem;flex-wrap:wrap;gap:8px;}
 .hd-title{font-family:"DM Sans",sans-serif;font-size:20px;font-weight:600;}
+/* 🧭 Menu de páginas do Maré (clique no título): mesmo visual do seletor de squads do kanban */
+.pg-switcher{position:relative;display:inline-block;}
+.pg-switcher .hd-title{cursor:pointer;user-select:none;}
+.pg-switcher .hd-title:hover{opacity:.85;}
+.pg-caret{font-size:13px;color:var(--txt3);margin-left:2px;}
+.pg-switcher-dd{position:absolute;top:calc(100% + 6px);left:0;min-width:230px;background:rgba(8,22,42,.99);border:1px solid var(--accent,#38b6ff);border-radius:10px;padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:99999;display:none;flex-direction:column;gap:2px;font-family:"DM Sans",sans-serif;font-size:12px;font-weight:400;}
+.pg-switcher-dd.open{display:flex;}
+.pg-switcher-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:12px;color:var(--txt);text-decoration:none;white-space:nowrap;}
+.pg-switcher-item:hover{background:rgba(56,182,255,.1);}
+.pg-switcher-item.active{background:rgba(56,182,255,.15);font-weight:700;cursor:default;pointer-events:none;}
+.pg-switcher-tag{font-size:10px;color:var(--txt3);font-weight:400;margin-left:auto;}
+.pg-switcher-tag.dev{color:#f59e0b;}
+.pg-switcher-sep{height:1px;background:rgba(56,182,255,.15);margin:3px 4px;}
 .hd-sub{font-size:11px;color:var(--txt3);}
 .badge{font-size:10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;padding:2px 10px;color:var(--cyan);}
 /* 🌴 Vice City: var(--cyan) vira o rosa-poeira #B36B6E nesse tema — tom
@@ -1462,7 +1475,10 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   <div id="painel-viewer-banner" style="display:none;background:rgba(56,182,255,.14);border-bottom:1px solid rgba(56,182,255,.4);padding:6px 12px;font-size:11px;font-weight:700;color:#38b6ff;letter-spacing:.02em;text-align:center;">👁 Modo visualização — acesso de convidado, sem permissão de edição</div>
   <div class="hd">
     <div>
-      <div class="hd-title">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span></div>
+      <div class="pg-switcher" id="pg-switcher">
+        <div class="hd-title" onclick="togglePagesSwitcher(event)" title="Clique para ir pra outra página do Maré (OKR, Kanban, Painel — produção e dev)">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span> <span class="pg-caret">▾</span></div>
+        <div class="pg-switcher-dd" id="pg-switcher-dd" role="menu"></div>
+      </div>
       <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -2768,7 +2784,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.8 · painel</div>
+<div class="version">v5.9 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8698,6 +8714,36 @@ function setPcfgTab(tab){
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
 }
 
+// 🧭 Menu de páginas do Maré (pedido direto: "clica no Maré Digital e sobe a listinha de todas as páginas") — OKR, Kanban e Painel, produção e dev.
+// Links relativos (mesmo domínio do GitHub Pages); a página atual fica marcada e não clica.
+const MARE_PAGES = [
+  {href:'okr.html',          ico:'🎯', nome:'OKR'},
+  {href:'okr-dev.html',      ico:'🎯', nome:'OKR',             dev:true},
+  {href:'kanban.html',       ico:'🐟', nome:'Kanban (board)'},
+  {href:'kanban-dev.html',   ico:'🐟', nome:'Kanban (board)',  dev:true},
+  {href:'painel.html',       ico:'🖥️', nome:'Painel'},
+  {href:'painel-dev.html',   ico:'🖥️', nome:'Painel',          dev:true},
+];
+function _pagesSwitcherRender(){
+  const dd = document.getElementById('pg-switcher-dd'); if(!dd) return;
+  const aqui = (location.pathname.split('/').pop() || '').toLowerCase();
+  dd.innerHTML = MARE_PAGES.map((p,i)=>{
+    const ativo = aqui===p.href;
+    return '<a href="'+esc(p.href)+'" role="menuitem" class="pg-switcher-item'+(ativo?' active':'')+'">'+p.ico+' '+esc(p.nome)
+      + (p.dev ? ' <span class="pg-switcher-tag dev">dev · testes</span>' : '')
+      + (ativo ? ' <span class="pg-switcher-tag">você está aqui</span>' : '')
+      + '</a>' + (p.dev ? '<div class="pg-switcher-sep"></div>' : '');
+  }).join('').replace(/<div class="pg-switcher-sep"><\/div>$/,'');
+}
+function togglePagesSwitcher(e){
+  if(e) e.stopPropagation();
+  const dd = document.getElementById('pg-switcher-dd'); if(!dd) return;
+  if(dd.classList.contains('open')){ dd.classList.remove('open'); return; }
+  _pagesSwitcherRender(); dd.classList.add('open');
+}
+document.addEventListener('click', e=>{ const dd=document.getElementById('pg-switcher-dd'); if(dd && dd.classList.contains('open') && !e.target.closest('#pg-switcher')) dd.classList.remove('open'); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ const dd=document.getElementById('pg-switcher-dd'); if(dd && dd.classList.contains('open')){ dd.classList.remove('open'); e.stopPropagation(); } } }, true);
+
 function loadPcfgUsers(){
   if(!cfgSquadId) return;
   const list=document.getElementById('pcfg-users-list'); if(!list) return;
@@ -9409,7 +9455,8 @@ const GU_EMPRESAS = [
   {id:'externo', label:'Externos',icon:'🌐'},
 ];
 // 🏛️ Torres do OKR (mesma lista de okr.html/okr-dev.html — manter igual): flag em kanban/usuarios/{uid}/torre; sem o campo = Digital.
-const GU_TORRES = [{id:'digital',label:'Digital',icon:'🌐'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'}];
+const GU_TORRES = [{id:'digital',label:'Digital',icon:'🌐'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'},
+  {id:'geral',label:'Geral (todas)',icon:'⭐'}];   // 'geral' = ADMs de OKR: criam/editam em TODAS as torres (só vale pra pessoa, nunca pra Objetivo)
 function _guTorreDe(u){ return GU_TORRES.some(t=>t.id===(u&&u.torre)) ? u.torre : 'digital'; }
 let _guFilter = {empresa:'', role:'', squad:'', gestorOkr:false, torre:''};
 function _guEmpresa(u){
@@ -9747,8 +9794,8 @@ function renderGlobalUsers(){
     // Grava só em kanban/usuarios/{uid} (o kanban não lê esse campo; usuarios_publicos não ganha nó parcial).
     const torreSel = document.createElement('select');
     torreSel.className = 'pt-filter-input';
-    torreSel.title = 'Torre da pessoa no OKR (Digital / Comercial / Corporativa) — define onde ela cria e edita Objetivos';
-    torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:130px;';
+    torreSel.title = 'Torre da pessoa no OKR (Digital / Comercial / Corporativa / ⭐ Geral = todas) — define onde ela cria e edita Objetivos';
+    torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
     torreSel.innerHTML = GU_TORRES.map(t=>`<option value="${t.id}"${_guTorreDe(u)===t.id?' selected':''}>${t.icon} ${t.label}</option>`).join('');
     torreSel.onchange = ()=>setGlobalUserTorre(uid, torreSel.value);
     squadsWrap.appendChild(torreSel);
