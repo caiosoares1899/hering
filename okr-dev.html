@@ -1077,6 +1077,16 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 /* ── página própria do OKR ── */
 body{min-height:100vh;}
 #ppane-okr{display:block;}
+.okr-online{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:-6px 0 16px;}
+.okr-online-lbl{font-size:11px;color:var(--txt2);margin-right:4px;display:inline-flex;align-items:center;gap:6px;}
+.okr-online .online-pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 8px;font-size:11px;color:var(--txt);background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;max-width:220px;}
+.okr-online .online-pill.eu{border-color:rgba(56,182,255,.45);background:rgba(56,182,255,.1);}
+.okr-online .online-pip{width:7px;height:7px;border-radius:50%;background:#1de9b6;box-shadow:0 0 6px rgba(29,233,182,.7);flex:none;}
+.okr-online .online-pill img{width:20px;height:20px;border-radius:50%;object-fit:cover;flex:none;}
+.okr-online .online-ini{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:rgba(56,182,255,.22);color:var(--accent);flex:none;}
+.okr-online .online-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.okr-online .online-voce{font-size:9px;color:var(--txt3);}
+.okr-online-mais{font-size:10px;color:var(--txt3);background:rgba(56,182,255,.1);padding:2px 8px;border-radius:999px;cursor:default;}
 </style>
 <script>
 // Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
@@ -1140,6 +1150,8 @@ body{min-height:100vh;}
       </div>
     </div>
   </div>
+
+  <div id="okr-online" class="okr-online"></div>
 
   <!-- 🎯 OKR — mesma tela que vivia na aba OKR do painel (extraída; ver comentário no <script>) -->
   <div id="ppane-okr">
@@ -1448,7 +1460,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v1.4 · okr-dev</div>
+<div class="version">v1.5 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1575,6 +1587,53 @@ document.addEventListener('visibilitychange', ()=>{
   if(document.hidden || typeof _okrBootedUid==='undefined' || !_okrBootedUid) return;
   if(!_guLoadedAt || Date.now()-_guLoadedAt >= _GU_TTL_MS) loadGlobalUsers(true);
 });
+
+// ── 🟢 Online no OKR ──────────────────────────────────────────────────────────────────────────────
+// Mesmo padrão de "Online no painel" (painel: _painelSendHeartbeat()/loadPainelPresence()), em node PRÓPRIO
+// (kanban/painel/okr_presence/{uid} — já coberto pelas regras de kanban/painel: escrita só da empresa, leitura também
+// de visualizador), pra mostrar quem está NESTA página agora. Heartbeat de 15 s, pausado em aba oculta e imediato
+// ao voltar; sem onDisconnect — quem some é cortado pelo prazo de 30 s na leitura (e um relógio de 10 s redesenha,
+// já que sair não gera evento nenhum). Visualizador externo vê a lista mas não aparece nela (não escreve).
+const OKR_PRESENCE_PATH = 'kanban/painel/okr_presence';
+const OKR_PRESENCE_TTL_MS = 30000;
+const OKR_PRESENCE_MAX_VISIVEIS = 12;
+let _okrPresenceMap = {};
+function _okrSendHeartbeat(){
+  const u = window._currentUser;
+  if(!u || !window._fbReady || window._isPainelViewer) return;
+  window._update(window._ref(window._db, OKR_PRESENCE_PATH+'/'+u.uid),
+    {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''}).catch(()=>{});
+}
+function _okrPresenceStart(){
+  clearInterval(window._okrHeartbeat);
+  window._okrHeartbeat = setInterval(()=>{ if(!document.hidden) _okrSendHeartbeat(); }, 15000);
+  if(!window._okrHeartbeatVisSet){
+    window._okrHeartbeatVisSet = true;
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden){ _okrSendHeartbeat(); renderOkrOnline(); } });
+  }
+  _okrSendHeartbeat(); // imediato, não espera o 1º tick
+}
+function loadOkrPresence(){
+  window._onValue(window._ref(window._db, OKR_PRESENCE_PATH), snap=>{ _okrPresenceMap = snap.val()||{}; renderOkrOnline(); });
+  clearInterval(window._okrPresenceTick);
+  window._okrPresenceTick = setInterval(renderOkrOnline, 10000);
+}
+function renderOkrOnline(){
+  const el = document.getElementById('okr-online'); if(!el) return;
+  const now = Date.now(), meuUid = window._currentUser?.uid;
+  const on = Object.entries(_okrPresenceMap)
+    .filter(([uid,u])=>u && u.nome && now-(+u.ts||0) < OKR_PRESENCE_TTL_MS)
+    .map(([uid,u])=>({uid, nome:String(u.nome), foto:u.foto||'', eu:uid===meuUid}))
+    .sort((a,b)=> (b.eu-a.eu) || a.nome.localeCompare(b.nome));
+  const vis = on.slice(0, OKR_PRESENCE_MAX_VISIVEIS), resto = on.length - vis.length;
+  el.innerHTML = `<span class="okr-online-lbl" title="Quem está com a página do OKR aberta agora (atualiza a cada ~15 s)">🟢 Online no OKR <span class="badge">${on.length}</span></span>`
+    + (on.length ? vis.map(u=>{
+        const f = safeUrl(u.foto);
+        const ini = esc(u.nome.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase() || '?');
+        return `<div class="online-pill${u.eu?' eu':''}" title="${esc(u.nome)}${u.eu?' (você)':''}"><span class="online-pip"></span>${f?`<img src="${f}" alt="">`:`<span class="online-ini">${ini}</span>`}<span class="online-nome">${esc(u.nome)}</span>${u.eu?'<span class="online-voce">(você)</span>':''}</div>`;
+      }).join('') + (resto>0 ? `<span class="okr-online-mais" title="${esc(on.slice(OKR_PRESENCE_MAX_VISIVEIS).map(u=>u.nome).join(', '))}">+${resto}</span>` : '')
+      : '<span style="font-size:11px;color:var(--txt3);">Ninguém online no momento.</span>');
+}
 
 // ── 🔗 Cards vinculados — sob demanda ─────────────────────────────────
 // objetivo.cardLinks: [{squadId, cardId}]. No painel os cards de todos os
@@ -6189,6 +6248,8 @@ function _finishOkrLogin(user){
   loadGlobalUsers();
   loadAdmList();
   loadOkr();
+  loadOkrPresence();
+  _okrPresenceStart();
   setTimeout(()=>{ _okrAccessReady = true; if(typeof _okrTryOpenFromUrl==='function') _okrTryOpenFromUrl(); }, 6000); // prazo se usuários/ADMs não chegarem
 }
 
