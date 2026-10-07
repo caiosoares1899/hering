@@ -110,3 +110,25 @@ test('convidados: recebem véspera e dia mesmo sem Objetivo na pauta; quem já e
 test('convidados: lista vazia/ausente não quebra', () => {
   assert.equal(J(cal.convidadosDe({})), J([])); assert.equal(J(cal.convidadosDe({ convidados: ['a', null, 'b'] })), J(['a', 'b']));
 });
+
+test('tags: o evento vinculado a uma tag abrange os Objetivos com ela (qualquer tipo), avisa só os responsáveis deles', () => {
+  const objs = {
+    a: { id: 'a', titulo: 'A', torre: 'digital', areaId: 'cx', tagIds: ['t1'], responsaveis: ['ana'] },
+    b: { id: 'b', titulo: 'B', torre: 'comercial', tagIds: ['t1', 't2'], responsaveis: ['bia'] },
+    c: { id: 'c', titulo: 'C', torre: 'digital', areaId: 'cx', tagIds: ['t2'], responsaveis: ['caio'] },
+    d: { id: 'd', titulo: 'D', torre: 'digital', areaId: 'cx', responsaveis: ['dan'] },
+  };
+  assert.equal(J(Object.keys(cal.alvosDoEvento({ tipo: 'evento', torre: '', tagIds: ['t1'] }, objs)).sort()), J(['ana', 'bia']));
+  assert.equal(cal.abrange({ tipo: 'evento', torre: '', tagIds: ['t1'] }, objs.a), 'tag');
+  assert.equal(cal.abrange({ tipo: 'evento', torre: '', tagIds: ['t1'] }, objs.c), '');
+  // torre local limita: a tag t1 na agenda Digital não pega o Objetivo da Comercial
+  assert.equal(J(Object.keys(cal.alvosDoEvento({ tipo: 'reuniao', torre: 'digital', tagIds: ['t1'] }, objs))), J(['ana']));
+});
+test('tags + gerências: vale uma OU a outra; vínculo explícito vale em qualquer torre; sem nenhum acerto fica de fora (não vira "a torre toda")', () => {
+  const o = { id: 'a', titulo: 'A', torre: 'digital', areaId: 'cx', tagIds: ['t9'], responsaveis: ['ana'] };
+  assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'digital', areaIds: ['cx'], tagIds: ['t1'] }, o), 'gerencia');
+  assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'digital', areaIds: ['tech'], tagIds: ['t1'] }, o), '');
+  assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'digital', tagIds: ['t1'] }, o), '');
+  assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'comercial', objetivoIds: ['a'] }, o), 'vinculo');
+  assert.equal(cal.abrange({ tipo: 'reuniao', torre: 'digital' }, o), 'torre');
+});
