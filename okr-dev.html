@@ -266,6 +266,19 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
  .okr-h-delta.ruim{color:var(--danger);background:rgba(255,107,107,.13);}
  .okr-h-delta.nada{color:var(--txt3);background:rgba(var(--ink-rgb),.5);}
 
+/* 📈 Histórico na visão global: comparativo por torre */
+.okr-h-torres{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin-bottom:14px;}
+.okr-h-torre{background:var(--glass);border:1px solid var(--glass-b);border-left:4px solid rgb(var(--torre));border-radius:12px;padding:10px 12px;cursor:pointer;transition:background .15s;}
+.okr-h-torre:hover,.okr-h-torre:focus-visible{background:rgba(var(--torre),.10);outline:none;}
+.okr-h-torre.on{background:rgba(var(--torre),.16);border-color:rgb(var(--torre));}
+.okr-h-torre-h{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:12px;color:var(--txt);}
+.okr-h-torre-h .mut{color:var(--txt3);font-size:11px;}
+.okr-h-torre-v{font-family:"Syne","DM Sans",sans-serif;font-size:26px;font-weight:800;color:rgb(var(--torre));line-height:1.15;margin:2px 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;}
+.okr-h-torre-v .okr-h-kpi-d{font-family:"DM Sans",sans-serif;font-size:11px;font-weight:500;}
+.okr-h-torre-s{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;color:var(--txt2);min-height:16px;}
+.okr-h-torre-s .okr-dot{margin-right:4px;}
+.okr-h-tgrp{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;padding:7px 10px;margin:12px 0 2px;border-left:4px solid rgb(var(--torre));background:rgba(var(--torre),.09);border-radius:8px;font-size:12px;color:var(--txt);}
+.okr-h-tgrp .mut{color:var(--txt3);font-size:11px;}
 .okr-h-legend{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:10.5px;color:var(--txt2);margin-bottom:6px;}
 
 .okr-h-legend>span{display:flex;align-items:center;gap:5px;}
@@ -1353,6 +1366,7 @@ body{min-height:100vh;}
           <ul style="margin:6px 0 0;padding-left:18px;">
             <li><b>Duas abas</b> no topo: <b>🎯 Atingimento</b> (padrão) e <b>🏁 Marcos</b>. <b>Atingimento</b> mede quanto de cada <b>meta</b> foi atingido — só entram Objetivos com 📈 Atingimento configurado (o ♾️ perene fica de fora); se o snapshot é de antes do atingimento existir, a curva é reconstruída pelos registros de valor do Objetivo. <b>Marcos</b> mede a % de <b>Marcos concluídos</b> (Objetivos sem Marcos ficam de fora). Tudo abaixo — indicadores, gráfico, "O que mudou", tabela e a janela do progresso médio — segue a aba escolhida.</li>
             <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
+            <li><b>🏛️ Por torre</b>: dentro de uma torre, o Histórico mostra só os Objetivos dela. Na <b>🔭 Visão global</b> ele <b>compara as torres</b>: um cartão por torre (nº de Objetivos, atingimento médio, variação e status — clique pra filtrar a tabela), uma <b>linha colorida por torre</b> no gráfico (a tracejada é o total), a torre de cada item em "O que mudou", a tabela em faixas por torre e a janela "Como cada Objetivo contribui" agrupada por torre.</li>
             <li><b>6 indicadores</b> do último snapshot (Objetivos ativos, Concluídos, No prazo, Risco, Atrasados e Progresso médio), cada um com a <b>variação</b> em relação à semana anterior — verde é melhora, vermelho é piora.</li>
             <li><b>🧮 Progresso médio — clique nele</b>: abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Histórico e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
             <li><b>Gráfico de evolução</b>: barras com os Objetivos por status e uma linha com o progresso médio. Passe o mouse (ou toque) numa semana pra ver os números dela.</li>
@@ -1498,7 +1512,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.2 · okr-dev</div>
+<div class="version">v2.3 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2410,7 +2424,7 @@ function _okrToggleNotas(){ _okrSetView(_okrShowNotas ? 'objetivos' : 'notas'); 
 let _okrHistRange = '8';
 
                       // '4' | '8' | '12' | 'all'
-let _okrHistFiltro = {area:'', status:'', texto:'', ordem:'titulo'};
+let _okrHistFiltro = {area:'', torre:'', status:'', texto:'', ordem:'titulo'};
 
 
 let _okrHistMudMais = false;
@@ -2462,8 +2476,45 @@ function _okrHistPctDe(d, id, o){
 function _okrHistSnap(d){
   const sn = okrSnapshots[d]; if(!sn) return null;
   const objs = {}, rg = {total:0, nao_iniciado:0, no_prazo:0, risco:0, atrasado:0, concluido:0};
-  Object.entries(sn.objetivos||{}).forEach(([id,o])=>{ if(_okrTorreValida(_okrTorreAtual) && _okrTorreDe(okrObjetivos[id]||o)!==_okrTorreAtual) return; const pct = _okrHistPctDe(d,id,o); if(pct===null) return; objs[id] = {...o, progressoPct:pct}; rg.total++; rg[o.status] = (rg[o.status]||0)+1; });
+  Object.entries(sn.objetivos||{}).forEach(([id,o])=>{ const torre = _okrHistTorreDe(id,o); if(_okrTorreValida(_okrTorreAtual) && torre!==_okrTorreAtual) return; const pct = _okrHistPctDe(d,id,o); if(pct===null) return; objs[id] = {...o, torre, progressoPct:pct}; rg.total++; rg[o.status] = (rg[o.status]||0)+1; });
   return {...sn, resumoGeral:rg, objetivos:objs};
+}
+
+
+// ── 🏛️ Histórico por torre (visão global) ─────────────────────────────────────────────────────────────────────
+// Na 🔭 Visão global o Histórico COMPARA as torres: cartão por torre, 1 linha colorida por torre no gráfico (+ o total tracejado), "o que mudou" com a torre
+// de cada Objetivo e a tabela agrupada por torre. Dentro de uma torre nada muda. A torre de um Objetivo é a ATUAL dele (se ainda existe); se foi apagado, a gravada
+// no snapshot (functions/okr/weeklySnapshot.js); sem nenhuma das duas = Digital (tudo que existia antes das torres).
+function _okrHistGlobal(){ return _okrTorreAtual==='global'; }
+function _okrHistTorreDe(id, o){ return _okrTorreDe(okrObjetivos[id] || o); }
+// Dimensão de agrupamento da janela "Como cada Objetivo contribui": gerência dentro de uma torre; a própria TORRE na visão global (o "Geral" de 3 torres não se mistura).
+function _okrHistGrupoDe(id, o){ return _okrHistGlobal() ? _okrHistTorreDe(id,o) : (o.areaId||'geral'); }
+function _okrHistGrupoLabel(k){ return _okrHistGlobal() ? okrTorreInfo(k).label : okrGerenciaLabel(k); }
+function _okrHistGrupoIcon(k){ return _okrHistGlobal() ? okrTorreInfo(k).icon : okrGerenciaIcon(k); }
+function _okrHistGrupoCor(k){ return _okrHistGlobal() ? 'rgb('+okrTorreInfo(k).rgb+')' : _okrHistCorGer(k); }
+function _okrHistGrupoPos(k){ return _okrHistGlobal() ? OKR_TORRES.findIndex(t=>t.id===k) : OKR_GERENCIAS_TODAS.findIndex(g=>g.id===k); }
+// Sub-snapshot só com os Objetivos de UMA torre (mesma forma de _okrHistSnap, pra reaproveitar _okrHistMedia).
+function _okrHistSub(snap, torre){
+  const objs = {}; Object.entries((snap&&snap.objetivos)||{}).forEach(([id,o])=>{ if((o.torre||_okrHistTorreDe(id,o))===torre) objs[id] = o; });
+  return {objetivos:objs};
+}
+function _okrHistFiltraTorre(id){
+  _okrHistFiltro.torre = (_okrHistFiltro.torre===id) ? '' : (id||''); _okrHistFiltro.area = '';
+  renderOkrHistorico();
+}
+// Um cartão por torre logo abaixo dos KPIs (só na visão global): nº de Objetivos, atingimento médio e variação vs. o snapshot anterior, e a contagem por status. Clicar filtra a tabela.
+function _okrHistTorresHtml(L, P){
+  return `<div class="okr-h-torres" role="group" aria-label="Comparativo por torre">${OKR_TORRES.map(t=>{
+    const sL = _okrHistSub(L,t.id), sP = P ? _okrHistSub(P,t.id) : null;
+    const ids = Object.keys(sL.objetivos), n = ids.length;
+    const m = _okrHistMedia(sL), mp = sP ? _okrHistMedia(sP) : null;
+    const on = _okrHistFiltro.torre===t.id;
+    const cont = OKR_STATUS.map(st=>{ const c = ids.filter(id=>sL.objetivos[id].status===st.id).length; return c ? `<span title="${esc(st.label)}"><span class="okr-dot" style="background:${st.dot};"></span>${c}</span>` : ''; }).join('');
+    return `<div class="okr-h-torre okr-t-${t.id}${on?' on':''}" style="--torre:${t.rgb};" role="button" tabindex="0" aria-pressed="${on}" title="${on?'Mostrar todas as torres':'Filtrar a tabela só pra '+esc(t.label)}" onclick="_okrHistFiltraTorre(${jsq(t.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistFiltraTorre(${jsq(t.id)});}">
+      <div class="okr-h-torre-h"><span>${t.icon} <b>${esc(t.label)}</b></span><span class="mut">${n} Objetivo${n===1?'':'s'}</span></div>
+      <div class="okr-h-torre-v">${m===null?'—':m+'%'}<span class="okr-h-kpi-d">${_okrHistDeltaHtml(m!==null&&mp!==null?m-mp:null,true,' pp')||'<span class="mut">sem comparação</span>'}</span></div>
+      <div class="okr-h-torre-s">${cont||'<span class="mut">sem Objetivos</span>'}</div></div>`;
+  }).join('')}</div>`;
 }
 
 
@@ -2565,14 +2616,16 @@ function renderOkrHistorico(){
     </div>
     ${_okrHistExclNoUltimo()?`<div class="okr-h-sim">🧮 <span>Simulação: o <b>${rot.gerais}</b> (indicador e gráfico) está calculado <b>sem ${_okrHistExclNoUltimo()} Objetivo${_okrHistExclNoUltimo()===1?'':'s'}</b> — só no seu navegador.</span> <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistMediaOpen()">Ver</button> <button type="button" class="btn btn-sm" style="font-size:11px;" onclick="_okrHistExclReset()">Restaurar tudo</button></div>`:''}
     <div class="okr-h-kpis">${_okrHistKpisHtml(L,P)}</div>
-    <div class="okr-h-card"><div class="okr-h-card-t">Evolução semanal <span class="mut">— barras: Objetivos por status · linha: ${rot.gerais}</span></div>
+    ${_okrHistGlobal()?_okrHistTorresHtml(L,P):''}
+    <div class="okr-h-card"><div class="okr-h-card-t">Evolução semanal <span class="mut">— barras: Objetivos por status · ${_okrHistGlobal()?'linhas: '+rot.gerais+' de cada torre (a tracejada é o total)':'linha: '+rot.gerais}</span></div>
       <div id="okr-hist-chart-legend" class="okr-h-legend"></div>
       <div class="okr-h-chartbox"><div id="okr-hist-chart" class="tp-chart-wrap"></div><div id="okr-h-tip" class="okr-h-tip" role="tooltip"></div></div></div>
     <div id="okr-h-mud"></div>
     <div class="okr-h-card"><div class="okr-h-card-t">Por Objetivo</div>
       <div class="okr-h-filtros">
         <input type="text" class="pt-filter-input" id="okr-h-f-texto" placeholder="Buscar Objetivo…" value="${esc(_okrHistFiltro.texto)}" oninput="_okrHistFiltra('texto',this.value)">
-        <select class="pt-filter-input" onchange="_okrHistFiltra('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${(_okrTorreValida(_okrTorreAtual)?okrGerenciasDa(_okrTorreAtual):OKR_GERENCIAS_TODAS).map(g=>`<option value="${esc(g.id)}"${_okrHistFiltro.area===g.id?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>
+        ${_okrHistGlobal()?`<select class="pt-filter-input" onchange="_okrHistFiltraTorre(this.value)" aria-label="Torre"><option value="">Todas as torres</option>${OKR_TORRES.map(t=>`<option value="${t.id}"${_okrHistFiltro.torre===t.id?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`:''}
+        ${(()=>{ const lg = _okrHistGlobal() ? (_okrHistFiltro.torre?okrGerenciasDa(_okrHistFiltro.torre):[]) : (_okrTorreValida(_okrTorreAtual)?okrGerenciasDa(_okrTorreAtual):OKR_GERENCIAS_TODAS); return (_okrHistGlobal() && lg.length<2) ? '' : `<select class="pt-filter-input" onchange="_okrHistFiltra('area',this.value)" aria-label="Gerência"><option value="">Todas as gerências</option>${lg.map(g=>`<option value="${esc(g.id)}"${_okrHistFiltro.area===g.id?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}</select>`; })()}
         <select class="pt-filter-input" onchange="_okrHistFiltra('status',this.value)" aria-label="Status"><option value="">Todos os status</option>${OKR_STATUS.map(s=>`<option value="${s.id}"${_okrHistFiltro.status===s.id?' selected':''}>${esc(s.label)}</option>`).join('')}</select>
         <select class="pt-filter-input" onchange="_okrHistFiltra('ordem',this.value)" aria-label="Ordenar por">${[['titulo','A–Z'],['alta','Maior alta'],['queda','Maior queda'],['pior','Pior status'],['pct','Maior progresso']].map(([v,l])=>`<option value="${v}"${_okrHistFiltro.ordem===v?' selected':''}>Ordenar: ${l}</option>`).join('')}</select>
       </div>
@@ -2650,7 +2703,7 @@ function _okrHistFmtN(n){ return Number(n).toLocaleString('pt-BR',{minimumFracti
 
 function _okrHistExclGerencia(areaId, tirar){   // marca/desmarca todos os Objetivos de UMA gerência (botões do cartão da gerência)
   const d = _okrHistDatas(); if(!d.length) return; const L = (_okrHistSnap(d[d.length-1])||{}).objetivos||{};
-  Object.keys(L).filter(id=>(L[id].areaId||'geral')===areaId).forEach(id=>{ if(tirar) _okrHistExcl.add(id); else _okrHistExcl.delete(id); });
+  Object.keys(L).filter(id=>_okrHistGrupoDe(id,L[id])===areaId).forEach(id=>{ if(tirar) _okrHistExcl.add(id); else _okrHistExcl.delete(id); });
   _okrHistExclSave(); renderOkrHistorico(); _okrHistMediaRender();
 }
 
@@ -2685,7 +2738,7 @@ function _okrHistMediaChartHtml(inc, datas, largura){
       const dl = delta(x), cor = dl>0?'var(--teal)':dl<0?'var(--danger)':'var(--txt3)', ult = x.vals[n-1];
       const ln = linha(x.vals).map(t=>`<polyline points="${t.join(' ')}" fill="none" stroke="${cor}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>`).join('');
       const pontos = x.vals.map((v,i)=>v===null?'':`<circle cx="${X(i).toFixed(1)}" cy="${Y(v).toFixed(1)}" r="${i===n-1?3.2:2}" fill="${cor}"/>`).join('');
-      return `<div class="okr-hm-mini"><div class="okr-hm-mini-h"><span class="okr-h-tit" title="${esc(x.titulo)}">${okrGerenciaIcon(x.area)} ${esc(x.titulo)}</span><b style="color:${cor};">${ult===null?'—':ult+'%'}</b></div>
+      return `<div class="okr-hm-mini"><div class="okr-hm-mini-h"><span class="okr-h-tit" title="${esc(x.titulo)}">${_okrHistGrupoIcon(x.area)} ${esc(x.titulo)}</span><b style="color:${cor};">${ult===null?'—':ult+'%'}</b></div>
         <svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" aria-hidden="true">${mediaLn}${ln}${pontos}</svg>
         <div class="okr-hm-mini-f">${_okrHistDeltaHtml(dl,true,' pp')}<span class="mut">${esc(_okrHistFmt(datas[0]))} → ${esc(_okrHistFmt(datas[n-1]))}</span></div></div>`; }).join('');
     _okrHistMChart = null;
@@ -2694,7 +2747,7 @@ function _okrHistMediaChartHtml(inc, datas, largura){
   // ── Gráfico único ──
   let series = [];
   if(modo==='ger'){
-    series = [...new Set(inc.map(r=>r.area))].map(g=>({id:'g:'+g, titulo:okrGerenciaLabel(g), cor:_okrHistCorGer(g), vals:media(porObj.filter(x=>x.area===g)), w:2.6, op:.95, rot:true}));
+    series = [...new Set(inc.map(r=>r.area))].map(g=>({id:'g:'+g, titulo:_okrHistGrupoLabel(g), cor:_okrHistGrupoCor(g), vals:media(porObj.filter(x=>x.area===g)), w:2.6, op:.95, rot:true}));
   } else if(modo==='dest'){
     // só ~6 linhas ganham cor e nome (as que mais subiram em verde, as que mais caíram em vermelho); o resto vira fundo cinza
     const mov = porObj.filter(x=>delta(x)!==0);
@@ -2782,8 +2835,8 @@ function _okrHistMediaRender(focoId){
   if(!todas.length){ body.innerHTML = '<div class="okr-h-vazio-t">Ainda não há snapshot.</div>'; return; }
   const ult = todas[todas.length-1], ant = todas.length>1 ? todas[todas.length-2] : null;
   const L = (_okrHistSnap(ult)||{}).objetivos||{}, P = ant ? ((_okrHistSnap(ant)||{}).objetivos||{}) : {};
-  const todos = Object.keys(L).map(id=>({id, o:L[id], pct:Number(L[id].progressoPct)||0, p:P[id]?(Number(P[id].progressoPct)||0):null, area:L[id].areaId||'geral'}));
-  const gerencias = [...new Set(todos.map(r=>r.area))].sort((a,b)=>OKR_GERENCIAS_TODAS.findIndex(g=>g.id===a)-OKR_GERENCIAS_TODAS.findIndex(g=>g.id===b));
+  const todos = Object.keys(L).map(id=>({id, o:L[id], pct:Number(L[id].progressoPct)||0, p:P[id]?(Number(P[id].progressoPct)||0):null, area:_okrHistGrupoDe(id,L[id])}));
+  const gerencias = [...new Set(todos.map(r=>r.area))].sort((a,b)=>_okrHistGrupoPos(a)-_okrHistGrupoPos(b));
   if(_okrHistMArea && !gerencias.includes(_okrHistMArea)) _okrHistMArea = '';
   const vis = todos.filter(r=>(!_okrHistMArea || r.area===_okrHistMArea) && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status)));
   const inc = vis.filter(r=>!_okrHistExcl.has(r.id)), exc = vis.filter(r=>_okrHistExcl.has(r.id));
@@ -2799,7 +2852,7 @@ function _okrHistMediaRender(focoId){
   const antesScroll = body.scrollTop;
   const per = _okrHistRange==='all' ? todas : todas.slice(-Number(_okrHistRange));
   const graficoW = Math.max(520, (body.clientWidth||960) - 50);
-  const top3 = (arr, f)=> arr.slice(0,3).map(r=>`<div class="okr-hm-top"><span class="okr-h-tit">${okrGerenciaIcon(r.area)} ${esc(r.o.titulo||'(sem título)')}</span>${f(r)}</div>`).join('') || '<div class="mut">—</div>';
+  const top3 = (arr, f)=> arr.slice(0,3).map(r=>`<div class="okr-hm-top"><span class="okr-h-tit">${_okrHistGrupoIcon(r.area)} ${esc(r.o.titulo||'(sem título)')}</span>${f(r)}</div>`).join('') || '<div class="mut">—</div>';
   const puxamBaixo = n>1 ? inc.slice().sort((a,b)=>efeito(b)-efeito(a)).filter(r=>efeito(r)>0.05) : [];
   const sustentam = inc.slice().sort((a,b)=>b.pct-a.pct).filter(r=>r.pct>0);
   const chip = r=>{
@@ -2810,7 +2863,7 @@ function _okrHistMediaRender(focoId){
     const rs = todos.filter(r=>r.area===g && (!_okrHistMStatus.size || _okrHistMStatus.has(r.o.status))).sort((a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')));
     const rin = rs.filter(r=>!_okrHistExcl.has(r.id)); const mg = rin.length ? Math.round(rin.reduce((a,r)=>a+r.pct,0)/rin.length) : null;
     if(!rs.length) return '';
-    return `<div class="okr-hm-grp"><div class="okr-hm-grp-h"><span>${okrGerenciaIcon(g)} <b>${esc(okrGerenciaLabel(g))}</b> <span class="mut">· ${rin.length}/${rs.length} na conta${mg===null?'':' · média '+mg+'%'}</span></span>
+    return `<div class="okr-hm-grp"><div class="okr-hm-grp-h"><span>${_okrHistGrupoIcon(g)} <b>${esc(_okrHistGrupoLabel(g))}</b> <span class="mut">· ${rin.length}/${rs.length} na conta${mg===null?'':' · média '+mg+'%'}</span></span>
       <span class="okr-hm-grp-a"><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},false)">todos</button><button type="button" class="okr-hm-lnk" onclick="_okrHistExclGerencia(${jsq(g)},true)">nenhum</button></span></div>
       <div class="okr-hm-chips">${rs.map(chip).join('')}</div></div>`;
   }).join('');
@@ -2818,7 +2871,7 @@ function _okrHistMediaRender(focoId){
     <div class="okr-hm-top3">
       <div class="okr-hm-sum">
         <div class="okr-hm-big">${media===null?'—':_okrHistFmtN(media)+'%'}</div>
-        <div class="okr-h-kpi-l">${_okrHistRot().gerais.replace(' (%)','')}${_okrHistMArea?' · '+esc(okrGerenciaLabel(_okrHistMArea)):''}</div>
+        <div class="okr-h-kpi-l">${_okrHistRot().gerais.replace(' (%)','')}${_okrHistMArea?' · '+esc(_okrHistGrupoLabel(_okrHistMArea)):''}</div>
         <div class="okr-hm-meta">${dMedia===null?'<span class="mut">sem comparação com o snapshot anterior</span>':_okrHistDeltaHtml(Math.round(dMedia*10)/10,true,' pp')+` <span class="mut">vs. ${esc(_okrHistFmt(ant,true))} (mesmos Objetivos)</span>`}
           <div class="mut"><b>${n}</b> de ${vis.length} Objetivo${vis.length===1?'':'s'} na conta · snapshot de ${esc(_okrHistFmt(ult,true))}</div></div>
         <div class="okr-hm-como">Média = soma dos progressos ÷ nº de Objetivos na conta. Cada um contribui com <b>progresso ÷ ${n||'N'}</b> ponto(s).</div>
@@ -2830,17 +2883,17 @@ function _okrHistMediaRender(focoId){
       <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🎛 Personalizar a visão</span>${(_okrHistMStatus.size||_okrHistMModo!=='dest'||_okrHistMArea)?`<button type="button" class="okr-hm-lnk" onclick="_okrHistMStatus.clear();_okrHistMModo='dest';_okrHistMArea='';_okrHistMediaRender()">limpar filtros</button>`:''}</div>
       <div class="okr-hm-visao-g">
         <div><div class="okr-hm-sub">⏱ Período</div><div class="okr-hm-chips">${[['4','4 sem'],['8','8 sem'],['12','12 sem'],['all','Tudo']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistRange===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistRange===v}" onclick="_okrHistMRange('${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMRange('${v}');}">${l}</span>`).join('')}</div></div>
-        <div><div class="okr-hm-sub">📈 Linhas do gráfico</div><div class="okr-hm-chips">${[['dest','⭐ Destaques'],['obj','Todas coloridas'],['ger','Por gerência'],['media','Só a média'],['mini','Mini-gráficos']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistMModo===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMModo===v}" onclick="_okrHistMediaSet('modo','${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('modo','${v}');}">${l}</span>`).join('')}</div></div>
+        <div><div class="okr-hm-sub">📈 Linhas do gráfico</div><div class="okr-hm-chips">${[['dest','⭐ Destaques'],['obj','Todas coloridas'],['ger',_okrHistGlobal()?'Por torre':'Por gerência'],['media','Só a média'],['mini','Mini-gráficos']].map(([v,l])=>`<span class="okr-hm-chip sel${_okrHistMModo===v?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMModo===v}" onclick="_okrHistMediaSet('modo','${v}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('modo','${v}');}">${l}</span>`).join('')}</div></div>
         <div><div class="okr-hm-sub">🚦 Status do Objetivo <span class="mut">(vazio = todos)</span></div><div class="okr-hm-chips">${OKR_STATUS.map(st=>{ const c = todos.filter(r=>(!_okrHistMArea||r.area===_okrHistMArea)&&r.o.status===st.id).length; return `<span class="okr-hm-chip sel${_okrHistMStatus.has(st.id)?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMStatus.has(st.id)}" onclick="_okrHistMStatusToggle(${jsq(st.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMStatusToggle(${jsq(st.id)});}"><i style="background:${st.dot};"></i>${esc(st.label)} <b>${c}</b></span>`; }).join('')}</div></div>
       </div>
     </div>
     <div class="okr-hm-sec">
-      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${{dest:'a média e os Objetivos que mais mudaram',obj:'cada Objetivo e a média',ger:'cada gerência e a média',media:'a média',mini:'um mini-gráfico por Objetivo'}[_okrHistMModo]}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Histórico)'}</span></div>
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📈 Evolução — ${{dest:'a média e os Objetivos que mais mudaram',obj:'cada Objetivo e a média',ger:_okrHistGlobal()?'cada torre e a média':'cada gerência e a média',media:'a média',mini:'um mini-gráfico por Objetivo'}[_okrHistMModo]}</span><span class="mut">período: ${_okrHistRange==='all'?'todos os snapshots':'últimas '+_okrHistRange+' semanas (muda no cabeçalho do Histórico)'}</span></div>
       ${_okrHistMediaChartHtml(inc, per, graficoW)}
     </div>
     <div class="okr-hm-sec">
-      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">🏢 Gerência</span>
-        <div class="okr-hm-chips"><span class="okr-hm-chip sel${_okrHistMArea?'':' on'}" role="button" tabindex="0" aria-pressed="${_okrHistMArea?'false':'true'}" onclick="_okrHistMediaSet('area','')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area','');}">Todas <b>${todos.length}</b></span>${gerencias.map(g=>`<span class="okr-hm-chip sel${_okrHistMArea===g?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMArea===g}" onclick="_okrHistMediaSet('area',${jsq(g)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area',${jsq(g)});}">${okrGerenciaIcon(g)} ${esc(okrGerenciaLabel(g))} <b>${todos.filter(r=>r.area===g).length}</b></span>`).join('')}</div></div>
+      <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">${_okrHistGlobal()?'🏛️ Torre':'🏢 Gerência'}</span>
+        <div class="okr-hm-chips"><span class="okr-hm-chip sel${_okrHistMArea?'':' on'}" role="button" tabindex="0" aria-pressed="${_okrHistMArea?'false':'true'}" onclick="_okrHistMediaSet('area','')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area','');}">Todas <b>${todos.length}</b></span>${gerencias.map(g=>`<span class="okr-hm-chip sel${_okrHistMArea===g?' on':''}" role="button" tabindex="0" aria-pressed="${_okrHistMArea===g}" onclick="_okrHistMediaSet('area',${jsq(g)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistMediaSet('area',${jsq(g)});}">${_okrHistGrupoIcon(g)} ${esc(_okrHistGrupoLabel(g))} <b>${todos.filter(r=>r.area===g).length}</b></span>`).join('')}</div></div>
     </div>
     <div class="okr-hm-sec">
       <div class="okr-hm-sec-h"><span class="okr-hm-sec-t">📍 Objetivos na conta <span class="mut" style="text-transform:none;letter-spacing:0;font-weight:500;">— clique num Objetivo pra tirá-lo (ou trazê-lo de volta) e a média recalcula na hora</span></span>
@@ -2855,7 +2908,7 @@ function _okrHistMediaRender(focoId){
         ${lista.length?lista.map(r=>{
           const fora = _okrHistExcl.has(r.id), st = okrStatusInfo(r.o.status), ef = efeito(r), dp = r.p===null?null:r.pct-r.p;
           return `<div class="okr-hm-row${fora?' fora':''}" onmouseenter="_okrHistMDestaca(${jsq(r.id)})" onmouseleave="_okrHistMDestaca('')">
-            <span class="okr-h-tr-t">${okrGerenciaIcon(r.area)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> <span class="okr-dot" style="background:${st.dot};" title="${esc(st.label)}"></span></span>
+            <span class="okr-h-tr-t">${_okrHistGrupoIcon(r.area)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> <span class="okr-dot" style="background:${st.dot};" title="${esc(st.label)}"></span></span>
             <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
             <span>${fora?'<span class="mut">fora da conta</span>':`<b>${_okrHistFmtN(r.pct/n)}</b> pp`}</span>
             <span>${ef===null?'<span class="mut">—</span>':fora?`voltando: ${_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}`:_okrHistDeltaHtml(Math.round(ef*10)/10,true,' pp')}</span>
@@ -2881,11 +2934,16 @@ function renderOkrHistoricoChart(){
   if(!wrap) return;
   if(legend){
     legend.innerHTML = OKR_STATUS.map(s=>`<span><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')
-      + `<span><span class="okr-h-linha-ico"></span>${_okrHistRot().gerais}</span>`;
+      + (_okrHistGlobal()
+        ? OKR_TORRES.map(t=>`<span><span class="okr-h-linha-ico" style="border-top-color:rgb(${t.rgb});"></span>${t.icon} ${esc(t.label)}</span>`).join('') + `<span><span class="okr-h-linha-ico" style="border-top-style:dashed;"></span>Total (${_okrHistRot().gerais.replace(' (%)','')})</span>`
+        : `<span><span class="okr-h-linha-ico"></span>${_okrHistRot().gerais}</span>`);
   }
   let datas = _okrHistDatas();
   if(_okrHistRange!=='all') datas = datas.slice(-Number(_okrHistRange));
-  const buckets = datas.map(d=>{ const s = _okrHistSnap(d)||{}; return {d, rg:s.resumoGeral||{}, total:(s.resumoGeral||{}).total||0, media:_okrHistMedia(s)}; });
+  const glob = _okrHistGlobal();
+  const buckets = datas.map(d=>{ const s = _okrHistSnap(d)||{}; const b = {d, rg:s.resumoGeral||{}, total:(s.resumoGeral||{}).total||0, media:_okrHistMedia(s)};
+    if(glob){ b.torres = {}; OKR_TORRES.forEach(t=>{ const sub = _okrHistSub(s,t.id); b.torres[t.id] = {media:_okrHistMedia(sub), n:Object.keys(sub.objetivos).length}; }); }
+    return b; });
   _okrHistChartData = buckets;
   const max = Math.max(1, ...buckets.map(b=>b.total));
   const W=780,H=176,pl=30,pr=34,pt=18,pb=24, cw=W-pl-pr, ch=H-pt-pb;
@@ -2908,8 +2966,13 @@ function renderOkrHistoricoChart(){
     if(buckets.length<=14 || i%2===0 || i===buckets.length-1) svg += `<text class="tp-axis-lbl" x="${cx.toFixed(1)}" y="${H-8}" text-anchor="middle"${i===buckets.length-1?' font-weight="700"':''}>${esc(_okrHistFmt(b.d))}</text>`;
     if(b.media!==null) pts.push([cx, yP(b.media)]);
   });
-  if(pts.length>1) svg += `<polyline fill="none" stroke="var(--ating-h,#ff73af)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
-  pts.forEach(p=>{ svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="var(--ating-h,#ff73af)" stroke="rgb(var(--ink-rgb))" stroke-width="1.2"/>`; });
+  if(glob) OKR_TORRES.forEach(t=>{   // 1 linha por torre, na cor dela
+    const tp = []; buckets.forEach((b,i)=>{ const m = b.torres[t.id].media; if(m!==null) tp.push([pl+slot*i+slot/2, yP(m)]); });
+    if(tp.length>1) svg += `<polyline fill="none" stroke="rgb(${t.rgb})" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" points="${tp.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
+    tp.forEach(p=>{ svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3" fill="rgb(${t.rgb})" stroke="rgb(var(--ink-rgb))" stroke-width="1.2"/>`; });
+  });
+  if(pts.length>1) svg += `<polyline fill="none" stroke="var(--ating-h,#ff73af)" stroke-width="${glob?1.8:2.2}"${glob?' stroke-dasharray="5 4"':''} stroke-linejoin="round" stroke-linecap="round" points="${pts.map(p=>p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ')}"/>`;
+  if(!glob) pts.forEach(p=>{ svg += `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.2" fill="var(--ating-h,#ff73af)" stroke="rgb(var(--ink-rgb))" stroke-width="1.2"/>`; });
   buckets.forEach((b,i)=>{
     svg += `<rect class="okr-h-hit" x="${(pl+slot*i).toFixed(1)}" y="${pt-8}" width="${slot.toFixed(1)}" height="${ch+8}" fill="transparent" onmousemove="_okrHistTip(event,${i})" onmouseleave="_okrHistTipOff()" onclick="_okrHistTip(event,${i})"/>`;
   });
@@ -2921,7 +2984,8 @@ function _okrHistTip(ev, i){
   const b = _okrHistChartData[i], tip = document.getElementById('okr-h-tip'), box = tip && tip.parentElement; if(!b || !tip) return;
   tip.innerHTML = `<b>${esc(_okrHistFmt(b.d,true))}</b>
     <div class="okr-h-tip-l">${OKR_STATUS.map(s=>(b.rg[s.id]||0)?`<div><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}: <b>${b.rg[s.id]}</b></div>`:'').join('')}</div>
-    <div class="okr-h-tip-m">Total: <b>${b.total}</b>${b.media!==null?` · ${_okrHistRot().gerais.replace(' (%)','')} <b>${b.media}%</b>`:''}</div>`;
+    <div class="okr-h-tip-m">Total: <b>${b.total}</b>${b.media!==null?` · ${_okrHistRot().gerais.replace(' (%)','')} <b>${b.media}%</b>`:''}</div>
+    ${b.torres?`<div class="okr-h-tip-l">${OKR_TORRES.map(t=>{ const x = b.torres[t.id]; return `<div><span class="okr-dot" style="background:rgb(${t.rgb});"></span>${t.icon} ${esc(t.label)}: <b>${x.media===null?'—':x.media+'%'}</b> <span class="mut">(${x.n} Obj.)</span></div>`; }).join('')}</div>`:''}`;
   tip.style.display = 'block';
   const r = box.getBoundingClientRect(); let x = ev.clientX-r.left+14;
   if(x+tip.offsetWidth > r.width) x = ev.clientX-r.left-tip.offsetWidth-14;
@@ -2941,13 +3005,13 @@ function _okrHistMudancas(L, P){
   const a = (L&&L.objetivos)||{}, b = (P&&P.objetivos)||{}, out = [];
   Object.keys(a).forEach(id=>{
     const n = a[id], o = b[id];
-    if(!o){ out.push({id, t:n.titulo, area:n.areaId, tipo:'novo', ord:3}); return; }
+    if(!o){ out.push({id, t:n.titulo, area:n.areaId, torre:_okrHistTorreDe(id,n), tipo:'novo', ord:3}); return; }
     const rn = OKR_STATUS_RANK[n.status]??2, ro = OKR_STATUS_RANK[o.status]??2;
     const dp = (Number(n.progressoPct)||0)-(Number(o.progressoPct)||0);
-    if(n.status!==o.status) out.push({id, t:n.titulo, area:n.areaId, tipo:rn>ro?'piorou':'melhorou', de:o.status, para:n.status, dp, ord:rn>ro?0:1});
-    else if(dp!==0) out.push({id, t:n.titulo, area:n.areaId, tipo:dp>0?'subiu':'caiu', dp, status:n.status, ord:dp>0?2:1.5});
+    if(n.status!==o.status) out.push({id, t:n.titulo, area:n.areaId, torre:_okrHistTorreDe(id,n), tipo:rn>ro?'piorou':'melhorou', de:o.status, para:n.status, dp, ord:rn>ro?0:1});
+    else if(dp!==0) out.push({id, t:n.titulo, area:n.areaId, torre:_okrHistTorreDe(id,n), tipo:dp>0?'subiu':'caiu', dp, status:n.status, ord:dp>0?2:1.5});
   });
-  Object.keys(b).forEach(id=>{ if(!a[id]) out.push({id, t:b[id].titulo, area:b[id].areaId, tipo:'saiu', ord:4}); });
+  Object.keys(b).forEach(id=>{ if(!a[id]) out.push({id, t:b[id].titulo, area:b[id].areaId, torre:_okrHistTorreDe(id,b[id]), tipo:'saiu', ord:4}); });
   return out.sort((x,y)=>x.ord-y.ord || Math.abs(y.dp||0)-Math.abs(x.dp||0) || String(x.t).localeCompare(String(y.t)));
 }
 
@@ -2964,7 +3028,7 @@ function _okrHistMudancasRender(L, P, ant, ult){
       const det = m.tipo==='piorou'||m.tipo==='melhorou' ? `${okrStatusInfo(m.de).label} → <b>${esc(okrStatusInfo(m.para).label)}</b>${m.dp?` · ${m.dp>0?'+':''}${m.dp} pp`:''}`
         : m.tipo==='subiu'||m.tipo==='caiu' ? `${m.dp>0?'+':''}${m.dp} pp de progresso` : '';
       return `<div class="okr-h-mud ${m.tipo}" ${m.tipo==='saiu'?'':`role="button" tabindex="0" onclick="_okrHistoricoSelectObj(${jsq(m.id)},true)" onkeydown="if(event.key==='Enter')_okrHistoricoSelectObj(${jsq(m.id)},true)"`}>
-        <span class="okr-h-mud-ic">${ic}</span><div class="okr-h-mud-b"><div class="okr-h-mud-t">${okrGerenciaIcon(m.area)} ${esc(m.t||'(sem título)')}</div><div class="okr-h-mud-d"><span class="okr-h-mud-lb">${lb}</span>${det?' · '+det:''}</div></div></div>`;
+        <span class="okr-h-mud-ic">${ic}</span><div class="okr-h-mud-b"><div class="okr-h-mud-t">${_okrHistGlobal()?`<span class="okr-torre-chip okr-t-${m.torre}" title="Torre ${esc(okrTorreInfo(m.torre).label)}">${okrTorreInfo(m.torre).icon}</span> `:''}${okrGerenciaIcon(m.area)} ${esc(m.t||'(sem título)')}</div><div class="okr-h-mud-d"><span class="okr-h-mud-lb">${lb}</span>${det?' · '+det:''}</div></div></div>`;
     }).join('')}</div>${ms.length>8?`<button type="button" class="btn btn-sm" style="margin-top:8px;font-size:11px;" onclick="_okrHistMudMais=!_okrHistMudMais;renderOkrHistorico()">${_okrHistMudMais?'Mostrar menos':'Ver todas as '+ms.length+' mudanças'}</button>`:''}`
     : `<div class="okr-h-vazio-t">Nenhuma mudança de status ou de progresso entre os dois últimos snapshots.</div>`}</div>`;
 }
@@ -2982,20 +3046,26 @@ function _okrHistTabelaRender(){
   let rows = Object.keys(L).map(id=>{
     const o = L[id], p = P[id], pct = Number(o.progressoPct)||0;
     return {id, o, pct, dp: p ? pct-(Number(p.progressoPct)||0) : null, serie: per.map(d=>{ const x = ((_okrHistSnap(d)||{}).objetivos||{})[id]; return x ? (Number(x.progressoPct)||0) : null; })};
-  }).filter(r=>(!f.area || (r.o.areaId||'geral')===f.area) && (!f.status || r.o.status===f.status) && (!q || String(r.o.titulo||'').toLowerCase().includes(q)));
+  }).filter(r=>(!_okrHistGlobal() || !f.torre || r.o.torre===f.torre) && (!f.area || (r.o.areaId||'geral')===f.area) && (!f.status || r.o.status===f.status) && (!q || String(r.o.titulo||'').toLowerCase().includes(q)));
   const ord = {
     titulo:(a,b)=>String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')),
     alta:(a,b)=>(b.dp??-999)-(a.dp??-999), queda:(a,b)=>(a.dp??999)-(b.dp??999),
     pior:(a,b)=>(OKR_STATUS_RANK[b.o.status]??2)-(OKR_STATUS_RANK[a.o.status]??2) || a.pct-b.pct, pct:(a,b)=>b.pct-a.pct,
   }[f.ordem] || ((a,b)=>0);
-  rows.sort(ord);
+  const agrupa = _okrHistGlobal() && !f.torre;   // visão global sem filtro de torre: uma faixa por torre, na ordem das torres
+  const tPos = t=>OKR_TORRES.findIndex(x=>x.id===t);
+  rows.sort(agrupa ? (a,b)=>tPos(a.o.torre)-tPos(b.o.torre) || ord(a,b) : ord);
   if(!rows.length){ el.innerHTML = '<div class="okr-h-vazio-t">Nenhum Objetivo com esses filtros.</div>'; return; }
+  const faixa = (t)=>{ const g = rows.filter(r=>r.o.torre===t.id), ex = g.filter(r=>!_okrHistExcl.has(r.id)); const m = ex.length ? Math.round(ex.reduce((a,r)=>a+r.pct,0)/ex.length) : null;
+    return `<div class="okr-h-tgrp okr-t-${t.id}" style="--torre:${t.rgb};"><span>${t.icon} <b>${esc(t.label)}</b></span><span class="mut">${g.length} Objetivo${g.length===1?'':'s'}${m===null?'':' · média '+m+'%'}</span></div>`; };
+  let _ultTorre = null;
   el.innerHTML = `<div class="okr-h-tab">
     <div class="okr-h-tr head"><span>Objetivo</span><span>Status</span><span>${_okrHistRot().col}</span><span>Δ</span><span>Tendência</span><span>Marcos</span></div>
     ${rows.map(r=>{
+      let cab = ''; if(agrupa && r.o.torre!==_ultTorre){ _ultTorre = r.o.torre; cab = faixa(okrTorreInfo(r.o.torre)); }
       const st = okrStatusInfo(r.o.status), aberto = _okrHistoricoObjId===r.id;
       const ating = r.o.atingimentoTipo ? `<span class="okr-h-ating" title="${esc(_okrAtingTipoLabel(r.o.atingimentoTipo))}">${_okrAtingTipoIco(r.o.atingimentoTipo)}</span>` : '';
-      return `<div class="okr-h-tr row${aberto?' aberto':''}" role="button" tabindex="0" aria-expanded="${aberto}" onclick="_okrHistoricoSelectObj(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistoricoSelectObj(${jsq(r.id)});}">
+      return cab + `<div class="okr-h-tr row${aberto?' aberto':''}" role="button" tabindex="0" aria-expanded="${aberto}" onclick="_okrHistoricoSelectObj(${jsq(r.id)})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();_okrHistoricoSelectObj(${jsq(r.id)});}">
         <span class="okr-h-tr-t"><span class="okr-h-seta">${aberto?'▾':'▸'}</span> ${okrGerenciaIcon(r.o.areaId)} <span class="okr-h-tit">${esc(r.o.titulo||'(sem título)')}</span> ${ating}</span>
         <span class="okr-h-st"><span class="okr-dot" style="background:${st.dot};"></span>${esc(st.label)}</span>
         <span class="okr-h-pct"><span class="okr-h-barra"><i style="width:${Math.max(0,Math.min(100,r.pct))}%;background:${st.dot};"></i></span><b>${r.pct}%</b></span>
@@ -3009,7 +3079,7 @@ function _okrHistTabelaRender(){
 
 function _okrHistoricoSelectObj(objId, rolar){
   _okrHistoricoObjId = (!rolar && _okrHistoricoObjId===objId) ? '' : (objId||'');
-  if(rolar){ _okrHistFiltro = {area:'', status:'', texto:'', ordem:_okrHistFiltro.ordem}; renderOkrHistorico(); }
+  if(rolar){ _okrHistFiltro = {area:'', torre:'', status:'', texto:'', ordem:_okrHistFiltro.ordem}; renderOkrHistorico(); }
   else _okrHistTabelaRender();
   if(rolar && _okrHistoricoObjId){ const r = document.querySelector('#okr-h-tbl .okr-h-tr.aberto'); if(r && r.scrollIntoView) r.scrollIntoView({block:'center', behavior:'smooth'}); }
 }
@@ -3795,7 +3865,7 @@ function _okrRenderNav(){
 function _okrEntrarTorre(id, push){
   if(id!=='global' && !_okrTorreValida(id)) id = '';
   const veioDaHome = !_okrTorreAtual;
-  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrHistFiltro.area = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
+  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrHistFiltro.area = ''; _okrHistFiltro.torre = ''; _okrHistMArea = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
   if(push!==false){
     try{ const u = new URL(location.href); u.searchParams.delete('okr'); if(id) u.searchParams.set('torre', id); else u.searchParams.delete('torre'); history.pushState({torre:id}, '', u); }catch(e){}
   }

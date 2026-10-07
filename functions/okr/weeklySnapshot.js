@@ -66,6 +66,9 @@ async function runOkrWeeklySnapshot(db) {
     snapshotObjetivos[objId] = {
       titulo: o.titulo || '',
       areaId: o.areaId || 'geral',
+      // Torres (2026-10-07): retrato da torre do Objetivo na época — o Histórico da visão global compara as torres e, sem isto,
+      // um Objetivo apagado/movido depois voltaria a contar como Digital. Sem o campo no Objetivo = Digital (mesma regra do client).
+      torre: ['digital', 'comercial', 'corporativa'].includes(o.torre) ? o.torre : 'digital',
       status,
       progressoPct: prog.pct,
       totalMarcos: marcosAtivos.length,

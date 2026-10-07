@@ -20017,6 +20017,10 @@ aplicável) ou endpoints escopados por playlist/faixa diretamente, nunca
 lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
+## Cloud Function — `okrWeeklySnapshot` — 2026-10-07 (Torres): o snapshot grava a torre
+
+**Requer `firebase deploy --only functions:okrWeeklySnapshot` (resync do clone antes, ver `CLAUDE.md`).** Cada Objetivo do snapshot semanal ganha `torre` (`digital`/`comercial`/`corporativa`; sem o campo ou inválido = `digital`) — o Histórico da visão global do OKR usa pra manter um Objetivo apagado/movido na torre certa. Campo novo e opcional: o client antigo ignora e o novo cai na torre atual do Objetivo enquanto o deploy não sai (snapshots antigos também não têm). +1 teste (16/16 no arquivo).
+
 ## Cloud Function — `okrDailyScan` (`functions/okr/dailyScan.js`) — fix 2026-10-07 (Torres)
 
 **Sem versão própria — requer `firebase deploy --only functions:okrDailyScan` (resync do clone antes, ver `CLAUDE.md`).** A "véspera da reunião de bloco quinzenal" notificava os responsáveis de TODO Objetivo ativo; os blocos (CX/Tech/CRM…) são da torre Digital, então Objetivos de Comercial/Corporativa (`areaId:'geral'`, que cai no bloco 1) recebiam "Reunião de X é amanhã" de uma reunião que não é deles. Agora pula `torre` ≠ digital (sem o campo = Digital, compatível com tudo que já existia). Prazo de marco segue em qualquer torre. +2 testes; 2 testes antigos (`marco … notifica`) dependiam da data real de hoje (falhavam na véspera de uma quinta de bloco) e passaram a filtrar por tipo; `atingimento.test.js` comparava o motor com `painel-dev.html`, de onde o OKR saiu na v5.0 (falhava desde então) — agora compara com `okr-dev.html`/`okr.html` ignorando linhas em branco. Suíte 604/604.
@@ -20689,6 +20693,16 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
+
+### okr-dev.html v2.3 · okr-dev — 2026-10-07 · 📈 Histórico pensado nas torres: comparativo por torre na 🔭 Visão global
+
+Pedido direto ("esse histórico é bom você repensar pensando nas torres, na visão global"). Dentro de uma torre nada muda (só os Objetivos dela). Na **Visão global** o Histórico passa a **comparar as torres**:
+- **Cartão por torre** logo abaixo dos KPIs: nº de Objetivos, atingimento médio, variação vs. snapshot anterior e a contagem por status; clicar filtra a tabela (clicar de novo limpa). A simulação "tirar da conta" vale por torre.
+- **Gráfico**: uma linha por torre na cor dela + o **total tracejado**; legenda e dica (ao passar o mouse/tocar) com o % e o nº de Objetivos de cada torre.
+- **🔄 O que mudou** mostra a torre de cada Objetivo; **tabela "Por Objetivo"** em faixas por torre (com a média de cada uma) e filtro de torre — o de gerência só aparece quando uma torre está escolhida (o "Geral" das 3 torres não se mistura mais).
+- **Janela "Como cada Objetivo contribui"**: na global agrupa por **torre** (modo do gráfico "Por torre", botões todos/nenhum por torre).
+- A torre vem do Objetivo atual; se ele foi apagado, da gravada no snapshot (abaixo); sem nenhuma = Digital.
+Testes no Chromium (fakefb): 15 cenários novos (global + dentro de uma torre) + suítes anteriores verdes.
 
 ### okr-dev.html v2.2 · okr-dev — 2026-10-07 · fix(/monitorarbugs): filtro de gerência do 📈 Histórico sobrevivia à troca de torre
 
