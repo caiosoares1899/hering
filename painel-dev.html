@@ -2744,7 +2744,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.9 · painel-dev</div>
+<div class="version">v5.10 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6751,7 +6751,7 @@ function loadPainelNotifs(){
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
     const notifs = Object.entries(val).filter(([,n])=>n).map(([nid,n])=>({
       _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
@@ -6851,7 +6851,11 @@ function renderPainelNotifs(){
     const quando = n.ts ? _relTime(n.ts) : '';
     const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
-    const openAttr = n.link
+    // Notificações do OKR (okr_*) não têm card nem aba: levam à página do OKR (Objetivo / Central do Agente / Anotações) — mesmo mapa do openNotif() do kanban.
+    const _okrAlvo = String(n.type||'').startsWith('okr_') ? (n.type==='okr_agente' ? 'chat' : (n.type==='okr_mencao' ? 'notas' : n.okrObjId)) : '';
+    const openAttr = _okrAlvo
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)});" style="cursor:pointer;"`
+      : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
     return `<div ${openAttr} style="padding:9px 11px;border-radius:9px;margin-bottom:5px;background:rgba(var(--slate-rgb),.4);border:1px solid var(--glass-b);display:flex;gap:8px;align-items:flex-start;${n.cardId?'cursor:pointer;':''}" ${n.cardId?'onmouseover="this.style.background=\'rgba(56,182,255,.1)\'" onmouseout="this.style.background=\'rgba(var(--slate-rgb),.4)\'"':''}>
