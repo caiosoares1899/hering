@@ -1736,7 +1736,8 @@ function startListeners(){
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{ okrObjetivos = snap.val()||{}; _loaded.obj=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/marcos'), snap=>{ okrMarcos = snap.val()||{}; _loaded.marco=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
-  window._onValue(window._ref(window._db,'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
+  // Visualizador externo lê o diretório magro (usuarios_publicos): as regras fecham kanban/usuarios (e-mails/tokens de push) pra ele — 2026-10-07.
+  window._onValue(window._ref(window._db, window._okrIsViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
   // Anotações da reunião — independente do carrossel de slides (não entra
   // em _loaded/scheduleRebuild()), só re-renderiza o próprio painel; ao
   // vivo pra quem estiver com o painel aberto ver anotações de outras
