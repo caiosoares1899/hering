@@ -29,7 +29,7 @@
     assigned:'👤', mention:'💬', unblocked:'✅', risk:'⚠️', due_today:'📅', due_overdue:'🔴', done:'🏁', checklist:'☑️', moved:'➡️',
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
-    okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬',
+    okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
     mural:'📢', obj_criado:'🆕', marco_concluido:'✅',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
@@ -93,7 +93,7 @@
       if(!f0) return; const f = {...f0, id};
       if(f.autorUid===eu || !paraMim(alvoTorres(f))) return;
       out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon:iconeSeguro(f.icone) || ICONS[f.tipo] || '🔔', title:f.titulo||'', sub:f.sub||'', autor:f.autor||'',
-        objId:f.objId||'', muralId:f.muralId||'', unread: st.seenReady && !lido(f)});
+        objId:f.objId||'', muralId:f.muralId||'', eventoId:f.eventoId||'', evData:f.evData||'', unread: st.seenReady && !lido(f)});
     });
     return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
   }
@@ -131,9 +131,11 @@
 
   // ── Roteador: pra onde cada coisa leva, de QUALQUER página (relativo à raiz, já com -dev quando for o caso) ──
   function urlOkr(param, valor){ return PAGES.okr + (param ? '?'+param+'='+encodeURIComponent(valor) : ''); }
+  function urlOkrEvento(id, data){ return PAGES.okr + '?evento=' + encodeURIComponent(id) + (data ? '&data=' + encodeURIComponent(data) : ''); }
   // Item do feed → URL.
   function urlFeed(it){
     if(!it) return null;
+    if(it.eventoId) return urlOkrEvento(it.eventoId, it.evData);
     if(it.muralId) return urlOkr('mural', it.muralId);
     if(it.objId) return urlOkr('okr', it.objId);
     return urlOkr();
@@ -142,6 +144,7 @@
   function urlPessoal(n){
     if(!n) return null;
     const t = String(n.type||'');
+    if(n.okrEventoId) return {url:urlOkrEvento(n.okrEventoId, n.okrEventoData)};   // reunião/evento do calendário do OKR
     if(t==='okr_agente') return {url:urlOkr('okr','chat')};
     if(t==='okr_mencao') return {url:urlOkr('okr','notas')};
     if(t.startsWith('okr_')) return {url:urlOkr('okr', n.okrObjId||'')};
@@ -153,7 +156,7 @@
   }
   // Abre um item do feed: a página pode tratar por dentro (opts.abrirFeed(it) devolve true) — senão navega pela URL.
   function abrirFeed(id){
-    const it = items().find(x=>x.id===id) || (st.feed[id] ? {id, muralId:st.feed[id].muralId, objId:st.feed[id].objId} : null);
+    const it = items().find(x=>x.id===id) || (st.feed[id] ? {id, muralId:st.feed[id].muralId, objId:st.feed[id].objId, eventoId:st.feed[id].eventoId, evData:st.feed[id].evData} : null);
     if(!it) return false;
     const w = markOne(id);
     try{ if(st.opts && st.opts.abrirFeed && st.opts.abrirFeed(it)) return true; }catch(e){ console.warn('[MareNotif] abrirFeed:', e); }

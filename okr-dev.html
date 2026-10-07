@@ -545,7 +545,17 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-evd-acoes{display:flex;gap:8px;margin-top:16px;}
 .okr-ev-chip{background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);color:var(--txt2);border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;font-family:inherit;}
 .okr-ev-chip.on{background:rgba(56,182,255,.2);border-color:var(--accent);color:var(--accent);font-weight:700;}
-.okr-ev-objlist{max-height:150px;overflow-y:auto;border:1px solid var(--glass-b);border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;background:rgba(var(--ink-rgb),.35);}
+.okr-ev-objlist{flex-shrink:0;max-height:150px;overflow-y:auto;border:1px solid var(--glass-b);border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;background:rgba(var(--ink-rgb),.35);}
+.okr-ev-conv{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.okr-ev-pessoa{display:inline-flex;align-items:center;gap:6px;background:rgba(56,182,255,.14);border:1px solid rgba(56,182,255,.35);color:var(--accent);border-radius:999px;padding:3px 6px 3px 11px;font-size:11.5px;}
+.okr-ev-pessoa button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:0 3px;font-family:inherit;}
+#okr-ev-body>*,#okr-evd-body>*{flex-shrink:0;}
+#okr-ev-desc{min-height:150px;line-height:1.5;}
+.okr-evd-pessoas{display:flex;flex-wrap:wrap;gap:6px;}
+.okr-evn-lista{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.okr-evn-nota{background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:9px;padding:8px 10px;font-size:12px;color:var(--txt2);line-height:1.5;}
+.okr-evn-nota .qt{font-size:10px;color:var(--txt3);float:right;}
+.okr-evn-apr{border-left:3px solid #1de9b6;}
 .okr-ev-obj{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--txt2);cursor:pointer;}
 @media(max-width:760px){
   .okr-cal-cell{min-height:50px;padding:3px;align-items:center;}
@@ -1730,7 +1740,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.25 · okr-dev</div>
+<div class="version">v2.26 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1781,7 +1791,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=5"></script>
+<script src="mare-notif-dev.js?v=6"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -2869,13 +2879,13 @@ function loadOkrFeed(){
   MareNotif.start({
     user:u, isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), onChange:_okrBellRender,
     // Feed: o aviso abre aqui mesmo; Objetivo também (senão o módulo navega pela URL)
-    abrirFeed:it=>{ if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
+    abrirFeed:it=>{ if(it.eventoId){ _okrAbrirEvento(it.eventoId, it.evData); return true; } if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
   });
   if(window._isPainelViewer) return;   // externo não lê kanban/usuarios: sem notificações pessoais
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
     _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))   // mesmo TTL do sino do kanban
-      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
+      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
     _okrBellRender();
   });
 }
@@ -2940,6 +2950,7 @@ function _okrBellClick(k, id){
     let w = Promise.resolve();
     if(!n.read){ n.read = true; w = window._set(window._ref(window._db,'kanban/usuarios/'+window._currentUser.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
     _okrBellRender();
+    if(n.okrEventoId) return _okrAbrirEvento(n.okrEventoId, n.okrEventoData);
     if(n.type==='okr_agente') return _okrIrParaChat();
     if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
     if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
@@ -4909,9 +4920,25 @@ function loadOkrCalendario(){
   window._onValue(window._ref(window._db, OKR_CAL_PATH), snap=>{
     okrEventos = snap.val() || {}; _okrCalLoaded = true;
     if(_okrShowCal) renderOkrCalendario();
+    _okrEventoDeepLink();
     try{ renderOkrObjetivos(); }catch(e){}   // o selo 📅 dos cartões acompanha as mudanças de agenda (mesmo com o calendário aberto, pra já estar certo ao voltar pros Objetivos)
   });
 }
+// Abre um evento a partir do sino ou do link (?evento=<id>&data=<YYYY-MM-DD>): vai pro calendário no mês dele e abre o detalhe da ocorrência.
+function _okrAbrirEvento(id, data){
+  if(!_okrCalLoaded){ _okrCalPendente = {id, data}; return; }   // chega quando o calendário carregar
+  const ev = okrEventos[id]; if(!ev){ showToast('⚠ Esse evento não existe mais — pode ter sido cancelado.'); return; }
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(data||'') ? data : _okrCalProxData(ev), t = _calParse(d);
+  _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = d; _okrCalTorreF = ''; 
+  _okrSetView('calendario'); openOkrEvento(id, d);
+}
+let _okrCalPendente = null;
+function _okrEventoDeepLink(){
+  if(!_okrCalPendente){ const q = new URLSearchParams(location.search), id = q.get('evento'); if(!id || _okrEventoDeepFeito) return; _okrEventoDeepFeito = true; _okrCalPendente = {id, data:q.get('data')||''}; }
+  if(!_okrCalLoaded) return;
+  const p = _okrCalPendente; _okrCalPendente = null; _okrAbrirEvento(p.id, p.data);
+}
+let _okrEventoDeepFeito = false;
 function _okrToggleCal(){ _okrSetView(_okrShowCal ? 'objetivos' : 'calendario'); }
 function _okrCalSetVista(v){ _okrCalVista = v; try{ localStorage.setItem('okr_cal_vista', v); }catch(e){} renderOkrCalendario(); }
 function _okrCalNav(d){
@@ -4985,21 +5012,115 @@ function renderOkrCalendario(){
   root.innerHTML = bar+corpo+`<div class="mut" style="font-size:10.5px;margin-top:12px;">◆ = prazo de Marco (vem dos próprios Marcos, só leitura). Reuniões da torre mostram a pauta sugerida ao abrir.</div>`;
 }
 
+// ── 🔔 avisos no sino ──
+// (1) Feed da torre (kanban/notif_feed): nova reunião / mudança / cancelamento — aparece pra quem é da agenda (torre ou todos, se global) em QUALQUER página.
+// (2) Notificação PESSOAL (kanban/usuarios/{uid}/notificacoes, tipo okr_reuniao — vira push) pros CONVIDADOS: convite, mudança, cancelamento, menção nas anotações.
+// (3) Véspera e dia da reunião: Cloud Function okrDailyScan (functions/okr/dailyScan.js), pra responsáveis dos Objetivos da pauta + convidados.
+function _okrCalProxData(ev){ const h = todaySPStr(); return _okrCalOcorrencias(ev, h, _calSomaDias(h, 400))[0] || ev.data; }
+function _okrCalQuandoTxt(ev, data){ return [_okrCalDataBR(data,true), _okrCalHoraTxt(ev), _okrCalRecNorm(ev) ? '↻ '+_okrCalRecTexto(ev) : ''].filter(Boolean).join(' · '); }
+function _okrCalMudou(a, b){
+  if(!a) return true;
+  return ['titulo','data','hi','hf','torre','local','link'].some(k=>String(a[k]||'')!==String(b[k]||'')) || !!a.diaInteiro!==!!b.diaInteiro || JSON.stringify(a.rec||null)!==JSON.stringify(b.rec||null);
+}
+function _okrCalAvisaFeed(acao, ev, dataOc){
+  if(!ev || ev.tipo==='lembrete' || typeof MareNotif==='undefined' || window._isPainelViewer) return;
+  const tp = (OKR_CAL_TIPOS[ev.tipo]||OKR_CAL_TIPOS.evento).label.toLowerCase(), data = dataOc || _okrCalProxData(ev);
+  const titulo = acao==='novo' ? `🗓️ Nova ${tp}: ${ev.titulo}` : (acao==='cancelada' ? `🚫 ${tp[0].toUpperCase()+tp.slice(1)} cancelada: ${ev.titulo}` : `✏️ ${tp[0].toUpperCase()+tp.slice(1)} atualizada: ${ev.titulo}`);
+  const sub = [_okrCalQuandoTxt(ev, data), _okrCalAgendaNome(ev.torre)].filter(Boolean).join(' · ');
+  _okrFeedPush('okr_evento', ev.torre ? [ev.torre] : ['*'], titulo, sub, {eventoId:ev.id, evData:data, icone:acao==='cancelada'?'🚫':'🗓️'});
+}
+function _okrCalNotificaPessoas(uids, titulo, sub, ev, data){
+  const eu = window._currentUser?.uid;
+  [...new Set(uids)].filter(u=>u && u!==eu).forEach(uid=>{
+    const id = 'n'+Date.now()+Math.random().toString(36).slice(2,6);
+    window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+id), {id, type:'okr_reuniao', title:titulo, sub:sub||'', okrEventoId:ev.id, okrEventoData:data||'', read:false, ts:new Date().toISOString()}).catch(()=>{});
+  });
+}
+function _okrCalAvisaConvidados(acao, ev, novos, dataOc){
+  const conv = novos || _okrCalLista(ev.convidados); if(!conv.length) return;
+  const autor = window._currentUser?.displayName || window._currentUser?.email || 'Alguém', data = dataOc || _okrCalProxData(ev);
+  const titulo = acao==='convite' ? `📩 ${autor} te convidou: ${ev.titulo}` : (acao==='cancelada' ? `🚫 Cancelado: ${ev.titulo}` : `✏️ Atualizado: ${ev.titulo}`);
+  _okrCalNotificaPessoas(conv, titulo, _okrCalQuandoTxt(ev, data)+' · '+_okrCalAgendaNome(ev.torre), ev, data);
+}
+function _okrCalPessoaChip(uid, remover){
+  const p = _okrPessoaInfo(uid);
+  return `<span class="okr-ev-pessoa">${esc(p.nome)}${remover?`<button type="button" onclick="_okrEvDelConv(${jsq(uid)})" title="Remover convidado" aria-label="Remover ${esc(p.nome)}">✕</button>`:''}</span>`;
+}
+
 // ── detalhe do evento (com pauta sugerida) ──
-let _okrEvdId = null, _okrEvdData = null, _okrEvdPautaTodos = false;
+let _okrEvdId = null, _okrEvdData = null, _okrEvdPautaTodos = false, _okrEvdNotas = {}, _okrEvdVinc = null, _okrEvdOff = [];
+const OKR_CAL_NOTAS = 'kanban/okr/calendario/notas', OKR_CAL_VINC = 'kanban/okr/calendario/vinculos';
+// Anotações pós-reunião: kanban/okr/calendario/notas/{eventoId}/{data}/{notaId} = {texto, autorUid, ts}. Vínculo com a apresentação do OKR:
+// kanban/okr/calendario/vinculos/{eventoId}/{data} = {apresentacao:true, por, ts} — quando a reunião foi conduzida pela okr-apresentacao.slide.html,
+// as anotações dela (kanban/okr/reuniao_notas/{data}) aparecem aqui também. Só escuta o evento/data abertos (nada carregado à toa).
+function _okrEvdSolta(){ _okrEvdOff.forEach(f=>{ try{ f(); }catch(e){} }); _okrEvdOff = []; _okrEvdNotas = {}; _okrEvdVinc = null; }
+function _okrEvdEscuta(){
+  _okrEvdSolta(); const id = _okrEvdId, d = _okrEvdData; if(!id || !d) return;
+  const w = window, dentro = ()=>_okrEvdId===id && _okrEvdData===d;
+  const a = w._onValue(w._ref(w._db, OKR_CAL_NOTAS+'/'+id+'/'+d), snap=>{ if(!dentro()) return; _okrEvdNotas = snap.val() || {}; renderOkrEventoDetalhe(); }, ()=>{});
+  const b = w._onValue(w._ref(w._db, OKR_CAL_VINC+'/'+id+'/'+d), snap=>{ if(!dentro()) return; _okrEvdVinc = snap.val() || null; renderOkrEventoDetalhe(); }, ()=>{});
+  _okrEvdOff = [a,b].filter(f=>typeof f==='function');
+}
 function openOkrEvento(id, data){
   const ev = okrEventos[id]; if(!ev){ showToast('⚠ Esse evento não existe mais.'); return; }
   _okrEvdId = id; _okrEvdData = data || ev.data; _okrEvdPautaTodos = false;
-  document.getElementById('okr-evd-ov')?.classList.add('open'); renderOkrEventoDetalhe();
+  document.getElementById('okr-evd-ov')?.classList.add('open'); renderOkrEventoDetalhe(); _okrEvdEscuta();
 }
-function closeOkrEvento(){ document.getElementById('okr-evd-ov')?.classList.remove('open'); _okrEvdId = null; }
+function closeOkrEvento(){ document.getElementById('okr-evd-ov')?.classList.remove('open'); _okrEvdSolta(); _okrEvdId = null; }
+function _okrEvdNotaAdd(){
+  const inp = document.getElementById('okr-evd-notainp'); if(!inp || window._isPainelViewer || !window._currentUser) return;
+  const texto = (inp.value||'').trim(); if(!texto) return;
+  const ev = okrEventos[_okrEvdId]; if(!ev) return;
+  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6), mencionados = _okrMencoesDoTexto(texto), data = _okrEvdData, evId = _okrEvdId;
+  window._set(window._ref(window._db, OKR_CAL_NOTAS+'/'+evId+'/'+data+'/'+id), {texto, autorUid:window._currentUser.uid, ts:new Date().toISOString()})
+    .then(()=>{ if(mencionados.length){ const autor = window._currentUser.displayName || window._currentUser.email || '?'; _okrCalNotificaPessoas(mencionados, `💬 ${autor} te mencionou nas anotações de "${ev.titulo}"`, texto.length>110 ? texto.slice(0,110)+'…' : texto, ev, data); } })
+    .catch(e=>showToast('❌ '+(e?.message||e)));
+  inp.value = '';
+}
+function _okrEvdNotaDel(nid){
+  const n = _okrEvdNotas[nid], ev = okrEventos[_okrEvdId]; if(!n || !ev) return;
+  if(n.autorUid!==window._currentUser?.uid && !_okrCalPodeEditar(ev)){ showToast('⚠ Só quem escreveu (ou ADM/organizador) apaga a anotação.'); return; }
+  window._remove(window._ref(window._db, OKR_CAL_NOTAS+'/'+_okrEvdId+'/'+_okrEvdData+'/'+nid)).catch(e=>showToast('❌ '+(e?.message||e)));
+}
+function _okrEvdMencionar(uid){ const inp = document.getElementById('okr-evd-notainp'); if(!inp || !uid) return; const p = _okrPessoaInfo(uid); inp.value += (inp.value && !/\s$/.test(inp.value) ? ' ' : '')+'@'+p.nome+' '; inp.focus(); const sel = document.getElementById('okr-evd-mencsel'); if(sel) sel.value = ''; }
+function _okrEvdVincular(sim){
+  const ref = window._ref(window._db, OKR_CAL_VINC+'/'+_okrEvdId+'/'+_okrEvdData);
+  (sim ? window._set(ref, {apresentacao:true, por:window._currentUser?.uid||'', ts:new Date().toISOString()}) : window._remove(ref)).catch(e=>showToast('❌ '+(e?.message||e)));
+}
+function _okrEvdAbrirNotasDia(d){ closeOkrEvento(); _okrSetView('notas'); if(window._okrNotasSetViewDate) window._okrNotasSetViewDate(d); }
+function _okrEvdNotasHtml(ev){
+  const ro = !!window._isPainelViewer, meu = window._currentUser?.uid, d = _okrEvdData;
+  const notas = Object.entries(_okrEvdNotas).filter(([,n])=>n).sort((a,b)=>String(a[1].ts||'').localeCompare(String(b[1].ts||'')));
+  const apr = Object.entries(okrReuniaoNotas[d]||{}).filter(([,n])=>n).sort((a,b)=>String(a[1].ts||'').localeCompare(String(b[1].ts||'')));
+  const vinc = !!(_okrEvdVinc && _okrEvdVinc.apresentacao);
+  const hora = ts=>ts ? new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+  const nota = ([id,n],extra)=>`<div class="okr-evn-nota${extra||''}"><span class="qt">${hora(n.ts)}${(!extra && (n.autorUid===meu || _okrCalPodeEditar(ev)) && !ro)?` <span style="cursor:pointer;" title="Excluir" onclick="_okrEvdNotaDel(${jsq(id)})">✕</span>`:''}</span><b>${esc((_okrPessoaInfo(n.autorUid).nome||'—').split(' ')[0])}</b><br>${_okrMencaoHtml(n.texto||'').replace(/\n/g,'<br>')}</div>`;
+  let h = `<div class="okr-field-label" style="margin-top:16px;">📝 Anotações pós-reunião <span class="mut" style="text-transform:none;letter-spacing:0;">— desta ocorrência (${esc(_okrCalDataBR(d,true))})</span></div>
+    <div class="okr-evn-lista">${notas.length ? notas.map(x=>nota(x)).join('') : '<div class="mut" style="font-size:11.5px;">Nenhuma anotação ainda.</div>'}</div>`;
+  if(!ro) h += `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">
+      <textarea class="okr-input" id="okr-evd-notainp" rows="3" maxlength="4000" placeholder="Ata, decisões, próximos passos… (use @Nome pra avisar alguém)" style="flex:1;min-width:220px;resize:vertical;"></textarea>
+      <div style="display:flex;flex-direction:column;gap:6px;"><button type="button" class="btn btn-p btn-sm" onclick="_okrEvdNotaAdd()">Adicionar</button>
+      <select class="okr-select" id="okr-evd-mencsel" onchange="_okrEvdMencionar(this.value)" style="width:120px;" title="Inserir uma menção"><option value="">@ mencionar</option>${_okrPessoaOptions().filter(p=>p.uid!==meu).sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${esc(p.uid)}">${esc(p.nome)}</option>`).join('')}</select></div></div>`;
+  // vínculo com a apresentação do OKR
+  if(vinc){
+    h += `<div class="okr-field-label" style="margin-top:14px;">🎥 Anotações da apresentação do OKR <span class="mut" style="text-transform:none;letter-spacing:0;">— reunião feita por ela (${esc(_okrCalDataBR(d,true))})</span></div>
+      <div class="okr-evn-lista">${apr.length ? apr.map(x=>nota(x,' okr-evn-apr')).join('') : '<div class="mut" style="font-size:11.5px;">Nenhuma anotação registrada na apresentação neste dia.</div>'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn btn-sm" onclick="_okrEvdAbrirNotasDia(${jsq(d)})">📋 Abrir na tela de anotações</button>
+      <a class="btn btn-sm" href="okr-apresentacao.slide.html" target="_blank" rel="noopener" style="text-decoration:none;">🎥 Abrir a apresentação</a>
+      ${!ro?`<button type="button" class="btn btn-sm" onclick="_okrEvdVincular(false)">Desvincular</button>`:''}</div>`;
+  } else if(!ro){
+    h += `<div style="margin-top:12px;"><button type="button" class="btn btn-sm" onclick="_okrEvdVincular(true)" title="Liga esta reunião às anotações da apresentação do OKR do mesmo dia">🔗 ${apr.length ? 'Há '+apr.length+' anotação(ões) da apresentação neste dia — vincular a esta reunião' : 'Esta reunião foi feita pela apresentação do OKR? Vincular'}</button></div>`;
+  }
+  return h;
+}
 function renderOkrEventoDetalhe(){
   const ev = okrEventos[_okrEvdId], body = document.getElementById('okr-evd-body'); if(!body) return;
   if(!ev){ closeOkrEvento(); return; }
+  const rascunho = document.getElementById('okr-evd-notainp')?.value || '';   // um snapshot novo não pode apagar o que a pessoa está digitando
   const tp = OKR_CAL_TIPOS[ev.tipo] || OKR_CAL_TIPOS.evento, ti = ev.torre ? okrTorreInfo(ev.torre) : null, pode = _okrCalPodeEditar(ev);
   document.getElementById('okr-evd-title').textContent = tp.ico+' '+tp.label;
   const areas = _okrCalLista(ev.areaIds).map(a=>okrGerenciaIcon(a, ev.torre||'digital')+' '+okrGerenciaLabel(a, ev.torre||'digital'));
-  const pauta = _okrCalPauta(ev, _okrEvdData), vis = _okrEvdPautaTodos ? pauta : pauta.slice(0, 8);
+  const pauta = _okrCalPauta(ev, _okrEvdData), vis = _okrEvdPautaTodos ? pauta : pauta.slice(0, 5);
   const link = safeUrl(ev.link);
   body.innerHTML = `
     <div class="okr-evd-tit">${esc(ev.titulo||'(sem título)')}</div>
@@ -5008,11 +5129,14 @@ function renderOkrEventoDetalhe(){
     <div class="okr-evd-linha">${ti?`<span class="okr-torre-chip okr-t-${ti.id}">${ti.icon} ${esc(_okrCalAgendaNome(ev.torre))}</span>`:'<span class="okr-torre-chip okr-t-todas">🌐 Agenda global · todas as torres</span>'}${areas.map(a=>` <span class="badge">${esc(a)}</span>`).join('')}</div>
     ${ev.local?`<div class="okr-evd-linha">📍 ${esc(ev.local)}</div>`:''}
     ${link?`<div class="okr-evd-linha">🔗 <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${esc(link.length>60?link.slice(0,58)+'…':link)}</a></div>`:''}
+    ${_okrCalLista(ev.convidados).length?`<div class="okr-field-label" style="margin-top:10px;">👥 Convidados</div><div class="okr-evd-pessoas">${_okrCalLista(ev.convidados).map(u=>_okrCalPessoaChip(u,false)).join('')}</div>`:''}
     ${ev.descricao?`<div class="okr-evd-desc">${esc(ev.descricao).replace(/\n/g,'<br>')}</div>`:''}
     ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
       ${vis.map(p=>`<div class="okr-cal-pauta-row" onclick="closeOkrEvento();openOkrObjetivo(${jsq(p.o.id)})" title="Abrir o Objetivo">${okrStatusDot(p.st)}<span style="flex:1;min-width:0;">${esc(p.o.titulo||'(sem título)')}</span>${p.flags.map(f=>`<span class="okr-cal-flag${f.w?' w':''}">${esc(f.t)}</span>`).join('')}</div>`).join('')}
       ${pauta.length>vis.length?`<button type="button" class="btn btn-sm" style="margin-top:4px;" onclick="_okrEvdPautaTodos=true;renderOkrEventoDetalhe()">Mostrar todos (${pauta.length})</button>`:''}`:''}
+    ${_okrEvdNotasHtml(ev)}
     ${pode?`<div class="okr-evd-acoes"><button type="button" class="btn btn-sm" onclick="openOkrEventoEditor(${jsq(ev.id)})">✏️ Editar</button><button type="button" class="btn btn-sm" style="color:var(--danger);" onclick="_okrEvExcluir(${jsq(ev.id)},${jsq(_okrEvdData)})">🗑 Excluir</button></div>`:''}`;
+  if(rascunho){ const i = document.getElementById('okr-evd-notainp'); if(i) i.value = rascunho; }
 }
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
@@ -5044,9 +5168,11 @@ async function _okrEvExcluir(id, data){
       const r = await _okrCalEscolha('Excluir "'+(ev.titulo||'evento')+'"?', [{id:'esta', label:'Só esta ocorrência ('+_okrCalDataBR(data,true)+')'}, {id:'serie', label:'Toda a série', danger:true}, {id:'', label:'Cancelar'}]);
       if(!r) return;
       if(r==='esta') await window._update(ref('/excecoes'), {[data]:true}); else await window._remove(ref());
+      if(data>=todaySPStr()){ _okrCalAvisaFeed('cancelada', ev, data); _okrCalAvisaConvidados('cancelada', ev, null, data); }
     } else {
       if(!await uiConfirm('Excluir "'+(ev.titulo||'este evento')+'"?', {danger:true, okText:'Excluir'})) return;
       await window._remove(ref());
+      if(ev.data>=todaySPStr()){ _okrCalAvisaFeed('cancelada', ev, ev.data); _okrCalAvisaConvidados('cancelada', ev, null, ev.data); }
     }
     showToast('🗑 Evento excluído.'); closeOkrEvento();
   }catch(e){ showToast('❌ '+(e?.message||e)); }
@@ -5064,7 +5190,9 @@ function openOkrEventoEditor(id, dataPadrao){
   const rn = ev ? _okrCalRecNorm(ev) : null, pre = rn && OKR_CAL_REC.find(x=>x.id===rn.tipo && x.unidade===rn.unidade && x.intervalo===rn.intervalo);
   _okrEvEditId = id || null;
   _okrEvDraft = ev ? { ...JSON.parse(JSON.stringify(ev)), areaIds:_okrCalLista(ev.areaIds), objetivoIds:_okrCalLista(ev.objetivoIds) }
-    : { tipo:'reuniao', titulo:'', data:dataPadrao || _okrCalSel || todaySPStr(), diaInteiro:false, hi:'10:00', hf:'11:00', torre, areaIds:[], objetivoIds:[], local:'', link:'', descricao:'' };
+    : { tipo:'reuniao', titulo:'', data:dataPadrao || _okrCalSel || todaySPStr(), diaInteiro:false, hi:'10:00', hf:'11:00', torre, areaIds:[], objetivoIds:[], convidados:[], local:'', link:'', descricao:'' };
+  _okrEvDraft.convidados = _okrCalLista(_okrEvDraft.convidados);
+  { const l = (ev && ev.lembrar) || {}; _okrEvDraft._lvesp = l.vespera!==undefined ? !!l.vespera : true; _okrEvDraft._ldia = l.dia!==undefined ? !!l.dia : true; _okrEvDraft._avisar = true; }
   _okrEvDraft._recTipo = rn ? (pre ? pre.id : 'personalizada') : 'nenhuma';
   _okrEvDraft._recN = rn ? rn.intervalo : 1; _okrEvDraft._recU = rn ? rn.unidade : 'semana'; _okrEvDraft._recAte = rn ? rn.ate : '';
   document.getElementById('okr-ev-title').textContent = ev ? '✏️ Editar evento' : '📅 Novo evento';
@@ -5077,9 +5205,12 @@ function _okrEvSync(){
   const g = id=>document.getElementById(id); if(!g('okr-ev-titulo')) return;
   d.titulo = g('okr-ev-titulo').value; d.tipo = g('okr-ev-tipo').value; d.data = g('okr-ev-data').value; d.diaInteiro = g('okr-ev-dia').checked;
   d.hi = g('okr-ev-hi').value; d.hf = g('okr-ev-hf').value; d.torre = g('okr-ev-torre').value; d.local = g('okr-ev-local').value; d.link = g('okr-ev-link').value; d.descricao = g('okr-ev-desc').value;
+  if(g('okr-ev-lvesp')){ d._lvesp = g('okr-ev-lvesp').checked; d._ldia = g('okr-ev-ldia').checked; d._avisar = g('okr-ev-avisar').checked; }
   d._recTipo = g('okr-ev-rec').value; if(g('okr-ev-recn')){ d._recN = g('okr-ev-recn').value; d._recU = g('okr-ev-recu').value; } d._recAte = g('okr-ev-recate') ? g('okr-ev-recate').value : '';
 }
 function _okrEvRerender(){ _okrEvSync(); const d = _okrEvDraft; const ok = new Set(d.torre ? okrGerenciasDa(d.torre).map(x=>x.id) : []); d.areaIds = d.areaIds.filter(a=>ok.has(a)); renderOkrEventoEditor(); }
+function _okrEvAddConv(uid){ _okrEvSync(); const d = _okrEvDraft; if(uid && !d.convidados.includes(uid)) d.convidados.push(uid); renderOkrEventoEditor(); }
+function _okrEvDelConv(uid){ _okrEvSync(); const d = _okrEvDraft; d.convidados = d.convidados.filter(x=>x!==uid); renderOkrEventoEditor(); }
 function _okrEvToggleArea(a){ _okrEvSync(); const d = _okrEvDraft, i = d.areaIds.indexOf(a); if(i>=0) d.areaIds.splice(i,1); else d.areaIds.push(a); renderOkrEventoEditor(); }
 function _okrEvToggleObj(id){ _okrEvSync(); const d = _okrEvDraft, i = d.objetivoIds.indexOf(id); if(i>=0) d.objetivoIds.splice(i,1); else d.objetivoIds.push(id); _okrEvRenderObjList(); }
 function _okrEvRenderObjList(){
@@ -5100,7 +5231,7 @@ function renderOkrEventoEditor(){
     <div class="okr-field-label">Título</div>
     <input type="text" class="okr-input" id="okr-ev-titulo" maxlength="120" value="${esc(d.titulo)}" placeholder="Ex.: Check-in OKR — Bloco 1">
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-      <div style="flex:1;min-width:130px;"><div class="okr-field-label">Tipo</div><select class="okr-select" id="okr-ev-tipo">${Object.entries(OKR_CAL_TIPOS).map(([k,v])=>`<option value="${k}"${d.tipo===k?' selected':''}>${v.ico} ${v.label}</option>`).join('')}</select></div>
+      <div style="flex:1;min-width:130px;"><div class="okr-field-label">Tipo</div><select class="okr-select" id="okr-ev-tipo" onchange="_okrEvRerender()">${Object.entries(OKR_CAL_TIPOS).map(([k,v])=>`<option value="${k}"${d.tipo===k?' selected':''}>${v.ico} ${v.label}</option>`).join('')}</select></div>
       <div style="flex:1;min-width:150px;"><div class="okr-field-label">Data</div><input type="date" class="okr-input" id="okr-ev-data" value="${esc(d.data)}"></div>
       <div style="flex:1;min-width:110px;"><div class="okr-field-label">Início</div><input type="time" class="okr-input" id="okr-ev-hi" value="${esc(d.hi||'')}" ${d.diaInteiro?'disabled':''}></div>
       <div style="flex:1;min-width:110px;"><div class="okr-field-label">Fim</div><input type="time" class="okr-input" id="okr-ev-hf" value="${esc(d.hf||'')}" ${d.diaInteiro?'disabled':''}></div>
@@ -5119,12 +5250,22 @@ function renderOkrEventoEditor(){
     <div class="okr-field-label" style="margin-top:12px;">Objetivos vinculados <span class="mut" style="text-transform:none;letter-spacing:0;">(opcional — vira a pauta e aparece no Objetivo)</span></div>
     <input type="text" class="okr-input" id="okr-ev-objq" placeholder="🔎 Buscar Objetivo…" oninput="_okrEvRenderObjList()" style="margin-bottom:6px;">
     <div id="okr-ev-objlist" class="okr-ev-objlist"></div>
+    <div class="okr-field-label" style="margin-top:12px;">👥 Convidados <span class="mut" style="text-transform:none;letter-spacing:0;">(recebem as notificações desta agenda: convite, mudanças, véspera e dia)</span></div>
+    <div class="okr-ev-conv">${d.convidados.map(u=>_okrCalPessoaChip(u,true)).join('') || '<span class="mut" style="font-size:11px;">Ninguém convidado ainda — quem tem Objetivo na pauta já é avisado.</span>'}</div>
+    <select class="okr-select" id="okr-ev-convsel" onchange="_okrEvAddConv(this.value)"><option value="">+ Adicionar convidado…</option>${_okrPessoaOptions().filter(p=>!d.convidados.includes(p.uid)).sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${esc(p.uid)}">${esc(p.nome)}</option>`).join('')}</select>
+    <div class="okr-field-label" style="margin-top:12px;">🔔 Avisos</div>
+    <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--txt2);">
+      <label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-avisar" ${d._avisar?'checked':''}> Avisar agora no sino (agenda nova ou mudança de data, horário ou local)</label>
+      ${d.tipo==='lembrete'?'':`<label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-lvesp" ${d._lvesp?'checked':''}> Lembrar na véspera (às 7h)</label>`}
+      ${d.tipo==='lembrete'?`<input type="checkbox" id="okr-ev-lvesp" style="display:none;" ${d._lvesp?'checked':''}>`:''}
+      <label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-ldia" ${d._ldia?'checked':''}> Lembrar no dia (às 7h)</label>
+    </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
       <div style="flex:1;min-width:170px;"><div class="okr-field-label">Local</div><input type="text" class="okr-input" id="okr-ev-local" maxlength="120" value="${esc(d.local||'')}" placeholder="Sala, endereço…"></div>
       <div style="flex:1;min-width:170px;"><div class="okr-field-label">Link da reunião (https)</div><input type="text" class="okr-input" id="okr-ev-link" maxlength="400" value="${esc(d.link||'')}" placeholder="https://meet.google.com/…"></div>
     </div>
     <div class="okr-field-label" style="margin-top:12px;">Descrição</div>
-    <textarea class="okr-input" id="okr-ev-desc" rows="3" maxlength="2000" style="resize:vertical;">${esc(d.descricao||'')}</textarea>`;
+    <textarea class="okr-input" id="okr-ev-desc" rows="8" maxlength="4000" style="resize:vertical;" placeholder="Pauta, contexto, links de apoio…">${esc(d.descricao||'')}</textarea>`;
   _okrEvRenderObjList();
 }
 async function saveOkrEvento(){
@@ -5148,11 +5289,17 @@ async function saveOkrEvento(){
   }
   const ts = new Date().toISOString(), id = _okrEvEditId || ('ev'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
   const ev = { id, titulo, tipo:d.tipo, data:d.data, diaInteiro:!!d.diaInteiro, hi:d.diaInteiro?'':(d.hi||''), hf:d.diaInteiro?'':(d.hf||''), torre:d.torre||'',
-    areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
+    areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), convidados:d.convidados.slice(), lembrar:{vespera:!!d._lvesp, dia:!!d._ldia}, local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
     excecoes:(antigo && antigo.excecoes) || {}, criadoPor:(antigo && antigo.criadoPor) || {uid:u.uid, nome:u.displayName||u.email||'?'}, criadoEm:(antigo && antigo.criadoEm) || ts, atualizadoEm:ts };
   try{
     await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+id), ev);
-    showToast('✅ Evento salvo.'); closeOkrEventoEditor();
+    const avisar = d._avisar; closeOkrEventoEditor();
+    // avisos: sino da agenda (só se for novo ou mudou algo que importa) + convidados (novos = convite; os que já estavam = só se mudou)
+    const mudou = _okrCalMudou(antigo, ev), jaConv = _okrCalLista(antigo && antigo.convidados), novosConv = ev.convidados.filter(u=>!jaConv.includes(u));
+    if(avisar && (!antigo || mudou)) _okrCalAvisaFeed(antigo ? 'mudou' : 'novo', ev);
+    if(novosConv.length) _okrCalAvisaConvidados('convite', ev, novosConv);
+    if(antigo && mudou && avisar){ const ficam = ev.convidados.filter(u=>jaConv.includes(u)); if(ficam.length) _okrCalAvisaConvidados('mudou', ev, ficam); }
+    showToast('✅ Evento salvo.');
     if(ev.data) { _okrCalSel = ev.data; const t = _calParse(ev.data); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); }
     if(_okrShowCal) renderOkrCalendario();
   }catch(e){ showToast('❌ '+(e?.message||e)); }
