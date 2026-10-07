@@ -1125,6 +1125,7 @@ body{min-height:100vh;}
 .okr-online .online-pill img{width:20px;height:20px;border-radius:50%;object-fit:cover;flex:none;}
 .okr-online .online-ini{width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;background:rgba(56,182,255,.22);color:var(--accent);flex:none;}
 .okr-online .online-nome{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.okr-online .online-ext{font-size:10px;opacity:.8;flex:none;}
 .okr-online .online-voce{font-size:9px;color:var(--txt3);}
 .okr-online-mais{font-size:10px;color:var(--txt3);background:rgba(56,182,255,.1);padding:2px 8px;border-radius:999px;cursor:default;}
 
@@ -1636,7 +1637,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.18 · okr-dev</div>
+<div class="version">v2.19 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1784,16 +1785,17 @@ document.addEventListener('visibilitychange', ()=>{
 // (kanban/painel/okr_presence/{uid} — já coberto pelas regras de kanban/painel: escrita só da empresa, leitura também
 // de visualizador), pra mostrar quem está NESTA página agora. Heartbeat de 15 s, pausado em aba oculta e imediato
 // ao voltar; sem onDisconnect — quem some é cortado pelo prazo de 30 s na leitura (e um relógio de 10 s redesenha,
-// já que sair não gera evento nenhum). Visualizador externo vê a lista mas não aparece nela (não escreve).
+// já que sair não gera evento nenhum). Visualizador externo TAMBÉM aparece (escreve só a própria presença — regra em database.rules.json, kanban/painel/okr_presence/$uid) com o selo 👁.
 const OKR_PRESENCE_PATH = 'kanban/painel/okr_presence';
 const OKR_PRESENCE_TTL_MS = 30000;
 const OKR_PRESENCE_MAX_VISIVEIS = 12;
 let _okrPresenceMap = {};
 function _okrSendHeartbeat(){
   const u = window._currentUser;
-  if(!u || !window._fbReady || window._isPainelViewer) return;
-  window._update(window._ref(window._db, OKR_PRESENCE_PATH+'/'+u.uid),
-    {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''}).catch(()=>{});
+  if(!u || !window._fbReady) return;
+  const dado = {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''};
+  if(window._isPainelViewer) dado.externo = true;   // selo 👁 na lista; sem o campo = pessoa da empresa
+  window._update(window._ref(window._db, OKR_PRESENCE_PATH+'/'+u.uid), dado).catch(()=>{});
 }
 function _okrPresenceStart(){
   clearInterval(window._okrHeartbeat);
@@ -1814,14 +1816,14 @@ function renderOkrOnline(){
   const now = Date.now(), meuUid = window._currentUser?.uid;
   const on = Object.entries(_okrPresenceMap)
     .filter(([uid,u])=>u && u.nome && now-(+u.ts||0) < OKR_PRESENCE_TTL_MS)
-    .map(([uid,u])=>({uid, nome:String(u.nome), foto:u.foto||'', eu:uid===meuUid}))
+    .map(([uid,u])=>({uid, nome:String(u.nome), foto:u.foto||'', eu:uid===meuUid, ext:u.externo===true}))
     .sort((a,b)=> (b.eu-a.eu) || a.nome.localeCompare(b.nome));
   const vis = on.slice(0, OKR_PRESENCE_MAX_VISIVEIS), resto = on.length - vis.length;
   el.innerHTML = `<span class="okr-online-lbl" title="Quem está com a página do OKR aberta agora (atualiza a cada ~15 s)">🟢 Online no OKR <span class="badge">${on.length}</span></span>`
     + (on.length ? vis.map(u=>{
         const f = safeUrl(u.foto);
         const ini = esc(u.nome.split(/\s+/).filter(Boolean).map(w=>w[0]).join('').substring(0,2).toUpperCase() || '?');
-        return `<div class="online-pill${u.eu?' eu':''}" title="${esc(u.nome)}${u.eu?' (você)':''}"><span class="online-pip"></span>${f?`<img src="${f}" alt="">`:`<span class="online-ini">${ini}</span>`}<span class="online-nome">${esc(u.nome)}</span>${u.eu?'<span class="online-voce">(você)</span>':''}</div>`;
+        return `<div class="online-pill${u.eu?' eu':''}" title="${esc(u.nome)}${u.eu?' (você)':''}${u.ext?' — visualizador externo':''}"><span class="online-pip"></span>${f?`<img src="${f}" alt="">`:`<span class="online-ini">${ini}</span>`}<span class="online-nome">${esc(u.nome)}</span>${u.ext?'<span class="online-ext" title="Visualizador externo">👁</span>':''}${u.eu?'<span class="online-voce">(você)</span>':''}</div>`;
       }).join('') + (resto>0 ? `<span class="okr-online-mais" title="${esc(on.slice(OKR_PRESENCE_MAX_VISIVEIS).map(u=>u.nome).join(', '))}">+${resto}</span>` : '')
       : '<span style="font-size:11px;color:var(--txt3);">Ninguém online no momento.</span>');
 }

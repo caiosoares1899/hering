@@ -2745,7 +2745,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.15 · painel-dev</div>
+<div class="version">v5.16 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3334,7 +3334,7 @@ function renderOkrOnlineVisao(){
   if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no OKR no momento.</div>'; return; }
   el.innerHTML = all.map(u=>{
     const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
-    return '<div class="online-pill"><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span></div>';
+    return '<div class="online-pill"'+(u.externo===true?' title="Visualizador externo"':'')+'><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span>'+(u.externo===true?'<span style="font-size:10px;opacity:.8;">👁</span>':'')+'</div>';
   }).join('');
 }
 function renderPainelOnline(){
