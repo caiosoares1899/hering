@@ -1649,7 +1649,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.21 · okr-dev</div>
+<div class="version">v2.22 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5526,6 +5526,7 @@ const OKR_LOCK_STALE_MS = 10*60*1000, OKR_LOCK_HEARTBEAT_MS = 60*1000, OKR_LOCK_
 let okrObjLocks = {}, _okrLocksLoaded = false;
 let _okrLockOwned = null;         // id do Objetivo cuja trava ESTE cliente segura agora (null = nenhuma)
 let _okrLockRO = false;           // o Objetivo aberto está travado por OUTRA pessoa (modo leitura)
+let _okrLockSolto = false;        // soltei a trava DE PROPÓSITO (fechei/saí): o reconciliador não pode retomá-la quando o próprio eco da remoção chegar
 let _okrLockHb = null, _okrLockUiTick = null, _okrLockForceTimer = null, _okrLockStealTimer = null, _okrLockReqHandledAt = null, _okrLockSig = '';
 const _okrLockRef = id => window._ref(window._db, OKR_LOCK_PATH+'/'+id);
 function _okrLockPayload(){ const u = window._currentUser||{}; return {uid:u.uid||'', who:u.displayName||u.email||'?', ts:Date.now()}; }
@@ -5555,6 +5556,7 @@ function _okrLockTomar(id){
 }
 // Solta a trava (fechar o modal, sair da página) — só remove se ainda for MINHA (não apaga a de quem assumiu depois de mim).
 function _okrLockSoltar(){
+  _okrLockSolto = true;   // o RTDB dispara o ouvinte local de forma SÍNCRONA dentro do remove(): sem isto o eco da própria remoção reabria a trava (achado do teste de console)
   _okrLockStopHb(); _okrLockStopReq();
   const id = _okrLockOwned; _okrLockOwned = null; _okrLockRO = false;
   _okrLockUI();
@@ -5564,6 +5566,7 @@ function _okrLockSoltar(){
 }
 window.addEventListener('beforeunload', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
 window.addEventListener('pagehide', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
+window.addEventListener('pageshow', e=>{ if(e.persisted && _okrEditingObjId){ _okrLockSolto = false; _okrLockOnChange(); } });   // voltou do cache de navegação com o modal ainda aberto: retoma a trava
 
 // Aviso do modal (nos dois lados) + botão de pedir.
 function _okrLockUI(){
@@ -5649,7 +5652,7 @@ function _okrLockOnChange(silencioso){
   } else if(outro){
     const virouRO = !_okrLockRO; _okrLockRO = true; _okrLockUI(); _okrLockHandleReq(id, lock, false);
     if(virouRO && !silencioso) _okrLockRerender();
-  } else {
+  } else if(!_okrLockSolto){
     const eraRO = _okrLockRO; _okrLockTomar(id); _okrLockUI(); _okrLockHandleReq(id, okrObjLocks[id], true);
     // herdei a trava de quem saiu/liberou: os campos na tela são os de quando abri — reabre com o dado fresco, como o kanban faz
     if(eraRO && !silencioso) setTimeout(()=>{ if(_okrEditingObjId===id && _okrLockOwned===id) openOkrObjetivo(id); }, 0);
@@ -5672,7 +5675,7 @@ function openOkrObjetivo(id){
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
   if(_okrLockOwned!==id) _okrLockSoltar();   // trava de OUTRO Objetivo (sessão anterior) sai antes; reabrir o mesmo (herdar trava) não solta pra não abrir janela
-  _okrLockRO = false;
+  _okrLockRO = false; _okrLockSolto = false;
   if(id){ if(_okrLocksLoaded) _okrLockOnChange(true); else window._get(_okrLockRef(id)).then(sn=>{ const v=sn.val(); if(v) okrObjLocks[id]=v; else delete okrObjLocks[id]; _okrLocksLoaded = true; if(_okrEditingObjId===id) _okrLockOnChange(); }).catch(()=>{}); }
   _okrAtingForm = {data:'', valor:'', atingido:false, nota:''};
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; }); // sessão nova: nada de texto pendente do Objetivo anterior
@@ -5702,8 +5705,9 @@ function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   document.getElementById('okr-obj-config-ov')?.classList.remove('open');
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; });
+  const _idFechando = _okrEditingObjId;
+  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;   // sessão encerrada ANTES de soltar a trava
   _okrLockSoltar();
-  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
 }
 
 
