@@ -2728,7 +2728,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.6 · painel-dev</div>
+<div class="version">v5.7 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8023,6 +8023,7 @@ function addPainelViewer(origem){
   const email=emailInp?.value?.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
   if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) já têm acesso, não precisam ser adicionados aqui.'); return; }
+  if((email.match(/\./g)||[]).length>8){ showToast('❌ Esse e-mail tem pontos demais (máx. 8): as regras do banco só conseguem localizar até 8 pontos no e-mail, e a pessoa ficaria autorizada aqui mas barrada ao entrar.'); return; }   // as regras trocam no máx. 8 pontos por vírgula ao procurar a chave
   const key=_painelViewerKey(email);
   const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+key), entry)
