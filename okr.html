@@ -500,6 +500,73 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    e o hook em rebuild() de lá). Canto absoluto fixo pra não disputar espaço
    com a linha de ▲▼ (que só aparece com podeReordenar), nem com o resto do
    card — sempre visível, qualquer um pode conferir como ficou. */
+/* ── 📅 Calendário do OKR ── */
+.okr-t-todas{--torre:150,170,195;}
+.okr-cal-bar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 12px;}
+.okr-cal-title{font-family:'DM Sans',sans-serif;font-weight:600;font-size:17px;min-width:150px;text-align:center;}
+.okr-cal-title::first-letter,.okr-cal-agday::first-letter,.okr-evd-quando::first-letter{text-transform:uppercase;}
+.okr-cal-seg{display:inline-flex;border:1px solid var(--glass-b);border-radius:9px;overflow:hidden;}
+.okr-cal-seg button{background:none;border:none;color:var(--txt2);padding:5px 12px;font-size:11px;cursor:pointer;font-family:inherit;}
+.okr-cal-seg button.on{background:rgba(56,182,255,.2);color:var(--accent);font-weight:700;}
+.okr-cal-gl{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;}
+.okr-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;}
+.okr-cal-dow{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);text-align:center;padding:4px 0;}
+.okr-cal-cell{min-height:98px;background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:9px;padding:5px;cursor:pointer;display:flex;flex-direction:column;gap:3px;overflow:hidden;min-width:0;}
+.okr-cal-cell.fora{opacity:.42;}
+.okr-cal-cell.hoje{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;}
+.okr-cal-cell.sel{background:rgba(56,182,255,.13);}
+.okr-cal-dn{font-size:11px;font-weight:700;color:var(--txt2);}
+.okr-cal-cell.hoje .okr-cal-dn{color:var(--accent);}
+.okr-cal-chip{display:block;width:100%;text-align:left;border:none;border-left:3px solid rgb(var(--torre,56,182,255));background:rgba(var(--torre,56,182,255),.17);color:var(--txt);border-radius:5px;padding:2px 5px;font-size:10.5px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:inherit;}
+.okr-cal-chip.prazo{--torre:255,193,7;border-left-color:#ffc107;background:rgba(255,193,7,.12);}
+.okr-cal-more{font-size:10px;color:var(--txt3);}
+.okr-cal-dots{display:none;gap:3px;flex-wrap:wrap;justify-content:center;}
+.okr-cal-dot{width:7px;height:7px;border-radius:50%;background:rgb(var(--torre,56,182,255));}
+.okr-cal-dot.prazo{background:#ffc107;}
+.okr-cal-migra{display:flex;gap:14px;align-items:center;flex-wrap:wrap;background:rgba(56,182,255,.10);border:1px solid rgba(56,182,255,.35);border-radius:11px;padding:11px 14px;margin:0 0 12px;font-size:12px;color:var(--txt2);line-height:1.55;}
+.okr-cal-migra>div{flex:1;min-width:240px;}
+.okr-cal-agday{font-size:12px;font-weight:700;color:var(--txt2);margin:14px 0 6px;}
+.okr-cal-item{display:flex;gap:12px;align-items:flex-start;padding:9px 12px;border:1px solid var(--glass-b);border-left:4px solid rgb(var(--torre,56,182,255));border-radius:9px;background:rgba(var(--ink-rgb),.4);cursor:pointer;margin-bottom:6px;}
+.okr-cal-item:hover{background:rgba(var(--torre,56,182,255),.1);}
+.okr-cal-item.prazo{--torre:255,193,7;}
+.okr-cal-item .hr{min-width:56px;font-size:11px;color:var(--txt3);line-height:1.4;}
+.okr-cal-item .tt{font-size:12.5px;font-weight:600;}
+.okr-cal-item .sb{font-size:11px;color:var(--txt3);margin-top:2px;}
+.okr-cal-prox{display:flex;flex-direction:column;gap:4px;}
+.okr-cal-prox button{text-align:left;background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:8px;padding:6px 10px;font-size:12px;color:var(--txt2);cursor:pointer;font-family:inherit;}
+.okr-cal-prox button:hover{border-color:var(--accent);}
+.okr-cal-cardchip{display:inline-flex;align-items:center;font-size:10px;padding:1px 8px;border-radius:999px;background:rgba(56,182,255,.14);color:var(--accent);border:1px solid rgba(56,182,255,.35);}
+.okr-cal-pauta-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 9px;border:1px solid var(--glass-b);border-radius:8px;margin-bottom:5px;font-size:12px;cursor:pointer;background:rgba(var(--ink-rgb),.35);}
+.okr-cal-pauta-row:hover{border-color:var(--accent);}
+.okr-cal-flag{font-size:10px;padding:1px 7px;border-radius:999px;background:rgba(255,107,107,.15);color:var(--danger);border:1px solid rgba(255,107,107,.35);white-space:nowrap;}
+.okr-cal-flag.w{background:rgba(255,193,7,.14);color:var(--warn);border-color:rgba(255,193,7,.35);}
+.okr-evd-tit{font-family:'DM Sans',sans-serif;font-weight:600;font-size:18px;margin-bottom:6px;}
+.okr-evd-quando{font-size:13px;color:var(--txt);margin-bottom:6px;}
+.okr-evd-linha{font-size:12px;color:var(--txt2);margin-bottom:6px;}
+.okr-evd-desc{font-size:12.5px;color:var(--txt2);line-height:1.6;background:rgba(var(--ink-rgb),.35);border:1px solid var(--glass-b);border-radius:9px;padding:9px 11px;margin-top:8px;}
+.okr-evd-acoes{display:flex;gap:8px;margin-top:16px;}
+.okr-ev-chip{background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);color:var(--txt2);border-radius:999px;padding:4px 11px;font-size:11.5px;cursor:pointer;font-family:inherit;}
+.okr-ev-chip.on{background:rgba(56,182,255,.2);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.okr-ev-objlist{flex-shrink:0;max-height:150px;overflow-y:auto;border:1px solid var(--glass-b);border-radius:9px;padding:6px 8px;display:flex;flex-direction:column;gap:3px;background:rgba(var(--ink-rgb),.35);}
+.okr-ev-conv{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;}
+.okr-ev-pessoa{display:inline-flex;align-items:center;gap:6px;background:rgba(56,182,255,.14);border:1px solid rgba(56,182,255,.35);color:var(--accent);border-radius:999px;padding:3px 6px 3px 11px;font-size:11.5px;}
+.okr-ev-pessoa button{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:0 3px;font-family:inherit;}
+#okr-ev-body>*,#okr-evd-body>*{flex-shrink:0;}
+#okr-ev-desc{min-height:150px;line-height:1.5;}
+.okr-evd-pessoas{display:flex;flex-wrap:wrap;gap:6px;}
+.okr-evn-lista{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.okr-evn-nota{background:rgba(var(--ink-rgb),.4);border:1px solid var(--glass-b);border-radius:9px;padding:8px 10px;font-size:12px;color:var(--txt2);line-height:1.5;}
+.okr-evn-nota .qt{font-size:10px;color:var(--txt3);float:right;}
+.okr-evn-apr{border-left:3px solid #1de9b6;}
+.okr-ev-obj{display:flex;align-items:flex-start;gap:7px;font-size:12px;color:var(--txt2);cursor:pointer;}
+@media(max-width:760px){
+  .okr-cal-cell{min-height:50px;padding:3px;align-items:center;}
+  .okr-cal-chips{display:none;}
+  .okr-cal-dots{display:flex;}
+  .okr-cal-title{font-size:15px;min-width:0;}
+  .okr-cal-bar{gap:6px;}
+}
+.okr-lock-chip{display:inline-flex;align-items:center;gap:4px;font-size:10px;padding:1px 8px;border-radius:999px;background:rgba(255,209,102,.14);border:1px solid rgba(255,209,102,.4);color:var(--warn);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .okr-preview-btn{position:absolute;top:8px;right:8px;width:24px;height:24px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);border-radius:7px;font-size:12px;color:var(--txt2);cursor:pointer;z-index:1;}
 
 .okr-preview-btn:hover{border-color:var(--accent);color:var(--accent);}
@@ -548,10 +615,40 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
       (clica de novo pra limpar) — não duplica lógica nova, só expõe o
       mesmo _okrSetFilter('status',…) de um jeito mais rápido de bater o
       olho que abrir o <select>. */
-.okr-stats-strip{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+/* ── Cabeçalho do OKR em níveis (redesenho 2026-10-07): título + ações · abas · filtros ── */
+.okr-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:4px 0 10px;}
+.okr-head-k{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--txt3);margin-bottom:2px;}
+.okr-head-t{font-family:'DM Sans',sans-serif;font-size:19px;font-weight:600;letter-spacing:0;margin:0;line-height:1.2;}   /* DM Sans (a fonte do corpo), não a de display: o título com Syne extrabold parecia "gerado por IA" */
+.okr-head-acoes{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.okr-head-acoes .btn{font-size:12px;padding:7px 14px;}
+.okr-btn-apr{text-decoration:none;display:inline-flex;align-items:center;color:var(--accent);border-color:rgba(56,182,255,.35);}
+.okr-more{position:relative;}
+.okr-more-menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:rgba(var(--ink-rgb),.98);border:1px solid var(--glass-b);border-radius:12px;padding:6px;box-shadow:0 14px 40px rgba(0,0,0,.5);z-index:60;display:flex;flex-direction:column;gap:1px;}
+.okr-more-menu[hidden]{display:none;}
+.okr-more-menu>*{display:flex;align-items:center;gap:8px;background:none;border:none;color:var(--txt2);padding:9px 12px;border-radius:8px;font-size:12px;text-align:left;cursor:pointer;text-decoration:none;font-family:inherit;width:100%;box-sizing:border-box;}
+.okr-more-menu>*:hover{background:rgba(56,182,255,.12);color:var(--txt);}
+.okr-tabs{display:flex;gap:2px;border-bottom:1px solid var(--glass-b);margin:0 0 14px;overflow-x:auto;scrollbar-width:none;}
+.okr-tabs::-webkit-scrollbar{display:none;}
+.okr-tabs button{background:none;border:none;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--txt2);padding:10px 15px;font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s,border-color .15s;}
+.okr-tabs button:hover{color:var(--txt);}
+.okr-tabs button.on{color:var(--accent);border-bottom-color:var(--accent);}
+.okr-toolbar .btn{font-size:11.5px;padding:6px 11px;}
+#okr-filtros-mais-btn.on{border-color:var(--accent);color:var(--accent);}
+.okr-badge-n{display:inline-block;min-width:16px;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--accent);color:#031a2e;font-size:10px;font-weight:800;line-height:16px;text-align:center;}
+.okr-badge-n:empty{display:none;}
+.okr-filtros-mais{flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;padding:8px 0 2px;}
+.okr-filtros-mais[hidden]{display:none;}
+@media(max-width:760px){
+  .okr-head-t{font-size:17px;}
+  .okr-head-acoes{width:100%;}
+  .okr-head-acoes #okr-novo-btn{margin-left:auto;}
+  .okr-tabs button{padding:10px 12px;}
+}
+/* Chips de estatística: mais leves (sem caixa até passar o mouse/estar ativo) e as métricas (atingimento, marcos) à direita, como texto */
+.okr-stats-strip{display:flex;flex-wrap:wrap;gap:4px 6px;margin-bottom:14px;align-items:center;}
 
-.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;
-  background:var(--glass);border:1px solid var(--glass-b);font-size:11px;color:var(--txt2);
+.okr-stat-chip{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;
+  background:transparent;border:1px solid transparent;font-size:11.5px;color:var(--txt2);
   cursor:pointer;transition:border-color .15s,background .15s;}
 
 .okr-stat-chip b{color:var(--txt);font-size:12px;}
@@ -561,8 +658,13 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .okr-stat-chip.active{border-color:var(--accent);background:rgba(56,182,255,.12);}
 
 .okr-stat-chip.total{cursor:default;}
+.okr-stat-chip.total:first-child{background:var(--glass);border-color:var(--glass-b);}
+.okr-stat-chip.metric{color:var(--txt3);}
+.okr-stat-chip.metric:first-of-type{margin-left:auto;}
+.okr-stat-chip:not(.total):not(.active):hover{background:var(--glass);}
 
-.okr-stat-chip.total:hover{border-color:var(--glass-b);}
+.okr-stat-chip.total:hover{border-color:transparent;}
+.okr-stat-chip.total:first-child:hover{border-color:var(--glass-b);}
 
 /* Drag-and-drop de reordenar Objetivos (pedido direto do usuário, junto das
    ▲/▼ já existentes — as duas convivem, drag é o atalho rápido, os botões
@@ -1234,31 +1336,35 @@ body{min-height:100vh;}
 
   <!-- 🎯 OKR — mesma tela que vivia na aba OKR do painel (extraída; ver comentário no <script>) -->
   <div id="ppane-okr">
-    <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
-      <span id="okr-titulo-aba">🎯 OKR — Objetivos estratégicos</span>
-      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;">
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <button type="button" class="btn btn-sm" onclick="openOkrHelp()" style="font-size:11px;padding:5px 12px;color:var(--accent);border-color:rgba(56,182,255,.3);">❓ Ajuda</button>
-          <a href="guia-okr.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia OKR</a>
-          <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm" style="font-size:11px;padding:5px 12px;text-decoration:none;display:inline-flex;align-items:center;" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+    <!-- Cabeçalho em 3 níveis (2026-10-07, redesenho): (1) título da torre + ações (🎥 Apresentação, ⋯ Mais, + Novo Objetivo — só este é preenchido), (2) ABAS das telas do
+         OKR (Objetivos · Calendário · Dashboard · Anotações · Agente Ágil — uma por vez, via _okrSetView), (3) filtros/estatísticas (só na aba Objetivos). Ajuda, guia, visualizadores e gerências
+         ficam no menu ⋯ Mais. Os ids dos botões foram mantidos (okr-cal-btn, okr-historico-btn, okr-notas-btn, okr-agente-btn, okr-novo-btn, okr-viewers-btn). -->
+    <div class="okr-head">
+      <div class="okr-head-tit"><div class="okr-head-k">🎯 Objetivos estratégicos</div><h2 id="okr-titulo-aba" class="okr-head-t">🎯 OKR — Objetivos estratégicos</h2></div>
+      <div class="okr-head-acoes">
+        <a href="okr-apresentacao.slide.html" target="_blank" rel="noopener" class="btn btn-sm okr-btn-apr" title="Abre a tela de apresentação (1 slide por Objetivo) em outra aba">🎥 Apresentação</a>
+        <div class="okr-more">
+          <button type="button" class="btn btn-sm" id="okr-more-btn" onclick="_okrMoreToggle(event)" aria-haspopup="menu" aria-expanded="false" title="Ajuda, guia visual, visualizadores externos e gerências">⋯ Mais</button>
+          <div class="okr-more-menu" id="okr-more-menu" role="menu" hidden>
+            <button type="button" role="menuitem" onclick="_okrMoreFecha();openOkrHelp()">❓ Ajuda</button>
+            <a role="menuitem" href="guia-okr.html" target="_blank" rel="noopener" onclick="_okrMoreFecha()" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia visual do OKR</a>
+            <button type="button" role="menuitem" id="okr-ger-btn" style="display:none;" onclick="_okrMoreFecha();openOkrGerencias(_okrTorreAtual)" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências da torre</button>
+            <button type="button" role="menuitem" id="okr-viewers-btn" style="display:none;" onclick="_okrMoreFecha();openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores externos</button>
+          </div>
         </div>
-        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
-        <div style="display:flex;flex-wrap:wrap;gap:6px;">
-          <button type="button" class="btn btn-sm" id="okr-agente-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleAgenteChat()">💬 Central Agente Ágil</button>
-          <button type="button" class="btn btn-sm" id="okr-notas-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleNotas()">📋 Anotações da reunião</button>
-          <button type="button" class="btn btn-sm" id="okr-viewers-btn" style="font-size:11px;padding:5px 12px;display:none;" onclick="openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores</button>
-          <button type="button" class="btn btn-sm" id="okr-historico-btn" style="font-size:11px;padding:5px 12px;" onclick="_okrToggleHistorico()">📊 Dashboard</button>
-        </div>
-        <span style="width:1px;height:18px;background:var(--glass-b);"></span>
-        <button type="button" class="btn btn-p" id="okr-novo-btn" style="font-size:11px;padding:6px 14px;display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
+        <button type="button" class="btn btn-p" id="okr-novo-btn" style="display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
       </div>
     </div>
+    <div class="okr-tabs" id="okr-tabs" role="tablist" aria-label="Telas do OKR">
+      <button type="button" role="tab" id="okr-tab-obj" class="on" aria-selected="true" onclick="_okrSetView('objetivos')">🎯 Objetivos</button>
+      <button type="button" role="tab" id="okr-cal-btn" aria-selected="false" onclick="_okrSetView('calendario')">📅 Calendário</button>
+      <button type="button" role="tab" id="okr-historico-btn" aria-selected="false" onclick="_okrSetView('historico')">📊 Dashboard</button>
+      <button type="button" role="tab" id="okr-notas-btn" aria-selected="false" onclick="_okrSetView('notas')">📋 Anotações</button>
+      <button type="button" role="tab" id="okr-agente-btn" aria-selected="false" onclick="_okrSetView('agente')">💬 Agente Ágil</button>
+    </div>
     <div class="okr-toolbar" id="okr-toolbar">
-      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" style="font-size:11px;padding:5px 10px;" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
+      <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="flex:1;min-width:200px;">
       <select id="okr-filter-area" class="pt-filter-input" onchange="_okrSetFilter('area', this.value)" title="Filtra por gerência"><option value="">Todas as gerências</option></select>
-      <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
-      <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
-      <select id="okr-filter-tag" class="pt-filter-input" onchange="_okrSetFilter('tag', this.value)" title="Filtra pelas tags aplicadas ao objetivo (também dá pra clicar numa tag no cartão)" style="display:none;"><option value="">Todas as tags</option></select>
       <select id="okr-filter-status" class="pt-filter-input" onchange="_okrSetFilter('status', this.value)" title="Filtra pelo pior status entre os marcos ativos do objetivo">
         <option value="">Todos os status</option>
         <option value="nao_iniciado">⚪ Não iniciado</option>
@@ -1267,8 +1373,14 @@ body{min-height:100vh;}
         <option value="atrasado">🔴 Atrasado / impacto</option>
         <option value="concluido">✅ Concluído</option>
       </select>
-      <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="min-width:170px;flex:1;">
-      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="font-size:11px;padding:5px 10px;display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
+      <button type="button" class="btn btn-sm" id="okr-filtros-mais-btn" onclick="_okrFiltrosMaisToggle()" aria-expanded="false" title="Período, pessoa e tag">⚙ Mais filtros<span class="okr-badge-n" id="okr-filtros-mais-n"></span></button>
+      <button type="button" class="btn btn-sm" id="okr-arquivados-btn" onclick="_okrToggleArquivados()">📦 Ver arquivados</button>
+      <button type="button" class="btn btn-sm" id="okr-clear-filters-btn" style="display:none;" onclick="_okrClearFilters()">✕ Limpar filtros</button>
+      <div class="okr-filtros-mais" id="okr-filtros-mais" hidden>
+      <select id="okr-filter-trimestre" class="pt-filter-input" onchange="_okrSetFilter('trimestre', this.value)" title="Filtra por período"><option value="">Todos os períodos</option></select>
+      <select id="okr-filter-pessoa" class="pt-filter-input" onchange="_okrSetFilter('pessoa', this.value)" title="Filtra por pessoa: responsável pelo objetivo ou por algum marco dele"><option value="">Todas as pessoas</option></select>
+      <select id="okr-filter-tag" class="pt-filter-input" onchange="_okrSetFilter('tag', this.value)" title="Filtra pelas tags aplicadas ao objetivo (também dá pra clicar numa tag no cartão)" style="display:none;"><option value="">Todas as tags</option></select>
+      </div>
     </div>
     <div id="okr-stats-strip"></div>
     <div id="okr-objetivos-wrap"><div style="font-size:11px;color:var(--txt3);">Carregando...</div></div>
@@ -1319,6 +1431,9 @@ body{min-height:100vh;}
          _okrShowArquivados (nunca junto com a lista de objetivos). -->
     <div id="okr-historico-wrap" style="display:none;"><div id="okr-h-root"></div></div>
 
+    <!-- 📅 Calendário — agenda global (todas as torres) + agenda local de cada torre; alterna com a lista de Objetivos via _okrSetView('calendario'). -->
+    <div id="okr-cal-wrap" style="display:none;"><div id="okr-cal-root"></div></div>
+
   </div><!-- /ppane-okr -->
 
   <!-- Modal de ajuda da aba OKR — mesmo padrão do modal de ajuda de
@@ -1334,15 +1449,21 @@ body{min-height:100vh;}
       <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
         <div>
           <b style="color:var(--txt);">🏛️ Torres</b><br>
-          O OKR se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de <b>Gerências</b> — quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres; gerência com Objetivos nunca é apagada, só oculta.
+          O OKR se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de <b>Gerências</b> — quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres; gerência com Objetivos nunca é apagada, só oculta (o 🗑 explica: mande os Objetivos pra outra gerência ou exclua-os primeiro). </div>
+        <div>
+          <b style="color:var(--txt);">🔒 Edição simultânea do mesmo Objetivo</b><br>
+          Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban. <b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>. Em leitura dá pra clicar em <b>🔔 Pedir o Objetivo</b>: quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume. A trava solta sozinha ao fechar o Objetivo, ao sair da página, e vence sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo. As ações rápidas do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo. O <b>Agente Ágil também respeita a trava</b>: se você pedir pra ele mexer num Objetivo que outra pessoa está editando, ele avisa quem é e não grava (senão a edição dela apagaria a dele).
         </div>
+        <div>
+          <b style="color:var(--txt);">📅 Calendário</b><br>
+          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag): o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita. <b>👥 Convidados</b>: quem você convida recebe as notificações da reunião (convite, mudança, cancelamento, véspera e dia — às 7h, também como push) mesmo sem Objetivo na pauta; os responsáveis dos Objetivos da pauta recebem a véspera e o dia automaticamente. A agenda nova ou alterada também aparece no <b>🔔 sino da torre</b> (desligue em "Avisar agora no sino" ao salvar). Clicar no aviso abre a reunião. Cada reunião tem as suas <b>📝 Anotações pós-reunião</b> (por ocorrência, com @menção) e dá pra <b>🔗 vincular</b> a ocorrência à apresentação do OKR: as anotações feitas na apresentação naquele dia aparecem ali também. No celular a visão abre como <b>Agenda</b>. </div>
         <div>
           <b style="color:var(--txt);">📢 Mural do OKR</b><br>
           Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.
         </div>
         <div>
           <b style="color:var(--txt);">🔔 Notificações do OKR</b><br>
-          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b> e <b>✅ Marco concluído</b>. Clique pra ir direto ao Objetivo/aviso/anotação; <b>✓ Marcar tudo como lido</b> zera. No rodapé do sino: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
+          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b>, <b>✅ Marco concluído</b> e <b>🗓️ reuniões/eventos do calendário</b> (nova, mudança, cancelamento; criar Objetivo e concluir Marco pelo Agente Ágil também aparecem). Clique pra ir direto ao Objetivo/aviso/anotação/reunião; <b>✓ Marcar tudo como lido</b> zera. No rodapé do sino: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
         </div>
         <div>
           <b style="color:var(--txt);">💬 @menção nas Anotações da reunião</b><br>
@@ -1350,8 +1471,7 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
-          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (ao lado de Anotações da reunião) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos.
-        </div>
+          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (no menu <b>⋯ Mais</b> do cabeçalho) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos. A lista mostra, pra cada pessoa, se ela <b>já entrou</b>: <b>⏳ ainda não entrou</b> · <b>✅ entrou · visto há X</b> · <b>🟢 online agora</b> (passe o mouse pra ver o primeiro acesso e o último sinal); quem acabou de ser adicionado só passa a constar como "entrou" no próximo login. </div>
         <div>
           <b style="color:var(--txt);">🎯 O que é um Objetivo</b><br>
           Uma meta estratégica de uma gerência/área. Tem gerência, trimestre(s)/período(s), pilar estratégico, descrição, e listas de Indicadores de Entrega, Progressos, Próximos Passos, Riscos e Planos de Ação — sempre "somando" itens conforme o Objetivo avança, sem apagar o histórico do que já foi registrado. Também pode ter uma meta numérica de <b>📈 Atingimento</b> (veja abaixo) — é ela que faz a barra de progresso andar.
@@ -1382,12 +1502,14 @@ body{min-height:100vh;}
           Cada seção tem a sua cor — 📈 Atingimento, 🎯 Indicadores, ✅ Progressos, ➡️ Próximos passos, ⚠️ Riscos, 🛠️ Planos de ação, 🏁 Marcos, 🔗 Cards vinculados, 📜 Histórico — com caixas de texto destacadas. No topo ficam <b>atalhos</b> (em duas filas) pra pular direto pra uma seção, como o botão de descrições do card do board. Funciona nos três temas, inclusive 🌴 Vice City. As seções lembram se estavam abertas ou fechadas.
         </div>
         <div>
-          <b style="color:var(--txt);">🔎 Filtros e resumo da aba</b><br>
-          No topo: <b>gerência</b>, <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele), <b>🏷️ tag</b> (só aparece quando há tags em uso), <b>status</b> e busca por nome. Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.
+          <b style="color:var(--txt);">🧭 O cabeçalho</b><br> Três níveis: em cima o <b>título da torre</b> com 🎥 Apresentação, <b>⋯ Mais</b> (Ajuda, Guia, ⚙ Gerências e 👁 Visualizadores) e <b>+ Novo Objetivo</b>; no meio as <b>abas</b> — 🎯 Objetivos · 📅 Calendário · 📊 Dashboard · 📋 Anotações · 💬 Agente Ágil (a aberta fica marcada); embaixo a barra de filtros. 📢 Mural, 🔔 sino e quem está online ficam no canto.
+</div>
+<div>
+<b style="color:var(--txt);">🔎 Filtros e resumo da aba</b><br> No topo: <b>gerência</b>, <b>status</b> e busca por nome; <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele) e <b>🏷️ tag</b> (só aparece quando há tags em uso). Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.
         </div>
         <div>
           <b style="color:var(--txt);">✏️ Quem pode editar</b><br>
-          Podem criar um Objetivo novo: <b>ADM</b>, <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), além desses três também vale estar marcado como <b>Responsável</b> daquele Objetivo específico. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).
+          Podem criar um Objetivo novo: <b>ADM</b> (em qualquer torre), <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais) — esses dois últimos <b>só na própria torre</b> (a torre ⭐ Geral vale em todas). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), valem os mesmos, na torre do Objetivo, e também estar marcado como <b>Responsável</b> daquele Objetivo específico. O <b>calendário</b> segue a mesma regra por agenda: a global é só do ADM, a de cada torre é de quem organiza a torre. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).
         </div>
         <div>
           <b style="color:var(--txt);">✏️ Editar o que já foi escrito</b><br>
@@ -1429,17 +1551,17 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">🔗 Link direto do Objetivo</b><br>
-          Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login @ciahering e acesso ao painel — é um atalho pra achar rápido, não uma exceção de acesso.
+          Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login (@ciahering, @arezzo ou visualizador autorizado) e acesso ao OKR — é um atalho pra achar rápido, não uma exceção de acesso.
         </div>
         <div>
           <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
-          Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, setas/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe. Cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Painel) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso. A barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.
+          Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe. A capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre. Cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no OKR) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso. A barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.
           <ul style="margin:6px 0 0;padding-left:18px;">
-            <li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no painel (dentro de cada gerência) — sem ordem manual, vai por título.</li>
+            <li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no OKR (dentro de cada gerência) — sem ordem manual, vai por título.</li>
             <li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li>
-            <li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último.</li>
+            <li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li>
             <li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li>
-            <li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no painel) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li>
+            <li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no OKR) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li>
           </ul>
         </div>
         <div>
@@ -1447,9 +1569,10 @@ body{min-height:100vh;}
           Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs — não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
           <ul style="margin:6px 0 0;padding-left:18px;">
             <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
-            <li>Também cria Objetivo novo (só se você for ADM) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído").</li>
+            <li>Também cria Objetivo novo (ADM, ou PO/Organizador/🎯 Gestor OKR na própria torre — ele pergunta a <b>torre</b> e a <b>gerência</b>, que mudam por torre) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído"). Objetivo criado e Marco concluído por ele aparecem no 🔔 sino da torre, igual à tela.</li>
+        <li><b>📅 Agenda</b> (só leitura): "quando é a próxima reunião de CX?", "o que tem na agenda dessa semana?", "qual a pauta da reunião de quinta?" — ele lê o calendário (global + torres). Criar, editar ou cancelar reunião e convidar gente é pela aba 📅 Calendário.</li>
             <li><b>📈 Atingimento</b>: ele consegue <b>ler</b> a meta, o valor atual e o % de cada Objetivo ("como estão os atingimentos?", "quem está sem registro há mais de 15 dias?"), <b>registrar</b> um valor ("fechamos setembro em R$ 48 mil" — ele usa a data de hoje se você não disser outra) e <b>configurar</b> o tipo/meta de um Objetivo que ainda não tem. Ele nunca inventa valor (pergunta se faltar), não apaga registro nem remove atingimento (isso é pela tela do Objetivo) e, se for trocar o tipo de um atingimento que já tem registros, confirma com você antes. O % é calculado igual ao da barra do Objetivo.</li>
-            <li>Respeita a mesma regra de permissão de cima: se você não for Responsável nem ADM daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou.</li>
+            <li>Respeita a mesma regra de permissão de cima (por torre): se você não for Responsável, ADM nem PO/Organizador/Gestor OKR da torre daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou. E se alguém está editando o Objetivo (🔒), ele espera.</li>
             <li>A conversa fica salva ali, pra sempre — dá pra rolar pra cima e ver os pedidos e respostas anteriores, de qualquer pessoa.</li>
           </ul>
         </div>
@@ -1473,6 +1596,13 @@ body{min-height:100vh;}
       <button class="x-btn" onclick="_okrTryCloseObjetivo()">✕</button>
     </div>
     <div class="okr-nav" id="okr-obj-nav"></div>
+    <!-- 🔒 Trava de edição concorrente (mesmo desenho da trava de card do kanban): quem abriu depois vê em modo leitura + este aviso; quem segura vê o pedido chegando. -->
+    <div id="okr-obj-lock-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--glass-b);background:rgba(255,209,102,.1);font-size:11px;color:var(--warn);flex-shrink:0;">
+      <span id="okr-lock-text" style="flex:1;min-width:200px;"></span><span id="okr-lock-req-action"></span>
+    </div>
+    <div id="okr-lock-request-row" style="display:none;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 14px;border-bottom:1px solid var(--glass-b);background:rgba(56,182,255,.1);font-size:11px;color:var(--accent);flex-shrink:0;">
+      <span id="okr-lock-request-text" style="flex:1;min-width:200px;"></span><button type="button" class="btn btn-sm" onclick="_okrLockLiberarAgora()">✅ Liberar agora</button>
+    </div>
     <div class="pc-modal-body" id="okr-obj-body"></div>
     <div class="pc-footer" id="okr-obj-footer"></div>
   </div>
@@ -1559,6 +1689,24 @@ body{min-height:100vh;}
 </div>
 
 <!-- 👁 Visualizadores externos — só ADM. Mesma lista do painel (⚙ Configurações → 🔑 ADMs / 👥 Global Users): kanban/painel_viewers. -->
+<!-- 📅 Evento do calendário: detalhe (com pauta sugerida) e editor. -->
+<div class="pc-modal-ov" id="okr-evd-ov" style="z-index:260;" onclick="if(event.target===this) closeOkrEvento()">
+  <div class="pc-modal" style="width:min(600px,94vw);">
+    <div class="pc-modal-hd"><div class="pc-modal-hd-title" id="okr-evd-title">🗓️ Reunião</div><button class="x-btn" onclick="closeOkrEvento()">✕</button></div>
+    <div class="pc-modal-body" id="okr-evd-body"></div>
+  </div>
+</div>
+<div class="pc-modal-ov" id="okr-ev-ov" style="z-index:270;" onclick="if(event.target===this) closeOkrEventoEditor()">
+  <div class="pc-modal" style="width:min(640px,94vw);">
+    <div class="pc-modal-hd"><div class="pc-modal-hd-title" id="okr-ev-title">📅 Novo evento</div><button class="x-btn" onclick="closeOkrEventoEditor()">✕</button></div>
+    <div class="pc-modal-body" id="okr-ev-body"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid var(--glass-b);">
+      <button type="button" class="btn btn-sm" onclick="closeOkrEventoEditor()">Cancelar</button>
+      <button type="button" class="btn btn-p btn-sm" onclick="saveOkrEvento()">💾 Salvar</button>
+    </div>
+  </div>
+</div>
+
 <div class="pc-modal-ov" id="okr-viewers-ov" style="z-index:300;" onclick="if(event.target===this) closeOkrViewers()">
   <div class="pc-modal" style="width:min(560px,94vw);">
     <div class="pc-modal-hd">
@@ -1567,6 +1715,7 @@ body{min-height:100vh;}
     </div>
     <div class="pc-modal-body">
       <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Dashboard, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:8px;">Cada pessoa mostra se <b>já entrou</b> (🟢 online agora · ✅ entrou, com o último sinal · ⏳ ainda não entrou). Passe o mouse no status pra ver o primeiro acesso. O registro começa a valer no próximo login de cada uma.</div>
       <div id="okr-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
       <div class="okr-field-label">Adicionar por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -1636,7 +1785,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.19 · okr</div>
+<div class="version">v2.33 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1687,7 +1836,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=4"></script>
+<script src="mare-notif.js?v=6"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -1793,7 +1942,7 @@ function _okrSendHeartbeat(){
   const u = window._currentUser;
   if(!u || !window._fbReady) return;
   const dado = {ts:Date.now(), nome:u.displayName||u.email||'?', foto:u.photoURL||''};
-  if(window._isPainelViewer) dado.externo = true;   // selo 👁 na lista; sem o campo = pessoa da empresa
+  if(window._isPainelViewer){ dado.externo = true; _viewerRegistrarAcesso('okr'); }   // selo 👁 na lista; sem o campo = pessoa da empresa. + registro de acesso (primeiro/último) pro ADM ver quem já entrou
   window._update(window._ref(window._db, OKR_PRESENCE_PATH+'/'+u.uid), dado).catch(()=>{});
 }
 function _okrPresenceStart(){
@@ -2031,6 +2180,9 @@ function _pGetCardTags(card){
 
 
 // ── Modais UI (painel) — equivalentes simples aos do board ──
+// Esc fecha SÓ o diálogo: o ouvinte vai na `window` em captura (roda antes dos de Esc do `document`, que fecham o detalhe/editor por baixo). Sem isto, Esc fechava a
+// janela de trás e deixava o diálogo órfão na tela. Devolve a função que remove o ouvinte.
+function _uiEscFecha(fn){ const h = e=>{ if(e.key!=='Escape') return; e.preventDefault(); e.stopPropagation(); fn(); }; window.addEventListener('keydown', h, true); return ()=>window.removeEventListener('keydown', h, true); }
 function _uiModalPainel({message, kind, defaultValue, placeholder, okText, danger}){
   return new Promise(resolve=>{
     const ov = document.createElement('div');
@@ -2048,7 +2200,8 @@ function _uiModalPainel({message, kind, defaultValue, placeholder, okText, dange
     document.body.appendChild(ov);
     const inp = ov.querySelector('#_uimp-inp');
     if(inp){ inp.focus(); inp.select(); inp.onkeydown=e=>{ if(e.key==='Enter') done(isPrompt?inp.value:true); if(e.key==='Escape') done(isPrompt?null:false); }; }
-    const done = (val)=>{ ov.remove(); resolve(val); };
+    const offEsc = _uiEscFecha(()=>done(isPrompt?null:false));
+    const done = (val)=>{ offEsc(); ov.remove(); resolve(val); };
     ov.querySelector('#_uimp-ok').onclick = ()=>done(isPrompt?(inp?inp.value:''):true);
     const cancel = ov.querySelector('#_uimp-cancel');
     if(cancel) cancel.onclick = ()=>done(isPrompt?null:false);
@@ -2058,6 +2211,7 @@ function _uiModalPainel({message, kind, defaultValue, placeholder, okText, dange
 
 
 function uiConfirm(message, opts={}){ return _uiModalPainel({message, kind:'confirm', ...opts}); }
+function uiAviso(message, opts={}){ return _uiModalPainel({message, kind:'info', okText:'Entendi', ...opts}); }   // só o botão de OK (sem Cancelar): explica por que algo não pôde ser feito
 
 
 
@@ -2221,6 +2375,7 @@ function _okrProximaReuniaoDoBloco(bloco, hojeStr){
 
 
 function _okrBlocoInfoHtml(areaId, torre){
+  if(typeof _okrBlocoMigrado==='function' && _okrCalLoaded && _okrBlocoMigrado()) return '';   // já importado pro calendário: "Próximas reuniões e eventos" mostra a reunião (e dá pra editar lá)
   if(torre && torre!=='digital') return '';   // os blocos quinzenais (CX/Tech/CRM etc.) são da torre Digital
   if(!OKR_BLOCO_AREAS[1].includes(areaId) && !OKR_BLOCO_AREAS[2].includes(areaId)) return '';   // gerência criada depois (configurável) não tem bloco
   const bloco = _okrBlocoDaArea(areaId);
@@ -2368,6 +2523,8 @@ function loadOkr(){
   loadOkrAgenteChat();
   loadOkrReuniaoNotas();
   loadOkrMural();
+  loadOkrLocks();
+  loadOkrCalendario();
   loadOkrFeed();
 }
 
@@ -2772,13 +2929,13 @@ function loadOkrFeed(){
   MareNotif.start({
     user:u, isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), onChange:_okrBellRender,
     // Feed: o aviso abre aqui mesmo; Objetivo também (senão o módulo navega pela URL)
-    abrirFeed:it=>{ if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
+    abrirFeed:it=>{ if(it.eventoId){ _okrAbrirEvento(it.eventoId, it.evData); return true; } if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
   });
   if(window._isPainelViewer) return;   // externo não lê kanban/usuarios: sem notificações pessoais
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
     // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
     _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))   // mesmo TTL do sino do kanban
-      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
+      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
     _okrBellRender();
   });
 }
@@ -2843,6 +3000,7 @@ function _okrBellClick(k, id){
     let w = Promise.resolve();
     if(!n.read){ n.read = true; w = window._set(window._ref(window._db,'kanban/usuarios/'+window._currentUser.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
     _okrBellRender();
+    if(n.okrEventoId) return _okrAbrirEvento(n.okrEventoId, n.okrEventoData);
     if(n.type==='okr_agente') return _okrIrParaChat();
     if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
     if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
@@ -2944,17 +3102,16 @@ function _okrNotifyMencao(uids, texto, data){
 // / Central Agente Ágil / Anotações da reunião) — nunca duas juntas.
 // _okrSetView() é o único ponto que decide isso; os toggles individuais só
 // chamam ela.
-function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
+function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas' | 'calendario'
+  _okrShowCal = view==='calendario';
   _okrShowHistorico = view==='historico';
   _okrShowAgenteChat = view==='agente';
   _okrShowNotas = view==='notas';
   if(!_okrShowHistorico) _okrHistMetricaManual = false;   // saiu do Histórico: na próxima abertura a aba é escolhida de novo
-  const histBtn = document.getElementById('okr-historico-btn');
-  if(histBtn) histBtn.textContent = _okrShowHistorico ? '◀ Ver Objetivos' : '📊 Dashboard';
-  const agBtn = document.getElementById('okr-agente-btn');
-  if(agBtn) agBtn.textContent = _okrShowAgenteChat ? '◀ Ver Objetivos' : '💬 Central Agente Ágil';
-  const notasBtn = document.getElementById('okr-notas-btn');
-  if(notasBtn) notasBtn.textContent = _okrShowNotas ? '◀ Ver Objetivos' : '📋 Anotações da reunião';
+  // abas: a ativa fica marcada (os textos dos botões não mudam mais — antes viravam "◀ Ver Objetivos")
+  const abas = {objetivos:'okr-tab-obj', calendario:'okr-cal-btn', historico:'okr-historico-btn', notas:'okr-notas-btn', agente:'okr-agente-btn'};
+  Object.entries(abas).forEach(([v,id])=>{ const b = document.getElementById(id); if(b){ b.classList.toggle('on', v===view); b.setAttribute('aria-selected', v===view ? 'true' : 'false'); } });
+  const calWrap = document.getElementById('okr-cal-wrap'); if(calWrap) calWrap.style.display = _okrShowCal ? '' : 'none';
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-agente-wrap').style.display = _okrShowAgenteChat ? '' : 'none';
   document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
@@ -2963,6 +3120,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
   });
   const arqBtn = document.getElementById('okr-arquivados-btn'); if(arqBtn) arqBtn.style.display = view==='objetivos' ? '' : 'none';
   const novoBtn = document.getElementById('okr-novo-btn'); if(novoBtn) novoBtn.style.display = view==='objetivos' ? (_okrCanCreate() ? 'inline-flex' : 'none') : 'none';
+  if(_okrShowCal) renderOkrCalendario();
   if(_okrShowHistorico) renderOkrHistorico();
   if(_okrShowAgenteChat) renderOkrAgenteChat();
   if(_okrShowNotas){
@@ -2973,6 +3131,21 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'agente' | 'notas'
 }
 
 
+// ⋯ Mais (menu do cabeçalho) e ⚙ Mais filtros (período/pessoa/tag).
+function _okrMoreToggle(e){ if(e) e.stopPropagation(); const m = document.getElementById('okr-more-menu'), b = document.getElementById('okr-more-btn'); if(!m) return; const abre = m.hidden; m.hidden = !abre; if(b) b.setAttribute('aria-expanded', abre ? 'true' : 'false'); }
+function _okrMoreFecha(){ const m = document.getElementById('okr-more-menu'), b = document.getElementById('okr-more-btn'); if(m) m.hidden = true; if(b) b.setAttribute('aria-expanded','false'); }
+document.addEventListener('click', e=>{ if(!e.target.closest || !e.target.closest('.okr-more')) _okrMoreFecha(); });
+document.addEventListener('keydown', e=>{ const m = document.getElementById('okr-more-menu'); if(e.key==='Escape' && m && !m.hidden){ e.preventDefault(); e.stopPropagation(); _okrMoreFecha(); document.getElementById('okr-more-btn')?.focus(); } }, true);
+let _okrFiltrosMaisAberto = false, _okrFiltrosMaisN0 = 0;
+function _okrFiltrosMaisToggle(){ _okrFiltrosMaisAberto = !_okrFiltrosMaisAberto; _okrFiltrosMaisSync(); }
+function _okrFiltrosMaisSync(){
+  const box = document.getElementById('okr-filtros-mais'), btn = document.getElementById('okr-filtros-mais-btn'), nEl = document.getElementById('okr-filtros-mais-n'); if(!box || !btn) return;
+  const n = ['trimestre','pessoa','tag'].filter(k=>_okrFilter[k]).length;
+  if(n>0 && _okrFiltrosMaisN0===0) _okrFiltrosMaisAberto = true;   // aplicou um filtro escondido (ex.: clicando numa tag do cartão): mostra, pra não parecer que sumiu algo
+  _okrFiltrosMaisN0 = n;
+  box.hidden = !_okrFiltrosMaisAberto; btn.classList.toggle('on', _okrFiltrosMaisAberto || n>0); btn.setAttribute('aria-expanded', _okrFiltrosMaisAberto ? 'true' : 'false');
+  if(nEl) nEl.textContent = n ? String(n) : '';
+}
 function _okrToggleHistorico(){ _okrSetView(_okrShowHistorico ? 'objetivos' : 'historico'); }
 
 
@@ -4177,6 +4350,7 @@ function _okrObjetivosSorted(lista){
 // Gerência. Mesma técnica de _okrMarcoMover(): reescreve `ordem` de TODOS
 // os objetivos ativos daquela Gerência a cada clique (lista curta).
 async function _okrObjMover(areaId, objId, dir){
+  if(_okrLockBloqueia(objId)) return;
   const torre = _okrTorreDe(okrObjetivos[objId]);
   const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrTorreDe(o)===torre && (o.areaId||'geral')===areaId));
   const idx = lista.findIndex(o=>o.id===objId);
@@ -4204,6 +4378,7 @@ let _okrDraggedObjId = null;
 
 
 async function _okrObjReorderTo(areaId, draggedId, targetId){
+  if(_okrLockBloqueia(draggedId)) return;
   if(draggedId===targetId) return;
   const torre = _okrTorreDe(okrObjetivos[draggedId]);
   const lista = _okrObjetivosSorted(Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrTorreDe(o)===torre && (o.areaId||'geral')===areaId));
@@ -4308,8 +4483,8 @@ function _okrStatsStripHtml(lista){
   return `<div class="okr-stats-strip">
     <div class="okr-stat-chip total"><b>${lista.length}</b> Objetivo${lista.length===1?'':'s'}</div>
     ${chips}
-    ${atingN?`<div class="okr-stat-chip total" title="Média do atingimento dos ${atingN} Objetivo(s) que têm meta configurada">📈 <b>${Math.round(atingSoma/atingN)}%</b> de atingimento médio <span style="opacity:.6;">(${atingN}/${lista.length})</span></div>`:''}
-    ${pctMarcos!==null?`<div class="okr-stat-chip total">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
+    ${atingN?`<div class="okr-stat-chip total metric" title="Média do atingimento dos ${atingN} Objetivo(s) que têm meta configurada">📈 <b>${Math.round(atingSoma/atingN)}%</b> de atingimento médio <span style="opacity:.6;">(${atingN}/${lista.length})</span></div>`:''}
+    ${pctMarcos!==null?`<div class="okr-stat-chip total metric">🏁 <b>${pctMarcos}%</b> dos marcos concluídos</div>`:''}
   </div>`;
 }
 
@@ -4329,12 +4504,13 @@ function renderOkrObjetivos(){
   const tituloAba = document.getElementById('okr-titulo-aba');
   if(tituloAba){
     const tn = _okrTorreAtual==='global' ? '🌐 Visão global' : (okrTorreInfo(_okrTorreAtual).icon+' Torre '+okrTorreInfo(_okrTorreAtual).label);
-    tituloAba.textContent = (_okrShowArquivados ? '📦 Objetivos arquivados' : '🎯 Objetivos estratégicos') + ' — ' + tn;
+    tituloAba.textContent = tn + (_okrShowArquivados ? ' · 📦 arquivados' : '');
   }
   const statusSel = document.getElementById('okr-filter-status');
   if(statusSel) statusSel.value = _okrFilter.status;
   const clearBtn = document.getElementById('okr-clear-filters-btn');
   if(clearBtn) clearBtn.style.display = _okrTemFiltroAtivo() ? '' : 'none';
+  _okrFiltrosMaisSync();
 
   const areaSel = document.getElementById('okr-filter-area');
   if(areaSel){
@@ -4494,7 +4670,8 @@ function _okrRenderNav(){
   const chip = (id, ico, label, rgb)=>`<button type="button" class="okr-tn${_okrTorreAtual===id?' on':''}" ${rgb?`style="--torre:${rgb}"`:''} onclick="_okrEntrarTorre(${jsq(id)})" aria-pressed="${_okrTorreAtual===id}">${ico} ${esc(label)}</button>`;
   el.innerHTML = `<button type="button" class="btn btn-sm" onclick="_okrEntrarTorre('')" style="font-size:11px;padding:5px 12px;" title="Voltar à tela inicial das torres">← Torres</button>`
     + OKR_TORRES.map(t=>chip(t.id, t.icon, t.label, t.rgb)).join('') + chip('global','🌐','Visão global','140,165,190')
-    + (_okrPodeEditarGerencias(_okrTorreAtual) ? `<button type="button" class="btn btn-sm" onclick="openOkrGerencias(${jsq(_okrTorreAtual)})" style="font-size:11px;padding:5px 12px;margin-left:auto;" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências</button>` : '');
+  ;
+  const gb = document.getElementById('okr-ger-btn'); if(gb) gb.style.display = _okrPodeEditarGerencias(_okrTorreAtual) ? 'flex' : 'none';   // ⚙ Gerências mora no menu ⋯ Mais
 }
 
 
@@ -4562,7 +4739,7 @@ function renderOkrGerencias(){
   const t = _okrGerTorre, ti = okrTorreInfo(t), lista = okrGerenciasDa(t, true), visiveis = lista.filter(g=>!g.oculta).length;
   const tt = document.getElementById('okr-ger-title'); if(tt) tt.textContent = '⚙ Gerências — '+ti.icon+' Torre '+ti.label;
   body.innerHTML = `
-    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">As gerências da <b>${esc(ti.label)}</b> aparecem nos seletores e agrupam os Objetivos da torre. <b>Gerência com Objetivos não é apagada</b> — fica <b>oculta</b> (some dos seletores de Objetivos novos; os que já estão nela continuam). Só dá pra excluir de vez uma gerência vazia.</div>
+    <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">As gerências da <b>${esc(ti.label)}</b> aparecem nos seletores e agrupam os Objetivos da torre. <b>Gerência com Objetivos não é apagada</b> — fica <b>oculta</b> (some dos seletores de Objetivos novos; os que já estão nela continuam). Só dá pra excluir de vez uma gerência vazia — clique em 🗑 numa que tem Objetivos pra ver como esvaziar.</div>
     <div style="display:flex;flex-direction:column;gap:6px;">${lista.map((g,i)=>{
       const n = _okrGerUsos(t, g.id);
       return `<div class="okr-ger-row${g.oculta?' oculta':''}" style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:9px;${g.oculta?'opacity:.6;':''}">
@@ -4572,7 +4749,7 @@ function renderOkrGerencias(){
         <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===0?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},-1)" title="Subir">▲</button>
         <button type="button" class="btn btn-sm" style="padding:3px 7px;" ${i===lista.length-1?'disabled':''} onclick="_okrGerMover(${jsq(g.id)},1)" title="Descer">▼</button>
         <button type="button" class="btn btn-sm" style="padding:3px 8px;font-size:11px;" onclick="_okrGerOcultar(${jsq(g.id)},${g.oculta?'false':'true'})" title="${g.oculta?'Voltar a aparecer nos seletores':'Esconder dos seletores de Objetivos novos'}">${g.oculta?'👁 Mostrar':'🙈 Ocultar'}</button>
-        <button type="button" class="btn btn-sm" style="padding:3px 7px;color:var(--danger);" ${n>0||lista.length<=1?'disabled':''} onclick="_okrGerExcluir(${jsq(g.id)})" title="${n>0?'Tem Objetivos — só dá pra ocultar':'Excluir gerência vazia'}">🗑</button>
+        <button type="button" class="btn btn-sm" style="padding:3px 7px;color:var(--danger);${n>0||lista.length<=1?'opacity:.6;':''}" onclick="_okrGerExcluir(${jsq(g.id)})" title="${lista.length<=1?'A torre precisa de ao menos uma gerência':(n>0?'Tem Objetivos — clique pra ver como excluir':'Excluir gerência vazia')}">🗑</button>
       </div>`; }).join('')}</div>
     <div class="okr-field-label" style="margin-top:14px;">Nova gerência</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -4608,7 +4785,12 @@ function _okrGerOcultar(id, oculta){
 }
 function _okrGerExcluir(id){
   const t = _okrGerTorre, nUso = _okrGerUsos(t, id);
-  if(nUso>0){ showToast('⚠ Essa gerência tem '+nUso+' Objetivo(s) — só dá pra ocultar.'); return; }
+  if(okrGerenciasDa(t, true).length<=1){ uiAviso('A torre precisa ter ao menos uma gerência — crie outra antes de excluir esta.'); return; }
+  if(nUso>0){
+    const nome = okrGerenciaLabel(id, t), arq = Object.values(okrObjetivos).filter(o=>o && _okrTorreDe(o)===t && (o.areaId||'geral')===id && o.arquivado).length;
+    uiAviso('Não dá pra excluir "'+nome+'": ela ainda tem '+nUso+' Objetivo'+(nUso===1?'':'s')+(arq?' ('+arq+' arquivado'+(arq===1?'':'s')+')':'')+'.\n\nPara excluir a gerência, primeiro esvazie ela:\n• ➡️ envie os Objetivos pra outra gerência — abra o Objetivo → ⚙ Configurações → campo Gerência; ou\n• 🗑 exclua os Objetivos dela'+(arq?' (os arquivados estão em 📦 Ver arquivados)':'')+'.\n\nSe só quer tirar a gerência dos seletores, use 🙈 Ocultar: os Objetivos continuam nela.');
+    return;
+  }
   uiConfirm('Excluir esta gerência vazia?', {danger:true, okText:'Excluir'}).then(okc=>{
     if(!okc) return;
     _okrGerAplicar(n=>{
@@ -4632,31 +4814,689 @@ function _okrGerNova(){
 }
 
 
+// ═══ 📅 Calendário do OKR (2026-10-07) ════════════════════════════════════════════════════════════════════════════
+// Reuniões, eventos e lembretes do OKR, criados por ADM ou organizador (Gestor OKR/PO da torre), com RECORRÊNCIA (toda semana, quinzenal, mensal, trimestral,
+// semestral, anual ou "a cada N dias/semanas/meses/anos", com data final opcional) e ligados à torre/gerência/Objetivos. Inteligência:
+//   • o cartão e o modal do Objetivo mostram a PRÓXIMA reunião/evento dele (_okrCalProximasHtml / _okrCalCardChip);
+//   • o evento monta uma PAUTA SUGERIDA (_okrCalPauta): Objetivos atrasados/em risco, marcos vencidos ou vencendo, atingimento sem lançamento recente;
+//   • os prazos dos Marcos aparecem no calendário (derivados dos próprios Marcos, só leitura).
+// Dado: kanban/okr/calendario/eventos/{id} = {id, titulo, tipo:'reuniao'|'evento'|'lembrete', data:'YYYY-MM-DD', diaInteiro, hi, hf, torre:''|torreId, areaIds:[],
+//   objetivoIds:[], local, link, descricao, rec:null|{tipo, unidade:'dia'|'semana'|'mes'|'ano', intervalo, ate:'YYYY-MM-DD'|''}, excecoes:{'YYYY-MM-DD':true},
+//   criadoPor:{uid,nome}, criadoEm, atualizadoEm}. AGENDA GLOBAL = torre '' (envolve todas as torres; só ADM cria) · AGENDA LOCAL = torre preenchida (o organizador da torre cria). Quem escreve é a empresa (regras de kanban/okr); externo só lê.
+const OKR_CAL_PATH = 'kanban/okr/calendario/eventos';
+const OKR_CAL_TIPOS = { reuniao:{ico:'🗓️', label:'Reunião'}, evento:{ico:'📌', label:'Evento'}, lembrete:{ico:'🔔', label:'Lembrete'} };
+const OKR_CAL_REC = [
+  {id:'nenhuma',    label:'Não repete'},
+  {id:'semanal',    label:'Toda semana',                  unidade:'semana', intervalo:1},
+  {id:'quinzenal',  label:'A cada 2 semanas (quinzenal)', unidade:'semana', intervalo:2},
+  {id:'mensal',     label:'Todo mês',                     unidade:'mes',    intervalo:1},
+  {id:'trimestral', label:'A cada 3 meses (trimestral)',  unidade:'mes',    intervalo:3},
+  {id:'semestral',  label:'A cada 6 meses (semestral)',   unidade:'mes',    intervalo:6},
+  {id:'anual',      label:'Todo ano',                     unidade:'ano',    intervalo:1},
+  {id:'personalizada', label:'Personalizada…'},
+];
+const OKR_CAL_DOW = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'], OKR_CAL_DOW_S = ['dom','seg','ter','qua','qui','sex','sáb'];
+let okrEventos = {}, _okrCalLoaded = false;
+let _okrShowCal = false, _okrCalMes = null, _okrCalSel = null, _okrCalTorreF = null, _okrCalAgendaDias = 60, _okrCalIncluiGlobal = true, _okrCalTagF = '';   // filtro: '' = todas as agendas · 'global' = só a global · id da torre = a local dela (+ a global, se _okrCalIncluiGlobal)
+let _okrCalVista = (()=>{ try{ const v = localStorage.getItem('okr_cal_vista'); if(v==='mes'||v==='agenda') return v; }catch(e){} return (window.innerWidth<760) ? 'agenda' : 'mes'; })();
+
+// ── datas (tudo em string local 'YYYY-MM-DD'; nada de UTC pra não "pular" de dia) ──
+const _calFmt = d => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const _calParse = s => { const p = String(s||'').slice(0,10).split('-').map(Number); return new Date(p[0]||1970, (p[1]||1)-1, p[2]||1); };
+function _calSomaDias(s, n){ const d = _calParse(s); d.setDate(d.getDate()+n); return _calFmt(d); }
+function _calDiasEntre(a, b){ return Math.round((_calParse(b)-_calParse(a))/86400000); }
+function _okrCalDataBR(s, comDia){ const d = _calParse(s); return (comDia ? OKR_CAL_DOW_S[d.getDay()]+' ' : '')+String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+function _okrCalLista(v){ return Array.isArray(v) ? v.filter(Boolean) : (v && typeof v==='object' ? Object.values(v).filter(Boolean) : []); }
+
+// ── recorrência (funções puras) ──
+// k-ésima ocorrência (k=0 é a própria data). Mensal/anual mantêm o DIA do mês da data inicial e, quando o mês não tem esse dia (31, 29/fev), usam o último dia.
+function _okrCalOcorrencia(data, rec, k){
+  const base = _calParse(data); if(!k) return _calFmt(base);
+  const n = rec.intervalo*k;
+  if(rec.unidade==='dia'){ base.setDate(base.getDate()+n); return _calFmt(base); }
+  if(rec.unidade==='semana'){ base.setDate(base.getDate()+7*n); return _calFmt(base); }
+  const meses = rec.unidade==='ano' ? 12*n : n, alvo = new Date(base.getFullYear(), base.getMonth()+meses, 1);
+  const ultimo = new Date(alvo.getFullYear(), alvo.getMonth()+1, 0).getDate();
+  alvo.setDate(Math.min(base.getDate(), ultimo)); return _calFmt(alvo);
+}
+function _okrCalRecNorm(ev){
+  const r = ev && ev.rec; if(!r || typeof r!=='object') return null;
+  const n = Math.floor(Number(r.intervalo));
+  if(!['dia','semana','mes','ano'].includes(r.unidade) || !(n>=1)) return null;
+  return { tipo:r.tipo||'personalizada', unidade:r.unidade, intervalo:Math.min(n,99), ate:/^\d{4}-\d{2}-\d{2}$/.test(r.ate||'') ? r.ate : '' };
+}
+// Datas 'YYYY-MM-DD' do evento dentro de [de, ate], sem as ocorrências canceladas (excecoes).
+function _okrCalOcorrencias(ev, de, ate){
+  const out = [], ex = (ev && ev.excecoes) || {}, rec = _okrCalRecNorm(ev);
+  if(!ev || !/^\d{4}-\d{2}-\d{2}$/.test(ev.data||'')) return out;
+  if(!rec){ if(ev.data>=de && ev.data<=ate && !ex[ev.data]) out.push(ev.data); return out; }
+  const fim = (rec.ate && rec.ate<ate) ? rec.ate : ate;
+  for(let k=0; k<5000; k++){ const dt = _okrCalOcorrencia(ev.data, rec, k); if(dt>fim) break; if(dt>=de && !ex[dt]) out.push(dt); }
+  return out;
+}
+function _okrCalRecTexto(ev){
+  const r = _okrCalRecNorm(ev); if(!r) return '';
+  const p = OKR_CAL_REC.find(x=>x.id===r.tipo && x.unidade===r.unidade && x.intervalo===r.intervalo), d = _calParse(ev.data);
+  const un = {dia:['dia','dias'], semana:['semana','semanas'], mes:['mês','meses'], ano:['ano','anos']}[r.unidade];
+  let t = r.intervalo===1 ? ({dia:'todo dia', semana:'toda semana', mes:'todo mês', ano:'todo ano'})[r.unidade] : 'a cada '+r.intervalo+' '+un[1];
+  if(p && p.id!=='semanal' && p.id!=='mensal' && p.id!=='anual') t += ' ('+p.id+')';
+  if(r.unidade==='semana') t += ' · '+OKR_CAL_DOW[d.getDay()]+(d.getDay()===0||d.getDay()===6?'':'-feira');
+  else if(r.unidade==='mes') t += ' · dia '+d.getDate();
+  else if(r.unidade==='ano') t += ' · '+_okrCalDataBR(ev.data);
+  return t+(r.ate ? ' · até '+_okrCalDataBR(r.ate)+'/'+_calParse(r.ate).getFullYear() : '');
+}
+
+// ── escopo / permissões ──
+function _okrCalPodeCriar(torre){
+  if(window._isPainelViewer) return false;
+  if(isAdmUser(window._currentUser)) return true;
+  return !!torre && _okrTorreValida(torre) && _okrCanCreate(torre);   // "todas as torres" só ADM
+}
+function _okrCalPodeEditar(ev){ return !!ev && _okrCalPodeCriar(ev.torre||''); }
+// O evento diz respeito a este Objetivo? Vínculo explícito vence (em qualquer torre); senão, dentro da torre do evento (global = todas), vale o recorte: TAGS (o Objetivo
+// tem alguma) ou GERÊNCIAS (está numa) — uma OU a outra. Com algum recorte (Objetivos/tags/gerências) e nenhum acerto = fora (não vira "a torre toda").
+// Sem recorte nenhum: reunião = a torre toda; evento/lembrete só se vinculado. Espelho: functions/okr/calendario.js (abrange).
+function _okrCalAbrange(ev, o, oid){
+  const id = oid || o.id, ids = _okrCalLista(ev.objetivoIds), tags = _okrCalLista(ev.tagIds), areas = _okrCalLista(ev.areaIds);
+  if(ids.includes(id)) return 'vinculo';
+  if(ev.torre && ev.torre!==_okrTorreDe(o)) return '';
+  if(tags.length && _okrCalLista(o.tagIds).some(t=>tags.includes(t))) return 'tag';
+  if(areas.length && areas.includes(o.areaId||'geral')) return 'gerencia';
+  if(ids.length || tags.length || areas.length) return '';
+  return ev.tipo==='reuniao' ? 'torre' : '';
+}
+function _okrCalProximasDoObjetivo(o, n, dias, oid){
+  const hoje = todaySPStr(), ate = _calSomaDias(hoje, dias||120), out = [];
+  Object.values(okrEventos).forEach(ev=>{ if(!ev || !ev.id || !_okrCalAbrange(ev, o, oid)) return; _okrCalOcorrencias(ev, hoje, ate).slice(0, n).forEach(d=>out.push({ev, data:d})); });
+  out.sort((a,b)=>a.data.localeCompare(b.data) || String(a.ev.hi||'').localeCompare(String(b.ev.hi||'')));
+  return out.slice(0, n);
+}
+function _okrCalHoraTxt(ev){ return ev.diaInteiro ? 'dia todo' : (ev.hi ? ev.hi+(ev.hf?'–'+ev.hf:'') : ''); }
+function _okrCalProximasHtml(o, oid){
+  if(!_okrCalLoaded) return '';
+  const l = _okrCalProximasDoObjetivo(o, 3, 120, oid); if(!l.length) return '';
+  return `<div class="okr-field-label">📅 Próximas reuniões e eventos</div>
+    <div class="okr-cal-prox">${l.map(x=>`<button type="button" onclick="openOkrEvento(${jsq(x.ev.id)},${jsq(x.data)})" title="Abrir no calendário"><b>${esc(_okrCalDataBR(x.data,true))}</b>${x.ev.diaInteiro||x.ev.hi?' · '+esc(_okrCalHoraTxt(x.ev)):''} — ${OKR_CAL_TIPOS[x.ev.tipo]?.ico||'📌'} ${esc(x.ev.titulo||'')}${_okrCalRecNorm(x.ev)?' <span class="mut">↻</span>':''}</button>`).join('')}</div>`;
+}
+// Selo no cartão do Objetivo: só se há reunião/evento dele nos próximos 7 dias.
+function _okrCalCardChip(o){
+  if(!_okrCalLoaded) return '';
+  const p = _okrCalProximasDoObjetivo(o, 1, 7)[0]; if(!p) return '';
+  return `<div style="margin-top:4px;"><span class="okr-cal-cardchip" title="${esc((OKR_CAL_TIPOS[p.ev.tipo]?.label||'Evento')+': '+(p.ev.titulo||''))}">📅 ${esc(_okrCalDataBR(p.data,true))}${p.ev.diaInteiro||!p.ev.hi?'':' · '+esc(p.ev.hi)}</span></div>`;
+}
+
+// ── pauta sugerida (a parte "inteligente"): quem merece a conversa nesta reunião ──
+function _okrCalPauta(ev, dataOc){
+  // mesma regra do escopo do Objetivo (vínculo, tag ou gerência; reunião sem recorte = a torre toda) — assim a pauta, o selo e os avisos concordam
+  const objs = Object.values(okrObjetivos).filter(o=>o && !o.arquivado && _okrCalAbrange(ev, o));
+  const hoje = todaySPStr(), ref = (dataOc && dataOc>hoje) ? dataOc : hoje, lim = _calSomaDias(ref, 7);
+  return objs.map(o=>{
+    const st = _okrObjStatus(o.id), marcos = _okrObjMarcos(o.id).filter(m=>m.progresso!=='concluido'), flags = [];
+    let score = ({atrasado:4, risco:3, nao_iniciado:1})[st] || 0;
+    if(st==='atrasado') flags.push({t:'atrasado', w:false}); else if(st==='risco') flags.push({t:'em risco', w:true});
+    const venc = marcos.filter(m=>m.prazo && m.prazo<hoje).length, vencem = marcos.filter(m=>m.prazo && m.prazo>=hoje && m.prazo<=lim).length;
+    if(venc){ score += 3; flags.push({t:venc+' marco'+(venc>1?'s':'')+' vencido'+(venc>1?'s':''), w:false}); }
+    if(vencem){ score += 1; flags.push({t:vencem+' marco'+(vencem>1?'s':'')+' vence'+(vencem>1?'m':'')+' até '+_okrCalDataBR(lim), w:true}); }
+    const at = o.atingimento;
+    if(at && at.tipo && at.tipo!=='perene'){
+      const ult = _okrAtingAtual(at), dias = ult && ult.em ? _calDiasEntre(ult.em, hoje) : null;
+      if(dias===null){ score += 1; flags.push({t:'atingimento sem lançamento', w:true}); }
+      else if(dias>14){ score += 1; flags.push({t:'sem lançamento há '+dias+' dias', w:true}); }
+    }
+    if(st==='concluido') score = -5;
+    return {o, st, flags, score};
+  }).sort((a,b)=>b.score-a.score || String(a.o.titulo||'').localeCompare(String(b.o.titulo||'')));
+}
+
+// ── itens do calendário num intervalo (eventos expandidos + prazos de Marcos) ──
+function _okrCalTorreFiltro(){ return _okrCalTorreF!==null ? _okrCalTorreF : (_okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : ''); }
+function _okrCalSetTag(v){ _okrCalTagF = okrTags[v] ? v : ''; renderOkrCalendario(); }
+function _okrCalSetGlobal(v){ _okrCalIncluiGlobal = !!v; renderOkrCalendario(); }
+// Filtro de agenda: '' = tudo · 'global' = só a global · torre = a local dela (+ a global, se marcado).
+function _okrCalVisivel(ev, torreF){
+  if(!torreF) return true;
+  if(torreF==='global') return !ev.torre;
+  return ev.torre===torreF || (_okrCalIncluiGlobal && !ev.torre);
+}
+// Torre que um evento NOVO recebe por padrão, conforme o filtro aberto.
+function _okrCalTorrePadrao(){ const tf = _okrCalTorreFiltro(); return tf==='global' ? '' : (tf || (isAdmUser(window._currentUser) ? '' : _okrTorreParaCriar())); }
+function _okrCalAgendaNome(torre){ return torre ? 'Agenda '+okrTorreInfo(torre).label : 'Agenda global'; }
+function _okrCalItens(de, ate, torreF){
+  const out = [];
+  Object.values(okrEventos).forEach(ev=>{
+    if(!ev || !ev.id || !_okrCalVisivel(ev, torreF)) return;
+    if(_okrCalTagF && !_okrCalLista(ev.tagIds).includes(_okrCalTagF)) return;
+    _okrCalOcorrencias(ev, de, ate).forEach(d=>out.push({k:'ev', ev, data:d, hi:ev.diaInteiro ? '' : (ev.hi||''), torre:ev.torre||''}));
+  });
+  Object.values(okrMarcos).forEach(m=>{
+    if(!m || m.arquivado || !m.prazo || m.progresso==='concluido' || m.prazo<de || m.prazo>ate) return;
+    const o = okrObjetivos[m.objetivoId]; if(!o || o.arquivado) return;
+    const t = _okrTorreDe(o); if(torreF==='global' || (torreF && t!==torreF)) return;   // prazo de Marco é sempre de uma torre
+    if(_okrCalTagF && !_okrCalLista(o.tagIds).includes(_okrCalTagF)) return;   // filtro por tag: o Marco entra pela tag do Objetivo dele
+    out.push({k:'prazo', m, o, data:m.prazo, hi:'', torre:t});
+  });
+  out.sort((a,b)=>a.data.localeCompare(b.data) || (a.k===b.k ? 0 : (a.k==='ev' ? -1 : 1)) || String(a.hi).localeCompare(String(b.hi)));
+  return out;
+}
+
+// ── carga + view ──
+function loadOkrCalendario(){
+  window._onValue(window._ref(window._db, OKR_CAL_PATH), snap=>{
+    okrEventos = snap.val() || {}; _okrCalLoaded = true;
+    if(_okrShowCal) renderOkrCalendario();
+    _okrEventoDeepLink();
+    try{ renderOkrObjetivos(); }catch(e){}   // o selo 📅 dos cartões acompanha as mudanças de agenda (mesmo com o calendário aberto, pra já estar certo ao voltar pros Objetivos)
+  });
+}
+// Abre um evento a partir do sino ou do link (?evento=<id>&data=<YYYY-MM-DD>): vai pro calendário no mês dele e abre o detalhe da ocorrência.
+function _okrAbrirEvento(id, data){
+  if(!_okrCalLoaded){ _okrCalPendente = {id, data}; return; }   // chega quando o calendário carregar
+  const ev = okrEventos[id]; if(!ev){ showToast('⚠ Esse evento não existe mais — pode ter sido cancelado.'); return; }
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(data||'') ? data : _okrCalProxData(ev), t = _calParse(d);
+  _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = d; _okrCalTorreF = ''; _okrCalTagF = '';
+  _okrSetView('calendario'); openOkrEvento(id, d);
+}
+let _okrCalPendente = null;
+function _okrEventoDeepLink(){
+  if(!_okrCalPendente){ const q = new URLSearchParams(location.search), id = q.get('evento'); if(!id || _okrEventoDeepFeito) return; _okrEventoDeepFeito = true; _okrCalPendente = {id, data:q.get('data')||''}; }
+  if(!_okrCalLoaded) return;
+  const p = _okrCalPendente; _okrCalPendente = null; _okrAbrirEvento(p.id, p.data);
+}
+let _okrEventoDeepFeito = false;
+function _okrToggleCal(){ _okrSetView(_okrShowCal ? 'objetivos' : 'calendario'); }
+function _okrCalSetVista(v){ _okrCalVista = v; try{ localStorage.setItem('okr_cal_vista', v); }catch(e){} renderOkrCalendario(); }
+function _okrCalNav(d){
+  if(d===0){ const t = _calParse(todaySPStr()); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = todaySPStr(); }
+  else {
+    _okrCalMes = new Date(_okrCalMes.getFullYear(), _okrCalMes.getMonth()+d, 1);
+    // o painel do dia (abaixo da grade) só enxerga o que está nas 6 semanas exibidas: um dia selecionado de outro mês aparecia como "Nada marcado" mesmo com eventos
+    const mesSel = (_okrCalSel||'').slice(0,7), mesAtual = _calFmt(_okrCalMes).slice(0,7), hojeS = todaySPStr();
+    if(mesSel!==mesAtual) _okrCalSel = hojeS.slice(0,7)===mesAtual ? hojeS : _calFmt(_okrCalMes);
+  }
+  renderOkrCalendario();
+}
+function _okrCalSetTorre(v){ _okrCalTorreF = v; renderOkrCalendario(); }
+function _okrCalSelDia(d){ _okrCalSel = d; renderOkrCalendario(); }
+function _okrCalMais(){ _okrCalAgendaDias += 60; renderOkrCalendario(); }
+
+// Classe CSS da agenda de um item. `ev.torre` vem do banco (qualquer pessoa da empresa grava em kanban/okr): só um id de torre conhecido entra no atributo — um valor
+// hostil (`x" onmouseover="…`) quebraria o `class="…"` (XSS armazenado); torre desconhecida é pintada como global.
+function _okrCalCls(torre){ return _okrTorreValida(torre) ? 'okr-t-'+torre : 'okr-t-todas'; }
+function _okrCalItemHtml(it, comData){
+  const torreCls = _okrCalCls(it.torre);
+  if(it.k==='prazo'){
+    return `<div class="okr-cal-item okr-t-${it.torre} prazo" onclick="openOkrObjetivo(${jsq(it.o.id)})"><div class="hr">${comData?esc(_okrCalDataBR(it.data,true)):'prazo'}</div>
+      <div><div class="tt">◆ ${esc(it.m.nome||'Marco')}</div><div class="sb">Prazo do Marco · 🎯 ${esc(it.o.titulo||'')}</div></div></div>`;
+  }
+  const ev = it.ev, tp = OKR_CAL_TIPOS[ev.tipo] || OKR_CAL_TIPOS.evento, ti = ev.torre ? okrTorreInfo(ev.torre) : null;
+  const sub = [ti ? ti.icon+' '+_okrCalAgendaNome(ev.torre) : '🌐 Agenda global (todas as torres)', _okrCalRecNorm(ev) ? '↻ '+_okrCalRecTexto(ev) : '', ev.local||'', _okrCalLista(ev.tagIds).filter(t=>okrTags[t]).map(t=>'🏷️ '+okrTags[t].label).join(' ')].filter(Boolean).join(' · ');
+  return `<div class="okr-cal-item ${torreCls}" onclick="openOkrEvento(${jsq(ev.id)},${jsq(it.data)})"><div class="hr">${comData?esc(_okrCalDataBR(it.data,true))+'<br>':''}${esc(_okrCalHoraTxt(ev))}</div>
+    <div><div class="tt">${tp.ico} ${esc(ev.titulo||'(sem título)')}</div><div class="sb">${esc(sub)}</div></div></div>`;
+}
+function renderOkrCalendario(){
+  const root = document.getElementById('okr-cal-root'); if(!root) return;
+  const hoje = todaySPStr();
+  if(!_okrCalMes){ const t = _calParse(hoje); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); }
+  if(!_okrCalSel) _okrCalSel = hoje;
+  const torreF = _okrCalTorreFiltro(), podeCriar = _okrCalPodeCriar(_okrCalTorrePadrao());
+  const mesTxt = _okrCalMes.toLocaleDateString('pt-BR', {month:'long', year:'numeric'});
+  const bar = `<div class="okr-cal-bar">
+      ${_okrCalVista==='mes' ? `<button type="button" class="btn btn-sm" onclick="_okrCalNav(-1)" title="Mês anterior" aria-label="Mês anterior">◀</button>
+      <div class="okr-cal-title">${esc(mesTxt)}</div>
+      <button type="button" class="btn btn-sm" onclick="_okrCalNav(1)" title="Próximo mês" aria-label="Próximo mês">▶</button>` : `<div class="okr-cal-title">Próximos eventos</div>`}
+      <button type="button" class="btn btn-sm" onclick="_okrCalNav(0)">Hoje</button>
+      <div class="okr-cal-seg" role="group" aria-label="Visualização"><button type="button" class="${_okrCalVista==='mes'?'on':''}" onclick="_okrCalSetVista('mes')">Mês</button><button type="button" class="${_okrCalVista==='agenda'?'on':''}" onclick="_okrCalSetVista('agenda')">Agenda</button></div>
+      <select class="pt-filter-input" onchange="_okrCalSetTorre(this.value)" title="Filtra por torre" aria-label="Torre">
+        <option value=""${torreF===''?' selected':''}>📅 Todas as agendas</option><option value="global"${torreF==='global'?' selected':''}>🌐 Agenda global</option>${OKR_TORRES.map(t=>`<option value="${t.id}"${torreF===t.id?' selected':''}>${t.icon} Agenda ${esc(t.label)}</option>`).join('')}</select>
+      ${_okrTorreValida(torreF)?`<label class="okr-cal-gl" title="Mostra junto os eventos da agenda global (que envolvem todas as torres)"><input type="checkbox" ${_okrCalIncluiGlobal?'checked':''} onchange="_okrCalSetGlobal(this.checked)"> + global</label>`:''}
+      ${Object.keys(okrTags).length?`<select class="pt-filter-input" onchange="_okrCalSetTag(this.value)" title="Filtra por tag (eventos com a tag e prazos de Marcos de Objetivos com a tag)" aria-label="Tag"><option value="">🏷️ Todas as tags</option>${Object.entries(okrTags).sort((a,b)=>String(a[1].label||'').localeCompare(String(b[1].label||''))).map(([id,t])=>`<option value="${esc(id)}"${_okrCalTagF===id?' selected':''}>🏷️ ${esc(t.label||'')}</option>`).join('')}</select>`:''}
+      <span style="flex:1;"></span>
+      ${podeCriar?`<button type="button" class="btn btn-p btn-sm" onclick="openOkrEventoEditor(null)">+ Novo evento</button>`:''}
+    </div>`;
+  const ehAdm = !window._isPainelViewer && isAdmUser(window._currentUser);
+  const migra = (ehAdm && _okrCalLoaded && !_okrBlocoMigrado())
+    ? `<div class="okr-cal-migra"><div>🗓️ <b>O bloco quinzenal do OKR</b> (Bloco 1: ${esc(OKR_BLOCO_AREAS[1].map(a=>okrGerenciaLabel(a,'digital')).join(', '))} · Bloco 2: ${esc(OKR_BLOCO_AREAS[2].map(a=>okrGerenciaLabel(a,'digital')).join(', '))} — quinta, de 15 em 15 dias) ainda está fixo no sistema e não aparece aqui. Importe pro calendário: viram 2 reuniões recorrentes que você edita (horário, link, convidados) e os avisos de véspera passam a vir daqui, sem duplicar.</div>
+        <button type="button" class="btn btn-p btn-sm" onclick="_okrCalImportarBloco()">📥 Importar bloco quinzenal</button></div>` : '';
+  let corpo = '';
+  if(_okrCalVista==='mes'){
+    const primeiro = new Date(_okrCalMes.getFullYear(), _okrCalMes.getMonth(), 1), ini = new Date(primeiro); ini.setDate(1-primeiro.getDay());
+    const de = _calFmt(ini), ate = _calSomaDias(de, 41), itens = _okrCalItens(de, ate, torreF), porDia = {};
+    itens.forEach(it=>{ (porDia[it.data] = porDia[it.data]||[]).push(it); });
+    let cel = '';
+    for(let i=0;i<42;i++){
+      const ds = _calSomaDias(de, i), dn = _calParse(ds), l = porDia[ds]||[], fora = dn.getMonth()!==_okrCalMes.getMonth();
+      cel += `<div class="okr-cal-cell${fora?' fora':''}${ds===hoje?' hoje':''}${ds===_okrCalSel?' sel':''}" onclick="_okrCalSelDia(${jsq(ds)})" role="button" tabindex="0" aria-label="${esc(dn.toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}${l.length?', '+l.length+' item(ns)':''}">
+        <div class="okr-cal-dn">${dn.getDate()}</div>
+        <div class="okr-cal-chips">${l.slice(0,3).map(it=> it.k==='prazo'
+          ? `<button type="button" class="okr-cal-chip prazo" onclick="event.stopPropagation();openOkrObjetivo(${jsq(it.o.id)})" title="Prazo do Marco: ${esc(it.m.nome||'')}">◆ ${esc(it.m.nome||'Marco')}</button>`
+          : `<button type="button" class="okr-cal-chip ${_okrCalCls(it.torre)}" onclick="event.stopPropagation();openOkrEvento(${jsq(it.ev.id)},${jsq(it.data)})" title="${esc(it.ev.titulo||'')}">${it.torre?'':'🌐 '}${it.hi?esc(it.hi)+' ':''}${esc(it.ev.titulo||'')}</button>`).join('')}${l.length>3?`<div class="okr-cal-more">+${l.length-3} mais</div>`:''}</div>
+        <div class="okr-cal-dots">${l.slice(0,5).map(it=>`<span class="okr-cal-dot ${it.k==='prazo'?'prazo':_okrCalCls(it.torre)}"></span>`).join('')}</div>
+      </div>`;
+    }
+    const dia = porDia[_okrCalSel] || [];
+    corpo = `<div class="okr-cal-grid">${OKR_CAL_DOW_S.map(d=>`<div class="okr-cal-dow">${d}</div>`).join('')}${cel}</div>
+      <div class="okr-cal-agday" style="margin-top:16px;">${esc(_calParse(_okrCalSel).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}${_okrCalSel===hoje?' · hoje':''}
+        ${podeCriar?`<button type="button" class="btn btn-sm" style="margin-left:8px;padding:2px 9px;font-size:11px;" onclick="openOkrEventoEditor(null,${jsq(_okrCalSel)})">+ neste dia</button>`:''}</div>
+      ${dia.length ? dia.map(it=>_okrCalItemHtml(it,false)).join('') : '<div class="mut" style="font-size:12px;padding:6px 2px;">Nada marcado neste dia.</div>'}`;
+  } else {
+    const de = hoje, ate = _calSomaDias(hoje, _okrCalAgendaDias), itens = _okrCalItens(de, ate, torreF), grupos = {};
+    itens.forEach(it=>{ (grupos[it.data] = grupos[it.data]||[]).push(it); });
+    const datas = Object.keys(grupos).sort();
+    corpo = datas.length ? datas.map(d=>`<div class="okr-cal-agday">${esc(_calParse(d).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'}))}${d===hoje?' · hoje':''}</div>${grupos[d].map(it=>_okrCalItemHtml(it,false)).join('')}`).join('')
+      : `<div class="mut" style="font-size:12px;padding:14px 2px;">Nada marcado nos próximos ${_okrCalAgendaDias} dias.</div>`;
+    corpo += `<div style="text-align:center;margin-top:10px;"><button type="button" class="btn btn-sm" onclick="_okrCalMais()">Ver mais 60 dias</button></div>`;
+  }
+  root.innerHTML = bar+migra+corpo+`<div class="mut" style="font-size:10.5px;margin-top:12px;">◆ = prazo de Marco (vem dos próprios Marcos, só leitura). Reuniões da torre mostram a pauta sugerida ao abrir.${(ehAdm && _okrBlocoMigrado())?` · <a href="#" style="color:var(--txt3);" onclick="event.preventDefault();_okrCalDesfazerBloco()" title="Apaga os 2 eventos do bloco quinzenal e volta ao aviso fixo">↩ Voltar ao bloco quinzenal fixo</a>`:''}</div>`;
+}
+
+// ── 🗓️ Migração do "bloco quinzenal" fixo pro calendário ──
+// O bloco (OKR_BLOCO_AREAS/OKR_BLOCO_ANCHOR, mais functions/okr/dailyScan.js) vira 2 eventos recorrentes de verdade — "Check-in OKR — Bloco 1/2", torre Digital, a cada 2 semanas
+// na quinta, ligados às gerências de cada bloco, véspera ligada (igual ao aviso antigo). Marca `origem:'bloco_quinzenal'`: com ela, o modal do Objetivo deixa de mostrar o
+// bloco fixo e o dailyScan cala o gatilho fixo (sem aviso duplicado). Idempotente (ids fixos) e reversível ("↩ Voltar ao bloco fixo" apaga os 2 eventos).
+const OKR_BLOCO_ORIGEM = 'bloco_quinzenal';
+function _okrBlocoMigrado(){ return Object.values(okrEventos).some(e=>e && e.origem===OKR_BLOCO_ORIGEM); }
+function _okrBlocoEventos(){
+  const u = window._currentUser || {}, ts = new Date().toISOString();
+  const mk = (n, data)=>({
+    id:'bloco_quinzenal_'+n, titulo:'Check-in OKR — Bloco '+n, tipo:'reuniao', data, diaInteiro:false, hi:'', hf:'', torre:'digital',
+    areaIds:OKR_BLOCO_AREAS[n].slice(), objetivoIds:[], tagIds:[], convidados:[], lembrar:{vespera:true, dia:false}, local:'', link:'',
+    descricao:'Reunião quinzenal de check-in dos OKRs — '+OKR_BLOCO_AREAS[n].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+'. Criada a partir do "bloco quinzenal" fixo (os 2 blocos se alternam toda quinta). Edite aqui o horário, o link e os convidados.',
+    rec:{tipo:'quinzenal', unidade:'semana', intervalo:2, ate:''}, excecoes:{}, origem:OKR_BLOCO_ORIGEM,
+    criadoPor:{uid:u.uid||'', nome:u.displayName||u.email||'?'}, criadoEm:ts, atualizadoEm:ts });
+  return [mk(1, OKR_BLOCO_ANCHOR), mk(2, _calSomaDias(OKR_BLOCO_ANCHOR, 7))];   // âncora = quinta do Bloco 1; o Bloco 2 é a quinta seguinte
+}
+async function _okrCalImportarBloco(){
+  if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM importa o bloco quinzenal.'); return; }
+  if(_okrBlocoMigrado()){ showToast('✅ O bloco quinzenal já está no calendário.'); return; }
+  if(!await uiConfirm('Importar o bloco quinzenal pro calendário?\n\nViram 2 reuniões recorrentes (a cada 2 semanas, às quintas, torre Digital): Bloco 1 — '+OKR_BLOCO_AREAS[1].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+' · Bloco 2 — '+OKR_BLOCO_AREAS[2].map(a=>okrGerenciaLabel(a,'digital')).join(', ')+'.\n\nOs avisos de véspera passam a vir do calendário (sem duplicar) e o aviso fixo se desliga. Você pode editar horário, link e convidados depois — e voltar ao bloco fixo quando quiser.', {okText:'Importar'})) return;
+  try{
+    for(const ev of _okrBlocoEventos()) if(!okrEventos[ev.id]) await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+ev.id), ev);
+    showToast('✅ Bloco quinzenal importado pro calendário.');
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
+}
+async function _okrCalDesfazerBloco(){
+  if(window._isPainelViewer || !isAdmUser(window._currentUser)) return;
+  const ids = Object.values(okrEventos).filter(e=>e && e.origem===OKR_BLOCO_ORIGEM).map(e=>e.id);
+  if(!ids.length) return;
+  if(!await uiConfirm('Voltar ao bloco quinzenal fixo?\n\nOs eventos "Check-in OKR — Bloco 1/2" são apagados (com as anotações e vínculos deles) e o aviso fixo de véspera volta a valer.', {danger:true, okText:'Voltar ao bloco fixo'})) return;
+  try{
+    for(const id of ids){ await window._remove(window._ref(window._db, OKR_CAL_PATH+'/'+id)); await window._remove(window._ref(window._db, OKR_CAL_NOTAS+'/'+id)).catch(()=>{}); await window._remove(window._ref(window._db, OKR_CAL_VINC+'/'+id)).catch(()=>{}); }
+    showToast('↩ Voltou ao bloco quinzenal fixo.');
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
+}
+
+// ── 🔔 avisos no sino ──
+// (1) Feed da torre (kanban/notif_feed): nova reunião / mudança / cancelamento — aparece pra quem é da agenda (torre ou todos, se global) em QUALQUER página.
+// (2) Notificação PESSOAL (kanban/usuarios/{uid}/notificacoes, tipo okr_reuniao — vira push) pros CONVIDADOS: convite, mudança, cancelamento, menção nas anotações.
+// (3) Véspera e dia da reunião: Cloud Function okrDailyScan (functions/okr/dailyScan.js), pra responsáveis dos Objetivos da pauta + convidados.
+function _okrCalProxData(ev){ const h = todaySPStr(); return _okrCalOcorrencias(ev, h, _calSomaDias(h, 400))[0] || ev.data; }
+function _okrCalQuandoTxt(ev, data){ return [_okrCalDataBR(data,true), _okrCalHoraTxt(ev), _okrCalRecNorm(ev) ? '↻ '+_okrCalRecTexto(ev) : ''].filter(Boolean).join(' · '); }
+function _okrCalMudou(a, b){
+  if(!a) return true;
+  return ['titulo','data','hi','hf','torre','local','link'].some(k=>String(a[k]||'')!==String(b[k]||'')) || !!a.diaInteiro!==!!b.diaInteiro || JSON.stringify(a.rec||null)!==JSON.stringify(b.rec||null);
+}
+function _okrCalAvisaFeed(acao, ev, dataOc){
+  if(!ev || ev.tipo==='lembrete' || typeof MareNotif==='undefined' || window._isPainelViewer) return;
+  const tp = (OKR_CAL_TIPOS[ev.tipo]||OKR_CAL_TIPOS.evento).label.toLowerCase(), data = dataOc || _okrCalProxData(ev);
+  const titulo = acao==='novo' ? `🗓️ Nova ${tp}: ${ev.titulo}` : (acao==='cancelada' ? `🚫 ${tp[0].toUpperCase()+tp.slice(1)} cancelada: ${ev.titulo}` : `✏️ ${tp[0].toUpperCase()+tp.slice(1)} atualizada: ${ev.titulo}`);
+  const sub = [_okrCalQuandoTxt(ev, data), _okrCalAgendaNome(ev.torre)].filter(Boolean).join(' · ');
+  _okrFeedPush('okr_evento', ev.torre ? [ev.torre] : ['*'], titulo, sub, {eventoId:ev.id, evData:data, icone:acao==='cancelada'?'🚫':'🗓️'});
+}
+function _okrCalNotificaPessoas(uids, titulo, sub, ev, data){
+  const eu = window._currentUser?.uid;
+  [...new Set(uids)].filter(u=>u && u!==eu).forEach(uid=>{
+    const id = 'n'+Date.now()+Math.random().toString(36).slice(2,6);
+    window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+id), {id, type:'okr_reuniao', title:titulo, sub:sub||'', okrEventoId:ev.id, okrEventoData:data||'', read:false, ts:new Date().toISOString()}).catch(()=>{});
+  });
+}
+function _okrCalAvisaConvidados(acao, ev, novos, dataOc){
+  const conv = novos || _okrCalLista(ev.convidados); if(!conv.length) return;
+  const autor = window._currentUser?.displayName || window._currentUser?.email || 'Alguém', data = dataOc || _okrCalProxData(ev);
+  const titulo = acao==='convite' ? `📩 ${autor} te convidou: ${ev.titulo}` : (acao==='cancelada' ? `🚫 Cancelado: ${ev.titulo}` : `✏️ Atualizado: ${ev.titulo}`);
+  _okrCalNotificaPessoas(conv, titulo, _okrCalQuandoTxt(ev, data)+' · '+_okrCalAgendaNome(ev.torre), ev, data);
+}
+function _okrCalPessoaChip(uid, remover){
+  const p = _okrPessoaInfo(uid);
+  return `<span class="okr-ev-pessoa">${esc(p.nome)}${remover?`<button type="button" onclick="_okrEvDelConv(${jsq(uid)})" title="Remover convidado" aria-label="Remover ${esc(p.nome)}">✕</button>`:''}</span>`;
+}
+
+// ── detalhe do evento (com pauta sugerida) ──
+let _okrEvdId = null, _okrEvdData = null, _okrEvdPautaTodos = false, _okrEvdNotas = {}, _okrEvdVinc = null, _okrEvdOff = [];
+const OKR_CAL_NOTAS = 'kanban/okr/calendario/notas', OKR_CAL_VINC = 'kanban/okr/calendario/vinculos';
+// Anotações pós-reunião: kanban/okr/calendario/notas/{eventoId}/{data}/{notaId} = {texto, autorUid, ts}. Vínculo com a apresentação do OKR:
+// kanban/okr/calendario/vinculos/{eventoId}/{data} = {apresentacao:true, por, ts} — quando a reunião foi conduzida pela okr-apresentacao.slide.html,
+// as anotações dela (kanban/okr/reuniao_notas/{data}) aparecem aqui também. Só escuta o evento/data abertos (nada carregado à toa).
+function _okrEvdSolta(){ _okrEvdOff.forEach(f=>{ try{ f(); }catch(e){} }); _okrEvdOff = []; _okrEvdNotas = {}; _okrEvdVinc = null; }
+function _okrEvdEscuta(){
+  _okrEvdSolta(); const id = _okrEvdId, d = _okrEvdData; if(!id || !d) return;
+  const w = window, dentro = ()=>_okrEvdId===id && _okrEvdData===d;
+  const a = w._onValue(w._ref(w._db, OKR_CAL_NOTAS+'/'+id+'/'+d), snap=>{ if(!dentro()) return; _okrEvdNotas = snap.val() || {}; renderOkrEventoDetalhe(); }, ()=>{});
+  const b = w._onValue(w._ref(w._db, OKR_CAL_VINC+'/'+id+'/'+d), snap=>{ if(!dentro()) return; _okrEvdVinc = snap.val() || null; renderOkrEventoDetalhe(); }, ()=>{});
+  _okrEvdOff = [a,b].filter(f=>typeof f==='function');
+}
+function openOkrEvento(id, data){
+  const ev = okrEventos[id]; if(!ev){ showToast('⚠ Esse evento não existe mais.'); return; }
+  _okrEvdId = id; _okrEvdData = data || ev.data; _okrEvdPautaTodos = false;
+  document.getElementById('okr-evd-ov')?.classList.add('open'); renderOkrEventoDetalhe(); _okrEvdEscuta();
+}
+function closeOkrEvento(){ document.getElementById('okr-evd-ov')?.classList.remove('open'); _okrEvdSolta(); _okrEvdId = null; }
+function _okrEvdNotaAdd(){
+  const inp = document.getElementById('okr-evd-notainp'); if(!inp || window._isPainelViewer || !window._currentUser) return;
+  const texto = (inp.value||'').trim(); if(!texto) return;
+  const ev = okrEventos[_okrEvdId]; if(!ev) return;
+  const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6), mencionados = _okrMencoesDoTexto(texto), data = _okrEvdData, evId = _okrEvdId;
+  window._set(window._ref(window._db, OKR_CAL_NOTAS+'/'+evId+'/'+data+'/'+id), {texto, autorUid:window._currentUser.uid, ts:new Date().toISOString()})
+    .then(()=>{ if(mencionados.length){ const autor = window._currentUser.displayName || window._currentUser.email || '?'; _okrCalNotificaPessoas(mencionados, `💬 ${autor} te mencionou nas anotações de "${ev.titulo}"`, texto.length>110 ? texto.slice(0,110)+'…' : texto, ev, data); } })
+    .catch(e=>showToast('❌ '+(e?.message||e)));
+  inp.value = '';
+}
+function _okrEvdNotaDel(nid){
+  const n = _okrEvdNotas[nid], ev = okrEventos[_okrEvdId]; if(!n || !ev) return;
+  if(n.autorUid!==window._currentUser?.uid && !_okrCalPodeEditar(ev)){ showToast('⚠ Só quem escreveu (ou ADM/organizador) apaga a anotação.'); return; }
+  window._remove(window._ref(window._db, OKR_CAL_NOTAS+'/'+_okrEvdId+'/'+_okrEvdData+'/'+nid)).catch(e=>showToast('❌ '+(e?.message||e)));
+}
+function _okrEvdMencionar(uid){ const inp = document.getElementById('okr-evd-notainp'); if(!inp || !uid) return; const p = _okrPessoaInfo(uid); inp.value += (inp.value && !/\s$/.test(inp.value) ? ' ' : '')+'@'+p.nome+' '; inp.focus(); const sel = document.getElementById('okr-evd-mencsel'); if(sel) sel.value = ''; }
+function _okrEvdVincular(sim){
+  const ref = window._ref(window._db, OKR_CAL_VINC+'/'+_okrEvdId+'/'+_okrEvdData);
+  (sim ? window._set(ref, {apresentacao:true, por:window._currentUser?.uid||'', ts:new Date().toISOString()}) : window._remove(ref)).catch(e=>showToast('❌ '+(e?.message||e)));
+}
+function _okrEvdAbrirNotasDia(d){ closeOkrEvento(); _okrSetView('notas'); if(window._okrNotasSetViewDate) window._okrNotasSetViewDate(d); }
+function _okrEvdNotasHtml(ev){
+  const ro = !!window._isPainelViewer, meu = window._currentUser?.uid, d = _okrEvdData;
+  const notas = Object.entries(_okrEvdNotas).filter(([,n])=>n).sort((a,b)=>String(a[1].ts||'').localeCompare(String(b[1].ts||'')));
+  const apr = Object.entries(okrReuniaoNotas[d]||{}).filter(([,n])=>n).sort((a,b)=>String(a[1].ts||'').localeCompare(String(b[1].ts||'')));
+  const vinc = !!(_okrEvdVinc && _okrEvdVinc.apresentacao);
+  const hora = ts=>ts ? new Date(ts).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : '';
+  const nota = ([id,n],extra)=>`<div class="okr-evn-nota${extra||''}"><span class="qt">${hora(n.ts)}${(!extra && (n.autorUid===meu || _okrCalPodeEditar(ev)) && !ro)?` <span style="cursor:pointer;" title="Excluir" onclick="_okrEvdNotaDel(${jsq(id)})">✕</span>`:''}</span><b>${esc((_okrPessoaInfo(n.autorUid).nome||'—').split(' ')[0])}</b><br>${_okrMencaoHtml(n.texto||'').replace(/\n/g,'<br>')}</div>`;
+  let h = `<div class="okr-field-label" style="margin-top:16px;">📝 Anotações pós-reunião <span class="mut" style="text-transform:none;letter-spacing:0;">— desta ocorrência (${esc(_okrCalDataBR(d,true))})</span></div>
+    <div class="okr-evn-lista">${notas.length ? notas.map(x=>nota(x)).join('') : '<div class="mut" style="font-size:11.5px;">Nenhuma anotação ainda.</div>'}</div>`;
+  if(!ro) h += `<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-start;">
+      <textarea class="okr-input" id="okr-evd-notainp" rows="3" maxlength="4000" placeholder="Ata, decisões, próximos passos… (use @Nome pra avisar alguém)" style="flex:1;min-width:220px;resize:vertical;"></textarea>
+      <div style="display:flex;flex-direction:column;gap:6px;"><button type="button" class="btn btn-p btn-sm" onclick="_okrEvdNotaAdd()">Adicionar</button>
+      <select class="okr-select" id="okr-evd-mencsel" onchange="_okrEvdMencionar(this.value)" style="width:120px;" title="Inserir uma menção"><option value="">@ mencionar</option>${_okrPessoaOptions().filter(p=>p.uid!==meu).sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${esc(p.uid)}">${esc(p.nome)}</option>`).join('')}</select></div></div>`;
+  // vínculo com a apresentação do OKR
+  if(vinc){
+    h += `<div class="okr-field-label" style="margin-top:14px;">🎥 Anotações da apresentação do OKR <span class="mut" style="text-transform:none;letter-spacing:0;">— reunião feita por ela (${esc(_okrCalDataBR(d,true))})</span></div>
+      <div class="okr-evn-lista">${apr.length ? apr.map(x=>nota(x,' okr-evn-apr')).join('') : '<div class="mut" style="font-size:11.5px;">Nenhuma anotação registrada na apresentação neste dia.</div>'}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;"><button type="button" class="btn btn-sm" onclick="_okrEvdAbrirNotasDia(${jsq(d)})">📋 Abrir na tela de anotações</button>
+      <a class="btn btn-sm" href="okr-apresentacao.slide.html" target="_blank" rel="noopener" style="text-decoration:none;">🎥 Abrir a apresentação</a>
+      ${!ro?`<button type="button" class="btn btn-sm" onclick="_okrEvdVincular(false)">Desvincular</button>`:''}</div>`;
+  } else if(!ro){
+    h += `<div style="margin-top:12px;"><button type="button" class="btn btn-sm" onclick="_okrEvdVincular(true)" title="Liga esta reunião às anotações da apresentação do OKR do mesmo dia">🔗 ${apr.length ? 'Há '+apr.length+' anotação(ões) da apresentação neste dia — vincular a esta reunião' : 'Esta reunião foi feita pela apresentação do OKR? Vincular'}</button></div>`;
+  }
+  return h;
+}
+function renderOkrEventoDetalhe(){
+  const ev = okrEventos[_okrEvdId], body = document.getElementById('okr-evd-body'); if(!body) return;
+  if(!ev){ closeOkrEvento(); return; }
+  const rascunho = document.getElementById('okr-evd-notainp')?.value || '';   // um snapshot novo não pode apagar o que a pessoa está digitando
+  const tp = OKR_CAL_TIPOS[ev.tipo] || OKR_CAL_TIPOS.evento, ti = ev.torre ? okrTorreInfo(ev.torre) : null, pode = _okrCalPodeEditar(ev);
+  document.getElementById('okr-evd-title').textContent = tp.ico+' '+tp.label;
+  const areas = _okrCalLista(ev.areaIds).map(a=>okrGerenciaIcon(a, ev.torre||'digital')+' '+okrGerenciaLabel(a, ev.torre||'digital'));
+  const pauta = _okrCalPauta(ev, _okrEvdData), vis = _okrEvdPautaTodos ? pauta : pauta.slice(0, 5);
+  const link = safeUrl(ev.link);
+  body.innerHTML = `
+    <div class="okr-evd-tit">${esc(ev.titulo||'(sem título)')}</div>
+    <div class="okr-evd-quando">🗓️ ${esc(_calParse(_okrEvdData).toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long',year:'numeric'}))}${_okrCalHoraTxt(ev)?' · '+esc(_okrCalHoraTxt(ev)):''}</div>
+    ${_okrCalRecNorm(ev)?`<div class="okr-evd-linha">↻ Repete ${esc(_okrCalRecTexto(ev))}</div>`:''}
+    <div class="okr-evd-linha">${ti?`<span class="okr-torre-chip okr-t-${ti.id}">${ti.icon} ${esc(_okrCalAgendaNome(ev.torre))}</span>`:'<span class="okr-torre-chip okr-t-todas">🌐 Agenda global · todas as torres</span>'}${areas.map(a=>` <span class="badge">${esc(a)}</span>`).join('')}</div>
+    ${_okrCalLista(ev.tagIds).filter(t=>okrTags[t]).length?`<div class="okr-evd-linha" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;">🏷️ ${_okrCalLista(ev.tagIds).map(t=>_okrTagChipHtml(t)).join('')}</div>`:''}
+    ${ev.local?`<div class="okr-evd-linha">📍 ${esc(ev.local)}</div>`:''}
+    ${link?`<div class="okr-evd-linha">🔗 <a href="${esc(link)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);">${esc(link.length>60?link.slice(0,58)+'…':link)}</a></div>`:''}
+    ${_okrCalLista(ev.convidados).length?`<div class="okr-field-label" style="margin-top:10px;">👥 Convidados</div><div class="okr-evd-pessoas">${_okrCalLista(ev.convidados).map(u=>_okrCalPessoaChip(u,false)).join('')}</div>`:''}
+    ${ev.descricao?`<div class="okr-evd-desc">${esc(ev.descricao).replace(/\n/g,'<br>')}</div>`:''}
+    ${pauta.length?`<div class="okr-field-label" style="margin-top:14px;">🧭 Pauta sugerida <span class="mut" style="text-transform:none;letter-spacing:0;">— ${_okrCalLista(ev.objetivoIds).length&&!_okrCalLista(ev.tagIds).length&&!_okrCalLista(ev.areaIds).length?'Objetivos vinculados':'Objetivos do escopo, do mais urgente pro menos'}</span></div>
+      ${vis.map(p=>`<div class="okr-cal-pauta-row" onclick="closeOkrEvento();openOkrObjetivo(${jsq(p.o.id)})" title="Abrir o Objetivo">${okrStatusDot(p.st)}<span style="flex:1;min-width:0;">${esc(p.o.titulo||'(sem título)')}</span>${p.flags.map(f=>`<span class="okr-cal-flag${f.w?' w':''}">${esc(f.t)}</span>`).join('')}</div>`).join('')}
+      ${pauta.length>vis.length?`<button type="button" class="btn btn-sm" style="margin-top:4px;" onclick="_okrEvdPautaTodos=true;renderOkrEventoDetalhe()">Mostrar todos (${pauta.length})</button>`:''}`:''}
+    ${_okrEvdNotasHtml(ev)}
+    ${pode?`<div class="okr-evd-acoes"><button type="button" class="btn btn-sm" onclick="openOkrEventoEditor(${jsq(ev.id)})">✏️ Editar</button><button type="button" class="btn btn-sm" style="color:var(--danger);" onclick="_okrEvExcluir(${jsq(ev.id)},${jsq(_okrEvdData)})">🗑 Excluir</button></div>`:''}`;
+  if(rascunho){ const i = document.getElementById('okr-evd-notainp'); if(i) i.value = rascunho; }
+}
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  const ed = document.getElementById('okr-ev-ov'), dt = document.getElementById('okr-evd-ov');
+  if(ed && ed.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrEventoEditor(); }
+  else if(dt && dt.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrEvento(); }
+}, true);
+
+// Diálogo de escolha com N botões (uiConfirm só tem OK/Cancelar). Devolve o id do botão, ou '' se cancelou.
+function _okrCalEscolha(msg, botoes){
+  return new Promise(res=>{
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(1,8,16,.85);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:1rem;';
+    ov.innerHTML = `<div style="background:rgba(6,18,36,.99);border:1px solid var(--glass-b);border-radius:14px;width:min(420px,95vw);padding:22px;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+      <div style="font-size:13px;color:var(--txt);line-height:1.6;margin-bottom:16px;white-space:pre-wrap;">${esc(msg)}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">${botoes.map((b,i)=>`<button type="button" data-i="${i}" class="btn btn-sm" style="padding:9px 14px;font-size:12px;${b.danger?'color:var(--danger);border-color:rgba(255,107,107,.4);':''}">${esc(b.label)}</button>`).join('')}</div></div>`;
+    const offEsc = _uiEscFecha(()=>fim(''));
+    const fim = v=>{ offEsc(); ov.remove(); res(v); };
+    ov.onclick = e=>{ if(e.target===ov) fim(''); };
+    ov.querySelectorAll('button').forEach(b=>b.onclick = ()=>fim(botoes[+b.dataset.i].id));
+    document.body.appendChild(ov);
+  });
+}
+async function _okrEvExcluir(id, data){
+  const ev = okrEventos[id]; if(!ev) return;
+  if(!_okrCalPodeEditar(ev)){ showToast('⚠ Só ADM ou o organizador da torre exclui este evento.'); return; }
+  const ref = p=>window._ref(window._db, OKR_CAL_PATH+'/'+id+(p||''));
+  try{
+    if(_okrCalRecNorm(ev)){
+      const r = await _okrCalEscolha('Excluir "'+(ev.titulo||'evento')+'"?', [{id:'esta', label:'Só esta ocorrência ('+_okrCalDataBR(data,true)+')'}, {id:'serie', label:'Toda a série', danger:true}, {id:'', label:'Cancelar'}]);
+      if(!r) return;
+      if(r==='esta') await window._update(ref('/excecoes'), {[data]:true}); else await window._remove(ref());
+      // "só esta" avisa se a ocorrência ainda não passou; "toda a série" avisa se ainda restava alguma ocorrência pela frente (apagar a série estando numa
+      // ocorrência PASSADA também cancela as futuras — antes ninguém era avisado e o aviso cairia numa data que já foi)
+      const hojeS = todaySPStr(), avisoData = r==='esta' ? (data>=hojeS ? data : '') : (_okrCalOcorrencias(ev, hojeS, _calSomaDias(hojeS, 400))[0] || '');
+      if(avisoData){ _okrCalAvisaFeed('cancelada', ev, avisoData); _okrCalAvisaConvidados('cancelada', ev, null, avisoData); }
+    } else {
+      if(!await uiConfirm('Excluir "'+(ev.titulo||'este evento')+'"?', {danger:true, okText:'Excluir'})) return;
+      await window._remove(ref());
+      if(ev.data>=todaySPStr()){ _okrCalAvisaFeed('cancelada', ev, ev.data); _okrCalAvisaConvidados('cancelada', ev, null, ev.data); }
+    }
+    showToast('🗑 Evento excluído.'); closeOkrEvento();
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
+}
+
+// ── editor ──
+let _okrEvDraft = null, _okrEvEditId = null;
+function openOkrEventoEditor(id, dataPadrao){
+  if(window._isPainelViewer){ showToast('👁 Modo visualização — sem permissão de escrita.'); return; }
+  const ev = id ? okrEventos[id] : null;
+  if(id && !ev){ showToast('⚠ Esse evento não existe mais.'); return; }
+  if(ev && !_okrCalPodeEditar(ev)){ showToast('⚠ Só ADM ou o organizador da torre edita este evento.'); return; }
+  const torre = ev ? (ev.torre||'') : _okrCalTorrePadrao();
+  if(!ev && !_okrCalPodeCriar(torre)){ showToast('⚠ Só ADM ou o organizador da torre cria eventos.'); return; }
+  const rn = ev ? _okrCalRecNorm(ev) : null, pre = rn && OKR_CAL_REC.find(x=>x.id===rn.tipo && x.unidade===rn.unidade && x.intervalo===rn.intervalo);
+  _okrEvEditId = id || null;
+  _okrEvDraft = ev ? { ...JSON.parse(JSON.stringify(ev)), areaIds:_okrCalLista(ev.areaIds), objetivoIds:_okrCalLista(ev.objetivoIds) }
+    : { tipo:'reuniao', titulo:'', data:dataPadrao || _okrCalSel || todaySPStr(), diaInteiro:false, hi:'10:00', hf:'11:00', torre, areaIds:[], objetivoIds:[], tagIds:[], convidados:[], local:'', link:'', descricao:'' };
+  _okrEvDraft.convidados = _okrCalLista(_okrEvDraft.convidados); _okrEvDraft.tagIds = _okrCalLista(_okrEvDraft.tagIds);
+  { const l = (ev && ev.lembrar) || {}; _okrEvDraft._lvesp = l.vespera!==undefined ? !!l.vespera : true; _okrEvDraft._ldia = l.dia!==undefined ? !!l.dia : true; _okrEvDraft._avisar = true; }
+  _okrEvDraft._recTipo = rn ? (pre ? pre.id : 'personalizada') : 'nenhuma';
+  _okrEvDraft._recN = rn ? rn.intervalo : 1; _okrEvDraft._recU = rn ? rn.unidade : 'semana'; _okrEvDraft._recAte = rn ? rn.ate : '';
+  document.getElementById('okr-ev-title').textContent = ev ? '✏️ Editar evento' : '📅 Novo evento';
+  document.getElementById('okr-ev-ov')?.classList.add('open'); renderOkrEventoEditor();
+  setTimeout(()=>document.getElementById('okr-ev-titulo')?.focus(), 50);
+}
+function closeOkrEventoEditor(){ document.getElementById('okr-ev-ov')?.classList.remove('open'); _okrEvDraft = null; _okrEvEditId = null; }
+function _okrEvSync(){
+  const d = _okrEvDraft; if(!d) return;
+  const g = id=>document.getElementById(id); if(!g('okr-ev-titulo')) return;
+  d.titulo = g('okr-ev-titulo').value; d.tipo = g('okr-ev-tipo').value; d.data = g('okr-ev-data').value; d.diaInteiro = g('okr-ev-dia').checked;
+  d.hi = g('okr-ev-hi').value; d.hf = g('okr-ev-hf').value; d.torre = g('okr-ev-torre').value; d.local = g('okr-ev-local').value; d.link = g('okr-ev-link').value; d.descricao = g('okr-ev-desc').value;
+  if(g('okr-ev-lvesp')){ d._lvesp = g('okr-ev-lvesp').checked; d._ldia = g('okr-ev-ldia').checked; d._avisar = g('okr-ev-avisar').checked; }
+  d._recTipo = g('okr-ev-rec').value; if(g('okr-ev-recn')){ d._recN = g('okr-ev-recn').value; d._recU = g('okr-ev-recu').value; } d._recAte = g('okr-ev-recate') ? g('okr-ev-recate').value : '';
+}
+function _okrEvRerender(){ _okrEvSync(); const d = _okrEvDraft; const ok = new Set(d.torre ? okrGerenciasDa(d.torre).map(x=>x.id) : []); d.areaIds = d.areaIds.filter(a=>ok.has(a)); renderOkrEventoEditor(); }
+function _okrEvToggleTag(id){ _okrEvSync(); const d = _okrEvDraft, i = d.tagIds.indexOf(id); if(i>=0) d.tagIds.splice(i,1); else d.tagIds.push(id); renderOkrEventoEditor(); }
+function _okrEvAddConv(uid){ _okrEvSync(); const d = _okrEvDraft; if(uid && !d.convidados.includes(uid)) d.convidados.push(uid); renderOkrEventoEditor(); }
+function _okrEvDelConv(uid){ _okrEvSync(); const d = _okrEvDraft; d.convidados = d.convidados.filter(x=>x!==uid); renderOkrEventoEditor(); }
+function _okrEvToggleArea(a){ _okrEvSync(); const d = _okrEvDraft, i = d.areaIds.indexOf(a); if(i>=0) d.areaIds.splice(i,1); else d.areaIds.push(a); renderOkrEventoEditor(); }
+function _okrEvToggleObj(id){ _okrEvSync(); const d = _okrEvDraft, i = d.objetivoIds.indexOf(id); if(i>=0) d.objetivoIds.splice(i,1); else d.objetivoIds.push(id); _okrEvRenderObjList(); }
+function _okrEvRenderObjList(){
+  const box = document.getElementById('okr-ev-objlist'); if(!box || !_okrEvDraft) return;
+  const d = _okrEvDraft, q = (document.getElementById('okr-ev-objq')?.value||'').trim().toLowerCase();
+  let l = Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!d.torre || _okrTorreDe(o)===d.torre) && (!d.areaIds.length || d.areaIds.includes(o.areaId||'geral') || d.objetivoIds.includes(o.id)));
+  if(q) l = l.filter(o=>String(o.titulo||'').toLowerCase().includes(q) || d.objetivoIds.includes(o.id));
+  l.sort((a,b)=>(d.objetivoIds.includes(b.id)?1:0)-(d.objetivoIds.includes(a.id)?1:0) || String(a.titulo||'').localeCompare(String(b.titulo||'')));
+  box.innerHTML = l.slice(0,200).map(o=>`<label class="okr-ev-obj"><input type="checkbox" ${d.objetivoIds.includes(o.id)?'checked':''} onchange="_okrEvToggleObj(${jsq(o.id)})"> <span>${esc(o.titulo||'(sem título)')}</span></label>`).join('') || '<div class="mut" style="font-size:11px;">Nenhum Objetivo nesse recorte.</div>';
+}
+function renderOkrEventoEditor(){
+  const d = _okrEvDraft, body = document.getElementById('okr-ev-body'); if(!body || !d) return;
+  const adm = isAdmUser(window._currentUser);
+  const torres = adm ? [{id:'', icon:'🌐', label:'Agenda global (todas as torres)'}, ...OKR_TORRES.map(t=>({...t, label:'Agenda '+t.label+' (local)'}))] : OKR_TORRES.filter(t=>_okrCanCreate(t.id)).map(t=>({...t, label:'Agenda '+t.label+' (local)'}));
+  if(d.torre && !torres.some(t=>t.id===d.torre)) torres.push({...okrTorreInfo(d.torre), label:'Agenda '+okrTorreInfo(d.torre).label+' (local)'});
+  const personal = d._recTipo==='personalizada', rec = d._recTipo!=='nenhuma';
+  body.innerHTML = `
+    <div class="okr-field-label">Título</div>
+    <input type="text" class="okr-input" id="okr-ev-titulo" maxlength="120" value="${esc(d.titulo)}" placeholder="Ex.: Check-in OKR — Bloco 1">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <div style="flex:1;min-width:130px;"><div class="okr-field-label">Tipo</div><select class="okr-select" id="okr-ev-tipo" onchange="_okrEvRerender()">${Object.entries(OKR_CAL_TIPOS).map(([k,v])=>`<option value="${k}"${d.tipo===k?' selected':''}>${v.ico} ${v.label}</option>`).join('')}</select></div>
+      <div style="flex:1;min-width:150px;"><div class="okr-field-label">Data</div><input type="date" class="okr-input" id="okr-ev-data" value="${esc(d.data)}"></div>
+      <div style="flex:1;min-width:110px;"><div class="okr-field-label">Início</div><input type="time" class="okr-input" id="okr-ev-hi" value="${esc(d.hi||'')}" ${d.diaInteiro?'disabled':''}></div>
+      <div style="flex:1;min-width:110px;"><div class="okr-field-label">Fim</div><input type="time" class="okr-input" id="okr-ev-hf" value="${esc(d.hf||'')}" ${d.diaInteiro?'disabled':''}></div>
+    </div>
+    <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--txt2);margin-top:8px;"><input type="checkbox" id="okr-ev-dia" ${d.diaInteiro?'checked':''} onchange="_okrEvRerender()"> Dia inteiro</label>
+    <div class="okr-field-label" style="margin-top:12px;">Repetição</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <select class="okr-select" id="okr-ev-rec" style="flex:1;min-width:210px;" onchange="_okrEvRerender()">${OKR_CAL_REC.map(r=>`<option value="${r.id}"${d._recTipo===r.id?' selected':''}>${r.label}</option>`).join('')}</select>
+      ${personal?`<span style="font-size:12px;color:var(--txt2);">a cada</span><input type="number" class="okr-input" id="okr-ev-recn" min="1" max="99" value="${esc(d._recN)}" style="width:68px;"><select class="okr-select" id="okr-ev-recu" style="width:110px;"><option value="dia"${d._recU==='dia'?' selected':''}>dia(s)</option><option value="semana"${d._recU==='semana'?' selected':''}>semana(s)</option><option value="mes"${d._recU==='mes'?' selected':''}>mês(es)</option><option value="ano"${d._recU==='ano'?' selected':''}>ano(s)</option></select>`:''}
+    </div>
+    ${rec?`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;"><span style="font-size:12px;color:var(--txt2);">Termina em</span><input type="date" class="okr-input" id="okr-ev-recate" value="${esc(d._recAte||'')}" style="width:160px;"><span class="mut" style="font-size:11px;">(vazio = sem fim) · mudanças valem pra toda a série</span></div>`:''}
+    <div class="okr-field-label" style="margin-top:12px;">Agenda <span class="mut" style="text-transform:none;letter-spacing:0;">(global = todas as torres, só ADM · local = só a torre)</span></div>
+    <select class="okr-select" id="okr-ev-torre" onchange="_okrEvRerender()">${torres.map(t=>`<option value="${t.id}"${d.torre===t.id?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>
+    ${d.torre?`<div class="okr-field-label" style="margin-top:10px;">Gerências <span class="mut" style="text-transform:none;letter-spacing:0;">(nenhuma marcada = a torre toda; com tags, vale uma OU a outra)</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">${okrGerenciasDa(d.torre).map(g=>`<button type="button" class="okr-ev-chip${d.areaIds.includes(g.id)?' on':''}" onclick="_okrEvToggleArea(${jsq(g.id)})">${g.icon} ${esc(g.label)}</button>`).join('')}</div>`:''}
+    <div class="okr-field-label" style="margin-top:12px;">🏷️ Tags <span class="mut" style="text-transform:none;letter-spacing:0;">(opcional — os Objetivos com essas tags entram na pauta, nas próximas reuniões deles e nos avisos)</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;">${Object.keys(okrTags).length ? Object.entries(okrTags).sort((a,b)=>String(a[1].label||'').localeCompare(String(b[1].label||''))).map(([id])=>_okrTagChipHtml(id,false,'',`_okrEvToggleTag(${jsq(id)})`,d.tagIds.includes(id))).join('') : '<span class="mut" style="font-size:11px;">Ainda não há tags — crie em ⚙ Configurações de um Objetivo.</span>'}</div>
+    ${d.tagIds.some(t=>!okrTags[t])?'<div class="mut" style="font-size:10.5px;margin-top:4px;">Há uma tag que foi apagada neste evento — desmarque pra limpar.</div>':''}
+    <div class="okr-field-label" style="margin-top:12px;">Objetivos vinculados <span class="mut" style="text-transform:none;letter-spacing:0;">(opcional — vira a pauta e aparece no Objetivo)</span></div>
+    <input type="text" class="okr-input" id="okr-ev-objq" placeholder="🔎 Buscar Objetivo…" oninput="_okrEvRenderObjList()" style="margin-bottom:6px;">
+    <div id="okr-ev-objlist" class="okr-ev-objlist"></div>
+    <div class="okr-field-label" style="margin-top:12px;">👥 Convidados <span class="mut" style="text-transform:none;letter-spacing:0;">(recebem as notificações desta agenda: convite, mudanças, véspera e dia)</span></div>
+    <div class="okr-ev-conv">${d.convidados.map(u=>_okrCalPessoaChip(u,true)).join('') || '<span class="mut" style="font-size:11px;">Ninguém convidado ainda — quem tem Objetivo na pauta já é avisado.</span>'}</div>
+    <select class="okr-select" id="okr-ev-convsel" onchange="_okrEvAddConv(this.value)"><option value="">+ Adicionar convidado…</option>${_okrPessoaOptions().filter(p=>!d.convidados.includes(p.uid)).sort((a,b)=>a.nome.localeCompare(b.nome)).map(p=>`<option value="${esc(p.uid)}">${esc(p.nome)}</option>`).join('')}</select>
+    <div class="okr-field-label" style="margin-top:12px;">🔔 Avisos</div>
+    <div style="display:flex;flex-direction:column;gap:5px;font-size:12px;color:var(--txt2);">
+      <label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-avisar" ${d._avisar?'checked':''}> Avisar agora no sino (agenda nova ou mudança de data, horário ou local)</label>
+      ${d.tipo==='lembrete'?'':`<label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-lvesp" ${d._lvesp?'checked':''}> Lembrar na véspera (às 7h)</label>`}
+      ${d.tipo==='lembrete'?`<input type="checkbox" id="okr-ev-lvesp" style="display:none;" ${d._lvesp?'checked':''}>`:''}
+      <label style="display:flex;align-items:center;gap:7px;"><input type="checkbox" id="okr-ev-ldia" ${d._ldia?'checked':''}> Lembrar no dia (às 7h)</label>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;">
+      <div style="flex:1;min-width:170px;"><div class="okr-field-label">Local</div><input type="text" class="okr-input" id="okr-ev-local" maxlength="120" value="${esc(d.local||'')}" placeholder="Sala, endereço…"></div>
+      <div style="flex:1;min-width:170px;"><div class="okr-field-label">Link da reunião (https)</div><input type="text" class="okr-input" id="okr-ev-link" maxlength="400" value="${esc(d.link||'')}" placeholder="https://meet.google.com/…"></div>
+    </div>
+    <div class="okr-field-label" style="margin-top:12px;">Descrição</div>
+    <textarea class="okr-input" id="okr-ev-desc" rows="8" maxlength="4000" style="resize:vertical;" placeholder="Pauta, contexto, links de apoio…">${esc(d.descricao||'')}</textarea>`;
+  _okrEvRenderObjList();
+}
+async function saveOkrEvento(){
+  _okrEvSync(); const d = _okrEvDraft; if(!d) return;
+  const u = window._currentUser, titulo = d.titulo.trim();
+  if(!titulo){ showToast('⚠ Dê um título ao evento.'); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(d.data||'')){ showToast('⚠ Informe a data.'); return; }
+  if(!d.diaInteiro && d.hi && d.hf && d.hf<=d.hi){ showToast('⚠ O fim precisa ser depois do início.'); return; }
+  const link = String(d.link||'').trim(); if(link && !safeUrl(link)){ showToast('⚠ O link precisa começar com https://'); return; }
+  const antigo = _okrEvEditId ? okrEventos[_okrEvEditId] : null;
+  if(_okrEvEditId && !antigo){ showToast('⚠ Esse evento foi excluído por outra pessoa enquanto você editava — nada foi salvo.'); closeOkrEventoEditor(); return; }   // salvar de novo o ressuscitaria em silêncio (e avisaria como "novo")
+  if(antigo && !_okrCalPodeEditar(antigo)){ showToast('⚠ Sem permissão pra editar este evento.'); return; }
+  if(!_okrCalPodeCriar(d.torre||'')){ showToast(d.torre ? '⚠ Você não organiza esta torre.' : '⚠ Só ADM cria evento pra todas as torres.'); return; }
+  let rec = null;
+  if(d._recTipo!=='nenhuma'){
+    const p = OKR_CAL_REC.find(x=>x.id===d._recTipo), ate = d._recAte||'';
+    if(ate && ate<d.data){ showToast('⚠ O fim da repetição é antes da data do evento.'); return; }
+    if(d._recTipo==='personalizada'){
+      const n = Math.floor(Number(d._recN)); if(!(n>=1 && n<=99)){ showToast('⚠ A repetição personalizada vai de 1 a 99.'); return; }
+      rec = {tipo:'personalizada', unidade:d._recU, intervalo:n, ate};
+    } else rec = {tipo:p.id, unidade:p.unidade, intervalo:p.intervalo, ate};
+  }
+  const ts = new Date().toISOString(), id = _okrEvEditId || ('ev'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  const ev = { id, titulo, tipo:d.tipo, data:d.data, diaInteiro:!!d.diaInteiro, hi:d.diaInteiro?'':(d.hi||''), hf:d.diaInteiro?'':(d.hf||''), torre:d.torre||'',
+    areaIds:d.areaIds.slice(), objetivoIds:d.objetivoIds.slice(), tagIds:d.tagIds.slice(), convidados:d.convidados.slice(), lembrar:{vespera:!!d._lvesp, dia:!!d._ldia}, local:String(d.local||'').trim(), link, descricao:String(d.descricao||'').trim(), rec,
+    ...(antigo && antigo.origem ? {origem:antigo.origem} : {}),   // eventos importados do bloco quinzenal mantêm a origem (senão o aviso fixo voltaria e duplicaria)
+    excecoes:(antigo && antigo.excecoes) || {}, criadoPor:(antigo && antigo.criadoPor) || {uid:u.uid, nome:u.displayName||u.email||'?'}, criadoEm:(antigo && antigo.criadoEm) || ts, atualizadoEm:ts };
+  if(_okrEvSalvando) return;   // duplo clique/Enter repetido: cada chamada de um evento NOVO gera um id novo — criava 2 eventos e 2 avisos no sino
+  _okrEvSalvando = true;
+  try{
+    await window._set(window._ref(window._db, OKR_CAL_PATH+'/'+id), ev);
+    const avisar = d._avisar; closeOkrEventoEditor();
+    // avisos: sino da agenda (só se for novo ou mudou algo que importa) + convidados (novos = convite; os que já estavam = só se mudou)
+    const mudou = _okrCalMudou(antigo, ev), jaConv = _okrCalLista(antigo && antigo.convidados), novosConv = ev.convidados.filter(u=>!jaConv.includes(u));
+    if(avisar && (!antigo || mudou)) _okrCalAvisaFeed(antigo ? 'mudou' : 'novo', ev);
+    if(novosConv.length) _okrCalAvisaConvidados('convite', ev, novosConv);
+    if(antigo && mudou && avisar){ const ficam = ev.convidados.filter(u=>jaConv.includes(u)); if(ficam.length) _okrCalAvisaConvidados('mudou', ev, ficam); }
+    showToast('✅ Evento salvo.');
+    if(ev.data) { _okrCalSel = ev.data; const t = _calParse(ev.data); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); }
+    if(_okrShowCal) renderOkrCalendario();
+  }catch(e){ showToast('❌ '+(e?.message||e)); }
+  finally{ _okrEvSalvando = false; }
+}
+let _okrEvSalvando = false;
+
+
 // ═══ 👁 Visualizadores externos (só ADM) ═══════════════════════════════════════════════════════════
+// ── 👁 Acesso do visualizador externo (quem JÁ entrou / quem está ativo) ──────────────────────────────────
+// O ADM cadastra o e-mail em kanban/painel_viewers/{emailKey} mas não tinha como saber se a pessoa chegou a entrar. O próprio visualizador grava
+// (só no próprio nó — regra em database.rules.json) kanban/painel_viewers/{emailKey}/acesso = {primeiro, ultimo, uid, pagina}. `ultimo` é renovado a cada ~5 min
+// de uso com a aba visível; some junto com o visualizador se o ADM remover (o nó mora dentro dele).
+const VIEWER_ACESSO_EVERY_MS = 5*60*1000, VIEWER_ATIVO_MS = 6*60*1000;
+function _viewerRegistrarAcesso(pagina){
+  const u = window._currentUser; if(!u || !u.email || !window._isPainelViewer || !window._db) return;
+  const agora = Date.now(); if(agora - (window._viewerAcessoTs||0) < VIEWER_ACESSO_EVERY_MS) return;
+  window._viewerAcessoTs = agora;
+  const ref = p=>window._ref(window._db, 'kanban/painel_viewers/'+_painelViewerKey(u.email)+'/acesso'+(p||''));
+  window._get(ref('/primeiro')).then(s=>{
+    const d = {ultimo:agora, uid:u.uid, pagina};
+    if(!s.exists()) d.primeiro = agora;
+    return window._update(ref(), d);
+  }).catch(()=>{ window._viewerAcessoTs = agora - VIEWER_ACESSO_EVERY_MS + 60000; });   // falhou (rede/regra ainda não publicada): tenta de novo em ~1 min, não a cada tick
+}
+function _viewerTempoRel(ms){
+  const m = Math.max(0, Math.round((Date.now()-ms)/60000));
+  if(m < 1) return 'agora há pouco'; if(m < 60) return 'há '+m+' min';
+  const h = Math.round(m/60); if(h < 24) return 'há '+h+' h';
+  const d = Math.round(h/24); return d < 60 ? 'há '+d+(d===1?' dia':' dias') : 'há mais de 2 meses';
+}
+function _viewerDataBR(ms){ const d = new Date(ms); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+// presence = mapa de kanban/painel/okr_presence (opcional). Retorna {ord, txt, cor, title}.
+function _viewerStatus(v, presence){
+  const a = v && v.acesso, now = Date.now();
+  if(!a || !a.ultimo) return {ord:2, txt:'⏳ ainda não entrou', cor:'var(--txt3)', title:'Nenhum acesso registrado. Quem foi adicionado antes deste registro existir só aparece como "entrou" depois do próximo login.'};
+  const p = presence && a.uid && presence[a.uid];
+  const online = (p && now-(+p.ts||0) < OKR_PRESENCE_TTL_MS) || now-a.ultimo < VIEWER_ATIVO_MS;
+  const quando = 'Primeiro acesso: '+(a.primeiro ? _viewerDataBR(a.primeiro) : '—')+' · Último sinal: '+_viewerDataBR(a.ultimo)+(a.pagina ? ' ('+(a.pagina==='okr'?'OKR':'Painel')+')' : '');
+  return online ? {ord:0, txt:'🟢 online agora'+(a.pagina?' · '+(a.pagina==='okr'?'OKR':'Painel'):''), cor:'#4ade80', title:quando}
+                : {ord:1, txt:'✅ entrou · visto '+_viewerTempoRel(a.ultimo), cor:'var(--accent)', title:quando};
+}
+function _viewerOrdena(entries, presence){
+  return entries.map(([k,v])=>[k,v,_viewerStatus(v,presence)]).sort((x,y)=> x[2].ord-y[2].ord || ((y[1].acesso&&y[1].acesso.ultimo)||0)-((x[1].acesso&&x[1].acesso.ultimo)||0) || String(x[1].email||x[0]).localeCompare(String(y[1].email||y[0])));
+}
 // Gerencia kanban/painel_viewers/{emailKey} (a mesma lista do painel): quem está aí entra em okr.html/painel.html só pra LER (as regras
 // nunca liberam escrita). Atalho pra não precisar sair do OKR e achar ⚙ Configurações → 🔑 ADMs no painel.
-function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'inline-flex' : 'none'; }
+function _okrApplyViewersBtn(){ const b = document.getElementById('okr-viewers-btn'); if(b) b.style.display = (!window._isPainelViewer && isAdmUser(window._currentUser)) ? 'flex' : 'none'; }
 function openOkrViewers(){
   if(window._isPainelViewer || !isAdmUser(window._currentUser)){ showToast('⚠ Só ADM gerencia visualizadores externos.'); return; }
   document.getElementById('okr-viewers-ov')?.classList.add('open'); renderOkrViewers();
+  clearInterval(window._okrViewersTick); window._okrViewersTick = setInterval(()=>renderOkrViewers(true), 20000);   // status "online agora" se atualiza com o modal aberto
 }
-function closeOkrViewers(){ document.getElementById('okr-viewers-ov')?.classList.remove('open'); }
+function closeOkrViewers(){ document.getElementById('okr-viewers-ov')?.classList.remove('open'); clearInterval(window._okrViewersTick); }
 document.addEventListener('keydown', e=>{ const ov = document.getElementById('okr-viewers-ov'); if(e.key==='Escape' && ov && ov.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrViewers(); } }, true);
-function renderOkrViewers(){
+function renderOkrViewers(silencioso){
   const list = document.getElementById('okr-viewers-list'); if(!list) return;
-  list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  if(!silencioso) list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
   window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
-    const entries = Object.entries(snap.val()||{});
+    const entries = _viewerOrdena(Object.entries(snap.val()||{}), _okrPresenceMap);
     if(!entries.length){ list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
     list.innerHTML = '';
-    entries.forEach(([key,v])=>{
+    entries.forEach(([key,v,st])=>{
       const row = document.createElement('div');
-      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
-      const lbl = document.createElement('span'); lbl.style.cssText = 'flex:1;font-size:12px;'; lbl.textContent = (v.nome ? v.nome+' — ' : '') + (v.email||key);
+      row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 9px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;flex-wrap:wrap;';
+      const lbl = document.createElement('span'); lbl.style.cssText = 'flex:1;font-size:12px;min-width:140px;'; lbl.textContent = (v.nome ? v.nome+' — ' : '') + (v.email||key);
+      const stEl = document.createElement('span'); stEl.className = 'viewer-status'; stEl.style.cssText = 'font-size:10px;font-weight:600;color:'+st.cor+';white-space:nowrap;'; stEl.textContent = st.txt; stEl.title = st.title;
       const badge = document.createElement('span'); badge.style.cssText = 'font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent = 'só leitura';
       const rm = document.createElement('button'); rm.type = 'button'; rm.style.cssText = 'background:none;border:none;color:var(--danger);cursor:pointer;font-size:13px;padding:2px 4px;'; rm.textContent = '✕'; rm.title = 'Remover visualizador';
       rm.onclick = ()=>removeOkrViewer(key);
-      row.append(lbl, badge, rm); list.appendChild(row);
+      row.append(lbl, stEl, badge, rm); list.appendChild(row);
     });
   }).catch(e=>{ list.innerHTML = '<div style="font-size:11px;color:var(--danger);">Não consegui ler a lista ('+esc(e?.message||e)+').</div>'; });
 }
@@ -4742,6 +5582,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},-1)" ${i===0?'disabled':''} title="Mover pra cima" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===0?'opacity:.25;cursor:default;':''}">▲</button>
       <button type="button" onclick="event.stopPropagation();_okrObjMover(${jsq(areaId)},${jsq(o.id)},1)" ${i===total-1?'disabled':''} title="Mover pra baixo" style="background:none;border:none;padding:0 2px;line-height:1;font-size:10px;color:var(--txt3);cursor:pointer;${i===total-1?'opacity:.25;cursor:default;':''}">▼</button>
     </div>`:''}
+    ${(()=>{ const lk=_okrLockInfo(o.id); return lk?`<div style="margin-bottom:4px;"><span class="okr-lock-chip" title="${esc(lk.who||'Alguém')} está editando este Objetivo agora — abre em modo leitura">🔒 ${esc(lk.who||'Alguém')} editando</span></div>`:''; })()}
     <p class="okr-card-title"${podeReordenar?'':' style="padding-right:28px;"'}>${esc(o.titulo||'(sem título)')}</p>
     <div class="okr-card-meta">
       ${_okrTorreAtual==='global'?`<span class="okr-torre-chip" title="Torre ${esc(torreInfo.label)}">${torreInfo.icon} ${esc(torreInfo.label)}</span>`:''}
@@ -4750,6 +5591,7 @@ function _okrObjCardHtml(o, areaId, i, total, podeReordenar){
       ${o.pilar?`<span class="badge">${esc(o.pilar)}</span>`:''}
     </div>
     ${_okrCardTagsHtml(o)}
+    ${_okrCalCardChip(o)}
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
       <div class="okr-avatar-stack">${resp.map(uid=>_okrAvatarHtml(uid)).join('')}</div>
       <span style="font-size:10px;color:var(--txt3);">${viaAting!==null?`<button type="button" class="okr-ating-ico" title="${esc(_okrAtingTipoLabel(o.atingimento.tipo))} — clique pra ver a evolução" onclick="event.stopPropagation();openOkrAtingChart(${jsq(o.id)})">${_okrAtingTipoIco(o.atingimento.tipo)}</button> <b>${viaAting}%</b> · `:(o.atingimento&&o.atingimento.tipo==='perene'?`<span title="Perene — a barra acompanha os marcos">♾️</span> `:'')}🏁 ${marcos.filter(m=>m.progresso==='concluido').length}/${marcos.length}</span>
@@ -4989,6 +5831,7 @@ async function _okrCtxResumoNoObjetivo(objId, texto){
 
 
 async function _okrCtxTagToggle(objId, tagId){
+  if(_okrLockBloqueia(objId)) return;
   const o = okrObjetivos[objId]; if(!o || !_okrCanEdit(o)) return;
   const label = (okrTags[tagId]||{}).label || '?'; let aplicou = false;
   const out = await _okrTx('kanban/okr/objetivos/'+objId, n=>{
@@ -5003,6 +5846,7 @@ async function _okrCtxTagToggle(objId, tagId){
 
 
 async function _okrCtxMarcoStatus(marcoId, novo){
+  if(_okrLockBloqueia((okrMarcos[marcoId]||{}).objetivoId)) return;
   const m = okrMarcos[marcoId]; if(!m) return;
   const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
   let resumo = '';
@@ -5022,6 +5866,7 @@ async function _okrCtxMarcoStatus(marcoId, novo){
 
 
 async function _okrCtxMarcoApresentacao(marcoId){
+  if(_okrLockBloqueia((okrMarcos[marcoId]||{}).objetivoId)) return;
   const m = okrMarcos[marcoId]; if(!m) return;
   const obj = okrObjetivos[m.objetivoId]; if(!obj || !_okrCanEdit(obj)) return;
   let agora = true, nome = m.nome||'?';
@@ -5488,6 +6333,157 @@ let _okrObjDraft = null;
 // estado atual antes de fechar de verdade.
 let _okrObjOpenSnapshot = null;
 
+// ═══ 🔒 TRAVA DE EDIÇÃO CONCORRENTE DO OBJETIVO (okr-dev v2.21) ═══════════════════════════════════════════════════════════
+// Pedido direto: "trave edição simultânea do mesmo objetivo, estilo o que já temos no kanban em cards". Mesmo desenho da trava de card
+// (kanban-dev.html, _checkCardLock()): 1 nó por Objetivo em kanban/okr/obj_locks/{objId} = {uid, who, ts[, request:{byUid,byWho,at}]}.
+//  • Quem abre primeiro segura. Quem abre depois vê o Objetivo em MODO LEITURA + aviso de quem está editando (e os Marcos dele também).
+//  • Heartbeat de 1 min; trava sem heartbeat há 10 min conta como abandonada (aba fechada/navegador caiu) — quem abrir assume.
+//  • "🔔 Pedir o Objetivo": quem segura tem 5 min de carência pra salvar e sair (ou "✅ Liberar agora"); estourou, o sistema salva e fecha
+//    pra ele e quem pediu assume.
+//  • O MESMO usuário em outra aba não é travado contra si mesmo (checagem por uid).
+//  • Só quem pode editar o Objetivo pega a trava (quem só lê já está em modo leitura). Visualizador externo nunca escreve.
+//  • As ações rápidas do menu ⋯ / arrastar que escrevem no nó do Objetivo (tags, ordem, arquivar, excluir, status/apresentação/arquivar de Marco)
+//    também respeitam a trava — senão o Salvar de quem segura (que grava o rascunho inteiro) apagaria a mudança em silêncio.
+//  • Limite conhecido: o Agente Ágil (servidor) edita Objetivo sem passar por aqui e não é travado.
+// Um único listener no nó inteiro (pequeno) mantém `okrObjLocks` ao vivo: serve ao modal, ao selo 🔒 dos cartões e às ações rápidas.
+const OKR_LOCK_PATH = 'kanban/okr/obj_locks';
+const OKR_LOCK_STALE_MS = 10*60*1000, OKR_LOCK_HEARTBEAT_MS = 60*1000, OKR_LOCK_REQUEST_GRACE_MS = 5*60*1000;
+let okrObjLocks = {}, _okrLocksLoaded = false;
+let _okrLockOwned = null;         // id do Objetivo cuja trava ESTE cliente segura agora (null = nenhuma)
+let _okrLockRO = false;           // o Objetivo aberto está travado por OUTRA pessoa (modo leitura)
+let _okrLockSolto = false;        // soltei a trava DE PROPÓSITO (fechei/saí): o reconciliador não pode retomá-la quando o próprio eco da remoção chegar
+let _okrLockHb = null, _okrLockUiTick = null, _okrLockForceTimer = null, _okrLockStealTimer = null, _okrLockReqHandledAt = null, _okrLockSig = '';
+const _okrLockRef = id => window._ref(window._db, OKR_LOCK_PATH+'/'+id);
+function _okrLockPayload(){ const u = window._currentUser||{}; return {uid:u.uid||'', who:u.displayName||u.email||'?', ts:Date.now()}; }
+function _okrLockFresh(l){ return !!(l && l.ts && Date.now()-l.ts < OKR_LOCK_STALE_MS); }
+// Trava VIVA de OUTRA pessoa neste Objetivo (null = livre pra mim, inclusive a minha própria e a de outra aba minha).
+function _okrLockInfo(id){ const l = okrObjLocks[id], me = window._currentUser?.uid; return (id && l && _okrLockFresh(l) && l.uid!==me) ? l : null; }
+function _okrLockBloqueia(id){   // pra ações rápidas: true = travado por outra pessoa (já avisou)
+  const l = _okrLockInfo(id); if(!l) return false;
+  showToast('🔒 '+(l.who||'Alguém')+' está editando este Objetivo agora — tente de novo quando ela(e) fechar.'); return true;
+}
+function loadOkrLocks(){
+  window._onValue(window._ref(window._db, OKR_LOCK_PATH), snap=>{ okrObjLocks = snap.val()||{}; _okrLocksLoaded = true; _okrLockOnChange(); }, ()=>{ _okrLocksLoaded = true; });
+  clearInterval(window._okrLockPoll); window._okrLockPoll = setInterval(()=>{ if(!document.hidden) _okrLockOnChange(); }, 30000);   // trava sem heartbeat vence sem gerar evento nenhum
+}
+function _okrLockStopHb(){ clearInterval(_okrLockHb); _okrLockHb = null; }
+function _okrLockStopReq(){
+  clearTimeout(_okrLockForceTimer); _okrLockForceTimer = null; clearTimeout(_okrLockStealTimer); _okrLockStealTimer = null;
+  clearInterval(_okrLockUiTick); _okrLockUiTick = null; _okrLockReqHandledAt = null;
+}
+function _okrLockTomar(id){
+  const lk = okrObjLocks[id], minha = !!(lk && lk.uid===window._currentUser?.uid);
+  _okrLockOwned = id; _okrLockRO = false;
+  if(minha) window._update(_okrLockRef(id), _okrLockPayload()).catch(()=>{});   // update (não set): não apaga um pedido pendente
+  else window._set(_okrLockRef(id), _okrLockPayload()).catch(()=>{});
+  _okrLockStopHb();
+  _okrLockHb = setInterval(()=>{ if(_okrLockOwned===id && window._fbReady) window._update(_okrLockRef(id), _okrLockPayload()).catch(()=>{}); }, OKR_LOCK_HEARTBEAT_MS);
+}
+// Solta a trava (fechar o modal, sair da página) — só remove se ainda for MINHA (não apaga a de quem assumiu depois de mim).
+function _okrLockSoltar(){
+  _okrLockSolto = true;   // o RTDB dispara o ouvinte local de forma SÍNCRONA dentro do remove(): sem isto o eco da própria remoção reabria a trava (achado do teste de console)
+  _okrLockStopHb(); _okrLockStopReq();
+  const id = _okrLockOwned; _okrLockOwned = null; _okrLockRO = false;
+  _okrLockUI();
+  if(!id || !window._fbReady) return;
+  const lk = okrObjLocks[id];
+  if(!lk || lk.uid===window._currentUser?.uid){ delete okrObjLocks[id]; window._remove(_okrLockRef(id)).catch(()=>{}); }
+}
+window.addEventListener('beforeunload', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
+window.addEventListener('pagehide', ()=>{ if(_okrLockOwned) _okrLockSoltar(); });
+window.addEventListener('pageshow', e=>{ if(e.persisted && _okrEditingObjId){ _okrLockSolto = false; _okrLockOnChange(); } });   // voltou do cache de navegação com o modal ainda aberto: retoma a trava
+
+// Aviso do modal (nos dois lados) + botão de pedir.
+function _okrLockUI(){
+  const row = document.getElementById('okr-obj-lock-row'); if(!row) return;
+  const id = _okrEditingObjId, l = id ? _okrLockInfo(id) : null, ro = !!(id && _okrLockRO && l);
+  row.style.display = ro ? 'flex' : 'none';
+  if(ro){ const t = document.getElementById('okr-lock-text'); if(t) t.textContent = '🔒 '+(l.who||'Alguém')+' está editando este Objetivo agora — modo leitura até liberar.'; }
+  if(!ro){ const a = document.getElementById('okr-lock-req-action'); if(a) a.innerHTML = ''; const o = document.getElementById('okr-lock-request-row'); if(o) o.style.display = 'none'; }
+}
+function _okrLockRenderReq(req, iOwn){
+  clearInterval(_okrLockUiTick); _okrLockUiTick = null;
+  const ask = document.getElementById('okr-lock-req-action'), ownRow = document.getElementById('okr-lock-request-row'), ownTxt = document.getElementById('okr-lock-request-text');
+  if(!req){
+    if(ask) ask.innerHTML = iOwn ? '' : '<button type="button" class="btn btn-sm" onclick="_okrLockPedir()">🔔 Pedir o Objetivo</button>';
+    if(ownRow) ownRow.style.display = 'none'; return;
+  }
+  const me = window._currentUser?.uid;
+  const tick = ()=>{
+    const restam = Math.max(0, req.at+OKR_LOCK_REQUEST_GRACE_MS-Date.now());
+    const mm = String(Math.floor(restam/60000)).padStart(2,'0'), ss = String(Math.floor((restam%60000)/1000)).padStart(2,'0');
+    if(iOwn){ if(ownRow) ownRow.style.display = 'flex'; if(ownTxt) ownTxt.textContent = '🔔 '+(req.byWho||'Alguém')+' está esperando este Objetivo — salve e feche em até '+mm+':'+ss+', ou libere agora.'; if(ask) ask.innerHTML = ''; }
+    else if(req.byUid===me){ if(ask) ask.innerHTML = '<span style="opacity:.85;">⏳ Pedido enviado — expira em '+mm+':'+ss+'</span>'; }
+    else { if(ask) ask.innerHTML = '<span style="opacity:.85;">⏳ '+esc(req.byWho||'Alguém')+' já pediu este Objetivo (expira em '+mm+':'+ss+')</span>'; }
+  };
+  tick(); _okrLockUiTick = setInterval(tick, 1000);
+}
+async function _okrLockPedir(){
+  const id = _okrEditingObjId; if(!id || !window._fbReady) return;
+  const ex = (await window._get(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request')).catch(()=>null)); const r = ex && ex.val();
+  if(r && r.at && Date.now()-r.at < OKR_LOCK_REQUEST_GRACE_MS) return;                       // já tem pedido em andamento
+  const u = window._currentUser||{};
+  window._set(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request'), {byUid:u.uid||'', byWho:u.displayName||u.email||'?', at:Date.now()}).catch(()=>{});
+}
+// "Liberar agora" e o estouro do prazo fazem a MESMA coisa: salva o que está na tela (Marco aberto primeiro) e fecha — a trava sai junto.
+async function _okrLockLiberarAgora(){
+  try{
+    if(document.getElementById('okr-marco-ov')?.classList.contains('open')) await saveOkrMarco();
+    if(_okrLockOwned && _okrEditingObjId===_okrLockOwned) await saveOkrObjetivo();
+  }catch(e){ console.warn('[okr-lock] liberar:', e); }
+}
+function _okrLockHandleReq(id, lock, iOwn){
+  const req = lock && lock.request;
+  if(!req || !req.at || Date.now()-req.at >= OKR_LOCK_REQUEST_GRACE_MS){
+    clearTimeout(_okrLockForceTimer); _okrLockForceTimer = null; clearTimeout(_okrLockStealTimer); _okrLockStealTimer = null; _okrLockReqHandledAt = null;
+    _okrLockRenderReq(null, iOwn); return;
+  }
+  _okrLockRenderReq(req, iOwn);
+  const restam = req.at+OKR_LOCK_REQUEST_GRACE_MS-Date.now();
+  if(iOwn){
+    if(_okrLockReqHandledAt===req.at) return; _okrLockReqHandledAt = req.at;
+    showToast('🔔 '+(req.byWho||'Alguém')+' está esperando este Objetivo — salve e feche em até 5 min.');
+    clearTimeout(_okrLockForceTimer); _okrLockForceTimer = setTimeout(_okrLockLiberarAgora, Math.max(0,restam));
+  } else if(req.byUid===window._currentUser?.uid){
+    if(_okrLockReqHandledAt===req.at) return; _okrLockReqHandledAt = req.at;
+    clearTimeout(_okrLockStealTimer);
+    // Rede de segurança: se quem segurava não liberou a tempo (aba travada, sem internet…), assume à força (+2 s de folga pro dono salvar na hora do estouro).
+    _okrLockStealTimer = setTimeout(()=>{
+      if(_okrEditingObjId!==id || !window._fbReady) return;
+      window._set(_okrLockRef(id), _okrLockPayload()).catch(()=>{}); window._remove(window._ref(window._db, OKR_LOCK_PATH+'/'+id+'/request')).catch(()=>{});
+    }, Math.max(0,restam)+2000);
+  }
+}
+function _okrLockRerender(){   // o Objetivo aberto mudou de estado (travou/liberou): redesenha mantendo o que foi digitado
+  const id = _okrEditingObjId; if(!id || !_okrObjDraft) return;
+  if(document.getElementById('okr-marco-ov')?.classList.contains('open')){ try{ _okrSyncMarcoDraftFromDom(); }catch(e){} renderOkrMarcoBody(); return; }
+  try{ _okrSyncObjDraftFromDom(); }catch(e){}
+  if(document.getElementById('okr-obj-config-ov')?.classList.contains('open') && _okrLockRO) closeOkrConfigBack();   // travou: a Config não é acessível em leitura
+  else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(id);
+}
+// Reconcilia o estado da trava do Objetivo aberto com o que está no banco — chamado a cada mudança do nó, a cada 30 s e ao abrir.
+function _okrLockOnChange(silencioso){
+  // 1) selo 🔒 nos cartões: só redesenha a lista quando QUEM está travado muda (heartbeat sozinho não conta)
+  const sig = Object.keys(okrObjLocks).filter(i=>_okrLockInfo(i)).sort().map(i=>i+':'+okrObjLocks[i].uid).join('|');
+  if(sig!==_okrLockSig){ _okrLockSig = sig; if(!silencioso && !_okrShowHistorico && typeof renderOkrObjetivos==='function') try{ renderOkrObjetivos(); }catch(e){} }
+  // 2) o Objetivo aberto
+  const id = _okrEditingObjId;
+  if(!id || !_okrObjDraft){ return; }
+  if(window._isPainelViewer || !_okrCanEdit(okrObjetivos[id]||{})){ _okrLockUI(); return; }   // quem só lê não pega trava
+  const lock = okrObjLocks[id], outro = _okrLockInfo(id);
+  if(_okrLockOwned===id){
+    if(outro){ _okrLockStopHb(); _okrLockOwned = null; _okrLockRO = true; _okrLockUI(); _okrLockRenderReq(null,false); if(!silencioso) _okrLockRerender(); showToast('🔒 '+(outro.who||'Alguém')+' assumiu este Objetivo — você passou a modo leitura.'); }   // perdi a corrida
+    else _okrLockHandleReq(id, lock, true);
+  } else if(outro){
+    const virouRO = !_okrLockRO; _okrLockRO = true; _okrLockUI(); _okrLockHandleReq(id, lock, false);
+    if(virouRO && !silencioso) _okrLockRerender();
+  } else if(!_okrLockSolto){
+    const eraRO = _okrLockRO; _okrLockTomar(id); _okrLockUI(); _okrLockHandleReq(id, okrObjLocks[id], true);
+    // herdei a trava de quem saiu/liberou: os campos na tela são os de quando abri — reabre com o dado fresco, como o kanban faz
+    if(eraRO && !silencioso) setTimeout(()=>{ if(_okrEditingObjId===id && _okrLockOwned===id) openOkrObjetivo(id); }, 0);
+  }
+}
+
 
 
 function openOkrObjetivo(id){
@@ -5503,6 +6499,9 @@ function openOkrObjetivo(id){
   // edição; vira trimestres[] de verdade no próximo Salvar.
   if(id) _okrObjDraft.trimestres = _okrTrimestresOf(_okrObjDraft);
   _okrObjOpenSnapshot = JSON.stringify(_okrObjDraft);
+  if(_okrLockOwned!==id) _okrLockSoltar();   // trava de OUTRO Objetivo (sessão anterior) sai antes; reabrir o mesmo (herdar trava) não solta pra não abrir janela
+  _okrLockRO = false; _okrLockSolto = false;
+  if(id){ if(_okrLocksLoaded) _okrLockOnChange(true); else window._get(_okrLockRef(id)).then(sn=>{ const v=sn.val(); if(v) okrObjLocks[id]=v; else delete okrObjLocks[id]; _okrLocksLoaded = true; if(_okrEditingObjId===id) _okrLockOnChange(); }).catch(()=>{}); }
   _okrAtingForm = {data:'', valor:'', atingido:false, nota:''};
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; }); // sessão nova: nada de texto pendente do Objetivo anterior
   // Link só faz sentido pra um Objetivo que já existe (tem id real pro
@@ -5522,6 +6521,7 @@ function openOkrObjetivo(id){
     document.getElementById('okr-obj-title').textContent = '🎯 ' + (_okrObjDraft.titulo || 'Editar Objetivo');
     renderOkrObjBody(id);
     document.getElementById('okr-obj-ov').classList.add('open');
+    _okrLockUI(); if(_okrLockRO) _okrLockHandleReq(id, okrObjLocks[id], false);
   }
 }
 
@@ -5530,7 +6530,9 @@ function closeOkrObjetivo(){
   document.getElementById('okr-obj-ov').classList.remove('open');
   document.getElementById('okr-obj-config-ov')?.classList.remove('open');
   ['okr-obj-body','okr-obj-config-body'].forEach(i=>{ const e=document.getElementById(i); if(e) e.innerHTML=''; });
-  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;
+  const _idFechando = _okrEditingObjId;
+  _okrEditingObjId = null; _okrObjDraft = null; _okrObjOpenSnapshot = null;   // sessão encerrada ANTES de soltar a trava
+  _okrLockSoltar();
 }
 
 
@@ -6468,7 +7470,7 @@ function renderOkrObjBody(id){
   const footer = document.getElementById('okr-obj-footer');
   if(!body || !_okrObjDraft) return;
   _okrAplicarTorreModal(_okrTorreDe(_okrObjDraft));
-  const podeEditar = id ? _okrCanEdit(okrObjetivos[id]||{}) : _okrCanCreate();
+  const podeEditar = id ? (_okrCanEdit(okrObjetivos[id]||{}) && !_okrLockRO) : _okrCanCreate();   // travado por outra pessoa = leitura
   const d = _okrObjDraft;
   const cfgBtn = document.getElementById('okr-obj-config-btn');
   if(cfgBtn) cfgBtn.style.display = podeEditar ? '' : 'none';
@@ -6478,6 +7480,7 @@ function renderOkrObjBody(id){
       <div class="okr-field-label">Torre / Gerência / Trimestre</div>
       <div style="font-size:12px;color:var(--txt2);"><span class="okr-torre-chip">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> ${okrGerenciaIcon(d.areaId, _okrTorreDe(d))} ${esc(okrGerenciaLabel(d.areaId, _okrTorreDe(d)))} ${_okrTrimestresOf(d).length?'· '+_okrTrimestresOf(d).map(esc).join(', '):''}</div>
       ${_okrBlocoInfoHtml(d.areaId, _okrTorreDe(d))}
+      ${_okrCalProximasHtml(d, id)}
       ${_okrAtingSectionHtml(false)}
       ${d.pilar?`<div class="okr-field-label">Pilar Estratégico</div><div style="font-size:12px;color:var(--txt2);">${esc(d.pilar)}</div>`:''}
       <div class="okr-field-label">Objetivo</div>
@@ -6513,6 +7516,7 @@ function renderOkrObjBody(id){
       </div>
       <button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 9px;flex-shrink:0;" onclick="openOkrConfig()">⚙ Configurações</button>
     </div>
+    ${_okrCalProximasHtml(d, id)}
     ${_okrAtingSectionHtml(true)}
     ${_okrListEditorHtml('indicadores','Indicadores de Entrega','Descrever indicador…')}
     ${_okrListEditorHtml('progressos','Progressos','O que já avançou…')}
@@ -6591,6 +7595,7 @@ function renderOkrObjConfigBody(){
 
 
 async function saveOkrObjetivo(){
+  if(_okrEditingObjId && _okrLockBloqueia(_okrEditingObjId)) return;   // outra pessoa assumiu a trava (corrida/pedido): não grava por cima
   _okrSyncObjDraftFromDom();
   const d = _okrObjDraft;
   // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
@@ -6638,6 +7643,7 @@ async function saveOkrObjetivo(){
 
 
 async function _okrArquivarObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   if(!await uiConfirm('Arquivar este objetivo? Ele some da lista de ativos, mas continua acessível em "📦 Ver arquivados".', {danger:true, okText:'Arquivar'})) return;
   const hist = Array.isArray(okrObjetivos[id]?.history) ? okrObjetivos[id].history.slice() : [];
   hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'arquivou o Objetivo', tipo:'arquivado', at:new Date().toISOString()});
@@ -6649,6 +7655,7 @@ async function _okrArquivarObjetivo(id){
 
 
 async function _okrDesarquivarObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   const hist = Array.isArray(okrObjetivos[id]?.history) ? okrObjetivos[id].history.slice() : [];
   hist.push({who:_okrHistWho(), uid:window._currentUser?.uid||'', what:'desarquivou o Objetivo', tipo:'arquivado', at:new Date().toISOString()});
   await window._update(window._ref(window._db,'kanban/okr/objetivos/'+id), {arquivado:false, history:hist});
@@ -6732,6 +7739,7 @@ async function _okrDuplicarObjetivo(id){
 // kanban/okr/marcos sem o pai não aparecem em NENHUMA tela, só ocupariam
 // espaço no Firebase pra sempre.
 async function _okrExcluirObjetivo(id){
+  if(_okrLockBloqueia(id)) return;
   const obj = okrObjetivos[id];
   if(!obj) return;
   const marcosDoObjetivo = Object.keys(okrMarcos).filter(mid=>okrMarcos[mid]?.objetivoId===id);
@@ -7013,7 +8021,7 @@ function renderOkrMarcoBody(){
   if(!body || !_okrMarcoDraft) return;
   const obj = okrObjetivos[_okrMarcoDraft.objetivoId] || {};
   _okrAplicarTorreModal(_okrTorreDe(obj));
-  const podeEditar = _okrCanEdit(obj);
+  const podeEditar = _okrCanEdit(obj) && !_okrLockInfo(_okrMarcoDraft.objetivoId);   // Objetivo travado por outra pessoa: Marco em leitura também
   const d = _okrMarcoDraft;
 
   if(!podeEditar){
@@ -7076,6 +8084,7 @@ function renderOkrMarcoBody(){
 
 
 async function saveOkrMarco(){
+  if(_okrMarcoDraft && _okrLockBloqueia(_okrMarcoDraft.objetivoId)) return;   // Objetivo travado por outra pessoa
   const d = _okrMarcoDraft;
   d.nome = document.getElementById('okr-m-nome').value.trim();
   if(!d.nome){ showToast('Dá um nome pro marco antes de salvar.'); return; }
@@ -7131,6 +8140,7 @@ async function _okrArquivarMarco(idParam){
   // idParam: arquivar a partir do menu de contexto da lista (sem o modal do Marco aberto); sem ele, é o Marco aberto no modal.
   const mid = (typeof idParam==='string' && idParam) ? idParam : _okrEditingMarcoId;
   if(!mid) return;
+  if(_okrLockBloqueia((okrMarcos[mid]||{}).objetivoId)) return;
   if(!await uiConfirm('Arquivar este marco?', {danger:true, okText:'Arquivar'})) return;
   const m = okrMarcos[mid] || {};
   const hist = Array.isArray(m.history) ? m.history.slice() : [];
