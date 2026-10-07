@@ -28,6 +28,10 @@ Promoção do lote acumulado de `kanban-dev.html` desde a v8.30.787 (merge de 3 
 - **Fix do sino** (v8.30.792): "Marcar todas como lidas" não gravava nada desde a v8.30.786 (regex sobre o `onclick`, que passou a usar aspas duplas), e por isso "Limpar antigas" não achava notificação lida pra apagar; agora ambos gravam numa escrita só, com toast de sucesso/erro.
 Smoke test no `kanban.html` real: Dados do Board 12/12, ordenação OK, sino (1 escrita com todos os ids), data do histórico OK. `node --check` OK; balanço -1/3 no baseline. Mural: rascunho `seed_kanban_v8_30_792_2026_10_06`.
 
+### v8.30.793-dev — 2026-10-07 · fix: colar uma lista em tópicos no "Novo item..." do checklist agora cria um item por linha (só kanban-dev)
+
+Sugestão de usuária: copiar uma mensagem escrita em tópicos (WhatsApp, Slack, e-mail, outro card) e colar no campo do checklist jogava tudo num item só. Causa: o campo "Novo item..." é um `<input>` de uma linha, e o navegador achata as quebras de linha ao colar. Agora o evento de colar é tratado: com **2 ou mais linhas** o texto é dividido por linha (linhas vazias ignoradas) e cada uma vira um item — marcadores no começo são removidos (`-`, `•`, `*`, `–`, `▪`, `●`, `1.`, `1)`, `a)`, `☐`…) e `[x]`/`[ ]` entram já marcados/desmarcados (é o formato que "📋 Copiar checklist" gera, então copiar de um card e colar em outro preserva quem estava concluído). Sub-itens recuados viram itens normais; "-5 pontos" (sem espaço) mantém o sinal; **1 linha só cola normal**. Toast "📋 N itens adicionados ao checklist." e um único passo no "desfazer". Chromium (14 cenários: parser com 9 formatos + colar de verdade no campo, lista × 1 linha, grupo certo, `[x]` preservado, sem erro de JS). Só dev; o prod recebe quando validado.
+
 ### v8.30.792-dev — 2026-10-06 · fix: "Marcar todas como lidas" do sino não gravava nada (e por isso "Limpar antigas" não achava nada pra apagar)
 
 Relato de usuária ("não consigo apagar as notificações já lidas"). Causa raiz: `markAllRead()` achava o id de cada notificação com um regex `/'([^']+)'/` em cima do atributo `onclick` — mas desde a conversão do `onclick` do sino para `jsq()` (correção de XSS, v8.30.786) os
