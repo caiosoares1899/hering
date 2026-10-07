@@ -1786,7 +1786,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.30 · okr-dev</div>
+<div class="version">v2.31 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -5004,15 +5004,23 @@ function _okrToggleCal(){ _okrSetView(_okrShowCal ? 'objetivos' : 'calendario');
 function _okrCalSetVista(v){ _okrCalVista = v; try{ localStorage.setItem('okr_cal_vista', v); }catch(e){} renderOkrCalendario(); }
 function _okrCalNav(d){
   if(d===0){ const t = _calParse(todaySPStr()); _okrCalMes = new Date(t.getFullYear(), t.getMonth(), 1); _okrCalSel = todaySPStr(); }
-  else _okrCalMes = new Date(_okrCalMes.getFullYear(), _okrCalMes.getMonth()+d, 1);
+  else {
+    _okrCalMes = new Date(_okrCalMes.getFullYear(), _okrCalMes.getMonth()+d, 1);
+    // o painel do dia (abaixo da grade) só enxerga o que está nas 6 semanas exibidas: um dia selecionado de outro mês aparecia como "Nada marcado" mesmo com eventos
+    const mesSel = (_okrCalSel||'').slice(0,7), mesAtual = _calFmt(_okrCalMes).slice(0,7), hojeS = todaySPStr();
+    if(mesSel!==mesAtual) _okrCalSel = hojeS.slice(0,7)===mesAtual ? hojeS : _calFmt(_okrCalMes);
+  }
   renderOkrCalendario();
 }
 function _okrCalSetTorre(v){ _okrCalTorreF = v; renderOkrCalendario(); }
 function _okrCalSelDia(d){ _okrCalSel = d; renderOkrCalendario(); }
 function _okrCalMais(){ _okrCalAgendaDias += 60; renderOkrCalendario(); }
 
+// Classe CSS da agenda de um item. `ev.torre` vem do banco (qualquer pessoa da empresa grava em kanban/okr): só um id de torre conhecido entra no atributo — um valor
+// hostil (`x" onmouseover="…`) quebraria o `class="…"` (XSS armazenado); torre desconhecida é pintada como global.
+function _okrCalCls(torre){ return _okrTorreValida(torre) ? 'okr-t-'+torre : 'okr-t-todas'; }
 function _okrCalItemHtml(it, comData){
-  const torreCls = it.torre ? 'okr-t-'+it.torre : 'okr-t-todas';
+  const torreCls = _okrCalCls(it.torre);
   if(it.k==='prazo'){
     return `<div class="okr-cal-item okr-t-${it.torre} prazo" onclick="openOkrObjetivo(${jsq(it.o.id)})"><div class="hr">${comData?esc(_okrCalDataBR(it.data,true)):'prazo'}</div>
       <div><div class="tt">◆ ${esc(it.m.nome||'Marco')}</div><div class="sb">Prazo do Marco · 🎯 ${esc(it.o.titulo||'')}</div></div></div>`;
@@ -5058,8 +5066,8 @@ function renderOkrCalendario(){
         <div class="okr-cal-dn">${dn.getDate()}</div>
         <div class="okr-cal-chips">${l.slice(0,3).map(it=> it.k==='prazo'
           ? `<button type="button" class="okr-cal-chip prazo" onclick="event.stopPropagation();openOkrObjetivo(${jsq(it.o.id)})" title="Prazo do Marco: ${esc(it.m.nome||'')}">◆ ${esc(it.m.nome||'Marco')}</button>`
-          : `<button type="button" class="okr-cal-chip ${it.torre?'okr-t-'+it.torre:'okr-t-todas'}" onclick="event.stopPropagation();openOkrEvento(${jsq(it.ev.id)},${jsq(it.data)})" title="${esc(it.ev.titulo||'')}">${it.torre?'':'🌐 '}${it.hi?esc(it.hi)+' ':''}${esc(it.ev.titulo||'')}</button>`).join('')}${l.length>3?`<div class="okr-cal-more">+${l.length-3} mais</div>`:''}</div>
-        <div class="okr-cal-dots">${l.slice(0,5).map(it=>`<span class="okr-cal-dot ${it.k==='prazo'?'prazo':(it.torre?'okr-t-'+it.torre:'okr-t-todas')}"></span>`).join('')}</div>
+          : `<button type="button" class="okr-cal-chip ${_okrCalCls(it.torre)}" onclick="event.stopPropagation();openOkrEvento(${jsq(it.ev.id)},${jsq(it.data)})" title="${esc(it.ev.titulo||'')}">${it.torre?'':'🌐 '}${it.hi?esc(it.hi)+' ':''}${esc(it.ev.titulo||'')}</button>`).join('')}${l.length>3?`<div class="okr-cal-more">+${l.length-3} mais</div>`:''}</div>
+        <div class="okr-cal-dots">${l.slice(0,5).map(it=>`<span class="okr-cal-dot ${it.k==='prazo'?'prazo':_okrCalCls(it.torre)}"></span>`).join('')}</div>
       </div>`;
     }
     const dia = porDia[_okrCalSel] || [];
@@ -5271,7 +5279,10 @@ async function _okrEvExcluir(id, data){
       const r = await _okrCalEscolha('Excluir "'+(ev.titulo||'evento')+'"?', [{id:'esta', label:'Só esta ocorrência ('+_okrCalDataBR(data,true)+')'}, {id:'serie', label:'Toda a série', danger:true}, {id:'', label:'Cancelar'}]);
       if(!r) return;
       if(r==='esta') await window._update(ref('/excecoes'), {[data]:true}); else await window._remove(ref());
-      if(data>=todaySPStr()){ _okrCalAvisaFeed('cancelada', ev, data); _okrCalAvisaConvidados('cancelada', ev, null, data); }
+      // "só esta" avisa se a ocorrência ainda não passou; "toda a série" avisa se ainda restava alguma ocorrência pela frente (apagar a série estando numa
+      // ocorrência PASSADA também cancela as futuras — antes ninguém era avisado e o aviso cairia numa data que já foi)
+      const hojeS = todaySPStr(), avisoData = r==='esta' ? (data>=hojeS ? data : '') : (_okrCalOcorrencias(ev, hojeS, _calSomaDias(hojeS, 400))[0] || '');
+      if(avisoData){ _okrCalAvisaFeed('cancelada', ev, avisoData); _okrCalAvisaConvidados('cancelada', ev, null, avisoData); }
     } else {
       if(!await uiConfirm('Excluir "'+(ev.titulo||'este evento')+'"?', {danger:true, okText:'Excluir'})) return;
       await window._remove(ref());

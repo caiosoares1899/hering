@@ -10,6 +10,8 @@ function urlDoPush(notif) {
   const n = notif || {};
   const type = String(n.type || '');
   if (type.startsWith('okr_')) {
+    // Reunião/evento do calendário do OKR (aviso de véspera/dia, convite, mudança, menção nas anotações): abre direto o evento, igual ao clique no sino.
+    if (n.okrEventoId) return SITE_BASE_URL + 'okr.html?evento=' + encodeURIComponent(String(n.okrEventoId)) + (n.okrEventoData ? '&data=' + encodeURIComponent(String(n.okrEventoData)) : '');
     const alvo = type === 'okr_agente' ? 'chat' : type === 'okr_mencao' ? 'notas' : String(n.okrObjId || '');
     return SITE_BASE_URL + 'okr.html' + (alvo ? '?okr=' + encodeURIComponent(alvo) : '');
   }
