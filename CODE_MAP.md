@@ -3474,6 +3474,7 @@ Extração mecânica (AST) da aba OKR do `painel-dev.html` v4.8 — todas as ân
 - Bloco "🎯 OKR — página própria" no início do `<script>`: `SQUADS`/`squadBoardUrl()`/`loadExtraSquads()` (squads base + `kanban/squads_meta`), `loadAdmList()`, `loadGlobalUsers()` (enxuto, só popula `_globalUsersCache` e re-renderiza o OKR).
 - **Cards vinculados sob demanda**: `_okrCardCache`/`_okrCardFetchOne()`/`_okrCardEnsure()`/`_okrCardPaint()` (título por vínculo via `cards_index` → `cards/{chave}`), `_okrSquadOkrCards()` (carga única por squad na 1ª busca, só cards com badge OKR), `_okrCardSearchResults()`/`_okrRenderCardSearch()` (assíncrona) e `_okrCardLinksHtml()` — substituem as versões do painel, que liam `squadData` (todos os cards). `_okrOpenLinkedCard()` abre `kanban(-dev).html?squad=&card=` em aba nova.
 - Bloco "🔐 Login / portão de acesso" (cópia do painel): `doSignIn()`/`doSignInMicrosoft()`, `_loginProviderMismatchMsg()`, handler de `auth-change` (viewers com cache de 15 min), `_okrEnsureUserRecord()`, `_finishOkrLogin()` (sobe `loadOkr()` & cia. 1x por usuário; outra conta na mesma aba recarrega).
+- 🟢 **Online no OKR** (v1.5): `_okrSendHeartbeat()`/`_okrPresenceStart()`/`loadOkrPresence()`/`renderOkrOnline()` — node `kanban/painel/okr_presence/{uid}`, `OKR_PRESENCE_TTL_MS` 30 s, faixa `#okr-online`.
 - `_okrObjShareUrl()` = `location.pathname + '?okr=<id>'`; `_okrTryOpenFromUrl()` sem `swPtab`. Auto-atualização: `VERSION_KEY = 'okr_dev'`.
 - Módulo Firebase próprio: override de config em `localStorage` sob o sufixo `_okr_dev`.
 
