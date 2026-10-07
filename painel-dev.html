@@ -1534,6 +1534,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
 
+    <!-- 🎯 Online no OKR — a página do OKR (okr.html/okr-dev.html) tem heartbeat próprio em kanban/painel/okr_presence/{uid}; aqui só LEMOS (loadOkrPresence()). -->
+    <div class="sec-title" id="okr-online-section-title">🎯 Online no OKR <span class="badge" id="okr-online-count">0</span></div>
+    <div id="okr-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+    </div>
+
     <!-- Filtro por GERÊNCIA (grupo de squads) — pedido direto: cada gerente vê
          só as squads da própria gerência, sem excluir a Visão Geral (que
          continua no filtro por squad logo abaixo, botão "🏠 Todos"). Mesmo
@@ -2722,7 +2728,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.5 · painel-dev</div>
+<div class="version">v5.6 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3283,6 +3289,26 @@ function loadPainelPresence(){
     window._presence_painel = Object.values(val).filter(u=>u.nome && now-u.ts<30000);
     renderPainelOnline();
   });
+}
+// 🎯 Presença do OKR (2026-10-07): quem está com a página do OKR aberta. Node escrito pela própria página do OKR
+// (kanban/painel/okr_presence/{uid}, heartbeat de 15 s) — o painel só lê. Quem fecha a aba não gera evento, então um relógio de 10 s
+// redesenha a lista (corte de 30 s, igual ao resto das presenças).
+const OKR_PRESENCE_TTL_MS = 30000;
+function loadOkrPresence(){
+  window._onValue(window._ref(window._db,'kanban/painel/okr_presence'), snap=>{ window._okrPresenceRaw = snap.val()||{}; renderOkrOnlineVisao(); });
+  clearInterval(window._okrOnlineClock);
+  window._okrOnlineClock = setInterval(()=>{ if(!document.hidden) renderOkrOnlineVisao(); }, 10000);
+}
+function renderOkrOnlineVisao(){
+  const el = document.getElementById('okr-online-list'); if(!el) return;
+  const now = Date.now();
+  const all = Object.values(window._okrPresenceRaw||{}).filter(u=>u && u.nome && now-(+u.ts||0) < OKR_PRESENCE_TTL_MS).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  const count = document.getElementById('okr-online-count'); if(count) count.textContent = all.length;
+  if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no OKR no momento.</div>'; return; }
+  el.innerHTML = all.map(u=>{
+    const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
+    return '<div class="online-pill"><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span></div>';
+  }).join('');
 }
 function renderPainelOnline(){
   const all = window._presence_painel||[];
@@ -8685,6 +8711,7 @@ window.addEventListener('fb-ready',()=>{
   _painelTryOpenTabFromUrl();
   loadPresence();
   loadPainelPresence();
+  loadOkrPresence();
   loadAgentUsage();
   loadPcalEvents();
   // Rede de segurança: força um re-render ~2s após o boot, caso a primeira pintura da tela

@@ -20782,6 +20782,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v5.6 · painel-dev — 2026-10-07 · aba Visão: nova linha "🎯 Online no OKR"
+
+Pedido direto: a aba Visão mostrava "Online no board" e "Online no painel"; agora mostra também **quem está com a página do OKR aberta**. Lê `kanban/painel/okr_presence` (o heartbeat de 15 s que a própria página do OKR já escreve — o painel só lê, sem escrita nova nem mudança de regras). Mesmo corte de 30 s das outras presenças, com um relógio de 10 s pra tirar quem fecha a aba sem gerar evento; nomes escapados. Testes no Chromium: 7 cenários (contagem, filtro por nome/tempo, ordem alfabética, nome com HTML, vazio, expiração sem evento).
+
 ### painel-dev.html v5.5 · painel-dev — 2026-10-07 · 👁 Visualizadores externos mais fáceis de achar (e dizem que valem pro OKR)
 
 Os visualizadores externos (`kanban/painel_viewers`) só eram gerenciáveis em ⚙ Configurações → 🔑 ADMs (precisa escolher um squad antes) e o texto só falava do painel. Agora: (1) a seção se chama **"Visualizadores externos (painel e OKR)"** e explica que a pessoa só acompanha, vê as 3 torres, não edita e entra com o Google direto em okr.html; (2) botão **👁 Visualizadores externos** no topo de 👥 Global Users (só ADM) abre um modal com a mesma lista e o formulário de adicionar, sem passar por squad nenhum (`renderPainelViewers()` agora renderiza nos 2 lugares; `addPainelViewer('modal')`). A aba ADMs segue igual.
