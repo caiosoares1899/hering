@@ -1498,7 +1498,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.0 · okr-dev</div>
+<div class="version">v2.1 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3645,8 +3645,8 @@ function renderOkrObjetivos(){
   }
   const trimSel = document.getElementById('okr-filter-trimestre');
   if(trimSel){
-    const trimestres = [...new Set(Object.values(okrObjetivos).filter(o=>o&&!o.arquivado&&_okrNaVisao(o)).flatMap(o=>_okrTrimestresOf(o)))].sort();
     const cur = _okrFilter.trimestre;
+    const trimestres = [...new Set([...Object.values(okrObjetivos).filter(o=>o&&!o.arquivado&&_okrNaVisao(o)).flatMap(o=>_okrTrimestresOf(o)), ...(cur?[cur]:[])])].sort();   // o escolhido entra sempre (como pessoa/tag), senão o select mostraria "Todos" com filtro ativo
     trimSel.innerHTML = '<option value="">Todos os períodos</option>'
       + trimestres.map(t=>`<option value="${esc(t)}"${t===cur?' selected':''}>${esc(t)}</option>`).join('');
   }
@@ -3795,7 +3795,7 @@ function _okrRenderNav(){
 function _okrEntrarTorre(id, push){
   if(id!=='global' && !_okrTorreValida(id)) id = '';
   const veioDaHome = !_okrTorreAtual;
-  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrShowArquivados = false; }
+  if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
   if(push!==false){
     try{ const u = new URL(location.href); u.searchParams.delete('okr'); if(id) u.searchParams.set('torre', id); else u.searchParams.delete('torre'); history.pushState({torre:id}, '', u); }catch(e){}
   }

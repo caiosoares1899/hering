@@ -20017,6 +20017,10 @@ aplicável) ou endpoints escopados por playlist/faixa diretamente, nunca
 lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
 
+## Cloud Function — `okrDailyScan` (`functions/okr/dailyScan.js`) — fix 2026-10-07 (Torres)
+
+**Sem versão própria — requer `firebase deploy --only functions:okrDailyScan` (resync do clone antes, ver `CLAUDE.md`).** A "véspera da reunião de bloco quinzenal" notificava os responsáveis de TODO Objetivo ativo; os blocos (CX/Tech/CRM…) são da torre Digital, então Objetivos de Comercial/Corporativa (`areaId:'geral'`, que cai no bloco 1) recebiam "Reunião de X é amanhã" de uma reunião que não é deles. Agora pula `torre` ≠ digital (sem o campo = Digital, compatível com tudo que já existia). Prazo de marco segue em qualquer torre. +2 testes; 2 testes antigos (`marco … notifica`) dependiam da data real de hoje (falhavam na véspera de uma quinta de bloco) e passaram a filtrar por tipo; `atingimento.test.js` comparava o motor com `painel-dev.html`, de onde o OKR saiu na v5.0 (falhava desde então) — agora compara com `okr-dev.html`/`okr.html` ignorando linhas em branco. Suíte 604/604.
+
 ## Cloud Function — `okrWeeklySnapshot` (`functions/okr/weeklySnapshot.js`, sem versão própria em `version.json`)
 
 ### 2026-09-05 — Nova function: snapshot semanal dos OKRs (Fase 3)
@@ -20686,6 +20690,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.1 · okr-dev — 2026-10-07 · fix(/monitorarbugs): trocar de torre mantinha o filtro de período da torre anterior
+
+Achado da auditoria das Torres. O filtro "Todos os períodos" guardava o trimestre escolhido numa torre ao entrar em outra: se a nova torre não tinha nenhum Objetivo daquele período, a lista ficava vazia ("Nenhum objetivo bate com esse filtro") enquanto o select mostrava "Todos os períodos" — filtro ativo e invisível. Reproduzido antes (Digital com 2026-Q3 → Comercial só com 2026-Q4: 0 cartões, select em branco). Agora o filtro de período zera ao trocar de torre (como a gerência já fazia) e o período escolhido entra sempre nas opções do select (como pessoa/tag).
+
 ### okr-dev.html v2.0 · okr-dev — 2026-10-07 · 🏛️ Torres: o OKR passa a ter 3 visões (Digital, Comercial, Corporativa) + Visão global colorida
 
 Pedido direto: vários times vão usar o OKR, então as visões precisam ser divididas. A página inicial agora é uma **home com 3 botões de torre** (🌐 Digital, 🛍️ Comercial, 🏛️ Corporativa) e o botão **🔭 Visão global**; clicar entra nos Objetivos daquela torre, separados (`?torre=` na URL, botão Voltar do navegador funciona). Tudo que já existia vira **Digital** automaticamente (objetivo sem `torre` = Digital, sem migração). Visão global: todos os Objetivos juntos, agrupados por torre e **coloridos** (card do objetivo e chip no modal).
@@ -20734,6 +20742,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel-dev.html v5.3 · painel-dev — 2026-10-07 · fix(/monitorarbugs): nome na lista "Online" era injetado como HTML (XSS armazenado)
+
+`renderOnline()` (Online no board) e `renderPainelOnline()` (Online no painel) montavam a pílula com `u.nome` cru. O nome vem de `presence/{uid}`, que qualquer membro grava — um nome como `<img src=x onerror=…>` rodava JS na sessão de quem abrisse o painel (inclusive ADM). Reproduzido no Chromium antes (2 execuções no `painel.html` de prod; 0 depois do fix no dev): agora `esc()` no nome e no ícone do squad. **`painel.html` (prod) ainda tem o problema** — mesma correção de 3 linhas, aguardando sinal verde pra promover.
 
 ### painel-dev.html v5.2 · painel-dev — 2026-10-07 · 👥 Global Users: ADM define a Torre de cada pessoa (+ filtro)
 
