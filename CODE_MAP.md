@@ -3346,6 +3346,7 @@ produção. Ver `CHANGELOG.md` v3.20 · painel-dev pro racional completo.
   `participantes` do marco — antes só campos principais + responsável.
 
 #### 📈 Histórico semanal — Fase 3 (2026-09-05, v3.21 · painel-dev — promovida pra prod v3.23 em 2026-09-05)
+> ⚠ Desde 2026-10-07 (okr-dev v2.18) a aba aparece pro usuário como **📊 Dashboard** — os nomes internos (`renderOkrHistorico()`, `_okrHist*`, `okr-historico-btn`, `_okrToggleHistorico()`) continuam os mesmos.
 Visualização de `kanban/okr/snapshots/{data}`, gravado toda sexta pela
 Cloud Function `okrWeeklySnapshot` (ver seção `okr/` em Cloud
 Functions). `okrSnapshots` (estado local, `loadOkrSnapshots()`),
