@@ -6491,7 +6491,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.795-dev</div>
+<div class="version">v8.30.796-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28892,6 +28892,7 @@ const NOTIF_ICONS = {
   okr_prazo:   '🎯',
   okr_reuniao: '🎯',
   okr_agente:  '🤖',
+  okr_mencao:  '💬',
   recorrente:  '🔁',
   reuniao:     '🎥',
   gcal_pending: '📅',
@@ -29907,9 +29908,9 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // /monitorarbugs, 2026-09-06, mesma classe do gap de squad diferente já
   // corrigido acima). painel-dev.html trata `?okr=<id>`/`?okr=chat` — ver
   // _okrTryOpenFromUrl().
-  if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente'){
+  if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente' || type==='okr_mencao'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
-    const alvo = type==='okr_agente' ? 'chat' : okrObjId;
+    const alvo = type==='okr_agente' ? 'chat' : (type==='okr_mencao' ? 'notas' : okrObjId);   // @menção nas Anotações → okr(-dev).html?okr=notas
     window.location.href = painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : '');
     return;
   }

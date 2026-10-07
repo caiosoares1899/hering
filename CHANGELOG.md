@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.796-dev — 2026-10-07 · fix: o sino do kanban entende a notificação de @menção do OKR (só kanban-dev)
+
+Acompanha o **sino do OKR** (`okr-dev.html` v2.10): as Anotações da reunião ganharam @menção e a pessoa mencionada recebe uma notificação `okr_mencao`. Sem isto, no sino do kanban ela apareceria com o ícone genérico e, ao clicar, só marcaria como lida sem levar a lugar nenhum (a mesma classe de gap já corrigida em 2026-09-06 para os outros tipos `okr_*`). Agora tem o ícone 💬 e leva às Anotações do OKR (`?okr=notas`).
+
 ### v8.30.795-dev — 2026-10-07 · feat: cadastro novo pergunta a torre (Digital / Comercial / Corporativa) na inscrição (só kanban-dev)
 
 Parte do recurso **Torres** do OKR (ver `okr-dev.html` v2.0). A tela "🙋 Inscrever-se no quadro" — que todo usuário **novo** já vê, pra confirmar as iniciais — ganhou o campo obrigatório **Sua torre** (começa em "Escolha…"; sem escolher, "⚠ Escolha a sua torre."). A escolha é gravada só em `kanban/usuarios/{uid}/torre` (o board não lê esse campo; `usuarios_publicos` fica como está). Também vale pro caminho "cadastro com recarga" (externos), que reabre a inscrição depois do reload. Quem já existia **não** é perguntado aqui: sem o campo = Digital. A inscrição antiga ("Primeira vez?") também não pergunta.
@@ -20697,6 +20701,10 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
+
+### okr-dev.html v2.10 · okr-dev — 2026-10-07 · 📢 Mural exclusivo do OKR + 🔔 sino de notificações
+
+Pedido direto: "um mural exclusivo + sininho de notificações" no OKR. **📢 Mural do OKR** (`kanban/okr/mural/{id}` = tipo, título, mensagem, torres, autor, expiração): faixa fixa no alto da página (tela inicial e dentro das torres — dentro de uma torre mostra o dela + o dirigido a todas), com os 4 tipos do Mural geral (🎉 novidade, ⚠️ aviso, 💡 dica, 🚨 urgente); os **🚨 urgentes também abrem um popup 1x por pessoa** ("Entendi" marca como visto; vários pendentes abrem um de cada vez; quem publicou não recebe o próprio). **Quem publica**: ADM e quem edita a torre (PO/Organizador, 🎯 Gestor OKR ou torre ⭐ Geral), só nas torres que edita — "Todas as torres" é só pra quem edita todas (ADM / ⭐ Geral). Cada aviso tem expiração (7/15/30 dias ou só quando arquivar); editar e 📦 arquivar seguem a mesma régua. **🔔 Sino** no cabeçalho, com badge: junta as notificações pessoais `okr_*` (as mesmas do sino do kanban/painel: editado, prazo, reunião, agente + a nova **menção**) com o **feed da torre** (`kanban/okr/feed/{id}`, 1 escrita por evento, sem fan-out por pessoa): aviso novo no Mural, 🆕 Objetivo criado e ✅ Marco concluído — cada pessoa vê o da sua torre + o dirigido a todas (ADM, ⭐ Geral e visualizador externo veem todas); o que a própria pessoa fez não vira aviso pra ela. Clicar leva ao Objetivo / abre o aviso / abre as Anotações; "lido" por item (`kanban/okr/feed_seen/{uid}`) e **✓ Marcar tudo como lido**; na 1ª visita nada antigo vira "não lido". **Visualizador externo tem sino** com o feed e o Mural (só leitura — o "lido" dele fica no navegador, sem escrever no Firebase); menções e prazos são só pra quem tem usuário. **@menção nas 📋 Anotações da reunião**: digitar `@` lista as pessoas (↑↓ + Enter/Tab, Esc fecha); ao enviar, quem foi mencionado (nome completo, sem diferenciar acento/maiúscula) recebe `okr_mencao` e a menção aparece destacada na lista; deep link `?okr=notas`. **Sem mudança de regras do Firebase nem de Cloud Function** (usa `kanban/okr/*`, já legível pelo externo e gravável só pela empresa; a chave de feed ordena por tempo, sem índice novo). Push no celular pra menção/aviso não foi incluído (precisaria de `okr_mencao` em `PUSH_TYPES` + deploy da função). Testes no Chromium: 73 cenários (permissões por papel/torre, visibilidade por torre, popup, sino, externo sem escrita, eventos do feed, menção) + as 11 suítes anteriores do OKR sem regressão; backend 609/609.
 
 ### okr-dev.html v2.9 · okr-dev — 2026-10-07 · ⚙ Gerências configuráveis por torre
 
