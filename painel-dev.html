@@ -2745,7 +2745,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.17 · painel-dev</div>
+<div class="version">v5.18 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8047,16 +8047,52 @@ function closeAgentesHelp(){ document.getElementById('agentes-help-ov')?.classLi
 // mesmo espírito de kanban/squads/{squadId}/externos. A trava de verdade
 // (write nunca libera pra quem não é @ciahering, em nenhum node do
 // painel) mora nas regras — isto aqui só gerencia a whitelist de LEITURA.
+// ── 👁 Acesso do visualizador externo (quem JÁ entrou / quem está ativo) ──────────────────────────────────
+// O ADM cadastra o e-mail em kanban/painel_viewers/{emailKey} mas não tinha como saber se a pessoa chegou a entrar. O próprio visualizador grava
+// (só no próprio nó — regra em database.rules.json) kanban/painel_viewers/{emailKey}/acesso = {primeiro, ultimo, uid, pagina}. `ultimo` é renovado a cada ~5 min
+// de uso com a aba visível; some junto com o visualizador se o ADM remover (o nó mora dentro dele).
+const VIEWER_ACESSO_EVERY_MS = 5*60*1000, VIEWER_ATIVO_MS = 6*60*1000;
+function _viewerRegistrarAcesso(pagina){
+  const u = window._currentUser; if(!u || !u.email || !window._isPainelViewer || !window._db) return;
+  const agora = Date.now(); if(agora - (window._viewerAcessoTs||0) < VIEWER_ACESSO_EVERY_MS) return;
+  window._viewerAcessoTs = agora;
+  const ref = p=>window._ref(window._db, 'kanban/painel_viewers/'+_painelViewerKey(u.email)+'/acesso'+(p||''));
+  window._get(ref('/primeiro')).then(s=>{
+    const d = {ultimo:agora, uid:u.uid, pagina};
+    if(!s.exists()) d.primeiro = agora;
+    return window._update(ref(), d);
+  }).catch(()=>{ window._viewerAcessoTs = agora - VIEWER_ACESSO_EVERY_MS + 60000; });   // falhou (rede/regra ainda não publicada): tenta de novo em ~1 min, não a cada tick
+}
+function _viewerTempoRel(ms){
+  const m = Math.max(0, Math.round((Date.now()-ms)/60000));
+  if(m < 1) return 'agora há pouco'; if(m < 60) return 'há '+m+' min';
+  const h = Math.round(m/60); if(h < 24) return 'há '+h+' h';
+  const d = Math.round(h/24); return d < 60 ? 'há '+d+(d===1?' dia':' dias') : 'há mais de 2 meses';
+}
+function _viewerDataBR(ms){ const d = new Date(ms); return d.toLocaleDateString('pt-BR')+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); }
+// presence = mapa de kanban/painel/okr_presence (opcional). Retorna {ord, txt, cor, title}.
+function _viewerStatus(v, presence){
+  const a = v && v.acesso, now = Date.now();
+  if(!a || !a.ultimo) return {ord:2, txt:'⏳ ainda não entrou', cor:'var(--txt3)', title:'Nenhum acesso registrado. Quem foi adicionado antes deste registro existir só aparece como "entrou" depois do próximo login.'};
+  const p = presence && a.uid && presence[a.uid];
+  const online = (p && now-(+p.ts||0) < OKR_PRESENCE_TTL_MS) || now-a.ultimo < VIEWER_ATIVO_MS;
+  const quando = 'Primeiro acesso: '+(a.primeiro ? _viewerDataBR(a.primeiro) : '—')+' · Último sinal: '+_viewerDataBR(a.ultimo)+(a.pagina ? ' ('+(a.pagina==='okr'?'OKR':'Painel')+')' : '');
+  return online ? {ord:0, txt:'🟢 online agora'+(a.pagina?' · '+(a.pagina==='okr'?'OKR':'Painel'):''), cor:'#4ade80', title:quando}
+                : {ord:1, txt:'✅ entrou · visto '+_viewerTempoRel(a.ultimo), cor:'var(--accent)', title:quando};
+}
+function _viewerOrdena(entries, presence){
+  return entries.map(([k,v])=>[k,v,_viewerStatus(v,presence)]).sort((x,y)=> x[2].ord-y[2].ord || ((y[1].acesso&&y[1].acesso.ultimo)||0)-((x[1].acesso&&x[1].acesso.ultimo)||0) || String(x[1].email||x[0]).localeCompare(String(y[1].email||y[0])));
+}
 // A lista aparece em 2 lugares (⚙ Configurações → 🔑 ADMs, e o modal 👁 aberto de 👥 Global Users): renderiza em todos os que existirem.
 function renderPainelViewers(){
   const lists=['pcfg-viewers-list','pv-list'].map(id=>document.getElementById(id)).filter(Boolean); if(!lists.length) return;
   lists.forEach(l=>{ l.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; });
   window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
-    const entries=Object.entries(snap.val()||{});
+    const entries=_viewerOrdena(Object.entries(snap.val()||{}), window._okrPresenceRaw);
     lists.forEach(list=>{
       if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
       list.innerHTML='';
-      entries.forEach(([key,v])=>{
+      entries.forEach(([key,v,st])=>{
         const row=document.createElement('div');
         row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
         const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=(v.nome?v.nome+' — ':'')+(v.email||key);
@@ -8065,7 +8101,9 @@ function renderPainelViewers(){
         rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
         rm.textContent='✕'; rm.title='Remover visualizador';
         rm.onclick=()=>removePainelViewer(key);
-        row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
+        const stEl=document.createElement('span'); stEl.className='viewer-status'; stEl.style.cssText='font-size:10px;font-weight:600;color:'+st.cor+';white-space:nowrap;'; stEl.textContent=st.txt; stEl.title=st.title;
+        row.style.flexWrap='wrap'; lbl.style.minWidth='140px';
+        row.appendChild(lbl); row.appendChild(stEl); row.appendChild(badge); row.appendChild(rm);
         list.appendChild(row);
       });
     });
@@ -8717,6 +8755,7 @@ function _finishPainelLogin(user){
   // em kanban/usuarios/{uid} (ver _painelEnsureUserRecord() abaixo).
   if(!window._isPainelViewer) _painelEnsureUserRecord(user);
   _painelPresenceStart();
+  if(window._isPainelViewer){ _viewerRegistrarAcesso('painel'); setInterval(()=>{ if(!document.hidden) _viewerRegistrarAcesso('painel'); }, 60000); }   // ADM vê quem já entrou (⚙ ADMs / 👥 Global Users → 👁)
   setTimeout(_seedComunicadoRascunhos, 2000);
   // Notificações do painel dependem de _currentUser — carrega aqui, onde ele já existe
   // (o fb-ready pode disparar antes do auth-change, deixando o load anterior sem usuário)
