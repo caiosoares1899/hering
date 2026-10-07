@@ -1536,7 +1536,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.6 · okr</div>
+<div class="version">v2.7 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3964,6 +3964,7 @@ function addOkrViewer(){
   const email = (emailInp?.value||'').trim().toLowerCase();
   if(!email || !email.includes('@')){ showToast('⚠ E-mail inválido'); return; }
   if(_isTrustedDomainEmail(email)){ showToast('❌ E-mails @ciahering.com.br/@arezzo.com.br já têm acesso — não precisam ser adicionados aqui.'); return; }
+  if((email.match(/\./g)||[]).length>8){ showToast('❌ Esse e-mail tem pontos demais (máx. 8): as regras do banco só conseguem localizar até 8 pontos no e-mail, e a pessoa ficaria autorizada aqui mas barrada ao entrar.'); return; }   // as regras trocam no máx. 8 pontos por vírgula ao procurar a chave
   const entry = { email, nome:(nomeInp?.value||'').trim(), addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+_painelViewerKey(email)), entry)
     .then(()=>{ showToast('✅ '+email+' autorizado como visualizador.'); emailInp.value=''; if(nomeInp) nomeInp.value=''; renderOkrViewers(); })

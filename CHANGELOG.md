@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.7 · okr — 2026-10-07 · Promove pra prod — "+ Visualizador" recusa e-mail com mais de 8 pontos
+
+Promoção do `okr-dev.html` v2.7 sobre a v2.6 de prod (merge de 3 vias; dev × prod só diferem nas 27 linhas de ambiente): o botão **+ Visualizador** recusa e-mail com mais de 8 pontos (as regras do banco só localizam a chave com até 8 `replace`; antes a pessoa ficava autorizada na lista e barrada ao entrar). Smoke test no `okr.html` real: página 49/49, torres 35/35, Histórico 15/15, visualizadores 22/22 + 5/5.
+
 ### okr-dev.html v2.7 · okr-dev — 2026-10-07 · fix(/monitorarbugs): visualizador externo com e-mail de mais de 8 pontos era autorizado mas ficava barrado
 
 Achado da auditoria do que subiu hoje. As regras do banco procuram a chave do visualizador trocando "." por "," com **no máximo 8** `replace` encadeados (limitação já documentada em `database.rules.json`), mas a lista (OKR e painel) gravava a chave com TODOS os pontos trocados: um e-mail com mais de 8 pontos entrava na lista e a pessoa continuava barrada ao tentar entrar, sem pista do motivo. Agora o botão **+ Visualizador** recusa com a explicação (precaução: o limite de 8 é o das regras atuais). Também: `guia-okr.html` não fala mais em "aba OKR do Painel" (o OKR tem página própria desde a v5.0 do painel). +3 cenários de teste (21 no total).
@@ -20789,6 +20793,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.8 · painel — 2026-10-07 · Promove pra prod — o botão 👁 Visualizadores externos de 👥 Global Users passa a abrir por cima
+
+Promoção do `painel-dev.html` v5.7 + v5.8 sobre a v5.6 de prod (merge de 3 vias; dev × prod só diferem nas linhas de ambiente e nos blocos já divergentes de sempre): (1) **fix** — o botão 👁 em 👥 Global Users "não fazia nada": o modal abria por baixo do Global Users (mesmo `z-index`, ordem do HTML); agora `z-index:9200`; (2) o "+ Visualizador" (aba ADMs e esse modal) recusa e-mail com mais de 8 pontos. Smoke test no `painel.html` real: o campo de e-mail do modal é o elemento do topo; redirecionamentos 17/17, Online no OKR 7/7, visualizadores 22/22.
 
 ### painel-dev.html v5.8 · painel-dev — 2026-10-07 · fix (relato direto): o botão 👁 Visualizadores externos de 👥 Global Users "não fazia nada"
 

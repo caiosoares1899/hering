@@ -2768,7 +2768,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.6 · painel</div>
+<div class="version">v5.8 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8417,6 +8417,7 @@ function addPainelViewer(origem){
   const email=emailInp?.value?.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
   if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) já têm acesso, não precisam ser adicionados aqui.'); return; }
+  if((email.match(/\./g)||[]).length>8){ showToast('❌ Esse e-mail tem pontos demais (máx. 8): as regras do banco só conseguem localizar até 8 pontos no e-mail, e a pessoa ficaria autorizada aqui mas barrada ao entrar.'); return; }   // as regras trocam no máx. 8 pontos por vírgula ao procurar a chave
   const key=_painelViewerKey(email);
   const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+key), entry)
@@ -12064,7 +12065,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 
 <!-- MODAL: GESTÃO GLOBAL DE USUÁRIOS -->
 <!-- 👁 Visualizadores externos (painel e OKR) — atalho de 👥 Global Users; mesma lista de ⚙ Configurações → 🔑 ADMs (renderPainelViewers). -->
-<div class="cfg-ov" id="viewers-ov" onclick="if(event.target===this) closePainelViewersModal()">
+<div class="cfg-ov" id="viewers-ov" style="z-index:9200;" onclick="if(event.target===this) closePainelViewersModal()">   <!-- acima de 👥 Global Users (cfg-ov = 9100, e este vem antes no HTML: sem isso abria POR BAIXO dele) -->
   <div class="cfg-panel" style="max-width:560px;">
     <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
     <div class="cfg-body">
