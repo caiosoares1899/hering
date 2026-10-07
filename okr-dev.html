@@ -1448,7 +1448,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v1.3 · okr-dev</div>
+<div class="version">v1.4 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1557,6 +1557,7 @@ function loadGlobalUsers(force){
   window._get(window._ref(window._db,'kanban/usuarios')).then(snap=>{
     _guLoadedAt = Date.now(); _guRetries = 0;
     _globalUsersCache = snap.val() || {};
+    if(window._currentUser && typeof _okrSetCurrentInit==='function') _okrSetCurrentInit(window._currentUser); // sigla do kanban, se a pessoa já tiver
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // avatares de responsável/participante dependem deste cache
     _okrUsersOk = true; _okrCheckAccessReady();
   }).catch(()=>{
@@ -6114,27 +6115,43 @@ window.addEventListener('auth-change',e=>{
   }
 });
 
-// Cria/cura kanban/usuarios/{uid} no 1º login (mesma regra do painel: quem usa SÓ o
-// OKR não passa pelo board, então ninguém mais criaria esse registro). Sem inscrito/
-// squads/role — abrir esta página não matricula ninguém em nenhum squad.
+// Cadastro de quem só usa o OKR: cria/cura kanban/usuarios/{uid} no 1º login (nome/e-mail/foto — é o que faz a
+// pessoa aparecer nos seletores de Responsável/Participante e no 👥 Global Users do painel, onde um ADM pode torná-la
+// 🎯 Gestor OKR). SEM init/papel/squads/inscrito de propósito: abrir esta página não matricula ninguém em squad nenhum;
+// se a pessoa abrir o kanban depois, o cadastro completo (sigla, squad, papel) roda lá — o registro parcial é tratado
+// como "usuário novo" (autoRegistrar → `_parcial`). Cria com UPDATE (mescla), nunca set: se o kanban gravar o cadastro
+// completo no mesmo instante, um set nosso o sobrescreveria. Devolve 'novo' | 'curado' | false.
 function _okrEnsureUserRecord(user){
-  if(!user || !user.uid) return;
-  window._get(window._ref(window._db,'kanban/usuarios/'+user.uid)).then(snap=>{
+  if(!user || !user.uid) return Promise.resolve(false);
+  const ref = window._ref(window._db,'kanban/usuarios/'+user.uid);
+  return window._get(ref).then(snap=>{
     const existe = snap.val();
     if(!existe){
-      window._set(window._ref(window._db,'kanban/usuarios/'+user.uid), {
+      return window._update(ref, {
         uid: user.uid, nome: user.displayName||'', email: user.email||'',
         foto: user.photoURL||'', criadoEm: new Date().toISOString(),
-      }).catch(err=>console.error('[okr] falha ao criar registro de usuário:', err));
-      return;
+      }).then(()=>'novo');
     }
     const cura={};
     if(!existe.nome && user.displayName) cura.nome=user.displayName;
     if(!existe.email && user.email) cura.email=user.email;
     if(!existe.foto && user.photoURL) cura.foto=user.photoURL;
     if(!existe.uid) cura.uid=user.uid;
-    if(Object.keys(cura).length) window._update(window._ref(window._db,'kanban/usuarios/'+user.uid), cura).catch(err=>console.error('[okr] falha ao curar registro de usuário:', err));
-  }).catch(err=>console.error('[okr] falha ao checar registro de usuário:', err));
+    if(Object.keys(cura).length) return window._update(ref, cura).then(()=>'curado');
+    return false;
+  }).catch(err=>{ console.error('[okr] falha no cadastro do usuário:', err); return false; });
+}
+// Depois do cadastro: relê a lista de usuários (a leitura do boot pode ter chegado ANTES da gravação, deixando a própria
+// pessoa fora dos seletores/avatares por até 10 min) e dá as boas-vindas só quando o registro foi criado agora.
+function _okrAposCadastro(res){
+  if(!res) return;
+  loadGlobalUsers(true);
+  if(res==='novo') showToast('✅ Bem-vindo(a) ao OKR! Você acompanha tudo por aqui; edita os Objetivos em que for Responsável — pra criar/editar os demais, peça acesso a um ADM.');
+}
+// Iniciais do autor nas mensagens da Central Agente Ágil (o kanban preenche isto no login; aqui só existe o OKR).
+function _okrSetCurrentInit(user){
+  const g = (typeof _globalUsersCache!=='undefined' && _globalUsersCache[user.uid]) || {};
+  window._currentUserInit = g.init || String(user.displayName||user.email||'').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase() || '?';
 }
 
 // Visualizador externo só LÊ (as regras negam toda escrita): sem isto, as caixas de Anotações da reunião e da
@@ -6163,7 +6180,8 @@ function _finishOkrLogin(user){
   document.body.classList.toggle('painel-viewer-mode', window._isPainelViewer);
   const banner=document.getElementById('painel-viewer-banner');
   if(banner) banner.style.display = window._isPainelViewer ? 'block' : 'none';
-  if(!window._isPainelViewer) _okrEnsureUserRecord(user);
+  _okrSetCurrentInit(user);
+  if(!window._isPainelViewer) _okrEnsureUserRecord(user).then(_okrAposCadastro);
   _okrApplyViewerLock();
   if(_okrBootedUid) return;
   _okrBootedUid = user.uid;
