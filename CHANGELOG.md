@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.794 — 2026-10-07 · Promove pra prod — colar uma lista em tópicos no checklist cria um item por linha
+
+Promoção de `kanban-dev.html` v8.30.793 + v8.30.794 (merge de 3 vias a partir da v8.30.792-dev; dev × prod só diferem nas 7 linhas de ambiente). Sugestão de usuária: colar uma mensagem escrita em tópicos no "Novo item..." do checklist jogava tudo num item só (o `<input>` de uma linha achata as quebras). Agora, com 2+ linhas, cada linha vira um item: marcadores do começo (`-`, `•`, `*`, `1.`, `1)`, `a)`, `☐`…) são removidos, `[x]`/`[ ]` entram marcados/desmarcados (formato do "📋 Copiar checklist"), sub-itens recuados viram itens, iniciais de nome ("J. Silva") e sinais ("-5 pontos") ficam intactos, 1 linha cola normal. Smoke test no `kanban.html` real: 15 cenários verdes; `node --check` OK; balanço -1/-1 (baseline novo: +4 parênteses de regex/comentário, não de sintaxe). Mural: rascunho `seed_colar_lista_checklist_2026_10_07`.
+
 ### v8.30.794-dev — 2026-10-07 · fix: colar lista no checklist não come iniciais de nome ("J. Silva") (só kanban-dev)
 
 Achado de `/monitorarbugs` no parser da v8.30.793-dev: o marcador de letra aceitava `A.` além de `a)`, então "J. Silva enviou a proposta" colado no checklist virava "Silva enviou a proposta". Agora só `a)`/`B)` conta como marcador. Chromium: parser + colar de verdade (15 cenários).
@@ -20678,6 +20682,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v1.3 · okr — 2026-10-07 · Promove pra prod — correções das v1.1–v1.3 (colar lista, deep link espera papéis, sair recarrega, visualizador, usuários renovam)
+
+Promoção do `okr-dev.html` v1.1–v1.3 (PRs #1229–#1231) sobre a v1.0 de prod: colar lista em tópicos nas caixas "+ Add" (um item por linha); `?okr=<id>` só abre o Objetivo depois que ADMs/usuários chegaram (PO/Gestor OKR via o modal com 💾 Salvar); sair depois de logado recarrega (listeners do Firebase morrem sem acesso); título de card vinculado lido uma vez; visualizador externo com as caixas de Anotações/Central Agente Ágil desabilitadas (antes perdia o texto em silêncio); usuários/papéis renovam ao voltar pra aba. `okr.html` = `okr-dev.html` com as 6 diferenças de ambiente (título, sem faixa laranja, link pro `painel.html`, versão, `VERSION_KEY='okr'`, sufixo da config do Firebase). Smoke no `okr.html` real: página 35, E2E ao vivo 11, menu de contexto 42, colagem 9.
+
 ### okr-dev.html v1.3 · okr-dev — 2026-10-07 · fix(/monitorarbugs): visualizador não perde mais texto digitado; usuários renovam ao voltar pra aba
 
 Auditoria da página nova (2ª rodada). (1) **Visualizador externo (`painel_viewers`) via as caixas de "📋 Anotações da reunião" e "💬 Central Agente Ágil" como se pudesse escrever**: digitava, o campo limpava e a gravação era negada em silêncio pelas regras — o texto sumia sem aviso. Agora as 2 caixas (e os botões Enviar) ficam desabilitadas com "👁 Modo visualização — convidado sem permissão de escrita." (membros da empresa continuam normais). (2) O painel renovava a lista de usuários (papéis/fotos) ao voltar pra aba e retomava uma 1ª leitura que falhou (`visibilitychange`); essa parte da infra não veio na extração — a página ficava, depois de 5 falhas de rede, sem nomes/papéis até recarregar. Voltou, só depois do login. Checado e sem achado: todos os ids de DOM usados pelo código existem na página; nenhum efeito colateral global do painel ficou pra trás (21 declarações com "okr" fora da extração revisadas — todas pertencem ao painel); regras do Firebase cobrem os 7 caminhos de `kanban/okr` (escrita só empresa; leitura também visualizador) e as notificações `okr_editado` seguem permitidas pra quem usa só o OKR (regra por domínio); service worker serve páginas network-first (o antigo redirect `okr.html` não fica preso em cache); `?card=` do kanban existe. **Testes**: pixel-diff `painel-dev` × `okr-dev` em 9 componentes × 3 temas (cartão, barra de filtros, resumo, menu de contexto, modal do Objetivo, modal do Marco, ajuda, Histórico, janela de contribuição) = 0 pixels diferentes (a poda de CSS não perdeu nada); E2E real com listeners ao vivo (criar Objetivo → item de lista → Marco → comentário → arquivar/restaurar → excluir sem órfãos) 11/11; 390 px sem rolagem horizontal em lista/modal/Histórico/janela; suíte da página 35 cenários (4 novos).
@@ -20704,6 +20712,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v4.10 · painel — 2026-10-07 · Promove pra prod — colar lista em tópicos nas caixas "+ Add" do OKR cria um item por linha
+
+Promoção do `painel-dev.html` v4.9 + v4.10 (merge de 3 vias a partir da v4.8): Indicadores/Progressos/Próximos Passos/Riscos/Planos de Ação/Trimestres e checklist do Marco passam a aceitar uma lista colada (um item por linha, marcadores removidos, `[x]`/`[ ]` no checklist do Marco; "J. Silva" e "-5 pontos" intactos; 1 linha cola normal). Smoke no `painel.html` real: colagem 9 + menu de contexto 42 verdes. Mural: rascunho `seed_colar_lista_checklist_2026_10_07` (também cobre o kanban).
 
 ### painel-dev.html v4.10 · painel-dev — 2026-10-07 · fix: colar lista com iniciais de nome ("J. Silva") não perde a inicial (só painel-dev)
 
