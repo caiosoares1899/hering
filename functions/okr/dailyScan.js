@@ -39,6 +39,7 @@
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
 const { getDatabase } = require('firebase-admin/database');
+const cal = require('./calendario');
 
 // ── Bloco quinzenal — mesma fórmula de painel-dev.html (OKR_BLOCO_AREAS/
 // _okrBlocoDaArea/_okrBlocoNaData). 2026-09-03 é uma quinta confirmada
@@ -80,7 +81,7 @@ function diasAte(dataStr) {
   return Number.isFinite(d) ? d : null;
 }
 
-async function writeNotif(db, uid, type, title, sub, okrObjId) {
+async function writeNotif(db, uid, type, title, sub, okrObjId, extra) {
   if (!uid) return;
   const id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
   await db.ref(`kanban/usuarios/${uid}/notificacoes/${id}`).set({
@@ -89,6 +90,7 @@ async function writeNotif(db, uid, type, title, sub, okrObjId) {
     title,
     sub: sub || '',
     okrObjId: okrObjId || null,
+    ...(extra || {}),
     read: false,
     ts: new Date().toISOString(),
   });
@@ -99,12 +101,14 @@ async function writeNotif(db, uid, type, title, sub, okrObjId) {
 // scheduler nunca passa esse argumento, então `hoje` vem sempre de
 // todaySP() (data real).
 async function runOkrDailyScan(db, hojeOverride) {
-  const [objSnap, marcoSnap] = await Promise.all([
+  const [objSnap, marcoSnap, evSnap] = await Promise.all([
     db.ref('kanban/okr/objetivos').get(),
     db.ref('kanban/okr/marcos').get(),
+    db.ref('kanban/okr/calendario/eventos').get(),
   ]);
   const objetivos = objSnap.val() || {};
   const marcos = marcoSnap.val() || {};
+  const eventos = evSnap.val() || {};
 
   // 1) Prazo de marco chegando (3 dias antes / 1 dia antes)
   for (const marcoId of Object.keys(marcos)) {
@@ -169,6 +173,42 @@ async function runOkrDailyScan(db, hojeOverride) {
       } catch (e) { console.error('[okrDailyScan] reuniao falhou:', objId, e); }
     }
   }
+
+  // 3) 📅 Calendário do OKR (2026-10-07): reunião/evento/lembrete marcado pra AMANHÃ (véspera) e pra HOJE, conforme `lembrar` do evento
+  //    (sem o campo = os dois). Quem recebe: responsáveis dos Objetivos ativos que o evento abrange (mesmo critério da pauta — ver calendario.js).
+  //    Mesma notificação pessoal `okr_reuniao` (já está no PUSH_TYPES → também vira push). Sem estado de dedupe: roda 1x/dia e cada janela
+  //    (amanhã/hoje) é por igualdade exata de data — uma ocorrência só cai numa delas por rodada.
+  try {
+    await avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr);
+  } catch (e) { console.error('[okrDailyScan] calendário falhou:', e); }
+}
+
+async function avisaEventosDoCalendario(db, eventos, objetivos, hoje, amanhaStr) {
+  for (const evId of Object.keys(eventos)) {
+    const ev0 = eventos[evId];
+    if (!ev0 || !ev0.data) continue;
+    const ev = { ...ev0, id: ev0.id || evId };
+    const lem = cal.lembretesDe(ev);
+    const janelas = [];
+    if (lem.vespera && cal.ocorrencias(ev, amanhaStr, amanhaStr).length) janelas.push({ quando: 'Amanhã', data: amanhaStr });
+    if (lem.dia && cal.ocorrencias(ev, hoje, hoje).length) janelas.push({ quando: 'Hoje', data: hoje });
+    if (!janelas.length) continue;
+    const alvos = cal.alvosDoEvento(ev, objetivos);
+    const convidados = new Set(cal.convidadosDe(ev));
+    convidados.forEach((u) => { if (!alvos[u]) alvos[u] = []; });   // convidado sem Objetivo na pauta também é avisado
+    const uids = Object.keys(alvos);
+    if (!uids.length) continue;
+    for (const j of janelas) {
+      for (const uid of uids) {
+        try {
+          const objs = alvos[uid].filter(Boolean);
+          const pauta = objs.length ? 'Na pauta: ' + objs.slice(0, 2).join(' · ') + (objs.length > 2 ? ` +${objs.length - 2}` : '') : '';
+          const sub = [cal.horaTxt(ev), cal.agendaNome(ev), ev.local || '', convidados.has(uid) ? 'Você está convidado(a)' : '', pauta].filter(Boolean).join(' · ');
+          await writeNotif(db, uid, 'okr_reuniao', `🗓️ ${j.quando}: ${ev.titulo || 'Evento do OKR'}`, sub, null, { okrEventoId: ev.id, okrEventoData: j.data });
+        } catch (e) { console.error('[okrDailyScan] calendário falhou:', evId, uid, e); }
+      }
+    }
+  }
 }
 
 exports.okrDailyScan = onSchedule(
@@ -189,6 +229,7 @@ exports.okrDailyScan = onSchedule(
 exports.diasAte = diasAte;
 exports.todaySP = todaySP;
 exports.runOkrDailyScan = runOkrDailyScan;
+exports.avisaEventosDoCalendario = avisaEventosDoCalendario;
 exports.blocoDaArea = blocoDaArea;
 exports.ehDiaDeReuniao = ehDiaDeReuniao;
 exports.OKR_BLOCO_AREAS = OKR_BLOCO_AREAS;

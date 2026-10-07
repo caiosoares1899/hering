@@ -6491,7 +6491,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.798-dev</div>
+<div class="version">v8.30.799-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6834,7 +6834,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=3"></script>
+<script src="mare-notif-dev.js?v=6"></script>
 
 <script>
 
@@ -29893,7 +29893,7 @@ function renderNotifs(notifs){
         <div class="notif-time">${timeAgo(n.ts)}${n.autor?' · '+esc(n.autor):''}</div>
       </div>
     </div>` : `
-    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
+    <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrEventoId ? ('evento:'+n.okrEventoId+'~'+(n.okrEventoData||'')) : (n.okrObjId||''))},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
         <div class="notif-title">${esc(n.title)}</div>
@@ -29928,6 +29928,12 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // /monitorarbugs, 2026-09-06, mesma classe do gap de squad diferente já
   // corrigido acima). painel-dev.html trata `?okr=<id>`/`?okr=chat` — ver
   // _okrTryOpenFromUrl().
+  // Reunião/evento do calendário do OKR (okr_reuniao com okrEventoId, passado como 'evento:<id>~<data>') → abre direto no calendário do OKR.
+  if(type==='okr_reuniao' && String(okrObjId||'').startsWith('evento:')){
+    const [evId, evData] = String(okrObjId).slice(7).split('~');
+    window.location.href = (window.location.pathname.endsWith('kanban-dev.html') ? 'okr-dev.html' : 'okr.html')+'?evento='+encodeURIComponent(evId)+(evData?'&data='+encodeURIComponent(evData):'');
+    return;
+  }
   if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente' || type==='okr_mencao'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
     const alvo = type==='okr_agente' ? 'chat' : (type==='okr_mencao' ? 'notas' : okrObjId);   // @menção nas Anotações → okr(-dev).html?okr=notas

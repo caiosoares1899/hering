@@ -2745,7 +2745,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.18 · painel-dev</div>
+<div class="version">v5.19 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2848,7 +2848,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=5"></script>
+<script src="mare-notif-dev.js?v=6"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -6769,7 +6769,7 @@ function loadPainelNotifs(){
     // chave por cima) -- mesmo padrão aqui: chave real sempre vence.
     const notifs = Object.entries(val).filter(([,n])=>n && (!window.MareNotif || MareNotif.viva(n))).map(([nid,n])=>({   // mesmo TTL do sino do kanban/OKR
       _kind:'notif', id:n.id||nid, title:n.title||'', sub:n.sub||'', cardId:n.cardId||'',
-      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'',
+      ts:n.ts||'', read:!!n.read, squad:n.squad||'', type:n.type||'', link:n.link||'', okrObjId:n.okrObjId||'', okrEventoId:n.okrEventoId||'', okrEventoData:n.okrEventoData||'',
     }));
     _mergePainelNotifs('notif', notifs);
   });
@@ -6888,6 +6888,8 @@ function renderPainelNotifs(){
     const _okrAlvo = n._kind==='feed' ? '' : String(n.type||'').startsWith('okr_') ? (n.type==='okr_agente' ? 'chat' : (n.type==='okr_mencao' ? 'notas' : n.okrObjId)) : '';
     const openAttr = n._kind==='feed'
       ? `onclick="MareNotif.abrirFeed(${jsq(n.id)});togglePainelNotif(event);" style="cursor:pointer;"`
+      : n.okrEventoId
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')});" style="cursor:pointer;"`
       : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)});" style="cursor:pointer;"`
       : n.link
