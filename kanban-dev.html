@@ -6491,7 +6491,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.796-dev</div>
+<div class="version">v8.30.797-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6834,6 +6834,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
+<script src="mare-notif-dev.js?v=1"></script>
 
 <script>
 
@@ -29770,6 +29771,9 @@ let _activeNotifsCache = [];
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
   if(_notifListener) return; // já registrado
+  // SINO ÚNICO: o feed da torre (aviso do Mural do OKR, Objetivo criado, Marco concluído…) vem do módulo compartilhado mare-notif(-dev).js
+  // e aparece misturado às notificações pessoais, igual em kanban/painel/OKR. Quem não tem acesso ao feed (freelancer) só não recebe esses itens.
+  if(window.MareNotif) MareNotif.start({user, isViewer:false, isAdm:()=>isAdmUser(window._currentUser), onChange:()=>renderNotifs(_activeNotifsCache)});
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   // Só as últimas NOTIF_QUERY_LIMIT por 'ts' (não por chave -- ver comentário
   // grande na declaração de NOTIF_QUERY_LIMIT) em vez do node inteiro.
@@ -29860,6 +29864,9 @@ function _playNotifSound(){
 function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
   const badge = document.getElementById('notif-badge');
+  // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (sem ✕, abrem por URL)
+  const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
+  notifs = notifs.concat(feed).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   const unread = notifs.filter(n=>!n.read).length;
   const btn = document.getElementById('notif-btn');
   if(badge){
@@ -29877,7 +29884,15 @@ function renderNotifs(notifs){
   if(!notifs.length){
     list.innerHTML='<div class="notif-empty">Tudo em dia! 🎉</div>'; return;
   }
-  list.innerHTML = notifs.map(n=>`
+  list.innerHTML = notifs.map(n=>n._feed ? `
+    <div class="notif-item ${n.read?'':'unread'}" data-feed-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openFeedNotif(${jsq(n.id)})">
+      <div class="notif-icon">${esc(n.icon)}</div>
+      <div class="notif-body">
+        <div class="notif-title">${esc(n.title)}</div>
+        ${n.sub?`<div class="notif-sub">${esc(n.sub)}</div>`:''}
+        <div class="notif-time">${timeAgo(n.ts)}${n.autor?' · '+esc(n.autor):''}</div>
+      </div>
+    </div>` : `
     <div class="notif-item ${n.read?'':'unread'}" data-notif-id="${esc(n.id)}" data-ts="${n.ts||''}" onclick="openNotif(${jsq(n.id)},${jsq(n.cardId||'')},${jsq(n.squad||ACTIVE_SQUAD)},${jsq(n.commentId||'')},${jsq(n.type||'')},${jsq(n.okrObjId||'')},${jsq(encodeURIComponent(n.meetingLink||''))})">
       <div class="notif-icon">${NOTIF_ICONS[n.type]||'🔔'}</div>
       <div class="notif-body">
@@ -29889,6 +29904,11 @@ function renderNotifs(notifs){
     </div>`).join('');
 }
 
+// Item do feed da torre: abre pela URL do módulo (aviso do Mural → okr(-dev).html?mural=<id>; Objetivo → ?okr=<id>) e marca como lido.
+function openFeedNotif(id){
+  notifOpen=false; document.getElementById('notif-panel')?.classList.remove('open');
+  if(window.MareNotif) MareNotif.abrirFeed(id);
+}
 function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLinkEnc){
   // Marca como lida
   const user=window._currentUser; if(!user) return;
@@ -30030,7 +30050,9 @@ function markAllRead(){
   const ups = {};
   document.querySelectorAll('.notif-item.unread').forEach(el=>{ const nid = el.dataset.notifId; if(nid) ups[nid+'/read'] = true; });
   const n = Object.keys(ups).length;
-  if(!n){ showToast('Nenhuma notificação não lida.'); return; }
+  const nFeed = window.MareNotif ? MareNotif.unread() : 0;   // feed da torre (sino único)
+  if(nFeed) MareNotif.markAll();
+  if(!n){ showToast(nFeed ? '✓ '+nFeed+' novidade'+(nFeed>1?'s':'')+' da torre marcada'+(nFeed>1?'s':'')+' como lida'+(nFeed>1?'s':'')+'.' : 'Nenhuma notificação não lida.'); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes'), ups)
     .then(()=>showToast('✓ '+n+' notificaç'+(n>1?'ões marcadas':'ão marcada')+' como lida'+(n>1?'s':'')+'.'))
     .catch(()=>showToast('⚠ Não consegui marcar como lidas. Tente de novo.'));

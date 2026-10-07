@@ -1209,6 +1209,7 @@ body{min-height:100vh;}
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <a class="btn" href="painel-dev.html" title="Voltar ao painel" style="text-decoration:none;display:inline-flex;align-items:center;">🐟 Painel</a>
+      <button type="button" id="okr-mural-btn" class="btn okr-bell" onclick="openOkrMural()" title="Mural do OKR — avisos por torre" aria-label="Mural do OKR">📢<span class="okr-bell-n" id="okr-mural-n"></span></button>
       <button type="button" id="okr-bell-btn" class="btn okr-bell" onclick="_okrBellToggle(event)" title="Notificações do OKR: avisos do Mural, Objetivos novos, Marcos concluídos, menções e prazos" aria-label="Notificações do OKR">🔔<span class="okr-bell-n" id="okr-bell-n"></span></button>
       <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
       <div id="user-badge" style="display:flex;align-items:center;gap:7px;padding:4px 10px;background:var(--glass);border:1px solid var(--glass-b);border-radius:999px;">
@@ -1221,8 +1222,6 @@ body{min-height:100vh;}
 
   <div id="okr-online" class="okr-online"></div>
 
-  <!-- 📢 Mural do OKR — avisos por torre (kanban/okr/mural). Faixa fixa; os 🚨 urgentes também abrem um popup 1x por pessoa. -->
-  <div id="okr-mural" class="okr-mural" style="display:none;"></div>
   <!-- 🔔 Notificações do OKR (dropdown do sino do cabeçalho) -->
   <div id="okr-bell-drop" class="okr-bell-drop"></div>
 
@@ -1336,11 +1335,11 @@ body{min-height:100vh;}
         </div>
         <div>
           <b style="color:var(--txt);">📢 Mural do OKR</b><br>
-          Avisos por torre, numa faixa fixa no alto da página (tela inicial e dentro das torres; dentro de uma torre aparece o dela + o dirigido a todas). Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b>: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.
+          Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.
         </div>
         <div>
           <b style="color:var(--txt);">🔔 Notificações do OKR</b><br>
-          O sino do cabeçalho junta o que é seu — Objetivo editado, prazo de Marco, véspera de reunião, Agente Ágil e <b>💬 menção</b> — com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b> e <b>✅ Marco concluído</b>. Clique pra ir direto ao Objetivo/aviso/anotação; <b>✓ Marcar tudo como lido</b> zera. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
+          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b> e <b>✅ Marco concluído</b>. Clique pra ir direto ao Objetivo/aviso/anotação; <b>✓ Marcar tudo como lido</b> zera. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
         </div>
         <div>
           <b style="color:var(--txt);">💬 @menção nas Anotações da reunião</b><br>
@@ -1516,6 +1515,17 @@ body{min-height:100vh;}
   </div>
 </div>
 
+<!-- 📢 Mural do OKR — lista de avisos por torre (kanban/okr/mural), aberta pelo botão 📢 do cabeçalho. Os 🚨 urgentes também abrem um popup 1x por pessoa. -->
+<div class="pc-modal-ov" id="okr-mural-list-ov" style="z-index:280;" onclick="if(event.target===this) closeOkrMural()">
+  <div class="pc-modal" style="width:min(640px,96vw);">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-hd-title">📢 Mural do OKR</div>
+      <button class="x-btn" onclick="closeOkrMural()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-mural-list-body"></div>
+  </div>
+</div>
+
 <!-- 📢 Publicar/editar aviso no Mural do OKR — ADM, 🎯 Gestor OKR e quem edita a torre (só nas torres que a pessoa edita). Dados: kanban/okr/mural/{id}. -->
 <div class="pc-modal-ov" id="okr-mural-ov" style="z-index:295;" onclick="if(event.target===this) closeOkrMuralModal()">
   <div class="pc-modal" style="width:min(600px,96vw);">
@@ -1623,7 +1633,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.11 · okr-dev</div>
+<div class="version">v2.12 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1665,6 +1675,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
+<script src="mare-notif-dev.js?v=1"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -2526,10 +2537,10 @@ window._okrNotaDel = id => {
 // ═══ 📢 Mural do OKR + 🔔 Sino ═══════════════════════════════════════════════════════════════════════════════
 // Mural: kanban/okr/mural/{id} = {id, tipo, titulo, corpo, torres:[ids]|['*'], autor, autorUid, ts, expiraEm?, arquivado?, editadoEm?}.
 //   Quem publica: ADM e quem edita a torre (PO/Organizador ou 🎯 Gestor OKR da torre, ou torre ⭐ Geral) — só nas torres que edita;
-//   "Todas as torres" exige poder editar todas (ADM / ⭐ Geral). Faixa fixa no alto; os 🚨 urgentes também abrem um popup 1x por pessoa.
-// Feed: kanban/okr/feed/{id} = {id, tipo:'mural'|'obj_criado'|'marco_concluido', torres, titulo, sub, objId?, muralId?, autor, autorUid, ts}
+//   "Todas as torres" exige poder editar todas (ADM / ⭐ Geral). Botão 📢 no cabeçalho (como o do kanban) com selo de não vistos + lista; os 🚨 urgentes também abrem um popup 1x por pessoa.
+// Feed (SINO ÚNICO, módulo mare-notif-dev.js): kanban/notif_feed/{id} = {id, tipo:'mural'|'obj_criado'|'marco_concluido', torres, titulo, sub, icone?, objId?, muralId?, autor, autorUid, ts}
 //   1 escrita por evento (sem fan-out por pessoa); todo mundo lê — visualizador externo incluído — e filtra pela própria torre.
-//   "Lido": kanban/okr/feed_seen/{uid} = {ts (marcar tudo), lidos:{id:true}}; o visualizador externo (não escreve no Firebase) guarda igual no localStorage.
+//   "Lido": kanban/notif_feed_seen/{uid} = {ts (marcar tudo), lidos:{id:true}}; o visualizador externo (não escreve no Firebase) guarda igual no localStorage.
 // Pessoais (okr_editado/okr_prazo/okr_reuniao/okr_agente/okr_mencao): kanban/usuarios/{uid}/notificacoes — as mesmas que o sino do kanban/painel mostram.
 const OKR_MURAL_TIPOS = {
   novidade:{icon:'🎉', label:'Novidade', rgb:'29,233,182'},
@@ -2537,12 +2548,10 @@ const OKR_MURAL_TIPOS = {
   dica:    {icon:'💡', label:'Dica',     rgb:'56,182,255'},
   urgente: {icon:'🚨', label:'Urgente',  rgb:'255,107,107'},
 };
-const OKR_BELL_ICONS = {okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', obj_criado:'🆕', marco_concluido:'✅'};
 function _okrMuralTipo(t){ return OKR_MURAL_TIPOS[t] || OKR_MURAL_TIPOS.aviso; }
-let okrMural = {}, okrFeed = {}, _okrMuralLoaded = false;
+let okrMural = {}, _okrMuralLoaded = false;
 let _okrNotifPessoais = [];
-let _okrFeedSeen = {ts:'', lidos:{}}, _okrFeedSeenReady = false;
-let _okrMuralSaving = false, _okrMuralTodos = false, _okrMuralEditId = null, _okrMuralDraft = null, _okrMuralPopId = null, _okrMuralHtmlAnt = null;
+let _okrMuralSaving = false, _okrMuralEditId = null, _okrMuralDraft = null, _okrMuralPopId = null;
 
 function _okrRel(ts){
   const d = new Date(ts), diff = Date.now()-d.getTime(); if(!ts || isNaN(diff)) return '';
@@ -2566,12 +2575,7 @@ function _okrAlvoParaMim(torres){
 function _okrMuralAtivo(a){ return !!a && !a.arquivado && (!a.expiraEm || a.expiraEm > new Date().toISOString()); }
 function _okrMuralLista(){ return Object.entries(okrMural).filter(([,a])=>a).map(([id,a])=>({...a,id})); }
 function _okrMuralVisiveis(){
-  const tv = _okrTorreValida(_okrTorreAtual) ? _okrTorreAtual : '';
-  return _okrMuralLista().filter(a=>{
-    if(!_okrMuralAtivo(a)) return false;
-    const t = _okrAlvoTorres(a);
-    return _okrAlvoParaMim(t) && (!tv || t.includes('*') || t.includes(tv));
-  }).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
+  return _okrMuralLista().filter(a=>_okrMuralAtivo(a) && _okrAlvoParaMim(_okrAlvoTorres(a))).sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
 }
 function _okrMuralTorresPermitidas(){ return OKR_TORRES.filter(t=>_okrCanCreate(t.id)).map(t=>t.id); }
 function _okrMuralPodePublicar(){ return !window._isPainelViewer && !!window._currentUser && _okrMuralTorresPermitidas().length>0; }
@@ -2585,34 +2589,49 @@ function _okrAlvoChips(torres){
   return torres.map(id=> id==='*' ? '<span class="okr-mural-chip">✨ Todas as torres</span>' : `<span class="okr-mural-chip">${okrTorreInfo(id).icon} ${esc(okrTorreInfo(id).label)}</span>`).join('');
 }
 
+// Deep link ?mural=<id> (vem do sino do kanban/painel): abre o aviso em destaque, 1x.
+let _okrMuralDeepFeito = false;
+function _okrMuralDeepLink(){
+  if(_okrMuralDeepFeito) return;
+  const id = new URLSearchParams(location.search).get('mural'); if(!id) return;
+  _okrMuralDeepFeito = true;
+  if(okrMural[id]) _okrMuralAbrir(id); else showToast('⚠ Esse aviso não existe mais — pode ter expirado ou sido arquivado.');
+}
 function loadOkrMural(){
   window._onValue(window._ref(window._db,'kanban/okr/mural'), snap=>{
     okrMural = snap.val() || {}; _okrMuralLoaded = true;
-    _okrExtrasRender(); _okrMuralChecaPopup();
+    _okrExtrasRender(); _okrMuralChecaPopup(); _okrMuralDeepLink();
   });
 }
 
-// Faixa do Mural (alto da página, na tela inicial e dentro das torres). Dentro de uma torre mostra só o dela + o dirigido a todas.
+// 📢 Mural: botão no cabeçalho (igual ao do kanban) com selo de avisos não vistos; abre a lista. Clicar num aviso abre o texto inteiro.
+function _okrMuralNaoVistos(){
+  const vistos = _okrMuralVistos(), eu = window._currentUser?.uid;
+  return _okrMuralVisiveis().filter(a=>a.autorUid!==eu && !vistos.includes(a.id));
+}
+function _okrMuralBadge(){
+  const b = document.getElementById('okr-mural-n'); if(!b) return;
+  const n = _okrMuralNaoVistos().length;
+  if(n>0){ b.textContent = n>9?'9+':String(n); b.style.display='flex'; } else b.style.display='none';
+}
+function openOkrMural(){
+  document.getElementById('okr-mural-list-ov').classList.add('open');
+  _okrMuralRender();
+}
+function closeOkrMural(){ document.getElementById('okr-mural-list-ov').classList.remove('open'); }
 function _okrMuralRender(){
-  const el = document.getElementById('okr-mural'); if(!el) return;
-  const lista = _okrMuralVisiveis(), pode = _okrMuralPodePublicar();
-  let html = '';
-  if(lista.length || pode){
-    const LIM = 3, vis = _okrMuralTodos ? lista : lista.slice(0,LIM);
-    const item = a=>{
-      const t = _okrMuralTipo(a.tipo);
-      const gerir = _okrMuralPodeGerir(a)
-        ? `<button type="button" class="okr-mural-act" title="Editar o aviso (não notifica de novo)" onclick="openOkrMuralModal(${jsq(a.id)})">✎</button><button type="button" class="okr-mural-act" title="Arquivar — some do Mural" onclick="okrMuralArquivar(${jsq(a.id)})">📦</button>` : '';
-      return `<div class="okr-mural-item" style="--mc:${t.rgb}"><div class="okr-mural-top"><span>${t.icon}</span><b>${esc(a.titulo||'')}</b>${_okrAlvoChips(_okrAlvoTorres(a))}<span class="okr-mural-meta">${esc(a.autor||'')} · ${esc(_okrRel(a.ts))}</span>${gerir}</div>${a.corpo?`<div class="okr-mural-corpo">${esc(a.corpo)}</div>`:''}</div>`;
-    };
-    html = `<div class="okr-mural-hd"><b>📢 Mural do OKR</b>${lista.length?`<span class="badge">${lista.length}</span>`:'<span style="font-size:11px;color:var(--txt3);">Nenhum aviso no momento.</span>'}<span class="okr-mural-sp"></span>${pode?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:5px 12px;" onclick="openOkrMuralModal(null)">📢 Publicar aviso</button>':''}</div>`
-      + vis.map(item).join('')
-      + (lista.length>LIM ? `<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 12px;align-self:flex-start;" onclick="_okrMuralTodos=!_okrMuralTodos;_okrMuralHtmlAnt=null;_okrMuralRender()">${_okrMuralTodos?'▲ Mostrar só os mais recentes':'▼ Ver mais '+(lista.length-LIM)+' aviso'+(lista.length-LIM>1?'s':'')}</button>` : '');
-  }
-  if(html===_okrMuralHtmlAnt) return;
-  _okrMuralHtmlAnt = html;
-  el.style.display = html ? 'flex' : 'none';
-  el.innerHTML = html;
+  _okrMuralBadge();
+  const ov = document.getElementById('okr-mural-list-ov'); if(!ov || !ov.classList.contains('open')) return;   // a lista só é desenhada com a janela aberta
+  const body = document.getElementById('okr-mural-list-body'), lista = _okrMuralVisiveis(), pode = _okrMuralPodePublicar(), vistos = _okrMuralVistos(), eu = window._currentUser?.uid;
+  const item = a=>{
+    const t = _okrMuralTipo(a.tipo), naoVisto = a.autorUid!==eu && !vistos.includes(a.id);
+    const gerir = _okrMuralPodeGerir(a)
+      ? `<button type="button" class="okr-mural-act" title="Editar o aviso (não notifica de novo)" onclick="event.stopPropagation();openOkrMuralModal(${jsq(a.id)})">✎</button><button type="button" class="okr-mural-act" title="Arquivar — some do Mural" onclick="event.stopPropagation();okrMuralArquivar(${jsq(a.id)})">📦</button>` : '';
+    return `<div class="okr-mural-item" style="--mc:${t.rgb};cursor:pointer;" onclick="_okrMuralAbrir(${jsq(a.id)})"><div class="okr-mural-top"><span>${t.icon}</span><b>${esc(a.titulo||'')}</b>${naoVisto?'<span class="okr-bell-dot" title="Ainda não visto"></span>':''}${_okrAlvoChips(_okrAlvoTorres(a))}<span class="okr-mural-meta">${esc(a.autor||'')} · ${esc(_okrRel(a.ts))}</span>${gerir}</div>${a.corpo?`<div class="okr-mural-corpo" style="max-height:3.2em;overflow:hidden;">${esc(a.corpo)}</div>`:''}</div>`;
+  };
+  body.innerHTML = `<div class="okr-mural-hd">${pode?'<button type="button" class="btn btn-sm btn-p" style="font-size:11px;padding:5px 12px;" onclick="openOkrMuralModal(null)">📢 Publicar aviso</button>':''}<span class="okr-mural-sp"></span>${lista.length?`<span class="badge">${lista.length}</span>`:''}</div>`
+    + (lista.length ? '<div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">'+lista.map(item).join('')+'</div>'
+       : '<div style="font-size:12px;color:var(--txt3);text-align:center;padding:24px 0;">Nenhum aviso no momento.</div>');
 }
 // Tudo que depende de mural/feed/torre da pessoa: redesenha quando algum deles (ou a lista de usuários) muda.
 function _okrExtrasRender(){ _okrMuralRender(); _okrBellRender(); }
@@ -2680,7 +2699,7 @@ async function saveOkrMural(){
   catch(err){ console.error('[mural] falha ao publicar:', err); showToast('❌ Não consegui publicar o aviso. Tente de novo.'); return; }
   finally{ _okrMuralSaving = false; }
   okrMural[id] = payload; _okrMuralVistoMarca(id);
-  if(isNovo){ const t = _okrMuralTipo(payload.tipo); _okrFeedPush('mural', payload.torres, t.icon+' '+titulo, t.label+(corpo?' · '+corpo.slice(0,90)+(corpo.length>90?'…':''):''), {muralId:id}); }
+  if(isNovo){ const t = _okrMuralTipo(payload.tipo); _okrFeedPush('mural', payload.torres, t.icon+' '+titulo, t.label+(corpo?' · '+corpo.slice(0,90)+(corpo.length>90?'…':''):''), {muralId:id, icone:t.icon}); }
   showToast(isNovo ? '📢 Aviso publicado.' : '💾 Aviso salvo.');
   closeOkrMuralModal(); _okrExtrasRender();
 }
@@ -2695,10 +2714,11 @@ async function okrMuralArquivar(id){
 // Esc fecha a camada de cima: aviso em destaque → painel do sino → modal de publicar (capture + stopPropagation, como os outros modais da página).
 document.addEventListener('keydown', e=>{
   if(e.key!=='Escape') return;
-  const pop = document.getElementById('okr-mural-pop-ov'), drop = document.getElementById('okr-bell-drop'), mod = document.getElementById('okr-mural-ov');
+  const pop = document.getElementById('okr-mural-pop-ov'), drop = document.getElementById('okr-bell-drop'), mod = document.getElementById('okr-mural-ov'), lst = document.getElementById('okr-mural-list-ov');
   if(pop && pop.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrMuralPopFecha(); }
   else if(drop && drop.style.display==='flex'){ e.preventDefault(); e.stopPropagation(); drop.style.display = 'none'; }
   else if(mod && mod.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrMuralModal(); }
+  else if(lst && lst.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrMural(); }
 }, true);
 
 // ── Popup do aviso (🚨 urgente ainda não visto, ou aberto pelo sino) ──
@@ -2711,7 +2731,7 @@ function _okrMuralVistoMarca(id){
 function _okrMuralAbrir(id){
   const a = okrMural[id]; if(!a){ showToast('⚠ Esse aviso não existe mais.'); return; }
   const t = _okrMuralTipo(a.tipo);
-  _okrMuralPopId = id;
+  _okrMuralPopId = id; _okrMuralVistoMarca(id); _okrMuralRender();   // abrir = visto (o selo do 📢 e o ponto da lista já baixam)
   document.getElementById('okr-mural-pop-title').textContent = t.icon+' '+t.label;
   document.getElementById('okr-mural-pop-body').innerHTML = `<div style="font-size:14px;font-weight:700;color:var(--txt);margin-bottom:6px;">${esc(a.titulo||'')}</div><div style="margin-bottom:8px;">${_okrAlvoChips(_okrAlvoTorres(a))}</div>${a.corpo?`<div class="okr-mural-corpo" style="font-size:12.5px;color:var(--txt2);">${esc(a.corpo)}</div>`:''}<div style="font-size:10px;color:var(--txt3);margin-top:10px;">${esc(a.autor||'')} · ${esc(_okrRel(a.ts))}${a.arquivado?' · 📦 arquivado':''}</div>`;
   document.getElementById('okr-mural-pop-ov').classList.add('open');
@@ -2730,60 +2750,38 @@ function _okrMuralChecaPopup(){
   if(a) _okrMuralAbrir(a.id);
 }
 
-// ── Feed (eventos da torre) ──
-function _okrFeedPush(tipo, torres, titulo, sub, extra){
-  const u = window._currentUser; if(!u || window._isPainelViewer) return Promise.resolve();
-  const id = 'f'+Date.now()+Math.random().toString(36).slice(2,6);
-  return window._set(window._ref(window._db,'kanban/okr/feed/'+id), Object.assign({id, tipo, torres, titulo:String(titulo||''), sub:String(sub||''), autorUid:u.uid, autor:u.displayName||u.email||'?', ts:new Date().toISOString()}, extra||{}))
-    .catch(err=>console.error('[feed] falha ao gravar o evento:', err));
-}
-function _okrSeenLocalKey(){ return 'okr_feed_seen_'+_painelViewerKey(window._currentUser?.email); }
-function _okrSeenLocalSalvar(){ try{ localStorage.setItem(_okrSeenLocalKey(), JSON.stringify(_okrFeedSeen)); }catch(e){} }
+// ── Feed (eventos da torre) e notificações pessoais — SINO ÚNICO: a parte compartilhada vive em mare-notif(-dev).js (MareNotif) ──
+// Feed em kanban/notif_feed (qualquer página lê); "lido" por item/tudo e o roteador de URLs também ficam no módulo.
+function _okrFeedPush(tipo, torres, titulo, sub, extra){ return MareNotif.pushFeed(Object.assign({tipo, torres, titulo, sub}, extra||{})); }
 function loadOkrFeed(){
   const u = window._currentUser; if(!u) return;
-  window._onValue(window._query(window._ref(window._db,'kanban/okr/feed'), window._limitToLast(60)), snap=>{ okrFeed = snap.val() || {}; _okrBellRender(); });
-  if(window._isPainelViewer){
-    let v = null; try{ v = JSON.parse(localStorage.getItem(_okrSeenLocalKey())||'null'); }catch(e){}
-    _okrFeedSeen = (v && v.ts) ? {ts:v.ts, lidos:v.lidos||{}} : {ts:new Date().toISOString(), lidos:{}};   // 1ª visita: só o que vier depois conta como novo
-    _okrSeenLocalSalvar(); _okrFeedSeenReady = true; _okrBellRender();
-    return;   // externo não lê kanban/usuarios: sem notificações pessoais
-  }
-  window._onValue(window._ref(window._db,'kanban/okr/feed_seen/'+u.uid), snap=>{
-    const v = snap.val();
-    if(!v || !v.ts){ const ts = new Date().toISOString(); window._update(window._ref(window._db,'kanban/okr/feed_seen/'+u.uid), {ts}).catch(()=>{}); _okrFeedSeen = {ts, lidos:(v&&v.lidos)||{}}; }
-    else _okrFeedSeen = {ts:v.ts, lidos:v.lidos||{}};
-    _okrFeedSeenReady = true; _okrBellRender();
+  MareNotif.start({
+    user:u, isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), onChange:_okrBellRender,
+    // Feed: o aviso abre aqui mesmo; Objetivo também (senão o módulo navega pela URL)
+    abrirFeed:it=>{ if(it.muralId){ _okrMuralAbrir(it.muralId); return true; } if(it.objId){ _okrIrParaObjetivo(it.objId); return true; } return false; },
   });
+  if(window._isPainelViewer) return;   // externo não lê kanban/usuarios: sem notificações pessoais
   window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
-    _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && String(n.type||'').startsWith('okr_'))
-      .map(([id,n])=>({id:n.id||id, type:n.type, title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrNotaData:n.okrNotaData||''}));
+    // TODOS os tipos (card, Kudos, reunião, intake…), não só os okr_* — o sino é o mesmo em qualquer página; só 'rascunho' é exclusivo do painel
+    _okrNotifPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type))
+      .map(([id,n])=>({id:n.id||id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, okrObjId:n.okrObjId||'', okrNotaData:n.okrNotaData||'', cardId:n.cardId||'', squad:n.squad||'', meetingLink:n.meetingLink||''}));
     _okrBellRender();
   });
-}
-function _okrFeedLido(f){ return (!!f.ts && f.ts <= (_okrFeedSeen.ts||'')) || !!(_okrFeedSeen.lidos||{})[f.id]; }
-function _okrFeedMarcaUm(id){
-  _okrFeedSeen = {ts:_okrFeedSeen.ts, lidos:{...(_okrFeedSeen.lidos||{}), [id]:true}};
-  if(window._isPainelViewer) _okrSeenLocalSalvar();
-  else window._update(window._ref(window._db,'kanban/okr/feed_seen/'+window._currentUser.uid), {['lidos/'+id]:true}).catch(()=>{});
 }
 
 // ── 🔔 Sino ──
 function _okrBellItens(){
-  const eu = window._currentUser?.uid, out = [];
-  Object.entries(okrFeed).forEach(([id,f0])=>{
-    if(!f0) return; const f = {...f0, id};
-    if(f.autorUid===eu || !_okrAlvoParaMim(_okrAlvoTorres(f))) return;   // o que EU fiz não vira aviso pra mim
-    out.push({k:'f', id, ts:f.ts||'', icon: f.tipo==='mural' ? _okrMuralTipo((okrMural[f.muralId]||{}).tipo).icon : (OKR_BELL_ICONS[f.tipo]||'🔔'), title:f.titulo||'', sub:f.sub||'', unread:_okrFeedSeenReady && !_okrFeedLido(f), autor:f.autor||''});
-  });
-  _okrNotifPessoais.forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:OKR_BELL_ICONS[n.type]||'🎯', title:n.title, sub:n.sub, unread:!n.read}));
+  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
+  _okrNotifPessoais.forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function _okrBellRender(){
   const itens = _okrBellItens(), n = itens.filter(i=>i.unread).length;
   const b = document.getElementById('okr-bell-n');
   if(b){ if(n>0){ b.textContent = n>99?'99+':String(n); b.style.display='flex'; } else b.style.display='none'; }
+  _okrMuralBadge();
   const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
-  drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações do OKR</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
+  drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
     <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${i.icon}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')
       : '<div style="font-size:11px;color:var(--txt3);padding:24px 12px;text-align:center;">Nada por aqui ainda.</div>'}
       ${window._isPainelViewer?'<div style="font-size:10px;color:var(--txt3);text-align:center;padding:4px 8px 8px;">👁 Modo visualização: avisos e novidades das torres. Menções e prazos são só pra quem tem usuário.</div>':''}</div>`;
@@ -2803,11 +2801,8 @@ document.addEventListener('click', e=>{
 });
 function _okrBellTudoLido(){
   const u = window._currentUser; if(!u) return;
-  const ts = new Date().toISOString();
-  _okrFeedSeen = {ts, lidos:{}};
-  if(window._isPainelViewer) _okrSeenLocalSalvar();
-  else{
-    window._set(window._ref(window._db,'kanban/okr/feed_seen/'+u.uid), {ts}).catch(()=>{});
+  MareNotif.markAll();
+  if(!window._isPainelViewer){
     const up = {}; _okrNotifPessoais.filter(n=>!n.read).forEach(n=>{ up[n.id+'/read'] = true; });
     if(Object.keys(up).length) window._update(window._ref(window._db,'kanban/usuarios/'+u.uid+'/notificacoes'), up).catch(()=>{});
     _okrNotifPessoais = _okrNotifPessoais.map(n=>({...n, read:true}));
@@ -2822,13 +2817,12 @@ function _okrBellClick(k, id){
     _okrBellRender();
     if(n.type==='okr_agente') return _okrIrParaChat();
     if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
-    if(n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
+    if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
+    const alvo = MareNotif.urlPessoal(n);   // card, Kudos, reunião, intake… vivem em outras páginas: o roteador compartilhado sabe pra onde ir
+    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else location.href = alvo.url; }
     return;
   }
-  const f = okrFeed[id]; if(!f) return;
-  _okrFeedMarcaUm(id); _okrBellRender();
-  if(f.tipo==='mural') return _okrMuralAbrir(f.muralId);
-  if(f.objId) return _okrIrParaObjetivo(f.objId);
+  MareNotif.abrirFeed(id); _okrBellRender();
 }
 // ✅ Marco concluído — vale pra torre do Objetivo dele (pelo modal do Marco e pelo menu de contexto).
 function _okrFeedMarcoConcluido(m){
@@ -4255,7 +4249,7 @@ function _okrStatsStripHtml(lista){
 
 function renderOkrObjetivos(){
   _okrApplyViewersBtn();
-  _okrExtrasRender();   // 📢 faixa do Mural e 🔔 sino dependem da torre da pessoa e da torre em que ela está
+  _okrExtrasRender();   // 📢 selo do Mural e 🔔 sino dependem da torre da pessoa e da torre em que ela está
   if(_guLoadedAt) loadGlobalUsers(); // só RENOVA (TTL de 10 min, _GU_TTL_MS): pessoa recém-cadastrada pelo painel aparece nos seletores de responsável sem F5; sem 1ª carga não insiste (evita leitura a cada render se a rede/permissão falhar)
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;

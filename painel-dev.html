@@ -2744,7 +2744,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.10 · painel-dev</div>
+<div class="version">v5.11 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2838,6 +2838,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
+<script src="mare-notif-dev.js?v=1"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -6724,12 +6725,15 @@ let _painelNotifListeners = false;
 
 function loadPainelNotifs(){
   const user = window._currentUser; if(!user) return;
-  // Sininho é para o ADM logado — esconde para não-ADM
+  // SINO ÚNICO (2026-10-07): o sino aparece pra todo mundo (antes só ADM) — é o mesmo do kanban e do OKR: notificações pessoais + feed da
+  // torre (mare-notif-dev.js). Só os LEMBRETES de squad seguem exclusivos de ADM (leem dados de todos os squads).
   const btn = document.getElementById('painel-notif-btn');
-  if(btn) btn.style.display = _isAdmPainel() ? 'inline-flex' : 'none';
-  if(!_isAdmPainel()) return;
+  if(btn) btn.style.display = 'inline-flex';
+  if(!window._isPainelViewer) _painelLoadLembretes(user);
   if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
   _painelNotifListeners = true;
+  if(window.MareNotif) MareNotif.start({user, isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), onChange:_painelSyncFeed});
+  if(window._isPainelViewer) { renderPainelNotifs(); return; }   // visualizador externo: só o feed (não lê notificações pessoais)
   // Limpa o "Carregando..." de cara — se não houver nada, renderPainelNotifs
   // vai mostrar o estado vazio; se houver, os listeners preenchem em seguida
   renderPainelNotifs();
@@ -6755,7 +6759,14 @@ function loadPainelNotifs(){
     }));
     _mergePainelNotifs('notif', notifs);
   });
-  // 2) Lembretes próprios em cada squad
+}
+
+// 2) Lembretes próprios em cada squad — só ADM. Guarda PRÓPRIA (não a das notificações): a lista de ADMs extras chega depois do 1º login,
+// então esta função roda de novo a cada loadPainelNotifs() até a pessoa ser reconhecida como ADM (antes o `return` do não-ADM fazia isso de graça).
+let _painelLembretesOn = false;
+function _painelLoadLembretes(user){
+  if(_painelLembretesOn || !_isAdmPainel()) return;
+  _painelLembretesOn = true;
   SQUADS.forEach(sq=>{
     window._onValue(window._ref(window._db,'kanban/squads/'+sq.id+'/dados/lembretes_prop/'+user.uid), snap=>{
       const val = snap.val();
@@ -6768,6 +6779,11 @@ function loadPainelNotifs(){
   });
 }
 
+// Feed da torre (módulo compartilhado) → grupo 'feed' do sino
+function _painelSyncFeed(){
+  if(!window.MareNotif) return;
+  _mergePainelNotifs('feed', MareNotif.items().map(i=>({_kind:'feed', id:i.id, title:i.title, sub:i.sub, ts:i.ts, read:!i.unread, icon:i.icon, autor:i.autor, squad:'', cardId:'', type:i.tipo})));
+}
 // Mantém grupos separados por fonte e reconcilia em _painelNotifs
 const _painelNotifGroups = {};
 function _mergePainelNotifs(groupKey, items){
@@ -6789,7 +6805,9 @@ function _markOnePainelNotifRead(id){
 async function markAllPainelNotifsRead(){
   const user = window._currentUser; if(!user) return;
   const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read);
-  if(!naoLidas.length){ showToast('Nenhuma notificação não lida.'); return; }
+  const nFeed = _painelNotifs.filter(n=>n._kind==='feed' && !n.read).length;
+  if(nFeed && window.MareNotif) MareNotif.markAll();   // feed da torre (sino único)
+  if(!naoLidas.length){ showToast(nFeed ? '✅ '+nFeed+' novidade'+(nFeed>1?'s':'')+' da torre marcada'+(nFeed>1?'s':'')+' como lida'+(nFeed>1?'s':'')+'.' : 'Nenhuma notificação não lida.'); return; }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   const idsNaoLidas = new Set(naoLidas.map(n=>n.id));
   try {
@@ -6834,7 +6852,7 @@ async function clearReadPainelNotifs(){
 
 function renderPainelNotifs(){
   const badge = document.getElementById('painel-notif-badge');
-  const naoLidas = _painelNotifs.filter(n=>n._kind==='notif' && !n.read).length + _painelNotifs.filter(n=>n._kind==='lembrete').length;
+  const naoLidas = _painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).length + _painelNotifs.filter(n=>n._kind==='lembrete').length;
   if(badge){
     if(naoLidas>0){ badge.textContent = naoLidas>99?'99+':naoLidas; badge.style.display='flex'; }
     else badge.style.display='none';
@@ -6847,13 +6865,15 @@ function renderPainelNotifs(){
   list.innerHTML = _painelNotifs.slice(0,50).map(n=>{
     const sqc = n.squad ? _painelSqColor(n.squad) : null;
     const sqBadge = n.squad ? `<span style="font-size:8px;padding:1px 6px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(n.squad))}</span>` : '';
-    const icon = n._kind==='lembrete' ? '✎' : '🔔';
+    const icon = n._kind==='lembrete' ? '✎' : (n._kind==='feed' ? esc(n.icon||'🔔') : '🔔');
     const quando = n.ts ? _relTime(n.ts) : '';
-    const dotRead = (n._kind==='notif' && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
+    const dotRead = ((n._kind==='notif'||n._kind==='feed') && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
     // Notificações do OKR (okr_*) não têm card nem aba: levam à página do OKR (Objetivo / Central do Agente / Anotações) — mesmo mapa do openNotif() do kanban.
-    const _okrAlvo = String(n.type||'').startsWith('okr_') ? (n.type==='okr_agente' ? 'chat' : (n.type==='okr_mencao' ? 'notas' : n.okrObjId)) : '';
-    const openAttr = _okrAlvo
+    const _okrAlvo = n._kind==='feed' ? '' : String(n.type||'').startsWith('okr_') ? (n.type==='okr_agente' ? 'chat' : (n.type==='okr_mencao' ? 'notas' : n.okrObjId)) : '';
+    const openAttr = n._kind==='feed'
+      ? `onclick="MareNotif.abrirFeed(${jsq(n.id)});togglePainelNotif(event);" style="cursor:pointer;"`
+      : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)});" style="cursor:pointer;"`
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
