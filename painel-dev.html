@@ -2728,7 +2728,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.7 · painel-dev</div>
+<div class="version">v5.8 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -11556,7 +11556,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 
 <!-- MODAL: GESTÃO GLOBAL DE USUÁRIOS -->
 <!-- 👁 Visualizadores externos (painel e OKR) — atalho de 👥 Global Users; mesma lista de ⚙ Configurações → 🔑 ADMs (renderPainelViewers). -->
-<div class="cfg-ov" id="viewers-ov" onclick="if(event.target===this) closePainelViewersModal()">
+<div class="cfg-ov" id="viewers-ov" style="z-index:9200;" onclick="if(event.target===this) closePainelViewersModal()">   <!-- acima de 👥 Global Users (cfg-ov = 9100, e este vem antes no HTML: sem isso abria POR BAIXO dele) -->
   <div class="cfg-panel" style="max-width:560px;">
     <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
     <div class="cfg-body">

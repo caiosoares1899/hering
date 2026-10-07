@@ -20790,6 +20790,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 
 ## painel.html / painel-dev.html
 
+### painel-dev.html v5.8 · painel-dev — 2026-10-07 · fix (relato direto): o botão 👁 Visualizadores externos de 👥 Global Users "não fazia nada"
+
+O modal abria, mas **por baixo** do 👥 Global Users: os dois usam `.cfg-ov` (`z-index:9100`) e o novo vem antes no HTML, então ficava atrás e a tela parecia igual. Reproduzido antes (o campo de e-mail não era o elemento do topo). Agora `#viewers-ov` tem `z-index:9200`. O teste da v5.5 só conferia a classe `open` — passou a conferir o que está no topo da tela. **`painel.html` (prod, v5.6) tem o mesmo problema** — correção de 1 linha, aguardando validação no dev.
+
 ### painel-dev.html v5.7 · painel-dev — 2026-10-07 · fix(/monitorarbugs): + Visualizador recusa e-mail com mais de 8 pontos
 
 Mesmo achado do okr-dev v2.7, na lista de visualizadores externos do painel (aba ADMs e modal de 👥 Global Users).
