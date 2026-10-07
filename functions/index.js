@@ -14,13 +14,14 @@ const { onValueCreated } = require('firebase-functions/v2/database');
 const { initializeApp } = require('firebase-admin/app');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getDatabase } = require('firebase-admin/database');
+const { urlDoPush, tagDoPush } = require('./common/pushUrl');
 
 initializeApp();
 
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'feedback', 'reuniao', 'due_today', 'due_overdue']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -87,18 +88,14 @@ exports.sendPushOnNotification = onValueCreated(
     // Push do iOS tem histórico de bugs resolvendo URL relativa dentro do
     // Service Worker — uma URL já totalmente qualificada não depende de
     // NENHUMA resolução do navegador, elimina essa classe de bug inteira.
-    const SITE_BASE_URL = 'https://caiosoares1899.github.io/hering/';
-    const params = new URLSearchParams();
-    if (notif.squad) params.set('squad', notif.squad);
-    if (notif.cardId) params.set('card', notif.cardId);
-    const qs = params.toString();
+    // Notificações do OKR (okr_*) levam à página do OKR (okr.html), as demais ao kanban — ver common/pushUrl.js.
     const message = {
       data: {
         title,
         body,
-        tag: String(notif.type || 'geral') + '_' + String(notif.cardId || ''),
+        tag: tagDoPush(notif, event.params.notifId),
         cardId: String(notif.cardId || ''),
-        url: qs ? `${SITE_BASE_URL}kanban.html?${qs}` : `${SITE_BASE_URL}kanban.html`,
+        url: urlDoPush(notif),
       },
       tokens,
     };
@@ -121,6 +118,11 @@ exports.sendPushOnNotification = onValueCreated(
     if (deletions.length) await Promise.all(deletions);
   }
 );
+
+// 📢 Push do aviso novo do Mural do OKR — o aviso é 1 evento em kanban/notif_feed (sem notificação por pessoa), então o push parte dele
+// (ver functions/okr/pushMural.js). Mesma regra de quem vê do sino (torre/ADM/Geral), respeita o Não Perturbe.
+// Deploy isolado: firebase deploy --only functions:sendPushOnMural
+exports.sendPushOnMural = require('./okr/pushMural').criaTrigger();
 
 // 💬 Contagem de comentários por card (kanban/squads/{squad}/dados/card_comments_count/{cardId}) —
 // alimenta o indicador de comentário na face do card (ver functions/comentarios/contagem.js).

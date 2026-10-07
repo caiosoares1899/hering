@@ -3889,7 +3889,8 @@ detalhe aberto — ver nota abaixo).
   os tipos de `createNotif()` contra `PUSH_TYPES`; `reuniao` tinha o
   mesmo gap do `feedback` — irmão quase idêntico `okr_reuniao` já tinha
   push, o genérico não)) — L23
-- `sendPushOnNotification` — L25
+- `sendPushOnNotification` — L25 (URL/tag do push em `common/pushUrl.js`: `urlDoPush()`/`tagDoPush()` — `okr_*` abre `okr.html`; `okr_mencao` entrou em `PUSH_TYPES` 2026-10-07)
+- `sendPushOnMural` (`okr/pushMural.js`: `runPushMural()`/`deveReceber()`/`criaTrigger()`) — push do aviso novo do Mural, disparado por evento `tipo:'mural'` em `kanban/notif_feed/{id}`; só ADM/Geral/torre alvo, respeita Não Perturbe
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L127 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L131–L170 → `spotify/*.js`
 - `intakeSubmit` — L176 → `intake/submit.js`

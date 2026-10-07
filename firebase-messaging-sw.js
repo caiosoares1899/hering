@@ -165,8 +165,10 @@ self.addEventListener('notificationclick', (event) => {
   const url = event.notification.data?.url || `${SITE_BASE_URL}kanban.html`;
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      // Reaproveita uma aba que já está na página de destino (OKR ou kanban) — nunca "sequestra" uma aba do kanban pra abrir o OKR.
+      const pagina = /\/okr(-dev)?\.html/.test(url) ? 'okr' : 'kanban';
       for (const client of clientList) {
-        if (client.url.includes('kanban') && 'focus' in client) {
+        if (client.url.includes(pagina) && 'focus' in client) {
           if (event.notification.data?.url) client.navigate(url);
           return client.focus();
         }

@@ -150,7 +150,7 @@ letting them hit the error first.
   (`functions/index.js`) only decides whether that notification should also
   become a push — it does this by checking `notif.type` against the
   `PUSH_TYPES` allow-list (currently `assigned`, `mention`, `unblocked`,
-  `risk`, `recorrente`, `painel_broadcast`). **To make a new notification
+  `risk`, `recorrente`, `painel_broadcast`, `okr_mencao`, …; see the constant). The Mural do OKR's new-notice push is a separate function, `sendPushOnMural`, because that notice is one `kanban/notif_feed` event rather than a per-user notification. **To make a new notification
   type trigger push, add it to `PUSH_TYPES` and redeploy the function** — a
   front-end-only change is not enough. The function also respects each
   user's "Não Perturbe" (do-not-disturb) window at
