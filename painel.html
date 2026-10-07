@@ -1532,6 +1532,12 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
       <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
 
+    <!-- 🎯 Online no OKR — a página do OKR (okr.html/okr-dev.html) tem heartbeat próprio em kanban/painel/okr_presence/{uid}; aqui só LEMOS (loadOkrPresence()). -->
+    <div class="sec-title" id="okr-online-section-title">🎯 Online no OKR <span class="badge" id="okr-online-count">0</span></div>
+    <div id="okr-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+    </div>
+
     <!-- Filtro por GERÊNCIA (grupo de squads) — pedido direto: cada gerente vê
          só as squads da própria gerência, sem excluir a Visão Geral (que
          continua no filtro por squad logo abaixo, botão "🏠 Todos"). Mesmo
@@ -2658,8 +2664,8 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
              painel", não fica junto de "Usuários" (que é sobre membros de
              squad, um conceito diferente). Ver _finishPainelLogin()/
              _blockIfPainelViewer() no <script> pro resto do mecanismo. -->
-        <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos do painel</div>
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora de @ciahering.com.br autorizados a ver o painel inteiro (todos os squads, comunicados, etc.) — sem nenhuma permissão de edição, garantido pelas regras do Firebase, não só pela tela.</div>
+        <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos (painel e OKR)</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br/@arezzo.com.br) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (as 3 torres, Histórico, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
         <div id="pcfg-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
         <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por email</div>
         <div style="display:flex;gap:6px;">
@@ -2762,7 +2768,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.4 · painel</div>
+<div class="version">v5.6 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3329,6 +3335,26 @@ function loadPainelPresence(){
     window._presence_painel = Object.values(val).filter(u=>u.nome && now-u.ts<30000);
     renderPainelOnline();
   });
+}
+// 🎯 Presença do OKR (2026-10-07): quem está com a página do OKR aberta. Node escrito pela própria página do OKR
+// (kanban/painel/okr_presence/{uid}, heartbeat de 15 s) — o painel só lê. Quem fecha a aba não gera evento, então um relógio de 10 s
+// redesenha a lista (corte de 30 s, igual ao resto das presenças).
+const OKR_PRESENCE_TTL_MS = 30000;
+function loadOkrPresence(){
+  window._onValue(window._ref(window._db,'kanban/painel/okr_presence'), snap=>{ window._okrPresenceRaw = snap.val()||{}; renderOkrOnlineVisao(); });
+  clearInterval(window._okrOnlineClock);
+  window._okrOnlineClock = setInterval(()=>{ if(!document.hidden) renderOkrOnlineVisao(); }, 10000);
+}
+function renderOkrOnlineVisao(){
+  const el = document.getElementById('okr-online-list'); if(!el) return;
+  const now = Date.now();
+  const all = Object.values(window._okrPresenceRaw||{}).filter(u=>u && u.nome && now-(+u.ts||0) < OKR_PRESENCE_TTL_MS).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
+  const count = document.getElementById('okr-online-count'); if(count) count.textContent = all.length;
+  if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no OKR no momento.</div>'; return; }
+  el.innerHTML = all.map(u=>{
+    const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
+    return '<div class="online-pill"><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span></div>';
+  }).join('');
 }
 function renderPainelOnline(){
   const all = window._presence_painel||[];
@@ -8360,38 +8386,41 @@ function closeAgentesHelp(){ document.getElementById('agentes-help-ov')?.classLi
 // mesmo espírito de kanban/squads/{squadId}/externos. A trava de verdade
 // (write nunca libera pra quem não é @ciahering, em nenhum node do
 // painel) mora nas regras — isto aqui só gerencia a whitelist de LEITURA.
+// A lista aparece em 2 lugares (⚙ Configurações → 🔑 ADMs, e o modal 👁 aberto de 👥 Global Users): renderiza em todos os que existirem.
 function renderPainelViewers(){
-  const list=document.getElementById('pcfg-viewers-list'); if(!list) return;
-  list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>';
+  const lists=['pcfg-viewers-list','pv-list'].map(id=>document.getElementById(id)).filter(Boolean); if(!lists.length) return;
+  lists.forEach(l=>{ l.innerHTML='<div style="font-size:11px;color:var(--txt3);">Carregando...</div>'; });
   window._get(window._ref(window._db,'kanban/painel_viewers')).then(snap=>{
-    const viewers=snap.val()||{};
-    const entries=Object.entries(viewers);
-    if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
-    list.innerHTML='';
-    entries.forEach(([key,v])=>{
-      const row=document.createElement('div');
-      row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
-      const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=(v.nome?v.nome+' — ':'')+(v.email||key);
-      const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent='👁 leitura';
-      const rm=document.createElement('button');
-      rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
-      rm.textContent='✕'; rm.title='Remover visualizador';
-      rm.onclick=()=>removePainelViewer(key);
-      row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
-      list.appendChild(row);
+    const entries=Object.entries(snap.val()||{});
+    lists.forEach(list=>{
+      if(!entries.length){ list.innerHTML='<div style="font-size:11px;color:var(--txt3);">Nenhum visualizador externo ainda.</div>'; return; }
+      list.innerHTML='';
+      entries.forEach(([key,v])=>{
+        const row=document.createElement('div');
+        row.style.cssText='display:flex;align-items:center;gap:8px;padding:5px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
+        const lbl=document.createElement('span'); lbl.style.cssText='flex:1;font-size:11px;'; lbl.textContent=(v.nome?v.nome+' — ':'')+(v.email||key);
+        const badge=document.createElement('span'); badge.style.cssText='font-size:9px;padding:1px 7px;border-radius:999px;background:rgba(56,182,255,.15);color:var(--accent);border:1px solid rgba(56,182,255,.3);'; badge.textContent='só leitura';
+        const rm=document.createElement('button');
+        rm.style.cssText='background:none;border:none;color:var(--danger);cursor:pointer;font-size:12px;padding:2px 4px;';
+        rm.textContent='✕'; rm.title='Remover visualizador';
+        rm.onclick=()=>removePainelViewer(key);
+        row.appendChild(lbl); row.appendChild(badge); row.appendChild(rm);
+        list.appendChild(row);
+      });
     });
   });
 }
-function addPainelViewer(){
-  const emailInp=document.getElementById('pcfg-viewer-email');
-  const nomeInp=document.getElementById('pcfg-viewer-nome');
+// origem 'modal' = campos do modal 👁 (pv-email/pv-nome); omitida = campos da aba ADMs
+function addPainelViewer(origem){
+  const emailInp=document.getElementById(origem==='modal'?'pv-email':'pcfg-viewer-email');
+  const nomeInp=document.getElementById(origem==='modal'?'pv-nome':'pcfg-viewer-nome');
   const email=emailInp?.value?.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
   if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) já têm acesso, não precisam ser adicionados aqui.'); return; }
   const key=_painelViewerKey(email);
   const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+key), entry)
-    .then(()=>{ showToast('✅ '+email+' autorizado como visualizador do painel'); emailInp.value=''; if(nomeInp) nomeInp.value=''; renderPainelViewers(); })
+    .then(()=>{ showToast('✅ '+email+' autorizado como visualizador (painel e OKR)'); emailInp.value=''; if(nomeInp) nomeInp.value=''; renderPainelViewers(); })
     .catch(e=>showToast('❌ '+e.message));
 }
 function removePainelViewer(key){
@@ -8400,6 +8429,13 @@ function removePainelViewer(key){
     .then(()=>{ showToast('✅ Visualizador removido'); renderPainelViewers(); })
     .catch(e=>showToast('❌ '+e.message));
 }
+// Atalho em 👥 Global Users: mesma lista, sem precisar escolher um squad e abrir ⚙ Configurações → 🔑 ADMs.
+function openPainelViewersModal(){
+  if(_blockIfPainelViewer()) return;
+  if(!_isAdmPainel()){ showToast('⚠ Só ADM gerencia visualizadores externos.'); return; }
+  document.getElementById('viewers-ov')?.classList.add('open'); renderPainelViewers();
+}
+function closePainelViewersModal(){ document.getElementById('viewers-ov')?.classList.remove('open'); }
 // ── FIM VISUALIZADORES EXTERNOS DO PAINEL ──────────────────────────
 
 // ── CENTRAL DE DADOS (captação digital diária) ─────────────────────
@@ -9079,6 +9115,7 @@ window.addEventListener('fb-ready',()=>{
   _painelTryOpenTabFromUrl();
   loadPresence();
   loadPainelPresence();
+  loadOkrPresence();
   loadAgentUsage();
   loadPcalEvents();
   // Rede de segurança: força um re-render ~2s após o boot, caso a primeira pintura da tela
@@ -9277,6 +9314,7 @@ function _squadMembersFromGlobalCache(sqId){
 function openGlobalUsersModal(){
   if(_blockIfPainelViewer()) return;
   document.getElementById('global-users-ov').classList.add('open');
+  const _gvb=document.getElementById('gu-viewers-btn'); if(_gvb) _gvb.style.display=_isAdmPainel()?'':'none';   // só ADM gerencia visualizadores
   renderGlobalUsers();
   loadGlobalUsers(true); // tela de gestão: sempre dado fresco (re-renderiza sozinho ao chegar)
 }
@@ -12025,11 +12063,29 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 </div>
 
 <!-- MODAL: GESTÃO GLOBAL DE USUÁRIOS -->
+<!-- 👁 Visualizadores externos (painel e OKR) — atalho de 👥 Global Users; mesma lista de ⚙ Configurações → 🔑 ADMs (renderPainelViewers). -->
+<div class="cfg-ov" id="viewers-ov" onclick="if(event.target===this) closePainelViewersModal()">
+  <div class="cfg-panel" style="max-width:560px;">
+    <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
+    <div class="cfg-body">
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o painel e o <b>OKR</b> (as 3 torres, Histórico, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
+      <div id="pv-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
+      <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por e-mail</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <input class="cfg-input" id="pv-email" placeholder="email@dominio.com" style="flex:1;min-width:160px;">
+        <input class="cfg-input" id="pv-nome" placeholder="Nome (opcional)" style="flex:1;min-width:130px;">
+        <button class="save-btn" onclick="addPainelViewer('modal')">+ Visualizador</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="cfg-ov" id="global-users-ov">
   <div class="cfg-panel" style="max-width:720px;">
     <div class="cfg-hd">
       <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
-        <div class="cfg-hd-title">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span></div>
+        <div class="cfg-hd-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span>
+          <button type="button" class="btn btn-sm" id="gu-viewers-btn" style="margin-left:auto;font-size:11px;display:none;" onclick="openPainelViewersModal()" title="Pessoas de fora da empresa autorizadas a só acompanhar o painel e o OKR">👁 Visualizadores externos</button></div>
         <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
           style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
         <div id="gu-filters" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>

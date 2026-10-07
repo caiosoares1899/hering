@@ -20694,6 +20694,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.6 · okr — 2026-10-07 · Promove pra prod — 👁 ADM autoriza visualizador externo sem sair do OKR
+
+Promoção do `okr-dev.html` v2.6 sobre a v2.5 de prod (merge de 3 vias; dev × prod só diferem nas 27 linhas de ambiente): botão **👁 Visualizadores** (só ADM) com lista/adicionar/remover da mesma lista `kanban/painel_viewers` do painel, e parágrafo na Ajuda do OKR. Smoke test no `okr.html` real: página 49/49, torres 35/35, Histórico 15/15, visualizadores 18/18 + 5/5.
+
 ### okr-dev.html v2.6 · okr-dev — 2026-10-07 · 👁 ADM autoriza visualizador externo sem sair do OKR
 
 Pedido direto ("só em kanban dá pra autorizar um externo — tem que ter no painel/OKR também"): botão **👁 Visualizadores** (só ADM, ao lado de "Anotações da reunião") abre um modal com a lista de quem só acompanha, e-mail + nome + "+ Visualizador" e ✕ pra remover (confirmação). É a mesma lista de `kanban/painel_viewers` do painel (e-mail da empresa é recusado — já tem acesso; e-mail inválido também). Esc e clique fora fecham; visualizador e não-ADM não veem o botão nem abrem o modal. Texto na Ajuda do OKR. Testes no Chromium: 18 cenários (OKR + painel).
@@ -20781,6 +20785,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.6 · painel — 2026-10-07 · Promove pra prod — aba Visão ganha "🎯 Online no OKR"; Visualizadores externos mais fáceis de achar
+
+Promoção do `painel-dev.html` v5.5 + v5.6 sobre a v5.4 de prod (merge de 3 vias; dev × prod só diferem nas linhas de ambiente e nos blocos já divergentes de sempre): (1) **nova linha "🎯 Online no OKR"** na aba Visão (lê `kanban/painel/okr_presence`, o heartbeat que a própria página do OKR já escreve; corte de 30 s, nomes escapados); (2) a seção de visualizadores externos virou "(painel e OKR)", com explicação, e ganhou o botão **👁 Visualizadores externos** em 👥 Global Users (só ADM). Smoke test no `painel.html` real: redirecionamentos 17/17, Online no OKR 7/7, visualizadores 18/18.
 
 ### painel-dev.html v5.6 · painel-dev — 2026-10-07 · aba Visão: nova linha "🎯 Online no OKR"
 
