@@ -1623,7 +1623,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.10 · okr-dev</div>
+<div class="version">v2.11 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2542,7 +2542,7 @@ function _okrMuralTipo(t){ return OKR_MURAL_TIPOS[t] || OKR_MURAL_TIPOS.aviso; }
 let okrMural = {}, okrFeed = {}, _okrMuralLoaded = false;
 let _okrNotifPessoais = [];
 let _okrFeedSeen = {ts:'', lidos:{}}, _okrFeedSeenReady = false;
-let _okrMuralTodos = false, _okrMuralEditId = null, _okrMuralDraft = null, _okrMuralPopId = null, _okrMuralHtmlAnt = null;
+let _okrMuralSaving = false, _okrMuralTodos = false, _okrMuralEditId = null, _okrMuralDraft = null, _okrMuralPopId = null, _okrMuralHtmlAnt = null;
 
 function _okrRel(ts){
   const d = new Date(ts), diff = Date.now()-d.getTime(); if(!ts || isNaN(diff)) return '';
@@ -2661,6 +2661,7 @@ function renderOkrMuralBody(){
     <div style="font-size:10.5px;color:var(--txt3);margin-top:8px;">${_okrMuralEditId?'Editar não manda notificação de novo.':'Quem é da torre recebe no 🔔 do OKR; os 🚨 urgentes ainda abrem em destaque na próxima visita.'}</div>`;
 }
 async function saveOkrMural(){
+  if(_okrMuralSaving) return;   // duplo clique/Enter repetido: cada chamada gera um id novo — sem a trava saía 2 avisos e 2 eventos no sino
   _okrMuralSync(); const d = _okrMuralDraft; if(!d) return;
   const titulo = (d.titulo||'').trim().slice(0,120), corpo = (d.corpo||'').trim().slice(0,1500);
   if(!titulo){ showToast('Dá um título pro aviso antes de publicar.'); return; }
@@ -2674,8 +2675,10 @@ async function saveOkrMural(){
   if(expiraEm) payload.expiraEm = expiraEm;
   if(antes.arquivado) payload.arquivado = true;
   if(!isNovo) payload.editadoEm = new Date().toISOString();
+  _okrMuralSaving = true;
   try{ await window._set(window._ref(window._db,'kanban/okr/mural/'+id), payload); }
   catch(err){ console.error('[mural] falha ao publicar:', err); showToast('❌ Não consegui publicar o aviso. Tente de novo.'); return; }
+  finally{ _okrMuralSaving = false; }
   okrMural[id] = payload; _okrMuralVistoMarca(id);
   if(isNovo){ const t = _okrMuralTipo(payload.tipo); _okrFeedPush('mural', payload.torres, t.icon+' '+titulo, t.label+(corpo?' · '+corpo.slice(0,90)+(corpo.length>90?'…':''):''), {muralId:id}); }
   showToast(isNovo ? '📢 Aviso publicado.' : '💾 Aviso salvo.');
@@ -2688,6 +2691,15 @@ async function okrMuralArquivar(id){
   catch(err){ console.error('[mural] falha ao arquivar:', err); showToast('❌ Não consegui arquivar.'); return; }
   okrMural[id] = {...a, arquivado:true}; _okrExtrasRender(); showToast('📦 Aviso arquivado.');
 }
+
+// Esc fecha a camada de cima: aviso em destaque → painel do sino → modal de publicar (capture + stopPropagation, como os outros modais da página).
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape') return;
+  const pop = document.getElementById('okr-mural-pop-ov'), drop = document.getElementById('okr-bell-drop'), mod = document.getElementById('okr-mural-ov');
+  if(pop && pop.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); _okrMuralPopFecha(); }
+  else if(drop && drop.style.display==='flex'){ e.preventDefault(); e.stopPropagation(); drop.style.display = 'none'; }
+  else if(mod && mod.classList.contains('open')){ e.preventDefault(); e.stopPropagation(); closeOkrMuralModal(); }
+}, true);
 
 // ── Popup do aviso (🚨 urgente ainda não visto, ou aberto pelo sino) ──
 function _okrMuralVistos(){
@@ -6624,6 +6636,7 @@ async function _okrDuplicarObjetivo(id){
   };
   await window._set(window._ref(window._db,'kanban/okr/objetivos/'+newId), novo);
   okrObjetivos[newId] = novo;
+  _okrFeedPush('obj_criado', [novo.torre], `🆕 Novo Objetivo: "${novo.titulo}"`, `${okrTorreInfo(novo.torre).icon} Torre ${okrTorreInfo(novo.torre).label} · por ${who} (cópia)`, {objId:newId});   // mesmo evento do "+ Novo Objetivo"
 
   const marcosOriginais = _okrObjMarcos(id);
   if(marcosOriginais.length){
