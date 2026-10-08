@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.803 — 2026-10-08 · Promove pra prod — correções da auditoria do modo só Hering (kanban v8.30.803, painel.html v5.22, okr.html v2.44)
+
+Promove as correções da auditoria `/monitorarbugs` (entrada abaixo): conta `@arezzo` entrando pelo Google deixa de ser mandada pro botão Microsoft escondido (cai no "Acesso restrito a @ciahering.com.br"), e torre desconhecida/corrompida continua valendo como Digital. O push do Mural (servidor) já estava publicado pelo usuário. Merge de 3 vias; dev × prod só diferem nas linhas de ambiente. Sem avisos.
+
 ### 🏢 Maré só Hering — auditoria `/monitorarbugs` — 2026-10-08 · kanban-dev v8.30.803-dev · painel-dev v5.22 · okr-dev v2.44 · Cloud Functions (SÓ DEV + funções — produção ainda na v8.30.802/v5.21/v2.43)
 
 Auditoria do que o modo só Hering escondeu/esqueceu (reproduzida antes de corrigir):

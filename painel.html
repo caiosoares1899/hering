@@ -2792,7 +2792,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.21 · painel</div>
+<div class="version">v5.22 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9071,7 +9071,8 @@ function _loginProviderMismatchMsg(user){
   if(!email) return 'Sua conta entrou sem um e-mail (comum em contas Microsoft sem caixa de e-mail). Peça a um ADM pra conferir o cadastro da conta.';
   if(email.endsWith('@ciahering.com.br') && !provs.includes('google.com'))
     return 'Contas @ciahering.com.br entram pelo botão do Google — clique em "Entrar com Google".';
-  if(email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
+  // Modo "só Hering" (MARE_SO_HERING): o botão da Microsoft não existe — @arezzo não é mais mandada pra um botão escondido, cai no "Acesso restrito a @ciahering.com.br" do portão de externos.
+  if(!MARE_SO_HERING && email.endsWith('@arezzo.com.br') && !provs.includes('microsoft.com'))
     return 'Contas @arezzo.com.br entram pelo botão da Microsoft — clique em "Entrar com Microsoft".';
   return '';
 }
