@@ -1348,7 +1348,7 @@ body:has(#okr-help-ov.open) .version{display:none;}   /* o rótulo de versão (z
 .okr-fab-ic{font-size:20px;line-height:1;}
 .okr-fab-n{position:absolute;top:-6px;right:-4px;min-width:20px;height:20px;padding:0 5px;border-radius:999px;background:#ff5a5f;color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;border:2px solid rgba(var(--deep-rgb),.95);}
 .okr-fab-n[hidden],.okr-agente-panel[hidden]{display:none!important;}
-.okr-agente-panel{position:fixed;right:20px;bottom:84px;z-index:160;width:410px;height:min(560px,calc(100vh - 240px));min-height:320px;display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.985);box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;}
+.okr-agente-panel{position:fixed;right:20px;bottom:84px;z-index:210;width:410px;height:min(560px,calc(100vh - 240px));min-height:320px;display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.985);box-shadow:0 18px 60px rgba(0,0,0,.55);overflow:hidden;}
 .okr-agente-hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 14px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .okr-agente-ttl{display:flex;flex-direction:column;min-width:0;}
 .okr-agente-ttl b{font-family:'DM Sans',sans-serif;font-size:13.5px;color:var(--txt);}
@@ -1365,7 +1365,12 @@ body:has(#okr-help-ov.open) .version{display:none;}   /* o rótulo de versão (z
 .okr-agente-ex button{flex:0 0 auto;font-size:11px;padding:6px 11px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);cursor:pointer;font-family:inherit;white-space:nowrap;}
 .okr-agente-ex button:hover{border-color:var(--accent);color:var(--txt);}
 .okr-agente-add{padding:8px 14px 12px;flex-shrink:0;margin:0;}
-.version{left:12px;right:auto;}
+body:has(#app-root[style*="none"]) #okr-agente-fab,body:has(#app-root[style*="none"]) #okr-agente-wrap{display:none!important;}   /* sem login o botão não aparece (o #app-root começa escondido) */
+
+.version{left:12px;right:auto;font-size:10px;color:var(--txt2);}
+.app{padding-bottom:6rem;}   /* o botão flutuante não cobre o fim da lista/calendário */
+.okr-more-ver{padding:7px 12px 4px;font-size:10.5px;color:var(--txt3);border-top:1px solid var(--glass-b);margin-top:4px;cursor:default;user-select:text;}
+.hlp-ver{font-size:10.5px;font-weight:400;color:var(--txt3);margin-left:8px;}
 body:has(.okr-agente-panel:not([hidden])) .version{display:none;}   /* o botão flutuante ocupa o canto direito */
 @media (max-width:640px){
   .okr-fab{right:14px;bottom:calc(16px + env(safe-area-inset-bottom));width:56px;height:56px;padding:0;justify-content:center;}
@@ -1540,6 +1545,7 @@ body{min-height:100vh;}
             <a role="menuitem" href="guia-okr.html" target="_blank" rel="noopener" onclick="_okrMoreFecha()" title="Guia visual passo a passo, com gifs, de como usar a aba OKR">📘 Guia visual do OKR</a>
             <button type="button" role="menuitem" id="okr-ger-btn" style="display:none;" onclick="_okrMoreFecha();openOkrGerencias(_okrTorreAtual)" title="Criar, renomear, reordenar ou ocultar as gerências desta torre">⚙ Gerências da torre</button>
             <button type="button" role="menuitem" id="okr-viewers-btn" style="display:none;" onclick="_okrMoreFecha();openOkrViewers()" title="Pessoas de fora da empresa autorizadas a só acompanhar o OKR">👁 Visualizadores externos</button>
+            <div class="okr-more-ver" role="presentation">ℹ️ Versão <b class="okr-ver-txt">—</b></div>
           </div>
         </div>
         <button type="button" class="btn btn-p" id="okr-novo-btn" style="display:none;" onclick="openOkrObjetivo(null)">+ Novo Objetivo</button>
@@ -1614,7 +1620,7 @@ body{min-height:100vh;}
   <div class="pev-modal-ov" id="okr-help-ov" role="dialog" aria-modal="true" aria-labelledby="okr-help-tt">
     <div class="pev-modal hlp-modal">
       <div class="hlp-top">
-        <div class="hlp-hd"><div id="okr-help-tt" class="hlp-ttl">❓ Ajuda do OKR</div><button type="button" class="x-btn" onclick="closeOkrHelp()" aria-label="Fechar ajuda">✕</button></div>
+        <div class="hlp-hd"><div id="okr-help-tt" class="hlp-ttl">❓ Ajuda do OKR<span class="hlp-ver">versão <span class="okr-ver-txt">—</span></span></div><button type="button" class="x-btn" onclick="closeOkrHelp()" aria-label="Fechar ajuda">✕</button></div>
         <div class="hlp-search"><span aria-hidden="true">🔎</span><input type="search" id="okr-help-q" placeholder="Buscar na ajuda… (ex.: trava, atingimento, convidar)" autocomplete="off" spellcheck="false" oninput="_okrHelpBusca(this.value)" aria-label="Buscar na ajuda"><button type="button" class="hlp-clear" id="okr-help-qx" onclick="_okrHelpLimpa()" aria-label="Limpar busca" hidden>✕</button><kbd class="hlp-kbd">/</kbd></div>
         <div class="hlp-tabs" id="okr-help-tabs" role="tablist" aria-label="Assuntos da ajuda"><button type="button" role="tab" id="hlp-tab-comecar" class="hlp-tab on" data-tab="comecar" aria-selected="true" aria-controls="hlp-pane-comecar" tabindex="0">⭐ Começar<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-faq" class="hlp-tab" data-tab="faq" aria-selected="false" aria-controls="hlp-pane-faq" tabindex="-1">❓ Perguntas<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-objetivos" class="hlp-tab" data-tab="objetivos" aria-selected="false" aria-controls="hlp-pane-objetivos" tabindex="-1">🎯 Objetivos<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-agenda" class="hlp-tab" data-tab="agenda" aria-selected="false" aria-controls="hlp-pane-agenda" tabindex="-1">📅 Agenda e avisos<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-acesso" class="hlp-tab" data-tab="acesso" aria-selected="false" aria-controls="hlp-pane-acesso" tabindex="-1">🏛️ Torres e acesso<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-navegar" class="hlp-tab" data-tab="navegar" aria-selected="false" aria-controls="hlp-pane-navegar" tabindex="-1">🧭 Navegar<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-agente" class="hlp-tab" data-tab="agente" aria-selected="false" aria-controls="hlp-pane-agente" tabindex="-1">💬 Agente Ágil<em class="hlp-n"></em></button></div>
         <div class="hlp-res" id="okr-help-res" hidden></div>
@@ -1650,9 +1656,11 @@ body{min-height:100vh;}
       </div>
     </div>
   </div>
+</div><!-- /app-root -->
+
   <!-- 💬 Central Agente Ágil — BOTÃO FLUTUANTE (v2.39): chat dedicado (kanban/okr/agente_chat), sem @menção — toda mensagem já é um pedido pro agente.
        Central geral (não presa a um Objetivo). O histórico de pedidos É o próprio chat (permanente e compartilhado) — ver functions/okr/agenteChat.js.
-       Vive FORA das abas: abre por cima de qualquer tela (desktop: painel no canto, sem bloquear a página; celular: folha em tela cheia). -->
+       Vive FORA do #app-root (no nível do body, no mesmo contexto de empilhamento dos modais — dentro dele o painel ficava SEMPRE por baixo do modal do Objetivo/Marco); aparece só depois do login (CSS abaixo). Vive FORA das abas: abre por cima de qualquer tela (desktop: painel no canto, sem bloquear a página; celular: folha em tela cheia). -->
   <button type="button" id="okr-agente-fab" class="okr-fab" onclick="_okrToggleAgenteChat()" aria-label="Abrir o Agente Ágil" aria-expanded="false" aria-controls="okr-agente-wrap" title="Agente Ágil — conte a situação e ele escreve no OKR">
     <span class="okr-fab-ic" aria-hidden="true">🤖</span><span class="okr-fab-tx">Agente Ágil</span><span class="okr-fab-n" id="okr-agente-fab-n" hidden></span>
   </button>
@@ -1676,7 +1684,7 @@ body{min-height:100vh;}
       <button type="button" class="btn btn-sm" id="okr-agente-send-btn" onclick="_okrAgenteChatSend()">Enviar</button>
     </div>
   </section>
-</div><!-- /app-root -->
+
 
 <div class="toast" id="toast"></div>
 
@@ -1882,7 +1890,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.40 · okr</div>
+<div class="version">v2.41 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8573,6 +8581,13 @@ function _okrHelpEuHtml(){
 }
 function _okrHelpEuRender(){ const el = _hlpEl('okr-help-eu'); if(el){ el.innerHTML = _okrHelpEuHtml(); el.hidden = !el.innerHTML; } }
 
+// Versão que a página está rodando (a mesma do rótulo do canto): também no menu ⋯ Mais, na Ajuda e no tooltip do botão do Agente — o rótulo do canto é pequeno e já foi coberto por outras coisas.
+function _okrVersaoMostrar(){
+  const t = (document.querySelector('.version')?.textContent||'').trim(); if(!t) return;
+  document.querySelectorAll('.okr-ver-txt').forEach(e=>{ e.textContent = t; });
+  const f = document.getElementById('okr-agente-fab'); if(f) f.title = 'Agente Ágil — conte a situação e ele escreve no OKR · '+t;
+}
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', _okrVersaoMostrar); else _okrVersaoMostrar();
 function openOkrHelp(id){
   const ov = _hlpEl('okr-help-ov'); if(!ov) return;
   _okrHelpEuRender();

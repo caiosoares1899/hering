@@ -20744,6 +20744,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.41 · okr — 2026-10-08 · Promove pra prod — versão sempre visível, painel do Agente por cima dos modais, folga pro botão flutuante
+
+Promove okr-dev v2.41 (prod estava na v2.40): a **versão** passa a aparecer também no menu ⋯ Mais, no título da ❓ Ajuda e no tooltip do botão do Agente; **"💬 Perguntar ao Agente"** com o modal do Objetivo aberto abre o painel por cima do modal (antes ficava por baixo); a página ganha folga embaixo pro botão flutuante não esconder o fim da lista. Sem avisos (Mural/WhatsApp) por decisão do usuário.
+
 ### okr-dev.html v2.41 · okr-dev — 2026-10-08 · fix: versão sempre visível + painel do Agente por cima dos modais + folga pro botão flutuante (/monitorarbugs)
 
 Relato direto: "o botão do agente tá em cima do número da versão, não consigo saber qual versão tá". O rótulo do canto é minúsculo (9 px, cinza) e dividia o canto com o botão; agora a **versão aparece em 3 lugares impossíveis de cobrir**: no menu **⋯ Mais** ("ℹ️ Versão vX"), no título da **❓ Ajuda** e no tooltip do botão do Agente — e o rótulo do canto ficou maior e mais claro. A varredura do que foi feito hoje achou mais 2 coisas reais, reproduzidas no Chromium antes de corrigir: (1) **"💬 Perguntar ao Agente"** (menu de contexto do Marco/Objetivo) com o modal do Objetivo aberto abria o painel **por baixo do modal** — parecia não fazer nada; o botão e o painel moravam dentro do `#app-root`, que cria um contexto de empilhamento menor que o dos modais (z-index não adianta ali) — foram pro nível do `body` (aparecem só depois do login) e o painel ganhou z-index acima dos modais, enquanto o botão fica atrás deles; (2) o fim da lista/calendário podia ficar **escondido atrás do botão** flutuante — a página ganhou folga embaixo (6 rem). Teste: 8 cenários (`test_versao_fab`) + regressão.
