@@ -736,7 +736,9 @@ const OKR_TORRES_TODAS = [
 // Esta página é COMPARTILHADA (sem cópia -dev): mudar aqui vale pro ar assim que for mergeado. `true` = só Digital (Objetivos das outras torres ficam no banco, fora do deck);
 // `false` = as 3 torres como em 2026-10-07.
 const MARE_SO_HERING = true;
-const OKR_TORRES = MARE_SO_HERING ? OKR_TORRES_TODAS.filter(t=>t.id==='digital') : OKR_TORRES_TODAS;
+// Torre única = "Digital Hering 🐟" (rótulo já traz o peixinho; sem ícone nem a palavra "Torre").
+const OKR_TORRES = MARE_SO_HERING ? OKR_TORRES_TODAS.filter(t=>t.id==='digital').map(t=>Object.assign({}, t, {label:'Digital Hering 🐟', icon:''})) : OKR_TORRES_TODAS;
+const _okrTorreTitulo = t => MARE_SO_HERING ? t.label : t.icon+' Torre '+t.label;
 const OKR_GERENCIAS_PADRAO = { digital: OKR_GERENCIAS, comercial:[{id:'geral',label:'Geral',icon:'🧭'}], corporativa:[{id:'geral',label:'Geral',icon:'🧭'}] };
 let okrGerenciasCfg = {};
 // Torre INATIVA (modo só Hering) volta como ela mesma, não como Digital — aí o filtro de _okrObjetivosAtivos() a deixa de fora do deck.
@@ -1140,7 +1142,7 @@ function buildSlides(){
       <div class="cover-ico">🎯</div>
       <div class="cover-title">OKRs — Maré Digital</div>
       <div class="cover-sub">Panorama por torre e gerência · ${esc(hoje)}</div>
-      ${_okrFiltroTorre?`<div class="cover-sub" style="margin-top:-30px;margin-bottom:34px;">Apresentando só a torre ${OKR_TORRES.find(t=>t.id===_okrFiltroTorre).icon} <b>${esc(OKR_TORRES.find(t=>t.id===_okrFiltroTorre).label)}</b></div>`:''}
+      ${_okrFiltroTorre?`<div class="cover-sub" style="margin-top:-30px;margin-bottom:34px;">Apresentando só ${MARE_SO_HERING?'':'a torre '}${OKR_TORRES.find(t=>t.id===_okrFiltroTorre).icon} <b>${esc(OKR_TORRES.find(t=>t.id===_okrFiltroTorre).label)}</b></div>`:''}
       ${_okrFiltroTag&&okrTags[_okrFiltroTag]?`<div class="cover-sub" style="margin-top:6px;">Filtrando pela tag 🏷️ <b>${esc(okrTags[_okrFiltroTag].label||'')}</b></div>`:''}
       <div class="stat-row">
         <div class="stat-chip"><b>${ativos.length}</b><span>Objetivos ativos</span></div>
@@ -1168,11 +1170,11 @@ function buildSlides(){
     torresComObj.forEach(t=>{
       const lt = ativos.filter(o=>_okrTorreDe(o)===t.id), st = _okrStatsDe(lt), grs = grupos.filter(g=>g.torre===t.id);
       // Slide-capa da torre: resumo + as gerências (clicáveis) com contagem, barra de status e média.
-      list.push({key:'torre:'+t.id, title:t.icon+' Torre '+t.label, torre:t.id, torreDot:true, html:`
+      list.push({key:'torre:'+t.id, title:_okrTorreTitulo(t), torre:t.id, torreDot:true, html:`
         <div class="slide-inner t-${t.id}">
           <div class="torre-hd">
             <span class="big">${t.icon}</span>
-            <div><h2>Torre ${esc(t.label)}</h2><div class="sub">${lt.length} Objetivo${lt.length===1?'':'s'} · ${grs.length} gerência${grs.length===1?'':'s'}</div></div>
+            <div><h2>${MARE_SO_HERING?'':'Torre '}${esc(t.label)}</h2><div class="sub">${lt.length} Objetivo${lt.length===1?'':'s'} · ${grs.length} gerência${grs.length===1?'':'s'}</div></div>
             <div class="torre-kpis">
               <div class="stat-chip"><b>${st.media}%</b><span>progresso médio</span></div>
               <div class="stat-chip"><b style="color:var(--teal);">${st.c.no_prazo}</b><span>No prazo</span></div>
@@ -1214,7 +1216,7 @@ function buildSlides(){
     // Uma faixa por torre (com o subtotal) e, embaixo, as gerências dela.
     const tableRows = torresComObj.map(t=>{
       const lt = ativos.filter(o=>_okrTorreDe(o)===t.id);
-      return `<tbody class="t-${t.id}">`+linhaTab('sum-torre', t.icon+' Torre '+esc(t.label), _okrStatsDe(lt))
+      return `<tbody class="t-${t.id}">`+linhaTab('sum-torre', esc(_okrTorreTitulo(t)), _okrStatsDe(lt))
         + grupos.filter(g=>g.torre===t.id).map(gr=>linhaTab('sum-ger', gr.g.icon+' '+esc(gr.g.label), _okrStatsDe(gr.lista))).join('')+`</tbody>`;
     }).join('');
     list.push({key:'summary', title:'Panorama geral', html:`
