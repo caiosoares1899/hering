@@ -20744,6 +20744,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html v2.40 · okr — 2026-10-08 · Promove pra prod — Agente Ágil flutuante, ajuda em abas com busca, links em aba nova, faixas das gerências, ocultar Objetivo da apresentação
+
+Promove okr-dev v2.34 → v2.40 (prod estava na v2.33), com `mare-notif.js` v7: **💬 Agente Ágil vira botão flutuante** (sai das abas; painel no canto no computador, tela cheia no celular, selo de resposta nova); **❓ Ajuda do OKR** reorganizada (abas, busca, 18 perguntas frequentes, "🙋 O que eu posso fazer?" por papel); modais do Objetivo/Configurações/Marco repensados pro **celular**; **gerências em faixas alternadas** (dois tons suaves); **🎬 ocultar Objetivo da apresentação** (+ filtro "só incluídos") e **menu de contexto** com Ver histórico/Agendar reunião/Perguntar ao Agente; **links entre páginas abrem em aba nova**. Sem avisos (Mural/WhatsApp) por decisão do usuário.
+
 ### okr-dev.html v2.40 · okr-dev + okr-apresentacao.slide.html — 2026-10-08 · 🎬 ocultar Objetivo da apresentação + filtro · menu de contexto com 4 itens novos
 
 **Ocultar Objetivo da apresentação** (o que já existia nos Marcos): campo `mostrarApresentacao` no Objetivo (`false` = oculto; ausente = aparece, então nada muda pros Objetivos atuais). Liga/desliga em **botão direito → 🎬 Ocultar/Mostrar na apresentação** (tecla O, grava por transação e registra no Histórico) ou em **⚙ Configurações → 🎬 Aparecer na apresentação**. O cartão ganha o selo **🙈 fora da apresentação**. **Filtro** novo em **⚙ Mais filtros → 🎬 Apresentação**: todos / só os incluídos / só os ocultos (entra no contador e no "Limpar filtros"). A **apresentação em slides** (`okr-apresentacao.slide.html`, sem cópia dev: vale assim que mergeia) passa a ignorar o Objetivo oculto em TUDO — capa, torres, gerências, panorama, Anterior/Próximo, contadores, filtro de tag — e o `?preview=` de um oculto não abre; o 👁 do cartão e o "Ver na apresentação" do menu avisam em vez de abrir. No OKR o Objetivo oculto segue igual (lista, Dashboard, calendário).
@@ -21028,6 +21032,10 @@ Pedido direto: tirar o OKR de dentro do painel. Primeira etapa: **`okr-dev.html`
 - **Testes** (Chromium, Firebase falso em memória que roda o boot real da página): 29 cenários novos (portão de login com provedor errado/externo/visualizador/ADM, listeners só após login, nenhum card baixado no boot, títulos sob demanda, busca com cache e regra de badge OKR, vínculo + histórico "vinculou o card", usuário criado, deep links, tema) + as suítes do OKR do painel reaproveitadas contra a página nova (menu de contexto 42, histórico 17, janela de contribuição 35, abas Atingimento/Marcos 12, atingimento 12+17+13+27, filtro, tags 13+17, XSS de tag, duplo clique) — todas verdes. `node --check`, `no-undef` (ESLint) e checagem de handlers inline sem pendências.
 
 ## painel.html / painel-dev.html
+
+### painel.html v5.20 · painel — 2026-10-08 · Promove pra prod — a aba "🎯 OKR ↗" e os cliques do sino abrem o OKR em aba nova
+
+Promove painel-dev v5.20 (prod estava na v5.19) + `mare-notif.js` v7 (novo `MareNotif.abrirPagina()`: aba nova; se o navegador bloquear, navega na mesma). Sem avisos.
 
 ### painel-dev.html v5.20 · painel-dev + okr-dev v2.36 + `mare-notif-dev.js` (?v=7) — 2026-10-08 · links entre páginas abrem em ABA NOVA
 
