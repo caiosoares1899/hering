@@ -1,3 +1,5 @@
+// Este arquivo cobre o comportamento COM várias torres/Arezzo (interruptor desligado). O modo atual (só Hering) é coberto por modoSoHering.test.js.
+process.env.MARE_MODO_TESTE = 'varias-torres';
 // functions/okr/__tests__/dailyScan.test.js
 //
 // Cobertura de runOkrDailyScan() — os 2 gatilhos ambientais do módulo OKR

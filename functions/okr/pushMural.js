@@ -13,12 +13,14 @@
 // tokens de todo mundo pra memória por causa de 1 aviso.
 
 const { SITE_BASE_URL } = require('../common/pushUrl');
+const { emailDaEmpresa, MARE_SO_HERING, TORRES_ATIVAS } = require('../common/mareModo');
 
 const DEFAULT_ADM_EMAILS = ['caio.soares@ciahering.com.br', 'rafael.passos@ciahering.com.br'];
 
 // O feed do sino só é legível pela empresa (e visualizadores) — o push não pode furar isso: freelancer/parceiro com push ativo (a conta existe em
 // usuarios_publicos e pode ter token) NÃO recebe o texto de um aviso interno do OKR. Mesmo critério do domínio de confiança do app.
-const empresa = (email) => /@(ciahering|arezzo)\.com\.br$/i.test(String(email || ''));
+// Modo "só Hering" (common/mareModo.js): só @ciahering.com.br; com o interruptor desligado volta a valer @arezzo.com.br também.
+const empresa = emailDaEmpresa;
 
 function alvoTorres(ev) {
   const t = ev && ev.torres;
@@ -37,6 +39,8 @@ function deveReceber({ ev, uid, torre, ehAdm, agora }) {
   if (!ev || ev.tipo !== 'mural') return false;
   if (uid === ev.autorUid) return false;
   const alvo = alvoTorres(ev);
+  // Modo "só Hering": aviso dirigido SÓ a outra torre (ex.: ['comercial']) não vai pra ninguém, nem pro ADM.
+  if (MARE_SO_HERING && !alvo.includes('*') && !alvo.some((t) => TORRES_ATIVAS.includes(t))) return false;
   if (ehAdm || torre === 'geral' || alvo.includes('*')) return true;
   return alvo.includes(torre || 'digital');
 }

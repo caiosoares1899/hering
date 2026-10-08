@@ -39,6 +39,7 @@
 // QUALQUER tipo, só decide mandar push ou não pela allow-list.
 
 const { onSchedule } = require('firebase-functions/v2/scheduler');
+const { torreAtiva } = require('../common/mareModo');
 const { getDatabase } = require('firebase-admin/database');
 const cal = require('./calendario');
 
@@ -107,9 +108,12 @@ async function runOkrDailyScan(db, hojeOverride) {
     db.ref('kanban/okr/marcos').get(),
     db.ref('kanban/okr/calendario/eventos').get(),
   ]);
-  const objetivos = objSnap.val() || {};
+  // Modo "só Hering" (common/mareModo.js): Objetivo/evento de outra torre é invisível pro scan (nenhum aviso de prazo/reunião); os marcos deles
+  // caem no `!obj` abaixo. Com o interruptor desligado o filtro não tira nada.
+  const soAtivas = (o) => Object.fromEntries(Object.entries(o || {}).filter(([, x]) => x && torreAtiva(x.torre)));
+  const objetivos = soAtivas(objSnap.val());
   const marcos = marcoSnap.val() || {};
-  const eventos = evSnap.val() || {};
+  const eventos = soAtivas(evSnap.val());
 
   // 1) Prazo de marco chegando (3 dias antes / 1 dia antes)
   for (const marcoId of Object.keys(marcos)) {

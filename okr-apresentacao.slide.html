@@ -727,14 +727,20 @@ function okrStatusInfo(id){ return OKR_STATUS.find(s=>s.id===id) || OKR_STATUS[0
 // ── 🏛️ Torres + 🧭 gerências configuráveis (mesmo modelo do okr.html: kanban/okr/gerencias/{torre}/{id} = {label, icon, ordem, oculta?}) ──
 // Sem nada configurado vale o padrão (Digital: as 7 acima; Comercial/Corporativa: só "Geral"). Os slides agrupam por TORRE + gerência: o "Geral"
 // das 3 torres não se mistura, e uma gerência criada pela torre (que não está na lista fixa) também ganha o seu slide.
-const OKR_TORRES = [
+const OKR_TORRES_TODAS = [
   {id:'digital',     label:'Digital',     icon:'🛒'},
   {id:'comercial',   label:'Comercial',   icon:'🛍️'},
   {id:'corporativa', label:'Corporativa', icon:'🏛️'},
 ];
+// 🏢 MODO "SÓ HERING" (2026-10-08): o OKR tem UMA torre — Digital. Mesmo interruptor de okr/painel/kanban (grep MARE_SO_HERING; doc: docs/arezzo/MARE_SO_HERING.md).
+// Esta página é COMPARTILHADA (sem cópia -dev): mudar aqui vale pro ar assim que for mergeado. `true` = só Digital (Objetivos das outras torres ficam no banco, fora do deck);
+// `false` = as 3 torres como em 2026-10-07.
+const MARE_SO_HERING = true;
+const OKR_TORRES = MARE_SO_HERING ? OKR_TORRES_TODAS.filter(t=>t.id==='digital') : OKR_TORRES_TODAS;
 const OKR_GERENCIAS_PADRAO = { digital: OKR_GERENCIAS, comercial:[{id:'geral',label:'Geral',icon:'🧭'}], corporativa:[{id:'geral',label:'Geral',icon:'🧭'}] };
 let okrGerenciasCfg = {};
-function _okrTorreDe(o){ return (o && OKR_TORRES.some(t=>t.id===o.torre)) ? o.torre : 'digital'; }
+// Torre INATIVA (modo só Hering) volta como ela mesma, não como Digital — aí o filtro de _okrObjetivosAtivos() a deixa de fora do deck.
+function _okrTorreDe(o){ return (o && (OKR_TORRES.some(t=>t.id===o.torre) || OKR_TORRES_TODAS.some(t=>t.id===o.torre))) ? o.torre : 'digital'; }
 function _okrGerenciasBase(torre){
   const t = OKR_TORRES.some(x=>x.id===torre) ? torre : 'digital';
   const cfg = okrGerenciasCfg && okrGerenciasCfg[t];
@@ -824,7 +830,7 @@ let _okrFiltroTag = '';
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
 let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
 function _okrObjetivosAtivos(ignorarTorre){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
 function _okrGerenciaObjetivos(areaId, torre){
   return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));

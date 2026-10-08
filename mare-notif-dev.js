@@ -57,7 +57,11 @@
     return arr;
   }
   // Quem vê: ADM, torre ⭐ Geral e visualizador externo veem tudo; os demais, o das suas torres (+ o dirigido a todas).
+  // MODO "SÓ HERING" (window.MARE_SO_HERING, definido no 1º <script> de cada página; sem a variável vale `true`, igual aos HTML): o feed só mostra o que é da
+  // torre Digital ou de todas ('*') — evento dirigido SÓ a outra torre não aparece pra ninguém, nem pra ADM/Geral/visualizador. Desligado = regra de sempre.
+  const SO_HERING = (typeof window !== 'undefined' && typeof window.MARE_SO_HERING !== 'undefined') ? !!window.MARE_SO_HERING : true;
   function paraMim(torres){
+    if(SO_HERING) return torres.includes('*') || torres.includes('digital');
     if(st.viewer || st.torre==='geral') return true;
     try{ if(st.opts && st.opts.isAdm && st.opts.isAdm()) return true; }catch(e){}
     return torres.includes('*') || torres.includes(st.torre);
