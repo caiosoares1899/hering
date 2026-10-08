@@ -1457,6 +1457,15 @@ body{min-height:100vh;}
 .okr-modal-torre-chip{margin-right:auto;}
 </style>
 <script>
+// 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital), @menção/listas de pessoas
+// só @ciahering. `true` esconde/desliga a integração Arezzo/Microsoft e as torres (os dados das outras torres NÃO são apagados, só ficam invisíveis);
+// `false` religa tudo como estava em 2026-10-01..07. Mesmo interruptor em kanban/painel/okr/okr-apresentacao/mare-notif (grep MARE_SO_HERING) +
+// functions/common/mareModo.js + database.rules.json. Passo a passo pra religar: docs/arezzo/MARE_SO_HERING.md
+window.MARE_SO_HERING = true;
+(function(){ if(!window.MARE_SO_HERING) return; try{ var st=document.createElement('style');
+  st.textContent='.ms-login,.okr-so-hering-esconde,#okr-torre-nav,#okr-home,.okr-modal-torre-chip,#hlp-torres,#hlp-faq13{display:none!important}'; document.head.appendChild(st); }catch(e){} })();
+</script>
+<script>
 // Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
 // escuro (padrão) seguido de troca pro claro assim que o JS principal
 // carregasse lá embaixo. Mesma técnica/mesma chave (mare_theme) do
@@ -1483,20 +1492,20 @@ body{min-height:100vh;}
     <div style="font-size:13px;color:var(--txt2);">OKR · Objetivos estratégicos</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:320px;width:100%;backdrop-filter:blur(12px);">
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google ou Microsoft para acessar o OKR.</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google<span class="ms-login"> ou Microsoft</span> para acessar o OKR.</div>
     <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Entrar com Google
     </button>
     <!-- Integração Arezzo (2026-10-01) — mesmo padrão já usado em kanban-dev.html
          (ver TRUSTED_DOMAINS/_isTrustedDomainEmail() logo abaixo). -->
-    <button onclick="doSignInMicrosoft()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
+    <button onclick="doSignInMicrosoft()" class="btn btn-p ms-login" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
       <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
       Entrar com Microsoft
     </button>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
-  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br / @arezzo.com.br</div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br<span class="ms-login"> / @arezzo.com.br</span></div>
 </div>
 
 <!-- APP -->
@@ -1819,7 +1828,7 @@ body{min-height:100vh;}
       <button class="x-btn" onclick="closeOkrViewers()">✕</button>
     </div>
     <div class="pc-modal-body">
-      <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o OKR — as 3 torres, Dashboard, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
+      <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:12px;">Pessoas de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) que só <b>acompanham</b> o OKR — <span class="ms-login">as 3 torres, </span>Dashboard, Anotações e apresentação. <b>Só leitura</b>, garantido pelas regras do Firebase; não veem e-mails nem notificações pessoais de ninguém; veem o <b>Mural</b> e o <b>🔔 sino</b> das torres. Depois de adicionar, mande o link desta página: ela entra com o <b>Google</b> na conta do e-mail cadastrado. A mesma lista vale pro painel.</div>
       <div style="font-size:11px;color:var(--txt3);line-height:1.5;margin-bottom:8px;">Cada pessoa mostra se <b>já entrou</b> (🟢 online agora · ✅ entrou, com o último sinal · ⏳ ainda não entrou). Passe o mouse no status pra ver o primeiro acesso. O registro começa a valer no próximo login de cada uma.</div>
       <div id="okr-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
       <div class="okr-field-label">Adicionar por e-mail</div>
@@ -1890,7 +1899,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.41 · okr</div>
+<div class="version">v2.43 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1941,7 +1950,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=7"></script>
+<script src="mare-notif.js?v=8"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -2377,11 +2386,15 @@ const OKR_GERENCIAS = [
 // (`kanban/usuarios/{uid}/torre`; sem o campo = Digital). A tela inicial são os botões das torres + uma visão
 // global (todos os Objetivos, separados por cor). Todo mundo VÊ tudo; editar/criar só na própria torre (ADM em
 // qualquer uma; Responsável sempre edita o seu). Cada torre tem a sua lista de Gerências.
-const OKR_TORRES = [
+const OKR_TORRES_TODAS = [
   {id:'digital',     label:'Digital',     icon:'🛒', rgb:'56,182,255'},
   {id:'comercial',   label:'Comercial',   icon:'🛍️', rgb:'255,152,0'},
   {id:'corporativa', label:'Corporativa', icon:'🏛️', rgb:'167,139,250'},
 ];
+// MODO "SÓ HERING" (MARE_SO_HERING, 1º <script>, 2026-10-08): o OKR tem UMA torre — Digital. Tudo que itera OKR_TORRES (home, seletores, filtros, avisos, agenda)
+// passa a ver só ela; os dados das outras ficam no banco, invisíveis (ver _okrSoAtivo()). Desligado = as 3 de sempre.
+const OKR_SO_DIGITAL = !!MARE_SO_HERING;
+const OKR_TORRES = OKR_SO_DIGITAL ? OKR_TORRES_TODAS.filter(t=>t.id==='digital') : OKR_TORRES_TODAS;
 const OKR_TORRE_PADRAO = 'digital';
 // Quem foi criado a partir daqui e ainda não escolheu a torre é perguntado; quem existia antes conta como Digital (sem gravação em massa).
 const OKR_TORRES_CORTE = '2026-10-07T00:00:00';
@@ -2417,7 +2430,11 @@ function _okrGerenciaDe(id, torre){
 }
 function okrTorreInfo(id){ return OKR_TORRES.find(t=>t.id===id) || OKR_TORRES[0]; }
 function _okrTorreValida(id){ return OKR_TORRES.some(t=>t.id===id); }
-function _okrTorreDe(o){ return (o && _okrTorreValida(o.torre)) ? o.torre : OKR_TORRE_PADRAO; }
+// Torre de uma torre INATIVA (modo só Hering) volta como ela mesma ('comercial'…), NÃO como Digital: assim todo filtro `_okrTorreDe(o)===torreAtual` a deixa de fora
+// (snapshots do Histórico, Marcos, eventos…) em vez de misturá-la na Digital.
+function _okrTorreDe(o){ return (o && (_okrTorreValida(o.torre) || OKR_TORRES_TODAS.some(t=>t.id===o.torre))) ? o.torre : OKR_TORRE_PADRAO; }
+// O registro (Objetivo, evento, aviso…) é visível no modo atual? Lê o campo CRU: sem o campo = Digital; torre fora das ativas = invisível.
+function _okrSoAtivo(x){ return !OKR_SO_DIGITAL || !x || !x.torre || _okrTorreValida(x.torre); }
 // 'geral' só existe como torre de PESSOA (nunca de Objetivo): quem tem — ADMs de OKR — cria/edita em TODAS as torres (continua precisando do papel: PO/Organizador ou 🎯 Gestor OKR).
 const OKR_TORRE_GERAL = 'geral';
 function _okrTorreDoUsuario(uid){ const t = uid && _globalUsersCache[uid]?.torre; return t===OKR_TORRE_GERAL ? t : (_okrTorreValida(t) ? t : OKR_TORRE_PADRAO); }
@@ -2543,7 +2560,7 @@ let okrMarcos = {};
       // {id: marco}, marco.objetivoId aponta pro pai
 let _okrFilter = {area:'', trimestre:'', status:'', texto:'', pessoa:'', tag:'', apres:''};   // apres: '' | 'sim' (só incluídos na apresentação) | 'nao' (só ocultos)
 // Onde a pessoa está: '' = tela inicial (botões das torres) · 'digital'|'comercial'|'corporativa' = uma torre · 'global' = todos os Objetivos.
-let _okrTorreAtual = '';
+let _okrTorreAtual = OKR_SO_DIGITAL ? OKR_TORRE_PADRAO : '';   // modo só Hering: já nasce DENTRO da Digital (sem a home de torres)
 function _okrNaVisao(o){ return _okrTorreAtual==='global' || _okrTorreDe(o)===_okrTorreAtual; }
 
 
@@ -2599,6 +2616,7 @@ function _okrTryOpenFromUrl(){
 function loadOkr(){
   window._onValue(window._ref(window._db,'kanban/okr/objetivos'), snap=>{
     okrObjetivos = snap.val() || {};
+    if(OKR_SO_DIGITAL) okrObjetivos = Object.fromEntries(Object.entries(okrObjetivos).filter(([,o])=>_okrSoAtivo(o)));   // modo só Hering: Objetivo de outra torre fica no banco, invisível aqui
     _okrLoaded = true;
     renderOkrObjetivos();
     if(_okrShowHistorico) renderOkrHistorico();
@@ -2892,6 +2910,7 @@ function _okrRel(ts){
   return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'});
 }
 // torres de um aviso/evento → ids válidos, ou ['*'] (todas)
+function _okrAlvoTorresBruto(x){ const t = x && x.torres; return Array.isArray(t) ? t : (t && typeof t==='object' ? Object.values(t) : []); }
 function _okrAlvoTorres(x){
   const t = x && x.torres, arr = Array.isArray(t) ? t : (t && typeof t==='object' ? Object.values(t) : []);
   if(!arr.length || arr.includes('*')) return ['*'];
@@ -2931,6 +2950,7 @@ function _okrMuralDeepLink(){
 function loadOkrMural(){
   window._onValue(window._ref(window._db,'kanban/okr/mural'), snap=>{
     okrMural = snap.val() || {}; _okrMuralLoaded = true;
+    if(OKR_SO_DIGITAL) okrMural = Object.fromEntries(Object.entries(okrMural).filter(([,a])=>{ const arr=_okrAlvoTorresBruto(a); return !arr.length || arr.includes('*') || arr.some(_okrTorreValida); }));   // aviso dirigido SÓ a outra torre não aparece
     _okrExtrasRender(); _okrMuralChecaPopup(); _okrMuralDeepLink();
   });
 }
@@ -4073,7 +4093,7 @@ function loadOkrGerencias(){
     okrGerenciasCfg = snap.val() || {};
     if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // seletores, agrupamento e rótulos dependem da lista
     if(document.getElementById('okr-ger-ov')?.classList.contains('open')) renderOkrGerencias();
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
+    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')){ _okrSyncObjDraftFromDom(); renderOkrObjConfigBody(); }   // sincroniza antes: outra pessoa mexendo nas gerências não pode apagar o que estou digitando
     if(_okrShowHistorico) renderOkrHistorico();
   }, ()=>{});   // sem permissão de leitura: segue com o padrão
 }
@@ -4083,8 +4103,7 @@ function loadOkrTags(){
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{
     okrTags = snap.val() || {};
     if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // chips e filtro por tag dependem das tags carregadas
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
-    else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+    _okrRerenderObjModalSync();
   });
 }
 
@@ -4197,8 +4216,7 @@ async function _okrTagFormSalvar(){
     (_okrObjDraft.tagIds = _okrObjDraft.tagIds||[]).push(id);
     renderOkrObjConfigBody();
   }else{
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
-    else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+    _okrRerenderObjModalSync();
     renderOkrObjetivos();
   }
   showToast(eraNova?'🏷️ Tag criada e aplicada.':'🏷️ Tag atualizada.');
@@ -4334,6 +4352,8 @@ function _okrPessoaOptions(){
     // SEM squad de propósito (_painelEnsureUserRecord(), 2026-09-09) e só aparecia aqui depois de um ADM matriculá-lo em um squad.
     // Basta o registro ter identidade (nome ou e-mail); registros vazios/parciais (só preferências) continuam de fora.
     .filter(([uid,u])=>u && (u.inscrito || u.squads || u.role==='adm' || u.nome || u.email))
+    // MODO "SÓ HERING": listas de pessoas (responsável, participante, @menção) só oferecem contas @ciahering.com.br; registro sem e-mail passa (não dá pra classificar).
+    .filter(([uid,u])=>!OKR_SO_DIGITAL || !u.email || /@ciahering\.com\.br$/i.test(u.email))
     .map(([uid,u])=>({uid, nome:u.nome||u.email||uid}))
     .sort((a,b)=>a.nome.localeCompare(b.nome));
 }
@@ -4840,6 +4860,7 @@ function _okrRenderNav(){
 // Entra numa torre ('digital'|'comercial'|'corporativa'), na visão global ('global') ou volta à tela inicial (''). `push:false`
 // = sem criar entrada no histórico do navegador (vindo da URL/voltar). O botão "voltar" do navegador volta pra tela anterior.
 function _okrEntrarTorre(id, push){
+  if(OKR_SO_DIGITAL) id = OKR_TORRE_PADRAO;   // modo só Hering: não existe home de torres nem visão global
   if(id!=='global' && !_okrTorreValida(id)) id = '';
   const veioDaHome = !_okrTorreAtual;
   if(id!==_okrTorreAtual){ _okrTorreAtual = id; _okrFilter.area = ''; _okrFilter.trimestre = ''; _okrHistFiltro.area = ''; _okrHistFiltro.torre = ''; _okrHistMArea = ''; _okrShowArquivados = false; }   // gerências e períodos são da torre: o filtro da anterior deixava a lista vazia com o select mostrando "Todos"
@@ -5145,6 +5166,7 @@ function _okrCalItens(de, ate, torreF){
 function loadOkrCalendario(){
   window._onValue(window._ref(window._db, OKR_CAL_PATH), snap=>{
     okrEventos = snap.val() || {}; _okrCalLoaded = true;
+    if(OKR_SO_DIGITAL) okrEventos = Object.fromEntries(Object.entries(okrEventos).filter(([,e])=>_okrSoAtivo(e)));   // agenda de outra torre: invisível (a global e a Digital ficam)
     if(_okrShowCal) renderOkrCalendario();
     _okrEventoDeepLink();
     try{ renderOkrObjetivos(); }catch(e){}   // o selo 📅 dos cartões acompanha as mudanças de agenda (mesmo com o calendário aberto, pra já estar certo ao voltar pros Objetivos)
@@ -5666,7 +5688,7 @@ function addOkrViewer(){
   const emailInp = document.getElementById('okr-viewer-email'), nomeInp = document.getElementById('okr-viewer-nome');
   const email = (emailInp?.value||'').trim().toLowerCase();
   if(!email || !email.includes('@')){ showToast('⚠ E-mail inválido'); return; }
-  if(_isTrustedDomainEmail(email)){ showToast('❌ E-mails @ciahering.com.br/@arezzo.com.br já têm acesso — não precisam ser adicionados aqui.'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ E-mails '+_dominiosTxt()+' já têm acesso — não precisam ser adicionados aqui.'); return; }
   if((email.match(/\./g)||[]).length>8){ showToast('❌ Esse e-mail tem pontos demais (máx. 8): as regras do banco só conseguem localizar até 8 pontos no e-mail, e a pessoa ficaria autorizada aqui mas barrada ao entrar.'); return; }   // as regras trocam no máx. 8 pontos por vírgula ao procurar a chave
   const entry = { email, nome:(nomeInp?.value||'').trim(), addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
   window._set(window._ref(window._db,'kanban/painel_viewers/'+_painelViewerKey(email)), entry)
@@ -5687,6 +5709,7 @@ function removeOkrViewer(key){
 // Sem o campo = Digital (todo mundo que já existia). Quem se cadastra a partir de OKR_TORRES_CORTE e ainda não tem torre
 // escolhe aqui, numa tela obrigatória (não dá pra fechar). ADM troca a de qualquer pessoa em 👥 Global Users (painel).
 function _okrCheckTorrePrompt(){
+  if(OKR_SO_DIGITAL) return;   // modo só Hering: uma torre só, ninguém é perguntado
   const u = window._currentUser; if(!u || window._isPainelViewer || document.getElementById('okr-torre-ov')) return;
   const rec = _globalUsersCache[u.uid]; if(!rec || _okrTorreValida(rec.torre) || rec.torre===OKR_TORRE_GERAL) return;
   if(!(String(rec.criadoEm||'') >= OKR_TORRES_CORTE)) return;   // já existia antes: conta como Digital, ninguém é perguntado
@@ -6540,6 +6563,21 @@ let _okrObjDraft = null;
 // estado atual antes de fechar de verdade.
 let _okrObjOpenSnapshot = null;
 
+
+// Chave de comparação do "tem alteração não salva?". O DOM devolve '' / true onde o dado antigo nunca teve o campo (mostrarApresentacao ausente = aparece;
+// responsável/prazo/descrição/pilar ausentes = vazio), então comparar o JSON cru acusava "alterações não salvas" sem a pessoa ter mexido em nada — em TODO Marco
+// anterior ao botão 🎬 e em todo Objetivo aberto na ⚙ Configurações (/monitorarbugs 2026-10-08). Normaliza os dois lados e ordena as chaves.
+function _okrDirtyStr(d){
+  const c = JSON.parse(JSON.stringify(d||{}));
+  c.mostrarApresentacao = c.mostrarApresentacao!==false;
+  ['nome','titulo','responsavel','prazo','descricao','pilar'].forEach(k=>{ if(c[k]==null) c[k] = ''; });
+  const ord = v => Array.isArray(v) ? v.map(ord) : (v && typeof v==='object') ? Object.keys(v).sort().reduce((o,k)=>(o[k]=ord(v[k]),o),{}) : v;
+  return JSON.stringify(ord(c));
+}
+function _okrSnapshotMudou(draft, snapshot){
+  try{ return _okrDirtyStr(draft) !== _okrDirtyStr(JSON.parse(snapshot)); }catch(e){ return JSON.stringify(draft) !== snapshot; }
+}
+
 // ═══ 🔒 TRAVA DE EDIÇÃO CONCORRENTE DO OBJETIVO (okr-dev v2.21) ═══════════════════════════════════════════════════════════
 // Pedido direto: "trave edição simultânea do mesmo objetivo, estilo o que já temos no kanban em cards". Mesmo desenho da trava de card
 // (kanban-dev.html, _checkCardLock()): 1 nó por Objetivo em kanban/okr/obj_locks/{objId} = {uid, who, ts[, request:{byUid,byWho,at}]}.
@@ -6820,7 +6858,7 @@ async function _okrTryCloseObjetivo(){
     const _camposAdd = ['indicadores','progressos','proximosPassos','riscos','planosAcao','trimestres'];
     const _temTextoPendente = _camposAdd.some(c => (document.getElementById('okr-add-'+c)?.value||'').trim());
     const _atingPendente = !!((document.getElementById('okr-ating-valor')?.value||'').trim() || (document.getElementById('okr-ating-nota')?.value||'').trim());
-    if(_temTextoPendente || _atingPendente || JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+    if(_temTextoPendente || _atingPendente || _okrSnapshotMudou(_okrObjDraft, _okrObjOpenSnapshot)){
       if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -7474,6 +7512,17 @@ function _okrRerenderCurrentScreen(){
 }
 
 
+// Re-render do modal do Objetivo disparado por algo ASSÍNCRONO de fora (outra pessoa criou/editou uma tag, mexeram nas gerências…): guarda antes o que a pessoa
+// já digitou — sem isto o texto do título/pilar/descrição (⚙ Configurações) ou o valor do atingimento sumia sem ela fazer nada (/monitorarbugs 2026-10-08).
+function _okrRerenderObjModalSync(){
+  if(!_okrObjDraft) return;
+  const cfg = document.getElementById('okr-obj-config-ov')?.classList.contains('open'), main = document.getElementById('okr-obj-ov')?.classList.contains('open');
+  if(!cfg && !main) return;
+  _okrSyncObjDraftFromDom();
+  if(cfg) renderOkrObjConfigBody(); else renderOkrObjBody(_okrEditingObjId);
+}
+
+
 function _okrListAdd(campo){
   const inp = document.getElementById('okr-add-'+campo);
   const v = (inp?.value||'').trim(); if(!v) return;
@@ -7610,6 +7659,7 @@ async function _okrMarcoMover(objId, marcoId, dir){
   marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = ordens[i]; });
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: ordens[i]}; });
+  _okrSyncObjDraftFromDom();   // a gravação é assíncrona: o que foi digitado enquanto isso (ex.: valor do atingimento) não pode sumir no re-render
   renderOkrObjBody(_okrEditingObjId);
 }
 
@@ -7636,6 +7686,7 @@ async function _okrMarcoReorderTo(objId, draggedId, targetId){
   marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = i; });
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: i}; });
+  _okrSyncObjDraftFromDom();   // idem _okrMarcoMover()
   renderOkrObjBody(objId);
 }
 
@@ -7764,6 +7815,14 @@ function renderOkrObjBody(id){
 // tags/responsável. Extraído de renderOkrObjBody() (ver comentário lá) pra
 // esta 2ª tela; mesmo _okrObjDraft, sem dirty-check próprio (ver
 // openOkrConfig()/closeOkrConfigBack()).
+// Campo "Torre" da ⚙ Configurações — some no modo só Hering (OKR_SO_DIGITAL).
+function _okrTorreCampoHtml(d){
+  return `<div class="okr-field-label">Torre</div>
+  ${_okrPodeMudarTorre()
+    ? `<select class="okr-select" id="okr-f-torre" onchange="_okrMudarTorreDraft(this.value)">${OKR_TORRES.map(t=>`<option value="${t.id}"${t.id===_okrTorreDe(d)?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`
+    : `<div><span class="okr-torre-chip okr-t-${_okrTorreDe(d)}">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> <span style="font-size:10px;color:var(--txt3);">só um ADM (ou quem tem a torre Geral) muda a torre de um Objetivo</span></div>`}`;
+}
+
 function renderOkrObjConfigBody(){
   if(_okrObjDraft) _okrAplicarTorreModal(_okrTorreDe(_okrObjDraft));
   const body = document.getElementById('okr-obj-config-body');
@@ -7780,10 +7839,7 @@ function renderOkrObjConfigBody(){
   body.innerHTML = `
     <div class="okr-field-label">Título do Objetivo</div>
     <input type="text" class="okr-input" id="okr-f-titulo" value="${esc(d.titulo||'')}" placeholder="Ex.: Definir o modelo e viabilidade do OMNI Hering">
-    <div class="okr-field-label">Torre</div>
-    ${_okrPodeMudarTorre()
-      ? `<select class="okr-select" id="okr-f-torre" onchange="_okrMudarTorreDraft(this.value)">${OKR_TORRES.map(t=>`<option value="${t.id}"${t.id===_okrTorreDe(d)?' selected':''}>${t.icon} ${esc(t.label)}</option>`).join('')}</select>`
-      : `<div><span class="okr-torre-chip okr-t-${_okrTorreDe(d)}">${okrTorreInfo(_okrTorreDe(d)).icon} ${esc(okrTorreInfo(_okrTorreDe(d)).label)}</span> <span style="font-size:10px;color:var(--txt3);">só um ADM (ou quem tem a torre Geral) muda a torre de um Objetivo</span></div>`}
+    ${OKR_SO_DIGITAL ? '' : _okrTorreCampoHtml(d)}
     <div class="okr-field-label">Gerência</div>
     <select class="okr-select" id="okr-f-area" onchange="_okrSyncObjDraftFromDom();renderOkrObjConfigBody();">${okrGerenciasDa(_okrTorreDe(d)).map(g=>`<option value="${g.id}"${g.id===d.areaId?' selected':''}>${g.icon} ${esc(g.label)}</option>`).join('')}${okrGerenciasDa(_okrTorreDe(d)).some(g=>g.id===d.areaId)?'':`<option value="${esc(d.areaId||'')}" selected>${esc(okrGerenciaLabel(d.areaId, _okrTorreDe(d)))} (${okrGerenciasDa(_okrTorreDe(d), true).some(g=>g.id===d.areaId)?'oculta':'fora da lista'})</option>`}</select>
     ${_okrBlocoInfoHtml(d.areaId, _okrTorreDe(d))}
@@ -7812,8 +7868,27 @@ function renderOkrObjConfigBody(){
 
 
 
+// Trava de "salvando": o id do Objetivo NOVO nasce a cada chamada e a gravação é assíncrona — duplo clique em 💾 Salvar (ou Enter repetido)
+// criava 2 Objetivos / duplicava a linha do histórico e a notificação (/monitorarbugs 2026-10-08; mesma lição do registro rápido e do evento).
+let _okrSalvandoObj = false;
 async function saveOkrObjetivo(){
+  if(_okrSalvandoObj) return;
+  _okrSalvandoObj = true;
+  const _botoes = [...document.querySelectorAll('#okr-obj-footer .save-btn, #okr-obj-config-footer .save-btn')];
+  _botoes.forEach(b=>b.disabled = true);
+  const _histAntes = _okrObjDraft && Array.isArray(_okrObjDraft.history) ? _okrObjDraft.history.slice() : null;
+  try{ return await _saveOkrObjetivoInner(); }
+  catch(e){   // falha de gravação (permissão/rede): o modal continua aberto, sem duplicar a linha de histórico numa nova tentativa
+    if(_okrObjDraft && _histAntes) _okrObjDraft.history = _histAntes;
+    console.error('saveOkrObjetivo', e); showToast('⚠ Não consegui salvar o Objetivo. Tente de novo.');
+  }
+  finally{ _okrSalvandoObj = false; _botoes.forEach(b=>{ if(b.isConnected) b.disabled = false; }); }
+}
+
+
+async function _saveOkrObjetivoInner(){
   if(_okrEditingObjId && _okrLockBloqueia(_okrEditingObjId)) return;   // outra pessoa assumiu a trava (corrida/pedido): não grava por cima
+  if(_okrEditingObjId && !okrObjetivos[_okrEditingObjId]){ showToast('⚠ Este Objetivo foi excluído por outra pessoa enquanto você editava — não dá pra salvar.'); return; }   // senão o Salvar o "ressuscitava"
   _okrSyncObjDraftFromDom();
   const d = _okrObjDraft;
   // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
@@ -7826,7 +7901,7 @@ async function saveOkrObjetivo(){
       const antes=(d.atingimento.lancamentos||[]).length;
       _okrAtingAdd(true);
       if(((_okrObjDraft.atingimento&&_okrObjDraft.atingimento.lancamentos)||[]).length<=antes) return;   // valor inválido: _okrAtingAdd já avisou; não salva
-      return saveOkrObjetivo();                                                                          // reentra já com o registro no rascunho e o formulário limpo
+      return _saveOkrObjetivoInner();                                                                    // reentra (sem a trava de duplo clique) já com o registro no rascunho e o formulário limpo
     }
   }
   // Registros lançados por OUTRA pessoa enquanto este modal estava aberto (o listener ao vivo já os trouxe pra okrObjetivos): o Salvar grava o
@@ -8036,7 +8111,7 @@ async function _okrTryCloseMarco(){
     // verdade com Enter/"+ Add"; sem confirmar, nunca entra em
     // _okrSyncMarcoDraftFromDom() e clicar fora perdia o texto em silêncio.
     const _temTextoPendente = (document.getElementById('okr-checklist-add')?.value||'').trim();
-    if(_temTextoPendente || JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+    if(_temTextoPendente || _okrSnapshotMudou(_okrMarcoDraft, _okrMarcoOpenSnapshot)){
       if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -8215,7 +8290,7 @@ function _okrLoadMarcoComments(marcoId){
   window._get(window._ref(window._db,'kanban/okr/marco_comments/'+marcoId)).then(snap=>{
     const val = snap.val()||{};
     _okrMarcoComments = Object.values(val).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
-    if(_okrEditingMarcoId===marcoId) renderOkrMarcoBody();
+    if(_okrEditingMarcoId===marcoId){ _okrSyncMarcoDraftFromDom(); renderOkrMarcoBody(); }   // a leitura volta DEPOIS de a pessoa já ter começado a digitar: sem o sync o re-render apagava nome/descrição/prazo
   }).catch(()=>{});
 }
 
@@ -8301,8 +8376,27 @@ function renderOkrMarcoBody(){
 
 
 
+// Mesma trava do saveOkrObjetivo(): o id do Marco NOVO nasce a cada chamada (duplo clique = 2 Marcos + 2 linhas no histórico do Objetivo).
+let _okrSalvandoMarco = false;
 async function saveOkrMarco(){
+  if(_okrSalvandoMarco) return;
+  _okrSalvandoMarco = true;
+  const _botoes = [...document.querySelectorAll('#okr-marco-footer .save-btn')];
+  _botoes.forEach(b=>b.disabled = true);
+  const _histAntes = _okrMarcoDraft && Array.isArray(_okrMarcoDraft.history) ? _okrMarcoDraft.history.slice() : null;
+  try{ return await _saveOkrMarcoInner(); }
+  catch(e){
+    if(_okrMarcoDraft && _histAntes) _okrMarcoDraft.history = _histAntes;
+    console.error('saveOkrMarco', e); showToast('⚠ Não consegui salvar o Marco. Tente de novo.');
+  }
+  finally{ _okrSalvandoMarco = false; _botoes.forEach(b=>{ if(b.isConnected) b.disabled = false; }); }
+}
+
+
+async function _saveOkrMarcoInner(){
   if(_okrMarcoDraft && _okrLockBloqueia(_okrMarcoDraft.objetivoId)) return;   // Objetivo travado por outra pessoa
+  if(_okrMarcoDraft && !okrObjetivos[_okrMarcoDraft.objetivoId]){ showToast('⚠ O Objetivo deste Marco foi excluído por outra pessoa — não dá pra salvar.'); return; }
+  if(_okrEditingMarcoId && !okrMarcos[_okrEditingMarcoId]){ showToast('⚠ Este Marco foi excluído por outra pessoa enquanto você editava — não dá pra salvar.'); return; }   // senão o Salvar o "ressuscitava"
   const d = _okrMarcoDraft;
   d.nome = document.getElementById('okr-m-nome').value.trim();
   if(!d.nome){ showToast('Dá um nome pro marco antes de salvar.'); return; }
@@ -8390,6 +8484,18 @@ document.addEventListener('click',e=>{if(e.target.id==='okr-obj-config-ov')_okrT
 
 
 document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')_okrTryCloseMarco();});
+
+
+// Esc fecha o modal de edição (Objetivo / ⚙ Configurações / Marco) pelo MESMO caminho do ✕ e do clique fora — com o aviso de "alterações não salvas".
+// Era a única janela da página sem Esc (todas as outras fecham). Fase de BORBULHA de propósito: as camadas de cima (diálogo, gráfico, registro rápido, ajuda,
+// menu de contexto, calendário...) tratam o Esc em captura com stopPropagation e chegam antes; e quem já usou o Esc (cancelar a edição de um item da lista,
+// que dá preventDefault) não fecha a janela por baixo.
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape' || e.defaultPrevented || e.isComposing) return;
+  if(e.target && e.target.tagName==='SELECT') return;   // Esc fecha a lista aberta do <select>, não a janela
+  if(document.getElementById('okr-obj-config-ov')?.classList.contains('open') || document.getElementById('okr-obj-ov')?.classList.contains('open')){ e.preventDefault(); _okrTryCloseObjetivo(); }
+  else if(document.getElementById('okr-marco-ov')?.classList.contains('open')){ e.preventDefault(); _okrTryCloseMarco(); }
+});
 
 
 // ── ❓ Ajuda do OKR (v2.35): abas, busca, perguntas frequentes e "🙋 O que eu posso fazer?" (calculado do papel real da pessoa) ──
@@ -8539,18 +8645,18 @@ function _okrHelpEuHtml(){
   const pode = [], nao = [];
   const torresTxt = P.adm || P.geral ? 'qualquer torre' : (P.torresEdita.length ? 'na torre '+P.torresEdita.map(t=>t.icon+' '+t.label).join(', ') : '');
   if(P.viewer){
-    pode.push('<b>Acompanhar</b>: ver as 3 torres, o '+G('dashboard','📊 Dashboard')+', as Anotações e a '+G('apresentacao','apresentação')+'.');
+    pode.push('<b>Acompanhar</b>: ver '+(OKR_SO_DIGITAL?'os Objetivos':'as 3 torres')+', o '+G('dashboard','📊 Dashboard')+', as Anotações e a '+G('apresentacao','apresentação')+'.');
     pode.push('Receber os avisos do <b>📢 Mural</b> e as novidades das torres no '+G('sino','🔔 sino')+'.');
     pode.push('<b>Buscar</b> na ajuda e abrir o '+G('link','link de um Objetivo')+' que te mandaram.');
     nao.push('Editar, criar ou registrar qualquer coisa — o acesso é só de leitura (as regras do Firebase impedem).');
     nao.push('Ver e-mails ou notificações pessoais de outras pessoas.');
   } else {
-    pode.push('<b>Ver tudo</b>: as 3 torres, a 🌐 Visão global, o '+G('dashboard','Dashboard')+' e as Anotações — '+G('filtros','filtrando')+' por gerência, status, pessoa ou tag.');
+    pode.push('<b>Ver tudo</b>: '+(OKR_SO_DIGITAL?'os Objetivos':'as 3 torres, a 🌐 Visão global')+', o '+G('dashboard','Dashboard')+' e as Anotações — '+G('filtros','filtrando')+' por gerência, status, pessoa ou tag.');
     pode.push('<b>Apresentar</b> em slides (🎥) e abrir o '+G('link','link de um Objetivo')+'.');
     pode.push('Usar o '+G('sino','🔔 sino')+', o 📢 Mural e o '+G('agente','💬 Agente Ágil')+' (que respeita as suas permissões).');
     if(P.adm || P.organiza){
       pode.push('<b>Criar e editar Objetivos e Marcos</b> em '+torresTxt+' — inclusive '+G('atingimento','registrar o atingimento')+' e usar o '+G('menu','menu de ações')+'.');
-      pode.push('<b>⚙ Gerências</b>: criar, renomear, reordenar e ocultar as da '+(P.adm||P.geral?'torre':'sua torre')+'. '+G('torres','Saiba mais'));
+      pode.push('<b>⚙ Gerências</b>: criar, renomear, reordenar e ocultar as da '+(P.adm||P.geral?'torre':'sua torre')+'.'+(OKR_SO_DIGITAL?'':' '+G('torres','Saiba mais')));
       pode.push('<b>📅 Calendário</b>: criar reuniões '+(P.adm ? 'na agenda <b>🌐 global</b> e em qualquer torre' : 'na agenda da '+(P.geral?'torre':'sua torre'))+', com convidados e pauta. '+G('calendario','Saiba mais'));
       pode.push('<b>📢 Mural</b>: publicar avisos '+(P.adm||P.geral?'pra todas as torres':'pra '+P.torresEdita.map(t=>t.icon+' '+t.label).join(', '))+'.');
     }
@@ -8677,10 +8783,13 @@ function doSignIn(){
 }
 function doSignInMicrosoft(){
   const err=document.getElementById('login-err'); err.style.display='none';
+  if(MARE_SO_HERING){ err.textContent='O login pela Microsoft está desativado — entre com a conta Google @ciahering.com.br.'; err.style.display='block'; return; }
   window._signInMicrosoft().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
 }
 function doSignOut(){ window._signOut(); }
-const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
+// MODO "SÓ HERING" (MARE_SO_HERING, 1º <script>): só @ciahering.com.br. Desligado, volta @arezzo.com.br (Microsoft) também.
+const TRUSTED_DOMAINS = MARE_SO_HERING ? ['@ciahering.com.br'] : ['@ciahering.com.br', '@arezzo.com.br'];
+const _dominiosTxt = () => TRUSTED_DOMAINS.join('/');
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
 function _loginProviderMismatchMsg(user){
   const email=String(user?.email||'').toLowerCase();
@@ -8718,7 +8827,7 @@ window.addEventListener('auth-change',e=>{
         const viewers = snap.val()||{};
         const allowed = !!viewers[_painelViewerKey(user.email)];
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça a um ADM pra te adicionar como visualizador.';
+          document.getElementById('login-err').textContent='Acesso restrito a '+_dominiosTxt()+'. Peça a um ADM pra te adicionar como visualizador.';
           document.getElementById('login-err').style.display='block';
           window._signOut();
         } else {
@@ -8729,7 +8838,7 @@ window.addEventListener('auth-change',e=>{
       }).catch(err=>{
         console.error('[painel_viewers check] erro (tentativa '+tentativa+'):', err);
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_check(tentativa+1));
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').textContent='Acesso restrito a '+_dominiosTxt()+'. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut();
       });

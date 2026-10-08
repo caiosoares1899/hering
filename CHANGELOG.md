@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.802 — 2026-10-08 · Promove pra prod — Maré só Hering (login só Google, OKR só Digital, menção só @ciahering) + links em aba nova + modal de edição do OKR
+
+Promove pra produção, com `painel.html v5.21`, `okr.html v2.43` e `mare-notif.js v8`: o **modo só Hering** (entrada abaixo — `window.MARE_SO_HERING = true`; o botão "Entrar com Microsoft" some, o OKR abre direto na torre Digital, @menção/listas de pessoas só com `@ciahering.com.br`), que já tinha `database.rules.json` e as Cloud Functions publicados pelo usuário; os **links entre páginas em aba nova** no kanban (v8.30.801-dev, que ainda não tinha subido); e, no `okr.html`, o **conserto do modal de edição** (duplo clique em Salvar, "alterações não salvas" falso, texto digitado sumindo, Esc — okr-dev v2.42). Merge de 3 vias a partir do estado promovido anteriormente; dev × prod só diferem nas linhas de ambiente. Sem avisos (Mural/WhatsApp), a pedido. Doc de referência e passo a passo pra religar: `docs/arezzo/MARE_SO_HERING.md`.
+
 ### 🏢 Maré só Hering — 2026-10-08 · kanban-dev v8.30.802-dev · painel-dev v5.21 · okr-dev v2.43 · apresentação · mare-notif-dev v8 · regras do banco · Cloud Functions (SÓ DEV — produção ainda não mudou)
 
 Pedido direto: *"o Maré vai só atender Hering! pode voltar as configurações de só ter acesso Google, OKR só do Digital, menção só a Hering… mapeia tudo que tem hoje, faz as alterações mas gera um doc com tudo que tem e como implementou, caso seja necessário implementar novamente"*. Em vez de apagar o que foi construído entre 2026-10-01 e 07, tudo ficou atrás de **um interruptor por página** (`window.MARE_SO_HERING = true`) + um arquivo de regras arquivado — religar é trocar o valor (passo a passo no doc).
