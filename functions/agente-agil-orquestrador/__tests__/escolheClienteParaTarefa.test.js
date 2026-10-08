@@ -111,3 +111,32 @@ test('db.ref().get() lançando erro: ignora override silenciosamente, cai na heu
   const { tier } = await escolheClienteParaTarefa({ apiKey: 'sk-fake', taskText: 'move esse card', db: dbQuebrado });
   assert.equal(tier, 'sonnet');
 });
+
+test('tier haiku usa o Haiku 5.5, com fallback pro 4.5; sonnet/opus não ganham fallback extra aqui', async () => {
+  const { FALLBACK_BY_TIER } = require('../escolheClienteParaTarefa');
+  assert.equal(MODEL_BY_TIER.haiku, 'claude-haiku-5-5');
+  assert.equal(FALLBACK_BY_TIER.haiku, 'claude-haiku-4-5-20251001');
+  assert.equal(FALLBACK_BY_TIER.sonnet, undefined);
+  assert.equal(FALLBACK_BY_TIER.opus, undefined);
+});
+
+test('haiku: id recusado pela API (404) → repete 1x com o Haiku 4.5', async () => {
+  const { escolheClienteParaTarefa } = require('../escolheClienteParaTarefa');
+  const { _modelosIndisponiveis } = require('../llmClient');
+  _modelosIndisponiveis.clear();
+  const originalFetch = global.fetch, warn = console.warn; console.warn = () => {};
+  const modelos = [];
+  global.fetch = async (url, opts) => {
+    const m = JSON.parse(opts.body).model; modelos.push(m);
+    return m === 'claude-haiku-5-5'
+      ? { ok: false, status: 404, text: async () => 'not_found_error' }
+      : { ok: true, json: async () => ({ content: [{ type: 'text', text: 'ok' }], stop_reason: 'end_turn', usage: {} }) };
+  };
+  try {
+    const { tier, llmClient } = await escolheClienteParaTarefa({ apiKey: 'k', taskText: '@Agente Ágil o que é WIP?' });
+    assert.equal(tier, 'haiku');
+    const r = await llmClient.decide({ system: 's', history: [{ role: 'user', text: 't' }], tools: [] });
+    assert.equal(r.text, 'ok');
+    assert.deepEqual(modelos, ['claude-haiku-5-5', 'claude-haiku-4-5-20251001']);
+  } finally { global.fetch = originalFetch; console.warn = warn; _modelosIndisponiveis.clear(); }
+});
