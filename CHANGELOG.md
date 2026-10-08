@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.803 · okr v2.45 — 2026-10-08 · Promove pra prod — OKR: "Digital Hering 🐟" + Ajuda/Guia ao lado de Apresentação (okr.html v2.45)
+
+Promove o okr-dev v2.45 (entrada "🐟 OKR: a torre única vira Digital Hering 🐟", abaixo): a torre única passa a se chamar **Digital Hering 🐟** (em vez de "🛒 Torre Digital") e **❓ Ajuda** e **📘 Guia** saem do "⋯ Mais" e ficam ao lado de 🎥 Apresentação. Sem mudança no kanban nem no painel (seguem na v8.30.803 / v5.22). Guia, apresentação e `maredigital` já estavam no ar (compartilhados). Sem avisos (pedido do usuário).
+
 ### 🐟 OKR: a torre única vira "Digital Hering 🐟" + guia e maredigital em dia com o modo só Hering — 2026-10-08 · okr-dev v2.45 · apresentação · guia-okr · maredigital (okr-dev SÓ DEV; guia/apresentação/maredigital são compartilhados e valem já)
 
 - **Rótulo:** no modo só Hering o OKR deixa de falar "🛒 Torre Digital" e passa a mostrar **"Digital Hering 🐟"** (título da tela, ⚙ Gerências, avisos do sino "Novo Objetivo / Marco concluído", agenda, apresentação). Implementação: `OKR_TORRES` (okr-dev e apresentação) mapeia a torre única pra `{label:'Digital Hering 🐟', icon:''}` e o helper novo `okrTorreTitulo(id)` (`_okrTorreTitulo` na apresentação) devolve só o rótulo no modo só Hering e `🛒 Torre Digital` com o interruptor desligado — religar as 3 torres traz tudo de volta sem mexer em mais nada.
