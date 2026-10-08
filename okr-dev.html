@@ -1231,6 +1231,103 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   .okr-foot-menu button{width:100%;text-align:left;}
 }
 
+/* ── ❓ Ajuda do OKR (v2.35): abas + busca + perguntas frequentes + "O que eu posso fazer?" ── */
+#okr-help-ov .hlp-modal{max-width:820px;width:100%;height:min(86vh,780px);max-height:none;background:rgba(var(--deep-rgb),.98);}
+.hlp-top{flex-shrink:0;border-bottom:1px solid var(--glass-b);background:rgba(var(--deep-rgb),.98);}
+.hlp-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 6px;}
+.hlp-ttl{font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--txt);}
+.hlp-search{display:flex;align-items:center;gap:8px;margin:4px 16px 8px;padding:0 10px;border:1px solid var(--glass-b);border-radius:10px;background:var(--glass);}
+.hlp-search:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px rgba(56,182,255,.15);}
+.hlp-search input{flex:1;min-width:0;height:38px;background:none;border:0;outline:0;color:var(--txt);font-size:13px;font-family:inherit;-webkit-appearance:none;appearance:none;}
+.hlp-search input::-webkit-search-cancel-button{display:none;}
+.hlp-clear{background:none;border:0;color:var(--txt3);cursor:pointer;font-size:13px;padding:6px;}
+.hlp-clear:hover{color:var(--txt);}
+.hlp-kbd,.hlp-tip kbd{font-size:10px;padding:1px 6px;border:1px solid var(--glass-b);border-bottom-width:2px;border-radius:5px;color:var(--txt3);font-family:inherit;}
+.hlp-search:focus-within .hlp-kbd,.hlp-search.has-q .hlp-kbd{display:none;}
+.hlp-tabs{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 10px;}   /* desktop: quebra em 2 linhas se faltar largura; celular: uma fila que rola (abaixo) */
+.hlp-tabs.sr{display:none;}   /* em busca as abas somem: os resultados já vêm agrupados com o título de cada seção */
+.hlp-tab{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;padding:6px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);font-size:12px;font-family:inherit;cursor:pointer;white-space:nowrap;}
+.hlp-tab:hover{color:var(--txt);border-color:var(--accent);}
+.hlp-tab.on{background:rgba(56,182,255,.18);border-color:var(--accent);color:var(--accent);font-weight:700;}
+.hlp-tab em{font-style:normal;font-size:10px;opacity:.85;}
+.hlp-tab em:empty{display:none;}
+.hlp-tab.dim{opacity:.45;}
+.hlp-res{padding:0 16px 10px;font-size:11.5px;color:var(--txt2);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hlp-res[hidden],.hlp-pane[hidden],.hlp-empty[hidden],.hlp-it[hidden]{display:none!important;}
+#okr-help-ov .hlp-body{display:block;padding:12px 16px 18px;font-size:12px;color:var(--txt2);line-height:1.6;scroll-behavior:smooth;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.hlp-panehd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:2px 0 8px;font-size:11px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;}
+.hlp-lnk{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;font-size:inherit;font-family:inherit;text-decoration:underline;text-underline-offset:2px;text-transform:none;letter-spacing:0;font-weight:500;}
+.hlp-it{border:1px solid var(--glass-b);background:var(--glass);border-radius:11px;margin-bottom:7px;overflow:hidden;}
+.hlp-it[open]{border-color:rgba(56,182,255,.35);}
+.hlp-it>summary{list-style:none;display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;min-height:44px;}
+.hlp-it>summary::-webkit-details-marker{display:none;}
+.hlp-it>summary::after{content:'›';margin-left:auto;color:var(--txt3);font-size:18px;transition:transform .15s;}
+.hlp-it[open]>summary::after{transform:rotate(90deg);}
+.hlp-ic{font-size:18px;width:26px;text-align:center;flex-shrink:0;}
+.hlp-tt{display:flex;flex-direction:column;min-width:0;}
+.hlp-tt b{color:var(--txt);font-size:12.5px;line-height:1.35;}
+.hlp-tt small{color:var(--txt3);font-size:11px;line-height:1.35;}
+.hlp-snip{display:block;margin-top:3px;font-size:11px;color:var(--txt2);line-height:1.45;}
+.hlp-bd{padding:2px 14px 13px 48px;}
+.hlp-bd p{margin:0 0 8px;}
+.hlp-bd ul,.hlp-bd ol{margin:4px 0 8px;padding-left:18px;}
+.hlp-bd li{margin-bottom:5px;}
+.hlp-bd b{color:var(--txt);}
+.hlp-bd code{font-size:11px;padding:0 5px;border-radius:5px;background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);}
+.hlp-bd a.hlp-go,.hlp-steps a.hlp-go,.hlp-eu a.hlp-go{color:var(--accent);}
+mark.hlp-mk{background:rgba(255,213,79,.35);color:inherit;border-radius:3px;padding:0 1px;}
+.hlp-flash{animation:hlpFlash 1.4s ease-out;}
+@keyframes hlpFlash{0%{box-shadow:0 0 0 3px rgba(56,182,255,.7);}100%{box-shadow:0 0 0 3px rgba(56,182,255,0);}}
+.hlp-hero{border:1px solid rgba(56,182,255,.3);background:rgba(56,182,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.hlp-hero>b{color:var(--txt);font-size:13px;}
+.hlp-hero p{margin:8px 0 0;}
+.hlp-flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px;}
+.hlp-flow span{padding:4px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:12px;}
+.hlp-flow i{font-style:normal;color:var(--txt3);}
+.hlp-h{margin:16px 0 8px;font-size:12px;color:var(--txt);font-weight:700;}
+.hlp-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;}
+.hlp-card{display:flex;align-items:center;gap:10px;text-align:left;padding:10px 12px;border:1px solid var(--glass-b);background:var(--glass);border-radius:11px;cursor:pointer;color:var(--txt2);font-family:inherit;min-height:50px;}
+.hlp-card:hover{border-color:var(--accent);}
+.hlp-card-ic{font-size:20px;flex-shrink:0;}
+.hlp-card-tx{display:flex;flex-direction:column;min-width:0;}
+.hlp-card-tx b{color:var(--txt);font-size:12px;}
+.hlp-card-tx small{font-size:10.5px;color:var(--txt3);line-height:1.35;}
+.hlp-steps{margin:0;padding-left:20px;}
+.hlp-steps li{margin-bottom:6px;}
+.hlp-tip{margin:14px 0 0;padding:10px 12px;border-radius:10px;border:1px dashed var(--glass-b);}
+/* 🙋 O que eu posso fazer? — calculado do papel real da pessoa */
+.hlp-eu{border:1px solid rgba(var(--mc,56,182,255),.45);background:rgba(var(--mc,56,182,255),.08);border-radius:12px;padding:12px 14px;}
+.hlp-eu-hd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hlp-eu-hd>b{color:var(--txt);font-size:13px;}
+.hlp-eu-chips{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0 2px;}
+.hlp-eu-chip{font-size:10.5px;padding:2px 9px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);}
+.hlp-eu h4{margin:10px 0 4px;font-size:11px;font-weight:700;color:var(--txt);}
+.hlp-eu ul{margin:0;padding-left:18px;}
+.hlp-eu li{margin-bottom:4px;}
+.hlp-eu .nao{color:var(--txt2);}
+.hlp-empty{text-align:center;padding:26px 10px;color:var(--txt2);}
+.hlp-empty .hlp-sug{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px;}
+@media (max-width:640px){
+  #okr-help-ov{padding:0;align-items:stretch;}
+  #okr-help-ov .hlp-modal{max-width:none;height:100vh;height:100dvh;background:rgb(var(--deep-rgb));border-radius:0;border-left:0;border-right:0;border-bottom:0;}
+  body:has(> div[style*="249,115,22"]) #okr-help-ov .hlp-modal{padding-top:48px;}
+  .hlp-hd{padding:10px 12px 4px;}
+  .hlp-search{margin:4px 12px 8px;}
+  .hlp-search input{font-size:16px;height:42px;}
+  .hlp-kbd,.hlp-tip kbd{display:none;}
+  .hlp-tabs{padding:0 12px 8px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;}
+  .hlp-tabs::-webkit-scrollbar{display:none;}
+  .hlp-tab{padding:8px 13px;font-size:12.5px;}
+  .hlp-res{padding:0 12px 8px;}
+  #okr-help-ov .hlp-body{padding:10px 12px calc(18px + env(safe-area-inset-bottom));}
+  .hlp-bd{padding:2px 12px 12px 12px;}
+  .hlp-cards{grid-template-columns:1fr 1fr;}
+  .hlp-card{padding:9px 10px;gap:8px;}
+  .hlp-card-ic{font-size:18px;}
+}
+@media (hover:none),(pointer:coarse){ .hlp-kbd,.hlp-tip kbd{display:none;} }
+body:has(#okr-help-ov.open) .version{display:none;}   /* o rótulo de versão (z-index 3) aparecia por cima da ajuda em tela cheia no celular */
+
 /* ── página própria do OKR ── */
 body{min-height:100vh;}
 #ppane-okr{display:block;}
@@ -1483,105 +1580,24 @@ body{min-height:100vh;}
        Agentes acima (pev-modal-ov/pev-modal/pev-hd/pev-body), pedido
        direto do usuário: "cria um help content lá no okr explicando pro
        pessoal como usar - inclusive o agente ágil lá". -->
-  <div class="pev-modal-ov" id="okr-help-ov">
-    <div class="pev-modal" style="max-width:560px;">
-      <div class="pev-hd">
-        <div style="font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;">❓ OKR — como funciona</div>
-        <button class="x-btn" onclick="closeOkrHelp()">✕</button>
+  <div class="pev-modal-ov" id="okr-help-ov" role="dialog" aria-modal="true" aria-labelledby="okr-help-tt">
+    <div class="pev-modal hlp-modal">
+      <div class="hlp-top">
+        <div class="hlp-hd"><div id="okr-help-tt" class="hlp-ttl">❓ Ajuda do OKR</div><button type="button" class="x-btn" onclick="closeOkrHelp()" aria-label="Fechar ajuda">✕</button></div>
+        <div class="hlp-search"><span aria-hidden="true">🔎</span><input type="search" id="okr-help-q" placeholder="Buscar na ajuda… (ex.: trava, atingimento, convidar)" autocomplete="off" spellcheck="false" oninput="_okrHelpBusca(this.value)" aria-label="Buscar na ajuda"><button type="button" class="hlp-clear" id="okr-help-qx" onclick="_okrHelpLimpa()" aria-label="Limpar busca" hidden>✕</button><kbd class="hlp-kbd">/</kbd></div>
+        <div class="hlp-tabs" id="okr-help-tabs" role="tablist" aria-label="Assuntos da ajuda"><button type="button" role="tab" id="hlp-tab-comecar" class="hlp-tab on" data-tab="comecar" aria-selected="true" aria-controls="hlp-pane-comecar" tabindex="0">⭐ Começar<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-faq" class="hlp-tab" data-tab="faq" aria-selected="false" aria-controls="hlp-pane-faq" tabindex="-1">❓ Perguntas<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-objetivos" class="hlp-tab" data-tab="objetivos" aria-selected="false" aria-controls="hlp-pane-objetivos" tabindex="-1">🎯 Objetivos<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-agenda" class="hlp-tab" data-tab="agenda" aria-selected="false" aria-controls="hlp-pane-agenda" tabindex="-1">📅 Agenda e avisos<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-acesso" class="hlp-tab" data-tab="acesso" aria-selected="false" aria-controls="hlp-pane-acesso" tabindex="-1">🏛️ Torres e acesso<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-navegar" class="hlp-tab" data-tab="navegar" aria-selected="false" aria-controls="hlp-pane-navegar" tabindex="-1">🧭 Navegar<em class="hlp-n"></em></button><button type="button" role="tab" id="hlp-tab-agente" class="hlp-tab" data-tab="agente" aria-selected="false" aria-controls="hlp-pane-agente" tabindex="-1">💬 Agente Ágil<em class="hlp-n"></em></button></div>
+        <div class="hlp-res" id="okr-help-res" hidden></div>
       </div>
-      <div class="pev-body" style="font-size:11.5px;color:var(--txt2);line-height:1.65;display:flex;flex-direction:column;gap:14px;">
-        <div>
-          <b style="color:var(--txt);">🏛️ Torres</b><br>
-          O OKR se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre). <b>Todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu). A torre de cada pessoa é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Cada torre tem a sua lista de <b>Gerências</b> — quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres; gerência com Objetivos nunca é apagada, só oculta (o 🗑 explica: mande os Objetivos pra outra gerência ou exclua-os primeiro). </div>
-        <div>
-          <b style="color:var(--txt);">🔒 Edição simultânea do mesmo Objetivo</b><br>
-          Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban. <b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>. Em leitura dá pra clicar em <b>🔔 Pedir o Objetivo</b>: quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume. A trava solta sozinha ao fechar o Objetivo, ao sair da página, e vence sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo. As ações rápidas do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo. O <b>Agente Ágil também respeita a trava</b>: se você pedir pra ele mexer num Objetivo que outra pessoa está editando, ele avisa quem é e não grava (senão a edição dela apagaria a dele).
-        </div>
-        <div>
-          <b style="color:var(--txt);">📅 Calendário</b><br>
-          Reuniões, eventos e lembretes do OKR. Há a <b>🌐 agenda global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>). Cada evento repete como você quiser: <b>toda semana, quinzenal, mensal, trimestral, semestral, anual</b> ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional); dá pra excluir só uma ocorrência. Vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag): o Objetivo passa a mostrar a próxima reunião dele (e o cartão ganha um selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b> — Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente. Os <b>prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita. <b>👥 Convidados</b>: quem você convida recebe as notificações da reunião (convite, mudança, cancelamento, véspera e dia — às 7h, também como push) mesmo sem Objetivo na pauta; os responsáveis dos Objetivos da pauta recebem a véspera e o dia automaticamente. A agenda nova ou alterada também aparece no <b>🔔 sino da torre</b> (desligue em "Avisar agora no sino" ao salvar). Clicar no aviso abre a reunião. Cada reunião tem as suas <b>📝 Anotações pós-reunião</b> (por ocorrência, com @menção) e dá pra <b>🔗 vincular</b> a ocorrência à apresentação do OKR: as anotações feitas na apresentação naquele dia aparecem ali também. No celular a visão abre como <b>Agenda</b>. </div>
-        <div>
-          <b style="color:var(--txt);">📢 Mural do OKR</b><br>
-          Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🔔 Notificações do OKR</b><br>
-          O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página. Junta tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b>, <b>✅ Marco concluído</b> e <b>🗓️ reuniões/eventos do calendário</b> (nova, mudança, cancelamento; criar Objetivo e concluir Marco pelo Agente Ágil também aparecem). Clique pra ir direto ao Objetivo/aviso/anotação/reunião; <b>✓ Marcar tudo como lido</b> zera. No rodapé do sino: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas. O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).
-        </div>
-        <div>
-          <b style="color:var(--txt);">💬 @menção nas Anotações da reunião</b><br>
-          Nas <b>📋 Anotações da reunião</b>, digite <b>@</b> e escolha a pessoa (↑↓ e Enter, ou clique): ela recebe uma notificação e a menção fica destacada. Vale só pra anotações escritas nesta página.
-        </div>
-        <div>
-          <b style="color:var(--txt);">👁 Visualizadores externos</b> <span class="mut">(só ADM)</span><br>
-          Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (no menu <b>⋯ Mais</b> do cabeçalho) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos. A lista mostra, pra cada pessoa, se ela <b>já entrou</b>: <b>⏳ ainda não entrou</b> · <b>✅ entrou · visto há X</b> · <b>🟢 online agora</b> (passe o mouse pra ver o primeiro acesso e o último sinal); quem acabou de ser adicionado só passa a constar como "entrou" no próximo login. </div>
-        <div>
-          <b style="color:var(--txt);">🎯 O que é um Objetivo</b><br>
-          Uma meta estratégica de uma gerência/área. Tem gerência, trimestre(s)/período(s), pilar estratégico, descrição, e listas de Indicadores de Entrega, Progressos, Próximos Passos, Riscos e Planos de Ação — sempre "somando" itens conforme o Objetivo avança, sem apagar o histórico do que já foi registrado. Também pode ter uma meta numérica de <b>📈 Atingimento</b> (veja abaixo) — é ela que faz a barra de progresso andar.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🏁 Marcos e status</b><br>
-          Um Marco é uma atividade macro dentro de um Objetivo, com prazo e status: ⚪ Não iniciado, 🟢 No prazo, 🟡 Risco identificado, 🔴 Atrasado/impacto, ✅ Concluído. O status mostrado pro Objetivo na lista é sempre o <b>pior status entre os Marcos ainda não concluídos</b> — ou "Concluído" quando todos já terminaram. <b>A cor (status) vem sempre dos Marcos</b>; já a <b>barra de %</b> do cartão anda pelo <b>📈 Atingimento</b> quando o Objetivo tem meta (senão, pelos Marcos concluídos).
-        </div>
-        <div>
-          <b style="color:var(--txt);">📈 Atingimento — a meta do Objetivo</b><br>
-          Dentro do Objetivo, a seção <b>📈 Atingimento</b> (a primeira, em rosa) define como o Objetivo é medido. Escolha o <b>tipo de meta</b>:
-          <ul style="margin:6px 0 0;padding-left:18px;">
+      <div class="pev-body hlp-body" id="okr-help-body">
+        <section class="hlp-pane" id="hlp-pane-comecar" data-pane="comecar" role="tabpanel" aria-labelledby="hlp-tab-comecar"><div class="hlp-panehd"><span>⭐ Começar</span></div><div class="hlp-hero"><b>O OKR em 30 segundos</b><div class="hlp-flow"><span>🏛️ Torre</span><i>→</i><span>🎯 Objetivo</span><i>→</i><span>🏁 Marcos</span></div><p><b>A cor</b> do Objetivo vem dos <b>Marcos</b> (o pior status que ainda não terminou). <b>A barra de %</b> anda pelo <b>📈 Atingimento</b> (a meta) — sem meta, pelos Marcos concluídos.</p></div><div class="hlp-eu" id="okr-help-eu"></div><h3 class="hlp-h">🔥 Mais usados</h3><div class="hlp-cards"><button type="button" class="hlp-card hlp-go" data-go="atingimento"><span class="hlp-card-ic">📈</span><span class="hlp-card-tx"><b>Registrar atingimento</b><small>Lance o valor da meta e veja o % andar</small></span></button><button type="button" class="hlp-card hlp-go" data-go="menu"><span class="hlp-card-ic">🖱</span><span class="hlp-card-tx"><b>Menu de ações</b><small>Botão direito: registrar, tags, mover…</small></span></button><button type="button" class="hlp-card hlp-go" data-go="quemedita"><span class="hlp-card-ic">✏️</span><span class="hlp-card-tx"><b>Quem pode editar</b><small>Papéis, torre e Responsável</small></span></button><button type="button" class="hlp-card hlp-go" data-go="trava"><span class="hlp-card-ic">🔒</span><span class="hlp-card-tx"><b>“Fulano editando”</b><small>Pedir o Objetivo e as travas</small></span></button><button type="button" class="hlp-card hlp-go" data-go="calendario"><span class="hlp-card-ic">📅</span><span class="hlp-card-tx"><b>Reuniões e convidados</b><small>Agenda global, de torre e pauta</small></span></button><button type="button" class="hlp-card hlp-go" data-go="sino"><span class="hlp-card-ic">🔔</span><span class="hlp-card-tx"><b>Sino e avisos</b><small>Notificações, som e Não Perturbe</small></span></button><button type="button" class="hlp-card hlp-go" data-go="apresentacao"><span class="hlp-card-ic">🖥️</span><span class="hlp-card-tx"><b>Apresentação</b><small>Slides, setas e filtro por tag</small></span></button><button type="button" class="hlp-card hlp-go" data-go="agente"><span class="hlp-card-ic">💬</span><span class="hlp-card-tx"><b>Agente Ágil</b><small>Conte a situação; ele preenche</small></span></button></div><h3 class="hlp-h">🚀 Primeiros passos</h3><ol class="hlp-steps"><li>Escolha a <b>torre</b> na tela inicial (ou a <b>🌐 Visão global</b>). <a href="#" class="hlp-go" data-go="torres">Saiba mais</a></li><li>Abra um <b>Objetivo</b> — ou <b>+ Novo Objetivo</b>, se for da sua torre. <a href="#" class="hlp-go" data-go="objetivo">Saiba mais</a></li><li>Defina como ele é medido em <b>📈 Atingimento</b> e quebre o trabalho em <b>🏁 Marcos</b>. <a href="#" class="hlp-go" data-go="atingimento">Saiba mais</a></li><li>Quando algo mudar, <b>registre o valor</b> e atualize Progressos, Próximos passos e Riscos — ou conte pro <b>💬 Agente Ágil</b>. <a href="#" class="hlp-go" data-go="agente">Saiba mais</a></li><li>Acompanhe no <b>📊 Dashboard</b> e apresente com <b>🎥 Apresentação</b>. <a href="#" class="hlp-go" data-go="dashboard">Saiba mais</a></li></ol><p class="hlp-tip">💡 Tem dúvida? Use a <b>busca</b> lá em cima (atalho <kbd>/</kbd>) ou veja as <button type="button" class="hlp-lnk" data-tab="faq">❓ Perguntas frequentes</button>.</p></section><section class="hlp-pane" id="hlp-pane-faq" data-pane="faq" role="tabpanel" aria-labelledby="hlp-tab-faq" hidden><div class="hlp-panehd"><span>❓ Perguntas</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('faq')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-faq1" data-tab="faq" data-kw="editar permissão não consigo leitura bloqueado torre responsável"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Por que não consigo editar este Objetivo?</b></span></summary><div class="hlp-bd"><p>Costuma ser uma de duas coisas:</p><ul><li><b>Permissão</b>: você só cria/edita Objetivos da <b>sua torre</b> (ADM em qualquer uma; PO/Organizador e 🎯 Gestor OKR na própria torre; e o <b>Responsável</b> daquele Objetivo). Veja <a href="#" class="hlp-go" data-go="quemedita">Quem pode editar</a> e <a href="#" class="hlp-go" data-go="torres">Torres e gerências</a>.</li><li><b>Alguém já está editando</b>: aparece o aviso e o selo <b>🔒 Fulano editando</b>, e você vê em modo leitura. Veja <a href="#" class="hlp-go" data-go="trava">Edição simultânea</a>.</li></ul></div></details><details class="hlp-it" id="hlp-faq2" data-tab="faq" data-kw="trava lock editando pedir objetivo liberar esperar"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Apareceu “🔒 Fulano editando” — e agora?</b></span></summary><div class="hlp-bd"><p>Você está em modo leitura. Clique em <b>🔔 Pedir o Objetivo</b>: a pessoa tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema salva o que está na tela e fecha pra ela, e você assume. Se ela só esqueceu aberto, a trava vence sozinha após <b>10 minutos sem sinal</b>. Detalhes em <a href="#" class="hlp-go" data-go="trava">Edição simultânea</a>.</p></div></details><details class="hlp-it" id="hlp-faq3" data-tab="faq" data-kw="registrar atingimento valor meta lançar data salvar r atalho"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como registro o valor da meta (atingimento)?</b></span></summary><div class="hlp-bd"><p>Abra o Objetivo → seção <b>📈 Atingimento</b> → informe a data (padrão: hoje) e o valor → <b>+ Registrar</b> → <b>💾 Salvar</b>. O que vale é o registro mais recente (por data); todos ficam no histórico.</p><p><b>Atalho</b>: botão direito no cartão → <b>📈 Registrar atingimento…</b> (tecla R) — pergunta só data, valor e nota. Veja <a href="#" class="hlp-go" data-go="atingimento">Atingimento</a> e <a href="#" class="hlp-go" data-go="menu">Menu de ações</a>.</p></div></details><details class="hlp-it" id="hlp-faq4" data-tab="faq" data-kw="cor status barra porcentagem marcos atingimento diferente"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Por que a cor do Objetivo não bate com a barra de %?</b></span></summary><div class="hlp-bd"><p>São duas coisas diferentes: a <b>cor (status)</b> vem sempre dos <b>Marcos</b> (o pior status entre os ainda não concluídos); a <b>barra de %</b> anda pelo <b>📈 Atingimento</b> quando o Objetivo tem meta — sem meta, pelos Marcos concluídos. Veja <a href="#" class="hlp-go" data-go="marcos">Marcos e status</a>.</p></div></details><details class="hlp-it" id="hlp-faq5" data-tab="faq" data-kw="reunião criar evento convidar convidados calendário agenda repetição"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como crio uma reunião e convido pessoas?</b></span></summary><div class="hlp-bd"><p>Aba <b>📅 Calendário</b> → criar evento. A agenda <b>🌐 global</b> é só do ADM; a de cada <b>torre</b> é do ADM e de quem organiza a torre (PO/Gestor OKR). Escolha a repetição (semanal, quinzenal, mensal…), vincule gerências/tags/Objetivos e adicione <b>👥 Convidados</b> — eles recebem convite, mudança, cancelamento, véspera e dia. Veja <a href="#" class="hlp-go" data-go="calendario">Calendário</a>.</p></div></details><details class="hlp-it" id="hlp-faq6" data-tab="faq" data-kw="notificação aviso não recebi push som não perturbe permissão aparelho"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Não recebi o aviso de uma reunião ou menção. O que verifico?</b></span></summary><div class="hlp-bd"><ul><li>O sino é <b>o mesmo</b> do kanban e do painel: confira se a notificação não está lá, só sem push.</li><li>No rodapé do sino, veja a <b>permissão neste aparelho</b> (pra avisar com a aba fechada) e o <b>🔕 Não Perturbe</b> (silencia som/aviso, mas o sino segue registrando).</li><li>O que <b>você mesmo</b> fez não avisa você.</li><li>Reunião: você precisa estar <b>convidado</b> ou ser responsável de um Objetivo da pauta.</li></ul><p>Veja <a href="#" class="hlp-go" data-go="sino">Notificações do OKR</a> e <a href="#" class="hlp-go" data-go="calendario">Calendário</a>.</p></div></details><details class="hlp-it" id="hlp-faq7" data-tab="faq" data-kw="arquivar excluir apagar diferença desarquivar"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Qual a diferença entre Arquivar e Excluir?</b></span></summary><div class="hlp-bd"><p><b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua em “📦 Ver arquivados” e dá pra desarquivar. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele, sem desfazer. Veja <a href="#" class="hlp-go" data-go="arquivar">Arquivar × Excluir</a>.</p></div></details><details class="hlp-it" id="hlp-faq8" data-tab="faq" data-kw="ordem reordenar mover arrastar subir descer"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como mudo a ordem dos Objetivos ou dos Marcos?</b></span></summary><div class="hlp-bd"><p>Botões <b>▲/▼</b> em cada cartão (Objetivos, dentro da gerência) ou em cada Marco (dentro do Objetivo); os Objetivos também aceitam <b>arrastar e soltar</b> (ícone ⠿). Com algum filtro ligado a reordenação fica desativada. A mesma ordem vale na apresentação. Veja <a href="#" class="hlp-go" data-go="ordem">Reordenar</a>.</p></div></details><details class="hlp-it" id="hlp-faq9" data-tab="faq" data-kw="marco esconder ocultar apresentação aparecer"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como escondo um Marco da apresentação?</b></span></summary><div class="hlp-bd"><p>No Marco, desligue <b>🎬 Aparecer na apresentação</b> (ou botão direito no Marco → <b>Mostrar/Ocultar na apresentação</b>). Ele continua no OKR; só some da apresentação — bom pra marcos antigos em OKRs contínuos. Veja <a href="#" class="hlp-go" data-go="apresentacao">Apresentação</a>.</p></div></details><details class="hlp-it" id="hlp-faq10" data-tab="faq" data-kw="apresentação slides abrir passar setas tela cheia f"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como abro a apresentação e passo os slides?</b></span></summary><div class="hlp-bd"><p>Botão <b>🎥 Apresentação</b> no cabeçalho (ou o <b>👁</b> do cartão, que abre já naquele Objetivo). <code>F</code> = tela cheia · <code>←</code> <code>→</code>/espaço = navegar · <code>Backspace</code>/<code>Esc</code> = fecha o detalhe. Veja <a href="#" class="hlp-go" data-go="apresentacao">Apresentação</a>.</p></div></details><details class="hlp-it" id="hlp-faq11" data-tab="faq" data-kw="filtrar filtro pessoa responsável tag período mais filtros"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como filtro por pessoa ou por tag?</b></span></summary><div class="hlp-bd"><p>Na barra de filtros, <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco) e <b>🏷️ tag</b>. Também dá pra clicar numa tag do cartão (clicar de novo limpa). <b>✕ Limpar</b> zera tudo. Veja <a href="#" class="hlp-go" data-go="filtros">Filtros</a>.</p></div></details><details class="hlp-it" id="hlp-faq12" data-tab="faq" data-kw="gerência criar renomear ocultar reordenar área"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como crio, renomeio ou oculto uma gerência?</b></span></summary><div class="hlp-bd"><p>Botão <b>⚙ Gerências</b> (no <b>⋯ Mais</b> / barra de torres), para quem edita a torre. Gerência com Objetivos nunca é apagada, só oculta — mande os Objetivos pra outra gerência ou exclua-os primeiro. Veja <a href="#" class="hlp-go" data-go="torres">Torres e gerências</a>.</p></div></details><details class="hlp-it" id="hlp-faq13" data-tab="faq" data-kw="torre errada trocar geral global users editar outra"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Minha torre está errada ou preciso editar outra torre.</b></span></summary><div class="hlp-bd"><p>Um <b>ADM</b> troca a torre da pessoa em <b>👥 Global Users</b>, no painel. A torre <b>⭐ Geral</b> serve pra quem precisa editar <b>todas</b> (continua precisando ser PO/Organizador ou 🎯 Gestor OKR). Veja <a href="#" class="hlp-go" data-go="torres">Torres e gerências</a>.</p></div></details><details class="hlp-it" id="hlp-faq14" data-tab="faq" data-kw="visualizador externo acesso dar convidar leitura google e-mail"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como dou acesso a alguém de fora da empresa?</b></span></summary><div class="hlp-bd"><p>Só ADM: <b>⋯ Mais → 👁 Visualizadores</b> → e-mail → <b>+ Visualizador</b>. A pessoa entra com o Google desse e-mail e <b>só acompanha</b> (sem editar, sem ver e-mails nem notificações pessoais). Remover tira o acesso em até 15 minutos. Veja <a href="#" class="hlp-go" data-go="viewers">Visualizadores externos</a>.</p></div></details><details class="hlp-it" id="hlp-faq15" data-tab="faq" data-kw="link copiar url compartilhar objetivo"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Como copio o link de um Objetivo?</b></span></summary><div class="hlp-bd"><p>Botão <b>🔗</b> no cabeçalho do Objetivo, ou botão direito no cartão → <b>🔗 Copiar link</b> (tecla L). Quem recebe precisa de login e acesso ao OKR — é um atalho, não uma exceção de acesso. Veja <a href="#" class="hlp-go" data-go="link">Link direto</a>.</p></div></details><details class="hlp-it" id="hlp-faq16" data-tab="faq" data-kw="dashboard atualizado quando sexta snapshot histórico semanal"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>Quando o Dashboard é atualizado?</b></span></summary><div class="hlp-bd"><p>Um snapshot automático é guardado toda <b>sexta-feira às 17h</b> (status e % de cada Objetivo ativo). O Dashboard compara os dois últimos e mostra a evolução. Veja <a href="#" class="hlp-go" data-go="dashboard">Dashboard</a>.</p></div></details><details class="hlp-it" id="hlp-faq17" data-tab="faq" data-kw="perene contínuo sem meta marcos"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>O que significa ♾️ Perene?</b></span></summary><div class="hlp-bd"><p>É um tipo de Atingimento pra objetivo contínuo, sem meta final nem registros: a barra volta a andar pelos <b>Marcos concluídos</b>, e isso fica explícito (♾️) no cartão. Veja <a href="#" class="hlp-go" data-go="atingimento">Atingimento</a>.</p></div></details><details class="hlp-it" id="hlp-faq18" data-tab="faq" data-kw="agente ágil chat faz não faz ia pedir permissão"><summary><span class="hlp-ic">❓</span><span class="hlp-tt"><b>O que o Agente Ágil faz (e o que não faz)?</b></span></summary><div class="hlp-bd"><p>Ele escreve nos campos do Objetivo (Progresso, Próximo Passo, Risco), cria Objetivo e Marco, muda status de Marco, <b>lê a agenda</b> e <b>lê, registra e configura o atingimento</b>. Ele <b>não</b> inventa valor, não apaga registro nem remove atingimento, e não cria/edita/cancela reunião (isso é pela aba 📅 Calendário). Respeita as mesmas permissões por torre e a trava 🔒. Veja <a href="#" class="hlp-go" data-go="agente">Central Agente Ágil</a>.</p></div></details></section><section class="hlp-pane" id="hlp-pane-objetivos" data-pane="objetivos" role="tabpanel" aria-labelledby="hlp-tab-objetivos" hidden><div class="hlp-panehd"><span>🎯 Objetivos</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('objetivos')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-objetivo" data-tab="objetivos" data-kw="meta estratégica gerência trimestre pilar indicadores progressos próximos passos riscos planos de ação descrição"><summary><span class="hlp-ic">🎯</span><span class="hlp-tt"><b>O que é um Objetivo</b><small>Meta estratégica de uma gerência, com listas que só crescem</small></span></summary><div class="hlp-bd">Uma meta estratégica de uma gerência/área. Tem gerência, trimestre(s)/período(s), pilar estratégico, descrição, e listas de Indicadores de Entrega, Progressos, Próximos Passos, Riscos e Planos de Ação — sempre "somando" itens conforme o Objetivo avança, sem apagar o histórico do que já foi registrado. Também pode ter uma meta numérica de <b>📈 Atingimento</b> (veja abaixo) — é ela que faz a barra de progresso andar.</div></details><details class="hlp-it" id="hlp-marcos" data-tab="objetivos" data-kw="marco status cor barra prazo atrasado risco concluído não iniciado no prazo pior status progresso porcentagem"><summary><span class="hlp-ic">🏁</span><span class="hlp-tt"><b>Marcos e status</b><small>A cor vem dos Marcos; a barra de % vem do Atingimento</small></span></summary><div class="hlp-bd">Um Marco é uma atividade macro dentro de um Objetivo, com prazo e status: ⚪ Não iniciado, 🟢 No prazo, 🟡 Risco identificado, 🔴 Atrasado/impacto, ✅ Concluído. O status mostrado pro Objetivo na lista é sempre o <b>pior status entre os Marcos ainda não concluídos</b> — ou "Concluído" quando todos já terminaram. <b>A cor (status) vem sempre dos Marcos</b>; já a <b>barra de %</b> do cartão anda pelo <b>📈 Atingimento</b> quando o Objetivo tem meta (senão, pelos Marcos concluídos).</div></details><details class="hlp-it" id="hlp-atingimento" data-tab="objetivos" data-kw="atingimento meta registrar valor financeira porcentagem número atingido manter acima abaixo data de entrega perene histórico inicial percentual tipo"><summary><span class="hlp-ic">📈</span><span class="hlp-tt"><b>Atingimento — a meta do Objetivo</b><small>8 tipos de meta, como registrar o valor e quem pode</small></span></summary><div class="hlp-bd"><p>Dentro do Objetivo, a seção <b>📈 Atingimento</b> (a primeira, em rosa) define como o Objetivo é medido. Escolha o <b>tipo de meta</b>:</p>
+          <ul>
             <li><b>💰 Financeira</b> (R$, US$ ou €), <b>📊 Porcentagem</b> e <b>🔢 Número</b> — informe valor inicial e meta; o % é <code>(atual − inicial) ÷ (meta − inicial)</code>, sempre entre 0% e 100% (se a meta for menor que o início, como "reduzir custo", também funciona).</li>
             <li><b>✅ Atingido/Não atingido</b> — vale 0% ou 100%.</li>
             <li><b>⬆️ Manter acima de</b> / <b>⬇️ Manter abaixo de</b> — 100% se o valor medido cumpre o limite, 0% se não (é tudo ou nada).</li>
             <li><b>📅 Data de entrega</b> — você define faixas ("entregue entre X e Y = Z%"); o % é o da faixa onde a data da entrega cai (fora de todas = 0%).</li>
             <li><b>♾️ Perene</b> — objetivo contínuo, sem meta final nem registros: a barra volta a andar pelos <b>Marcos concluídos</b>, e isso fica explícito (♾️) no cartão.</li>
-          </ul>
-          <b>Registrando</b>: informe a data (padrão: hoje) e o valor e clique <b>+ Registrar</b>, depois <b>💾 Salvar</b> — o que vale é o registro mais recente (por data) e todos ficam num histórico datado, com quem registrou. Se você digitar um valor e clicar em Salvar sem registrar, o painel pergunta se quer registrar. Trocar o tipo recalcula o % dos registros antigos (eles não são apagados). Sem atingimento, o Objetivo continua andando pelos Marcos, como sempre foi.<br>
-          <b>Quem pode</b>: as mesmas pessoas que editam o Objetivo (ADM, PO/Organizador, Gestor OKR e o Responsável daquele Objetivo). Dois Responsáveis registrando ao mesmo tempo não se sobrescrevem.
-        </div>
-        <div>
-          <b style="color:var(--txt);">📊 Gráfico de evolução</b><br>
-          Cada cartão com atingimento mostra o <b>emoji do tipo</b> (💰 📊 🔢 ✅ ⬆️ ⬇️ 📅 ♾️) ao lado do %. Clique nele (ou em <b>📈 Gráfico</b>, dentro do Objetivo) pra ver a <b>evolução</b>: valor registrado ao longo do tempo com a linha da 🎯 meta (nos tipos Atingido e Data de entrega, o %). <b>Passe o mouse</b> — ou toque, no celular — em cada ponto pra ver data, valor, % e quem registrou. Esc fecha. O mesmo gráfico aparece na <b>apresentação</b>.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🎨 O modal do Objetivo</b><br>
-          Cada seção tem a sua cor — 📈 Atingimento, 🎯 Indicadores, ✅ Progressos, ➡️ Próximos passos, ⚠️ Riscos, 🛠️ Planos de ação, 🏁 Marcos, 🔗 Cards vinculados, 📜 Histórico — com caixas de texto destacadas. No topo ficam <b>atalhos</b> (em duas filas) pra pular direto pra uma seção, como o botão de descrições do card do board. Funciona nos três temas, inclusive 🌴 Vice City. As seções lembram se estavam abertas ou fechadas.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🧭 O cabeçalho</b><br> Três níveis: em cima o <b>título da torre</b> com 🎥 Apresentação, <b>⋯ Mais</b> (Ajuda, Guia, ⚙ Gerências e 👁 Visualizadores) e <b>+ Novo Objetivo</b>; no meio as <b>abas</b> — 🎯 Objetivos · 📅 Calendário · 📊 Dashboard · 📋 Anotações · 💬 Agente Ágil (a aberta fica marcada); embaixo a barra de filtros. 📢 Mural, 🔔 sino e quem está online ficam no canto.
-</div>
-<div>
-<b style="color:var(--txt);">🔎 Filtros e resumo da aba</b><br> No topo: <b>gerência</b>, <b>status</b> e busca por nome; <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele) e <b>🏷️ tag</b> (só aparece quando há tags em uso). Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.
-        </div>
-        <div>
-          <b style="color:var(--txt);">✏️ Quem pode editar</b><br>
-          Podem criar um Objetivo novo: <b>ADM</b> (em qualquer torre), <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais) — esses dois últimos <b>só na própria torre</b> (a torre ⭐ Geral vale em todas). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), valem os mesmos, na torre do Objetivo, e também estar marcado como <b>Responsável</b> daquele Objetivo específico. O <b>calendário</b> segue a mesma regra por agenda: a global é só do ADM, a de cada torre é de quem organiza a torre. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).
-        </div>
-        <div>
-          <b style="color:var(--txt);">✏️ Editar o que já foi escrito</b><br>
-          Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação (Objetivo) e itens do Checklist (Marco) aceitam clicar em cima do texto pra editar — não só adicionar/remover. Enter ou clicar fora salva, Esc cancela.
-        </div>
-        <div>
-          <b style="color:var(--txt);">↕️ Reordenar Objetivos e Marcos</b><br>
-          Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).
-        </div>
-        <div>
-          <b style="color:var(--txt);">📦 Arquivar × 🗑 Excluir</b><br>
-          <b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🖱 Menu de ações (clique direito)</b><br>
-          Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo:
-          <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas),
-          <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b> e <b>🗑 Excluir</b> (só ADM), <b>🔗 Copiar link</b>. Dentro do Objetivo, cada <b>Marco</b> tem o mesmo menu: <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.
-          Cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); dá pra navegar com <b>↑ ↓</b>, abrir submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).
-          As mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo. <b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🏷️ Tags e 🔗 cards vinculados</b><br>
-          Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).
-        </div>
-        <div>
-          <b style="color:var(--txt);">📊 Dashboard (histórico semanal)</b><br>
-          Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📊 Dashboard</b> mostra:
-          <ul style="margin:6px 0 0;padding-left:18px;">
+          </ul><p><b>Registrando</b>: informe a data (padrão: hoje) e o valor e clique <b>+ Registrar</b>, depois <b>💾 Salvar</b> — o que vale é o registro mais recente (por data) e todos ficam num histórico datado, com quem registrou. Se você digitar um valor e clicar em Salvar sem registrar, o painel pergunta se quer registrar. Trocar o tipo recalcula o % dos registros antigos (eles não são apagados). Sem atingimento, o Objetivo continua andando pelos Marcos, como sempre foi.</p><p><b>Quem pode</b>: as mesmas pessoas que editam o Objetivo (ADM, PO/Organizador, Gestor OKR e o Responsável daquele Objetivo). Dois Responsáveis registrando ao mesmo tempo não se sobrescrevem.</p></div></details><details class="hlp-it" id="hlp-grafico" data-tab="objetivos" data-kw="gráfico evolução linha meta ponto tooltip emoji tipo"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Gráfico de evolução</b><small>Valor registrado ao longo do tempo, com a linha da meta</small></span></summary><div class="hlp-bd">Cada cartão com atingimento mostra o <b>emoji do tipo</b> (💰 📊 🔢 ✅ ⬆️ ⬇️ 📅 ♾️) ao lado do %. Clique nele (ou em <b>📈 Gráfico</b>, dentro do Objetivo) pra ver a <b>evolução</b>: valor registrado ao longo do tempo com a linha da 🎯 meta (nos tipos Atingido e Data de entrega, o %). <b>Passe o mouse</b> — ou toque, no celular — em cada ponto pra ver data, valor, % e quem registrou. Esc fecha. O mesmo gráfico aparece na <b>apresentação</b>.</div></details><details class="hlp-it" id="hlp-modal" data-tab="objetivos" data-kw="modal seções cor atalhos temas vice city abertas fechadas layout celular"><summary><span class="hlp-ic">🎨</span><span class="hlp-tt"><b>O modal do Objetivo</b><small>Seções coloridas e atalhos no topo pra pular de uma a outra</small></span></summary><div class="hlp-bd">Cada seção tem a sua cor — 📈 Atingimento, 🎯 Indicadores, ✅ Progressos, ➡️ Próximos passos, ⚠️ Riscos, 🛠️ Planos de ação, 🏁 Marcos, 🔗 Cards vinculados, 📜 Histórico — com caixas de texto destacadas. No topo ficam <b>atalhos</b> (em duas filas) pra pular direto pra uma seção, como o botão de descrições do card do board. Funciona nos três temas, inclusive 🌴 Vice City. As seções lembram se estavam abertas ou fechadas.</div></details><details class="hlp-it" id="hlp-menu" data-tab="objetivos" data-kw="menu contexto botão direito clique direito atalho tecla registrar mover duplicar arquivar excluir copiar link tags marco status"><summary><span class="hlp-ic">🖱</span><span class="hlp-tt"><b>Menu de ações (clique direito)</b><small>Registrar, tags, mover, duplicar… sem abrir o Objetivo</small></span></summary><div class="hlp-bd"><p>Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo.</p><ul><li><b>No Objetivo</b>: <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas), <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📦 Arquivar</b>, <b>🗑 Excluir</b> (só ADM) e <b>🔗 Copiar link</b>.</li><li><b>No Marco</b>: dentro do Objetivo, cada Marco tem o mesmo menu — <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, mover e arquivar.</li><li><b>Teclado</b>: cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); navegue com <b>↑ ↓</b>, abra submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).</li><li><b>Gravação</b>: as mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo.</li><li><b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.</li></ul></div></details><details class="hlp-it" id="hlp-editar" data-tab="objetivos" data-kw="editar texto indicadores progressos próximos passos riscos planos checklist clicar enter esc"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Editar o que já foi escrito</b><small>Clique no texto pra editar — Enter salva, Esc cancela</small></span></summary><div class="hlp-bd">Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação (Objetivo) e itens do Checklist (Marco) aceitam clicar em cima do texto pra editar — não só adicionar/remover. Enter ou clicar fora salva, Esc cancela.</div></details><details class="hlp-it" id="hlp-ordem" data-tab="objetivos" data-kw="reordenar ordem mover arrastar soltar subir descer posição ▲ ▼ filtro desativada"><summary><span class="hlp-ic">↕️</span><span class="hlp-tt"><b>Reordenar Objetivos e Marcos</b><small>Botões ▲/▼ ou arrastar ⠿ — vale também na apresentação</small></span></summary><div class="hlp-bd">Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).</div></details><details class="hlp-it" id="hlp-tags" data-tab="objetivos" data-kw="tag etiqueta cor filtrar card vinculado badge board nova configurações"><summary><span class="hlp-ic">🏷️</span><span class="hlp-tt"><b>Tags e cards vinculados</b><small>Etiquetas com cor no Objetivo e cards do board ligados a ele</small></span></summary><div class="hlp-bd">Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).</div></details><details class="hlp-it" id="hlp-arquivar" data-tab="objetivos" data-kw="arquivar desarquivar excluir apagar deletar arquivados definitivo"><summary><span class="hlp-ic">📦</span><span class="hlp-tt"><b>Arquivar × Excluir</b><small>Arquivar esconde (e volta); Excluir apaga de vez (só ADM)</small></span></summary><div class="hlp-bd"><b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.</div></details></section><section class="hlp-pane" id="hlp-pane-agenda" data-pane="agenda" role="tabpanel" aria-labelledby="hlp-tab-agenda" hidden><div class="hlp-panehd"><span>📅 Agenda e avisos</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agenda')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-calendario" data-tab="agenda" data-kw="calendário agenda reunião evento repetição recorrente convidados convidar pauta aviso véspera bloco quinzenal importar anotações pós-reunião global torre vincular tag" open data-open0="1"><summary><span class="hlp-ic">📅</span><span class="hlp-tt"><b>Calendário</b><small>Reuniões e eventos por torre, com repetição, convidados e pauta</small></span></summary><div class="hlp-bd"><p>Reuniões, eventos e lembretes do OKR.</p><ul><li><b>Duas agendas</b>: a <b>🌐 global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>).</li><li><b>Repetição</b>: toda semana, quinzenal, mensal, trimestral, semestral, anual ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional). Dá pra excluir só uma ocorrência.</li><li><b>Vínculos e pauta</b>: vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag). O Objetivo passa a mostrar a próxima reunião dele (o cartão ganha o selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b>: Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente.</li><li><b>Prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita.</li><li><b>👥 Convidados e avisos</b>: quem você convida recebe as notificações da reunião (convite, mudança, cancelamento, véspera e dia — às 7h, também como push) mesmo sem Objetivo na pauta; os responsáveis dos Objetivos da pauta recebem a véspera e o dia automaticamente. A agenda nova ou alterada também aparece no <b>🔔 sino da torre</b> (desligue em "Avisar agora no sino" ao salvar). Clicar no aviso abre a reunião.</li><li><b>📝 Anotações pós-reunião</b>: cada reunião tem as suas (por ocorrência, com @menção) e dá pra <b>🔗 vincular</b> a ocorrência à apresentação do OKR: as anotações feitas na apresentação naquele dia aparecem ali também.</li><li>No celular a visão abre como <b>Agenda</b>.</li></ul></div></details><details class="hlp-it" id="hlp-mural" data-tab="agenda" data-kw="mural aviso publicar urgente novidade dica torre selo arquivar expira comunicado"><summary><span class="hlp-ic">📢</span><span class="hlp-tt"><b>Mural do OKR</b><small>Avisos por torre, com selo de não lidos e urgentes em destaque</small></span></summary><div class="hlp-bd">Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.</div></details><details class="hlp-it" id="hlp-sino" data-tab="agenda" data-kw="sino notificação notificações push som não perturbe permissão aparelho limpar lido menção reunião mural aviso"><summary><span class="hlp-ic">🔔</span><span class="hlp-tt"><b>Notificações do OKR</b><small>O mesmo sino do kanban e do painel, com as novidades da sua torre</small></span></summary><div class="hlp-bd"><p>O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página.</p><ul><li><b>O que aparece</b>: tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b>, <b>✅ Marco concluído</b> e <b>🗓️ reuniões/eventos do calendário</b> (nova, mudança, cancelamento; criar Objetivo e concluir Marco pelo Agente Ágil também aparecem).</li><li><b>Clicar</b> vai direto ao Objetivo/aviso/anotação/reunião; <b>✓ Marcar tudo como lido</b> zera.</li><li><b>Rodapé do sino</b>: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas.</li><li>O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).</li></ul></div></details><details class="hlp-it" id="hlp-mencao" data-tab="agenda" data-kw="menção @ anotações reunião notificação pessoa"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>@menção nas Anotações da reunião</b><small>Digite @ e escolha a pessoa — ela é notificada</small></span></summary><div class="hlp-bd">Nas <b>📋 Anotações da reunião</b>, digite <b>@</b> e escolha a pessoa (↑↓ e Enter, ou clique): ela recebe uma notificação e a menção fica destacada. Vale só pra anotações escritas nesta página.</div></details></section><section class="hlp-pane" id="hlp-pane-acesso" data-pane="acesso" role="tabpanel" aria-labelledby="hlp-tab-acesso" hidden><div class="hlp-panehd"><span>🏛️ Torres e acesso</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('acesso')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-torres" data-tab="acesso" data-kw="torre digital comercial corporativa visão global cor geral gerência gerências ocultar renomear reordenar sua torre global users" open data-open0="1"><summary><span class="hlp-ic">🏛️</span><span class="hlp-tt"><b>Torres e gerências</b><small>Digital, Comercial e Corporativa — e quem edita o quê</small></span></summary><div class="hlp-bd"><p>O OKR se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre).</p><ul><li><b>Quem vê, quem edita</b>: <b>todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu).</li><li><b>Sua torre</b> é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR).</li><li><b>⚙ Gerências</b>: cada torre tem a sua lista. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres. Gerência com Objetivos nunca é apagada, só oculta (o 🗑 explica: mande os Objetivos pra outra gerência ou exclua-os primeiro).</li></ul></div></details><details class="hlp-it" id="hlp-quemedita" data-tab="acesso" data-kw="permissão editar criar quem pode adm po organizador gestor okr responsável papel torre calendário agenda global users"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Quem pode editar</b><small>Papéis, torre e Responsável — o que cada um consegue fazer</small></span></summary><div class="hlp-bd">Podem criar um Objetivo novo: <b>ADM</b> (em qualquer torre), <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais) — esses dois últimos <b>só na própria torre</b> (a torre ⭐ Geral vale em todas). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), valem os mesmos, na torre do Objetivo, e também estar marcado como <b>Responsável</b> daquele Objetivo específico. O <b>calendário</b> segue a mesma regra por agenda: a global é só do ADM, a de cada torre é de quem organiza a torre. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).</div></details><details class="hlp-it" id="hlp-trava" data-tab="acesso" data-kw="trava lock bloqueado editando leitura pedir objetivo liberar agora 5 minutos 10 minutos duas pessoas simultânea conflito sobrescrever agente"><summary><span class="hlp-ic">🔒</span><span class="hlp-tt"><b>Edição simultânea do mesmo Objetivo</b><small>Quem abre primeiro segura; os outros veem em leitura e podem pedir</small></span></summary><div class="hlp-bd"><p>Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban.</p><ul><li><b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>.</li><li><b>🔔 Pedir o Objetivo</b> (em leitura): quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume.</li><li><b>Quando a trava solta</b>: ao fechar o Objetivo, ao sair da página, e sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo.</li><li><b>Ações rápidas</b> do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo.</li><li>O <b>Agente Ágil também respeita a trava</b>: se você pedir pra ele mexer num Objetivo que outra pessoa está editando, ele avisa quem é e não grava (senão a edição dela apagaria a dele).</li></ul></div></details><details class="hlp-it" id="hlp-viewers" data-tab="acesso" data-kw="visualizador externo convidado acompanhar leitura acesso google e-mail remover online entrou"><summary><span class="hlp-ic">👁</span><span class="hlp-tt"><b>Visualizadores externos</b><small>Acesso só de leitura pra quem é de fora da empresa (só ADM)</small></span></summary><div class="hlp-bd">Pra alguém de fora da empresa <b>só acompanhar</b> o OKR: botão <b>👁 Visualizadores</b> (no menu <b>⋯ Mais</b> do cabeçalho) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos. A lista mostra, pra cada pessoa, se ela <b>já entrou</b>: <b>⏳ ainda não entrou</b> · <b>✅ entrou · visto há X</b> · <b>🟢 online agora</b> (passe o mouse pra ver o primeiro acesso e o último sinal); quem acabou de ser adicionado só passa a constar como "entrou" no próximo login.</div></details></section><section class="hlp-pane" id="hlp-pane-navegar" data-pane="navegar" role="tabpanel" aria-labelledby="hlp-tab-navegar" hidden><div class="hlp-panehd"><span>🧭 Navegar</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('navegar')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-cabecalho" data-tab="navegar" data-kw="cabeçalho abas mais ajuda guia gerências visualizadores novo objetivo apresentação mural sino online"><summary><span class="hlp-ic">🧭</span><span class="hlp-tt"><b>O cabeçalho</b><small>Três níveis: torre + ações, abas e filtros</small></span></summary><div class="hlp-bd">Três níveis: em cima o <b>título da torre</b> com 🎥 Apresentação, <b>⋯ Mais</b> (Ajuda, Guia, ⚙ Gerências e 👁 Visualizadores) e <b>+ Novo Objetivo</b>; no meio as <b>abas</b> — 🎯 Objetivos · 📅 Calendário · 📊 Dashboard · 📋 Anotações · 💬 Agente Ágil (a aberta fica marcada); embaixo a barra de filtros. 📢 Mural, 🔔 sino e quem está online ficam no canto.</div></details><details class="hlp-it" id="hlp-filtros" data-tab="navegar" data-kw="filtro filtrar busca gerência status período pessoa responsável tag mais filtros limpar resumo atingimento médio"><summary><span class="hlp-ic">🔎</span><span class="hlp-tt"><b>Filtros e resumo da aba</b><small>Gerência, status, busca, pessoa, tag e período</small></span></summary><div class="hlp-bd">No topo: <b>gerência</b>, <b>status</b> e busca por nome; <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele) e <b>🏷️ tag</b> (só aparece quando há tags em uso). Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.</div></details><details class="hlp-it" id="hlp-link" data-tab="navegar" data-kw="link direto copiar url compartilhar objetivo"><summary><span class="hlp-ic">🔗</span><span class="hlp-tt"><b>Link direto do Objetivo</b><small>Copia um link que abre aquele Objetivo</small></span></summary><div class="hlp-bd">Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login (@ciahering, @arezzo ou visualizador autorizado) e acesso ao OKR — é um atalho pra achar rápido, não uma exceção de acesso.</div></details><details class="hlp-it" id="hlp-dashboard" data-tab="navegar" data-kw="dashboard histórico semanal snapshot sexta 17h progresso médio gráfico o que mudou torre comparar simulação variação indicadores tabela"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Dashboard (histórico semanal)</b><small>Snapshot toda sexta às 17h, comparativo por torre e simulação</small></span></summary><div class="hlp-bd">Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📊 Dashboard</b> mostra:
+          <ul>
             <li><b>Duas abas</b> no topo: <b>🎯 Atingimento</b> (padrão) e <b>🏁 Marcos</b>. <b>Atingimento</b> mede quanto de cada <b>meta</b> foi atingido — só entram Objetivos com 📈 Atingimento configurado (o ♾️ perene fica de fora); se o snapshot é de antes do atingimento existir, a curva é reconstruída pelos registros de valor do Objetivo. <b>Marcos</b> mede a % de <b>Marcos concluídos</b> (Objetivos sem Marcos ficam de fora). Tudo abaixo — indicadores, gráfico, "O que mudou", tabela e a janela do progresso médio — segue a aba escolhida.</li>
             <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
             <li><b>🏛️ Por torre</b>: dentro de uma torre, o Dashboard mostra só os Objetivos dela. Na <b>🌐 Visão global</b> ele <b>compara as torres</b>: um cartão por torre (nº de Objetivos, atingimento médio, variação e status — clique pra filtrar a tabela), uma <b>linha colorida por torre</b> no gráfico (a tracejada é o total), a torre de cada item em "O que mudou", a tabela em faixas por torre e a janela "Como cada Objetivo contribui" agrupada por torre.</li>
@@ -1590,35 +1606,16 @@ body{min-height:100vh;}
             <li><b>Gráfico de evolução</b>: barras com os Objetivos por status e uma linha com o progresso médio. Passe o mouse (ou toque) numa semana pra ver os números dela.</li>
             <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
             <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
-          </ul>
-        </div>
-        <div>
-          <b style="color:var(--txt);">🔗 Link direto do Objetivo</b><br>
-          Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login (@ciahering, @arezzo ou visualizador autorizado) e acesso ao OKR — é um atalho pra achar rápido, não uma exceção de acesso.
-        </div>
-        <div>
-          <b style="color:var(--txt);">🖥️ Apresentação em slides</b><br>
-          Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>. <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe. A capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre. Cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no OKR) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso. A barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.
-          <ul style="margin:6px 0 0;padding-left:18px;">
-            <li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no OKR (dentro de cada gerência) — sem ordem manual, vai por título.</li>
-            <li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li>
-            <li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li>
-            <li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li>
-            <li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no OKR) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li>
-          </ul>
-        </div>
-        <div>
-          <b style="color:var(--txt);">💬 Central Agente Ágil</b><br>
-          Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs — não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
-          <ul style="margin:6px 0 0;padding-left:18px;">
+          </ul></div></details><details class="hlp-it" id="hlp-apresentacao" data-tab="navegar" data-kw="apresentação slides reunião tela cheia f setas teclado capa torres marco colapsar concluídos filtro tag anterior próximo ordem rola"><summary><span class="hlp-ic">🖥️</span><span class="hlp-tt"><b>Apresentação em slides</b><small>1 slide por Objetivo, tela cheia, setas do teclado e filtro por tag</small></span></summary><div class="hlp-bd"><p>Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>.</p><ul><li><b>Atalhos</b>: <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.</li><li><b>Capa e torres</b>: a capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre.</li><li><b>Marcos na apresentação</b>: cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no OKR) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso.</li><li><b>Atingimento</b>: a barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.</li><li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no OKR (dentro de cada gerência) — sem ordem manual, vai por título.</li><li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li><li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li><li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li><li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no OKR) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li></ul></div></details></section><section class="hlp-pane" id="hlp-pane-agente" data-pane="agente" role="tabpanel" aria-labelledby="hlp-tab-agente" hidden><div class="hlp-panehd"><span>💬 Agente Ágil</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agente')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-agente" data-tab="agente" data-kw="agente ágil chat ia assistente pedir criar objetivo marco progresso próximo passo risco agenda atingimento registrar permissão trava" open data-open0="1"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>Central Agente Ágil</b><small>Chat que preenche Objetivos, Marcos e atingimento por você</small></span></summary><div class="hlp-bd">Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs — não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
+          <ul>
             <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
             <li>Também cria Objetivo novo (ADM, ou PO/Organizador/🎯 Gestor OKR na própria torre — ele pergunta a <b>torre</b> e a <b>gerência</b>, que mudam por torre) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído"). Objetivo criado e Marco concluído por ele aparecem no 🔔 sino da torre, igual à tela.</li>
         <li><b>📅 Agenda</b> (só leitura): "quando é a próxima reunião de CX?", "o que tem na agenda dessa semana?", "qual a pauta da reunião de quinta?" — ele lê o calendário (global + torres). Criar, editar ou cancelar reunião e convidar gente é pela aba 📅 Calendário.</li>
             <li><b>📈 Atingimento</b>: ele consegue <b>ler</b> a meta, o valor atual e o % de cada Objetivo ("como estão os atingimentos?", "quem está sem registro há mais de 15 dias?"), <b>registrar</b> um valor ("fechamos setembro em R$ 48 mil" — ele usa a data de hoje se você não disser outra) e <b>configurar</b> o tipo/meta de um Objetivo que ainda não tem. Ele nunca inventa valor (pergunta se faltar), não apaga registro nem remove atingimento (isso é pela tela do Objetivo) e, se for trocar o tipo de um atingimento que já tem registros, confirma com você antes. O % é calculado igual ao da barra do Objetivo.</li>
             <li>Respeita a mesma regra de permissão de cima (por torre): se você não for Responsável, ADM nem PO/Organizador/Gestor OKR da torre daquele Objetivo, ele explica e não faz a mudança — em vez de fingir que funcionou. E se alguém está editando o Objetivo (🔒), ele espera.</li>
             <li>A conversa fica salva ali, pra sempre — dá pra rolar pra cima e ver os pedidos e respostas anteriores, de qualquer pessoa.</li>
-          </ul>
-        </div>
+          </ul></div></details></section>
+        <div class="hlp-empty" id="okr-help-empty" hidden></div>
       </div>
     </div>
   </div>
@@ -1828,7 +1825,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.34 · okr-dev</div>
+<div class="version">v2.35 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8223,10 +8220,225 @@ document.addEventListener('click',e=>{if(e.target.id==='okr-obj-config-ov')_okrT
 document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')_okrTryCloseMarco();});
 
 
-function openOkrHelp(){ document.getElementById('okr-help-ov')?.classList.add('open'); }
+// ── ❓ Ajuda do OKR (v2.35): abas, busca, perguntas frequentes e "🙋 O que eu posso fazer?" (calculado do papel real da pessoa) ──
+let _hlpTab = 'comecar', _hlpQ = '';
+function _hlpEl(id){ return document.getElementById(id); }
+// minúsculo e sem acento, MESMO comprimento do original (os índices do trecho achado batem com o texto mostrado)
+function _hlpNorm(s){
+  s = String(s==null?'':s); let o = '';
+  for(let i=0;i<s.length;i++){ const c = s[i], n = c.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase(); o += n.length===1 ? n : (c.toLowerCase().length===1 ? c.toLowerCase() : c); }
+  return o;
+}
+function _hlpTermos(q){ return _hlpNorm(q).split(/\s+/).filter(Boolean); }
+// intervalos [ini,fim) onde algum termo aparece em `norm` (já normalizado), unindo sobreposições
+function _hlpRanges(norm, termos){
+  const r = [];
+  termos.forEach(t=>{ let i = norm.indexOf(t); while(i>=0){ r.push([i,i+t.length]); i = norm.indexOf(t,i+t.length); } });
+  r.sort((a,b)=>a[0]-b[0]); const m = [];
+  r.forEach(x=>{ if(m.length && x[0]<=m[m.length-1][1]) m[m.length-1][1] = Math.max(m[m.length-1][1],x[1]); else m.push(x.slice()); });
+  return m;
+}
+function _hlpMarkHtml(txt, termos){
+  const rs = _hlpRanges(_hlpNorm(txt), termos); let o = '', p = 0;
+  rs.forEach(([a,b])=>{ o += esc(txt.slice(p,a)) + '<mark class="hlp-mk">' + esc(txt.slice(a,b)) + '</mark>'; p = b; });
+  return o + esc(txt.slice(p));
+}
+function _hlpUnmark(root){
+  root.querySelectorAll('mark.hlp-mk').forEach(m=>{ const par = m.parentNode; par.replaceChild(document.createTextNode(m.textContent), m); par.normalize(); });
+}
+function _hlpMarkDom(root, termos){
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode:n=>/^(SCRIPT|STYLE|MARK)$/.test(n.parentNode.nodeName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  const nodes = []; while(w.nextNode()) nodes.push(w.currentNode);
+  nodes.forEach(n=>{
+    const rs = _hlpRanges(_hlpNorm(n.nodeValue), termos); if(!rs.length) return;
+    const frag = document.createDocumentFragment(); let p = 0;
+    rs.forEach(([a,b])=>{ if(a>p) frag.appendChild(document.createTextNode(n.nodeValue.slice(p,a))); const m = document.createElement('mark'); m.className = 'hlp-mk'; m.textContent = n.nodeValue.slice(a,b); frag.appendChild(m); p = b; });
+    if(p<n.nodeValue.length) frag.appendChild(document.createTextNode(n.nodeValue.slice(p)));
+    n.parentNode.replaceChild(frag, n);
+  });
+}
+function _hlpItens(){ return Array.from(document.querySelectorAll('#okr-help-ov .hlp-it')); }
+function _hlpIdx(it){   // texto normalizado do item (título, palavras-chave, corpo) — calculado uma vez
+  if(!it._ix){
+    const tt = it.querySelector('.hlp-tt b').textContent, bd = it.querySelector('.hlp-bd').textContent.replace(/\s+/g,' ').trim();
+    it._ix = {t:_hlpNorm(tt), k:_hlpNorm(it.dataset.kw||''), b:_hlpNorm(bd), bd};
+  }
+  return it._ix;
+}
 
+// ── abas ──
+function _okrHelpTab(t, foco){
+  if(!_hlpEl('hlp-pane-'+t)) t = 'comecar';
+  _hlpTab = t;
+  document.querySelectorAll('#okr-help-tabs .hlp-tab').forEach(b=>{ const on = b.dataset.tab===t; b.classList.toggle('on',on); b.setAttribute('aria-selected',on?'true':'false'); b.tabIndex = on?0:-1; if(on){ if(foco) b.focus({preventScroll:true}); b.scrollIntoView({inline:'center',block:'nearest'}); } });
+  document.querySelectorAll('#okr-help-ov .hlp-pane').forEach(p=>{ p.hidden = p.dataset.pane!==t; });
+  const body = _hlpEl('okr-help-body'); if(body) body.scrollTop = 0;
+}
+function _okrHelpToggleTudo(t){
+  const its = Array.from(document.querySelectorAll('#hlp-pane-'+t+' .hlp-it')), abrir = its.some(i=>!i.open);
+  its.forEach(i=>{ i.open = abrir; });
+}
+// ── ir direto a um tópico (usado pelos links "Veja…", pelos cartões "Mais usados" e por openOkrHelp('id')) ──
+function _okrHelpIr(id){
+  const it = _hlpEl('hlp-'+id); if(!it) return;
+  if(_hlpQ) _okrHelpLimpa(true);
+  _okrHelpTab(it.dataset.tab);
+  it.open = true;
+  const body = _hlpEl('okr-help-body');
+  body.scrollTop = Math.max(0, it.offsetTop - body.offsetTop - 6);
+  it.classList.remove('hlp-flash'); void it.offsetWidth; it.classList.add('hlp-flash');
+}
+// ── busca ──
+function _okrHelpBusca(q){
+  _hlpQ = (q||'').trim();
+  const termos = _hlpTermos(_hlpQ), box = document.querySelector('#okr-help-ov .hlp-search');
+  box.classList.toggle('has-q', !!_hlpQ); _hlpEl('okr-help-tabs').classList.toggle('sr', !!_hlpQ); _hlpEl('okr-help-qx').hidden = !_hlpQ;
+  const its = _hlpItens(), res = _hlpEl('okr-help-res'), empty = _hlpEl('okr-help-empty');
+  its.forEach(it=>{ _hlpUnmark(it); const s = it.querySelector('.hlp-snip'); if(s) s.remove(); });
+  if(!termos.length){   // volta ao modo abas
+    its.forEach(it=>{ it.hidden = false; if(it._open0!==undefined){ it.open = it._open0; delete it._open0; } });
+    res.hidden = true; empty.hidden = true;
+    document.querySelectorAll('#okr-help-tabs .hlp-tab').forEach(b=>{ b.classList.remove('dim'); b.querySelector('em').textContent = ''; });
+    document.querySelectorAll('#okr-help-ov .hlp-panehd').forEach(h=>{ h.hidden = false; });
+    _okrHelpTab(_hlpTab); return;
+  }
+  const porAba = {}; let total = 0;
+  its.forEach(it=>{
+    if(it._open0===undefined) it._open0 = it.open;
+    const ix = _hlpIdx(it), tudo = ix.t+' '+ix.k+' '+ix.b;
+    if(!termos.every(t=>tudo.includes(t))){ it.hidden = true; return; }
+    it.hidden = false; total++; porAba[it.dataset.tab] = (porAba[it.dataset.tab]||0)+1;
+  });
+  its.forEach(it=>{
+    if(it.hidden) return;
+    const ix = _hlpIdx(it), tit = it.querySelector('.hlp-tt b');
+    _hlpMarkDom(tit, termos);
+    const pos = termos.map(t=>ix.b.indexOf(t)).filter(i=>i>=0).sort((a,b)=>a-b)[0];
+    if(pos!==undefined){
+      const a = Math.max(0,pos-45), b = Math.min(ix.bd.length,pos+100), s = document.createElement('span');
+      s.className = 'hlp-snip'; s.innerHTML = (a>0?'…':'') + _hlpMarkHtml(ix.bd.slice(a,b), termos) + (b<ix.bd.length?'…':'');
+      it.querySelector('.hlp-tt').appendChild(s);
+    }
+    it.open = total<=3;
+    if(total<=3) _hlpMarkDom(it.querySelector('.hlp-bd'), termos);
+  });
+  // no modo busca todas as seções com resultado aparecem juntas, cada uma com o seu título
+  document.querySelectorAll('#okr-help-ov .hlp-pane').forEach(p=>{ const n = porAba[p.dataset.pane]||0; p.hidden = !n; p.querySelector('.hlp-panehd').hidden = false; });
+  document.querySelectorAll('#okr-help-tabs .hlp-tab').forEach(b=>{ const n = porAba[b.dataset.tab]||0; b.classList.toggle('dim', !n); b.querySelector('em').textContent = n ? '· '+n : ''; });
+  res.hidden = false;
+  res.innerHTML = total ? '<b>'+total+'</b> '+(total===1?'resultado':'resultados')+' para “'+esc(_hlpQ)+'” <button type="button" class="hlp-lnk" onclick="_okrHelpLimpa()">limpar busca</button>' : '';
+  empty.hidden = !!total;
+  if(!total){
+    empty.innerHTML = '<div style="font-size:26px;">🤔</div><div style="margin-top:6px;"><b style="color:var(--txt);">Nada encontrado para “'+esc(_hlpQ)+'”</b></div><div style="margin-top:4px;">Tente uma palavra mais simples (ex.: <i>meta</i>, <i>reunião</i>, <i>editar</i>) ou veja as perguntas mais comuns.</div>'
+      + '<div class="hlp-sug"><button type="button" class="hlp-tab hlp-sugb" data-q="atingimento">atingimento</button><button type="button" class="hlp-tab hlp-sugb" data-q="trava">trava</button><button type="button" class="hlp-tab hlp-sugb" data-q="reunião">reunião</button><button type="button" class="hlp-tab hlp-sugb" data-q="notificação">notificação</button><button type="button" class="hlp-tab hlp-sugb" data-q="editar">editar</button></div>'
+      + '<div style="margin-top:12px;"><button type="button" class="hlp-lnk" onclick="_okrHelpLimpa();_okrHelpTab(\'faq\')">❓ Ver as perguntas frequentes</button></div>';
+  }
+  const body = _hlpEl('okr-help-body'); if(body) body.scrollTop = 0;
+}
+function _okrHelpLimpa(semFoco){
+  const i = _hlpEl('okr-help-q'); i.value = ''; _okrHelpBusca('');
+  if(!semFoco && !matchMedia('(pointer:coarse)').matches) i.focus();
+}
 
-function closeOkrHelp(){ document.getElementById('okr-help-ov')?.classList.remove('open'); }
+// ── 🙋 O que eu posso fazer? — lê o papel REAL da pessoa (mesmas funções que travam a edição de verdade) ──
+function _okrHelpPerfil(){
+  const u = window._currentUser, uid = u?.uid, viewer = !!window._isPainelViewer, adm = !!isAdmUser(u);
+  const geral = !viewer && !!uid && _okrMinhaEhGeral(), torre = viewer ? null : _okrMinhaTorre();
+  const po = !viewer && _isPOouOrgEmAlgumSquad(uid), gestor = !viewer && _isGestorOkr(uid);
+  const meus = viewer ? [] : Object.values(okrObjetivos||{}).filter(o=>o && !o.arquivado && _okrIsResponsavel(o));
+  const torresEdita = viewer ? [] : OKR_TORRES.filter(t=>_okrCanCreate(t.id));
+  const organiza = adm || ((po||gestor) && torresEdita.length>0);
+  return {u, uid, viewer, adm, geral, torre, po, gestor, meus, torresEdita, organiza};
+}
+function _okrHelpEuHtml(){
+  const P = _okrHelpPerfil(), G = (id,t)=>'<a href="#" class="hlp-go" data-go="'+id+'">'+t+'</a>';
+  const tnome = id => { const t = OKR_TORRES.find(x=>x.id===id); return t ? t.icon+' '+t.label : id; };
+  const chips = [];
+  if(!P.u) return '';
+  if(P.viewer) chips.push('👁 Visualizador externo');
+  else {
+    if(P.adm) chips.push('🛡️ ADM');
+    if(P.po) chips.push('🎯 PO/Organizador');
+    if(P.gestor) chips.push('🎯 Gestor OKR');
+    chips.push(P.geral ? '⭐ Torre Geral (todas)' : tnome(P.torre));
+    if(P.meus.length) chips.push('👤 Responsável por '+P.meus.length+' Objetivo'+(P.meus.length>1?'s':''));
+    if(!P.adm && !P.po && !P.gestor && !P.meus.length) chips.push('Membro');
+  }
+  const pode = [], nao = [];
+  const torresTxt = P.adm || P.geral ? 'qualquer torre' : (P.torresEdita.length ? 'na torre '+P.torresEdita.map(t=>t.icon+' '+t.label).join(', ') : '');
+  if(P.viewer){
+    pode.push('<b>Acompanhar</b>: ver as 3 torres, o '+G('dashboard','📊 Dashboard')+', as Anotações e a '+G('apresentacao','apresentação')+'.');
+    pode.push('Receber os avisos do <b>📢 Mural</b> e as novidades das torres no '+G('sino','🔔 sino')+'.');
+    pode.push('<b>Buscar</b> na ajuda e abrir o '+G('link','link de um Objetivo')+' que te mandaram.');
+    nao.push('Editar, criar ou registrar qualquer coisa — o acesso é só de leitura (as regras do Firebase impedem).');
+    nao.push('Ver e-mails ou notificações pessoais de outras pessoas.');
+  } else {
+    pode.push('<b>Ver tudo</b>: as 3 torres, a 🌐 Visão global, o '+G('dashboard','Dashboard')+' e as Anotações — '+G('filtros','filtrando')+' por gerência, status, pessoa ou tag.');
+    pode.push('<b>Apresentar</b> em slides (🎥) e abrir o '+G('link','link de um Objetivo')+'.');
+    pode.push('Usar o '+G('sino','🔔 sino')+', o 📢 Mural e o '+G('agente','💬 Agente Ágil')+' (que respeita as suas permissões).');
+    if(P.adm || P.organiza){
+      pode.push('<b>Criar e editar Objetivos e Marcos</b> em '+torresTxt+' — inclusive '+G('atingimento','registrar o atingimento')+' e usar o '+G('menu','menu de ações')+'.');
+      pode.push('<b>⚙ Gerências</b>: criar, renomear, reordenar e ocultar as da '+(P.adm||P.geral?'torre':'sua torre')+'. '+G('torres','Saiba mais'));
+      pode.push('<b>📅 Calendário</b>: criar reuniões '+(P.adm ? 'na agenda <b>🌐 global</b> e em qualquer torre' : 'na agenda da '+(P.geral?'torre':'sua torre'))+', com convidados e pauta. '+G('calendario','Saiba mais'));
+      pode.push('<b>📢 Mural</b>: publicar avisos '+(P.adm||P.geral?'pra todas as torres':'pra '+P.torresEdita.map(t=>t.icon+' '+t.label).join(', '))+'.');
+    }
+    if(P.adm){
+      pode.push('<b>🗑 Excluir</b> Objetivos (definitivo), <b>👁 dar acesso</b> a '+G('viewers','visualizadores externos')+' e trocar a torre de cada pessoa em 👥 Global Users (painel).');
+    }
+    if(P.meus.length){
+      pode.push('<b>Seus Objetivos</b> ('+P.meus.length+'): como Responsável você edita cada um deles, cria/edita os Marcos e registra o atingimento — mesmo fora da sua torre. Dá pra achá-los com o filtro <b>👤 pessoa</b>.');
+    }
+    if(!P.organiza && !P.meus.length){
+      pode.push('<b>Participar</b>: ser convidado pras reuniões, receber avisos e ser <b>@mencionado</b> nas Anotações.');
+      nao.push('Criar ou editar Objetivos — isso é de ADM, PO/Organizador ou 🎯 Gestor OKR (na torre deles) e do Responsável de cada Objetivo. Veja '+G('quemedita','Quem pode editar')+'.');
+    }
+    if(P.organiza && !P.adm){
+      nao.push('<b>Excluir</b> Objetivos e dar acesso a visualizadores — só ADM.');
+      nao.push('Criar reunião na agenda <b>🌐 global</b>'+(P.geral?'':' ou editar Objetivos de outras torres (só se for o Responsável)')+'.');
+    }
+    if(!P.adm && P.meus.length && !P.organiza){
+      nao.push('Criar Objetivo novo ou editar os que não são seus — isso é de ADM, PO/Organizador ou 🎯 Gestor OKR da torre.');
+    }
+    if(!P.adm && !P.organiza) nao.push('Criar reunião no 📅 Calendário (só ADM e quem organiza a torre).');
+    pode.push('Se alguém já estiver editando um Objetivo, você vê em leitura e pode <b>🔔 pedir</b> — veja '+G('trava','Edição simultânea')+'.');
+  }
+  return '<div class="hlp-eu-hd"><b>🙋 O que eu posso fazer?</b></div>'
+    + '<div class="hlp-eu-chips">'+chips.map(c=>'<span class="hlp-eu-chip">'+esc(c)+'</span>').join('')+'</div>'
+    + '<h4>✅ Você pode</h4><ul>'+pode.map(x=>'<li>'+x+'</li>').join('')+'</ul>'
+    + (nao.length ? '<h4>🚫 Você não pode</h4><ul class="nao">'+nao.map(x=>'<li class="nao">'+x+'</li>').join('')+'</ul>' : '');
+}
+function _okrHelpEuRender(){ const el = _hlpEl('okr-help-eu'); if(el){ el.innerHTML = _okrHelpEuHtml(); el.hidden = !el.innerHTML; } }
+
+function openOkrHelp(id){
+  const ov = _hlpEl('okr-help-ov'); if(!ov) return;
+  _okrHelpEuRender();
+  _hlpItens().forEach(it=>{ delete it._open0; });
+  const q = _hlpEl('okr-help-q'); q.value = ''; _okrHelpBusca('');
+  ov.classList.add('open');
+  const cont = (id && _hlpEl('hlp-'+id)) ? (_okrHelpIr(id), true) : (_okrHelpTab('comecar'), false);
+  if(!cont && !matchMedia('(pointer:coarse)').matches) q.focus({preventScroll:true});
+}
+function closeOkrHelp(){ _hlpEl('okr-help-ov')?.classList.remove('open'); }
+document.addEventListener('click', e=>{
+  if(e.target.id==='okr-help-ov'){ closeOkrHelp(); return; }
+  const go = e.target.closest?.('#okr-help-ov [data-go]'); if(go){ e.preventDefault(); _okrHelpIr(go.dataset.go); return; }
+  const tb = e.target.closest?.('#okr-help-ov button[data-tab]'); if(tb){ if(_hlpQ) _okrHelpLimpa(true); _okrHelpTab(tb.dataset.tab); return; }
+  const sg = e.target.closest?.('#okr-help-ov .hlp-sugb'); if(sg){ const i = _hlpEl('okr-help-q'); i.value = sg.dataset.q; _okrHelpBusca(sg.dataset.q); }
+});
+// Esc: limpa a busca (se houver) e só então fecha — capture na window pra rodar antes dos outros modais; "/" foca a busca; ←/→ trocam de aba
+window.addEventListener('keydown', e=>{
+  const ov = _hlpEl('okr-help-ov'); if(!ov || !ov.classList.contains('open')) return;
+  const q = _hlpEl('okr-help-q'), digitando = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+  if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); if(_hlpQ){ _okrHelpLimpa(); } else closeOkrHelp(); return; }
+  if(e.key==='/' && !digitando){ e.preventDefault(); q.focus(); return; }
+  const tb = document.activeElement?.closest?.('#okr-help-tabs .hlp-tab');
+  if(tb && (e.key==='ArrowRight'||e.key==='ArrowLeft'||e.key==='Home'||e.key==='End')){
+    const ts = Array.from(document.querySelectorAll('#okr-help-tabs .hlp-tab')), i = ts.indexOf(tb);
+    const n = e.key==='Home' ? 0 : e.key==='End' ? ts.length-1 : (i + (e.key==='ArrowRight'?1:-1) + ts.length) % ts.length;
+    e.preventDefault(); e.stopPropagation(); if(_hlpQ) _okrHelpLimpa(true); _okrHelpTab(ts[n].dataset.tab, true);
+  }
+}, true);
+
 
 
 
