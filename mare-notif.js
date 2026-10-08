@@ -154,6 +154,14 @@
     if(n.cardId) return {url:PAGES.kanban+'?squad='+encodeURIComponent(n.squad||'')+'&card='+encodeURIComponent(n.cardId)};
     return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};
   }
+  // Abre outra página do Maré Digital (OKR ↔ painel ↔ kanban) numa ABA NOVA — a que a pessoa está usando fica como está.
+  // Se o navegador bloquear a aba nova (popup), cai pra navegação normal em vez de não fazer nada.
+  function abrirPagina(u){
+    if(!u) return false;
+    let w = null; try{ w = window.open(u, '_blank'); }catch(e){}
+    if(w){ try{ w.opener = null; }catch(e){} return true; }
+    location.href = u; return false;
+  }
   // Abre um item do feed: a página pode tratar por dentro (opts.abrirFeed(it) devolve true) — senão navega pela URL.
   function abrirFeed(id){
     const it = items().find(x=>x.id===id) || (st.feed[id] ? {id, muralId:st.feed[id].muralId, objId:st.feed[id].objId, eventoId:st.feed[id].eventoId, evData:st.feed[id].evData} : null);
@@ -161,7 +169,7 @@
     const w = markOne(id);
     try{ if(st.opts && st.opts.abrirFeed && st.opts.abrirFeed(it)) return true; }catch(e){ console.warn('[MareNotif] abrirFeed:', e); }
     const u = urlFeed(it);
-    if(u) Promise.race([w, new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = u; });   // deixa o "lido" sair antes de trocar de página (no máx. 0,8 s)
+    if(u) abrirPagina(u);   // aba nova: a página atual continua viva, então o "lido" termina de gravar sozinho (e o clique conta como gesto do usuário — sem bloqueio de popup)
     return true;
   }
 
@@ -338,7 +346,7 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
-  window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
+  window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
