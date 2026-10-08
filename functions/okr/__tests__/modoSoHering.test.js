@@ -38,6 +38,8 @@ test('interruptor: ligado por padrão — empresa = só @ciahering.com.br; torre
   assert.equal(modo.torreAtiva(undefined), true);   // sem o campo = Digital
   assert.equal(modo.torreAtiva('digital'), true);
   assert.equal(modo.torreAtiva('comercial'), false);
+  assert.equal(modo.torreAtiva('corporativa'), false);
+  assert.equal(modo.torreAtiva('xyz'), true);   // valor desconhecido/corrompido vale como Digital (não some do nada)
 });
 
 test('push do Mural: conta @arezzo NÃO recebe; aviso dirigido só a outra torre não vai pra ninguém (nem ADM)', async () => {
@@ -90,4 +92,19 @@ test('Agente: torre "comercial" nem passa na validação de entrada; criar Objet
   assert.deepEqual(g.torres.map((t) => t.torre), ['digital']);
   assert.match(SYSTEM_PROMPT_OKR_V1, /única em uso/);
   assert.doesNotMatch(SYSTEM_PROMPT_OKR_V1, /O OKR tem 3 torres/);
+});
+
+test('push do Mural: quem tem a flag antiga de outra torre (comercial/corporativa) recebe aviso da Digital — no modo só Hering todo mundo é Digital', async () => {
+  const db = makeFakeDb({ kanban: {
+    config: { adm_emails: [] }, usuarios_publicos: { a: {}, b: {}, c: {} },
+    usuarios: {
+      a: { email: 'a@ciahering.com.br', torre: 'comercial', fcm_tokens: { d: { token: 'T-a' } } },
+      b: { email: 'b@ciahering.com.br', fcm_tokens: { d: { token: 'T-b' } } },
+      c: { email: 'c@ciahering.com.br', torre: 'corporativa', fcm_tokens: { d: { token: 'T-c' } } },
+    } } });
+  const env = [];
+  const msg = { async sendEachForMulticast(m) { env.push(...m.tokens); return { successCount: m.tokens.length, failureCount: 0, responses: m.tokens.map(() => ({ success: true })) }; } };
+  await runPushMural(db, msg, { id: 'f', tipo: 'mural', torres: ['digital'], titulo: 'x', sub: 'y', muralId: 'm', autorUid: 'z' }, { log: () => {} });
+  assert.deepEqual(env.sort(), ['T-a', 'T-b', 'T-c']);
+  assert.equal(deveReceber({ ev: { tipo: 'mural', torres: ['digital'], autorUid: 'z' }, uid: 'u', torre: 'comercial', ehAdm: false }), true);
 });

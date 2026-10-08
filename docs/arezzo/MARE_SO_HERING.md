@@ -211,6 +211,10 @@ Os `kanban.html`, `painel.html`, `okr.html`, `mare-notif.js` (prod) **não têm*
 - `functions/` — `npm test`: **matriz de regras nos dois arquivos** (`rules/__tests__/databaseRules.test.js`), `okr/__tests__/modoSoHering.test.js` (modo atual) e as 4 suítes legadas com `MARE_MODO_TESTE=varias-torres` (modo religado).
 - Navegador (Playwright + Firebase falso; scripts na pasta de trabalho da sessão, não versionados): `test_so_hering.js` (okr-dev: login, uma torre só, dados de outra torre invisíveis em lista/calendário/histórico/mural, sem pergunta de torre, pessoas só Hering, conta Arezzo barrada), `test_so_hering_kanban_painel.js` (login, domínios, menção, inscrição, ajuda, filtros do Global Users); e as suítes antigas do OKR (`head/page/torres/gerencias/calendario/help/modal_edicao`) rodando **com o interruptor virado pra `false`** — todas passam, o que prova que religar devolve o comportamento anterior.
 
+## 5.1 Auditoria `/monitorarbugs` pós-implementação (2026-10-08)
+
+Achados corrigidos depois da promoção: (a) `pushMural.deveReceber()` agora trata a flag de torre antiga como Digital no modo só Hering (antes: pessoa com `torre:'comercial'` via o aviso no sino e não recebia o push); (b) `_loginProviderMismatchMsg()` não manda mais conta `@arezzo` pro botão Microsoft escondido; (c) `_okrSoAtivo()`/`torreAtiva()` só escondem Comercial/Corporativa de verdade (torre desconhecida = Digital). Pra **religar** lembre que a apresentação tem a própria constante (`const MARE_SO_HERING` em `okr-apresentacao.slide.html`) — com só o `okr-dev` virado, os testes de gerências da apresentação ainda falham.
+
 ## 6. Pendências / cuidados
 
 - **Produção ainda não mudou.** `kanban.html`, `painel.html`, `okr.html` e `mare-notif.js` seguem como estavam (com Arezzo/Microsoft e 3 torres) até alguém autorizar a promoção (`/subirproprod`, fluxo normal do `CLAUDE.md`).

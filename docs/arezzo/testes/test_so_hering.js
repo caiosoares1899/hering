@@ -6,7 +6,7 @@ const hoje=new Date().toISOString().slice(0,10);
 const mk=(id,t,o,extra)=>({id,titulo:t,areaId:'geral',trimestres:['2026-Q4'],responsaveis:[],tagIds:[],history:[],ordem:o,indicadores:[],progressos:[],proximosPassos:[],riscos:[],planosAcao:[],...extra});
 const seed=()=>({kanban:{
   okr:{objetivos:{ o1:mk('o1','Digital sem campo torre',0,{areaId:'dadosia'}), o2:mk('o2','Digital explícito',1,{torre:'digital',areaId:'cx'}),
-      c1:mk('c1','Comercial um SEGREDO',0,{torre:'comercial'}), k1:mk('k1','Corporativa um SEGREDO',0,{torre:'corporativa'}) },
+      c1:mk('c1','Comercial um SEGREDO',0,{torre:'comercial'}), z9:mk('z9','Digital com torre corrompida',2,{torre:'xyz'}), k1:mk('k1','Corporativa um SEGREDO',0,{torre:'corporativa'}) },
     marcos:{ m1:{id:'m1',objetivoId:'o1',nome:'Marco digital',progresso:'em_andamento',prazo:hoje}, m2:{id:'m2',objetivoId:'c1',nome:'Marco comercial SEGREDO',progresso:'em_andamento',prazo:hoje} },
     snapshots:{'2026-09-25':{date:'2026-09-25',resumoGeral:{total:3},objetivos:{ o1:{titulo:'D',areaId:'dadosia',torre:'digital',status:'no_prazo',progressoPct:40,totalMarcos:0,marcosConcluidos:0}, c1:{titulo:'C SEGREDO',areaId:'geral',torre:'comercial',status:'no_prazo',progressoPct:50,totalMarcos:0,marcosConcluidos:0} }}},
     calendario:{eventos:{ eg:{id:'eg',titulo:'Reunião GLOBAL',tipo:'reuniao',data:hoje,torre:''}, ed:{id:'ed',titulo:'Reunião Digital',tipo:'reuniao',data:hoje,torre:'digital'}, ec:{id:'ec',titulo:'Reunião Comercial SEGREDO',tipo:'reuniao',data:hoje,torre:'comercial'} }},
@@ -27,6 +27,8 @@ const U=(uid,email,nome,prov)=>({uid,email,displayName:nome,photoURL:'',provider
    ok('1b. texto de acesso restrito não cita @arezzo', !/arezzo/i.test(login.txt), login.txt);
    const g=await page.evaluate(()=>({ms:window.MARE_SO_HERING, td:TRUSTED_DOMAINS, a:_isTrustedDomainEmail('x@arezzo.com.br'), h:_isTrustedDomainEmail('x@ciahering.com.br')}));
    ok('1c. TRUSTED_DOMAINS = só @ciahering; @arezzo não é confiável', g.ms===true && g.td.length===1 && g.a===false && g.h===true, JSON.stringify(g));
+   const mm=await page.evaluate(()=>({az:_loginProviderMismatchMsg({email:'ze@arezzo.com.br',providerData:[{providerId:'google.com'}]}), h:_loginProviderMismatchMsg({email:'a@ciahering.com.br',providerData:[{providerId:'google.com'}]})}));
+   ok('1e. conta @arezzo entrando pelo Google NÃO é mandada pro botão Microsoft (escondido)', mm.az==='' && mm.h==='', JSON.stringify(mm));
    const t=await page.evaluate(()=>{ doSignInMicrosoft(); return document.getElementById('login-err').textContent; });
    ok('1d. doSignInMicrosoft() recusa com mensagem', /desativado/.test(t), t); await ctx.close(); }
  // 2) uma torre só
@@ -34,12 +36,12 @@ const U=(uid,email,nome,prov)=>({uid,email,displayName:nome,photoURL:'',provider
    const r=await page.evaluate(()=>({home:getComputedStyle(document.getElementById('okr-home')).display, nav:getComputedStyle(document.getElementById('okr-torre-nav')).display, atual:_okrTorreAtual, torres:OKR_TORRES.map(t=>t.id),
       titulos:[...document.querySelectorAll('.okr-card-title')].map(e=>e.textContent), body:document.body.innerText}));
    ok('2a. entra direto na Digital: sem home de torres, sem barra de torres', r.home==='none' && r.nav==='none' && r.atual==='digital' && r.torres.join()==='digital', JSON.stringify({home:r.home,nav:r.nav,atual:r.atual,torres:r.torres}));
-   ok('2b. a lista mostra só os Objetivos Digitais (com e sem o campo torre)', r.titulos.length===2 && r.titulos.every(t=>/Digital/.test(t)), JSON.stringify(r.titulos));
+   ok('2b. a lista mostra só os Objetivos Digitais (com e sem o campo torre, e com torre desconhecida = Digital)', r.titulos.length===3 && r.titulos.every(t=>/Digital/.test(t)), JSON.stringify(r.titulos));
    ok('2c. nada de SEGREDO (Comercial/Corporativa) em lugar nenhum da tela', !/SEGREDO/.test(r.body));
    const e=await page.evaluate(()=>{ _okrEntrarTorre('comercial'); const a1=_okrTorreAtual; _okrEntrarTorre('global'); const a2=_okrTorreAtual; _okrEntrarTorre(''); return [a1,a2,_okrTorreAtual]; });
    ok('2d. _okrEntrarTorre("comercial"/"global"/"") sempre cai na Digital', e.join()==='digital,digital,digital', e.join());
    const dados=await page.evaluate(()=>({obj:Object.keys(okrObjetivos).sort().join(), ev:Object.keys(okrEventos).sort().join(), mu:Object.keys(okrMural).sort().join()}));
-   ok('2e. cache: Objetivos/eventos/avisos de outra torre nem entram (ficam só no banco)', dados.obj==='o1,o2' && dados.ev==='ed,eg' && dados.mu==='a1,a2', JSON.stringify(dados));
+   ok('2e. cache: Objetivos/eventos/avisos de outra torre nem entram (ficam só no banco)', dados.obj==='o1,o2,z9' && dados.ev==='ed,eg' && dados.mu==='a1,a2', JSON.stringify(dados));
    const bd=await page.evaluate(async()=>{ _okrSetView('calendario'); await new Promise(r=>setTimeout(r,500)); const c=document.body.innerText; _okrSetView('historico'); await new Promise(r=>setTimeout(r,700)); return {cal:c, hist:document.body.innerText}; });
    ok('2f. Calendário e Histórico semanal sem nada das outras torres', !/SEGREDO/.test(bd.cal) && !/SEGREDO/.test(bd.hist), (bd.cal+bd.hist).match(/.{0,30}SEGREDO.{0,30}/)?.[0]);
    const cfg=await page.evaluate(()=>{ _okrSetView('objetivos'); openOkrObjetivo('o1'); openOkrConfig(); return {torreCampo:!!document.getElementById('okr-f-torre'), txt:document.getElementById('okr-obj-config-body').innerText}; });
