@@ -25,12 +25,16 @@ const { createAnthropicLlmClient, DEFAULT_MODEL } = require('./llmClient');
 
 // Tier -> model id da Anthropic.
 const MODEL_BY_TIER = {
-  haiku: 'claude-haiku-4-5-20251001',
+  haiku: 'claude-haiku-5-5',   // 2026-10-08: era claude-haiku-4-5-20251001
   sonnet: DEFAULT_MODEL,
   opus: 'claude-opus-5',
 };
 
 const TIERS_VALIDOS = new Set(Object.keys(MODEL_BY_TIER));
+
+// Rede de segurança por tier (ver llmClient.js): se a API recusar o id novo, repete 1x com o anterior. 'sonnet' usa o FALLBACK_MODEL do próprio llmClient;
+// 'opus' não tem fallback (só é usado por override manual).
+const FALLBACK_BY_TIER = { haiku: 'claude-haiku-4-5-20251001' };
 
 // Mesmo padrão de normalização de detectaMencao.js (minúsculo + remove
 // diacríticos) — reaproveitado aqui só pela consistência de convenção
@@ -94,8 +98,8 @@ async function escolheClienteParaTarefa({ apiKey, taskText, db } = {}) {
   return {
     tier,
     model,
-    llmClient: createAnthropicLlmClient({ apiKey, model }),
+    llmClient: createAnthropicLlmClient({ apiKey, model, ...(FALLBACK_BY_TIER[tier] ? { fallbackModel: FALLBACK_BY_TIER[tier] } : {}) }),
   };
 }
 
-module.exports = { escolheClienteParaTarefa, classificaComplexidade, MODEL_BY_TIER, TIERS_VALIDOS };
+module.exports = { escolheClienteParaTarefa, classificaComplexidade, MODEL_BY_TIER, TIERS_VALIDOS, FALLBACK_BY_TIER };

@@ -92,7 +92,7 @@ function anthropicToolsFromTools(tools) {
 //
 // Mínimo cacheável pro Sonnet 5/Opus 5 é 1024 tokens — system+tools aqui
 // somam ~2,5k tokens (medido), então cria cache normalmente. Já pro tier
-// 'haiku' (ver escolheClienteParaTarefa.js), o mínimo do Haiku 4.5 é
+// 'haiku' (ver escolheClienteParaTarefa.js; Haiku 5.5 desde 2026-10-08 — o mínimo abaixo é o do 4.5, conferir o do 5.5), o mínimo do Haiku 4.5 é
 // 4096 tokens — abaixo disso o marcador não quebra nada, só não cria
 // cache (comportamento documentado da API: cache_creation_input_tokens
 // fica 0, sem erro).
