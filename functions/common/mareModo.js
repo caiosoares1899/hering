@@ -12,7 +12,8 @@
 const MARE_SO_HERING = process.env.MARE_MODO_TESTE === 'varias-torres' ? false : true;
 
 const DOMINIOS_EMPRESA = MARE_SO_HERING ? ['ciahering.com.br'] : ['ciahering.com.br', 'arezzo.com.br'];
-const TORRES_ATIVAS = MARE_SO_HERING ? ['digital'] : ['digital', 'comercial', 'corporativa'];
+const TORRES_TODAS = ['digital', 'comercial', 'corporativa'];
+const TORRES_ATIVAS = MARE_SO_HERING ? ['digital'] : TORRES_TODAS;
 
 // O e-mail é de uma conta da empresa? (mesma regra de TRUSTED_DOMAINS nos HTML)
 const emailDaEmpresa = (email) => {
@@ -22,6 +23,7 @@ const emailDaEmpresa = (email) => {
 
 // O registro (Objetivo, evento…) pertence a uma torre ativa? Lê o campo CRU `torre` (sem o campo = Digital): no modo "só Hering" o que é de
 // outra torre é tratado como inexistente — NÃO como Digital (por isso não usar torreDe(), que normaliza torre desconhecida pra Digital).
-const torreAtiva = (torre) => !torre || TORRES_ATIVAS.includes(torre);
+// (torre desconhecida/corrompida continua valendo como Digital, igual a torreDe() — só some o que é de uma das OUTRAS torres de verdade.)
+const torreAtiva = (torre) => !torre || TORRES_ATIVAS.includes(torre) || !TORRES_TODAS.includes(torre);
 
-module.exports = { MARE_SO_HERING, DOMINIOS_EMPRESA, TORRES_ATIVAS, emailDaEmpresa, torreAtiva };
+module.exports = { MARE_SO_HERING, DOMINIOS_EMPRESA, TORRES_ATIVAS, TORRES_TODAS, emailDaEmpresa, torreAtiva };

@@ -39,6 +39,8 @@ function deveReceber({ ev, uid, torre, ehAdm, agora }) {
   if (!ev || ev.tipo !== 'mural') return false;
   if (uid === ev.autorUid) return false;
   const alvo = alvoTorres(ev);
+  // Modo "só Hering": existe uma torre só, então a flag antiga da pessoa (comercial/corporativa, que continua gravada) não conta — todo mundo é Digital (menos a ⭐ Geral).
+  if (MARE_SO_HERING && torre !== 'geral') torre = 'digital';
   // Modo "só Hering": aviso dirigido SÓ a outra torre (ex.: ['comercial']) não vai pra ninguém, nem pro ADM.
   if (MARE_SO_HERING && !alvo.includes('*') && !alvo.some((t) => TORRES_ATIVAS.includes(t))) return false;
   if (ehAdm || torre === 'geral' || alvo.includes('*')) return true;
