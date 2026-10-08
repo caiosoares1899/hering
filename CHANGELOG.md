@@ -20744,6 +20744,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr.html — 2026-10-08 · fix cosmético: o 🎯 aparecia duas vezes na aba (ícone + título)
+
+O ícone da aba já é o 🎯; o título também começava com ele ("🎯 🎯 OKR…"). O título de **prod** passa a ser só "OKR · Maré Digital" (o do dev, "🧪 OKR · Maré Digital · Dev", não repetia o ícone e fica como está). Só texto do `<title>`: sem bump de versão, pra não forçar recarga nas abas abertas — vale no próximo carregamento da página.
+
 ### okr.html v2.41 · okr — 2026-10-08 · Promove pra prod — versão sempre visível, painel do Agente por cima dos modais, folga pro botão flutuante
 
 Promove okr-dev v2.41 (prod estava na v2.40): a **versão** passa a aparecer também no menu ⋯ Mais, no título da ❓ Ajuda e no tooltip do botão do Agente; **"💬 Perguntar ao Agente"** com o modal do Objetivo aberto abre o painel por cima do modal (antes ficava por baixo); a página ganha folga embaixo pro botão flutuante não esconder o fim da lista. Sem avisos (Mural/WhatsApp) por decisão do usuário.
