@@ -1527,7 +1527,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')"><span class="ptab-icon">👁</span><span class="ptab-lbl">Visão</span></button>
     <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
     <button class="ptab"     id="ptab-timeline" onclick="swPtab('timeline')"><span class="ptab-icon">🛤️</span><span class="ptab-lbl">Timeline</span></button>
-    <a class="ptab" id="ptab-okr" href="okr-dev.html" title="O OKR agora tem página própria — abre okr-dev.html" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">🎯</span><span class="ptab-lbl">OKR ↗</span></a>
+    <a class="ptab" id="ptab-okr" href="okr-dev.html" target="_blank" rel="noopener" title="O OKR tem página própria — abre okr-dev.html em outra aba" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">🎯</span><span class="ptab-lbl">OKR ↗</span></a>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
@@ -2745,7 +2745,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.19 · painel-dev</div>
+<div class="version">v5.20 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2848,7 +2848,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=6"></script>
+<script src="mare-notif-dev.js?v=7"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -5437,7 +5437,7 @@ function togglePcalSection(){ swPtab('pessoas'); }
 // Página própria do OKR (mesmo ambiente: painel→okr, painel-dev→okr-dev)
 const OKR_PAGE = 'okr-dev.html';
 function swPtab(tab){
-  if(tab==='okr'){ location.href = OKR_PAGE; return; } // OKR tem página própria (okr.html / okr-dev.html) — esta aba é só um atalho
+  if(tab==='okr'){ MareNotif.abrirPagina(OKR_PAGE); return; } // OKR tem página própria (okr.html / okr-dev.html) — esta aba é só um atalho; abre em aba nova
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
   document.querySelectorAll('.ptab-pane').forEach(p=>p.classList.remove('on'));
   const btn=document.getElementById('ptab-'+tab);
@@ -6889,9 +6889,9 @@ function renderPainelNotifs(){
     const openAttr = n._kind==='feed'
       ? `onclick="MareNotif.abrirFeed(${jsq(n.id)});togglePainelNotif(event);" style="cursor:pointer;"`
       : n.okrEventoId
-      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')});" style="cursor:pointer;"`
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')}));" style="cursor:pointer;"`
       : _okrAlvo
-      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});location.href=OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)});" style="cursor:pointer;"`
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)}));" style="cursor:pointer;"`
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
