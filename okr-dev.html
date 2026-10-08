@@ -1891,7 +1891,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.41 · okr-dev</div>
+<div class="version">v2.42 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4074,7 +4074,7 @@ function loadOkrGerencias(){
     okrGerenciasCfg = snap.val() || {};
     if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // seletores, agrupamento e rótulos dependem da lista
     if(document.getElementById('okr-ger-ov')?.classList.contains('open')) renderOkrGerencias();
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
+    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')){ _okrSyncObjDraftFromDom(); renderOkrObjConfigBody(); }   // sincroniza antes: outra pessoa mexendo nas gerências não pode apagar o que estou digitando
     if(_okrShowHistorico) renderOkrHistorico();
   }, ()=>{});   // sem permissão de leitura: segue com o padrão
 }
@@ -4084,8 +4084,7 @@ function loadOkrTags(){
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{
     okrTags = snap.val() || {};
     if(_okrLoaded && typeof renderOkrObjetivos==='function') renderOkrObjetivos();   // chips e filtro por tag dependem das tags carregadas
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
-    else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+    _okrRerenderObjModalSync();
   });
 }
 
@@ -4198,8 +4197,7 @@ async function _okrTagFormSalvar(){
     (_okrObjDraft.tagIds = _okrObjDraft.tagIds||[]).push(id);
     renderOkrObjConfigBody();
   }else{
-    if(document.getElementById('okr-obj-config-ov')?.classList.contains('open')) renderOkrObjConfigBody();
-    else if(document.getElementById('okr-obj-ov')?.classList.contains('open')) renderOkrObjBody(_okrEditingObjId);
+    _okrRerenderObjModalSync();
     renderOkrObjetivos();
   }
   showToast(eraNova?'🏷️ Tag criada e aplicada.':'🏷️ Tag atualizada.');
@@ -6541,6 +6539,21 @@ let _okrObjDraft = null;
 // estado atual antes de fechar de verdade.
 let _okrObjOpenSnapshot = null;
 
+
+// Chave de comparação do "tem alteração não salva?". O DOM devolve '' / true onde o dado antigo nunca teve o campo (mostrarApresentacao ausente = aparece;
+// responsável/prazo/descrição/pilar ausentes = vazio), então comparar o JSON cru acusava "alterações não salvas" sem a pessoa ter mexido em nada — em TODO Marco
+// anterior ao botão 🎬 e em todo Objetivo aberto na ⚙ Configurações (/monitorarbugs 2026-10-08). Normaliza os dois lados e ordena as chaves.
+function _okrDirtyStr(d){
+  const c = JSON.parse(JSON.stringify(d||{}));
+  c.mostrarApresentacao = c.mostrarApresentacao!==false;
+  ['nome','titulo','responsavel','prazo','descricao','pilar'].forEach(k=>{ if(c[k]==null) c[k] = ''; });
+  const ord = v => Array.isArray(v) ? v.map(ord) : (v && typeof v==='object') ? Object.keys(v).sort().reduce((o,k)=>(o[k]=ord(v[k]),o),{}) : v;
+  return JSON.stringify(ord(c));
+}
+function _okrSnapshotMudou(draft, snapshot){
+  try{ return _okrDirtyStr(draft) !== _okrDirtyStr(JSON.parse(snapshot)); }catch(e){ return JSON.stringify(draft) !== snapshot; }
+}
+
 // ═══ 🔒 TRAVA DE EDIÇÃO CONCORRENTE DO OBJETIVO (okr-dev v2.21) ═══════════════════════════════════════════════════════════
 // Pedido direto: "trave edição simultânea do mesmo objetivo, estilo o que já temos no kanban em cards". Mesmo desenho da trava de card
 // (kanban-dev.html, _checkCardLock()): 1 nó por Objetivo em kanban/okr/obj_locks/{objId} = {uid, who, ts[, request:{byUid,byWho,at}]}.
@@ -6821,7 +6834,7 @@ async function _okrTryCloseObjetivo(){
     const _camposAdd = ['indicadores','progressos','proximosPassos','riscos','planosAcao','trimestres'];
     const _temTextoPendente = _camposAdd.some(c => (document.getElementById('okr-add-'+c)?.value||'').trim());
     const _atingPendente = !!((document.getElementById('okr-ating-valor')?.value||'').trim() || (document.getElementById('okr-ating-nota')?.value||'').trim());
-    if(_temTextoPendente || _atingPendente || JSON.stringify(_okrObjDraft) !== _okrObjOpenSnapshot){
+    if(_temTextoPendente || _atingPendente || _okrSnapshotMudou(_okrObjDraft, _okrObjOpenSnapshot)){
       if(!await uiConfirm('Você tem alterações não salvas neste Objetivo. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -7475,6 +7488,17 @@ function _okrRerenderCurrentScreen(){
 }
 
 
+// Re-render do modal do Objetivo disparado por algo ASSÍNCRONO de fora (outra pessoa criou/editou uma tag, mexeram nas gerências…): guarda antes o que a pessoa
+// já digitou — sem isto o texto do título/pilar/descrição (⚙ Configurações) ou o valor do atingimento sumia sem ela fazer nada (/monitorarbugs 2026-10-08).
+function _okrRerenderObjModalSync(){
+  if(!_okrObjDraft) return;
+  const cfg = document.getElementById('okr-obj-config-ov')?.classList.contains('open'), main = document.getElementById('okr-obj-ov')?.classList.contains('open');
+  if(!cfg && !main) return;
+  _okrSyncObjDraftFromDom();
+  if(cfg) renderOkrObjConfigBody(); else renderOkrObjBody(_okrEditingObjId);
+}
+
+
 function _okrListAdd(campo){
   const inp = document.getElementById('okr-add-'+campo);
   const v = (inp?.value||'').trim(); if(!v) return;
@@ -7611,6 +7635,7 @@ async function _okrMarcoMover(objId, marcoId, dir){
   marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = ordens[i]; });
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: ordens[i]}; });
+  _okrSyncObjDraftFromDom();   // a gravação é assíncrona: o que foi digitado enquanto isso (ex.: valor do atingimento) não pode sumir no re-render
   renderOkrObjBody(_okrEditingObjId);
 }
 
@@ -7637,6 +7662,7 @@ async function _okrMarcoReorderTo(objId, draggedId, targetId){
   marcos.forEach((m,i)=>{ updates[`kanban/okr/marcos/${m.id}/ordem`] = i; });
   await window._update(window._ref(window._db), updates);
   marcos.forEach((m,i)=>{ okrMarcos[m.id] = {...okrMarcos[m.id], ordem: i}; });
+  _okrSyncObjDraftFromDom();   // idem _okrMarcoMover()
   renderOkrObjBody(objId);
 }
 
@@ -7813,8 +7839,27 @@ function renderOkrObjConfigBody(){
 
 
 
+// Trava de "salvando": o id do Objetivo NOVO nasce a cada chamada e a gravação é assíncrona — duplo clique em 💾 Salvar (ou Enter repetido)
+// criava 2 Objetivos / duplicava a linha do histórico e a notificação (/monitorarbugs 2026-10-08; mesma lição do registro rápido e do evento).
+let _okrSalvandoObj = false;
 async function saveOkrObjetivo(){
+  if(_okrSalvandoObj) return;
+  _okrSalvandoObj = true;
+  const _botoes = [...document.querySelectorAll('#okr-obj-footer .save-btn, #okr-obj-config-footer .save-btn')];
+  _botoes.forEach(b=>b.disabled = true);
+  const _histAntes = _okrObjDraft && Array.isArray(_okrObjDraft.history) ? _okrObjDraft.history.slice() : null;
+  try{ return await _saveOkrObjetivoInner(); }
+  catch(e){   // falha de gravação (permissão/rede): o modal continua aberto, sem duplicar a linha de histórico numa nova tentativa
+    if(_okrObjDraft && _histAntes) _okrObjDraft.history = _histAntes;
+    console.error('saveOkrObjetivo', e); showToast('⚠ Não consegui salvar o Objetivo. Tente de novo.');
+  }
+  finally{ _okrSalvandoObj = false; _botoes.forEach(b=>{ if(b.isConnected) b.disabled = false; }); }
+}
+
+
+async function _saveOkrObjetivoInner(){
   if(_okrEditingObjId && _okrLockBloqueia(_okrEditingObjId)) return;   // outra pessoa assumiu a trava (corrida/pedido): não grava por cima
+  if(_okrEditingObjId && !okrObjetivos[_okrEditingObjId]){ showToast('⚠ Este Objetivo foi excluído por outra pessoa enquanto você editava — não dá pra salvar.'); return; }   // senão o Salvar o "ressuscitava"
   _okrSyncObjDraftFromDom();
   const d = _okrObjDraft;
   // 📈 valor/“atingido” digitado e NÃO registrado: antes sumia em silêncio no Salvar ("Objetivo salvo" sem o atingimento). Pergunta e registra.
@@ -7827,7 +7872,7 @@ async function saveOkrObjetivo(){
       const antes=(d.atingimento.lancamentos||[]).length;
       _okrAtingAdd(true);
       if(((_okrObjDraft.atingimento&&_okrObjDraft.atingimento.lancamentos)||[]).length<=antes) return;   // valor inválido: _okrAtingAdd já avisou; não salva
-      return saveOkrObjetivo();                                                                          // reentra já com o registro no rascunho e o formulário limpo
+      return _saveOkrObjetivoInner();                                                                    // reentra (sem a trava de duplo clique) já com o registro no rascunho e o formulário limpo
     }
   }
   // Registros lançados por OUTRA pessoa enquanto este modal estava aberto (o listener ao vivo já os trouxe pra okrObjetivos): o Salvar grava o
@@ -8037,7 +8082,7 @@ async function _okrTryCloseMarco(){
     // verdade com Enter/"+ Add"; sem confirmar, nunca entra em
     // _okrSyncMarcoDraftFromDom() e clicar fora perdia o texto em silêncio.
     const _temTextoPendente = (document.getElementById('okr-checklist-add')?.value||'').trim();
-    if(_temTextoPendente || JSON.stringify(_okrMarcoDraft) !== _okrMarcoOpenSnapshot){
+    if(_temTextoPendente || _okrSnapshotMudou(_okrMarcoDraft, _okrMarcoOpenSnapshot)){
       if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
     }
   }
@@ -8216,7 +8261,7 @@ function _okrLoadMarcoComments(marcoId){
   window._get(window._ref(window._db,'kanban/okr/marco_comments/'+marcoId)).then(snap=>{
     const val = snap.val()||{};
     _okrMarcoComments = Object.values(val).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
-    if(_okrEditingMarcoId===marcoId) renderOkrMarcoBody();
+    if(_okrEditingMarcoId===marcoId){ _okrSyncMarcoDraftFromDom(); renderOkrMarcoBody(); }   // a leitura volta DEPOIS de a pessoa já ter começado a digitar: sem o sync o re-render apagava nome/descrição/prazo
   }).catch(()=>{});
 }
 
@@ -8302,8 +8347,27 @@ function renderOkrMarcoBody(){
 
 
 
+// Mesma trava do saveOkrObjetivo(): o id do Marco NOVO nasce a cada chamada (duplo clique = 2 Marcos + 2 linhas no histórico do Objetivo).
+let _okrSalvandoMarco = false;
 async function saveOkrMarco(){
+  if(_okrSalvandoMarco) return;
+  _okrSalvandoMarco = true;
+  const _botoes = [...document.querySelectorAll('#okr-marco-footer .save-btn')];
+  _botoes.forEach(b=>b.disabled = true);
+  const _histAntes = _okrMarcoDraft && Array.isArray(_okrMarcoDraft.history) ? _okrMarcoDraft.history.slice() : null;
+  try{ return await _saveOkrMarcoInner(); }
+  catch(e){
+    if(_okrMarcoDraft && _histAntes) _okrMarcoDraft.history = _histAntes;
+    console.error('saveOkrMarco', e); showToast('⚠ Não consegui salvar o Marco. Tente de novo.');
+  }
+  finally{ _okrSalvandoMarco = false; _botoes.forEach(b=>{ if(b.isConnected) b.disabled = false; }); }
+}
+
+
+async function _saveOkrMarcoInner(){
   if(_okrMarcoDraft && _okrLockBloqueia(_okrMarcoDraft.objetivoId)) return;   // Objetivo travado por outra pessoa
+  if(_okrMarcoDraft && !okrObjetivos[_okrMarcoDraft.objetivoId]){ showToast('⚠ O Objetivo deste Marco foi excluído por outra pessoa — não dá pra salvar.'); return; }
+  if(_okrEditingMarcoId && !okrMarcos[_okrEditingMarcoId]){ showToast('⚠ Este Marco foi excluído por outra pessoa enquanto você editava — não dá pra salvar.'); return; }   // senão o Salvar o "ressuscitava"
   const d = _okrMarcoDraft;
   d.nome = document.getElementById('okr-m-nome').value.trim();
   if(!d.nome){ showToast('Dá um nome pro marco antes de salvar.'); return; }
@@ -8391,6 +8455,18 @@ document.addEventListener('click',e=>{if(e.target.id==='okr-obj-config-ov')_okrT
 
 
 document.addEventListener('click',e=>{if(e.target.id==='okr-marco-ov')_okrTryCloseMarco();});
+
+
+// Esc fecha o modal de edição (Objetivo / ⚙ Configurações / Marco) pelo MESMO caminho do ✕ e do clique fora — com o aviso de "alterações não salvas".
+// Era a única janela da página sem Esc (todas as outras fecham). Fase de BORBULHA de propósito: as camadas de cima (diálogo, gráfico, registro rápido, ajuda,
+// menu de contexto, calendário...) tratam o Esc em captura com stopPropagation e chegam antes; e quem já usou o Esc (cancelar a edição de um item da lista,
+// que dá preventDefault) não fecha a janela por baixo.
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Escape' || e.defaultPrevented || e.isComposing) return;
+  if(e.target && e.target.tagName==='SELECT') return;   // Esc fecha a lista aberta do <select>, não a janela
+  if(document.getElementById('okr-obj-config-ov')?.classList.contains('open') || document.getElementById('okr-obj-ov')?.classList.contains('open')){ e.preventDefault(); _okrTryCloseObjetivo(); }
+  else if(document.getElementById('okr-marco-ov')?.classList.contains('open')){ e.preventDefault(); _okrTryCloseMarco(); }
+});
 
 
 // ── ❓ Ajuda do OKR (v2.35): abas, busca, perguntas frequentes e "🙋 O que eu posso fazer?" (calculado do papel real da pessoa) ──

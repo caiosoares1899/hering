@@ -20744,6 +20744,18 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.42 · okr-dev — 2026-10-08 · fix: edição do OKR no modal — duplo clique em Salvar, "alterações não salvas" falso, texto digitado sumindo, Esc (/monitorarbugs)
+
+Auditoria do modal de edição (Objetivo, ⚙ Configurações e Marco) — todos reproduzidos no Chromium (banco com 300 ms de latência) antes de corrigir:
+
+- **Duplo clique em 💾 Salvar criava duplicata.** O id do Objetivo/Marco NOVO nasce a cada chamada e a gravação é assíncrona: 2 cliques = 2 Objetivos (ou 2 Marcos) e, ao editar um existente, 2 linhas idênticas no 📜 Histórico (+2 notificações). Agora há trava "salvando" (`_okrSalvandoObj`/`_okrSalvandoMarco`) e o botão fica desabilitado enquanto grava. Se a gravação falhar (sem permissão/rede) o modal continua aberto, avisa "Não consegui salvar" e tentar de novo não duplica a linha do histórico.
+- **Salvar um Objetivo/Marco apagado por outra pessoa o "ressuscitava".** O Salvar grava o rascunho inteiro por cima do nó; com o item já excluído, ele voltava a existir (e um Marco novo sob Objetivo apagado virava órfão). Agora recusa com aviso.
+- **"Você tem alterações não salvas" sem a pessoa ter mexido em nada.** O rascunho era comparado em JSON cru com o que o formulário devolve (`''`/`true`), e o dado antigo não tem `mostrarApresentacao`, responsável, prazo ou descrição: todo Marco anterior ao botão 🎬 (e os criados pelo Agente/duplicados) e todo Objetivo aberto na ⚙ Configurações perguntavam ao fechar. `_okrDirtyStr()` normaliza os dois lados (e ordena as chaves) — mexer de verdade (nome, 🎬, título…) continua perguntando.
+- **Texto digitado sumia sozinho.** Três re-renders assíncronos não guardavam antes o que já estava na tela: os **comentários do Marco** chegando (nome/descrição/prazo digitados antes de a leitura voltar eram apagados), **outra pessoa criando/editando uma tag** ou **mexendo nas gerências** com a ⚙ Configurações aberta (título/pilar/descrição), e reordenar Marcos (valor de atingimento digitado). Todos passam a sincronizar o rascunho antes de redesenhar.
+- **Esc agora fecha o modal de edição** (era a única janela da página sem Esc), pelo mesmo caminho do ✕ — com o aviso de alterações; Esc dentro da edição de um item da lista só cancela a edição, e as camadas de cima (diálogo, gráfico, ajuda…) continuam fechando primeiro.
+
+Teste: `test_modal_edicao.js` (26 verificações no Chromium; 18 falham no código da v2.41) + script de console em português entregue na conversa.
+
 ### okr.html — 2026-10-08 · fix cosmético: o 🎯 aparecia duas vezes na aba (ícone + título)
 
 O ícone da aba já é o 🎯; o título também começava com ele ("🎯 🎯 OKR…"). O título de **prod** passa a ser só "OKR · Maré Digital" (o do dev, "🧪 OKR · Maré Digital · Dev", não repetia o ícone e fica como está). Só texto do `<title>`: sem bump de versão, pra não forçar recarga nas abas abertas — vale no próximo carregamento da página.
