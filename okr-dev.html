@@ -1328,6 +1328,19 @@ mark.hlp-mk{background:rgba(255,213,79,.35);color:inherit;border-radius:3px;padd
 @media (hover:none),(pointer:coarse){ .hlp-kbd,.hlp-tip kbd{display:none;} }
 body:has(#okr-help-ov.open) .version{display:none;}   /* o rótulo de versão (z-index 3) aparecia por cima da ajuda em tela cheia no celular */
 
+/* Gerências em faixas alternadas (2026-10-08): dois tons bem suaves da cor do tema — na visão global, da cor da torre — alternando pela POSIÇÃO da gerência na lista. Só fundo; nada muda de tamanho (a margem negativa devolve o respiro que o padding tira). */
+.okr-ger-bloco{--ger-rgb:var(--torre,var(--okr-focus-rgb));margin:0 -10px 4px;padding:0 10px;border-radius:14px;}
+.okr-ger-bloco .sec-title{margin-top:0!important;padding-top:14px;}
+.okr-ger-bloco .okr-area-grid{margin-bottom:6px;padding-bottom:8px;}
+.okr-ger-a{background:rgba(var(--ger-rgb),.055);}
+.okr-ger-b{background:rgba(var(--ger-rgb),.016);}
+:root[data-theme="light"] .okr-ger-a{background:rgba(255,255,255,.14);}   /* no claro o fundo já é azul saturado: o tom "da cor" vira branco translúcido */
+:root[data-theme="light"] .okr-ger-b{background:rgba(255,255,255,.04);}
+.okr-torre-hd+.okr-ger-bloco{margin-top:8px;}
+:root[data-theme="vice"] .okr-ger-a{background:rgba(var(--ger-rgb),.07);}
+:root[data-theme="vice"] .okr-ger-b{background:rgba(var(--ger-rgb),.02);}
+@media (max-width:640px){ .okr-ger-bloco{margin:0 -6px 4px;padding:0 6px;border-radius:12px;} }
+
 /* ── página própria do OKR ── */
 body{min-height:100vh;}
 #ppane-okr{display:block;}
@@ -1825,7 +1838,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.36 · okr-dev</div>
+<div class="version">v2.37 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4637,12 +4650,15 @@ function renderOkrObjetivos(){
     const ids = conhecidas.map(g=>g.id).filter(id=>porArea[id]?.length);
     Object.keys(porArea).forEach(id=>{ if(!ids.includes(id)) ids.push(id); });
     const podeReordenar = _okrCanCreate(torre) && !_okrShowArquivados && !_okrTemFiltroAtivo();
-    return ids.map(id=>{
+    return ids.map((id,pos)=>{
       const g = conhecidas.find(x=>x.id===id) || {id, label:okrGerenciaLabel(id, torre), icon:okrGerenciaIcon(id, torre)};
       const l = _okrObjetivosSorted(porArea[id]);
+      // fundo alternado por POSIÇÃO na lista (não por gerência): 1ª/3ª/… num tom, 2ª/4ª/… no outro — divide as gerências sem poluir de cor
       return `
+    <div class="okr-ger-bloco okr-ger-${pos%2?'b':'a'}">
     <div class="sec-title" style="margin-top:16px;">${g.icon} ${esc(g.label)} <span class="badge">${l.length}</span></div>
-    <div class="okr-area-grid">${l.map((o,i)=>_okrObjCardHtml(o, g.id, i, l.length, podeReordenar)).join('')}</div>`;
+    <div class="okr-area-grid">${l.map((o,i)=>_okrObjCardHtml(o, g.id, i, l.length, podeReordenar)).join('')}</div>
+    </div>`;
     }).join('');
   };
   if(_okrTorreAtual==='global'){
