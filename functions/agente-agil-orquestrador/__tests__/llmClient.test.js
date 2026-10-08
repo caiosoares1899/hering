@@ -11,6 +11,9 @@ const {
   historyToAnthropicMessages,
   withSystemCacheControl,
   withMessagesCacheControl,
+  DEFAULT_MODEL,
+  FALLBACK_MODEL,
+  _modelosIndisponiveis,
 } = require('../llmClient');
 
 test('withSystemCacheControl: converte string em bloco com cache_control ttl 1h', () => {
@@ -200,4 +203,81 @@ test('decide(): resumoMeuDia.js chama com tools:[] — system ainda vira bloco c
   } finally {
     global.fetch = originalFetch;
   }
+});
+
+
+// ── Sonnet 5.5 como padrão + rede de segurança (2026-10-08) ──
+const respOk = () => ({ ok: true, json: async () => ({ content: [{ type: 'text', text: 'oi' }], stop_reason: 'end_turn', usage: {} }) });
+const respErro = (status, corpo) => ({ ok: false, status, text: async () => corpo });
+const decideCom = (client) => client.decide({ system: 's', history: [{ role: 'user', text: 't' }], tools: [] });
+
+test('modelo padrão é o Sonnet 5.5 e o fallback é o anterior', () => {
+  assert.equal(DEFAULT_MODEL, 'claude-sonnet-5-5');
+  assert.equal(FALLBACK_MODEL, 'claude-sonnet-5');
+});
+
+test('decide(): manda o Sonnet 5.5 quando a API aceita (1 chamada, sem fallback)', async () => {
+  const originalFetch = global.fetch; _modelosIndisponiveis.clear();
+  const modelos = [];
+  global.fetch = async (url, opts) => { modelos.push(JSON.parse(opts.body).model); return respOk(); };
+  try {
+    const r = await decideCom(createAnthropicLlmClient({ apiKey: 'k' }));
+    assert.equal(r.text, 'oi');
+    assert.deepEqual(modelos, ['claude-sonnet-5-5']);
+  } finally { global.fetch = originalFetch; }
+});
+
+test('decide(): id do modelo recusado (404) → repete UMA vez com o modelo anterior e lembra disso', async () => {
+  const originalFetch = global.fetch; _modelosIndisponiveis.clear();
+  const modelos = [];
+  global.fetch = async (url, opts) => {
+    const m = JSON.parse(opts.body).model; modelos.push(m);
+    return m === 'claude-sonnet-5-5' ? respErro(404, '{"error":{"type":"not_found_error","message":"model: claude-sonnet-5-5"}}') : respOk();
+  };
+  const warn = console.warn; console.warn = () => {};
+  try {
+    const client = createAnthropicLlmClient({ apiKey: 'k' });
+    const r1 = await decideCom(client);
+    assert.equal(r1.text, 'oi');
+    assert.deepEqual(modelos, ['claude-sonnet-5-5', 'claude-sonnet-5']);
+    modelos.length = 0;
+    await decideCom(client);   // 2ª chamada: vai direto no anterior (não bate de novo no id recusado)
+    assert.deepEqual(modelos, ['claude-sonnet-5']);
+  } finally { global.fetch = originalFetch; console.warn = warn; _modelosIndisponiveis.clear(); }
+});
+
+test('decide(): erro que NÃO é de modelo (500/429) continua estourando, sem trocar de modelo', async () => {
+  const originalFetch = global.fetch; _modelosIndisponiveis.clear();
+  const modelos = [];
+  global.fetch = async (url, opts) => { modelos.push(JSON.parse(opts.body).model); return respErro(529, 'overloaded'); };
+  try {
+    await assert.rejects(() => decideCom(createAnthropicLlmClient({ apiKey: 'k' })), /529/);
+    assert.deepEqual(modelos, ['claude-sonnet-5-5']);
+    assert.equal(_modelosIndisponiveis.size, 0);
+  } finally { global.fetch = originalFetch; }
+});
+
+test('decide(): 400 que fala de "model" também aciona o fallback; 400 de outra coisa não', async () => {
+  const originalFetch = global.fetch; _modelosIndisponiveis.clear();
+  const warn = console.warn; console.warn = () => {};
+  try {
+    let n = 0;
+    global.fetch = async (url, opts) => { n++; return JSON.parse(opts.body).model === 'claude-sonnet-5-5' ? respErro(400, 'invalid model identifier') : respOk(); };
+    await decideCom(createAnthropicLlmClient({ apiKey: 'k' }));
+    assert.equal(n, 2);
+    _modelosIndisponiveis.clear(); n = 0;
+    global.fetch = async () => { n++; return respErro(400, 'messages: texto vazio'); };
+    await assert.rejects(() => decideCom(createAnthropicLlmClient({ apiKey: 'k' })), /400/);
+    assert.equal(n, 1);
+  } finally { global.fetch = originalFetch; console.warn = warn; _modelosIndisponiveis.clear(); }
+});
+
+test('decide(): modelo escolhido à mão (haiku/opus) NÃO tem fallback automático', async () => {
+  const originalFetch = global.fetch; _modelosIndisponiveis.clear();
+  let n = 0;
+  global.fetch = async () => { n++; return respErro(404, 'not_found_error'); };
+  try {
+    await assert.rejects(() => decideCom(createAnthropicLlmClient({ apiKey: 'k', model: 'claude-haiku-4-5-20251001' })), /404/);
+    assert.equal(n, 1);
+  } finally { global.fetch = originalFetch; }
 });
