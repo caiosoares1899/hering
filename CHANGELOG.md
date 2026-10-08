@@ -18,6 +18,18 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🏢 Maré só Hering — 2026-10-08 · kanban-dev v8.30.802-dev · painel-dev v5.21 · okr-dev v2.43 · apresentação · mare-notif-dev v8 · regras do banco · Cloud Functions (SÓ DEV — produção ainda não mudou)
+
+Pedido direto: *"o Maré vai só atender Hering! pode voltar as configurações de só ter acesso Google, OKR só do Digital, menção só a Hering… mapeia tudo que tem hoje, faz as alterações mas gera um doc com tudo que tem e como implementou, caso seja necessário implementar novamente"*. Em vez de apagar o que foi construído entre 2026-10-01 e 07, tudo ficou atrás de **um interruptor por página** (`window.MARE_SO_HERING = true`) + um arquivo de regras arquivado — religar é trocar o valor (passo a passo no doc).
+
+- **Login só Google:** botões "Entrar com Microsoft" (e o de conta Microsoft pessoal do kanban) escondidos; `doSignInMicrosoft*()` recusam; `TRUSTED_DOMAINS` = só `@ciahering.com.br` (conta `@arezzo` cai no portão de externos e é barrada); textos "@ciahering/@arezzo" dinâmicos (`_dominiosTxt()`). Chip "Arezzo" sai do 👥 Global Users.
+- **Regras do banco:** `database.rules.json` sem a alternativa `@arezzo.com.br`+`microsoft.com` (60 expressões); a versão antiga ficou em `docs/arezzo/database.rules.com-arezzo.json`; a matriz de `rules/__tests__/databaseRules.test.js` roda nos dois arquivos. **Requer `firebase deploy --only database`** (máquina do usuário, depois do resync).
+- **OKR só do Digital:** `OKR_TORRES` vira só Digital (home/barra/visão global/pergunta de torre/campo Torre/ajuda de torres somem), `_okrEntrarTorre()` sempre cai na Digital, e Objetivos, avisos do Mural e eventos de outra torre **não entram no cache** (ficam no banco, invisíveis). `_okrTorreDe()` devolve a torre crua da inativa, então snapshots/Marcos dela também ficam de fora. Apresentação (`okr-apresentacao.slide.html`, compartilhada → vai ao ar no merge) e sino único (`mare-notif-dev.js`, `?v=8`) seguem a mesma regra. Kanban: inscrição não pergunta a torre e a ajuda "Sua torre…" sai.
+- **Menção/pessoas só `@ciahering.com.br`:** `mentionCandidates()` (kanban) e `_okrPessoaOptions()` (okr). Não bloqueia a notificação de um nome digitado à mão.
+- **Cloud Functions:** novo `functions/common/mareModo.js` (`MARE_SO_HERING`, `emailDaEmpresa`, `torreAtiva`); `sendPushOnMural` (só `@ciahering`; aviso só de outra torre não vai pra ninguém), `okrDailyScan` (ignora Objetivo/evento de outra torre), `okrAgenteChat` (ferramentas e prompt só com a Digital). **Requer** `firebase deploy --only functions:sendPushOnMural,functions:okrDailyScan,functions:okrAgenteChat`.
+- **Testes:** `npm test` em `functions/` (modo só Hering em `okr/__tests__/modoSoHering.test.js`; modo religado nas 4 suítes antigas via `MARE_MODO_TESTE=varias-torres`) + suítes de navegador do OKR rodando nos dois modos.
+- **Documento de referência (o que existia, como foi feito, como religar):** `docs/arezzo/MARE_SO_HERING.md`.
+
 ### v8.30.800 — 2026-10-07 · Promove pra prod — sino único, torre na inscrição, Central de Ajuda em dia
 
 Promove o lote de dev v8.30.795 → v8.30.800: (1) **sino único** — o 🔔 do kanban passa a mostrar também as novidades da torre (aviso do Mural do OKR, Objetivo criado, Marco concluído, reuniões do calendário) via `mare-notif.js`, e entende as notificações do OKR (@menção, reunião) levando ao lugar certo; link de reunião só abre http(s); (2) **cadastro novo pergunta a torre** (Digital/Comercial/Corporativa) — só vale pro OKR; (3) **Central de Ajuda** com colar lista no checklist, sino único, "Sua torre" e a Central do OKR. Diff vs. prod = só essas mudanças + as divergências de ambiente de sempre (favicon, `VERSION_KEY`, chave de "Deslogar todos"). Mesmo lote em dev: v8.30.795–800-dev.
@@ -20743,6 +20755,18 @@ das 4 colunas do rodapé vinham vazias; depois, as 14 linhas e as 4 colunas
 aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
+
+### okr-dev.html v2.42 · okr-dev — 2026-10-08 · fix: edição do OKR no modal — duplo clique em Salvar, "alterações não salvas" falso, texto digitado sumindo, Esc (/monitorarbugs)
+
+Auditoria do modal de edição (Objetivo, ⚙ Configurações e Marco) — todos reproduzidos no Chromium (banco com 300 ms de latência) antes de corrigir:
+
+- **Duplo clique em 💾 Salvar criava duplicata.** O id do Objetivo/Marco NOVO nasce a cada chamada e a gravação é assíncrona: 2 cliques = 2 Objetivos (ou 2 Marcos) e, ao editar um existente, 2 linhas idênticas no 📜 Histórico (+2 notificações). Agora há trava "salvando" (`_okrSalvandoObj`/`_okrSalvandoMarco`) e o botão fica desabilitado enquanto grava. Se a gravação falhar (sem permissão/rede) o modal continua aberto, avisa "Não consegui salvar" e tentar de novo não duplica a linha do histórico.
+- **Salvar um Objetivo/Marco apagado por outra pessoa o "ressuscitava".** O Salvar grava o rascunho inteiro por cima do nó; com o item já excluído, ele voltava a existir (e um Marco novo sob Objetivo apagado virava órfão). Agora recusa com aviso.
+- **"Você tem alterações não salvas" sem a pessoa ter mexido em nada.** O rascunho era comparado em JSON cru com o que o formulário devolve (`''`/`true`), e o dado antigo não tem `mostrarApresentacao`, responsável, prazo ou descrição: todo Marco anterior ao botão 🎬 (e os criados pelo Agente/duplicados) e todo Objetivo aberto na ⚙ Configurações perguntavam ao fechar. `_okrDirtyStr()` normaliza os dois lados (e ordena as chaves) — mexer de verdade (nome, 🎬, título…) continua perguntando.
+- **Texto digitado sumia sozinho.** Três re-renders assíncronos não guardavam antes o que já estava na tela: os **comentários do Marco** chegando (nome/descrição/prazo digitados antes de a leitura voltar eram apagados), **outra pessoa criando/editando uma tag** ou **mexendo nas gerências** com a ⚙ Configurações aberta (título/pilar/descrição), e reordenar Marcos (valor de atingimento digitado). Todos passam a sincronizar o rascunho antes de redesenhar.
+- **Esc agora fecha o modal de edição** (era a única janela da página sem Esc), pelo mesmo caminho do ✕ — com o aviso de alterações; Esc dentro da edição de um item da lista só cancela a edição, e as camadas de cima (diálogo, gráfico, ajuda…) continuam fechando primeiro.
+
+Teste: `test_modal_edicao.js` (26 verificações no Chromium; 18 falham no código da v2.41) + script de console em português entregue na conversa.
 
 ### okr.html — 2026-10-08 · fix cosmético: o 🎯 aparecia duas vezes na aba (ícone + título)
 

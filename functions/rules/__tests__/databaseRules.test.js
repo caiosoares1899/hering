@@ -86,13 +86,32 @@ const CASOS = [
     { forasteiro: 1, freela_novo: 1, membro: 1 }],
 ];
 
-for (const [desc, op, p, nv, esperado] of CASOS) {
-  test(desc, () => {
-    for (const [nome, ok] of Object.entries(esperado)) {
-      assert.equal(check(RULES, DB, op, p, ATOR[nome], nv), !!ok, `${nome} em ${op} ${p}: esperado ${ok ? 'permitido' : 'negado'}`);
-    }
-  });
+// Duas edições das regras, mesma matriz (ver docs/arezzo/MARE_SO_HERING.md):
+//  • database.rules.json (MODO ATUAL, "só Hering", 2026-10-08): só @ciahering.com.br via Google — a conta Arezzo/Microsoft NUNCA passa (arezzo: 0 em tudo);
+//  • docs/arezzo/database.rules.com-arezzo.json (ARQUIVADA, pra religar a integração): a matriz como foi escrita (arezzo: 1 onde a empresa passa).
+const RULES_COM_AREZZO = JSON.parse(fs.readFileSync(path.join(__dirname, '..', '..', '..', 'docs', 'arezzo', 'database.rules.com-arezzo.json'), 'utf8'));
+for (const [modo, regras] of [['só Hering', RULES], ['arquivada com Arezzo', RULES_COM_AREZZO]]) {
+  for (const [desc, op, p, nv, esperado] of CASOS) {
+    test(`[${modo}] ${desc}`, () => {
+      for (const [nome, ok] of Object.entries(esperado)) {
+        const permitido = (modo === 'só Hering' && nome === 'arezzo') ? false : !!ok;
+        assert.equal(check(regras, DB, op, p, ATOR[nome], nv), permitido, `${nome} em ${op} ${p}: esperado ${permitido ? 'permitido' : 'negado'}`);
+      }
+    });
+  }
 }
+
+test('modo só Hering: o arquivo de regras ativo não menciona Arezzo/Microsoft em lugar nenhum', () => {
+  const txt = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'database.rules.json'), 'utf8').toLowerCase();
+  assert.equal(/arezzo|microsoft/.test(txt), false);
+});
+
+test('modo só Hering: conta Arezzo (Microsoft) não lê usuarios, não escreve notificação nem feedback; Hering+Google segue passando', () => {
+  const az = ATOR.arezzo;
+  assert.equal(check(RULES, DB, 'read', 'kanban/usuarios', az), false);
+  assert.equal(check(RULES, DB, 'write', 'kanban/feedback/f1', az, { texto: 'x' }), false);
+  assert.equal(check(RULES, DB, 'read', 'kanban/usuarios', ATOR.membro), true);
+});
 
 test('1º login do freela: depois de gravar o próprio registro com squad, já consegue escrever feedback/access_log', () => {
   const dbDepois = JSON.parse(JSON.stringify(DB));

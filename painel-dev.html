@@ -1419,6 +1419,13 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 }
 </style>
 <script>
+// 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital), @menção só a quem é
+// @ciahering. `true` esconde/desliga a integração Arezzo/Microsoft e as torres; `false` religa tudo como estava em 2026-10-01..07. Mesmo interruptor em
+// kanban/painel/okr/okr-apresentacao/mare-notif (grep MARE_SO_HERING) + functions/common/mareModo.js + database.rules.json. Doc: docs/arezzo/MARE_SO_HERING.md
+window.MARE_SO_HERING = true;
+(function(){ if(!window.MARE_SO_HERING) return; try{ var st=document.createElement('style'); st.textContent='.ms-login{display:none!important}'; document.head.appendChild(st); }catch(e){} })();
+</script>
+<script>
 // Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
 // escuro (padrão) seguido de troca pro claro assim que o JS principal
 // carregasse lá embaixo. Mesma técnica/mesma chave (mare_theme) do
@@ -1452,20 +1459,20 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
     <div style="font-size:13px;color:var(--txt2);">Painel de Controle · Multi-Squad</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:320px;width:100%;backdrop-filter:blur(12px);">
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google ou Microsoft para acessar o painel.</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google<span class="ms-login"> ou Microsoft</span> para acessar o painel.</div>
     <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Entrar com Google
     </button>
     <!-- Integração Arezzo (2026-10-01) — mesmo padrão já usado em kanban-dev.html
          (ver TRUSTED_DOMAINS/_isTrustedDomainEmail() logo abaixo). -->
-    <button onclick="doSignInMicrosoft()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
+    <button onclick="doSignInMicrosoft()" class="btn btn-p ms-login" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
       <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
       Entrar com Microsoft
     </button>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
-  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br / @arezzo.com.br</div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br<span class="ms-login"> / @arezzo.com.br</span></div>
 </div>
 
 <!-- APP -->
@@ -2642,7 +2649,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
              squad, um conceito diferente). Ver _finishPainelLogin()/
              _blockIfPainelViewer() no <script> pro resto do mecanismo. -->
         <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos (painel e OKR)</div>
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br/@arezzo.com.br) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (as 3 torres, Dashboard, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
         <div id="pcfg-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
         <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por email</div>
         <div style="display:flex;gap:6px;">
@@ -2745,7 +2752,7 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 </div>
 
 
-<div class="version">v5.20 · painel-dev</div>
+<div class="version">v5.21 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2848,7 +2855,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=7"></script>
+<script src="mare-notif-dev.js?v=8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8117,7 +8124,7 @@ function addPainelViewer(origem){
   const nomeInp=document.getElementById(origem==='modal'?'pv-nome':'pcfg-viewer-nome');
   const email=emailInp?.value?.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('⚠ Email inválido'); return; }
-  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) já têm acesso, não precisam ser adicionados aqui.'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável ('+_dominiosTxt()+') já têm acesso, não precisam ser adicionados aqui.'); return; }
   if((email.match(/\./g)||[]).length>8){ showToast('❌ Esse e-mail tem pontos demais (máx. 8): as regras do banco só conseguem localizar até 8 pontos no e-mail, e a pessoa ficaria autorizada aqui mas barrada ao entrar.'); return; }   // as regras trocam no máx. 8 pontos por vírgula ao procurar a chave
   const key=_painelViewerKey(email);
   const entry={ email, nome:nomeInp?.value?.trim()||'', addedBy:window._currentUser?.email||'', addedAt:new Date().toISOString() };
@@ -8635,6 +8642,7 @@ function doSignIn(){
 // tem, ver comentário lá; mantido consistente, não introduzido aqui).
 function doSignInMicrosoft(){
   const err=document.getElementById('login-err'); err.style.display='none';
+  if(MARE_SO_HERING){ err.textContent='O login pela Microsoft está desativado — entre com a conta Google @ciahering.com.br.'; err.style.display='block'; return; }
   window._signInMicrosoft().catch(e=>{ err.textContent='Erro: '+e.message; err.style.display='block'; });
 }
 function doSignOut(){ window._signOut(); }
@@ -8643,7 +8651,9 @@ function doSignOut(){ window._signOut(); }
 // que é só leitura). Mesmo array/função de kanban-dev.html — ver comentário
 // completo lá; database.rules.json replica a MESMA lista, não dá pra ler
 // este array dali.
-const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
+// MODO "SÓ HERING" (MARE_SO_HERING, 1º <script>): só @ciahering.com.br. Desligado, volta @arezzo.com.br (Microsoft) também.
+const TRUSTED_DOMAINS = MARE_SO_HERING ? ['@ciahering.com.br'] : ['@ciahering.com.br', '@arezzo.com.br'];
+const _dominiosTxt = () => TRUSTED_DOMAINS.join('/');
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
 // Mesmo espelho do pin de provedor de database.rules.json que kanban-dev.html ganhou (ver
 // _loginProviderMismatchMsg() lá) — as regras são UM arquivo só pros dois, então o gate do
@@ -8718,7 +8728,7 @@ window.addEventListener('auth-change',e=>{
         const viewers = snap.val()||{};
         const allowed = !!viewers[_painelViewerKey(user.email)];
         if(!allowed){
-          document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça a um ADM pra te adicionar como visualizador.';
+          document.getElementById('login-err').textContent='Acesso restrito a '+_dominiosTxt()+'. Peça a um ADM pra te adicionar como visualizador.';
           document.getElementById('login-err').style.display='block';
           window._signOut();
         } else {
@@ -8729,7 +8739,7 @@ window.addEventListener('auth-change',e=>{
       }).catch(err=>{
         console.error('[painel_viewers check] erro (tentativa '+tentativa+'):', err);
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_check(tentativa+1));
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').textContent='Acesso restrito a '+_dominiosTxt()+'. (Erro ao verificar lista de visualizadores — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         window._signOut();
       });
@@ -9128,7 +9138,7 @@ const GU_EMPRESAS = [
   {id:'hering',  label:'Hering',  icon:'🏢'},
   {id:'arezzo',  label:'Arezzo',  icon:'🅰️'},
   {id:'externo', label:'Externos',icon:'🌐'},
-];
+].filter(e=>!(MARE_SO_HERING && e.id==='arezzo'));   // modo só Hering: sem o chip Arezzo
 // 🏛️ Torres do OKR (mesma lista de okr.html/okr-dev.html — manter igual): flag em kanban/usuarios/{uid}/torre; sem o campo = Digital.
 const GU_TORRES = [{id:'digital',label:'Digital',icon:'🛒'},{id:'comercial',label:'Comercial',icon:'🛍️'},{id:'corporativa',label:'Corporativa',icon:'🏛️'},
   {id:'geral',label:'Geral (todas)',icon:'⭐'}];   // 'geral' = ADMs de OKR: criam/editam em TODAS as torres (só vale pra pessoa, nunca pra Objetivo)
@@ -9174,7 +9184,7 @@ function _guFiltersHtml(contagemEmpresa, totalBase){
     ${GU_EMPRESAS.map(e=>chip(e.id,e.icon,e.label,contagemEmpresa[e.id]||0)).join('')}
     ${sel('role','Todos os papéis', GLOBAL_ROLES.map(r=>[r,r]))}
     ${sel('squad','Todos os squads', [...SQUADS.map(sq=>[sq.id,(sq.icon||'')+' '+sq.label]), ['__nenhum','— sem nenhum squad']])}
-    ${sel('torre','Todas as torres', GU_TORRES.map(t=>[t.id, t.icon+' '+t.label]))}
+    ${MARE_SO_HERING ? '' : sel('torre','Todas as torres', GU_TORRES.map(t=>[t.id, t.icon+' '+t.label]))}
     <label class="okr-stat-chip${_guFilter.gestorOkr?' active':''}" style="cursor:pointer;" title="Só quem tem a flag 🎯 Gestor OKR">
       <input type="checkbox" ${_guFilter.gestorOkr?'checked':''} onchange="_guSetFilter('gestorOkr', this.checked)" style="width:12px;height:12px;accent-color:var(--accent);"> 🎯 Gestor OKR</label>
     ${_guTemFiltro()?'<button type="button" class="btn btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_guClearFilters()">✕ Limpar filtros</button>':''}`;
@@ -9341,7 +9351,7 @@ function renderGlobalUsers(){
     torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
     torreSel.innerHTML = GU_TORRES.map(t=>`<option value="${t.id}"${_guTorreDe(u)===t.id?' selected':''}>${t.icon} ${t.label}</option>`).join('');
     torreSel.onchange = ()=>setGlobalUserTorre(uid, torreSel.value);
-    squadsWrap.appendChild(torreSel);
+    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);   // modo só Hering: o OKR tem uma torre só, nada a escolher (o campo gravado fica intacto)
 
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
@@ -9380,6 +9390,7 @@ async function toggleAdmUser(uid, checked){
   setTimeout(()=>{ if(typeof renderGlobalUsers==='function') renderGlobalUsers(); }, 600);
 }
 function setGlobalUserTorre(uid, torre){
+  if(MARE_SO_HERING){ showToast('ℹ️ O OKR está em modo "só Hering" (uma torre só) — a torre da pessoa não muda nada agora.'); return; }
   if(!GU_TORRES.some(t=>t.id===torre)) return;
   if(!_isAdmPainel()){ showToast('⚠ Só ADM muda a torre de uma pessoa.'); renderGlobalUsers(); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {torre})
@@ -11687,7 +11698,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
   <div class="cfg-panel" style="max-width:560px;">
     <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
     <div class="cfg-body">
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br/@arezzo.com.br) que só <b>acompanham</b> o painel e o <b>OKR</b> (as 3 torres, Dashboard, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) que só <b>acompanham</b> o painel e o <b>OKR</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
       <div id="pv-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
       <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">

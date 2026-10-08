@@ -1,3 +1,5 @@
+// Este arquivo cobre o comportamento COM várias torres/Arezzo (interruptor desligado). O modo atual (só Hering) é coberto por modoSoHering.test.js.
+process.env.MARE_MODO_TESTE = 'varias-torres';
 // functions/okr/__tests__/pushMural.test.js — push do aviso novo do Mural (ver pushMural.js)
 const test = require('node:test');
 const assert = require('node:assert/strict');

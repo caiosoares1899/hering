@@ -15,7 +15,9 @@ const OKR_HIST_CAP = 80;
 // ── Torres (2026-10-07) ──────────────────────────────────────────────────────────────────────────────────────────────
 // O OKR passou a ter 3 torres; o Objetivo guarda `torre` (sem o campo = Digital, mesma regra de _okrTorreDe() em okr-dev.html). A PESSOA também tem torre
 // (`kanban/usuarios/{uid}/torre`; 'geral' = ADMs de OKR, que atuam em todas) e as gerências são configuráveis por torre (kanban/okr/gerencias/{torre}/{id}).
-const TORRES = ['digital', 'comercial', 'corporativa'];
+// Modo "só Hering" (common/mareModo.js): TORRES_ATIVAS = ['digital']; desligado = as 3 de sempre.
+const { TORRES_ATIVAS, torreAtiva } = require('../common/mareModo');
+const TORRES = TORRES_ATIVAS;
 const TORRE_PADRAO = 'digital';
 const TORRE_INFO = { digital: { icon: '🛒', label: 'Digital' }, comercial: { icon: '🛍️', label: 'Comercial' }, corporativa: { icon: '🏛️', label: 'Corporativa' } };
 const torreValida = (t) => TORRES.includes(t);
@@ -121,11 +123,11 @@ async function resolveObjetivo(db, { objetivo_id, titulo } = {}) {
   const todos = snap.val() || {};
   if (objetivo_id) {
     const o = todos[objetivo_id];
-    if (o && !o.arquivado) return { id: objetivo_id, objetivo: o };
+    if (o && !o.arquivado && torreAtiva(o.torre)) return { id: objetivo_id, objetivo: o };
     return { error: 'objetivo_nao_encontrado', message: `Nenhum Objetivo ativo com id "${objetivo_id}".` };
   }
   if (!titulo) return { error: 'faltou_referencia', message: 'Preciso do id ou do título do Objetivo.' };
-  const ativos = Object.entries(todos).filter(([, o]) => o && !o.arquivado);
+  const ativos = Object.entries(todos).filter(([, o]) => o && !o.arquivado && torreAtiva(o.torre));
   const alvo = String(titulo).toLowerCase().trim();
   const exatos = ativos.filter(([, o]) => String(o.titulo || '').toLowerCase().trim() === alvo);
   if (exatos.length === 1) return { id: exatos[0][0], objetivo: exatos[0][1] };
@@ -193,6 +195,6 @@ async function notifyObjetivoEditado(db, objetivoId, actingUid) {
 
 module.exports = {
   AGENTE_UID, AGENTE_NOME, DEFAULT_ADM_EMAILS, isAdmUid, canEditObjetivo, canCreateObjetivo, torreParaCriar, infoUsuario, resolveObjetivo, pushHistory, notifyObjetivoEditado,
-  TORRES, TORRE_PADRAO, TORRE_INFO, torreValida, torreDe, GERENCIAS_PADRAO, gerenciasDeCfg, gerenciasDaTorre, rotuloGerencia,
+  TORRES, TORRE_PADRAO, TORRE_INFO, torreValida, torreDe, torreAtiva, GERENCIAS_PADRAO, gerenciasDeCfg, gerenciasDaTorre, rotuloGerencia,
   OKR_LOCK_STALE_MS, travaDeOutro, msgTrava, publicaFeed,
 };

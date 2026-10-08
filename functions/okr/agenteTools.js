@@ -25,7 +25,7 @@ const { z } = require('zod');
 const { zodToJsonSchema } = require('zod-to-json-schema');
 const {
   resolveObjetivo, canEditObjetivo, canCreateObjetivo, torreParaCriar, pushHistory, notifyObjetivoEditado, AGENTE_UID, AGENTE_NOME,
-  TORRES, TORRE_INFO, torreDe, gerenciasDeCfg, rotuloGerencia, travaDeOutro, msgTrava, publicaFeed,
+  TORRES, TORRE_INFO, torreDe, torreAtiva, gerenciasDeCfg, rotuloGerencia, travaDeOutro, msgTrava, publicaFeed,
 } = require('./agenteHelpers');
 const ating = require('./atingimento');
 const cal = require('./calendario');
@@ -161,7 +161,7 @@ function makeListarObjetivosHandler({ db }) {
     const todos = snap.val() || {};
     const cfgGer = gerSnap.val() || {};
     const marcos = Object.values(marcosSnap.val() || {}).filter((m) => m && !m.arquivado);
-    let ativos = Object.entries(todos).filter(([, o]) => o && !o.arquivado);
+    let ativos = Object.entries(todos).filter(([, o]) => o && !o.arquivado && torreAtiva(o.torre));   // modo "só Hering": outra torre não existe pro agente
     if (input?.torre) ativos = ativos.filter(([, o]) => torreDe(o) === input.torre);
     if (input?.area_id) ativos = ativos.filter(([, o]) => (o.areaId || 'geral') === input.area_id);
     const lista = ativos.map(([id, o]) => {
@@ -234,7 +234,7 @@ function makeResumoAtingimentosHandler({ db }) {
     const [snap, marcosSnap] = await Promise.all([db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/marcos').get()]);
     const marcos = Object.values(marcosSnap.val() || {}).filter((m) => m && !m.arquivado);
     const hoje = todaySP();
-    let ativos = Object.entries(snap.val() || {}).filter(([, o]) => o && !o.arquivado);
+    let ativos = Object.entries(snap.val() || {}).filter(([, o]) => o && !o.arquivado && torreAtiva(o.torre));
     if (torre) ativos = ativos.filter(([, o]) => torreDe(o) === torre);
     if (area_id) ativos = ativos.filter(([, o]) => (o.areaId || 'geral') === area_id);
     const linhas = [];
@@ -637,7 +637,7 @@ function makeListarAgendaHandler({ db }) {
     if (!parsed.success) return { ok: false, error: 'entrada_invalida', message: msgZod(parsed) };
     const inp = parsed.data;
     const [evSnap, objSnap, tagsSnap] = await Promise.all([db.ref('kanban/okr/calendario/eventos').get(), db.ref('kanban/okr/objetivos').get(), db.ref('kanban/okr/tags').get()]);
-    const objetivos = Object.fromEntries(Object.entries(objSnap.val() || {}).filter(([, o]) => o && !o.arquivado).map(([id, o]) => [id, { ...o, id: o.id || id }]));
+    const objetivos = Object.fromEntries(Object.entries(objSnap.val() || {}).filter(([, o]) => o && !o.arquivado && torreAtiva(o.torre)).map(([id, o]) => [id, { ...o, id: o.id || id }]));
     const tagsCfg = tagsSnap.val() || {};
     const hoje = todaySP();
     const dias = inp.dias || 14;
@@ -650,7 +650,7 @@ function makeListarAgendaHandler({ db }) {
       alvoObj = { ...r.objetivo, id: r.id };
     }
 
-    const eventos = Object.entries(evSnap.val() || {}).filter(([, e]) => e && e.data).map(([id, e]) => ({ ...e, id: e.id || id }));
+    const eventos = Object.entries(evSnap.val() || {}).filter(([, e]) => e && e.data && torreAtiva(e.torre)).map(([id, e]) => ({ ...e, id: e.id || id }));
     const linhas = [];
     for (const ev of eventos) {
       if (inp.evento_id && ev.id !== inp.evento_id) continue;

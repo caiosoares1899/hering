@@ -1,3 +1,5 @@
+// Este arquivo cobre o comportamento COM várias torres/Arezzo (interruptor desligado). O modo atual (só Hering) é coberto por modoSoHering.test.js.
+process.env.MARE_MODO_TESTE = 'varias-torres';
 // Agente Ágil do OKR × o que mudou em 2026-10-07: torres, gerências configuráveis, permissão por torre, 🔒 trava de edição, 🔔 feed do sino e 📅 agenda (só leitura).
 const test = require('node:test');
 const assert = require('node:assert/strict');

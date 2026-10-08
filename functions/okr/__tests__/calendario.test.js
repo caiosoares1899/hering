@@ -1,3 +1,5 @@
+// Este arquivo cobre o comportamento COM várias torres/Arezzo (interruptor desligado). O modo atual (só Hering) é coberto por modoSoHering.test.js.
+process.env.MARE_MODO_TESTE = 'varias-torres';
 // functions/okr/__tests__/calendario.test.js
 //
 // Parte pura do calendário do OKR (recorrência, escopo, lembretes) + o gatilho 3 do dailyScan (véspera e dia). Os casos de recorrência são os MESMOS do

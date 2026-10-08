@@ -1,0 +1,184 @@
+{
+  "rules": {
+    "kanban": {
+      "campanhas": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "campanhas_log": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "campanhas_log_dev": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "dados_diarios": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "dados_diarios_dev": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "comunicados": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        ".indexOn": ["ativo"]
+      },
+      "feedback": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())"
+      },
+      "squads_meta": {
+        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "squads": {
+        "$squadId": {
+          "dados": {
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)"
+          },
+          "presence": {
+            ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            "$uid": {
+              ".write": "auth != null && auth.uid === $uid && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+            }
+          },
+          "snapshots": {
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+          },
+          "backups": {
+            ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+          },
+          "error_logs": {
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+          },
+          "error_stats": {
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+          },
+          "agent_usage": {
+            ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+          },
+          "access_log": {
+            ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+            ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true)"
+          },
+          "externos": {
+            ".read": "auth != null",
+            ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm')"
+          }
+        }
+      },
+      "painel": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        "okr_presence": {
+          "$uid": {
+            ".write": "auth != null && auth.uid === $uid && root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()",
+            ".validate": "newData.hasChildren(['ts','nome']) && newData.child('ts').isNumber() && newData.child('nome').isString() && newData.child('nome').val().length <= 120 && (!newData.child('foto').exists() || (newData.child('foto').isString() && newData.child('foto').val().length <= 600)) && (!newData.child('externo').exists() || newData.child('externo').isBoolean())"
+          }
+        }
+      },
+      "okr": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "notif_feed": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "notif_feed_seen": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "painel_viewers": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        "$k": {
+          "acesso": {
+            ".write": "auth != null && $k === auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',') && root.child('kanban/painel_viewers/' + $k).exists()",
+            ".validate": "newData.hasChildren(['ultimo','uid']) && newData.child('ultimo').isNumber() && newData.child('uid').isString() && newData.child('uid').val().length <= 128 && (!newData.child('primeiro').exists() || (newData.child('primeiro').isNumber() && (!data.child('primeiro').exists() || newData.child('primeiro').val() === data.child('primeiro').val()))) && (!newData.child('pagina').exists() || (newData.child('pagina').isString() && newData.child('pagina').val().length <= 20))"
+          }
+        }
+      },
+      "config": {
+        ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+        ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+      },
+      "spotify_secrets": {
+        ".read": false,
+        ".write": false
+      },
+      "spotify_radio_owner_secret": {
+        ".read": false,
+        ".write": false
+      },
+      "oauth_pending": {
+        "$state": {
+          ".read": false,
+          ".write": "auth != null && newData.child('uid').val() === auth.uid"
+        }
+      },
+      "usuarios": {
+        ".read": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')))",
+        "$uid": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": "auth != null && (auth.uid === $uid || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))",
+          "role": {
+            ".validate": "((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br') || newData.val() === data.val() || (!data.exists() && (newData.val() === 'membro' || newData.val() === 'convidado')) || (data.val() === 'convidado' && newData.val() === 'membro' && auth.uid === $uid)"
+          },
+          "squads": {
+            "$squadId": {
+              ".validate": "newData.val() === null || (newData.val() === true && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/squads/' + $squadId + '/externos/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists()))"
+            }
+          },
+          "notificacoes": {
+            ".indexOn": ["ts"],
+            "$notifId": {
+              ".write": "auth != null && (auth.uid === $uid || (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm') || (!data.exists() && newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast' && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/usuarios/' + auth.uid + '/squads').exists())))"
+            }
+          }
+        }
+      },
+      "usuarios_publicos": {
+        ".read": "auth != null",
+        "$uid": {
+          ".write": "auth != null && (auth.uid === $uid || ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br'))"
+        }
+      },
+      "init_registry": {
+        ".read": "auth != null",
+        "$init": {
+          ".write": "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || newData.val() === auth.uid || (newData.val() === null && data.val() === auth.uid))"
+        }
+      },
+      "presence": {
+        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))",
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        }
+      },
+      "global": {
+        "force_logout_after": {
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        },
+        "force_logout_after_dev": {
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        },
+        "idle_logout_config": {
+          ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
+          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')||(auth.token.email.endsWith('@arezzo.com.br')&&auth.token.firebase.sign_in_provider=='microsoft.com'))"
+        }
+      }
+    }
+  }
+}
