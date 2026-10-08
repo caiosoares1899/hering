@@ -20732,6 +20732,20 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.35 · okr-dev — 2026-10-08 · ❓ Ajuda do OKR reorganizada — abas, busca, perguntas frequentes e "🙋 O que eu posso fazer?"
+
+Pedido direto: a ajuda do OKR tinha virado uma lista corrida de 24 blocos de texto. Reorganizada **sem perder nenhum conteúdo** (os 24 tópicos continuam, agora em seções):
+
+- **7 abas**: ⭐ Começar · ❓ Perguntas · 🎯 Objetivos · 📅 Agenda e avisos · 🏛️ Torres e acesso · 🧭 Navegar · 💬 Agente Ágil. Cada tópico é um acordeão com título + uma linha de resumo; os textões (Torres, Trava, Calendário, Notificações, Menu de ações, Apresentação) viraram listas com o termo em negrito.
+- **⭐ Começar** (abre aqui): "O OKR em 30 segundos" (Torre → Objetivo → Marcos; a **cor** vem dos Marcos, a **barra** do Atingimento — a dúvida mais comum), **🔥 Mais usados** (8 atalhos pros tópicos) e **🚀 Primeiros passos**.
+- **🙋 O que eu posso fazer?** — janelinha **personalizada pelo papel real da pessoa** (lê as mesmas funções que travam a edição: ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral, Responsável por N Objetivos, Membro, 👁 Visualizador externo): lista "✅ Você pode" e "🚫 Você não pode" (com link pro tópico que explica). Ex.: um Gestor OKR da Comercial vê "criar/editar na torre Comercial, agenda da sua torre, Mural" e "não pode excluir nem usar a agenda global".
+- **❓ Perguntas frequentes** — 18 perguntas (por que não consigo editar, "🔒 Fulano editando", como registrar atingimento, cor × barra, reunião/convidados, não recebi aviso, Arquivar × Excluir, acesso externo…), cada uma com links "Veja…" pro tópico.
+- **🔎 Busca** — ignora acento e maiúsculas, várias palavras = todas precisam aparecer, procura no título, em palavras-chave (ex.: "convidar" acha o Calendário) e no texto; mostra o trecho com destaque, agrupa por seção e abre sozinha quando há até 3 resultados. Atalho **/** foca a busca; **Esc** limpa a busca e, de novo, fecha; ← → trocam de aba; clicar no fundo fecha (antes o Esc não fechava a ajuda).
+- **Celular**: tela cheia (mesmo padrão dos modais do Objetivo), abas em fila rolável, busca em 16px (sem zoom do iOS), alvos de toque ≥ 44px.
+- `openOkrHelp('trava')` abre direto num tópico (pronto pra links de ajuda contextual).
+
+Teste: 41 cenários no Chromium (desktop + 390×844), 5 papéis conferidos.
+
 ### okr.html v2.33 · okr — 2026-10-07 · Promove pra prod — 📅 Calendário, 🔒 trava de edição, cabeçalho em níveis, apresentação por torre e correções do dia
 
 Promove okr-dev v2.20 → v2.33 (prod estava na v2.19): **🔒 trava de edição** do Objetivo (e pedir o Objetivo), **📅 Calendário** (agenda global + de cada torre, recorrências, pauta sugerida, convidados, avisos no sino/push, anotações pós-reunião, tags; **bloco quinzenal importável**), **cabeçalho reorganizado** (abas + ⋯ Mais + filtros recolhíveis, títulos em DM Sans), **ADM vê se o visualizador externo já entrou/está online**, aviso ao excluir gerência com Objetivos, rodapé do sino respeitando o Não Perturbe desde o boot, e as 2 rodadas de `/monitorarbugs` (XSS por torre do evento, duplo clique em Salvar, Esc nos diálogos, série apagada a partir de ocorrência passada, evento apagado por outra pessoa). `mare-notif.js` v6 (reuniões no sino). **Requer deploy das functions** `okrDailyScan`, `sendPushOnNotification` e `okrAgenteChat` pra reuniões/push/Agente funcionarem por completo (a página funciona sem). Antes de usar o aviso de véspera do bloco quinzenal, importar o bloco pelo banner do ADM.
