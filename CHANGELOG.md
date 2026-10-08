@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐟 OKR: a torre única vira "Digital Hering 🐟" + guia e maredigital em dia com o modo só Hering — 2026-10-08 · okr-dev v2.45 · apresentação · guia-okr · maredigital (okr-dev SÓ DEV; guia/apresentação/maredigital são compartilhados e valem já)
+
+- **Rótulo:** no modo só Hering o OKR deixa de falar "🛒 Torre Digital" e passa a mostrar **"Digital Hering 🐟"** (título da tela, ⚙ Gerências, avisos do sino "Novo Objetivo / Marco concluído", agenda, apresentação). Implementação: `OKR_TORRES` (okr-dev e apresentação) mapeia a torre única pra `{label:'Digital Hering 🐟', icon:''}` e o helper novo `okrTorreTitulo(id)` (`_okrTorreTitulo` na apresentação) devolve só o rótulo no modo só Hering e `🛒 Torre Digital` com o interruptor desligado — religar as 3 torres traz tudo de volta sem mexer em mais nada.
+- **`guia-okr.html`:** slides das torres/gerências, permissões, calendário, Mural, sino, apresentação, visualizadores e Agente reescritos pra uma base só + login Google; **8 prints refeitos** (lista, gerências, trava, calendário, reunião, Mural, sino) com o Maré no modo só Hering. Os GIFs de criar/duplicar/reordenar não foram refeitos (mostram o fluxo, não o rótulo da torre).
+- **`maredigital.html`:** versões das páginas e seção do OKR com a nota do modo só Hering (`docs/arezzo/MARE_SO_HERING.md`).
+- **Cabeçalho:** os botões **❓ Ajuda** e **📘 Guia** saíram do menu "⋯ Mais" e ficam agora **ao lado de 🎥 Apresentação** (ids `okr-help-btn`/`okr-guia-btn`); o ⋯ Mais ficou só com ⚙ Gerências e 👁 Visualizadores (+ a versão).
+- Testado em Chromium nos dois modos do interruptor (okr-dev + apresentação) e as suítes `test_so_hering` / `test_modal_edicao` seguem passando.
+
 ### v8.30.803 — 2026-10-08 · Promove pra prod — correções da auditoria do modo só Hering (kanban v8.30.803, painel.html v5.22, okr.html v2.44)
 
 Promove as correções da auditoria `/monitorarbugs` (entrada abaixo): conta `@arezzo` entrando pelo Google deixa de ser mandada pro botão Microsoft escondido (cai no "Acesso restrito a @ciahering.com.br"), e torre desconhecida/corrompida continua valendo como Digital. O push do Mural (servidor) já estava publicado pelo usuário. Merge de 3 vias; dev × prod só diferem nas linhas de ambiente. Sem avisos.
