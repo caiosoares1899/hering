@@ -824,7 +824,7 @@ let _okrFiltroTag = '';
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
 let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
 function _okrObjetivosAtivos(ignorarTorre){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
 function _okrGerenciaObjetivos(areaId, torre){
   return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));
@@ -834,7 +834,7 @@ function _okrGerenciaObjetivos(areaId, torre){
 function _okrAtualizaFiltroTag(){
   if(_okrFiltroTag && !okrTags[_okrFiltroTag]) _okrFiltroTag = '';
   const uso = {};
-  Object.values(okrObjetivos).filter(o=>o && !o.arquivado).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) uso[t]=(uso[t]||0)+1; }));
+  Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) uso[t]=(uso[t]||0)+1; }));
   if(_okrFiltroTag && !uso[_okrFiltroTag]) uso[_okrFiltroTag]=0;
   const ids = Object.keys(uso).sort((a,b)=>String(okrTags[a].label||'').localeCompare(String(okrTags[b].label||'')));
   const sel = document.getElementById('tb-tag'), box = document.getElementById('tb-filter');
@@ -1239,7 +1239,7 @@ function rebuild(){
   render();
   if(_previewObjId){
     const id = _previewObjId; _previewObjId = null;
-    if(okrObjetivos[id]) window._okrOpenDetail(id);
+    if(okrObjetivos[id] && okrObjetivos[id].mostrarApresentacao!==false) window._okrOpenDetail(id);   // Objetivo oculto na apresentação: o ?preview= não abre
   }
 }
 
