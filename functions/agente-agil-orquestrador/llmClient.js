@@ -17,7 +17,13 @@ const ANTHROPIC_VERSION = '2023-06-01';
 // exercitado contra a API de verdade (Etapa 1/2 só usaram cliente
 // scriptado). Revisar este valor sempre que o próximo passo (LLM real)
 // for implementado, caso um modelo mais novo já exista nessa altura.
-const DEFAULT_MODEL = 'claude-sonnet-5';
+// 2026-10-08: o Agente Ágil (todos os fluxos passam por escolheClienteParaTarefa → tier 'sonnet') passa pro Sonnet 5.5.
+const DEFAULT_MODEL = 'claude-sonnet-5-5';
+// Rede de segurança: se a API disser que o id do DEFAULT_MODEL não existe/não está liberado pra esta chave (404, ou 400 falando de "model"),
+// repete a chamada UMA vez com o modelo anterior e passa a usá-lo direto neste processo — o agente nunca fica mudo por causa de um id de modelo.
+const FALLBACK_MODEL = 'claude-sonnet-5';
+const _modelosIndisponiveis = new Set();
+function modeloIndisponivel(status, body) { return status === 404 || (status === 400 && /model/i.test(String(body || ''))); }
 const DEFAULT_MAX_TOKENS = 4096;
 
 // Traduz o histórico genérico do loop (ver loop.js) pro formato de
@@ -109,12 +115,12 @@ function withMessagesCacheControl(messages) {
   return [...messages.slice(0, -1), { ...last, content }];
 }
 
-function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = DEFAULT_MAX_TOKENS } = {}) {
+function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = DEFAULT_MAX_TOKENS, fallbackModel = (model === DEFAULT_MODEL ? FALLBACK_MODEL : null) } = {}) {
   if (!apiKey) throw new Error('createAnthropicLlmClient requer apiKey.');
 
   return {
     async decide({ system, history, tools }) {
-      const res = await fetch(ANTHROPIC_API_URL, {
+      const chama = (m) => fetch(ANTHROPIC_API_URL, {
         method: 'POST',
         headers: {
           'content-type': 'application/json',
@@ -122,13 +128,27 @@ function createAnthropicLlmClient({ apiKey, model = DEFAULT_MODEL, maxTokens = D
           'anthropic-version': ANTHROPIC_VERSION,
         },
         body: JSON.stringify({
-          model,
+          model: m,
           max_tokens: maxTokens,
           system: withSystemCacheControl(system),
           messages: withMessagesCacheControl(historyToAnthropicMessages(history)),
           tools: anthropicToolsFromTools(tools),
         }),
       });
+
+      const usaFallback = !!fallbackModel && _modelosIndisponiveis.has(model);
+      let res = await chama(usaFallback ? fallbackModel : model);
+
+      if (!res.ok && fallbackModel && !usaFallback) {
+        const corpo = await res.text().catch(() => '');
+        if (modeloIndisponivel(res.status, corpo)) {
+          _modelosIndisponiveis.add(model);
+          console.warn(`[llmClient] modelo ${model} indisponível (${res.status}) — usando ${fallbackModel}: ${corpo.slice(0, 200)}`);
+          res = await chama(fallbackModel);
+        } else {
+          throw new Error(`Anthropic API respondeu ${res.status}: ${corpo}`);
+        }
+      }
 
       if (!res.ok) {
         const body = await res.text().catch(() => '');
@@ -154,4 +174,6 @@ module.exports = {
   withSystemCacheControl,
   withMessagesCacheControl,
   DEFAULT_MODEL,
+  FALLBACK_MODEL,
+  _modelosIndisponiveis,   // exportado só pros testes
 };
