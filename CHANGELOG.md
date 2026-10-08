@@ -20736,6 +20736,10 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### okr-dev.html v2.38 · okr-dev — 2026-10-08 · 🎨 faixas das gerências um pouco mais visíveis (escuro e Vice City)
+
+Feedback: no tema escuro e no Vice City a diferença entre as faixas alternadas ficou suave demais pra perceber. Escuro: ~13% / 3% (era 5,5% / 1,6%). Vice City: ~20% / 5% **mais um contorno fino** (inset, sem mexer no layout) — o fundo do Vice é um degradê forte (laranja no meio, roxo embaixo), então só o tom some em alguma altura da tela; o contorno mantém a divisão visível em qualquer parte. Claro e visão global inalterados.
+
 ### okr-dev.html v2.37 · okr-dev — 2026-10-08 · 🎨 gerências em faixas alternadas (dois tons bem suaves)
 
 Pedido direto: dividir melhor as gerências na lista de Objetivos, sem poluir. Cada gerência agora fica num bloco com fundo bem leve, e os blocos **alternam dois tons pela POSIÇÃO** (1ª, 3ª… num tom; 2ª, 4ª… no outro — não é uma cor por gerência, então filtrar não "troca" a cor de ninguém). O tom é da cor do tema (azul no Abrolhos, pêssego no Vice City, branco translúcido no Lençóis, que já é azul saturado); na **visão global** é a cor de cada torre, recomeçando a alternância em cada faixa. Só fundo: os cartões não mudam de lugar nem de tamanho (margem negativa devolve o respiro do padding), sem rolagem horizontal, 1º bloco da visão global respira do título da torre. Opacidades: ~5,5% / 1,6% (escuro). Teste: 11 cenários no Chromium (4 gerências alternam a-b-a-b, filtro recomeça em "a", 3 temas, visão global por torre, celular).
