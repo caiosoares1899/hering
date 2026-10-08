@@ -3565,6 +3565,14 @@ input[type="date"]{-moz-appearance:textfield;}
 .help-tip.danger .help-tip-balloon{border-color:rgba(255,107,107,.35);}
 </style>
 <script>
+// 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital),
+// @menção só a quem é @ciahering. `true` esconde/desliga a integração Arezzo/Microsoft e as torres; `false` religa tudo como estava em
+// 2026-10-01..07. É UM interruptor por página (grep MARE_SO_HERING em kanban/painel/okr/okr-apresentacao/mare-notif + functions/common/mareModo.js
+// + database.rules.json). Lista completa e passo a passo pra religar: docs/arezzo/MARE_SO_HERING.md
+window.MARE_SO_HERING = true;
+(function(){ if(!window.MARE_SO_HERING) return; try{ var st=document.createElement('style'); st.textContent='.ms-login{display:none!important}'; document.head.appendChild(st); }catch(e){} })();
+</script>
+<script>
 // Aplica o tema salvo ANTES do body renderizar — evita o "flash" de tema
 // escuro (padrão) seguido de troca pro claro assim que o JS principal
 // carregasse lá embaixo. Não usa safeLS (definido só no <script> grande,
@@ -3605,7 +3613,7 @@ input[type="date"]{-moz-appearance:textfield;}
     <div style="font-size:13px;color:var(--txt2);" id="login-subtitle">Digital Hering</div>
   </div>
   <div style="background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:28px 32px;text-align:center;max-width:340px;width:100%;backdrop-filter:blur(12px);">
-    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google ou Microsoft.</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;line-height:1.6;">Entre com sua conta Google<span class="ms-login"> ou Microsoft</span>.</div>
     <button onclick="doSignIn()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;">
       <svg width="16" height="16" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       Entrar com Google
@@ -3615,18 +3623,18 @@ input[type="date"]{-moz-appearance:textfield;}
          provider/fallback de redirect dedicados (ver <script type="module">),
          domínio @arezzo.com.br tratado como confiável igual @ciahering.com.br
          (ver TRUSTED_DOMAINS/_isTrustedDomainEmail() + database.rules.json). -->
-    <button onclick="doSignInMicrosoft()" class="btn btn-p" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
+    <button onclick="doSignInMicrosoft()" class="btn btn-p ms-login" style="width:100%;justify-content:center;gap:10px;padding:11px 20px;font-size:13px;margin-top:8px;background:#2f2f2f;border-color:#2f2f2f;">
       <svg width="16" height="16" viewBox="0 0 23 23"><path fill="#f35325" d="M1 1h10v10H1z"/><path fill="#81bc06" d="M12 1h10v10H12z"/><path fill="#05a6f0" d="M1 12h10v10H1z"/><path fill="#ffba08" d="M12 12h10v10H12z"/></svg>
       Entrar com Microsoft
     </button>
     <!-- "Primeira vez? Inscrever-se no quadro" removido (2026-10-05): o atalho sempre abria o login do GOOGLE, então quem
          entrava direto por Microsoft/conta pessoal nunca via a tela de inscrição. Agora o próprio login detecta usuário
          novo e abre a inscrição (ver autoRegistrar()), com qualquer provedor. -->
-    <div style="margin-top:8px;font-size:11px;color:var(--txt3);">Externo autorizado com hotmail/outlook? <button onclick="doSignInMicrosoftPessoal()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Entrar com conta pessoal Microsoft</button></div>
+    <div class="ms-login" style="margin-top:8px;font-size:11px;color:var(--txt3);">Externo autorizado com hotmail/outlook? <button onclick="doSignInMicrosoftPessoal()" style="background:none;border:none;color:var(--cyan);cursor:pointer;font-size:11px;text-decoration:underline;">Entrar com conta pessoal Microsoft</button></div>
     <div id="login-err" style="font-size:11px;color:var(--danger);margin-top:10px;display:none;"></div>
   </div>
 
-  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br / @arezzo.com.br</div>
+  <div style="font-size:10px;color:var(--txt3);">Acesso restrito a @ciahering.com.br<span class="ms-login"> / @arezzo.com.br</span></div>
 </div>
 
 <!-- INSCRIÇÃO -->
@@ -5076,7 +5084,7 @@ input[type="date"]{-moz-appearance:textfield;}
           <div class="cfg-sec-title" style="margin-bottom:0;font-size:11px;">🔓 Emails externos autorizados</div>
           <button class="btn btn-sm" onclick="abrirAddExterno()" style="font-size:10px;color:rgba(255,209,102,.9);border-color:rgba(255,209,102,.3);">+ Adicionar externo</button>
         </div>
-        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora de @ciahering.com.br/@arezzo.com.br que podem acessar este board. Entram como convidado.</p>
+        <p style="font-size:10px;color:var(--txt3);margin-bottom:8px;">Emails fora de @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span> que podem acessar este board. Entram como convidado.</p>
         <div id="externos-list" style="display:flex;flex-direction:column;gap:5px;"></div>
         <div id="add-externo-row" style="display:none;margin-top:8px;gap:6px;" class="frow">
           <input class="fi" id="externo-email-inp" type="email" placeholder="email@dominio.com" style="flex:1;font-size:12px;">
@@ -6491,7 +6499,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.800</div>
+<div class="version">v8.30.802</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6834,7 +6842,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=6"></script>
+<script src="mare-notif.js?v=8"></script>
 
 <script>
 
@@ -6870,7 +6878,9 @@ let ADM_EMAILS = ['caio.soares@ciahering.com.br','rafael.passos@ciahering.com.br
 // tela de "+ Adicionar externo") quando um domínio novo entrar aqui no
 // futuro — e porque database.rules.json replica a MESMA lista (não dá pra
 // ler este array dali, regra de segurança não executa JS da página).
-const TRUSTED_DOMAINS = ['@ciahering.com.br', '@arezzo.com.br'];
+// MODO "SÓ HERING" (MARE_SO_HERING, 1º <script>): só @ciahering.com.br. Desligado, volta @arezzo.com.br (Microsoft) também.
+const TRUSTED_DOMAINS = MARE_SO_HERING ? ['@ciahering.com.br'] : ['@ciahering.com.br', '@arezzo.com.br'];
+const _dominiosTxt = () => TRUSTED_DOMAINS.join('/');
 function _isTrustedDomainEmail(email){ return TRUSTED_DOMAINS.some(d=>String(email||'').toLowerCase().endsWith(d)); }
 // Espelha o PIN DE PROVEDOR de database.rules.json (PR #1152): @ciahering.com.br só vale
 // logado pelo Google, @arezzo.com.br só pela Microsoft. Sem isso o gate do client (só domínio)
@@ -7874,6 +7884,8 @@ function _askAgenteAgilNoCard(card, pergunta){
   const ok = _dispatchAgenteAgilComment(card.id, '@Agente Ágil '+pergunta, {squads: AGENTE_AGIL_MENTION_SQUADS, warnIfUnavailable:true});
   if(ok) showToast('🤖 Pergunta enviada — a resposta chega como comentário no card.');
 }
+// Modo "só Hering": o autocomplete de @menção só oferece contas @ciahering.com.br (agentes e entradas sem e-mail passam). Desligado = todo mundo.
+function _mencionavelNoModo(m){ return !MARE_SO_HERING || m.isAgent || !m.email || /@ciahering\.com\.br$/i.test(m.email); }
 function mentionCandidates(){
   // allIdentities() já pode incluir AGENTE_AGIL_ASSIGNEE_ENTRY (mesmo uid
   // 'agente-agil') no squad 'dados' — filtra pra não duplicar com
@@ -7885,7 +7897,7 @@ function mentionCandidates(){
   // quem só digita "@" sem saber que a opção existe. Assim ela é sempre a
   // 1ª sugestão, sem prejudicar quem já sabe o nome de quem quer mencionar
   // (a busca por texto continua achando qualquer pessoa normalmente).
-  const base = [TODOS_MENTION_ENTRY, ...allIdentities().filter(m=>m.uid!==AGENTE_AGIL_ASSIGNEE_ENTRY.uid)];
+  const base = [TODOS_MENTION_ENTRY, ...allIdentities().filter(m=>m.uid!==AGENTE_AGIL_ASSIGNEE_ENTRY.uid && _mencionavelNoModo(m))];
   return AGENTE_AGIL_MENTION_SQUADS.has(ACTIVE_SQUAD) ? [...base, AGENTE_AGIL_MENTION_ENTRY] : base;
 }
 // Label usado tanto pra filtrar (digitou "@a"/"@age"...) quanto pra exibir
@@ -11225,6 +11237,7 @@ function doSignIn(insc=false){
 // Google) já que são provedores/janelas de popup independentes.
 function doSignInMicrosoft(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
+  if(MARE_SO_HERING){ err.textContent='O login pela Microsoft está desativado — entre com a conta Google @ciahering.com.br.'; err.style.display='block'; return; }
   if(!window._signInMicrosoft){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
   if(insc) window._pendingInsc=true;
   window._signInMicrosoft().catch(e=>{
@@ -11248,6 +11261,7 @@ function doSignInMicrosoft(insc=false){
 // Externo autorizado com conta Microsoft pessoal (hotmail/outlook) — contador de falha de popup próprio.
 function doSignInMicrosoftPessoal(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
+  if(MARE_SO_HERING){ err.textContent='O login pela Microsoft está desativado — entre com uma conta Google.'; err.style.display='block'; return; }
   if(!window._signInMicrosoftPessoal){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
   if(insc) window._pendingInsc=true;
   window._signInMicrosoftPessoal().catch(e=>{
@@ -11455,7 +11469,7 @@ window.addEventListener('auth-change',e=>{
         let allowed = !!externos[_extKey(user.email)] || Object.values(externos).map(e=>e.email||e).includes(user.email);
         // Não autorizado NESTE squad: antes recusava direto. Se a URL nem pedia squad (cai no 'dados' hardcoded) ou
         // se a pessoa está autorizada em OUTRO squad, ajuda em vez de só recusar.
-        let _msgNegado='Acesso restrito a @ciahering.com.br/@arezzo.com.br. Peça ao PO para adicionar seu email como externo.';
+        let _msgNegado='Acesso restrito a '+_dominiosTxt()+'. Peça ao PO para adicionar seu email como externo.';
         if(!allowed){
           let outros=[]; try{ outros=await _squadsDoExterno(user); }catch(e){}
           if(outros.length){
@@ -11476,7 +11490,7 @@ window.addEventListener('auth-change',e=>{
       }).catch((err)=>{
         console.error('[externos check] erro (tentativa '+tentativa+'):', err);
         if(tentativa<3) return new Promise(r=>setTimeout(r,2000)).then(()=>_checkExternos(tentativa+1));
-        document.getElementById('login-err').textContent='Acesso restrito a @ciahering.com.br/@arezzo.com.br. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
+        document.getElementById('login-err').textContent='Acesso restrito a '+_dominiosTxt()+'. (Erro ao verificar lista de externos — avise o admin: '+(err?.message||err)+')';
         document.getElementById('login-err').style.display='block';
         _rejectLoginAfterReload(document.getElementById('login-err').textContent);
         window._signOut('external_whitelist_check_error');
@@ -11880,7 +11894,7 @@ let _inscOriginalInit = '';
 // 🏛️ Torre (OKR): só a inscrição de cadastro NOVO pergunta (opts.pedirTorre). Quem já existia fica Digital (sem campo = Digital).
 let _inscPedirTorre = false;
 function mostrarInscricao(user,dados,opts){
-  _inscPedirTorre = !!(opts && opts.pedirTorre);
+  _inscPedirTorre = !MARE_SO_HERING && !!(opts && opts.pedirTorre);   // modo só Hering: OKR de uma torre só, nada a perguntar
   const _tw=document.getElementById('insc-torre-wrap'); if(_tw) _tw.style.display=_inscPedirTorre?'':'none';
   const _ts=document.getElementById('insc-torre'); if(_ts) _ts.value='';
   const init=dados?.init||window._currentUserInit||'';
@@ -28089,6 +28103,8 @@ Regras que você já tinha criado antes continuam funcionando sem precisar recri
 </div>` },
   ],
 }
+// Modo "só Hering" (MARE_SO_HERING): o OKR tem uma torre só, então a entrada "Sua torre…" não faz sentido (volta sozinha ao desligar o interruptor).
+if(MARE_SO_HERING) Object.keys(HELP_CONTENT).forEach(k=>{ HELP_CONTENT[k] = HELP_CONTENT[k].filter(e=>!/^Sua torre/.test(e.title)); });
 let _helpTab = 'board';
 
 // Abre o help — tab opcional + termo de busca opcional (usado pelos botões ❓ contextuais)
@@ -29932,13 +29948,13 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // Reunião/evento do calendário do OKR (okr_reuniao com okrEventoId, passado como 'evento:<id>~<data>') → abre direto no calendário do OKR.
   if(type==='okr_reuniao' && String(okrObjId||'').startsWith('evento:')){
     const [evId, evData] = String(okrObjId).slice(7).split('~');
-    window.location.href = (window.location.pathname.endsWith('kanban-dev.html') ? 'okr-dev.html' : 'okr.html')+'?evento='+encodeURIComponent(evId)+(evData?'&data='+encodeURIComponent(evData):'');
+    MareNotif.abrirPagina((window.location.pathname.endsWith('kanban-dev.html') ? 'okr-dev.html' : 'okr.html')+'?evento='+encodeURIComponent(evId)+(evData?'&data='+encodeURIComponent(evData):''));   // aba nova
     return;
   }
   if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente' || type==='okr_mencao'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
     const alvo = type==='okr_agente' ? 'chat' : (type==='okr_mencao' ? 'notas' : okrObjId);   // @menção nas Anotações → okr(-dev).html?okr=notas
-    window.location.href = painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : '');
+    MareNotif.abrirPagina(painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : ''));   // aba nova (o painel encaminha pro OKR)
     return;
   }
   // Feedback do Mural (🐛/💡/❓) pro ADM não tem card — vive na aba Monitor
@@ -29946,7 +29962,7 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // (/monitorarbugs, 2026-09-06) — antes só marcava como lida e não navegava.
   if(type==='feedback'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
-    window.location.href = painelFile + '?tab=monitor';
+    MareNotif.abrirPagina(painelFile + '?tab=monitor');   // aba nova
     return;
   }
   // "🎥 Reunião em X min" também não tem card — abre o link da reunião
@@ -37262,7 +37278,7 @@ function salvarExterno(){
   const nomeInp = document.getElementById('externo-nome-inp');
   const email = emailInp?.value.trim().toLowerCase();
   if(!email||!email.includes('@')){ showToast('❌ Email inválido.'); return; }
-  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável (@ciahering.com.br/@arezzo.com.br) não precisam ser adicionados aqui.'); return; }
+  if(_isTrustedDomainEmail(email)){ showToast('❌ Emails de domínio confiável ('+_dominiosTxt()+') não precisam ser adicionados aqui.'); return; }
   const key = _extKey(email);
   const ext = { email, nome: nomeInp?.value.trim()||'', adicionadoEm: new Date().toISOString(), adicionadoPor: window._currentUserInit||'' };
   fbSet('kanban/squads/'+ACTIVE_SQUAD+'/externos/'+key, ext);
