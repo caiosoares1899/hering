@@ -1189,6 +1189,48 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
   .x-btn{ min-width:40px; min-height:40px; font-size:20px; }
 }
 
+
+/* 📱 Modais do OKR no celular (Objetivo · ⚙ Configurações · Marco) — a tela era uma janelinha com 41% de espaço útil (cabeçalho 168px + 4 filas de chips + rodapé estourando):
+   agora é uma FOLHA em tela cheia. Cabeçalho em 2 linhas (título inteiro + ✕ / torre + ⚙ 🔗), os atalhos de seção viram um único seletor "Ir para…", o resumo perde o botão
+   duplicado (o ⚙ do cabeçalho já abre) e o rodapé fica [Cancelar] [⋯] [💾 Salvar] com Duplicar/Excluir/Arquivar dentro do ⋯. Desktop não muda. */
+.okr-nav .okr-nav-sel{display:none;}
+.okr-foot-desk{display:contents;}
+.okr-foot-more{display:none;}
+@media (max-width:640px){
+  #okr-obj-ov,#okr-obj-config-ov,#okr-marco-ov{padding:0;align-items:stretch;}
+  #okr-obj-ov .pc-modal,#okr-obj-config-ov .pc-modal,#okr-marco-ov .pc-modal{width:100%!important;max-width:none;max-height:none;height:100vh;height:100dvh;border-radius:0;border-left:0;border-right:0;border-bottom:0;box-shadow:none;}
+  /* cabeçalho: linha 1 = título + ✕ · linha 2 = chip da torre + ⚙ 🔗 */
+  #okr-obj-ov .pc-modal-hd,#okr-obj-config-ov .pc-modal-hd,#okr-marco-ov .pc-modal-hd{flex-wrap:wrap;align-items:center;gap:4px 8px;padding:10px 12px 8px;}
+  #okr-obj-ov .pc-modal-hd-title,#okr-obj-config-ov .pc-modal-hd-title,#okr-marco-ov .pc-modal-hd-title{order:1;flex:1 1 calc(100% - 52px);min-width:0;font-size:15px;line-height:1.3;overflow-wrap:anywhere;}
+  #okr-obj-ov .pc-modal-hd>.x-btn:last-child,#okr-obj-config-ov .pc-modal-hd>.x-btn:last-child,#okr-marco-ov .pc-modal-hd>.x-btn:last-child{order:2;}
+  #okr-obj-ov .okr-modal-torre-chip,#okr-obj-config-ov .okr-modal-torre-chip,#okr-marco-ov .okr-modal-torre-chip{order:3;margin-right:auto;}
+  #okr-obj-config-btn,#okr-obj-share-btn{order:4;min-width:36px;min-height:36px;font-size:18px;margin-right:0!important;}
+  /* atalhos de seção: um seletor no lugar dos chips */
+  .okr-nav{padding:6px 12px;flex-wrap:nowrap;}
+  .okr-nav .okr-nav-chip{display:none;}
+  .okr-nav .okr-nav-sel{display:block;width:100%;min-height:38px;}
+  /* corpo: mais área útil */
+  #okr-obj-body,#okr-obj-config-body,#okr-marco-body{padding:10px 12px;gap:8px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;}
+  .okr-sec{padding:8px 10px 10px;}
+  #okr-obj-body .okr-field-label,#okr-obj-config-body .okr-field-label,#okr-marco-body .okr-field-label{margin:8px 0 3px;}   /* a margem de 14px de cima + o gap do corpo deixavam um buraco entre o rótulo e o campo */
+  /* só no dev: a faixa fixa "OKR DEV" (2 linhas no celular) cobria a 1ª linha do cabeçalho — sem tocar na faixa (ela diverge de prod de propósito) */
+  body:has(> div[style*="249,115,22"]) #okr-obj-ov .pc-modal,body:has(> div[style*="249,115,22"]) #okr-obj-config-ov .pc-modal,body:has(> div[style*="249,115,22"]) #okr-marco-ov .pc-modal{padding-top:48px;}
+  .okr-recap{padding:8px 10px;}
+  .okr-recap .btn{display:none;}   /* o ⚙ do cabeçalho já abre as Configurações */
+  .okr-cal-prox button{padding:5px 8px;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  #okr-obj-lock-row,#okr-lock-request-row{padding:6px 12px;}
+  /* rodapé: [Cancelar] [⋯] ........ [💾 Salvar] */
+  #okr-obj-footer,#okr-obj-config-footer,#okr-marco-footer{padding:8px 12px calc(8px + env(safe-area-inset-bottom));gap:8px;flex-wrap:nowrap;justify-content:flex-start;align-items:center;}
+  #okr-obj-footer button,#okr-obj-config-footer button,#okr-marco-footer button,#okr-obj-footer summary{min-height:42px;font-size:13px!important;}
+  #okr-obj-footer .save-btn,#okr-obj-config-footer .save-btn,#okr-marco-footer .save-btn{flex:1;margin-left:auto;}
+  .okr-foot-desk{display:none;}
+  .okr-foot-more{display:block;position:relative;}
+  .okr-foot-more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:center;min-width:44px;padding:0 12px;border:1px solid var(--glass-b);border-radius:10px;background:var(--glass);color:var(--txt2);font-size:20px;line-height:1;user-select:none;-webkit-tap-highlight-color:transparent;}
+  .okr-foot-more>summary::-webkit-details-marker{display:none;}
+  .okr-foot-menu{position:absolute;left:0;bottom:calc(100% + 8px);z-index:5;display:flex;flex-direction:column;gap:6px;min-width:190px;padding:8px;border-radius:12px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.98);box-shadow:0 12px 36px rgba(0,0,0,.55);}
+  .okr-foot-menu button{width:100%;text-align:left;}
+}
+
 /* ── página própria do OKR ── */
 body{min-height:100vh;}
 #ppane-okr{display:block;}
@@ -1786,7 +1828,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.33 · okr-dev</div>
+<div class="version">v2.34 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6748,7 +6790,7 @@ function _okrIrParaSecao(id){
   if(el.tagName==='DETAILS') el.open = true;
   el.scrollIntoView({behavior:'smooth', block:'start'});
   el.classList.remove('okr-sec-flash'); void el.offsetWidth; el.classList.add('okr-sec-flash');
-  if(el.tagName!=='DETAILS'){
+  if(el.tagName!=='DETAILS' && !(window.matchMedia && matchMedia('(pointer:coarse)').matches)){   // em toque o foco abriria o teclado sem a pessoa pedir
     const inp = el.querySelector('input.okr-input, textarea.okr-input'); // só existe pra quem pode editar
     if(inp) setTimeout(()=>{ try{ inp.focus({preventScroll:true}); }catch(e){} }, 380);
   }
@@ -6756,7 +6798,9 @@ function _okrIrParaSecao(id){
 
 
 function _okrNavChipsHtml(chips){
-  return chips.map(c=>`<button type="button" class="okr-nav-chip ${c.cls||'okr-sec-neutro'}" onclick="_okrIrParaSecao(${jsq(c.id)})" title="Ir para ${esc(c.label)}"><span>${c.ico}</span><span>${esc(c.label)}</span>${c.n?`<span class="okr-sec-count">${c.n}</span>`:''}</button>`).join('');
+  // Celular: os chips (até 4 filas) viram UM seletor "Ir para…" (CSS esconde um ou o outro) — sobra a tela pra editar.
+  const sel = `<select class="okr-select okr-nav-sel" aria-label="Ir para uma seção" onchange="if(this.value){ _okrIrParaSecao(this.value); } this.selectedIndex=0;"><option value="">🧭 Ir para a seção…</option>${chips.map(c=>`<option value="${esc(c.id)}">${c.ico} ${esc(c.label)}${c.n?' ('+esc(String(c.n))+')':''}</option>`).join('')}</select>`;
+  return sel + chips.map(c=>`<button type="button" class="okr-nav-chip ${c.cls||'okr-sec-neutro'}" onclick="_okrIrParaSecao(${jsq(c.id)})" title="Ir para ${esc(c.label)}"><span>${c.ico}</span><span>${esc(c.label)}</span>${c.n?`<span class="okr-sec-count">${c.n}</span>`:''}</button>`).join('');
 }
 
 
@@ -7534,14 +7578,18 @@ function renderOkrObjBody(id){
     ${_okrHistorySectionHtml(d)}`;
   _okrWritePending(_pendObj);
   _okrRenderObjNav(id, d, true);
-  footer.innerHTML = `
-    <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+  // Ações secundárias (Duplicar/Excluir/Arquivar): inline no desktop, num menu ⋯ no celular (o rodapé estourava a largura)
+  const _sec = `
     ${id?`<button onclick="_okrDuplicarObjetivo(${jsq(id)})" title="Cria um Objetivo novo com a mesma estrutura (marcos sem prazo/progresso), pra ajustar antes de usar" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">⧉ Duplicar</button>`:''}
     ${(id && _isAdmPainel())?`<button onclick="_okrExcluirObjetivo(${jsq(id)})" title="Exclusão definitiva — diferente de Arquivar, não dá pra desfazer" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">🗑 Excluir</button>`:''}
     ${(id && _isAdmPainel())?(d.arquivado
       ? `<button onclick="_okrDesarquivarObjetivo(${jsq(id)})" style="padding:6px 14px;font-size:11px;background:none;border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">📦 Desarquivar</button>`
       : `<button onclick="_okrArquivarObjetivo(${jsq(id)})" style="padding:6px 14px;font-size:11px;background:none;border:1px solid rgba(255,107,107,.3);border-radius:10px;color:var(--danger);cursor:pointer;">Arquivar</button>`
     ):''}
+  `;
+  footer.innerHTML = `
+    <button onclick="_okrTryCloseObjetivo()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
+    ${_sec.trim()?`<span class="okr-foot-desk">${_sec}</span><details class="okr-foot-more"><summary title="Mais ações" aria-label="Mais ações">⋯</summary><div class="okr-foot-menu">${_sec}</div></details>`:''}
     <button class="save-btn" onclick="saveOkrObjetivo()">💾 Salvar</button>`;
 }
 
