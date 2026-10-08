@@ -1453,7 +1453,7 @@ body{min-height:100vh;}
       <div class="hd-sub">Objetivos estratégicos · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <a class="btn" href="painel-dev.html" title="Voltar ao painel" style="text-decoration:none;display:inline-flex;align-items:center;">🐟 Painel</a>
+      <a class="btn" href="painel-dev.html" target="_blank" rel="noopener" title="Abre o painel em outra aba" style="text-decoration:none;display:inline-flex;align-items:center;">🐟 Painel</a>
       <button type="button" id="okr-mural-btn" class="btn okr-bell" onclick="openOkrMural()" title="Mural do OKR — avisos por torre" aria-label="Mural do OKR">📢<span class="okr-bell-n" id="okr-mural-n"></span></button>
       <button type="button" id="okr-bell-btn" class="btn okr-bell" onclick="_okrBellToggle(event)" title="Notificações do OKR: avisos do Mural, Objetivos novos, Marcos concluídos, menções e prazos" aria-label="Notificações do OKR">🔔<span class="okr-bell-n" id="okr-bell-n"></span></button>
       <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
@@ -1825,7 +1825,7 @@ body{min-height:100vh;}
   </div>
 </div>
 
-<div class="version">v2.35 · okr-dev</div>
+<div class="version">v2.36 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1876,7 +1876,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=6"></script>
+<script src="mare-notif-dev.js?v=7"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -3045,7 +3045,7 @@ function _okrBellClick(k, id){
     if(n.type==='okr_mencao') return _okrIrParaNotas(n.okrNotaData);
     if(n.type.startsWith('okr_') && n.okrObjId) return _okrIrParaObjetivo(n.okrObjId);
     const alvo = MareNotif.urlPessoal(n);   // card, Kudos, reunião, intake… vivem em outras páginas: o roteador compartilhado sabe pra onde ir
-    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else Promise.race([w, new Promise(r=>setTimeout(r,800))]).then(()=>{ location.href = alvo.url; }); }   // deixa o "lido" sair antes de trocar de página
+    if(alvo){ if(alvo.externo) window.open(alvo.url,'_blank','noopener'); else MareNotif.abrirPagina(alvo.url); }   // outra página do Maré Digital abre em aba nova (o "lido" termina de gravar aqui mesmo)
     return;
   }
   MareNotif.abrirFeed(id); _okrBellRender();

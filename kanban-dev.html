@@ -6491,7 +6491,7 @@ input[type="date"]{-moz-appearance:textfield;}
   </button>
 </nav>
 
-<div class="version">v8.30.800-dev</div>
+<div class="version">v8.30.801-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6834,7 +6834,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=6"></script>
+<script src="mare-notif-dev.js?v=7"></script>
 
 <script>
 
@@ -29932,13 +29932,13 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // Reunião/evento do calendário do OKR (okr_reuniao com okrEventoId, passado como 'evento:<id>~<data>') → abre direto no calendário do OKR.
   if(type==='okr_reuniao' && String(okrObjId||'').startsWith('evento:')){
     const [evId, evData] = String(okrObjId).slice(7).split('~');
-    window.location.href = (window.location.pathname.endsWith('kanban-dev.html') ? 'okr-dev.html' : 'okr.html')+'?evento='+encodeURIComponent(evId)+(evData?'&data='+encodeURIComponent(evData):'');
+    MareNotif.abrirPagina((window.location.pathname.endsWith('kanban-dev.html') ? 'okr-dev.html' : 'okr.html')+'?evento='+encodeURIComponent(evId)+(evData?'&data='+encodeURIComponent(evData):''));   // aba nova
     return;
   }
   if(type==='okr_editado' || type==='okr_prazo' || type==='okr_reuniao' || type==='okr_agente' || type==='okr_mencao'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
     const alvo = type==='okr_agente' ? 'chat' : (type==='okr_mencao' ? 'notas' : okrObjId);   // @menção nas Anotações → okr(-dev).html?okr=notas
-    window.location.href = painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : '');
+    MareNotif.abrirPagina(painelFile + (alvo ? ('?okr='+encodeURIComponent(alvo)) : ''));   // aba nova (o painel encaminha pro OKR)
     return;
   }
   // Feedback do Mural (🐛/💡/❓) pro ADM não tem card — vive na aba Monitor
@@ -29946,7 +29946,7 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
   // (/monitorarbugs, 2026-09-06) — antes só marcava como lida e não navegava.
   if(type==='feedback'){
     const painelFile = window.location.pathname.endsWith('kanban-dev.html') ? 'painel-dev.html' : 'painel.html';
-    window.location.href = painelFile + '?tab=monitor';
+    MareNotif.abrirPagina(painelFile + '?tab=monitor');   // aba nova
     return;
   }
   // "🎥 Reunião em X min" também não tem card — abre o link da reunião
