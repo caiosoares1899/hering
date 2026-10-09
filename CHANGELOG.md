@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📡 Painel: logo do Radar (sem fundo) no lugar do emoji — 2026-10-09 · painel-dev v5.27 (SÓ DEV)
+- A aba **Radar ↗** do painel e o menu de páginas (Radar prod/dev) mostram o `radar-logo.png` no lugar do 📡. O 📡 de "Só contexto (sem representar no board)" é outro significado e ficou.
+
+### 📡 Radar: favicon nova (fundo azul) + logo sem fundo na capa da apresentação — 2026-10-09 · arquivos compartilhados (valem em prod e dev assim que mergeados)
+- **`favicon-radar.png` trocada** pela versão de fundo azul-marinho cheio (256 px, ~24 KB): aparece na aba de `okr`/`okr-dev`, apresentação, Guia e no card "Radar" do menu de produtos (mesmo arquivo — o navegador pode segurar a antiga no cache da aba por um tempo).
+- **`radar-logo.png` (nova, sem fundo, 256 px):** substitui o emoji 📡 na **capa da apresentação** (104 px, com sombra suave) e no logo da barra de cima.
+- **Subtítulo da capa:** no modo só Hering vira "Panorama **por gerência** · data" (sem "por torre"); com as torres religadas continua "por torre e gerência".
+- Teste novo `docs/arezzo/testes/test_apresentacao_capa.js` (Chromium, 2 modos: imagens carregam, sem emoji na capa, subtítulo certo).
+
 ### 📅 Radar: legenda clicável do calendário + fim dos resquícios de torre/agenda global — 2026-10-09 · okr-dev v2.51 (SÓ DEV — produção segue na v2.49)
 
 - **Legenda com chips clicáveis** (fecha o item que estava pendente): **🗓️ Reunião · 📌 Evento · 🔔 Lembrete · ◆ Prazo de Marco**, cada um com a contagem do período que está na tela. Clicar liga/desliga aquele tipo no Mês e na Agenda e no painel do dia (chip fica riscado, `aria-pressed`); "Mostrar todos" volta tudo. É só filtro de tela (nada é apagado, vale só na sessão) e abrir um evento pelo sino/link religa os tipos pra ele aparecer na lista por baixo.

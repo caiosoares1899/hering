@@ -120,6 +120,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* ── Cover ── */
 .cover-wrap{margin:auto;text-align:center;transform-origin:center center;}
 .cover-ico{font-size:68px;margin-bottom:12px;}
+.cover-ico img{width:104px;height:104px;display:block;margin:0 auto;object-fit:contain;filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));}
 .cover-title{font-size:clamp(2.2rem,5vw,3.6rem);font-weight:800;letter-spacing:-.02em;margin-bottom:12px;}
 .cover-sub{font-size:18px;color:var(--txt2);margin-bottom:42px;}
 .stat-row{display:flex;gap:20px;justify-content:center;flex-wrap:wrap;}
@@ -538,7 +539,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 <div id="app" hidden>
   <div id="topbar">
-    <div class="tb-logo">📡 Radar</div>
+    <div class="tb-logo"><img src="radar-logo.png" alt="" style="width:22px;height:22px;object-fit:contain;"> Radar</div>
     <div class="tb-live"><span class="tb-live-dot"></span>Ao vivo</div>
     <div class="tb-clock-wrap" id="tb-clock-wrap" onclick="window._okrToggleAgendaCfg()" title="Configurar horário da reunião">
       <div class="tb-clock" id="tb-clock">--:--</div>
@@ -1142,9 +1143,9 @@ function buildSlides(){
   const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'});
   list.push({key:'cover', title:'Visão geral', html:`
     <div class="cover-wrap">
-      <div class="cover-ico">📡</div>
+      <div class="cover-ico"><img src="radar-logo.png" alt="📡"></div>
       <div class="cover-title">Radar — OKRs Hering</div>
-      <div class="cover-sub">Panorama por torre e gerência · ${esc(hoje)}</div>
+      <div class="cover-sub">Panorama por ${MARE_SO_HERING?'':'torre e '}gerência · ${esc(hoje)}</div>
       ${_okrFiltroTorre?`<div class="cover-sub" style="margin-top:-30px;margin-bottom:34px;">Apresentando só ${MARE_SO_HERING?'':'a torre '}${OKR_TORRES.find(t=>t.id===_okrFiltroTorre).icon} <b>${esc(OKR_TORRES.find(t=>t.id===_okrFiltroTorre).label)}</b></div>`:''}
       ${_okrFiltroTag&&okrTags[_okrFiltroTag]?`<div class="cover-sub" style="margin-top:6px;">Filtrando pela tag 🏷️ <b>${esc(okrTags[_okrFiltroTag].label||'')}</b></div>`:''}
       <div class="stat-row">
