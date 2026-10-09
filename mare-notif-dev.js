@@ -358,10 +358,9 @@
   // "Já usa o painel" fica em kanban/usuarios/{uid}/apps/painel (o próprio dono grava — as regras já deixam; não é segurança, só vitrine:
   // esconder o botão não impede quem sabe a URL). Uso (depois do login):  MareNotif.appsMontar({user, aqui:'okr', isViewer, isAdm, slot:'#id', btnClass:'btn'})
   //   e, onde a página SABE que a pessoa usa um produto:  MareNotif.appsUso('painel', user).
-  // Logos: SVG próprios (gradiente + glifo), pra não depender de arquivo de imagem. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
+  // Logos: o Maré Digital usa o favicon.png de produção; os demais, SVG provisórios (gradiente + glifo) até ganharem logo de verdade. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
   const APPS = [
-    {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, g:['#38b6ff','#1b6fb0'],
-      glifo:'<path d="M8 17c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3M8 25c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3M8 33c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3"/>'},
+    {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, img:'favicon.png'},   // a logo do Maré Digital já existe (favicon.png de PRODUÇÃO, também nas páginas -dev)
     {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, g:['#8b8cff','#4a4fc4'],
       glifo:'<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>'},
     {id:'okr',    nome:'Radar',        sub:'Objetivos e OKRs',    href:PAGES.okr, g:['#3ddc97','#118a63'],
@@ -383,6 +382,7 @@
     return {viewer:!!o.isViewer, adm:(typeof o.isAdm==='function' ? !!o.isAdm() : !!o.isAdm), uso:appsSt.uso||{}};
   }
   function appsLogo(a){
+    if(a.img) return '<img src="'+esc(a.img)+'" width="42" height="42" alt="" loading="lazy" decoding="async" style="border-radius:12px;display:block;object-fit:cover;">';
     const id = 'mn-g-'+a.id;
     return '<svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a.g[0]+'"/><stop offset="1" stop-color="'+a.g[1]+'"/></linearGradient></defs>'
       + '<rect width="48" height="48" rx="12" fill="url(#'+id+')"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".96">'+a.glifo+'</g></svg>';

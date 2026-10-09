@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔲 Oceano: menu de produtos usa a logo do Maré Digital de verdade — 2026-10-09 · mare-notif-dev v10 · okr-dev v2.48 · painel-dev v5.25 · kanban-dev v8.30.806-dev (SÓ DEV)
+
+No menu de produtos, o Maré Digital passa a usar o `favicon.png` de produção (os peixinhos) no lugar do ícone de ondas que eu tinha desenhado — também nas páginas `-dev`. Painel, Radar e A Bordo seguem com os SVG provisórios até ganharem logo própria. A imagem só carrega quando o menu abre.
+
 ### 🔲 Oceano: menu de produtos (estilo "apps do Google") — 2026-10-09 · mare-notif-dev v9 · okr-dev v2.47 · painel-dev v5.24 · kanban-dev v8.30.805-dev (SÓ DEV)
 
 Novo botão de 9 pontinhos no cabeçalho do Maré Digital, do Painel e do Radar: abre a grade dos produtos do Oceano, cada um com a sua logo, e clicar **abre em aba nova**. Só aparece o que a pessoa usa:
