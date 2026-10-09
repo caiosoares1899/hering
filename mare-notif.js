@@ -21,8 +21,8 @@
   const FEED = 'kanban/notif_feed', SEEN = 'kanban/notif_feed_seen', FEED_LIMIT = 60;
   const IS_DEV = /-dev\.html/.test(location.pathname);
   const PAGES = IS_DEV
-    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html'}
-    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html'};
+    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html'}
+    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html'};
 
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
@@ -360,6 +360,7 @@
   //   e, onde a página SABE que a pessoa usa um produto:  MareNotif.appsUso('painel', user).
   // Logos: Maré Digital = favicon.png de produção, Radar = favicon-radar.png; os demais, SVG provisórios (gradiente + glifo) até ganharem logo de verdade. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
   const APPS = [
+    {id:'oceano', nome:'Oceano', sub:'Lobby e boas-vindas', href:PAGES.oceano, img:'favicon-oceano.png'},   // o lobby da família: NÃO é tile da grade — é o título do popover (link, só pra quem é da Hering)
     {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, img:'favicon.png'},   // a logo do Maré Digital já existe (favicon.png de PRODUÇÃO, também nas páginas -dev)
     {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, g:['#8b8cff','#4a4fc4'],
       glifo:'<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>'},
@@ -367,6 +368,7 @@
     {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', g:['#ffb347','#d9731a'],
       glifo:'<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>'},
   ];
+  const APP_OCEANO = APPS.find(a=>a.id==='oceano');
   const appsSt = {opts:null, uso:{}, aberto:false};
   function appsLsKey(uid){ return 'mare_apps_'+uid; }
   function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
@@ -374,6 +376,7 @@
   function appsVisivel(a, c){
     if(a.id==='painel') return !!(c.viewer || c.adm || c.uso.painel);
     if(a.id==='okr') return true;
+    if(a.id==='oceano') return !c.viewer;   // o lobby é só pra conta Google @ciahering
     return !c.viewer;   // Maré Digital e A Bordo: só gente da empresa
   }
   function appsCtx(){
@@ -389,12 +392,13 @@
   function appsPopRender(){
     const pop = document.getElementById('mn-apps-pop'); if(!pop) return;
     const c = appsCtx(), aqui = (appsSt.opts && appsSt.opts.aqui) || '';
-    const lista = APPS.filter(a=>appsVisivel(a, c));
-    pop.innerHTML = '<div class="mn-apps-hd">🌊 Oceano</div>'
+    const lista = APPS.filter(a=>a.id!=='oceano' && appsVisivel(a, c));   // a grade é só de PRODUTOS; o Oceano em si é o título (link pro lobby)
+    const oc = APP_OCEANO && appsVisivel(APP_OCEANO, c) && aqui!=='oceano';
+    pop.innerHTML = (oc ? '<a class="mn-apps-hd mn-oceano" role="menuitem" data-app="oceano" href="'+esc(APP_OCEANO.href)+'" target="_blank" rel="noopener" title="Ir pro início do Oceano"><span>🌊 Oceano</span><span class="mn-oc-go">início ↗</span></a>' : '<div class="mn-apps-hd">🌊 Oceano</div>')
       + (IS_DEV ? '<div class="mn-apps-dev">🧪 páginas de teste (dev)</div>' : '')
       + '<div class="mn-apps-grid">' + lista.map(a=>{
           const eh = a.id===aqui;
-          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
+          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" data-app="'+esc(a.id)+'" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
             + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
             + (eh ? '</div>' : '</a>');
         }).join('') + '</div>';
@@ -438,6 +442,12 @@
     if(btn.parentNode !== slot) slot.appendChild(btn);
     if(!document.getElementById('mn-apps-pop')){
       const pop = document.createElement('div'); pop.id = 'mn-apps-pop'; pop.setAttribute('role','menu'); pop.setAttribute('aria-label','Produtos do Oceano'); pop.style.display = 'none';
+      // Dentro do Oceano (a página-lobby hospeda os produtos num iframe de nome 'oceano-frame'): em vez de abrir aba nova, pede pro lobby trocar de produto.
+      pop.addEventListener('click', e=>{
+        const a = e.target.closest && e.target.closest('a[data-app]'); if(!a || !(window.parent && window.parent!==window && window.name==='oceano-frame')) return;
+        e.preventDefault(); appsFechar(false);
+        try{ window.parent.postMessage({oceano: a.dataset.app==='oceano' ? 'lobby' : 'abrir', app:a.dataset.app}, location.origin); }catch(x){}
+      });
       document.body.appendChild(pop);
     }
     // quem usa o quê: cache primeiro (render imediato), depois confere no banco se o cache tem mais de 1h
@@ -471,6 +481,8 @@
       + '.mn-apps-btn:not(.btn):not(.notif-btn){background:none;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:8px;color:var(--txt2,#bcd);padding:6px 8px;}'
       + '#mn-apps-pop{position:fixed;z-index:10050;box-sizing:border-box;background:rgba(var(--deep-rgb,3,13,26),.99);border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.55);padding:12px;max-height:80vh;overflow-y:auto;}'
       + '.mn-apps-hd{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,#8fa);padding:0 4px 8px;}'
+      + 'a.mn-oceano{display:flex;justify-content:space-between;align-items:center;text-decoration:none;border-radius:8px;margin:0 0 4px;padding:4px;}'
+      + 'a.mn-oceano:hover{background:rgba(56,182,255,.1);color:var(--accent,#38b6ff);}.mn-oc-go{font-weight:600;letter-spacing:0;text-transform:none;font-size:11px;}'
       + '.mn-apps-dev{font-size:10px;color:var(--warn,#ffd166);padding:0 4px 8px;}'
       + '.mn-apps-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}'
       + '.mn-app{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 6px 10px;border-radius:12px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;cursor:pointer;}'

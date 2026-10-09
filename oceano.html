@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<link rel="icon" type="image/png" href="favicon-oceano.png">
+<link rel="apple-touch-icon" href="oceano-icon-192.png">
+<link rel="manifest" href="oceano.webmanifest">
+<meta name="theme-color" content="#030d1a">
+<title>Oceano</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<script>
+// Interruptor "só Hering" (mesmo das outras páginas — ver docs/arezzo/MARE_SO_HERING.md): true = só conta Google @ciahering.com.br.
+window.MARE_SO_HERING = true;
+// Tema ANTES de pintar (sem flash): a preferência do Oceano, ou a mesma chave `mare_theme` das outras páginas.
+(function(){ try{ var o=JSON.parse(localStorage.getItem('oceano_prefs')||'null'), t=(o&&o.tema)||(localStorage.getItem('mare_theme')==='light'?'lencois':'abrolhos'); var d=document.documentElement; if(t==='lencois') d.setAttribute('data-theme','light'); else if(t==='entardecer') d.setAttribute('data-theme','sunset'); }catch(e){} })();
+// Quem entra aqui precisa ser da Hering (Google). Visualizador externo do Radar continua usando okr.html direto.
+</script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;scroll-padding-top:76px;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+
+/* ═══ MARINE GLASS — mesmos tokens do kanban/painel/okr (ver MARINE_GLASS.md). Temas: 🌙 Abrolhos (padrão), ☀️ Lençóis Maranhenses ([data-theme="light"],
+   a MESMA chave mare_theme das outras páginas) e 🌅 Entardecer (opcional, só desta página). ═══ */
+:root{
+  --deep:#030d1a;--deep-rgb:3,13,26;--glass:rgba(10,37,64,0.6);--glass-b:rgba(56,182,255,0.18);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,0.65);--txt3:rgba(150,200,240,0.4);
+  --warn:#ffd166;--danger:#ff6b6b;--ok:#4ade80;--r:10px;--r2:14px;
+  --ink-rgb:3,13,26;--slate-rgb:10,30,55;
+  --ff-d:'Syne','DM Sans',sans-serif;--ff:'DM Sans',system-ui,sans-serif;
+  --shadow:0 10px 34px rgba(0,0,0,.35);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,80,160,.4) 0%,transparent 60%),radial-gradient(ellipse at 80% 20%,rgba(0,150,180,.25) 0%,transparent 55%),#010810;
+}
+:root[data-theme="light"]{
+  --deep:#0F87C4;--deep-rgb:15,135,196;--glass:rgba(255,255,255,0.55);--glass-b:rgba(0,124,168,0.28);
+  --blue:#0077AD;--accent:#0077AD;--cyan:#065670;--teal:#0a8f86;
+  --txt:#0B2436;--txt2:rgba(11,36,54,0.72);--txt3:rgba(11,36,54,0.5);
+  --warn:#c98a10;--danger:#F15B6C;--ok:#1f9d55;--ink-rgb:251,253,255;--slate-rgb:235,245,250;--shadow:0 10px 30px rgba(7,70,110,.22);
+  --ocean:radial-gradient(ellipse at 20% 80%,rgba(0,183,180,.30) 0%,transparent 62%),radial-gradient(ellipse at 80% 15%,rgba(0,151,214,.30) 0%,transparent 58%),linear-gradient(175deg,#57C4E0 0%,#0F87C4 100%);
+}
+:root[data-theme="sunset"]{
+  --deep:#1a1530;--deep-rgb:26,21,48;--glass:rgba(38,28,58,0.62);--glass-b:rgba(255,176,110,0.26);
+  --blue:#c4642f;--accent:#ffb36b;--cyan:#ffd2a1;--teal:#ffcf6e;
+  --txt:#fdf1e4;--txt2:rgba(253,241,228,0.72);--txt3:rgba(253,241,228,0.46);
+  --ink-rgb:26,21,48;--slate-rgb:48,34,66;
+  --ocean:radial-gradient(ellipse 80% 45% at 50% 38%,rgba(255,160,70,.5) 0%,rgba(255,120,60,.16) 45%,transparent 70%),linear-gradient(180deg,#141d3f 0%,#2a2a55 22%,#7a4a56 38%,#d98a58 47%,#1b4a63 48.4%,#0d2f4b 62%,#071c33 100%);
+}
+html,body{min-height:100vh;overflow-x:hidden;}
+body{font-family:var(--ff);background:var(--deep);color:var(--txt);-webkit-font-smoothing:antialiased;}
+.ocean{position:fixed;inset:0;z-index:-3;pointer-events:none;background:var(--ocean);}
+a{color:var(--accent);}
+button{font-family:inherit;}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+* { scrollbar-width:thin; scrollbar-color:rgba(56,182,255,.25) transparent; }
+::-webkit-scrollbar{width:6px;height:6px;}::-webkit-scrollbar-thumb{background:rgba(56,182,255,.22);border-radius:999px;}
+
+/* ═══ PEIXINHOS E BOLHAS — as MESMAS do Maré Digital (kanban-dev: #fwrap/#bwrap, swimLTR/RTL, rise) ═══ */
+.bubble{position:absolute;bottom:-40px;border-radius:50%;border:1px solid rgba(56,182,255,.2);background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.25),rgba(0,229,255,.05));animation:rise linear infinite;}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.8}90%{opacity:.3}100%{transform:translateY(-110vh);opacity:0}}
+.fish-wrap,.bubble-wrap{position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+.bubble-wrap{z-index:-2;}.fish-wrap{z-index:-1;}
+.fish-ltr{position:absolute;animation:swimLTR linear infinite;}
+@keyframes swimLTR{0%{transform:translateX(-140px)}100%{transform:translateX(calc(100vw + 140px))}}
+.fish-rtl{position:absolute;animation:swimRTL linear infinite;}
+@keyframes swimRTL{0%{transform:translateX(calc(100vw + 140px)) scaleX(-1)}100%{transform:translateX(-140px) scaleX(-1)}}
+[data-theme="light"] .fish-wrap,[data-theme="light"] .bubble{filter:brightness(2.3) saturate(.5) drop-shadow(0 0 3px rgba(0,35,55,.4));}
+[data-anim-paused] .fish-ltr,[data-anim-paused] .fish-rtl,[data-anim-paused] .bubble,[data-anim-paused] .porthole{animation-play-state:paused;}
+@media (prefers-reduced-motion:reduce){.fish-ltr,.fish-rtl,.bubble,.porthole{animation:none!important;}}
+
+/* ═══ CABEÇALHO (vidro, como o das outras páginas) ═══ */
+.topo{position:sticky;top:0;z-index:40;background:rgba(var(--deep-rgb),.74);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--glass-b);}
+[data-theme="light"] .topo{background:rgba(255,255,255,.55);}
+.topo-in{max-width:1180px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;}
+.marca{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--txt);}
+.marca img{width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-b);background:#0b2a55;}
+.marca .tx{font-size:20px;font-weight:600;}
+.marca .tx small{display:block;font-size:11px;font-weight:400;color:var(--txt3);margin-top:-2px;}
+.marca .dev{font-size:10px;font-weight:700;background:rgba(255,209,102,.14);color:var(--warn);border:1px solid rgba(255,209,102,.4);padding:2px 8px;border-radius:99px;}
+.nav{display:flex;gap:2px;margin-left:6px;flex:1;overflow-x:auto;scrollbar-width:none;}
+.nav::-webkit-scrollbar{display:none;}
+.nav a{color:var(--txt2);text-decoration:none;font-size:13px;font-weight:600;padding:8px 11px;border-radius:var(--r);white-space:nowrap;}
+.nav a:hover,.nav a.on{color:var(--txt);background:rgba(56,182,255,.1);}
+.topo-dir{display:flex;align-items:center;gap:8px;margin-left:auto;}
+.eu{display:flex;align-items:center;gap:8px;padding:3px 12px 3px 3px;border-radius:99px;background:var(--glass);border:1px solid var(--glass-b);color:var(--txt);cursor:pointer;font-size:12.5px;font-weight:600;backdrop-filter:blur(8px);}
+.eu:hover{border-color:var(--accent);}
+.eu img,.eu .ini{width:28px;height:28px;border-radius:50%;object-fit:cover;background:var(--blue);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;}
+.eu-nome{max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+@media (max-width:760px){.nav{display:none;}.eu-nome{display:none;}.marca .tx small{display:none;}}
+
+/* ═══ BLOCOS ═══ */
+main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
+.sec{padding:54px 0 6px;}
+.sec-k{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:8px;}
+.sec h2{font-family:var(--ff-d);font-weight:800;font-size:clamp(25px,3.6vw,38px);line-height:1.12;letter-spacing:-.01em;margin-bottom:12px;}
+.sec .lead{font-size:16px;line-height:1.6;color:var(--txt2);max-width:760px;margin-bottom:26px;}
+.linha{height:1px;border:0;background:var(--glass-b);margin:46px 0 0;}
+.vidro{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 16px;font-size:13px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;transition:all .2s;backdrop-filter:blur(8px);text-decoration:none;}
+.btn:hover{border-color:var(--accent);}
+.btn.pri{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+.btn.pri:hover{background:rgba(37,99,201,.85);}
+[data-theme="light"] .btn.pri{background:rgba(0,119,173,.9);}
+.btn.sm{padding:6px 12px;font-size:12px;}
+.btn[disabled]{opacity:.5;cursor:not-allowed;}
+.ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
+.ibtn:hover{border-color:var(--accent);}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--cyan);}
+.chip.ok{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.1);}
+.chip.dev{color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.1);}
+.chip.lock{color:var(--txt3);}
+
+/* ═══ ABAS (como as do Radar) ═══ */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--glass-b);margin:6px 0 22px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;margin-bottom:-1px;}
+.tabs button:hover{color:var(--txt);}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);}
+.tabp{display:none;}.tabp.on{display:block;}
+
+/* ═══ INÍCIO: o dia a dia ═══ */
+.ola{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:22px 0 16px;}
+.ola b{font-family:var(--ff-d);font-size:20px;font-weight:700;}
+.ola span{font-size:12px;color:var(--txt3);}
+.sec-title{font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin:26px 0 14px;}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+.tile{position:relative;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:border-color .2s,transform .15s,box-shadow .2s;}
+.tile:hover,.tile:focus-within{border-color:var(--accent);box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);}
+.tile-main{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:26px 16px 16px;background:none;border:none;color:inherit;cursor:pointer;text-align:left;border-radius:var(--r2);min-height:150px;}
+.tile-logo{width:56px;height:56px;border-radius:14px;overflow:hidden;flex:none;display:block;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.tile-logo img,.tile-logo svg{width:100%;height:100%;display:block;object-fit:cover;}
+.tile-n{font-family:var(--ff-d);font-size:15px;font-weight:700;line-height:1.2;}
+.tile-s{display:block;font-size:12px;color:var(--txt2);line-height:1.4;margin-top:2px;}
+.tile-key{position:absolute;left:12px;top:9px;font-size:10px;color:var(--txt3);font-weight:600;}
+.tile-st{position:absolute;right:12px;top:9px;font-size:10px;font-weight:600;color:var(--txt3);display:flex;align-items:center;gap:4px;}
+.tile-st i{width:6px;height:6px;border-radius:50%;background:var(--warn);display:inline-block;}
+.tile-ac{position:absolute;right:8px;bottom:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.tile:hover .tile-ac,.tile:focus-within .tile-ac{opacity:1;}
+@media (hover:none){.tile-ac{opacity:.75;}}
+.tile-ac a,.tile-ac button{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:var(--txt2);font-size:14px;cursor:pointer;text-decoration:none;}
+.tile-ac a:hover,.tile-ac button:hover{background:rgba(56,182,255,.14);color:var(--txt);}
+.tile.futuro{opacity:.6;}.tile.futuro .tile-main{cursor:default;}
+.tile.ultimo .tile-n::after{content:'último';margin-left:7px;font-family:var(--ff);font-size:9.5px;font-weight:600;color:var(--teal);border:1px solid rgba(29,233,182,.4);border-radius:99px;padding:1px 7px;vertical-align:2px;}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;}
+.atalhos button{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
+.atalhos button:hover{border-color:var(--accent);}
+.atalhos img{width:16px;height:16px;border-radius:4px;}
+.dica{font-size:12px;color:var(--txt3);margin-top:22px;}
+.kbd{display:inline-block;border:1px solid var(--glass-b);border-radius:5px;padding:0 5px;font-size:10.5px;font-weight:600;color:var(--txt2);}
+.abertos{display:none;margin:0 0 14px;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--txt2);}
+.abertos.on{display:flex;}
+.pg-h{font-family:var(--ff-d);font-size:24px;font-weight:700;letter-spacing:-.01em;margin:8px 0 8px;}
+.pg-l{font-size:14.5px;line-height:1.6;color:var(--txt2);max-width:720px;margin-bottom:22px;}
+.sub-h{font-family:var(--ff-d);font-size:16px;font-weight:700;margin:34px 0 12px;}
+/* vigia (logo redonda): só no login e nas abas do host */
+.porthole{--s:84px;width:var(--s);height:var(--s);border-radius:50%;flex:none;position:relative;display:block;border:2px solid var(--glass-b);background:var(--glass);}
+.porthole .vid{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0b2a55;position:relative;}
+.porthole .vid img,.porthole .vid svg{width:100%;height:100%;display:block;object-fit:cover;}
+.ph-wrap{display:flex;justify-content:center;}
+@keyframes balanca{from{transform:rotate(-2.5deg) translateY(0)}to{transform:rotate(2.5deg) translateY(-6px)}}
+
+/* ═══ ARGUMENTOS ═══ */
+.dor{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
+.dor>div{padding:22px;}
+.dor h3{font-family:var(--ff-d);font-size:15px;font-weight:700;margin-bottom:12px;}
+.dor ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
+.dor li{display:flex;gap:10px;font-size:13.5px;line-height:1.5;color:var(--txt2);}
+.dor li b{color:var(--txt);}
+.dor .depois{border-color:rgba(29,233,182,.35);background:linear-gradient(180deg,rgba(29,233,182,.1),var(--glass));}
+@media (max-width:760px){.dor{grid-template-columns:1fr;}}
+.argus{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;margin-bottom:26px;}
+.argu{padding:20px;}
+.argu .em{display:none;}
+.argu h3{font-family:var(--ff-d);font-size:15px;font-weight:700;line-height:1.25;margin-bottom:8px;}
+.argu p{font-size:13.5px;line-height:1.55;color:var(--txt2);margin-bottom:10px;}
+.argu .prova{font-size:11.5px;font-weight:600;color:var(--txt3);}
+.argu .prova::before{content:'Na prática: ';color:var(--teal);}
+.quem{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:26px;}
+.quem>div{padding:20px;}
+.quem h3{font-family:var(--ff-d);font-size:15px;font-weight:700;margin-bottom:6px;}
+.quem p{font-size:13.5px;line-height:1.55;color:var(--txt2);}
+.faixa{padding:26px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:space-between;background:linear-gradient(120deg,rgba(56,182,255,.16),var(--glass));}
+.faixa h3{font-family:var(--ff-d);font-size:17px;font-weight:700;margin-bottom:4px;}
+.faixa p{font-size:14px;color:var(--txt2);max-width:560px;line-height:1.5;}
+
+/* ═══ PRODUTOS (abas) ═══ */
+.abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.aba{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
+.aba .tile-logo{width:24px;height:24px;border-radius:7px;box-shadow:none;}
+.aba:hover{border-color:var(--accent);}
+.aba[aria-selected="true"]{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+[data-theme="light"] .aba[aria-selected="true"]{background:rgba(0,119,173,.9);}
+.painel-prod{padding:26px;display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+.painel-prod h3{font-family:var(--ff-d);font-size:19px;font-weight:700;margin-bottom:4px;}
+.painel-prod .tag{font-size:12.5px;color:var(--teal);font-weight:600;margin-bottom:12px;}
+.painel-prod p{font-size:13.5px;line-height:1.6;color:var(--txt2);margin-bottom:12px;}
+.painel-prod ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
+.painel-prod li{display:flex;gap:9px;font-size:13px;line-height:1.5;color:var(--txt2);}
+.painel-prod li b{color:var(--txt);}
+.painel-prod h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;}
+.painel-prod .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+@media (max-width:820px){.painel-prod{grid-template-columns:1fr;}}
+
+/* ═══ POR BAIXO DO CASCO ═══ */
+.arq{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-bottom:18px;}
+.arq .no{flex:1;min-width:150px;padding:16px;text-align:center;}
+.arq .no b{display:block;font-size:13px;margin:4px 0 3px;}
+.arq .no span{font-size:12px;color:var(--txt2);line-height:1.4;display:block;}
+.arq .no .e{font-size:24px;}
+.arq .seta{align-self:center;font-size:20px;color:var(--accent);padding:0 6px;}
+@media (max-width:760px){.arq .seta{display:none;}.arq .no{margin-bottom:8px;}}
+.fatos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px;}
+.fato{padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--txt2);display:flex;gap:10px;}
+.fato b{color:var(--txt);}
+table.vers{width:100%;border-collapse:collapse;font-size:13.5px;}
+table.vers th,table.vers td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--glass-b);}
+table.vers th{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);}
+table.vers tr:last-child td{border-bottom:none;}
+table.vers code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;color:var(--accent);}
+footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:center;color:var(--txt3);font-size:12.5px;line-height:1.7;}
+
+/* ═══ LOGIN ═══ */
+#login{position:fixed;inset:0;z-index:200;background:rgba(var(--deep-rgb),.55);backdrop-filter:blur(16px);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;}
+.login-card{width:min(420px,100%);padding:34px 28px;text-align:center;}
+.login-card .ph-wrap{margin-bottom:14px;}
+.login-card h1{font-family:var(--ff-d);font-size:30px;font-weight:800;margin-bottom:6px;}
+.login-card p{font-size:14.5px;line-height:1.55;color:var(--txt2);margin-bottom:18px;}
+.login-err{display:none;margin-top:14px;font-size:13px;line-height:1.5;color:var(--danger);background:rgba(255,107,107,.1);border:1px solid rgba(255,107,107,.3);border-radius:var(--r);padding:10px 12px;text-align:left;}
+.login-nota{font-size:11px;color:var(--txt3);margin-top:16px;line-height:1.5;}
+#app{display:none;}
+.gbtn{width:100%;padding:12px 16px;font-size:14px;}
+
+/* ═══ MODAIS ═══ */
+.ov{position:fixed;inset:0;z-index:120;background:rgba(1,8,16,.78);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;}
+.ov.open{display:flex;}
+.modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);}
+[data-theme="light"] .modal{background:rgba(248,253,255,.97);}
+.modal-hd{display:flex;align-items:center;gap:10px;padding:14px 20px;border-bottom:1px solid var(--glass-b);}
+.modal-hd h3{font-family:var(--ff-d);font-size:19px;flex:1;}
+.modal-bd{padding:20px;max-height:74vh;overflow:auto;}
+.x{background:none;border:none;color:var(--txt3);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:17px;}
+.x:hover{background:rgba(255,255,255,.08);color:var(--txt);}
+.gr{margin-bottom:22px;}
+.gr h4{font-family:var(--ff-d);font-size:15px;margin-bottom:4px;}
+.gr .d{font-size:12.5px;color:var(--txt3);margin-bottom:10px;line-height:1.5;}
+.campos{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media (max-width:560px){.campos{grid-template-columns:1fr;}}
+label.f{display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:var(--txt2);}
+input.in,select.in{font-family:inherit;font-size:13px;padding:8px 11px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.4);color:var(--txt);width:100%;}
+[data-theme="light"] input.in,[data-theme="light"] select.in{background:#fff;}
+select.in option{color:#111;}
+input.in[readonly]{opacity:.7;}
+.perfil-topo{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+.perfil-topo img,.perfil-topo .ini{width:58px;height:58px;border-radius:50%;object-fit:cover;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:20px;border:2px solid var(--glass-b);}
+.opc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.opc button{cursor:pointer;text-align:left;padding:12px;border-radius:var(--r2);border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;line-height:1.35;}
+.opc button:hover{border-color:var(--accent);}
+.opc button b{display:block;font-size:14px;margin-bottom:3px;}
+.opc button span{color:var(--txt2);font-size:12px;}
+.opc button[aria-pressed="true"]{border-color:var(--accent);background:rgba(56,182,255,.14);}
+.sw{height:34px;border-radius:8px;margin-bottom:8px;border:1px solid rgba(255,255,255,.2);}
+.sw.t1{background:linear-gradient(180deg,#2a2a55,#d98a58 55%,#0d2f4b 56%,#071c33);}
+.sw.t2{background:radial-gradient(ellipse at 20% 80%,#0a4aa0,transparent 60%),#010810;}
+.sw.t3{background:linear-gradient(180deg,#8fd6f5,#0F87C4);}
+.tg{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid var(--glass-b);border-radius:var(--r2);background:var(--glass);margin-bottom:8px;font-size:13.5px;}
+.tg small{display:block;color:var(--txt3);font-size:12px;margin-top:2px;line-height:1.4;}
+.tg input{width:20px;height:20px;accent-color:var(--accent);flex:none;}
+.faq details{border:1px solid var(--glass-b);border-radius:var(--r2);margin-bottom:8px;background:var(--glass);}
+.faq summary{cursor:pointer;padding:12px 14px;font-weight:600;font-size:14px;list-style:none;display:flex;gap:9px;}
+.faq summary::before{content:'▸';color:var(--accent);transition:transform .15s;}
+.faq details[open] summary::before{transform:rotate(90deg);}
+.faq .r{padding:0 14px 14px 30px;font-size:13.5px;line-height:1.6;color:var(--txt2);}
+.faq .r p+p{margin-top:8px;}
+.busca{margin-bottom:14px;}
+
+/* ═══ HOSPEDAGEM DOS PRODUTOS (o Oceano como aplicativo) ═══ */
+#host{position:fixed;inset:0;z-index:100;display:none;flex-direction:column;background:var(--deep);}
+#host.on{display:flex;}
+.host-barra{display:flex;align-items:center;gap:6px;padding:6px 10px;background:rgba(var(--deep-rgb),.97);border-bottom:1px solid var(--glass-b);padding-top:max(6px,env(safe-area-inset-top));}
+.host-tabs{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none;}
+.host-tabs::-webkit-scrollbar{display:none;}
+.htab{display:flex;align-items:center;gap:7px;padding:4px 6px 4px 4px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.htab .porthole{--s:24px;box-shadow:none;border-width:1px;}
+.htab[aria-selected="true"]{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
+.htab .fx{opacity:.7;font-size:12px;padding:0 5px;border-radius:50%;}
+.htab .fx:hover{opacity:1;background:rgba(0,0,0,.2);}
+.host-frames{flex:1;position:relative;background:var(--deep);}
+.host-frames iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--deep);display:none;}
+.host-frames iframe.on{display:block;}
+.host-load{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;color:var(--txt2);font-size:14px;pointer-events:none;}
+.host-load .porthole{--s:80px;animation:balanca 3s ease-in-out infinite alternate;}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(20px);z-index:300;background:rgba(10,37,64,.96);color:#e8f4fd;border:1px solid var(--glass-b);padding:11px 18px;border-radius:var(--r2);font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;max-width:92vw;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.versao-aviso{position:fixed;left:0;right:0;top:0;z-index:310;background:rgba(37,99,201,.95);color:#fff;padding:9px 14px;text-align:center;font-size:13px;font-weight:700;display:none;}
+.versao-aviso button{margin-left:10px;border:1px solid #fff;background:transparent;color:inherit;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+<div class="versao-aviso" id="versao-aviso">🌊 Tem uma versão nova do Oceano. <button type="button" onclick="location.reload()">Atualizar agora</button></div>
+
+<!-- Fundo: oceano + bolhas + peixinhos (os mesmos do Maré Digital; desligáveis em ⚙ Meu perfil) -->
+<div class="ocean"></div>
+<div class="bubble-wrap" id="bwrap" aria-hidden="true"></div>
+<div class="fish-wrap" id="fwrap" aria-hidden="true"></div>
+
+<!-- LOGIN (só Google @ciahering) -->
+<div id="login">
+  <div class="vidro login-card">
+    <div class="ph-wrap"><div class="porthole" style="--s:110px;"><div class="vid"><img src="oceano-icon-192.png" alt="Oceano"></div></div></div>
+    <h1>Oceano</h1>
+    <p>Os produtos do time Digital Hering num lugar só. Entre com a sua conta Google da empresa.</p>
+    <button class="btn pri gbtn" id="btn-login" type="button">Entrar com Google</button>
+    <div class="login-err" id="login-err" role="alert"></div>
+    <div class="login-nota">Acesso só com <b>@ciahering.com.br</b> pelo Google. Seus dados ficam no Firebase da Hering, com as regras de acesso aplicadas no servidor.</div>
+  </div>
+</div>
+
+<div id="app">
+<div id="devbar" style="display:none;background:rgba(249,115,22,.12);border-bottom:1px solid rgba(249,115,22,.4);padding:4px 12px;font-size:10px;font-weight:700;color:#f97316;letter-spacing:.06em;text-align:center;">🧪 OCEANO DEV — página de teste; usa os dados REAIS (o mesmo cadastro das páginas de produção)</div>
+<header class="topo">
+  <div class="topo-in">
+    <a class="marca" href="#inicio" aria-label="Oceano — início"><img src="favicon-oceano.png" alt=""><span class="tx">Oceano<small>Digital Hering</small></span></a>
+    <div style="flex:1"></div>
+    <div class="topo-dir">
+      <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
+      <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
+      <button class="eu" id="btn-eu" type="button" aria-haspopup="dialog" title="Meu perfil e preferências"><span id="eu-av"></span><span class="eu-nome" id="eu-nome"></span><span aria-hidden="true">⚙</span></button>
+    </div>
+  </div>
+</header>
+
+<main id="inicio">
+  <nav class="tabs" role="tablist" aria-label="Seções do Oceano">
+    <button type="button" role="tab" data-tab="inicio" aria-selected="true">Meus produtos</button>
+    <button type="button" role="tab" data-tab="conheca" aria-selected="false">Conheça o Oceano</button>
+    <button type="button" role="tab" data-tab="tecnica" aria-selected="false">Por baixo do casco</button>
+  </nav>
+
+  <!-- ══ INÍCIO: o uso do dia a dia ══ -->
+  <section class="tabp on" id="tab-inicio" role="tabpanel">
+    <div class="ola"><b id="ola">Olá</b><span id="ola-data"></span></div>
+    <div class="abertos" id="abertos"></div>
+    <div class="tiles" id="tiles"></div>
+    <div id="atalhos-wrap" style="display:none;"><div class="sec-title">Atalhos</div><div class="atalhos" id="atalhos"></div></div>
+    <p class="dica" id="dica-teclas"></p>
+  </section>
+
+  <!-- ══ CONHEÇA: a "venda" ══ -->
+  <section class="tabp" id="tab-conheca" role="tabpanel">
+    <h2 class="pg-h">Pra que serve o Oceano</h2>
+    <p class="pg-l">O time Digital planeja, acompanha e entrega em ferramentas diferentes. O Oceano junta as que a gente mesmo construiu: a mesma conta Google, o mesmo sino e o mesmo visual.</p>
+    <div class="dor">
+      <div class="vidro"><h3>Sem o Oceano</h3><ul>
+        <li><span>Status espalhado em planilha, chat e e-mail.</span></li>
+        <li><span>O Objetivo fica no slide e o trabalho no board, sem ligação entre os dois.</span></li>
+        <li><span>Reunião só pra atualizar o que já devia estar visível.</span></li>
+        <li><span>Cada ferramenta com o seu login e o seu jeito de avisar.</span></li></ul></div>
+      <div class="vidro depois"><h3>Com o Oceano</h3><ul>
+        <li><span>O que alguém muda aparece pra todo mundo na hora.</span></li>
+        <li><span>O Radar enxerga o que o Maré entrega.</span></li>
+        <li><span>A reunião serve pra decidir; o estado das coisas já está no painel.</span></li>
+        <li><span>Uma conta Google e um sino só.</span></li></ul></div>
+    </div>
+    <div class="argus">
+      <article class="vidro argu"><h3>Do OKR ao card</h3><p>No Radar o Objetivo tem Marcos e uma meta medida. Os cards do Maré podem ser vinculados a ele, então a estratégia anda junto com a entrega.</p><div class="prova">cards vinculados ao Objetivo</div></article>
+      <article class="vidro argu"><h3>Tudo ao vivo</h3><p>O board atualiza sozinho, sem F5. Dá pra ver quem está online, e a trava de edição evita duas pessoas sobrescrevendo o mesmo Objetivo.</p><div class="prova">presença online e trava de edição</div></article>
+      <article class="vidro argu"><h3>Agente Ágil</h3><p>Marque o Agente Ágil num card, ou converse com ele no Radar. Ele lê o contexto e atualiza progresso, riscos e Marcos, com as mesmas permissões que você tem.</p><div class="prova">funciona no card e no Radar</div></article>
+      <article class="vidro argu"><h3>Um sino só</h3><p>A mesma notificação aparece no Maré, no Painel e no Radar, vira push no celular e respeita o seu Não Perturbe.</p><div class="prova">sino único nos três produtos</div></article>
+      <article class="vidro argu"><h3>Acesso decidido no servidor</h3><p>Só entra quem tem Google @ciahering. As regras do banco aplicam isso no servidor, não só na tela. Tem histórico de alterações e backup semanal automático.</p><div class="prova">regras no servidor e backup semanal</div></article>
+      <article class="vidro argu"><h3>Evolui toda semana</h3><p>Quem constrói é o próprio time. O ajuste pedido passa por um ambiente de teste, é validado e só então vai pra produção, tudo registrado no changelog.</p><div class="prova">dev, validação e produção, com histórico</div></article>
+    </div>
+    <h3 class="sub-h">Quem usa o quê</h3>
+    <div class="quem">
+      <div class="vidro"><h3>Squads</h3><p>Vivem no <b>Maré Digital</b>: board, checklist, automações, métricas de fluxo e o Agente Ágil ao lado.</p></div>
+      <div class="vidro"><h3>Liderança</h3><p>Usa o <b>Painel</b> (visão consolidada, pessoas, comunicados) e o <b>Radar</b> (Objetivos, atingimento, reuniões, apresentação).</p></div>
+      <div class="vidro"><h3>Gente nova</h3><p>O <b>A Bordo</b> recebe quem está entrando no time, com as boas-vindas e o essencial pra começar.</p></div>
+    </div>
+    <div class="vidro faixa"><div><h3>Quer o Oceano no seu time?</h3><p>A gente configura o squad, conecta ao Radar e acompanha as primeiras semanas.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;"><a class="btn pri" id="btn-contato" href="#">Falar com a squad</a></div></div>
+    <h3 class="sub-h" id="produtos">Os produtos</h3>
+    <div class="abas" id="abas" role="tablist" aria-label="Produtos do Oceano"></div>
+    <div class="vidro painel-prod" id="painel-prod" role="tabpanel"></div>
+  </section>
+
+  <!-- ══ TÉCNICA ══ -->
+  <section class="tabp" id="tab-tecnica" role="tabpanel">
+    <h2 class="pg-h">Como é feito</h2>
+    <p class="pg-l">Páginas estáticas, banco em tempo real e funções na nuvem só onde precisa. Simples de manter e rápido de evoluir, com o acesso decidido no servidor.</p>
+    <div class="arq">
+      <div class="vidro no"><div class="e">🌐</div><b>Páginas estáticas</b><span>GitHub Pages, um arquivo por tela, sem bundler</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">🔐</div><b>Firebase Auth</b><span>Google @ciahering, sem senha nova</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">🗄️</div><b>Realtime Database</b><span>tempo real e regras de acesso no servidor</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">⚙️</div><b>Cloud Functions</b><span>Agente Ágil, push e backup semanal</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">📲</div><b>Push (FCM)</b><span>notificação no aparelho, com Não Perturbe</span></div>
+    </div>
+    <div class="fatos">
+      <div class="vidro fato"><span><b>Sem build.</b> Cada página é um arquivo autônomo: abrir, ler e corrigir é rápido.</span></div>
+      <div class="vidro fato"><span><b>Acesso no servidor.</b> As regras do banco exigem Google @ciahering; a interface não é a única barreira.</span></div>
+      <div class="vidro fato"><span><b>Backup semanal</b> automático dos boards (domingo, de madrugada), mais snapshots diários.</span></div>
+      <div class="vidro fato"><span><b>Auto-atualização.</b> A página avisa quando existe versão nova, sem perder o que você estava digitando.</span></div>
+      <div class="vidro fato"><span><b>PWA com fila offline.</b> O Maré guarda ações sem conexão e reaplica quando a rede volta.</span></div>
+      <div class="vidro fato"><span><b>Dev e produção.</b> Tudo passa por um ambiente de teste e só sobe depois de validado.</span></div>
+    </div>
+    <h3 class="sub-h">No ar agora</h3>
+    <div class="vidro" style="padding:6px 6px 0;margin-bottom:16px;overflow:auto;"><table class="vers" id="vers"><thead><tr><th>Produto</th><th>Produção</th><th>Em teste (dev)</th></tr></thead><tbody><tr><td colspan="3" style="color:var(--txt3);">Conferindo as versões…</td></tr></tbody></table></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn pri" type="button" data-doc="maredigital.html">Documentação técnica completa</button>
+      <button class="btn" type="button" data-doc="guia-okr.html">Guia do Radar</button>
+    </div>
+  </section>
+</main>
+
+<footer class="rodape">
+  🐟 Oceano · feito pelo time Digital Hering <br>
+  <span id="rodape-versao"></span>
+</footer>
+</div>
+
+<!-- ═══ HOSPEDAGEM: produtos abertos dentro do Oceano ═══ -->
+<div id="host" role="region" aria-label="Produto aberto">
+  <div class="host-barra">
+    <button class="ibtn" id="host-lobby" type="button" title="Voltar ao lobby (os produtos abertos continuam rodando)">🌊 Lobby</button>
+    <div class="host-tabs" id="host-tabs" role="tablist"></div>
+    <button class="ibtn" id="host-recarregar" type="button" title="Recarregar este produto">↻</button>
+    <button class="ibtn" id="host-aba" type="button" title="Abrir este produto numa aba nova">↗</button>
+  </div>
+  <div class="host-frames" id="host-frames"><div class="host-load" id="host-load"><div class="porthole"><div class="vid"><img src="oceano-icon-192.png" alt=""></div></div><div id="host-load-tx">Abrindo…</div></div></div>
+</div>
+
+<!-- ═══ MODAL: MEU PERFIL E PREFERÊNCIAS ═══ -->
+<div class="ov" id="ov-perfil"><div class="vidro modal" role="dialog" aria-modal="true" aria-labelledby="perfil-t">
+  <div class="modal-hd"><h3 id="perfil-t">⚙ Meu perfil e preferências</h3><button class="x" type="button" data-fecha="ov-perfil" aria-label="Fechar">✕</button></div>
+  <div class="modal-bd" id="perfil-bd"></div>
+</div></div>
+
+<!-- ═══ MODAL: AJUDA ═══ -->
+<div class="ov" id="ov-ajuda"><div class="vidro modal" role="dialog" aria-modal="true" aria-labelledby="ajuda-t">
+  <div class="modal-hd"><h3 id="ajuda-t">❓ Ajuda do Oceano</h3><button class="x" type="button" data-fecha="ov-ajuda" aria-label="Fechar">✕</button></div>
+  <div class="modal-bd"><input class="in busca" id="ajuda-busca" type="search" placeholder="🔎 Buscar na ajuda (ex.: instalar, Painel, peixinhos)…" aria-label="Buscar na ajuda"><div class="faq" id="faq"></div></div>
+</div></div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const firebaseConfig = {
+  // Override manual sob chave PRÓPRIA desta página ('oceano'): chaves cruas de localStorage são compartilhadas entre as páginas do domínio.
+  apiKey:            localStorage.getItem('fb_apiKeyoceano')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomainoceano')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLoceano')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdoceano')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucketoceano')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdoceano')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdoceano')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+window._db=db; window._ref=ref; window._get=get; window._update=update;
+window._signIn=()=>signInWithPopup(auth,provider);
+window._signOut=()=>signOut(auth);
+onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
+window.dispatchEvent(new Event('fb-ready'));
+</script>
+
+<script>
+(function(){
+'use strict';
+const VERSION = 'v1.2 · oceano', VERSION_KEY = 'oceano';
+const IS_DEV = /-dev\.html/.test(location.pathname);
+const SO_HERING = window.MARE_SO_HERING !== false;
+const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
+const $ = (s,r)=> (r||document).querySelector(s), $$ = (s,r)=> Array.from((r||document).querySelectorAll(s));
+const esc = s => String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const reduzMov = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const standalone = ()=> (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone === true;
+
+// ── Os produtos da família (a mesma lista do menu de 9 pontinhos: mare-notif(-dev).js) ──
+const SVG_PAINEL = '<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>';
+const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>';
+const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
+const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
+const APPS = [
+  {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
+  {id:'painel', nome:'Painel', sub:'Gestão e pessoas', href:P('painel'), g:['#8b8cff','#4a4fc4'], glifo:SVG_PAINEL, pt:'A visão de quem coordena'},
+  {id:'okr', nome:'Radar', sub:'Objetivos e OKRs', href:P('okr'), img:'favicon-radar.png?v=2', pt:'Estratégia que anda junto com a entrega'},
+  {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas ao time', href:'onboarding.html', g:['#ffb347','#d9731a'], glifo:SVG_BORDO, pt:'Quem chega já começa andando'},
+  {id:'travessia', nome:'Travessia', sub:'Performance e gente', href:'', g:['#3fd3c5','#1b7f8f'], glifo:SVG_TRAV, futuro:true, pt:'O próximo trecho da viagem'},
+];
+const EXTRA = [];   // documentos abertos dentro do Oceano (maredigital.html, guia-okr.html): têm aba no host, mas não aparecem nas listas de produtos
+const APP = id => APPS.find(a=>a.id===id) || EXTRA.find(a=>a.id===id);
+function logoInner(a, extra){
+  return a.img ? '<img src="'+esc(a.img)+'" alt="" decoding="async">'
+    : '<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg-'+a.id+(extra||'')+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a.g[0]+'"/><stop offset="1" stop-color="'+a.g[1]+'"/></linearGradient></defs><rect width="48" height="48" fill="url(#lg-'+a.id+(extra||'')+')"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".96">'+a.glifo+'</g></svg>';
+}
+const logoPorthole = (a, extra)=> '<span class="porthole"><span class="vid">'+logoInner(a,extra)+'</span></span>';   // redonda: abas do host
+const logoQuad = (a, extra)=> '<span class="tile-logo">'+logoInner(a,extra)+'</span>';                          // quadrada (como no menu de 9 pontinhos)
+
+// ── Preferências (localStorage espelha o Firebase: aplica o tema ANTES do login) ──
+const temaDoMare = ()=>{ try{ return localStorage.getItem('mare_theme')==='light' ? 'lencois' : 'abrolhos'; }catch(e){ return 'abrolhos'; } };   // a mesma chave do kanban/painel/radar
+const peixesDoMare = ()=>{ try{ return localStorage.getItem('fish_bg_off')==='1' ? 'off' : 'normal'; }catch(e){ return 'normal'; } };   // idem: o "🐟 liga/desliga" do Maré
+const PREFS_PADRAO = {tema:temaDoMare(), peixes: reduzMov?'off':peixesDoMare(), abrir:'auto', inicio:'lobby', apelido:'', ultimo:''};
+let prefs = Object.assign({}, PREFS_PADRAO);
+function lsLer(k){ try{ return JSON.parse(localStorage.getItem(k)||'null'); }catch(e){ return null; } }
+function lsSalvar(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+const PREFS_LS = 'oceano_prefs';
+(function(){ const o = lsLer(PREFS_LS); if(o && typeof o==='object') prefs = Object.assign(prefs, o); })();
+const TEMAS = {abrolhos:'🌙 Abrolhos', lencois:'☀️ Lençóis Maranhenses', entardecer:'🌅 Entardecer'};
+function aplicarPrefs(){
+  if(!TEMAS[prefs.tema]) prefs.tema = 'abrolhos';
+  if(prefs.peixes==='muitos') prefs.peixes = 'normal';   // nome antigo
+  const d = document.documentElement;
+  if(prefs.tema==='lencois') d.setAttribute('data-theme','light'); else if(prefs.tema==='entardecer') d.setAttribute('data-theme','sunset'); else d.removeAttribute('data-theme');
+  const mc = document.querySelector('meta[name=theme-color]'); if(mc) mc.content = prefs.tema==='lencois' ? '#0F87C4' : prefs.tema==='entardecer' ? '#1a1530' : '#030d1a';
+  criarPeixes();
+}
+let _salvaT = null;
+function salvarPrefs(avisar){
+  lsSalvar(PREFS_LS, prefs); aplicarPrefs();
+  clearTimeout(_salvaT);
+  _salvaT = setTimeout(()=>{
+    if(!U) return;
+    try{ window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/oceano'), Object.assign({}, prefs, {atualizadoEm:new Date().toISOString()})).then(()=>{ if(avisar) toast('✅ Preferências salvas'); }).catch(()=>{ if(avisar) toast('⚠️ Salvei neste aparelho, mas não consegui gravar no seu cadastro.'); }); }catch(e){}
+  }, 450);
+}
+function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(()=>el.classList.remove('on'), 3200); }
+
+// ── Peixinhos e bolhas: as MESMAS do Maré Digital (kanban-dev: 3 silhuetas azul/teal/cyan, 8 peixes e 16 bolhas — metade no celular) ──
+const FISH_SVGS = [
+  '<svg viewBox="0 0 60 28" width="60" height="28" xmlns="http://www.w3.org/2000/svg"><polygon points="0,4 14,14 0,24" fill="rgba(56,182,255,.22)"/><ellipse cx="34" cy="14" rx="22" ry="9" fill="rgba(56,182,255,.15)" stroke="rgba(56,182,255,.32)" stroke-width="1"/><circle cx="47" cy="11" r="2.5" fill="rgba(56,182,255,.55)"/></svg>',
+  '<svg viewBox="0 0 42 22" width="42" height="22" xmlns="http://www.w3.org/2000/svg"><polygon points="0,3 12,11 0,19" fill="rgba(29,233,182,.2)"/><ellipse cx="26" cy="11" rx="15" ry="8" fill="rgba(29,233,182,.12)" stroke="rgba(29,233,182,.28)" stroke-width="1"/><circle cx="36" cy="8" r="2" fill="rgba(29,233,182,.5)"/></svg>',
+  '<svg viewBox="0 0 72 34" width="72" height="34" xmlns="http://www.w3.org/2000/svg"><polygon points="0,5 16,17 0,29" fill="rgba(126,200,227,.2)"/><ellipse cx="42" cy="17" rx="27" ry="12" fill="rgba(126,200,227,.1)" stroke="rgba(126,200,227,.25)" stroke-width="1"/><circle cx="57" cy="13" r="3" fill="rgba(126,200,227,.48)"/></svg>',
+];
+function criarPeixes(){
+  const fw = $('#fwrap'), bw = $('#bwrap'); if(!fw || !bw) return; fw.innerHTML = ''; bw.innerHTML = '';
+  if(prefs.peixes==='off') return;
+  const mobile = window.matchMedia('(max-width:768px)').matches, fator = prefs.peixes==='poucos' ? .5 : 1;
+  const nF = Math.max(2, Math.round((mobile ? 4 : 8) * fator)), nB = Math.max(4, Math.round((mobile ? 8 : 16) * fator));
+  for(let i=0;i<nF;i++){ const f = document.createElement('div'); f.className = Math.random()>.5 ? 'fish-ltr' : 'fish-rtl'; f.style.top = (5+Math.random()*80)+'%'; f.style.animationDuration = (14+Math.random()*24)+'s'; f.style.animationDelay = (-Math.random()*24)+'s'; f.innerHTML = FISH_SVGS[i%FISH_SVGS.length]; fw.appendChild(f); }
+  for(let i=0;i<nB;i++){ const b = document.createElement('div'), sz = 3+Math.random()*14; b.className = 'bubble'; b.style.cssText = 'width:'+sz+'px;height:'+sz+'px;left:'+(Math.random()*100)+'%;animation-duration:'+(8+Math.random()*18)+'s;animation-delay:-'+(Math.random()*18)+'s;'; bw.appendChild(b); }
+}
+document.addEventListener('visibilitychange', ()=> document.documentElement.toggleAttribute('data-anim-paused', document.hidden));
+
+// ── Estado do usuário ──
+let U = null, perfilFb = {}, usoApps = {}, ehAdm = false;
+const _fn = s => String(s||'').trim().split(/\s+/)[0] || '';
+const nomeCurto = ()=> prefs.apelido || (perfilFb.nome ? _fn(perfilFb.nome) : _fn(U && U.displayName)) || '';
+const iniciais = ()=> (perfilFb.init || ((U && U.displayName||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('')) || '?').toUpperCase().slice(0,3);
+
+// ── Login ──
+function loginErr(m){ const e = $('#login-err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; }
+$('#btn-login').addEventListener('click', ()=>{ loginErr(''); window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
+function emailHering(u){ return /@ciahering\.com\.br$/i.test((u && u.email)||''); }
+function viaGoogle(u){ return (u.providerData||[]).some(p=>p.providerId==='google.com'); }
+window.addEventListener('auth-change', e=>{
+  const u = e.detail;
+  if(!u){
+    if(U){ location.reload(); return; }
+    $('#login').style.display = 'flex'; $('#app').style.display = 'none'; return;
+  }
+  if(!emailHering(u) || !viaGoogle(u)){
+    loginErr(emailHering(u) ? 'Contas @ciahering.com.br entram pelo botão do Google.' : 'O Oceano é só pra conta Google @ciahering.com.br. Se você é visualizador externo do Radar, abra direto o Radar (okr.html).');
+    window._signOut(); return;
+  }
+  U = u; iniciarSessao();
+});
+
+async function lerRamo(sub){ try{ const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+U.uid+'/'+sub)); return sn && sn.exists() ? sn.val() : null; }catch(e){ return null; } }
+async function iniciarSessao(){
+  $('#login').style.display = 'none'; $('#app').style.display = 'block';
+  $('#devbar').style.display = IS_DEV ? 'block' : 'none';
+  renderEu(); renderTudo();
+  // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
+  const [nome, init, role, squads, apps, oc, uid] = await Promise.all(['nome','init','role','squads','apps','oceano','uid'].map(lerRamo));
+  if(!uid){ try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){} }
+  perfilFb = {nome:nome||U.displayName||'', init:init||'', role:role||'', squads:squads&&typeof squads==='object' ? Object.keys(squads).filter(k=>squads[k]===true) : []};
+  usoApps = (apps && typeof apps==='object') ? apps : {};
+  if(oc && typeof oc==='object'){ const salvo = lsLer(PREFS_LS)||{}; prefs = Object.assign({}, PREFS_PADRAO, oc, {}); if(!oc.tema && salvo.tema) prefs.tema = salvo.tema; lsSalvar(PREFS_LS, prefs); }
+  aplicarPrefs();
+  try{ const sn = await window._get(window._ref(window._db,'kanban/config/adm_emails')); const l = sn && sn.exists() ? sn.val() : []; const arr = Array.isArray(l) ? l : Object.values(l||{}); ehAdm = arr.map(x=>String(x).toLowerCase()).includes(String(U.email).toLowerCase()); }catch(e){}
+  if(perfilFb.role==='adm' || String(U.email).toLowerCase()===CONTATO.email) ehAdm = true;
+  renderEu(); renderTudo();
+  rotearHash(true);
+}
+
+// ── Quem vê o quê (vitrine, não segurança — igual ao menu de 9 pontinhos) ──
+function visivel(a){ if(a.id==='painel') return !!(ehAdm || usoApps.painel); return true; }
+
+// ── Render ──
+function saudacao(){ const h = new Date().getHours(); return h<5 ? 'Boa madrugada' : h<12 ? 'Bom dia' : h<18 ? 'Boa tarde' : 'Boa noite'; }
+function renderEu(){
+  if(!U) return;
+  $('#eu-av').innerHTML = U.photoURL ? '<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">' : '<span class="ini">'+esc(iniciais())+'</span>';
+  $('#eu-nome').textContent = nomeCurto();
+}
+function appsDoDia(){ return APPS.filter(a=>!a.futuro && visivel(a)); }
+function renderTudo(){
+  if(!U) return;
+  const nome = nomeCurto(), ultimo = APP(prefs.ultimo) && !APP(prefs.ultimo).futuro && visivel(APP(prefs.ultimo)) ? prefs.ultimo : '';
+  $('#ola').textContent = saudacao()+(nome ? ', '+nome : '');
+  $('#ola-data').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const meus = appsDoDia();
+  $('#tiles').innerHTML = APPS.filter(a=>a.futuro || visivel(a)).map(a=>{
+    const n = a.futuro ? 0 : meus.indexOf(a)+1;
+    const st = a.futuro ? '<span class="tile-st">em breve</span>' : (IS_DEV && a.id!=='onboarding' ? '<span class="tile-st"><i></i>teste</span>' : '');
+    return '<article class="tile'+(a.futuro?' futuro':'')+(a.id===ultimo?' ultimo':'')+'">'
+      + '<span class="tile-key">'+(n&&n<10?n:'')+'</span>'+st
+      + '<button type="button" class="tile-main" '+(a.futuro?'data-prod="travessia"':'data-app="'+a.id+'"')+' aria-label="'+(a.futuro?'Saiba mais sobre ':'Abrir ')+esc(a.nome)+'">'+logoQuad(a,'-t')+'<span><span class="tile-n">'+esc(a.nome)+'</span><span class="tile-s">'+esc(a.sub)+'</span></span></button>'
+      + '<span class="tile-ac">'+(a.futuro?'':'<a href="'+esc(a.href)+'" target="_blank" rel="noopener" title="Abrir em aba nova" aria-label="Abrir '+esc(a.nome)+' em aba nova">↗</a>')+'<button type="button" data-prod="'+a.id+'" title="O que é" aria-label="O que é '+esc(a.nome)+'">ⓘ</button></span></article>';
+  }).join('');
+  // atalhos: um por squad seu no Maré, e as portas do Radar que mais se usa
+  const at = [];
+  if(visivel(APP('kanban'))) (perfilFb.squads||[]).forEach(sq=>at.push({app:'kanban', url:P('kanban')+'?squad='+encodeURIComponent(sq), txt:'Maré · '+sq}));
+  at.push({app:'okr', url:P('okr')+'?okr=notas', txt:'Radar · Anotações da reunião'}, {app:'okr', url:P('okr')+'?okr=chat', txt:'Radar · Perguntar ao Agente Ágil'});
+  $('#atalhos').innerHTML = at.map(x=>'<button type="button" data-app="'+x.app+'" data-url="'+esc(x.url)+'">'+logoQuad(APP(x.app),'-s').replace('class="tile-logo"','class="tile-logo" style="width:16px;height:16px;border-radius:4px;box-shadow:none"')+esc(x.txt)+'</button>').join('');
+  $('#atalhos-wrap').style.display = at.length ? 'block' : 'none';
+  $('#dica-teclas').innerHTML = meus.length ? 'Dica: tecle <span class="kbd">1</span> a <span class="kbd">'+Math.min(meus.length,9)+'</span> pra abrir um produto, ou <span class="kbd">?</span> pra ajuda.' : '';
+  $('#btn-contato').href = 'mailto:'+CONTATO.email+'?subject='+encodeURIComponent('Quero o Oceano no meu time')+'&body='+encodeURIComponent('Oi! Vi o Oceano e queria conversar sobre usar no meu time.');
+  renderAbertos(); renderAbas(); renderVersoes();
+  $('#rodape-versao').textContent = VERSION+(standalone() ? ' · aplicativo' : '');
+}
+let prodSel = 'kanban';
+const PROD = {
+  kanban:{tag:'O quadro vivo dos squads', p:'Onde o trabalho acontece. Colunas, cards, checklist e comentários com @menção, num board que todo mundo vê mudar ao vivo.', quem:'Squads, POs e quem pede coisas pro time.',
+    itens:[['🧩','<b>Cards completos</b> — checklist com grupos, anexos de links, prazo com semáforo, comentários e histórico.'],['🧬','<b>Supercards e Ficha Técnica</b> — um pedido que vira vários cards (formato, veículo, teste) sem digitar tudo de novo.'],['⚙️','<b>Automações</b> estilo Butler: quando X acontece, faça Y — sem pedir pra ninguém.'],['🤖','<b>Agente Ágil</b> — marque-o num card e ele lê, resume e age dentro das suas permissões.'],['📊','<b>Métricas de fluxo</b> — WIP, throughput, cycle e lead time, CFD e burndown.'],['📶','<b>Funciona sem rede</b> — PWA com fila offline.']],
+    doc:['📚 Documentação técnica','maredigital.html']},
+  painel:{tag:'A visão de quem coordena', p:'Todos os squads num lugar só, mais as ferramentas de gestão: pessoas, papéis, comunicados e métricas.', quem:'Lideranças, gestão e administradores.',
+    itens:[['🗺️','<b>Visão consolidada</b> de todos os squads — o que está andando, travado ou atrasado.'],['👥','<b>Pessoas e papéis</b> — quem é de qual squad, quem organiza, quem administra.'],['📢','<b>Mural e push manual</b> — avisos que aparecem no sistema e chegam no celular.'],['🟢','<b>Online agora</b> — quem está com o board ou o Radar abertos.'],['🧾','<b>Visualizadores externos</b> — dê acesso só de leitura a quem é de fora, de forma controlada.']],
+    doc:['📚 Documentação técnica','maredigital.html']},
+  okr:{tag:'Estratégia que anda junto com a entrega', p:'O OKR do time sai do slide e vira algo vivo: Objetivos com Marcos, meta medida de verdade e uma agenda de reuniões que se atualiza sozinha.', quem:'Liderança, POs e quem é responsável por um Objetivo.',
+    itens:[['🎯','<b>Objetivos e Marcos</b> por gerência, com status que vem do trabalho real.'],['📈','<b>Atingimento</b> — vários tipos de meta, registro de valores, histórico e gráfico.'],['📅','<b>Calendário</b> — reuniões com convidados, pauta, anotações e avisos de véspera.'],['🎥','<b>Apresentação em slides</b> gerada do próprio Radar, pronta pra reunião.'],['🔒','<b>Trava de edição</b> — duas pessoas não sobrescrevem o mesmo Objetivo.'],['💬','<b>Agente Ágil do Radar</b> — conte a situação e ele preenche progresso, riscos e próximos passos.']],
+    doc:['📘 Guia do Radar','guia-okr.html']},
+  onboarding:{tag:'Quem chega já começa andando', p:'As boas-vindas ao time: o que é preciso saber, quem é quem e por onde começar — com cards ao vivo.', quem:'Pessoas novas no time e quem as recebe.',
+    itens:[['👋','<b>Boas-vindas</b> com o essencial na primeira semana.'],['🗂️','<b>Cards ao vivo</b> ligados ao board, pra ver o trabalho real do time.'],['🧭','<b>Caminho claro</b> — o que fazer primeiro, a quem pedir ajuda.']], doc:null},
+  travessia:{tag:'O próximo trecho da viagem', p:'Um espaço pra ciclo de performance e desenvolvimento de gente: avaliação, PDI e dia a dia — usando o que o Radar e o Maré já sabem sobre as entregas.', quem:'Liderança e cada pessoa do time.',
+    itens:[['🧭','<b>Em desenho</b> — ainda não existe, e a ideia é construir junto com quem vai usar.'],['🔐','<b>Dado sensível, regras próprias</b> — acesso desenhado antes do código, em área separada do banco.'],['🔗','<b>Conectado</b> às métricas do Radar e do Maré, sem digitar duas vezes.']], doc:null},
+};
+function renderAbas(){
+  const ab = $('#abas'); ab.innerHTML = APPS.map(a=>'<button class="aba" type="button" role="tab" data-prod="'+a.id+'" aria-selected="'+(a.id===prodSel)+'">'+logoQuad(a,'-a')+esc(a.nome)+'</button>').join('');
+  const a = APP(prodSel), d = PROD[prodSel], pode = !a.futuro && visivel(a);
+  $('#painel-prod').innerHTML = '<div>'+logoQuad(a,'-p').replace('class="tile-logo"','class="tile-logo" style="margin-bottom:12px;"')+'<h3>'+esc(a.nome)+'</h3><div class="tag">'+esc(d.tag)+'</div><p>'+esc(d.p)+'</p><p><b>Pra quem:</b> '+esc(d.quem)+'</p>'
+    + '<div class="acoes">'+(a.futuro ? '<span class="chip lock">⏳ projeto futuro</span>' : pode ? '<button class="btn pri" type="button" data-app="'+a.id+'">Abrir '+esc(a.nome)+'</button><a class="btn" href="'+esc(a.href)+'" target="_blank" rel="noopener">↗ Nova aba</a>' : '<span class="chip lock">🔒 Você ainda não usa o Painel — peça acesso à sua liderança ou à squad.</span>')
+    + (d.doc ? '<button class="btn" type="button" data-doc="'+esc(d.doc[1])+'">'+esc(d.doc[0])+'</button>' : '')+'</div></div>'
+    + '<div><h4>O que você ganha</h4><ul>'+d.itens.map(i=>'<li><span>'+i[0]+'</span><span>'+i[1]+'</span></li>').join('')+'</ul></div>';
+}
+async function renderVersoes(){
+  const tb = $('#vers tbody'); if(!tb) return;
+  try{
+    const r = await fetch('version.json?_='+Date.now(), {cache:'no-store'}); const v = await r.json();
+    const lin = (nome,k,kd)=>'<tr><td><b>'+esc(nome)+'</b></td><td><code>'+esc(v[k]||'—')+'</code></td><td><code>'+esc(v[kd]||'—')+'</code></td></tr>';
+    tb.innerHTML = lin('Maré Digital','kanban','kanban_dev')+lin('Painel','painel','painel_dev')+lin('Radar','okr','okr_dev')+lin('Oceano (esta página)','oceano','oceano_dev');
+    if(v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) $('#versao-aviso').style.display = 'block';
+  }catch(e){ tb.innerHTML = '<tr><td colspan="3" style="color:var(--txt3);">Não consegui ler as versões agora.</td></tr>'; }
+}
+setInterval(()=>{ if(!document.hidden) renderVersoes(); }, 300000);
+
+// ── Hospedagem dos produtos dentro do Oceano ──
+const host = {abertos:[], atual:null};
+function abrirAqui(){ return prefs.abrir==='aqui' || (prefs.abrir==='auto' && standalone()); }
+function abrirApp(id, forcarAqui, url){
+  const a = APP(id); if(!a || a.futuro || !a.href) return;
+  if(!forcarAqui && !abrirAqui()){ window.open(url || a.href, '_blank', 'noopener'); lembrarUltimo(id); return; }
+  mostrarHost(id, url);
+}
+function lembrarUltimo(id){ if(prefs.ultimo===id || !APPS.some(a=>a.id===id)) return; prefs.ultimo = id; salvarPrefs(false); renderTudo(); }
+function mostrarHost(id, url){
+  const a = APP(id); if(!a) return;
+  let fr = $('#host-frames iframe[data-app="'+id+'"]');
+  if(!fr){
+    if(host.abertos.length>=4){ const velho = host.abertos.find(x=>x!==id); if(velho) fecharApp(velho, true); }
+    fr = document.createElement('iframe'); fr.dataset.app = id; fr.name = 'oceano-frame'; fr.title = a.nome; fr.src = url || a.href;
+    fr.setAttribute('allow','clipboard-read; clipboard-write; fullscreen; notifications'); fr.setAttribute('allowfullscreen','');
+    fr.addEventListener('load', ()=>{ if(host.atual===id) $('#host-load').style.display = 'none'; fr.dataset.ok = '1'; });
+    $('#host-frames').appendChild(fr); host.abertos.push(id);
+  }
+  if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
+  host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
+  $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
+  $('#host').classList.add('on'); document.body.style.overflow = 'hidden';
+  document.title = a.nome+' · Oceano'+(IS_DEV?' (dev)':'');
+  lembrarUltimo(id); renderHostTabs();
+  if(location.hash !== '#/'+id) history.pushState(null,'','#/'+id);
+}
+function renderHostTabs(){
+  $('#host-tabs').innerHTML = host.abertos.map(id=>{ const a = APP(id); return '<button class="htab" type="button" role="tab" data-ht="'+id+'" aria-selected="'+(id===host.atual)+'">'+logoPorthole(a,'-h')+esc(a.nome)+'<span class="fx" data-fecha-app="'+id+'" title="Fechar '+esc(a.nome)+'" aria-label="Fechar '+esc(a.nome)+'">✕</span></button>'; }).join('');
+}
+function fecharApp(id, silencioso){
+  const fr = $('#host-frames iframe[data-app="'+id+'"]'); if(fr) fr.remove();
+  host.abertos = host.abertos.filter(x=>x!==id);
+  if(silencioso) return;
+  if(host.atual===id){ const prox = host.abertos[host.abertos.length-1]; if(prox) mostrarHost(prox); else voltarLobby(); }
+  else renderHostTabs();
+  renderAbertos();
+}
+function voltarLobby(){
+  $('#host').classList.remove('on'); document.body.style.overflow = ''; host.atual = null; document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
+  if(location.hash.indexOf('#/')===0) history.pushState(null,'',location.pathname+location.search);
+  renderAbertos();
+}
+function renderAbertos(){
+  const el = $('#abertos'); if(!el) return;
+  el.classList.toggle('on', host.abertos.length>0);
+  el.innerHTML = host.abertos.length ? '⚓ Abertos agora: '+host.abertos.map(id=>'<button class="btn sm" type="button" data-app="'+id+'">'+esc(APP(id).nome)+'</button>').join(' ') : '';
+}
+function irAba(id, hash){
+  if(!['inicio','conheca','tecnica'].includes(id)) id = 'inicio';
+  $$('.tabs button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===id)));
+  $$('.tabp').forEach(p=>p.classList.toggle('on', p.id==='tab-'+id));
+  if(hash!==false) history.replaceState(null,'', location.pathname+location.search+(id==='inicio' ? '' : '#'+id));
+}
+function rotearHash(inicio){
+  const h = location.hash||'';
+  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; renderAbertos(); } return; }
+  const m = /^#\/(\w+)$/.exec(h);
+  if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
+  if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); return; }
+  if(inicio && !location.hash){
+    const ini = prefs.inicio;
+    if(standalone() && ini && ini!=='lobby'){ const alvo = ini==='ultimo' ? prefs.ultimo : ini; if(APP(alvo) && visivel(APP(alvo)) && !APP(alvo).futuro) mostrarHost(alvo); }
+  }
+}
+window.addEventListener('hashchange', ()=>rotearHash(false));
+window.addEventListener('message', e=>{
+  if(e.origin !== location.origin || !e.data || typeof e.data!=='object') return;
+  if(e.data.oceano==='lobby') voltarLobby();
+  else if(e.data.oceano==='abrir' && APP(e.data.app) && visivel(APP(e.data.app))) mostrarHost(e.data.app);
+});
+window.__oceanoHost = {abrir:id=>abrirApp(id,true), lobby:voltarLobby};   // gancho de teste/depuração
+
+// ── Modais ──
+let modalTopo = null;
+function abrirModal(id){ const o = $('#'+id); o.classList.add('open'); modalTopo = id; const f = o.querySelector('input,button.x'); if(f) setTimeout(()=>f.focus({preventScroll:true}),30); }
+function fecharModal(id){ const o = $('#'+id); if(o) o.classList.remove('open'); if(modalTopo===id) modalTopo = null; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && modalTopo){ fecharModal(modalTopo); e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+$$('.ov').forEach(o=>o.addEventListener('mousedown', e=>{ if(e.target===o) fecharModal(o.id); }));
+$$('[data-fecha]').forEach(b=>b.addEventListener('click', ()=>fecharModal(b.dataset.fecha)));
+
+// ── Meu perfil e preferências ──
+function abrirPerfil(){
+  const squads = (perfilFb.squads||[]).map(s=>'<span class="chip">'+esc(s)+'</span>').join(' ') || '<span class="chip lock">nenhum squad ainda</span>';
+  const usa = APPS.filter(a=>!a.futuro&&visivel(a)).map(a=>'<span class="chip ok">'+esc(a.nome)+'</span>').join(' ');
+  $('#perfil-bd').innerHTML =
+    '<div class="gr"><div class="perfil-topo">'+(U.photoURL?'<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">':'<span class="ini">'+esc(iniciais())+'</span>')+'<div><div style="font-family:var(--ff-d);font-size:19px;font-weight:800;">'+esc(perfilFb.nome||U.displayName||'')+'</div><div style="font-size:13px;color:var(--txt2);">'+esc(U.email)+'</div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">'+(perfilFb.role?'<span class="chip">'+esc(perfilFb.role)+'</span>':'')+(ehAdm?'<span class="chip ok">ADM</span>':'')+'</div></div></div>'
+    + '<h4>🪪 Cadastro</h4><div class="d">Nome e foto vêm da sua conta Google. O que você muda aqui vale em todos os produtos do Oceano.</div>'
+    + '<div class="campos"><label class="f">Como você quer ser chamado(a)<input class="in" id="pf-apelido" maxlength="24" value="'+esc(prefs.apelido)+'" placeholder="'+esc(_fn(perfilFb.nome||U.displayName))+'"></label>'
+    + '<label class="f">Sigla (2–3 letras)<input class="in" id="pf-init" maxlength="3" value="'+esc(perfilFb.init||'')+'" placeholder="'+esc(iniciais())+'" style="text-transform:uppercase;"></label></div>'
+    + '<div style="margin-top:12px;font-size:12.5px;color:var(--txt2);display:flex;flex-direction:column;gap:6px;"><div><b>Squads:</b> '+squads+'</div><div><b>Produtos que você usa:</b> '+usa+'</div></div></div>'
+    + '<div class="gr"><h4>🎨 Ambiente</h4><div class="d">Os nomes seguem a identidade Marine Glass. Abrolhos e Lençóis valem também no Maré, Painel e Radar.</div><div class="opc" id="op-tema">'
+    + [['abrolhos','t2','Abrolhos','o escuro da marca (padrão)'],['lencois','t3','Lençóis Maranhenses','o claro, de mar aberto'],['entardecer','t1','Entardecer','só aqui: luz âmbar de fim de tarde']].map(t=>'<button type="button" data-tema="'+t[0]+'" aria-pressed="'+(prefs.tema===t[0])+'"><div class="sw '+t[1]+'"></div><b>'+t[2]+'</b><span>'+t[3]+'</span></button>').join('')+'</div></div>'
+    + '<div class="gr"><h4>🐟 Peixinhos e bolhas</h4><div class="d">'+(reduzMov?'Seu sistema pede menos movimento — por isso começam desligados. ':'')+'São os mesmos do Maré Digital. Ficam atrás do conteúdo e param sozinhos com a aba em segundo plano.</div><div class="opc" id="op-peixes">'
+    + [['off','Desligados','mar calmo'],['poucos','Poucos','um cardume discreto'],['normal','Como no Maré','8 peixes, 16 bolhas']].map(t=>'<button type="button" data-peixes="'+t[0]+'" aria-pressed="'+(prefs.peixes===t[0])+'"><b>'+t[1]+'</b><span>'+t[2]+'</span></button>').join('')+'</div></div>'
+    + '<div class="gr"><h4>🧭 Como abrir os produtos</h4><div class="campos"><label class="f">Ao clicar em "Abrir"<select class="in" id="pf-abrir"><option value="auto">Automático (aqui dentro se o Oceano estiver instalado)</option><option value="aqui">Sempre aqui dentro do Oceano</option><option value="aba">Sempre em aba nova</option></select></label>'
+    + '<label class="f">Ao abrir o app instalado, ir para<select class="in" id="pf-inicio"><option value="lobby">O lobby (esta página)</option><option value="ultimo">O último produto que usei</option>'+APPS.filter(a=>!a.futuro&&visivel(a)).map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('')+'</select></label></div></div>'
+    + '<div class="gr"><h4>📲 Aplicativo</h4><div class="d">Instale o Oceano uma vez e use Maré, Painel e Radar pelo mesmo ícone. Quem só usa o Maré Digital pode continuar com o aplicativo dele — nada muda.</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn" type="button" id="pf-instalar" '+(instalarEv?'':'disabled')+'>📲 Instalar o Oceano</button><button class="btn" type="button" id="pf-ajuda">❓ Como instalar</button><button class="btn" type="button" id="pf-sair">🚪 Sair</button></div></div>';
+  $('#pf-abrir').value = prefs.abrir; $('#pf-inicio').value = prefs.inicio;
+  abrirModal('ov-perfil');
+}
+$('#perfil-bd').addEventListener('click', e=>{
+  const t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.tema){ prefs.tema = t.dataset.tema; $$('#op-tema button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('mare_theme', prefs.tema==='lencois' ? 'light' : 'dark'); }catch(x){} salvarPrefs(true); }
+  else if(t.dataset.peixes){ prefs.peixes = t.dataset.peixes; $$('#op-peixes button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('fish_bg_off', prefs.peixes==='off' ? '1' : '0'); }catch(x){} salvarPrefs(true); }
+  else if(t.id==='pf-instalar') instalar();
+  else if(t.id==='pf-ajuda'){ fecharModal('ov-perfil'); abrirAjuda('instalar'); }
+  else if(t.id==='pf-sair'){ window._signOut(); }
+});
+$('#perfil-bd').addEventListener('change', e=>{
+  const t = e.target;
+  if(t.id==='pf-abrir'){ prefs.abrir = t.value; salvarPrefs(true); }
+  else if(t.id==='pf-inicio'){ prefs.inicio = t.value; salvarPrefs(true); }
+  else if(t.id==='pf-apelido'){ prefs.apelido = t.value.trim().slice(0,24); salvarPrefs(true); renderEu(); renderTudo(); }
+  else if(t.id==='pf-init'){
+    const v = t.value.trim().toUpperCase().replace(/[^A-ZÀ-Ú]/g,'').slice(0,3); t.value = v;
+    if(v.length<2){ toast('⚠️ A sigla precisa de 2 ou 3 letras.'); return; }
+    perfilFb.init = v; renderEu();
+    try{ window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {init:v}).then(()=>toast('✅ Sigla salva')).catch(()=>toast('⚠️ Não consegui salvar a sigla.')); }catch(x){}
+  }
+});
+
+// ── Ajuda ──
+const FAQ = [
+  {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
+  {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
+  {id:'instalar', q:'Como instalo o Oceano como aplicativo?', a:'<p><b>Chrome/Edge (computador e Android):</b> clique em <b>📲 Instalar</b> no topo (ou no menu do navegador → "Instalar Oceano").</p><p><b>iPhone/iPad (Safari):</b> Compartilhar → <b>Adicionar à Tela de Início</b>.</p><p>Depois de instalado, o Oceano abre os produtos <b>aqui dentro</b>, com abas para trocar de um pro outro, sem precisar de um aplicativo por produto.</p>'},
+  {id:'mare', q:'Já uso o app do Maré Digital. Preciso trocar?', a:'<p>Não. O aplicativo do Maré Digital continua existindo e funcionando igual — quem só usa o board pode ficar com ele. O Oceano é um jeito a mais, para quem circula entre mais de um produto.</p>'},
+  {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
+  {id:'painel', q:'Por que não vejo o Painel?', a:'<p>O Painel é a visão de gestão; ele aparece para administradores e para quem já o usa (quem é PO/Organizador, por exemplo). Se você precisa dele, fale com sua liderança ou com a squad.</p><p>Isso organiza a sua vitrine — o acesso de verdade é decidido no servidor.</p>'},
+  {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
+  {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
+  {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
+  {id:'sino', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
+  {id:'contato', q:'Como falo com a squad que constrói?', a:'<p>Use <b>✉️ Falar com a squad</b> na seção "Por que o Oceano", ou comente no card "Melhorias Maré Digital" do Maré.</p>'},
+];
+function renderFaq(q){
+  const t = (q||'').toLowerCase().trim();
+  const l = FAQ.filter(f=>!t || (f.q+' '+f.a.replace(/<[^>]+>/g,' ')).toLowerCase().includes(t));
+  $('#faq').innerHTML = l.length ? l.map(f=>'<details id="faq-'+f.id+'"><summary>'+esc(f.q)+'</summary><div class="r">'+f.a+'</div></details>').join('') : '<p style="color:var(--txt3);font-size:13.5px;">Nada por aqui com "'+esc(q)+'". Tente outra palavra ou fale com a squad.</p>';
+}
+function abrirAjuda(id){ $('#ajuda-busca').value = ''; renderFaq(''); abrirModal('ov-ajuda'); if(id){ const d = $('#faq-'+id); if(d){ d.open = true; d.scrollIntoView({block:'nearest'}); } } }
+$('#ajuda-busca').addEventListener('input', e=>renderFaq(e.target.value));
+$('#btn-ajuda').addEventListener('click', ()=>abrirAjuda());
+$('#btn-eu').addEventListener('click', abrirPerfil);
+
+// ── Instalar (PWA) ──
+let instalarEv = null;
+window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); instalarEv = e; if(!standalone()) $('#btn-instalar').style.display = ''; const b = $('#pf-instalar'); if(b) b.disabled = false; });
+window.addEventListener('appinstalled', ()=>{ instalarEv = null; $('#btn-instalar').style.display = 'none'; toast('🎉 Oceano instalado! Procure o ícone na sua tela.'); });
+function instalar(){ if(!instalarEv){ abrirAjuda('instalar'); return; } instalarEv.prompt(); instalarEv.userChoice.finally(()=>{ instalarEv = null; $('#btn-instalar').style.display = 'none'; }); }
+$('#btn-instalar').addEventListener('click', instalar);
+if(standalone()) $('#btn-instalar').style.display = 'none';
+if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('./firebase-messaging-sw.js').catch(()=>{}); }catch(e){} }
+
+// ── Cliques gerais (delegação) ──
+document.addEventListener('click', e=>{
+  const fx = e.target.closest('[data-fecha-app]'); if(fx){ e.stopPropagation(); fecharApp(fx.dataset.fechaApp); return; }
+  const ht = e.target.closest('[data-ht]'); if(ht){ mostrarHost(ht.dataset.ht); return; }
+  const tb = e.target.closest('.tabs button[data-tab]'); if(tb){ irAba(tb.dataset.tab); return; }
+  const ap = e.target.closest('button[data-app]'); if(ap){ abrirApp(ap.dataset.app, false, ap.dataset.url); return; }
+  const pr = e.target.closest('[data-prod]'); if(pr){ prodSel = pr.dataset.prod; renderAbas(); if(!pr.classList.contains('aba')){ irAba('conheca'); $('#produtos').scrollIntoView({behavior: reduzMov?'auto':'smooth'}); } return; }
+  const mc = e.target.closest('a.marca'); if(mc){ e.preventDefault(); if(host.atual) voltarLobby(); irAba('inicio'); return; }
+  const dc = e.target.closest('[data-doc]'); if(dc){ const h = dc.dataset.doc; if(abrirAqui()){ mostrarDocumento(h); } else window.open(h,'_blank','noopener'); return; }
+});
+// documentos (maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
+const DOCS = {'maredigital.html':{id:'doc-mare', nome:'Documentação', img:'favicon.png'}, 'guia-okr.html':{id:'doc-guia', nome:'Guia do Radar', img:'favicon-radar.png?v=2'}};
+function mostrarDocumento(h){
+  const d = DOCS[h]; if(!d){ window.open(h,'_blank','noopener'); return; }
+  if(!APP(d.id)) EXTRA.push({id:d.id, nome:d.nome, href:h, img:d.img, sub:'', pt:''});
+  mostrarHost(d.id);
+}
+$('#host-lobby').addEventListener('click', voltarLobby);
+$('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
+$('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
+// atalhos de teclado: 1..9 abrem os produtos da tela inicial, ? abre a ajuda
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||modalTopo||!U) return;
+  const el = document.activeElement, digitando = el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || (el && el.isContentEditable);
+  if(digitando || $('#host').classList.contains('on') || !$('#tab-inicio').classList.contains('on')) return;
+  if(e.key==='?'){ e.preventDefault(); abrirAjuda(); return; }
+  if(/^[1-9]$/.test(e.key)){ const a = appsDoDia()[Number(e.key)-1]; if(a){ e.preventDefault(); abrirApp(a.id); } }
+});
+window.addEventListener('pageshow', ()=>{ if(U) renderTudo(); });
+
+aplicarPrefs();
+irAba((location.hash||'').replace('#','')==='tecnica'?'tecnica':(location.hash==='#conheca'?'conheca':'inicio'), false);
+document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
+})();
+</script>
+</body>
+</html>
