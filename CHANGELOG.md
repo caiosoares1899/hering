@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📘 guia-okr.html: prints refeitos + slides novos (Dashboard, Cards, Agente Ágil) — 2026-10-09 (guia compartilhado, sem cópia dev: no ar ao mergear)
+- **Prints refeitos** com a página atual do Radar (cabeçalho com 🔗 Cards, menu de produtos, 📢, 🔔, 🌙 e o botão flutuante do Agente): lista de Objetivos, gerências, trava de edição, calendário, reunião, Mural e sino. Os GIFs de fluxo (criar Objetivo/Marco, reordenar, duplicar) e os prints do modal não mudaram.
+- **Dashboard**: o slide único virou 3 — número grande + linha, situação/o que mudou/tabela, detalhe de um Objetivo — com print de cada um.
+- **Novo slide 🔗 Cards** (aba Cards do Radar) e **slide próprio do 🤖 Agente Ágil** com o painel do chat aberto; o texto que ainda dizia "aba 💬 Agente Ágil" agora fala do botão flutuante. Capa: badges Dashboard/Cards, "~24 min". 33 → 36 slides.
+- Gerador dos prints guardado em `docs/arezzo/testes/gerar_prints_guia.js` (Playwright + Firebase fake).
+
 ### 🚀 Promoção pra prod: Oceano v1.5 (🔔 sino) + Radar v2.58 (aba 🔗 Cards, Dashboard redesenhado) — 2026-10-09
 - **oceano.html v1.5**: sininho 🔔 ao lado de Ajuda, igual ao das outras páginas (mesmo feed, rodapé com som/push/Não Perturbe) — promovido de oceano-dev v1.5 (PR #1329).
 - **okr.html v2.58 (Radar)**: nova aba **🔗 Cards** (cards do board com badge 🎯 OKR por squad e o Objetivo vinculado — v2.57, PR #1330) e **Dashboard redesenhado** (número grande + linha no desenho do atingimento, situação clicável, "o que mudou" simples, tabela por pior situação, detalhe do Objetivo mais limpo — v2.58, PR #1331).
