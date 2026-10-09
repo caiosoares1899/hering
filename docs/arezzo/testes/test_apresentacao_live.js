@@ -45,6 +45,8 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  // pedir / passar o controle
  await B.p.evaluate(()=>window._livePedir()); await B.p.waitForTimeout(250); await sync(B.p,A.p);
  t('pedido de controle aparece pro apresentador, com Passar/Recusar', await A.p.evaluate(()=>/Eve Souza pede o controle/.test(document.getElementById('live-toast').textContent) && !!document.querySelector('#live-toast [data-pedido] button')), 'sem pedido');
+ // cenário real: a flag de "seguindo" da Ana estava desligada quando ela passou o controle — a tela dela (a compartilhada no Meet) tem que passar a seguir a Eve mesmo assim
+ await A.p.evaluate(()=>{ liveSeguindo = false; });
  await A.p.evaluate(()=>document.querySelector('#live-toast [data-pedido] button').click()); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const a4=await info(A.p), b4=await info(B.p); t('aceitar passa o controle: Eve vira apresentadora e Ana acompanha', /Você está apresentando/.test(b4.box) && /Eve Souza está apresentando/.test(a4.box), {a4,b4});
  await B.p.evaluate(()=>window._okrGoTo(1)); await B.p.waitForTimeout(250); await sync(B.p,A.p); t('o novo apresentador comanda (Ana segue a Eve)', (await info(A.p)).idx===1, await info(A.p));

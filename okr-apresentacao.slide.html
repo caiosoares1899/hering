@@ -2000,7 +2000,8 @@ function liveToast(msg, acoes, ttl){
 }
 function liveInit(){
   window._onValue(liveRef(), snap=>{
-    const antes = liveAtiva(); live = snap.val();
+    const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
+    if(eraHost && !liveSouHost() && liveAtiva()) liveSeguindo = true;   // passou o controle: a tela dele (a compartilhada no Meet) passa a seguir o novo apresentador
     if(antes && !liveAtiva()){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
     if(liveAtiva() && !_liveEntrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
     liveAplicar(); liveRender(); liveDesenhar();
