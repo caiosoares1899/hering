@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 💡 Dicas (mini popups) no Radar, no Maré e no Oceano — 2026-10-09 · okr-dev v2.59 · kanban-dev v8.30.813-dev · oceano-dev v1.6 (SÓ DEV)
+- Pedido: mini popups de dicas, que o usuário possa desligar, personalizados por app (Radar, Oceano e Maré; Painel e A Bordo ficam de fora), linguagem simples e curta, com "saiba mais" levando à Ajuda.
+- **Módulo novo compartilhado `mare-dicas-dev.js`** (mesmo ciclo do `mare-notif`: `?v=` nas páginas; a versão de prod, `mare-dicas.js`, nasce na promoção). Mostra **uma dica por vez**, no canto inferior esquerdo (acima da barra no celular), **quando a pessoa chega num lugar** (gatilho), **uma vez só** cada, com no mínimo 50 s entre duas e no máximo 4 por visita. Botões: **Entendi**, **Saiba mais** (abre o tópico certo da Ajuda do app) e **Não mostrar dicas do <app>**. Texto sempre como texto puro; não rouba o foco.
+- **Liga/desliga por app e por pessoa**: `kanban/usuarios/{uid}/dicas = {off:{radar:true}, vistas:{radar:{id:true}}}` (cada pessoa já escreve o próprio nó — sem mudar regra) + cópia no aparelho (única do visualizador externo). Desligar no Radar não desliga no Maré. O interruptor **💡 Dicas** + **Rever dicas** fica na Ajuda do Radar, na Central de Ajuda do Maré e em ⚙ Meu perfil do Oceano (e uma pergunta nova na Ajuda do Oceano).
+- **Catálogos** (cada app o seu, em `OKR_DICAS` / `MARE_DICAS` / `OCEANO_DICAS`): Radar 11 dicas (semáforo automático, atingimento, Agente, menu do botão direito, Apresentação, atalhos do modal, trava, Dashboard x2, Calendário, Cards); Maré 10 (Ctrl+K, Ctrl+D, botão direito no card, Ctrl+Z, Meus cards, ⋮⋮⋮, @menção, colar checklist, card travado, Automações); Oceano 6 (instalar, ⋮⋮⋮, abrir em aba, 🔔, peixinhos, tema).
+- Teste novo `docs/arezzo/testes/test_dicas.js` (os 3 apps: aparece sozinha, 1 por vez, intervalo, desligar/religar e gravar, saiba mais, vistas/desligado vindo do Firebase, externo, celular, boot real do Maré).
+
 ### 📘 guia-okr.html: prints refeitos + slides novos (Dashboard, Cards, Agente Ágil) — 2026-10-09 (guia compartilhado, sem cópia dev: no ar ao mergear)
 - **Prints refeitos** com a página atual do Radar (cabeçalho com 🔗 Cards, menu de produtos, 📢, 🔔, 🌙 e o botão flutuante do Agente): lista de Objetivos, gerências, trava de edição, calendário, reunião, Mural e sino. Os GIFs de fluxo (criar Objetivo/Marco, reordenar, duplicar) e os prints do modal não mudaram.
 - **Dashboard**: o slide único virou 3 — número grande + linha, situação/o que mudou/tabela, detalhe de um Objetivo — com print de cada um.

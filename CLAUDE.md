@@ -99,6 +99,7 @@ letting them hit the error first.
   `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), além do rodapé do sino (🔊 som · permissão deste aparelho/push · 🔕 Não Perturbe) usado pelo OKR e pelo painel, usado pelo sino de
   `kanban`, `painel` e `okr` — a notificação tem que aparecer igual em qualquer página. Segue o mesmo ciclo dev→prod
   (as páginas `-dev` carregam `mare-notif-dev.js?v=N`, as de prod `mare-notif.js?v=N`; ao mudar o módulo, bump o `?v=` nas páginas).
+- `mare-dicas-dev.js` / `mare-dicas.js` — **dicas (mini popups)**: segundo módulo compartilhado (raiz do domínio), usado só por `kanban` (Maré), `okr` (Radar) e `oceano` — Painel e A Bordo ficam de fora. Cada app tem o próprio catálogo (`MARE_DICAS`/`OKR_DICAS`/`OCEANO_DICAS`) e chama `MareDicas.gatilho(...)` onde a pessoa chega; o módulo cuida de aparecer 1 por vez, uma vez só, e do liga/desliga por app (`kanban/usuarios/{uid}/dicas`). **Dica nova = uma linha no catálogo do app + (se couber) o `saiba` apontando pra um tópico da Ajuda.** Mesmo ciclo dev→prod do `mare-notif` (`?v=` nas páginas).
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
   root** (not in a subfolder) — it handles both offline caching and showing
   push notifications when the tab is closed/backgrounded.
