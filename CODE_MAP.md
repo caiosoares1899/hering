@@ -4490,4 +4490,8 @@ Popup `#boarddata-ov` até 1500px; barra única `#boarddata-colbar-chips` (`_bdR
 (`_bdToggleCol()`); cartões `.bd-grid2`/`.bd-card`. Gráficos medem o container via `_bdChartW(el,min)` (barras/tendência/CFD/burndown) e redesenham no `resize` (`_bdResizeT`);
 `openBoardData()` abre o overlay ANTES de desenhar (largura 0 se fechado).
 
+### 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, v2.59/8.30.813/1.6 dev)
+Raiz do domínio, como `mare-notif-dev.js`. API `window.MareDicas`: `init({app,nome,user,isViewer,dicas,abrirAjuda})`, `gatilho(nome)`, `controle(elemento)` (interruptor + "Rever dicas"), `definir(bool)`, `reiniciar()`, `fechar()`, `_estado()`. Internos: `proxima(g, checaQuando)` (o `quando` só vale na hora de MOSTRAR), `mostra(d)` (marca vista ao aparecer), prefs em `kanban/usuarios/{uid}/dicas` + localStorage `mare_dicas_{uid}`.
+Catálogos e ganchos por página: `OKR_DICAS`/`_okrDicasIniciar()` (okr-dev; gatilhos em `_okrSetView()` `view:<aba>` e `openOkrHelp`/`openOkrObjetivo` `obj-modal`; controle em `#okr-help-dicas`); `MARE_DICAS`/`_mareDicasIniciar()` (kanban-dev, antes de `loadNotifs()`; gatilhos em `openCard()`/`openCfg()`; controle em `#help-dicas-ctl` via `openHelp()`); `OCEANO_DICAS`/`iniciarDicas()` (oceano-dev; gatilhos `sino` em `sinoToggle()` e `perfil` em `abrirPerfil()`; controle em `#pf-dicas`). Painel e A Bordo não usam. Teste: `docs/arezzo/testes/test_dicas.js`.
+
 *Retrato do commit `32abbd5` (2026-10-07); seções `okr-dev.html`, `okr-apresentacao.slide.html` e `functions/okr/` revalidadas em 2026-10-07 (okr-dev v2.33, Agente Ágil por torre). As demais seções seguem o retrato de `6e30656` (2026-09-30).*
