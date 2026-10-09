@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🏷️ Radar: dá pra APAGAR tag (e gerenciar todas pelo ⋯ Mais) — 2026-10-09 · okr-dev v2.50 (SÓ DEV — produção segue na v2.49)
+
+Antes dava pra criar e editar tag (só dentro do ⚙ Configurações de um Objetivo), mas não existia como apagar — `_okrTagApagar()` estava no código sem nenhum botão ligado a ela.
+- **🗑 Apagar tag** no editor de tag (o 🎨 do ⚙ Configurações): tira a tag do Radar inteiro **e de todo Objetivo que a usa** (inclusive arquivados), com uma linha no histórico de cada um ("removeu a tag … (tag apagada)"), limpa o filtro por tag se era ela e não deixa o Objetivo aberto com "alterações não salvas" à toa. Pede confirmação dizendo em quantos Objetivos está.
+- **⋯ Mais → 🏷️ Gerenciar tags** (quem cria Objetivo): lista todas as tags com quantos Objetivos usam cada uma, ✎ editar, 🗑 apagar e **+ Nova tag** (cria sem aplicar em ninguém) — não precisa mais entrar no ⚙ Configurações de um Objetivo.
+- **Quem apaga:** tag **em uso** só ADM (mexe em Objetivo de outras pessoas; pros demais o 🗑 fica desabilitado, com explicação); tag **sem uso** qualquer pessoa da empresa (desfaz tag criada por engano). Visualizador não grava.
+- Trava contra duplo clique (a gravação é assíncrona) e Esc em camadas (editor por cima do gerenciador fecha primeiro). A Ajuda do Radar ganhou a explicação.
+- Testado em Chromium (banco com latência): duplo clique grava 1 vez, tag some de banco/Objetivos/filtro/rascunho, histórico, ADM × PO, Esc, criar sem aplicar. Testes em `docs/arezzo/testes/test_tags.js`.
+
 ### v8.30.803 · okr v2.49 — 2026-10-09 · Promove pra prod — 📡 Radar (o OKR vira Radar) + favicon nova + menu de produtos do Oceano (okr.html v2.49, mare-notif.js v11)
 
 Promove o okr-dev v2.49 (entradas "Oceano: o OKR vira Radar", "menu de produtos" e "logo do Maré Digital", mais a favicon nova). **Sem avisos** (pedido do usuário).
