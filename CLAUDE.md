@@ -185,7 +185,7 @@ O Maré passou a atender só a Hering: login só Google (`@ciahering.com.br`), O
 
 O que era tudo "Maré Digital" virou a família **Oceano**: **Maré Digital** (kanban), **Painel**, **Radar** (= o OKR, `okr.html`), **A Bordo** (onboarding) e **Travessia** (futuro, performance/gente). Só os **nomes visíveis** mudam — arquivos, URLs e caminhos do banco ficam. "OKR" continua como metodologia, papel ("🎯 Gestor OKR") e selo dos cards. Regras e fases em `docs/OCEANO.md` — **leia antes de renomear qualquer texto**; texto novo que cite a página do OKR deve dizer "Radar".
 
-**Página Oceano (2026-10-09, em produção):** `oceano.html` / `oceano-dev.html` é o lobby/boas-vindas da família (login só Google, vitrine por pessoa, personalização, ajuda, e **host** dos produtos em iframe quando instalada como app — o PWA do Maré Digital não muda). Detalhes em `docs/OCEANO.md`.
+**Página Oceano (2026-10-09, em produção):** `oceano.html` / `oceano-dev.html` é o lobby/boas-vindas da família (login só Google, vitrine por pessoa, personalização, ajuda, e **host** dos produtos em iframe quando instalada como app — o PWA do Maré Digital não muda). Detalhes em `docs/OCEANO.md`. **Menu de produtos (⋮⋮⋮, `mare-notif(-dev).js`)** com abas Produtos · Hering · Meus links — links da Hering em `kanban/config/links_hering` (nó compartilhado dev/prod), pessoais em `kanban/usuarios/{uid}/links`; em prod em `kanban`, `painel`, `okr` e `oceano` desde 2026-10-09.
 
 ## Pendências conhecidas de documentação
 
