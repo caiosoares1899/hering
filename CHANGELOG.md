@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📡 Radar: favicon com `?v=2` pra o navegador largar a antiga — 2026-10-09 · okr.html / okr-dev.html / apresentação / guia (só o `<link>`; sem bump de versão pra não forçar reload)
+- O arquivo `favicon-radar.png` já era o de fundo azul desde o PR #1309, mas o Chrome guarda favicon por endereço e seguia mostrando a antiga na aba. Os `<link rel="icon">` e `apple-touch-icon` agora apontam pra `favicon-radar.png?v=2`.
+
 ### 🎥 Apresentação do Radar: aba sem o 📡 — 2026-10-09 · okr-apresentacao.slide.html (compartilhada, vale assim que mergeada)
 - O título da aba era "📡 Radar · Apresentação" e aparecia o emoji do lado do favicon; agora é só "Radar · Apresentação".
 
