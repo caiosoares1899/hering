@@ -2625,11 +2625,32 @@ window.MARE_SO_HERING = true;
           <button class="err-filter-btn active" id="pcfg-tab-sprint" onclick="setPcfgTab('sprint')">⚙ Config</button>
           <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
           <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
+          <button class="err-filter-btn" id="pcfg-tab-links"  onclick="setPcfgTab('links')">🔗 Links</button>
         </div>
       </div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
     </div>
     <div class="cfg-body">
+
+      <!-- Aba Links (2026-10-09): links importantes da Hering, mostrados na aba "Hering" do menu de produtos (9 pontinhos) de todas as páginas.
+           Dado em kanban/config/links_hering/{id} = {titulo, desc, url, img, ordem}. Edição só pra ADM (na tela, como o Mural/ADMs). -->
+      <div id="painel-cfg-links" style="display:none;">
+        <div class="cfg-sec">Links importantes da Hering</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:10px;line-height:1.5;">Aparecem na aba <b>Hering</b> do menu de produtos (os 9 pontinhos) em todas as páginas. Título, uma descrição curta, o link e, se quiser, uma imagem (endereço direto de um arquivo .png/.jpg/.svg, de qualquer site de imagens). Sem imagem, usa o ícone do site.</div>
+        <div id="pcfg-links-so-adm" style="display:none;font-size:11px;color:var(--warn);margin-bottom:8px;">🔒 Só administradores editam os links.</div>
+        <div id="pcfg-links-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;"></div>
+        <div id="pcfg-links-form">
+          <div class="cfg-sec" id="pl-form-t" style="margin-top:6px;">Novo link</div>
+          <input type="hidden" id="pl-id">
+          <div class="cfg-row">
+            <div class="cfg-field"><label class="cfg-label">Título *</label><input class="cfg-input" id="pl-titulo" maxlength="40" placeholder="Ex.: Portal do RH"></div>
+            <div class="cfg-field"><label class="cfg-label">Descrição (curta)</label><input class="cfg-input" id="pl-desc" maxlength="90" placeholder="Ex.: Holerite, férias e benefícios"></div>
+          </div>
+          <div class="cfg-field" style="margin-top:6px;"><label class="cfg-label">Link * (https://…)</label><input class="cfg-input" id="pl-url" maxlength="600" placeholder="https://"></div>
+          <div class="cfg-field" style="margin-top:6px;"><label class="cfg-label">Imagem (link direto, https://… — opcional)</label><input class="cfg-input" id="pl-img" maxlength="600" placeholder="https://…/logo.png"></div>
+          <div style="display:flex;gap:6px;margin-top:10px;"><button class="save-btn" onclick="savePlink()">💾 Salvar link</button><button class="btn btn-sm" id="pl-cancel" onclick="resetPlinkForm()" style="display:none;">Cancelar</button></div>
+        </div>
+      </div>
 
       <!-- Aba ADMs -->
       <div id="painel-cfg-adm" style="display:none;">
@@ -2753,7 +2774,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.30 · painel-dev</div>
+<div class="version">v5.31 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2856,7 +2877,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=13"></script>
+<script src="mare-notif-dev.js?v=14"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8401,12 +8422,74 @@ function removeDadosEditor(email){
 
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  ['sprint','users','adm'].forEach(t=>{
+  ['sprint','users','adm','links'].forEach(t=>{
     const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
   if(tab==='users') loadPcfgUsers();
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
+  if(tab==='links') loadPlinks();
+}
+
+// ── 🔗 LINKS DA HERING (aba "Hering" do menu de produtos) ─────────────────────────────────────────
+let PLINKS = {};
+const _plOk = u => window.MareNotif ? MareNotif.linkUrlOk(u) : /^https?:\/\/\S+$/i.test(u||'');
+const _plImgOk = u => window.MareNotif ? MareNotif.linkImgOk(u) : /^https:\/\/\S+$/i.test(u||'');
+function _plSync(){ try{ if(window.MareNotif && MareNotif.linksCacheSet) MareNotif.linksCacheSet('hering', null, PLINKS); }catch(e){} }   // as outras páginas deste navegador já enxergam na hora
+function loadPlinks(){
+  window._get(window._ref(window._db,'kanban/config/links_hering')).then(sn=>{ PLINKS = (sn&&sn.exists()&&typeof sn.val()==='object') ? sn.val() : {}; renderPlinks(); _plSync(); }).catch(e=>{ renderPlinks(); showToast('❌ Não consegui ler os links: '+(e&&e.message||e)); });
+}
+function _plSorted(){ return Object.entries(PLINKS||{}).map(([id,v])=>Object.assign({id},v||{})).sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0) || String(a.titulo||'').localeCompare(String(b.titulo||''),'pt-BR')); }
+function renderPlinks(){
+  const adm = _isAdmPainel(), list = document.getElementById('pcfg-links-list'); if(!list) return;
+  document.getElementById('pcfg-links-so-adm').style.display = adm ? 'none' : 'block';
+  document.getElementById('pcfg-links-form').style.display = adm ? 'block' : 'none';
+  const arr = _plSorted();
+  if(!arr.length){ list.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Nenhum link cadastrado ainda.</div>'; return; }
+  list.innerHTML = '';
+  arr.forEach((l,i)=>{
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:6px 8px;background:rgba(var(--ink-rgb),.5);border:1px solid var(--glass-b);border-radius:8px;';
+    const logo = document.createElement('span'); logo.style.cssText = 'width:28px;height:28px;border-radius:7px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(56,182,255,.14);font-size:12px;font-weight:700;color:var(--accent);';
+    const src = _plImgOk(l.img) ? l.img : (window.MareNotif ? MareNotif.linkFavicon(l.url) : '');
+    if(src){ const im = document.createElement('img'); im.src = src; im.referrerPolicy = 'no-referrer'; im.style.cssText = 'width:100%;height:100%;object-fit:cover;'; im.onerror = ()=>{ logo.textContent = (l.titulo||'?')[0].toUpperCase(); }; logo.appendChild(im); } else logo.textContent = (l.titulo||'?')[0].toUpperCase();
+    const tx = document.createElement('span'); tx.style.cssText = 'flex:1;min-width:0;display:flex;flex-direction:column;';
+    const t = document.createElement('span'); t.style.cssText = 'font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'; t.textContent = l.titulo||'(sem título)';
+    const d = document.createElement('span'); d.style.cssText = 'font-size:10px;color:var(--txt3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'; d.textContent = (l.desc ? l.desc+' · ' : '')+(l.url||'');
+    tx.appendChild(t); tx.appendChild(d); row.appendChild(logo); row.appendChild(tx);
+    if(adm){
+      const mk = (txt,title,fn,dis)=>{ const b = document.createElement('button'); b.type='button'; b.textContent = txt; b.title = title; b.disabled = !!dis; b.style.cssText = 'background:none;border:none;color:var(--txt2);cursor:pointer;font-size:12px;padding:2px 5px;'+(dis?'opacity:.3;cursor:default;':''); b.onclick = fn; return b; };
+      row.appendChild(mk('▲','Subir',()=>movePlink(l.id,-1),i===0)); row.appendChild(mk('▼','Descer',()=>movePlink(l.id,1),i===arr.length-1));
+      row.appendChild(mk('✎','Editar',()=>editPlink(l.id))); const rm = mk('✕','Remover',()=>removePlink(l.id)); rm.style.color = 'var(--danger)'; row.appendChild(rm);
+    }
+    list.appendChild(row);
+  });
+}
+function resetPlinkForm(){ ['pl-id','pl-titulo','pl-desc','pl-url','pl-img'].forEach(i=>{ const e=document.getElementById(i); if(e) e.value=''; }); document.getElementById('pl-form-t').textContent = 'Novo link'; document.getElementById('pl-cancel').style.display = 'none'; }
+function editPlink(id){ const l = PLINKS[id]; if(!l) return; document.getElementById('pl-id').value = id; document.getElementById('pl-titulo').value = l.titulo||''; document.getElementById('pl-desc').value = l.desc||''; document.getElementById('pl-url').value = l.url||''; document.getElementById('pl-img').value = l.img||''; document.getElementById('pl-form-t').textContent = 'Editar link'; document.getElementById('pl-cancel').style.display = ''; document.getElementById('pl-titulo').focus(); }
+function savePlink(){
+  if(!_isAdmPainel()){ showToast('🔒 Só administradores editam os links.'); return; }
+  const v = i=>(document.getElementById(i)?.value||'').trim(), id0 = v('pl-id');
+  const titulo = v('pl-titulo'), desc = v('pl-desc'), url = v('pl-url'), img = v('pl-img');
+  if(!titulo){ showToast('⚠ Dê um título ao link'); return; }
+  if(!_plOk(url)){ showToast('⚠ O link precisa começar com https:// (ou http://)'); return; }
+  if(img && !_plImgOk(img)){ showToast('⚠ A imagem precisa ser um endereço https:// direto'); return; }
+  const id = id0 || ('l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  if(!id0 && Object.keys(PLINKS||{}).length >= 60){ showToast('⚠ Limite de 60 links'); return; }
+  const ordem = id0 && PLINKS[id0] ? (Number(PLINKS[id0].ordem)||0) : (Math.max(0,...Object.values(PLINKS||{}).map(x=>Number(x.ordem)||0)) + 1);
+  const obj = {titulo, desc, url, img, ordem, ativo:true, criadoEm:(id0&&PLINKS[id0]?.criadoEm)||new Date().toISOString(), atualizadoPor:(window._currentUser?.email||'')};
+  window._set(window._ref(window._db,'kanban/config/links_hering/'+id), obj).then(()=>{ PLINKS[id] = obj; renderPlinks(); _plSync(); resetPlinkForm(); showToast('✅ Link salvo'); }).catch(e=>showToast('❌ '+(e&&e.message||e)));
+}
+function removePlink(id){
+  if(!_isAdmPainel() || !PLINKS[id]) return; if(!confirm('Remover "'+(PLINKS[id].titulo||'')+'" dos links da Hering?')) return;
+  window._remove(window._ref(window._db,'kanban/config/links_hering/'+id)).then(()=>{ delete PLINKS[id]; renderPlinks(); _plSync(); showToast('✅ Link removido'); }).catch(e=>showToast('❌ '+(e&&e.message||e)));
+}
+function movePlink(id, dir){
+  if(!_isAdmPainel()) return; const arr = _plSorted(), i = arr.findIndex(x=>x.id===id), j = i+dir; if(i<0 || j<0 || j>=arr.length) return;
+  // renumera tudo de 1..n já com a troca (evita empate de "ordem")
+  const nova = arr.map(x=>x.id); nova.splice(i,1); nova.splice(j,0,id);
+  const upd = {}; nova.forEach((k,n)=>{ upd[k+'/ordem'] = n+1; });
+  window._update(window._ref(window._db,'kanban/config/links_hering'), upd).then(()=>{ nova.forEach((k,n)=>{ if(PLINKS[k]) PLINKS[k].ordem = n+1; }); renderPlinks(); _plSync(); }).catch(e=>showToast('❌ '+(e&&e.message||e)));
 }
 
 // 🧭 Menu de páginas do Maré (pedido direto: "clica no Maré Digital e sobe a listinha de todas as páginas") — OKR, Kanban e Painel, produção e dev.
