@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### ✨ Apresentação ao vivo: caneta temporária × fixa, desfazer, e os traços continuam no detalhe — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
+- **Dois tipos de caneta (a que o time usa no Meet):** **🖍️ Caneta** (tecla **P**) = **fixa**, o traço fica até você apagar; **✨ Temporária** (tecla **T**) = o traço **some sozinho depois de 5 s** (esmaece no último segundo) pra todo mundo. Cada tela conta o tempo sozinha, então some mesmo que o apresentador saia; o apresentador também limpa o banco. Mesmas 4 cores; os dois tipos convivem.
+- **↩ Desfazer** (tecla **Z**) tira só o **último traço fixo**; **🧽** continua apagando tudo.
+- **Fix: ao entrar no detalhe do Objetivo os traços sumiam.** Agora os traços do slide **continuam por cima do detalhe**; o que for desenhado dentro do detalhe fica só nele (ao fechar, sobram os do slide).
+- Testes novos (falham sem a mudança): T liga a temporária; some do banco e das 2 telas em ~5 s com a fixa ficando; temporária "esquecida" no banco some localmente; ↩ desfaz só o último; traços continuam no detalhe e os do detalhe ficam só nele.
+
 ### 🎙️ Apresentação ao vivo: depois de passar o controle, a tela de quem apresentava volta a seguir — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
 - **Cenário:** você compartilha a tela no Meet, passa o controle pra outra pessoa e ela passa slide/risca na página dela — a **sua** página (a compartilhada) precisa refletir isso. Se por algum motivo a sua tela tinha saído da sincronização antes de passar o controle (você mexeu "por conta própria" quando era só acompanhante e depois assumiu), ela ficava parada. **Correção:** ao deixar de ser apresentador, a página volta a seguir o novo apresentador automaticamente. Teste cobre esse caso (falha sem a correção).
 

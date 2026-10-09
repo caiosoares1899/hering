@@ -1983,7 +1983,7 @@ function startListeners(){
 //     (ou quem pede o controle e o apresentador aceita); se o apresentador sumir (>90 s sem sinal) outra pessoa pode assumir. ⏹ encerra e apaga tudo.
 // ═════════════════════════════════════════════════════════════════
 const LIVE_PATH = 'kanban/okr/apresentacao_live', LIVE_CORES = ['#ff4d4d','#ffd166','#1de9b6','#ffffff'];
-let live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false;
+let _liveRaf = 0, liveVisto = {}, liveMeus = [], live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false;
 const liveEu = () => window._currentUser || {};
 const liveRef = sub => window._ref(window._db, LIVE_PATH + (sub ? '/'+sub : ''));
 const liveAtiva = () => !!(live && live.ativa && live.apresentador && live.apresentador.uid);
@@ -1992,7 +1992,9 @@ const liveHostParado = () => liveAtiva() && (Date.now() - (live.atualizadoEm||0)
 const liveNome = u => (u && (u.displayName || (u.email||'').split('@')[0])) || 'Alguém';
 const liveSlideKey = () => slides[currentIdx] ? slides[currentIdx].key : '';
 const liveDetalheAberto = () => document.getElementById('detail-ov').classList.contains('open') ? (_okrDetailCurrentId||'') : '';
-const liveCtx = () => { const d = liveDetalheAberto(); return d ? 'd:'+d : 's:'+liveSlideKey(); };
+const liveCtx = () => { const d = liveDetalheAberto(); return d ? 'd:'+d : 's:'+liveSlideKey(); };   // onde o NOVO traço nasce
+// o que aparece: os traços do slide continuam por cima do detalhe aberto a partir dele (não somem ao entrar no Objetivo) + os traços feitos dentro do próprio detalhe
+const liveCtxs = () => { const d = liveDetalheAberto(), l = ['s:'+liveSlideKey()]; if(d) l.push('d:'+d); return l; };
 function liveToast(msg, acoes, ttl){
   const box = document.getElementById('live-toast'); if(!box) return null;
   const el = document.createElement('div'); el.className = 'live-t'; el.innerHTML = '<span>'+esc(msg)+'</span>'+(acoes||'');
@@ -2016,7 +2018,7 @@ function liveBatida(){
 window._liveComecar = () => {
   if(window._okrIsViewer) return; const u = liveEu();
   window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto()})
-    .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Teclas: L laser · P caneta.', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
+    .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Teclas: L laser · P caneta fixa · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!liveSouHost()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
 function liveAplicar(){
@@ -2056,12 +2058,13 @@ window._liveAssumir = () => { const u = liveEu(); liveTrocar(u.uid, liveNome(u),
 window._liveMenuPassar = () => document.getElementById('live-pass')?.classList.toggle('open');
 window._liveFerr = t => {
   if(!liveSouHost()) return; liveFerr = liveFerr===t ? '' : t;
-  document.body.classList.toggle('live-pen', liveFerr==='caneta');
+  document.body.classList.toggle('live-pen', liveFerr==='caneta' || liveFerr==='temp');
   if(liveFerr!=='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); document.getElementById('live-laser').style.display = 'none'; }
   liveRender();
 };
 window._liveCor = c => { liveCor = c; liveRender(); };
-window._liveLimpar = () => { if(liveSouHost()) window._remove(liveRef('tracos')).catch(()=>{}); };
+window._liveLimpar = () => { if(liveSouHost()){ liveMeus = []; window._remove(liveRef('tracos')).catch(()=>{}); } };
+window._liveDesfazer = () => { if(!liveSouHost()) return; while(liveMeus.length){ const id = liveMeus.pop(); if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; } } };
 function liveRender(){
   const box = document.getElementById('live-box'); if(!box) return;
   const viewer = !!window._okrIsViewer; let h = '';
@@ -2070,8 +2073,10 @@ function liveRender(){
   } else if(liveSouHost()){
     h = '<span class="live-pill"><i></i>Você está apresentando</span>'
       + '<button type="button" class="tb-btn live-btn'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L)">🔴 Laser</button>'
-      + '<button type="button" class="tb-btn live-btn'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button>'
-      + (liveFerr==='caneta' ? LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('') : '')
+      + '<button type="button" class="tb-btn live-btn'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta fixa (P): o traço fica até você apagar — Esc sai">🖍️ Caneta</button>'
+      + '<button type="button" class="tb-btn live-btn'+(liveFerr==='temp'?' on':'')+'" onclick="window._liveFerr(\'temp\')" title="Caneta temporária (T): o traço some sozinho depois de 5 s — Esc sai">✨ Temporária</button>'
+      + (liveFerr==='caneta' || liveFerr==='temp' ? LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('') : '')
+      + '<button type="button" class="tb-btn live-btn" onclick="window._liveDesfazer()" title="Desfazer o último traço fixo (Z)">↩</button>'
       + '<button type="button" class="tb-btn live-btn" onclick="window._liveLimpar()" title="Apagar todos os traços">🧽</button>'
       + '<button type="button" class="tb-btn live-btn" onclick="window._liveMenuPassar()" title="Passar o controle pra outra pessoa">🤝 Passar o controle ▾</button>'
       + '<button type="button" class="tb-btn live-btn" onclick="window._liveEncerrar()" title="Encerrar a apresentação ao vivo">⏹</button>'
@@ -2102,10 +2107,23 @@ function liveDesenhar(){
   const dpr = window.devicePixelRatio||1, W = window.innerWidth, H = window.innerHeight;
   if(cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
   const c = cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
-  const ctx = liveCtx(), tr = liveAtiva() ? Object.values(live.tracos||{}) : [];
-  const todos = tr.filter(t=>t && t.k===ctx && Array.isArray(t.p)); if(liveStroke && liveStroke.k===ctx) todos.push(liveStroke);
+  const ctxs = liveCtxs(), ag = Date.now(), mapa = liveAtiva() ? (live.tracos||{}) : {}, todos = []; let animar = false;
+  Object.keys(liveVisto).forEach(id=>{ if(!mapa[id]) delete liveVisto[id]; });
+  Object.entries(mapa).forEach(([id,t])=>{
+    if(!t || !Array.isArray(t.p)) return;
+    if(t.m==='t'){   // caneta temporária: depois de pronta, some em 5 s (os últimos 1 s esmaecem); cada tela conta o tempo sozinha, então não depende do relógio de ninguém
+      const v = liveVisto[id] || (liveVisto[id] = {n:-1, fim:false, t:ag});
+      if(v.n!==t.p.length || v.fim!==!!t.fim){ v.n = t.p.length; v.fim = !!t.fim; v.t = ag; }
+      if(!v.fim){ if(ctxs.includes(t.k)) todos.push(Object.assign({a:1}, t)); return; }
+      const idade = ag - v.t; if(idade >= 5000) return; animar = true;
+      if(ctxs.includes(t.k)) todos.push(Object.assign({a: idade<4000 ? 1 : 1-(idade-4000)/1000}, t));
+    } else if(ctxs.includes(t.k)) todos.push(Object.assign({a:1}, t));
+  });
+  if(liveStroke && ctxs.includes(liveStroke.k)) todos.push(Object.assign({a:1}, liveStroke));
   c.lineCap = 'round'; c.lineJoin = 'round'; c.lineWidth = 4;
-  todos.forEach(t=>{ c.strokeStyle = t.c||'#ff4d4d'; c.beginPath(); t.p.forEach((pt,i)=>{ const x = pt[0]*W, y = pt[1]*H; if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); if(t.p.length===1){ c.lineTo(t.p[0][0]*W+0.1, t.p[0][1]*H); } c.stroke(); });
+  todos.forEach(t=>{ c.globalAlpha = t.a; c.strokeStyle = t.c||'#ff4d4d'; c.beginPath(); t.p.forEach((pt,i)=>{ const x = pt[0]*W, y = pt[1]*H; if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); if(t.p.length===1){ c.lineTo(t.p[0][0]*W+0.1, t.p[0][1]*H); } c.stroke(); });
+  c.globalAlpha = 1;
+  if(animar && !_liveRaf){ _liveRaf = requestAnimationFrame(()=>{ _liveRaf = 0; liveDesenhar(); }); }
   const lz = document.getElementById('live-laser');
   if(liveAtiva() && !liveSouHost() && live.laser && live.laser.on){ lz.style.display = 'block'; lz.style.left = (live.laser.x*100)+'%'; lz.style.top = (live.laser.y*100)+'%'; }
   else if(!(liveSouHost() && liveFerr==='laser')) lz.style.display = 'none';
@@ -2121,10 +2139,10 @@ document.addEventListener('mouseleave', ()=>{ if(liveSouHost() && liveFerr==='la
 (function(){
   const cv = document.getElementById('live-capture'); if(!cv) return;
   const pt = e => [+(e.clientX/window.innerWidth).toFixed(4), +(e.clientY/window.innerHeight).toFixed(4)];
-  const enviar = fim => { if(!liveStroke) return; const ag = Date.now(); if(!fim && ag-_liveStrokeT < 110) return; _liveStrokeT = ag; window._set(liveRef('tracos/'+liveStroke.id), {c:liveStroke.c, k:liveStroke.k, p:liveStroke.p}).catch(()=>{}); };
-  cv.addEventListener('pointerdown', e=>{ if(!liveSouHost() || liveFerr!=='caneta') return; e.preventDefault(); cv.setPointerCapture(e.pointerId); liveStroke = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), c:liveCor, k:liveCtx(), p:[pt(e)]}; liveDesenhar(); enviar(false); });
+  const enviar = fim => { if(!liveStroke) return; const ag = Date.now(); if(!fim && ag-_liveStrokeT < 110) return; _liveStrokeT = ag; window._set(liveRef('tracos/'+liveStroke.id), {c:liveStroke.c, k:liveStroke.k, p:liveStroke.p, m:liveStroke.m, fim:!!fim}).catch(()=>{}); };
+  cv.addEventListener('pointerdown', e=>{ if(!liveSouHost() || (liveFerr!=='caneta' && liveFerr!=='temp')) return; e.preventDefault(); cv.setPointerCapture(e.pointerId); liveStroke = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), c:liveCor, k:liveCtx(), m:(liveFerr==='temp'?'t':'f'), p:[pt(e)]}; liveDesenhar(); enviar(false); });
   cv.addEventListener('pointermove', e=>{ if(!liveStroke) return; if(liveStroke.p.length<800) liveStroke.p.push(pt(e)); liveDesenhar(); enviar(false); });
-  const fim = ()=>{ if(!liveStroke) return; enviar(true); liveStroke = null; };
+  const fim = ()=>{ if(!liveStroke) return; const id = liveStroke.id, tmp = liveStroke.m==='t'; enviar(true); if(tmp) setTimeout(()=>window._remove(liveRef('tracos/'+id)).catch(()=>{}), 5600); else liveMeus.push(id); liveStroke = null; };
   cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
 })();
 document.addEventListener('keydown', e=>{
@@ -2132,6 +2150,8 @@ document.addEventListener('keydown', e=>{
   const k = (e.key||'').toLowerCase();
   if(k==='l'){ e.preventDefault(); window._liveFerr('laser'); }
   else if(k==='p'){ e.preventDefault(); window._liveFerr('caneta'); }
+  else if(k==='t'){ e.preventDefault(); window._liveFerr('temp'); }
+  else if(k==='z'){ e.preventDefault(); window._liveDesfazer(); }
   else if(e.key==='Escape' && liveFerr){ e.preventDefault(); e.stopImmediatePropagation(); window._liveFerr(liveFerr); }
 }, true);
 document.addEventListener('click', e=>{ const m = document.getElementById('live-pass'); if(m && m.classList.contains('open') && !e.target.closest('#live-pass') && !e.target.closest('[onclick*="_liveMenuPassar"]')) m.classList.remove('open'); });
