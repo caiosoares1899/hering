@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎙️ Apresentação ao vivo: controles num botão flutuante (também no detalhe), temporária dentro da caneta, e clicar no nome passa o controle — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
+- **Botão flutuante 🎙️/🖍️ (acima do das Anotações)** com um painel: Laser, Caneta, Desfazer, Apagar tudo, **Passar o controle pra…** (lista de quem está na sala, clique no nome) e Encerrar. Fica **por cima do detalhe do Objetivo** (a barra do topo some atrás do modal, por isso os controles não apareciam lá) e **não ocupa espaço na barra**, que agora só mostra o selo "🎙️ Você está apresentando" (ou o botão "Apresentar ao vivo"). Quem acompanha tem o mesmo botão: ↩ Voltar a seguir, ✋ Pedir o controle, 🎙️ Assumir.
+- **Caneta com dois tipos dentro dela:** ao ligar a 🖍️ Caneta aparece **Fixa | Temporária · 5 s** (+ as 4 cores). Teclas: **P** liga/desliga a caneta, **T** liga já na temporária.
+- **Fix: não dava pra clicar no nome da pessoa pra passar o controle.** A barra era remontada a cada sinal de vida dos participantes (o tempo todo), trocando o botão entre o mouse descer e subir — o clique se perdia (e o menu fechava sozinho). Agora a interface só é remontada quando algo muda de verdade e a lista de pessoas fica **dentro do painel** (sem menu suspenso). Teste: clicar no nome com sinais de vida chegando no meio do clique.
+- Testes novos/atualizados (Chromium, 2 páginas): botão por cima do detalhe, laser ligado pelo painel no detalhe, tipo temporária dentro da caneta, clique no nome passa o controle.
+
 ### ✨ Apresentação ao vivo: caneta temporária × fixa, desfazer, e os traços continuam no detalhe — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
 - **Dois tipos de caneta (a que o time usa no Meet):** **🖍️ Caneta** (tecla **P**) = **fixa**, o traço fica até você apagar; **✨ Temporária** (tecla **T**) = o traço **some sozinho depois de 5 s** (esmaece no último segundo) pra todo mundo. Cada tela conta o tempo sozinha, então some mesmo que o apresentador saia; o apresentador também limpa o banco. Mesmas 4 cores; os dois tipos convivem.
 - **↩ Desfazer** (tecla **Z**) tira só o **último traço fixo**; **🧽** continua apagando tudo.
