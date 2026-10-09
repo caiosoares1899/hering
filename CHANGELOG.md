@@ -18,6 +18,20 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v8.30.803 · okr v2.49 — 2026-10-09 · Promove pra prod — 📡 Radar (o OKR vira Radar) + favicon nova + menu de produtos do Oceano (okr.html v2.49, mare-notif.js v11)
+
+Promove o okr-dev v2.49 (entradas "Oceano: o OKR vira Radar", "menu de produtos" e "logo do Maré Digital", mais a favicon nova). **Sem avisos** (pedido do usuário).
+- **Radar:** aba do navegador, cabeçalho ("📡 Radar · Oceano"), Ajuda, Mural, Notificações, "Online no Radar" e mensagens falam "Radar"; **favicon nova** (radar com peixinhos, `favicon-radar.png`) na aba e no menu de produtos; `apple-touch-icon` também.
+- **Menu de produtos (9 pontinhos)** entra no cabeçalho do Radar: Maré Digital, Painel, Radar e A Bordo, cada um com a sua logo, abrindo em aba nova. O botão "🐟 Painel" do cabeçalho saiu (o Painel agora só aparece no menu pra ADM, visualizador externo e quem já usa o painel — o "já usa" é gravado quando a pessoa abre o painel ou é PO/Organizador no kanban **dev**; em prod isso só passa a valer quando o Maré Digital/Painel forem promovidos, então por enquanto o Painel aparece no menu só pra ADM e visualizador).
+- **`mare-notif.js` v11** (módulo compartilhado): ganha o menu de produtos e a logo do Radar. `kanban.html`/`painel.html` seguem carregando `?v=8` e não chamam o menu (inerte pra eles até serem promovidos).
+- **Páginas compartilhadas (sem cópia dev) no ar junto:** `guia-okr.html` ("Guia do Radar", 8 prints refeitos com o cabeçalho novo, favicon), `okr-apresentacao.slide.html` ("Radar — OKRs Hering", favicon), `maredigital.html` (versões, Radar, card do menu).
+- **Cloud Function (exige deploy):** o prompt do Agente Ágil do OKR passa a chamar o produto de "Radar" (OKR segue sendo a metodologia): `firebase deploy --only functions:okrAgenteChat` (resync do clone antes).
+- Smoke em Chromium contra `okr.html` e `okr-dev.html`: favicon, logos carregando, links de produção/dev, módulo certo; suítes do modo só Hering, modal de edição, apresentação (2) e `functions/` (728, 727 passam) seguem verdes.
+
+### 📡 Radar: favicon nova + logo no menu de produtos — 2026-10-09 · okr-dev v2.49 · mare-notif-dev v11 · painel-dev v5.26 · kanban-dev v8.30.807-dev
+
+`favicon-radar.png` (256 px, ~24 KB) vira o ícone da aba do Radar e a logo dele no menu de produtos (no lugar do SVG provisório). Painel e kanban só sobem o `?v=` do módulo pra 11.
+
 ### 🎥 Apresentação do OKR/Radar — `/monitorarbugs` antes da reunião — 2026-10-09 · okr-apresentacao.slide.html (compartilhada, vale assim que mergeada)
 
 6 achados reais, reproduzidos no Chromium (modo só Hering e 3 torres) antes de corrigir:

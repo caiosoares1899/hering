@@ -6,7 +6,7 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 |---|---|---|---|
 | **Maré Digital** | o kanban (gestão dos squads) | `kanban.html` | mantém o nome |
 | **Painel** | gestão/diretoria, pessoas, comunicados | `painel.html` | mantém o nome (a ideia "Passadiço" foi descartada) |
-| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado (fase 1 em dev) |
+| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (okr v2.49, 2026-10-09) — logo: `favicon-radar.png` |
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | — | projeto futuro |
 
@@ -26,3 +26,6 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 
 ## Cuidados
 - Travessia lida com dado sensível (avaliação/PDI): regras de acesso próprias, num trecho separado do banco, desenhadas antes do código.
+
+## Logos
+- **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
