@@ -18,6 +18,17 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎥 Apresentação do OKR/Radar — `/monitorarbugs` antes da reunião — 2026-10-09 · okr-apresentacao.slide.html (compartilhada, vale assim que mergeada)
+
+6 achados reais, reproduzidos no Chromium (modo só Hering e 3 torres) antes de corrigir:
+- **Filtro de tag mentia no modo só Hering:** a contagem `(N)` e a lista de tags olhavam Objetivos de Comercial/Corporativa (escondidos) — aparecia "Só Comercial/Corp (3)" e, ao escolher, "Nenhum Objetivo com essa tag"; "Peak Natal (3)" mostrava 2. Também ignorava o filtro de torre. Agora conta só o que a tela mostra.
+- **Slide sumindo ao vivo jogava pra capa:** se alguém desligasse no painel o único Objetivo da gerência que estava na tela, a apresentação voltava pra capa no meio da fala. Agora fica na mesma posição (o próximo slide). Trocar de filtro continua voltando pra capa.
+- **Visualizador externo perdia anotação em silêncio:** a caixa de anotação ficava habilitada, o texto sumia ao enviar e as regras negavam a gravação. Agora ele vê as anotações com o aviso "acesso de visualizador", sem caixa; o ⏱ horário da reunião também não abre pra ele.
+- **Falha ao gravar anotação sumia o texto:** agora o texto volta pro campo e aparece um aviso.
+- **"Colapsar concluídos" deixava a numeração em "2." sem o "1.":** as linhas visíveis agora são renumeradas.
+- **Torre única sem ícone** deixava um recuo vazio no cartão/título da torre ("Digital Hering 🐟"): o espaço do ícone só existe quando há ícone.
+Sem achado: navegação por teclado (→ ← espaço F, com detalhe/anotações/comentários abertos), Esc em camadas, Anterior/Próximo do detalhe, Marco/Objetivo ocultos, "Colapsar concluídos", foco do `<select>`, modo de 3 torres. Testes: `docs/arezzo/testes/test_apresentacao.js` e `test_apresentacao_nav.js`.
+
 ### 🔲 Oceano: menu de produtos usa a logo do Maré Digital de verdade — 2026-10-09 · mare-notif-dev v10 · okr-dev v2.48 · painel-dev v5.25 · kanban-dev v8.30.806-dev (SÓ DEV)
 
 No menu de produtos, o Maré Digital passa a usar o `favicon.png` de produção (os peixinhos) no lugar do ícone de ondas que eu tinha desenhado — também nas páginas `-dev`. Painel, Radar e A Bordo seguem com os SVG provisórios até ganharem logo própria. A imagem só carrega quando o menu abre.
