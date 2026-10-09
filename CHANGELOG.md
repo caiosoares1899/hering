@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎙️ Apresentação ao vivo: depois de passar o controle, a tela de quem apresentava volta a seguir — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
+- **Cenário:** você compartilha a tela no Meet, passa o controle pra outra pessoa e ela passa slide/risca na página dela — a **sua** página (a compartilhada) precisa refletir isso. Se por algum motivo a sua tela tinha saído da sincronização antes de passar o controle (você mexeu "por conta própria" quando era só acompanhante e depois assumiu), ela ficava parada. **Correção:** ao deixar de ser apresentador, a página volta a seguir o novo apresentador automaticamente. Teste cobre esse caso (falha sem a correção).
+
 ### 🖍️ Apresentação ao vivo: caneta ligada não deixava desligar nem limpar (fix) — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
 - **Bug:** com a caneta ligada, a camada que captura o mouse cobria a tela inteira, **inclusive a barra do topo**; clicar em 🖍️ (desligar), 🧽 (limpar) ou nas cores não chegava no botão. **Correção:** a captura da caneta agora começa **abaixo da barra** (`#live-capture`), então os botões seguem clicáveis; a tecla P e o Esc continuam funcionando. Teste novo: com a caneta ligada, clicar (de verdade) em 🖍️ desliga e em 🧽 limpa nos dois lados, e a caneta ainda desenha nos slides.
 
