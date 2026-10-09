@@ -3751,6 +3751,8 @@ Re-grep o nome antes de confiar em linha.
 - **Host:** `abrirApp()`, `mostrarHost()`, `fecharApp()`, `voltarLobby()`, `rotearHash()` (`#/id`), listener de `message` (`oceano:'abrir'|'lobby'`); iframes `name="oceano-frame"`.
 - `abrirPerfil()`, `abrirAjuda()`, `instalar()` (`beforeinstallprompt`). `mare-notif-dev.js` v12: `APPS` ganhou `oceano` e o clique do `#mn-apps-pop` fala com o host.
 
+## okr-apresentacao.slide.html — 🎙️ Apresentação ao vivo (2026-10-09): `liveInit()` ouve `kanban/okr/apresentacao_live`; `_liveComecar`/`_liveEncerrar`/`_livePassar`/`_livePedir`/`_liveAssumir`/`_liveFerr` (laser/caneta)/`liveAplicar()` (acompanhar)/`liveAposNavegar()` (envolve `_okrGoTo`/`_okrOpenDetail`/`_okrCloseDetail`)/`liveRender()`/`liveDesenhar()` (canvas dos traços + ponto do laser).
+
 ## okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
 seção própria neste mapa até agora apesar de ~935 linhas e várias
 rodadas de fix; só lê `kanban/okr/*`, exige login @ciahering normal)
