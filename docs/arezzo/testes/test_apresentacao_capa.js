@@ -1,0 +1,14 @@
+// Capa da apresentação: logo do Radar (imagem, não emoji), subtítulo sem "torre" no modo só Hering, favicon novo.
+const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
+const seed=()=>({kanban:{okr:{objetivos:{d1:{id:'d1',titulo:'Fidelidade',torre:'digital',areaId:'crm',trimestres:['2026-Q4'],responsaveis:['ana'],tagIds:[],history:[],indicadores:[],progressos:[],proximosPassos:[],riscos:[],planosAcao:[],descricao:''}},marcos:{},tags:{},reuniao_notas:{}},
+ usuarios:{ana:{uid:'ana',nome:'Ana',email:'ana@ciahering.com.br',inscrito:true,init:'AA'}},usuarios_publicos:{ana:{uid:'ana',nome:'Ana',init:'AA'}},config:{adm_emails:['ana@ciahering.com.br']}}});
+(async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
+ for(const hering of [true,false]){ const ctx=await b.newContext({viewport:{width:1366,height:768}}); await fake.install(ctx,seed()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+  if(!hering) await p.route('**/okr-apresentacao.slide.html*', async r=>{ const res=await r.fetch(); let body=await res.text(); body=body.replace('const MARE_SO_HERING = true','const MARE_SO_HERING = false'); r.fulfill({response:res,body}); });
+  await p.goto('http://localhost:8941/okr-apresentacao.slide.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),{uid:'ana',email:'ana@ciahering.com.br',displayName:'Ana',photoURL:'',providerData:[{providerId:'google.com'}]}); await p.waitForTimeout(1500);
+  const r=await p.evaluate(()=>{ const im=document.querySelector('.slide.active .cover-ico img'), tb=document.querySelector('.tb-logo img'); return {capa:!!im&&im.complete&&im.naturalWidth>0, capaW:im&&im.naturalWidth, tb:!!tb&&tb.complete&&tb.naturalWidth>0, sub:document.querySelector('.slide.active .cover-sub').textContent.trim(), emojiNaCapa:/📡/.test(document.querySelector('.slide.active .cover-wrap').innerText), favicon:document.querySelector('link[rel=icon]').getAttribute('href')}; });
+  console.log(hering?'SÓ HERING':'3 TORRES',JSON.stringify(r));
+  t((hering?'só Hering':'3 torres')+': logo da capa carrega como imagem (sem emoji)', r.capa && !r.emojiNaCapa, r); t('logo da barra carrega', r.tb, r);
+  t(hering?'só Hering: subtítulo "Panorama por gerência" (sem "torre")':'3 torres: subtítulo mantém "por torre e gerência"', hering? /^Panorama por gerência ·/.test(r.sub) && !/torre/.test(r.sub) : /^Panorama por torre e gerência ·/.test(r.sub), r.sub);
+  if(hering){ await p.screenshot({path:process.argv[2]||'capa.png'}); } t('sem erro de JS', !errs.length, errs); await ctx.close(); }
+ await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();
