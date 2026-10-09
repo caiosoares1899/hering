@@ -108,6 +108,16 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .btn[disabled]{opacity:.5;cursor:not-allowed;}
 .ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
 .ibtn:hover{border-color:var(--accent);}
+.sino{position:relative;}
+.sino-n{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;font-family:var(--ff-b,inherit);}
+.sino-drop{display:none;position:fixed;z-index:100;flex-direction:column;max-height:min(70vh,540px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:14px;box-shadow:0 14px 44px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.sino-hd{display:flex;align-items:center;gap:8px;padding:11px 14px;border-bottom:1px solid var(--glass-b);font-size:13px;font-weight:700;color:var(--txt);}
+.sino-list{overflow-y:auto;padding:8px;}
+.sino-it{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;border-radius:10px;margin-bottom:5px;background:rgba(var(--slate-rgb,10,37,64),.4);border:1px solid var(--glass-b);cursor:pointer;}
+.sino-it:hover,.sino-it:focus-visible{border-color:var(--accent);outline:none;}
+.sino-it .t{font-size:12px;color:var(--txt);line-height:1.4;}.sino-it .s{font-size:11px;color:var(--txt3,var(--txt2));margin-top:2px;}.sino-it .w{font-size:10px;color:var(--txt3,var(--txt2));margin-top:3px;}
+.sino-dot{width:8px;height:8px;border-radius:999px;background:var(--cyan);flex-shrink:0;margin-top:5px;}
+.sino-vazio{font-size:12px;color:var(--txt3,var(--txt2));padding:26px 12px;text-align:center;}
 .chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--cyan);}
 .chip.ok{color:var(--ok);border-color:rgba(74,222,128,.35);background:rgba(74,222,128,.1);}
 .chip.dev{color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.1);}
@@ -342,6 +352,7 @@ input.in[readonly]{opacity:.7;}
     <div class="topo-dir">
       <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
       <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
+      <button class="ibtn sino" id="btn-sino" type="button" aria-haspopup="true" aria-expanded="false" title="Notificações" aria-label="Notificações">🔔<span class="sino-n" id="sino-n" aria-hidden="true"></span></button>
       <button class="eu" id="btn-eu" type="button" aria-haspopup="dialog" title="Meu perfil e preferências"><span id="eu-av"></span><span class="eu-nome" id="eu-nome"></span><span aria-hidden="true">⚙</span></button>
     </div>
   </div>
@@ -460,10 +471,11 @@ input.in[readonly]{opacity:.7;}
 </div></div>
 
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -481,17 +493,28 @@ const db = getDatabase(fbApp);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
-window._db=db; window._ref=ref; window._get=get; window._update=update;
+window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast;
+// Push (FCM) deste aparelho — o rodapé do sino (mare-notif(-dev).js) usa estes ganchos pra ativar/desativar o push. Import dinâmico dentro de try: se o
+// SDK de mensagens não carregar (rede/bloqueio), só o push some — o login e o resto do Oceano seguem.
+window._fcmReady = false;
+import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js').then(m=>m.isSupported().then(ok=>{ if(!ok) return;
+  const messaging = m.getMessaging(fbApp);
+  window._fcmGetToken = (vapidKey, swReg)=>m.getToken(messaging, {vapidKey, serviceWorkerRegistration:swReg});
+  window._fcmDeleteToken = ()=>m.deleteToken(messaging); window._fcmOnMessage = cb=>m.onMessage(messaging, cb); window._fcmReady = true;
+  if(window.MareNotif) MareNotif.rodapeRender();
+})).catch(e=>console.warn('[FCM] não inicializado:', e));
 window._signIn=()=>signInWithPopup(auth,provider);
 window._signOut=()=>signOut(auth);
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
+<script src="mare-notif-dev.js?v=16"></script>
+
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.4 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.5 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -594,7 +617,7 @@ async function lerRamo(sub){ try{ const sn = await window._get(window._ref(windo
 async function iniciarSessao(){
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
-  renderEu(); renderTudo();
+  renderEu(); renderTudo(); iniciarSino();
   // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
   const [nome, init, role, squads, apps, oc, uid] = await Promise.all(['nome','init','role','squads','apps','oceano','uid'].map(lerRamo));
   if(!uid){ try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){} }
@@ -604,10 +627,88 @@ async function iniciarSessao(){
   aplicarPrefs();
   try{ const sn = await window._get(window._ref(window._db,'kanban/config/adm_emails')); const l = sn && sn.exists() ? sn.val() : []; const arr = Array.isArray(l) ? l : Object.values(l||{}); ehAdm = arr.map(x=>String(x).toLowerCase()).includes(String(U.email).toLowerCase()); }catch(e){}
   if(perfilFb.role==='adm' || String(U.email).toLowerCase()===CONTATO.email) ehAdm = true;
-  renderEu(); renderTudo();
+  renderEu(); renderTudo(); sinoRender();
   carregarLinks();
   rotearHash(true);
 }
+
+// ── 🔔 Sino (o mesmo das outras páginas: feed da torre + notificações pessoais; o módulo compartilhado cuida de lido/som/Não Perturbe/push) ──
+let sinoPessoais = [], sinoIniciado = false;
+function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em aba nova, conforme "Como abrir os produtos")
+  const base = String(url||'').split(/[?#]/)[0], app = APPS.find(a=>a.href===base);
+  if(app) abrirApp(app.id, false, url); else MareNotif.abrirPagina(url);
+}
+function sinoItens(){
+  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
+  sinoPessoais.forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
+  return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
+}
+function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
+function sinoRender(){
+  if(!window.MareNotif) return;
+  const itens = sinoItens(), n = itens.filter(i=>i.unread).length, b = $('#sino-n');
+  if(b){ if(n>0){ b.textContent = n>99 ? '99+' : String(n); b.style.display = 'flex'; } else b.style.display = 'none'; }
+  $('#btn-sino').title = n ? 'Notificações ('+n+' não lida'+(n>1?'s':'')+')' : 'Notificações';
+  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id));   // som quando chega uma nova (respeita 🔇 e o Não Perturbe)
+  const drop = $('#sino-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
+  drop.innerHTML = '<div class="sino-hd"><span>🔔 Notificações</span><span style="flex:1"></span>'+(n ? '<button type="button" class="btn sm" id="sino-tudo">✓ Marcar tudo como lido</button>' : '')+'</div>'
+    + '<div class="sino-list">'+(itens.length ? itens.slice(0,50).map(i=>'<div class="sino-it" role="button" tabindex="0" data-k="'+i.k+'" data-id="'+esc(i.id)+'"><span style="font-size:15px;flex-shrink:0;">'+esc(i.icon)+'</span><div style="flex:1;min-width:0;"><div class="t">'+esc(i.title)+'</div>'+(i.sub?'<div class="s">'+esc(i.sub)+'</div>':'')+'<div class="w">'+esc(tempoRel(i.ts))+(i.autor?' · '+esc(i.autor):'')+'</div></div>'+(i.unread?'<span class="sino-dot" title="Não lida"></span>':'')+'</div>').join('') : '<div class="sino-vazio">Nada por aqui ainda.</div>')+'</div>'
+    + MareNotif.rodapeHtml('<button type="button" class="mn-link" id="sino-limpar">Limpar antigas</button>');
+  MareNotif.rodapeRender();
+}
+function sinoFecha(){ const d = $('#sino-drop'); if(d && d.style.display==='flex'){ d.style.display = 'none'; $('#btn-sino').setAttribute('aria-expanded','false'); return true; } return false; }
+function sinoToggle(e){
+  if(e) e.stopPropagation();
+  const drop = $('#sino-drop'), btn = $('#btn-sino'); if(!drop || !window.MareNotif) return;
+  if(sinoFecha()) return;
+  const r = btn.getBoundingClientRect(), w = Math.min(390, window.innerWidth-16);
+  drop.style.top = (r.bottom+8)+'px'; drop.style.left = Math.max(8, Math.min(r.right-w, window.innerWidth-w-8))+'px'; drop.style.width = w+'px'; drop.style.display = 'flex';
+  btn.setAttribute('aria-expanded','true'); sinoRender();
+}
+function sinoTudoLido(){
+  MareNotif.markAll();
+  const up = {}; sinoPessoais.filter(n=>!n.read).forEach(n=>{ up[n.id+'/read'] = true; });
+  if(Object.keys(up).length) window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).catch(()=>{});
+  sinoPessoais = sinoPessoais.map(n=>({...n, read:true})); sinoRender();
+}
+function sinoLimpar(){
+  const up = {}; sinoPessoais.filter(n=>n.read).forEach(n=>{ up[n.id] = null; }); const q = Object.keys(up).length;
+  if(!q){ toast('Nenhuma notificação lida para remover.'); return; }
+  window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), up).then(()=>toast('🧹 '+q+' notificaç'+(q>1?'ões lidas removidas':'ão lida removida')+'.')).catch(()=>toast('⚠️ Não consegui remover as notificações. Tente de novo.'));
+}
+function sinoClique(k, id){
+  sinoFecha();
+  if(k==='f'){ MareNotif.abrirFeed(id); sinoRender(); return; }
+  const n = sinoPessoais.find(x=>x.id===id); if(!n) return;
+  if(!n.read){ n.read = true; window._set(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes/'+id+'/read'), true).catch(()=>{}); }
+  sinoRender();
+  const alvo = MareNotif.urlPessoal(n.raw);   // card, Kudos, reunião, intake, OKR…: o roteador compartilhado sabe pra onde ir
+  if(!alvo) return;
+  if(alvo.externo) window.open(alvo.url, '_blank', 'noopener'); else rotearUrl(alvo.url);
+}
+function iniciarSino(){
+  if(sinoIniciado || !window.MareNotif || !U) return; sinoIniciado = true;
+  MareNotif.start({user:U, isViewer:false, isAdm:()=>ehAdm, onChange:sinoRender, toast,
+    abrirFeed:it=>{ const u = MareNotif.urlFeed(it); if(u) rotearUrl(u); return true; }});   // aviso do Mural/Objetivo/Marco abre o Radar aqui dentro
+  window._onValue(window._query(window._ref(window._db,'kanban/usuarios/'+U.uid+'/notificacoes'), window._orderByChild('ts'), window._limitToLast(80)), snap=>{
+    // TODOS os tipos (card, Kudos, reunião, intake, OKR…) — só 'rascunho' é exclusivo do painel; mesmo TTL do sino do kanban
+    sinoPessoais = Object.entries(snap.val()||{}).filter(([,n])=>n && !MareNotif.SO_PAINEL.has(n.type) && MareNotif.viva(n))
+      .map(([id,n])=>({id, type:n.type||'', title:n.title||'', sub:n.sub||'', ts:n.ts||'', read:!!n.read, raw:n}));
+    sinoRender();
+  }, ()=>{});
+  sinoRender();
+}
+$('#btn-sino').addEventListener('click', sinoToggle);
+$('#sino-drop').addEventListener('click', e=>{
+  e.stopPropagation();
+  if(e.target.closest('#sino-tudo')){ sinoTudoLido(); return; }
+  if(e.target.closest('#sino-limpar')){ sinoLimpar(); return; }
+  const it = e.target.closest('.sino-it'); if(it) sinoClique(it.dataset.k, it.dataset.id);
+});
+$('#sino-drop').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.classList && e.target.classList.contains('sino-it')){ e.preventDefault(); sinoClique(e.target.dataset.k, e.target.dataset.id); } });
+document.addEventListener('click', e=>{ const d = $('#sino-drop'); if(!d || d.style.display!=='flex') return; if((e.composedPath ? e.composedPath() : []).some(el=>el===d || el===$('#btn-sino'))) return; sinoFecha(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && sinoFecha()){ e.preventDefault(); e.stopImmediatePropagation(); $('#btn-sino').focus(); } }, true);
+window.addEventListener('resize', sinoFecha);
 
 // ── Quem vê o quê (vitrine, não segurança — igual ao menu de 9 pontinhos) ──
 function visivel(a){ if(a.id==='painel') return !!(ehAdm || usoApps.painel); return true; }
@@ -882,6 +983,7 @@ $('#perfil-bd').addEventListener('change', e=>{
 
 // ── Ajuda ──
 const FAQ = [
+  {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
   {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
   {id:'instalar', q:'Como instalo o Oceano como aplicativo?', a:'<p><b>Chrome/Edge (computador e Android):</b> clique em <b>📲 Instalar</b> no topo (ou no menu do navegador → "Instalar Oceano").</p><p><b>iPhone/iPad (Safari):</b> Compartilhar → <b>Adicionar à Tela de Início</b>.</p><p>Depois de instalado, o Oceano abre os produtos <b>aqui dentro</b>, com abas para trocar de um pro outro, sem precisar de um aplicativo por produto.</p>'},
