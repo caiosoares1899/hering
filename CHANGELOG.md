@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 📅 Radar: legenda clicável do calendário + fim dos resquícios de torre/agenda global — 2026-10-09 · okr-dev v2.51 (SÓ DEV — produção segue na v2.49)
+
+- **Legenda com chips clicáveis** (fecha o item que estava pendente): **🗓️ Reunião · 📌 Evento · 🔔 Lembrete · ◆ Prazo de Marco**, cada um com a contagem do período que está na tela. Clicar liga/desliga aquele tipo no Mês e na Agenda e no painel do dia (chip fica riscado, `aria-pressed`); "Mostrar todos" volta tudo. É só filtro de tela (nada é apagado, vale só na sessão) e abrir um evento pelo sino/link religa os tipos pra ele aparecer na lista por baixo.
+- **Resquícios de torre/Arezzo no calendário (modo só Hering)**, limpos: o seletor "Todas as agendas / Agenda global / Agenda Digital Hering 🐟" e o "+ global" saem (a agenda é uma só); itens e detalhes não dizem mais "Agenda global · todas as torres" nem "🌐"; toda a agenda usa a mesma cor (o tipo vai no ícone); o editor de evento esconde o campo "Agenda" e o evento novo nasce na agenda da Digital (**antes um ADM criava na "global" e PO/Gestor só na da torre — agora PO/Gestor OKR também criam sem passar pelo seletor**); avisos de permissão falam "ADM, PO/Organizador ou 🎯 Gestor OKR" em vez de "organizador da torre"; "gerências (nenhuma marcada = a torre toda)" vira "todas as gerências"; Ajuda do calendário ajustada. Eventos antigos da agenda global continuam existindo (só ADM edita). Arezzo/Microsoft não aparecia no calendário (os convidados já listavam só @ciahering).
+- Com o interruptor desligado (3 torres) o calendário volta ao que era, com a legenda por cima.
+- Testes em Chromium nos 2 modos (`docs/arezzo/testes/test_calendario.js`). Fica pra promoção: o slide do calendário do Guia (texto + print).
+
 ### 🏷️ Radar: dá pra APAGAR tag (e gerenciar todas pelo ⋯ Mais) — 2026-10-09 · okr-dev v2.50 (SÓ DEV — produção segue na v2.49)
 
 Antes dava pra criar e editar tag (só dentro do ⚙ Configurações de um Objetivo), mas não existia como apagar — `_okrTagApagar()` estava no código sem nenhum botão ligado a ela.
