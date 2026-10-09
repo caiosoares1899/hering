@@ -125,7 +125,7 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .ola{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:22px 0 16px;}
 .ola b{font-family:var(--ff-d);font-size:20px;font-weight:700;}
 .ola span{font-size:12px;color:var(--txt3);}
-.sec-title{font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin:26px 0 14px;}
+.sec-title{display:flex;align-items:center;font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin:26px 0 14px;}
 .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
 .tile{position:relative;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:border-color .2s,transform .15s,box-shadow .2s;}
 .tile:hover,.tile:focus-within{border-color:var(--accent);box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);}
@@ -155,6 +155,21 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .pg-h{font-family:var(--ff-d);font-size:24px;font-weight:700;letter-spacing:-.01em;margin:8px 0 8px;}
 .pg-l{font-size:14.5px;line-height:1.6;color:var(--txt2);max-width:720px;margin-bottom:22px;}
 .sub-h{font-family:var(--ff-d);font-size:16px;font-weight:700;margin:34px 0 12px;}
+/* links (Hering e meus) */
+.lk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px;}
+a.lk{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);color:var(--txt);text-decoration:none;backdrop-filter:blur(12px);transition:border-color .2s,transform .15s;min-width:0;}
+a.lk:hover,a.lk:focus-visible{border-color:var(--accent);transform:translateY(-1px);outline:none;}
+.lk-logo{width:36px;height:36px;border-radius:9px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(56,182,255,.14);border:1px solid var(--glass-b);}
+.lk-logo img{width:100%;height:100%;object-fit:cover;display:block;}.lk-logo b{font-size:15px;color:var(--accent);}
+.lk-tx{display:flex;flex-direction:column;min-width:0;}.lk-t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.lk-d{font-size:11px;color:var(--txt3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sec-title .lk-add{margin-left:auto;background:none;border:1px solid var(--glass-b);border-radius:var(--r);color:var(--accent);font-size:11px;font-weight:600;padding:3px 10px;cursor:pointer;}
+.sec-title .lk-add:hover{border-color:var(--accent);}
+.lk-vazio{font-size:12px;color:var(--txt3);padding:6px 0;}
+.lkrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);margin-bottom:6px;}
+.lkrow .lk-logo{width:30px;height:30px;}.lkrow .lk-tx{flex:1;}
+.lkrow button{background:none;border:none;color:var(--txt2);cursor:pointer;font-size:13px;padding:2px 6px;border-radius:6px;}
+.lkrow button:hover:not([disabled]){background:rgba(56,182,255,.14);color:var(--txt);}.lkrow button[disabled]{opacity:.3;cursor:default;}
 /* vigia (logo redonda): só no login e nas abas do host */
 .porthole{--s:84px;width:var(--s);height:var(--s);border-radius:50%;flex:none;position:relative;display:block;border:2px solid var(--glass-b);background:var(--glass);}
 .porthole .vid{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0b2a55;position:relative;}
@@ -345,6 +360,8 @@ input.in[readonly]{opacity:.7;}
     <div class="abertos" id="abertos"></div>
     <div class="tiles" id="tiles"></div>
     <div id="atalhos-wrap" style="display:none;"><div class="sec-title">Atalhos</div><div class="atalhos" id="atalhos"></div></div>
+    <div id="lk-hering-wrap" style="display:none;"><div class="sec-title">Links da Hering</div><div class="lk-grid" id="lk-hering"></div></div>
+    <div id="lk-meus-wrap"><div class="sec-title">Meus links<button type="button" class="lk-add" id="lk-add">＋ Adicionar</button></div><div class="lk-grid" id="lk-meus"></div></div>
     <p class="dica" id="dica-teclas"></p>
   </section>
 
@@ -474,7 +491,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.2 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.4 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -588,6 +605,7 @@ async function iniciarSessao(){
   try{ const sn = await window._get(window._ref(window._db,'kanban/config/adm_emails')); const l = sn && sn.exists() ? sn.val() : []; const arr = Array.isArray(l) ? l : Object.values(l||{}); ehAdm = arr.map(x=>String(x).toLowerCase()).includes(String(U.email).toLowerCase()); }catch(e){}
   if(perfilFb.role==='adm' || String(U.email).toLowerCase()===CONTATO.email) ehAdm = true;
   renderEu(); renderTudo();
+  carregarLinks();
   rotearHash(true);
 }
 
@@ -662,6 +680,76 @@ async function renderVersoes(){
 }
 setInterval(()=>{ if(!document.hidden) renderVersoes(); }, 300000);
 
+// ── Links: "da Hering" (ADM cadastra no Painel: kanban/config/links_hering) e "meus" (kanban/usuarios/{uid}/links, editados em ⚙ Meu perfil). O cache em localStorage é o mesmo do menu de 9 pontinhos. ──
+let linksHering = null, linksMeus = null, linkEdit = null;
+const linkUrlOk = u => { u = String(u||'').trim(); return u.length>0 && u.length<=600 && /^https?:\/\/[^\s"'<>]+$/i.test(u); };
+const linkImgOk = u => { u = String(u||'').trim(); return u.length>0 && u.length<=600 && /^https:\/\/[^\s"'<>]+$/i.test(u); };
+const linksOrd = obj => Object.entries(obj && typeof obj==='object' ? obj : {}).map(([id,v])=>Object.assign({id}, v||{})).filter(l=>l.titulo && linkUrlOk(l.url) && l.ativo!==false).sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0) || String(a.titulo).localeCompare(String(b.titulo),'pt-BR'));
+const linkFav = url => { try{ return 'https://www.google.com/s2/favicons?domain='+encodeURIComponent(new URL(url).hostname)+'&sz=64'; }catch(e){ return ''; } };
+function linkLogo(l){
+  const ini = esc((String(l.titulo||'?').trim()[0]||'?').toUpperCase()), fav = linkFav(l.url), src = linkImgOk(l.img) ? l.img : fav;
+  return '<span class="lk-logo" data-ini="'+ini+'">'+(src ? '<img class="lk-img" src="'+esc(src)+'" data-fav="'+esc(fav)+'" data-t="'+(linkImgOk(l.img)?'0':'1')+'" alt="" decoding="async" referrerpolicy="no-referrer">' : '<b>'+ini+'</b>')+'</span>';
+}
+document.addEventListener('error', e=>{
+  const im = e.target; if(!im || !im.classList || !im.classList.contains('lk-img')) return;
+  if(im.dataset.t==='0' && im.dataset.fav){ im.dataset.t = '1'; im.src = im.dataset.fav; return; }
+  if(im.parentNode) im.parentNode.innerHTML = '<b>'+(im.parentNode.dataset.ini||'?')+'</b>';
+}, true);
+function linksCacheSet(tipo, v){ try{ localStorage.setItem(tipo==='hering' ? 'mare_links_hering' : 'mare_links_user_'+U.uid, JSON.stringify({t:Date.now(), v:v||{}})); }catch(e){} }
+async function carregarLinks(){
+  const lerCache = k=>{ try{ const o = JSON.parse(localStorage.getItem(k)||'null'); return o && 'v' in o ? o : null; }catch(e){ return null; } };
+  const ch = lerCache('mare_links_hering'), cm = lerCache('mare_links_user_'+U.uid);
+  if(ch){ linksHering = ch.v; } if(cm){ linksMeus = cm.v; } renderLinks();
+  const rd = async path=>{ try{ const sn = await window._get(window._ref(window._db, path)); return sn && sn.exists() && typeof sn.val()==='object' ? sn.val() : {}; }catch(e){ return null; } };
+  const [h, m] = await Promise.all([rd('kanban/config/links_hering'), rd('kanban/usuarios/'+U.uid+'/links')]);
+  if(h){ linksHering = h; linksCacheSet('hering', h); } else if(linksHering===null) linksHering = {};
+  if(m){ linksMeus = m; linksCacheSet('meus', m); } else if(linksMeus===null) linksMeus = {};
+  renderLinks();
+}
+function renderLinks(){
+  const html = lista => lista.map(l=>'<a class="lk" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="lk-tx"><span class="lk-t">'+esc(l.titulo)+'</span>'+(l.desc?'<span class="lk-d">'+esc(l.desc)+'</span>':'')+'</span></a>').join('');
+  const h = linksOrd(linksHering), m = linksOrd(linksMeus);
+  $('#lk-hering-wrap').style.display = h.length ? 'block' : 'none'; $('#lk-hering').innerHTML = html(h);
+  $('#lk-meus').innerHTML = m.length ? html(m) : '<div class="lk-vazio">Você ainda não tem atalhos. Adicione os sites que você mais usa.</div>';
+  if($('#pf-links')) renderPerfilLinks();
+}
+function htmlPerfilLinks(){
+  return '<div class="gr" id="pf-links-sec"><h4>🔗 Meus links</h4><div class="d">Atalhos pra sites que você usa. Aparecem aqui no início e na aba <b>Meus links</b> do menu de produtos, só pra você.</div><div id="pf-links"></div>'
+    + '<div class="campos" style="margin-top:8px;"><label class="f">Título *<input class="in" id="pfl-titulo" maxlength="40" placeholder="Ex.: Meu Drive"></label><label class="f">Descrição (curta)<input class="in" id="pfl-desc" maxlength="90" placeholder="Ex.: Documentos do time"></label></div>'
+    + '<div class="campos" style="margin-top:8px;"><label class="f">Link * (https://…)<input class="in" id="pfl-url" maxlength="600" placeholder="https://"></label><label class="f">Imagem (link direto, https://… — opcional)<input class="in" id="pfl-img" maxlength="600" placeholder="https://…/logo.png"></label></div>'
+    + '<div style="display:flex;gap:8px;margin-top:10px;"><button class="btn pri sm" type="button" id="pfl-salvar">Salvar link</button><button class="btn sm" type="button" id="pfl-cancelar" style="display:none;">Cancelar</button></div><div class="d" style="margin-top:6px;">Sem imagem, uso o ícone do site.</div></div>';
+}
+function renderPerfilLinks(){
+  const el = $('#pf-links'); if(!el) return; const arr = linksOrd(linksMeus);
+  el.innerHTML = arr.length ? arr.map((l,i)=>'<div class="lkrow">'+linkLogo(l)+'<span class="lk-tx"><span class="lk-t">'+esc(l.titulo)+'</span><span class="lk-d">'+esc((l.desc?l.desc+' · ':'')+l.url)+'</span></span>'
+    + '<button type="button" data-lk="up" data-id="'+esc(l.id)+'" title="Subir" '+(i===0?'disabled':'')+'>▲</button><button type="button" data-lk="down" data-id="'+esc(l.id)+'" title="Descer" '+(i===arr.length-1?'disabled':'')+'>▼</button><button type="button" data-lk="edit" data-id="'+esc(l.id)+'" title="Editar">✎</button><button type="button" data-lk="del" data-id="'+esc(l.id)+'" title="Remover" style="color:var(--danger)">✕</button></div>').join('') : '<div class="lk-vazio">Nenhum link ainda.</div>';
+}
+async function gravaLinks(upd, novo){
+  try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/links'), upd); linksMeus = novo; linksCacheSet('meus', novo); renderLinks(); return true; }
+  catch(e){ toast('⚠️ Não consegui gravar os links: '+(e && e.message || e)); return false; }
+}
+let _salvandoLink = false;   // gravação assíncrona com id novo a cada chamada: sem a trava, duplo clique em Salvar criava 2 links iguais
+async function salvarLink(){
+  if(_salvandoLink) return;
+  const v = id=>($('#'+id).value||'').trim(), titulo = v('pfl-titulo'), desc = v('pfl-desc'), url = v('pfl-url'), img = v('pfl-img');
+  if(!titulo){ toast('⚠️ Dê um título ao link.'); return; } if(!linkUrlOk(url)){ toast('⚠️ O link precisa começar com https://'); return; } if(img && !linkImgOk(img)){ toast('⚠️ A imagem precisa ser um endereço https:// direto.'); return; }
+  const atual = Object.assign({}, linksMeus||{}), id = linkEdit || ('l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
+  if(!linkEdit && Object.keys(atual).length>=30){ toast('⚠️ Limite de 30 links.'); return; }
+  const ordem = linkEdit && atual[linkEdit] ? (Number(atual[linkEdit].ordem)||0) : (Math.max(0,...Object.values(atual).map(x=>Number(x.ordem)||0))+1);
+  const obj = {titulo, desc, url, img, ordem, ativo:true}; atual[id] = obj;
+  _salvandoLink = true; const bt = $('#pfl-salvar'); if(bt) bt.disabled = true;
+  const ok = await gravaLinks({[id]:obj}, atual); _salvandoLink = false; if(bt) bt.disabled = false;
+  if(ok){ linkEdit = null; ['pfl-titulo','pfl-desc','pfl-url','pfl-img'].forEach(i=>$('#'+i).value=''); $('#pfl-cancelar').style.display='none'; $('#pfl-salvar').textContent='Salvar link'; toast('✅ Link salvo'); }
+}
+async function acaoLink(act, id){
+  const atual = Object.assign({}, linksMeus||{}); const arr = linksOrd(atual);
+  if(act==='edit'){ const l = atual[id]; if(!l) return; linkEdit = id; $('#pfl-titulo').value = l.titulo||''; $('#pfl-desc').value = l.desc||''; $('#pfl-url').value = l.url||''; $('#pfl-img').value = l.img||''; $('#pfl-cancelar').style.display=''; $('#pfl-salvar').textContent='Salvar alterações'; $('#pfl-titulo').focus(); return; }
+  if(act==='del'){ if(!atual[id] || !confirm('Remover "'+(atual[id].titulo||'')+'"?')) return; delete atual[id]; await gravaLinks({[id]:null}, atual); return; }
+  const i = arr.findIndex(x=>x.id===id), j = i + (act==='up'?-1:1); if(i<0 || j<0 || j>=arr.length) return;
+  const ids = arr.map(x=>x.id); ids.splice(i,1); ids.splice(j,0,id); const upd = {}; ids.forEach((k,n)=>{ upd[k+'/ordem'] = n+1; atual[k] = Object.assign({}, atual[k], {ordem:n+1}); });
+  await gravaLinks(upd, atual);
+}
+
 // ── Hospedagem dos produtos dentro do Oceano ──
 const host = {abertos:[], atual:null};
 function abrirAqui(){ return prefs.abrir==='aqui' || (prefs.abrir==='auto' && standalone()); }
@@ -718,6 +806,7 @@ function irAba(id, hash){
 }
 function rotearHash(inicio){
   const h = location.hash||'';
+  if(h==='#meus-links'){ irAba('inicio', false); abrirPerfil('links'); history.replaceState(null,'',location.pathname+location.search); return; }
   if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; renderAbertos(); } return; }
   const m = /^#\/(\w+)$/.exec(h);
   if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
@@ -732,6 +821,7 @@ window.addEventListener('message', e=>{
   if(e.origin !== location.origin || !e.data || typeof e.data!=='object') return;
   if(e.data.oceano==='lobby') voltarLobby();
   else if(e.data.oceano==='abrir' && APP(e.data.app) && visivel(APP(e.data.app))) mostrarHost(e.data.app);
+  else if(e.data.oceano==='prefs'){ voltarLobby(); abrirPerfil(e.data.secao); }
 });
 window.__oceanoHost = {abrir:id=>abrirApp(id,true), lobby:voltarLobby};   // gancho de teste/depuração
 
@@ -744,7 +834,7 @@ $$('.ov').forEach(o=>o.addEventListener('mousedown', e=>{ if(e.target===o) fecha
 $$('[data-fecha]').forEach(b=>b.addEventListener('click', ()=>fecharModal(b.dataset.fecha)));
 
 // ── Meu perfil e preferências ──
-function abrirPerfil(){
+function abrirPerfil(secao){
   const squads = (perfilFb.squads||[]).map(s=>'<span class="chip">'+esc(s)+'</span>').join(' ') || '<span class="chip lock">nenhum squad ainda</span>';
   const usa = APPS.filter(a=>!a.futuro&&visivel(a)).map(a=>'<span class="chip ok">'+esc(a.nome)+'</span>').join(' ');
   $('#perfil-bd').innerHTML =
@@ -757,14 +847,20 @@ function abrirPerfil(){
     + [['abrolhos','t2','Abrolhos','o escuro da marca (padrão)'],['lencois','t3','Lençóis Maranhenses','o claro, de mar aberto'],['entardecer','t1','Entardecer','só aqui: luz âmbar de fim de tarde']].map(t=>'<button type="button" data-tema="'+t[0]+'" aria-pressed="'+(prefs.tema===t[0])+'"><div class="sw '+t[1]+'"></div><b>'+t[2]+'</b><span>'+t[3]+'</span></button>').join('')+'</div></div>'
     + '<div class="gr"><h4>🐟 Peixinhos e bolhas</h4><div class="d">'+(reduzMov?'Seu sistema pede menos movimento — por isso começam desligados. ':'')+'São os mesmos do Maré Digital. Ficam atrás do conteúdo e param sozinhos com a aba em segundo plano.</div><div class="opc" id="op-peixes">'
     + [['off','Desligados','mar calmo'],['poucos','Poucos','um cardume discreto'],['normal','Como no Maré','8 peixes, 16 bolhas']].map(t=>'<button type="button" data-peixes="'+t[0]+'" aria-pressed="'+(prefs.peixes===t[0])+'"><b>'+t[1]+'</b><span>'+t[2]+'</span></button>').join('')+'</div></div>'
+    + htmlPerfilLinks()
     + '<div class="gr"><h4>🧭 Como abrir os produtos</h4><div class="campos"><label class="f">Ao clicar em "Abrir"<select class="in" id="pf-abrir"><option value="auto">Automático (aqui dentro se o Oceano estiver instalado)</option><option value="aqui">Sempre aqui dentro do Oceano</option><option value="aba">Sempre em aba nova</option></select></label>'
     + '<label class="f">Ao abrir o app instalado, ir para<select class="in" id="pf-inicio"><option value="lobby">O lobby (esta página)</option><option value="ultimo">O último produto que usei</option>'+APPS.filter(a=>!a.futuro&&visivel(a)).map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('')+'</select></label></div></div>'
     + '<div class="gr"><h4>📲 Aplicativo</h4><div class="d">Instale o Oceano uma vez e use Maré, Painel e Radar pelo mesmo ícone. Quem só usa o Maré Digital pode continuar com o aplicativo dele — nada muda.</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn" type="button" id="pf-instalar" '+(instalarEv?'':'disabled')+'>📲 Instalar o Oceano</button><button class="btn" type="button" id="pf-ajuda">❓ Como instalar</button><button class="btn" type="button" id="pf-sair">🚪 Sair</button></div></div>';
   $('#pf-abrir').value = prefs.abrir; $('#pf-inicio').value = prefs.inicio;
+  linkEdit = null; renderPerfilLinks();
   abrirModal('ov-perfil');
+  if(secao==='links'){ const sec = $('#pf-links-sec'); if(sec) setTimeout(()=>{ sec.scrollIntoView({block:'start'}); const t = $('#pfl-titulo'); if(t) t.focus({preventScroll:true}); }, 60); }
 }
 $('#perfil-bd').addEventListener('click', e=>{
   const t = e.target.closest('button'); if(!t) return;
+  if(t.dataset.lk){ acaoLink(t.dataset.lk, t.dataset.id); return; }
+  if(t.id==='pfl-salvar'){ salvarLink(); return; }
+  if(t.id==='pfl-cancelar'){ linkEdit = null; ['pfl-titulo','pfl-desc','pfl-url','pfl-img'].forEach(i=>$('#'+i).value=''); t.style.display='none'; $('#pfl-salvar').textContent='Salvar link'; return; }
   if(t.dataset.tema){ prefs.tema = t.dataset.tema; $$('#op-tema button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('mare_theme', prefs.tema==='lencois' ? 'light' : 'dark'); }catch(x){} salvarPrefs(true); }
   else if(t.dataset.peixes){ prefs.peixes = t.dataset.peixes; $$('#op-peixes button').forEach(b=>b.setAttribute('aria-pressed', String(b===t))); try{ localStorage.setItem('fish_bg_off', prefs.peixes==='off' ? '1' : '0'); }catch(x){} salvarPrefs(true); }
   else if(t.id==='pf-instalar') instalar();
@@ -795,6 +891,7 @@ const FAQ = [
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
+  {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
   {id:'sino', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
   {id:'contato', q:'Como falo com a squad que constrói?', a:'<p>Use <b>✉️ Falar com a squad</b> na seção "Por que o Oceano", ou comente no card "Melhorias Maré Digital" do Maré.</p>'},
 ];
@@ -806,7 +903,8 @@ function renderFaq(q){
 function abrirAjuda(id){ $('#ajuda-busca').value = ''; renderFaq(''); abrirModal('ov-ajuda'); if(id){ const d = $('#faq-'+id); if(d){ d.open = true; d.scrollIntoView({block:'nearest'}); } } }
 $('#ajuda-busca').addEventListener('input', e=>renderFaq(e.target.value));
 $('#btn-ajuda').addEventListener('click', ()=>abrirAjuda());
-$('#btn-eu').addEventListener('click', abrirPerfil);
+$('#btn-eu').addEventListener('click', ()=>abrirPerfil());
+$('#lk-add').addEventListener('click', ()=>abrirPerfil('links'));
 
 // ── Instalar (PWA) ──
 let instalarEv = null;

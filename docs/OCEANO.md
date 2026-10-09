@@ -30,7 +30,7 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.2; dev: `oceano-dev.html`)
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.4; dev: `oceano-dev.html`)
 `oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `maredigital.html`), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 - **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
@@ -39,3 +39,8 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 - **Tela inicial (v1.2):** abre na aba *Meus produtos* (grade de botões, teclas 1–9, atalhos por squad); a parte de "venda" e a técnica ficam nas abas *Conheça o Oceano* e *Por baixo do casco*. Fontes: Syne nos títulos pequenos e DM Sans no corpo, como o Maré.
 - **Menu de 9 pontinhos:** o Oceano é o *título* do popover ("🌊 Oceano · início ↗", link pro lobby, só pra quem é da Hering), não um tile da grade — a grade é só de produtos. Decisão de 2026-10-09.
 - **Links (2026-10-09, dev):** o menu de 9 pontinhos tem abas **Produtos · Hering · Meus links**. *Hering* = `kanban/config/links_hering/{id}` {titulo, desc, url, img, ordem} (ADM edita no Painel → ⚙ Configurações → 🔗 Links); *Meus links* = `kanban/usuarios/{uid}/links/{id}` (a pessoa edita em Oceano → ⚙ Meu perfil). Cache `mare_links_*` no localStorage. Só `http(s)` (imagem só `https`). A restrição a ADM é só da tela (as regras de `kanban/config` aceitam qualquer @ciahering).
+
+## Menu de produtos com abas + links (2026-10-09, em produção: `mare-notif.js` v16)
+O botão ⋮⋮⋮ (`MareNotif.appsMontar`) tem 3 abas: **Produtos** (grade; o título "🌊 Oceano" é o link do lobby), **Hering** e **Meus links**. Dados: `kanban/config/links_hering/{id}` (**nó compartilhado entre dev e prod** — o que o ADM cadastra em Painel → ⚙ Configurações → 🔗 Links vale nos dois) e `kanban/usuarios/{uid}/links/{id}` (editados em Oceano → ⚙ Meu perfil → 🔗 Meus links). Cache em `localStorage` (`mare_links_hering`, `mare_links_user_{uid}`, TTL 10 min). Só `http(s)` pro endereço e `https` pra imagem; sem imagem usa o favicon do site (serviço do Google — o nome do site é enviado a ele). Quantidade múltipla de 3 vira grade. O `kanban.html` de prod carrega o menu desde a v8.30.812.
+Limitações conhecidas: a restrição "só ADM edita os links da Hering" é só da interface (as regras deixam qualquer `@ciahering` escrever em `kanban/config`); os caches ficam no aparelho depois do logout; conta externa (`painel_viewers`) só acompanha a apresentação ao vivo e não vê as abas de links.
+

@@ -369,7 +369,39 @@
       glifo:'<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>'},
   ];
   const APP_OCEANO = APPS.find(a=>a.id==='oceano');
-  const appsSt = {opts:null, uso:{}, aberto:false};
+  const appsSt = {opts:null, uso:{}, aberto:false, tab:'produtos', links:{hering:null, meus:null}};
+  // ── LINKS: abas "Hering" (links importantes, cadastrados por ADM no Painel → ⚙ Configurações → 🔗 Links: kanban/config/links_hering) e
+  //    "Meus links" (da própria pessoa, em Oceano → ⚙ Meu perfil: kanban/usuarios/{uid}/links). Cache em localStorage (compartilhado entre as páginas
+  //    do domínio: quem edita atualiza o cache e as outras páginas já enxergam na hora). Só http(s); imagem só https; texto sempre escapado.
+  const LINKS_HERING = 'kanban/config/links_hering', LINKS_TTL = 600000;
+  const linksChave = (tipo, uid)=> tipo==='hering' ? 'mare_links_hering' : 'mare_links_user_'+uid;
+  const linkUrlOk = u => { u = String(u||'').trim(); return u.length>0 && u.length<=600 && /^https?:\/\/[^\s"'<>]+$/i.test(u); };
+  const linkImgOk = u => { u = String(u||'').trim(); return u.length>0 && u.length<=600 && /^https:\/\/[^\s"'<>]+$/i.test(u); };
+  function linksLista(obj){
+    return Object.entries(obj && typeof obj==='object' ? obj : {}).map(([id,v])=>Object.assign({id}, v||{}))
+      .filter(l=>l.titulo && linkUrlOk(l.url) && l.ativo!==false)
+      .sort((a,b)=>(Number(a.ordem)||0)-(Number(b.ordem)||0) || String(a.titulo).localeCompare(String(b.titulo),'pt-BR'));
+  }
+  function linksCacheLer(tipo, uid){ try{ const o = JSON.parse(localStorage.getItem(linksChave(tipo,uid))||'null'); return (o && typeof o==='object' && 'v' in o) ? o : null; }catch(e){ return null; } }
+  function linksCacheSet(tipo, uid, v){ try{ localStorage.setItem(linksChave(tipo,uid), JSON.stringify({t:Date.now(), v:v||{}})); }catch(e){} if(tipo==='hering') appsSt.links.hering = v||{}; else appsSt.links.meus = v||{}; if(appsSt.aberto) appsPopRender(); }
+  function linksCarregar(tipo){
+    const u = appsSt.opts && appsSt.opts.user; if(!u || !u.uid || appsSt.opts.isViewer) return;
+    const c = linksCacheLer(tipo, u.uid); if(c) appsSt.links[tipo==='hering'?'hering':'meus'] = c.v;
+    if(c && (Date.now() - (c.t||0)) < LINKS_TTL) return;
+    const path = tipo==='hering' ? LINKS_HERING : 'kanban/usuarios/'+u.uid+'/links';
+    try{ window._get(window._ref(window._db, path)).then(sn=>{ linksCacheSet(tipo, u.uid, (sn && sn.exists() && typeof sn.val()==='object') ? sn.val() : {}); }).catch(()=>{ if(!c){ appsSt.links[tipo==='hering'?'hering':'meus'] = {}; if(appsSt.aberto) appsPopRender(); } }); }catch(e){}
+  }
+  const linkFavicon = url => { try{ return 'https://www.google.com/s2/favicons?domain='+encodeURIComponent(new URL(url).hostname)+'&sz=64'; }catch(e){ return ''; } };
+  function linkLogo(l){
+    const ini = esc((String(l.titulo||'?').trim()[0]||'?').toUpperCase()), fav = linkFavicon(l.url);
+    const src = linkImgOk(l.img) ? l.img : fav;
+    return '<span class="mn-lk-logo" data-ini="'+ini+'">'+(src ? '<img class="mn-lk-img" src="'+esc(src)+'" data-fav="'+esc(fav)+'" data-t="'+(linkImgOk(l.img)?'0':'1')+'" alt="" loading="lazy" decoding="async" referrerpolicy="no-referrer">' : '<b>'+ini+'</b>')+'</span>';
+  }
+  function linksHtml(lista, vazio){
+    if(!lista.length) return '<div class="mn-lk-vazio">'+vazio+'</div>';
+    // "inteligente": quantidade múltipla de 3 vira grade de quadrados (3 por fila, como a aba Produtos); qualquer outra fica em lista
+    return '<div class="mn-lk-lista'+(lista.length%3===0 ? ' mn-lk-grade' : '')+'">'+lista.map(l=>'<a class="mn-lk" role="menuitem" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="mn-lk-tx"><span class="mn-lk-t">'+esc(l.titulo)+'</span>'+(l.desc ? '<span class="mn-lk-d">'+esc(l.desc)+'</span>' : '')+'</span></a>').join('')+'</div>';
+  }
   function appsLsKey(uid){ return 'mare_apps_'+uid; }
   function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
   function appsLsSalvar(uid, v){ try{ localStorage.setItem(appsLsKey(uid), JSON.stringify({t:Date.now(), v})); }catch(e){} }
@@ -394,18 +426,29 @@
     const c = appsCtx(), aqui = (appsSt.opts && appsSt.opts.aqui) || '';
     const lista = APPS.filter(a=>a.id!=='oceano' && appsVisivel(a, c));   // a grade é só de PRODUTOS; o Oceano em si é o título (link pro lobby)
     const oc = APP_OCEANO && appsVisivel(APP_OCEANO, c) && aqui!=='oceano';
-    pop.innerHTML = (oc ? '<a class="mn-apps-hd mn-oceano" role="menuitem" data-app="oceano" href="'+esc(APP_OCEANO.href)+'" target="_blank" rel="noopener" title="Ir pro início do Oceano"><span>🌊 Oceano</span><span class="mn-oc-go">início ↗</span></a>' : '<div class="mn-apps-hd">🌊 Oceano</div>')
-      + (IS_DEV ? '<div class="mn-apps-dev">🧪 páginas de teste (dev)</div>' : '')
-      + '<div class="mn-apps-grid">' + lista.map(a=>{
+    const comAbas = !c.viewer, tab = comAbas ? appsSt.tab : 'produtos';
+    let corpo;
+    if(tab==='hering'){
+      corpo = linksHtml(linksLista(appsSt.links.hering), appsSt.links.hering===null ? 'Carregando…' : 'Nenhum link cadastrado ainda.'+(c.adm ? '<br><small>Cadastre em <b>Painel → ⚙ Configurações → 🔗 Links</b>.</small>' : ''));
+    } else if(tab==='meus'){
+      corpo = linksHtml(linksLista(appsSt.links.meus), appsSt.links.meus===null ? 'Carregando…' : 'Você ainda não tem atalhos. Adicione os sites que você mais usa.')
+        + '<a class="mn-lk-gerir" role="menuitem" data-app="oceano" data-secao="links" href="'+esc(APP_OCEANO.href)+'#meus-links" target="_blank" rel="noopener">＋ Adicionar ou editar meus links</a>';
+    } else {
+      corpo = '<div class="mn-apps-grid">' + lista.map(a=>{
           const eh = a.id===aqui;
           return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" data-app="'+esc(a.id)+'" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
             + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
             + (eh ? '</div>' : '</a>');
         }).join('') + '</div>';
+    }
+    pop.innerHTML = (oc ? '<a class="mn-apps-hd mn-oceano" role="menuitem" data-app="oceano" href="'+esc(APP_OCEANO.href)+'" target="_blank" rel="noopener" title="Ir pro início do Oceano"><span>🌊 Oceano</span><span class="mn-oc-go">início ↗</span></a>' : '<div class="mn-apps-hd">🌊 Oceano</div>')
+      + (IS_DEV ? '<div class="mn-apps-dev">🧪 páginas de teste (dev)</div>' : '')
+      + (comAbas ? '<div class="mn-tabs" role="tablist">'+[['produtos','Produtos'],['hering','Hering'],['meus','Meus links']].map(t=>'<button type="button" role="tab" data-mntab="'+t[0]+'" aria-selected="'+(t[0]===tab)+'">'+t[1]+'</button>').join('')+'</div>' : '')
+      + corpo;
   }
   function appsPosicionar(){
     const btn = document.getElementById('mn-apps-btn'), pop = document.getElementById('mn-apps-pop'); if(!btn || !pop) return;
-    const r = btn.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 16);
+    const r = btn.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 16);
     pop.style.width = w+'px';
     pop.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8))+'px';
     pop.style.top = (r.bottom + 8)+'px';
@@ -419,7 +462,7 @@
     if(e) e.stopPropagation();
     const pop = document.getElementById('mn-apps-pop'), btn = document.getElementById('mn-apps-btn'); if(!pop || !btn) return;
     if(appsSt.aberto){ appsFechar(true); return; }
-    menusFechar(); appsPopRender(); appsSt.aberto = true; pop.style.display = 'block'; appsPosicionar(); btn.setAttribute('aria-expanded','true');
+    menusFechar(); if(appsSt.tab!=='produtos' && !appsSt.opts.isViewer) linksCarregar(appsSt.tab==='hering'?'hering':'meus'); appsPopRender(); appsSt.aberto = true; pop.style.display = 'block'; appsPosicionar(); btn.setAttribute('aria-expanded','true');
     const p = pop.querySelector('a.mn-app'); if(p) p.focus({preventScroll:true});
   }
   document.addEventListener('click', e=>{ if(appsSt.aberto && e.target.closest && !e.target.closest('#mn-apps-pop') && !e.target.closest('#mn-apps-btn')) appsFechar(false); });
@@ -430,6 +473,8 @@
     appsSt.opts = opts || {};
     const u = appsSt.opts.user, slot = typeof appsSt.opts.slot==='string' ? document.querySelector(appsSt.opts.slot) : appsSt.opts.slot;
     if(!slot) return;
+    // outra pessoa entrou na mesma página (sair/entrar sem recarregar): os "Meus links" e a aba da anterior não podem aparecer pra ela
+    const uidNovo = (u && u.uid) || ''; if(appsSt.uid && appsSt.uid!==uidNovo){ appsSt.links = {hering:null, meus:null}; appsSt.tab = 'produtos'; } appsSt.uid = uidNovo;
     let btn = document.getElementById('mn-apps-btn');
     if(!btn){
       btn = document.createElement('button'); btn.type = 'button'; btn.id = 'mn-apps-btn';
@@ -444,10 +489,18 @@
       const pop = document.createElement('div'); pop.id = 'mn-apps-pop'; pop.setAttribute('role','menu'); pop.setAttribute('aria-label','Produtos do Oceano'); pop.style.display = 'none';
       // Dentro do Oceano (a página-lobby hospeda os produtos num iframe de nome 'oceano-frame'): em vez de abrir aba nova, pede pro lobby trocar de produto.
       pop.addEventListener('click', e=>{
+        const tb = e.target.closest && e.target.closest('button[data-mntab]');
+        if(tb){ e.stopPropagation(); appsSt.tab = tb.dataset.mntab; if(appsSt.tab!=='produtos') linksCarregar(appsSt.tab==='hering'?'hering':'meus'); appsPopRender(); appsPosicionar(); const t2 = pop.querySelector('button[data-mntab="'+appsSt.tab+'"]'); if(t2) t2.focus({preventScroll:true}); return; }
         const a = e.target.closest && e.target.closest('a[data-app]'); if(!a || !(window.parent && window.parent!==window && window.name==='oceano-frame')) return;
         e.preventDefault(); appsFechar(false);
-        try{ window.parent.postMessage({oceano: a.dataset.app==='oceano' ? 'lobby' : 'abrir', app:a.dataset.app}, location.origin); }catch(x){}
+        try{ window.parent.postMessage(a.dataset.secao ? {oceano:'prefs', secao:a.dataset.secao} : {oceano: a.dataset.app==='oceano' ? 'lobby' : 'abrir', app:a.dataset.app}, location.origin); }catch(x){}
       });
+      // imagem do link que não carrega: tenta o ícone do site; se também falhar, vira a inicial do título
+      pop.addEventListener('error', e=>{
+        const im = e.target; if(!im || !im.classList || !im.classList.contains('mn-lk-img')) return;
+        if(im.dataset.t==='0' && im.dataset.fav){ im.dataset.t = '1'; im.src = im.dataset.fav; return; }
+        const w = im.parentNode; if(w){ w.innerHTML = '<b>'+(w.dataset.ini||'?')+'</b>'; }
+      }, true);
       document.body.appendChild(pop);
     }
     // quem usa o quê: cache primeiro (render imediato), depois confere no banco se o cache tem mais de 1h
@@ -483,6 +536,25 @@
       + '.mn-apps-hd{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,#8fa);padding:0 4px 8px;}'
       + 'a.mn-oceano{display:flex;justify-content:space-between;align-items:center;text-decoration:none;border-radius:8px;margin:0 0 4px;padding:4px;}'
       + 'a.mn-oceano:hover{background:rgba(56,182,255,.1);color:var(--accent,#38b6ff);}.mn-oc-go{font-weight:600;letter-spacing:0;text-transform:none;font-size:11px;}'
+      + '.mn-tabs{display:flex;gap:2px;border-bottom:1px solid var(--glass-b,rgba(255,255,255,.15));margin:0 0 10px;}'
+      + '.mn-tabs button{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2,#bcd);font-size:12px;font-weight:600;padding:7px 4px;cursor:pointer;margin-bottom:-1px;}'
+      + '.mn-tabs button:hover{color:var(--txt,#e8f4ff);}.mn-tabs button[aria-selected="true"]{color:var(--accent,#38b6ff);border-bottom-color:var(--accent,#38b6ff);}'
+      + '.mn-lk-lista{display:flex;flex-direction:column;gap:2px;}'
+      + 'a.mn-lk{box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;min-width:0;}'
+      + 'a.mn-lk:hover,a.mn-lk:focus-visible{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.35);outline:none;}'
+      + '.mn-lk-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(56,182,255,.14);border:1px solid var(--glass-b,rgba(255,255,255,.15));}'
+      + '.mn-lk-logo img{width:100%;height:100%;object-fit:cover;display:block;}.mn-lk-logo b{font-size:14px;color:var(--accent,#38b6ff);}'
+      + '.mn-lk-tx{display:flex;flex-direction:column;min-width:0;}.mn-lk-t{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+      + '.mn-lk-d{font-size:10.5px;color:var(--txt3,#8fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+      + '.mn-lk-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}'
+      + '.mn-lk-grade a.mn-lk{flex-direction:column;text-align:center;gap:6px;padding:12px 4px 10px;border-radius:12px;}'
+      + '.mn-lk-grade .mn-lk-logo{width:42px;height:42px;border-radius:12px;}'
+      + '.mn-lk-grade .mn-lk-tx{align-items:center;gap:2px;width:100%;}'
+      + '.mn-lk-grade .mn-lk-t{font-size:12px;line-height:1.25;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}'
+      + '.mn-lk-grade .mn-lk-d{font-size:10px;line-height:1.3;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}'
+      + '.mn-lk-vazio{font-size:12px;color:var(--txt3,#8fa);text-align:center;padding:18px 8px;line-height:1.5;}'
+      + 'a.mn-lk-gerir{display:block;margin-top:8px;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--accent,#38b6ff);text-decoration:none;border:1px dashed var(--glass-b,rgba(255,255,255,.2));border-radius:10px;}'
+      + 'a.mn-lk-gerir:hover{background:rgba(56,182,255,.1);}'
       + '.mn-apps-dev{font-size:10px;color:var(--warn,#ffd166);padding:0 4px 8px;}'
       + '.mn-apps-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}'
       + '.mn-app{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 6px 10px;border-radius:12px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;cursor:pointer;}'
@@ -494,7 +566,7 @@
   })();
 
   window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
-    appsMontar, appsUso, APPS, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
+    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
 })();
