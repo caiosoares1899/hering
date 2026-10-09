@@ -2774,7 +2774,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.32 · painel-dev</div>
+<div class="version">v5.33 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2877,7 +2877,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=15"></script>
+<script src="mare-notif-dev.js?v=16"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -8467,7 +8467,9 @@ function renderPlinks(){
 }
 function resetPlinkForm(){ ['pl-id','pl-titulo','pl-desc','pl-url','pl-img'].forEach(i=>{ const e=document.getElementById(i); if(e) e.value=''; }); document.getElementById('pl-form-t').textContent = 'Novo link'; document.getElementById('pl-cancel').style.display = 'none'; }
 function editPlink(id){ const l = PLINKS[id]; if(!l) return; document.getElementById('pl-id').value = id; document.getElementById('pl-titulo').value = l.titulo||''; document.getElementById('pl-desc').value = l.desc||''; document.getElementById('pl-url').value = l.url||''; document.getElementById('pl-img').value = l.img||''; document.getElementById('pl-form-t').textContent = 'Editar link'; document.getElementById('pl-cancel').style.display = ''; document.getElementById('pl-titulo').focus(); }
+let _plSalvando = false;   // id novo a cada chamada + gravação assíncrona: duplo clique em Salvar criava 2 links
 function savePlink(){
+  if(_plSalvando) return;
   if(!_isAdmPainel()){ showToast('🔒 Só administradores editam os links.'); return; }
   const v = i=>(document.getElementById(i)?.value||'').trim(), id0 = v('pl-id');
   const titulo = v('pl-titulo'), desc = v('pl-desc'), url = v('pl-url'), img = v('pl-img');
@@ -8478,7 +8480,11 @@ function savePlink(){
   if(!id0 && Object.keys(PLINKS||{}).length >= 60){ showToast('⚠ Limite de 60 links'); return; }
   const ordem = id0 && PLINKS[id0] ? (Number(PLINKS[id0].ordem)||0) : (Math.max(0,...Object.values(PLINKS||{}).map(x=>Number(x.ordem)||0)) + 1);
   const obj = {titulo, desc, url, img, ordem, ativo:true, criadoEm:(id0&&PLINKS[id0]?.criadoEm)||new Date().toISOString(), atualizadoPor:(window._currentUser?.email||'')};
-  window._set(window._ref(window._db,'kanban/config/links_hering/'+id), obj).then(()=>{ PLINKS[id] = obj; renderPlinks(); _plSync(); resetPlinkForm(); showToast('✅ Link salvo'); }).catch(e=>showToast('❌ '+(e&&e.message||e)));
+  _plSalvando = true;
+  // a lista da tela pode estar velha (outro ADM mexeu): editar um link que já foi removido o ressuscitaria sem avisar
+  const gravar = ()=>window._set(window._ref(window._db,'kanban/config/links_hering/'+id), obj).then(()=>{ PLINKS[id] = obj; renderPlinks(); _plSync(); resetPlinkForm(); showToast('✅ Link salvo'); });
+  (id0 ? window._get(window._ref(window._db,'kanban/config/links_hering/'+id0)).then(sn=>{ if(!sn.exists()){ delete PLINKS[id0]; renderPlinks(); resetPlinkForm(); showToast('⚠ Esse link foi removido por outra pessoa — salve de novo como novo link.'); return; } return gravar(); }) : gravar())
+    .catch(e=>showToast('❌ '+(e&&e.message||e))).then(()=>{ _plSalvando = false; });
 }
 function removePlink(id){
   if(!_isAdmPainel() || !PLINKS[id]) return; if(!confirm('Remover "'+(PLINKS[id].titulo||'')+'" dos links da Hering?')) return;
@@ -8488,8 +8494,13 @@ function movePlink(id, dir){
   if(!_isAdmPainel()) return; const arr = _plSorted(), i = arr.findIndex(x=>x.id===id), j = i+dir; if(i<0 || j<0 || j>=arr.length) return;
   // renumera tudo de 1..n já com a troca (evita empate de "ordem")
   const nova = arr.map(x=>x.id); nova.splice(i,1); nova.splice(j,0,id);
-  const upd = {}; nova.forEach((k,n)=>{ upd[k+'/ordem'] = n+1; });
-  window._update(window._ref(window._db,'kanban/config/links_hering'), upd).then(()=>{ nova.forEach((k,n)=>{ if(PLINKS[k]) PLINKS[k].ordem = n+1; }); renderPlinks(); _plSync(); }).catch(e=>showToast('❌ '+(e&&e.message||e)));
+  // só renumera o que ainda existe no banco: um id removido por outra pessoa voltaria como registro vazio (só com "ordem"), ocupando vaga do limite
+  window._get(window._ref(window._db,'kanban/config/links_hering')).then(sn=>{
+    const vivos = (sn.exists() && typeof sn.val()==='object') ? sn.val() : {}, upd = {}, ids = nova.filter(k=>vivos[k]);
+    ids.forEach((k,n)=>{ upd[k+'/ordem'] = n+1; });
+    if(!ids.length){ PLINKS = vivos; renderPlinks(); _plSync(); return; }
+    return window._update(window._ref(window._db,'kanban/config/links_hering'), upd).then(()=>{ PLINKS = vivos; ids.forEach((k,n)=>{ PLINKS[k].ordem = n+1; }); renderPlinks(); _plSync(); });
+  }).catch(e=>showToast('❌ '+(e&&e.message||e)));
 }
 
 // 🧭 Menu de páginas do Maré (pedido direto: "clica no Maré Digital e sobe a listinha de todas as páginas") — OKR, Kanban e Painel, produção e dev.

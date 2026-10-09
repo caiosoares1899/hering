@@ -9,6 +9,7 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_apresentacao_capa.js` — capa da apresentação: logo do Radar em imagem, subtítulo sem "torre" no modo só Hering, favicon.
 - `test_oceano.js` — `oceano-dev.html`: login Google, vitrine por pessoa, temas, peixinhos, cadastro, host dos produtos em iframe e troca pelo menu de 9 pontinhos do Radar, celular. (As 2 checagens de lista exata do menu de apps — fora do repo — mudaram: agora o 🌊 Oceano vem primeiro.)
 - `test_links.js` — links do menu de produtos: cadastro no Painel (ADM), abas Hering/Meus links, imagem quebrada, segurança de URL, edição no Oceano.
+- `test_monitorarbugs_1009.js` — /monitorarbugs de 09/10: apresentação ao vivo (ouvinte único, apresentador que recarrega, laser, copiar link), duplo clique em Salvar link (Oceano/Painel), link removido por outra pessoa, menu ao trocar de conta.
 - `test_apresentacao_live.js` — apresentação ao vivo: 2 páginas (apresentador e acompanhante), laser, caneta, passar/pedir/assumir controle, encerrar, visualizador externo.
 - `test_tags.js` — apagar tag e Gerenciar tags do Radar (okr-dev): uso, histórico, duplo clique, ADM × PO, Esc.
 - `test_calendario.js` — calendário do Radar (okr-dev): legenda clicável por tipo, sem resquício de torre/agenda global no modo só Hering, PO cria evento, 3 torres, deep link.
