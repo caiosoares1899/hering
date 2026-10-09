@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### v5.28 · okr v2.52 — 2026-10-09 · Promove pra prod — 📡 Radar (okr.html v2.52) + Painel (painel.html v5.28) · SEM avisos (sem Mural/WhatsApp)
+- **Radar (`okr.html` v2.49 → v2.52):** 🏷️ dá pra **apagar tag** e há **⋯ Mais → Gerenciar tags** (v2.50); 📅 **legenda clicável do calendário** (Reunião · Evento · Lembrete · Prazo de Marco, com contagem e liga/desliga por tipo) e **fim dos resquícios de torre/agenda global** no modo só Hering — uma agenda só, a da Digital Hering 🐟 (v2.51); **logo do Radar** (sem fundo) no login, cabeçalho, home e ajuda (v2.52).
+- **Painel (`painel.html` v5.22 → v5.28):** nomes **Radar** (aba "Radar ↗", "Online no Radar", visualizadores, ajudas), **menu de produtos do Oceano** (botão estilo "apps do Google": Maré, Radar, Painel, A Bordo — Painel só aparece pra quem usa) e `mare-notif.js?v=11`.
+- Feito por **merge de 3 vias** (base = dev da última promoção); só sobraram as linhas de ambiente (título/favicon/banner dev/versão/chave `okr`/`painel`/`mare-notif.js`). `okr.html` roda as 4 suítes do Radar (só Hering, tags, calendário, modal de edição) e o painel prod roda a suíte do modo só Hering — tudo verde.
+- **Guia do Radar:** slide do calendário (texto + print) com a legenda e sem agenda global.
+- Fica de fora (continua dev): Maré Digital (`kanban-dev` v8.30.807-dev) com o menu de produtos — por isso, em prod, o menu aparece no Radar e no Painel mas não no board.
+
 ### 📡 Radar: logo sem fundo no lugar do emoji (login, cabeçalho, home, ajuda) — 2026-10-09 · okr-dev v2.52 (SÓ DEV — produção segue na v2.49)
 - Os 📡 do `okr-dev` viram o `radar-logo.png` (classe `.rdr-logo`, acompanha o tamanho da letra): tela de login, cabeçalho da página, título "Radar — escolha uma torre" e o "Começar" da ajuda. Vai pra prod na próxima promoção.
 
