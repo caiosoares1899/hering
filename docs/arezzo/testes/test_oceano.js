@@ -17,13 +17,16 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    t('ADM: saudação com o primeiro nome', /Ana/.test(r.h1), r.h1); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
    t('já tem cadastro: não cria de novo', !r.cadastro.some(x=>/kanban\/usuarios\/ana$/.test(x)), r.cadastro);
    // temas
-   await p.click('#btn-eu'); await p.waitForTimeout(200); await p.click('#op-tema button[data-tema="abrolhos"]'); await p.waitForTimeout(700);
-   const tema=await p.evaluate(()=>({t:document.documentElement.dataset.tema, ls:JSON.parse(localStorage.getItem('oceano_prefs')).tema, fb:window.__log.filter(l=>l[0]==='update'&&/oceano$/.test(l[1])).length}));
-   t('tema Abrolhos aplica, guarda no aparelho e grava no cadastro', tema.t==='abrolhos' && tema.ls==='abrolhos' && tema.fb>=1, tema);
+   await p.click('#btn-eu'); await p.waitForTimeout(200); const padrao=await p.evaluate(()=>document.documentElement.getAttribute('data-theme')); t('tema padrão é o Abrolhos da marca (sem data-theme), como as outras páginas', padrao===null, padrao);
+   await p.click('#op-tema button[data-tema="lencois"]'); await p.waitForTimeout(700);
+   const tema=await p.evaluate(()=>({t:document.documentElement.getAttribute('data-theme'), ls:JSON.parse(localStorage.getItem('oceano_prefs')).tema, mare:localStorage.getItem('mare_theme'), fb:window.__log.filter(l=>l[0]==='update'&&/oceano$/.test(l[1])).length}));
+   t('tema Lençóis aplica (data-theme="light"), vale nas outras páginas (mare_theme) e grava no cadastro', tema.t==='light' && tema.ls==='lencois' && tema.mare==='light' && tema.fb>=1, tema);
+   await p.click('#op-tema button[data-tema="entardecer"]'); await p.waitForTimeout(200); t('Entardecer é opcional (data-theme="sunset")', (await p.evaluate(()=>document.documentElement.getAttribute('data-theme')))==='sunset', 'tema');
    // peixinhos
-   const cont=async()=>p.evaluate(()=>({peixes:document.querySelectorAll('#peixes .peixe').length,bolhas:document.querySelectorAll('#peixes .bolha').length}));
-   await p.click('#op-peixes button[data-peixes="muitos"]'); const mu=await cont(); await p.click('#op-peixes button[data-peixes="off"]'); const off=await cont();
-   t('peixinhos: muitos > 0, desligados = 0 (e sem bolhas)', mu.peixes>=10 && off.peixes===0 && off.bolhas===0, {mu,off});
+   const cont=async()=>p.evaluate(()=>({peixes:document.querySelectorAll('#fwrap .fish-ltr,#fwrap .fish-rtl').length,bolhas:document.querySelectorAll('#bwrap .bubble').length,svgs:[...new Set([...document.querySelectorAll('#fwrap svg')].map(x=>x.getAttribute('viewBox')))].sort().join('|')}));
+   await p.click('#op-peixes button[data-peixes="normal"]'); const mu=await cont(); await p.click('#op-peixes button[data-peixes="off"]'); const off=await cont();
+   t('peixinhos iguais aos do Maré: 8 peixes e 16 bolhas, com as 3 silhuetas; desligados = 0', mu.peixes===8 && mu.bolhas===16 && mu.svgs==='0 0 42 22|0 0 60 28|0 0 72 34' && off.peixes===0 && off.bolhas===0, {mu,off});
+   t('desligar espelha no liga/desliga do Maré (fish_bg_off)', await p.evaluate(()=>localStorage.getItem('fish_bg_off')==='1'), 'fish_bg_off');
    // sigla
    await p.fill('#pf-init','mm'); await p.dispatchEvent('#pf-init','change'); await p.waitForTimeout(300);
    t('sigla grava em kanban/usuarios/uid', await p.evaluate(()=>window.__log.some(l=>l[0]==='update'&&l[1]==='kanban/usuarios/ana')), 'sem update');
@@ -56,7 +59,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
  // 6) automático em aba normal abre aba nova (não hospeda)
  { const {ctx,p}=await open(U('ana','Ana Silva')); const pop=p.waitForEvent('popup'); await p.click('#cabines button[data-app="kanban"]'); const np=await pop; t('modo automático no navegador: abre em aba nova (não no host)', /kanban-dev\.html/.test(np.url()) && !(await p.evaluate(()=>document.getElementById('host').classList.contains('on'))), np.url()); await ctx.close(); }
  // 7) ajuda + busca; movimento reduzido
- { const {ctx,p}=await open(U('ana','Ana Silva'),{reduce:true}); const c=await p.evaluate(()=>({peixes:document.querySelectorAll('#peixes .peixe').length, ajuda:(document.getElementById('btn-ajuda').click(), document.querySelectorAll('#faq details').length)}));
+ { const {ctx,p}=await open(U('ana','Ana Silva'),{reduce:true}); const c=await p.evaluate(()=>({peixes:document.querySelectorAll('#fwrap div').length, ajuda:(document.getElementById('btn-ajuda').click(), document.querySelectorAll('#faq details').length)}));
    await p.fill('#ajuda-busca','instalar'); const f=await p.evaluate(()=>[...document.querySelectorAll('#faq summary')].map(x=>x.textContent));
    t('movimento reduzido do sistema: peixinhos começam desligados', c.peixes===0 && c.ajuda>=8, c); t('busca da ajuda filtra', f.length>=1 && f.length<c.ajuda && f.some(x=>/instalo/i.test(x)), f); await ctx.close(); }
  // 8) celular

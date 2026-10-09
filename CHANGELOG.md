@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Oceano: visual volta pro Marine Glass das outras páginas — 2026-10-09 · oceano-dev v1.1 (SÓ DEV)
+- **Layout igual ao das outras páginas:** mesmos tokens do Maré/Painel/Radar (`--deep`, `--glass`, `--accent`…), cabeçalho de vidro (título "Oceano" + subtítulo, botões `.btn`, chip do usuário), cards de vidro, botão primário azul, fontes Syne/DM Sans. Saiu a madeira/latão, a corda, as ondas e o gradiente de pôr do sol como padrão.
+- **Peixinhos e bolhas são os do Maré Digital:** as mesmas 3 silhuetas (azul/teal/cyan), 8 peixes e 16 bolhas (metade no celular), mesmas animações, e o mesmo comportamento no tema claro. **Sumiram os "pontos dourados"** (eram as bolhas na cor âmbar do tema antigo). Preferência "Como no Maré / Poucos / Desligados" espelha o 🐟 liga/desliga do Maré (`fish_bg_off`).
+- **Temas:** 🌙 Abrolhos (padrão) e ☀️ Lençóis Maranhenses usam a **mesma chave `mare_theme`** das outras páginas — escolher aqui vale no Maré, Painel e Radar. 🌅 Entardecer ficou como opcional, só no Oceano.
+- Faixa laranja "🧪 OCEANO DEV" como nas outras páginas `-dev`. Vigias (logos redondas) agora com anel de vidro azul em vez de latão.
+- Teste atualizado (`test_oceano.js`): tema padrão sem `data-theme`, Lençóis → `light` + `mare_theme`, peixinhos 8/16 com as 3 silhuetas e espelho em `fish_bg_off`.
+
 ### 🌊 Oceano — a página-lobby da família (NOVA) — 2026-10-09 · oceano-dev v1.0 · mare-notif-dev v12 · okr-dev/painel-dev/kanban-dev (`?v=12`) (SÓ DEV)
 - **Página nova `oceano-dev.html`** (+ `favicon-oceano.png`, `oceano-logo.png`, `oceano-icon-192/512.png`, `oceano-dev.webmanifest`): o lobby/boas-vindas que reúne Maré Digital, Painel, Radar, A Bordo e Travessia (em breve). **Login só Google @ciahering** (outra conta é barrada; visualizador externo do Radar segue usando o `okr.html`).
 - **Vibe de salão de cruzeiro:** cabeçalho de madeira com latão, produtos em **vigias** (portholes) de latão, corda separando as seções; 3 ambientes — 🌅 **Entardecer** (padrão), 🌙 **Abrolhos**, ☀️ **Lençóis Maranhenses**. **Peixinhos, bolhas e ondas desligáveis** (desligados/poucos/muitos; começam desligados se o sistema pede menos movimento; pausam com a aba em segundo plano).
