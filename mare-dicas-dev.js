@@ -4,15 +4,17 @@
    Fica na raiz do domínio, como mare-notif(-dev).js: exceção à regra "sem import entre páginas", mesmo ciclo dev→prod (?v=N nas páginas).
 
    O que faz: mostra UMA dica curta por vez, no canto da tela, quando a pessoa chega num lugar do app (gatilho). Cada dica aparece uma vez só.
-   Cada app tem o PRÓPRIO catálogo (a página passa em init); Painel e A Bordo não usam.
+   Cada app tem o PRÓPRIO catálogo, que vive AQUI no módulo (CATALOGO: dados puros — id, gatilho, texto, saiba, ajuda) pra o Painel poder listar tudo
+   (⚙ Configurações → 💡 Dicas). A página só informa o que depende do estado dela: `quando` (id → função) e `abrirAjuda`. Painel e A Bordo não mostram dicas.
    Controles da pessoa: "Entendi", "Saiba mais" (abre o tópico certo da ajuda do app), "Não mostrar dicas do <app>", e na ajuda de cada app
    (MareDicas.controle) o interruptor + "Rever dicas". Desligar vale por app: desligar no Radar não desliga no Maré.
 
    Dados: kanban/usuarios/{uid}/dicas = {off:{radar:true}, vistas:{radar:{idDaDica:true}}} (cada pessoa lê/escreve o próprio nó — sem mudar regra)
    + cópia em localStorage (chave por uid), que também é o único armazenamento do visualizador externo (não escreve no Firebase).
 
+   Dica nova = 1 linha no CATALOGO do app aqui + (se depender de estado da tela) 1 entrada em `quando` na página + o gatilho, se for lugar novo.
    Uso (cada página, depois do login):
-     MareDicas.init({app:'radar', nome:'Radar', user, isViewer, abrirAjuda:topico=>…, dicas:[{id, gatilho, texto, saiba:'topico', quando:()=>true}]});
+     MareDicas.init({app:'radar', user, isViewer, abrirAjuda:topico=>…, quando:{idDaDica:()=>true}});
      MareDicas.gatilho('view:dashboard');          // onde a pessoa chegou; a dica só abre se houver uma não vista pra esse gatilho
      MareDicas.controle(elemento);                 // interruptor "💡 Dicas" + "Rever dicas" dentro da ajuda
    Depende só dos helpers que as páginas já expõem em window: _db _ref _get _set.
@@ -25,6 +27,41 @@
   const ESPERA_ENTRE_MS = 50000; // intervalo mínimo entre duas dicas
   const MAX_SESSAO = 4;          // no máximo por abertura da página
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  // ── CATÁLOGO: dados puros por app. `saiba` = o que a página entrega ao abrirAjuda (string ou {tab,q}); `ajuda` = nome do tópico, só pra listar (Painel).
+  //    `gatilhos` = rótulo legível de cada lugar. Textos curtos e simples; cada dica aparece uma vez só.
+  const CATALOGO = {
+    radar:{nome:'Radar', icone:'🛰️', gatilhos:{boot:'Ao entrar', 'view:historico':'Ao abrir o Dashboard', 'view:calendario':'Ao abrir o Calendário', 'view:cards':'Ao abrir a aba Cards', 'obj-modal':'Ao abrir um Objetivo'}, dicas:[
+      {id:'semaforo',    gatilho:'boot',            texto:'O status do Objetivo é automático: vem do pior Marco. Atualize os Marcos e o semáforo muda sozinho.', saiba:'marcos', ajuda:'Marcos e status'},
+      {id:'atingimento', gatilho:'boot',            texto:'Dá pra medir cada Objetivo por uma meta (R$, %, número…). Abra o Objetivo e use 📈 Atingimento.', saiba:'atingimento', ajuda:'Atingimento — a meta do Objetivo'},
+      {id:'agente',      gatilho:'boot',            texto:'Precisa registrar algo rápido? Converse com o 🤖 Agente Ágil, no canto da tela.', saiba:'agente', ajuda:'Central Agente Ágil'},
+      {id:'menu',        gatilho:'boot',            texto:'Clique com o botão direito num Objetivo ou Marco pra ver ações rápidas.', saiba:'menu', ajuda:'Menu de ações (clique direito)'},
+      {id:'apresentacao',gatilho:'boot',            texto:'Hora da reunião? Use 🎥 Apresentação (tela cheia). As setas ← → passam os slides.', saiba:'apresentacao', ajuda:'Apresentação em slides'},
+      {id:'modal-atalhos',gatilho:'obj-modal',      texto:'Os atalhos no topo levam direto a cada seção do Objetivo.', saiba:'modal', ajuda:'O modal do Objetivo'},
+      {id:'trava',       gatilho:'obj-modal',       texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava', ajuda:'Edição simultânea do mesmo Objetivo'},
+      {id:'dash-filtro', gatilho:'view:historico',  texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
+      {id:'dash-contrib',gatilho:'view:historico',  texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
+      {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário'},
+      {id:'cards-carregar',gatilho:'view:cards',    texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.'}]},
+    mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
+      {id:'busca',    gatilho:'boot',      texto:'Aperte Ctrl+K pra buscar qualquer card, de qualquer squad.', saiba:{tab:'board', q:'Busca global'}, ajuda:'Busca global (Ctrl+K)'},
+      {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
+      {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
+      {id:'desfazer', gatilho:'boot',      texto:'Mexeu sem querer? Ctrl+Z desfaz a última mudança no board.', saiba:{tab:'board', q:'Desfazer'}, ajuda:'Desfazer (Ctrl+Z)'},
+      {id:'meus',     gatilho:'boot',      texto:'Quer ver só o que é seu? Use o filtro Meus cards.', saiba:{tab:'board', q:'Meus cards'}, ajuda:'Meus cards'},
+      {id:'oceano',   gatilho:'boot',      texto:'O botão ⋮⋮⋮ do topo leva ao Radar, ao Painel e à página Oceano.', saiba:{tab:'board', q:'Menu de produtos'}, ajuda:'Menu de produtos (⋮⋮⋮) e a página Oceano'},
+      {id:'mencao',   gatilho:'card-open', texto:'Digite @ na descrição ou num comentário pra chamar alguém. A pessoa recebe um aviso.', saiba:{tab:'cards', q:'Menções'}, ajuda:'Menções'},
+      {id:'checklist',gatilho:'card-open', texto:'No checklist, cole uma lista: cada linha vira um item.', saiba:{tab:'cards', q:'Checklist'}, ajuda:'Checklist'},
+      {id:'travado',  gatilho:'card-open', texto:'Duas pessoas no mesmo card? Quem abre primeiro edita; a outra vê em modo leitura.', saiba:{tab:'cards', q:'Card travado'}, ajuda:'Card travado (duas pessoas no mesmo card)'},
+      {id:'automacao',gatilho:'cfg-open',  texto:'Em Automações, regras do tipo "quando acontecer X, faça Y" trabalham por você.', saiba:{tab:'automacoes', q:'O que é uma automação'}, ajuda:'O que é uma automação'}]},
+    oceano:{nome:'Oceano', icone:'🌐', gatilhos:{boot:'Ao entrar', sino:'Ao abrir o 🔔', perfil:'Ao abrir ⚙ Meu perfil'}, dicas:[
+      {id:'instalar', gatilho:'boot',   texto:'Instale o Oceano como aplicativo: Maré, Radar e Painel abrem como abas dentro dele.', saiba:'instalar', ajuda:'Como instalo o Oceano como aplicativo?'},
+      {id:'menu',     gatilho:'boot',   texto:'O botão ⋮⋮⋮ do topo leva a qualquer produto. Lá também ficam os links da Hering e os seus.', saiba:'links', ajuda:'Meus links e links da Hering'},
+      {id:'aqui',     gatilho:'boot',   texto:'Prefere cada produto numa aba do navegador? Troque em ⚙ Meu perfil → Como abrir os produtos.', saiba:'aqui', ajuda:'Abrir aqui dentro x aba nova'},
+      {id:'sino',     gatilho:'sino',   texto:'Este 🔔 é o mesmo do Maré e do Radar. Ative as notificações neste aparelho pra receber no celular.', saiba:'sino', ajuda:'O sininho 🔔 do topo'},
+      {id:'peixes',   gatilho:'perfil', texto:'O fundo pesa no seu aparelho? Dá pra reduzir ou desligar os peixinhos aqui.', saiba:'peixes', ajuda:'Os peixinhos pesam? Como desligo?'},
+      {id:'tema',     gatilho:'perfil', texto:'Abrolhos (escuro) ou Lençóis (claro): escolha o tema que cansa menos a vista.', saiba:'tema', ajuda:'Dá pra mudar as cores?'}]},
+  };
 
   const S = {app:'', nome:'', user:null, viewer:false, dicas:[], abrirAjuda:null, prefs:{off:{}, vistas:{}}, pronto:false,
              atual:null, ultima:0, mostradas:0, timer:0, pendente:null, ouvintes:[]};
@@ -154,8 +191,11 @@
   // ── início ──
   function init(o){
     o = o||{};
-    S.app = String(o.app||''); S.nome = String(o.nome||''); S.user = o.user||null; S.viewer = !!o.isViewer;
-    S.dicas = Array.isArray(o.dicas) ? o.dicas.filter(d=>d && d.id && d.gatilho && d.texto) : [];
+    S.app = String(o.app||''); S.user = o.user||null; S.viewer = !!o.isViewer;
+    const cat = CATALOGO[S.app]; S.nome = String(o.nome || (cat && cat.nome) || '');
+    const quando = (o.quando && typeof o.quando==='object') ? o.quando : {};
+    const base = Array.isArray(o.dicas) ? o.dicas : (cat ? cat.dicas : []);   // `dicas` na chamada = só pra teste
+    S.dicas = base.filter(d=>d && d.id && d.gatilho && d.texto).map(d=>Object.assign({}, d, typeof quando[d.id]==='function' ? {quando:quando[d.id]} : {}));
     S.abrirAjuda = typeof o.abrirAjuda==='function' ? o.abrirAjuda : null;
     S.prefs = norm(lsLer()); S.pronto = true; avisa();   // já dá pra mostrar com o que está no aparelho
     if(remoto()){
@@ -169,6 +209,15 @@
     }
   }
 
-  window.MareDicas = {init, gatilho, controle, definir, reiniciar, ativas:()=>ativas(), fechar:fecha,
+  // Painel: lista tudo e mostra o que ESTA pessoa já viu (lê só o próprio nó)
+  const catalogo = () => JSON.parse(JSON.stringify(CATALOGO));
+  async function minhasPrefs(user){
+    let p = norm(null);
+    try{ const o = JSON.parse(localStorage.getItem('mare_dicas_'+((user&&user.uid)||'anon'))||'null'); if(o) p = norm(o); }catch(e){}
+    try{ if(user && window._db && window._get){ const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+user.uid+'/dicas')); if(sn && sn.exists()) p = norm(sn.val()); } }catch(e){}
+    return p;
+  }
+
+  window.MareDicas = {init, gatilho, controle, catalogo, minhasPrefs, definir, reiniciar, ativas:()=>ativas(), fechar:fecha,
     _estado:()=>({app:S.app, ativas:ativas(), atual:S.atual, mostradas:S.mostradas, vistas:Object.assign({}, S.prefs.vistas[S.app]||{}), prefs:S.prefs})};
 })();

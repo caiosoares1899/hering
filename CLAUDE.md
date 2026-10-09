@@ -99,7 +99,7 @@ letting them hit the error first.
   `kanban/notif_feed_seen/{uid}`) e o roteador de tipos de notificação (ícone + URL entre páginas), além do rodapé do sino (🔊 som · permissão deste aparelho/push · 🔕 Não Perturbe) usado pelo OKR e pelo painel, usado pelo sino de
   `kanban`, `painel` e `okr` — a notificação tem que aparecer igual em qualquer página. Segue o mesmo ciclo dev→prod
   (as páginas `-dev` carregam `mare-notif-dev.js?v=N`, as de prod `mare-notif.js?v=N`; ao mudar o módulo, bump o `?v=` nas páginas).
-- `mare-dicas-dev.js` / `mare-dicas.js` — **dicas (mini popups)**: segundo módulo compartilhado (raiz do domínio), usado só por `kanban` (Maré), `okr` (Radar) e `oceano` — Painel e A Bordo ficam de fora. Cada app tem o próprio catálogo (`MARE_DICAS`/`OKR_DICAS`/`OCEANO_DICAS`) e chama `MareDicas.gatilho(...)` onde a pessoa chega; o módulo cuida de aparecer 1 por vez, uma vez só, e do liga/desliga por app (`kanban/usuarios/{uid}/dicas`). **Dica nova = uma linha no catálogo do app + (se couber) o `saiba` apontando pra um tópico da Ajuda.** Mesmo ciclo dev→prod do `mare-notif` (`?v=` nas páginas).
+- `mare-dicas-dev.js` / `mare-dicas.js` — **dicas (mini popups)**: segundo módulo compartilhado (raiz do domínio), usado só por `kanban` (Maré), `okr` (Radar) e `oceano` — Painel e A Bordo não mostram dicas (o Painel só **lista** todas, em ⚙ Configurações → 💡 Dicas). O **catálogo de todos os apps vive no módulo** (`CATALOGO`: id, gatilho, texto curto, `saiba` → tópico da Ajuda, `ajuda` = nome do tópico); cada página só chama `MareDicas.init({app, user, quando:{id:fn}, abrirAjuda})` e `MareDicas.gatilho(...)` onde a pessoa chega. O módulo cuida de aparecer 1 por vez, uma vez só, e do liga/desliga por app (`kanban/usuarios/{uid}/dicas`). **Dica nova = 1 linha no `CATALOGO` + (se depender do estado da tela) 1 entrada em `quando` na página.** Mesmo ciclo dev→prod do `mare-notif` (`?v=` nas páginas — bump em todas ao mudar o módulo).
 - `firebase-messaging-sw.js` — the Service Worker. **Must stay at the domain
   root** (not in a subfolder) — it handles both offline caching and showing
   push notifications when the tab is closed/backgrounded.
@@ -245,6 +245,8 @@ page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
    this way — never `ts: Date.now()`** — `loadComments()` sorts with
    `a.ts.localeCompare(b.ts)`, which throws and silently breaks the ENTIRE
    comment list for that card if `ts` isn't a string.
+
+7. **Avaliar uma dica (regra permanente, 2026-10-09).** Toda vez que implementarmos algo **novo e visível** em Radar, Maré ou Oceano, avalie se vale uma dica (mini popup) sobre isso — e diga na resposta o que decidiu ("dica: sim, X" ou "dica: não, porque Y"). Vale uma dica quando é um atalho/recurso que a pessoa não descobre sozinha e que economiza tempo; **não vale** pra correção de bug, mudança só interna, ou algo que já é óbvio na tela. Texto simples e curto (uma frase), com "Saiba mais" se houver tópico na Ajuda (e a Ajuda também precisa estar em dia — `/atualizarhelpcontent`). Implementar = linha no `CATALOGO` de `mare-dicas-dev.js` (+ `quando`/gatilho se for lugar novo) e entrada no `CHANGELOG.md`.
 
 Files without a `-dev` counterpart (`firebase-messaging-sw.js`,
 `database.rules.json`, `functions/`) skip the dev-first step — they're

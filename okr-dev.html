@@ -2023,7 +2023,7 @@ window.dispatchEvent(new Event('fb-ready'));
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=16"></script>
-<script src="mare-dicas-dev.js?v=1"></script>
+<script src="mare-dicas-dev.js?v=2"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -3183,24 +3183,13 @@ function _okrMuralChecaPopup(){
 }
 
 
-// ── 💡 Dicas (mini popups) do Radar — módulo mare-dicas(-dev).js. Textos curtos, 1 por vez, cada uma uma vez só; "Saiba mais" abre o tópico da Ajuda (hlp-<id>).
-//    gatilho 'boot' = ao entrar (1 por visita, na ordem); 'view:<aba>' e 'obj-modal' = ao chegar no lugar. `quando` é reconferido na hora de mostrar.
-const OKR_DICAS = [
-  {id:'semaforo',   gatilho:'boot',          texto:'O status do Objetivo é automático: vem do pior Marco. Atualize os Marcos e o semáforo muda sozinho.', saiba:'marcos'},
-  {id:'atingimento',gatilho:'boot',          texto:'Dá pra medir cada Objetivo por uma meta (R$, %, número…). Abra o Objetivo e use 📈 Atingimento.', saiba:'atingimento'},
-  {id:'agente',     gatilho:'boot',          texto:'Precisa registrar algo rápido? Converse com o 🤖 Agente Ágil, no canto da tela.', saiba:'agente'},
-  {id:'menu',       gatilho:'boot',          texto:'Clique com o botão direito num Objetivo ou Marco pra ver ações rápidas.', saiba:'menu'},
-  {id:'apresentacao',gatilho:'boot',         texto:'Hora da reunião? Use 🎥 Apresentação (tela cheia). As setas ← → passam os slides.', saiba:'apresentacao'},
-  {id:'modal-atalhos',gatilho:'obj-modal',   texto:'Os atalhos no topo levam direto a cada seção do Objetivo.', saiba:'modal'},
-  {id:'trava',      gatilho:'obj-modal',     texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava'},
-  {id:'dash-filtro',gatilho:'view:historico',texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', quando:()=>_okrShowHistorico},
-  {id:'dash-contrib',gatilho:'view:historico',texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', quando:()=>_okrShowHistorico},
-  {id:'cal-dia',    gatilho:'view:calendario',texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', quando:()=>_okrShowCal},
-  {id:'cards-carregar',gatilho:'view:cards', texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.', quando:()=>_okrShowCards},
-];
+// ── 💡 Dicas (mini popups) do Radar — módulo mare-dicas(-dev).js: o CATÁLOGO (textos, gatilhos, "saiba mais") vive lá (o Painel lista tudo).
+//    Aqui só o que depende do estado desta tela: `quando` (reconferido na hora de mostrar) e o abrirAjuda (tópico hlp-<id>).
+//    gatilhos: 'boot' (ao entrar, 1 por visita), 'view:<aba>' em _okrSetView(), 'obj-modal' em openOkrObjetivo().
+const OKR_DICAS_QUANDO = {'dash-filtro':()=>_okrShowHistorico, 'dash-contrib':()=>_okrShowHistorico, 'cal-dia':()=>_okrShowCal, 'cards-carregar':()=>_okrShowCards};
 function _okrDicasIniciar(u){
   if(!window.MareDicas || !u) return;
-  MareDicas.init({app:'radar', nome:'Radar', user:u, isViewer:!!window._isPainelViewer, dicas:OKR_DICAS, abrirAjuda:t=>openOkrHelp(t)});
+  MareDicas.init({app:'radar', user:u, isViewer:!!window._isPainelViewer, quando:OKR_DICAS_QUANDO, abrirAjuda:t=>openOkrHelp(t)});
   setTimeout(()=>MareDicas.gatilho('boot'), 5000);   // depois do login/carga da tela
 }
 

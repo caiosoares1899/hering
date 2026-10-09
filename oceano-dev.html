@@ -510,7 +510,7 @@ window.dispatchEvent(new Event('fb-ready'));
 </script>
 
 <script src="mare-notif-dev.js?v=16"></script>
-<script src="mare-dicas-dev.js?v=1"></script>
+<script src="mare-dicas-dev.js?v=2"></script>
 
 <script>
 (function(){
@@ -688,19 +688,12 @@ function sinoClique(k, id){
   if(!alvo) return;
   if(alvo.externo) window.open(alvo.url, '_blank', 'noopener'); else rotearUrl(alvo.url);
 }
-// ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js. 1 por vez, cada uma uma vez só; "Saiba mais" abre a pergunta certa da Ajuda (faq-<id>).
-//    gatilho 'boot' = ao entrar (1 por visita); 'sino' = ao abrir o 🔔; 'perfil' = ao abrir ⚙ Meu perfil.
-const OCEANO_DICAS = [
-  {id:'instalar', gatilho:'boot',   texto:'Instale o Oceano como aplicativo: Maré, Radar e Painel abrem como abas dentro dele.', saiba:'instalar', quando:()=>!standalone()},
-  {id:'menu',     gatilho:'boot',   texto:'O botão ⋮⋮⋮ do topo leva a qualquer produto. Lá também ficam os links da Hering e os seus.', saiba:'links'},
-  {id:'aqui',     gatilho:'boot',   texto:'Prefere cada produto numa aba do navegador? Troque em ⚙ Meu perfil → Como abrir os produtos.', saiba:'aqui'},
-  {id:'sino',     gatilho:'sino',   texto:'Este 🔔 é o mesmo do Maré e do Radar. Ative as notificações neste aparelho pra receber no celular.', saiba:'sino'},
-  {id:'peixes',   gatilho:'perfil', texto:'O fundo pesa no seu aparelho? Dá pra reduzir ou desligar os peixinhos aqui.', saiba:'peixes'},
-  {id:'tema',     gatilho:'perfil', texto:'Abrolhos (escuro) ou Lençóis (claro): escolha o tema que cansa menos a vista.', saiba:'tema'},
-];
+// ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado da página.
+//    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' em sinoToggle(), 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
+const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone()};
 function iniciarDicas(){
   if(!window.MareDicas || !U) return;
-  MareDicas.init({app:'oceano', nome:'Oceano', user:U, isViewer:false, dicas:OCEANO_DICAS, abrirAjuda:id=>abrirAjuda(id)});
+  MareDicas.init({app:'oceano', user:U, isViewer:false, quando:OCEANO_DICAS_QUANDO, abrirAjuda:id=>abrirAjuda(id)});
   setTimeout(()=>MareDicas.gatilho('boot'), 4500);
 }
 function iniciarSino(){

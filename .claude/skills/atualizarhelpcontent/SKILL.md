@@ -106,6 +106,10 @@ open('/tmp/help_check.js','w',encoding='utf-8').write(scripts[0])
 node --check /tmp/help_check.js
 ```
 
+## Passo 5.1 — Vale uma dica (mini popup)?
+
+Desde 2026-10-09 (regra permanente do `CLAUDE.md`, passo 7 do Release process): ao documentar uma funcionalidade **nova e visível** de Radar, Maré ou Oceano, avalie também se vale uma dica no `CATALOGO` de `mare-dicas-dev.js` — uma frase curta, com `saiba` apontando pro tópico que você acabou de escrever/atualizar (e `ajuda` com o nome dele, pra lista do Painel). Diga na resposta o que decidiu.
+
 ## Passo 6 — Fluxo de release
 
 Mesmo processo do `CLAUDE.md` ("Release process") — texto de ajuda é
