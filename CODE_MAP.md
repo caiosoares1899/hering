@@ -3743,6 +3743,7 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 ## oceano-dev.html (lobby da família Oceano — 2026-10-09, só dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
 Re-grep o nome antes de confiar em linha.
 - `APPS` / `PROD` / `FAQ` — os produtos (id, href, logo, visibilidade), o texto de cada aba e a ajuda; `visivel(a)` = mesma regra do menu de 9 pontinhos (Painel só ADM/quem usa).
+- **Abas:** `irAba()` (inicio/conheca/tecnica, `#conheca`/`#tecnica`); `renderTudo()` monta a grade `#tiles`, os atalhos `#atalhos` (squads do Maré + Radar) e a dica de teclas 1–9.
 - `iniciarSessao()` — lê `nome/init/role/squads/apps/oceano/uid` de `kanban/usuarios/{uid}` (ramos, não o registro inteiro), cria cadastro básico se faltar, aplica prefs, `rotearHash()`.
 - `prefs` / `salvarPrefs()` / `aplicarPrefs()` — tema (`data-tema`), peixinhos, ondas, `abrir`, `inicio`, `apelido`, `ultimo`; localStorage `oceano_prefs` + `kanban/usuarios/{uid}/oceano`.
 - `criarPeixes()` — peixinhos/bolhas SVG; `renderTudo()`, `renderAbas()`, `renderVersoes()` (lê `version.json`).

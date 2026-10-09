@@ -7,7 +7,7 @@
 <link rel="apple-touch-icon" href="oceano-icon-192.png">
 <link rel="manifest" href="oceano-dev.webmanifest">
 <meta name="theme-color" content="#030d1a">
-<title>🧪 Oceano · Dev</title>
+<title>Oceano · Dev</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <script>
@@ -113,72 +113,92 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .chip.dev{color:var(--warn);border-color:rgba(255,209,102,.4);background:rgba(255,209,102,.1);}
 .chip.lock{color:var(--txt3);}
 
-/* ═══ HERO ═══ */
-.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:30px;align-items:center;padding:52px 0 8px;}
-.hero .hi{font-size:14px;font-weight:600;color:var(--teal);margin-bottom:10px;}
-.hero h1{font-family:var(--ff-d);font-weight:800;font-size:clamp(34px,5.6vw,60px);line-height:1.04;letter-spacing:-.02em;margin-bottom:16px;}
-.hero h1 em{font-style:normal;background:linear-gradient(90deg,var(--accent),var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent;}
-.hero p.l{font-size:17px;line-height:1.6;color:var(--txt2);max-width:560px;margin-bottom:22px;}
-.hero .ctas{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
-.hero .sel{display:flex;flex-wrap:wrap;gap:8px;}
-.ph-wrap{display:flex;justify-content:center;}
-/* "vigia": a logo recortada num círculo de vidro com brilho azul (a marca do Oceano é redonda) */
-.porthole{--s:84px;width:var(--s);height:var(--s);border-radius:50%;flex:none;position:relative;display:block;border:2px solid var(--glass-b);background:var(--glass);box-shadow:0 0 0 4px rgba(56,182,255,.08),0 8px 26px rgba(0,60,140,.35);}
+/* ═══ ABAS (como as do Radar) ═══ */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--glass-b);margin:6px 0 22px;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;margin-bottom:-1px;}
+.tabs button:hover{color:var(--txt);}
+.tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);}
+.tabp{display:none;}.tabp.on{display:block;}
+
+/* ═══ INÍCIO: o dia a dia ═══ */
+.ola{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin:22px 0 16px;}
+.ola b{font-family:var(--ff-d);font-size:20px;font-weight:700;}
+.ola span{font-size:12px;color:var(--txt3);}
+.sec-title{font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);padding-bottom:8px;margin:26px 0 14px;}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px;}
+.tile{position:relative;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);transition:border-color .2s,transform .15s,box-shadow .2s;}
+.tile:hover,.tile:focus-within{border-color:var(--accent);box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);}
+.tile-main{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:12px;padding:26px 16px 16px;background:none;border:none;color:inherit;cursor:pointer;text-align:left;border-radius:var(--r2);min-height:150px;}
+.tile-logo{width:56px;height:56px;border-radius:14px;overflow:hidden;flex:none;display:block;box-shadow:0 2px 10px rgba(0,0,0,.3);}
+.tile-logo img,.tile-logo svg{width:100%;height:100%;display:block;object-fit:cover;}
+.tile-n{font-family:var(--ff-d);font-size:15px;font-weight:700;line-height:1.2;}
+.tile-s{display:block;font-size:12px;color:var(--txt2);line-height:1.4;margin-top:2px;}
+.tile-key{position:absolute;left:12px;top:9px;font-size:10px;color:var(--txt3);font-weight:600;}
+.tile-st{position:absolute;right:12px;top:9px;font-size:10px;font-weight:600;color:var(--txt3);display:flex;align-items:center;gap:4px;}
+.tile-st i{width:6px;height:6px;border-radius:50%;background:var(--warn);display:inline-block;}
+.tile-ac{position:absolute;right:8px;bottom:8px;display:flex;gap:2px;opacity:0;transition:opacity .15s;}
+.tile:hover .tile-ac,.tile:focus-within .tile-ac{opacity:1;}
+@media (hover:none){.tile-ac{opacity:.75;}}
+.tile-ac a,.tile-ac button{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;border:none;background:transparent;color:var(--txt2);font-size:14px;cursor:pointer;text-decoration:none;}
+.tile-ac a:hover,.tile-ac button:hover{background:rgba(56,182,255,.14);color:var(--txt);}
+.tile.futuro{opacity:.6;}.tile.futuro .tile-main{cursor:default;}
+.tile.ultimo .tile-n::after{content:'último';margin-left:7px;font-family:var(--ff);font-size:9.5px;font-weight:600;color:var(--teal);border:1px solid rgba(29,233,182,.4);border-radius:99px;padding:1px 7px;vertical-align:2px;}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;}
+.atalhos button{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
+.atalhos button:hover{border-color:var(--accent);}
+.atalhos img{width:16px;height:16px;border-radius:4px;}
+.dica{font-size:12px;color:var(--txt3);margin-top:22px;}
+.kbd{display:inline-block;border:1px solid var(--glass-b);border-radius:5px;padding:0 5px;font-size:10.5px;font-weight:600;color:var(--txt2);}
+.abertos{display:none;margin:0 0 14px;align-items:center;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--txt2);}
+.abertos.on{display:flex;}
+.pg-h{font-family:var(--ff-d);font-size:24px;font-weight:700;letter-spacing:-.01em;margin:8px 0 8px;}
+.pg-l{font-size:14.5px;line-height:1.6;color:var(--txt2);max-width:720px;margin-bottom:22px;}
+.sub-h{font-family:var(--ff-d);font-size:16px;font-weight:700;margin:34px 0 12px;}
+/* vigia (logo redonda): só no login e nas abas do host */
+.porthole{--s:84px;width:var(--s);height:var(--s);border-radius:50%;flex:none;position:relative;display:block;border:2px solid var(--glass-b);background:var(--glass);}
 .porthole .vid{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;background:#0b2a55;position:relative;}
 .porthole .vid img,.porthole .vid svg{width:100%;height:100%;display:block;object-fit:cover;}
-.porthole .vid::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 30% 24%,rgba(255,255,255,.22),transparent 40%);pointer-events:none;}
-.ph-big{--s:min(300px,72vw);animation:balanca 6s ease-in-out infinite alternate;box-shadow:0 0 0 8px rgba(56,182,255,.07),0 0 60px rgba(56,182,255,.25);}
-@keyframes balanca{from{transform:rotate(-2.5deg) translateY(0)}to{transform:rotate(2.5deg) translateY(-8px)}}
-@media (max-width:860px){.hero{grid-template-columns:1fr;}.ph-wrap{order:-1;}.ph-big{--s:min(190px,52vw);}}
-
-/* ═══ CARDS DOS PRODUTOS ═══ */
-.cabines{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:14px;}
-.cabine{padding:16px;display:flex;flex-direction:column;gap:10px;align-items:flex-start;position:relative;}
-.cabine h3{font-family:var(--ff-d);font-size:19px;font-weight:800;}
-.cabine p{font-size:13.5px;line-height:1.5;color:var(--txt2);flex:1;}
-.cabine .acoes{display:flex;gap:8px;flex-wrap:wrap;width:100%;}
-.cabine .acoes .btn.pri{flex:1;}
-.cabine.futuro{opacity:.78;border-style:dashed;}
-.cabine .st{position:absolute;top:14px;right:14px;}
-.abertos{display:none;margin:0 0 14px;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;color:var(--txt2);}
-.abertos.on{display:flex;}
+.ph-wrap{display:flex;justify-content:center;}
+@keyframes balanca{from{transform:rotate(-2.5deg) translateY(0)}to{transform:rotate(2.5deg) translateY(-6px)}}
 
 /* ═══ ARGUMENTOS ═══ */
 .dor{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:22px;}
 .dor>div{padding:22px;}
-.dor h3{font-family:var(--ff-d);font-size:18px;margin-bottom:12px;}
+.dor h3{font-family:var(--ff-d);font-size:15px;font-weight:700;margin-bottom:12px;}
 .dor ul{list-style:none;display:flex;flex-direction:column;gap:10px;}
-.dor li{display:flex;gap:10px;font-size:14.5px;line-height:1.5;color:var(--txt2);}
+.dor li{display:flex;gap:10px;font-size:13.5px;line-height:1.5;color:var(--txt2);}
 .dor li b{color:var(--txt);}
 .dor .depois{border-color:rgba(29,233,182,.35);background:linear-gradient(180deg,rgba(29,233,182,.1),var(--glass));}
 @media (max-width:760px){.dor{grid-template-columns:1fr;}}
 .argus{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;margin-bottom:26px;}
 .argu{padding:20px;}
-.argu .em{font-size:26px;margin-bottom:6px;}
-.argu h3{font-family:var(--ff-d);font-size:18px;line-height:1.2;margin-bottom:8px;}
-.argu p{font-size:14px;line-height:1.55;color:var(--txt2);margin-bottom:10px;}
-.argu .prova{font-size:12px;font-weight:700;color:var(--teal);display:flex;gap:6px;}
+.argu .em{display:none;}
+.argu h3{font-family:var(--ff-d);font-size:15px;font-weight:700;line-height:1.25;margin-bottom:8px;}
+.argu p{font-size:13.5px;line-height:1.55;color:var(--txt2);margin-bottom:10px;}
+.argu .prova{font-size:11.5px;font-weight:600;color:var(--txt3);}
+.argu .prova::before{content:'Na prática: ';color:var(--teal);}
 .quem{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:26px;}
 .quem>div{padding:20px;}
-.quem h3{font-family:var(--ff-d);font-size:17px;margin-bottom:6px;}
+.quem h3{font-family:var(--ff-d);font-size:15px;font-weight:700;margin-bottom:6px;}
 .quem p{font-size:13.5px;line-height:1.55;color:var(--txt2);}
 .faixa{padding:26px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;justify-content:space-between;background:linear-gradient(120deg,rgba(56,182,255,.16),var(--glass));}
-.faixa h3{font-family:var(--ff-d);font-size:22px;margin-bottom:4px;}
+.faixa h3{font-family:var(--ff-d);font-size:17px;font-weight:700;margin-bottom:4px;}
 .faixa p{font-size:14px;color:var(--txt2);max-width:560px;line-height:1.5;}
 
 /* ═══ PRODUTOS (abas) ═══ */
 .abas{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
-.aba{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 6px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
-.aba .porthole{--s:28px;box-shadow:none;border-width:1px;}
+.aba{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 8px;border-radius:99px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt);font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(8px);}
+.aba .tile-logo{width:24px;height:24px;border-radius:7px;box-shadow:none;}
 .aba:hover{border-color:var(--accent);}
 .aba[aria-selected="true"]{background:rgba(37,99,201,.65);border-color:var(--blue);color:#fff;}
 [data-theme="light"] .aba[aria-selected="true"]{background:rgba(0,119,173,.9);}
 .painel-prod{padding:26px;display:grid;grid-template-columns:1fr 1fr;gap:26px;}
-.painel-prod h3{font-family:var(--ff-d);font-size:24px;margin-bottom:4px;}
-.painel-prod .tag{font-size:14px;color:var(--teal);font-weight:700;margin-bottom:12px;}
-.painel-prod p{font-size:14.5px;line-height:1.6;color:var(--txt2);margin-bottom:12px;}
+.painel-prod h3{font-family:var(--ff-d);font-size:19px;font-weight:700;margin-bottom:4px;}
+.painel-prod .tag{font-size:12.5px;color:var(--teal);font-weight:600;margin-bottom:12px;}
+.painel-prod p{font-size:13.5px;line-height:1.6;color:var(--txt2);margin-bottom:12px;}
 .painel-prod ul{list-style:none;display:flex;flex-direction:column;gap:9px;}
-.painel-prod li{display:flex;gap:9px;font-size:14px;line-height:1.5;color:var(--txt2);}
+.painel-prod li{display:flex;gap:9px;font-size:13px;line-height:1.5;color:var(--txt2);}
 .painel-prod li b{color:var(--txt);}
 .painel-prod h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:10px;}
 .painel-prod .acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
@@ -187,13 +207,13 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 /* ═══ POR BAIXO DO CASCO ═══ */
 .arq{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin-bottom:18px;}
 .arq .no{flex:1;min-width:150px;padding:16px;text-align:center;}
-.arq .no b{display:block;font-size:14px;margin:4px 0 3px;}
+.arq .no b{display:block;font-size:13px;margin:4px 0 3px;}
 .arq .no span{font-size:12px;color:var(--txt2);line-height:1.4;display:block;}
 .arq .no .e{font-size:24px;}
 .arq .seta{align-self:center;font-size:20px;color:var(--accent);padding:0 6px;}
 @media (max-width:760px){.arq .seta{display:none;}.arq .no{margin-bottom:8px;}}
 .fatos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-bottom:20px;}
-.fato{padding:14px 16px;font-size:13.5px;line-height:1.5;color:var(--txt2);display:flex;gap:10px;}
+.fato{padding:12px 14px;font-size:12.5px;line-height:1.5;color:var(--txt2);display:flex;gap:10px;}
 .fato b{color:var(--txt);}
 table.vers{width:100%;border-collapse:collapse;font-size:13.5px;}
 table.vers th,table.vers td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--glass-b);}
@@ -289,10 +309,10 @@ input.in[readonly]{opacity:.7;}
 <!-- LOGIN (só Google @ciahering) -->
 <div id="login">
   <div class="vidro login-card">
-    <div class="ph-wrap"><div class="porthole ph-big" style="--s:132px;"><div class="vid"><img src="oceano-icon-192.png" alt="Oceano"></div></div></div>
+    <div class="ph-wrap"><div class="porthole" style="--s:110px;"><div class="vid"><img src="oceano-icon-192.png" alt="Oceano"></div></div></div>
     <h1>Oceano</h1>
-    <p>Maré Digital, Painel, Radar e mais — a família de produtos do time Digital Hering. Entre com a sua conta Google da empresa pra subir a bordo.</p>
-    <button class="btn pri gbtn" id="btn-login" type="button">🔐 Entrar com Google</button>
+    <p>Os produtos do time Digital Hering num lugar só. Entre com a sua conta Google da empresa.</p>
+    <button class="btn pri gbtn" id="btn-login" type="button">Entrar com Google</button>
     <div class="login-err" id="login-err" role="alert"></div>
     <div class="login-nota">Acesso só com <b>@ciahering.com.br</b> pelo Google. Seus dados ficam no Firebase da Hering, com as regras de acesso aplicadas no servidor.</div>
   </div>
@@ -302,10 +322,8 @@ input.in[readonly]{opacity:.7;}
 <div id="devbar" style="display:none;background:rgba(249,115,22,.12);border-bottom:1px solid rgba(249,115,22,.4);padding:4px 12px;font-size:10px;font-weight:700;color:#f97316;letter-spacing:.06em;text-align:center;">🧪 OCEANO DEV — página de teste; usa os dados REAIS (o mesmo cadastro das páginas de produção)</div>
 <header class="topo">
   <div class="topo-in">
-    <a class="marca" href="#inicio" aria-label="Oceano — início"><img src="favicon-oceano.png" alt=""><span class="tx">Oceano<small>Digital Hering · família de produtos</small></span></a>
-    <nav class="nav" aria-label="Seções">
-      <a href="#inicio" data-s="inicio">Início</a><a href="#produtos" data-s="produtos">Produtos</a><a href="#porque" data-s="porque">Por que o Oceano</a><a href="#casco" data-s="casco">Por baixo do casco</a>
-    </nav>
+    <a class="marca" href="#inicio" aria-label="Oceano — início"><img src="favicon-oceano.png" alt=""><span class="tx">Oceano<small>Digital Hering</small></span></a>
+    <div style="flex:1"></div>
     <div class="topo-dir">
       <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
       <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
@@ -315,104 +333,82 @@ input.in[readonly]{opacity:.7;}
 </header>
 
 <main id="inicio">
-  <!-- ══ HERO ══ -->
-  <section class="hero">
-    <div>
-      <div class="hi" id="hi">🌊 Oceano · a família de produtos do time Digital Hering</div>
-      <h1 id="h1-boas">Bem-vindo a bordo.</h1>
-      <p class="l">Planejar, acompanhar e entregar sem pular entre planilha, chat e reunião de status. Do Objetivo ao card, tudo no mesmo barco — com <b>uma conta só</b> e <b>um sino só</b>.</p>
-      <div class="ctas">
-        <button class="btn pri" id="btn-continuar" type="button">⚓ Abrir o Maré Digital</button>
-        <a class="btn" href="#produtos">🧭 Conhecer os produtos</a>
-      </div>
-      <div class="sel"><span class="chip">🔒 Só Google @ciahering</span><span class="chip">⚡ Tempo real</span><span class="chip">🔔 Um sino só</span><span class="chip">🤖 Agente Ágil</span><span class="chip">📲 Instala como app</span></div>
-    </div>
-    <div class="ph-wrap"><div class="porthole ph-big"><div class="vid"><img src="oceano-icon-512.png" alt="Logo do Oceano"></div></div></div>
-  </section>
+  <nav class="tabs" role="tablist" aria-label="Seções do Oceano">
+    <button type="button" role="tab" data-tab="inicio" aria-selected="true">Meus produtos</button>
+    <button type="button" role="tab" data-tab="conheca" aria-selected="false">Conheça o Oceano</button>
+    <button type="button" role="tab" data-tab="tecnica" aria-selected="false">Por baixo do casco</button>
+  </nav>
 
-  <!-- ══ SUA CABINE ══ -->
-  <section class="sec" id="cabine" style="padding-top:30px;">
-    <div class="sec-k">⚓ Sua cabine</div>
-    <h2>Seus produtos, a um toque</h2>
-    <p class="lead" id="cabine-lead">Os produtos que você usa. Abrir aqui mantém tudo dentro do Oceano — troca de um pro outro sem perder onde estava.</p>
+  <!-- ══ INÍCIO: o uso do dia a dia ══ -->
+  <section class="tabp on" id="tab-inicio" role="tabpanel">
+    <div class="ola"><b id="ola">Olá</b><span id="ola-data"></span></div>
     <div class="abertos" id="abertos"></div>
-    <div class="cabines" id="cabines"></div>
+    <div class="tiles" id="tiles"></div>
+    <div id="atalhos-wrap" style="display:none;"><div class="sec-title">Atalhos</div><div class="atalhos" id="atalhos"></div></div>
+    <p class="dica" id="dica-teclas"></p>
   </section>
 
-  <hr class="linha">
-
-  <!-- ══ POR QUE O OCEANO ══ -->
-  <section class="sec" id="porque">
-    <div class="sec-k">🧭 Por que o Oceano</div>
-    <h2>Um time só deveria navegar num barco só.</h2>
-    <p class="lead">Cada ferramenta solta cobra um imposto: login a mais, status em outro lugar, reunião pra descobrir o que já estava escrito. O Oceano junta o que o time Digital faz todo dia — e deixa o resto sair do caminho.</p>
+  <!-- ══ CONHEÇA: a "venda" ══ -->
+  <section class="tabp" id="tab-conheca" role="tabpanel">
+    <h2 class="pg-h">Pra que serve o Oceano</h2>
+    <p class="pg-l">O time Digital planeja, acompanha e entrega em ferramentas diferentes. O Oceano junta as que a gente mesmo construiu: a mesma conta Google, o mesmo sino e o mesmo visual.</p>
     <div class="dor">
-      <div class="vidro"><h3>🌫️ Como costuma ser</h3><ul>
-        <li><span>📄</span><span><b>Status espalhado</b> — planilha, chat, e-mail e a cabeça de cada pessoa.</span></li>
-        <li><span>🎯</span><span><b>Objetivo num slide, trabalho no board</b> — e ninguém liga uma coisa à outra.</span></li>
-        <li><span>🗣️</span><span><b>Reunião pra "atualizar"</b> o que já deveria estar visível pra todo mundo.</span></li>
-        <li><span>🔑</span><span><b>Um login, um sino e um jeito de usar</b> por ferramenta.</span></li></ul></div>
-      <div class="vidro depois"><h3>🌊 Com o Oceano</h3><ul>
-        <li><span>⚡</span><span><b>Tudo ao vivo</b> — o que alguém muda aparece pra todos na hora, sem F5.</span></li>
-        <li><span>🔗</span><span><b>Do Objetivo ao card</b> — o Radar enxerga o que o Maré entrega.</span></li>
-        <li><span>🧘</span><span><b>Reunião pra decidir</b>, não pra descobrir: o painel já mostra o estado das coisas.</span></li>
-        <li><span>🔐</span><span><b>Uma conta Google</b>, um sino, o mesmo visual em tudo.</span></li></ul></div>
+      <div class="vidro"><h3>Sem o Oceano</h3><ul>
+        <li><span>Status espalhado em planilha, chat e e-mail.</span></li>
+        <li><span>O Objetivo fica no slide e o trabalho no board, sem ligação entre os dois.</span></li>
+        <li><span>Reunião só pra atualizar o que já devia estar visível.</span></li>
+        <li><span>Cada ferramenta com o seu login e o seu jeito de avisar.</span></li></ul></div>
+      <div class="vidro depois"><h3>Com o Oceano</h3><ul>
+        <li><span>O que alguém muda aparece pra todo mundo na hora.</span></li>
+        <li><span>O Radar enxerga o que o Maré entrega.</span></li>
+        <li><span>A reunião serve pra decidir; o estado das coisas já está no painel.</span></li>
+        <li><span>Uma conta Google e um sino só.</span></li></ul></div>
     </div>
     <div class="argus">
-      <article class="vidro argu"><div class="em">🧭</div><h3>Do OKR ao card, sem ponte de planilha</h3><p>No Radar o Objetivo ganha Marcos e uma meta medida de verdade; os cards do Maré podem ser vinculados a ele. A estratégia deixa de ser um slide e vira algo que anda junto com a entrega.</p><div class="prova">✔ Radar ↔ Maré: cards vinculados ao Objetivo</div></article>
-      <article class="vidro argu"><div class="em">⚡</div><h3>Tempo real de verdade</h3><p>Banco em tempo real: quem abre o board vê o card mudando na hora. Presença online mostra quem está junto, e a trava de edição evita que duas pessoas sobrescrevam o mesmo Objetivo.</p><div class="prova">✔ Presença online · trava de edição · sem F5</div></article>
-      <article class="vidro argu"><div class="em">🤖</div><h3>Um agente que trabalha com você</h3><p>O Agente Ágil lê o contexto e age: marque-o num card do Maré ou converse com ele no Radar e ele atualiza Progresso, Riscos e Marcos — sempre com as mesmas permissões que você tem.</p><div class="prova">✔ Fala com você no card e no Radar</div></article>
-      <article class="vidro argu"><div class="em">🔔</div><h3>Um sino só</h3><p>A mesma notificação aparece em qualquer produto, vira push no celular e respeita o seu Não Perturbe. Menção, prazo, reunião do Radar, aviso do Mural: tudo num lugar.</p><div class="prova">✔ Sino único (Maré · Painel · Radar) + push</div></article>
-      <article class="vidro argu"><div class="em">🔒</div><h3>Seguro por padrão</h3><p>Acesso só com Google corporativo, regras aplicadas no servidor (esconder um botão nunca é a única barreira), histórico de alterações e backup semanal automático dos boards.</p><div class="prova">✔ Regras no servidor · backup semanal · histórico</div></article>
-      <article class="vidro argu"><div class="em">🛠️</div><h3>Feito em casa, evolui toda semana</h3><p>Quem constrói é o próprio time, em ciclos curtos: ajuste pedido, testado no ambiente dev, validado e só então promovido — tudo com changelog. O produto acompanha o jeito que a gente trabalha.</p><div class="prova">✔ Dev → validação → produção, com histórico</div></article>
+      <article class="vidro argu"><h3>Do OKR ao card</h3><p>No Radar o Objetivo tem Marcos e uma meta medida. Os cards do Maré podem ser vinculados a ele, então a estratégia anda junto com a entrega.</p><div class="prova">cards vinculados ao Objetivo</div></article>
+      <article class="vidro argu"><h3>Tudo ao vivo</h3><p>O board atualiza sozinho, sem F5. Dá pra ver quem está online, e a trava de edição evita duas pessoas sobrescrevendo o mesmo Objetivo.</p><div class="prova">presença online e trava de edição</div></article>
+      <article class="vidro argu"><h3>Agente Ágil</h3><p>Marque o Agente Ágil num card, ou converse com ele no Radar. Ele lê o contexto e atualiza progresso, riscos e Marcos, com as mesmas permissões que você tem.</p><div class="prova">funciona no card e no Radar</div></article>
+      <article class="vidro argu"><h3>Um sino só</h3><p>A mesma notificação aparece no Maré, no Painel e no Radar, vira push no celular e respeita o seu Não Perturbe.</p><div class="prova">sino único nos três produtos</div></article>
+      <article class="vidro argu"><h3>Acesso decidido no servidor</h3><p>Só entra quem tem Google @ciahering. As regras do banco aplicam isso no servidor, não só na tela. Tem histórico de alterações e backup semanal automático.</p><div class="prova">regras no servidor e backup semanal</div></article>
+      <article class="vidro argu"><h3>Evolui toda semana</h3><p>Quem constrói é o próprio time. O ajuste pedido passa por um ambiente de teste, é validado e só então vai pra produção, tudo registrado no changelog.</p><div class="prova">dev, validação e produção, com histórico</div></article>
     </div>
-    <h3 style="font-family:var(--ff-d);font-size:20px;margin-bottom:12px;">Quem sobe a bordo</h3>
+    <h3 class="sub-h">Quem usa o quê</h3>
     <div class="quem">
-      <div class="vidro"><h3>⚓ Quem executa</h3><p>Squads que vivem no <b>Maré Digital</b>: board, checklist, automações, métricas de fluxo e o Agente Ágil ao lado.</p></div>
-      <div class="vidro"><h3>🔭 Quem lidera</h3><p>Gestão e diretoria no <b>Painel</b> (visão consolidada, pessoas, comunicados) e no <b>Radar</b> (Objetivos, atingimento, reuniões, apresentação).</p></div>
-      <div class="vidro"><h3>🧳 Quem chega</h3><p>O <b>A Bordo</b> recebe quem está entrando no time com as boas-vindas e o essencial pra começar.</p></div>
+      <div class="vidro"><h3>Squads</h3><p>Vivem no <b>Maré Digital</b>: board, checklist, automações, métricas de fluxo e o Agente Ágil ao lado.</p></div>
+      <div class="vidro"><h3>Liderança</h3><p>Usa o <b>Painel</b> (visão consolidada, pessoas, comunicados) e o <b>Radar</b> (Objetivos, atingimento, reuniões, apresentação).</p></div>
+      <div class="vidro"><h3>Gente nova</h3><p>O <b>A Bordo</b> recebe quem está entrando no time, com as boas-vindas e o essencial pra começar.</p></div>
     </div>
-    <div class="vidro faixa"><div><h3>Quer o Oceano no seu time?</h3><p>A gente configura o seu squad, conecta ao Radar e acompanha as primeiras semanas. Fale com quem constrói.</p></div>
-      <div style="display:flex;gap:10px;flex-wrap:wrap;"><a class="btn pri" id="btn-contato" href="#">✉️ Falar com a squad</a><a class="btn" href="#produtos">Ver os produtos</a></div></div>
-  </section>
-
-  <hr class="linha">
-
-  <!-- ══ PRODUTOS ══ -->
-  <section class="sec" id="produtos">
-    <div class="sec-k">🗺️ Os produtos</div>
-    <h2>Cada produto, o que faz por você</h2>
-    <p class="lead">Cinco nomes, uma família: o que cada um resolve, pra quem é e como abrir.</p>
+    <div class="vidro faixa"><div><h3>Quer o Oceano no seu time?</h3><p>A gente configura o squad, conecta ao Radar e acompanha as primeiras semanas.</p></div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;"><a class="btn pri" id="btn-contato" href="#">Falar com a squad</a></div></div>
+    <h3 class="sub-h" id="produtos">Os produtos</h3>
     <div class="abas" id="abas" role="tablist" aria-label="Produtos do Oceano"></div>
     <div class="vidro painel-prod" id="painel-prod" role="tabpanel"></div>
   </section>
 
-  <hr class="linha">
-
-  <!-- ══ POR BAIXO DO CASCO ══ -->
-  <section class="sec" id="casco">
-    <div class="sec-k">⚙️ Por baixo do casco</div>
-    <h2>Sem servidor pra cuidar. Sem build. Sem surpresa.</h2>
-    <p class="lead">Páginas estáticas, banco em tempo real e funções na nuvem só onde precisa. Simples de manter, rápido de evoluir e com o acesso decidido no servidor.</p>
+  <!-- ══ TÉCNICA ══ -->
+  <section class="tabp" id="tab-tecnica" role="tabpanel">
+    <h2 class="pg-h">Como é feito</h2>
+    <p class="pg-l">Páginas estáticas, banco em tempo real e funções na nuvem só onde precisa. Simples de manter e rápido de evoluir, com o acesso decidido no servidor.</p>
     <div class="arq">
-      <div class="vidro no"><div class="e">🌐</div><b>Páginas estáticas</b><span>GitHub Pages · um arquivo por tela, sem bundler</span></div><div class="seta">→</div>
-      <div class="vidro no"><div class="e">🔐</div><b>Firebase Auth</b><span>Google @ciahering, nada de senha nova</span></div><div class="seta">→</div>
-      <div class="vidro no"><div class="e">🗄️</div><b>Realtime Database</b><span>tempo real + regras de acesso no servidor</span></div><div class="seta">→</div>
-      <div class="vidro no"><div class="e">⚙️</div><b>Cloud Functions</b><span>Agente Ágil, push, backup semanal</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">🌐</div><b>Páginas estáticas</b><span>GitHub Pages, um arquivo por tela, sem bundler</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">🔐</div><b>Firebase Auth</b><span>Google @ciahering, sem senha nova</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">🗄️</div><b>Realtime Database</b><span>tempo real e regras de acesso no servidor</span></div><div class="seta">→</div>
+      <div class="vidro no"><div class="e">⚙️</div><b>Cloud Functions</b><span>Agente Ágil, push e backup semanal</span></div><div class="seta">→</div>
       <div class="vidro no"><div class="e">📲</div><b>Push (FCM)</b><span>notificação no aparelho, com Não Perturbe</span></div>
     </div>
     <div class="fatos">
-      <div class="vidro fato"><span>🧱</span><span><b>Sem build.</b> Cada página é um arquivo autônomo: abrir, ler e corrigir é rápido.</span></div>
-      <div class="vidro fato"><span>🛡️</span><span><b>Acesso no servidor.</b> As regras do banco exigem Google @ciahering; a interface não é a única barreira.</span></div>
-      <div class="vidro fato"><span>💾</span><span><b>Backup semanal</b> automático dos boards (domingo, de madrugada), mais snapshots diários.</span></div>
-      <div class="vidro fato"><span>🔁</span><span><b>Auto-atualização.</b> A página avisa quando existe versão nova — sem perder o que você estava digitando.</span></div>
-      <div class="vidro fato"><span>📶</span><span><b>PWA com fila offline.</b> O Maré guarda ações sem conexão e reaplica quando a rede volta.</span></div>
-      <div class="vidro fato"><span>🧪</span><span><b>Dev → produção.</b> Tudo passa por um ambiente de teste e só sobe depois de validado.</span></div>
+      <div class="vidro fato"><span><b>Sem build.</b> Cada página é um arquivo autônomo: abrir, ler e corrigir é rápido.</span></div>
+      <div class="vidro fato"><span><b>Acesso no servidor.</b> As regras do banco exigem Google @ciahering; a interface não é a única barreira.</span></div>
+      <div class="vidro fato"><span><b>Backup semanal</b> automático dos boards (domingo, de madrugada), mais snapshots diários.</span></div>
+      <div class="vidro fato"><span><b>Auto-atualização.</b> A página avisa quando existe versão nova, sem perder o que você estava digitando.</span></div>
+      <div class="vidro fato"><span><b>PWA com fila offline.</b> O Maré guarda ações sem conexão e reaplica quando a rede volta.</span></div>
+      <div class="vidro fato"><span><b>Dev e produção.</b> Tudo passa por um ambiente de teste e só sobe depois de validado.</span></div>
     </div>
-    <div class="vidro" style="padding:6px 6px 0;margin-bottom:16px;overflow:auto;"><table class="vers" id="vers"><thead><tr><th>Produto</th><th>No ar agora</th><th>Em teste (dev)</th></tr></thead><tbody><tr><td colspan="3" style="color:var(--txt3);">Conferindo as versões…</td></tr></tbody></table></div>
+    <h3 class="sub-h">No ar agora</h3>
+    <div class="vidro" style="padding:6px 6px 0;margin-bottom:16px;overflow:auto;"><table class="vers" id="vers"><thead><tr><th>Produto</th><th>Produção</th><th>Em teste (dev)</th></tr></thead><tbody><tr><td colspan="3" style="color:var(--txt3);">Conferindo as versões…</td></tr></tbody></table></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn pri" type="button" data-doc="maredigital.html">📚 Documentação técnica completa</button>
-      <button class="btn" type="button" data-doc="guia-okr.html">📘 Guia do Radar</button>
+      <button class="btn pri" type="button" data-doc="maredigital.html">Documentação técnica completa</button>
+      <button class="btn" type="button" data-doc="guia-okr.html">Guia do Radar</button>
     </div>
   </section>
 </main>
@@ -478,7 +474,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.1 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.2 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -501,11 +497,12 @@ const APPS = [
 ];
 const EXTRA = [];   // documentos abertos dentro do Oceano (maredigital.html, guia-okr.html): têm aba no host, mas não aparecem nas listas de produtos
 const APP = id => APPS.find(a=>a.id===id) || EXTRA.find(a=>a.id===id);
-function logoPorthole(a, extra){
-  const inner = a.img ? '<img src="'+esc(a.img)+'" alt="" decoding="async">'
+function logoInner(a, extra){
+  return a.img ? '<img src="'+esc(a.img)+'" alt="" decoding="async">'
     : '<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="lg-'+a.id+(extra||'')+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a.g[0]+'"/><stop offset="1" stop-color="'+a.g[1]+'"/></linearGradient></defs><rect width="48" height="48" fill="url(#lg-'+a.id+(extra||'')+')"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".96">'+a.glifo+'</g></svg>';
-  return '<span class="porthole"><span class="vid">'+inner+'</span></span>';
 }
+const logoPorthole = (a, extra)=> '<span class="porthole"><span class="vid">'+logoInner(a,extra)+'</span></span>';   // redonda: abas do host
+const logoQuad = (a, extra)=> '<span class="tile-logo">'+logoInner(a,extra)+'</span>';                          // quadrada (como no menu de 9 pontinhos)
 
 // ── Preferências (localStorage espelha o Firebase: aplica o tema ANTES do login) ──
 const temaDoMare = ()=>{ try{ return localStorage.getItem('mare_theme')==='light' ? 'lencois' : 'abrolhos'; }catch(e){ return 'abrolhos'; } };   // a mesma chave do kanban/painel/radar
@@ -604,23 +601,29 @@ function renderEu(){
   $('#eu-av').innerHTML = U.photoURL ? '<img alt="" referrerpolicy="no-referrer" src="'+esc(U.photoURL)+'">' : '<span class="ini">'+esc(iniciais())+'</span>';
   $('#eu-nome').textContent = nomeCurto();
 }
+function appsDoDia(){ return APPS.filter(a=>!a.futuro && visivel(a)); }
 function renderTudo(){
   if(!U) return;
-  const nome = nomeCurto();
-  $('#hi').textContent = '🌊 '+saudacao()+(nome ? ', '+nome : '')+' · Oceano, a família de produtos do time Digital Hering';
-  $('#h1-boas').innerHTML = 'Bem-vindo <em>a bordo</em>'+(nome ? ', '+esc(nome) : '')+'.';
-  const ult = APP(prefs.ultimo) && visivel(APP(prefs.ultimo)) && !APP(prefs.ultimo).futuro ? APP(prefs.ultimo) : APP('kanban');
-  const bc = $('#btn-continuar'); bc.textContent = (prefs.ultimo && ult.id===prefs.ultimo ? '⚓ Continuar em ' : '⚓ Abrir o ')+ult.nome; bc.dataset.app = ult.id;
-  $('#btn-contato').href = 'mailto:'+CONTATO.email+'?subject='+encodeURIComponent('Quero o Oceano no meu time')+'&body='+encodeURIComponent('Oi! Vi o Oceano e queria conversar sobre usar no meu time.');
-  // cabines
-  const cab = $('#cabines');
-  cab.innerHTML = APPS.filter(a=>a.futuro || visivel(a)).map(a=>{
-    const st = a.futuro ? '<span class="chip lock st">⏳ em breve</span>' : (IS_DEV && a.id!=='onboarding' ? '<span class="chip dev st">🧪 teste</span>' : '<span class="chip ok st">● no ar</span>');
-    return '<article class="vidro cabine'+(a.futuro?' futuro':'')+'">'+st+logoPorthole(a,'-c')+'<div><h3>'+esc(a.nome)+'</h3></div><p>'+esc(a.pt)+'.</p>'
-      + (a.futuro ? '<div class="acoes"><button class="btn" type="button" data-prod="travessia">Saiba mais</button></div>'
-        : '<div class="acoes"><button class="btn pri" type="button" data-app="'+a.id+'">Abrir</button><a class="btn" href="'+esc(a.href)+'" target="_blank" rel="noopener" title="Abrir numa aba nova">↗</a><button class="btn" type="button" data-prod="'+a.id+'" title="O que é e o que faz">Saiba mais</button></div>')
-      + '</article>';
+  const nome = nomeCurto(), ultimo = APP(prefs.ultimo) && !APP(prefs.ultimo).futuro && visivel(APP(prefs.ultimo)) ? prefs.ultimo : '';
+  $('#ola').textContent = saudacao()+(nome ? ', '+nome : '');
+  $('#ola-data').textContent = new Date().toLocaleDateString('pt-BR',{weekday:'long',day:'numeric',month:'long'});
+  const meus = appsDoDia();
+  $('#tiles').innerHTML = APPS.filter(a=>a.futuro || visivel(a)).map(a=>{
+    const n = a.futuro ? 0 : meus.indexOf(a)+1;
+    const st = a.futuro ? '<span class="tile-st">em breve</span>' : (IS_DEV && a.id!=='onboarding' ? '<span class="tile-st"><i></i>teste</span>' : '');
+    return '<article class="tile'+(a.futuro?' futuro':'')+(a.id===ultimo?' ultimo':'')+'">'
+      + '<span class="tile-key">'+(n&&n<10?n:'')+'</span>'+st
+      + '<button type="button" class="tile-main" '+(a.futuro?'data-prod="travessia"':'data-app="'+a.id+'"')+' aria-label="'+(a.futuro?'Saiba mais sobre ':'Abrir ')+esc(a.nome)+'">'+logoQuad(a,'-t')+'<span><span class="tile-n">'+esc(a.nome)+'</span><span class="tile-s">'+esc(a.sub)+'</span></span></button>'
+      + '<span class="tile-ac">'+(a.futuro?'':'<a href="'+esc(a.href)+'" target="_blank" rel="noopener" title="Abrir em aba nova" aria-label="Abrir '+esc(a.nome)+' em aba nova">↗</a>')+'<button type="button" data-prod="'+a.id+'" title="O que é" aria-label="O que é '+esc(a.nome)+'">ⓘ</button></span></article>';
   }).join('');
+  // atalhos: um por squad seu no Maré, e as portas do Radar que mais se usa
+  const at = [];
+  if(visivel(APP('kanban'))) (perfilFb.squads||[]).forEach(sq=>at.push({app:'kanban', url:P('kanban')+'?squad='+encodeURIComponent(sq), txt:'Maré · '+sq}));
+  at.push({app:'okr', url:P('okr')+'?okr=notas', txt:'Radar · Anotações da reunião'}, {app:'okr', url:P('okr')+'?okr=chat', txt:'Radar · Perguntar ao Agente Ágil'});
+  $('#atalhos').innerHTML = at.map(x=>'<button type="button" data-app="'+x.app+'" data-url="'+esc(x.url)+'">'+logoQuad(APP(x.app),'-s').replace('class="tile-logo"','class="tile-logo" style="width:16px;height:16px;border-radius:4px;box-shadow:none"')+esc(x.txt)+'</button>').join('');
+  $('#atalhos-wrap').style.display = at.length ? 'block' : 'none';
+  $('#dica-teclas').innerHTML = meus.length ? 'Dica: tecle <span class="kbd">1</span> a <span class="kbd">'+Math.min(meus.length,9)+'</span> pra abrir um produto, ou <span class="kbd">?</span> pra ajuda.' : '';
+  $('#btn-contato').href = 'mailto:'+CONTATO.email+'?subject='+encodeURIComponent('Quero o Oceano no meu time')+'&body='+encodeURIComponent('Oi! Vi o Oceano e queria conversar sobre usar no meu time.');
   renderAbertos(); renderAbas(); renderVersoes();
   $('#rodape-versao').textContent = VERSION+(standalone() ? ' · aplicativo' : '');
 }
@@ -641,9 +644,9 @@ const PROD = {
     itens:[['🧭','<b>Em desenho</b> — ainda não existe, e a ideia é construir junto com quem vai usar.'],['🔐','<b>Dado sensível, regras próprias</b> — acesso desenhado antes do código, em área separada do banco.'],['🔗','<b>Conectado</b> às métricas do Radar e do Maré, sem digitar duas vezes.']], doc:null},
 };
 function renderAbas(){
-  const ab = $('#abas'); ab.innerHTML = APPS.map(a=>'<button class="aba" type="button" role="tab" data-prod="'+a.id+'" aria-selected="'+(a.id===prodSel)+'">'+logoPorthole(a,'-a')+esc(a.nome)+'</button>').join('');
+  const ab = $('#abas'); ab.innerHTML = APPS.map(a=>'<button class="aba" type="button" role="tab" data-prod="'+a.id+'" aria-selected="'+(a.id===prodSel)+'">'+logoQuad(a,'-a')+esc(a.nome)+'</button>').join('');
   const a = APP(prodSel), d = PROD[prodSel], pode = !a.futuro && visivel(a);
-  $('#painel-prod').innerHTML = '<div>'+logoPorthole(a,'-p').replace('class="porthole"','class="porthole" style="--s:64px;margin-bottom:12px;"')+'<h3>'+esc(a.nome)+'</h3><div class="tag">'+esc(d.tag)+'</div><p>'+esc(d.p)+'</p><p><b>Pra quem:</b> '+esc(d.quem)+'</p>'
+  $('#painel-prod').innerHTML = '<div>'+logoQuad(a,'-p').replace('class="tile-logo"','class="tile-logo" style="margin-bottom:12px;"')+'<h3>'+esc(a.nome)+'</h3><div class="tag">'+esc(d.tag)+'</div><p>'+esc(d.p)+'</p><p><b>Pra quem:</b> '+esc(d.quem)+'</p>'
     + '<div class="acoes">'+(a.futuro ? '<span class="chip lock">⏳ projeto futuro</span>' : pode ? '<button class="btn pri" type="button" data-app="'+a.id+'">Abrir '+esc(a.nome)+'</button><a class="btn" href="'+esc(a.href)+'" target="_blank" rel="noopener">↗ Nova aba</a>' : '<span class="chip lock">🔒 Você ainda não usa o Painel — peça acesso à sua liderança ou à squad.</span>')
     + (d.doc ? '<button class="btn" type="button" data-doc="'+esc(d.doc[1])+'">'+esc(d.doc[0])+'</button>' : '')+'</div></div>'
     + '<div><h4>O que você ganha</h4><ul>'+d.itens.map(i=>'<li><span>'+i[0]+'</span><span>'+i[1]+'</span></li>').join('')+'</ul></div>';
@@ -662,22 +665,23 @@ setInterval(()=>{ if(!document.hidden) renderVersoes(); }, 300000);
 // ── Hospedagem dos produtos dentro do Oceano ──
 const host = {abertos:[], atual:null};
 function abrirAqui(){ return prefs.abrir==='aqui' || (prefs.abrir==='auto' && standalone()); }
-function abrirApp(id, forcarAqui){
+function abrirApp(id, forcarAqui, url){
   const a = APP(id); if(!a || a.futuro || !a.href) return;
-  if(!forcarAqui && !abrirAqui()){ window.open(a.href, '_blank', 'noopener'); lembrarUltimo(id); return; }
-  mostrarHost(id);
+  if(!forcarAqui && !abrirAqui()){ window.open(url || a.href, '_blank', 'noopener'); lembrarUltimo(id); return; }
+  mostrarHost(id, url);
 }
 function lembrarUltimo(id){ if(prefs.ultimo===id || !APPS.some(a=>a.id===id)) return; prefs.ultimo = id; salvarPrefs(false); renderTudo(); }
-function mostrarHost(id){
+function mostrarHost(id, url){
   const a = APP(id); if(!a) return;
   let fr = $('#host-frames iframe[data-app="'+id+'"]');
   if(!fr){
     if(host.abertos.length>=4){ const velho = host.abertos.find(x=>x!==id); if(velho) fecharApp(velho, true); }
-    fr = document.createElement('iframe'); fr.dataset.app = id; fr.name = 'oceano-frame'; fr.title = a.nome; fr.src = a.href;
+    fr = document.createElement('iframe'); fr.dataset.app = id; fr.name = 'oceano-frame'; fr.title = a.nome; fr.src = url || a.href;
     fr.setAttribute('allow','clipboard-read; clipboard-write; fullscreen; notifications'); fr.setAttribute('allowfullscreen','');
     fr.addEventListener('load', ()=>{ if(host.atual===id) $('#host-load').style.display = 'none'; fr.dataset.ok = '1'; });
     $('#host-frames').appendChild(fr); host.abertos.push(id);
   }
+  if(url && fr.dataset.ok && fr.getAttribute('src')!==url){ fr.dataset.ok = ''; fr.src = url; }
   host.atual = id; $$('#host-frames iframe').forEach(f=>f.classList.toggle('on', f.dataset.app===id));
   $('#host-load').style.display = fr.dataset.ok ? 'none' : 'flex'; $('#host-load-tx').textContent = 'Abrindo '+a.nome+'…';
   $('#host').classList.add('on'); document.body.style.overflow = 'hidden';
@@ -706,8 +710,16 @@ function renderAbertos(){
   el.classList.toggle('on', host.abertos.length>0);
   el.innerHTML = host.abertos.length ? '⚓ Abertos agora: '+host.abertos.map(id=>'<button class="btn sm" type="button" data-app="'+id+'">'+esc(APP(id).nome)+'</button>').join(' ') : '';
 }
+function irAba(id, hash){
+  if(!['inicio','conheca','tecnica'].includes(id)) id = 'inicio';
+  $$('.tabs button').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.tab===id)));
+  $$('.tabp').forEach(p=>p.classList.toggle('on', p.id==='tab-'+id));
+  if(hash!==false) history.replaceState(null,'', location.pathname+location.search+(id==='inicio' ? '' : '#'+id));
+}
 function rotearHash(inicio){
-  const m = /^#\/(\w+)$/.exec(location.hash||'');
+  const h = location.hash||'';
+  if(/^#(conheca|produtos|tecnica|casco|porque)$/.test(h)){ irAba(h==='#tecnica'||h==='#casco' ? 'tecnica' : 'conheca', false); if(h==='#produtos'||h==='#porque') $('#produtos').scrollIntoView(); if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; renderAbertos(); } return; }
+  const m = /^#\/(\w+)$/.exec(h);
   if(m && APP(m[1]) && visivel(APP(m[1])) && !APP(m[1]).futuro){ mostrarHost(m[1]); return; }
   if(host.atual){ $('#host').classList.remove('on'); document.body.style.overflow=''; host.atual=null; document.title=(IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':''); renderAbertos(); return; }
   if(inicio && !location.hash){
@@ -809,8 +821,10 @@ if('serviceWorker' in navigator){ try{ navigator.serviceWorker.register('./fireb
 document.addEventListener('click', e=>{
   const fx = e.target.closest('[data-fecha-app]'); if(fx){ e.stopPropagation(); fecharApp(fx.dataset.fechaApp); return; }
   const ht = e.target.closest('[data-ht]'); if(ht){ mostrarHost(ht.dataset.ht); return; }
-  const ap = e.target.closest('button[data-app]'); if(ap){ abrirApp(ap.dataset.app); return; }
-  const pr = e.target.closest('[data-prod]'); if(pr){ prodSel = pr.dataset.prod; renderAbas(); if(pr.closest('.cabine')) $('#produtos').scrollIntoView({behavior: reduzMov?'auto':'smooth'}); return; }
+  const tb = e.target.closest('.tabs button[data-tab]'); if(tb){ irAba(tb.dataset.tab); return; }
+  const ap = e.target.closest('button[data-app]'); if(ap){ abrirApp(ap.dataset.app, false, ap.dataset.url); return; }
+  const pr = e.target.closest('[data-prod]'); if(pr){ prodSel = pr.dataset.prod; renderAbas(); if(!pr.classList.contains('aba')){ irAba('conheca'); $('#produtos').scrollIntoView({behavior: reduzMov?'auto':'smooth'}); } return; }
+  const mc = e.target.closest('a.marca'); if(mc){ e.preventDefault(); if(host.atual) voltarLobby(); irAba('inicio'); return; }
   const dc = e.target.closest('[data-doc]'); if(dc){ const h = dc.dataset.doc; if(abrirAqui()){ mostrarDocumento(h); } else window.open(h,'_blank','noopener'); return; }
 });
 // documentos (maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
@@ -823,12 +837,18 @@ function mostrarDocumento(h){
 $('#host-lobby').addEventListener('click', voltarLobby);
 $('#host-recarregar').addEventListener('click', ()=>{ const fr = $('#host-frames iframe.on'); if(fr){ fr.dataset.ok=''; $('#host-load').style.display='flex'; fr.src = fr.src; } });
 $('#host-aba').addEventListener('click', ()=>{ const a = APP(host.atual); if(a) window.open(a.href,'_blank','noopener'); });
-$('#btn-continuar').addEventListener('click', e=>abrirApp(e.currentTarget.dataset.app || 'kanban'));
-// marcação da seção atual no menu
-const secs = ['inicio','produtos','porque','casco'];
-if('IntersectionObserver' in window){ const io = new IntersectionObserver(es=>{ es.forEach(en=>{ if(en.isIntersecting){ $$('.nav a').forEach(a=>a.classList.toggle('on', a.dataset.s===en.target.id)); } }); }, {rootMargin:'-45% 0px -50% 0px'}); secs.forEach(id=>{ const el = document.getElementById(id); if(el) io.observe(el); }); }
+// atalhos de teclado: 1..9 abrem os produtos da tela inicial, ? abre a ajuda
+document.addEventListener('keydown', e=>{
+  if(e.ctrlKey||e.metaKey||e.altKey||modalTopo||!U) return;
+  const el = document.activeElement, digitando = el && /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || (el && el.isContentEditable);
+  if(digitando || $('#host').classList.contains('on') || !$('#tab-inicio').classList.contains('on')) return;
+  if(e.key==='?'){ e.preventDefault(); abrirAjuda(); return; }
+  if(/^[1-9]$/.test(e.key)){ const a = appsDoDia()[Number(e.key)-1]; if(a){ e.preventDefault(); abrirApp(a.id); } }
+});
+window.addEventListener('pageshow', ()=>{ if(U) renderTudo(); });
 
 aplicarPrefs();
+irAba((location.hash||'').replace('#','')==='tecnica'?'tecnica':(location.hash==='#conheca'?'conheca':'inicio'), false);
 document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
 })();
 </script>

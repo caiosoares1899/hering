@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Oceano: a tela inicial é o dia a dia — produtos primeiro, "venda" em outra aba — 2026-10-09 · oceano-dev v1.2 (SÓ DEV)
+- **Abre direto nos produtos:** aba **Meus produtos** com uma saudação curta e uma grade de botões (logo quadrada, nome, uma linha), como o menu de 9 pontinhos mas em tamanho de uso. Um clique abre (aqui dentro ou em aba nova, conforme a preferência). **Teclas 1–9** abrem o produto, **?** abre a ajuda. Marca o **último** que você usou; cada botão tem ↗ (aba nova) e ⓘ (o que é).
+- **Atalhos:** um botão por squad seu no Maré (`?squad=`) e as portas do Radar mais usadas (Anotações da reunião, Agente Ágil). Dentro do Oceano abrem na aba do produto.
+- **A venda ficou nas outras abas:** **Conheça o Oceano** (por que, quem usa o quê, produtos) e **Por baixo do casco** (técnica e versões). Os links `#conheca`/`#tecnica` funcionam.
+- **Menos cara de "gerado":** saíram o título gigante com gradiente, o porthole grande balançando, as fileiras de chips com emoji e os títulos em caixa-alta com emoji. Textos mais curtos e diretos; títulos em Syne pequeno (como o `hd-title` do Maré) e corpo em DM Sans 13–14 px. Cabeçalho mais enxuto (sem a navegação por âncoras — agora são abas, como as do Radar).
+- Teste atualizado: 1ª tela são os produtos, atalhos, tecla `1`, aba Conheça/Técnica, deep link.
+
 ### 🌊 Oceano: visual volta pro Marine Glass das outras páginas — 2026-10-09 · oceano-dev v1.1 (SÓ DEV)
 - **Layout igual ao das outras páginas:** mesmos tokens do Maré/Painel/Radar (`--deep`, `--glass`, `--accent`…), cabeçalho de vidro (título "Oceano" + subtítulo, botões `.btn`, chip do usuário), cards de vidro, botão primário azul, fontes Syne/DM Sans. Saiu a madeira/latão, a corda, as ondas e o gradiente de pôr do sol como padrão.
 - **Peixinhos e bolhas são os do Maré Digital:** as mesmas 3 silhuetas (azul/teal/cyan), 8 peixes e 16 bolhas (metade no celular), mesmas animações, e o mesmo comportamento no tema claro. **Sumiram os "pontos dourados"** (eram as bolhas na cor âmbar do tema antigo). Preferência "Como no Maré / Poucos / Desligados" espelha o 🐟 liga/desliga do Maré (`fish_bg_off`).

@@ -36,3 +36,4 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
 - **Produto novo:** além de `APPS`/`appsVisivel()` no módulo, acrescente em `APPS` e `PROD` do `oceano-dev.html`.
 - Visual: **Marine Glass igual às outras páginas** (tokens, vidro, peixinhos/bolhas do Maré). Temas `abrolhos` (padrão) e `lencois` compartilham `mare_theme`; `entardecer` é opcional só aqui. Peixinhos por preferência (espelha `fish_bg_off`). Logos: `favicon-oceano.png` (fundo azul), `oceano-logo.png` (sem fundo), ícones 192/512.
+- **Tela inicial (v1.2):** abre na aba *Meus produtos* (grade de botões, teclas 1–9, atalhos por squad); a parte de "venda" e a técnica ficam nas abas *Conheça o Oceano* e *Por baixo do casco*. Fontes: Syne nos títulos pequenos e DM Sans no corpo, como o Maré.
