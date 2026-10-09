@@ -12,6 +12,7 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_monitorarbugs_1009.js` — /monitorarbugs de 09/10: apresentação ao vivo (ouvinte único, apresentador que recarrega, laser, copiar link), duplo clique em Salvar link (Oceano/Painel), link removido por outra pessoa, menu ao trocar de conta.
 - `test_menu_kanban.js` — menu de produtos dentro do kanban logado (boot real, Firebase falso): botão visível no desktop/celular, abas, produtos por papel, Esc, Central de Ajuda. `K=kanban` testa a página de prod.
 - `test_oceano_sino.js` — sininho do Oceano: selo, painel, marcar tudo/limpar, abrir item (aba nova e dentro do host), Esc, rodapé de push/som/Não Perturbe. `PAGE=oceano.html` testa a prod (depois da promoção).
+- `test_okr_cards.js` — aba 🔗 Cards do Radar: não baixa cards ao abrir, lista só badge OKR (squads_meta incluídos), vínculo com Objetivos (arquivado não conta), filtro/busca, abrir card/Objetivo, visualizador externo. `BASE=…/okr.html` testa a prod.
 - `test_apresentacao_live.js` — apresentação ao vivo: 2 páginas (apresentador e acompanhante), laser, caneta, passar/pedir/assumir controle, encerrar, visualizador externo.
 - `test_tags.js` — apagar tag e Gerenciar tags do Radar (okr-dev): uso, histórico, duplo clique, ADM × PO, Esc.
 - `test_calendario.js` — calendário do Radar (okr-dev): legenda clicável por tipo, sem resquício de torre/agenda global no modo só Hering, PO cria evento, 3 torres, deep link.
