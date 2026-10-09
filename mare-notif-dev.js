@@ -21,8 +21,8 @@
   const FEED = 'kanban/notif_feed', SEEN = 'kanban/notif_feed_seen', FEED_LIMIT = 60;
   const IS_DEV = /-dev\.html/.test(location.pathname);
   const PAGES = IS_DEV
-    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html'}
-    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html'};
+    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html'}
+    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html'};
 
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
@@ -360,6 +360,7 @@
   //   e, onde a página SABE que a pessoa usa um produto:  MareNotif.appsUso('painel', user).
   // Logos: Maré Digital = favicon.png de produção, Radar = favicon-radar.png; os demais, SVG provisórios (gradiente + glifo) até ganharem logo de verdade. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
   const APPS = [
+    {id:'oceano', nome:'Oceano', sub:'Lobby e boas-vindas', href:PAGES.oceano, img:'favicon-oceano.png'},   // a página-lobby da família (só quem é da Hering)
     {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, img:'favicon.png'},   // a logo do Maré Digital já existe (favicon.png de PRODUÇÃO, também nas páginas -dev)
     {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, g:['#8b8cff','#4a4fc4'],
       glifo:'<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>'},
@@ -374,6 +375,7 @@
   function appsVisivel(a, c){
     if(a.id==='painel') return !!(c.viewer || c.adm || c.uso.painel);
     if(a.id==='okr') return true;
+    if(a.id==='oceano') return !c.viewer;   // o lobby é só pra conta Google @ciahering
     return !c.viewer;   // Maré Digital e A Bordo: só gente da empresa
   }
   function appsCtx(){
@@ -394,7 +396,7 @@
       + (IS_DEV ? '<div class="mn-apps-dev">🧪 páginas de teste (dev)</div>' : '')
       + '<div class="mn-apps-grid">' + lista.map(a=>{
           const eh = a.id===aqui;
-          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
+          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" data-app="'+esc(a.id)+'" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
             + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
             + (eh ? '</div>' : '</a>');
         }).join('') + '</div>';
@@ -438,6 +440,12 @@
     if(btn.parentNode !== slot) slot.appendChild(btn);
     if(!document.getElementById('mn-apps-pop')){
       const pop = document.createElement('div'); pop.id = 'mn-apps-pop'; pop.setAttribute('role','menu'); pop.setAttribute('aria-label','Produtos do Oceano'); pop.style.display = 'none';
+      // Dentro do Oceano (a página-lobby hospeda os produtos num iframe de nome 'oceano-frame'): em vez de abrir aba nova, pede pro lobby trocar de produto.
+      pop.addEventListener('click', e=>{
+        const a = e.target.closest && e.target.closest('a.mn-app[data-app]'); if(!a || !(window.parent && window.parent!==window && window.name==='oceano-frame')) return;
+        e.preventDefault(); appsFechar(false);
+        try{ window.parent.postMessage({oceano: a.dataset.app==='oceano' ? 'lobby' : 'abrir', app:a.dataset.app}, location.origin); }catch(x){}
+      });
       document.body.appendChild(pop);
     }
     // quem usa o quê: cache primeiro (render imediato), depois confere no banco se o cache tem mais de 1h
