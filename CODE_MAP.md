@@ -3740,6 +3740,15 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
 - `openGlobalUsersModal()` — L10223
 - `initHiddenCols()` — L9764
 
+## oceano-dev.html (lobby da família Oceano — 2026-10-09, só dev; arquivo único, 2 `<script>`: módulo Firebase + IIFE)
+Re-grep o nome antes de confiar em linha.
+- `APPS` / `PROD` / `FAQ` — os produtos (id, href, logo, visibilidade), o texto de cada aba e a ajuda; `visivel(a)` = mesma regra do menu de 9 pontinhos (Painel só ADM/quem usa).
+- `iniciarSessao()` — lê `nome/init/role/squads/apps/oceano/uid` de `kanban/usuarios/{uid}` (ramos, não o registro inteiro), cria cadastro básico se faltar, aplica prefs, `rotearHash()`.
+- `prefs` / `salvarPrefs()` / `aplicarPrefs()` — tema (`data-tema`), peixinhos, ondas, `abrir`, `inicio`, `apelido`, `ultimo`; localStorage `oceano_prefs` + `kanban/usuarios/{uid}/oceano`.
+- `criarPeixes()` — peixinhos/bolhas SVG; `renderTudo()`, `renderAbas()`, `renderVersoes()` (lê `version.json`).
+- **Host:** `abrirApp()`, `mostrarHost()`, `fecharApp()`, `voltarLobby()`, `rotearHash()` (`#/id`), listener de `message` (`oceano:'abrir'|'lobby'`); iframes `name="oceano-frame"`.
+- `abrirPerfil()`, `abrirAjuda()`, `instalar()` (`beforeinstallprompt`). `mare-notif-dev.js` v12: `APPS` ganhou `oceano` e o clique do `#mn-apps-pop` fala com o host.
+
 ## okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
 seção própria neste mapa até agora apesar de ~935 linhas e várias
 rodadas de fix; só lê `kanban/okr/*`, exige login @ciahering normal)

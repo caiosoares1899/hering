@@ -29,3 +29,10 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
+
+## A página Oceano (lobby) — 2026-10-09, só dev
+`oceano-dev.html` (prod: `oceano.html`, na promoção) é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `maredigital.html`), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
+- **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
+- **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
+- **Produto novo:** além de `APPS`/`appsVisivel()` no módulo, acrescente em `APPS` e `PROD` do `oceano-dev.html`.
+- Visual: ambientes `entardecer` (padrão), `abrolhos`, `lencois`; peixinhos/ondas por preferência. Logos: `favicon-oceano.png` (fundo azul), `oceano-logo.png` (sem fundo), ícones 192/512.

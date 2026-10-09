@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Oceano — a página-lobby da família (NOVA) — 2026-10-09 · oceano-dev v1.0 · mare-notif-dev v12 · okr-dev/painel-dev/kanban-dev (`?v=12`) (SÓ DEV)
+- **Página nova `oceano-dev.html`** (+ `favicon-oceano.png`, `oceano-logo.png`, `oceano-icon-192/512.png`, `oceano-dev.webmanifest`): o lobby/boas-vindas que reúne Maré Digital, Painel, Radar, A Bordo e Travessia (em breve). **Login só Google @ciahering** (outra conta é barrada; visualizador externo do Radar segue usando o `okr.html`).
+- **Vibe de salão de cruzeiro:** cabeçalho de madeira com latão, produtos em **vigias** (portholes) de latão, corda separando as seções; 3 ambientes — 🌅 **Entardecer** (padrão), 🌙 **Abrolhos**, ☀️ **Lençóis Maranhenses**. **Peixinhos, bolhas e ondas desligáveis** (desligados/poucos/muitos; começam desligados se o sistema pede menos movimento; pausam com a aba em segundo plano).
+- **Conteúdo "de venda interna":** seção *Por que o Oceano* (como costuma ser × com o Oceano, 6 argumentos com a prova de cada um, quem sobe a bordo, contato), *Os produtos* (abas com o que cada um faz) e *Por baixo do casco* (arquitetura, fatos técnicos, **versões no ar lidas do `version.json`**, link pra `maredigital.html` e Guia do Radar). Sem números inventados — só o que o repositório comprova.
+- **"Sua cabine":** vitrine por pessoa com a mesma regra do menu de 9 pontinhos (Painel só pra ADM/quem já usa). **Cadastro e personalização:** perfil (apelido, sigla), ambiente, peixinhos/ondas, como abrir os produtos e "ao abrir o app, ir para…"; tudo em `kanban/usuarios/{uid}/oceano` (+ localStorage pra aplicar o tema antes do login). Quem nunca entrou em produto nenhum ganha o cadastro básico (update, nunca set). **Ajuda** com busca (FAQ, inclusive "como instalar").
+- **O Oceano como aplicativo (host):** manifesto próprio (`oceano(-dev).webmanifest`, `id` próprio, escopo só da página) — **o aplicativo do Maré Digital não é tocado**. Com o app instalado (ou "Sempre aqui dentro"), os produtos abrem **num iframe dentro do Oceano**, com abas, vários abertos ao mesmo tempo (até 4), "🌊 Lobby", ↻ e ↗; `#/okr`, `#/kanban`… como deep link e o botão Voltar volta pro lobby. No navegador comum, "Abrir" continua abrindo em aba nova.
+- **`mare-notif-dev.js` v12:** o menu de 9 pontinhos ganhou **🌊 Oceano** (primeiro item, só pra quem é da Hering) e, **quando a página roda dentro do Oceano** (iframe `oceano-frame`), clicar num produto manda `postMessage` pro lobby trocar de aba em vez de abrir aba nova.
+- Teste novo `docs/arezzo/testes/test_oceano.js` (Chromium, 24 checagens: login/Gmail barrado, vitrine por pessoa, temas, peixinhos, cadastro, host em iframe, troca pelo menu do Radar, celular).
+- **Ainda não feito (propositalmente):** sino dentro do lobby; `oceano.html` (prod) e a promoção; logos próprias de Painel/A Bordo.
+
 ### 📡 Radar: favicon com `?v=2` pra o navegador largar a antiga — 2026-10-09 · okr.html / okr-dev.html / apresentação / guia (só o `<link>`; sem bump de versão pra não forçar reload)
 - O arquivo `favicon-radar.png` já era o de fundo azul desde o PR #1309, mas o Chrome guarda favicon por endereço e seguia mostrando a antiga na aba. Os `<link rel="icon">` e `apple-touch-icon` agora apontam pra `favicon-radar.png?v=2`.
 

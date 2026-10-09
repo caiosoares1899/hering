@@ -52,7 +52,7 @@ Pedido original (2026-10-01): *"o time da Arezzo colabora com a gente, mas usa M
 
 ### 1.2 Como foi desligado (modo só Hering)
 
-- **1º `<script>` de `kanban-dev.html`, `painel-dev.html`, `okr-dev.html`:**
+- **1º `<script>` de `kanban-dev.html`, `painel-dev.html`, `okr-dev.html` (e `oceano-dev.html`, que só aceita Google @ciahering e não tem a alternativa Microsoft implementada):**
   ```js
   window.MARE_SO_HERING = true;
   // + <style>.ms-login{display:none!important}</style> injetado na hora (esconde tudo que tem a classe .ms-login)
