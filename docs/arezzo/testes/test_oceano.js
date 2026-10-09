@@ -12,9 +12,10 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
  { const {ctx,p}=await open(U('x','Fulano','x@gmail.com')); const r=await p.evaluate(()=>({err:document.getElementById('login-err').textContent, app:getComputedStyle(document.getElementById('app')).display, signedOut:window.__signedOut}));
    t('Gmail é barrado, com a dica do Radar', /@ciahering/.test(r.err) && r.app==='none' && r.signedOut>=1, r); await ctx.close(); }
  // 3) ADM: saudação, 4 cabines + Travessia, Painel visível
- { const {ctx,p,errs}=await open(U('ana','Ana Silva')); const r=await p.evaluate(()=>({h1:document.getElementById('h1-boas').textContent, cab:[...document.querySelectorAll('#cabines .cabine h3')].map(x=>x.textContent), btn:document.getElementById('btn-continuar').textContent, cadastro:window.__log.filter(l=>l[0]==='update').map(l=>l[1])}));
+ { const {ctx,p,errs}=await open(U('ana','Ana Silva')); const r=await p.evaluate(()=>({h1:document.getElementById('ola').textContent, cab:[...document.querySelectorAll('#tiles .tile-n')].map(x=>x.textContent.replace('último','')), tiles:document.querySelectorAll('#tiles .tile').length, atalhos:[...document.querySelectorAll('#atalhos button')].map(b=>b.dataset.url), cadastro:window.__log.filter(l=>l[0]==='update').map(l=>l[1])}));
    console.log('ADM:',JSON.stringify(r));
-   t('ADM: saudação com o primeiro nome', /Ana/.test(r.h1), r.h1); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
+   t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===5, r.h1);
+   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban-dev.html?squad=dev') && r.atalhos.includes('okr-dev.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
    t('já tem cadastro: não cria de novo', !r.cadastro.some(x=>/kanban\/usuarios\/ana$/.test(x)), r.cadastro);
    // temas
    await p.click('#btn-eu'); await p.waitForTimeout(200); const padrao=await p.evaluate(()=>document.documentElement.getAttribute('data-theme')); t('tema padrão é o Abrolhos da marca (sem data-theme), como as outras páginas', padrao===null, padrao);
@@ -33,7 +34,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    await p.keyboard.press('Escape'); await p.waitForTimeout(150); t('Esc fecha o perfil', !(await p.evaluate(()=>document.getElementById('ov-perfil').classList.contains('open'))), 'aberto');
    t('sem erro de JS (ADM)', !errs.length, errs); await ctx.close(); }
  // 4) membro sem uso do painel: não vê Painel; sem cadastro → cria
- { const {ctx,p}=await open(U('eve','Eve Souza')); const r=await p.evaluate(()=>[...document.querySelectorAll('#cabines .cabine h3')].map(x=>x.textContent));
+ { const {ctx,p}=await open(U('eve','Eve Souza')); const r=await p.evaluate(()=>[...document.querySelectorAll('#tiles .tile-n')].map(x=>x.textContent));
    t('membro sem uso do Painel: não vê o Painel na cabine', !r.includes('Painel') && r.includes('Radar'), r);
    t('aba "Painel" mostra que precisa pedir acesso', await p.evaluate(()=>{ document.querySelector('.aba[data-prod="painel"]').click(); return /ainda não usa o Painel/.test(document.getElementById('painel-prod').textContent); }), 'sem aviso'); await ctx.close(); }
  { const {ctx,p}=await open(U('nova','Nova Pessoa')); const r=await p.evaluate(()=>window.__log.filter(l=>l[0]==='update').map(l=>l[1]));
@@ -41,7 +42,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
  // 5) hospedagem: abre o Radar dentro do Oceano, troca pelo menu de produtos do próprio Radar
  { const {ctx,p,errs}=await open(U('ana','Ana Silva')); await p.evaluate(()=>{ const s=JSON.parse(localStorage.getItem('oceano_prefs')||'{}'); s.abrir='aqui'; localStorage.setItem('oceano_prefs',JSON.stringify(s)); });
    await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await p.waitForTimeout(900);
-   await p.click('#cabines button[data-app="okr"]'); await p.waitForTimeout(1500);
+   await p.click('#tiles .tile-main[data-app="okr"]'); await p.waitForTimeout(1500);
    const r=await p.evaluate(()=>({host:document.getElementById('host').classList.contains('on'), fr:[...document.querySelectorAll('#host-frames iframe')].map(f=>f.dataset.app+'|'+f.getAttribute('name')+'|'+f.getAttribute('src')), hash:location.hash, titulo:document.title, tabs:[...document.querySelectorAll('.htab')].map(x=>x.textContent.replace('✕','').trim())}));
    console.log('HOST:',JSON.stringify(r)); t('Radar abre dentro do Oceano (iframe nomeado, aba, hash e título)', r.host && r.fr.length===1 && /okr\|oceano-frame\|okr-dev\.html/.test(r.fr[0]) && r.hash==='#/okr' && /Radar/.test(r.titulo) && r.tabs[0]==='Radar', r);
    const fr=p.frames().find(f=>/okr-dev\.html/.test(f.url())); await fr.waitForFunction(()=>!!window.__authCb); await fr.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await fr.waitForTimeout(2200);
@@ -57,7 +58,14 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    await p.click('#abertos button[data-app="okr"]'); await p.waitForTimeout(300); await p.click('.htab[data-ht="okr"] .fx'); await p.waitForTimeout(200);
    t('fechar uma aba mantém a outra', await p.evaluate(()=>document.querySelectorAll('#host-frames iframe').length===1 && document.querySelector('#host-frames iframe.on')?.dataset.app==='kanban'), 'abas'); await ctx.close(); }
  // 6) automático em aba normal abre aba nova (não hospeda)
- { const {ctx,p}=await open(U('ana','Ana Silva')); const pop=p.waitForEvent('popup'); await p.click('#cabines button[data-app="kanban"]'); const np=await pop; t('modo automático no navegador: abre em aba nova (não no host)', /kanban-dev\.html/.test(np.url()) && !(await p.evaluate(()=>document.getElementById('host').classList.contains('on'))), np.url()); await ctx.close(); }
+ { const {ctx,p}=await open(U('ana','Ana Silva')); const pop=p.waitForEvent('popup'); await p.keyboard.press('1'); const np=await pop; t('modo automático no navegador: tecla 1 abre o Maré em aba nova (não no host)', /kanban-dev\.html/.test(np.url()) && !(await p.evaluate(()=>document.getElementById('host').classList.contains('on'))), np.url()); await ctx.close(); }
+ // 6b) abas: Conheça e Técnica, deep link e o produto pelo ⓘ
+ { const {ctx,p}=await open(U('ana','Ana Silva')); const ini=await p.evaluate(()=>({on:document.querySelector('.tabp.on').id, conhecaVisivel:getComputedStyle(document.getElementById('tab-conheca')).display}));
+   t('abre na aba Meus produtos (a venda fica numa aba à parte)', ini.on==='tab-inicio' && ini.conhecaVisivel==='none', ini);
+   await p.click('#tiles .tile:nth-child(3) button[data-prod]'); await p.waitForTimeout(300); const r=await p.evaluate(()=>({on:document.querySelector('.tabp.on').id, sel:document.querySelector('.aba[aria-selected=true]').textContent.trim(), hash:location.hash}));
+   t('ⓘ do Radar leva pra aba Conheça já no Radar', r.on==='tab-conheca' && /Radar/.test(r.sel), r);
+   await p.click('.tabs button[data-tab="tecnica"]'); await p.waitForTimeout(300); t('aba Por baixo do casco mostra as versões lidas do version.json', await p.evaluate(()=>/v8\.30/.test(document.getElementById('vers').textContent)), 'versões');
+   await ctx.close(); }
  // 7) ajuda + busca; movimento reduzido
  { const {ctx,p}=await open(U('ana','Ana Silva'),{reduce:true}); const c=await p.evaluate(()=>({peixes:document.querySelectorAll('#fwrap div').length, ajuda:(document.getElementById('btn-ajuda').click(), document.querySelectorAll('#faq details').length)}));
    await p.fill('#ajuda-busca','instalar'); const f=await p.evaluate(()=>[...document.querySelectorAll('#faq summary')].map(x=>x.textContent));
