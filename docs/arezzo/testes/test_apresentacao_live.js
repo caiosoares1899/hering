@@ -42,6 +42,35 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.keyboard.press('Escape'); await A.p.evaluate(()=>window._okrGoTo(1)); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('traços são por slide: em outro slide a tela fica limpa', await px(B.p)===0, await px(B.p));
  await A.p.evaluate(()=>window._okrGoTo(3)); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('e voltam quando se retorna ao slide', await px(B.p)>200, await px(B.p));
  await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(200); await sync(A.p,B.p); t('🧽 limpa os traços pra todos', await px(B.p)===0, await px(B.p));
+ // caneta TEMPORÁRIA (some sozinha em ~5 s) × FIXA (fica até apagar) + desfazer
+ await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(150);
+ await A.p.keyboard.press('t'); t('tecla T liga a caneta temporária', await A.p.evaluate(()=>liveFerr==='temp' && document.body.classList.contains('live-pen')), 'não ligou');
+ await A.p.mouse.move(300,300); await A.p.mouse.down(); await A.p.mouse.move(420,360,{steps:5}); await A.p.mouse.up(); await A.p.waitForTimeout(250); await sync(A.p,B.p);
+ const tmp=await A.p.evaluate(()=>Object.values(window.__store.kanban.okr.apresentacao_live.tracos||{}).map(x=>x.m+':'+x.fim));
+ t('traço temporário aparece pro apresentador e pro acompanhante, marcado como temporário e pronto', tmp.join()==='t:true' && await px(A.p)>100 && await px(B.p)>100, {tmp, a:await px(A.p), b:await px(B.p)});
+ await A.p.keyboard.press('p'); await A.p.mouse.move(300,450); await A.p.mouse.down(); await A.p.mouse.move(420,480,{steps:5}); await A.p.mouse.up(); await A.p.waitForTimeout(250); await sync(A.p,B.p);
+ t('caneta fixa (tecla P) convive com a temporária', (await A.p.evaluate(()=>Object.values(window.__store.kanban.okr.apresentacao_live.tracos||{}).map(x=>x.m).sort().join()))==='f,t', 'tipos');
+ await A.p.waitForTimeout(5900); await sync(A.p,B.p);
+ const dep=await A.p.evaluate(()=>Object.values(window.__store.kanban.okr.apresentacao_live.tracos||{}).map(x=>x.m).join());
+ t('depois de ~5 s a temporária some do banco e das duas telas; a fixa continua', dep==='f' && await px(A.p)>50 && await px(B.p)>50 && await px(B.p)<=await px(A.p)+5, {dep, a:await px(A.p), b:await px(B.p)});
+ // desfazer: remove só o último fixo
+ await A.p.mouse.move(300,550); await A.p.mouse.down(); await A.p.mouse.move(420,580,{steps:5}); await A.p.mouse.up(); await A.p.waitForTimeout(250);
+ await A.p.click('#live-box button[title^="Desfazer"]'); await A.p.waitForTimeout(250); await sync(A.p,B.p);
+ t('↩ desfaz só o último traço fixo (o anterior fica)', (await A.p.evaluate(()=>Object.keys(window.__store.kanban.okr.apresentacao_live.tracos||{}).length))===1, await A.p.evaluate(()=>Object.keys(window.__store.kanban.okr.apresentacao_live.tracos||{}).length));
+ // expiração local: uma temporária "esquecida" no banco (ex.: o apresentador saiu antes de apagar) some sozinha em cada tela depois de 5 s
+ await B.p.evaluate(()=>{ const s=window.__store.kanban.okr.apresentacao_live; s.tracos.zz={c:'#ff4d4d',k:'s:'+slides[currentIdx].key,m:'t',fim:true,p:[[0.1,0.1],[0.5,0.5]]}; (window.__lis||[]).filter(l=>l.p==='kanban/okr/apresentacao_live').forEach(l=>l.cb({val:()=>JSON.parse(JSON.stringify(s)),exists:()=>true,key:'x'})); });
+ await B.p.waitForTimeout(200); const antes=await px(B.p); await B.p.waitForTimeout(5400); const depois=await px(B.p);
+ t('temporária esquecida no banco some sozinha em cada tela (conta o tempo localmente, sem depender do apresentador)', antes>depois && depois<antes-50, {antes, depois});
+ await A.p.keyboard.press('Escape'); await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(200); await sync(A.p,B.p);
+ // traços do slide CONTINUAM quando se entra no detalhe do Objetivo; os feitos dentro do detalhe ficam só nele
+ await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(150); await A.p.evaluate(()=>window._okrGoTo(3)); await A.p.waitForTimeout(200);
+ await A.p.keyboard.press('p'); await A.p.mouse.move(300,300); await A.p.mouse.down(); await A.p.mouse.move(450,340,{steps:5}); await A.p.mouse.up(); await A.p.keyboard.press('Escape'); await A.p.waitForTimeout(200); await sync(A.p,B.p);
+ const pre=await px(B.p); await A.p.evaluate(()=>window._okrOpenDetail('d2')); await A.p.waitForTimeout(300); await sync(A.p,B.p);
+ t('entrar no detalhe do Objetivo NÃO apaga os traços do slide (nas duas telas)', pre>100 && await px(A.p)>100 && await px(B.p)>100, {pre, a:await px(A.p), b:await px(B.p)});
+ await A.p.keyboard.press('p'); await A.p.mouse.move(300,500); await A.p.mouse.down(); await A.p.mouse.move(520,540,{steps:5}); await A.p.mouse.up(); await A.p.keyboard.press('Escape'); await A.p.waitForTimeout(200); await sync(A.p,B.p);
+ const comDet=await px(B.p); await A.p.evaluate(()=>window._okrCloseDetail()); await A.p.waitForTimeout(250); await sync(A.p,B.p); const semDet=await px(B.p);
+ t('traço feito dentro do detalhe fica só nele; ao fechar sobram os do slide', comDet>pre+50 && semDet>100 && semDet<comDet-50, {pre, comDet, semDet});
+ await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(150);
  // pedir / passar o controle
  await B.p.evaluate(()=>window._livePedir()); await B.p.waitForTimeout(250); await sync(B.p,A.p);
  t('pedido de controle aparece pro apresentador, com Passar/Recusar', await A.p.evaluate(()=>/Eve Souza pede o controle/.test(document.getElementById('live-toast').textContent) && !!document.querySelector('#live-toast [data-pedido] button')), 'sem pedido');
