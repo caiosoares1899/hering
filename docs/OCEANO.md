@@ -21,5 +21,8 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 2. **Menu entre produtos do Oceano** (hoje o menu de páginas já existe no cabeçalho do painel e lista "Radar").
 3. **URLs/arquivos** só no fim, se valer a pena, com redirecionamento.
 
+## Menu de produtos (2026-10-09, só dev)
+Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).js`: `MareNotif.appsMontar()` / `appsUso()`), abre a grade com a logo de cada produto em **aba nova**. Quem vê o quê: Maré Digital e A Bordo = Hering; Radar = todos (inclusive visualizador externo); **Painel = ADM, visualizador externo ou quem já usa** (`kanban/usuarios/{uid}/apps/painel`, gravado quando a pessoa abre o painel ou é PO/Organizador/ADM no kanban). É vitrine, não segurança. **Produto novo** (ex.: Travessia): acrescente uma entrada em `APPS` e uma regra em `appsVisivel()` no módulo — as páginas não mudam.
+
 ## Cuidados
 - Travessia lida com dado sensível (avaliação/PDI): regras de acesso próprias, num trecho separado do banco, desenhadas antes do código.

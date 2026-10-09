@@ -3723,6 +3723,7 @@ window.MARE_SO_HERING = true;
       </div>
       <button onclick="doSignOut()" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:11px;" title="Sair">✕</button>
     </div>
+<span id="mare-apps-slot" style="display:inline-flex;align-items:center;"></span>
 <button class="notif-btn" id="notif-btn" onclick="toggleNotifPanel()" title="Notificações">
     🔔<span class="notif-badge" id="notif-badge">0</span>
     <span id="dnd-bell-badge" title="Não Perturbe ativo" style="display:none;position:absolute;bottom:-2px;right:-2px;font-size:10px;line-height:1;">🔕</span>
@@ -6499,7 +6500,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.804-dev</div>
+<div class="version">v8.30.805-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6842,7 +6843,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=8"></script>
+<script src="mare-notif-dev.js?v=9"></script>
 
 <script>
 
@@ -11834,6 +11835,7 @@ function autoRegistrar(user){
       // batendo com a inicial registrada de OUTRA pessoa. Usa o valor autoritativo.
       window._currentUserInit=existe.init||window._currentUserInit;
       window._currentUserRole=getEffectiveRole(user, existe.squads_roles&&existe.squads_roles[ACTIVE_SQUAD], existe.role);
+      if(window.MareNotif && ['adm','po','organizador'].includes(window._currentUserRole)) MareNotif.appsUso('painel', user);   // PO/Organizador/ADM "usam o painel": ele aparece no menu de produtos
       // ⚡ Sincroniza usuarios_publicos SEMPRE no login, não só quando uma
       // condição específica muda abaixo (foto, virar ADM, migração de squad).
       // Sem isso, gente que já tinha conta e nunca disparou nenhuma dessas
@@ -29791,7 +29793,10 @@ function loadNotifs(){
   if(_notifListener) return; // já registrado
   // SINO ÚNICO: o feed da torre (aviso do Mural do OKR, Objetivo criado, Marco concluído…) vem do módulo compartilhado mare-notif(-dev).js
   // e aparece misturado às notificações pessoais, igual em kanban/painel/OKR. Quem não tem acesso ao feed (freelancer) só não recebe esses itens.
-  if(window.MareNotif) MareNotif.start({user, isViewer:false, isAdm:()=>isAdmUser(window._currentUser), onChange:()=>renderNotifs(_activeNotifsCache)});
+  if(window.MareNotif){
+    MareNotif.appsMontar({user, aqui:'kanban', isViewer:false, isAdm:()=>isAdmUser(window._currentUser), slot:'#mare-apps-slot', btnClass:'notif-btn'});   // 🔲 produtos do Oceano (abre em aba nova)
+    MareNotif.start({user, isViewer:false, isAdm:()=>isAdmUser(window._currentUser), onChange:()=>renderNotifs(_activeNotifsCache)});
+  }
   const ref = window._ref(window._db,'kanban/usuarios/'+user.uid+'/notificacoes');
   // Só as últimas NOTIF_QUERY_LIMIT por 'ts' (não por chave -- ver comentário
   // grande na declaração de NOTIF_QUERY_LIMIT) em vez do node inteiro.

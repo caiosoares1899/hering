@@ -1491,6 +1491,7 @@ window.MARE_SO_HERING = true;
       <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span id="mare-apps-slot" style="display:inline-flex;"></span>
       <div style="position:relative;display:inline-block;">
         <button class="btn" onclick="togglePainelNotif(event)" title="Minhas notificações e lembretes" id="painel-notif-btn">🔔<span id="painel-notif-badge" style="display:none;position:absolute;top:-4px;right:-4px;background:var(--danger);color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:999px;display:none;align-items:center;justify-content:center;padding:0 4px;">0</span></button>
         <div id="painel-notif-drop" style="display:none;position:absolute;top:100%;right:0;margin-top:6px;width:min(380px,90vw);max-height:480px;background:rgba(8,22,42,.99);border:1px solid var(--glass-b);border-radius:12px;box-shadow:0 16px 40px rgba(0,0,0,.6);z-index:600;overflow:hidden;flex-direction:column;">
@@ -2752,7 +2753,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.23 · painel-dev</div>
+<div class="version">v5.24 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2855,7 +2856,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=8"></script>
+<script src="mare-notif-dev.js?v=9"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -6750,6 +6751,8 @@ function loadPainelNotifs(){
   if(_painelNotifListeners) return; // evita registrar os listeners mais de uma vez
   _painelNotifListeners = true;
   if(window.MareNotif){
+    MareNotif.appsMontar({user, aqui:'painel', isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), slot:'#mare-apps-slot', btnClass:'btn'});   // 🔲 produtos do Oceano (abre em aba nova)
+    MareNotif.appsUso('painel', user);   // quem abre o painel "usa o painel": passa a ver o Painel no menu dos outros produtos
     MareNotif.start({user, isViewer:!!window._isPainelViewer, isAdm:()=>_isAdmPainel(), onChange:_painelSyncFeed});
     const ft = document.getElementById('painel-notif-ft');   // rodapé do sino: 🔊 som · permissão deste aparelho · 🔕 Não Perturbe (igual ao kanban)
     if(ft){ ft.innerHTML = MareNotif.rodapeHtml(''); MareNotif.rodapeRender(); }

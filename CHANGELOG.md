@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔲 Oceano: menu de produtos (estilo "apps do Google") — 2026-10-09 · mare-notif-dev v9 · okr-dev v2.47 · painel-dev v5.24 · kanban-dev v8.30.805-dev (SÓ DEV)
+
+Novo botão de 9 pontinhos no cabeçalho do Maré Digital, do Painel e do Radar: abre a grade dos produtos do Oceano, cada um com a sua logo, e clicar **abre em aba nova**. Só aparece o que a pessoa usa:
+- **Maré Digital** e **A Bordo**: qualquer pessoa da Hering · **Radar**: todo mundo, inclusive visualizador externo.
+- **Painel**: ADM, visualizador externo e quem **já usa** o painel — abriu o painel alguma vez ou é PO/Organizador/ADM num squad. Isso fica em `kanban/usuarios/{uid}/apps/painel` (o próprio dono grava; as regras do banco já deixavam, **sem deploy**). É vitrine, não segurança: esconder o botão não impede quem sabe a URL.
+- Nas páginas `-dev` o menu abre as páginas `-dev` e avisa "🧪 páginas de teste". A página atual aparece como "você está aqui".
+- O botão "🐟 Painel" do cabeçalho do Radar foi substituído pelo menu (o Painel agora só aparece pra quem o usa).
+- Implementação: módulo compartilhado `mare-notif-dev.js` (`MareNotif.appsMontar()` / `appsUso()`, logos em SVG próprios — sem arquivo de imagem); cada página só tem um `<span id="mare-apps-slot">` no cabeçalho e uma chamada depois do login. `?v=` do módulo vai pra 9.
+- Testado em Chromium: ADM / pessoa comum / quem já usa o painel / visualizador externo veem os produtos certos, links `target=_blank rel=noopener` e `-dev`, Esc e clique fora fecham, cabe no celular, abrir o painel grava o uso, e o botão encaixa no cabeçalho do kanban.
+
 ### 🌊 Oceano: o OKR vira "Radar" 📡 — fase 1, só nomes visíveis — 2026-10-09 · okr-dev v2.46 · painel-dev v5.23 · kanban-dev v8.30.804-dev (SÓ DEV — produção ainda chama "OKR")
 
 Decisão: o que era tudo "Maré Digital" vira uma família chamada **Oceano** — **Maré Digital** (o kanban, mantém o nome), **Painel** (mantém), **Radar** (o OKR), **A Bordo** (onboarding, depois) e **Travessia** (performance/gente, projeto futuro). Detalhes e regras em `docs/OCEANO.md`.

@@ -1519,7 +1519,7 @@ window.MARE_SO_HERING = true;
       <div class="hd-sub">Objetivos estratégicos · Digital Hering / Grupo Azzas 2154</div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <a class="btn" href="painel-dev.html" target="_blank" rel="noopener" title="Abre o painel em outra aba" style="text-decoration:none;display:inline-flex;align-items:center;">🐟 Painel</a>
+      <span id="mare-apps-slot" style="display:inline-flex;"></span>
       <button type="button" id="okr-mural-btn" class="btn okr-bell" onclick="openOkrMural()" title="Mural do Radar — avisos por torre" aria-label="Mural do Radar">📢<span class="okr-bell-n" id="okr-mural-n"></span></button>
       <button type="button" id="okr-bell-btn" class="btn okr-bell" onclick="_okrBellToggle(event)" title="Notificações do Radar: avisos do Mural, Objetivos novos, Marcos concluídos, menções e prazos" aria-label="Notificações do Radar">🔔<span class="okr-bell-n" id="okr-bell-n"></span></button>
       <button id="theme-toggle-btn" class="btn" onclick="toggleTheme()" onpointerdown="_themeBtnPointerDown()" onpointerup="_themeBtnPointerUp()" onpointerleave="_themeBtnPointerUp()" onpointercancel="_themeBtnPointerUp()" title="Alterna entre 🌙 Abrolhos (escuro) e ☀️ Lençóis Maranhenses (claro). Preferência salva só neste navegador.">🌙</button>
@@ -1901,7 +1901,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.46 · okr-dev</div>
+<div class="version">v2.47 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -1952,7 +1952,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=8"></script>
+<script src="mare-notif-dev.js?v=9"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -3113,6 +3113,7 @@ function _okrMuralChecaPopup(){
 function _okrFeedPush(tipo, torres, titulo, sub, extra){ return MareNotif.pushFeed(Object.assign({tipo, torres, titulo, sub}, extra||{})); }
 function loadOkrFeed(){
   const u = window._currentUser; if(!u) return;
+  MareNotif.appsMontar({user:u, aqui:'okr', isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), slot:'#mare-apps-slot', btnClass:'btn'});   // 🔲 produtos do Oceano (abre em aba nova)
   MareNotif.start({
     user:u, isViewer:!!window._isPainelViewer, isAdm:()=>isAdmUser(window._currentUser), onChange:_okrBellRender,
     // Feed: o aviso abre aqui mesmo; Objetivo também (senão o módulo navega pela URL)
