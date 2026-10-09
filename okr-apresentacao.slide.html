@@ -1473,7 +1473,7 @@ function render(){
   const upd = document.getElementById('cover-updated');
   if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
   fitSlideContent(document.querySelector('.slide.active'));
-  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(); }
+  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(typeof _liveRetomar!=='undefined' && _liveRetomar); }
 }
 window.addEventListener('resize', () => { fitSlideContent(document.querySelector('.slide.active')); if(typeof liveDesenhar==='function') liveDesenhar(); });
 
@@ -2018,13 +2018,17 @@ function liveToast(msg, acoes, ttl){
   const el = document.createElement('div'); el.className = 'live-t'; el.innerHTML = '<span>'+esc(msg)+'</span>'+(acoes||'');
   box.appendChild(el); if(ttl!==0) setTimeout(()=>el.remove(), ttl||4200); return el;
 }
+let _liveIniciado = false, _liveRetomar = false;
 function liveInit(){
+  if(_liveIniciado) return; _liveIniciado = true;   // _okrShowApp() roda de novo a cada auth-change: sem a trava, cada um acumulava mais um ouvinte do mesmo nó
   window._onValue(liveRef(), snap=>{
     const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
     if(eraHost && !liveSouHost() && liveAtiva()) liveSeguindo = true;   // passou o controle: a tela dele (a compartilhada no Meet) passa a seguir o novo apresentador
     if(antes && !liveAtiva()){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
-    if(liveAtiva() && !_liveEntrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
-    liveAplicar(); liveRender(); liveDesenhar();
+    const entrou = liveAtiva() && !_liveEntrou;
+    if(entrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
+    if(entrou && liveSouHost()) _liveRetomar = true;
+    liveAplicar(_liveRetomar); liveRender(); liveDesenhar();
   }, ()=>{});
   clearInterval(_liveHb); _liveHb = setInterval(liveBatida, 20000);
 }
@@ -2039,15 +2043,16 @@ window._liveComecar = () => {
     .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!liveSouHost()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
-function liveAplicar(){
-  if(!liveAtiva() || liveSouHost() || !liveSeguindo) return;
+function liveAplicar(forcar){
+  // forcar: o APRESENTADOR recarregou a página — ela abre na capa enquanto a sala continua no slide dele; volta pra posição da sessão (sem isso ele só ressincroniza ao navegar)
+  if(!liveAtiva() || (liveSouHost() && !forcar) || (!liveSouHost() && !liveSeguindo)) return;
   _liveAplicando = true;
   try{
     const i = slides.findIndex(x=>x.key===live.slide);
     if(i>=0){ if(i!==currentIdx) window._okrGoTo(i); } else if(live.slide) _livePend = true;
     const d = live.detalhe||'', aberto = liveDetalheAberto();
     if(d && d!==aberto){ if(okrObjetivos[d]) window._okrOpenDetail(d); else _livePend = true; } else if(!d && aberto) window._okrCloseDetail();
-  } finally { _liveAplicando = false; }
+  } finally { _liveAplicando = false; if(!_livePend) _liveRetomar = false; }   // retomada de quem recarregou é de uma vez só (senão cada sinal da sala puxaria o apresentador de volta)
 }
 function liveAposNavegar(){
   if(_liveAplicando){ liveDesenhar(); return; }
@@ -2085,6 +2090,7 @@ window._liveTipo = m => { liveTipo = m; if(liveSouHost() && liveFerr!=='caneta')
 window._liveCor = c => { liveCor = c; liveRender(); };
 window._liveLimpar = () => { if(liveSouHost()){ liveMeus = []; window._remove(liveRef('tracos')).catch(()=>{}); } };
 window._liveDesfazer = () => { if(!liveSouHost()) return; while(liveMeus.length){ const id = liveMeus.pop(); if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; } } };
+window._liveCopiarLink = () => { const url = location.origin + location.pathname; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>liveToast('📋 Link copiado — mande pra quem vai receber o controle.')).catch(()=>liveToast('Copie o endereço da barra do navegador: '+url, '', 7000)); };
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
@@ -2118,7 +2124,7 @@ function liveRender(){
         + '<div class="lp-cores">'+LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('')+'</div>';
       p += '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveDesfazer()" title="Desfaz o último traço fixo (Z)">↩ Desfazer</button><button type="button" class="lp-b" onclick="window._liveLimpar()" title="Apaga todos os traços">🧽 Apagar tudo</button></div>'
         + '<div class="lp-sub">Passar o controle pra…</div>'
-        + (pessoas.length ? '<div class="lp-lista">'+pessoas.map(([id,x])=>'<button type="button" onclick="window._livePassar('+jsq(id)+','+jsq(x.nome||'')+')">🤝 '+esc(x.nome||'Alguém')+'</button>').join('')+'</div>' : '<div class="lp-vazio">Ninguém mais está com a página aberta agora. Peça pra abrirem o link da apresentação.</div>')
+        + (pessoas.length ? '<div class="lp-lista">'+pessoas.map(([id,x])=>'<button type="button" onclick="window._livePassar('+jsq(id)+','+jsq(x.nome||'')+')">🤝 '+esc(x.nome||'Alguém')+'</button>').join('')+'</div>' : '<div class="lp-vazio">Ninguém mais está com a página aberta agora. Peça pra abrirem o link da apresentação (entrando com a conta da empresa) — o nome aparece aqui em instantes. Outra aba da sua própria conta não conta.</div><button type="button" class="lp-b" onclick="window._liveCopiarLink()">📋 Copiar link da apresentação</button>')
         + '<button type="button" class="lp-b lp-fim" onclick="window._liveEncerrar()">⏹ Encerrar apresentação</button>';
     } else {
       p += (liveSeguindo ? '<div class="lp-vazio">Você está acompanhando o slide dele.</div>' : '<button type="button" class="lp-b" onclick="window._liveSeguir()">↩ Voltar a seguir</button>')
@@ -2168,7 +2174,9 @@ document.addEventListener('mousemove', e=>{
   const ag = Date.now(); if(ag - _liveLaserT < 40) return; _liveLaserT = ag;
   window._set(liveRef('laser'), {x:+x.toFixed(4), y:+y.toFixed(4), on:true, t:ag}).catch(()=>{});
 }, true);
-document.addEventListener('mouseleave', ()=>{ if(liveSouHost() && liveFerr==='laser') window._set(liveRef('laser'), {on:false}).catch(()=>{}); });
+const liveLaserOff = () => { if(liveSouHost() && liveFerr==='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; } };
+// mouseleave não borbulha e no document nem sempre dispara ao sair da janela: sem isto o ponto vermelho ficava parado na tela de quem acompanha
+document.documentElement.addEventListener('mouseleave', liveLaserOff); document.addEventListener('mouseleave', liveLaserOff); window.addEventListener('blur', liveLaserOff);
 (function(){
   const cv = document.getElementById('live-capture'); if(!cv) return;
   const pt = e => [+(e.clientX/window.innerWidth).toFixed(4), +(e.clientY/window.innerHeight).toFixed(4)];

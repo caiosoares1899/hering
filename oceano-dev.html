@@ -491,7 +491,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.3 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.4 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -728,14 +728,18 @@ async function gravaLinks(upd, novo){
   try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid+'/links'), upd); linksMeus = novo; linksCacheSet('meus', novo); renderLinks(); return true; }
   catch(e){ toast('⚠️ Não consegui gravar os links: '+(e && e.message || e)); return false; }
 }
+let _salvandoLink = false;   // gravação assíncrona com id novo a cada chamada: sem a trava, duplo clique em Salvar criava 2 links iguais
 async function salvarLink(){
+  if(_salvandoLink) return;
   const v = id=>($('#'+id).value||'').trim(), titulo = v('pfl-titulo'), desc = v('pfl-desc'), url = v('pfl-url'), img = v('pfl-img');
   if(!titulo){ toast('⚠️ Dê um título ao link.'); return; } if(!linkUrlOk(url)){ toast('⚠️ O link precisa começar com https://'); return; } if(img && !linkImgOk(img)){ toast('⚠️ A imagem precisa ser um endereço https:// direto.'); return; }
   const atual = Object.assign({}, linksMeus||{}), id = linkEdit || ('l'+Date.now().toString(36)+Math.random().toString(36).slice(2,5));
   if(!linkEdit && Object.keys(atual).length>=30){ toast('⚠️ Limite de 30 links.'); return; }
   const ordem = linkEdit && atual[linkEdit] ? (Number(atual[linkEdit].ordem)||0) : (Math.max(0,...Object.values(atual).map(x=>Number(x.ordem)||0))+1);
   const obj = {titulo, desc, url, img, ordem, ativo:true}; atual[id] = obj;
-  if(await gravaLinks({[id]:obj}, atual)){ linkEdit = null; ['pfl-titulo','pfl-desc','pfl-url','pfl-img'].forEach(i=>$('#'+i).value=''); $('#pfl-cancelar').style.display='none'; $('#pfl-salvar').textContent='Salvar link'; toast('✅ Link salvo'); }
+  _salvandoLink = true; const bt = $('#pfl-salvar'); if(bt) bt.disabled = true;
+  const ok = await gravaLinks({[id]:obj}, atual); _salvandoLink = false; if(bt) bt.disabled = false;
+  if(ok){ linkEdit = null; ['pfl-titulo','pfl-desc','pfl-url','pfl-img'].forEach(i=>$('#'+i).value=''); $('#pfl-cancelar').style.display='none'; $('#pfl-salvar').textContent='Salvar link'; toast('✅ Link salvo'); }
 }
 async function acaoLink(act, id){
   const atual = Object.assign({}, linksMeus||{}); const arr = linksOrd(atual);

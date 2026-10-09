@@ -473,6 +473,8 @@
     appsSt.opts = opts || {};
     const u = appsSt.opts.user, slot = typeof appsSt.opts.slot==='string' ? document.querySelector(appsSt.opts.slot) : appsSt.opts.slot;
     if(!slot) return;
+    // outra pessoa entrou na mesma página (sair/entrar sem recarregar): os "Meus links" e a aba da anterior não podem aparecer pra ela
+    const uidNovo = (u && u.uid) || ''; if(appsSt.uid && appsSt.uid!==uidNovo){ appsSt.links = {hering:null, meus:null}; appsSt.tab = 'produtos'; } appsSt.uid = uidNovo;
     let btn = document.getElementById('mn-apps-btn');
     if(!btn){
       btn = document.createElement('button'); btn.type = 'button'; btn.id = 'mn-apps-btn';
