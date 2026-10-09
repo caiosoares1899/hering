@@ -33,6 +33,12 @@ async function sync(from,to){ const n=await from.evaluate(()=>JSON.stringify(((w
  await A.p.keyboard.press('p'); await A.p.mouse.move(300,300); await A.p.mouse.down(); await A.p.mouse.move(400,350,{steps:6}); await A.p.mouse.move(500,300,{steps:6}); await A.p.mouse.up(); await A.p.waitForTimeout(250); await sync(A.p,B.p);
  const px=async p=>p.evaluate(()=>{ const c=document.getElementById('live-canvas'), d=c.getContext('2d').getImageData(0,0,c.width,c.height).data; let n=0; for(let i=3;i<d.length;i+=4) if(d[i]>0) n++; return n; });
  t('traço da caneta fica salvo e aparece pro acompanhante', (await A.p.evaluate(()=>Object.keys((window.__store.kanban.okr.apresentacao_live.tracos)||{}).length))===1 && await px(B.p)>200, {a:await px(A.p), b:await px(B.p)});
+ // com a caneta LIGADA os botões da barra seguem clicáveis (bug: a camada da caneta cobria a barra e não dava pra desligar nem limpar)
+ t('com a caneta ligada, clicar em 🖍️ DESLIGA (clique de verdade, não só tecla)', await (async()=>{ await A.p.click('#live-box button:has-text("Caneta")'); await A.p.waitForTimeout(200); return await A.p.evaluate(()=>!document.body.classList.contains('live-pen')); })(), 'continuou ligada');
+ await A.p.click('#live-box button:has-text("Caneta")'); await A.p.waitForTimeout(150); await A.p.click('#live-box button[title^="Apagar"]'); await A.p.waitForTimeout(250); await sync(A.p,B.p);
+ t('com a caneta ligada, clicar em 🧽 limpa os traços (nos dois lados)', (await px(A.p))===0 && (await px(B.p))===0, {a:await px(A.p), b:await px(B.p)});
+ await A.p.mouse.move(300,300); await A.p.mouse.down(); await A.p.mouse.move(420,360,{steps:5}); await A.p.mouse.up(); await A.p.waitForTimeout(200);
+ t('a caneta ainda desenha na área dos slides (abaixo da barra)', (await px(A.p))>100, await px(A.p));
  await A.p.keyboard.press('Escape'); await A.p.evaluate(()=>window._okrGoTo(1)); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('traços são por slide: em outro slide a tela fica limpa', await px(B.p)===0, await px(B.p));
  await A.p.evaluate(()=>window._okrGoTo(3)); await A.p.waitForTimeout(250); await sync(A.p,B.p); t('e voltam quando se retorna ao slide', await px(B.p)>200, await px(B.p));
  await A.p.evaluate(()=>window._liveLimpar()); await A.p.waitForTimeout(200); await sync(A.p,B.p); t('🧽 limpa os traços pra todos', await px(B.p)===0, await px(B.p));

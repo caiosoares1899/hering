@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🖍️ Apresentação ao vivo: caneta ligada não deixava desligar nem limpar (fix) — 2026-10-09 · okr-apresentacao.slide.html (compartilhada)
+- **Bug:** com a caneta ligada, a camada que captura o mouse cobria a tela inteira, **inclusive a barra do topo**; clicar em 🖍️ (desligar), 🧽 (limpar) ou nas cores não chegava no botão. **Correção:** a captura da caneta agora começa **abaixo da barra** (`#live-capture`), então os botões seguem clicáveis; a tecla P e o Esc continuam funcionando. Teste novo: com a caneta ligada, clicar (de verdade) em 🖍️ desliga e em 🧽 limpa nos dois lados, e a caneta ainda desenha nos slides.
+
 ### 🎙️ Apresentação ao vivo: passador, laser e caneta direto na nossa apresentação — 2026-10-09 · okr-apresentacao.slide.html (compartilhada, vale assim que mergeada; aditivo: nada muda até alguém clicar em "Apresentar ao vivo")
 - **Como funciona:** quem clica **🎙️ Apresentar ao vivo** vira o apresentador. O slide (pela chave, então funciona mesmo com filtros diferentes) e o Objetivo aberto no detalhe vão pro Firebase (`kanban/okr/apresentacao_live`). **Quem abrir a página acompanha sozinho** ("Acompanhando ✓"); mexer nos slides por conta própria sai da sincronização e aparece **↩ Voltar a seguir**. Visualizador externo acompanha, mas não apresenta nem pede controle.
 - **Passador:** o apresentador tem **🤝 Passar o controle ▾** (lista quem está com a página aberta) e quem acompanha tem **✋ Pedir o controle** (o apresentador vê "Fulano pede o controle" com Passar/Recusar). Se o apresentador ficar **90 s sem sinal**, qualquer pessoa pode **🎙️ Assumir**. **⏹** encerra e apaga a sessão.
