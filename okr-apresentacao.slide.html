@@ -831,8 +831,8 @@ let _okrFiltroTag = '';
 // 🏛️ Filtro por torre (2026-10-07): apresentar só UMA torre (reunião da Comercial, por ex.). Também por URL: ?torre=comercial. Mesma regra da tag — vale pra
 // capa, torres, gerências, panorama e o Anterior/Próximo do detalhe, porque tudo parte de _okrObjetivosAtivos().
 let _okrFiltroTorre = (()=>{ const t = new URLSearchParams(location.search).get('torre'); return OKR_TORRES.some(x=>x.id===t) ? t : ''; })();
-function _okrObjetivosAtivos(ignorarTorre){
-  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (!_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
+function _okrObjetivosAtivos(ignorarTorre, ignorarTag){
+  return Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false && (!MARE_SO_HERING || _okrTorreDe(o)==='digital') && (ignorarTag || !_okrFiltroTag || (o.tagIds||[]).includes(_okrFiltroTag)) && (ignorarTorre || !_okrFiltroTorre || _okrTorreDe(o)===_okrFiltroTorre));
 }
 function _okrGerenciaObjetivos(areaId, torre){
   return _okrObjetivosSorted(_okrObjetivosAtivos().filter(o=>(o.areaId||'geral')===areaId && _okrTorreDe(o)===(torre||'digital')));
@@ -842,7 +842,8 @@ function _okrGerenciaObjetivos(areaId, torre){
 function _okrAtualizaFiltroTag(){
   if(_okrFiltroTag && !okrTags[_okrFiltroTag]) _okrFiltroTag = '';
   const uso = {};
-  Object.values(okrObjetivos).filter(o=>o && !o.arquivado && o.mostrarApresentacao!==false).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) uso[t]=(uso[t]||0)+1; }));
+  // Conta só o que a tela de fato mostra (sem o próprio filtro de tag): no modo só Hering os Objetivos de Comercial/Corporativa não entram, e com o filtro de torre ligado só os dessa torre — senão o seletor oferecia tag que só existe em Objetivo escondido ("Nenhum Objetivo com essa tag") e o (N) não batia com o que aparecia (/monitorarbugs 2026-10-09).
+  _okrObjetivosAtivos(false, true).forEach(o=>(o.tagIds||[]).forEach(t=>{ if(okrTags[t]) uso[t]=(uso[t]||0)+1; }));
   if(_okrFiltroTag && !uso[_okrFiltroTag]) uso[_okrFiltroTag]=0;
   const ids = Object.keys(uso).sort((a,b)=>String(okrTags[a].label||'').localeCompare(String(okrTags[b].label||'')));
   const sel = document.getElementById('tb-tag'), box = document.getElementById('tb-filter');
@@ -855,7 +856,7 @@ function _okrAtualizaFiltroTag(){
   sel.classList.toggle('on', !!_okrFiltroTag);
   box.hidden = !ids.length;
 }
-window._okrSetTag = v => { _okrFiltroTag = v||''; rebuild(); };
+window._okrSetTag = v => { _okrFiltroTag = v||''; rebuild(true); };
 // <select> de torre da barra: aparece quando há Objetivos em 2+ torres (ou já tem filtro ligado). Conta pelos Objetivos ativos SEM o filtro de torre.
 function _okrAtualizaFiltroTorre(){
   const sel = document.getElementById('tb-torre'), box = document.getElementById('tb-filter-torre'); if(!sel || !box) return;
@@ -1154,7 +1155,7 @@ function buildSlides(){
       ${torresComObj.length?`<div class="torre-tiles">${torresComObj.map(t=>{
         const l = ativos.filter(o=>_okrTorreDe(o)===t.id), st = _okrStatsDe(l), ng = grupos.filter(g=>g.torre===t.id).length;
         return `<div class="torre-tile t-${t.id}" role="button" tabindex="0" onclick="window._okrGoToKey('torre:${t.id}')" title="Abrir a torre ${esc(t.label)}">
-          <div class="tt-head"><span class="tt-ico">${t.icon}</span>${esc(t.label)}</div>
+          <div class="tt-head">${t.icon?`<span class="tt-ico">${t.icon}</span>`:''}${esc(t.label)}</div>
           <div class="tt-nums"><div><b>${l.length}</b><span>Objetivo${l.length===1?'':'s'}</span></div><div><b>${st.media}%</b><span>progresso médio</span></div></div>
           ${_okrSbarHtml(st)}
           <div class="tt-sub">${ng} gerência${ng===1?'':'s'}${st.c.atrasado?` · <span style="color:var(--danger);">${st.c.atrasado} atrasado${st.c.atrasado===1?'':'s'}</span>`:''}${st.c.risco?` · <span style="color:var(--warn);">${st.c.risco} em risco</span>`:''}</div>
@@ -1173,7 +1174,7 @@ function buildSlides(){
       list.push({key:'torre:'+t.id, title:_okrTorreTitulo(t), torre:t.id, torreDot:true, html:`
         <div class="slide-inner t-${t.id}">
           <div class="torre-hd">
-            <span class="big">${t.icon}</span>
+            ${t.icon?`<span class="big">${t.icon}</span>`:''}
             <div><h2>${MARE_SO_HERING?'':'Torre '}${esc(t.label)}</h2><div class="sub">${lt.length} Objetivo${lt.length===1?'':'s'} · ${grs.length} gerência${grs.length===1?'':'s'}</div></div>
             <div class="torre-kpis">
               <div class="stat-chip"><b>${st.media}%</b><span>progresso médio</span></div>
@@ -1194,7 +1195,7 @@ function buildSlides(){
         const g = gr.g, lista = _okrObjetivosSorted(gr.lista);
         list.push({key:'ger:'+gr.key, title:gr.rotulo, torre:t.id, html:`
           <div class="slide-inner t-${t.id}">
-            <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon} ${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
+            <div class="ger-header com-torre"><span class="ico">${g.icon}</span><h2>${esc(g.label)}</h2><span class="torre-chip">${t.icon?t.icon+' ':''}${esc(t.label)}</span><span class="ger-count">${lista.length} objetivo${lista.length>1?'s':''}</span></div>
             <div class="obj-grid">${lista.map(o=>objCardHtml(o)).join('')}</div>
           </div>`});
       });
@@ -1235,7 +1236,7 @@ function scheduleRebuild(){
   clearTimeout(scheduleRebuild._t);
   scheduleRebuild._t = setTimeout(rebuild, 150);
 }
-function rebuild(){
+function rebuild(porFiltro){
   if(!Object.values(_loaded).every(Boolean)) return;
   const prevKey = slides[currentIdx]?.key;
   _okrAtualizaFiltroTag();
@@ -1243,7 +1244,8 @@ function rebuild(){
   slides = buildSlides();
   _lastUpdate = new Date();
   let idx = slides.findIndex(s=>s.key===prevKey);
-  currentIdx = idx>=0 ? idx : 0;
+  // Atualização ao vivo que faz o slide atual sumir (ex.: alguém desliga o último Objetivo da gerência no painel): fica na mesma posição (= o próximo slide) em vez de jogar a apresentação pra capa no meio da fala; troca de filtro continua voltando pra capa.
+  currentIdx = idx>=0 ? idx : (porFiltro ? 0 : Math.max(0, Math.min(currentIdx, slides.length-1)));
   render();
   if(_previewObjId){
     const id = _previewObjId; _previewObjId = null;
@@ -1546,11 +1548,11 @@ window._okrOpenDetail = id => {
           <div class="d2-table-header">
             <span class="c-nome">Marcos ou atividades macros</span><span class="c-status">Status</span><span class="c-prazo">Prazo</span>
           </div>
-          <div class="d2-table-rows">${marcos.length ? marcos.map((m,i)=>{
+          <div class="d2-table-rows">${marcos.length ? (()=>{ let _n=0; return marcos.map((m,i)=>{
             const ms=okrStatusInfo(m.progresso);
             const oculto = _okrColapsarConcluidos && m.progresso==='concluido';
             return `<div class="d2-marco-row"${oculto?' style="display:none;"':''} onclick="window._okrOpenMarcoComments(${jsq(m.id)})" title="Ver comentários">
-              <span class="d2-marco-num">${i+1}.</span>
+              <span class="d2-marco-num">${oculto ? (i+1) : (++_n)}.</span>
               <div class="d2-marco-main">
                 <span class="d2-marco-nome">${esc(m.nome||'—')}</span>
                 ${m.descricao?`<div class="d2-marco-desc">${esc(m.descricao)}</div>`:''}
@@ -1558,7 +1560,7 @@ window._okrOpenDetail = id => {
               <span class="d2-marco-status"><span class="status-dot" style="background:${ms.dot};"></span>${esc(ms.label)}</span>
               <span class="d2-marco-prazo">${m.prazo?esc(m.prazo):'—'}</span>
             </div>`;
-          }).join('') : '<div class="d2-empty">Nenhum marco cadastrado ainda.</div>'}</div>
+          }).join(''); })() : '<div class="d2-empty">Nenhum marco cadastrado ainda.</div>'}</div>
         </div>
       </div>
       <div class="d2-footer">
@@ -1703,14 +1705,19 @@ window._okrNotesSetViewDate = dataStr => {
   renderNotas();
   const list = document.getElementById('notes-list'); if(list) list.scrollTop = list.scrollHeight;
 };
+const NOTES_READONLY_TXT = '🔒 Reunião encerrada — só leitura. Abra "Hoje" pra adicionar uma anotação nova.';
 function renderNotas(){
   const list = document.getElementById('notes-list'); if(!list) return;
   _notasPopulateDateSel();
   const isHoje = _notesViewDate===_hojeStr();
   // Reunião passada é só leitura — compor uma anotação nova sempre entra
   // na reunião de HOJE (ver window._okrAddNota()), nunca retroativa.
-  document.getElementById('notes-compose').hidden = !isHoje;
-  document.getElementById('notes-readonly').hidden = isHoje;
+  // Visualizador externo (só leitura): sem caixa de compor, com o aviso dele.
+  const soLeitura = !!window._okrIsViewer;
+  document.getElementById('notes-compose').hidden = !isHoje || soLeitura;
+  const rdEl = document.getElementById('notes-readonly');
+  rdEl.textContent = (soLeitura && isHoje) ? '👁 Acesso de visualizador — você acompanha as anotações, mas não escreve.' : NOTES_READONLY_TXT;
+  rdEl.hidden = isHoje && !soLeitura;
   // Ordem cronológica (mais antiga primeiro) — lê como uma ata da reunião,
   // não um feed. `ts` é ISO string (mesma convenção do resto do app —
   // NUNCA Date.now() cru, ver comentário no CLAUDE.md sobre isso quebrar
@@ -1799,14 +1806,14 @@ window._okrCloseMarcoComments = () => { _mcCurrentId = null; document.getElement
 window._okrAddNota = () => {
   const inp = document.getElementById('notes-input');
   const texto = (inp.value||'').trim();
-  if(!texto || !window._currentUser) return;
+  if(!texto || !window._currentUser || window._okrIsViewer) return;   // visualizador externo só lê (as regras negam a escrita; antes o texto sumia sem aviso)
   const hoje = _hojeStr();
   const id = 'nota_'+Date.now()+Math.random().toString(36).slice(2,6);
   window._set(window._ref(window._db, 'kanban/okr/reuniao_notas/'+hoje+'/'+id), {
     texto,
     autorUid: window._currentUser.uid,
     ts: new Date().toISOString(),
-  }).catch(err=>console.error('[notas] falha ao salvar:', err));
+  }).catch(err=>{ console.error('[notas] falha ao salvar:', err); if(!inp.value) inp.value = texto; const rd = document.getElementById('notes-readonly'); if(rd){ rd.textContent = '⚠️ Não foi possível salvar a anotação — seu texto voltou pro campo. Tente de novo.'; rd.hidden = false; setTimeout(()=>{ rd.textContent = NOTES_READONLY_TXT; rd.hidden = (_notesViewDate===_hojeStr()); }, 6000); } });
   inp.value = '';
 };
 window._okrDelNota = id => {
@@ -1842,12 +1849,14 @@ function _okrAgendaPopulateInputs(){
   document.getElementById('agenda-fim').value = ag?.fim || '';
 }
 window._okrToggleAgendaCfg = () => {
+  if(window._okrIsViewer) return;   // horário da reunião é de quem organiza; visualizador só vê a contagem
   const ov = document.getElementById('agenda-cfg-ov');
   if(ov.classList.contains('open')) window._okrCloseAgendaCfg();
   else { _okrAgendaPopulateInputs(); ov.classList.add('open'); }
 };
 window._okrCloseAgendaCfg = () => document.getElementById('agenda-cfg-ov').classList.remove('open');
 window._okrAgendaSalvar = () => {
+  if(window._okrIsViewer){ window._okrCloseAgendaCfg(); return; }   // visualizador não grava (regras negam)
   const inicio = document.getElementById('agenda-inicio').value;
   const fim = document.getElementById('agenda-fim').value;
   if(!inicio || !fim) return;
@@ -1857,6 +1866,7 @@ window._okrAgendaSalvar = () => {
   window._okrCloseAgendaCfg();
 };
 window._okrAgendaLimpar = () => {
+  if(window._okrIsViewer){ window._okrCloseAgendaCfg(); return; }
   window._remove(window._ref(window._db,'kanban/okr/reuniao_agenda/'+_hojeStr())).catch(err=>console.error('[agenda] falha ao limpar:', err));
   window._okrCloseAgendaCfg();
 };
