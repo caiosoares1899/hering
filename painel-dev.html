@@ -591,7 +591,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:1rem;}
 .pc-modal-ov.open{display:flex;}
 /* Achado real (usuário: "cliquei no card vinculado a um OKR, abriu atrás
-   do modal do OKR") — #pc-modal-ov/#pt-feed-ov/#okr-obj-ov/#okr-marco-ov
+   do modal do Radar") — #pc-modal-ov/#pt-feed-ov/#okr-obj-ov/#okr-marco-ov
    compartilham .pc-modal-ov (mesmo z-index:200); a ordem de empilhamento
    vira ordem no DOM, e #pc-modal-ov (visualizador de card) é declarado
    ANTES dos modais de OKR no HTML — sempre pintava por baixo quando os
@@ -1485,7 +1485,7 @@ window.MARE_SO_HERING = true;
   <div class="hd">
     <div>
       <div class="pg-switcher" id="pg-switcher">
-        <div class="hd-title" onclick="togglePagesSwitcher(event)" title="Clique para ir pra outra página do Maré (OKR, Kanban, Painel — produção e dev)">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span> <span class="pg-caret">▾</span></div>
+        <div class="hd-title" onclick="togglePagesSwitcher(event)" title="Clique para ir pra outra página do Maré (Radar, Kanban, Painel — produção e dev)">🐟 Maré Digital <span style="color:var(--teal);font-size:14px;">Painel</span> <span class="pg-caret">▾</span></div>
         <div class="pg-switcher-dd" id="pg-switcher-dd" role="menu"></div>
       </div>
       <div class="hd-sub">Visão consolidada · Digital Hering / Grupo Azzas 2154</div>
@@ -1534,7 +1534,7 @@ window.MARE_SO_HERING = true;
     <button class="ptab on"  id="ptab-visao"   onclick="swPtab('visao')"><span class="ptab-icon">👁</span><span class="ptab-lbl">Visão</span></button>
     <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
     <button class="ptab"     id="ptab-timeline" onclick="swPtab('timeline')"><span class="ptab-icon">🛤️</span><span class="ptab-lbl">Timeline</span></button>
-    <a class="ptab" id="ptab-okr" href="okr-dev.html" target="_blank" rel="noopener" title="O OKR tem página própria — abre okr-dev.html em outra aba" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">🎯</span><span class="ptab-lbl">OKR ↗</span></a>
+    <a class="ptab" id="ptab-okr" href="okr-dev.html" target="_blank" rel="noopener" title="O Radar (OKR) tem página própria — abre okr-dev.html em outra aba" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">📡</span><span class="ptab-lbl">Radar ↗</span></a>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
@@ -1559,7 +1559,7 @@ window.MARE_SO_HERING = true;
     </div>
 
     <!-- 🎯 Online no OKR — a página do OKR (okr.html/okr-dev.html) tem heartbeat próprio em kanban/painel/okr_presence/{uid}; aqui só LEMOS (loadOkrPresence()). -->
-    <div class="sec-title" id="okr-online-section-title">🎯 Online no OKR <span class="badge" id="okr-online-count">0</span></div>
+    <div class="sec-title" id="okr-online-section-title">🎯 Online no Radar <span class="badge" id="okr-online-count">0</span></div>
     <div id="okr-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
       <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
     </div>
@@ -2648,8 +2648,8 @@ window.MARE_SO_HERING = true;
              painel", não fica junto de "Usuários" (que é sobre membros de
              squad, um conceito diferente). Ver _finishPainelLogin()/
              _blockIfPainelViewer() no <script> pro resto do mecanismo. -->
-        <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos (painel e OKR)</div>
-        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>OKR</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do OKR.</div>
+        <div class="cfg-sec" style="margin-top:20px;">👁 Visualizadores externos (painel e Radar)</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:8px;">E-mails de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) autorizados a <b>acompanhar</b> o painel (todos os squads, comunicados…) e o <b>Radar</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b>: não editam nada (garantido pelas regras do Firebase, não só pela tela) e não veem e-mails/notificações de outras pessoas. A pessoa entra com o <b>Google</b> na conta desse e-mail, direto em okr.html (ou painel.html). Também dá pra gerenciar pelo botão 👁 em 👥 Global Users e na página do Radar.</div>
         <div id="pcfg-viewers-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
         <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por email</div>
         <div style="display:flex;gap:6px;">
@@ -2752,7 +2752,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.22 · painel-dev</div>
+<div class="version">v5.23 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3338,7 +3338,7 @@ function renderOkrOnlineVisao(){
   const now = Date.now();
   const all = Object.values(window._okrPresenceRaw||{}).filter(u=>u && u.nome && now-(+u.ts||0) < OKR_PRESENCE_TTL_MS).sort((a,b)=>String(a.nome).localeCompare(String(b.nome)));
   const count = document.getElementById('okr-online-count'); if(count) count.textContent = all.length;
-  if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no OKR no momento.</div>'; return; }
+  if(!all.length){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Ninguém online no Radar no momento.</div>'; return; }
   el.innerHTML = all.map(u=>{
     const foto = safeUrl(u.foto) ? '<img src="'+safeUrl(u.foto)+'" style="width:20px;height:20px;border-radius:50%;">' : '';
     return '<div class="online-pill"'+(u.externo===true?' title="Visualizador externo"':'')+'><span class="online-pip"></span>'+foto+'<span>'+esc(u.nome)+'</span>'+(u.externo===true?'<span style="font-size:10px;opacity:.8;">👁</span>':'')+'</div>';
@@ -8085,8 +8085,8 @@ function _viewerStatus(v, presence){
   if(!a || !a.ultimo) return {ord:2, txt:'⏳ ainda não entrou', cor:'var(--txt3)', title:'Nenhum acesso registrado. Quem foi adicionado antes deste registro existir só aparece como "entrou" depois do próximo login.'};
   const p = presence && a.uid && presence[a.uid];
   const online = (p && now-(+p.ts||0) < OKR_PRESENCE_TTL_MS) || now-a.ultimo < VIEWER_ATIVO_MS;
-  const quando = 'Primeiro acesso: '+(a.primeiro ? _viewerDataBR(a.primeiro) : '—')+' · Último sinal: '+_viewerDataBR(a.ultimo)+(a.pagina ? ' ('+(a.pagina==='okr'?'OKR':'Painel')+')' : '');
-  return online ? {ord:0, txt:'🟢 online agora'+(a.pagina?' · '+(a.pagina==='okr'?'OKR':'Painel'):''), cor:'#4ade80', title:quando}
+  const quando = 'Primeiro acesso: '+(a.primeiro ? _viewerDataBR(a.primeiro) : '—')+' · Último sinal: '+_viewerDataBR(a.ultimo)+(a.pagina ? ' ('+(a.pagina==='okr'?'Radar':'Painel')+')' : '');
+  return online ? {ord:0, txt:'🟢 online agora'+(a.pagina?' · '+(a.pagina==='okr'?'Radar':'Painel'):''), cor:'#4ade80', title:quando}
                 : {ord:1, txt:'✅ entrou · visto '+_viewerTempoRel(a.ultimo), cor:'var(--accent)', title:quando};
 }
 function _viewerOrdena(entries, presence){
@@ -8409,8 +8409,8 @@ function setPcfgTab(tab){
 // 🧭 Menu de páginas do Maré (pedido direto: "clica no Maré Digital e sobe a listinha de todas as páginas") — OKR, Kanban e Painel, produção e dev.
 // Links relativos (mesmo domínio do GitHub Pages); a página atual fica marcada e não clica.
 const MARE_PAGES = [
-  {href:'okr.html',          ico:'🎯', nome:'OKR'},
-  {href:'okr-dev.html',      ico:'🎯', nome:'OKR',             dev:true},
+  {href:'okr.html',          ico:'📡', nome:'Radar'},
+  {href:'okr-dev.html',      ico:'📡', nome:'Radar',             dev:true},
   {href:'kanban.html',       ico:'🐟', nome:'Kanban (board)'},
   {href:'kanban-dev.html',   ico:'🐟', nome:'Kanban (board)',  dev:true},
   {href:'painel.html',       ico:'🖥️', nome:'Painel'},
@@ -9328,7 +9328,7 @@ function renderGlobalUsers(){
     // responsável designado, mas continua "Membro" (ou o que já for) em
     // tudo mais. Chip solto no mesmo wrap dos squads, mesmo estilo visual.
     const okrChip = document.createElement('label');
-    okrChip.title = 'Deixa esta pessoa criar/editar qualquer Objetivo da SUA TORRE no OKR, mesmo sem ser PO/Organizador/ADM nem responsável designado — continua só "Membro" pra tudo o resto (board, Automações, Campanhas).';
+    okrChip.title = 'Deixa esta pessoa criar/editar qualquer Objetivo da SUA TORRE no Radar, mesmo sem ser PO/Organizador/ADM nem responsável designado — continua só "Membro" pra tudo o resto (board, Automações, Campanhas).';
     okrChip.style.cssText = 'display:flex;align-items:center;gap:4px;font-size:10px;padding:3px 8px;border-radius:999px;cursor:pointer;'+
       (u.gestorOkr
         ? 'background:rgba(56,182,255,.15);border:1px solid rgba(56,182,255,.35);color:var(--txt);'
@@ -9348,11 +9348,11 @@ function renderGlobalUsers(){
     // Grava só em kanban/usuarios/{uid} (o kanban não lê esse campo; usuarios_publicos não ganha nó parcial).
     const torreSel = document.createElement('select');
     torreSel.className = 'pt-filter-input';
-    torreSel.title = 'Torre da pessoa no OKR (Digital / Comercial / Corporativa / ⭐ Geral = todas) — define onde ela cria e edita Objetivos';
+    torreSel.title = 'Torre da pessoa no Radar (Digital / Comercial / Corporativa / ⭐ Geral = todas) — define onde ela cria e edita Objetivos';
     torreSel.style.cssText = 'font-size:10px;padding:3px 6px;max-width:150px;';
     torreSel.innerHTML = GU_TORRES.map(t=>`<option value="${t.id}"${_guTorreDe(u)===t.id?' selected':''}>${t.icon} ${t.label}</option>`).join('');
     torreSel.onchange = ()=>setGlobalUserTorre(uid, torreSel.value);
-    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);   // modo só Hering: o OKR tem uma torre só, nada a escolher (o campo gravado fica intacto)
+    if(!MARE_SO_HERING) squadsWrap.appendChild(torreSel);   // modo só Hering: o Radar tem uma torre só, nada a escolher (o campo gravado fica intacto)
 
     // Botão excluir (remove o usuário inteiro de kanban/usuarios)
     const delBtn = document.createElement('button');
@@ -9391,7 +9391,7 @@ async function toggleAdmUser(uid, checked){
   setTimeout(()=>{ if(typeof renderGlobalUsers==='function') renderGlobalUsers(); }, 600);
 }
 function setGlobalUserTorre(uid, torre){
-  if(MARE_SO_HERING){ showToast('ℹ️ O OKR está em modo "só Hering" (uma torre só) — a torre da pessoa não muda nada agora.'); return; }
+  if(MARE_SO_HERING){ showToast('ℹ️ O Radar está em modo "só Hering" (uma torre só) — a torre da pessoa não muda nada agora.'); return; }
   if(!GU_TORRES.some(t=>t.id===torre)) return;
   if(!_isAdmPainel()){ showToast('⚠ Só ADM muda a torre de uma pessoa.'); renderGlobalUsers(); return; }
   window._update(window._ref(window._db,'kanban/usuarios/'+uid), {torre})
@@ -11697,9 +11697,9 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
 <!-- 👁 Visualizadores externos (painel e OKR) — atalho de 👥 Global Users; mesma lista de ⚙ Configurações → 🔑 ADMs (renderPainelViewers). -->
 <div class="cfg-ov" id="viewers-ov" style="z-index:9200;" onclick="if(event.target===this) closePainelViewersModal()">   <!-- acima de 👥 Global Users (cfg-ov = 9100, e este vem antes no HTML: sem isso abria POR BAIXO dele) -->
   <div class="cfg-panel" style="max-width:560px;">
-    <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e OKR)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
+    <div class="cfg-hd"><div class="cfg-hd-title">👁 Visualizadores externos (painel e Radar)</div><button class="x-btn" onclick="closePainelViewersModal()">✕</button></div>
     <div class="cfg-body">
-      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) que só <b>acompanham</b> o painel e o <b>OKR</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
+      <div style="font-size:11px;color:var(--txt3);margin-bottom:10px;line-height:1.55;">Pessoas de fora (não @ciahering.com.br<span class="ms-login">/@arezzo.com.br</span>) que só <b>acompanham</b> o painel e o <b>Radar</b> (<span class="ms-login">as 3 torres, </span>Dashboard, apresentação). <b>Só leitura</b> — garantido pelas regras do Firebase. Mande o link <b>okr.html</b>: a pessoa entra com o <b>Google</b> na conta do e-mail cadastrado aqui.</div>
       <div id="pv-list" style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px;"></div>
       <div class="cfg-sec" style="margin-top:8px;">Adicionar visualizador por e-mail</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;">
@@ -11716,7 +11716,7 @@ _onRealAuthChange(()=>setTimeout(checkOverdueGlobalBackup, 5000));
     <div class="cfg-hd">
       <div style="display:flex;flex-direction:column;gap:6px;width:100%;">
         <div class="cfg-hd-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">🗂 Usuários cadastrados <span class="badge" id="global-users-count">0</span>
-          <button type="button" class="btn btn-sm" id="gu-viewers-btn" style="margin-left:auto;font-size:11px;display:none;" onclick="openPainelViewersModal()" title="Pessoas de fora da empresa autorizadas a só acompanhar o painel e o OKR">👁 Visualizadores externos</button></div>
+          <button type="button" class="btn btn-sm" id="gu-viewers-btn" style="margin-left:auto;font-size:11px;display:none;" onclick="openPainelViewersModal()" title="Pessoas de fora da empresa autorizadas a só acompanhar o painel e o Radar">👁 Visualizadores externos</button></div>
         <input id="gu-search" placeholder="Buscar por nome ou email..." oninput="renderGlobalUsers()"
           style="padding:6px 12px;font-size:12px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;width:100%;max-width:320px;">
         <div id="gu-filters" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;"></div>

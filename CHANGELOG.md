@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Oceano: o OKR vira "Radar" 📡 — fase 1, só nomes visíveis — 2026-10-09 · okr-dev v2.46 · painel-dev v5.23 · kanban-dev v8.30.804-dev (SÓ DEV — produção ainda chama "OKR")
+
+Decisão: o que era tudo "Maré Digital" vira uma família chamada **Oceano** — **Maré Digital** (o kanban, mantém o nome), **Painel** (mantém), **Radar** (o OKR), **A Bordo** (onboarding, depois) e **Travessia** (performance/gente, projeto futuro). Detalhes e regras em `docs/OCEANO.md`.
+- **okr-dev:** aba do navegador "📡 Radar · Oceano", cabeçalho "📡 Radar · Oceano", tela de login, "Ajuda do Radar" (o herói agora diz "O Radar em 30 segundos" e explica que Radar é o nome do OKR no Oceano), "Mural do Radar", "Notificações do Radar", "Telas do Radar", "Online no Radar", "📘 Guia", boas-vindas e a notificação "te mencionou nas anotações do Radar".
+- **painel-dev:** aba "📡 Radar ↗", menu de páginas, "Online no Radar", Visualizadores externos (painel e Radar) e avisos que citavam o OKR.
+- **kanban-dev:** Central de Ajuda e a inscrição falam "Radar" onde é a página/produto.
+- **Não mudou (de propósito):** "🎯 Gestor OKR" (papel), o selo **OKR dos cards** do kanban ("Marcar como OKR"), "OKRs" (metodologia), eventos "Check-in OKR" já gravados, arquivos/URLs/caminhos do banco.
+- **Fica pra promoção:** `guia-okr.html` (+ prints), `okr-apresentacao.slide.html`, `maredigital.html` e os textos das Cloud Functions (prompt do Agente do OKR, push `okr_*` — exigem deploy), pra não deixar prod e guia dizendo coisas diferentes.
+- Testado em Chromium (nomes no okr-dev/painel-dev/kanban-dev + suítes do modo só Hering e do modal de edição).
+
 ### v8.30.803 · okr v2.45 — 2026-10-08 · Promove pra prod — OKR: "Digital Hering 🐟" + Ajuda/Guia ao lado de Apresentação (okr.html v2.45)
 
 Promove o okr-dev v2.45 (entrada "🐟 OKR: a torre única vira Digital Hering 🐟", abaixo): a torre única passa a se chamar **Digital Hering 🐟** (em vez de "🛒 Torre Digital") e **❓ Ajuda** e **📘 Guia** saem do "⋯ Mais" e ficam ao lado de 🎥 Apresentação. Sem mudança no kanban nem no painel (seguem na v8.30.803 / v5.22). Guia, apresentação e `maredigital` já estavam no ar (compartilhados). Sem avisos (pedido do usuário).
