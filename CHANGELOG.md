@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🎥 Apresentação do Radar: aba sem o 📡 — 2026-10-09 · okr-apresentacao.slide.html (compartilhada, vale assim que mergeada)
+- O título da aba era "📡 Radar · Apresentação" e aparecia o emoji do lado do favicon; agora é só "Radar · Apresentação".
+
 ### v5.28 · okr v2.52 — 2026-10-09 · Promove pra prod — 📡 Radar (okr.html v2.52) + Painel (painel.html v5.28) · SEM avisos (sem Mural/WhatsApp)
 - **Radar (`okr.html` v2.49 → v2.52):** 🏷️ dá pra **apagar tag** e há **⋯ Mais → Gerenciar tags** (v2.50); 📅 **legenda clicável do calendário** (Reunião · Evento · Lembrete · Prazo de Marco, com contagem e liga/desliga por tipo) e **fim dos resquícios de torre/agenda global** no modo só Hering — uma agenda só, a da Digital Hering 🐟 (v2.51); **logo do Radar** (sem fundo) no login, cabeçalho, home e ajuda (v2.52).
 - **Painel (`painel.html` v5.22 → v5.28):** nomes **Radar** (aba "Radar ↗", "Online no Radar", visualizadores, ajudas), **menu de produtos do Oceano** (botão estilo "apps do Google": Maré, Radar, Painel, A Bordo — Painel só aparece pra quem usa) e `mare-notif.js?v=11`.
