@@ -350,8 +350,140 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
+  // ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+  // 🔲 MENU DE PRODUTOS DO OCEANO (estilo "apps do Google") — um botão de 9 pontinhos no cabeçalho de cada página que abre a grade dos
+  // produtos da família, cada um com a sua logo; clicar abre o produto em ABA NOVA. Só aparece o que a pessoa usa:
+  //   Maré Digital (kanban) e A Bordo → qualquer pessoa da Hering · Radar (OKR) → todo mundo, inclusive visualizador externo
+  //   Painel → ADM, visualizador externo e quem JÁ USA o painel (abriu o painel alguma vez ou é PO/Organizador num squad).
+  // "Já usa o painel" fica em kanban/usuarios/{uid}/apps/painel (o próprio dono grava — as regras já deixam; não é segurança, só vitrine:
+  // esconder o botão não impede quem sabe a URL). Uso (depois do login):  MareNotif.appsMontar({user, aqui:'okr', isViewer, isAdm, slot:'#id', btnClass:'btn'})
+  //   e, onde a página SABE que a pessoa usa um produto:  MareNotif.appsUso('painel', user).
+  // Logos: SVG próprios (gradiente + glifo), pra não depender de arquivo de imagem. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
+  const APPS = [
+    {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, g:['#38b6ff','#1b6fb0'],
+      glifo:'<path d="M8 17c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3M8 25c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3M8 33c3-4 5-4 8 0s5 4 8 0 5-4 8 0 4 3 4 3"/>'},
+    {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, g:['#8b8cff','#4a4fc4'],
+      glifo:'<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>'},
+    {id:'okr',    nome:'Radar',        sub:'Objetivos e OKRs',    href:PAGES.okr, g:['#3ddc97','#118a63'],
+      glifo:'<circle cx="24" cy="24" r="15"/><circle cx="24" cy="24" r="8"/><path d="M24 24l11-11"/><circle cx="32" cy="29" r="1.8" fill="#fff" stroke="none"/>'},
+    {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', g:['#ffb347','#d9731a'],
+      glifo:'<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>'},
+  ];
+  const appsSt = {opts:null, uso:{}, aberto:false};
+  function appsLsKey(uid){ return 'mare_apps_'+uid; }
+  function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
+  function appsLsSalvar(uid, v){ try{ localStorage.setItem(appsLsKey(uid), JSON.stringify({t:Date.now(), v})); }catch(e){} }
+  function appsVisivel(a, c){
+    if(a.id==='painel') return !!(c.viewer || c.adm || c.uso.painel);
+    if(a.id==='okr') return true;
+    return !c.viewer;   // Maré Digital e A Bordo: só gente da empresa
+  }
+  function appsCtx(){
+    const o = appsSt.opts || {};
+    return {viewer:!!o.isViewer, adm:(typeof o.isAdm==='function' ? !!o.isAdm() : !!o.isAdm), uso:appsSt.uso||{}};
+  }
+  function appsLogo(a){
+    const id = 'mn-g-'+a.id;
+    return '<svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true"><defs><linearGradient id="'+id+'" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+a.g[0]+'"/><stop offset="1" stop-color="'+a.g[1]+'"/></linearGradient></defs>'
+      + '<rect width="48" height="48" rx="12" fill="url(#'+id+')"/><g fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" opacity=".96">'+a.glifo+'</g></svg>';
+  }
+  function appsPopRender(){
+    const pop = document.getElementById('mn-apps-pop'); if(!pop) return;
+    const c = appsCtx(), aqui = (appsSt.opts && appsSt.opts.aqui) || '';
+    const lista = APPS.filter(a=>appsVisivel(a, c));
+    pop.innerHTML = '<div class="mn-apps-hd">🌊 Oceano</div>'
+      + (IS_DEV ? '<div class="mn-apps-dev">🧪 páginas de teste (dev)</div>' : '')
+      + '<div class="mn-apps-grid">' + lista.map(a=>{
+          const eh = a.id===aqui;
+          return (eh ? '<div class="mn-app mn-app-aqui" role="menuitem" aria-current="page" tabindex="0">' : '<a class="mn-app" role="menuitem" href="'+esc(a.href)+'" target="_blank" rel="noopener">')
+            + appsLogo(a) + '<span class="mn-app-n">'+esc(a.nome)+'</span><span class="mn-app-s">'+(eh ? 'você está aqui' : esc(a.sub))+'</span>'
+            + (eh ? '</div>' : '</a>');
+        }).join('') + '</div>';
+  }
+  function appsPosicionar(){
+    const btn = document.getElementById('mn-apps-btn'), pop = document.getElementById('mn-apps-pop'); if(!btn || !pop) return;
+    const r = btn.getBoundingClientRect(), w = Math.min(300, window.innerWidth - 16);
+    pop.style.width = w+'px';
+    pop.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8))+'px';
+    pop.style.top = (r.bottom + 8)+'px';
+  }
+  function appsFechar(volta){
+    const pop = document.getElementById('mn-apps-pop'), btn = document.getElementById('mn-apps-btn'); if(!pop || !appsSt.aberto) return false;
+    appsSt.aberto = false; pop.style.display = 'none'; if(btn){ btn.setAttribute('aria-expanded','false'); if(volta) btn.focus(); }
+    return true;
+  }
+  function appsToggle(e){
+    if(e) e.stopPropagation();
+    const pop = document.getElementById('mn-apps-pop'), btn = document.getElementById('mn-apps-btn'); if(!pop || !btn) return;
+    if(appsSt.aberto){ appsFechar(true); return; }
+    menusFechar(); appsPopRender(); appsSt.aberto = true; pop.style.display = 'block'; appsPosicionar(); btn.setAttribute('aria-expanded','true');
+    const p = pop.querySelector('a.mn-app'); if(p) p.focus({preventScroll:true});
+  }
+  document.addEventListener('click', e=>{ if(appsSt.aberto && e.target.closest && !e.target.closest('#mn-apps-pop') && !e.target.closest('#mn-apps-btn')) appsFechar(false); });
+  document.addEventListener('keydown', e=>{ if(e.key==='Escape' && appsFechar(true)){ e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  window.addEventListener('resize', ()=>{ if(appsSt.aberto) appsPosicionar(); });
+  // Monta (ou remonta) o botão no `slot` da página e carrega "quem usa o quê" (cache de 1h no aparelho; 1 leitura pequena do próprio registro).
+  function appsMontar(opts){
+    appsSt.opts = opts || {};
+    const u = appsSt.opts.user, slot = typeof appsSt.opts.slot==='string' ? document.querySelector(appsSt.opts.slot) : appsSt.opts.slot;
+    if(!slot) return;
+    let btn = document.getElementById('mn-apps-btn');
+    if(!btn){
+      btn = document.createElement('button'); btn.type = 'button'; btn.id = 'mn-apps-btn';
+      btn.setAttribute('aria-haspopup','menu'); btn.setAttribute('aria-expanded','false'); btn.title = 'Produtos do Oceano'; btn.setAttribute('aria-label','Produtos do Oceano');
+      btn.innerHTML = '<svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true" fill="currentColor">'
+        + [3,10,17].map(y=>[3,10,17].map(x=>'<circle cx="'+x+'" cy="'+y+'" r="1.9"/>').join('')).join('') + '</svg>';
+      btn.addEventListener('click', appsToggle);
+    }
+    btn.className = 'mn-apps-btn ' + (appsSt.opts.btnClass || '');
+    if(btn.parentNode !== slot) slot.appendChild(btn);
+    if(!document.getElementById('mn-apps-pop')){
+      const pop = document.createElement('div'); pop.id = 'mn-apps-pop'; pop.setAttribute('role','menu'); pop.setAttribute('aria-label','Produtos do Oceano'); pop.style.display = 'none';
+      document.body.appendChild(pop);
+    }
+    // quem usa o quê: cache primeiro (render imediato), depois confere no banco se o cache tem mais de 1h
+    appsSt.uso = {};
+    if(u && u.uid && !appsSt.opts.isViewer){
+      const c = appsLsLer(u.uid); if(c) appsSt.uso = c.v;
+      if(!c || (Date.now() - (c.t||0)) > 3600000){
+        try{
+          window._get(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/apps')).then(sn=>{
+            appsSt.uso = Object.assign({}, (sn && sn.exists() && sn.val() && typeof sn.val()==='object') ? sn.val() : {}, appsSt.uso); appsLsSalvar(u.uid, appsSt.uso);   // junta com o que a página acabou de marcar (a gravação pode ainda não ter chegado)
+            if(appsSt.aberto) appsPopRender();
+          }).catch(()=>{});
+        }catch(e){}
+      }
+    }
+    if(appsSt.aberto) appsPopRender();
+  }
+  // A página sabe que a pessoa USA um produto (ex.: abriu o painel, ou é PO/Organizador): grava 1 vez, no próprio registro, e atualiza o cache.
+  function appsUso(app, user){
+    const u = user || (appsSt.opts && appsSt.opts.user); if(!u || !u.uid || (appsSt.opts && appsSt.opts.isViewer) || window._isPainelViewer) return;
+    const c = appsLsLer(u.uid), v = (c && c.v) || appsSt.uso || {};
+    if(v[app]===true){ appsSt.uso = v; return; }
+    v[app] = true; appsSt.uso = v; appsLsSalvar(u.uid, v);
+    try{ window._update(window._ref(window._db, 'kanban/usuarios/'+u.uid+'/apps'), {[app]:true}).catch(()=>{}); }catch(e){}
+    if(appsSt.aberto) appsPopRender();
+  }
+  (function cssApps(){
+    if(document.getElementById('mn-apps-css')) return;
+    const el = document.createElement('style'); el.id = 'mn-apps-css';
+    el.textContent = '.mn-apps-btn{display:inline-flex;align-items:center;justify-content:center;cursor:pointer;line-height:1;}'
+      + '.mn-apps-btn:not(.btn):not(.notif-btn){background:none;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:8px;color:var(--txt2,#bcd);padding:6px 8px;}'
+      + '#mn-apps-pop{position:fixed;z-index:10050;box-sizing:border-box;background:rgba(var(--deep-rgb,3,13,26),.99);border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:14px;box-shadow:0 16px 44px rgba(0,0,0,.55);padding:12px;max-height:80vh;overflow-y:auto;}'
+      + '.mn-apps-hd{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3,#8fa);padding:0 4px 8px;}'
+      + '.mn-apps-dev{font-size:10px;color:var(--warn,#ffd166);padding:0 4px 8px;}'
+      + '.mn-apps-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;}'
+      + '.mn-app{box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px;padding:12px 6px 10px;border-radius:12px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;cursor:pointer;}'
+      + 'a.mn-app:hover,a.mn-app:focus-visible{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.35);outline:none;}'
+      + '.mn-app-aqui{background:rgba(255,255,255,.05);border-color:var(--glass-b,rgba(255,255,255,.15));cursor:default;}'
+      + '.mn-app-n{font-size:12.5px;font-weight:600;color:var(--txt,#e8f4ff);}'
+      + '.mn-app-s{font-size:10px;color:var(--txt3,#8fa);}';
+    (document.head || document.documentElement).appendChild(el);
+  })();
+
   window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
-    rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
+    appsMontar, appsUso, APPS, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
 })();
