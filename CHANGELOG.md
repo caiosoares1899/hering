@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🔗 Radar: nova aba "Cards" — os cards do board com badge 🎯 OKR, por squad, e a que Objetivo cada um está vinculado — 2026-10-09 · okr-dev v2.57 (SÓ DEV)
+- Pedido: "não achei os cards vinculados a OKR no Radar". Dentro do Objetivo a seção "🔗 Cards vinculados" já existia (e funciona), mas a **lista geral "🎯 Cards do board com badge OKR"** ficou no Painel (aba Visão) quando o OKR virou página própria. Agora o Radar tem a aba **🔗 Cards** (depois de Anotações).
+- **Só baixa ao clicar** (📥 Carregar cards): ler os cards de cada squad é justamente o que o Radar evitava no boot; 1x por sessão, 🔄 Atualizar baixa de novo. Lista por squad (inclusive os de `squads_meta`): título (clique abre o card no board em aba nova), coluna, responsável, prazo, ⏸ pausado. Mesma regra de "badge OKR" de antes (`isOKR`, tag `okr` ou tag do squad marcada OKR, em `tags[]` inteiro; arquivados fora).
+- **Vínculo com Objetivos:** cada card mostra os Objetivos que o vinculam (`cardLinks`; chip 🎯 abre o Objetivo) ou "sem vínculo com Objetivo"; Objetivo arquivado não conta. Filtro (todos / vinculados / sem vínculo), busca (card ou Objetivo) e resumo "N cards · N vinculados · N sem vínculo". Visualizador externo não vê a aba.
+- Teste novo `docs/arezzo/testes/test_okr_cards.js` (13 checagens, incl. "abrir a aba não baixa nenhum card"). Ajuda do Radar atualizada.
+
 ### 🔔 Oceano ganha o sininho (ao lado da Ajuda) — 2026-10-09 · oceano-dev v1.5 (SÓ DEV)
 - O botão **🔔** no topo do Oceano, colado ao ❓ Ajuda, é o **mesmo sino** das outras páginas (módulo `mare-notif-dev.js`): notificações pessoais (todos os tipos; só `rascunho` é exclusivo do painel) + avisos da torre, com selo de não lidas, ✓ Marcar tudo como lido, Limpar antigas e o **rodapé de 🔊 som · 🔔 notificações neste aparelho (push) · 🔕 Não Perturbe**.
 - **Push:** o Oceano agora pode registrar o aparelho (`fcm_tokens`) — quem usa só o Oceano instalado passa a poder receber push (antes só dava pelo Maré/Painel/Radar). O push em si continua sendo emitido pela Cloud Function `sendPushOnNotification` a partir de `kanban/usuarios/{uid}/notificacoes`; nada novo a implantar no servidor. FCM carregado por `import()` dinâmico: se não carregar, só o push some, o login segue.
