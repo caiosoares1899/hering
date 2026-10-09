@@ -83,6 +83,48 @@ const base=(extra)=>({kanban:Object.assign({okr:{objetivos:{d1:mk('d1','Fidelida
    await p.evaluate(()=>{ document.getElementById('help-ov').classList.remove('open'); });
    await p.evaluate(()=>MareDicas.reiniciar()); await p.evaluate(()=>{ MareDicas._estado(); });
    t('Maré: sem erro de JS', !errs.length, errs.filter(e=>!/ResizeObserver/.test(e))); await ctx.close(); }
+ // ── /monitorarbugs (2026-10-09): regressões ──
+ // (1) visualizador externo só acompanha: nunca recebe dica que manda editar/criar
+ { const sx=base(); sx.kanban.painel_viewers={'ext@gmail,com':true};
+   const ctx=await b.newContext({viewport:{width:1280,height:800}}); await fake.install(ctx,sx); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message));
+   await p.goto('http://localhost:8941/okr'+SUF+'.html?torre=digital'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ext','Externo','ext@gmail.com')); await p.waitForTimeout(6800);
+   const d=await dica(p); t('Externo (só leitura): a dica de entrada NÃO manda editar — é a da Apresentação', d && /Apresenta/.test(d.t) && !/Atualize|Converse|registrar|botão direito/i.test(d.t), d);
+   const ed=await p.evaluate(()=>{ const c=MareDicas.catalogo().radar.dicas; return {edita:c.filter(x=>x.edita).map(x=>x.id)}; });
+   t('Externo: as dicas de edição existem no catálogo (flag edita) e continuam pros demais', ed.edita.length===6, ed);
+   await ctx.close();
+   const {ctx:c2,p:p2}=await abrir('okr'); await p2.evaluate(()=>_okrEntrarTorre('digital')); await p2.waitForTimeout(6800);
+   const d2=await dica(p2); t('Radar (membro/ADM): a primeira dica de entrada continua sendo a do semáforo', d2 && /semáforo/.test(d2.t), d2); await c2.close(); }
+ // (2) Oceano: com um produto aberto aqui dentro, a dica de entrada do lobby NÃO cobre o produto
+ { const sx=base({notif_feed:{}}); const ctx=await b.newContext({viewport:{width:1280,height:800}}); await fake.install(ctx,sx);
+   await ctx.addInitScript(()=>{ try{ localStorage.setItem('oceano_prefs', JSON.stringify({abrir:'aqui'})); }catch(e){} });
+   const p=await ctx.newPage(); await p.goto('http://localhost:8941/oceano'+SUF+'.html'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ana','Ana ADM')); await p.waitForTimeout(1500);
+   await p.click('#tiles .tile-main[data-app="okr"]'); await p.waitForTimeout(500);
+   await p.evaluate(()=>{ MareDicas.reiniciar(); MareDicas.gatilho('boot'); }); await p.waitForTimeout(2300);
+   t('Oceano: com o Radar aberto aqui dentro a dica de entrada do lobby não aparece', (await dica(p))===null, await dica(p));
+   await p.evaluate(()=>{ document.getElementById('host').classList.remove('on'); MareDicas.reiniciar(); MareDicas.gatilho('boot'); }); await p.waitForTimeout(2300);
+   t('Oceano: de volta ao lobby a dica aparece', (await dica(p))!==null, 'sem dica'); await ctx.close(); }
+ // (3) interruptor: foco fica no controle e os ouvintes não se acumulam a cada abertura da Ajuda
+ { const {ctx,p}=await abrir('okr'); await p.evaluate(()=>_okrEntrarTorre('digital')); await p.waitForTimeout(800);
+   const r=await p.evaluate(async()=>{ for(let i=0;i<25;i++){ openOkrHelp(); closeOkrHelp(); } openOkrHelp(); const el=document.getElementById('okr-help-dicas');
+     let redes=0; const mo=new MutationObserver(rs=>{ redes+=rs.filter(x=>x.addedNodes.length).length; }); mo.observe(el,{childList:true});
+     const inp=el.querySelector('input'); inp.focus(); inp.click(); await new Promise(r=>setTimeout(r,80)); mo.disconnect();
+     return {redes, foco:document.activeElement===el.querySelector('input'), marcado:el.querySelector('input').checked, ativas:MareDicas.ativas()}; });
+   t('Interruptor: alternar não redesenha o controle (0 redesenhos, mesmo depois de 26 aberturas da Ajuda) e o foco continua nele', r.redes===0 && r.foco, r);
+   t('Interruptor: a troca vale (desligado) e o controle acompanha', r.ativas===false && r.marcado===false, r);
+   await p.evaluate(()=>MareDicas.definir(true)); await p.waitForTimeout(100);
+   t('Interruptor: religar por fora (JS) atualiza o controle que está na tela', await p.evaluate(()=>document.querySelector('#okr-help-dicas input').checked), 'desatualizado'); await ctx.close(); }
+ // (4) "Saiba mais" leva ao tópico CERTO (a entrada do título vem primeiro) nos 3 apps
+ { const sx=base(); sx.kanban.squads={dev:{dados:{columns:[{id:'todo',name:'A fazer'}],tags:[],cards_index:{c1:'k1'},cards:{k1:{id:'c1',title:'Card',col:'todo',owner:'AA'}}}}};
+   const {ctx,p}=await abrir('kanban',sx,1280,800,'?squad=dev'); await p.evaluate(()=>document.querySelectorAll('.ov.open').forEach(o=>o.classList.remove('open')));
+   const res=await p.evaluate(async()=>{ const out=[]; for(const d of MareDicas.catalogo().mare.dicas){ openHelp(d.saiba.tab, d.saiba.q); await new Promise(r=>setTimeout(r,250));
+       const prim=(document.querySelector('#help-body > div > div:nth-child(2)')||{}).textContent||''; out.push([d.id, prim.toLowerCase().includes(d.saiba.q.toLowerCase()), (document.getElementById('help-search-count').textContent)]); } return out; });
+   t('Maré: todo "Saiba mais" abre a Ajuda com o tópico certo EM PRIMEIRO ('+res.length+' dicas)', res.every(x=>x[1]), res.filter(x=>!x[1]));
+   t('Maré: a dica do Ctrl+K não promete busca "de qualquer squad" (a busca é do board atual)', !/qualquer squad/.test(JSON.stringify(await p.evaluate(()=>MareDicas.catalogo().mare.dicas))), 'texto'); await ctx.close(); }
+ { const {ctx,p}=await abrir('okr'); await p.evaluate(()=>_okrEntrarTorre('digital')); const r=await p.evaluate(()=>MareDicas.catalogo().radar.dicas.filter(d=>d.saiba && !document.getElementById('hlp-'+d.saiba)).map(d=>d.id));
+   t('Radar: todo "Saiba mais" aponta pra um tópico que existe na Ajuda (hlp-<id>)', r.length===0, r); await ctx.close(); }
+ { const {ctx,p}=await abrir('oceano',base({notif_feed:{}})); await p.click('#btn-ajuda'); await p.waitForTimeout(400);
+   const r=await p.evaluate(()=>MareDicas.catalogo().oceano.dicas.filter(d=>d.saiba && !document.getElementById('faq-'+d.saiba)).map(d=>d.id));
+   t('Oceano: todo "Saiba mais" aponta pra uma pergunta que existe na Ajuda (faq-<id>)', r.length===0, r); await ctx.close(); }
  // ── PAINEL: aba 💡 Dicas lista tudo (só leitura) e marca o que a própria pessoa já viu ──
  { const sx=base(); sx.kanban.usuarios.ana.dicas={vistas:{radar:{semaforo:true,agente:true},mare:{busca:true}},off:{oceano:true}};
    const {ctx,p,errs}=await abrir('painel',sx); await p.evaluate(()=>{ setPcfgTab('dicas'); }); await p.waitForTimeout(900);

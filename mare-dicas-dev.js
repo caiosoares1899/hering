@@ -32,30 +32,30 @@
   //    `gatilhos` = rótulo legível de cada lugar. Textos curtos e simples; cada dica aparece uma vez só.
   const CATALOGO = {
     radar:{nome:'Radar', icone:'🛰️', gatilhos:{boot:'Ao entrar', 'view:historico':'Ao abrir o Dashboard', 'view:calendario':'Ao abrir o Calendário', 'view:cards':'Ao abrir a aba Cards', 'obj-modal':'Ao abrir um Objetivo'}, dicas:[
-      {id:'semaforo',    gatilho:'boot',            texto:'O status do Objetivo é automático: vem do pior Marco. Atualize os Marcos e o semáforo muda sozinho.', saiba:'marcos', ajuda:'Marcos e status'},
-      {id:'atingimento', gatilho:'boot',            texto:'Dá pra medir cada Objetivo por uma meta (R$, %, número…). Abra o Objetivo e use 📈 Atingimento.', saiba:'atingimento', ajuda:'Atingimento — a meta do Objetivo'},
-      {id:'agente',      gatilho:'boot',            texto:'Precisa registrar algo rápido? Converse com o 🤖 Agente Ágil, no canto da tela.', saiba:'agente', ajuda:'Central Agente Ágil'},
-      {id:'menu',        gatilho:'boot',            texto:'Clique com o botão direito num Objetivo ou Marco pra ver ações rápidas.', saiba:'menu', ajuda:'Menu de ações (clique direito)'},
+      {id:'semaforo',    gatilho:'boot',            texto:'O status do Objetivo é automático: vem do pior Marco. Atualize os Marcos e o semáforo muda sozinho.', saiba:'marcos', ajuda:'Marcos e status', edita:true},
+      {id:'atingimento', gatilho:'boot',            texto:'Dá pra medir cada Objetivo por uma meta (R$, %, número…). Abra o Objetivo e use 📈 Atingimento.', saiba:'atingimento', ajuda:'Atingimento — a meta do Objetivo', edita:true},
+      {id:'agente',      gatilho:'boot',            texto:'Precisa registrar algo rápido? Converse com o 🤖 Agente Ágil, no canto da tela.', saiba:'agente', ajuda:'Central Agente Ágil', edita:true},
+      {id:'menu',        gatilho:'boot',            texto:'Clique com o botão direito num Objetivo ou Marco pra ver ações rápidas.', saiba:'menu', ajuda:'Menu de ações (clique direito)', edita:true},
       {id:'apresentacao',gatilho:'boot',            texto:'Hora da reunião? Use 🎥 Apresentação (tela cheia). As setas ← → passam os slides.', saiba:'apresentacao', ajuda:'Apresentação em slides'},
       {id:'modal-atalhos',gatilho:'obj-modal',      texto:'Os atalhos no topo levam direto a cada seção do Objetivo.', saiba:'modal', ajuda:'O modal do Objetivo'},
-      {id:'trava',       gatilho:'obj-modal',       texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava', ajuda:'Edição simultânea do mesmo Objetivo'},
+      {id:'trava',       gatilho:'obj-modal',       texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava', ajuda:'Edição simultânea do mesmo Objetivo', edita:true},
       {id:'dash-filtro', gatilho:'view:historico',  texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'dash-contrib',gatilho:'view:historico',  texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
-      {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário'},
+      {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário', edita:true},
       {id:'cards-carregar',gatilho:'view:cards',    texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.'}]},
     mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
-      {id:'busca',    gatilho:'boot',      texto:'Aperte Ctrl+K pra buscar qualquer card, de qualquer squad.', saiba:{tab:'board', q:'Busca global'}, ajuda:'Busca global (Ctrl+K)'},
+      {id:'busca',    gatilho:'boot',      texto:'Aperte Ctrl+K pra achar um card pelo título, pela descrição ou pelo responsável.', saiba:{tab:'board', q:'Busca global'}, ajuda:'Busca global (Ctrl+K)'},
       {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
       {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
       {id:'desfazer', gatilho:'boot',      texto:'Mexeu sem querer? Ctrl+Z desfaz a última mudança no board.', saiba:{tab:'board', q:'Desfazer'}, ajuda:'Desfazer (Ctrl+Z)'},
-      {id:'meus',     gatilho:'boot',      texto:'Quer ver só o que é seu? Use o filtro Meus cards.', saiba:{tab:'board', q:'Meus cards'}, ajuda:'Meus cards'},
-      {id:'oceano',   gatilho:'boot',      texto:'O botão ⋮⋮⋮ do topo leva ao Radar, ao Painel e à página Oceano.', saiba:{tab:'board', q:'Menu de produtos'}, ajuda:'Menu de produtos (⋮⋮⋮) e a página Oceano'},
+      {id:'meus',     gatilho:'boot',      texto:'Quer achar o que é seu? Em Filtros, 💡 Meus cards põe um brilho nos seus cards.', saiba:{tab:'board', q:'Meus cards'}, ajuda:'Meus cards'},
+      {id:'oceano',   gatilho:'boot',      texto:'O botão ⋮⋮⋮ do topo leva ao Radar e à página Oceano.', saiba:{tab:'board', q:'Menu de produtos'}, ajuda:'Menu de produtos (⋮⋮⋮) e a página Oceano'},
       {id:'mencao',   gatilho:'card-open', texto:'Digite @ na descrição ou num comentário pra chamar alguém. A pessoa recebe um aviso.', saiba:{tab:'cards', q:'Menções'}, ajuda:'Menções'},
       {id:'checklist',gatilho:'card-open', texto:'No checklist, cole uma lista: cada linha vira um item.', saiba:{tab:'cards', q:'Checklist'}, ajuda:'Checklist'},
       {id:'travado',  gatilho:'card-open', texto:'Duas pessoas no mesmo card? Quem abre primeiro edita; a outra vê em modo leitura.', saiba:{tab:'cards', q:'Card travado'}, ajuda:'Card travado (duas pessoas no mesmo card)'},
       {id:'automacao',gatilho:'cfg-open',  texto:'Em Automações, regras do tipo "quando acontecer X, faça Y" trabalham por você.', saiba:{tab:'automacoes', q:'O que é uma automação'}, ajuda:'O que é uma automação'}]},
     oceano:{nome:'Oceano', icone:'🌐', gatilhos:{boot:'Ao entrar', sino:'Ao abrir o 🔔', perfil:'Ao abrir ⚙ Meu perfil'}, dicas:[
-      {id:'instalar', gatilho:'boot',   texto:'Instale o Oceano como aplicativo: Maré, Radar e Painel abrem como abas dentro dele.', saiba:'instalar', ajuda:'Como instalo o Oceano como aplicativo?'},
+      {id:'instalar', gatilho:'boot',   texto:'Instale o Oceano como aplicativo: os produtos abrem como abas dentro dele.', saiba:'instalar', ajuda:'Como instalo o Oceano como aplicativo?'},
       {id:'menu',     gatilho:'boot',   texto:'O botão ⋮⋮⋮ do topo leva a qualquer produto. Lá também ficam os links da Hering e os seus.', saiba:'links', ajuda:'Meus links e links da Hering'},
       {id:'aqui',     gatilho:'boot',   texto:'Prefere cada produto numa aba do navegador? Troque em ⚙ Meu perfil → Como abrir os produtos.', saiba:'aqui', ajuda:'Abrir aqui dentro x aba nova'},
       {id:'sino',     gatilho:'sino',   texto:'Este 🔔 é o mesmo do Maré e do Radar. Ative as notificações neste aparelho pra receber no celular.', saiba:'sino', ajuda:'O sininho 🔔 do topo'},
@@ -77,7 +77,7 @@
     if(!remoto()) return;
     try{ Promise.resolve(window._set(window._ref(window._db,'kanban/usuarios/'+S.user.uid+'/dicas/'+caminho), valor)).catch(()=>{}); }catch(e){}
   }
-  function avisa(){ S.ouvintes.forEach(f=>{ try{ f(); }catch(e){} }); }
+  function avisa(){ S.ouvintes = S.ouvintes.filter(f=>{ try{ return f()!==false; }catch(e){ return true; } }); }   // ouvinte devolve false quando o elemento saiu da página: poda
 
   function ativas(){ return !S.prefs.off[S.app]; }
   function vista(id){ return !!(S.prefs.vistas[S.app] && S.prefs.vistas[S.app][id]); }
@@ -179,13 +179,17 @@
     if(!el) return;
     css();
     const desenha = ()=>{
+      if(!el.isConnected) return false;
+      const marcado = ativas(), inp = el.querySelector('input');
+      if(inp){ inp.checked = marcado; return; }   // já desenhado: só sincroniza (redesenhar tirava o foco de quem usa o teclado)
       el.className = (el.className||'').replace(/\bmdica-ctl\b/,'').trim()+' mdica-ctl';
-      el.innerHTML = `<label class="mdica-sw"><input type="checkbox" role="switch" ${ativas()?'checked':''} aria-label="Mostrar dicas${S.nome?' do '+esc(S.nome):''}"><span>💡 Dicas${S.nome?' do '+esc(S.nome):''}</span></label>
+      el.innerHTML = `<label class="mdica-sw"><input type="checkbox" role="switch" ${marcado?'checked':''} aria-label="Mostrar dicas${S.nome?' do '+esc(S.nome):''}"><span>💡 Dicas${S.nome?' do '+esc(S.nome):''}</span></label>
         <span>Mini avisos com um truque ou um lugar útil, um de cada vez.</span><button type="button" class="mdica-b mdica-re">Rever dicas</button>`;
       el.querySelector('input').addEventListener('change', e=>{ definir(e.target.checked); });
       el.querySelector('.mdica-re').addEventListener('click', ()=>{ reiniciar(); if(!ativas()) definir(true); });
     };
-    desenha(); S.ouvintes.push(()=>{ if(el.isConnected) desenha(); });
+    desenha();
+    if(!el._mdicaOuv){ el._mdicaOuv = true; S.ouvintes.push(desenha); }   // 1 ouvinte por elemento (a Ajuda chama controle() a cada abertura)
   }
 
   // ── início ──
@@ -194,7 +198,8 @@
     S.app = String(o.app||''); S.user = o.user||null; S.viewer = !!o.isViewer;
     const cat = CATALOGO[S.app]; S.nome = String(o.nome || (cat && cat.nome) || '');
     const quando = (o.quando && typeof o.quando==='object') ? o.quando : {};
-    const base = Array.isArray(o.dicas) ? o.dicas : (cat ? cat.dicas : []);   // `dicas` na chamada = só pra teste
+    let base = Array.isArray(o.dicas) ? o.dicas : (cat ? cat.dicas : []);   // `dicas` na chamada = só pra teste
+    if(S.viewer) base = base.filter(d=>!d.edita);   // visualizador externo só acompanha: nada de dica que manda editar/criar
     S.dicas = base.filter(d=>d && d.id && d.gatilho && d.texto).map(d=>Object.assign({}, d, typeof quando[d.id]==='function' ? {quando:quando[d.id]} : {}));
     S.abrirAjuda = typeof o.abrirAjuda==='function' ? o.abrirAjuda : null;
     S.prefs = norm(lsLer()); S.pronto = true; avisa();   // já dá pra mostrar com o que está no aparelho
