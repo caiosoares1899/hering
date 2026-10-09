@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### painel v5.30 — 2026-10-09 · 🌊 Oceano (prod e dev) na listinha de páginas do Painel (painel.html e painel-dev.html)
+- A lista que desce ao clicar no "Maré Digital" do cabeçalho do Painel agora tem **Oceano** (e **Oceano · dev**) no topo, antes de Radar, Kanban e Painel. Só a lista mudou. Colocado direto em prod junto com o dev, a pedido (mudança de uma lista, sem lógica).
+
 ### okr v2.53 · painel v5.29 · oceano v1.2 — 2026-10-09 · Promove pra prod — 🌊 Oceano (oceano.html) + menu de produtos com o Oceano · SEM avisos (sem Mural/WhatsApp)
 - **🌊 Oceano em produção (`oceano.html` v1.2):** a página-lobby da família (ver as entradas de dev abaixo): abre direto nos produtos (teclas 1–9, atalhos por squad e do Radar), abas "Conheça o Oceano" (a venda) e "Por baixo do casco" (técnica + versões), login só Google @ciahering, cadastro e personalização (ambiente, peixinhos, como abrir os produtos), ajuda com busca e **host dos produtos em iframe** quando instalada como app (`oceano.webmanifest`; o aplicativo do Maré Digital não é tocado).
 - **Menu de produtos (`mare-notif.js` v13):** o **Oceano é o título do popover** ("🌊 Oceano · início ↗", link pro lobby, só pra quem é da Hering); a grade continua só de produtos (Maré, Painel, Radar, A Bordo). Dentro do Oceano o clique troca a aba em vez de abrir outra janela. `okr.html` v2.53 e `painel.html` v5.29 carregam `mare-notif.js?v=13`. O `kanban.html` de prod não carrega o menu (continua só no `kanban-dev`, v8.30.808-dev).
