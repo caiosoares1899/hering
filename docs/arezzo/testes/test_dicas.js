@@ -83,4 +83,13 @@ const base=(extra)=>({kanban:Object.assign({okr:{objetivos:{d1:mk('d1','Fidelida
    await p.evaluate(()=>{ document.getElementById('help-ov').classList.remove('open'); });
    await p.evaluate(()=>MareDicas.reiniciar()); await p.evaluate(()=>{ MareDicas._estado(); });
    t('Maré: sem erro de JS', !errs.length, errs.filter(e=>!/ResizeObserver/.test(e))); await ctx.close(); }
+ // ── PAINEL: aba 💡 Dicas lista tudo (só leitura) e marca o que a própria pessoa já viu ──
+ { const sx=base(); sx.kanban.usuarios.ana.dicas={vistas:{radar:{semaforo:true,agente:true},mare:{busca:true}},off:{oceano:true}};
+   const {ctx,p,errs}=await abrir('painel',sx); await p.evaluate(()=>{ setPcfgTab('dicas'); }); await p.waitForTimeout(900);
+   const r=await p.evaluate(()=>{ const el=document.getElementById('pcfg-dicas-list'); const sec=[...el.querySelectorAll('.cfg-sec')].map(x=>x.textContent.replace(/\s+/g,' ').trim()); return {sec, linhas:el.querySelectorAll('[title^="Você"]').length, vistos:[...el.querySelectorAll('[title="Você já viu esta dica"]')].length, txt:el.innerText, vis:getComputedStyle(document.getElementById('painel-cfg-dicas')).display}; });
+   t('Painel: aba 💡 Dicas aparece e lista Radar, Maré e Oceano', r.vis==='block' && r.sec.length===3 && /Radar/.test(r.sec[0]) && /Maré/.test(r.sec[1]) && /Oceano/.test(r.sec[2]), r);
+   t('Painel: mostra todas as dicas (11 + 10 + 6) com o texto e onde aparece', r.linhas===27 && /Ao abrir o Dashboard/.test(r.txt) && /Ao abrir um card/.test(r.txt) && /Ao abrir ⚙ Meu perfil/.test(r.txt), {linhas:r.linhas});
+   t('Painel: marca ✅ só o que a pessoa já viu (3) e avisa que as do Oceano estão desligadas pra ela', r.vistos===3 && /desligadas pra você/.test(r.sec[2]) && /você viu 2/.test(r.sec[0]), r);
+   t('Painel: mostra o tópico da Ajuda ("Saiba mais →") de cada dica', /Saiba mais → Marcos e status/.test(r.txt) && /Saiba mais → Busca global/.test(r.txt), 'saiba');
+   t('Painel: sem erro de JS', !errs.length, errs); await ctx.close(); }
  await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();

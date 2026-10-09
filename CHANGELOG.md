@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 💡 Dicas: lista de todas as dicas no Painel + catálogo centralizado no módulo — 2026-10-09 · painel-dev v5.34 · okr-dev v2.59 · kanban-dev v8.30.813-dev · oceano-dev v1.6 (SÓ DEV)
+- Pedido: "coloca essa lista no painel" (ver todas as dicas) e, daqui pra frente, **avaliar uma dica a cada funcionalidade nova** (agora regra permanente no `CLAUDE.md`, passo 7 do Release process).
+- **Painel → ⚙ Configurações → 💡 Dicas** (só leitura): Radar, Maré e Oceano, cada dica com o texto, **onde aparece** ("Ao abrir o Dashboard", "Ao abrir um card"…), o tópico do **Saiba mais** e o ✅/⏳ do que **você** já viu (lê só o próprio nó); mostra "desligadas pra você" quando for o caso.
+- Pra isso o **catálogo saiu das páginas e foi pro módulo** `mare-dicas-dev.js` (`CATALOGO`, dados puros): as páginas só passam o que depende da tela (`quando`) e o `abrirAjuda`. `?v=2` do módulo em todas as páginas. Comportamento das dicas inalterado (mesmo teste passando).
+- Teste: `test_dicas.js` ganhou o bloco do Painel (3 apps, 27 dicas, ✅ só das vistas, desligadas, tópico da Ajuda).
+
 ### 💡 Dicas (mini popups) no Radar, no Maré e no Oceano — 2026-10-09 · okr-dev v2.59 · kanban-dev v8.30.813-dev · oceano-dev v1.6 (SÓ DEV)
 - Pedido: mini popups de dicas, que o usuário possa desligar, personalizados por app (Radar, Oceano e Maré; Painel e A Bordo ficam de fora), linguagem simples e curta, com "saiba mais" levando à Ajuda.
 - **Módulo novo compartilhado `mare-dicas-dev.js`** (mesmo ciclo do `mare-notif`: `?v=` nas páginas; a versão de prod, `mare-dicas.js`, nasce na promoção). Mostra **uma dica por vez**, no canto inferior esquerdo (acima da barra no celular), **quando a pessoa chega num lugar** (gatilho), **uma vez só** cada, com no mínimo 50 s entre duas e no máximo 4 por visita. Botões: **Entendi**, **Saiba mais** (abre o tópico certo da Ajuda do app) e **Não mostrar dicas do <app>**. Texto sempre como texto puro; não rouba o foco.
