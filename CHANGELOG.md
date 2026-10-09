@@ -18,8 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 📡 Painel: logo do Radar (sem fundo) no lugar do emoji — 2026-10-09 · painel-dev v5.27 (SÓ DEV)
-- A aba **Radar ↗** do painel e o menu de páginas (Radar prod/dev) mostram o `radar-logo.png` no lugar do 📡. O 📡 de "Só contexto (sem representar no board)" é outro significado e ficou.
+### 📡 Radar: logo sem fundo no lugar do emoji (login, cabeçalho, home, ajuda) — 2026-10-09 · okr-dev v2.52 (SÓ DEV — produção segue na v2.49)
+- Os 📡 do `okr-dev` viram o `radar-logo.png` (classe `.rdr-logo`, acompanha o tamanho da letra): tela de login, cabeçalho da página, título "Radar — escolha uma torre" e o "Começar" da ajuda. Vai pra prod na próxima promoção.
+
+### 📡 Painel: volta o emoji 📡 (desfaz a troca pelo logo) — 2026-10-09 · painel-dev v5.28 (SÓ DEV)
+- A v5.27 trocou o 📡 da aba "Radar ↗" e do menu de páginas pelo `radar-logo.png`; no painel o emoji ficou melhor, então a v5.28 desfaz isso (o logo segue na apresentação e no `okr-dev`).
 
 ### 📡 Radar: favicon nova (fundo azul) + logo sem fundo na capa da apresentação — 2026-10-09 · arquivos compartilhados (valem em prod e dev assim que mergeados)
 - **`favicon-radar.png` trocada** pela versão de fundo azul-marinho cheio (256 px, ~24 KB): aparece na aba de `okr`/`okr-dev`, apresentação, Guia e no card "Radar" do menu de produtos (mesmo arquivo — o navegador pode segurar a antiga no cache da aba por um tempo).
