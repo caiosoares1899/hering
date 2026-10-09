@@ -3,8 +3,9 @@
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const U=(uid,n,email,extra)=>Object.assign({uid,email:email||uid+'@ciahering.com.br',displayName:n,photoURL:'',providerData:[{providerId:'google.com'}]},extra||{});
 const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ciahering.com.br',init:'AS',role:'adm',squads:{dev:true,dados:true}},eve:{uid:'eve',nome:'Eve Souza',email:'eve@ciahering.com.br',init:'ES',role:'membro'}},config:{adm_emails:['ana@ciahering.com.br']}}});
+const PAGE=process.env.PAGE||'oceano-dev.html', D=/-dev/.test(PAGE)?'-dev':'';   // PAGE=oceano.html roda tudo contra a produção (okr.html, kanban.html…)
 (async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']}); let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n+(c?'':' → '+JSON.stringify(d).slice(0,300))); };
- const open=async(user,{w=1280,h=800,seedF=seed,reduce=false}={})=>{ const ctx=await b.newContext({viewport:{width:w,height:h},reducedMotion:reduce?'reduce':'no-preference'}); await fake.install(ctx,seedF()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); await p.goto('http://localhost:8941/oceano-dev.html'); await p.waitForFunction(()=>!!window.__authCb); if(user) { await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(900); } return {ctx,p,errs}; };
+ const open=async(user,{w=1280,h=800,seedF=seed,reduce=false}={})=>{ const ctx=await b.newContext({viewport:{width:w,height:h},reducedMotion:reduce?'reduce':'no-preference'}); await fake.install(ctx,seedF()); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); await p.goto('http://localhost:8941/'+PAGE); await p.waitForFunction(()=>!!window.__authCb); if(user) { await p.evaluate(x=>window.__authCb(x),user); await p.waitForTimeout(900); } return {ctx,p,errs}; };
  // 1) sem login: só a tela de entrar
  { const {ctx,p}=await open(null); const r=await p.evaluate(()=>({login:getComputedStyle(document.getElementById('login')).display, app:getComputedStyle(document.getElementById('app')).display}));
    t('sem login: aparece só a tela de login (conteúdo escondido)', r.login==='flex' && r.app==='none', r); await ctx.close(); }
@@ -15,7 +16,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
  { const {ctx,p,errs}=await open(U('ana','Ana Silva')); const r=await p.evaluate(()=>({h1:document.getElementById('ola').textContent, cab:[...document.querySelectorAll('#tiles .tile-n')].map(x=>x.textContent.replace('último','')), tiles:document.querySelectorAll('#tiles .tile').length, atalhos:[...document.querySelectorAll('#atalhos button')].map(b=>b.dataset.url), cadastro:window.__log.filter(l=>l[0]==='update').map(l=>l[1])}));
    console.log('ADM:',JSON.stringify(r));
    t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===5, r.h1);
-   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban-dev.html?squad=dev') && r.atalhos.includes('okr-dev.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
+   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban'+D+'.html?squad=dev') && r.atalhos.includes('okr'+D+'.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
    t('já tem cadastro: não cria de novo', !r.cadastro.some(x=>/kanban\/usuarios\/ana$/.test(x)), r.cadastro);
    // temas
    await p.click('#btn-eu'); await p.waitForTimeout(200); const padrao=await p.evaluate(()=>document.documentElement.getAttribute('data-theme')); t('tema padrão é o Abrolhos da marca (sem data-theme), como as outras páginas', padrao===null, padrao);
@@ -44,11 +45,11 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await p.waitForTimeout(900);
    await p.click('#tiles .tile-main[data-app="okr"]'); await p.waitForTimeout(1500);
    const r=await p.evaluate(()=>({host:document.getElementById('host').classList.contains('on'), fr:[...document.querySelectorAll('#host-frames iframe')].map(f=>f.dataset.app+'|'+f.getAttribute('name')+'|'+f.getAttribute('src')), hash:location.hash, titulo:document.title, tabs:[...document.querySelectorAll('.htab')].map(x=>x.textContent.replace('✕','').trim())}));
-   console.log('HOST:',JSON.stringify(r)); t('Radar abre dentro do Oceano (iframe nomeado, aba, hash e título)', r.host && r.fr.length===1 && /okr\|oceano-frame\|okr-dev\.html/.test(r.fr[0]) && r.hash==='#/okr' && /Radar/.test(r.titulo) && r.tabs[0]==='Radar', r);
-   const fr=p.frames().find(f=>/okr-dev\.html/.test(f.url())); await fr.waitForFunction(()=>!!window.__authCb); await fr.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await fr.waitForTimeout(2200);
+   console.log('HOST:',JSON.stringify(r)); t('Radar abre dentro do Oceano (iframe nomeado, aba, hash e título)', r.host && r.fr.length===1 && new RegExp('okr\\|oceano-frame\\|okr'+D+'\\.html').test(r.fr[0]) && r.hash==='#/okr' && /Radar/.test(r.titulo) && r.tabs[0]==='Radar', r);
+   const fr=p.frames().find(f=>new RegExp('okr'+D+'\\.html').test(f.url())); await fr.waitForFunction(()=>!!window.__authCb); await fr.evaluate(x=>window.__authCb(x),U('ana','Ana Silva')); await fr.waitForTimeout(2200);
    const temBtn=await fr.evaluate(()=>!!document.getElementById('mn-apps-btn')); t('o Radar (dentro do Oceano) mostra o menu de 9 pontinhos', temBtn, 'sem botão');
    await fr.click('#mn-apps-btn'); await fr.waitForTimeout(300);
-   const itens=await fr.evaluate(()=>[...document.querySelectorAll('#mn-apps-pop .mn-app-n')].map(x=>x.textContent)); t('o menu lista o Oceano primeiro', itens[0]==='Oceano' && itens.includes('Maré Digital'), itens);
+   const itens=await fr.evaluate(()=>({grade:[...document.querySelectorAll('#mn-apps-pop .mn-app-n')].map(x=>x.textContent), titulo:!!document.querySelector('#mn-apps-pop a.mn-oceano[data-app=oceano]')})); t('o menu tem o Oceano como título-link e a grade só de produtos', itens.titulo && !itens.grade.includes('Oceano') && itens.grade.includes('Maré Digital'), itens);
    await fr.click('#mn-apps-pop a[data-app="kanban"]'); await p.waitForTimeout(1200);
    const r2=await p.evaluate(()=>({atual:location.hash, tabs:document.querySelectorAll('.htab').length, on:document.querySelector('#host-frames iframe.on')?.dataset.app}));
    t('clicar em Maré Digital no menu do Radar troca o produto no Oceano (sem aba nova)', r2.on==='kanban' && r2.tabs===2 && r2.atual==='#/kanban', r2);
@@ -58,7 +59,7 @@ const seed=()=>({kanban:{usuarios:{ana:{uid:'ana',nome:'Ana Silva',email:'ana@ci
    await p.click('#abertos button[data-app="okr"]'); await p.waitForTimeout(300); await p.click('.htab[data-ht="okr"] .fx'); await p.waitForTimeout(200);
    t('fechar uma aba mantém a outra', await p.evaluate(()=>document.querySelectorAll('#host-frames iframe').length===1 && document.querySelector('#host-frames iframe.on')?.dataset.app==='kanban'), 'abas'); await ctx.close(); }
  // 6) automático em aba normal abre aba nova (não hospeda)
- { const {ctx,p}=await open(U('ana','Ana Silva')); const pop=p.waitForEvent('popup'); await p.keyboard.press('1'); const np=await pop; t('modo automático no navegador: tecla 1 abre o Maré em aba nova (não no host)', /kanban-dev\.html/.test(np.url()) && !(await p.evaluate(()=>document.getElementById('host').classList.contains('on'))), np.url()); await ctx.close(); }
+ { const {ctx,p}=await open(U('ana','Ana Silva')); const pop=p.waitForEvent('popup'); await p.keyboard.press('1'); const np=await pop; t('modo automático no navegador: tecla 1 abre o Maré em aba nova (não no host)', new RegExp('kanban'+D+'\\.html').test(np.url()) && !(await p.evaluate(()=>document.getElementById('host').classList.contains('on'))), np.url()); await ctx.close(); }
  // 6b) abas: Conheça e Técnica, deep link e o produto pelo ⓘ
  { const {ctx,p}=await open(U('ana','Ana Silva')); const ini=await p.evaluate(()=>({on:document.querySelector('.tabp.on').id, conhecaVisivel:getComputedStyle(document.getElementById('tab-conheca')).display}));
    t('abre na aba Meus produtos (a venda fica numa aba à parte)', ini.on==='tab-inicio' && ini.conhecaVisivel==='none', ini);

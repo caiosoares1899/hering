@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### okr v2.53 · painel v5.29 · oceano v1.2 — 2026-10-09 · Promove pra prod — 🌊 Oceano (oceano.html) + menu de produtos com o Oceano · SEM avisos (sem Mural/WhatsApp)
+- **🌊 Oceano em produção (`oceano.html` v1.2):** a página-lobby da família (ver as entradas de dev abaixo): abre direto nos produtos (teclas 1–9, atalhos por squad e do Radar), abas "Conheça o Oceano" (a venda) e "Por baixo do casco" (técnica + versões), login só Google @ciahering, cadastro e personalização (ambiente, peixinhos, como abrir os produtos), ajuda com busca e **host dos produtos em iframe** quando instalada como app (`oceano.webmanifest`; o aplicativo do Maré Digital não é tocado).
+- **Menu de produtos (`mare-notif.js` v13):** o **Oceano é o título do popover** ("🌊 Oceano · início ↗", link pro lobby, só pra quem é da Hering); a grade continua só de produtos (Maré, Painel, Radar, A Bordo). Dentro do Oceano o clique troca a aba em vez de abrir outra janela. `okr.html` v2.53 e `painel.html` v5.29 carregam `mare-notif.js?v=13`. O `kanban.html` de prod não carrega o menu (continua só no `kanban-dev`, v8.30.808-dev).
+- Merge de 3 vias (base = dev da promoção anterior): só sobraram as linhas de ambiente. `oceano.html` = `oceano-dev.html` com título, manifesto, chaves de localStorage do Firebase e `VERSION_KEY` próprios. Testes (Chromium): `test_oceano.js` contra `oceano.html` e `oceano-dev.html`; as 4 suítes do Radar contra `okr.html`; suíte só Hering contra `painel.html`.
+
 ### 🌊 Oceano: a tela inicial é o dia a dia — produtos primeiro, "venda" em outra aba — 2026-10-09 · oceano-dev v1.2 (SÓ DEV)
 - **Abre direto nos produtos:** aba **Meus produtos** com uma saudação curta e uma grade de botões (logo quadrada, nome, uma linha), como o menu de 9 pontinhos mas em tamanho de uso. Um clique abre (aqui dentro ou em aba nova, conforme a preferência). **Teclas 1–9** abrem o produto, **?** abre a ajuda. Marca o **último** que você usou; cada botão tem ↗ (aba nova) e ⓘ (o que é).
 - **Atalhos:** um botão por squad seu no Maré (`?squad=`) e as portas do Radar mais usadas (Anotações da reunião, Agente Ágil). Dentro do Oceano abrem na aba do produto.
