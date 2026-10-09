@@ -399,7 +399,8 @@
   }
   function linksHtml(lista, vazio){
     if(!lista.length) return '<div class="mn-lk-vazio">'+vazio+'</div>';
-    return '<div class="mn-lk-lista">'+lista.map(l=>'<a class="mn-lk" role="menuitem" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="mn-lk-tx"><span class="mn-lk-t">'+esc(l.titulo)+'</span>'+(l.desc ? '<span class="mn-lk-d">'+esc(l.desc)+'</span>' : '')+'</span></a>').join('')+'</div>';
+    // "inteligente": quantidade múltipla de 3 vira grade de quadrados (3 por fila, como a aba Produtos); qualquer outra fica em lista
+    return '<div class="mn-lk-lista'+(lista.length%3===0 ? ' mn-lk-grade' : '')+'">'+lista.map(l=>'<a class="mn-lk" role="menuitem" href="'+esc(l.url)+'" target="_blank" rel="noopener noreferrer" title="'+esc(l.url)+'">'+linkLogo(l)+'<span class="mn-lk-tx"><span class="mn-lk-t">'+esc(l.titulo)+'</span>'+(l.desc ? '<span class="mn-lk-d">'+esc(l.desc)+'</span>' : '')+'</span></a>').join('')+'</div>';
   }
   function appsLsKey(uid){ return 'mare_apps_'+uid; }
   function appsLsLer(uid){ try{ const o = JSON.parse(localStorage.getItem(appsLsKey(uid))||'null'); return (o && o.v && typeof o.v==='object') ? o : null; }catch(e){ return null; } }
@@ -537,12 +538,18 @@
       + '.mn-tabs button{flex:1;background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2,#bcd);font-size:12px;font-weight:600;padding:7px 4px;cursor:pointer;margin-bottom:-1px;}'
       + '.mn-tabs button:hover{color:var(--txt,#e8f4ff);}.mn-tabs button[aria-selected="true"]{color:var(--accent,#38b6ff);border-bottom-color:var(--accent,#38b6ff);}'
       + '.mn-lk-lista{display:flex;flex-direction:column;gap:2px;}'
-      + 'a.mn-lk{display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;}'
+      + 'a.mn-lk{box-sizing:border-box;display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:10px;text-decoration:none;color:var(--txt,#e8f4ff);border:1px solid transparent;min-width:0;}'
       + 'a.mn-lk:hover,a.mn-lk:focus-visible{background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.35);outline:none;}'
       + '.mn-lk-logo{width:34px;height:34px;border-radius:9px;overflow:hidden;flex:none;display:flex;align-items:center;justify-content:center;background:rgba(56,182,255,.14);border:1px solid var(--glass-b,rgba(255,255,255,.15));}'
       + '.mn-lk-logo img{width:100%;height:100%;object-fit:cover;display:block;}.mn-lk-logo b{font-size:14px;color:var(--accent,#38b6ff);}'
       + '.mn-lk-tx{display:flex;flex-direction:column;min-width:0;}.mn-lk-t{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
       + '.mn-lk-d{font-size:10.5px;color:var(--txt3,#8fa);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}'
+      + '.mn-lk-grade{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}'
+      + '.mn-lk-grade a.mn-lk{flex-direction:column;text-align:center;gap:6px;padding:12px 4px 10px;border-radius:12px;}'
+      + '.mn-lk-grade .mn-lk-logo{width:42px;height:42px;border-radius:12px;}'
+      + '.mn-lk-grade .mn-lk-tx{align-items:center;gap:2px;width:100%;}'
+      + '.mn-lk-grade .mn-lk-t{font-size:12px;line-height:1.25;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}'
+      + '.mn-lk-grade .mn-lk-d{font-size:10px;line-height:1.3;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;word-break:break-word;}'
       + '.mn-lk-vazio{font-size:12px;color:var(--txt3,#8fa);text-align:center;padding:18px 8px;line-height:1.5;}'
       + 'a.mn-lk-gerir{display:block;margin-top:8px;padding:8px;text-align:center;font-size:12px;font-weight:600;color:var(--accent,#38b6ff);text-decoration:none;border:1px dashed var(--glass-b,rgba(255,255,255,.2));border-radius:10px;}'
       + 'a.mn-lk-gerir:hover{background:rgba(56,182,255,.1);}'
