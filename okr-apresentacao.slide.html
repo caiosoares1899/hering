@@ -517,6 +517,30 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .mc-close:hover{background:var(--glass-hover);}
 .mc-list{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:12px;}
 .mc-empty{margin:auto;text-align:center;color:var(--txt3);font-size:13px;padding:20px;}
+
+/* ═══ 🎙️ APRESENTAÇÃO AO VIVO (2026-10-09): um apresentador comanda o slide, os outros acompanham; laser, caneta e "passar o controle" ═══ */
+#live-box{display:flex;align-items:center;gap:6px;flex-wrap:wrap;position:relative;flex:0 0 auto;}
+body.live-host .tb-clock-wrap,body.live-host .tb-live{display:none;}   /* com as ferramentas do apresentador na barra, o relógio sai pra dar espaço */
+.tb-mid{min-width:0;}
+.live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,77,77,.14);border:1px solid rgba(255,77,77,.45);color:#ff8a8a;white-space:nowrap;}
+.live-pill i{width:7px;height:7px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 0 rgba(255,77,77,.6);animation:livePulse 1.6s infinite;}
+@keyframes livePulse{70%{box-shadow:0 0 0 7px rgba(255,77,77,0)}100%{box-shadow:0 0 0 0 rgba(255,77,77,0)}}
+@media (prefers-reduced-motion:reduce){.live-pill i{animation:none;}}
+.live-btn.on{border-color:var(--accent);background:rgba(56,182,255,.2);}
+.live-cor{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.35);cursor:pointer;padding:0;}
+.live-cor.on{border-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25);}
+#live-pass{position:absolute;top:calc(100% + 6px);right:0;min-width:220px;background:rgba(3,13,26,.97);border:1px solid var(--glass-b);border-radius:12px;padding:6px;display:none;z-index:300;box-shadow:0 12px 34px rgba(0,0,0,.5);}
+#live-pass.open{display:block;}
+#live-pass button{display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt);font-size:12.5px;padding:8px 10px;border-radius:8px;cursor:pointer;}
+#live-pass button:hover{background:rgba(56,182,255,.14);}
+#live-pass .vazio{font-size:11.5px;color:var(--txt3);padding:8px 10px;line-height:1.5;}
+#live-canvas{position:fixed;left:0;top:0;width:100vw;height:100vh;z-index:600;pointer-events:none;}
+body.live-pen #live-canvas{pointer-events:auto;cursor:crosshair;}
+#live-laser{position:fixed;z-index:610;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:radial-gradient(circle,#fff 0,#ff3b3b 38%,rgba(255,59,59,0) 72%);box-shadow:0 0 14px 6px rgba(255,59,59,.55);pointer-events:none;display:none;}
+#live-toast{position:fixed;left:16px;bottom:16px;z-index:620;display:flex;flex-direction:column;gap:8px;max-width:min(360px,92vw);}
+.live-t{background:rgba(3,13,26,.96);border:1px solid var(--glass-b);border-radius:12px;padding:10px 12px;font-size:12.5px;color:var(--txt);display:flex;align-items:center;gap:10px;flex-wrap:wrap;box-shadow:0 10px 30px rgba(0,0,0,.45);}
+.live-t button{background:var(--glass);border:1px solid var(--glass-b);border-radius:8px;color:var(--txt);font-size:11.5px;padding:4px 10px;cursor:pointer;}
+.live-t button:hover{border-color:var(--accent);}
 </style>
 </head>
 <body>
@@ -555,6 +579,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
     <label class="tb-filter" id="tb-filter-torre" hidden title="Apresentar só uma torre">
       <select id="tb-torre" onchange="window._okrSetTorre(this.value);this.blur();"><option value="">🏛️ Todas as torres</option></select>
     </label>
+    <div id="live-box"></div>
     <div class="tb-nav">
       <button class="tb-btn" id="btn-prev" onclick="window._okrPrev()" title="Anterior (←)">◀</button>
       <button class="tb-btn" id="btn-next" onclick="window._okrNext()" title="Próximo (→)">▶</button>
@@ -568,6 +593,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
   <div id="slides"></div>
   <div id="bottombar"></div>
 </div>
+
+<canvas id="live-canvas" aria-hidden="true"></canvas>
+<div id="live-laser" aria-hidden="true"></div>
+<div id="live-toast" role="status" aria-live="polite"></div>
 
 <div id="detail-ov" onclick="if(event.target===this) window._okrCloseDetail()">
   <div class="detail-modal" id="detail-modal"></div>
@@ -654,7 +683,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, onValue, set, remove, get } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, onValue, set, remove, get, update } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -674,7 +703,7 @@ provider.setCustomParameters({ hd: 'ciahering.com.br' });
 // Mesmo padrão de exposição de kanban.html/painel.html (window._db/_ref/_onValue/...)
 // — deixa a página testável com o mesmo mock de Firebase já usado nos testes
 // Playwright do resto do repo, em vez de import direto do SDK espalhado pelo código.
-window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove; window._get = get;
+window._db = db; window._ref = ref; window._onValue = onValue; window._set = set; window._remove = remove; window._get = get; window._update = update;
 
 window._doLogin = () => {
   document.getElementById('login-err').hidden = true;
@@ -1423,8 +1452,9 @@ function render(){
   const upd = document.getElementById('cover-updated');
   if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
   fitSlideContent(document.querySelector('.slide.active'));
+  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(); }
 }
-window.addEventListener('resize', () => fitSlideContent(document.querySelector('.slide.active')));
+window.addEventListener('resize', () => { fitSlideContent(document.querySelector('.slide.active')); if(typeof liveDesenhar==='function') liveDesenhar(); });
 
 // Achado real (print do usuário, conteúdo cortado mesmo com fitSlideContent no
 // lugar): a 1ª medição roda ANTES da webfont (Syne/DM Sans, carregada via
@@ -1942,6 +1972,165 @@ function startListeners(){
   }, onErr);
 }
 
+// ═════════════════════════════════════════════════════════════════
+// 🎙️ APRESENTAÇÃO AO VIVO — kanban/okr/apresentacao_live (as regras de kanban/okr já deixam qualquer @ciahering escrever e o visualizador externo ler).
+//   • Quem clica "🎙️ Apresentar ao vivo" vira o APRESENTADOR: o slide (por chave, não por posição) e o Objetivo aberto no detalhe vão pro banco.
+//   • Todo mundo que abrir a página acompanha sozinho; mexer nos slides por conta própria sai da sincronização ("Voltar a seguir" volta).
+//   • O apresentador tem 🔴 laser (L) e 🖍️ caneta (P); os traços ficam por slide e aparecem pra todos. "Passar o controle" a quem está com a página aberta
+//     (ou quem pede o controle e o apresentador aceita); se o apresentador sumir (>90 s sem sinal) outra pessoa pode assumir. ⏹ encerra e apaga tudo.
+// ═════════════════════════════════════════════════════════════════
+const LIVE_PATH = 'kanban/okr/apresentacao_live', LIVE_CORES = ['#ff4d4d','#ffd166','#1de9b6','#ffffff'];
+let live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false;
+const liveEu = () => window._currentUser || {};
+const liveRef = sub => window._ref(window._db, LIVE_PATH + (sub ? '/'+sub : ''));
+const liveAtiva = () => !!(live && live.ativa && live.apresentador && live.apresentador.uid);
+const liveSouHost = () => liveAtiva() && live.apresentador.uid === liveEu().uid;
+const liveHostParado = () => liveAtiva() && (Date.now() - (live.atualizadoEm||0)) > 90000;
+const liveNome = u => (u && (u.displayName || (u.email||'').split('@')[0])) || 'Alguém';
+const liveSlideKey = () => slides[currentIdx] ? slides[currentIdx].key : '';
+const liveDetalheAberto = () => document.getElementById('detail-ov').classList.contains('open') ? (_okrDetailCurrentId||'') : '';
+const liveCtx = () => { const d = liveDetalheAberto(); return d ? 'd:'+d : 's:'+liveSlideKey(); };
+function liveToast(msg, acoes, ttl){
+  const box = document.getElementById('live-toast'); if(!box) return null;
+  const el = document.createElement('div'); el.className = 'live-t'; el.innerHTML = '<span>'+esc(msg)+'</span>'+(acoes||'');
+  box.appendChild(el); if(ttl!==0) setTimeout(()=>el.remove(), ttl||4200); return el;
+}
+function liveInit(){
+  window._onValue(liveRef(), snap=>{
+    const antes = liveAtiva(); live = snap.val();
+    if(antes && !liveAtiva()){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
+    if(liveAtiva() && !_liveEntrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
+    liveAplicar(); liveRender(); liveDesenhar();
+  }, ()=>{});
+  clearInterval(_liveHb); _liveHb = setInterval(liveBatida, 20000);
+}
+function liveBatida(){
+  if(!liveAtiva() || window._okrIsViewer) return; const u = liveEu(); if(!u.uid) return;
+  const upd = {['participantes/'+u.uid]: {nome:liveNome(u), ts:Date.now()}}; if(liveSouHost()) upd.atualizadoEm = Date.now();
+  window._update(liveRef(), upd).catch(()=>{});
+}
+window._liveComecar = () => {
+  if(window._okrIsViewer) return; const u = liveEu();
+  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto()})
+    .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Teclas: L laser · P caneta.', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
+};
+window._liveEncerrar = () => { if(!liveSouHost()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
+function liveAplicar(){
+  if(!liveAtiva() || liveSouHost() || !liveSeguindo) return;
+  _liveAplicando = true;
+  try{
+    const i = slides.findIndex(x=>x.key===live.slide);
+    if(i>=0){ if(i!==currentIdx) window._okrGoTo(i); } else if(live.slide) _livePend = true;
+    const d = live.detalhe||'', aberto = liveDetalheAberto();
+    if(d && d!==aberto){ if(okrObjetivos[d]) window._okrOpenDetail(d); else _livePend = true; } else if(!d && aberto) window._okrCloseDetail();
+  } finally { _liveAplicando = false; }
+}
+function liveAposNavegar(){
+  if(_liveAplicando){ liveDesenhar(); return; }
+  if(liveSouHost()){
+    clearTimeout(_liveSyncT);
+    _liveSyncT = setTimeout(()=>{ window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now()}).catch(()=>{}); }, 60);
+  } else if(liveAtiva() && liveSeguindo){ liveSeguindo = false; liveRender(); }
+  liveDesenhar();
+}
+(function(){
+  const go = window._okrGoTo, op = window._okrOpenDetail, cl = window._okrCloseDetail;
+  window._okrGoTo = i => { go(i); liveAposNavegar(); };
+  window._okrOpenDetail = id => { op(id); liveAposNavegar(); };
+  window._okrCloseDetail = () => { cl(); liveAposNavegar(); };
+})();
+window._liveSeguir = () => { liveSeguindo = true; liveAplicar(); liveRender(); };
+window._livePedir = () => { const u = liveEu(); window._set(liveRef('pedidos/'+u.uid), {nome:liveNome(u), ts:Date.now()}).then(()=>liveToast('✋ Pedido enviado — o apresentador vai ver.')).catch(()=>liveToast('⚠️ Não consegui pedir o controle.')); };
+function liveTrocar(uid, nome, email){
+  const upd = {apresentador:{uid, nome, email:email||''}, atualizadoEm:Date.now(), laser:null}; upd['pedidos/'+uid] = null;
+  window._update(liveRef(), upd).catch(e=>liveToast('⚠️ Não consegui passar o controle: '+(e && e.message || e)));
+}
+window._livePassar = (uid, nome) => { liveTrocar(uid, nome, ''); document.getElementById('live-pass')?.classList.remove('open'); liveFerr = ''; document.body.classList.remove('live-pen'); };
+window._liveAceitar = (uid, nome) => { liveTrocar(uid, nome, ''); liveFerr = ''; document.body.classList.remove('live-pen'); };
+window._liveRecusar = uid => window._remove(liveRef('pedidos/'+uid)).catch(()=>{});
+window._liveAssumir = () => { const u = liveEu(); liveTrocar(u.uid, liveNome(u), u.email); liveSeguindo = true; };
+window._liveMenuPassar = () => document.getElementById('live-pass')?.classList.toggle('open');
+window._liveFerr = t => {
+  if(!liveSouHost()) return; liveFerr = liveFerr===t ? '' : t;
+  document.body.classList.toggle('live-pen', liveFerr==='caneta');
+  if(liveFerr!=='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); document.getElementById('live-laser').style.display = 'none'; }
+  liveRender();
+};
+window._liveCor = c => { liveCor = c; liveRender(); };
+window._liveLimpar = () => { if(liveSouHost()) window._remove(liveRef('tracos')).catch(()=>{}); };
+function liveRender(){
+  const box = document.getElementById('live-box'); if(!box) return;
+  const viewer = !!window._okrIsViewer; let h = '';
+  if(!liveAtiva()){
+    h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveComecar()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
+  } else if(liveSouHost()){
+    h = '<span class="live-pill"><i></i>Você está apresentando</span>'
+      + '<button type="button" class="tb-btn live-btn'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L)">🔴 Laser</button>'
+      + '<button type="button" class="tb-btn live-btn'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button>'
+      + (liveFerr==='caneta' ? LIVE_CORES.map(c=>'<button type="button" class="live-cor'+(c===liveCor?' on':'')+'" style="background:'+c+'" onclick="window._liveCor(\''+c+'\')" aria-label="Cor"></button>').join('') : '')
+      + '<button type="button" class="tb-btn live-btn" onclick="window._liveLimpar()" title="Apagar todos os traços">🧽</button>'
+      + '<button type="button" class="tb-btn live-btn" onclick="window._liveMenuPassar()" title="Passar o controle pra outra pessoa">🤝 Passar o controle ▾</button>'
+      + '<button type="button" class="tb-btn live-btn" onclick="window._liveEncerrar()" title="Encerrar a apresentação ao vivo">⏹</button>'
+      + '<div id="live-pass">'+livePassarHtml()+'</div>';
+  } else {
+    const eu = liveEu(), pediu = !!(live.pedidos && live.pedidos[eu.uid]);
+    h = '<span class="live-pill"><i></i>'+esc(live.apresentador.nome||'Alguém')+' está apresentando</span>'
+      + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')
+      + (viewer ? '' : (liveHostParado() ? '<button type="button" class="tb-btn live-btn" onclick="window._liveAssumir()" title="O apresentador está sem sinal há mais de 90 s">🎙️ Assumir</button>' : '<button type="button" class="tb-btn live-btn" onclick="window._livePedir()" '+(pediu?'disabled':'')+' title="Pede pro apresentador passar o controle">'+(pediu?'✋ Pedido enviado':'✋ Pedir o controle')+'</button>'));
+  }
+  box.innerHTML = h; document.body.classList.toggle('live-host', liveSouHost());
+  // pedidos de controle (só o apresentador vê)
+  const tb = document.getElementById('live-toast'); tb.querySelectorAll('[data-pedido]').forEach(x=>x.remove());
+  if(liveSouHost()) Object.entries(live.pedidos||{}).forEach(([uid,p])=>{
+    const el = liveToast('✋ '+(p.nome||'Alguém')+' pede o controle', '<button onclick="window._liveAceitar('+jsq(uid)+','+jsq(p.nome||'')+')">Passar</button><button onclick="window._liveRecusar('+jsq(uid)+')">Recusar</button>', 0);
+    if(el) el.setAttribute('data-pedido', uid);
+  });
+}
+function livePassarHtml(){
+  const eu = liveEu().uid, ag = Date.now();
+  const lista = Object.entries(live.participantes||{}).filter(([id,p])=>id!==eu && p && ag-(p.ts||0) < 70000);
+  return lista.length ? lista.map(([id,p])=>'<button type="button" onclick="window._livePassar('+jsq(id)+','+jsq(p.nome||'')+')">'+esc(p.nome||'Alguém')+'</button>').join('') : '<div class="vazio">Ninguém mais está com a página aberta agora. Peça pra abrirem o link da apresentação.</div>';
+}
+// laser e traços
+function liveDesenhar(){
+  const cv = document.getElementById('live-canvas'); if(!cv) return;
+  const dpr = window.devicePixelRatio||1, W = window.innerWidth, H = window.innerHeight;
+  if(cv.width !== Math.round(W*dpr) || cv.height !== Math.round(H*dpr)){ cv.width = Math.round(W*dpr); cv.height = Math.round(H*dpr); }
+  const c = cv.getContext('2d'); c.setTransform(dpr,0,0,dpr,0,0); c.clearRect(0,0,W,H);
+  const ctx = liveCtx(), tr = liveAtiva() ? Object.values(live.tracos||{}) : [];
+  const todos = tr.filter(t=>t && t.k===ctx && Array.isArray(t.p)); if(liveStroke && liveStroke.k===ctx) todos.push(liveStroke);
+  c.lineCap = 'round'; c.lineJoin = 'round'; c.lineWidth = 4;
+  todos.forEach(t=>{ c.strokeStyle = t.c||'#ff4d4d'; c.beginPath(); t.p.forEach((pt,i)=>{ const x = pt[0]*W, y = pt[1]*H; if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); if(t.p.length===1){ c.lineTo(t.p[0][0]*W+0.1, t.p[0][1]*H); } c.stroke(); });
+  const lz = document.getElementById('live-laser');
+  if(liveAtiva() && !liveSouHost() && live.laser && live.laser.on){ lz.style.display = 'block'; lz.style.left = (live.laser.x*100)+'%'; lz.style.top = (live.laser.y*100)+'%'; }
+  else if(!(liveSouHost() && liveFerr==='laser')) lz.style.display = 'none';
+}
+document.addEventListener('mousemove', e=>{
+  if(!liveSouHost() || liveFerr!=='laser') return;
+  const x = e.clientX/window.innerWidth, y = e.clientY/window.innerHeight, lz = document.getElementById('live-laser');
+  lz.style.display = 'block'; lz.style.left = (x*100)+'%'; lz.style.top = (y*100)+'%';
+  const ag = Date.now(); if(ag - _liveLaserT < 40) return; _liveLaserT = ag;
+  window._set(liveRef('laser'), {x:+x.toFixed(4), y:+y.toFixed(4), on:true, t:ag}).catch(()=>{});
+}, true);
+document.addEventListener('mouseleave', ()=>{ if(liveSouHost() && liveFerr==='laser') window._set(liveRef('laser'), {on:false}).catch(()=>{}); });
+(function(){
+  const cv = document.getElementById('live-canvas'); if(!cv) return;
+  const pt = e => [+(e.clientX/window.innerWidth).toFixed(4), +(e.clientY/window.innerHeight).toFixed(4)];
+  const enviar = fim => { if(!liveStroke) return; const ag = Date.now(); if(!fim && ag-_liveStrokeT < 110) return; _liveStrokeT = ag; window._set(liveRef('tracos/'+liveStroke.id), {c:liveStroke.c, k:liveStroke.k, p:liveStroke.p}).catch(()=>{}); };
+  cv.addEventListener('pointerdown', e=>{ if(!liveSouHost() || liveFerr!=='caneta') return; e.preventDefault(); cv.setPointerCapture(e.pointerId); liveStroke = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), c:liveCor, k:liveCtx(), p:[pt(e)]}; liveDesenhar(); enviar(false); });
+  cv.addEventListener('pointermove', e=>{ if(!liveStroke) return; if(liveStroke.p.length<800) liveStroke.p.push(pt(e)); liveDesenhar(); enviar(false); });
+  const fim = ()=>{ if(!liveStroke) return; enviar(true); liveStroke = null; };
+  cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
+})();
+document.addEventListener('keydown', e=>{
+  if(!liveSouHost() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = (e.key||'').toLowerCase();
+  if(k==='l'){ e.preventDefault(); window._liveFerr('laser'); }
+  else if(k==='p'){ e.preventDefault(); window._liveFerr('caneta'); }
+  else if(e.key==='Escape' && liveFerr){ e.preventDefault(); e.stopImmediatePropagation(); window._liveFerr(liveFerr); }
+}, true);
+document.addEventListener('click', e=>{ const m = document.getElementById('live-pass'); if(m && m.classList.contains('open') && !e.target.closest('#live-pass') && !e.target.closest('[onclick*="_liveMenuPassar"]')) m.classList.remove('open'); });
+
 function _okrShowApp(user){
   document.getElementById('login-ov').hidden = true;
   document.getElementById('app').hidden = false;
@@ -1950,6 +2139,7 @@ function _okrShowApp(user){
   document.getElementById('notes-fab').hidden = false;
   if(safeUrl(user.photoURL)) document.getElementById('tb-avatar').src = user.photoURL;
   startListeners();
+  liveInit(); liveRender();
 }
 // Achado real de análise de segurança, 2026-09-17: window._okrHandleAuth()
 // só checava `if(user)` (QUALQUER login Google bem-sucedido, não só
