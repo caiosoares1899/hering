@@ -40,6 +40,10 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🎨 Favicons do Painel e do A Bordo: arte maior e centralizada — 2026-10-10 · painel-dev v5.44 · kanban-dev v8.30.824-dev · okr-dev v2.69 · oceano-dev v1.14 · mare-notif-dev v22 (SÓ DEV; `onboarding.html` já em prod)
+- O usuário reenviou as duas artes com o desenho maior e centralizado (2000 px). `favicon-painel-v2.png`, `favicon-painel-v2-dev.png` (com o selo "DEV") e `favicon-bordo-v2.png` foram refeitos (512 px, paleta, ~70 KB) — legíveis até em 16 px. Como o nome dos arquivos não mudou, as referências ganharam `?v=3` (aba do painel-dev, menu de produtos, tile do Oceano e `onboarding.html`) pra o navegador não reaproveitar a imagem antiga em cache.
+- Dica: não — troca de ícone.
+
 ### 🎨 A Bordo: favicon nova (o convés) na aba da página e no menu de produtos — 2026-10-10 · painel-dev v5.43 · kanban-dev v8.30.823-dev · okr-dev v2.68 · oceano-dev v1.13 · mare-notif-dev v21 (SÓ DEV)
 - Arte nova do A Bordo enviada pelo usuário: `favicon-bordo-v2.png` (512 px, paleta, 45 KB). **`onboarding.html`** (página avulsa, sem versão nem cópia dev) ganhou `<link rel="icon">`/apple-touch-icon — antes não tinha favicon nenhum, então a aba nova já vale em produção. **Menu de produtos ⋮⋮⋮** (`mare-notif-dev.js`) e **tile do Oceano** (`oceano-dev.html`): o A Bordo deixa de ser o glifo laranja provisório e mostra a logo nova (em prod só na promoção do módulo/Oceano).
 - Dica: não — é troca de ícone.
