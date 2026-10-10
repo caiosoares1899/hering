@@ -22,13 +22,15 @@ function urlDoPush(notif) {
   return SITE_BASE_URL + 'kanban.html' + (qs ? '?' + qs : '');
 }
 
-// Tag do push (mesma tag = o novo substitui o anterior). Notificações do OKR sem card usam o id da própria notificação, senão duas
-// menções seguidas se substituiriam ("okr_mencao_" igual) e a primeira sumiria sem ter sido vista.
+// Tag do push (mesma tag = o novo substitui o anterior, no aparelho). Card conhecido → a tag é do card (várias mudanças no mesmo card se
+// substituem, de propósito). SEM card (reunião, mensagem de feedback, entrada do intake, comunicado do Painel, Estrela do Mar, tudo do OKR…)
+// a tag leva o id da própria notificação: antes só o OKR fazia isso, e dois avisos seguidos de qualquer outro tipo sem card ("Reunião em 10 min"
+// de duas reuniões na mesma hora, dois feedbacks, dois itens no intake) tinham a MESMA tag — o 2º push apagava o 1º sem ninguém ter visto.
 function tagDoPush(notif, notifId) {
   const n = notif || {};
   const type = String(n.type || 'geral');
-  if (type.startsWith('okr_')) return type + '_' + String(n.cardId || notifId || '');
-  return type + '_' + String(n.cardId || '');
+  if (n.cardId) return type + '_' + String(n.cardId);
+  return type + '_' + String(notifId || '');
 }
 
 module.exports = { SITE_BASE_URL, urlDoPush, tagDoPush };

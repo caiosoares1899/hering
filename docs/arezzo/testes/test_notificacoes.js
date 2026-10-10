@@ -65,7 +65,7 @@ let ok=true; const t=(n,c,d)=>{ if(!c) ok=false; console.log((c?'✅ ':'❌ ')+n
    const cfg=await p.evaluate(()=>(window.__store.kanban.notif_config||{}).mention);
    t('desligar o 🔔 de "Menção" grava kanban/notif_config/mention {sino:false, por, em}', cfg && cfg.sino===false && /Ana/.test(cfg.por) && !!cfg.em, cfg);
    const aft=await p.evaluate(()=>({sino:MareNotif.sinoLigado('mention'),viva:MareNotif.viva({type:'mention',ts:new Date().toISOString(),read:false}),vivaOutro:MareNotif.viva({type:'assigned',ts:new Date().toISOString(),read:false}),alt:!!document.querySelector('#nc-row-mention .nc-tag.alt'),filtro:null}));
-   t('o módulo passa a esconder o tipo (viva=false) e só ele; a linha ganha "✏️ alterado"', aft.sino===false && aft.viva===false && aft.vivaOutro===true && aft.alt, aft);
+   t('o módulo passa a esconder o tipo (sinoLigado=false) e só ele — viva() é só o prazo (TTL), o filtro fica no desenho; a linha ganha "✏️ alterado"', aft.sino===false && aft.viva===true && aft.vivaOutro===true && aft.alt, aft);
    // push on num tipo que não enviava
    await p.evaluate(()=>{ const i=document.querySelector('#nc-row-done .nc-sw:nth-of-type(2) input'); i.click(); }); await p.waitForTimeout(400);
    t('ligar o 📲 de "Card concluído" (fora do PUSH_TYPES) grava push:true', (await p.evaluate(()=>(window.__store.kanban.notif_config||{}).done))?.push===true);
