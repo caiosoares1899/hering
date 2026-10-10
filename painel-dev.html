@@ -266,7 +266,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .tp-bar:hover{opacity:.75;cursor:default;}
 .tp-grid-line{stroke:rgba(56,182,255,.07);stroke-width:1;}
 .tp-axis-lbl{font-size:9px;fill:var(--txt3);font-family:"DM Sans",sans-serif;}
-.tp-bar-lbl{font-size:9px;fill:var(--teal);font-family:"DM Sans",sans-serif;font-weight:700;}
+.tp-bar-lbl{font-size:9px;fill:var(--txt);font-family:"DM Sans",sans-serif;font-weight:700;}
 .bar-empty{color:var(--txt3);font-size:11px;text-align:center;padding:32px 0;}
 /* ── CFD CHART ── */
 .cfd-wrap{display:flex;flex-direction:column;gap:6px;}
@@ -290,6 +290,38 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .aging-age{font-weight:700;font-size:13px;font-family:"DM Sans",sans-serif;white-space:nowrap;text-align:right;}
 .aging-empty{color:var(--txt3);font-size:11px;padding:10px 4px;}
 /* Col bar */
+.on-card{padding:6px 16px;}
+.on-row{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid rgba(56,182,255,.07);}
+.on-row:last-child{border-bottom:none;}
+.on-lbl{font-size:11px;font-weight:600;color:var(--txt2);display:flex;align-items:center;gap:6px;}
+.on-list{display:flex;flex-wrap:wrap;gap:8px;min-width:0;}
+.on-empty{font-size:11px;color:var(--txt3);}
+.filter-card{display:flex;flex-direction:column;gap:6px;margin-bottom:18px;}
+.filter-grp{display:flex;align-items:center;gap:10px;min-width:0;}
+.filter-grp .filter-bar{margin-bottom:0;}
+.filter-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--txt3);width:84px;flex-shrink:0;}
+.cmp-table th .wk-dot{margin-right:5px;}
+.met-un{font-size:12px;font-weight:500;color:var(--txt3);margin-left:3px;}
+.flow-met .met-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tp-today{fill:var(--txt);font-weight:700;}
+/* Fluxo: identidade do squad (bolinha) + barra empilhada "onde está o trabalho" */
+.wk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-right:6px;vertical-align:baseline;}
+.wk-legend{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 10px;font-size:10px;color:var(--txt2);}
+.wk-legend:empty{display:none;}
+.wk-lg{display:inline-flex;align-items:center;}
+.wk-sw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;}
+.wk-row{display:grid;grid-template-columns:128px 1fr auto;align-items:center;gap:10px;padding:5px 0;}
+.wk-name{display:flex;align-items:center;font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.wk-track{min-width:0;}
+.wk-bar{display:flex;gap:2px;height:22px;}
+.wk-seg{display:flex;align-items:center;justify-content:center;min-width:4px;border-radius:4px;font-size:10px;font-weight:700;font-family:"DM Sans",sans-serif;overflow:hidden;}
+.wk-meta{display:flex;flex-direction:column;align-items:flex-end;line-height:1.15;min-width:52px;}
+.wk-meta b{font-size:13px;font-family:"DM Sans",sans-serif;color:var(--txt);}
+.wk-wip{font-size:9px;color:var(--txt3);}
+.wk-wip.over{color:var(--danger);font-weight:700;}
+.aging-bar-wrap{position:relative;overflow:visible !important;}
+.aging-thr{position:absolute;top:-3px;bottom:-3px;width:0;border-left:1.5px dashed var(--txt2);pointer-events:none;}
+.aging-title .wk-dot{margin-right:6px;}
 .col-bar{display:flex;flex-direction:column;gap:5px;margin-top:8px;}
 .col-row{display:flex;align-items:center;gap:8px;font-size:11px;}
 .col-row-name{width:90px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -987,6 +1019,10 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   .aging-item{ gap:7px; }
 
   .aging-age{ font-size:15px; }
+  .wk-row{ grid-template-columns:78px 1fr auto; gap:8px; }
+  .on-row{ grid-template-columns:1fr; gap:6px; }
+  .filter-grp{ flex-direction:column; align-items:stretch; gap:4px; }
+  .filter-lbl{ width:auto; }
 
 
   /* ── Calendário ── */
@@ -1546,23 +1582,18 @@ window.MARE_SO_HERING = true;
   <!-- ═══ ABA: VISÃO ═══ -->
   <div class="ptab-pane on" id="ppane-visao">
 
-    <div class="sec-title" id="online-section-title">👥 Online no board <span class="badge" id="online-count">0</span></div>
-    <div id="online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
-    </div>
-
-    <!-- 🖥️ Online no PAINEL — separado de "Online no board" de propósito (pedido
-         direto do usuário): alguém pode estar nos dois ao mesmo tempo, em abas
-         diferentes, e são apps distintos (ver _painelSendHeartbeat()/loadPainelPresence()). -->
-    <div class="sec-title" id="painel-online-section-title">🖥️ Online no painel <span class="badge" id="painel-online-count">0</span></div>
-    <div id="painel-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
-    </div>
-
-    <!-- 🎯 Online no OKR — a página do OKR (okr.html/okr-dev.html) tem heartbeat próprio em kanban/painel/okr_presence/{uid}; aqui só LEMOS (loadOkrPresence()). -->
-    <div class="sec-title" id="okr-online-section-title">🎯 Online no Radar <span class="badge" id="okr-online-count">0</span></div>
-    <div id="okr-online-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;">
-      <div style="font-size:11px;color:var(--txt3);">Carregando...</div>
+    <!-- Quem está online — 3 apps em UM cartão (antes eram 3 seções empilhadas, ~200px de página só pra "quem está aí").
+         Cada linha tem seu próprio heartbeat/lista (ids preservados): board = renderOnline(); painel = loadPainelPresence();
+         Radar = loadOkrPresence() (okr.html/okr-dev.html tem heartbeat próprio em kanban/painel/okr_presence/{uid}).
+         Separados de propósito: alguém pode estar nos três ao mesmo tempo, em abas diferentes. -->
+    <div class="sec-title">👥 Quem está online</div>
+    <div class="card on-card" style="margin-bottom:20px;">
+      <div class="on-row"><div class="on-lbl" id="online-section-title">Maré <span class="badge" id="online-count">0</span></div>
+        <div id="online-list" class="on-list"><div class="on-empty">Carregando...</div></div></div>
+      <div class="on-row"><div class="on-lbl" id="painel-online-section-title">Painel <span class="badge" id="painel-online-count">0</span></div>
+        <div id="painel-online-list" class="on-list"><div class="on-empty">Carregando...</div></div></div>
+      <div class="on-row"><div class="on-lbl" id="okr-online-section-title">Radar <span class="badge" id="okr-online-count">0</span></div>
+        <div id="okr-online-list" class="on-list"><div class="on-empty">Carregando...</div></div></div>
     </div>
 
     <!-- Filtro por GERÊNCIA (grupo de squads) — pedido direto: cada gerente vê
@@ -1571,15 +1602,14 @@ window.MARE_SO_HERING = true;
          mecanismo de activeFilter/squadVisible() que já filtrava por squad —
          só ganhou um novo formato de valor ('ger-xxx'), ver renderGerenciaBar()/
          gerenciaSquadIds() no <script>. -->
-    <div class="sec-title" style="margin-bottom:8px;">👔 Ver por gerência</div>
-    <div class="filter-bar" id="gerencia-bar" style="margin-bottom:14px;"></div>
-
-    <div class="sec-title" style="margin-bottom:8px;">🐟 Ver por squad</div>
-    <div class="filter-bar">
-      <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
-      <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
-      <button class="filter-btn"        id="fb-prf"         onclick="setFilter('prf')">📱 Marketing de Performance</button>
-      <button class="filter-btn"        id="fb-midiacriativa" onclick="setFilter('midiacriativa')">🎨 Mídia Criativa</button>
+    <div class="filter-card">
+      <div class="filter-grp"><span class="filter-lbl">👔 Gerência</span><div class="filter-bar" id="gerencia-bar"></div></div>
+      <div class="filter-grp"><span class="filter-lbl">🐟 Squad</span><div class="filter-bar" id="squad-filter-bar">
+        <button class="filter-btn active" id="fb-all"           onclick="setFilter('all')">🏠 Todos</button>
+        <button class="filter-btn"        id="fb-dados"         onclick="setFilter('dados')">📊 Dados</button>
+        <button class="filter-btn"        id="fb-prf"         onclick="setFilter('prf')">📱 Marketing de Performance</button>
+        <button class="filter-btn"        id="fb-midiacriativa" onclick="setFilter('midiacriativa')">🎨 Mídia Criativa</button>
+      </div></div>
     </div>
 
     <div class="sec-title">🏃 Squads em tempo real</div>
@@ -1590,7 +1620,7 @@ window.MARE_SO_HERING = true;
       <div class="met"><div class="met-lbl">Cards totais</div><div class="met-val" id="m-total">—</div><div class="met-sub">ativos</div></div>
       <div class="met"><div class="met-lbl">WIP total</div><div class="met-val" id="m-wip">—</div><div class="met-sub">em progresso</div></div>
       <div class="met"><div class="met-lbl">Bloqueios</div><div class="met-val" id="m-blockers" style="color:var(--danger)">—</div><div class="met-sub">impedimentos</div></div>
-      <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">throughput total</div></div>
+      <div class="met"><div class="met-lbl">Concluídos</div><div class="met-val met-ok" id="m-done">—</div><div class="met-sub">no total do board</div></div>
     </div>
 
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between;">
@@ -1673,10 +1703,10 @@ window.MARE_SO_HERING = true;
 
     <div id="cmp-section">
       <div class="sec-title">⚖️ Comparação entre squads</div>
-      <div class="card" style="margin-bottom:20px;">
+      <div class="card" style="margin-bottom:20px;overflow-x:auto;">
         <table class="cmp-table">
-          <thead><tr><th>Métrica</th><th>📊 Squad Dados e IA</th><th>📱 Marketing de Performance</th><th>🎨 Mídia Criativa</th></tr></thead>
-          <tbody id="cmp-body"><tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
+          <thead id="cmp-head"><tr><th>Métrica</th></tr></thead>
+          <tbody id="cmp-body"><tr><td style="color:var(--txt3);padding:12px;">Carregando...</td></tr></tbody>
         </table>
       </div>
     </div>
@@ -1694,54 +1724,49 @@ window.MARE_SO_HERING = true;
       </span>
     </div>
     <div class="grid-4" style="margin-bottom:20px;">
-      <div class="met flow-met" title="Tempo médio do início (Em Progresso) até Concluído.">
+      <div class="met flow-met" title="Tempo do início (Em Progresso) até Concluído — mediana dos cards concluídos na janela.">
         <div class="met-lbl">⏱ Cycle Time</div>
         <div class="met-val" id="m-cycle">—</div>
         <div class="met-sub" id="m-cycle-sub">mediana · dias</div>
       </div>
-      <div class="met flow-met" title="Tempo da criação até a conclusão (inclui fila no backlog).">
+      <div class="met flow-met" title="Tempo da criação até a conclusão (inclui fila no backlog) — mediana dos cards concluídos na janela.">
         <div class="met-lbl">📦 Lead Time</div>
         <div class="met-val" id="m-lead">—</div>
         <div class="met-sub" id="m-lead-sub">mediana · dias</div>
       </div>
       <div class="met flow-met" title="Cards concluídos por semana, na janela escolhida.">
         <div class="met-lbl">🚀 Throughput</div>
-        <div class="met-val met-ok" id="m-throughput">—</div>
+        <div class="met-val" id="m-throughput">—</div>
         <div class="met-sub" id="m-throughput-sub">cards / semana</div>
       </div>
-      <div class="met flow-met" title="Idade do card aberto mais antigo (Work Item Age).">
-        <div class="met-lbl">🔥 Item mais velho</div>
+      <div class="met flow-met" title="Idade do card EM ANDAMENTO mais antigo (Work Item Age). Cards na fila (Backlog, A fazer) não contam. Vermelho = passou do P85 do cycle time.">
+        <div class="met-lbl">🔥 Parado há mais tempo</div>
         <div class="met-val" id="m-age">—</div>
-        <div class="met-sub" id="m-age-sub">work item age · dias</div>
+        <div class="met-sub" id="m-age-sub">em andamento</div>
       </div>
     </div>
 
     <div class="grid-2" style="margin-bottom:20px;">
       <div class="card flow-card">
-        <div class="flow-card-hd">📈 Throughput semanal</div>
-        <div class="flow-card-sub">Cards concluídos por período</div>
+        <div class="flow-card-hd">📈 Entregas por dia</div>
+        <div class="flow-card-sub" id="tp-sub">Cards concluídos por dia</div>
+        <div class="wk-legend" id="tp-legend"></div>
         <div class="tp-chart-wrap" id="throughput-chart"></div>
       </div>
       <div class="card flow-card">
-        <div class="flow-card-hd">🌊 Distribuição WIP</div>
-        <div class="flow-card-sub">Cards por estágio · hoje</div>
+        <div class="flow-card-hd">🌊 Onde está o trabalho agora</div>
+        <div class="flow-card-sub">Cards abertos por squad · fila = colunas antes de "Em Progresso"</div>
         <div id="cfd-chart"></div>
       </div>
     </div>
 
     <div id="aging-section" style="margin-bottom:20px;">
-      <div class="sec-title">⏳ Work Item Age · cards em risco</div>
-      <div class="card"><div id="aging-list"></div></div>
+      <div class="sec-title">⏳ Cards andando há mais tempo</div>
+      <div class="card">
+        <div class="flow-card-sub" id="aging-sub"></div>
+        <div id="aging-list"></div>
+      </div>
     </div>
-
-    <div class="sec-title">📈 Tendência · Últimos 7 dias</div>
-    <div class="grid-2" style="margin-bottom:20px;">
-      <div class="card"><div class="card-title">📊 Squad Dados e IA — Throughput</div><div id="trend-dados" class="col-bar"></div></div>
-      <div class="card"><div class="card-title">📱 Marketing de Performance — Throughput</div><div id="trend-prf" class="col-bar"></div></div>
-    </div>
-
-    <div class="sec-title">📋 Distribuição por coluna</div>
-    <div class="grid-2" id="col-dist" style="margin-bottom:20px;"></div>
 
   </div><!-- /ppane-fluxo -->
 
@@ -2782,7 +2807,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.35 · painel-dev</div>
+<div class="version">v5.36 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4869,7 +4894,7 @@ function renderRiscos(){
       </div>
       <p class="pc-card-title">${c.title}</p>
       <div style="display:flex;flex-direction:column;gap:2px;">
-        ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt3);">• ${r}</div>`).join('')}
+        ${c.riscos.slice(0,2).map(r=>`<div style="font-size:10px;color:var(--txt3);">• ${esc(typeof r==='string'?r:(r&&(r.t||r.text))||'')}</div>`).join('')}
         ${c.riscos.length>2?`<div style="font-size:9px;color:var(--txt3);opacity:.7;">+${c.riscos.length-2} mais...</div>`:''}
       </div>
     </div>`;
@@ -8744,7 +8769,7 @@ function renderSquadLinks(){
 // só faltava o botão pra escolher esse id). Preserva o filtro ativo ao
 // re-renderizar (ex: squad novo aparece no meio da sessão).
 function renderFilterBar(){
-  const bar = document.querySelector('.filter-bar');
+  const bar = document.getElementById('squad-filter-bar');   // (era querySelector('.filter-bar') = o 1º da página, #gerencia-bar)
   if(!bar) return;
   bar.innerHTML = `<button class="filter-btn${activeFilter==='all'?' active':''}" id="fb-all" onclick="setFilter('all')">🏠 Todos</button>`
     + SQUADS.map(sq=>`<button class="filter-btn${activeFilter===sq.id?' active':''}" id="fb-${esc(sq.id)}" onclick="setFilter(${jsq(sq.id)})">${sq.icon} ${esc(sq.label.replace('Squad ',''))}</button>`).join('');
@@ -10048,10 +10073,11 @@ function _squadThroughput14(d){
 function _squadMaxAge(d){
   if(!d) return null;
   const now=Date.now();
-  const { doneId }=flowColsFor(d);
+  const fc=flowColsFor(d), doneId=fc.doneId;
   let max=null;
   (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
     if(!c||c.archived||c.col===doneId) return;
+    if(_flowStage(d,c,fc)==='fila') return;   // mesma regra do KPI do Fluxo: fila (Backlog/A fazer) não envelhece
     const st=_startTs(c); if(st){ const age=(now-st)/DAY_MS; if(max==null||age>max) max=age; }
   });
   return max;
@@ -10085,15 +10111,38 @@ function percentile(arr, p){
 }
 function median(arr){ return percentile(arr,50); }
 
-// Coleta cards relevantes considerando squads visíveis + baseline de reset
+// Estágio de um card no Fluxo: 'fila' (colunas ANTES da de início, ex. Backlog/A fazer),
+// 'andamento', 'bloqueado' ou 'concluido'. Mesma regra de bloqueio do renderBlockers()
+// (modo coluna: col==='blocker'; modo tag: c.blocker).
+function _flowStage(d, c, fc){
+  if(c.col===fc.doneId) return 'concluido';
+  const bmode=d.blockerMode||'col';
+  if(bmode==='col' ? c.col==='blocker' : !!c.blocker) return 'bloqueado';
+  const ids=(d.columns||[]).map(x=>x.id);
+  const si=ids.indexOf(fc.startId), ci=ids.indexOf(c.col);
+  if(si>=0 && ci>=0 && ci<si) return 'fila';
+  return 'andamento';
+}
+// '#rrggbb' + alpha (0..1) → rgba(); cor fora do padrão cai num azul neutro
+function _hexA(hex, a){
+  const m=/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex||'');
+  return m ? 'rgba('+parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)+','+a+')' : 'rgba(56,182,255,'+a+')';
+}
+function _sqNome(sq){ return String(sq.label||sq.id).replace(/^Squad /,''); }
+
+// Coleta cards relevantes considerando squads visíveis + baseline de reset.
+// Work Item Age só conta o que JÁ COMEÇOU (estágio andamento/bloqueado): card parado
+// no Backlog tem "início" por fallback (enteredAt/createdAt) e inflava o "item mais
+// velho" com fila — a fila vai em `fila` (só contagem).
 function _collectFlowCards(){
   const now=Date.now();
   const winStart=now - FLOW_WINDOW*DAY_MS;
-  const cycle=[], lead=[], openItems=[]; doneInWindow.length=0;
+  const cycle=[], lead=[], openItems=[]; let fila=0; doneInWindow.length=0;
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
     const baselineAt = (d.flowBaseline&&d.flowBaseline.at)? new Date(d.flowBaseline.at).getTime() : 0;
-    const { doneId } = flowColsFor(d);
+    const fc = flowColsFor(d);
+    const doneId = fc.doneId;
     const cards=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c&&!c.archived);
     cards.forEach(c=>{
       const st=_startTs(c), dn=_doneTs(c), cr=_createdTs(c);
@@ -10103,168 +10152,197 @@ function _collectFlowCards(){
         if(cr && dn>=cr){ lead.push(Math.max(0,(dn-cr)/DAY_MS)); }
         if(dn>=winStart) doneInWindow.push({sq:sq.id, ts:dn});
       } else if(c.col!==doneId){
-        // Em aberto: work item age (apenas se já "iniciado")
-        if(st){ openItems.push({sq:sq.id, card:c, age:(now-st)/DAY_MS, col:c.col}); }
+        const stage=_flowStage(d,c,fc);
+        if(stage==='fila'){ fila++; }
+        else if(st){ openItems.push({sq:sq.id, card:c, age:(now-st)/DAY_MS, col:c.col, stage}); }
       }
     });
   });
-  return { cycle, lead, doneInWindow, openItems };
+  return { cycle, lead, doneInWindow, openItems, fila };
 }
 
+function _flowVal(v, un){ return v+'<span class="met-un">'+un+'</span>'; }
 function renderFlowMetrics(){
-  const { cycle, lead, doneInWindow, openItems } = _collectFlowCards();
+  const { cycle, lead, doneInWindow, openItems, fila } = _collectFlowCards();
 
   // Cycle Time
   const cMed=median(cycle), cP85=percentile(cycle,85);
-  document.getElementById('m-cycle').textContent = cMed!=null? cMed.toFixed(1) : '—';
-  document.getElementById('m-cycle-sub').textContent = cP85!=null? ('mediana · P85 '+cP85.toFixed(1)+'d') : 'sem dados ainda';
+  document.getElementById('m-cycle').innerHTML = cMed!=null? _flowVal(cMed.toFixed(1),'d') : '—';
+  document.getElementById('m-cycle-sub').textContent = cP85!=null? ('mediana · P85 '+cP85.toFixed(1)+'d · '+cycle.length+' cards') : 'sem conclusões na janela';
 
   // Lead Time
   const lMed=median(lead), lP85=percentile(lead,85);
-  document.getElementById('m-lead').textContent = lMed!=null? lMed.toFixed(1) : '—';
-  document.getElementById('m-lead-sub').textContent = lP85!=null? ('mediana · P85 '+lP85.toFixed(1)+'d') : 'sem dados ainda';
+  document.getElementById('m-lead').innerHTML = lMed!=null? _flowVal(lMed.toFixed(1),'d') : '—';
+  document.getElementById('m-lead-sub').textContent = lP85!=null? ('mediana · P85 '+lP85.toFixed(1)+'d · '+lead.length+' cards') : 'sem conclusões na janela';
 
   // Throughput (cards/semana na janela)
   const weeks=FLOW_WINDOW/7;
   const tp = doneInWindow.length/weeks;
-  document.getElementById('m-throughput').textContent = doneInWindow.length? tp.toFixed(1) : '0';
-  document.getElementById('m-throughput-sub').textContent = doneInWindow.length+' em '+FLOW_WINDOW+'d';
+  document.getElementById('m-throughput').innerHTML = _flowVal(tp.toFixed(1),'/sem');
+  document.getElementById('m-throughput-sub').textContent = doneInWindow.length+' entregues em '+FLOW_WINDOW+' dias';
 
-  // Work item age — mais velho
-  const ages=openItems.map(o=>o.age);
-  const maxAge=ages.length?Math.max(...ages):null;
+  // Work item age — o card EM ANDAMENTO mais antigo
+  const maxItem=openItems.reduce((m,o)=>(!m||o.age>m.age)?o:m,null);
   const ageEl=document.getElementById('m-age');
-  ageEl.textContent = maxAge!=null? Math.round(maxAge) : '—';
-  // cor de alerta: > P85 do cycle (se houver) ou > 2x mediana
+  ageEl.innerHTML = maxItem? _flowVal(Math.round(maxItem.age),'d') : '—';
+  // alerta (vermelho) só quando passa do P85 do cycle (ou 2x a mediana) — senão cor neutra
   const ageThreshold = cP85!=null? cP85 : (cMed!=null? cMed*2 : null);
-  ageEl.className = 'met-val' + (maxAge!=null && ageThreshold!=null && maxAge>ageThreshold ? ' met-bad' : (maxAge!=null?' met-warn':''));
-  document.getElementById('m-age-sub').textContent = openItems.length? (openItems.length+' cards em aberto') : 'nada em aberto';
+  ageEl.className = 'met-val' + (maxItem && ageThreshold!=null && maxItem.age>ageThreshold ? ' met-bad' : '');
+  const ageSub=document.getElementById('m-age-sub');
+  if(maxItem){
+    const sq=SQUADS.find(x=>x.id===maxItem.sq);
+    const t=maxItem.card.title||'(sem título)';
+    ageSub.textContent=(sq?sq.icon+' ':'')+t;
+    ageSub.title=t+(openItems.length>1?' · '+openItems.length+' em andamento':'')+(fila?' · '+fila+' na fila (não contam)':'');
+  } else { ageSub.textContent='nada em andamento'; ageSub.title=''; }
 
   renderThroughputChart(doneInWindow);
   renderCFD();
-  renderAgingWip(openItems, ageThreshold, cMed);
+  renderAgingWip(openItems, ageThreshold, cMed, fila);
 }
 
-// Gráfico de barras — throughput por semana (SVG)
+// Entregas por dia — colunas empilhadas por squad (cor = identidade do squad, a mesma
+// da bolinha em "Onde está o trabalho"/"Cards andando há mais tempo"). Sempre diário:
+// 7/14/30 dias batem exatamente com os cards contados no KPI de Throughput.
 function renderThroughputChart(doneInWindow){
   const wrap=document.getElementById('throughput-chart'); if(!wrap) return;
-  const now=Date.now();
-  const isDaily=FLOW_WINDOW<=7;
-  const nBuckets=isDaily?7:Math.min(Math.max(Math.round(FLOW_WINDOW/7),2),8);
-  const buckets=[];
-  if(isDaily){
-    for(let i=6;i>=0;i--){
-      const dayStart=new Date(now-i*DAY_MS); dayStart.setHours(0,0,0,0);
-      const s=dayStart.getTime(),e=s+DAY_MS;
-      const cnt=doneInWindow.filter(x=>x.ts>=s&&x.ts<e).length;
-      const d=dayStart.getDate();
-      buckets.push({lbl:['D','S','T','Q','Q','S','S'][dayStart.getDay()]+'·'+d,cnt,today:i===0});
-    }
-  } else {
-    const wk=FLOW_WINDOW/7|0||2;
-    for(let i=wk-1;i>=0;i--){
-      const e=now-i*7*DAY_MS,s=e-7*DAY_MS;
-      const cnt=doneInWindow.filter(x=>x.ts>=s&&x.ts<e).length;
-      const wd=new Date(s);
-      buckets.push({lbl:(wd.getDate()+'/'+(wd.getMonth()+1)),cnt,today:i===0});
-    }
-  }
+  const leg=document.getElementById('tp-legend'); const sub=document.getElementById('tp-sub');
+  const sqs=SQUADS.filter(sq=>squadData[sq.id] && squadVisible(sq.id));
+  if(sub) sub.textContent = doneInWindow.length+' cards concluídos nos últimos '+FLOW_WINDOW+' dias';
+  if(leg) leg.innerHTML = (sqs.length>1) ? sqs.map(sq=>'<span class="wk-lg"><i class="wk-dot" style="background:'+esc(sq.color||'#38b6ff')+'"></i>'+esc(_sqNome(sq))+'</span>').join('') : '';
   if(!doneInWindow.length){
-    wrap.innerHTML='<div class="bar-empty">Sem conclusões na janela.<br>Mova cards para Concluído para começar.</div>';
+    wrap.innerHTML='<div class="bar-empty">Sem conclusões nos últimos '+FLOW_WINDOW+' dias.<br>Mova cards para Concluído para começar.</div>';
     return;
   }
-  const max=Math.max(1,...buckets.map(b=>b.cnt));
-  const W=360,H=110,padL=8,padR=8,padT=18,padB=22;
-  const chartW=W-padL-padR, chartH=H-padT-padB;
-  const bw=Math.floor(chartW/buckets.length);
-  const gap=Math.max(2,Math.floor(bw*0.22));
-  const barW=bw-gap;
-  // Grid lines (3 levels)
-  const gridLines=[0.25,0.5,0.75,1].map(f=>Math.round(max*f)).filter((v,i,a)=>a.indexOf(v)===i&&v>0);
-  let svg=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-  // grid
-  gridLines.forEach(v=>{
-    const y=padT+chartH-Math.round((v/max)*chartH);
-    svg+=`<line class="tp-grid-line" x1="${padL}" y1="${y}" x2="${W-padR}" y2="${y}"/>`;
-    svg+=`<text class="tp-axis-lbl" x="${padL}" y="${y-3}" text-anchor="start">${v}</text>`;
+  const now=Date.now(), n=FLOW_WINDOW;
+  const days=[];
+  for(let i=n-1;i>=0;i--){
+    const ds=new Date(now-i*DAY_MS); ds.setHours(0,0,0,0);
+    const de=new Date(ds); de.setDate(de.getDate()+1);
+    const s0=ds.getTime(), e0=de.getTime();
+    const bySq={}; let tot=0;
+    doneInWindow.forEach(x=>{ if(x.ts>=s0&&x.ts<e0){ bySq[x.sq]=(bySq[x.sq]||0)+1; tot++; } });
+    days.push({ds,bySq,tot,today:i===0,i});
+  }
+  const max=Math.max(2,...days.map(d=>d.tot));
+  const W=Math.max(300,Math.min(560,wrap.clientWidth||560)),H=150,padL=22,padR=6,padT=18,padB=22;   // viewBox ≈ largura real → texto em tamanho legível no celular
+  const cw=W-padL-padR, ch=H-padT-padB;
+  const bw=cw/n, barW=Math.max(4,Math.min(22,bw*0.62));
+  const step = n<=7?1 : n<=14?2 : 5;
+  const yOf=v=>padT+ch-(v/max)*ch;
+  let svg='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Entregas por dia, empilhadas por squad">';
+  const gl=[0,Math.ceil(max/2),max].filter((v,i,a)=>a.indexOf(v)===i);
+  gl.forEach(v=>{
+    const y=yOf(v);
+    svg+='<line class="tp-grid-line" x1="'+padL+'" y1="'+y+'" x2="'+(W-padR)+'" y2="'+y+'"/>';
+    svg+='<text class="tp-axis-lbl" x="'+(padL-4)+'" y="'+(y+3)+'" text-anchor="end">'+v+'</text>';
   });
-  // bars
-  buckets.forEach((b,i)=>{
-    const x=padL+i*bw+gap/2;
-    const barH_=b.cnt>0?Math.max(4,Math.round((b.cnt/max)*chartH)):2;
-    const y=padT+chartH-barH_;
-    const alpha=b.today?'1':'0.55';
-    const fill=b.today?'var(--teal)':'rgba(29,233,182,0.55)';
-    svg+=`<rect class="tp-bar" x="${x}" y="${y}" width="${barW}" height="${barH_}" rx="3"
-      fill="${fill}" opacity="${alpha}" data-val="${b.cnt}"/>`;
-    if(b.cnt>0){
-      svg+=`<text class="tp-bar-lbl" x="${x+barW/2}" y="${y-4}" text-anchor="middle">${b.cnt}</text>`;
+  days.forEach((d,k)=>{
+    const cx=padL+bw*k+bw/2, x=cx-barW/2;
+    let acc=0;
+    const parts=[];
+    sqs.forEach(sq=>{
+      const c=d.bySq[sq.id]||0; if(!c) return;
+      const y1=yOf(acc+c), y0=yOf(acc);
+      const h=Math.max(2,(y0-y1)-1.5);                 // 1.5px de respiro entre segmentos (superfície)
+      svg+='<rect class="tp-bar" x="'+x.toFixed(1)+'" y="'+(y0-h-0.75).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+esc(sq.color||'#38b6ff')+'"/>';
+      acc+=c; parts.push(_sqNome(sq)+' '+c);
+    });
+    const lbl=d.ds.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+    // rótulo de valor seletivo: todos nas janelas curtas; só o pico/hoje na de 30 dias
+    if(d.tot>0 && (n<=14 || d.tot===max)){
+      svg+='<text class="tp-bar-lbl" x="'+cx.toFixed(1)+'" y="'+(yOf(d.tot)-4).toFixed(1)+'" text-anchor="middle">'+d.tot+'</text>';
     }
-    svg+=`<text class="tp-axis-lbl" x="${x+barW/2}" y="${H-4}" text-anchor="middle">${b.lbl}</text>`;
+    if(d.today){
+      svg+='<text class="tp-axis-lbl tp-today" x="'+cx.toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle">hoje</text>';
+    } else if(d.i%step===0 && d.i>=step*0.5){
+      svg+='<text class="tp-axis-lbl" x="'+cx.toFixed(1)+'" y="'+(H-6)+'" text-anchor="middle">'+(n<=7?['D','S','T','Q','Q','S','S'][d.ds.getDay()]+' '+d.ds.getDate():lbl.slice(0,5))+'</text>';
+    }
+    // alvo de hover da coluna inteira
+    svg+='<rect x="'+(cx-bw/2).toFixed(1)+'" y="'+padT+'" width="'+bw.toFixed(1)+'" height="'+ch+'" fill="transparent"><title>'+lbl+' · '+(d.tot||'nenhuma')+' entrega'+(d.tot===1?'':'s')+(parts.length&&sqs.length>1?' ('+parts.join(', ')+')':'')+'</title></rect>';
   });
   svg+='</svg>';
   wrap.innerHTML=svg;
 }
 
-// CFD simplificado — distribuição atual de WIP por estágio (snapshot hoje)
+// "Onde está o trabalho agora" — uma barra por squad (não somar squads diferentes numa lista
+// única de colunas). Cor = squad; cor cheia = em andamento; cor clara = na fila (colunas antes
+// do início); vermelho = bloqueado. Concluídos não são trabalho em aberto e ficam de fora.
+// (nome mantido: swPtab('fluxo') e renderFlowMetrics() ainda chamam renderCFD())
 function renderCFD(){
   const el=document.getElementById('cfd-chart'); if(!el) return;
-  const byStage={}, order=[];
+  const rows=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
-    (d.columns||[]).forEach(col=>{
-      const cnt=(Array.isArray(d.cards)?d.cards:[]).filter(c=>c&&!c.archived&&c.col===col.id).length;
-      const key=col.name||col.id;
-      if(!(key in byStage)){byStage[key]={cnt:0,color:col.color||'#38b6ff'};order.push(key);}
-      byStage[key].cnt+=cnt;
+    const fc=flowColsFor(d); const n={fila:0,andamento:0,bloqueado:0};
+    (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
+      if(!c||c.archived) return;
+      const st=_flowStage(d,c,fc); if(st!=='concluido') n[st]++;
     });
+    const total=n.fila+n.andamento+n.bloqueado;
+    const lim=parseInt((d.agilCfg&&d.agilCfg.wip)||sq.wipLimit)||0;
+    rows.push({sq,n,total,wip:n.andamento+n.bloqueado,lim});
   });
-  const total=order.reduce((s,k)=>s+byStage[k].cnt,0);
-  if(!total){el.innerHTML='<div class="bar-empty" style="padding:20px 0;">Sem cards.</div>';return;}
-  // Filtra colunas com 0 cards para não poluir
-  const visible=order.filter(k=>byStage[k].cnt>0);
-  el.innerHTML=`<div class="cfd-wrap">`+visible.map(k=>{
-    const o=byStage[k], pct=Math.round((o.cnt/total)*100);
-    return `<div class="cfd-row">
-      <span class="cfd-dot" style="background:${o.color};"></span>
-      <span class="cfd-name" title="${k}">${k}</span>
-      <div class="cfd-track"><div class="cfd-seg" style="width:${pct}%;background:${o.color};"></div></div>
-      <div class="cfd-meta">
-        <span class="cfd-count">${o.cnt}</span>
-        <span class="cfd-pct">${pct}%</span>
-      </div>
-    </div>`;
-  }).join('')+'</div>';
+  const max=Math.max(1,...rows.map(r=>r.total));
+  if(!rows.some(r=>r.total)){ el.innerHTML='<div class="bar-empty" style="padding:20px 0;">Nenhum card em aberto.</div>'; return; }
+  const seg=(cnt,bg,fg,label)=> cnt ? '<span class="wk-seg" style="flex:'+cnt+' 1 0;background:'+bg+';color:'+fg+';" title="'+label+': '+cnt+'">'+(cnt/max>=.07?cnt:'')+'</span>' : '';
+  el.innerHTML='<div class="wk-legend">'
+    +'<span class="wk-lg"><i class="wk-sw" style="background:var(--txt2)"></i>Em andamento</span>'
+    +'<span class="wk-lg"><i class="wk-sw" style="background:var(--txt2);opacity:.3"></i>Na fila</span>'
+    +'<span class="wk-lg"><i class="wk-sw" style="background:var(--danger)"></i>Bloqueado</span></div>'
+    +rows.map(r=>{
+      const col=r.sq.color||'#38b6ff';
+      const over=r.lim && r.wip>r.lim;
+      return '<div class="wk-row">'
+        +'<span class="wk-name" title="'+esc(r.sq.label)+'"><i class="wk-dot" style="background:'+esc(col)+'"></i>'+esc(_sqNome(r.sq))+'</span>'
+        +'<div class="wk-track"><div class="wk-bar" style="width:'+Math.max(2,r.total/max*100).toFixed(1)+'%">'
+          +seg(r.n.andamento,esc(col),'#04121f','Em andamento')
+          +seg(r.n.fila,_hexA(col,.3),'var(--txt)','Na fila')
+          +seg(r.n.bloqueado,'var(--danger)','#04121f','Bloqueado')
+        +'</div></div>'
+        +'<span class="wk-meta"><b>'+r.total+'</b>'+(r.lim?'<small class="wk-wip'+(over?' over':'')+'" title="Em andamento + bloqueado, contra o limite de WIP do squad">WIP '+r.wip+'/'+r.lim+'</small>':'')+'</span>'
+        +'</div>';
+    }).join('');
 }
 
-// Aging WIP — lista de cards abertos por idade (vermelho = risco)
-function renderAgingWip(openItems, threshold, cMed){
+// Aging WIP — cards EM ANDAMENTO mais antigos. Marca tracejada = limite (P85 do cycle time,
+// ou 2x a mediana); vermelho = passou do limite, neutro = normal.
+function renderAgingWip(openItems, threshold, cMed, fila){
   const el=document.getElementById('aging-list'); if(!el) return;
-  if(!openItems.length){ el.innerHTML='<div class="aging-empty">Nenhum card em aberto com início registrado. Mova cards para "Em Progresso" para começar a medir.</div>'; return; }
-  const sorted=[...openItems].sort((a,b)=>b.age-a.age).slice(0,8);
-  const maxAge=sorted[0].age||1;
-  el.innerHTML=sorted.map(o=>{
+  const sub=document.getElementById('aging-sub');
+  if(!openItems.length){
+    if(sub) sub.textContent='';
+    el.innerHTML='<div class="aging-empty">Nenhum card em andamento'+(fila?' ('+fila+' na fila, que não contam)':'')+'. Mova cards para "Em Progresso" para começar a medir.</div>';
+    return;
+  }
+  const sorted=[...openItems].sort((a,b)=>b.age-a.age);
+  const shown=sorted.slice(0,8);
+  const nOver = threshold!=null ? sorted.filter(o=>o.age>threshold).length : 0;
+  if(sub) sub.textContent = (threshold!=null
+      ? (nOver? nOver+' de '+sorted.length+' passaram do limite' : 'Nenhum passou do limite')+' · tracejado = '+threshold.toFixed(0)+' dias'
+      : sorted.length+' em andamento')
+    + (fila? ' · '+fila+' na fila não contam' : '');
+  const scale=Math.max(shown[0].age, threshold||0, 1)*1.05;
+  const thrPct = threshold!=null ? Math.min(100,threshold/scale*100) : null;
+  el.innerHTML=shown.map(o=>{
     const age=Math.round(o.age);
-    let color='var(--teal)';
-    if(threshold!=null){
-      if(o.age>threshold) color='var(--danger)';
-      else if(cMed!=null&&o.age>cMed) color='var(--warn)';
-    } else if(age>=14) color='var(--danger)';
-    else if(age>=7) color='var(--warn)';
-    const pct=Math.min(100,Math.round((o.age/maxAge)*100));
+    // só 2 níveis: normal (neutro) e passou do limite (vermelho) — "acima da mediana" é metade dos cards por definição, não é alerta
+    let color='var(--txt2)', txt='var(--txt)';
+    if(threshold!=null ? o.age>threshold : age>=14){ color='var(--danger)'; txt='var(--danger)'; }
+    const pct=Math.min(100,(o.age/scale)*100);
     const sq=SQUADS.find(s=>s.id===o.sq);
     const d=squadData[o.sq];
     const colName=(d&&d.columns||[]).find(col=>col.id===o.col)?.name||o.col;
-    const title=(o.card.title||'(sem título)').replace(/"/g,'&quot;');
+    const t=o.card.title||'(sem título)';
     return `<div class="aging-item">
       <div class="aging-left">
-        <span class="aging-title" title="${title}">${o.card.title||'(sem título)'}</span>
-        <div class="aging-bar-wrap"><div class="aging-bar-fill" style="width:${pct}%;background:${color};"></div></div>
+        <span class="aging-title" title="${esc(t)}"><i class="wk-dot" style="background:${esc((sq&&sq.color)||'#38b6ff')}" title="${esc(sq?sq.label:o.sq)}"></i>${esc(t)}</span>
+        <div class="aging-bar-wrap"><div class="aging-bar-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div>${thrPct!=null?`<i class="aging-thr" style="left:${thrPct.toFixed(1)}%"></i>`:''}</div>
       </div>
-      <span class="aging-col-tag">${colName}</span>
-      <span class="aging-age" style="color:${color};">${age}d</span>
+      <span class="aging-col-tag">${o.stage==='bloqueado'?'🚧 ':''}${esc(colName)}</span>
+      <span class="aging-age" style="color:${txt};">${age}d</span>
     </div>`;
-  }).join('');
+  }).join('') + (sorted.length>shown.length?`<div class="aging-empty">+${sorted.length-shown.length} mais, todos mais novos que o último da lista.</div>`:'');
 }
 
 // ── RESET DE CONTAGEM (zera baseline de fluxo de um squad) ──────────
@@ -10344,27 +10422,27 @@ function renderComparison(){
     {label:'Cards atrasados', fn:d=>{const today=new Date();today.setHours(0,0,0,0);return (Array.isArray(d.cards)?d.cards:[]).filter(c=>c && c.due&&!c.archived&&c.col!=='done'&&new Date(c.due+'T00:00:00')<today).length;}, lower:'winner'},
     {label:'Cycle Time mediano (d)', fn:d=>{const v=_squadCycleArr(d);const m=median(v);return m!=null?m.toFixed(1):'—';}, lower:'winner'},
     {label:'Throughput (14d)', fn:d=>_squadThroughput14(d), higher:'winner'},
-    {label:'Item mais velho (d)', fn:d=>{const a=_squadMaxAge(d);return a!=null?Math.round(a):'—';}, lower:'winner'},
+    {label:'Parado há mais tempo (d)', fn:d=>{const a=_squadMaxAge(d);return a!=null?Math.round(a):'—';}, lower:'winner'},
     {label:'Sprint atual', fn:d=>d.agilCfg?.sprintNum||'—', compare:false},
   ];
   const dataArr=SQUADS.map(sq=>squadData[sq.id]);
-  if(dataArr.some(d=>!d)){ tbody.innerHTML='<tr><td colspan="3" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>'; return; }
+  // Cabeçalho vem de SQUADS (antes: 3 nomes fixos no HTML, mas só 2 colunas eram desenhadas — o 3º squad nunca aparecia)
+  const head=document.getElementById('cmp-head');
+  if(head) head.innerHTML='<tr><th>Métrica</th>'+SQUADS.map(sq=>'<th><i class="wk-dot" style="background:'+esc(sq.color||'#38b6ff')+'"></i>'+esc(sq.icon)+' '+esc(_sqNome(sq))+'</th>').join('')+'</tr>';
+  if(dataArr.some(d=>!d)){ tbody.innerHTML='<tr><td colspan="'+(SQUADS.length+1)+'" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>'; return; }
 
   tbody.innerHTML=metrics.map(m=>{
     const vals=dataArr.map(d=>m.fn(d));
-    const [v0,v1]=vals;
-    let c0='',c1='';
-    if(m.compare!==false && typeof v0==='number' && typeof v1==='number'){
-      if(m.higher==='winner'){
-        if(v0>v1) c0='winner'; else if(v1>v0) c1='winner';
-      } else if(m.lower==='winner'){
-        if(v0<v1) c0='winner'; else if(v1<v0) c1='winner';
-      }
+    // vencedor = melhor valor entre TODOS os squads (empate no topo → ninguém destacado)
+    const nums=vals.filter(v=>typeof v==='number');
+    let best=null;
+    if(m.compare!==false && nums.length>1 && (m.higher==='winner'||m.lower==='winner')){
+      const b=m.higher==='winner'?Math.max(...nums):Math.min(...nums);
+      if(nums.filter(v=>v===b).length===1) best=b;
     }
     return `<tr>
       <td style="color:var(--txt2);">${m.label}</td>
-      <td class="${c0}">${v0}</td>
-      <td class="${c1}">${v1}</td>
+      ${vals.map(v=>`<td class="${best!=null&&v===best?'winner':''}">${v}</td>`).join('')}
     </tr>`;
   }).join('');
 }
@@ -11061,6 +11139,8 @@ function _renderPtFeed(){
 
 // ── TENDÊNCIA (SNAPSHOTS) ──────────────────────────────────────────
 function renderTrend(){
+  // (2026-10-10) A seção "Tendência" saiu da aba Fluxo (duplicava o gráfico de entregas e só
+  // tinha 2 squads fixos). Nulo-seguro: só desenha se algum #trend-{squad} existir na página.
   SQUADS.forEach(sq=>{
     const el=document.getElementById('trend-'+sq.id); if(!el) return;
     const card=el.closest('.card'); if(card) card.style.display=squadVisible(sq.id)?'':'none';
@@ -11084,7 +11164,10 @@ function renderTrend(){
 
 // ── DISTRIBUIÇÃO POR COLUNA ────────────────────────────────────────
 function renderColDist(){
+  // (2026-10-10) "Distribuição por coluna" saiu da aba Fluxo (as barras por coluna já estão nos
+  // cards de "Squads em tempo real" na Visão). Nulo-seguro se o container não existir.
   const container=document.getElementById('col-dist');
+  if(!container) return;
   container.innerHTML='';
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d || !d.cards) return;
