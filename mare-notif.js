@@ -473,15 +473,13 @@
   // "Já usa o painel" fica em kanban/usuarios/{uid}/apps/painel (o próprio dono grava — as regras já deixam; não é segurança, só vitrine:
   // esconder o botão não impede quem sabe a URL). Uso (depois do login):  MareNotif.appsMontar({user, aqui:'okr', isViewer, isAdm, slot:'#id', btnClass:'btn'})
   //   e, onde a página SABE que a pessoa usa um produto:  MareNotif.appsUso('painel', user).
-  // Logos: Maré Digital = favicon.png de produção, Radar = favicon-radar.png; os demais, SVG provisórios (gradiente + glifo) até ganharem logo de verdade. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
+  // Logos: Maré Digital = favicon.png de produção, Radar = favicon-radar.png, Painel = favicon-painel-v2.png, A Bordo = favicon-bordo-v2.png; os demais, SVG provisórios (gradiente + glifo) até ganharem logo de verdade. Nas páginas -dev abre as páginas -dev (e mostra o aviso 🧪).
   const APPS = [
     {id:'oceano', nome:'Oceano', sub:'Lobby e boas-vindas', href:PAGES.oceano, img:'favicon-oceano.png'},   // o lobby da família: NÃO é tile da grade — é o título do popover (link, só pra quem é da Hering)
     {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, img:'favicon.png'},   // a logo do Maré Digital já existe (favicon.png de PRODUÇÃO, também nas páginas -dev)
-    {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, g:['#8b8cff','#4a4fc4'],
-      glifo:'<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.6"/><path d="M24 8v7M24 33v7M8 24h7M33 24h7M12.7 12.7l5 5M30.3 30.3l5 5M35.3 12.7l-5 5M17.7 30.3l-5 5"/>'},
+    {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, img:'favicon-painel-v2.png?v=3'},   // logo do Painel (a ponte de comando) — a mesma da aba do navegador
     {id:'okr',    nome:'Radar',        sub:'Objetivos e OKRs',    href:PAGES.okr, img:'favicon-radar.png'},   // logo do Radar (peixinhos no radar) — a mesma da aba do navegador
-    {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', g:['#ffb347','#d9731a'],
-      glifo:'<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>'},
+    {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', img:'favicon-bordo-v2.png?v=3'},   // logo do A Bordo (o convés) — a mesma da aba do navegador
   ];
   const APP_OCEANO = APPS.find(a=>a.id==='oceano');
   const appsSt = {opts:null, uso:{}, aberto:false, tab:'produtos', links:{hering:null, meus:null}};
