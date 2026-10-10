@@ -19,7 +19,7 @@ export const set=async(r,v)=>{ window.__log.push(['set',r.p]); if(window.__setDe
 export const update=async(r,v)=>{ window.__log.push(['update',r.p]); if(window.__denySet && window.__denySet(r.p,v)) { const e=new Error('PERMISSION_DENIED'); e.code='PERMISSION_DENIED'; throw e; } if(window.__setDelay){ const d=window.__setDelay(r.p); if(d) await new Promise(x=>setTimeout(x,d)); } Object.entries(v).forEach(([k,x])=>setv((r.p?r.p+'/':'')+k,x)); fire(r.p); };
 export const remove=async(r)=>{ window.__log.push(['remove',r.p]); setv(r.p,null); fire(r.p); };
 export const runTransaction=async(r,fn)=>{ const cur=clone(getv(r.p)); const n=fn(cur); if(n===undefined) return {committed:false,snapshot:snap(r.p)}; setv(r.p,n); fire(r.p); return {committed:true,snapshot:snap(r.p)}; };
-export const query=(r)=>r; export const orderByChild=()=>0; export const limitToLast=()=>0; export const equalTo=()=>0; export const onChildAdded=()=>()=>{}; export const onChildChanged=()=>()=>{}; export const onChildRemoved=()=>()=>{}; export const increment=n=>n;
+export const query=(r)=>r; export const orderByChild=()=>0; export const orderByKey=()=>{ (window.__qlog=window.__qlog||[]).push('orderByKey'); return 0; }; export const limitToLast=(n)=>{ (window.__qlog=window.__qlog||[]).push('limitToLast:'+n); return 0; }; export const equalTo=()=>0; export const onChildAdded=()=>()=>{}; export const onChildChanged=()=>()=>{}; export const onChildRemoved=()=>()=>{}; export const increment=n=>n;
 `;
   const auth=`
 export const getAuth=()=>({});

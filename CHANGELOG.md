@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### ⚡ Otimização de rotina: Central de Dados só baixa os últimos 15 dias — 2026-10-10 · kanban-dev v8.30.815-dev (SÓ DEV)
+- **Achado (Passo 4.1, leitura do Firebase):** a Central de Dados do board (`renderDadosPainel`) mostra só o dia mais recente + 14 anteriores, mas o listener de `kanban/dados_diarios` baixava e mantinha ao vivo o nó **inteiro** — 1 entrada por dia desde que a feature nasceu, só cresce — em toda sessão do kanban (e a cada reload forçado por promoção). Agora `query(orderByKey(), limitToLast(15))`: as chaves são datas (`YYYY-MM-DD`), então ordem de chave é ordem cronológica. A tela mostra exatamente o mesmo.
+- Sem mudança de regra/índice (`orderByKey` não precisa de `.indexOn`). Sem os helpers `window._orderByKey/_limitToLast` cai no comportamento antigo (nó inteiro).
+- Teste novo `test_dados_diarios.js` (o listener pede `orderByKey`+`limitToLast(15)`; a Central mostra 15 datas com 40 dias no banco; falha no código anterior). `fakefb.js` exporta `orderByKey` e registra `orderByKey`/`limitToLast` em `window.__qlog`.
+- **Baseline desta rodada:** `kanban-dev.html` 2.467.147 bytes (38.651 linhas), CSS ~224 KB, script principal ~1,87 MB, 19/17 timers (o novo é o refresh horário do perfil do Google, vida inteira da sessão e com guarda de aba escondida), 44 `backdrop-filter`, zero `data:image` embutido; `mare-dicas.js` 21 KB e `mare-notif.js` 48 KB (externos, cacheados).
+- **Reportado, não implementado:** (1) ícones grandes — `favicon-dev.png` 150 KB, `favicon-painel-dev.png` 123 KB, `favicon-painel.png` 94 KB, `favicon-vice.png` 96 KB (512 px RGB); quantizar para paleta cairia ~70%, mas é lossy e precisa de aval visual; (2) `kudos`/`kudos_geral` (já anotado em 2026-09-22) e a Central de Dados do **Painel** (`painel-dev` lê `dados_diarios_dev` inteiro na aba de gestão — lá a tela de edição usa o histórico completo, então não dá pra limitar sem mudar a tela).
+
 ### 🚀 Promoção pra prod: 💡 Dicas (Maré v8.30.814 · Radar v2.60 · Oceano v1.7 · Painel v5.35) — 2026-10-10
 - **Mini popups de dicas** nos 3 apps (Maré, Radar, Oceano): uma dica curta por vez, quando a pessoa chega no lugar certo, cada uma uma vez só (50 s entre duas, até 4 por visita). **Entendi · Saiba mais** (abre o tópico certo da Ajuda) **· Não mostrar dicas do app**. Liga/desliga por app e por pessoa (`kanban/usuarios/{uid}/dicas`), com interruptor 💡 e "Rever dicas" na Ajuda do Radar, na Central de Ajuda do Maré e em ⚙ Meu perfil do Oceano. Painel e A Bordo não mostram dicas.
 - **Painel → ⚙ Configurações → 💡 Dicas**: lista só leitura das 27 dicas (texto, onde aparece, tópico do "Saiba mais", e o ✅ do que você já viu).

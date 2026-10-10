@@ -6501,7 +6501,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.814-dev</div>
+<div class="version">v8.30.815-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6520,7 +6520,7 @@ window.MARE_SO_HERING = true;
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -6624,6 +6624,9 @@ window._query=query; window._orderByChild=orderByChild; window._equalTo=equalTo;
 // todo ponto de escrita já grava), lexicograficamente ordenável =
 // cronologicamente ordenável, sem essa armadilha.
 window._limitToLast=limitToLast;
+// orderByKey: só pro listener de kanban/dados_diarios (/otimizaçãoderotina, Passo 4.1, 2026-10-10) — as chaves desse nó são DATAS
+// ('YYYY-MM-DD'), então ordem de chave É ordem cronológica (diferente das notificações acima, cujo id tem prefixos variados).
+window._orderByKey=orderByKey;
 window._auth=auth; window._provider=provider; window._msProvider=msProvider; window._msPersonalProvider=msPersonalProvider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -7247,6 +7250,9 @@ function _closeOtherDrawers(exceptId){
 
 // ── CENTRAL DE DADOS (captação digital — leitura no board) ─────────
 let dadosDiariosBoard = {};   // {date:'YYYY-MM-DD': {...}} — kanban/dados_diarios
+// A Central de Dados (renderDadosPainel) só mostra o dia mais recente + 14 anteriores (dates.slice(1,15)), mas o listener baixava o nó INTEIRO
+// (1 entrada por dia, desde que a feature nasceu, e só cresce) em toda sessão. Agora o servidor só devolve os últimos DADOS_DIAS_BOARD dias.
+const DADOS_DIAS_BOARD = 15;
 let dadosApresentacoesBoard = []; // [{id,title,url}] — kanban/config/dados_apresentacoes
 
 function toggleDados(){
@@ -10854,7 +10860,9 @@ let _cardsSyncDebounce = null;
       if(document.getElementById('lem-drawer')?.classList.contains('open')) renderLembretes();
     });
     // Central de Dados (captação digital) — globais, fora do squad
-    window._onValue(window._ref(window._db,'kanban/dados_diarios'),snap=>{ _dbgTrack('dados_diarios', snap.val());
+    const _ddRef = window._ref(window._db,'kanban/dados_diarios');
+    const _ddQuery = (window._query && window._orderByKey && window._limitToLast) ? window._query(_ddRef, window._orderByKey(), window._limitToLast(DADOS_DIAS_BOARD)) : _ddRef;   // sem os helpers: lê o nó todo (como antes)
+    window._onValue(_ddQuery,snap=>{ _dbgTrack('dados_diarios', snap.val());
       dadosDiariosBoard = snap.val()||{};
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
