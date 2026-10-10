@@ -38,7 +38,10 @@
   // kanban-dev.html; mantenha os dois em sincronia): lida some em 3 dias, não lida em 30. Sem isto, OKR/painel mostravam (e contavam no selo)
   // notificações que o kanban já escondia — o "sino único" mostrava listas diferentes.
   const TTL_LIDA_MS = 3*86400000, TTL_NAO_LIDA_MS = 30*86400000;
-  function viva(n){ const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS) && sinoLigado(n.type); }   // + 🔔 interruptor do tipo (Central de Notificações do Painel)
+  // SÓ o prazo (TTL). O interruptor do tipo (Central de Notificações) NÃO entra aqui: as páginas montam a lista pessoal com viva() quando o snapshot chega e
+  // refiltram por sinoLigado() a cada desenho — com o filtro dentro de viva(), a config chegando DEPOIS do snapshot (ou o ADM religando o tipo ao vivo)
+  // deixava a notificação descartada da lista até o próximo snapshot.
+  function viva(n){ const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS); }
   // O ícone do evento vem do banco (qualquer pessoa da empresa grava no feed): só texto curto, sem nada que vire HTML.
   function iconeSeguro(x){ return String(x||'').replace(/[<>&"'`\\]/g,'').slice(0,16); }
 
@@ -46,7 +49,7 @@
   // ═══ 🔔 CENTRAL DE NOTIFICAÇÕES (Painel → aba 🔔 Notificações) ═══════════════════════════════════════════════════════════════════
   // CATÁLOGO de todos os tipos de notificação do Maré: o que são, QUANDO disparam, QUEM recebe e ONDE nascem — mais os INTERRUPTORES que o ADM
   // liga/desliga: kanban/notif_config/{tipo} = {sino?:bool, push?:bool, por, em} (ausente = padrão: sino ligado; push ligado só nos tipos do PUSH_PADRAO).
-  //   • sino: as páginas escondem do sino (e do selo) o que está desligado — viva() e items() abaixo; a notificação continua gravada (ex.: com o push ligado).
+  //   • sino: as páginas escondem do sino (e do selo) o que está desligado — sinoLigado() nos desenhos do sino e items() abaixo; a notificação continua gravada (ex.: com o push ligado).
   //   • push: lido pela Cloud Function (sendPushOnNotification/sendPushOnMural, functions/common/notifConfig.js): `false` bloqueia, `true` libera mesmo fora do PUSH_TYPES.
   // Tipo novo = 1 entrada aqui (+ ICONS acima, + PUSH_TYPES de functions/index.js se for virar push por padrão). O teste test_notificacoes.js confere o PUSH_PADRAO com o PUSH_TYPES.
   const AREAS = [
@@ -350,6 +353,7 @@
   const idsVistos = new Set(); let t0Novas = 0;
   function novas(ids){
     prefsStart();   // o Não Perturbe precisa estar carregado ANTES do 1º ding — não pode depender de o sino ter sido aberto
+    if(!cfgPronto) return false;   // sem a config o sino ainda não mostra tipo nenhum: a janela "fria" de 3 s só começa quando a lista de verdade aparece (senão a lista que já existia chegava "nova" e tocava)
     if(!t0Novas) t0Novas = Date.now();
     const quente = Date.now() - t0Novas > 3000; let achou = false;
     (ids||[]).forEach(id=>{ if(!idsVistos.has(id)){ idsVistos.add(id); if(quente) achou = true; } });

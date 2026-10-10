@@ -2891,7 +2891,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.39 · painel-dev</div>
+<div class="version">v5.40 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2994,7 +2994,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=18"></script>
+<script src="mare-notif-dev.js?v=19"></script>
 <script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
@@ -7441,8 +7441,11 @@ function _painelResolveComunicadoAlvos(c){
 }
 async function _painelNotifyBroadcast(c, id){
   const autorUid = window._currentUser?.uid;
+  // 🔔 Central de Notificações: tipo desligado no sino E no push = nem grava (mesma regra do createNotif() do board).
+  if(window.MareNotif && !MareNotif.cfgLigado('painel_broadcast','sino') && !MareNotif.cfgLigado('painel_broadcast','push')) return;
   const alvos = _painelResolveComunicadoAlvos(c);
   alvos.delete(autorUid);
+  let falhas = 0;
   const writes = [...alvos].map(uid=>{
     const nid='n'+Date.now()+Math.random().toString(36).slice(2,6);
     return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
@@ -7459,9 +7462,12 @@ async function _painelNotifyBroadcast(c, id){
       link: 'pessoas',
       read:false,
       ts:new Date().toISOString(),
-    }).catch(()=>{});
+    }).catch(()=>{ falhas++; });
   });
   await Promise.all(writes);
+  // As regras só deixam gravar 'painel_broadcast' na caixa de OUTRA pessoa a quem tem papel po/adm no banco — ADM só pela lista de e-mails
+  // publicava o comunicado, via "✅ publicado!" e ninguém era avisado (cada escrita negada era engolida em silêncio).
+  if(falhas) showToast('⚠ Comunicado publicado, mas '+falhas+' de '+alvos.size+' aviso(s) não foram entregues — só quem tem papel PO/ADM no 👥 Global Users envia o aviso a todos.');
 }
 function saveComunicado(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
