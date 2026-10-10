@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐛 Menu de capa (🎨) do card ficava aberto pra sempre — 2026-10-10 · kanban-dev v8.30.817-dev (SÓ DEV)
+- **Relato:** "no modal do card, quando clica no símbolo pra botar capa, se não clicar de novo pra fechar ele não fecha mais — mesmo saindo do card e voltando".
+- **Causa (reproduzida no Chromium antes de corrigir):** `toggleCoverMenu()` registrava o ouvinte de "clique fora fecha" com `{once:true}`; o **primeiro clique DENTRO do menu** (campo da URL, texto, área vazia) gastava o ouvinte (que só ignorava o clique) e a partir dali o menu nunca mais fechava por clique fora. E como o menu mora no cabeçalho do modal, que é reaproveitado, ele continuava aberto ao fechar e reabrir o card (ou abrir outro).
+- **Correção:** ouvinte persistente enquanto o menu está aberto (removido em `_closeCoverMenu()`), e o menu fecha também ao **abrir um card (novo ou existente)** e ao **fechar o modal**. O botão 🎨 continua alternando.
+- Teste novo `docs/arezzo/testes/test_capa_menu.js` (9 checks; falha no código anterior). **Dica: não** (correção).
+
 ### 📚 Documentação em dia: Ajuda do Maré (v8.30.816-dev) e do Radar (v2.61-dev), guia do Radar (38 slides), maredigital.html e CODE_MAP — 2026-10-10 · SÓ DEV (guia/maredigital/CODE_MAP valem na hora)
 Rodada de `/atualizarhelpcontent` + `/atualizarcodemap` + `maredigital.html` + `guia-okr.html` (pedido: "todos"). Só texto/documentação — nenhum comportamento muda.
 - **Central de Ajuda do Maré (`HELP_CONTENT`, kanban-dev v8.30.816-dev):** 2 entradas novas — **💡 Dicas (mini popups)** (como funcionam, o interruptor no topo da Ajuda e o "Rever dicas") e **📊 Central de Dados (aba lateral)** (dia mais recente + 14 anteriores; o board só baixa os últimos 15 dias) (conferido: "Sua torre" já se esconde sozinha da Ajuda no modo "só Hering" e a entrada do menu de produtos com as 3 abas já estava em dia).
