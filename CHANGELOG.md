@@ -40,6 +40,11 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🎨 Painel: favicon nova (a ponte de comando) na aba e no menu de produtos — 2026-10-10 · painel-dev v5.42 · kanban-dev v8.30.822-dev · okr-dev v2.67 · oceano-dev v1.12 · mare-notif-dev v20 (SÓ DEV)
+- Arte nova do Painel enviada pelo usuário (volante e painéis diante do mar, peixinho e radar). Arquivos novos na raiz: `favicon-painel-v2.png` (512 px, paleta — 50 KB; aba de prod no futuro + menu de produtos) e `favicon-painel-v2-dev.png` (a mesma com selo laranja "DEV", pra aba do painel-dev se distinguir). Os antigos (`favicon-painel.png`/`-dev.png`, os peixinhos de colete) ficam intocados até a promoção — `painel.html` de prod ainda os usa.
+- **painel-dev:** a aba usa `favicon-painel-v2-dev.png`. **Menu de produtos ⋮⋮⋮** (`mare-notif-dev.js`) e **tile do Oceano** (`oceano-dev.html`): o Painel deixa de ser o glifo roxo provisório e passa a mostrar a logo nova (`img:'favicon-painel-v2.png'`). Em prod só muda na promoção (painel.html troca o link; mare-notif.js/oceano.html recebem o módulo).
+- Dica: não — é troca de ícone.
+
 ### 📘 Radar: Ajuda "Link direto do Objetivo" não cita mais a Arezzo no modo só Hering — 2026-10-10 · okr-dev v2.66 (SÓ DEV)
 - A entrada da Ajuda dizia que quem recebe o link precisa de login "@ciahering, @arezzo ou visualizador autorizado" — no modo só Hering o login Arezzo não existe. O trecho `@arezzo` passou a usar a classe `ms-login` (que o modo só Hering esconde). Achado ao gerar a base de conhecimento do Agente Ágil a partir da Ajuda.
 
