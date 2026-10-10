@@ -1,6 +1,11 @@
 [
  {
   "data": "2026-10-10",
+  "titulo": "🚀 Promoção: logos novas do Painel e do A Bordo + Ajuda do Radar sem Arezzo — 2026-10-10 · kanban v8.30.824 · painel v5.44 · okr v2.69 · oceano v1.14 · mare-notif.js v22 (sem avisos)",
+  "texto": "Sobe pra produção o que estava em dev (kanban-dev v8.30.822→824, painel-dev v5.42→5.44, okr-dev v2.66→2.69, oceano-dev v1.12→1.14, mare-notif-dev v20→22).\n- Logo nova do Painel (a ponte de comando) na aba do painel.html e no menu de produtos (⋮⋮⋮) e no tile do Oceano; logo nova do A Bordo (o convés) no menu e no Oceano (a aba da página onboarding.html já estava no ar). Arte maior e centralizada, ícones de 512 px legíveis até em 16 px; ?v=3 nas referências pra o navegador trocar a imagem antiga.\n- Radar: a Ajuda \"Link direto do Objetivo\" não cita mais o login @arezzo no modo só Hering.\n- Agente Ágil: a base de conhecimento (conhecimento/*.json) foi regenerada a partir das páginas de produção e deste CHANGELOG; as funções do agente só enxergam depois do deploy manual.\n- Dica: não — troca de ícones e correção de texto."
+ },
+ {
+  "data": "2026-10-10",
   "titulo": "🚀 Promoção: Dicas — no máximo 1 por dia por app — 2026-10-10 · kanban v8.30.821 · painel v5.41 · okr v2.65 · oceano v1.11 · mare-dicas.js v4 (sem avisos)",
   "texto": "Sobe pra produção o ritmo novo das dicas (mini popups), validado em dev (kanban-dev v8.30.821, painel-dev v5.41, okr-dev v2.65, oceano-dev v1.11, mare-dicas-dev v4).\n- Antes: até 4 dicas por abertura da página, com 50 s entre elas. Agora: no máximo 1 dica por dia, por app (Maré, Radar e Oceano contam separado), no dia do calendário da pessoa. Cada dica continua aparecendo uma vez só; amanhã vem a próxima ainda não vista. \"Rever dicas\" recomeça; desligar vale por app.\n- A data da última dica fica em kanban/usuarios/{uid}/dicas/ultima/{app} (mesmo nó das dicas vistas, sem mudar regra) e também no aparelho; ao juntar aparelho e Firebase vale o dia mais recente.\n- Textos atualizados: Ajuda do Maré (\"Dicas (mini popups)\"), aba 💡 Dicas do Painel e o interruptor da Ajuda dos apps.\n- Dica: não — é a própria regra das dicas."
  },
@@ -143,10 +148,5 @@
   "data": "2026-10-07",
   "titulo": "v8.30.798-dev — 2026-10-07 · fix: o sino do kanban só abre link de reunião http(s) (só kanban-dev)",
   "texto": "Achado do /monitorarbugs no sino único: a notificação \"🎥 Reunião em X min\" abria meetingLink com window.open() sem checar o esquema — um javascript: gravado na notificação (quem tem permissão de criar notificação na caixa de outra pessoa) rodava no navegador de quem clicasse. Agora só http(s)://, com noopener."
- },
- {
-  "data": "2026-10-07",
-  "titulo": "v8.30.797-dev — 2026-10-07 · feat: SINO ÚNICO — o sino do kanban passa a mostrar o feed da torre (só kanban-dev)",
-  "texto": "Pedido direto: \"o sistema de notificação do Maré tem que ser um só — a notificação aparece independente da página em que você está\". As notificações pessoais já eram um nó só (kanban/usuarios/{uid}/notificacoes); o que estava separado era o feed da torre (aviso novo no Mural do OKR, 🆕 Objetivo criado, ✅ Marco concluído), que só aparecia no sino do OKR. Agora o kanban carrega o módulo compartilhado mare-notif-dev.js e mistura o feed na própria lista do 🔔, ordenado por data, com o mesmo selo; clicar num item do feed abre o OKR no ponto certo (?mural=<id> / ?okr=<id>) e marca como lido; \"Marcar todas como lidas\" também zera o feed. Quem não tem acesso ao feed (freelancer) só não recebe esses itens. Nada do sino de antes mudou (som, Não Perturbe, \"Limpar antigas\", ✕, navegação de cada tipo)."
  }
 ]

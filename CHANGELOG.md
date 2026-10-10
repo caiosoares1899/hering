@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: logos novas do Painel e do A Bordo + Ajuda do Radar sem Arezzo — 2026-10-10 · kanban v8.30.824 · painel v5.44 · okr v2.69 · oceano v1.14 · mare-notif.js v22 (sem avisos)
+Sobe pra produção o que estava em dev (kanban-dev v8.30.822→824, painel-dev v5.42→5.44, okr-dev v2.66→2.69, oceano-dev v1.12→1.14, mare-notif-dev v20→22).
+- **Logo nova do Painel** (a ponte de comando) na aba do `painel.html` e no **menu de produtos (⋮⋮⋮)** e no tile do Oceano; **logo nova do A Bordo** (o convés) no menu e no Oceano (a aba da página `onboarding.html` já estava no ar). Arte maior e centralizada, ícones de 512 px legíveis até em 16 px; `?v=3` nas referências pra o navegador trocar a imagem antiga.
+- **Radar:** a Ajuda "Link direto do Objetivo" não cita mais o login @arezzo no modo só Hering.
+- **Agente Ágil:** a base de conhecimento (`conhecimento/*.json`) foi regenerada a partir das páginas de produção e deste CHANGELOG; as funções do agente só enxergam depois do deploy manual.
+- Dica: não — troca de ícones e correção de texto.
+
 ### 🚀 Promoção: Dicas — no máximo 1 por dia por app — 2026-10-10 · kanban v8.30.821 · painel v5.41 · okr v2.65 · oceano v1.11 · mare-dicas.js v4 (sem avisos)
 Sobe pra produção o ritmo novo das dicas (mini popups), validado em dev (kanban-dev v8.30.821, painel-dev v5.41, okr-dev v2.65, oceano-dev v1.11, mare-dicas-dev v4).
 - **Antes:** até 4 dicas por abertura da página, com 50 s entre elas. **Agora:** **no máximo 1 dica por dia, por app** (Maré, Radar e Oceano contam separado), no dia do calendário da pessoa. Cada dica continua aparecendo **uma vez só**; amanhã vem a próxima ainda não vista. "Rever dicas" recomeça; desligar vale por app.
