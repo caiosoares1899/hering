@@ -190,6 +190,8 @@ O que era tudo "Maré Digital" virou a família **Oceano**: **Maré Digital** (k
 
 ## Pendências conhecidas de documentação
 
+**Rodada de 2026-10-10:** Ajuda do Maré (+💡 Dicas, +📊 Central de Dados) e do Radar (+🎙️ apresentar ao vivo, +⋮⋮⋮ menu de produtos), `guia-okr.html` (38 slides: +ao vivo, +menu/dicas), `maredigital.html` (Oceano, Dicas, Painel Fluxo/Visão, versões) e `CODE_MAP.md` (~420 âncoras revalidadas por `.claude/skills/atualizarcodemap/revalidar_ancoras.py`) em dia. 
+
 Rodada de revisão feita em 2026-10-07 (noite): `guia-okr.html` (prints refeitos com 🛒/🌐 e o sino com rodapé; +3 slides: trava, calendário, pauta/convidados/anotações), `maredigital.html`, `CODE_MAP.md`, ajuda in-app do OKR (`#okr-help-ov`) e `HELP_CONTENT` do kanban (Checklist/colar lista, Notificações/sino único, "Sua torre"), mais o prompt/ferramentas do Agente Ágil do OKR (torres, gerências, trava, agenda). **Resolvido (2026-10-09):** o guia mostra o Agente Ágil como botão flutuante e tem slides do Dashboard v2.58, Cards e Agente (prints refeitos; gerador em `docs/arezzo/testes/gerar_prints_guia.js`). Ao mudar o OKR de novo, lembrar que o guia é compartilhado (sem cópia dev) e que seus prints envelhecem a cada mudança de cabeçalho/símbolo — refazê-los com um harness de Playwright + Firebase fake (copiar de uma rodada anterior) em vez de editar o base64 à mão.
 
 ## Release process

@@ -242,5 +242,7 @@ Formato: baseline → novo — o que motivou — achados/correções.
   redirect e fix de logout/gcal_token (invisíveis pro usuário, sem
   ação nenhuma pra descrever).
 
+- **v8.30.815→816-dev (2026-10-10, pedido "help content (todos)" junto com codemap/maredigital/guia)**: cobertura por TODAS as ajudas (kanban `HELP_CONTENT`, Radar `#okr-help-ov`, FAQ do Oceano; o Painel não tem Ajuda geral — só a aba 💡 Dicas, que lista as dicas). 2 gaps reais no Maré: (1) **💡 Dicas** sem entrada (só havia o interruptor); (2) a aba lateral **📊 Dados** (Central de Dados) NUNCA teve entrada em `HELP_CONTENT` — feature antiga, achada só agora ao procurar "15 dias". Falso alarme registrado: **"Sua torre"** parece errada no modo "só Hering", mas já é filtrada da Ajuda por `if(MARE_SO_HERING) … filter(!/^Sua torre/)` (confira esse filtro antes de reescrever texto sobre torre). Radar: faltavam **Apresentar ao vivo** (laser/caneta/controle — 8 PRs no dia, nenhuma linha na Ajuda) e o **menu de produtos ⋮⋮⋮**. `hlp-torres` já se esconde sozinha no modo só Hering (CSS injetado) — conferir isso antes de "corrigir" texto de torre no Radar. Oceano: FAQ completa (sino, dicas, links). **Lição:** perguntar "essa aba/botão tem entrada?" a partir da UI (cada botão da toolbar/gaveta lateral), não só "o que mudou no changelog" — a Central de Dados estava invisível pra rodadas baseadas em commits.
+
 Atualize esta seção a cada rodada nova (2-4 linhas: baseline→novo, o
 que motivou, achados) — evita re-analisar algo já checado e em dia.

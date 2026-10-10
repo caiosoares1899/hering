@@ -20,5 +20,13 @@ const seed=role=>({kanban:{usuarios:{eve:{uid:'eve',nome:'Eve',email:'eve@ciaher
    t(`${nome}: sem erro de JS`, !errs.length, errs); await ctx.close(); }
  for(const role of ['adm','po']){ const {ctx,p}=await open(role,1280,800); await p.click('#mn-apps-btn'); await p.waitForTimeout(250);
    t(`papel ${role}: aba Produtos inclui o Painel`, (await p.evaluate(()=>[...document.querySelectorAll('#mn-apps-pop .mn-app-n')].map(x=>x.textContent).join()))==='Maré Digital,Painel,Radar,A Bordo', 'tiles'); await ctx.close(); }
- { const {ctx,p}=await open('membro',1280,800); const r=await p.evaluate(async()=>{ openHelp(); await new Promise(r=>setTimeout(r,400)); return /Menu de produtos \(⋮⋮⋮\) e a página Oceano/.test(document.body.innerText); }); t('Central de Ajuda tem a entrada "Menu de produtos e a página Oceano"', r, r); await ctx.close(); }
+ { const {ctx,p}=await open('membro',1280,800); const r=await p.evaluate(async()=>{ openHelp(); await new Promise(r=>setTimeout(r,400)); return /Menu de produtos \(⋮⋮⋮\) e a página Oceano/.test(document.body.innerText); }); t('Central de Ajuda tem a entrada "Menu de produtos e a página Oceano"', r, r);
+   // Ajuda em dia (2026-10-10): entradas novas + "Sua torre" coerente com o modo só Hering
+   const r2=await p.evaluate(async()=>{ const txt=document.body.innerText; const H=JSON.stringify(HELP_CONTENT); return {dicas:/Dicas \(mini popups\)/.test(txt), dados:/Central de Dados \(aba lateral/.test(txt), torre:!/Sua torre/.test(JSON.stringify(Object.values(HELP_CONTENT).flat().map(e=>e.title))), quinze:/últimos 15 dias/.test(H)}; });
+   t('Central de Ajuda tem "Dicas (mini popups)" e "Central de Dados (aba lateral)"', r2.dicas && r2.dados, r2);
+   t('"Sua torre" some da Ajuda no modo só Hering (ninguém é perguntado); Central de Dados cita os 15 dias', r2.torre && r2.quinze, r2);
+   await ctx.close(); }
+ { // Ajuda do Radar (HTML estático em okr-dev.html): ao vivo + menu de produtos
+   const html=require('fs').readFileSync('/home/user/hering/okr-dev.html','utf8');
+   t('Ajuda do Radar: "Apresentar ao vivo" (laser, caneta, controle) e "Menu de produtos"', /Apresentar ao vivo<\/b>[^]*?Laser[^]*?Caneta[^]*?Passar o controle/.test(html) && /Menu de produtos<\/b> \(os 9 pontinhos\)/.test(html), 'texto ausente em okr-dev.html'); }
  await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();
