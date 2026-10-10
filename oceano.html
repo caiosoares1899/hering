@@ -510,11 +510,12 @@ window.dispatchEvent(new Event('fb-ready'));
 </script>
 
 <script src="mare-notif.js?v=16"></script>
+<script src="mare-dicas.js?v=3"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.5 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.7 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -617,7 +618,7 @@ async function lerRamo(sub){ try{ const sn = await window._get(window._ref(windo
 async function iniciarSessao(){
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
-  renderEu(); renderTudo(); iniciarSino();
+  renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
   // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
   const [nome, init, role, squads, apps, oc, uid] = await Promise.all(['nome','init','role','squads','apps','oceano','uid'].map(lerRamo));
   if(!uid){ try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){} }
@@ -661,6 +662,7 @@ function sinoToggle(e){
   if(e) e.stopPropagation();
   const drop = $('#sino-drop'), btn = $('#btn-sino'); if(!drop || !window.MareNotif) return;
   if(sinoFecha()) return;
+  try{ window.MareDicas && MareDicas.gatilho('sino'); }catch(err){}
   const r = btn.getBoundingClientRect(), w = Math.min(390, window.innerWidth-16);
   drop.style.top = (r.bottom+8)+'px'; drop.style.left = Math.max(8, Math.min(r.right-w, window.innerWidth-w-8))+'px'; drop.style.width = w+'px'; drop.style.display = 'flex';
   btn.setAttribute('aria-expanded','true'); sinoRender();
@@ -685,6 +687,16 @@ function sinoClique(k, id){
   const alvo = MareNotif.urlPessoal(n.raw);   // card, Kudos, reunião, intake, OKR…: o roteador compartilhado sabe pra onde ir
   if(!alvo) return;
   if(alvo.externo) window.open(alvo.url, '_blank', 'noopener'); else rotearUrl(alvo.url);
+}
+// ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado da página.
+//    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' em sinoToggle(), 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
+// as dicas de ENTRADA falam do lobby: com um produto aberto aqui dentro (app instalado abrindo no último produto, ou clique rápido) elas cobririam o produto
+const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on');
+const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel};
+function iniciarDicas(){
+  if(!window.MareDicas || !U) return;
+  MareDicas.init({app:'oceano', user:U, isViewer:false, quando:OCEANO_DICAS_QUANDO, abrirAjuda:id=>abrirAjuda(id)});
+  setTimeout(()=>MareDicas.gatilho('boot'), 4500);
 }
 function iniciarSino(){
   if(sinoIniciado || !window.MareNotif || !U) return; sinoIniciado = true;
@@ -949,12 +961,14 @@ function abrirPerfil(secao){
     + '<div class="gr"><h4>🐟 Peixinhos e bolhas</h4><div class="d">'+(reduzMov?'Seu sistema pede menos movimento — por isso começam desligados. ':'')+'São os mesmos do Maré Digital. Ficam atrás do conteúdo e param sozinhos com a aba em segundo plano.</div><div class="opc" id="op-peixes">'
     + [['off','Desligados','mar calmo'],['poucos','Poucos','um cardume discreto'],['normal','Como no Maré','8 peixes, 16 bolhas']].map(t=>'<button type="button" data-peixes="'+t[0]+'" aria-pressed="'+(prefs.peixes===t[0])+'"><b>'+t[1]+'</b><span>'+t[2]+'</span></button>').join('')+'</div></div>'
     + htmlPerfilLinks()
+    + '<div class="gr"><h4>💡 Dicas</h4><div id="pf-dicas"></div></div>'
     + '<div class="gr"><h4>🧭 Como abrir os produtos</h4><div class="campos"><label class="f">Ao clicar em "Abrir"<select class="in" id="pf-abrir"><option value="auto">Automático (aqui dentro se o Oceano estiver instalado)</option><option value="aqui">Sempre aqui dentro do Oceano</option><option value="aba">Sempre em aba nova</option></select></label>'
     + '<label class="f">Ao abrir o app instalado, ir para<select class="in" id="pf-inicio"><option value="lobby">O lobby (esta página)</option><option value="ultimo">O último produto que usei</option>'+APPS.filter(a=>!a.futuro&&visivel(a)).map(a=>'<option value="'+a.id+'">'+esc(a.nome)+'</option>').join('')+'</select></label></div></div>'
     + '<div class="gr"><h4>📲 Aplicativo</h4><div class="d">Instale o Oceano uma vez e use Maré, Painel e Radar pelo mesmo ícone. Quem só usa o Maré Digital pode continuar com o aplicativo dele — nada muda.</div><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn" type="button" id="pf-instalar" '+(instalarEv?'':'disabled')+'>📲 Instalar o Oceano</button><button class="btn" type="button" id="pf-ajuda">❓ Como instalar</button><button class="btn" type="button" id="pf-sair">🚪 Sair</button></div></div>';
   $('#pf-abrir').value = prefs.abrir; $('#pf-inicio').value = prefs.inicio;
   linkEdit = null; renderPerfilLinks();
   abrirModal('ov-perfil');
+  try{ window.MareDicas && (MareDicas.controle($('#pf-dicas')), MareDicas.gatilho('perfil')); }catch(err){}
   if(secao==='links'){ const sec = $('#pf-links-sec'); if(sec) setTimeout(()=>{ sec.scrollIntoView({block:'start'}); const t = $('#pfl-titulo'); if(t) t.focus({preventScroll:true}); }, 60); }
 }
 $('#perfil-bd').addEventListener('click', e=>{
@@ -991,6 +1005,7 @@ const FAQ = [
   {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
   {id:'painel', q:'Por que não vejo o Painel?', a:'<p>O Painel é a visão de gestão; ele aparece para administradores e para quem já o usa (quem é PO/Organizador, por exemplo). Se você precisa dele, fale com sua liderança ou com a squad.</p><p>Isso organiza a sua vitrine — o acesso de verdade é decidido no servidor.</p>'},
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
+  {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
