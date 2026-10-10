@@ -873,6 +873,50 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
   transition:color .15s,border-color .15s;}
 .ptab:hover:not(.on){color:var(--txt2);}
 .ptab.on{color:var(--txt);border-bottom-color:var(--accent);font-weight:600;}
+/* 🔔 Central de Notificações (aba Notificações) */
+.nc-aviso{font-size:12px;line-height:1.55;color:var(--txt);background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.35);border-radius:10px;padding:9px 12px;margin:0 0 14px;max-width:920px;}
+.nc-intro{font-size:12px;line-height:1.6;color:var(--txt2);margin:-2px 0 14px;max-width:920px;}
+.nc-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
+.nc-busca{flex:1 1 240px;max-width:360px;padding:7px 11px;font-size:12px;background:rgba(var(--ink-rgb),.6);border:1px solid var(--glass-b);border-radius:9px;color:var(--txt);}
+.nc-leg{font-size:10.5px;color:var(--txt3);}
+.nc-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.nc-chip{font-size:10.5px;padding:4px 11px;border-radius:999px;border:1px solid var(--glass-b);background:transparent;color:var(--txt2);cursor:pointer;}
+.nc-chip.on{background:rgba(56,182,255,.14);border-color:var(--accent);color:var(--accent);font-weight:600;}
+.nc-area{margin:16px 0 6px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--txt3);display:flex;gap:6px;align-items:baseline;}
+.nc-area small{font-weight:400;text-transform:none;letter-spacing:0;font-size:10.5px;}
+.nc-row{border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.45);border-radius:10px;margin-bottom:6px;overflow:hidden;}
+.nc-row.off{opacity:.78;}
+.nc-main{display:grid;grid-template-columns:30px minmax(150px,1.1fr) minmax(0,2fr) auto auto auto;gap:10px;align-items:center;padding:9px 12px;cursor:pointer;}
+.nc-ic{font-size:18px;text-align:center;}
+.nc-tt{min-width:0;font-size:12.5px;color:var(--txt);}
+.nc-tt small{font-size:9.5px;color:var(--txt3);margin-left:5px;font-family:monospace;}
+.nc-tag{display:inline-block;font-size:9px;padding:1px 7px;border-radius:999px;margin-left:5px;border:1px solid var(--glass-b);color:var(--txt3);vertical-align:middle;}
+.nc-tag.alt{color:var(--warn);border-color:rgba(255,209,102,.4);}
+.nc-quando{font-size:11px;color:var(--txt2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.nc-uso{font-size:10.5px;color:var(--txt3);text-align:right;white-space:nowrap;min-width:78px;}
+.nc-uso b{color:var(--txt);font-weight:600;}
+.nc-sw{display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;user-select:none;white-space:nowrap;}
+.nc-sw input{width:30px;height:16px;accent-color:var(--teal);cursor:pointer;}
+.nc-sw.dis{opacity:.4;cursor:not-allowed;} .nc-sw.dis input{cursor:not-allowed;}
+.nc-det{display:none;padding:2px 14px 12px 52px;font-size:11.5px;line-height:1.6;color:var(--txt2);border-top:1px solid rgba(56,182,255,.07);}
+.nc-row.open .nc-det{display:block;}
+.nc-det dl{display:grid;grid-template-columns:90px 1fr;gap:4px 12px;margin:8px 0 0;}
+.nc-det dt{color:var(--txt3);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding-top:2px;}
+.nc-det dd{margin:0;}
+.nc-det .nc-padrao{margin-top:8px;font-size:10.5px;color:var(--txt3);}
+.nc-pess{display:grid;grid-template-columns:minmax(150px,1.4fr) minmax(90px,.8fr) minmax(130px,1.2fr) minmax(90px,.8fr);gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid rgba(56,182,255,.07);font-size:11.5px;}
+.nc-pess.hd{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--txt3);border-bottom:1px solid var(--glass-b);}
+.nc-pess .nm{min-width:0;} .nc-pess .nm b{display:block;font-size:12px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;} .nc-pess .nm small{color:var(--txt3);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;}
+.nc-dnd{color:var(--warn);font-weight:600;}
+.nc-box{border:1px solid var(--glass-b);border-radius:10px;background:rgba(var(--ink-rgb),.45);overflow:hidden;}
+.nc-nota{margin-top:20px;padding:12px 14px;font-size:11px;line-height:1.65;color:var(--txt3);border:1px dashed var(--glass-b);border-radius:10px;}
+.nc-vazio{font-size:11.5px;color:var(--txt3);padding:16px;text-align:center;}
+body.painel-viewer-mode #ptab-notifs, body.painel-viewer-mode #ppane-notifs{display:none !important;}
+@media (max-width:760px){
+  .nc-main{grid-template-columns:26px 1fr auto auto;} .nc-quando,.nc-uso{display:none;}
+  .nc-det{padding-left:14px;} .nc-det dl{grid-template-columns:1fr;}
+  .nc-pess{grid-template-columns:1fr 1fr;} .nc-pess.hd{display:none;}
+}
 .ptab-pane{display:none;}
 .ptab-pane.on{display:block;}
 
@@ -1571,6 +1615,7 @@ window.MARE_SO_HERING = true;
     <button class="ptab"     id="ptab-timeline" onclick="swPtab('timeline')"><span class="ptab-icon">🛤️</span><span class="ptab-lbl">Timeline</span></button>
     <a class="ptab" id="ptab-okr" href="okr.html" target="_blank" rel="noopener" title="O Radar (OKR) tem página própria — abre okr.html em outra aba" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">📡</span><span class="ptab-lbl">Radar ↗</span></a>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
+    <button class="ptab"     id="ptab-notifs"  onclick="swPtab('notifs')"><span class="ptab-icon">🔔</span><span class="ptab-lbl">Notificações</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
     <button class="ptab"     id="ptab-status"  onclick="swPtab('status')"><span class="ptab-icon">🔋</span><span class="ptab-lbl">Status</span></button>
     <button class="ptab"     id="ptab-dados"   onclick="swPtab('dados')"  style="color:var(--cyan);"><span class="ptab-icon">📊</span><span class="ptab-lbl">Dados</span></button>
@@ -2020,6 +2065,45 @@ window.MARE_SO_HERING = true;
     <div id="agent-logs" style="margin-bottom:20px;display:flex;flex-direction:column;gap:5px;"></div>
 
   </div><!-- /ppane-pessoas -->
+
+  <!-- ═══ ABA: NOTIFICAÇÕES (Central de Notificações, 2026-10-10) ═══
+       Catálogo de TODOS os tipos de aviso do Maré (MareNotif.TIPOS, em mare-notif-dev.js) com o QUANDO/QUEM/ONDE de cada um, interruptores 🔔 sino e 📲 push por tipo
+       (kanban/notif_config/{tipo}, só PO/ADM gravam), uso dos últimos 7 dias (contado do cache de usuários — leitura que o painel já faz) e a lista de pessoas com
+       push e Não Perturbe (kanban/usuarios/{uid}/notif_prefs/dnd, fcm_tokens). Pedido: "um sistema de gerenciamento mesmo!". -->
+  <div class="ptab-pane" id="ppane-notifs">
+    <div class="sec-title" style="display:flex;align-items:center;gap:8px;">🔔 Central de Notificações
+      <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center;font-weight:400;">
+        <span id="nc-quando" style="font-size:10px;color:var(--txt3);"></span>
+        <button class="btn btn-sm" onclick="ncAtualizar()" title="Relê a lista de usuários (notificações, aparelhos de push e Não Perturbe)" style="font-size:10px;padding:3px 10px;">🔄 Atualizar</button>
+      </span>
+    </div>
+    <p class="nc-intro">Todos os avisos que o Maré gera — o que são, <b>quando disparam</b>, <b>quem recebe</b> e <b>onde nascem</b>. Os interruptores valem <b>pra todo mundo</b>:
+      <b>🔔 Sino</b> = aparece (ou some) no sino do Maré, do Painel, do Radar e do Oceano · <b>📲 Push</b> = vira (ou deixa de virar) aviso no celular/computador.
+      Desligar o sino só <i>esconde</i> — nada é apagado. Cada pessoa ainda pode usar o Não Perturbe dela (veja abaixo quem está com ele ligado).</p>
+
+    <div class="nc-aviso" id="nc-sem-permissao" style="display:none;"></div>
+    <div class="grid-4" id="nc-resumo" style="margin-bottom:18px;"></div>
+
+    <div class="sec-title" style="margin-bottom:8px;">🧩 Tipos de notificação</div>
+    <div class="nc-tools">
+      <input type="search" id="nc-busca" class="nc-busca" placeholder="🔎 Buscar (nome, gatilho, quem recebe…)" oninput="ncBusca(this.value)">
+      <div class="nc-chips" id="nc-chips-tipos"></div>
+      <span class="nc-leg" title="Cada linha tem dois interruptores à direita">à direita de cada linha: <b>🔔</b> sino · <b>📲</b> push</span>
+      <button class="btn btn-sm" id="nc-reset" onclick="ncRestaurarTudo()" style="font-size:10px;padding:3px 10px;margin-left:auto;">↺ Restaurar tudo ao padrão</button>
+    </div>
+    <div id="nc-tipos"></div>
+
+    <div class="sec-title" style="margin:22px 0 8px;">🔕 Pessoas: push e Não Perturbe</div>
+    <div class="nc-tools"><div class="nc-chips" id="nc-chips-pessoas"></div></div>
+    <div id="nc-pessoas"></div>
+
+    <div class="nc-nota">
+      <b>Como funciona por baixo</b> — O Maré (e o Radar/Painel) cria a notificação na caixa da pessoa; uma Cloud Function só decide se ela <i>também</i> vira push.
+      <b>Sino desligado</b>: a notificação continua gravada, mas as páginas não a mostram nem contam no selo (e se o push também estiver desligado, nem é gravada).
+      <b>Push</b>: <i>ligado</i> envia mesmo para um tipo que antes não enviava; <i>desligado</i> bloqueia mesmo um tipo que enviava — vale só depois do deploy da função
+      <code>sendPushOnNotification</code> (e <code>sendPushOnMural</code> para o Mural). <b>Não Perturbe</b> é decisão pessoal: aqui só se vê.
+    </div>
+  </div><!-- /ppane-notifs -->
 
   <!-- ═══ ABA: MONITOR ═══ -->
   <div class="ptab-pane" id="ppane-monitor">
@@ -2847,7 +2931,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.37 · painel</div>
+<div class="version">v5.40 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2950,7 +3034,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=16"></script>
+<script src="mare-notif.js?v=19"></script>
 <script src="mare-dicas.js?v=3"></script>
 
 <script>
@@ -5571,6 +5655,7 @@ function swPtab(tab){
   // side-effects por aba
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); if(typeof renderPushmUsers==='function') renderPushmUsers(); }
+  if(tab==='notifs'){ loadGlobalUsers(false); renderNotifCentral(); }
   if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
@@ -6916,6 +7001,7 @@ function _painelLoadLembretes(user){
 // Feed da torre (módulo compartilhado) → grupo 'feed' do sino
 function _painelSyncFeed(){
   if(!window.MareNotif) return;
+  if(_ncAberta()) renderNotifCentral();   // interruptor mudou (kanban/notif_config) → a Central de Notificações se redesenha
   _mergePainelNotifs('feed', MareNotif.items().map(i=>({_kind:'feed', id:i.id, title:i.title, sub:i.sub, ts:i.ts, read:!i.unread, icon:i.icon, autor:i.autor, squad:'', cardId:'', type:i.tipo})));
 }
 // Mantém grupos separados por fonte e reconcilia em _painelNotifs
@@ -6923,6 +7009,7 @@ const _painelNotifGroups = {};
 function _mergePainelNotifs(groupKey, items){
   _painelNotifGroups[groupKey] = items;
   _painelNotifs = Object.values(_painelNotifGroups).flat()
+    .filter(n=>!(n._kind==='notif' && window.MareNotif && !MareNotif.sinoLigado(n.type)))   // 🔔 tipo desligado pelo ADM na Central de Notificações (re-avalia ao vivo: onChange → _painelSyncFeed → aqui)
     .sort((a,b)=>String(b.ts||'').localeCompare(String(a.ts||'')));
   renderPainelNotifs();
 }
@@ -7771,8 +7858,11 @@ function _painelResolveComunicadoAlvos(c){
 }
 async function _painelNotifyBroadcast(c, id){
   const autorUid = window._currentUser?.uid;
+  // 🔔 Central de Notificações: tipo desligado no sino E no push = nem grava (mesma regra do createNotif() do board).
+  if(window.MareNotif && !MareNotif.cfgLigado('painel_broadcast','sino') && !MareNotif.cfgLigado('painel_broadcast','push')) return;
   const alvos = _painelResolveComunicadoAlvos(c);
   alvos.delete(autorUid);
+  let falhas = 0;
   const writes = [...alvos].map(uid=>{
     const nid='n'+Date.now()+Math.random().toString(36).slice(2,6);
     return window._set(window._ref(window._db,'kanban/usuarios/'+uid+'/notificacoes/'+nid), {
@@ -7789,9 +7879,12 @@ async function _painelNotifyBroadcast(c, id){
       link: 'pessoas',
       read:false,
       ts:new Date().toISOString(),
-    }).catch(()=>{});
+    }).catch(()=>{ falhas++; });
   });
   await Promise.all(writes);
+  // As regras só deixam gravar 'painel_broadcast' na caixa de OUTRA pessoa a quem tem papel po/adm no banco — ADM só pela lista de e-mails
+  // publicava o comunicado, via "✅ publicado!" e ninguém era avisado (cada escrita negada era engolida em silêncio).
+  if(falhas) showToast('⚠ Comunicado publicado, mas '+falhas+' de '+alvos.size+' aviso(s) não foram entregues — só quem tem papel PO/ADM no 👥 Global Users envia o aviso a todos.');
 }
 function saveComunicado(){
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
@@ -9700,6 +9793,7 @@ function loadGlobalUsers(force){
     if(typeof renderKudosPainel==='function') renderKudosPainel();
     if(typeof renderPushmUsers==='function') renderPushmUsers();
     renderAll();
+    if(_ncAberta()) renderNotifCentral();   // Central de Notificações: pessoas, aparelhos, Não Perturbe e uso saem deste cache
   }).catch(()=>{
     // falha de rede/permissão: tenta de novo (até 5x, 15s) — sem isso avatares e
     // responsáveis do OKR ficariam vazios a sessão toda
@@ -11735,6 +11829,176 @@ function renderColDist(){
   });
 }
 
+
+// ═══════════════════════════════════════════════════════
+// 🔔 CENTRAL DE NOTIFICAÇÕES (aba "Notificações", 2026-10-10)
+// ═══════════════════════════════════════════════════════
+// Catálogo = MareNotif.TIPOS (mare-notif-dev.js). Interruptores = kanban/notif_config/{tipo} {sino?, push?, por, em} (só PO/ADM gravam — database.rules.json).
+// Pessoas/uso saem do cache de usuários (_globalUsersCache = kanban/usuarios inteiro, a mesma leitura do 👥 Global Users): fcm_tokens, notif_prefs/dnd, notificacoes.
+const NC = {tipos:'todos', pessoas:'todos', busca:'', abertos:new Set()};
+const NC_CHIPS_TIPOS = [['todos','Todos'],['sino_off','🔔 Sino desligado'],['push_on','📲 Com push'],['push_off','Sem push'],['alterados','✏️ Alterados pelo ADM']];
+const NC_CHIPS_PESSOAS = [['todos','Todas'],['dnd','🔕 Em Não Perturbe'],['com_push','📲 Com push'],['sem_push','Sem push']];
+
+function _ncAberta(){ const p=document.getElementById('ppane-notifs'); return !!(p && p.classList.contains('on')); }
+function _ncCfg(tipo){ const c=(window.MareNotif && MareNotif.cfgTudo()[tipo]) || {}; return c; }
+function _ncAlterado(t){ const c=_ncCfg(t.id); return typeof c.sino==='boolean' || typeof c.push==='boolean'; }
+// Não Perturbe ATIVO agora? (on:true e sem fim ou fim no futuro) — mesma regra de MareNotif.dndAtivo()/da função de push
+function _ncDnd(u, agora){
+  const d = u && u.notif_prefs && u.notif_prefs.dnd; if(!d || !d.on) return null;
+  if(d.until){ const t=new Date(d.until).getTime(); if(isNaN(t) || t<=agora) return null; }
+  return {ate:d.until||'', label:d.label||''};
+}
+function _ncAparelhos(u){ return Object.values((u && u.fcm_tokens) || {}).filter(t=>t && t.token).length; }
+function _ncNome(u){ return u.nome || u.displayName || (u.email||'').split('@')[0] || '(sem nome)'; }
+// Uso dos últimos 7 dias, contado do que ainda está nas caixas (as LIDAS são limpas depois de 3 dias, então os dias mais antigos são um piso).
+function _ncUso(){
+  const lim = Date.now() - 7*864e5, map = {};
+  Object.entries(_globalUsersCache || {}).forEach(([uid,u])=>{
+    Object.values((u && u.notificacoes) || {}).forEach(n=>{
+      if(!n || !n.type) return;
+      const t = new Date(n.ts).getTime(); if(isNaN(t) || t < lim) return;
+      const m = map[n.type] || (map[n.type] = {ger:0, lidas:0, pessoas:new Set(), ult:0});
+      m.ger++; if(n.read) m.lidas++; m.pessoas.add(uid); if(t > m.ult) m.ult = t;
+    });
+  });
+  return map;
+}
+function _ncFmtData(ms){ return ms ? new Date(ms).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : ''; }
+
+function renderNotifCentral(){
+  const elT = document.getElementById('nc-tipos'); if(!elT || !window.MareNotif) return;
+  const M = MareNotif, agora = Date.now(), adm = _isAdmPainel() && _ncPapelGrava();
+  const av = document.getElementById('nc-sem-permissao'); if(av){ const sem = _isAdmPainel() && !adm; av.style.display = sem ? '' : 'none'; if(sem) av.innerHTML = '🔒 Você é ADM pela lista de e-mails, mas o seu <b>papel no banco</b> não é PO nem ADM — por isso os interruptores ficam só pra leitura. Peça a um PO/ADM pra ajustar o seu papel no <b>👥 Global Users</b> e clique em 🔄 Atualizar.'; }
+  const cache = _globalUsersCache || {}, users = Object.entries(cache).filter(([,u])=>u && (u.nome||u.email||u.displayName));
+  const uso = _ncUso();
+  const q = (NC.busca||'').toLowerCase().trim();
+  const ql = document.getElementById('nc-quando'); if(ql) ql.textContent = _guLoadedAt ? 'dados de '+new Date(_guLoadedAt).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : (users.length ? '' : 'carregando usuários…');
+
+  // — resumo
+  const nTipos = M.TIPOS.length, nSino = M.TIPOS.filter(t=>M.cfgLigado(t.id,'sino')).length;
+  const pushPoss = M.TIPOS.filter(t=>t.pushPossivel), nPush = pushPoss.filter(t=>M.cfgLigado(t.id,'push')).length;
+  const emDnd = users.filter(([,u])=>_ncDnd(u,agora)).sort((a,b)=>_ncNome(a[1]).localeCompare(_ncNome(b[1])));
+  const comPush = users.filter(([,u])=>_ncAparelhos(u)>0).length;
+  const card = (lbl,val,sub,cls)=>'<div class="met"><div class="met-lbl">'+lbl+'</div><div class="met-val '+(cls||'')+'">'+val+'</div><div class="met-sub">'+sub+'</div></div>';
+  document.getElementById('nc-resumo').innerHTML =
+    card('🔔 Sino ligado', nSino+'<span class="met-un">/'+nTipos+'</span>', nSino<nTipos ? (nTipos-nSino)+' tipo(s) escondido(s) do sino' : 'todos os tipos aparecem', nSino<nTipos?'met-warn':'')
+   +card('📲 Push ligado', nPush+'<span class="met-un">/'+pushPoss.length+'</span>', 'tipos que viram aviso no aparelho', '')
+   +card('🔕 Não Perturbe agora', String(emDnd.length), emDnd.length ? esc(emDnd.slice(0,3).map(([,u])=>_ncNome(u).split(' ')[0]).join(', ')+(emDnd.length>3?' +'+(emDnd.length-3):'')) : 'ninguém', emDnd.length?'met-warn':'')
+   +card('📱 Pessoas com push', comPush+'<span class="met-un">/'+users.length+'</span>', (users.length-comPush)+' sem nenhum aparelho', '');
+
+  // — chips
+  const chips = (lista, atual, fn)=>lista.map(([id,l])=>'<button class="nc-chip'+(atual===id?' on':'')+'" onclick="'+fn+'('+jsq(id)+')">'+esc(l)+'</button>').join('');
+  document.getElementById('nc-chips-tipos').innerHTML = chips(NC_CHIPS_TIPOS, NC.tipos, 'ncFiltroTipos');
+  document.getElementById('nc-chips-pessoas').innerHTML = chips(NC_CHIPS_PESSOAS, NC.pessoas, 'ncFiltroPessoas');
+  const rb = document.getElementById('nc-reset'); if(rb){ rb.style.display = M.TIPOS.some(_ncAlterado) ? '' : 'none'; rb.disabled = !adm; }
+
+  // — tipos, agrupados por área
+  const passa = t=>{
+    if(q && !(t.nome+' '+t.id+' '+t.quando+' '+t.quem+' '+t.onde).toLowerCase().includes(q)) return false;
+    if(NC.tipos==='sino_off') return !M.cfgLigado(t.id,'sino');
+    if(NC.tipos==='push_on') return t.pushPossivel && M.cfgLigado(t.id,'push');
+    if(NC.tipos==='push_off') return !(t.pushPossivel && M.cfgLigado(t.id,'push'));
+    if(NC.tipos==='alterados') return _ncAlterado(t);
+    return true;
+  };
+  let html = '';
+  M.AREAS.forEach(a=>{
+    const ts = M.TIPOS.filter(t=>t.area===a.id && passa(t)); if(!ts.length) return;
+    html += '<div class="nc-area">'+a.icone+' '+esc(a.nome)+' <small>'+esc(a.desc)+'</small></div>';
+    ts.forEach(t=>{
+      const sino = M.cfgLigado(t.id,'sino'), push = M.cfgLigado(t.id,'push'), c = _ncCfg(t.id), alt = _ncAlterado(t), aberto = NC.abertos.has(t.id);
+      const u = uso[t.id];
+      const usoTxt = t.fonte==='feed' ? 'evento da torre' : (u ? '<b>'+u.ger+'</b> em '+u.pessoas.size+' pessoa'+(u.pessoas.size===1?'':'s')+' · '+(u.ger-u.lidas)+' não lida'+((u.ger-u.lidas)===1?'':'s') : 'nada em 7d');
+      const dis = adm ? '' : ' disabled';
+      const pushDis = !t.pushPossivel;
+      html += '<div class="nc-row'+((!sino && !push)?' off':'')+(aberto?' open':'')+'" id="nc-row-'+esc(t.id)+'">'
+        +'<div class="nc-main" onclick="ncAbrir('+jsq(t.id)+')">'
+          +'<span class="nc-ic">'+esc(t.icone)+'</span>'
+          +'<div class="nc-tt"><b>'+esc(t.nome)+'</b><small>'+esc(t.id)+'</small>'+(t.fonte==='feed'?'<span class="nc-tag">feed da torre</span>':'')+(alt?'<span class="nc-tag alt" title="'+esc('Alterado por '+(c.por||'?')+(c.em?' em '+_ncFmtData(new Date(c.em).getTime()):''))+'">✏️ alterado</span>':'')+'</div>'
+          +'<div class="nc-quando" title="'+esc(t.quando)+'">'+esc(t.quando)+'</div>'
+          +'<div class="nc-uso" title="Notificações deste tipo que ainda estão nas caixas, últimos 7 dias (as lidas somem das caixas depois de 3 dias)">'+usoTxt+'</div>'
+          +'<label class="nc-sw" onclick="event.stopPropagation()" title="Aparece no sino (Maré, Painel, Radar e Oceano)"><input type="checkbox" '+(sino?'checked':'')+dis+' onchange="ncSet('+jsq(t.id)+',\'sino\',this)">🔔</label>'
+          +'<label class="nc-sw'+(pushDis?' dis':'')+'" onclick="event.stopPropagation()" title="'+(pushDis?'Este tipo não tem push (é só do sino)':'Vira aviso no aparelho (push)')+'"><input type="checkbox" '+(push&&!pushDis?'checked':'')+(pushDis?' disabled':dis)+' onchange="ncSet('+jsq(t.id)+',\'push\',this)">📲</label>'
+        +'</div>'
+        +'<div class="nc-det"><dl>'
+          +'<dt>Quando</dt><dd>'+esc(t.quando)+'</dd><dt>Quem recebe</dt><dd>'+esc(t.quem)+'</dd><dt>Onde nasce</dt><dd>'+esc(t.onde)+'</dd>'
+          +'<dt>Padrão</dt><dd>🔔 sino ligado · 📲 push '+(t.pushPossivel ? (t.pushPadrao?'ligado':'desligado') : 'não se aplica')+(u&&u.ult?' · última nas caixas: '+_ncFmtData(u.ult):'')+'</dd>'
+        +'</dl>'
+        +(alt ? '<div class="nc-padrao">Alterado por <b>'+esc(c.por||'?')+'</b>'+(c.em?' em '+esc(_ncFmtData(new Date(c.em).getTime())):'')+' · <a href="#" onclick="event.preventDefault();ncRestaurar('+jsq(t.id)+')" style="color:var(--accent);">↺ voltar ao padrão</a></div>' : '')
+        +'</div></div>';
+    });
+  });
+  elT.innerHTML = html || '<div class="nc-vazio">Nenhum tipo com esse filtro.</div>';
+
+  // — pessoas
+  const elP = document.getElementById('nc-pessoas');
+  let lista = users.map(([uid,u])=>({uid,u,dnd:_ncDnd(u,agora),ap:_ncAparelhos(u)}));
+  if(NC.pessoas==='dnd') lista = lista.filter(x=>x.dnd);
+  else if(NC.pessoas==='com_push') lista = lista.filter(x=>x.ap>0);
+  else if(NC.pessoas==='sem_push') lista = lista.filter(x=>!x.ap);
+  lista.sort((a,b)=>(!!b.dnd-!!a.dnd) || _ncNome(a.u).localeCompare(_ncNome(b.u)));
+  if(!users.length){ elP.innerHTML = '<div class="nc-vazio">'+(_guLoadedAt ? 'Nenhum usuário.' : 'Carregando usuários…')+'</div>'; }
+  else if(!lista.length){ elP.innerHTML = '<div class="nc-vazio">Ninguém com esse filtro.</div>'; }
+  else {
+    elP.innerHTML = '<div class="nc-box"><div class="nc-pess hd"><div>Pessoa</div><div>Push</div><div>Não Perturbe</div><div>Na caixa</div></div>'
+      + lista.map(x=>{
+        const ns = Object.values(x.u.notificacoes||{}).filter(n=>n); const nl = ns.filter(n=>!n.read).length;
+        const dndTxt = x.dnd ? '<span class="nc-dnd">🔕 ligado</span> <small style="color:var(--txt3);">'+(x.dnd.ate ? 'até '+esc(_ncFmtData(new Date(x.dnd.ate).getTime())) : 'sem hora de fim')+(x.dnd.label?' · '+esc(x.dnd.label):'')+'</small>' : '<span style="color:var(--txt3);">—</span>';
+        return '<div class="nc-pess"><div class="nm"><b>'+esc(_ncNome(x.u))+'</b><small>'+esc(x.u.email||'')+'</small></div>'
+          +'<div>'+(x.ap ? '📲 '+x.ap+' aparelho'+(x.ap>1?'s':'') : '<span style="color:var(--txt3);">sem push</span>')+'</div>'
+          +'<div>'+dndTxt+'</div><div>'+ns.length+' <small style="color:var(--txt3);">('+nl+' não lida'+(nl===1?'':'s')+')</small></div></div>';
+      }).join('') + '</div>';
+  }
+}
+function ncAbrir(id){ if(NC.abertos.has(id)) NC.abertos.delete(id); else NC.abertos.add(id); const r=document.getElementById('nc-row-'+id); if(r) r.classList.toggle('open', NC.abertos.has(id)); }
+function ncBusca(v){ NC.busca = v||''; renderNotifCentral(); }
+function ncFiltroTipos(f){ NC.tipos = f; renderNotifCentral(); }
+function ncFiltroPessoas(f){ NC.pessoas = f; renderNotifCentral(); }
+function ncAtualizar(){ loadGlobalUsers(true); showPainelToast('🔄 Atualizando usuários…'); }
+function _ncPor(){ const u = window._currentUser || {}; return u.displayName || u.email || '?'; }
+// Quem o BANCO deixa gravar em kanban/notif_config (espelho do .write das regras): papel po/adm em kanban/usuarios/{uid}/role, ou o e-mail do Caio.
+// Ser ADM só pela lista de e-mails (isAdmUser) NÃO basta — esse ADM vê a tela, mas o banco nega. Papel ainda não carregado = deixa tentar (o banco decide).
+const NC_EMAIL_MASTER = 'caio.soares@ciahering.com.br';
+function _ncPapelGrava(){
+  const u = window._currentUser; if(!u) return false;
+  if(String(u.email||'').toLowerCase() === NC_EMAIL_MASTER) return true;
+  const eu = _globalUsersCache && _globalUsersCache[u.uid];
+  if(!eu) return true;
+  return eu.role === 'po' || eu.role === 'adm';
+}
+function _ncErroGravar(e, acao){
+  const code = (e && e.code) || (e && e.message) || 'erro';
+  if(/PERMISSION_DENIED/i.test(String(code))) return _ncPapelGrava()
+    ? '⛔ O banco recusou. As regras novas de notif_config já foram publicadas (firebase deploy --only database)? Se sim, confira o seu papel PO/ADM no 👥 Global Users.'
+    : '⛔ O banco recusou: só quem tem o papel PO ou ADM (no 👥 Global Users) grava aqui — ser ADM só pelo e-mail não basta.';
+  return '❌ Não consegui '+acao+' ('+code+').';
+}
+async function ncSet(tipo, canal, el){
+  if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM liga e desliga notificações.'); renderNotifCentral(); return; }
+  if(typeof _blockIfPainelViewer==='function' && _blockIfPainelViewer()){ renderNotifCentral(); return; }
+  const t = MareNotif.TIPOS.find(x=>x.id===tipo); if(!t) return;
+  const val = !!el.checked;
+  try{
+    await window._update(window._ref(window._db, MareNotif.CFG+'/'+tipo), {[canal]:val, por:_ncPor(), em:new Date().toISOString()});
+    showPainelToast((canal==='sino'?'🔔 Sino':'📲 Push')+' de "'+t.nome+'" '+(val?'ligado':'desligado')+'.'+(canal==='push'?' (vale após o deploy da função de push)':''));
+  }catch(e){
+    console.error('[notif_config]', e);
+    showPainelToast(_ncErroGravar(e,'gravar'));
+    renderNotifCentral();
+  }
+}
+async function ncRestaurar(tipo){
+  if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM.'); return; }
+  try{ await window._set(window._ref(window._db, MareNotif.CFG+'/'+tipo), null); showPainelToast('↺ Voltou ao padrão.'); }
+  catch(e){ showPainelToast(_ncErroGravar(e,'restaurar')); }
+}
+async function ncRestaurarTudo(){
+  if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM.'); return; }
+  const n = MareNotif.TIPOS.filter(_ncAlterado).length;
+  if(!confirm('Voltar TODOS os '+n+' tipo(s) alterado(s) ao padrão?\n\nSino ligado em todos e push só nos tipos que já enviavam.')) return;
+  try{ await window._set(window._ref(window._db, MareNotif.CFG), null); showPainelToast('↺ Tudo no padrão.'); }
+  catch(e){ showPainelToast(_ncErroGravar(e,'restaurar')); }
+}
 
 // ═══════════════════════════════════════════════════════
 // BOARD SETUP

@@ -38,9 +38,121 @@
   // kanban-dev.html; mantenha os dois em sincronia): lida some em 3 dias, não lida em 30. Sem isto, OKR/painel mostravam (e contavam no selo)
   // notificações que o kanban já escondia — o "sino único" mostrava listas diferentes.
   const TTL_LIDA_MS = 3*86400000, TTL_NAO_LIDA_MS = 30*86400000;
+  // SÓ o prazo (TTL). O interruptor do tipo (Central de Notificações) NÃO entra aqui: as páginas montam a lista pessoal com viva() quando o snapshot chega e
+  // refiltram por sinoLigado() a cada desenho — com o filtro dentro de viva(), a config chegando DEPOIS do snapshot (ou o ADM religando o tipo ao vivo)
+  // deixava a notificação descartada da lista até o próximo snapshot.
   function viva(n){ const t = new Date(n && n.ts).getTime(); return !isNaN(t) && (Date.now()-t) < (n.read ? TTL_LIDA_MS : TTL_NAO_LIDA_MS); }
   // O ícone do evento vem do banco (qualquer pessoa da empresa grava no feed): só texto curto, sem nada que vire HTML.
   function iconeSeguro(x){ return String(x||'').replace(/[<>&"'`\\]/g,'').slice(0,16); }
+
+
+  // ═══ 🔔 CENTRAL DE NOTIFICAÇÕES (Painel → aba 🔔 Notificações) ═══════════════════════════════════════════════════════════════════
+  // CATÁLOGO de todos os tipos de notificação do Maré: o que são, QUANDO disparam, QUEM recebe e ONDE nascem — mais os INTERRUPTORES que o ADM
+  // liga/desliga: kanban/notif_config/{tipo} = {sino?:bool, push?:bool, por, em} (ausente = padrão: sino ligado; push ligado só nos tipos do PUSH_PADRAO).
+  //   • sino: as páginas escondem do sino (e do selo) o que está desligado — sinoLigado() nos desenhos do sino e items() abaixo; a notificação continua gravada (ex.: com o push ligado).
+  //   • push: lido pela Cloud Function (sendPushOnNotification/sendPushOnMural, functions/common/notifConfig.js): `false` bloqueia, `true` libera mesmo fora do PUSH_TYPES.
+  // Tipo novo = 1 entrada aqui (+ ICONS acima, + PUSH_TYPES de functions/index.js se for virar push por padrão). O teste test_notificacoes.js confere o PUSH_PADRAO com o PUSH_TYPES.
+  const AREAS = [
+    {id:'board',   icone:'📋', nome:'Cards do board',            desc:'O que acontece com os cards no Maré Digital'},
+    {id:'prazos',  icone:'⏰', nome:'Prazos e rotinas',          desc:'Avisos que nascem do tempo passando'},
+    {id:'pessoas', icone:'⭐', nome:'Pessoas e reconhecimento',  desc:'Estrelas do Mar, reações, mensagens ao ADM'},
+    {id:'radar',   icone:'📡', nome:'Radar (OKR)',               desc:'Objetivos, Marcos, reuniões e Mural do Radar'},
+    {id:'agenda',  icone:'🎥', nome:'Calendário e reuniões',     desc:'Agendas do Google e lembretes de reunião'},
+    {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
+  ];
+  // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural']);
+  // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
+  const TIPOS = [
+    // ── Cards do board ──
+    {id:'mention', area:'board', fonte:'pessoal', nome:'Menção (@)',
+      quando:'Alguém escreve @nome, @iniciais ou @todos na descrição, num comentário, no checklist, nos riscos ou no campo de PO. Também quando o Agente Ágil te marca ou responde num card.',
+      quem:'A pessoa mencionada (nunca quem escreveu). @todos avisa todo o squad.',
+      onde:'Maré: parseMentions() a cada Salvar/autosave (id fixo cardId+pessoa: não repete). Servidor: Agente Ágil (agente-agil/notifications.js, mentionTrigger).'},
+    {id:'assigned', area:'board', fonte:'pessoal', nome:'Card atribuído a você',
+      quando:'O responsável de um card passa a ser você (salvar o card, arrastar, atalho de atribuição, Automação, ação em massa).',
+      quem:'O novo responsável (nunca quem atribuiu).', onde:'Maré: notifAssigned().'},
+    {id:'unblocked', area:'board', fonte:'pessoal', nome:'Card desbloqueado',
+      quando:'O impedimento de um card acaba (sai da coluna Impedimentos ou a tag de impedimento é removida).',
+      quem:'Responsável, participantes e demandante (menos quem desbloqueou).', onde:'Maré: notifUnblocked().'},
+    {id:'done', area:'board', fonte:'pessoal', nome:'Card concluído',
+      quando:'Um card vai para a coluna de conclusão.', quem:'Responsável, participantes e demandante (menos quem moveu).', onde:'Maré: notifDone().'},
+    {id:'moved', area:'board', fonte:'pessoal', nome:'Card mudou de coluna',
+      quando:'Um card muda de coluna (exceto Concluído, que tem o aviso próprio acima).', quem:'Responsável e participantes (menos quem moveu).', onde:'Maré: notifMoved().'},
+    {id:'risk', area:'board', fonte:'pessoal', nome:'Risco mapeado',
+      quando:'Um risco é adicionado a um card (pelo Salvar ou pelo autosave).', quem:'PO, Organizadores e ADM do squad.', onde:'Maré: notifRisk() (cache de 5 min da lista de PO/Organizador).'},
+    {id:'checklist', area:'board', fonte:'pessoal', nome:'Checklist concluída',
+      quando:'O checklist do card chega a 100%.', quem:'O responsável do card.', onde:'Maré: notifChecklistDone().'},
+    {id:'recorrente', area:'board', fonte:'pessoal', nome:'Card recorrente / agendado',
+      quando:'Um card recorrente ou agendado entra no quadro — ou fica um tempo sem ser aberto.', quem:'O responsável configurado no item recorrente/agendado.',
+      onde:'Maré: processRecorrentes() / processAgendamentos() / lembrete de "ainda não aberto".'},
+    {id:'intake', area:'board', fonte:'pessoal', nome:'Novo pedido (intake)',
+      quando:'Chega um pedido pelo formulário público do squad (ou o Agente Ágil registra um).', quem:'Todos os inscritos no squad do formulário.',
+      onde:'Servidor: functions/intake/submit.js (intakeSubmit) e o intakeTrigger do Agente Ágil. Clicar abre o painel de Intake.'},
+    // ── Prazos e rotinas ──
+    {id:'due_today', area:'prazos', fonte:'pessoal', nome:'Prazo é hoje',
+      quando:'No dia do prazo de um card ainda aberto. Checagem 1x por dia, a partir das 09:00 (São Paulo), quando alguém abre o board; o servidor também varre os squads com Agente Ágil.',
+      quem:'O responsável do card.', onde:'Maré: checkDueNotifs() (id fixo por card/dia). Servidor: agenteAgilDueOverdueScan.'},
+    {id:'due_overdue', area:'prazos', fonte:'pessoal', nome:'Prazo atrasado',
+      quando:'No 1º dia depois do prazo, se o card segue aberto (avisa uma vez só, não repete todo dia).', quem:'O responsável do card.', onde:'Maré: checkDueNotifs(). Servidor: agenteAgilDueOverdueScan.'},
+    // ── Pessoas e reconhecimento ──
+    {id:'kudos', area:'pessoas', fonte:'pessoal', nome:'Estrela do Mar',
+      quando:'Alguém te envia uma ⭐ Estrela do Mar, ou reage à Estrela que você enviou.', quem:'Quem recebeu a Estrela / quem a enviou.', onde:'Maré: addKudos() e toggleKudosReaction().'},
+    {id:'kudos_monitor', area:'pessoas', fonte:'pessoal', nome:'Monitor de Estrelas',
+      quando:'Qualquer Estrela do Mar é emitida no squad (monitoramento).', quem:'ADM e PO do squad (menos remetente e destinatário).', onde:'Maré: addKudos().'},
+    {id:'reacao', area:'pessoas', fonte:'pessoal', nome:'Reação ao seu comentário',
+      quando:'Alguém reage (👍 etc.) a um comentário seu num card.', quem:'O autor do comentário.', onde:'Maré: toggleReaction().'},
+    {id:'feedback', area:'pessoas', fonte:'pessoal', nome:'Mensagem pro ADM ("Fale com o ADM")',
+      quando:'Alguém envia bug, sugestão ou dúvida pelo botão ✍️ Fale com o ADM.', quem:'Todos os ADMs.', onde:'Maré: envio do feedback (kanban/feedback). Aparece também na aba 🐛 Monitor do Painel.'},
+    // ── Radar (OKR) ──
+    {id:'okr_editado', area:'radar', fonte:'pessoal', nome:'Objetivo editado',
+      quando:'Um Objetivo ou Marco é salvo/editado por outra pessoa — ou pelo Agente Ágil (chat do Radar, ferramentas).', quem:'Responsáveis do Objetivo e participantes dos Marcos (menos quem editou).',
+      onde:'Radar: _okrNotifyEditado(). Servidor: functions/okr/agenteHelpers.js (edições do Agente).'},
+    {id:'okr_prazo', area:'radar', fonte:'pessoal', nome:'Prazo de Marco chegando',
+      quando:'Faltam 3 dias e 1 dia para o prazo de um Marco (o scan diário roda às 7h).', quem:'O responsável do Marco (sem ele, os responsáveis do Objetivo).', onde:'Servidor: okrDailyScan (functions/okr/dailyScan.js).'},
+    {id:'okr_reuniao', area:'radar', fonte:'pessoal', nome:'Reunião do Radar (convite, mudança, véspera)',
+      quando:'Convite, mudança ou cancelamento de reunião no calendário do Radar; e véspera e dia da reunião (7h).', quem:'Convidados e responsáveis dos Objetivos da pauta.',
+      onde:'Radar: salvar evento do calendário. Servidor: okrDailyScan.'},
+    {id:'okr_agente', area:'radar', fonte:'pessoal', nome:'Agente Ágil respondeu (Radar)',
+      quando:'O Agente Ágil responde no chat dedicado do Radar.', quem:'Quem fez a pergunta.', onde:'Servidor: okrAgenteChat (functions/okr/agenteChat.js).'},
+    {id:'okr_mencao', area:'radar', fonte:'pessoal', nome:'Menção nas Anotações da reunião',
+      quando:'Alguém te menciona (@Nome completo) nas 📋 Anotações da reunião do Radar.', quem:'A pessoa mencionada.', onde:'Radar: envio da anotação.'},
+    {id:'mural', area:'radar', fonte:'feed', nome:'Aviso novo no Mural do Radar',
+      quando:'Um aviso é publicado no 📢 Mural do Radar (o 🚨 urgente também abre em popup 1x por pessoa).', quem:'Quem é da torre alvo do aviso (ADM e torre ⭐ Geral veem tudo). Hoje: Digital.',
+      onde:'Radar: publicar aviso → evento no feed (kanban/notif_feed). Push: sendPushOnMural (função própria).'},
+    {id:'obj_criado', area:'radar', fonte:'feed', nome:'Objetivo criado', pushPossivel:false,
+      quando:'Um novo Objetivo é criado (ou duplicado) no Radar.', quem:'A torre do Objetivo (feed único — sem notificação por pessoa).', onde:'Radar: salvar/duplicar Objetivo → feed.'},
+    {id:'marco_concluido', area:'radar', fonte:'feed', nome:'Marco concluído', pushPossivel:false,
+      quando:'Um Marco passa para Concluído.', quem:'A torre do Objetivo (feed único).', onde:'Radar: salvar Marco → feed.'},
+    // ── Calendário e reuniões ──
+    {id:'reuniao', area:'agenda', fonte:'pessoal', nome:'Lembrete de reunião',
+      quando:'Faltam alguns minutos para uma reunião do Google Agenda ligada ao board (com botão de entrar).', quem:'Você mesmo, no navegador com o board aberto.', onde:'Maré: checkUpcomingMeetings().'},
+    {id:'gcal_pending', area:'agenda', fonte:'pessoal', nome:'Agenda aguardando aprovação',
+      quando:'Alguém pede para conectar uma agenda do Google ao squad.', quem:'Todos os ADMs.', onde:'Maré: pedido de conexão de agenda.'},
+    {id:'gcal_approved', area:'agenda', fonte:'pessoal', nome:'Agenda conectada',
+      quando:'O ADM aprova o pedido de conexão da agenda.', quem:'Quem pediu a conexão.', onde:'Maré: aprovação de agenda.'},
+    {id:'okr_evento', area:'agenda', fonte:'feed', nome:'Agenda do Radar nova/alterada', pushPossivel:false,
+      quando:'Um evento novo entra no calendário do Radar, ou muda data, horário ou local.', quem:'A torre do evento (feed único).', onde:'Radar: salvar evento → feed.'},
+    // ── Painel e sistema ──
+    {id:'painel_broadcast', area:'sistema', fonte:'pessoal', nome:'Aviso do Painel (push manual / comunicado urgente)',
+      quando:'O ADM envia um push manual (Painel → Pessoas) ou publica um Comunicado urgente / popup insistente.', quem:'As pessoas escolhidas no push manual, ou o público do comunicado.', onde:'Painel: sendPainelPush() e saveComunicado().'},
+    {id:'rascunho', area:'sistema', fonte:'pessoal', nome:'Rascunho aguardando revisão', pushPossivel:false,
+      quando:'Um rascunho de comunicado/Mural nasce e precisa de revisão do ADM.', quem:'ADMs (só aparece no sino do Painel).', onde:'Painel: seed e criação de rascunhos.'},
+  ];
+  TIPOS.forEach(t=>{ t.icone = ICONS[t.id] || '🔔'; if(t.pushPossivel===undefined) t.pushPossivel = true; t.pushPadrao = PUSH_PADRAO.has(t.id); });
+
+  // Interruptores (kanban/notif_config) — lidos por start(); sem config = padrão.
+  const CFG = 'kanban/notif_config';
+  let cfg = {};
+  function cfgLigado(tipo, canal){
+    const c = cfg[tipo];
+    if(c && typeof c[canal]==='boolean') return c[canal];
+    return canal==='push' ? PUSH_PADRAO.has(tipo) : true;
+  }
+  // Enquanto a config não chegou do banco o sino NÃO mostra tipo nenhum: antes valia "tudo ligado", e um tipo que o ADM desligou aparecia (e tocava o
+  // ding) no boot até a leitura voltar — o selo sumia logo depois, mas o som já tinha saído. Sem permissão de leitura (erro) também conta como pronta.
+  let cfgPronto = false;
+  function sinoLigado(tipo){ return !tipo || (cfgPronto && cfgLigado(tipo, 'sino')); }
 
   const st = {uid:null, viewer:false, opts:null, feed:{}, seen:{ts:'', lidos:{}}, seenReady:false, torre:'digital', started:false};
 
@@ -73,6 +185,7 @@
     if(st.started && st.uid===user.uid){ st.opts = opts; return; }   // 1x por usuário (trocar de conta recarrega a página)
     st.started = true; st.uid = user.uid; st.opts = opts; st.viewer = !!opts.isViewer;
     const W = window;
+    W._onValue(W._ref(W._db, CFG), snap=>{ cfg = snap.val() || {}; cfgPronto = true; emitir(); }, ()=>{ cfgPronto = true; emitir(); });   // interruptores da Central de Notificações (sem permissão/ausente = tudo no padrão)
     W._onValue(W._query(W._ref(W._db, FEED), W._limitToLast(FEED_LIMIT)), snap=>{ st.feed = snap.val() || {}; emitir(); },
       err=>console.warn('[MareNotif] feed indisponível (sem permissão?):', err && err.message));
     if(st.viewer){
@@ -95,7 +208,7 @@
     const eu = st.uid, out = [];
     Object.entries(st.feed).forEach(([id,f0])=>{
       if(!f0) return; const f = {...f0, id};
-      if(f.autorUid===eu || !paraMim(alvoTorres(f))) return;
+      if(f.autorUid===eu || !paraMim(alvoTorres(f)) || !sinoLigado(f.tipo)) return;   // tipo desligado pelo ADM some do sino
       out.push({k:'feed', id, tipo:f.tipo||'', ts:f.ts||'', icon:iconeSeguro(f.icone) || ICONS[f.tipo] || '🔔', title:f.titulo||'', sub:f.sub||'', autor:f.autor||'',
         objId:f.objId||'', muralId:f.muralId||'', eventoId:f.eventoId||'', evData:f.evData||'', unread: st.seenReady && !lido(f)});
     });
@@ -126,6 +239,7 @@
   // Grava 1 evento no feed (qualquer página pode publicar). `torres` = ['digital',…] ou ['*'].
   function pushFeed(ev){
     const u = st.opts && st.opts.user; if(!u || st.viewer) return Promise.resolve();
+    if(ev && ev.tipo && !cfgLigado(ev.tipo,'sino') && !cfgLigado(ev.tipo,'push')) return Promise.resolve();   // desligado nos dois canais: nem grava o evento
     const id = 'f'+Date.now()+Math.random().toString(36).slice(2,6);
     const dado = Object.assign({id, tipo:'', torres:['*'], titulo:'', sub:'', autorUid:u.uid, autor:u.displayName||u.email||'?', ts:new Date().toISOString()}, ev||{});
     Object.keys(dado).forEach(k=>{ if(dado[k]===undefined) delete dado[k]; });   // o RTDB recusa a gravação inteira com um undefined
@@ -239,6 +353,7 @@
   const idsVistos = new Set(); let t0Novas = 0;
   function novas(ids){
     prefsStart();   // o Não Perturbe precisa estar carregado ANTES do 1º ding — não pode depender de o sino ter sido aberto
+    if(!cfgPronto) return false;   // sem a config o sino ainda não mostra tipo nenhum: a janela "fria" de 3 s só começa quando a lista de verdade aparece (senão a lista que já existia chegava "nova" e tocava)
     if(!t0Novas) t0Novas = Date.now();
     const quente = Date.now() - t0Novas > 3000; let achou = false;
     (ids||[]).forEach(id=>{ if(!idsVistos.has(id)){ idsVistos.add(id); if(quente) achou = true; } });
@@ -565,7 +680,7 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
-  window.MareNotif = {start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
+  window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
