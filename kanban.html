@@ -5560,6 +5560,7 @@ window.MARE_SO_HERING = true;
     </div>
     <div id="help-search-count" style="font-size:10px;color:var(--txt3);margin-top:4px;min-height:14px;"></div>
   </div>
+  <div id="help-dicas-ctl" style="padding:0 16px;flex-shrink:0;"></div>
   <div class="ag-tabs" id="help-tabs" style="flex-shrink:0;">
     <div class="ag-tab on" onclick="swHelpTab('board')">Board</div>
     <div class="ag-tab" onclick="swHelpTab('cards')">Cards</div>
@@ -6500,7 +6501,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.812</div>
+<div class="version">v8.30.814</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6844,6 +6845,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=16"></script>
+<script src="mare-dicas.js?v=3"></script>
 
 <script>
 
@@ -15947,6 +15949,7 @@ function toggleAgenteHotlineInfo(){
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 function openCard(id){
+  try{ window.MareDicas && id && MareDicas.gatilho('card-open'); }catch(e){}   // 💡 dica do card (só abre se houver uma não vista)
   // Flusha o autosave pendente do card ANTERIOR (se houver) antes de
   // reatribuir editingId/DOM pro card novo — ver comentário completo em
   // _flushAutoSave(). Sem isso, trocar de card rápido (link, "← Voltar",
@@ -25436,6 +25439,7 @@ function delLink(i){
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
 function openCfg(tab){
+  try{ window.MareDicas && MareDicas.gatilho('cfg-open'); }catch(e){}
   // Aba "🤖 Histórico do Agente" só existe onde o orquestrador tem escrita
   // real (mesmo escopo de _askAgenteAgilNoCard()/insightsCard()) — mostrar
   // em outras squads levaria a uma lista sempre vazia, sem explicação.
@@ -28115,6 +28119,7 @@ let _helpTab = 'board';
 function openHelp(tab, searchTerm){
   const el = document.getElementById('help-ov');
   el.classList.add('open');
+  try{ window.MareDicas && MareDicas.controle(document.getElementById('help-dicas-ctl')); }catch(e){}   // 💡 interruptor das dicas
   const inp = document.getElementById('help-search');
   if(searchTerm){ inp.value = searchTerm; }
   else { inp.value = ''; }
@@ -28152,6 +28157,9 @@ function renderHelp(){
       item.title.toLowerCase().includes(query) ||
       item.text.toLowerCase().includes(query)
     );
+    // quem tem o termo no TÍTULO vem antes de quem só o cita no texto (sort estável: a ordem de cada grupo não muda) —
+    // sem isso o "Saiba mais" das 💡 Dicas e dos balões ? caía numa lista em que a entrada certa não era a primeira
+    items.sort((x,y)=>(y.title.toLowerCase().includes(query)?1:0)-(x.title.toLowerCase().includes(query)?1:0));
     if(countEl) countEl.textContent = items.length ? items.length+' resultado'+(items.length>1?'s':'') : '—  Nenhum resultado';
   } else {
     if(tabs) tabs.style.opacity = '1';
@@ -29789,8 +29797,18 @@ window.addEventListener('fb-ready', ()=>{
 // "Meu Dia" (Fase 5.1) pra listar menções não lidas sem precisar de outro
 // listener/fetch — o de loadNotifs() já roda o tempo todo desde o boot.
 let _activeNotifsCache = [];
+
+// ── 💡 Dicas (mini popups) do Maré — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado desta tela.
+//    gatilhos: 'boot' (ao entrar, 1 por visita), 'card-open' em openCard(), 'cfg-open' em openCfg(). "Saiba mais" = {tab, q} → openHelp(tab, q).
+const MARE_DICAS_QUANDO = {mencao:()=>!!editingId, checklist:()=>!!editingId, travado:()=>!!editingId};
+function _mareDicasIniciar(user){
+  if(!window.MareDicas || !user) return;
+  MareDicas.init({app:'mare', user, isViewer:false, quando:MARE_DICAS_QUANDO, abrirAjuda:s=>openHelp(s.tab, s.q)});
+  setTimeout(()=>MareDicas.gatilho('boot'), 7000);   // depois do boot do board (loaders, overlays de versão)
+}
 function loadNotifs(){
   const user = window._currentUser; if(!user) return;
+  _mareDicasIniciar(user);
   if(_notifListener) return; // já registrado
   // SINO ÚNICO: o feed da torre (aviso do Mural do OKR, Objetivo criado, Marco concluído…) vem do módulo compartilhado mare-notif(-dev).js
   // e aparece misturado às notificações pessoais, igual em kanban/painel/OKR. Quem não tem acesso ao feed (freelancer) só não recebe esses itens.

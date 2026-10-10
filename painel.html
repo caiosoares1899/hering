@@ -2666,11 +2666,19 @@ window.MARE_SO_HERING = true;
           <button class="err-filter-btn" id="pcfg-tab-users"  onclick="setPcfgTab('users')">👥 Usuários</button>
           <button class="err-filter-btn" id="pcfg-tab-adm"    onclick="setPcfgTab('adm')">🔑 ADMs</button>
           <button class="err-filter-btn" id="pcfg-tab-links"  onclick="setPcfgTab('links')">🔗 Links</button>
+          <button class="err-filter-btn" id="pcfg-tab-dicas"  onclick="setPcfgTab('dicas')">💡 Dicas</button>
         </div>
       </div>
       <button class="x-btn" onclick="closeCfg()">✕</button>
     </div>
     <div class="cfg-body">
+
+      <!-- Aba Dicas (2026-10-09): lista de TODAS as dicas (mini popups) de Radar, Maré e Oceano, vindas do catálogo do módulo mare-dicas(-dev).js. Só leitura. -->
+      <div id="painel-cfg-dicas" style="display:none;">
+        <div class="cfg-sec">Dicas dos apps</div>
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:10px;line-height:1.5;">Os mini avisos que aparecem pra quem usa o <b>Radar</b>, o <b>Maré</b> e o <b>Oceano</b> (o Painel e o A Bordo não têm). Cada dica aparece uma vez só, quando a pessoa chega no lugar indicado. Quem quiser pode desligar na Ajuda de cada app. O ✅ mostra o que <b>você</b> já viu.</div>
+        <div id="pcfg-dicas-list"></div>
+      </div>
 
       <!-- Aba Links (2026-10-09): links importantes da Hering, mostrados na aba "Hering" do menu de produtos (9 pontinhos) de todas as páginas.
            Dado em kanban/config/links_hering/{id} = {titulo, desc, url, img, ordem}. Edição só pra ADM (na tela, como o Mural/ADMs). -->
@@ -2814,7 +2822,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.33 · painel</div>
+<div class="version">v5.35 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2918,6 +2926,7 @@ getRedirectResult(auth).then(result=>{
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif.js?v=16"></script>
+<script src="mare-dicas.js?v=3"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -7084,6 +7093,16 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_dicas_2026_10_10',
+    titulo: '💡 Dicas rápidas no Maré, no Radar e no Oceano',
+    corpo: '<p>Agora cada app mostra, de vez em quando, uma <b>dica curta</b> num cantinho da tela — um atalho ou um lugar útil que muita gente não descobre sozinha. Aparece <b>uma por vez</b>, só quando você chega no lugar certo, e <b>cada dica só uma vez</b>.</p>'
+      + '<p>Tem botão <b>Entendi</b> e <b>Saiba mais</b> (abre direto o tópico certo da Ajuda).</p>'
+      + '<p><b>Não gostou? Dá pra desligar</b> — por app: no próprio aviso (<i>Não mostrar dicas</i>) ou na Ajuda do app (💡 Dicas). Lá também tem <b>Rever dicas</b> pra ver tudo de novo.</p>'
+      + '<p>Administradores veem a lista completa em Painel → ⚙ Configurações → <b>💡 Dicas</b>.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_oceano_menu_apps_2026_10_09',
     titulo: '🌊 Conheça o Oceano + o novo menu de apps (com seus atalhos)',
     corpo: '<p>Chegou o <b>Oceano</b>, a página que reúne tudo do Maré num lugar só: Maré Digital, Painel, Radar e A Bordo. Abra em <a href="https://caiosoares1899.github.io/hering/oceano.html" target="_blank" rel="noopener"><b>caiosoares1899.github.io/hering/oceano.html</b></a> — entra com a conta Google da Hering e já mostra os botões dos produtos que você usa. Dá para <b>instalar como aplicativo</b> (o aplicativo do Maré Digital continua funcionando igual).</p>'
@@ -8829,13 +8848,32 @@ function removeDadosEditor(email){
 
 // ── GERENCIAMENTO DE USUÁRIOS PELO PAINEL ─────────────────────────
 function setPcfgTab(tab){
-  ['sprint','users','adm','links'].forEach(t=>{
+  ['sprint','users','adm','links','dicas'].forEach(t=>{
     const el=document.getElementById('painel-cfg-'+t); if(el) el.style.display=tab===t?'block':'none';
     const btn=document.getElementById('pcfg-tab-'+t); if(btn) btn.classList.toggle('active',tab===t);
   });
   if(tab==='users') loadPcfgUsers();
   if(tab==='adm'){ renderAdmList(); renderPainelViewers(); }
   if(tab==='links') loadPlinks();
+  if(tab==='dicas') renderPcfgDicas();
+}
+
+// ── 💡 DICAS DOS APPS (lista só leitura) — catálogo vem do módulo mare-dicas(-dev).js (MareDicas.catalogo()); o ✅ vem do próprio nó da pessoa ──
+async function renderPcfgDicas(){
+  const el = document.getElementById('pcfg-dicas-list'); if(!el) return;
+  if(!window.MareDicas){ el.innerHTML = '<div style="font-size:11px;color:var(--txt3);">Módulo de dicas não carregou.</div>'; return; }
+  const cat = MareDicas.catalogo(), u = window._currentUser;
+  let prefs = {off:{}, vistas:{}}; try{ prefs = await MareDicas.minhasPrefs(u); }catch(e){}
+  el.innerHTML = Object.keys(cat).map(app=>{
+    const c = cat[app], vistas = (prefs.vistas||{})[app]||{}, off = !!(prefs.off||{})[app];
+    const vi = c.dicas.filter(d=>vistas[d.id]).length;
+    return `<div style="margin-bottom:16px;">
+      <div class="cfg-sec" style="display:flex;align-items:center;gap:8px;">${esc(c.icone||'')} ${esc(c.nome)} <span style="font-weight:500;color:var(--txt3);text-transform:none;letter-spacing:0;">${c.dicas.length} dicas · você viu ${vi}${off?' · <span style="color:var(--warn);">desligadas pra você</span>':''}</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;">${c.dicas.map(d=>`<div style="display:flex;gap:9px;padding:8px 10px;border-radius:10px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb,6,26,46),.35);">
+        <span title="${vistas[d.id]?'Você já viu esta dica':'Você ainda não viu esta dica'}" style="flex:none;font-size:13px;line-height:1.4;">${vistas[d.id]?'✅':'⏳'}</span>
+        <div style="min-width:0;flex:1;"><div style="font-size:12px;color:var(--txt);line-height:1.45;">${esc(d.texto)}</div>
+          <div style="font-size:10.5px;color:var(--txt3);margin-top:3px;line-height:1.5;">📍 ${esc((c.gatilhos||{})[d.gatilho]||d.gatilho)}${d.ajuda?' · 📖 Saiba mais → '+esc(d.ajuda):' · sem "Saiba mais"'}</div></div></div>`).join('')}</div></div>`;
+  }).join('');
 }
 
 // ── 🔗 LINKS DA HERING (aba "Hering" do menu de produtos) ─────────────────────────────────────────

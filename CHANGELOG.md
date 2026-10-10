@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção pra prod: 💡 Dicas (Maré v8.30.814 · Radar v2.60 · Oceano v1.7 · Painel v5.35) — 2026-10-10
+- **Mini popups de dicas** nos 3 apps (Maré, Radar, Oceano): uma dica curta por vez, quando a pessoa chega no lugar certo, cada uma uma vez só (50 s entre duas, até 4 por visita). **Entendi · Saiba mais** (abre o tópico certo da Ajuda) **· Não mostrar dicas do app**. Liga/desliga por app e por pessoa (`kanban/usuarios/{uid}/dicas`), com interruptor 💡 e "Rever dicas" na Ajuda do Radar, na Central de Ajuda do Maré e em ⚙ Meu perfil do Oceano. Painel e A Bordo não mostram dicas.
+- **Painel → ⚙ Configurações → 💡 Dicas**: lista só leitura das 27 dicas (texto, onde aparece, tópico do "Saiba mais", e o ✅ do que você já viu).
+- **Correções da rodada de bugs**: externo (só leitura) não recebe dica de edição; a dica do lobby do Oceano não cobre um produto aberto; o interruptor não perde o foco nem acumula ouvintes; o "Saiba mais" do Maré abre o tópico certo em primeiro (a busca da Central de Ajuda agora põe o título antes do texto — vale pra toda busca); textos do catálogo corrigidos.
+- Novo módulo compartilhado `mare-dicas.js` (cópia de `mare-dicas-dev.js`, `?v=3` nas 4 páginas); `mare-notif.js` inalterado (v16). Promoção por merge de 3 vias; o diff de prod × dev é só linhas de ambiente. Regra permanente nova: toda funcionalidade nova avalia se vale uma dica (`CLAUDE.md`, passo 7). PRs #1334, #1335, #1336.
+
 ### 🐛 Dicas — rodada de /monitorarbugs: 5 achados corrigidos — 2026-10-09 · okr-dev v2.60 · kanban-dev v8.30.814-dev · oceano-dev v1.7 · painel-dev v5.35 (SÓ DEV)
 - **Externo (só leitura) recebia dica que manda editar** ("Atualize os Marcos…", "Converse com o Agente Ágil", "botão direito…"). O catálogo ganhou o marcador `edita` (6 dicas do Radar) e quem acompanha como visualizador só recebe as demais (Apresentação, atalhos do modal, Dashboard).
 - **Oceano: a dica de entrada aparecia POR CIMA do produto aberto** dentro do Oceano (app instalado abrindo direto no último produto, ou clique rápido num produto). As 3 dicas de entrada só aparecem com o lobby à vista.
