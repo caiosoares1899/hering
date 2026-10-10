@@ -18,6 +18,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: Dicas — no máximo 1 por dia por app — 2026-10-10 · kanban v8.30.821 · painel v5.41 · okr v2.65 · oceano v1.11 · mare-dicas.js v4 (sem avisos)
+Sobe pra produção o ritmo novo das dicas (mini popups), validado em dev (kanban-dev v8.30.821, painel-dev v5.41, okr-dev v2.65, oceano-dev v1.11, mare-dicas-dev v4).
+- **Antes:** até 4 dicas por abertura da página, com 50 s entre elas. **Agora:** **no máximo 1 dica por dia, por app** (Maré, Radar e Oceano contam separado), no dia do calendário da pessoa. Cada dica continua aparecendo **uma vez só**; amanhã vem a próxima ainda não vista. "Rever dicas" recomeça; desligar vale por app.
+- A data da última dica fica em `kanban/usuarios/{uid}/dicas/ultima/{app}` (mesmo nó das dicas vistas, sem mudar regra) e também no aparelho; ao juntar aparelho e Firebase vale o dia mais recente.
+- Textos atualizados: Ajuda do Maré ("Dicas (mini popups)"), aba 💡 Dicas do Painel e o interruptor da Ajuda dos apps.
+- Dica: não — é a própria regra das dicas.
+
 ### 🚀 Promoção: Central de Notificações + correções de notificação — 2026-10-10 · kanban v8.30.820 · painel v5.40 · okr v2.64 · oceano v1.10 · mare-notif.js v19 (sem avisos)
 Sobe pra produção o lote validado em dev (kanban-dev v8.30.818→820, painel-dev v5.38→5.40, okr-dev v2.62→2.64, oceano-dev v1.8→1.10, mare-notif-dev v17→19). Detalhes de cada item nas entradas de dev correspondentes.
 - **🔔 Central de Notificações (Painel → aba Notificações):** catálogo dos 29 tipos de aviso (quando disparam, quem recebe, onde nascem), interruptores de **sino** e **push** por tipo (valem pra todo mundo; só PO/ADM gravam), quem está com Não Perturbe, uso dos últimos 7 dias. Os 4 sinos (Maré, Painel, Radar, Oceano) respeitam o interruptor ao vivo.
