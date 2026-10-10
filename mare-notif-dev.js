@@ -477,9 +477,9 @@
   const APPS = [
     {id:'oceano', nome:'Oceano', sub:'Lobby e boas-vindas', href:PAGES.oceano, img:'favicon-oceano.png'},   // o lobby da família: NÃO é tile da grade — é o título do popover (link, só pra quem é da Hering)
     {id:'kanban', nome:'Maré Digital', sub:'Kanban dos squads',   href:PAGES.kanban, img:'favicon.png'},   // a logo do Maré Digital já existe (favicon.png de PRODUÇÃO, também nas páginas -dev)
-    {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, img:'favicon-painel-v2.png'},   // logo do Painel (a ponte de comando) — a mesma da aba do navegador
+    {id:'painel', nome:'Painel', sub:'Gestão e pessoas',        href:PAGES.painel, img:'favicon-painel-v2.png?v=3'},   // logo do Painel (a ponte de comando) — a mesma da aba do navegador
     {id:'okr',    nome:'Radar',        sub:'Objetivos e OKRs',    href:PAGES.okr, img:'favicon-radar.png'},   // logo do Radar (peixinhos no radar) — a mesma da aba do navegador
-    {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', img:'favicon-bordo-v2.png'},   // logo do A Bordo (o convés) — a mesma da aba do navegador
+    {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas',         href:'onboarding.html', img:'favicon-bordo-v2.png?v=3'},   // logo do A Bordo (o convés) — a mesma da aba do navegador
   ];
   const APP_OCEANO = APPS.find(a=>a.id==='oceano');
   const appsSt = {opts:null, uso:{}, aberto:false, tab:'produtos', links:{hering:null, meus:null}};
