@@ -304,3 +304,36 @@ test('responder: grava mensagem no chat com autoria do agente', async () => {
   assert.equal(msg.uid, 'agente-agil');
   assert.equal(msg.text, 'Feito, adicionei o progresso.');
 });
+
+// ── consultar_ajuda (leitura da base de conhecimento) ───────────────────
+
+test('consultar_ajuda: existe, é só leitura (sem db) e acha a Ajuda do Radar por palavra-chave', async () => {
+  const t = toolByName(buildOkrTools(), 'consultar_ajuda');
+  assert.ok(t && t.description.length > 100);
+  assert.deepEqual(t.input_schema.required, ['busca']);
+  const r = await t.handler({ busca: 'registrar valor atingimento' });
+  assert.equal(r.ok, true);
+  assert.ok(r.verbetes.length > 0 && r.verbetes.length <= 5);
+  assert.ok(r.verbetes.some((v) => /Radar/.test(v.grupo)), r.verbetes.map((v) => v.grupo).join(' | '));
+  r.verbetes.forEach((v) => assert.doesNotMatch(v.texto, /<[a-z][\s\S]*>/i));
+  // mesmo handler no modo real (nunca toca o db)
+  const real = toolByName(buildOkrTools({ mode: 'real', db: {}, requestingUid: 'u1' }), 'consultar_ajuda');
+  assert.equal((await real.handler({ busca: 'registrar valor atingimento' })).ok, true);
+});
+
+test('consultar_ajuda: sem resultado avisa (sem inventar); entrada inválida volta erro claro', async () => {
+  const t = toolByName(buildOkrTools(), 'consultar_ajuda');
+  const vazio = await t.handler({ busca: 'zzzxqwy' });
+  assert.deepEqual(vazio.verbetes, []);
+  assert.match(vazio.aviso, /não souber|inventar|Nada casou/i);
+  assert.equal((await t.handler({})).error, 'invalid_input');
+});
+
+test('consultar_ajuda: o Radar só fala da torre Digital (a cisão com a Arezzo) e o prompt cita a ferramenta', async () => {
+  const t = toolByName(buildOkrTools(), 'consultar_ajuda');
+  const r = await t.handler({ busca: 'torres gerências quem pode editar' });
+  const radar = r.verbetes.filter((v) => /Radar/.test(v.grupo));
+  radar.forEach((v) => assert.doesNotMatch(v.titulo, /^Torres e gerências|Minha torre está errada/));
+  const { SYSTEM_PROMPT_OKR_V1 } = require('../agentePrompt');
+  assert.match(SYSTEM_PROMPT_OKR_V1, /consultar_ajuda/);
+});

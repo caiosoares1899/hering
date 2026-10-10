@@ -3348,3 +3348,20 @@ squad `dev` (`NOTIFICAR_ESPECIALISTA_SQUADS`, `squadScope.js`), mas
 o bundle de código de cada função só pega a correção depois de
 redeployada:
 `firebase deploy --only functions:agenteAgilIntake,functions:agenteAgilMencao`
+
+
+## Base de conhecimento GERADA (`conhecimento/`, 2026-10-10)
+
+`biblioteca_agil` (orquestrador de cards) e `consultar_ajuda` (chat do Radar) leem 4 arquivos **gerados** — nunca editados à mão:
+
+| Arquivo | Fonte | O que é |
+|---|---|---|
+| `ajudaMare.json` | `HELP_CONTENT` de `kanban.html` (produção) | 122 verbetes da Central de Ajuda do Maré, sem HTML |
+| `ajudaRadar.json` | `okr.html` (`<details class="hlp-it">`) | Ajuda do Radar — já sem o que o modo só Hering esconde (torres, login Microsoft) |
+| `ajudaOceano.json` | `oceano.html` (`const FAQ`) | FAQ do Oceano |
+| `novidades.json` | `CHANGELOG.md`, seção de produção | 30 novidades mais recentes (sem "SÓ DEV") |
+
+- **Regenerar:** `cd functions && npm run conhecimento` (e commitar). O teste `conhecimento.test.js` falha se esquecer.
+- **Quando:** sempre que mudar o `HELP_CONTENT`, a Ajuda do Radar/Oceano ou depois de promover pra prod (a entrada do CHANGELOG vira "novidade").
+- **Deploy:** Cloud Functions não leem o repositório em runtime — os JSON entram no pacote. Depois de regenerar, republicar `agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO` e `okrAgenteChat`.
+- **Busca:** `conhecimento/busca.js` (palavra-chave sem acento, radical, título pesa 4×, novidades 0,4×). Verbetes curados à mão (família Oceano, cisão com a Arezzo) ficam em `tools/bibliotecaAgil.js` (`ECOSSISTEMA_OCEANO`).

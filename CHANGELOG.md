@@ -40,6 +40,9 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📘 Radar: Ajuda "Link direto do Objetivo" não cita mais a Arezzo no modo só Hering — 2026-10-10 · okr-dev v2.66 (SÓ DEV)
+- A entrada da Ajuda dizia que quem recebe o link precisa de login "@ciahering, @arezzo ou visualizador autorizado" — no modo só Hering o login Arezzo não existe. O trecho `@arezzo` passou a usar a classe `ms-login` (que o modo só Hering esconde). Achado ao gerar a base de conhecimento do Agente Ágil a partir da Ajuda.
+
 ### 🐛 Notificações — /monitorarbugs (2ª rodada): 3 achados + 1 regressão do fix anterior — 2026-10-10 · painel-dev v5.40 · kanban-dev v8.30.820-dev · okr-dev v2.64 · oceano-dev v1.10 · mare-notif-dev v19 · `functions/` (SÓ DEV)
 Pedido: "como notificação é sensível, roda outro". Tudo reproduzido (testes vermelhos) antes de corrigir.
 - **Regressão do fix da rodada anterior (minha).** Pôr `sinoLigado()` dentro de `viva()` fez Painel, Radar e Oceano **descartarem da lista pessoal** a notificação cujo snapshot chegava antes da config (`viva()` era chamada na montagem da lista, não no desenho) — selo vazio até o próximo snapshot — e, pelo mesmo motivo, **religar um tipo ao vivo não trazia a notificação de volta**. Agora `viva()` é só o prazo (TTL) e o filtro do interruptor fica no desenho (onde as 4 páginas já filtravam). Junto: `novas()` só inicia a janela "fria" de 3 s depois da config (senão a lista que já existia chegava "nova" e tocava o ding quando a config demorava >3 s).
@@ -20402,6 +20405,16 @@ aplicável) ou endpoints escopados por playlist/faixa diretamente, nunca
 `/users/{id}/...`. Não era a causa, e não há nada a corrigir por esse
 lado por enquanto — só fica registrado aqui caso alguém precise cruzar
 essa informação de novo no futuro.
+
+## Cloud Functions — Agente Ágil (orquestrador + chat do Radar) — 2026-10-10 · conhecimento atualizado: cisão com a Arezzo, família Oceano e funcionalidades novas
+Pedido: "atualizar o agente sobre a cisão com a Arezzo, voltar a dar conhecimento sobre o código e suas atualizações, o Oceano e as funcionalidades novas". Diagnóstico: a ferramenta `biblioteca_agil` (a base de conhecimento do orquestrador de cards) tinha 16 verbetes escritos à mão e parados desde agosto — nada de Meu Dia, Automações, Pausar, Contínuo, Raias, Canal, Dicas, Central de Notificações, Oceano/Radar; o prompt do orquestrador nunca soube que o Maré virou só-Hering. (O chat do Agente Ágil no Radar já conhecia torre única/Radar/atingimento desde 07–08/10.)
+- **Base de conhecimento GERADA das páginas** (`functions/agente-agil-orquestrador/conhecimento/`, `npm run conhecimento`): `ajudaMare.json` (122 verbetes, o `HELP_CONTENT` de `kanban.html`), `ajudaRadar.json` (40, a Ajuda do Radar de `okr.html` — já sem o que o modo só Hering esconde: torres, login Microsoft), `ajudaOceano.json` (14, o FAQ de `oceano.html`) e `novidades.json` (30 entradas de produção do `CHANGELOG.md`, sem as "SÓ DEV"). Nunca mais escrita à mão.
+- **`biblioteca_agil` ganhou `busca`** (palavras-chave, sem acento/maiúscula, com radical): devolve até 5 verbetes completos (Ajuda do Maré/Radar/Oceano, conceitos ágeis, família Oceano, novidades — estas com peso menor); sem `busca` devolve só os conceitos, a família Oceano, o ÍNDICE de toda a Ajuda e as novidades mais recentes (~15 KB, não os 180 KB).
+- **Família Oceano + cisão** (verbetes curados): o que é Maré/Painel/Radar/A Bordo/Oceano; **"Maré só Hering"** (login só Google @ciahering.com.br, OKR de uma torre só — Digital, @menção só @ciahering; Arezzo/Microsoft/torres Comercial e Corporativa desligadas por interruptor, não apagadas); Radar (Objetivos, Marcos, atingimento); Painel + Central de Notificações; sino único e Não Perturbe; Dicas (1 por dia por app).
+- **Prompt do orquestrador** (`systemPrompt.js`, nota 11): nova seção "Contexto do produto" (família Oceano, só Hering, dizer "Radar") e o bullet de `biblioteca_agil` explica `busca`, o índice e "se não cobrir, diga que não sabe".
+- **Chat do Radar** (`okr/`): nova ferramenta de LEITURA `consultar_ajuda` (mesma base) + linha no prompt — responde "como faço…/onde fica…/o que mudou" sem inventar.
+- **Anti-drift:** `conhecimento.test.js` FALHA se qualquer `ajuda*.json` ficar diferente do HELP_CONTENT/okr.html/oceano.html, ou se a novidade mais recente do CHANGELOG não estiver em `novidades.json` → quem mexer na Ajuda precisa rodar `npm run conhecimento` (passo novo nas skills `/atualizarhelpcontent` e `/subirproprod`).
+- **Testes:** `functions/` 753/753 (eram 740). ⚠️ **Exige deploy** (resincronizar o clone antes): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat` — os JSON entram no pacote; a Cloud Function não lê o repositório em tempo de execução.
 
 ## Cloud Function — Agente Ágil — 2026-10-08 · tier `haiku` passa pro Haiku 5.5
 

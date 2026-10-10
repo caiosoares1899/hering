@@ -69,6 +69,10 @@ deve ir pra prod, confirme o escopo também.
 10. Tenta criar e empurrar as tags de release (`kanban-vX.Y.Z` no commit
     de merge) — ver nota sobre 403 abaixo se falhar.
 
+## Passo 1.1 — Regenerar o conhecimento do Agente Ágil (2026-10-10)
+
+Depois que `kanban.html`/`okr.html`/`oceano.html` de produção mudarem (Ajuda nova) e a entrada de CHANGELOG da promoção estiver escrita, o Agente Ágil precisa "saber" disso: `cd functions && npm run conhecimento && npm test`, commitar os `conhecimento/*.json` (no mesmo PR da promoção ou num de acompanhamento) e **avisar o usuário** que o agente só enxerga depois do deploy manual das funções (`agenteAgilMencao`, `agenteAgilMencaoDados`, `agenteAgilIntake`, `agenteAgilAnalisePO`, `okrAgenteChat` — resincronizar o clone antes). O teste `conhecimento.test.js` já falha se a novidade mais recente do CHANGELOG não estiver no JSON.
+
 ## Passo 2 — Avisos (Mural + WhatsApp)
 
 Pule este passo SÓ se o usuário disser explicitamente pra pular (ex.:

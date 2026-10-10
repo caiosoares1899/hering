@@ -110,6 +110,14 @@ node --check /tmp/help_check.js
 
 Desde 2026-10-09 (regra permanente do `CLAUDE.md`, passo 7 do Release process): ao documentar uma funcionalidade **nova e visível** de Radar, Maré ou Oceano, avalie também se vale uma dica no `CATALOGO` de `mare-dicas-dev.js` — uma frase curta, com `saiba` apontando pro tópico que você acabou de escrever/atualizar (e `ajuda` com o nome dele, pra lista do Painel). Diga na resposta o que decidiu.
 
+## Passo 5.1 — Regenerar o conhecimento do Agente Ágil (obrigatório, 2026-10-10)
+
+O Agente Ágil (orquestrador de cards e chat do Radar) lê a Ajuda do Maré/Radar/Oceano de arquivos **gerados** em `functions/agente-agil-orquestrador/conhecimento/`. Depois de qualquer mudança no `HELP_CONTENT`, na Ajuda do Radar (`okr(-dev).html`) ou no FAQ do Oceano:
+```bash
+cd functions && npm run conhecimento && npm test   # o teste conhecimento.test.js falha se esquecer
+```
+Commite os JSON junto. A fonte é a página de **produção** (`kanban.html`/`okr.html`/`oceano.html`) — então a regeneração que "vale" é a feita depois da promoção. As funções do agente só enxergam o novo conteúdo depois do deploy manual (resincronizar o clone antes): `firebase deploy --only functions:agenteAgilMencao,functions:agenteAgilMencaoDados,functions:agenteAgilIntake,functions:agenteAgilAnalisePO,functions:okrAgenteChat`.
+
 ## Passo 6 — Fluxo de release
 
 Mesmo processo do `CLAUDE.md` ("Release process") — texto de ajuda é

@@ -7,7 +7,15 @@
 // atuar como "braço de PO" — não só agir sobre o card atual, mas também
 // explicar/orientar sobre o board em si.
 //
-// DUPLICAÇÃO DELIBERADA: todo o texto abaixo é extraído e adaptado de
+// 2026-10-10 (pedido: "atualizar o agente sobre a cisão com a Arezzo, os códigos e suas atualizações, o Oceano e as funcionalidades novas"):
+// o grupo "Como o board funciona" deixou de ser texto escrito à mão (16 verbetes parados em agosto) e passou a vir de
+// `conhecimento/ajudaMare.json` — GERADO a partir do HELP_CONTENT de kanban.html (122 verbetes, mesma redação que as pessoas leem) por
+// `npm run conhecimento` (conhecimento/gerar.js); o teste `conhecimento.test.js` falha se o JSON ficar diferente do HELP_CONTENT.
+// `conhecimento/novidades.json` traz o que mudou (CHANGELOG, seção de produção). Como são ~120 mil caracteres, a ferramenta ganhou o parâmetro
+// `busca`: sem ele devolve só os conceitos ágeis + o ÍNDICE (títulos) e as novidades mais recentes; com ele devolve os verbetes que casam.
+// Cloud Functions não leem o repositório em runtime: os JSON entram no pacote do deploy — regenerar exige republicar as funções do orquestrador.
+//
+// DUPLICAÇÃO DELIBERADA (histórico, vale pros CONCEITOS_AGEIS abaixo): todo o texto abaixo é extraído e adaptado de
 // `HELP_CONTENT` em kanban-dev.html (abas 'agil', 'board', 'cards',
 // 'config', 'comunicacao') — mesmo precedente já usado em
 // `agente-agil/flow.js` e `tools/visaoBoard.js`: kanban.html não tem
@@ -29,7 +37,17 @@
 // retrabalho.
 const { z } = require('zod');
 
-const bibliotecaAgilSchema = z.object({});
+const MAX_NOVIDADES_INDICE = 12;
+
+const bibliotecaAgilSchema = z.object({
+  busca: z
+    .string()
+    .max(200)
+    .optional()
+    .describe(
+      'Palavras-chave do que você quer saber (ex.: "recorrência", "pausar card", "Radar atingimento", "o que mudou nas dicas"). Sem este campo você recebe só os conceitos ágeis + o índice de tudo que existe; com ele, os verbetes completos que casam.',
+    ),
+});
 
 const CONCEITOS_AGEIS = [
   {
@@ -79,96 +97,104 @@ const CONCEITOS_AGEIS = [
   },
 ];
 
-const COMO_BOARD_FUNCIONA = [
+// O ecossistema Oceano e a "cisão" com a Arezzo — curado à mão (não existe no HELP_CONTENT do board). Fonte: CLAUDE.md, docs/OCEANO.md, docs/arezzo/MARE_SO_HERING.md.
+const ECOSSISTEMA_OCEANO = [
   {
-    titulo: 'Itens recorrentes',
+    titulo: 'A família Oceano (Maré, Painel, Radar, A Bordo)',
     texto:
-      'Cards que se repetem a cada sprint — entregas fixas, rituais, rotinas. Ao clicar em "✅ Usar", o card é criado no Backlog pré-preenchido.\n\nComo criar: abra ⚡ Funções (toolbar) → 🔁 Recorrentes → "+ Recorrente", preencha título, tag e opcionalmente descrição e responsável, salve — fica permanente na lista.\n\nComo usar na sprint: clique em "✅ Usar" num item — o card é criado no Backlog. O mesmo item pode ser usado sprint após sprint, sem recriar.',
+      'O que antes era tudo "Maré Digital" virou a família Oceano: Maré Digital (o kanban/board), Painel (administração: pessoas, comunicados, push manual, Central de Notificações, dados), Radar (a página de OKR — Objetivos, Marcos, atingimento, calendário, Mural, apresentação ao vivo), A Bordo (onboarding) e Travessia (futuro: performance/gente). A página Oceano é o lobby: login, vitrine por pessoa, personalização, ajuda e, quando instalada como app, o "host" que abre os produtos. Só os nomes visíveis mudaram — "OKR" continua sendo a metodologia, o papel "Gestor OKR" e o selo dos cards. Ao falar da página de OKR diga "Radar". O menu de produtos (⋮⋮⋮) leva entre os produtos e tem as abas Produtos · Hering (links da empresa) · Meus links (pessoais).',
   },
   {
-    titulo: 'Recorrência automática',
+    titulo: 'Maré só Hering (a cisão com a Arezzo)',
     texto:
-      'Um card pode se recriar automaticamente no board sem intervenção manual. Abra o card, vá em Recorrência e escolha o intervalo: a cada N dias, toda semana num dia fixo, dias úteis (segunda a sexta, pula fim de semana), ou todo mês numa data fixa. Quando o prazo chega e o board é aberto, o card renasce na coluna configurada com todo o conteúdo original (título, tag, responsável, checklist). Ideal para rituais recorrentes como relatórios, posts ou revisões.\n\nDiferença pra "Itens recorrentes": ali é o time que clica "Usar" manualmente a cada sprint; aqui o card se recria sozinho, sem ninguém precisar lembrar.',
+      'O Maré passou a atender SÓ a Hering: o login é só Google com e-mail @ciahering.com.br (o login Microsoft/Arezzo fica desligado por um interruptor, não apagado), o OKR tem uma torre só (Digital — Comercial e Corporativa não aparecem pra ninguém) e @menção só alcança quem é @ciahering. Por isso: não fale de Arezzo, de login Microsoft nem de torres Comercial/Corporativa como se existissem; se alguém perguntar, explique que foram separadas e ficam desligadas (dá pra religar, mas hoje não é o caso). Dados antigos dessas áreas continuam gravados mas escondidos.',
   },
   {
-    titulo: 'Modelos',
+    titulo: 'Radar (OKR): Objetivos, Marcos e atingimento',
     texto:
-      'Cards template com tudo pré-preenchido: tag, descrição, Insights do PO, checklist e riscos. Perfeito para tarefas que sempre seguem o mesmo padrão.\n\nComo criar: a partir de um card existente (rodapé do modal → 📋 Modelo) ou do zero (⚡ Funções → 📋 Modelos → "+ Modelo").\n\nComo usar: clique em "✅ Usar" — card criado no Backlog com tudo preenchido. Campos obrigatórios podem ser marcados no modelo, exigindo preenchimento antes de criar o card.',
+      'No Radar, cada Objetivo pertence a uma gerência da torre Digital e tem Marcos (atividades macro) com status nao_iniciado, no_prazo, risco, atrasado ou concluido. O Objetivo pode ter um atingimento (meta com % de cumprimento): Financeira, Porcentagem, Número, Atingido/Não atingido, Manter acima/abaixo de, Data de entrega ou ♾️ Perene; a barra anda pelo % do atingimento (ou pelos Marcos concluídos, se não houver). Tem calendário de reuniões/eventos (com repetição), Mural de avisos 📢 com selo, apresentação ao vivo (laser, caneta, passar o controle), histórico semanal e dashboard. Quem edita: ADM, PO/Organizador/Gestor OKR e o Responsável do Objetivo. Pra mexer em OKR por conversa existe o chat do Agente Ágil dentro do Radar (botão flutuante) — aqui no card você não edita Objetivos.',
   },
   {
-    titulo: 'Ficha Técnica (produção criativa)',
+    titulo: 'Painel (administração) e Central de Notificações',
     texto:
-      'Em Config → Criativos, PO/ADM/Organizador pode ativar a Ficha Técnica — pra times que produzem peças criativas, no lugar de planilha de controle. Com ela ativa, cada card ganha campos extras: Campanha, Funil, Etapa do Funil, Canal, Objetivo, Plataforma, Tipo, Formato, Variações e Direcional de Mídia. Todos obrigatórios pra salvar o card, exceto Direcional de Mídia. As opções de Canal/Objetivo/Plataforma/Tipo/Formato são listas fechadas, geridas pelo PO em Config → Criativos.\n\nUm supercard (ver "Supercard") não tem ficha própria — a seção some e deixa de ser obrigatória assim que o card ganha o primeiro filho, porque cada filho tem sua própria ficha.\n\nImportante pro Agente Ágil: hoje o agente NÃO sabe preencher a Ficha Técnica — se o squad tem ela ativa, ele recusa criar o card sozinho nesse caso e pede pra um humano preencher.',
+      'O Painel é a área de ADM/PO: pessoas e papéis, Mural/Comunicados (inclusive urgentes e push manual), campanhas, dados do board (Visão e Fluxo — WIP, throughput, cycle/lead time, aging, CFD), backups, usuários globais e a Central de Notificações (aba 🔔): o catálogo de todos os tipos de aviso (quando disparam, quem recebe), interruptores de sino e de push por tipo (valem pra todo mundo; só PO/ADM gravam) e quem está com Não Perturbe. Desligar o sino só esconde; nada é apagado. O Painel não mostra dicas.',
   },
   {
-    titulo: 'Dependências entre cards',
+    titulo: 'Notificações, sino único e Não Perturbe',
     texto:
-      'No campo Dependência dentro do card, vincule um card pai. O card filho mostra uma barra no topo indicando de que depende. O mapa de Dependências (toolbar) mostra todas as relações visualmente. Diferente de "Cards vinculados": aqui existe uma relação de ordem/bloqueio (pai → filho), não só uma referência solta.',
+      'O sino 🔔 é o mesmo no Maré, no Painel, no Radar e no Oceano: mostra as notificações pessoais (atribuição, menção, prazo, risco, reunião...) e o feed da torre (aviso do Mural, Objetivo criado, Marco concluído). Cada pessoa pode ativar o push no aparelho e usar o Não Perturbe (silencia som e push por um tempo). Notificações lidas somem em 3 dias, as não lidas em 30. O ADM pode desligar o sino e/ou o push de um tipo inteiro na Central de Notificações do Painel.',
   },
   {
-    titulo: 'Cards vinculados',
+    titulo: 'Dicas (mini popups)',
     texto:
-      'Vincule cards relacionados entre si, sem relação de bloqueio ou hierarquia — só uma referência cruzada. O card exibe os vínculos com o status atual de cada um. O Agente Ágil enxerga os vínculos ao analisar o board.',
-  },
-  {
-    titulo: 'Checklist',
-    texto:
-      'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board.',
-  },
-  {
-    titulo: 'Riscos',
-    texto:
-      'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.',
-  },
-  {
-    titulo: 'Menções',
-    texto:
-      'No campo de descrição, comentário ou nas Campanhas, digite @ para mencionar um membro do time (a pessoa recebe notificação no sino 🔔), ou @card: para vincular outro card (abre um seletor de busca).',
-  },
-  {
-    titulo: 'Peça vinculada (Milanote)',
-    texto:
-      'Dentro do card, o campo "Peça no Milanote" vincula o link do board/peça já criada no Milanote. O card ganha um botão "🎨 Abrir peça no Milanote" e um selo 📌 na lista do board, sinalizando de longe que aquele card tem um criativo associado — útil pra saber se a arte já está em produção sem abrir o card.',
-  },
-  {
-    titulo: 'Lembretes direcionados',
-    texto:
-      'PO e Organizador podem criar lembretes (Configurações → 📌 Lembretes) para um membro específico ou para a squad inteira. O destinatário vê um post-it marcado com 🎯; cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad". É um canal de comunicação da gestão pro time dentro do próprio board, separado dos comentários de card.',
-  },
-  {
-    titulo: 'Campanhas & Coleções',
-    texto:
-      'Cada campanha/coleção (📣 Campanhas na toolbar) é vinculada a uma tag do board — todos os cards com essa tag entram automaticamente. Dentro da campanha aparece o fluxo dos cards vinculados e um histórico de entradas: aprendizados 💡, resultados 📊, problemas 🚧, links 🔗 e registros 📝. Configura-se nome, mote, período, squads participantes (multi-squad) e tema visual da estação.',
-  },
-  {
-    titulo: 'Arquivados',
-    texto:
-      'Cards podem ser arquivados (botão Arquivar no modal) em vez de excluídos — ficam fora do board ativo mas continuam existindo, visíveis e restauráveis em "Arquivados" na toolbar (com filtros por nome, tag e responsável). Diferente de excluir, arquivar é reversível.',
-  },
-  {
-    titulo: 'Supercard (cards filhos)',
-    texto:
-      'Quando um pedido único vira vários cards por formato/veículo/teste diferente (ex.: mídia paga em Feed, Stories, Reels), agrupe num supercard em vez de espalhar solto no board. Dentro do card, em 🔗 Vínculos & anexos → "🧩 Cards filhos (supercard)", vincule um card existente ou crie um filho na hora — ele nasce herdando coluna, prazo, prioridade e demandante do pai. O card pai mostra no board o total concluído (ex.: "3/6 concluído(s)"). Os filhos são cards independentes (cada um anda na própria coluna, com seu responsável e prazo) — nenhum filho bloqueia o outro, diferente de "Dependências". Um card com filhos perde a seção de Ficha Técnica própria (ver "Ficha Técnica").',
-  },
-  {
-    titulo: 'Prazo e Submarca obrigatórios',
-    texto:
-      'Todo card precisa de um Prazo pra salvar — sem data definida ainda, use o botão "🚫 Sem prazo definido" em vez de chutar uma data. Em squads que usam o campo Submarca, escolher a submarca também é obrigatório. Vale pra criar e editar, pelo modal ou pelo Agente Ágil: o agente segue a mesma regra — recusa criar um card sem Submarca válida quando o squad exige, e um card criado sem prazo informado nasce marcado como "sem prazo definido" em vez de ficar num estado inválido.',
-  },
-  {
-    titulo: 'Agentes de IA cadastrados no board',
-    texto:
-      'Além de pessoas, um squad pode cadastrar identidades de IA (nome, iniciais, cor, emoji) em Config → Usuários → "🤖 Agentes de IA" — elas aparecem lado a lado com gente de verdade nos seletores de Responsável/Participante de um card. Um agente cadastrado NÃO tem login próprio — é só uma identidade visual/organizacional, diferente do Agente Ágil (você mesmo). Quando você (o Agente Ágil) muda algo de verdade num card que já tem um desses agentes como responsável ou participante, um comentário adicional marcando esse agente é postado automaticamente depois da sua resposta — não precisa fazer isso você mesmo. Use a ferramenta cards_por_agente pra consultar quais cards já são de um agente específico (ou ver todos agrupados) antes de sugerir organizar/redistribuir trabalho entre agentes.',
+      'As dicas são mini avisos no canto da tela com um truque ou lugar útil. Aparecem no máximo UMA por dia em cada produto (Maré, Radar e Oceano contam separado) e cada dica uma vez só; "Saiba mais" abre o assunto na Ajuda e "Não mostrar dicas" desliga por produto. Dá pra religar e rever em Ajuda → 💡 Dicas. O Painel e o A Bordo não mostram dicas.',
   },
 ];
 
+// ── conhecimento gerado (ver conhecimento/gerar.js) ──
+function lerJson(nome) {
+  try {
+    // eslint-disable-next-line global-require, import/no-dynamic-require
+    return require(`../conhecimento/${nome}.json`);
+  } catch (e) {
+    return [];
+  }
+}
+const AJUDA_MARE = lerJson('ajudaMare');
+const NOVIDADES = lerJson('novidades');
+const { ABAS } = require('../conhecimento/gerar');
+
+const AJUDA_RADAR = lerJson('ajudaRadar');
+const AJUDA_OCEANO = lerJson('ajudaOceano');
+const busca = require('../conhecimento/busca');
+
+function candidatos() {
+  const c = [];
+  CONCEITOS_AGEIS.forEach((v) => c.push({ grupo: 'Conceitos ágeis', titulo: v.titulo, texto: v.texto }));
+  ECOSSISTEMA_OCEANO.forEach((v) => c.push({ grupo: 'Família Oceano', titulo: v.titulo, texto: v.texto }));
+  AJUDA_MARE.forEach((v) => c.push({ grupo: `Ajuda do Maré · ${ABAS[v.aba] || v.aba}`, titulo: v.titulo, texto: v.texto }));
+  AJUDA_RADAR.forEach((v) => c.push({ grupo: 'Ajuda do Radar', titulo: v.titulo, texto: v.texto }));
+  AJUDA_OCEANO.forEach((v) => c.push({ grupo: 'Ajuda do Oceano', titulo: v.titulo, texto: v.texto }));
+  NOVIDADES.forEach((v) => c.push({ grupo: 'Novidades', titulo: v.titulo, texto: v.texto, data: v.data, peso: 0.4 }));
+  return c;
+}
+
+function buscar(texto) {
+  return busca.buscar(candidatos(), texto);
+}
+
+function indiceAjuda() {
+  const porAba = {};
+  AJUDA_MARE.forEach((v) => {
+    const nome = ABAS[v.aba] || v.aba;
+    (porAba[nome] = porAba[nome] || []).push(v.titulo);
+  });
+  if (AJUDA_RADAR.length) porAba['Radar (OKR)'] = AJUDA_RADAR.map((v) => v.titulo);
+  if (AJUDA_OCEANO.length) porAba['Oceano'] = AJUDA_OCEANO.map((v) => v.titulo);
+  return porAba;
+}
+
 function makeBibliotecaAgilHandler() {
-  return async function bibliotecaAgilHandler() {
+  return async function bibliotecaAgilHandler(input) {
+    const busca = input && typeof input.busca === 'string' ? input.busca.trim() : '';
+    if (busca) {
+      const verbetes = buscar(busca);
+      if (verbetes && verbetes.length) return { busca, verbetes };
+      return {
+        busca,
+        verbetes: [],
+        aviso: 'Nada casou com essa busca. Tente outras palavras (nome da funcionalidade, como aparece na tela) ou chame sem busca pra ver o índice de tudo que existe.',
+      };
+    }
     return {
+      como_usar:
+        'Esta é a base de conhecimento do Maré Digital e do Oceano. Abaixo: os conceitos ágeis e a família Oceano completos, o ÍNDICE (títulos) de toda a Ajuda do Maré e as novidades mais recentes. Pra ler um verbete ou uma novidade inteira, chame de novo com `busca` (ex.: "pausar card", "automação gatilho", "Radar atingimento").',
       grupos: [
         { nome: 'Conceitos ágeis', verbetes: CONCEITOS_AGEIS },
-        { nome: 'Como o board funciona', verbetes: COMO_BOARD_FUNCIONA },
+        { nome: 'Família Oceano', verbetes: ECOSSISTEMA_OCEANO },
       ],
+      indice_ajuda_do_mare: indiceAjuda(),
+      novidades_recentes: NOVIDADES.slice(0, MAX_NOVIDADES_INDICE).map((n) => ({ data: n.data, titulo: n.titulo })),
     };
   };
 }
@@ -176,6 +202,11 @@ function makeBibliotecaAgilHandler() {
 module.exports = {
   bibliotecaAgilSchema,
   CONCEITOS_AGEIS,
-  COMO_BOARD_FUNCIONA,
+  ECOSSISTEMA_OCEANO,
+  AJUDA_MARE,
+  AJUDA_RADAR,
+  AJUDA_OCEANO,
+  NOVIDADES,
+  buscar,
   makeBibliotecaAgilHandler,
 };
