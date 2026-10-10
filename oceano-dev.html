@@ -509,13 +509,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=20"></script>
+<script src="mare-notif-dev.js?v=21"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.12 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.13 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -533,7 +533,7 @@ const APPS = [
   {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
   {id:'painel', nome:'Painel', sub:'Gestão e pessoas', href:P('painel'), img:'favicon-painel-v2.png', pt:'A visão de quem coordena'},
   {id:'okr', nome:'Radar', sub:'Objetivos e OKRs', href:P('okr'), img:'favicon-radar.png?v=2', pt:'Estratégia que anda junto com a entrega'},
-  {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas ao time', href:'onboarding.html', g:['#ffb347','#d9731a'], glifo:SVG_BORDO, pt:'Quem chega já começa andando'},
+  {id:'onboarding', nome:'A Bordo', sub:'Boas-vindas ao time', href:'onboarding.html', img:'favicon-bordo-v2.png', pt:'Quem chega já começa andando'},
   {id:'travessia', nome:'Travessia', sub:'Performance e gente', href:'', g:['#3fd3c5','#1b7f8f'], glifo:SVG_TRAV, futuro:true, pt:'O próximo trecho da viagem'},
 ];
 const EXTRA = [];   // documentos abertos dentro do Oceano (maredigital.html, guia-okr.html): têm aba no host, mas não aparecem nas listas de produtos
