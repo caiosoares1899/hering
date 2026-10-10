@@ -6501,7 +6501,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.816-dev</div>
+<div class="version">v8.30.817-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -7441,12 +7441,20 @@ function renderCoverSwatches(){
 function toggleCoverMenu(){
   const menu=document.getElementById('m-cover-menu'); if(!menu) return;
   const isOpen=menu.style.display!=='none';
-  menu.style.display=isOpen?'none':'block';
-  if(!isOpen) setTimeout(()=>document.addEventListener('click', _closeCoverMenuOutside, {once:true}), 10);
+  if(isOpen){ _closeCoverMenu(); return; }
+  menu.style.display='block';
+  // Ouvinte de clique-fora PERSISTENTE enquanto o menu está aberto (removido em _closeCoverMenu). Antes era {once:true}:
+  // o 1º clique DENTRO do menu (numa cor, no campo da URL…) gastava o ouvinte e o menu nunca mais fechava por clique fora —
+  // e, como o menu mora no cabeçalho do modal (que é reaproveitado), ficava aberto ao fechar e reabrir o card.
+  setTimeout(()=>{ if(menu.style.display!=='none') document.addEventListener('click', _closeCoverMenuOutside); }, 10);
+}
+function _closeCoverMenu(){
+  document.removeEventListener('click', _closeCoverMenuOutside);
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
 }
 function _closeCoverMenuOutside(e){
   if(e.target.closest('#m-cover-menu')||e.target.closest('#m-cover-btn')) return;
-  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
+  _closeCoverMenu();
 }
 function _applyCoverStripToModal(colorId, imageUrl){
   const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
@@ -7522,7 +7530,7 @@ function _useFirstLinkAsCover(){
   setCardCoverImage(firstUrl);
 }
 function setCardCover(colorId){
-  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
+  _closeCoverMenu(); // fecha o popover do header, se veio de lá
   // "⊘ Sem capa" (colorId vazio) limpa TAMBÉM a capa de imagem — é o botão
   // "sem capa nenhuma", não só "sem capa de COR".
   if(!editingId){
@@ -15957,6 +15965,7 @@ function toggleAgenteHotlineInfo(){
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 function openCard(id){
+  _closeCoverMenu();   // o menu de capa mora no cabeçalho do modal reaproveitado: nunca herda o estado aberto do card anterior
   try{ window.MareDicas && id && MareDicas.gatilho('card-open'); }catch(e){}   // 💡 dica do card (só abre se houver uma não vista)
   // Flusha o autosave pendente do card ANTERIOR (se houver) antes de
   // reatribuir editingId/DOM pro card novo — ver comentário completo em
@@ -16392,6 +16401,7 @@ function _quickAddApplyIfNew(){
 // owner/participants (cardInSubteam()), não um campo próprio do card —
 // não tem um único membro "certo" pra pré-selecionar sem chutar.
 function openNewCard(col, prefillOwner, prefillTagId){
+  _closeCoverMenu();
   if(!checkEditPermission()) return;
   // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
   // openCard() em _flushAutoSave() — ver comentário completo lá):
@@ -34852,6 +34862,7 @@ function voltarParaFuncoesCard(modalId){
 }
 
 function _finishCloseOv(id){
+  _closeCoverMenu();
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     // Flusha o autosave pendente ANTES de qualquer outra limpeza abaixo —
