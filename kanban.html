@@ -6501,7 +6501,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.815</div>
+<div class="version">v8.30.820</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6847,7 +6847,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=16"></script>
+<script src="mare-notif.js?v=19"></script>
 <script src="mare-dicas.js?v=3"></script>
 
 <script>
@@ -7441,12 +7441,20 @@ function renderCoverSwatches(){
 function toggleCoverMenu(){
   const menu=document.getElementById('m-cover-menu'); if(!menu) return;
   const isOpen=menu.style.display!=='none';
-  menu.style.display=isOpen?'none':'block';
-  if(!isOpen) setTimeout(()=>document.addEventListener('click', _closeCoverMenuOutside, {once:true}), 10);
+  if(isOpen){ _closeCoverMenu(); return; }
+  menu.style.display='block';
+  // Ouvinte de clique-fora PERSISTENTE enquanto o menu está aberto (removido em _closeCoverMenu). Antes era {once:true}:
+  // o 1º clique DENTRO do menu (numa cor, no campo da URL…) gastava o ouvinte e o menu nunca mais fechava por clique fora —
+  // e, como o menu mora no cabeçalho do modal (que é reaproveitado), ficava aberto ao fechar e reabrir o card.
+  setTimeout(()=>{ if(menu.style.display!=='none') document.addEventListener('click', _closeCoverMenuOutside); }, 10);
+}
+function _closeCoverMenu(){
+  document.removeEventListener('click', _closeCoverMenuOutside);
+  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
 }
 function _closeCoverMenuOutside(e){
   if(e.target.closest('#m-cover-menu')||e.target.closest('#m-cover-btn')) return;
-  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none';
+  _closeCoverMenu();
 }
 function _applyCoverStripToModal(colorId, imageUrl){
   const strip=document.getElementById('m-cover-strip-modal'); if(!strip) return;
@@ -7522,7 +7530,7 @@ function _useFirstLinkAsCover(){
   setCardCoverImage(firstUrl);
 }
 function setCardCover(colorId){
-  const menu=document.getElementById('m-cover-menu'); if(menu) menu.style.display='none'; // fecha o popover do header, se veio de lá
+  _closeCoverMenu(); // fecha o popover do header, se veio de lá
   // "⊘ Sem capa" (colorId vazio) limpa TAMBÉM a capa de imagem — é o botão
   // "sem capa nenhuma", não só "sem capa de COR".
   if(!editingId){
@@ -15957,6 +15965,7 @@ function toggleAgenteHotlineInfo(){
   if(caret) caret.style.transform=open?'rotate(-90deg)':'rotate(0deg)';
 }
 function openCard(id){
+  _closeCoverMenu();   // o menu de capa mora no cabeçalho do modal reaproveitado: nunca herda o estado aberto do card anterior
   try{ window.MareDicas && id && MareDicas.gatilho('card-open'); }catch(e){}   // 💡 dica do card (só abre se houver uma não vista)
   // Flusha o autosave pendente do card ANTERIOR (se houver) antes de
   // reatribuir editingId/DOM pro card novo — ver comentário completo em
@@ -16392,6 +16401,7 @@ function _quickAddApplyIfNew(){
 // owner/participants (cardInSubteam()), não um campo próprio do card —
 // não tem um único membro "certo" pra pré-selecionar sem chutar.
 function openNewCard(col, prefillOwner, prefillTagId){
+  _closeCoverMenu();
   if(!checkEditPermission()) return;
   // Achado real (/monitorarbugs 2026-09-22, mesma classe do fix de
   // openCard() em _flushAutoSave() — ver comentário completo lá):
@@ -27814,6 +27824,8 @@ async function doTrelloImport(){
 const HELP_CONTENT = {
   board: [
     { icon:'🌊', title:'Menu de produtos (⋮⋮⋮) e a página Oceano', text:'O botão de 9 pontinhos no cabeçalho abre o <b>menu de produtos</b> do Oceano, a família que reúne o Maré Digital, o Painel, o Radar (OKR) e o A Bordo. Tem 3 abas:\n\n<b>Produtos</b> — atalhos para cada produto (abrem em outra aba). O título "🌊 Oceano · início" leva à <b>página Oceano</b> (oceano.html): o lobby com os botões dos produtos, links e ajuda; se você instalar o Oceano como aplicativo, ele abre os produtos aqui dentro.\n\n<b>Hering</b> — os links importantes de sistemas da empresa (portal do RH, ServiceDesk, VTEX…), cadastrados pelos administradores em <b>Painel → ⚙ Configurações → 🔗 Links</b> (título, endereço, imagem e uma descrição curta).\n\n<b>Meus links</b> — atalhos só seus. Para criar: aba <b>Meus links</b> → <b>＋ Adicionar ou editar meus links</b> (ou Oceano → ⚙ Meu perfil → 🔗 Meus links). Informe título e link (https://…); a imagem é opcional — sem ela usamos o ícone do site. Dá para reordenar com ▲▼, editar ✎ e remover ✕ (até 30 links).\n\n💡 Quando a lista de links tem 3, 6, 9… itens, ela vira uma grade de quadrados; nas outras quantidades fica em lista.' },
+    { icon:'💡', title:'Dicas (mini popups)', text:'De vez em quando aparece um <b>mini aviso no canto da tela</b> com um truque ou um lugar útil que muita gente demora a descobrir (um atalho, o Meu Dia, o menu de produtos…). Elas aparecem <b>uma de cada vez</b>, <b>uma única vez cada</b> (depois de vista não volta), com um intervalo entre elas e poucas por visita. O <b>Saiba mais</b> abre esta Central de Ajuda direto no assunto; o ✕ fecha.\n\n<b>Desligar ou religar</b>: no topo desta Central de Ajuda há o interruptor <b>💡 Dicas do Maré</b> — vale só pro Maré, e o Radar e o Oceano têm o interruptor deles (cada um na própria Ajuda). <b>Rever dicas</b> zera o que você já viu pra elas aparecerem de novo. A escolha fica salva na sua conta (vale em qualquer aparelho). O Painel e o A Bordo não mostram dicas; o Painel só <b>lista todas</b> em ⚙ Configurações → 💡 Dicas.' },
+    { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time (somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nMostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
     { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".' },
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
@@ -27914,7 +27926,7 @@ const HELP_CONTENT = {
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
     { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
-    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.' },
+    { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Firebase armazena todos os dados em tempo real e raramente precisa ser alterado após o setup inicial.\n\n⚠️ A aba Worker é resquício do painel de chat antigo do Agente Ágil (desativado — ver dica "Ações que o agente pode executar"), que dependia de um proxy Cloudflare externo pra falar com a API da Anthropic. O Agente Ágil atual (por @menção) não usa Worker nenhum — roda direto em Cloud Functions.' },
   ],
@@ -28962,6 +28974,8 @@ document.addEventListener('click', e=>{
 const _recentNotifs = new Map();
 function createNotif(targetUid, type, title, sub, cardId, idOverride, commentId, extra, dedupeExtra){
   if(!window._fbReady || !targetUid) return;
+  // 🔔 Central de Notificações do Painel: desligado nos DOIS canais (sino e push) = nem grava. Só o sino desligado ainda grava (o push pode estar ligado).
+  if(window.MareNotif && !MareNotif.cfgLigado(type,'sino') && !MareNotif.cfgLigado(type,'push')) return;
   // Evita duplicatas: mesma uid+type+card (ou idOverride) dentro de 5s — protege contra chamadas
   // repetidas na MESMA aba (ex.: 2 timers disparando quase junto).
   // dedupeExtra (achado real /monitorarbugs 2026-09-22): tipos sem cardId
@@ -29913,6 +29927,8 @@ function _playNotifSound(){
 }
 function renderNotifs(notifs){
   const list = document.getElementById('notif-list'); if(!list) return;
+  // 🔔 Central de Notificações do Painel: tipo desligado pelo ADM (kanban/notif_config/{tipo}.sino=false) some do sino — também ao vivo, quando o ADM muda (onChange do MareNotif)
+  if(window.MareNotif) notifs = notifs.filter(n=>MareNotif.sinoLigado(n.type));
   const badge = document.getElementById('notif-badge');
   // Feed da torre (sino único): itens do módulo entram na mesma lista, ordenados por data; `_feed` os distingue (sem ✕, abrem por URL)
   const feed = window.MareNotif ? MareNotif.items().map(i=>({...i, _feed:true, read:!i.unread, type:i.tipo})) : [];
@@ -34850,6 +34866,7 @@ function voltarParaFuncoesCard(modalId){
 }
 
 function _finishCloseOv(id){
+  _closeCoverMenu();
   document.getElementById(id)?.classList.remove('open');
   if(id==='card-ov'){
     // Flusha o autosave pendente ANTES de qualquer outra limpeza abaixo —

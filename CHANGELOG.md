@@ -18,6 +18,14 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: Central de Notificações + correções de notificação — 2026-10-10 · kanban v8.30.820 · painel v5.40 · okr v2.64 · oceano v1.10 · mare-notif.js v19 (sem avisos)
+Sobe pra produção o lote validado em dev (kanban-dev v8.30.818→820, painel-dev v5.38→5.40, okr-dev v2.62→2.64, oceano-dev v1.8→1.10, mare-notif-dev v17→19). Detalhes de cada item nas entradas de dev correspondentes.
+- **🔔 Central de Notificações (Painel → aba Notificações):** catálogo dos 29 tipos de aviso (quando disparam, quem recebe, onde nascem), interruptores de **sino** e **push** por tipo (valem pra todo mundo; só PO/ADM gravam), quem está com Não Perturbe, uso dos últimos 7 dias. Os 4 sinos (Maré, Painel, Radar, Oceano) respeitam o interruptor ao vivo.
+- **Menu de capa (🎨) do card** fecha por clique fora e não herda estado aberto ao reabrir/trocar de card.
+- **Correções (notificações):** o sino não toca mais por tipo desligado quando a config chega depois; ADM só pelo e-mail vê os interruptores travados com aviso; religar um tipo ao vivo traz a notificação de volta; Comunicado urgente avisa quando o envio falha por papel; push de tipo sem card (reunião, feedback, intake…) não substitui o anterior.
+- **Já no ar antes desta promoção (deploy manual feito):** regras `notif_config` (`firebase deploy --only database`) e funções `sendPushOnNotification`/`sendPushOnMural`.
+- Dica: não — conjunto de correções + painel administrativo.
+
 ### 🐛 Notificações — /monitorarbugs (2ª rodada): 3 achados + 1 regressão do fix anterior — 2026-10-10 · painel-dev v5.40 · kanban-dev v8.30.820-dev · okr-dev v2.64 · oceano-dev v1.10 · mare-notif-dev v19 · `functions/` (SÓ DEV)
 Pedido: "como notificação é sensível, roda outro". Tudo reproduzido (testes vermelhos) antes de corrigir.
 - **Regressão do fix da rodada anterior (minha).** Pôr `sinoLigado()` dentro de `viva()` fez Painel, Radar e Oceano **descartarem da lista pessoal** a notificação cujo snapshot chegava antes da config (`viva()` era chamada na montagem da lista, não no desenho) — selo vazio até o próximo snapshot — e, pelo mesmo motivo, **religar um tipo ao vivo não trazia a notificação de volta**. Agora `viva()` é só o prazo (TTL) e o filtro do interruptor fica no desenho (onde as 4 páginas já filtravam). Junto: `novas()` só inicia a janela "fria" de 3 s depois da config (senão a lista que já existia chegava "nova" e tocava o ding quando a config demorava >3 s).
