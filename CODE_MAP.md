@@ -2763,6 +2763,12 @@ squad novo aparece em `SQUADS`), filtro local de 30s de timeout, pills em
   mudança em `database.rules.json` — `kanban/painel` já tem `.write`
   liberado pra qualquer `@ciahering.com.br`, cobre o node novo.
 
+### 🔔 Central de Notificações (aba "Notificações" do painel-dev + catálogo em `mare-notif-dev.js`, 2026-10-10)
+- **Catálogo**: `MareNotif.TIPOS` (29 tipos: id, `area`, `fonte` pessoal|feed, `nome`, `quando`/`quem`/`onde`, `pushPossivel`) · `AREAS` (6) · `PUSH_PADRAO` (espelho do `PUSH_TYPES` de `functions/index.js` + `mural`; `test_notificacoes.js` confere) — `mare-notif-dev.js` ~L52–L149. **Tipo novo = 1 entrada aqui** (+ `ICONS`, + `PUSH_TYPES` se for push por padrão); o teste falha se um `createNotif(...,'tipo')` do Maré não estiver no catálogo.
+- **Interruptores**: `kanban/notif_config/{tipo}` = `{sino?, push?, por, em}` (ausente = padrão; só PO/ADM/Caio gravam, empresa e visualizador leem — `database.rules.json`, nas 2 edições das regras). `MareNotif.cfgLigado(tipo,'sino'|'push')`/`sinoLigado(tipo)` (+ ouvinte em `start()`): `viva()` e `items()` escondem do sino o tipo desligado; `pushFeed()` e `createNotif()` (kanban) nem gravam quando sino E push estão desligados. Os 4 sinos refiltram ao vivo (`renderNotifs`, `_mergePainelNotifs`, `_okrBellItens`, `sinoItens`).
+- **Push (servidor)**: `functions/common/notifConfig.js` (`lerConfigTipo()`/`pushPermitido(cfg, padrao)`) lido por `sendPushOnNotification` (index.js) e `runPushMural` — `push:false` bloqueia mesmo no PUSH_TYPES, `push:true` libera mesmo fora. **Exige deploy** (`functions:sendPushOnNotification`, `functions:sendPushOnMural`) e `firebase deploy --only database` (regras).
+- **Aba (painel-dev)**: `renderNotifCentral()` — L11328 (resumo, tipos por área, pessoas) · `ncSet(tipo,canal,el)` — L11418 · `ncRestaurar()`/`ncRestaurarTudo()` — L11437 · `_ncUso()` — L11314 (uso 7d contado do `_globalUsersCache`; as lidas somem das caixas em 3 dias → número é piso) · `_ncDnd()` — L11306 (Não Perturbe ativo: `on` e sem fim/fim futuro). Redesenha ao vivo por `_painelSyncFeed()` (config) e `loadGlobalUsers()` (pessoas). Viewer externo: aba escondida; não-ADM vê, switches desabilitados.
+
 ### Sino de notificações do PAINEL (`loadPainelNotifs()`/`renderPainelNotifs()`)
 UI separada do sino do kanban (`createNotif()`/`openNotif()`, ver
 `CODE_MAP.md` de `kanban-dev.html`) — mesmo Firebase

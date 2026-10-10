@@ -1971,7 +1971,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.61 · okr-dev</div>
+<div class="version">v2.62 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2022,7 +2022,7 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=16"></script>
+<script src="mare-notif-dev.js?v=17"></script>
 <script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
@@ -3217,7 +3217,7 @@ function loadOkrFeed(){
 // ── 🔔 Sino ──
 function _okrBellItens(){
   const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
-  _okrNotifPessoais.forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
+  _okrNotifPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function _okrBellRender(){
