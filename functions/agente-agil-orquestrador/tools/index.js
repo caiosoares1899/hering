@@ -142,7 +142,7 @@ function buildTools(options = {}) {
   tools.push({
     name: 'biblioteca_agil',
     description:
-      'Base de conhecimento estática: conceitos ágeis (WIP, sprint, throughput, papéis...) e como as funcionalidades do Maré Digital funcionam na prática (recorrência, ficha técnica, dependências, riscos, campanhas, arquivamento...). Sempre o mesmo conteúdo, não depende do estado do board. Use quando o pedido envolver dúvida sobre uma funcionalidade do board ou um conceito ágil, ou pra decidir se/como usar um recurso do Maré Digital antes de agir ou responder.',
+      'Base de conhecimento do Maré Digital e do Oceano: conceitos ágeis (WIP, sprint, throughput, papéis...), a família Oceano (Maré, Painel, Radar, A Bordo; o Maré só atende a Hering — sem Arezzo/Microsoft/torres), a Central de Ajuda inteira do Maré (~120 verbetes: cards, automações, recorrência, ficha técnica, supercard, pausar, contínuo, raias, timeline, arquivamento, notificações, dicas...) e as NOVIDADES recentes (o que mudou e quando). Sem `busca` devolve os conceitos, a família Oceano, o ÍNDICE (títulos) da Ajuda e as novidades mais recentes; com `busca` (palavras-chave, ex.: "pausar card", "automação gatilho", "o que mudou nas dicas") devolve os verbetes completos que casam. Não depende do estado do board. Use quando o pedido envolver dúvida sobre uma funcionalidade, um conceito ágil, "o que mudou", ou pra decidir se/como usar um recurso antes de agir ou responder.',
     input_schema: zodToJsonSchema(bibliotecaAgilSchema),
     // Sem distinção fake/real: dado 100% estático, nunca toca o Firebase —
     // o mesmo handler serve os dois modos de buildTools().

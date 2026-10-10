@@ -50,6 +50,12 @@ const listarGerenciasSchema = z.object({
 });
 
 // 📅 Agenda: reuniões/eventos/lembretes do calendário do OKR (kanban/okr/calendario/eventos) — só leitura.
+// consultar_ajuda (LEITURA): a mesma base de conhecimento do orquestrador de cards (Ajuda do Radar/Oceano/Maré + novidades + a família Oceano, gerada das
+// páginas — ver agente-agil-orquestrador/conhecimento/gerar.js). Não toca o Firebase.
+const consultarAjudaSchema = z.object({
+  busca: z.string().min(2).max(200).describe('Palavras-chave do que você quer saber (ex.: "registrar atingimento", "apresentação ao vivo", "quem pode editar", "o que mudou no calendário").'),
+});
+
 const listarAgendaSchema = z.object({
   dias: z.number().int().min(1).max(120).optional(),
   torre: z.enum([...TORRES, 'global']).optional(),
@@ -151,6 +157,20 @@ const responderSchema = z.object({
 
 function fake(name) {
   return async (input) => ({ ok: true, simulated: true, tool: name, wouldHaveExecuted: input });
+}
+
+function makeConsultarAjudaHandler() {
+  return async function consultarAjudaHandler(input) {
+    const parsed = consultarAjudaSchema.safeParse(input);
+    if (!parsed.success) return { ok: false, error: 'invalid_input', message: 'Informe o que quer saber em "busca".' };
+    // eslint-disable-next-line global-require
+    const { buscar } = require('../agente-agil-orquestrador/tools/bibliotecaAgil');
+    const verbetes = buscar(parsed.data.busca);
+    if (!verbetes || !verbetes.length) {
+      return { ok: true, verbetes: [], aviso: 'Nada casou com essa busca. Tente outras palavras (o nome da funcionalidade como aparece na tela). Se não houver resposta na Ajuda, diga que não sabe em vez de inventar.' };
+    }
+    return { ok: true, verbetes };
+  };
 }
 
 // ── Handlers reais ───────────────────────────────────────────────────────
@@ -774,6 +794,12 @@ function buildOkrTools(options = {}) {
       description: `Cria ou ajusta o atingimento (a meta) de um Objetivo. tipo: financeira (moeda BRL/USD/EUR), porcentagem, numero, binario (atingido/não atingido), acima ("manter acima de"), abaixo ("manter abaixo de"), data (faixas de data de entrega) ou perene (sem meta, a barra anda pelos marcos). Tipos financeira/porcentagem/numero/acima/abaixo exigem meta (e opcionalmente valor_inicial, só nos 3 primeiros); data exige faixas [{de, ate, pct}]. Nunca apaga registros já lançados; trocar o tipo de um atingimento que já tem registros exige confirmar_recalculo = true DEPOIS de perguntar pra pessoa. Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(configurarAtingimentoSchema),
       handler: mode === 'real' ? makeConfigurarAtingimentoHandler({ db, requestingUid, dryRun }) : fake('configurar_atingimento'),
+    },
+    {
+      name: 'consultar_ajuda',
+      description: 'LEITURA — busca na Ajuda do Radar (OKR), do Oceano e do Maré Digital, na família Oceano (o que é cada produto; o Maré só atende a Hering, sem Arezzo/torres) e nas novidades recentes (o que mudou e quando). Use ANTES de explicar como algo funciona na tela, quem pode fazer o quê, onde fica um botão ou "o que mudou". Devolve até 5 verbetes completos; se nada casar, não invente. Não altera nada.',
+      input_schema: zodToJsonSchema(consultarAjudaSchema),
+      handler: makeConsultarAjudaHandler(),
     },
     {
       name: 'responder',
