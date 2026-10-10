@@ -18,6 +18,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐛 Dicas — rodada de /monitorarbugs: 5 achados corrigidos — 2026-10-09 · okr-dev v2.60 · kanban-dev v8.30.814-dev · oceano-dev v1.7 · painel-dev v5.35 (SÓ DEV)
+- **Externo (só leitura) recebia dica que manda editar** ("Atualize os Marcos…", "Converse com o Agente Ágil", "botão direito…"). O catálogo ganhou o marcador `edita` (6 dicas do Radar) e quem acompanha como visualizador só recebe as demais (Apresentação, atalhos do modal, Dashboard).
+- **Oceano: a dica de entrada aparecia POR CIMA do produto aberto** dentro do Oceano (app instalado abrindo direto no último produto, ou clique rápido num produto). As 3 dicas de entrada só aparecem com o lobby à vista.
+- **Interruptor 💡 Dicas perdia o foco** ao ser alternado (o controle era redesenhado — quem usa o teclado caía no início da página) **e acumulava ouvintes** a cada abertura da Ajuda (26 aberturas = 26 redesenhos por clique). Agora desenha uma vez, só sincroniza o estado, e há 1 ouvinte por elemento (os de elementos que saíram da página são podados).
+- **"Saiba mais" do Maré caía numa lista em que a entrada certa não era a primeira** (ex.: "Menções" abria com "Meu Dia" no topo; "Checklist" tinha 23 resultados). A busca da Central de Ajuda agora põe antes quem tem o termo no **título** (ordem estável; vale pra qualquer busca e pros balões "Saiba mais →").
+- **Textos do catálogo que prometiam o que não é verdade**: o Ctrl+K busca no board atual (não "de qualquer squad"); "Meus cards" destaca (não filtra); o ⋮⋮⋮ só leva ao Painel pra quem tem acesso a ele.
+- Verificado e sem achado: dica por cima dos modais (z-index 9400 > 9000/9100/120/60), regras do banco aceitam `usuarios/{uid}/dicas` (igual a `links`/`apps`), todos os "Saiba mais" do Radar (`hlp-<id>`) e do Oceano (`faq-<id>`) existem, XSS (texto sempre `textContent`; nome do app e catálogo escapados), corrida entre desligar e a leitura remota (janela de ~100 ms depois do login, antes de a 1ª dica poder aparecer — não reproduzível de forma fiel; fica como observação).
+- `test_dicas.js` ganhou 12 verificações dessa rodada (6 falham no código anterior). `?v=3` do módulo nas 4 páginas.
+
 ### 💡 Dicas: lista de todas as dicas no Painel + catálogo centralizado no módulo — 2026-10-09 · painel-dev v5.34 · okr-dev v2.59 · kanban-dev v8.30.813-dev · oceano-dev v1.6 (SÓ DEV)
 - Pedido: "coloca essa lista no painel" (ver todas as dicas) e, daqui pra frente, **avaliar uma dica a cada funcionalidade nova** (agora regra permanente no `CLAUDE.md`, passo 7 do Release process).
 - **Painel → ⚙ Configurações → 💡 Dicas** (só leitura): Radar, Maré e Oceano, cada dica com o texto, **onde aparece** ("Ao abrir o Dashboard", "Ao abrir um card"…), o tópico do **Saiba mais** e o ✅/⏳ do que **você** já viu (lê só o próprio nó); mostra "desligadas pra você" quando for o caso.

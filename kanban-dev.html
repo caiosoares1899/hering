@@ -6501,7 +6501,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.813-dev</div>
+<div class="version">v8.30.814-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6845,7 +6845,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=16"></script>
-<script src="mare-dicas-dev.js?v=2"></script>
+<script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
 
@@ -28157,6 +28157,9 @@ function renderHelp(){
       item.title.toLowerCase().includes(query) ||
       item.text.toLowerCase().includes(query)
     );
+    // quem tem o termo no TÍTULO vem antes de quem só o cita no texto (sort estável: a ordem de cada grupo não muda) —
+    // sem isso o "Saiba mais" das 💡 Dicas e dos balões ? caía numa lista em que a entrada certa não era a primeira
+    items.sort((x,y)=>(y.title.toLowerCase().includes(query)?1:0)-(x.title.toLowerCase().includes(query)?1:0));
     if(countEl) countEl.textContent = items.length ? items.length+' resultado'+(items.length>1?'s':'') : '—  Nenhum resultado';
   } else {
     if(tabs) tabs.style.opacity = '1';

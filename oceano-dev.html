@@ -510,12 +510,12 @@ window.dispatchEvent(new Event('fb-ready'));
 </script>
 
 <script src="mare-notif-dev.js?v=16"></script>
-<script src="mare-dicas-dev.js?v=2"></script>
+<script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.6 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.7 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -690,7 +690,9 @@ function sinoClique(k, id){
 }
 // ── 💡 Dicas (mini popups) do Oceano — módulo mare-dicas(-dev).js: o CATÁLOGO vive lá (o Painel lista tudo). Aqui só o que depende do estado da página.
 //    gatilhos: 'boot' (ao entrar, 1 por visita), 'sino' em sinoToggle(), 'perfil' em abrirPerfil(). "Saiba mais" abre a pergunta da Ajuda (faq-<id>).
-const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone()};
+// as dicas de ENTRADA falam do lobby: com um produto aberto aqui dentro (app instalado abrindo no último produto, ou clique rápido) elas cobririam o produto
+const _lobbyVisivel = ()=>!document.getElementById('host').classList.contains('on');
+const OCEANO_DICAS_QUANDO = {instalar:()=>!standalone() && _lobbyVisivel(), menu:_lobbyVisivel, aqui:_lobbyVisivel};
 function iniciarDicas(){
   if(!window.MareDicas || !U) return;
   MareDicas.init({app:'oceano', user:U, isViewer:false, quando:OCEANO_DICAS_QUANDO, abrirAjuda:id=>abrirAjuda(id)});
