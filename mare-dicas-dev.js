@@ -3,13 +3,13 @@
    Carregado por kanban-dev (Maré), okr-dev (Radar) e oceano-dev (Oceano); a versão de produção, mare-dicas.js, nasce na promoção.
    Fica na raiz do domínio, como mare-notif(-dev).js: exceção à regra "sem import entre páginas", mesmo ciclo dev→prod (?v=N nas páginas).
 
-   O que faz: mostra UMA dica curta por vez, no canto da tela, quando a pessoa chega num lugar do app (gatilho). Cada dica aparece uma vez só.
+   O que faz: mostra UMA dica curta por vez, no canto da tela, quando a pessoa chega num lugar do app (gatilho). Cada dica aparece uma vez só, e no máximo UMA POR DIA POR APP.
    Cada app tem o PRÓPRIO catálogo, que vive AQUI no módulo (CATALOGO: dados puros — id, gatilho, texto, saiba, ajuda) pra o Painel poder listar tudo
    (⚙ Configurações → 💡 Dicas). A página só informa o que depende do estado dela: `quando` (id → função) e `abrirAjuda`. Painel e A Bordo não mostram dicas.
    Controles da pessoa: "Entendi", "Saiba mais" (abre o tópico certo da ajuda do app), "Não mostrar dicas do <app>", e na ajuda de cada app
    (MareDicas.controle) o interruptor + "Rever dicas". Desligar vale por app: desligar no Radar não desliga no Maré.
 
-   Dados: kanban/usuarios/{uid}/dicas = {off:{radar:true}, vistas:{radar:{idDaDica:true}}} (cada pessoa lê/escreve o próprio nó — sem mudar regra)
+   Dados: kanban/usuarios/{uid}/dicas = {off:{radar:true}, vistas:{radar:{idDaDica:true}}, ultima:{radar:'2026-10-10'}} (cada pessoa lê/escreve o próprio nó — sem mudar regra)
    + cópia em localStorage (chave por uid), que também é o único armazenamento do visualizador externo (não escreve no Firebase).
 
    Dica nova = 1 linha no CATALOGO do app aqui + (se depender de estado da tela) 1 entrada em `quando` na página + o gatilho, se for lugar novo.
@@ -24,8 +24,9 @@
   if(window.MareDicas) return;
 
   const ATRASO_MS = 1400;        // espera depois do gatilho (a tela termina de montar, a pessoa vê onde chegou)
-  const ESPERA_ENTRE_MS = 50000; // intervalo mínimo entre duas dicas
-  const MAX_SESSAO = 4;          // no máximo por abertura da página
+  // 1 dica por DIA por app (dia do calendário, no relógio da pessoa): `prefs.ultima[app]` = 'AAAA-MM-DD' da última dica mostrada naquele app. Os três apps
+  // (Maré, Radar, Oceano) contam separado — ver o Radar hoje não adianta a dica do Maré. Cada dica continua aparecendo uma vez só, pra sempre.
+  const hoje = () => { const d = new Date(), z = n => String(n).padStart(2,'0'); return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate()); };
   const esc = s => String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
   // ── CATÁLOGO: dados puros por app. `saiba` = o que a página entrega ao abrirAjuda (string ou {tab,q}); `ajuda` = nome do tópico, só pra listar (Painel).
@@ -63,14 +64,14 @@
       {id:'tema',     gatilho:'perfil', texto:'Abrolhos (escuro) ou Lençóis (claro): escolha o tema que cansa menos a vista.', saiba:'tema', ajuda:'Dá pra mudar as cores?'}]},
   };
 
-  const S = {app:'', nome:'', user:null, viewer:false, dicas:[], abrirAjuda:null, prefs:{off:{}, vistas:{}}, pronto:false,
-             atual:null, ultima:0, mostradas:0, timer:0, pendente:null, ouvintes:[]};
+  const S = {app:'', nome:'', user:null, viewer:false, dicas:[], abrirAjuda:null, prefs:{off:{}, vistas:{}, ultima:{}}, pronto:false,
+             atual:null, mostradas:0, timer:0, pendente:null, ouvintes:[]};
 
   // ── preferências: localStorage na hora, Firebase por cima (se a pessoa escreve lá) ──
   const lsKey = () => 'mare_dicas_'+((S.user&&S.user.uid)||'anon');
   function lsLer(){ try{ const o = JSON.parse(localStorage.getItem(lsKey())||'null'); return o && typeof o==='object' ? o : null; }catch(e){ return null; } }
   function lsGravar(){ try{ localStorage.setItem(lsKey(), JSON.stringify(S.prefs)); }catch(e){} }
-  function norm(o){ o = (o && typeof o==='object') ? o : {}; return {off: (o.off&&typeof o.off==='object')?o.off:{}, vistas: (o.vistas&&typeof o.vistas==='object')?o.vistas:{}}; }
+  function norm(o){ o = (o && typeof o==='object') ? o : {}; return {off: (o.off&&typeof o.off==='object')?o.off:{}, vistas: (o.vistas&&typeof o.vistas==='object')?o.vistas:{}, ultima: (o.ultima&&typeof o.ultima==='object')?o.ultima:{}}; }
   function remoto(){ return !S.viewer && S.user && window._db && window._ref && window._set; }
   function gravar(caminho, valor){   // caminho relativo a .../dicas ; valor null apaga
     lsGravar();
@@ -80,6 +81,7 @@
   function avisa(){ S.ouvintes = S.ouvintes.filter(f=>{ try{ return f()!==false; }catch(e){ return true; } }); }   // ouvinte devolve false quando o elemento saiu da página: poda
 
   function ativas(){ return !S.prefs.off[S.app]; }
+  function jaMostrouHoje(){ return S.prefs.ultima[S.app] === hoje(); }
   function vista(id){ return !!(S.prefs.vistas[S.app] && S.prefs.vistas[S.app][id]); }
 
   // ── interface ──
@@ -142,7 +144,8 @@
         t.innerHTML = '<p class="mdica-t" style="margin:0;">Pronto, dicas desligadas. Pra voltar: <b>Ajuda → 💡 Dicas</b>.</p>'; document.body.appendChild(t); setTimeout(()=>{ if(t.parentNode) t.remove(); }, 5000); }
     });
     document.body.appendChild(el);
-    S.atual = d.id; S.ultima = Date.now(); S.mostradas++;
+    S.atual = d.id; S.mostradas++;
+    S.prefs.ultima[S.app] = hoje(); gravar('ultima/'+S.app, hoje());   // gasta a dica do dia deste app
     // vista ao APARECER: ignorada ou fechada, não volta (dica não é cobrança)
     S.prefs.vistas[S.app] = S.prefs.vistas[S.app] || {}; S.prefs.vistas[S.app][d.id] = true; gravar('vistas/'+S.app+'/'+d.id, true);
   }
@@ -153,13 +156,12 @@
     return S.dicas.find(d=>d.gatilho===g && !vista(d.id) && (!checaQuando || typeof d.quando!=='function' || d.quando()!==false));
   }
   function gatilho(g){
-    if(!S.app || !S.pronto || !ativas() || S.atual || S.mostradas>=MAX_SESSAO) return;
-    if(S.ultima && Date.now()-S.ultima < ESPERA_ENTRE_MS) return;
+    if(!S.app || !S.pronto || !ativas() || S.atual || jaMostrouHoje()) return;
     if(!proxima(g) || S.timer) return;
     S.pendente = g;
     S.timer = setTimeout(function tenta(){
       S.timer = 0; const gg = S.pendente; S.pendente = null;
-      if(!gg || !ativas() || S.atual) return;
+      if(!gg || !ativas() || S.atual || jaMostrouHoje()) return;
       if(document.hidden){ S.pendente = gg; S.timer = setTimeout(tenta, 4000); return; }   // aba em segundo plano: espera voltar
       const d = proxima(gg, true); if(d) mostra(d);   // confere "quando" agora: a pessoa pode ter saído do lugar
     }, ATRASO_MS);
@@ -173,7 +175,7 @@
     avisa();
   }
   function reiniciar(){
-    S.prefs.vistas[S.app] = {}; gravar('vistas/'+S.app, null); S.mostradas = 0; S.ultima = 0; avisa();
+    S.prefs.vistas[S.app] = {}; gravar('vistas/'+S.app, null); delete S.prefs.ultima[S.app]; gravar('ultima/'+S.app, null); S.mostradas = 0; avisa();   // "Rever dicas": recomeça — a 1ª sai já, as outras uma por dia
   }
   function controle(el){
     if(!el) return;
@@ -184,7 +186,7 @@
       if(inp){ inp.checked = marcado; return; }   // já desenhado: só sincroniza (redesenhar tirava o foco de quem usa o teclado)
       el.className = (el.className||'').replace(/\bmdica-ctl\b/,'').trim()+' mdica-ctl';
       el.innerHTML = `<label class="mdica-sw"><input type="checkbox" role="switch" ${marcado?'checked':''} aria-label="Mostrar dicas${S.nome?' do '+esc(S.nome):''}"><span>💡 Dicas${S.nome?' do '+esc(S.nome):''}</span></label>
-        <span>Mini avisos com um truque ou um lugar útil, um de cada vez.</span><button type="button" class="mdica-b mdica-re">Rever dicas</button>`;
+        <span>Mini avisos com um truque ou um lugar útil — no máximo um por dia.</span><button type="button" class="mdica-b mdica-re">Rever dicas</button>`;
       el.querySelector('input').addEventListener('change', e=>{ definir(e.target.checked); });
       el.querySelector('.mdica-re').addEventListener('click', ()=>{ reiniciar(); if(!ativas()) definir(true); });
     };
@@ -208,7 +210,8 @@
         const r = norm(sn && sn.exists && sn.exists() ? sn.val() : null), l = S.prefs;
         // junta: o que foi visto em qualquer aparelho conta; "desligado" no Firebase vale (quem religou apagou o nó)
         const vistas = {}; [r.vistas, l.vistas].forEach(v=>Object.keys(v).forEach(a=>{ vistas[a] = Object.assign(vistas[a]||{}, v[a]); }));
-        S.prefs = {off:r.off, vistas}; lsGravar(); avisa();
+        const ultima = Object.assign({}, r.ultima); Object.keys(l.ultima).forEach(a=>{ if(!ultima[a] || String(l.ultima[a]) > String(ultima[a])) ultima[a] = l.ultima[a]; });   // vale o dia mais recente de qualquer aparelho
+        S.prefs = {off:r.off, vistas, ultima}; lsGravar(); avisa();
         if(!ativas()) fecha();
       }).catch(()=>{});
     }

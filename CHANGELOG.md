@@ -26,6 +26,13 @@ Sobe pra produção o lote validado em dev (kanban-dev v8.30.818→820, painel-d
 - **Já no ar antes desta promoção (deploy manual feito):** regras `notif_config` (`firebase deploy --only database`) e funções `sendPushOnNotification`/`sendPushOnMural`.
 - Dica: não — conjunto de correções + painel administrativo.
 
+### 💡 Dicas: no máximo 1 por dia por app — 2026-10-10 · kanban-dev v8.30.821-dev · okr-dev v2.65 · oceano-dev v1.11 · painel-dev v5.41 · mare-dicas-dev v4 (SÓ DEV)
+Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (até 4 dicas, 50 s entre elas); agora é por **dia do calendário** (relógio da pessoa), contado **separado em cada app** (Maré, Radar e Oceano). Cada dica continua aparecendo **uma vez só, pra sempre**.
+- **Como:** `prefs.ultima[app]` = `'AAAA-MM-DD'` da última dica mostrada naquele app, em `kanban/usuarios/{uid}/dicas/ultima/{app}` (mesmo nó das `vistas`/`off`, sem mudar regra) + cópia no aparelho. Ao reunir aparelho e Firebase vale o dia mais recente. O gatilho não abre nada se o app já gastou a dica de hoje; amanhã vem a **próxima não vista**. "Rever dicas" recomeça (a 1ª volta já, as demais uma por dia); desligar continua valendo por app. Saiu o limite de 4 por visita e o intervalo de 50 s (a regra do dia já cobre).
+- **Textos:** Ajuda do Maré ("Dicas (mini popups)"), aba 💡 Dicas do Painel e o interruptor da Ajuda dos apps agora dizem "no máximo uma por dia".
+- **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
+- **Dica:** não — é a própria regra das dicas.
+
 ### 🐛 Notificações — /monitorarbugs (2ª rodada): 3 achados + 1 regressão do fix anterior — 2026-10-10 · painel-dev v5.40 · kanban-dev v8.30.820-dev · okr-dev v2.64 · oceano-dev v1.10 · mare-notif-dev v19 · `functions/` (SÓ DEV)
 Pedido: "como notificação é sensível, roda outro". Tudo reproduzido (testes vermelhos) antes de corrigir.
 - **Regressão do fix da rodada anterior (minha).** Pôr `sinoLigado()` dentro de `viva()` fez Painel, Radar e Oceano **descartarem da lista pessoal** a notificação cujo snapshot chegava antes da config (`viva()` era chamada na montagem da lista, não no desenho) — selo vazio até o próximo snapshot — e, pelo mesmo motivo, **religar um tipo ao vivo não trazia a notificação de volta**. Agora `viva()` é só o prazo (TTL) e o filtro do interruptor fica no desenho (onde as 4 páginas já filtravam). Junto: `novas()` só inicia a janela "fria" de 3 s depois da config (senão a lista que já existia chegava "nova" e tocava o ding quando a config demorava >3 s).
