@@ -15,6 +15,7 @@ const { initializeApp } = require('firebase-admin/app');
 const { getMessaging } = require('firebase-admin/messaging');
 const { getDatabase } = require('firebase-admin/database');
 const { urlDoPush, tagDoPush } = require('./common/pushUrl');
+const { lerConfigTipo, pushPermitido } = require('./common/notifConfig');
 
 initializeApp();
 
@@ -38,13 +39,18 @@ exports.sendPushOnNotification = onValueCreated(
     // pra descobrir isso). Cada saída agora loga o motivo.
     if (!notif) { console.log(`[push] ${uid}: evento sem dado (notif null), ignorando.`); return; }
 
-    // Tipos que não devem virar push (ex.: rascunho, só-painel) — mas continuam no sino normalmente
-    if (notif.type && !PUSH_TYPES.has(notif.type)) {
-      console.log(`[push] ${uid}: tipo '${notif.type}' fora de PUSH_TYPES, não enviando.`);
-      return;
-    }
-
     const db = getDatabase();
+
+    // Tipos que não devem virar push (ex.: rascunho, só-painel) — mas continuam no sino normalmente.
+    // 🔔 Central de Notificações do Painel: o ADM liga/desliga o push POR TIPO em kanban/notif_config/{tipo}.push —
+    // `false` bloqueia mesmo um tipo do PUSH_TYPES, `true` libera mesmo um de fora; sem config vale o PUSH_TYPES.
+    if (notif.type) {
+      const cfg = await lerConfigTipo(db, notif.type);
+      if (!pushPermitido(cfg, PUSH_TYPES.has(notif.type))) {
+        console.log(`[push] ${uid}: tipo '${notif.type}' ${typeof cfg.push === 'boolean' ? 'desligado pelo ADM na Central de Notificações' : 'fora de PUSH_TYPES'}, não enviando.`);
+        return;
+      }
+    }
 
     // Checa Não Perturbe
     const dndSnap = await db.ref(`kanban/usuarios/${uid}/notif_prefs/dnd`).get();

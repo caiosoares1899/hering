@@ -118,3 +118,19 @@ test('deveReceber / alvoTorres (puras)', () => {
   assert.equal(deveReceber({ ev: EV(), uid: 'aut', torre: 'comercial', ehAdm: true }), false);
   assert.equal(deveReceber({ ev: EV(), uid: 'x', torre: undefined, ehAdm: false }), false);
 });
+
+test('Central de Notificações: push do Mural desligado pelo ADM (notif_config/mural.push=false) não envia nada', async () => {
+  const db = seed();
+  await db.ref('kanban/notif_config/mural').set({ push: false, por: 'Ana', em: '2026-10-10T10:00:00Z' });
+  const msg = fakeMessaging();
+  const r = await runPushMural(db, msg, EV({ torres: ['*'] }), { log: () => {} });
+  assert.deepEqual(r, { enviados: 0, alvos: 0 });
+  assert.equal(msg.enviados.length, 0);
+});
+test('Central de Notificações: com o Mural ligado (ou só o sino desligado) o push continua saindo', async () => {
+  const db = seed();
+  await db.ref('kanban/notif_config/mural').set({ sino: false });   // desligar o SINO não impede o push
+  const msg = fakeMessaging();
+  const r = await runPushMural(db, msg, EV({ torres: ['*'] }), { log: () => {} });
+  assert.ok(r.enviados > 0);
+});

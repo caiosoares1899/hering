@@ -13,6 +13,7 @@
 // tokens de todo mundo pra memória por causa de 1 aviso.
 
 const { SITE_BASE_URL } = require('../common/pushUrl');
+const { lerConfigTipo, pushPermitido } = require('../common/notifConfig');
 const { emailDaEmpresa, MARE_SO_HERING, TORRES_ATIVAS } = require('../common/mareModo');
 
 const DEFAULT_ADM_EMAILS = ['caio.soares@ciahering.com.br', 'rafael.passos@ciahering.com.br'];
@@ -49,6 +50,8 @@ function deveReceber({ ev, uid, torre, ehAdm, agora }) {
 
 async function runPushMural(db, messaging, ev, { agora = Date.now(), log = console.log } = {}) {
   if (!ev || ev.tipo !== 'mural') { log('[push-mural] evento não é "mural", ignorando.'); return { enviados: 0, alvos: 0 }; }
+  // 🔔 Central de Notificações do Painel: o ADM pode desligar o push do tipo 'mural' (kanban/notif_config/mural.push === false).
+  if (!pushPermitido(await lerConfigTipo(db, 'mural'), true)) { log('[push-mural] push do Mural desligado pelo ADM na Central de Notificações, não enviando.'); return { enviados: 0, alvos: 0 }; }
   const [pubSnap, admSnap] = await Promise.all([db.ref('kanban/usuarios_publicos').get(), db.ref('kanban/config/adm_emails').get()]);
   const admEmails = (Array.isArray(admSnap.val()) ? admSnap.val() : DEFAULT_ADM_EMAILS).map((e) => String(e).toLowerCase());
   const uids = Object.keys(pubSnap.val() || {}).filter((u) => u !== ev.autorUid);

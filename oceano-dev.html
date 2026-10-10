@@ -509,13 +509,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=16"></script>
+<script src="mare-notif-dev.js?v=17"></script>
 <script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.7 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.8 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -641,7 +641,7 @@ function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em ab
 }
 function sinoItens(){
   const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
-  sinoPessoais.forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
+  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
