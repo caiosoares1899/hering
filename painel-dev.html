@@ -2807,7 +2807,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.36 · painel-dev</div>
+<div class="version">v5.37 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -10128,6 +10128,8 @@ function _hexA(hex, a){
   const m=/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex||'');
   return m ? 'rgba('+parseInt(m[1],16)+','+parseInt(m[2],16)+','+parseInt(m[3],16)+','+a+')' : 'rgba(56,182,255,'+a+')';
 }
+// cor do squad (vem de squads_meta) só entra em style/fill se for #hex — nada de ';' extra no CSS
+function _sqCor(sq){ const c=sq&&sq.color; return /^#[0-9a-f]{3,8}$/i.test(c||'')?c:'#38b6ff'; }
 function _sqNome(sq){ return String(sq.label||sq.id).replace(/^Squad /,''); }
 
 // Coleta cards relevantes considerando squads visíveis + baseline de reset.
@@ -10136,7 +10138,11 @@ function _sqNome(sq){ return String(sq.label||sq.id).replace(/^Squad /,''); }
 // velho" com fila — a fila vai em `fila` (só contagem).
 function _collectFlowCards(){
   const now=Date.now();
-  const winStart=now - FLOW_WINDOW*DAY_MS;
+  // Janela = FLOW_WINDOW dias de CALENDÁRIO (hoje + os anteriores, a partir da meia-noite), os mesmos
+  // dias que o gráfico "Entregas por dia" desenha — com `now - N*24h` o KPI contava entregas das
+  // primeiras horas do dia N+1 que nenhuma coluna do gráfico mostra (6 no KPI × 5 no gráfico).
+  const _w0=new Date(); _w0.setHours(0,0,0,0); _w0.setDate(_w0.getDate()-(FLOW_WINDOW-1));
+  const winStart=_w0.getTime();
   const cycle=[], lead=[], openItems=[]; let fila=0; doneInWindow.length=0;
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
@@ -10209,7 +10215,7 @@ function renderThroughputChart(doneInWindow){
   const leg=document.getElementById('tp-legend'); const sub=document.getElementById('tp-sub');
   const sqs=SQUADS.filter(sq=>squadData[sq.id] && squadVisible(sq.id));
   if(sub) sub.textContent = doneInWindow.length+' cards concluídos nos últimos '+FLOW_WINDOW+' dias';
-  if(leg) leg.innerHTML = (sqs.length>1) ? sqs.map(sq=>'<span class="wk-lg"><i class="wk-dot" style="background:'+esc(sq.color||'#38b6ff')+'"></i>'+esc(_sqNome(sq))+'</span>').join('') : '';
+  if(leg) leg.innerHTML = (sqs.length>1) ? sqs.map(sq=>'<span class="wk-lg"><i class="wk-dot" style="background:'+_sqCor(sq)+'"></i>'+esc(_sqNome(sq))+'</span>').join('') : '';
   if(!doneInWindow.length){
     wrap.innerHTML='<div class="bar-empty">Sem conclusões nos últimos '+FLOW_WINDOW+' dias.<br>Mova cards para Concluído para começar.</div>';
     return;
@@ -10217,7 +10223,7 @@ function renderThroughputChart(doneInWindow){
   const now=Date.now(), n=FLOW_WINDOW;
   const days=[];
   for(let i=n-1;i>=0;i--){
-    const ds=new Date(now-i*DAY_MS); ds.setHours(0,0,0,0);
+    const ds=new Date(now); ds.setHours(0,0,0,0); ds.setDate(ds.getDate()-i);   // setDate (não -i*24h): dia de horário de verão tem 23/25h
     const de=new Date(ds); de.setDate(de.getDate()+1);
     const s0=ds.getTime(), e0=de.getTime();
     const bySq={}; let tot=0;
@@ -10245,7 +10251,7 @@ function renderThroughputChart(doneInWindow){
       const c=d.bySq[sq.id]||0; if(!c) return;
       const y1=yOf(acc+c), y0=yOf(acc);
       const h=Math.max(2,(y0-y1)-1.5);                 // 1.5px de respiro entre segmentos (superfície)
-      svg+='<rect class="tp-bar" x="'+x.toFixed(1)+'" y="'+(y0-h-0.75).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+esc(sq.color||'#38b6ff')+'"/>';
+      svg+='<rect class="tp-bar" x="'+x.toFixed(1)+'" y="'+(y0-h-0.75).toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'" rx="2" fill="'+_sqCor(sq)+'"/>';
       acc+=c; parts.push(_sqNome(sq)+' '+c);
     });
     const lbl=d.ds.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
@@ -10274,14 +10280,15 @@ function renderCFD(){
   const rows=[];
   SQUADS.forEach(sq=>{
     const d=squadData[sq.id]; if(!d||!squadVisible(sq.id)) return;
-    const fc=flowColsFor(d); const n={fila:0,andamento:0,bloqueado:0};
+    const fc=flowColsFor(d); const n={fila:0,andamento:0,bloqueado:0}; let wip=0;
     (Array.isArray(d.cards)?d.cards:[]).forEach(c=>{
       if(!c||c.archived) return;
       const st=_flowStage(d,c,fc); if(st!=='concluido') n[st]++;
+      if(c.col===fc.startId) wip++;   // mesma conta do card do squad na Visão (cards na coluna "Em Progresso"); não "andamento+bloqueado" — dava 5/3 aqui e 4/3 lá
     });
     const total=n.fila+n.andamento+n.bloqueado;
     const lim=parseInt((d.agilCfg&&d.agilCfg.wip)||sq.wipLimit)||0;
-    rows.push({sq,n,total,wip:n.andamento+n.bloqueado,lim});
+    rows.push({sq,n,total,wip,lim});
   });
   const max=Math.max(1,...rows.map(r=>r.total));
   if(!rows.some(r=>r.total)){ el.innerHTML='<div class="bar-empty" style="padding:20px 0;">Nenhum card em aberto.</div>'; return; }
@@ -10291,7 +10298,7 @@ function renderCFD(){
     +'<span class="wk-lg"><i class="wk-sw" style="background:var(--txt2);opacity:.3"></i>Na fila</span>'
     +'<span class="wk-lg"><i class="wk-sw" style="background:var(--danger)"></i>Bloqueado</span></div>'
     +rows.map(r=>{
-      const col=r.sq.color||'#38b6ff';
+      const col=_sqCor(r.sq);
       const over=r.lim && r.wip>r.lim;
       return '<div class="wk-row">'
         +'<span class="wk-name" title="'+esc(r.sq.label)+'"><i class="wk-dot" style="background:'+esc(col)+'"></i>'+esc(_sqNome(r.sq))+'</span>'
@@ -10300,7 +10307,7 @@ function renderCFD(){
           +seg(r.n.fila,_hexA(col,.3),'var(--txt)','Na fila')
           +seg(r.n.bloqueado,'var(--danger)','#04121f','Bloqueado')
         +'</div></div>'
-        +'<span class="wk-meta"><b>'+r.total+'</b>'+(r.lim?'<small class="wk-wip'+(over?' over':'')+'" title="Em andamento + bloqueado, contra o limite de WIP do squad">WIP '+r.wip+'/'+r.lim+'</small>':'')+'</span>'
+        +'<span class="wk-meta"><b>'+r.total+'</b>'+(r.lim?'<small class="wk-wip'+(over?' over':'')+'" title="Cards na coluna Em Progresso, contra o limite de WIP do squad (mesmo número do card do squad na Visão)">WIP '+r.wip+'/'+r.lim+'</small>':'')+'</span>'
         +'</div>';
     }).join('');
 }
@@ -10336,7 +10343,7 @@ function renderAgingWip(openItems, threshold, cMed, fila){
     const t=o.card.title||'(sem título)';
     return `<div class="aging-item">
       <div class="aging-left">
-        <span class="aging-title" title="${esc(t)}"><i class="wk-dot" style="background:${esc((sq&&sq.color)||'#38b6ff')}" title="${esc(sq?sq.label:o.sq)}"></i>${esc(t)}</span>
+        <span class="aging-title" title="${esc(t)}"><i class="wk-dot" style="background:${_sqCor(sq)}" title="${esc(sq?sq.label:o.sq)}"></i>${esc(t)}</span>
         <div class="aging-bar-wrap"><div class="aging-bar-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div>${thrPct!=null?`<i class="aging-thr" style="left:${thrPct.toFixed(1)}%"></i>`:''}</div>
       </div>
       <span class="aging-col-tag">${o.stage==='bloqueado'?'🚧 ':''}${esc(colName)}</span>
@@ -10428,13 +10435,15 @@ function renderComparison(){
   const dataArr=SQUADS.map(sq=>squadData[sq.id]);
   // Cabeçalho vem de SQUADS (antes: 3 nomes fixos no HTML, mas só 2 colunas eram desenhadas — o 3º squad nunca aparecia)
   const head=document.getElementById('cmp-head');
-  if(head) head.innerHTML='<tr><th>Métrica</th>'+SQUADS.map(sq=>'<th><i class="wk-dot" style="background:'+esc(sq.color||'#38b6ff')+'"></i>'+esc(sq.icon)+' '+esc(_sqNome(sq))+'</th>').join('')+'</tr>';
+  if(head) head.innerHTML='<tr><th>Métrica</th>'+SQUADS.map(sq=>'<th><i class="wk-dot" style="background:'+_sqCor(sq)+'"></i>'+esc(sq.icon)+' '+esc(_sqNome(sq))+'</th>').join('')+'</tr>';
   if(dataArr.some(d=>!d)){ tbody.innerHTML='<tr><td colspan="'+(SQUADS.length+1)+'" style="color:var(--txt3);padding:12px;">Carregando...</td></tr>'; return; }
 
   tbody.innerHTML=metrics.map(m=>{
     const vals=dataArr.map(d=>m.fn(d));
     // vencedor = melhor valor entre TODOS os squads (empate no topo → ninguém destacado)
-    const nums=vals.filter(v=>typeof v==='number');
+    // Cycle Time chega como texto ("3.0", toFixed) — antes só `number` competia e a linha nunca destacava ninguém
+    const numOf=v=>typeof v==='number'?v:(typeof v==='string'&&/^\d+(\.\d+)?$/.test(v)?parseFloat(v):NaN);
+    const nums=vals.map(numOf).filter(v=>!isNaN(v));
     let best=null;
     if(m.compare!==false && nums.length>1 && (m.higher==='winner'||m.lower==='winner')){
       const b=m.higher==='winner'?Math.max(...nums):Math.min(...nums);
@@ -10442,7 +10451,7 @@ function renderComparison(){
     }
     return `<tr>
       <td style="color:var(--txt2);">${m.label}</td>
-      ${vals.map(v=>`<td class="${best!=null&&v===best?'winner':''}">${v}</td>`).join('')}
+      ${vals.map(v=>`<td class="${best!=null&&numOf(v)===best?'winner':''}">${v}</td>`).join('')}
     </tr>`;
   }).join('');
 }

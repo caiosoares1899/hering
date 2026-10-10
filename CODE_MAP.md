@@ -3730,9 +3730,9 @@ Agente Ágil (que só existia por squad, dentro do próprio kanban).
   `/cards` fresco do Firebase antes de escrever, não usa `squadData`
   cacheado pra montar o payload — ver `/monitorarbugs` 2026-09-17)
 - `renderRiscos()` — L6194
-- `renderTrend()` — L11141 / `renderColDist()` — L11166 (nulo-seguras: as seções saíram da aba Fluxo na v5.36)
-- `renderComparison()` — L10410 (1 coluna por squad, cabeçalho de `SQUADS`)
-- **Aba Fluxo (v5.36):** `_flowStage()` — L10117 (fila/andamento/bloqueado/concluído) · `_collectFlowCards()` — L10137 · `renderFlowMetrics()` — L10165 (KPIs) · `renderThroughputChart()` — L10207 (entregas por dia, empilhado por squad) · `renderCFD()` — L10272 ("Onde está o trabalho agora", nome mantido) · `renderAgingWip()` — L10310 · `renderFilterBar()` — L8771 (squad em `#squad-filter-bar`)
+- `renderTrend()` — L11150 / `renderColDist()` — L11175 (nulo-seguras: as seções saíram da aba Fluxo na v5.36)
+- `renderComparison()` — L10417 (1 coluna por squad, cabeçalho de `SQUADS`)
+- **Aba Fluxo (v5.36):** `_flowStage()` — L10117 (fila/andamento/bloqueado/concluído) · `_collectFlowCards()` — L10139 · `renderFlowMetrics()` — L10171 (KPIs) · `renderThroughputChart()` — L10213 (entregas por dia, empilhado por squad) · `renderCFD()` — L10278 ("Onde está o trabalho agora", nome mantido) · `renderAgingWip()` — L10317 · `renderFilterBar()` — L8771 (squad em `#squad-filter-bar`)
 - `loadAgentUsage()` — L6635
 - `renderGerenciaBar()` — L3221 / `gerenciaSquadIds()` — L3214 (Insights por Gerência)
 

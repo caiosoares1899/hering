@@ -43,7 +43,7 @@ let ok=0, bad=0; const t=(n,c,d)=>{ if(c){ok++;console.log('  ✅',n);} else {ba
  t('Entregas por dia: legenda com os 2 squads + 14 alvos de hover', f.legend.length===2 && f.hover===14, [f.legend,f.hover]);
  t('Onde está o trabalho: 1 linha por squad', f.cfd.length===2, f.cfd);
  t('Dados: 6 abertos (2 na fila: Backlog + A Fazer · 3 em andamento · 1 bloqueado)', f.cfd[0] && f.cfd[0].tot===6, f.cfd[0]);
- t('Dados: WIP 4/2 em vermelho (andamento+bloqueado acima do limite)', f.cfd[0] && /WIP 4\/2/.test(f.cfd[0].wip) && f.cfd[0].over, f.cfd[0]);
+ t('Dados: WIP 3/2 em vermelho (coluna Em Progresso acima do limite; o bloqueado não entra)', f.cfd[0] && /WIP 3\/2/.test(f.cfd[0].wip) && f.cfd[0].over, f.cfd[0]);
  t('Dados: segmento de bloqueado em vermelho (var(--danger))', f.cfd[0] && f.cfd[0].segs.some(s=>/danger/.test(s)), f.cfd[0]);
  t('Prf: WIP 1/3 sem alerta', f.cfd[1] && /WIP 1\/3/.test(f.cfd[1].wip) && !f.cfd[1].over, f.cfd[1]);
  t('Aging: nenhum card de Backlog/fila na lista', f.ag.length>0 && !f.ag.some(a=>/Velho no backlog/.test(a.t)), f.ag);
@@ -84,6 +84,35 @@ let ok=0, bad=0; const t=(n,c,d)=>{ if(c){ok++;console.log('  ✅',n);} else {ba
  await p.evaluate(()=>swPtab('fluxo')); await p.waitForTimeout(300);
  const fp=await p.evaluate(()=>({rows:document.querySelectorAll('#cfd-chart .wk-row').length,leg:document.querySelectorAll('#tp-legend .wk-lg').length,cmp:getComputedStyle(document.getElementById('cmp-section')).display}));
  t('Filtro Prf: Fluxo mostra só 1 squad e sem legenda; comparação oculta', fp.rows===1 && fp.leg===0 && fp.cmp==='none', fp);
+
+ // ── 2ª rodada (/monitorarbugs): regressões achadas no redesenho ──
+ console.log('Regressões /monitorarbugs');
+ const r2=await p.evaluate(()=>{
+  const mid=d=>{const x=new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate()-d); return x;};
+  const at=(d,h)=>{const x=mid(d); x.setHours(h,5,0,0); return x.toISOString();};
+  const mk=(id,doneIso,start)=>({id,title:id,col:'done',owner:'AA',createdAt:'2026-01-01',archived:false,flow:{enteredAt:{done:doneIso},firstStartAt:start,doneAt:doneIso,log:[]}});
+  const cols=[{id:'backlog',name:'Backlog'},{id:'progress',name:'Em Progresso'},{id:'blocker',name:'Imp'},{id:'done',name:'Concluído'}];
+  const cy=(id,days)=>mk(id,at(1,12),new Date(Date.now()-(1+days)*864e5).toISOString());
+  // 'edge' concluiu às 23:05 do dia D-14: dentro de "agora − 14×24h" (até 23h), FORA dos 14 dias de calendário do gráfico
+  squadData.dados={cards:[mk('edge',at(14,23),at(15,1)),mk('ok',at(2,12),at(5,12)),cy('c1',3),cy('c2',9)],columns:cols,tags:[],agilCfg:{},members:[]};
+  squadData.prf={cards:[cy('p1',5),cy('p2',7)],columns:cols.map(x=>({...x})),tags:[],agilCfg:{},members:[]};
+  FLOW_WINDOW=14; setFilter('all'); renderAll(); renderFlowMetrics();
+  const sum=[...document.querySelectorAll('#throughput-chart title')].reduce((s,x)=>{const m=/· (\d+) entrega/.exec(x.textContent);return s+(m?+m[1]:0);},0);
+  const cyc=[...document.querySelectorAll('#cmp-body tr')].find(r=>/Cycle/.test(r.children[0].textContent));
+  // cor hostil vinda de squads_meta nunca vira CSS extra
+  const old=SQUADS[0].color; SQUADS[0].color='red;background:url(//x.test/y)'; renderFlowMetrics(); renderComparison();
+  const html=document.getElementById('cfd-chart').innerHTML+document.getElementById('throughput-chart').innerHTML+document.getElementById('cmp-head').innerHTML;
+  SQUADS[0].color=old; renderFlowMetrics();
+  return {kpi:doneInWindow.length,sum,cyc:[...cyc.children].map(td=>td.textContent+(td.classList.contains('winner')?'*':'')),hostil:/x\.test|url\(/.test(html)};
+ });
+ t('KPI de entregas = soma das colunas do gráfico (janela em dias de calendário)', r2.kpi===r2.sum && r2.kpi===5, r2);
+ t('Comparação: Cycle Time (texto "3.0") também destaca o menor', r2.cyc.some(x=>/\*$/.test(x)), r2.cyc);
+ t('Cor do squad hostil não vira CSS (só #hex)', !r2.hostil, r2);
+ // WIP do Fluxo = WIP do card do squad na Visão
+ const w=await p.evaluate(()=>{ squadData.dados.cards=[{id:'w1',title:'w1',col:'progress',archived:false,createdAt:'2026-01-01',flow:{}},{id:'w2',title:'w2',col:'progress',archived:false,createdAt:'2026-01-01',flow:{}},{id:'w3',title:'w3',col:'blocker',archived:false,createdAt:'2026-01-01',flow:{}}]; renderAll(); renderFlowMetrics();
+   const vis=[...document.querySelectorAll('#squad-cards .met')].find(m=>/WIP/.test(m.textContent)).querySelector('.met-val').textContent.trim();
+   const flu=(document.querySelector('#cfd-chart .wk-wip')||{}).textContent; return {vis,flu}; });
+ t('WIP do Fluxo bate com o WIP do card do squad na Visão (bloqueado em coluna própria não entra)', /WIP 2\//.test(w.flu||'') && w.vis==='2', w);
  t('Sem erros de página', errs.length===0, errs.slice(0,3));
  console.log(bad?`\n${bad} FALHA(S) de ${ok+bad}`:`\nTUDO OK (${ok})`);
  await b.close(); process.exit(bad?1:0);
