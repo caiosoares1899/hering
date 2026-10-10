@@ -13,7 +13,7 @@ const fire=(p)=>{ p=norm(p); lis.forEach(l=>{ if(l.p===p||l.p.startsWith(p+'/')|
 window.__log = window.__log || [];
 export const getDatabase=()=>({});
 export const ref=(db,p)=>({p:norm(p)});
-export const onValue=(r,cb)=>{ window.__log.push(['onValue',r.p]); lis.push({p:r.p,cb}); Promise.resolve().then(()=>cb(snap(r.p))); return ()=>{}; };
+export const onValue=(r,cb)=>{ window.__log.push(['onValue',r.p]); lis.push({p:r.p,cb}); const d=window.__onValueDelay&&window.__onValueDelay(r.p); if(d) setTimeout(()=>cb(snap(r.p)),d); else Promise.resolve().then(()=>cb(snap(r.p))); return ()=>{}; };   // __onValueDelay(path)→ms: 1ª entrega atrasada (rede lenta)
 export const get=async(r)=>{ window.__log.push(['get',r.p]); if(window.__getDelay){ const d=window.__getDelay(r.p); if(d) await new Promise(x=>setTimeout(x,d)); } if(window.__denyGet && window.__denyGet(r.p)) throw new Error('PERMISSION_DENIED'); return snap(r.p); };
 export const set=async(r,v)=>{ window.__log.push(['set',r.p]); if(window.__setDelay){ const d=window.__setDelay(r.p); if(d) await new Promise(x=>setTimeout(x,d)); } if(window.__denySet && window.__denySet(r.p,v)) { const e=new Error('PERMISSION_DENIED'); e.code='PERMISSION_DENIED'; throw e; } setv(r.p,v); fire(r.p); };
 export const update=async(r,v)=>{ window.__log.push(['update',r.p]); if(window.__denySet && window.__denySet(r.p,v)) { const e=new Error('PERMISSION_DENIED'); e.code='PERMISSION_DENIED'; throw e; } if(window.__setDelay){ const d=window.__setDelay(r.p); if(d) await new Promise(x=>setTimeout(x,d)); } Object.entries(v).forEach(([k,x])=>setv((r.p?r.p+'/':'')+k,x)); fire(r.p); };

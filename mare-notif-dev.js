@@ -146,7 +146,10 @@
     if(c && typeof c[canal]==='boolean') return c[canal];
     return canal==='push' ? PUSH_PADRAO.has(tipo) : true;
   }
-  function sinoLigado(tipo){ return !tipo || cfgLigado(tipo, 'sino'); }
+  // Enquanto a config não chegou do banco o sino NÃO mostra tipo nenhum: antes valia "tudo ligado", e um tipo que o ADM desligou aparecia (e tocava o
+  // ding) no boot até a leitura voltar — o selo sumia logo depois, mas o som já tinha saído. Sem permissão de leitura (erro) também conta como pronta.
+  let cfgPronto = false;
+  function sinoLigado(tipo){ return !tipo || (cfgPronto && cfgLigado(tipo, 'sino')); }
 
   const st = {uid:null, viewer:false, opts:null, feed:{}, seen:{ts:'', lidos:{}}, seenReady:false, torre:'digital', started:false};
 
@@ -179,7 +182,7 @@
     if(st.started && st.uid===user.uid){ st.opts = opts; return; }   // 1x por usuário (trocar de conta recarrega a página)
     st.started = true; st.uid = user.uid; st.opts = opts; st.viewer = !!opts.isViewer;
     const W = window;
-    W._onValue(W._ref(W._db, CFG), snap=>{ cfg = snap.val() || {}; emitir(); }, ()=>{});   // interruptores da Central de Notificações (sem permissão/ausente = tudo no padrão)
+    W._onValue(W._ref(W._db, CFG), snap=>{ cfg = snap.val() || {}; cfgPronto = true; emitir(); }, ()=>{ cfgPronto = true; emitir(); });   // interruptores da Central de Notificações (sem permissão/ausente = tudo no padrão)
     W._onValue(W._query(W._ref(W._db, FEED), W._limitToLast(FEED_LIMIT)), snap=>{ st.feed = snap.val() || {}; emitir(); },
       err=>console.warn('[MareNotif] feed indisponível (sem permissão?):', err && err.message));
     if(st.viewer){
@@ -673,7 +676,7 @@
     (document.head || document.documentElement).appendChild(el);
   })();
 
-  window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
+  window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
     appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};

@@ -874,6 +874,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
 .ptab:hover:not(.on){color:var(--txt2);}
 .ptab.on{color:var(--txt);border-bottom-color:var(--accent);font-weight:600;}
 /* 🔔 Central de Notificações (aba Notificações) */
+.nc-aviso{font-size:12px;line-height:1.55;color:var(--txt);background:rgba(255,193,7,.1);border:1px solid rgba(255,193,7,.35);border-radius:10px;padding:9px 12px;margin:0 0 14px;max-width:920px;}
 .nc-intro{font-size:12px;line-height:1.6;color:var(--txt2);margin:-2px 0 14px;max-width:920px;}
 .nc-tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px;}
 .nc-busca{flex:1 1 240px;max-width:360px;padding:7px 11px;font-size:12px;background:rgba(var(--ink-rgb),.6);border:1px solid var(--glass-b);border-radius:9px;color:var(--txt);}
@@ -2040,6 +2041,7 @@ window.MARE_SO_HERING = true;
       <b>🔔 Sino</b> = aparece (ou some) no sino do Maré, do Painel, do Radar e do Oceano · <b>📲 Push</b> = vira (ou deixa de virar) aviso no celular/computador.
       Desligar o sino só <i>esconde</i> — nada é apagado. Cada pessoa ainda pode usar o Não Perturbe dela (veja abaixo quem está com ele ligado).</p>
 
+    <div class="nc-aviso" id="nc-sem-permissao" style="display:none;"></div>
     <div class="grid-4" id="nc-resumo" style="margin-bottom:18px;"></div>
 
     <div class="sec-title" style="margin-bottom:8px;">🧩 Tipos de notificação</div>
@@ -2889,7 +2891,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.38 · painel-dev</div>
+<div class="version">v5.39 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2992,7 +2994,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=17"></script>
+<script src="mare-notif-dev.js?v=18"></script>
 <script src="mare-dicas-dev.js?v=3"></script>
 
 <script>
@@ -11327,7 +11329,8 @@ function _ncFmtData(ms){ return ms ? new Date(ms).toLocaleString('pt-BR',{day:'2
 
 function renderNotifCentral(){
   const elT = document.getElementById('nc-tipos'); if(!elT || !window.MareNotif) return;
-  const M = MareNotif, agora = Date.now(), adm = _isAdmPainel();
+  const M = MareNotif, agora = Date.now(), adm = _isAdmPainel() && _ncPapelGrava();
+  const av = document.getElementById('nc-sem-permissao'); if(av){ const sem = _isAdmPainel() && !adm; av.style.display = sem ? '' : 'none'; if(sem) av.innerHTML = '🔒 Você é ADM pela lista de e-mails, mas o seu <b>papel no banco</b> não é PO nem ADM — por isso os interruptores ficam só pra leitura. Peça a um PO/ADM pra ajustar o seu papel no <b>👥 Global Users</b> e clique em 🔄 Atualizar.'; }
   const cache = _globalUsersCache || {}, users = Object.entries(cache).filter(([,u])=>u && (u.nome||u.email||u.displayName));
   const uso = _ncUso();
   const q = (NC.busca||'').toLowerCase().trim();
@@ -11415,6 +11418,23 @@ function ncFiltroTipos(f){ NC.tipos = f; renderNotifCentral(); }
 function ncFiltroPessoas(f){ NC.pessoas = f; renderNotifCentral(); }
 function ncAtualizar(){ loadGlobalUsers(true); showPainelToast('🔄 Atualizando usuários…'); }
 function _ncPor(){ const u = window._currentUser || {}; return u.displayName || u.email || '?'; }
+// Quem o BANCO deixa gravar em kanban/notif_config (espelho do .write das regras): papel po/adm em kanban/usuarios/{uid}/role, ou o e-mail do Caio.
+// Ser ADM só pela lista de e-mails (isAdmUser) NÃO basta — esse ADM vê a tela, mas o banco nega. Papel ainda não carregado = deixa tentar (o banco decide).
+const NC_EMAIL_MASTER = 'caio.soares@ciahering.com.br';
+function _ncPapelGrava(){
+  const u = window._currentUser; if(!u) return false;
+  if(String(u.email||'').toLowerCase() === NC_EMAIL_MASTER) return true;
+  const eu = _globalUsersCache && _globalUsersCache[u.uid];
+  if(!eu) return true;
+  return eu.role === 'po' || eu.role === 'adm';
+}
+function _ncErroGravar(e, acao){
+  const code = (e && e.code) || (e && e.message) || 'erro';
+  if(/PERMISSION_DENIED/i.test(String(code))) return _ncPapelGrava()
+    ? '⛔ O banco recusou. As regras novas de notif_config já foram publicadas (firebase deploy --only database)? Se sim, confira o seu papel PO/ADM no 👥 Global Users.'
+    : '⛔ O banco recusou: só quem tem o papel PO ou ADM (no 👥 Global Users) grava aqui — ser ADM só pelo e-mail não basta.';
+  return '❌ Não consegui '+acao+' ('+code+').';
+}
 async function ncSet(tipo, canal, el){
   if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM liga e desliga notificações.'); renderNotifCentral(); return; }
   if(typeof _blockIfPainelViewer==='function' && _blockIfPainelViewer()){ renderNotifCentral(); return; }
@@ -11425,21 +11445,21 @@ async function ncSet(tipo, canal, el){
     showPainelToast((canal==='sino'?'🔔 Sino':'📲 Push')+' de "'+t.nome+'" '+(val?'ligado':'desligado')+'.'+(canal==='push'?' (vale após o deploy da função de push)':''));
   }catch(e){
     console.error('[notif_config]', e);
-    showPainelToast('❌ Não consegui gravar ('+((e&&e.code)||(e&&e.message)||'erro')+'). As regras novas de notif_config já foram publicadas?');
+    showPainelToast(_ncErroGravar(e,'gravar'));
     renderNotifCentral();
   }
 }
 async function ncRestaurar(tipo){
   if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM.'); return; }
   try{ await window._set(window._ref(window._db, MareNotif.CFG+'/'+tipo), null); showPainelToast('↺ Voltou ao padrão.'); }
-  catch(e){ showPainelToast('❌ Não consegui restaurar ('+((e&&e.code)||'erro')+').'); }
+  catch(e){ showPainelToast(_ncErroGravar(e,'restaurar')); }
 }
 async function ncRestaurarTudo(){
   if(!_isAdmPainel()){ showPainelToast('⛔ Só ADM.'); return; }
   const n = MareNotif.TIPOS.filter(_ncAlterado).length;
   if(!confirm('Voltar TODOS os '+n+' tipo(s) alterado(s) ao padrão?\n\nSino ligado em todos e push só nos tipos que já enviavam.')) return;
   try{ await window._set(window._ref(window._db, MareNotif.CFG), null); showPainelToast('↺ Tudo no padrão.'); }
-  catch(e){ showPainelToast('❌ Não consegui restaurar ('+((e&&e.code)||'erro')+').'); }
+  catch(e){ showPainelToast(_ncErroGravar(e,'restaurar')); }
 }
 
 // ═══════════════════════════════════════════════════════
