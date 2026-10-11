@@ -83,7 +83,7 @@ const seed=()=>({kanban:{
    t('420 px: sem rolagem horizontal', w.sw<=w.cw+1, w); await ctx.close(); }
 
  // ── LADO DO MARÉ (kanban-dev): campos configuráveis + criar card ──
- { const ctx=await b.newContext({viewport:{width:1280,height:900}}); const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
+ { const ctx=await b.newContext({viewport:{width:1280,height:900}}); await ctx.addInitScript(()=>{ try{ sessionStorage.setItem('mare_login_local','1'); }catch(e){} }); /* sem o redirecionamento pro Oceano */ const p=await ctx.newPage(); const errs=[]; p.on('pageerror',e=>errs.push(e.message)); p.on('dialog',d=>d.accept());
    await p.goto('http://localhost:8941/'+K+'.html',{waitUntil:'load'}); await p.waitForTimeout(1500);
    const r=await p.evaluate(()=>{
      tags.splice(0,tags.length,{id:'t_camp',label:'Campanha',pi:1},{id:'t_out',label:'Outro',pi:2},{id:'tag_sm_a',label:'Hering Adulto Comercial',pi:4});

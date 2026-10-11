@@ -46,3 +46,12 @@ Limitações conhecidas: a restrição "só ADM edita os links da Hering" é só
 
 ## Sino no Oceano (2026-10-09, só dev: `oceano-dev.html` v1.5)
 Botão 🔔 no topo, ao lado de ❓ Ajuda, com o módulo compartilhado `mare-notif-dev.js`. Pessoais (`kanban/usuarios/{uid}/notificacoes`, TTL do sino do kanban) + feed da torre; rodapé de som/push/Não Perturbe registra o aparelho em `fcm_tokens` (FCM por `import()` dinâmico). Clique roteia por `rotearUrl()` → `abrirApp()` (host/aba nova conforme a preferência). O push continua emitido pela Cloud Function; o clique na notificação de push (service worker) ainda abre `kanban`/`okr` numa aba do navegador, não o Oceano instalado.
+
+## Login único pelo Oceano (2026-10-11, só dev: kanban-dev v8.30.826 · painel-dev v5.45 · oceano-dev v1.15)
+O Oceano é a **porta de entrada**: quem não está logado no Maré ou no Painel é mandado pra `oceano(-dev).html?next=<página>`, entra com o Google da Hering (e o cadastro básico em `kanban/usuarios/{uid}` é feito lá, sem sobrescrever) e **volta sozinho** pra mesma página (squad/card/hash incluídos).
+- **Onde:** `_irParaOceano()` no ramo deslogado de `kanban(-dev)` (listener `auth-change`) e `painel(-dev)`; `NEXT` + `garantirCadastro()` + tela "Voltando…" no `oceano(-dev)`. Interruptor: `window.MARE_LOGIN_PELO_OCEANO` (1º `<script>` das duas páginas, ao lado de `MARE_SO_HERING`); `false` = cada página volta a mostrar a tela de login própria.
+- **`next` seguro:** lista fechada `^(kanban|painel|okr)(-dev)?\.html(?query)(#hash)?$`; qualquer outra coisa é ignorada.
+- **Exceções (não redireciona):** Radar (visualizador externo entra direto); página dentro do host do Oceano (iframe); `?login=local` (convidado externo/visualizador — guarda `sessionStorage.mare_login_local` pela aba; a tela de login do Oceano tem os links "Convidado externo? Entre direto"); recusa/aviso já escrito em `#login-err` ou guardado em `login_notice`; anti-loop (`sessionStorage.mare_oceano_ts`, 45 s).
+- **Cuidado ao mexer em login:** quem tem sessão nunca vê nada disso. Se um dia o Oceano cair, `MARE_LOGIN_PELO_OCEANO=false` + promoção resolve; convidados externos usam `?login=local`.
+- **A testar à mão:** o app instalado (PWA) indo e voltando pelo Oceano (escopo do manifest) no iPhone/desktop. Teste automático: `docs/arezzo/testes/test_login_oceano.js`.
+

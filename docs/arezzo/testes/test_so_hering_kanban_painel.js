@@ -3,7 +3,7 @@ const { chromium } = require('/opt/node22/lib/node_modules/playwright');
 let falhas=0; const ok=(n,c,d)=>{ if(!c) falhas++; console.log(c?'✅':'❌',n,c?'':(d===undefined?'':String(d).slice(0,300))); };
 (async()=>{ const b=await chromium.launch({executablePath:'/opt/pw-browsers/chromium-1194/chrome-linux/chrome',args:['--no-sandbox']});
  for(const [nome,url] of [[process.env.K||'kanban-dev','http://localhost:8941/'+(process.env.K||'kanban-dev')+'.html'],[process.env.P||'painel-dev','http://localhost:8941/'+(process.env.P||'painel-dev')+'.html']]){
-   const ctx=await b.newContext({viewport:{width:1280,height:900}}); const page=await ctx.newPage(); const errs=[]; page.on('pageerror',e=>errs.push(e.message));
+   const ctx=await b.newContext({viewport:{width:1280,height:900}}); await ctx.addInitScript(()=>{ try{ sessionStorage.setItem('mare_login_local','1'); }catch(e){} }); /* sem o redirecionamento pro Oceano: aqui se confere a tela de login local */ const page=await ctx.newPage(); const errs=[]; page.on('pageerror',e=>errs.push(e.message));
    await page.goto(url,{waitUntil:'load'}); await page.waitForTimeout(1500);
    const r=await page.evaluate(()=>{ const ov=document.getElementById('login-ov'); const vis=el=>el&&getComputedStyle(el).display!=='none'&&el.offsetParent!==null;
      const msBtns=[...document.querySelectorAll('[onclick*="doSignInMicrosoft"]')];

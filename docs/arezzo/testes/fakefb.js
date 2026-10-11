@@ -1,5 +1,8 @@
 // Firebase SDK falso (em memória) servido no lugar do gstatic — roda o BOOT REAL da página.
-exports.install = async function(context, seed){
+// opts.oceano=true liga o redirecionamento "deslogado → Oceano" de Maré/Painel (test_login_oceano.js); nos demais testes ele fica desligado
+// (a sessão da aba começa com mare_login_local=1), senão toda página que sobe deslogada antes do __authCb iria parar no Oceano.
+exports.install = async function(context, seed, opts){
+  if(!(opts&&opts.oceano)) await context.addInitScript(()=>{ try{ sessionStorage.setItem('mare_login_local','1'); }catch(e){} });
   const app=`export const initializeApp=()=>({});`;
   const dbm=`
 const store = (window.__store = window.__store || {});

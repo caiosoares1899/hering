@@ -1503,6 +1503,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 // @ciahering. `true` esconde/desliga a integração Arezzo/Microsoft e as torres; `false` religa tudo como estava em 2026-10-01..07. Mesmo interruptor em
 // kanban/painel/okr/okr-apresentacao/mare-notif (grep MARE_SO_HERING) + functions/common/mareModo.js + database.rules.json. Doc: docs/arezzo/MARE_SO_HERING.md
 window.MARE_SO_HERING = true;
+// Login único pelo Oceano (2026-10-11): quem NÃO está logado é mandado pro Oceano (?next=esta página), faz login e cadastro lá e volta.
+// false = cada página volta a mostrar a própria tela de login. Convidado externo entra com ?login=local (ver _irParaOceano()).
+window.MARE_LOGIN_PELO_OCEANO = true;
 (function(){ if(!window.MARE_SO_HERING) return; try{ var st=document.createElement('style'); st.textContent='.ms-login{display:none!important}'; document.head.appendChild(st); }catch(e){} })();
 </script>
 <script>
@@ -2891,7 +2894,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.44 · painel-dev</div>
+<div class="version">v5.45 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8939,6 +8942,26 @@ function _loginProviderMismatchMsg(user){
 // toast em vez de abrir o modal).
 window._isPainelViewer = false;
 function _painelViewerKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
+// ── Login único pelo Oceano ──
+// Deslogado em Maré/Painel → Oceano (?next=<esta página, com query/hash>) → login + cadastro → volta pra cá. Devolve true se mandou embora.
+// NÃO manda: dentro do host do Oceano (iframe), com ?login=local (convidado externo/visualizador — o Oceano é só @ciahering; a escolha
+// vale pela aba), com recusa/aviso já escrito (ou guardado em login_notice) na tela de login (a pessoa precisa ler), ou se já mandou há menos de 45 s (anti-loop).
+function _irParaOceano(){
+  try{
+    if(window.MARE_LOGIN_PELO_OCEANO===false) return false;
+    if(window.parent && window.parent!==window) return false;
+    if(new URLSearchParams(location.search).get('login')==='local') sessionStorage.setItem('mare_login_local','1');
+    if(sessionStorage.getItem('mare_login_local')==='1') return false;
+    const e=document.getElementById('login-err'); if(e && e.style.display!=='none' && e.textContent.trim()) return false;
+    try{ const raw=localStorage.getItem('login_notice'); if(raw){ const n=JSON.parse(raw); if(n && n.msg && Date.now()-n.ts<=120000) return false; } }catch(err){}   // recusa guardada que _showLoginNotice() ainda vai mostrar
+    const ult=Number(sessionStorage.getItem('mare_oceano_ts')||0); if(ult && Date.now()-ult<45000) return false;
+    sessionStorage.setItem('mare_oceano_ts', String(Date.now()));
+    const dev=/-dev\.html/.test(location.pathname);
+    const alvo=location.pathname.split('/').pop()+location.search+location.hash;
+    location.replace((dev?'oceano-dev.html':'oceano.html')+'?next='+encodeURIComponent(alvo));
+    return true;
+  }catch(err){ return false; }
+}
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
@@ -8995,6 +9018,7 @@ window.addEventListener('auth-change',e=>{
     window._isPainelViewer = false;
     _finishPainelLogin(user);
   } else {
+    if(_irParaOceano()) return;
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
   }

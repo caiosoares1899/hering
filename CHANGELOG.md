@@ -47,6 +47,16 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🌊 Login único pelo Oceano — kanban-dev v8.30.826-dev · painel-dev v5.45 · oceano-dev v1.15 (SÓ DEV)
+Quem **não está logado** no Maré ou no Painel agora é mandado pro **Oceano**, faz login e cadastro lá e **volta sozinho** pra mesma página (inclusive `?squad=…&card=…`).
+- **Maré e Painel (deslogado):** `_irParaOceano()` → `oceano(-dev).html?next=<página + query + hash>`. Interruptor `window.MARE_LOGIN_PELO_OCEANO` (false = volta a tela de login própria, ao lado do `MARE_SO_HERING`).
+- **Oceano:** com `?next=`, depois do login faz o cadastro básico (`kanban/usuarios/{uid}`, sem sobrescrever) e volta — tela "Voltando pra onde você estava…" em vez de piscar o lobby. `next` só aceita `kanban|painel|okr` (+`-dev`) do próprio domínio (lista fechada; `https://…`, `//…`, `javascript:` e `../` são ignorados).
+- **Não redireciona:** **Radar** (visualizador externo segue entrando direto); página **dentro do host do Oceano** (iframe); `?login=local` (convidado externo/visualizador — vale pela aba, via `sessionStorage`); recusa/aviso já escrito na tela de login (ou guardado em `login_notice`); e **anti-loop** (se já mandou há menos de 45 s e voltou deslogado, mostra o login próprio).
+- **Convidado externo:** a tela de login do Oceano ganhou "Convidado externo? Entre direto: Maré · Painel · Radar" (links `?login=local`); a mensagem de recusa de conta não-Hering aponta pra eles.
+- Ajuda do Oceano: FAQ "Abri o Maré e fui parar no Oceano. Por quê?". Testes: `test_login_oceano.js` (25 checagens; `fakefb.js` ganhou `opts.oceano` — por padrão os testes ficam com o redirecionamento desligado); toda a bateria de `docs/arezzo/testes/` re-rodada.
+- **Pendente de teste manual (não dá pra automatizar aqui):** o app instalado (PWA) no iPhone/desktop indo e voltando pelo Oceano sem abrir o navegador por fora.
+- Dica: não — é o fluxo de entrada.
+
 ### 📥 Intake interno: mesmo link, dois modos — kanban-dev v8.30.825-dev · `intake-dev.html` (novo, SÓ DEV)
 Pedir algo a um squad ficou mais rápido pra quem é da Hering, sem mexer no formulário público.
 - **`intake-dev.html`** (cópia de dev da `intake.html`; a prod só muda na promoção): **sem login** continua o formulário de sempre, via Cloud Function (honeypot + limite por IP/squad). Com **login Google @ciahering** (botão "🔐 Entrar com Google", ou quem já está logado no Maré) vira um formulário de toques: nome/contato/foto vêm do login; **prioridade** em 4 chips (Média já marcada — é uma *sugestão*), **prazo** com atalhos (Hoje/Amanhã/Sexta/+1 semana), **submarca**, **canal de venda**, **tags** e **link**; o time solicitante fica lembrado. Seletor **"Pedir para"** troca o squad de destino. Grava direto em `intake_pending` (as regras já deixam qualquer Hering gravar no squad) e avisa os membros do squad no 🔔 — **nenhum deploy de `functions/`**. Submarca/canal/tags saem das `tags` do próprio squad (nada duplicado na página).
