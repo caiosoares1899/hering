@@ -174,6 +174,9 @@ let sel = null;           // escolhas da pessoa no formulário interno
 let squadsLista = null;   // [{id,label,emoji}] — seletor "Pedir para"
 let pubInfo = null;       // {label,emoji} do squad no modo público (vem da Cloud Function)
 let authPronto = false;
+let entrarSeq = 0;        // cada entrar() ganha um número; resposta atrasada de uma chamada anterior é descartada
+// id de squad: só letras/números/_/- (nunca vira caminho do banco com barra ou ponto)
+const squadValido = s => /^[A-Za-z0-9_-]{1,40}$/.test(s || '');
 
 function showMsg(text, ok) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
 function clearMsg() { $('msg').className = 'msg'; }
@@ -339,14 +342,21 @@ function mostrar(modo) {
 // ── Fluxo principal ──
 async function entrar() {
   if (!authPronto) return;
+  const meu = ++entrarSeq, ainda = () => meu === entrarSeq;
   clearMsg();
   $('loading').style.display = '';
   $('area').style.display = 'none';
   if (user) {
     await carregarListaSquads();
+    if (!ainda()) return;
     pubInfo = null;
-    if (!squad) { mostrar('escolher'); return; }
-    try { sq = await carregarSquadInterno(); } catch (e) { sq = null; }
+    if (!ainda()) return;
+    if (!squad) { sq = null; mostrar('escolher'); return; }
+    if (!squadValido(squad)) { sq = null; mostrar('invalid'); return; }
+    let novoSq = null;
+    try { novoSq = await carregarSquadInterno(); } catch (e) { console.warn('[intake] carregar squad:', e); novoSq = null; }
+    if (!ainda()) return;   // o squad mudou de novo enquanto este carregava — vale só a última escolha
+    sq = novoSq;
     if (!sq) { mostrar('invalid'); return; }
     if (!sq.intakeEnabled) { mostrar('disabled'); return; }
     renderInterno();
@@ -355,16 +365,17 @@ async function entrar() {
   }
   // Público (sem login): comportamento de sempre
   sq = null; pubInfo = null;
-  if (!squad) { mostrar('invalid'); return; }
+  if (!squadValido(squad)) { mostrar('invalid'); return; }
   try {
     const r = await fetch(FN_URL + '?squad=' + encodeURIComponent(squad));
     if (!r.ok) throw 0;
     const data = await r.json();
+    if (!ainda()) return;
     if (data.intakeEnabled === false) { mostrar('disabled'); return; }
     pubInfo = { label: data.squad.label, emoji: data.squad.emoji };
     $('f-squad-demandante').innerHTML = '<option value="" disabled selected>— selecione —</option>' + SQUADS_DEMANDANTES.map(s => '<option value="' + esc(s) + '">' + esc(s) + '</option>').join('');
     mostrar('publico');
-  } catch (e) { mostrar('invalid'); }
+  } catch (e) { if (ainda()) mostrar('invalid'); }
 }
 onAuthStateChanged(auth, u => {
   const novo = isHering(u) ? u : null;
@@ -412,14 +423,14 @@ function validarInterno() {
   if (!$('i-sqdem-sel').value) return 'Escolha o seu time.';
   return '';
 }
-async function avisarMembros(titulo, demandante) {
+async function avisarMembros(titulo, demandante, squadId) {
   try {
     const snap = await get(ref(db, 'kanban/usuarios_publicos'));
     const todos = snap.val() || {};
-    const uids = Object.keys(todos).filter(uid => uid !== user.uid && todos[uid] && todos[uid].squads && todos[uid].squads[squad] === true);
+    const uids = Object.keys(todos).filter(uid => uid !== user.uid && todos[uid] && todos[uid].squads && todos[uid].squads[squadId] === true);
     if (!uids.length) return;
     const notifId = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
-    const notif = { id: notifId, type: 'intake', title: '📥 Novo pedido de intake', sub: titulo + ' — ' + demandante, read: false, ts: new Date().toISOString(), squad };
+    const notif = { id: notifId, type: 'intake', title: '📥 Novo pedido de intake', sub: titulo + ' — ' + demandante, read: false, ts: new Date().toISOString(), squad: squadId };
     await Promise.all(uids.map(uid => set(ref(db, 'kanban/usuarios/' + uid + '/notificacoes/' + notifId), notif).catch(() => {})));
   } catch (e) { console.warn('[intake] não deu pra avisar o squad:', e); }
 }
@@ -450,7 +461,7 @@ $('intake-int').addEventListener('submit', async function (e) {
   const link = $('i-link') ? $('i-link').value.trim() : '';
   if (c.link.on && link) item.links = [{ url: link.slice(0, 500) }];
   try {
-    const novo = push(ref(db, 'kanban/squads/' + squad + '/dados/intake_pending'));
+    const novo = push(ref(db, 'kanban/squads/' + sq.id + '/dados/intake_pending'));
     item.id = novo.key;
     await set(novo, item);
   } catch (err) {
@@ -459,7 +470,7 @@ $('intake-int').addEventListener('submit', async function (e) {
     return;
   }
   lsSet(LS_SQDEM, sqdem);
-  avisarMembros(titulo, demandante);
+  avisarMembros(titulo, demandante, sq.id);
   $('intake-int').style.display = 'none';
   showMsg('✅ Pedido enviado para ' + sq.emoji + ' ' + sq.label + '! O time recebe um aviso e transforma em card.', true);
   btn.disabled = false; btn.textContent = 'Enviar pedido';

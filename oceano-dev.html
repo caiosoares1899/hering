@@ -572,7 +572,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.17 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.18 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -675,10 +675,11 @@ window.addEventListener('auth-change', e=>{
   U = u; iniciarSessao();
 });
 
-async function lerRamo(sub){ try{ const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+U.uid+'/'+sub)); return sn && sn.exists() ? sn.val() : null; }catch(e){ return null; } }
+// null = o ramo não existe; undefined = a LEITURA falhou (rede/permissão) — quem cria cadastro só age no null, nunca por cima de um cadastro que existe e não deu pra ler
+async function lerRamo(sub){ try{ const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+U.uid+'/'+sub)); return sn && sn.exists() ? sn.val() : null; }catch(e){ return undefined; } }
 // cadastro básico: se a pessoa ainda não tem registro em kanban/usuarios, cria (mesmo critério do Radar: UPDATE, nunca set)
 async function garantirCadastro(uidAtual){
-  if(uidAtual) return;
+  if(uidAtual !== null) return;   // já existe (string) ou a leitura falhou (undefined)
   try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){}
 }
 async function iniciarSessao(){
@@ -743,7 +744,6 @@ function avLimpa(html){
   })(doc.body);
   return doc.body.innerHTML;
 }
-function avTexto(html){ const d = new DOMParser().parseFromString('<body>'+String(html||'')+'</body>','text/html'); return (d.body.textContent||'').trim(); }
 function avCmp(a,b){
   return (b.fixado?1:0)-(a.fixado?1:0) || (b.tipo==='urgente'?1:0)-(a.tipo==='urgente'?1:0) || String(b.criadoEm||'').localeCompare(String(a.criadoEm||''));
 }
@@ -779,7 +779,16 @@ function muralRender(){
   // "Ler tudo ›" só onde o texto foi cortado (precisa estar visível pra medir)
   if(muralAberto) requestAnimationFrame(()=>$$('#mural .av').forEach(a=>{ const cp = a.querySelector('.av-corpo'), l = a.querySelector('.av-ler'); if(cp && l) l.hidden = !(cp.scrollHeight > cp.clientHeight + 2); }));
   // com o Mural ABERTO e uns segundos na tela, o que está à vista vira "visto" (some o NOVO na próxima visita); recolhido não conta como visto
-  clearTimeout(avVistoT); if(muralAberto) avVistoT = setTimeout(()=>{ avSalvaVistos(mostrar.map(c=>c.id)); }, 6000);
+  clearTimeout(avVistoT); if(muralAberto) avVistoT = setTimeout(avMarcaVistos, 6000);
+}
+// Só conta como "visto" com o Mural aberto E à vista: aba em segundo plano ou produto aberto por cima do lobby (host) não contam — tenta de novo até voltar.
+function avMarcaVistos(){
+  clearTimeout(avVistoT);
+  const wrap = $('#mural-wrap'); if(!muralAberto || !wrap || wrap.style.display==='none') return;
+  const lista = avisos.slice().sort(avCmp), mostrar = avisosTodos ? lista : lista.slice(0, AV_LIMITE), vistos = avVistos();
+  if(mostrar.every(c=>vistos.has(c.id))) return;
+  if(document.hidden || $('#host').classList.contains('on')){ avVistoT = setTimeout(avMarcaVistos, 3000); return; }
+  avSalvaVistos(mostrar.map(c=>c.id));
 }
 function avAbreBotao(c){
   const u = String(c.botao && c.botao.url || ''); if(!u) return;
