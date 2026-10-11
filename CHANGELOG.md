@@ -47,6 +47,9 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📐 Mural sem corte: coluna mais alta — oceano-dev v1.21 (SÓ DEV)
+Relato do usuário (prints): a coluna do Mural cortava o aviso e criava rolagem enquanto sobrava espaço até a linha de baixo. O teto da coluna subiu de `100vh − 290px` pra `max(600px, 100vh − 170px)` — um aviso com capa cabe inteiro; a rolagem interna só entra com muitos avisos.
+
 ### 📐 Início do Oceano em duas colunas: produtos à esquerda, Mural à direita — oceano-dev v1.20 (SÓ DEV)
 Relato do usuário (com print): o Mural empilhado ficava colado nos produtos e empurrava tudo pra baixo.
 - **Desktop (≥ 980 px):** `#inicio-grid` em 2 colunas — produtos (2×2) à esquerda, **Mural à direita**, os dois na primeira tela, sem rolar a página. A coluna do Mural tem altura limitada (`100vh − 290px`) e **rola por dentro** quando há muitos avisos; fixado/urgente continuam em destaque (capa em cima, texto embaixo). Sem aviso nenhum a coluna some e os produtos ocupam a largura toda (`.tem-mural`).
