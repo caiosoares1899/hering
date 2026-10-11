@@ -47,6 +47,13 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📐 Início do Oceano em duas colunas: produtos à esquerda, Mural à direita — oceano-dev v1.20 (SÓ DEV)
+Relato do usuário (com print): o Mural empilhado ficava colado nos produtos e empurrava tudo pra baixo.
+- **Desktop (≥ 980 px):** `#inicio-grid` em 2 colunas — produtos (2×2) à esquerda, **Mural à direita**, os dois na primeira tela, sem rolar a página. A coluna do Mural tem altura limitada (`100vh − 290px`) e **rola por dentro** quando há muitos avisos; fixado/urgente continuam em destaque (capa em cima, texto embaixo). Sem aviso nenhum a coluna some e os produtos ocupam a largura toda (`.tem-mural`).
+- **Padrão aberto/recolhido acompanha o layout:** sem escolha da pessoa, **aberto no desktop** (não empurra nada) e **recolhido no celular/janela estreita** (empilhado); a escolha dela (`oceano_mural_aberto`) vale mais que o padrão, e girar/redimensionar a janela atualiza o padrão. No estreito continua "mostra 4 + Ver todos"; no desktop mostra todos.
+- Teste: `test_mural_oceano.js` (+8 checagens de layout: lado a lado, primeira tela, rolagem interna, escolha lembrada, estreitar/alargar, sem avisos). FAQ atualizado.
+- Dica: não.
+
 ### 🌊 Login único: a pessoa FICA no Oceano (e vê o Mural) — oceano-dev v1.19 (SÓ DEV; ajuste da v1.15)
 Relato direto do usuário: depois do login a pessoa era **devolvida sozinha** ao Maré/Painel e nunca via a página inicial do Oceano — justamente onde fica o Mural.
 - **Antes:** Oceano fazia o cadastro e `location.replace(next)` ("Voltando pra onde você estava…"). **Agora:** a pessoa **fica no Oceano** (lobby, Mural, vitrine) e ganha, no topo, um atalho **"↩ Você estava indo para o Maré Digital (no card que você abriu) · [Continuar] ✕"**. Continuar abre a página de origem (squad/card/hash) pelo roteador do Oceano (aba nova ou dentro do host, conforme a preferência); ✕ dispensa. `next` continua só da família (lista fechada); `next` inválido = sem atalho.

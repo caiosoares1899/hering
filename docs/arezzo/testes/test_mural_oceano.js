@@ -33,7 +33,7 @@ const seed=()=>({kanban:{
  const titulos=p=>p.evaluate(()=>[...document.querySelectorAll('#mural .av-t')].map(e=>e.textContent));
 
  // ── Oceano: membro do squad dev ──
- { const {ctx,p,errs,abertas}=await abre(U('eve','Eve Souza'));
+ { const {ctx,p,errs,abertas}=await abre(U('eve','Eve Souza'),800);   // 800 px = layout empilhado (limite de 4 + "Ver todos"); o desktop em 2 colunas tem bloco próprio mais abaixo
    const v=await p.evaluate(()=>({wrap:getComputedStyle(document.getElementById('mural-wrap')).display,n:document.getElementById('mural-n').textContent,mais:document.getElementById('mural-mais').textContent,xss:window.__xss||0,aberto:document.getElementById('mural-hd').getAttribute('aria-expanded')}));
    const ts=await titulos(p);
    t('mural aparece na página inicial (aberto pela preferência), com contador e "Ver todos"', v.wrap!=='none' && v.n==='7' && v.aberto==='true' && /Ver todos \(7\)/.test(v.mais), v);
@@ -66,9 +66,9 @@ const seed=()=>({kanban:{
    t('depois de uns segundos na tela, os avisos viram "vistos" (some o NOVO na próxima visita)', nv.novos===0 || nv.novos===1, nv);
    t('sem erro de JS (mural)', !errs.length, errs); await ctx.close(); }
  // ── Recolhido por padrão + indicador de novos ──
- { const {ctx,p}=await abre(U('eve','Eve Souza'),1280,null,true);
+ { const {ctx,p}=await abre(U('eve','Eve Souza'),800,null,true);
    const r=await p.evaluate(()=>{ const vis=e=>!!e&&e.offsetParent!==null&&getComputedStyle(e).visibility!=='hidden'; return {wrap:getComputedStyle(document.getElementById('mural-wrap')).display,exp:document.getElementById('mural-hd').getAttribute('aria-expanded'),corpo:vis(document.getElementById('mural-corpo')),cards:document.querySelectorAll('#mural .av').length&&[...document.querySelectorAll('#mural .av')].some(vis),n:document.getElementById('mural-n').textContent,novos:document.getElementById('mural-novos').textContent,novosVis:vis(document.getElementById('mural-novos')),urg:document.getElementById('mural-novos').classList.contains('urg'),ls:localStorage.getItem('oceano_mural_aberto')}; });
-   t('sem preferência salva, o Mural começa RECOLHIDO: só o cabeçalho com a contagem (7) e o selo "● 7 novos"', r.wrap!=='none' && r.exp==='false' && !r.corpo && !r.cards && r.n==='7' && r.novos==='7 novos' && r.novosVis && r.ls===null, r);
+   t('estreito (800 px), sem preferência salva: o Mural começa RECOLHIDO: só o cabeçalho com a contagem (7) e o selo "● 7 novos"', r.wrap!=='none' && r.exp==='false' && !r.corpo && !r.cards && r.n==='7' && r.novos==='7 novos' && r.novosVis && r.ls===null, r);
    t('há um 🚨 Urgente entre os novos: o selo fica vermelho', r.urg, r);
    if(SHOT) await p.screenshot({path:SHOT+'/mural_recolhido.png',clip:{x:0,y:100,width:1280,height:200}});
    await p.waitForTimeout(6500); await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('eve','Eve Souza')); await p.waitForTimeout(900);
@@ -86,15 +86,36 @@ const seed=()=>({kanban:{
    t('o cabeçalho é um botão: Enter abre pelo teclado', await p.evaluate(()=>document.getElementById('mural-hd').getAttribute('aria-expanded')==='true'), 0);
    await ctx.close(); }
  // aviso novo chega com o Mural recolhido: o selo sobe sem abrir nada
- { const {ctx,p}=await abre(U('eve','Eve Souza'),1280,()=>{ const s=seed(); s.kanban.comunicados=Object.fromEntries([com('um',{titulo:'Único',tipo:'dica'})]); return s; },true);
+ { const {ctx,p}=await abre(U('eve','Eve Souza'),800,()=>{ const s=seed(); s.kanban.comunicados=Object.fromEntries([com('um',{titulo:'Único',tipo:'dica'})]); return s; },true);
    t('com 1 aviso o selo diz "1 novo" (no singular) e não é vermelho', (await p.evaluate(()=>({t:document.getElementById('mural-novos').textContent,u:document.getElementById('mural-novos').classList.contains('urg')}))).t==='1 novo', 0);
    await p.evaluate(()=>{ window._set(window._ref(window._db,'kanban/comunicados/chegou'),{id:'chegou',titulo:'Urgente ao vivo',corpo:'x',tipo:'urgente',squad:'*',publico:'todos',prioridade:'oceano',ativo:true,oceano:true,criadoEm:new Date().toISOString()}); }); await p.waitForTimeout(400);
    const r=await p.evaluate(()=>({t:document.getElementById('mural-novos').textContent,u:document.getElementById('mural-novos').classList.contains('urg'),fechado:document.getElementById('mural-corpo').hidden}));
    t('aviso urgente chegando ao vivo com o Mural recolhido: selo "2 novos" vira vermelho, sem abrir sozinho', r.t==='2 novos' && r.u && r.fechado, r); await ctx.close(); }
+ // ── Desktop: apps à esquerda, Mural à direita, tudo à vista sem rolar a página ──
+ { const {ctx,p}=await abre(U('eve','Eve Souza'),1280,null,true);   // sem preferência salva
+   await p.setViewportSize({width:1280,height:760}); await p.waitForTimeout(200);
+   const r=await p.evaluate(()=>{ const rc=e=>{ const b=document.querySelector(e).getBoundingClientRect(); return {l:b.left,r:b.right,t:b.top,b:b.bottom,w:b.width}; };
+     const m=document.getElementById('mural'); return {grid:document.getElementById('inicio-grid').classList.contains('tem-mural'),exp:document.getElementById('mural-hd').getAttribute('aria-expanded'),tile:rc('#tiles .tile'),tiles:rc('#tiles'),mural:rc('#col-mural'),hd:rc('#mural-hd'),cards:m.querySelectorAll('.av').length,mais:getComputedStyle(document.getElementById('mural-mais')).display,rola:m.scrollHeight>m.clientHeight+2,ls:localStorage.getItem('oceano_mural_aberto'),vh:innerHeight,pageScroll:document.documentElement.scrollHeight>innerHeight+1}; });
+   t('desktop: Mural na coluna da DIREITA e apps na da ESQUERDA (lado a lado)', r.grid && r.tiles.r<=r.mural.l+2 && r.tile.l<r.mural.l, r);
+   t('desktop: sem preferência salva o Mural já vem ABERTO (não empurra nada) e mostra todos os avisos (sem "Ver todos")', r.exp==='true' && r.cards===7 && r.mais==='none' && r.ls===null, r);
+   t('desktop: o primeiro app e o cabeçalho do Mural aparecem na primeira tela, sem rolar', r.tile.b<r.vh && r.hd.b<r.vh, r);
+   t('desktop: a lista do Mural rola DENTRO da coluna (a página não cresce por causa dele)', r.rola, r);
+   if(SHOT) await p.screenshot({path:SHOT+'/mural_2colunas.png'});
+   await p.click('#mural-hd'); await p.waitForTimeout(150); await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('eve','Eve Souza')); await p.waitForTimeout(900);
+   t('desktop: recolher é lembrado (a escolha vale mais que o padrão do layout)', await p.evaluate(()=>document.getElementById('mural-hd').getAttribute('aria-expanded')==='false' && localStorage.getItem('oceano_mural_aberto')==='0'), 0);
+   // estreitar a janela sem escolha: acompanha o layout
+   await p.evaluate(()=>localStorage.removeItem('oceano_mural_aberto')); await p.reload(); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('eve','Eve Souza')); await p.waitForTimeout(700);
+   await p.setViewportSize({width:700,height:760}); await p.waitForTimeout(400);
+   t('sem escolha salva, estreitar a janela recolhe o Mural (empilhado) e alargar abre de novo', await p.evaluate(()=>document.getElementById('mural-hd').getAttribute('aria-expanded')==='false') && (await p.setViewportSize({width:1280,height:760}), await p.waitForTimeout(400), await p.evaluate(()=>document.getElementById('mural-hd').getAttribute('aria-expanded')==='true')), 0);
+   await ctx.close(); }
+ // sem avisos no desktop: os apps ocupam a largura toda (nada de coluna vazia)
+ { const {ctx,p}=await abre(U('eve','Eve Souza'),1280,()=>{ const s=seed(); s.kanban.comunicados={}; return s; });
+   const r=await p.evaluate(()=>({grid:document.getElementById('inicio-grid').classList.contains('tem-mural'),w:document.getElementById('tiles').getBoundingClientRect().width,mural:getComputedStyle(document.getElementById('mural-wrap')).display}));
+   t('desktop sem avisos: não existe a coluna do Mural e os apps usam a largura toda', !r.grid && r.mural==='none' && r.w>900, r); await ctx.close(); }
  // ── PO e ADM veem mais ──
- { const {ctx,p}=await abre(U('paulo','Paulo PO')); await p.click('#mural-mais'); const ts=await titulos(p);
+ { const {ctx,p}=await abre(U('paulo','Paulo PO'),800); await p.click('#mural-mais'); const ts=await titulos(p);
    t('PO do squad também vê o aviso "só PO"', ts.includes('Só PO e ADM') && !ts.includes('Squad do marketplace'), ts); await ctx.close(); }
- { const {ctx,p}=await abre(U('ana','Ana ADM')); await p.click('#mural-mais'); const ts=await titulos(p);
+ { const {ctx,p}=await abre(U('ana','Ana ADM'),800); await p.click('#mural-mais'); const ts=await titulos(p);
    t('ADM (sem squad) vê avisos de qualquer squad e os "só PO"; nunca o arquivado/expirado/sem Oceano', ts.includes('Squad do marketplace') && ts.includes('Só PO e ADM') && ts.includes('Só do squad dev') && !ts.some(x=>/Arquivado|Expirado|Só popup/.test(x)), ts); await ctx.close(); }
  // ── sem avisos: some ──
  { const {ctx,p}=await abre(U('eve','Eve Souza'),1280,()=>{ const s=seed(); s.kanban.comunicados={}; return s; });
