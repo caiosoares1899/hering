@@ -340,6 +340,7 @@ input.in[readonly]{opacity:.7;}
     <button class="btn pri gbtn" id="btn-login" type="button">Entrar com Google</button>
     <div class="login-err" id="login-err" role="alert"></div>
     <div class="login-nota">Acesso só com <b>@ciahering.com.br</b> pelo Google. Seus dados ficam no Firebase da Hering, com as regras de acesso aplicadas no servidor.</div>
+    <div class="login-nota" id="login-convidado">Convidado externo (visualizador)? Entre direto: <a id="lc-kanban" href="#">Maré</a> · <a id="lc-painel" href="#">Painel</a> · <a id="lc-okr" href="#">Radar</a></div>
   </div>
 </div>
 
@@ -515,7 +516,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.14 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.15 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -529,6 +530,9 @@ const SVG_PAINEL = '<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.
 const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>';
 const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
+// Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>; depois do login + cadastro voltamos pra ela.
+// Só páginas do próprio domínio da família (lista fechada) — nunca um endereço de fora.
+const NEXT = (()=>{ try{ const n = new URLSearchParams(location.search).get('next') || ''; return /^(kanban|painel|okr)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(n) ? n : ''; }catch(e){ return ''; } })();
 const APPS = [
   {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
   {id:'painel', nome:'Painel', sub:'Gestão e pessoas', href:P('painel'), img:'favicon-painel-v2.png?v=3', pt:'A visão de quem coordena'},
@@ -597,6 +601,7 @@ const nomeCurto = ()=> prefs.apelido || (perfilFb.nome ? _fn(perfilFb.nome) : _f
 const iniciais = ()=> (perfilFb.init || ((U && U.displayName||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('')) || '?').toUpperCase().slice(0,3);
 
 // ── Login ──
+['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(a) a.href = P(id)+'?login=local'; });
 function loginErr(m){ const e = $('#login-err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; }
 $('#btn-login').addEventListener('click', ()=>{ loginErr(''); window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
 function emailHering(u){ return /@ciahering\.com\.br$/i.test((u && u.email)||''); }
@@ -608,20 +613,32 @@ window.addEventListener('auth-change', e=>{
     $('#login').style.display = 'flex'; $('#app').style.display = 'none'; return;
   }
   if(!emailHering(u) || !viaGoogle(u)){
-    loginErr(emailHering(u) ? 'Contas @ciahering.com.br entram pelo botão do Google.' : 'O Oceano é só pra conta Google @ciahering.com.br. Se você é visualizador externo do Radar, abra direto o Radar (okr.html).');
+    loginErr(emailHering(u) ? 'Contas @ciahering.com.br entram pelo botão do Google.' : 'O Oceano é só pra conta Google @ciahering.com.br. Se você é convidado externo (visualizador), entre direto por um dos links abaixo.');
     window._signOut(); return;
   }
   U = u; iniciarSessao();
 });
 
 async function lerRamo(sub){ try{ const sn = await window._get(window._ref(window._db,'kanban/usuarios/'+U.uid+'/'+sub)); return sn && sn.exists() ? sn.val() : null; }catch(e){ return null; } }
+// cadastro básico: se a pessoa ainda não tem registro em kanban/usuarios, cria (mesmo critério do Radar: UPDATE, nunca set)
+async function garantirCadastro(uidAtual){
+  if(uidAtual) return;
+  try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){}
+}
 async function iniciarSessao(){
+  if(NEXT){   // veio do Maré/Painel: faz o cadastro e volta — sem piscar o lobby
+    const card = document.querySelector('#login .login-card');
+    if(card) card.innerHTML = '<div class="ph-wrap"><div class="porthole" style="--s:90px;"><div class="vid"><img src="oceano-icon-192.png" alt="Oceano"></div></div></div><h1>Oceano</h1><p id="voltando">Tudo certo, '+esc(U.displayName||U.email)+'. Voltando pra onde você estava…</p>';
+    $('#login').style.display = 'flex'; $('#app').style.display = 'none';
+    await garantirCadastro(await lerRamo('uid'));
+    location.replace(NEXT); return;
+  }
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
   renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
   // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
   const [nome, init, role, squads, apps, oc, uid] = await Promise.all(['nome','init','role','squads','apps','oceano','uid'].map(lerRamo));
-  if(!uid){ try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){} }
+  await garantirCadastro(uid);
   perfilFb = {nome:nome||U.displayName||'', init:init||'', role:role||'', squads:squads&&typeof squads==='object' ? Object.keys(squads).filter(k=>squads[k]===true) : []};
   usoApps = (apps && typeof apps==='object') ? apps : {};
   if(oc && typeof oc==='object'){ const salvo = lsLer(PREFS_LS)||{}; prefs = Object.assign({}, PREFS_PADRAO, oc, {}); if(!oc.tema && salvo.tema) prefs.tema = salvo.tema; lsSalvar(PREFS_LS, prefs); }
@@ -1007,6 +1024,7 @@ const FAQ = [
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
+  {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>volta sozinho pra página que abriu</b>, no mesmo card ou link. Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
   {id:'sino', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},

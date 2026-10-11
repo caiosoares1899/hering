@@ -38,6 +38,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
+- **Login único pelo Oceano (2026-10-11, só dev)** — `_irParaOceano()` (kanban-dev e painel-dev, logo antes do listener `auth-change`) manda o deslogado pra `oceano(-dev).html?next=…` (interruptor `window.MARE_LOGIN_PELO_OCEANO`; exceções: iframe, `?login=local`, recusa em `#login-err`/`login_notice`, anti-loop 45 s). Oceano: `NEXT`, `garantirCadastro()`, ramo `if(NEXT)` de `iniciarSessao()`. Detalhes em `docs/OCEANO.md`. Teste: `test_login_oceano.js`.
 - `ADM_EMAILS` (let) — L6879
 - `getEffectiveRole()` — L6964 — papel efetivo, ADMs hardcoded não são rebaixáveis
 - `loadSquadsFromFirebase()` / `SQUAD_META_LIVE` — L7057 / L7026
