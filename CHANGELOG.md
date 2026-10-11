@@ -47,6 +47,12 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📌 Mural do Oceano recolhível, com selo de novos — oceano-dev v1.17 (SÓ DEV)
+- O Mural da página inicial agora **começa recolhido**: o cabeçalho (botão, também por teclado) mostra "📌 Mural · N" e o selo **● N novos** — **vermelho** se entre os novos há um 🚨 Urgente, singular com 1 ("1 novo"). Clicar abre/recolhe e a **escolha fica lembrada** no navegador (`oceano_mural_aberto`).
+- **"Visto" só conta com o Mural aberto**: recolhido não marca nada como visto; aberto, o que está à vista (os 4 primeiros, ou todos em "Ver todos") vira visto depois de ~6 s. O selo sobe sozinho quando chega aviso novo, sem abrir o Mural.
+- FAQ do Oceano atualizado. Teste: `test_mural_oceano.js` (41 checagens, +10 do recolhido/selo) + testes do Oceano e do login re-rodados.
+- Dica: não.
+
 ### 📌 Mural de avisos na página inicial do Oceano — oceano-dev v1.16 · painel-dev v5.46 · kanban-dev v8.30.827-dev (SÓ DEV)
 Como todo mundo agora passa pelo Oceano, os **Comunicados** do Painel ganharam um destino novo: o **Mural da página inicial** do Oceano.
 - **Painel › Pessoas › Comunicados (composer):** novo checkbox **🌊 Mostrar no mural do Oceano** (vem **marcado** em aviso novo; rascunho 🤖 também) e nova opção em "Onde aparece": **🌊 Só no Oceano** (não aparece no Maré: sem popup, sem mural/📢 e **sem notificação**, mesmo 🚨 Urgente). Com o Oceano ligado: **imagem de capa** (https), **botão** (texto + link — https ou página do Maré, ex. `kanban.html?squad=dados`) e **📌 fixar no topo**. Grava `oceano`, `capa`, `botao`, `fixado`, `autor`; as listas mostram "popup + 🌊 Oceano (fixado)" / "🌊 só Oceano". Aviso antigo (sem o campo) abre **desmarcado** — só vai pro Oceano se alguém marcar e salvar.
