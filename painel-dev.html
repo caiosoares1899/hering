@@ -2462,7 +2462,27 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           <select class="pev-input" id="cc-prioridade" onchange="_ccTogglePrioridadeUI()">
             <option value="popup">🔔 Popup — interrompe ao abrir o board (também fica no mural)</option>
             <option value="mural">📌 Só no mural — não interrompe, a pessoa vê quando quiser</option>
+            <option value="oceano">🌊 Só no Oceano — não aparece no Maré (sem popup, mural do Maré nem notificação)</option>
           </select>
+        </div>
+        <div class="pev-field" id="cc-oceano-wrap" style="margin-top:-2px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+            <input type="checkbox" id="cc-oceano" onchange="_ccTogglePrioridadeUI()" checked> 🌊 Mostrar no mural do Oceano <span style="font-size:10px;color:var(--txt3);">(a página inicial que todo mundo passa)</span>
+          </label>
+        </div>
+        <div id="cc-oceano-extra" style="border:1px solid var(--glass-b);border-radius:8px;padding:10px 10px 4px;margin-bottom:10px;background:rgba(var(--ink-rgb),.35);">
+          <div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">Como fica no mural do Oceano (tudo opcional):</div>
+          <div class="pev-field">
+            <label class="pev-label">Imagem de capa (endereço https://…)</label>
+            <input class="pev-input" id="cc-capa" placeholder="https://… (uma imagem larga, tipo banner)" maxlength="500">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:10px;">
+            <div class="pev-field"><label class="pev-label">Texto do botão</label><input class="pev-input" id="cc-botao-txt" placeholder="Ex: Ver agora" maxlength="30"></div>
+            <div class="pev-field"><label class="pev-label">Link do botão</label><input class="pev-input" id="cc-botao-url" placeholder="https://… ou kanban.html?squad=dados" maxlength="500"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:0 0 8px;">
+            <input type="checkbox" id="cc-fixado"> 📌 Fixar no topo do mural (aparece em destaque, em largura total)
+          </label>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
@@ -2894,7 +2914,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.45 · painel-dev</div>
+<div class="version">v5.46 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7183,6 +7203,11 @@ async function _seedComunicadoRascunhos(){
     else showToast('🤖 '+novos.length+' rascunhos de comunicados aguardando revisão → aba Pessoas');
   }
 }
+// Onde o aviso aparece, em texto curto pras listas: 🌊 só Oceano · 🔔 popup + 🌊 · 📌 só mural + 🌊 …
+function _comunicadoOndeTxt(c){
+  if(c.prioridade==='oceano') return '🌊 só Oceano';
+  return (c.prioridade==='mural' ? '📌 só mural' : '🔔 popup') + (c.oceano===true ? ' + 🌊 Oceano' : '') + (c.oceano===true && c.fixado ? ' (fixado)' : '');
+}
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
@@ -7212,7 +7237,7 @@ function renderComunicadosLista(){
     const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
-    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    const ondeAparece = _comunicadoOndeTxt(c);
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;">${tipo.icon}</span>
@@ -7249,7 +7274,7 @@ function renderArquivadosComunicado(arquivados){
   el.innerHTML = arquivados.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
-    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    const ondeAparece = _comunicadoOndeTxt(c);
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;filter:grayscale(1);">${tipo.icon}</span>
@@ -7364,9 +7389,15 @@ function openComunicadoCompose(id){
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-squad').value = c.squad||'*';
     document.getElementById('cc-publico').value = c.publico||'todos';
-    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : 'popup';
+    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : c.prioridade==='oceano' ? 'oceano' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
+    // 🌊 Oceano: aviso antigo (sem o campo) abre DESMARCADO — só vai pro mural do Oceano se alguém marcar e salvar; rascunho 🤖 nasce marcado.
+    document.getElementById('cc-oceano').checked = c.rascunho ? true : c.oceano===true;
+    document.getElementById('cc-capa').value = c.capa||'';
+    document.getElementById('cc-botao-txt').value = c.botao?.rotulo||'';
+    document.getElementById('cc-botao-url').value = c.botao?.url||'';
+    document.getElementById('cc-fixado').checked = !!c.fixado;
     if(delBtn) delBtn.style.display = '';
     const archBtn = document.getElementById('cc-arch-btn');
     if(archBtn){
@@ -7383,6 +7414,11 @@ function openComunicadoCompose(id){
     document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
+    document.getElementById('cc-oceano').checked = true;   // padrão: o aviso também vai pro mural do Oceano
+    document.getElementById('cc-capa').value = '';
+    document.getElementById('cc-botao-txt').value = '';
+    document.getElementById('cc-botao-url').value = '';
+    document.getElementById('cc-fixado').checked = false;
     if(delBtn) delBtn.style.display = 'none';
     const archBtnNew = document.getElementById('cc-arch-btn');
     if(archBtnNew) archBtnNew.style.display = 'none';
@@ -7400,12 +7436,20 @@ function openComunicadoCompose(id){
 // checkbox marcado-mas-desabilitado enquanto mural está selecionado é seguro —
 // não tem como isso vazar um insistente:true indevido pro Firebase.
 function _ccTogglePrioridadeUI(){
-  const isMural = document.getElementById('cc-prioridade').value === 'mural';
+  const prio = document.getElementById('cc-prioridade').value;
+  const semPopup = prio === 'mural' || prio === 'oceano';   // insistente só faz sentido pra popup
   const wrap = document.getElementById('cc-insistente-wrap');
   const chk = document.getElementById('cc-insistente');
-  if(!wrap || !chk) return;
-  if(isMural){ chk.disabled = true; wrap.style.opacity = '.45'; }
-  else { chk.disabled = false; wrap.style.opacity = '1'; }
+  if(wrap && chk){
+    if(semPopup){ chk.disabled = true; wrap.style.opacity = '.45'; }
+    else { chk.disabled = false; wrap.style.opacity = '1'; }
+  }
+  // 🌊 "Só no Oceano" = o aviso existe SÓ lá: o checkbox fica marcado e travado; o extra (capa/botão/fixar) só aparece com o Oceano ligado.
+  const oc = document.getElementById('cc-oceano');
+  if(oc){
+    if(prio === 'oceano'){ oc.checked = true; oc.disabled = true; } else oc.disabled = false;
+    const extra = document.getElementById('cc-oceano-extra'); if(extra) extra.style.display = oc.checked ? '' : 'none';
+  }
 }
 function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
@@ -7484,6 +7528,19 @@ function saveComunicado(){
   const estavaAtivo = !!existente.ativo; // pra decidir se notifica (só na transição pra ativo, ver comentário acima)
   const prioridade = document.getElementById('cc-prioridade').value;
   const insistente = prioridade==='popup' ? document.getElementById('cc-insistente').checked : false;
+  // 🌊 Oceano: "só no Oceano" liga sempre; senão vale o checkbox. Capa/botão só aceitam http(s) (o botão também aceita página da família, ex. kanban.html?squad=x).
+  const noOceano = prioridade==='oceano' ? true : !!document.getElementById('cc-oceano').checked;
+  const _urlOk = (u, familia)=>{ u=String(u||'').trim(); if(!u) return ''; if(/^https?:\/\/\S+$/i.test(u)) return u.slice(0,500); if(familia && /^(kanban|painel|okr|onboarding)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(u)) return u.slice(0,500); return null; };
+  let capa = '', botao = null, fixado = false;
+  if(noOceano){
+    capa = _urlOk(document.getElementById('cc-capa').value, false);
+    if(capa===null || (capa && !/^https:\/\//i.test(capa))){ showToast('⚠ A imagem de capa precisa ser um endereço https://…'); return; }
+    const bt = document.getElementById('cc-botao-txt').value.trim().slice(0,30), bu = _urlOk(document.getElementById('cc-botao-url').value, true);
+    if(bu===null){ showToast('⚠ O link do botão precisa começar com https:// (ou ser uma página do Maré, ex.: kanban.html?squad=dados).'); return; }
+    if(bu && !bt){ showToast('⚠ Dê um texto pro botão.'); return; }
+    if(bu) botao = {rotulo:bt, url:bu};
+    fixado = !!document.getElementById('cc-fixado').checked;
+  }
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
@@ -7491,15 +7548,20 @@ function saveComunicado(){
     publico: document.getElementById('cc-publico').value,
     prioridade,
     insistente,
+    oceano: noOceano,
     ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
     rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
+    autor: existente.autor || window._currentUser?.displayName || window._currentUser?.email || '',
   };
+  if(capa) obj.capa = capa;
+  if(botao) obj.botao = botao;
+  if(fixado) obj.fixado = true;
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
     .then(()=>{
       showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!');
-      if(!estavaAtivo && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
+      if(!estavaAtivo && obj.prioridade!=='oceano' && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
         _painelNotifyBroadcast(obj, id);
       }
       closeComunicadoCompose();

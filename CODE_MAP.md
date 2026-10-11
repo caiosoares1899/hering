@@ -801,6 +801,7 @@ detalhe dos 4 call sites.
   (chama `desarquivar()` + fecha o modal) quando `c.archived`.
 
 ### Comunicados / Mural (popup + badge + Mural)
+- **🌊 Mural do Oceano (2026-10-11, só dev)** — avisos com `oceano:true` aparecem no Mural da página inicial de `oceano-dev.html` (`iniciarMural()`/`avPodeVer()`/`avLimpa()`/`muralRender()`/`avAbre()`); `painel-dev.html`: checkbox `#cc-oceano`, opção `prioridade:'oceano'` ("só no Oceano" — sem popup, sem mural do Maré, sem `_painelNotifyBroadcast`), extra `#cc-oceano-extra` (capa/botão/fixar), `_comunicadoOndeTxt()`; `kanban-dev.html`: `_muralTodos` filtra `prioridade!=='oceano'`. Detalhes em `docs/OCEANO.md`. Teste: `test_mural_oceano.js`.
 - `_refreshComunicados()` — L38116 — busca `kanban/comunicados`
   filtrado `ativo:true` no servidor (`query(...)`), com fallback pra
   árvore inteira se a query falhar (`_dbgTrack('comunicados_fallback', ...)`

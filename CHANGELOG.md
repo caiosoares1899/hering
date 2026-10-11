@@ -47,6 +47,15 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📌 Mural de avisos na página inicial do Oceano — oceano-dev v1.16 · painel-dev v5.46 · kanban-dev v8.30.827-dev (SÓ DEV)
+Como todo mundo agora passa pelo Oceano, os **Comunicados** do Painel ganharam um destino novo: o **Mural da página inicial** do Oceano.
+- **Painel › Pessoas › Comunicados (composer):** novo checkbox **🌊 Mostrar no mural do Oceano** (vem **marcado** em aviso novo; rascunho 🤖 também) e nova opção em "Onde aparece": **🌊 Só no Oceano** (não aparece no Maré: sem popup, sem mural/📢 e **sem notificação**, mesmo 🚨 Urgente). Com o Oceano ligado: **imagem de capa** (https), **botão** (texto + link — https ou página do Maré, ex. `kanban.html?squad=dados`) e **📌 fixar no topo**. Grava `oceano`, `capa`, `botao`, `fixado`, `autor`; as listas mostram "popup + 🌊 Oceano (fixado)" / "🌊 só Oceano". Aviso antigo (sem o campo) abre **desmarcado** — só vai pro Oceano se alguém marcar e salvar.
+- **Oceano (início):** seção **📌 Mural** acima dos produtos, só aparece se há aviso pra você. Cards de vidro com faixa e selo coloridos por tipo (🎉 Novidade · ⚠️ Aviso · 💡 Dica · 🚨 Urgente), data relativa, autor, selo **NOVO** (some depois de uns segundos na tela), capa e botão. **Fixados e 🚨 urgentes** ocupam a largura toda; mostra 4 e "Ver todos (N)". Clicar abre o texto completo (capa, data, autor, validade, botão); botão com página da família abre pelo roteador do Oceano. Tempo real (query `ativo=true` filtrada no servidor), celular (390 px, destaque vira coluna), 3 temas.
+- **Quem vê o quê:** mesmas regras do Maré — aviso de um squad só pra quem é do squad, "só PO" pra PO/Organizador/ADM; ADM vê tudo; expirado e arquivado nunca. O HTML do aviso é **sanitizado de novo** no Oceano (lista curta de tags, sem atributos, link só http/https/mailto).
+- **Maré:** aviso "só no Oceano" não entra no mural/badge 📢 (nem no popup). Ajuda do Maré e FAQ do Oceano atualizados.
+- Testes: `test_mural_oceano.js` (31 checagens) + bateria completa re-rodada. **Nenhuma mudança em regras/functions** (as regras de `comunicados` já deixam qualquer Hering ler, só quem é Hering escrever).
+- Dica: não — o mural é a própria tela inicial.
+
 ### 🌊 Login único pelo Oceano — kanban-dev v8.30.826-dev · painel-dev v5.45 · oceano-dev v1.15 (SÓ DEV)
 Quem **não está logado** no Maré ou no Painel agora é mandado pro **Oceano**, faz login e cadastro lá e **volta sozinho** pra mesma página (inclusive `?squad=…&card=…`).
 - **Maré e Painel (deslogado):** `_irParaOceano()` → `oceano(-dev).html?next=<página + query + hash>`. Interruptor `window.MARE_LOGIN_PELO_OCEANO` (false = volta a tela de login própria, ao lado do `MARE_SO_HERING`).

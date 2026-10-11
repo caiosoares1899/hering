@@ -55,3 +55,8 @@ O Oceano é a **porta de entrada**: quem não está logado no Maré ou no Painel
 - **Cuidado ao mexer em login:** quem tem sessão nunca vê nada disso. Se um dia o Oceano cair, `MARE_LOGIN_PELO_OCEANO=false` + promoção resolve; convidados externos usam `?login=local`.
 - **A testar à mão:** o app instalado (PWA) indo e voltando pelo Oceano (escopo do manifest) no iPhone/desktop. Teste automático: `docs/arezzo/testes/test_login_oceano.js`.
 
+## Mural de avisos (2026-10-11, só dev: oceano-dev v1.16 · painel-dev v5.46 · kanban-dev v8.30.827)
+A página inicial do Oceano mostra um **📌 Mural** com os **Comunicados** (`kanban/comunicados`) marcados com `oceano:true`. Quem decide é o ADM no composer do Painel (aba Pessoas › Comunicados): **🌊 Mostrar no mural do Oceano** (padrão ligado) ou prioridade **🌊 Só no Oceano** (`prioridade:'oceano'` — fora do Maré e sem notificação). Campos novos do aviso: `oceano`, `capa` (https), `botao {rotulo,url}`, `fixado`, `autor`.
+- **Oceano:** `iniciarMural()` (query `ativo=true`), `avPodeVer()` (squad / "só PO" / ADM / expiração), `avLimpa()` (sanitiza o HTML), `muralRender()`, `avAbre()`; `squads_roles` do usuário vem de `kanban/usuarios/{uid}/squads_roles`. **Painel:** `_ccTogglePrioridadeUI()`, `saveComunicado()`, `_comunicadoOndeTxt()`. **Maré:** `_muralTodos` ignora `prioridade==='oceano'`.
+- Aviso antigo (sem `oceano`) **não** vai pro Oceano até alguém abrir, marcar e salvar. Sem mudança em regras nem functions.
+

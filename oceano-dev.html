@@ -259,6 +259,41 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .gbtn{width:100%;padding:12px 16px;font-size:14px;}
 
 /* ═══ MODAIS ═══ */
+/* ── 📌 Mural de avisos (Painel › Pessoas › Comunicados, com 🌊 Oceano) ── */
+.mural-n{margin-left:8px;font-size:10px;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(56,182,255,.16);color:var(--accent);}
+.mural-mais{margin-left:auto;background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 4px;}
+.mural-mais:hover{text-decoration:underline;}
+.mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
+.av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;text-align:left;transition:border-color .2s,transform .15s,box-shadow .2s;}
+.av::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mc,var(--accent));z-index:1;}
+.av:hover,.av:focus-visible{border-color:var(--mc,var(--accent));box-shadow:0 6px 22px rgba(0,60,140,.28);transform:translateY(-2px);outline:none;}
+.av-capa{height:118px;background:rgba(var(--slate-rgb),.6);overflow:hidden;}
+.av-capa img{width:100%;height:100%;object-fit:cover;display:block;}
+.av-c{display:flex;flex-direction:column;gap:7px;padding:14px 16px 13px 20px;flex:1;min-width:0;}
+.av-top{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:10.5px;color:var(--txt3);}
+.av-tipo{font-weight:700;padding:2px 9px;border-radius:999px;color:var(--mc,var(--accent));background:color-mix(in srgb,var(--mc,var(--accent)) 14%,transparent);border:1px solid color-mix(in srgb,var(--mc,var(--accent)) 38%,transparent);}
+.av-pin{font-weight:600;color:var(--txt2);}
+.av-novo{font-weight:700;color:#04141f;background:var(--teal);padding:1px 7px;border-radius:999px;font-size:9.5px;letter-spacing:.03em;}
+.av-quando{margin-left:auto;}
+.av-t{font-family:var(--ff-d);font-size:16px;line-height:1.25;font-weight:700;color:var(--txt);}
+.av-corpo{font-size:13px;line-height:1.55;color:var(--txt2);display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;}
+.av-corpo p{margin:0 0 .5em;}.av-corpo a{color:var(--accent);}
+.av-corpo ul,.av-corpo ol{margin:.2em 0 .5em 1.2em;}
+.av-rod{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:auto;padding-top:4px;}
+.av-ler{font-size:11.5px;color:var(--accent);font-weight:600;}
+.av-autor{font-size:10.5px;color:var(--txt3);margin-left:auto;}
+.av-bt{padding:6px 12px;font-size:12px;}
+.av.dest{grid-column:1/-1;flex-direction:row;}
+.av.dest .av-capa{width:36%;max-width:360px;height:auto;min-height:150px;flex:none;}
+.av.dest .av-c{padding:18px 22px 16px 24px;gap:9px;}
+.av.dest .av-t{font-size:20px;}
+.av.dest .av-corpo{-webkit-line-clamp:7;font-size:13.5px;}
+@media (max-width:640px){.av.dest{flex-direction:column;}.av.dest .av-capa{width:100%;max-width:none;height:130px;min-height:0;}}
+.aviso-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--txt3);margin-bottom:12px;}
+.aviso-capa{width:100%;max-height:240px;object-fit:cover;border-radius:var(--r);margin-bottom:14px;display:block;}
+.aviso-corpo{font-size:14.5px;line-height:1.65;color:var(--txt);}
+.aviso-corpo p{margin:0 0 .7em;}.aviso-corpo a{color:var(--accent);}
+.aviso-corpo ul,.aviso-corpo ol{margin:.3em 0 .7em 1.3em;}
 .ov{position:fixed;inset:0;z-index:120;background:rgba(1,8,16,.78);backdrop-filter:blur(10px);display:none;align-items:flex-start;justify-content:center;padding:4vh 14px;overflow:auto;}
 .ov.open{display:flex;}
 .modal{width:min(720px,100%);padding:0;overflow:hidden;background:rgba(var(--deep-rgb),.94);}
@@ -369,6 +404,7 @@ input.in[readonly]{opacity:.7;}
   <!-- ══ INÍCIO: o uso do dia a dia ══ -->
   <section class="tabp on" id="tab-inicio" role="tabpanel">
     <div class="ola"><b id="ola">Olá</b><span id="ola-data"></span></div>
+    <div id="mural-wrap" style="display:none;"><div class="sec-title" style="margin-top:6px;">📌 Mural<span class="mural-n" id="mural-n"></span><button type="button" class="mural-mais" id="mural-mais" style="display:none;"></button></div><div class="mural" id="mural"></div></div>
     <div class="abertos" id="abertos"></div>
     <div class="tiles" id="tiles"></div>
     <div id="atalhos-wrap" style="display:none;"><div class="sec-title">Atalhos</div><div class="atalhos" id="atalhos"></div></div>
@@ -471,12 +507,16 @@ input.in[readonly]{opacity:.7;}
   <div class="modal-bd"><input class="in busca" id="ajuda-busca" type="search" placeholder="🔎 Buscar na ajuda (ex.: instalar, Painel, peixinhos)…" aria-label="Buscar na ajuda"><div class="faq" id="faq"></div></div>
 </div></div>
 
+<div class="ov" id="ov-aviso"><div class="vidro modal" role="dialog" aria-modal="true" aria-labelledby="aviso-t">
+  <div class="modal-hd"><h3 id="aviso-t"></h3><button class="x" type="button" data-fecha="ov-aviso" aria-label="Fechar">✕</button></div>
+  <div class="modal-bd" id="aviso-bd"></div>
+</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -494,7 +534,7 @@ const db = getDatabase(fbApp);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
-window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast;
+window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast; window._equalTo=equalTo;
 // Push (FCM) deste aparelho — o rodapé do sino (mare-notif(-dev).js) usa estes ganchos pra ativar/desativar o push. Import dinâmico dentro de try: se o
 // SDK de mensagens não carregar (rede/bloqueio), só o push some — o login e o resto do Oceano seguem.
 window._fcmReady = false;
@@ -516,7 +556,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.15 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.16 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -637,7 +677,8 @@ async function iniciarSessao(){
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
   renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
   // cadastro: se a pessoa ainda não tem registro em kanban/usuarios, cria o básico (mesmo critério do Radar: UPDATE, nunca set)
-  const [nome, init, role, squads, apps, oc, uid] = await Promise.all(['nome','init','role','squads','apps','oceano','uid'].map(lerRamo));
+  const [nome, init, role, squads, apps, oc, uid, sqRoles] = await Promise.all(['nome','init','role','squads','apps','oceano','uid','squads_roles'].map(lerRamo));
+  squadsRoles = (sqRoles && typeof sqRoles==='object') ? sqRoles : {};
   await garantirCadastro(uid);
   perfilFb = {nome:nome||U.displayName||'', init:init||'', role:role||'', squads:squads&&typeof squads==='object' ? Object.keys(squads).filter(k=>squads[k]===true) : []};
   usoApps = (apps && typeof apps==='object') ? apps : {};
@@ -647,8 +688,112 @@ async function iniciarSessao(){
   if(perfilFb.role==='adm' || String(U.email).toLowerCase()===CONTATO.email) ehAdm = true;
   renderEu(); renderTudo(); sinoRender();
   carregarLinks();
+  iniciarMural();
   rotearHash(true);
 }
+
+// ── 📌 Mural de avisos ──────────────────────────────────────────────────────────────────────────────
+// Fonte: kanban/comunicados (os "Comunicados" do Painel › Pessoas) com oceano:true. Quem escolhe ir pro Oceano é o ADM ao publicar
+// (🌊 Mostrar no mural do Oceano, padrão ligado; "Só no Oceano" = não aparece no Maré). Mesmas regras de público do Maré: squad e "só PO".
+const AV_TIPOS = {novidade:{ic:'🎉',n:'Novidade',c:'#1de9b6'}, aviso:{ic:'⚠️',n:'Aviso',c:'#ffd166'}, dica:{ic:'💡',n:'Dica',c:'#38b6ff'}, urgente:{ic:'🚨',n:'Urgente',c:'#ff6b6b'}};
+const AV_LIMITE = 4;
+let avisos = [], avisosTodos = false, avisosUnsub = null, squadsRoles = {}, avVistoT = null;
+function avHttp(u){ try{ const x = new URL(String(u||''), location.href); return (x.protocol==='https:'||x.protocol==='http:') ? x.href : ''; }catch(e){ return ''; } }
+function avPodeVer(c){
+  if(c.ativo!==true || c.oceano!==true) return false;
+  if(c.expiraEm && c.expiraEm < new Date().toISOString()) return false;
+  const meus = perfilFb.squads||[], papeis = Object.values(squadsRoles||{});
+  const poOuMais = ehAdm || perfilFb.role==='po' || perfilFb.role==='adm' || perfilFb.role==='organizador' || papeis.some(p=>p==='po'||p==='organizador');
+  if(c.publico==='po' && !poOuMais) return false;
+  if(c.squad && c.squad!=='*' && !ehAdm && !meus.includes(c.squad)) return false;
+  return true;
+}
+// HTML do aviso vem de um editor simples do Painel (negrito, itálico, link) — mesmo assim sanitiza aqui: lista curta de tags, nenhum atributo (só href http/https/mailto).
+function avLimpa(html){
+  const OK = new Set(['B','STRONG','I','EM','U','A','BR','P','UL','OL','LI','DIV','SPAN']), SEM = new Set(['SCRIPT','STYLE','IFRAME','OBJECT','EMBED','NOSCRIPT','TEMPLATE']);
+  const doc = new DOMParser().parseFromString('<body>'+String(html||'')+'</body>', 'text/html');
+  (function limpa(no){
+    [...no.childNodes].forEach(f=>{
+      if(f.nodeType===3) return;
+      if(f.nodeType!==1){ f.remove(); return; }
+      limpa(f);
+      if(SEM.has(f.tagName)){ f.remove(); return; }
+      if(!OK.has(f.tagName)){ while(f.firstChild) f.parentNode.insertBefore(f.firstChild, f); f.remove(); return; }
+      const href = f.tagName==='A' ? f.getAttribute('href') : null;
+      [...f.attributes].forEach(a=>f.removeAttribute(a.name));
+      if(f.tagName==='A'){ if(href && /^(https?:|mailto:)/i.test(href.trim())){ f.setAttribute('href', href.trim()); f.setAttribute('target','_blank'); f.setAttribute('rel','noopener noreferrer'); } }
+    });
+  })(doc.body);
+  return doc.body.innerHTML;
+}
+function avTexto(html){ const d = new DOMParser().parseFromString('<body>'+String(html||'')+'</body>','text/html'); return (d.body.textContent||'').trim(); }
+function avCmp(a,b){
+  return (b.fixado?1:0)-(a.fixado?1:0) || (b.tipo==='urgente'?1:0)-(a.tipo==='urgente'?1:0) || String(b.criadoEm||'').localeCompare(String(a.criadoEm||''));
+}
+function avVistos(){ try{ return new Set(JSON.parse(localStorage.getItem('oceano_mural_visto_'+U.uid)||'[]')); }catch(e){ return new Set(); } }
+function avSalvaVistos(ids){ try{ const s = avVistos(); ids.forEach(i=>s.add(i)); localStorage.setItem('oceano_mural_visto_'+U.uid, JSON.stringify([...s].slice(-120))); }catch(e){} }
+function avBotaoHtml(c){ const b = c.botao; if(!b || !b.rotulo || !b.url) return ''; return '<button type="button" class="btn pri av-bt" data-av-bt="'+esc(c.id)+'">'+esc(b.rotulo)+'</button>'; }
+function avHtml(c, novo){
+  const t = AV_TIPOS[c.tipo] || AV_TIPOS.aviso, capa = String(c.capa||'').startsWith('https://') ? avHttp(c.capa) : '';
+  const dest = !!(c.fixado || c.tipo==='urgente'), quando = c.criadoEm ? tempoRel(c.criadoEm) : '';
+  return '<article class="av'+(dest?' dest':'')+'" style="--mc:'+t.c+'" role="button" tabindex="0" data-av="'+esc(c.id)+'" aria-label="'+esc((c.titulo||'Aviso'))+'">'
+    + (capa ? '<div class="av-capa"><img src="'+esc(capa)+'" alt="" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentNode.remove()"></div>' : '')
+    + '<div class="av-c"><div class="av-top"><span class="av-tipo">'+t.ic+' '+t.n+'</span>'
+    + (c.fixado ? '<span class="av-pin">📌 Fixado</span>' : '') + (novo ? '<span class="av-novo">NOVO</span>' : '')
+    + (quando ? '<span class="av-quando" title="'+esc(new Date(c.criadoEm).toLocaleString('pt-BR'))+'">'+esc(quando)+'</span>' : '') + '</div>'
+    + '<h3 class="av-t">'+esc(c.titulo||'(sem título)')+'</h3>'
+    + '<div class="av-corpo">'+avLimpa(c.corpo)+'</div>'
+    + '<div class="av-rod">'+avBotaoHtml(c)+'<span class="av-ler" hidden>Ler tudo ›</span>'+(c.autor ? '<span class="av-autor">por '+esc(c.autor)+'</span>' : '')+'</div></div></article>';
+}
+function muralRender(){
+  const wrap = $('#mural-wrap'); if(!wrap) return;
+  const lista = avisos.slice().sort(avCmp);
+  if(!lista.length){ wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  const vistos = avVistos(), mostrar = avisosTodos ? lista : lista.slice(0, AV_LIMITE);
+  $('#mural-n').textContent = lista.length;
+  const mais = $('#mural-mais'); if(lista.length>AV_LIMITE){ mais.style.display = ''; mais.textContent = avisosTodos ? 'Ver menos' : 'Ver todos ('+lista.length+')'; } else mais.style.display = 'none';
+  $('#mural').innerHTML = mostrar.map(c=>avHtml(c, !vistos.has(c.id))).join('');
+  // "Ler tudo ›" só onde o texto foi cortado
+  requestAnimationFrame(()=>$$('#mural .av').forEach(a=>{ const cp = a.querySelector('.av-corpo'), l = a.querySelector('.av-ler'); if(cp && l) l.hidden = !(cp.scrollHeight > cp.clientHeight + 2); }));
+  // depois de uns segundos com o mural na tela, tudo vira "visto" (o NOVO some na próxima visita)
+  clearTimeout(avVistoT); avVistoT = setTimeout(()=>avSalvaVistos(mostrar.map(c=>c.id)), 6000);
+}
+function avAbreBotao(c){
+  const u = String(c.botao && c.botao.url || ''); if(!u) return;
+  if(/^(kanban|painel|okr|onboarding)(-dev)?\.html/.test(u)){ rotearUrl(u); return; }
+  const h = avHttp(u); if(h) window.open(h, '_blank', 'noopener');
+}
+function avAbre(id){
+  const c = avisos.find(x=>x.id===id); if(!c) return;
+  const t = AV_TIPOS[c.tipo] || AV_TIPOS.aviso, capa = String(c.capa||'').startsWith('https://') ? avHttp(c.capa) : '';
+  $('#aviso-t').textContent = t.ic+' '+(c.titulo||'Aviso');
+  $('#aviso-bd').innerHTML = (capa ? '<img class="aviso-capa" src="'+esc(capa)+'" alt="" referrerpolicy="no-referrer" onerror="this.remove()">' : '')
+    + '<div class="aviso-meta"><span class="av-tipo" style="--mc:'+t.c+'">'+t.ic+' '+t.n+'</span>'+(c.fixado?'<span>📌 Fixado</span>':'')+(c.criadoEm?'<span>'+esc(new Date(c.criadoEm).toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'}))+'</span>':'')+(c.autor?'<span>por '+esc(c.autor)+'</span>':'')+(c.expiraEm?'<span>até '+esc(new Date(c.expiraEm).toLocaleDateString('pt-BR'))+'</span>':'')+'</div>'
+    + '<div class="aviso-corpo">'+avLimpa(c.corpo)+'</div>'
+    + (c.botao && c.botao.rotulo && c.botao.url ? '<div style="margin-top:18px;">'+avBotaoHtml(c)+'</div>' : '');
+  avSalvaVistos([id]); muralRender();
+  abrirModal('ov-aviso');
+}
+function iniciarMural(){
+  if(avisosUnsub) return;
+  try{
+    const q = window._query(window._ref(window._db,'kanban/comunicados'), window._orderByChild('ativo'), window._equalTo(true));   // só os ativos, filtrado no servidor
+    avisosUnsub = window._onValue(q, snap=>{
+      const v = snap.val() || {};
+      avisos = Object.entries(v).map(([id,c])=>Object.assign({}, c, {id})).filter(avPodeVer);
+      muralRender();
+    }, ()=>{ avisos = []; muralRender(); });
+  }catch(e){}
+}
+$('#mural').addEventListener('click', e=>{
+  const bt = e.target.closest('[data-av-bt]'); if(bt){ e.stopPropagation(); const c = avisos.find(x=>x.id===bt.dataset.avBt); if(c) avAbreBotao(c); return; }
+  if(e.target.closest('a')) return;
+  const a = e.target.closest('[data-av]'); if(a) avAbre(a.dataset.av);
+});
+$('#mural').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches('[data-av]')){ e.preventDefault(); avAbre(e.target.dataset.av); } });
+$('#aviso-bd').addEventListener('click', e=>{ const bt = e.target.closest('[data-av-bt]'); if(bt){ const c = avisos.find(x=>x.id===bt.dataset.avBt); if(c){ fecharModal('ov-aviso'); avAbreBotao(c); } } });
+$('#mural-mais').addEventListener('click', ()=>{ avisosTodos = !avisosTodos; muralRender(); });
 
 // ── 🔔 Sino (o mesmo das outras páginas: feed da torre + notificações pessoais; o módulo compartilhado cuida de lido/som/Não Perturbe/push) ──
 let sinoPessoais = [], sinoIniciado = false;
@@ -1024,6 +1169,7 @@ const FAQ = [
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
+  {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
   {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>volta sozinho pra página que abriu</b>, no mesmo card ou link. Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
