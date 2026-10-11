@@ -260,8 +260,19 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 
 /* ═══ MODAIS ═══ */
 /* ── 📌 Mural de avisos (Painel › Pessoas › Comunicados, com 🌊 Oceano) ── */
-.mural-n{margin-left:8px;font-size:10px;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(56,182,255,.16);color:var(--accent);}
-.mural-mais{margin-left:auto;background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 4px;}
+.mural-hd{display:flex;align-items:center;gap:8px;width:100%;margin:6px 0 14px;padding:6px 2px 10px;font:inherit;font-size:12px;font-weight:600;color:var(--txt);background:none;border:none;border-bottom:1px solid var(--glass-b);cursor:pointer;text-align:left;}
+.mural-hd:hover .mural-seta,.mural-hd:focus-visible .mural-seta{color:var(--accent);}
+.mural-hd:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
+.mural-n{font-size:10px;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(56,182,255,.16);color:var(--accent);}
+.mural-novos{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;padding:2px 10px 2px 8px;border-radius:999px;color:#04141f;background:var(--teal);}
+.mural-novos::before{content:"";width:7px;height:7px;border-radius:50%;background:#04141f;opacity:.75;animation:muralPulso 1.8s ease-in-out infinite;}
+.mural-novos.urg{background:var(--danger);color:#fff;}.mural-novos.urg::before{background:#fff;opacity:1;}
+@keyframes muralPulso{0%,100%{transform:scale(1);opacity:.75}50%{transform:scale(1.5);opacity:.35}}
+@media (prefers-reduced-motion:reduce){.mural-novos::before{animation:none;}}
+.mural-seta{margin-left:auto;font-size:13px;color:var(--txt3);transition:transform .2s;}
+.mural-hd[aria-expanded="true"] .mural-seta{transform:rotate(180deg);}
+.mural-rod{display:flex;justify-content:flex-end;}
+.mural-mais{margin-top:8px;background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px 4px;}
 .mural-mais:hover{text-decoration:underline;}
 .mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px;}
 .av{position:relative;display:flex;flex-direction:column;overflow:hidden;background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;text-align:left;transition:border-color .2s,transform .15s,box-shadow .2s;}
@@ -404,7 +415,12 @@ input.in[readonly]{opacity:.7;}
   <!-- ══ INÍCIO: o uso do dia a dia ══ -->
   <section class="tabp on" id="tab-inicio" role="tabpanel">
     <div class="ola"><b id="ola">Olá</b><span id="ola-data"></span></div>
-    <div id="mural-wrap" style="display:none;"><div class="sec-title" style="margin-top:6px;">📌 Mural<span class="mural-n" id="mural-n"></span><button type="button" class="mural-mais" id="mural-mais" style="display:none;"></button></div><div class="mural" id="mural"></div></div>
+    <div id="mural-wrap" style="display:none;">
+      <button type="button" class="mural-hd" id="mural-hd" aria-expanded="false" aria-controls="mural-corpo" title="Mostrar ou recolher o Mural">
+        <span class="mural-tit">📌 Mural</span><span class="mural-n" id="mural-n"></span><span class="mural-novos" id="mural-novos" hidden></span><span class="mural-seta" aria-hidden="true">▾</span>
+      </button>
+      <div id="mural-corpo" hidden><div class="mural" id="mural"></div><div class="mural-rod"><button type="button" class="mural-mais" id="mural-mais" style="display:none;"></button></div></div>
+    </div>
     <div class="abertos" id="abertos"></div>
     <div class="tiles" id="tiles"></div>
     <div id="atalhos-wrap" style="display:none;"><div class="sec-title">Atalhos</div><div class="atalhos" id="atalhos"></div></div>
@@ -556,7 +572,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.16 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.17 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -698,6 +714,7 @@ async function iniciarSessao(){
 const AV_TIPOS = {novidade:{ic:'🎉',n:'Novidade',c:'#1de9b6'}, aviso:{ic:'⚠️',n:'Aviso',c:'#ffd166'}, dica:{ic:'💡',n:'Dica',c:'#38b6ff'}, urgente:{ic:'🚨',n:'Urgente',c:'#ff6b6b'}};
 const AV_LIMITE = 4;
 let avisos = [], avisosTodos = false, avisosUnsub = null, squadsRoles = {}, avVistoT = null;
+let muralAberto = false; try{ muralAberto = localStorage.getItem('oceano_mural_aberto')==='1'; }catch(e){}   // padrão: recolhido; a escolha da pessoa fica lembrada neste navegador
 function avHttp(u){ try{ const x = new URL(String(u||''), location.href); return (x.protocol==='https:'||x.protocol==='http:') ? x.href : ''; }catch(e){ return ''; } }
 function avPodeVer(c){
   if(c.ativo!==true || c.oceano!==true) return false;
@@ -752,12 +769,17 @@ function muralRender(){
   wrap.style.display = 'block';
   const vistos = avVistos(), mostrar = avisosTodos ? lista : lista.slice(0, AV_LIMITE);
   $('#mural-n').textContent = lista.length;
+  // ● N novos — aparece mesmo com o Mural recolhido (vermelho se entre eles há um 🚨 Urgente)
+  const novos = lista.filter(c=>!vistos.has(c.id)), nv = $('#mural-novos');
+  if(novos.length){ nv.hidden = false; nv.className = 'mural-novos'+(novos.some(c=>c.tipo==='urgente') ? ' urg' : ''); nv.textContent = novos.length===1 ? '1 novo' : novos.length+' novos'; }
+  else nv.hidden = true;
+  $('#mural-hd').setAttribute('aria-expanded', String(muralAberto)); $('#mural-corpo').hidden = !muralAberto;
   const mais = $('#mural-mais'); if(lista.length>AV_LIMITE){ mais.style.display = ''; mais.textContent = avisosTodos ? 'Ver menos' : 'Ver todos ('+lista.length+')'; } else mais.style.display = 'none';
   $('#mural').innerHTML = mostrar.map(c=>avHtml(c, !vistos.has(c.id))).join('');
-  // "Ler tudo ›" só onde o texto foi cortado
-  requestAnimationFrame(()=>$$('#mural .av').forEach(a=>{ const cp = a.querySelector('.av-corpo'), l = a.querySelector('.av-ler'); if(cp && l) l.hidden = !(cp.scrollHeight > cp.clientHeight + 2); }));
-  // depois de uns segundos com o mural na tela, tudo vira "visto" (o NOVO some na próxima visita)
-  clearTimeout(avVistoT); avVistoT = setTimeout(()=>avSalvaVistos(mostrar.map(c=>c.id)), 6000);
+  // "Ler tudo ›" só onde o texto foi cortado (precisa estar visível pra medir)
+  if(muralAberto) requestAnimationFrame(()=>$$('#mural .av').forEach(a=>{ const cp = a.querySelector('.av-corpo'), l = a.querySelector('.av-ler'); if(cp && l) l.hidden = !(cp.scrollHeight > cp.clientHeight + 2); }));
+  // com o Mural ABERTO e uns segundos na tela, o que está à vista vira "visto" (some o NOVO na próxima visita); recolhido não conta como visto
+  clearTimeout(avVistoT); if(muralAberto) avVistoT = setTimeout(()=>{ avSalvaVistos(mostrar.map(c=>c.id)); }, 6000);
 }
 function avAbreBotao(c){
   const u = String(c.botao && c.botao.url || ''); if(!u) return;
@@ -794,6 +816,7 @@ $('#mural').addEventListener('click', e=>{
 $('#mural').addEventListener('keydown', e=>{ if((e.key==='Enter'||e.key===' ') && e.target.matches('[data-av]')){ e.preventDefault(); avAbre(e.target.dataset.av); } });
 $('#aviso-bd').addEventListener('click', e=>{ const bt = e.target.closest('[data-av-bt]'); if(bt){ const c = avisos.find(x=>x.id===bt.dataset.avBt); if(c){ fecharModal('ov-aviso'); avAbreBotao(c); } } });
 $('#mural-mais').addEventListener('click', ()=>{ avisosTodos = !avisosTodos; muralRender(); });
+$('#mural-hd').addEventListener('click', ()=>{ muralAberto = !muralAberto; try{ localStorage.setItem('oceano_mural_aberto', muralAberto?'1':'0'); }catch(e){} muralRender(); });
 
 // ── 🔔 Sino (o mesmo das outras páginas: feed da torre + notificações pessoais; o módulo compartilhado cuida de lido/som/Não Perturbe/push) ──
 let sinoPessoais = [], sinoIniciado = false;
@@ -1169,7 +1192,7 @@ const FAQ = [
   {id:'peixes', q:'Os peixinhos pesam? Como desligo?', a:'<p>Em ⚙ Meu perfil → <b>Peixinhos e bolhas</b> você escolhe desligados, poucos ou "como no Maré" (os mesmos peixes do board). Eles pausam quando a aba fica em segundo plano e começam desligados se o seu sistema pede menos movimento. O liga/desliga é o mesmo do 🐟 do Maré Digital.</p>'},
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
-  {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
+  {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>O Mural começa <b>recolhido</b>: o cabeçalho mostra quantos avisos há e um selo <b>● N novos</b> (vermelho se tiver um urgente). Clique no cabeçalho pra abrir ou recolher — o Oceano lembra a sua escolha. Os avisos só contam como "vistos" depois de alguns segundos com o Mural aberto.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
   {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>volta sozinho pra página que abriu</b>, no mesmo card ou link. Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
