@@ -47,6 +47,13 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🌊 Login único: a pessoa FICA no Oceano (e vê o Mural) — oceano-dev v1.19 (SÓ DEV; ajuste da v1.15)
+Relato direto do usuário: depois do login a pessoa era **devolvida sozinha** ao Maré/Painel e nunca via a página inicial do Oceano — justamente onde fica o Mural.
+- **Antes:** Oceano fazia o cadastro e `location.replace(next)` ("Voltando pra onde você estava…"). **Agora:** a pessoa **fica no Oceano** (lobby, Mural, vitrine) e ganha, no topo, um atalho **"↩ Você estava indo para o Maré Digital (no card que você abriu) · [Continuar] ✕"**. Continuar abre a página de origem (squad/card/hash) pelo roteador do Oceano (aba nova ou dentro do host, conforme a preferência); ✕ dispensa. `next` continua só da família (lista fechada); `next` inválido = sem atalho.
+- Maré e Painel não mudam: deslogado → Oceano (`?next=`), com as mesmas exceções (Radar, iframe, `?login=local`, recusa na tela, anti-loop). FAQ do Oceano atualizado.
+- Teste: `test_login_oceano.js` reescrito pro novo comportamento (fica no Oceano, cadastro no caminho normal, atalho abre/dispensa, `next` inválido sem atalho).
+- Dica: não.
+
 ### 🐛 /monitorarbugs (11/10): Intake interno, Mural do Oceano e Comunicados — kanban-dev v8.30.828-dev · painel-dev v5.47 · oceano-dev v1.18 · intake-dev (SÓ DEV)
 Rodada sobre o código das últimas horas (Intake interno, login único, Mural, composer). 7 achados, todos reproduzidos no Chromium antes de corrigir.
 - **Intake — trocar "Pedir para" rápido** (`intake-dev.html`): a resposta atrasada de um squad antigo sobrescrevia o formulário do escolhido (tags do squad errado sob o nome do certo; o pedido ia pro squad novo com os campos do antigo). Cada `entrar()` agora tem número e só a última vale; o envio usa o id do squad carregado. Mesmo vale pro caso "público falhou depois do login".
