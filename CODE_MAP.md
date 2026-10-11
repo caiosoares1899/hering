@@ -2628,6 +2628,7 @@ pra trás de um comportamento que os outros já tinham.
   `functions/agente-agil-orquestrador/tools/criarCard.js`) — antes
   desses campos existirem, a tela só sabia renderizar pedidos do
   formulário público.
+- **Pedido interno (2026-10-11, kanban-dev v8.30.825-dev + `intake-dev.html`)** — mesmo link, 2 modos: sem login = formulário público (Cloud Function `intakeSubmit`); com Google @ciahering = formulário de toques que grava DIRETO em `intake_pending` (origem `'interno'`, campos `prioridade`/`tags`/`submarca`/`canal`/`links`/`prazo`/`solicitanteUid`) e avisa os membros (`usuarios_publicos`) no 🔔 — sem deploy de functions. Página: `camposEfetivos()` (padrões), `carregarSquadInterno()` (lê `tags`/`config/*` do squad de destino — submarca/canal = tags `tag_sm_*`/`tag_cv_*`), `renderInterno()`, `validarInterno()`, `avisarMembros()`. Maré: `INTAKE_CAMPOS_DEF`/`_intakeCamposPadrao()`/`_intakeCamposEfetivos()` (**mesmos padrões de `camposEfetivos()` da página — mudou um, mude o outro**), `fillIntakeCamposUI()`/`_readIntakeCamposUI()` (⚙ Config → Ágil → "🏢 Pedido interno", grava só o que difere do padrão em `agil_cfg.intakeCampos`), `_intakeChipsHtml()` (chips na caixa de entrada), prioridade/links aplicados em `_intakeCriarCard()` (links via `_pendingTransferLinks`). Teste: `docs/arezzo/testes/test_intake_interno.js`.
 - `_intakeCriarCard(id)` — L23800 — abre o modal de novo card pré-
   preenchido; casa `squadDemandante` E (2026-08-27) `submarca` contra
   tags reais por label (case/acento-insensitive, `_norm()`), pré-

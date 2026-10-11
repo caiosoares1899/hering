@@ -4950,6 +4950,13 @@ window.MARE_SO_HERING = true;
         Permitir pedidos externos por link público (intake.html)
       </label>
       <p style="font-size:10px;color:var(--txt3);margin:0 0 4px;line-height:1.5;">Se desmarcar, o link de intake deste squad para de aceitar novos pedidos (quem tentar vê um aviso) e o botão "📥 Intake" some da toolbar. Pedidos já pendentes continuam disponíveis pra revisar.</p>
+      <div style="margin-top:10px;" class="cfg-sec-title">🏢 Pedido interno — campos do formulário</div>
+      <p style="font-size:10px;color:var(--txt3);margin:0 0 6px;line-height:1.5;">Quem entra com a conta Google da Hering no mesmo link vê um formulário de toques (sem digitar nome nem contato). Escolha o que este squad precisa pra triar sem voltar a perguntar — quanto menos campos, mais rápido de preencher. Título e detalhes são sempre obrigatórios.</p>
+      <div id="cfg-intake-campos" style="display:flex;flex-direction:column;gap:4px;margin-bottom:4px;"></div>
+      <div id="cfg-intake-tags-wrap" style="display:none;margin:4px 0 6px;">
+        <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;">Tags oferecidas no pedido (nenhuma marcada = todas, menos tamanho/submarca/canal):</div>
+        <div id="cfg-intake-tags" style="display:flex;flex-wrap:wrap;gap:5px;"></div>
+      </div>
       <div style="margin-top:10px;" class="cfg-sec-title">Colunas do board <button class="btn btn-sm" onclick="toggleColEdit()" id="btn-col-edit" style="margin-left:8px;font-size:10px;">✏️ Editar</button></div>
       <div id="col-editor" style="display:none;margin-bottom:8px;">
         <div id="col-edit-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;"></div>
@@ -6501,7 +6508,7 @@ window.MARE_SO_HERING = true;
   </button>
 </nav>
 
-<div class="version">v8.30.824-dev</div>
+<div class="version">v8.30.825-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23757,7 +23764,7 @@ function openIntakePanel(){
   document.getElementById('intake-ov').classList.add('open');
 }
 function _copyIntakeLink(){
-  const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + 'intake.html?squad=' + encodeURIComponent(ACTIVE_SQUAD);
+  const url = window.location.origin + window.location.pathname.replace(/kanban(-dev)?\.html$/,'') + (/kanban-dev\.html$/.test(window.location.pathname)?'intake-dev.html':'intake.html') + '?squad=' + encodeURIComponent(ACTIVE_SQUAD);
   navigator.clipboard?.writeText(url).then(()=>showToast('🔗 Link copiado! '+url), ()=>showToast('⚠️ Não deu pra copiar — copie manualmente: '+url));
 }
 function _intakeSwitchTab(tab){
@@ -23767,6 +23774,18 @@ function _intakeSwitchTab(tab){
   const tp=document.getElementById('intake-tab-pendentes'); if(tp) tp.classList.toggle('active', !isGuardados);
   const tg=document.getElementById('intake-tab-guardados'); if(tg) tg.classList.toggle('active', isGuardados);
   if(isGuardados) renderIntakeGuardadosBody(); else renderIntakeBody();
+}
+// Chips do pedido interno (prioridade sugerida, canal, tags, link) — só o que veio preenchido.
+// Submarca já tem a linha própria logo abaixo. Prioridade é SUGESTÃO do solicitante (o PO confirma no modal).
+const _INTAKE_PRIO_LBL={low:'🟢 Baixa',medium:'🟡 Média',high:'🔴 Alta',critical:'🔥 Crítica'};
+function _intakeChipsHtml(item){
+  const chip=(t,title)=>`<span ${title?`title="${esc(title)}" `:''}style="font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(255,255,255,.05);color:var(--txt2);">${t}</span>`;
+  const out=[];
+  if(item.prioridade&&_INTAKE_PRIO_LBL[item.prioridade]) out.push(chip(_INTAKE_PRIO_LBL[item.prioridade],'Prioridade sugerida por quem pediu'));
+  if(item.canal) out.push(chip('🛒 '+esc(item.canal)));
+  (Array.isArray(item.tags)?item.tags:[]).filter(Boolean).forEach(t=>out.push(chip('🏷 '+esc(t))));
+  (Array.isArray(item.links)?item.links:[]).filter(l=>l&&/^https?:\/\//i.test(l.url||'')).forEach(l=>out.push(`<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(56,182,255,.35);background:rgba(56,182,255,.1);color:var(--accent);text-decoration:none;">🔗 Link</a>`));
+  return out.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">${out.join('')}</div>`:'';
 }
 // Item compartilhado entre a aba Pendentes e a aba Guardados — só o botão
 // "🗂 Guardar" (opts.showGuardar) e a data exibida mudam entre as duas.
@@ -23780,10 +23799,11 @@ function _intakeItemHtml(item, opts){
   if(opts && opts.showGuardar) botoes.push(`<button class="btn btn-sm" onclick="_intakeGuardar(${jsq(item.id)})" style="color:var(--txt2);">🗂 Guardar</button>`);
   botoes.push(`<button class="btn btn-sm" onclick="_intakeDescartar(${jsq(item.id)})" style="color:var(--danger);border-color:rgba(255,107,107,.3);">🗑 Descartar</button>`);
   return `<div style="background:rgba(255,255,255,.03);border:1px solid var(--glass-b);border-radius:10px;padding:12px 14px;margin-bottom:10px;">
-      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${esc(item.titulo)}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--txt);margin-bottom:4px;">${item.origem==='agente-agil'?'🤖 ':''}${item.origem==='interno'?'🏢 ':''}${esc(item.titulo)}</div>
       <div style="font-size:11px;color:var(--txt3);margin-bottom:6px;">De: ${esc(item.demandante)}${item.contato?' ('+esc(item.contato)+')':''}${item.squadDemandante?' · Squad: '+esc(item.squadDemandante):''} · ${quando}${prazo}</div>
       ${item.status==='saved' && item.savedAt ? `<div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">🗂 Guardado em ${new Date(item.savedAt).toLocaleDateString('pt-BR')}</div>` : ''}
       ${item.submarca ? `<div style="font-size:11px;color:var(--accent2,#2ecc9c);margin-bottom:6px;">🏷 Submarca sugerida: ${esc(item.submarca)}</div>` : ''}
+      ${_intakeChipsHtml(item)}
       ${item.descricao ? `<div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;margin-bottom:8px;">${esc(item.descricao)}</div>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;">${botoes.join('')}</div>
       ${_intakeLinkOpenId===item.id ? _intakeLinkUIHtml(item.id) : ''}
@@ -23815,6 +23835,7 @@ function _intakeCriarCard(id){
   document.getElementById('m-title').value = '📥 '+item.titulo;
   const partes = ['**Pedido via formulário de intake**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
   if(item.squadDemandante) partes.push('Squad/time solicitante: '+item.squadDemandante);
+  if(item.prioridade&&_INTAKE_PRIO_LBL[item.prioridade]) partes.push('Prioridade pedida: '+_INTAKE_PRIO_LBL[item.prioridade]);
   if(item.descricao){ partes.push(''); partes.push(item.descricao); }
   eocInitDisplay('desc-eoc', partes.join('\n'), 'Adicionar descrição...');
   if(item.prazo){
@@ -23889,6 +23910,19 @@ function _intakeCriarCard(id){
       const cvSel=document.getElementById('m-canalvenda');
       if(cvSel) cvSel.value=cvMatch.id;
     }
+  }
+  // Prioridade SUGERIDA pelo solicitante (pedido interno) — pré-seleciona no modal; quem cria o
+  // card revisa antes de Salvar (por isso também vai escrita na descrição acima).
+  if(['low','medium','high','critical'].includes(item.prioridade)){
+    const prSel=document.getElementById('m-priority'); if(prSel) prSel.value=item.prioridade;
+  }
+  // Links do pedido interno — mesmo mecanismo de "Enviar pra outro squad": links só entram no card na
+  // criação de verdade (saveCard() lê _pendingTransferLinks ao nascer _newCard). openNewCard() zera este
+  // campo no início, por isso é setado DEPOIS dela.
+  if(Array.isArray(item.links)){
+    const ls=item.links.filter(l=>l&&/^https?:\/\//i.test(l.url||'')).slice(0,5)
+      .map((l,i)=>({id:'lnk'+Date.now()+i, url:String(l.url).slice(0,500), title:String(l.title||'').slice(0,120), ts:new Date().toISOString()}));
+    if(ls.length) _pendingTransferLinks=ls;
   }
   // Setado DEPOIS de openNewCard() de propósito — openNewCard() zera este
   // mesmo campo no início (ver comentário na declaração), então só marcar
@@ -25592,6 +25626,82 @@ function calcSprintEnd(){
   const end=new Date(start+'T00:00:00'); end.setDate(end.getDate()+days-1);
   document.getElementById('cfg-sprint-end').value=end.toISOString().split('T')[0];
 }
+// ── Pedido interno (intake-dev.html logado com Google da Hering): campos que o PO liga/desliga ──
+// MESMOS padrões de camposEfetivos() em intake.html/intake-dev.html — se mudar um, mude o outro.
+// Só grava em agil_cfg.intakeCampos o que difere do padrão (assim, ligar Submarca/Canal depois
+// continua refletindo no pedido sem o PO precisar voltar aqui).
+const INTAKE_CAMPOS_DEF=[
+  {k:'prioridade',label:'🔥 Prioridade (sugerida)'},
+  {k:'prazo',label:'📅 Prazo desejado'},
+  {k:'submarca',label:'🏷 Submarca',so:()=>submarcaAtivo},
+  {k:'canal',label:'🛒 Canal de venda',so:()=>canalVendaAtivo},
+  {k:'tags',label:'🏷 Tags'},
+  {k:'link',label:'🔗 Link (Drive, Figma…)'},
+];
+let _intakeTagIdsSel=new Set();
+function _intakeCamposPadrao(){
+  return {prioridade:{on:true,req:false},prazo:{on:true,req:false},tags:{on:false,req:false,ids:[]},
+    submarca:{on:!!submarcaAtivo,req:!!submarcaAtivo},canal:{on:!!canalVendaAtivo,req:!!canalVendaObrigatorio},link:{on:true,req:false}};
+}
+function _intakeCamposEfetivos(){
+  const c=(agilCfg&&agilCfg.intakeCampos)||{}, d=_intakeCamposPadrao(), out={};
+  Object.keys(d).forEach(k=>{ out[k]=Object.assign({},d[k],c[k]||{}); });
+  return out;
+}
+function _intakeTagsOferecidas(){
+  return (tags||[]).filter(t=>t&&!/^tag_(tam|sm|cv)_/.test(t.id));
+}
+function fillIntakeCamposUI(){
+  const box=document.getElementById('cfg-intake-campos'); if(!box) return;
+  const ef=_intakeCamposEfetivos();
+  _intakeTagIdsSel=new Set(Array.isArray(ef.tags.ids)?ef.tags.ids:[]);
+  box.innerHTML=INTAKE_CAMPOS_DEF.filter(c=>!c.so||c.so()).map(c=>
+    `<div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--txt);">
+      <span style="flex:1;">${c.label}</span>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;"><input type="checkbox" id="cfg-ic-${c.k}-on" ${ef[c.k].on?'checked':''} onchange="_intakeCamposToggle('${c.k}')" style="accent-color:var(--accent2,#2ecc9c);"> Mostrar</label>
+      <label style="display:flex;align-items:center;gap:4px;font-size:11px;color:var(--txt2);cursor:pointer;"><input type="checkbox" id="cfg-ic-${c.k}-req" ${ef[c.k].req?'checked':''} onchange="_intakeCamposToggle('${c.k}')" style="accent-color:var(--accent2,#2ecc9c);"> Obrigatório</label>
+    </div>`).join('');
+  _intakeCamposToggle('tags');
+  _intakeCamposRefreshAll();
+}
+function _intakeCamposRefreshAll(){
+  INTAKE_CAMPOS_DEF.forEach(c=>{
+    const on=document.getElementById('cfg-ic-'+c.k+'-on'), req=document.getElementById('cfg-ic-'+c.k+'-req');
+    if(on&&req){ req.disabled=!on.checked; if(!on.checked) req.checked=false; }
+  });
+}
+function _intakeCamposToggle(k){
+  _intakeCamposRefreshAll();
+  if(k!=='tags') return;
+  const wrap=document.getElementById('cfg-intake-tags-wrap'), on=document.getElementById('cfg-ic-tags-on');
+  if(!wrap) return;
+  wrap.style.display=(on&&on.checked)?'':'none';
+  const box=document.getElementById('cfg-intake-tags'); if(!box) return;
+  box.innerHTML=_intakeTagsOferecidas().map(t=>{
+    const sel=_intakeTagIdsSel.has(t.id);
+    return `<button type="button" class="btn btn-sm" onclick="_intakeTagPick(${jsq(t.id)})" style="font-size:11px;${sel?'background:rgba(46,204,156,.18);border-color:var(--accent2,#2ecc9c);color:var(--txt);':''}">${esc(t.label)}</button>`;
+  }).join('')||'<span style="font-size:11px;color:var(--txt3);">Este squad ainda não tem tags.</span>';
+}
+function _intakeTagPick(id){
+  if(_intakeTagIdsSel.has(id)) _intakeTagIdsSel.delete(id); else _intakeTagIdsSel.add(id);
+  _intakeCamposToggle('tags');
+}
+// Lê a UI e devolve SÓ o que difere do padrão (objeto vazio = tudo padrão).
+function _readIntakeCamposUI(){
+  const d=_intakeCamposPadrao(), out={};
+  INTAKE_CAMPOS_DEF.forEach(c=>{
+    const onEl=document.getElementById('cfg-ic-'+c.k+'-on'), reqEl=document.getElementById('cfg-ic-'+c.k+'-req');
+    if(!onEl||!reqEl) { // linha não renderizada (Submarca/Canal desligados): mantém o que já estava salvo
+      const prev=agilCfg&&agilCfg.intakeCampos&&agilCfg.intakeCampos[c.k]; if(prev) out[c.k]=prev; return;
+    }
+    const v={on:onEl.checked,req:reqEl.checked&&onEl.checked};
+    if(c.k==='tags') v.ids=[..._intakeTagIdsSel].filter(id=>(tags||[]).some(t=>t.id===id));
+    const dv=d[c.k];
+    const igual=v.on===dv.on&&v.req===dv.req&&(c.k!=='tags'||!v.ids.length);
+    if(!igual) out[c.k]=v;
+  });
+  return out;
+}
 function fillAgilTab(){
   const s=agilCfg||{};
   document.getElementById('cfg-sprint-num').value=s.sprintNum||'';
@@ -25606,11 +25716,12 @@ function fillAgilTab(){
   // já que o formulário já estava ativo em produção pra todo mundo antes
   // deste toggle existir — precisa de opt-OUT explícito, não opt-in.
   const intakeChk=document.getElementById('cfg-intake-enabled'); if(intakeChk) intakeChk.checked = s.intakeEnabled!==false;
+  fillIntakeCamposUI();
   renderColEditor();
 }
 function saveAgilCfg(){
   calcSprintEnd();
-  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,bfBannerMsg:document.getElementById('cfg-bf-banner-msg')?.value||'',intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false};
+  agilCfg={sprintNum:document.getElementById('cfg-sprint-num').value,sprintDays:document.getElementById('cfg-sprint-days').value,sprintStart:document.getElementById('cfg-sprint-start').value,sprintEnd:document.getElementById('cfg-sprint-end').value,wip:document.getElementById('cfg-wip').value,capacity:document.getElementById('cfg-capacity').value,goal:document.getElementById('cfg-sprint-goal').value,bfBannerMsg:document.getElementById('cfg-bf-banner-msg')?.value||'',intakeEnabled:document.getElementById('cfg-intake-enabled')?.checked!==false,intakeCampos:_readIntakeCamposUI()};
   fbSet(FB+'/agil_cfg',agilCfg);
   fbSet(FB+'/tags',tags);
 
@@ -27860,7 +27971,7 @@ const HELP_CONTENT = {
     { icon:'💡', title:'Insights pra PO/ADM/Organizador', text:'Dentro de 📊 Dados do Board, a aba "💡 Insights" (ao lado de "📊 Visão Geral") traz uma leitura mais interpretativa do estado da squad: distribuição de cards por prioridade (com aviso se a fatia de "Crítica" estiver desproporcional), carga por responsável (com aviso de sobrecarga quando alguém tem bem mais cards que a média do time), cards com mais riscos mapeados em aberto, cards marcados como OKR por coluna, e os cards há mais tempo sem edição (1+ sprint parado, mesmo cálculo que deixa o card esmaecido no board). Se o squad usa o campo Submarca e/ou Canal de venda, ganha também a distribuição por cada um. Tem filtro de <b>período</b> (por padrão olha os cards ativos agora; dá pra trocar pra só os criados nos últimos 7/14/30/90 dias) e de <b>tag</b> (clique numa ou mais tags pra restringir a análise só a elas). Clique em qualquer card da lista pra abrir ele direto. Tudo calculado a partir do que o board já tem carregado — não busca nada novo do Firebase.\n\n🏷️🛒 Submarca/Canal por coluna: na aba "📊 Visão Geral" (a outra, ao lado), squads que usam esses campos também ganham uma tabela mostrando quantos cards de cada Submarca/Canal estão em cada coluna do board — cruza os dois eixos, não só o total.\n\n🤖 Ponto de vista do Agente Ágil: botão no fim do painel que manda esses mesmos números pro agente interpretar e devolver uma leitura curta do que chama mais atenção — inclui também um resumo do CFD e do Burndown (aba "📈 CFD & Burndown"), que a leitura sempre comenta explicitamente. Só lê — não recalcula nada diferente do que já está na tela, não escreve nada no board.' },
     { icon:'📈', title:'CFD & Burndown', text:'Dentro de 📊 Dados do Board, a aba "📈 CFD & Burndown" traz dois gráficos reconstruídos a partir do histórico de movimentação que cada card já guarda (nenhuma coleta nova):\n\n📊 Cumulative Flow Diagram — área empilhada mostrando quantos cards estavam em cada coluna, dia a dia, nos últimos 21 dias. Ajuda a enxergar gargalos: se a faixa de uma coluna vai engordando com o tempo, cards estão empacando ali. Passe o mouse no <span class="help-tip-btn" style="display:inline-flex;">?</span> ao lado do título pra uma explicação completa (o que é, como ler, o que é um resultado satisfatório) direto na tela.\n\n🔥 Burndown — linha real de cards restantes vs. uma linha ideal (tracejada, declínio linear), usando o início/fim de sprint configurados em ⚙ Config → Ágil. O escopo é aproximado (o board não tem um campo próprio de "pertence à sprint X"): entram os cards não arquivados criados até o fim da sprint, que ainda não foram concluídos ou que foram concluídos dentro da janela da sprint.\n\n📍 Colunas na conta: o popup 📊 Dados do Board é grande (usa a tela) e tem, logo abaixo das abas, uma barra única com um botãozinho por coluna — clique numa pra tirá-la da conta (ou trazê-la de volta) e todos os números das <b>3 abas</b> (Visão Geral, Insights e CFD) recalculam juntos. Os gráficos preenchem a largura disponível e, no celular, os blocos empilham.\n\nLimitação aceita: o histórico de movimentação de cada card guarda só os últimos 40 eventos, então cards muito antigos e muito movimentados podem ter uma parte do passado incompleta no CFD.\n\n⚙ Nem toda coluna do board é "fluxo de trabalho" de verdade (ex.: Backlog, Arquivo, Bloqueios) — em ⚙ Config → Fluxo → "Ocultar do CFD", marque quais colunas não devem entrar no gráfico. Vazio = mostra todas, como antes.' },
     { icon:'🔴', title:'Indicador de conexão (offline)', text:'Quando o navegador perde a conexão com o Firebase, um selo "🔴 Offline" aparece no topo, ao lado do botão de tema. Enquanto ele estiver visível, suas alterações ainda não foram confirmadas no servidor — o app tenta reenviar sozinho assim que a internet voltar, mas se você tiver um card aberto com algo digitado e não salvo enquanto o selo está vermelho, um aviso do próprio navegador aparece se você tentar fechar ou recarregar a aba, pra você não perder o que escreveu sem perceber que estava offline.' },
-    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
+    { icon:'📥', title:'Formulário de intake (pedidos externos)', text:'Botão "📥 Intake" na toolbar abre a lista de pedidos recebidos por um link público, sem necessidade de login — pra alguém de fora do squad (ou até de fora da empresa) pedir algo sem precisar de conta no Maré Digital.\n\nComo compartilhar: dentro do painel de Intake, clique em "🔗 Copiar link de intake deste squad" — copia um endereço tipo intake.html?squad=SEU_SQUAD, próprio pra esse squad. Cole onde quiser (e-mail, WhatsApp, formulário de outro time).\n\nComo funciona: quem preenche o formulário externo manda título, descrição, nome e squad/time solicitante (todos obrigatórios) e, opcionalmente, contato e prazo desejado — isso vira um "pedido pendente", visível só pra quem está logado no board. Nenhum card é criado sozinho: alguém do squad revisa cada pedido e escolhe entre 4 ações — "✅ Criar card" (abre o card já pré-preenchido, prontinho pra revisar/ajustar e salvar), "🔗 Vincular a card" (a demanda não precisa virar card novo — busca um card já existente e escolhe se o pedido vira um <b>comentário</b> ou um <b>item de checklist</b> nele), "🗂 Guardar" (tira da fila de pendentes sem decidir agora — fica numa aba própria dentro do Intake, sem prazo, pra revisar quando quiser; de lá dá pra Criar card, Vincular ou Descartar a qualquer momento) ou "🗑 Descartar". O número no badge do botão "📥 Intake" mostra quantos pedidos ainda esperam revisão (pendentes + guardados contam separado, cada aba tem seu próprio contador).\n\n🔔 Todo mundo inscrito no squad recebe uma notificação (sino 🔔, com push se o app estiver fechado) assim que o pedido chega — não precisa de ninguém com o board aberto no momento pra saber que tem algo novo. Clicar na notificação abre direto o painel de Intake.\n\n🏷 Vínculo automático de tag: "squad/time solicitante" é uma lista suspensa fixa (Outlet, Omni, App, Site Hering, MarketPlace, CX, Midia, Comercial Geral) — evita o problema de digitar errado e a tag não bater. Se a opção escolhida bater com o nome de alguma tag já cadastrada neste squad (ignorando maiúscula/acento), o card criado já nasce com essa tag marcada. Não existe uma tag com esse nome ainda? Sem problema, a opção escolhida continua visível na descrição do card, só não pré-marca tag nenhuma.\n\n🏢 <b>Pedido interno (quem é da Hering)</b>: o MESMO link tem dois modos. Sem login, é o formulário de sempre. Quem entra com a conta Google da Hering (botão "🔐 Entrar com Google" no topo — ou já logado no Maré) vê um formulário de toques: nome, contato e time vêm do login, e dá pra marcar prioridade (sugerida), prazo (com atalhos Hoje/Amanhã/Sexta), submarca, canal de venda, tags e um link (Drive, Figma…). Dá pra escolher outro squad em "Pedir para". O pedido chega na caixa de entrada com 🏢 e chips; ao clicar "✅ Criar card", prioridade, tags, submarca, canal, prazo e link já vêm no modal. A prioridade é só uma sugestão — quem cria o card confirma.\n\n⚙ <b>Quais campos perguntar</b>: em ⚙ Config → Ágil → "🏢 Pedido interno — campos do formulário", o PO liga/desliga e marca como obrigatório cada campo (Prioridade, Prazo, Submarca e Canal — só se o squad usa —, Tags, Link). Em Tags dá pra escolher quais tags aparecem. Sem mexer em nada vale o padrão: Prioridade, Prazo e Link opcionais; Submarca/Canal obrigatórios só se já são obrigatórios no card. Quanto menos campos, mais rápido de preencher.\n\n🔌 É opcional por squad: em ⚙ Config → Ágil → "📥 Formulário de intake", desmarque a opção pra desligar. Com isso, o link público do squad para de aceitar pedidos novos (quem tentar abrir vê um aviso) e o botão "📥 Intake" some da toolbar — pedidos que já estavam pendentes continuam lá pra revisar. Ligado por padrão.' },
   ],
   cards: [
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },

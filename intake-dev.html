@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pedido — Maré Digital · Dev</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#0b1622; --card:#101f30; --card-b:rgba(255,255,255,.08);
+    --txt:#eaf2f8; --txt2:#a9bccb; --txt3:#6f8598;
+    --accent:#38b6ff; --accent2:#2ecc9c; --danger:#ff5c7a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:linear-gradient(160deg,#0b1622,#0d2338 55%,#0b1622);
+    color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    display:flex; align-items:flex-start; justify-content:center; padding:24px 16px;
+  }
+  .wrap{ width:100%; max-width:520px; }
+  .card{
+    background:var(--card); border:1px solid var(--card-b); border-radius:16px;
+    padding:26px 24px; box-shadow:0 20px 60px rgba(0,0,0,.35);
+  }
+  h1{ font-size:19px; margin:0 0 4px; display:flex; align-items:center; gap:8px; }
+  .sub{ font-size:12.5px; color:var(--txt3); margin:0 0 18px; line-height:1.5; }
+  label, .lbl{ display:block; font-size:12px; color:var(--txt2); margin:14px 0 5px; font-weight:600; }
+  label .opt, .lbl .opt{ font-weight:400; color:var(--txt3); }
+  label .req, .lbl .req{ color:var(--accent2); }
+  input[type=text], input[type=email], input[type=date], input[type=url], textarea, select{
+    width:100%; background:rgba(255,255,255,.04); border:1px solid var(--card-b); border-radius:10px;
+    color:var(--txt); font-size:14px; padding:10px 12px; font-family:inherit;
+  }
+  select{ appearance:none; -webkit-appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a9bccb' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 12px center; padding-right:34px; }
+  select option{ background:#101f30; color:var(--txt); }
+  input:focus, textarea:focus, select:focus{ outline:none; border-color:var(--accent); }
+  textarea{ min-height:90px; resize:vertical; }
+  .honeypot{ position:absolute; left:-9999px; opacity:0; height:0; overflow:hidden; }
+  .btn-main{
+    margin-top:22px; width:100%; padding:12px; border:none; border-radius:10px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04141f; font-weight:700;
+    font-size:14.5px; cursor:pointer;
+  }
+  .btn-main:disabled{ opacity:.55; cursor:default; }
+  .msg{ margin-top:14px; font-size:13px; line-height:1.5; padding:10px 12px; border-radius:10px; display:none; }
+  .msg.ok{ display:block; background:rgba(46,204,156,.12); border:1px solid rgba(46,204,156,.35); color:#8ff0cf; }
+  .msg.err{ display:block; background:rgba(255,92,122,.12); border:1px solid rgba(255,92,122,.35); color:#ffb3c1; }
+  .state{ text-align:center; padding:40px 10px; color:var(--txt3); font-size:13.5px; }
+  .squad-tag{ font-size:12px; color:var(--accent); font-weight:700; }
+
+  /* barra de login / identidade */
+  .who{ display:flex; align-items:center; gap:10px; padding:9px 12px; margin:0 0 16px; border-radius:12px;
+    background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); font-size:12.5px; color:var(--txt2); }
+  .who img{ width:26px; height:26px; border-radius:50%; object-fit:cover; flex:none; }
+  .who b{ color:var(--txt); }
+  .who .lnk{ margin-left:auto; background:none; border:none; color:var(--txt3); cursor:pointer; font-size:11.5px; text-decoration:underline; padding:0; }
+  .gbar{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; margin:0 0 16px;
+    border-radius:12px; background:rgba(56,182,255,.08); border:1px solid rgba(56,182,255,.25); font-size:12.5px; color:var(--txt2); }
+  .btn-g{ flex:none; padding:8px 12px; border-radius:9px; border:1px solid rgba(56,182,255,.5); background:rgba(56,182,255,.14);
+    color:var(--accent); font-weight:700; font-size:12.5px; cursor:pointer; }
+
+  /* chips (um toque) */
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{ padding:7px 12px; border-radius:999px; border:1px solid var(--card-b); background:rgba(255,255,255,.04);
+    color:var(--txt2); font-size:12.5px; cursor:pointer; font-family:inherit; line-height:1.2; }
+  .chip:hover{ border-color:rgba(255,255,255,.22); }
+  .chip[aria-pressed="true"]{ background:rgba(56,182,255,.18); border-color:var(--accent); color:var(--txt); font-weight:700; }
+  .chip.prio-low[aria-pressed="true"]{ background:rgba(74,222,128,.16); border-color:#4ade80; }
+  .chip.prio-medium[aria-pressed="true"]{ background:rgba(255,213,79,.16); border-color:#ffd54f; }
+  .chip.prio-high[aria-pressed="true"]{ background:rgba(255,107,107,.16); border-color:#ff6b6b; }
+  .chip.prio-critical[aria-pressed="true"]{ background:rgba(232,70,70,.2); border-color:#e84646; }
+  .hint{ font-size:11px; color:var(--txt3); margin:5px 0 0; line-height:1.4; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:420px){ .row2{ grid-template-columns:1fr; } .card{ padding:20px 16px; } }
+  .grp{ font-size:10.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--txt3); margin:8px 0 4px; }
+  .outro{ margin-top:16px; width:100%; padding:11px; border-radius:10px; border:1px solid var(--card-b); background:none; color:var(--txt2); font-size:13.5px; cursor:pointer; }
+  .devtag{ display:inline-block; font-size:10px; padding:2px 7px; border-radius:999px; background:rgba(255,107,107,.15); color:#ff9aa0; border:1px solid rgba(255,107,107,.3); margin-left:6px; vertical-align:middle; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div id="loading" class="state">Carregando…</div>
+    <div id="area" style="display:none;">
+      <h1>🐟 Novo pedido <span class="devtag">dev</span></h1>
+      <div id="who-slot"></div>
+      <div id="squad-slot"></div>
+      <div id="invalid" class="state" style="display:none;">
+        ⚠️ Link inválido ou squad não encontrado. Confirme o endereço com quem te passou este link.
+      </div>
+      <div id="disabled" class="state" style="display:none;">
+        🚫 Este squad não está recebendo pedidos por este link no momento. Fale direto com alguém do time.
+      </div>
+
+      <!-- Modo público: igual ao de sempre (sem login, passa pela Cloud Function) -->
+      <form id="intake-form" style="display:none;">
+        <p class="sub">Preencha os campos abaixo — não precisa de login. Alguém do time vai revisar e transformar em card.</p>
+        <label>Título do pedido *</label>
+        <input type="text" id="f-titulo" maxlength="200" required placeholder="Ex.: Banner para campanha X">
+        <label>Descrição *</label>
+        <textarea id="f-descricao" maxlength="4000" required placeholder="Detalhe o que precisa, referências, contexto..."></textarea>
+        <label>Seu nome *</label>
+        <input type="text" id="f-demandante" maxlength="120" required placeholder="Quem está pedindo">
+        <label>Squad/time solicitante *</label>
+        <select id="f-squad-demandante" required></select>
+        <label>E-mail ou contato <span class="opt">(opcional)</span></label>
+        <input type="text" id="f-contato" maxlength="200" placeholder="Pra time entrar em contato se precisar">
+        <label>Prazo desejado <span class="opt">(opcional)</span></label>
+        <input type="date" id="f-prazo">
+        <div class="honeypot"><label>Website</label><input type="text" id="f-website" tabindex="-1" autocomplete="off"></div>
+        <button type="submit" class="btn-main" id="btn-submit">Enviar pedido</button>
+      </form>
+
+      <!-- Modo interno: logado com a conta Google da Hering -->
+      <form id="intake-int" style="display:none;" novalidate>
+        <p class="sub" id="int-sub">Poucos toques: o time recebe o pedido já com as informações pra triar.</p>
+        <label for="i-titulo">O que você precisa? <span class="req">*</span></label>
+        <input type="text" id="i-titulo" maxlength="200" placeholder="Ex.: Banner para campanha X" autocomplete="off">
+        <label for="i-descricao">Detalhes <span class="req">*</span></label>
+        <textarea id="i-descricao" maxlength="4000" placeholder="O que é, pra quê, referências…"></textarea>
+        <div id="i-campos"></div>
+        <div id="i-sqdem"></div>
+        <button type="submit" class="btn-main" id="i-submit">Enviar pedido</button>
+      </form>
+
+      <div class="msg" id="msg"></div>
+      <button type="button" class="outro" id="btn-outro" style="display:none;">➕ Fazer outro pedido</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+// Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
+const firebaseConfig = {
+  apiKey:            localStorage.getItem('fb_apiKeyintake_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomainintake_dev')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLintake_dev')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdintake_dev')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucketintake_dev')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdintake_dev')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdintake_dev')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+
+const FN_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/intakeSubmit';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+// Squads/times que pedem — mesma lista do formulário público (o nome casa por label com a tag do squad de destino ao criar o card).
+const SQUADS_DEMANDANTES = ['Outlet', 'Omni', 'App', 'Site Hering', 'MarketPlace', 'CX', 'Midia', 'Comercial Geral'];
+// Squads originais nunca ganharam entrada em squads_meta (mesmo mapa que a Cloud Function intakeSubmit usa).
+const SQUAD_FALLBACK = {
+  dados: { label: 'Dados', emoji: '📊' }, prf: { label: 'Marketing de Performance', emoji: '📱' },
+  midiacriativa: { label: 'Mídia Criativa', emoji: '🎨' }, dev: { label: 'Dev', emoji: '🧪' }, gestao: { label: 'Gestão', emoji: '🏛' },
+};
+const PRIOS = [
+  { v: 'low', l: '🟢 Baixa' }, { v: 'medium', l: '🟡 Média' }, { v: 'high', l: '🔴 Alta' }, { v: 'critical', l: '🔥 Crítica' },
+];
+const LS_SQDEM = 'intake_sqdem';
+
+let squad = new URLSearchParams(location.search).get('squad') || '';
+let user = null;          // usuário da Hering logado (Google) — null = modo público
+let sq = null;            // dados do squad de destino (modo interno)
+let sel = null;           // escolhas da pessoa no formulário interno
+let squadsLista = null;   // [{id,label,emoji}] — seletor "Pedir para"
+let pubInfo = null;       // {label,emoji} do squad no modo público (vem da Cloud Function)
+let authPronto = false;
+
+function showMsg(text, ok) { const m = $('msg'); m.textContent = text; m.className = 'msg ' + (ok ? 'ok' : 'err'); }
+function clearMsg() { $('msg').className = 'msg'; }
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+function isHering(u) {
+  return !!(u && /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com'));
+}
+function arr(v) { return v ? (Array.isArray(v) ? v : Object.values(v)).filter(Boolean) : []; }
+function hojeISO(add) {
+  const d = new Date(); d.setDate(d.getDate() + (add || 0));
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+function proximaSexta() { const d = new Date(); const falta = (5 - d.getDay() + 7) % 7; return hojeISO(falta === 0 ? 7 : falta); }
+
+// ── Campos configuráveis pelo PO (⚙ Config → Ágil → "Campos do pedido interno") ──
+// intakeCampos ausente = padrão abaixo. Submarca/Canal seguem o que o squad já exige no card.
+function camposEfetivos(s) {
+  const c = (s.agil && s.agil.intakeCampos) || {};
+  const pick = (k, d) => Object.assign({}, d, c[k] || {});
+  return {
+    prioridade: pick('prioridade', { on: true, req: false }),
+    prazo: pick('prazo', { on: true, req: false }),
+    tags: pick('tags', { on: false, req: false, ids: [] }),
+    submarca: pick('submarca', { on: s.submarcaAtivo, req: s.submarcaAtivo }),
+    canal: pick('canal', { on: s.canalAtivo, req: s.canalObrigatorio }),
+    link: pick('link', { on: true, req: false }),
+  };
+}
+function tagsEspeciais(id) { return /^tag_(tam|sm|cv)_/.test(id || ''); }
+
+// ── Carregamento ──
+async function carregarListaSquads() {
+  if (squadsLista) return squadsLista;
+  const out = {};
+  Object.keys(SQUAD_FALLBACK).forEach(id => { out[id] = { id, label: SQUAD_FALLBACK[id].label, emoji: SQUAD_FALLBACK[id].emoji }; });
+  try {
+    const snap = await get(ref(db, 'kanban/squads_meta'));
+    const v = snap.val() || {};
+    Object.keys(v).forEach(id => { out[id] = { id, label: v[id].label || out[id]?.label || id, emoji: v[id].emoji || out[id]?.emoji || '🐟' }; });
+  } catch (e) { /* sem squads_meta: só os originais */ }
+  squadsLista = Object.values(out).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  return squadsLista;
+}
+async function carregarSquadInterno() {
+  const base = 'kanban/squads/' + squad + '/dados/';
+  const g = p => get(ref(db, p)).then(s => s.val());
+  const [meta, agil, tagsV, smAt, smVis, cvAt, cvObr, cvVis] = await Promise.all([
+    g('kanban/squads_meta/' + squad), g(base + 'agil_cfg'), g(base + 'tags'),
+    g(base + 'config/submarca_ativo'), g(base + 'config/submarcas_visiveis'),
+    g(base + 'config/canal_venda_ativo'), g(base + 'config/canal_venda_obrigatorio'), g(base + 'config/canais_venda_visiveis'),
+  ]);
+  const fb = SQUAD_FALLBACK[squad];
+  if (!meta && !fb && agil == null && tagsV == null) return null; // squad inexistente
+  const tags = arr(tagsV);
+  const smVisiveis = smVis || {}, cvVisiveis = cvVis || {};
+  return {
+    id: squad,
+    label: (meta && meta.label) || (fb && fb.label) || squad,
+    emoji: (meta && meta.emoji) || (fb && fb.emoji) || '🐟',
+    agil: agil || {},
+    intakeEnabled: !agil || agil.intakeEnabled !== false,
+    submarcaAtivo: !!smAt, canalAtivo: !!cvAt, canalObrigatorio: !!cvObr,
+    tags,
+    submarcas: tags.filter(t => /^tag_sm_/.test(t.id) && smVisiveis[t.id] !== false),
+    canais: tags.filter(t => /^tag_cv_/.test(t.id) && cvVisiveis[t.id] !== false),
+  };
+}
+
+// ── Render ──
+function renderWho() {
+  const slot = $('who-slot');
+  if (user) {
+    const foto = user.photoURL ? '<img src="' + esc(user.photoURL) + '" alt="" referrerpolicy="no-referrer">' : '🐟';
+    slot.innerHTML = '<div class="who">' + foto + '<span>Pedindo como <b>' + esc(user.displayName || user.email) + '</b></span><button type="button" class="lnk" id="btn-sair">sair</button></div>';
+    $('btn-sair').onclick = () => signOut(auth);
+  } else {
+    slot.innerHTML = '<div class="gbar"><span>É da Hering? Entre com sua conta pra pedir mais rápido.</span><button type="button" class="btn-g" id="btn-google">🔐 Entrar com Google</button></div>';
+    $('btn-google').onclick = async () => {
+      try {
+        const r = await signInWithPopup(auth, provider);
+        if (!isHering(r.user)) { await signOut(auth); showMsg('⚠️ Use a conta @ciahering.com.br — ou envie sem entrar, pelo formulário abaixo.', false); }
+      } catch (e) { if (e && e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') showMsg('⚠️ Não deu pra entrar agora. Tente de novo ou envie sem entrar.', false); }
+    };
+  }
+}
+function renderSquadSlot() {
+  const slot = $('squad-slot');
+  if (user && squadsLista) {
+    // Interno: "Pedir para" — troca o squad de destino sem sair da página.
+    slot.innerHTML = '<label for="s-dest" style="margin-top:0;">Pedir para</label><select id="s-dest">' +
+      (squad ? '' : '<option value="" disabled selected>— escolha o squad —</option>') +
+      squadsLista.map(s => '<option value="' + esc(s.id) + '"' + (s.id === squad ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('') + '</select>';
+    $('s-dest').onchange = e => { squad = e.target.value; history.replaceState(null, '', '?squad=' + encodeURIComponent(squad)); clearMsg(); entrar(); };
+  } else if (pubInfo) {
+    slot.innerHTML = '<p class="sub" style="margin-bottom:14px;">Squad de destino: <span class="squad-tag" id="squad-label">' + esc((pubInfo.emoji || '🐟') + ' ' + pubInfo.label) + '</span></p>';
+  } else slot.innerHTML = '';
+}
+function renderInterno() {
+  const c = camposEfetivos(sq);
+  sel = { prio: c.prioridade.on ? 'medium' : '', tags: new Set(), submarca: '', canal: '' };
+  const partes = [];
+  const lbl = (txt, cfg) => '<div class="lbl">' + txt + (cfg.req ? ' <span class="req">*</span>' : ' <span class="opt">(opcional)</span>') + '</div>';
+  if (c.prioridade.on) {
+    partes.push(lbl('Prioridade', c.prioridade) + '<div class="chips" id="g-prio">' +
+      PRIOS.map(p => '<button type="button" class="chip prio-' + p.v + '" data-prio="' + p.v + '" aria-pressed="' + (p.v === sel.prio) + '">' + p.l + '</button>').join('') +
+      '</div><p class="hint">É uma sugestão — o time confirma ao criar o card.</p>');
+  }
+  if (c.prazo.on) {
+    partes.push(lbl('Prazo desejado', c.prazo) + '<input type="date" id="i-prazo" min="' + hojeISO(0) + '">' +
+      '<div class="chips" style="margin-top:7px;">' +
+      '<button type="button" class="chip" data-prazo="0">Hoje</button><button type="button" class="chip" data-prazo="1">Amanhã</button>' +
+      '<button type="button" class="chip" data-prazo="sex">Sexta</button><button type="button" class="chip" data-prazo="7">+1 semana</button></div>');
+  }
+  if (c.submarca.on && sq.submarcas.length) {
+    partes.push(lbl('Submarca', c.submarca) + '<div class="chips" id="g-sm">' +
+      sq.submarcas.map(t => '<button type="button" class="chip" data-sm="' + esc(t.id) + '" aria-pressed="false">' + esc(t.label) + '</button>').join('') + '</div>');
+  }
+  if (c.canal.on && sq.canais.length) {
+    partes.push(lbl('Canal de venda', c.canal) + '<div class="chips" id="g-cv">' +
+      sq.canais.map(t => '<button type="button" class="chip" data-cv="' + esc(t.id) + '" aria-pressed="false">' + esc(t.label) + '</button>').join('') + '</div>');
+  }
+  if (c.tags.on) {
+    const ids = Array.isArray(c.tags.ids) ? c.tags.ids : [];
+    const oferecidas = sq.tags.filter(t => !tagsEspeciais(t.id) && (!ids.length || ids.includes(t.id)));
+    if (oferecidas.length) partes.push(lbl('Tags', c.tags) + '<div class="chips" id="g-tags">' +
+      oferecidas.map(t => '<button type="button" class="chip" data-tag="' + esc(t.id) + '" aria-pressed="false">' + esc(t.label) + '</button>').join('') + '</div>');
+  }
+  if (c.link.on) {
+    partes.push('<label for="i-link" style="margin-top:14px;">Link (Drive, Figma…) ' + (c.link.req ? '<span class="req">*</span>' : '<span class="opt">(opcional)</span>') + '</label><input type="url" id="i-link" maxlength="500" placeholder="https://…">');
+  }
+  $('i-campos').innerHTML = partes.join('');
+
+  const ultimo = lsGet(LS_SQDEM);
+  $('i-sqdem').innerHTML = '<label for="i-sqdem-sel">Seu time <span class="req">*</span></label><select id="i-sqdem-sel"><option value="" disabled' + (ultimo ? '' : ' selected') + '>— selecione —</option>' +
+    SQUADS_DEMANDANTES.map(s => '<option value="' + esc(s) + '"' + (s === ultimo ? ' selected' : '') + '>' + esc(s) + '</option>').join('') + '</select>';
+
+  // Eventos (delegação por grupo)
+  const g = (id, fn) => { const el = $(id); if (el) el.addEventListener('click', e => { const b = e.target.closest('.chip'); if (b) fn(b); }); };
+  g('g-prio', b => { sel.prio = b.dataset.prio; document.querySelectorAll('#g-prio .chip').forEach(x => x.setAttribute('aria-pressed', x === b)); });
+  g('g-sm', b => { const on = b.getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#g-sm .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', on); sel.submarca = on ? b.dataset.sm : ''; });
+  g('g-cv', b => { const on = b.getAttribute('aria-pressed') !== 'true'; document.querySelectorAll('#g-cv .chip').forEach(x => x.setAttribute('aria-pressed', 'false')); b.setAttribute('aria-pressed', on); sel.canal = on ? b.dataset.cv : ''; });
+  g('g-tags', b => { const id = b.dataset.tag; if (sel.tags.has(id)) sel.tags.delete(id); else sel.tags.add(id); b.setAttribute('aria-pressed', sel.tags.has(id)); });
+  document.querySelectorAll('[data-prazo]').forEach(b => b.addEventListener('click', () => {
+    const v = b.dataset.prazo; $('i-prazo').value = v === 'sex' ? proximaSexta() : hojeISO(Number(v));
+  }));
+}
+// modo: 'publico' | 'interno' | 'invalid' | 'disabled' | 'escolher' (logado, ainda sem squad).
+// O cabeçalho (login) e o seletor "Pedir para" ficam SEMPRE visíveis — senão quem escolhe um squad
+// desligado/inexistente fica preso sem poder trocar.
+function mostrar(modo) {
+  renderWho(); renderSquadSlot();
+  $('loading').style.display = 'none';
+  $('area').style.display = '';
+  $('invalid').style.display = modo === 'invalid' ? '' : 'none';
+  $('disabled').style.display = modo === 'disabled' ? '' : 'none';
+  $('intake-form').style.display = modo === 'publico' ? '' : 'none';
+  $('intake-int').style.display = modo === 'interno' ? '' : 'none';
+  $('btn-outro').style.display = 'none';
+}
+
+// ── Fluxo principal ──
+async function entrar() {
+  if (!authPronto) return;
+  clearMsg();
+  $('loading').style.display = '';
+  $('area').style.display = 'none';
+  if (user) {
+    await carregarListaSquads();
+    pubInfo = null;
+    if (!squad) { mostrar('escolher'); return; }
+    try { sq = await carregarSquadInterno(); } catch (e) { sq = null; }
+    if (!sq) { mostrar('invalid'); return; }
+    if (!sq.intakeEnabled) { mostrar('disabled'); return; }
+    renderInterno();
+    mostrar('interno');
+    return;
+  }
+  // Público (sem login): comportamento de sempre
+  sq = null; pubInfo = null;
+  if (!squad) { mostrar('invalid'); return; }
+  try {
+    const r = await fetch(FN_URL + '?squad=' + encodeURIComponent(squad));
+    if (!r.ok) throw 0;
+    const data = await r.json();
+    if (data.intakeEnabled === false) { mostrar('disabled'); return; }
+    pubInfo = { label: data.squad.label, emoji: data.squad.emoji };
+    $('f-squad-demandante').innerHTML = '<option value="" disabled selected>— selecione —</option>' + SQUADS_DEMANDANTES.map(s => '<option value="' + esc(s) + '">' + esc(s) + '</option>').join('');
+    mostrar('publico');
+  } catch (e) { mostrar('invalid'); }
+}
+onAuthStateChanged(auth, u => {
+  const novo = isHering(u) ? u : null;
+  const mudou = (novo && novo.uid) !== (user && user.uid);
+  user = novo;
+  if (!authPronto || mudou) { authPronto = true; entrar(); }
+});
+
+// ── Envio: público (Cloud Function, como sempre) ──
+$('intake-form').addEventListener('submit', function (e) {
+  e.preventDefault();
+  const btn = $('btn-submit');
+  btn.disabled = true; btn.textContent = 'Enviando…'; clearMsg();
+  const payload = {
+    squad, titulo: $('f-titulo').value, descricao: $('f-descricao').value, demandante: $('f-demandante').value,
+    squadDemandante: $('f-squad-demandante').value, contato: $('f-contato').value, prazo: $('f-prazo').value, website: $('f-website').value,
+  };
+  fetch(FN_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    .then(r => r.json().then(data => ({ ok: r.ok, data })))
+    .then(({ ok, data }) => {
+      if (ok && data.ok) {
+        $('intake-form').reset(); $('intake-form').style.display = 'none';
+        showMsg('✅ Pedido enviado! O time vai revisar e transformar em card em breve.', true);
+      } else if (data.error === 'rate_limited') showMsg('⚠️ Muitos envios em pouco tempo. Tente novamente daqui a pouco.', false);
+      else if (data.error === 'intake_disabled') showMsg('🚫 Este squad desativou os pedidos por este link enquanto você preenchia. Fale direto com alguém do time.', false);
+      else showMsg('⚠️ Preencha título, descrição, nome e squad/time antes de enviar.', false);
+    })
+    .catch(() => showMsg('⚠️ Não deu pra enviar (conexão instável). Tente de novo.', false))
+    .finally(() => { btn.disabled = false; btn.textContent = 'Enviar pedido'; });
+});
+
+// ── Envio: interno (grava direto em intake_pending, sem Cloud Function) ──
+function validarInterno() {
+  const c = camposEfetivos(sq);
+  if (!$('i-titulo').value.trim()) return 'Falta o título do pedido.';
+  if (!$('i-descricao').value.trim()) return 'Falta descrever o pedido.';
+  if (c.prioridade.on && c.prioridade.req && !sel.prio) return 'Escolha a prioridade.';
+  if (c.prazo.on && c.prazo.req && !$('i-prazo').value) return 'Informe o prazo desejado.';
+  if (c.submarca.on && c.submarca.req && sq.submarcas.length && !sel.submarca) return 'Escolha a submarca.';
+  if (c.canal.on && c.canal.req && sq.canais.length && !sel.canal) return 'Escolha o canal de venda.';
+  if (c.tags.on && c.tags.req && !sel.tags.size) return 'Escolha ao menos uma tag.';
+  const link = $('i-link') ? $('i-link').value.trim() : '';
+  if (c.link.on && c.link.req && !link) return 'Cole o link de referência.';
+  if (link && !/^https?:\/\/\S+$/i.test(link)) return 'O link precisa começar com http:// ou https://.';
+  if (!$('i-sqdem-sel').value) return 'Escolha o seu time.';
+  return '';
+}
+async function avisarMembros(titulo, demandante) {
+  try {
+    const snap = await get(ref(db, 'kanban/usuarios_publicos'));
+    const todos = snap.val() || {};
+    const uids = Object.keys(todos).filter(uid => uid !== user.uid && todos[uid] && todos[uid].squads && todos[uid].squads[squad] === true);
+    if (!uids.length) return;
+    const notifId = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const notif = { id: notifId, type: 'intake', title: '📥 Novo pedido de intake', sub: titulo + ' — ' + demandante, read: false, ts: new Date().toISOString(), squad };
+    await Promise.all(uids.map(uid => set(ref(db, 'kanban/usuarios/' + uid + '/notificacoes/' + notifId), notif).catch(() => {})));
+  } catch (e) { console.warn('[intake] não deu pra avisar o squad:', e); }
+}
+$('intake-int').addEventListener('submit', async function (e) {
+  e.preventDefault();
+  if (!user || !sq) return;
+  const btn = $('i-submit');
+  if (btn.disabled) return;
+  const erro = validarInterno();
+  if (erro) { showMsg('⚠️ ' + erro, false); return; }
+  btn.disabled = true; btn.textContent = 'Enviando…'; clearMsg();
+  const c = camposEfetivos(sq);
+  const porId = id => sq.tags.find(t => t.id === id);
+  const titulo = $('i-titulo').value.trim().slice(0, 200);
+  const demandante = (user.displayName || user.email).slice(0, 120);
+  const sqdem = $('i-sqdem-sel').value;
+  const item = {
+    titulo, descricao: $('i-descricao').value.trim().slice(0, 4000), demandante, contato: (user.email || '').slice(0, 200),
+    squadDemandante: sqdem, origem: 'interno', solicitanteUid: user.uid, solicitanteFoto: user.photoURL || '',
+    createdAt: new Date().toISOString(), status: 'pending',
+  };
+  const prazo = $('i-prazo') ? $('i-prazo').value : '';
+  if (c.prazo.on && /^\d{4}-\d{2}-\d{2}$/.test(prazo)) item.prazo = prazo;
+  if (c.prioridade.on && sel.prio) item.prioridade = sel.prio;
+  if (c.submarca.on && sel.submarca && porId(sel.submarca)) item.submarca = porId(sel.submarca).label;
+  if (c.canal.on && sel.canal && porId(sel.canal)) item.canal = porId(sel.canal).label;
+  if (c.tags.on && sel.tags.size) item.tags = [...sel.tags].map(id => porId(id) && porId(id).label).filter(Boolean);
+  const link = $('i-link') ? $('i-link').value.trim() : '';
+  if (c.link.on && link) item.links = [{ url: link.slice(0, 500) }];
+  try {
+    const novo = push(ref(db, 'kanban/squads/' + squad + '/dados/intake_pending'));
+    item.id = novo.key;
+    await set(novo, item);
+  } catch (err) {
+    btn.disabled = false; btn.textContent = 'Enviar pedido';
+    showMsg('⚠️ Não deu pra enviar (conexão ou permissão). Tente de novo.', false);
+    return;
+  }
+  lsSet(LS_SQDEM, sqdem);
+  avisarMembros(titulo, demandante);
+  $('intake-int').style.display = 'none';
+  showMsg('✅ Pedido enviado para ' + sq.emoji + ' ' + sq.label + '! O time recebe um aviso e transforma em card.', true);
+  btn.disabled = false; btn.textContent = 'Enviar pedido';
+  $('btn-outro').style.display = '';
+});
+$('btn-outro').addEventListener('click', () => { clearMsg(); $('btn-outro').style.display = 'none'; $('i-titulo').value = ''; $('i-descricao').value = ''; renderInterno(); $('intake-int').style.display = ''; window.scrollTo({ top: 0 }); });
+
+// ganchos de teste (Playwright)
+window.__intake = { get modo() { return user ? 'interno' : 'publico'; }, get squad() { return squad; } };
+</script>
+</body>
+</html>
