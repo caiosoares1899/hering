@@ -6511,7 +6511,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.827-dev</div>
+<div class="version">v8.30.828-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -23811,6 +23811,18 @@ function _intakeChipsHtml(item){
   (Array.isArray(item.links)?item.links:[]).filter(l=>l&&/^https?:\/\//i.test(l.url||'')).forEach(l=>out.push(`<a href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" style="font-size:10.5px;padding:2px 8px;border-radius:999px;border:1px solid rgba(56,182,255,.35);background:rgba(56,182,255,.1);color:var(--accent);text-decoration:none;">🔗 Link</a>`));
   return out.length?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">${out.join('')}</div>`:'';
 }
+// Campos estruturados do pedido interno, em linhas de texto — pra quando o pedido vira COMENTÁRIO num card existente (Vincular a card),
+// que não tem onde pendurar tag/prioridade/link como campo.
+function _intakeDetalhesLinhas(item){
+  const out=[];
+  if(item.prioridade&&_INTAKE_PRIO_LBL[item.prioridade]) out.push('Prioridade pedida: '+_INTAKE_PRIO_LBL[item.prioridade]);
+  if(item.prazo) out.push('Prazo desejado: '+new Date(item.prazo+'T00:00:00').toLocaleDateString('pt-BR'));
+  if(item.submarca) out.push('Submarca: '+item.submarca);
+  if(item.canal) out.push('Canal: '+item.canal);
+  const tg=(Array.isArray(item.tags)?item.tags:[]).filter(Boolean); if(tg.length) out.push('Tags: '+tg.join(', '));
+  (Array.isArray(item.links)?item.links:[]).filter(l=>l&&/^https?:\/\//i.test(l.url||'')).forEach(l=>out.push('Link: '+l.url));
+  return out;
+}
 // Item compartilhado entre a aba Pendentes e a aba Guardados — só o botão
 // "🗂 Guardar" (opts.showGuardar) e a data exibida mudam entre as duas.
 function _intakeItemHtml(item, opts){
@@ -24040,6 +24052,7 @@ function _intakeConfirmLink(id, mode){
   if(!card){ showToast('⚠ Esse card não existe mais.'); _intakeLinkSel[id]=null; _intakeRerenderFor(id); return; }
   const partes=['📥 Pedido via formulário de intake: **'+item.titulo+'**', 'Demandante: '+item.demandante+(item.contato?' ('+item.contato+')':'')];
   if(item.squadDemandante) partes.push('Squad/time solicitante: '+item.squadDemandante);
+  _intakeDetalhesLinhas(item).forEach(l=>partes.push(l));   // pedido interno: prioridade, prazo, submarca, canal, tags, links — sem isso o comentário perdia o que o card novo recebe
   if(item.descricao){ partes.push(''); partes.push(item.descricao); }
   const texto=partes.join('\n');
   if(mode==='comment'){

@@ -2504,7 +2504,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         <button id="cc-arch-btn" onclick="_ccToggleArquivar()" style="color:var(--cyan);border:1px solid rgba(56,182,255,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;display:none;">🗄 Arquivar</button>
         <button id="cc-del-btn" onclick="deleteComunicado()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
         <button onclick="closeComunicadoCompose()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
-        <button onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
+        <button id="cc-publicar-btn" onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
       </div>
     </div>
   </div>
@@ -2914,7 +2914,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.46 · painel-dev</div>
+<div class="version">v5.47 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7516,7 +7516,10 @@ async function _painelNotifyBroadcast(c, id){
   // publicava o comunicado, via "✅ publicado!" e ninguém era avisado (cada escrita negada era engolida em silêncio).
   if(falhas) showToast('⚠ Comunicado publicado, mas '+falhas+' de '+alvos.size+' aviso(s) não foram entregues — só quem tem papel PO/ADM no 👥 Global Users envia o aviso a todos.');
 }
+// Trava de "em andamento": comunicado NOVO ganha id a cada chamada — duplo clique em Publicar gravava 2 avisos (e 2 cards no Mural do Oceano).
+let _ccSalvando = false;
 function saveComunicado(){
+  if(_ccSalvando) return;
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
   const titulo = document.getElementById('cc-titulo').value.trim();
   const corpo = _sanitizeComunicadoHtml(document.getElementById('cc-corpo').innerHTML);
@@ -7558,15 +7561,18 @@ function saveComunicado(){
   if(capa) obj.capa = capa;
   if(botao) obj.botao = botao;
   if(fixado) obj.fixado = true;
+  _ccSalvando = true; const _btnPub = document.getElementById('cc-publicar-btn'); if(_btnPub) _btnPub.disabled = true;
+  const _ccFim = ()=>{ _ccSalvando = false; if(_btnPub) _btnPub.disabled = false; };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
     .then(()=>{
+      _ccFim();
       showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!');
       if(!estavaAtivo && obj.prioridade!=='oceano' && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
         _painelNotifyBroadcast(obj, id);
       }
       closeComunicadoCompose();
     })
-    .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
+    .catch(e=>{ _ccFim(); showToast('⚠ Erro ao salvar: '+(e?.message||e)); });
 }
 async function deleteComunicado(){
   if(!_editingComunicadoId) return;

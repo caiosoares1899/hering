@@ -47,6 +47,17 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🐛 /monitorarbugs (11/10): Intake interno, Mural do Oceano e Comunicados — kanban-dev v8.30.828-dev · painel-dev v5.47 · oceano-dev v1.18 · intake-dev (SÓ DEV)
+Rodada sobre o código das últimas horas (Intake interno, login único, Mural, composer). 7 achados, todos reproduzidos no Chromium antes de corrigir.
+- **Intake — trocar "Pedir para" rápido** (`intake-dev.html`): a resposta atrasada de um squad antigo sobrescrevia o formulário do escolhido (tags do squad errado sob o nome do certo; o pedido ia pro squad novo com os campos do antigo). Cada `entrar()` agora tem número e só a última vale; o envio usa o id do squad carregado. Mesmo vale pro caso "público falhou depois do login".
+- **Intake — `?squad=` com `/` ou `..`** virava pedaço de caminho do banco (leitura e escrita). Agora só `[A-Za-z0-9_-]` (senão "link inválido").
+- **Vincular a card (Intake)**: o comentário só levava título/demandante/descrição — **prioridade pedida, prazo, submarca, canal, tags e link do pedido interno se perdiam** (só "Criar card" os levava). `_intakeDetalhesLinhas()`.
+- **Mural do Oceano — "visto"** contava com a aba em segundo plano ou com um produto aberto por cima do lobby (host); agora só com o Mural aberto **e à vista** (`avMarcaVistos()` tenta de novo até voltar). Código morto `avTexto()` removido.
+- **Painel — duplo clique em Publicar Comunicado** gravava 2 avisos (id novo por chamada, sem trava) — e agora seriam 2 cards no Mural de todo mundo. Trava `_ccSalvando` + botão desabilitado.
+- **Oceano — cadastro**: se a **leitura** do cadastro falhasse (rede), o Oceano tratava como "não existe" e gravava um cadastro novo por cima (nome, foto e data de criação reescritos). `lerRamo()` agora devolve `undefined` na falha; só `null` (não existe) cria.
+- Teste: `docs/arezzo/testes/test_monitorarbugs_1011.js` (13 checagens; todas as de bug falham no código anterior).
+- Dica: não — correções.
+
 ### 📌 Mural do Oceano recolhível, com selo de novos — oceano-dev v1.17 (SÓ DEV)
 - O Mural da página inicial agora **começa recolhido**: o cabeçalho (botão, também por teclado) mostra "📌 Mural · N" e o selo **● N novos** — **vermelho** se entre os novos há um 🚨 Urgente, singular com 1 ("1 novo"). Clicar abre/recolhe e a **escolha fica lembrada** no navegador (`oceano_mural_aberto`).
 - **"Visto" só conta com o Mural aberto**: recolhido não marca nada como visto; aberto, o que está à vista (os 4 primeiros, ou todos em "Ver todos") vira visto depois de ~6 s. O selo sobe sozinho quando chega aviso novo, sem abrir o Mural.
