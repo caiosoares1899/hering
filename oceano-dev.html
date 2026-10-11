@@ -260,6 +260,10 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 
 /* ═══ MODAIS ═══ */
 /* ── 📌 Mural de avisos (Painel › Pessoas › Comunicados, com 🌊 Oceano) ── */
+.continuar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px 10px 16px;margin:0 0 14px;border-color:rgba(46,204,156,.4);}
+.continuar-ic{font-size:16px;color:var(--teal);}
+.continuar-t{flex:1;min-width:160px;font-size:13px;color:var(--txt);}
+.continuar-t b{font-family:var(--ff-d);}
 .mural-hd{display:flex;align-items:center;gap:8px;width:100%;margin:6px 0 14px;padding:6px 2px 10px;font:inherit;font-size:12px;font-weight:600;color:var(--txt);background:none;border:none;border-bottom:1px solid var(--glass-b);cursor:pointer;text-align:left;}
 .mural-hd:hover .mural-seta,.mural-hd:focus-visible .mural-seta{color:var(--accent);}
 .mural-hd:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px;}
@@ -415,6 +419,10 @@ input.in[readonly]{opacity:.7;}
   <!-- ══ INÍCIO: o uso do dia a dia ══ -->
   <section class="tabp on" id="tab-inicio" role="tabpanel">
     <div class="ola"><b id="ola">Olá</b><span id="ola-data"></span></div>
+    <div id="continuar" class="vidro continuar" style="display:none;" role="region" aria-label="Continuar de onde você estava">
+      <span class="continuar-ic" aria-hidden="true">↩</span><span class="continuar-t" id="continuar-t"></span>
+      <button type="button" class="btn pri sm" id="continuar-ir">Continuar</button><button type="button" class="x" id="continuar-x" aria-label="Dispensar">✕</button>
+    </div>
     <div id="mural-wrap" style="display:none;">
       <button type="button" class="mural-hd" id="mural-hd" aria-expanded="false" aria-controls="mural-corpo" title="Mostrar ou recolher o Mural">
         <span class="mural-tit">📌 Mural</span><span class="mural-n" id="mural-n"></span><span class="mural-novos" id="mural-novos" hidden></span><span class="mural-seta" aria-hidden="true">▾</span>
@@ -572,7 +580,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.18 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.19 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -586,8 +594,8 @@ const SVG_PAINEL = '<circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2.
 const SVG_BORDO = '<circle cx="24" cy="12" r="3.4"/><path d="M24 15.5V37M16.5 21h15M11 29c0 7 5.5 9 13 9s13-2 13-9"/>';
 const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10 4 18-4s12 4 18-4" opacity=".6"/>';
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
-// Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>; depois do login + cadastro voltamos pra ela.
-// Só páginas do próprio domínio da família (lista fechada) — nunca um endereço de fora.
+// Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>. A pessoa FICA no Oceano (vê o Mural e a vitrine) e ganha um
+// atalho "↩ Continuar para o Maré" no topo — não é devolvida sozinha. Só páginas da família (lista fechada) — nunca um endereço de fora.
 const NEXT = (()=>{ try{ const n = new URLSearchParams(location.search).get('next') || ''; return /^(kanban|painel|okr)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(n) ? n : ''; }catch(e){ return ''; } })();
 const APPS = [
   {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
@@ -683,13 +691,6 @@ async function garantirCadastro(uidAtual){
   try{ await window._update(window._ref(window._db,'kanban/usuarios/'+U.uid), {uid:U.uid, nome:U.displayName||'', email:U.email||'', foto:U.photoURL||'', criadoEm:new Date().toISOString()}); toast('👋 Cadastro criado — bem-vindo a bordo!'); }catch(e){}
 }
 async function iniciarSessao(){
-  if(NEXT){   // veio do Maré/Painel: faz o cadastro e volta — sem piscar o lobby
-    const card = document.querySelector('#login .login-card');
-    if(card) card.innerHTML = '<div class="ph-wrap"><div class="porthole" style="--s:90px;"><div class="vid"><img src="oceano-icon-192.png" alt="Oceano"></div></div></div><h1>Oceano</h1><p id="voltando">Tudo certo, '+esc(U.displayName||U.email)+'. Voltando pra onde você estava…</p>';
-    $('#login').style.display = 'flex'; $('#app').style.display = 'none';
-    await garantirCadastro(await lerRamo('uid'));
-    location.replace(NEXT); return;
-  }
   $('#login').style.display = 'none'; $('#app').style.display = 'block';
   $('#devbar').style.display = IS_DEV ? 'block' : 'none';
   renderEu(); renderTudo(); iniciarSino(); iniciarDicas();
@@ -707,8 +708,18 @@ async function iniciarSessao(){
   carregarLinks();
   iniciarMural();
   rotearHash(true);
+  mostrarContinuar();
 }
 
+// ── ↩ Continuar (veio do Maré/Painel pedindo login) ──
+function mostrarContinuar(){
+  if(!NEXT) return;
+  const app = /^painel/.test(NEXT) ? 'o Painel' : /^okr/.test(NEXT) ? 'o Radar' : 'o Maré Digital', det = /[?&]card=/.test(NEXT) ? ' (no card que você abriu)' : '';
+  $('#continuar-t').innerHTML = 'Você estava indo para <b>'+esc(app.replace(/^o /,''))+'</b>'+esc(det)+'.';
+  $('#continuar').style.display = 'flex';
+}
+$('#continuar-ir').addEventListener('click', ()=>{ $('#continuar').style.display = 'none'; rotearUrl(NEXT); });
+$('#continuar-x').addEventListener('click', ()=>{ $('#continuar').style.display = 'none'; });
 // ── 📌 Mural de avisos ──────────────────────────────────────────────────────────────────────────────
 // Fonte: kanban/comunicados (os "Comunicados" do Painel › Pessoas) com oceano:true. Quem escolhe ir pro Oceano é o ADM ao publicar
 // (🌊 Mostrar no mural do Oceano, padrão ligado; "Só no Oceano" = não aparece no Maré). Mesmas regras de público do Maré: squad e "só PO".
@@ -1202,7 +1213,7 @@ const FAQ = [
   {id:'dicas', q:'Os avisos de dica ficam me incomodando. Como desligo?', a:'<p>No próprio aviso, clique em <b>Não mostrar dicas do Oceano</b>. Ou desligue em ⚙ Meu perfil → <b>💡 Dicas</b> (lá também dá pra <b>Rever dicas</b>). Cada produto tem o seu interruptor: desligar aqui não desliga no Maré nem no Radar — nesses, o interruptor fica na Central de Ajuda.</p>'},
   {id:'tema', q:'Dá pra mudar as cores?', a:'<p>Dá: <b>Abrolhos</b> (escuro da marca, padrão), <b>Lençóis Maranhenses</b> (claro) e <b>Entardecer</b> (opcional, só no Oceano). Abrolhos e Lençóis acompanham o tema do Maré, Painel e Radar. A escolha fica salva na sua conta.</p>'},
   {id:'mural', q:'O que é o Mural na página inicial?', a:'<p>É onde a squad publica os <b>avisos</b> pra todo mundo: novidades, avisos, dicas e alertas urgentes. Quem publica é o administrador, no <b>Painel → Pessoas → Comunicados</b> (a opção "🌊 Mostrar no mural do Oceano" vem marcada; existe também "Só no Oceano"). Os avisos <b>fixados</b> e os <b>urgentes</b> aparecem em destaque; os novos têm um selo <b>NOVO</b>. Clique num aviso pra ler inteiro, e no botão dele, quando houver, pra ir direto ao assunto.</p><p>O Mural começa <b>recolhido</b>: o cabeçalho mostra quantos avisos há e um selo <b>● N novos</b> (vermelho se tiver um urgente). Clique no cabeçalho pra abrir ou recolher — o Oceano lembra a sua escolha. Os avisos só contam como "vistos" depois de alguns segundos com o Mural aberto.</p><p>Você só vê o que é pra você: avisos de um squad específico aparecem pra quem é desse squad, e os "só PO" pra PO, Organizador e ADM. Aviso com data de validade some sozinho.</p>'},
-  {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>volta sozinho pra página que abriu</b>, no mesmo card ou link. Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
+  {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>fica no Oceano</b>, onde vê o Mural e os produtos. Um aviso <b>"↩ Continuar para o Maré"</b> no topo leva de volta pro que você tinha aberto (o mesmo card ou link). Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
   {id:'sino', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
