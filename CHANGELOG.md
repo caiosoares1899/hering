@@ -47,6 +47,15 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 🔎 Escala: filtros de squad, subtime e submarca — 2026-10-12 · escala-dev v1.1 · kanban-dev v8.30.830-dev (SÓ DEV)
+Pedido: "filtro de subtime, submarca e squad (na visão global)".
+- **Barra 🔎 Filtrar** (squad · subtime · submarca · ✕ Limpar filtros), valendo nas duas visões — o filtro de **squad** só aparece na global. Os filtros entram na URL (`f_sq`, `f_sub`, `f_sm`), então dá pra mandar o link já filtrado.
+- **Subtime:** vem dos subtimes que o PO cria no Maré (`kanban/squads/{sq}/dados/subtimes`, membros por iniciais). Na visão global, subtimes de squads diferentes com o mesmo **nome** viram uma opção só ("Designers" = todos os Designers de todas as squads). Filtrar esconde as pessoas de fora e as squads que ficam sem ninguém.
+- **Submarca (decisão: marcada em cada dia):** no ➕ Cadastro, campo opcional **"Submarcas que cobre"** (chips das submarcas que a squad usa — as 10 fixas do Maré, respeitando as "submarcas visíveis"; só aparece em squad com o campo Submarca ligado e some em Folga). O filtro mostra **quem cobre aquela submarca naquele dia**; o aviso de buracos passa a dizer "sem ninguém cobrindo Kids Comercial". O chip do dia ganha 🏷 e o detalhe do dia lista as submarcas.
+- **Dados/regras:** entrada ganha `s: {tag_sm_*: true}` (mapa, até 12). `database.rules.json` valida (`tag_sm_…` = true) — **precisa de novo `firebase deploy --only database`**. Lê também `squads/{sq}/dados/config/submarca_ativo|submarcas_visiveis` e `subtimes` (leituras pequenas, uma vez por abertura).
+- **Testes:** `test_escala.js` agora com 86 checks (filtros em global/squad, escopo das opções, subtime × submarca juntos, link com filtros, cadastro com submarca/folga/outra squad, detalhe do dia respeitando o filtro).
+- Dica: não (mesmo motivo da Escala).
+
 ### 🗓️ Escala: quem trabalha quando (squad + global + cadastro) — 2026-10-12 · escala-dev v1.0 · kanban-dev v8.30.829-dev · painel-dev v5.48 (SÓ DEV)
 Pedido (Black Friday, dor 3 — "escala por squad com foto/menção"): uma página só com **visão da squad** e **visão global**, mais uma **etapa de cadastro** feita pela própria pessoa ou pelo PO/Organizador/ADM.
 - **Página nova `escala-dev.html`** (login Google @ciahering, sem build; mesma família do `intake-dev.html`): semana de segunda a domingo, ◀ ▶ Hoje e **🔥 Black Friday** (pula pra semana dela e marca a sexta). Cada dia de cada pessoa é **✅ Escalado**, **🔥 Plantão** ou **🏖️ Folga**, com horário e observação opcionais.

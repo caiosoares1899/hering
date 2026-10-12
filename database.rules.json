@@ -89,6 +89,7 @@
               "i": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
               "f": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
               "n": { ".validate": "newData.isString() && newData.val().length <= 140" },
+              "s": { ".validate": "newData.hasChildren() && newData.numChildren() <= 12", "$tag": { ".validate": "newData.val() === true && $tag.matches(/^tag_sm_[A-Za-z0-9_]{1,40}$/)" } },
               "$other": { ".validate": false }
             }
           }
