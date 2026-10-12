@@ -47,6 +47,10 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### ✂️ Escala: fica só o filtro de subtime — 2026-10-12 · escala-dev v1.2 · kanban-dev v8.30.831-dev (SÓ DEV)
+Pedido: "deixa só subtime". Saem os filtros de **squad** e de **submarca** da v1.1 (e o campo "Submarcas que cobre" do cadastro e a validação `s` das regras do banco — **não precisa do segundo deploy de regras**; quem já publicou a versão com `s` pode republicar sem ele, não faz diferença). Fica o **filtro de subtime** nas duas visões (por nome: "Designers" junta os Designers de todas as squads na global), com ✕ Limpar filtro e `?f_sub=` na URL; a barra some em squad sem nenhum subtime. O filtro só esconde pessoas — o ➕ Cadastro continua listando a squad inteira.
+- **Testes:** `test_escala.js` com os checks de filtro reescritos pra só subtime (global, link, visão da squad, squad sem subtimes, cadastro não afetado).
+
 ### 🔎 Escala: filtros de squad, subtime e submarca — 2026-10-12 · escala-dev v1.1 · kanban-dev v8.30.830-dev (SÓ DEV)
 Pedido: "filtro de subtime, submarca e squad (na visão global)".
 - **Barra 🔎 Filtrar** (squad · subtime · submarca · ✕ Limpar filtros), valendo nas duas visões — o filtro de **squad** só aparece na global. Os filtros entram na URL (`f_sq`, `f_sub`, `f_sm`), então dá pra mandar o link já filtrado.
