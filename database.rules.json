@@ -76,6 +76,24 @@
           }
         }
       },
+      "escala": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$date": {
+          "$squadId": {
+            "$uid": {
+              ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && ((auth.uid === $uid && root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true) || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
+              ".validate": "newData.hasChildren(['t','por','ts']) && (newData.child('t').val() === 'trab' || newData.child('t').val() === 'plant' || newData.child('t').val() === 'folga') && newData.child('por').val() === auth.uid && newData.child('ts').isNumber() && $date.matches(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/) && $squadId.matches(/^[A-Za-z0-9_-]{1,40}$/)",
+              "t": { ".validate": true },
+              "por": { ".validate": true },
+              "ts": { ".validate": true },
+              "i": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
+              "f": { ".validate": "newData.isString() && newData.val().matches(/^([01][0-9]|2[0-3]):[0-5][0-9]$/)" },
+              "n": { ".validate": "newData.isString() && newData.val().length <= 140" },
+              "$other": { ".validate": false }
+            }
+          }
+        }
+      },
       "painel": {
         ".read":  "auth != null && (((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) || root.child('kanban/painel_viewers/' + auth.token.email.toLowerCase().replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',').replace('.', ',')).exists())",
         ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
