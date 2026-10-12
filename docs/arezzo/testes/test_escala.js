@@ -13,6 +13,7 @@ const pubs = () => ({
   ana: { uid: 'ana', nome: 'Ana Lima', init: 'AL', email: 'ana@ciahering.com.br', role: 'membro', squads: { dados: true, dev: true }, squads_roles: { dados: 'membro', dev: 'membro' } },
   bru: { uid: 'bru', nome: 'Bruno Reis', init: 'BR', email: 'bru@ciahering.com.br', role: 'membro', squads: { dados: true }, squads_roles: { dados: 'membro' } },
   pau: { uid: 'pau', nome: 'Paulo PO', init: 'PP', email: 'pau@ciahering.com.br', role: 'po', squads: { dados: true }, squads_roles: { dados: 'po' } },
+  zeca: { uid: 'zeca', nome: 'Zeca Dev', init: 'ZD', email: 'zeca@ciahering.com.br', role: 'membro', squads: { dev: true }, squads_roles: { dev: 'membro' } },
   org: { uid: 'org', nome: 'Olga Org', init: 'OO', email: 'org@ciahering.com.br', role: 'membro', squads: { dev: true }, squads_roles: { dev: 'organizador' } },
   adm: { uid: 'adm', nome: 'Adm Geral', init: 'AG', email: 'adm@ciahering.com.br', role: 'adm', squads: {} },
   cv: { uid: 'cv', nome: 'Convidado', init: 'CV', email: 'cv@ciahering.com.br', role: 'convidado', squads: { dados: true }, squads_roles: { dados: 'convidado' } },
@@ -24,6 +25,11 @@ const seed = () => ({ kanban: {
     [D(0)]: { dados: { ana: { t: 'trab', i: '09:00', f: '18:00', por: 'ana', ts: 1 }, bru: { t: 'plant', n: 'lançamento da campanha', por: 'pau', ts: 1 } } },
     [D(1)]: { dados: { ana: { t: 'folga', por: 'ana', ts: 1 } }, dev: { ana: { t: 'trab', por: 'ana', ts: 1 } } },
     [D(2)]: { dados: { cv: { t: 'trab', por: 'pau', ts: 1 } } },   // convidado não conta
+    [D(5)]: { dados: { ana: { t: 'trab', s: { tag_sm_adulto_com: true, tag_sm_kids_com: true }, por: 'ana', ts: 1 }, bru: { t: 'plant', s: { tag_sm_kids_com: true }, por: 'pau', ts: 1 }, pau: { t: 'trab', s: { tag_sm_sports_cad: true }, por: 'pau', ts: 1 } }, dev: { zeca: { t: 'trab', por: 'zeca', ts: 1 } } },
+  },
+  squads: {
+    dados: { dados: { subtimes: [{ id: 's1', name: 'Designers', members: ['AL', 'BR'] }, { id: 's2', name: 'Redatores', members: ['PP'] }], config: { submarca_ativo: true, submarcas_visiveis: { tag_sm_teen_com: false } } } },
+    dev: { dados: { subtimes: [{ id: 's3', name: 'designers', members: ['ZD'] }] } },
   },
 }});
 
@@ -200,6 +206,73 @@ const seed = () => ({ kanban: {
     await p.click('.cel[data-u="ana"][data-d="' + D(5) + '"]'); await p.evaluate(() => { const b = document.getElementById('c-salvar'); b.click(); b.click(); b.click(); }); await p.waitForTimeout(900);
     const n = await p.evaluate(() => window.__log.filter(x => x[0] === 'update' && x[1] === 'kanban/escala').length);
     t('cliques repetidos em Cadastrar gravam uma vez só', n === 1, n);
+    await ctx.close(); }
+
+  // ── FILTROS (squad / subtime / submarca) ──
+  { const { ctx, p, errs } = await open(ANA, '?visao=global');
+    const linhas = () => p.evaluate(() => [...document.querySelectorAll('tbody th.sqn .nm')].map(e => e.textContent.trim().replace(/^\S+\s/, '')));
+    const opts = id => p.evaluate(i => [...document.querySelectorAll('#' + i + ' option')].map(o => o.textContent.trim()), id);
+    const av = (sq, d) => p.evaluate(([s, dd]) => [...document.querySelectorAll('.gdia[data-gs="' + s + '"][data-gd="' + dd + '"] .av b')].map(e => e.textContent).sort().join(), [sq, d]);
+    t('global: três filtros visíveis (squad, subtime, submarca) e sem "limpar"', await vis(p, '#f-squad') && await vis(p, '#f-sub') && await vis(p, '#f-sm') && !(await vis(p, '#f-limpar')), 0);
+    t('subtimes juntam pelo nome entre squads (Designers/designers = 1) e listam Redatores', (await opts('f-sub')).join('|') === 'Todos os subtimes|Designers|Redatores', await opts('f-sub'));
+    t('submarcas: só as visíveis da squad que usa (Teen Comercial escondida) — 9 + "todas"', (await opts('f-sm')).length === 10 && !(await opts('f-sm')).some(x => /Teen Comercial/.test(x)), await opts('f-sm'));
+    await p.selectOption('#f-squad', 'dev'); await p.waitForTimeout(100);
+    t('filtro de squad: só a Dev', (await linhas()).join() === 'Dev' && await vis(p, '#f-limpar'), await linhas());
+    t('com a squad Dev, o filtro de submarca some (Dev não usa submarca)', !(await vis(p, '#f-sm')), 0);
+    await p.click('#f-limpar'); await p.waitForTimeout(100);
+    t('limpar filtros volta tudo', (await linhas()).join() === 'Dados,Dev' && !(await vis(p, '#f-limpar')), await linhas());
+    await p.selectOption('#f-sub', 'Redatores'); await p.waitForTimeout(100);
+    t('subtime Redatores: só quem é Redator (Dados) — Dev some por ter linha vazia', (await linhas()).join() === 'Dados' && await av('dados', D(5)) === 'PP', [await linhas(), await av('dados', D(5))]);
+    await p.selectOption('#f-sub', 'Designers'); await p.waitForTimeout(100);
+    t('subtime Designers vale pra todas as squads (Dados: AL,BR · Dev: ZD)', (await linhas()).join() === 'Dados,Dev' && await av('dados', D(0)) === 'AL,BR' && await av('dev', D(5)) === 'ZD', [await av('dados', D(0)), await av('dev', D(5))]);
+    await p.click('#f-limpar'); await p.selectOption('#f-sm', 'tag_sm_kids_com'); await p.waitForTimeout(100);
+    t('submarca Kids Comercial: no sábado só quem marcou (AL,BR); outros dias ficam vazios; squad sem submarca (Dev) some', (await linhas()).join() === 'Dados' && await av('dados', D(5)) === 'AL,BR' && await av('dados', D(0)) === '', [await linhas(), await av('dados', D(5)), await av('dados', D(0))]);
+    t('aviso de buracos fala da submarca', /cobrindo Kids Comercial/.test(await txt(p, '#avisos')), await txt(p, '#avisos'));
+    await p.selectOption('#f-sub', 'Redatores'); await p.waitForTimeout(100);
+    t('subtime + submarca juntos: Redator que não cobre Kids = ninguém', !(await av('dados', D(5))) , await av('dados', D(5)));
+    await p.click('#f-limpar'); await p.selectOption('#f-sm', 'tag_sm_sports_cad'); await p.waitForTimeout(100);
+    await p.click('.gdia[data-gs="dados"][data-gd="' + D(5) + '"]'); await p.waitForTimeout(100);
+    const det = await txt(p, '.md'); t('detalhe do dia respeita o filtro e mostra a submarca', /Paulo PO/.test(det) && !/Ana Lima/.test(det) && /Sports Cadastro/.test(det), det);
+    await p.keyboard.press('Escape');
+    t('filtros entram na URL (link compartilhável)', await p.evaluate(() => /f_sm=tag_sm_sports_cad/.test(location.search)), 0);
+    await p.click('#f-limpar'); t('limpar tira os filtros da URL', await p.evaluate(() => !/f_sm|f_sub|f_sq/.test(location.search)), 0);
+    t('sem erro de JS (filtros globais)', !errs.length, errs); await ctx.close(); }
+  { // filtros chegam por link
+    const { ctx, p } = await open(ANA, '?visao=global&f_sub=Designers&f_sm=tag_sm_kids_com&semana=' + D(0));
+    const st = await p.evaluate(() => ({ sub: document.getElementById('f-sub').value, sm: document.getElementById('f-sm').value, url: location.search }));
+    t('?f_sub / ?f_sm do link já vêm aplicados', st.sub === 'Designers' && st.sm === 'tag_sm_kids_com' && /f_sub=Designers/.test(st.url) && /f_sm=tag_sm_kids_com/.test(st.url), st);
+    await ctx.close(); }
+  { // filtros na visão da squad: sem filtro de squad; submarca só em squad que usa
+    const { ctx, p } = await open(ANA, '?squad=dados');
+    t('squad Dados: filtro de squad escondido; subtime e submarca aparecem', !(await vis(p, '#f-squad')) && await vis(p, '#f-sub') && await vis(p, '#f-sm'), 0);
+    await p.selectOption('#f-sub', 'Designers'); await p.waitForTimeout(100);
+    const nomes = await p.evaluate(() => [...document.querySelectorAll('tbody tr:not(.cob) th.pess .pnome > div > b')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
+    t('squad: subtime Designers esconde o Paulo (Redator)', nomes.join('|') === 'Ana Lima (você)|Bruno Reis', nomes);
+    await p.selectOption('#f-sm', 'tag_sm_kids_com'); await p.waitForTimeout(100);
+    const sab = await p.evaluate(d => ['ana', 'bru'].map(u => document.querySelector('.cel[data-u="' + u + '"][data-d="' + d + '"]').innerText.replace(/\s+/g, ' ').trim()), D(5));
+    t('squad: com Kids Comercial, o sábado mostra Ana ✅ 🏷 e Bruno 🔥 🏷; segunda some', /✅.*🏷/.test(sab[0]) && /🔥.*🏷/.test(sab[1]) && !(await p.evaluate(d => document.querySelector('.cel[data-u="ana"][data-d="' + d + '"] .ct'), D(0))), sab);
+    await p.click('#v-global'); await p.waitForTimeout(100);
+    t('trocar de visão mantém os filtros que ainda valem', await p.evaluate(() => document.getElementById('f-sub').value === 'Designers' && document.getElementById('f-sm').value === 'tag_sm_kids_com'), 0);
+    await ctx.close(); }
+  { const { ctx, p } = await open(ANA, '?squad=dev'); t('squad Dev: sem submarca (não usa) e subtime "designers" presente', !(await vis(p, '#f-sm')) && await vis(p, '#f-sub'), 0); await ctx.close(); }
+
+  // ── CADASTRO COM SUBMARCA ──
+  { const { ctx, p } = await open(ANA, '?squad=dados');
+    await p.click('#b-cad'); await p.waitForTimeout(120);
+    const ch = await p.evaluate(() => [...document.querySelectorAll('#c-sm .chip')].map(c => c.textContent.trim()));
+    t('cadastro oferece as submarcas visíveis da squad (sem "Teen Comercial")', ch.length === 9 && ch.includes('Kids Comercial') && !ch.includes('Teen Comercial'), ch);
+    await p.click('#c-sm [data-sm="tag_sm_kids_cad"]'); await p.click('#c-sm [data-sm="tag_sm_sports_com"]');
+    await p.fill('#c-de', D(7)); await p.fill('#c-ate', D(7)); await p.waitForTimeout(100);   // uma segunda só (seg–sex já marcados)
+    await p.click('#c-salvar'); await p.waitForTimeout(500);
+    const e = (await store(p))[D(7)]?.dados?.ana;
+    t('grava as submarcas marcadas como mapa {tag:true}', e && e.s && e.s.tag_sm_kids_cad === true && e.s.tag_sm_sports_com === true && Object.keys(e.s).length === 2, e);
+    await p.click('#b-cad'); await p.waitForTimeout(100); await p.click('[data-t="folga"]');
+    t('folga esconde o campo de submarcas', !(await vis(p, '#c-sm-box')), 0);
+    await p.click('#c-cancelar');
+    await p.click('.cel[data-u="ana"][data-d="' + D(7) + '"]'); await p.waitForTimeout(100);
+    t('editar o dia traz as submarcas já marcadas', await p.evaluate(() => [...document.querySelectorAll('#c-sm .chip[aria-pressed="true"]')].map(c => c.textContent.trim()).sort().join()) === 'Kids Cadastro,Sports Comercial', 0);
+    await p.click('#c-sq'); await p.selectOption('#c-sq', 'dev'); await p.waitForTimeout(100);
+    t('squad que não usa submarca: sem o campo no cadastro', !(await p.evaluate(() => !!document.getElementById('c-sm'))), 0);
     await ctx.close(); }
 
   // ── INTEGRAÇÃO: botão no Maré, atalho no Painel, Ajuda ──
