@@ -248,18 +248,26 @@ const seed = () => ({ kanban: {
     const opts = await p.evaluate(() => [...document.querySelectorAll('#c-uid option')].map(o => o.textContent.trim()));
     t('cadastro continua listando todos da squad mesmo com filtro ativo', opts.join('|') === 'Paulo PO (você)|Ana Lima|Bruno Reis', opts); await ctx.close(); }
 
-  // ── INTEGRAÇÃO: botão no Maré, atalho no Painel, Ajuda ──
+  // ── INTEGRAÇÃO: visão dentro do 📅 Calendários do Maré, aba no Painel, Ajuda ──
   { const K = PAGE.replace(/^escala/, 'kanban'), seedK = { kanban: { usuarios: { eve: { uid: 'eve', nome: 'Eve', email: 'eve@ciahering.com.br', inscrito: true, init: 'EV', role: 'membro', squads: { dev: true } } }, usuarios_publicos: { eve: { uid: 'eve', nome: 'Eve', init: 'EV', role: 'membro', squads: { dev: true } } } } };
     const ctx = await b.newContext({ viewport: { width: 1280, height: 800 } }); await fake.install(ctx, seedK);
     const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto('http://localhost:8941/' + K + '?squad=dev'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), G('eve', 'Eve')); await p.waitForTimeout(2800);
     await p.evaluate(() => { document.querySelectorAll('.ov.open,.modal-ov.open').forEach(e => e.classList.remove('open')); });
-    t('Maré: botão 🗓️ Escala existe na barra', await vis(p, '#btn-escala'), 0);
-    const [pop] = await Promise.all([ctx.waitForEvent('page'), p.evaluate(() => document.getElementById('btn-escala').click())]);
-    t('Maré: o botão abre a Escala em outra aba, já na squad atual', new URL(pop.url()).pathname.endsWith('/' + PAGE) && new URL(pop.url()).searchParams.get('squad') === 'dev', pop.url());
+    t('Maré: não há mais botão 🗓️ Escala solto na barra (nem atalho configurável)', await p.evaluate(() => !document.getElementById('btn-escala') && !ATALHO_ACOES.escala), 0);
+    await p.evaluate(() => openCal()); await p.waitForTimeout(300);
+    t('Calendário: a visão 👥 Escala fica ao lado de Tudo / Eventos / Prazos', await p.evaluate(() => [...document.querySelectorAll('#cal-ov .view-btn[data-mode]')].map(b => b.dataset.mode).join()) === 'both,events,cards,escala', 0);
+    t('Calendário: antes de escolher, o mês aparece e a Escala não', await vis(p, '#cal-grid') && !(await vis(p, '#cal-escala-fr')), 0);
+    await p.click('#cal-ov .view-btn[data-mode="escala"]'); await p.waitForTimeout(400);
+    const fr = await p.evaluate(() => { const f = document.getElementById('cal-escala-fr'); return { src: f.getAttribute('src'), full: document.getElementById('cal-escala-full').getAttribute('href'), mes: !!document.getElementById('cal-grid').offsetParent, nav: !!document.getElementById('cal-nav').offsetParent, filtros: !!document.getElementById('cal-filtros-row').offsetParent, add: getComputedStyle(document.getElementById('btn-add-event')).display }; });
+    t('Escala: abre embutida (embed=1) na squad atual, mês/filtros/"+ Evento" somem e há link pra tela cheia', new URL(fr.src, 'http://x/').searchParams.get('embed') === '1' && new URL(fr.src, 'http://x/').searchParams.get('squad') === 'dev' && new URL(fr.src, 'http://x/').pathname.endsWith('/' + PAGE) && !/embed/.test(fr.full) && !fr.mes && !fr.nav && !fr.filtros && fr.add === 'none', fr);
+    const frame = p.frames().find(f => /escala/.test(f.url())); await frame.waitForFunction(() => !!window.__authCb); await frame.evaluate(x => window.__authCb(x), G('eve', 'Eve')); await frame.waitForTimeout(600);
+    const dentro = await frame.evaluate(() => ({ grid: !!document.querySelector('table.grid'), topoOculto: getComputedStyle(document.querySelector('.top')).display === 'none', emb: document.body.classList.contains('embed') }));
+    t('Escala embutida: grade da squad visível e cabeçalho da página escondido', dentro.grid && dentro.topoOculto && dentro.emb, dentro);
+    await p.click('#cal-ov .view-btn[data-mode="both"]'); await p.waitForTimeout(200);
+    t('voltar pra Tudo: o mês e os filtros voltam e a Escala some', await vis(p, '#cal-grid') && await vis(p, '#cal-filtros-row') && !(await vis(p, '#cal-escala-fr')), 0);
     const ajuda = await p.evaluate(() => JSON.stringify(HELP_CONTENT).includes('Escala (quem trabalha quando)'));
     t('Maré: Central de Ajuda tem a entrada da Escala', ajuda, 0);
-    t('Maré: atalho configurável "🗓️ Escala" cadastrado', await p.evaluate(() => !!ATALHO_ACOES.escala), 0);
     t('Maré: sem erro de JS', !errs.length, errs);
     const pn = require('fs').readFileSync('/home/user/hering/' + PAGE.replace(/^escala/, 'painel'), 'utf8');
     t('Painel: aba-atalho "Escala ↗" abre a visão global em outra aba', new RegExp('id="ptab-escala" href="' + PAGE + '\\?visao=global" target="_blank"').test(pn), 0);

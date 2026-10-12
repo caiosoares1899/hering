@@ -1712,6 +1712,9 @@ input[type="date"]{-moz-appearance:textfield;}
   backdrop-filter:blur(10px);display:none;align-items:center;
   justify-content:center;padding:1rem;overflow:hidden;}
 .cal-ov.open{display:flex;}
+.cal-ov #cal-escala{display:none;flex:1;min-height:0;flex-direction:column;}
+.cal-ov.cal-esc #cal-escala{display:flex;}
+.cal-ov.cal-esc #cal-nav,.cal-ov.cal-esc #cal-filtros-row,.cal-ov.cal-esc #cal-body,.cal-ov.cal-esc #gcal-token-warn{display:none !important;}
 .cal-panel{background:rgba(var(--surface-rgb),.98);border:1px solid var(--glass-b);border-radius:var(--r2);width:96vw;max-width:1600px;height:calc(100vh - 2rem);max-height:calc(100vh - 2rem);display:flex;flex-direction:column;}.cal-body{padding:14px 16px;flex:1;display:flex;flex-direction:column;overflow:hidden;}
 .cal-hd{padding:12px 16px;border-bottom:1px solid var(--glass-b);
   display:flex;align-items:center;justify-content:space-between;
@@ -3944,7 +3947,6 @@ window.MARE_LOGIN_PELO_OCEANO = true;
        menu suspenso de Submarcas no header. -->
   <button class="btn btn-sm" data-tb-id="dashboard" onclick="openBoardData()" title="Indicadores do board (WIP, throughput, prazos...)" style="color:var(--cyan);border-color:rgba(126,200,227,.35);">📊 Dados do Board</button>
   <button class="btn btn-sm" data-tb-id="intake" id="btn-intake" onclick="openIntakePanel()" title="Pedidos recebidos pelo formulário público de intake" style="color:var(--accent2,#2ecc9c);border-color:rgba(46,204,156,.35);">📥 Intake<span id="intake-badge" style="display:none;">0</span></button>
-  <button class="btn btn-sm" data-tb-id="escala" id="btn-escala" onclick="openEscala()" title="Escala: quem trabalha quando — visão da squad e de todas as squads, com cadastro (abre em outra aba)" style="color:#ffb86b;border-color:rgba(255,159,67,.4);">🗓️ Escala</button>
   <div class="tb-sep" data-tb-id="sep4"></div>
   <button class="btn btn-sm" data-tb-id="campanhas" onclick="openCamp()" style="color:#f4a8c8;border-color:rgba(244,168,200,.3);">📣 Campanhas</button>
   <button class="btn btn-sm" data-tb-id="criativos" id="btn-criativos" onclick="openCriativos()" title="Controle de produção de criativos" style="display:none;color:#ffb3d9;border-color:rgba(255,179,217,.35);">🎬 Controle de Criativos</button>
@@ -5642,10 +5644,11 @@ window.MARE_LOGIN_PELO_OCEANO = true;
           <button class="view-btn active" data-mode="both" onclick="changeCalView('both')">Tudo</button>
           <button class="view-btn" data-mode="events" onclick="changeCalView('events')">🗓️ Eventos</button>
           <button class="view-btn" data-mode="cards" onclick="changeCalView('cards')">📎 Prazos</button>
+          <button class="view-btn" data-mode="escala" onclick="changeCalView('escala')" title="Quem trabalha quando: escala da squad e de todas as squads, com cadastro">👥 Escala</button>
         </div>
       </div>
       
-      <div class="cal-nav">
+      <div class="cal-nav" id="cal-nav">
         <button class="cal-nav-btn" onclick="calNav(-1)">◀</button>
         <div class="cal-month-lbl" id="cal-month-lbl"></div>
         <button class="cal-nav-btn" onclick="calNav(1)">▶</button>
@@ -5658,7 +5661,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       </div>
     </div>
 
-   <div style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap; position:relative; z-index:10;">
+   <div id="cal-filtros-row" style="display:flex; gap:8px; padding:10px 16px; border-bottom:1px solid var(--glass-b); background:rgba(0,0,0,.15); align-items:center; flex-wrap:wrap; position:relative; z-index:10;">
       <span style="font-size:10px;color:var(--txt3);font-weight:700;text-transform:uppercase;letter-spacing:.05em;">Filtros:</span>
       
       <select id="cal-f-owner" onchange="renderCal()" class="view-btn" style="color:var(--txt); outline:none;">
@@ -5680,7 +5683,14 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <span style="flex:1;">⚠ A conexão com o Google Agenda expirou — os eventos das agendas conectadas não estão sendo exibidos.</span>
       <button class="btn btn-sm" onclick="reconectarGCal()" style="color:var(--warn);border-color:rgba(255,209,102,.4);white-space:nowrap;">🔄 Reconectar</button>
     </div>
-    <div class="cal-body">
+    <div id="cal-escala">
+      <div style="display:flex;align-items:center;gap:10px;padding:6px 16px;border-bottom:1px solid var(--glass-b);font-size:11px;color:var(--txt3);">
+        <span style="flex:1;">👥 Escala — quem trabalha quando (cada um cadastra a sua; PO/Organizador/ADM cadastram pelos outros)</span>
+        <a id="cal-escala-full" href="#" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline;">↗ abrir em tela cheia</a>
+      </div>
+      <iframe id="cal-escala-fr" title="Escala" style="flex:1;width:100%;border:0;min-height:0;"></iframe>
+    </div>
+    <div class="cal-body" id="cal-body">
       <div class="cal-weekdays">
         <div class="cal-wd">Dom</div><div class="cal-wd">Seg</div><div class="cal-wd">Ter</div>
         <div class="cal-wd">Qua</div><div class="cal-wd">Qui</div><div class="cal-wd">Sex</div><div class="cal-wd">Sáb</div>
@@ -6512,7 +6522,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.831-dev</div>
+<div class="version">v8.30.832-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -28097,7 +28107,7 @@ const HELP_CONTENT = {
     { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
-    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Clique em 🗓️ Escala na barra do board para abrir a página da Escala (em outra aba). Lá você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).' },
+    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
@@ -29250,12 +29260,6 @@ function getUidByInit(init){
 // já existir/estar visível na toolbar como critério, mais simples que
 // duplicar a condição de `intakeAtivo` aqui) — mesmo critério que já
 // esconde o botão correspondente na toolbar.
-// 🗓️ Escala (2026-10-12): página própria (escala-dev.html / escala.html) — quem trabalha quando, por squad e global, com cadastro.
-// Abre em outra aba já na squad atual; a página decide o que a pessoa pode editar (a própria linha; PO/Organizador/ADM editam a de todos).
-function openEscala(){
-  const pagina=/kanban-dev\.html$/.test(window.location.pathname)?'escala-dev.html':'escala.html';
-  window.open(pagina+'?squad='+encodeURIComponent(ACTIVE_SQUAD),'_blank','noopener');
-}
 const ATALHO_ACOES = {
   // ── 🗂️ Board (globais — funcionam em qualquer lugar do board) ──
   dashboard:   { label:'📊 Dados do Board',         tipo:'global', run:()=>openBoardData() },
@@ -29273,7 +29277,6 @@ const ATALHO_ACOES = {
   calendarios: { label:'📅 Calendários',             tipo:'global', run:()=>openCal() },
   campanhas:   { label:'📣 Campanhas',               tipo:'global', run:()=>openCamp() },
   intake:      { label:'📥 Intake',                  tipo:'global', run:()=>openIntakePanel(), visivel:()=>document.getElementById('btn-intake')?.style.display!=='none' },
-  escala:      { label:'🗓️ Escala',                  tipo:'global', run:()=>openEscala() },
   // ── 📇 Modal do card (só funcionam com um card aberto) ──
   copiarLink:  { label:'🔗 Copiar link do card',     tipo:'card', run:()=>shareCardLink() },
   duplicar:    { label:'⧉ Duplicar card',            tipo:'card', run:()=>duplicarCard() },
@@ -30978,7 +30981,19 @@ function changeCalView(mode) {
       if (btn.getAttribute('data-mode') === mode) btn.classList.add('active');
     }
   });
-  renderCal();
+  _calMostrarEscala(mode === 'escala');
+  if (mode !== 'escala') renderCal();
+}
+// 👥 Escala dentro do Calendário (2026-10-12): a página escala(-dev).html embutida (?embed=1) — é a MESMA página (squad + global + cadastro), sem cópia do código.
+// Carrega só quando a pessoa abre a visão (e recarrega se trocou de squad); no modo Escala somem o mês, os filtros e o "+ Evento", que não fazem sentido ali.
+function _calMostrarEscala(on){
+  document.getElementById('cal-ov')?.classList.toggle('cal-esc', !!on);   // o CSS (.cal-esc) esconde mês/filtros e mostra a Escala — sem mexer em style inline
+  const add=document.getElementById('btn-add-event'); if(add) add.style.display=on?'none':(_isPOorOrg()?'':'none');
+  if(!on) return;
+  const pagina=(/kanban-dev\.html$/.test(window.location.pathname)?'escala-dev.html':'escala.html')+'?squad='+encodeURIComponent(ACTIVE_SQUAD);
+  const fr=document.getElementById('cal-escala-fr'), full=document.getElementById('cal-escala-full');
+  if(full) full.href=pagina;
+  if(fr && fr.dataset.sq!==ACTIVE_SQUAD){ fr.dataset.sq=ACTIVE_SQUAD; fr.src=pagina+'&embed=1'; }
 }
 
 function populateCalFilters() {
@@ -31019,6 +31034,7 @@ function openCal(){
   document.getElementById('btn-add-event').style.display=isPO?'':'none';
   populateCalFilters();
   renderCal();
+  _calMostrarEscala(calViewMode === 'escala');
   document.getElementById('cal-ov').classList.add('open');
 }
 

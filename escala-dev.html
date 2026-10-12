@@ -139,6 +139,8 @@
   #versao-aviso{ position:fixed; left:0; right:0; top:0; z-index:90; text-align:center; background:#12314a; border-bottom:1px solid rgba(56,182,255,.4); padding:8px; font-size:13px; }
   #versao-aviso button{ margin-left:8px; }
   .ver{ margin-top:26px; text-align:center; font-size:11px; color:var(--txt3); }
+  body.embed{ padding:10px 14px 24px; min-height:100vh; }
+  body.embed .top, body.embed .ver{ display:none; }
   @media (max-width:640px){ .row2{ grid-template-columns:1fr; } .nav .lbl{ min-width:120px; } .grid th.pess{ min-width:150px; } .btn{ white-space:nowrap; } }
 </style>
 </head>
@@ -202,7 +204,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.2 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.3 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -219,6 +221,8 @@ const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
 
+// ?embed=1: aberta dentro do 📅 Calendários do Maré (sem cabeçalho/rodapé; a barra de login só aparece se não houver sessão)
+if (new URLSearchParams(location.search).get('embed') === '1') document.body.classList.add('embed');
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ADM_EMAIL_FIXO = 'caio.soares@ciahering.com.br';   // mesmo e-mail que as regras do banco tratam como ADM
