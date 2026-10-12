@@ -76,6 +76,56 @@
           }
         }
       },
+      "metas_digital": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$id": {
+          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+          ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())"
+        }
+      },
+      "metas_squads": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$squadId": {
+          "$id": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
+            ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())"
+          }
+        }
+      },
+      "metas_log": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$id": {
+          "$k": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+            ".validate": "newData.hasChildren(['v','t']) && newData.child('v').isNumber() && newData.child('t').isNumber()"
+          }
+        }
+      },
+      "metas_digital_dev": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$id": {
+          ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+          ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())"
+        }
+      },
+      "metas_squads_dev": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$squadId": {
+          "$id": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/squads/' + $squadId).val() === true || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br' || (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).exists() ? (root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/squads_roles/' + $squadId).val() === 'organizador') : (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'po' || root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'organizador')))",
+            ".validate": "newData.hasChildren(['titulo','alvo','tipo','fmt']) && newData.child('titulo').isString() && newData.child('titulo').val().length > 0 && newData.child('titulo').val().length <= 100 && newData.child('alvo').isNumber() && (newData.child('tipo').val() === 'meta' || newData.child('tipo').val() === 'desafio') && (newData.child('fmt').val() === 'brl' || newData.child('fmt').val() === 'num' || newData.child('fmt').val() === 'pct') && (!newData.child('atual').exists() || newData.child('atual').isNumber())"
+          }
+        }
+      },
+      "metas_log_dev": {
+        ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+        "$id": {
+          "$k": {
+            ".write": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
+            ".validate": "newData.hasChildren(['v','t']) && newData.child('v').isNumber() && newData.child('t').isNumber()"
+          }
+        }
+      },
       "escala": {
         ".read":  "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com'))",
         "$date": {
