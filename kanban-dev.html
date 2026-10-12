@@ -1448,6 +1448,8 @@ input[type="date"]{-moz-appearance:textfield;}
 .lem-hd{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;
   border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .lem-hd-title{font-family:"Syne",sans-serif;font-weight:800;font-size:18px;color:var(--txt);display:flex;align-items:center;gap:8px;}
+/* Dados: título e números em DM Sans (a Syne dificultava a leitura de dados) */
+#dados-drawer .lem-hd-title{font-family:"DM Sans",sans-serif;font-weight:800;}
 .lem-filters{display:flex;flex-wrap:wrap;gap:7px;padding:12px 20px;border-bottom:1px solid var(--glass-b);flex-shrink:0;}
 .lem-fchk{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2);cursor:pointer;
   padding:4px 10px;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass-h);
@@ -6531,7 +6533,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.834-dev</div>
+<div class="version">v8.30.835-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6878,7 +6880,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=23"></script>
-<script src="mare-metas-dev.js?v=1"></script>
+<script src="mare-metas-dev.js?v=2"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -28174,7 +28176,7 @@ const HELP_CONTENT = {
     { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
-    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).' },
+    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).\n\n🖼️ <b>Baixar JPG</b>: gera uma imagem da escala pra mandar no WhatsApp ou colar numa apresentação. Escolha <b>Dia, Semana ou Mês</b> e uma data de referência, confira a prévia e baixe. Vale pra squad (ou todas as squads) e respeita o filtro de subtime. No detalhe de um dia, <b>🖼️ JPG do dia</b> abre direto no modo Dia.' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
