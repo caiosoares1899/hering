@@ -2924,7 +2924,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.49 · painel-dev</div>
+<div class="version">v5.50 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3027,7 +3027,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=22"></script>
+<script src="mare-notif-dev.js?v=23"></script>
 <script src="mare-metas-dev.js?v=1"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
@@ -7078,6 +7078,8 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')}));" style="cursor:pointer;"`
       : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)}));" style="cursor:pointer;"`
+      : n.type==='meta_lembrete'
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban-dev.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';

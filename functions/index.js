@@ -22,7 +22,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -202,6 +202,12 @@ exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 // cache que painel.html já mantém) pra período/reunião — zero chamada nova
 // à API do Google. Deploy isolado: firebase deploy --only functions:okrDailyScan
 exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
+
+// 🐟 Metas e desafios — lembretes de preenchimento ("O mar tá pra peixe", ver functions/metas/lembretes.js): agendada a cada 15 min, no horário de
+// Brasília; cada meta configura o próprio lembrete (a cada 1–4 h, 1× por dia ou horários exatos). Escreve notificações do tipo `meta_lembrete`
+// (que também é push — PUSH_TYPES acima). Deploy isolado: firebase deploy --only functions:metasLembretes
+// (e, junto, sendPushOnNotification — ela precisa conhecer o tipo novo — e `firebase deploy --only database` pras regras das metas).
+exports.metasLembretes = require('./metas/lembretes').metasLembretes;
 
 // 🎯 OKR — Fase 3: snapshot semanal (toda sexta 17h, ver
 // functions/okr/weeklySnapshot.js). NÃO notifica ninguém — só grava uma
