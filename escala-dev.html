@@ -113,6 +113,7 @@
   /* modais */
   .ov{ position:fixed; inset:0; background:rgba(3,10,18,.72); display:flex; align-items:flex-start; justify-content:center; padding:5vh 14px 20px; overflow-y:auto; z-index:50; }
   .md{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-b); border-radius:16px; padding:22px 22px 20px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .md.wide{ max-width:820px; }
   .md h2{ margin:0 0 4px; font-size:17px; } .md .sub{ margin:0 0 10px; font-size:12.5px; color:var(--txt3); line-height:1.5; }
   .md label, .md .lb{ display:block; font-size:12px; color:var(--txt2); margin:13px 0 5px; font-weight:600; }
   .md .opt{ font-weight:400; color:var(--txt3); }
@@ -176,6 +177,7 @@
         <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
       </div>
       <span class="grow"></span>
+      <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
       <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
     </div>
     <div class="bar filtros" id="filtros">
@@ -204,7 +206,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.3 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.4 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -491,9 +493,10 @@ function abrirDia(data, sqUnico) {
     h += '</ul>';
   });
   if (!alguem) h += '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>';
-  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">🖼️ JPG do dia</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
   $('d-fechar').onclick = fecharOv;
+  $('d-jpg').onclick = () => abrirJpg('dia', data);
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
     try { await navigator.clipboard.writeText(txt); toast('Menções copiadas: ' + txt); } catch (e) { toast('Copie manualmente: ' + txt); }
@@ -608,6 +611,257 @@ async function confirmarCadastro(limpar) {
   gravando = false;
 }
 
+// ═══ Baixar a escala em JPG (dia · semana · mês) ═══
+// Desenhada direto num <canvas> (sem biblioteca externa e sem foto de perfil, que "contaminaria" o canvas e bloquearia o download).
+// Respeita a visão da tela (squad escolhida ou todas) e o filtro de subtime.
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const FONTE = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
+const JC = { txt: '#eaf2f8', txt2: '#a9bccb', txt3: '#6f8598', accent: '#38b6ff', warn: '#ffd166', danger: '#ff5c7a',
+  trab: { c: '#2ecc9c', bg: 'rgba(46,204,156,.18)' }, plant: { c: '#ff9f43', bg: 'rgba(255,159,67,.24)' }, folga: { c: '#8aa0b4', bg: 'rgba(138,160,180,.14)' } };
+const ORDEM_T = { plant: 0, trab: 1, folga: 2 };
+let jpg = null;   // { modo, ref, seq, canvas }
+
+function jRR(x, px, py, w, h, r, fill, stroke) {
+  x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath();
+  if (fill) { x.fillStyle = fill; x.fill(); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = 1; x.stroke(); }
+}
+function jAjusta(x, s, max) { s = String(s); if (!max || x.measureText(s).width <= max) return s; while (s.length > 1 && x.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; }
+function jT(x, s, px, py, o) {
+  o = o || {}; x.font = (o.w || 400) + ' ' + (o.s || 13) + 'px ' + FONTE; x.fillStyle = o.c || JC.txt; x.textAlign = o.a || 'left'; x.textBaseline = 'middle';
+  x.fillText(jAjusta(x, s, o.max), px, py);
+}
+function jNome(n, todos) {
+  const p = String(n || '').trim().split(/\s+/), f = p[0] || '?';
+  const dup = (todos || []).filter(o => String(o || '').trim().split(/\s+/)[0] === f).length > 1;
+  return dup && p.length > 1 ? f + ' ' + p[p.length - 1][0] + '.' : f;
+}
+function jNova(W, H) {
+  const k = W > 1500 ? 1.5 : 2, c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k);
+  const x = c.getContext('2d'); x.scale(k, k);
+  const g = x.createLinearGradient(0, 0, W * .4, H); g.addColorStop(0, '#0b1622'); g.addColorStop(.55, '#0d2338'); g.addColorStop(1, '#0b1622');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  return { c, x };
+}
+function jPeriodo(modo, refISO) {
+  const d = parseISO(refISO) || new Date();
+  if (modo === 'dia') return { modo, a: d, b: d, titulo: DIAS[diaSem(d)] + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(), arq: iso(d) };
+  if (modo === 'semana') { const s = segunda(d), f = addDias(s, 6); return { modo, a: s, b: f, titulo: 'Semana ' + curto(s) + ' – ' + curto(f) + '/' + f.getFullYear(), arq: iso(s) }; }
+  const a = new Date(d.getFullYear(), d.getMonth(), 1), b = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return { modo, a, b, titulo: MESES[d.getMonth()][0].toUpperCase() + MESES[d.getMonth()].slice(1) + ' de ' + d.getFullYear(), arq: d.getFullYear() + '-' + pad(d.getMonth() + 1) };
+}
+function jEscopo() {
+  const lista = visao === 'global' ? squads.filter(s => membrosF(s.id).length) : squads.filter(s => s.id === squad);
+  const s1 = squads.find(s => s.id === squad);
+  return { lista, nome: visao === 'global' ? 'Todas as squads' : (s1 ? s1.label : squad) };
+}
+const jEnt = (dd, data, sq, uid) => (((dd[data] || {})[sq] || {})[uid]) || null;
+function jDoDia(dd, sq, dt) {
+  const ms = membrosF(sq), trab = [], folga = [];
+  ms.forEach(m => { const e = jEnt(dd, dt, sq, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+  trab.sort((a, b) => ORDEM_T[a.e.t] - ORDEM_T[b.e.t] || a.m.nome.localeCompare(b.m.nome, 'pt-BR'));
+  return { trab, folga, ms };
+}
+// Moldura comum: título, período, subtítulo (filtro) e rodapé com a legenda.
+function jMoldura(x, W, H, esc, per) {
+  jT(x, 'Escala — ' + esc.nome, 28, 32, { s: 24, w: 700, max: W - 340 });
+  jT(x, per.titulo, W - 28, 32, { s: 18, w: 700, c: JC.accent, a: 'right' });
+  const gerado = new Date();
+  jT(x, (filtro.sub ? 'Subtime: ' + filtro.sub : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
+  [['trab', 'Escalado'], ['plant', 'Plantão'], ['folga', 'Folga']].reduce((px, [t, nome]) => {
+    jRR(x, px, H - 36, 14, 14, 4, JC[t].bg, JC[t].c); jT(x, nome, px + 20, H - 29, { s: 12, c: JC.txt2 }); return px + 20 + x.measureText(nome).width + 22;
+  }, 28);
+  jT(x, 'Maré Digital · gerada em ' + pad(gerado.getDate()) + '/' + pad(gerado.getMonth() + 1) + '/' + gerado.getFullYear() + ' ' + pad(gerado.getHours()) + ':' + pad(gerado.getMinutes()), W - 28, H - 29, { s: 11.5, c: JC.txt3, a: 'right' });
+}
+function jChip(x, e, px, py, w, h) {
+  const t = JC[e.t] || JC.folga, hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '', rot = (TIPOS[e.t] || {}).nome || '';
+  jRR(x, px, py, w, h, 9, t.bg, t.c);
+  if (hora) { jT(x, rot, px + w / 2, py + h / 2 - 8, { s: 12.5, w: 700, c: t.c, a: 'center', max: w - 10 }); jT(x, hora, px + w / 2, py + h / 2 + 9, { s: 12, c: JC.txt, a: 'center', max: w - 10 }); }
+  else jT(x, rot, px + w / 2, py + h / 2, { s: 13, w: 700, c: t.c, a: 'center', max: w - 10 });
+}
+function jCabDia(x, d, i, px, py, w, h, bf) {
+  const s = iso(d), hj = s === hojeISO();
+  if (hj) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(56,182,255,.16)'); else if (i >= 5) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(255,255,255,.03)');
+  jT(x, DIAS[i], px + w / 2, py + h / 2 - 9, { s: 13.5, w: 700, c: hj ? JC.accent : JC.txt, a: 'center' });
+  jT(x, curto(d) + (s === iso(bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: s === iso(bf) ? JC.warn : JC.txt2, a: 'center' });
+}
+
+function jSemanaSquad(per, dd, esc) {
+  const sq = esc.lista[0]; if (!sq) return jVazio(per, esc, 'Nenhuma squad selecionada.');
+  const ms = membrosF(sq.id), dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
+  const L = 28, nW = 220, dW = 150, W = L * 2 + nW + dW * 7, topo = 84, hh = 52, rh = 54, ch = 40, n = Math.max(ms.length, 1);
+  const H = topo + hh + n * rh + ch + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, 'Pessoa', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
+  dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
+  if (!ms.length) jT(x, filtro.sub ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad.', W / 2, topo + hh + rh / 2, { s: 14, c: JC.txt3, a: 'center' });
+  ms.forEach((m, r) => {
+    const y = topo + hh + r * rh;
+    jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+    jT(x, m.nome, L + 12, y + rh / 2 - 8, { s: 14.5, w: 700, max: nW - 20 });
+    jT(x, (m.init ? '@' + m.init : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : ''), L + 12, y + rh / 2 + 10, { s: 11.5, c: JC.txt3, max: nW - 20 });
+    dias.forEach((d, i) => { const e = jEnt(dd, iso(d), sq.id, m.uid); if (e) jChip(x, e, L + nW + i * dW + 8, y + 8, dW - 16, rh - 16); });
+  });
+  const yc = topo + hh + n * rh, tem = dias.some(d => ms.some(m => jEnt(dd, iso(d), sq.id, m.uid)));
+  jT(x, 'Cobertura', L + 12, yc + ch / 2 - 6, { s: 13, w: 700, c: JC.txt2 }); jT(x, 'escalados + plantão', L + 12, yc + ch / 2 + 9, { s: 10.5, c: JC.txt3 });
+  dias.forEach((d, i) => {
+    const t = jDoDia(dd, sq.id, iso(d)), nn = t.trab.length, p = t.trab.filter(z => z.e.t === 'plant').length, cx = L + nW + i * dW + dW / 2;
+    if (nn) jT(x, nn + (p ? ' · ' + p + ' plantão' : ''), cx, yc + ch / 2, { s: 13.5, w: 700, c: JC.trab.c, a: 'center' });
+    else jT(x, tem && i < 5 ? '⚠ 0' : '–', cx, yc + ch / 2, { s: 13.5, w: 700, c: tem && i < 5 ? JC.danger : JC.txt3, a: 'center' });
+  });
+  return c;
+}
+
+function jSemanaGlobal(per, dd, esc) {
+  if (!esc.lista.length) return jVazio(per, esc, filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.');
+  const dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
+  const L = 28, nW = 200, dW = 150, W = L * 2 + nW + dW * 7, topo = 84, hh = 52, LH = 17, MAXN = 6;
+  const linhas = esc.lista.map(s => {
+    const tem = dias.some(d => membrosF(s.id).some(m => jEnt(dd, iso(d), s.id, m.uid)));
+    const cel = dias.map((d, i) => {
+      const t = jDoDia(dd, s.id, iso(d)), ls = [], nomes = t.trab.map(z => z.m.nome), mais = t.trab.length > MAXN;
+      t.trab.slice(0, mais ? MAXN - 1 : MAXN).forEach(z => ls.push({ s: jNome(z.m.nome, nomes), c: z.e.t === 'plant' ? JC.plant.c : JC.txt, w: z.e.t === 'plant' ? 700 : 500 }));
+      if (mais) ls.push({ s: '+' + (t.trab.length - (MAXN - 1)) + ' pessoas', c: JC.txt2, w: 500 });
+      if (t.folga.length) ls.push({ s: t.folga.length + ' de folga', c: JC.txt3, w: 400 });
+      if (!t.trab.length && tem && i < 5) ls.unshift({ s: '⚠ ninguém', c: JC.danger, w: 700 });
+      return ls;
+    });
+    return { s, cel, h: Math.max(60, 20 + Math.max(...cel.map(l => l.length), 1) * LH) };
+  });
+  const H = topo + hh + linhas.reduce((a, l) => a + l.h, 0) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, 'Squad', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
+  dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
+  let y = topo + hh;
+  linhas.forEach((l, r) => {
+    jRR(x, L, y + 2, W - L * 2, l.h - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+    jT(x, l.s.label, L + 12, y + 22, { s: 14.5, w: 700, max: nW - 20 });
+    jT(x, membrosF(l.s.id).length + ' pessoa' + (membrosF(l.s.id).length > 1 ? 's' : ''), L + 12, y + 41, { s: 11.5, c: JC.txt3 });
+    l.cel.forEach((ls, i) => ls.forEach((ln, k) => jT(x, ln.s, L + nW + i * dW + 12, y + 18 + k * LH, { s: 12.5, w: ln.w, c: ln.c, max: dW - 20 })));
+    y += l.h;
+  });
+  return c;
+}
+
+function jDia(per, dd, esc) {
+  const dt = iso(per.a), W = 860, L = 28, topo = 84, rh = 42, bh = 40;
+  const blocos = esc.lista.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: jEnt(dd, dt, s.id, m.uid) })).filter(z => z.e).sort((a, b) => ORDEM_T[a.e.t] - ORDEM_T[b.e.t] || a.m.nome.localeCompare(b.m.nome, 'pt-BR')) })).filter(b => b.itens.length);
+  const H = topo + (blocos.length ? blocos.reduce((a, b) => a + (esc.lista.length > 1 ? bh : 6) + b.itens.length * rh + 10, 0) : 80) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  if (!blocos.length) { jT(x, 'Ninguém com escala cadastrada neste dia.', W / 2, topo + 40, { s: 14.5, c: JC.txt3, a: 'center' }); return c; }
+  let y = topo;
+  blocos.forEach(b => {
+    if (esc.lista.length > 1) { jT(x, b.s.label, L, y + bh / 2, { s: 16, w: 700, c: JC.accent }); y += bh; } else y += 6;
+    b.itens.forEach((z, r) => {
+      jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+      jT(x, z.m.nome, L + 14, y + rh / 2, { s: 14.5, w: 700, max: 250 });
+      jT(x, (z.m.init ? '@' + z.m.init : '') + (z.e.n ? '  ·  ' + z.e.n : ''), L + 280, y + rh / 2, { s: 12, c: JC.txt2, max: 330 });
+      const hora = z.e.i ? z.e.i + (z.e.f ? '–' + z.e.f : '') : '', t = JC[z.e.t] || JC.folga;
+      jRR(x, W - L - 170, y + 7, 156, rh - 14, 8, t.bg, t.c);
+      jT(x, ((TIPOS[z.e.t] || {}).nome || '') + (hora ? ' · ' + hora : ''), W - L - 92, y + rh / 2, { s: 12.5, w: 700, c: t.c, a: 'center', max: 146 });
+      y += rh;
+    });
+    y += 10;
+  });
+  return c;
+}
+
+function jMes(per, dd, esc) {
+  if (visao !== 'global' && !esc.lista.length) return jVazio(per, esc, 'Nenhuma squad selecionada.');
+  if (visao === 'global' && !esc.lista.length) return jVazio(per, esc, 'Nenhuma squad com pessoas.');
+  const ini = segunda(per.a), fim = addDias(segunda(per.b), 6);
+  const semanas = []; for (let d = ini; d <= fim; d = addDias(d, 7)) semanas.push(d);
+  const L = 28, dW = 190, W = L * 2 + dW * 7, topo = 84, hh = 30, LH = 16, MAXN = visao === 'global' ? 8 : 6, bf = proximaBF(), global = visao === 'global';
+  const mes = per.a.getMonth();
+  const conteudo = d => {
+    if (d.getMonth() !== mes) return null;
+    const dt = iso(d), ls = [];
+    if (global) {
+      const todos = esc.lista.map(s => { const t = jDoDia(dd, s.id, dt); return { s, n: t.trab.length, p: t.trab.filter(z => z.e.t === 'plant').length }; }).filter(z => z.n);
+      todos.slice(0, todos.length > MAXN ? MAXN - 1 : MAXN).forEach(z => ls.push({ l: z.s.label, r: z.n + (z.p ? ' · ' + z.p + ' plant.' : ''), c: z.p ? JC.plant.c : JC.txt, w: z.p ? 700 : 500 }));
+      if (todos.length > MAXN) ls.push({ l: '+' + (todos.length - (MAXN - 1)) + ' squads', c: JC.txt2, w: 500 });
+    } else {
+      const t = jDoDia(dd, esc.lista[0].id, dt), nomes = t.trab.map(z => z.m.nome), mais = t.trab.length > MAXN;
+      t.trab.slice(0, mais ? MAXN - 1 : MAXN).forEach(z => ls.push({ l: jNome(z.m.nome, nomes), c: z.e.t === 'plant' ? JC.plant.c : JC.txt, w: z.e.t === 'plant' ? 700 : 500 }));
+      if (mais) ls.push({ l: '+' + (t.trab.length - (MAXN - 1)) + ' pessoas', c: JC.txt2, w: 500 });
+      if (t.folga.length) ls.push({ l: t.folga.length + ' de folga', c: JC.txt3, w: 400 });
+    }
+    return ls;
+  };
+  const dados2 = semanas.map(s => { const cel = Array.from({ length: 7 }, (_, i) => { const d = addDias(s, i); return { d, ls: conteudo(d) }; }); return { cel, h: Math.max(74, 34 + Math.max(...cel.map(z => (z.ls || []).length), 1) * LH + 6) }; });
+  const H = topo + hh + dados2.reduce((a, r) => a + r.h, 0) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  DIAS.forEach((nm, i) => jT(x, nm, L + i * dW + dW / 2, topo + hh / 2, { s: 13, w: 700, c: i >= 5 ? JC.txt3 : JC.txt2, a: 'center' }));
+  let y = topo + hh;
+  dados2.forEach(r => {
+    r.cel.forEach((z, i) => {
+      const px = L + i * dW + 3, w = dW - 6, dt = iso(z.d), fora = z.ls === null, hj = dt === hojeISO();
+      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (dt === iso(bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
+      jT(x, String(z.d.getDate()), px + 10, y + 19, { s: 14, w: 700, c: fora ? JC.txt3 : (hj ? JC.accent : JC.txt) });
+      if (dt === iso(bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
+      (z.ls || []).forEach((ln, k) => {
+        const ly = y + 38 + k * LH;
+        if (ln.r) { jT(x, ln.r, px + w - 10, ly, { s: 11.5, w: 700, c: ln.c, a: 'right' }); jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 - x.measureText(ln.r).width - 8 }); }
+        else jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 });
+      });
+    });
+    y += r.h;
+  });
+  return c;
+}
+function jVazio(per, esc, msg) {
+  const W = 860, H = 240, { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, msg, W / 2, 130, { s: 14.5, c: JC.txt3, a: 'center' }); return c;
+}
+async function jGerar(modo, refISO) {
+  const per = jPeriodo(modo, refISO), esc = jEscopo();
+  const dd = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(iso(per.a)), endAt(iso(per.b))))).val() || {};
+  const c = modo === 'dia' ? jDia(per, dd, esc) : modo === 'semana' ? (visao === 'global' ? jSemanaGlobal(per, dd, esc) : jSemanaSquad(per, dd, esc)) : jMes(per, dd, esc);
+  return { c, per, esc };
+}
+function jBaixar(c, nome) {
+  c.toBlob(b => {
+    if (!b) { toast('Não consegui gerar a imagem. Tente de novo.'); return; }
+    const url = URL.createObjectURL(b), a = document.createElement('a');
+    a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Imagem baixada ✔');
+  }, 'image/jpeg', 0.92);
+}
+async function jpgAtualizar() {
+  const meu = ++jpg.seq, prev = $('j-prev'), bt = $('j-baixar');
+  if (!prev) return;
+  const per = jPeriodo(jpg.modo, jpg.ref); $('j-per').textContent = per.titulo;
+  document.querySelectorAll('#j-modo button').forEach(b => b.setAttribute('aria-selected', b.dataset.m === jpg.modo));
+  bt.disabled = true; jpg.canvas = null; prev.innerHTML = '<div class="state" style="padding:30px 0">Montando a imagem…</div>';
+  try {
+    const r = await jGerar(jpg.modo, jpg.ref);
+    if (meu !== jpg.seq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
+    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? 'todas-as-squads' : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
+    r.c.style.cssText = 'width:100%;height:auto;border-radius:10px;display:block;'; prev.innerHTML = ''; prev.appendChild(r.c); bt.disabled = false;
+  } catch (e) {
+    if (meu !== jpg.seq || !$('j-prev')) return;
+    const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
+    prev.innerHTML = '<div class="state" style="padding:24px 0">⚠️ ' + (negado ? 'Sem permissão pra ler a escala (as regras do banco ainda não foram publicadas).' : 'Não deu pra carregar a escala agora. Tente de novo.') + '</div>';
+  }
+}
+function abrirJpg(modo, refISO) {
+  const sem = diasDaSemana().map(iso);
+  jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), seq: 0, canvas: null, nome: '' };
+  const sc = jEscopo();
+  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.sub ? ' · subtime <b>' + esc(filtro.sub) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
+    '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
+    '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
+    '<p class="sub" style="margin:0 0 10px">Dia = o dia escolhido · Semana = a semana que contém o dia · Mês = o mês que contém o dia.</p>' +
+    '<div id="j-prev"></div>' +
+    '<div class="acoes"><button type="button" class="btn primary" id="j-baixar" disabled>⬇️ Baixar JPG</button><span class="grow"></span><button type="button" class="btn" id="j-fechar">Fechar</button></div>');
+  const md = $('ov').firstElementChild; if (md) md.classList.add('wide');
+  $('j-ref').value = jpg.ref;
+  document.querySelectorAll('#j-modo button').forEach(b => { b.onclick = () => { jpg.modo = b.dataset.m; jpgAtualizar(); }; });
+  $('j-ref').onchange = e => { if (ISO_RE.test(e.target.value)) { jpg.ref = e.target.value; jpgAtualizar(); } };
+  $('j-baixar').onclick = () => { if (jpg.canvas) jBaixar(jpg.canvas, jpg.nome); };
+  $('j-fechar').onclick = fecharOv;
+  jpgAtualizar();
+}
+
 // ═══ Eventos da tela ═══
 $('v-squad').onclick = () => { visao = 'squad'; render(); };
 $('v-global').onclick = () => { visao = 'global'; render(); };
@@ -617,6 +871,7 @@ $('b-next').onclick = () => irParaSemana(addDias(semana, 7));
 $('b-hoje').onclick = () => irParaSemana(new Date());
 $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
+$('b-jpg').onclick = () => abrirJpg();
 $('f-sub').onchange = e => { filtro.sub = e.target.value; render(); };
 $('f-limpar').onclick = () => { filtro = { sub: '' }; render(); };
 $('view').addEventListener('click', e => {

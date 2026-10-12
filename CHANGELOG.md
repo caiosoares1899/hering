@@ -71,6 +71,13 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🖼️ Escala: baixar em JPG (dia · semana · mês) + títulos de Dados em fonte mais legível — 2026-10-12 · escala-dev v1.4 · kanban-dev v8.30.835-dev · painel-dev v5.51 · mare-metas-dev v2 (SÓ DEV)
+- **Baixar JPG na Escala:** botão **🖼️ Baixar JPG** na barra (e **🖼️ JPG do dia** no detalhe de cada dia). Escolhe **Dia / Semana / Mês** + uma data de referência, vê a prévia e baixa. Vale pra visão da tela (a squad escolhida ou **todas as squads**) e respeita o **filtro de subtime**. Semana (squad): pessoas × dias com chips Escalado/Plantão/Folga, horário e linha de cobertura; semana (global): um bloco por squad com os nomes; dia: lista por squad; mês: calendário com nomes (squad) ou contagem por squad (global). Imagem em tema escuro, com legenda e data de geração, pronta pra WhatsApp/apresentação.
+- Desenhada direto num `<canvas>` (sem biblioteca externa, sem foto de perfil — foto de outro domínio bloquearia o download). Lê o período direto do banco (não depende da semana aberta na tela).
+- **Fonte:** o título "📊 Dados — metas, desafios e captação" e os títulos/popup do módulo de metas deixam a Syne (difícil de ler) e passam a **DM Sans em negrito**.
+- Teste novo: `docs/arezzo/testes/test_escala_jpg.js` (13 cenários: modal, prévia, download real com assinatura JPEG, modos, global, subtime, atalho do dia, troca rápida de modo).
+- Dica: não — a Escala ainda está em dev e o botão é autoexplicativo.
+
 ### 📅 Escala dentro do Calendário (some o botão da barra) — 2026-10-12 · kanban-dev v8.30.832-dev · escala-dev v1.3 (SÓ DEV)
 Pedido: "não acho que deveria ser um botão externo na toolbar, deveria ser dentro de calendário".
 - **Saiu** o botão 🗓️ Escala da barra do board (e a ação equivalente dos atalhos configuráveis).
