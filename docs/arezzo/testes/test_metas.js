@@ -115,6 +115,21 @@ const K = process.env.K || 'kanban-dev', SFX = /-dev$/.test(K) ? '_dev' : '';
     await p.click('#dados-pane .mm-hero [data-mm-act="reg"]'); await p.fill('#mm-r-v', '900000'); await p.click('#mm-r-ok'); await p.waitForTimeout(500);
     t('banco negou: mensagem clara (regras/permissão), modal aberto e botão volta', /Sem permissão/.test(await txt(p, '#mm-r-e')) && await p.evaluate(() => !document.getElementById('mm-r-ok').disabled), await txt(p, '#mm-r-e')); await ctx.close(); }
 
+  // ── 🔔 LEMBRETE DE PREENCHIMENTO: clique na notificação e link ?dados= ──
+  { const { ctx, p } = await abre('po', { semMarcoFresco: true });
+    const abaAtiva = () => p.evaluate(() => document.querySelector('#dados-body .mm-tab.on')?.dataset.dtab || null);
+    await p.evaluate(() => openNotif('n1', '', 'dev', '', 'meta_lembrete', 'digital')); await p.waitForTimeout(500);
+    t('clicar no lembrete de meta do Digital abre a aba 📊 Dados já na aba 🌊 Digital', await p.evaluate(() => document.getElementById('dados-drawer').classList.contains('open')) && await abaAtiva() === 'digital', await abaAtiva());
+    await p.evaluate(() => { toggleDados(); openNotif('n2', '', 'dev', '', 'meta_lembrete', 'squad'); }); await p.waitForTimeout(500);
+    t('clicar no lembrete de meta da squad abre a aba da squad', await p.evaluate(() => document.getElementById('dados-drawer').classList.contains('open')) && await abaAtiva() === 'squad', await abaAtiva());
+    t('o ícone 🐟 do tipo existe no sino do Maré', await p.evaluate(() => NOTIF_ICONS.meta_lembrete === '🐟' && MareNotif.TIPOS.some(x => x.id === 'meta_lembrete')), 0);
+    await ctx.close(); }
+  { const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, S.seed('po', { semMarcoFresco: true }));
+    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    await p.goto('http://localhost:8941/' + K + '.html?squad=dev&dados=digital'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), U); await p.waitForTimeout(4200);
+    t('?dados=digital no link abre a aba lateral Dados na aba Digital (é o que o lembrete do Painel/Radar/Oceano usa)', await p.evaluate(() => document.getElementById('dados-drawer').classList.contains('open')) && await p.evaluate(() => document.querySelector('#dados-body .mm-tab.on')?.dataset.dtab) === 'digital', 0);
+    t('sem erro de JS (link)', !errs.length, errs); await ctx.close(); }
+
   // ── ⚙ CONFIG → 🐟 METAS ──
   { const { ctx, p, errs } = await abre('po', { semMarcoFresco: true });
     await p.evaluate(() => { openCfg(); swCfgTab('metas'); }); await p.waitForTimeout(400);
