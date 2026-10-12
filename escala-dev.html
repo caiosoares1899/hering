@@ -178,10 +178,8 @@
     </div>
     <div class="bar filtros" id="filtros">
       <span class="flbl">🔎 Filtrar</span>
-      <select id="f-squad" aria-label="Filtrar por squad"></select>
       <select id="f-sub" aria-label="Filtrar por subtime"></select>
-      <select id="f-sm" aria-label="Filtrar por submarca"></select>
-      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtros</button>
+      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtro</button>
     </div>
     <div id="erro" class="erro" hidden></div>
     <div id="hoje" class="hoje" hidden></div>
@@ -204,7 +202,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.1 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.2 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -240,16 +238,6 @@ const SQUAD_FALLBACK = {
   midiacriativa: { label: 'Mídia Criativa', emoji: '🎨' }, dev: { label: 'Dev', emoji: '🧪' }, gestao: { label: 'Gestão', emoji: '🏛' },
 };
 
-// Submarcas: ids FIXOS, os mesmos de SUBMARCA_TAGS do kanban-dev.html (manter iguais). Só aparecem pra squads com o campo "Submarca" ligado
-// (kanban/squads/{sq}/dados/config/submarca_ativo), respeitando as submarcas visíveis de cada squad.
-const SUBMARCAS = [
-  { id: 'tag_sm_adulto_com',    label: 'Hering Adulto Comercial' },    { id: 'tag_sm_adulto_cad',    label: 'Hering Adulto Cadastro' },
-  { id: 'tag_sm_kids_com',      label: 'Hering Kids Comercial' },      { id: 'tag_sm_kids_cad',      label: 'Hering Kids Cadastro' },
-  { id: 'tag_sm_sports_com',    label: 'Hering Sports Comercial' },    { id: 'tag_sm_sports_cad',    label: 'Hering Sports Cadastro' },
-  { id: 'tag_sm_intimates_com', label: 'Hering Intimates Comercial' }, { id: 'tag_sm_intimates_cad', label: 'Hering Intimates Cadastro' },
-  { id: 'tag_sm_teen_com',      label: 'Hering Teen Comercial' },      { id: 'tag_sm_teen_cad',      label: 'Hering Teen Cadastro' },
-];
-const labelSm = id => ((SUBMARCAS.find(x => x.id === id) || {}).label || id).replace(/^Hering\s+/, '');
 const norm = s => String(s == null ? '' : s).trim().toLowerCase();
 const arrDe = v => (Array.isArray(v) ? v : Object.values(v || {})).filter(x => x != null);
 
@@ -276,8 +264,8 @@ let visao = 'squad';        // 'squad' | 'global'
 let squad = '';
 let semana = segunda(new Date());
 let dados = {};             // escala da janela: { 'YYYY-MM-DD': { squadId: { uid: entry } } }
-let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}], smAtivo, smVis } — lido de kanban/squads/{sq}/dados
-let filtro = { sq: '', sub: '', sm: '' };   // filtros da tela (squad só vale na visão global)
+let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}] } — lido de kanban/squads/{sq}/dados/subtimes
+let filtro = { sub: '' };   // filtro da tela: subtime (por nome)
 let erroLeitura = '';       // '' | 'regras' | 'rede'
 let carregando = false;     // leitura da janela em andamento (a tabela fica esmaecida em vez de mostrar dados de outra semana)
 let janelaSeq = 0;          // só a última leitura da janela escreve no estado
@@ -305,10 +293,8 @@ function membrosDoSquad(sq) {
     .sort((a, b) => (a.uid === (user && user.uid) ? -1 : b.uid === (user && user.uid) ? 1 : a.nome.localeCompare(b.nome, 'pt-BR')));
 }
 function subtimesDe(sq, init) { const c = cfgSquad[sq]; return (c && init) ? c.subtimes.filter(st => st.members.includes(init)).map(st => st.name) : []; }
-// Visão FILTRADA (o que a tela mostra): subtime restringe pessoas; submarca restringe as entradas (quem cobre aquela submarca naquele dia).
+// Visão FILTRADA (o que a tela mostra): o subtime restringe as pessoas.
 function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.sub ? ms.filter(m => m.subs.some(n => norm(n) === norm(filtro.sub))) : ms; }
-function entradaF(data, sq, uid) { const e = entrada(data, sq, uid); return (e && filtro.sm && !(e.s && e.s[filtro.sm] === true)) ? null : e; }
-function submarcasDoSquad(sq) { const c = cfgSquad[sq]; return (c && c.smAtivo) ? SUBMARCAS.filter(o => c.smVis[o.id] !== false) : []; }
 const entrada = (data, sq, uid) => (((dados[data] || {})[sq] || {})[uid]) || null;
 
 function av(m, extra) {
@@ -319,8 +305,7 @@ function av(m, extra) {
 function chipTipo(e) {
   const t = TIPOS[e.t]; if (!t) return '';
   const hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '';
-  const sm = e.s ? Object.keys(e.s).filter(k => e.s[k] === true).map(labelSm) : [];
-  return '<span class="ct ' + e.t + '" title="' + esc(t.nome + (hora ? ' · ' + hora : '') + (sm.length ? ' · ' + sm.join(', ') : '') + (e.n ? ' · ' + e.n : '')) + '">' + t.emoji + ' ' + (hora ? '<small>' + esc(hora) + '</small>' : esc(t.nome)) + (sm.length ? ' 🏷' : '') + (e.n ? ' 💬' : '') + '</span>';
+  return '<span class="ct ' + e.t + '" title="' + esc(t.nome + (hora ? ' · ' + hora : '') + (e.n ? ' · ' + e.n : '')) + '">' + t.emoji + ' ' + (hora ? '<small>' + esc(hora) + '</small>' : esc(t.nome)) + (e.n ? ' 💬' : '') + '</span>';
 }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3200); }
 
@@ -335,9 +320,8 @@ async function carregarBase() {
   if (meu !== baseSeq) return false;
   const cfg = {};
   await Promise.all(Object.keys(Object.assign({}, SQUAD_FALLBACK, meta)).filter(squadValido).map(async id => {
-    const base = 'kanban/squads/' + id + '/dados/', g = p => get(ref(db, p)).then(x => x.val()).catch(() => null);
-    const [st, at, vis] = await Promise.all([g(base + 'subtimes'), g(base + 'config/submarca_ativo'), g(base + 'config/submarcas_visiveis')]);
-    cfg[id] = { subtimes: arrDe(st).filter(x => x && x.name).map(x => ({ name: String(x.name), members: arrDe(x.members).map(String) })), smAtivo: !!at, smVis: (vis && typeof vis === 'object') ? vis : {} };
+    const st = await get(ref(db, 'kanban/squads/' + id + '/dados/subtimes')).then(x => x.val()).catch(() => null);
+    cfg[id] = { subtimes: arrDe(st).filter(x => x && x.name).map(x => ({ name: String(x.name), members: arrDe(x.members).map(String) })) };
   }));
   if (meu !== baseSeq) return false;
   cfgSquad = cfg;
@@ -373,10 +357,10 @@ function cabecalhoDias(dias, bf) {
 }
 function coberturaDoDia(sq, data) {
   let n = 0, p = 0;
-  membrosF(sq).forEach(m => { const e = entradaF(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
+  membrosF(sq).forEach(m => { const e = entrada(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
   return { n, p };
 }
-function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entradaF(iso(d), sq, m.uid))); }
+function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entrada(iso(d), sq, m.uid))); }
 
 function renderSquad() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
@@ -386,7 +370,7 @@ function renderSquad() {
   ms.forEach(m => {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
     dias.forEach((d, i) => {
-      const s = iso(d), e = entradaF(s, squad, m.uid), pode = podeEditar(squad, m.uid);
+      const s = iso(d), e = entrada(s, squad, m.uid), pode = podeEditar(squad, m.uid);
       h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (s === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
         (e ? chipTipo(e) : (pode ? '<span class="ghost">＋</span>' : '')) + '</button></td>';
     });
@@ -403,15 +387,15 @@ function renderSquad() {
 
 function renderGlobal() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
-  const lista = squads.filter(s => (!filtro.sq || s.id === filtro.sq) && (!filtro.sm || submarcasDoSquad(s.id).some(o => o.id === filtro.sm)) && membrosF(s.id).length);
-  if (!lista.length) return '<div class="state">' + (filtro.sq || filtro.sub || filtro.sm ? 'Nenhuma squad com pessoas para esses filtros.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
+  const lista = squads.filter(s => membrosF(s.id).length);
+  if (!lista.length) return '<div class="state">' + (filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
   let h = '<table class="grid"><thead><tr><th class="pess">Squad</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
   lista.forEach(s => {
     const ms = membrosF(s.id), tem = squadTemEscala(s.id, dias);
-    h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + (filtro.sm ? 'ninguém marcado nesta submarca' : 'sem escala cadastrada') + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
+    h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + 'sem escala cadastrada' + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
     dias.forEach((d, i) => {
       const dt = iso(d), trab = [], folga = [];
-      ms.forEach(m => { const e = entradaF(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+      ms.forEach(m => { const e = entrada(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
       trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
       const vazio = tem && i < 5 && !trab.length;
       const tip = trab.length ? trab.map(x => x.m.nome + (x.e.t === 'plant' ? ' (plantão)' : '')).join(', ') : (vazio ? 'Ninguém escalado neste dia útil' : '');
@@ -427,9 +411,9 @@ function renderGlobal() {
 function renderHoje() {
   const box = $('hoje'), dias = diasDaSemana().map(iso), hj = hojeISO();
   if (!dias.includes(hj)) { box.hidden = true; return; }
-  const sqs = visao === 'global' ? squads.filter(s => !filtro.sq || s.id === filtro.sq).map(s => s.id) : [squad];
+  const sqs = visao === 'global' ? squads.map(s => s.id) : [squad];
   const plant = [], trab = new Set();
-  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entradaF(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
+  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entrada(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
   const uniq = []; plant.forEach(m => { if (!uniq.find(x => x.uid === m.uid)) uniq.push(m); });
   box.innerHTML = '<span>Hoje, <b>' + curto(new Date()) + '</b></span><span>✅ <b>' + trab.size + '</b> escalado' + (trab.size === 1 ? '' : 's') + '</span>' +
     '<span>🔥 Plantão: ' + (uniq.length ? '<span class="avs">' + uniq.slice(0, 6).map(m => av(m, 'plant')).join('') + '</span> ' + esc(uniq.slice(0, 3).map(m => m.nome.split(' ')[0]).join(', ')) + (uniq.length > 3 ? ' +' + (uniq.length - 3) : '') : '<span style="color:var(--txt3)">ninguém</span>') + '</span>';
@@ -439,28 +423,24 @@ function renderAvisos() {
   const box = $('avisos');
   if (visao !== 'global') { box.hidden = true; return; }
   const dias = diasDaSemana().slice(0, 5), furos = [];
-  squads.filter(s => (!filtro.sq || s.id === filtro.sq) && (!filtro.sm || submarcasDoSquad(s.id).some(o => o.id === filtro.sm)) && membrosF(s.id).length && squadTemEscala(s.id, diasDaSemana())).forEach(s => {
+  squads.filter(s => membrosF(s.id).length && squadTemEscala(s.id, diasDaSemana())).forEach(s => {
     const dd = dias.filter(d => !coberturaDoDia(s.id, iso(d)).n).map(d => DIAS[diaSem(d)] + ' ' + curto(d));
     if (dd.length) furos.push('<b>' + esc(s.label) + '</b>: ' + dd.join(', '));
   });
   if (!furos.length) { box.hidden = true; return; }
-  box.innerHTML = '⚠️ Dias úteis sem ninguém ' + (filtro.sm ? 'cobrindo ' + esc(labelSm(filtro.sm)) : 'escalado') + ' — ' + furos.join(' · ');
+  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
   box.hidden = false;
 }
-// Filtros: squad (só visão global), subtime (por nome, em qualquer squad que tenha um subtime com esse nome) e submarca (quem cobre aquela submarca no dia).
+// Filtro de subtime: por NOME (subtimes de squads diferentes com o mesmo nome viram uma opção só — na visão global vale pra todas as squads).
 function renderFiltros() {
-  const global = visao === 'global';
-  const escopo = global ? squads.filter(x => !filtro.sq || x.id === filtro.sq) : squads.filter(x => x.id === squad);   // as opções de subtime/submarca seguem o escopo já filtrado
+  const escopo = visao === 'global' ? squads : squads.filter(x => x.id === squad);
   const subs = new Map(); escopo.forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
-  const sms = escopo.reduce((acc, x) => { submarcasDoSquad(x.id).forEach(o => { if (!acc.find(y => y.id === o.id)) acc.push(o); }); return acc; }, []);
-  if (filtro.sq && !squads.find(x => x.id === filtro.sq)) filtro.sq = '';
   if (filtro.sub && !subs.has(norm(filtro.sub))) filtro.sub = '';
-  if (filtro.sm && !sms.find(o => o.id === filtro.sm)) filtro.sm = '';
-  const fill = (id, vazio, opts, val, oculto) => { const el = $(id); el.hidden = oculto; el.innerHTML = '<option value="">' + vazio + '</option>' + opts.map(o => '<option value="' + esc(o[0]) + '"' + (o[0] === val ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join(''); el.classList.toggle('on', !!val); };
-  fill('f-squad', 'Todas as squads', squads.filter(x => membrosDoSquad(x.id).length).map(x => [x.id, x.emoji + ' ' + x.label]), filtro.sq, !global);
-  fill('f-sub', 'Todos os subtimes', [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(n => [n, n]), filtro.sub, !subs.size);
-  fill('f-sm', 'Todas as submarcas', sms.map(o => [o.id, o.label]), filtro.sm, !sms.length);
-  $('f-limpar').hidden = !((global && filtro.sq) || filtro.sub || filtro.sm);
+  const el = $('f-sub'); el.hidden = !subs.size;
+  el.innerHTML = '<option value="">Todos os subtimes</option>' + [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(n => '<option value="' + esc(n) + '"' + (n === filtro.sub ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+  el.classList.toggle('on', !!filtro.sub);
+  $('f-limpar').hidden = !filtro.sub;
+  $('filtros').hidden = !subs.size;   // squad sem nenhum subtime: a barra inteira some
 }
 function render() {
   if (!user) return;
@@ -479,7 +459,7 @@ function render() {
   renderHoje(); renderAvisos();
   $('b-cad').disabled = !squadsEditaveis().length;
   $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
-  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); ['sq', 'sub', 'sm'].forEach(k => { if (filtro[k]) u.searchParams.set('f_' + k, filtro[k]); else u.searchParams.delete('f_' + k); }); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.sub) u.searchParams.set('f_sub', filtro.sub); else u.searchParams.delete('f_sub'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
 }
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
@@ -491,18 +471,18 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').h
 
 function abrirDia(data, sqUnico) {
   const d = parseISO(data); if (!d) return;
-  const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squads.filter(s => (!filtro.sq || s.id === filtro.sq) && membrosF(s.id).length);
+  const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squads.filter(s => membrosF(s.id).length);
   let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (sqUnico ? '' : ' — todas as squads') + '. Plantão primeiro.</p>', menc = [];
   let alguem = false;
   sqs.forEach(s => {
-    const itens = membrosF(s.id).map(m => ({ m, e: entradaF(data, s.id, m.uid) })).filter(x => x.e)
+    const itens = membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e)
       .sort((a, b) => ({ plant: 0, trab: 1, folga: 2 }[a.e.t] - { plant: 0, trab: 1, folga: 2 }[b.e.t]));
     if (!itens.length) return;
     alguem = true;
     h += '<ul class="lista-dia">' + (sqUnico ? '' : '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(s.emoji + ' ' + s.label) + '</li>');
     itens.forEach(x => {
       if (x.e.t !== 'folga' && x.m.init) menc.push('@' + x.m.init);
-      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.s ? ' · 🏷 ' + esc(Object.keys(x.e.s).filter(k => x.e.s[k] === true).map(labelSm).join(', ')) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
+      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
     });
     h += '</ul>';
   });
@@ -531,7 +511,6 @@ function abrirCadastro(pre) {
     de: unico ? pre.data : iso(semana), ate: unico ? pre.data : iso(dFim),
     dsem: unico ? new Set([diaSem(parseISO(pre.data))]) : new Set([0, 1, 2, 3, 4]),
     t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '',
-    s: new Set(ex && ex.s ? Object.keys(ex.s).filter(k => ex.s[k] === true) : []),   // submarcas que cobre (opcional)
   };
   desenharCadastro(editaveis);
 }
@@ -550,15 +529,13 @@ function desenharCadastro(editaveis) {
     '<div class="lb">Dias da semana</div><div class="chips dsem" id="c-dsem">' + DIAS.map((n, i) => '<button type="button" class="chip" data-ds="' + i + '" aria-pressed="' + cad.dsem.has(i) + '">' + n + '</button>').join('') + '</div>' +
     '<div class="lb">Tipo</div><div class="chips" id="c-tipo">' + Object.keys(TIPOS).map(k => '<button type="button" class="chip t-' + k + '" data-t="' + k + '" aria-pressed="' + (cad.t === k) + '">' + TIPOS[k].emoji + ' ' + TIPOS[k].nome + '</button>').join('') + '</div>' +
     '<div id="c-hora"' + (cad.t === 'folga' ? ' hidden' : '') + '><div class="row2"><div><label for="c-i">Entrada <span class="opt">(opcional)</span></label><input type="time" id="c-i" value="' + esc(cad.i) + '"></div><div><label for="c-f">Saída <span class="opt">(opcional)</span></label><input type="time" id="c-f" value="' + esc(cad.f) + '"></div></div></div>' +
-    (submarcasDoSquad(cad.sq).length ? '<div id="c-sm-box"' + (cad.t === 'folga' ? ' hidden' : '') + '><div class="lb">Submarcas que cobre <span class="opt">(opcional — alimenta o filtro de submarca)</span></div><div class="chips" id="c-sm">' +
-      submarcasDoSquad(cad.sq).map(o => '<button type="button" class="chip" data-sm="' + esc(o.id) + '" aria-pressed="' + cad.s.has(o.id) + '">' + esc(o.label.replace(/^Hering\s+/, '')) + '</button>').join('') + '</div></div>' : '') +
     '<label for="c-n">Observação <span class="opt">(opcional)</span></label><input type="text" id="c-n" maxlength="140" value="' + esc(cad.n) + '" placeholder="Ex.: sobreaviso até 23h, lançamento da campanha…">' +
     '<div class="prev" id="c-prev"></div><div class="msg err" id="c-msg" hidden></div>' +
     '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">Cadastrar</button><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><span class="grow"></span><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
   abrirOv(h);
   atualizarPrev();
   const o = $('ov');
-  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; cad.s = new Set(); if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
+  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
   if (gestor) $('c-uid').onchange = e => { cad.uid = e.target.value; atualizarPrev(); };
   ['c-de', 'c-ate'].forEach(id => { $(id).oninput = () => { lerForm(); atualizarPrev(); }; });
   ['c-i', 'c-f', 'c-n'].forEach(id => { $(id).oninput = () => { lerForm(); }; });
@@ -570,8 +547,7 @@ function desenharCadastro(editaveis) {
     atualizarPrev();
   });
   o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); atualizarPrev(); });
-  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; if ($('c-sm-box')) $('c-sm-box').hidden = cad.t === 'folga'; });
-  o.querySelectorAll('[data-sm]').forEach(b => b.onclick = () => { const id = b.dataset.sm; if (cad.s.has(id)) cad.s.delete(id); else cad.s.add(id); b.setAttribute('aria-pressed', cad.s.has(id)); });
+  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; });
   $('c-cancelar').onclick = fecharOv;
   $('c-salvar').onclick = () => confirmarCadastro(false);
   $('c-limpar').onclick = () => confirmarCadastro(true);
@@ -607,8 +583,6 @@ async function confirmarCadastro(limpar) {
   const base = { t: cad.t, por: user.uid, ts: Date.now() };
   if (cad.t !== 'folga') { if (cad.i) base.i = cad.i; if (cad.f) base.f = cad.f; }
   if (cad.n) base.n = cad.n.slice(0, 140);
-  const smOk = [...cad.s].filter(id => submarcasDoSquad(cad.sq).some(o => o.id === id));   // só submarcas que a squad usa
-  if (cad.t !== 'folga' && smOk.length) base.s = Object.fromEntries(smOk.map(id => [id, true]));
   r.datas.forEach(d => { upd[d + '/' + cad.sq + '/' + cad.uid] = limpar ? null : Object.assign({}, base); });
   gravando = true; $('c-salvar').disabled = true; $('c-limpar').disabled = true; $('c-salvar').textContent = 'Gravando…';
   try {
@@ -639,8 +613,8 @@ $('b-next').onclick = () => irParaSemana(addDias(semana, 7));
 $('b-hoje').onclick = () => irParaSemana(new Date());
 $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
-[['f-squad', 'sq'], ['f-sub', 'sub'], ['f-sm', 'sm']].forEach(([id, k]) => { $(id).onchange = e => { filtro[k] = e.target.value; render(); }; });
-$('f-limpar').onclick = () => { filtro = { sq: '', sub: '', sm: '' }; render(); };
+$('f-sub').onchange = e => { filtro.sub = e.target.value; render(); };
+$('f-limpar').onclick = () => { filtro = { sub: '' }; render(); };
 $('view').addEventListener('click', e => {
   const cel = e.target.closest('.cel.edit'); if (cel) { abrirCadastro({ sq: squad, uid: cel.dataset.u, data: cel.dataset.d }); return; }
   const gd = e.target.closest('.gdia'); if (gd) { abrirDia(gd.dataset.gd, null); return; }
@@ -676,7 +650,7 @@ async function iniciar() {
   squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
   visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
   const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
-  filtro = { sq: q.get('f_sq') || '', sub: q.get('f_sub') || '', sm: q.get('f_sm') || '' };
+  filtro = { sub: q.get('f_sub') || '' };
   $('loading').hidden = true; $('app').hidden = false;
   await carregarJanela();
 }
