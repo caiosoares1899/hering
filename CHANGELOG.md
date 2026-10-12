@@ -47,6 +47,14 @@ Pedido: "1 dica por dia por app". Antes o limite era por abertura da página (at
 - **Testes:** `test_dicas_dia.js` (11 checks: 1ª do dia aparece e grava o dia; 2ª no mesmo dia não — nem recarregando a página; outro app no mesmo dia aparece; no dia seguinte vem a próxima; "Rever dicas"; desligado) + `test_dicas.js` verde.
 - **Dica:** não — é a própria regra das dicas.
 
+### 📅 Escala dentro do Calendário (some o botão da barra) — 2026-10-12 · kanban-dev v8.30.832-dev · escala-dev v1.3 (SÓ DEV)
+Pedido: "não acho que deveria ser um botão externo na toolbar, deveria ser dentro de calendário".
+- **Saiu** o botão 🗓️ Escala da barra do board (e a ação equivalente dos atalhos configuráveis).
+- **Entrou** a visão **👥 Escala** no 📅 Calendários, ao lado de Tudo / 🗓️ Eventos / 📎 Prazos. Escolhendo, o mês, os filtros e o "+ Evento" saem de cena e aparece a Escala da squad atual (a MESMA página `escala-dev.html`, embutida com `?embed=1` — sem cabeçalho/rodapé; squad, 🌐 Todas as squads, filtro de subtime e ➕ Cadastrar escala funcionam igual). Há um link "↗ abrir em tela cheia". A página só carrega quando a pessoa abre a visão (e recarrega se a squad mudou); reabrir o Calendário lembra a visão em que estava.
+- **Mantido:** a aba **Escala ↗** do Painel (abre a visão global em outra aba) — me avise se também deve sair/ir pra dentro do calendário do Painel.
+- **Testes:** `test_escala.js` (78 checks) agora cobre o Calendário: sem botão solto, a visão ao lado das outras, iframe com `embed=1` na squad atual, mês/filtros escondidos, página sem cabeçalho, voltar pra Tudo.
+- Dica: não.
+
 ### ✂️ Escala: fica só o filtro de subtime — 2026-10-12 · escala-dev v1.2 · kanban-dev v8.30.831-dev (SÓ DEV)
 Pedido: "deixa só subtime". Saem os filtros de **squad** e de **submarca** da v1.1 (e o campo "Submarcas que cobre" do cadastro e a validação `s` das regras do banco — **não precisa do segundo deploy de regras**; quem já publicou a versão com `s` pode republicar sem ele, não faz diferença). Fica o **filtro de subtime** nas duas visões (por nome: "Designers" junta os Designers de todas as squads na global), com ✕ Limpar filtro e `?f_sub=` na URL; a barra some em squad sem nenhum subtime. O filtro só esconde pessoas — o ➕ Cadastro continua listando a squad inteira.
 - **Testes:** `test_escala.js` com os checks de filtro reescritos pra só subtime (global, link, visão da squad, squad sem subtimes, cadastro não afetado).
