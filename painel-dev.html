@@ -2270,6 +2270,15 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       </div>
     </div>
 
+    <!-- 🐟 METAS e DESAFIOS do Digital ("O mar tá pra peixe") — módulo mare-metas-dev.js; aparece na aba 📊 Dados → 🌊 Digital do Maré -->
+    <div id="dados-metas" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
+      <div class="cfg-sec">🐟 Metas e desafios do Digital — "O mar tá pra peixe"</div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:12px;">Cadastre a <b>meta global do Digital</b> (a principal — vira o anel grande na aba <b>📊 Dados → 🌊 Digital</b> do Maré) e <b>desafios extras</b> (ex.: "dia 27: 1 milhão de peças", "meta de Marketplace"). Cada squad cadastra as suas em <b>⚙ Configurações → 🐟 Metas</b> no Maré; as marcadas "🌊 mostrar na visão global" aparecem junto com as do Digital. A cada <b>20 %</b> o time vê o popup 🐟 e dá pra programar um <b>⏰ lembrete</b> de preenchimento (horário de Brasília).</div>
+      <div id="dados-metas-bar" style="display:none;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn btn-sm btn-teal" onclick="dadosMetaNova('meta')">➕ Nova meta global</button><button class="btn btn-sm" onclick="dadosMetaNova('desafio')">🏆 Novo desafio</button></div>
+      <div id="dados-metas-lista"></div>
+      <div id="dados-metas-squads" style="margin-top:14px;"></div>
+    </div>
+
     <div id="dados-lock-msg" style="display:none;font-size:11px;color:var(--txt3);background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.15);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5;">🔒 Você tem acesso de leitura aqui. Só quem tem permissão de publicação (veja a lista abaixo) edita os números do dia.</div>
 
     <div id="dados-form-wrap" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
@@ -2915,7 +2924,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.48 · painel-dev</div>
+<div class="version">v5.49 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3019,6 +3028,7 @@ getRedirectResult(auth).then(result=>{
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=22"></script>
+<script src="mare-metas-dev.js?v=1"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -8406,6 +8416,39 @@ function loadDadosDiarios(){
   });
 }
 
+// ── 🐟 METAS e DESAFIOS do Digital (módulo mare-metas-dev.js) ──────────────────────────────────────────────────────────────────────────
+function _pmetasUser(){ const u=window._currentUser||{}; return {uid:u.uid||null, nome:u.displayName||u.email||''}; }
+function renderDadosMetas(){
+  const box=document.getElementById('dados-metas-lista'); if(!box) return;
+  if(!window.MareMetas){ box.innerHTML='<div style="font-size:12px;color:var(--txt3)">O módulo de metas não carregou — recarregue a página.</div>'; return; }
+  const ed=isDadosEditor(window._currentUser), bar=document.getElementById('dados-metas-bar'); if(bar) bar.style.display=ed?'flex':'none';
+  const l=MareMetas.todasDigital();
+  box.innerHTML = l.length ? '<div class="mm"><div class="mm-grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">'+l.map(m=>(m.ativo===false?'<div style="opacity:.55">':'<div>')+MareMetas.cartaoHtml(m,{pode:ed,gestor:ed,escopoTxt:(m.ativo===false?'⏸ inativa · ':'')+(m.tipo==='desafio'?'desafio':'meta global')})+'</div>').join('')+'</div></div>'
+    : '<div class="mm"><div class="mm-vazio"><b>🌊</b>Nenhuma meta do Digital ainda.<br>'+(ed?'Crie a <b>meta global</b> e os <b>desafios</b> com os botões acima.':'Quem cuida dos dados do Digital cadastra aqui.')+'</div></div>';
+  MareMetas.ligar(box,{user:_pmetasUser, editar:dadosMetaEditar});
+  const sq=document.getElementById('dados-metas-squads');
+  if(sq){ const r=MareMetas.squadsRankingHtml(id=>{ const s=(typeof SQUADS!=='undefined'?SQUADS:[]).find(x=>x.id===id); return {nome:s?(s.label||id):id, emoji:(s&&s.icon)||'🐠'}; });
+    sq.innerHTML = r ? '<div class="mm"><div class="mm-sec-t">🐠 Metas das squads <span style="font-weight:500;text-transform:none;letter-spacing:0">(marcadas "mostrar na visão global")</span></div>'+r+'</div>' : ''; }
+}
+// Quem pode ser marcado como "quem preenche": ADMs + editores de Dados (os que realmente atualizam números do Digital) + você.
+async function _pmetasPessoas(){
+  try{
+    const pub=(await window._get(window._ref(window._db,'kanban/usuarios_publicos'))).val()||{}, me=window._currentUser||{};
+    return Object.keys(pub).filter(uid=>{ const u=pub[uid]||{}; return uid===me.uid || u.role==='adm' || DADOS_EDITORS.includes(u.email); }).map(uid=>({uid, nome:pub[uid].nome||pub[uid].email||uid}));
+  }catch(e){ return []; }
+}
+async function dadosMetaNova(tipo){
+  if(!isDadosEditor(window._currentUser)||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'digital',tipo:tipo||'meta',pessoas:await _pmetasPessoas(),onSave:inp=>MareMetas.salvar(inp,_pmetasUser()).then(r=>{ renderDadosMetas(); return r; })});
+}
+async function dadosMetaEditar(m){
+  if(!isDadosEditor(window._currentUser)||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'digital',meta:m,pessoas:await _pmetasPessoas(),onSave:inp=>MareMetas.salvar(inp,_pmetasUser()).then(r=>{ renderDadosMetas(); return r; }),onRemover:mm=>MareMetas.remover(mm).then(()=>renderDadosMetas())});
+}
+function _pmetasIniciar(){
+  if(!window.MareMetas || _pmetasIniciar._ok) return; _pmetasIniciar._ok=true;
+  MareMetas.iniciar({todasSquads:true, onChange:()=>{ if(_isPtab('dados')) renderDadosMetas(); }});
+}
 function renderDadosTab(){
   const editor = isDadosEditor(window._currentUser);
   const formWrap = document.getElementById('dados-form-wrap');
@@ -8424,6 +8467,7 @@ function renderDadosTab(){
   renderDadosApresList();
   renderDadosHistorico();
   renderDadosEditorList();
+  renderDadosMetas();
 }
 
 function loadDadosFormForDate(date){
@@ -9204,6 +9248,7 @@ window.addEventListener('fb-ready',()=>{
   loadPainelNotifs();
   loadDadosConfig();
   loadDadosDiarios();
+  _pmetasIniciar();   // 🐟 metas/desafios do Digital + metas das squads (ranking)
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){

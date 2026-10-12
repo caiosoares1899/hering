@@ -1,3 +1,4 @@
+// (2026-10-12) a captação do dia agora mora na aba 🌊 Digital da aba lateral Dados (a 1ª aba é a da squad: metas e desafios) — o teste abre a aba Digital.
 // ⚡ /otimizaçãoderotina (2026-10-10): o listener de kanban/dados_diarios só pede os últimos 15 dias ao servidor (orderByKey + limitToLast), e a Central de Dados continua igual.
 // kanban-dev (padrão) — K=kanban testa a prod. Roda o BOOT REAL do kanban com o Firebase falso.
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
@@ -12,6 +13,6 @@ const seed=()=>({kanban:{usuarios:{eve:{uid:'eve',nome:'Eve',email:'eve@ciaherin
  const q=await p.evaluate(()=>window.__qlog||[]);
  t('o listener de dados_diarios pede ao servidor só os últimos 15 dias (orderByKey + limitToLast(15))', q.includes('orderByKey') && q.includes('limitToLast:15'), q);
  t('o listener foi mesmo registrado em kanban/dados_diarios', await p.evaluate(()=>(window.__log||[]).some(l=>l[0]==='onValue' && l[1]==='kanban/dados_diarios')), 'sem onValue');
- const r=await p.evaluate(async()=>{ toggleDados(); await new Promise(r=>setTimeout(r,500)); const b=document.getElementById('dados-body'); return {txt:b.innerText, compactos:b.querySelectorAll('div[style*="justify-content:space-between"][style*="gap:8px"]').length}; });
+ const r=await p.evaluate(async()=>{ toggleDados(); await new Promise(r=>setTimeout(r,500)); setDadosTab('digital'); await new Promise(r=>setTimeout(r,300)); const b=document.getElementById('dados-body'); return {txt:b.innerText, compactos:b.querySelectorAll('div[style*="justify-content:space-between"][style*="gap:8px"]').length}; });
  const datas=(r.txt.match(/\b\d\d\/\d\d\b/g)||[]); t('Central de Dados: mostra o dia mais recente + 14 anteriores (15 datas), o mesmo de antes', /dias anteriores/i.test(r.txt) && datas.length===15 && datas[0]==='10/10', {n:datas.length, primeira:datas[0]});
  t('sem erro de JS', !errs.length, errs); await ctx.close(); await b.close(); console.log(ok?'TUDO OK':'HÁ FALHAS'); })();

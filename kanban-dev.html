@@ -4073,7 +4073,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 <!-- ═══ CENTRAL DE DADOS (captação digital, somente leitura no board) ═══ -->
 <div class="lem-drawer" id="dados-drawer">
   <div class="lem-hd">
-    <div class="lem-hd-title">📊 Central de Dados — Digital</div>
+    <div class="lem-hd-title">📊 Dados — metas, desafios e captação</div>
     <button class="x-btn" onclick="toggleDados()">✕</button>
   </div>
   <div class="lem-body" id="dados-body"></div>
@@ -4907,6 +4907,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     <div class="ag-tab" onclick="swCfgTab('backup')">💾 Backup</div>
     <div class="ag-tab" onclick="swCfgTab('calendario')">🗓️ Calendário</div>
     <div class="ag-tab" onclick="swCfgTab('criativos')">🎬 Criativos</div>
+    <div class="ag-tab" onclick="swCfgTab('metas')">🐟 Metas</div>
     <div class="ag-tab" id="cfgtab-agentelog-btn" style="display:none;" onclick="swCfgTab('agentelog')">🤖 Histórico do Agente</div>
   </div>
   <div class="cfg-body">
@@ -5038,6 +5039,14 @@ window.MARE_LOGIN_PELO_OCEANO = true;
          real do orquestrador (AGENTE_AGIL_MENTION_SQUADS) — ver
          _applyAgenteLogTabVisibility(). Configurações inteiro já é
          PO/Organizador/ADM-only, não precisa de gate extra aqui. -->
+    <!-- ABA METAS (🐟 O mar tá pra peixe — metas e desafios da squad; ver mare-metas-dev.js) -->
+    <div class="tab-c" id="cfgtab-metas">
+      <div class="cfg-sec-title">🐟 Metas e desafios da squad</div>
+      <p style="font-size:11px;color:var(--txt2);margin-bottom:10px;line-height:1.6;">Cadastre a <strong>meta da squad</strong> (a principal — aparece grande na aba <strong>📊 Dados → 🐠 Squad</strong>) e <strong>desafios extras</strong> (ex.: "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre"), por submarca, canal ou dia. Quem é da squad atualiza o valor; a cada <strong>20 %</strong> atingidos o time vê o popup 🐟 <em>O mar tá pra peixe!</em>. Marque <strong>🌊 Mostrar na visão global</strong> pra a meta aparecer também na aba <strong>Digital</strong>. Dá pra programar um <strong>⏰ lembrete</strong> de preenchimento (horário de Brasília).</p>
+      <div id="cfg-metas-bar" style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn btn-teal btn-sm" onclick="metasNova('meta')">➕ Nova meta</button><button class="btn btn-sm" onclick="metasNova('desafio')">🏆 Novo desafio</button></div>
+      <div id="cfg-metas-lista"></div>
+    </div>
+
     <div class="tab-c" id="cfgtab-agentelog">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;gap:8px;">
         <div class="cfg-sec-title" style="margin-bottom:0;">🤖 Histórico do Agente Ágil</div>
@@ -6522,7 +6531,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.832-dev</div>
+<div class="version">v8.30.833-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6869,6 +6878,7 @@ getRedirectResult(auth).then(r=>{
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
 <script src="mare-notif-dev.js?v=22"></script>
+<script src="mare-metas-dev.js?v=1"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -7367,12 +7377,10 @@ function toggleDadosApres(id){
     if(btn) btn.textContent='🖥️ Ocultar '+esc(apres.title);
   }
 }
-function renderDadosPainel(){
-  const body = document.getElementById('dados-body'); if(!body) return;
+function _dadosCaptacaoHtml(){
   const dates = Object.keys(dadosDiariosBoard).sort().reverse();
   if(!dates.length){
-    body.innerHTML = '<div style="font-size:12px;color:var(--txt3);padding:20px 4px;text-align:center;line-height:1.6;">Nenhum resultado publicado ainda.<br>Configure em Painel → 📊 Dados.</div>';
-    return;
+    return '<div style="font-size:12px;color:var(--txt3);padding:20px 4px;text-align:center;line-height:1.6;">Nenhum resultado publicado ainda.<br>Configure em Painel → 📊 Dados.</div>';
   }
   const latestDate = dates[0];
   let html = _renderDadosDay(latestDate);
@@ -7390,7 +7398,61 @@ function renderDadosPainel(){
       ${dates.slice(1,15).map(d=>_renderDadosDayCompact(d)).join('')}
     </div>`;
   }
-  body.innerHTML = html;
+  return html;
+}
+
+// ── 🐟 METAS e DESAFIOS — "O mar tá pra peixe" (2026-10-12, só dev) ──────────────────────────────────────────────────────────────────
+// A lógica, os gráficos (estilo Radar), os formulários e o popup dos peixes vivem em mare-metas-dev.js (compartilhado com o Painel). Aqui só liga:
+//   • aba lateral 📊 Dados com 2 abas — 🐠 Squad (metas/desafios desta squad) e 🌊 Digital (meta global + squads marcadas "mostrar na visão global" + captação do dia);
+//   • ⚙ Configurações → 🐟 Metas (PO/Organizador/ADM criam e editam as da squad);
+//   • quem é da squad atualiza o valor pelo botão ✏️; a meta global do Digital é configurada no Painel (📊 Dados → 🐟 Metas do Digital).
+let _dadosTab = (()=>{ try{ return localStorage.getItem('mare_dados_tab')==='digital' ? 'digital' : 'squad'; }catch(e){ return 'squad'; } })();
+function setDadosTab(t){ _dadosTab = (t==='digital') ? 'digital' : 'squad'; try{ localStorage.setItem('mare_dados_tab',_dadosTab); }catch(e){} renderDadosPainel(); }
+function _metasUser(){ const u=window._currentUser||{}; return {uid:u.uid||null, nome:u.displayName||u.email||''}; }
+function _metasNomeSquad(id){ const sq=(typeof SQUADS!=='undefined'&&Array.isArray(SQUADS))?SQUADS.find(x=>x.id===id):null; return {nome:sq?(sq.label||id):id, emoji:(sq&&sq.icon)||'🐠'}; }
+function _metasPessoas(){ return (typeof members!=='undefined'?members:[]).filter(m=>m.uid).map(m=>({uid:m.uid,nome:m.name||m.init||m.email||m.uid})); }
+function _metasPode(m){ return m.escopo==='digital' ? isAdmUser(window._currentUser) : (m.squad===ACTIVE_SQUAD); }   // quem informa o valor: a squad (a meta dela) · ADM (a do Digital — o resto é no Painel)
+function _metasAbrirDados(aba){ if(aba) _dadosTab=aba; const d=document.getElementById('dados-drawer'); if(d && !d.classList.contains('open')) toggleDados(); else renderDadosPainel(); }
+function renderDadosPainel(){
+  const body = document.getElementById('dados-body'); if(!body) return;
+  if(!window.MareMetas){ body.innerHTML = _dadosCaptacaoHtml(); return; }   // módulo não carregou: cai no desenho de antes
+  const nSq = MareMetas.metasSquad(ACTIVE_SQUAD).length, nDg = MareMetas.metasDigital().length;
+  let pane;
+  if(_dadosTab==='squad'){
+    pane = MareMetas.painelSquadHtml(ACTIVE_SQUAD,{pode:_metasPode, nomeSquad:_metasNomeSquad(ACTIVE_SQUAD).nome, gestorGeral:_isPOorOrg()});
+  } else {
+    MareMetas.ouvirTodasSquads();
+    pane = MareMetas.painelDigitalHtml({pode:_metasPode, nomeDe:_metasNomeSquad, editorGlobal:isAdmUser(window._currentUser)})
+      + '<div class="mm"><div class="mm-sec"><div class="mm-sec-t">📈 Captação do dia</div></div></div>' + _dadosCaptacaoHtml();
+  }
+  body.innerHTML = `<div class="mm"><div class="mm-tabs" role="tablist"><button type="button" class="mm-tab${_dadosTab==='squad'?' on':''}" data-dtab="squad" role="tab" aria-selected="${_dadosTab==='squad'}" onclick="setDadosTab('squad')">🐠 ${esc(_metasNomeSquad(ACTIVE_SQUAD).nome)}${nSq?`<span class="n">${nSq}</span>`:''}</button><button type="button" class="mm-tab${_dadosTab==='digital'?' on':''}" data-dtab="digital" role="tab" aria-selected="${_dadosTab==='digital'}" onclick="setDadosTab('digital')">🌊 Digital${nDg?`<span class="n">${nDg}</span>`:''}</button></div></div><div id="dados-pane">${pane}</div>`;
+  MareMetas.ligar(document.getElementById('dados-pane'),{user:_metasUser});
+}
+// ⚙ Configurações → 🐟 Metas (só PO/Organizador/ADM)
+function fillMetasTab(){
+  const box=document.getElementById('cfg-metas-lista'); if(!box) return;
+  const ok=_isPOorOrg(), bar=document.getElementById('cfg-metas-bar'); if(bar) bar.style.display=ok?'flex':'none';
+  if(!window.MareMetas){ box.innerHTML='<div style="font-size:12px;color:var(--txt3)">O módulo de metas não carregou — recarregue a página.</div>'; return; }
+  if(!ok){ box.innerHTML='<div style="font-size:12px;color:var(--txt3);line-height:1.6;">Só PO, Organizador e ADM criam e editam as metas da squad. Quem é da squad atualiza o valor na aba <b>📊 Dados</b>.</div>'; return; }
+  const l=MareMetas.todasDaSquad(ACTIVE_SQUAD);
+  box.innerHTML = l.length ? '<div class="mm"><div class="mm-grid">'+l.map(m=>(m.ativo===false?'<div style="opacity:.55">':'<div>')+MareMetas.cartaoHtml(m,{pode:true,gestor:true,escopoTxt:(m.ativo===false?'⏸ inativa · ':'')+(m.global?'🌊 global · ':'')+(m.tipo==='desafio'?'desafio':'meta')})+'</div>').join('')+'</div></div>'
+    : '<div class="mm"><div class="mm-vazio"><b>🐟</b>Nenhuma meta ou desafio ainda.<br>Crie a <b>meta da squad</b> (a principal, com anel grande) e quantos <b>desafios</b> quiser — por submarca, canal ou dia.</div></div>';
+  MareMetas.ligar(box,{user:_metasUser, editar:metasEditar});
+}
+function metasNova(tipo){
+  if(!_isPOorOrg()||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'squad',squad:ACTIVE_SQUAD,tipo:tipo||'meta',pessoas:_metasPessoas(),onSave:inp=>MareMetas.salvar(inp,_metasUser()).then(r=>{ fillMetasTab(); return r; })});
+}
+function metasEditar(m){
+  if(!_isPOorOrg()||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'squad',squad:ACTIVE_SQUAD,meta:m,pessoas:_metasPessoas(),onSave:inp=>MareMetas.salvar(inp,_metasUser()).then(r=>{ fillMetasTab(); return r; }),onRemover:mm=>MareMetas.remover(mm).then(()=>fillMetasTab())});
+}
+function _metasIniciar(){
+  if(!window.MareMetas || _metasIniciar._ok) return; _metasIniciar._ok=true;
+  MareMetas.iniciar({squad:ACTIVE_SQUAD, onChange:()=>{
+    if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
+    if(document.getElementById('cfgtab-metas')?.classList.contains('on')) fillMetasTab();
+  }});
 }
 // ── FIM CENTRAL DE DADOS ────────────────────────────────────────────
 
@@ -10920,6 +10982,7 @@ let _cardsSyncDebounce = null;
       dadosApresentacoesBoard = Array.isArray(saved) ? saved.filter(Boolean) : (saved ? Object.values(saved).filter(Boolean) : []);
       if(document.getElementById('dados-drawer')?.classList.contains('open')) renderDadosPainel();
     });
+    _metasIniciar();   // 🐟 metas/desafios (squad atual + Digital) — popup dos peixes e aba Dados
   }
   // Lembretes próprios (privados, por uid) — registra quando o usuário é conhecido
   _listenLembretesProprios();
@@ -25548,7 +25611,7 @@ function openCfg(tab){
   swCfgTab(tab||'agil'); document.getElementById('cfg-ov').classList.add('open');
 }
 function swCfgTab(tab){
- const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','agentelog'];
+ const TABS=['agil','usuarios','lembretes','tags','subtimes','padroes','fluxo','auto','importar','worker','firebase','backup','calendario','criativos','metas','agentelog'];
   document.querySelectorAll('#cfg-tabs .ag-tab').forEach((t,i)=>t.classList.toggle('on',TABS[i]===tab));
   TABS.forEach(t=>document.getElementById('cfgtab-'+t)?.classList.toggle('on',t===tab));
   // 'auto' nunca chega aqui — o botão da aba chama openAutoOv() direto (ver
@@ -25558,6 +25621,7 @@ function swCfgTab(tab){
   if(tab==='agil') fillAgilTab();
   if(tab==='usuarios'){ renderUsuarios(); renderExternos(); renderAgentesList(); setUsuariosView('users'); }
   if(tab==='lembretes'){ renderLemCfg(); }
+  if(tab==='metas'){ fillMetasTab(); }
   if(tab==='tags'){
     renderTagEditor();
     const el=document.getElementById('cfg-tamanho-ativo'); if(el) el.checked=tamanhoAtivo;
@@ -27984,7 +28048,8 @@ const HELP_CONTENT = {
   board: [
     { icon:'🌊', title:'Menu de produtos (⋮⋮⋮) e a página Oceano', text:'O botão de 9 pontinhos no cabeçalho abre o <b>menu de produtos</b> do Oceano, a família que reúne o Maré Digital, o Painel, o Radar (OKR) e o A Bordo. Tem 3 abas:\n\n<b>Produtos</b> — atalhos para cada produto (abrem em outra aba). O título "🌊 Oceano · início" leva à <b>página Oceano</b> (oceano.html): o lobby com os botões dos produtos, links e ajuda; se você instalar o Oceano como aplicativo, ele abre os produtos aqui dentro.\n\n<b>Hering</b> — os links importantes de sistemas da empresa (portal do RH, ServiceDesk, VTEX…), cadastrados pelos administradores em <b>Painel → ⚙ Configurações → 🔗 Links</b> (título, endereço, imagem e uma descrição curta).\n\n<b>Meus links</b> — atalhos só seus. Para criar: aba <b>Meus links</b> → <b>＋ Adicionar ou editar meus links</b> (ou Oceano → ⚙ Meu perfil → 🔗 Meus links). Informe título e link (https://…); a imagem é opcional — sem ela usamos o ícone do site. Dá para reordenar com ▲▼, editar ✎ e remover ✕ (até 30 links).\n\n💡 Quando a lista de links tem 3, 6, 9… itens, ela vira uma grade de quadrados; nas outras quantidades fica em lista.' },
     { icon:'💡', title:'Dicas (mini popups)', text:'De vez em quando aparece um <b>mini aviso no canto da tela</b> com um truque ou um lugar útil que muita gente demora a descobrir (um atalho, o Meu Dia, o menu de produtos…). Aparece <b>no máximo uma por dia</b> em cada produto (Maré, Radar e Oceano contam separado) e <b>uma única vez cada</b> — depois de vista não volta. O <b>Saiba mais</b> abre esta Central de Ajuda direto no assunto; o ✕ fecha.\n\n<b>Desligar ou religar</b>: no topo desta Central de Ajuda há o interruptor <b>💡 Dicas do Maré</b> — vale só pro Maré, e o Radar e o Oceano têm o interruptor deles (cada um na própria Ajuda). <b>Rever dicas</b> zera o que você já viu pra elas aparecerem de novo. A escolha fica salva na sua conta (vale em qualquer aparelho). O Painel e o A Bordo não mostram dicas; o Painel só <b>lista todas</b> em ⚙ Configurações → 💡 Dicas.' },
-    { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time (somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nMostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
+    { icon:'🐟', title:'Metas e desafios (O mar tá pra peixe)', text:'Na aba lateral <b>📊 Dados → 🐠 sua squad</b> você acompanha, num relance, a <b>meta da squad</b> (anel grande com o %, quanto falta, quantos dias restam e quanto precisa entrar por dia) e os <b>desafios extras</b> — por exemplo "no dia 27, vender 500 camisetas Hering Kids", "meta do Mercado Livre" ou "conversão do App", por submarca, canal de venda ou dia. As cores seguem o Radar: 🟢 no ritmo, 🟡 atenção, 🔴 atrasada, 🏆 batida; o <b>tracinho branco</b> no anel/na barra é onde deveria estar hoje. O <b>📈 Evolução</b> mostra a linha real contra o ritmo ideal e a meta.\n\n🐟 <b>O mar tá pra peixe!</b> A cada <b>20 %</b> da meta (20, 40, 60, 80 e 100) aparece um popup com peixinhos pulando — uma vez por pessoa. Corrigir o valor pra baixo não tira o peixe já conquistado.\n\n✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa o valor — escolha <i>Definir o total</i> ou <i>Somar ao atual</i>; a prévia mostra o novo % e se vem peixe novo. Cartões com ⏰ "atualize!" estão sem atualização há mais que o dobro do lembrete.\n\n⚙ <b>Quem cria/edita</b>: PO, Organizador e ADM, em <b>⚙ Configurações → 🐟 Metas</b> (nome, ícone, R$/quantidade/%, alvo, período, submarca, canal, <b>🌊 Mostrar na visão global</b> e <b>⏰ lembrete de preenchimento</b> a cada 1 h/2 h, 1× por dia ou em horários exatos — horário de Brasília). A meta global do Digital e os desafios do Digital são cadastrados no <b>Painel → 📊 Dados</b>; aparecem na aba <b>🌊 Digital</b> junto com um ranking das squads.' },
+    { icon:'📊', title:'Central de Dados (aba lateral 📊 Dados)', text:'A aba azul <b>📊 Dados</b>, na lateral direita (junto de 📌 Lembretes, ⭐ Estrelas, 🎧 Spotify e 📝 Notas), abre os <b>Dados</b> em <b>duas abas</b>: <b>🐠 da sua squad</b> (metas e desafios — veja o tópico "Metas e desafios") e <b>🌊 Digital</b> (a meta global, as metas das squads que marcaram "mostrar na visão global" e, logo abaixo, a <b>Central de Dados — Digital</b>: os resultados diários de captação digital publicados pelo time — somente leitura aqui no board; quem publica é o ADM no <b>Painel → 📊 Dados</b>).\n\nNa Central de captação, mostra o <b>dia mais recente</b> em destaque, botões <b>🖥️</b> pra abrir as apresentações cadastradas ali mesmo (embutidas) e a lista <b>Dias anteriores</b> — os <b>14 dias anteriores</b> ao mais recente, em formato compacto. Dias mais antigos não aparecem aqui nem são baixados (o board só carrega os últimos 15 dias, o que deixa a abertura mais leve); o histórico completo continua no Painel.\n\nSe aparecer \"Nenhum resultado publicado ainda\", é porque ninguém publicou dados — a configuração é no Painel. Não confunda com <b>📊 Dados do Board</b> (botão da toolbar), que são as métricas do <i>seu quadro</i> (WIP, Insights, CFD…).' },
     { icon:'🌅', title:'Meu Dia (Ctrl+D)', text:'Botão "🌅 Meu Dia" na toolbar (ou Ctrl+D / Cmd+D) abre uma visão pessoal com os SEUS cards de TODOS os squads (onde você é responsável ou participante) — não só do quadro que você está olhando agora.\n\nAgrupado por: Atrasado, Hoje, Esta semana, Menções não lidas, Bloqueios que te afetam e Sem prazo. Cards já concluídos não aparecem — é uma lista do que ainda precisa de atenção.\n\nClique num card pra abrir — se for de outro squad, o app navega pra lá automaticamente. Na primeira abertura, busca os dados dos outros squads (pode levar um instante); aberturas seguintes na mesma sessão já ficam rápidas.\n\n🤖 Resumo do Agente Ágil: botão dentro do painel Meu Dia (squads dev/dados) que pede pro agente ler seus cards ativos (atrasado, bloqueado, sem descrição, checklist pendente) e devolver um resumo priorizado, sugerindo uma ordem de ataque pro dia. Só lê — não mexe em nada no board. Limite de 1 pedido a cada 2 minutos por pessoa; o resumo reseta toda vez que o painel é reaberto (não guarda o de uma sessão anterior).\n\n🤖 Análise do board (PO): botão extra, visível só pra PO/Organizador/ADM, que pede uma leitura do board inteiro do squad atual (não só os seus cards) — WIP, gargalo, atrasados, bloqueados, cards incompletos — e, quando fizer sentido pelos dados, uma sugestão de campanha/coleção nova, sempre comparando com as Campanhas & Coleções já ativas/em planejamento pra nunca sugerir algo que já esteja em execução. Mesmo limite de 2 minutos entre pedidos, mesmo "só lê".' },
     { icon:'🔍', title:'Busca global (Ctrl+K)', text:'Pressione Ctrl+K (ou Cmd+K no Mac) ou clique em 🔍 no header para abrir a busca. Filtra cards em tempo real por título, descrição, Insights do PO e responsável (nome ou iniciais). Use as setas ↑↓ para navegar, Enter para abrir o card e Esc para fechar.\n\n🔍 Ver todos no board: logo abaixo dos resultados, o botão "Ver N cards no board" aplica o mesmo termo como filtro de texto do board inteiro, mostrando todos os cards que batem dispostos nas colunas, em vez de escolher um da lista. Esse filtro de texto também tem campo próprio na barra de Filtros, pra usar direto por lá.' },
     { icon:'🔢', title:'Contador WIP no header', text:'A coluna Em Progresso exibe o contador no formato atual/limite (ex: 4/3). Quando o WIP ultrapassa o limite configurado, o contador fica vermelho. Configure o limite em Config → Ágil → Limite de WIP.' },
