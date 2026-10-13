@@ -158,3 +158,10 @@ test('Metas: histórico dos valores (metas_log) exige v e t numéricos', () => {
 test('regras: os nós de dev e de produção das Metas têm exatamente o mesmo formato (só muda o sufixo)', () => {
   ['metas_digital', 'metas_squads', 'metas_log'].forEach(n => assert.deepEqual(RULES.rules.kanban[n + '_dev'], RULES.rules.kanban[n], n));
 });
+
+// ═══════════════ 🚨 VTEX — batimento do monitor (kanban/vtex_saude) ═══════════════
+test('vtex_saude: toda conta Google @ciahering lê (selinho do Oceano); ninguém escreve pelo cliente (só o Admin SDK da função)', () => {
+  ['ana', 'bia', 'pau', 'adm', 'caio'].forEach(k => assert.equal(check(RULES, DB, 'read', 'kanban/vtex_saude', A[k]), true, k));
+  ['forasteiro', 'arezzo'].forEach(k => assert.equal(check(RULES, DB, 'read', 'kanban/vtex_saude', A[k]), false, k));
+  ['ana', 'pau', 'adm', 'caio'].forEach(k => assert.equal(check(RULES, DB, 'write', 'kanban/vtex_saude', A[k], { ok: true }), false, k));
+});

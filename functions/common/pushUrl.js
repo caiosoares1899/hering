@@ -23,7 +23,7 @@ function urlDoPush(notif) {
     return SITE_BASE_URL + 'escala.html?' + p.toString();
   }
   // Aviso do vigia dos backups (só ADMs): abre o Painel.
-  if (type === 'backup_falhou') return SITE_BASE_URL + 'painel.html';
+  if (type === 'backup_falhou' || type === 'vtex_monitor_falhou') return SITE_BASE_URL + 'painel.html';
   const params = new URLSearchParams();
   if (n.squad) params.set('squad', n.squad);
   if (n.cardId) params.set('card', n.cardId);

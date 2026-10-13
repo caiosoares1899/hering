@@ -108,6 +108,17 @@ main{max-width:1180px;margin:0 auto;padding:0 16px 80px;}
 .btn[disabled]{opacity:.5;cursor:not-allowed;}
 .ibtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;font-size:12.5px;font-weight:600;border:1px solid var(--glass-b);border-radius:var(--r);background:var(--glass);color:var(--txt);cursor:pointer;backdrop-filter:blur(8px);}
 .ibtn:hover{border-color:var(--accent);}
+/* 🚨 selinho do status da VTEX (kanban/vtex_saude, escrito pela função vtexStatus): azul = normal · vermelho = incidente · cinza = monitor sem leitura */
+.vtex-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 11px;font-size:11.5px;font-weight:700;border:1px solid var(--glass-b);border-radius:999px;background:var(--glass);color:var(--txt);text-decoration:none;white-space:nowrap;backdrop-filter:blur(8px);}
+.vtex-pill::before{content:"";width:8px;height:8px;border-radius:50%;background:#1E64EB;box-shadow:0 0 0 3px rgba(30,100,235,.22);flex:none;}
+.vtex-pill:hover{border-color:var(--accent);}
+.vtex-pill.alerta{border-color:rgba(255,107,107,.7);background:rgba(255,107,107,.14);}
+.vtex-pill.alerta::before{background:#ff6b6b;box-shadow:0 0 0 3px rgba(255,107,107,.3);animation:vtexp 1.6s ease-in-out infinite;}
+.vtex-pill.mudo{opacity:.75;}
+.vtex-pill.mudo::before{background:#8a99a8;box-shadow:0 0 0 3px rgba(138,153,168,.22);}
+@keyframes vtexp{50%{box-shadow:0 0 0 7px rgba(255,107,107,0);}}
+@media (max-width:560px){.vtex-pill .vtex-tx{display:none;}.vtex-pill{padding:8px;}}
+@media (prefers-reduced-motion:reduce){.vtex-pill.alerta::before{animation:none;}}
 .sino{position:relative;}
 .sino-n{position:absolute;top:-6px;right:-6px;min-width:17px;height:17px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;display:none;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box;font-family:var(--ff-b,inherit);}
 .sino-drop{display:none;position:fixed;z-index:100;flex-direction:column;max-height:min(70vh,540px);background:rgba(var(--deep-rgb),.97);border:1px solid var(--glass-b);border-radius:14px;box-shadow:0 14px 44px rgba(0,0,0,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
@@ -412,6 +423,7 @@ input.in[readonly]{opacity:.7;}
     <a class="marca" href="#inicio" aria-label="Oceano — início"><img src="favicon-oceano.png" alt=""><span class="tx">Oceano<small>Digital Hering</small></span></a>
     <div style="flex:1"></div>
     <div class="topo-dir">
+      <a class="vtex-pill" id="vtex-pill" href="https://status.vtex.com/" target="_blank" rel="noopener noreferrer" style="display:none;"><span class="vtex-tx" id="vtex-tx"></span></a>
       <button class="ibtn" id="btn-instalar" type="button" style="display:none;" title="Instala o Oceano como aplicativo — um só pra todos os produtos">📲 <span>Instalar</span></button>
       <button class="ibtn" id="btn-ajuda" type="button" title="Ajuda e perguntas frequentes">❓ <span class="eu-nome" style="max-width:none;">Ajuda</span></button>
       <button class="ibtn sino" id="btn-sino" type="button" aria-haspopup="true" aria-expanded="false" title="Notificações" aria-label="Notificações">🔔<span class="sino-n" id="sino-n" aria-hidden="true"></span></button>
@@ -594,13 +606,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=26"></script>
+<script src="mare-notif-dev.js?v=27"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.28 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.29 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -727,6 +739,7 @@ async function iniciarSessao(){
   renderEu(); renderTudo(); sinoRender();
   carregarLinks();
   iniciarMural();
+  iniciarVtex();
   rotearHash(true);
   mostrarContinuar();
 }
@@ -842,6 +855,36 @@ function avAbre(id){
   avSalvaVistos([id]); muralRender();
   abrirModal('ov-aviso');
 }
+// ── 🚨 Status da VTEX (selinho no topo) ──
+// Lê o batimento que a função vtexStatus grava a cada 5 min em kanban/vtex_saude. Nunca afirma "normal" sem leitura recente: sem batimento há mais de
+// 20 min (função parada / feed fora do ar) o selinho fica cinza "sem leitura". Sem nó nenhum (função ainda não publicada) ou monitor desligado: some.
+const VTEX_VELHO_MS = 20*60*1000;
+function vtexEstado(s, agora){
+  if(!s || typeof s!=='object' || s.desligado) return null;
+  const ult = Date.parse(s.ultimoOkEm||'');
+  if(!Number.isFinite(ult) || agora-ult > VTEX_VELHO_MS) return {nivel:'mudo', texto:'VTEX: sem leitura', titulo:'O monitor do status da VTEX não leu a página nos últimos minutos — não dá pra afirmar que está tudo normal. Clique pra ver o status oficial.'};
+  const inc = Array.isArray(s.incidentes) ? s.incidentes : Object.values(s.incidentes||{});
+  if(s.abertos>0 || inc.length){
+    const nomes = inc.map(i=>i&&i.titulo).filter(Boolean).slice(0,3).join(' · ');
+    return {nivel:'alerta', texto:'VTEX: incidente', titulo:'Incidente na VTEX em andamento'+(nomes?': '+nomes:'')+'. Clique pra ver o status oficial.', href:(inc[0]&&/^https:\/\/status\.vtex\.com\//.test(inc[0].link||'')) ? inc[0].link : null};
+  }
+  return {nivel:'ok', texto:'VTEX normal', titulo:'Status da VTEX: sem incidentes em andamento (verificado há '+Math.max(1,Math.round((agora-ult)/60000))+' min). Clique pra ver o status oficial.'};
+}
+let vtexSaude = undefined;
+function vtexRender(){
+  const el = $('#vtex-pill'); if(!el) return;
+  const e = vtexEstado(vtexSaude, Date.now());
+  if(!e){ el.style.display = 'none'; return; }
+  el.style.display = ''; el.className = 'vtex-pill'+(e.nivel==='ok' ? '' : ' '+e.nivel);
+  $('#vtex-tx').textContent = e.texto; el.title = e.titulo; el.setAttribute('aria-label', e.titulo);
+  el.href = e.href || 'https://status.vtex.com/';
+}
+function iniciarVtex(){
+  if(iniciarVtex._on) return; iniciarVtex._on = true;
+  try{ window._onValue(window._ref(window._db,'kanban/vtex_saude'), sn=>{ vtexSaude = sn.exists() ? sn.val() : null; vtexRender(); }, ()=>{ vtexSaude = null; vtexRender(); }); }catch(e){}
+  setInterval(vtexRender, 60*1000);   // o "há quanto tempo" e o cinza por falta de batimento andam sozinhos
+}
+window.vtexEstado = vtexEstado;
 function iniciarMural(){
   if(avisosUnsub) return;
   try{

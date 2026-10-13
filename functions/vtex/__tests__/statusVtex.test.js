@@ -176,3 +176,58 @@ test('rodar: interruptor geral, feed vazio e erro HTTP', async () => {
   const r2 = await V.rodar({ db, fetchImpl: resp(rss(item({ id: 'B', titulo: 'Real', estado: 'Investigating' }))), agora: AGORA });
   assert.equal(r2.itens, 1); assert.equal(r2.criados, 1);
 });
+
+// ── saúde do monitor (kanban/vtex_saude) e aviso aos ADMs quando o feed falha ──
+const resp = (corpo, ok = true, status = 200) => async () => ({ ok, status, text: async () => corpo });
+const saude = async (db) => (await db.ref('kanban/vtex_saude').get()).val();
+
+test('executar: feed ok sem incidente → saúde ok, 0 abertos', async () => {
+  const db = novoDb();
+  await V.executar({ db, fetchImpl: resp(FEED), agora: AGORA });
+  const s = await saude(db);
+  assert.equal(s.ok, true); assert.equal(s.abertos, 0); assert.equal(s.falhasSeguidas, 0); assert.equal(s.ultimoOkEm, new Date(AGORA).toISOString());
+});
+
+test('executar: incidente aberto → saúde lista o incidente (título, link, estado)', async () => {
+  const db = novoDb();
+  await V.executar({ db, fetchImpl: resp(rss(item({ id: 'S1', titulo: 'Payments degraded', estado: 'Identified' }))), agora: AGORA });
+  const s = await saude(db);
+  assert.equal(s.abertos, 1);
+  assert.deepEqual(s.incidentes, [{ titulo: 'Payments degraded', link: 'https://status.vtex.com/incidents/S1', estado: 'Identified' }]);
+});
+
+test('executar: falha do feed conta, preserva o último ok e só avisa os ADMs ao atingir o limite (uma vez por queda)', async () => {
+  const db = novoDb();
+  await V.executar({ db, fetchImpl: resp(FEED), agora: AGORA });
+  for (let i = 1; i < V.LIMITE_FALHAS; i++) {
+    await assert.rejects(() => V.executar({ db, fetchImpl: resp('', false, 503), agora: AGORA + i * 300000 }), /HTTP 503/);
+    const s = await saude(db);
+    assert.equal(s.ok, false); assert.equal(s.falhasSeguidas, i); assert.equal(s.ultimoOkEm, new Date(AGORA).toISOString());
+    assert.equal((await notifs(db, 'adm')).length, 0, 'ainda não avisa com ' + i + ' falhas');
+  }
+  await assert.rejects(() => V.executar({ db, fetchImpl: resp('', false, 503), agora: AGORA + V.LIMITE_FALHAS * 300000 }), /HTTP 503/);
+  const n = await notifs(db, 'adm');
+  assert.equal(n.length, 1); assert.equal(n[0].type, 'vtex_monitor_falhou'); assert.match(n[0].sub, /HTTP 503/);
+  assert.equal((await notifs(db, 'ana')).length, 0);                       // só ADM
+  // continua falhando: não repete o aviso
+  await assert.rejects(() => V.executar({ db, fetchImpl: resp('', false, 503), agora: AGORA + (V.LIMITE_FALHAS + 1) * 300000 }));
+  assert.equal((await notifs(db, 'adm')).length, 1);
+  // volta a funcionar: zera o contador e libera um novo aviso numa próxima queda
+  await V.executar({ db, fetchImpl: resp(FEED), agora: AGORA + (V.LIMITE_FALHAS + 2) * 300000 });
+  const s = await saude(db);
+  assert.equal(s.ok, true); assert.equal(s.falhasSeguidas, 0); assert.equal(s.avisadoEm, undefined);
+});
+
+test('executar: feed que "responde" mas sem item (formato mudou) também é falha', async () => {
+  const db = novoDb();
+  await assert.rejects(() => V.executar({ db, fetchImpl: resp('<html>nova página</html>'), agora: AGORA, log: { warn() {} } }), /sem nenhum item/);
+  const s = await saude(db);
+  assert.equal(s.ok, false); assert.equal(s.falhasSeguidas, 1);
+});
+
+test('executar: interruptor desligado grava saúde "desligado" (selinho some)', async () => {
+  const db = novoDb({ config: { vtex_status_off: true } });
+  await V.executar({ db, fetchImpl: resp(FEED), agora: AGORA });
+  const s = await saude(db);
+  assert.equal(s.desligado, true); assert.equal(s.ok, undefined);
+});

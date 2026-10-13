@@ -15,6 +15,9 @@
 //     só vira alerta quando começar);
 //   • item resolvido/concluído → Comunicado desativado (`fechado:true`);
 //   • se um ADM apagar ou desativar o Comunicado à mão, a função respeita (não recria nem reativa).
+// SAÚDE DO MONITOR: a cada tick grava `kanban/vtex_saude` = { ok, ultimoOkEm, abertos, incidentes:[{titulo,link,estado}], falhasSeguidas } (lido pelo selinho
+// do Oceano: "VTEX ok" · "incidente" · "monitor sem resposta"). Feed fora do ar / vazio / formato mudado por LIMITE_FALHAS ticks seguidos (≈ 1 h) →
+// notificação `vtex_monitor_falhou` (sino + push) pros ADMs, uma vez por queda — sem isso o selinho/avisos ficariam calados sem ninguém saber.
 // Interruptor geral: `kanban/config/vtex_status_off === true`. Deploy isolado: firebase deploy --only functions:vtexStatus
 //   (e `sendPushOnNotification`, por causa do tipo novo `vtex_incidente` em PUSH_TYPES).
 
@@ -26,6 +29,8 @@ const SITE = 'https://status.vtex.com/';
 const IDADE_MAX_MS = 7 * 24 * 3600 * 1000;      // item aberto há mais que isso = lixo do feed, ignora
 const EXPIRA_MS = 3 * 3600 * 1000;               // o Comunicado se auto-expira se a função parar de renová-lo
 const TIPO_NOTIF = 'vtex_incidente';
+const TIPO_MONITOR = 'vtex_monitor_falhou';
+const LIMITE_FALHAS = 12;                        // 12 ticks de 5 min ≈ 1 h sem conseguir ler o feed
 
 // Estados finais (o incidente acabou) e "só agendado" (ainda não começou). Todo o resto = em andamento.
 const FINAIS = /^(resolved|complete|completed|cancelled|canceled|postmortem|resolvido|conclu[ií]d[oa]|cancelad[oa])$/i;
@@ -145,7 +150,7 @@ async function notificar({ db, item, comunicadoId, agora }) {
 // Processa o feed. `db` injetado (testes passam fake). Devolve contadores.
 async function processar({ db, itens, agora }) {
   const t = agora == null ? Date.now() : agora;
-  const out = { criados: 0, atualizados: 0, fechados: 0, notificados: 0, ignorados: 0 };
+  const out = { criados: 0, atualizados: 0, fechados: 0, notificados: 0, ignorados: 0, incidentes: [] };
   for (const item of itens) {
     const fase = faseDe(item);
     const chave = chaveDe(item.guid);
@@ -163,6 +168,7 @@ async function processar({ db, itens, agora }) {
     }
     if (!recente(item, t)) { out.ignorados++; continue; }
 
+    if (fase === 'aberto') out.incidentes.push({ titulo: item.titulo.slice(0, 120), link: item.link || SITE, estado: item.estado });
     const atual = (await comRef.get()).val();
     if (est && !atual) { out.ignorados++; continue; }                 // um ADM apagou o aviso: respeita
     if (atual && atual.ativo === false && !est?.fechado) { out.ignorados++; continue; }   // ADM desativou à mão: respeita
@@ -197,13 +203,51 @@ async function rodar({ db, fetchImpl, agora, log }) {
   return Object.assign({ itens: itens.length }, r);
 }
 
+// Notifica os ADMs (usuarios_publicos com role 'adm') que o monitor não consegue ler o feed. Id fixo por dia (reexecutar não duplica).
+async function alertarMonitor({ db, falhas, erro, agora }) {
+  const pubs = (await db.ref('kanban/usuarios_publicos').get()).val() || {};
+  const adms = Object.keys(pubs).filter((uid) => pubs[uid] && pubs[uid].role === 'adm');
+  const ts = new Date(agora).toISOString();
+  const id = `vtexmon_${ts.slice(0, 10)}`;
+  const sub = `Sem ler o status da VTEX há ~${Math.round((falhas * 5) / 60 * 10) / 10} h (${falhas} tentativas): ${String(erro || 'feed vazio').slice(0, 120)}. Os avisos automáticos de incidente estão parados.`;
+  let n = 0;
+  for (const uid of adms) {
+    const ref = db.ref(`kanban/usuarios/${uid}/notificacoes/${id}`);
+    if ((await ref.get()).exists()) continue;
+    await ref.set({ id, type: TIPO_MONITOR, title: '🛰️ Monitor da VTEX sem resposta', sub, read: false, ts });
+    n++;
+  }
+  return n;
+}
+
+// Um tick completo: lê o feed, aplica os avisos e registra a SAÚDE (kanban/vtex_saude). Em falha, conta e (≥ LIMITE_FALHAS) avisa os ADMs; relança o erro.
+async function executar({ db, fetchImpl, agora, log }) {
+  const t = agora == null ? Date.now() : agora;
+  const iso = new Date(t).toISOString();
+  const ref = db.ref('kanban/vtex_saude');
+  try {
+    const r = await rodar({ db, fetchImpl, agora: t, log });
+    if (r.desligado) { await ref.set({ desligado: true, em: iso }); return r; }
+    if (!r.itens) throw new Error('feed sem nenhum item (formato mudou?)');
+    await ref.set({ ok: true, ultimoOkEm: iso, abertos: r.incidentes.length, incidentes: r.incidentes.slice(0, 3), falhasSeguidas: 0 });
+    return r;
+  } catch (e) {
+    const prev = (await ref.get()).val() || {};
+    const n = (prev.falhasSeguidas || 0) + 1;
+    const upd = { ok: false, falhasSeguidas: n, ultimaTentativaEm: iso, erro: String((e && e.message) || e).slice(0, 200) };
+    if (n >= LIMITE_FALHAS && !prev.avisadoEm) { await alertarMonitor({ db, falhas: n, erro: upd.erro, agora: t }); upd.avisadoEm = iso; }
+    await ref.update(upd);
+    throw e;
+  }
+}
+
 exports.vtexStatus = onSchedule(
   { schedule: '*/5 * * * *', timeZone: 'America/Sao_Paulo', region: 'us-central1', timeoutSeconds: 90 },
   async () => {
-    try { const r = await rodar({ db: getDatabase() }); if (r.criados || r.fechados || r.atualizados) console.log('[vtexStatus]', JSON.stringify(r)); }
+    try { const r = await executar({ db: getDatabase() }); if (r.criados || r.fechados || r.atualizados) console.log('[vtexStatus]', JSON.stringify(r)); }
     catch (e) { console.error('[vtexStatus] falhou:', e); }
   }
 );
 
 // Exportados pra teste (lógica pura, sem mockar firebase-functions).
-exports._test = { chaveDe, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF };
+exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF };

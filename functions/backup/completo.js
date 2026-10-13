@@ -55,7 +55,7 @@ const NOS_GLOBAIS = [
 // O que NUNCA entra (documentado no manifesto pra ninguém achar que "esqueceu"):
 const EXCLUIDOS = [
   'spotify_secrets', 'spotify_radio_owner_secret', 'oauth_pending',           // segredos
-  'presence', 'notif_feed', 'notif_feed_seen',                                // efêmeros (o feed é derivado)
+  'presence', 'notif_feed', 'notif_feed_seen', 'vtex_saude',                  // efêmeros (o feed é derivado; vtex_saude = batimento do monitor da VTEX)
   'usuarios/*/notificacoes', 'usuarios/*/fcm_tokens',                         // caixa de notificações e tokens de push
   'painel/{okr_presence,presence,spotify_now_geral,_debug_*}', 'okr/obj_locks', // presença, travas e debug
   'squads/*/{presence,access_log,error_logs,error_stats,agent_usage,backups}', // telemetria do squad
