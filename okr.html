@@ -1970,7 +1970,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.73 · okr</div>
+<div class="version">v2.75 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2021,8 +2021,8 @@ window.dispatchEvent(new Event('fb-ready'));
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=27"></script>
-<script src="mare-dicas.js?v=4"></script>
+<script src="mare-notif.js?v=29"></script>
+<script src="mare-dicas.js?v=5"></script>
 
 <script>
 // ═════════════════════════════════════════════════════════════════
@@ -3215,8 +3215,8 @@ function loadOkrFeed(){
 
 // ── 🔔 Sino ──
 function _okrBellItens(){
-  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
-  _okrNotifPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
+  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo}));
+  _okrNotifPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function _okrBellRender(){
@@ -3224,7 +3224,7 @@ function _okrBellRender(){
   const b = document.getElementById('okr-bell-n');
   if(b){ if(n>0){ b.textContent = n>99?'99+':String(n); b.style.display='flex'; } else b.style.display='none'; }
   _okrMuralBadge();
-  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id));   // som quando chega uma notificação nova (respeita 🔇 e o Não Perturbe)
+  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id), itens.filter(i=>i.unread).map(i=>i.tipo));   // som quando chega uma notificação nova (respeita 🔇 e o Não Perturbe)
   const drop = document.getElementById('okr-bell-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
   drop.innerHTML = `<div class="okr-bell-hd"><span>🔔 Notificações</span><span style="flex:1;"></span>${n?'<button type="button" class="btn btn-sm" style="font-size:10px;padding:3px 10px;" onclick="_okrBellTudoLido()">✓ Marcar tudo como lido</button>':''}</div>
     <div class="okr-bell-list">${itens.length ? itens.slice(0,50).map(i=>`<div class="okr-bell-it" onclick="_okrBellClick(${jsq(i.k)},${jsq(i.id)})"><span style="font-size:14px;flex-shrink:0;">${esc(i.icon)}</span><div style="flex:1;min-width:0;"><div class="t">${esc(i.title)}</div>${i.sub?`<div class="s">${esc(i.sub)}</div>`:''}<div class="w">${esc(_okrRel(i.ts))}${i.autor?' · '+esc(i.autor):''}</div></div>${i.unread?'<span class="okr-bell-dot"></span>':''}</div>`).join('')

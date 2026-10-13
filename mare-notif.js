@@ -218,6 +218,7 @@
       else st.seen = {ts:v.ts, lidos:v.lidos||{}};
       st.seenReady = true; emitir();
     }, ()=>{ st.seenReady = true; emitir(); });
+    prefsStart(); insRender();   // Não Perturbe + modo insistente da pessoa (kanban/usuarios/{uid}/notif_prefs) já carregados antes do 1º aviso
   }
 
   // Eventos do feed visíveis pra mim (sem os que eu mesmo fiz), do mais novo pro mais antigo.
@@ -318,6 +319,26 @@
   const dnd = {on:false, until:null, label:''};
   let prefsOn = false, tokenConfirmado = false, fcmHookOn = false;
 
+  // 🪟 Push que chega com a página VISÍVEL mas SEM FOCO (ex.: o Maré/Radar aberto no 2º monitor enquanto o foco está no Meet/Teams, ou a tela sendo
+  // compartilhada): o FCM só entrega ao Service Worker (aviso do sistema) quando NENHUMA aba está visível; com uma visível entrega à própria página, que só
+  // mostrava um toast de 3 s — fácil de perder numa reunião. Aqui, sem foco, a página mostra também o aviso do sistema, igual ao do Service Worker (mesma `tag`
+  // → se os dois dispararem, um substitui o outro, nunca duplica). Com foco (a pessoa está olhando a janela) fica só o toast.
+  const SITE = 'https://caiosoares1899.github.io/hering/';
+  function avisoSistema(p){
+    try{
+      if(!window.Notification || Notification.permission!=='granted' || !('serviceWorker' in navigator)) return false;
+      if(document.hasFocus()) return false;
+      const d = (p && p.data) || {};
+      const titulo = d.title || (p && p.notification && p.notification.title) || 'Maré Digital';
+      const url = String(d.url||'').indexOf(SITE)===0 ? d.url : SITE+'kanban.html';          // só endereço do próprio site (o clique abre isso)
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification(titulo, {
+        body: d.body || (p && p.notification && p.notification.body) || '',
+        icon: SITE+'marinheiro.png', badge: SITE+'marinheiro.png',
+        tag: d.tag || 'mare-digital-notif', data: Object.assign({}, d, {url})
+      })).catch(()=>{});
+      return true;
+    }catch(e){ return false; }
+  }
   function toast(m){ try{ if(st.opts && st.opts.toast) st.opts.toast(m); else if(typeof window.showToast==='function') window.showToast(m); }catch(e){} }
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -342,8 +363,127 @@
     if(prefsOn || !st.uid || st.viewer) return; prefsOn = true;
     window._onValue(window._ref(window._db, 'kanban/usuarios/'+st.uid+'/notif_prefs'), snap=>{
       const v = snap.val() || {}; const d = v.dnd || {on:false, until:null, label:''};
-      dnd.on = !!d.on; dnd.until = d.until || null; dnd.label = d.label || ''; rodapeRender();
+      dnd.on = !!d.on; dnd.until = d.until || null; dnd.label = d.label || ''; if(v.insistente && typeof v.insistente==='object') insAplicaRemoto(v.insistente); rodapeRender();
     }, ()=>{});
+  }
+
+  // ═════════════════════════════════════════════════════════════════════════════════════
+  // 🫨 MODO INSISTENTE (opt-in, 2026-10-13) — "às vezes eu não ouço o barulho": quem quiser liga e passa a ser CHAMADO com mais força quando chega um aviso.
+  // Padrão: DESLIGADO (o sino segue tocando só o "ding"). Ligado, a cada aviso novo (o mesmo momento do ding): 📳 a tela treme (o "zumbido" do MSN), e — se a pessoa
+  // NÃO está olhando a janela — 🔁 o som se repete a cada 30 s (até 5 vezes) e 🪧 o título da aba pisca, até ela voltar à janela, mexer em algo (clique/tecla/toque)
+  // ou o Não Perturbe ligar. Respeita 🔇 (sem som, o resto continua) e o Não Perturbe (nada acontece). Por padrão só os avisos IMPORTANTES (os mesmos que viram push).
+  // Preferência por pessoa: kanban/usuarios/{uid}/notif_prefs/insistente (acompanha a conta em todos os aparelhos) + cópia no aparelho (localStorage 'notif_insistente').
+  // O tremor mexe SÓ no conteúdo principal (#app-root / #app), animando left/top — nunca `transform`, que deslocaria os elementos fixos (modais, gaveta, botões
+  // flutuantes) pra dentro do conteúdo. Respeita "reduzir movimento" do sistema (prefers-reduced-motion): sem tremor.
+  const INS_PADRAO = {on:false, tremer:true, repetir:true, titulo:true, importantes:true};
+  const INS_INTERVALO_MS = 30000, INS_MAX_REPETICOES = 5;
+  function insLer(){ let v = null; try{ v = JSON.parse(lsGet('notif_insistente')||'null'); }catch(e){} return Object.assign({}, INS_PADRAO, (v && typeof v==='object') ? v : {}); }
+  let ins = insLer();
+  let insTimer = null, insRepeticoes = 0, insOuvindo = false, tituloTimer = null, tituloOrig = '';
+  function reduzMovimento(){ try{ return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }catch(e){ return false; } }
+  function insNormaliza(v){
+    const o = Object.assign({}, INS_PADRAO); Object.keys(INS_PADRAO).forEach(k=>{ if(v && typeof v[k]==='boolean') o[k] = v[k]; }); return o;
+  }
+  function insAplicaRemoto(v){ ins = insNormaliza(v); lsSet('notif_insistente', JSON.stringify(ins)); insRender(); }
+  function insistenteSet(patch){
+    ins = insNormaliza(Object.assign({}, ins, patch)); lsSet('notif_insistente', JSON.stringify(ins)); insRender();
+    if(!ins.on) insistenteParar();
+    if(!st.uid || st.viewer) return;
+    window._set(window._ref(window._db, 'kanban/usuarios/'+st.uid+'/notif_prefs/insistente'), ins).catch(()=>toast('⚠ Salvei neste aparelho, mas não consegui gravar no seu cadastro.'));
+  }
+  // 📳 o "zumbido": o conteúdo principal chacoalha ~0,7 s.
+  function tremer(){
+    if(reduzMovimento()) return false;
+    const el = ['#app-root','#app'].map(s=>document.querySelector(s)).find(e=>e && getComputedStyle(e).display!=='none');
+    if(!el || !el.animate) return false;
+    const cs = getComputedStyle(el); const volta = cs.position==='static' ? (el.style.position = 'relative', true) : false;   // left/top só funcionam fora de `static`
+    const kf = [[0,0],[-11,3],[10,-4],[-9,-3],[9,4],[-7,2],[6,-3],[-4,2],[3,-1],[-1,1],[0,0]].map(([x,y])=>({left:x+'px', top:y+'px'}));
+    const a = el.animate(kf, {duration:700, easing:'cubic-bezier(.36,.07,.19,.97)'});
+    const fim = ()=>{ if(volta) el.style.position = ''; };
+    a.onfinish = fim; a.oncancel = fim;
+    return true;
+  }
+  function piscarTitulo(txt){
+    if(tituloTimer) return;
+    tituloOrig = document.title; let on = false;
+    tituloTimer = setInterval(()=>{ on = !on; document.title = on ? ('🔔 '+(txt||'Nova notificação')+' · '+tituloOrig) : tituloOrig; }, 1000);
+  }
+  function pararTitulo(){ if(tituloTimer){ clearInterval(tituloTimer); tituloTimer = null; document.title = tituloOrig; } }
+  function insistenteParar(){
+    if(insTimer){ clearInterval(insTimer); insTimer = null; }
+    insRepeticoes = 0; pararTitulo();
+  }
+  function insOuvir(){
+    if(insOuvindo) return; insOuvindo = true;
+    ['pointerdown','keydown','touchstart','focus'].forEach(ev=>window.addEventListener(ev, insistenteParar, {passive:true, capture:true}));
+    document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && document.hasFocus()) insistenteParar(); });
+  }
+  const olhando = ()=>{ try{ return document.hasFocus() && !document.hidden; }catch(e){ return false; } };
+  const IMPORTANTE = tipo => !tipo || PUSH_PADRAO.has(tipo);
+  // Chamado junto do "ding" (aviso NOVO). opts: {tipos:[...tipos dos avisos novos], dnd:true (a página sabe que o Não Perturbe está ligado), titulo:'texto do aviso'}. Devolve se escalou.
+  function insistente(opts){
+    opts = opts || {};
+    prefsStart();
+    if(!ins.on) return false;
+    if(opts.dnd===true || dndAtivo()) return false;
+    if(ins.importantes && Array.isArray(opts.tipos) && opts.tipos.length && !opts.tipos.some(IMPORTANTE)) return false;
+    if(ins.tremer) tremer();
+    if(!olhando()){                                  // olhando a janela: o tremor basta — não repete nem pisca
+      if(ins.titulo) piscarTitulo(opts.titulo);
+      if(ins.repetir && !insTimer){
+        insOuvir(); insRepeticoes = 0;
+        insTimer = setInterval(()=>{
+          if(dndAtivo() || olhando() || ++insRepeticoes > INS_MAX_REPETICOES){ insistenteParar(); return; }
+          tocar();
+        }, INS_INTERVALO_MS);
+      }
+      insOuvir();
+    }
+    return true;
+  }
+  // "▶ Testar agora" do menu: mostra exatamente o que a pessoa escolheu (ignora o interruptor geral e o Não Perturbe).
+  function insistenteTestar(){
+    const m = somMudo(); if(m) toast('🔇 O som está desligado — o resto do aviso insistente continua.');
+    if(ins.tremer && !tremer()) toast(reduzMovimento() ? 'O seu sistema pede menos movimento — a tela não treme.' : 'Não consegui tremer esta tela.');
+    tocar();
+    if(ins.titulo){ piscarTitulo('Teste do modo insistente'); setTimeout(pararTitulo, 4000); }
+  }
+  function insRender(){
+    const on = !!ins.on;
+    document.querySelectorAll('.mn-ins-lbl').forEach(el=>{ el.textContent = on ? '🫨 Modo insistente ligado' : '🫨 Modo insistente: desligado'; });
+    document.querySelectorAll('.mn-ins-btn').forEach(b=>b.classList.toggle('mn-ins-ativo', on));
+    const m = document.getElementById('mn-ins-menu'); if(!m) return;
+    ['on','tremer','repetir','titulo','importantes'].forEach(k=>{ const c = m.querySelector('[data-ins="'+k+'"]'); if(c) c.checked = !!ins[k]; });
+    m.classList.toggle('mn-ins-off', !on);
+    const nota = m.querySelector('.mn-ins-nota'); if(nota) nota.style.display = reduzMovimento() ? 'block' : 'none';
+  }
+  function insMenuEnsure(){
+    let m = document.getElementById('mn-ins-menu'); if(m) return m;
+    m = document.createElement('div'); m.id = 'mn-ins-menu'; m.className = 'mn-dnd-menu mn-ins-menu';
+    m.innerHTML = '<div class="mn-dnd-hint">Por padrão o sino só toca um “ding”. Ligue pra ser <b>chamado com mais força</b> quando chegar um aviso.</div>'
+      + '<label class="mn-ins-it mn-ins-on"><input type="checkbox" data-ins="on"> <b>Ligar o modo insistente</b></label>'
+      + '<div class="mn-ins-sub">'
+      + '<label class="mn-ins-it"><input type="checkbox" data-ins="tremer"> 📳 Tremer a tela (como o “zumbido” do MSN)</label>'
+      + '<label class="mn-ins-it"><input type="checkbox" data-ins="repetir"> 🔁 Repetir o som a cada 30 s (até 5×) se eu não estiver na janela</label>'
+      + '<label class="mn-ins-it"><input type="checkbox" data-ins="titulo"> 🪧 Piscar o título da aba se eu não estiver na janela</label>'
+      + '<label class="mn-ins-it"><input type="checkbox" data-ins="importantes"> ⭐ Só avisos importantes (os mesmos que viram push)</label>'
+      + '</div>'
+      + '<div class="mn-ins-nota" style="display:none">O seu sistema pede menos movimento: a tela não treme (o resto funciona).</div>'
+      + '<button type="button" class="mn-dnd-it mn-dnd-re" data-ins-testar="1">▶ Testar agora</button>';
+    m.addEventListener('click', e=>{ e.stopPropagation(); if(e.target.closest && e.target.closest('[data-ins-testar]')) insistenteTestar(); });
+    m.addEventListener('change', e=>{ const k = e.target && e.target.getAttribute && e.target.getAttribute('data-ins'); if(k) insistenteSet({[k]: !!e.target.checked}); });
+    document.body.appendChild(m); insRender(); return m;
+  }
+  function insistenteMenu(e){
+    if(e) e.stopPropagation();
+    const btn = e && e.currentTarget; if(!btn) return;
+    const m = insMenuEnsure();
+    if(m.style.display==='block'){ m.style.display = 'none'; return; }
+    menusFechar(); insRender();
+    const r = btn.getBoundingClientRect(); m.style.display = 'block'; const h = m.offsetHeight;
+    m.style.left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 300) - 8))+'px'; m.style.width = Math.max(r.width, 300)+'px';
+    if(window.innerHeight - r.bottom - 8 >= h){ m.style.top = (r.bottom+6)+'px'; m.style.bottom = 'auto'; }
+    else { m.style.top = 'auto'; m.style.bottom = (window.innerHeight - r.top + 6)+'px'; }
   }
 
   // Som: "ding" de 2 tons sintetizado (Web Audio, sem arquivo). Respeita o mudo pessoal e o Não Perturbe.
@@ -371,13 +511,14 @@
   // O sino chama isto a cada desenho com os ids das NÃO lidas: toca o som quando aparece um id que ainda não tinha sido visto.
   // O que chega nos primeiros 3 s da página (carga inicial) só entra na lista, sem som.
   const idsVistos = new Set(); let t0Novas = 0;
-  function novas(ids){
+  function novas(ids, tipos){
     prefsStart();   // o Não Perturbe precisa estar carregado ANTES do 1º ding — não pode depender de o sino ter sido aberto
     if(!cfgPronto) return false;   // sem a config o sino ainda não mostra tipo nenhum: a janela "fria" de 3 s só começa quando a lista de verdade aparece (senão a lista que já existia chegava "nova" e tocava)
     if(!t0Novas) t0Novas = Date.now();
     const quente = Date.now() - t0Novas > 3000; let achou = false;
-    (ids||[]).forEach(id=>{ if(!idsVistos.has(id)){ idsVistos.add(id); if(quente) achou = true; } });
-    if(achou) tocar();
+    const tiposNovos = [];
+    (ids||[]).forEach((id,i)=>{ if(!idsVistos.has(id)){ idsVistos.add(id); if(quente){ achou = true; if(tipos && tipos[i]) tiposNovos.push(tipos[i]); } } });
+    if(achou){ tocar(); insistente({tipos:tiposNovos}); }
     return achou;
   }
 
@@ -434,10 +575,11 @@
         + '<button type="button" class="mn-dnd-it" onclick="MareNotif.dndAmanha()">🔕 Até amanhã de manhã</button>'
         + '<button type="button" class="mn-dnd-it" onclick="MareNotif.dndSet(true,null,\'\')">🔕 Até eu desativar</button>'
         + '<button type="button" class="mn-dnd-it mn-dnd-re" onclick="MareNotif.dndSet(false)">🔔 Reativar notificações</button></div></div>')
+      + '<div class="mn-insw"><button type="button" class="mn-ins-btn" onclick="MareNotif.insistenteMenu(event)"><span class="mn-ins-lbl"></span></button></div>'
       + '</div>';
   }
   function rodapeRender(){
-    prefsStart();
+    prefsStart(); insRender();
     const mudo = somMudo(), s = permEstado(), ativo = dndAtivo();
     const labels = {granted:'✅ Permitidas neste aparelho', denied:'🚫 Bloqueadas (ajuste nas config. do navegador)', default:'🔔 Ativar notificações neste aparelho', unsupported:'⚠ Não suportado neste navegador'};
     document.querySelectorAll('.mn-som').forEach(b=>{ b.textContent = mudo ? '🔇' : '🔊'; b.title = mudo ? 'Som desligado — clique para ligar' : 'Som ligado — clique para desligar'; });
@@ -446,7 +588,7 @@
     document.querySelectorAll('.mn-dnd-lbl').forEach(el=>{ el.textContent = ativo ? ('🔕 Não Perturbe ativo'+(dnd.label ? ' ('+dnd.label+')' : ' (até você desativar)')) : '🔔 Notificações ativas'; });
     // Permissão já concedida em outra sessão/página: garante o token deste aparelho (1x por carga), como o kanban faz.
     if(s==='granted' && !tokenConfirmado && st.uid && !st.viewer && window._fcmReady){ tokenConfirmado = true; tokenRegistrar(); }
-    if(!fcmHookOn && window._fcmOnMessage){ fcmHookOn = true; try{ window._fcmOnMessage(p=>toast('🔔 '+((p && p.data && p.data.title) || (p && p.notification && p.notification.title) || 'Nova notificação'))); }catch(e){} }
+    if(!fcmHookOn && window._fcmOnMessage){ fcmHookOn = true; try{ window._fcmOnMessage(p=>{ toast('🔔 '+((p && p.data && p.data.title) || (p && p.notification && p.notification.title) || 'Nova notificação')); avisoSistema(p); }); }catch(e){} }
   }
   // Menu do Não Perturbe: fixo na tela (o painel do sino corta o que passa da própria caixa), abre pra cima quando não cabe embaixo.
   function dndMenu(e){
@@ -479,6 +621,10 @@
       + '.mn-dnd-btn{box-sizing:border-box;width:100%;text-align:left;background:none;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--txt2,#bcd);font-size:11px;white-space:normal;word-break:break-word;}'
       + '.mn-dnd-btn.mn-dnd-ativo{border-color:rgba(255,209,102,.4);color:var(--warn,#ffd166);background:rgba(255,209,102,.08);}'
       + '.mn-dnd-menu{display:none;box-sizing:border-box;position:fixed;background:rgba(var(--deep-rgb,3,13,26),.99);border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);padding:6px;z-index:9999;max-height:70vh;overflow-y:auto;}'
+      + '.mn-insw{padding-top:2px;}.mn-ins-btn{box-sizing:border-box;width:100%;text-align:left;background:none;border:1px solid var(--glass-b,rgba(255,255,255,.15));border-radius:8px;padding:7px 10px;cursor:pointer;color:var(--txt2,#bcd);font-size:11px;white-space:normal;}'
+      + '.mn-ins-btn.mn-ins-ativo{border-color:rgba(56,182,255,.5);color:var(--accent,#38b6ff);background:rgba(56,182,255,.08);}'
+      + '.mn-ins-menu{padding:8px;}.mn-ins-it{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--txt2,#bcd);padding:6px 4px;cursor:pointer;line-height:1.35;}.mn-ins-it input{margin-top:2px;flex:none;}.mn-ins-on{border-bottom:1px solid var(--glass-b,rgba(255,255,255,.15));margin-bottom:4px;}'
+      + '.mn-ins-sub{padding-left:4px;}.mn-ins-off .mn-ins-sub{opacity:.5;}.mn-ins-nota{font-size:10px;color:var(--warn,#ffd166);padding:4px 6px;}'
       + '.mn-dnd-hint{font-size:10px;color:var(--txt3,#8fa);padding:4px 8px 6px;white-space:normal;}'
       + '.mn-dnd-it{box-sizing:border-box;display:block;width:100%;text-align:left;background:none;border:none;color:var(--txt2,#bcd);font-size:12px;padding:8px;border-radius:6px;cursor:pointer;white-space:normal;line-height:1.4;}'
       + '.mn-dnd-it:hover{background:rgba(56,182,255,.1);}.mn-dnd-re{color:var(--accent,#38b6ff);border-top:1px solid var(--glass-b,rgba(255,255,255,.15));margin-top:4px;padding-top:10px;}';
@@ -699,7 +845,7 @@
   })();
 
   window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
-    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
+    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, insistente, insistenteMenu, insistenteSet, insistenteParar, insistenteTestar, insRender, insEstado: ()=>Object.assign({}, ins), dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
 })();

@@ -2964,7 +2964,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.62 · painel</div>
+<div class="version">v5.64 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3067,9 +3067,9 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=27"></script>
+<script src="mare-notif.js?v=29"></script>
 <script src="mare-metas.js?v=8"></script>
-<script src="mare-dicas.js?v=4"></script>
+<script src="mare-dicas.js?v=5"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -7114,7 +7114,7 @@ function renderPainelNotifs(){
     if(naoLidas>0){ badge.textContent = naoLidas>99?'99+':naoLidas; badge.style.display='flex'; }
     else badge.style.display='none';
   }
-  if(window.MareNotif) MareNotif.novas(_painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).map(n=>n._kind+':'+n.id));   // som quando chega notificação nova (respeita 🔇 e o Não Perturbe)
+  if(window.MareNotif) MareNotif.novas(_painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).map(n=>n._kind+':'+n.id), _painelNotifs.filter(n=>(n._kind==='notif'||n._kind==='feed') && !n.read).map(n=>n.type||n.tipo));   // som quando chega notificação nova (respeita 🔇 e o Não Perturbe)
   const list = document.getElementById('painel-notif-list'); if(!list) return;
   if(!_painelNotifs.length){
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:24px 16px;text-align:center;">Nenhuma notificação ou lembrete.</div>';
@@ -7244,6 +7244,16 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_modo_insistente_2026_10_13',
+    titulo: '🫨 Não ouve o “ding”? Agora dá pra ser chamado com mais força',
+    corpo: '<p>Quem às vezes não ouve o som das notificações ganhou uma opção: o <b>🫨 Modo insistente</b>. Ele vem <b>desligado</b> — só liga quem quiser, no rodapé do <b>🔔</b> (Maré, Radar, Painel e Oceano).</p>'
+      + '<p>Ligado, quando chega um aviso <b>importante</b> (os mesmos que viram notificação no celular): <b>📳 a tela treme</b> (como o zumbido do MSN) e, se você não estiver olhando a janela, o <b>🔁 som se repete a cada 30 s</b> (até 5 vezes) e o <b>🪧 título da aba pisca</b> — até você voltar ou mexer em algo.</p>'
+      + '<p>Você escolhe cada item e pode apertar <b>▶ Testar agora</b>. Respeita o 🔇 e o 🔕 Não Perturbe, e não treme se o seu computador pede “reduzir movimento”.</p>'
+      + '<p>🪟 E mais: se o Maré estiver aberto mas você estiver em outra janela (numa reunião, por exemplo), o aviso agora também aparece como <b>notificação do Windows/Chrome</b>.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_vtex_alerta_2026_10_13',
     titulo: '🚨 Incidente na VTEX? O Maré avisa sozinho',
