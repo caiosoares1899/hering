@@ -16,6 +16,7 @@ const { getMessaging } = require('firebase-admin/messaging');
 const { getDatabase } = require('firebase-admin/database');
 const { urlDoPush, tagDoPush } = require('./common/pushUrl');
 const { lerConfigTipo, pushPermitido } = require('./common/notifConfig');
+const { tokenMorto, resumirFalhas, falhaGeral } = require('./common/pushTokens');
 
 initializeApp();
 
@@ -108,17 +109,20 @@ exports.sendPushOnNotification = onValueCreated(
 
     const resp = await getMessaging().sendEachForMulticast(message);
     console.log(`[push] ${uid}: ${resp.successCount} ok, ${resp.failureCount} falhas`);
+    // POR QUE falhou (antes só a contagem ia pro log — sem o código não dava pra saber se eram tokens mortos, payload recusado ou credencial).
+    if (resp.failureCount) {
+      const motivos = resumirFalhas(resp.responses);
+      console.log(`[push] ${uid}: motivos das falhas (tipo '${notif.type}'): ${JSON.stringify(motivos)}`);
+      if (falhaGeral(resp.responses)) console.error(`[push] ${uid}: o FCM recusou TODOS os tokens por motivo que NÃO é token morto — mensagem/credencial/projeto, não apagando nada. ${JSON.stringify(motivos)}`);
+    }
 
-    // Remove tokens mortos (desinstalou, revogou permissão, etc.) pra não
-    // ficar tentando pra sempre em vão
+    // Remove só tokens que o FCM diz estarem mortos (desinstalou, revogou permissão, etc.) — `invalid-argument` de PAYLOAD não apaga nada
+    // (ver common/pushTokens.js: uma mensagem malformada apagava os tokens de todo mundo).
     const deletions = [];
     resp.responses.forEach((r, i) => {
-      if (!r.success) {
-        const code = r.error?.code || '';
-        if (code.includes('registration-token-not-registered') || code.includes('invalid-argument')) {
-          const [key] = tokenEntries[i];
-          deletions.push(db.ref(`kanban/usuarios/${uid}/fcm_tokens/${key}`).remove());
-        }
+      if (!r.success && tokenMorto(r.error)) {
+        const [key] = tokenEntries[i];
+        deletions.push(db.ref(`kanban/usuarios/${uid}/fcm_tokens/${key}`).remove());
       }
     });
     if (deletions.length) await Promise.all(deletions);

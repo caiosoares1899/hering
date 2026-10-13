@@ -14,6 +14,7 @@
 
 const { SITE_BASE_URL } = require('../common/pushUrl');
 const { lerConfigTipo, pushPermitido } = require('../common/notifConfig');
+const { tokenMorto, resumirFalhas } = require('../common/pushTokens');
 const { emailDaEmpresa, MARE_SO_HERING, TORRES_ATIVAS } = require('../common/mareModo');
 
 const DEFAULT_ADM_EMAILS = ['caio.soares@ciahering.com.br', 'rafael.passos@ciahering.com.br'];
@@ -86,10 +87,11 @@ async function runPushMural(db, messaging, ev, { agora = Date.now(), log = conso
       });
       enviados += resp.successCount || 0;
       const mortos = [];
+      // Só apaga token que o FCM diz estar morto; `invalid-argument` de PAYLOAD não apaga (ver common/pushTokens.js).
       resp.responses.forEach((r, i) => {
-        const code = (r.error && r.error.code) || '';
-        if (!r.success && (code.includes('registration-token-not-registered') || code.includes('invalid-argument'))) mortos.push(db.ref(`kanban/usuarios/${uid}/fcm_tokens/${entries[i][0]}`).remove());
+        if (!r.success && tokenMorto(r.error)) mortos.push(db.ref(`kanban/usuarios/${uid}/fcm_tokens/${entries[i][0]}`).remove());
       });
+      if (resp.failureCount) log(`[push-mural] ${uid}: motivos das falhas: ${JSON.stringify(resumirFalhas(resp.responses))}`);
       if (mortos.length) await Promise.all(mortos);
     } catch (e) { log(`[push-mural] ${uid}: falha (${e && e.message}), seguindo com os demais.`); }
   }));
