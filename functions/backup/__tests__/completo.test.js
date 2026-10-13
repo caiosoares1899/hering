@@ -37,7 +37,7 @@ const seed = () => ({
     usuarios: { ana: { role: 'po', squads: { dados: true }, notificacoes: { n1: {} }, fcm_tokens: { t: { token: 'SEGREDO' } }, atalhos_custom: { a: 1 } }, bia: { role: 'membro' } },
     painel: { config: { x: 1 }, okr_presence: { u: 1 }, presence: { u: 1 }, kudos_geral: { k: 1 } },
     spotify_secrets: { a: 'SEGREDO' }, oauth_pending: { b: 'SEGREDO' }, notif_feed: { e: 1 },
-    campanhas: { c1: { nome: 'BF' } }, dados_diarios: { '2026-10-17': { v: 1 } },
+    campanhas: { c1: { nome: 'BF' } }, dados_diarios: { '2026-10-17': { v: 1 } }, dados_diarios_dev: { '2026-10-17': { v: 'dev' } },
   },
 });
 
@@ -63,8 +63,9 @@ test('semanal: guarda cada squad INTEIRO (comentários, config, intake, snapshot
   assert.deepEqual(lido(b, `${base}/global/okr.json`).dados, { objetivos: { o1: { titulo: 'x' } } });
   assert.deepEqual(lido(b, `${base}/global/painel.json`).dados, { config: { x: 1 }, kudos_geral: { k: 1 } });
   assert.ok(lido(b, `${base}/global/campanhas.json`) && lido(b, `${base}/global/dados_diarios.json`), 'volumosos entram no semanal');
+  assert.deepEqual(lido(b, `${base}/global/dados_diarios_dev.json`).dados, { '2026-10-17': { v: 'dev' } }, 'a Central de Dados do painel de teste também tem cópia');
   assert.equal(lido(b, `${base}/global/escala.json`).dados['2026-10-19'].dados.ana.p, '12:00-13:00', 'pausas da escala também');
-  assert.ok(m.itens.length === 10 && m.erros.length === 0 && m.excluidos.length > 5);
+  assert.ok(m.itens.length === 11 && m.erros.length === 0 && m.excluidos.length > 5);
   assert.equal(lido(b, `${base}/manifesto.json`).modo, 'semanal');
   assert.ok(m.vazios.includes('squads/prf'), 'squad sem nada vai pro manifesto como vazio');
 });
@@ -94,7 +95,7 @@ test('filtros puros e escolha de nós por modo', () => {
   assert.deepEqual(filtrarDadosSquad({ cards: 1, card_locks: 2 }), { cards: 1 });
   assert.equal(nosDoModo('semanal').length, NOS_GLOBAIS.length);
   assert.ok(nosDoModo('diario').length < NOS_GLOBAIS.length);
-  NOS_GLOBAIS.forEach((n) => assert.equal(/_dev$|secret|oauth|presence|notif_feed/.test(n.no) && !['notif_config'].includes(n.no), false, n.no));
+  NOS_GLOBAIS.forEach((n) => assert.equal(/_dev$|secret|oauth|presence|notif_feed/.test(n.no) && !['notif_config', 'dados_diarios_dev'].includes(n.no), false, n.no));
 });
 
 test('restauração: plano por nó, por pessoa (usuarios) e por squad — sempre update, nunca set', () => {

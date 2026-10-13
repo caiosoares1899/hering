@@ -3950,7 +3950,7 @@ detalhe aberto — ver nota abaixo).
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L147–L186 → `spotify/*.js`
 - `intakeSubmit` — L192 → `intake/submit.js`
 - `weeklyBackup` — L197 → `backup/weeklyBackup.js` (só o QUADRO do squad; exporta também `_listActiveSquads()`, reaproveitado pelo backup completo)
-- `backupCompletoSemanal`/`backupGlobalDiario` — L206–L215 → `backup/completo.js` (2026-10-13; backup COMPLETO em `backups-completos/`, ver seção `backup/` abaixo)
+- `backupCompletoSemanal`/`backupGlobalDiario` — L206–L215 → `backup/completo.js` (2026-10-13; backup COMPLETO em `backups-completos/`, ver seção `backup/` abaixo); `backupVigia` → `backup/vigia.js`; `backupCompletoApi` → `backup/restaurarApi.js` (mesmas seção)
 - `okrDailyScan` — L204 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
 - `metasLembretes` — L210 → `functions/index.js` (2026-10-12; deploy na máquina do usuário: `firebase deploy --only functions:metasLembretes,functions:sendPushOnNotification`) → `metas/lembretes.js` — lembretes de preenchimento das metas, a cada 15 min no horário de Brasília (ver 🐟 Metas e desafios no kanban-dev)
 - `okrWeeklySnapshot` — L217 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
@@ -4369,6 +4369,13 @@ detalhe aberto — ver nota abaixo).
   erro num item → resto salvo + manifesto + execução reprovada. `backup/restaurar.js` — CLI local (dry-run por padrão):
   `planoDeRestauracao()` (sempre `update`, por pessoa em `usuarios`), salva o estado atual em `pre-restauracao/` antes de aplicar.
   Testes: `backup/__tests__/completo.test.js`. Retenção: `storage-lifecycle.json` (semanal 90 d · diário 14 d · pre-restauração 30 d).
+  `dados_diarios_dev` é a única exceção ao "nós `_dev` ficam de fora". **`backup/vigia.js`** — `backupVigia` (todo dia 09:00): `verificar()` confere o RESULTADO
+  no Storage (manifesto do diário de hoje, semanal ≤ 8 dias, `backups/{squad}` do quadro de cada squad) e `alertarAdms()` grava `backup_falhou` (id `backup_{data}`,
+  1/dia) pros ADMs (`usuarios_publicos.role==='adm'`). **`backup/restaurarCore.js`** (puro: `AREAS`, `faltantes()` — só o que NÃO existe hoje —, `compararAreas()`,
+  `marcadoresDeMencao()` p/ não reacionar o Agente Ágil) + **`backup/restaurarApi.js`** — `backupCompletoApi` (HTTP + Bearer; `exigirPermissao()` = ADM ou PO/Organizador
+  inscrito no squad; ações `listar`/`comparar`/`restaurar`; grava `pre-restauracao/…/api-{squad}.json` e `dados/backup_restauracoes/{ts}`). Cliente: `kanban-dev.html`
+  `rcListar()`/`rcComparar()`/`rcRestaurar()`/`_rcChamar()` + `#restore-cloud-section` (⚙ Config → Backup; visibilidade em `_applyRestoreSectionVisibility()`), `BACKUP_API_URL`.
+  Tipo de notificação `backup_falhou` (`MareNotif.TIPOS`, `PUSH_TYPES`, `pushUrl.js` → Painel). Testes: `backup/__tests__/{vigia,restaurarApi}.test.js`, `docs/arezzo/testes/test_backup_completo.js`.
 ### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
 - `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
   (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`
