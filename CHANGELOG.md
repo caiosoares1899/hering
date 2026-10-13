@@ -18,6 +18,16 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: Metas "O mar tá pra peixe", Escala, Pedido interno, login único pelo Oceano, login do iPhone — 2026-10-13 · kanban v8.30.845 · painel v5.59 · okr v2.70 · oceano v1.24 · mare-notif.js v24 · mare-metas.js v8 (novo) · mare-login.js v2 (novo) · escala.html v1.7 (nova) · intake.html (Pedido interno)
+Sobe pra produção tudo o que estava validado em dev desde 10/10 (kanban-dev v8.30.825→845, painel-dev v5.45→5.59, okr-dev v2.70, oceano-dev v1.15→1.24, mare-notif-dev v23→24). Em `database.rules.json` os nós `metas_*`, `escala` e `notif_config` já estão publicados.
+- **🐟 Metas e desafios ("O mar tá pra peixe"):** aba lateral 📊 Dados do Maré (squad | Digital) e 📊 Dados do Painel; meta com ritmo **linear ou por dia (diarização do time)**, faróis 🟢🟡🔴, popup de peixinhos a cada 20 %, **Atualizar valor** com data/hora (entrada retroativa, como soma ou como total) e **🗂 Entradas** (ver, editar, excluir). Lembrete de preenchimento (função `metasLembretes`).
+- **🗓️ Escala (`escala.html`):** escala de trabalho/plantão/folga por dia — visão da squad, global e cadastro; visão 👥 no 📅 Calendários do Maré (marcador por dia no mês), imagem JPG da semana/dia, aviso (sino + push) a quem teve a escala cadastrada por um gestor.
+- **📥 Pedido interno (`intake.html`):** pedido a uma squad já logado com o Google da Hering, com os campos que o PO liga/desliga; cai na caixa de Intake. Correção: salvar a config do Painel não religa mais o Intake nem apaga os campos do pedido interno (`dados/agil_cfg`).
+- **🌊 Login único e Mural do Oceano:** Maré/Painel deslogados levam ao Oceano e voltam; Mural de avisos na página inicial do Oceano (recolhível, com indicador de novos); Comunicados com "Mostrar no mural do Oceano".
+- **📱 Login do iPhone/iPad (`mare-login.js`):** no atalho da tela inicial o login do Google não trava mais (vai por navegação de página inteira, sem popup). **Pré-requisito:** as URLs `oceano.html` e `kanban.html` (e as `-dev`) cadastradas em *URIs de redirecionamento autorizados* do cliente web do Google Cloud.
+- Notificações: tipos `escala` e `meta_lembrete` na Central; Escala/Metas no roteador do sino. Mais as correções das rodadas de /monitorarbugs de 13/10 (Metas, Escala JPG, Intake, login).
+- Comunicados (rascunhos no Mural, para publicar): Metas, Escala e Pedido interno/login.
+
 ### 🚀 Promoção: logos novas do Painel e do A Bordo + Ajuda do Radar sem Arezzo — 2026-10-10 · kanban v8.30.824 · painel v5.44 · okr v2.69 · oceano v1.14 · mare-notif.js v22 (sem avisos)
 Sobe pra produção o que estava em dev (kanban-dev v8.30.822→824, painel-dev v5.42→5.44, okr-dev v2.66→2.69, oceano-dev v1.12→1.14, mare-notif-dev v20→22).
 - **Logo nova do Painel** (a ponte de comando) na aba do `painel.html` e no **menu de produtos (⋮⋮⋮)** e no tile do Oceano; **logo nova do A Bordo** (o convés) no menu e no Oceano (a aba da página `onboarding.html` já estava no ar). Arte maior e centralizada, ícones de 512 px legíveis até em 16 px; `?v=3` nas referências pra o navegador trocar a imagem antiga.

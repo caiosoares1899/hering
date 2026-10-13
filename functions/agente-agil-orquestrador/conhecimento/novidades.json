@@ -1,5 +1,10 @@
 [
  {
+  "data": "2026-10-13",
+  "titulo": "🚀 Promoção: Metas \"O mar tá pra peixe\", Escala, Pedido interno, login único pelo Oceano, login do iPhone — 2026-10-13 · kanban v8.30.845 · painel v5.59 · okr v2.70 · oceano v1.24 · mare-notif.js v24 · mare-metas.js v8 (novo) · mare-login.js v2 (novo) · escala.html v1.7 (nova) · intake.html (Pedido interno)",
+  "texto": "Sobe pra produção tudo o que estava validado em dev desde 10/10 (kanban-dev v8.30.825→845, painel-dev v5.45→5.59, okr-dev v2.70, oceano-dev v1.15→1.24, mare-notif-dev v23→24). Em database.rules.json os nós metas_*, escala e notif_config já estão publicados.\n- 🐟 Metas e desafios (\"O mar tá pra peixe\"): aba lateral 📊 Dados do Maré (squad | Digital) e 📊 Dados do Painel; meta com ritmo linear ou por dia (diarização do time), faróis 🟢🟡🔴, popup de peixinhos a cada 20 %, Atualizar valor com data/hora (entrada retroativa, como soma ou como total) e 🗂 Entradas (ver, editar, excluir). Lembrete de preenchimento (função metasLembretes).\n- 🗓️ Escala (escala.html): escala de trabalho/plantão/folga por dia — visão da squad, global e cadastro; visão 👥 no 📅 Calendários do Maré (marcador por dia no mês), imagem JPG da semana/dia, aviso (sino + push) a quem teve a escala cadastrada por um gestor.\n- 📥 Pedido interno (intake.html): pedido a uma squad já logado com o Google da Hering, com os campos que o PO liga/desliga; cai na caixa de Intake. Correção: salvar a config do Painel não religa mais o Intake nem apaga os campos do pedido interno (dados/agil_cfg).\n- 🌊 Login único e Mural do Oceano: Maré/Painel deslogados levam ao Oceano e voltam; Mural de avisos na página inicial do Oceano (recolhível, com indicador de novos); Comunicados com \"Mostrar no mural do Oceano\".\n- 📱 Login do iPhone"
+ },
+ {
   "data": "2026-10-10",
   "titulo": "🚀 Promoção: logos novas do Painel e do A Bordo + Ajuda do Radar sem Arezzo — 2026-10-10 · kanban v8.30.824 · painel v5.44 · okr v2.69 · oceano v1.14 · mare-notif.js v22 (sem avisos)",
   "texto": "Sobe pra produção o que estava em dev (kanban-dev v8.30.822→824, painel-dev v5.42→5.44, okr-dev v2.66→2.69, oceano-dev v1.12→1.14, mare-notif-dev v20→22).\n- Logo nova do Painel (a ponte de comando) na aba do painel.html e no menu de produtos (⋮⋮⋮) e no tile do Oceano; logo nova do A Bordo (o convés) no menu e no Oceano (a aba da página onboarding.html já estava no ar). Arte maior e centralizada, ícones de 512 px legíveis até em 16 px; ?v=3 nas referências pra o navegador trocar a imagem antiga.\n- Radar: a Ajuda \"Link direto do Objetivo\" não cita mais o login @arezzo no modo só Hering.\n- Agente Ágil: a base de conhecimento (conhecimento/*.json) foi regenerada a partir das páginas de produção e deste CHANGELOG; as funções do agente só enxergam depois do deploy manual.\n- Dica: não — troca de ícones e correção de texto."
@@ -143,10 +148,5 @@
   "data": "2026-10-07",
   "titulo": "v8.30.800-dev — 2026-10-07 · docs: Central de Ajuda (❓) em dia com o dia — colar lista, sino único, \"Sua torre\", Agente do OKR (só kanban-dev)",
   "texto": "Só texto da HELP_CONTENT, sem mudança de comportamento. ☑ Checklist ganhou \"📋 Colar uma lista\" (tópicos -/•/*/1./1)/a), [x] marca feito, só com 2+ linhas, iniciais tipo \"J. Silva\" ficam no texto). 🔔 Notificações agora conta que o sino é único: além dos avisos pessoais, mostra as novidades da torre (📢 Mural do OKR, 🆕 Objetivo criado, ✅ Marco concluído, 🗓️ reuniões do calendário) e que clicar leva ao lugar certo. Entrada nova 🏛️ Sua torre (Digital/Comercial/Corporativa — perguntada na inscrição, só vale pro OKR, ADM troca em 👥 Global Users). 🎯 OKR (o marcador do card) aponta pra página própria do OKR e 🤖 O que é o Agente Ágil cita a Central do OKR. Visualmente nada mudou."
- },
- {
-  "data": "2026-10-07",
-  "titulo": "v8.30.798-dev — 2026-10-07 · fix: o sino do kanban só abre link de reunião http(s) (só kanban-dev)",
-  "texto": "Achado do /monitorarbugs no sino único: a notificação \"🎥 Reunião em X min\" abria meetingLink com window.open() sem checar o esquema — um javascript: gravado na notificação (quem tem permissão de criar notificação na caixa de outra pessoa) rodava no navegador de quem clicasse. Agora só http(s)://, com noopener."
  }
 ]
