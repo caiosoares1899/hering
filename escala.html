@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escala — Maré Digital</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#0b1622; --card:#101f30; --card-b:rgba(255,255,255,.08);
+    --txt:#eaf2f8; --txt2:#a9bccb; --txt3:#6f8598;
+    --accent:#38b6ff; --accent2:#2ecc9c; --danger:#ff5c7a; --warn:#ffd166;
+    --c-trab:#2ecc9c; --c-plant:#ff9f43; --c-folga:#8aa0b4;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none !important;}
+  body{
+    margin:0; min-height:100vh; background:linear-gradient(160deg,#0b1622,#0d2338 55%,#0b1622);
+    color:var(--txt); font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    padding:18px 16px 60px;
+  }
+  .wrap{ width:100%; max-width:1180px; margin:0 auto; }
+  .top{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
+  h1{ font-size:20px; margin:0; display:flex; align-items:center; gap:8px; }
+  .devtag{ display:inline-block; font-size:10px; padding:2px 7px; border-radius:999px; background:rgba(255,107,107,.15); color:#ff9aa0; border:1px solid rgba(255,107,107,.3); }
+  .state{ text-align:center; padding:50px 10px; color:var(--txt3); font-size:13.5px; }
+  .card{ background:var(--card); border:1px solid var(--card-b); border-radius:16px; padding:22px; box-shadow:0 20px 60px rgba(0,0,0,.35); }
+  .login{ max-width:420px; margin:40px auto; text-align:center; }
+  .login p{ color:var(--txt2); font-size:13.5px; line-height:1.55; }
+  button{ font-family:inherit; }
+  .btn{ padding:9px 14px; border-radius:10px; border:1px solid var(--card-b); background:rgba(255,255,255,.05); color:var(--txt); font-size:13px; cursor:pointer; }
+  .btn:hover{ border-color:rgba(255,255,255,.25); }
+  .btn.primary{ background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#04141f; font-weight:700; border:none; }
+  .btn.danger{ border-color:rgba(255,92,122,.4); color:#ffb3c1; background:rgba(255,92,122,.08); }
+  .btn:disabled{ opacity:.55; cursor:default; }
+  .who{ display:flex; align-items:center; gap:10px; padding:6px 12px; border-radius:12px; background:rgba(46,204,156,.08); border:1px solid rgba(46,204,156,.25); font-size:12.5px; color:var(--txt2); }
+  .who img{ width:24px; height:24px; border-radius:50%; object-fit:cover; }
+  .who b{ color:var(--txt); }
+  .who .lnk{ background:none; border:none; color:var(--txt3); cursor:pointer; font-size:11.5px; text-decoration:underline; padding:0; }
+
+  /* barra de controles */
+  .bar{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .seg{ display:inline-flex; border:1px solid var(--card-b); border-radius:11px; overflow:hidden; }
+  .seg button{ padding:9px 14px; background:rgba(255,255,255,.03); border:none; color:var(--txt2); font-size:13px; cursor:pointer; }
+  .seg button[aria-selected="true"]{ background:rgba(56,182,255,.18); color:var(--txt); font-weight:700; }
+  select, input[type=text], input[type=date], input[type=time]{
+    background:rgba(255,255,255,.04); border:1px solid var(--card-b); border-radius:10px; color:var(--txt); font-size:13.5px; padding:9px 11px; font-family:inherit;
+  }
+  select{ appearance:none; -webkit-appearance:none; padding-right:30px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a9bccb' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
+  select option{ background:#101f30; color:var(--txt); }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--accent); }
+  .nav{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; max-width:100%; }
+  .nav .lbl{ min-width:150px; text-align:center; font-size:13px; font-weight:600; }
+  .grow{ flex:1; }
+  .bf{ border-color:rgba(255,159,67,.45); color:#ffc48a; }
+
+  /* faixa "hoje" */
+  .filtros{ margin-bottom:12px; padding:8px 12px; border-radius:12px; border:1px solid var(--card-b); background:rgba(255,255,255,.025); }
+  .filtros .flbl{ font-size:12px; color:var(--txt3); font-weight:600; }
+  .filtros select{ padding:7px 28px 7px 10px; font-size:12.5px; max-width:230px; }
+  .filtros select.on{ border-color:var(--accent); background-color:rgba(56,182,255,.1); }
+  .hoje{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:10px 14px; margin-bottom:12px; border-radius:12px; background:rgba(255,159,67,.07); border:1px solid rgba(255,159,67,.25); font-size:13px; color:var(--txt2); }
+  .hoje b{ color:var(--txt); }
+  .avs{ display:inline-flex; align-items:center; }
+  .avs .av{ margin-left:-6px; border:2px solid var(--card); }
+  .avs .av:first-child{ margin-left:0; }
+  .av{ position:relative; display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#1d3a55; color:#cfe6f7; font-size:10px; font-weight:700; overflow:hidden; flex:none; }
+  .av img{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+  .av.plant{ box-shadow:0 0 0 2px var(--c-plant); border-color:var(--c-plant); }
+  .av.mais{ background:rgba(255,255,255,.1); color:var(--txt2); }
+
+  /* tabela */
+  .scroll{ overflow-x:auto; border:1px solid var(--card-b); border-radius:14px; background:var(--card); }
+  table.grid{ border-collapse:separate; border-spacing:0; width:100%; min-width:780px; }
+  .grid th, .grid td{ padding:8px 6px; text-align:center; border-bottom:1px solid rgba(255,255,255,.05); font-size:12.5px; }
+  .grid thead th{ font-size:11.5px; color:var(--txt2); font-weight:600; background:rgba(255,255,255,.03); position:sticky; top:0; }
+  .grid thead th.dia{ cursor:pointer; }
+  .grid thead th.dia:hover{ color:var(--txt); }
+  .grid th.pess{ text-align:left; position:sticky; left:0; z-index:2; background:#101f30; min-width:190px; padding-left:12px; border-right:1px solid rgba(255,255,255,.05); }
+  .grid thead th.pess{ background:#13253a; z-index:3; }
+  .grid .hj{ background:rgba(56,182,255,.07); }
+  .grid thead th.hj{ color:var(--accent); }
+  .grid .fds{ opacity:.85; }
+  .grid .bfdia{ box-shadow:inset 0 2px 0 var(--c-plant); }
+  .bfmark{ display:block; font-size:9.5px; color:#ffc48a; letter-spacing:.04em; font-weight:700; }
+  .pnome{ display:flex; align-items:center; gap:9px; }
+  .pnome b{ display:block; font-size:13px; color:var(--txt); font-weight:600; line-height:1.2; }
+  .pnome small{ display:block; font-size:10.5px; color:var(--txt3); }
+  .cel{ width:100%; min-height:36px; border-radius:9px; border:1px dashed transparent; background:none; color:var(--txt2); cursor:default; font-size:12px; padding:4px 4px; }
+  .cel.edit{ cursor:pointer; }
+  .cel.edit:hover{ border-color:rgba(56,182,255,.55); background:rgba(56,182,255,.07); }
+  .cel .ghost{ opacity:0; color:var(--txt3); }
+  .cel.edit:hover .ghost{ opacity:1; }
+  .ct{ display:inline-flex; align-items:center; gap:4px; padding:4px 8px; border-radius:999px; font-size:12px; font-weight:600; border:1px solid; white-space:nowrap; }
+  .ct small{ font-weight:500; opacity:.9; font-size:11px; }
+  .ct.trab{ color:#8ff0cf; background:rgba(46,204,156,.13); border-color:rgba(46,204,156,.4); }
+  .ct.plant{ color:#ffc48a; background:rgba(255,159,67,.14); border-color:rgba(255,159,67,.5); }
+  .ct.folga{ color:#b7c6d4; background:rgba(138,160,180,.12); border-color:rgba(138,160,180,.35); font-weight:500; }
+  .cob td, .cob th{ background:rgba(255,255,255,.025); font-size:12px; }
+  .cob .ok{ color:#8ff0cf; font-weight:700; } .cob .zero{ color:var(--warn); font-weight:700; } .cob .nada{ color:var(--txt3); }
+  .gdia{ width:100%; border:1px solid transparent; background:none; border-radius:9px; min-height:44px; padding:4px; cursor:pointer; color:var(--txt2); }
+  .gdia:hover{ border-color:rgba(56,182,255,.5); background:rgba(56,182,255,.06); }
+  .gdia.vazio{ color:var(--warn); }
+  .gdia .n{ display:block; font-size:10.5px; color:var(--txt3); margin-top:3px; }
+  th.sqn{ text-align:left; padding-left:12px; min-width:190px; }
+  .sqn .nm{ font-weight:600; font-size:13px; color:var(--txt); } .sqn small{ display:block; color:var(--txt3); font-size:10.5px; margin-top:1px; }
+  .vlink{ color:var(--accent); cursor:pointer; text-decoration:underline; font-size:11px; background:none; border:none; padding:0; }
+  .semescala{ color:var(--txt3); font-size:11.5px; font-style:italic; }
+  .legenda{ display:flex; gap:14px; flex-wrap:wrap; margin:12px 2px 0; font-size:12px; color:var(--txt3); }
+  .avisos{ margin-top:12px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,209,102,.3); background:rgba(255,209,102,.07); color:#ffe29a; font-size:12.5px; line-height:1.55; }
+  .erro{ margin:0 0 12px; padding:10px 14px; border-radius:12px; border:1px solid rgba(255,92,122,.35); background:rgba(255,92,122,.1); color:#ffb3c1; font-size:13px; line-height:1.5; }
+
+  /* modais */
+  .ov{ position:fixed; inset:0; background:rgba(3,10,18,.72); display:flex; align-items:flex-start; justify-content:center; padding:5vh 14px 20px; overflow-y:auto; z-index:50; }
+  .md{ width:100%; max-width:520px; background:var(--card); border:1px solid var(--card-b); border-radius:16px; padding:22px 22px 20px; box-shadow:0 30px 80px rgba(0,0,0,.5); }
+  .md.wide{ max-width:820px; }
+  .md h2{ margin:0 0 4px; font-size:17px; } .md .sub{ margin:0 0 10px; font-size:12.5px; color:var(--txt3); line-height:1.5; }
+  .md label, .md .lb{ display:block; font-size:12px; color:var(--txt2); margin:13px 0 5px; font-weight:600; }
+  .md .opt{ font-weight:400; color:var(--txt3); }
+  .md input[type=text], .md input[type=date], .md input[type=time], .md select{ width:100%; }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .chips{ display:flex; flex-wrap:wrap; gap:7px; }
+  .chip{ padding:7px 12px; border-radius:999px; border:1px solid var(--card-b); background:rgba(255,255,255,.04); color:var(--txt2); font-size:12.5px; cursor:pointer; line-height:1.2; }
+  .chip[aria-pressed="true"]{ background:rgba(56,182,255,.18); border-color:var(--accent); color:var(--txt); font-weight:700; }
+  .chip.t-trab[aria-pressed="true"]{ background:rgba(46,204,156,.18); border-color:var(--c-trab); }
+  .chip.t-plant[aria-pressed="true"]{ background:rgba(255,159,67,.2); border-color:var(--c-plant); }
+  .chip.t-folga[aria-pressed="true"]{ background:rgba(138,160,180,.2); border-color:var(--c-folga); }
+  .dsem .chip{ padding:7px 0; width:42px; text-align:center; }
+  .prev{ margin:14px 0 0; padding:9px 12px; border-radius:10px; background:rgba(56,182,255,.07); border:1px solid rgba(56,182,255,.2); font-size:12.5px; color:var(--txt2); line-height:1.5; }
+  .prev.ruim{ background:rgba(255,92,122,.08); border-color:rgba(255,92,122,.3); color:#ffb3c1; }
+  .acoes{ display:flex; gap:8px; margin-top:18px; flex-wrap:wrap; }
+  .acoes .grow{ flex:1; }
+  .msg{ margin-top:12px; font-size:13px; line-height:1.5; padding:10px 12px; border-radius:10px; }
+  .msg.err{ background:rgba(255,92,122,.12); border:1px solid rgba(255,92,122,.35); color:#ffb3c1; }
+  .lista-dia{ list-style:none; margin:10px 0 0; padding:0; display:flex; flex-direction:column; gap:8px; }
+  .lista-dia li{ display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:10px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.05); font-size:13px; }
+  .lista-dia .gsq{ margin:14px 0 2px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--txt3); background:none; border:none; padding:0; }
+  .lista-dia small{ color:var(--txt3); display:block; font-size:11px; }
+  #toast{ position:fixed; left:50%; bottom:26px; transform:translateX(-50%); background:#12314a; border:1px solid rgba(56,182,255,.4); color:var(--txt); padding:10px 16px; border-radius:12px; font-size:13px; z-index:80; box-shadow:0 10px 30px rgba(0,0,0,.4); }
+  #versao-aviso{ position:fixed; left:0; right:0; top:0; z-index:90; text-align:center; background:#12314a; border-bottom:1px solid rgba(56,182,255,.4); padding:8px; font-size:13px; }
+  #versao-aviso button{ margin-left:8px; }
+  .ver{ margin-top:26px; text-align:center; font-size:11px; color:var(--txt3); }
+  body.embed{ padding:10px 14px 24px; min-height:100vh; }
+  body.embed .top, body.embed .ver{ display:none; }
+  @media (max-width:640px){ .row2{ grid-template-columns:1fr; } .nav .lbl{ min-width:120px; } .grid th.pess{ min-width:150px; } .btn{ white-space:nowrap; } }
+</style>
+</head>
+<body>
+<div id="versao-aviso" hidden>Há uma versão nova da Escala. <button class="btn primary" onclick="location.reload()">Atualizar</button></div>
+<div class="wrap">
+  <div class="top">
+    <h1>🗓️ Escala</h1>
+    <div id="who-slot"></div>
+  </div>
+
+  <div id="loading" class="state">Carregando…</div>
+
+  <div id="login" class="card login" hidden>
+    <h2 style="margin:0 0 6px;font-size:18px;">Entre pra ver a escala</h2>
+    <p>Quem trabalha quando, por squad — e a visão de todas as squads juntas. Use a conta <b>@ciahering.com.br</b>.</p>
+    <button class="btn primary" id="btn-google" style="width:100%;padding:12px;">🔐 Entrar com Google</button>
+    <div class="msg err" id="login-msg" hidden></div>
+  </div>
+
+  <main id="app" hidden>
+    <div class="bar">
+      <div class="seg" role="tablist">
+        <button type="button" id="v-squad" role="tab" aria-selected="true">👥 Squad</button>
+        <button type="button" id="v-global" role="tab" aria-selected="false">🌐 Todas as squads</button>
+      </div>
+      <select id="sel-squad" aria-label="Squad"></select>
+      <div class="nav">
+        <button type="button" class="btn" id="b-prev" aria-label="Semana anterior">◀</button>
+        <span class="lbl" id="lbl-semana"></span>
+        <button type="button" class="btn" id="b-next" aria-label="Próxima semana">▶</button>
+        <button type="button" class="btn" id="b-hoje">Hoje</button>
+        <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
+      </div>
+      <span class="grow"></span>
+      <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
+      <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
+    </div>
+    <div class="bar filtros" id="filtros">
+      <span class="flbl">🔎 Filtrar</span>
+      <select id="f-sub" aria-label="Filtrar por subtime"></select>
+      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtro</button>
+    </div>
+    <div id="erro" class="erro" hidden></div>
+    <div id="hoje" class="hoje" hidden></div>
+    <div id="view" class="scroll"></div>
+    <div id="avisos" class="avisos" hidden></div>
+    <div class="legenda">
+      <span><span class="ct trab">✅ Escalado</span> dia normal de trabalho</span>
+      <span><span class="ct plant">🔥 Plantão</span> escala especial (ex.: Black Friday)</span>
+      <span><span class="ct folga">🏖️ Folga</span> fora naquele dia</span>
+    </div>
+  </main>
+  <div class="ver" id="ver"></div>
+</div>
+
+<div class="ov" id="ov" hidden></div>
+<div id="toast" hidden></div>
+
+<script type="module">
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+const VERSION = 'v1.7 · escala', VERSION_KEY = 'escala';
+// Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
+const firebaseConfig = {
+  apiKey:            localStorage.getItem('fb_apiKeyescala')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
+  authDomain:        localStorage.getItem('fb_authDomainescala')       || 'hering-onboarding.firebaseapp.com',
+  databaseURL:       localStorage.getItem('fb_databaseURLescala')      || 'https://hering-onboarding-default-rtdb.firebaseio.com',
+  projectId:         localStorage.getItem('fb_projectIdescala')        || 'hering-onboarding',
+  storageBucket:     localStorage.getItem('fb_storageBucketescala')    || 'hering-onboarding.firebasestorage.app',
+  messagingSenderId: localStorage.getItem('fb_messagingSenderIdescala')|| '122502391131',
+  appId:             localStorage.getItem('fb_appIdescala')            || '1:122502391131:web:0a31bed5ed2494e16ba67e',
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const auth = getAuth(fbApp);
+const provider = new GoogleAuthProvider();
+provider.setCustomParameters({ hd: 'ciahering.com.br' });
+
+// ?embed=1: aberta dentro do 📅 Calendários do Maré (sem cabeçalho/rodapé; a barra de login só aparece se não houver sessão)
+if (new URLSearchParams(location.search).get('embed') === '1') document.body.classList.add('embed');
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ADM_EMAIL_FIXO = 'caio.soares@ciahering.com.br';   // mesmo e-mail que as regras do banco tratam como ADM
+const squadValido = s => /^[A-Za-z0-9_-]{1,40}$/.test(s || '');
+const MAX_DIAS = 93;   // um cadastro grava no máximo ~3 meses de uma vez (evita período digitado errado)
+
+// Tipos de dia. t = chave gravada no banco (as regras só aceitam estas três).
+const TIPOS = {
+  trab:  { emoji: '✅',  nome: 'Escalado' },
+  plant: { emoji: '🔥',  nome: 'Plantão' },
+  folga: { emoji: '🏖️', nome: 'Folga' },
+};
+const DIAS = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb', 'Dom'];
+// Squads originais nunca ganharam entrada em squads_meta (mesmo mapa do intake/Cloud Function).
+const SQUAD_FALLBACK = {
+  dados: { label: 'Dados', emoji: '📊' }, prf: { label: 'Marketing de Performance', emoji: '📱' },
+  midiacriativa: { label: 'Mídia Criativa', emoji: '🎨' }, dev: { label: 'Dev', emoji: '🧪' }, gestao: { label: 'Gestão', emoji: '🏛' },
+};
+
+const norm = s => String(s == null ? '' : s).trim().toLowerCase();
+const arrDe = v => (Array.isArray(v) ? v : Object.values(v || {})).filter(x => x != null);
+
+// ── datas (sempre locais; a chave no banco é YYYY-MM-DD) ──
+const pad = n => String(n).padStart(2, '0');
+const iso = d => d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+function parseISO(s) { const m = ISO_RE.test(s || '') && s.split('-').map(Number); return m ? new Date(m[0], m[1] - 1, m[2]) : null; }
+const addDias = (d, n) => new Date(d.getFullYear(), d.getMonth(), d.getDate() + n);
+const diaSem = d => (d.getDay() + 6) % 7;                       // 0 = segunda
+const segunda = d => addDias(d, -diaSem(d));
+const hojeISO = () => iso(new Date());
+const curto = d => pad(d.getDate()) + '/' + pad(d.getMonth() + 1);
+// Black Friday = sexta depois da 4ª quinta de novembro.
+function blackFriday(ano) { const p = (4 - new Date(ano, 10, 1).getDay() + 7) % 7; return new Date(ano, 10, 1 + p + 21 + 1); }
+function proximaBF() { const h = new Date(); let bf = blackFriday(h.getFullYear()); if (addDias(bf, 7) < h) bf = blackFriday(h.getFullYear() + 1); return bf; }
+
+// ── estado ──
+let user = null;            // Google @ciahering logado
+let eu = null;              // meu registro em usuarios_publicos
+let squads = [];            // [{id,label,emoji}]
+let pessoas = {};           // usuarios_publicos
+let visao = 'squad';        // 'squad' | 'global'
+let squad = '';
+let semana = segunda(new Date());
+let dados = {};             // escala da janela: { 'YYYY-MM-DD': { squadId: { uid: entry } } }
+let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}] } — lido de kanban/squads/{sq}/dados/subtimes
+let filtro = { sub: '' };   // filtro da tela: subtime (por nome)
+let erroLeitura = '';       // '' | 'regras' | 'rede'
+let carregando = false;     // leitura da janela em andamento (a tabela fica esmaecida em vez de mostrar dados de outra semana)
+let janelaSeq = 0;          // só a última leitura da janela escreve no estado
+let baseSeq = 0;            // idem para o carregamento inicial (squads + pessoas)
+let gravando = false;       // trava: um cadastro por vez (id novo a cada clique = escrita duplicada)
+let authPronto = false;
+
+function lsGet(k) { try { return localStorage.getItem(k) || ''; } catch (e) { return ''; } }
+function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+function isHering(u) { return !!(u && /@ciahering\.com\.br$/i.test(u.email || '') && (u.providerData || []).some(p => p.providerId === 'google.com')); }
+
+// ── quem sou eu / o que posso editar (espelha as regras do banco) ──
+const papelNoSquad = (p, sq) => (p && p.squads_roles && p.squads_roles[sq]) || (p && p.role) || 'membro';
+const souAdm = () => !!user && ((eu && eu.role === 'adm') || (user.email || '').toLowerCase() === ADM_EMAIL_FIXO);
+const souDoSquad = sq => !!(eu && eu.squads && eu.squads[sq] === true);
+const souGestor = sq => souAdm() || ['po', 'organizador'].includes(papelNoSquad(eu, sq));
+const podeEditar = (sq, uid) => souGestor(sq) || (!!user && uid === user.uid && souDoSquad(sq));
+const squadsEditaveis = () => squads.filter(s => souGestor(s.id) || souDoSquad(s.id));
+const rotuloPapel = r => ({ po: 'PO', organizador: 'Organizador', adm: 'ADM' }[r] || '');
+
+function membrosDoSquad(sq) {
+  return Object.keys(pessoas).map(uid => ({ uid, p: pessoas[uid] }))
+    .filter(x => x.p && x.p.squads && x.p.squads[sq] === true && papelNoSquad(x.p, sq) !== 'convidado' && (x.p.nome || x.p.email))
+    .map(x => ({ uid: x.uid, nome: x.p.nome || x.p.email, init: x.p.init || '', foto: x.p.foto || '', papel: papelNoSquad(x.p, sq), subs: subtimesDe(sq, x.p.init || '') }))
+    .sort((a, b) => (a.uid === (user && user.uid) ? -1 : b.uid === (user && user.uid) ? 1 : a.nome.localeCompare(b.nome, 'pt-BR')));
+}
+function subtimesDe(sq, init) { const c = cfgSquad[sq]; return (c && init) ? c.subtimes.filter(st => st.members.includes(init)).map(st => st.name) : []; }
+// Visão FILTRADA (o que a tela mostra): o subtime restringe as pessoas.
+function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.sub ? ms.filter(m => m.subs.some(n => norm(n) === norm(filtro.sub))) : ms; }
+const entrada = (data, sq, uid) => (((dados[data] || {})[sq] || {})[uid]) || null;
+
+function av(m, extra) {
+  const ini = esc((m.init || m.nome || '?').slice(0, 2).toUpperCase());
+  const foto = /^https:\/\//.test(m.foto || '') ? '<img src="' + esc(m.foto) + '" alt="" referrerpolicy="no-referrer" loading="lazy" onerror="this.style.display=\'none\'">' : '';
+  return '<span class="av' + (extra ? ' ' + extra : '') + '" title="' + esc(m.nome) + '"><b>' + ini + '</b>' + foto + '</span>';
+}
+function chipTipo(e) {
+  const t = TIPOS[e.t]; if (!t) return '';
+  const hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '';
+  return '<span class="ct ' + e.t + '" title="' + esc(t.nome + (hora ? ' · ' + hora : '') + (e.n ? ' · ' + e.n : '')) + '">' + t.emoji + ' ' + (hora ? '<small>' + esc(hora) + '</small>' : esc(t.nome)) + (e.n ? ' 💬' : '') + '</span>';
+}
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3200); }
+
+// ═══ Carregamento ═══
+async function carregarBase() {
+  const meu = ++baseSeq;
+  const out = {};
+  Object.keys(SQUAD_FALLBACK).forEach(id => { out[id] = { id, label: SQUAD_FALLBACK[id].label, emoji: SQUAD_FALLBACK[id].emoji }; });
+  let meta = {}, pub = {};
+  try { meta = (await get(ref(db, 'kanban/squads_meta'))).val() || {}; } catch (e) { /* sem squads_meta: só os originais */ }
+  try { pub = (await get(ref(db, 'kanban/usuarios_publicos'))).val() || {}; } catch (e) { pub = {}; }
+  if (meu !== baseSeq) return false;
+  const cfg = {};
+  await Promise.all(Object.keys(Object.assign({}, SQUAD_FALLBACK, meta)).filter(squadValido).map(async id => {
+    const st = await get(ref(db, 'kanban/squads/' + id + '/dados/subtimes')).then(x => x.val()).catch(() => null);
+    cfg[id] = { subtimes: arrDe(st).filter(x => x && x.name).map(x => ({ name: String(x.name), members: arrDe(x.members).map(String) })) };
+  }));
+  if (meu !== baseSeq) return false;
+  cfgSquad = cfg;
+  Object.keys(meta).forEach(id => { if (squadValido(id)) out[id] = { id, label: (meta[id] && meta[id].label) || (out[id] && out[id].label) || id, emoji: (meta[id] && meta[id].emoji) || (out[id] && out[id].emoji) || '🐟' }; });
+  squads = Object.values(out).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+  pessoas = pub;
+  eu = (user && pub[user.uid]) || null;
+  return true;
+}
+async function carregarJanela() {
+  const meu = ++janelaSeq;
+  carregando = true;
+  const a = iso(semana), b = iso(addDias(semana, 6));
+  let v = {}, erro = '';
+  try {
+    v = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(a), endAt(b)))).val() || {};
+  } catch (e) {
+    erro = (e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''))) ? 'regras' : 'rede';
+  }
+  if (meu !== janelaSeq) return;      // a pessoa já mudou de semana: esta resposta é velha
+  dados = v; erroLeitura = erro; carregando = false;
+  render();
+}
+
+// ═══ Render ═══
+function diasDaSemana() { return Array.from({ length: 7 }, (_, i) => addDias(semana, i)); }
+function cabecalhoDias(dias, bf) {
+  const hj = hojeISO();
+  return dias.map((d, i) => {
+    const s = iso(d), cls = ['dia', s === hj ? 'hj' : '', i >= 5 ? 'fds' : '', s === iso(bf) ? 'bfdia' : ''].filter(Boolean).join(' ');
+    return '<th class="' + cls + '" data-dia="' + s + '" title="Ver quem está nesse dia">' + DIAS[i] + '<br>' + curto(d) + (s === iso(bf) ? '<span class="bfmark">🔥 BLACK FRIDAY</span>' : '') + '</th>';
+  }).join('');
+}
+function coberturaDoDia(sq, data) {
+  let n = 0, p = 0;
+  membrosF(sq).forEach(m => { const e = entrada(data, sq, m.uid); if (e && (e.t === 'trab' || e.t === 'plant')) { n++; if (e.t === 'plant') p++; } });
+  return { n, p };
+}
+function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m => entrada(iso(d), sq, m.uid))); }
+
+function renderSquad() {
+  const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
+  const ms = membrosF(squad);
+  if (!ms.length) return '<div class="state">' + (filtro.sub ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad ainda.') + '</div>';
+  let h = '<table class="grid"><thead><tr><th class="pess">Pessoa</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
+  ms.forEach(m => {
+    h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
+    dias.forEach((d, i) => {
+      const s = iso(d), e = entrada(s, squad, m.uid), pode = podeEditar(squad, m.uid);
+      h += '<td class="' + (s === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (s === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="cel' + (pode ? ' edit' : '') + '" data-u="' + esc(m.uid) + '" data-d="' + s + '"' + (pode ? '' : ' tabindex="-1"') + '>' +
+        (e ? chipTipo(e) : (pode ? '<span class="ghost">＋</span>' : '')) + '</button></td>';
+    });
+    h += '</tr>';
+  });
+  h += '<tr class="cob"><th class="pess">Cobertura <small style="color:var(--txt3);font-weight:400">(escalados + plantão)</small></th>';
+  const tem = squadTemEscala(squad, dias);
+  dias.forEach((d, i) => {
+    const c = coberturaDoDia(squad, iso(d));
+    h += '<td>' + (c.n ? '<span class="ok">' + c.n + (c.p ? ' · 🔥' + c.p : '') + '</span>' : (tem && i < 5 ? '<span class="zero" title="Ninguém escalado neste dia útil">⚠️ 0</span>' : '<span class="nada">–</span>')) + '</td>';
+  });
+  return h + '</tr></tbody></table>';
+}
+
+function renderGlobal() {
+  const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
+  const lista = squads.filter(s => membrosF(s.id).length);
+  if (!lista.length) return '<div class="state">' + (filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
+  let h = '<table class="grid"><thead><tr><th class="pess">Squad</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
+  lista.forEach(s => {
+    const ms = membrosF(s.id), tem = squadTemEscala(s.id, dias);
+    h += '<tr><th class="pess sqn"><span class="nm">' + esc(s.emoji + ' ' + s.label) + '</span><small>' + ms.length + ' pessoa' + (ms.length > 1 ? 's' : '') + (tem ? '' : ' · <span class="semescala">' + 'sem escala cadastrada' + '</span>') + '</small><button type="button" class="vlink" data-ver="' + esc(s.id) + '">ver squad ›</button></th>';
+    dias.forEach((d, i) => {
+      const dt = iso(d), trab = [], folga = [];
+      ms.forEach(m => { const e = entrada(dt, s.id, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+      trab.sort((a, b) => (a.e.t === 'plant' ? 0 : 1) - (b.e.t === 'plant' ? 0 : 1));
+      const vazio = tem && i < 5 && !trab.length;
+      const tip = trab.length ? trab.map(x => x.m.nome + (x.e.t === 'plant' ? ' (plantão)' : '')).join(', ') : (vazio ? 'Ninguém escalado neste dia útil' : '');
+      h += '<td class="' + (dt === hj ? 'hj ' : '') + (i >= 5 ? 'fds ' : '') + (dt === iso(bf) ? 'bfdia' : '') + '"><button type="button" class="gdia' + (vazio ? ' vazio' : '') + '" data-gd="' + dt + '" data-gs="' + esc(s.id) + '" title="' + esc(tip) + '">' +
+        (trab.length ? '<span class="avs">' + trab.slice(0, 4).map(x => av(x.m, x.e.t === 'plant' ? 'plant' : '')).join('') + (trab.length > 4 ? '<span class="av mais">+' + (trab.length - 4) + '</span>' : '') + '</span>' +
+          '<span class="n">' + trab.length + (folga.length ? ' · ' + folga.length + ' de folga' : '') + '</span>' : (vazio ? '⚠️ 0' : '<span style="color:var(--txt3)">–</span>')) + '</button></td>';
+    });
+    h += '</tr>';
+  });
+  return h + '</tbody></table>';
+}
+
+function renderHoje() {
+  const box = $('hoje'), dias = diasDaSemana().map(iso), hj = hojeISO();
+  if (!dias.includes(hj)) { box.hidden = true; return; }
+  const sqs = visao === 'global' ? squads.map(s => s.id) : [squad];
+  const plant = [], trab = new Set();
+  sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entrada(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
+  const uniq = []; plant.forEach(m => { if (!uniq.find(x => x.uid === m.uid)) uniq.push(m); });
+  box.innerHTML = '<span>Hoje, <b>' + curto(new Date()) + '</b></span><span>✅ <b>' + trab.size + '</b> escalado' + (trab.size === 1 ? '' : 's') + '</span>' +
+    '<span>🔥 Plantão: ' + (uniq.length ? '<span class="avs">' + uniq.slice(0, 6).map(m => av(m, 'plant')).join('') + '</span> ' + esc(uniq.slice(0, 3).map(m => m.nome.split(' ')[0]).join(', ')) + (uniq.length > 3 ? ' +' + (uniq.length - 3) : '') : '<span style="color:var(--txt3)">ninguém</span>') + '</span>';
+  box.hidden = false;
+}
+function renderAvisos() {
+  const box = $('avisos');
+  if (visao !== 'global') { box.hidden = true; return; }
+  const dias = diasDaSemana().slice(0, 5), furos = [];
+  squads.filter(s => membrosF(s.id).length && squadTemEscala(s.id, diasDaSemana())).forEach(s => {
+    const dd = dias.filter(d => !coberturaDoDia(s.id, iso(d)).n).map(d => DIAS[diaSem(d)] + ' ' + curto(d));
+    if (dd.length) furos.push('<b>' + esc(s.label) + '</b>: ' + dd.join(', '));
+  });
+  if (!furos.length) { box.hidden = true; return; }
+  box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
+  box.hidden = false;
+}
+// Filtro de subtime: por NOME (subtimes de squads diferentes com o mesmo nome viram uma opção só — na visão global vale pra todas as squads).
+function renderFiltros() {
+  const escopo = visao === 'global' ? squads : squads.filter(x => x.id === squad);
+  const subs = new Map(); escopo.forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
+  if (filtro.sub && !subs.has(norm(filtro.sub))) filtro.sub = '';
+  const el = $('f-sub'); el.hidden = !subs.size;
+  el.innerHTML = '<option value="">Todos os subtimes</option>' + [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(n => '<option value="' + esc(n) + '"' + (n === filtro.sub ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
+  el.classList.toggle('on', !!filtro.sub);
+  $('f-limpar').hidden = !filtro.sub;
+  $('filtros').hidden = !subs.size;   // squad sem nenhum subtime: a barra inteira some
+}
+function render() {
+  if (!user) return;
+  $('v-squad').setAttribute('aria-selected', visao === 'squad'); $('v-global').setAttribute('aria-selected', visao === 'global');
+  const sel = $('sel-squad'); sel.hidden = visao !== 'squad';
+  sel.innerHTML = squads.map(s => '<option value="' + esc(s.id) + '"' + (s.id === squad ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('');
+  const fim = addDias(semana, 6);
+  $('lbl-semana').textContent = curto(semana) + ' – ' + curto(fim) + '/' + fim.getFullYear();
+  const er = $('erro');
+  if (erroLeitura === 'regras') { er.hidden = false; er.textContent = '⚠️ Sem permissão pra ler a escala. As regras do banco ainda não foram publicadas (firebase deploy --only database) — avise o ADM.'; }
+  else if (erroLeitura === 'rede') { er.hidden = false; er.textContent = '⚠️ Não deu pra carregar a escala agora (conexão). Tente a semana de novo em instantes.'; }
+  else er.hidden = true;
+  renderFiltros();
+  $('view').innerHTML = visao === 'squad' ? renderSquad() : renderGlobal();
+  $('view').style.opacity = carregando ? '.45' : '';
+  renderHoje(); renderAvisos();
+  $('b-cad').disabled = !squadsEditaveis().length;
+  $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.sub) u.searchParams.set('f_sub', filtro.sub); else u.searchParams.delete('f_sub'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+}
+function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
+
+// ═══ Modais ═══
+function abrirOv(html) { const ov = $('ov'); ov.innerHTML = '<div class="md" role="dialog" aria-modal="true">' + html + '</div>'; ov.hidden = false; }
+function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; }
+$('ov').addEventListener('mousedown', e => { if (e.target === $('ov')) fecharOv(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharOv(); });
+
+function abrirDia(data, sqUnico) {
+  const d = parseISO(data); if (!d) return;
+  const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squads.filter(s => membrosF(s.id).length);
+  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (sqUnico ? '' : ' — todas as squads') + '. Plantão primeiro.</p>', menc = [];
+  let alguem = false;
+  sqs.forEach(s => {
+    const itens = membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e)
+      .sort((a, b) => ({ plant: 0, trab: 1, folga: 2 }[a.e.t] - { plant: 0, trab: 1, folga: 2 }[b.e.t]));
+    if (!itens.length) return;
+    alguem = true;
+    h += '<ul class="lista-dia">' + (sqUnico ? '' : '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(s.emoji + ' ' + s.label) + '</li>');
+    itens.forEach(x => {
+      if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init);   // quem está em duas squads entra uma vez só
+      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
+    });
+    h += '</ul>';
+  });
+  if (!alguem) h += '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>';
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">🖼️ JPG do dia</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  abrirOv(h);
+  $('d-fechar').onclick = fecharOv;
+  $('d-jpg').onclick = () => abrirJpg('dia', data);
+  if ($('d-menc')) $('d-menc').onclick = async () => {
+    const txt = menc.join(' ');
+    try { await navigator.clipboard.writeText(txt); toast('Menções copiadas: ' + txt); } catch (e) { toast('Copie manualmente: ' + txt); }
+  };
+}
+
+// Cadastro (e edição de 1 dia): pessoa + squad + período + dias da semana + tipo + horário + observação.
+let cad = null;   // { sq, uid, de, ate, dsem:Set, t, i, f, n }
+function abrirCadastro(pre) {
+  const editaveis = squadsEditaveis(); if (!editaveis.length) return;
+  pre = pre || {};
+  let sq = pre.sq || (visao === 'squad' ? squad : '');
+  if (!editaveis.find(s => s.id === sq)) sq = (editaveis.find(s => s.id === lsGet('escala_sq')) || editaveis[0]).id;
+  const unico = !!pre.data;
+  const ex = unico ? entrada(pre.data, sq, pre.uid || user.uid) : null;
+  const dFim = addDias(semana, 6);
+  cad = {
+    sq, uid: pre.uid || user.uid,
+    de: unico ? pre.data : iso(semana), ate: unico ? pre.data : iso(dFim),
+    dsem: unico ? new Set([diaSem(parseISO(pre.data))]) : new Set([0, 1, 2, 3, 4]),
+    t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '',
+  };
+  desenharCadastro(editaveis);
+}
+function desenharCadastro(editaveis) {
+  const gestor = souGestor(cad.sq);
+  if (!gestor) cad.uid = user.uid;
+  const ms = membrosDoSquad(cad.sq);
+  if (gestor && ms.length && !ms.find(m => m.uid === cad.uid)) cad.uid = ms[0].uid;   // ex.: ADM abrindo uma squad onde não está inscrito — a pessoa mostrada tem que ser a gravada
+  const h = '<h2>➕ Cadastrar escala</h2><p class="sub">' + (gestor ? 'Você é gestor desta squad: pode cadastrar a sua e a de qualquer pessoa.' : 'Cadastre os seus dias. (PO, Organizador e ADM da squad também podem cadastrar pelas outras pessoas.)') + '</p>' +
+    '<label for="c-sq">Squad</label><select id="c-sq">' + editaveis.map(s => '<option value="' + esc(s.id) + '"' + (s.id === cad.sq ? ' selected' : '') + '>' + esc(s.emoji + ' ' + s.label) + '</option>').join('') + '</select>' +
+    '<label for="c-uid">Pessoa</label>' + (gestor
+      ? '<select id="c-uid">' + ms.map(m => '<option value="' + esc(m.uid) + '"' + (m.uid === cad.uid ? ' selected' : '') + '>' + esc(m.nome + (m.uid === user.uid ? ' (você)' : '')) + '</option>').join('') + '</select>'
+      : '<select id="c-uid" disabled><option>' + esc((user.displayName || user.email) + ' (você)') + '</option></select>') +
+    '<div class="row2"><div><label for="c-de">De</label><input type="date" id="c-de" value="' + esc(cad.de) + '"></div><div><label for="c-ate">Até</label><input type="date" id="c-ate" value="' + esc(cad.ate) + '"></div></div>' +
+    '<div class="chips" style="margin-top:8px"><button type="button" class="chip" data-atalho="sem">Esta semana</button><button type="button" class="chip" data-atalho="prox">Próxima semana</button><button type="button" class="chip" data-atalho="bf">🔥 Semana da Black Friday</button></div>' +
+    '<div class="lb">Dias da semana</div><div class="chips dsem" id="c-dsem">' + DIAS.map((n, i) => '<button type="button" class="chip" data-ds="' + i + '" aria-pressed="' + cad.dsem.has(i) + '">' + n + '</button>').join('') + '</div>' +
+    '<div class="lb">Tipo</div><div class="chips" id="c-tipo">' + Object.keys(TIPOS).map(k => '<button type="button" class="chip t-' + k + '" data-t="' + k + '" aria-pressed="' + (cad.t === k) + '">' + TIPOS[k].emoji + ' ' + TIPOS[k].nome + '</button>').join('') + '</div>' +
+    '<div id="c-hora"' + (cad.t === 'folga' ? ' hidden' : '') + '><div class="row2"><div><label for="c-i">Entrada <span class="opt">(opcional)</span></label><input type="time" id="c-i" value="' + esc(cad.i) + '"></div><div><label for="c-f">Saída <span class="opt">(opcional)</span></label><input type="time" id="c-f" value="' + esc(cad.f) + '"></div></div></div>' +
+    '<label for="c-n">Observação <span class="opt">(opcional)</span></label><input type="text" id="c-n" maxlength="140" value="' + esc(cad.n) + '" placeholder="Ex.: sobreaviso até 23h, lançamento da campanha…">' +
+    '<div class="prev" id="c-prev"></div><div class="msg err" id="c-msg" hidden></div>' +
+    '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">Cadastrar</button><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><span class="grow"></span><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
+  abrirOv(h);
+  atualizarPrev();
+  const o = $('ov');
+  $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
+  if (gestor) $('c-uid').onchange = e => { cad.uid = e.target.value; atualizarPrev(); };
+  ['c-de', 'c-ate'].forEach(id => { $(id).oninput = () => { lerForm(); atualizarPrev(); }; });
+  ['c-i', 'c-f', 'c-n'].forEach(id => { $(id).oninput = () => { lerForm(); }; });
+  o.querySelectorAll('[data-atalho]').forEach(b => b.onclick = () => {
+    const a = b.dataset.atalho; let ini;
+    if (a === 'sem') ini = segunda(new Date()); else if (a === 'prox') ini = addDias(segunda(new Date()), 7); else ini = segunda(proximaBF());
+    cad.de = iso(ini); cad.ate = iso(addDias(ini, 6)); $('c-de').value = cad.de; $('c-ate').value = cad.ate;
+    if (a === 'bf') { cad.dsem = new Set([0, 1, 2, 3, 4, 5, 6]); o.querySelectorAll('[data-ds]').forEach(x => x.setAttribute('aria-pressed', 'true')); }   // Black Friday: a semana inteira conta
+    atualizarPrev();
+  });
+  o.querySelectorAll('[data-ds]').forEach(b => b.onclick = () => { const i = Number(b.dataset.ds); if (cad.dsem.has(i)) cad.dsem.delete(i); else cad.dsem.add(i); b.setAttribute('aria-pressed', cad.dsem.has(i)); atualizarPrev(); });
+  o.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { cad.t = b.dataset.t; o.querySelectorAll('[data-t]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('c-hora').hidden = cad.t === 'folga'; });
+  $('c-cancelar').onclick = fecharOv;
+  $('c-salvar').onclick = () => confirmarCadastro(false);
+  $('c-limpar').onclick = () => confirmarCadastro(true);
+}
+function lerForm() { cad.de = $('c-de').value; cad.ate = $('c-ate').value; cad.i = $('c-i') ? $('c-i').value : ''; cad.f = $('c-f') ? $('c-f').value : ''; cad.n = $('c-n') ? $('c-n').value.trim() : ''; }
+// Datas que o cadastro vai atingir (período ∩ dias da semana). Devolve também o motivo se o período é inválido.
+function datasDoCadastro() {
+  const a = parseISO(cad.de), b = parseISO(cad.ate);
+  if (!a || !b) return { datas: [], erro: 'Informe as duas datas (de / até).' };
+  if (b < a) return { datas: [], erro: 'A data final é antes da inicial.' };
+  if ((b - a) / 86400000 + 1 > MAX_DIAS) return { datas: [], erro: 'Período grande demais (máximo ' + MAX_DIAS + ' dias de uma vez).' };
+  const datas = []; for (let d = a; d <= b; d = addDias(d, 1)) if (cad.dsem.has(diaSem(d))) datas.push(iso(d));
+  return { datas, erro: datas.length ? '' : 'Nenhum dia da semana marcado cai nesse período.' };
+}
+function atualizarPrev() {
+  const r = datasDoCadastro(), el = $('c-prev'); if (!el) return;
+  const m = membrosDoSquad(cad.sq).find(x => x.uid === cad.uid);
+  if (r.erro) { el.className = 'prev ruim'; el.textContent = r.erro; return; }
+  el.className = 'prev';
+  el.textContent = r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ' · ' + ((m && m.nome) || 'você') + ' · de ' + curto(parseISO(r.datas[0])) + ' a ' + curto(parseISO(r.datas[r.datas.length - 1]));
+}
+async function confirmarCadastro(limpar) {
+  if (gravando) return;
+  lerForm();
+  const msg = $('c-msg'); msg.hidden = true;
+  const r = datasDoCadastro();
+  if (r.erro) { msg.textContent = r.erro; msg.hidden = false; return; }
+  if (!membrosDoSquad(cad.sq).some(m => m.uid === cad.uid)) { msg.textContent = 'Essa pessoa não está na lista da squad (convidados não entram na escala).'; msg.hidden = false; return; }
+  if (!podeEditar(cad.sq, cad.uid)) { msg.textContent = 'Você não pode editar a escala desta pessoa nesta squad.'; msg.hidden = false; return; }
+  if (cad.t !== 'folga' && cad.i && cad.f && cad.f <= cad.i) { msg.textContent = 'A saída precisa ser depois da entrada.'; msg.hidden = false; return; }
+  if (limpar && !confirm('Apagar a escala de ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + '?')) return;
+  const upd = {};
+  const base = { t: cad.t, por: user.uid, ts: Date.now() };
+  if (cad.t !== 'folga') { if (cad.i) base.i = cad.i; if (cad.f) base.f = cad.f; }
+  if (cad.n) base.n = cad.n.slice(0, 140);
+  r.datas.forEach(d => { upd[d + '/' + cad.sq + '/' + cad.uid] = limpar ? null : Object.assign({}, base); });
+  gravando = true; $('c-salvar').disabled = true; $('c-limpar').disabled = true; $('c-salvar').textContent = 'Gravando…';
+  try {
+    await update(ref(db, 'kanban/escala'), upd);
+    lsSet('escala_sq', cad.sq);
+    if (cad.uid !== user.uid) avisarPessoa(cad.uid, cad.sq, r.datas, limpar, base);   // gestor mexeu na escala de OUTRA pessoa: ela é avisada (sino + push)
+    const primeira = parseISO(r.datas[0]);
+    const fora = primeira < semana || primeira > addDias(semana, 6);
+    fecharOv();
+    toast(limpar ? '🗑 Escala removida (' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ')' : '✅ Escala cadastrada (' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + ')');
+    if (fora) { semana = segunda(primeira); }
+    await carregarJanela();
+  } catch (e) {
+    gravando = false;
+    if ($('c-salvar')) { $('c-salvar').disabled = false; $('c-limpar').disabled = false; $('c-salvar').textContent = 'Cadastrar'; }
+    const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
+    if ($('c-msg')) { $('c-msg').textContent = negado ? '⚠️ Sem permissão pra gravar. Você só edita a sua própria escala (e precisa estar inscrito na squad) — PO, Organizador e ADM editam a de todos. Se for o seu caso e mesmo assim negou, as regras do banco podem não estar publicadas: avise o ADM.' : '⚠️ Não deu pra gravar agora (conexão). Tente de novo.'; $('c-msg').hidden = false; }
+    return;
+  }
+  gravando = false;
+}
+
+// Aviso (sino + push) pra pessoa cuja escala um gestor cadastrou/limpou. Uma notificação por cadastro (período inteiro), nunca pra quem mexeu na própria.
+// Tipo `escala` (MareNotif.TIPOS · PUSH_TYPES). `okrObjId` leva a 1ª data (mesmo atalho do meta_lembrete) pra o sino abrir a semana certa.
+async function avisarPessoa(uid, sq, datas, limpar, base) {
+  try {
+    const s = squads.find(x => x.id === sq), id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const ini = parseISO(datas[0]), fim = parseISO(datas[datas.length - 1]);
+    const per = datas.length === 1 ? curto(ini) : curto(ini) + ' – ' + curto(fim) + ' (' + datas.length + ' dias)';
+    const hora = !limpar && base.i ? ' ' + base.i + (base.f ? '–' + base.f : '') : '';
+    const oque = limpar ? 'escala removida' : (TIPOS[base.t] || {}).nome + hora;
+    const quem = (user.displayName || user.email || '').split(' ')[0];
+    await set(ref(db, 'kanban/usuarios/' + uid + '/notificacoes/' + id), {
+      id, type: 'escala', title: limpar ? '🗓️ Sua escala foi removida' : '🗓️ Sua escala foi cadastrada',
+      sub: [(s ? s.label : sq), per, oque, quem ? 'por ' + quem : ''].filter(Boolean).join(' · '),
+      squad: sq, okrObjId: datas[0], read: false, ts: new Date().toISOString(),
+    });
+  } catch (e) { console.warn('[escala] não deu pra avisar a pessoa:', e); }
+}
+
+// ═══ Baixar a escala em JPG (dia · semana · mês) ═══
+// Desenhada direto num <canvas> (sem biblioteca externa e sem foto de perfil, que "contaminaria" o canvas e bloquearia o download).
+// Respeita a visão da tela (squad escolhida ou todas) e o filtro de subtime.
+const MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+const FONTE = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif';
+const JC = { txt: '#eaf2f8', txt2: '#a9bccb', txt3: '#6f8598', accent: '#38b6ff', warn: '#ffd166', danger: '#ff5c7a',
+  trab: { c: '#2ecc9c', bg: 'rgba(46,204,156,.18)' }, plant: { c: '#ff9f43', bg: 'rgba(255,159,67,.24)' }, folga: { c: '#8aa0b4', bg: 'rgba(138,160,180,.14)' } };
+const ORDEM_T = { plant: 0, trab: 1, folga: 2 };
+let jpg = null;   // { modo, ref, canvas, nome }
+let jSeq = 0;     // contador GLOBAL de pedidos de imagem: só a resposta do último vale (um por modal reiniciava em 0 e deixava uma resposta velha passar)
+
+function jRR(x, px, py, w, h, r, fill, stroke) {
+  x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath();
+  if (fill) { x.fillStyle = fill; x.fill(); } if (stroke) { x.strokeStyle = stroke; x.lineWidth = 1; x.stroke(); }
+}
+function jAjusta(x, s, max) { s = String(s); if (!max || x.measureText(s).width <= max) return s; while (s.length > 1 && x.measureText(s + '…').width > max) s = s.slice(0, -1); return s + '…'; }
+function jT(x, s, px, py, o) {
+  o = o || {}; x.font = (o.w || 400) + ' ' + (o.s || 13) + 'px ' + FONTE; x.fillStyle = o.c || JC.txt; x.textAlign = o.a || 'left'; x.textBaseline = 'middle';
+  x.fillText(jAjusta(x, s, o.max), px, py);
+}
+function jNome(n, todos) {
+  const p = String(n || '').trim().split(/\s+/), f = p[0] || '?';
+  const dup = (todos || []).filter(o => String(o || '').trim().split(/\s+/)[0] === f).length > 1;
+  return dup && p.length > 1 ? f + ' ' + p[p.length - 1][0] + '.' : f;
+}
+function jNova(W, H) {
+  const k = W > 1500 ? 1.5 : 2, c = document.createElement('canvas'); c.width = Math.round(W * k); c.height = Math.round(H * k);
+  const x = c.getContext('2d'); x.scale(k, k);
+  const g = x.createLinearGradient(0, 0, W * .4, H); g.addColorStop(0, '#0b1622'); g.addColorStop(.55, '#0d2338'); g.addColorStop(1, '#0b1622');
+  x.fillStyle = g; x.fillRect(0, 0, W, H);
+  return { c, x };
+}
+function jPeriodo(modo, refISO) {
+  const d = parseISO(refISO) || new Date();
+  if (modo === 'dia') return { modo, a: d, b: d, titulo: DIAS[diaSem(d)] + ', ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear(), arq: iso(d) };
+  if (modo === 'semana') { const s = segunda(d), f = addDias(s, 6); return { modo, a: s, b: f, titulo: 'Semana ' + curto(s) + ' – ' + curto(f) + '/' + f.getFullYear(), arq: iso(s) }; }
+  const a = new Date(d.getFullYear(), d.getMonth(), 1), b = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  return { modo, a, b, titulo: MESES[d.getMonth()][0].toUpperCase() + MESES[d.getMonth()].slice(1) + ' de ' + d.getFullYear(), arq: d.getFullYear() + '-' + pad(d.getMonth() + 1) };
+}
+function jEscopo() {
+  const lista = visao === 'global' ? squads.filter(s => membrosF(s.id).length) : squads.filter(s => s.id === squad);
+  const s1 = squads.find(s => s.id === squad);
+  return { lista, nome: visao === 'global' ? 'Todas as squads' : (s1 ? s1.label : squad) };
+}
+const jEnt = (dd, data, sq, uid) => (((dd[data] || {})[sq] || {})[uid]) || null;
+function jDoDia(dd, sq, dt) {
+  const ms = membrosF(sq), trab = [], folga = [];
+  ms.forEach(m => { const e = jEnt(dd, dt, sq, m.uid); if (!e) return; if (e.t === 'folga') folga.push(m); else trab.push({ m, e }); });
+  trab.sort((a, b) => ORDEM_T[a.e.t] - ORDEM_T[b.e.t] || a.m.nome.localeCompare(b.m.nome, 'pt-BR'));
+  return { trab, folga, ms };
+}
+// Moldura comum: título, período, subtítulo (filtro) e rodapé com a legenda.
+function jMoldura(x, W, H, esc, per) {
+  jT(x, 'Escala — ' + esc.nome, 28, 32, { s: 24, w: 700, max: W - 340 });
+  jT(x, per.titulo, W - 28, 32, { s: 18, w: 700, c: JC.accent, a: 'right' });
+  const gerado = new Date();
+  jT(x, (filtro.sub ? 'Subtime: ' + filtro.sub : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
+  [['trab', 'Escalado'], ['plant', 'Plantão'], ['folga', 'Folga']].reduce((px, [t, nome]) => {
+    jRR(x, px, H - 36, 14, 14, 4, JC[t].bg, JC[t].c); jT(x, nome, px + 20, H - 29, { s: 12, c: JC.txt2 }); return px + 20 + x.measureText(nome).width + 22;
+  }, 28);
+  jT(x, 'Maré Digital · gerada em ' + pad(gerado.getDate()) + '/' + pad(gerado.getMonth() + 1) + '/' + gerado.getFullYear() + ' ' + pad(gerado.getHours()) + ':' + pad(gerado.getMinutes()), W - 28, H - 29, { s: 11.5, c: JC.txt3, a: 'right' });
+}
+function jChip(x, e, px, py, w, h) {
+  const t = JC[e.t] || JC.folga, hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '', rot = (TIPOS[e.t] || {}).nome || '';
+  jRR(x, px, py, w, h, 9, t.bg, t.c);
+  if (hora) { jT(x, rot, px + w / 2, py + h / 2 - 8, { s: 12.5, w: 700, c: t.c, a: 'center', max: w - 10 }); jT(x, hora, px + w / 2, py + h / 2 + 9, { s: 12, c: JC.txt, a: 'center', max: w - 10 }); }
+  else jT(x, rot, px + w / 2, py + h / 2, { s: 13, w: 700, c: t.c, a: 'center', max: w - 10 });
+}
+function jCabDia(x, d, i, px, py, w, h, bf) {
+  const s = iso(d), hj = s === hojeISO();
+  if (hj) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(56,182,255,.16)'); else if (i >= 5) jRR(x, px + 2, py, w - 4, h, 8, 'rgba(255,255,255,.03)');
+  jT(x, DIAS[i], px + w / 2, py + h / 2 - 9, { s: 13.5, w: 700, c: hj ? JC.accent : JC.txt, a: 'center' });
+  jT(x, curto(d) + (s === iso(bf) ? '  🔥 BF' : ''), px + w / 2, py + h / 2 + 9, { s: 12, c: s === iso(bf) ? JC.warn : JC.txt2, a: 'center' });
+}
+
+function jSemanaSquad(per, dd, esc) {
+  const sq = esc.lista[0]; if (!sq) return jVazio(per, esc, 'Nenhuma squad selecionada.');
+  const ms = membrosF(sq.id), dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
+  const L = 28, nW = 220, dW = 150, W = L * 2 + nW + dW * 7, topo = 84, hh = 52, rh = 54, ch = 40, n = Math.max(ms.length, 1);
+  const H = topo + hh + n * rh + ch + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, 'Pessoa', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
+  dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
+  if (!ms.length) jT(x, filtro.sub ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad.', W / 2, topo + hh + rh / 2, { s: 14, c: JC.txt3, a: 'center' });
+  ms.forEach((m, r) => {
+    const y = topo + hh + r * rh;
+    jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+    jT(x, m.nome, L + 12, y + rh / 2 - 8, { s: 14.5, w: 700, max: nW - 20 });
+    jT(x, (m.init ? '@' + m.init : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : ''), L + 12, y + rh / 2 + 10, { s: 11.5, c: JC.txt3, max: nW - 20 });
+    dias.forEach((d, i) => { const e = jEnt(dd, iso(d), sq.id, m.uid); if (e) jChip(x, e, L + nW + i * dW + 8, y + 8, dW - 16, rh - 16); });
+  });
+  const yc = topo + hh + n * rh, tem = dias.some(d => ms.some(m => jEnt(dd, iso(d), sq.id, m.uid)));
+  jT(x, 'Cobertura', L + 12, yc + ch / 2 - 6, { s: 13, w: 700, c: JC.txt2 }); jT(x, 'escalados + plantão', L + 12, yc + ch / 2 + 9, { s: 10.5, c: JC.txt3 });
+  dias.forEach((d, i) => {
+    const t = jDoDia(dd, sq.id, iso(d)), nn = t.trab.length, p = t.trab.filter(z => z.e.t === 'plant').length, cx = L + nW + i * dW + dW / 2;
+    if (nn) jT(x, nn + (p ? ' · ' + p + ' plantão' : ''), cx, yc + ch / 2, { s: 13.5, w: 700, c: JC.trab.c, a: 'center' });
+    else jT(x, tem && i < 5 ? '⚠ 0' : '–', cx, yc + ch / 2, { s: 13.5, w: 700, c: tem && i < 5 ? JC.danger : JC.txt3, a: 'center' });
+  });
+  return c;
+}
+
+function jSemanaGlobal(per, dd, esc) {
+  if (!esc.lista.length) return jVazio(per, esc, filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.');
+  const dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
+  const L = 28, nW = 200, dW = 150, W = L * 2 + nW + dW * 7, topo = 84, hh = 52, LH = 17, MAXN = 6;
+  const linhas = esc.lista.map(s => {
+    const tem = dias.some(d => membrosF(s.id).some(m => jEnt(dd, iso(d), s.id, m.uid)));
+    const cel = dias.map((d, i) => {
+      const t = jDoDia(dd, s.id, iso(d)), ls = [], nomes = t.trab.map(z => z.m.nome), mais = t.trab.length > MAXN;
+      t.trab.slice(0, mais ? MAXN - 1 : MAXN).forEach(z => ls.push({ s: jNome(z.m.nome, nomes), c: z.e.t === 'plant' ? JC.plant.c : JC.txt, w: z.e.t === 'plant' ? 700 : 500 }));
+      if (mais) ls.push({ s: '+' + (t.trab.length - (MAXN - 1)) + ' pessoas', c: JC.txt2, w: 500 });
+      if (t.folga.length) ls.push({ s: t.folga.length + ' de folga', c: JC.txt3, w: 400 });
+      if (!t.trab.length && tem && i < 5) ls.unshift({ s: '⚠ ninguém', c: JC.danger, w: 700 });
+      return ls;
+    });
+    return { s, cel, h: Math.max(60, 20 + Math.max(...cel.map(l => l.length), 1) * LH) };
+  });
+  const H = topo + hh + linhas.reduce((a, l) => a + l.h, 0) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, 'Squad', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
+  dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
+  let y = topo + hh;
+  linhas.forEach((l, r) => {
+    jRR(x, L, y + 2, W - L * 2, l.h - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+    jT(x, l.s.label, L + 12, y + 22, { s: 14.5, w: 700, max: nW - 20 });
+    jT(x, membrosF(l.s.id).length + ' pessoa' + (membrosF(l.s.id).length > 1 ? 's' : ''), L + 12, y + 41, { s: 11.5, c: JC.txt3 });
+    l.cel.forEach((ls, i) => ls.forEach((ln, k) => jT(x, ln.s, L + nW + i * dW + 12, y + 18 + k * LH, { s: 12.5, w: ln.w, c: ln.c, max: dW - 20 })));
+    y += l.h;
+  });
+  return c;
+}
+
+function jDia(per, dd, esc) {
+  const dt = iso(per.a), W = 860, L = 28, topo = 84, rh = 42, bh = 40;
+  const blocos = esc.lista.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: jEnt(dd, dt, s.id, m.uid) })).filter(z => z.e).sort((a, b) => ORDEM_T[a.e.t] - ORDEM_T[b.e.t] || a.m.nome.localeCompare(b.m.nome, 'pt-BR')) })).filter(b => b.itens.length);
+  const H = topo + (blocos.length ? blocos.reduce((a, b) => a + (esc.lista.length > 1 ? bh : 6) + b.itens.length * rh + 10, 0) : 80) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  if (!blocos.length) { jT(x, 'Ninguém com escala cadastrada neste dia.', W / 2, topo + 40, { s: 14.5, c: JC.txt3, a: 'center' }); return c; }
+  let y = topo;
+  blocos.forEach(b => {
+    if (esc.lista.length > 1) { jT(x, b.s.label, L, y + bh / 2, { s: 16, w: 700, c: JC.accent }); y += bh; } else y += 6;
+    b.itens.forEach((z, r) => {
+      jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
+      jT(x, z.m.nome, L + 14, y + rh / 2, { s: 14.5, w: 700, max: 250 });
+      jT(x, (z.m.init ? '@' + z.m.init : '') + (z.e.n ? '  ·  ' + z.e.n : ''), L + 280, y + rh / 2, { s: 12, c: JC.txt2, max: 330 });
+      const hora = z.e.i ? z.e.i + (z.e.f ? '–' + z.e.f : '') : '', t = JC[z.e.t] || JC.folga;
+      jRR(x, W - L - 170, y + 7, 156, rh - 14, 8, t.bg, t.c);
+      jT(x, ((TIPOS[z.e.t] || {}).nome || '') + (hora ? ' · ' + hora : ''), W - L - 92, y + rh / 2, { s: 12.5, w: 700, c: t.c, a: 'center', max: 146 });
+      y += rh;
+    });
+    y += 10;
+  });
+  return c;
+}
+
+function jMes(per, dd, esc) {
+  if (visao !== 'global' && !esc.lista.length) return jVazio(per, esc, 'Nenhuma squad selecionada.');
+  if (visao === 'global' && !esc.lista.length) return jVazio(per, esc, 'Nenhuma squad com pessoas.');
+  const ini = segunda(per.a), fim = addDias(segunda(per.b), 6);
+  const semanas = []; for (let d = ini; d <= fim; d = addDias(d, 7)) semanas.push(d);
+  const L = 28, dW = 190, W = L * 2 + dW * 7, topo = 84, hh = 30, LH = 16, MAXN = visao === 'global' ? 8 : 6, bf = proximaBF(), global = visao === 'global';
+  const mes = per.a.getMonth();
+  const conteudo = d => {
+    if (d.getMonth() !== mes) return null;
+    const dt = iso(d), ls = [];
+    if (global) {
+      const todos = esc.lista.map(s => { const t = jDoDia(dd, s.id, dt); return { s, n: t.trab.length, p: t.trab.filter(z => z.e.t === 'plant').length }; }).filter(z => z.n);
+      todos.slice(0, todos.length > MAXN ? MAXN - 1 : MAXN).forEach(z => ls.push({ l: z.s.label, r: z.n + (z.p ? ' · ' + z.p + ' plant.' : ''), c: z.p ? JC.plant.c : JC.txt, w: z.p ? 700 : 500 }));
+      if (todos.length > MAXN) ls.push({ l: '+' + (todos.length - (MAXN - 1)) + ' squads', c: JC.txt2, w: 500 });
+    } else {
+      const t = jDoDia(dd, esc.lista[0].id, dt), nomes = t.trab.map(z => z.m.nome), mais = t.trab.length > MAXN;
+      t.trab.slice(0, mais ? MAXN - 1 : MAXN).forEach(z => ls.push({ l: jNome(z.m.nome, nomes), c: z.e.t === 'plant' ? JC.plant.c : JC.txt, w: z.e.t === 'plant' ? 700 : 500 }));
+      if (mais) ls.push({ l: '+' + (t.trab.length - (MAXN - 1)) + ' pessoas', c: JC.txt2, w: 500 });
+      if (t.folga.length) ls.push({ l: t.folga.length + ' de folga', c: JC.txt3, w: 400 });
+    }
+    return ls;
+  };
+  const dados2 = semanas.map(s => { const cel = Array.from({ length: 7 }, (_, i) => { const d = addDias(s, i); return { d, ls: conteudo(d) }; }); return { cel, h: Math.max(74, 34 + Math.max(...cel.map(z => (z.ls || []).length), 1) * LH + 6) }; });
+  const H = topo + hh + dados2.reduce((a, r) => a + r.h, 0) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  DIAS.forEach((nm, i) => jT(x, nm, L + i * dW + dW / 2, topo + hh / 2, { s: 13, w: 700, c: i >= 5 ? JC.txt3 : JC.txt2, a: 'center' }));
+  let y = topo + hh;
+  dados2.forEach(r => {
+    r.cel.forEach((z, i) => {
+      const px = L + i * dW + 3, w = dW - 6, dt = iso(z.d), fora = z.ls === null, hj = dt === hojeISO();
+      jRR(x, px, y + 3, w, r.h - 6, 10, fora ? 'rgba(255,255,255,.012)' : (i >= 5 ? 'rgba(255,255,255,.035)' : 'rgba(255,255,255,.06)'), hj ? JC.accent : (dt === iso(bf) ? JC.warn : (fora ? null : 'rgba(255,255,255,.06)')));
+      jT(x, String(z.d.getDate()), px + 10, y + 19, { s: 14, w: 700, c: fora ? JC.txt3 : (hj ? JC.accent : JC.txt) });
+      if (dt === iso(bf)) jT(x, '🔥 BF', px + w - 8, y + 19, { s: 11.5, w: 700, c: JC.warn, a: 'right' });
+      (z.ls || []).forEach((ln, k) => {
+        const ly = y + 38 + k * LH;
+        if (ln.r) { jT(x, ln.r, px + w - 10, ly, { s: 11.5, w: 700, c: ln.c, a: 'right' }); jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 - x.measureText(ln.r).width - 8 }); }
+        else jT(x, ln.l, px + 10, ly, { s: 12, w: ln.w, c: ln.c, max: w - 20 });
+      });
+    });
+    y += r.h;
+  });
+  return c;
+}
+function jVazio(per, esc, msg) {
+  const W = 860, H = 240, { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  jT(x, msg, W / 2, 130, { s: 14.5, c: JC.txt3, a: 'center' }); return c;
+}
+async function jGerar(modo, refISO) {
+  const per = jPeriodo(modo, refISO), esc = jEscopo();
+  const dd = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(iso(per.a)), endAt(iso(per.b))))).val() || {};
+  const c = modo === 'dia' ? jDia(per, dd, esc) : modo === 'semana' ? (visao === 'global' ? jSemanaGlobal(per, dd, esc) : jSemanaSquad(per, dd, esc)) : jMes(per, dd, esc);
+  return { c, per, esc };
+}
+function jBaixar(c, nome) {
+  c.toBlob(b => {
+    if (!b) { toast('Não consegui gerar a imagem. Tente de novo.'); return; }
+    const url = URL.createObjectURL(b), a = document.createElement('a');
+    a.href = url; a.download = nome; document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+    toast('Imagem baixada ✔');
+  }, 'image/jpeg', 0.92);
+}
+async function jpgAtualizar() {
+  const meu = ++jSeq, prev = $('j-prev'), bt = $('j-baixar');
+  if (!prev) return;
+  const per = jPeriodo(jpg.modo, jpg.ref); $('j-per').textContent = per.titulo;
+  document.querySelectorAll('#j-modo button').forEach(b => b.setAttribute('aria-selected', b.dataset.m === jpg.modo));
+  bt.disabled = true; jpg.canvas = null; prev.innerHTML = '<div class="state" style="padding:30px 0">Montando a imagem…</div>';
+  try {
+    const r = await jGerar(jpg.modo, jpg.ref);
+    if (meu !== jSeq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
+    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? 'todas-as-squads' : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
+    r.c.style.cssText = 'width:100%;height:auto;border-radius:10px;display:block;'; prev.innerHTML = ''; prev.appendChild(r.c); bt.disabled = false;
+  } catch (e) {
+    if (meu !== jSeq || !$('j-prev')) return;
+    const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
+    prev.innerHTML = '<div class="state" style="padding:24px 0">⚠️ ' + (negado ? 'Sem permissão pra ler a escala (as regras do banco ainda não foram publicadas).' : 'Não deu pra carregar a escala agora. Tente de novo.') + '</div>';
+  }
+}
+function abrirJpg(modo, refISO) {
+  const sem = diasDaSemana().map(iso);
+  jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
+  const sc = jEscopo();
+  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.sub ? ' · subtime <b>' + esc(filtro.sub) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
+    '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
+    '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
+    '<p class="sub" style="margin:0 0 10px">Dia = o dia escolhido · Semana = a semana que contém o dia · Mês = o mês que contém o dia.</p>' +
+    '<div id="j-prev"></div>' +
+    '<div class="acoes"><button type="button" class="btn primary" id="j-baixar" disabled>⬇️ Baixar JPG</button><span class="grow"></span><button type="button" class="btn" id="j-fechar">Fechar</button></div>');
+  const md = $('ov').firstElementChild; if (md) md.classList.add('wide');
+  $('j-ref').value = jpg.ref;
+  document.querySelectorAll('#j-modo button').forEach(b => { b.onclick = () => { jpg.modo = b.dataset.m; jpgAtualizar(); }; });
+  $('j-ref').onchange = e => { if (ISO_RE.test(e.target.value)) { jpg.ref = e.target.value; jpgAtualizar(); } };
+  $('j-baixar').onclick = () => { if (jpg.canvas) jBaixar(jpg.canvas, jpg.nome); };
+  $('j-fechar').onclick = fecharOv;
+  jpgAtualizar();
+}
+
+// ═══ Eventos da tela ═══
+$('v-squad').onclick = () => { visao = 'squad'; render(); };
+$('v-global').onclick = () => { visao = 'global'; render(); };
+$('sel-squad').onchange = e => { squad = e.target.value; lsSet('escala_sq', squad); render(); };
+$('b-prev').onclick = () => irParaSemana(addDias(semana, -7));
+$('b-next').onclick = () => irParaSemana(addDias(semana, 7));
+$('b-hoje').onclick = () => irParaSemana(new Date());
+$('b-bf').onclick = () => irParaSemana(proximaBF());
+$('b-cad').onclick = () => abrirCadastro();
+$('b-jpg').onclick = () => abrirJpg();
+$('f-sub').onchange = e => { filtro.sub = e.target.value; render(); };
+$('f-limpar').onclick = () => { filtro = { sub: '' }; render(); };
+$('view').addEventListener('click', e => {
+  const cel = e.target.closest('.cel.edit'); if (cel) { abrirCadastro({ sq: squad, uid: cel.dataset.u, data: cel.dataset.d }); return; }
+  const gd = e.target.closest('.gdia'); if (gd) { abrirDia(gd.dataset.gd, null); return; }
+  const dia = e.target.closest('th.dia'); if (dia) { abrirDia(dia.dataset.dia, visao === 'squad' ? squad : null); return; }
+  const ver = e.target.closest('[data-ver]'); if (ver) { squad = ver.dataset.ver; lsSet('escala_sq', squad); visao = 'squad'; render(); }
+});
+
+// ═══ Login / fluxo principal ═══
+function renderWho() {
+  const slot = $('who-slot');
+  if (!user) { slot.innerHTML = ''; return; }
+  const foto = user.photoURL ? '<img src="' + esc(user.photoURL) + '" alt="" referrerpolicy="no-referrer">' : '🐟';
+  slot.innerHTML = '<div class="who">' + foto + '<span><b>' + esc(user.displayName || user.email) + '</b></span><button type="button" class="lnk" id="btn-sair">sair</button></div>';
+  $('btn-sair').onclick = () => signOut(auth);
+}
+$('btn-google').onclick = async () => {
+  const m = $('login-msg'); m.hidden = true;
+  try {
+    const r = await signInWithPopup(auth, provider);
+    if (!isHering(r.user)) { await signOut(auth); m.textContent = '⚠️ Use a conta @ciahering.com.br.'; m.hidden = false; }
+  } catch (e) { if (e && e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') { m.textContent = '⚠️ Não deu pra entrar agora. Tente de novo.'; m.hidden = false; } }
+};
+async function iniciar() {
+  renderWho();
+  if (!user) { $('loading').hidden = true; $('app').hidden = true; $('login').hidden = false; return; }
+  $('login').hidden = true; $('loading').hidden = false; $('app').hidden = true;
+  const meuUser = user.uid;
+  const ok = await carregarBase();
+  if (!ok || !user || user.uid !== meuUser) return;
+  const q = new URLSearchParams(location.search);
+  const qs = q.get('squad') || '', ls = lsGet('escala_sq');
+  const meus = squads.filter(s => souDoSquad(s.id));
+  squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
+  visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
+  const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
+  filtro = { sub: q.get('f_sub') || '' };
+  $('loading').hidden = true; $('app').hidden = false;
+  await carregarJanela();
+}
+onAuthStateChanged(auth, u => {
+  const novo = isHering(u) ? u : null;
+  const mudou = (novo && novo.uid) !== (user && user.uid);
+  user = novo;
+  if (!authPronto || mudou) { authPronto = true; iniciar(); }
+});
+
+// Atualização: avisa (sem recarregar sozinho) quando o version.json aponta uma versão nova.
+$('ver').textContent = VERSION;
+async function checarVersao() {
+  try { const v = await (await fetch('version.json?_=' + Date.now(), { cache: 'no-store' })).json(); if (v[VERSION_KEY] && v[VERSION_KEY] !== VERSION) $('versao-aviso').hidden = false; } catch (e) {}
+}
+setTimeout(checarVersao, 4000); setInterval(checarVersao, 5 * 60 * 1000);
+
+// Gancho só pra testes automatizados (somente leitura).
+window.__escala = { get estado() { return { visao, squad, semana: iso(semana), gravando, erroLeitura, souAdm: souAdm() }; } };
+</script>
+</body>
+</html>

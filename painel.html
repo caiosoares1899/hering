@@ -1503,6 +1503,9 @@ body.painel-viewer-mode [data-sqid]{ display:none !important; }
 // @ciahering. `true` esconde/desliga a integração Arezzo/Microsoft e as torres; `false` religa tudo como estava em 2026-10-01..07. Mesmo interruptor em
 // kanban/painel/okr/okr-apresentacao/mare-notif (grep MARE_SO_HERING) + functions/common/mareModo.js + database.rules.json. Doc: docs/arezzo/MARE_SO_HERING.md
 window.MARE_SO_HERING = true;
+// Login único pelo Oceano (2026-10-11): quem NÃO está logado é mandado pro Oceano (?next=esta página), faz login e cadastro lá e volta.
+// false = cada página volta a mostrar a própria tela de login. Convidado externo entra com ?login=local (ver _irParaOceano()).
+window.MARE_LOGIN_PELO_OCEANO = true;
 (function(){ if(!window.MARE_SO_HERING) return; try{ var st=document.createElement('style'); st.textContent='.ms-login{display:none!important}'; document.head.appendChild(st); }catch(e){} })();
 </script>
 <script>
@@ -1614,6 +1617,7 @@ window.MARE_SO_HERING = true;
     <button class="ptab"     id="ptab-fluxo"   onclick="swPtab('fluxo')"><span class="ptab-icon">🌊</span><span class="ptab-lbl">Fluxo</span></button>
     <button class="ptab"     id="ptab-timeline" onclick="swPtab('timeline')"><span class="ptab-icon">🛤️</span><span class="ptab-lbl">Timeline</span></button>
     <a class="ptab" id="ptab-okr" href="okr.html" target="_blank" rel="noopener" title="O Radar (OKR) tem página própria — abre okr.html em outra aba" style="color:#ffd700;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">📡</span><span class="ptab-lbl">Radar ↗</span></a>
+    <a class="ptab" id="ptab-escala" href="escala.html?visao=global" target="_blank" rel="noopener" title="Escala: quem trabalha quando, por squad e global — abre escala.html em outra aba" style="color:#ffb86b;text-decoration:none;display:inline-flex;align-items:center;"><span class="ptab-icon">🗓️</span><span class="ptab-lbl">Escala ↗</span></a>
     <button class="ptab"     id="ptab-pessoas" onclick="swPtab('pessoas')"><span class="ptab-icon">🧑‍🤝‍🧑</span><span class="ptab-lbl">Pessoas</span></button>
     <button class="ptab"     id="ptab-notifs"  onclick="swPtab('notifs')"><span class="ptab-icon">🔔</span><span class="ptab-lbl">Notificações</span></button>
     <button class="ptab"     id="ptab-monitor" onclick="swPtab('monitor')" style="color:var(--danger);"><span class="ptab-icon">🐛</span><span class="ptab-lbl">Monitor</span></button>
@@ -2306,6 +2310,15 @@ window.MARE_SO_HERING = true;
       </div>
     </div>
 
+    <!-- 🐟 METAS e DESAFIOS do Digital ("O mar tá pra peixe") — módulo mare-metas-dev.js; aparece na aba 📊 Dados → 🌊 Digital do Maré -->
+    <div id="dados-metas" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
+      <div class="cfg-sec">🐟 Metas e desafios do Digital — "O mar tá pra peixe"</div>
+      <div style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:12px;">Cadastre a <b>meta global do Digital</b> (a principal — vira o anel grande na aba <b>📊 Dados → 🌊 Digital</b> do Maré) e <b>desafios extras</b> (ex.: "dia 27: 1 milhão de peças", "meta de Marketplace"). Cada squad cadastra as suas em <b>⚙ Configurações → 🐟 Metas</b> no Maré; as marcadas "🌊 mostrar na visão global" aparecem junto com as do Digital. A cada <b>20 %</b> o time vê o popup 🐟 e dá pra programar um <b>⏰ lembrete</b> de preenchimento (horário de Brasília).</div>
+      <div id="dados-metas-bar" style="display:none;gap:8px;margin-bottom:12px;flex-wrap:wrap;"><button class="btn btn-sm btn-teal" onclick="dadosMetaNova('meta')">➕ Nova meta global</button><button class="btn btn-sm" onclick="dadosMetaNova('desafio')">🏆 Novo desafio</button></div>
+      <div id="dados-metas-lista"></div>
+      <div id="dados-metas-squads" style="margin-top:14px;"></div>
+    </div>
+
     <div id="dados-lock-msg" style="display:none;font-size:11px;color:var(--txt3);background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.15);border-radius:8px;padding:10px 12px;margin-bottom:14px;line-height:1.5;">🔒 Você tem acesso de leitura aqui. Só quem tem permissão de publicação (veja a lista abaixo) edita os números do dia.</div>
 
     <div id="dados-form-wrap" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:16px;margin-bottom:18px;">
@@ -2499,7 +2512,27 @@ window.MARE_SO_HERING = true;
           <select class="pev-input" id="cc-prioridade" onchange="_ccTogglePrioridadeUI()">
             <option value="popup">🔔 Popup — interrompe ao abrir o board (também fica no mural)</option>
             <option value="mural">📌 Só no mural — não interrompe, a pessoa vê quando quiser</option>
+            <option value="oceano">🌊 Só no Oceano — não aparece no Maré (sem popup, mural do Maré nem notificação)</option>
           </select>
+        </div>
+        <div class="pev-field" id="cc-oceano-wrap" style="margin-top:-2px;">
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt);cursor:pointer;">
+            <input type="checkbox" id="cc-oceano" onchange="_ccTogglePrioridadeUI()" checked> 🌊 Mostrar no mural do Oceano <span style="font-size:10px;color:var(--txt3);">(a página inicial que todo mundo passa)</span>
+          </label>
+        </div>
+        <div id="cc-oceano-extra" style="border:1px solid var(--glass-b);border-radius:8px;padding:10px 10px 4px;margin-bottom:10px;background:rgba(var(--ink-rgb),.35);">
+          <div style="font-size:10px;color:var(--txt3);margin-bottom:6px;">Como fica no mural do Oceano (tudo opcional):</div>
+          <div class="pev-field">
+            <label class="pev-label">Imagem de capa (endereço https://…)</label>
+            <input class="pev-input" id="cc-capa" placeholder="https://… (uma imagem larga, tipo banner)" maxlength="500">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:10px;">
+            <div class="pev-field"><label class="pev-label">Texto do botão</label><input class="pev-input" id="cc-botao-txt" placeholder="Ex: Ver agora" maxlength="30"></div>
+            <div class="pev-field"><label class="pev-label">Link do botão</label><input class="pev-input" id="cc-botao-url" placeholder="https://… ou kanban.html?squad=dados" maxlength="500"></div>
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--txt2);cursor:pointer;padding:0 0 8px;">
+            <input type="checkbox" id="cc-fixado"> 📌 Fixar no topo do mural (aparece em destaque, em largura total)
+          </label>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
           <div class="pev-field">
@@ -2521,7 +2554,7 @@ window.MARE_SO_HERING = true;
         <button id="cc-arch-btn" onclick="_ccToggleArquivar()" style="color:var(--cyan);border:1px solid rgba(56,182,255,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;display:none;">🗄 Arquivar</button>
         <button id="cc-del-btn" onclick="deleteComunicado()" style="color:var(--danger);border:1px solid rgba(255,107,107,.3);background:none;border-radius:8px;padding:5px 12px;cursor:pointer;font-size:11px;margin-right:auto;display:none;">🗑 Excluir</button>
         <button onclick="closeComunicadoCompose()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Cancelar</button>
-        <button onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
+        <button id="cc-publicar-btn" onclick="saveComunicado()" style="padding:6px 16px;font-size:12px;background:rgba(37,99,201,.8);color:#fff;border:1px solid var(--blue);border-radius:10px;cursor:pointer;font-weight:600;">Publicar</button>
       </div>
     </div>
   </div>
@@ -2931,7 +2964,7 @@ window.MARE_SO_HERING = true;
 </div>
 
 
-<div class="version">v5.44 · painel</div>
+<div class="version">v5.59 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3034,7 +3067,8 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=22"></script>
+<script src="mare-notif.js?v=24"></script>
+<script src="mare-metas.js?v=8"></script>
 <script src="mare-dicas.js?v=4"></script>
 
 <script>
@@ -3414,7 +3448,9 @@ function saveCfg(){
 
   // Salva no Firebase
   const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
-  window._set(ref, cfg)
+  // update (mescla), NÃO set: `agil_cfg` também guarda o que o Maré grava (intakeEnabled, intakeCampos, bfBannerMsg) — um set() com este objeto novo apagava tudo isso
+  // (pedidos desligados pelo PO voltavam a ser aceitos pelo link público e os campos do pedido interno voltavam ao padrão).
+  window._update(ref, cfg)
     .then(()=>{ showToast('✅ Configurações salvas!'); closeCfg(); })
     .catch(e=>{ console.error(e); showToast('❌ Erro ao salvar: '+e.message); });
 }
@@ -7099,6 +7135,10 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')}));" style="cursor:pointer;"`
       : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)}));" style="cursor:pointer;"`
+      : n.type==='escala'
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina('escala.html?visao=squad&squad='+encodeURIComponent(${jsq(n.squad||'')})+'&semana='+encodeURIComponent(${jsq(n.okrObjId||'')}));" style="cursor:pointer;"`
+      : n.type==='meta_lembrete'
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
@@ -7204,6 +7244,34 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_metas_mar_pra_peixe_2026_10_13',
+    titulo: '🐟 O mar tá pra peixe: metas e desafios no Maré',
+    corpo: '<p>Agora dá pra acompanhar <b>metas e desafios</b> direto no Maré — na aba lateral <b>📊 Dados</b>: a meta da <b>squad</b> (anel com o %, quanto falta, quantos dias restam) e a do <b>Digital</b> (com o ranking das squads).</p>'
+      + '<p>🎯 Cada cartão mostra se está <b>no ritmo</b> (🟢), em <b>atenção</b> (🟡) ou <b>atrasada</b> (🔴). O traço branco é onde deveria estar <b>hoje</b> — e, se o time definir uma <b>diarização</b> (a venda não cresce igual todo dia), o ritmo segue essa curva.</p>'
+      + '<p>✏️ <b>Atualizar valor</b>: qualquer pessoa da squad informa. Dá pra <b>somar ao atual</b> ou definir o total — e lançar <b>dias que já passaram</b> (data e hora da entrada). No <b>🗂 Entradas</b> você vê, edita e exclui o que foi lançado.</p>'
+      + '<p>🐟 A cada <b>20%</b> da meta aparece o popup <b>“O mar tá pra peixe!”</b> com peixinhos pulando. PO, Organizador e ADM criam as metas em ⚙ Configurações → 🐟 Metas, com <b>lembrete de preenchimento</b> opcional.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_escala_2026_10_13',
+    titulo: '🗓️ Escala: quem trabalha quando, num lugar só',
+    corpo: '<p>Nova página <b>Escala</b> (abre pelo <b>⋮⋮⋮</b> de produtos ou pelo botão <b>📅 Calendários → 👥 Escala</b> no Maré): a escala de <b>trabalho, plantão e folga</b> por dia — da sua squad ou de todas.</p>'
+      + '<p>✅ Cada pessoa cadastra a <b>própria</b> escala; PO, Organizador e ADM cadastram a de <b>todo mundo</b> — e quem teve a escala cadastrada por outra pessoa <b>recebe um aviso</b> no sino.</p>'
+      + '<p>📅 No calendário do mês do Maré cada dia mostra quantas pessoas estão escaladas (e a sua). Dá pra gerar uma <b>imagem (JPG)</b> da semana ou do dia pra mandar no grupo.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
+    id: 'seed_intake_interno_login_2026_10_13',
+    titulo: '📥 Pedido interno + entrar uma vez só (inclusive no iPhone)',
+    corpo: '<p><b>Pedido interno:</b> quem é da Hering agora faz um pedido pra uma squad já <b>logado</b> (sem digitar nome e e-mail), pelo link de Intake da squad. Os campos do formulário o PO liga/desliga em ⚙ Configurações. O pedido cai na caixa de <b>Intake</b> pra aprovar e virar card.</p>'
+      + '<p>🌊 <b>Login único:</b> se você abrir o Maré ou o Painel deslogado, é levado ao <b>Oceano</b>, entra com o Google uma vez e volta. No Oceano, o <b>Mural</b> de avisos fica na página inicial.</p>'
+      + '<p>📱 <b>iPhone/iPad:</b> corrigimos o travamento do login do Google quando o app é aberto pelo <b>atalho na tela inicial</b>. Se ainda travar, avise o time Digital.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_dicas_2026_10_10',
     titulo: '💡 Dicas rápidas no Maré, no Radar e no Oceano',
@@ -7597,6 +7665,11 @@ async function _seedComunicadoRascunhos(){
     else showToast('🤖 '+novos.length+' rascunhos de comunicados aguardando revisão → aba Pessoas');
   }
 }
+// Onde o aviso aparece, em texto curto pras listas: 🌊 só Oceano · 🔔 popup + 🌊 · 📌 só mural + 🌊 …
+function _comunicadoOndeTxt(c){
+  if(c.prioridade==='oceano') return '🌊 só Oceano';
+  return (c.prioridade==='mural' ? '📌 só mural' : '🔔 popup') + (c.oceano===true ? ' + 🌊 Oceano' : '') + (c.oceano===true && c.fixado ? ' (fixado)' : '');
+}
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
@@ -7626,7 +7699,7 @@ function renderComunicadosLista(){
     const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
-    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    const ondeAparece = _comunicadoOndeTxt(c);
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.5);border:1px solid ${c.ativo&&!expirado?'rgba(29,233,182,.2)':'var(--glass-b)'};border-radius:8px;margin-bottom:6px;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;">${tipo.icon}</span>
@@ -7663,7 +7736,7 @@ function renderArquivadosComunicado(arquivados){
   el.innerHTML = arquivados.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
-    const ondeAparece = c.prioridade==='mural' ? '📌 só mural' : '🔔 popup';
+    const ondeAparece = _comunicadoOndeTxt(c);
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
         <span style="font-size:15px;filter:grayscale(1);">${tipo.icon}</span>
@@ -7778,9 +7851,15 @@ function openComunicadoCompose(id){
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
     document.getElementById('cc-squad').value = c.squad||'*';
     document.getElementById('cc-publico').value = c.publico||'todos';
-    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : 'popup';
+    document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : c.prioridade==='oceano' ? 'oceano' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
     document.getElementById('cc-insistente').checked = !!c.insistente;
+    // 🌊 Oceano: aviso antigo (sem o campo) abre DESMARCADO — só vai pro mural do Oceano se alguém marcar e salvar; rascunho 🤖 nasce marcado.
+    document.getElementById('cc-oceano').checked = c.rascunho ? true : c.oceano===true;
+    document.getElementById('cc-capa').value = c.capa||'';
+    document.getElementById('cc-botao-txt').value = c.botao?.rotulo||'';
+    document.getElementById('cc-botao-url').value = c.botao?.url||'';
+    document.getElementById('cc-fixado').checked = !!c.fixado;
     if(delBtn) delBtn.style.display = '';
     const archBtn = document.getElementById('cc-arch-btn');
     if(archBtn){
@@ -7797,6 +7876,11 @@ function openComunicadoCompose(id){
     document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
     document.getElementById('cc-insistente').checked = false;
+    document.getElementById('cc-oceano').checked = true;   // padrão: o aviso também vai pro mural do Oceano
+    document.getElementById('cc-capa').value = '';
+    document.getElementById('cc-botao-txt').value = '';
+    document.getElementById('cc-botao-url').value = '';
+    document.getElementById('cc-fixado').checked = false;
     if(delBtn) delBtn.style.display = 'none';
     const archBtnNew = document.getElementById('cc-arch-btn');
     if(archBtnNew) archBtnNew.style.display = 'none';
@@ -7814,12 +7898,20 @@ function openComunicadoCompose(id){
 // checkbox marcado-mas-desabilitado enquanto mural está selecionado é seguro —
 // não tem como isso vazar um insistente:true indevido pro Firebase.
 function _ccTogglePrioridadeUI(){
-  const isMural = document.getElementById('cc-prioridade').value === 'mural';
+  const prio = document.getElementById('cc-prioridade').value;
+  const semPopup = prio === 'mural' || prio === 'oceano';   // insistente só faz sentido pra popup
   const wrap = document.getElementById('cc-insistente-wrap');
   const chk = document.getElementById('cc-insistente');
-  if(!wrap || !chk) return;
-  if(isMural){ chk.disabled = true; wrap.style.opacity = '.45'; }
-  else { chk.disabled = false; wrap.style.opacity = '1'; }
+  if(wrap && chk){
+    if(semPopup){ chk.disabled = true; wrap.style.opacity = '.45'; }
+    else { chk.disabled = false; wrap.style.opacity = '1'; }
+  }
+  // 🌊 "Só no Oceano" = o aviso existe SÓ lá: o checkbox fica marcado e travado; o extra (capa/botão/fixar) só aparece com o Oceano ligado.
+  const oc = document.getElementById('cc-oceano');
+  if(oc){
+    if(prio === 'oceano'){ oc.checked = true; oc.disabled = true; } else oc.disabled = false;
+    const extra = document.getElementById('cc-oceano-extra'); if(extra) extra.style.display = oc.checked ? '' : 'none';
+  }
 }
 function closeComunicadoCompose(){
   document.getElementById('comunicado-compose-ov')?.classList.remove('open');
@@ -7886,7 +7978,10 @@ async function _painelNotifyBroadcast(c, id){
   // publicava o comunicado, via "✅ publicado!" e ninguém era avisado (cada escrita negada era engolida em silêncio).
   if(falhas) showToast('⚠ Comunicado publicado, mas '+falhas+' de '+alvos.size+' aviso(s) não foram entregues — só quem tem papel PO/ADM no 👥 Global Users envia o aviso a todos.');
 }
+// Trava de "em andamento": comunicado NOVO ganha id a cada chamada — duplo clique em Publicar gravava 2 avisos (e 2 cards no Mural do Oceano).
+let _ccSalvando = false;
 function saveComunicado(){
+  if(_ccSalvando) return;
   if(!_isAdmPainel()){ showToast('⚠ Só administradores.'); return; }
   const titulo = document.getElementById('cc-titulo').value.trim();
   const corpo = _sanitizeComunicadoHtml(document.getElementById('cc-corpo').innerHTML);
@@ -7898,6 +7993,19 @@ function saveComunicado(){
   const estavaAtivo = !!existente.ativo; // pra decidir se notifica (só na transição pra ativo, ver comentário acima)
   const prioridade = document.getElementById('cc-prioridade').value;
   const insistente = prioridade==='popup' ? document.getElementById('cc-insistente').checked : false;
+  // 🌊 Oceano: "só no Oceano" liga sempre; senão vale o checkbox. Capa/botão só aceitam http(s) (o botão também aceita página da família, ex. kanban.html?squad=x).
+  const noOceano = prioridade==='oceano' ? true : !!document.getElementById('cc-oceano').checked;
+  const _urlOk = (u, familia)=>{ u=String(u||'').trim(); if(!u) return ''; if(/^https?:\/\/\S+$/i.test(u)) return u.slice(0,500); if(familia && /^(kanban|painel|okr|onboarding)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(u)) return u.slice(0,500); return null; };
+  let capa = '', botao = null, fixado = false;
+  if(noOceano){
+    capa = _urlOk(document.getElementById('cc-capa').value, false);
+    if(capa===null || (capa && !/^https:\/\//i.test(capa))){ showToast('⚠ A imagem de capa precisa ser um endereço https://…'); return; }
+    const bt = document.getElementById('cc-botao-txt').value.trim().slice(0,30), bu = _urlOk(document.getElementById('cc-botao-url').value, true);
+    if(bu===null){ showToast('⚠ O link do botão precisa começar com https:// (ou ser uma página do Maré, ex.: kanban.html?squad=dados).'); return; }
+    if(bu && !bt){ showToast('⚠ Dê um texto pro botão.'); return; }
+    if(bu) botao = {rotulo:bt, url:bu};
+    fixado = !!document.getElementById('cc-fixado').checked;
+  }
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
@@ -7905,20 +8013,28 @@ function saveComunicado(){
     publico: document.getElementById('cc-publico').value,
     prioridade,
     insistente,
+    oceano: noOceano,
     ativo: true, // publicar sempre ativa — rascunhos nascem inativos justamente até esse clique
     rascunho: false, // clicar em Publicar sempre tira do estado de rascunho
     criadoEm: existente.criadoEm || new Date().toISOString(),
     expiraEm: expiraRaw ? new Date(expiraRaw+'T23:59:59').toISOString() : null,
+    autor: existente.autor || window._currentUser?.displayName || window._currentUser?.email || '',
   };
+  if(capa) obj.capa = capa;
+  if(botao) obj.botao = botao;
+  if(fixado) obj.fixado = true;
+  _ccSalvando = true; const _btnPub = document.getElementById('cc-publicar-btn'); if(_btnPub) _btnPub.disabled = true;
+  const _ccFim = ()=>{ _ccSalvando = false; if(_btnPub) _btnPub.disabled = false; };
   window._set(window._ref(window._db,'kanban/comunicados/'+id), obj)
     .then(()=>{
+      _ccFim();
       showToast(eraRascunho ? '✅ Rascunho revisado e publicado!' : '✅ Comunicado publicado!');
-      if(!estavaAtivo && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
+      if(!estavaAtivo && obj.prioridade!=='oceano' && (obj.tipo==='urgente' || (obj.prioridade==='popup' && obj.insistente))){
         _painelNotifyBroadcast(obj, id);
       }
       closeComunicadoCompose();
     })
-    .catch(e=>showToast('⚠ Erro ao salvar: '+(e?.message||e)));
+    .catch(e=>{ _ccFim(); showToast('⚠ Erro ao salvar: '+(e?.message||e)); });
 }
 async function deleteComunicado(){
   if(!_editingComunicadoId) return;
@@ -8751,6 +8867,39 @@ function loadDadosDiarios(){
   });
 }
 
+// ── 🐟 METAS e DESAFIOS do Digital (módulo mare-metas-dev.js) ──────────────────────────────────────────────────────────────────────────
+function _pmetasUser(){ const u=window._currentUser||{}; return {uid:u.uid||null, nome:u.displayName||u.email||''}; }
+function renderDadosMetas(){
+  const box=document.getElementById('dados-metas-lista'); if(!box) return;
+  if(!window.MareMetas){ box.innerHTML='<div style="font-size:12px;color:var(--txt3)">O módulo de metas não carregou — recarregue a página.</div>'; return; }
+  const ed=isDadosEditor(window._currentUser), bar=document.getElementById('dados-metas-bar'); if(bar) bar.style.display=ed?'flex':'none';
+  const l=MareMetas.todasDigital();
+  box.innerHTML = l.length ? '<div class="mm"><div class="mm-grid" style="grid-template-columns:repeat(auto-fill,minmax(320px,1fr))">'+l.map(m=>(m.ativo===false?'<div style="opacity:.55">':'<div>')+MareMetas.cartaoHtml(m,{pode:ed,gestor:ed,escopoTxt:(m.ativo===false?'⏸ inativa · ':'')+(m.tipo==='desafio'?'desafio':'meta global')})+'</div>').join('')+'</div></div>'
+    : '<div class="mm"><div class="mm-vazio"><b>🌊</b>Nenhuma meta do Digital ainda.<br>'+(ed?'Crie a <b>meta global</b> e os <b>desafios</b> com os botões acima.':'Quem cuida dos dados do Digital cadastra aqui.')+'</div></div>';
+  MareMetas.ligar(box,{user:_pmetasUser, editar:dadosMetaEditar});
+  const sq=document.getElementById('dados-metas-squads');
+  if(sq){ const r=MareMetas.squadsRankingHtml(id=>{ const s=(typeof SQUADS!=='undefined'?SQUADS:[]).find(x=>x.id===id); return {nome:s?(s.label||id):id, emoji:(s&&s.icon)||'🐠'}; });
+    sq.innerHTML = r ? '<div class="mm"><div class="mm-sec-t">🐠 Metas das squads <span style="font-weight:500;text-transform:none;letter-spacing:0">(marcadas "mostrar na visão global")</span></div>'+r+'</div>' : ''; }
+}
+// Quem pode ser marcado como "quem preenche": ADMs + editores de Dados (os que realmente atualizam números do Digital) + você.
+async function _pmetasPessoas(){
+  try{
+    const pub=(await window._get(window._ref(window._db,'kanban/usuarios_publicos'))).val()||{}, me=window._currentUser||{};
+    return Object.keys(pub).filter(uid=>{ const u=pub[uid]||{}; return uid===me.uid || u.role==='adm' || DADOS_EDITORS.includes(u.email); }).map(uid=>({uid, nome:pub[uid].nome||pub[uid].email||uid}));
+  }catch(e){ return []; }
+}
+async function dadosMetaNova(tipo){
+  if(!isDadosEditor(window._currentUser)||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'digital',tipo:tipo||'meta',pessoas:await _pmetasPessoas(),onSave:inp=>MareMetas.salvar(inp,_pmetasUser()).then(r=>{ renderDadosMetas(); return r; })});
+}
+async function dadosMetaEditar(m){
+  if(!isDadosEditor(window._currentUser)||!window.MareMetas) return;
+  MareMetas.abrirForm({escopo:'digital',meta:m,pessoas:await _pmetasPessoas(),onSave:inp=>MareMetas.salvar(inp,_pmetasUser()).then(r=>{ renderDadosMetas(); return r; }),onRemover:mm=>MareMetas.remover(mm).then(()=>renderDadosMetas())});
+}
+function _pmetasIniciar(){
+  if(!window.MareMetas || _pmetasIniciar._ok) return; _pmetasIniciar._ok=true;
+  MareMetas.iniciar({todasSquads:true, onChange:()=>{ if(_isPtab('dados')) renderDadosMetas(); }});
+}
 function renderDadosTab(){
   const editor = isDadosEditor(window._currentUser);
   const formWrap = document.getElementById('dados-form-wrap');
@@ -8769,6 +8918,7 @@ function renderDadosTab(){
   renderDadosApresList();
   renderDadosHistorico();
   renderDadosEditorList();
+  renderDadosMetas();
 }
 
 function loadDadosFormForDate(date){
@@ -9366,6 +9516,26 @@ function _loginProviderMismatchMsg(user){
 // toast em vez de abrir o modal).
 window._isPainelViewer = false;
 function _painelViewerKey(email){ return String(email||'').trim().toLowerCase().replace(/\./g, ','); }
+// ── Login único pelo Oceano ──
+// Deslogado em Maré/Painel → Oceano (?next=<esta página, com query/hash>) → login + cadastro → volta pra cá. Devolve true se mandou embora.
+// NÃO manda: dentro do host do Oceano (iframe), com ?login=local (convidado externo/visualizador — o Oceano é só @ciahering; a escolha
+// vale pela aba), com recusa/aviso já escrito (ou guardado em login_notice) na tela de login (a pessoa precisa ler), ou se já mandou há menos de 45 s (anti-loop).
+function _irParaOceano(){
+  try{
+    if(window.MARE_LOGIN_PELO_OCEANO===false) return false;
+    if(window.parent && window.parent!==window) return false;
+    if(new URLSearchParams(location.search).get('login')==='local') sessionStorage.setItem('mare_login_local','1');
+    if(sessionStorage.getItem('mare_login_local')==='1') return false;
+    const e=document.getElementById('login-err'); if(e && e.style.display!=='none' && e.textContent.trim()) return false;
+    try{ const raw=localStorage.getItem('login_notice'); if(raw){ const n=JSON.parse(raw); if(n && n.msg && Date.now()-n.ts<=120000) return false; } }catch(err){}   // recusa guardada que _showLoginNotice() ainda vai mostrar
+    const ult=Number(sessionStorage.getItem('mare_oceano_ts')||0); if(ult && Date.now()-ult<45000) return false;
+    sessionStorage.setItem('mare_oceano_ts', String(Date.now()));
+    const dev=/-dev\.html/.test(location.pathname);
+    const alvo=location.pathname.split('/').pop()+location.search+location.hash;
+    location.replace((dev?'oceano-dev.html':'oceano.html')+'?next='+encodeURIComponent(alvo));
+    return true;
+  }catch(err){ return false; }
+}
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
@@ -9422,6 +9592,7 @@ window.addEventListener('auth-change',e=>{
     window._isPainelViewer = false;
     _finishPainelLogin(user);
   } else {
+    if(_irParaOceano()) return;
     document.getElementById('login-ov').style.display='flex';
     document.getElementById('app-root').style.display='none';
   }
@@ -9538,6 +9709,7 @@ window.addEventListener('fb-ready',()=>{
   loadPainelNotifs();
   loadDadosConfig();
   loadDadosDiarios();
+  _pmetasIniciar();   // 🐟 metas/desafios do Digital + metas das squads (ranking)
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){

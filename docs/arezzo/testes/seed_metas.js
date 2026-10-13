@@ -33,5 +33,7 @@ exports.seed = function (papel, opts) {
   const pts = []; for (let i = 0; i < 14; i++) pts.push([now - (14 - i) * 3.5 * 3600e3, Math.round(840000 * (i + 1) / 14 * (0.8 + 0.2 * Math.sin(i)))]);
   s.kanban.metas_log_dev.a = Object.fromEntries(pts.map(([t, v], i) => [String(t).padStart(14, '0') + '_x' + i, { v, t, nome: 'Ana' }]));
   if (opts.semMarcoFresco) { delete s.kanban.metas_squads_dev.dev.a.marcoTs; delete s.kanban.metas_squads_dev.dev.c.marcoTs; delete s.kanban.metas_digital_dev.g.marcoTs; }
+  // K=kanban (produção): os nós das metas não têm o sufixo _dev — o módulo usa SFX '' nas páginas de produção
+  if (!/-dev$/.test(process.env.K || 'kanban-dev')) ['metas_squads_dev', 'metas_digital_dev', 'metas_log_dev'].forEach(k => { s.kanban[k.replace('_dev', '')] = s.kanban[k]; delete s.kanban[k]; });
   return s;
 };
