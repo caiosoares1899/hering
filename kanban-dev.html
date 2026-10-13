@@ -6541,7 +6541,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.844-dev</div>
+<div class="version">v8.30.845-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6558,7 +6558,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
      (firebase-database.js/firebase-auth.js/firebase-messaging.js → import
      de firebase-app.js) reescrita de URL absoluta do gstatic.com pra
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
-<script src="mare-login-dev.js?v=1"></script>
+<script src="mare-login-dev.js?v=2"></script>
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
@@ -6966,6 +6966,7 @@ function _irParaOceano(){
   try{
     if(window.MARE_LOGIN_PELO_OCEANO===false) return false;
     if(window.parent && window.parent!==window) return false;
+    if(window.MareLogin && MareLogin.voltando) return false;   // acabou de voltar do Google (login direto, ver mare-login-dev.js): o 1º auth-change vem nulo ANTES do signInWithCredential terminar — mandar pro Oceano aqui jogaria o token fora
     if(new URLSearchParams(location.search).get('login')==='local') sessionStorage.setItem('mare_login_local','1');
     if(sessionStorage.getItem('mare_login_local')==='1') return false;
     const e=document.getElementById('login-err'); if(e && e.style.display!=='none' && e.textContent.trim()) return false;

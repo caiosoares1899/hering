@@ -71,6 +71,11 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🔎 /monitorarbugs Maré antes de subir — login direto × login único — 2026-10-13 · kanban-dev v8.30.845-dev · mare-login-dev v2 (SÓ DEV)
+- **Achado (regressão minha do login direto):** na volta do Google o Firebase dispara um `auth-change` **nulo** antes do `signInWithCredential` terminar; o "login único" do Maré (`_irParaOceano()`) tratava isso como "deslogado" e mandava a pessoa pro Oceano — o token já tinha sido apagado da URL, então se perdia e a pessoa caía na tela de login de novo. Agora `MareLogin.voltando` (ligado quando a página volta do Google) impede o redirect. Reproduzido antes de corrigir (o fake de teste liga "login local" por padrão e escondia isso — o teste agora limpa essa trava).
+- Sem achado: validação da volta (state/nonce/aud/iss/exp/idade), Oceano na volta, Escala dentro do calendário do mês (leitura "só a última vale", cache, iframe só recarrega se squad/semana mudou), 🗂 Entradas (Esc/empilhamento/trava de clique duplo), Intake.
+- Observação: o **Radar** (`okr.html`) ainda não usa o login direto (fica fora do login único) — no atalho do iPhone ele pode ter o mesmo travamento. Teste: `test_login_direto.js`.
+
 ### 🔐 Login direto pro atalho do iPhone/iPad (Oceano e Maré) — 2026-10-13 · oceano-dev v1.24 · kanban-dev v8.30.844-dev · mare-login-dev v1 (SÓ DEV)
 Relato de usuária (iPhone 12): o atalho na tela inicial **fica preso no login do Google**.
 - **Causa provável:** no atalho (modo "app") o popup do Google abre numa janela que não devolve o resultado ao app — fica na tela do Google, **sem erro** (por isso o fallback "popup falhou 2×" do Maré nunca disparava; o Oceano nem tinha fallback). O redirect do Firebase também não serve no Safari/iOS recente (o resultado volta por um iframe de outro domínio, isolado pelo Safari).

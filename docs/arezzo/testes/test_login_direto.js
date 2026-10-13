@@ -56,8 +56,10 @@ const jwt = (c) => 'h.' + b64(Object.assign({ iss: 'https://accounts.google.com'
     const u = goog[0] ? new URL(goog[0]) : null;
     t('Maré (?loginDireto=1): doSignIn vai direto pro Google (sem popup) com a volta em kanban-dev.html', u && u.searchParams.get('redirect_uri') === ORIG + '/kanban-dev.html' && !(await p.evaluate(() => window.__popup || 0).catch(() => 0)), goog);
     await ctx.close(); }
-  { const { ctx, p } = await pagina('kanban-dev.html', '?squad=dev#id_token=' + jwt({ nonce: 'k1' }) + '&state=ks', { init: ([n, s]) => { if (!sessionStorage.__ini) { sessionStorage.__ini = 1; localStorage.setItem('mare_oauth_direto', JSON.stringify({ nonce: n, state: s, ts: Date.now(), ret: '/kanban-dev.html?squad=dev' })); localStorage.setItem('mare_pending_insc', '1'); } }, initArg: ['k1', 'ks'] });
+  { const { ctx, p } = await pagina('kanban-dev.html', '?squad=dev#id_token=' + jwt({ nonce: 'k1' }) + '&state=ks', { init: ([n, s]) => { if (!sessionStorage.__ini) { sessionStorage.__ini = 1; localStorage.setItem('mare_oauth_direto', JSON.stringify({ nonce: n, state: s, ts: Date.now(), ret: '/kanban-dev.html?squad=dev' })); localStorage.setItem('mare_pending_insc', '1'); } sessionStorage.removeItem('mare_login_local'); }, initArg: ['k1', 'ks'] });   // o fake liga "login local" por padrão; aqui queremos o login único de verdade (redireciona pro Oceano)
     await p.waitForFunction(() => !!window.__authCb); await p.waitForTimeout(1200);
+    await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(600);   // o Firebase real dispara auth-change NULO antes do signInWithCredential terminar
+    t('Maré na volta: o auth-change nulo NÃO manda a pessoa pro Oceano (login único) e jogar o token fora', /kanban-dev\.html/.test(p.url()) && !/oceano/.test(p.url()), p.url());
     t('Maré na volta: id_token entregue ao Firebase e a URL volta a ?squad=dev', !!(await p.evaluate(() => window.__cred)) && /\?squad=dev$/.test(p.url()), p.url()); await ctx.close(); }
   { const { ctx, p } = await pagina('kanban-dev.html', '?squad=dev', {}); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(800);
     await p.evaluate(() => doSignIn()); await p.waitForTimeout(500);
