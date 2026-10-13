@@ -64,5 +64,32 @@ const jwt = (c) => 'h.' + b64(Object.assign({ iss: 'https://accounts.google.com'
   { const { ctx, p } = await pagina('kanban-dev.html', '?squad=dev', {}); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(800);
     await p.evaluate(() => doSignIn()); await p.waitForTimeout(500);
     t('Maré no navegador comum: continua no popup', (await p.evaluate(() => window.__popup || 0)) === 1, 0); await ctx.close(); }
+  // ── iPhone no SAFARI COMUM (13/10): link aberto do WhatsApp → o popup do Firebase falhava com "missing initial state" ──
+  { const { ctx, p, goog } = await pagina('oceano-dev.html', '', { iphone: true }); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(500);
+    t('iPhone no Safari comum (fora do atalho): MareLogin.usar() é verdadeiro', await p.evaluate(() => MareLogin.usar()), 0);
+    await p.click('#btn-login'); await p.waitForTimeout(700);
+    const u = goog[0] ? new URL(goog[0]) : null;
+    t('iPhone no Safari comum: Oceano vai direto pro Google (SEM popup), volta na própria página', u && u.searchParams.get('response_type') === 'id_token' && u.searchParams.get('redirect_uri') === ORIG + '/oceano-dev.html' && !(await p.evaluate(() => window.__popup || 0).catch(() => 0)), goog); await ctx.close(); }
+  { const { ctx, p } = await pagina('kanban-dev.html', '?squad=dev&login=local', { iphone: true }); await p.waitForFunction(() => !!window.__authCb);
+    t('convidado externo (?login=local) no iPhone continua no popup (o login direto só aceita @ciahering)', !(await p.evaluate(() => MareLogin.usar())), 0); await ctx.close(); }
+  // ── Escala e Intake no iPhone: sem redirect URI próprio, a volta do Google é no Oceano (hub) e a pessoa é levada de volta ──
+  for (const [arq, qs, btn, nome] of [['escala-dev.html', '?squad=dados', '#btn-google', 'Escala'], ['intake-dev.html', '?squad=dados', '#btn-google', 'Intake']]) {
+    { const { ctx, p, goog, errs } = await pagina(arq, qs, { iphone: true }); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(700);
+      await p.click(btn); await p.waitForTimeout(700);
+      const u = goog[0] ? new URL(goog[0]) : null, pend = JSON.parse((((await ctx.storageState()).origins.find(o => o.origin === ORIG) || { localStorage: [] }).localStorage.find(x => x.name === 'mare_oauth_direto') || { value: 'null' }).value);
+      t(nome + ' no iPhone: vai direto pro Google (sem popup) e a volta é no OCEANO (já cadastrado), não na própria página', u && u.searchParams.get('redirect_uri') === ORIG + '/oceano-dev.html' && !(await p.evaluate(() => window.__popup || 0).catch(() => 0)), goog);
+      t(nome + ' no iPhone: guarda de onde saiu (hub + ret com a query)', pend && pend.hub === true && pend.ret === '/' + arq + qs, pend);
+      t(nome + ' sem erro de JS', !errs.length, errs); await ctx.close(); }
+    { const { ctx, p } = await pagina(arq, qs, {}); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(() => window.__authCb(null)); await p.waitForTimeout(700);
+      await p.click(btn); await p.waitForTimeout(500);
+      t(nome + ' no computador: continua no popup', (await p.evaluate(() => window.__popup || 0)) === 1 && p.url().startsWith(ORIG + '/' + arq), p.url()); await ctx.close(); }
+  }
+  { // volta pelo hub: o Oceano entrega o token ao Firebase e LEVA a pessoa de volta pra página de origem
+    const { ctx, p } = await pagina('oceano-dev.html', '#id_token=' + jwt({ nonce: 'h1' }) + '&state=hs', { iphone: true, init: ([n, s]) => { if (!sessionStorage.__ini) { sessionStorage.__ini = 1; localStorage.setItem('mare_oauth_direto', JSON.stringify({ nonce: n, state: s, ts: Date.now(), ret: '/escala-dev.html?squad=dados', hub: true })); } }, initArg: ['h1', 'hs'] });
+    await p.waitForFunction(() => /escala-dev\.html/.test(location.pathname), null, { timeout: 8000 }).catch(() => {});
+    t('hub: depois do login o Oceano leva a pessoa de volta pra Escala (mesma query)', /\/escala-dev\.html\?squad=dados$/.test(p.url()), p.url()); await ctx.close(); }
+  { const { ctx, p } = await pagina('oceano-dev.html', '#id_token=' + jwt({ nonce: 'h1' }) + '&state=hs', { iphone: true, init: ([n, s]) => { if (!sessionStorage.__ini) { sessionStorage.__ini = 1; localStorage.setItem('mare_oauth_direto', JSON.stringify({ nonce: n, state: s, ts: Date.now(), ret: '//evil.example/x', hub: true })); } }, initArg: ['h1', 'hs'] });
+    await p.waitForTimeout(2500);
+    t('hub: um "ret" que aponta pra fora da origem (//evil.example) é IGNORADO — fica no Oceano', p.url().startsWith(ORIG + '/oceano-dev.html'), p.url()); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
 })();

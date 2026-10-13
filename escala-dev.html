@@ -229,12 +229,13 @@
 <div class="ov" id="ov" hidden></div>
 <div id="toast" hidden></div>
 
+<script src="mare-login-dev.js?v=3"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.9 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.10 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -1134,6 +1135,7 @@ function renderWho() {
 }
 $('btn-google').onclick = async () => {
   const m = $('login-msg'); m.hidden = true;
+  if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; }   // iPhone/iPad: o popup do Firebase falha ("missing initial state") — vai pelo Oceano (mare-login-dev.js)
   try {
     const r = await signInWithPopup(auth, provider);
     if (!isHering(r.user)) { await signOut(auth); m.textContent = '⚠️ Use a conta @ciahering.com.br.'; m.hidden = false; }
