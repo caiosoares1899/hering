@@ -424,6 +424,12 @@
 .mm-cv-rows{max-height:230px;overflow-y:auto;margin-top:8px;border:1px solid var(--glass-b,rgba(255,255,255,.1));border-radius:10px;padding:4px 8px;background:rgba(var(--ink-rgb,0,0,0),.25);}
 .mm-cv-r{display:grid;grid-template-columns:78px 1fr 52px;gap:8px;align-items:center;padding:3px 0;font-size:12px;color:var(--txt2);}
 .mm-cv-r input{padding:5px 8px !important;font-size:12px !important;}
+.mm-ent-l{max-height:48vh;overflow:auto;margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.mm-ent-r{padding:9px 11px;border-radius:10px;background:rgba(var(--ink-rgb,0,0,0),.3);border:1px solid var(--glass-b,rgba(255,255,255,.1));font-size:12.5px;line-height:1.45;}
+.mm-ent-r .t{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap;}
+.mm-ent-r small{color:var(--txt3);font-size:11px;}
+.mm-ent-r .a{display:flex;gap:6px;}
+.mm-ent-ed{display:flex;flex-direction:column;gap:6px;margin-top:8px;}
 .mm-cv-r .mm-cv-acc{text-align:right;color:var(--txt3);font-size:11px;}
 .mm-cv-r.fds{color:var(--txt3);}
 .mm-chk{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--txt2);margin-top:12px;line-height:1.4;cursor:pointer;}
@@ -553,7 +559,7 @@
         <div class="mm-hero-txt"><div class="mm-kick">${esc(m.emoji || '🎯')} ${m.tipo === 'desafio' ? 'Desafio' : 'Meta'}${donos}</div><div class="mm-ttl">${esc(m.titulo)}</div>
         <div class="mm-big">${esc(fmtVal(m, m.atual))} <small>de ${esc(fmtVal(m, m.alvo))}</small></div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${statusPill(m)}</div>${tagsHtml(m)}</div></div>
       ${kpisHtml(m)}${marcosHtml(m)}
-      <div class="mm-upd">${atualizadoHtml(m)}<span style="display:flex;gap:6px">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar valor</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈 Evolução</button>${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙</button>` : ''}</span></div>
+      <div class="mm-upd">${atualizadoHtml(m)}<span style="display:flex;gap:6px">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar valor</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈 Evolução</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂 Entradas</button>` : ''}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙</button>` : ''}</span></div>
       <div class="mm-chart-slot" hidden></div></div>`;
   }
   // CARTÃO (desafios e metas secundárias): emoji, título, tags (dia/submarca/canal), barra com "esperado" e rodapé de números.
@@ -567,7 +573,7 @@
       <div class="mm-bar" title="${esc(st.label)}"><i style="width:${w.toFixed(0)}%"></i>${esp != null && esp > 0 && esp < 100 ? `<u style="left:${esp.toFixed(0)}%" title="Esperado hoje: ${Math.round(esp)}%"></u>` : ''}</div>
       <div class="mm-card-f"><span>${esc(fmtPar(m))} · ${faltaTxt}</span><span>${statusPill(m)} ${prazo}</span></div>
       <div class="mm-card-f" style="margin-top:4px"><span>${atualizadoHtml(m)}</span>${o.escopoTxt ? `<span>${esc(o.escopoTxt)}</span>` : ''}</div>
-      <div class="mm-card-a">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈</button>${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙ Editar</button>` : ''}</div>
+      <div class="mm-card-a">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂</button>` : ''}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙ Editar</button>` : ''}</div>
       <div class="mm-chart-slot" hidden></div></div>`;
   }
   function rankingHtml(itens) {
@@ -681,6 +687,58 @@
     const pts = Object.keys(v).sort().slice(-80).map(k => ({ t: Number(v[k].t), v: Number(v[k].v), nome: v[k].nome })).filter(x => isFinite(x.t) && isFinite(x.v));
     S.logCache[id] = { t: Date.now(), pts }; return pts;
   }
+  // ── Gerir as entradas (histórico): editar / excluir ──
+  // O histórico guarda o ACUMULADO de cada ponto (`v`); entrada lançada como PARTE também leva `d` (quanto entrou). Regras ao mexer (lista sempre em ordem de `t`):
+  //  • excluir/editar uma PARTE desloca os pontos POSTERIORES pela mesma diferença (o todo continua = soma das partes);
+  //  • excluir/editar um TOTAL mexe só naquele ponto (os posteriores são valores absolutos);
+  //  • o valor ATUAL passa a refletir o último ponto (deslocado pela mesma diferença); sem pontos sobrando, a meta volta a "sem valor ainda".
+  const ordEnt = (a, b) => (a.t - b.t) || (a.k < b.k ? -1 : a.k > b.k ? 1 : 0);
+  const entradasDeLog = v => Object.keys(v || {}).map(k => Object.assign({ k }, v[k])).filter(e => e && isFinite(Number(e.t)) && isFinite(Number(e.v))).map(e => Object.assign(e, { t: Number(e.t), v: Number(e.v) })).sort(ordEnt);
+  function entRemove(lista, k) {
+    const E = lista.find(e => e.k === k); if (!E) return null;
+    return lista.filter(e => e.k !== k).map(e => { e = Object.assign({}, e); if (isNum(E.d) && ordEnt(e, E) > 0) e.v -= Number(E.d); return e; });
+  }
+  function entInsere(lista, novo, base) {
+    const out = lista.map(e => Object.assign({}, e)); novo = Object.assign({}, novo);
+    if (isNum(novo.d)) { const antes = out.filter(e => ordEnt(e, novo) < 0).pop(); novo.d = Number(novo.d); novo.v = (antes ? antes.v : base) + novo.d; out.forEach(e => { if (ordEnt(e, novo) > 0) e.v += novo.d; }); }
+    out.push(novo); out.sort(ordEnt); return out;
+  }
+  // op: {tipo:'del', k} | {tipo:'edit', k, t, valor, nota}  (valor = a PARTE se a entrada é parte, senão o TOTAL daquele ponto). → {lista, atual, atualT}
+  function entPlano(f, lista, op) {
+    const base = isNum(f.inicial) ? Number(f.inicial) : 0, E = lista.find(e => e.k === op.k); if (!E) return { erro: 'Essa entrada não existe mais (outra pessoa pode ter excluído).' };
+    let depois = entRemove(lista, op.k), editK = null;
+    if (op.tipo === 'edit') {
+      const t = isNum(op.t) ? Number(op.t) : E.t, parte = isNum(E.d), val = Number(op.valor);
+      if (!isFinite(val)) return { erro: 'Informe um número.' };
+      const k = t === E.t ? E.k : String(t).padStart(14, '0') + '_' + Math.random().toString(36).slice(2, 5);
+      const novo = Object.assign({}, E, { k, t, nota: op.nota || undefined });
+      if (parte) novo.d = val; else novo.v = val;
+      depois = entInsere(depois, novo, base); editK = k;
+    }
+    const ult = l => (l.length ? l[l.length - 1] : null), a0 = ult(lista), a1 = ult(depois);
+    const atual = !a1 ? null : (isNum(f.atual) && a0 ? Number(f.atual) + (a1.v - a0.v) : a1.v);
+    return { lista: depois, atual, atualT: a1 ? a1.t : null, editK };
+  }
+  // Aplica o plano: grava só os pontos que mudaram (ou sumiram) + o valor atual, num update só.
+  async function mexerEntrada(m, op, user) {
+    const agora = Date.now(); if (op.tipo === 'edit' && isNum(op.t) && op.t > agora + 5 * 60e3) return { ok: false, erro: 'A data e hora da entrada não podem estar no futuro.' };
+    const f = achar(m.id, m.escopo, m.squad) || m;
+    let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + m.id))).val() || {}; } catch (e) { return { ok: false, erro: 'Não deu pra ler o histórico agora. Tente de novo.' }; }
+    const antes = entradasDeLog(v), pl = entPlano(f, antes, op); if (pl.erro) return { ok: false, erro: pl.erro };
+    const upd = {}, lp = PATHS.log + '/' + m.id + '/', porK = {}; antes.forEach(e => { porK[e.k] = e; });
+    const limpa = e => { const o = {}; Object.keys(e).forEach(x => { if (x !== 'k' && e[x] !== undefined) o[x] = e[x]; }); return o; };
+    antes.forEach(e => { if (!pl.lista.some(n => n.k === e.k)) upd[lp + e.k] = null; });
+    pl.lista.forEach(n => { const o = porK[n.k]; const alt = !o || o.v !== n.v || o.t !== n.t || o.d !== n.d || (o.nota || undefined) !== (n.nota || undefined); if (!alt) return; upd[lp + n.k] = limpa(n); });
+    if (pl.editK) { const ed = pl.lista.find(n => n.k === pl.editK); if (ed) { const w = upd[lp + ed.k] || limpa(ed); w.ed = agora; w.edNome = (user && user.nome) || ''; upd[lp + ed.k] = w; } }
+    const novo = Object.assign({}, f, { atual: pl.atual }), meta = {};
+    meta.atual = pl.atual; meta.atualT = pl.atualT; meta.atualizadoEm = agora; meta.atualizadoPor = (user && user.uid) || null; meta.atualizadoNome = (user && user.nome) || '';
+    if (pl.atual != null) { const mc = marcoDe(pct(novo)); if (mc > (Number(f.marco) || 0)) { meta.marco = mc; meta.marcoTs = agora; } }
+    Object.keys(meta).forEach(x => { upd[pathMeta(m) + '/' + x] = meta[x]; });
+    await root._update(refDe('kanban'), Object.fromEntries(Object.entries(upd).map(([k, x]) => [k.replace(/^kanban\//, ''), x])));
+    delete S.logCache[m.id];
+    return { ok: true, atual: pl.atual };
+  }
+  async function lerEntradas(id) { let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + id))).val() || {}; } catch (e) { return null; } return entradasDeLog(v); }
   function achar(id, esc_, sq) { return (esc_ === 'squad' ? lista(S.squads[sq]).map(m => Object.assign({ squad: sq, escopo: 'squad' }, m)) : lista(S.digital).map(m => Object.assign({ escopo: 'digital' }, m))).find(m => m.id === id) || null; }
 
   // ════════════════ MODAIS ════════════════
@@ -859,6 +917,51 @@
     $('mm-r-v').focus();
   }
 
+
+  // 🗂 Entradas: lista tudo que foi lançado (mais novo primeiro) e deixa editar (data/hora, valor, nota) ou excluir. Quem vê o botão é quem pode atualizar o valor.
+  function abrirEntradas(m, opts) {
+    injetaCss(); opts = opts || {};
+    const ov = abreOv(`<h3>🗂 Entradas</h3><p class="sub" id="mm-e-sub"></p><div class="mm-ent-l" id="mm-e-l">Carregando…</div><div class="mm-msg" id="mm-e-e" hidden></div><div class="mm-acts"><span class="g"></span><button type="button" class="mm-btn" id="mm-e-x">Fechar</button></div>`);
+    if (!ov) return;
+    const $ = id => ov.querySelector('#' + id), fresco = () => achar(m.id, m.escopo, m.squad) || m;
+    let lista = [], edK = null, busy = false, atualTxt = null;
+    const erro = t => { $('mm-e-e').textContent = t || ''; $('mm-e-e').hidden = !t; };
+    const sub = () => { const f = fresco(); $('mm-e-sub').innerHTML = `${esc(m.emoji || '🎯')} <b>${esc(m.titulo)}</b> — total <b>${esc(atualTxt != null ? atualTxt : fmtVal(m, f.atual))}</b> de ${esc(fmtVal(m, m.alvo))} · ${lista.length} ${lista.length === 1 ? 'entrada' : 'entradas'}`; };
+    const linha = e => {
+      const parte = isNum(e.d), val = parte ? `<b>${Number(e.d) > 0 ? '+' : ''}${esc(fmtVal(m, e.d))}</b> <small>(total ${esc(fmtVal(m, e.v))})</small>` : `total <b>${esc(fmtVal(m, e.v))}</b>`;
+      const meta = esc(fmtQuando(e.t)) + (e.nome ? ' · ' + esc(e.nome) : '') + (e.reg ? ' · lançado em ' + esc(fmtQuando(e.reg)) : '') + (e.ed ? ' · editado' + (e.edNome ? ' por ' + esc(e.edNome) : '') : '') + (e.nota ? ' · “' + esc(e.nota) + '”' : '');
+      if (e.k === edK) { const q = partesSP(e.t); return `<div class="mm-ent-r" data-k="${esc(e.k)}"><div class="t"><span>${val}</span></div>
+        <div class="mm-ent-ed"><div class="mm-r2"><input type="date" id="mm-e-d" value="${q.data}" max="${partesSP(Date.now()).data}" aria-label="Data"><input type="time" id="mm-e-h" value="${q.hora}" aria-label="Hora"></div>
+        <input type="number" id="mm-e-v" step="any" inputmode="decimal" value="${parte ? esc(String(e.d)) : esc(String(e.v))}" aria-label="${parte ? 'Quanto entrou' : 'Total acumulado'}" placeholder="${parte ? 'Quanto entrou (uma parte do total)' : 'Total acumulado naquele momento'}">
+        <input type="text" id="mm-e-n" maxlength="140" value="${esc(e.nota || '')}" placeholder="Nota (opcional)">
+        <div class="mm-chips"><button type="button" class="mm-btn p s" data-a="ok">Salvar</button><button type="button" class="mm-btn s" data-a="cn">Cancelar</button></div></div></div>`; }
+      return `<div class="mm-ent-r" data-k="${esc(e.k)}"><div class="t"><span>${val}</span><span class="a"><button type="button" class="mm-btn s" data-a="ed" title="Editar">✏️</button><button type="button" class="mm-btn s" data-a="del" title="Excluir">🗑</button></span></div><small>${meta}</small></div>`;
+    };
+    const desenha = () => { sub(); $('mm-e-l').innerHTML = lista.length ? lista.slice().reverse().map(linha).join('') : '<div class="mm-chart-vazio">Nenhuma entrada lançada ainda.</div>'; };
+    const carrega = async () => { const l = await lerEntradas(m.id); if (l == null) { $('mm-e-l').textContent = 'Não deu pra ler as entradas agora. Feche e abra de novo.'; return; } lista = l; desenha(); };
+    const rodar = async op => { if (busy) return; busy = true; erro('');
+      try { const r = await mexerEntrada(m, op, opts.user); if (r.ok === false) { erro(r.erro); } else { atualTxt = r.atual == null ? 'sem valor' : fmtVal(m, r.atual); edK = null; await carrega(); } }
+      catch (e) { erro((e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''))) ? 'Sem permissão pra gravar. Se for a 1ª vez, as regras do banco precisam ser publicadas — avise o ADM.' : 'Não deu pra salvar agora. Tente de novo.'); }
+      busy = false; };
+    $('mm-e-x').onclick = () => ov.remove();
+    $('mm-e-l').addEventListener('click', e => {
+      const b = e.target.closest('[data-a]'); if (!b) return; const row = b.closest('[data-k]'), k = row.dataset.k, en = lista.find(x => x.k === k); if (!en) return; const a = b.dataset.a;
+      if (a === 'ed') { edK = k; erro(''); desenha(); const v = $('mm-e-v'); v && v.focus(); }
+      else if (a === 'cn') { edK = null; erro(''); desenha(); }
+      else if (a === 'del') {
+        const parte = isNum(en.d);
+        if (!confirm(parte ? `Excluir esta entrada de ${fmtQuando(en.t)} (+${fmtVal(m, en.d)})?\n\nO total cai ${fmtVal(m, en.d)} e o gráfico é recalculado.` : `Excluir o total de ${fmtVal(m, en.v)} lançado em ${fmtQuando(en.t)}?`)) return;
+        rodar({ tipo: 'del', k });
+      } else if (a === 'ok') {
+        const v = $('mm-e-v').value, q = spParaMs($('mm-e-d').value, $('mm-e-h').value);
+        if (!isNum(v)) { erro('Informe um número.'); return; } if (isNaN(q)) { erro('Informe a data e a hora da entrada.'); return; }
+        if (q > Date.now() + 5 * 60e3) { erro('A data e hora da entrada não podem estar no futuro.'); return; }
+        rodar({ tipo: 'edit', k, t: q, valor: Number(v), nota: $('mm-e-n').value.trim() });
+      }
+    });
+    carrega();
+  }
+
   // ════════════════ POPUP 🐟 ════════════════
   const LS_VISTO = 'mare_peixes_vistos' + SFX;
   const lsGet = () => { try { return JSON.parse(localStorage.getItem(LS_VISTO) || '{}') || {}; } catch (e) { return {}; } };
@@ -955,6 +1058,7 @@
       const m = achar(box.dataset.mmId, box.dataset.mmEsc, box.dataset.mmSq); if (!m) return;
       const act = b.dataset.mmAct;
       if (act === 'reg') abrirRegistrar(m, { onSave: (v, nota, quando, opc) => registrar(m, v, ctx.user(), nota, quando, opc) });
+      if (act === 'ent') abrirEntradas(m, { user: ctx.user() });
       if (act === 'edit' && ctx.editar) ctx.editar(m);
       if (act === 'graf') {
         const slot = box.querySelector('.mm-chart-slot'); if (!slot) return;
@@ -972,9 +1076,9 @@
     // visual
     injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
     // dados
-    iniciar, ouvirTodasSquads, salvar, remover, arquivar, registrar, lerLog, metasDigital, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
+    iniciar, ouvirTodasSquads, salvar, remover, arquivar, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
     // modais
-    abrirForm, abrirRegistrar, mostrarPeixes, vigiaMarcos,
+    abrirForm, abrirRegistrar, abrirEntradas, mostrarPeixes, vigiaMarcos,
   };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.MareMetas = api;

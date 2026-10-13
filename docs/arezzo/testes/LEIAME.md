@@ -23,6 +23,8 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_monitorarbugs_1013b.js` — 2ª rodada de 13/10 (Escala): sem rolagem lateral no celular e "Copiar menções" sem repetir quem está em duas squads.
 - `test_monitorarbugs_1013c.js` — 3ª rodada de 13/10 (Intake): salvar ⚙ Config no Painel preserva `intakeEnabled`/`intakeCampos`/`bfBannerMsg`; pedido interno recusa prazo no passado.
 - `test_metas_curva.js` — 🐟 Metas com diarização (ritmo não linear): matemática (esperado acumulado, situação, meta do dia, validar, colar da planilha, gráfico) + formulário no Maré (grade por dia, colar, período, salvar/editar, voltar pra linear).
+- `test_metas_entradas.js` — 🐟 🗂 Entradas (editar/excluir o histórico): lógica pura (parte × total, reordenar por data, última entrada, entrada já excluída) + modal no Maré (editar, mudar data, excluir, validações).
+- `test_metas_curva_colar.js` — colar a diarização sem período (deduz o período; avisos específicos).
 - `test_metas_retroativo.js` — 🐟 "Atualizar valor" com data e hora da entrada (retroativo): fuso Brasília, só histórico quando é mais antigo que o atual, vira atual quando é mais novo, ordem de lançamento ≠ ordem do tempo, futuro recusado, "Somar" desligado, selo "(valor de …)".
 - `test_escala_aviso.js` — 🔔 aviso à pessoa quando o gestor cadastra/limpa a escala dela (e ninguém se avisa) + clique no sino do Maré abre a Escala na semana certa.
 - `test_escala_calendario.js` — 📅 Escala no mês do Calendário do Maré: minha escala + contagem por dia, popover, "Abrir na Escala", interruptor, releitura ao voltar, sem permissão.
