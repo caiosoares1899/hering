@@ -86,6 +86,11 @@ Deploy (na sua máquina, depois de resincronizar o clone — ver `CLAUDE.md`) + 
 cd functions && firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario
 gsutil lifecycle set storage-lifecycle.json gs://hering-onboarding.firebasestorage.app
 ```
+**Aviso quando falhar** — `backupVigia` (todo dia 09:00): confere o **resultado** no Storage (completo diário de hoje, completo semanal ≤ 8 dias, quadro de cada
+squad ≤ 8 dias) e manda uma notificação 🛟 (sino + push) pros **ADMs**, no máximo 1 por dia. **Restaurar pela tela do Maré** — ⚙ Config → Backup → 🛟 Backup completo (nuvem)
+(ADM/PO/Organizador): lista, compara e traz de volta **só o que sumiu** (comentários dos cards, configurações, intake, subtimes, estrelas; nunca sobrescreve) via
+`backupCompletoApi`. Deploy: `firebase deploy --only functions:backupVigia,functions:backupCompletoApi,functions:backupCompletoSemanal,functions:sendPushOnNotification`.
+
 **Restaurar** (script local, `functions/backup/restaurar.js`; por padrão só simula): `node backup/restaurar.js --listar`;
 `node backup/restaurar.js --modo diario --data ultimo --no okr` (simula) e o mesmo com `--aplicar` (grava). Também restaura
 um squad (`--squad dados`). Sempre **mescla** (nunca apaga o que não está no backup) e salva o estado atual em

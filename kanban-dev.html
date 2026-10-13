@@ -5441,6 +5441,22 @@ window.MARE_LOGIN_PELO_OCEANO = true;
         </p>
         <div id="restore-compare" style="display:none;margin-bottom:10px;"></div>
       </div>
+
+      <div id="restore-cloud-section">
+        <div style="height:1px;background:var(--glass-b);margin:14px 0 10px;"></div>
+        <div class="cfg-sec-title" style="color:var(--cyan);">🛟 Backup completo (nuvem)</div>
+        <p style="font-size:11px;color:var(--txt2);line-height:1.7;margin-bottom:10px;">
+          O backup completo do banco, feito toda semana pela nuvem, guarda o que o backup do quadro não guarda: <b>comentários dos cards</b>, <b>configurações</b> do squad, <b>pedidos de intake</b>, subtimes e estrelas. Aqui você traz de volta <b>só o que sumiu</b> — o que existe hoje <b>nunca é sobrescrito</b>. (Os cards, colunas e tags continuam na 🧯 Restaurar backup, acima.)
+        </p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px;">
+          <button class="btn btn-sm" id="rc-btn-listar" onclick="rcListar()" style="color:var(--cyan);border-color:rgba(56,182,255,.3);">☁️ Ver backups disponíveis</button>
+          <select id="rc-data" class="fi" style="display:none;max-width:260px;padding:6px 8px;font-size:11px;" onchange="rcLimpar()"></select>
+          <button class="btn btn-sm" id="rc-btn-comparar" onclick="rcComparar()" style="display:none;color:var(--cyan);border-color:rgba(56,182,255,.3);">🔍 Comparar com hoje</button>
+        </div>
+        <div id="rc-msg" style="font-size:11px;color:var(--txt3);line-height:1.6;margin-bottom:8px;"></div>
+        <div id="rc-areas" style="display:none;margin-bottom:10px;"></div>
+        <button class="btn btn-sm" id="rc-btn-restaurar" onclick="rcRestaurar()" style="display:none;color:var(--teal);border-color:rgba(46,204,156,.4);">🧯 Restaurar as áreas marcadas (só o que sumiu)</button>
+      </div>
     </div>
 
   </div>
@@ -6541,7 +6557,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.847-dev</div>
+<div class="version">v8.30.849-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6892,7 +6908,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=24"></script>
+<script src="mare-notif-dev.js?v=25"></script>
 <script src="mare-metas-dev.js?v=8"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
@@ -28169,7 +28185,7 @@ const HELP_CONTENT = {
     { icon:'🛒', title:'Canal (venda em marketplaces)', text:'Em Config → Tags, role até "🛒 Canal" e ative "Ativar campo de canal neste squad" (só PO/ADM/Organizador conseguem ligar) — pensado pro squad Marketplace, que vende os mesmos produtos em vários canais ao mesmo tempo (Mercado Livre nas modalidades ME1/ME2/Full, Dafiti, Netshoes, Shopee/Shopee Kids, Amazon/Amazon FBA, Privalia, Magazine Luiza, ZZ Mall, Off Premium, TikTok Shop). Mesma "pegada" da Submarca do squad Site — o campo dedicado "🛒 Canal" aparece no modal do card (ao lado de Executor) e é exclusivo (só um canal por vez).\n\nObrigatório é opt-in: diferente da Submarca (sempre obrigatória assim que ativada), o Canal só trava o Salvar se o squad TAMBÉM ligar o segundo interruptor "Tornar Canal obrigatório pra salvar o card" — ativar só o campo deixa o Canal opcional (ver dica "Prazo, Submarca e Canal obrigatórios").\n\nVisibilidade: cada um dos 14 canais tem seu próprio interruptor em Config → Tags — todos começam ligados por padrão, e desligar um esconde ele do campo do card e do menu de filtro (sem apagar o que já foi marcado nos cards antigos).\n\nFiltro rápido: na toolbar, logo depois de Filtros, tem o botão "🛒 Canais ▾" — mesmo funcionamento do menu de Submarcas: marque quantos canais quiser ao mesmo tempo, o botão mostra quantos estão marcados (ex.: "🛒 Canais (2) ▾"), e "Todos" limpa a seleção.' },
     { icon:'📢', title:'Campo Demandante', text:'Em Config → Padrões de card (seção "📢 Campo Demandante"), ative "Ativar campo de Demandante neste squad" (só PO/ADM/Organizador conseguem ligar) — separa quem PEDIU o card (Demandante) de quem EXECUTA (Responsável), que pode mudar de mão ao longo do card (ex.: passa de designer pra redator) enquanto o demandante normalmente não muda. Depois de ativado, o campo "📢 Demandante" aparece no modal do card (logo abaixo de Responsável), vira filtro dedicado na toolbar, e conta pras notificações de conclusão/desbloqueio junto com Responsável e Participantes.\n\n<b>Proteção da descrição:</b> assim que um card tem Demandante definido, a descrição principal fica travada pra quem não é ADM, PO ou Organizador — a caixa nem abre pra edição (mostra um aviso "🔒 Protegida (Demandante)" ao lado do rótulo, e treme se alguém tentar clicar), pra ninguém apagar ou substituir aquele conteúdo por engano. Complementar continua livre pra qualquer um, só que pelo campo separado "Descrições adicionais" (ver dica) — é remover ou reescrever o que já estava lá que fica bloqueado.' },
     { icon:'📥', title:'Importar do Trello', text:'Em Config → Importar, cole o JSON exportado do Trello (Board → Show menu → More → Export as JSON). O sistema mapeia listas para colunas, labels para tags e membros para usuários do Maré automaticamente.\n\nLabel do Trello com nome de Submarca ou Canal: se o squad usa o campo Submarca ou o campo Canal (ver dicas em Configurações) e uma label do Trello tem o MESMO nome de uma das opções (ex.: label "Hering Adulto Comercial" ou label "Shopee") ela vincula direto na tag fixa correspondente — o card já nasce plugado no campo dedicado e no filtro, sem precisar remapear manualmente depois.\n\nAplicar uma tag a todos os cards do import: útil quando você importa vários boards do Trello pro mesmo squad (ex.: uma submarca ou um canal por board) — escolha a tag no select antes de confirmar e ela entra em todo card importado daquela vez, sem precisar marcar card por card depois.\n\nMembro sem match no board: quando o Trello tem alguém vinculado a um card que não bate com ninguém do squad, o card fica sem responsável — mas ganha uma tag automática "👤 Nome da Pessoa" (uma por pessoa, reaproveitada em todos os cards dela). Quando essa pessoa se cadastrar de verdade, filtre pela tag pra achar rápido todos os cards dela e reatribuir em lote.' },
-    { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n🛟 <b>Backup completo do banco</b> (feito pela squad de desenvolvimento, fora do board): além do quadro, guarda comentários dos cards, as configurações do squad, intake, Radar, Metas, Escala e os cadastros das pessoas — toda semana (tudo) e todo dia (o que é mais sensível a perda). Esse backup <b>não aparece na tela Restaurar backup</b>: se algo sumiu e não está nos cards, avise o time pra restaurar a partir dele.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
+    { icon:'💾', title:'Backup', text:'Em Config → Backup, exporte todos os dados do board em JSON a qualquer momento (cards, colunas, tags, eventos, modelos). Configure o EmailJS para receber um backup automático todo domingo por email. O histórico dos últimos snapshots fica salvo no Firebase e pode ser baixado a qualquer momento.\n\n<b>Backup automático em segundo plano:</b> além do que a pessoa dispara na mão, todo domingo às 04:00 um backup de cada squad é salvo sozinho no Cloud Storage, sem depender de ninguém abrir o board — funciona como uma rede de segurança extra, guardando os últimos ~2 meses de histórico.\n\n🛟 <b>Backup completo do banco</b> (feito pela squad de desenvolvimento, fora do board): além do quadro, guarda comentários dos cards, as configurações do squad, intake, Radar, Metas, Escala e os cadastros das pessoas — toda semana (tudo) e todo dia (o que é mais sensível a perda). Esse backup <b>não aparece na tela 🧯 Restaurar backup</b> (que é só do quadro). Pra trazer de volta o que sumiu das outras áreas, use, logo abaixo, <b>🛟 Backup completo (nuvem)</b> (só ADM, PO e Organizador): <b>☁️ Ver backups disponíveis</b> → escolha a data → <b>🔍 Comparar com hoje</b> mostra, por área (💬 comentários dos cards, ⚙️ configurações do squad, 📥 pedidos de intake, 👥 subtimes, ⭐ estrelas), quantos itens sumiram → marque o que quer e <b>🧯 Restaurar as áreas marcadas</b>. Só volta <b>o que sumiu</b>: o que existe hoje nunca é sobrescrito, e a lista do que foi criado fica guardada pra desfazer. Se um backup falhar, os ADMs recebem um aviso 🛟 no sino.\n\n<b>🧯 Restaurar backup</b> (só ADM/PO/Organizador): na mesma aba, dá pra subir um arquivo de backup (ou escolher um snapshot do histórico) e trazer os dados de volta pro board. Duas formas: "🔍 Comparar com o board atual" lista só os cards que sumiram do board desde aquele backup (nem ativos, nem arquivados) — dá pra revisar um por um e restaurar só quem realmente sumiu por engano, sem mexer no que foi arquivado/excluído de propósito; "🧯 Restaurar TUDO" substitui cards, colunas, tags e configurações por inteiro, pra quando o board inteiro precisa voltar a um estado anterior. Antes de qualquer restauração, o estado atual é salvo automaticamente — dá pra desfazer restaurando esse snapshot de volta se algo sair errado.' },
     { icon:'🔔', title:'Notificações', text:'Clique em 🔔 no header para ver as notificações. São geradas automaticamente quando: um card é atribuído a você, um bloqueio é removido, um card vai para Concluído, um card muda para qualquer outra coluna, riscos são adicionados, checklist é completado, prazo está próximo ou você é mencionado com @.\n\n🌊 O sino é único no Maré: além dos avisos pessoais, ele também mostra os avisos da sua torre — novo aviso no 📢 Mural do Radar, 🆕 Novo Objetivo, ✅ Marco concluído e 🗓️ reuniões/eventos do calendário do Radar (nova, mudança ou cancelamento; convidados e responsáveis também recebem a véspera e o dia). Clicar leva direto ao lugar certo na página do Radar. O que você já viu fica marcado como lido, e "Marcar tudo" vale pros dois tipos. A mesma notificação aparece igual no sino do kanban, do painel e do Radar.\n\n🛠️ <b>ADMs controlam os tipos</b>: no <b>Painel → 🔔 Notificações</b> o ADM vê todos os tipos de aviso (quando disparam, quem recebe) e liga/desliga cada um pra todo mundo — <b>🔔 sino</b> (aparece ou some do sino) e <b>📲 push</b> (vira ou não aviso no aparelho). Se um tipo de aviso sumiu do seu sino, foi desligado por lá. O seu <b>Não Perturbe</b> continua sendo só seu.\n\n🗓️🐟 <b>Escala e Metas</b>: quando PO, Organizador ou ADM cadastra ou limpa a <b>sua escala</b>, chega o aviso "🗓️ Sua escala foi cadastrada/removida" (clicar abre a Escala na semana certa). E, se a sua squad tem uma meta com <b>⏰ lembrete de preenchimento</b>, chega o aviso "🐟 Atualize a meta" nos horários combinados (clicar abre a aba Dados). Os dois tipos também estão no 🔔 Notificações do Painel e respeitam o seu Não Perturbe.' },
     { icon:'🔗', title:'Links do Google Drive nos anexos', text:'Ao colar um link do Google Drive no campo de anexos de um card, o board reconhece automaticamente o tipo do arquivo pelo formato da URL e exibe o ícone e rótulo corretos: 📄 Google Docs, 📊 Google Sheets, 📽 Google Slides, 📝 Google Forms, 📁 Pasta do Drive, 📎 Arquivo genérico. Não é preciso fazer nada diferente — basta colar o link compartilhado normalmente. O upload direto de arquivos do computador para o Drive está previsto para quando o ambiente de servidor da Hering estiver disponível.' },
     { icon:'🔧', title:'Worker e Firebase', text:'O Firebase armazena todos os dados em tempo real e raramente precisa ser alterado após o setup inicial.\n\n⚠️ A aba Worker é resquício do painel de chat antigo do Agente Ágil (desativado — ver dica "Ações que o agente pode executar"), que dependia de um proxy Cloudflare externo pra falar com a API da Anthropic. O Agente Ágil atual (por @menção) não usa Worker nenhum — roda direto em Cloud Functions.' },
@@ -29196,6 +29212,7 @@ const NOTIF_ICONS = {
   feedback:    '💬',
   painel_broadcast: '📢',
   meta_lembrete: '🐟',
+  backup_falhou: '🛟',
   escala: '🗓️',
 };
 
@@ -38351,8 +38368,77 @@ async function _applyRestorePayload(payload){
   }
 }
 
+
+// ── 🛟 Backup completo (nuvem): comparar e restaurar SÓ o que sumiu (comentários, configurações, intake, subtimes, kudos) ──
+// O Storage de backups-completos/ não é legível pelo cliente (tem papéis/e-mails de todo mundo): quem lê é a Cloud Function
+// backupCompletoApi (functions/backup/restaurarApi.js), que confere se a pessoa é ADM/PO/Organizador DESTE squad. Nunca sobrescreve o que existe hoje.
+const BACKUP_API_URL = 'https://us-central1-hering-onboarding.cloudfunctions.net/backupCompletoApi';
+async function _rcChamar(corpo){
+  const cu = window._currentUser; if(!cu) throw new Error('Faça login de novo.');
+  const idToken = await cu.getIdToken();
+  const res = await fetch(BACKUP_API_URL, { method:'POST', headers:{ 'Authorization':'Bearer '+idToken, 'Content-Type':'application/json' }, body: JSON.stringify(Object.assign({ squad: ACTIVE_SQUAD }, corpo)) });
+  let json = null; try{ json = await res.json(); }catch(e){}
+  if(!res.ok) throw new Error((json && json.erro) || ('Erro '+res.status+(res.status===404?' — a função ainda não foi publicada?':'')));
+  return json;
+}
+function _rcMsg(t, cor){ const el=document.getElementById('rc-msg'); if(el){ el.textContent=t||''; el.style.color=cor||'var(--txt3)'; } }
+function rcLimpar(){
+  const a=document.getElementById('rc-areas'); if(a){ a.style.display='none'; a.innerHTML=''; }
+  const b=document.getElementById('rc-btn-restaurar'); if(b) b.style.display='none';
+  _rcMsg('');
+}
+async function rcListar(){
+  const btn=document.getElementById('rc-btn-listar'); if(btn) btn.disabled=true;
+  rcLimpar(); _rcMsg('Buscando backups…');
+  try{
+    const r = await _rcChamar({ acao:'listar' });
+    const sel=document.getElementById('rc-data'), cmp=document.getElementById('rc-btn-comparar');
+    if(!r.backups.length){ _rcMsg('Ainda não há backup completo deste squad (o 1º sai no próximo domingo, ou peça pra equipe de desenvolvimento rodar na hora).', 'var(--warn)'); if(sel) sel.style.display='none'; if(cmp) cmp.style.display='none'; return; }
+    sel.innerHTML = r.backups.map(b=>'<option value="'+esc(b.data)+'">'+esc(b.data.split('-').reverse().join('/'))+(b.bytes?' · '+(b.bytes/1048576>=1?(b.bytes/1048576).toFixed(1)+' MB':Math.max(1,Math.round(b.bytes/1024))+' KB'):'')+'</option>').join('');
+    sel.style.display=''; cmp.style.display='';
+    _rcMsg(r.backups.length+' backup(s) semanal(is). Escolha um e clique em Comparar com hoje.');
+  }catch(e){ _rcMsg('⚠️ '+(e&&e.message||e), 'var(--danger)'); }
+  finally{ if(btn) btn.disabled=false; }
+}
+async function rcComparar(){
+  const data=document.getElementById('rc-data')?.value; if(!data) return;
+  rcLimpar(); _rcMsg('Comparando com o que existe hoje…');
+  try{
+    const r = await _rcChamar({ acao:'comparar', data });
+    const box=document.getElementById('rc-areas');
+    box.innerHTML = r.areas.map(a=>{
+      const tem = a.faltando>0;
+      return '<label style="display:flex;gap:9px;align-items:flex-start;padding:8px 10px;margin-bottom:6px;background:rgba(var(--surface2-rgb),.6);border:1px solid var(--glass-b);border-radius:8px;'+(tem?'cursor:pointer;':'opacity:.55;')+'">'+
+        '<input type="checkbox" class="rc-area" value="'+esc(a.id)+'"'+(tem?' checked':' disabled')+' style="margin-top:2px;">'+
+        '<span style="flex:1;min-width:0;"><span style="font-size:12px;font-weight:700;color:#e8f4fd;">'+esc(a.rotulo)+'</span> '+
+        (tem?'<span style="font-size:11px;color:var(--teal);font-weight:700;">'+a.faltando+(a.faltando>1?' sumiram':' sumiu')+'</span>':'<span style="font-size:11px;color:var(--txt3);">nada sumiu</span>')+
+        '<span style="display:block;font-size:10px;color:var(--txt3);line-height:1.5;">'+esc(a.desc)+' · backup: '+a.noBackup+' · hoje: '+a.agora+(tem&&a.exemplos.length?' · ex.: '+esc(a.exemplos.slice(0,3).join(', ')):'')+'</span></span></label>';
+    }).join('');
+    box.style.display='';
+    const algum = r.areas.some(a=>a.faltando>0);
+    document.getElementById('rc-btn-restaurar').style.display = algum ? '' : 'none';
+    _rcMsg(algum ? 'Backup de '+data.split('-').reverse().join('/')+' (gerado '+new Date(r.exportadoEm).toLocaleString('pt-BR')+'). Marque o que quer trazer de volta.' : 'Nada sumiu nessas áreas: tudo que está nesse backup já existe hoje. ✅', algum?'':'var(--teal)');
+  }catch(e){ _rcMsg('⚠️ '+(e&&e.message||e), 'var(--danger)'); }
+}
+async function rcRestaurar(){
+  const data=document.getElementById('rc-data')?.value;
+  const areas=[...document.querySelectorAll('#rc-areas .rc-area:checked')].map(i=>i.value);
+  if(!data || !areas.length){ showToast('Marque ao menos uma área.'); return; }
+  if(!await uiConfirm('Trazer de volta, do backup de '+data.split('-').reverse().join('/')+', só o que SUMIU nas áreas marcadas ('+areas.length+')? O que existe hoje não é alterado — e a lista do que for criado fica guardada pra desfazer.', {title:'🛟 Restaurar do backup completo', okText:'Restaurar', cancelText:'Cancelar'})) return;
+  const btn=document.getElementById('rc-btn-restaurar'); if(btn) btn.disabled=true;
+  _rcMsg('Restaurando…');
+  try{
+    const r = await _rcChamar({ acao:'restaurar', data, areas });
+    showToast(r.total ? '✅ '+r.total+' item(ns) restaurado(s).' : 'Nada pra restaurar.');
+    _rcMsg(r.total ? '✅ '+r.total+' item(ns) restaurado(s). Recarregue a página pra ver os comentários e configurações de volta.' : (r.mensagem||'Nada pra restaurar.'), r.total?'var(--teal)':'');
+    if(r.total) rcComparar();
+  }catch(e){ _rcMsg('⚠️ '+(e&&e.message||e), 'var(--danger)'); }
+  finally{ if(btn) btn.disabled=false; }
+}
+
 function _applyRestoreSectionVisibility(){
   const pode = typeof canBulkDelete==='function' && canBulkDelete();
+  const rc = document.getElementById('restore-cloud-section'); if(rc) rc.style.display = pode ? '' : 'none';
   const sec = document.getElementById('restore-section');
   const noPerm = document.getElementById('restore-no-permission');
   if(sec) sec.style.display = pode ? '' : 'none';

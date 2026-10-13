@@ -22,7 +22,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -203,6 +203,15 @@ exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 //   firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario
 exports.backupCompletoSemanal = require('./backup/completo').backupCompletoSemanal;
 exports.backupGlobalDiario = require('./backup/completo').backupGlobalDiario;
+// O VIGIA dos backups (functions/backup/vigia.js): todo dia 09:00 confere o RESULTADO no Storage (completo diário/semanal e o quadro de cada
+// squad) e avisa os ADMs (sino + push, tipo `backup_falhou`) se algo faltou ou deu erro. Deploy isolado:
+//   firebase deploy --only functions:backupVigia,functions:sendPushOnNotification   (o 2º por causa do novo tipo no PUSH_TYPES)
+exports.backupVigia = require('./backup/vigia').backupVigia;
+
+// API da tela "🛟 Backup completo (nuvem)" do Maré (Config → Backup): lista/compara/restaura SÓ o que sumiu (comentários, config, intake, subtimes,
+// kudos) a partir do backup completo — HTTP + Bearer idToken, só ADM/PO/Organizador do squad (functions/backup/restaurarApi.js). Deploy isolado:
+//   firebase deploy --only functions:backupCompletoApi
+exports.backupCompletoApi = require('./backup/restaurarApi').backupCompletoApi;
 
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender

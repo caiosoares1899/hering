@@ -22,6 +22,8 @@ function urlDoPush(notif) {
     if (/^\d{4}-\d{2}-\d{2}$/.test(String(n.okrObjId || ''))) p.set('semana', n.okrObjId);
     return SITE_BASE_URL + 'escala.html?' + p.toString();
   }
+  // Aviso do vigia dos backups (só ADMs): abre o Painel.
+  if (type === 'backup_falhou') return SITE_BASE_URL + 'painel.html';
   const params = new URLSearchParams();
   if (n.squad) params.set('squad', n.squad);
   if (n.cardId) params.set('card', n.cardId);

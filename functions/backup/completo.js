@@ -47,6 +47,7 @@ const NOS_GLOBAIS = [
   { no: 'campanhas', diario: false },        // volumosos / reconstituíveis: só no semanal
   { no: 'campanhas_log', diario: false },
   { no: 'dados_diarios', diario: false },
+  { no: 'dados_diarios_dev', diario: false }, // exceção ao "nada de _dev": a Central de Dados também é publicada pelo painel de teste (painel-dev)
   { no: 'feedback', diario: false },
 ];
 
@@ -58,7 +59,7 @@ const EXCLUIDOS = [
   'painel/{okr_presence,presence,spotify_now_geral,_debug_*}', 'okr/obj_locks', // presença, travas e debug
   'squads/*/{presence,access_log,error_logs,error_stats,agent_usage,backups}', // telemetria do squad
   'squads/*/dados/{_debug_*,access_stats,card_locks,spotify_now,agente_pending_auto}',
-  'nós *_dev (dados de teste) e os squads fictícios dev/omnichannel',
+  'nós *_dev (dados de teste — exceto dados_diarios_dev) e os squads fictícios dev/omnichannel',
 ];
 
 const SEM = {
