@@ -555,7 +555,7 @@ input.in[readonly]{opacity:.7;}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
-<script src="mare-login.js?v=2"></script>
+<script src="mare-login.js?v=3"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -594,13 +594,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif.js?v=24"></script>
+<script src="mare-notif.js?v=25"></script>
 <script src="mare-dicas.js?v=4"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.24 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.27 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1234,7 +1234,7 @@ const FAQ = [
   {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
   {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
-  {id:'instalar', q:'Como instalo o Oceano como aplicativo?', a:'<p><b>Chrome/Edge (computador e Android):</b> clique em <b>📲 Instalar</b> no topo (ou no menu do navegador → "Instalar Oceano").</p><p><b>iPhone/iPad (Safari):</b> Compartilhar → <b>Adicionar à Tela de Início</b>.</p><p>Depois de instalado, o Oceano abre os produtos <b>aqui dentro</b>, com abas para trocar de um pro outro, sem precisar de um aplicativo por produto.</p>'},
+  {id:'instalar', q:'Como instalo o Oceano como aplicativo?', a:'<p><b>Chrome/Edge (computador e Android):</b> clique em <b>📲 Instalar</b> no topo (ou no menu do navegador → "Instalar Oceano").</p><p><b>iPhone/iPad (Safari):</b> Compartilhar → <b>Adicionar à Tela de Início</b>.</p><p><b>Login no iPhone/iPad:</b> no iPhone e no iPad (pelo ícone da tela inicial ou pelo Safari, inclusive com o link vindo do WhatsApp), o botão <b>Entrar com Google</b> leva a página inteira ao Google e volta já logado (sem janelinha, que travava ou acabava em "Unable to process request due to missing initial state") — é normal a tela sair e voltar.</p><p>Depois de instalado, o Oceano abre os produtos <b>aqui dentro</b>, com abas para trocar de um pro outro, sem precisar de um aplicativo por produto.</p>'},
   {id:'mare', q:'Já uso o app do Maré Digital. Preciso trocar?', a:'<p>Não. O aplicativo do Maré Digital continua existindo e funcionando igual — quem só usa o board pode ficar com ele. O Oceano é um jeito a mais, para quem circula entre mais de um produto.</p>'},
   {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
   {id:'painel', q:'Por que não vejo o Painel?', a:'<p>O Painel é a visão de gestão; ele aparece para administradores e para quem já o usa (quem é PO/Organizador, por exemplo). Se você precisa dele, fale com sua liderança ou com a squad.</p><p>Isso organiza a sua vitrine — o acesso de verdade é decidido no servidor.</p>'},
@@ -1245,7 +1245,7 @@ const FAQ = [
   {id:'entrada', q:'Abri o Maré (ou o Painel) e fui parar no Oceano. Por quê?', a:'<p>O Oceano é a <b>porta de entrada</b>: quem ainda não está logado no Maré ou no Painel é mandado pra cá, entra com o Google da Hering (e o cadastro básico é feito aqui) e <b>fica no Oceano</b>, onde vê o Mural e os produtos. Um aviso <b>"↩ Continuar para o Maré"</b> no topo leva de volta pro que você tinha aberto (o mesmo card ou link). Com a sessão ativa, nada disso aparece — você entra direto.</p><p>Convidado externo (visualizador)? Na tela de login há links <b>"Entre direto"</b>; eles abrem o Maré, o Painel ou o Radar com a tela de login própria.</p>'},
   {id:'cadastro', q:'O que o cadastro aqui muda nos outros produtos?', a:'<p>Nome e foto vêm do Google. A <b>sigla</b> (iniciais) é a mesma usada nos avatares do Maré e do Radar. "Como ser chamado(a)" só muda a saudação do Oceano. Se você nunca tinha entrado em nenhum produto, o Oceano cria o seu cadastro básico; squads e papéis continuam sendo definidos no Maré/Painel.</p>'},
   {id:'links', q:'Como adiciono meus links e o que são os links da Hering?', a:'<p><b>Links da Hering</b> são os sites importantes da empresa; um administrador cadastra no Painel (⚙ Configurações → 🔗 Links) e aparecem pra todo mundo.</p><p><b>Meus links</b> são só seus: em ⚙ Meu perfil → 🔗 Meus links você coloca título, descrição, o endereço e, se quiser, uma imagem (link direto de um .png/.jpg/.svg, de qualquer site de imagens; sem imagem uso o ícone do site). Os dois aparecem aqui no início e no menu de produtos (9 pontinhos), nas abas <b>Hering</b> e <b>Meus links</b>.</p>'},
-  {id:'sino', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
+  {id:'notif', q:'E as notificações?', a:'<p>O sino é o mesmo em Maré, Painel e Radar (um sino só), com push no celular e Não Perturbe. Abra o produto para ver e configurar — o Oceano não duplica o sino.</p>'},
   {id:'contato', q:'Como falo com a squad que constrói?', a:'<p>Use <b>✉️ Falar com a squad</b> na seção "Por que o Oceano", ou comente no card "Melhorias Maré Digital" do Maré.</p>'},
 ];
 function renderFaq(q){
