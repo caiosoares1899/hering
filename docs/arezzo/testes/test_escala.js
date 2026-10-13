@@ -211,13 +211,14 @@ const seed = () => ({ kanban: {
   // ── FILTRO DE SUBTIME ──
   { const { ctx, p, errs } = await open(ANA, '?visao=global');
     const linhas = () => p.evaluate(() => [...document.querySelectorAll('tbody th.sqn .nm')].map(e => e.textContent.trim().replace(/^\S+\s/, '')));
-    const opts = id => p.evaluate(i => [...document.querySelectorAll('#' + i + ' option')].map(o => o.textContent.trim()), id);
+    const opts = id => p.evaluate(i => [...document.querySelectorAll('#' + i + ' .fchip')].map(o => o.textContent.trim()), id);
+    const chipSub = n => p.click('#f-subs [data-fsub="' + n + '"]');
     const av = (sq, d) => p.evaluate(([s, dd]) => [...document.querySelectorAll('.gdia[data-gs="' + s + '"][data-gd="' + dd + '"] .av b')].map(e => e.textContent).sort().join(), [sq, d]);
-    t('global: só o filtro de subtime (sem squad nem submarca) e sem "limpar"', await vis(p, '#f-sub') && !(await p.evaluate(() => !!document.getElementById('f-squad') || !!document.getElementById('f-sm'))) && !(await vis(p, '#f-limpar')), 0);
-    t('subtimes juntam pelo nome entre squads (Designers/designers = 1) e listam Redatores', (await opts('f-sub')).join('|') === 'Todos os subtimes|Designers|Redatores', await opts('f-sub'));
-    await p.selectOption('#f-sub', 'Redatores'); await p.waitForTimeout(100);
+    t('global: chips de squad (Todas · Dados · Dev) e de subtime, sem "limpar" enquanto nada filtra', await vis(p, '#f-subs') && (await opts('f-sqs')).slice(0, 3).join('|') === 'Todas|📊 Dados|🧪 Dev' && (await p.$$eval('#f-sqs [aria-pressed="true"]', e => e.map(x => x.textContent))).join() === 'Todas' && !(await vis(p, '#f-limpar')), [await opts('f-sqs')]);
+    t('subtimes juntam pelo nome entre squads (Designers/designers = 1) e listam Redatores', (await opts('f-subs')).join('|') === 'Todos|Designers|Redatores', await opts('f-subs'));
+    await chipSub('Redatores'); await p.waitForTimeout(100);
     t('subtime Redatores: só quem é Redator (Dados) — a Dev, sem ninguém, some', (await linhas()).join() === 'Dados' && await av('dados', D(5)) === 'PP' && await vis(p, '#f-limpar'), [await linhas(), await av('dados', D(5))]);
-    await p.selectOption('#f-sub', 'Designers'); await p.waitForTimeout(100);
+    await chipSub('Redatores'); await chipSub('Designers'); await p.waitForTimeout(100);
     t('subtime Designers vale pra todas as squads (Dados: AL,BR · Dev: ZD)', (await linhas()).join() === 'Dados,Dev' && await av('dados', D(0)) === 'AL,BR' && await av('dev', D(5)) === 'ZD', [await av('dados', D(0)), await av('dev', D(5))]);
     t('o filtro entra na URL (link compartilhável)', await p.evaluate(() => /f_sub=Designers/.test(location.search)), 0);
     await p.click('.gdia[data-gs="dados"][data-gd="' + D(5) + '"]'); await p.waitForTimeout(100);
@@ -228,23 +229,23 @@ const seed = () => ({ kanban: {
     t('sem erro de JS (filtro global)', !errs.length, errs); await ctx.close(); }
   { // filtro chega por link
     const { ctx, p } = await open(ANA, '?visao=global&f_sub=Designers&semana=' + D(0));
-    const st = await p.evaluate(() => ({ sub: document.getElementById('f-sub').value, url: location.search }));
+    const st = await p.evaluate(() => ({ sub: [...document.querySelectorAll('#f-subs [aria-pressed="true"]')].map(e => e.textContent).join(), url: location.search }));
     t('?f_sub do link já vem aplicado', st.sub === 'Designers' && /f_sub=Designers/.test(st.url), st);
     await ctx.close(); }
   { // visão da squad
     const { ctx, p } = await open(ANA, '?squad=dados');
-    await p.selectOption('#f-sub', 'Designers'); await p.waitForTimeout(100);
+    await p.click('#f-subs [data-fsub="Designers"]'); await p.waitForTimeout(100);
     const nomes = await p.evaluate(() => [...document.querySelectorAll('tbody tr:not(.cob) th.pess .pnome > div > b')].map(e => e.textContent.replace(/\s+/g, ' ').trim()));
     t('squad: subtime Designers esconde o Paulo (Redator); a cobertura recalcula só com os Designers', nomes.join('|') === 'Ana Lima (você)|Bruno Reis', nomes);
     await p.click('#v-global'); await p.waitForTimeout(100);
-    t('trocar de visão mantém o filtro que ainda vale', await p.evaluate(() => document.getElementById('f-sub').value === 'Designers'), 0);
-    await p.selectOption('#f-sub', 'Redatores'); await p.click('#v-squad'); await p.waitForTimeout(100);
-    t('Redatores existe na squad Dados, então o filtro continua na visão da squad', await p.evaluate(() => document.getElementById('f-sub').value === 'Redatores'), 0);
+    t('trocar de visão mantém o filtro que ainda vale', await p.evaluate(() => [...document.querySelectorAll('#f-subs [aria-pressed="true"]')].map(e => e.textContent).join() === 'Designers'), 0);
+    await p.click('#f-subs [data-fsub="Designers"]'); await p.click('#f-subs [data-fsub="Redatores"]'); await p.click('#v-squad'); await p.waitForTimeout(100);
+    t('Redatores existe na squad Dados, então o filtro continua na visão da squad', await p.evaluate(() => [...document.querySelectorAll('#f-subs [aria-pressed="true"]')].map(e => e.textContent).join() === 'Redatores'), 0);
     await ctx.close(); }
-  { const { ctx, p } = await open(ANA, '?squad=dev'); t('squad Dev (subtime "designers"): filtro presente', await vis(p, '#f-sub'), 0); await ctx.close(); }
-  { const s0 = seed(); delete s0.kanban.squads; const { ctx, p } = await open(ANA, '?squad=dados', { seed: s0 }); t('squad sem nenhum subtime: a barra de filtro some', !(await vis(p, '#filtros')), 0); await ctx.close(); }
+  { const { ctx, p } = await open(ANA, '?squad=dev'); t('squad Dev (subtime "designers"): chips de subtime presentes', await vis(p, '#f-subs'), 0); await ctx.close(); }
+  { const s0 = seed(); delete s0.kanban.squads; const { ctx, p } = await open(ANA, '?squad=dados', { seed: s0 }); t('squad sem nenhum subtime: os chips de subtime somem (os de squad continuam)', !(await vis(p, '#f-subs')) && await vis(p, '#f-sqs'), 0); await ctx.close(); }
   { // o filtro não atrapalha o cadastro (lista todas as pessoas da squad)
-    const { ctx, p } = await open(PAU, '?squad=dados'); await p.selectOption('#f-sub', 'Designers'); await p.click('#b-cad'); await p.waitForTimeout(120);
+    const { ctx, p } = await open(PAU, '?squad=dados'); await p.click('#f-subs [data-fsub="Designers"]'); await p.click('#b-cad'); await p.waitForTimeout(120);
     const opts = await p.evaluate(() => [...document.querySelectorAll('#c-uid option')].map(o => o.textContent.trim()));
     t('cadastro continua listando todos da squad mesmo com filtro ativo', opts.join('|') === 'Paulo PO (você)|Ana Lima|Bruno Reis', opts); await ctx.close(); }
 

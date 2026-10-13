@@ -49,7 +49,7 @@ const seed = () => {
   t('global: Dia e Mês geram imagem', !!(await dims()), 0);
   await p.click('#j-fechar');
   // filtro de subtime respeitado
-  await p.selectOption('#f-sub', 'Designers'); await p.waitForTimeout(200); await p.click('#v-squad'); await p.click('#b-jpg'); await p.waitForSelector('#j-prev canvas'); await shot('semana_subtime');
+  await p.click('#f-subs [data-fsub="Designers"]'); await p.waitForTimeout(200); await p.click('#v-squad'); await p.click('#b-jpg'); await p.waitForSelector('#j-prev canvas'); await shot('semana_subtime');
   t('com subtime filtrado o modal diz o subtime', /subtime\s+Designers/i.test(await p.textContent('.md .sub')), await p.textContent('.md .sub'));
   await p.click('#j-fechar');
   // atalho no detalhe do dia

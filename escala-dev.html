@@ -57,8 +57,34 @@
   /* faixa "hoje" */
   .filtros{ margin-bottom:12px; padding:8px 12px; border-radius:12px; border:1px solid var(--card-b); background:rgba(255,255,255,.025); }
   .filtros .flbl{ font-size:12px; color:var(--txt3); font-weight:600; }
-  .filtros select{ padding:7px 28px 7px 10px; font-size:12.5px; max-width:230px; }
-  .filtros select.on{ border-color:var(--accent); background-color:rgba(56,182,255,.1); }
+  .fgrp{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .fgrp[hidden]{ display:none; }
+  .fgrp .glbl{ font-size:11px; color:var(--txt3); letter-spacing:.05em; text-transform:uppercase; margin-right:2px; }
+  .fchip{ padding:5px 11px !important; font-size:12px !important; }
+  .fgrp + .fgrp{ padding-left:12px; border-left:1px solid var(--card-b); }
+  /* visão Gantt do dia: uma linha por pessoa, barra do horário que ela está */
+  .md.gantt{ max-width:900px; }
+  .dmodo{ margin:8px 0 2px; }
+  .gt{ margin-top:10px; overflow-x:auto; padding-bottom:4px; }
+  .gt-in{ min-width:560px; }
+  .gt-row{ display:grid; grid-template-columns:150px 1fr; align-items:center; gap:10px; padding:3px 0; }
+  .gt-row .who2{ display:flex; align-items:center; gap:8px; min-width:0; font-size:12.5px; }
+  .gt-row .who2 b{ white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .gt-tr{ position:relative; height:26px; border-radius:7px; background-color:rgba(255,255,255,.035); }
+  .gt-ax{ position:relative; height:16px; margin:0 0 2px; font-size:10.5px; color:var(--txt3); }
+  .gt-ax span{ position:absolute; transform:translateX(-50%); }
+  .gt-ax span:first-child{ transform:none; } .gt-ax span:last-child{ transform:translateX(-100%); }
+  .gt-bar{ position:absolute; top:3px; bottom:3px; border-radius:6px; font-size:11px; line-height:20px; padding:0 7px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#04141f; font-weight:700; box-shadow:0 1px 0 rgba(0,0,0,.25); }
+  .gt-bar.trab{ background:var(--c-trab); } .gt-bar.plant{ background:var(--c-plant); }
+  .gt-bar.semh{ background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0 6px,transparent 6px 12px); font-weight:600; }
+  .gt-bar.aberta-d{ border-top-right-radius:0; border-bottom-right-radius:0; } .gt-bar.aberta-e{ border-top-left-radius:0; border-bottom-left-radius:0; }
+  .gt-agora{ position:absolute; top:-2px; bottom:-2px; width:2px; background:#ff5c7a; border-radius:2px; z-index:2; }
+  .gt-agora::after{ content:'agora'; position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:9.5px; color:#ff9aa0; }
+  .gt-sq{ margin:12px 0 2px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--txt3); }
+  .gt-cob .gt-tr{ height:22px; background:none; display:flex; }
+  .gt-cob .c{ flex:1; text-align:center; font-size:11px; line-height:22px; color:var(--txt2); border-left:1px solid rgba(255,255,255,.05); }
+  .gt-cob .c.z{ color:var(--txt3); } .gt-cob .c.max{ color:var(--c-trab); font-weight:700; }
+  .gt-folga{ margin-top:10px; font-size:12px; color:var(--txt3); }
   .hoje{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; padding:10px 14px; margin-bottom:12px; border-radius:12px; background:rgba(255,159,67,.07); border:1px solid rgba(255,159,67,.25); font-size:13px; color:var(--txt2); }
   .hoje b{ color:var(--txt); }
   .avs{ display:inline-flex; align-items:center; }
@@ -182,8 +208,9 @@
     </div>
     <div class="bar filtros" id="filtros">
       <span class="flbl">🔎 Filtrar</span>
-      <select id="f-sub" aria-label="Filtrar por subtime"></select>
-      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtro</button>
+      <div class="fgrp" id="f-sqs" role="group" aria-label="Filtrar por squad" hidden></div>
+      <div class="fgrp" id="f-subs" role="group" aria-label="Filtrar por subtime" hidden></div>
+      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtros</button>
     </div>
     <div id="erro" class="erro" hidden></div>
     <div id="hoje" class="hoje" hidden></div>
@@ -206,7 +233,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.7 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.8 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -271,7 +298,7 @@ let squad = '';
 let semana = segunda(new Date());
 let dados = {};             // escala da janela: { 'YYYY-MM-DD': { squadId: { uid: entry } } }
 let cfgSquad = {};          // por squad: { subtimes:[{name,members:[init]}] } — lido de kanban/squads/{sq}/dados/subtimes
-let filtro = { sub: '' };   // filtro da tela: subtime (por nome)
+let filtro = { subs: [], sqs: [] };   // filtros da tela: subtimes (por nome, vários) e — só na visão global — squads (ids; vazio = todas)
 let erroLeitura = '';       // '' | 'regras' | 'rede'
 let carregando = false;     // leitura da janela em andamento (a tabela fica esmaecida em vez de mostrar dados de outra semana)
 let janelaSeq = 0;          // só a última leitura da janela escreve no estado
@@ -300,7 +327,10 @@ function membrosDoSquad(sq) {
 }
 function subtimesDe(sq, init) { const c = cfgSquad[sq]; return (c && init) ? c.subtimes.filter(st => st.members.includes(init)).map(st => st.name) : []; }
 // Visão FILTRADA (o que a tela mostra): o subtime restringe as pessoas.
-function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.sub ? ms.filter(m => m.subs.some(n => norm(n) === norm(filtro.sub))) : ms; }
+function membrosF(sq) { const ms = membrosDoSquad(sq); return filtro.subs.length ? ms.filter(m => m.subs.some(n => filtro.subs.some(f => norm(f) === norm(n)))) : ms; }
+// Squads em foco: na visão global, as escolhidas nos chips (nenhuma escolhida = todas); na visão da squad, só a atual.
+function squadsEscopo() { return visao === 'global' ? (filtro.sqs.length ? squads.filter(s => filtro.sqs.includes(s.id)) : squads) : squads.filter(s => s.id === squad); }
+const rotuloSubs = () => filtro.subs.join(', ');
 const entrada = (data, sq, uid) => (((dados[data] || {})[sq] || {})[uid]) || null;
 
 function av(m, extra) {
@@ -371,7 +401,7 @@ function squadTemEscala(sq, dias) { return dias.some(d => membrosF(sq).some(m =>
 function renderSquad() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
   const ms = membrosF(squad);
-  if (!ms.length) return '<div class="state">' + (filtro.sub ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad ainda.') + '</div>';
+  if (!ms.length) return '<div class="state">' + (filtro.subs.length ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad ainda.') + '</div>';
   let h = '<table class="grid"><thead><tr><th class="pess">Pessoa</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
   ms.forEach(m => {
     h += '<tr><th class="pess"><div class="pnome">' + av(m) + '<div><b>' + esc(m.nome) + (m.uid === user.uid ? ' <span style="color:var(--accent);font-weight:500">(você)</span>' : '') + '</b><small>' + (m.init ? '@' + esc(m.init) : '') + (rotuloPapel(m.papel) ? ' · ' + rotuloPapel(m.papel) : '') + '</small></div></div></th>';
@@ -393,8 +423,8 @@ function renderSquad() {
 
 function renderGlobal() {
   const dias = diasDaSemana(), bf = proximaBF(), hj = hojeISO();
-  const lista = squads.filter(s => membrosF(s.id).length);
-  if (!lista.length) return '<div class="state">' + (filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
+  const lista = squadsEscopo().filter(s => membrosF(s.id).length);
+  if (!lista.length) return '<div class="state">' + (filtro.subs.length ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.') + '</div>';
   let h = '<table class="grid"><thead><tr><th class="pess">Squad</th>' + cabecalhoDias(dias, bf) + '</tr></thead><tbody>';
   lista.forEach(s => {
     const ms = membrosF(s.id), tem = squadTemEscala(s.id, dias);
@@ -417,7 +447,7 @@ function renderGlobal() {
 function renderHoje() {
   const box = $('hoje'), dias = diasDaSemana().map(iso), hj = hojeISO();
   if (!dias.includes(hj)) { box.hidden = true; return; }
-  const sqs = visao === 'global' ? squads.map(s => s.id) : [squad];
+  const sqs = visao === 'global' ? squadsEscopo().map(s => s.id) : [squad];
   const plant = [], trab = new Set();
   sqs.forEach(sq => membrosF(sq).forEach(m => { const e = entrada(hj, sq, m.uid); if (!e) return; if (e.t === 'plant') plant.push(m); if (e.t === 'plant' || e.t === 'trab') trab.add(m.uid); }));
   const uniq = []; plant.forEach(m => { if (!uniq.find(x => x.uid === m.uid)) uniq.push(m); });
@@ -429,7 +459,7 @@ function renderAvisos() {
   const box = $('avisos');
   if (visao !== 'global') { box.hidden = true; return; }
   const dias = diasDaSemana().slice(0, 5), furos = [];
-  squads.filter(s => membrosF(s.id).length && squadTemEscala(s.id, diasDaSemana())).forEach(s => {
+  squadsEscopo().filter(s => membrosF(s.id).length && squadTemEscala(s.id, diasDaSemana())).forEach(s => {
     const dd = dias.filter(d => !coberturaDoDia(s.id, iso(d)).n).map(d => DIAS[diaSem(d)] + ' ' + curto(d));
     if (dd.length) furos.push('<b>' + esc(s.label) + '</b>: ' + dd.join(', '));
   });
@@ -437,16 +467,23 @@ function renderAvisos() {
   box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
   box.hidden = false;
 }
-// Filtro de subtime: por NOME (subtimes de squads diferentes com o mesmo nome viram uma opção só — na visão global vale pra todas as squads).
+// Filtros em CHIPS. Squad: na visão global é multi-seleção (nenhuma = todas as squads); na visão da squad mostra qual está em foco e clicar em outra troca de squad.
+// Subtime: multi-seleção, por NOME (subtimes de squads diferentes com o mesmo nome viram um chip só) — só os das squads em foco.
 function renderFiltros() {
-  const escopo = visao === 'global' ? squads : squads.filter(x => x.id === squad);
+  const escopo = squadsEscopo();
+  filtro.sqs = filtro.sqs.filter(id => squads.some(x => x.id === id));
   const subs = new Map(); escopo.forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
-  if (filtro.sub && !subs.has(norm(filtro.sub))) filtro.sub = '';
-  const el = $('f-sub'); el.hidden = !subs.size;
-  el.innerHTML = '<option value="">Todos os subtimes</option>' + [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR')).map(n => '<option value="' + esc(n) + '"' + (n === filtro.sub ? ' selected' : '') + '>' + esc(n) + '</option>').join('');
-  el.classList.toggle('on', !!filtro.sub);
-  $('f-limpar').hidden = !filtro.sub;
-  $('filtros').hidden = !subs.size;   // squad sem nenhum subtime: a barra inteira some
+  filtro.subs = filtro.subs.filter(n => subs.has(norm(n)));   // subtime que sumiu do escopo deixa de filtrar
+  const chip = (attr, val, txt, on, extra) => '<button type="button" class="chip fchip' + (extra || '') + '" ' + attr + '="' + esc(val) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + txt + '</button>';
+  const sqEl = $('f-sqs'), mostraSq = squads.length > 1;
+  sqEl.hidden = !mostraSq;
+  if (mostraSq) sqEl.innerHTML = '<span class="glbl">Squad</span>' + (visao === 'global' ? chip('data-fsq', '', 'Todas', !filtro.sqs.length) : '') +
+    squads.map(x => chip('data-fsq', x.id, esc(x.emoji + ' ' + x.label), visao === 'global' ? filtro.sqs.includes(x.id) : x.id === squad)).join('');
+  const sbEl = $('f-subs'), lista = [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  sbEl.hidden = !lista.length;
+  if (lista.length) sbEl.innerHTML = '<span class="glbl">Subtime</span>' + chip('data-fsub', '', 'Todos', !filtro.subs.length) + lista.map(n => chip('data-fsub', n, esc(n), filtro.subs.some(f => norm(f) === norm(n)))).join('');
+  $('f-limpar').hidden = !(filtro.subs.length || (visao === 'global' && filtro.sqs.length));
+  $('filtros').hidden = !(mostraSq || lista.length);   // uma squad só e sem nenhum subtime: a barra inteira some
 }
 function render() {
   if (!user) return;
@@ -465,7 +502,7 @@ function render() {
   renderHoje(); renderAvisos();
   $('b-cad').disabled = !squadsEditaveis().length;
   $('b-cad').title = $('b-cad').disabled ? 'Você precisa estar inscrito em uma squad (entre uma vez no Maré) pra cadastrar escala' : '';
-  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.sub) u.searchParams.set('f_sub', filtro.sub); else u.searchParams.delete('f_sub'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
+  try { const u = new URL(location.href); u.searchParams.set('visao', visao); if (squad) u.searchParams.set('squad', squad); u.searchParams.set('semana', iso(semana)); if (filtro.subs.length) u.searchParams.set('f_sub', filtro.subs.join(',')); else u.searchParams.delete('f_sub'); if (visao === 'global' && filtro.sqs.length) u.searchParams.set('f_sq', filtro.sqs.join(',')); else u.searchParams.delete('f_sq'); history.replaceState(null, '', u.pathname + u.search); } catch (e) {}
 }
 function irParaSemana(d) { semana = segunda(d); dados = {}; carregarJanela(); render(); }
 
@@ -475,28 +512,77 @@ function fecharOv() { $('ov').hidden = true; $('ov').innerHTML = ''; }
 $('ov').addEventListener('mousedown', e => { if (e.target === $('ov')) fecharOv(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').hidden) fecharOv(); });
 
-function abrirDia(data, sqUnico) {
-  const d = parseISO(data); if (!d) return;
-  const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squads.filter(s => membrosF(s.id).length);
-  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (sqUnico ? '' : ' — todas as squads') + '. Plantão primeiro.</p>', menc = [];
-  let alguem = false;
-  sqs.forEach(s => {
-    const itens = membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e)
-      .sort((a, b) => ({ plant: 0, trab: 1, folga: 2 }[a.e.t] - { plant: 0, trab: 1, folga: 2 }[b.e.t]));
-    if (!itens.length) return;
-    alguem = true;
-    h += '<ul class="lista-dia">' + (sqUnico ? '' : '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(s.emoji + ' ' + s.label) + '</li>');
-    itens.forEach(x => {
-      if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init);   // quem está em duas squads entra uma vez só
+// ── Detalhe do dia: 📋 Lista | 📊 Visão Gantt ──
+let diaModo = lsGet('escala_dia_modo') === 'gantt' ? 'gantt' : 'lista';
+const ordTipo = { plant: 0, trab: 1, folga: 2 };
+const hm = t => { const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+function listaDia(grupos, multi) {
+  let h = '';
+  grupos.forEach(g => {
+    h += '<ul class="lista-dia">' + (multi ? '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(g.s.emoji + ' ' + g.s.label) + '</li>' : '');
+    g.itens.forEach(x => {
       h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
     });
     h += '</ul>';
   });
-  if (!alguem) h += '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>';
+  return h;
+}
+// Visão Gantt: uma linha por pessoa, com a barra do período em que ela está (entrada–saída). Sem horário cadastrado = barra listrada "dia todo";
+// só entrada ou só saída = barra aberta. O eixo se ajusta aos horários do dia. Plantão em laranja, escalado em verde; folga vai numa linha à parte.
+function ganttDia(data, grupos, multi) {
+  const folgas = []; let mn = Infinity, mx = -Infinity;
+  grupos.forEach(g => g.itens.forEach(x => {
+    if (x.e.t === 'folga') { folgas.push(x.m); return; }
+    const a = hm(x.e.i), b = hm(x.e.f);
+    if (a != null) { mn = Math.min(mn, a); mx = Math.max(mx, b != null ? b : a + 60); } else if (b != null) { mn = Math.min(mn, b - 60); mx = Math.max(mx, b); }
+  }));
+  let ini = 8 * 60, fim = 18 * 60;
+  if (isFinite(mn)) { ini = Math.max(0, Math.floor((mn - 30) / 60) * 60); fim = Math.min(1440, Math.ceil((mx + 30) / 60) * 60); if (fim - ini < 360) fim = Math.min(1440, ini + 360); if (fim - ini < 360) ini = Math.max(0, fim - 360); }
+  const span = fim - ini, pc = m => Math.max(0, Math.min(100, (m - ini) / span * 100)), N = span / 60, hh = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+  const grade = 'background-image:linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:calc(100% / ' + N + ') 100%;';
+  const passo = span <= 600 ? 60 : 120; let ticks = '';
+  for (let t = ini; t <= fim; t += passo) ticks += '<span style="left:' + pc(t) + '%">' + String(Math.floor(t / 60)).padStart(2, '0') + 'h</span>';
+  const agoraMin = (() => { if (data !== hojeISO()) return null; const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); return m >= ini && m <= fim ? m : null; })();
+  const agora = agoraMin == null ? '' : '<i class="gt-agora" style="left:' + pc(agoraMin) + '%" title="Agora"></i>';
+  const cob = new Array(N).fill(0); let h = '<div class="gt"><div class="gt-in"><div class="gt-row"><span></span><div class="gt-ax">' + ticks + '</div></div>';
+  grupos.forEach(g => {
+    const linhas = g.itens.filter(x => x.e.t !== 'folga').map(x => ({ x, a: hm(x.e.i), b: hm(x.e.f) }))
+      .sort((p, q) => (ordTipo[p.x.e.t] - ordTipo[q.x.e.t]) || ((p.a == null ? -1 : p.a) - (q.a == null ? -1 : q.a)) || p.x.m.nome.localeCompare(q.x.m.nome, 'pt-BR'));
+    if (!linhas.length) return;
+    if (multi) h += '<div class="gt-sq">' + esc(g.s.emoji + ' ' + g.s.label) + '</div>';
+    linhas.forEach(({ x, a, b }) => {
+      const t = TIPOS[x.e.t], de = a != null ? a : ini, ate = b != null ? b : (a != null ? fim : fim);
+      let cls = x.e.t, txt = '', l = 0, w = 100;
+      if (a == null && b == null) { cls += ' semh'; txt = 'dia todo'; }
+      else { l = pc(de); w = Math.max(1.5, pc(ate) - l); if (a == null) { cls += ' aberta-e'; txt = '→ ' + x.e.f; } else if (b == null) { cls += ' aberta-d'; txt = x.e.i + ' →'; } else txt = x.e.i + '–' + x.e.f; }
+      for (let k = 0; k < N; k++) { const s0 = ini + k * 60, s1 = s0 + 60; if ((a == null && b == null) || (de < s1 && ate > s0)) cob[k]++; }
+      const tip = x.m.nome + ' · ' + t.emoji + ' ' + t.nome + (x.e.i || x.e.f ? ' · ' + (x.e.i || '…') + '–' + (x.e.f || '…') : ' · dia todo') + (x.e.n ? ' · ' + x.e.n : '');
+      h += '<div class="gt-row"><div class="who2">' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<b>' + esc(x.m.nome.split(' ')[0]) + '</b></div><div class="gt-tr" style="' + grade + '">' + agora +
+        '<div class="gt-bar ' + cls + '" style="left:' + l + '%;width:' + w + '%" title="' + esc(tip) + '">' + (w > 9 ? esc(txt) : '') + '</div></div></div>';
+    });
+  });
+  const max = Math.max.apply(null, cob.concat(0));
+  h += '<div class="gt-row gt-cob"><div class="who2"><b style="color:var(--txt3);font-weight:600">Cobertura</b></div><div class="gt-tr">' + cob.map((n, k) => '<span class="c' + (n === 0 ? ' z' : (n === max ? ' max' : '')) + '" title="' + hh(ini + k * 60) + ' – ' + hh(ini + k * 60 + 60) + ': ' + n + ' pessoa' + (n === 1 ? '' : 's') + '">' + (n || '·') + '</span>').join('') + '</div></div></div></div>';
+  if (folgas.length) h += '<div class="gt-folga">🏖️ Folga: ' + esc(folgas.map(m => m.nome.split(' ')[0]).join(', ')) + '</div>';
+  return h;
+}
+function abrirDia(data, sqUnico, modo) {
+  const d = parseISO(data); if (!d) return;
+  if (modo) { diaModo = modo; lsSet('escala_dia_modo', modo); }
+  const sqs = sqUnico ? squads.filter(s => s.id === sqUnico) : squadsEscopo().filter(s => membrosF(s.id).length);
+  const grupos = sqs.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: entrada(data, s.id, m.uid) })).filter(x => x.e).sort((a, b) => ordTipo[a.e.t] - ordTipo[b.e.t]) })).filter(g => g.itens.length);
+  const menc = [];
+  grupos.forEach(g => g.itens.forEach(x => { if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init); }));   // quem está em duas squads entra uma vez só
+  const multi = !sqUnico;
+  let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
+  h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
+  h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
   h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">🖼️ JPG do dia</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
+  $('ov').querySelector('.md').classList.toggle('gantt', diaModo === 'gantt');
   $('d-fechar').onclick = fecharOv;
   $('d-jpg').onclick = () => abrirJpg('dia', data);
+  $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) abrirDia(data, sqUnico, b.dataset.dm); };
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
     try { await navigator.clipboard.writeText(txt); toast('Menções copiadas: ' + txt); } catch (e) { toast('Copie manualmente: ' + txt); }
@@ -670,9 +756,9 @@ function jPeriodo(modo, refISO) {
   return { modo, a, b, titulo: MESES[d.getMonth()][0].toUpperCase() + MESES[d.getMonth()].slice(1) + ' de ' + d.getFullYear(), arq: d.getFullYear() + '-' + pad(d.getMonth() + 1) };
 }
 function jEscopo() {
-  const lista = visao === 'global' ? squads.filter(s => membrosF(s.id).length) : squads.filter(s => s.id === squad);
+  const lista = visao === 'global' ? squadsEscopo().filter(s => membrosF(s.id).length) : squads.filter(s => s.id === squad);
   const s1 = squads.find(s => s.id === squad);
-  return { lista, nome: visao === 'global' ? 'Todas as squads' : (s1 ? s1.label : squad) };
+  return { lista, nome: visao === 'global' ? (filtro.sqs.length ? squadsEscopo().map(x => x.label).join(' + ') : 'Todas as squads') : (s1 ? s1.label : squad) };
 }
 const jEnt = (dd, data, sq, uid) => (((dd[data] || {})[sq] || {})[uid]) || null;
 function jDoDia(dd, sq, dt) {
@@ -686,7 +772,7 @@ function jMoldura(x, W, H, esc, per) {
   jT(x, 'Escala — ' + esc.nome, 28, 32, { s: 24, w: 700, max: W - 340 });
   jT(x, per.titulo, W - 28, 32, { s: 18, w: 700, c: JC.accent, a: 'right' });
   const gerado = new Date();
-  jT(x, (filtro.sub ? 'Subtime: ' + filtro.sub : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
+  jT(x, (filtro.subs.length ? 'Subtime: ' + rotuloSubs() : (visao === 'global' ? 'Todas as pessoas das squads' : 'Todas as pessoas da squad')), 28, 58, { s: 12.5, c: JC.txt2 });
   [['trab', 'Escalado'], ['plant', 'Plantão'], ['folga', 'Folga']].reduce((px, [t, nome]) => {
     jRR(x, px, H - 36, 14, 14, 4, JC[t].bg, JC[t].c); jT(x, nome, px + 20, H - 29, { s: 12, c: JC.txt2 }); return px + 20 + x.measureText(nome).width + 22;
   }, 28);
@@ -713,7 +799,7 @@ function jSemanaSquad(per, dd, esc) {
   const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
   jT(x, 'Pessoa', L + 10, topo + hh / 2, { s: 12, w: 700, c: JC.txt3 });
   dias.forEach((d, i) => jCabDia(x, d, i, L + nW + i * dW, topo, dW, hh, bf));
-  if (!ms.length) jT(x, filtro.sub ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad.', W / 2, topo + hh + rh / 2, { s: 14, c: JC.txt3, a: 'center' });
+  if (!ms.length) jT(x, filtro.subs.length ? 'Ninguém desse subtime nesta squad.' : 'Nenhuma pessoa inscrita nesta squad.', W / 2, topo + hh + rh / 2, { s: 14, c: JC.txt3, a: 'center' });
   ms.forEach((m, r) => {
     const y = topo + hh + r * rh;
     jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
@@ -732,7 +818,7 @@ function jSemanaSquad(per, dd, esc) {
 }
 
 function jSemanaGlobal(per, dd, esc) {
-  if (!esc.lista.length) return jVazio(per, esc, filtro.sub ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.');
+  if (!esc.lista.length) return jVazio(per, esc, filtro.subs.length ? 'Nenhuma squad com pessoas nesse subtime.' : 'Nenhuma squad com pessoas inscritas.');
   const dias = Array.from({ length: 7 }, (_, i) => addDias(per.a, i)), bf = proximaBF();
   const L = 28, nW = 200, dW = 150, W = L * 2 + nW + dW * 7, topo = 84, hh = 52, LH = 17, MAXN = 6;
   const linhas = esc.lista.map(s => {
@@ -855,7 +941,7 @@ async function jpgAtualizar() {
   try {
     const r = await jGerar(jpg.modo, jpg.ref);
     if (meu !== jSeq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
-    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? 'todas-as-squads' : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
+    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? (filtro.sqs.length ? filtro.sqs.join('+') : 'todas-as-squads') : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
     r.c.style.cssText = 'width:100%;height:auto;border-radius:10px;display:block;'; prev.innerHTML = ''; prev.appendChild(r.c); bt.disabled = false;
   } catch (e) {
     if (meu !== jSeq || !$('j-prev')) return;
@@ -867,7 +953,7 @@ function abrirJpg(modo, refISO) {
   const sem = diasDaSemana().map(iso);
   jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
   const sc = jEscopo();
-  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.sub ? ' · subtime <b>' + esc(filtro.sub) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
+  abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
     '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
     '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
     '<p class="sub" style="margin:0 0 10px">Dia = o dia escolhido · Semana = a semana que contém o dia · Mês = o mês que contém o dia.</p>' +
@@ -892,8 +978,20 @@ $('b-hoje').onclick = () => irParaSemana(new Date());
 $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
 $('b-jpg').onclick = () => abrirJpg();
-$('f-sub').onchange = e => { filtro.sub = e.target.value; render(); };
-$('f-limpar').onclick = () => { filtro = { sub: '' }; render(); };
+$('filtros').addEventListener('click', e => {
+  const sq = e.target.closest('[data-fsq]'), sb = e.target.closest('[data-fsub]');
+  if (sq) {
+    const id = sq.dataset.fsq;
+    if (visao === 'global') { if (!id) filtro.sqs = []; else filtro.sqs = filtro.sqs.includes(id) ? filtro.sqs.filter(x => x !== id) : filtro.sqs.concat(id); }
+    else if (id && id !== squad) { squad = id; lsSet('escala_sq', squad); }
+    render();
+  } else if (sb) {
+    const n = sb.dataset.fsub;
+    if (!n) filtro.subs = []; else filtro.subs = filtro.subs.some(f => norm(f) === norm(n)) ? filtro.subs.filter(f => norm(f) !== norm(n)) : filtro.subs.concat(n);
+    render();
+  }
+});
+$('f-limpar').onclick = () => { filtro = { subs: [], sqs: [] }; render(); };
 $('view').addEventListener('click', e => {
   const cel = e.target.closest('.cel.edit'); if (cel) { abrirCadastro({ sq: squad, uid: cel.dataset.u, data: cel.dataset.d }); return; }
   const gd = e.target.closest('.gdia'); if (gd) { abrirDia(gd.dataset.gd, null); return; }
@@ -929,7 +1027,7 @@ async function iniciar() {
   squad = [qs, ls].find(x => x && squads.find(s => s.id === x)) || (meus[0] && meus[0].id) || (squads[0] && squads[0].id) || '';
   visao = q.get('visao') === 'global' || (!meus.length && !qs) ? 'global' : 'squad';
   const sm = parseISO(q.get('semana') || ''); if (sm) semana = segunda(sm);
-  filtro = { sub: q.get('f_sub') || '' };
+  filtro = { subs: (q.get('f_sub') || '').split(',').map(x => x.trim()).filter(Boolean), sqs: (q.get('f_sq') || '').split(',').map(x => x.trim()).filter(Boolean) };
   $('loading').hidden = true; $('app').hidden = false;
   await carregarJanela();
 }
