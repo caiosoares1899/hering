@@ -2964,7 +2964,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.60 · painel</div>
+<div class="version">v5.62 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3067,7 +3067,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=25"></script>
+<script src="mare-notif.js?v=27"></script>
 <script src="mare-metas.js?v=8"></script>
 <script src="mare-dicas.js?v=4"></script>
 
@@ -7244,6 +7244,16 @@ function loadComunicados(){
 // sentido. Ver script de console (entregue junto com este fix) pra
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
+  {
+    id: 'seed_vtex_alerta_2026_10_13',
+    titulo: '🚨 Incidente na VTEX? O Maré avisa sozinho',
+    corpo: '<p>O Maré agora <b>acompanha a página de status da VTEX</b> (status.vtex.com) o dia todo. Quando a VTEX registra um <b>incidente ou uma manutenção em andamento</b>, aparece um <b>popup 🚨 para todo mundo</b> — ele volta a aparecer até o problema acabar — e chega uma <b>notificação no sino e no celular</b>.</p>'
+      + '<p>✅ Quando a VTEX marca como <b>resolvido</b>, o aviso some sozinho. Manutenção só <b>agendada</b> vira um aviso comum, sem notificação no celular.</p>'
+      + '<p>🌊 No <b>Oceano</b> também tem um selinho <b>VTEX</b> no topo: <b>azul</b> = normal · <b>vermelho</b> = incidente (clique pra ver os detalhes) · <b>cinza</b> = não consegui consultar agora (nesse caso não dá pra garantir que está tudo bem).</p>'
+      + '<p>📲 Pra receber no celular, ative as notificações no rodapé do 🔔. Se preferir não receber esse tipo de aviso, o <b>Não Perturbe</b> continua valendo.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
   {
     id: 'seed_metas_mar_pra_peixe_2026_10_13',
     titulo: '🐟 O mar tá pra peixe: metas e desafios no Maré',
