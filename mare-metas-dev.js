@@ -90,13 +90,26 @@
     const h = diaN(hoje || hojeSP()); if (h == null || h < diaN(m.inicio) || h > diaN(m.fim)) return null;
     return curvaPeso(m.curva[isoDe(h)]) / curvaTotal(m) * (Number(m.alvo) - (isNum(m.inicial) ? Number(m.inicial) : 0));
   }
-  // % que "deveria" estar hoje (fim do dia: no último dia = 100): pela diarização se houver, senão linear pelo calendário. null = sem período (ou período de 1 dia só).
-  function esperado(m, hoje) {
+  // Fração do dia que já passou em Brasília (0 = meia-noite, 1 = fim do dia).
+  function fracAgora() {
+    const p = new Intl.DateTimeFormat('en-GB', { timeZone: SP, hour12: false, hour: '2-digit', minute: '2-digit' }).format(new Date()).split(':');
+    return ((Number(p[0]) % 24) * 60 + Number(p[1])) / 1440;
+  }
+  // % que "deveria" estar hoje: LINEAR = fim do dia pelo calendário (último dia = 100); COM DIARIZAÇÃO = o acumulado até ontem + a parte de hoje na proporção da hora do dia
+  // (sem isso, um dia pesado da curva — ex.: 50 % da meta no último dia — deixaria o farol vermelho às 00:01). `hoje` explícito = fim do dia (determinístico, testes);
+  // `fracDia` (0–1) força a fração. null = sem período (ou período de 1 dia só).
+  function esperado(m, hoje, fracDia) {
+    const agoraImplicito = hoje === undefined || hoje === null || hoje === '';
     const a = diaN(m && m.inicio), b = diaN(m && m.fim), h = diaN(hoje || hojeSP());
     if (a == null || b == null || b <= a || h == null) return null;
     if (h < a) return 0;
+    if (temCurva(m)) {
+      if (h > b) return 100;
+      const frac = fracDia != null ? Math.max(0, Math.min(1, fracDia)) : (agoraImplicito ? fracAgora() : 1);
+      const ontem = h > a ? curvaAcum(m, isoDe(h - 1)) : 0;
+      return Math.min(100, ontem + curvaPeso(m.curva[isoDe(h)]) / curvaTotal(m) * 100 * frac);
+    }
     if (h >= b) return 100;
-    if (temCurva(m)) return curvaAcum(m, hoje || hojeSP());
     return (h - a + 1) / (b - a + 1) * 100;
   }
   // Número em formato brasileiro ("R$ 1.234,56", "1.500", "12,5%") → Number; NaN se não der.
@@ -138,15 +151,17 @@
     futura: { id: 'futura', label: 'Ainda não começou', ico: '⏳', cor: 'var(--txt3)' },
     sem_dado: { id: 'sem_dado', label: 'Sem valor ainda', ico: '⚪', cor: 'var(--txt3)' },
   };
-  function status(m, hoje) {
+  function status(m, hoje, fracDia) {
+    const agoraImplicito = !hoje;
     hoje = hoje || hojeSP();
     const p = pct(m), h = diaN(hoje), a = diaN(m && m.inicio), b = diaN(m && m.fim);
     if (a != null && h < a) return STATUS.futura;
     if (p === null) return (b != null && h > b) ? STATUS.encerrada : STATUS.sem_dado;
     if (p >= 100) return STATUS.batida;
     if (b != null && h > b) return STATUS.encerrada;
-    const e = esperado(m, hoje);
+    const e = esperado(m, agoraImplicito ? undefined : hoje, fracDia);
     if (e == null) return STATUS.andamento;
+    if (e <= 0) return STATUS.no_ritmo;   // a curva ainda não pediu nada (início do 1º dia / dia de peso zero)
     const r = p / e * 100;
     return r >= 95 ? STATUS.no_ritmo : r >= 70 ? STATUS.atencao : STATUS.atrasada;
   }
