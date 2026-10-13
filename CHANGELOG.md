@@ -71,6 +71,9 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🩹 Hotfix kanban-dev v8.30.843-dev — texto de ajuda do 🗂 Entradas quebrava o script (SÓ DEV)
+O PR do 🗂 Entradas (v8.30.842-dev) inseriu o texto novo na Central de Ajuda com quebras de linha de verdade dentro de uma string JS (`'...'`): "Invalid or unexpected token" — o `kanban-dev.html` não carregava. Corrigido (`\n\n`). Os testes tinham rodado ANTES dessa última edição de texto. Prod não foi afetada (nada disso foi promovido). Novo: `docs/demo/brainstorm-console.js` (códigos de console pro brainstorm: intake de demonstração, popup 🐟, escala fake e limpezas).
+
 ### 🐟 Metas: 🗂 Entradas — ver, editar e excluir o que foi lançado — 2026-10-13 · kanban-dev v8.30.842-dev · painel-dev v5.59 · mare-metas-dev v8 (SÓ DEV)
 Pedido: depois de lançar não tinha como corrigir/excluir uma entrada (principalmente os dias lançados como parte).
 - **Novo botão 🗂 Entradas** nos cartões (Maré e Painel, pra quem pode atualizar o valor): lista **todas** as entradas, mais nova primeiro — valor (parte "+X · total Y" ou "total Y"), data/hora, quem lançou, "lançado em" (retroativas), nota e "editado por". Cada uma tem **✏️ editar** (data, hora, valor, nota) e **🗑 excluir** (com confirmação que explica o efeito).
