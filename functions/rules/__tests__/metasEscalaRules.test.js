@@ -81,6 +81,13 @@ test('Escala: validação do formato (tipo, horário, observação, autor, data,
   assert.equal(pode('write', 'kanban/escala/27-11-2026/dev/ana', A.ana, ESC('ana')), false, 'data fora do formato AAAA-MM-DD');
   assert.equal(pode('write', 'kanban/escala/2026-11-27/dev/ana', A.ana, { t: 'trab' }), false, 'sem por/ts');
 });
+test('Escala: pausas no meio do dia (campo p: até 3 intervalos saída-volta)', () => {
+  const ok = o => pode('write', E, A.ana, ESC('ana', o));
+  assert.equal(ok({ i: '09:00', f: '18:00', p: '12:00-13:00' }), true);
+  assert.equal(ok({ i: '09:00', f: '18:00', p: '10:30-10:45;12:00-13:00;15:00-15:15' }), true, '3 pausas');
+  assert.equal(ok({ p: '10:30-10:45;12:00-13:00;15:00-15:15;16:00-16:10' }), false, '4 pausas passam do limite');
+  assert.equal(ok({ p: '12:00' }), false); assert.equal(ok({ p: '12:00-25:00' }), false); assert.equal(ok({ p: '12:00-13:00;' }), false); assert.equal(ok({ p: 5 }), false); assert.equal(ok({ p: '12h-13h' }), false);
+});
 test('Escala: gravação em lote (update por vários dias) segue valendo dia a dia', () => {
   ['2026-11-26', '2026-11-27', '2026-11-28'].forEach(d => assert.equal(pode('write', `kanban/escala/${d}/dev/ana`, A.ana, ESC('ana')), true, d));
 });
