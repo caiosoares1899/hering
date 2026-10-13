@@ -1,6 +1,6 @@
 // 🎬 Códigos de console pro brainstorm — rodar em kanban-dev.html?squad=dev (Console do navegador, já logado como ADM/PO).
 // Cada bloco é independente; cole um de cada vez. Tudo só mexe na squad "dev".
-// Marcas de limpeza: intake = chave "demo_…"; escala = ts 424242 (as regras do banco não aceitam campo extra no dia da escala).
+// Marcas de limpeza: intake = chave "demo_…"; escala = ts 424242 (as regras do banco não aceitam campo extra no dia da escala; as pausas usam o campo `p`, que exige `firebase deploy --only database`).
 
 // ═══ 1) INTAKE — cai na caixa de Intake pra aprovar e virar card ═══
 (async () => {
@@ -40,8 +40,13 @@
       let e;
       if (dsem === 0 || dsem === 6) e = { t: 'folga' };                                   // fim de semana: folga
       else if (dsem === ((p + semana) % 5) + 1) e = { t: 'folga' };                       // 1 folga na semana, rotativa
-      else if (dsem === 5 && (p + semana) % pessoas.length === 0) e = { t: 'plant', i: '08:00', f: '20:00', n: 'plantão Black Friday' };   // 1 plantão por semana, rotativo
-      else e = { t: 'trab', i: p % 2 ? '10:00' : '09:00', f: p % 2 ? '19:00' : '18:00' };
+      else if (dsem === 5 && (p + semana) % pessoas.length === 0) e = { t: 'plant', i: '08:00', f: '20:00', p: '12:00-13:00;15:30-15:45;18:00-18:30', n: 'plantão Black Friday' };   // 1 plantão por semana, rotativo, com 3 pausas
+      else {
+        e = { t: 'trab', i: p % 2 ? '10:00' : '09:00', f: p % 2 ? '19:00' : '18:00' };
+        // pausas (campo p = "saída-volta;saída-volta"): 1ª pessoa almoça 12–13h; 2ª almoça 12:30–13:30 + café; 3ª sem pausa (pra contrastar); e assim por diante
+        if (p % 3 === 0) e.p = '12:00-13:00';
+        else if (p % 3 === 1) e.p = '12:30-13:30;16:00-16:15';
+      }
       upd[iso(dia) + '/dev/' + pessoas[p].uid] = Object.assign(e, base);
     }
     try { await window._update(window._ref(window._db, 'kanban/escala'), upd); ok++; } catch (err) { falhas++; }   // sem permissão pra outra pessoa? grava só a sua
