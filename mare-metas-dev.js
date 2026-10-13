@@ -73,13 +73,59 @@
     if (t === i) return null;
     return (Number(m.atual) - i) / (t - i) * 100;
   }
-  // % que "deveria" estar hoje, pelo calendário (fim do dia: no último dia = 100). null = sem período (ou período de 1 dia só).
+  // ── Diarização (ritmo NÃO linear): o time define antes quanto a meta pede de cada dia. `m.curva` = { 'AAAA-MM-DD': peso } (valor do dia ou peso — vale a proporção).
+  const isoDe = n => new Date(n * 864e5).toISOString().slice(0, 10);
+  const curvaPeso = v => (isNum(v) && Number(v) > 0 ? Number(v) : 0);
+  function curvaTotal(m) { return Object.keys((m && m.curva) || {}).reduce((t, k) => t + curvaPeso(m.curva[k]), 0); }
+  function temCurva(m) { const a = diaN(m && m.inicio), b = diaN(m && m.fim); return !!(m && m.curva && typeof m.curva === 'object' && a != null && b != null && b > a && curvaTotal(m) > 0); }
+  // % acumulado da curva até o fim do dia `hoje` (só dias dentro do período).
+  function curvaAcum(m, hoje) {
+    const a = diaN(m.inicio), b = diaN(m.fim), h = Math.min(diaN(hoje), b), tot = curvaTotal(m); let acc = 0;
+    for (let d = a; d <= h; d++) acc += curvaPeso(m.curva[isoDe(d)]);
+    return acc / tot * 100;
+  }
+  // Quanto a meta pede só DESTE dia (na unidade da meta), pela curva; null = sem curva ou fora do período.
+  function metaDoDia(m, hoje) {
+    if (!temCurva(m)) return null;
+    const h = diaN(hoje || hojeSP()); if (h == null || h < diaN(m.inicio) || h > diaN(m.fim)) return null;
+    return curvaPeso(m.curva[isoDe(h)]) / curvaTotal(m) * (Number(m.alvo) - (isNum(m.inicial) ? Number(m.inicial) : 0));
+  }
+  // % que "deveria" estar hoje (fim do dia: no último dia = 100): pela diarização se houver, senão linear pelo calendário. null = sem período (ou período de 1 dia só).
   function esperado(m, hoje) {
     const a = diaN(m && m.inicio), b = diaN(m && m.fim), h = diaN(hoje || hojeSP());
     if (a == null || b == null || b <= a || h == null) return null;
     if (h < a) return 0;
     if (h >= b) return 100;
+    if (temCurva(m)) return curvaAcum(m, hoje || hojeSP());
     return (h - a + 1) / (b - a + 1) * 100;
+  }
+  // Número em formato brasileiro ("R$ 1.234,56", "1.500", "12,5%") → Number; NaN se não der.
+  function numPt(x) {
+    let t = String(x == null ? '' : x).replace(/R\$|%|\s/g, ''); if (!t) return NaN;
+    if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); else if (t.includes(',')) t = t.replace(',', '.');
+    const v = Number(t); return isFinite(v) ? v : NaN;
+  }
+  // Lê o que a pessoa colou da planilha: uma coluna de valores NA ORDEM dos dias, ou linhas "dd/mm valor". `datas` = os dias do período. → {valores:{data:valor}, aviso}
+  function lerColado(texto, datas) {
+    const linhas = String(texto || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean), out = {};
+    const DATA = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/;
+    const diaDe = (tok) => { const mt = DATA.exec(tok); if (!mt) return null; const mm = mt[2].padStart(2, '0') + '-' + mt[1].padStart(2, '0'); return datas.find(d => d.slice(5) === mm && (!mt[3] || d.slice(0, 4) === (mt[3].length === 2 ? '20' + mt[3] : mt[3]))) || ''; };
+    const celulas = l => l.split(/[\t;]+/).map(c => c.trim()).filter(Boolean);
+    let comData = 0, ignoradas = 0;
+    const emOrdem = [];
+    linhas.forEach(l => {
+      let c = celulas(l), dia = null, val = null;
+      if (c.length === 1) { const sp = /^(\S+)\s+(.+)$/.exec(c[0]); if (sp && DATA.test(sp[1])) c = [sp[1], sp[2]]; }
+      if (c.length >= 2 && DATA.test(c[0])) { comData++; dia = diaDe(c[0]); val = numPt(c[1]); if (dia && !isNaN(val) && val >= 0) out[dia] = val; else ignoradas++; return; }
+      if (c.length > 1 && linhas.length === 1) { c.forEach(x => emOrdem.push(numPt(x))); return; }   // uma linha só, vários valores (colou uma LINHA da planilha)
+      emOrdem.push(numPt(c[c.length - 1]));
+    });
+    let aviso = '';
+    if (comData) { aviso = ignoradas ? ignoradas + ' linha(s) ignorada(s) (data fora do período ou valor inválido).' : ''; return { valores: out, aviso }; }
+    emOrdem.forEach((v, i) => { if (i < datas.length && !isNaN(v) && v >= 0) out[datas[i]] = v; });
+    if (emOrdem.some(v => isNaN(v) || v < 0)) aviso = 'Alguns valores não são números válidos e foram ignorados.';
+    else if (emOrdem.length !== datas.length) aviso = emOrdem.length + ' valor(es) colado(s) para ' + datas.length + ' dia(s) — confira.';
+    return { valores: out, aviso };
   }
   // Situação — mesma linguagem do Radar (verde no ritmo · amarelo atenção · vermelho atrasada · azul batida · cinza sem dado).
   const STATUS = {
@@ -185,6 +231,15 @@
     if (m.inicio && m.fim && diaN(m.fim) < diaN(m.inicio)) return { ok: false, erro: 'O fim do período é antes do início.' };
     m.submarca = SUBMARCAS.some(x => x.id === inp.submarca) ? inp.submarca : '';
     m.canal = CANAIS.some(x => x.id === inp.canal) ? inp.canal : '';
+    if (inp.ritmo === 'dia') {   // diarização: peso por dia dentro do período
+      const a = diaN(m.inicio), b = diaN(m.fim);
+      if (a == null || b == null || b <= a) return { ok: false, erro: 'Pra distribuir a meta por dia, informe o período (de/até) com pelo menos 2 dias.' };
+      if (b - a + 1 > 93) return { ok: false, erro: 'Período grande demais pra distribuir por dia (máximo 93 dias).' };
+      const cv = {}; let tot = 0;
+      for (let d = a; d <= b; d++) { const w = curvaPeso(((inp.curva || {})[isoDe(d)])); cv[isoDe(d)] = w; tot += w; }
+      if (tot <= 0) return { ok: false, erro: 'Informe quanto a meta pede de pelo menos um dia (ou use o ritmo linear).' };
+      m.curva = cv;
+    }
     m.global = m.escopo === 'squad' ? !!inp.global : false;
     m.ativo = inp.ativo !== false;
     const l = inp.lembrete || {};
@@ -315,6 +370,11 @@
 .mm-acts{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;} .mm-acts .g{flex:1;}
 .mm-msg{margin-top:12px;font-size:12.5px;padding:9px 12px;border-radius:10px;background:color-mix(in srgb,var(--danger) 14%,transparent);border:1px solid color-mix(in srgb,var(--danger) 40%,transparent);color:var(--danger);}
 .mm-prev{margin-top:12px;padding:10px 12px;border-radius:10px;background:rgba(var(--ink-rgb,0,0,0),.35);border:1px solid var(--glass-b,rgba(255,255,255,.1));font-size:12.5px;line-height:1.5;}
+.mm-cv-rows{max-height:230px;overflow-y:auto;margin-top:8px;border:1px solid var(--glass-b,rgba(255,255,255,.1));border-radius:10px;padding:4px 8px;background:rgba(var(--ink-rgb,0,0,0),.25);}
+.mm-cv-r{display:grid;grid-template-columns:78px 1fr 52px;gap:8px;align-items:center;padding:3px 0;font-size:12px;color:var(--txt2);}
+.mm-cv-r input{padding:5px 8px !important;font-size:12px !important;}
+.mm-cv-r .mm-cv-acc{text-align:right;color:var(--txt3);font-size:11px;}
+.mm-cv-r.fds{color:var(--txt3);}
 .mm-chk{display:flex;align-items:flex-start;gap:8px;font-size:12.5px;color:var(--txt2);margin-top:12px;line-height:1.4;cursor:pointer;}
 .mm-chk input{margin-top:2px;}
 /* popup 🐟 */
@@ -378,12 +438,14 @@
     if (isNum(m.atual) && (p == null || p < 100)) k.push(`<div class="mm-kpi"><small>Falta</small><b>${esc(fmtVal(m, falta(m)))}</b></div>`);
     if (dr != null) k.push(`<div class="mm-kpi ${dr <= 1 && (p == null || p < 100) ? 'warn' : ''}"><small>Restam</small><b>${dr === 0 ? 'hoje é o dia' : dr + (dr === 1 ? ' dia' : ' dias')}</b></div>`);
     if (rn != null && rn > 0 && (p == null || p < 100)) k.push(`<div class="mm-kpi ${st.id === 'atrasada' ? 'bad' : st.id === 'atencao' ? 'warn' : ''}"><small>Precisa/dia</small><b>${esc(fmtVal(m, rn))}</b></div>`);
+    const md = metaDoDia(m); if (md != null) k.push(`<div class="mm-kpi"><small>Meta de hoje</small><b>${esc(fmtVal(m, md))}</b></div>`);
     if (esp != null && p != null) { const d = Math.round(p - esp); k.push(`<div class="mm-kpi ${d >= 0 ? 'ok' : d > -15 ? 'warn' : 'bad'}"><small>Vs. ritmo</small><b>${d >= 0 ? '+' : ''}${d} pp</b></div>`); }
     return `<div class="mm-kpis">${k.join('')}</div>`;
   }
   const tagsHtml = m => {
     const t = [];
     if (m.inicio) t.push(`<span class="mm-tag dia">📅 ${esc(m.inicio === m.fim ? curto(m.inicio) : curto(m.inicio) + '–' + curto(m.fim))}</span>`);
+    if (temCurva(m)) t.push(`<span class="mm-tag" title="O time definiu quanto a meta pede de cada dia">📅 diarizada</span>`);
     const sm = SUBMARCAS.find(x => x.id === m.submarca); if (sm) t.push(`<span class="mm-tag">🏷️ ${esc(sm.label.replace(/^Hering\s+/, ''))}</span>`);
     const cv = CANAIS.find(x => x.id === m.canal); if (cv) t.push(`<span class="mm-tag">🛒 ${esc(cv.label)}</span>`);
     return t.length ? `<div class="mm-tags">${t.join('')}</div>` : '';
@@ -403,7 +465,12 @@
     const fy = v => fmtVal(m, v);
     const grid = [0, 1, 2, 3].map(k => { const v = mn + (mx - mn) * k / 3; return `<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W - pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".1"/><text x="${pl - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity=".6">${esc(fy(v))}</text>`; }).join('');
     const meta = `<line x1="${pl}" y1="${Y(alvo).toFixed(1)}" x2="${W - pr}" y2="${Y(alvo).toFixed(1)}" stroke="var(--accent)" stroke-dasharray="5 4" stroke-opacity=".85"/><text x="${W - pr}" y="${(Y(alvo) - 4).toFixed(1)}" text-anchor="end" font-size="9.5" font-weight="700" fill="var(--accent)">🎯 meta</text>`;
-    const ideal = (a != null && b != null && b > a) ? `<line x1="${X(a * 864e5 + 3 * 3600e3).toFixed(1)}" y1="${Y(ini).toFixed(1)}" x2="${X(b * 864e5 + 27 * 3600e3).toFixed(1)}" y2="${Y(alvo).toFixed(1)}" stroke="var(--txt3)" stroke-dasharray="3 4" stroke-opacity=".9"/>` : '';
+    let ideal = '';
+    if (temCurva(m)) {   // ritmo ideal = a curva definida pelo time (acumulado ao fim de cada dia), não uma reta
+      const pts2 = [[X(a * 864e5 + 3 * 3600e3), Y(ini)]]; let acc = 0; const tot = curvaTotal(m);
+      for (let d = a; d <= b; d++) { acc += curvaPeso(m.curva[isoDe(d)]); pts2.push([X(d * 864e5 + 27 * 3600e3), Y(ini + acc / tot * (alvo - ini))]); }
+      ideal = `<polyline fill="none" stroke="var(--txt3)" stroke-dasharray="3 4" stroke-opacity=".9" points="${pts2.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"/>`;
+    } else if (a != null && b != null && b > a) ideal = `<line x1="${X(a * 864e5 + 3 * 3600e3).toFixed(1)}" y1="${Y(ini).toFixed(1)}" x2="${X(b * 864e5 + 27 * 3600e3).toFixed(1)}" y2="${Y(alvo).toFixed(1)}" stroke="var(--txt3)" stroke-dasharray="3 4" stroke-opacity=".9"/>`;
     const xy = pts.map(x => [X(x.t), Y(x.v)]);
     const linha = xy.length > 1 ? `<path d="M${xy[0][0].toFixed(1)},${(pt + ih).toFixed(1)} L${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L')} L${xy[xy.length - 1][0].toFixed(1)},${(pt + ih).toFixed(1)}Z" fill="${st.cor}" fill-opacity=".12"/><polyline fill="none" stroke="${st.cor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>` : '';
     const dots = pts.map((x, i) => `<circle cx="${xy[i][0].toFixed(1)}" cy="${xy[i][1].toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3.2}" fill="${st.cor}" stroke="rgba(255,255,255,.85)" stroke-width="1.2"><title>${esc(new Date(x.t).toLocaleString('pt-BR', { timeZone: SP, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · ' + fy(x.v))}</title></circle>`).join('');
@@ -412,7 +479,7 @@
     const ult = xy[xy.length - 1];
     const rot = `<text x="${Math.min(W - pr - 4, ult[0] + 7)}" y="${(ult[1] - 8).toFixed(1)}" text-anchor="${ult[0] > W - 70 ? 'end' : 'start'}" font-size="10" font-weight="700" fill="${st.cor}">${esc(fy(pts[pts.length - 1].v))}</text>`;
     return `<div class="mm-chart" style="--mm-c:${st.cor}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de ${esc(m.titulo)}">${grid}${meta}${ideal}${linha}${dots}${rot}${xl}</svg>
-      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>ritmo ideal</span>' : ''}<span><i class="mt"></i>meta</span></div></div>`;
+      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>' + (temCurva(m) ? 'ritmo do time (diarização)' : 'ritmo ideal') + '</span>' : ''}<span><i class="mt"></i>meta</span></div></div>`;
   }
   // "180 / 500 camisetas" · "R$ 840 mil / R$ 2 mi" · "42% / 100%" — a unidade aparece uma vez só.
   function fmtPar(m) {
@@ -555,7 +622,7 @@
   function abrirForm(opts) {
     injetaCss();
     const m = opts.meta || {}, novo = !m.id, escopo = opts.escopo || m.escopo || 'digital';
-    const st = { tipo: m.tipo || opts.tipo || 'meta', fmt: m.fmt || 'brl', emoji: m.emoji || '', sm: m.submarca || '', cv: m.canal || '', resp: new Set(m.responsaveis || []), lemModo: (m.lembrete && m.lembrete.modo) || 'off' };
+    const st = { tipo: m.tipo || opts.tipo || 'meta', fmt: m.fmt || 'brl', emoji: m.emoji || '', sm: m.submarca || '', cv: m.canal || '', resp: new Set(m.responsaveis || []), rit: temCurva(m) ? 'dia' : 'lin', curva: Object.assign({}, m.curva || {}), lemModo: (m.lembrete && m.lembrete.modo) || 'off' };
     const l = m.lembrete || {};
     const resp = (opts.pessoas || []).length ? `<div class="lb">Quem preenche <span class="opt">(opcional — recebe o lembrete)</span></div><div class="mm-chips" id="mm-resp">${(opts.pessoas || []).map(p => `<button type="button" class="mm-ch" data-u="${esc(p.uid)}" aria-pressed="${st.resp.has(p.uid)}">${esc(p.nome)}</button>`).join('')}</div><div class="sub" style="margin:4px 0 0">Sem ninguém marcado: o lembrete vai pros ${escopo === 'squad' ? 'PO e Organizadores da squad' : 'ADMs'}.</div>` : '';
     const ov = abreOv(`<h3 id="mm-f-h"></h3><p class="sub">${escopo === 'digital' ? 'Vale pro <b>Digital inteiro</b> e aparece na aba 🌊 Digital do Maré.' : 'Vale pra esta <b>squad</b> e aparece na aba 🐠 Squad do Maré.'}</p>
@@ -567,6 +634,11 @@
       <div class="mm-r2"><div><label for="mm-f-a">Alvo (a meta)</label><input type="number" id="mm-f-a" step="any" inputmode="decimal" value="${isNum(m.alvo) ? m.alvo : ''}"></div><div><label for="mm-f-i">Ponto de partida <span class="opt">(padrão 0)</span></label><input type="number" id="mm-f-i" step="any" inputmode="decimal" value="${isNum(m.inicial) && Number(m.inicial) !== 0 ? m.inicial : ''}"></div></div>
       <div class="lb">Período <span class="opt">(opcional — é o que permite medir o ritmo; num dia só, deixe os dois iguais)</span></div><div class="mm-r2"><input type="date" id="mm-f-d1" value="${esc(m.inicio || '')}"><input type="date" id="mm-f-d2" value="${esc(m.fim || '')}"></div>
       <div class="mm-chips" style="margin-top:7px"><button type="button" class="mm-ch" id="mm-hoje">Só hoje</button><button type="button" class="mm-ch" id="mm-bf">🔥 Black Friday</button></div>
+      <div class="lb">Ritmo ao longo do período <span class="opt">(como a meta se distribui nos dias)</span></div><div class="mm-chips" id="mm-rit"><button type="button" class="mm-ch" data-r="lin" aria-pressed="${!temCurva(m)}">📏 Linear — igual todo dia</button><button type="button" class="mm-ch" data-r="dia" aria-pressed="${temCurva(m)}">📅 Por dia — diarização do time</button></div>
+      <div id="mm-curva" hidden><p class="sub" style="margin:8px 0 0">Informe <b>quanto a meta pede de cada dia</b> (valor ou peso — vale a proporção entre os dias). O "esperado hoje", o ritmo e o gráfico passam a seguir essa curva.</p>
+        <div class="mm-chips" style="margin-top:8px"><button type="button" class="mm-ch" id="mm-cv-igual">Distribuir igual</button><button type="button" class="mm-ch" id="mm-cv-colar">📋 Colar da planilha</button></div>
+        <div id="mm-cv-colarbox" hidden><textarea id="mm-cv-txt" rows="3" style="width:100%;font:inherit;font-size:12px;padding:8px 10px;border-radius:10px;border:1px solid var(--glass-b,rgba(255,255,255,.14));background:rgba(var(--ink-rgb,0,0,0),.4);color:var(--txt);margin-top:8px" placeholder="Uma coluna de valores NA ORDEM dos dias — ou linhas no formato 12/11 1500"></textarea><div class="mm-chips" style="margin-top:6px"><button type="button" class="mm-ch" id="mm-cv-aplicar">Aplicar</button></div></div>
+        <div class="mm-cv-rows" id="mm-cv-rows"></div><div class="mm-prev" id="mm-cv-sum" style="margin-top:8px"></div></div>
       <div class="mm-r2"><div><label for="mm-f-sm">Submarca <span class="opt">(opcional)</span></label><select id="mm-f-sm"><option value="">—</option>${SUBMARCAS.map(x => `<option value="${x.id}" ${st.sm === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div>
         <div><label for="mm-f-cv">Canal de venda <span class="opt">(opcional)</span></label><select id="mm-f-cv"><option value="">—</option>${CANAIS.map(x => `<option value="${x.id}" ${st.cv === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div></div>
       ${escopo === 'squad' ? `<label class="mm-chk"><input type="checkbox" id="mm-f-g" ${m.global ? 'checked' : ''}> <span>🌊 <b>Mostrar na visão global</b> (aba Digital, pra todo o Digital ver)</span></label>` : ''}
@@ -587,8 +659,35 @@
     ov.querySelector('#mm-em').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; st.emoji = st.emoji === b.dataset.e ? '' : b.dataset.e; sel('#mm-em', 'data-e', st.emoji); };
     ov.querySelector('#mm-fmt').onclick = e => { const b = e.target.closest('[data-f]'); if (!b) return; st.fmt = b.dataset.f; sel('#mm-fmt', 'data-f', st.fmt); $('mm-sufw').hidden = st.fmt !== 'num'; };
     if (ov.querySelector('#mm-resp')) ov.querySelector('#mm-resp').onclick = e => { const b = e.target.closest('[data-u]'); if (!b) return; const u = b.dataset.u; if (st.resp.has(u)) st.resp.delete(u); else st.resp.add(u); b.setAttribute('aria-pressed', st.resp.has(u)); };
-    $('mm-hoje').onclick = () => { const h = hojeSP(); $('mm-f-d1').value = h; $('mm-f-d2').value = h; };
-    $('mm-bf').onclick = () => { const bf = blackFriday(); $('mm-f-d1').value = bf.ini; $('mm-f-d2').value = bf.fim; };
+    // ── Diarização: uma linha por dia do período, com o acumulado em % ao lado ──
+    const diasDoPeriodo = () => { const a = diaN($('mm-f-d1').value), b = diaN($('mm-f-d2').value); if (a == null || b == null || b <= a || b - a + 1 > 93) return []; const o = []; for (let d = a; d <= b; d++) o.push(isoDe(d)); return o; };
+    const cvLer = () => { $$('#mm-cv-rows input[data-d]').forEach(i => { if (i.value !== '') st.curva[i.dataset.d] = i.value; else delete st.curva[i.dataset.d]; }); };
+    const cvSoma = () => {
+      const ins = $$('#mm-cv-rows input[data-d]'), pesos = ins.map(i => curvaPeso(i.value)), tot = pesos.reduce((x, y) => x + y, 0), el = $('mm-cv-sum'); let acc = 0;
+      ins.forEach((i, k) => { acc += pesos[k]; i.closest('.mm-cv-r').querySelector('.mm-cv-acc').textContent = tot > 0 ? Math.round(acc / tot * 100) + '%' : '—'; });
+      const meta = isNum($('mm-f-a').value) ? Number($('mm-f-a').value) - (isNum($('mm-f-i').value) ? Number($('mm-f-i').value) : 0) : null, fm = { fmt: st.fmt, sufixo: $('mm-f-s').value };
+      el.innerHTML = tot > 0 ? `Soma dos dias: <b>${esc(fmtVal(fm, tot))}</b>${meta != null ? ' · meta: <b>' + esc(fmtVal(fm, meta)) + '</b>' + (Math.abs(tot - meta) > Math.abs(meta) * 0.005 ? ' — a soma é diferente da meta, mas tudo bem: a curva usa a <b>proporção</b> de cada dia.' : ' ✔') : ''}` : 'Preencha pelo menos um dia.';
+    };
+    const cvRender = (semLer) => {   // semLer: o estado foi mudado de propósito (distribuir/colar) — não sobrescrever com o que a grade mostrava
+      const ritChips = ov.querySelectorAll('#mm-rit [data-r]'); ritChips.forEach(b => b.setAttribute('aria-pressed', b.dataset.r === st.rit));
+      $('mm-curva').hidden = st.rit !== 'dia'; if (st.rit !== 'dia') return;
+      if (!semLer) cvLer(); const dias = diasDoPeriodo(), rows = $('mm-cv-rows');
+      if (!dias.length) { rows.innerHTML = ''; $('mm-cv-sum').textContent = diaN($('mm-f-d2').value) - diaN($('mm-f-d1').value) + 1 > 93 ? 'Período grande demais pra distribuir por dia (máximo 93 dias).' : 'Informe o período (de/até) acima, com pelo menos 2 dias, pra distribuir a meta por dia.'; return; }
+      const SEM = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+      rows.innerHTML = dias.map(d => { const wd = new Date(diaN(d) * 864e5).getUTCDay(); return `<div class="mm-cv-r${wd === 0 || wd === 6 ? ' fds' : ''}"><span>${SEM[wd]} ${curto(d)}</span><input type="number" min="0" step="any" inputmode="decimal" data-d="${d}" value="${st.curva[d] != null ? esc(st.curva[d]) : ''}" aria-label="Meta do dia ${curto(d)}"><span class="mm-cv-acc"></span></div>`; }).join('');
+      cvSoma();
+    };
+    ov.querySelector('#mm-rit').onclick = e => { const b = e.target.closest('[data-r]'); if (!b) return; st.rit = b.dataset.r; cvRender(); };
+    $('mm-cv-rows').addEventListener('input', cvSoma);
+    ['mm-f-d1', 'mm-f-d2'].forEach(id => { $(id).addEventListener('change', () => cvRender()); $(id).addEventListener('input', () => cvRender()); });
+    ['mm-f-a', 'mm-f-i', 'mm-f-s'].forEach(id => $(id).addEventListener('input', () => { if (st.rit === 'dia') cvSoma(); }));
+    $('mm-fmt').addEventListener('click', () => { if (st.rit === 'dia') cvSoma(); });
+    $('mm-cv-igual').onclick = () => { const dias = diasDoPeriodo(); if (!dias.length) return; const meta = isNum($('mm-f-a').value) ? Number($('mm-f-a').value) - (isNum($('mm-f-i').value) ? Number($('mm-f-i').value) : 0) : 0, v = meta > 0 ? Math.round(meta / dias.length * 100) / 100 : 1; dias.forEach(d => { st.curva[d] = v; }); cvRender(true); };
+    $('mm-cv-colar').onclick = () => { $('mm-cv-colarbox').hidden = !$('mm-cv-colarbox').hidden; if (!$('mm-cv-colarbox').hidden) $('mm-cv-txt').focus(); };
+    $('mm-cv-aplicar').onclick = () => { const r = lerColado($('mm-cv-txt').value, diasDoPeriodo()); cvLer(); Object.keys(r.valores).forEach(d => { st.curva[d] = r.valores[d]; }); cvRender(true); if (r.aviso) $('mm-cv-sum').textContent = '⚠️ ' + r.aviso; else $('mm-cv-colarbox').hidden = true; };
+    $('mm-hoje').onclick = () => { const h = hojeSP(); $('mm-f-d1').value = h; $('mm-f-d2').value = h; cvRender(); };
+    $('mm-bf').onclick = () => { const bf = blackFriday(); $('mm-f-d1').value = bf.ini; $('mm-f-d2').value = bf.fim; cvRender(); };
+    cvRender();
     const lemMostra = () => { const v = $('mm-f-lem').value; ['cada', 'diario', 'horarios'].forEach(k => { $('mm-lem-' + k).hidden = v !== k; }); };
     $('mm-f-lem').value = st.lemModo; $('mm-l-c').value = String(l.cada || 1); lemMostra(); $('mm-f-lem').onchange = lemMostra;
     $('mm-f-x').onclick = () => ov.remove();
@@ -599,7 +698,7 @@
       if (lemModo === 'diario') lembrete.hora = $('mm-l-h').value;
       if (lemModo === 'horarios') lembrete.horas = $$('.mm-l-hs').map(i => i.value).filter(Boolean);
       const inp = { id: m.id, escopo, squad: opts.squad || m.squad, tipo: st.tipo, titulo: $('mm-f-t').value, emoji: st.emoji, fmt: st.fmt, sufixo: $('mm-f-s').value, alvo: $('mm-f-a').value, inicial: $('mm-f-i').value,
-        inicio: $('mm-f-d1').value, fim: $('mm-f-d2').value, submarca: $('mm-f-sm').value, canal: $('mm-f-cv').value, global: $('mm-f-g') ? $('mm-f-g').checked : false, ativo: $('mm-f-ativo').checked, lembrete, responsaveis: [...st.resp], ordem: m.ordem };
+        inicio: $('mm-f-d1').value, fim: $('mm-f-d2').value, submarca: $('mm-f-sm').value, canal: $('mm-f-cv').value, global: $('mm-f-g') ? $('mm-f-g').checked : false, ativo: $('mm-f-ativo').checked, lembrete, responsaveis: [...st.resp], ordem: m.ordem, ritmo: st.rit, curva: (cvLer(), st.curva) };
       const v = validar(inp), er = $('mm-f-err');
       if (!v.ok) { er.textContent = v.erro; er.hidden = false; return; }
       er.hidden = true; $('mm-f-ok').disabled = true;
@@ -759,7 +858,7 @@
   const api = {
     IS_DEV, PATHS, SUBMARCAS, CANAIS, MARCOS, STATUS,
     // matemática
-    hojeSP, fmtVal, pctTxt, pct, esperado, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
+    hojeSP, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, lerColado, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
     injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
     // dados
