@@ -606,13 +606,13 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif.js?v=27"></script>
-<script src="mare-dicas.js?v=4"></script>
+<script src="mare-notif.js?v=29"></script>
+<script src="mare-dicas.js?v=5"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.30 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.32 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -916,8 +916,8 @@ function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em ab
   if(app) abrirApp(app.id, false, url); else MareNotif.abrirPagina(url);
 }
 function sinoItens(){
-  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor}));
-  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read}));
+  const out = MareNotif.items().map(i=>({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo}));
+  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
@@ -926,7 +926,7 @@ function sinoRender(){
   const itens = sinoItens(), n = itens.filter(i=>i.unread).length, b = $('#sino-n');
   if(b){ if(n>0){ b.textContent = n>99 ? '99+' : String(n); b.style.display = 'flex'; } else b.style.display = 'none'; }
   $('#btn-sino').title = n ? 'Notificações ('+n+' não lida'+(n>1?'s':'')+')' : 'Notificações';
-  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id));   // som quando chega uma nova (respeita 🔇 e o Não Perturbe)
+  MareNotif.novas(itens.filter(i=>i.unread).map(i=>i.k+':'+i.id), itens.filter(i=>i.unread).map(i=>i.tipo));   // som quando chega uma nova (respeita 🔇 e o Não Perturbe)
   const drop = $('#sino-drop'); if(!drop || drop.style.display!=='flex') return;   // a lista só é desenhada com o painel aberto
   drop.innerHTML = '<div class="sino-hd"><span>🔔 Notificações</span><span style="flex:1"></span>'+(n ? '<button type="button" class="btn sm" id="sino-tudo">✓ Marcar tudo como lido</button>' : '')+'</div>'
     + '<div class="sino-list">'+(itens.length ? itens.slice(0,50).map(i=>'<div class="sino-it" role="button" tabindex="0" data-k="'+i.k+'" data-id="'+esc(i.id)+'"><span style="font-size:15px;flex-shrink:0;">'+esc(i.icon)+'</span><div style="flex:1;min-width:0;"><div class="t">'+esc(i.title)+'</div>'+(i.sub?'<div class="s">'+esc(i.sub)+'</div>':'')+'<div class="w">'+esc(tempoRel(i.ts))+(i.autor?' · '+esc(i.autor):'')+'</div></div>'+(i.unread?'<span class="sino-dot" title="Não lida"></span>':'')+'</div>').join('') : '<div class="sino-vazio">Nada por aqui ainda.</div>')+'</div>'
@@ -1274,7 +1274,7 @@ $('#perfil-bd').addEventListener('change', e=>{
 
 // ── Ajuda ──
 const FAQ = [
-  {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p>'},
+  {id:'sino', q:'O sininho 🔔 do topo: o que aparece e como recebo avisos no celular?', a:'<p>É o <b>mesmo sino</b> do Maré Digital, do Painel e do Radar: junta as suas notificações (card atribuído a você, menção, Estrela do Mar, reunião, prazo…) e os avisos da torre (Mural do Radar, Objetivo criado, Marco concluído). O número vermelho mostra quantas ainda não foram lidas; clique numa notificação para abrir o card ou o Objetivo (dentro do Oceano, se você usa o app instalado).</p><p><b>No rodapé do sino</b> você liga/desliga o som, ativa as <b>notificações neste aparelho</b> (push — chegam mesmo com o Oceano fechado) e pode silenciar com o <b>Não Perturbe</b>. Ativar aqui vale para todos os produtos neste aparelho.</p><p>Se nem sempre você ouve o “ding”, use o <b>🫨 Modo insistente</b> (também no rodapé, desligado por padrão): quando chega um aviso importante a tela treme e, se você não estiver olhando a janela, o som se repete e o título da aba pisca — até você voltar ou mexer em algo. Dá para escolher cada item e testar na hora.</p>'},
   {id:'vtex', q:'O selinho "VTEX" no topo: o que ele mostra?', a:'<p>É o <b>status da VTEX</b> (a plataforma da loja), lido automaticamente da página oficial <b>status.vtex.com</b> a cada poucos minutos. <b>Azul "VTEX normal"</b>: nenhum incidente em andamento. <b>Vermelho "VTEX: incidente"</b>: a VTEX está com instabilidade — passe o mouse para ver qual e clique para abrir os detalhes. <b>Cinza "VTEX: sem leitura"</b>: o monitor não conseguiu consultar a página agora, então não dá para afirmar que está tudo normal.</p><p>Quando há incidente você também recebe um <b>popup 🚨</b> e uma notificação (sino e celular); quando a VTEX resolve, o aviso some sozinho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
   {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
