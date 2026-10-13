@@ -318,6 +318,26 @@
   const dnd = {on:false, until:null, label:''};
   let prefsOn = false, tokenConfirmado = false, fcmHookOn = false;
 
+  // 🪟 Push que chega com a página VISÍVEL mas SEM FOCO (ex.: o Maré/Radar aberto no 2º monitor enquanto o foco está no Meet/Teams, ou a tela sendo
+  // compartilhada): o FCM só entrega ao Service Worker (aviso do sistema) quando NENHUMA aba está visível; com uma visível entrega à própria página, que só
+  // mostrava um toast de 3 s — fácil de perder numa reunião. Aqui, sem foco, a página mostra também o aviso do sistema, igual ao do Service Worker (mesma `tag`
+  // → se os dois dispararem, um substitui o outro, nunca duplica). Com foco (a pessoa está olhando a janela) fica só o toast.
+  const SITE = 'https://caiosoares1899.github.io/hering/';
+  function avisoSistema(p){
+    try{
+      if(!window.Notification || Notification.permission!=='granted' || !('serviceWorker' in navigator)) return false;
+      if(document.hasFocus()) return false;
+      const d = (p && p.data) || {};
+      const titulo = d.title || (p && p.notification && p.notification.title) || 'Maré Digital';
+      const url = String(d.url||'').indexOf(SITE)===0 ? d.url : SITE+'kanban.html';          // só endereço do próprio site (o clique abre isso)
+      navigator.serviceWorker.ready.then(reg=>reg.showNotification(titulo, {
+        body: d.body || (p && p.notification && p.notification.body) || '',
+        icon: SITE+'marinheiro.png', badge: SITE+'marinheiro.png',
+        tag: d.tag || 'mare-digital-notif', data: Object.assign({}, d, {url})
+      })).catch(()=>{});
+      return true;
+    }catch(e){ return false; }
+  }
   function toast(m){ try{ if(st.opts && st.opts.toast) st.opts.toast(m); else if(typeof window.showToast==='function') window.showToast(m); }catch(e){} }
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
@@ -446,7 +466,7 @@
     document.querySelectorAll('.mn-dnd-lbl').forEach(el=>{ el.textContent = ativo ? ('🔕 Não Perturbe ativo'+(dnd.label ? ' ('+dnd.label+')' : ' (até você desativar)')) : '🔔 Notificações ativas'; });
     // Permissão já concedida em outra sessão/página: garante o token deste aparelho (1x por carga), como o kanban faz.
     if(s==='granted' && !tokenConfirmado && st.uid && !st.viewer && window._fcmReady){ tokenConfirmado = true; tokenRegistrar(); }
-    if(!fcmHookOn && window._fcmOnMessage){ fcmHookOn = true; try{ window._fcmOnMessage(p=>toast('🔔 '+((p && p.data && p.data.title) || (p && p.notification && p.notification.title) || 'Nova notificação'))); }catch(e){} }
+    if(!fcmHookOn && window._fcmOnMessage){ fcmHookOn = true; try{ window._fcmOnMessage(p=>{ toast('🔔 '+((p && p.data && p.data.title) || (p && p.notification && p.notification.title) || 'Nova notificação')); avisoSistema(p); }); }catch(e){} }
   }
   // Menu do Não Perturbe: fixo na tela (o painel do sino corta o que passa da própria caixa), abre pra cima quando não cabe embaixo.
   function dndMenu(e){
@@ -699,7 +719,7 @@
   })();
 
   window.MareNotif = {TIPOS, AREAS, PUSH_PADRAO, CFG, cfgLigado, sinoLigado, cfgTudo: ()=>cfg, cfgPronto: ()=>cfgPronto, start, items, unread, markOne, markAll, pushFeed, abrirFeed, abrirPagina, urlFeed, urlPessoal, ICONS, SO_PAINEL, PAGES, esc, viva, FEED, SEEN,
-    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
+    appsMontar, appsUso, APPS, linksCacheSet, linksLista, linkUrlOk, linkImgOk, linkFavicon, rodapeHtml, rodapeRender, avisoSistema, dndSet, dndAmanha, dndMenu, dndAtivo, menusFechar, somToggle, somMudo, tocar, novas, permEstado, permClick,
     // para os testes
     _estado: ()=>st};
 })();
