@@ -414,6 +414,7 @@ function validarInterno() {
   if (!$('i-descricao').value.trim()) return 'Falta descrever o pedido.';
   if (c.prioridade.on && c.prioridade.req && !sel.prio) return 'Escolha a prioridade.';
   if (c.prazo.on && c.prazo.req && !$('i-prazo').value) return 'Informe o prazo desejado.';
+  if (c.prazo.on && $('i-prazo').value && $('i-prazo').value < hojeISO(0)) return 'O prazo desejado já passou — escolha hoje ou uma data futura.';   // o formulário é novalidate: o `min` do campo não barra data digitada
   if (c.submarca.on && c.submarca.req && sq.submarcas.length && !sel.submarca) return 'Escolha a submarca.';
   if (c.canal.on && c.canal.req && sq.canais.length && !sel.canal) return 'Escolha o canal de venda.';
   if (c.tags.on && c.tags.req && !sel.tags.size) return 'Escolha ao menos uma tag.';

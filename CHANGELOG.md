@@ -71,6 +71,11 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🐛 /monitorarbugs (13/10, 3ª rodada): Intake — Painel apagava a config do intake — 2026-10-13 · painel-dev v5.53 · intake-dev (SÓ DEV)
+- **⚙ Config do board no Painel apagava a configuração do intake (severo).** `saveCfg()` gravava `agil_cfg` com `set()` de um objeto novo (sprint, WIP, capacidade…), e esse mesmo nó guarda o que o Maré grava: `intakeEnabled`, `intakeCampos` ("Campos do pedido interno") e `bfBannerMsg`. Salvar a config de uma squad no Painel **religava os pedidos que o PO tinha desligado** (o link público voltava a aceitar) e zerava os campos escolhidos. Agora usa `update` (mescla). **O mesmo código está em `painel.html` (produção)** — vai na próxima promoção do Painel.
+- **Pedido interno com prazo no passado:** o formulário é `novalidate`, então o `min` do campo não barrava data digitada à mão (o card nascia com prazo vencido). Agora avisa "O prazo desejado já passou".
+Sem achado: envio interno (trava de duplo clique, número de chamada ao trocar de squad), campos configuráveis × padrão, criar card/vincular/guardar/descartar, notificação `intake` (push, navegação), regras de `intake_pending`.
+
 ### 🐛 /monitorarbugs (13/10, 2ª rodada): Escala — celular e menções — 2026-10-13 · escala-dev v1.6 (SÓ DEV)
 - **Celular:** a barra da semana (◀ data ▶ Hoje 🔥 Black Friday) não quebrava linha e estourava a largura: a página ganhava rolagem lateral e o botão da Black Friday ficava cortado. Agora quebra linha.
 - **📋 Copiar menções (visão "Todas as squads"):** quem está em duas squads aparecia duas vezes (`@AL @AL @BR`) e inflava o contador. Agora uma vez só.

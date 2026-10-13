@@ -2924,7 +2924,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.52 · painel-dev</div>
+<div class="version">v5.53 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3402,7 +3402,9 @@ function saveCfg(){
 
   // Salva no Firebase
   const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
-  window._set(ref, cfg)
+  // update (mescla), NÃO set: `agil_cfg` também guarda o que o Maré grava (intakeEnabled, intakeCampos, bfBannerMsg) — um set() com este objeto novo apagava tudo isso
+  // (pedidos desligados pelo PO voltavam a ser aceitos pelo link público e os campos do pedido interno voltavam ao padrão).
+  window._update(ref, cfg)
     .then(()=>{ showToast('✅ Configurações salvas!'); closeCfg(); })
     .catch(e=>{ console.error(e); showToast('❌ Erro ao salvar: '+e.message); });
 }
