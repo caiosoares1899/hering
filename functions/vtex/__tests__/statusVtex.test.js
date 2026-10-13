@@ -231,3 +231,56 @@ test('executar: interruptor desligado grava saúde "desligado" (selinho some)', 
   const s = await saude(db);
   assert.equal(s.desligado, true); assert.equal(s.ok, undefined);
 });
+
+// ── 2026-10-13 · /monitorarbugs na VTEX ──
+test('formato do feed mudou (sem "Status:" legível): NENHUM alerta em massa e conta como falha do monitor', async () => {
+  const db = novoDb();
+  const sem = (id, titulo) => `<item><title><![CDATA[${titulo}]]></title><link>https://status.vtex.com//incidents/${id}</link><guid>https://status.vtex.com//incidents/${id}</guid><pubDate>Tue, 13 Oct 2026 19:00:00 GMT</pubDate><description><![CDATA[<strong>Status: Resolved</strong><br/>texto]]></description></item>`;
+  const xml = `<rss><channel>${sem('F1', 'Velho 1')}${sem('F2', 'Velho 2')}</channel></rss>`;
+  assert.equal(V.faseDe({ estado: '' }), 'desconhecido');
+  const r = await V.processar({ db, itens: V.parseFeed(xml), agora: AGORA });
+  assert.deepEqual([r.criados, r.notificados, r.incidentes.length, r.ignorados], [0, 0, 0, 2]);
+  assert.equal((await db.ref('kanban/comunicados').get()).val(), null);
+  assert.equal((await notifs(db, 'ana')).length, 0);
+  await assert.rejects(() => V.executar({ db, fetchImpl: resp(xml), agora: AGORA, log: { warn() {} } }), /sem nenhum item/);
+  assert.equal((await saude(db)).falhasSeguidas, 1);
+});
+
+test('link do feed só vale se for da página de status da VTEX (nada de javascript: no popup nem na notificação)', async () => {
+  assert.equal(V.linkSeguro('https://status.vtex.com/incidents/01ABC'), 'https://status.vtex.com/incidents/01ABC');
+  ['javascript:alert(1)', 'https://evil.example/x', 'http://status.vtex.com/x', ''].forEach((u) => assert.equal(V.linkSeguro(u), '', u));
+  const db = novoDb();
+  const xml = rss(item({ id: 'L1', titulo: 'X', estado: 'Investigating' }).replace(/https:\/\/status\.vtex\.com\/\/incidents\/L1/, 'javascript:alert(1)'));
+  await V.processar({ db, itens: V.parseFeed(xml), agora: AGORA });
+  const c = Object.values((await db.ref('kanban/comunicados').get()).val())[0];
+  assert.doesNotMatch(c.corpo, /javascript:/); assert.match(c.corpo, /href="https:\/\/status\.vtex\.com\/"/);
+  assert.equal((await notifs(db, 'ana'))[0].link, 'https://status.vtex.com/');
+});
+
+test('um item que falha ao gravar não derruba os outros itens do mesmo feed', async () => {
+  const db = novoDb();
+  const orig = db.ref.bind(db);
+  db.ref = (p) => { if (/vtex_status\/BAD/.test(p)) throw new Error('boom'); return orig(p); };
+  const xml = rss(item({ id: 'BAD', titulo: 'Ruim', estado: 'Investigating' }), item({ id: 'GOOD', titulo: 'Bom', estado: 'Investigating' }));
+  const silencio = console.error; console.error = () => {};
+  let r; try { r = await V.processar({ db, itens: V.parseFeed(xml), agora: AGORA }); } finally { console.error = silencio; }
+  assert.deepEqual([r.criados, r.erros], [1, 1]);
+  assert.ok((await orig('kanban/comunicados/vtex_GOOD').get()).val());
+});
+
+test('executar: se o aviso aos ADMs falhar, o erro original e o contador continuam (e o aviso tenta de novo no tick seguinte)', async () => {
+  const db = novoDb({ vtex_saude: { falhasSeguidas: V.LIMITE_FALHAS - 1 } });
+  const orig = db.ref.bind(db);
+  let derruba = true;
+  db.ref = (p) => { if (derruba && /notificacoes/.test(p)) throw new Error('db caiu'); return orig(p); };
+  const silencio = console.error; console.error = () => {};
+  try {
+    await assert.rejects(() => V.executar({ db, fetchImpl: resp('', false, 503), agora: AGORA }), /HTTP 503/);
+    let s = (await orig('kanban/vtex_saude').get()).val();
+    assert.equal(s.falhasSeguidas, V.LIMITE_FALHAS); assert.equal(s.avisadoEm, undefined);
+    derruba = false;
+    await assert.rejects(() => V.executar({ db, fetchImpl: resp('', false, 503), agora: AGORA + 300000 }), /HTTP 503/);
+    s = (await orig('kanban/vtex_saude').get()).val();
+    assert.ok(s.avisadoEm); assert.equal((await notifs(db, 'adm')).length, 1);
+  } finally { console.error = silencio; }
+});

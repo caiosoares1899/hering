@@ -14,7 +14,9 @@
 //   • push/sino: UMA vez por incidente, na 1ª vez que ele fica "urgente" (manutenção só agendada, ainda no futuro, vira aviso comum — sem push — e
 //     só vira alerta quando começar);
 //   • item resolvido/concluído → Comunicado desativado (`fechado:true`);
-//   • se um ADM apagar ou desativar o Comunicado à mão, a função respeita (não recria nem reativa).
+//   • se um ADM apagar ou desativar o Comunicado à mão, a função respeita (não recria nem reativa);
+//   • item SEM "Status:" legível (formato do feed mudou) é ignorado — nunca vira alerta; feed inteiro sem nenhum Status legível conta como falha do monitor;
+//   • o link do item só vale se for de https://status.vtex.com/ (senão cai na home da página de status); um item que falha ao gravar não derruba os outros.
 // SAÚDE DO MONITOR: a cada tick grava `kanban/vtex_saude` = { ok, ultimoOkEm, abertos, incidentes:[{titulo,link,estado}], falhasSeguidas } (lido pelo selinho
 // do Oceano: "VTEX ok" · "incidente" · "monitor sem resposta"). Feed fora do ar / vazio / formato mudado por LIMITE_FALHAS ticks seguidos (≈ 1 h) →
 // notificação `vtex_monitor_falhou` (sino + push) pros ADMs, uma vez por queda — sem isso o selinho/avisos ficariam calados sem ninguém saber.
@@ -84,16 +86,17 @@ function parseFeed(xml) {
     const corpoTexto = limpaMojibake(htmlParaTexto((partes[0] || '').replace(/<b>\s*Status:[^<]*<\/b>/i, '')));
     const pub = Date.parse(tag(b, 'pubDate'));
     itens.push({
-      guid, titulo, link: tag(b, 'link').trim().replace(/([^:])\/\/+/g, '$1/'), publicadoEm: Number.isFinite(pub) ? pub : null,
+      guid, titulo, link: linkSeguro(tag(b, 'link').trim().replace(/([^:])\/\/+/g, '$1/')), publicadoEm: Number.isFinite(pub) ? pub : null,
       estado: sm ? limpaMojibake(sm[1]).trim() : '', corpoTexto, componentes, manutencao: /^maintenance\s*:/i.test(titulo),
     });
   }
   return itens;
 }
 
-// 'final' | 'agendado' | 'aberto'
+// 'final' | 'agendado' | 'aberto' | 'desconhecido' (sem "Status:" legível: o formato do feed mudou — nunca alarma em cima de um estado que não deu pra ler)
 function faseDe(item) {
   const est = String(item.estado || '').trim();
+  if (!est) return 'desconhecido';
   if (FINAIS.test(est)) return 'final';
   if (AGENDADOS.test(est)) return 'agendado';
   return 'aberto';
@@ -102,6 +105,9 @@ function faseDe(item) {
 const recente = (item, agora) => !item.publicadoEm || (agora - item.publicadoEm) <= IDADE_MAX_MS;
 
 // Chave segura pro Realtime Database a partir do guid (que é uma URL): só o id final do incidente (ULID), sem . # $ / [ ].
+// Só links da própria página de status da VTEX viram href/link de notificação (um `javascript:` ou site estranho no feed nunca chega no popup).
+const linkSeguro = (u) => (/^https:\/\/status\.vtex\.com\//i.test(String(u || '')) ? String(u) : '');
+
 const chaveDe = (guid) => String(guid || '').replace(/\/+$/, '').split('/').pop().replace(/[.#$/\[\]]/g, '_').slice(0, 60);
 
 // ── Comunicado / notificação ──
@@ -150,40 +156,46 @@ async function notificar({ db, item, comunicadoId, agora }) {
 // Processa o feed. `db` injetado (testes passam fake). Devolve contadores.
 async function processar({ db, itens, agora }) {
   const t = agora == null ? Date.now() : agora;
-  const out = { criados: 0, atualizados: 0, fechados: 0, notificados: 0, ignorados: 0, incidentes: [] };
+  const out = { criados: 0, atualizados: 0, fechados: 0, notificados: 0, ignorados: 0, erros: 0, incidentes: [] };
   for (const item of itens) {
     const fase = faseDe(item);
     const chave = chaveDe(item.guid);
-    const estRef = db.ref(`kanban/vtex_status/${chave}`);
-    const est = (await estRef.get()).val();
-    const comId = `vtex_${chave}`;
-    const comRef = db.ref(`kanban/comunicados/${comId}`);
-
-    if (fase === 'final') {
-      if (!est || est.fechado) { out.ignorados++; continue; }       // nunca vimos aberto (1ª execução / histórico) ou já fechado
-      const atual = (await comRef.get()).val();
-      if (atual && atual.ativo !== false) { await comRef.update({ ativo: false, expiraEm: new Date(t).toISOString() }); out.fechados++; }
-      await estRef.update({ fechado: true, estado: item.estado, fechadoEm: new Date(t).toISOString() });
-      continue;
-    }
-    if (!recente(item, t)) { out.ignorados++; continue; }
-
-    if (fase === 'aberto') out.incidentes.push({ titulo: item.titulo.slice(0, 120), link: item.link || SITE, estado: item.estado });
-    const atual = (await comRef.get()).val();
-    if (est && !atual) { out.ignorados++; continue; }                 // um ADM apagou o aviso: respeita
-    if (atual && atual.ativo === false && !est?.fechado) { out.ignorados++; continue; }   // ADM desativou à mão: respeita
-    const com = comunicadoDe(item, fase, t, atual);
-    await comRef.set(com);
-    atual ? out.atualizados++ : out.criados++;
-    const novoEst = { comunicadoId: comId, estado: item.estado, criadoEm: est?.criadoEm || new Date(t).toISOString(), atualizadoEm: new Date(t).toISOString() };
-    if (est?.notificadoEm) novoEst.notificadoEm = est.notificadoEm;
-    if (fase === 'aberto' && !est?.notificadoEm) {
-      out.notificados += await notificar({ db, item, comunicadoId: comId, agora: t });
-      novoEst.notificadoEm = new Date(t).toISOString();
-    }
-    await estRef.set(novoEst);
+    if (fase === 'desconhecido' || !chave) { out.ignorados++; continue; }   // chave vazia faria o set() cair no nó `vtex_status` inteiro
+    try { await processarItem({ db, item, fase, chave, t, out }); }
+    catch (e) { out.erros++; console.error('[vtexStatus] item', chave, 'falhou:', (e && e.message) || e); }   // um item ruim não derruba os outros
   }
   return out;
+}
+
+async function processarItem({ db, item, fase, chave, t, out }) {
+  const estRef = db.ref(`kanban/vtex_status/${chave}`);
+  const est = (await estRef.get()).val();
+  const comId = `vtex_${chave}`;
+  const comRef = db.ref(`kanban/comunicados/${comId}`);
+
+  if (fase === 'final') {
+    if (!est || est.fechado) { out.ignorados++; return; }       // nunca vimos aberto (1ª execução / histórico) ou já fechado
+    const atual = (await comRef.get()).val();
+    if (atual && atual.ativo !== false) { await comRef.update({ ativo: false, expiraEm: new Date(t).toISOString() }); out.fechados++; }
+    await estRef.update({ fechado: true, estado: item.estado, fechadoEm: new Date(t).toISOString() });
+    return;
+  }
+  if (!recente(item, t)) { out.ignorados++; return; }
+
+  if (fase === 'aberto') out.incidentes.push({ titulo: item.titulo.slice(0, 120), link: item.link || SITE, estado: item.estado });
+  const atual = (await comRef.get()).val();
+  if (est && !atual) { out.ignorados++; return; }                 // um ADM apagou o aviso: respeita
+  if (atual && atual.ativo === false && !est?.fechado) { out.ignorados++; return; }   // ADM desativou à mão: respeita
+  const com = comunicadoDe(item, fase, t, atual);
+  await comRef.set(com);
+  atual ? out.atualizados++ : out.criados++;
+  const novoEst = { comunicadoId: comId, estado: item.estado, criadoEm: est?.criadoEm || new Date(t).toISOString(), atualizadoEm: new Date(t).toISOString() };
+  if (est?.notificadoEm) novoEst.notificadoEm = est.notificadoEm;
+  if (fase === 'aberto' && !est?.notificadoEm) {
+    out.notificados += await notificar({ db, item, comunicadoId: comId, agora: t });
+    novoEst.notificadoEm = new Date(t).toISOString();
+  }
+  await estRef.set(novoEst);
 }
 
 async function buscarFeed(fetchImpl) {
@@ -199,7 +211,9 @@ async function rodar({ db, fetchImpl, agora, log }) {
   const xml = await buscarFeed(fetchImpl);
   const itens = parseFeed(xml);
   if (!itens.length) { say.warn('[vtexStatus] feed sem nenhum item — formato mudou? (nada alterado)'); return { itens: 0 }; }
+  if (!itens.some((i) => i.estado)) { say.warn('[vtexStatus] feed sem nenhum "Status:" legível — formato mudou? (nada alterado)'); return { itens: 0 }; }
   const r = await processar({ db, itens, agora });
+  if (r.erros && r.erros >= itens.length) throw new Error('todos os ' + itens.length + ' itens do feed falharam ao gravar');
   return Object.assign({ itens: itens.length }, r);
 }
 
@@ -228,14 +242,17 @@ async function executar({ db, fetchImpl, agora, log }) {
   try {
     const r = await rodar({ db, fetchImpl, agora: t, log });
     if (r.desligado) { await ref.set({ desligado: true, em: iso }); return r; }
-    if (!r.itens) throw new Error('feed sem nenhum item (formato mudou?)');
+    if (!r.itens) throw new Error('feed sem nenhum item legível (formato mudou?)');
     await ref.set({ ok: true, ultimoOkEm: iso, abertos: r.incidentes.length, incidentes: r.incidentes.slice(0, 3), falhasSeguidas: 0 });
     return r;
   } catch (e) {
     const prev = (await ref.get()).val() || {};
     const n = (prev.falhasSeguidas || 0) + 1;
     const upd = { ok: false, falhasSeguidas: n, ultimaTentativaEm: iso, erro: String((e && e.message) || e).slice(0, 200) };
-    if (n >= LIMITE_FALHAS && !prev.avisadoEm) { await alertarMonitor({ db, falhas: n, erro: upd.erro, agora: t }); upd.avisadoEm = iso; }
+    if (n >= LIMITE_FALHAS && !prev.avisadoEm) {
+      try { await alertarMonitor({ db, falhas: n, erro: upd.erro, agora: t }); upd.avisadoEm = iso; }
+      catch (e2) { console.error('[vtexStatus] não consegui avisar os ADMs (tenta de novo no próximo tick):', e2); }   // sem avisadoEm → repete; o contador e o erro original seguem
+    }
     await ref.update(upd);
     throw e;
   }
@@ -250,4 +267,4 @@ exports.vtexStatus = onSchedule(
 );
 
 // Exportados pra teste (lógica pura, sem mockar firebase-functions).
-exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF };
+exports._test = { executar, alertarMonitor, LIMITE_FALHAS, TIPO_MONITOR, chaveDe, linkSeguro, parseFeed, faseDe, recente, comunicadoDe, processar, rodar, limpaMojibake, FEED_URL, TIPO_NOTIF };
