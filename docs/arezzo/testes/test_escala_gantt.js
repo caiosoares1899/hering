@@ -39,11 +39,11 @@ const seed = () => ({ kanban: {
   const open = async (user, qs, opts) => {
     opts = opts || {};
     const ctx = await b.newContext({ viewport: { width: 1280, height: 900 } }); await fake.install(ctx, opts.seed || seed());
-    const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+    const p = await ctx.newPage(); fake.hookFiltros(p); const errs = []; p.on('pageerror', e => errs.push(e.message));
     await p.goto('http://localhost:8941/' + PAGE + (qs || '')); await p.waitForFunction(() => !!window.__authCb);
     await p.evaluate(x => window.__authCb(x), user); await p.waitForTimeout(600); return { ctx, p, errs };
   };
-  const txts = (p, sel) => p.$$eval(sel, a => a.map(x => x.textContent.trim().replace(/\s+/g, ' ')));
+  const txts = async (p, sel) => { if (/^#f-/.test(sel)) await p.abreFiltros(); return p.$$eval(sel, a => a.map(x => x.textContent.trim().replace(/\s+/g, ' '))); };
   const pressed = (p, g) => txts(p, '#' + g + ' [aria-pressed="true"]');
   const linhas = p => p.$$eval('tbody th.sqn .nm', a => a.map(e => e.textContent.trim().replace(/^\S+\s/, '')));
   const vis = (p, sel) => p.evaluate(s => { const e = document.querySelector(s); return !!e && !e.hidden && e.offsetParent !== null; }, sel);
@@ -54,17 +54,17 @@ const seed = () => ({ kanban: {
     t('subtimes da squad em foco viram chips (Designers · Redatores), nenhum marcado ("Todos")', (await txts(p, '#f-subs .fchip')).join('|') === 'Todos|Designers|Redatores' && (await pressed(p, 'f-subs')).join() === 'Todos', await txts(p, '#f-subs .fchip'));
     await p.click('#f-sqs [data-fsq="dev"]'); await p.waitForTimeout(150);
     t('clicar no chip de outra squad troca a squad (select acompanha) e os chips de subtime mudam (Backend)', await p.inputValue('#sel-squad') === 'dev' && (await pressed(p, 'f-sqs')).join() === '🧪 Dev' && (await txts(p, '#f-subs .fchip')).join('|') === 'Todos|Backend', [await p.inputValue('#sel-squad'), await txts(p, '#f-subs .fchip')]);
-    t('o limpar não aparece só por estar numa squad', !(await vis(p, '#f-limpar')), 0);
+    t('o limpar não aparece só por estar numa squad', !(await vis(p, '#f-badge')), 0);
     t('sem erro de JS (chips da squad)', !errs.length, errs); await ctx.close(); }
   { const { ctx, p } = await open(ANA, '?visao=global&semana=' + D(0));
     t('global: "Todas" marcado e as squads listadas', (await pressed(p, 'f-sqs')).join() === 'Todas' && (await linhas(p)).join() === 'Dados,Dev', [await pressed(p, 'f-sqs'), await linhas(p)]);
     await p.click('#f-sqs [data-fsq="dev"]'); await p.waitForTimeout(150);
-    t('global: marcar Dev mostra só a Dev; o chip "Todas" desmarca; limpar aparece; entra na URL (f_sq)', (await linhas(p)).join() === 'Dev' && (await pressed(p, 'f-sqs')).join() === '🧪 Dev' && await vis(p, '#f-limpar') && await p.evaluate(() => /f_sq=dev/.test(location.search)), [await linhas(p), await p.evaluate(() => location.search)]);
+    t('global: marcar Dev mostra só a Dev; o chip "Todas" desmarca; limpar aparece; entra na URL (f_sq)', (await linhas(p)).join() === 'Dev' && (await pressed(p, 'f-sqs')).join() === '🧪 Dev' && await vis(p, '#f-badge') && await p.evaluate(() => /f_sq=dev/.test(location.search)), [await linhas(p), await p.evaluate(() => location.search)]);
     t('subtimes só das squads em foco (Dev: Backend)', (await txts(p, '#f-subs .fchip')).join('|') === 'Todos|Backend', await txts(p, '#f-subs .fchip'));
     await p.click('#f-sqs [data-fsq="dados"]'); await p.waitForTimeout(150);
     t('global: várias squads ao mesmo tempo (multi-seleção)', (await linhas(p)).join() === 'Dados,Dev' && (await pressed(p, 'f-sqs')).length === 2, await pressed(p, 'f-sqs'));
     await p.click('#f-sqs [data-fsq=""]'); await p.waitForTimeout(150);
-    t('chip "Todas" volta tudo e tira f_sq da URL', (await pressed(p, 'f-sqs')).join() === 'Todas' && await p.evaluate(() => !/f_sq/.test(location.search)) && !(await vis(p, '#f-limpar')), await pressed(p, 'f-sqs'));
+    t('chip "Todas" volta tudo e tira f_sq da URL', (await pressed(p, 'f-sqs')).join() === 'Todas' && await p.evaluate(() => !/f_sq/.test(location.search)) && !(await vis(p, '#f-badge')), await pressed(p, 'f-sqs'));
     await p.click('#f-sqs [data-fsq="dev"]'); await p.click('#f-subs [data-fsub="Backend"]'); await p.waitForTimeout(150);
     await p.click('#f-limpar'); await p.waitForTimeout(150);
     t('✕ Limpar filtros zera squad E subtime', (await pressed(p, 'f-sqs')).join() === 'Todas' && (await pressed(p, 'f-subs')).join() === 'Todos', 0);

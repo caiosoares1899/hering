@@ -22,7 +22,7 @@ const seed = () => {
   const b = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox'] }); let ok = true;
   const t = (n, c, d) => { if (!c) ok = false; console.log((c ? '✅ ' : '❌ ') + n + (c ? '' : '  ← ' + JSON.stringify(d).slice(0, 300))); };
   const ctx = await b.newContext({ viewport: { width: 1280, height: 900 }, acceptDownloads: true }); await fake.install(ctx, seed());
-  const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+  const p = await ctx.newPage(); fake.hookFiltros(p); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto('http://localhost:8941/' + PAGE + '?squad=dados'); await p.waitForFunction(() => !!window.__authCb); await p.evaluate(x => window.__authCb(x), G('paulo', 'Paulo PO')); await p.waitForTimeout(900);
   const dims = () => p.evaluate(() => { const c = document.querySelector('#j-prev canvas'); return c ? { w: c.width, h: c.height, vazio: (() => { const x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, 60).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 150 && d[i + 1] > 150) n++; return n; })() } : null; });
   const shot = async nome => { if (process.env.SHOTS) { const d = await p.evaluate(() => document.querySelector('#j-prev canvas').toDataURL('image/jpeg', .92)); fs.writeFileSync('/tmp/escala_jpg_' + nome + '.jpg', Buffer.from(d.split(',')[1], 'base64')); } };

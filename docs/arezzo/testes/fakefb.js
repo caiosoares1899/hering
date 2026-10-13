@@ -44,3 +44,16 @@ export const onAuthStateChanged=(a,cb)=>{ window.__authCb=cb; Promise.resolve().
   await context.route('https://fonts.googleapis.com/**',r=>r.fulfill({status:200,contentType:'text/css',body:''}));
   if(seed) await context.addInitScript(s=>{ window.__store=JSON.parse(s); },JSON.stringify(seed));
 };
+
+// Escala: os chips de filtro vivem numa mini tela aberta por #b-filtros. Este gancho deixa o teste clicar nos chips (#f-sqs/#f-subs/#f-limpar/#f-fechar)
+// sem se preocupar em abrir a mini tela, e fecha a mini tela sozinho antes de qualquer outro clique na página.
+module.exports.hookFiltros=p=>{
+  const orig=p.click.bind(p);
+  p.click=async(sel,o)=>{
+    const dentro=/^#f-(sqs|subs|limpar|fechar)/.test(sel), aberta=!!(await p.$('#f-sqs'));
+    if(dentro&&!aberta){ await orig('#b-filtros'); await p.waitForSelector('#f-sqs'); }
+    else if(!dentro&&aberta&&sel!=='#b-filtros'){ await p.keyboard.press('Escape'); await p.waitForTimeout(50); }
+    return orig(sel,o);
+  };
+  p.abreFiltros=async()=>{ if(!(await p.$('#f-sqs'))){ await orig('#b-filtros'); await p.waitForSelector('#f-sqs'); } };
+};

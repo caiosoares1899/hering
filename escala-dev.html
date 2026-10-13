@@ -55,13 +55,16 @@
   .bf{ border-color:rgba(255,159,67,.45); color:#ffc48a; }
 
   /* faixa "hoje" */
-  .filtros{ margin-bottom:12px; padding:8px 12px; border-radius:12px; border:1px solid var(--card-b); background:rgba(255,255,255,.025); }
-  .filtros .flbl{ font-size:12px; color:var(--txt3); font-weight:600; }
-  .fgrp{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  /* filtros: um botão na barra + mini tela (chips só lá dentro) */
+  #b-filtros.on{ border-color:var(--accent); background:rgba(56,182,255,.14); }
+  .fbadge{ display:inline-block; min-width:18px; margin-left:6px; padding:0 5px; border-radius:999px; background:var(--accent); color:#04141f; font-size:11px; font-weight:800; line-height:18px; text-align:center; }
+  .fbadge[hidden]{ display:none; }
+  .md.mini{ max-width:430px; }
+  .fgrp{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px; }
   .fgrp[hidden]{ display:none; }
-  .fgrp .glbl{ font-size:11px; color:var(--txt3); letter-spacing:.05em; text-transform:uppercase; margin-right:2px; }
-  .fchip{ padding:5px 11px !important; font-size:12px !important; }
-  .fgrp + .fgrp{ padding-left:12px; border-left:1px solid var(--card-b); }
+  .fgrp-t{ margin:16px 0 0; font-size:11px; color:var(--txt3); letter-spacing:.06em; text-transform:uppercase; }
+  .fgrp-t[hidden]{ display:none; }
+  .fchip{ padding:6px 12px !important; font-size:12.5px !important; }
   /* visão Gantt do dia: uma linha por pessoa, barra do horário que ela está */
   .md.gantt{ max-width:900px; }
   .dmodo{ margin:8px 0 2px; }
@@ -78,6 +81,9 @@
   .gt-bar.trab{ background:var(--c-trab); } .gt-bar.plant{ background:var(--c-plant); }
   .gt-bar.semh{ background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.28) 0 6px,transparent 6px 12px); font-weight:600; }
   .gt-bar.aberta-d{ border-top-right-radius:0; border-bottom-right-radius:0; } .gt-bar.aberta-e{ border-top-left-radius:0; border-bottom-left-radius:0; }
+  .prow{ display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:end; margin-bottom:8px; }
+  .prow label{ margin-top:0; }
+  .gt-pausa{ position:absolute; top:50%; height:0; border-top:2px dashed rgba(255,255,255,.4); z-index:1; pointer-events:none; }
   .gt-agora{ position:absolute; top:-2px; bottom:-2px; width:2px; background:#ff5c7a; border-radius:2px; z-index:2; }
   .gt-agora::after{ content:'agora'; position:absolute; top:-14px; left:50%; transform:translateX(-50%); font-size:9.5px; color:#ff9aa0; }
   .gt-sq{ margin:12px 0 2px; font-size:11px; letter-spacing:.06em; text-transform:uppercase; color:var(--txt3); }
@@ -203,14 +209,9 @@
         <button type="button" class="btn bf" id="b-bf" title="Pula pra semana da Black Friday">🔥 Black Friday</button>
       </div>
       <span class="grow"></span>
+      <button type="button" class="btn" id="b-filtros" title="Filtrar por squad e subtime" hidden>🔎 Filtros<span class="fbadge" id="f-badge" hidden></span></button>
       <button type="button" class="btn" id="b-jpg" title="Baixar a escala em imagem JPG (dia, semana ou mês)">🖼️ Baixar JPG</button>
       <button type="button" class="btn primary" id="b-cad">➕ Cadastrar escala</button>
-    </div>
-    <div class="bar filtros" id="filtros">
-      <span class="flbl">🔎 Filtrar</span>
-      <div class="fgrp" id="f-sqs" role="group" aria-label="Filtrar por squad" hidden></div>
-      <div class="fgrp" id="f-subs" role="group" aria-label="Filtrar por subtime" hidden></div>
-      <button type="button" class="btn" id="f-limpar" hidden>✕ Limpar filtros</button>
     </div>
     <div id="erro" class="erro" hidden></div>
     <div id="hoje" class="hoje" hidden></div>
@@ -233,7 +234,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.8 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.9 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -340,8 +341,8 @@ function av(m, extra) {
 }
 function chipTipo(e) {
   const t = TIPOS[e.t]; if (!t) return '';
-  const hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '';
-  return '<span class="ct ' + e.t + '" title="' + esc(t.nome + (hora ? ' · ' + hora : '') + (e.n ? ' · ' + e.n : '')) + '">' + t.emoji + ' ' + (hora ? '<small>' + esc(hora) + '</small>' : esc(t.nome)) + (e.n ? ' 💬' : '') + '</span>';
+  const hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '', pa = pausaTxt(e);
+  return '<span class="ct ' + e.t + '" title="' + esc(t.nome + (hora ? ' · ' + hora : '') + (pa ? ' · pausa ' + pa : '') + (e.n ? ' · ' + e.n : '')) + '">' + t.emoji + ' ' + (hora ? '<small>' + esc(hora) + '</small>' : esc(t.nome)) + (pa ? ' ☕' : '') + (e.n ? ' 💬' : '') + '</span>';
 }
 function toast(msg) { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 3200); }
 
@@ -467,23 +468,47 @@ function renderAvisos() {
   box.innerHTML = '⚠️ Dias úteis sem ninguém escalado — ' + furos.join(' · ');
   box.hidden = false;
 }
-// Filtros em CHIPS. Squad: na visão global é multi-seleção (nenhuma = todas as squads); na visão da squad mostra qual está em foco e clicar em outra troca de squad.
+// Filtros: um botão "🔎 Filtros" na barra (com o número de filtros ativos) que abre uma mini tela com os chips — a escala não perde espaço.
+// Squad: na visão global é multi-seleção (nenhuma = todas as squads); na visão da squad mostra qual está em foco e clicar em outra troca de squad.
 // Subtime: multi-seleção, por NOME (subtimes de squads diferentes com o mesmo nome viram um chip só) — só os das squads em foco.
+function subtimesDoEscopo() {
+  const subs = new Map(); squadsEscopo().forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
+  return subs;
+}
+function nFiltros() { return filtro.subs.length + (visao === 'global' ? filtro.sqs.length : 0); }
 function renderFiltros() {
-  const escopo = squadsEscopo();
   filtro.sqs = filtro.sqs.filter(id => squads.some(x => x.id === id));
-  const subs = new Map(); escopo.forEach(x => ((cfgSquad[x.id] || {}).subtimes || []).forEach(st => { if (!subs.has(norm(st.name))) subs.set(norm(st.name), st.name); }));
+  const subs = subtimesDoEscopo();
   filtro.subs = filtro.subs.filter(n => subs.has(norm(n)));   // subtime que sumiu do escopo deixa de filtrar
-  const chip = (attr, val, txt, on, extra) => '<button type="button" class="chip fchip' + (extra || '') + '" ' + attr + '="' + esc(val) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + txt + '</button>';
+  const n = nFiltros(), b = $('b-filtros');
+  b.hidden = !(squads.length > 1 || subs.size);   // uma squad só e sem nenhum subtime: o botão some
+  $('f-badge').hidden = !n; $('f-badge').textContent = n; b.classList.toggle('on', n > 0);
+  const nomes = (visao === 'global' ? filtro.sqs.map(id => (squads.find(x => x.id === id) || {}).label) : []).concat(filtro.subs).filter(Boolean);
+  b.title = n ? 'Filtros ativos: ' + nomes.join(', ') : 'Filtrar por squad e subtime';
+  if ($('f-sqs')) pintarFiltros();   // a mini tela está aberta: acompanha o que mudou na página
+}
+function pintarFiltros() {
+  const subs = subtimesDoEscopo(), lista = [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+  const chip = (attr, val, txt, on) => '<button type="button" class="chip fchip" ' + attr + '="' + esc(val) + '" aria-pressed="' + (on ? 'true' : 'false') + '">' + txt + '</button>';
   const sqEl = $('f-sqs'), mostraSq = squads.length > 1;
-  sqEl.hidden = !mostraSq;
-  if (mostraSq) sqEl.innerHTML = '<span class="glbl">Squad</span>' + (visao === 'global' ? chip('data-fsq', '', 'Todas', !filtro.sqs.length) : '') +
+  sqEl.hidden = $('f-sqs-t').hidden = !mostraSq;
+  if (mostraSq) sqEl.innerHTML = (visao === 'global' ? chip('data-fsq', '', 'Todas', !filtro.sqs.length) : '') +
     squads.map(x => chip('data-fsq', x.id, esc(x.emoji + ' ' + x.label), visao === 'global' ? filtro.sqs.includes(x.id) : x.id === squad)).join('');
-  const sbEl = $('f-subs'), lista = [...subs.values()].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  sbEl.hidden = !lista.length;
-  if (lista.length) sbEl.innerHTML = '<span class="glbl">Subtime</span>' + chip('data-fsub', '', 'Todos', !filtro.subs.length) + lista.map(n => chip('data-fsub', n, esc(n), filtro.subs.some(f => norm(f) === norm(n)))).join('');
-  $('f-limpar').hidden = !(filtro.subs.length || (visao === 'global' && filtro.sqs.length));
-  $('filtros').hidden = !(mostraSq || lista.length);   // uma squad só e sem nenhum subtime: a barra inteira some
+  const sbEl = $('f-subs');
+  sbEl.hidden = $('f-subs-t').hidden = !lista.length;
+  if (lista.length) sbEl.innerHTML = chip('data-fsub', '', 'Todos', !filtro.subs.length) + lista.map(n => chip('data-fsub', n, esc(n), filtro.subs.some(f => norm(f) === norm(n)))).join('');
+  $('f-limpar').disabled = !nFiltros();
+  $('f-fechar').textContent = nFiltros() ? 'Pronto (' + nFiltros() + ')' : 'Pronto';
+}
+function abrirFiltros() {
+  abrirOv('<h2>🔎 Filtros</h2><p class="sub">' + (visao === 'global' ? 'Escolha quais squads e subtimes aparecem. Vale também pro JPG.' : 'Troque de squad ou escolha só um subtime. Vale também pro JPG.') + '</p>' +
+    '<div class="fgrp-t" id="f-sqs-t">Squad</div><div class="fgrp" id="f-sqs" role="group" aria-label="Filtrar por squad"></div>' +
+    '<div class="fgrp-t" id="f-subs-t">Subtime</div><div class="fgrp" id="f-subs" role="group" aria-label="Filtrar por subtime"></div>' +
+    '<div class="acoes"><button type="button" class="btn" id="f-limpar">✕ Limpar filtros</button><span class="grow"></span><button type="button" class="btn primary" id="f-fechar">Pronto</button></div>');
+  $('ov').firstElementChild.classList.add('mini');
+  pintarFiltros();
+  $('f-fechar').onclick = fecharOv;
+  $('f-limpar').onclick = () => { filtro = { subs: [], sqs: [] }; render(); };
 }
 function render() {
   if (!user) return;
@@ -516,12 +541,30 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('ov').h
 let diaModo = lsGet('escala_dia_modo') === 'gantt' ? 'gantt' : 'lista';
 const ordTipo = { plant: 0, trab: 1, folga: 2 };
 const hm = t => { const m = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(t || ''); return m ? (+m[1]) * 60 + (+m[2]) : null; };
+// Pausas no meio do dia: e.p = "12:00-13:00;15:00-15:15" (saída–volta, até MAX_PAUSAS, em ordem). Texto inválido é ignorado na leitura.
+const MAX_PAUSAS = 3;
+function pausasDe(e) {
+  return String((e && e.p) || '').split(';').map(x => x.split('-')).filter(a => a.length === 2 && hm(a[0]) != null && hm(a[1]) != null && hm(a[1]) > hm(a[0])).map(a => [a[0], a[1]]).slice(0, MAX_PAUSAS);
+}
+const pausaTxt = e => pausasDe(e).map(a => a[0] + '–' + a[1]).join(', ');
+// Erro (texto) se as pausas não cabem no expediente; '' se está tudo certo. ps = [[saída, volta], ...] em "HH:MM".
+function erroPausas(ps, i, f) {
+  let ult = i || '';
+  for (const [a, b] of ps) {
+    if (hm(a) == null || hm(b) == null) return 'Preencha a saída e a volta de cada pausa (ou remova a pausa em branco).';
+    if (b <= a) return 'Em cada pausa, a volta precisa ser depois da saída.';
+    if (ult && a < ult) return i && a < i ? 'A pausa começa antes da entrada.' : 'As pausas precisam estar em ordem e sem se sobrepor.';
+    ult = b;
+  }
+  if (ps.length && f && ult > f) return 'A pausa termina depois da saída.';
+  return '';
+}
 function listaDia(grupos, multi) {
   let h = '';
   grupos.forEach(g => {
     h += '<ul class="lista-dia">' + (multi ? '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(g.s.emoji + ' ' + g.s.label) + '</li>' : '');
     g.itens.forEach(x => {
-      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
+      h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (pausaTxt(x.e) ? ' · ☕ pausa ' + esc(pausaTxt(x.e)) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
     });
     h += '</ul>';
   });
@@ -529,41 +572,64 @@ function listaDia(grupos, multi) {
 }
 // Visão Gantt: uma linha por pessoa, com a barra do período em que ela está (entrada–saída). Sem horário cadastrado = barra listrada "dia todo";
 // só entrada ou só saída = barra aberta. O eixo se ajusta aos horários do dia. Plantão em laranja, escalado em verde; folga vai numa linha à parte.
-function ganttDia(data, grupos, multi) {
+// Modelo do Gantt (usado na tela e no JPG): eixo ajustado aos horários, uma linha por pessoa com os trechos em que ela está
+// (a pausa abre um buraco no meio da barra), cobertura por hora e quem está de folga.
+const hhmm = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+function ganttModelo(grupos) {
   const folgas = []; let mn = Infinity, mx = -Infinity;
   grupos.forEach(g => g.itens.forEach(x => {
-    if (x.e.t === 'folga') { folgas.push(x.m); return; }
+    if (x.e.t === 'folga') { if (!folgas.some(m => m.uid === x.m.uid)) folgas.push(x.m); return; }
     const a = hm(x.e.i), b = hm(x.e.f);
     if (a != null) { mn = Math.min(mn, a); mx = Math.max(mx, b != null ? b : a + 60); } else if (b != null) { mn = Math.min(mn, b - 60); mx = Math.max(mx, b); }
+    pausasDe(x.e).forEach(([pa, pb]) => { mn = Math.min(mn, hm(pa)); mx = Math.max(mx, hm(pb)); });
   }));
   let ini = 8 * 60, fim = 18 * 60;
   if (isFinite(mn)) { ini = Math.max(0, Math.floor((mn - 30) / 60) * 60); fim = Math.min(1440, Math.ceil((mx + 30) / 60) * 60); if (fim - ini < 360) fim = Math.min(1440, ini + 360); if (fim - ini < 360) ini = Math.max(0, fim - 360); }
-  const span = fim - ini, pc = m => Math.max(0, Math.min(100, (m - ini) / span * 100)), N = span / 60, hh = m => String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
-  const grade = 'background-image:linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:calc(100% / ' + N + ') 100%;';
-  const passo = span <= 600 ? 60 : 120; let ticks = '';
-  for (let t = ini; t <= fim; t += passo) ticks += '<span style="left:' + pc(t) + '%">' + String(Math.floor(t / 60)).padStart(2, '0') + 'h</span>';
-  const agoraMin = (() => { if (data !== hojeISO()) return null; const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); return m >= ini && m <= fim ? m : null; })();
-  const agora = agoraMin == null ? '' : '<i class="gt-agora" style="left:' + pc(agoraMin) + '%" title="Agora"></i>';
-  const cob = new Array(N).fill(0); let h = '<div class="gt"><div class="gt-in"><div class="gt-row"><span></span><div class="gt-ax">' + ticks + '</div></div>';
+  const span = fim - ini, N = span / 60, passo = span <= 600 ? 60 : 120, ticks = [];
+  for (let t = ini; t <= fim; t += passo) ticks.push(t);
+  const cob = new Array(N).fill(0), blocos = [];
   grupos.forEach(g => {
     const linhas = g.itens.filter(x => x.e.t !== 'folga').map(x => ({ x, a: hm(x.e.i), b: hm(x.e.f) }))
-      .sort((p, q) => (ordTipo[p.x.e.t] - ordTipo[q.x.e.t]) || ((p.a == null ? -1 : p.a) - (q.a == null ? -1 : q.a)) || p.x.m.nome.localeCompare(q.x.m.nome, 'pt-BR'));
-    if (!linhas.length) return;
+      .sort((p, q) => (ordTipo[p.x.e.t] - ordTipo[q.x.e.t]) || ((p.a == null ? -1 : p.a) - (q.a == null ? -1 : q.a)) || p.x.m.nome.localeCompare(q.x.m.nome, 'pt-BR'))
+      .map(({ x, a, b }) => {
+        const de = a != null ? a : ini, ate = b != null ? b : fim, semh = a == null && b == null, pausas = pausasDe(x.e).map(([pa, pb]) => [hm(pa), hm(pb)]);
+        const segs = []; let cur = de;
+        pausas.forEach(([pa, pb]) => { if (pb <= cur || pa >= ate) return; if (pa > cur) segs.push([cur, Math.min(pa, ate)]); cur = Math.max(cur, pb); });
+        if (cur < ate) segs.push([cur, ate]);
+        for (let k = 0; k < N; k++) { const s0 = ini + k * 60, s1 = s0 + 60; if (segs.some(([sa, sb]) => sa < s1 && sb > s0)) cob[k]++; }
+        const rotulo = semh ? 'dia todo' : a == null ? '→ ' + x.e.f : b == null ? x.e.i + ' →' : x.e.i + '–' + x.e.f;
+        return { m: x.m, e: x.e, segs, pausas, semh, rotulo, abertaE: a == null && b != null, abertaD: b == null && a != null };
+      });
+    if (linhas.length) blocos.push({ g, linhas });
+  });
+  return { ini, fim, span, N, ticks, cob, blocos, folgas };
+}
+function ganttDia(data, grupos, multi) {
+  const M = ganttModelo(grupos), { ini, span, N } = M, pc = m => Math.max(0, Math.min(100, (m - ini) / span * 100));
+  const grade = 'background-image:linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:calc(100% / ' + N + ') 100%;';
+  const ticks = M.ticks.map(t => '<span style="left:' + pc(t) + '%">' + String(Math.floor(t / 60)).padStart(2, '0') + 'h</span>').join('');
+  const agoraMin = (() => { if (data !== hojeISO()) return null; const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); return m >= ini && m <= M.fim ? m : null; })();
+  const agora = agoraMin == null ? '' : '<i class="gt-agora" style="left:' + pc(agoraMin) + '%" title="Agora"></i>';
+  let h = '<div class="gt"><div class="gt-in"><div class="gt-row"><span></span><div class="gt-ax">' + ticks + '</div></div>';
+  M.blocos.forEach(({ g, linhas }) => {
     if (multi) h += '<div class="gt-sq">' + esc(g.s.emoji + ' ' + g.s.label) + '</div>';
-    linhas.forEach(({ x, a, b }) => {
-      const t = TIPOS[x.e.t], de = a != null ? a : ini, ate = b != null ? b : (a != null ? fim : fim);
-      let cls = x.e.t, txt = '', l = 0, w = 100;
-      if (a == null && b == null) { cls += ' semh'; txt = 'dia todo'; }
-      else { l = pc(de); w = Math.max(1.5, pc(ate) - l); if (a == null) { cls += ' aberta-e'; txt = '→ ' + x.e.f; } else if (b == null) { cls += ' aberta-d'; txt = x.e.i + ' →'; } else txt = x.e.i + '–' + x.e.f; }
-      for (let k = 0; k < N; k++) { const s0 = ini + k * 60, s1 = s0 + 60; if ((a == null && b == null) || (de < s1 && ate > s0)) cob[k]++; }
-      const tip = x.m.nome + ' · ' + t.emoji + ' ' + t.nome + (x.e.i || x.e.f ? ' · ' + (x.e.i || '…') + '–' + (x.e.f || '…') : ' · dia todo') + (x.e.n ? ' · ' + x.e.n : '');
-      h += '<div class="gt-row"><div class="who2">' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<b>' + esc(x.m.nome.split(' ')[0]) + '</b></div><div class="gt-tr" style="' + grade + '">' + agora +
-        '<div class="gt-bar ' + cls + '" style="left:' + l + '%;width:' + w + '%" title="' + esc(tip) + '">' + (w > 9 ? esc(txt) : '') + '</div></div></div>';
+    linhas.forEach(l => {
+      const t = TIPOS[l.e.t], pa = pausaTxt(l.e);
+      const tip = l.m.nome + ' · ' + t.emoji + ' ' + t.nome + (l.e.i || l.e.f ? ' · ' + (l.e.i || '…') + '–' + (l.e.f || '…') : ' · dia todo') + (pa ? ' · pausa ' + pa : '') + (l.e.n ? ' · ' + l.e.n : '');
+      let barras = '', maior = 0;
+      l.segs.forEach(([sa, sb], k) => { if (sb - sa > l.segs[maior][1] - l.segs[maior][0]) maior = k; });
+      l.segs.forEach(([sa, sb], k) => {
+        const left = pc(sa), w = Math.max(1.5, pc(sb) - left);
+        let cls = l.e.t + (l.semh ? ' semh' : '') + (k === 0 && l.abertaE ? ' aberta-e' : '') + (k === l.segs.length - 1 && l.abertaD ? ' aberta-d' : '');
+        barras += '<div class="gt-bar ' + cls + '" style="left:' + left + '%;width:' + w + '%" title="' + esc(tip) + '">' + (k === maior && w > 9 ? esc(l.rotulo) : '') + '</div>';
+      });
+      l.pausas.forEach(([x1, x2]) => { const left = pc(x1), w = pc(x2) - left; if (w > 0) barras += '<i class="gt-pausa" style="left:' + left + '%;width:' + w + '%" title="' + esc('Pausa ' + hhmm(x1) + '–' + hhmm(x2)) + '"></i>'; });
+      h += '<div class="gt-row"><div class="who2">' + av(l.m, l.e.t === 'plant' ? 'plant' : '') + '<b>' + esc(l.m.nome.split(' ')[0]) + '</b></div><div class="gt-tr" style="' + grade + '">' + agora + barras + '</div></div>';
     });
   });
-  const max = Math.max.apply(null, cob.concat(0));
-  h += '<div class="gt-row gt-cob"><div class="who2"><b style="color:var(--txt3);font-weight:600">Cobertura</b></div><div class="gt-tr">' + cob.map((n, k) => '<span class="c' + (n === 0 ? ' z' : (n === max ? ' max' : '')) + '" title="' + hh(ini + k * 60) + ' – ' + hh(ini + k * 60 + 60) + ': ' + n + ' pessoa' + (n === 1 ? '' : 's') + '">' + (n || '·') + '</span>').join('') + '</div></div></div></div>';
-  if (folgas.length) h += '<div class="gt-folga">🏖️ Folga: ' + esc(folgas.map(m => m.nome.split(' ')[0]).join(', ')) + '</div>';
+  const max = Math.max.apply(null, M.cob.concat(0));
+  h += '<div class="gt-row gt-cob"><div class="who2"><b style="color:var(--txt3);font-weight:600">Cobertura</b></div><div class="gt-tr">' + M.cob.map((n, k) => '<span class="c' + (n === 0 ? ' z' : (n === max ? ' max' : '')) + '" title="' + hhmm(ini + k * 60) + ' – ' + hhmm(ini + k * 60 + 60) + ': ' + n + ' pessoa' + (n === 1 ? '' : 's') + '">' + (n || '·') + '</span>').join('') + '</div></div></div></div>';
+  if (M.folgas.length) h += '<div class="gt-folga">🏖️ Folga: ' + esc(M.folgas.map(m => m.nome.split(' ')[0]).join(', ')) + '</div>';
   return h;
 }
 function abrirDia(data, sqUnico, modo) {
@@ -577,11 +643,11 @@ function abrirDia(data, sqUnico, modo) {
   let h = '<h2>' + DIAS[diaSem(d)] + ', ' + curto(d) + '</h2><p class="sub">Quem está no dia' + (multi ? ' — todas as squads' : '') + (diaModo === 'gantt' ? '. Cada barra é o período em que a pessoa está.' : '. Plantão primeiro.') + '</p>';
   h += '<div class="seg dmodo" id="d-modo" role="tablist"><button type="button" data-dm="lista" role="tab" aria-selected="' + (diaModo === 'lista') + '">📋 Lista</button><button type="button" data-dm="gantt" role="tab" aria-selected="' + (diaModo === 'gantt') + '">📊 Visão Gantt</button></div>';
   h += !grupos.length ? '<div class="state" style="padding:24px 0">Ninguém com escala cadastrada neste dia.</div>' : (diaModo === 'gantt' ? ganttDia(data, grupos, multi) : listaDia(grupos, multi));
-  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">🖼️ JPG do dia</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
+  h += '<div class="acoes">' + (menc.length ? '<button type="button" class="btn" id="d-menc">📋 Copiar menções (' + menc.length + ')</button>' : '') + '<button type="button" class="btn" id="d-jpg">' + (diaModo === 'gantt' ? '🖼️ JPG do Gantt' : '🖼️ JPG do dia') + '</button><span class="grow"></span><button type="button" class="btn" id="d-fechar">Fechar</button></div>';
   abrirOv(h);
   $('ov').querySelector('.md').classList.toggle('gantt', diaModo === 'gantt');
   $('d-fechar').onclick = fecharOv;
-  $('d-jpg').onclick = () => abrirJpg('dia', data);
+  $('d-jpg').onclick = () => abrirJpg('dia', data, diaModo);
   $('d-modo').onclick = e => { const b = e.target.closest('[data-dm]'); if (b && b.dataset.dm !== diaModo) abrirDia(data, sqUnico, b.dataset.dm); };
   if ($('d-menc')) $('d-menc').onclick = async () => {
     const txt = menc.join(' ');
@@ -590,7 +656,7 @@ function abrirDia(data, sqUnico, modo) {
 }
 
 // Cadastro (e edição de 1 dia): pessoa + squad + período + dias da semana + tipo + horário + observação.
-let cad = null;   // { sq, uid, de, ate, dsem:Set, t, i, f, n }
+let cad = null;   // { sq, uid, de, ate, dsem:Set, t, i, f, n, p:[[saída,volta],…] }
 function abrirCadastro(pre) {
   const editaveis = squadsEditaveis(); if (!editaveis.length) return;
   pre = pre || {};
@@ -603,7 +669,7 @@ function abrirCadastro(pre) {
     sq, uid: pre.uid || user.uid,
     de: unico ? pre.data : iso(semana), ate: unico ? pre.data : iso(dFim),
     dsem: unico ? new Set([diaSem(parseISO(pre.data))]) : new Set([0, 1, 2, 3, 4]),
-    t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '',
+    t: ex ? ex.t : 'trab', i: ex ? ex.i || '' : '', f: ex ? ex.f || '' : '', n: ex ? ex.n || '' : '', p: ex ? pausasDe(ex) : [],
   };
   desenharCadastro(editaveis);
 }
@@ -621,17 +687,20 @@ function desenharCadastro(editaveis) {
     '<div class="chips" style="margin-top:8px"><button type="button" class="chip" data-atalho="sem">Esta semana</button><button type="button" class="chip" data-atalho="prox">Próxima semana</button><button type="button" class="chip" data-atalho="bf">🔥 Semana da Black Friday</button></div>' +
     '<div class="lb">Dias da semana</div><div class="chips dsem" id="c-dsem">' + DIAS.map((n, i) => '<button type="button" class="chip" data-ds="' + i + '" aria-pressed="' + cad.dsem.has(i) + '">' + n + '</button>').join('') + '</div>' +
     '<div class="lb">Tipo</div><div class="chips" id="c-tipo">' + Object.keys(TIPOS).map(k => '<button type="button" class="chip t-' + k + '" data-t="' + k + '" aria-pressed="' + (cad.t === k) + '">' + TIPOS[k].emoji + ' ' + TIPOS[k].nome + '</button>').join('') + '</div>' +
-    '<div id="c-hora"' + (cad.t === 'folga' ? ' hidden' : '') + '><div class="row2"><div><label for="c-i">Entrada <span class="opt">(opcional)</span></label><input type="time" id="c-i" value="' + esc(cad.i) + '"></div><div><label for="c-f">Saída <span class="opt">(opcional)</span></label><input type="time" id="c-f" value="' + esc(cad.f) + '"></div></div></div>' +
+    '<div id="c-hora"' + (cad.t === 'folga' ? ' hidden' : '') + '><div class="row2"><div><label for="c-i">Entrada <span class="opt">(opcional)</span></label><input type="time" id="c-i" value="' + esc(cad.i) + '"></div><div><label for="c-f">Saída <span class="opt">(opcional)</span></label><input type="time" id="c-f" value="' + esc(cad.f) + '"></div></div>' +
+      '<div class="lb">☕ Pausas no dia <span class="opt">(opcional)</span></div><div id="c-pausas"></div><button type="button" class="btn" id="c-addp">☕ Adicionar pausa (saída e volta)</button><p class="sub" style="margin:6px 0 0">Se a pessoa sai e volta no meio do expediente, a barra da Visão Gantt fica com um intervalo.</p></div>' +
     '<label for="c-n">Observação <span class="opt">(opcional)</span></label><input type="text" id="c-n" maxlength="140" value="' + esc(cad.n) + '" placeholder="Ex.: sobreaviso até 23h, lançamento da campanha…">' +
     '<div class="prev" id="c-prev"></div><div class="msg err" id="c-msg" hidden></div>' +
     '<div class="acoes"><button type="button" class="btn primary" id="c-salvar">Cadastrar</button><button type="button" class="btn danger" id="c-limpar" title="Apaga a escala já cadastrada nesses dias">🗑 Limpar período</button><span class="grow"></span><button type="button" class="btn" id="c-cancelar">Cancelar</button></div>';
   abrirOv(h);
-  atualizarPrev();
+  atualizarPrev(); pintarPausas();
   const o = $('ov');
   $('c-sq').onchange = e => { lerForm(); cad.sq = e.target.value; if (!souGestor(cad.sq)) cad.uid = user.uid; else if (!membrosDoSquad(cad.sq).find(m => m.uid === cad.uid)) cad.uid = (membrosDoSquad(cad.sq)[0] || {}).uid || user.uid; desenharCadastro(editaveis); };
   if (gestor) $('c-uid').onchange = e => { cad.uid = e.target.value; atualizarPrev(); };
   ['c-de', 'c-ate'].forEach(id => { $(id).oninput = () => { lerForm(); atualizarPrev(); }; });
   ['c-i', 'c-f', 'c-n'].forEach(id => { $(id).oninput = () => { lerForm(); }; });
+  $('c-addp').onclick = () => { lerForm(); if (cad.p.length < MAX_PAUSAS) cad.p.push(['', '']); pintarPausas(); };
+  $('c-pausas').onclick = e => { const x = e.target.closest('[data-pdel]'); if (!x) return; lerForm(); cad.p.splice(Number(x.dataset.pdel), 1); pintarPausas(); };
   o.querySelectorAll('[data-atalho]').forEach(b => b.onclick = () => {
     const a = b.dataset.atalho; let ini;
     if (a === 'sem') ini = segunda(new Date()); else if (a === 'prox') ini = addDias(segunda(new Date()), 7); else ini = segunda(proximaBF());
@@ -645,7 +714,15 @@ function desenharCadastro(editaveis) {
   $('c-salvar').onclick = () => confirmarCadastro(false);
   $('c-limpar').onclick = () => confirmarCadastro(true);
 }
-function lerForm() { cad.de = $('c-de').value; cad.ate = $('c-ate').value; cad.i = $('c-i') ? $('c-i').value : ''; cad.f = $('c-f') ? $('c-f').value : ''; cad.n = $('c-n') ? $('c-n').value.trim() : ''; }
+function lerForm() {
+  cad.de = $('c-de').value; cad.ate = $('c-ate').value; cad.i = $('c-i') ? $('c-i').value : ''; cad.f = $('c-f') ? $('c-f').value : ''; cad.n = $('c-n') ? $('c-n').value.trim() : '';
+  if ($('c-pausas')) cad.p = [...$('c-pausas').querySelectorAll('.prow')].map(r => [r.querySelector('[data-pa]').value, r.querySelector('[data-pb]').value]);
+}
+function pintarPausas() {
+  const el = $('c-pausas'); if (!el) return;
+  el.innerHTML = cad.p.map((r, k) => '<div class="prow"><div><label>Sai às</label><input type="time" data-pa value="' + esc(r[0]) + '"></div><div><label>Volta às</label><input type="time" data-pb value="' + esc(r[1]) + '"></div><button type="button" class="btn" data-pdel="' + k + '" aria-label="Remover pausa" title="Remover pausa">✕</button></div>').join('');
+  $('c-addp').hidden = cad.p.length >= MAX_PAUSAS;
+}
 // Datas que o cadastro vai atingir (período ∩ dias da semana). Devolve também o motivo se o período é inválido.
 function datasDoCadastro() {
   const a = parseISO(cad.de), b = parseISO(cad.ate);
@@ -671,10 +748,12 @@ async function confirmarCadastro(limpar) {
   if (!membrosDoSquad(cad.sq).some(m => m.uid === cad.uid)) { msg.textContent = 'Essa pessoa não está na lista da squad (convidados não entram na escala).'; msg.hidden = false; return; }
   if (!podeEditar(cad.sq, cad.uid)) { msg.textContent = 'Você não pode editar a escala desta pessoa nesta squad.'; msg.hidden = false; return; }
   if (cad.t !== 'folga' && cad.i && cad.f && cad.f <= cad.i) { msg.textContent = 'A saída precisa ser depois da entrada.'; msg.hidden = false; return; }
+  const ps = cad.t === 'folga' ? [] : cad.p.filter(r => r[0] || r[1]);
+  if (!limpar && ps.length) { const ep = erroPausas(ps, cad.i, cad.f); if (ep) { msg.textContent = ep; msg.hidden = false; return; } }
   if (limpar && !confirm('Apagar a escala de ' + r.datas.length + ' dia' + (r.datas.length > 1 ? 's' : '') + '?')) return;
   const upd = {};
   const base = { t: cad.t, por: user.uid, ts: Date.now() };
-  if (cad.t !== 'folga') { if (cad.i) base.i = cad.i; if (cad.f) base.f = cad.f; }
+  if (cad.t !== 'folga') { if (cad.i) base.i = cad.i; if (cad.f) base.f = cad.f; if (ps.length) base.p = ps.map(r => r[0] + '-' + r[1]).join(';'); }
   if (cad.n) base.n = cad.n.slice(0, 140);
   r.datas.forEach(d => { upd[d + '/' + cad.sq + '/' + cad.uid] = limpar ? null : Object.assign({}, base); });
   gravando = true; $('c-salvar').disabled = true; $('c-limpar').disabled = true; $('c-salvar').textContent = 'Gravando…';
@@ -779,7 +858,7 @@ function jMoldura(x, W, H, esc, per) {
   jT(x, 'Maré Digital · gerada em ' + pad(gerado.getDate()) + '/' + pad(gerado.getMonth() + 1) + '/' + gerado.getFullYear() + ' ' + pad(gerado.getHours()) + ':' + pad(gerado.getMinutes()), W - 28, H - 29, { s: 11.5, c: JC.txt3, a: 'right' });
 }
 function jChip(x, e, px, py, w, h) {
-  const t = JC[e.t] || JC.folga, hora = e.i ? e.i + (e.f ? '–' + e.f : '') : '', rot = (TIPOS[e.t] || {}).nome || '';
+  const t = JC[e.t] || JC.folga, hora = e.i ? e.i + (e.f ? '–' + e.f : '') + (pausasDe(e).length ? ' ☕' : '') : '', rot = (TIPOS[e.t] || {}).nome || '';
   jRR(x, px, py, w, h, 9, t.bg, t.c);
   if (hora) { jT(x, rot, px + w / 2, py + h / 2 - 8, { s: 12.5, w: 700, c: t.c, a: 'center', max: w - 10 }); jT(x, hora, px + w / 2, py + h / 2 + 9, { s: 12, c: JC.txt, a: 'center', max: w - 10 }); }
   else jT(x, rot, px + w / 2, py + h / 2, { s: 13, w: 700, c: t.c, a: 'center', max: w - 10 });
@@ -860,7 +939,7 @@ function jDia(per, dd, esc) {
     b.itens.forEach((z, r) => {
       jRR(x, L, y + 2, W - L * 2, rh - 4, 10, r % 2 ? 'rgba(255,255,255,.025)' : 'rgba(255,255,255,.05)');
       jT(x, z.m.nome, L + 14, y + rh / 2, { s: 14.5, w: 700, max: 250 });
-      jT(x, (z.m.init ? '@' + z.m.init : '') + (z.e.n ? '  ·  ' + z.e.n : ''), L + 280, y + rh / 2, { s: 12, c: JC.txt2, max: 330 });
+      jT(x, (z.m.init ? '@' + z.m.init : '') + (pausaTxt(z.e) ? '  ·  ☕ pausa ' + pausaTxt(z.e) : '') + (z.e.n ? '  ·  ' + z.e.n : ''), L + 280, y + rh / 2, { s: 12, c: JC.txt2, max: 330 });
       const hora = z.e.i ? z.e.i + (z.e.f ? '–' + z.e.f : '') : '', t = JC[z.e.t] || JC.folga;
       jRR(x, W - L - 170, y + 7, 156, rh - 14, 8, t.bg, t.c);
       jT(x, ((TIPOS[z.e.t] || {}).nome || '') + (hora ? ' · ' + hora : ''), W - L - 92, y + rh / 2, { s: 12.5, w: 700, c: t.c, a: 'center', max: 146 });
@@ -868,6 +947,47 @@ function jDia(per, dd, esc) {
     });
     y += 10;
   });
+  return c;
+}
+
+// 📊 Gantt do dia em imagem: mesmo modelo da tela (ganttModelo) — barra por pessoa, pausa como intervalo tracejado, cobertura por hora e folga.
+function jGantt(per, dd, esc) {
+  const dt = iso(per.a), W = 1000, L = 28, nW = 170, bx = L + nW + 12, bw = W - bx - L, topo = 84, ah = 26, rh = 36, sh = 30, multi = esc.lista.length > 1;
+  const grupos = esc.lista.map(s => ({ s, itens: membrosF(s.id).map(m => ({ m, e: jEnt(dd, dt, s.id, m.uid) })).filter(z => z.e) })).filter(g => g.itens.length);
+  if (!grupos.length) { const { c, x } = jNova(860, 240); jMoldura(x, 860, 240, esc, per); jT(x, 'Ninguém com escala cadastrada neste dia.', 430, 130, { s: 14.5, c: JC.txt3, a: 'center' }); return c; }
+  const M = ganttModelo(grupos), nl = M.blocos.reduce((a, b) => a + b.linhas.length, 0), ns = multi ? M.blocos.length : 0;
+  const todos = M.blocos.reduce((a, b) => a.concat(b.linhas.map(l => l.m.nome)), []);
+  const H = topo + ah + nl * rh + ns * sh + 12 + 34 + (M.folgas.length ? 34 : 0) + 52;
+  const { c, x } = jNova(W, H); jMoldura(x, W, H, esc, per);
+  x.save(); x.setLineDash([4, 3]); x.strokeStyle = 'rgba(255,255,255,.6)'; x.lineWidth = 2; x.beginPath(); x.moveTo(280, H - 29); x.lineTo(306, H - 29); x.stroke(); x.restore(); jT(x, 'Pausa', 314, H - 29, { s: 12, c: JC.txt2 });
+  const px = m => bx + (m - M.ini) / M.span * bw, y0 = topo + ah, yFim = H - 52 - (M.folgas.length ? 34 : 0) - 34 - 12;
+  // grade e horas
+  x.strokeStyle = 'rgba(255,255,255,.07)'; x.lineWidth = 1;
+  for (let k = 0; k <= M.N; k++) { const gx = Math.round(bx + k * bw / M.N) + .5; x.beginPath(); x.moveTo(gx, y0 - 4); x.lineTo(gx, yFim); x.stroke(); }
+  M.ticks.forEach(t => jT(x, String(Math.floor(t / 60)).padStart(2, '0') + 'h', px(t), topo + ah / 2, { s: 11.5, c: JC.txt3, a: 'center' }));
+  let y = y0, r = 0;
+  M.blocos.forEach(({ g, linhas }) => {
+    if (multi) { jT(x, g.s.label, L, y + sh / 2 + 4, { s: 14, w: 700, c: JC.accent }); y += sh; }
+    linhas.forEach(l => {
+      const t = JC[l.e.t] || JC.trab;
+      jRR(x, L, y + 2, W - L * 2, rh - 4, 9, r++ % 2 ? 'rgba(255,255,255,.02)' : 'rgba(255,255,255,.045)');
+      jT(x, jNome(l.m.nome, todos), L + 10, y + rh / 2 - 6, { s: 13.5, w: 700, max: nW - 16 });
+      jT(x, l.m.init ? '@' + l.m.init : '', L + 10, y + rh / 2 + 9, { s: 10.5, c: JC.txt3, max: nW - 16 });
+      let maior = 0; l.segs.forEach((sg, k) => { if (sg[1] - sg[0] > l.segs[maior][1] - l.segs[maior][0]) maior = k; });
+      l.segs.forEach(([sa, sb], k) => {
+        const bx1 = px(sa), w = Math.max(5, px(sb) - bx1);
+        jRR(x, bx1, y + 7, w, rh - 14, 6, l.semh ? t.bg : t.c, l.semh ? t.c : null);
+        if (k === maior && w > 64) jT(x, l.rotulo, bx1 + w / 2, y + rh / 2, { s: 11.5, w: 700, c: l.semh ? t.c : '#04141f', a: 'center', max: w - 8 });
+      });
+      l.pausas.forEach(([pa, pb]) => { x.save(); x.setLineDash([4, 3]); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 2; x.beginPath(); x.moveTo(px(pa), y + rh / 2); x.lineTo(px(pb), y + rh / 2); x.stroke(); x.restore(); });
+      y += rh;
+    });
+  });
+  // cobertura por hora
+  const mx = Math.max.apply(null, M.cob.concat(0)), yc = y + 12;
+  jT(x, 'Cobertura', L + 10, yc + 17, { s: 13, w: 700, c: JC.txt2 });
+  M.cob.forEach((n, k) => jT(x, n ? String(n) : '·', bx + (k + .5) * bw / M.N, yc + 17, { s: 13, w: n === mx && n ? 700 : 500, c: n === 0 ? JC.txt3 : (n === mx ? JC.trab.c : JC.txt2), a: 'center' }));
+  if (M.folgas.length) jT(x, '🏖️ Folga: ' + M.folgas.map(m => m.nome.split(' ')[0]).join(', '), L + 10, yc + 34 + 12, { s: 12.5, c: JC.txt3, max: W - L * 2 - 20 });
   return c;
 }
 
@@ -921,7 +1041,7 @@ function jVazio(per, esc, msg) {
 async function jGerar(modo, refISO) {
   const per = jPeriodo(modo, refISO), esc = jEscopo();
   const dd = (await get(query(ref(db, 'kanban/escala'), orderByKey(), startAt(iso(per.a)), endAt(iso(per.b))))).val() || {};
-  const c = modo === 'dia' ? jDia(per, dd, esc) : modo === 'semana' ? (visao === 'global' ? jSemanaGlobal(per, dd, esc) : jSemanaSquad(per, dd, esc)) : jMes(per, dd, esc);
+  const c = modo === 'dia' ? (jpg.estilo === 'gantt' ? jGantt(per, dd, esc) : jDia(per, dd, esc)) : modo === 'semana' ? (visao === 'global' ? jSemanaGlobal(per, dd, esc) : jSemanaSquad(per, dd, esc)) : jMes(per, dd, esc);
   return { c, per, esc };
 }
 function jBaixar(c, nome) {
@@ -937,11 +1057,13 @@ async function jpgAtualizar() {
   if (!prev) return;
   const per = jPeriodo(jpg.modo, jpg.ref); $('j-per').textContent = per.titulo;
   document.querySelectorAll('#j-modo button').forEach(b => b.setAttribute('aria-selected', b.dataset.m === jpg.modo));
+  $('j-estilo').hidden = jpg.modo !== 'dia';
+  document.querySelectorAll('#j-estilo button').forEach(b => b.setAttribute('aria-selected', b.dataset.e === jpg.estilo));
   bt.disabled = true; jpg.canvas = null; prev.innerHTML = '<div class="state" style="padding:30px 0">Montando a imagem…</div>';
   try {
     const r = await jGerar(jpg.modo, jpg.ref);
     if (meu !== jSeq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
-    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? (filtro.sqs.length ? filtro.sqs.join('+') : 'todas-as-squads') : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
+    jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? (filtro.sqs.length ? filtro.sqs.join('+') : 'todas-as-squads') : squad) + '-' + jpg.modo + (jpg.modo === 'dia' && jpg.estilo === 'gantt' ? '-gantt' : '') + '-' + r.per.arq + '.jpg';
     r.c.style.cssText = 'width:100%;height:auto;border-radius:10px;display:block;'; prev.innerHTML = ''; prev.appendChild(r.c); bt.disabled = false;
   } catch (e) {
     if (meu !== jSeq || !$('j-prev')) return;
@@ -949,12 +1071,13 @@ async function jpgAtualizar() {
     prev.innerHTML = '<div class="state" style="padding:24px 0">⚠️ ' + (negado ? 'Sem permissão pra ler a escala (as regras do banco ainda não foram publicadas).' : 'Não deu pra carregar a escala agora. Tente de novo.') + '</div>';
   }
 }
-function abrirJpg(modo, refISO) {
+function abrirJpg(modo, refISO, estilo) {
   const sem = diasDaSemana().map(iso);
-  jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
+  jpg = { modo: modo || 'semana', estilo: estilo || diaModo, ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
   const sc = jEscopo();
   abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.subs.length ? ' · subtime <b>' + esc(rotuloSubs()) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
     '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +
+    '<div class="seg" id="j-estilo" role="tablist" style="margin-top:8px" hidden><button type="button" data-e="lista">📋 Lista</button><button type="button" data-e="gantt">📊 Visão Gantt</button></div>' +
     '<div style="display:flex;gap:10px;align-items:center;margin:12px 0 4px;flex-wrap:wrap"><input type="date" id="j-ref" style="max-width:180px" aria-label="Data de referência"><b id="j-per" style="font-size:14px"></b></div>' +
     '<p class="sub" style="margin:0 0 10px">Dia = o dia escolhido · Semana = a semana que contém o dia · Mês = o mês que contém o dia.</p>' +
     '<div id="j-prev"></div>' +
@@ -962,6 +1085,7 @@ function abrirJpg(modo, refISO) {
   const md = $('ov').firstElementChild; if (md) md.classList.add('wide');
   $('j-ref').value = jpg.ref;
   document.querySelectorAll('#j-modo button').forEach(b => { b.onclick = () => { jpg.modo = b.dataset.m; jpgAtualizar(); }; });
+  document.querySelectorAll('#j-estilo button').forEach(b => { b.onclick = () => { jpg.estilo = b.dataset.e; jpgAtualizar(); }; });
   $('j-ref').onchange = e => { if (ISO_RE.test(e.target.value)) { jpg.ref = e.target.value; jpgAtualizar(); } };
   $('j-baixar').onclick = () => { if (jpg.canvas) jBaixar(jpg.canvas, jpg.nome); };
   $('j-fechar').onclick = fecharOv;
@@ -978,7 +1102,9 @@ $('b-hoje').onclick = () => irParaSemana(new Date());
 $('b-bf').onclick = () => irParaSemana(proximaBF());
 $('b-cad').onclick = () => abrirCadastro();
 $('b-jpg').onclick = () => abrirJpg();
-$('filtros').addEventListener('click', e => {
+$('b-filtros').onclick = abrirFiltros;
+$('ov').addEventListener('click', e => {
+  const pop = e.target.closest('#f-sqs, #f-subs'); if (!pop) return;
   const sq = e.target.closest('[data-fsq]'), sb = e.target.closest('[data-fsub]');
   if (sq) {
     const id = sq.dataset.fsq;
@@ -991,7 +1117,6 @@ $('filtros').addEventListener('click', e => {
     render();
   }
 });
-$('f-limpar').onclick = () => { filtro = { subs: [], sqs: [] }; render(); };
 $('view').addEventListener('click', e => {
   const cel = e.target.closest('.cel.edit'); if (cel) { abrirCadastro({ sq: squad, uid: cel.dataset.u, data: cel.dataset.d }); return; }
   const gd = e.target.closest('.gdia'); if (gd) { abrirDia(gd.dataset.gd, null); return; }
