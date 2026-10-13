@@ -129,6 +129,7 @@
   </div>
 </div>
 
+<script src="mare-login.js?v=3"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
@@ -257,6 +258,7 @@ function renderWho() {
   } else {
     slot.innerHTML = '<div class="gbar"><span>É da Hering? Entre com sua conta pra pedir mais rápido.</span><button type="button" class="btn-g" id="btn-google">🔐 Entrar com Google</button></div>';
     $('btn-google').onclick = async () => {
+      if (window.MareLogin && MareLogin.usar()) { MareLogin.iniciar({ hub: true }); return; }   // iPhone/iPad: o popup do Firebase falha ("missing initial state") — vai pelo Oceano (mare-login-dev.js)
       try {
         const r = await signInWithPopup(auth, provider);
         if (!isHering(r.user)) { await signOut(auth); showMsg('⚠️ Use a conta @ciahering.com.br — ou envie sem entrar, pelo formulário abaixo.', false); }

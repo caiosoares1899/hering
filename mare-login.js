@@ -18,18 +18,24 @@
   };
   const ios = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = () => (root.matchMedia && root.matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
-  // Só onde o popup é sabidamente ruim (atalho do iPhone/iPad) — ou forçado por ?loginDireto=1 / localStorage mare_login_direto=1 (pra testar).
-  function usar() { return (ios() && standalone()) || /[?&]loginDireto=1(&|$)/.test(location.search) || ls.get('mare_login_direto') === '1'; }
+  // Onde o popup do Firebase é ruim: TODO iPhone/iPad (2026-10-13). Antes era só o atalho da tela inicial, mas o mesmo defeito aparece no Safari comum quando o link é aberto de
+  // outro app (WhatsApp…): o Google devolve pra hering-onboarding.firebaseapp.com/__/auth/handler e o Safari mostra "Unable to process request due to missing initial state"
+  // (o sessionStorage do popup não sobrevive). Convidado externo (?login=local) fica no popup (o login direto só aceita conta @ciahering). Forçável por ?loginDireto=1 / mare_login_direto=1.
+  function usar() { return (ios() && !/[?&]login=local(&|$)/.test(location.search)) || /[?&]loginDireto=1(&|$)/.test(location.search) || ls.get('mare_login_direto') === '1'; }
   const rnd = () => { const a = new Uint8Array(16); (root.crypto || {}).getRandomValues(a); return Array.from(a, x => x.toString(16).padStart(2, '0')).join(''); };
   function urlGoogle(nonce, state, redirect) {
     const p = { client_id: CLIENT_ID, redirect_uri: redirect, response_type: 'id_token', scope: 'openid email profile', nonce, state, prompt: 'select_account', hd: 'ciahering.com.br' };
     return 'https://accounts.google.com/o/oauth2/v2/auth?' + Object.keys(p).map(k => k + '=' + encodeURIComponent(p[k])).join('&');
   }
   // Vai pro Google. A volta é na MESMA página (sem query/hash); guardamos o caminho completo pra restaurar ?squad=… depois.
-  function iniciar() {
+  // `{hub:true}` (páginas SEM redirect URI próprio cadastrado no Google — Escala, Intake…): a volta do Google é no Oceano (oceano[-dev].html, já cadastrado) — como todas as páginas são da
+  // mesma origem, o login feito lá vale pra todas — e o Oceano leva a pessoa de volta pra página de onde ela saiu (`ret`) assim que o Firebase confirma o login.
+  const hubDe = () => location.origin + location.pathname.replace(/[^/]*$/, '') + (/-dev\.html$/.test(location.pathname) ? 'oceano-dev.html' : 'oceano.html');
+  function iniciar(opc) {
+    const hub = !!(opc && opc.hub) && !/\/oceano(-dev)?\.html$/.test(location.pathname);
     const nonce = rnd(), state = rnd();
-    ls.set(KEY, JSON.stringify({ nonce, state, ts: Date.now(), ret: location.pathname + location.search }));
-    location.assign(urlGoogle(nonce, state, location.origin + location.pathname));
+    ls.set(KEY, JSON.stringify({ nonce, state, ts: Date.now(), ret: location.pathname + location.search, hub }));
+    location.assign(urlGoogle(nonce, state, hub ? hubDe() : location.origin + location.pathname));
   }
   function jwt(t) {
     const s = String(t || '').split('.')[1]; if (!s) return null;
@@ -50,9 +56,10 @@
     if (root.MareLogin && typeof root.MareLogin.aoErro === 'function') { try { root.MareLogin.aoErro(msg); return; } catch (e) {} }
     const el = document.getElementById('login-err'); if (el) { el.textContent = msg; el.style.display = 'block'; } else console.warn('[MareLogin]', msg);
   };
-  function entrar(token) {
+  // `depois` (só no modo hub): roda quando o Firebase confirmou o login — leva a pessoa de volta pra página de origem.
+  function entrar(token, depois) {
     let n = 0; const t = setInterval(() => {
-      if (typeof root._signInIdToken === 'function') { clearInterval(t); Promise.resolve().then(() => root._signInIdToken(token)).catch(e => aviso('Não deu pra entrar: ' + ((e && e.message) || e))); }
+      if (typeof root._signInIdToken === 'function') { clearInterval(t); Promise.resolve().then(() => root._signInIdToken(token)).then(() => { if (depois) setTimeout(depois, 350); }).catch(e => aviso('Não deu pra entrar: ' + ((e && e.message) || e))); }
       else if (++n > 200) { clearInterval(t); aviso('O login demorou demais pra carregar. Toque em Entrar para tentar de novo.'); }
     }, 100);
   }
@@ -62,9 +69,12 @@
     let pend = null; try { pend = JSON.parse(ls.get(KEY) || 'null'); } catch (e) {}
     root.MareLogin.voltando = true;   // as páginas NÃO podem mandar a pessoa embora (ex.: login único → Oceano) enquanto o token está sendo entregue
     const hash = location.hash; ls.del(KEY);
-    try { history.replaceState(null, '', (pend && pend.ret) || (location.pathname + location.search)); } catch (e) {}
+    // ret só é seguido se for um caminho relativo da própria origem (nunca //outro.site nem esquema)
+    const retOk = pend && typeof pend.ret === 'string' && /^\/[A-Za-z0-9._~\-\/]*(\?[^#\s]*)?$/.test(pend.ret) && !pend.ret.startsWith('//') ? pend.ret : '';
+    const hub = !!(pend && pend.hub && retOk);
+    try { history.replaceState(null, '', hub ? location.pathname : (retOk || (location.pathname + location.search))); } catch (e) {}
     const r = validar(hash, pend, Date.now());
-    if (r.ok) entrar(r.token); else setTimeout(() => aviso(r.erro), 0);
+    if (r.ok) entrar(r.token, hub ? () => location.replace(retOk) : null); else setTimeout(() => aviso(r.erro), 0);
   }
   root.MareLogin = { CLIENT_ID, usar, iniciar, validar, urlGoogle, retorno };
   if (typeof module === 'object' && module.exports) module.exports = root.MareLogin;
