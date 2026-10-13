@@ -6541,7 +6541,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.843-dev</div>
+<div class="version">v8.30.844-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6558,10 +6558,11 @@ window.MARE_LOGIN_PELO_OCEANO = true;
      (firebase-database.js/firebase-auth.js/firebase-messaging.js → import
      de firebase-app.js) reescrita de URL absoluta do gstatic.com pra
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
+<script src="mare-login-dev.js?v=1"></script>
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
 import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
-import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithCredential, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
 // ── localStorage seguro: nunca lança erro (Safari privado/PWA bloqueia) ──
@@ -6850,6 +6851,8 @@ window._requestCalendarScope = () => signInWithPopup(auth, calProvider).then(r=>
 // experiência de popup pra navegação de página inteira, por isso só entra
 // como FALLBACK depois de 2 falhas SEGUIDAS do mesmo tipo (ver doSignIn()
 // no <script> clássico abaixo), nunca como caminho principal.
+// Login direto (atalho do iPhone/iPad — ver mare-login-dev.js): entrega o id_token que voltou do Google. Sem accessToken (Google Agenda pede o escopo depois, no próprio fluxo).
+window._signInIdToken=(idToken)=>signInWithCredential(auth,GoogleAuthProvider.credential(idToken));
 window._signInRedirect=(insc)=>{
   // localStorage, não window._pendingInsc: signInWithRedirect() navega a
   // página INTEIRA pro Google e volta — qualquer estado só em memória
@@ -11336,6 +11339,8 @@ function closeStatusMenu(){
 }
 function doSignIn(insc=false){
   const err=document.getElementById('login-err'); err.style.display='none';
+  // Atalho na tela inicial do iPhone/iPad: o popup trava na tela do Google (não devolve o resultado ao app). Vai por navegação de página inteira (ver mare-login-dev.js).
+  if(window.MareLogin && MareLogin.usar()){ if(insc) safeLS.setItem('mare_pending_insc','1'); MareLogin.iniciar(); return; }
   if(!window._signIn){ err.textContent='Firebase carregando...'; err.style.display='block'; return; }
   if(insc) window._pendingInsc=true;
   window._signIn().catch(e=>{

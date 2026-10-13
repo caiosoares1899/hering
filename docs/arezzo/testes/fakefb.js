@@ -27,9 +27,10 @@ export const query=(r,...c)=>{ const o={p:r.p}; c.forEach(x=>{ if(x&&x.__s!==und
 `;
   const auth=`
 export const getAuth=()=>({});
-export class GoogleAuthProvider{ setCustomParameters(){} addScope(){} }
+export class GoogleAuthProvider{ setCustomParameters(){} addScope(){} static credential(t){ return {idToken:t}; } }
 export class OAuthProvider{ constructor(id){this.id=id;} setCustomParameters(){} }
 export const signInWithPopup=async()=>{ window.__popup=(window.__popup||0)+1; };
+export const signInWithCredential=async(a,c)=>{ window.__cred=c; };
 export const signInWithRedirect=async()=>{}; export const getRedirectResult=async()=>null; export const reload=async()=>{}; export const updateProfile=async()=>{};
 export const signOut=async()=>{ window.__signedOut=(window.__signedOut||0)+1; if(window.__authCb) window.__authCb(null); };
 export const onAuthStateChanged=(a,cb)=>{ window.__authCb=cb; Promise.resolve().then(()=>cb(null)); };

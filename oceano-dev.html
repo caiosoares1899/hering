@@ -555,10 +555,11 @@ input.in[readonly]{opacity:.7;}
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
+<script src="mare-login-dev.js?v=1"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
 import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
   // Override manual sob chave PRÓPRIA desta página ('oceano_dev'): chaves cruas de localStorage são compartilhadas entre as páginas do domínio.
@@ -586,6 +587,8 @@ import('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js').then(
   if(window.MareNotif) MareNotif.rodapeRender();
 })).catch(e=>console.warn('[FCM] não inicializado:', e));
 window._signIn=()=>signInWithPopup(auth,provider);
+// Login direto (atalho do iPhone/iPad — ver mare-login-dev.js): entrega o id_token que voltou do Google.
+window._signInIdToken=idToken=>signInWithCredential(auth,GoogleAuthProvider.credential(idToken));
 window._signOut=()=>signOut(auth);
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 window.dispatchEvent(new Event('fb-ready'));
@@ -597,7 +600,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.23 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.24 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -684,7 +687,7 @@ const iniciais = ()=> (perfilFb.init || ((U && U.displayName||'?').split(/\s+/).
 // ── Login ──
 ['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(a) a.href = P(id)+'?login=local'; });
 function loginErr(m){ const e = $('#login-err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; }
-$('#btn-login').addEventListener('click', ()=>{ loginErr(''); window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
+$('#btn-login').addEventListener('click', ()=>{ loginErr(''); if(window.MareLogin && MareLogin.usar()){ MareLogin.iniciar(); return; } window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
 function emailHering(u){ return /@ciahering\.com\.br$/i.test((u && u.email)||''); }
 function viaGoogle(u){ return (u.providerData||[]).some(p=>p.providerId==='google.com'); }
 window.addEventListener('auth-change', e=>{
