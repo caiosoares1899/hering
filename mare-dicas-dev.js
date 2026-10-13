@@ -45,6 +45,7 @@
       {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário', edita:true},
       {id:'cards-carregar',gatilho:'view:cards',    texto:'Os cards só são baixados quando você clica em Carregar cards. Assim a tela abre leve.'}]},
     mare:{nome:'Maré', icone:'🌊', gatilhos:{boot:'Ao entrar', 'card-open':'Ao abrir um card', 'cfg-open':'Ao abrir as Configurações'}, dicas:[
+      {id:'insistente',gatilho:'boot',     texto:'Não ouve o “ding” do sino? Ligue o modo insistente no rodapé do 🔔: a tela treme e o som se repete.', saiba:{tab:'config', q:'Notificações'}, ajuda:'Notificações'},
       {id:'busca',    gatilho:'boot',      texto:'Aperte Ctrl+K pra achar um card pelo título, pela descrição ou pelo responsável.', saiba:{tab:'board', q:'Busca global'}, ajuda:'Busca global (Ctrl+K)'},
       {id:'meudia',   gatilho:'boot',      texto:'Ctrl+D abre o Meu Dia: o que é seu hoje, num lugar só.', saiba:{tab:'board', q:'Meu Dia'}, ajuda:'Meu Dia (Ctrl+D)'},
       {id:'menu-card',gatilho:'boot',      texto:'Clique com o botão direito num card pra ações rápidas: mover, impedir, duplicar…', saiba:{tab:'cards', q:'Funções de card'}, ajuda:'Funções de card'},
