@@ -34,6 +34,7 @@ const NOS_GLOBAIS = [
   { no: 'metas_squads', diario: true },
   { no: 'metas_log', diario: true },
   { no: 'escala', diario: true },            // 🗓️ Escala
+  { no: 'vtex_status', diario: false },      // 🚨 estado do monitor de incidentes da VTEX (reconstituível a partir do feed)
   { no: 'usuarios', diario: true },          // papéis, squads, torre, preferências (sem notificações/tokens)
   { no: 'usuarios_publicos', diario: true },
   { no: 'squads_meta', diario: true },       // quais squads existem

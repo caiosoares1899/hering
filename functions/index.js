@@ -22,7 +22,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -225,6 +225,12 @@ exports.okrDailyScan = require('./okr/dailyScan').okrDailyScan;
 // (que também é push — PUSH_TYPES acima). Deploy isolado: firebase deploy --only functions:metasLembretes
 // (e, junto, sendPushOnNotification — ela precisa conhecer o tipo novo — e `firebase deploy --only database` pras regras das metas).
 exports.metasLembretes = require('./metas/lembretes').metasLembretes;
+
+// 🚨 Alerta de incidente da VTEX (functions/vtex/statusVtex.js): a cada 5 min lê https://status.vtex.com/feed.rss e, com incidente/manutenção em
+// andamento, publica sozinho um Comunicado 🚨 (popup insistente, todos) + notificação `vtex_incidente` (sino + push, PUSH_TYPES acima) pra todo mundo;
+// resolvido/concluído → desativa o aviso. Interruptor: kanban/config/vtex_status_off=true. Deploy isolado:
+//   firebase deploy --only functions:vtexStatus,functions:sendPushOnNotification   (o 2º por causa do tipo novo no PUSH_TYPES)
+exports.vtexStatus = require('./vtex/statusVtex').vtexStatus;
 
 // 🎯 OKR — Fase 3: snapshot semanal (toda sexta 17h, ver
 // functions/okr/weeklySnapshot.js). NÃO notifica ninguém — só grava uma
