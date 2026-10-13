@@ -117,7 +117,7 @@ letting them hit the error first.
   (Agente Ágil orquestrador, `agente-agil-orquestrador/`), `agenteAgil`
   (older HTTP-based agent v0-v3, `agente-agil/`), `intakeSubmit`
   (anonymous public form → `intake_pending`, `intake/`), `weeklyBackup`
-  (automatic weekly board backup to Cloud Storage, `backup/`), and most of
+  (automatic weekly board backup to Cloud Storage, `backup/weeklyBackup.js` — board only), `backupCompletoSemanal`/`backupGlobalDiario` (**full database backup**, `backup/completo.js` → private `backups-completos/`; **a new top-level node in the database = add it to `NOS_GLOBAIS` there, or it has no backup**; restore with `backup/restaurar.js`), and most of
   the Spotify integration (`spotify/`, see below) — **except**
   `spotifySync`, which is commented out. See `CODE_MAP.md` for the full
   export list with line numbers.

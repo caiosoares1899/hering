@@ -1,17 +1,58 @@
 {
   "rule": [
     {
-      "action": { "type": "Delete" },
+      "action": {
+        "type": "Delete"
+      },
       "condition": {
         "age": 2,
-        "matchesPrefix": ["relatorios/"]
+        "matchesPrefix": [
+          "relatorios/"
+        ]
       }
     },
     {
-      "action": { "type": "Delete" },
+      "action": {
+        "type": "Delete"
+      },
       "condition": {
         "age": 60,
-        "matchesPrefix": ["backups/"]
+        "matchesPrefix": [
+          "backups/"
+        ]
+      }
+    },
+    {
+      "action": {
+        "type": "Delete"
+      },
+      "condition": {
+        "age": 90,
+        "matchesPrefix": [
+          "backups-completos/semanal/"
+        ]
+      }
+    },
+    {
+      "action": {
+        "type": "Delete"
+      },
+      "condition": {
+        "age": 14,
+        "matchesPrefix": [
+          "backups-completos/diario/"
+        ]
+      }
+    },
+    {
+      "action": {
+        "type": "Delete"
+      },
+      "condition": {
+        "age": 30,
+        "matchesPrefix": [
+          "backups-completos/pre-restauracao/"
+        ]
       }
     }
   ]

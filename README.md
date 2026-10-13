@@ -68,6 +68,30 @@ clicar ou deixar a aba aberta. Formato do JSON é o mesmo de
 `exportBackupJSON()`, então dá pra restaurar direto pela UI "🧯 Restaurar
 backup" do board.
 
+### Backup completo do banco (2026-10-13)
+O `weeklyBackup` acima só guarda o **quadro** de cada squad. O backup **completo** (`functions/backup/completo.js`)
+guarda o resto: comentários dos cards, `config` do squad (Raias, Ficha Técnica, padrões, calendários…), intake, subtimes,
+kudos, snapshots do CFD, e — fora dos squads — o Radar (`okr`), Metas, Escala, `usuarios` (papéis, squads, torre, preferências),
+`squads_meta`, Comunicados, `painel`, `config`… Duas funções agendadas (horário de Brasília):
+- `backupCompletoSemanal` — domingo 04:30: tudo → `backups-completos/semanal/{data}/` (retenção 90 dias);
+- `backupGlobalDiario` — todo dia 03:30: só os nós globais pequenos e insubstituíveis → `backups-completos/diario/{data}/` (14 dias).
+
+Dentro de cada pasta: `global/{nó}.json`, `squads/{id}.json` e `manifesto.json` (o que entrou, tamanhos, vazios, erros e o que
+**nunca** entra: segredos do Spotify, tokens de push, notificações pessoais, presença/locks/debug, nós `_dev`). Esse prefixo
+**não é legível pelo cliente** (`storage.rules`). Se algum item falhar a execução termina com erro (aparece no monitoramento)
+mas o que deu certo já foi salvo.
+
+Deploy (na sua máquina, depois de resincronizar o clone — ver `CLAUDE.md`) + retenção (uma vez):
+```bash
+cd functions && firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario
+gsutil lifecycle set storage-lifecycle.json gs://hering-onboarding.firebasestorage.app
+```
+**Restaurar** (script local, `functions/backup/restaurar.js`; por padrão só simula): `node backup/restaurar.js --listar`;
+`node backup/restaurar.js --modo diario --data ultimo --no okr` (simula) e o mesmo com `--aplicar` (grava). Também restaura
+um squad (`--squad dados`). Sempre **mescla** (nunca apaga o que não está no backup) e salva o estado atual em
+`backups-completos/pre-restauracao/…` antes de gravar, pra dar pra desfazer. Precisa de credencial (`gcloud auth
+application-default login`) e das variáveis `FIREBASE_DATABASE_URL` e `FIREBASE_STORAGE_BUCKET`.
+
 ### Cloud Storage
 `storage.rules`, na raiz do repo — mesma lógica do `database.rules.json` acima
 (espelho do que está configurado no Firebase Console → Storage → Rules). Guarda os

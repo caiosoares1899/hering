@@ -3949,7 +3949,8 @@ detalhe aberto — ver nota abaixo).
 - `agenteAgil` (HTTP, agente v0-v3 mais antigo) — L143 → `agente-agil/http.js`
 - `spotifyOauthCallback`/`Disconnect`/`SyncNow`/`Playback`/`RadioOwnerCallback`/`RadioSearch`/`RadioSuggest` — L147–L186 → `spotify/*.js`
 - `intakeSubmit` — L192 → `intake/submit.js`
-- `weeklyBackup` — L197 → `backup/weeklyBackup.js`
+- `weeklyBackup` — L197 → `backup/weeklyBackup.js` (só o QUADRO do squad; exporta também `_listActiveSquads()`, reaproveitado pelo backup completo)
+- `backupCompletoSemanal`/`backupGlobalDiario` — L206–L215 → `backup/completo.js` (2026-10-13; backup COMPLETO em `backups-completos/`, ver seção `backup/` abaixo)
 - `okrDailyScan` — L204 → `okr/dailyScan.js` (2026-09-04, novo — ver seção `okr/` abaixo)
 - `metasLembretes` — L210 → `functions/index.js` (2026-10-12; deploy na máquina do usuário: `firebase deploy --only functions:metasLembretes,functions:sendPushOnNotification`) → `metas/lembretes.js` — lembretes de preenchimento das metas, a cada 15 min no horário de Brasília (ver 🐟 Metas e desafios no kanban-dev)
 - `okrWeeklySnapshot` — L217 → `okr/weeklySnapshot.js` (2026-09-05, novo — Fase 3, ver seção `okr/` abaixo)
@@ -4360,7 +4361,14 @@ detalhe aberto — ver nota abaixo).
   (`backups/{squadId}/{data}.json`), independente de alguém abrir o board.
   Retenção automática de 60 dias via `storage-lifecycle.json` (~8-9 backups
   semanais mantidos por squad).
-
+- `backup/completo.js` — **backup COMPLETO** (2026-10-13): `backupCompletoSemanal` (domingo 04:30, tudo) e
+  `backupGlobalDiario` (todo dia 03:30, só nós globais pequenos), mesmo `rodarBackup({db,bucket,modo,agora,log})`. Lista de nós em
+  `NOS_GLOBAIS` (`diario:true` = entra no diário; **nó novo no banco = 1 linha lá**, senão fica sem backup), o que nunca entra em
+  `EXCLUIDOS`/`SEM` (segredos, tokens de push, notificações, presença, locks, debug, `_dev`); filtros puros `filtrarNo()`/
+  `filtrarDadosSquad()`; layout `backups-completos/{semanal|diario}/{data}/{global/{nó}.json, squads/{id}.json, manifesto.json}`;
+  erro num item → resto salvo + manifesto + execução reprovada. `backup/restaurar.js` — CLI local (dry-run por padrão):
+  `planoDeRestauracao()` (sempre `update`, por pessoa em `usuarios`), salva o estado atual em `pre-restauracao/` antes de aplicar.
+  Testes: `backup/__tests__/completo.test.js`. Retenção: `storage-lifecycle.json` (semanal 90 d · diário 14 d · pre-restauração 30 d).
 ### okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
 - `okr/dailyScan.js` — `okrDailyScan`, `onSchedule` todo dia 07:00
   (Brasília), mesmo padrão de `weeklyBackup`/`agenteAgilDueOverdueScan`

@@ -36,6 +36,13 @@ service firebase.storage {
       allow write: if false;
     }
 
+    // Backup COMPLETO do banco (functions/backup/completo.js): papéis/e-mails de todo mundo, OKR, Metas, Escala… —
+    // NINGUÉM lê pelo cliente (só o Admin SDK/console, e o restaurar.js com credencial de serviço). Já seria negado
+    // pelo "todo o resto" abaixo; a regra explícita só deixa a intenção escrita (e protege de um afrouxamento futuro).
+    match /backups-completos/{allPaths=**} {
+      allow read, write: if false;
+    }
+
     // Bucket foi criado do zero pra essa feature — nada mais usa Storage
     // ainda hoje. Todo o resto continua negado por padrão (mesmo
     // comportamento que já estava configurado no console antes desse
