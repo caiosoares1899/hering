@@ -196,6 +196,14 @@ exports.intakeSubmit = require('./intake/submit').intakeSubmit;
 // ninguém abrir o board. Deploy isolado: firebase deploy --only functions:weeklyBackup
 exports.weeklyBackup = require('./backup/weeklyBackup').weeklyBackup;
 
+// Backup COMPLETO (2026-10-13, ver functions/backup/completo.js): o weeklyBackup acima só guarda o quadro de
+// cada squad — este guarda TUDO (comentários, config, intake, OKR, Metas, Escala, usuários…) em
+// backups-completos/ (sem leitura pelo cliente). Semanal = tudo; diário = só os nós globais pequenos.
+// Restaurar: functions/backup/restaurar.js (na sua máquina). Deploy isolado:
+//   firebase deploy --only functions:backupCompletoSemanal,functions:backupGlobalDiario
+exports.backupCompletoSemanal = require('./backup/completo').backupCompletoSemanal;
+exports.backupGlobalDiario = require('./backup/completo').backupGlobalDiario;
+
 // 🎯 OKR — scan diário (prazo de marco chegando, período de editar, véspera
 // de reunião — ver functions/okr/dailyScan.js). Roda sozinho, sem depender
 // de ninguém abrir o painel. Lê kanban/painel/config/gcal_cache (mesmo

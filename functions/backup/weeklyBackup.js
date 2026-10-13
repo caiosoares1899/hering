@@ -86,6 +86,9 @@ async function backupSquad(db, bucket, squadId, date) {
   return (payload.board.cards || []).filter((c) => c && !c.archived).length;
 }
 
+// Reaproveitado por backup/completo.js (mesma lista de squads de produção) — não é uma Cloud Function.
+exports._listActiveSquads = listActiveSquads;
+
 exports.weeklyBackup = onSchedule(
   { schedule: 'every sunday 04:00', timeZone: 'America/Sao_Paulo', region: 'us-central1', timeoutSeconds: 120 },
   async () => {
