@@ -36,3 +36,8 @@ test('escala cadastrada por um gestor abre a Escala na semana cadastrada (okrObj
   assert.equal(urlDoPush({ type: 'escala' }), SITE_BASE_URL + 'escala.html?visao=squad');
   assert.notEqual(tagDoPush({ type: 'escala' }, 'nA'), tagDoPush({ type: 'escala' }, 'nB'));   // dois cadastros seguidos não se substituem no aparelho
 });
+
+test('vtex_monitor_falhou (aviso aos ADMs) abre o Painel; vtex_incidente cai no Maré', () => {
+  assert.equal(urlDoPush({ type: 'vtex_monitor_falhou' }), SITE_BASE_URL + 'painel.html');
+  assert.equal(urlDoPush({ type: 'vtex_incidente' }), SITE_BASE_URL + 'kanban.html');
+});
