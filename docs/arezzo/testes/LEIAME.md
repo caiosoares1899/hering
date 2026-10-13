@@ -23,6 +23,7 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_monitorarbugs_1013b.js` — 2ª rodada de 13/10 (Escala): sem rolagem lateral no celular e "Copiar menções" sem repetir quem está em duas squads.
 - `test_monitorarbugs_1013c.js` — 3ª rodada de 13/10 (Intake): salvar ⚙ Config no Painel preserva `intakeEnabled`/`intakeCampos`/`bfBannerMsg`; pedido interno recusa prazo no passado.
 - `test_metas_curva.js` — 🐟 Metas com diarização (ritmo não linear): matemática (esperado acumulado, situação, meta do dia, validar, colar da planilha, gráfico) + formulário no Maré (grade por dia, colar, período, salvar/editar, voltar pra linear).
+- `test_login_direto.js` — 🔐 login direto do atalho do iPhone (`mare-login-dev.js`): validação (state/nonce/aud/iss/exp/idade), ida pro Google sem popup, volta com `signInWithCredential`, aviso em token inválido, navegador comum segue no popup (Oceano e Maré).
 - `test_metas_entradas.js` — 🐟 🗂 Entradas (editar/excluir o histórico): lógica pura (parte × total, reordenar por data, última entrada, entrada já excluída) + modal no Maré (editar, mudar data, excluir, validações).
 - `test_metas_curva_colar.js` — colar a diarização sem período (deduz o período; avisos específicos).
 - `test_metas_retroativo.js` — 🐟 "Atualizar valor" com data e hora da entrada (retroativo): fuso Brasília, só histórico quando é mais antigo que o atual, vira atual quando é mais novo, ordem de lançamento ≠ ordem do tempo, futuro recusado, "Somar" desligado, selo "(valor de …)".

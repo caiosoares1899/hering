@@ -71,6 +71,14 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🔐 Login direto pro atalho do iPhone/iPad (Oceano e Maré) — 2026-10-13 · oceano-dev v1.24 · kanban-dev v8.30.844-dev · mare-login-dev v1 (SÓ DEV)
+Relato de usuária (iPhone 12): o atalho na tela inicial **fica preso no login do Google**.
+- **Causa provável:** no atalho (modo "app") o popup do Google abre numa janela que não devolve o resultado ao app — fica na tela do Google, **sem erro** (por isso o fallback "popup falhou 2×" do Maré nunca disparava; o Oceano nem tinha fallback). O redirect do Firebase também não serve no Safari/iOS recente (o resultado volta por um iframe de outro domínio, isolado pelo Safari).
+- **Correção:** novo módulo compartilhado `mare-login-dev.js` — no atalho do iPhone/iPad (ou com `?loginDireto=1`) o botão **Entrar** leva a página inteira ao Google e volta com o `id_token` no fragmento da **própria página**, que entrega ao Firebase com `signInWithCredential`. Sem popup e sem storage de terceiros. Valida `state`, `nonce`, `aud`, `iss`, validade e idade da tentativa (10 min); apaga o token da barra de endereço na hora; erros viram aviso na tela de login. **Quem já entra bem não muda** (continua no popup).
+- **Pré-requisito (uma vez, no Google Cloud Console):** em Credenciais → "Web client (auto created by Google Service)" → *URIs de redirecionamento autorizados*, incluir `…/hering/oceano.html`, `…/oceano-dev.html`, `…/kanban.html`, `…/kanban-dev.html`. Sem isso o Google mostra `redirect_uri_mismatch`.
+- Observação: esse caminho não traz o token do Google Agenda (o Maré pede o escopo depois, no próprio fluxo). **Não foi possível testar num iPhone real** — validado em Chromium com iPhone emulado (ida, volta, nonce/state inválidos). Painel e Radar ainda não usam (mesmo padrão, se precisar).
+- Dica: não. Teste: `test_login_direto.js` (+ `fakefb.js` ganhou `signInWithCredential`).
+
 ### 🩹 Hotfix kanban-dev v8.30.843-dev — texto de ajuda do 🗂 Entradas quebrava o script (SÓ DEV)
 O PR do 🗂 Entradas (v8.30.842-dev) inseriu o texto novo na Central de Ajuda com quebras de linha de verdade dentro de uma string JS (`'...'`): "Invalid or unexpected token" — o `kanban-dev.html` não carregava. Corrigido (`\n\n`). Os testes tinham rodado ANTES dessa última edição de texto. Prod não foi afetada (nada disso foi promovido). Novo: `docs/demo/brainstorm-console.js` (códigos de console pro brainstorm: intake de demonstração, popup 🐟, escala fake e limpezas).
 
