@@ -70,6 +70,11 @@ const K = process.env.K || 'kanban-dev', SFX = /-dev$/.test(K) ? '_dev' : '';
     // parte NEGATIVA corrige um dia (ex.: lançou a mais)
     await parte(d2, -4); await p.click('#mm-r-ok'); await p.waitForTimeout(600);
     t('parte negativa corrige o total (−4)', (await store(p, 'kanban/metas_squads' + SFX + '/dev/b')).atual === base + 18, (await store(p, 'kanban/metas_squads' + SFX + '/dev/b')).atual);
+    // editar a meta (renomear) NÃO pode perder o instante do valor atual (atualT): sem ele um retroativo seguinte passaria por cima
+    const antesEd = await store(p, 'kanban/metas_squads' + SFX + '/dev/b');
+    await p.evaluate(sq => MareMetas.salvar(Object.assign({}, MareMetas.achar('b', 'squad', sq), { titulo: 'Renomeada' }), { uid: 'eve', nome: 'Eve Souza' }), 'dev'); await p.waitForTimeout(500);
+    const depoisEd = await store(p, 'kanban/metas_squads' + SFX + '/dev/b');
+    t('editar/renomear a meta preserva o atualT (instante do valor atual) e o valor', depoisEd.titulo === 'Renomeada' && depoisEd.atualT === antesEd.atualT && depoisEd.atual === antesEd.atual, [antesEd.atualT, depoisEd.atualT]);
     t('sem erro de JS (partes)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
 })();

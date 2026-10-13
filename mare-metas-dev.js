@@ -130,17 +130,40 @@
     if (/^-?\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, '').replace(',', '.'); else if (t.includes(',')) t = t.replace(',', '.');
     const v = Number(t); return isFinite(v) ? v : NaN;
   }
+  const COL_DATA = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/;
+  const colCelulas = l => l.split(/[\t;]+/).map(c => c.trim()).filter(Boolean);
+  const colLinhas = texto => String(texto || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  // "dd/mm valor" (data e valor na mesma célula) → [data, valor]
+  const colSepara = c => { if (c.length === 1) { const sp = /^(\S+)\s+(.+)$/.exec(c[0]); if (sp && COL_DATA.test(sp[1])) return [sp[1], sp[2]]; } return c; };
+  // Quando o PERÍODO ainda não foi definido (ou só um dos lados): deduz do que foi colado. Linhas "dd/mm valor" → do 1º ao último dia (vira o ano quando o mês volta);
+  // só valores → N dias a partir do "de" (ou terminando no "até"). Devolve {ini, fim, n} (ini/fim só se deu pra deduzir) ou {n}.
+  function inferePeriodo(texto, ini, fim) {
+    const linhas = colLinhas(texto), pad = x => String(x).padStart(2, '0'), isos = [];
+    let ano = diaN(ini) != null ? Number(ini.slice(0, 4)) : Number(hojeSP().slice(0, 4)), prev = null, n = 0, comData = false;
+    linhas.forEach(l => {
+      const c = colSepara(colCelulas(l)), mt = c.length >= 2 ? COL_DATA.exec(c[0]) : null;
+      if (mt) {
+        comData = true; const key = (+mt[2]) * 100 + (+mt[1]); let a = null;
+        if (mt[3]) { a = mt[3].length === 2 ? 2000 + (+mt[3]) : +mt[3]; ano = a; } else { if (prev != null && key < prev) ano++; a = ano; }
+        prev = key; const iso = a + '-' + pad(mt[2]) + '-' + pad(mt[1]); if (diaN(iso) != null && isoDe(diaN(iso)) === iso) isos.push(iso);
+      } else if (c.length > 1 && linhas.length === 1) n += c.length; else n++;
+    });
+    if (comData) { if (isos.length < 2) return { n: isos.length }; isos.sort(); const a = isos[0], b = isos[isos.length - 1], q = diaN(b) - diaN(a) + 1; return q >= 2 && q <= 93 ? { ini: a, fim: b, n: q } : { n: q }; }
+    if (n < 2 || n > 93) return { n };
+    if (diaN(ini) != null) return { ini, fim: isoDe(diaN(ini) + n - 1), n };
+    if (diaN(fim) != null) return { ini: isoDe(diaN(fim) - n + 1), fim, n };
+    return { n };
+  }
   // Lê o que a pessoa colou da planilha: uma coluna de valores NA ORDEM dos dias, ou linhas "dd/mm valor". `datas` = os dias do período. → {valores:{data:valor}, aviso}
   function lerColado(texto, datas) {
-    const linhas = String(texto || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean), out = {};
-    const DATA = /^(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?$/;
+    const linhas = colLinhas(texto), out = {};
+    const DATA = COL_DATA;
     const diaDe = (tok) => { const mt = DATA.exec(tok); if (!mt) return null; const mm = mt[2].padStart(2, '0') + '-' + mt[1].padStart(2, '0'); return datas.find(d => d.slice(5) === mm && (!mt[3] || d.slice(0, 4) === (mt[3].length === 2 ? '20' + mt[3] : mt[3]))) || ''; };
-    const celulas = l => l.split(/[\t;]+/).map(c => c.trim()).filter(Boolean);
+    const celulas = colCelulas;
     let comData = 0, ignoradas = 0;
     const emOrdem = [];
     linhas.forEach(l => {
-      let c = celulas(l), dia = null, val = null;
-      if (c.length === 1) { const sp = /^(\S+)\s+(.+)$/.exec(c[0]); if (sp && DATA.test(sp[1])) c = [sp[1], sp[2]]; }
+      let c = colSepara(celulas(l)), dia = null, val = null;
       if (c.length >= 2 && DATA.test(c[0])) { comData++; dia = diaDe(c[0]); val = numPt(c[1]); if (dia && !isNaN(val) && val >= 0) out[dia] = val; else ignoradas++; return; }
       if (c.length > 1 && linhas.length === 1) { c.forEach(x => emOrdem.push(numPt(x))); return; }   // uma linha só, vários valores (colou uma LINHA da planilha)
       emOrdem.push(numPt(c[c.length - 1]));
@@ -149,7 +172,8 @@
     if (comData) { aviso = ignoradas ? ignoradas + ' linha(s) ignorada(s) (data fora do período ou valor inválido).' : ''; return { valores: out, aviso }; }
     emOrdem.forEach((v, i) => { if (i < datas.length && !isNaN(v) && v >= 0) out[datas[i]] = v; });
     if (emOrdem.some(v => isNaN(v) || v < 0)) aviso = 'Alguns valores não são números válidos e foram ignorados.';
-    else if (emOrdem.length !== datas.length) aviso = emOrdem.length + ' valor(es) colado(s) para ' + datas.length + ' dia(s) — confira.';
+    else if (emOrdem.length > datas.length) aviso = emOrdem.length + ' valores colados para ' + datas.length + ' dias — só os ' + datas.length + ' primeiros entraram. Confira o período.';
+    else if (emOrdem.length < datas.length) aviso = emOrdem.length + ' valores colados para ' + datas.length + ' dias — os ' + (datas.length - emOrdem.length) + ' últimos dias ficaram em branco.';
     return { valores: out, aviso };
   }
   // Situação — mesma linguagem do Radar (verde no ritmo · amarelo atenção · vermelho atrasada · azul batida · cinza sem dado).
@@ -595,7 +619,7 @@
     if (!m.id) { m.id = novoId(); m.criadoEm = agora; m.criadoPor = (user && user.uid) || null; }
     const antigo = (m.escopo === 'squad' ? (S.squads[m.squad] || {}) : S.digital)[m.id] || {};
     // preserva o que o formulário não edita (valor atual, marco, autoria)
-    ['atual', 'atualizadoEm', 'atualizadoPor', 'atualizadoNome', 'marco', 'marcoTs', 'criadoEm', 'criadoPor', 'lembreteUltimo'].forEach(k => { if (antigo[k] !== undefined && m[k] === undefined) m[k] = antigo[k]; });
+    ['atual', 'atualT', 'atualizadoEm', 'atualizadoPor', 'atualizadoNome', 'marco', 'marcoTs', 'criadoEm', 'criadoPor', 'lembreteUltimo'].forEach(k => { if (antigo[k] !== undefined && m[k] === undefined) m[k] = antigo[k]; });
     if (m.ordem === undefined) m.ordem = antigo.ordem !== undefined ? antigo.ordem : agora;
     const out = {}; Object.keys(m).forEach(k => { if (k !== 'id') out[k] = m[k]; });
     await root._set(refDe(pathMeta(m)), out);
@@ -735,9 +759,19 @@
     ['mm-f-d1', 'mm-f-d2'].forEach(id => { $(id).addEventListener('change', () => cvRender()); $(id).addEventListener('input', () => cvRender()); });
     ['mm-f-a', 'mm-f-i', 'mm-f-s'].forEach(id => $(id).addEventListener('input', () => { if (st.rit === 'dia') cvSoma(); }));
     $('mm-fmt').addEventListener('click', () => { if (st.rit === 'dia') cvSoma(); });
-    $('mm-cv-igual').onclick = () => { const dias = diasDoPeriodo(); if (!dias.length) return; const meta = isNum($('mm-f-a').value) ? Number($('mm-f-a').value) - (isNum($('mm-f-i').value) ? Number($('mm-f-i').value) : 0) : 0, v = meta > 0 ? Math.round(meta / dias.length * 100) / 100 : 1; dias.forEach(d => { st.curva[d] = v; }); cvRender(true); };
+    $('mm-cv-igual').onclick = () => { const dias = diasDoPeriodo(); if (!dias.length) { $('mm-cv-sum').textContent = '⚠️ Defina o período (de/até, com pelo menos 2 dias) pra distribuir.'; return; } const meta = isNum($('mm-f-a').value) ? Number($('mm-f-a').value) - (isNum($('mm-f-i').value) ? Number($('mm-f-i').value) : 0) : 0, v = meta > 0 ? Math.round(meta / dias.length * 100) / 100 : 1; dias.forEach(d => { st.curva[d] = v; }); cvRender(true); };
     $('mm-cv-colar').onclick = () => { $('mm-cv-colarbox').hidden = !$('mm-cv-colarbox').hidden; if (!$('mm-cv-colarbox').hidden) $('mm-cv-txt').focus(); };
-    $('mm-cv-aplicar').onclick = () => { const r = lerColado($('mm-cv-txt').value, diasDoPeriodo()); cvLer(); Object.keys(r.valores).forEach(d => { st.curva[d] = r.valores[d]; }); cvRender(true); if (r.aviso) $('mm-cv-sum').textContent = '⚠️ ' + r.aviso; else $('mm-cv-colarbox').hidden = true; };
+    $('mm-cv-aplicar').onclick = () => {
+      const txt = $('mm-cv-txt').value; let dias = diasDoPeriodo(), nota = '';
+      if (!dias.length) {   // período ausente/incompleto: deduz do que foi colado em vez de recusar com "N valores para 0 dias"
+        const p = inferePeriodo(txt, $('mm-f-d1').value, $('mm-f-d2').value);
+        if (p.ini) { $('mm-f-d1').value = p.ini; $('mm-f-d2').value = p.fim; dias = diasDoPeriodo(); nota = 'Período ajustado: ' + curto(p.ini) + ' a ' + curto(p.fim) + ' (' + dias.length + ' dias).'; }
+        else { $('mm-cv-sum').textContent = p.n > 93 ? '⚠️ ' + p.n + ' dias é demais pra distribuir (máximo 93).' : p.n >= 2 ? '⚠️ ' + p.n + ' valores colados, mas o período não está definido. Preencha o "de" (início) acima — o "até" eu calculo — e aplique de novo.' : '⚠️ Não achei valores nem datas no texto colado.'; return; }
+      }
+      const r = lerColado(txt, dias); cvLer(); Object.keys(r.valores).forEach(d => { st.curva[d] = r.valores[d]; }); cvRender(true);
+      const msg = [nota, r.aviso].filter(Boolean).join(' ');
+      if (r.aviso) $('mm-cv-sum').textContent = '⚠️ ' + msg; else { $('mm-cv-colarbox').hidden = true; if (nota) $('mm-cv-sum').textContent = '✔ ' + nota; }
+    };
     $('mm-hoje').onclick = () => { const h = hojeSP(); $('mm-f-d1').value = h; $('mm-f-d2').value = h; cvRender(); };
     $('mm-bf').onclick = () => { const bf = blackFriday(); $('mm-f-d1').value = bf.ini; $('mm-f-d2').value = bf.fim; cvRender(); };
     cvRender();
@@ -934,7 +968,7 @@
   const api = {
     IS_DEV, PATHS, SUBMARCAS, CANAIS, MARCOS, STATUS,
     // matemática
-    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, lerColado, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
+    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
     injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
     // dados
