@@ -60,6 +60,7 @@
   function retorno() {
     if (!/[#&](id_token|error)=/.test(location.hash)) return;
     let pend = null; try { pend = JSON.parse(ls.get(KEY) || 'null'); } catch (e) {}
+    root.MareLogin.voltando = true;   // as páginas NÃO podem mandar a pessoa embora (ex.: login único → Oceano) enquanto o token está sendo entregue
     const hash = location.hash; ls.del(KEY);
     try { history.replaceState(null, '', (pend && pend.ret) || (location.pathname + location.search)); } catch (e) {}
     const r = validar(hash, pend, Date.now());
