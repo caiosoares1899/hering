@@ -21,8 +21,8 @@
   const FEED = 'kanban/notif_feed', SEEN = 'kanban/notif_feed_seen', FEED_LIMIT = 60;
   const IS_DEV = /-dev\.html/.test(location.pathname);
   const PAGES = IS_DEV
-    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html'}
-    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html'};
+    ? {okr:'okr-dev.html', kanban:'kanban-dev.html', painel:'painel-dev.html', oceano:'oceano-dev.html', escala:'escala-dev.html'}
+    : {okr:'okr.html', kanban:'kanban.html', painel:'painel.html', oceano:'oceano.html', escala:'escala.html'};
 
   // Ícone de cada tipo (pessoais + feed). As páginas podem ter o próprio mapa; este é o de referência.
   const ICONS = {
@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', escala:'🗓️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -61,7 +61,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -99,6 +99,9 @@
       quando:'Uma meta ou desafio (🐟 O mar tá pra peixe) pede lembrete de preenchimento: a cada 1–4 h, 1× por dia ou em horários exatos, no horário de Brasília — só dentro do período da meta, enquanto ela não bateu 100 % e se ninguém atualizou há pouco.',
       quem:'Os responsáveis marcados na meta; sem ninguém marcado, PO e Organizadores da squad (ou os ADMs, nas metas do Digital).',
       onde:'Servidor: metasLembretes (functions/metas/lembretes.js, agendada de 15 em 15 min). Clicar abre a aba 📊 Dados do Maré.'},
+    {id:'escala', area:'agenda', fonte:'pessoal', nome:'Sua escala foi cadastrada', pushPossivel:true,
+      quando:'PO, Organizador ou ADM cadastra (ou limpa) a escala de trabalho/plantão/folga de OUTRA pessoa — uma notificação por cadastro, com o período e o tipo. Quem cadastra a própria escala não se avisa.',
+      quem:'A pessoa dona da escala.', onde:'Escala (escala-dev.html → avisarPessoa()). Clicar abre a Escala na semana cadastrada.'},
     // ── Pessoas e reconhecimento ──
     {id:'kudos', area:'pessoas', fonte:'pessoal', nome:'Estrela do Mar',
       quando:'Alguém te envia uma ⭐ Estrela do Mar, ou reage à Estrela que você enviou.', quem:'Quem recebeu a Estrela / quem a enviou.', onde:'Maré: addKudos() e toggleKudosReaction().'},
@@ -271,6 +274,7 @@
     if(t==='okr_mencao') return {url:urlOkr('okr','notas')};
     if(t.startsWith('okr_')) return {url:urlOkr('okr', n.okrObjId||'')};
     if(t==='feedback') return {url:PAGES.painel+'?tab=monitor'};
+    if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
     if(t==='reuniao') return /^https?:\/\//i.test(String(n.meetingLink||'')) ? {url:n.meetingLink, externo:true} : null;   // só http(s): um javascript: gravado na notificação viraria XSS no window.open
     if(t==='painel_broadcast') return {url:PAGES.kanban+(n.squad?'?squad='+encodeURIComponent(n.squad):'')};

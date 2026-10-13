@@ -203,10 +203,10 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.6 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.7 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -595,6 +595,7 @@ async function confirmarCadastro(limpar) {
   try {
     await update(ref(db, 'kanban/escala'), upd);
     lsSet('escala_sq', cad.sq);
+    if (cad.uid !== user.uid) avisarPessoa(cad.uid, cad.sq, r.datas, limpar, base);   // gestor mexeu na escala de OUTRA pessoa: ela é avisada (sino + push)
     const primeira = parseISO(r.datas[0]);
     const fora = primeira < semana || primeira > addDias(semana, 6);
     fecharOv();
@@ -609,6 +610,24 @@ async function confirmarCadastro(limpar) {
     return;
   }
   gravando = false;
+}
+
+// Aviso (sino + push) pra pessoa cuja escala um gestor cadastrou/limpou. Uma notificação por cadastro (período inteiro), nunca pra quem mexeu na própria.
+// Tipo `escala` (MareNotif.TIPOS · PUSH_TYPES). `okrObjId` leva a 1ª data (mesmo atalho do meta_lembrete) pra o sino abrir a semana certa.
+async function avisarPessoa(uid, sq, datas, limpar, base) {
+  try {
+    const s = squads.find(x => x.id === sq), id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const ini = parseISO(datas[0]), fim = parseISO(datas[datas.length - 1]);
+    const per = datas.length === 1 ? curto(ini) : curto(ini) + ' – ' + curto(fim) + ' (' + datas.length + ' dias)';
+    const hora = !limpar && base.i ? ' ' + base.i + (base.f ? '–' + base.f : '') : '';
+    const oque = limpar ? 'escala removida' : (TIPOS[base.t] || {}).nome + hora;
+    const quem = (user.displayName || user.email || '').split(' ')[0];
+    await set(ref(db, 'kanban/usuarios/' + uid + '/notificacoes/' + id), {
+      id, type: 'escala', title: limpar ? '🗓️ Sua escala foi removida' : '🗓️ Sua escala foi cadastrada',
+      sub: [(s ? s.label : sq), per, oque, quem ? 'por ' + quem : ''].filter(Boolean).join(' · '),
+      squad: sq, okrObjId: datas[0], read: false, ts: new Date().toISOString(),
+    });
+  } catch (e) { console.warn('[escala] não deu pra avisar a pessoa:', e); }
 }
 
 // ═══ Baixar a escala em JPG (dia · semana · mês) ═══
