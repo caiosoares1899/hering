@@ -113,7 +113,7 @@ async function writeNotif(db, uid, meta, escopo, squadId, agoraMs) {
   const id = 'n' + agoraMs + Math.random().toString(36).slice(2, 6);
   const p = pct(meta);
   const quem = (meta.emoji || '🎯') + (escopo === 'digital' ? ' Digital' : '');
-  const valor = isNum(meta.atual) ? `hoje ${fmtVal(meta, meta.atual)} de ${fmtVal(meta, meta.alvo)} (${Math.round(p)}%)` : `meta ${fmtVal(meta, meta.alvo)}`;
+  const valor = isNum(meta.atual) ? `hoje ${fmtVal(meta, meta.atual)} de ${fmtVal(meta, meta.alvo)} (${p < 100 ? Math.min(99, Math.round(p)) : Math.round(p)}%)` : `meta ${fmtVal(meta, meta.alvo)}`;
   const sub = [quem, ago(meta.atualizadoEm, agoraMs), valor].join(' · ');
   await db.ref(`kanban/usuarios/${uid}/notificacoes/${id}`).set({
     id, type: 'meta_lembrete', title: `🐟 Atualize a meta: ${meta.titulo}`, sub,

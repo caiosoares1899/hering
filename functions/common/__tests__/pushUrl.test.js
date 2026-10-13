@@ -30,3 +30,9 @@ test('okr_reuniao do calendário abre o evento (id + data da ocorrência), não 
   assert.equal(urlDoPush({ type: 'okr_reuniao', okrEventoId: 'a b' }), SITE_BASE_URL + 'okr.html?evento=a%20b');
   assert.equal(urlDoPush({ type: 'okr_reuniao', okrObjId: 'o1' }), SITE_BASE_URL + 'okr.html?okr=o1');   // bloco fixo (legado) segue levando ao Objetivo
 });
+test('escala cadastrada por um gestor abre a Escala na semana cadastrada (okrObjId leva a 1ª data); data inválida é ignorada', () => {
+  assert.equal(urlDoPush({ type: 'escala', squad: 'dados', okrObjId: '2026-11-23' }), SITE_BASE_URL + 'escala.html?visao=squad&squad=dados&semana=2026-11-23');
+  assert.equal(urlDoPush({ type: 'escala', squad: 'dados', okrObjId: 'xx' }), SITE_BASE_URL + 'escala.html?visao=squad&squad=dados');
+  assert.equal(urlDoPush({ type: 'escala' }), SITE_BASE_URL + 'escala.html?visao=squad');
+  assert.notEqual(tagDoPush({ type: 'escala' }, 'nA'), tagDoPush({ type: 'escala' }, 'nB'));   // dois cadastros seguidos não se substituem no aparelho
+});

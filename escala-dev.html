@@ -49,7 +49,7 @@
   select{ appearance:none; -webkit-appearance:none; padding-right:30px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%23a9bccb' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; }
   select option{ background:#101f30; color:var(--txt); }
   input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--accent); }
-  .nav{ display:inline-flex; align-items:center; gap:6px; }
+  .nav{ display:inline-flex; align-items:center; gap:6px; flex-wrap:wrap; max-width:100%; }
   .nav .lbl{ min-width:150px; text-align:center; font-size:13px; font-weight:600; }
   .grow{ flex:1; }
   .bf{ border-color:rgba(255,159,67,.45); color:#ffc48a; }
@@ -203,10 +203,10 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, set, update, query, orderByKey, startAt, endAt } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
-const VERSION = 'v1.4 · escala-dev', VERSION_KEY = 'escala_dev';
+const VERSION = 'v1.7 · escala-dev', VERSION_KEY = 'escala_dev';
 // Mesmo projeto Firebase das outras páginas; override manual sob chave PRÓPRIA desta página (localStorage cru é compartilhado entre páginas do domínio).
 const firebaseConfig = {
   apiKey:            localStorage.getItem('fb_apiKeyescala_dev')           || 'AIzaSyBzCOFtPCpaxUcLqX5Sq1GxYL2yAWnDAWU',
@@ -487,7 +487,7 @@ function abrirDia(data, sqUnico) {
     alguem = true;
     h += '<ul class="lista-dia">' + (sqUnico ? '' : '<li class="gsq" style="display:block;padding:0;border:none;background:none">' + esc(s.emoji + ' ' + s.label) + '</li>');
     itens.forEach(x => {
-      if (x.e.t !== 'folga' && x.m.init) menc.push('@' + x.m.init);
+      if (x.e.t !== 'folga' && x.m.init && !menc.includes('@' + x.m.init)) menc.push('@' + x.m.init);   // quem está em duas squads entra uma vez só
       h += '<li>' + av(x.m, x.e.t === 'plant' ? 'plant' : '') + '<div style="flex:1"><b>' + esc(x.m.nome) + '</b><small>' + (x.m.init ? '@' + esc(x.m.init) : '') + (x.e.n ? ' · ' + esc(x.e.n) : '') + '</small></div>' + chipTipo(x.e) + '</li>';
     });
     h += '</ul>';
@@ -595,6 +595,7 @@ async function confirmarCadastro(limpar) {
   try {
     await update(ref(db, 'kanban/escala'), upd);
     lsSet('escala_sq', cad.sq);
+    if (cad.uid !== user.uid) avisarPessoa(cad.uid, cad.sq, r.datas, limpar, base);   // gestor mexeu na escala de OUTRA pessoa: ela é avisada (sino + push)
     const primeira = parseISO(r.datas[0]);
     const fora = primeira < semana || primeira > addDias(semana, 6);
     fecharOv();
@@ -611,6 +612,24 @@ async function confirmarCadastro(limpar) {
   gravando = false;
 }
 
+// Aviso (sino + push) pra pessoa cuja escala um gestor cadastrou/limpou. Uma notificação por cadastro (período inteiro), nunca pra quem mexeu na própria.
+// Tipo `escala` (MareNotif.TIPOS · PUSH_TYPES). `okrObjId` leva a 1ª data (mesmo atalho do meta_lembrete) pra o sino abrir a semana certa.
+async function avisarPessoa(uid, sq, datas, limpar, base) {
+  try {
+    const s = squads.find(x => x.id === sq), id = 'n' + Date.now() + Math.random().toString(36).slice(2, 6);
+    const ini = parseISO(datas[0]), fim = parseISO(datas[datas.length - 1]);
+    const per = datas.length === 1 ? curto(ini) : curto(ini) + ' – ' + curto(fim) + ' (' + datas.length + ' dias)';
+    const hora = !limpar && base.i ? ' ' + base.i + (base.f ? '–' + base.f : '') : '';
+    const oque = limpar ? 'escala removida' : (TIPOS[base.t] || {}).nome + hora;
+    const quem = (user.displayName || user.email || '').split(' ')[0];
+    await set(ref(db, 'kanban/usuarios/' + uid + '/notificacoes/' + id), {
+      id, type: 'escala', title: limpar ? '🗓️ Sua escala foi removida' : '🗓️ Sua escala foi cadastrada',
+      sub: [(s ? s.label : sq), per, oque, quem ? 'por ' + quem : ''].filter(Boolean).join(' · '),
+      squad: sq, okrObjId: datas[0], read: false, ts: new Date().toISOString(),
+    });
+  } catch (e) { console.warn('[escala] não deu pra avisar a pessoa:', e); }
+}
+
 // ═══ Baixar a escala em JPG (dia · semana · mês) ═══
 // Desenhada direto num <canvas> (sem biblioteca externa e sem foto de perfil, que "contaminaria" o canvas e bloquearia o download).
 // Respeita a visão da tela (squad escolhida ou todas) e o filtro de subtime.
@@ -619,7 +638,8 @@ const FONTE = '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-ser
 const JC = { txt: '#eaf2f8', txt2: '#a9bccb', txt3: '#6f8598', accent: '#38b6ff', warn: '#ffd166', danger: '#ff5c7a',
   trab: { c: '#2ecc9c', bg: 'rgba(46,204,156,.18)' }, plant: { c: '#ff9f43', bg: 'rgba(255,159,67,.24)' }, folga: { c: '#8aa0b4', bg: 'rgba(138,160,180,.14)' } };
 const ORDEM_T = { plant: 0, trab: 1, folga: 2 };
-let jpg = null;   // { modo, ref, seq, canvas }
+let jpg = null;   // { modo, ref, canvas, nome }
+let jSeq = 0;     // contador GLOBAL de pedidos de imagem: só a resposta do último vale (um por modal reiniciava em 0 e deixava uma resposta velha passar)
 
 function jRR(x, px, py, w, h, r, fill, stroke) {
   x.beginPath(); x.moveTo(px + r, py); x.arcTo(px + w, py, px + w, py + h, r); x.arcTo(px + w, py + h, px, py + h, r); x.arcTo(px, py + h, px, py, r); x.arcTo(px, py, px + w, py, r); x.closePath();
@@ -827,25 +847,25 @@ function jBaixar(c, nome) {
   }, 'image/jpeg', 0.92);
 }
 async function jpgAtualizar() {
-  const meu = ++jpg.seq, prev = $('j-prev'), bt = $('j-baixar');
+  const meu = ++jSeq, prev = $('j-prev'), bt = $('j-baixar');
   if (!prev) return;
   const per = jPeriodo(jpg.modo, jpg.ref); $('j-per').textContent = per.titulo;
   document.querySelectorAll('#j-modo button').forEach(b => b.setAttribute('aria-selected', b.dataset.m === jpg.modo));
   bt.disabled = true; jpg.canvas = null; prev.innerHTML = '<div class="state" style="padding:30px 0">Montando a imagem…</div>';
   try {
     const r = await jGerar(jpg.modo, jpg.ref);
-    if (meu !== jpg.seq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
+    if (meu !== jSeq || !$('j-prev')) return;      // a pessoa já mudou de período/fechou: resposta velha
     jpg.canvas = r.c; jpg.nome = 'escala-' + (visao === 'global' ? 'todas-as-squads' : squad) + '-' + jpg.modo + '-' + r.per.arq + '.jpg';
     r.c.style.cssText = 'width:100%;height:auto;border-radius:10px;display:block;'; prev.innerHTML = ''; prev.appendChild(r.c); bt.disabled = false;
   } catch (e) {
-    if (meu !== jpg.seq || !$('j-prev')) return;
+    if (meu !== jSeq || !$('j-prev')) return;
     const negado = e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''));
     prev.innerHTML = '<div class="state" style="padding:24px 0">⚠️ ' + (negado ? 'Sem permissão pra ler a escala (as regras do banco ainda não foram publicadas).' : 'Não deu pra carregar a escala agora. Tente de novo.') + '</div>';
   }
 }
 function abrirJpg(modo, refISO) {
   const sem = diasDaSemana().map(iso);
-  jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), seq: 0, canvas: null, nome: '' };
+  jpg = { modo: modo || 'semana', ref: refISO || (sem.includes(hojeISO()) ? hojeISO() : iso(semana)), canvas: null, nome: '' };
   const sc = jEscopo();
   abrirOv('<h2>🖼️ Baixar escala em JPG</h2><p class="sub">Imagem pronta pra mandar no WhatsApp ou colar numa apresentação. Vale pra <b>' + esc(sc.nome) + '</b>' + (filtro.sub ? ' · subtime <b>' + esc(filtro.sub) + '</b>' : '') + ' — mude a visão, a squad ou o subtime na tela antes, se precisar.</p>' +
     '<div class="seg" id="j-modo" role="tablist"><button type="button" data-m="dia">Dia</button><button type="button" data-m="semana">Semana</button><button type="button" data-m="mes">Mês</button></div>' +

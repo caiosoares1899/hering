@@ -64,6 +64,8 @@
     return t + (m && m.sufixo ? ' ' + m.sufixo : '');
   }
 
+  // % pra MOSTRAR: arredonda, mas só diz 100 quando a meta foi batida de verdade (99,7 % aparece 99 %, não "100%" sem o 🏆 e sem o popup).
+  const pctTxt = p => p == null || !isFinite(p) ? '—' : (p < 100 ? Math.min(99, Math.round(p)) : Math.round(p)) + '%';
   // % da meta (pode passar de 100). null = ainda sem valor informado.
   function pct(m) {
     if (!m || !isNum(m.atual) || !isNum(m.alvo)) return null;
@@ -352,7 +354,7 @@
       tique = `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="var(--txt)" stroke-width="2.4" stroke-linecap="round"><title>Esperado hoje: ${Math.round(esp)}%</title></line>`;
     }
     const marcas = [20, 40, 60, 80].map(k => { const a = k / 100 * 2 * Math.PI, cx = size / 2, cy = size / 2, ri = r - th / 2, ro = r + th / 2; return `<line x1="${(cx + ri * Math.cos(a)).toFixed(1)}" y1="${(cy + ri * Math.sin(a)).toFixed(1)}" x2="${(cx + ro * Math.cos(a)).toFixed(1)}" y2="${(cy + ro * Math.sin(a)).toFixed(1)}" stroke="rgba(0,0,0,.45)" stroke-width="1.5"/>`; }).join('');
-    const txt = p == null ? '—' : Math.round(p) + '%';
+    const txt = pctTxt(p);
     const fs = Math.round(size * (txt.length > 4 ? .2 : .26));
     return `<div class="mm-ring ${st.id}" style="width:${size}px;height:${size}px;--mm-c:${st.cor}" role="img" aria-label="${esc(m.titulo)}: ${esc(txt)} da meta, ${esc(st.label)}">
       <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(var(--ink-rgb,0,0,0),.6)" stroke-width="${th}"/>
@@ -442,7 +444,7 @@
     const faltaTxt = isNum(m.atual) ? (p >= 100 ? '🏆 batida!' : 'falta <b>' + esc(fmtVal(m, falta(m))) + '</b>') : 'sem valor ainda';
     const prazo = dr == null ? '' : (dr === 0 ? '<b>é hoje!</b>' : 'em <b>' + dr + (dr === 1 ? ' dia' : ' dias') + '</b>');
     return `<div class="mm-card" style="--mm-c:${st.cor}" data-mm-id="${esc(m.id)}" data-mm-esc="${esc(m.escopo)}" data-mm-sq="${esc(m.squad || '')}">
-      <div class="mm-card-h"><div class="mm-card-e">${esc(m.emoji || '🏆')}</div><div class="mm-card-t"><b>${esc(m.titulo)}</b>${tagsHtml(m)}</div><div class="mm-card-pct">${p == null ? '—' : Math.round(p) + '%'}</div></div>
+      <div class="mm-card-h"><div class="mm-card-e">${esc(m.emoji || '🏆')}</div><div class="mm-card-t"><b>${esc(m.titulo)}</b>${tagsHtml(m)}</div><div class="mm-card-pct">${pctTxt(p)}</div></div>
       <div class="mm-bar" title="${esc(st.label)}"><i style="width:${w.toFixed(0)}%"></i>${esp != null && esp > 0 && esp < 100 ? `<u style="left:${esp.toFixed(0)}%" title="Esperado hoje: ${Math.round(esp)}%"></u>` : ''}</div>
       <div class="mm-card-f"><span>${esc(fmtPar(m))} · ${faltaTxt}</span><span>${statusPill(m)} ${prazo}</span></div>
       <div class="mm-card-f" style="margin-top:4px"><span>${atualizadoHtml(m)}</span>${o.escopoTxt ? `<span>${esc(o.escopoTxt)}</span>` : ''}</div>
@@ -452,7 +454,7 @@
   function rankingHtml(itens) {
     // itens: [{nome, emoji, pct, cor}]
     if (!itens.length) return '';
-    return `<div class="mm-rank">${itens.map(i => `<div class="mm-rk" style="--mm-c:${i.cor}" title="${esc(i.nome)}: ${i.pct == null ? 'sem valor' : Math.round(i.pct) + '%'}"><span class="mm-rk-n">${esc(i.emoji || '')} ${esc(i.nome)}</span><span class="mm-rk-b"><i style="width:${Math.max(0, Math.min(100, i.pct == null ? 0 : i.pct)).toFixed(0)}%"></i></span><span class="mm-rk-v">${i.pct == null ? '—' : Math.round(i.pct) + '%'}</span></div>`).join('')}</div>`;
+    return `<div class="mm-rank">${itens.map(i => `<div class="mm-rk" style="--mm-c:${i.cor}" title="${esc(i.nome)}: ${i.pct == null ? 'sem valor' : pctTxt(i.pct)}"><span class="mm-rk-n">${esc(i.emoji || '')} ${esc(i.nome)}</span><span class="mm-rk-b"><i style="width:${Math.max(0, Math.min(100, i.pct == null ? 0 : i.pct)).toFixed(0)}%"></i></span><span class="mm-rk-v">${pctTxt(i.pct)}</span></div>`).join('')}</div>`;
   }
 
   // ════════════════ ESTADO + DADOS ════════════════
@@ -504,12 +506,22 @@
     await root._set(refDe(pathMeta(m)), out);
     return { ok: true, meta: Object.assign({ id: m.id }, out) };
   }
-  async function remover(m) { await root._set(refDe(pathMeta(m)), null); await root._set(refDe(PATHS.log + '/' + m.id), null).catch(() => {}); return { ok: true }; }
+  // As regras só dão .write nas CHAVES do histórico (metas_log/{id}/{chave}), não no nó-pai: apagar `metas_log/{id}` de uma vez é NEGADO (e o erro era engolido,
+  // deixando o histórico órfão no banco). Apaga chave a chave, num update só.
+  async function remover(m) {
+    await root._set(refDe(pathMeta(m)), null);
+    try {
+      const ks = Object.keys((await root._get(refDe(PATHS.log + '/' + m.id))).val() || {});
+      if (ks.length) { const u = {}; ks.forEach(k => { u[k] = null; }); await root._update(refDe(PATHS.log + '/' + m.id), u); }
+    } catch (e) { console.warn('[metas] histórico não apagado', e); }
+    delete S.logCache[m.id];
+    return { ok: true };
+  }
   async function arquivar(m, ativo) { await root._set(refDe(pathMeta(m) + '/ativo'), !!ativo); return { ok: true }; }
   // Informa um valor: grava atual + marco + histórico num update só (multi-caminho = tudo ou nada).
   async function registrar(m, valor, user, nota) {
     if (!isNum(valor)) return { ok: false, erro: 'Informe um número.' };
-    const patch = patchDeRegistro(m, valor, user);
+    const patch = patchDeRegistro(achar(m.id, m.escopo, m.squad) || m, valor, user);   // marco comparado com o MAIS NOVO do banco (o `m` da tela pode estar velho: o marco já conquistado nunca desce)
     const upd = {}; Object.keys(patch).forEach(k => { upd[pathMeta(m) + '/' + k] = patch[k]; });
     const chave = String(patch.atualizadoEm).padStart(14, '0') + '_' + Math.random().toString(36).slice(2, 5);
     const lg = { v: Number(valor), t: patch.atualizadoEm, por: (user && user.uid) || null, nome: (user && user.nome) || '' }; if (nota) lg.nota = String(nota).slice(0, 140);
@@ -533,7 +545,9 @@
     const ov = document.createElement('div'); ov.className = 'mm-ov mm'; ov.innerHTML = '<div class="mm-md" role="dialog" aria-modal="true">' + html + '</div>';
     ov.addEventListener('mousedown', e => { if (e.target === ov && fechavel !== false) ov.remove(); });
     document.body.appendChild(ov);
-    const onKey = e => { if (e.key === 'Escape' && ov.isConnected) { ov.remove(); document.removeEventListener('keydown', onKey, true); } };
+    // Esc fecha SÓ este modal: `stopPropagation` impede que o Esc global da página feche também a tela que está por baixo (⚙ Configurações, Dados…). Se o modal já foi
+    // fechado por outro caminho (Cancelar, clique fora), o ouvinte se desfaz na próxima tecla em vez de ficar pendurado.
+    const onKey = e => { if (!ov.isConnected) { document.removeEventListener('keydown', onKey, true); return; } if (e.key === 'Escape') { e.stopPropagation(); ov.remove(); document.removeEventListener('keydown', onKey, true); } };
     document.addEventListener('keydown', onKey, true);
     return ov;
   }
@@ -614,11 +628,14 @@
       <div class="mm-acts"><button type="button" class="mm-btn p" id="mm-r-ok">Atualizar</button><span class="g"></span><button type="button" class="mm-btn" id="mm-r-x">Cancelar</button></div>`);
     if (!ov) return;
     const $ = id => ov.querySelector('#' + id);
-    const novoVal = () => { const v = $('mm-r-v').value; if (!isNum(v)) return null; return modo === 'somar' ? (isNum(m.atual) ? Number(m.atual) : (isNum(m.inicial) ? Number(m.inicial) : 0)) + Number(v) : Number(v); };
+    // Sempre parte do valor MAIS NOVO (o listener ao vivo mantém isso): "somar" não pode usar o que a tela viu quando o modal abriu — se outra pessoa informou
+    // nesse meio-tempo, a soma dela se perdia.
+    const fresco = () => achar(m.id, m.escopo, m.squad) || m;
+    const novoVal = () => { const v = $('mm-r-v').value; if (!isNum(v)) return null; const f = fresco(); return modo === 'somar' ? (isNum(f.atual) ? Number(f.atual) : (isNum(f.inicial) ? Number(f.inicial) : 0)) + Number(v) : Number(v); };
     const prev = () => {
       const nv = novoVal(), el = $('mm-r-p'); if (nv == null) { el.textContent = 'Digite o valor para ver o efeito.'; return; }
-      const nm = Object.assign({}, m, { atual: nv }), p = pct(nm), mc = marcoDe(p), up = mc > (Number(m.marco) || 0);
-      el.innerHTML = `Vai para <b>${esc(fmtVal(m, nv))}</b> → <b>${p == null ? '—' : Math.round(p) + '%'}</b> da meta (${statusPill(nm)})${up ? `<br>🐟 <b>Novo peixe!</b> Cruzou ${mc}% — vai aparecer o popup pra todo mundo.` : ''}`;
+      const nm = Object.assign({}, fresco(), { atual: nv }), p = pct(nm), mc = marcoDe(p), up = mc > (Number(fresco().marco) || 0);
+      el.innerHTML = `Vai para <b>${esc(fmtVal(m, nv))}</b> → <b>${pctTxt(p)}</b> da meta (${statusPill(nm)})${up ? `<br>🐟 <b>Novo peixe!</b> Cruzou ${mc}% — vai aparecer o popup pra todo mundo.` : ''}`;
     };
     ov.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { modo = b.dataset.m; ov.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('mm-r-l').firstChild.textContent = modo === 'somar' ? 'Quanto entrou desde a última vez' : 'Valor total acumulado'; prev(); });
     $('mm-r-v').oninput = prev; $('mm-r-x').onclick = () => ov.remove();
@@ -673,7 +690,7 @@
       <p class="sub">${esc(m.emoji || '🎯')} <b>${esc(m.titulo)}</b><br>${cem ? 'A rede encheu! Parabéns, time.' : (dono ? 'Chegamos a <b>' + marco + '%</b> da meta ' + (m.escopo === 'digital' ? 'do Digital' : 'da squad') + '.' : '') + (nx ? ' Próximo peixe em <b>' + nx.marco + '%</b>.' : '')}</p>
       <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${cem ? 'Bora comemorar! 🥳' : 'Bora pescar mais! 🚀'}</button></div>`;
     const fecha = () => { if (!el.isConnected) return; el.remove(); document.removeEventListener('keydown', onKey, true); clearTimeout(tm); fim && fim(); };
-    const onKey = e => { if (e.key === 'Escape') fecha(); };
+    const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); fecha(); } };
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('mousedown', e => { if (e.target === el) fecha(); });
     el.querySelector('.x').onclick = fecha; el.querySelector('.go').onclick = fecha;
@@ -742,7 +759,7 @@
   const api = {
     IS_DEV, PATHS, SUBMARCAS, CANAIS, MARCOS, STATUS,
     // matemática
-    hojeSP, fmtVal, pct, esperado, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
+    hojeSP, fmtVal, pctTxt, pct, esperado, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
     injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
     // dados

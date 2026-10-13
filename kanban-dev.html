@@ -1761,6 +1761,14 @@ input[type="date"]{-moz-appearance:textfield;}
 .cal-day.today{border-color:rgba(56,182,255,.4);background:rgba(37,99,201,.1);}
 .cal-day.other-month{opacity:.35;}
 .cal-day.has-events{border-color:rgba(29,233,182,.2);}
+.cal-esc-row{margin-top:auto;display:flex;gap:4px;flex-wrap:wrap;align-items:center;font-size:9.5px;padding-top:3px;cursor:pointer;}
+.cal-esc-me{padding:1px 6px;border-radius:999px;font-weight:700;border:1px solid;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
+@media (max-width:640px){ .cal-esc-me{padding:0 4px;} }
+.cal-esc-me.t-trab{color:#2ecc9c;background:rgba(46,204,156,.14);border-color:rgba(46,204,156,.4);}
+.cal-esc-me.t-plant{color:#ff9f43;background:rgba(255,159,67,.16);border-color:rgba(255,159,67,.45);}
+.cal-esc-me.t-folga{color:var(--txt2);background:rgba(138,160,180,.12);border-color:rgba(138,160,180,.35);}
+.cal-esc-n{color:var(--txt2);font-weight:600;white-space:nowrap;}
+.cal-esc-row:hover .cal-esc-n{color:var(--accent);}
 .cal-day-num{font-size:12.5px;font-weight:700;color:var(--txt);margin-bottom:4px;}
 .cal-day.other-month .cal-day-num{color:var(--txt3);}
 .cal-day.today .cal-day-num{color:var(--accent);font-weight:800;}
@@ -6533,7 +6541,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.835-dev</div>
+<div class="version">v8.30.837-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6552,7 +6560,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
      caminho relativo local — sem nenhuma outra alteração de conteúdo. -->
 <script type="module">
 import { initializeApp } from './vendor/firebase-10.14.1/firebase-app.js';
-import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
+import { getDatabase, ref, set, get, onValue, onChildAdded, onChildChanged, onChildRemoved, update, remove, increment, query, orderByChild, orderByKey, equalTo, limitToLast, startAt, endAt, runTransaction } from './vendor/firebase-10.14.1/firebase-database.js';
 import { getAuth, GoogleAuthProvider, OAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, reload, updateProfile } from './vendor/firebase-10.14.1/firebase-auth.js';
 import { getMessaging, getToken as fcmGetToken, deleteToken as fcmDeleteToken, onMessage as fcmOnMessage, isSupported as fcmIsSupported } from './vendor/firebase-10.14.1/firebase-messaging.js';
 
@@ -6659,6 +6667,8 @@ window._limitToLast=limitToLast;
 // orderByKey: só pro listener de kanban/dados_diarios (/otimizaçãoderotina, Passo 4.1, 2026-10-10) — as chaves desse nó são DATAS
 // ('YYYY-MM-DD'), então ordem de chave É ordem cronológica (diferente das notificações acima, cujo id tem prefixos variados).
 window._orderByKey=orderByKey;
+// startAt/endAt: só pra Escala no mês do Calendário (kanban/escala, chaves = datas) — lê só o intervalo visível.
+window._startAt=startAt; window._endAt=endAt;
 window._auth=auth; window._provider=provider; window._msProvider=msProvider; window._msPersonalProvider=msPersonalProvider;
 
 // ── Push notifications (FCM) ────────────────────────────────────────
@@ -6879,8 +6889,8 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=23"></script>
-<script src="mare-metas-dev.js?v=2"></script>
+<script src="mare-notif-dev.js?v=24"></script>
+<script src="mare-metas-dev.js?v=3"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -28176,7 +28186,7 @@ const HELP_CONTENT = {
     { icon:'✓', title:'Resolver vs. excluir lembrete', text:'O ✓ RESOLVE o lembrete só pra você — some da sua tela mas continua visível para os outros que ainda precisam vê-lo. Já o 🗑 (disponível só para quem criou ou para admins) EXCLUI o lembrete para todo mundo. Em lembretes próprios, o ✓ conclui e remove de vez, já que são privados.' },
     { icon:'🌊', title:'Avisos automáticos do quadro', text:'Quando você liga o filtro Quadro, o sistema gera post-its automaticamente a partir dos cards: 🚧 cards bloqueados, ⚠ riscos mapeados, ⏰ prazos atrasados, ⚡ vencendo hoje, 📅 vencendo em até 2 dias e ✅ resolvidos nas últimas 48h. Clicar no aviso abre o card.' },
     { icon:'🎯', title:'Lembretes direcionados (PO)', text:'PO e organizador podem criar lembretes para um membro específico ou para a squad inteira em Configurações → 📌 Lembretes. Quem é o destinatário vê um post-it marcado com 🎯. Cada pessoa só enxerga os lembretes destinados a ela ou a "toda a squad".' },
-    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).\n\n🖼️ <b>Baixar JPG</b>: gera uma imagem da escala pra mandar no WhatsApp ou colar numa apresentação. Escolha <b>Dia, Semana ou Mês</b> e uma data de referência, confira a prévia e baixe. Vale pra squad (ou todas as squads) e respeita o filtro de subtime. No detalhe de um dia, <b>🖼️ JPG do dia</b> abre direto no modo Dia.' },
+    { icon:'🗓️', title:'Escala (quem trabalha quando)', text:'Abra 📅 Calendários e escolha a visão <b>👥 Escala</b> (ao lado de Tudo, Eventos e Prazos). Você vê, semana a semana, quem da squad está ✅ Escalado, 🔥 de Plantão ou 🏖️ de Folga — com foto, @iniciais e a cobertura de cada dia (⚠️ avisa dia útil sem ninguém).\n\n👥 <b>Squad</b> mostra as pessoas da squad nos 7 dias. 🌐 <b>Todas as squads</b> mostra uma linha por squad, com as fotos de quem está no dia — ótimo pra achar buracos antes da Black Friday. Clique num dia pra ver a lista e copiar as menções (@) de quem está trabalhando.\n\n➕ <b>Cadastrar escala</b>: escolha o período (ou 🔥 Semana da Black Friday), os dias da semana, o tipo, um horário (opcional) e uma observação. Cada pessoa cadastra a própria escala; PO, Organizador e ADM da squad podem cadastrar a de qualquer pessoa. Também dá pra clicar direto numa célula pra ajustar um dia só, e 🗑 Limpar período apaga o que já estava cadastrado.\n\n🔎 <b>Filtro de subtime</b>: escolha um subtime (os que o PO cria em ⚙ Config → Subtimes) pra ver só essas pessoas. Na visão global, subtimes de squads diferentes com o mesmo nome contam como um só ("Designers" mostra os Designers de todas as squads).\n\n🖼️ <b>Baixar JPG</b>: gera uma imagem da escala pra mandar no WhatsApp ou colar numa apresentação.\n\n📅 <b>No mês</b>: na visão Tudo/Eventos/Prazos do Calendário, cada dia mostra a <b>sua</b> escala (✅ horário · 🔥 Plantão · 🏖️ Folga) e quantas pessoas da squad estão escaladas (👥 N · 🔥 plantão). Clique no dia pra ver quem é e use Abrir na Escala pra ir direto à semana dele. O botão <b>👥 Escala ✓</b> nas Legendas liga/desliga isso (fica lembrado neste aparelho).\n\n🔔 <b>Aviso</b>: quando PO, Organizador ou ADM cadastra (ou limpa) a escala de OUTRA pessoa, ela recebe uma notificação com o período e o tipo — clicar abre a Escala na semana certa. Escolha <b>Dia, Semana ou Mês</b> e uma data de referência, confira a prévia e baixe. Vale pra squad (ou todas as squads) e respeita o filtro de subtime. No detalhe de um dia, <b>🖼️ JPG do dia</b> abre direto no modo Dia.' },
     { icon:'🎧', title:'Status de presença', text:'Clique na sua foto no topo direito para definir um status rápido: 🎧 Foco total, 📞 Em reunião, 🍔 Almoço, 🌙 Ausente, ou ✓ Disponível. O emoji aparece na sua foto e na de todos os membros online, ajudando o time a saber quando não interromper.' },
     { icon:'👍', title:'Reações em comentários', text:'Em vez de responder um comentário só para dizer "ciente", passe o mouse e clique no ＋ para reagir com 👍 👀 ❤️ ✅ 🎉. Clique de novo na sua reação para removê-la. Reduz o ruído mantendo o reconhecimento.' },
     { icon:'🔔', title:'Gerenciar notificações', text:'Clique em 🔔 no header para ver suas notificações. Para dispensar uma notificação individualmente, passe o mouse sobre ela e clique no ✕ que aparece à direita — ela some só para você sem afetar os outros. Para limpar todas de uma vez, use o botão Limpar antigas no rodapé do painel.' },
@@ -29180,6 +29190,7 @@ const NOTIF_ICONS = {
   feedback:    '💬',
   painel_broadcast: '📢',
   meta_lembrete: '🐟',
+  escala: '🗓️',
 };
 
 function toggleNotifPanel(){
@@ -30218,6 +30229,12 @@ function openNotif(notifId, cardId, squad, commentId, type, okrObjId, meetingLin
     openIntakePanel();
     return;
   }
+  // 🗓️ Escala cadastrada por um gestor: abre a Escala na semana cadastrada (okrObjId = 1ª data).
+  if(type==='escala'){
+    const u = MareNotif.urlPessoal({type:'escala', squad, okrObjId});
+    if(u && u.url) MareNotif.abrirPagina(u.url);
+    return;
+  }
   // 🐟 Lembrete de preencher a meta: abre a aba 📊 Dados (okrObjId carrega o escopo: 'digital' | 'squad') — se for meta de OUTRA squad, vai pra ela já na aba certa.
   if(type==='meta_lembrete'){
     const aba = okrObjId==='digital' ? 'digital' : 'squad';
@@ -31051,6 +31068,7 @@ let editingEvId=null;
 let calViewMode = 'both';
 
 function changeCalView(mode) {
+  if(calViewMode==='escala' && mode!=='escala') _calEscala.ts=0;   // voltou da Escala: o iframe pode ter cadastrado — o mês relê
   calViewMode = mode;
   document.querySelectorAll('#cal-ov .view-btn').forEach(btn => {
     if (btn.hasAttribute('data-mode')) {
@@ -31067,10 +31085,10 @@ function _calMostrarEscala(on){
   document.getElementById('cal-ov')?.classList.toggle('cal-esc', !!on);   // o CSS (.cal-esc) esconde mês/filtros e mostra a Escala — sem mexer em style inline
   const add=document.getElementById('btn-add-event'); if(add) add.style.display=on?'none':(_isPOorOrg()?'':'none');
   if(!on) return;
-  const pagina=(/kanban-dev\.html$/.test(window.location.pathname)?'escala-dev.html':'escala.html')+'?squad='+encodeURIComponent(ACTIVE_SQUAD);
+  const pagina=(/kanban-dev\.html$/.test(window.location.pathname)?'escala-dev.html':'escala.html')+'?squad='+encodeURIComponent(ACTIVE_SQUAD)+(_calEscalaSemana?'&semana='+encodeURIComponent(_calEscalaSemana):'');
   const fr=document.getElementById('cal-escala-fr'), full=document.getElementById('cal-escala-full');
   if(full) full.href=pagina;
-  if(fr && fr.dataset.sq!==ACTIVE_SQUAD){ fr.dataset.sq=ACTIVE_SQUAD; fr.src=pagina+'&embed=1'; }
+  if(fr && fr.dataset.url!==pagina){ fr.dataset.url=pagina; fr.dataset.sq=ACTIVE_SQUAD; fr.src=pagina+'&embed=1'; }   // recarrega só quando a squad ou a semana pedida mudaram
 }
 
 function populateCalFilters() {
@@ -31113,6 +31131,7 @@ function openCal(){
   renderCal();
   _calMostrarEscala(calViewMode === 'escala');
   document.getElementById('cal-ov').classList.add('open');
+  _calEscalaCarregar();
 }
 
 function calNav(dir){
@@ -31164,6 +31183,7 @@ function renderBoardCalLegend(){
      <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'cards')">📎 Prazos ▾</button>
       <div id="cal-legend-pop-cards" class="ctx-menu" style="display: none; position: absolute; top: calc(100% + 8px); right: 0; padding: 12px; min-width: 260px; max-height: 400px; overflow-y: auto; flex-direction: column; gap: 7px; z-index: 9999; box-shadow: 0 8px 32px rgba(0,0,0,0.8);"></div>
     </div>
+    <button class="view-btn" id="cal-esc-toggle" style="color: var(--txt);${_calEscalaOn?'border-color:var(--accent);':'opacity:.65;'}" aria-pressed="${_calEscalaOn}" onclick="calToggleEscala()" title="Mostra no mês a sua escala e quantos estão escalados em cada dia">👥 Escala ${_calEscalaOn?'✓':'✗'}</button>
     ${(Object.keys(window._squadCalendars||{}).length || (window._gcalGlobalEvents||[]).length) ? `
     <div style="position: relative; display: inline-block;">
      <button class="view-btn" style="color: var(--txt);" onclick="toggleCalLegendPopup(event, 'agendas')">📅 Agendas ▾</button>
@@ -31250,7 +31270,63 @@ function renderBoardCalLegend(){
 
 // renderCal chama a legenda
 const _origRenderCal=renderCal;
-renderCal=function(){ _origRenderCal(); renderBoardCalLegend(); };
+renderCal=function(){ _origRenderCal(); renderBoardCalLegend(); if(document.getElementById('cal-ov')?.classList.contains('open')) _calEscalaCarregar(); };
+// 👥 Escala no mês (2026-10-13): em cada dia, a MINHA escala (✅ horário / 🔥 Plantão / 🏖️ Folga) e quantas pessoas da squad estão escaladas (com o plantão).
+// Lê só o intervalo visível de kanban/escala (chaves = datas), 1 vez por mês navegado (cache de 5 min), só com o Calendário aberto e só se o interruptor
+// "👥 Escala" da legenda estiver ligado (guardado neste aparelho). Clicar no resumo abre a Escala (aba 👥) já na semana do dia.
+let _calEscalaOn=(()=>{ try{ return localStorage.getItem('mare_cal_escala')!=='0'; }catch(e){ return true; } })();
+let _calEscala={dados:{},de:'',ate:'',ts:0,seq:0};
+let _calEscalaSemana='';
+const _CAL_ESC_TIPO={trab:{e:'✅',n:'Escalado'},plant:{e:'🔥',n:'Plantão'},folga:{e:'🏖️',n:'Folga'}};
+function _calIsoLocal(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function _calEscalaCarregar(){
+  if(!_calEscalaOn || !window._query || !window._startAt || !window._endAt || !window._orderByKey) return;
+  const ini=new Date(calYear,calMonth,1); ini.setDate(ini.getDate()-7);
+  const fim=new Date(calYear,calMonth+1,0); fim.setDate(fim.getDate()+7);
+  const de=_calIsoLocal(ini), ate=_calIsoLocal(fim);
+  if(_calEscala.de===de && _calEscala.ate===ate && Date.now()-_calEscala.ts<300000) return;
+  const meu=++_calEscala.seq;   // só a última leitura vale (navegar de mês rápido)
+  const guarda=v=>{ _calEscala.dados=v; _calEscala.de=de; _calEscala.ate=ate; _calEscala.ts=Date.now(); };
+  window._get(window._query(window._ref(window._db,'kanban/escala'),window._orderByKey(),window._startAt(de),window._endAt(ate))).then(s=>{
+    if(meu!==_calEscala.seq) return;
+    guarda(s.val()||{});
+    if(document.getElementById('cal-ov')?.classList.contains('open') && calViewMode!=='escala') renderCal();
+  }).catch(()=>{ if(meu===_calEscala.seq) guarda({}); });   // sem permissão (conta de fora) ou sem rede: o mês fica sem a escala, sem barulho
+}
+function calToggleEscala(){
+  _calEscalaOn=!_calEscalaOn;
+  try{ localStorage.setItem('mare_cal_escala',_calEscalaOn?'1':'0'); }catch(e){}
+  if(_calEscalaOn){ _calEscala.ts=0; _calEscalaCarregar(); }
+  renderCal();
+}
+// Escala do dia nesta squad: [{uid,e}] (só gente que ainda está na squad); null = nada cadastrado / interruptor desligado.
+function _calEscalaDia(ds){
+  if(!_calEscalaOn) return null;
+  const dia=(_calEscala.dados[ds]||{})[ACTIVE_SQUAD]; if(!dia) return null;
+  const uids=new Set((typeof members!=='undefined'?members:[]).map(m=>m.uid).filter(Boolean));
+  const out=[]; Object.keys(dia).forEach(uid=>{ const e=dia[uid]; if(!e||!_CAL_ESC_TIPO[e.t]) return; if(uids.size && !uids.has(uid)) return; out.push({uid,e}); });
+  return out.length?out:null;
+}
+function _calEscalaHora(e){ return e&&e.i?(e.i+(e.f?'–'+e.f:'')):''; }
+function _calEscalaRowHtml(ds){
+  const L=_calEscalaDia(ds); if(!L) return '';
+  const meuUid=window._currentUser&&window._currentUser.uid, eu=L.find(x=>x.uid===meuUid);
+  const trab=L.filter(x=>x.e.t!=='folga'), plant=L.filter(x=>x.e.t==='plant');
+  const me=eu?`<span class="cal-esc-me t-${eu.e.t}" title="Sua escala neste dia">${_CAL_ESC_TIPO[eu.e.t].e} ${esc(_calEscalaHora(eu.e)||_CAL_ESC_TIPO[eu.e.t].n)}</span>`:'';
+  const n=trab.length?`<span class="cal-esc-n">👥 ${trab.length}${plant.length?' · 🔥'+plant.length:''}</span>`:'';
+  return `<div class="cal-esc-row" onclick="event.stopPropagation();calAbrirEscala(${jsq(ds)})" title="Escala do dia: ${trab.length} escalado${trab.length===1?'':'s'}${plant.length?' ('+plant.length+' de plantão)':''} — clique pra abrir a Escala">${me}${n}</div>`;
+}
+function _calEscalaPopHtml(ds){
+  const L=_calEscalaDia(ds); if(!L) return '';
+  const nome=uid=>{ const m=(typeof members!=='undefined'?members:[]).find(x=>x.uid===uid); return esc(String((m&&(m.name||m.init))||'?').split(' ')[0]); };
+  const grupo=(t,tit)=>{ const g=L.filter(x=>x.e.t===t).sort((a,b)=>nome(a.uid).localeCompare(nome(b.uid),'pt-BR')); return g.length?`<div style="font-size:11.5px;margin-top:4px;"><b>${tit}</b> (${g.length}): ${g.map(x=>nome(x.uid)+(_calEscalaHora(x.e)?' <span style="color:var(--txt3)">'+esc(_calEscalaHora(x.e))+'</span>':'')).join(', ')}</div>`:''; };
+  return `<div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--glass-b);"><div style="font-size:10px;color:var(--txt3);text-transform:uppercase;letter-spacing:.05em;font-weight:700;">👥 Escala neste dia</div>${grupo('plant','🔥 Plantão')}${grupo('trab','✅ Escalados')}${grupo('folga','🏖️ Folga')}<button class="btn btn-sm" style="margin-top:8px;" onclick="calAbrirEscala(${jsq(ds)})">Abrir na Escala ›</button></div>`;
+}
+function calAbrirEscala(ds){
+  closeOv('cal-day-pop-ov');
+  _calEscalaSemana=/^\d{4}-\d{2}-\d{2}$/.test(ds||'')?ds:'';
+  changeCalView('escala');
+}
 function makeDayEl(date,otherMonth=false,isToday=false){
   const ds=date.toISOString().split('T')[0];
   let dayItems = [];
@@ -31303,6 +31379,7 @@ function makeDayEl(date,otherMonth=false,isToday=false){
       }
     }).join('')
     +(ocultosCount > 0 ? `<div style="font-size:10px;color:var(--accent);font-weight:700;margin-top:2px;padding:2px 4px;">+${ocultosCount} mais...</div>` : '')
+    +_calEscalaRowHtml(ds)
     +`<button class="cal-add-btn" onclick="event.stopPropagation();openEvModal(${jsq(ds)})">+</button>`;
     
   // Ao clicar no dia, abre a janela flutuante com a lista completa estilo Google Calendar
@@ -31350,6 +31427,8 @@ function makeDayEl(date,otherMonth=false,isToday=false){
       }
     }).join('');
   }
+
+  body.insertAdjacentHTML('beforeend', _calEscalaPopHtml(ds));
 
   if (canEdit) {
     ft.innerHTML = `<button class="btn btn-teal btn-sm" style="width:100%;justify-content:center;" onclick="closeOv('cal-day-pop-ov');openEvModal(${jsq(ds)})">+ Novo Evento</button>`;

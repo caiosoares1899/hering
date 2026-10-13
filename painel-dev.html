@@ -2924,7 +2924,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.51 · painel-dev</div>
+<div class="version">v5.54 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3027,8 +3027,8 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=23"></script>
-<script src="mare-metas-dev.js?v=2"></script>
+<script src="mare-notif-dev.js?v=24"></script>
+<script src="mare-metas-dev.js?v=3"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -3402,7 +3402,9 @@ function saveCfg(){
 
   // Salva no Firebase
   const ref = window._ref(window._db, 'kanban/squads/'+cfgSquadId+'/dados/agil_cfg');
-  window._set(ref, cfg)
+  // update (mescla), NÃO set: `agil_cfg` também guarda o que o Maré grava (intakeEnabled, intakeCampos, bfBannerMsg) — um set() com este objeto novo apagava tudo isso
+  // (pedidos desligados pelo PO voltavam a ser aceitos pelo link público e os campos do pedido interno voltavam ao padrão).
+  window._update(ref, cfg)
     .then(()=>{ showToast('✅ Configurações salvas!'); closeCfg(); })
     .catch(e=>{ console.error(e); showToast('❌ Erro ao salvar: '+e.message); });
 }
@@ -7078,6 +7080,8 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?evento='+encodeURIComponent(${jsq(n.okrEventoId)})+'&data='+encodeURIComponent(${jsq(n.okrEventoData||'')}));" style="cursor:pointer;"`
       : _okrAlvo
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina(OKR_PAGE+'?okr='+encodeURIComponent(${jsq(_okrAlvo)}));" style="cursor:pointer;"`
+      : n.type==='escala'
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina('escala-dev.html?visao=squad&squad='+encodeURIComponent(${jsq(n.squad||'')})+'&semana='+encodeURIComponent(${jsq(n.okrObjId||'')}));" style="cursor:pointer;"`
       : n.type==='meta_lembrete'
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban-dev.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
       : n.link

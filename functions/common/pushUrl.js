@@ -15,6 +15,13 @@ function urlDoPush(notif) {
     const alvo = type === 'okr_agente' ? 'chat' : type === 'okr_mencao' ? 'notas' : String(n.okrObjId || '');
     return SITE_BASE_URL + 'okr.html' + (alvo ? '?okr=' + encodeURIComponent(alvo) : '');
   }
+  // Escala cadastrada por um gestor: abre a Escala (squad + semana cadastrada; `okrObjId` leva a 1ª data, igual ao meta_lembrete).
+  if (type === 'escala') {
+    const p = new URLSearchParams({ visao: 'squad' });
+    if (n.squad) p.set('squad', n.squad);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(String(n.okrObjId || ''))) p.set('semana', n.okrObjId);
+    return SITE_BASE_URL + 'escala.html?' + p.toString();
+  }
   const params = new URLSearchParams();
   if (n.squad) params.set('squad', n.squad);
   if (n.cardId) params.set('card', n.cardId);

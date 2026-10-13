@@ -12,11 +12,11 @@ const PAGE=process.env.PAGE||'oceano-dev.html', D=/-dev/.test(PAGE)?'-dev':'';  
  // 2) conta que não é da Hering é barrada
  { const {ctx,p}=await open(U('x','Fulano','x@gmail.com')); const r=await p.evaluate(()=>({err:document.getElementById('login-err').textContent, app:getComputedStyle(document.getElementById('app')).display, signedOut:window.__signedOut}));
    t('Gmail é barrado, com a dica do Radar', /@ciahering/.test(r.err) && r.app==='none' && r.signedOut>=1, r); await ctx.close(); }
- // 3) ADM: saudação, 4 cabines + Travessia, Painel visível
+ // 3) ADM: saudação, 4 cabines (a Travessia não tem cartão na home), Painel visível
  { const {ctx,p,errs}=await open(U('ana','Ana Silva')); const r=await p.evaluate(()=>({h1:document.getElementById('ola').textContent, cab:[...document.querySelectorAll('#tiles .tile-n')].map(x=>x.textContent.replace('último','')), tiles:document.querySelectorAll('#tiles .tile').length, atalhos:[...document.querySelectorAll('#atalhos button')].map(b=>b.dataset.url), cadastro:window.__log.filter(l=>l[0]==='update').map(l=>l[1])}));
    console.log('ADM:',JSON.stringify(r));
-   t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===5, r.h1);
-   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban'+D+'.html?squad=dev') && r.atalhos.includes('okr'+D+'.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar, A Bordo e Travessia (em breve)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo,Travessia', r.cab);
+   t('ADM: a 1ª coisa da tela são os produtos, com saudação curta', /Ana/.test(r.h1) && r.tiles===4, r.h1);
+   t('ADM: atalhos por squad e do Radar', r.atalhos.includes('kanban'+D+'.html?squad=dev') && r.atalhos.includes('okr'+D+'.html?okr=notas'), r.atalhos); t('ADM: vê Maré, Painel, Radar e A Bordo (Travessia só em Conheça o Oceano)', r.cab.join()==='Maré Digital,Painel,Radar,A Bordo', r.cab);
    t('já tem cadastro: não cria de novo', !r.cadastro.some(x=>/kanban\/usuarios\/ana$/.test(x)), r.cadastro);
    // temas
    await p.click('#btn-eu'); await p.waitForTimeout(200); const padrao=await p.evaluate(()=>document.documentElement.getAttribute('data-theme')); t('tema padrão é o Abrolhos da marca (sem data-theme), como as outras páginas', padrao===null, padrao);
