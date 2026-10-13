@@ -71,6 +71,12 @@ Pedido: meta global (Digital) configurável pelo Painel, meta de cada squad em C
 - **Testes:** `test_metas_calc.js` (14, matemática em Node) · `test_metas.js` (62, Maré: popup/fila/visto, abas, hero/KPIs/marcos, gráfico, atualizar valor, config criar/editar/excluir/desativar, permissões, caminhos `_dev`) · `test_metas_painel.js` (15) · `test_dados_diarios.js` ajustado (a captação agora está na aba 🌊 Digital).
 - **Dica:** não — o próprio popup 🐟 e o aviso do lançamento apresentam; uma dica exigiria bump do módulo de dicas em 4 páginas.
 
+### 🐟 Metas: entrada retroativa como PARTE do total (dia a dia) — 2026-10-13 · kanban-dev v8.30.840-dev · painel-dev v5.57 · mare-metas-dev v6 (SÓ DEV)
+Pedido: no retroativo só dava "definir o total" — pra lançar os 12 dias de setembro, um por vez, o todo tem que ser a **soma** deles.
+- **"+ Somar ao atual" agora vale no retroativo:** com a data/hora no passado, o valor é uma **parte** (rótulo "Quanto entrou neste dia/horário"). Ela **soma ao total** e o histórico é **recalculado**: o ponto novo fica em (acumulado até ali + parte) e os pontos que vinham depois sobem a mesma parte — o gráfico continua coerente. Pode lançar **em qualquer ordem**; parte negativa corrige um dia lançado a mais.
+- "Definir o total" retroativo continua existindo (acumulado daquele momento, só histórico se houver entrada mais nova). A prévia diz "Parte de dd/mm hh:mm: +X · o total passa de A para B".
+- Dado: ponto do histórico ganha `d` (a parte); `atualT` nunca recua. Sem deploy (regras já aceitam). Dica: não. Teste: `test_metas_retroativo.js` (cenário de 3 partes fora de ordem + negativa).
+
 ### 🐟 Metas: "Atualizar valor" com data e hora da entrada (retroativo) — 2026-10-13 · kanban-dev v8.30.839-dev · painel-dev v5.56 · mare-metas-dev v5 (SÓ DEV)
 Pedido: o valor pode ser lançado depois do fato (fechamento de ontem, de ontem às 14h…).
 - **Modal "Atualizar valor":** novo campo **Data e hora da entrada** (horário de Brasília, padrão = agora). Mudando pro passado vira **entrada retroativa**: "Somar ao atual" fica desligado (informe o **total acumulado naquele momento**), aparece "🕒 Voltar pra agora" e a prévia explica o que vai acontecer. Data/hora no futuro é recusada.

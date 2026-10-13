@@ -618,18 +618,32 @@
   //  • o histórico/gráfico recebe o ponto na data certa (`t`);
   //  • só vira o valor ATUAL se for o mais recente (`atualT` = instante do valor que está em `atual`); um retroativo mais antigo entra só no histórico;
   //  • `atualizadoEm/Por/Nome` seguem sendo QUANDO/QUEM atualizou de verdade (é o que o selo ⏰ e os lembretes olham).
-  async function registrar(m, valor, user, nota, quando) {
+  //  • `opc.parte` = o `valor` é uma PARTE (quanto entrou naquele momento), não o total: soma ao total de hoje e o histórico é recalculado — o ponto novo
+  //    fica em (acumulado até ali + parte) e todos os pontos DEPOIS dele sobem a mesma parte. Serve pra lançar, dia a dia, o que já passou (o todo = soma das partes).
+  async function registrar(m, valor, user, nota, quando, opc) {
     if (!isNum(valor)) return { ok: false, erro: 'Informe um número.' };
-    const agora = Date.now(), t = isNum(quando) ? Number(quando) : agora;
+    const agora = Date.now(), t = isNum(quando) ? Number(quando) : agora, parte = !!(opc && opc.parte);
     if (t > agora + 5 * 60e3) return { ok: false, erro: 'A data e hora da entrada não podem estar no futuro.' };
     const f = achar(m.id, m.escopo, m.squad) || m;   // marco/valor comparados com o MAIS NOVO do banco (o `m` da tela pode estar velho: o marco já conquistado nunca desce)
     const atualT = Number(f.atualT) || Number(f.atualizadoEm) || 0;   // instante do valor que está em `atual` (metas antigas, sem atualT: a última atualização)
-    const vira = !isNum(f.atual) || t >= atualT;
-    // não vira o atual: só histórico + "quem/quando atualizou"; fixa o atualT (senão o recuo pro atualizadoEm passaria a apontar pra AGORA)
-    const patch = vira ? Object.assign(patchDeRegistro(f, valor, user, agora), { atualT: t }) : { atualizadoEm: agora, atualizadoPor: (user && user.uid) || null, atualizadoNome: (user && user.nome) || '', atualT };
-    const upd = {}; Object.keys(patch).forEach(k => { upd[pathMeta(m) + '/' + k] = patch[k]; });
+    const upd = {}, base = isNum(f.atual) ? Number(f.atual) : (isNum(f.inicial) ? Number(f.inicial) : 0);
+    let patch, vira, lgv = Number(valor), lgd;
+    if (parte) {
+      const d = Number(valor); lgd = d; vira = !isNum(f.atual) || t >= atualT;
+      // o total sempre recebe a parte; `atualT` só avança se esta for a entrada mais recente
+      patch = Object.assign(patchDeRegistro(f, base + d, user, agora), { atualT: Math.max(t, atualT) });
+      let v = {}; try { v = (await root._get(refDe(PATHS.log + '/' + m.id))).val() || {}; } catch (e) { v = {}; }
+      let antes = isNum(f.inicial) ? Number(f.inicial) : 0;
+      Object.keys(v).sort().forEach(k => { const e = v[k] || {}, et = Number(e.t), ev = Number(e.v); if (!isFinite(et) || !isFinite(ev)) return; if (et <= t) antes = ev; else upd[PATHS.log + '/' + m.id + '/' + k + '/v'] = ev + d; });
+      lgv = antes + d;
+    } else {
+      vira = !isNum(f.atual) || t >= atualT;
+      // não vira o atual: só histórico + "quem/quando atualizou"; fixa o atualT (senão o recuo pro atualizadoEm passaria a apontar pra AGORA)
+      patch = vira ? Object.assign(patchDeRegistro(f, valor, user, agora), { atualT: t }) : { atualizadoEm: agora, atualizadoPor: (user && user.uid) || null, atualizadoNome: (user && user.nome) || '', atualT };
+    }
+    Object.keys(patch).forEach(k => { upd[pathMeta(m) + '/' + k] = patch[k]; });
     const chave = String(t).padStart(14, '0') + '_' + Math.random().toString(36).slice(2, 5);
-    const lg = { v: Number(valor), t, por: (user && user.uid) || null, nome: (user && user.nome) || '' }; if (nota) lg.nota = String(nota).slice(0, 140);
+    const lg = { v: lgv, t, por: (user && user.uid) || null, nome: (user && user.nome) || '' }; if (nota) lg.nota = String(nota).slice(0, 140); if (parte) lg.d = lgd;
     if (agora - t > 2 * 60e3) lg.reg = agora;   // retroativo: quando foi lançado
     upd[PATHS.log + '/' + m.id + '/' + chave] = lg;
     await root._update(refDe('kanban'), Object.fromEntries(Object.entries(upd).map(([k, v]) => [k.replace(/^kanban\//, ''), v])));
@@ -773,28 +787,30 @@
     // nesse meio-tempo, a soma dela se perdia.
     const fresco = () => achar(m.id, m.escopo, m.squad) || m;
     const novoVal = () => { const v = $('mm-r-v').value; if (!isNum(v)) return null; const f = fresco(); return modo === 'somar' ? (isNum(f.atual) ? Number(f.atual) : (isNum(f.inicial) ? Number(f.inicial) : 0)) + Number(v) : Number(v); };
-    // Data/hora da entrada: padrão = agora (Brasília). Mudando pro passado vira ENTRADA RETROATIVA (só "definir o total": "somar" parte do valor de agora).
+    // Data/hora da entrada: padrão = agora (Brasília). Mudando pro passado vira ENTRADA RETROATIVA: "definir o total" (acumulado daquele momento) ou "+ Somar" (uma PARTE: soma ao total e recalcula o histórico).
     const agoraSP = partesSP(Date.now()); $('mm-r-d').value = agoraSP.data; $('mm-r-h').value = agoraSP.hora; $('mm-r-d').max = agoraSP.data;
     const quandoMs = () => spParaMs($('mm-r-d').value, $('mm-r-h').value);
     const retro = () => { const q = quandoMs(); return !isNaN(q) && Date.now() - q > 2 * 60e3; };
     const prev = () => {
       const nv = novoVal(), el = $('mm-r-p'); if (nv == null) { el.textContent = 'Digite o valor para ver o efeito.'; return; }
       const f = fresco(), q = quandoMs(), ret = retro(), vira = !isNum(f.atual) || isNaN(q) || q >= (Number(f.atualT) || Number(f.atualizadoEm) || 0);
-      const nm = Object.assign({}, f, { atual: nv }), p = pct(nm), mc = marcoDe(p), up = vira && mc > (Number(f.marco) || 0);
-      el.innerHTML = ret && !vira
+      const nm = Object.assign({}, f, { atual: nv }), p = pct(nm), mc = marcoDe(p), up = (vira || (ret && modo === 'somar')) && mc > (Number(f.marco) || 0);
+      el.innerHTML = ret && modo === 'somar'
+        ? `🕒 Parte de <b>${esc(fmtQuando(q))}</b>: <b>+${esc(fmtVal(m, Number($('mm-r-v').value)))}</b>. O total passa de <b>${esc(fmtVal(m, isNum(f.atual) ? f.atual : (Number(f.inicial) || 0)))}</b> para <b>${esc(fmtVal(m, nv))}</b> → <b>${pctTxt(p)}</b> da meta (${statusPill(nm)}). O gráfico é recalculado a partir dessa data.${up ? `<br>🐟 <b>Novo peixe!</b> Cruzou ${mc}% — vai aparecer o popup pra todo mundo.` : ''}`
+        : ret && !vira
         ? `🕒 Entrada de <b>${esc(fmtQuando(q))}</b>: <b>${esc(fmtVal(m, nv))}</b> (${pctTxt(p)}). Vai pro <b>histórico e pro gráfico</b>; o valor atual continua <b>${esc(fmtVal(m, f.atual))}</b> porque já existe uma entrada mais recente${f.atualT || f.atualizadoEm ? ' (' + esc(fmtQuando(f.atualT || f.atualizadoEm)) + ')' : ''}.`
         : `${ret ? `🕒 Entrada de <b>${esc(fmtQuando(q))}</b> — ` : ''}Vai para <b>${esc(fmtVal(m, nv))}</b> → <b>${pctTxt(p)}</b> da meta (${statusPill(nm)})${up ? `<br>🐟 <b>Novo peixe!</b> Cruzou ${mc}% — vai aparecer o popup pra todo mundo.` : ''}`;
     };
+    const rotulo = () => { $('mm-r-l').firstChild.textContent = modo === 'somar' ? (retro() ? 'Quanto entrou neste dia/horário (uma parte do total)' : 'Quanto entrou desde a última vez') : 'Valor total acumulado'; };
     const quandoMudou = () => {
-      const ret = retro(), somar = ov.querySelector('[data-m="somar"]');
-      if (ret && modo === 'somar') { modo = 'total'; ov.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', x.dataset.m === 'total')); $('mm-r-l').firstChild.textContent = 'Valor total acumulado'; }
-      somar.disabled = ret; somar.title = ret ? 'Em entrada retroativa informe o TOTAL acumulado naquele momento' : '';
-      const q = quandoMs(); $('mm-r-agora').hidden = isNaN(q) || Math.abs(Date.now() - q) <= 2 * 60e3; $('mm-r-q').hidden = !ret; $('mm-r-q').textContent = ret ? 'Entrada retroativa: informe o total acumulado naquele momento.' : '';
-      prev();
+      const ret = retro();
+      const q = quandoMs(); $('mm-r-agora').hidden = isNaN(q) || Math.abs(Date.now() - q) <= 2 * 60e3; $('mm-r-q').hidden = !ret;
+      $('mm-r-q').textContent = ret ? (modo === 'somar' ? 'Entrada retroativa como PARTE: o valor é somado ao total e o gráfico é recalculado a partir dessa data. Repita pra cada dia.' : 'Entrada retroativa como TOTAL: informe o acumulado que valia naquele momento. Pra lançar um dia por vez, use "+ Somar ao atual".') : '';
+      rotulo(); prev();
     };
     $('mm-r-d').addEventListener('input', quandoMudou); $('mm-r-h').addEventListener('input', quandoMudou);
     $('mm-r-agora').onclick = () => { const a = partesSP(Date.now()); $('mm-r-d').value = a.data; $('mm-r-h').value = a.hora; quandoMudou(); };
-    ov.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { modo = b.dataset.m; ov.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', x === b)); $('mm-r-l').firstChild.textContent = modo === 'somar' ? 'Quanto entrou desde a última vez' : 'Valor total acumulado'; prev(); });
+    ov.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { modo = b.dataset.m; ov.querySelectorAll('[data-m]').forEach(x => x.setAttribute('aria-pressed', x === b)); quandoMudou(); });
     $('mm-r-v').oninput = prev; $('mm-r-x').onclick = () => ov.remove();
     $('mm-r-ok').onclick = async () => {
       const nv = novoVal(), er = $('mm-r-e');
@@ -803,7 +819,7 @@
       const q = quandoMs(); if (isNaN(q)) { er.textContent = 'Informe a data e a hora da entrada.'; er.hidden = false; return; }
       if (q > Date.now() + 5 * 60e3) { er.textContent = 'A data e hora da entrada não podem estar no futuro.'; er.hidden = false; return; }
       $('mm-r-ok').disabled = true;
-      try { const r = await opts.onSave(nv, $('mm-r-n').value.trim(), retro() ? q : undefined); if (r && r.ok === false) { er.textContent = r.erro || 'Não deu pra salvar.'; er.hidden = false; $('mm-r-ok').disabled = false; return; } ov.remove(); }
+      try { const r = await opts.onSave(modo === 'somar' && retro() ? Number($('mm-r-v').value) : nv, $('mm-r-n').value.trim(), retro() ? q : undefined, { parte: modo === 'somar' && retro() }); if (r && r.ok === false) { er.textContent = r.erro || 'Não deu pra salvar.'; er.hidden = false; $('mm-r-ok').disabled = false; return; } ov.remove(); }
       catch (e) { er.textContent = (e && (e.code === 'PERMISSION_DENIED' || /permission/i.test(e.message || ''))) ? 'Sem permissão pra gravar. Se for a 1ª vez, as regras do banco precisam ser publicadas — avise o ADM.' : 'Não deu pra salvar agora. Tente de novo.'; er.hidden = false; $('mm-r-ok').disabled = false; }
     };
     $('mm-r-v').focus();
@@ -904,7 +920,7 @@
       const box = b.closest('[data-mm-id]'); if (!box) return;
       const m = achar(box.dataset.mmId, box.dataset.mmEsc, box.dataset.mmSq); if (!m) return;
       const act = b.dataset.mmAct;
-      if (act === 'reg') abrirRegistrar(m, { onSave: (v, nota, quando) => registrar(m, v, ctx.user(), nota, quando) });
+      if (act === 'reg') abrirRegistrar(m, { onSave: (v, nota, quando, opc) => registrar(m, v, ctx.user(), nota, quando, opc) });
       if (act === 'edit' && ctx.editar) ctx.editar(m);
       if (act === 'graf') {
         const slot = box.querySelector('.mm-chart-slot'); if (!slot) return;

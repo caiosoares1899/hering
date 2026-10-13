@@ -20,7 +20,7 @@ const K = process.env.K || 'kanban-dev', SFX = /-dev$/.test(K) ? '_dev' : '';
     t('o modal ganha Data e hora da entrada, já em "agora" (Brasília)', ini.d === agora.data && /^\d\d:\d\d$/.test(ini.h) && Math.abs(M.spParaMs(ini.d, ini.h) - Date.now()) < 3 * 60e3, ini);
     // 1) retroativo MAIS ANTIGO que o valor atual (a meta "b" foi atualizada há 5 h): só histórico
     const t1 = Date.now() - 10 * 3600e3; await quando(p, t1); await p.fill('#mm-r-v', '120');
-    t('retroativo: "Somar ao atual" fica desligado (informe o total daquele momento) e aparece "Voltar pra agora"', await p.evaluate(() => document.querySelector('[data-m="somar"]').disabled && !document.getElementById('mm-r-agora').hidden), 0);
+    t('retroativo: "Somar ao atual" continua LIGADO (lança como parte) e aparece "Voltar pra agora"', await p.evaluate(() => !document.querySelector('[data-m="somar"]').disabled && !document.getElementById('mm-r-agora').hidden), 0);
     t('a prévia avisa que vai só pro histórico/gráfico e o atual continua 180', /histórico e pro gráfico/.test(await p.innerText('#mm-r-p')) && /180/.test(await p.innerText('#mm-r-p')), await p.innerText('#mm-r-p'));
     await p.click('#mm-r-ok'); await p.waitForTimeout(600);
     const m1 = await store(p, 'kanban/metas_squads' + SFX + '/dev/b'), l1 = await lgDe(p);
@@ -46,5 +46,30 @@ const K = process.env.K || 'kanban-dev', SFX = /-dev$/.test(K) ? '_dev' : '';
     await abrir(p); await quando(p, Date.now() - 3600e3); await p.fill('#mm-r-v', '280'); await p.click('#mm-r-ok'); await p.waitForTimeout(700);
     t('cartão: "Atualizado agora há pouco por Eve (valor de dd/mm hh:mm)" quando o valor é retroativo', /valor de \d\d\/\d\d \d\d:\d\d/.test(await p.innerText('#dados-pane .mm-card[data-mm-id="b"]')), (await p.innerText('#dados-pane .mm-card[data-mm-id="b"]')).replace(/\s+/g, ' ').slice(0, 300));
     t('sem erro de JS', !errs.length, errs); await ctx.close(); }
+
+  // 6) PARTES retroativas: cada dia que já passou entra como uma parte e o todo é a soma (lançadas fora de ordem)
+  { const { ctx, p, errs } = await abre(); await abrir(p); await p.click('#mm-r-x');
+    const antes = await store(p, 'kanban/metas_squads' + SFX + '/dev/b'), logAntes = Object.values(await store(p, 'kanban/metas_log' + SFX + '/b') || {}).sort((x, y) => x.t - y.t);
+    const base = antes.atual, D = 24 * 3600e3, d3 = Date.now() - 3 * D, d2 = Date.now() - 2 * D, d1 = Date.now() - 1 * D;
+    const parte = async (ms, v, nota) => { await abrir(p); await quando(p, ms); await p.click('[data-m="somar"]'); await p.fill('#mm-r-v', String(v)); if (nota) await p.fill('#mm-r-n', nota); return p.innerText('#mm-r-p'); };
+    const prev = await parte(d2, 10);
+    t('a prévia diz que é uma PARTE e mostra o total somado (' + base + ' → ' + (base + 10) + ')', /Parte de/.test(prev) && prev.replace(/\D/g, '').includes(String(base + 10)), prev);
+    t('o rótulo vira "Quanto entrou neste dia/horário" e o botão Somar está ativo', /Quanto entrou neste dia/.test(await p.innerText('.mm-md label[for="mm-r-v"]')) && await p.evaluate(() => !document.querySelector('[data-m="somar"]').disabled), 0);
+    await p.click('#mm-r-ok'); await p.waitForTimeout(600);
+    await parte(d3, 5); await p.click('#mm-r-ok'); await p.waitForTimeout(600);     // mais antigo, lançado DEPOIS
+    await parte(d1, 7); await p.click('#mm-r-ok'); await p.waitForTimeout(600);     // mais novo
+    const mb = await store(p, 'kanban/metas_squads' + SFX + '/dev/b'), lg = Object.values(await store(p, 'kanban/metas_log' + SFX + '/b') || {}).sort((x, y) => x.t - y.t);
+    t('o total é a SOMA das partes (' + base + ' + 10 + 5 + 7 = ' + (base + 22) + ')', mb.atual === base + 22, mb.atual);
+    t('3 pontos novos no histórico, cada um marcado com a parte (d)', lg.length === logAntes.length + 3 && [5, 10, 7].every(d => lg.some(x => x.d === d)), lg.map(x => [x.v, x.d]));
+    t('o histórico fica coerente: acumulado cresce na ordem do tempo e o último ponto = total', lg.every((x, i) => i === 0 || x.v >= lg[i - 1].v - 1e-9 || !x.d) && lg.filter(x => x.d).map(x => x.d).join() === '5,10,7' && lg.filter(x => x.d).every((x, i, a) => i === 0 || x.v > a[i - 1].v), lg.map(x => [x.t, x.v, x.d]));
+    const pd = lg.filter(x => x.d), ultimoAntes = logAntes.filter(x => x.t <= pd[0].t).pop();
+    t('1ª parte (a mais antiga) = acumulado até ali + parte; os pontos antigos que vinham depois subiram a mesma parte', pd[0].v === (ultimoAntes ? ultimoAntes.v : (antes.inicial || 0)) + 5 && logAntes.filter(x => x.t > pd[0].t).every(o => lg.some(x => !x.d && x.t === o.t && x.v >= o.v + 5)), [pd[0].v, ultimoAntes && ultimoAntes.v]);
+    t('o valor ATUAL e o instante dele não recuaram (a parte mais nova é de ontem, antes do último valor)', mb.atualT >= (antes.atualT || antes.atualizadoEm || 0), [mb.atualT, antes.atualT]);
+    t('quem/quando atualizou é de agora (selo ⏰ ok)', mb.atualizadoEm > Date.now() - 60e3, mb.atualizadoEm);
+    t('o cartão mostra o novo total', (await p.innerText('#dados-pane .mm-card[data-mm-id="b"]')).replace(/\D/g, '').includes(String(base + 22)), (await p.innerText('#dados-pane .mm-card[data-mm-id="b"]')).replace(/\s+/g, ' ').slice(0, 200));
+    // parte NEGATIVA corrige um dia (ex.: lançou a mais)
+    await parte(d2, -4); await p.click('#mm-r-ok'); await p.waitForTimeout(600);
+    t('parte negativa corrige o total (−4)', (await store(p, 'kanban/metas_squads' + SFX + '/dev/b')).atual === base + 18, (await store(p, 'kanban/metas_squads' + SFX + '/dev/b')).atual);
+    t('sem erro de JS (partes)', !errs.length, errs); await ctx.close(); }
   await b.close(); console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
 })();
