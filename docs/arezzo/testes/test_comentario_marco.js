@@ -1,4 +1,4 @@
-// Radar — ✏️ editar o próprio comentário do Marco (okr-dev). Servir a raiz do repo: python3 -m http.server 8941 ; BASE=... node test_comentario_marco.js
+// Radar — ✏️ editar e 🗑️ apagar o próprio comentário do Marco (okr-dev). Servir a raiz do repo: python3 -m http.server 8941 ; BASE=... node test_comentario_marco.js
 const { chromium } = require('/opt/node22/lib/node_modules/playwright'); const fake=require('./fakefb.js');
 const BASE=process.env.BASE||'http://localhost:8941/okr-dev.html';
 let falhas=0; const ok=(n,c,d)=>{ if(!c) falhas++; console.log(c?'✅':'❌',n,c?'':(d===undefined?'':String(d).slice(0,400))); };
@@ -14,7 +14,7 @@ const seed=()=>({kanban:{okr:{objetivos:{o1:obj('o1')},marcos:{m1:{id:'m1',objet
  const com=()=>page.evaluate(()=>JSON.parse(JSON.stringify(window.__store.kanban.okr.marco_comments.m1)));
  const abre=async()=>{ await page.evaluate(()=>openOkrMarco('m1','o1')); await page.waitForTimeout(500); };
  await abre();
- ok('1a. ✏️ aparece só no comentário da própria pessoa', await page.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !!bs[0].querySelector('[title="Editar comentário"]') && !bs[1].querySelector('[title="Editar comentário"]'); }));
+ ok('1a. ✏️ e 🗑️ aparecem só no comentário da própria pessoa', await page.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !!bs[0].querySelector('[title="Editar comentário"]') && !!bs[0].querySelector('[title="Apagar comentário"]') && !bs[1].querySelector('[title="Editar comentário"]') && !bs[1].querySelector('[title="Apagar comentário"]'); }));
  // edita e salva com Enter
  await page.evaluate(()=>{ document.getElementById('okr-m-descricao').value='descrição em andamento'; });   // texto pendente no Marco não pode sumir
  await page.click('#okr-marco-body [title="Editar comentário"]'); await page.waitForTimeout(200);
@@ -55,6 +55,20 @@ const seed=()=>({kanban:{okr:{objetivos:{o1:obj('o1')},marcos:{m1:{id:'m1',objet
  // fechar o Marco e reabrir limpa o modo edição
  await page.click('#okr-marco-body [title="Editar comentário"]'); await page.evaluate(()=>{ closeOkrMarco(); }); await abre();
  ok('6a. reabrir o Marco não volta em modo edição', await page.evaluate(()=>!document.getElementById('okr-comment-edit-inp')));
+ // 🗑️ apagar comentário: cancelar (botão e Esc), falha de gravação e confirmação preservando rascunho
+ await page.evaluate(()=>{ document.getElementById('okr-m-descricao').value='rascunho ao apagar'; });
+ await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100);
+ await page.click('#_uimp-cancel'); await page.waitForTimeout(200);
+ c=await com(); ok('6b. cancelar a confirmação não apaga o comentário', !!c.cA && c.cA.text==='vai falhar');
+ await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100);
+ await page.keyboard.press('Escape'); await page.waitForTimeout(200);
+ c=await com(); ok('6c. Esc na confirmação fecha só o diálogo e mantém o Marco aberto', !!c.cA && await page.evaluate(()=>!document.getElementById('_uimp-ov') && document.getElementById('okr-marco-ov').classList.contains('open')));
+ await page.evaluate(()=>{ window.__denySet=p=>/marco_comments/.test(p); });
+ await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100); await page.click('#_uimp-ok'); await page.waitForTimeout(300);
+ c=await com(); ok('6d. falha ao apagar: avisa e mantém o comentário na tela e no banco', !!c.cA && (await page.evaluate(()=>window.__t)).some(t=>/Não consegui apagar o comentário/.test(t)) && await page.evaluate(()=>document.querySelectorAll('#okr-marco-body .okr-comment').length===2));
+ await page.evaluate(()=>{ window.__denySet=null; });
+ await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100); await page.click('#_uimp-ok'); await page.waitForTimeout(300);
+ c=await com(); ok('6e. confirmar apaga no banco, tira da lista e preserva o rascunho do Marco e o comentário alheio', !c.cA && c.cB?.text==='da Bia' && await page.evaluate(()=>document.querySelectorAll('#okr-marco-body .okr-comment').length===1 && document.getElementById('okr-m-descricao').value==='rascunho ao apagar'));
  // outra pessoa (Bia): contexto novo, logada como ela
  await ctx.close();
  const ctx2=await b.newContext({viewport:{width:1280,height:900}}); await fake.install(ctx2,seed()); const pg=await ctx2.newPage(); const errs2=[]; pg.on('pageerror',e=>errs2.push(e.message));
@@ -62,8 +76,9 @@ const seed=()=>({kanban:{okr:{objetivos:{o1:obj('o1')},marcos:{m1:{id:'m1',objet
  await pg.evaluate(()=>window.__authCb({uid:'bia',email:'bia@ciahering.com.br',displayName:'Bia',photoURL:'',providerData:[{providerId:'google.com'}]})); await pg.waitForTimeout(1400);
  await pg.evaluate(()=>{ window.__t=[]; const t=showToast; window.showToast=m=>{ window.__t.push(m); try{t(m);}catch(e){} }; });
  await pg.evaluate(()=>openOkrMarco('m1','o1')); await pg.waitForTimeout(500);
- ok('7a. a Bia só tem ✏️ no comentário dela', await pg.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !bs[0].querySelector('[title="Editar comentário"]') && !!bs[1].querySelector('[title="Editar comentário"]'); }));
+ ok('7a. a Bia só tem ✏️ e 🗑️ no comentário dela', await pg.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !bs[0].querySelector('[title="Editar comentário"]') && !bs[0].querySelector('[title="Apagar comentário"]') && !!bs[1].querySelector('[title="Editar comentário"]') && !!bs[1].querySelector('[title="Apagar comentário"]'); }));
  ok('7b. chamar a edição do comentário alheio na marra não grava', await pg.evaluate(async()=>{ _okrComentEditId='cA'; renderOkrMarcoBody(); const antes=JSON.stringify(window.__store.kanban.okr.marco_comments.m1.cA); await _okrCommentEditSave(); return JSON.stringify(window.__store.kanban.okr.marco_comments.m1.cA)===antes && !document.getElementById('okr-comment-edit-inp'); }));
+ ok('7c. chamar _okrCommentDel do comentário alheio na marra não apaga', await pg.evaluate(async()=>{ await _okrCommentDel('cA'); return !!window.__store.kanban.okr.marco_comments.m1.cA && !document.getElementById('_uimp-ov'); }));
  // XSS
  await pg.click('#okr-marco-body [title="Editar comentário"]'); await pg.fill('#okr-comment-edit-inp','<img src=x onerror=window.__xss=1> "aspas"'); await pg.keyboard.press('Enter'); await pg.waitForTimeout(400);
  ok('8a. HTML no texto é escapado', await pg.evaluate(()=>!window.__xss && document.querySelector('#okr-marco-body').textContent.includes('<img src=x')));

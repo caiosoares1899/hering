@@ -1971,7 +1971,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.76 · okr-dev</div>
+<div class="version">v2.77 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -8548,8 +8548,9 @@ function _okrCommentsHtml(){
             <button type="button" class="btn btn-sm" onclick="_okrCommentEditCancel()">Cancelar</button>
           </div></div>`;
         const edBtn = meu ? `<span style="cursor:pointer;margin-left:6px;" title="Editar comentário" onclick="_okrCommentEdit(${jsq(c.id)})">✏️</span>` : '';
+        const delBtn = meu ? `<span style="cursor:pointer;margin-left:6px;" title="Apagar comentário" onclick="_okrCommentDel(${jsq(c.id)})">🗑️</span>` : '';
         const ed = c.editadoEm ? ` · editado` : '';
-        return `<div class="okr-comment"><span class="okr-comment-ts">${new Date(c.ts).toLocaleString('pt-BR')}${ed}${edBtn}</span><b>${esc(c.author||'?')}</b><br>${esc(c.text)}</div>`;
+        return `<div class="okr-comment"><span class="okr-comment-ts">${new Date(c.ts).toLocaleString('pt-BR')}${ed}${edBtn}${delBtn}</span><b>${esc(c.author||'?')}</b><br>${esc(c.text)}</div>`;
       }).join('')
     : '<div style="font-size:11px;color:var(--txt3);margin-bottom:8px;">Sem comentários ainda.</div>';
   const form = _okrEditingMarcoId ? `
@@ -8611,6 +8612,28 @@ async function _okrCommentEditSave(){
     _okrComentEditId = null;
     renderOkrMarcoBody();
   }catch(e){ console.error('_okrCommentEditSave', e); showToast('⚠ Não consegui salvar o comentário. Tente de novo.'); }
+  finally{ _okrComentSalvando = false; }
+}
+
+
+// 🗑️ Apagar o próprio comentário do Marco (com confirmação).
+async function _okrCommentDel(id){
+  if(_okrComentSalvando) return;
+  const marcoId = _okrEditingMarcoId;
+  if(!id || !marcoId || window._isPainelViewer) return;
+  const c = (_okrMarcoComments||[]).find(x=>x.id===id);
+  if(!c || c.uid!==window._currentUser?.uid) return;                      // só o autor (a UI já esconde o 🗑️ dos outros)
+  if(!await uiConfirm('Apagar este comentário?', {danger:true, okText:'Apagar'})) return;
+  if(_okrEditingMarcoId!==marcoId || _okrComentSalvando) return;          // fechou/trocou de Marco durante a confirmação
+  _okrComentSalvando = true;
+  try{
+    await window._remove(window._ref(window._db,'kanban/okr/marco_comments/'+marcoId+'/'+id));
+    if(_okrEditingMarcoId!==marcoId) return;                              // fechou/trocou de Marco durante a exclusão
+    _okrMarcoComments = (_okrMarcoComments||[]).filter(x=>x.id!==id);
+    if(_okrComentEditId===id) _okrComentEditId = null;
+    _okrSyncMarcoDraftFromDom();
+    renderOkrMarcoBody();
+  }catch(e){ console.error('_okrCommentDel', e); showToast('⚠ Não consegui apagar o comentário. Tente de novo.'); }
   finally{ _okrComentSalvando = false; }
 }
 
