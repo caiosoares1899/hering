@@ -612,7 +612,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.32 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.34 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -628,6 +628,8 @@ const SVG_TRAV = '<path d="M6 32c6-8 10 4 18-4s12 4 18-4"/><path d="M6 22c6-8 10
 const P = n => IS_DEV ? n+'-dev.html' : n+'.html';
 // Login único: Maré/Painel mandam quem não está logado pra cá com ?next=<página>. A pessoa FICA no Oceano (vê o Mural e a vitrine) e ganha um
 // atalho "↩ Continuar para o Maré" no topo — não é devolvida sozinha. Só páginas da família (lista fechada) — nunca um endereço de fora.
+// Passou pelo Oceano hoje (aberto direto, no topo): o Maré/Painel não precisam mandar a pessoa pra cá de novo na 1ª abertura do dia (ver _oceanoDoDia() em kanban/painel).
+try{ if(window.parent===window) localStorage.setItem('mare_oceano_dia'+(IS_DEV?'_dev':''), new Date().toLocaleDateString('sv-SE')); }catch(e){}
 const NEXT = (()=>{ try{ const n = new URLSearchParams(location.search).get('next') || ''; return /^(kanban|painel|okr)(-dev)?\.html(\?[^#\s]*)?(#\S*)?$/.test(n) ? n : ''; }catch(e){ return ''; } })();
 const APPS = [
   {id:'kanban', nome:'Maré Digital', sub:'O quadro dos squads', href:P('kanban'), img:'favicon.png', pt:'Gestão ágil dos squads'},
@@ -697,7 +699,9 @@ const nomeCurto = ()=> prefs.apelido || (perfilFb.nome ? _fn(perfilFb.nome) : _f
 const iniciais = ()=> (perfilFb.init || ((U && U.displayName||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('')) || '?').toUpperCase().slice(0,3);
 
 // ── Login ──
-['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(a) a.href = P(id)+'?login=local'; });
+['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(!a) return;
+  if(NEXT && NEXT.split(/[?#]/)[0]===P(id)){ const [base, hash] = NEXT.split('#'); a.href = base + (base.indexOf('?')>=0 ? '&' : '?') + 'login=local' + (hash ? '#'+hash : ''); }   // veio de uma página com squad/card: o link do convidado leva junto
+  else a.href = P(id)+'?login=local'; });
 function loginErr(m){ const e = $('#login-err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; }
 $('#btn-login').addEventListener('click', ()=>{ loginErr(''); if(window.MareLogin && MareLogin.usar()){ MareLogin.iniciar(); return; } window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
 function emailHering(u){ return /@ciahering\.com\.br$/i.test((u && u.email)||''); }
@@ -707,6 +711,10 @@ window.addEventListener('auth-change', e=>{
   if(!u){
     if(U){ location.reload(); return; }
     $('#login').style.display = 'flex'; $('#app').style.display = 'none'; return;
+  }
+  if(!emailHering(u) && NEXT){   // convidado externo que o Maré/Painel mandou pra cá: segue pra página de origem em modo local (a sessão do Google continua; a página confere a lista de externos e recusa ela mesma se for o caso)
+    const [base, hash] = NEXT.split('#');
+    location.replace(base + (base.indexOf('?')>=0 ? '&' : '?') + 'login=local' + (hash ? '#'+hash : '')); return;
   }
   if(!emailHering(u) || !viaGoogle(u)){
     loginErr(emailHering(u) ? 'Contas @ciahering.com.br entram pelo botão do Google.' : 'O Oceano é só pra conta Google @ciahering.com.br. Se você é convidado externo (visualizador), entre direto por um dos links abaixo.');
@@ -1278,6 +1286,7 @@ const FAQ = [
   {id:'vtex', q:'O selinho "VTEX" no topo: o que ele mostra?', a:'<p>É o <b>status da VTEX</b> (a plataforma da loja), lido automaticamente da página oficial <b>status.vtex.com</b> a cada poucos minutos. <b>Azul "VTEX normal"</b>: nenhum incidente em andamento. <b>Vermelho "VTEX: incidente"</b>: a VTEX está com instabilidade — passe o mouse para ver qual e clique para abrir os detalhes. <b>Cinza "VTEX: sem leitura"</b>: o monitor não conseguiu consultar a página agora, então não dá para afirmar que está tudo normal.</p><p>Quando há incidente você também recebe um <b>popup 🚨</b> e uma notificação (sino e celular); quando a VTEX resolve, o aviso some sozinho.</p>'},
   {id:'oque', q:'O que é o Oceano?', a:'<p>É o nome da família de produtos do time Digital Hering: <b>Maré Digital</b> (o board dos squads), <b>Painel</b> (gestão e pessoas), <b>Radar</b> (OKRs e reuniões), <b>A Bordo</b> (boas-vindas) e, no futuro, <b>Travessia</b> (performance e gente). Esta página é o lobby: apresenta tudo, serve de atalho e guarda o seu perfil.</p>'},
   {id:'login', q:'Quem consegue entrar? Por que só Google?', a:'<p>Só quem tem conta <b>@ciahering.com.br</b> entrando pelo Google. É a mesma regra do servidor (as regras do banco exigem isso), então não depende só desta tela. Visualizadores externos do Radar entram direto pelo Radar, não pelo Oceano.</p>'},
+  {id:'porta', q:'Por que o Maré me mandou pro Oceano?', a:'<p>O Oceano é a <b>porta de entrada</b> da família. Na <b>primeira vez do dia</b> que você abre o Maré Digital ou o Painel por um favorito ou link simples — mesmo já estando logado — eles passam antes pelo Oceano, pra você ver o Mural e os avisos. Depois, o atalho <b>↩ Continuar</b> no topo leva de volta ao produto que você queria (com a mesma squad). Nas outras aberturas do dia, abre direto.</p><p><b>Não passam pelo Oceano:</b> links que levam a algo específico (um card, uma notificação, o Radar), o aplicativo instalado do Maré Digital e quem já abriu o Oceano hoje.</p>'},
   {id:'instalar', q:'Como instalo o Oceano como aplicativo?', a:'<p><b>Chrome/Edge (computador e Android):</b> clique em <b>📲 Instalar</b> no topo (ou no menu do navegador → "Instalar Oceano").</p><p><b>iPhone/iPad (Safari):</b> Compartilhar → <b>Adicionar à Tela de Início</b>.</p><p><b>Login no iPhone/iPad:</b> no iPhone e no iPad (pelo ícone da tela inicial ou pelo Safari, inclusive com o link vindo do WhatsApp), o botão <b>Entrar com Google</b> leva a página inteira ao Google e volta já logado (sem janelinha, que travava ou acabava em "Unable to process request due to missing initial state") — é normal a tela sair e voltar.</p><p>Depois de instalado, o Oceano abre os produtos <b>aqui dentro</b>, com abas para trocar de um pro outro, sem precisar de um aplicativo por produto.</p>'},
   {id:'mare', q:'Já uso o app do Maré Digital. Preciso trocar?', a:'<p>Não. O aplicativo do Maré Digital continua existindo e funcionando igual — quem só usa o board pode ficar com ele. O Oceano é um jeito a mais, para quem circula entre mais de um produto.</p>'},
   {id:'aqui', q:'Qual a diferença entre "abrir aqui dentro" e "aba nova"?', a:'<p><b>Aqui dentro:</b> o produto abre numa aba do próprio Oceano; dá pra manter vários abertos e voltar ao lobby sem perder nada. <b>Aba nova:</b> abre numa aba do navegador, como sempre. Mude em ⚙ Meu perfil → Como abrir os produtos. No automático, o app instalado abre aqui dentro e o navegador abre em aba nova.</p>'},
