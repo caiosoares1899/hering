@@ -612,7 +612,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.33 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.34 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -699,7 +699,9 @@ const nomeCurto = ()=> prefs.apelido || (perfilFb.nome ? _fn(perfilFb.nome) : _f
 const iniciais = ()=> (perfilFb.init || ((U && U.displayName||'?').split(/\s+/).map(x=>x[0]).slice(0,2).join('')) || '?').toUpperCase().slice(0,3);
 
 // ── Login ──
-['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(a) a.href = P(id)+'?login=local'; });
+['kanban','painel','okr'].forEach(id=>{ const a = $('#lc-'+id); if(!a) return;
+  if(NEXT && NEXT.split(/[?#]/)[0]===P(id)){ const [base, hash] = NEXT.split('#'); a.href = base + (base.indexOf('?')>=0 ? '&' : '?') + 'login=local' + (hash ? '#'+hash : ''); }   // veio de uma página com squad/card: o link do convidado leva junto
+  else a.href = P(id)+'?login=local'; });
 function loginErr(m){ const e = $('#login-err'); e.textContent = m; e.style.display = m ? 'block' : 'none'; }
 $('#btn-login').addEventListener('click', ()=>{ loginErr(''); if(window.MareLogin && MareLogin.usar()){ MareLogin.iniciar(); return; } window._signIn().catch(e=>loginErr('Não deu pra entrar: '+(e && e.message || e))); });
 function emailHering(u){ return /@ciahering\.com\.br$/i.test((u && u.email)||''); }
@@ -709,6 +711,10 @@ window.addEventListener('auth-change', e=>{
   if(!u){
     if(U){ location.reload(); return; }
     $('#login').style.display = 'flex'; $('#app').style.display = 'none'; return;
+  }
+  if(!emailHering(u) && NEXT){   // convidado externo que o Maré/Painel mandou pra cá: segue pra página de origem em modo local (a sessão do Google continua; a página confere a lista de externos e recusa ela mesma se for o caso)
+    const [base, hash] = NEXT.split('#');
+    location.replace(base + (base.indexOf('?')>=0 ? '&' : '?') + 'login=local' + (hash ? '#'+hash : '')); return;
   }
   if(!emailHering(u) || !viaGoogle(u)){
     loginErr(emailHering(u) ? 'Contas @ciahering.com.br entram pelo botão do Google.' : 'O Oceano é só pra conta Google @ciahering.com.br. Se você é convidado externo (visualizador), entre direto por um dos links abaixo.');

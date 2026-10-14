@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐛 Convidado externo (freelancer) não conseguia entrar: o Oceano recusava e ela ficava sem caminho pro Maré — 2026-10-14 · oceano-dev v1.34 (SÓ DEV)
+- **O problema:** quem não está logado no Maré/Painel é mandado pro Oceano (`?next=`) — o Maré ainda não sabe o e-mail dela. Com uma conta que NÃO é `@ciahering.com.br` (freelancer/visualizador), o Oceano a desloga e mostrava só "O Oceano é só pra conta Google @ciahering.com.br…". A saída (links "Maré · Painel · Radar" no rodapé) mandava pra `?login=local` **sem a squad nem o card de origem** e ela precisava entrar com o Google de novo — na prática ficava sem entrar em lugar nenhum.
+- **Agora:** se a conta externa veio do Maré/Painel (há `?next=`), o Oceano **encaminha direto pra página de origem em modo local** (`…&login=local`, mantendo squad/card/hash), sem deslogar; o Maré confere a lista de externos da squad e, se não estiver autorizada, mostra o motivo certo ("peça ao PO…"). Os links de convidado da tela de login também levam a squad/card de origem. Quem abre o Oceano direto com conta externa continua recebendo a recusa. Conta `@ciahering` que não entrou pelo Google continua recusada.
+- Teste: `test_login_oceano.js` (caso 5 reescrito + 3 novos). Dica: não (correção).
+
 ### 🌊 Oceano como porta de entrada também pra quem já está logado (1ª abertura do dia) — 2026-10-14 · kanban-dev v8.30.856-dev · painel-dev v5.65 · oceano-dev v1.33 (SÓ DEV)
 - **O problema:** o redirecionamento pro Oceano só valia pra quem NÃO tinha sessão no Maré/Painel. O login do Maré é uma sessão do Firebase guardada no navegador — ela sobrevive a sair da conta Google (e à verificação em 2 etapas pedida de novo). Resultado: com o Google deslogado, o Maré ainda abria direto e a pessoa nunca passava pelo Oceano (nem via o Mural).
 - **Agora:** na **primeira abertura do dia** por favorito ou link simples (sem destino), o Maré e o Painel mandam a pessoa logada pro Oceano (`?next=`, preservando a squad); o atalho "↩ Continuar" leva de volta. Abrir o Oceano direto também conta como "já passou hoje". Marca: `localStorage.mare_oceano_dia`.
