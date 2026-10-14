@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: buzina de navio no popup "O mar tá pra peixe" — 2026-10-14 · kanban v8.30.858 · painel v5.67 · mare-metas.js v10 · `buzina-navio.mp3` (sem avisos)
+- **🚢 Buzina no popup 🐟:** ao cruzar um marco de 20 % da meta (e na meta batida 🏆), o popup dos peixinhos toca uma **buzina de navio** inteira (~9,5 s) e fecha cerca de 1 s depois que ela acaba. Respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s (14 s na meta batida). Marco comum soa mais baixo (0,7) que a meta batida (0,85). Fechar o popup antes para a buzina.
+- Ajuda do Maré (Metas e desafios) atualizada; conhecimento do Agente Ágil regenerado. Detalhes nas entradas de dev de 14/10. Dica: não (efeito automático).
+
 ### 🚢 Buzina do popup 🐟 agora toca INTEIRA e o popup acompanha — 2026-10-14 · kanban-dev v8.30.858-dev · painel-dev v5.67 · mare-metas-dev v10 · `buzina-navio.mp3` (SÓ DEV)
 - **Corrige a desproporção da v9:** o áudio enviado tem ~10 s e eu o tinha cortado em 4 s (e em 2,4 s nos marcos comuns), enquanto o popup ficava 9–14 s aberto. Agora o `buzina-navio.mp3` tem o áudio **inteiro** (9,5 s, duas buzinadas, ~95 KB) e **o popup fecha ~1 s depois que a buzina acaba** (antes: tempo fixo de 9 s / 14 s na meta batida).
 - Sem som (🔇, Não Perturbe, ou o navegador barrou o autoplay) o popup volta ao tempo fixo de sempre (9 s; 14 s na meta batida). Marco comum soa em volume 0,7 e a meta batida 0,85. Fechar o popup antes (✕, botão, Esc) para a buzina.
