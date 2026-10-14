@@ -18,6 +18,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🗑️ Radar: apagar o próprio comentário do Marco — 2026-10-14 · okr-dev v2.77 (SÓ DEV)
+- **🗑️ Apagar comentário no Marco:** ao lado do ✏️ (editar), cada comentário feito pela própria pessoa no modal do Marco agora exibe o botão **🗑️ Apagar comentário** (`_okrCommentDel`). Pede confirmação (`uiConfirm`), remove de `kanban/okr/marco_comments/{marcoId}/{id}` sem perder o que estiver sendo digitado no Marco e atualiza a lista e o contador de comentários na hora. Comentários de outras pessoas e o modo visualizador externo não exibem o botão.
+- Sem mudança de regra no banco (`kanban/okr` já permite escrita aos usuários autenticados `@ciahering.com.br`). Dica: não (ícone direto no comentário). Teste `test_comentario_marco.js` atualizado cobrindo exclusão, cancelamento, preservação de rascunho, falha de rede e permissão por autor.
+
 ### 🚀 Promoção: buzina de navio no popup "O mar tá pra peixe" — 2026-10-14 · kanban v8.30.858 · painel v5.67 · mare-metas.js v10 · `buzina-navio.mp3` (sem avisos)
 - **🚢 Buzina no popup 🐟:** ao cruzar um marco de 20 % da meta (e na meta batida 🏆), o popup dos peixinhos toca uma **buzina de navio** inteira (~9,5 s) e fecha cerca de 1 s depois que ela acaba. Respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s (14 s na meta batida). Marco comum soa mais baixo (0,7) que a meta batida (0,85). Fechar o popup antes para a buzina.
 - Ajuda do Maré (Metas e desafios) atualizada; conhecimento do Agente Ágil regenerado. Detalhes nas entradas de dev de 14/10. Dica: não (efeito automático).
