@@ -1,6 +1,11 @@
 [
  {
   "data": "2026-10-14",
+  "titulo": "🚀 Promoção: buzina de navio no popup \"O mar tá pra peixe\" — 2026-10-14 · kanban v8.30.858 · painel v5.67 · mare-metas.js v10 · `buzina-navio.mp3` (sem avisos)",
+  "texto": "- 🚢 Buzina no popup 🐟: ao cruzar um marco de 20 % da meta (e na meta batida 🏆), o popup dos peixinhos toca uma buzina de navio inteira (~9,5 s) e fecha cerca de 1 s depois que ela acaba. Respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s (14 s na meta batida). Marco comum soa mais baixo (0,7) que a meta batida (0,85). Fechar o popup antes para a buzina.\n- Ajuda do Maré (Metas e desafios) atualizada; conhecimento do Agente Ágil regenerado. Detalhes nas entradas de dev de 14/10. Dica: não (efeito automático)."
+ },
+ {
+  "data": "2026-10-14",
   "titulo": "🚀 Promoção: Oceano como porta de entrada (1ª abertura do dia) + correção do convidado externo — 2026-10-14 · kanban v8.30.856 · painel v5.65 · oceano v1.34 (com avisos)",
   "texto": "- 🌊 Oceano como porta de entrada: na primeira abertura do dia do Maré ou do Painel por favorito/link simples, quem já está logado passa antes pelo Oceano (vê o Mural e os avisos) e o atalho \"↩ Continuar\" leva de volta, na mesma squad. Antes só quem NÃO tinha sessão era mandado pra lá — e o login do Maré sobrevive a sair da conta Google, então quase ninguém passava. Não passam: link com destino (card, notificação, ?okr=), app instalado do Maré, e-mail de fora da Hering, ?login=local, o Maré dentro do Oceano e quem já abriu o Oceano hoje. Interruptor MARE_OCEANO_DIARIO.\n- 🐛 Convidado externo (freelancer) não conseguia entrar: o Maré manda todo deslogado pro Oceano; o Oceano recusava a conta externa e a saída levava pra ?login=local sem a squad. Agora a conta externa vinda do Maré/Painel é encaminhada direto pra página de origem em modo local (squad/card/hash preservados), e o Maré confere a lista de externos.\n- Ajuda do Maré (Menu de produtos) e FAQ do Oceano (\"Por que o Maré me mandou pro Oceano?\") atualizados; conhecimento do Agente Ágil regenerado. Mural + WhatsApp: rascunho seed_oceano_porta_2026_10_14 no Painel. Dica: não (automático). Detalhes nas entradas de dev de 14/10."
  },
@@ -143,10 +148,5 @@
   "data": "2026-10-09",
   "titulo": "v8.30.803 · okr v2.49 — 2026-10-09 · Promove pra prod — 📡 Radar (o OKR vira Radar) + favicon nova + menu de produtos do Oceano (okr.html v2.49, mare-notif.js v11)",
   "texto": "Promove o okr-dev v2.49 (entradas \"Oceano: o OKR vira Radar\", \"menu de produtos\" e \"logo do Maré Digital\", mais a favicon nova). Sem avisos (pedido do usuário).\n- Radar: aba do navegador, cabeçalho (\"📡 Radar · Oceano\"), Ajuda, Mural, Notificações, \"Online no Radar\" e mensagens falam \"Radar\"; favicon nova (radar com peixinhos, favicon-radar.png) na aba e no menu de produtos; apple-touch-icon também.\n- Menu de produtos (9 pontinhos) entra no cabeçalho do Radar: Maré Digital, Painel, Radar e A Bordo, cada um com a sua logo, abrindo em aba nova. O botão \"🐟 Painel\" do cabeçalho saiu (o Painel agora só aparece no menu pra ADM, visualizador externo e quem já usa o painel — o \"já usa\" é gravado quando a pessoa abre o painel ou é PO/Organizador no kanban dev; em prod isso só passa a valer quando o Maré Digital/Painel forem promovidos, então por enquanto o Painel aparece no menu só pra ADM e visualizador).\n- mare-notif.js v11 (módulo compartilhado): ganha o menu de produtos e a logo do Radar. kanban.html/painel.html seguem carregando ?v=8 e não chamam o menu (inerte pra eles até serem promovidos).\n- Páginas compartilhadas (sem cópia dev) no ar junto: guia-okr.html (\"Guia do Radar\", 8 prints refeitos com o cabeçalho novo, favicon), okr-apresentacao.slide.html (\"Radar — OKRs Hering\", favicon), maredigital.html (versões, Radar, card do menu).\n- Cloud Function (exige deploy): o prompt do A"
- },
- {
-  "data": "2026-10-09",
-  "titulo": "📡 Radar: favicon nova + logo no menu de produtos — 2026-10-09 · okr-dev v2.49 · mare-notif-dev v11 · painel-dev v5.26 · kanban-dev v8.30.807-dev",
-  "texto": "favicon-radar.png (256 px, ~24 KB) vira o ícone da aba do Radar e a logo dele no menu de produtos (no lugar do SVG provisório). Painel e kanban só sobem o ?v= do módulo pra 11."
  }
 ]
