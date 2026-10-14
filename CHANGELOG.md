@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚀 Promoção: editar e apagar comentários nos Marcos do Radar (+ moderação ADM) — 2026-10-14 · okr v2.78 (com avisos)
+- **✏️ Editar o próprio comentário do Marco (`_okrCommentEdit` / `_okrCommentEditSave`):** botão **✏️** ao lado da data em cada comentário feito pela própria pessoa no modal do Marco abre edição inline (Salvar/Cancelar, `Enter`/`Esc`), grava apenas `text` + `editadoEm` e exibe **· editado**. Não perde o que estiver sendo digitado no Marco e avisa caso o comentário tenha sido removido antes de salvar.
+- **🗑️ Apagar comentário no Marco (`_okrCommentDel`):** botão **🗑️** ao lado do comentário (com confirmação `uiConfirm`) permite que o próprio autor apague seu comentário e que **ADMs** (`_isAdmPainel()`) também apaguem comentários de qualquer pessoa para moderação. Visualizadores externos continuam em modo somente leitura.
+- Conhecimento do Agente Ágil (`novidades.json`) regenerado. Dica: não (ícones diretos no comentário). Detalhes nas entradas de dev de 14/10 (okr-dev v2.76→v2.78).
+
 ### 🛡️ Radar: ADM também pode apagar comentários de qualquer pessoa nos Marcos — 2026-10-14 · okr-dev v2.78 (SÓ DEV)
 - **🛡️ Moderação de comentários por ADM (`_okrCommentsHtml` / `_okrCommentDel`):** além do próprio autor, usuários ADM (`_isAdmPainel()`) agora também veem o botão **🗑️ Apagar comentário** e podem remover comentários de outras pessoas dentro do modal do Marco (com confirmação `uiConfirm`). A edição inline (`✏️`) continua restrita exclusivamente ao autor do comentário, e visualizadores externos continuam em modo somente leitura. `loadAdmList()` também re-renderiza o corpo do Marco caso o modal já esteja aberto quando a lista de ADMs terminar de carregar.
 

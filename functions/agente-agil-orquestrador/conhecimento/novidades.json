@@ -1,6 +1,11 @@
 [
  {
   "data": "2026-10-14",
+  "titulo": "🚀 Promoção: editar e apagar comentários nos Marcos do Radar (+ moderação ADM) — 2026-10-14 · okr v2.78 (com avisos)",
+  "texto": "- ✏️ Editar o próprio comentário do Marco (_okrCommentEdit / _okrCommentEditSave): botão ✏️ ao lado da data em cada comentário feito pela própria pessoa no modal do Marco abre edição inline (Salvar/Cancelar, Enter/Esc), grava apenas text + editadoEm e exibe · editado. Não perde o que estiver sendo digitado no Marco e avisa caso o comentário tenha sido removido antes de salvar.\n- 🗑️ Apagar comentário no Marco (_okrCommentDel): botão 🗑️ ao lado do comentário (com confirmação uiConfirm) permite que o próprio autor apague seu comentário e que ADMs (_isAdmPainel()) também apaguem comentários de qualquer pessoa para moderação. Visualizadores externos continuam em modo somente leitura.\n- Conhecimento do Agente Ágil (novidades.json) regenerado. Dica: não (ícones diretos no comentário). Detalhes nas entradas de dev de 14/10 (okr-dev v2.76→v2.78)."
+ },
+ {
+  "data": "2026-10-14",
   "titulo": "🚀 Promoção: buzina de navio no popup \"O mar tá pra peixe\" — 2026-10-14 · kanban v8.30.858 · painel v5.67 · mare-metas.js v10 · `buzina-navio.mp3` (sem avisos)",
   "texto": "- 🚢 Buzina no popup 🐟: ao cruzar um marco de 20 % da meta (e na meta batida 🏆), o popup dos peixinhos toca uma buzina de navio inteira (~9,5 s) e fecha cerca de 1 s depois que ela acaba. Respeita o 🔇 e o 🔕 Não Perturbe do sino; sem som, o popup fecha sozinho em 9 s (14 s na meta batida). Marco comum soa mais baixo (0,7) que a meta batida (0,85). Fechar o popup antes para a buzina.\n- Ajuda do Maré (Metas e desafios) atualizada; conhecimento do Agente Ágil regenerado. Detalhes nas entradas de dev de 14/10. Dica: não (efeito automático)."
  },
@@ -143,10 +148,5 @@
   "data": "2026-10-09",
   "titulo": "📡 Radar: favicon nova (fundo azul) + logo sem fundo na capa da apresentação — 2026-10-09 · arquivos compartilhados (valem em prod e dev assim que mergeados)",
   "texto": "- favicon-radar.png trocada pela versão de fundo azul-marinho cheio (256 px, ~24 KB): aparece na aba de okr/okr-dev, apresentação, Guia e no card \"Radar\" do menu de produtos (mesmo arquivo — o navegador pode segurar a antiga no cache da aba por um tempo).\n- radar-logo.png (nova, sem fundo, 256 px): substitui o emoji 📡 na capa da apresentação (104 px, com sombra suave) e no logo da barra de cima.\n- Subtítulo da capa: no modo só Hering vira \"Panorama por gerência · data\" (sem \"por torre\"); com as torres religadas continua \"por torre e gerência\".\n- Teste novo docs/arezzo/testes/test_apresentacao_capa.js (Chromium, 2 modos: imagens carregam, sem emoji na capa, subtítulo certo)."
- },
- {
-  "data": "2026-10-09",
-  "titulo": "v8.30.803 · okr v2.49 — 2026-10-09 · Promove pra prod — 📡 Radar (o OKR vira Radar) + favicon nova + menu de produtos do Oceano (okr.html v2.49, mare-notif.js v11)",
-  "texto": "Promove o okr-dev v2.49 (entradas \"Oceano: o OKR vira Radar\", \"menu de produtos\" e \"logo do Maré Digital\", mais a favicon nova). Sem avisos (pedido do usuário).\n- Radar: aba do navegador, cabeçalho (\"📡 Radar · Oceano\"), Ajuda, Mural, Notificações, \"Online no Radar\" e mensagens falam \"Radar\"; favicon nova (radar com peixinhos, favicon-radar.png) na aba e no menu de produtos; apple-touch-icon também.\n- Menu de produtos (9 pontinhos) entra no cabeçalho do Radar: Maré Digital, Painel, Radar e A Bordo, cada um com a sua logo, abrindo em aba nova. O botão \"🐟 Painel\" do cabeçalho saiu (o Painel agora só aparece no menu pra ADM, visualizador externo e quem já usa o painel — o \"já usa\" é gravado quando a pessoa abre o painel ou é PO/Organizador no kanban dev; em prod isso só passa a valer quando o Maré Digital/Painel forem promovidos, então por enquanto o Painel aparece no menu só pra ADM e visualizador).\n- mare-notif.js v11 (módulo compartilhado): ganha o menu de produtos e a logo do Radar. kanban.html/painel.html seguem carregando ?v=8 e não chamam o menu (inerte pra eles até serem promovidos).\n- Páginas compartilhadas (sem cópia dev) no ar junto: guia-okr.html (\"Guia do Radar\", 8 prints refeitos com o cabeçalho novo, favicon), okr-apresentacao.slide.html (\"Radar — OKRs Hering\", favicon), maredigital.html (versões, Radar, card do menu).\n- Cloud Function (exige deploy): o prompt do A"
  }
 ]
