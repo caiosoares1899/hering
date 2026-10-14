@@ -1971,7 +1971,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.78 · okr-dev</div>
+<div class="version">v2.79 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6708,7 +6708,7 @@ let _okrCardsPedido = false, _okrCardsBusca = '', _okrCardsFiltro = 'todos', _ok
 function _okrCardsVinculos(){   // 'squad::card' -> [Objetivos ativos (não arquivados, visíveis neste modo) que vinculam esse card]
   const m = {};
   Object.values(okrObjetivos||{}).forEach(o=>{
-    if(!o || o.archived || (OKR_SO_DIGITAL && _okrTorreDe(o)!=='digital')) return;
+    if(!o || o.arquivado || (OKR_SO_DIGITAL && _okrTorreDe(o)!=='digital')) return;
     (o.cardLinks||[]).forEach(l=>{ if(l&&l.squadId&&l.cardId){ (m[l.squadId+'::'+l.cardId] = m[l.squadId+'::'+l.cardId] || []).push(o); } });
   });
   return m;
@@ -7192,7 +7192,7 @@ async function _copyToClipboard(text, successMsg){
 const _OKR_OBJ_PENDING_IDS = ['okr-add-indicadores','okr-add-progressos','okr-add-proximosPassos','okr-add-riscos','okr-add-planosAcao','okr-add-trimestres'];
 
 
-const _OKR_MARCO_PENDING_IDS = ['okr-checklist-add'];
+const _OKR_MARCO_PENDING_IDS = ['okr-checklist-add','okr-tag-add','okr-comment-inp','okr-comment-edit-inp'];
 
 
 function _okrReadPending(ids){
@@ -8368,14 +8368,18 @@ function closeOkrMarco(){
 // propósito); só ✕/clique fora/"Cancelar" passam por aqui primeiro.
 async function _okrTryCloseMarco(){
   if(_okrMarcoDraft && _okrMarcoOpenSnapshot!=null){
-    _okrSyncMarcoDraftFromDom();
-    // Mesmo achado/mesma causa raiz de _okrTryCloseObjetivo() acima — texto
-    // digitado no "+ Add" do checklist (okr-checklist-add) só vira item de
-    // verdade com Enter/"+ Add"; sem confirmar, nunca entra em
-    // _okrSyncMarcoDraftFromDom() e clicar fora perdia o texto em silêncio.
-    const _temTextoPendente = (document.getElementById('okr-checklist-add')?.value||'').trim();
-    if(_temTextoPendente || _okrSnapshotMudou(_okrMarcoDraft, _okrMarcoOpenSnapshot)){
-      if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+    const obj = okrObjetivos[_okrMarcoDraft.objetivoId] || {};
+    const podeEditar = _okrCanEdit(obj) && !_okrLockInfo(_okrMarcoDraft.objetivoId);
+    if(podeEditar){
+      _okrSyncMarcoDraftFromDom();
+      // Mesmo achado/mesma causa raiz de _okrTryCloseObjetivo() acima — texto
+      // digitado no "+ Add" do checklist/tag só vira item de verdade com
+      // Enter/"+ Add"; sem confirmar, nunca entra em _okrSyncMarcoDraftFromDom()
+      // e clicar fora perdia o texto em silêncio.
+      const _temTextoPendente = ['okr-checklist-add','okr-tag-add'].some(id=>(document.getElementById(id)?.value||'').trim());
+      if(_temTextoPendente || _okrSnapshotMudou(_okrMarcoDraft, _okrMarcoOpenSnapshot)){
+        if(!await uiConfirm('Você tem alterações não salvas neste Marco. Fechar mesmo assim?', {danger:true, okText:'Fechar sem salvar'})) return;
+      }
     }
   }
   closeOkrMarco();
@@ -8398,22 +8402,26 @@ function _okrSyncMarcoDraftFromDom(){
 
 
 
-function _okrChecklistHtml(){
+function _okrChecklistHtml(podeEditar=true){
   const cl = _okrMarcoDraft.checklist||[];
   const done = cl.filter(i=>i.done).length;
   return `
     <section class="okr-sec okr-sec-prog" id="okr-sec-marco-checklist"><div class="okr-sec-hd"><span class="okr-sec-ico">☑️</span><span>Checklist</span>${cl.length?`<span class="okr-sec-count">${done}/${cl.length}</span>`:''}</div>
-    ${cl.map((it,i)=>`
+    ${cl.length ? cl.map((it,i)=>podeEditar?`
       <div class="okr-checklist-row${it.done?' done':''}">
         <input type="checkbox" ${it.done?'checked':''} onchange="_okrChecklistToggle(${i})">
         <span class="okr-checklist-item-text" onclick="_okrChecklistEditStart(this,${i})" title="Clique para editar" style="cursor:pointer;">${esc(it.text)}</span>
         <button type="button" class="okr-edit-btn" onclick="_okrChecklistEditStart(this.closest('.okr-checklist-row').querySelector('.okr-checklist-item-text'),${i})" title="Editar" style="margin-left:auto;background:none;border:none;color:var(--txt3);cursor:pointer;">✏️</button>
         <button type="button" onclick="_okrChecklistRemove(${i})" title="Remover" style="background:none;border:none;color:var(--txt3);cursor:pointer;">✕</button>
-      </div>`).join('')}
-    <div class="okr-list-add">
+      </div>`:`
+      <div class="okr-checklist-row${it.done?' done':''}">
+        <input type="checkbox" ${it.done?'checked':''} disabled>
+        <span class="okr-checklist-item-text">${esc(it.text)}</span>
+      </div>`).join('') : (!podeEditar ? '<div style="font-size:11px;color:var(--txt3);">Nenhum item.</div>' : '')}
+    ${podeEditar?`<div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-checklist-add" placeholder="Novo item…" onpaste="_okrPasteChecklist(event)" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrChecklistAdd();}">
       <button type="button" class="btn btn-sm" onclick="_okrChecklistAdd()">+ Add</button>
-    </div></section>`;
+    </div>`:''}</section>`;
 }
 
 
@@ -8473,23 +8481,24 @@ function _okrChecklistEditStart(span, i){
 
 
 
-function _okrTagsHtml(){
+function _okrTagsHtml(podeEditar=true){
   const tags = _okrMarcoDraft.tags||[];
   return `
     <section class="okr-sec okr-sec-neutro" id="okr-sec-marco-tags"><div class="okr-sec-hd"><span class="okr-sec-ico">🏷️</span><span>Tags</span>${tags.length?`<span class="okr-sec-count">${tags.length}</span>`:''}</div>
     <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px;">
-      ${tags.map((t,i)=>`<span class="pt-tag" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.3);color:var(--teal);">${esc(t)} <span style="cursor:pointer;" onclick="_okrTagRemove(${i})">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
+      ${tags.map((t,i)=>`<span class="pt-tag" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.3);color:var(--teal);">${esc(t)}${podeEditar?` <span style="cursor:pointer;" onclick="_okrTagRemove(${i})">✕</span>`:''}</span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Nenhuma.</span>'}
     </div>
-    <div class="okr-list-add">
+    ${podeEditar?`<div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-tag-add" placeholder="Nova tag…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrTagAdd();}">
       <button type="button" class="btn btn-sm" onclick="_okrTagAdd()">+ Add</button>
-    </div></section>`;
+    </div>`:''}</section>`;
 }
 
 
 function _okrTagAdd(){
   const inp = document.getElementById('okr-tag-add');
   const v = (inp?.value||'').trim(); if(!v) return;
+  inp.value = '';
   _okrSyncMarcoDraftFromDom();
   (_okrMarcoDraft.tags = _okrMarcoDraft.tags||[]).push(v);
   renderOkrMarcoBody();
@@ -8500,18 +8509,18 @@ function _okrTagRemove(i){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraft.tags.spli
 
 
 
-function _okrParticipantesHtml(){
+function _okrParticipantesHtml(podeEditar=true){
   const sel = _okrMarcoDraft.participantes||[];
   const opts = _okrPessoaOptions();
   return `
     <section class="okr-sec okr-sec-neutro" id="okr-sec-marco-participantes"><div class="okr-sec-hd"><span class="okr-sec-ico">👥</span><span>Participantes</span>${sel.length?`<span class="okr-sec-count">${sel.length}</span>`:''}</div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;">
-      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)} <span style="cursor:pointer;" onclick="_okrParticipanteRemove(${jsq(uid)})">✕</span></span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
+      ${sel.map(uid=>`<span class="pt-tag" style="background:rgba(56,182,255,.12);border-color:rgba(56,182,255,.3);color:var(--accent);">${esc(_okrPessoaInfo(uid).nome)}${podeEditar?` <span style="cursor:pointer;" onclick="_okrParticipanteRemove(${jsq(uid)})">✕</span>`:''}</span>`).join('') || '<span style="font-size:11px;color:var(--txt3);">Ninguém ainda.</span>'}
     </div>
-    <select class="okr-select" onchange="if(this.value){_okrParticipanteAdd(this.value);this.value='';}">
+    ${podeEditar?`<select class="okr-select" onchange="if(this.value){_okrParticipanteAdd(this.value);this.value='';}">
       <option value="">+ Adicionar participante…</option>
       ${opts.filter(p=>!sel.includes(p.uid)).map(p=>`<option value="${p.uid}">${esc(p.nome)}</option>`).join('')}
-    </select></section>`;
+    </select>`:''}</section>`;
 }
 
 
@@ -8522,11 +8531,11 @@ function _okrParticipanteRemove(uid){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraf
 
 
 
-function _okrStatusPickerHtml(){
+function _okrStatusPickerHtml(podeEditar=true){
   return `
     <div class="okr-field-label">Progresso</div>
     <div class="okr-status-select">
-      ${OKR_STATUS.map(s=>`<span class="okr-status-opt${_okrMarcoDraft.progresso===s.id?' active':''}" onclick="_okrSetMarcoStatus(${jsq(s.id)})"><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')}
+      ${OKR_STATUS.map(s=>`<span class="okr-status-opt${_okrMarcoDraft.progresso===s.id?' active':''}"${podeEditar?` onclick="_okrSetMarcoStatus(${jsq(s.id)})"`:' style="cursor:default;pointer-events:none;"'}><span class="okr-dot" style="background:${s.dot};"></span>${esc(s.label)}</span>`).join('')}
     </div>`;
 }
 
@@ -8556,11 +8565,11 @@ function _okrCommentsHtml(){
         return `<div class="okr-comment"><span class="okr-comment-ts">${new Date(c.ts).toLocaleString('pt-BR')}${ed}${edBtn}${delBtn}</span><b>${esc(c.author||'?')}</b><br>${esc(c.text)}</div>`;
       }).join('')
     : '<div style="font-size:11px;color:var(--txt3);margin-bottom:8px;">Sem comentários ainda.</div>';
-  const form = _okrEditingMarcoId ? `
+  const form = window._isPainelViewer ? '' : (_okrEditingMarcoId ? `
     <div class="okr-list-add">
       <input type="text" class="okr-input" id="okr-comment-inp" placeholder="Escrever um comentário…" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrCommentSend();}">
       <button type="button" class="btn btn-sm" onclick="_okrCommentSend()">Enviar</button>
-    </div>` : '<div style="font-size:11px;color:var(--txt3);">Salve o marco primeiro pra poder comentar.</div>';
+    </div>` : '<div style="font-size:11px;color:var(--txt3);">Salve o marco primeiro pra poder comentar.</div>');
   return list + form;
 }
 
@@ -8577,6 +8586,8 @@ function _okrLoadMarcoComments(marcoId){
 // ✏️ Editar o próprio comentário do Marco (inline). Grava só `text` + `editadoEm` (o resto — autor, uid, ts — fica como está).
 function _okrCommentEdit(id){
   _okrSyncMarcoDraftFromDom();   // o re-render refaz o corpo inteiro: não perde o que já foi digitado no Marco
+  const oldInp = document.getElementById('okr-comment-edit-inp');
+  if(oldInp && _okrComentEditId!==id) oldInp.value = '';
   _okrComentEditId = id;
   renderOkrMarcoBody();
   const i = document.getElementById('okr-comment-edit-inp');
@@ -8642,14 +8653,21 @@ async function _okrCommentDel(id){
 
 
 async function _okrCommentSend(){
+  if(_okrComentSalvando || window._isPainelViewer) return;
   const inp = document.getElementById('okr-comment-inp');
   const text = (inp?.value||'').trim();
-  if(!text || !_okrEditingMarcoId) return;
+  const marcoId = _okrEditingMarcoId;
+  if(!text || !marcoId) return;
   const user = window._currentUser;
   const c = { id:'c'+Date.now()+Math.random().toString(36).slice(2,5), uid:user?.uid||'', author:user?.displayName||user?.email||'?', foto:user?.photoURL||'', text, ts:new Date().toISOString() };
   _okrSyncMarcoDraftFromDom(); // o comentário dispara re-render do corpo inteiro; não perder edição em andamento
-  await window._set(window._ref(window._db,'kanban/okr/marco_comments/'+_okrEditingMarcoId+'/'+c.id), c);
-  _okrLoadMarcoComments(_okrEditingMarcoId);
+  _okrComentSalvando = true;
+  try{
+    await window._set(window._ref(window._db,'kanban/okr/marco_comments/'+marcoId+'/'+c.id), c);
+    if(inp) inp.value = '';
+    _okrLoadMarcoComments(marcoId);
+  }catch(e){ console.error('_okrCommentSend', e); showToast('⚠ Não consegui enviar o comentário. Tente de novo.'); }
+  finally{ _okrComentSalvando = false; }
 }
 
 
@@ -8662,27 +8680,28 @@ function renderOkrMarcoBody(){
   _okrAplicarTorreModal(_okrTorreDe(obj));
   const podeEditar = _okrCanEdit(obj) && !_okrLockInfo(_okrMarcoDraft.objetivoId);   // Objetivo travado por outra pessoa: Marco em leitura também
   const d = _okrMarcoDraft;
+  const _pendMarco = _okrReadPending(_OKR_MARCO_PENDING_IDS);
 
   if(!podeEditar){
     body.innerHTML = `
       <div class="okr-field-label">Nome</div><div style="font-size:12px;color:var(--txt2);">${esc(d.nome||'—')}</div>
-      ${_okrStatusPickerHtml()}
+      ${_okrStatusPickerHtml(false)}
       ${d.responsavel?`<div class="okr-field-label">Responsável</div><div style="font-size:12px;color:var(--txt2);">${esc(_okrPessoaInfo(d.responsavel).nome)}</div>`:''}
       ${d.prazo?`<div class="okr-field-label">Prazo</div><div style="font-size:12px;color:var(--txt2);">${new Date(d.prazo+'T00:00:00').toLocaleDateString('pt-BR')}</div>`:''}
       ${d.descricao?`<div class="okr-field-label">Descrição</div><div style="font-size:12px;color:var(--txt2);white-space:pre-wrap;">${esc(d.descricao)}</div>`:''}
       ${d.mostrarApresentacao===false?`<div style="font-size:11px;color:var(--txt3);">🙈 Oculto na apresentação</div>`:''}
-      ${_okrChecklistHtml()}
-      ${_okrTagsHtml()}
-      ${_okrParticipantesHtml()}
+      ${_okrChecklistHtml(false)}
+      ${_okrTagsHtml(false)}
+      ${_okrParticipantesHtml(false)}
       <section class="okr-sec okr-sec-coment" id="okr-sec-marco-comentarios"><div class="okr-sec-hd"><span class="okr-sec-ico">💬</span><span>Comentários</span></div>${_okrCommentsHtml()}</section>
       ${_okrHistorySectionHtml(d)}`;
     footer.innerHTML = `<button onclick="closeOkrMarco()" style="padding:6px 14px;font-size:11px;background:var(--glass);border:1px solid var(--glass-b);border-radius:10px;color:var(--txt2);cursor:pointer;">Fechar</button>`;
+    _okrWritePending(_pendMarco);
     _okrRenderMarcoNav(d);
     return;
   }
 
   const respOpts = _okrPessoaOptions();
-  const _pendMarco = _okrReadPending(_OKR_MARCO_PENDING_IDS);
   body.innerHTML = `
     <section class="okr-sec okr-sec-marco" id="okr-sec-marco-detalhes"><div class="okr-sec-hd"><span class="okr-sec-ico">🏁</span><span>Detalhes do marco</span></div>
     <div class="okr-field-label" style="margin-top:0;">Nome do Marco</div>
