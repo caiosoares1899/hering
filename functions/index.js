@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -235,6 +235,13 @@ exports.metasLembretes = require('./metas/lembretes').metasLembretes;
 // resolvido/concluído → desativa o aviso. Interruptor: kanban/config/vtex_status_off=true. Deploy isolado:
 //   firebase deploy --only functions:vtexStatus,functions:sendPushOnNotification   (o 2º por causa do tipo novo no PUSH_TYPES)
 exports.vtexStatus = require('./vtex/statusVtex').vtexStatus;
+
+// 🐙 Status do GitHub & GitHub Pages (functions/github/statusGithub.js): a cada 5 min lê https://www.githubstatus.com/api/v2/summary.json,
+// atualiza `kanban/github_saude` (exibido na aba 🔋 Status do Painel) e, quando abre incidente ou degradação no GitHub Pages, aciona SOMENTE
+// os ADMs via sino + push (`github_incidente`, PUSH_TYPES acima) — nunca cria Comunicado global para todos os usuários. Interruptor:
+// kanban/config/github_status_off=true. Deploy isolado:
+//   firebase deploy --only functions:githubStatus,functions:sendPushOnNotification
+exports.githubStatus = require('./github/statusGithub').githubStatus;
 
 // 🎯 OKR — Fase 3: snapshot semanal (toda sexta 17h, ver
 // functions/okr/weeklySnapshot.js). NÃO notifica ninguém — só grava uma

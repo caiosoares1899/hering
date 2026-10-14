@@ -1609,6 +1609,10 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   <div class="refresh-bar">
     <span class="status-dot status-ok" id="conn-dot"></span>
     <span>Firebase conectado</span>
+    <span id="github-status-pill" onclick="swPtab('status')" title="Ver status detalhado do GitHub e GitHub Pages (aba 🔋 Status)" style="display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;cursor:pointer;background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.25);color:var(--teal);margin-left:6px;transition:all .15s;">
+      <span id="github-status-pill-dot" style="width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
+      <span id="github-status-pill-txt">🐙 GitHub Pages: verificando…</span>
+    </span>
     <span class="last-update" id="last-update"></span>
   </div>
 
@@ -2139,6 +2143,51 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     </div>
     <div style="font-size:10px;color:var(--txt3);background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.15);border-radius:8px;padding:8px 12px;margin-bottom:14px;line-height:1.5;">
       ⚠️ O Firebase não expõe a quota oficial (leituras/downloads/limite do plano) pelo navegador — esses números só existem no Console. Aqui mostramos <b>proxies mensuráveis</b>: peso dos dados, contagens, latência e presença. Servem para acompanhar o crescimento e detectar squads inflando o banco.
+    </div>
+
+    <!-- 🐙 Status do GitHub & GitHub Pages -->
+    <div class="status-card" id="st-github-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div>
+          <div style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;display:flex;align-items:center;gap:6px;">
+            <span>🐙 Status do GitHub &amp; GitHub Pages</span>
+            <span id="st-gh-overall-badge" style="font-size:10px;padding:2px 8px;border-radius:999px;background:rgba(29,233,182,.12);border:1px solid rgba(29,233,182,.3);color:var(--teal);font-weight:600;">Verificando…</span>
+          </div>
+          <div style="font-size:11px;color:var(--txt3);margin-top:2px;">
+            Hospedagem oficial do Maré Digital, Painel, Radar, Oceano e Escala · 🔒 <b>Alertas de incidente acionam apenas os ADMs</b> (sino + push, sem popup para todos os usuários)
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-sm" onclick="loadGithubStatus(true)" style="color:var(--accent);border-color:rgba(56,182,255,.3);font-size:10px;">🔄 Checar GitHub</button>
+          <a href="https://www.githubstatus.com" target="_blank" rel="noopener noreferrer" class="btn btn-sm" style="text-decoration:none;color:var(--txt2);font-size:10px;">↗ githubstatus.com</a>
+        </div>
+      </div>
+
+      <!-- Destaque principal: GitHub Pages -->
+      <div id="st-gh-pages-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:11px 13px;border-radius:9px;background:rgba(29,233,182,.07);border:1px solid rgba(29,233,182,.25);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <span id="st-gh-pages-icon" style="font-size:20px;line-height:1;">📄</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+              <span>GitHub Pages (Hospedagem das páginas)</span>
+              <span id="st-gh-pages-badge" style="font-size:10px;padding:1px 8px;border-radius:999px;background:rgba(29,233,182,.16);color:var(--teal);font-weight:700;">Verificando…</span>
+            </div>
+            <div id="st-gh-pages-desc" style="font-size:10px;color:var(--txt3);margin-top:2px;">Servidores de publicação e entrega estática do domínio caiosoares1899.github.io/hering</div>
+          </div>
+        </div>
+        <div id="st-gh-pages-meta" style="font-size:10px;color:var(--txt3);text-align:right;">—</div>
+      </div>
+
+      <!-- Grade dos demais serviços do GitHub -->
+      <div id="st-gh-comps-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:7px;margin-bottom:10px;"></div>
+
+      <!-- Incidentes ativos -->
+      <div id="st-gh-incidents" style="font-size:11px;color:var(--txt2);"></div>
+
+      <!-- Rodapé do vigia automático (Cloud Function githubStatus -> kanban/github_saude) -->
+      <div id="st-gh-monitor-meta" style="margin-top:9px;padding-top:8px;border-top:1px solid var(--glass-b);font-size:10px;color:var(--txt3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+        <span>🛰️ Vigia automático (<code>githubStatus</code>, a cada 5 min): aguardando leitura…</span>
+      </div>
     </div>
 
     <!-- Config de logout por inatividade -->
@@ -2924,7 +2973,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.67 · painel-dev</div>
+<div class="version">v5.68 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3027,7 +3076,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=29"></script>
+<script src="mare-notif-dev.js?v=30"></script>
 <script src="mare-metas-dev.js?v=10"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
@@ -6759,8 +6808,239 @@ function _stPesoLoad(){
 function _stPesoSave(c){
   try{ localStorage.setItem('painel_st_peso', JSON.stringify({...c, at:Date.now(), url:window._db?.app?.options?.databaseURL||''})); }catch(e){}
 }
+// ── 🐙 Status do GitHub & GitHub Pages (aba 🔋 Status + pílula no topo) ──
+const _GH_STATUS_URL = 'https://www.githubstatus.com/api/v2/summary.json';
+const _GH_TTL_MS = 2 * 60 * 1000;
+const _GH_COMP_META = [
+  { key: 'Pages',          name: 'Pages',          label: 'GitHub Pages',   icon: '📄', primary: true },
+  { key: 'Actions',        name: 'Actions',        label: 'Actions',        icon: '⚙️' },
+  { key: 'Git Operations', name: 'Git Operations', label: 'Git Operations', icon: '🌿' },
+  { key: 'API Requests',   name: 'API Requests',   label: 'API Requests',   icon: '🔌' },
+  { key: 'Webhooks',       name: 'Webhooks',       label: 'Webhooks',       icon: '🪝' },
+  { key: 'Pull Requests',  name: 'Pull Requests',  label: 'Pull Requests',  icon: '🔀' },
+  { key: 'Issues',         name: 'Issues',         label: 'Issues',         icon: '🐛' },
+  { key: 'Packages',       name: 'Packages',       label: 'Packages',       icon: '📦' },
+  { key: 'Copilot',        name: 'Copilot',        label: 'Copilot',        icon: '🤖' }
+];
+const _GH_STATUS_STYLE = {
+  operational:          { label: 'Operacional',              color: '#00c9a7', bg: 'rgba(0,201,167,.12)',   border: 'rgba(0,201,167,.35)' },
+  degraded_performance: { label: 'Lentidão / degradação',    color: '#ffb547', bg: 'rgba(255,181,71,.14)',  border: 'rgba(255,181,71,.42)' },
+  partial_outage:       { label: 'Indisponibilidade parcial',color: '#ff5c7c', bg: 'rgba(255,92,124,.15)',  border: 'rgba(255,92,124,.45)' },
+  major_outage:         { label: 'Fora do ar (queda grave)', color: '#ff5c7c', bg: 'rgba(255,92,124,.20)',  border: 'rgba(255,92,124,.55)' },
+  under_maintenance:    { label: 'Em manutenção',            color: '#38b6ff', bg: 'rgba(56,182,255,.14)',  border: 'rgba(56,182,255,.40)' }
+};
+function _ghStyleFor(st){
+  return _GH_STATUS_STYLE[st] || { label: st || 'Desconhecido', color: 'var(--txt3)', bg: 'rgba(138,164,192,.1)', border: 'rgba(138,164,192,.25)' };
+}
+let _ghSaude = null;
+let _ghLive = null;
+let _ghLiveAt = 0;
+let _ghInited = false;
+
+function initGithubStatusMonitor(){
+  if(_ghInited) return;
+  _ghInited = true;
+  try{
+    window._onValue(window._ref(window._db, 'kanban/github_saude'), snap => {
+      _dbgTrack('github_saude', snap.val());
+      _ghSaude = snap.val() || null;
+      renderGithubStatusUI();
+    });
+  }catch(e){}
+  loadGithubStatus(false);
+  setInterval(() => loadGithubStatus(false), 5 * 60 * 1000);
+}
+
+async function loadGithubStatus(force){
+  if(!force && _ghLive && (Date.now() - _ghLiveAt < _GH_TTL_MS)){
+    renderGithubStatusUI();
+    return;
+  }
+  try{
+    const res = await fetch(_GH_STATUS_URL, { cache: 'no-store' });
+    if(res.ok){
+      const json = await res.json();
+      const comps = {};
+      for(const c of (Array.isArray(json.components) ? json.components : [])){
+        if(c && c.name) comps[c.name] = { status: c.status || 'unknown', updatedAt: c.updated_at || null };
+      }
+      const incs = (Array.isArray(json.incidents) ? json.incidents : []).map(inc => {
+        const upds = Array.isArray(inc.incident_updates) ? inc.incident_updates : [];
+        const latest = upds[0] || {};
+        return {
+          id: inc.id || '',
+          name: inc.name || 'Incidente no GitHub',
+          status: inc.status || 'investigating',
+          impact: inc.impact || 'minor',
+          shortlink: inc.shortlink || 'https://www.githubstatus.com',
+          updatedAt: inc.updated_at || inc.created_at || null,
+          latestBody: String(latest.body || '').slice(0, 280)
+        };
+      });
+      _ghLive = {
+        indicator: (json.status && json.status.indicator) || 'none',
+        description: (json.status && json.status.description) || '',
+        pagesStatus: (comps['Pages'] && comps['Pages'].status) || 'unknown',
+        pagesUpdatedAt: (comps['Pages'] && comps['Pages'].updatedAt) || null,
+        componentes: comps,
+        incidentesAtivos: incs,
+        fetchedAt: new Date().toISOString()
+      };
+      _ghLiveAt = Date.now();
+    }
+  }catch(e){}
+  renderGithubStatusUI();
+}
+
+function renderGithubStatusUI(){
+  const src = _ghLive || _ghSaude;
+  const pill = document.getElementById('github-status-pill');
+  const overallEl = document.getElementById('st-gh-overall-badge');
+  const bannerEl = document.getElementById('st-gh-pages-banner');
+  const dotEl = document.getElementById('st-gh-pages-dot');
+  const badgeEl = document.getElementById('st-gh-pages-badge');
+  const descEl = document.getElementById('st-gh-pages-desc');
+  const gridEl = document.getElementById('st-gh-comps-grid');
+  const incEl = document.getElementById('st-gh-incidents');
+  const metaEl = document.getElementById('st-gh-monitor-meta');
+
+  if(!src){
+    if(pill){ pill.style.display = 'inline-flex'; pill.textContent = '🐙 Pages: verificando…'; }
+    return;
+  }
+
+  const pagesSt = src.pagesStatus || (src.componentes && src.componentes.Pages && src.componentes.Pages.status) || 'unknown';
+  const pStyle = _ghStyleFor(pagesSt);
+  const incs = Array.isArray(src.incidentesAtivos) ? src.incidentesAtivos : [];
+  const indicator = src.indicator || 'none';
+  const hasIssue = pagesSt !== 'operational' || incs.length > 0 || (indicator !== 'none' && indicator !== 'unknown');
+
+  // 1) Pílula no topo (.refresh-bar)
+  if(pill){
+    pill.style.display = 'inline-flex';
+    if(pagesSt !== 'operational' && pagesSt !== 'unknown'){
+      pill.style.color = pStyle.color;
+      pill.style.borderColor = pStyle.border;
+      pill.style.background = pStyle.bg;
+      pill.textContent = `🚨 GitHub Pages: ${pStyle.label}`;
+    } else if(incs.length > 0){
+      pill.style.color = '#ffb547';
+      pill.style.borderColor = 'rgba(255,181,71,.4)';
+      pill.style.background = 'rgba(255,181,71,.12)';
+      pill.textContent = `🐙 Pages OK · ${incs.length} incidente${incs.length>1?'s':''} no GitHub`;
+    } else {
+      pill.style.color = '#00c9a7';
+      pill.style.borderColor = 'rgba(0,201,167,.3)';
+      pill.style.background = 'rgba(0,201,167,.08)';
+      pill.textContent = '🐙 GitHub Pages: OK';
+    }
+  }
+
+  // 2) Selo geral no cabeçalho do card
+  if(overallEl){
+    if(!hasIssue){
+      overallEl.style.color = '#00c9a7';
+      overallEl.style.borderColor = 'rgba(0,201,167,.35)';
+      overallEl.style.background = 'rgba(0,201,167,.12)';
+      overallEl.textContent = '✓ Todos os sistemas operacionais';
+    } else if(pagesSt !== 'operational' && pagesSt !== 'unknown'){
+      overallEl.style.color = pStyle.color;
+      overallEl.style.borderColor = pStyle.border;
+      overallEl.style.background = pStyle.bg;
+      overallEl.textContent = `🚨 Pages: ${pStyle.label}`;
+    } else {
+      overallEl.style.color = '#ffb547';
+      overallEl.style.borderColor = 'rgba(255,181,71,.4)';
+      overallEl.style.background = 'rgba(255,181,71,.14)';
+      overallEl.textContent = `⚠️ ${incs.length} incidente${incs.length>1?'s':''} ativo${incs.length>1?'s':''}`;
+    }
+  }
+
+  // 3) Destaque principal: GitHub Pages
+  if(bannerEl && dotEl && badgeEl && descEl){
+    bannerEl.style.borderColor = pStyle.border;
+    bannerEl.style.background = pStyle.bg;
+    dotEl.style.background = pStyle.color;
+    dotEl.style.boxShadow = `0 0 10px ${pStyle.color}`;
+    badgeEl.style.color = pStyle.color;
+    badgeEl.style.borderColor = pStyle.border;
+    badgeEl.style.background = 'rgba(6,18,36,.45)';
+    badgeEl.textContent = pStyle.label;
+    if(pagesSt === 'operational'){
+      descEl.textContent = 'Hospedagem e publicação automática das páginas da família Oceano funcionando normalmente.';
+    } else if(pagesSt === 'unknown'){
+      descEl.textContent = 'Não foi possível confirmar o status do GitHub Pages agora.';
+    } else {
+      descEl.textContent = 'Atenção: instabilidade no GitHub Pages pode atrasar deploys da branch main ou afetar o carregamento das páginas. Os ADMs são acionados automaticamente.';
+    }
+  }
+
+  // 4) Grade de componentes do GitHub
+  if(gridEl){
+    const comps = src.componentes || {};
+    gridEl.innerHTML = _GH_COMP_META.map(m => {
+      const cObj = comps[m.key] || comps[m.name] || {};
+      const st = cObj.status || (m.key === 'Pages' ? pagesSt : 'unknown');
+      const stInfo = _ghStyleFor(st);
+      const isOk = st === 'operational';
+      return `<div style="padding:9px 11px;border-radius:9px;background:${isOk?'rgba(var(--slate-rgb),.32)':stInfo.bg};border:1px solid ${isOk?'var(--glass-b)':stInfo.border};display:flex;align-items:center;justify-content:space-between;gap:8px;">
+        <div style="display:flex;align-items:center;gap:6px;min-width:0;">
+          <span style="font-size:13px;flex-shrink:0;">${m.icon}</span>
+          <span style="font-size:11px;font-weight:${m.primary?'700':'600'};color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.label)}</span>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:${stInfo.color};flex-shrink:0;">
+          <span style="width:7px;height:7px;border-radius:999px;background:${stInfo.color};"></span>
+          ${esc(isOk ? 'OK' : stInfo.label)}
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  // 5) Lista de incidentes ativos (quando houver)
+  if(incEl){
+    if(!incs.length){
+      incEl.style.display = 'none';
+      incEl.innerHTML = '';
+    } else {
+      incEl.style.display = 'block';
+      incEl.innerHTML = incs.map(inc => {
+        const impColor = (inc.impact === 'critical' || inc.impact === 'major') ? '#ff5c7c' : '#ffb547';
+        const dtTxt = inc.updatedAt ? new Date(inc.updatedAt).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        return `<div style="padding:10px 12px;border-radius:9px;background:rgba(255,92,124,.09);border:1px solid rgba(255,92,124,.32);margin-bottom:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div style="font-size:11.5px;font-weight:700;color:${impColor};">🚨 ${esc(inc.name || 'Incidente no GitHub')}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(6,18,36,.5);color:var(--txt2);border:1px solid var(--glass-b);">${esc(inc.status || '')}</span>
+              ${dtTxt ? `<span style="font-size:9.5px;color:var(--txt3);">${esc(dtTxt)}</span>` : ''}
+              ${inc.shortlink ? `<a href="${esc(inc.shortlink)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
+            </div>
+          </div>
+          ${inc.latestBody ? `<div style="font-size:10.5px;color:var(--txt2);margin-top:5px;line-height:1.45;">${esc(inc.latestBody)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // 6) Rodapé de telemetria (mostra checagem ao vivo + vigia de 5 min no servidor)
+  if(metaEl){
+    const parts = [];
+    if(_ghLive && _ghLive.fetchedAt){
+      const t = new Date(_ghLive.fetchedAt).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      parts.push(`Ao vivo no navegador: ${t}`);
+    }
+    if(_ghSaude && _ghSaude.verificadoEm){
+      const tSrv = new Date(_ghSaude.verificadoEm).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      parts.push(`Vigia Cloud Function (5 min): ${tSrv}${_ghSaude.ok === false ? ' ⚠️ falha na última leitura' : ''}`);
+    } else {
+      parts.push('Vigia Cloud Function (githubStatus): aguardando 1ª execução');
+    }
+    metaEl.textContent = parts.join(' · ');
+  }
+}
+
 async function loadStatusData(force){
   carregarConfigInatividade();
+  loadGithubStatus(force);
   const listEl = document.getElementById('st-squad-list');
   if(listEl) listEl.innerHTML='<div style="font-size:11px;color:var(--txt3);">Medindo dados de cada squad...</div>';
 
@@ -7068,7 +7348,7 @@ function renderPainelNotifs(){
   list.innerHTML = _painelNotifs.slice(0,50).map(n=>{
     const sqc = n.squad ? _painelSqColor(n.squad) : null;
     const sqBadge = n.squad ? `<span style="font-size:8px;padding:1px 6px;border-radius:999px;background:${sqc.bg};border:1px solid ${sqc.border};color:${sqc.text};">${esc(_sqLabel(n.squad))}</span>` : '';
-    const icon = n._kind==='lembrete' ? '✎' : (n._kind==='feed' ? esc(n.icon||'🔔') : '🔔');
+    const icon = n._kind==='lembrete' ? '✎' : (n._kind==='feed' ? esc(n.icon||'🔔') : ((window.MareNotif && MareNotif.ICONS && MareNotif.ICONS[n.type]) || '🔔'));
     const quando = n.ts ? _relTime(n.ts) : '';
     const dotRead = ((n._kind==='notif'||n._kind==='feed') && !n.read) ? '<span style="width:7px;height:7px;border-radius:999px;background:var(--teal);flex-shrink:0;"></span>' : '';
     // Notificações de rascunho navegam pra aba correta do painel; outras abrem card no board
@@ -7084,6 +7364,8 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina('escala-dev.html?visao=squad&squad='+encodeURIComponent(${jsq(n.squad||'')})+'&semana='+encodeURIComponent(${jsq(n.okrObjId||'')}));" style="cursor:pointer;"`
       : n.type==='meta_lembrete'
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban-dev.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
+      : (n.type==='github_incidente' || n.type==='github_monitor_falhou' || n.type==='backup_falhou')
+      ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});swPtab('status');togglePainelNotif(event);" style="cursor:pointer;"`
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
       : (n.cardId && n.squad) ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}window.open('kanban-dev.html?squad=${esc(n.squad)}&opencard=${esc(n.cardId)}','_blank')" style="cursor:pointer;"` : '';
@@ -9280,6 +9562,7 @@ window.addEventListener('fb-ready',()=>{
   loadDadosConfig();
   loadDadosDiarios();
   _pmetasIniciar();   // 🐟 metas/desafios do Digital + metas das squads (ranking)
+  initGithubStatusMonitor();   // 🐙 status do GitHub & GitHub Pages (pílula no topo + aba 🔋 Status)
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){
