@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚢 Buzina de navio no popup "O mar tá pra peixe" — 2026-10-14 · kanban-dev v8.30.857-dev · painel-dev v5.66 · mare-metas-dev v9 · `buzina-navio.mp3` (SÓ DEV)
+- O popup 🐟 de cada marco de 20 % agora toca uma **buzina de navio**: buzinada curta (corta com fade em ~2,4 s, volume 0,6) nos marcos comuns e a **buzina inteira** (4 s, volume 0,85) na meta batida 🏆.
+- O áudio é o `buzina-navio.mp3` (raiz do domínio, ~50 KB): trecho de 4,1 s de um som de navio de cruzeiro (Freesound, enviado pelo Caio), cortado, normalizado e comprimido (mono, 96 kbps). **Confirmar a licença/atribuição do original antes de promover pra prod.**
+- Respeita o 🔇 do sino e o 🔕 Não Perturbe (`MareNotif.somMudo()`/`dndAtivo()`); fecha o popup = para o som; se o navegador barrar o som (autoplay), falha em silêncio e o popup aparece normal.
+- Ajuda do Maré (Metas) atualizada. Dica: não (efeito automático). Teste novo `test_metas_buzina.js` (8 checagens); testes de Metas existentes sem regressão.
+
 ### 🚀 Promoção: Oceano como porta de entrada (1ª abertura do dia) + correção do convidado externo — 2026-10-14 · kanban v8.30.856 · painel v5.65 · oceano v1.34 (com avisos)
 - **🌊 Oceano como porta de entrada:** na **primeira abertura do dia** do Maré ou do Painel por favorito/link simples, quem já está logado passa antes pelo Oceano (vê o Mural e os avisos) e o atalho "↩ Continuar" leva de volta, na mesma squad. Antes só quem NÃO tinha sessão era mandado pra lá — e o login do Maré sobrevive a sair da conta Google, então quase ninguém passava. Não passam: link com destino (card, notificação, `?okr=`), app instalado do Maré, e-mail de fora da Hering, `?login=local`, o Maré dentro do Oceano e quem já abriu o Oceano hoje. Interruptor `MARE_OCEANO_DIARIO`.
 - **🐛 Convidado externo (freelancer) não conseguia entrar:** o Maré manda todo deslogado pro Oceano; o Oceano recusava a conta externa e a saída levava pra `?login=local` sem a squad. Agora a conta externa vinda do Maré/Painel é encaminhada direto pra página de origem em modo local (squad/card/hash preservados), e o Maré confere a lista de externos.
