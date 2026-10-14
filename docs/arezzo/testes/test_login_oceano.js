@@ -22,7 +22,7 @@ const seed=()=>({kanban:{usuarios:{},usuarios_publicos:{},config:{adm_emails:[]}
  // 3) Oceano com next + login Hering → FICA no Oceano (vê o Mural/vitrine), cadastra, e oferece "↩ Continuar"
  { const {ctx,p,errs,abertas}=await novo(); const nav=[]; await seguraVolta(p,'kanban',nav); await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent('kanban'+SUF+'.html?squad=dev&card=c1'),{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb);
    const antes=await p.evaluate(()=>({login:getComputedStyle(document.getElementById('login')).display,conv:document.getElementById('login-convidado').innerText,hrefs:[...document.querySelectorAll('#login-convidado a')].map(a=>a.getAttribute('href'))}));
-   t('tela de login do Oceano mostra a saída pro convidado externo (links ?login=local)', antes.login!=='none' && /Convidado externo/.test(antes.conv) && antes.hrefs.join()==='kanban'+SUF+'.html?login=local,painel'+SUF+'.html?login=local,okr'+SUF+'.html?login=local', antes);
+   t('tela de login do Oceano mostra a saída pro convidado externo (links ?login=local, levando squad/card de origem)', antes.login!=='none' && /Convidado externo/.test(antes.conv) && antes.hrefs.join()==='kanban'+SUF+'.html?squad=dev&card=c1&login=local,painel'+SUF+'.html?login=local,okr'+SUF+'.html?login=local', antes);
    const u0=await p.evaluate(x=>{ window.__authCb(x); return new Promise(r=>setTimeout(()=>r(window.__store.kanban.usuarios.eve||null),150)); },U);
    await p.waitForTimeout(1800);
    const r=await p.evaluate(()=>({app:getComputedStyle(document.getElementById('app')).display,login:getComputedStyle(document.getElementById('login')).display,cont:getComputedStyle(document.getElementById('continuar')).display,txt:document.getElementById('continuar-t').innerText,url:location.pathname+location.search}));
@@ -40,10 +40,21 @@ const seed=()=>({kanban:{usuarios:{},usuarios_publicos:{},config:{adm_emails:[]}
  for(const ruim of ['https://evil.com','//evil.com/x','javascript:alert(1)','oceano'+SUF+'.html','kanban'+SUF+'.html@evil.com','../kanban.html']){
    const {ctx,p}=await novo(); await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent(ruim),{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U); await p.waitForTimeout(900);
    t(`next inválido "${ruim}" é ignorado (fica no Oceano, lobby normal, SEM atalho de continuar)`, /oceano/.test(p.url()) && await p.evaluate(()=>getComputedStyle(document.getElementById('app')).display!=='none' && getComputedStyle(document.getElementById('continuar')).display==='none'), p.url()); await ctx.close(); }
- // 5) conta que não é da Hering no Oceano: recusa e mantém a saída do convidado
- { const {ctx,p}=await novo(); await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent('painel'+SUF+'.html'),{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),EXT); await p.waitForTimeout(500);
+ // 5) conta que não é da Hering no Oceano. COM ?next (veio do Maré/Painel): segue pra página de origem em modo local, levando squad/card.
+ //    SEM ?next (abriu o Oceano direto): recusa e mantém a saída do convidado (links levam ?login=local).
+ for(const [alvo,esperado] of [['painel'+SUF+'.html','painel'+SUF+'.html?login=local'],['kanban'+SUF+'.html?squad=dev&card=c1','kanban'+SUF+'.html?squad=dev&card=c1&login=local'],['kanban'+SUF+'.html?squad=dev#x','kanban'+SUF+'.html?squad=dev&login=local#x']]){
+   const {ctx,p}=await novo(); const nav=[]; const pref=alvo.split(/[?#]/)[0]; await p.route(u=>u.href.startsWith(B+pref),async r=>{ nav.push(r.request().url().replace(B,'')); r.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>stub</title>'}); });
+   await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent(alvo),{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),EXT); await p.waitForTimeout(1200);
+   t(`conta externa vinda do Maré/Painel (${alvo}) é encaminhada pra página de origem em modo local, sem recusa`, nav.length===1 && decodeURIComponent(p.url().replace(B,''))===esperado && !(await p.evaluate(()=>window.__signedOut||0)), nav); await ctx.close(); }
+ { const {ctx,p}=await novo(); await p.goto(B+'oceano'+SUF+'.html',{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),EXT); await p.waitForTimeout(500);
    const r=await p.evaluate(()=>({err:document.getElementById('login-err').textContent,conv:getComputedStyle(document.getElementById('login-convidado')).display,url:location.pathname}));
-   t('conta externa no Oceano é recusada e a mensagem aponta pros links do convidado', /convidado externo/i.test(r.err) && r.conv!=='none' && /oceano/.test(r.url), r); await ctx.close(); }
+   t('conta externa que abriu o Oceano direto (sem ?next) é recusada e a mensagem aponta pros links do convidado', /convidado externo/i.test(r.err) && r.conv!=='none' && /oceano/.test(r.url), r); await ctx.close(); }
+ { const {ctx,p}=await novo(); await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent('kanban'+SUF+'.html?squad=dev&card=c1'),{waitUntil:'load'});
+   const h=await p.evaluate(()=>['lc-kanban','lc-painel','lc-okr'].map(i=>document.getElementById(i).getAttribute('href')));
+   t('links do convidado na tela de login levam a squad/card de origem (e os outros seguem simples)', h[0]==='kanban'+SUF+'.html?squad=dev&card=c1&login=local' && h[1]==='painel'+SUF+'.html?login=local' && h[2]==='okr'+SUF+'.html?login=local', h); await ctx.close(); }
+ { const {ctx,p}=await novo(); await p.goto(B+'oceano'+SUF+'.html?next='+encodeURIComponent('painel'+SUF+'.html'),{waitUntil:'load'}); await p.waitForFunction(()=>!!window.__authCb);
+   await p.evaluate(x=>window.__authCb(x),{uid:'h2',email:'hering@ciahering.com.br',displayName:'H',photoURL:'',providerData:[{providerId:'password'}]}); await p.waitForTimeout(500);
+   t('conta @ciahering que NÃO veio pelo Google continua recusada (não é encaminhada)', /oceano/.test(p.url()) && /botão do Google/.test(await p.evaluate(()=>document.getElementById('login-err').textContent)), p.url()); await ctx.close(); }
  // 6) ?login=local: sem redirecionar, e a escolha vale pela aba (reload sem a query)
  for(const pg of ['kanban','painel']){
    const {ctx,p}=await novo(); await p.goto(B+pg+SUF+'.html?login=local',{waitUntil:'load'}); await p.waitForTimeout(1200);
