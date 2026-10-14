@@ -2924,7 +2924,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.64 · painel-dev</div>
+<div class="version">v5.65 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -9081,6 +9081,30 @@ function _irParaOceano(){
     return true;
   }catch(err){ return false; }
 }
+// Oceano como porta de entrada (2026-10-14): quem JÁ está logado (o login do Maré/Painel vive no navegador, não no Google — sobrevive a sair da conta Google)
+// também passa pelo Oceano na 1ª abertura do dia, pra ver o Mural e os avisos. Devolve true se mandou embora.
+// NÃO manda: iframe (host do Oceano), ?login=local/convidado, e-mail fora de @ciahering (o Oceano é só Hering), app instalado do Maré (standalone — não muda),
+// link com destino (qualquer parâmetro além de ?squad=, ou #hash: card, notificação, okr…), quem já passou pelo Oceano hoje (o próprio Oceano marca o dia),
+// e voltando do login direto do Google. Interruptor: window.MARE_OCEANO_DIARIO=false.
+function _oceanoDoDia(user){
+  try{
+    if(window.MARE_LOGIN_PELO_OCEANO===false || window.MARE_OCEANO_DIARIO===false) return false;
+    if(window.parent && window.parent!==window) return false;
+    if(window.MareLogin && MareLogin.voltando) return false;
+    if(!/@ciahering\.com\.br$/i.test(String((user&&user.email)||''))) return false;
+    if(new URLSearchParams(location.search).get('login')==='local' || sessionStorage.getItem('mare_login_local')==='1') return false;
+    if((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true) return false;
+    if(location.hash || [...new URLSearchParams(location.search).keys()].some(k=>k!=='squad')) return false;
+    if(!/(kanban|painel)(-dev)?\.html$/.test(location.pathname)) return false;
+    const dev=/-dev\.html/.test(location.pathname), chave='mare_oceano_dia'+(dev?'_dev':''), hoje=new Date().toLocaleDateString('sv-SE');
+    if(localStorage.getItem(chave)===hoje) return false;
+    const ult=Number(sessionStorage.getItem('mare_oceano_ts')||0); if(ult && Date.now()-ult<45000) return false;
+    localStorage.setItem(chave, hoje); sessionStorage.setItem('mare_oceano_ts', String(Date.now()));
+    const alvo=location.pathname.split('/').pop()+location.search;
+    location.replace((dev?'oceano-dev.html':'oceano.html')+'?next='+encodeURIComponent(alvo));
+    return true;
+  }catch(err){ return false; }
+}
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
@@ -9135,6 +9159,7 @@ window.addEventListener('auth-change',e=>{
       return; // aguarda verificação async
     }
     window._isPainelViewer = false;
+    if(_oceanoDoDia(user)) return;
     _finishPainelLogin(user);
   } else {
     if(_irParaOceano()) return;

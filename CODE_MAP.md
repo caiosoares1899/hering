@@ -38,6 +38,7 @@ confiar num número aqui se for mexer em `painel.html` prod).
 ## kanban.html / kanban-dev.html
 
 ### Papéis & autenticação
+- **Oceano na 1ª abertura do dia (2026-10-14, só dev)** — `_oceanoDoDia(user)` (kanban-dev e painel-dev, logo após `_irParaOceano()`; chamada antes de `autoRegistrar`/`_finishPainelLogin`): quem JÁ está logado também vai pro Oceano (`?next=`) uma vez por dia (`localStorage.mare_oceano_dia[_dev]`, gravado também pelo `oceano-dev.html` ao abrir direto); interruptor `MARE_OCEANO_DIARIO`; teste `docs/arezzo/testes/test_oceano_do_dia.js`.
 - **Login único pelo Oceano (2026-10-11, só dev)** — `_irParaOceano()` (kanban-dev e painel-dev, logo antes do listener `auth-change`) manda o deslogado pra `oceano(-dev).html?next=…` (interruptor `window.MARE_LOGIN_PELO_OCEANO`; exceções: iframe, `?login=local`, recusa em `#login-err`/`login_notice`, anti-loop 45 s). Oceano: `NEXT`, `garantirCadastro()`, `mostrarContinuar()` (atalho "↩ Continuar" — a pessoa fica no Oceano, não é devolvida sozinha). Detalhes em `docs/OCEANO.md`. Teste: `test_login_oceano.js`.
 - `ADM_EMAILS` (let) — L6925
 - `getEffectiveRole()` — L7031 — papel efetivo, ADMs hardcoded não são rebaixáveis
