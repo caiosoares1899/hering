@@ -1,6 +1,7 @@
 ---
 name: otimizaçãoderotina
-description: Audita o código do Maré Digital (kanban.html/kanban-dev.html, e por extensão painel.html se pedido) em busca de oportunidades reais de otimização de bytes de download da PÁGINA, performance, mobile, E consumo de LEITURA do Firebase (query/fallback/tree completa) — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "revisar consumo do Firebase", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código", "nosso consumo de Firebase tá alto").
+description: >-
+  Audita o código do Maré Digital (kanban.html/kanban-dev.html, e por extensão painel.html se pedido) em busca de oportunidades reais de otimização de bytes de download da PÁGINA, performance, mobile, E consumo de LEITURA do Firebase (query/fallback/tree completa) — sem alterar a arquitetura de página única self-contained do projeto. Use sempre que o usuário pedir para "otimizar o código", "revisar performance do board", "economizar bytes/download", "deixar o board mais rápido", "otimização para mobile", "revisar consumo do Firebase", "rotina de otimização", ou pedir pra rodar essa rotina de novo — mesmo que a frase não mencione "kanban" ou "bytes" explicitamente (ex.: "o board tá pesado", "dá uma olhada se tem gordura pra cortar no código", "nosso consumo de Firebase tá alto").
 ---
 
 # Rotina de otimização — Maré Digital

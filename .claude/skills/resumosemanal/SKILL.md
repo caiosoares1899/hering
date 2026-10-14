@@ -1,6 +1,7 @@
 ---
 name: resumosemanal
-description: Lê o CHANGELOG.md e monta um resumo em texto corrido (nunca lista crua de entradas) do que mudou na SEMANA PASSADA no Maré Digital e no Agente Ágil, agrupado por tema/história pra apresentar na reunião semanal da squad. Use sempre que o usuário pedir "resumo semanal", "o que fizemos essa semana/semana passada", "prepara pra reunião da squad", "recap da semana", "o que rolou na última semana", ou invocar /resumosemanal diretamente — mesmo que a frase não diga "changelog" explicitamente.
+description: >-
+  Lê o CHANGELOG.md e monta um resumo em texto corrido (nunca lista crua de entradas) do que mudou na SEMANA PASSADA no Maré Digital e no Agente Ágil, agrupado por tema/história pra apresentar na reunião semanal da squad. Use sempre que o usuário pedir "resumo semanal", "o que fizemos essa semana/semana passada", "prepara pra reunião da squad", "recap da semana", "o que rolou na última semana", ou invocar /resumosemanal diretamente — mesmo que a frase não diga "changelog" explicitamente.
 ---
 
 # Resumo Semanal — reunião da squad

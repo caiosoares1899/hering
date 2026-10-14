@@ -1,6 +1,7 @@
 ---
 name: gerarokr
-description: Gera o prompt humanizado (texto corrido, NUNCA JSON) pra mandar pro agente estratégico do Gemini — um gem que preenche automaticamente os slides de "Planejamento Estratégico" a partir de um prompt em linguagem natural — cobrindo os 2 objetivos ativos (Maré Digital e Agente Ágil), com base no que mudou nos últimos 15 dias segundo o CHANGELOG.md/CODE_MAP.md/log dos cards. Use sempre que o usuário pedir "atualiza o OKR", "gera o prompt do OKR", "atualiza os slides de planejamento estratégico", "prepara o resumo pro Gemini preencher os slides", "manda pro agente estratégico as novidades", ou invocar /gerarokr diretamente — mesmo que a frase não diga "OKR" explicitamente.
+description: >-
+  Gera o prompt humanizado (texto corrido, NUNCA JSON) pra mandar pro agente estratégico do Gemini — um gem que preenche automaticamente os slides de "Planejamento Estratégico" a partir de um prompt em linguagem natural — cobrindo os 2 objetivos ativos (Maré Digital e Agente Ágil), com base no que mudou nos últimos 15 dias segundo o CHANGELOG.md/CODE_MAP.md/log dos cards. Use sempre que o usuário pedir "atualiza o OKR", "gera o prompt do OKR", "atualiza os slides de planejamento estratégico", "prepara o resumo pro Gemini preencher os slides", "manda pro agente estratégico as novidades", ou invocar /gerarokr diretamente — mesmo que a frase não diga "OKR" explicitamente.
 ---
 
 # Gerar OKR — Planejamento Estratégico (Maré Digital)
