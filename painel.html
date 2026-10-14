@@ -2964,7 +2964,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.64 · painel</div>
+<div class="version">v5.65 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -7245,6 +7245,15 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_oceano_porta_2026_10_14',
+    titulo: '🌊 O Oceano agora é a porta de entrada (e vale instalar o app!)',
+    corpo: '<p>Na <b>primeira vez do dia</b> que você abrir o <b>Maré</b> ou o <b>Painel</b> por um favorito ou link simples, você passa antes pelo <b>Oceano</b> — assim vê o <b>Mural</b> e os avisos do dia — e o atalho <b>↩ Continuar</b> no topo leva de volta ao que você queria (na mesma squad). Nas outras aberturas do dia, abre direto. Links com destino (um card, uma notificação) e o aplicativo instalado do Maré <b>não</b> passam pelo Oceano.</p>'
+      + '<p>📲 Dica: <b>instale o Oceano como aplicativo</b> no computador — clique em <b>📲 Instalar</b> no topo (ou no seu nome → <b>Preferências → Aplicativo</b>, ou no menu do Chrome → <b>Instalar Oceano</b>). Um ícone só para Maré, Painel e Radar, em janela própria.</p>'
+      + '<p>🧑‍💻 <b>Convidados externos (freelancers):</b> se você não tem e-mail @ciahering, o Oceano agora te leva direto para a página de onde você veio, sem barrar a entrada.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_modo_insistente_2026_10_13',
     titulo: '🫨 Não ouve o “ding”? Agora dá pra ser chamado com mais força',
     corpo: '<p>Quem às vezes não ouve o som das notificações ganhou uma opção: o <b>🫨 Modo insistente</b>. Ele vem <b>desligado</b> — só liga quem quiser, no rodapé do <b>🔔</b> (Maré, Radar, Painel e Oceano).</p>'
@@ -9556,6 +9565,30 @@ function _irParaOceano(){
     return true;
   }catch(err){ return false; }
 }
+// Oceano como porta de entrada (2026-10-14): quem JÁ está logado (o login do Maré/Painel vive no navegador, não no Google — sobrevive a sair da conta Google)
+// também passa pelo Oceano na 1ª abertura do dia, pra ver o Mural e os avisos. Devolve true se mandou embora.
+// NÃO manda: iframe (host do Oceano), ?login=local/convidado, e-mail fora de @ciahering (o Oceano é só Hering), app instalado do Maré (standalone — não muda),
+// link com destino (qualquer parâmetro além de ?squad=, ou #hash: card, notificação, okr…), quem já passou pelo Oceano hoje (o próprio Oceano marca o dia),
+// e voltando do login direto do Google. Interruptor: window.MARE_OCEANO_DIARIO=false.
+function _oceanoDoDia(user){
+  try{
+    if(window.MARE_LOGIN_PELO_OCEANO===false || window.MARE_OCEANO_DIARIO===false) return false;
+    if(window.parent && window.parent!==window) return false;
+    if(window.MareLogin && MareLogin.voltando) return false;
+    if(!/@ciahering\.com\.br$/i.test(String((user&&user.email)||''))) return false;
+    if(new URLSearchParams(location.search).get('login')==='local' || sessionStorage.getItem('mare_login_local')==='1') return false;
+    if((window.matchMedia && matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true) return false;
+    if(location.hash || [...new URLSearchParams(location.search).keys()].some(k=>k!=='squad')) return false;
+    if(!/(kanban|painel)(-dev)?\.html$/.test(location.pathname)) return false;
+    const dev=/-dev\.html/.test(location.pathname), chave='mare_oceano_dia'+(dev?'_dev':''), hoje=new Date().toLocaleDateString('sv-SE');
+    if(localStorage.getItem(chave)===hoje) return false;
+    const ult=Number(sessionStorage.getItem('mare_oceano_ts')||0); if(ult && Date.now()-ult<45000) return false;
+    localStorage.setItem(chave, hoje); sessionStorage.setItem('mare_oceano_ts', String(Date.now()));
+    const alvo=location.pathname.split('/').pop()+location.search;
+    location.replace((dev?'oceano-dev.html':'oceano.html')+'?next='+encodeURIComponent(alvo));
+    return true;
+  }catch(err){ return false; }
+}
 window.addEventListener('auth-change',e=>{
   const user=e.detail;
   window._currentUser=user||null;
@@ -9610,6 +9643,7 @@ window.addEventListener('auth-change',e=>{
       return; // aguarda verificação async
     }
     window._isPainelViewer = false;
+    if(_oceanoDoDia(user)) return;
     _finishPainelLogin(user);
   } else {
     if(_irParaOceano()) return;
