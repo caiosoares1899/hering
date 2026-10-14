@@ -1,6 +1,7 @@
 ---
 name: atualizarcodemap
-description: Sincroniza o CODE_MAP.md com o código de verdade — revalida cada âncora existente (linha certa, função ainda existe com esse nome), acha áreas funcionais novas sem seção própria, e atualiza o rodapé "Retrato do commit". Use sempre que o usuário pedir "atualiza o codemap", "atualiza o mapa do código", "sincroniza o CODE_MAP", "revisa o CODE_MAP.md", "roda o atualizarcodemap", "o mapa do código tá desatualizado", ou invocar /atualizarcodemap diretamente — mesmo que a frase não mencione "CODE_MAP.md" explicitamente (ex.: "confere se o índice do código ainda bate com a realidade"). Diferente do passo 8 do /subirproprod (que só confere o diff de UMA promoção específica) — esta é a auditoria PROFUNDA do arquivo inteiro.
+description: >-
+  Sincroniza o CODE_MAP.md com o código de verdade — revalida cada âncora existente (linha certa, função ainda existe com esse nome), acha áreas funcionais novas sem seção própria, e atualiza o rodapé "Retrato do commit". Use sempre que o usuário pedir "atualiza o codemap", "atualiza o mapa do código", "sincroniza o CODE_MAP", "revisa o CODE_MAP.md", "roda o atualizarcodemap", "o mapa do código tá desatualizado", ou invocar /atualizarcodemap diretamente — mesmo que a frase não mencione "CODE_MAP.md" explicitamente (ex.: "confere se o índice do código ainda bate com a realidade"). Diferente do passo 8 do /subirproprod (que só confere o diff de UMA promoção específica) — esta é a auditoria PROFUNDA do arquivo inteiro.
 ---
 
 # Atualizar CODE_MAP — Maré Digital

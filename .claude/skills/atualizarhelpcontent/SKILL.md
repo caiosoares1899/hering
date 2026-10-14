@@ -1,6 +1,7 @@
 ---
 name: atualizarhelpcontent
-description: Sincroniza a documentação in-app do Maré Digital (a Central de Ajuda "❓"/Ctrl+K, objeto `HELP_CONTENT` em kanban-dev.html, e o texto inline das telas de configuração) com o comportamento real de uma funcionalidade que acabou de mudar — ou audita tudo em busca de entradas desatualizadas. Use sempre que o usuário pedir para "atualiza o help content", "atualiza a central de ajuda", "sincroniza a documentação", "revisa a ajuda do board", "a documentação tá desatualizada", "roda a rotina de help content", ou perguntar algo como "atualizou o help content também?" depois de uma feature/fix — mesmo que a frase não mencione "HELP_CONTENT" ou "Ctrl+K" explicitamente.
+description: >-
+  Sincroniza a documentação in-app do Maré Digital (a Central de Ajuda "❓"/Ctrl+K, objeto `HELP_CONTENT` em kanban-dev.html, e o texto inline das telas de configuração) com o comportamento real de uma funcionalidade que acabou de mudar — ou audita tudo em busca de entradas desatualizadas. Use sempre que o usuário pedir para "atualiza o help content", "atualiza a central de ajuda", "sincroniza a documentação", "revisa a ajuda do board", "a documentação tá desatualizada", "roda a rotina de help content", ou perguntar algo como "atualizou o help content também?" depois de uma feature/fix — mesmo que a frase não mencione "HELP_CONTENT" ou "Ctrl+K" explicitamente.
 ---
 
 # Atualizar Help Content — Maré Digital
