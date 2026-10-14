@@ -14,7 +14,7 @@ const seed=()=>({kanban:{okr:{objetivos:{o1:obj('o1')},marcos:{m1:{id:'m1',objet
  const com=()=>page.evaluate(()=>JSON.parse(JSON.stringify(window.__store.kanban.okr.marco_comments.m1)));
  const abre=async()=>{ await page.evaluate(()=>openOkrMarco('m1','o1')); await page.waitForTimeout(500); };
  await abre();
- ok('1a. ✏️ e 🗑️ aparecem só no comentário da própria pessoa', await page.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !!bs[0].querySelector('[title="Editar comentário"]') && !!bs[0].querySelector('[title="Apagar comentário"]') && !bs[1].querySelector('[title="Editar comentário"]') && !bs[1].querySelector('[title="Apagar comentário"]'); }));
+ ok('1a. ADM vê ✏️+🗑️ no próprio comentário e 🗑️ (sem ✏️) no comentário de outra pessoa', await page.evaluate(()=>{ const bs=[...document.querySelectorAll('#okr-marco-body .okr-comment')]; return bs.length===2 && !!bs[0].querySelector('[title="Editar comentário"]') && !!bs[0].querySelector('[title="Apagar comentário"]') && !bs[1].querySelector('[title="Editar comentário"]') && !!bs[1].querySelector('[title="Apagar comentário"]'); }));
  // edita e salva com Enter
  await page.evaluate(()=>{ document.getElementById('okr-m-descricao').value='descrição em andamento'; });   // texto pendente no Marco não pode sumir
  await page.click('#okr-marco-body [title="Editar comentário"]'); await page.waitForTimeout(200);
@@ -69,7 +69,10 @@ const seed=()=>({kanban:{okr:{objetivos:{o1:obj('o1')},marcos:{m1:{id:'m1',objet
  await page.evaluate(()=>{ window.__denySet=null; });
  await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100); await page.click('#_uimp-ok'); await page.waitForTimeout(300);
  c=await com(); ok('6e. confirmar apaga no banco, tira da lista e preserva o rascunho do Marco e o comentário alheio', !c.cA && c.cB?.text==='da Bia' && await page.evaluate(()=>document.querySelectorAll('#okr-marco-body .okr-comment').length===1 && document.getElementById('okr-m-descricao').value==='rascunho ao apagar'));
- // outra pessoa (Bia): contexto novo, logada como ela
+ // ADM também apaga comentário de outra pessoa (cB, da Bia)
+ await page.click('#okr-marco-body [title="Apagar comentário"]'); await page.waitForTimeout(100); await page.click('#_uimp-ok'); await page.waitForTimeout(300);
+ c=await com(); ok('6f. ADM consegue apagar comentário de outra pessoa (moderação)', !c.cB && await page.evaluate(()=>document.querySelectorAll('#okr-marco-body .okr-comment').length===0));
+ // outra pessoa não-ADM (Bia): contexto novo, logada como ela
  await ctx.close();
  const ctx2=await b.newContext({viewport:{width:1280,height:900}}); await fake.install(ctx2,seed()); const pg=await ctx2.newPage(); const errs2=[]; pg.on('pageerror',e=>errs2.push(e.message));
  await pg.goto(BASE+'?torre=digital'); await pg.waitForFunction(()=>!!window.__authCb);

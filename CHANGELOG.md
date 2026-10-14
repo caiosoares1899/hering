@@ -18,6 +18,9 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🛡️ Radar: ADM também pode apagar comentários de qualquer pessoa nos Marcos — 2026-10-14 · okr-dev v2.78 (SÓ DEV)
+- **🛡️ Moderação de comentários por ADM (`_okrCommentsHtml` / `_okrCommentDel`):** além do próprio autor, usuários ADM (`_isAdmPainel()`) agora também veem o botão **🗑️ Apagar comentário** e podem remover comentários de outras pessoas dentro do modal do Marco (com confirmação `uiConfirm`). A edição inline (`✏️`) continua restrita exclusivamente ao autor do comentário, e visualizadores externos continuam em modo somente leitura. `loadAdmList()` também re-renderiza o corpo do Marco caso o modal já esteja aberto quando a lista de ADMs terminar de carregar.
+
 ### 🗑️ Radar: apagar o próprio comentário do Marco — 2026-10-14 · okr-dev v2.77 (SÓ DEV)
 - **🗑️ Apagar comentário no Marco:** ao lado do ✏️ (editar), cada comentário feito pela própria pessoa no modal do Marco agora exibe o botão **🗑️ Apagar comentário** (`_okrCommentDel`). Pede confirmação (`uiConfirm`), remove de `kanban/okr/marco_comments/{marcoId}/{id}` sem perder o que estiver sendo digitado no Marco e atualiza a lista e o contador de comentários na hora. Comentários de outras pessoas e o modo visualizador externo não exibem o botão.
 - Sem mudança de regra no banco (`kanban/okr` já permite escrita aos usuários autenticados `@ciahering.com.br`). Dica: não (ícone direto no comentário). Teste `test_comentario_marco.js` atualizado cobrindo exclusão, cancelamento, preservação de rascunho, falha de rede e permissão por autor.
