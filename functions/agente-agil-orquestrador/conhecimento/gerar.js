@@ -28,6 +28,7 @@ const ABAS_FORA = new Set(['agil', 'spotify', 'ui']);
 
 function htmlParaTexto(s) {
   return String(s || '')
+    .replace(/\r\n/g, '\n')
     .replace(/<\s*br\s*\/?>/gi, '\n')
     .replace(/<(div|p|ul|ol|h[1-6]|tr)(\s[^>]*)?>/gi, '\n')
     .replace(/<\/(div|p|li|ul|ol|h[1-6]|tr)>/gi, '\n')
@@ -104,6 +105,7 @@ function gerarAjudaOceano(html) {
 }
 
 function gerarNovidades(md, max = 30) {
+  md = String(md || '').replace(/\r\n/g, '\n');
   const ini = md.indexOf('## kanban.html (produção)');
   if (ini < 0) throw new Error('seção de produção do CHANGELOG não encontrada');
   const resto = md.slice(ini + 5);

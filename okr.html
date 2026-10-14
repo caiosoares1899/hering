@@ -1970,7 +1970,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.75 · okr</div>
+<div class="version">v2.78 · okr</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2079,6 +2079,7 @@ function loadAdmList(){
     const saved=snap.val();
     if(saved&&Array.isArray(saved)) ADM_EMAILS=[...new Set([...ADM_EMAILS,...saved])];
     if(typeof renderOkrObjetivos==='function') renderOkrObjetivos(); // permissão de editar depende de ser ADM
+    if(_okrEditingMarcoId && typeof renderOkrMarcoBody==='function'){ _okrSyncMarcoDraftFromDom(); renderOkrMarcoBody(); }
   }).catch(()=>{}).finally(()=>{ _okrAdmOk = true; _okrCheckAccessReady(); });
 }
 
@@ -8324,6 +8325,7 @@ let _okrMarcoDraft = null;
 
 
 let _okrMarcoComments = [];
+let _okrComentEditId = null;   // id do comentário aberto pra edição inline (null = nenhum)
 
 
 // Mesmo achado/motivo de _okrObjOpenSnapshot acima — dirty-check ao fechar,
@@ -8344,7 +8346,7 @@ function openOkrMarco(id, objId){
   document.getElementById('okr-marco-title').textContent = id ? '🏁 Editar Marco' : '🏁 Novo Marco';
   document.getElementById('okr-obj-ov').classList.remove('open'); // 1 modal por vez, evita empilhar
   document.getElementById('okr-marco-ov').classList.add('open');
-  _okrMarcoComments = [];
+  _okrMarcoComments = []; _okrComentEditId = null;
   { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; } // sessão nova: nada de texto pendente do Marco anterior
   renderOkrMarcoBody();
   if(id) _okrLoadMarcoComments(id);
@@ -8355,7 +8357,7 @@ function closeOkrMarco(){
   document.getElementById('okr-marco-ov').classList.remove('open');
   { const e=document.getElementById('okr-marco-body'); if(e) e.innerHTML=''; }
   const objId = _okrEditingMarcoObjId;
-  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
+  _okrEditingMarcoId = null; _okrMarcoDraft = null; _okrMarcoComments = []; _okrComentEditId = null; _okrEditingMarcoObjId = null; _okrMarcoOpenSnapshot = null;
   if(objId){ document.getElementById('okr-obj-ov').classList.add('open'); renderOkrObjBody(objId); }
 }
 
@@ -8534,8 +8536,24 @@ function _okrSetMarcoStatus(id){ _okrSyncMarcoDraftFromDom(); _okrMarcoDraft.pro
 
 function _okrCommentsHtml(){
   const cs = _okrMarcoComments||[];
+  const meuUid = window._isPainelViewer ? '' : (window._currentUser?.uid||'');   // só o AUTOR edita o próprio comentário (externo só acompanha)
+  const adm = !window._isPainelViewer && _isAdmPainel();                         // ADM também pode apagar comentários de outros (moderação)
   const list = cs.length
-    ? cs.map(c=>`<div class="okr-comment"><span class="okr-comment-ts">${new Date(c.ts).toLocaleString('pt-BR')}</span><b>${esc(c.author||'?')}</b><br>${esc(c.text)}</div>`).join('')
+    ? cs.map(c=>{
+        const meu = !!meuUid && !!c.id && c.uid===meuUid;
+        const podeApagar = !!c.id && (meu || adm);
+        if(meu && _okrComentEditId===c.id) return `<div class="okr-comment">
+          <b>${esc(c.author||'?')}</b>
+          <div class="okr-list-add" style="margin-top:6px;">
+            <input type="text" class="okr-input" id="okr-comment-edit-inp" value="${esc(c.text)}" onkeydown="if(event.key==='Enter'){event.preventDefault();_okrCommentEditSave();}else if(event.key==='Escape'){event.preventDefault();event.stopPropagation();_okrCommentEditCancel();}">
+            <button type="button" class="btn btn-sm" onclick="_okrCommentEditSave()">Salvar</button>
+            <button type="button" class="btn btn-sm" onclick="_okrCommentEditCancel()">Cancelar</button>
+          </div></div>`;
+        const edBtn = meu ? `<span style="cursor:pointer;margin-left:6px;" title="Editar comentário" onclick="_okrCommentEdit(${jsq(c.id)})">✏️</span>` : '';
+        const delBtn = podeApagar ? `<span style="cursor:pointer;margin-left:6px;" title="Apagar comentário" onclick="_okrCommentDel(${jsq(c.id)})">🗑️</span>` : '';
+        const ed = c.editadoEm ? ` · editado` : '';
+        return `<div class="okr-comment"><span class="okr-comment-ts">${new Date(c.ts).toLocaleString('pt-BR')}${ed}${edBtn}${delBtn}</span><b>${esc(c.author||'?')}</b><br>${esc(c.text)}</div>`;
+      }).join('')
     : '<div style="font-size:11px;color:var(--txt3);margin-bottom:8px;">Sem comentários ainda.</div>';
   const form = _okrEditingMarcoId ? `
     <div class="okr-list-add">
@@ -8552,6 +8570,73 @@ function _okrLoadMarcoComments(marcoId){
     _okrMarcoComments = Object.values(val).sort((a,b)=>String(a.ts).localeCompare(String(b.ts)));
     if(_okrEditingMarcoId===marcoId){ _okrSyncMarcoDraftFromDom(); renderOkrMarcoBody(); }   // a leitura volta DEPOIS de a pessoa já ter começado a digitar: sem o sync o re-render apagava nome/descrição/prazo
   }).catch(()=>{});
+}
+
+
+// ✏️ Editar o próprio comentário do Marco (inline). Grava só `text` + `editadoEm` (o resto — autor, uid, ts — fica como está).
+function _okrCommentEdit(id){
+  _okrSyncMarcoDraftFromDom();   // o re-render refaz o corpo inteiro: não perde o que já foi digitado no Marco
+  _okrComentEditId = id;
+  renderOkrMarcoBody();
+  const i = document.getElementById('okr-comment-edit-inp');
+  if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+
+
+function _okrCommentEditCancel(){
+  _okrSyncMarcoDraftFromDom();
+  _okrComentEditId = null;
+  renderOkrMarcoBody();
+}
+
+
+let _okrComentSalvando = false;
+async function _okrCommentEditSave(){
+  if(_okrComentSalvando) return;
+  const id = _okrComentEditId, marcoId = _okrEditingMarcoId;
+  const inp = document.getElementById('okr-comment-edit-inp');
+  if(!id || !marcoId || !inp) return;
+  const text = inp.value.trim();
+  const c = (_okrMarcoComments||[]).find(x=>x.id===id);
+  if(!c || c.uid!==window._currentUser?.uid) return;                      // só o autor (a UI já esconde o ✏️ dos outros)
+  if(!text){ showToast('O comentário não pode ficar vazio.'); return; }
+  if(text===c.text){ _okrCommentEditCancel(); return; }                   // nada mudou: não grava nem marca "editado"
+  _okrComentSalvando = true;
+  try{
+    const ref = window._ref(window._db,'kanban/okr/marco_comments/'+marcoId+'/'+id);
+    const atual = (await window._get(ref)).val();
+    if(!atual){ showToast('⚠ Este comentário não existe mais.'); _okrComentEditId = null; _okrLoadMarcoComments(marcoId); return; }
+    const editadoEm = new Date().toISOString();
+    await window._update(ref, { text, editadoEm });
+    if(_okrEditingMarcoId!==marcoId) return;                              // fechou/trocou de Marco durante a gravação
+    c.text = text; c.editadoEm = editadoEm;
+    _okrSyncMarcoDraftFromDom();
+    _okrComentEditId = null;
+    renderOkrMarcoBody();
+  }catch(e){ console.error('_okrCommentEditSave', e); showToast('⚠ Não consegui salvar o comentário. Tente de novo.'); }
+  finally{ _okrComentSalvando = false; }
+}
+
+
+// 🗑️ Apagar comentário do Marco (o próprio autor ou ADM, com confirmação).
+async function _okrCommentDel(id){
+  if(_okrComentSalvando) return;
+  const marcoId = _okrEditingMarcoId;
+  if(!id || !marcoId || window._isPainelViewer) return;
+  const c = (_okrMarcoComments||[]).find(x=>x.id===id);
+  if(!c || (c.uid!==window._currentUser?.uid && !_isAdmPainel())) return; // só o autor ou ADM (a UI já esconde o 🗑️ dos outros)
+  if(!await uiConfirm('Apagar este comentário?', {danger:true, okText:'Apagar'})) return;
+  if(_okrEditingMarcoId!==marcoId || _okrComentSalvando) return;          // fechou/trocou de Marco durante a confirmação
+  _okrComentSalvando = true;
+  try{
+    await window._remove(window._ref(window._db,'kanban/okr/marco_comments/'+marcoId+'/'+id));
+    if(_okrEditingMarcoId!==marcoId) return;                              // fechou/trocou de Marco durante a exclusão
+    _okrMarcoComments = (_okrMarcoComments||[]).filter(x=>x.id!==id);
+    if(_okrComentEditId===id) _okrComentEditId = null;
+    _okrSyncMarcoDraftFromDom();
+    renderOkrMarcoBody();
+  }catch(e){ console.error('_okrCommentDel', e); showToast('⚠ Não consegui apagar o comentário. Tente de novo.'); }
+  finally{ _okrComentSalvando = false; }
 }
 
 
