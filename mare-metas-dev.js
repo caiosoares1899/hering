@@ -990,10 +990,11 @@
     _mostrando = true; vistos[it.id] = it.marco; lsSet(vistos);
     mostrarPeixes(it.meta, it.marco, () => { _mostrando = false; setTimeout(proximoPopup, 400); });
   }
-  // 🚢 Buzina de navio no popup (buzina-navio.mp3, na raiz do domínio, ~50 KB). Respeita o 🔇 e o 🔕 Não Perturbe do sino (MareNotif) e falha em silêncio
-  // se o navegador barrar o som (autoplay). Marco comum = buzinada curta (corta com fade em ~2,4 s); meta batida (100 %) = buzina inteira, mais alta.
+  // 🚢 Buzina de navio no popup (buzina-navio.mp3, na raiz do domínio, ~95 KB, 9,5 s: duas buzinadas). Toca INTEIRA e o popup só fecha ~1 s depois que ela acaba
+  // (antes o popup tinha tempo fixo e o som era cortado). Respeita o 🔇 e o 🔕 Não Perturbe do sino (MareNotif); se o navegador barrar o som (autoplay) ou o som
+  // estiver desligado, o popup volta ao tempo fixo de sempre. Marco comum = volume 0,7; meta batida (100 %) = 0,85.
   const SOM_BUZINA = 'buzina-navio.mp3';
-  function buzinar(cem) {
+  function buzinar(cem, aoAcabar, aoFalhar) {
     try {
       if (typeof Audio === 'undefined') return null;
       const N = root.MareNotif;
@@ -1001,12 +1002,9 @@
       if (N && typeof N.somMudo === 'function') mudo = !!N.somMudo() || (typeof N.dndAtivo === 'function' && !!N.dndAtivo());
       else { try { mudo = localStorage.getItem('notif_sound_muted') === '1'; } catch (e) {} }
       if (mudo) return null;
-      const a = new Audio(SOM_BUZINA), vol = cem ? 0.85 : 0.6; a.volume = vol;
-      const p = a.play(); if (p && typeof p.catch === 'function') p.catch(() => {});
-      if (!cem) {   // fade-out de 0,6 s a partir de 1,8 s
-        const t0 = setTimeout(() => { let k = 6; const iv = setInterval(() => { k--; try { a.volume = Math.max(0, vol * k / 6); } catch (e) {} if (k <= 0) { clearInterval(iv); try { a.pause(); } catch (e) {} } }, 100); }, 1800);
-        a._t0 = t0;
-      }
+      const a = new Audio(SOM_BUZINA); a.volume = cem ? 0.85 : 0.7;
+      a.onended = () => { try { aoAcabar && aoAcabar(); } catch (e) {} };
+      const p = a.play(); if (p && typeof p.catch === 'function') p.catch(() => { try { aoFalhar && aoFalhar(); } catch (e) {} });
       return a;
     } catch (e) { return null; }
   }
@@ -1021,15 +1019,17 @@
       <h2>${cem ? '🏆 Meta batida! 🎉' : 'O mar tá pra peixe! 🐟'}</h2><div class="big">${marco}%</div>
       <p class="sub">${esc(m.emoji || '🎯')} <b>${esc(m.titulo)}</b><br>${cem ? 'A rede encheu! Parabéns, time.' : (dono ? 'Chegamos a <b>' + marco + '%</b> da meta ' + (m.escopo === 'digital' ? 'do Digital' : 'da squad') + '.' : '') + (nx ? ' Próximo peixe em <b>' + nx.marco + '%</b>.' : '')}</p>
       <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${cem ? 'Bora comemorar! 🥳' : 'Bora pescar mais! 🚀'}</button></div>`;
-    let som = null;
-    const fecha = () => { if (!el.isConnected) return; el.remove(); document.removeEventListener('keydown', onKey, true); clearTimeout(tm); if (som) { clearTimeout(som._t0); try { som.pause(); } catch (e) {} } fim && fim(); };
+    let som = null, tm = null;
+    const fecha = () => { if (!el.isConnected) return; el.remove(); document.removeEventListener('keydown', onKey, true); clearTimeout(tm); if (som) { try { som.pause(); } catch (e) {} } fim && fim(); };
     const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); fecha(); } };
     document.addEventListener('keydown', onKey, true);
     el.addEventListener('mousedown', e => { if (e.target === el) fecha(); });
     el.querySelector('.x').onclick = fecha; el.querySelector('.go').onclick = fecha;
-    const tm = setTimeout(fecha, cem ? 14000 : 9000);
+    const FIXO = cem ? 14000 : 9000;
+    tm = setTimeout(fecha, FIXO);
     document.body.appendChild(el);
-    som = buzinar(cem);
+    som = buzinar(cem, () => { clearTimeout(tm); tm = setTimeout(fecha, 1000); }, () => { clearTimeout(tm); tm = setTimeout(fecha, FIXO); });
+    if (som) { clearTimeout(tm); tm = setTimeout(fecha, 14000); }   // com som: fecha 1 s depois do fim da buzina (rede de segurança: 14 s, caso o "ended" nunca chegue)
   }
 
   // ════════════════ PAINÉIS PRONTOS (a página só escolhe onde colocar) ════════════════

@@ -18,6 +18,11 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🚢 Buzina do popup 🐟 agora toca INTEIRA e o popup acompanha — 2026-10-14 · kanban-dev v8.30.858-dev · painel-dev v5.67 · mare-metas-dev v10 · `buzina-navio.mp3` (SÓ DEV)
+- **Corrige a desproporção da v9:** o áudio enviado tem ~10 s e eu o tinha cortado em 4 s (e em 2,4 s nos marcos comuns), enquanto o popup ficava 9–14 s aberto. Agora o `buzina-navio.mp3` tem o áudio **inteiro** (9,5 s, duas buzinadas, ~95 KB) e **o popup fecha ~1 s depois que a buzina acaba** (antes: tempo fixo de 9 s / 14 s na meta batida).
+- Sem som (🔇, Não Perturbe, ou o navegador barrou o autoplay) o popup volta ao tempo fixo de sempre (9 s; 14 s na meta batida). Marco comum soa em volume 0,7 e a meta batida 0,85. Fechar o popup antes (✕, botão, Esc) para a buzina.
+- Teste `test_metas_buzina.js` reescrito (11 checagens, incluindo "popup continua aberto depois dos 9 s com a buzina tocando" e "fecha ~1 s após o fim"). Ajuda do Maré (Metas) atualizada. **Licença do som a confirmar antes de ir pra prod.**
+
 ### 🚢 Buzina de navio no popup "O mar tá pra peixe" — 2026-10-14 · kanban-dev v8.30.857-dev · painel-dev v5.66 · mare-metas-dev v9 · `buzina-navio.mp3` (SÓ DEV)
 - O popup 🐟 de cada marco de 20 % agora toca uma **buzina de navio**: buzinada curta (corta com fade em ~2,4 s, volume 0,6) nos marcos comuns e a **buzina inteira** (4 s, volume 0,85) na meta batida 🏆.
 - O áudio é o `buzina-navio.mp3` (raiz do domínio, ~50 KB): trecho de 4,1 s de um som de navio de cruzeiro (Freesound, enviado pelo Caio), cortado, normalizado e comprimido (mono, 96 kbps). **Confirmar a licença/atribuição do original antes de promover pra prod.**
