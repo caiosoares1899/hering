@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🌊 Oceano como porta de entrada também pra quem já está logado (1ª abertura do dia) — 2026-10-14 · kanban-dev v8.30.856-dev · painel-dev v5.65 · oceano-dev v1.33 (SÓ DEV)
+- **O problema:** o redirecionamento pro Oceano só valia pra quem NÃO tinha sessão no Maré/Painel. O login do Maré é uma sessão do Firebase guardada no navegador — ela sobrevive a sair da conta Google (e à verificação em 2 etapas pedida de novo). Resultado: com o Google deslogado, o Maré ainda abria direto e a pessoa nunca passava pelo Oceano (nem via o Mural).
+- **Agora:** na **primeira abertura do dia** por favorito ou link simples (sem destino), o Maré e o Painel mandam a pessoa logada pro Oceano (`?next=`, preservando a squad); o atalho "↩ Continuar" leva de volta. Abrir o Oceano direto também conta como "já passou hoje". Marca: `localStorage.mare_oceano_dia`.
+- **Não muda:** link com destino (card, notificação, `?okr=`, `#hash`), app instalado do Maré (standalone), iframe do Oceano, `?login=local`, e-mail fora da Hering e quem já passou hoje. `?squad=` NÃO conta como destino (é a escolha do quadro; o `?next=` leva a squad junto). Interruptor `window.MARE_OCEANO_DIARIO=false`.
+- Ajuda do Maré (Menu de produtos) e FAQ do Oceano ("Por que o Maré me mandou pro Oceano?") atualizados. Dica: não (é automático). Teste novo `test_oceano_do_dia.js` (29 checagens); `fakefb.js` ganhou `window.__initialUser` (a pessoa já chega logada).
+
 ### 🛡️ /monitorarbugs na VTEX: feed com formato diferente não vira alerta em massa, link do feed só da página oficial, um item ruim não derruba os outros — 2026-10-13 · `vtexStatus` (SÓ DEV / função ainda não republicada; sem mudança de página nem de `version.json`)
 - **Severo (latente): formato do feed mudou = popup 🚨 + push pra TODO MUNDO por cada incidente já resolvido dos últimos 7 dias.** `faseDe()` tratava "sem `Status:` legível" como "aberto". Reproduzido com o feed trocando `<b>` por `<strong>`: 2 itens já resolvidos → 2 comunicados insistentes + 4 notificações. Agora status ilegível = fase `desconhecido` (ignorado, nunca alarma) e, se o feed inteiro vier sem nenhum `Status:` legível, conta como falha do monitor (selo cinza + aviso aos ADMs depois de ~1 h).
 - **Link do feed sem validação:** `javascript:alert(1)` ou site estranho no `<link>` virava `href` do popup (sem sanitização no Maré) e `link` da notificação. Agora só `https://status.vtex.com/…` vale; senão cai na home da página de status.
