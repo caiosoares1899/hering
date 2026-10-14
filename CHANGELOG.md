@@ -21479,6 +21479,17 @@ aparecem completas, com a slide toda escalada a ~63% pra caber.
 
 ## okr.html / okr-dev.html (página própria do OKR)
 
+### ✏️ Radar: editar o próprio comentário do Marco — 2026-10-14 · okr-dev v2.76 · okr-dev (SÓ DEV)
+
+Os comentários do Marco só podiam ser enviados — errou uma palavra, ficava assim. Agora cada comentário **seu** tem um ✏️ ao lado da data: abre o texto no próprio lugar com **Salvar** / **Cancelar** (Enter salva, Esc cancela sem fechar o Marco) e o comentário passa a mostrar **· editado**.
+
+- Só o **autor** edita (comentário dos outros não tem ✏️; externo só acompanha). Grava apenas `text` + `editadoEm` — autor, data e ordem não mudam. Texto igual ao atual não regrava; vazio é recusado.
+- Comentário apagado por outra pessoa durante a edição não ressuscita (avisa); gravação negada avisa e mantém o campo aberto.
+- O que já estava digitado no Marco (nome/descrição/prazo) sobrevive ao abrir/salvar/cancelar a edição.
+- Sem mudança nas regras do banco (`kanban/okr` já aceita escrita de qualquer conta @ciahering). Dica: não (o ✏️ está ao lado do comentário, é óbvio na tela). Ajuda do Radar: não cita comentários do Marco, nada a atualizar.
+
+Teste: `docs/arezzo/testes/test_comentario_marco.js` (18 verificações no Chromium, banco falso).
+
 ### okr-dev.html v2.42 · okr-dev — 2026-10-08 · fix: edição do OKR no modal — duplo clique em Salvar, "alterações não salvas" falso, texto digitado sumindo, Esc (/monitorarbugs)
 
 Auditoria do modal de edição (Objetivo, ⚙ Configurações e Marco) — todos reproduzidos no Chromium (banco com 300 ms de latência) antes de corrigir:
