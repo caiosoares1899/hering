@@ -161,7 +161,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .ger-row:hover{transform:translateY(-2px);background:var(--glass-hover);}
 .ger-row .gr-ico{font-size:30px;flex-shrink:0;}
 .ger-row .gr-main{flex:1;min-width:0;}
-.ger-row .gr-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;margin-bottom:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ger-row .gr-name{font-family:'Syne',sans-serif;font-weight:700;font-size:19px;line-height:1.25;margin-bottom:8px;overflow-wrap:break-word;}
 .ger-row .gr-num{text-align:right;flex-shrink:0;}
 .ger-row .gr-num b{display:block;font-family:'Syne',sans-serif;font-weight:800;font-size:26px;line-height:1;}
 .ger-row .gr-num span{font-size:11.5px;color:var(--txt3);}
@@ -192,7 +192,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 .status-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
 .obj-trims{display:flex;gap:6px;flex-wrap:wrap;}
 .pill{font-size:12px;background:rgba(255,255,255,.06);border:1px solid var(--glass-b);border-radius:999px;padding:3px 11px;color:var(--txt2);}
-.obj-title{font-family:'Syne',sans-serif;font-weight:700;font-size:21px;line-height:1.3;margin-bottom:6px;}
+.obj-title{font-family:'Syne',sans-serif;font-weight:700;font-size:21px;line-height:1.3;margin-bottom:6px;overflow-wrap:break-word;}
 .obj-pilar{font-size:13.5px;color:var(--txt3);font-style:italic;margin-bottom:14px;}
 .prog-bar{height:8px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin-bottom:8px;}
 .prog-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--accent));}
@@ -250,8 +250,8 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 /* Header em grid real (não position:fixed) — título, trimestre e marca/fechar
    nunca se sobrepõem porque cada um tem sua própria coluna garantida. */
 .d2-header{display:grid;grid-template-columns:1fr auto auto;align-items:start;gap:20px;flex-shrink:0;}
-.d2-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.4rem,2.6vw,2rem);line-height:1.25;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.d2-title{font-family:'Syne',sans-serif;font-weight:800;font-size:clamp(1.3rem,2.4vw,1.9rem);line-height:1.22;
+  min-width:0;overflow-wrap:break-word;}
 .d2-trim{display:flex;gap:7px;flex-wrap:wrap;align-content:flex-start;justify-content:flex-end;padding-top:5px;max-width:170px;}
 .d2-brand-row{display:flex;align-items:center;gap:13px;padding-top:5px;}
 .d2-brand{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:var(--txt2);white-space:nowrap;
@@ -510,10 +510,10 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 #mc-ov.open{display:flex;justify-content:flex-end;}
 .mc-panel{width:min(420px,92vw);height:100%;background:var(--glass);border-left:1px solid var(--glass-b);
   backdrop-filter:blur(20px);display:flex;flex-direction:column;box-shadow:-10px 0 40px rgba(0,0,0,.4);}
-.mc-hd{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 20px;
+.mc-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding:18px 20px;
   border-bottom:1px solid var(--glass-b);flex-shrink:0;}
-.mc-hd h3{font-size:15px;font-weight:800;display:flex;align-items:center;gap:8px;font-family:'Syne',sans-serif;
-  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.mc-hd h3{font-size:14.5px;font-weight:800;display:flex;align-items:flex-start;gap:8px;font-family:'Syne',sans-serif;
+  min-width:0;line-height:1.3;overflow-wrap:break-word;}
 .mc-close{background:none;border:1px solid var(--glass-b);border-radius:8px;width:30px;height:30px;color:var(--txt2);
   font-size:15px;cursor:pointer;font-family:inherit;flex-shrink:0;}
 .mc-close:hover{background:var(--glass-hover);}
@@ -1687,6 +1687,17 @@ function _okrFitDetailSections(){
   const dBody = document.querySelector('.d2-body');
   const dFooter = document.querySelector('.d2-footer');
   if(!dBody || !dFooter) return;
+  const dTitle = document.querySelector('.d2-title');
+  if(dTitle){
+    dTitle.style.fontSize = '';
+    // Se o título for longo e passar de 2 linhas, reduz a fonte gradualmente (até o piso de 15px)
+    // para caber inteiro sem cortar nem roubar altura vertical do corpo/rodapé.
+    let fs = parseFloat(getComputedStyle(dTitle).fontSize) || 26;
+    while(fs > 15 && dTitle.offsetHeight > Math.ceil(fs * 1.25 * 2) + 4){
+      fs -= 1;
+      dTitle.style.fontSize = fs + 'px';
+    }
+  }
   dBody.style.flex = ''; dBody.style.height = '';
   dFooter.style.flex = ''; dFooter.style.height = ''; dFooter.style.minHeight = '';
   // Piso do rodapé (2026-10-06, achado de /monitorarbugs): rodapé e corpo dividem o aperto

@@ -3813,8 +3813,8 @@ detalhe aberto — ver nota abaixo).
   vez, senão uma seção curta encolhe à toa por causa de uma longa):
   `fitSlideContent(containerEl, contentEl)` — L1439 — o carrossel de
   slides (dispara no `resize` e depois que a webfont troca de verdade,
-  `document.fonts.ready`); `_okrFitDetailSections()` — L1663 — o modal de
-  detalhe de 1 Objetivo (trava a divisão `.d2-body`/`.d2-footer` e dá piso
+  `document.fonts.ready`); `_okrFitDetailSections()` — L1686 — o modal de
+  detalhe de 1 Objetivo (auto-ajusta o `font-size` de `.d2-title` até `15px` se passar de 2 linhas — sem `-webkit-line-clamp` para nunca cortar títulos longos —, trava a divisão `.d2-body`/`.d2-footer` e dá piso
   de 30% ao rodapé). **Desde 2026-10-06 NÃO usa mais `_zoomFitToHeight`
   nas seções do detalhe**: Marcos (`.d2-table-rows`), colunas do rodapé
   (`.d2-flist`) e raia esquerda (`.d2-left`) mantêm a fonte e ROLAM
