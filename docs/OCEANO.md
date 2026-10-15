@@ -6,7 +6,7 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 |---|---|---|---|
 | **Maré Digital** | o kanban (gestão dos squads) | `kanban.html` | mantém o nome |
 | **Painel** | gestão/diretoria, pessoas, comunicados | `painel.html` | mantém o nome (a ideia "Passadiço" foi descartada) |
-| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (okr v2.49, 2026-10-09) — logo: `favicon-radar.png` |
+| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.88 · dev `okr-dev.html` v2.89; `mare-metas.js` v13) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco** e Metas com **📅 Curva diária** e expansão em tela cheia (**⛶ Expandir**) |
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | — | projeto futuro |
 
@@ -30,13 +30,13 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.34; dev: `oceano-dev.html` v1.34)
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.34; dev: `oceano-dev.html` v1.35)
 `oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `maredigital.html`), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 - **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12+) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
 - **Produto novo:** além de `APPS`/`appsVisivel()` no módulo, acrescente em `APPS` e `PROD` do `oceano-dev.html`.
 - Visual: **Marine Glass igual às outras páginas** (tokens, vidro, peixinhos/bolhas do Maré). Temas `abrolhos` (padrão) e `lencois` compartilham `mare_theme`; `entardecer` é opcional só aqui. Peixinhos por preferência (espelha `fish_bg_off`). Logos: `favicon-oceano.png` (fundo azul), `oceano-logo.png` (sem fundo), ícones 192/512.
-- **Tela inicial (v1.2):** abre na aba *Meus produtos* (grade de botões, teclas 1–9, atalhos por squad); a parte de "venda" e a técnica ficam nas abas *Conheça o Oceano* e *Por baixo do casco*. No topo fica também o selinho `#vtex-pill` (saúde da VTEX em tempo real via `kanban/vtex_saude`). Fontes: Syne nos títulos pequenos e DM Sans no corpo, como o Maré.
+- **Tela inicial (v1.2):** abre na aba *Meus produtos* (grade de botões, teclas 1–9, atalhos por squad); a parte de "venda" e a técnica ficam nas abas *Conheça o Oceano* e *Por baixo do casco*. No topo fica também o monitor de **Status dos Serviços** (`#vtex-pill`, via `kanban/vtex_saude`), que acompanha em tempo real não só a VTEX, mas os serviços críticos do ecossistema (**VTEX, Shopify, Cloudflare, GitHub, OpenAI e Claude**), exibindo status consolidado e detalhes por serviço. Fontes: Syne nos títulos pequenos e DM Sans no corpo, como o Maré.
 - **Menu de 9 pontinhos:** o Oceano é o *título* do popover ("🌊 Oceano · início ↗", link pro lobby, só pra quem é da Hering), não um tile da grade — a grade é só de produtos. Decisão de 2026-10-09.
 - **Links (2026-10-09, em produção):** o menu de 9 pontinhos tem abas **Produtos · Hering · Meus links**. *Hering* = `kanban/config/links_hering/{id}` {titulo, desc, url, img, ordem} (ADM edita no Painel → ⚙ Configurações → 🔗 Links); *Meus links* = `kanban/usuarios/{uid}/links/{id}` (a pessoa edita em Oceano → ⚙ Meu perfil). Cache `mare_links_*` no localStorage. Só `http(s)` (imagem só `https`). A restrição a ADM é só da tela (as regras de `kanban/config` aceitam qualquer @ciahering).
 
@@ -66,4 +66,4 @@ A página inicial do Oceano mostra um **📌 Mural** com os **Comunicados** (`ka
 
 ## Escala (2026-10-12; prod `escala.html` v1.10 desde 13/10 · dev: `escala-dev.html` v1.10)
 Página própria `escala-dev.html` / `escala.html` — **não é um produto novo do menu ⋮⋮⋮ nem tile do Oceano**, é uma ferramenta ligada ao Maré (visão **👥 Escala** dentro do 📅 Calendários) e ao Painel (aba **Escala ↗**): quem trabalha quando, por squad e global, com cadastro pela própria pessoa ou pelo PO/Organizador/ADM. Dados em `kanban/escala/{data}/{squadId}/{uid}`; regras em `database.rules.json` (precisam de `firebase deploy --only database`). Detalhes no `CHANGELOG.md` e no `CODE_MAP.md`. Na promoção pra prod: `escala.html` (cópia sem o sufixo/`devtag`, `VERSION_KEY='escala'`, chave `escala` em `version.json`) + `kanban.html` + `painel.html` juntos.
-**v1.8–v1.10 (em produção desde 13/10):** os filtros de squad/subtime viraram uma mini tela (botão 🔎 Filtros, selo com o nº de filtros); o detalhe do dia ganhou a 📊 Visão Gantt (e JPG do Gantt); o cadastro aceita até 3 ☕ pausas por dia (campo `p`, regras novas — `firebase deploy --only database`).
+**v1.8–v1.10 (em produção desde 13/10):** os filtros de squad/subtime viraram uma mini tela (botão `🔎 Filtros`, selo com o nº de filtros); o detalhe do dia ganhou a **📊 Visão Gantt** (com exportação em JPG do Gantt); o cadastro aceita até 3 **☕ pausas** por dia (campo `p`, regras novas — `firebase deploy --only database`); e usuários sem permissão de edição na squad acessam em **modo somente-leitura**.
