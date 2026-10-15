@@ -1508,6 +1508,32 @@ body{min-height:100vh;}
 .okr-torre-hd{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:rgb(var(--torre));}
 .pc-modal.okr-t-digital,.pc-modal.okr-t-comercial,.pc-modal.okr-t-corporativa{border-top:4px solid rgb(var(--torre));box-shadow:0 0 0 1px rgba(var(--torre),.28),0 18px 60px rgba(0,0,0,.45);}
 .okr-modal-torre-chip{margin-right:auto;}
+/* 📈 Data Studio (Looker Studio incorporado) */
+#okr-ds-wrap{display:flex;flex-direction:column;gap:12px;margin-top:4px;}
+.okr-ds-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:12px;backdrop-filter:blur(10px);}
+.okr-ds-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.okr-ds-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--border);background:var(--surface2);color:var(--muted2);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.okr-ds-pill:hover{border-color:rgba(56,189,248,.4);color:var(--text);}
+.okr-ds-pill.on{background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(34,211,238,.12));border-color:rgba(56,189,248,.6);color:var(--accent2);box-shadow:0 0 12px rgba(56,189,248,.18);}
+.okr-ds-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-left:auto;}
+.okr-ds-btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;text-decoration:none;transition:all .15s;}
+.okr-ds-btn:hover{border-color:var(--accent);color:var(--accent2);background:rgba(56,189,248,.1);}
+.okr-ds-btn.pri{background:linear-gradient(135deg,rgba(56,189,248,.22),rgba(34,211,238,.14));border-color:rgba(56,189,248,.5);color:var(--accent2);}
+.okr-ds-desc{font-size:.76rem;color:var(--muted2);padding:0 4px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+.okr-ds-frame-box{position:relative;width:100%;height:calc(100vh - 230px);min-height:540px;background:rgba(4,13,26,.65);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.35);}
+.okr-ds-frame{width:100%;height:100%;border:0;display:block;background:#071526;}
+.okr-ds-fs{position:fixed!important;inset:0!important;z-index:9400!important;background:var(--bg)!important;padding:12px 16px!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:10px!important;}
+.okr-ds-fs .okr-ds-frame-box{flex:1;height:auto;min-height:0;}
+.okr-ds-empty{padding:36px 24px;background:var(--surface);border:1px dashed var(--border);border-radius:14px;text-align:center;max-width:680px;margin:18px auto;}
+.okr-ds-empty h3{font-family:'Syne',sans-serif;font-size:1.05rem;color:var(--text);margin-bottom:8px;}
+.okr-ds-empty p{font-size:.83rem;color:var(--muted2);line-height:1.55;margin-bottom:14px;}
+.okr-ds-guide{text-align:left;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 15px;font-size:.77rem;color:var(--muted2);line-height:1.55;margin:12px 0;}
+.okr-ds-guide b{color:var(--text);}
+.okr-ds-guide ol{margin:6px 0 0 18px;padding:0;}
+.okr-ds-guide li{margin-bottom:4px;}
+.okr-ds-list-item{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;margin-bottom:6px;font-size:.79rem;}
+.okr-ds-list-item .t{font-weight:600;color:var(--text);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.okr-ds-list-item .u{font-size:.7rem;color:var(--muted);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 </style>
 <script>
 // 🏢 MODO "SÓ HERING" (2026-10-08) — o Maré atende só a Hering: login só pelo Google (@ciahering.com.br), OKR de uma torre só (Digital), @menção/listas de pessoas
@@ -1621,6 +1647,7 @@ window.MARE_SO_HERING = true;
       <button type="button" role="tab" id="okr-historico-btn" aria-selected="false" onclick="_okrSetView('historico')">📊 Dashboard</button>
       <button type="button" role="tab" id="okr-notas-btn" aria-selected="false" onclick="_okrSetView('notas')">📋 Anotações</button>
       <button type="button" role="tab" id="okr-cards-btn" aria-selected="false" onclick="_okrSetView('cards')" title="Cards do board marcados com o badge 🎯 OKR">🔗 Cards</button>
+      <button type="button" role="tab" id="okr-ds-btn" aria-selected="false" onclick="_okrSetView('datastudio')" title="Painéis do Looker Studio (Data Studio) ao vivo">📈 Data Studio</button>
     </div>
     <div class="okr-toolbar" id="okr-toolbar">
       <input type="text" id="okr-filter-texto" class="pt-filter-input" placeholder="🔎 Buscar objetivo…" oninput="_okrSetFilter('texto', this.value)" style="flex:1;min-width:200px;">
@@ -1679,6 +1706,9 @@ window.MARE_SO_HERING = true;
     <!-- 🔗 Cards — todos os cards do board com badge 🎯 OKR, por squad, e a que Objetivo cada um está vinculado. Carregado SÓ ao clicar (baixa os cards de cada squad). -->
     <div id="okr-cards-wrap" style="display:none;"><div id="okr-cards-root"></div></div>
 
+    <!-- 📈 Data Studio (Looker Studio incorporado) — lê kanban/okr/datastudio SÓ quando a aba é aberta (zero bytes no boot do Radar). -->
+    <div id="okr-ds-wrap" style="display:none;"><div id="okr-ds-root"></div></div>
+
   </div><!-- /ppane-okr -->
 
   <!-- Modal de ajuda da aba OKR — mesmo padrão do modal de ajuda de
@@ -1702,7 +1732,7 @@ window.MARE_SO_HERING = true;
             <li><b>⬆️ Manter acima de</b> / <b>⬇️ Manter abaixo de</b> — 100% se o valor medido cumpre o limite, 0% se não (é tudo ou nada).</li>
             <li><b>📅 Data de entrega</b> — você define faixas ("entregue entre X e Y = Z%"); o % é o da faixa onde a data da entrega cai (fora de todas = 0%).</li>
             <li><b>♾️ Perene</b> — objetivo contínuo, sem meta final nem registros: a barra volta a andar pelos <b>Marcos concluídos</b>, e isso fica explícito (♾️) no cartão.</li>
-          </ul><p><b>Registrando</b>: informe a data (padrão: hoje) e o valor e clique <b>+ Registrar</b>, depois <b>💾 Salvar</b> — o que vale é o registro mais recente (por data) e todos ficam num histórico datado, com quem registrou. Se você digitar um valor e clicar em Salvar sem registrar, o painel pergunta se quer registrar. Trocar o tipo recalcula o % dos registros antigos (eles não são apagados). Sem atingimento, o Objetivo continua andando pelos Marcos, como sempre foi.</p><p><b>Quem pode</b>: as mesmas pessoas que editam o Objetivo (ADM, PO/Organizador, Gestor OKR e o Responsável daquele Objetivo). Dois Responsáveis registrando ao mesmo tempo não se sobrescrevem.</p></div></details><details class="hlp-it" id="hlp-grafico" data-tab="objetivos" data-kw="gráfico evolução linha meta ponto tooltip emoji tipo"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Gráfico de evolução</b><small>Valor registrado ao longo do tempo, com a linha da meta</small></span></summary><div class="hlp-bd">Cada cartão com atingimento mostra o <b>emoji do tipo</b> (💰 📊 🔢 ✅ ⬆️ ⬇️ 📅 ♾️) ao lado do %. Clique nele (ou em <b>📈 Gráfico</b>, dentro do Objetivo) pra ver a <b>evolução</b>: valor registrado ao longo do tempo com a linha da 🎯 meta (nos tipos Atingido e Data de entrega, o %). <b>Passe o mouse</b> — ou toque, no celular — em cada ponto pra ver data, valor, % e quem registrou. Esc fecha. O mesmo gráfico aparece na <b>apresentação</b>.</div></details><details class="hlp-it" id="hlp-modal" data-tab="objetivos" data-kw="modal seções cor atalhos temas vice city abertas fechadas layout celular"><summary><span class="hlp-ic">🎨</span><span class="hlp-tt"><b>O modal do Objetivo</b><small>Seções coloridas e atalhos no topo pra pular de uma a outra</small></span></summary><div class="hlp-bd">Cada seção tem a sua cor — 📈 Atingimento, 🎯 Indicadores, ✅ Progressos, ➡️ Próximos passos, ⚠️ Riscos, 🛠️ Planos de ação, 🏁 Marcos, 🔗 Cards vinculados, 📜 Histórico — com caixas de texto destacadas. No topo ficam <b>atalhos</b> (em duas filas) pra pular direto pra uma seção, como o botão de descrições do card do board. Funciona nos três temas, inclusive 🌴 Vice City. As seções lembram se estavam abertas ou fechadas.</div></details><details class="hlp-it" id="hlp-menu" data-tab="objetivos" data-kw="menu contexto botão direito clique direito atalho tecla registrar mover duplicar arquivar excluir copiar link tags marco status"><summary><span class="hlp-ic">🖱</span><span class="hlp-tt"><b>Menu de ações (clique direito)</b><small>Registrar, tags, mover, duplicar… sem abrir o Objetivo</small></span></summary><div class="hlp-bd"><p>Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo.</p><ul><li><b>No Objetivo</b>: <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas), <b>🎬 Ocultar/Mostrar na apresentação</b>, <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📜 Ver histórico</b>, <b>📅 Agendar reunião sobre este Objetivo</b> (já vem com o Objetivo vinculado), <b>💬 Perguntar ao Agente</b> (abre o painel do agente com a frase pronta), <b>📦 Arquivar</b>, <b>🗑 Excluir</b> (só ADM) e <b>🔗 Copiar link</b>.</li><li><b>No Marco</b>: dentro do Objetivo, cada Marco tem o mesmo menu — <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, <b>💬 Perguntar ao Agente sobre este Marco</b>, mover e arquivar.</li><li><b>Teclado</b>: cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); navegue com <b>↑ ↓</b>, abra submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).</li><li><b>Gravação</b>: as mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo.</li><li><b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.</li></ul></div></details><details class="hlp-it" id="hlp-editar" data-tab="objetivos" data-kw="editar texto indicadores progressos próximos passos riscos planos checklist comentários marco apagar excluir clicar enter esc"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Editar o que já foi escrito</b><small>Clique no texto pra editar — Enter salva, Esc cancela; comentários do Marco têm ✏️ e 🗑️</small></span></summary><div class="hlp-bd">Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação (Objetivo) e itens do Checklist (Marco) aceitam clicar em cima do texto pra editar — não só adicionar/remover. Enter ou clicar fora salva, Esc cancela. Nos <b>💬 comentários de um Marco</b>, quem escreveu pode <b>✏️ editar</b> (fica o selo <i>(editado)</i>) ou <b>🗑️ apagar</b> (com confirmação) o próprio comentário; um <b>ADM</b> também pode moderar comentários de outras pessoas.</div></details><details class="hlp-it" id="hlp-ordem" data-tab="objetivos" data-kw="reordenar ordem mover arrastar soltar subir descer posição ▲ ▼ filtro desativada"><summary><span class="hlp-ic">↕️</span><span class="hlp-tt"><b>Reordenar Objetivos e Marcos</b><small>Botões ▲/▼ ou arrastar ⠿ — vale também na apresentação</small></span></summary><div class="hlp-bd">Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).</div></details><details class="hlp-it" id="hlp-tags" data-tab="objetivos" data-kw="tag etiqueta cor filtrar card vinculado badge board nova configurações"><summary><span class="hlp-ic">🏷️</span><span class="hlp-tt"><b>Tags e cards vinculados</b><small>Etiquetas com cor no Objetivo e cards do board ligados a ele</small></span></summary><div class="hlp-bd">Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação; pra <b>ver, criar, editar e apagar</b> as tags sem abrir um Objetivo, use <b>⋯ Mais → 🏷️ Gerenciar tags</b> — ali cada tag mostra em quantos Objetivos está; <b>apagar</b> tira a tag de todos eles (ADM apaga tag em uso; tag sem uso qualquer pessoa apaga)) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).</div></details><details class="hlp-it" id="hlp-arquivar" data-tab="objetivos" data-kw="arquivar desarquivar excluir apagar deletar arquivados definitivo"><summary><span class="hlp-ic">📦</span><span class="hlp-tt"><b>Arquivar × Excluir</b><small>Arquivar esconde (e volta); Excluir apaga de vez (só ADM)</small></span></summary><div class="hlp-bd"><b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.</div></details></section><section class="hlp-pane" id="hlp-pane-agenda" data-pane="agenda" role="tabpanel" aria-labelledby="hlp-tab-agenda" hidden><div class="hlp-panehd"><span>📅 Agenda e avisos</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agenda')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-calendario" data-tab="agenda" data-kw="calendário agenda reunião evento repetição recorrente convidados convidar pauta aviso véspera bloco quinzenal importar anotações pós-reunião global torre vincular tag" open data-open0="1"><summary><span class="hlp-ic">📅</span><span class="hlp-tt"><b>Calendário</b><small>Reuniões e eventos, com repetição, convidados e pauta</small></span></summary><div class="hlp-bd"><p>Reuniões, eventos e lembretes do Radar.</p><ul><li class="okr-so-hering-esconde"><b>Duas agendas</b>: a <b>🌐 global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>).</li><li class="okr-so-hering-so"><b>Quem cria</b>: ADM, PO/Organizador e 🎯 Gestor OKR criam e editam reuniões, eventos e lembretes. Eventos antigos da agenda global só o ADM edita.</li><li><b>🏷️ Legenda clicável</b>: os chips <b>🗓️ Reunião · 📌 Evento · 🔔 Lembrete · ◆ Prazo de Marco</b> (cada um com a contagem do período na tela) ligam e desligam aquele tipo no calendário — é só um filtro de tela, nada é apagado. <b>Mostrar todos</b> traz tudo de volta.</li><li><b>Repetição</b>: toda semana, quinzenal, mensal, trimestral, semestral, anual ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional). Dá pra excluir só uma ocorrência.</li><li><b>Vínculos e pauta</b>: vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag). O Objetivo passa a mostrar a próxima reunião dele (o cartão ganha o selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b>: Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente.</li><li><b>Prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita.</li><li><b>👥 Convidados e avisos</b>: quem você convida recebe as notificações da reunião (convite, mudança, cancelamento, véspera e dia — às 7h, também como push) mesmo sem Objetivo na pauta; os responsáveis dos Objetivos da pauta recebem a véspera e o dia automaticamente. A agenda nova ou alterada também aparece no <b>🔔 sino</b> (desligue em "Avisar agora no sino" ao salvar). Clicar no aviso abre a reunião.</li><li><b>📝 Anotações pós-reunião</b>: cada reunião tem as suas (por ocorrência, com @menção) e dá pra <b>🔗 vincular</b> a ocorrência à apresentação do Radar: as anotações feitas na apresentação naquele dia aparecem ali também.</li><li>No celular a visão abre como <b>Agenda</b>.</li></ul></div></details><details class="hlp-it" id="hlp-mural" data-tab="agenda" data-kw="mural aviso publicar urgente novidade dica torre selo arquivar expira comunicado"><summary><span class="hlp-ic">📢</span><span class="hlp-tt"><b>Mural do Radar</b><small>Avisos por torre, com selo de não lidos e urgentes em destaque</small></span></summary><div class="hlp-bd">Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.</div></details><details class="hlp-it" id="hlp-sino" data-tab="agenda" data-kw="sino notificação notificações push som não perturbe permissão aparelho limpar lido menção reunião mural aviso"><summary><span class="hlp-ic">🔔</span><span class="hlp-tt"><b>Notificações do Radar</b><small>O mesmo sino do kanban e do painel, com as novidades da sua torre</small></span></summary><div class="hlp-bd"><p>O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página.</p><ul><li><b>O que aparece</b>: tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b>, <b>✅ Marco concluído</b> e <b>🗓️ reuniões/eventos do calendário</b> (nova, mudança, cancelamento; criar Objetivo e concluir Marco pelo Agente Ágil também aparecem).</li><li><b>Clicar</b> vai direto ao Objetivo/aviso/anotação/reunião; <b>✓ Marcar tudo como lido</b> zera.</li><li><b>Rodapé do sino</b>: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas.</li><li>O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).</li></ul></div></details><details class="hlp-it" id="hlp-mencao" data-tab="agenda" data-kw="menção @ anotações reunião notificação pessoa"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>@menção nas Anotações da reunião</b><small>Digite @ e escolha a pessoa — ela é notificada</small></span></summary><div class="hlp-bd">Nas <b>📋 Anotações da reunião</b>, digite <b>@</b> e escolha a pessoa (↑↓ e Enter, ou clique): ela recebe uma notificação e a menção fica destacada. Vale só pra anotações escritas nesta página.</div></details></section><section class="hlp-pane" id="hlp-pane-acesso" data-pane="acesso" role="tabpanel" aria-labelledby="hlp-tab-acesso" hidden><div class="hlp-panehd"><span>🏛️ Torres e acesso</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('acesso')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-torres" data-tab="acesso" data-kw="torre digital comercial corporativa visão global cor geral gerência gerências ocultar renomear reordenar sua torre global users" open data-open0="1"><summary><span class="hlp-ic">🏛️</span><span class="hlp-tt"><b>Torres e gerências</b><small>Digital, Comercial e Corporativa — e quem edita o quê</small></span></summary><div class="hlp-bd"><p>O Radar se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre).</p><ul><li><b>Quem vê, quem edita</b>: <b>todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu).</li><li><b>Sua torre</b> é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR).</li><li><b>⚙ Gerências</b>: cada torre tem a sua lista. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres. Gerência com Objetivos nunca é apagada, só oculta (o 🗑 explica: mande os Objetivos pra outra gerência ou exclua-os primeiro).</li></ul></div></details><details class="hlp-it" id="hlp-quemedita" data-tab="acesso" data-kw="permissão editar criar quem pode adm po organizador gestor okr responsável papel torre calendário agenda global users"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Quem pode editar</b><small>Papéis, torre e Responsável — o que cada um consegue fazer</small></span></summary><div class="hlp-bd">Podem criar um Objetivo novo: <b>ADM</b> (em qualquer torre), <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais) — esses dois últimos <b>só na própria torre</b> (a torre ⭐ Geral vale em todas). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), valem os mesmos, na torre do Objetivo, e também estar marcado como <b>Responsável</b> daquele Objetivo específico. O <b>calendário</b> segue a mesma regra por agenda: a global é só do ADM, a de cada torre é de quem organiza a torre. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).</div></details><details class="hlp-it" id="hlp-trava" data-tab="acesso" data-kw="trava lock bloqueado editando leitura pedir objetivo liberar agora 5 minutos 10 minutos duas pessoas simultânea conflito sobrescrever agente"><summary><span class="hlp-ic">🔒</span><span class="hlp-tt"><b>Edição simultânea do mesmo Objetivo</b><small>Quem abre primeiro segura; os outros veem em leitura e podem pedir</small></span></summary><div class="hlp-bd"><p>Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban.</p><ul><li><b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>.</li><li><b>🔔 Pedir o Objetivo</b> (em leitura): quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume.</li><li><b>Quando a trava solta</b>: ao fechar o Objetivo, ao sair da página, e sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo.</li><li><b>Ações rápidas</b> do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo.</li><li>O <b>Agente Ágil também respeita a trava</b>: se você pedir pra ele mexer num Objetivo que outra pessoa está editando, ele avisa quem é e não grava (senão a edição dela apagaria a dele).</li></ul></div></details><details class="hlp-it" id="hlp-viewers" data-tab="acesso" data-kw="visualizador externo convidado acompanhar leitura acesso google e-mail remover online entrou"><summary><span class="hlp-ic">👁</span><span class="hlp-tt"><b>Visualizadores externos</b><small>Acesso só de leitura pra quem é de fora da empresa (só ADM)</small></span></summary><div class="hlp-bd">Pra alguém de fora da empresa <b>só acompanhar</b> o Radar: botão <b>👁 Visualizadores</b> (no menu <b>⋯ Mais</b> do cabeçalho) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos. A lista mostra, pra cada pessoa, se ela <b>já entrou</b>: <b>⏳ ainda não entrou</b> · <b>✅ entrou · visto há X</b> · <b>🟢 online agora</b> (passe o mouse pra ver o primeiro acesso e o último sinal); quem acabou de ser adicionado só passa a constar como "entrou" no próximo login.</div></details></section><section class="hlp-pane" id="hlp-pane-navegar" data-pane="navegar" role="tabpanel" aria-labelledby="hlp-tab-navegar" hidden><div class="hlp-panehd"><span>🧭 Navegar</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('navegar')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-cabecalho" data-tab="navegar" data-kw="cabeçalho abas mais ajuda guia gerências visualizadores novo objetivo apresentação mural sino online menu de produtos oceano pontinhos meus links hering dicas"><summary><span class="hlp-ic">🧭</span><span class="hlp-tt"><b>O cabeçalho</b><small>Três níveis: torre + ações, abas e filtros</small></span></summary><div class="hlp-bd">Três níveis: em cima o <b>título da torre</b> com 🎥 Apresentação, <b>❓ Ajuda</b>, <b>📘 Guia</b>, <b>⋯ Mais</b> (⚙ Gerências e 👁 Visualizadores) e <b>+ Novo Objetivo</b>; no meio as <b>abas</b> — 🎯 Objetivos · 📅 Calendário · 📊 Dashboard · 📋 Anotações · 🔗 Cards (os cards do board com badge 🎯 OKR, por squad e com o Objetivo a que cada um está vinculado — só carrega ao clicar em "Carregar cards") (a aberta fica marcada); embaixo a barra de filtros. O <b>💬 Agente Ágil</b> não é uma aba: é o <b>botão flutuante</b> no canto inferior direito, disponível em qualquer tela. 📢 Mural, 🔔 sino e quem está online ficam no canto.<br><br><b>⋮⋮⋮ Menu de produtos</b> (os 9 pontinhos): abre o menu do <b>Oceano</b> com 3 abas — <b>Produtos</b> (Maré Digital, Painel, Radar e A Bordo; o título "🌊 Oceano · início" leva ao lobby), <b>Hering</b> (links importantes da empresa, cadastrados por ADM no Painel → ⚙ Configurações → 🔗 Links) e <b>Meus links</b> (atalhos só seus, criados ali mesmo em "＋ Adicionar ou editar meus links"). <b>💡 Dicas</b>: de vez em quando aparece um mini aviso com um truque; o interruptor <b>💡 Dicas do Radar</b> (e o "Rever dicas") fica no topo desta Ajuda.</div></details><details class="hlp-it" id="hlp-filtros" data-tab="navegar" data-kw="filtro filtrar busca gerência status período pessoa responsável tag mais filtros limpar resumo atingimento médio"><summary><span class="hlp-ic">🔎</span><span class="hlp-tt"><b>Filtros e resumo da aba</b><small>Gerência, status, busca, pessoa, tag e período</small></span></summary><div class="hlp-bd">No topo: <b>gerência</b>, <b>status</b> e busca por nome; <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele) e <b>🏷️ tag</b> (só aparece quando há tags em uso). Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.</div></details><details class="hlp-it" id="hlp-link" data-tab="navegar" data-kw="link direto copiar url compartilhar objetivo"><summary><span class="hlp-ic">🔗</span><span class="hlp-tt"><b>Link direto do Objetivo</b><small>Copia um link que abre aquele Objetivo</small></span></summary><div class="hlp-bd">Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login (@ciahering<span class="ms-login">, @arezzo</span> ou visualizador autorizado) e acesso ao Radar — é um atalho pra achar rápido, não uma exceção de acesso.</div></details><details class="hlp-it" id="hlp-dashboard" data-tab="navegar" data-kw="dashboard histórico semanal snapshot sexta 17h progresso médio gráfico o que mudou torre comparar simulação variação indicadores tabela"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Dashboard (histórico semanal)</b><small>Snapshot toda sexta às 17h, comparativo por torre e simulação</small></span></summary><div class="hlp-bd">Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📊 Dashboard</b> mostra:
+          </ul><p><b>Registrando</b>: informe a data (padrão: hoje) e o valor e clique <b>+ Registrar</b>, depois <b>💾 Salvar</b> — o que vale é o registro mais recente (por data) e todos ficam num histórico datado, com quem registrou. Se você digitar um valor e clicar em Salvar sem registrar, o painel pergunta se quer registrar. Trocar o tipo recalcula o % dos registros antigos (eles não são apagados). Sem atingimento, o Objetivo continua andando pelos Marcos, como sempre foi.</p><p><b>Quem pode</b>: as mesmas pessoas que editam o Objetivo (ADM, PO/Organizador, Gestor OKR e o Responsável daquele Objetivo). Dois Responsáveis registrando ao mesmo tempo não se sobrescrevem.</p></div></details><details class="hlp-it" id="hlp-grafico" data-tab="objetivos" data-kw="gráfico evolução linha meta ponto tooltip emoji tipo"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Gráfico de evolução</b><small>Valor registrado ao longo do tempo, com a linha da meta</small></span></summary><div class="hlp-bd">Cada cartão com atingimento mostra o <b>emoji do tipo</b> (💰 📊 🔢 ✅ ⬆️ ⬇️ 📅 ♾️) ao lado do %. Clique nele (ou em <b>📈 Gráfico</b>, dentro do Objetivo) pra ver a <b>evolução</b>: valor registrado ao longo do tempo com a linha da 🎯 meta (nos tipos Atingido e Data de entrega, o %). <b>Passe o mouse</b> — ou toque, no celular — em cada ponto pra ver data, valor, % e quem registrou. Esc fecha. O mesmo gráfico aparece na <b>apresentação</b>.</div></details><details class="hlp-it" id="hlp-modal" data-tab="objetivos" data-kw="modal seções cor atalhos temas vice city abertas fechadas layout celular"><summary><span class="hlp-ic">🎨</span><span class="hlp-tt"><b>O modal do Objetivo</b><small>Seções coloridas e atalhos no topo pra pular de uma a outra</small></span></summary><div class="hlp-bd">Cada seção tem a sua cor — 📈 Atingimento, 🎯 Indicadores, ✅ Progressos, ➡️ Próximos passos, ⚠️ Riscos, 🛠️ Planos de ação, 🏁 Marcos, 🔗 Cards vinculados, 📜 Histórico — com caixas de texto destacadas. No topo ficam <b>atalhos</b> (em duas filas) pra pular direto pra uma seção, como o botão de descrições do card do board. Funciona nos três temas, inclusive 🌴 Vice City. As seções lembram se estavam abertas ou fechadas.</div></details><details class="hlp-it" id="hlp-menu" data-tab="objetivos" data-kw="menu contexto botão direito clique direito atalho tecla registrar mover duplicar arquivar excluir copiar link tags marco status"><summary><span class="hlp-ic">🖱</span><span class="hlp-tt"><b>Menu de ações (clique direito)</b><small>Registrar, tags, mover, duplicar… sem abrir o Objetivo</small></span></summary><div class="hlp-bd"><p>Clique com o <b>botão direito</b> num cartão de Objetivo pra abrir o menu, sem precisar abrir o Objetivo.</p><ul><li><b>No Objetivo</b>: <b>📂 Abrir</b>, <b>📈 Registrar atingimento…</b> (pergunta só data, valor e nota e mostra o % que vai ficar), <b>📊 Ver evolução</b>, <b>👁 Ver na apresentação</b>, <b>🏷️ Tags</b> (marca/desmarca na hora, com ✓ nas aplicadas), <b>🎬 Ocultar/Mostrar na apresentação</b>, <b>⬆⬇ Mover</b>, <b>⧉ Duplicar</b>, <b>📜 Ver histórico</b>, <b>📅 Agendar reunião sobre este Objetivo</b> (já vem com o Objetivo vinculado), <b>💬 Perguntar ao Agente</b> (abre o painel do agente com a frase pronta), <b>📦 Arquivar</b>, <b>🗑 Excluir</b> (só ADM) e <b>🔗 Copiar link</b>.</li><li><b>No Marco</b>: dentro do Objetivo, cada Marco tem o mesmo menu — <b>🚦 Status</b>, <b>🎬 Mostrar/Ocultar na apresentação</b>, <b>💬 Perguntar ao Agente sobre este Marco</b>, mover e arquivar.</li><li><b>Teclado</b>: cada item mostra a <b>tecla de atalho</b> (R, E, P, T, D, A, L…); navegue com <b>↑ ↓</b>, abra submenu com <b>→</b>, <b>Enter</b> executa e <b>Esc</b> fecha. Itens que você não pode usar ficam apagados (quem edita é o mesmo de sempre: ADM, PO/Organizador, Gestor OKR e o Responsável).</li><li><b>Gravação</b>: as mudanças feitas pelo menu são gravadas na hora e entram no <b>Histórico</b> do Objetivo, sem sobrescrever o que outra pessoa lançou ao mesmo tempo.</li><li><b>🗑 Excluir</b> (tecla X) aparece só pra <b>ADM</b>, pede confirmação e apaga o Objetivo e os Marcos dele de vez — pra esconder sem perder, use <b>Arquivar</b>.</li></ul></div></details><details class="hlp-it" id="hlp-editar" data-tab="objetivos" data-kw="editar texto indicadores progressos próximos passos riscos planos checklist comentários marco apagar excluir clicar enter esc"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Editar o que já foi escrito</b><small>Clique no texto pra editar — Enter salva, Esc cancela; comentários do Marco têm ✏️ e 🗑️</small></span></summary><div class="hlp-bd">Indicadores, Progressos, Próximos Passos, Riscos, Planos de Ação (Objetivo) e itens do Checklist (Marco) aceitam clicar em cima do texto pra editar — não só adicionar/remover. Enter ou clicar fora salva, Esc cancela. Nos <b>💬 comentários de um Marco</b>, quem escreveu pode <b>✏️ editar</b> (fica o selo <i>(editado)</i>) ou <b>🗑️ apagar</b> (com confirmação) o próprio comentário; um <b>ADM</b> também pode moderar comentários de outras pessoas.</div></details><details class="hlp-it" id="hlp-ordem" data-tab="objetivos" data-kw="reordenar ordem mover arrastar soltar subir descer posição ▲ ▼ filtro desativada"><summary><span class="hlp-ic">↕️</span><span class="hlp-tt"><b>Reordenar Objetivos e Marcos</b><small>Botões ▲/▼ ou arrastar ⠿ — vale também na apresentação</small></span></summary><div class="hlp-bd">Tanto os cards de Objetivo (dentro de cada Gerência) quanto os Marcos (dentro de um Objetivo) podem ser reordenados manualmente — botões ▲/▼, e os Objetivos também aceitam arrastar e soltar (ícone ⠿) direto pra posição desejada. Essa ordem também vale na apresentação. Com algum filtro ligado a reordenação fica desativada (a ordem manual só vale na lista completa).</div></details><details class="hlp-it" id="hlp-tags" data-tab="objetivos" data-kw="tag etiqueta cor filtrar card vinculado badge board nova configurações"><summary><span class="hlp-ic">🏷️</span><span class="hlp-tt"><b>Tags e cards vinculados</b><small>Etiquetas com cor no Objetivo e cards do board ligados a ele</small></span></summary><div class="hlp-bd">Dá pra marcar Tags num Objetivo (em ⚙ Configurações — <b>+ Nova</b> abre o formulário com <b>nome e cor</b>: 6 cores prontas ou qualquer outra pelo seletor 🎨; o 🎨 ao lado de uma tag aplicada edita nome e cor dela, e a mudança vale pra todos os Objetivos que usam a tag, inclusive na apresentação; pra <b>ver, criar, editar e apagar</b> as tags sem abrir um Objetivo, use <b>⋯ Mais → 🏷️ Gerenciar tags</b> — ali cada tag mostra em quantos Objetivos está; <b>apagar</b> tira a tag de todos eles (ADM apaga tag em uso; tag sem uso qualquer pessoa apaga)) e vincular cards do board a ele — os cards vinculados ganham um badge 🎯 e aparecem em "Cards do board com badge OKR", no fim da aba. As <b>tags aparecem no cartão do Objetivo</b> na lista (até 4, e "+N" se houver mais) e dá pra <b>filtrar por tag</b>: pelo seletor 🏷️ no topo ou clicando numa tag do cartão (clicar de novo limpa).</div></details><details class="hlp-it" id="hlp-arquivar" data-tab="objetivos" data-kw="arquivar desarquivar excluir apagar deletar arquivados definitivo"><summary><span class="hlp-ic">📦</span><span class="hlp-tt"><b>Arquivar × Excluir</b><small>Arquivar esconde (e volta); Excluir apaga de vez (só ADM)</small></span></summary><div class="hlp-bd"><b>Arquivar</b> só esconde o Objetivo da lista de ativos — continua acessível em "📦 Ver arquivados" e dá pra desarquivar depois. <b>Excluir</b> (só ADM) é definitivo: apaga o Objetivo e todos os Marcos dele pra sempre, sem desfazer.</div></details></section><section class="hlp-pane" id="hlp-pane-agenda" data-pane="agenda" role="tabpanel" aria-labelledby="hlp-tab-agenda" hidden><div class="hlp-panehd"><span>📅 Agenda e avisos</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agenda')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-calendario" data-tab="agenda" data-kw="calendário agenda reunião evento repetição recorrente convidados convidar pauta aviso véspera bloco quinzenal importar anotações pós-reunião global torre vincular tag" open data-open0="1"><summary><span class="hlp-ic">📅</span><span class="hlp-tt"><b>Calendário</b><small>Reuniões e eventos, com repetição, convidados e pauta</small></span></summary><div class="hlp-bd"><p>Reuniões, eventos e lembretes do Radar.</p><ul><li class="okr-so-hering-esconde"><b>Duas agendas</b>: a <b>🌐 global</b> (envolve todas as torres — só ADM cria) e a <b>agenda local de cada torre</b> (o ADM e quem organiza a torre — PO/Gestor OKR — criam). O filtro mostra tudo, só a global ou uma torre (com a opção <b>+ global</b>).</li><li class="okr-so-hering-so"><b>Quem cria</b>: ADM, PO/Organizador e 🎯 Gestor OKR criam e editam reuniões, eventos e lembretes. Eventos antigos da agenda global só o ADM edita.</li><li><b>🏷️ Legenda clicável</b>: os chips <b>🗓️ Reunião · 📌 Evento · 🔔 Lembrete · ◆ Prazo de Marco</b> (cada um com a contagem do período na tela) ligam e desligam aquele tipo no calendário — é só um filtro de tela, nada é apagado. <b>Mostrar todos</b> traz tudo de volta.</li><li><b>Repetição</b>: toda semana, quinzenal, mensal, trimestral, semestral, anual ou personalizado (<i>a cada N dias/semanas/meses/anos</i>, com data final opcional). Dá pra excluir só uma ocorrência.</li><li><b>Vínculos e pauta</b>: vincule a <b>gerências, tags e Objetivos</b> (os Objetivos com a tag entram na pauta, nas próximas reuniões deles e nos avisos; o calendário também filtra por tag). O Objetivo passa a mostrar a próxima reunião dele (o cartão ganha o selo 📅 quando ela é nos próximos 7 dias) e a reunião monta uma <b>pauta sugerida</b>: Objetivos atrasados ou em risco, marcos vencidos ou vencendo e atingimento sem lançamento recente.</li><li><b>Prazos dos Marcos</b> (◆) também aparecem. O <b>bloco quinzenal</b> (Bloco 1/2, quintas) pode ser <b>importado pro calendário</b> pelo banner que o ADM vê: viram duas reuniões recorrentes que você edita.</li><li><b>👥 Convidados e avisos</b>: quem você convida recebe as notificações da reunião (convite, mudança, cancelamento, véspera e dia — às 7h, também como push) mesmo sem Objetivo na pauta; os responsáveis dos Objetivos da pauta recebem a véspera e o dia automaticamente. A agenda nova ou alterada também aparece no <b>🔔 sino</b> (desligue em "Avisar agora no sino" ao salvar). Clicar no aviso abre a reunião.</li><li><b>📝 Anotações pós-reunião</b>: cada reunião tem as suas (por ocorrência, com @menção) e dá pra <b>🔗 vincular</b> a ocorrência à apresentação do Radar: as anotações feitas na apresentação naquele dia aparecem ali também.</li><li>No celular a visão abre como <b>Agenda</b>.</li></ul></div></details><details class="hlp-it" id="hlp-mural" data-tab="agenda" data-kw="mural aviso publicar urgente novidade dica torre selo arquivar expira comunicado"><summary><span class="hlp-ic">📢</span><span class="hlp-tt"><b>Mural do Radar</b><small>Avisos por torre, com selo de não lidos e urgentes em destaque</small></span></summary><div class="hlp-bd">Avisos por torre. O botão <b>📢</b> do cabeçalho (o mesmo símbolo do Mural do kanban) mostra um <b>selo</b> com os avisos que você ainda não viu; clique pra abrir a lista e clique num aviso pra ler o texto inteiro. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) vê <b>📢 Publicar aviso</b> dentro da lista: escolha o tipo (🎉 novidade · ⚠️ aviso · 💡 dica · 🚨 urgente), título, mensagem, <b>pra quais torres</b> (só as que você edita; "Todas as torres" é de ADM/⭐ Geral) e quando some (7/15/30 dias ou só quando arquivar). Os <b>🚨 urgentes</b> também abrem em destaque, uma vez por pessoa. ✎ edita (sem notificar de novo) e 📦 arquiva.</div></details><details class="hlp-it" id="hlp-sino" data-tab="agenda" data-kw="sino notificação notificações push som não perturbe permissão aparelho limpar lido menção reunião mural aviso"><summary><span class="hlp-ic">🔔</span><span class="hlp-tt"><b>Notificações do Radar</b><small>O mesmo sino do kanban e do painel, com as novidades da sua torre</small></span></summary><div class="hlp-bd"><p>O <b>🔔</b> é o <b>mesmo sino do kanban e do painel</b> — a notificação aparece igual em qualquer página.</p><ul><li><b>O que aparece</b>: tudo que é seu (card atribuído, menção, prazo, reunião, Objetivo editado, Agente Ágil…) com as novidades da sua torre: <b>📢 aviso novo no Mural</b>, <b>🆕 Objetivo criado</b>, <b>✅ Marco concluído</b> e <b>🗓️ reuniões/eventos do calendário</b> (nova, mudança, cancelamento; criar Objetivo e concluir Marco pelo Agente Ágil também aparecem).</li><li><b>Clicar</b> vai direto ao Objetivo/aviso/anotação/reunião; <b>✓ Marcar tudo como lido</b> zera.</li><li><b>Rodapé do sino</b>: <b>Limpar antigas</b> (apaga as suas já lidas), <b>🔊/🔇</b> (som quando chega algo novo), <b>permissão neste aparelho</b> (avisos mesmo com a aba fechada) e <b>🔕 Não Perturbe</b> (silencia o som/aviso por 1 h, 8 h, até amanhã ou até você desativar — o sino segue registrando tudo). São os mesmos do Kanban: o que você escolher vale nas três páginas.</li><li>O que você mesmo fez não avisa você. Visualizadores externos também têm sino (avisos e novidades das torres).</li></ul></div></details><details class="hlp-it" id="hlp-mencao" data-tab="agenda" data-kw="menção @ anotações reunião notificação pessoa"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>@menção nas Anotações da reunião</b><small>Digite @ e escolha a pessoa — ela é notificada</small></span></summary><div class="hlp-bd">Nas <b>📋 Anotações da reunião</b>, digite <b>@</b> e escolha a pessoa (↑↓ e Enter, ou clique): ela recebe uma notificação e a menção fica destacada. Vale só pra anotações escritas nesta página.</div></details></section><section class="hlp-pane" id="hlp-pane-acesso" data-pane="acesso" role="tabpanel" aria-labelledby="hlp-tab-acesso" hidden><div class="hlp-panehd"><span>🏛️ Torres e acesso</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('acesso')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-torres" data-tab="acesso" data-kw="torre digital comercial corporativa visão global cor geral gerência gerências ocultar renomear reordenar sua torre global users" open data-open0="1"><summary><span class="hlp-ic">🏛️</span><span class="hlp-tt"><b>Torres e gerências</b><small>Digital, Comercial e Corporativa — e quem edita o quê</small></span></summary><div class="hlp-bd"><p>O Radar se divide em <b>torres</b>: <b>🛒 Digital</b>, <b>🛍️ Comercial</b> e <b>🏛️ Corporativa</b>. A tela inicial são os botões das torres — clique numa pra ver os Objetivos dela; a <b>🌐 Visão global</b> mostra todos juntos, separados por cor (cada cartão e cada janela leva a cor da torre).</p><ul><li><b>Quem vê, quem edita</b>: <b>todo mundo vê tudo</b>, mas você só cria/edita Objetivos da <b>sua torre</b> (ADM edita em qualquer uma; o Responsável de um Objetivo sempre edita o seu).</li><li><b>Sua torre</b> é escolhida no cadastro; um ADM troca em 👥 Global Users, no painel — lá existe também a torre <b>⭐ Geral</b>, pra quem precisa editar <b>todas</b> as torres (continua precisando ser PO/Organizador ou 🎯 Gestor OKR).</li><li><b>⚙ Gerências</b>: cada torre tem a sua lista. Quem edita a torre (ADM, PO/Organizador, 🎯 Gestor OKR, torre ⭐ Geral) cria, renomeia, reordena e <b>oculta</b> pelo botão <b>⚙ Gerências</b> da barra de torres. Gerência com Objetivos nunca é apagada, só oculta (o 🗑 explica: mande os Objetivos pra outra gerência ou exclua-os primeiro).</li></ul></div></details><details class="hlp-it" id="hlp-quemedita" data-tab="acesso" data-kw="permissão editar criar quem pode adm po organizador gestor okr responsável papel torre calendário agenda global users"><summary><span class="hlp-ic">✏️</span><span class="hlp-tt"><b>Quem pode editar</b><small>Papéis, torre e Responsável — o que cada um consegue fazer</small></span></summary><div class="hlp-bd">Podem criar um Objetivo novo: <b>ADM</b> (em qualquer torre), <b>PO/Organizador</b> (de qualquer squad) e quem tiver o papel <b>🎯 Gestor OKR</b> (liga/desliga em "👥 Global Users" — independente do papel no board, continua "Membro" em tudo mais) — esses dois últimos <b>só na própria torre</b> (a torre ⭐ Geral vale em todas). Pra editar um Objetivo já existente (ou criar/editar um Marco dele), valem os mesmos, na torre do Objetivo, e também estar marcado como <b>Responsável</b> daquele Objetivo específico. O <b>calendário</b> segue a mesma regra por agenda: a global é só do ADM, a de cada torre é de quem organiza a torre. A lista de responsáveis inclui <b>qualquer pessoa cadastrada no painel</b> — mesmo quem não está em nenhum squad (em "👥 Global Users", os ADMs aparecem com o chip 🛡️).</div></details><details class="hlp-it" id="hlp-trava" data-tab="acesso" data-kw="trava lock bloqueado editando leitura pedir objetivo liberar agora 5 minutos 10 minutos duas pessoas simultânea conflito sobrescrever agente"><summary><span class="hlp-ic">🔒</span><span class="hlp-tt"><b>Edição simultânea do mesmo Objetivo</b><small>Quem abre primeiro segura; os outros veem em leitura e podem pedir</small></span></summary><div class="hlp-bd"><p>Duas pessoas não editam o <b>mesmo Objetivo</b> ao mesmo tempo (uma sobrescreveria a outra, sem aviso) — igual à trava dos cards do Kanban.</p><ul><li><b>Quem abre primeiro segura</b>; quem abrir depois vê o Objetivo (e os Marcos dele) em <b>modo leitura</b>, com um aviso de quem está editando, e o cartão na lista ganha o selo <b>🔒 Fulano editando</b>.</li><li><b>🔔 Pedir o Objetivo</b> (em leitura): quem está editando vê o pedido e tem <b>5 minutos</b> pra salvar e sair (ou clicar em <b>✅ Liberar agora</b>); passou o prazo, o sistema <b>salva o que está na tela e fecha</b> pra ele, e quem pediu assume.</li><li><b>Quando a trava solta</b>: ao fechar o Objetivo, ao sair da página, e sozinha se ficar <b>10 minutos sem sinal</b> (aba fechada, computador dormiu). Você em duas abas não trava a si mesmo.</li><li><b>Ações rápidas</b> do menu ⋯ (tags, mover, arquivar, status do Marco…) também esperam enquanto alguém edita aquele Objetivo.</li><li>O <b>Agente Ágil também respeita a trava</b>: se você pedir pra ele mexer num Objetivo que outra pessoa está editando, ele avisa quem é e não grava (senão a edição dela apagaria a dele).</li></ul></div></details><details class="hlp-it" id="hlp-viewers" data-tab="acesso" data-kw="visualizador externo convidado acompanhar leitura acesso google e-mail remover online entrou"><summary><span class="hlp-ic">👁</span><span class="hlp-tt"><b>Visualizadores externos</b><small>Acesso só de leitura pra quem é de fora da empresa (só ADM)</small></span></summary><div class="hlp-bd">Pra alguém de fora da empresa <b>só acompanhar</b> o Radar: botão <b>👁 Visualizadores</b> (no menu <b>⋯ Mais</b> do cabeçalho) → e-mail da pessoa → <b>+ Visualizador</b>. Ela entra com o <b>Google</b> na conta desse e-mail, direto neste endereço, e vê as 3 torres, o Dashboard, as Anotações e a apresentação — <b>sem editar nada</b> (as regras do Firebase impedem) e sem ver e-mails nem notificações pessoais de ninguém. Ela tem o <b>📢 Mural</b> e o <b>🔔 sino</b> (avisos e novidades das torres). A lista é a mesma do painel (⚙ Configurações → 🔑 ADMs, ou 👥 Global Users → 👁). Remover tira o acesso em até 15 minutos. A lista mostra, pra cada pessoa, se ela <b>já entrou</b>: <b>⏳ ainda não entrou</b> · <b>✅ entrou · visto há X</b> · <b>🟢 online agora</b> (passe o mouse pra ver o primeiro acesso e o último sinal); quem acabou de ser adicionado só passa a constar como "entrou" no próximo login.</div></details></section><section class="hlp-pane" id="hlp-pane-navegar" data-pane="navegar" role="tabpanel" aria-labelledby="hlp-tab-navegar" hidden><div class="hlp-panehd"><span>🧭 Navegar</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('navegar')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-cabecalho" data-tab="navegar" data-kw="cabeçalho abas mais ajuda guia gerências visualizadores novo objetivo apresentação mural sino online menu de produtos oceano pontinhos meus links hering dicas data studio looker"><summary><span class="hlp-ic">🧭</span><span class="hlp-tt"><b>O cabeçalho</b><small>Três níveis: torre + ações, abas e filtros</small></span></summary><div class="hlp-bd">Três níveis: em cima o <b>título da torre</b> com 🎥 Apresentação, <b>❓ Ajuda</b>, <b>📘 Guia</b>, <b>⋯ Mais</b> (⚙ Gerências e 👁 Visualizadores) e <b>+ Novo Objetivo</b>; no meio as <b>abas</b> — 🎯 Objetivos · 📅 Calendário · 📊 Dashboard · 📋 Anotações · 🔗 Cards (os cards do board com badge 🎯 OKR, por squad e com o Objetivo a que cada um está vinculado — só carrega ao clicar em "Carregar cards") · 📈 Data Studio (painéis do Looker Studio ao vivo dentro do Radar — só carrega ao clicar na aba) (a aberta fica marcada); embaixo a barra de filtros. O <b>💬 Agente Ágil</b> não é uma aba: é o <b>botão flutuante</b> no canto inferior direito, disponível em qualquer tela. 📢 Mural, 🔔 sino e quem está online ficam no canto.<br><br><b>⋮⋮⋮ Menu de produtos</b> (os 9 pontinhos): abre o menu do <b>Oceano</b> com 3 abas — <b>Produtos</b> (Maré Digital, Painel, Radar e A Bordo; o título "🌊 Oceano · início" leva ao lobby), <b>Hering</b> (links importantes da empresa, cadastrados por ADM no Painel → ⚙ Configurações → 🔗 Links) e <b>Meus links</b> (atalhos só seus, criados ali mesmo em "＋ Adicionar ou editar meus links"). <b>💡 Dicas</b>: de vez em quando aparece um mini aviso com um truque; o interruptor <b>💡 Dicas do Radar</b> (e o "Rever dicas") fica no topo desta Ajuda.</div></details><details class="hlp-it" id="hlp-filtros" data-tab="navegar" data-kw="filtro filtrar busca gerência status período pessoa responsável tag mais filtros limpar resumo atingimento médio"><summary><span class="hlp-ic">🔎</span><span class="hlp-tt"><b>Filtros e resumo da aba</b><small>Gerência, status, busca, pessoa, tag e período</small></span></summary><div class="hlp-bd">No topo: <b>gerência</b>, <b>status</b> e busca por nome; <b>⚙ Mais filtros</b> abre <b>período</b>, <b>👤 pessoa</b> (responsável pelo Objetivo ou por algum Marco dele) e <b>🏷️ tag</b> (só aparece quando há tags em uso). Logo abaixo, o resumo mostra quantos Objetivos há em cada status e o <b>% médio de atingimento</b> dos que têm meta; <b>✕ Limpar</b> zera os filtros.</div></details><details class="hlp-it" id="hlp-link" data-tab="navegar" data-kw="link direto copiar url compartilhar objetivo"><summary><span class="hlp-ic">🔗</span><span class="hlp-tt"><b>Link direto do Objetivo</b><small>Copia um link que abre aquele Objetivo</small></span></summary><div class="hlp-bd">Todo Objetivo já existente tem um botão 🔗 no cabeçalho — copia um link que abre esse Objetivo específico direto (mesma ideia do "Copiar link" de um card do board). Quem recebe o link ainda precisa de login (@ciahering<span class="ms-login">, @arezzo</span> ou visualizador autorizado) e acesso ao Radar — é um atalho pra achar rápido, não uma exceção de acesso.</div></details><details class="hlp-it" id="hlp-dashboard" data-tab="navegar" data-kw="dashboard histórico semanal snapshot sexta 17h progresso médio gráfico o que mudou torre comparar simulação variação indicadores tabela"><summary><span class="hlp-ic">📊</span><span class="hlp-tt"><b>Dashboard (histórico semanal)</b><small>Snapshot toda sexta às 17h, comparativo por torre e simulação</small></span></summary><div class="hlp-bd">Toda <b>sexta-feira às 17h</b> um snapshot automático guarda o status e o % de progresso de cada Objetivo ativo (o mesmo % da barra: atingimento quando há meta, senão Marcos). O botão <b>📊 Dashboard</b> mostra:
           <ul>
             <li><b>Duas abas</b> no topo: <b>🎯 Atingimento</b> (padrão) e <b>🏁 Marcos</b>. <b>Atingimento</b> mede quanto de cada <b>meta</b> foi atingido — só entram Objetivos com 📈 Atingimento configurado (o ♾️ perene fica de fora); se o snapshot é de antes do atingimento existir, a curva é reconstruída pelos registros de valor do Objetivo. <b>Marcos</b> mede a % de <b>Marcos concluídos</b> (Objetivos sem Marcos ficam de fora). Tudo abaixo — indicadores, gráfico, "O que mudou", tabela e a janela do progresso médio — segue a aba escolhida.</li>
             <li><b>Cabeçalho</b>: quando foi o último snapshot, quando sai o próximo e o período do gráfico (4, 8, 12 semanas ou tudo).</li>
@@ -1712,7 +1742,7 @@ window.MARE_SO_HERING = true;
             <li><b>🧮 Como cada Objetivo contribui</b> (botão ao lado do número grande): abre uma janela grande com a <b>média em destaque</b>, quem <b>mais puxa a média pra baixo</b> e quem <b>mais a sustenta</b>, e um gráfico. Por padrão ele mostra os <b>⭐ Destaques</b>: a média numa linha branca grossa, os <b>3 Objetivos que mais subiram</b> (verde) e os <b>3 que mais caíram</b> (vermelho), com o nome no fim da linha, e os demais em cinza de fundo — passe o mouse numa linha, num chip ou numa linha da tabela pra destacar aquele Objetivo. Outras visões nos chips <b>Linhas do gráfico</b>: <b>Todas coloridas</b> (uma cor por Objetivo), <b>Por gerência</b>, <b>Só a média</b> (com a faixa do menor ao maior) e <b>Mini-gráficos</b> (um cartão por Objetivo, com a média tracejada de fundo, do que mais caiu pro que mais subiu). Também dá pra filtrar por <b>período</b>, <b>status</b> do Objetivo e <b>gerência</b>. Os Objetivos aparecem como chips agrupados por gerência: <b>clique num pra tirá-lo da conta</b> (ou trazê-lo de volta) e a média, o gráfico, o indicador do Dashboard e a tabela de contribuição recalculam na hora (com um aviso de simulação e <b>Restaurar tudo</b>). É só uma simulação no seu navegador — nada é gravado nem muda pra outras pessoas.</li>
             <li><b>🔄 O que mudou</b>: o que piorou, melhorou, subiu ou caiu de progresso, os Objetivos novos e os que saíram, entre os dois últimos snapshots. Clique numa mudança pra ver o Objetivo.</li>
             <li><b>Por Objetivo</b>: tabela com status, progresso, variação, mini-tendência e marcos de cada Objetivo, com busca e filtros de gerência e status, e ordenação (maior alta, maior queda, pior status…). Clique numa linha pra abrir a curva de progresso e o quadro semana a semana (com o atingimento) e o botão <b>📂 Abrir Objetivo</b>.</li>
-          </ul></div></details><details class="hlp-it" id="hlp-apresentacao" data-tab="navegar" data-kw="apresentação slides reunião tela cheia f setas teclado capa torres marco colapsar concluídos filtro tag anterior próximo ordem rola ao vivo apresentar laser caneta passar controle meet acompanhar"><summary><span class="hlp-ic">🖥️</span><span class="hlp-tt"><b>Apresentação em slides</b><small>1 slide por Objetivo, tela cheia, ao vivo (laser e caneta) e filtro por tag</small></span></summary><div class="hlp-bd"><p>Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>.</p><ul><li><b>Atalhos</b>: <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.</li><li><b>Capa e torres</b>: a capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre.</li><li><b>Objetivos na apresentação</b>: um Objetivo marcado como <b>🙈 fora da apresentação</b> (botão direito → Ocultar, ou ⚙ Configurações) some de tudo — capa, grade, slides, painel geral e contadores. <b>Marcos na apresentação</b>: cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Radar) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso.</li><li><b>Atingimento</b>: a barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.</li><li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no Radar (dentro de cada gerência) — sem ordem manual, vai por título.</li><li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li><li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li><li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li><li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no Radar) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li><li><b>🎙️ Apresentar ao vivo</b> (reunião no Meet): quem clica em <b>🎙️ Apresentar ao vivo</b> vira o <b>apresentador</b> — o slide e o Objetivo aberto no detalhe passam pro Firebase, e <b>quem abrir a página acompanha sozinho</b> ("Acompanhando ✓"); só o apresentador compartilha a aba, os outros abrem o link. Mexer nos slides por conta própria tira você da sincronização e aparece <b>↩ Voltar a seguir</b>. No botão flutuante 🎙️ (canto, por cima até do detalhe) o apresentador tem: <b>🔴 Laser</b> (tecla <code>L</code> — um ponto vermelho que todo mundo vê), <b>🖍️ Caneta</b> (tecla <code>P</code>, 4 cores, traço <b>fixo</b>; <code>T</code> liga a <b>temporária</b>, que some sozinha em 5 s), <b>↩ Desfazer</b> (<code>Z</code>, só o último traço fixo), <b>🧽 Apagar tudo</b> e <b>Passar o controle pra…</b> (clique no nome de quem está na sala). Quem acompanha pode <b>✋ Pedir o controle</b>; se o apresentador ficar 90 s sem sinal, qualquer pessoa pode <b>🎙️ Assumir</b>. <b>⏹ Encerrar</b> apaga a sessão. Visualizador externo acompanha, mas não apresenta.</li></ul></div></details></section><section class="hlp-pane" id="hlp-pane-agente" data-pane="agente" role="tabpanel" aria-labelledby="hlp-tab-agente" hidden><div class="hlp-panehd"><span>💬 Agente Ágil</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agente')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-agente" data-tab="agente" data-kw="agente ágil chat ia assistente pedir criar objetivo marco progresso próximo passo risco agenda atingimento registrar permissão trava" open data-open0="1"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>Central Agente Ágil</b><small>Chat que preenche Objetivos, Marcos e atingimento por você</small></span></summary><div class="hlp-bd">Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs. Fica no <b>botão flutuante 🤖 Agente Ágil</b> (canto inferior direito de qualquer tela): no computador abre um painel no canto, <b>sem bloquear a página</b> (dá pra consultar o Radar enquanto conversa); no celular abre em tela cheia. Um selo vermelho avisa quando ele respondeu a você, e atalhos de pergunta ajudam a começar. Não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
+          </ul></div></details><details class="hlp-it" id="hlp-apresentacao" data-tab="navegar" data-kw="apresentação slides reunião tela cheia f setas teclado capa torres marco colapsar concluídos filtro tag anterior próximo ordem rola ao vivo apresentar laser caneta passar controle meet acompanhar"><summary><span class="hlp-ic">🖥️</span><span class="hlp-tt"><b>Apresentação em slides</b><small>1 slide por Objetivo, tela cheia, ao vivo (laser e caneta) e filtro por tag</small></span></summary><div class="hlp-bd"><p>Pra reunião, existe uma tela dedicada só de apresentação (1 slide por Objetivo) — <code>okr-apresentacao.slide.html</code>.</p><ul><li><b>Atalhos</b>: <code>F</code> pra tela cheia, <code>←</code> <code>→</code>/espaço pra navegar, <code>Backspace</code>/<code>Esc</code> fecha o detalhe.</li><li><b>Capa e torres</b>: a capa mostra as <b>3 torres</b> (cartões com contagem e progresso), cada torre tem o seu slide com as gerências, e a barra do topo filtra por torre.</li><li><b>Objetivos na apresentação</b>: um Objetivo marcado como <b>🙈 fora da apresentação</b> (botão direito → Ocultar, ou ⚙ Configurações) some de tudo — capa, grade, slides, painel geral e contadores. <b>Marcos na apresentação</b>: cada Marco tem um botão "🎬 Aparecer na apresentação" (aqui no Radar) — desligue pra esconder marcos antigos/irrelevantes dessa tela sem precisar arquivar (útil em OKRs contínuos, com muitos marcos acumulados). No detalhe de um Objetivo com marco concluído, a apresentação também tem um botão "Colapsar concluídos" — só esconde a linha ali, não muda a % de progresso.</li><li><b>Atingimento</b>: a barra de cada cartão segue o <b>📈 Atingimento</b> (quando o Objetivo tem meta), mostra o <b>emoji do tipo</b> e clicar nele abre o <b>gráfico de evolução</b>; no detalhe há também um botão <b>Evolução</b>. Objetivos ♾️ Perene mostram o ♾️ e andam pelos marcos.</li><li><b>Ordem</b>: a apresentação segue a <b>mesma ordem manual</b> que você montou aqui no Radar (dentro de cada gerência) — sem ordem manual, vai por título.</li><li><b>🏷️ Tags e filtro</b>: os cartões da grade mostram as tags do Objetivo, e a barra do topo tem um seletor <b>🏷️ Tag</b> — filtra grade, slides e a navegação do detalhe pelos Objetivos daquela tag (útil pra separar o que outra pessoa vai levar pra outra apresentação). A capa mostra "Filtrando pela tag…" enquanto o filtro está ligado.</li><li><b>← Anterior / Próximo →</b>: no detalhe de um Objetivo, os dois botões percorrem os Objetivos da mesma gerência, na mesma ordem e com o mesmo filtro da grade; o botão fica apagado no primeiro/último. As <b>setas ← → do teclado</b> fazem o mesmo (com o detalhe fechado, passam os slides).</li><li><b>Texto longo rola</b>: no detalhe, se a tabela de Marcos, o rodapé (Progressos, Próximos passos, Riscos, Planos de ação) ou a coluna da esquerda não couberem, <b>a letra não diminui</b> — a área ganha uma barra de rolagem. Textos curtos não rolam. Os limites de caracteres mostrados nos campos (contador "n/limite") ajudam a evitar isso.</li><li><b>👁 no cartão</b>: o botão 👁 de cada cartão do Objetivo (aqui no Radar) abre a apresentação já nesse Objetivo, pra conferir como ele vai aparecer.</li><li><b>🎙️ Apresentar ao vivo</b> (reunião no Meet): quem clica em <b>🎙️ Apresentar ao vivo</b> vira o <b>apresentador</b> — o slide e o Objetivo aberto no detalhe passam pro Firebase, e <b>quem abrir a página acompanha sozinho</b> ("Acompanhando ✓"); só o apresentador compartilha a aba, os outros abrem o link. Mexer nos slides por conta própria tira você da sincronização e aparece <b>↩ Voltar a seguir</b>. No botão flutuante 🎙️ (canto, por cima até do detalhe) o apresentador tem: <b>🔴 Laser</b> (tecla <code>L</code> — um ponto vermelho que todo mundo vê), <b>🖍️ Caneta</b> (tecla <code>P</code>, 4 cores, traço <b>fixo</b>; <code>T</code> liga a <b>temporária</b>, que some sozinha em 5 s), <b>↩ Desfazer</b> (<code>Z</code>, só o último traço fixo), <b>🧽 Apagar tudo</b> e <b>Passar o controle pra…</b> (clique no nome de quem está na sala). Quem acompanha pode <b>✋ Pedir o controle</b>; se o apresentador ficar 90 s sem sinal, qualquer pessoa pode <b>🎙️ Assumir</b>. <b>⏹ Encerrar</b> apaga a sessão. Visualizador externo acompanha, mas não apresenta.</li></ul></div></details><details class="hlp-it" id="hlp-datastudio" data-tab="navegar" data-kw="data studio looker studio painel relatório bi incorporado embed tela cheia atualizar configurar credenciais proprietário não listado"><summary><span class="hlp-ic">📈</span><span class="hlp-tt"><b>Data Studio (Looker Studio ao vivo)</b><small>Painéis incorporados direto no Radar, com tela cheia e troca rápida</small></span></summary><div class="hlp-bd"><p>A aba <b>📈 Data Studio</b> abre os painéis do Looker Studio usados no dia a dia dentro do próprio Radar, sem sair do Oceano. Os links ficam guardados só no Firebase (protegidos por login <code>@ciahering.com.br</code>) e só são carregados quando alguém clica na aba.</p><ul><li><b>Troca rápida e tela cheia</b>: se houver mais de um painel cadastrado, alterne pelos botões no topo; <b>⛶ Tela cheia</b> (ou <code>Esc</code> pra sair) expande o painel na tela toda, <b>🔄 Atualizar</b> recarrega o iframe e <b>↗ Abrir no Looker Studio</b> abre numa nova guia.</li><li><b>⚙ Configurar painéis</b> (ADM, PO/Organizador e 🎯 Gestor OKR): adicione, edite ou reordene os relatórios colando o link de compartilhamento ou de incorporação (o Radar converte automaticamente para <code>/embed/reporting/...</code>).</li><li><b>Para abrir direto sem pedir login extra</b>: no Looker Studio, ative <b>Arquivo → Incorporar relatório</b>, configure a fonte de dados com <b>Credenciais do proprietário</b> e deixe o compartilhamento como <b>Não listado (qualquer pessoa com o link pode ver)</b>. Como o link fica restrito ao Firebase do Radar, só quem já entrou com Google <code>@ciahering.com.br</code> tem acesso.</li></ul></div></details></section><section class="hlp-pane" id="hlp-pane-agente" data-pane="agente" role="tabpanel" aria-labelledby="hlp-tab-agente" hidden><div class="hlp-panehd"><span>💬 Agente Ágil</span><button type="button" class="hlp-lnk" onclick="_okrHelpToggleTudo('agente')">abrir / recolher todos</button></div><details class="hlp-it" id="hlp-agente" data-tab="agente" data-kw="agente ágil chat ia assistente pedir criar objetivo marco progresso próximo passo risco agenda atingimento registrar permissão trava" open data-open0="1"><summary><span class="hlp-ic">💬</span><span class="hlp-tt"><b>Central Agente Ágil</b><small>Chat que preenche Objetivos, Marcos e atingimento por você</small></span></summary><div class="hlp-bd">Chat com o Agente Ágil dedicado a ajudar a preencher os OKRs. Fica no <b>botão flutuante 🤖 Agente Ágil</b> (canto inferior direito de qualquer tela): no computador abre um painel no canto, <b>sem bloquear a página</b> (dá pra consultar o Radar enquanto conversa); no celular abre em tela cheia. Um selo vermelho avisa quando ele respondeu a você, e atalhos de pergunta ajudam a começar. Não precisa de <code>@menção</code>, toda mensagem já é um pedido pra ele. É uma central geral (não presa a 1 Objetivo só) — dá pra perguntar sobre qualquer Objetivo dali.
           <ul>
             <li>Conte a situação com suas palavras (ex.: "já validamos a viabilidade do OMNI, falta apresentar pro conselho") — ele identifica o Objetivo certo (ou pergunta, se não tiver certeza) e separa o que é <b>Progresso</b>, <b>Próximo Passo</b> ou <b>Risco</b>, escrevendo direto nesses campos.</li>
             <li>Também cria Objetivo novo (ADM, ou PO/Organizador/🎯 Gestor OKR na própria torre — ele pergunta a <b>torre</b> e a <b>gerência</b>, que mudam por torre) e cria/atualiza Marco — inclusive mudar o status de um Marco por texto ("marca tal marco como concluído"). Objetivo criado e Marco concluído por ele aparecem no 🔔 sino da torre, igual à tela.</li>
@@ -1971,7 +2001,19 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.80 · okr-dev</div>
+<!-- Modal de configuração dos painéis do 📈 Data Studio (Looker Studio) -->
+<div class="pc-ov" id="okr-ds-ov" onclick="if(event.target===this)_okrDsCloseCfg()">
+  <div class="pc-modal" style="max-width:640px;">
+    <div class="pc-modal-hd">
+      <div class="pc-modal-title" id="okr-ds-cfg-title">⚙ Configurar painéis · Data Studio</div>
+      <button class="x-btn" onclick="_okrDsCloseCfg()">✕</button>
+    </div>
+    <div class="pc-modal-body" id="okr-ds-cfg-body"></div>
+    <div class="pc-footer" id="okr-ds-cfg-footer"></div>
+  </div>
+</div>
+
+<div class="version">v2.81 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2687,6 +2729,7 @@ function _okrTryOpenFromUrl(){
     return;
   }
   if(alvo==='notas'){ _okrIrParaNotas(); return; }   // notificação de @menção nas Anotações da reunião
+  if(alvo==='datastudio'){ _okrEntrarTorre(_okrMinhaEhGeral() ? 'global' : _okrMinhaTorre(), false); _okrSetView('datastudio'); return; }
   if(okrObjetivos[alvo]){ _okrEntrarTorre(_okrTorreDe(okrObjetivos[alvo]), false); openOkrObjetivo(alvo); }   // a torre do Objetivo fica por trás do modal
   else showToast('⚠ Esse Objetivo não foi encontrado — pode ter sido excluído ou arquivado.');
 }
@@ -2883,6 +2926,7 @@ let okrReuniaoNotas = {};
   // {data: {notaId: {texto,autorUid,ts}}}
 let _okrShowNotas = false;
 let _okrShowCards = false;
+let _okrShowDataStudio = false;
 
 
 let _okrNotasViewDate = null;
@@ -3377,22 +3421,26 @@ function _okrNotifyMencao(uids, texto, data){
 // / Central Agente Ágil / Anotações da reunião) — nunca duas juntas.
 // _okrSetView() é o único ponto que decide isso; os toggles individuais só
 // chamam ela.
-function _okrSetView(view){ // 'objetivos' | 'historico' | 'notas' | 'calendario' | 'cards'  ('agente' = legado: abre o painel flutuante e não troca de tela)
+function _okrSetView(view){ // 'objetivos' | 'historico' | 'notas' | 'calendario' | 'cards' | 'datastudio'  ('agente' = legado: abre o painel flutuante e não troca de tela)
   if(view==='agente'){ _okrAbrirAgente(); return; }
   try{ window.MareDicas && MareDicas.gatilho('view:'+view); }catch(e){}   // 💡 dica do lugar onde a pessoa chegou (só abre se houver uma não vista)
   _okrShowCal = view==='calendario';
   _okrShowHistorico = view==='historico';
   _okrShowNotas = view==='notas';
   _okrShowCards = view==='cards';
+  _okrShowDataStudio = view==='datastudio';
+  if(!_okrShowDataStudio){ const w = document.getElementById('okr-ds-wrap'); if(w) w.classList.remove('okr-ds-fs'); }
   if(!_okrShowHistorico) _okrHistMetricaManual = false;   // saiu do Histórico: na próxima abertura a aba é escolhida de novo
   // abas: a ativa fica marcada (os textos dos botões não mudam mais — antes viravam "◀ Ver Objetivos")
-  const abas = {objetivos:'okr-tab-obj', calendario:'okr-cal-btn', historico:'okr-historico-btn', notas:'okr-notas-btn', cards:'okr-cards-btn'};
+  const abas = {objetivos:'okr-tab-obj', calendario:'okr-cal-btn', historico:'okr-historico-btn', notas:'okr-notas-btn', cards:'okr-cards-btn', datastudio:'okr-ds-btn'};
   Object.entries(abas).forEach(([v,id])=>{ const b = document.getElementById(id); if(b){ b.classList.toggle('on', v===view); b.setAttribute('aria-selected', v===view ? 'true' : 'false'); } });
   const calWrap = document.getElementById('okr-cal-wrap'); if(calWrap) calWrap.style.display = _okrShowCal ? '' : 'none';
   document.getElementById('okr-historico-wrap').style.display = _okrShowHistorico ? '' : 'none';
   document.getElementById('okr-notas-wrap').style.display = _okrShowNotas ? '' : 'none';
   const cardsWrap = document.getElementById('okr-cards-wrap'); if(cardsWrap) cardsWrap.style.display = _okrShowCards ? '' : 'none';
+  const dsWrap = document.getElementById('okr-ds-wrap'); if(dsWrap) dsWrap.style.display = _okrShowDataStudio ? '' : 'none';
   const cardsBtn = document.getElementById('okr-cards-btn'); if(cardsBtn) cardsBtn.style.display = window._isPainelViewer ? 'none' : '';   // visualizador externo não lê os cards dos squads
+  const dsBtn = document.getElementById('okr-ds-btn'); if(dsBtn) dsBtn.style.display = window._isPainelViewer ? 'none' : '';   // visualizador externo não acessa relatórios internos
   ['okr-toolbar','okr-stats-strip','okr-objetivos-wrap','okr-section-title','okr-list'].forEach(id=>{
     const el = document.getElementById(id); if(el) el.style.display = view==='objetivos' ? '' : 'none';
   });
@@ -3400,6 +3448,7 @@ function _okrSetView(view){ // 'objetivos' | 'historico' | 'notas' | 'calendario
   const novoBtn = document.getElementById('okr-novo-btn'); if(novoBtn) novoBtn.style.display = view==='objetivos' ? (_okrCanCreate() ? 'inline-flex' : 'none') : 'none';
   if(_okrShowCal) renderOkrCalendario();
   if(_okrShowCards) renderOkrCards();
+  if(_okrShowDataStudio) renderOkrDataStudio();
   if(_okrShowHistorico) renderOkrHistorico();
   if(_okrShowNotas){
     if(!_okrNotasViewDate) _okrNotasViewDate = _todayStr();
@@ -9303,6 +9352,345 @@ function _finishOkrLogin(user){
   _okrPresenceStart();
   setTimeout(()=>{ _okrAccessReady = true; if(typeof _okrTryOpenFromUrl==='function') _okrTryOpenFromUrl(); _okrExtrasRender(); _okrMuralChecaPopup(); }, 6000); // prazo se usuários/ADMs não chegarem
 }
+
+
+// ═══ 📈 Data Studio (Looker Studio incorporado — Opção 1: URLs no Firebase + Credenciais do Proprietário) ═══
+// Lê `kanban/okr/datastudio` uma única vez por sessão, APENAS quando a pessoa clica na aba 📈 Data Studio
+// (consumo zero de bytes no boot do Radar). As URLs nunca ficam expostas no código público do GitHub.
+let _okrDsReports = null; // null = ainda não carregado; {id: {id, titulo, icone, url, descricao, ordem, criadoEm, criadoPor}}
+let _okrDsLoading = false;
+let _okrDsSelectedId = (()=>{ try{ return localStorage.getItem('okr_ds_sel')||''; }catch(e){ return ''; } })();
+let _okrDsEditId = null;
+
+function _okrDsNormalizeUrl(raw){
+  let s = String(raw||'').trim();
+  if(!s) return '';
+  // Se colou o código <iframe src="..."> inteiro do Looker Studio, extrai só o src
+  const mSrc = s.match(/src\s*=\s*["']([^"']+)["']/i);
+  if(mSrc && mSrc[1]) s = mSrc[1].trim();
+  try{
+    const u = new URL(s);
+    if(u.hostname === 'datastudio.google.com') u.hostname = 'lookerstudio.google.com';
+    // Converte /reporting/... ou /u/0/reporting/... para /embed/reporting/... automaticamente
+    u.pathname = u.pathname
+      .replace(/^\/u\/\d+\/reporting\//, '/embed/reporting/')
+      .replace(/^\/u\/\d+\/embed\/reporting\//, '/embed/reporting/')
+      .replace(/^\/reporting\//, '/embed/reporting/');
+    return u.toString();
+  }catch(e){
+    return s;
+  }
+}
+
+function _okrDsViewUrl(embedUrl){
+  const s = String(embedUrl||'').trim();
+  if(!s) return '#';
+  return s.replace('/embed/reporting/', '/reporting/');
+}
+
+function _okrDsListSorted(){
+  const obj = _okrDsReports || {};
+  return Object.values(obj)
+    .filter(r => r && r.url)
+    .sort((a,b) => (Number(a.ordem??999) - Number(b.ordem??999)) || String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
+}
+
+async function _okrDsEnsureLoaded(force){
+  if(_okrDsReports !== null && !force) return _okrDsReports;
+  if(_okrDsLoading) return _okrDsReports || {};
+  _okrDsLoading = true;
+  try{
+    const snap = await window._get(window._ref(window._db, 'kanban/okr/datastudio'));
+    _okrDsReports = (snap && snap.exists()) ? (snap.val() || {}) : {};
+  }catch(e){
+    console.warn('[Radar Data Studio] Erro ao carregar kanban/okr/datastudio:', e);
+    _okrDsReports = _okrDsReports || {};
+  }finally{
+    _okrDsLoading = false;
+  }
+  return _okrDsReports;
+}
+
+async function renderOkrDataStudio(){
+  const root = document.getElementById('okr-ds-root');
+  if(!root) return;
+  if(window._isPainelViewer){
+    root.innerHTML = '<div class="okr-ds-empty"><h3>🔒 Acesso restrito</h3><p>Os painéis do Data Studio são exclusivos para integrantes com conta corporativa Hering.</p></div>';
+    return;
+  }
+  if(_okrDsReports === null){
+    root.innerHTML = '<div style="padding:28px;text-align:center;font-size:.82rem;color:var(--muted2);">⏳ Carregando painéis do Data Studio…</div>';
+    await _okrDsEnsureLoaded(false);
+  }
+  const lista = _okrDsListSorted();
+  const podeCfg = typeof _okrCanCreate === 'function' && _okrCanCreate();
+  const wrap = document.getElementById('okr-ds-wrap');
+  const emFs = !!(wrap && wrap.classList.contains('okr-ds-fs'));
+
+  if(!lista.length){
+    root.innerHTML = `
+      <div class="okr-ds-empty">
+        <h3>📈 Nenhum painel do Data Studio cadastrado ainda</h3>
+        <p>Incorpore aqui os relatórios do <b>Looker Studio (Data Studio)</b> do Digital para acompanhar os resultados ao vivo direto pelo Radar, sem precisar sair do Oceano.</p>
+        <div class="okr-ds-guide">
+          <b>🔓 Como configurar no Looker Studio para abrir direto sem bloqueio de login (Opção 1):</b>
+          <ol>
+            <li>Na <b>Fonte de Dados</b> do relatório (<i>Recurso → Gerenciar fontes de dados adicionadas → Editar</i>), clique em <b>Credenciais de dados</b> no topo e mude para <b>Credenciais do proprietário</b>.</li>
+            <li>Em <b>Compartilhar</b> (canto superior direito), em <i>Configurações de link</i>, selecione <b>Não listado</b> (<i>Qualquer pessoa na internet com o link pode visualizar</i>). A URL ficará protegida dentro do Firebase do Radar (só quem loga com <code>@ciahering.com.br</code> tem acesso).</li>
+            <li>No menu <b>Arquivo → Incorporar relatório</b>, marque <b>Ativar incorporação</b>, copie a <b>URL de incorporação</b> (ou o link normal do relatório) e cole abaixo.</li>
+          </ol>
+        </div>
+        ${podeCfg
+          ? `<button type="button" class="okr-ds-btn pri" style="padding:9px 16px;font-size:.82rem;" onclick="_okrDsOpenCfg()">＋ Cadastrar primeiro painel</button>`
+          : `<div style="font-size:.76rem;color:var(--muted);">Peça a um ADM, PO/Organizador ou 🎯 Gestor OKR para cadastrar o link do painel.</div>`}
+      </div>`;
+    return;
+  }
+
+  let sel = lista.find(r => r.id === _okrDsSelectedId) || lista[0];
+  _okrDsSelectedId = sel.id;
+  try{ localStorage.setItem('okr_ds_sel', sel.id); }catch(e){}
+
+  const pillsHtml = lista.map(r => {
+    const on = r.id === sel.id ? ' on' : '';
+    const ic = _esc(r.icone || '📈');
+    return `<button type="button" class="okr-ds-pill${on}" onclick="_okrDsSelect('${_esc(r.id)}')"><span>${ic}</span><span>${_esc(r.titulo || 'Painel')}</span></button>`;
+  }).join('');
+
+  const embedUrl = _okrDsNormalizeUrl(sel.url);
+  const viewUrl = _okrDsViewUrl(embedUrl);
+
+  root.innerHTML = `
+    <div class="okr-ds-bar">
+      <div class="okr-ds-pills">${pillsHtml}</div>
+      <div class="okr-ds-actions">
+        <button type="button" class="okr-ds-btn" onclick="_okrDsReloadFrame()" title="Recarregar o painel atual">🔄 Atualizar</button>
+        <button type="button" class="okr-ds-btn" id="okr-ds-fs-btn" onclick="_okrDsToggleFs()" title="Expandir painel em tela cheia (Esc sai)">${emFs ? '✕ Sair da tela cheia' : '⛶ Tela cheia'}</button>
+        <a class="okr-ds-btn" href="${_esc(viewUrl)}" target="_blank" rel="noopener noreferrer" title="Abrir este relatório direto no Looker Studio em nova guia">↗ Abrir no Looker Studio</a>
+        ${podeCfg ? `<button type="button" class="okr-ds-btn pri" onclick="_okrDsOpenCfg()" title="Adicionar, editar ou reordenar painéis do Data Studio">⚙ Configurar</button>` : ''}
+      </div>
+    </div>
+    <div class="okr-ds-desc">
+      <span>${sel.descricao ? _esc(sel.descricao) : `<span style="color:var(--muted);">Visualizando <b>${_esc(sel.titulo||'Painel')}</b> ao vivo no Radar</span>`}</span>
+      <span style="font-size:.71rem;color:var(--muted);">💡 Se pedir login ou não carregar, confira o guia em ${podeCfg ? `<a href="#" onclick="_okrDsOpenCfg();return false;" style="color:var(--accent2);">⚙ Configurar</a>` : `❓ Ajuda → Data Studio`} ou use <b>↗ Abrir no Looker Studio</b>.</span>
+    </div>
+    <div class="okr-ds-frame-box">
+      <iframe id="okr-ds-iframe" class="okr-ds-frame"
+        src="${_esc(embedUrl)}"
+        title="${_esc(sel.titulo || 'Looker Studio')}"
+        allow="storage-access; fullscreen; clipboard-write"
+        allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade"
+        sandbox="allow-storage-access-by-user-activation allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox allow-forms allow-downloads"></iframe>
+    </div>`;
+}
+
+function _okrDsSelect(id){
+  if(!id) return;
+  _okrDsSelectedId = id;
+  try{ localStorage.setItem('okr_ds_sel', id); }catch(e){}
+  renderOkrDataStudio();
+}
+
+function _okrDsReloadFrame(){
+  const fr = document.getElementById('okr-ds-iframe');
+  if(!fr) return;
+  const s = fr.getAttribute('src');
+  if(!s) return;
+  fr.setAttribute('src', s);
+  if(typeof showToast === 'function') showToast('🔄 Atualizando painel do Data Studio…');
+}
+
+function _okrDsToggleFs(forceOff){
+  const wrap = document.getElementById('okr-ds-wrap');
+  if(!wrap) return;
+  const on = (typeof forceOff === 'boolean') ? !forceOff : !wrap.classList.contains('okr-ds-fs');
+  wrap.classList.toggle('okr-ds-fs', on);
+  const btn = document.getElementById('okr-ds-fs-btn');
+  if(btn) btn.textContent = on ? '✕ Sair da tela cheia' : '⛶ Tela cheia';
+}
+
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape'){
+    const ov = document.getElementById('okr-ds-ov');
+    if(ov && ov.classList.contains('open')){ _okrDsCloseCfg(); return; }
+    const wrap = document.getElementById('okr-ds-wrap');
+    if(wrap && wrap.classList.contains('okr-ds-fs')){ _okrDsToggleFs(true); }
+  }
+});
+
+function _okrDsOpenCfg(editId){
+  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())){
+    if(typeof showToast === 'function') showToast('⚠ Apenas ADM, PO/Organizador ou Gestor OKR podem configurar os painéis.');
+    return;
+  }
+  _okrDsEditId = editId || null;
+  _okrDsRenderCfgModal();
+  const ov = document.getElementById('okr-ds-ov');
+  if(ov) ov.classList.add('open');
+}
+
+function _okrDsCloseCfg(){
+  const ov = document.getElementById('okr-ds-ov');
+  if(ov) ov.classList.remove('open');
+  _okrDsEditId = null;
+}
+
+function _okrDsRenderCfgModal(){
+  const body = document.getElementById('okr-ds-cfg-body');
+  const footer = document.getElementById('okr-ds-cfg-footer');
+  if(!body || !footer) return;
+  const lista = _okrDsListSorted();
+  const editItem = _okrDsEditId && _okrDsReports ? _okrDsReports[_okrDsEditId] : null;
+
+  const listaHtml = lista.length ? lista.map((r, idx) => `
+    <div class="okr-ds-list-item">
+      <span>${_esc(r.icone || '📈')}</span>
+      <span class="t" title="${_esc(r.titulo||'')}">${_esc(r.titulo || 'Painel')}</span>
+      <span class="u" title="${_esc(r.url||'')}">${_esc(r.url || '')}</span>
+      <button type="button" class="btn btn-sm" onclick="_okrDsMove('${_esc(r.id)}',-1)" ${idx===0?'disabled':''} title="Subir">▲</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsMove('${_esc(r.id)}',1)" ${idx===lista.length-1?'disabled':''} title="Descer">▼</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsOpenCfg('${_esc(r.id)}')" title="Editar">✏️</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsDelete('${_esc(r.id)}')" title="Remover painel">🗑️</button>
+    </div>`).join('') : `<div style="font-size:.78rem;color:var(--muted);padding:8px 0;">Nenhum painel cadastrado ainda.</div>`;
+
+  body.innerHTML = `
+    <div style="margin-bottom:14px;">
+      <div style="font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted2);margin-bottom:6px;">Painéis cadastrados (${lista.length})</div>
+      ${listaHtml}
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:12px;">
+      <div style="font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:8px;">
+        ${editItem ? `✏️ Editando: ${_esc(editItem.titulo||'Painel')}` : '＋ Adicionar novo painel'}
+      </div>
+      <div style="display:grid;grid-template-columns:74px 1fr;gap:8px;margin-bottom:8px;">
+        <div>
+          <label style="font-size:.72rem;color:var(--muted2);display:block;margin-bottom:3px;">Ícone</label>
+          <input type="text" id="okr-ds-inp-icone" class="okr-input" maxlength="4" value="${_esc(editItem ? (editItem.icone||'📈') : '📈')}" style="text-align:center;">
+        </div>
+        <div>
+          <label style="font-size:.72rem;color:var(--muted2);display:block;margin-bottom:3px;">Nome do painel *</label>
+          <input type="text" id="okr-ds-inp-titulo" class="okr-input" maxlength="60" placeholder="Ex.: Resultado Diário Digital · E-commerce" value="${_esc(editItem ? (editItem.titulo||'') : '')}">
+        </div>
+      </div>
+      <div style="margin-bottom:8px;">
+        <label style="font-size:.72rem;color:var(--muted2);display:block;margin-bottom:3px;">Link do Looker Studio / Data Studio (ou código &lt;iframe&gt;) *</label>
+        <input type="url" id="okr-ds-inp-url" class="okr-input" placeholder="https://lookerstudio.google.com/embed/reporting/..." value="${_esc(editItem ? (editItem.url||'') : '')}">
+        <div style="font-size:.69rem;color:var(--muted);margin-top:3px;">Pode colar o link normal (<code>/reporting/...</code>) ou de incorporação (<code>/embed/reporting/...</code>) — o Radar converte sozinho.</div>
+      </div>
+      <div style="margin-bottom:10px;">
+        <label style="font-size:.72rem;color:var(--muted2);display:block;margin-bottom:3px;">Descrição curta (opcional)</label>
+        <input type="text" id="okr-ds-inp-desc" class="okr-input" maxlength="140" placeholder="Ex.: Atualizado de hora em hora · Receita, conversão e sessões" value="${_esc(editItem ? (editItem.descricao||'') : '')}">
+      </div>
+      <div class="okr-ds-guide" style="margin:8px 0 0;">
+        <b>🔓 Checklist para não pedir login dentro do Radar (Opção 1):</b>
+        <ol>
+          <li>Na fonte de dados do Looker Studio: <b>Credenciais de dados → Credenciais do proprietário</b>.</li>
+          <li>Em <b>Compartilhar → Configurações de link</b>: <b>Não listado</b> (qualquer pessoa com o link pode ver). O link fica guardado só no Firebase (restrito a <code>@ciahering.com.br</code>).</li>
+          <li>Em <b>Arquivo → Incorporar relatório</b>: marque <b>Ativar incorporação</b>.</li>
+        </ol>
+      </div>
+    </div>`;
+
+  footer.innerHTML = `
+    ${editItem ? `<button type="button" class="btn btn-sm" onclick="_okrDsOpenCfg(null)">Cancelar edição</button>` : ''}
+    <button type="button" class="btn btn-sm" onclick="_okrDsCloseCfg()">Fechar</button>
+    <button type="button" class="btn btn-p" onclick="_okrDsSaveForm()">💾 ${editItem ? 'Salvar alterações' : 'Adicionar painel'}</button>`;
+}
+
+async function _okrDsSaveForm(){
+  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())) return;
+  const icone = (document.getElementById('okr-ds-inp-icone')?.value || '📈').trim() || '📈';
+  const titulo = (document.getElementById('okr-ds-inp-titulo')?.value || '').trim();
+  const rawUrl = (document.getElementById('okr-ds-inp-url')?.value || '').trim();
+  const descricao = (document.getElementById('okr-ds-inp-desc')?.value || '').trim();
+  if(!titulo){ if(typeof showToast==='function') showToast('⚠ Informe o nome do painel.'); return; }
+  const url = _okrDsNormalizeUrl(rawUrl);
+  if(!url || !/^https:\/\/(lookerstudio|datastudio)\.google\.com\//i.test(url)){
+    if(typeof showToast==='function') showToast('⚠ Informe um link válido do Looker Studio (https://lookerstudio.google.com/...).');
+    return;
+  }
+  if(!_okrDsReports) _okrDsReports = {};
+  const isEdit = !!(_okrDsEditId && _okrDsReports[_okrDsEditId]);
+  const id = isEdit ? _okrDsEditId : ('ds_' + Date.now().toString(36));
+  const lista = _okrDsListSorted();
+  const prev = isEdit ? _okrDsReports[id] : null;
+  const rec = {
+    id,
+    icone,
+    titulo,
+    url,
+    descricao,
+    ordem: prev && typeof prev.ordem === 'number' ? prev.ordem : lista.length,
+    criadoEm: (prev && prev.criadoEm) || new Date().toISOString(),
+    criadoPor: (prev && prev.criadoPor) || (window._currentUser?.email || ''),
+    atualizadoEm: new Date().toISOString(),
+    atualizadoPor: window._currentUser?.email || ''
+  };
+  try{
+    await window._set(window._ref(window._db, 'kanban/okr/datastudio/' + id), rec);
+    _okrDsReports[id] = rec;
+    _okrDsSelectedId = id;
+    try{ localStorage.setItem('okr_ds_sel', id); }catch(e){}
+    _okrDsEditId = null;
+    _okrDsRenderCfgModal();
+    renderOkrDataStudio();
+    if(typeof showToast==='function') showToast(isEdit ? '✅ Painel atualizado!' : '✅ Painel adicionado ao Radar!');
+  }catch(e){
+    console.error('[Radar Data Studio] Erro ao salvar:', e);
+    if(typeof showToast==='function') showToast('⚠ Erro ao salvar painel no Firebase.');
+  }
+}
+
+async function _okrDsDelete(id){
+  if(!id || !_okrDsReports || !_okrDsReports[id]) return;
+  const item = _okrDsReports[id];
+  if(!confirm(`Remover o painel "${item.titulo || id}" do Radar?`)) return;
+  try{
+    await window._remove(window._ref(window._db, 'kanban/okr/datastudio/' + id));
+    delete _okrDsReports[id];
+    if(_okrDsSelectedId === id) _okrDsSelectedId = '';
+    if(_okrDsEditId === id) _okrDsEditId = null;
+    _okrDsRenderCfgModal();
+    renderOkrDataStudio();
+    if(typeof showToast==='function') showToast('🗑️ Painel removido.');
+  }catch(e){
+    console.error('[Radar Data Studio] Erro ao remover:', e);
+    if(typeof showToast==='function') showToast('⚠ Erro ao remover painel.');
+  }
+}
+
+async function _okrDsMove(id, dir){
+  const lista = _okrDsListSorted();
+  const idx = lista.findIndex(r => r.id === id);
+  const alvo = idx + dir;
+  if(idx < 0 || alvo < 0 || alvo >= lista.length) return;
+  const tmp = lista[idx];
+  lista[idx] = lista[alvo];
+  lista[alvo] = tmp;
+  const updates = {};
+  lista.forEach((r, i) => {
+    r.ordem = i;
+    if(_okrDsReports && _okrDsReports[r.id]) _okrDsReports[r.id].ordem = i;
+    updates[r.id + '/ordem'] = i;
+  });
+  try{
+    await window._update(window._ref(window._db, 'kanban/okr/datastudio'), updates);
+    _okrDsRenderCfgModal();
+    renderOkrDataStudio();
+  }catch(e){
+    console.error('[Radar Data Studio] Erro ao reordenar:', e);
+  }
+}
+
+window._okrDsSelect = _okrDsSelect;
+window._okrDsReloadFrame = _okrDsReloadFrame;
+window._okrDsToggleFs = _okrDsToggleFs;
+window._okrDsOpenCfg = _okrDsOpenCfg;
+window._okrDsCloseCfg = _okrDsCloseCfg;
+window._okrDsSaveForm = _okrDsSaveForm;
+window._okrDsDelete = _okrDsDelete;
+window._okrDsMove = _okrDsMove;
 
 
 // ══ AUTO-UPDATE: detecta nova versão publicada e recarrega quando for seguro ══
