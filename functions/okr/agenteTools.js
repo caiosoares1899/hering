@@ -36,7 +36,61 @@ const OKR_GERENCIA_IDS = ['geral', 'comercial', 'performance', 'dadosia', 'cx', 
 const gerenciaId = () => z.string().min(1).max(60);
 const torreEnum = () => z.enum(TORRES);
 const OKR_STATUS_IDS = ['nao_iniciado', 'no_prazo', 'risco', 'atrasado', 'concluido'];
-const listaDeTexto = () => z.array(z.string().min(1)).max(20).optional();
+const listaDeTexto = (desc) => {
+  const base = z.array(z.string().min(1)).max(20).optional();
+  return desc ? base.describe(desc) : base;
+};
+
+// Limites de caracteres da Apresentação Executiva (okr-apresentacao.slide.html / OKR_CHAR_LIMITS em okr-dev.html):
+// cada Objetivo é exibido em um slide único (one-page), então textos longos quebram o layout visual.
+const OKR_CHAR_LIMITS = {
+  titulo: 90,
+  pilar: 60,
+  descricao: 200,
+  indicadores: 90,
+  progressos: 90,
+  proximos_passos: 90,
+  riscos: 90,
+  planos_acao: 90,
+  marco_nome: 70,
+};
+
+function validarLimitesCaracteres(regras) {
+  const violacoes = [];
+  for (const r of regras) {
+    if (r.isLista) {
+      if (!Array.isArray(r.valor)) continue;
+      r.valor.forEach((item, idx) => {
+        const txt = typeof item === 'string' ? item : String(item ?? '');
+        if (txt.length > r.limite) {
+          violacoes.push({
+            campo: `${r.campo}[${idx}]`,
+            rotulo: `${r.rotulo} (item ${idx + 1})`,
+            tamanho: txt.length,
+            limite: r.limite,
+            texto: txt,
+          });
+        }
+      });
+    } else if (typeof r.valor === 'string' && r.valor.length > r.limite) {
+      violacoes.push({
+        campo: r.campo,
+        rotulo: r.rotulo,
+        tamanho: r.valor.length,
+        limite: r.limite,
+        texto: r.valor,
+      });
+    }
+  }
+  if (!violacoes.length) return null;
+  return {
+    ok: false,
+    error: 'limite_caracteres_excedido',
+    violacoes,
+    limites: OKR_CHAR_LIMITS,
+    message: `Texto acima do limite da apresentação executiva (${violacoes.map((v) => `${v.rotulo}: ${v.tamanho}/${v.limite} caracteres`).join('; ')}). NUNCA salve um textão nem corte frases no meio sem avisar: proponha uma versão resumida dentro do limite (mostrando a contagem de caracteres) e valide com a pessoa no chat antes de gravar.`,
+  };
+}
 
 // ── Schemas ──────────────────────────────────────────────────────────────
 
@@ -70,34 +124,34 @@ const lerObjetivoSchema = z.object({
 });
 
 const criarObjetivoSchema = z.object({
-  titulo: z.string().min(1),
+  titulo: z.string().min(1).describe(`Título do Objetivo — máx. ${OKR_CHAR_LIMITS.titulo} caracteres para caber na apresentação. Se passar disso, sugira versão resumida e valide com a pessoa antes.`),
   torre: torreEnum().optional(),
   area_id: gerenciaId(),
-  pilar: z.string().min(1).optional(),
-  descricao: z.string().min(1).optional(),
+  pilar: z.string().min(1).optional().describe(`Pilar estratégico — máx. ${OKR_CHAR_LIMITS.pilar} caracteres.`),
+  descricao: z.string().min(1).optional().describe(`Descrição do Objetivo — máx. ${OKR_CHAR_LIMITS.descricao} caracteres na apresentação executiva. Se precisar resumir o texto da pessoa, valide com ela antes de gravar.`),
   trimestres: z.array(z.string().min(1)).max(6).optional(),
-  indicadores: listaDeTexto(),
+  indicadores: listaDeTexto(`Lista de Indicadores de Entrega — máx. ${OKR_CHAR_LIMITS.indicadores} caracteres por item na apresentação.`),
 });
 
 const editarCamposOkrSchema = z.object({
   objetivo_id: z.string().min(1).optional(),
   titulo_objetivo: z.string().min(1).optional(),
-  novo_titulo: z.string().min(1).optional(),
+  novo_titulo: z.string().min(1).optional().describe(`Novo título do Objetivo — máx. ${OKR_CHAR_LIMITS.titulo} caracteres na apresentação executiva.`),
   area_id: gerenciaId().optional(),
-  pilar: z.string().min(1).optional(),
-  descricao: z.string().min(1).optional(),
+  pilar: z.string().min(1).optional().describe(`Pilar estratégico — máx. ${OKR_CHAR_LIMITS.pilar} caracteres na apresentação executiva.`),
+  descricao: z.string().min(1).optional().describe(`Descrição do Objetivo — máx. ${OKR_CHAR_LIMITS.descricao} caracteres na apresentação executiva. Se o texto pedido passar disso, resuma e valide com a pessoa antes de chamar esta ferramenta.`),
   trimestres_adicionar: z.array(z.string().min(1)).max(6).optional(),
-  indicadores_adicionar: listaDeTexto(),
-  progressos_adicionar: listaDeTexto(),
-  proximos_passos_adicionar: listaDeTexto(),
-  riscos_adicionar: listaDeTexto(),
-  planos_acao_adicionar: listaDeTexto(),
+  indicadores_adicionar: listaDeTexto(`Itens a somar em Indicadores de Entrega — máx. ${OKR_CHAR_LIMITS.indicadores} caracteres por item na apresentação executiva.`),
+  progressos_adicionar: listaDeTexto(`Itens a somar em Progressos — máx. ${OKR_CHAR_LIMITS.progressos} caracteres por item na apresentação executiva.`),
+  proximos_passos_adicionar: listaDeTexto(`Itens a somar em Próximos Passos — máx. ${OKR_CHAR_LIMITS.proximos_passos} caracteres por item na apresentação executiva.`),
+  riscos_adicionar: listaDeTexto(`Itens a somar em Riscos — máx. ${OKR_CHAR_LIMITS.riscos} caracteres por item na apresentação executiva.`),
+  planos_acao_adicionar: listaDeTexto(`Itens a somar em Planos de Ação — máx. ${OKR_CHAR_LIMITS.planos_acao} caracteres por item na apresentação executiva.`),
 });
 
 const criarMarcoSchema = z.object({
   objetivo_id: z.string().min(1).optional(),
   titulo_objetivo: z.string().min(1).optional(),
-  nome: z.string().min(1),
+  nome: z.string().min(1).describe(`Nome do Marco — máx. ${OKR_CHAR_LIMITS.marco_nome} caracteres na apresentação executiva.`),
   prazo: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'prazo deve estar no formato YYYY-MM-DD')
@@ -110,7 +164,7 @@ const editarMarcoSchema = z.object({
   objetivo_id: z.string().min(1).optional(),
   titulo_objetivo: z.string().min(1).optional(),
   nome_marco: z.string().min(1).optional(),
-  novo_nome: z.string().min(1).optional(),
+  novo_nome: z.string().min(1).optional().describe(`Novo nome do Marco — máx. ${OKR_CHAR_LIMITS.marco_nome} caracteres na apresentação executiva.`),
   progresso: z.enum(OKR_STATUS_IDS).optional(),
   prazo: z
     .string()
@@ -298,6 +352,13 @@ function makeCriarObjetivoHandler({ db, requestingUid, dryRun }) {
       return { ok: false, error: 'gerencia_invalida', message: `A torre ${TORRE_INFO[torre].label} não tem a gerência "${input.area_id}". As que existem: ${gerencias.filter((x) => !x.oculta).map((x) => `${x.label} (${x.id})`).join(', ')}.` };
     }
     if (g.oculta) return { ok: false, error: 'gerencia_oculta', message: `A gerência "${g.label}" está oculta na torre ${TORRE_INFO[torre].label} (não recebe Objetivos novos). Escolha outra.` };
+    const erroLimite = validarLimitesCaracteres([
+      { campo: 'titulo', rotulo: 'Título do Objetivo', valor: input.titulo, limite: OKR_CHAR_LIMITS.titulo },
+      { campo: 'pilar', rotulo: 'Pilar estratégico', valor: input.pilar, limite: OKR_CHAR_LIMITS.pilar },
+      { campo: 'descricao', rotulo: 'Descrição do Objetivo', valor: input.descricao, limite: OKR_CHAR_LIMITS.descricao },
+      { campo: 'indicadores', rotulo: 'Indicadores de Entrega', valor: input.indicadores, limite: OKR_CHAR_LIMITS.indicadores, isLista: true },
+    ]);
+    if (erroLimite) return erroLimite;
     if (dryRun) return { ok: true, dryRun: true, tool: 'criar_objetivo', wouldHaveExecuted: { ...input, torre } };
 
     const id = 'obj_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -348,6 +409,17 @@ function makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) {
       if (!g) return { ok: false, error: 'gerencia_invalida', message: `A torre ${TORRE_INFO[torreDe(objetivo)].label} não tem a gerência "${input.area_id}". As que existem: ${gerencias.filter((x) => !x.oculta).map((x) => `${x.label} (${x.id})`).join(', ')}.` };
       rotuloArea = g.label;
     }
+    const erroLimite = validarLimitesCaracteres([
+      { campo: 'novo_titulo', rotulo: 'Título do Objetivo', valor: input.novo_titulo, limite: OKR_CHAR_LIMITS.titulo },
+      { campo: 'pilar', rotulo: 'Pilar estratégico', valor: input.pilar, limite: OKR_CHAR_LIMITS.pilar },
+      { campo: 'descricao', rotulo: 'Descrição do Objetivo', valor: input.descricao, limite: OKR_CHAR_LIMITS.descricao },
+      { campo: 'indicadores_adicionar', rotulo: 'Indicadores de Entrega', valor: input.indicadores_adicionar, limite: OKR_CHAR_LIMITS.indicadores, isLista: true },
+      { campo: 'progressos_adicionar', rotulo: 'Progressos', valor: input.progressos_adicionar, limite: OKR_CHAR_LIMITS.progressos, isLista: true },
+      { campo: 'proximos_passos_adicionar', rotulo: 'Próximos Passos', valor: input.proximos_passos_adicionar, limite: OKR_CHAR_LIMITS.proximos_passos, isLista: true },
+      { campo: 'riscos_adicionar', rotulo: 'Riscos', valor: input.riscos_adicionar, limite: OKR_CHAR_LIMITS.riscos, isLista: true },
+      { campo: 'planos_acao_adicionar', rotulo: 'Planos de Ação', valor: input.planos_acao_adicionar, limite: OKR_CHAR_LIMITS.planos_acao, isLista: true },
+    ]);
+    if (erroLimite) return erroLimite;
     if (dryRun) return { ok: true, dryRun: true, tool: 'editar_campos_okr', objetivo_id: id, wouldHaveExecuted: input };
 
     const patch = {};
@@ -396,6 +468,10 @@ function makeCriarMarcoHandler({ db, requestingUid, dryRun }) {
     }
     const trava = await travaDeOutro(db, objetivoId, requestingUid);
     if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
+    const erroLimite = validarLimitesCaracteres([
+      { campo: 'nome', rotulo: 'Nome do Marco', valor: input.nome, limite: OKR_CHAR_LIMITS.marco_nome },
+    ]);
+    if (erroLimite) return erroLimite;
     if (dryRun) return { ok: true, dryRun: true, tool: 'criar_marco', objetivo_id: objetivoId, wouldHaveExecuted: input };
 
     const marcoId = 'marco_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
@@ -458,6 +534,10 @@ function makeEditarMarcoHandler({ db, requestingUid, dryRun }) {
     }
     const trava = await travaDeOutro(db, objetivoId, requestingUid);
     if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivoResolved.objetivo.titulo) };
+    const erroLimite = validarLimitesCaracteres([
+      { campo: 'novo_nome', rotulo: 'Nome do Marco', valor: input.novo_nome, limite: OKR_CHAR_LIMITS.marco_nome },
+    ]);
+    if (erroLimite) return erroLimite;
     if (dryRun) return { ok: true, dryRun: true, tool: 'editar_marco', marco_id: marcoId, wouldHaveExecuted: input };
 
     const patch = {};
@@ -755,25 +835,25 @@ function buildOkrTools(options = {}) {
     },
     {
       name: 'criar_objetivo',
-      description: `Cria um Objetivo (OKR) novo numa TORRE (torre: digital, comercial ou corporativa; sem informar, vale a torre de quem pediu) e numa gerência dela (area_id — confira com listar_gerencias; as gerências mudam por torre). Só ADM, ou PO/Organizador/🎯 Gestor OKR da torre — senão a ferramenta recusa e explica. O evento "Novo Objetivo" aparece no sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE em kanban/okr/objetivos.'}`,
+      description: `Cria um Objetivo (OKR) novo numa TORRE (torre: digital, comercial ou corporativa; sem informar, vale a torre de quem pediu) e numa gerência dela (area_id — confira com listar_gerencias; as gerências mudam por torre). Limites obrigatórios da apresentação executiva: titulo ≤ ${OKR_CHAR_LIMITS.titulo} caracteres, pilar ≤ ${OKR_CHAR_LIMITS.pilar}, descricao ≤ ${OKR_CHAR_LIMITS.descricao}, cada item de indicadores ≤ ${OKR_CHAR_LIMITS.indicadores} (se o texto pedido passar do limite, resuma e valide com a pessoa antes de chamar esta ferramenta). Só ADM, ou PO/Organizador/🎯 Gestor OKR da torre — senão a ferramenta recusa e explica. O evento "Novo Objetivo" aparece no sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE em kanban/okr/objetivos.'}`,
       input_schema: zodToJsonSchema(criarObjetivoSchema),
       handler: mode === 'real' ? makeCriarObjetivoHandler({ db, requestingUid, dryRun }) : fake('criar_objetivo'),
     },
     {
       name: 'editar_campos_okr',
-      description: `Edita campos de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Campos de lista (indicadores_adicionar, progressos_adicionar, proximos_passos_adicionar, riscos_adicionar, planos_acao_adicionar) só SOMAM item novo — nunca apagam o que já tinha. area_id muda a gerência (precisa existir na torre do Objetivo). Só quem é Responsável do Objetivo, ADM ou PO/Organizador/Gestor OKR da torre pode editar; se outra pessoa está com o Objetivo aberto pra editar (🔒), a ferramenta recusa e diz quem. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Edita campos de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Campos de lista (indicadores_adicionar, progressos_adicionar, proximos_passos_adicionar, riscos_adicionar, planos_acao_adicionar) só SOMAM item novo — nunca apagam o que já tinha. Limites obrigatórios da apresentação executiva: novo_titulo ≤ ${OKR_CHAR_LIMITS.titulo} caracteres, pilar ≤ ${OKR_CHAR_LIMITS.pilar}, descricao ≤ ${OKR_CHAR_LIMITS.descricao}, cada item de lista ≤ ${OKR_CHAR_LIMITS.indicadores} caracteres (se o texto pedido passar do limite, NÃO chame direto com textão: proponha uma versão enxuta dentro do limite via responder e valide com a pessoa antes de gravar). area_id muda a gerência (precisa existir na torre do Objetivo). Só quem é Responsável do Objetivo, ADM ou PO/Organizador/Gestor OKR da torre pode editar; se outra pessoa está com o Objetivo aberto pra editar (🔒), a ferramenta recusa e diz quem. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(editarCamposOkrSchema),
       handler: mode === 'real' ? makeEditarCamposOkrHandler({ db, requestingUid, dryRun }) : fake('editar_campos_okr'),
     },
     {
       name: 'criar_marco',
-      description: `Cria um Marco (atividade macro) dentro de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Cria um Marco (atividade macro) dentro de um Objetivo já existente (identifique por objetivo_id ou titulo_objetivo). Limite da apresentação executiva: nome ≤ ${OKR_CHAR_LIMITS.marco_nome} caracteres (se passar disso, sugira versão enxuta e valide com a pessoa antes). Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(criarMarcoSchema),
       handler: mode === 'real' ? makeCriarMarcoHandler({ db, requestingUid, dryRun }) : fake('criar_marco'),
     },
     {
       name: 'editar_marco',
-      description: `Edita um Marco já existente (identifique por marco_id, ou por objetivo_id/titulo_objetivo + nome_marco). Muda status (progresso), prazo ou nome. Mesma regra de permissão e de trava 🔒 de editar_campos_okr; concluir um Marco também avisa o sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      description: `Edita um Marco já existente (identifique por marco_id, ou por objetivo_id/titulo_objetivo + nome_marco). Muda status (progresso), prazo ou nome (novo_nome ≤ ${OKR_CHAR_LIMITS.marco_nome} caracteres na apresentação executiva). Mesma regra de permissão e de trava 🔒 de editar_campos_okr; concluir um Marco também avisa o sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(editarMarcoSchema),
       handler: mode === 'real' ? makeEditarMarcoHandler({ db, requestingUid, dryRun }) : fake('editar_marco'),
     },
@@ -815,6 +895,8 @@ function buildOkrTools(options = {}) {
 module.exports = {
   OKR_GERENCIA_IDS,
   OKR_STATUS_IDS,
+  OKR_CHAR_LIMITS,
+  validarLimitesCaracteres,
   buildOkrTools,
   resolveMarco,
 };
