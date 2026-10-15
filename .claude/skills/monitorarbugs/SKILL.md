@@ -29,15 +29,14 @@ abordagem do zero a cada vez.
 
 ## Escopo de cada rodada
 
-- **Usuário nomeou uma área**: escopo só nela. Usa o `CODE_MAP.md` pra
-  achar as âncoras da área — ele é um retrato, não live, então **sempre
-  re-`grep` cada nome antes de confiar na linha**.
+- **Usuário nomeou uma área**: escopo só nela. Usa o `CODE_MAP_FAST.md` (índice rápido de linhas gerado por `node scripts/mare-cli.js map`) e o `CODE_MAP.md` pra
+  achar as âncoras da área — e consulte primeiro a seção `🛡️ Armadilhas Conhecidas & Regras de Ouro` em `BUGS_E_CORRECOES.md`.
 - **Pedido genérico** ("varre tudo", sem especificar onde): não tenta ler
   o arquivo inteiro (~28k linhas) numa passada só. Escolhe 1-2 áreas por
   rodada, nesta ordem de prioridade:
   1. áreas alteradas mais recentemente (`git log --oneline -20 --
      kanban-dev.html`) — código fresco é o de maior risco;
-  2. áreas que o "Histórico de achados" abaixo ainda não cobre;
+  2. áreas que o "Histórico de achados" abaixo e o `BUGS_E_CORRECOES.md` ainda não cobrem;
   3. se nada se destacar, pergunta ao usuário qual área focar.
 - Arquivo padrão: `kanban-dev.html`. Estende pra `painel.html`/
   `painel-dev.html`, `functions/`, `database.rules.json` só se a área
@@ -45,9 +44,7 @@ abordagem do zero a cada vez.
 
 ## Passo 1 — Reconstituir o entry point
 
-Ache as âncoras da área no `CODE_MAP.md`, re-`grep` cada nome (`-a`
-sempre — emoji/unicode fazem `grep -n` sem `-a` reportar "binary file
-matches") pra confirmar a linha atual, e **leia as funções INTEIRAS**,
+Consulte primeiro `CODE_MAP_FAST.md` (e `CODE_MAP.md`) para localizar as linhas exatas das funções da área e revise a seção `🛡️ Armadilhas Conhecidas` de `BUGS_E_CORRECOES.md`. Confirme a linha atual e **leia as funções INTEIRAS** (via `view_file` com `StartLine`/`EndLine` cirúrgicos),
 não trechos isolados — um bug de estado/condicional normalmente só
 aparece olhando a função de ponta a ponta.
 
@@ -100,9 +97,8 @@ tenha sido "corrige tudo que achar".
 2. `node --check` no maior bloco `<script>` + balanço de chaves/
    parênteses contra o baseline conhecido da sessão.
 3. Função/helper novo → confere se o `CODE_MAP.md` precisa de anchor
-   novo (mesmo commit, ou `/atualizarcodemap` depois).
-4. Bump de versão + entrada em `CHANGELOG.md` com o cenário concreto do
-   bug — não só "corrige inconsistência".
+   novo e atualiza `CODE_MAP_FAST.md` (`node scripts/mare-cli.js map`).
+4. Bump de versão + entrada em **`BUGS_E_CORRECOES.md`** (via `node scripts/mare-cli.js log --type bug ...` ou edição direta em `BUGS_E_CORRECOES.md`, mantendo `CHANGELOG.md` apenas para features e grandes entregas) com o sintoma, a causa-raiz e o cenário concreto do bug — não só "corrige inconsistência".
 5. Commit → rebase em `origin/main` → push → PR (nunca self-merge sem
    checar CI).
 6. Promoção pra prod é etapa separada (`/subirproprod`), só depois de

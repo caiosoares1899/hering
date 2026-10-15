@@ -9,8 +9,12 @@
     1. **`agente-mare`**: `kanban-dev.html` / `kanban.html`, `intake-dev.html` / `intake.html`, `escala-dev.html` / `escala.html`.
     2. **`agente-radar`**: `okr-dev.html` / `okr.html`, `okr-apresentacao.slide.html`, `guia-okr.html`.
     3. **`agente-painel-oceano`**: `painel-dev.html` / `painel.html`, `oceano-dev.html` / `oceano.html` e módulos compartilhados (`mare-notif-dev.js`, `mare-dicas-dev.js`, `mare-metas-dev.js`, `mare-login-dev.js`).
-    4. **`agente-functions-docs`**: `functions/` (código + testes unitários), `database.rules.json`, `version.json`, `CHANGELOG.md` e `CODE_MAP.md`.
+    4. **`agente-functions-docs`**: `functions/` (código + testes unitários), `database.rules.json`, `version.json`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md` e `CODE_MAP.md`.
     O agente principal atua como **Orquestrador**: alinha requisitos com o usuário, dispara os subagentes relevantes simultaneamente (cada um com contexto limpo e rápido) e, ao receber o retorno, executa o único `run_command` final de teste + branch + commit + push + PR.
+  - **Orquestrador Zero-Código & Automação via `scripts/mare-cli.js`:** O agente principal **nunca** deve ler ou editar diretamente arquivos grandes (`.html` / `.js` de milhares de linhas) na conversa principal para evitar compressão de contexto e lentidão. Toda leitura/edição de código deve ser delegada aos subagentes especialistas (que consultam `CODE_MAP_FAST.md` e `BUGS_E_CORRECOES.md` antes de abrir qualquer arquivo), finalizando com `node scripts/mare-cli.js` (bump de versão, registro de log, rebuild do mapa rápido e promoção dev→prod).
+  - **Separação entre `CHANGELOG.md` e `BUGS_E_CORRECOES.md`:**
+    - **`CHANGELOG.md`:** exclusivo para **novas funcionalidades (features)** e **grandes melhorias/entregas estruturais** (`node scripts/mare-cli.js log --type feature ...`). Entradas de jul/2026 a set/2026 ficam arquivadas em `docs/changelog-archive-2026-07-a-09.md`.
+    - **`BUGS_E_CORRECOES.md`:** concentra **bugs reportados**, **correções pontuais**, **ajustes de regressão**, **achados do `/monitorarbugs`** (`node scripts/mare-cli.js log --type bug ...`) e a seção **`🛡️ Armadilhas Conhecidas & Regras de Ouro`**.
 - **Fluxo GitHub-first (Branches & PRs):** Sempre crie uma branch nova a partir da `main` atualizada (`git fetch origin && git checkout main && git pull origin main`), faça commit, `git push` e abra a Pull Request no GitHub informando o link ao usuário. **Nunca faça merge da PR por conta própria** — o usuário aprova e clica em Merge no GitHub.
 - **Deploy Firebase (`database.rules.json` e `functions/`):** Se uma tarefa alterar regras do Realtime Database ou Cloud Functions, avise o usuário que precisa de deploy no Firebase e aguarde confirmação explícita no chat antes de rodar `firebase deploy`.
 - **Logs nos Cards & Avisos (Mural/WhatsApp):** Só gere o script de console para logar comentário nos cards (`c1785199972010_nd0` / `c1783541085140`) e os rascunhos de aviso quando for promover para produção (`/subirproprod`), não a cada PR de `-dev`.
@@ -81,12 +85,16 @@ letting them hit the error first.
 
 ## Key files and their roles
 
-- `CODE_MAP.md` — index of stable function/const anchors by feature area
-  (auth, board render, cards, supercards, automations, notas, notifications,
-  Cloud Functions...) for `kanban.html`/`kanban-dev.html`/`painel.html`/
-  `functions/`. Use it to jump straight to the right area instead of reading
-  the whole file — but always re-`grep` the anchor name before trusting a
-  line number, since it's a snapshot that drifts on every edit.
+- `CODE_MAP_FAST.md` & `CODE_MAP.md` — `CODE_MAP_FAST.md` is the compact,
+  auto-generated line-index of functions and anchors across the main HTML/JS
+  files (regenerated via `node scripts/mare-cli.js map`) for fast subagent
+  lookup; `CODE_MAP.md` is the detailed feature-area index for `kanban.html`/
+  `kanban-dev.html`/`painel.html`/`functions/`.
+- `BUGS_E_CORRECOES.md` — technical log of bugs, point fixes, regressions,
+  `/monitorarbugs` findings, and the `🛡️ Armadilhas Conhecidas` section (8
+  critical pitfalls to check before touching Firebase queries, auth, or
+  comments), keeping `CHANGELOG.md` focused exclusively on new features and
+  major deliveries.
 - `MARINE_GLASS.md` — the brand/design-system manual for "Marine Glass"
   (the "glass over ocean" visual identity — dark oceanic gradient background
   + glassmorphism surfaces, "Abrolhos"/"Lençóis Maranhenses" theme names,
