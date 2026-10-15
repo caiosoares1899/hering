@@ -32,10 +32,10 @@ page (`kanban.html`/`kanban-dev.html`/`painel.html`/`painel-dev.html`):
    right now" and "what changed between two releases" answerable with
    plain git (`git tag -l`, `git diff <old-tag> <new-tag>`) instead of
    spelunking through commit history.
-5. **Update `CHANGELOG.md`** with a new entry under the right page/version,
-   summarizing what changed and linking the PR number. Keep entries
-   user-facing (what changed and why), not a copy of the commit's internal
-   diff description.
+5. **Update `CHANGELOG.md` vs. `BUGS_E_CORRECOES.md` (separação obrigatória):**
+   - **`CHANGELOG.md`:** registre apenas **novas funcionalidades (features)** e **grandes melhorias/entregas estruturais** (`node scripts/mare-cli.js log --type feature ...`), mantendo o texto voltado para o usuário e linkando o PR. Entradas anteriores (jul–set/2026) ficam em `docs/changelog-archive-2026-07-a-09.md`.
+   - **`BUGS_E_CORRECOES.md`:** registre todos os **bugs**, **correções pontuais**, **ajustes de regressão** e **achados do `/monitorarbugs`** (`node scripts/mare-cli.js log --type bug ...`), além de manter atualizada a seção `🛡️ Armadilhas Conhecidas & Regras de Ouro`.
+   - **Orquestrador Zero-Código & Automação via `scripts/mare-cli.js`:** O agente principal nunca lê/edita arquivos HTML/JS gigantes diretamente na conversa principal (para evitar compressão de contexto); sempre delega para subagentes especialistas que consultam `CODE_MAP_FAST.md` e `BUGS_E_CORRECOES.md`, finalizando com `node scripts/mare-cli.js` para bump de versão, log, atualização de `CODE_MAP_FAST.md` e promoção dev→prod.
 6. **Send avisos + log the batch to the card.** Every time `kanban.html`
    (prod) gets promoted, always: (a) draft the two announcements — a Mural
    post (via console script against `painel.html`, or the
