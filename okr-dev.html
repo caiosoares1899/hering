@@ -1509,7 +1509,7 @@ body{min-height:100vh;}
 .pc-modal.okr-t-digital,.pc-modal.okr-t-comercial,.pc-modal.okr-t-corporativa{border-top:4px solid rgb(var(--torre));box-shadow:0 0 0 1px rgba(var(--torre),.28),0 18px 60px rgba(0,0,0,.45);}
 .okr-modal-torre-chip{margin-right:auto;}
 /* 📈 Data Studio (Looker Studio incorporado) */
-#okr-ds-wrap,#okr-ds-root{display:flex;flex-direction:column;gap:12px;}
+#okr-ds-wrap,#okr-ds-root,#okr-ds-top{display:flex;flex-direction:column;gap:12px;}
 #okr-ds-wrap{margin-top:4px;}
 #okr-ds-root{flex:1;min-height:0;}
 .okr-ds-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--glass);border:1px solid var(--glass-b);border-radius:12px;backdrop-filter:blur(10px);}
@@ -2018,7 +2018,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.84 · okr-dev</div>
+<div class="version">v2.85 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -4908,8 +4908,10 @@ function renderOkrObjetivos(){
   const wrap = document.getElementById('okr-objetivos-wrap');
   if(!wrap) return;
   if(!_okrAplicarShell()) return;   // tela inicial (torres): só os botões — a lista de Objetivos não é desenhada
+  const emObjetivos = !(_okrShowCal || _okrShowHistorico || _okrShowNotas || _okrShowCards || _okrShowDataStudio);
   const novoBtn = document.getElementById('okr-novo-btn');
-  if(novoBtn) novoBtn.style.display = (_okrCanCreate() && !_okrShowArquivados) ? 'inline-flex' : 'none';
+  if(novoBtn) novoBtn.style.display = (emObjetivos && _okrCanCreate() && !_okrShowArquivados) ? 'inline-flex' : 'none';
+  if(_okrShowDataStudio && typeof renderOkrDataStudio === 'function') renderOkrDataStudio();
   const arqBtn = document.getElementById('okr-arquivados-btn');
   if(arqBtn) arqBtn.textContent = _okrShowArquivados ? '◀ Ver ativos' : '📦 Ver arquivados';
   const tituloAba = document.getElementById('okr-titulo-aba');
@@ -9364,6 +9366,8 @@ function _finishOkrLogin(user){
 // (consumo zero de bytes no boot do Radar). As URLs nunca ficam expostas no código público do GitHub.
 let _okrDsReports = null; // null = ainda não carregado; {id: {id, titulo, icone, url, descricao, ordem, criadoEm, criadoPor}}
 let _okrDsLoading = false;
+let _okrDsLoadingPromise = null;
+let _okrDsSaving = false;
 let _okrDsSelectedId = (()=>{ try{ return localStorage.getItem('okr_ds_sel')||''; }catch(e){ return ''; } })();
 let _okrDsEditId = null;
 const _esc = s => (typeof esc === 'function')
@@ -9376,9 +9380,13 @@ function _okrDsNormalizeUrl(raw){
   // Se colou o código <iframe src="..."> inteiro do Looker Studio, extrai só o src
   const mSrc = s.match(/src\s*=\s*["']([^"']+)["']/i);
   if(mSrc && mSrc[1]) s = mSrc[1].trim();
+  if(/^(lookerstudio|datastudio)\.google\.com\//i.test(s)) s = 'https://' + s;
   try{
     const u = new URL(s);
-    if(u.hostname === 'datastudio.google.com') u.hostname = 'lookerstudio.google.com';
+    if(u.protocol !== 'https:') return '';
+    const host = u.hostname.toLowerCase();
+    if(host !== 'lookerstudio.google.com' && host !== 'datastudio.google.com') return '';
+    u.hostname = 'lookerstudio.google.com';
     // Converte /reporting/... ou /u/0/reporting/... para /embed/reporting/... automaticamente
     u.pathname = u.pathname
       .replace(/^\/u\/\d+\/reporting\//, '/embed/reporting/')
@@ -9386,37 +9394,42 @@ function _okrDsNormalizeUrl(raw){
       .replace(/^\/reporting\//, '/embed/reporting/');
     return u.toString();
   }catch(e){
-    return s;
+    return '';
   }
 }
 
 function _okrDsViewUrl(embedUrl){
-  const s = String(embedUrl||'').trim();
+  const s = _okrDsNormalizeUrl(embedUrl);
   if(!s) return '#';
   return s.replace('/embed/reporting/', '/reporting/');
 }
 
 function _okrDsListSorted(){
   const obj = _okrDsReports || {};
-  return Object.values(obj)
-    .filter(r => r && r.url)
+  return Object.entries(obj)
+    .filter(([k, r]) => r && typeof r === 'object' && _okrDsNormalizeUrl(r.url))
+    .map(([k, r]) => Object.assign({}, r, {id: String(r.id || k)}))
     .sort((a,b) => (Number(a.ordem??999) - Number(b.ordem??999)) || String(a.criadoEm||'').localeCompare(String(b.criadoEm||'')));
 }
 
 async function _okrDsEnsureLoaded(force){
   if(_okrDsReports !== null && !force) return _okrDsReports;
-  if(_okrDsLoading) return _okrDsReports || {};
+  if(_okrDsLoadingPromise) return _okrDsLoadingPromise;
   _okrDsLoading = true;
-  try{
-    const snap = await window._get(window._ref(window._db, 'kanban/okr/datastudio'));
-    _okrDsReports = (snap && snap.exists()) ? (snap.val() || {}) : {};
-  }catch(e){
-    console.warn('[Radar Data Studio] Erro ao carregar kanban/okr/datastudio:', e);
-    _okrDsReports = _okrDsReports || {};
-  }finally{
-    _okrDsLoading = false;
-  }
-  return _okrDsReports;
+  _okrDsLoadingPromise = (async ()=>{
+    try{
+      const snap = await window._get(window._ref(window._db, 'kanban/okr/datastudio'));
+      _okrDsReports = (snap && snap.exists()) ? (snap.val() || {}) : {};
+    }catch(e){
+      console.warn('[Radar Data Studio] Erro ao carregar kanban/okr/datastudio:', e);
+      _okrDsReports = _okrDsReports || {};
+    }finally{
+      _okrDsLoading = false;
+      _okrDsLoadingPromise = null;
+    }
+    return _okrDsReports;
+  })();
+  return _okrDsLoadingPromise;
 }
 
 async function renderOkrDataStudio(){
@@ -9427,7 +9440,9 @@ async function renderOkrDataStudio(){
     return;
   }
   if(_okrDsReports === null){
-    root.innerHTML = '<div style="padding:28px;text-align:center;font-size:.82rem;color:var(--txt2);">⏳ Carregando painéis do Data Studio…</div>';
+    if(!document.getElementById('okr-ds-iframe')){
+      root.innerHTML = '<div style="padding:28px;text-align:center;font-size:.82rem;color:var(--txt2);">⏳ Carregando painéis do Data Studio…</div>';
+    }
     await _okrDsEnsureLoaded(false);
   }
   const lista = _okrDsListSorted();
@@ -9436,6 +9451,7 @@ async function renderOkrDataStudio(){
   const emFs = !!(wrap && wrap.classList.contains('okr-ds-fs'));
 
   if(!lista.length){
+    if(emFs && wrap) wrap.classList.remove('okr-ds-fs');
     root.innerHTML = `
       <div class="okr-ds-empty">
         <h3>📈 Nenhum painel do Data Studio cadastrado ainda</h3>
@@ -9462,13 +9478,13 @@ async function renderOkrDataStudio(){
   const pillsHtml = lista.map(r => {
     const on = r.id === sel.id ? ' on' : '';
     const ic = _esc(r.icone || '📈');
-    return `<button type="button" class="okr-ds-pill${on}" onclick="_okrDsSelect('${_esc(r.id)}')"><span>${ic}</span><span>${_esc(r.titulo || 'Painel')}</span></button>`;
+    return `<button type="button" class="okr-ds-pill${on}" onclick="_okrDsSelect(${jsq(r.id)})"><span>${ic}</span><span>${_esc(r.titulo || 'Painel')}</span></button>`;
   }).join('');
 
   const embedUrl = _okrDsNormalizeUrl(sel.url);
   const viewUrl = _okrDsViewUrl(embedUrl);
 
-  root.innerHTML = `
+  const topHtml = `
     <div class="okr-ds-bar">
       <div class="okr-ds-pills">${pillsHtml}</div>
       <div class="okr-ds-actions">
@@ -9481,7 +9497,20 @@ async function renderOkrDataStudio(){
     <div class="okr-ds-desc">
       <span>${sel.descricao ? _esc(sel.descricao) : `<span style="color:var(--txt2);">Visualizando <b>${_esc(sel.titulo||'Painel')}</b> ao vivo no Radar</span>`}</span>
       <span style="font-size:.71rem;color:var(--txt3);">💡 Se pedir login ou não carregar, confira o guia em ${podeCfg ? `<a href="#" onclick="_okrDsOpenCfg();return false;" style="color:var(--cyan);">⚙ Configurar</a>` : `❓ Ajuda → Data Studio`} ou use <b>↗ Abrir no Looker Studio</b>.</span>
-    </div>
+    </div>`;
+
+  // Preserva o <iframe> se já estiver montado na mesma URL (evita recarregar o Looker Studio e perder filtros ao alternar de aba, reordenar ou editar nome/descrição)
+  const topEl = document.getElementById('okr-ds-top');
+  const fr = document.getElementById('okr-ds-iframe');
+  if(topEl && fr && root.contains(topEl) && root.contains(fr)){
+    topEl.innerHTML = topHtml;
+    fr.title = sel.titulo || 'Looker Studio';
+    if(fr.getAttribute('src') !== embedUrl) fr.setAttribute('src', embedUrl);
+    return;
+  }
+
+  root.innerHTML = `
+    <div id="okr-ds-top">${topHtml}</div>
     <div class="okr-ds-frame-box">
       <iframe id="okr-ds-iframe" class="okr-ds-frame"
         src="${_esc(embedUrl)}"
@@ -9519,13 +9548,19 @@ function _okrDsToggleFs(forceOff){
 }
 
 document.addEventListener('keydown', e=>{
-  if(e.key === 'Escape'){
-    const ov = document.getElementById('okr-ds-ov');
-    if(ov && ov.classList.contains('open')){ _okrDsCloseCfg(); return; }
-    const wrap = document.getElementById('okr-ds-wrap');
-    if(wrap && wrap.classList.contains('okr-ds-fs')){ _okrDsToggleFs(true); }
+  if(e.key !== 'Escape') return;
+  const ov = document.getElementById('okr-ds-ov');
+  if(ov && ov.classList.contains('open')){
+    e.preventDefault(); e.stopPropagation();
+    _okrDsCloseCfg();
+    return;
   }
-});
+  const wrap = document.getElementById('okr-ds-wrap');
+  if(_okrShowDataStudio && wrap && wrap.classList.contains('okr-ds-fs')){
+    e.preventDefault(); e.stopPropagation();
+    _okrDsToggleFs(true);
+  }
+}, true);
 
 function _okrDsOpenCfg(editId){
   if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())){
@@ -9533,7 +9568,7 @@ function _okrDsOpenCfg(editId){
     return;
   }
   _okrDsEditId = editId || null;
-  _okrDsRenderCfgModal();
+  _okrDsRenderCfgModal(false);
   const ov = document.getElementById('okr-ds-ov');
   if(ov) ov.classList.add('open');
 }
@@ -9544,22 +9579,33 @@ function _okrDsCloseCfg(){
   _okrDsEditId = null;
 }
 
-function _okrDsRenderCfgModal(){
+function _okrDsRenderCfgModal(preserveDraft){
   const body = document.getElementById('okr-ds-cfg-body');
   const footer = document.getElementById('okr-ds-cfg-footer');
   if(!body || !footer) return;
+  const draft = preserveDraft ? {
+    icone: document.getElementById('okr-ds-inp-icone')?.value,
+    titulo: document.getElementById('okr-ds-inp-titulo')?.value,
+    url: document.getElementById('okr-ds-inp-url')?.value,
+    desc: document.getElementById('okr-ds-inp-desc')?.value,
+  } : null;
   const lista = _okrDsListSorted();
   const editItem = _okrDsEditId && _okrDsReports ? _okrDsReports[_okrDsEditId] : null;
+  const valIcone = (draft && draft.icone !== undefined) ? draft.icone : (editItem ? (editItem.icone||'📈') : '📈');
+  const valTitulo = (draft && draft.titulo !== undefined) ? draft.titulo : (editItem ? (editItem.titulo||'') : '');
+  const valUrl = (draft && draft.url !== undefined) ? draft.url : (editItem ? (editItem.url||'') : '');
+  const valDesc = (draft && draft.desc !== undefined) ? draft.desc : (editItem ? (editItem.descricao||'') : '');
+  const kdEnter = `onkeydown="if(event.key==='Enter'){event.preventDefault();_okrDsSaveForm();}"`;
 
   const listaHtml = lista.length ? lista.map((r, idx) => `
     <div class="okr-ds-list-item">
       <span>${_esc(r.icone || '📈')}</span>
       <span class="t" title="${_esc(r.titulo||'')}">${_esc(r.titulo || 'Painel')}</span>
       <span class="u" title="${_esc(r.url||'')}">${_esc(r.url || '')}</span>
-      <button type="button" class="btn btn-sm" onclick="_okrDsMove('${_esc(r.id)}',-1)" ${idx===0?'disabled':''} title="Subir">▲</button>
-      <button type="button" class="btn btn-sm" onclick="_okrDsMove('${_esc(r.id)}',1)" ${idx===lista.length-1?'disabled':''} title="Descer">▼</button>
-      <button type="button" class="btn btn-sm" onclick="_okrDsOpenCfg('${_esc(r.id)}')" title="Editar">✏️</button>
-      <button type="button" class="btn btn-sm" onclick="_okrDsDelete('${_esc(r.id)}')" title="Remover painel">🗑️</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsMove(${jsq(r.id)},-1)" ${idx===0?'disabled':''} title="Subir">▲</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsMove(${jsq(r.id)},1)" ${idx===lista.length-1?'disabled':''} title="Descer">▼</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsOpenCfg(${jsq(r.id)})" title="Editar">✏️</button>
+      <button type="button" class="btn btn-sm" onclick="_okrDsDelete(${jsq(r.id)})" title="Remover painel">🗑️</button>
     </div>`).join('') : `<div style="font-size:.78rem;color:var(--txt3);padding:8px 0;">Nenhum painel cadastrado ainda.</div>`;
 
   body.innerHTML = `
@@ -9574,21 +9620,21 @@ function _okrDsRenderCfgModal(){
       <div style="display:grid;grid-template-columns:74px 1fr;gap:8px;margin-bottom:8px;">
         <div>
           <label style="font-size:.72rem;color:var(--txt2);display:block;margin-bottom:3px;">Ícone</label>
-          <input type="text" id="okr-ds-inp-icone" class="okr-input" maxlength="4" value="${_esc(editItem ? (editItem.icone||'📈') : '📈')}" style="text-align:center;">
+          <input type="text" id="okr-ds-inp-icone" class="okr-input" maxlength="4" value="${_esc(valIcone)}" style="text-align:center;" ${kdEnter}>
         </div>
         <div>
           <label style="font-size:.72rem;color:var(--txt2);display:block;margin-bottom:3px;">Nome do painel *</label>
-          <input type="text" id="okr-ds-inp-titulo" class="okr-input" maxlength="60" placeholder="Ex.: Resultado Diário Digital · E-commerce" value="${_esc(editItem ? (editItem.titulo||'') : '')}">
+          <input type="text" id="okr-ds-inp-titulo" class="okr-input" maxlength="60" placeholder="Ex.: Resultado Diário Digital · E-commerce" value="${_esc(valTitulo)}" ${kdEnter}>
         </div>
       </div>
       <div style="margin-bottom:8px;">
         <label style="font-size:.72rem;color:var(--txt2);display:block;margin-bottom:3px;">Link do Looker Studio / Data Studio (ou código &lt;iframe&gt;) *</label>
-        <input type="url" id="okr-ds-inp-url" class="okr-input" placeholder="https://lookerstudio.google.com/embed/reporting/..." value="${_esc(editItem ? (editItem.url||'') : '')}">
+        <input type="url" id="okr-ds-inp-url" class="okr-input" placeholder="https://lookerstudio.google.com/embed/reporting/..." value="${_esc(valUrl)}" ${kdEnter}>
         <div style="font-size:.69rem;color:var(--txt3);margin-top:3px;">Pode colar o link normal (<code>/reporting/...</code>) ou de incorporação (<code>/embed/reporting/...</code>) — o Radar converte sozinho.</div>
       </div>
       <div style="margin-bottom:10px;">
         <label style="font-size:.72rem;color:var(--txt2);display:block;margin-bottom:3px;">Descrição curta (opcional)</label>
-        <input type="text" id="okr-ds-inp-desc" class="okr-input" maxlength="140" placeholder="Ex.: Atualizado de hora em hora · Receita, conversão e sessões" value="${_esc(editItem ? (editItem.descricao||'') : '')}">
+        <input type="text" id="okr-ds-inp-desc" class="okr-input" maxlength="140" placeholder="Ex.: Atualizado de hora em hora · Receita, conversão e sessões" value="${_esc(valDesc)}" ${kdEnter}>
       </div>
       <div class="okr-ds-guide" style="margin:8px 0 0;">
         <b>🔓 Checklist para não pedir login dentro do Radar (Opção 1):</b>
@@ -9603,25 +9649,30 @@ function _okrDsRenderCfgModal(){
   footer.innerHTML = `
     ${editItem ? `<button type="button" class="btn btn-sm" onclick="_okrDsOpenCfg(null)">Cancelar edição</button>` : ''}
     <button type="button" class="btn btn-sm" onclick="_okrDsCloseCfg()">Fechar</button>
-    <button type="button" class="btn btn-p" onclick="_okrDsSaveForm()">💾 ${editItem ? 'Salvar alterações' : 'Adicionar painel'}</button>`;
+    <button type="button" class="btn btn-p" id="okr-ds-save-btn" onclick="_okrDsSaveForm()">💾 ${editItem ? 'Salvar alterações' : 'Adicionar painel'}</button>`;
 }
 
 async function _okrDsSaveForm(){
-  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())) return;
+  if(_okrDsSaving) return;
+  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())){
+    if(typeof showToast==='function') showToast('⚠ Apenas ADM, PO/Organizador ou Gestor OKR podem salvar painéis.');
+    return;
+  }
   const icone = (document.getElementById('okr-ds-inp-icone')?.value || '📈').trim() || '📈';
   const titulo = (document.getElementById('okr-ds-inp-titulo')?.value || '').trim();
   const rawUrl = (document.getElementById('okr-ds-inp-url')?.value || '').trim();
   const descricao = (document.getElementById('okr-ds-inp-desc')?.value || '').trim();
   if(!titulo){ if(typeof showToast==='function') showToast('⚠ Informe o nome do painel.'); return; }
   const url = _okrDsNormalizeUrl(rawUrl);
-  if(!url || !/^https:\/\/(lookerstudio|datastudio)\.google\.com\//i.test(url)){
+  if(!url){
     if(typeof showToast==='function') showToast('⚠ Informe um link válido do Looker Studio (https://lookerstudio.google.com/...).');
     return;
   }
   if(!_okrDsReports) _okrDsReports = {};
   const isEdit = !!(_okrDsEditId && _okrDsReports[_okrDsEditId]);
-  const id = isEdit ? _okrDsEditId : ('ds_' + Date.now().toString(36));
+  const id = isEdit ? _okrDsEditId : ('ds_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,5));
   const lista = _okrDsListSorted();
+  const maxOrdem = lista.reduce((m, r) => Math.max(m, Number.isFinite(Number(r.ordem)) ? Number(r.ordem) : -1), -1);
   const prev = isEdit ? _okrDsReports[id] : null;
   const rec = {
     id,
@@ -9629,37 +9680,53 @@ async function _okrDsSaveForm(){
     titulo,
     url,
     descricao,
-    ordem: prev && typeof prev.ordem === 'number' ? prev.ordem : lista.length,
+    ordem: prev && typeof prev.ordem === 'number' ? prev.ordem : (maxOrdem + 1),
     criadoEm: (prev && prev.criadoEm) || new Date().toISOString(),
     criadoPor: (prev && prev.criadoPor) || (window._currentUser?.email || ''),
     atualizadoEm: new Date().toISOString(),
     atualizadoPor: window._currentUser?.email || ''
   };
+  _okrDsSaving = true;
+  const saveBtn = document.getElementById('okr-ds-save-btn');
+  if(saveBtn) saveBtn.disabled = true;
   try{
     await window._set(window._ref(window._db, 'kanban/okr/datastudio/' + id), rec);
     _okrDsReports[id] = rec;
     _okrDsSelectedId = id;
     try{ localStorage.setItem('okr_ds_sel', id); }catch(e){}
     _okrDsEditId = null;
-    _okrDsRenderCfgModal();
+    _okrDsRenderCfgModal(false);
     renderOkrDataStudio();
     if(typeof showToast==='function') showToast(isEdit ? '✅ Painel atualizado!' : '✅ Painel adicionado ao Radar!');
   }catch(e){
     console.error('[Radar Data Studio] Erro ao salvar:', e);
     if(typeof showToast==='function') showToast('⚠ Erro ao salvar painel no Firebase.');
+  }finally{
+    _okrDsSaving = false;
+    const b = document.getElementById('okr-ds-save-btn');
+    if(b) b.disabled = false;
   }
 }
 
 async function _okrDsDelete(id){
+  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())){
+    if(typeof showToast==='function') showToast('⚠ Apenas ADM, PO/Organizador ou Gestor OKR podem remover painéis.');
+    return;
+  }
   if(!id || !_okrDsReports || !_okrDsReports[id]) return;
   const item = _okrDsReports[id];
-  if(!confirm(`Remover o painel "${item.titulo || id}" do Radar?`)) return;
+  const msg = `Remover o painel "${item.titulo || id}" do Radar?`;
+  const ok = (typeof uiConfirm === 'function')
+    ? await uiConfirm(msg, {title:'Remover painel', danger:true, okText:'Remover'})
+    : confirm(msg);
+  if(!ok) return;
   try{
     await window._remove(window._ref(window._db, 'kanban/okr/datastudio/' + id));
     delete _okrDsReports[id];
     if(_okrDsSelectedId === id) _okrDsSelectedId = '';
+    const manterRascunho = (_okrDsEditId !== id);
     if(_okrDsEditId === id) _okrDsEditId = null;
-    _okrDsRenderCfgModal();
+    _okrDsRenderCfgModal(manterRascunho);
     renderOkrDataStudio();
     if(typeof showToast==='function') showToast('🗑️ Painel removido.');
   }catch(e){
@@ -9669,6 +9736,7 @@ async function _okrDsDelete(id){
 }
 
 async function _okrDsMove(id, dir){
+  if(!(typeof _okrCanCreate === 'function' && _okrCanCreate())) return;
   const lista = _okrDsListSorted();
   const idx = lista.findIndex(r => r.id === id);
   const alvo = idx + dir;
@@ -9684,7 +9752,7 @@ async function _okrDsMove(id, dir){
   });
   try{
     await window._update(window._ref(window._db, 'kanban/okr/datastudio'), updates);
-    _okrDsRenderCfgModal();
+    _okrDsRenderCfgModal(true);
     renderOkrDataStudio();
   }catch(e){
     console.error('[Radar Data Studio] Erro ao reordenar:', e);
