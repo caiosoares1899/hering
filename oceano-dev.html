@@ -270,16 +270,25 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
 .gbtn{width:100%;padding:12px 16px;font-size:14px;}
 
 /* ═══ MODAIS ═══ */
-/* ── 📌 Mural de avisos (Painel › Pessoas › Comunicados, com 🌊 Oceano) ── */
+/* ── 📌 Mural de avisos e 🎯 Meta Global (Painel › Pessoas › Comunicados + Painel › Dados › Metas, com 🌊 Oceano) ── */
 .inicio-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:18px 22px;align-items:start;}
 .inicio-grid .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));}
-/* Desktop: apps à esquerda, Mural à direita — os dois à vista, sem rolar a página. Sem avisos o Mural some e os apps ocupam tudo. */
+.col-meta .meta-hd{display:flex;align-items:center;gap:8px;width:100%;margin:6px 0 14px;padding:6px 2px 10px;font:inherit;font-size:12px;font-weight:600;color:var(--txt);border-bottom:1px solid var(--glass-b);}
+.col-meta .meta-hd .mural-seta{margin-left:auto;font-size:11px;font-weight:500;color:var(--txt3);}
+/* Desktop:
+   • Só Mural ou só Meta: apps à esquerda (5fr), Mural/Meta à direita (6fr).
+   • Meta + Mural juntos: apps em faixa horizontal no topo (os 5 produtos lado a lado), e logo abaixo Meta Global (6fr) + Mural de avisos (5fr) lado a lado, tudo visível sem rolar. */
 @media (min-width:980px){
-  .inicio-grid.tem-mural{grid-template-columns:minmax(0,5fr) minmax(0,6fr);}
-  .inicio-grid.tem-mural .tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .inicio-grid.tem-mural:not(.tem-meta),
+  .inicio-grid.tem-meta:not(.tem-mural){grid-template-columns:minmax(0,5fr) minmax(0,6fr);}
+  .inicio-grid.tem-mural:not(.tem-meta) .tiles,
+  .inicio-grid.tem-meta:not(.tem-mural) .tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .inicio-grid.tem-meta.tem-mural{grid-template-columns:minmax(0,6fr) minmax(0,5fr);}
+  .inicio-grid.tem-meta.tem-mural .col-apps{grid-column:1 / -1;}
+  .inicio-grid.tem-meta.tem-mural .tiles{grid-template-columns:repeat(auto-fit,minmax(175px,1fr));}
   .col-mural .mural{grid-template-columns:minmax(0,1fr);max-height:max(600px,calc(100vh - 170px));overflow-y:auto;padding:2px 6px 2px 0;scrollbar-width:thin;scrollbar-color:var(--glass-b) transparent;}
 }
-.col-mural .mural-hd{margin-top:0;}
+.col-mural .mural-hd,.col-meta .meta-hd{margin-top:0;}
 .col-mural .av.dest{flex-direction:column;}
 .col-mural .av.dest .av-capa{width:100%;max-width:none;height:130px;min-height:0;}
 .continuar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px 10px 16px;margin:0 0 14px;border-color:rgba(46,204,156,.4);}
@@ -451,6 +460,10 @@ input.in[readonly]{opacity:.7;}
         <div class="abertos" id="abertos"></div>
         <div class="tiles" id="tiles"></div>
       </div>
+      <section class="col-meta" id="col-meta" aria-label="Meta global do Digital" style="display:none;">
+        <div class="meta-hd"><span class="mural-tit">🎯 Meta Global · Digital</span><span class="mural-n" id="meta-oceano-tag">🐟 O mar tá pra peixe</span><span class="mural-seta">Tempo real</span></div>
+        <div id="meta-oceano-body"></div>
+      </section>
       <aside class="col-mural" id="col-mural" aria-label="Mural de avisos">
         <div id="mural-wrap" style="display:none;">
           <button type="button" class="mural-hd" id="mural-hd" aria-expanded="false" aria-controls="mural-corpo" title="Mostrar ou recolher o Mural">
@@ -608,11 +621,12 @@ window.dispatchEvent(new Event('fb-ready'));
 
 <script src="mare-notif-dev.js?v=29"></script>
 <script src="mare-dicas-dev.js?v=5"></script>
+<script src="mare-metas-dev.js?v=14"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.35 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.36 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -747,9 +761,45 @@ async function iniciarSessao(){
   renderEu(); renderTudo(); sinoRender();
   carregarLinks();
   iniciarMural();
+  iniciarMetasOceano();
   iniciarVtex();
   rotearHash(true);
   mostrarContinuar();
+}
+
+// ── 🎯 Meta Global no Oceano (mare-metas-dev.js: metas do Digital marcadas com oceano:true) ──
+let podeDadosGlobal = false;
+async function iniciarMetasOceano(){
+  if(!window.MareMetas) return;
+  try{
+    const sn = await window._get(window._ref(window._db,'kanban/config/dados_editors'));
+    const l = sn && sn.exists() ? sn.val() : [];
+    const arr = Array.isArray(l) ? l : Object.values(l||{});
+    podeDadosGlobal = ehAdm || arr.map(x=>String(x).toLowerCase()).includes(String(U.email||'').toLowerCase());
+  }catch(e){}
+  const el = $('#meta-oceano-body');
+  if(el) MareMetas.ligar(el, { user: ()=>U });
+  MareMetas.iniciar({ todasSquads: false, onChange: metaOceanoRender });
+  metaOceanoRender();
+}
+function metaPodeAtualizar(m){
+  if(ehAdm || podeDadosGlobal) return true;
+  if(!U) return false;
+  return Array.isArray(m.responsaveis) && m.responsaveis.includes(U.uid);
+}
+function metaOceanoRender(){
+  const wrap = $('#col-meta'), body = $('#meta-oceano-body'), grid = $('#inicio-grid');
+  if(!wrap || !body || !grid || !window.MareMetas) return;
+  const lista = MareMetas.metasOceano ? MareMetas.metasOceano() : [];
+  if(!lista.length){
+    wrap.style.display = 'none';
+    body.innerHTML = '';
+    grid.classList.remove('tem-meta');
+    return;
+  }
+  wrap.style.display = 'block';
+  grid.classList.add('tem-meta');
+  body.innerHTML = MareMetas.painelOceanoHtml({ pode: metaPodeAtualizar, gestor: false });
 }
 
 // ── ↩ Continuar (veio do Maré/Painel pedindo login) ──

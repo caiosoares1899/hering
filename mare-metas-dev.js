@@ -292,6 +292,7 @@
       m.curva = cv;
     }
     m.global = m.escopo === 'squad' ? !!inp.global : false;
+    m.oceano = m.escopo === 'digital' ? !!inp.oceano : false;
     m.ativo = inp.ativo !== false;
     const l = inp.lembrete || {};
     const modo = ['off', 'cada', 'diario', 'horarios'].includes(l.modo) ? l.modo : 'off';
@@ -705,12 +706,14 @@
   function heroHtml(m, o) {
     o = o || {}; const st = status(m);
     const donos = o.escopoTxt ? ` · ${esc(o.escopoTxt)}` : '';
+    const ocBadge = m.escopo === 'digital' && m.oceano && !o.noOceano ? `<span class="mm-tag" style="border-color:rgba(56,182,255,.45);color:#7ec8e3;">🌊 No Oceano</span>` : '';
+    const ocBtn = o.gestor && m.escopo === 'digital' ? `<button type="button" class="mm-btn s" data-mm-act="oceano" title="${m.oceano ? 'Visível na página inicial do Oceano (clique para ocultar)' : 'Mostrar na página inicial do Oceano'}" style="${m.oceano ? 'border-color:rgba(56,182,255,.55);background:rgba(56,182,255,.16);color:#7ec8e3;' : ''}">🌊 ${m.oceano ? 'No Oceano ✓' : 'Mostrar no Oceano'}</button>` : '';
     return `<div class="mm-hero" style="--mm-c:${st.cor}" data-mm-id="${esc(m.id)}" data-mm-esc="${esc(m.escopo)}" data-mm-sq="${esc(m.squad || '')}">
       <div class="mm-hero-top">${anelHtml(m, { size: o.size || 118 })}
         <div class="mm-hero-txt"><div class="mm-kick">${esc(m.emoji || '🎯')} ${m.tipo === 'desafio' ? 'Desafio' : 'Meta'}${donos}</div><div class="mm-ttl">${esc(m.titulo)}</div>
-        <div class="mm-big">${esc(fmtVal(m, m.atual))} <small>de ${esc(fmtVal(m, m.alvo))}</small></div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${statusPill(m)}</div>${tagsHtml(m)}</div></div>
+        <div class="mm-big">${esc(fmtVal(m, m.atual))} <small>de ${esc(fmtVal(m, m.alvo))}</small></div><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">${statusPill(m)}${ocBadge}</div>${tagsHtml(m)}</div></div>
       ${kpisHtml(m)}${marcosHtml(m)}
-      <div class="mm-upd">${atualizadoHtml(m)}<span style="display:flex;gap:6px">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar valor</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈 Evolução</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂 Entradas</button>` : ''}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙</button>` : ''}</span></div>
+      <div class="mm-upd">${atualizadoHtml(m)}<span style="display:flex;gap:6px">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar valor</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈 Evolução</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂 Entradas</button>` : ''}${ocBtn}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙</button>` : ''}</span></div>
       <div class="mm-chart-slot" hidden></div></div>`;
   }
   // CARTÃO (desafios e metas secundárias): emoji, título, tags (dia/submarca/canal), barra com "esperado" e rodapé de números.
@@ -719,12 +722,14 @@
     const w = Math.max(0, Math.min(100, p == null ? 0 : p));
     const faltaTxt = isNum(m.atual) ? (p >= 100 ? '🏆 batida!' : 'falta <b>' + esc(fmtVal(m, falta(m))) + '</b>') : 'sem valor ainda';
     const prazo = dr == null ? '' : (dr === 0 ? '<b>é hoje!</b>' : 'em <b>' + dr + (dr === 1 ? ' dia' : ' dias') + '</b>');
+    const ocBadge = !o.gestor && m.escopo === 'digital' && m.oceano && !o.noOceano ? `<span class="mm-tag" style="border-color:rgba(56,182,255,.45);color:#7ec8e3;">🌊 No Oceano</span>` : '';
+    const ocBtn = o.gestor && m.escopo === 'digital' ? `<button type="button" class="mm-btn s" data-mm-act="oceano" title="${m.oceano ? 'Visível na página inicial do Oceano (clique para ocultar)' : 'Mostrar na página inicial do Oceano'}" style="${m.oceano ? 'border-color:rgba(56,182,255,.55);background:rgba(56,182,255,.16);color:#7ec8e3;' : ''}">🌊 ${m.oceano ? 'No Oceano ✓' : 'Oceano'}</button>` : '';
     return `<div class="mm-card" style="--mm-c:${st.cor}" data-mm-id="${esc(m.id)}" data-mm-esc="${esc(m.escopo)}" data-mm-sq="${esc(m.squad || '')}">
       <div class="mm-card-h"><div class="mm-card-e">${esc(m.emoji || '🏆')}</div><div class="mm-card-t"><b>${esc(m.titulo)}</b>${tagsHtml(m)}</div><div class="mm-card-pct">${pctTxt(p)}</div></div>
       <div class="mm-bar" title="${esc(st.label)}"><i style="width:${w.toFixed(0)}%"></i>${esp != null && esp > 0 && esp < 100 ? `<u style="left:${esp.toFixed(0)}%" title="Esperado hoje: ${Math.round(esp)}%"></u>` : ''}</div>
       <div class="mm-card-f"><span>${esc(fmtPar(m))} · ${faltaTxt}</span><span>${statusPill(m)} ${prazo}</span></div>
-      <div class="mm-card-f" style="margin-top:4px"><span>${atualizadoHtml(m)}</span>${o.escopoTxt ? `<span>${esc(o.escopoTxt)}</span>` : ''}</div>
-      <div class="mm-card-a">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂</button>` : ''}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙ Editar</button>` : ''}</div>
+      <div class="mm-card-f" style="margin-top:4px"><span>${atualizadoHtml(m)}</span>${ocBadge}${o.escopoTxt ? `<span>${esc(o.escopoTxt)}</span>` : ''}</div>
+      <div class="mm-card-a">${o.pode ? `<button type="button" class="mm-btn p s" data-mm-act="reg">✏️ Atualizar</button>` : ''}<button type="button" class="mm-btn s" data-mm-act="graf">📈</button>${o.pode ? `<button type="button" class="mm-btn s" data-mm-act="ent" title="Ver, editar e excluir as entradas lançadas">🗂</button>` : ''}${ocBtn}${o.gestor ? `<button type="button" class="mm-btn s" data-mm-act="edit">⚙ Editar</button>` : ''}</div>
       <div class="mm-chart-slot" hidden></div></div>`;
   }
   function rankingHtml(itens) {
@@ -739,6 +744,7 @@
   function lista(obj) { return Object.keys(obj || {}).map(id => Object.assign({ id }, obj[id])).filter(m => m && typeof m === 'object' && m.titulo); }
   const comEscopoDigital = m => Object.assign({}, m, { escopo: 'digital' });
   function metasDigital() { return ordenar(lista(S.digital).map(comEscopoDigital).filter(m => m.ativo !== false)); }
+  function metasOceano() { return metasDigital().filter(m => m.oceano === true); }
   function metasSquad(sq) { return ordenar(lista(S.squads[sq]).map(m => Object.assign({ squad: sq, escopo: 'squad' }, m)).filter(m => m.ativo !== false)); }
   function todasDaSquad(sq) { return ordenar(lista(S.squads[sq]).map(m => Object.assign({ squad: sq, escopo: 'squad' }, m))); }   // inclui arquivadas (tela de configuração)
   function todasDigital() { return ordenar(lista(S.digital).map(comEscopoDigital)); }
@@ -794,6 +800,7 @@
     return { ok: true };
   }
   async function arquivar(m, ativo) { await root._set(refDe(pathMeta(m) + '/ativo'), !!ativo); return { ok: true }; }
+  async function definirOceano(m, oceano) { await root._set(refDe(pathMeta(m) + '/oceano'), !!oceano); return { ok: true, oceano: !!oceano }; }
   // Informa um valor: grava atual + marco + histórico num update só (multi-caminho = tudo ou nada).
   // `quando` (ms, opcional) = data/hora da ENTRADA, pra lançar depois do fato (retroativo). Sem ele vale "agora".
   //  • o histórico/gráfico recebe o ponto na data certa (`t`);
@@ -948,7 +955,7 @@
         <div class="mm-cv-rows" id="mm-cv-rows"></div><div class="mm-prev" id="mm-cv-sum" style="margin-top:8px"></div></div>
       <div class="mm-r2"><div><label for="mm-f-sm">Submarca <span class="opt">(opcional)</span></label><select id="mm-f-sm"><option value="">—</option>${SUBMARCAS.map(x => `<option value="${x.id}" ${st.sm === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div>
         <div><label for="mm-f-cv">Canal de venda <span class="opt">(opcional)</span></label><select id="mm-f-cv"><option value="">—</option>${CANAIS.map(x => `<option value="${x.id}" ${st.cv === x.id ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div></div>
-      ${escopo === 'squad' ? `<label class="mm-chk"><input type="checkbox" id="mm-f-g" ${m.global ? 'checked' : ''}> <span>🌊 <b>Mostrar na visão global</b> (aba Digital, pra todo o Digital ver)</span></label>` : ''}
+      ${escopo === 'squad' ? `<label class="mm-chk"><input type="checkbox" id="mm-f-g" ${m.global ? 'checked' : ''}> <span>🌊 <b>Mostrar na visão global</b> (aba Digital, pra todo o Digital ver)</span></label>` : `<label class="mm-chk"><input type="checkbox" id="mm-f-oceano" ${(novo ? st.tipo === 'meta' : !!m.oceano) ? 'checked' : ''}> <span>🌊 <b>Mostrar na página inicial do Oceano</b> (destaque visível junto aos produtos e ao mural de avisos)</span></label>`}
       <label class="mm-chk"><input type="checkbox" id="mm-f-ativo" ${m.ativo !== false ? 'checked' : ''}> <span>Ativa (aparece na aba Dados e entra nos lembretes)</span></label>
       <div class="lb">⏰ Lembrete de preenchimento <span class="opt">(horário de Brasília)</span></div>
       <select id="mm-f-lem"><option value="off">Sem lembrete</option><option value="cada">A cada 1 h / 2 h…</option><option value="diario">1 vez por dia</option><option value="horarios">Em horários exatos</option></select>
@@ -962,7 +969,7 @@
     const $ = id => ov.querySelector('#' + id), $$ = s => [...ov.querySelectorAll(s)];
     const cab = () => { $('mm-f-h').textContent = novo ? (st.tipo === 'desafio' ? '➕ Novo desafio' : '➕ Nova meta') : '⚙ Editar ' + (st.tipo === 'desafio' ? 'desafio' : 'meta'); }; cab();
     const sel = (sc, atr, val) => $$(sc + ' [' + atr + ']').forEach(b => b.setAttribute('aria-pressed', b.getAttribute(atr) === val));
-    ov.querySelector('#mm-tipo').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; st.tipo = b.dataset.t; sel('#mm-tipo', 'data-t', st.tipo); cab(); };
+    ov.querySelector('#mm-tipo').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; st.tipo = b.dataset.t; sel('#mm-tipo', 'data-t', st.tipo); cab(); if (novo && $('mm-f-oceano')) $('mm-f-oceano').checked = st.tipo === 'meta'; };
     ov.querySelector('#mm-em').onclick = e => { const b = e.target.closest('[data-e]'); if (!b) return; st.emoji = st.emoji === b.dataset.e ? '' : b.dataset.e; sel('#mm-em', 'data-e', st.emoji); };
     ov.querySelector('#mm-fmt').onclick = e => { const b = e.target.closest('[data-f]'); if (!b) return; st.fmt = b.dataset.f; sel('#mm-fmt', 'data-f', st.fmt); $('mm-sufw').hidden = st.fmt !== 'num'; };
     if (ov.querySelector('#mm-resp')) ov.querySelector('#mm-resp').onclick = e => { const b = e.target.closest('[data-u]'); if (!b) return; const u = b.dataset.u; if (st.resp.has(u)) st.resp.delete(u); else st.resp.add(u); b.setAttribute('aria-pressed', st.resp.has(u)); };
@@ -1015,7 +1022,7 @@
       if (lemModo === 'diario') lembrete.hora = $('mm-l-h').value;
       if (lemModo === 'horarios') lembrete.horas = $$('.mm-l-hs').map(i => i.value).filter(Boolean);
       const inp = { id: m.id, escopo, squad: opts.squad || m.squad, tipo: st.tipo, titulo: $('mm-f-t').value, emoji: st.emoji, fmt: st.fmt, sufixo: $('mm-f-s').value, alvo: $('mm-f-a').value, inicial: $('mm-f-i').value,
-        inicio: $('mm-f-d1').value, fim: $('mm-f-d2').value, submarca: $('mm-f-sm').value, canal: $('mm-f-cv').value, global: $('mm-f-g') ? $('mm-f-g').checked : false, ativo: $('mm-f-ativo').checked, lembrete, responsaveis: [...st.resp], ordem: m.ordem, ritmo: st.rit, curva: (cvLer(), st.curva) };
+        inicio: $('mm-f-d1').value, fim: $('mm-f-d2').value, submarca: $('mm-f-sm').value, canal: $('mm-f-cv').value, global: $('mm-f-g') ? $('mm-f-g').checked : false, oceano: $('mm-f-oceano') ? $('mm-f-oceano').checked : !!m.oceano, ativo: $('mm-f-ativo').checked, lembrete, responsaveis: [...st.resp], ordem: m.ordem, ritmo: st.rit, curva: (cvLer(), st.curva) };
       const v = validar(inp), er = $('mm-f-err');
       if (!v.ok) { er.textContent = v.erro; er.hidden = false; return; }
       er.hidden = true; $('mm-f-ok').disabled = true;
@@ -1332,7 +1339,17 @@
     }
     return h + `</div>`;
   }
-  // Liga os botões (✏️ atualizar · 📈 evolução · ⛶ expandir · 📅/📈 modo · ⚙ editar) de um container já desenhado.
+  // Bloco enxuto para a página inicial do Oceano: mostra as metas/desafios do Digital marcadas com `oceano: true`.
+  function painelOceanoHtml(o) {
+    o = o || {}; const list = metasOceano(); if (!list.length) return '';
+    const principal = list.find(m => m.tipo === 'meta') || list[0], outras = list.filter(m => m !== principal);
+    const opt = m => ({ pode: o.pode ? o.pode(m) : false, gestor: !!o.gestor, noOceano: true, escopoTxt: m.tipo === 'desafio' ? 'Desafio Digital' : 'Meta Global · Digital' });
+    let h = `<div class="mm">`;
+    h += `<div class="mm-sec">${heroHtml(principal, Object.assign(opt(principal), { size: 108 }))}</div>`;
+    if (outras.length) h += `<div class="mm-sec" style="margin-top:10px"><div class="mm-grid">${outras.map(m => cartaoHtml(m, opt(m))).join('')}</div></div>`;
+    return h + `</div>`;
+  }
+  // Liga os botões (✏️ atualizar · 📈 evolução · ⛶ expandir · 📅/📈 modo · 🌊 oceano · ⚙ editar) de um container já desenhado.
   function ligar(container, ctx) {
     if (!container || container._mmLigado) return; container._mmLigado = true;
     container.addEventListener('click', async e => {
@@ -1352,6 +1369,7 @@
       if (act === 'reg') abrirRegistrar(m, { onSave: (v, nota, quando, opc) => registrar(m, v, ctx.user(), nota, quando, opc) });
       if (act === 'ent') abrirEntradas(m, { user: ctx.user() });
       if (act === 'edit' && ctx.editar) ctx.editar(m);
+      if (act === 'oceano') { await definirOceano(m, !m.oceano); if (ctx && ctx.onOceano) ctx.onOceano(m, !m.oceano); }
       if (act === 'graf') {
         const slot = box.querySelector('.mm-chart-slot'); if (!slot) return;
         if (!slot.hidden) { slot.hidden = true; return; }
@@ -1371,9 +1389,9 @@
     // matemática
     hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, serieDiaria, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
-    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar, textoPopup,
+    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, painelOceanoHtml, ligar, textoPopup,
     // dados
-    iniciar, ouvirTodasSquads, salvar, remover, arquivar, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
+    iniciar, ouvirTodasSquads, salvar, remover, arquivar, definirOceano, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasOceano, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
     // modais
     abrirForm, abrirRegistrar, abrirEntradas, abrirGraficoModal, mostrarPeixes, vigiaMarcos,
   };
