@@ -1,9 +1,9 @@
 ---
 name: subirproprod
-description: Promove o conteúdo validado dos arquivos `-dev` (kanban-dev.html, okr-dev.html, oceano-dev.html, escala-dev.html, intake-dev.html, painel-dev.html, mare-*-dev.js) para produção seguindo o "Release process" do CLAUDE.md/AGENTS.md em tempo recorde (~30s, 3-4 turnos), usando `CHANGELOG.md` + `CODE_MAP.md` para localizar os hunks instantaneamente e `promover.js` para sincronizar os arquivos grandes sem dezenas de `replace_file_content` sequenciais. Entrega os 3 artefatos padrão: (1) PR de prod no GitHub, (2) rascunho de avisos (Mural em painel.html + WhatsApp), e (3) script de console para logar no card certo do Firebase (`c1785199972010_nd0` ou `c1783541085140`).
+description: Promove o conteúdo validado dos arquivos -dev (kanban-dev.html, okr-dev.html, oceano-dev.html, escala-dev.html, intake-dev.html, painel-dev.html, mare-*-dev.js) para produção seguindo o Release process do CLAUDE.md/AGENTS.md em tempo recorde (~30s, 3-4 turnos), usando CHANGELOG.md, BUGS_E_CORRECOES.md e CODE_MAP_FAST.md para localizar os hunks instantaneamente e promover.js para sincronizar os arquivos grandes sem dezenas de replace_file_content sequenciais. Use sempre que o usuário pedir "sobe pro prod", "promove pra prod", "publica em produção", ou invocar /subirproprod diretamente.
 ---
 
-# Subir pro Prod (`/subirproprod`) — Fluxo Rápido via `CODE_MAP.md` + `promover.js`
+# Subir pro Prod (`/subirproprod`) — Fluxo Rápido via `CODE_MAP_FAST.md` + `promover.js`
 
 Promove o lote acumulado em `-dev` para produção em **3 a 4 turnos (~30 segundos)**, respeitando a política de **Zero terminal para leitura** e **1 único `run_command` encadeado no final** do `AGENTS.md`.
 
@@ -12,11 +12,11 @@ Promove o lote acumulado em `-dev` para produção em **3 a 4 turnos (~30 segund
 ## Por que este fluxo é rápido (Regras de Ouro de Performance)
 
 1. **Nunca faça buscas cegas nos HTMLs gigantes (`kanban.html` tem ~2,5 MB / 39 mil linhas):**
-   - Todo item em `-dev` já está documentado no topo do `CHANGELOG.md` com a tag **`(SÓ DEV)`** e os nomes exatos das funções/constantes alteradas.
-   - O `CODE_MAP.md` tem o índice exato de linhas de cada função/constante e o marcador de `COMUNICADO_RASCUNHOS_SEED` em `painel.html`.
+   - Todo item em `-dev` já está documentado no topo do `CHANGELOG.md` (features) ou `BUGS_E_CORRECOES.md` (bugs) com a tag **`(SÓ DEV)`** e os nomes exatos das funções/constantes alteradas.
+   - O `CODE_MAP_FAST.md` (e o `CODE_MAP.md`) tem o índice exato de linhas de cada função/constante e o marcador de `COMUNICADO_RASCUNHOS_SEED` em `painel.html`.
 2. **Nunca aplique dezenas de `replace_file_content` sequenciais em arquivos espelhados (`kanban.html`, `okr.html`, `oceano.html`, `escala.html`, `intake.html`, `mare-*.js`):**
    - Cada `replace_file_content` em um arquivo de 2,5 MB leva ~12–15s. Fazer 12 chamadas sequenciais desperdiça ~3 minutos.
-   - Em vez disso, use o script **`node .claude/skills/subirproprod/promover.js`** dentro do `run_command` único final (ou a rota cirúrgica guiada por `CODE_MAP.md` quando for apenas 1 hunk pequeno ou edição em `painel.html`). O `promover.js` roda `git diff --no-index -U0`, promove 100% dos hunks de feature/versão, preserva 100% das linhas permanentes de ambiente de prod (`VERSION_KEY`, `FB_OVERRIDE_NS`, `favicon.png`, `oceano.webmanifest`, `fb_*`, `force_logout_after`), atualiza `version.json` e valida a sintaxe de todas as tags `<script>` via `vm.Script` em **menos de 0,2 segundo**.
+   - Em vez disso, use o script **`node .claude/skills/subirproprod/promover.js`** dentro do `run_command` único final (ou a rota cirúrgica guiada por `CODE_MAP_FAST.md` quando for apenas 1 hunk pequeno ou edição em `painel.html`). O `promover.js` roda `git diff --no-index -U0`, promove 100% dos hunks de feature/versão, preserva 100% das linhas permanentes de ambiente de prod (`VERSION_KEY`, `FB_OVERRIDE_NS`, `favicon.png`, `oceano.webmanifest`, `fb_*`, `force_logout_after`), atualiza `version.json` e valida a sintaxe de todas as tags `<script>` via `vm.Script` em **menos de 0,2 segundo**.
 
 ---
 
@@ -25,22 +25,22 @@ Promove o lote acumulado em `-dev` para produção em **3 a 4 turnos (~30 segund
 No **primeiro turno**, faça chamadas `view_file` **em paralelo**:
 
 1. `version.json` (inteiro) → mostra imediatamente quais chaves `-dev` estão à frente das chaves de prod (`kanban_dev` vs `kanban`, `okr_dev` vs `okr`, `oceano_dev` vs `oceano`, `escala_dev` vs `escala`, `intake_dev` vs `intake`, `painel_dev` vs `painel`).
-2. `CHANGELOG.md` (`StartLine: 1, EndLine: 100`) → lista todas as seções marcadas com **`(SÓ DEV)`** ou versões `-dev` ainda não promovidas, com os nomes exatos das funções/constantes mexidas.
-3. `CODE_MAP.md` (`StartLine: 1, EndLine: 120` + bloco do `painel.html` onde fica `COMUNICADO_RASCUNHOS_SEED`, ~linhas 235–290) → dá as linhas exatas das funções alteradas e a linha exata de `COMUNICADO_RASCUNHOS_SEED` em `painel.html`.
+2. `CHANGELOG.md` (`StartLine: 1, EndLine: 90`) e `BUGS_E_CORRECOES.md` (`StartLine: 1, EndLine: 120`) → listam todas as seções marcadas com **`(SÓ DEV)`** ainda não promovidas, com os nomes exatos das funções/constantes mexidas.
+3. `CODE_MAP_FAST.md` (inteiro, ~90 linhas) → dá as linhas exatas das seções e âncoras de cada arquivo (incluindo `painel.html`).
 
-> **Pare se:** todas as chaves de `version.json` já estiverem empatadas entre dev e prod e não houver nenhum `(SÓ DEV)` no `CHANGELOG.md` — avise o usuário que prod já está em dia.
+> **Pare se:** todas as chaves de `version.json` já estiverem empatadas entre dev e prod e não houver nenhum `(SÓ DEV)` no `CHANGELOG.md` ou `BUGS_E_CORRECOES.md` — avise o usuário que prod já está em dia.
 
 ---
 
-## Passo 2 — Edições de Metadados, Rascunho do Mural e `painel.html` (via `CODE_MAP.md`)
+## Passo 2 — Edições de Metadados, Rascunho do Mural e `painel.html`
 
 Com o diagnóstico do Passo 1 em mãos, prepare as edições de texto usando `replace_file_content`:
 
-### 2.1. `CHANGELOG.md`
-- Nas entradas do topo que estavam marcadas como **`(SÓ DEV)`**, troque por **`(PROD)`** e adicione o cabeçalho da versão de produção correspondente (ex.: `## kanban.html — v8.30.XXX (2026-MM-DD)`), mantendo o texto voltado ao usuário (o quê mudou e por quê).
+### 2.1. `CHANGELOG.md` e `BUGS_E_CORRECOES.md`
+- Nas entradas do topo que estavam marcadas como **`(SÓ DEV)`**, troque por **`(PROD)`** e atualize o cabeçalho com a versão de produção correspondente (ex.: `kanban v8.30.XXX`), mantendo o texto voltado ao usuário em `CHANGELOG.md` e o detalhamento técnico em `BUGS_E_CORRECOES.md`.
 
-### 2.2. `CODE_MAP.md` (se o lote mudou ou criou função/constante âncora)
-- Graças ao `CHANGELOG.md`, você já sabe quais funções nasceram ou mudaram de linha em `-dev`. Atualize apenas as linhas correspondentes no `CODE_MAP.md` (não rode a auditoria pesada `/atualizarcodemap` inteira durante o `/subirproprod`).
+### 2.2. `CODE_MAP.md` / `CODE_MAP_FAST.md`
+- O comando `node scripts/mare-cli.js map` no Passo 3 revalida automaticamente todos os números de linha (`Lxxxx`) do `CODE_MAP.md` e regenera o `CODE_MAP_FAST.md`. Se uma função importante nova nasceu no lote, adicione apenas a linha dela no `CODE_MAP.md`.
 
 ### 2.3. Rascunho do Mural em `painel.html` (`COMUNICADO_RASCUNHOS_SEED`)
 - Use a linha de `COMUNICADO_RASCUNHOS_SEED` indicada no `CODE_MAP.md` (seção `painel.html` → *Comunicados + Rascunhos do Mural*), leia ~35 linhas ao redor com `view_file` e insira o rascunho da promoção no topo do array `COMUNICADO_RASCUNHOS_SEED` em `painel.html` (e `painel-dev.html` se quiser manter em paridade):
