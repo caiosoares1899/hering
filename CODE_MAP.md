@@ -20,8 +20,8 @@ Firebase que o listener de "Deslogar todos" escuta
 (`kanban/global/force_logout_after` em prod, `force_logout_after_dev`
 em dev — ver seção "Papéis & autenticação" abaixo). Fora essas 3
 divergências permanentes, os dois arquivos ficam byte-idênticos só LOGO
-DEPOIS de uma promoção (última confirmada: v8.30.861, 2026-10-15 —
-curva diária/tooltip/expandir gráfico e popup personalizado nas Metas `mare-metas.js` v13, aba Data Studio e correções de Anotações/`/monitorarbugs` em `okr.html` v2.87 e `painel.html` v5.74; antes dela, v8.30.858 em 2026-10-14 e v8.30.845 em 2026-10-13 — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
+DEPOIS de uma promoção (última confirmada: v8.30.863, 2026-10-15 —
+nova Submarca `'Geral'` (`tag_sm_geral`, 11 tags fixas) em `kanban.html` v8.30.863 e `intake.html`, edição/exclusão de anotações de reunião e da agenda em `okr.html` v2.88; antes dela, v8.30.861 em 2026-10-15, v8.30.858 em 2026-10-14 e v8.30.845 em 2026-10-13 — ver `CHANGELOG.md`) — o estado NORMAL na maior parte do
 tempo é `kanban-dev.html` ter um lote acumulado não promovido ainda
 (volta a acontecer assim que o próximo commit em dev acontecer). Os
 números abaixo são os de `kanban-dev.html` (o superset). Se o `diff`
@@ -2080,14 +2080,14 @@ Mesma arquitetura pros dois (toggle por squad + tags fixas + campo dedicado
 sobre por que o nome interno é "canalVenda"/`CANAL_VENDA` (já existe um
 campo "Canal" DIFERENTE — mídia de Ficha Técnica/Criativos,
 `CANAL_OPCOES_DEFAULT`/`card.canal` — sem relação nenhuma com este).
-- **Submarca** (squad Site Hering) — `SUBMARCA_TAGS` L8771 (10 tags fixas,
-  5 marcas × Comercial/Cadastro); `submarcaAtivo`/`submarcasVisiveis` L8590-1;
+- **Submarca** (squad Site Hering) — `SUBMARCA_TAGS` L8771 (11 tags fixas:
+  5 marcas × Comercial/Cadastro + `tag_sm_geral` `'Geral'`); `submarcaAtivo`/`submarcasVisiveis` L8590-1;
   `toggleSubmarcaAtivo()`/`_ensureSubmarcaTagsBackfilled()` L18393/18371;
   `_applySubmarcaUIVisibility()` L18461; `setCardSubmarca()` L18471;
   dropdown da toolbar `renderSubmarcaQuickFilters()`/
   `toggleSubmarcaDropdown()` L18509/18553 (`#submarca-dd-wrap`); sempre
   **obrigatória** pra salvar assim que ativada (ver `saveCard()` ~L16660,
-  HELP_CONTENT "Prazo, Submarca e Canal obrigatórios").
+  HELP_CONTENT "Prazo, Submarca e Canal obrigatórios"). `getTag()` (~L12229) e o seletor de condições de Automação (`case 'submarca'`, ~L33638) caem em `SUBMARCA_TAGS` como fallback se `tags` remoto ainda não tiver o backfill, e `SUBMARCA_COLORS` (~L22286) inclui cor própria pra `'Geral'`. `intake.html`/`intake-dev.html` (`SUBMARCA_FALLBACK`) também trazem as 11 opções.
 - **Canal de venda** (squad Marketplace, 2026-09-10, pedido direto do
   usuário "cria na mesma pegada do submarcas") — `CANAL_VENDA_TAGS` L8796
   (14 tags fixas: Mercado Livre ME1/ME2/Full, Dafiti, Netshoes, Shopee/

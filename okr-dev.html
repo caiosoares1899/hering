@@ -3108,7 +3108,7 @@ window._okrNotaDel = async id => {
 };
 
 
-window._okrNotaDelDate = async () => {
+window._okrNotaDelData = window._okrNotaDelDate = async () => {
   if(window._isPainelViewer || !_isAdmPainel()){ showToast('⚠ Apenas ADM pode excluir todas as anotações de uma data.'); return; }
   const dataAlvo = _okrNotasViewDate || _todayStr();
   const notasDoDia = okrReuniaoNotas[dataAlvo] || {};
