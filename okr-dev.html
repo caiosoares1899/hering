@@ -1509,7 +1509,9 @@ body{min-height:100vh;}
 .pc-modal.okr-t-digital,.pc-modal.okr-t-comercial,.pc-modal.okr-t-corporativa{border-top:4px solid rgb(var(--torre));box-shadow:0 0 0 1px rgba(var(--torre),.28),0 18px 60px rgba(0,0,0,.45);}
 .okr-modal-torre-chip{margin-right:auto;}
 /* 📈 Data Studio (Looker Studio incorporado) */
-#okr-ds-wrap{display:flex;flex-direction:column;gap:12px;margin-top:4px;}
+#okr-ds-wrap,#okr-ds-root{display:flex;flex-direction:column;gap:12px;}
+#okr-ds-wrap{margin-top:4px;}
+#okr-ds-root{flex:1;min-height:0;}
 .okr-ds-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;background:var(--glass);border:1px solid var(--glass-b);border-radius:12px;backdrop-filter:blur(10px);}
 .okr-ds-pills{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
 .okr-ds-pill{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--slate-rgb),.6);color:var(--txt2);font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:all .15s;}
@@ -1523,7 +1525,10 @@ body{min-height:100vh;}
 .okr-ds-frame-box{position:relative;width:100%;height:calc(100vh - 230px);min-height:540px;background:rgba(var(--ink-rgb),.75);border:1px solid var(--glass-b);border-radius:14px;overflow:hidden;box-shadow:0 14px 36px rgba(0,0,0,.35);}
 .okr-ds-frame{width:100%;height:100%;border:0;display:block;background:#071526;}
 .okr-ds-fs{position:fixed!important;inset:0!important;z-index:9400!important;background:var(--deep)!important;padding:12px 16px!important;margin:0!important;display:flex!important;flex-direction:column!important;gap:10px!important;}
-.okr-ds-fs .okr-ds-frame-box{flex:1;height:auto;min-height:0;}
+body:has(> div[style*="249,115,22"]) .okr-ds-fs{padding-top:42px!important;}
+.okr-ds-fs #okr-ds-root{flex:1;min-height:0;gap:8px;}
+.okr-ds-fs .okr-ds-desc{display:none;}
+.okr-ds-fs .okr-ds-frame-box{flex:1;height:auto!important;min-height:0!important;}
 .okr-ds-empty{padding:36px 24px;background:var(--glass);border:1px dashed var(--glass-b);border-radius:14px;text-align:center;max-width:680px;margin:18px auto;}
 .okr-ds-empty h3{font-family:'Syne',sans-serif;font-size:1.05rem;color:var(--txt);margin-bottom:8px;}
 .okr-ds-empty p{font-size:.83rem;color:var(--txt2);line-height:1.55;margin-bottom:14px;}
@@ -2013,7 +2018,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.83 · okr-dev</div>
+<div class="version">v2.84 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
