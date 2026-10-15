@@ -124,4 +124,25 @@ t('lembreteTxt legível', () => {
   assert.equal(M.lembreteTxt({ modo: 'off' }), 'sem lembrete'); assert.equal(M.lembreteTxt({ modo: 'cada', cada: 2, de: '08:00', ate: '20:00' }), 'a cada 2h (08:00–20:00)');
   assert.equal(M.lembreteTxt({ modo: 'diario', hora: '09:00' }), '1× por dia às 09:00'); assert.equal(M.lembreteTxt({ modo: 'horarios', horas: ['09:00', '15:00'] }), 'às 09:00, 15:00');
 });
+t('serieDiaria e graficoHtml: curva diária (não acumulada), pontos interativos (mm-pt) e botão expandir', () => {
+  const m = { id: 'm1', titulo: 'Outubro', fmt: 'brl', alvo: 1000, inicial: 0, atual: 350, inicio: '2026-10-01', fim: '2026-10-03', curva: { '2026-10-01': 200, '2026-10-02': 300, '2026-10-03': 500 } };
+  const pts = [
+    { t: M.spParaMs('2026-10-01', '12:00'), v: 180, d: 180, nota: 'Dia 1' },
+    { t: M.spParaMs('2026-10-02', '12:00'), v: 530, d: 350, nota: 'Dia 2' },
+  ];
+  const s = M.serieDiaria(m, pts);
+  assert.ok(Array.isArray(s) && s.length === 3);
+  assert.equal(s[0].meta, 200); assert.equal(s[1].meta, 300); assert.equal(s[2].meta, 500);
+  assert.equal(s[0].real, 180); assert.equal(s[1].real, 350); assert.equal(s[2].real, null);
+  // Gráfico modo acumulado (default) e modo diário
+  const gAcum = M.graficoHtml(m, pts);
+  assert.ok(/<polyline[^>]*stroke-dasharray="3 4"/.test(gAcum) && /diarização/.test(gAcum));
+  assert.ok(/class="mm-pt"/.test(gAcum) && /data-mm-act="graf-exp"/.test(gAcum));
+  const gDia = M.graficoHtml(m, pts, { modo: 'dia' });
+  assert.ok(/meta do dia \(diarização\)/.test(gDia) && /realizado no dia/.test(gDia));
+  assert.ok(/class="mm-pt"/.test(gDia) && /data-sub="Meta do dia:/.test(gDia));
+  const gGrande = M.graficoHtml(m, pts, { modo: 'dia', grande: true });
+  assert.ok(/viewBox="0 0 780 320"/.test(gGrande) && !/data-mm-act="graf-exp"/.test(gGrande));
+});
 console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
+
