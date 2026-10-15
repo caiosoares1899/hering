@@ -1475,7 +1475,7 @@ function render(){
   const upd = document.getElementById('cover-updated');
   if(upd && _lastUpdate) upd.textContent = '🔄 Atualizado às ' + _lastUpdate.toLocaleTimeString('pt-BR');
   fitSlideContent(document.querySelector('.slide.active'));
-  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(typeof _liveRetomar!=='undefined' && _liveRetomar); }
+  if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(true); }
 }
 window.addEventListener('resize', () => { fitSlideContent(document.querySelector('.slide.active')); if(typeof liveDesenhar==='function') liveDesenhar(); });
 
@@ -1707,7 +1707,10 @@ function _okrFitDetailSections(){
 window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
 window._okrToggleColapsarConcluidos = () => {
   _okrColapsarConcluidos = !_okrColapsarConcluidos;
-  if(_okrDetailCurrentId) window._okrOpenDetail(_okrDetailCurrentId);
+  if(_okrDetailCurrentId){
+    const prev = _liveAplicando; _liveAplicando = true;
+    try { window._okrOpenDetail(_okrDetailCurrentId); } finally { _liveAplicando = prev; }
+  }
 };
 
 // ── Anotações da reunião (📋 flutuante) — pedido direto do usuário: registrar
@@ -2016,7 +2019,7 @@ function startListeners(){
 //   • O apresentador (e qualquer ADM, a qualquer momento) tem 🔴 laser (L), 🖍️ caneta (P), passar/assumir o controle, sincronizar slide e ⏹ encerrar.
 // ═════════════════════════════════════════════════════════════════
 const LIVE_PATH = 'kanban/okr/apresentacao_live', LIVE_CORES = ['#ff4d4d','#ffd166','#1de9b6','#ffffff'];
-let liveTipo = 'f', _liveRaf = 0, liveVisto = {}, liveMeus = [], live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false;
+let liveTipo = 'f', _liveRaf = 0, liveVisto = {}, liveMeus = [], live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false, _liveUltNavKey = '', _liveUltHostUid = '', _liveMeuNavId = '', _liveMeuNavTs = 0;
 const liveEu = () => window._currentUser || {};
 const liveRef = sub => window._ref(window._db, LIVE_PATH + (sub ? '/'+sub : ''));
 const liveAtiva = () => !!(live && live.ativa && live.apresentador && live.apresentador.uid);
@@ -2040,12 +2043,25 @@ function liveInit(){
   if(_liveIniciado) return; _liveIniciado = true;   // _okrShowApp() roda de novo a cada auth-change: sem a trava, cada um acumulava mais um ouvinte do mesmo nó
   window._onValue(liveRef(), snap=>{
     const antes = liveAtiva(), eraHost = liveSouHost(); live = snap.val();
-    if(eraHost && !liveSouHost() && liveAtiva()) liveSeguindo = true;   // passou o controle: a tela dele (a compartilhada no Meet) passa a seguir o novo apresentador
-    if(antes && !liveAtiva()){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
-    const entrou = liveAtiva() && !_liveEntrou;
+    const ativa = liveAtiva();
+    const navKey = ativa ? (live.slide||'')+'|'+(live.detalhe||'')+'|'+(live.navId||'') : '';
+    const mudouNav = ativa && navKey !== _liveUltNavKey;
+    _liveUltNavKey = navKey;
+    const hostUid = ativa ? live.apresentador.uid : '';
+    const mudouHost = ativa && hostUid !== _liveUltHostUid;
+    _liveUltHostUid = hostUid;
+    if(antes && !ativa){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
+    const entrou = ativa && !_liveEntrou;
     if(entrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
     if(entrou && liveSouHost()) _liveRetomar = true;
-    liveAplicar(_liveRetomar); liveRender(); liveDesenhar();
+    // Sempre que o apresentador ou um ADM mudar de slide/detalhe (mudouNav) ou passar/assumir o controle (mudouHost),
+    // toda a sala (incluindo quem tinha saído de sincronia antes, o apresentador anterior e os ADMs) acompanha imediatamente.
+    if(mudouNav || mudouHost) liveSeguindo = true;
+    liveAplicar(_liveRetomar || mudouNav || mudouHost);
+    if(mudouHost && antes && !entrou && liveSouHost() && !eraHost){
+      liveToast('🎙️ Você recebeu o controle da apresentação!');
+    }
+    liveRender(); liveDesenhar();
   }, ()=>{});
   clearInterval(_liveHb); _liveHb = setInterval(liveBatida, 20000);
 }
@@ -2056,26 +2072,52 @@ function liveBatida(){
 }
 window._liveComecar = () => {
   if(window._okrIsViewer) return; const u = liveEu();
-  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto()})
+  const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+  _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
+  window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||''})
     .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
 window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
 function liveAplicar(forcar){
-  // forcar: o APRESENTADOR recarregou a página — ela abre na capa enquanto a sala continua no slide dele; volta pra posição da sessão (sem isso ele só ressincroniza ao navegar)
-  if(!liveAtiva() || (liveSouHost() && !forcar) || (!liveSouHost() && !liveSeguindo)) return;
+  // forcar: retomada de quem recarregou a página ou mudança ativa de slide/detalhe/apresentador vinda da sala
+  if(!liveAtiva()) return;
+  const ehMeuNav = !_liveRetomar && ((live.navId && live.navId === _liveMeuNavId) || !!_liveSyncT);
+  if(ehMeuNav) return;
+  if(!forcar && !liveSeguindo) return;
+  if(!forcar && (Date.now() - _liveMeuNavTs < 2000)) return;
   _liveAplicando = true;
   try{
     const i = slides.findIndex(x=>x.key===live.slide);
-    if(i>=0){ if(i!==currentIdx) window._okrGoTo(i); } else if(live.slide) _livePend = true;
+    if(i>=0){
+      if(i!==currentIdx){
+        window._okrCloseAting?.(); window._okrCloseMarcoComments?.();
+        window._okrGoTo(i);
+      }
+    } else if(live.slide) _livePend = true;
     const d = live.detalhe||'', aberto = liveDetalheAberto();
-    if(d && d!==aberto){ if(okrObjetivos[d]) window._okrOpenDetail(d); else _livePend = true; } else if(!d && aberto) window._okrCloseDetail();
+    if(d && d!==aberto){
+      if(okrObjetivos[d]){
+        window._okrCloseAting?.(); window._okrCloseMarcoComments?.();
+        window._okrOpenDetail(d);
+      } else _livePend = true;
+    } else if(!d && aberto){
+      window._okrCloseAting?.(); window._okrCloseMarcoComments?.();
+      window._okrCloseDetail();
+    }
   } finally { _liveAplicando = false; if(!_livePend) _liveRetomar = false; }   // retomada de quem recarregou é de uma vez só (senão cada sinal da sala puxaria o apresentador de volta)
 }
 function liveAposNavegar(){
   if(_liveAplicando){ liveDesenhar(); return; }
-  if(liveSouHost()){
+  if(livePodeControlar()){
+    liveSeguindo = true;
+    _liveMeuNavTs = Date.now();
     clearTimeout(_liveSyncT);
-    _liveSyncT = setTimeout(()=>{ window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now()}).catch(()=>{}); }, 60);
+    _liveSyncT = setTimeout(()=>{
+      _liveSyncT = null;
+      const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+      _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
+      window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now()}).catch(()=>{});
+    }, 60);
   } else if(liveAtiva() && liveSeguindo){ liveSeguindo = false; liveRender(); }
   liveDesenhar();
 }
@@ -2085,7 +2127,7 @@ function liveAposNavegar(){
   window._okrOpenDetail = id => { op(id); liveAposNavegar(); };
   window._okrCloseDetail = () => { cl(); liveAposNavegar(); };
 })();
-window._liveSeguir = () => { liveSeguindo = true; liveAplicar(); liveRender(); };
+window._liveSeguir = () => { liveSeguindo = true; liveAplicar(true); liveRender(); };
 window._livePedir = () => { const u = liveEu(); window._set(liveRef('pedidos/'+u.uid), {nome:liveNome(u), ts:Date.now()}).then(()=>liveToast('✋ Pedido enviado — o apresentador vai ver.')).catch(()=>liveToast('⚠️ Não consegui pedir o controle.')); };
 function liveTrocar(uid, nome, email){
   const upd = {apresentador:{uid, nome, email:email||''}, atualizadoEm:Date.now(), laser:null}; upd['pedidos/'+uid] = null;
@@ -2096,14 +2138,18 @@ window._liveAceitar = (uid, nome) => { if(!livePodeControlar()) return; liveTroc
 window._liveRecusar = uid => { if(!livePodeControlar()) return; window._remove(liveRef('pedidos/'+uid)).catch(()=>{}); };
 window._liveAssumir = () => {
   const u = liveEu(); if(!u.uid) return;
-  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now(), laser:null};
+  const navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+  _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
+  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now(), laser:null};
   upd['pedidos/'+u.uid] = null;
   liveSeguindo = true;
   window._update(liveRef(), upd).then(()=>liveToast('🎙️ Você assumiu o controle da apresentação.')).catch(e=>liveToast('⚠️ Não consegui assumir o controle: '+(e && e.message || e)));
 };
 window._livePuxarSlide = () => {
   if(!livePodeControlar()) return;
-  window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now()})
+  const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
+  _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
+  window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now()})
     .then(()=>{ liveSeguindo = true; liveRender(); liveToast('📍 Sala sincronizada no seu slide.'); })
     .catch(e=>liveToast('⚠️ Não consegui sincronizar o slide: '+(e && e.message || e)));
 };
