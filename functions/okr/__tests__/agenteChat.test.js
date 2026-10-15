@@ -282,3 +282,41 @@ test('chat em dryRun: o agente "registra" mas nada é gravado no Objetivo', asyn
   const ls = (await db.ref('kanban/okr/objetivos/o1/atingimento/lancamentos').get()).val();
   assert.equal((ls || []).length, 0);
 });
+
+test('chat: texto acima do limite da apresentação executiva é barrado por limite_caracteres_excedido e o agente volta pro usuário validar versão enxuta', async () => {
+  const db = seedDb();
+  const textao = 'Reduzir o consumo de banda do Firebase Realtime Database em todas as squads do Digital por meio de otimizações de listeners, paginação de histórico, cache local e consolidação de deploys no fim do dia para evitar reloads simultâneos.'; // > 200 chars
+  const sugestaoCurta = 'Reduzir banda do Firebase nas squads via otimização de listeners, cache local e deploys concentrados no fim do dia.'; // 115 chars
+  const llmClient = scriptedLlmClient([
+    { toolCalls: [{ id: 't1', name: 'editar_campos_okr', input: { objetivo_id: 'o1', descricao: textao } }], text: '' },
+    {
+      toolCalls: [
+        {
+          id: 't2',
+          name: 'responder',
+          input: {
+            texto: `Esse texto tem ${textao.length} caracteres e o limite da apresentação é 200. Sugiro resumir para (${sugestaoCurta.length}/200 caracteres): "${sugestaoCurta}". Posso gravar assim?`,
+          },
+        },
+      ],
+      text: '',
+    },
+    { toolCalls: [], text: 'ok' },
+  ]);
+
+  const outcome = await processarMensagem(db, {
+    msgId: 'mlim1',
+    message: { uid: 'uid-humano', text: `muda a descrição do objetivo Reduzir custo Firebase para: ${textao}` },
+    llmClient,
+    dryRun: false,
+  });
+
+  assert.equal(outcome.processed, true);
+  assert.equal(outcome.result.steps[0].toolCalls[0].output.error, 'limite_caracteres_excedido');
+  // Não gravou o textão no banco
+  const obj = (await db.ref('kanban/okr/objetivos/o1').get()).val();
+  assert.equal(obj.descricao || '', '');
+  // Respondeu no chat pedindo validação da versão enxuta
+  const chat = (await db.ref('kanban/okr/agente_chat').get()).val();
+  assert.match(Object.values(chat)[0].text, /Posso gravar assim\?/);
+});

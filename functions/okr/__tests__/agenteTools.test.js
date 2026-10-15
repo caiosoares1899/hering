@@ -337,3 +337,89 @@ test('consultar_ajuda: o Radar só fala da torre Digital (a cisão com a Arezzo)
   const { SYSTEM_PROMPT_OKR_V1 } = require('../agentePrompt');
   assert.match(SYSTEM_PROMPT_OKR_V1, /consultar_ajuda/);
 });
+
+// ── Limites de caracteres da Apresentação Executiva (OKR_CHAR_LIMITS) ────
+
+test('editar_campos_okr: recusa descricao > 200 caracteres e itens de lista > 90 caracteres com limite_caracteres_excedido e não grava no banco', async () => {
+  const { OKR_CHAR_LIMITS } = require('../agenteTools');
+  assert.deepEqual(OKR_CHAR_LIMITS, {
+    titulo: 90,
+    pilar: 60,
+    descricao: 200,
+    indicadores: 90,
+    progressos: 90,
+    proximos_passos: 90,
+    riscos: 90,
+    planos_acao: 90,
+    marco_nome: 70,
+  });
+
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: RESP_UID, dryRun: false });
+  const editar = toolByName(tools, 'editar_campos_okr');
+
+  const descLonga = 'A'.repeat(201);
+  const itemLongo = 'B'.repeat(91);
+  const res = await editar.handler({
+    objetivo_id: 'o1',
+    descricao: descLonga,
+    progressos_adicionar: ['Item curto ok', itemLongo],
+  });
+
+  assert.equal(res.ok, false);
+  assert.equal(res.error, 'limite_caracteres_excedido');
+  assert.equal(res.violacoes.length, 2);
+  assert.equal(res.violacoes[0].campo, 'descricao');
+  assert.equal(res.violacoes[0].limite, 200);
+  assert.equal(res.violacoes[0].tamanho, 201);
+  assert.equal(res.violacoes[1].campo, 'progressos_adicionar[1]');
+  assert.equal(res.violacoes[1].limite, 90);
+  assert.equal(res.violacoes[1].tamanho, 91);
+  assert.match(res.message, /valide com a pessoa/i);
+
+  // Confirma que nada foi gravado no banco
+  const obj = (await db.ref('kanban/okr/objetivos/o1').get()).val();
+  assert.equal(obj.descricao, '');
+  assert.deepEqual(obj.progressos, []);
+
+  // No limite exato (200 e 90), aceita e grava normalmente
+  const resOk = await editar.handler({
+    objetivo_id: 'o1',
+    descricao: 'C'.repeat(200),
+    progressos_adicionar: ['D'.repeat(90)],
+  });
+  assert.equal(resOk.ok, true);
+  const objDepois = (await db.ref('kanban/okr/objetivos/o1').get()).val();
+  assert.equal(objDepois.descricao.length, 200);
+  assert.equal(objDepois.progressos[0].length, 90);
+});
+
+test('criar_objetivo, criar_marco e editar_marco: respeitam limites de titulo (90), pilar (60) e nome de marco (70)', async () => {
+  const db = seedDb();
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: ADM_UID, dryRun: false });
+
+  const rCriarObj = await toolByName(tools, 'criar_objetivo').handler({
+    titulo: 'T'.repeat(91),
+    area_id: 'tech',
+    pilar: 'P'.repeat(61),
+  });
+  assert.equal(rCriarObj.ok, false);
+  assert.equal(rCriarObj.error, 'limite_caracteres_excedido');
+  assert.equal(rCriarObj.violacoes.length, 2);
+
+  const rCriarMarco = await toolByName(tools, 'criar_marco').handler({
+    objetivo_id: 'o1',
+    nome: 'M'.repeat(71),
+  });
+  assert.equal(rCriarMarco.ok, false);
+  assert.equal(rCriarMarco.error, 'limite_caracteres_excedido');
+  assert.equal(rCriarMarco.violacoes[0].limite, 70);
+
+  const rEditarMarco = await toolByName(tools, 'editar_marco').handler({
+    marco_id: 'm1',
+    novo_nome: 'N'.repeat(75),
+  });
+  assert.equal(rEditarMarco.ok, false);
+  assert.equal(rEditarMarco.error, 'limite_caracteres_excedido');
+  assert.equal(rEditarMarco.violacoes[0].campo, 'novo_nome');
+});
