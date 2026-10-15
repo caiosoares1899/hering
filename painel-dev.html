@@ -3018,7 +3018,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.70 · painel-dev</div>
+<div class="version">v5.71 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6912,6 +6912,14 @@ function _limparHtmlStatus(str){
     .trim();
 }
 
+function _linkSeguroStatus(url, fallback){
+  const s = String(url || '').trim();
+  if(!s) return fallback;
+  if(/^https?:\/\/[^\s"'<>]+$/i.test(s)) return s;
+  if(/^\/?incidents\/[a-zA-Z0-9_-]+\/?$/.test(s)) return fallback.replace(/\/+$/, '') + '/' + s.replace(/^\/+/, '');
+  return fallback;
+}
+
 function _statusIncidenteRecente(isoStr){
   if(!isoStr) return true;
   const ts = Date.parse(isoStr);
@@ -6958,7 +6966,7 @@ async function loadGithubStatus(force){
             name: _limparHtmlStatus(inc.name || 'Incidente no GitHub'),
             status: inc.status || 'investigating',
             impact: inc.impact || 'minor',
-            shortlink: inc.shortlink || 'https://www.githubstatus.com',
+            shortlink: _linkSeguroStatus(inc.shortlink, 'https://www.githubstatus.com'),
             updatedAt: inc.updated_at || inc.created_at || null,
             latestBody: _limparHtmlStatus(latest.body || '').slice(0, 280)
           };
@@ -7020,7 +7028,7 @@ function renderGithubStatusUI(){
     name: inc.name || inc.titulo || 'Incidente no GitHub',
     status: inc.status || inc.estadoLabel || inc.estado || 'investigating',
     impact: inc.impact || inc.impacto || 'minor',
-    shortlink: inc.shortlink || inc.link || 'https://www.githubstatus.com',
+    shortlink: _linkSeguroStatus(inc.shortlink || inc.link, 'https://www.githubstatus.com'),
     updatedAt: inc.updatedAt || inc.atualizadoEm || null,
     latestBody: inc.latestBody || inc.resumo || ''
   }));
@@ -7271,7 +7279,7 @@ async function loadFirebaseStatus(force){
             status: stOverall || 'INVESTIGATING',
             impact: compSt === 'major_outage' ? 'critical' : compSt === 'partial_outage' ? 'major' : 'minor',
             servicosAfetados: servicos,
-            shortlink: raw.uri ? ('https://status.firebase.google.com/' + String(raw.uri).replace(/^\/+/, '')) : 'https://status.firebase.google.com',
+            shortlink: _linkSeguroStatus(raw.uri, 'https://status.firebase.google.com'),
             updatedAt: updAt,
             latestBody: _limparHtmlStatus(raw.most_recent_update?.text || '').slice(0, 280)
           });
@@ -7335,7 +7343,7 @@ function renderFirebaseStatusUI(){
       status: inc.status || inc.estadoLabel || inc.statusComp || 'INVESTIGATING',
       impact: imp,
       servicosAfetados: Array.isArray(inc.servicosAfetados) ? inc.servicosAfetados : (Array.isArray(inc.servicos) ? inc.servicos : []),
-      shortlink: inc.shortlink || inc.link || 'https://status.firebase.google.com',
+      shortlink: _linkSeguroStatus(inc.shortlink || inc.link, 'https://status.firebase.google.com'),
       updatedAt: inc.updatedAt || inc.atualizadoEm || null,
       latestBody: inc.latestBody || inc.resumo || ''
     };
