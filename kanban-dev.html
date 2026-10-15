@@ -5197,7 +5197,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--glass-b);">
         <div class="cfg-sec-title">🏷️ Submarca</div>
         <p style="font-size:12px;color:var(--txt2);line-height:1.55;margin:0 0 10px;">
-          Campo dedicado "Submarca" no card (Hering Adulto/Kids/Sports/Intimates/Teens) — um board só, com filtros rápidos pra cada marca, no lugar de boards separados por submarca.
+          Campo dedicado "Submarca" no card (Hering Adulto/Kids/Sports/Intimates/Teens + Geral) — um board só, com filtros rápidos pra cada marca, no lugar de boards separados por submarca.
         </p>
         <label style="font-size:12px;color:var(--txt2);display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.25);border-radius:var(--r);">
           <input type="checkbox" id="cfg-submarca-ativo" onchange="toggleSubmarcaAtivo(this.checked)"> Ativar campo de submarca neste squad
@@ -6560,7 +6560,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.861-dev</div>
+<div class="version">v8.30.862-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -8779,6 +8779,7 @@ const SUBMARCA_TAGS = [
   {id:'tag_sm_intimates_cad', label:'Hering Intimates Cadastro',  pi:4},
   {id:'tag_sm_teen_com',      label:'Hering Teen Comercial',      pi:4},
   {id:'tag_sm_teen_cad',      label:'Hering Teen Cadastro',       pi:4},
+  {id:'tag_sm_geral',         label:'Geral',                      pi:4},
 ];
 function _submarcaIsVisivel(tagId){ return submarcasVisiveis[tagId]!==false; }
 
@@ -22298,7 +22299,7 @@ function renderBoardDataInsights(){
     // não precisava distinguir entre si), o que deixaria o donut praticamente
     // monocromático. Aqui a cor É o diferenciador principal, então usa uma
     // paleta própria de 10 tons distintos, ciclando por índice.
-    const SUBMARCA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa'];
+    const SUBMARCA_COLORS=['#38b6ff','#1de9b6','#ffd166','#ff6b6b','#d67fff','#7eb3ff','#4ade80','#ff9f43','#f472b6','#60a5fa','#a3e635'];
     const porSubmarca={};
     activeCards.forEach(c=>{
       const tagsDoCard=getCardTags(c);
