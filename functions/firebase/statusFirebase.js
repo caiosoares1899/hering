@@ -295,6 +295,7 @@ async function processar({ db, parsed, agora }) {
     try {
       const chave = chaveDe(inc.id);
       const fase = faseDe(inc);
+      if (!chave || fase === 'desconhecido') { out.ignorados++; continue; }
       const estRef = db.ref(`kanban/firebase_status/${chave}`);
       const est = (await estRef.get()).val();
 
@@ -386,6 +387,9 @@ async function rodar({ db, fetchImpl, agora, log }) {
     return { valido: false };
   }
   const r = await processar({ db, parsed, agora: t });
+  if (r.erros && parsed.incidentes.length && r.erros >= parsed.incidentes.length) {
+    throw new Error('todos os ' + parsed.incidentes.length + ' incidentes do Firebase falharam ao gravar');
+  }
   return Object.assign({ valido: true, parsed }, r);
 }
 

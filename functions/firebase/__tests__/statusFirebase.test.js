@@ -162,3 +162,31 @@ test('falhas seguidas do endpoint do Firebase: só avisa os ADMs ao atingir LIMI
   assert.equal(nAdm[0].type, 'firebase_monitor_falhou');
   assert.equal((await notifs(db, 'ana')).length, 0);
 });
+
+test('se todos os incidentes falharem ao gravar no banco, rodar() propaga erro e executar() registra falha em firebase_saude', async () => {
+  const db = novoDb();
+  const origRef = db.ref.bind(db);
+  db.ref = (path) => {
+    if (String(path).startsWith('kanban/firebase_status/')) {
+      return { get: async () => ({ val: () => null }), set: async () => { throw new Error('permissão negada simulada'); } };
+    }
+    return origRef(path);
+  };
+  const body = JSON.stringify([
+    {
+      id: 'fb-inc-err-1',
+      service_name: 'Firebase Realtime Database',
+      external_desc: 'Outage in RTDB',
+      begin: '2026-10-14T17:40:00Z',
+      modified: '2026-10-14T17:55:00Z',
+      severity: 'high',
+      status_impact: 'SERVICE_OUTAGE',
+      most_recent_update: { status: 'SERVICE_OUTAGE', text: 'Investigating', modified: '2026-10-14T17:55:00Z' },
+    },
+  ]);
+  await assert.rejects(() => F.executar({ db, fetchImpl: resp(body), agora: AGORA }), /falharam ao gravar/);
+  const saude = (await origRef('kanban/firebase_saude').get()).val();
+  assert.equal(saude.ok, false);
+  assert.equal(saude.falhasSeguidas, 1);
+});
+
