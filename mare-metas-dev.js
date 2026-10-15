@@ -1008,17 +1008,72 @@
       return a;
     } catch (e) { return null; }
   }
+  // Monta os textos personalizados do popup dos peixes (título, subtítulo e botão) reagindo ao nome, tema (mês/Black/campanha), escopo, marco e números da meta.
+  function textoPopup(m, marco) {
+    m = m || {};
+    const cem = marco >= 100, tit = String(m.titulo || '').trim();
+    const escopoTxt = m.escopo === 'digital' ? 'meta do Digital' : 'meta da squad';
+    const temAlvo = Number(m.alvo) > 0 && m.atual != null;
+    const progTxt = temAlvo ? ` (${esc(fmtVal(m, m.atual))} de ${esc(fmtVal(m, m.alvo))})` : '';
+    const nx = !cem ? proximoMarco(m) : null;
+    const faltaNx = nx && Number(nx.falta) > 0 ? ` — faltam <b>${esc(fmtVal(m, nx.falta))}</b>` : '';
+    const proxTxt = nx ? ` Próximo peixe em <b>${nx.marco}%</b>${faltaNx}.` : '';
+    const mMes = tit.match(/(?:^|\b)(janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\b|$)/i);
+    const mesCru = mMes ? mMes[1].toLowerCase().replace(/^marco$/, 'março') : '';
+    const mes = mesCru ? mesCru.charAt(0).toUpperCase() + mesCru.slice(1) : '';
+    const ehBf = /black\s*friday|cyber\s*monday|esquenta/i.test(tit);
+    const mCamp = !mes && !ehBf ? tit.match(/(dia das m[aã]es|dia dos pais|dia das crian[cç]as|dia dos namorados|natal|ano novo|anivers[aá]rio|live|sald[aã]o|liquida[cç][aã]o|liquida)/i) : null;
+    const camp = mCamp ? mCamp[1] : '';
+    const temaCurto = mes || (ehBf ? 'Black Friday' : camp);
+    const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const emTit = tit && norm(tit) !== norm(temaCurto) ? ` em <b>${esc(tit)}</b>` : '';
+    let h2, corpo, btn;
+    if (cem) {
+      h2 = mes ? `🏆 Meta batida em ${esc(mes)}! 🎉` : (m.tipo === 'desafio' ? '🏆 Meta batida — desafio concluído! 🎉' : '🏆 Meta batida! 🎉');
+      if (ehBf) corpo = `A rede de <b>${esc(tit || 'Black Friday')}</b> transbordou na Black! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      else if (mes) corpo = `A rede de <b>${esc(tit || mes)}</b> encheu! Fechamos <b>${esc(mes)}</b> em <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      else corpo = `A rede${tit ? ' de <b>' + esc(tit) + '</b>' : ''} encheu! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      btn = mes ? `Bora comemorar ${esc(mes)}! 🥳` : 'Bora comemorar! 🥳';
+    } else {
+      h2 = mes ? `O mar tá pra peixe em ${esc(mes)}! 🐟` : (ehBf ? 'O mar tá pra peixe na Black! 🐟' : 'O mar tá pra peixe! 🐟');
+      let abre;
+      if (mes) {
+        abre = marco === 20 ? `Primeiro peixe de <b>${esc(mes)}</b> na rede!`
+          : marco === 40 ? `O cardume de <b>${esc(mes)}</b> tá encorpando!`
+          : marco === 60 ? `Passamos da metade de <b>${esc(mes)}</b>!`
+          : marco === 80 ? `Reta final de <b>${esc(mes)}</b> no mar!`
+          : `A maré de <b>${esc(mes)}</b> tá subindo!`;
+      } else if (ehBf) {
+        abre = marco === 20 ? 'Primeiro peixe da <b>Black</b> na rede!'
+          : marco === 40 ? 'O cardume da <b>Black</b> tá forte!'
+          : marco === 60 ? 'Passamos da metade na <b>Black</b>!'
+          : marco === 80 ? 'Reta final da <b>Black</b> pegando fogo!'
+          : 'A maré da <b>Black</b> tá subindo!';
+      } else if (camp) {
+        abre = `A campanha de <b>${esc(camp)}</b> engrenou!`;
+      } else {
+        abre = marco === 20 ? 'Primeiro peixe na rede!'
+          : marco === 40 ? 'O cardume tá encorpando!'
+          : marco === 60 ? 'Passamos da metade!'
+          : marco === 80 ? 'Reta final no mar!'
+          : 'A maré tá subindo!';
+      }
+      corpo = `${abre} Chegamos a <b>${marco}%</b> da ${escopoTxt}${emTit}${progTxt}.${proxTxt}`;
+      btn = mes ? `Bora pescar mais em ${esc(mes)}! 🚀` : (ehBf ? 'Bora pescar mais na Black! 🚀' : 'Bora pescar mais! 🚀');
+    }
+    const sub = `${esc(m.emoji || '🎯')} <b>${esc(tit)}</b><br>${corpo}`;
+    return { h2, sub, btn, corpo };
+  }
   function mostrarPeixes(m, marco, fim) {
     injetaCss(); if (typeof document === 'undefined') return;
     const cem = marco >= 100, n = Math.max(1, Math.min(7, cem ? 7 : marco / 20 + 1));
-    const dono = m.escopo === 'squad' ? (m.squad ? 'a squad' : '') : 'o Digital';
-    const nx = proximoMarco(m);
+    const tx = textoPopup(m, marco);
     const fish = Array.from({ length: n }, (_, i) => `<span class="f" style="left:${6 + i * (84 / Math.max(1, n))}%;animation-delay:${(i * .33).toFixed(2)}s;font-size:${28 + (i % 3) * 5}px">${['🐟', '🐠', '🐡'][i % 3]}</span>`).join('');
     const el = document.createElement('div'); el.className = 'mm-fish-ov mm';
     el.innerHTML = `<div class="mm-fish ${cem ? 'cem' : ''}" role="dialog" aria-modal="true" aria-label="O mar tá pra peixe"><button class="x" aria-label="Fechar">✕</button>
-      <h2>${cem ? '🏆 Meta batida! 🎉' : 'O mar tá pra peixe! 🐟'}</h2><div class="big">${marco}%</div>
-      <p class="sub">${esc(m.emoji || '🎯')} <b>${esc(m.titulo)}</b><br>${cem ? 'A rede encheu! Parabéns, time.' : (dono ? 'Chegamos a <b>' + marco + '%</b> da meta ' + (m.escopo === 'digital' ? 'do Digital' : 'da squad') + '.' : '') + (nx ? ' Próximo peixe em <b>' + nx.marco + '%</b>.' : '')}</p>
-      <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${cem ? 'Bora comemorar! 🥳' : 'Bora pescar mais! 🚀'}</button></div>`;
+      <h2>${tx.h2}</h2><div class="big">${marco}%</div>
+      <p class="sub">${tx.sub}</p>
+      <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${tx.btn}</button></div>`;
     let som = null, tm = null;
     const fecha = () => { if (!el.isConnected) return; el.remove(); document.removeEventListener('keydown', onKey, true); clearTimeout(tm); if (som) { try { som.pause(); } catch (e) {} } fim && fim(); };
     const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); fecha(); } };
@@ -1096,7 +1151,7 @@
     // matemática
     hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
-    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
+    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar, textoPopup,
     // dados
     iniciar, ouvirTodasSquads, salvar, remover, arquivar, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
     // modais
