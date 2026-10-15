@@ -212,6 +212,7 @@ body{font-family:"DM Sans",sans-serif;background:var(--deep);color:var(--txt);}
    (responsável/tag/prioridade/texto) + o select de squad já existente, pra
    não repetir a mesma string de estilo 4x. */
 .pt-filter-input{padding:5px 10px;font-size:11px;border:1px solid var(--glass-b);border-radius:8px;background:rgba(var(--ink-rgb),.8);color:var(--txt);font-family:'DM Sans',sans-serif;}
+.pt-filter-input option,.okr-select option{background:rgb(var(--ink-rgb));color:var(--txt);}
 
 /* ═══ OKR (Objetivos/Marcos) — Fase 1 ═══
    Dot de status em vez de texto colorido em cima de fundo colorido —
@@ -2018,7 +2019,7 @@ window.MARE_SO_HERING = true;
   </div>
 </div>
 
-<div class="version">v2.86 · okr-dev</div>
+<div class="version">v2.87 · okr-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -2948,7 +2949,7 @@ function loadOkrReuniaoNotas(){
 function _okrNotasPopulateDateSel(){
   const sel = document.getElementById('okr-notas-date-sel'); if(!sel) return;
   const hoje = _todayStr();
-  const datas = new Set(Object.keys(okrReuniaoNotas)); datas.add(hoje);
+  const datas = new Set(Object.keys(okrReuniaoNotas).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d))); datas.add(hoje);
   const lista = [...datas].sort().reverse();
   const atual = sel.value || _okrNotasViewDate || hoje;
   sel.innerHTML = lista.map(d=>`<option value="${d}">${esc(d===hoje ? 'Hoje, '+_fmtDateBR(d) : _fmtDateBR(d))}</option>`).join('');
