@@ -1613,6 +1613,10 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <span id="github-status-pill-dot" style="width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
       <span id="github-status-pill-txt">🐙 GitHub Pages: verificando…</span>
     </span>
+    <span id="firebase-status-pill" onclick="swPtab('status')" title="Ver status dos 6 serviços do Firebase que usamos (aba 🔋 Status)" style="display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:10px;font-weight:600;cursor:pointer;background:rgba(29,233,182,.08);border:1px solid rgba(29,233,182,.25);color:var(--teal);margin-left:4px;transition:all .15s;">
+      <span id="firebase-status-pill-dot" style="width:6px;height:6px;border-radius:50%;background:var(--teal);display:inline-block;"></span>
+      <span id="firebase-status-pill-txt">🔥 Firebase: verificando…</span>
+    </span>
     <span class="last-update" id="last-update"></span>
   </div>
 
@@ -2187,6 +2191,47 @@ window.MARE_LOGIN_PELO_OCEANO = true;
       <!-- Rodapé do vigia automático (Cloud Function githubStatus -> kanban/github_saude) -->
       <div id="st-gh-monitor-meta" style="margin-top:9px;padding-top:8px;border-top:1px solid var(--glass-b);font-size:10px;color:var(--txt3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
         <span>🛰️ Vigia automático (<code>githubStatus</code>, a cada 5 min): aguardando leitura…</span>
+      </div>
+    </div>
+
+    <!-- 🔥 Status do Firebase (Serviços que usamos) -->
+    <div class="status-card" id="st-firebase-card" style="background:rgba(var(--slate-rgb),.5);border:1px solid var(--glass-b);border-radius:11px;padding:14px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <span style="font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--txt);">🔥 Status do Firebase (Serviços que usamos)</span>
+          <span id="st-fb-overall-badge" style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--glass-b);color:var(--txt2);">Verificando…</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+          <span style="font-size:10px;color:var(--txt3);" title="Não cria comunicado no Mural nem notifica usuários comuns">🔒 Alerta restrito aos ADMs (sino + push)</span>
+          <a href="https://status.firebase.google.com/" target="_blank" rel="noopener" class="btn" style="padding:3px 9px;font-size:10px;text-decoration:none;">status.firebase.google.com ↗</a>
+          <button class="btn" onclick="loadFirebaseStatus(true)" style="padding:3px 9px;font-size:10px;">🔄 Checar agora</button>
+        </div>
+      </div>
+
+      <!-- Destaque principal: Realtime Database + Telemetria real da sessão -->
+      <div id="st-fb-rtdb-banner" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;padding:11px 13px;border-radius:9px;background:rgba(29,233,182,.07);border:1px solid rgba(29,233,182,.28);margin-bottom:10px;">
+        <div style="display:flex;align-items:center;gap:10px;min-width:0;">
+          <span style="font-size:20px;line-height:1;">🗄️</span>
+          <div>
+            <div style="font-size:12px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+              <span>Realtime Database (banco em tempo real <code>kanban/</code>)</span>
+              <span id="st-fb-rtdb-badge" style="font-size:10px;font-weight:700;padding:1px 8px;border-radius:999px;background:rgba(29,233,182,.16);color:var(--teal);">Operacional</span>
+            </div>
+            <div id="st-fb-rtdb-desc" style="font-size:11px;color:var(--txt2);margin-top:2px;">Cards, quadros, OKRs, presença, notificações e configurações sincronizados em tempo real.</div>
+          </div>
+        </div>
+        <div id="st-fb-rtdb-meta" style="font-size:10px;color:var(--txt3);text-align:right;"></div>
+      </div>
+
+      <!-- Grade dos outros 5 serviços do Firebase que usamos -->
+      <div id="st-fb-comps-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:7px;margin-bottom:10px;"></div>
+
+      <!-- Incidentes ativos nos 6 serviços que usamos -->
+      <div id="st-fb-incidents" style="font-size:11px;color:var(--txt2);"></div>
+
+      <!-- Rodapé do vigia automático (Cloud Function firebaseStatus -> kanban/firebase_saude) -->
+      <div id="st-fb-monitor-meta" style="margin-top:9px;padding-top:8px;border-top:1px solid var(--glass-b);font-size:10px;color:var(--txt3);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;">
+        <span>🛰️ Vigia automático (<code>firebaseStatus</code>, a cada 5 min): aguardando leitura…</span>
       </div>
     </div>
 
@@ -2973,7 +3018,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.68 · painel-dev</div>
+<div class="version">v5.69 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3076,7 +3121,7 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif-dev.js?v=30"></script>
+<script src="mare-notif-dev.js?v=31"></script>
 <script src="mare-metas-dev.js?v=10"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
@@ -6957,11 +7002,13 @@ function renderGithubStatusUI(){
   }
 
   // 3) Destaque principal: GitHub Pages
-  if(bannerEl && dotEl && badgeEl && descEl){
+  if(bannerEl && badgeEl && descEl){
     bannerEl.style.borderColor = pStyle.border;
     bannerEl.style.background = pStyle.bg;
-    dotEl.style.background = pStyle.color;
-    dotEl.style.boxShadow = `0 0 10px ${pStyle.color}`;
+    if(dotEl){
+      dotEl.style.background = pStyle.color;
+      dotEl.style.boxShadow = `0 0 10px ${pStyle.color}`;
+    }
     badgeEl.style.color = pStyle.color;
     badgeEl.style.borderColor = pStyle.border;
     badgeEl.style.background = 'rgba(6,18,36,.45)';
@@ -7038,9 +7085,276 @@ function renderGithubStatusUI(){
   }
 }
 
+// ── 🔥 Status do Firebase — Serviços que usamos (aba 🔋 Status + pílula no topo) ──
+const _FB_STATUS_URL = 'https://status.firebase.google.com/incidents.json';
+const _FB_TTL_MS = 2 * 60 * 1000;
+const _FB_COMP_META = [
+  { key: 'Realtime Database', label: 'Realtime Database', icon: '🗄️', desc: 'Banco em tempo real (kanban/)', primary: true, match: ['realtime database', 'firebase realtime database', 'rtdb'] },
+  { key: 'Authentication',    label: 'Authentication',    icon: '🔐', desc: 'Login Google (@ciahering)',    match: ['authentication', 'firebase authentication', 'auth'] },
+  { key: 'Cloud Messaging',   label: 'Cloud Messaging',   icon: '🔔', desc: 'Notificações Push (FCM)',      match: ['cloud messaging', 'firebase cloud messaging', 'fcm'] },
+  { key: 'Cloud Functions',   label: 'Cloud Functions',   icon: '⚡', desc: 'Push, Agente Ágil, Backups',   match: ['cloud functions', 'firebase cloud functions', 'functions'] },
+  { key: 'Cloud Storage',     label: 'Cloud Storage',     icon: '📦', desc: 'Anexos, fotos e backups',      match: ['cloud storage', 'firebase cloud storage', 'storage for firebase'] },
+  { key: 'Hosting',           label: 'Hosting / Domínio', icon: '🌐', desc: 'Domínio OAuth firebaseapp',    match: ['hosting', 'firebase hosting'] }
+];
+let _fbSaude = null;
+let _fbLive = null;
+let _fbLiveAt = 0;
+let _fbProbeOk = true;
+let _fbLastLatenciaMs = null;
+let _fbInited = false;
+
+function _fbMatchServicos(serviceName, affectedProducts){
+  const candidatos = [];
+  if(serviceName) candidatos.push(String(serviceName).toLowerCase());
+  if(Array.isArray(affectedProducts)){
+    affectedProducts.forEach(p => { if(p && p.title) candidatos.push(String(p.title).toLowerCase()); });
+  }
+  const atingidos = [];
+  _FB_COMP_META.forEach(s => {
+    const bateu = candidatos.some(c => s.match.some(m => c === m || c.includes(m)));
+    if(bateu) atingidos.push(s.key);
+  });
+  return atingidos;
+}
+
+function initFirebaseStatusMonitor(){
+  if(_fbInited) return;
+  _fbInited = true;
+  try{
+    window._onValue(window._ref(window._db, 'kanban/firebase_saude'), snap => {
+      _dbgTrack('firebase_saude', snap.val());
+      _fbSaude = snap.val() || null;
+      renderFirebaseStatusUI();
+    });
+  }catch(e){}
+  loadFirebaseStatus(false);
+  setInterval(() => loadFirebaseStatus(false), 5 * 60 * 1000);
+}
+
+async function loadFirebaseStatus(force){
+  if(!force && (_fbLive || _fbLastLatenciaMs !== null) && (Date.now() - _fbLiveAt < _FB_TTL_MS)){
+    renderFirebaseStatusUI();
+    return;
+  }
+  // 1) Mede a saúde ao vivo do Realtime Database na própria sessão (independente de CORS externo)
+  try{
+    const t0 = performance.now();
+    await window._get(window._ref(window._db, 'kanban/config'));
+    _fbLastLatenciaMs = Math.round(performance.now() - t0);
+    _fbProbeOk = true;
+  }catch(e){
+    _fbProbeOk = false;
+  }
+  // 2) Tenta consultar também o feed público oficial de incidentes do Firebase
+  try{
+    const res = await fetch(_FB_STATUS_URL, { cache: 'no-store' });
+    if(res.ok){
+      const arr = await res.json();
+      if(Array.isArray(arr)){
+        const comps = {};
+        _FB_COMP_META.forEach(s => { comps[s.key] = { status: 'operational', updatedAt: null }; });
+        const incs = [];
+        for(const raw of arr){
+          if(!raw || typeof raw !== 'object') continue;
+          const endStr = String(raw.end || '').trim();
+          const stOverall = String(raw.most_recent_update?.status || raw.status_impact || '').toUpperCase();
+          if(endStr || stOverall === 'AVAILABLE' || stOverall === 'RESOLVED') continue;
+          const servicos = _fbMatchServicos(raw.service_name, raw.affected_products);
+          if(!servicos.length) continue;
+          const sev = String(raw.severity || '').toLowerCase();
+          const compSt = (stOverall === 'SERVICE_OUTAGE' || sev === 'high' || sev === 'critical')
+            ? 'major_outage'
+            : (stOverall === 'SERVICE_DISRUPTION' || sev === 'medium') ? 'partial_outage' : 'degraded_performance';
+          const updAt = raw.most_recent_update?.modified || raw.modified || raw.begin || null;
+          servicos.forEach(k => {
+            if(comps[k]){ comps[k].status = compSt; comps[k].updatedAt = updAt; }
+          });
+          incs.push({
+            id: String(raw.id || raw.number || '').trim(),
+            name: String(raw.external_desc || raw.service_name || 'Incidente no Firebase').trim().slice(0, 200),
+            status: stOverall || 'INVESTIGATING',
+            impact: compSt === 'major_outage' ? 'critical' : compSt === 'partial_outage' ? 'major' : 'minor',
+            servicosAfetados: servicos,
+            shortlink: raw.uri ? ('https://status.firebase.google.com/' + String(raw.uri).replace(/^\/+/, '')) : 'https://status.firebase.google.com',
+            updatedAt: updAt,
+            latestBody: String(raw.most_recent_update?.text || '').replace(/\s+/g, ' ').trim().slice(0, 280)
+          });
+        }
+        _fbLive = {
+          indicator: incs.length ? 'minor' : 'none',
+          rtdbStatus: comps['Realtime Database'].status,
+          componentes: comps,
+          incidentesAtivos: incs,
+          fetchedAt: new Date().toISOString()
+        };
+      }
+    }
+  }catch(e){}
+  _fbLiveAt = Date.now();
+  renderFirebaseStatusUI();
+}
+
+function renderFirebaseStatusUI(){
+  const src = _fbLive || _fbSaude;
+  const pill = document.getElementById('firebase-status-pill');
+  const overallEl = document.getElementById('st-fb-overall-badge');
+  const bannerEl = document.getElementById('st-fb-rtdb-banner');
+  const badgeEl = document.getElementById('st-fb-rtdb-badge');
+  const descEl = document.getElementById('st-fb-rtdb-desc');
+  const metaRtdbEl = document.getElementById('st-fb-rtdb-meta');
+  const gridEl = document.getElementById('st-fb-comps-grid');
+  const incEl = document.getElementById('st-fb-incidents');
+  const metaEl = document.getElementById('st-fb-monitor-meta');
+
+  const comps = (src && src.componentes) || {};
+  let rtdbSt = (src && src.rtdbStatus)
+    || (comps['Realtime Database'] && comps['Realtime Database'].status)
+    || (_fbProbeOk ? 'operational' : 'partial_outage');
+  if(!_fbProbeOk && rtdbSt === 'operational') rtdbSt = 'degraded_performance';
+
+  const rStyle = _ghStyleFor(rtdbSt);
+  const incs = (src && Array.isArray(src.incidentesAtivos)) ? src.incidentesAtivos : [];
+  const hasAnyCompIssue = _FB_COMP_META.some(m => {
+    const st = (comps[m.key] && comps[m.key].status) || 'operational';
+    return st !== 'operational' && st !== 'unknown';
+  });
+  const hasIssue = rtdbSt !== 'operational' || incs.length > 0 || hasAnyCompIssue;
+  const latTxt = _fbLastLatenciaMs != null ? `${_fbLastLatenciaMs} ms` : '';
+
+  // 1) Pílula no topo (.refresh-bar)
+  if(pill){
+    pill.style.display = 'inline-flex';
+    if(rtdbSt !== 'operational' && rtdbSt !== 'unknown'){
+      pill.style.color = rStyle.color;
+      pill.style.borderColor = rStyle.border;
+      pill.style.background = rStyle.bg;
+      pill.textContent = `🚨 Firebase (RTDB): ${rStyle.label}`;
+    } else if(incs.length > 0 || hasAnyCompIssue){
+      pill.style.color = '#ffb547';
+      pill.style.borderColor = 'rgba(255,181,71,.4)';
+      pill.style.background = 'rgba(255,181,71,.12)';
+      pill.textContent = `🔥 RTDB OK · ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} no Firebase`;
+    } else {
+      pill.style.color = '#00c9a7';
+      pill.style.borderColor = 'rgba(0,201,167,.3)';
+      pill.style.background = 'rgba(0,201,167,.08)';
+      pill.textContent = `🔥 Firebase (RTDB): OK${latTxt ? ' · ' + latTxt : ''}`;
+    }
+  }
+
+  // 2) Selo geral no cabeçalho do card
+  if(overallEl){
+    if(!hasIssue){
+      overallEl.style.color = '#00c9a7';
+      overallEl.style.borderColor = 'rgba(0,201,167,.35)';
+      overallEl.style.background = 'rgba(0,201,167,.12)';
+      overallEl.textContent = '✓ Todos os 6 serviços operacionais';
+    } else if(rtdbSt !== 'operational' && rtdbSt !== 'unknown'){
+      overallEl.style.color = rStyle.color;
+      overallEl.style.borderColor = rStyle.border;
+      overallEl.style.background = rStyle.bg;
+      overallEl.textContent = `🚨 Realtime DB: ${rStyle.label}`;
+    } else {
+      overallEl.style.color = '#ffb547';
+      overallEl.style.borderColor = 'rgba(255,181,71,.4)';
+      overallEl.style.background = 'rgba(255,181,71,.14)';
+      overallEl.textContent = `⚠️ ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} ativo${incs.length > 1 ? 's' : ''}`;
+    }
+  }
+
+  // 3) Destaque principal: Realtime Database (coração do Maré Digital)
+  if(bannerEl && badgeEl && descEl){
+    bannerEl.style.borderColor = rStyle.border;
+    bannerEl.style.background = rStyle.bg;
+    badgeEl.style.color = rStyle.color;
+    badgeEl.style.borderColor = rStyle.border;
+    badgeEl.style.background = 'rgba(6,18,36,.45)';
+    badgeEl.textContent = rStyle.label + (latTxt ? ` · ${latTxt}` : '');
+    if(rtdbSt === 'operational'){
+      descEl.textContent = 'Banco em tempo real (kanban/) sincronizando quadros, cards, OKRs, metas, escala e notificações normalmente.';
+    } else {
+      descEl.textContent = 'Atenção: instabilidade no Realtime Database pode atrasar a sincronização de cards ou leituras do painel. Os ADMs são acionados automaticamente.';
+    }
+    if(metaRtdbEl){
+      const authOk = !!(window._currentUser && window._currentUser.uid);
+      metaRtdbEl.innerHTML = `${latTxt ? `<div>⚡ Ping RTDB: <b style="color:var(--txt);">${esc(latTxt)}</b></div>` : ''}<div style="margin-top:2px;">🔐 Sessão Auth: <b style="color:${authOk ? 'var(--teal)' : 'var(--warn)'};">${authOk ? 'Ativa' : 'Verificando'}</b></div>`;
+    }
+  }
+
+  // 4) Grade dos 6 serviços do Firebase que usamos
+  if(gridEl){
+    gridEl.innerHTML = _FB_COMP_META.map(m => {
+      const cObj = comps[m.key] || {};
+      let st = cObj.status || (m.key === 'Realtime Database' ? rtdbSt : 'operational');
+      if(m.key === 'Realtime Database') st = rtdbSt;
+      const stInfo = _ghStyleFor(st);
+      const isOk = st === 'operational';
+      return `<div style="padding:9px 11px;border-radius:9px;background:${isOk?'rgba(var(--slate-rgb),.32)':stInfo.bg};border:1px solid ${isOk?'var(--glass-b)':stInfo.border};display:flex;align-items:center;justify-content:space-between;gap:8px;" title="${esc(m.desc)}">
+        <div style="min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <span style="font-size:13px;flex-shrink:0;">${m.icon}</span>
+            <span style="font-size:11px;font-weight:${m.primary?'700':'600'};color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.label)}</span>
+          </div>
+          <div style="font-size:9.5px;color:var(--txt3);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.desc)}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:5px;font-size:9.5px;font-weight:700;color:${stInfo.color};flex-shrink:0;">
+          <span style="width:7px;height:7px;border-radius:999px;background:${stInfo.color};"></span>
+          ${esc(isOk ? 'OK' : stInfo.label)}
+        </span>
+      </div>`;
+    }).join('');
+  }
+
+  // 5) Lista de incidentes ativos nos serviços que usamos
+  if(incEl){
+    if(!incs.length){
+      incEl.style.display = 'none';
+      incEl.innerHTML = '';
+    } else {
+      incEl.style.display = 'block';
+      incEl.innerHTML = incs.map(inc => {
+        const impColor = (inc.impact === 'critical' || inc.impact === 'major') ? '#ff5c7c' : '#ffb547';
+        const dtTxt = inc.updatedAt ? new Date(inc.updatedAt).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+        const svcs = Array.isArray(inc.servicosAfetados) && inc.servicosAfetados.length ? inc.servicosAfetados.join(', ') : '';
+        return `<div style="padding:10px 12px;border-radius:9px;background:rgba(255,92,124,.09);border:1px solid rgba(255,92,124,.32);margin-bottom:6px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+            <div style="font-size:11.5px;font-weight:700;color:${impColor};">🚨 ${esc(inc.name || 'Incidente no Firebase')}${svcs ? ` <span style="font-size:10px;color:var(--txt2);font-weight:600;">(${esc(svcs)})</span>` : ''}</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:9.5px;font-weight:700;padding:1px 7px;border-radius:999px;background:rgba(6,18,36,.5);color:var(--txt2);border:1px solid var(--glass-b);">${esc(inc.status || '')}</span>
+              ${dtTxt ? `<span style="font-size:9.5px;color:var(--txt3);">${esc(dtTxt)}</span>` : ''}
+              ${inc.shortlink ? `<a href="${esc(inc.shortlink)}" target="_blank" rel="noopener" style="font-size:10px;color:var(--teal);text-decoration:none;font-weight:600;">Detalhes ↗</a>` : ''}
+            </div>
+          </div>
+          ${inc.latestBody ? `<div style="font-size:10.5px;color:var(--txt2);margin-top:5px;line-height:1.45;">${esc(inc.latestBody)}</div>` : ''}
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // 6) Rodapé de telemetria
+  if(metaEl){
+    const parts = [];
+    if(_fbLive && _fbLive.fetchedAt){
+      const t = new Date(_fbLive.fetchedAt).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      parts.push(`Feed oficial lido no navegador: ${t}`);
+    } else if(_fbLiveAt){
+      const t = new Date(_fbLiveAt).toLocaleTimeString('pt-BR', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+      parts.push(`Sonda ao vivo no navegador: ${t}${latTxt ? ' (' + latTxt + ')' : ''}`);
+    }
+    if(_fbSaude && _fbSaude.verificadoEm){
+      const tSrv = new Date(_fbSaude.verificadoEm).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+      parts.push(`Vigia Cloud Function (5 min): ${tSrv}${_fbSaude.ok === false ? ' ⚠️ falha na última leitura' : ''}`);
+    } else {
+      parts.push('Vigia Cloud Function (firebaseStatus): aguardando 1ª execução');
+    }
+    metaEl.textContent = parts.join(' · ');
+  }
+}
+
 async function loadStatusData(force){
   carregarConfigInatividade();
   loadGithubStatus(force);
+  loadFirebaseStatus(force);
   const listEl = document.getElementById('st-squad-list');
   if(listEl) listEl.innerHTML='<div style="font-size:11px;color:var(--txt3);">Medindo dados de cada squad...</div>';
 
@@ -7050,6 +7364,9 @@ async function loadStatusData(force){
     const t0 = performance.now();
     await window._get(window._ref(window._db,'kanban/config'));
     latencia = Math.round(performance.now()-t0);
+    _fbLastLatenciaMs = latencia;
+    _fbProbeOk = true;
+    renderFirebaseStatusUI();
   } catch(e){ latencia = null; }
   const latEl=document.getElementById('st-latencia');
   if(latEl){
@@ -7364,7 +7681,7 @@ function renderPainelNotifs(){
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});MareNotif.abrirPagina('escala-dev.html?visao=squad&squad='+encodeURIComponent(${jsq(n.squad||'')})+'&semana='+encodeURIComponent(${jsq(n.okrObjId||'')}));" style="cursor:pointer;"`
       : n.type==='meta_lembrete'
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});${n.okrObjId==='digital'?`swPtab('dados');togglePainelNotif(event);`:`MareNotif.abrirPagina('kanban-dev.html?squad='+encodeURIComponent(${jsq(n.squad||'')})+'&dados=squad');`}" style="cursor:pointer;"`   // 🐟 lembrete de meta: Digital → aba Dados daqui; squad → aba Dados do Maré
-      : (n.type==='github_incidente' || n.type==='github_monitor_falhou' || n.type==='backup_falhou')
+      : (n.type==='github_incidente' || n.type==='github_monitor_falhou' || n.type==='firebase_incidente' || n.type==='firebase_monitor_falhou' || n.type==='backup_falhou')
       ? `onclick="_markOnePainelNotifRead(${jsq(n.id)});swPtab('status');togglePainelNotif(event);" style="cursor:pointer;"`
       : n.link
       ? `onclick="${n._kind==='notif'?`_markOnePainelNotifRead(${jsq(n.id)});`:''}swPtab(${jsq(n.link)});togglePainelNotif(event);" style="cursor:pointer;"`
@@ -9563,6 +9880,7 @@ window.addEventListener('fb-ready',()=>{
   loadDadosDiarios();
   _pmetasIniciar();   // 🐟 metas/desafios do Digital + metas das squads (ranking)
   initGithubStatusMonitor();   // 🐙 status do GitHub & GitHub Pages (pílula no topo + aba 🔋 Status)
+  initFirebaseStatusMonitor();   // 🔥 status do Firebase — 6 serviços que usamos (pílula no topo + aba 🔋 Status)
   setTimeout(_restoreTab, 300);
 });
 function loadLembretesGestao(){

@@ -24,8 +24,8 @@ function urlDoPush(notif) {
   }
   // Aviso do vigia dos backups ou do monitor da VTEX (só ADMs): abre o Painel.
   if (type === 'backup_falhou' || type === 'vtex_monitor_falhou') return SITE_BASE_URL + 'painel.html';
-  // Incidente ou falha de monitor do GitHub / GitHub Pages (só ADMs): abre o Painel direto na aba 🔋 Status.
-  if (type === 'github_incidente' || type === 'github_monitor_falhou') return SITE_BASE_URL + 'painel.html?tab=status';
+  // Incidente ou falha de monitor do GitHub / GitHub Pages ou Firebase (só ADMs): abre o Painel direto na aba 🔋 Status.
+  if (type === 'github_incidente' || type === 'github_monitor_falhou' || type === 'firebase_incidente' || type === 'firebase_monitor_falhou') return SITE_BASE_URL + 'painel.html?tab=status';
   const params = new URLSearchParams();
   if (n.squad) params.set('squad', n.squad);
   if (n.cardId) params.set('card', n.cardId);

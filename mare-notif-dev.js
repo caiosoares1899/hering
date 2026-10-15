@@ -30,7 +30,7 @@
     intake:'📥', recorrente:'🔁', reuniao:'🎥', gcal_pending:'📅', gcal_approved:'✅', kudos:'⭐', kudos_monitor:'⭐', reacao:'👍',
     feedback:'🐛', painel_broadcast:'📢', rascunho:'📝',
     okr_editado:'🎯', okr_prazo:'⏰', okr_reuniao:'🎥', okr_agente:'🤖', okr_mencao:'💬', okr_evento:'🗓️',
-    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', escala:'🗓️', backup_falhou:'🛟', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️',
+    mural:'📢', obj_criado:'🆕', marco_concluido:'✅', meta_lembrete:'🐟', escala:'🗓️', backup_falhou:'🛟', vtex_incidente:'🚨', vtex_monitor_falhou:'🛰️', github_incidente:'🐙', github_monitor_falhou:'🛰️', firebase_incidente:'🔥', firebase_monitor_falhou:'🛰️',
   };
   // Só aparecem no painel (o sino do board já os filtrava).
   const SO_PAINEL = new Set(['rascunho']);
@@ -61,7 +61,7 @@
     {id:'sistema', icone:'📢', nome:'Painel e sistema',          desc:'Avisos do Painel e entradas de fora'},
   ];
   // Espelho do PUSH_TYPES de functions/index.js (+ 'mural', que tem função própria: sendPushOnMural). O teste compara os dois.
-  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou']);
+  const PUSH_PADRAO = new Set(['assigned','mention','unblocked','risk','recorrente','painel_broadcast','intake','okr_editado','okr_prazo','okr_reuniao','okr_agente','okr_mencao','feedback','reuniao','due_today','due_overdue','mural','meta_lembrete','escala','backup_falhou','vtex_incidente','vtex_monitor_falhou','github_incidente','github_monitor_falhou','firebase_incidente','firebase_monitor_falhou']);
   // fonte: 'pessoal' = notificação gravada na caixa de cada pessoa (kanban/usuarios/{uid}/notificacoes); 'feed' = evento único da torre (kanban/notif_feed).
   const TIPOS = [
     // ── Cards do board ──
@@ -118,6 +118,12 @@
     {id:'github_monitor_falhou', area:'sistema', fonte:'pessoal', nome:'Monitor do GitHub sem resposta', pushPossivel:true,
       quando:'A função githubStatus não consegue ler o summary.json do GitHub Status por ~1 hora seguida. Um aviso por queda.',
       quem:'Só os ADMs.', onde:'Servidor: githubStatus (functions/github/statusGithub.js). Clicar abre a aba 🔋 Status do Painel; o batimento fica em kanban/github_saude.'},
+    {id:'firebase_incidente', area:'sistema', fonte:'pessoal', nome:'Incidente no Firebase — serviços em uso (ADMs)', pushPossivel:true,
+      quando:'O painel oficial de status do Firebase (status.firebase.google.com) registra um incidente em andamento em um dos 6 serviços usados pelo Maré Digital (Realtime Database, Authentication, Cloud Messaging, Cloud Functions, Cloud Storage ou Hosting). Incidentes em outros produtos do Firebase (Crashlytics, AdMob, Test Lab etc.) são ignorados. Não cria Comunicado para todos os usuários.',
+      quem:'Só os ADMs.', onde:'Servidor: firebaseStatus (functions/firebase/statusFirebase.js, a cada 5 min). Clicar abre a aba 🔋 Status do Painel. Desligar tudo: kanban/config/firebase_status_off = true.'},
+    {id:'firebase_monitor_falhou', area:'sistema', fonte:'pessoal', nome:'Monitor do Firebase sem resposta', pushPossivel:true,
+      quando:'A função firebaseStatus não consegue ler o incidents.json do Firebase Status por ~1 hora seguida. Um aviso por queda.',
+      quem:'Só os ADMs.', onde:'Servidor: firebaseStatus (functions/firebase/statusFirebase.js). Clicar abre a aba 🔋 Status do Painel; o batimento fica em kanban/firebase_saude.'},
     // ── Pessoas e reconhecimento ──
     {id:'kudos', area:'pessoas', fonte:'pessoal', nome:'Estrela do Mar',
       quando:'Alguém te envia uma ⭐ Estrela do Mar, ou reage à Estrela que você enviou.', quem:'Quem recebeu a Estrela / quem a enviou.', onde:'Maré: addKudos() e toggleKudosReaction().'},
@@ -291,7 +297,7 @@
     if(t==='okr_mencao') return {url:urlOkr('okr','notas')};
     if(t.startsWith('okr_')) return {url:urlOkr('okr', n.okrObjId||'')};
     if(t==='feedback') return {url:PAGES.painel+'?tab=monitor'};
-    if(t==='github_incidente' || t==='github_monitor_falhou') return {url:PAGES.painel+'?tab=status'};   // incidente/monitor do GitHub (só ADMs): abre a aba 🔋 Status do Painel
+    if(t==='github_incidente' || t==='github_monitor_falhou' || t==='firebase_incidente' || t==='firebase_monitor_falhou') return {url:PAGES.painel+'?tab=status'};   // incidente/monitor do GitHub ou Firebase (só ADMs): abre a aba 🔋 Status do Painel
     if(t==='backup_falhou' || t==='vtex_monitor_falhou') return {url:PAGES.painel};   // aviso pros ADMs: abre o Painel
     if(t==='escala') return {url:PAGES.escala+'?visao=squad'+(n.squad?'&squad='+encodeURIComponent(n.squad):'')+(/^\d{4}-\d{2}-\d{2}$/.test(n.okrObjId||'')?'&semana='+n.okrObjId:'')};   // abre a Escala na semana cadastrada
     if(t==='meta_lembrete') return {url:PAGES.kanban+'?'+(n.squad?'squad='+encodeURIComponent(n.squad)+'&':'')+'dados='+(n.okrObjId==='digital'?'digital':'squad')};   // abre a aba 📊 Dados (Squad ou Digital) do Maré
