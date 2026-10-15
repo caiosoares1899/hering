@@ -264,6 +264,7 @@ async function processar({ db, parsed, agora }) {
     try {
       const chave = chaveDe(inc.id);
       const fase = faseDe(inc);
+      if (!chave || fase === 'desconhecido') { out.ignorados++; continue; }
       const estRef = db.ref(`kanban/github_status/${chave}`);
       const est = (await estRef.get()).val();
 

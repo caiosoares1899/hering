@@ -3018,7 +3018,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.69 · painel-dev</div>
+<div class="version">v5.70 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -6896,6 +6896,38 @@ function initGithubStatusMonitor(){
   setInterval(() => loadGithubStatus(false), 5 * 60 * 1000);
 }
 
+const _STATUS_JANELA_RECENTE_MS = 7 * 24 * 3600 * 1000;
+const _STATUS_RANK = { operational: 0, under_maintenance: 1, degraded_performance: 2, partial_outage: 3, major_outage: 4 };
+
+function _limparHtmlStatus(str){
+  return String(str || '')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function _statusIncidenteRecente(isoStr){
+  if(!isoStr) return true;
+  const ts = Date.parse(isoStr);
+  if(!Number.isFinite(ts)) return true;
+  return (Date.now() - ts) <= _STATUS_JANELA_RECENTE_MS;
+}
+
+function _setStatusPill(pill, dotId, txtId, dotColor, text){
+  if(!pill) return;
+  const dotEl = document.getElementById(dotId);
+  const txtEl = document.getElementById(txtId);
+  if(dotEl && dotColor) dotEl.style.background = dotColor;
+  if(txtEl) txtEl.textContent = text;
+  else pill.textContent = text;
+}
+
 async function loadGithubStatus(force){
   if(!force && _ghLive && (Date.now() - _ghLiveAt < _GH_TTL_MS)){
     renderGithubStatusUI();
@@ -6907,21 +6939,30 @@ async function loadGithubStatus(force){
       const json = await res.json();
       const comps = {};
       for(const c of (Array.isArray(json.components) ? json.components : [])){
-        if(c && c.name) comps[c.name] = { status: c.status || 'unknown', updatedAt: c.updated_at || null };
+        if(c && c.name && !/^visit\s+www\.githubstatus\.com/i.test(c.name)){
+          comps[c.name] = { status: c.status || 'unknown', updatedAt: c.updated_at || null };
+        }
       }
-      const incs = (Array.isArray(json.incidents) ? json.incidents : []).map(inc => {
-        const upds = Array.isArray(inc.incident_updates) ? inc.incident_updates : [];
-        const latest = upds[0] || {};
-        return {
-          id: inc.id || '',
-          name: inc.name || 'Incidente no GitHub',
-          status: inc.status || 'investigating',
-          impact: inc.impact || 'minor',
-          shortlink: inc.shortlink || 'https://www.githubstatus.com',
-          updatedAt: inc.updated_at || inc.created_at || null,
-          latestBody: String(latest.body || '').slice(0, 280)
-        };
-      });
+      const incs = (Array.isArray(json.incidents) ? json.incidents : [])
+        .filter(inc => {
+          if(!inc || typeof inc !== 'object') return false;
+          const st = String(inc.status || '').toLowerCase();
+          if(st === 'resolved' || st === 'postmortem' || st === 'completed' || st === 'cancelled') return false;
+          return _statusIncidenteRecente(inc.updated_at || inc.created_at);
+        })
+        .map(inc => {
+          const upds = Array.isArray(inc.incident_updates) ? inc.incident_updates : [];
+          const latest = upds[0] || {};
+          return {
+            id: inc.id || '',
+            name: _limparHtmlStatus(inc.name || 'Incidente no GitHub'),
+            status: inc.status || 'investigating',
+            impact: inc.impact || 'minor',
+            shortlink: inc.shortlink || 'https://www.githubstatus.com',
+            updatedAt: inc.updated_at || inc.created_at || null,
+            latestBody: _limparHtmlStatus(latest.body || '').slice(0, 280)
+          };
+        });
       _ghLive = {
         indicator: (json.status && json.status.indicator) || 'none',
         description: (json.status && json.status.description) || '',
@@ -6945,20 +6986,51 @@ function renderGithubStatusUI(){
   const dotEl = document.getElementById('st-gh-pages-dot');
   const badgeEl = document.getElementById('st-gh-pages-badge');
   const descEl = document.getElementById('st-gh-pages-desc');
+  const pagesMetaEl = document.getElementById('st-gh-pages-meta');
   const gridEl = document.getElementById('st-gh-comps-grid');
   const incEl = document.getElementById('st-gh-incidents');
   const metaEl = document.getElementById('st-gh-monitor-meta');
 
   if(!src){
-    if(pill){ pill.style.display = 'inline-flex'; pill.textContent = '🐙 Pages: verificando…'; }
+    if(pill){
+      pill.style.display = 'inline-flex';
+      _setStatusPill(pill, 'github-status-pill-dot', 'github-status-pill-txt', 'var(--teal)', '🐙 Pages: verificando…');
+    }
     return;
   }
 
-  const pagesSt = src.pagesStatus || (src.componentes && src.componentes.Pages && src.componentes.Pages.status) || 'unknown';
+  // Normaliza mapa de componentes tanto do formato _ghLive (objeto `componentes`) quanto do formato _ghSaude (`componentesResumo` / `componentesDegradados`)
+  const comps = Object.assign({}, src.componentes || {});
+  if(Array.isArray(src.componentesResumo)){
+    src.componentesResumo.forEach(c => {
+      if(c && c.nome && !comps[c.nome]) comps[c.nome] = { status: c.status || 'unknown', updatedAt: c.atualizadoEm || null };
+    });
+  }
+  if(Array.isArray(src.componentesDegradados)){
+    src.componentesDegradados.forEach(c => {
+      if(c && c.nome) comps[c.nome] = { status: c.status || 'degraded_performance', updatedAt: c.atualizadoEm || null };
+    });
+  }
+
+  const pagesSt = src.pagesStatus || (comps.Pages && comps.Pages.status) || 'unknown';
   const pStyle = _ghStyleFor(pagesSt);
-  const incs = Array.isArray(src.incidentesAtivos) ? src.incidentesAtivos : [];
-  const indicator = src.indicator || 'none';
-  const hasIssue = pagesSt !== 'operational' || incs.length > 0 || (indicator !== 'none' && indicator !== 'unknown');
+  const rawIncs = Array.isArray(src.incidentesAtivos) ? src.incidentesAtivos : (Array.isArray(src.incidentes) ? src.incidentes : []);
+  const incs = rawIncs.map(inc => ({
+    id: inc.id || '',
+    name: inc.name || inc.titulo || 'Incidente no GitHub',
+    status: inc.status || inc.estadoLabel || inc.estado || 'investigating',
+    impact: inc.impact || inc.impacto || 'minor',
+    shortlink: inc.shortlink || inc.link || 'https://www.githubstatus.com',
+    updatedAt: inc.updatedAt || inc.atualizadoEm || null,
+    latestBody: inc.latestBody || inc.resumo || ''
+  }));
+  const indicator = src.indicator || src.indicador || 'none';
+  const hasAnyCompIssue = _GH_COMP_META.some(m => {
+    const cObj = comps[m.key] || comps[m.name] || {};
+    const st = cObj.status || (m.key === 'Pages' ? pagesSt : 'unknown');
+    return st !== 'operational' && st !== 'unknown';
+  });
+  const hasIssue = pagesSt !== 'operational' || incs.length > 0 || hasAnyCompIssue || (indicator !== 'none' && indicator !== 'unknown');
 
   // 1) Pílula no topo (.refresh-bar)
   if(pill){
@@ -6967,17 +7039,17 @@ function renderGithubStatusUI(){
       pill.style.color = pStyle.color;
       pill.style.borderColor = pStyle.border;
       pill.style.background = pStyle.bg;
-      pill.textContent = `🚨 GitHub Pages: ${pStyle.label}`;
-    } else if(incs.length > 0){
+      _setStatusPill(pill, 'github-status-pill-dot', 'github-status-pill-txt', pStyle.color, `🚨 GitHub Pages: ${pStyle.label}`);
+    } else if(incs.length > 0 || hasAnyCompIssue){
       pill.style.color = '#ffb547';
       pill.style.borderColor = 'rgba(255,181,71,.4)';
       pill.style.background = 'rgba(255,181,71,.12)';
-      pill.textContent = `🐙 Pages OK · ${incs.length} incidente${incs.length>1?'s':''} no GitHub`;
+      _setStatusPill(pill, 'github-status-pill-dot', 'github-status-pill-txt', '#ffb547', `🐙 Pages OK · ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} no GitHub`);
     } else {
       pill.style.color = '#00c9a7';
       pill.style.borderColor = 'rgba(0,201,167,.3)';
       pill.style.background = 'rgba(0,201,167,.08)';
-      pill.textContent = '🐙 GitHub Pages: OK';
+      _setStatusPill(pill, 'github-status-pill-dot', 'github-status-pill-txt', '#00c9a7', '🐙 GitHub Pages: OK');
     }
   }
 
@@ -6997,7 +7069,7 @@ function renderGithubStatusUI(){
       overallEl.style.color = '#ffb547';
       overallEl.style.borderColor = 'rgba(255,181,71,.4)';
       overallEl.style.background = 'rgba(255,181,71,.14)';
-      overallEl.textContent = `⚠️ ${incs.length} incidente${incs.length>1?'s':''} ativo${incs.length>1?'s':''}`;
+      overallEl.textContent = `⚠️ ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} ativo${incs.length > 1 ? 's' : ''}`;
     }
   }
 
@@ -7020,11 +7092,15 @@ function renderGithubStatusUI(){
     } else {
       descEl.textContent = 'Atenção: instabilidade no GitHub Pages pode atrasar deploys da branch main ou afetar o carregamento das páginas. Os ADMs são acionados automaticamente.';
     }
+    if(pagesMetaEl){
+      const pUpd = src.pagesUpdatedAt || src.pagesAtualizadoEm || src.verificadoEm || src.fetchedAt;
+      const pUpdTxt = pUpd ? new Date(pUpd).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' }) : '';
+      pagesMetaEl.innerHTML = `<div>🌐 Domínio: <b style="color:var(--txt);">github.io/hering</b></div>${pUpdTxt ? `<div style="margin-top:2px;">🕒 Atualizado: <b style="color:var(--txt2);">${esc(pUpdTxt)}</b></div>` : ''}`;
+    }
   }
 
   // 4) Grade de componentes do GitHub
   if(gridEl){
-    const comps = src.componentes || {};
     gridEl.innerHTML = _GH_COMP_META.map(m => {
       const cObj = comps[m.key] || comps[m.name] || {};
       const st = cObj.status || (m.key === 'Pages' ? pagesSt : 'unknown');
@@ -7089,12 +7165,12 @@ function renderGithubStatusUI(){
 const _FB_STATUS_URL = 'https://status.firebase.google.com/incidents.json';
 const _FB_TTL_MS = 2 * 60 * 1000;
 const _FB_COMP_META = [
-  { key: 'Realtime Database', label: 'Realtime Database', icon: '🗄️', desc: 'Banco em tempo real (kanban/)', primary: true, match: ['realtime database', 'firebase realtime database', 'rtdb'] },
-  { key: 'Authentication',    label: 'Authentication',    icon: '🔐', desc: 'Login Google (@ciahering)',    match: ['authentication', 'firebase authentication', 'auth'] },
-  { key: 'Cloud Messaging',   label: 'Cloud Messaging',   icon: '🔔', desc: 'Notificações Push (FCM)',      match: ['cloud messaging', 'firebase cloud messaging', 'fcm'] },
-  { key: 'Cloud Functions',   label: 'Cloud Functions',   icon: '⚡', desc: 'Push, Agente Ágil, Backups',   match: ['cloud functions', 'firebase cloud functions', 'functions'] },
-  { key: 'Cloud Storage',     label: 'Cloud Storage',     icon: '📦', desc: 'Anexos, fotos e backups',      match: ['cloud storage', 'firebase cloud storage', 'storage for firebase'] },
-  { key: 'Hosting',           label: 'Hosting / Domínio', icon: '🌐', desc: 'Domínio OAuth firebaseapp',    match: ['hosting', 'firebase hosting'] }
+  { key: 'Realtime Database', label: 'Realtime Database', icon: '🗄️', desc: 'Banco em tempo real (kanban/)', primary: true, rx: [/\brealtime\s+database\b/i, /\brtdb\b/i, /\bfirebase-database\b/i] },
+  { key: 'Authentication',    label: 'Authentication',    icon: '🔐', desc: 'Login Google (@ciahering)',    rx: [/\bfirebase\s+authentication\b/i, /\bauthentication\b/i, /\bfirebase-auth\b/i, /\bidentity\s+toolkit\b/i, /\bgoogle\s+identity\b/i] },
+  { key: 'Cloud Messaging',   label: 'Cloud Messaging',   icon: '🔔', desc: 'Notificações Push (FCM)',      rx: [/\bcloud\s+messaging\b/i, /\bfcm\b/i, /\bfirebase-messaging\b/i] },
+  { key: 'Cloud Functions',   label: 'Cloud Functions',   icon: '⚡', desc: 'Push, Agente Ágil, Backups',   rx: [/\bcloud\s+functions\b/i, /\bfirebase\s+functions\b/i, /\bfirebase-functions\b/i] },
+  { key: 'Cloud Storage',     label: 'Cloud Storage',     icon: '📦', desc: 'Anexos, fotos e backups',      rx: [/\bcloud\s+storage\b/i, /\bstorage\s+for\s+firebase\b/i, /\bfirebase\s+storage\b/i, /\bfirebase-storage\b/i] },
+  { key: 'Hosting',           label: 'Hosting / Domínio', icon: '🌐', desc: 'Domínio OAuth firebaseapp',    rx: [/\bfirebase\s+hosting\b/i, /\bhosting\b/i, /\bfirebase-hosting\b/i] }
 ];
 let _fbSaude = null;
 let _fbLive = null;
@@ -7103,15 +7179,31 @@ let _fbProbeOk = true;
 let _fbLastLatenciaMs = null;
 let _fbInited = false;
 
-function _fbMatchServicos(serviceName, affectedProducts){
-  const candidatos = [];
-  if(serviceName) candidatos.push(String(serviceName).toLowerCase());
-  if(Array.isArray(affectedProducts)){
-    affectedProducts.forEach(p => { if(p && p.title) candidatos.push(String(p.title).toLowerCase()); });
+function _fbMatchServicos(serviceNameOrRaw, affectedProducts, serviceKey){
+  const textos = [];
+  if(serviceNameOrRaw && typeof serviceNameOrRaw === 'object' && !Array.isArray(serviceNameOrRaw)){
+    const raw = serviceNameOrRaw;
+    if(raw.service_name) textos.push(String(raw.service_name));
+    if(raw.service_key) textos.push(String(raw.service_key));
+    if(Array.isArray(raw.affected_products)){
+      raw.affected_products.forEach(p => {
+        if(p && p.title) textos.push(String(p.title));
+        if(p && p.id) textos.push(String(p.id));
+      });
+    }
+  } else {
+    if(serviceNameOrRaw) textos.push(String(serviceNameOrRaw));
+    if(serviceKey) textos.push(String(serviceKey));
+    if(Array.isArray(affectedProducts)){
+      affectedProducts.forEach(p => {
+        if(p && p.title) textos.push(String(p.title));
+        if(p && p.id) textos.push(String(p.id));
+      });
+    }
   }
   const atingidos = [];
   _FB_COMP_META.forEach(s => {
-    const bateu = candidatos.some(c => s.match.some(m => c === m || c.includes(m)));
+    const bateu = textos.some(txt => s.rx.some(r => r.test(txt)));
     if(bateu) atingidos.push(s.key);
   });
   return atingidos;
@@ -7159,25 +7251,29 @@ async function loadFirebaseStatus(force){
           const endStr = String(raw.end || '').trim();
           const stOverall = String(raw.most_recent_update?.status || raw.status_impact || '').toUpperCase();
           if(endStr || stOverall === 'AVAILABLE' || stOverall === 'RESOLVED') continue;
-          const servicos = _fbMatchServicos(raw.service_name, raw.affected_products);
+          const updAt = raw.most_recent_update?.modified || raw.modified || raw.begin || null;
+          if(!_statusIncidenteRecente(updAt)) continue;
+          const servicos = _fbMatchServicos(raw);
           if(!servicos.length) continue;
           const sev = String(raw.severity || '').toLowerCase();
           const compSt = (stOverall === 'SERVICE_OUTAGE' || sev === 'high' || sev === 'critical')
             ? 'major_outage'
             : (stOverall === 'SERVICE_DISRUPTION' || sev === 'medium') ? 'partial_outage' : 'degraded_performance';
-          const updAt = raw.most_recent_update?.modified || raw.modified || raw.begin || null;
           servicos.forEach(k => {
-            if(comps[k]){ comps[k].status = compSt; comps[k].updatedAt = updAt; }
+            if(comps[k] && (_STATUS_RANK[compSt] || 0) >= (_STATUS_RANK[comps[k].status] || 0)){
+              comps[k].status = compSt;
+              comps[k].updatedAt = updAt;
+            }
           });
           incs.push({
             id: String(raw.id || raw.number || '').trim(),
-            name: String(raw.external_desc || raw.service_name || 'Incidente no Firebase').trim().slice(0, 200),
+            name: _limparHtmlStatus(raw.external_desc || raw.service_name || 'Incidente no Firebase').slice(0, 200),
             status: stOverall || 'INVESTIGATING',
             impact: compSt === 'major_outage' ? 'critical' : compSt === 'partial_outage' ? 'major' : 'minor',
             servicosAfetados: servicos,
             shortlink: raw.uri ? ('https://status.firebase.google.com/' + String(raw.uri).replace(/^\/+/, '')) : 'https://status.firebase.google.com',
             updatedAt: updAt,
-            latestBody: String(raw.most_recent_update?.text || '').replace(/\s+/g, ' ').trim().slice(0, 280)
+            latestBody: _limparHtmlStatus(raw.most_recent_update?.text || '').slice(0, 280)
           });
         }
         _fbLive = {
@@ -7206,14 +7302,44 @@ function renderFirebaseStatusUI(){
   const incEl = document.getElementById('st-fb-incidents');
   const metaEl = document.getElementById('st-fb-monitor-meta');
 
-  const comps = (src && src.componentes) || {};
+  // Normaliza mapa de serviços tanto do formato _fbLive (`componentes`) quanto do formato _fbSaude (`servicos` / `servicosResumo` / `servicosDegradados`)
+  const comps = Object.assign({}, (src && (src.componentes || src.servicos)) || {});
+  if(src && Array.isArray(src.servicosResumo)){
+    src.servicosResumo.forEach(s => {
+      const k = s && (s.key || s.nome);
+      if(k && !comps[k]) comps[k] = { status: s.status || 'operational', updatedAt: s.atualizadoEm || null };
+    });
+  }
+  if(src && Array.isArray(src.servicosDegradados)){
+    src.servicosDegradados.forEach(s => {
+      const k = s && (s.key || s.nome);
+      if(k) comps[k] = { status: s.status || 'degraded_performance', updatedAt: s.atualizadoEm || null };
+    });
+  }
+
   let rtdbSt = (src && src.rtdbStatus)
     || (comps['Realtime Database'] && comps['Realtime Database'].status)
     || (_fbProbeOk ? 'operational' : 'partial_outage');
   if(!_fbProbeOk && rtdbSt === 'operational') rtdbSt = 'degraded_performance';
 
   const rStyle = _ghStyleFor(rtdbSt);
-  const incs = (src && Array.isArray(src.incidentesAtivos)) ? src.incidentesAtivos : [];
+  const rawIncs = (src && Array.isArray(src.incidentesAtivos))
+    ? src.incidentesAtivos
+    : ((src && Array.isArray(src.incidentes)) ? src.incidentes : []);
+  const incs = rawIncs.map(inc => {
+    const sev = String(inc.severidade || '').toLowerCase();
+    const imp = inc.impact || (sev === 'high' || sev === 'critical' || inc.statusComp === 'major_outage' ? 'critical' : (sev === 'medium' || inc.statusComp === 'partial_outage' ? 'major' : 'minor'));
+    return {
+      id: inc.id || '',
+      name: inc.name || inc.titulo || 'Incidente no Firebase',
+      status: inc.status || inc.estadoLabel || inc.statusComp || 'INVESTIGATING',
+      impact: imp,
+      servicosAfetados: Array.isArray(inc.servicosAfetados) ? inc.servicosAfetados : (Array.isArray(inc.servicos) ? inc.servicos : []),
+      shortlink: inc.shortlink || inc.link || 'https://status.firebase.google.com',
+      updatedAt: inc.updatedAt || inc.atualizadoEm || null,
+      latestBody: inc.latestBody || inc.resumo || ''
+    };
+  });
   const hasAnyCompIssue = _FB_COMP_META.some(m => {
     const st = (comps[m.key] && comps[m.key].status) || 'operational';
     return st !== 'operational' && st !== 'unknown';
@@ -7228,17 +7354,17 @@ function renderFirebaseStatusUI(){
       pill.style.color = rStyle.color;
       pill.style.borderColor = rStyle.border;
       pill.style.background = rStyle.bg;
-      pill.textContent = `🚨 Firebase (RTDB): ${rStyle.label}`;
+      _setStatusPill(pill, 'firebase-status-pill-dot', 'firebase-status-pill-txt', rStyle.color, `🚨 Firebase (RTDB): ${rStyle.label}`);
     } else if(incs.length > 0 || hasAnyCompIssue){
       pill.style.color = '#ffb547';
       pill.style.borderColor = 'rgba(255,181,71,.4)';
       pill.style.background = 'rgba(255,181,71,.12)';
-      pill.textContent = `🔥 RTDB OK · ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} no Firebase`;
+      _setStatusPill(pill, 'firebase-status-pill-dot', 'firebase-status-pill-txt', '#ffb547', `🔥 RTDB OK · ${incs.length || 1} incidente${incs.length > 1 ? 's' : ''} no Firebase`);
     } else {
       pill.style.color = '#00c9a7';
       pill.style.borderColor = 'rgba(0,201,167,.3)';
       pill.style.background = 'rgba(0,201,167,.08)';
-      pill.textContent = `🔥 Firebase (RTDB): OK${latTxt ? ' · ' + latTxt : ''}`;
+      _setStatusPill(pill, 'firebase-status-pill-dot', 'firebase-status-pill-txt', '#00c9a7', `🔥 Firebase (RTDB): OK${latTxt ? ' · ' + latTxt : ''}`);
     }
   }
 
