@@ -1026,16 +1026,23 @@
     const camp = mCamp ? mCamp[1] : '';
     const temaCurto = mes || (ehBf ? 'Black Friday' : camp);
     const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-    const emTit = tit && norm(tit) !== norm(temaCurto) ? ` em <b>${esc(tit)}</b>` : '';
+    const emTit = temaCurto && tit && norm(tit) !== norm(temaCurto) ? ` em <b>${esc(tit)}</b>` : '';
     let h2, corpo, btn;
+    const titCurto = tit.length > 32 ? tit.slice(0, 30).trim() + '…' : tit;
     if (cem) {
-      h2 = mes ? `🏆 Meta batida em ${esc(mes)}! 🎉` : (m.tipo === 'desafio' ? '🏆 Meta batida — desafio concluído! 🎉' : '🏆 Meta batida! 🎉');
+      h2 = mes ? `🏆 Meta batida em ${esc(mes)}! 🎉`
+        : m.tipo === 'desafio' ? `🏆 Meta batida — desafio${titCurto ? ' ' + esc(titCurto) : ''} concluído! 🎉`
+        : titCurto ? `🏆 Meta batida — ${esc(titCurto)}! 🎉`
+        : '🏆 Meta batida! 🎉';
       if (ehBf) corpo = `A rede de <b>${esc(tit || 'Black Friday')}</b> transbordou na Black! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
       else if (mes) corpo = `A rede de <b>${esc(tit || mes)}</b> encheu! Fechamos <b>${esc(mes)}</b> em <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
       else corpo = `A rede${tit ? ' de <b>' + esc(tit) + '</b>' : ''} encheu! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
-      btn = mes ? `Bora comemorar ${esc(mes)}! 🥳` : 'Bora comemorar! 🥳';
+      btn = mes ? `Bora comemorar ${esc(mes)}! 🥳` : (titCurto ? `Bora comemorar ${esc(titCurto)}! 🥳` : 'Bora comemorar! 🥳');
     } else {
-      h2 = mes ? `O mar tá pra peixe em ${esc(mes)}! 🐟` : (ehBf ? 'O mar tá pra peixe na Black! 🐟' : 'O mar tá pra peixe! 🐟');
+      h2 = mes ? `O mar tá pra peixe em ${esc(mes)}! 🐟`
+        : ehBf ? 'O mar tá pra peixe na Black! 🐟'
+        : titCurto ? `O mar tá pra peixe — ${esc(titCurto)}! 🐟`
+        : 'O mar tá pra peixe! 🐟';
       let abre;
       if (mes) {
         abre = marco === 20 ? `Primeiro peixe de <b>${esc(mes)}</b> na rede!`
@@ -1051,6 +1058,12 @@
           : 'A maré da <b>Black</b> tá subindo!';
       } else if (camp) {
         abre = `A campanha de <b>${esc(camp)}</b> engrenou!`;
+      } else if (tit) {
+        abre = marco === 20 ? `Primeiro peixe de <b>${esc(tit)}</b> na rede!`
+          : marco === 40 ? `O cardume de <b>${esc(tit)}</b> tá encorpando!`
+          : marco === 60 ? `Passamos da metade em <b>${esc(tit)}</b>!`
+          : marco === 80 ? `Reta final de <b>${esc(tit)}</b> no mar!`
+          : `A maré de <b>${esc(tit)}</b> tá subindo!`;
       } else {
         abre = marco === 20 ? 'Primeiro peixe na rede!'
           : marco === 40 ? 'O cardume tá encorpando!'
@@ -1059,13 +1072,22 @@
           : 'A maré tá subindo!';
       }
       corpo = `${abre} Chegamos a <b>${marco}%</b> da ${escopoTxt}${emTit}${progTxt}.${proxTxt}`;
-      btn = mes ? `Bora pescar mais em ${esc(mes)}! 🚀` : (ehBf ? 'Bora pescar mais na Black! 🚀' : 'Bora pescar mais! 🚀');
+      btn = mes ? `Bora pescar mais em ${esc(mes)}! 🚀`
+        : ehBf ? 'Bora pescar mais na Black! 🚀'
+        : titCurto ? `Bora pescar mais — ${esc(titCurto)}! 🚀`
+        : 'Bora pescar mais! 🚀';
     }
     const sub = `${esc(m.emoji || '🎯')} <b>${esc(tit)}</b><br>${corpo}`;
     return { h2, sub, btn, corpo };
   }
   function mostrarPeixes(m, marco, fim) {
     injetaCss(); if (typeof document === 'undefined') return;
+    if (typeof m === 'number' || !m) {
+      const mc = typeof m === 'number' ? m : (Number(marco) || 60);
+      const ativa = metasDigital()[0] || ((S.ctx && S.ctx.squad) ? metasSquad(S.ctx.squad)[0] : null);
+      m = ativa || { id: 'teste', titulo: 'Outubro', emoji: '🎯', escopo: 'digital', tipo: 'meta', un: 'R$', alvo: 100, inicial: 0, atual: mc, marco: mc };
+      marco = mc;
+    }
     const cem = marco >= 100, n = Math.max(1, Math.min(7, cem ? 7 : marco / 20 + 1));
     const tx = textoPopup(m, marco);
     const fish = Array.from({ length: n }, (_, i) => `<span class="f" style="left:${6 + i * (84 / Math.max(1, n))}%;animation-delay:${(i * .33).toFixed(2)}s;font-size:${28 + (i % 3) * 5}px">${['🐟', '🐠', '🐡'][i % 3]}</span>`).join('');
