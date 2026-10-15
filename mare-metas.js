@@ -371,6 +371,20 @@
 .mm-btn:disabled{opacity:.55;cursor:default;}
 .mm-chart{margin-top:12px;position:relative;color:var(--txt2);}
 .mm-chart svg{width:100%;height:auto;display:block;overflow:visible;}
+.mm-chart-bar{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+.mm-chart-tabs{display:inline-flex;gap:3px;padding:2px;border-radius:9px;background:rgba(var(--ink-rgb,0,0,0),.4);border:1px solid var(--glass-b,rgba(255,255,255,.1));}
+.mm-chart-tab{font:inherit;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:7px;border:0;background:none;color:var(--txt3);cursor:pointer;white-space:nowrap;}
+.mm-chart-tab.on{background:rgba(var(--surface-rgb,16,31,48),.95);color:var(--txt);box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.mm-chart-hint{font-size:10px;color:var(--txt3);}
+.mm-chart-exp{margin-left:auto;font-size:10.5px!important;padding:3px 8px!important;}
+.mm-chart-wrap{position:relative;cursor:crosshair;touch-action:pan-y;}
+.mm-chart-wrap circle.mm-pt{transition:r .12s,stroke-width .12s;}
+.mm-chart-wrap circle.mm-pt.on{r:6px;stroke-width:2.2px;filter:drop-shadow(0 0 6px var(--mm-c,var(--teal)));}
+.mm-tip{position:absolute;z-index:20;pointer-events:none;min-width:150px;max-width:240px;padding:7px 10px;border-radius:10px;background:rgba(8,20,34,.96);border:1px solid var(--glass-b,rgba(255,255,255,.18));box-shadow:0 10px 28px rgba(0,0,0,.55);color:var(--txt);font-size:11px;line-height:1.4;backdrop-filter:blur(8px);}
+.mm-tip-d{font-size:10px;font-weight:700;color:var(--txt3);margin-bottom:2px;}
+.mm-tip-v{font-size:12.5px;font-weight:800;color:var(--mm-c,var(--teal));}
+.mm-tip-s{font-size:10.5px;color:var(--txt2);margin-top:1px;}
+.mm-tip-x{font-size:10px;color:var(--txt3);margin-top:2px;border-top:1px solid rgba(255,255,255,.08);padding-top:2px;}
 .mm-chart-vazio{font-size:11.5px;color:var(--txt3);text-align:center;padding:14px 4px;}
 .mm-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--txt3);margin-top:4px;}
 .mm-leg i{display:inline-block;width:14px;height:0;border-top:2.5px solid var(--mm-c,var(--teal));vertical-align:middle;margin-right:4px;}
@@ -406,6 +420,7 @@
 /* modais */
 .mm-ov{position:fixed;inset:0;z-index:99990;background:rgba(3,10,18,.72);display:flex;align-items:flex-start;justify-content:center;padding:4vh 12px 16px;overflow-y:auto;}
 .mm-md{width:100%;max-width:520px;border-radius:16px;background:rgba(var(--surface-rgb,16,31,48),.99);border:1px solid var(--glass-b,rgba(255,255,255,.12));padding:20px 20px 18px;box-shadow:0 30px 80px rgba(0,0,0,.55);color:var(--txt);}
+.mm-md.mm-md-lg{max-width:900px;}
 .mm-md h3{margin:0 0 2px;font-family:"DM Sans",sans-serif;font-weight:800;font-size:17px;}
 .mm-md .sub{font-size:12px;color:var(--txt3);margin:0 0 8px;line-height:1.5;}
 .mm-md label,.mm-md .lb{display:block;font-size:11.5px;font-weight:700;color:var(--txt2);margin:13px 0 5px;}
@@ -454,9 +469,50 @@
 @media (prefers-reduced-motion:reduce){.mm-fish .stage .f,.mm-mfish span.on em,.mm-fish .wave{animation:none!important}.mm-fish .stage .f{opacity:1;transform:translate(10px,-30px)}}
 @media (max-width:420px){.mm-r2,.mm-r3{grid-template-columns:1fr;}.mm-hero-top{flex-direction:column;align-items:flex-start;}}
 `;
+  let _grafDocLigado = false, _activeWrap = null;
+  function limpaHoverGraf(w) {
+    if (!w) return;
+    const tip = w.querySelector('.mm-tip'), hl = w.querySelector('.mm-g-hl');
+    if (tip) tip.hidden = true;
+    if (hl) hl.style.display = 'none';
+    w.querySelectorAll('circle.mm-pt.on').forEach(c => c.classList.remove('on'));
+  }
   function injetaCss() {
-    if (typeof document === 'undefined' || document.getElementById('mm-css')) return;
-    const st = document.createElement('style'); st.id = 'mm-css'; st.textContent = CSS; document.head.appendChild(st);
+    if (typeof document === 'undefined') return;
+    if (!document.getElementById('mm-css')) {
+      const st = document.createElement('style'); st.id = 'mm-css'; st.textContent = CSS; document.head.appendChild(st);
+    }
+    if (_grafDocLigado) return; _grafDocLigado = true;
+    const onMove = e => {
+      const tEl = e.target && e.target.closest ? e.target.closest('.mm-chart-wrap') : null;
+      if (!tEl) { if (_activeWrap) { limpaHoverGraf(_activeWrap); _activeWrap = null; } return; }
+      if (_activeWrap && _activeWrap !== tEl) limpaHoverGraf(_activeWrap);
+      _activeWrap = tEl;
+      const svg = tEl.querySelector('svg'), tip = tEl.querySelector('.mm-tip'), pts = tEl.querySelectorAll('circle.mm-pt');
+      if (!svg || !tip || !pts.length) return;
+      const rect = svg.getBoundingClientRect(); if (!rect.width) return;
+      const cx = e.touches && e.touches[0] ? e.touches[0].clientX : e.clientX;
+      const W = Number(tEl.dataset.mmW) || 360, H = Number(tEl.dataset.mmH) || 170;
+      const svgX = (cx - rect.left) / rect.width * W;
+      let best = pts[0], bestD = Infinity;
+      pts.forEach(c => { const d = Math.abs(Number(c.dataset.x) - svgX); if (d < bestD) { bestD = d; best = c; } });
+      pts.forEach(c => c.classList.toggle('on', c === best));
+      const px = Number(best.dataset.x), py = Number(best.dataset.y);
+      const hl = tEl.querySelector('.mm-g-hl');
+      if (hl) { hl.setAttribute('x1', px.toFixed(1)); hl.setAttribute('x2', px.toFixed(1)); hl.style.display = ''; }
+      tip.innerHTML = `<div class="mm-tip-d">${esc(best.dataset.lbl || '')}</div><div class="mm-tip-v">${esc(best.dataset.val || '')}</div>` +
+        (best.dataset.sub ? `<div class="mm-tip-s">${esc(best.dataset.sub)}</div>` : '') +
+        (best.dataset.extra ? `<div class="mm-tip-x">${esc(best.dataset.extra)}</div>` : '');
+      tip.hidden = false;
+      const relX = (px / W) * rect.width, relY = (py / H) * rect.height;
+      const tw = tip.offsetWidth || 170, th = tip.offsetHeight || 58;
+      const left = Math.max(4, Math.min(rect.width - tw - 4, relX - tw / 2));
+      const top = relY - th - 10 >= 0 ? relY - th - 10 : Math.min(rect.height - th - 2, relY + 12);
+      tip.style.left = left.toFixed(0) + 'px'; tip.style.top = top.toFixed(0) + 'px';
+    };
+    document.addEventListener('mousemove', onMove, { passive: true });
+    document.addEventListener('touchstart', onMove, { passive: true });
+    document.addEventListener('touchmove', onMove, { passive: true });
   }
 
   // Anel de progresso (SVG) — traço na cor da situação, marcas a cada 20 % e um "tique" branco no ESPERADO de hoje (ritmo).
@@ -507,36 +563,131 @@
     const cv = CANAIS.find(x => x.id === m.canal); if (cv) t.push(`<span class="mm-tag">🛒 ${esc(cv.label)}</span>`);
     return t.length ? `<div class="mm-tags">${t.join('')}</div>` : '';
   };
-  // Gráfico de evolução (estilo Radar): linha real × ritmo ideal (tracejado cinza) × meta (tracejado azul). pontos = [{t:ms, v:valor}].
-  function graficoHtml(m, pontos) {
-    const st = status(m);
+  // Série diária (não acumulada): compara o REALIZADO de cada dia contra a META do próprio dia (diarização ou linear).
+  // Devolve [{ iso, dataCurta, meta, metaAcum, real, acum, t, nome, nota }] para cada dia do período.
+  function serieDiaria(m, pontos) {
+    const a = diaN(m && m.inicio), b = diaN(m && m.fim);
+    if (a == null || b == null || b < a) return [];
+    const ini = isNum(m.inicial) ? Number(m.inicial) : 0, alvo = Number(m.alvo) || 0, tot = alvo - ini;
+    const pts = (pontos || []).filter(x => isFinite(x.t) && isFinite(x.v)).sort((x, y) => x.t - y.t);
+    const isoMin = isoDe(a), isoMax = isoDe(b);
+    const agrupa = clamp => {
+      const map = {}; let acumAnt = ini;
+      pts.forEach(p => {
+        let dia = partesSP(p.t).data;
+        if (clamp) { if (dia < isoMin) dia = isoMin; else if (dia > isoMax) dia = isoMax; }
+        const delta = isNum(p.d) ? Number(p.d) : (p.v - acumAnt);
+        acumAnt = p.v;
+        if (!map[dia]) map[dia] = { real: 0, acum: p.v, t: p.t, nome: p.nome || '', nota: p.nota || '' };
+        map[dia].real += delta; map[dia].acum = p.v; map[dia].t = p.t;
+        if (p.nome) map[dia].nome = p.nome;
+        if (p.nota) map[dia].nota = p.nota;
+      });
+      return map;
+    };
+    let porDia = agrupa(false);
+    const temNoPeriodo = Object.keys(porDia).some(d => d >= isoMin && d <= isoMax);
+    if (!temNoPeriodo && pts.length) porDia = agrupa(true);
+    const comCurva = temCurva(m), nDias = b - a + 1, out = [];
+    let metaAcum = ini;
+    for (let d = a; d <= b; d++) {
+      const iso = isoDe(d), md = comCurva ? (metaDoDia(m, iso) || 0) : (tot / nDias);
+      metaAcum += md;
+      const info = porDia[iso] || null;
+      out.push({ iso, dataCurta: curto(iso), meta: md, metaAcum, real: info ? info.real : null, acum: info ? info.acum : null, t: info ? info.t : null, nome: info ? info.nome : '', nota: info ? info.nota : '' });
+    }
+    return out;
+  }
+  // Gráfico de evolução (estilo Radar):
+  //  • modo 'acum' (padrão): linha real acumulada × ritmo ideal (tracejado cinza) × meta total (tracejado azul).
+  //  • modo 'dia' (metas diarizadas): curva NÃO acumulada dia a dia — realizado do dia (linha sólida + pontos + rótulos) × meta do próprio dia (linha tracejada azul).
+  //  • opts: { modo?: 'acum'|'dia', grande?: boolean }
+  function graficoHtml(m, pontos, opts) {
+    opts = opts || {};
+    const st = status(m), comCurva = temCurva(m), grande = !!opts.grande;
+    const modo = (opts.modo === 'dia' && comCurva) ? 'dia' : 'acum';
     const pts = (pontos || []).filter(x => isFinite(x.t) && isFinite(x.v)).sort((a, b) => a.t - b.t);
     if (!pts.length) return `<div class="mm-chart-vazio">O gráfico aparece quando houver o primeiro valor informado.</div>`;
-    const W = 360, H = 170, pl = 46, pr = 12, pt = 14, pb = 28, iw = W - pl - pr, ih = H - pt - pb;
+    const W = grande ? 780 : 360, H = grande ? 320 : 175, pl = grande ? 58 : 46, pr = grande ? 18 : 12, pt = grande ? 22 : 16, pb = grande ? 32 : 28, iw = W - pl - pr, ih = H - pt - pb;
+    const fy = v => fmtVal(m, v), fyL = v => fmtVal(m, v, true);
+    const barTabs = comCurva
+      ? `<div class="mm-chart-tabs" role="tablist"><button type="button" class="mm-chart-tab${modo === 'dia' ? ' on' : ''}" data-mm-gmodo="dia">📅 Curva diária</button><button type="button" class="mm-chart-tab${modo === 'acum' ? ' on' : ''}" data-mm-gmodo="acum">📈 Acumulado</button></div>`
+      : `<span class="mm-chart-hint">💡 Passe o mouse nos pontos para ver os valores</span>`;
+    const barExp = grande ? '' : `<button type="button" class="mm-btn s mm-chart-exp" data-mm-act="graf-exp" data-mm-gmodo-atual="${modo}" title="Expandir gráfico em janela maior">⛶ Expandir</button>`;
+    const barra = `<div class="mm-chart-bar">${barTabs}${barExp}</div>`;
+
+    if (modo === 'dia') {
+      const serie = serieDiaria(m, pts), n = serie.length;
+      const ys = []; serie.forEach(d => { ys.push(d.meta); if (d.real != null) ys.push(d.real); });
+      let mn = Math.min(...ys), mx = Math.max(...ys); const g = (mx - mn) * .12 || 1; mn -= g * .5; mx += g; if (Math.min(...ys) >= 0 && mn < 0) mn = 0;
+      const X = i => pl + (n > 1 ? iw * i / (n - 1) : iw / 2), Y = v => pt + ih * (1 - (v - mn) / (mx - mn));
+      const nGrid = grande ? 4 : 3;
+      const grid = Array.from({ length: nGrid + 1 }, (_, k) => { const v = mn + (mx - mn) * k / nGrid; return `<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W - pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".1"/><text x="${pl - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${esc(fy(v))}</text>`; }).join('');
+      const metaPts = serie.map((d, i) => [X(i), Y(d.meta)]);
+      const metaLine = `<polyline fill="none" stroke="var(--accent)" stroke-width="${grande ? 2 : 1.7}" stroke-dasharray="5 4" stroke-opacity=".9" points="${metaPts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"/>`;
+      const realIdxs = serie.map((d, i) => d.real != null ? i : -1).filter(i => i >= 0);
+      const realPts = realIdxs.map(i => [X(i), Y(serie[i].real)]);
+      const linhaReal = realPts.length > 1
+        ? `<path d="M${realPts[0][0].toFixed(1)},${(pt + ih).toFixed(1)} L${realPts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L')} L${realPts[realPts.length - 1][0].toFixed(1)},${(pt + ih).toFixed(1)}Z" fill="${st.cor}" fill-opacity=".13"/><polyline fill="none" stroke="${st.cor}" stroke-width="${grande ? 2.8 : 2.4}" stroke-linejoin="round" stroke-linecap="round" points="${realPts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>`
+        : '';
+      const dots = serie.map((d, i) => {
+        const x = X(i), ym = Y(d.meta);
+        if (d.real != null) {
+          const yr = Y(d.real), pDia = d.meta > 0 ? Math.round(d.real / d.meta * 100) : null, dif = d.real - d.meta;
+          const sub = `Meta do dia: ${fyL(d.meta)}` + (pDia != null ? ` (${pDia}% · ${dif >= 0 ? '+' : '-'}${fy(Math.abs(dif))})` : '');
+          const ext = (d.acum != null ? `Acumulado: ${fyL(d.acum)}` : '') + (d.nota ? ` · "${d.nota}"` : '');
+          const isLast = i === realIdxs[realIdxs.length - 1];
+          return `<circle cx="${x.toFixed(1)}" cy="${ym.toFixed(1)}" r="${grande ? 2.5 : 1.8}" fill="var(--accent)" fill-opacity=".75"/>` +
+            `<circle class="mm-pt" cx="${x.toFixed(1)}" cy="${yr.toFixed(1)}" r="${isLast ? (grande ? 5.5 : 4.6) : (grande ? 4.2 : 3.2)}" fill="${st.cor}" stroke="rgba(255,255,255,.9)" stroke-width="1.3" data-x="${x.toFixed(1)}" data-y="${yr.toFixed(1)}" data-lbl="📅 Dia ${esc(d.dataCurta)}" data-val="Realizado no dia: ${esc(fyL(d.real))}" data-sub="${esc(sub)}" data-extra="${esc(ext)}"><title>${esc('Dia ' + d.dataCurta + ' · Realizado: ' + fy(d.real) + ' / Meta do dia: ' + fy(d.meta))}</title></circle>`;
+        }
+        return `<circle class="mm-pt" cx="${x.toFixed(1)}" cy="${ym.toFixed(1)}" r="${grande ? 3.2 : 2.3}" fill="var(--accent)" fill-opacity=".75" stroke="rgba(255,255,255,.5)" stroke-width="1" data-x="${x.toFixed(1)}" data-y="${ym.toFixed(1)}" data-lbl="📅 Dia ${esc(d.dataCurta)}" data-val="Meta do dia: ${esc(fyL(d.meta))}" data-sub="Ainda sem valor lançado neste dia" data-extra="Meta acumulada até o dia: ${esc(fyL(d.metaAcum))}"><title>${esc('Dia ' + d.dataCurta + ' · Meta do dia: ' + fy(d.meta))}</title></circle>`;
+      }).join('');
+      const showAllLabels = grande ? realIdxs.length <= 35 : realIdxs.length <= 7;
+      const rots = realIdxs.map((idx, pos) => {
+        const isLast = pos === realIdxs.length - 1;
+        if (!showAllLabels && !isLast && pos !== 0) return '';
+        const x = X(idx), yr = Y(serie[idx].real), dy = (grande && realIdxs.length > 10 && pos % 2 === 1) ? -15 : -8;
+        const anc = x < pl + 24 ? 'start' : x > W - pr - 24 ? 'end' : 'middle';
+        return `<text x="${x.toFixed(1)}" y="${Math.max(10, yr + dy).toFixed(1)}" text-anchor="${anc}" font-size="${grande ? 9.5 : 9}" font-weight="700" fill="${st.cor}">${esc(fy(serie[idx].real))}</text>`;
+      }).join('');
+      const stepX = grande ? Math.max(1, Math.ceil(n / 15)) : Math.max(1, Math.ceil(n / 5));
+      const xl = serie.map((d, i) => (i === 0 || i === n - 1 || i % stepX === 0) ? `<text x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}" font-size="${grande ? 9.5 : 9}" fill="currentColor" fill-opacity=".65">${esc(d.dataCurta)}</text>` : '').join('');
+      const hl = `<line class="mm-g-hl" x1="0" y1="${pt}" x2="0" y2="${pt + ih}" stroke="var(--txt)" stroke-opacity=".35" stroke-dasharray="2 3" style="display:none;pointer-events:none"/>`;
+      return `<div class="mm-chart" style="--mm-c:${st.cor}" data-mm-gmodo-box="dia">${barra}<div class="mm-chart-wrap" data-mm-w="${W}" data-mm-h="${H}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Curva diária de ${esc(m.titulo)}">${grid}${metaLine}${linhaReal}${hl}${dots}${rots}${xl}</svg><div class="mm-tip" hidden></div></div>
+        <div class="mm-leg"><span><i></i>realizado no dia</span><span><i class="mt"></i>meta do dia (diarização)</span></div></div>`;
+    }
+
     const a = diaN(m.inicio), b = diaN(m.fim);
     let t0 = a != null ? a * 864e5 + 3 * 3600e3 : pts[0].t, t1 = b != null ? b * 864e5 + 27 * 3600e3 : pts[pts.length - 1].t;
     t0 = Math.min(t0, pts[0].t); t1 = Math.max(t1, pts[pts.length - 1].t); if (t1 === t0) t1 = t0 + 864e5;
     const ini = isNum(m.inicial) ? Number(m.inicial) : 0, alvo = Number(m.alvo);
     const ys = pts.map(x => x.v).concat([ini, alvo]); let mn = Math.min(...ys), mx = Math.max(...ys); const g = (mx - mn) * .08 || 1; mn -= g; mx += g; if (Math.min(...ys) >= 0 && mn < 0) mn = 0;
     const X = t => pl + iw * (t - t0) / (t1 - t0), Y = v => pt + ih * (1 - (v - mn) / (mx - mn));
-    const fy = v => fmtVal(m, v);
-    const grid = [0, 1, 2, 3].map(k => { const v = mn + (mx - mn) * k / 3; return `<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W - pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".1"/><text x="${pl - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity=".6">${esc(fy(v))}</text>`; }).join('');
-    const meta = `<line x1="${pl}" y1="${Y(alvo).toFixed(1)}" x2="${W - pr}" y2="${Y(alvo).toFixed(1)}" stroke="var(--accent)" stroke-dasharray="5 4" stroke-opacity=".85"/><text x="${W - pr}" y="${(Y(alvo) - 4).toFixed(1)}" text-anchor="end" font-size="9.5" font-weight="700" fill="var(--accent)">🎯 meta</text>`;
+    const nGrid = grande ? 4 : 3;
+    const grid = Array.from({ length: nGrid + 1 }, (_, k) => { const v = mn + (mx - mn) * k / nGrid; return `<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W - pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".1"/><text x="${pl - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${esc(fy(v))}</text>`; }).join('');
+    const meta = `<line x1="${pl}" y1="${Y(alvo).toFixed(1)}" x2="${W - pr}" y2="${Y(alvo).toFixed(1)}" stroke="var(--accent)" stroke-dasharray="5 4" stroke-opacity=".85"/><text x="${W - pr}" y="${(Y(alvo) - 4).toFixed(1)}" text-anchor="end" font-size="${grande ? 10.5 : 9.5}" font-weight="700" fill="var(--accent)">🎯 meta</text>`;
     let ideal = '';
-    if (temCurva(m)) {   // ritmo ideal = a curva definida pelo time (acumulado ao fim de cada dia), não uma reta
+    if (comCurva) {   // ritmo ideal = a curva definida pelo time (acumulado ao fim de cada dia), não uma reta
       const pts2 = [[X(a * 864e5 + 3 * 3600e3), Y(ini)]]; let acc = 0; const tot = curvaTotal(m);
       for (let d = a; d <= b; d++) { acc += curvaPeso(m.curva[isoDe(d)]); pts2.push([X(d * 864e5 + 27 * 3600e3), Y(ini + acc / tot * (alvo - ini))]); }
       ideal = `<polyline fill="none" stroke="var(--txt3)" stroke-dasharray="3 4" stroke-opacity=".9" points="${pts2.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' ')}"/>`;
     } else if (a != null && b != null && b > a) ideal = `<line x1="${X(a * 864e5 + 3 * 3600e3).toFixed(1)}" y1="${Y(ini).toFixed(1)}" x2="${X(b * 864e5 + 27 * 3600e3).toFixed(1)}" y2="${Y(alvo).toFixed(1)}" stroke="var(--txt3)" stroke-dasharray="3 4" stroke-opacity=".9"/>`;
     const xy = pts.map(x => [X(x.t), Y(x.v)]);
-    const linha = xy.length > 1 ? `<path d="M${xy[0][0].toFixed(1)},${(pt + ih).toFixed(1)} L${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L')} L${xy[xy.length - 1][0].toFixed(1)},${(pt + ih).toFixed(1)}Z" fill="${st.cor}" fill-opacity=".12"/><polyline fill="none" stroke="${st.cor}" stroke-width="2.4" stroke-linejoin="round" stroke-linecap="round" points="${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>` : '';
-    const dots = pts.map((x, i) => `<circle cx="${xy[i][0].toFixed(1)}" cy="${xy[i][1].toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3.2}" fill="${st.cor}" stroke="rgba(255,255,255,.85)" stroke-width="1.2"><title>${esc(new Date(x.t).toLocaleString('pt-BR', { timeZone: SP, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) + ' · ' + fy(x.v))}</title></circle>`).join('');
+    const linha = xy.length > 1 ? `<path d="M${xy[0][0].toFixed(1)},${(pt + ih).toFixed(1)} L${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' L')} L${xy[xy.length - 1][0].toFixed(1)},${(pt + ih).toFixed(1)}Z" fill="${st.cor}" fill-opacity=".12"/><polyline fill="none" stroke="${st.cor}" stroke-width="${grande ? 2.8 : 2.4}" stroke-linejoin="round" stroke-linecap="round" points="${xy.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}"/>` : '';
+    const dots = pts.map((x, i) => {
+      const dtTxt = new Date(x.t).toLocaleString('pt-BR', { timeZone: SP, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const pMeta = alvo !== ini ? Math.round((x.v - ini) / (alvo - ini) * 100) : null;
+      const sub = `Meta total: ${fyL(alvo)}` + (pMeta != null ? ` (${pMeta}% atingido)` : '');
+      const ext = (isNum(x.d) ? `Entrada: +${fyL(x.d)}` : '') + (x.nota ? (isNum(x.d) ? ' · ' : '') + `"${x.nota}"` : '') + (x.nome ? ` · por ${String(x.nome).split(' ')[0]}` : '');
+      return `<circle class="mm-pt" cx="${xy[i][0].toFixed(1)}" cy="${xy[i][1].toFixed(1)}" r="${i === pts.length - 1 ? (grande ? 5.5 : 5) : (grande ? 4 : 3.2)}" fill="${st.cor}" stroke="rgba(255,255,255,.85)" stroke-width="1.2" data-x="${xy[i][0].toFixed(1)}" data-y="${xy[i][1].toFixed(1)}" data-lbl="🕒 ${esc(dtTxt)}" data-val="Acumulado: ${esc(fyL(x.v))}" data-sub="${esc(sub)}" data-extra="${esc(ext)}"><title>${esc(dtTxt + ' · ' + fy(x.v))}</title></circle>`;
+    }).join('');
     const dl = d => new Date(d).toLocaleDateString('pt-BR', { timeZone: SP, day: '2-digit', month: '2-digit' });
-    const xl = `<text x="${pl}" y="${H - 8}" font-size="9" fill="currentColor" fill-opacity=".6">${dl(t0)}</text><text x="${W - pr}" y="${H - 8}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity=".6">${dl(t1)}</text>`;
+    const xl = `<text x="${pl}" y="${H - 8}" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${dl(t0)}</text><text x="${W - pr}" y="${H - 8}" text-anchor="end" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${dl(t1)}</text>`;
     const ult = xy[xy.length - 1];
-    const rot = `<text x="${Math.min(W - pr - 4, ult[0] + 7)}" y="${(ult[1] - 8).toFixed(1)}" text-anchor="${ult[0] > W - 70 ? 'end' : 'start'}" font-size="10" font-weight="700" fill="${st.cor}">${esc(fy(pts[pts.length - 1].v))}</text>`;
-    return `<div class="mm-chart" style="--mm-c:${st.cor}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de ${esc(m.titulo)}">${grid}${meta}${ideal}${linha}${dots}${rot}${xl}</svg>
-      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>' + (temCurva(m) ? 'ritmo do time (diarização)' : 'ritmo ideal') + '</span>' : ''}<span><i class="mt"></i>meta</span></div></div>`;
+    const rot = `<text x="${Math.min(W - pr - 4, ult[0] + 7)}" y="${(ult[1] - 8).toFixed(1)}" text-anchor="${ult[0] > W - 70 ? 'end' : 'start'}" font-size="${grande ? 11 : 10}" font-weight="700" fill="${st.cor}">${esc(fy(pts[pts.length - 1].v))}</text>`;
+    const hl = `<line class="mm-g-hl" x1="0" y1="${pt}" x2="0" y2="${pt + ih}" stroke="var(--txt)" stroke-opacity=".35" stroke-dasharray="2 3" style="display:none;pointer-events:none"/>`;
+    return `<div class="mm-chart" style="--mm-c:${st.cor}" data-mm-gmodo-box="acum">${barra}<div class="mm-chart-wrap" data-mm-w="${W}" data-mm-h="${H}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de ${esc(m.titulo)}">${grid}${meta}${ideal}${linha}${hl}${dots}${rot}${xl}</svg><div class="mm-tip" hidden></div></div>
+      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>' + (comCurva ? 'ritmo do time (diarização)' : 'ritmo ideal') + '</span>' : ''}<span><i class="mt"></i>meta</span></div></div>`;
   }
   // "180 / 500 camisetas" · "R$ 840 mil / R$ 2 mi" · "42% / 100%" — a unidade aparece uma vez só.
   function fmtPar(m) {
@@ -681,10 +832,10 @@
     return { ok: true, patch, viraAtual: vira };
   }
   async function lerLog(id) {
-    if (S.logCache[id] && Date.now() - S.logCache[id].t < 20000) return S.logCache[id].pts;
+    if (S.logCache[id] && Date.now() - S.logCache[id].t < 300000) return S.logCache[id].pts;
     let v = {};
     try { v = (await root._get(refDe(PATHS.log + '/' + id))).val() || {}; } catch (e) { v = {}; }
-    const pts = Object.keys(v).sort().slice(-80).map(k => ({ t: Number(v[k].t), v: Number(v[k].v), nome: v[k].nome })).filter(x => isFinite(x.t) && isFinite(x.v));
+    const pts = Object.keys(v).sort().slice(-120).map(k => ({ t: Number(v[k].t), v: Number(v[k].v), d: isNum(v[k].d) ? Number(v[k].d) : undefined, nome: v[k].nome, nota: v[k].nota })).filter(x => isFinite(x.t) && isFinite(x.v));
     S.logCache[id] = { t: Date.now(), pts }; return pts;
   }
   // ── Gerir as entradas (histórico): editar / excluir ──
@@ -742,15 +893,36 @@
   function achar(id, esc_, sq) { return (esc_ === 'squad' ? lista(S.squads[sq]).map(m => Object.assign({ squad: sq, escopo: 'squad' }, m)) : lista(S.digital).map(m => Object.assign({ escopo: 'digital' }, m))).find(m => m.id === id) || null; }
 
   // ════════════════ MODAIS ════════════════
-  function abreOv(html, fechavel) {
+  function abreOv(html, fechavel, extraClass) {
     if (typeof document === 'undefined') return null;
-    const ov = document.createElement('div'); ov.className = 'mm-ov mm'; ov.innerHTML = '<div class="mm-md" role="dialog" aria-modal="true">' + html + '</div>';
+    const ov = document.createElement('div'); ov.className = 'mm-ov mm'; ov.innerHTML = '<div class="mm-md' + (extraClass ? ' ' + extraClass : '') + '" role="dialog" aria-modal="true">' + html + '</div>';
     ov.addEventListener('mousedown', e => { if (e.target === ov && fechavel !== false) ov.remove(); });
     document.body.appendChild(ov);
     // Esc fecha SÓ este modal: `stopPropagation` impede que o Esc global da página feche também a tela que está por baixo (⚙ Configurações, Dados…). Se o modal já foi
     // fechado por outro caminho (Cancelar, clique fora), o ouvinte se desfaz na próxima tecla em vez de ficar pendurado.
     const onKey = e => { if (!ov.isConnected) { document.removeEventListener('keydown', onKey, true); return; } if (e.key === 'Escape') { e.stopPropagation(); ov.remove(); document.removeEventListener('keydown', onKey, true); } };
     document.addEventListener('keydown', onKey, true);
+    return ov;
+  }
+  async function abrirGraficoModal(m, pontos, modoInicial) {
+    injetaCss();
+    const pts = Array.isArray(pontos) ? pontos : await lerLog(m.id);
+    let modo = modoInicial || (temCurva(m) ? 'dia' : 'acum');
+    const per = m.inicio ? (m.inicio === m.fim ? curto(m.inicio) : curto(m.inicio) + '–' + curto(m.fim)) : '';
+    const ov = abreOv(`<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div><h3>${esc(m.emoji || '🎯')} ${esc(m.titulo)}</h3><p class="sub" style="margin-bottom:4px">${esc(fmtPar(m))} (${esc(pctTxt(pct(m)))}) ${per ? '· 📅 ' + esc(per) : ''} · passe o mouse nos pontos para inspecionar</p></div>
+        <div style="display:flex;align-items:center;gap:8px">${statusPill(m)}<button type="button" class="mm-btn s" id="mm-gm-x">✕ Fechar</button></div>
+      </div>
+      <div id="mm-gm-slot" style="margin-top:6px">${graficoHtml(m, pts, { modo, grande: true })}</div>
+      <div style="margin-top:12px">${kpisHtml(m)}</div>`, true, 'mm-md-lg');
+    if (!ov) return null;
+    const slot = ov.querySelector('#mm-gm-slot');
+    ov.querySelector('#mm-gm-x').onclick = () => ov.remove();
+    slot.addEventListener('click', e => {
+      const b = e.target.closest('[data-mm-gmodo]'); if (!b) return;
+      modo = b.dataset.mmGmodo;
+      slot.innerHTML = graficoHtml(m, pts, { modo, grande: true });
+    });
     return ov;
   }
   // Formulário de meta/desafio (nova ou editar). opts: {escopo, squad, meta?, pessoas?:[{uid,nome}], tipo?, onSave(meta)}
@@ -1008,17 +1180,106 @@
       return a;
     } catch (e) { return null; }
   }
+  function _normPopup(m, marco) {
+    if (typeof m === 'number' || !m || typeof m !== 'object') {
+      const mc = typeof m === 'number' ? m : (Number(marco) || 60);
+      const base = metasDigital()[0] || ((S.ctx && S.ctx.squad) ? metasSquad(S.ctx.squad)[0] : null)
+        || { id: 'teste', titulo: 'Outubro', emoji: '🎯', escopo: 'digital', tipo: 'meta', un: 'R$', alvo: 30000000, inicial: 0 };
+      const pBase = pct(base);
+      const atualSim = (pBase !== null && marcoDe(pBase) === marcoDe(mc)) ? base.atual : valorDoMarco(base, mc);
+      return { m: Object.assign({}, base, { atual: atualSim, marco: mc }), marco: mc };
+    }
+    const mc = isNum(marco) ? Number(marco) : (isNum(m.marco) ? Number(m.marco) : (marcoDe(pct(m)) || 20));
+    return { m, marco: mc };
+  }
+  // Monta os textos personalizados do popup dos peixes (título, subtítulo e botão) reagindo ao nome, tema (mês/Black/campanha), escopo, marco e números da meta.
+  function textoPopup(m, marco) {
+    const np = _normPopup(m, marco); m = np.m; marco = np.marco;
+    const cem = marco >= 100, tit = String(m.titulo || '').trim();
+    const escopoTxt = m.escopo === 'digital' ? 'meta do Digital' : 'meta da squad';
+    const temAlvo = Number(m.alvo) > 0 && m.atual != null;
+    const progTxt = temAlvo ? ` (${esc(fmtVal(m, m.atual))} de ${esc(fmtVal(m, m.alvo))})` : '';
+    let nx = !cem ? proximoMarco(m) : null;
+    if (!cem && (!nx || nx.marco <= marco)) {
+      const alvoMarco = Math.min(100, marcoDe(marco) + 20);
+      const valMarco = temAlvo ? valorDoMarco(m, alvoMarco) : null;
+      nx = { marco: alvoMarco, valor: valMarco, falta: valMarco != null ? valMarco - Number(m.atual || 0) : 0 };
+    }
+    const faltaNx = nx && temAlvo && Number(nx.falta) > 0 ? ` — faltam <b>${esc(fmtVal(m, nx.falta))}</b>` : '';
+    const proxTxt = nx ? ` Próximo peixe em <b>${nx.marco}%</b>${faltaNx}.` : '';
+    const mMes = tit.match(/(?:^|\b)(janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)(?:\b|$)/i);
+    const mesCru = mMes ? mMes[1].toLowerCase().replace(/^marco$/, 'março') : '';
+    const mes = mesCru ? mesCru.charAt(0).toUpperCase() + mesCru.slice(1) : '';
+    const ehBf = /black\s*friday|cyber\s*monday|esquenta/i.test(tit);
+    const mCamp = !mes && !ehBf ? tit.match(/(dia das m[aã]es|dia dos pais|dia das crian[cç]as|dia dos namorados|natal|ano novo|anivers[aá]rio|live|sald[aã]o|liquida[cç][aã]o|liquida)/i) : null;
+    const camp = mCamp ? mCamp[1] : '';
+    const temaCurto = mes || (ehBf ? 'Black Friday' : camp);
+    const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+    const emTit = temaCurto && tit && norm(tit) !== norm(temaCurto) ? ` em <b>${esc(tit)}</b>` : '';
+    let h2, corpo, btn;
+    const titCurto = tit.length > 32 ? tit.slice(0, 30).trim() + '…' : tit;
+    if (cem) {
+      h2 = mes ? `🏆 Meta batida em ${esc(mes)}! 🎉`
+        : m.tipo === 'desafio' ? `🏆 Meta batida — desafio${titCurto ? ' ' + esc(titCurto) : ''} concluído! 🎉`
+        : titCurto ? `🏆 Meta batida — ${esc(titCurto)}! 🎉`
+        : '🏆 Meta batida! 🎉';
+      if (ehBf) corpo = `A rede de <b>${esc(tit || 'Black Friday')}</b> transbordou na Black! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      else if (mes) corpo = `A rede de <b>${esc(tit || mes)}</b> encheu! Fechamos <b>${esc(mes)}</b> em <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      else corpo = `A rede${tit ? ' de <b>' + esc(tit) + '</b>' : ''} encheu! Batemos <b>${marco}%</b> da ${escopoTxt}${progTxt} — parabéns, time.`;
+      btn = mes ? `Bora comemorar ${esc(mes)}! 🥳` : (titCurto ? `Bora comemorar ${esc(titCurto)}! 🥳` : 'Bora comemorar! 🥳');
+    } else {
+      h2 = mes ? `O mar tá pra peixe em ${esc(mes)}! 🐟`
+        : ehBf ? 'O mar tá pra peixe na Black! 🐟'
+        : titCurto ? `O mar tá pra peixe — ${esc(titCurto)}! 🐟`
+        : 'O mar tá pra peixe! 🐟';
+      let abre;
+      if (mes) {
+        abre = marco === 20 ? `Primeiro peixe de <b>${esc(mes)}</b> na rede!`
+          : marco === 40 ? `O cardume de <b>${esc(mes)}</b> tá encorpando!`
+          : marco === 60 ? `Passamos da metade de <b>${esc(mes)}</b>!`
+          : marco === 80 ? `Reta final de <b>${esc(mes)}</b> no mar!`
+          : `A maré de <b>${esc(mes)}</b> tá subindo!`;
+      } else if (ehBf) {
+        abre = marco === 20 ? 'Primeiro peixe da <b>Black</b> na rede!'
+          : marco === 40 ? 'O cardume da <b>Black</b> tá forte!'
+          : marco === 60 ? 'Passamos da metade na <b>Black</b>!'
+          : marco === 80 ? 'Reta final da <b>Black</b> pegando fogo!'
+          : 'A maré da <b>Black</b> tá subindo!';
+      } else if (camp) {
+        abre = `A campanha de <b>${esc(camp)}</b> engrenou!`;
+      } else if (tit) {
+        abre = marco === 20 ? `Primeiro peixe de <b>${esc(tit)}</b> na rede!`
+          : marco === 40 ? `O cardume de <b>${esc(tit)}</b> tá encorpando!`
+          : marco === 60 ? `Passamos da metade em <b>${esc(tit)}</b>!`
+          : marco === 80 ? `Reta final de <b>${esc(tit)}</b> no mar!`
+          : `A maré de <b>${esc(tit)}</b> tá subindo!`;
+      } else {
+        abre = marco === 20 ? 'Primeiro peixe na rede!'
+          : marco === 40 ? 'O cardume tá encorpando!'
+          : marco === 60 ? 'Passamos da metade!'
+          : marco === 80 ? 'Reta final no mar!'
+          : 'A maré tá subindo!';
+      }
+      corpo = `${abre} Chegamos a <b>${marco}%</b> da ${escopoTxt}${emTit}${progTxt}.${proxTxt}`;
+      btn = mes ? `Bora pescar mais em ${esc(mes)}! 🚀`
+        : ehBf ? 'Bora pescar mais na Black! 🚀'
+        : titCurto ? `Bora pescar mais — ${esc(titCurto)}! 🚀`
+        : 'Bora pescar mais! 🚀';
+    }
+    const sub = `${esc(m.emoji || '🎯')} <b>${esc(tit)}</b><br>${corpo}`;
+    return { h2, sub, btn, corpo };
+  }
   function mostrarPeixes(m, marco, fim) {
     injetaCss(); if (typeof document === 'undefined') return;
+    const np = _normPopup(m, marco); m = np.m; marco = np.marco;
     const cem = marco >= 100, n = Math.max(1, Math.min(7, cem ? 7 : marco / 20 + 1));
-    const dono = m.escopo === 'squad' ? (m.squad ? 'a squad' : '') : 'o Digital';
-    const nx = proximoMarco(m);
+    const tx = textoPopup(m, marco);
     const fish = Array.from({ length: n }, (_, i) => `<span class="f" style="left:${6 + i * (84 / Math.max(1, n))}%;animation-delay:${(i * .33).toFixed(2)}s;font-size:${28 + (i % 3) * 5}px">${['🐟', '🐠', '🐡'][i % 3]}</span>`).join('');
     const el = document.createElement('div'); el.className = 'mm-fish-ov mm';
     el.innerHTML = `<div class="mm-fish ${cem ? 'cem' : ''}" role="dialog" aria-modal="true" aria-label="O mar tá pra peixe"><button class="x" aria-label="Fechar">✕</button>
-      <h2>${cem ? '🏆 Meta batida! 🎉' : 'O mar tá pra peixe! 🐟'}</h2><div class="big">${marco}%</div>
-      <p class="sub">${esc(m.emoji || '🎯')} <b>${esc(m.titulo)}</b><br>${cem ? 'A rede encheu! Parabéns, time.' : (dono ? 'Chegamos a <b>' + marco + '%</b> da meta ' + (m.escopo === 'digital' ? 'do Digital' : 'da squad') + '.' : '') + (nx ? ' Próximo peixe em <b>' + nx.marco + '%</b>.' : '')}</p>
-      <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${cem ? 'Bora comemorar! 🥳' : 'Bora pescar mais! 🚀'}</button></div>`;
+      <h2>${tx.h2}</h2><div class="big">${marco}%</div>
+      <p class="sub">${tx.sub}</p>
+      <div class="stage">${fish}<div class="wave"></div><div class="wave w2"></div></div><button class="go" type="button">${tx.btn}</button></div>`;
     let som = null, tm = null;
     const fecha = () => { if (!el.isConnected) return; el.remove(); document.removeEventListener('keydown', onKey, true); clearTimeout(tm); if (som) { try { som.pause(); } catch (e) {} } fim && fim(); };
     const onKey = e => { if (e.key === 'Escape') { e.stopPropagation(); fecha(); } };
@@ -1071,10 +1332,19 @@
     }
     return h + `</div>`;
   }
-  // Liga os botões (✏️ atualizar · 📈 evolução · ⚙ editar) de um container já desenhado.
+  // Liga os botões (✏️ atualizar · 📈 evolução · ⛶ expandir · 📅/📈 modo · ⚙ editar) de um container já desenhado.
   function ligar(container, ctx) {
     if (!container || container._mmLigado) return; container._mmLigado = true;
     container.addEventListener('click', async e => {
+      const mBtn = e.target.closest('[data-mm-gmodo]');
+      if (mBtn && !mBtn.closest('.mm-md')) {
+        const box = mBtn.closest('[data-mm-id]'); if (!box) return;
+        const m = achar(box.dataset.mmId, box.dataset.mmEsc, box.dataset.mmSq); if (!m) return;
+        const slot = box.querySelector('.mm-chart-slot'); if (!slot) return;
+        const pts = await lerLog(m.id);
+        slot.innerHTML = graficoHtml(m, pts, { modo: mBtn.dataset.mmGmodo });
+        return;
+      }
       const b = e.target.closest('[data-mm-act]'); if (!b) return;
       const box = b.closest('[data-mm-id]'); if (!box) return;
       const m = achar(box.dataset.mmId, box.dataset.mmEsc, box.dataset.mmSq); if (!m) return;
@@ -1086,7 +1356,12 @@
         const slot = box.querySelector('.mm-chart-slot'); if (!slot) return;
         if (!slot.hidden) { slot.hidden = true; return; }
         slot.hidden = false; slot.innerHTML = '<div class="mm-chart-vazio">Carregando…</div>';
-        const pts = await lerLog(m.id); slot.innerHTML = graficoHtml(m, pts);
+        const pts = await lerLog(m.id);
+        slot.innerHTML = graficoHtml(m, pts, { modo: temCurva(m) ? 'dia' : 'acum' });
+      }
+      if (act === 'graf-exp') {
+        const pts = await lerLog(m.id);
+        abrirGraficoModal(m, pts, b.dataset.mmGmodoAtual);
       }
     });
   }
@@ -1094,13 +1369,13 @@
   const api = {
     IS_DEV, PATHS, SUBMARCAS, CANAIS, MARCOS, STATUS,
     // matemática
-    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
+    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, serieDiaria, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
-    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar,
+    injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, ligar, textoPopup,
     // dados
     iniciar, ouvirTodasSquads, salvar, remover, arquivar, registrar, lerLog, lerEntradas, mexerEntrada, entPlano, entradasDeLog, metasDigital, metasSquad, todasDaSquad, todasDigital, squadsGlobais, achar,
     // modais
-    abrirForm, abrirRegistrar, abrirEntradas, mostrarPeixes, vigiaMarcos,
+    abrirForm, abrirRegistrar, abrirEntradas, abrirGraficoModal, mostrarPeixes, vigiaMarcos,
   };
   if (typeof module === 'object' && module.exports) module.exports = api;
   root.MareMetas = api;
