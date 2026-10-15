@@ -78,6 +78,7 @@ const SUBMARCA_LABELS = [
   'Hering Sports Comercial', 'Hering Sports Cadastro',
   'Hering Intimates Comercial', 'Hering Intimates Cadastro',
   'Hering Teen Comercial', 'Hering Teen Cadastro',
+  'Geral',
 ];
 
 function makeFakeCriarCardHandler() {

@@ -234,6 +234,9 @@ async function carregarSquadInterno() {
   const fb = SQUAD_FALLBACK[squad];
   if (!meta && !fb && agil == null && tagsV == null) return null; // squad inexistente
   const tags = arr(tagsV);
+  if ((smAt || tags.some(t => t && /^tag_sm_/.test(t.id))) && !tags.some(t => t && t.id === 'tag_sm_geral')) {
+    tags.push({ id: 'tag_sm_geral', label: 'Geral', pi: 4 });
+  }
   const smVisiveis = smVis || {}, cvVisiveis = cvVis || {};
   return {
     id: squad,
