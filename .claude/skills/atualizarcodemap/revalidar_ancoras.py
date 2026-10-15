@@ -5,7 +5,7 @@ Uso (da raiz do repo):  python3 .claude/skills/atualizarcodemap/revalidar_ancora
 Só mexe quando o nome tem UMA declaração no arquivo da seção (function X / const|let|var X / X = ...). Casos que ele
 não consegue parear (vários nomes × números diferentes, nomes de CSS, números em linha seguinte) saem em `skip`/`miss`
 e ficam pra revisão manual. A faixa de linhas do CODE_MAP -> arquivo está em fileFor(): AJUSTE quando as seções mudarem
-(2026-10-13: kanban <2710 · painel 2710-2983 · okr-dev 2983-3534 · painel 3534-3762 · oceano 3762-3774 · apresentação 3774-3930).
+(2026-10-14: kanban <2709 · painel 2709-2988 · okr-dev 2988-3541 · painel 3541-3769 · oceano 3769-3781 · apresentação 3781-3937).
 Lições: confira SEMPRE 1 caso à mão antes de aceitar o relatório; um drift quase uniforme por seção é normal, um número que
 anda MUITO diferente dos vizinhos merece olhar. Referências soltas (prosa, CSS) não são cobertas."""
 import re,sys,json
@@ -15,12 +15,12 @@ lines=open(R+'CODE_MAP.md',encoding='utf-8').read().split('\n')
 files={k:open(R+v,encoding='utf-8',errors='replace').read().split('\n') for k,v in {'k':'kanban-dev.html','p':'painel-dev.html','o':'okr-dev.html','oc':'oceano-dev.html','a':'okr-apresentacao.slide.html'}.items()}
 # faixa -> arquivo (1-based linhas do CODE_MAP)
 def fileFor(n):
-    if n<2710: return 'k'
-    if n<2983: return 'p'
-    if n<3534: return 'o'
-    if n<3762: return 'p'
-    if n<3774: return 'oc'
-    if n<3930: return 'a'
+    if n<2709: return 'k'
+    if n<2988: return 'p'
+    if n<3541: return 'o'
+    if n<3769: return 'p'
+    if n<3781: return 'oc'
+    if n<3937: return 'a'
     return None
 declcache={}
 def find(fk,name):
