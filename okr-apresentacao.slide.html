@@ -1786,14 +1786,14 @@ function renderNotas(){
       : '<div class="notes-empty">Nenhuma anotação registrada nesta reunião.</div>';
     return;
   }
-  const meuUid = window._currentUser?.uid;
+  const meuUid = window._currentUser?.uid, souAdm = _isAdmOkr();
   list.innerHTML = notas.map(([id,n])=>`
     <div class="note-item">
       <div class="note-item-hd">
         <div class="note-author">${_notaAvatarHtml(n.autorUid)}<span>${esc(pessoaInfo(n.autorUid).nome.split(' ')[0]||'—')}</span></div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span class="note-time">${_notaTempoFmt(n.ts)}</span>
-          ${(isHoje && n.autorUid===meuUid)?`<button class="note-del" onclick="window._okrDelNota(${jsq(id)})" title="Excluir">✕</button>`:''}
+          ${(isHoje && (n.autorUid===meuUid || souAdm))?`<button class="note-del" onclick="window._okrDelNota(${jsq(id)})" title="Excluir">✕</button>`:''}
         </div>
       </div>
       <div class="note-text">${esc(n.texto)}</div>
@@ -1875,7 +1875,7 @@ window._okrAddNota = () => {
 window._okrDelNota = id => {
   const hoje = _hojeStr();
   const n = (okrNotas[hoje]||{})[id];
-  if(!n || n.autorUid!==window._currentUser?.uid) return; // só o autor apaga a própria anotação, só na reunião de hoje (ver readonly acima)
+  if(!n || (n.autorUid!==window._currentUser?.uid && !_isAdmOkr())) return; // autor ou ADM apaga na reunião de hoje (ver readonly acima)
   window._remove(window._ref(window._db, 'kanban/okr/reuniao_notas/'+hoje+'/'+id)).catch(err=>console.error('[notas] falha ao excluir:', err));
 };
 // Enter envia (Shift+Enter quebra linha) — stopPropagation() em TODA tecla
@@ -1951,6 +1951,14 @@ setInterval(()=>{
 }, 1000);
 
 // ── Auth / data lifecycle ──
+let ADM_EMAILS = ['caio.soares@ciahering.com.br'];
+function _isAdmOkr(){
+  if(window._okrIsViewer) return false;
+  const u = window._currentUser; if(!u) return false;
+  const em = String(u.email||'').toLowerCase();
+  if(em && ADM_EMAILS.some(e=>String(e||'').toLowerCase()===em)) return true;
+  return !!(u.uid && usersCache[u.uid] && usersCache[u.uid].role === 'adm');
+}
 let listenersStarted = false;
 // _okrDenyAccess() é chamada tanto pela checagem de domínio/painel_viewers
 // (ANTES de mostrar o app — ver window._okrHandleAuth) quanto pelo onErr
@@ -1975,7 +1983,13 @@ function startListeners(){
   window._onValue(window._ref(window._db,'kanban/okr/tags'), snap=>{ okrTags = snap.val()||{}; _loaded.tag=true; scheduleRebuild(); }, onErr);
   window._onValue(window._ref(window._db,'kanban/okr/gerencias'), snap=>{ okrGerenciasCfg = snap.val()||{}; _loaded.ger=true; scheduleRebuild(); }, ()=>{ _loaded.ger=true; scheduleRebuild(); });   // sem leitura: segue com o padrão
   // Visualizador externo lê o diretório magro (usuarios_publicos): as regras fecham kanban/usuarios (e-mails/tokens de push) pra ele — 2026-10-07.
-  window._onValue(window._ref(window._db, window._okrIsViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); }, onErr);
+  window._onValue(window._ref(window._db, window._okrIsViewer ? 'kanban/usuarios_publicos' : 'kanban/usuarios'), snap=>{ usersCache = snap.val()||{}; _loaded.users=true; scheduleRebuild(); liveRender(); renderNotas(); }, onErr);
+  if(!window._okrIsViewer){
+    window._get(window._ref(window._db,'kanban/config/adm_emails')).then(s=>{
+      if(Array.isArray(s.val())) ADM_EMAILS = ['caio.soares@ciahering.com.br', ...s.val()];
+      liveRender(); renderNotas();
+    }).catch(()=>{});
+  }
   // Anotações da reunião — independente do carrossel de slides (não entra
   // em _loaded/scheduleRebuild()), só re-renderiza o próprio painel; ao
   // vivo pra quem estiver com o painel aberto ver anotações de outras
@@ -1999,8 +2013,7 @@ function startListeners(){
 // 🎙️ APRESENTAÇÃO AO VIVO — kanban/okr/apresentacao_live (as regras de kanban/okr já deixam qualquer @ciahering escrever e o visualizador externo ler).
 //   • Quem clica "🎙️ Apresentar ao vivo" vira o APRESENTADOR: o slide (por chave, não por posição) e o Objetivo aberto no detalhe vão pro banco.
 //   • Todo mundo que abrir a página acompanha sozinho; mexer nos slides por conta própria sai da sincronização ("Voltar a seguir" volta).
-//   • O apresentador tem 🔴 laser (L) e 🖍️ caneta (P); os traços ficam por slide e aparecem pra todos. "Passar o controle" a quem está com a página aberta
-//     (ou quem pede o controle e o apresentador aceita); se o apresentador sumir (>90 s sem sinal) outra pessoa pode assumir. ⏹ encerra e apaga tudo.
+//   • O apresentador (e qualquer ADM, a qualquer momento) tem 🔴 laser (L), 🖍️ caneta (P), passar/assumir o controle, sincronizar slide e ⏹ encerrar.
 // ═════════════════════════════════════════════════════════════════
 const LIVE_PATH = 'kanban/okr/apresentacao_live', LIVE_CORES = ['#ff4d4d','#ffd166','#1de9b6','#ffffff'];
 let liveTipo = 'f', _liveRaf = 0, liveVisto = {}, liveMeus = [], live = null, liveSeguindo = true, liveFerr = '', liveCor = LIVE_CORES[0], _liveAplicando = false, _livePend = false, _liveSyncT = null, liveStroke = null, _liveStrokeT = 0, _liveLaserT = 0, _liveHb = null, _liveEntrou = false;
@@ -2008,6 +2021,8 @@ const liveEu = () => window._currentUser || {};
 const liveRef = sub => window._ref(window._db, LIVE_PATH + (sub ? '/'+sub : ''));
 const liveAtiva = () => !!(live && live.ativa && live.apresentador && live.apresentador.uid);
 const liveSouHost = () => liveAtiva() && live.apresentador.uid === liveEu().uid;
+const liveSouAdm = () => _isAdmOkr();
+const livePodeControlar = () => liveAtiva() && (liveSouHost() || liveSouAdm());
 const liveHostParado = () => liveAtiva() && (Date.now() - (live.atualizadoEm||0)) > 90000;
 const liveNome = u => (u && (u.displayName || (u.email||'').split('@')[0])) || 'Alguém';
 const liveSlideKey = () => slides[currentIdx] ? slides[currentIdx].key : '';
@@ -2044,7 +2059,7 @@ window._liveComecar = () => {
   window._set(liveRef(), {ativa:true, apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, iniciadoEm:Date.now(), atualizadoEm:Date.now(), slide:liveSlideKey(), detalhe:liveDetalheAberto()})
     .then(()=>liveToast('🎙️ Você está apresentando ao vivo. Quem abrir a página acompanha o seu slide. Abra o 🎙️ no canto da tela. Teclas: L laser · P caneta · T caneta temporária (some em 5 s).', '', 6500)).catch(e=>liveToast('⚠️ Não consegui iniciar: '+(e && e.message || e)));
 };
-window._liveEncerrar = () => { if(!liveSouHost()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
+window._liveEncerrar = () => { if(!livePodeControlar()) return; if(!confirm('Encerrar a apresentação ao vivo pra todo mundo?')) return; window._remove(liveRef()).catch(()=>{}); };
 function liveAplicar(forcar){
   // forcar: o APRESENTADOR recarregou a página — ela abre na capa enquanto a sala continua no slide dele; volta pra posição da sessão (sem isso ele só ressincroniza ao navegar)
   if(!liveAtiva() || (liveSouHost() && !forcar) || (!liveSouHost() && !liveSeguindo)) return;
@@ -2076,50 +2091,74 @@ function liveTrocar(uid, nome, email){
   const upd = {apresentador:{uid, nome, email:email||''}, atualizadoEm:Date.now(), laser:null}; upd['pedidos/'+uid] = null;
   window._update(liveRef(), upd).catch(e=>liveToast('⚠️ Não consegui passar o controle: '+(e && e.message || e)));
 }
-window._livePassar = (uid, nome) => { liveTrocar(uid, nome, ''); liveDesligaFerr(); };
-window._liveAceitar = (uid, nome) => { liveTrocar(uid, nome, ''); liveDesligaFerr(); };
-window._liveRecusar = uid => window._remove(liveRef('pedidos/'+uid)).catch(()=>{});
-window._liveAssumir = () => { const u = liveEu(); liveTrocar(u.uid, liveNome(u), u.email); liveSeguindo = true; };
+window._livePassar = (uid, nome) => { if(!livePodeControlar()) return; liveTrocar(uid, nome, ''); liveDesligaFerr(); };
+window._liveAceitar = (uid, nome) => { if(!livePodeControlar()) return; liveTrocar(uid, nome, ''); liveDesligaFerr(); };
+window._liveRecusar = uid => { if(!livePodeControlar()) return; window._remove(liveRef('pedidos/'+uid)).catch(()=>{}); };
+window._liveAssumir = () => {
+  const u = liveEu(); if(!u.uid) return;
+  const upd = {apresentador:{uid:u.uid, nome:liveNome(u), email:u.email||''}, slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now(), laser:null};
+  upd['pedidos/'+u.uid] = null;
+  liveSeguindo = true;
+  window._update(liveRef(), upd).then(()=>liveToast('🎙️ Você assumiu o controle da apresentação.')).catch(e=>liveToast('⚠️ Não consegui assumir o controle: '+(e && e.message || e)));
+};
+window._livePuxarSlide = () => {
+  if(!livePodeControlar()) return;
+  window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), atualizadoEm:Date.now()})
+    .then(()=>{ liveSeguindo = true; liveRender(); liveToast('📍 Sala sincronizada no seu slide.'); })
+    .catch(e=>liveToast('⚠️ Não consegui sincronizar o slide: '+(e && e.message || e)));
+};
 function liveDesligaFerr(){ liveFerr = ''; document.body.classList.remove('live-pen'); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; }
 // ferramentas: 'laser' ou 'caneta' (a caneta tem dois tipos: fixa 'f' e temporária 't')
 window._liveFerr = t => {
-  if(!liveSouHost()) return; liveFerr = liveFerr===t ? '' : t;
+  if(!livePodeControlar()) return; liveFerr = liveFerr===t ? '' : t;
   document.body.classList.toggle('live-pen', liveFerr==='caneta');
   if(liveFerr!=='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; }
   liveRender();
 };
-window._liveTipo = m => { liveTipo = m; if(liveSouHost() && liveFerr!=='caneta') window._liveFerr('caneta'); else liveRender(); };
+window._liveTipo = m => { liveTipo = m; if(livePodeControlar() && liveFerr!=='caneta') window._liveFerr('caneta'); else liveRender(); };
 window._liveCor = c => { liveCor = c; liveRender(); };
-window._liveLimpar = () => { if(liveSouHost()){ liveMeus = []; window._remove(liveRef('tracos')).catch(()=>{}); } };
-window._liveDesfazer = () => { if(!liveSouHost()) return; while(liveMeus.length){ const id = liveMeus.pop(); if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; } } };
+window._liveLimpar = () => { if(livePodeControlar()){ liveMeus = []; window._remove(liveRef('tracos')).catch(()=>{}); } };
+window._liveDesfazer = () => { if(!livePodeControlar()) return; while(liveMeus.length){ const id = liveMeus.pop(); if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; } } };
 window._liveCopiarLink = () => { const url = location.origin + location.pathname; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>liveToast('📋 Link copiado — mande pra quem vai receber o controle.')).catch(()=>liveToast('Copie o endereço da barra do navegador: '+url, '', 7000)); };
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
 // e remontar a cada um fazia o clique no nome da pessoa se perder (o botão era trocado entre o botão do mouse descer e subir).
 let _liveSig = '', livePainelAberto = false;
-function liveParticipantes(){ const eu = liveEu().uid, ag = Date.now(); return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && p && ag-(p.ts||0) < 70000).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR')); }
+function liveParticipantes(){
+  const eu = liveEu().uid, hostUid = live && live.apresentador && live.apresentador.uid, ag = Date.now();
+  return Object.entries((live && live.participantes)||{}).filter(([id,p])=>id!==eu && id!==hostUid && p && ag-(p.ts||0) < 70000).sort((a,b)=>String(a[1].nome||'').localeCompare(String(b[1].nome||''),'pt-BR'));
+}
 function liveRender(){
   const box = document.getElementById('live-box'), fab = document.getElementById('live-fab'), painel = document.getElementById('live-fpanel'); if(!box || !fab || !painel) return;
-  const viewer = !!window._okrIsViewer, eu = liveEu(), ativa = liveAtiva(), host = liveSouHost();
-  const pessoas = ativa && host ? liveParticipantes() : [];
-  const pedidos = ativa && host ? Object.entries(live.pedidos||{}) : [];
+  const viewer = !!window._okrIsViewer, eu = liveEu(), ativa = liveAtiva(), host = liveSouHost(), adm = liveSouAdm(), controla = livePodeControlar();
+  const pessoas = ativa && controla ? liveParticipantes() : [];
+  const pedidos = ativa && controla ? Object.entries(live.pedidos||{}) : [];
   const pediu = !!(ativa && live.pedidos && live.pedidos[eu.uid]);
-  const sig = JSON.stringify([ativa, host, viewer, ativa&&live.apresentador.uid, ativa&&live.apresentador.nome, liveSeguindo, liveFerr, liveTipo, liveCor, pediu, ativa&&liveHostParado(), pessoas.map(x=>x[0]+x[1].nome), pedidos.map(x=>x[0]), livePainelAberto]);
+  const sig = JSON.stringify([ativa, host, adm, viewer, ativa&&live.apresentador.uid, ativa&&live.apresentador.nome, liveSeguindo, liveFerr, liveTipo, liveCor, pediu, ativa&&liveHostParado(), pessoas.map(x=>x[0]+x[1].nome), pedidos.map(x=>x[0]), livePainelAberto]);
   if(sig===_liveSig) return; _liveSig = sig;
   let h = '';
   if(!ativa) h = viewer ? '' : '<button type="button" class="tb-btn live-btn" onclick="window._liveComecar()" title="Cria uma sessão ao vivo: quem abrir esta página acompanha o seu slide, e você pode passar o controle e usar laser e caneta">🎙️ Apresentar ao vivo</button>';
   else if(host) h = '<span class="live-pill"><i></i>Você está apresentando</span>';
   else h = '<span class="live-pill"><i></i>'+esc(live.apresentador.nome||'Alguém')+' está apresentando</span>'
-    + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>');
+    + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')
+    + (adm ? '<button type="button" class="tb-btn live-btn" onclick="window._liveAssumir()" title="ADM: assumir o controle da apresentação agora">👑 Assumir</button>' : '');
   box.innerHTML = h;
-  document.body.classList.toggle('live-host', host);
+  document.body.classList.toggle('live-host', controla);
   const tbar = document.getElementById('topbar'); if(tbar) document.documentElement.style.setProperty('--live-top', Math.ceil(tbar.getBoundingClientRect().bottom)+'px');
   // botão flutuante + painel (como o das Anotações): funciona também dentro do detalhe do Objetivo, onde a barra do topo fica escondida
   fab.hidden = !(ativa && !viewer); painel.hidden = !(ativa && !viewer && livePainelAberto);
-  fab.textContent = host ? (liveFerr==='caneta' ? '🖍️' : liveFerr==='laser' ? '🔴' : '🎙️') : '🎙️'; fab.classList.toggle('on', host && !!liveFerr);
+  fab.textContent = controla ? (liveFerr==='caneta' ? '🖍️' : liveFerr==='laser' ? '🔴' : '🎙️') : '🎙️'; fab.classList.toggle('on', controla && !!liveFerr);
   if(ativa && !viewer){
-    let p = '<div class="lp-hd"><span>🎙️ '+(host ? 'Você está apresentando' : esc(live.apresentador.nome||'Alguém')+' está apresentando')+'</span><button type="button" onclick="window._livePainel(false)" aria-label="Fechar">✕</button></div>';
-    if(host){
+    let p = '<div class="lp-hd"><span>🎙️ '+(host ? 'Você está apresentando' : esc(live.apresentador.nome||'Alguém')+' está apresentando'+(adm?' · 🛡️ ADM':''))+'</span><button type="button" onclick="window._livePainel(false)" aria-label="Fechar">✕</button></div>';
+    if(!host && adm){
+      p += (liveSeguindo
+        ? '<div class="lp-vazio">Acompanhando o apresentador. Como ADM, você pode moderar, sincronizar seu slide ou assumir a apresentação a qualquer momento.</div>'
+        : '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveSeguir()">↩ Voltar a seguir</button><button type="button" class="lp-b" onclick="window._livePuxarSlide()" title="Manda a sala pro slide que você está vendo agora sem trocar o apresentador">📍 Puxar sala pra cá</button></div>')
+        + '<div class="lp-row"><button type="button" class="lp-b" onclick="window._liveAssumir()" title="Assume o comando como apresentador principal">👑 Assumir apresentação</button>'
+        + (liveSeguindo ? '<button type="button" class="lp-b" onclick="window._livePuxarSlide()" title="Sincroniza a sala no seu slide atual sem trocar o apresentador">📍 Sincronizar slide</button>' : '')
+        + '</div>';
+    }
+    if(controla){
       p += '<div class="lp-row"><button type="button" class="lp-b'+(liveFerr==='laser'?' on':'')+'" onclick="window._liveFerr(\'laser\')" title="Laser (L)">🔴 Laser</button>'
         + '<button type="button" class="lp-b'+(liveFerr==='caneta'?' on':'')+'" onclick="window._liveFerr(\'caneta\')" title="Caneta (P) — Esc sai">🖍️ Caneta</button></div>';
       if(liveFerr==='caneta') p += '<div class="lp-seg"><button type="button" class="'+(liveTipo==='f'?'on':'')+'" onclick="window._liveTipo(\'f\')" title="O traço fica até você apagar">Fixa</button><button type="button" class="'+(liveTipo==='t'?'on':'')+'" onclick="window._liveTipo(\'t\')" title="O traço some sozinho depois de 5 s (tecla T)">Temporária · 5 s</button></div>'
@@ -2134,7 +2173,7 @@ function liveRender(){
     }
     painel.innerHTML = p;
   }
-  // pedidos de controle (só o apresentador vê)
+  // pedidos de controle (apresentador e ADM veem e podem aprovar/recusar)
   const tb = document.getElementById('live-toast'); tb.querySelectorAll('[data-pedido]').forEach(x=>x.remove());
   pedidos.forEach(([uid,pd])=>{
     const el = liveToast('✋ '+(pd.nome||'Alguém')+' pede o controle', '<button onclick="window._liveAceitar('+jsq(uid)+','+jsq(pd.nome||'')+')">Passar</button><button onclick="window._liveRecusar('+jsq(uid)+')">Recusar</button>', 0);
@@ -2165,31 +2204,31 @@ function liveDesenhar(){
   todos.forEach(t=>{ c.globalAlpha = t.a; c.strokeStyle = t.c||'#ff4d4d'; c.beginPath(); t.p.forEach((pt,i)=>{ const x = pt[0]*W, y = pt[1]*H; if(i===0) c.moveTo(x,y); else c.lineTo(x,y); }); if(t.p.length===1){ c.lineTo(t.p[0][0]*W+0.1, t.p[0][1]*H); } c.stroke(); });
   c.globalAlpha = 1;
   if(animar && !_liveRaf){ _liveRaf = requestAnimationFrame(()=>{ _liveRaf = 0; liveDesenhar(); }); }
-  const lz = document.getElementById('live-laser');
-  if(liveAtiva() && !liveSouHost() && live.laser && live.laser.on){ lz.style.display = 'block'; lz.style.left = (live.laser.x*100)+'%'; lz.style.top = (live.laser.y*100)+'%'; }
-  else if(!(liveSouHost() && liveFerr==='laser')) lz.style.display = 'none';
+  const lz = document.getElementById('live-laser'), usandoLaser = livePodeControlar() && liveFerr==='laser';
+  if(liveAtiva() && !usandoLaser && live.laser && live.laser.on){ lz.style.display = 'block'; lz.style.left = (live.laser.x*100)+'%'; lz.style.top = (live.laser.y*100)+'%'; }
+  else if(!usandoLaser) lz.style.display = 'none';
 }
 document.addEventListener('mousemove', e=>{
-  if(!liveSouHost() || liveFerr!=='laser') return;
+  if(!livePodeControlar() || liveFerr!=='laser') return;
   const x = e.clientX/window.innerWidth, y = e.clientY/window.innerHeight, lz = document.getElementById('live-laser');
   lz.style.display = 'block'; lz.style.left = (x*100)+'%'; lz.style.top = (y*100)+'%';
   const ag = Date.now(); if(ag - _liveLaserT < 40) return; _liveLaserT = ag;
   window._set(liveRef('laser'), {x:+x.toFixed(4), y:+y.toFixed(4), on:true, t:ag}).catch(()=>{});
 }, true);
-const liveLaserOff = () => { if(liveSouHost() && liveFerr==='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; } };
+const liveLaserOff = () => { if(livePodeControlar() && liveFerr==='laser'){ window._set(liveRef('laser'), {on:false}).catch(()=>{}); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; } };
 // mouseleave não borbulha e no document nem sempre dispara ao sair da janela: sem isto o ponto vermelho ficava parado na tela de quem acompanha
 document.documentElement.addEventListener('mouseleave', liveLaserOff); document.addEventListener('mouseleave', liveLaserOff); window.addEventListener('blur', liveLaserOff);
 (function(){
   const cv = document.getElementById('live-capture'); if(!cv) return;
   const pt = e => [+(e.clientX/window.innerWidth).toFixed(4), +(e.clientY/window.innerHeight).toFixed(4)];
   const enviar = fim => { if(!liveStroke) return; const ag = Date.now(); if(!fim && ag-_liveStrokeT < 110) return; _liveStrokeT = ag; window._set(liveRef('tracos/'+liveStroke.id), {c:liveStroke.c, k:liveStroke.k, p:liveStroke.p, m:liveStroke.m, fim:!!fim}).catch(()=>{}); };
-  cv.addEventListener('pointerdown', e=>{ if(!liveSouHost() || liveFerr!=='caneta') return; e.preventDefault(); cv.setPointerCapture(e.pointerId); liveStroke = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), c:liveCor, k:liveCtx(), m:liveTipo, p:[pt(e)]}; liveDesenhar(); enviar(false); });
+  cv.addEventListener('pointerdown', e=>{ if(!livePodeControlar() || liveFerr!=='caneta') return; e.preventDefault(); cv.setPointerCapture(e.pointerId); liveStroke = {id:'t'+Date.now().toString(36)+Math.random().toString(36).slice(2,4), c:liveCor, k:liveCtx(), m:liveTipo, p:[pt(e)]}; liveDesenhar(); enviar(false); });
   cv.addEventListener('pointermove', e=>{ if(!liveStroke) return; if(liveStroke.p.length<800) liveStroke.p.push(pt(e)); liveDesenhar(); enviar(false); });
   const fim = ()=>{ if(!liveStroke) return; const id = liveStroke.id, tmp = liveStroke.m==='t'; enviar(true); if(tmp) setTimeout(()=>window._remove(liveRef('tracos/'+id)).catch(()=>{}), 5600); else liveMeus.push(id); liveStroke = null; };
   cv.addEventListener('pointerup', fim); cv.addEventListener('pointercancel', fim);
 })();
 document.addEventListener('keydown', e=>{
-  if(!liveSouHost() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if(!livePodeControlar() || _okrEhCampo(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = (e.key||'').toLowerCase();
   if(k==='l'){ e.preventDefault(); window._liveFerr('laser'); }
   else if(k==='p'){ e.preventDefault(); if(liveFerr==='caneta' && liveTipo==='t'){ liveTipo = 'f'; liveRender(); } else window._liveFerr('caneta'); }
