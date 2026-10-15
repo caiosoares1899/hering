@@ -36,6 +36,7 @@ const NOS_GLOBAIS = [
   { no: 'escala', diario: true },            // 🗓️ Escala
   { no: 'vtex_status', diario: false },      // 🚨 estado do monitor de incidentes da VTEX (reconstituível a partir do feed)
   { no: 'github_status', diario: false },    // 🐙 estado do monitor de incidentes do GitHub / GitHub Pages (reconstituível a partir da API)
+  { no: 'firebase_status', diario: false },  // 🔥 estado do monitor de incidentes do Firebase (reconstituível a partir da API)
   { no: 'usuarios', diario: true },          // papéis, squads, torre, preferências (sem notificações/tokens)
   { no: 'usuarios_publicos', diario: true },
   { no: 'squads_meta', diario: true },       // quais squads existem
@@ -56,7 +57,7 @@ const NOS_GLOBAIS = [
 // O que NUNCA entra (documentado no manifesto pra ninguém achar que "esqueceu"):
 const EXCLUIDOS = [
   'spotify_secrets', 'spotify_radio_owner_secret', 'oauth_pending',           // segredos
-  'presence', 'notif_feed', 'notif_feed_seen', 'vtex_saude', 'github_saude',  // efêmeros (o feed é derivado; *_saude = batimento dos monitores)
+  'presence', 'notif_feed', 'notif_feed_seen', 'vtex_saude', 'github_saude', 'firebase_saude', // efêmeros (o feed é derivado; *_saude = batimento dos monitores)
   'usuarios/*/notificacoes', 'usuarios/*/fcm_tokens',                         // caixa de notificações e tokens de push
   'painel/{okr_presence,presence,spotify_now_geral,_debug_*}', 'okr/obj_locks', // presença, travas e debug
   'squads/*/{presence,access_log,error_logs,error_stats,agent_usage,backups}', // telemetria do squad

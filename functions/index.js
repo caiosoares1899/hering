@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -242,6 +242,13 @@ exports.vtexStatus = require('./vtex/statusVtex').vtexStatus;
 // kanban/config/github_status_off=true. Deploy isolado:
 //   firebase deploy --only functions:githubStatus,functions:sendPushOnNotification
 exports.githubStatus = require('./github/statusGithub').githubStatus;
+
+// 🔥 Status do Firebase — Serviços que usamos (functions/firebase/statusFirebase.js): a cada 5 min lê https://status.firebase.google.com/incidents.json,
+// filtra SOMENTE os 6 serviços que o ecossistema Maré/Oceano usa (Realtime Database, Authentication, Cloud Messaging, Cloud Functions,
+// Cloud Storage e Hosting), atualiza `kanban/firebase_saude` e aciona SOMENTE os ADMs via sino + push (`firebase_incidente`, PUSH_TYPES acima).
+// Interruptor: kanban/config/firebase_status_off=true. Deploy isolado:
+//   firebase deploy --only functions:firebaseStatus,functions:sendPushOnNotification
+exports.firebaseStatus = require('./firebase/statusFirebase').firebaseStatus;
 
 // 🎯 OKR — Fase 3: snapshot semanal (toda sexta 17h, ver
 // functions/okr/weeklySnapshot.js). NÃO notifica ninguém — só grava uma
