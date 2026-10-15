@@ -368,10 +368,11 @@ function validateSyntax(filePath) {
     return { scriptsChecked: 1 };
   }
 
-  const scriptRe = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+  const noStyle = content.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+  const scriptRe = /^[ \t]*<script\b([^><\r\n]*)>([\s\S]*?)<\/script>/gim;
   let match;
   let count = 0;
-  while ((match = scriptRe.exec(content)) !== null) {
+  while ((match = scriptRe.exec(noStyle)) !== null) {
     const attrs = match[1] || '';
     if (/\bsrc\s*=/.test(attrs)) continue;
     let code = match[2];
