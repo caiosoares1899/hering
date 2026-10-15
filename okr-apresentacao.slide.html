@@ -522,7 +522,7 @@ h1,h2,h3,.syne{font-family:'Syne',sans-serif;}
 
 /* ═══ 🎙️ APRESENTAÇÃO AO VIVO (2026-10-09): um apresentador comanda o slide, os outros acompanham; laser, caneta e "passar o controle" ═══ */
 #live-box{display:flex;align-items:center;gap:6px;flex-wrap:wrap;position:relative;flex:0 0 auto;}
-body.live-host .tb-clock-wrap,body.live-host .tb-live{display:none;}   /* com as ferramentas do apresentador na barra, o relógio sai pra dar espaço */
+body.live-ativa .tb-live,body.live-host .tb-live{display:none;}   /* com a apresentação ao vivo na barra (#live-box), o selo estático "Ao vivo" sai; o relógio e a contagem regressiva continuam visíveis (as ferramentas estão no botão 🎙️ flutuante) */
 .tb-mid{min-width:0;}
 .live-pill{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:5px 10px;border-radius:99px;background:rgba(255,77,77,.14);border:1px solid rgba(255,77,77,.45);color:#ff8a8a;white-space:nowrap;}
 .live-pill i{width:7px;height:7px;border-radius:50%;background:#ff4d4d;box-shadow:0 0 0 0 rgba(255,77,77,.6);animation:livePulse 1.6s infinite;}
@@ -923,7 +923,7 @@ function _okrAtualizaFiltroTorre(){
   sel.value = _okrFiltroTorre; sel.classList.toggle('on', !!_okrFiltroTorre);
   box.hidden = !(comObj.length>1 || _okrFiltroTorre);
 }
-window._okrSetTorre = v => { _okrFiltroTorre = OKR_TORRES.some(t=>t.id===v) ? v : ''; currentIdx = 0; rebuild(); };
+window._okrSetTorre = v => { _okrFiltroTorre = OKR_TORRES.some(t=>t.id===v) ? v : ''; rebuild(true); };
 function objStatus(objId){
   const marcos = objMarcos(objId);
   if(!marcos.length) return 'nao_iniciado';
@@ -1302,6 +1302,18 @@ function rebuild(porFiltro){
   // Atualização ao vivo que faz o slide atual sumir (ex.: alguém desliga o último Objetivo da gerência no painel): fica na mesma posição (= o próximo slide) em vez de jogar a apresentação pra capa no meio da fala; troca de filtro continua voltando pra capa.
   currentIdx = idx>=0 ? idx : (porFiltro ? 0 : Math.max(0, Math.min(currentIdx, slides.length-1)));
   render();
+  if(document.getElementById('detail-ov')?.classList.contains('open') && _okrDetailCurrentId){
+    const ativos = new Set(_okrObjetivosAtivos().map(o=>o.id));
+    if(!ativos.has(_okrDetailCurrentId)){
+      window._okrCloseDetail();
+    } else {
+      const scrolls = [...document.querySelectorAll('#detail-modal .d2-table-rows, #detail-modal .d2-left, #detail-modal .d2-flist')].map(el=>el.scrollTop);
+      const prev = _liveAplicando; _liveAplicando = true;
+      try { window._okrOpenDetail(_okrDetailCurrentId); } finally { _liveAplicando = prev; }
+      [...document.querySelectorAll('#detail-modal .d2-table-rows, #detail-modal .d2-left, #detail-modal .d2-flist')].forEach((el,i)=>{ if(scrolls[i]) el.scrollTop = scrolls[i]; });
+    }
+  }
+  if(prevKey && (porFiltro || (typeof liveSouHost==='function' && liveSouHost() && slides[currentIdx]?.key !== prevKey)) && typeof liveAposNavegar==='function') liveAposNavegar();
   if(_previewObjId){
     const id = _previewObjId; _previewObjId = null;
     if(okrObjetivos[id] && okrObjetivos[id].mostrarApresentacao!==false) window._okrOpenDetail(id);   // Objetivo oculto na apresentação: o ?preview= não abre
@@ -1477,7 +1489,11 @@ function render(){
   fitSlideContent(document.querySelector('.slide.active'));
   if(typeof _livePend!=='undefined' && _livePend){ _livePend = false; liveAplicar(true); }
 }
-window.addEventListener('resize', () => { fitSlideContent(document.querySelector('.slide.active')); if(typeof liveDesenhar==='function') liveDesenhar(); });
+window.addEventListener('resize', () => {
+  fitSlideContent(document.querySelector('.slide.active'));
+  if(document.getElementById('detail-ov')?.classList.contains('open')) _okrFitDetailSections();
+  if(typeof liveDesenhar==='function') liveDesenhar();
+});
 
 // Achado real (print do usuário, conteúdo cortado mesmo com fitSlideContent no
 // lugar): a 1ª medição roda ANTES da webfont (Syne/DM Sans, carregada via
@@ -1525,6 +1541,7 @@ document.addEventListener('keydown', e=>{
     if(e.key==='Escape' || e.key==='Backspace'){ e.preventDefault(); window._okrCloseDetail(); }
     // ← / → passam pro Objetivo anterior/seguinte da gerência (antes não faziam nada com o detalhe aberto)
     else if((e.key==='ArrowRight' || e.key==='ArrowLeft') && !_okrEhCampo(e.target)){ e.preventDefault(); window._okrDetailVizinho(e.key==='ArrowRight' ? 1 : -1); }
+    else if(e.key.toLowerCase()==='f' && !_okrEhCampo(e.target) && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); window._okrFullscreen(); }
     return;
   }
   // Mesmo guard do detail-ov acima — sem isso, abrir o painel de Anotações
@@ -1560,6 +1577,10 @@ function d2FieldList(arr){
 }
 window._okrOpenDetail = id => {
   const o = okrObjetivos[id]; if(!o) return;
+  if(_okrDetailCurrentId && _okrDetailCurrentId !== id){
+    window._okrCloseMarcoComments?.();
+    window._okrCloseAting?.();
+  }
   _okrDetailCurrentId = id;
   const st = okrStatusInfo(objStatus(id));
   // Mesma ordenação do painel (painel-dev.html, _okrMarcosSorted()): por
@@ -1665,6 +1686,7 @@ window._okrOpenDetail = id => {
 function _okrFitDetailSections(){
   const dBody = document.querySelector('.d2-body');
   const dFooter = document.querySelector('.d2-footer');
+  if(!dBody || !dFooter) return;
   dBody.style.flex = ''; dBody.style.height = '';
   dFooter.style.flex = ''; dFooter.style.height = ''; dFooter.style.minHeight = '';
   // Piso do rodapé (2026-10-06, achado de /monitorarbugs): rodapé e corpo dividem o aperto
@@ -1702,9 +1724,13 @@ function _okrFitDetailSections(){
   // A barra de rolagem ocupa ~8px da largura das linhas; o cabeçalho (MARCOS / STATUS / PRAZO) ganha o mesmo recuo à direita, senão STATUS/PRAZO
   // ficam deslocados em relação às linhas (mesmo sintoma do bug de alinhamento de 2026-10-06).
   const tHead = document.querySelector('.d2-table-header');
-  if(tHead){ tHead.style.zoom = ''; tHead.style.paddingRight = (marcosRows.offsetWidth - marcosRows.clientWidth)+'px'; }
+  if(tHead && marcosRows){ tHead.style.zoom = ''; tHead.style.paddingRight = (marcosRows.offsetWidth - marcosRows.clientWidth)+'px'; }
 }
-window._okrCloseDetail = () => document.getElementById('detail-ov').classList.remove('open');
+window._okrCloseDetail = () => {
+  window._okrCloseMarcoComments?.();
+  window._okrCloseAting?.();
+  document.getElementById('detail-ov').classList.remove('open');
+};
 window._okrToggleColapsarConcluidos = () => {
   _okrColapsarConcluidos = !_okrColapsarConcluidos;
   if(_okrDetailCurrentId){
@@ -1754,7 +1780,7 @@ function _notasPopulateDateSel(){
   // que já têm anotação com "hoje" (sempre disponível pra começar uma reunião nova).
   const datas = new Set(Object.keys(okrNotas).filter(d=>/^\d{4}-\d{2}-\d{2}$/.test(d))); datas.add(hoje);
   const lista = [...datas].sort().reverse(); // mais recente primeiro
-  const atual = sel.value || _notesViewDate || hoje;
+  const atual = _notesViewDate || sel.value || hoje;
   sel.innerHTML = lista.map(d=>`<option value="${d}">${esc(_notaDataFmt(d))}</option>`).join('');
   sel.value = lista.includes(atual) ? atual : hoje;
   _notesViewDate = sel.value;
@@ -1807,7 +1833,7 @@ window._okrToggleNotes = () => {
   if(ov.classList.contains('open')) window._okrCloseNotes();
   else {
     ov.classList.add('open');
-    if(!_notesViewDate) _notesViewDate = _hojeStr(); // sempre abre na reunião de hoje
+    _notesViewDate = _hojeStr(); // sempre abre na reunião de hoje
     renderNotas();
     const list = document.getElementById('notes-list'); if(list) list.scrollTop = list.scrollHeight;
     setTimeout(()=>document.getElementById('notes-input')?.focus(), 50);
@@ -1963,6 +1989,17 @@ function _isAdmOkr(){
   return !!(u.uid && usersCache[u.uid] && usersCache[u.uid].role === 'adm');
 }
 let listenersStarted = false;
+function _okrResetOverlays(){
+  window._okrCloseNotes();
+  window._okrCloseDetail?.();
+  window._okrCloseAgendaCfg?.();
+  if(typeof liveDesligaFerr==='function') liveDesligaFerr();
+  livePainelAberto = false; _liveSig = '';
+  if(typeof liveRender==='function') liveRender();
+  const lf = document.getElementById('live-fab'), lp = document.getElementById('live-fpanel');
+  if(lf) lf.hidden = true;
+  if(lp) lp.hidden = true;
+}
 // _okrDenyAccess() é chamada tanto pela checagem de domínio/painel_viewers
 // (ANTES de mostrar o app — ver window._okrHandleAuth) quanto pelo onErr
 // dos listeners abaixo (rede de segurança se as REGRAS do Firebase, a
@@ -1971,7 +2008,7 @@ function _okrDenyAccess(msg){
   document.getElementById('login-ov').hidden = false;
   document.getElementById('app').hidden = true;
   document.getElementById('notes-fab').hidden = true;
-  window._okrCloseNotes();
+  _okrResetOverlays();
   const el = document.getElementById('login-err');
   el.textContent = msg;
   el.hidden = false;
@@ -2050,7 +2087,8 @@ function liveInit(){
     const hostUid = ativa ? live.apresentador.uid : '';
     const mudouHost = ativa && hostUid !== _liveUltHostUid;
     _liveUltHostUid = hostUid;
-    if(antes && !ativa){ liveToast('⏹ A apresentação ao vivo terminou.'); liveFerr = ''; document.body.classList.remove('live-pen'); _liveEntrou = false; }
+    if(antes && !ativa){ liveToast('⏹ A apresentação ao vivo terminou.'); liveDesligaFerr(); _liveEntrou = false; }
+    else if(!livePodeControlar() && (liveFerr || _liveSyncT || document.body.classList.contains('live-pen'))){ liveDesligaFerr(); }
     const entrou = ativa && !_liveEntrou;
     if(entrou){ _liveEntrou = true; liveSeguindo = true; liveBatida(); }
     if(entrou && liveSouHost()) _liveRetomar = true;
@@ -2058,8 +2096,9 @@ function liveInit(){
     // toda a sala (incluindo quem tinha saído de sincronia antes, o apresentador anterior e os ADMs) acompanha imediatamente.
     if(mudouNav || mudouHost) liveSeguindo = true;
     liveAplicar(_liveRetomar || mudouNav || mudouHost);
-    if(mudouHost && antes && !entrou && liveSouHost() && !eraHost){
-      liveToast('🎙️ Você recebeu o controle da apresentação!');
+    if(mudouHost && antes && !entrou){
+      if(liveSouHost() && !eraHost) liveToast('🎙️ Você recebeu o controle da apresentação!');
+      else if(eraHost && !liveSouHost()){ liveDesligaFerr(); liveToast('🎙️ '+(live.apresentador.nome||'Outra pessoa')+' assumiu o controle da apresentação.'); }
     }
     liveRender(); liveDesenhar();
   }, ()=>{});
@@ -2114,6 +2153,7 @@ function liveAposNavegar(){
     clearTimeout(_liveSyncT);
     _liveSyncT = setTimeout(()=>{
       _liveSyncT = null;
+      if(!livePodeControlar()) return;
       const u = liveEu(), navId = Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,6);
       _liveMeuNavId = navId; _liveMeuNavTs = Date.now();
       window._update(liveRef(), {slide:liveSlideKey(), detalhe:liveDetalheAberto(), navId, navPor:u.uid||'', atualizadoEm:Date.now()}).catch(()=>{});
@@ -2153,7 +2193,14 @@ window._livePuxarSlide = () => {
     .then(()=>{ liveSeguindo = true; liveRender(); liveToast('📍 Sala sincronizada no seu slide.'); })
     .catch(e=>liveToast('⚠️ Não consegui sincronizar o slide: '+(e && e.message || e)));
 };
-function liveDesligaFerr(){ liveFerr = ''; document.body.classList.remove('live-pen'); const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none'; }
+function liveDesligaFerr(){
+  clearTimeout(_liveSyncT); _liveSyncT = null;
+  liveStroke = null;
+  if(liveFerr==='laser') window._set(liveRef('laser'), {on:false}).catch(()=>{});
+  liveFerr = '';
+  document.body.classList.remove('live-pen');
+  const lz = document.getElementById('live-laser'); if(lz) lz.style.display = 'none';
+}
 // ferramentas: 'laser' ou 'caneta' (a caneta tem dois tipos: fixa 'f' e temporária 't')
 window._liveFerr = t => {
   if(!livePodeControlar()) return; liveFerr = liveFerr===t ? '' : t;
@@ -2164,7 +2211,15 @@ window._liveFerr = t => {
 window._liveTipo = m => { liveTipo = m; if(livePodeControlar() && liveFerr!=='caneta') window._liveFerr('caneta'); else liveRender(); };
 window._liveCor = c => { liveCor = c; liveRender(); };
 window._liveLimpar = () => { if(livePodeControlar()){ liveMeus = []; window._remove(liveRef('tracos')).catch(()=>{}); } };
-window._liveDesfazer = () => { if(!livePodeControlar()) return; while(liveMeus.length){ const id = liveMeus.pop(); if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; } } };
+window._liveDesfazer = () => {
+  if(!livePodeControlar()) return;
+  while(liveMeus.length){
+    const id = liveMeus.pop();
+    if(live && live.tracos && live.tracos[id]){ window._remove(liveRef('tracos/'+id)).catch(()=>{}); return; }
+  }
+  const ctxs = liveCtxs(), ids = Object.entries((live && live.tracos)||{}).filter(([,t])=>t && t.m!=='t' && ctxs.includes(t.k)).map(([id])=>id).sort();
+  if(ids.length) window._remove(liveRef('tracos/'+ids[ids.length-1])).catch(()=>{});
+};
 window._liveCopiarLink = () => { const url = location.origin + location.pathname; (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(url) : Promise.reject()).then(()=>liveToast('📋 Link copiado — mande pra quem vai receber o controle.')).catch(()=>liveToast('Copie o endereço da barra do navegador: '+url, '', 7000)); };
 window._livePainel = abrir => { livePainelAberto = typeof abrir==='boolean' ? abrir : !livePainelAberto; _liveSig = ''; liveRender(); };
 // A interface só é remontada quando algo MUDOU de verdade (quem apresenta, ferramenta, quem está na sala…): os sinais de vida dos participantes chegam o tempo todo,
@@ -2189,6 +2244,7 @@ function liveRender(){
     + (liveSeguindo ? '<span class="live-pill" style="background:rgba(29,233,182,.12);border-color:rgba(29,233,182,.4);color:var(--teal);">Acompanhando ✓</span>' : '<button type="button" class="tb-btn live-btn" onclick="window._liveSeguir()" title="Volta pro slide do apresentador">↩ Voltar a seguir</button>')
     + (adm ? '<button type="button" class="tb-btn live-btn" onclick="window._liveAssumir()" title="ADM: assumir o controle da apresentação agora">👑 Assumir</button>' : '');
   box.innerHTML = h;
+  document.body.classList.toggle('live-ativa', ativa);
   document.body.classList.toggle('live-host', controla);
   const tbar = document.getElementById('topbar'); if(tbar) document.documentElement.style.setProperty('--live-top', Math.ceil(tbar.getBoundingClientRect().bottom)+'px');
   // botão flutuante + painel (como o das Anotações): funciona também dentro do detalhe do Objetivo, onde a barra do topo fica escondida
@@ -2324,7 +2380,7 @@ window._okrHandleAuth = user => {
     // não esconde mais sozinho junto com o app shell — precisa do próprio
     // toggle aqui, e fecha o painel se tivesse ficado aberto.
     document.getElementById('notes-fab').hidden = true;
-    window._okrCloseNotes();
+    _okrResetOverlays();
     return;
   }
   if(user.email && user.email.endsWith('@ciahering.com.br')){
