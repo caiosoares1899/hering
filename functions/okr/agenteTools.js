@@ -172,6 +172,22 @@ const editarMarcoSchema = z.object({
     .optional(),
 });
 
+const promoverItemOkrSchema = z.object({
+  objetivo_id: z.string().min(1).optional(),
+  titulo_objetivo: z.string().min(1).optional(),
+  tipo: z.enum(['proximo_passo_para_progresso', 'progresso_para_marco']),
+  texto_item: z.string().min(1).describe('Texto (ou trecho único) do item atual em Próximos Passos ou Progressos que será promovido.'),
+  novo_texto: z.string().min(1).optional().describe(`Opcional: texto ajustado/enxuto para o Progresso (máx. ${OKR_CHAR_LIMITS.progressos} caracteres) ou nome do Marco (máx. ${OKR_CHAR_LIMITS.marco_nome} caracteres). Se omitido, usa o texto original do item.`),
+  prazo: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'prazo deve estar no formato YYYY-MM-DD')
+    .optional()
+    .describe('Apenas para progresso_para_marco: data do Marco (YYYY-MM-DD). Se omitido, usa hoje.'),
+  progresso: z.enum(OKR_STATUS_IDS).optional().describe('Apenas para progresso_para_marco: status do Marco (padrão: concluido).'),
+  responsavel: z.string().min(1).optional().describe('Apenas para progresso_para_marco: uid, e-mail ou nome do responsável pelo Marco (se omitido, usa o 1º responsável do Objetivo).'),
+  descricao: z.string().min(1).optional().describe(`Apenas para progresso_para_marco: descrição opcional do Marco (máx. ${OKR_CHAR_LIMITS.descricao} caracteres).`),
+});
+
 // ── 📈 Atingimento ───────────────────────────────────────────────────────
 const ATING_TIPO_IDS = ating.OKR_ATING_TIPOS.map((t) => t.id);
 const dataIso = () => z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'use o formato YYYY-MM-DD');
@@ -564,6 +580,166 @@ function makeEditarMarcoHandler({ db, requestingUid, dryRun }) {
 
 const msgZod = (parsed) => parsed.error.issues.map((i) => (i.path.length ? i.path.join('.') + ': ' : '') + i.message).join('; ');
 
+// Promove um item dentro do fluxo do Objetivo no Radar:
+// - 'proximo_passo_para_progresso': remove de proximosPassos e adiciona em progressos.
+// - 'progresso_para_marco': cria um Marco (padrão status='concluido', prazo=hoje) e remove o item de progressos.
+function makePromoverItemOkrHandler({ db, requestingUid, dryRun }) {
+  return async (input) => {
+    const parsed = promoverItemOkrSchema.safeParse(input || {});
+    if (!parsed.success) return { ok: false, error: 'entrada_invalida', message: msgZod(parsed) };
+    const inp = parsed.data;
+    const resolved = await resolveObjetivo(db, { objetivo_id: inp.objetivo_id, titulo: inp.titulo_objetivo });
+    if (resolved.error) return { ok: false, error: resolved.error, message: resolved.message };
+    const { id: objetivoId, objetivo } = resolved;
+    if (!(await canEditObjetivo(db, requestingUid, objetivo))) {
+      return { ok: false, error: 'sem_permissao', message: `Só quem é Responsável por "${objetivo.titulo}", ADM ou PO/Organizador/🎯 Gestor OKR da torre ${TORRE_INFO[torreDe(objetivo)].label} pode promover itens nele.` };
+    }
+    const trava = await travaDeOutro(db, objetivoId, requestingUid);
+    if (trava) return { ok: false, error: 'objetivo_em_edicao', message: msgTrava(trava, objetivo.titulo) };
+
+    const ehPassoParaProgresso = inp.tipo === 'proximo_passo_para_progresso';
+    const campoOrigem = ehPassoParaProgresso ? 'proximosPassos' : 'progressos';
+    const rotuloOrigem = ehPassoParaProgresso ? 'Próximos Passos' : 'Progressos';
+    const listaOrigem = Array.isArray(objetivo[campoOrigem]) ? [...objetivo[campoOrigem]] : [];
+    const alvo = String(inp.texto_item || '').toLowerCase().trim();
+
+    const comIndice = listaOrigem.map((txt, idx) => ({ txt: String(txt || ''), idx }));
+    let matches = comIndice.filter((it) => it.txt.toLowerCase().trim() === alvo);
+    if (!matches.length) matches = comIndice.filter((it) => it.txt.toLowerCase().includes(alvo));
+    if (!matches.length) {
+      return {
+        ok: false,
+        error: 'item_nao_encontrado',
+        itens_atuais: listaOrigem,
+        message: `Nenhum item em ${rotuloOrigem} de "${objetivo.titulo}" bate com "${inp.texto_item}". Confira itens_atuais para escolher o item certo.`,
+      };
+    }
+    if (matches.length > 1) {
+      return {
+        ok: false,
+        error: 'item_ambiguo',
+        candidatos: matches.map((m) => m.txt),
+        message: `Mais de um item em ${rotuloOrigem} de "${objetivo.titulo}" bate com "${inp.texto_item}" — informe um trecho mais específico.`,
+      };
+    }
+
+    const { txt: itemOriginal, idx: idxRemover } = matches[0];
+    const textoFinal = String(inp.novo_texto || itemOriginal).trim();
+
+    if (ehPassoParaProgresso) {
+      const erroLimite = validarLimitesCaracteres([
+        { campo: inp.novo_texto ? 'novo_texto' : 'texto_item', rotulo: 'Progressos', valor: textoFinal, limite: OKR_CHAR_LIMITS.progressos },
+      ]);
+      if (erroLimite) return erroLimite;
+      if (dryRun) {
+        return { ok: true, dryRun: true, tool: 'promover_item_okr', tipo: inp.tipo, objetivo_id: objetivoId, wouldHaveExecuted: { item_removido: itemOriginal, progresso_adicionado: textoFinal } };
+      }
+      const novosPassos = listaOrigem.filter((_, i) => i !== idxRemover);
+      const progressosAtuais = Array.isArray(objetivo.progressos) ? [...objetivo.progressos] : [];
+      const novosProgressos = progressosAtuais.includes(textoFinal) ? progressosAtuais : [...progressosAtuais, textoFinal];
+      const agora = new Date().toISOString();
+      await db.ref('kanban/okr/objetivos/' + objetivoId).update({
+        proximosPassos: novosPassos,
+        progressos: novosProgressos,
+        atualizadoEm: agora,
+        atualizadoPor: AGENTE_NOME,
+      });
+      await pushHistory(db, 'kanban/okr/objetivos/' + objetivoId, { what: `promoveu próximo passo a progresso: "${textoFinal}" (via chat)`, tipo: 'lista' });
+      await notifyObjetivoEditado(db, objetivoId, requestingUid);
+      return {
+        ok: true,
+        dryRun: false,
+        tool: 'promover_item_okr',
+        tipo: inp.tipo,
+        objetivo_id: objetivoId,
+        item_removido: itemOriginal,
+        progresso_adicionado: textoFinal,
+        message: `Próximo passo promovido a Progresso em "${objetivo.titulo}": "${textoFinal}".`,
+      };
+    }
+
+    // progresso_para_marco
+    const erroLimite = validarLimitesCaracteres([
+      { campo: inp.novo_texto ? 'novo_texto' : 'texto_item', rotulo: 'Nome do Marco', valor: textoFinal, limite: OKR_CHAR_LIMITS.marco_nome },
+      { campo: 'descricao', rotulo: 'Descrição do Marco', valor: inp.descricao, limite: OKR_CHAR_LIMITS.descricao },
+    ]);
+    if (erroLimite) return erroLimite;
+
+    const statusMarco = inp.progresso || 'concluido';
+    const prazoMarco = inp.prazo || todaySP();
+    let respUid = (Array.isArray(objetivo.responsaveis) && objetivo.responsaveis[0]) || '';
+    if (inp.responsavel) {
+      const uSnap = await db.ref('kanban/usuarios').get();
+      const usuarios = uSnap.val() || {};
+      const q = String(inp.responsavel).toLowerCase().trim();
+      if (usuarios[inp.responsavel]) {
+        respUid = inp.responsavel;
+      } else {
+        const achado = Object.entries(usuarios).find(([, u]) => u && (String(u.email || '').toLowerCase() === q || String(u.nome || '').toLowerCase().includes(q)));
+        respUid = achado ? achado[0] : inp.responsavel;
+      }
+    }
+
+    if (dryRun) {
+      return {
+        ok: true,
+        dryRun: true,
+        tool: 'promover_item_okr',
+        tipo: inp.tipo,
+        objetivo_id: objetivoId,
+        wouldHaveExecuted: { item_removido: itemOriginal, marco_nome: textoFinal, progresso: statusMarco, prazo: prazoMarco, responsavel: respUid },
+      };
+    }
+
+    const agora = new Date().toISOString();
+    const marcoId = 'marco_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+    const payload = {
+      id: marcoId,
+      objetivoId,
+      nome: textoFinal,
+      responsavel: respUid,
+      prazo: prazoMarco,
+      progresso: statusMarco,
+      mostrarApresentacao: true,
+      checklist: [],
+      tags: [],
+      participantes: [],
+      descricao: inp.descricao || '',
+      history: [{ who: AGENTE_NOME, uid: AGENTE_UID, what: 'criou o marco a partir de um progresso (via chat com o Agente Ágil)', tipo: 'criado', at: agora }],
+      criadoEm: agora,
+      criadoPor: AGENTE_NOME,
+      atualizadoEm: agora,
+      atualizadoPor: AGENTE_NOME,
+    };
+    const novosProgressos = listaOrigem.filter((_, i) => i !== idxRemover);
+    await db.ref('kanban/okr/marcos/' + marcoId).set(payload);
+    await db.ref('kanban/okr/objetivos/' + objetivoId).update({
+      progressos: novosProgressos,
+      atualizadoEm: agora,
+      atualizadoPor: AGENTE_NOME,
+    });
+    await pushHistory(db, 'kanban/okr/objetivos/' + objetivoId, { what: `promoveu progresso a marco "${textoFinal}" (via chat)`, tipo: 'marco' });
+    await notifyObjetivoEditado(db, objetivoId, requestingUid);
+    if (statusMarco === 'concluido') {
+      const t = torreDe(objetivo);
+      await publicaFeed(db, { tipo: 'marco_concluido', torres: [t], titulo: `✅ Marco concluído: "${textoFinal}"`, sub: `Objetivo: ${objetivo.titulo || '?'} · ${TORRE_INFO[t].icon} ${TORRE_INFO[t].label}`, extra: { objId: objetivoId, marcoId } });
+    }
+    return {
+      ok: true,
+      dryRun: false,
+      tool: 'promover_item_okr',
+      tipo: inp.tipo,
+      objetivo_id: objetivoId,
+      marco_id: marcoId,
+      item_removido: itemOriginal,
+      marco_nome: textoFinal,
+      progresso: statusMarco,
+      prazo: prazoMarco,
+      message: `Progresso promovido a Marco "${textoFinal}" (${statusMarco}) em "${objetivo.titulo}" e removido da lista de Progressos.`,
+    };
+  };
+}
+
 // Registra um valor/entrega no atingimento de um Objetivo (mesma ação de "+ Registrar" do painel). O registro entra
 // numa TRANSAÇÃO sobre a lista — alguém registrando pelo painel ao mesmo tempo não é sobrescrito.
 function makeRegistrarAtingimentoHandler({ db, requestingUid, dryRun }) {
@@ -856,6 +1032,12 @@ function buildOkrTools(options = {}) {
       description: `Edita um Marco já existente (identifique por marco_id, ou por objetivo_id/titulo_objetivo + nome_marco). Muda status (progresso), prazo ou nome (novo_nome ≤ ${OKR_CHAR_LIMITS.marco_nome} caracteres na apresentação executiva). Mesma regra de permissão e de trava 🔒 de editar_campos_okr; concluir um Marco também avisa o sino da torre. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
       input_schema: zodToJsonSchema(editarMarcoSchema),
       handler: mode === 'real' ? makeEditarMarcoHandler({ db, requestingUid, dryRun }) : fake('editar_marco'),
+    },
+    {
+      name: 'promover_item_okr',
+      description: `Promove um item no fluxo do Objetivo: (1) tipo = "proximo_passo_para_progresso" move um item de Próximos Passos para Progressos (remove de proximosPassos e adiciona em progressos, limite ≤ ${OKR_CHAR_LIMITS.progressos} caracteres); (2) tipo = "progresso_para_marco" promove um item de Progressos a Marco (cria o Marco — padrão progresso="concluido", prazo=hoje, responsavel=1º responsável do Objetivo — e remove o item de progressos, limite do nome do Marco ≤ ${OKR_CHAR_LIMITS.marco_nome} caracteres). Identifique o item por indice (base 0) ou trecho em texto_item; novo_texto opcional ajusta o texto ao promover (se o texto passar do limite, resuma e valide com a pessoa antes). Mesma regra de permissão e de trava 🔒 de editar_campos_okr. ${dryRun ? 'Em dryRun, monta o plano mas nunca grava.' : 'Escreve DE VERDADE.'}`,
+      input_schema: zodToJsonSchema(promoverItemOkrSchema),
+      handler: mode === 'real' ? makePromoverItemOkrHandler({ db, requestingUid, dryRun }) : fake('promover_item_okr'),
     },
     {
       name: 'resumo_atingimentos',

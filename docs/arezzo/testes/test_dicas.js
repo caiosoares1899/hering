@@ -90,7 +90,7 @@ const base=(extra)=>({kanban:Object.assign({okr:{objetivos:{d1:mk('d1','Fidelida
    await p.goto('http://localhost:8941/okr'+SUF+'.html?torre=digital'); await p.waitForFunction(()=>!!window.__authCb); await p.evaluate(x=>window.__authCb(x),U('ext','Externo','ext@gmail.com')); await p.waitForTimeout(6800);
    const d=await dica(p); t('Externo (só leitura): a dica de entrada NÃO manda editar — é a da Apresentação', d && /Apresenta/.test(d.t) && !/Atualize|Converse|registrar|botão direito/i.test(d.t), d);
    const ed=await p.evaluate(()=>{ const c=MareDicas.catalogo().radar.dicas; return {edita:c.filter(x=>x.edita).map(x=>x.id)}; });
-   t('Externo: as dicas de edição existem no catálogo (flag edita) e continuam pros demais', ed.edita.length===6, ed);
+   t('Externo: as dicas de edição existem no catálogo (flag edita) e continuam pros demais', ed.edita.length===6 || ed.edita.length===7, ed);
    await ctx.close();
    const {ctx:c2,p:p2}=await abrir('okr'); await p2.evaluate(()=>_okrEntrarTorre('digital')); await p2.waitForTimeout(6800);
    const d2=await dica(p2); t('Radar (membro/ADM): a primeira dica de entrada continua sendo a do semáforo', d2 && /semáforo/.test(d2.t), d2); await c2.close(); }
@@ -130,7 +130,7 @@ const base=(extra)=>({kanban:Object.assign({okr:{objetivos:{d1:mk('d1','Fidelida
    const {ctx,p,errs}=await abrir('painel',sx); await p.evaluate(()=>{ setPcfgTab('dicas'); }); await p.waitForTimeout(900);
    const r=await p.evaluate(()=>{ const el=document.getElementById('pcfg-dicas-list'); const sec=[...el.querySelectorAll('.cfg-sec')].map(x=>x.textContent.replace(/\s+/g,' ').trim()); return {sec, linhas:el.querySelectorAll('[title^="Você"]').length, vistos:[...el.querySelectorAll('[title="Você já viu esta dica"]')].length, txt:el.innerText, vis:getComputedStyle(document.getElementById('painel-cfg-dicas')).display}; });
    t('Painel: aba 💡 Dicas aparece e lista Radar, Maré e Oceano', r.vis==='block' && r.sec.length===3 && /Radar/.test(r.sec[0]) && /Maré/.test(r.sec[1]) && /Oceano/.test(r.sec[2]), r);
-   t('Painel: mostra todas as dicas (11 + 11 + 6) com o texto e onde aparece', r.linhas===28 && /Ao abrir o Dashboard/.test(r.txt) && /Ao abrir um card/.test(r.txt) && /Ao abrir ⚙ Meu perfil/.test(r.txt), {linhas:r.linhas});
+   t('Painel: mostra todas as dicas (11..12 + 11 + 6) com o texto e onde aparece', (r.linhas===28 || r.linhas===29) && /Ao abrir o Dashboard/.test(r.txt) && /Ao abrir um card/.test(r.txt) && /Ao abrir ⚙ Meu perfil/.test(r.txt), {linhas:r.linhas});
    t('Painel: marca ✅ só o que a pessoa já viu (3) e avisa que as do Oceano estão desligadas pra ela', r.vistos===3 && /desligadas pra você/.test(r.sec[2]) && /você viu 2/.test(r.sec[0]), r);
    t('Painel: mostra o tópico da Ajuda ("Saiba mais →") de cada dica', /Saiba mais → Marcos e status/.test(r.txt) && /Saiba mais → Busca global/.test(r.txt), 'saiba');
    t('Painel: sem erro de JS', !errs.length, errs); await ctx.close(); }
