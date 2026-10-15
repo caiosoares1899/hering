@@ -18,6 +18,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### 🐟 Metas ("O mar tá pra peixe!"): popup de marco personalizado para a meta em questão — 2026-10-15 · kanban-dev v8.30.859-dev · painel-dev v5.72 · mare-metas-dev.js v11 (SÓ DEV)
+- **🎯 Texto personalizado por meta, tema e marco (`textoPopup` + `mostrarPeixes` em `mare-metas-dev.js`):** o popup de comemoração a cada 20% (**"O mar tá pra peixe!"** / **"🏆 Meta batida!"**) deixou de usar uma frase única genérica e passou a reagir ao título, ao tema, ao marco atingido (`20%`, `40%`, `60%`, `80%`, `100%`) e aos valores reais da meta ou desafio:
+  - **Meses no título (ex.: `"Outubro"`, `"Meta Novembro"`):** adapta título, mensagem e botão para o mês (*"O mar tá pra peixe em Outubro! 🐟"*, *"Primeiro peixe de Outubro na rede!"* / *"O cardume de Outubro tá encorpando!"* / *"Passamos da metade de Outubro!"* / *"Reta final de Outubro no mar!"*, *"Bora pescar mais em Outubro! 🚀"*, e em 100% *"🏆 Meta batida em Outubro! 🎉"*).
+  - **Black Friday / Cyber / Esquenta e campanhas (`Dia das Mães`, `Natal`, `Live`, etc.):** adapta a saudação, o título e o botão para a Black ou campanha em andamento.
+  - **Qualquer meta ou desafio:** tece o nome da meta diretamente na frase de comemoração, exibe o progresso realizado no formato da meta (`(R$ 400 mil de R$ 1 mi)`) e quanto falta para o próximo peixe (`Próximo peixe em 60% — faltam R$ 200 mil.`). Dica: não (é um refinamento visual/textual de um popup comemorativo que já aparece sozinho).
+
 ### 📚 Documentação: Ajuda do Radar (comentários de Marco), Oceano, maredigital.html e CODE_MAP — 2026-10-14 · okr-dev v2.80 · maredigital.html · docs/OCEANO.md · CODE_MAP.md (SÓ DEV)
 - **❓ Ajuda do Radar (`okr-dev.html` v2.80):** o tópico **✏️ Editar o que já foi escrito** (`#hlp-editar`) agora documenta a edição (`✏️`, com selo *(editado)*) e a exclusão (`🗑️`, com confirmação) dos próprios comentários nos Marcos, além da moderação por ADMs.
 - **🌊 `docs/OCEANO.md`, `CLAUDE.md` e `AGENTS.md`:** atualizados os status do lobby `oceano.html` (v1.34, selo `#vtex-pill`), sino no Oceano, login único pelo Oceano (incluindo convidado externo e redirecionamento na 1ª abertura do dia via `_oceanoDoDia`), Mural de avisos do Oceano e `escala.html` (v1.10 com filtros em mini tela, Visão Gantt + JPG e pausas) de "só dev" para **em produção**.
