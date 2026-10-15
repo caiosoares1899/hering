@@ -18,7 +18,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### 🐟 Metas ("O mar tá pra peixe!"): popup de marco personalizado para a meta em questão — 2026-10-15 · kanban-dev v8.30.859-dev · painel-dev v5.72 · mare-metas-dev.js v11 (SÓ DEV)
+### 🐟 Metas ("O mar tá pra peixe!"): popup de marco personalizado para a meta em questão — 2026-10-15 · kanban-dev v8.30.859-dev→v8.30.860-dev · painel-dev v5.72→v5.73 · mare-metas-dev.js v11→v12 (SÓ DEV)
 - **🎯 Texto personalizado por meta, tema e marco (`textoPopup` + `mostrarPeixes` em `mare-metas-dev.js`):** o popup de comemoração a cada 20% (**"O mar tá pra peixe!"** / **"🏆 Meta batida!"**) deixou de usar uma frase única genérica e passou a reagir ao título, ao tema, ao marco atingido (`20%`, `40%`, `60%`, `80%`, `100%`) e aos valores reais da meta ou desafio:
   - **Meses no título (ex.: `"Outubro"`, `"Meta Novembro"`):** adapta título, mensagem e botão para o mês (*"O mar tá pra peixe em Outubro! 🐟"*, *"Primeiro peixe de Outubro na rede!"* / *"O cardume de Outubro tá encorpando!"* / *"Passamos da metade de Outubro!"* / *"Reta final de Outubro no mar!"*, *"Bora pescar mais em Outubro! 🚀"*, e em 100% *"🏆 Meta batida em Outubro! 🎉"*).
   - **Black Friday / Cyber / Esquenta e campanhas (`Dia das Mães`, `Natal`, `Live`, etc.):** adapta a saudação, o título e o botão para a Black ou campanha em andamento.
