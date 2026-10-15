@@ -40,6 +40,7 @@
       {id:'apresentacao',gatilho:'boot',            texto:'Hora da reunião? Use 🎥 Apresentação (tela cheia). As setas ← → passam os slides.', saiba:'apresentacao', ajuda:'Apresentação em slides'},
       {id:'modal-atalhos',gatilho:'obj-modal',      texto:'Os atalhos no topo levam direto a cada seção do Objetivo.', saiba:'modal', ajuda:'O modal do Objetivo'},
       {id:'trava',       gatilho:'obj-modal',       texto:'Duas pessoas no mesmo Objetivo? Quem abriu primeiro edita; a outra vê em modo leitura.', saiba:'trava', ajuda:'Edição simultânea do mesmo Objetivo', edita:true},
+      {id:'promover-fluxo',gatilho:'obj-modal',     texto:'Um próximo passo avançou? Use ✅ pra virar Progresso e 🏁 num Progresso pra promovê-lo a Marco.', saiba:'editar', ajuda:'Criar e editar um Objetivo', edita:true},
       {id:'dash-filtro', gatilho:'view:historico',  texto:'Clique numa situação (Atrasado, No prazo…) pra filtrar a tabela logo abaixo.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'dash-contrib',gatilho:'view:historico',  texto:'Quer saber quem puxa a média pra baixo? Use 🧮 Como cada Objetivo contribui.', saiba:'dashboard', ajuda:'Dashboard (histórico semanal)'},
       {id:'cal-dia',     gatilho:'view:calendario', texto:'Clique num dia pra ver ou criar reuniões e eventos.', saiba:'calendario', ajuda:'Calendário', edita:true},

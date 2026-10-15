@@ -423,3 +423,75 @@ test('criar_objetivo, criar_marco e editar_marco: respeitam limites de titulo (9
   assert.equal(rEditarMarco.error, 'limite_caracteres_excedido');
   assert.equal(rEditarMarco.violacoes[0].campo, 'novo_nome');
 });
+
+test('promover_item_okr: move próximo passo para progresso e promove progresso a Marco (removendo de progressos)', async () => {
+  const db = seedDb();
+  await db.ref('kanban/okr/objetivos/o1/progressos').set(['Mapeamento feito']);
+  await db.ref('kanban/okr/objetivos/o1/proximosPassos').set(['Validar com CS']);
+  const tools = buildOkrTools({ mode: 'real', db, requestingUid: RESP_UID, dryRun: false });
+  const promover = toolByName(tools, 'promover_item_okr');
+
+  // 1) Próximo passo -> Progresso (por texto parcial)
+  const r1 = await promover.handler({
+    objetivo_id: 'o1',
+    tipo: 'proximo_passo_para_progresso',
+    texto_item: 'Validar com CS',
+  });
+  assert.equal(r1.ok, true);
+  assert.equal(r1.tipo, 'proximo_passo_para_progresso');
+  assert.equal(r1.item_removido, 'Validar com CS');
+  assert.equal(r1.progresso_adicionado, 'Validar com CS');
+
+  let savedObj = (await db.ref('kanban/okr/objetivos/o1').get()).val();
+  assert.deepEqual(savedObj.proximosPassos || [], []);
+  assert.deepEqual(savedObj.progressos, ['Mapeamento feito', 'Validar com CS']);
+  assert.match(savedObj.history.at(-1).what, /promoveu próximo passo a progresso/i);
+
+  // 2) Progresso -> Marco (cria marco concluído, avisa feed e remove de progressos)
+  const r2 = await promover.handler({
+    objetivo_id: 'o1',
+    tipo: 'progresso_para_marco',
+    texto_item: 'Mapeamento feito',
+    prazo: '2026-10-15',
+  });
+  assert.equal(r2.ok, true);
+  assert.equal(r2.tipo, 'progresso_para_marco');
+  assert.equal(r2.item_removido, 'Mapeamento feito');
+  assert.equal(r2.marco_nome, 'Mapeamento feito');
+  assert.equal(r2.progresso, 'concluido');
+  assert.equal(r2.prazo, '2026-10-15');
+
+  savedObj = (await db.ref('kanban/okr/objetivos/o1').get()).val();
+  assert.deepEqual(savedObj.progressos, ['Validar com CS']);
+  const novoMarco = (await db.ref(`kanban/okr/marcos/${r2.marco_id}`).get()).val();
+  assert.ok(novoMarco);
+  assert.equal(novoMarco.nome, 'Mapeamento feito');
+  assert.equal(novoMarco.progresso, 'concluido');
+  assert.equal(novoMarco.responsavel, RESP_UID);
+  assert.equal(novoMarco.objetivoId, 'o1');
+  assert.match(savedObj.history.at(-1).what, /promoveu progresso a marco/i);
+
+  // 3) Valida limite de 70 caracteres ao promover para Marco
+  const rLim = await promover.handler({
+    objetivo_id: 'o1',
+    tipo: 'progresso_para_marco',
+    texto_item: 'Validar com CS',
+    novo_texto: 'X'.repeat(71),
+  });
+  assert.equal(rLim.ok, false);
+  assert.equal(rLim.error, 'limite_caracteres_excedido');
+  assert.equal(rLim.violacoes[0].limite, 70);
+
+  // 4) Recusa usuário sem permissão
+  const toolsOutro = buildOkrTools({ mode: 'real', db, requestingUid: OUTRO_UID, dryRun: false });
+  const rPerm = await toolByName(toolsOutro, 'promover_item_okr').handler({
+    objetivo_id: 'o1',
+    tipo: 'progresso_para_marco',
+    texto_item: 'Validar com CS',
+  });
+  assert.equal(rPerm.ok, false);
+  assert.equal(rPerm.error, 'sem_permissao');
+});
+
+
+

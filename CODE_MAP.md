@@ -4472,8 +4472,8 @@ detalhe aberto — ver nota abaixo).
   só do servidor fora do bloco (`resumoAtingimento()`/`progressoDoObjetivo()`/
   `lancamentosDe()`). `weeklySnapshot.js` usa o mesmo `progressoDoObjetivo()`.
   `resolveMarco()` exportado (resolve por id ou nome dentro do Objetivo,
-  erro `marco_ambiguo` se mais de 1 bater). **📏 Limites de caracteres da Apresentação Executiva (2026-10-15):** `OKR_CHAR_LIMITS` (`{titulo:90, pilar:60, descricao:200, indicadores:90, progressos:90, proximos_passos:90, riscos:90, planos_acao:90, marco_nome:70}`) e `validarLimitesCaracteres()` bloqueiam gravações acima do limite em `criar_objetivo`, `editar_campos_okr`, `criar_marco` e `editar_marco` com `error:'limite_caracteres_excedido'`. `okr/__tests__/agenteTools.test.js`,
-  22 casos.
+  erro `marco_ambiguo` se mais de 1 bater). **📏 Limites de caracteres da Apresentação Executiva (2026-10-15):** `OKR_CHAR_LIMITS` (`{titulo:90, pilar:60, descricao:200, indicadores:90, progressos:90, proximos_passos:90, riscos:90, planos_acao:90, marco_nome:70}`) e `validarLimitesCaracteres()` bloqueiam gravações acima do limite em `criar_objetivo`, `editar_campos_okr`, `criar_marco`, `editar_marco` e `promover_item_okr` com `error:'limite_caracteres_excedido'`. **🚀 Fluxo de promoção (2026-10-15, okr-dev v2.89):** `promover_item_okr` (`makePromoverItemOkrHandler` / `promoverItemOkrSchema`) move item de `proximosPassos` → `progressos` (`tipo:'proximo_passo_para_progresso'`) ou promove item de `progressos` → novo Marco em `kanban/okr/marcos` removendo de `progressos` (`tipo:'progresso_para_marco'`); na UI de `okr-dev.html`: `_okrPromoverParaProgresso(i)` (botão `✅`), `_okrPromoverParaMarco(i)` (botão `🏁` → `openOkrMarco(null, objId, prefill)` com `_okrMarcoFromProgresso`, removido de `progressos` em `_saveOkrMarcoInner()`). `okr/__tests__/agenteTools.test.js`,
+  23 casos.
 - `okr/agenteHelpers.js` — `isAdmUid()`/`canEditObjetivo()`/`canCreateObjetivo()`/
   `torreParaCriar()`/`infoUsuario()` (mesma regra POR TORRE de `_okrCanEdit()`/`_okrCanCreate()`
   em `okr-dev.html`, replicada servidor-side: ADM → tudo; PO/Organizador/Gestor OKR só na própria
@@ -4486,9 +4486,9 @@ detalhe aberto — ver nota abaixo).
   2026-09-05: notifica `responsaveis`/participantes de Marco quando o
   chat edita um Objetivo — mesma coisa que `_okrNotifyEditado()` no
   painel já fazia pra edição manual, `type:'okr_editado'`, exclui quem
-  editou). Chamada pelos 3 handlers de escrita de `agenteTools.js`
-  (`editar_campos_okr`/`criar_marco`/`editar_marco`).
-- `okr/agentePrompt.js` — `SYSTEM_PROMPT_OKR_V1` (ganhou, em 2026-10-07, o bloco "Torres, gerências e agenda": torre do Objetivo, `geral` ambíguo entre torres, permissão por torre, 🔒 trava, sino, calendário só-leitura; e em 2026-10-15 os limites obrigatórios de caracteres da Apresentação Executiva + regra de propor versão resumida com contagem de caracteres e validar com a pessoa antes de gravar), separado do prompt do
+  editou). Chamada pelos 4 handlers de escrita de `agenteTools.js`
+  (`editar_campos_okr`/`criar_marco`/`editar_marco`/`promover_item_okr`).
+- `okr/agentePrompt.js` — `SYSTEM_PROMPT_OKR_V1` (ganhou, em 2026-10-07, o bloco "Torres, gerências e agenda": torre do Objetivo, `geral` ambíguo entre torres, permissão por torre, 🔒 trava, sino, calendário só-leitura; e em 2026-10-15 os limites obrigatórios de caracteres da Apresentação Executiva + regra de propor versão resumida com contagem de caracteres e validar com a pessoa antes de gravar + fluxo `promover_item_okr` Próximo Passo → Progresso → Marco), separado do prompt do
   orquestrador de card (`agente-agil-orquestrador/systemPrompt.js`). Foco
   em TRADUZIR texto corrido pra Progresso/Próximo Passo/Risco, não só
   repetir — e sempre terminar chamando `responder`.
