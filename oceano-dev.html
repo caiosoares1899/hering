@@ -284,6 +284,8 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
   .inicio-grid.tem-mural:not(.tem-meta) .tiles,
   .inicio-grid.tem-meta:not(.tem-mural) .tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
   .inicio-grid.tem-meta.tem-mural{grid-template-columns:minmax(0,6fr) minmax(0,5fr);}
+  /* (2026-10-16) Só Meta (sem Mural): o cartão da meta começa na MESMA altura dos quadrados dos apps (antes o cabeçalho "Meta Global · Digital" empurrava o cartão ~47px para baixo; o próprio cartão já diz "Meta Global · Digital"). Só o topo é alinhado — esticar os quadrados deformava quando há mais de uma meta. */
+  .inicio-grid.tem-meta:not(.tem-mural) .col-meta .meta-hd{display:none;}
   .inicio-grid.tem-meta.tem-mural .col-apps{grid-column:1 / -1;}
   .inicio-grid.tem-meta.tem-mural .tiles{grid-template-columns:repeat(auto-fit,minmax(175px,1fr));}
   .col-mural .mural{grid-template-columns:minmax(0,1fr);max-height:max(600px,calc(100vh - 170px));overflow-y:auto;padding:2px 6px 2px 0;scrollbar-width:thin;scrollbar-color:var(--glass-b) transparent;}
@@ -754,7 +756,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.49 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.50 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
