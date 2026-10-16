@@ -61,6 +61,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · plantão automático: chave/segredo com espaço ou quebra de linha invisível derrubava a autenticação (401 / chave inválida)
+
+- **Sintoma:** no 1º deploy do modo automático o webhook do GitHub respondeu `401 assinatura inválida` e a chave do `plantaoProximo` deu `chave inválida`, com os segredos recém-criados.
+- **Causa provável:** o valor guardado no Secret Manager (colado à mão / de arquivo de texto) pode ter espaço ou quebra de linha no começo ou no fim, e a comparação era exata; `functions/plantao/agente.js` e `functions/plantao/webhook.js` não limpavam o segredo.
+- **Correção:** `limpaSegredo()` nos dois (chave da URL, segredo do webhook); testes novos. **Exige redeploy** de `plantaoProximo` e `plantaoGithubWebhook`.
+
 ### 2026-10-16 · functions: os testes do servidor do plantão nunca rodavam no npm test / CI
 
 - **O que estava errado:** o script `test` de `functions/package.json` lista as pastas de teste uma a uma e `plantao/__tests__` (criada no PR do plantão) ficou de fora — a CI nunca executou os testes de `plantaoBugNovo`/`plantaoVigia` (a contagem de `npm test` não subiu quando eles foram escritos).

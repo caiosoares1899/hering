@@ -7,7 +7,7 @@ const { onRequest } = require('firebase-functions/v2/https');
 const { defineSecret } = require('firebase-functions/params');
 const { getDatabase } = require('firebase-admin/database');
 const crypto = require('crypto');
-const { idDeBranch } = require('./agente');
+const { idDeBranch, limpaSegredo } = require('./agente');
 const { avisarAdms, cardIdDoBug } = require('./plantao');
 
 const PLANTAO_WEBHOOK_SECRET = defineSecret('PLANTAO_WEBHOOK_SECRET');
@@ -16,7 +16,8 @@ const AUTORES = ['caiosoares1899', 'Andreetta94', 'alioandrade99-netizen'];     
 const ACOES = ['opened', 'reopened', 'synchronize', 'edited', 'ready_for_review'];
 const FIM = ['em_prod', 'duplicado', 'cancelado'];
 
-function assinaturaOk(rawBody, header, segredo) {
+function assinaturaOk(rawBody, header, segredoBruto) {
+  const segredo = limpaSegredo(segredoBruto);
   if (!segredo || !/^sha256=[0-9a-f]{64}$/.test(String(header || ''))) return false;
   const esperado = 'sha256=' + crypto.createHmac('sha256', segredo).update(rawBody).digest('hex');
   return crypto.timingSafeEqual(Buffer.from(esperado), Buffer.from(String(header)));
