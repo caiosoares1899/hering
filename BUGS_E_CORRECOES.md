@@ -50,25 +50,29 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
    - `functions/rules/__tests__/okrRules.test.js` varre o código atrás de `kanban/okr/<nó>` e falha se faltar a declaração. Depois de declarar: `firebase deploy --only database` (só o Caio).
    - Permissão que só existe na tela NÃO é permissão: se a UI diz "só o autor/ADM", a regra do banco precisa dizer o mesmo. A regra só enxerga `role` global, `gestorOkr` e o e-mail do Caio — não `squads_roles` nem a lista `adm_emails`.
 
-10. **Schema de Cards ao criar/atualizar de fora do `kanban.html` (`intake`, `oceano`, `functions`):**
-   - **`priority` em português:** `'alta' | 'media' | 'baixa' | 'bloqueado'` (nunca `'critical'`/`'high'`/`'medium'`). Se houver impedimento crítico, usar `blocker: true` + `blockerReason`.
-   - **`checklist` usa `.text` (não `.t`):** cada item deve ser `{ text: '...', done: false }`, senão o modal do Maré renderiza `undefined` ao lado do checkbox.
-   - **`history` usa `{ action, by, col, ts }`:** onde `ts` é `'DD/MM/YYYY HH:MM'` (padrão `fbCreateCard`), e não `{ who, what, at }`.
-   - **`flow` é mapa `{ [colId]: timestampMs }` e `created` é `'DD/MM/YYYY'`:** incluir também `demandante` para exibir quem abriu a demanda e verificar se `cards/<slot>` não pertence a outro `card.id` antes de alocar `cards_index/<cardId>`.
+10. **Schema de Cards ao criar/atualizar de fora do `kanban.html` (`intake.html`, `oceano.html`, `functions`):**
+   - **`priority` usa os valores do `<select id="m-priority">` de `kanban-dev.html`:** `'critical' | 'high' | 'medium' | 'low'` (nunca `'alta'`/`'media'`/`'baixa'`, que deixam o `<select>` de prioridade vazio no modal do Maré). Se houver impedimento crítico, ligar também `blocker: true` + `blockerReason`.
+   - **`created` é QUEM criou (nome/iniciais do autor), nunca uma data:** `kanban-dev.html` exibe `"Criado por ${card.created}"`; a data ISO `AAAA-MM-DD` fica em `createdAt`.
+   - **`checklist` com `.text` e `.t`:** cada item deve ter `{ text: '...', t: '...', done: false }` para compatibilidade total no modal do Maré.
+   - **`history` no formato `{ who, what, at }` (`recordHistory` em `kanban-dev.html`):** onde `at` é ISO string (`new Date().toISOString()`).
+   - **`flow` no formato de `recordMove`:** `{ enteredAt: { [colId]: isoString }, log: [{ from: '—', to: colId, at: isoString }] }` e verificar se `cards/<slot>` não pertence a outro `card.id` antes de alocar `cards_index/<cardId>`. Sempre validar com `docs/arezzo/testes/test_ferias_card_contrato.js`.
 
 ---
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · oceano-dev.html v1.43 (2026-10-16) — Correção das 2 regressões de contrato Oceano ⇄ Maré no card de bug (`priority` e `created`)
+
+- **`priority` em inglês (`critical|high|medium|low`) conforme `<select id="m-priority">` de `kanban-dev.html` (`feriasNormalizarPrioridadeKanban`):** Na v1.42, `feriasNormalizarPrioridadeKanban` havia convertido `priority` para `'alta'|'media'|'baixa'`, deixando o `<select id="m-priority">` vazio ao abrir o card no `kanban-dev.html`. Restaurado o mapeamento oficial (`🔴 Bloqueia a operação` → `'critical'`, `🟠 Atrapalha` → `'high'`, `🟡 Dá pra contornar` → `'medium'`) e adicionada migração automática de cards gravados com valores em português.
+- **`created` com o nome do autor do relato em vez de data `DD/MM/YYYY` (`feriasMontarCardBugDados`):** Na v1.42, `created` passou a gravar `DD/MM/YYYY`, fazendo o modal do `kanban-dev.html` exibir `"Criado por 16/10/2026"`. Restaurado `created: autor` (com higienização automática caso o card existente tenha data em `created`) e `createdAt` com a data ISO `AAAA-MM-DD`, incrementando `kanbanSchemaV: 3` para curar automaticamente cards criados na v1.42 (validado pelo contrato `docs/arezzo/testes/test_ferias_card_contrato.js`).
+
 ### 2026-10-16 · oceano-dev.html v1.42 (2026-10-16) — /monitorarbugs na criação e sincronização do Card na coluna Bugs (Squad Dados)
 
 - **Listener em tempo real abortava por `window._onVal` indefinido (`feriasIniciarBugsListener`):** O `<script type="module">` do `oceano-dev.html` expunha `window._onValue`, mas `feriasIniciarBugsListener` checava `if(!window._onVal ...)`, saindo na primeira linha. Exposto `window._onVal = onValue` no módulo e adicionado fallback `window._onValue || window._onVal`.
 - **Itens do Checklist apareciam em branco/undefined no Maré (`feriasMontarCardBugDados`):** Os 3 itens do checklist eram gravados com a chave `{ t, done }`, mas `kanban-dev.html` renderiza `item.text`. Agora grava `{ text, t, done }`.
-- **Prioridade em inglês e flag de Bloqueio (`feriasNormalizarPrioridadeKanban`):** O card recebia `priority: "critical"|"high"|"medium"`, enquanto o `kanban-dev.html` espera `"alta"|"media"|"baixa"`. Normalizado para português (incluindo migração automática de cards já criados) e ativado `blocker: true` + `blockerReason` automaticamente quando o impacto é `🔴 Bloqueia a operação` (limpando o bloqueio ao resolver).
-- **Aba Histórico do card com campos incompatíveis (`feriasSincronizarCardSquadDados`):** O histórico gravava `{ who, what, at }`, enquanto `kanban-dev.html` lê `{ action, by, col, ts }`. Agora grava ambos os formatos e migra entradas existentes.
-- **Campos `flow`, `created` e `demandante` do card (`feriasMontarCardBugDados`):** Adicionado `flow: { [colFinal]: criadoMs }`, `created: "DD/MM/YYYY"` e `demandante: autor` no mesmo padrão de `fbCreateCard`.
+- **Flag automática de Impedimento (`blocker` / `blockerReason`):** Ativado `blocker: true` + `blockerReason` automaticamente quando o impacto é `🔴 Bloqueia a operação`, limpando o bloqueio automático ao resolver (Nota: a conversão de `priority` e `created` feita na v1.42 gerou regressão e foi revertida na v1.43).
 - **Proteção contra colisão de slot em `cards_index` (`feriasSincronizarCardSquadDados`):** Verifica se `cards/<cardKey>` não pertence a outro `card.id` antes de reutilizar o índice e cruza `occupiedKeys` de `/cards` dentro da transação de `cards_index`.
-- **Deep-link `&card=...&opencard=...` e retro-sync de schema v2 (`feriasUrlCardSquadDados`, `feriasProcessarSnapshotBugs`, `feriasEnviarBug`):** Incluído `&opencard=<id>` para abertura garantida após `fb-ready`, removido `kanbanCardId` prematuro antes da criação do card e adicionado `kanbanSchemaV: 2` para atualizar automaticamente os cards criados na v1.41.
+- **Deep-link `&card=...&opencard=...` (`feriasUrlCardSquadDados`, `feriasProcessarSnapshotBugs`, `feriasEnviarBug`):** Incluído `&opencard=<id>` para abertura garantida após `fb-ready` e removido `kanbanCardId` prematuro antes da criação do card.
 
 ### 2026-10-16 · oceano-dev.html v1.40 (2026-10-16) — /monitorarbugs no Assistente Férias (sino pessoal, auto-sync no foco e validação de imagem)
 
