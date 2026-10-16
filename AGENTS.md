@@ -36,4 +36,4 @@ Nasceram da auditoria de 16/10 (`docs/COORDENACAO_AGENTES.md`). Quebrar qualquer
 5. **Prod só depois da validação do ADM.** Você abre o PR de dev; o PR de prod só existe depois do "✅ validei" registrado. Ninguém aprova o próprio PR.
 6. **Tokens e segredos nunca no repositório, em issue, PR ou chat.** Se um vazar, avise na hora para revogar.
 
-Fluxo completo do Plantão de Férias e o que está ou não ativo: `docs/PLANTAO_BUGS.md`.
+Bug do Plantão de Férias: use `/plantaobug <pacote anônimo>` (skill em `.claude/skills/plantaobug/SKILL.md`). Fluxo completo e o que está ou não ativo: `docs/PLANTAO_BUGS.md`.

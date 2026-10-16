@@ -19,7 +19,7 @@ O Antigravity corporativo **pede aprovação a cada comando de terminal** (`comm
 Pessoa (Oceano › Assistente Férias › 🐛 Reportar Bug)
    └► kanban/feedback/{id}  +  card na squad Dados › 🐛 Bugs          (dados da pessoa ficam SÓ aqui)
         └► plantaoBugNovo (servidor): ficha kanban/plantao/{id} · junta duplicados · avisa os ADMs 🔔 (abre o card)
-             └► ADM: Oceano › 🐛 Reportar Bug › "📋 Copiar pacote anônimo"  → cola no Antigravity com o PROMPT DE PLANTÃO (abaixo)
+             └► ADM: Oceano › 🐛 Reportar Bug › "📋 Copiar pacote anônimo"  → cola no Antigravity com `/plantaobug` (abaixo)
                   └► Antigravity (sem clique): diagnostica, edita só o arquivo -dev, escreve o SCRIPT DE TESTE
                        └► ADM aprova o comando único (branch + commit + push + PR de dev) — 1 clique
                             └► ADM cola PR + script na ficha (💾), RODA o script no console do dev, e valida: ✅ ou ❌ (+ nota)
@@ -34,34 +34,24 @@ Quem valida é **sempre um ADM** (papel `adm`) — nunca quem reportou (a tela r
 
 `aguardando` → `em_analise` → `pr_aberto` → `testando` (PR + script salvos) → `validado` → `em_prod` · desvios: `reprovado` (volta a testando com novo PR+script), `escalado` (3 reprovações: Claude assume; o conserto do Claude também passa por validação de ADM), `duplicado` (juntado a outro bug aberto), `cancelado`.
 
-## Prompt de plantão (cole no Antigravity junto com o pacote anônimo)
+## Comando de plantão: `/plantaobug`
+
+No Antigravity do ADM (o repositório já traz a skill em `.claude/skills/plantaobug/SKILL.md`), basta:
 
 ```
-PLANTÃO DE BUG — siga o AGENTS.md (Linhas vermelhas). Pacote abaixo.
-Regras:
-1. Edite SÓ o arquivo -dev indicado no pacote. Não toque em functions/, database.rules.json, version.json de outras páginas nem em prod.
-   Se o conserto exigir mais de uma página, functions/ ou regras do banco: PARE e escreva "ESCALAR AO CLAUDE" com o motivo.
-2. Não use terminal até o fim (leia/edite com as ferramentas nativas). Não peça nem registre dados de quem reportou.
-3. Entregue, nesta ordem:
-   a) resumo do conserto em até 3 linhas;
-   b) SCRIPT DE TESTE para o console da página de DEV, em português: SOMENTE LEITURA (não grava no Firebase), chama as funções REAIS da página,
-      termina com console.table de ✅/❌ por verificação, e diz exatamente em que página/tela rodar;
-   c) UM ÚNICO comando de terminal agrupado: git fetch origin && git checkout -b antigravity/bug-<id-curto> origin/main && git add <arquivos> &&
-      git commit (mensagem + trailer "Agent: antigravity") && git push -u origin antigravity/bug-<id-curto> && abrir o PR contra main
-      com o título "Plantão: <resumo>". NUNCA fazer merge, NUNCA push na main.
-4. Bump de versão do -dev e entrada no BUGS_E_CORRECOES.md (node scripts/mare-cli.js bump / log --type bug).
-
-PACOTE:
-<cole aqui o pacote anônimo>
+/plantaobug <cole aqui o pacote anônimo>
 ```
+
+A skill já contém as regras: edita só o arquivo -dev do pacote; se precisar de mais de uma página, `functions/`, regras ou produção, responde **ESCALAR AO CLAUDE**; entrega o **script de teste** (português, só leitura, funções reais, `console.table` ✅/❌) e **um único comando agrupado** (branch + bump + log + checar + commit + push + PR de dev). Nunca faz merge. Se for reprovado, corrige no mesmo branch (máx. 3 tentativas).
 
 ## Status
 
 | PR | Conteúdo | Situação |
 |---|---|---|
 | 1 — Contenção | Sem Issue pública, sem workflow/daemon, pacote anônimo, linhas vermelhas no `AGENTS.md`, CI reprova workflow que reage a issue/comentário | ✅ em `main` (#1454) |
-| 2 — Servidor + validação | `plantaoBugNovo` / `plantaoVigia`, regras de `kanban/plantao` (só ADM), painel de validação no Oceano (v1.45), aviso `plantao_bug`, pausa geral | **este PR** — **exige deploy** (abaixo) |
-| 3 — Fechamento | Teste ponta a ponta no dev com dados reais, ajustes do que o uso mostrar, revisão do runbook | pendente |
+| 2 — Servidor + validação | `plantaoBugNovo` / `plantaoVigia`, regras de `kanban/plantao` (só ADM), painel de validação no Oceano (v1.45), aviso `plantao_bug`, pausa geral | ✅ em `main` (#1455) e **implantado** (database + functions) em 16/10 — teste ao vivo: aviso chegou para os 3 ADMs; trava "quem reportou não valida" confirmada |
+| 3 — Comando `/plantaobug` | Skill que reduz o plantão a colar o pacote; passo de validação documentado | **este PR** |
+| Em uso | Primeiro bug real passando pelo fluxo inteiro; ajustes do que o uso mostrar | pendente (depende de aparecer bug) |
 
 ## Deploy do PR 2 (só o Caio roda — Windows)
 
