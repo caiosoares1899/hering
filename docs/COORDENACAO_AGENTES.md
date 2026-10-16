@@ -93,7 +93,7 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 ### Em andamento
 | Agente | Branch | Arquivos que vai tocar | Desde |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | `claude/agente-agil-orchestrator-jf99de` | **Plantão de Férias** (3 PRs: contenção → servidor → MCP): `oceano-dev.html`, `AGENTS.md`, `scripts/checar.js`, depois `functions/`, `database.rules.json`. **Antigravity: não mexa nesses arquivos até o PR3.** Plano e status em `docs/PLANTAO_BUGS.md`. | 16/10 |
 
 ### Escalado para o Claude
 | Quem achou | O que | Como reproduzir | Data |

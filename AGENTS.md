@@ -24,3 +24,16 @@
 - **Fluxo GitHub-first (Branches & PRs):** Sempre crie uma branch nova a partir da `main` atualizada (`git fetch origin && git checkout main && git pull origin main`), faça commit, `git push` e abra a Pull Request no GitHub informando o link ao usuário. **Nunca faça merge da PR por conta própria** — o usuário aprova e clica em Merge no GitHub.
 - **Deploy Firebase (`database.rules.json` e `functions/`):** Se uma tarefa alterar regras do Realtime Database ou Cloud Functions, avise o usuário que precisa de deploy no Firebase e aguarde confirmação explícita no chat antes de rodar `firebase deploy`.
 - **Logs nos Cards & Avisos (Mural/WhatsApp):** Só gere o script de console para logar comentário nos cards (`c1785199972010_nd0` / `c1783541085140`) e os rascunhos de aviso quando for promover para produção (`/subirproprod`), não a cada PR de `-dev`.
+
+## Linhas vermelhas (valem sempre — inclusive nas férias do Caio)
+
+Nasceram da auditoria de 16/10 (`docs/COORDENACAO_AGENTES.md`). Quebrar qualquer uma é motivo de parar e escalar, nunca de "dar um jeito":
+
+1. **Nunca contorne um controle corporativo.** Se o Antigravity exige aprovação para rodar um comando, **peça a aprovação**. Proibido criar daemon, `.bat`, agendador ou script que "aperte o botão" por você (o `ferias-daemon.js` foi removido por isso). Mensagem como "Always Proceed disabled by admin" é regra da empresa, não obstáculo técnico.
+2. **Nada de automação que reage a texto de terceiros no GitHub.** Proibido workflow com gatilho `issues`, `issue_comment` ou `pull_request_target` (qualquer pessoa pode abrir issue/comentar e disparar o robô com permissão de escrita). A CI (`scripts/checar.js`) reprova o PR que criar um.
+3. **Dados de pessoas não saem do Firebase.** Nome, e-mail, uid, link de card e print de quem reportou um bug **nunca** vão para Issue, PR, commit, log ou prompt. O que o agente de código recebe é o **pacote anônimo** (`feriasMontarPacoteAnonimo`: app, arquivo, impacto, descrição e trecho de console já sanitizados).
+4. **Bug sem script de teste não é entregue.** Todo `/monitorarbugs` termina com um **script de console em português** (chama as funções reais da página, read-only, imprime ✅/❌) que o **ADM** (André ou Alisson) roda em dev **antes** de validar. Quem valida é sempre um ADM — nunca quem reportou, nunca você.
+5. **Prod só depois da validação do ADM.** Você abre o PR de dev; o PR de prod só existe depois do "✅ validei" registrado. Ninguém aprova o próprio PR.
+6. **Tokens e segredos nunca no repositório, em issue, PR ou chat.** Se um vazar, avise na hora para revogar.
+
+Fluxo completo do Plantão de Férias e o que está ou não ativo: `docs/PLANTAO_BUGS.md`.

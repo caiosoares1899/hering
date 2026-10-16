@@ -123,9 +123,36 @@ function referencias() {
   ok.push(`Referências em ${arq} (entradas a partir de ${REFS_A_PARTIR_DE}): ${conferidas} conferida(s)`);
 }
 
+// ── 5. Linhas vermelhas (AGENTS.md): automação que obedece a texto de terceiros + dados pessoais em issue pública ──
+function linhasVermelhas() {
+  const dir = path.join(ROOT, '.github', 'workflows');
+  let n = 0;
+  if (fs.existsSync(dir)) {
+    for (const f of fs.readdirSync(dir)) {
+      if (!/\.ya?ml$/.test(f)) continue;
+      const rel = `.github/workflows/${f}`;
+      const txt = lê(rel).replace(/^\s*#.*$/gm, '');   // comentários não contam
+      const m = txt.match(/\b(issues|issue_comment|pull_request_target)\s*:/);
+      if (m) falha('Linha vermelha', `${rel} reage a "${m[1]}" — qualquer pessoa pode abrir issue/comentar e disparar o robô. Proibido (AGENTS.md, "Linhas vermelhas")`, rel);
+      n++;
+    }
+  }
+  const proibidos = [
+    [/github\.com\/[\w.-]+\/[\w.-]+\/issues\/new/, 'abre issue PÚBLICA (vaza nome/e-mail de quem reportou)'],
+    [/api\.github\.com\/repos\/[\w.-]+\/[\w.-]+\/issues/, 'lê issues/comentários sem autenticação e confia no texto de qualquer pessoa'],
+  ];
+  for (const arq of PAGINAS) {
+    if (!existe(arq)) continue;
+    const html = lê(arq);
+    for (const [re, porque] of proibidos) if (re.test(html)) falha('Linha vermelha', `${arq} ${porque} (AGENTS.md, "Linhas vermelhas")`, arq);
+  }
+  ok.push(`Linhas vermelhas: ${n} workflow(s) e ${PAGINAS.length} página(s) conferidos`);
+}
+
 jsonValidos();
 versoes();
 sintaxe();
+linhasVermelhas();
 referencias();
 
 for (const l of ok) console.log('✅', l);
