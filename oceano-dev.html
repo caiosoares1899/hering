@@ -704,7 +704,7 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
 <script src="mare-login-dev.js?v=3"></script>
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+import { getDatabase, ref, get, update, set, onValue, query, orderByChild, limitToLast, equalTo, runTransaction } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
 import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithCredential, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 
 const firebaseConfig = {
@@ -722,7 +722,7 @@ const db = getDatabase(fbApp);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
-window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast; window._equalTo=equalTo;
+window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast; window._equalTo=equalTo; window._runTransaction=runTransaction;
 // Push (FCM) deste aparelho — o rodapé do sino (mare-notif(-dev).js) usa estes ganchos pra ativar/desativar o push. Import dinâmico dentro de try: se o
 // SDK de mensagens não carregar (rede/bloqueio), só o push some — o login e o resto do Oceano seguem.
 window._fcmReady = false;
@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.40 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.41 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1996,6 +1996,313 @@ const FERIAS_BUG_DICAS = {
   'painel-dev.html': 'Checar abas Usuários, Comunicados, Notificações e Status (monitores VTEX/GitHub/Firebase).'
 };
 
+function feriasCardIdBug(bugId){
+  const s = String(bugId || '').trim();
+  if(!s) return '';
+  if(s.startsWith('c_ferias_')) return s;
+  return 'c_ferias_' + s.replace(/^bug_ferias_/, '').replace(/[^0-9A-Za-z_]/g, '');
+}
+
+function feriasUrlCardSquadDados(bugOrId){
+  const rawId = (bugOrId && typeof bugOrId === 'object') ? (bugOrId.kanbanCardId || bugOrId.id || '') : String(bugOrId || '');
+  const cardId = feriasCardIdBug(rawId);
+  return P('kanban') + '?squad=dados' + (cardId ? '&card=' + encodeURIComponent(cardId) : '');
+}
+
+const FERIAS_DEFAULT_COLS_DADOS = [
+  {id:'backlog',name:'Backlog',color:'#888888',collapsible:true},
+  {id:'todo',name:'A Fazer',color:'#38b6ff',collapsible:false},
+  {id:'progress',name:'Em Progresso',color:'#1de9b6',collapsible:false},
+  {id:'blocker',name:'Impedimentos',color:'#ff6b6b',collapsible:false},
+  {id:'done',name:'Concluído',color:'#639922',collapsible:true}
+];
+
+async function feriasGarantirColunaBugsDados(){
+  const fbBase = 'kanban/squads/dados/dados';
+  if(!window._get || !window._set || !window._ref || !window._db) return 'col_bugs';
+  try{
+    const snap = await window._get(window._ref(window._db, fbBase + '/columns'));
+    const raw = snap && snap.exists() ? snap.val() : null;
+    let cols = Array.isArray(raw) ? raw.filter(Boolean) : (raw && typeof raw === 'object' ? Object.values(raw).filter(Boolean) : []);
+    if(!cols.length){
+      cols = FERIAS_DEFAULT_COLS_DADOS.map(c=>Object.assign({}, c));
+    }
+    const colBug = cols.find(c => c && (String(c.id||'').toLowerCase().includes('bug') || String(c.name||'').toLowerCase().includes('bug')));
+    if(colBug && colBug.id) return colBug.id;
+    const novaCol = { id: 'col_bugs', name: '🐛 Bugs', color: '#ff6b6b', collapsible: true };
+    const doneIdx = cols.findIndex(c => c && (c.id === 'done' || /conclu/i.test(String(c.name||''))));
+    if(doneIdx >= 0) cols.splice(doneIdx, 0, novaCol);
+    else cols.push(novaCol);
+    await window._set(window._ref(window._db, fbBase + '/columns'), cols);
+    return novaCol.id;
+  }catch(e){
+    return 'col_bugs';
+  }
+}
+
+function feriasMontarCardBugDados(bugObj, colId, cardExistente){
+  const ex = (cardExistente && typeof cardExistente === 'object') ? cardExistente : null;
+  const cardId = feriasCardIdBug(bugObj.kanbanCardId || bugObj.id);
+  const st = String(bugObj.status || 'pendente_monitorarbugs');
+  const stLabel = st === 'resolvido'
+    ? '🟢 Resolvido'
+    : (st === 'em_analise' ? '🔵 Sendo tratado (Em análise)' : '🔴 Aberto (Na fila /monitorarbugs)');
+  const imp = String(bugObj.impacto || '🟡 Dá pra contornar');
+  const prio = /bloqueia|bloqueante|cr[ií]tic/i.test(imp)
+    ? 'critical'
+    : (/atrapalha|alto|alta/i.test(imp) ? 'high' : 'medium');
+  const appNome = bugObj.app || 'Oceano';
+  const arqAlvo = bugObj.arquivoAlvo || 'oceano-dev.html';
+  const relatoTxt = String(bugObj.texto || bugObj.msg || 'Relato de bug').trim();
+  const tituloCurto = relatoTxt.replace(/\s+/g, ' ').slice(0, 95);
+  const title = '[Bug Férias · ' + appNome + '] ' + tituloCurto;
+
+  const criadoMs = Number(bugObj.criadoEm) || Date.now();
+  const criadoDataIso = new Date(criadoMs).toISOString().split('T')[0];
+  const criadoFmt = new Date(criadoMs).toLocaleString('pt-BR');
+  const agoraIso = new Date().toISOString();
+  const hojeIso = agoraIso.split('T')[0];
+  const autor = bugObj.autor || 'Time Hering';
+  const quem = bugObj.atualizadoPor || autor;
+
+  const linhasDesc = [
+    '🏖️ CHAMADO DE BUG — ASSISTENTE FÉRIAS DO CAIO',
+    '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',
+    '• Status atual: ' + stLabel,
+    '• App / Módulo: ' + appNome + ' (' + arqAlvo + ')',
+    '• Impacto: ' + imp,
+    '• Reportado por: ' + autor + (bugObj.email ? ' (' + bugObj.email + ')' : ''),
+    '• Data/Hora do relato: ' + criadoFmt,
+    '• ID na fila: kanban/feedback/' + (bugObj.id || ''),
+    '',
+    '📝 O QUE ACONTECEU / COMO REPRODUZIR:',
+    relatoTxt
+  ];
+  if(bugObj.evidenciaLink){
+    linhasDesc.push('', '🔗 LINK / CARD / TELA INFORMADO:', String(bugObj.evidenciaLink));
+  }
+  if(bugObj.erroConsole){
+    linhasDesc.push('', '🔴 ERROS DO CONSOLE (F12):', String(bugObj.erroConsole));
+  }
+  if(bugObj.evidenciaImg){
+    linhasDesc.push('', '📸 PRINT ANEXADO:', 'Disponível na fila do Assistente Férias no Oceano (kanban/feedback/' + (bugObj.id || '') + '/evidenciaImg)');
+  }
+  if(bugObj.githubIssueUrl){
+    linhasDesc.push('', '🐙 ISSUE NO GITHUB:', String(bugObj.githubIssueUrl));
+  }
+  if(bugObj.respostaStatus){
+    linhasDesc.push('', '💬 DIAGNÓSTICO / RESOLUÇÃO (' + (bugObj.atualizadoPor || 'Agente / ADM') + '):', String(bugObj.respostaStatus));
+  }
+  if(bugObj.promptAntigravity){
+    linhasDesc.push('', '🤖 COMANDO ANTIGRAVITY:', String(bugObj.promptAntigravity));
+  }
+
+  const linksArr = Array.isArray(ex && ex.links) ? ex.links.filter(Boolean).slice() : [];
+  const addLinkUnico = (t, u)=>{
+    const urlStr = String(u || '').trim();
+    if(!/^https:\/\//i.test(urlStr)) return;
+    if(!linksArr.some(x => x && x.url === urlStr)) linksArr.push({ title: t, url: urlStr });
+  };
+  if(bugObj.evidenciaLink && /^https:\/\//i.test(String(bugObj.evidenciaLink).trim())){
+    addLinkUnico('Evidência / Tela do Bug', String(bugObj.evidenciaLink).trim());
+  }
+  if(bugObj.githubIssueUrl && /^https:\/\//i.test(String(bugObj.githubIssueUrl).trim())){
+    addLinkUnico('Issue #' + (bugObj.githubIssueNum || 'GitHub'), String(bugObj.githubIssueUrl).trim());
+  }
+
+  const checklist = [
+    { t: 'Relato registrado pelo usuário no Assistente Férias (' + autor + ')', done: true },
+    { t: 'Diagnóstico /monitorarbugs em andamento pelo Antigravity / ADM', done: st === 'em_analise' || st === 'resolvido' },
+    { t: 'Correção aplicada, validada e autor notificado no sino 🔔', done: st === 'resolvido' }
+  ];
+
+  const colFinal = (ex && ex.col) ? ex.col : (colId || 'col_bugs');
+  const flowObj = (ex && ex.flow && typeof ex.flow === 'object') ? ex.flow : {
+    enteredAt: { [colFinal]: new Date(criadoMs).toISOString() },
+    log: [{ from: '—', to: colFinal, at: new Date(criadoMs).toISOString() }]
+  };
+
+  return Object.assign({}, ex || {}, {
+    id: cardId,
+    col: colFinal,
+    tags: Array.isArray(ex && ex.tags) && ex.tags.length ? ex.tags : ['bug'],
+    tag: (ex && ex.tag) ? ex.tag : 'bug',
+    title: title,
+    desc: linhasDesc.join('\n'),
+    descsExtra: Array.isArray(ex && ex.descsExtra) ? ex.descsExtra : [],
+    owner: (ex && ex.owner) || '',
+    demandante: (ex && ex.demandante) || '',
+    po: (ex && ex.po) || '',
+    sp: (ex && ex.sp) || '',
+    due: (ex && ex.due) || '',
+    noDue: (ex && ex.due) ? Boolean(ex.noDue) : true,
+    priority: (ex && ex.priority) || prio,
+    checklist: checklist,
+    checklistGroups: Array.isArray(ex && ex.checklistGroups) ? ex.checklistGroups : [],
+    riscos: Array.isArray(ex && ex.riscos) ? ex.riscos : [],
+    participants: Array.isArray(ex && ex.participants) ? ex.participants : [],
+    links: linksArr,
+    linkedCards: Array.isArray(ex && ex.linkedCards) ? ex.linkedCards : [],
+    childCardIds: Array.isArray(ex && ex.childCardIds) ? ex.childCardIds : [],
+    executorType: (ex && ex.executorType) || 'human',
+    agentStatus: st === 'resolvido' ? 'done' : (st === 'em_analise' ? 'running' : ((ex && ex.agentStatus) || '')),
+    archived: Boolean(ex && ex.archived),
+    blocker: Boolean(ex && ex.blocker),
+    blockerReason: (ex && ex.blockerReason) || '',
+    created: (ex && ex.created) || autor,
+    createdAt: (ex && ex.createdAt) || criadoDataIso,
+    edited: quem,
+    editedAt: hojeIso,
+    updatedAt: agoraIso,
+    updatedBy: quem,
+    origemFeriasBugId: bugObj.id || '',
+    flow: flowObj
+  });
+}
+
+const _feriasCardsSyncEmCurso = new Set();
+async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
+  if(!bugObj || !bugObj.id) return null;
+  if(!window._db || !window._ref || !window._get || !window._update) return null;
+  const bugId = String(bugObj.id);
+  const lockKey = bugId + ':' + String(eventoStatus || '');
+  if(_feriasCardsSyncEmCurso.has(lockKey)) return null;
+  _feriasCardsSyncEmCurso.add(lockKey);
+
+  const fbBase = 'kanban/squads/dados/dados';
+  const cardId = feriasCardIdBug(bugObj.kanbanCardId || bugId);
+  try{
+    const colId = await feriasGarantirColunaBugsDados();
+
+    // 1) Descobre ou aloca a chave numérica em cards_index/<cardId>
+    let cardKey = null;
+    try{
+      const idxItemSnap = await window._get(window._ref(window._db, fbBase + '/cards_index/' + cardId));
+      if(idxItemSnap && idxItemSnap.exists() && idxItemSnap.val() !== null && idxItemSnap.val() !== undefined){
+        cardKey = String(idxItemSnap.val());
+      }
+    }catch(e){}
+
+    if(cardKey === null){
+      let floorMax = -1;
+      try{
+        const cardsSnap = await window._get(window._ref(window._db, fbBase + '/cards'));
+        const cardsVal = cardsSnap && cardsSnap.exists() ? cardsSnap.val() : null;
+        if(cardsVal && typeof cardsVal === 'object'){
+          Object.entries(cardsVal).forEach(([k, v])=>{
+            const n = Number(k);
+            if(Number.isInteger(n) && n > floorMax) floorMax = n;
+            if(v && v.id === cardId && cardKey === null) cardKey = String(k);
+          });
+        }
+      }catch(e){}
+
+      if(cardKey === null){
+        if(typeof window._runTransaction === 'function'){
+          const txRes = await window._runTransaction(window._ref(window._db, fbBase + '/cards_index'), current=>{
+            const map = (current && typeof current === 'object') ? Object.assign({}, current) : {};
+            if(map[cardId] !== undefined && map[cardId] !== null) return map;
+            const nums = Object.values(map).map(v=>Number(v)).filter(n=>Number.isInteger(n) && n>=0);
+            const maxIdx = Math.max(floorMax, nums.length ? Math.max(...nums) : -1);
+            map[cardId] = String(maxIdx + 1);
+            return map;
+          });
+          const finalMap = txRes && txRes.snapshot ? txRes.snapshot.val() : null;
+          if(finalMap && finalMap[cardId] !== undefined) cardKey = String(finalMap[cardId]);
+        }
+        if(cardKey === null){
+          cardKey = String(floorMax + 1);
+        }
+      }
+    }
+
+    // 2) Lê card existente (se já criado antes) para preservar histórico e campos do board
+    let cardExistente = null;
+    try{
+      const cSnap = await window._get(window._ref(window._db, fbBase + '/cards/' + cardKey));
+      if(cSnap && cSnap.exists()) cardExistente = cSnap.val();
+    }catch(e){}
+
+    const cardNovo = feriasMontarCardBugDados(bugObj, colId, cardExistente);
+    const agoraIso = new Date().toISOString();
+    const quem = bugObj.atualizadoPor || bugObj.autor || 'Assistente Férias';
+    const hist = Array.isArray(cardExistente && cardExistente.history) ? cardExistente.history.filter(Boolean).slice() : [];
+    const acaoHist = !cardExistente
+      ? 'criou o card de bug via Assistente Férias (' + (bugObj.app || 'Oceano') + ')'
+      : (eventoStatus === 'resolvido'
+          ? 'marcou o bug como 🟢 Resolvido via Assistente Férias'
+          : (eventoStatus === 'em_analise'
+              ? 'marcou o bug como 🔵 Sendo tratado via Assistente Férias'
+              : 'sincronizou dados do chamado via Assistente Férias'));
+    hist.push({ who: quem, what: acaoHist, at: agoraIso });
+    if(hist.length > 50) cardNovo.history = hist.slice(-50);
+    else cardNovo.history = hist;
+
+    // 3) Grava card + cards_updated_at + cards_index atomicamente no squad Dados
+    const updatesSquad = {};
+    updatesSquad['cards/' + cardKey] = cardNovo;
+    updatesSquad['cards_updated_at/' + cardId] = agoraIso;
+    updatesSquad['cards_index/' + cardId] = String(cardKey);
+    await window._update(window._ref(window._db, fbBase), updatesSquad);
+
+    // 4) Registra comentário estruturado em card_comments/<cardId> com histórico da abertura / mudança de status
+    const st = String(bugObj.status || 'pendente_monitorarbugs');
+    const cmSuffix = (!cardExistente || eventoStatus === 'aberto') ? 'open' : (eventoStatus || st);
+    const commentId = 'cm_ferias_' + cmSuffix.replace(/[^0-9A-Za-z_]/g, '') + '_' + bugId.replace(/[^0-9A-Za-z_]/g, '');
+    let textoCm = '';
+    if(!cardExistente || eventoStatus === 'aberto'){
+      textoCm = '🏖️ **Relato de Bug registrado via Assistente Férias**\n'
+        + '• **Módulo:** ' + (bugObj.app || 'Oceano') + ' (`' + (bugObj.arquivoAlvo || '') + '`)\n'
+        + '• **Impacto:** ' + (bugObj.impacto || '') + '\n'
+        + '• **Autor:** ' + (bugObj.autor || 'Time Hering') + '\n'
+        + '• **Relato:** ' + String(bugObj.texto || bugObj.msg || '')
+        + (bugObj.erroConsole ? '\n• **Console (F12):** `' + String(bugObj.erroConsole).slice(0, 220) + '`' : '');
+    } else if(eventoStatus === 'em_analise' || eventoStatus === 'resolvido' || eventoStatus === 'sync_github'){
+      const ic = st === 'resolvido' ? '🟢 **Bug Resolvido**' : '🔵 **Bug Sendo Tratado (Em análise)**';
+      textoCm = ic + ' — atualizado por **' + quem + '**\n'
+        + (bugObj.respostaStatus ? '💬 ' + String(bugObj.respostaStatus) : '')
+        + (bugObj.githubIssueUrl ? '\n🐙 Issue: ' + String(bugObj.githubIssueUrl) : '');
+    }
+    if(textoCm && window._set){
+      const cmPayload = {
+        id: commentId,
+        uid: (U && U.uid) || 'assistente_ferias',
+        author: '🏖️ Assistente Férias (' + quem + ')',
+        init: '🤖',
+        foto: '',
+        text: textoCm.trim(),
+        ts: agoraIso
+      };
+      try{
+        await window._set(window._ref(window._db, fbBase + '/card_comments/' + cardId + '/' + commentId), cmPayload);
+        const allCmSnap = await window._get(window._ref(window._db, fbBase + '/card_comments/' + cardId));
+        const totalCm = (allCmSnap && allCmSnap.exists() && allCmSnap.val() && typeof allCmSnap.val() === 'object')
+          ? Object.keys(allCmSnap.val()).length
+          : 1;
+        await window._set(window._ref(window._db, fbBase + '/card_comments_count/' + cardId), totalCm);
+      }catch(e){}
+    }
+
+    // 5) Vincula o ID do card no registro do bug em kanban/feedback/<bugId>
+    bugObj.kanbanCardId = cardId;
+    bugObj.kanbanSquad = 'dados';
+    bugObj.kanbanColId = colId;
+    try{
+      await window._update(window._ref(window._db, 'kanban/feedback/' + bugId), {
+        kanbanCardId: cardId,
+        kanbanSquad: 'dados',
+        kanbanColId: colId
+      });
+    }catch(e){}
+
+    _feriasCardsSyncEmCurso.delete(lockKey);
+    return cardId;
+  }catch(e){
+    _feriasCardsSyncEmCurso.delete(lockKey);
+    return null;
+  }
+}
+
 function feriasHtmlMeusChamados(){
   const meus = feriasMeusBugsAtivos();
   if(!meus.length) return '';
@@ -2005,11 +2312,13 @@ function feriasHtmlMeusChamados(){
     + meus.slice(0,8).map(b=>{
         const st = feriasStatusMeta(b.status);
         const quando = b.atualizadoEm ? tempoRel(b.atualizadoEm) : (b.ts ? tempoRel(b.ts) : '');
+        const cardUrl = feriasUrlCardSquadDados(b);
         return '<div class="ferias-bug-item" style="background:rgba(8,22,42,.6);">'
           + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;">'
           +   '<span class="ferias-st-badge '+st.cls+'">'+st.label+'</span>'
           +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
           +   '<span style="color:var(--txt3);">'+esc(b.impacto||'')+'</span>'
+          +   '<a href="'+esc(cardUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--teal);border-color:rgba(29,233,182,.35);" title="Abrir card deste bug na coluna Bugs da Squad Dados">📋 Card Squad Dados (Bugs)</a>'
           +   (b.githubIssueUrl ? '<a href="'+esc(b.githubIssueUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--sky);">🐙 Issue #'+(b.githubIssueNum||'GitHub')+'</a>' : '')
           +   (quando ? '<span style="margin-left:auto;color:var(--txt3);">Atualizado '+esc(quando)+'</span>' : '')
           + '</div>'
@@ -2022,7 +2331,7 @@ function feriasHtmlMeusChamados(){
 }
 
 function feriasHtmlBugs(){
-  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo com <b>print</b> e os <b>erros vermelhos do F12</b>: o relato entra na fila oficial do Firebase (<code>kanban/feedback</code>), gera o <b><code>/monitorarbugs</code></b> pro <b>Antigravity</b> e <b>avisa você no sininho 🔔</b> quando mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></p>'
+  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo com <b>print</b> e os <b>erros vermelhos do F12</b>: o relato entra na fila oficial do Firebase (<code>kanban/feedback</code>), <b>cria automaticamente um Card na coluna <code>🐛 Bugs</code> da Squad Dados</b>, gera o <b><code>/monitorarbugs</code></b> pro <b>Antigravity</b> e <b>avisa você no sininho 🔔</b> quando mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido!</b></p>'
     + '<div id="fbug-meus-box">'+feriasHtmlMeusChamados()+'</div>'
     + feriasBlocoGuiaDevtoolsHtml(false)
     + '<div class="ferias-card" style="gap:10px;">'
@@ -2071,13 +2380,13 @@ function feriasHtmlBugs(){
     +     '<textarea class="in mono" id="fbug-console" maxlength="1600" placeholder="Aperte F12 → clique na aba Console → copie as linhas vermelhas (Uncaught TypeError, PERMISSION_DENIED, etc.) e cole aqui…"></textarea>'
     +   '</div>'
     +   '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
-    +     '<button type="button" class="btn pri" id="fbug-submit">🤖 Registrar no Firebase &amp; Gerar /monitorarbugs</button>'
-    +     '<span style="font-size:11.5px;color:var(--txt3);">Salva em <code>kanban/feedback</code> · Avisa você no sino 🔔 quando mudar de status!</span>'
+    +     '<button type="button" class="btn pri" id="fbug-submit">🤖 Registrar Bug + Criar Card na Squad Dados</button>'
+    +     '<span style="font-size:11.5px;color:var(--txt3);">Salva em <code>kanban/feedback</code> · Cria Card em <b>Squad Dados → Bugs</b> · Avisa no sino 🔔!</span>'
     +   '</div>'
     + '</div>'
     + '<div id="fbug-res"></div>'
     + '<div style="margin-top:18px;">'
-    +   '<div class="sec-title" style="margin:0 0 10px;">📋 Fila de relatos do plantão de férias (Status ao vivo)</div>'
+    +   '<div class="sec-title" style="margin:0 0 10px;">📋 Fila de relatos do plantão de férias (Status ao vivo · Sincronizada com Squad Dados)</div>'
     +   '<div id="fbug-lista"><div style="font-size:12px;color:var(--txt3);">Carregando fila do plantão…</div></div>'
     + '</div>';
 }
@@ -2171,12 +2480,14 @@ function feriasRenderBugsLista(){
     const admAberto = souAdmOuPo || !!feriasAdmOpenMap[b.id];
     const respId = 'fbug-resp-' + b.id;
     const valResp = Object.prototype.hasOwnProperty.call(rascunhosResp, respId) ? rascunhosResp[respId] : (b.respostaStatus||'');
+    const cardUrl = feriasUrlCardSquadDados(b);
     return '<div class="ferias-bug-item">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--txt3);">'
       +   '<span class="ferias-st-badge '+st.cls+'">'+st.label+'</span>'
       +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
       +   '<span>'+esc(b.impacto||'🟡 Dá pra contornar')+'</span>'
       +   (b.autor ? '<span>por <b>'+esc(b.autor)+'</b></span>' : '')
+      +   '<a href="'+esc(cardUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--teal);border-color:rgba(29,233,182,.35);" title="Abrir card deste bug na coluna Bugs da Squad Dados">📋 Card Squad Dados (Bugs)</a>'
       +   (b.githubIssueUrl ? '<a href="'+esc(b.githubIssueUrl)+'" target="_blank" rel="noopener noreferrer" class="chip" style="padding:1px 8px;font-size:10.5px;text-decoration:none;color:var(--sky);">🐙 Issue #'+(b.githubIssueNum||'GitHub')+'</a>' : '')
       +   (quando ? '<span style="margin-left:auto;">'+esc(quando)+'</span>' : '')
       + '</div>'
@@ -2275,6 +2586,8 @@ async function feriasAtualizarStatusBug(bugId, novoStatus){
   b.respostaStatus = respostaStatus;
   b.atualizadoEm = ts;
   b.atualizadoPor = quem;
+  b.kanbanCardId = feriasCardIdBug(b.kanbanCardId || bugId);
+  b.kanbanSquad = 'dados';
   feriasRenderBugsLista();
   feriasRenderBanner();
 
@@ -2285,8 +2598,9 @@ async function feriasAtualizarStatusBug(bugId, novoStatus){
       await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
       const nfIdDeterministico = 'nf_bug_' + bugId + '_' + novoStatus;
       await feriasDispararNotifStatusBug(b, bugId, novoStatus, respostaStatus, quem, ts, nfIdDeterministico);
+      await feriasSincronizarCardSquadDados(b, novoStatus);
     }
-    toast(novoStatus === 'resolvido' ? '🟢 Bug marcado como Resolvido e autor notificado no sino 🔔!' : '🔵 Bug marcado como Sendo tratado e autor notificado no sino 🔔!');
+    toast(novoStatus === 'resolvido' ? '🟢 Bug Resolvido! Card da Squad Dados atualizado e autor notificado no sino 🔔!' : '🔵 Bug em análise! Card da Squad Dados atualizado e autor notificado no sino 🔔!');
   }catch(e){
     toast('⚠️ Status atualizado na tela, mas houve falha ao gravar no Firebase.');
   }
@@ -2381,6 +2695,8 @@ async function feriasSincronizarGithubIssues(forcar){
         if(respostaFinal) bugObj.respostaStatus = respostaFinal;
         bugObj.githubIssueUrl = iss.html_url;
         bugObj.githubIssueNum = iss.number;
+        bugObj.kanbanCardId = feriasCardIdBug(bugObj.kanbanCardId || bugId);
+        bugObj.kanbanSquad = 'dados';
         if(mudouStatus || mudouResposta){
           bugObj.atualizadoEm = ts;
           bugObj.atualizadoPor = '🤖 Antigravity (Auto)';
@@ -2397,6 +2713,7 @@ async function feriasSincronizarGithubIssues(forcar){
             const nfIdDeterministico = 'nf_bug_' + bugId + '_' + novoStatus;
             await feriasDispararNotifStatusBug(bugObj, bugId, novoStatus, bugObj.respostaStatus, '🤖 Antigravity (Auto)', ts, nfIdDeterministico);
           }
+          await feriasSincronizarCardSquadDados(bugObj, mudouStatus ? novoStatus : 'sync_github');
         }
       }
     }
@@ -2424,6 +2741,7 @@ function _feriasAoFocarJanela(){
 window.addEventListener('focus', _feriasAoFocarJanela);
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') _feriasAoFocarJanela(); });
 
+const _feriasRetroSyncIds = new Set();
 function feriasProcessarSnapshotBugs(val){
   feriasBugsLista = Object.entries(val||{})
     .map(([id,v])=>Object.assign({id}, v||{}))
@@ -2432,6 +2750,14 @@ function feriasProcessarSnapshotBugs(val){
   feriasRenderBugsLista();
   feriasRenderBanner();
   if(typeof sinoRender === 'function') sinoRender();
+  if(U && window._db){
+    feriasBugsLista.slice(0, 10).forEach(b=>{
+      if(b && b.id && !b.kanbanCardId && !_feriasRetroSyncIds.has(b.id)){
+        _feriasRetroSyncIds.add(b.id);
+        feriasSincronizarCardSquadDados(b, 'aberto');
+      }
+    });
+  }
 }
 
 function feriasIniciarBugsListener(){
@@ -2473,6 +2799,7 @@ async function feriasEnviarBug(){
   }
   const ts = Date.now();
   const id = 'bug_ferias_' + ts;
+  const cardIdDados = feriasCardIdBug(id);
   const nomeUsuario = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'Time Hering';
   const emailUsuario = (U && U.email) || '';
   const uidUsuario = (U && U.uid) || '';
@@ -2502,16 +2829,22 @@ async function feriasEnviarBug(){
     criadoEm: ts,
     status: 'pendente_monitorarbugs',
     respostaStatus: '',
+    kanbanCardId: cardIdDados,
+    kanbanSquad: 'dados',
     promptAntigravity: promptAntigravity
   };
 
   _enviandoBugFerias = true;
   const bt = $('#fbug-submit'); if(bt) bt.disabled = true;
   let gravouFb = false;
+  let criouCardDados = false;
+  const bugComId = Object.assign({id}, payload);
   try{
     if(window._set && window._ref && window._db){
       await window._set(window._ref(window._db, 'kanban/feedback/' + id), payload);
       gravouFb = true;
+      const cid = await feriasSincronizarCardSquadDados(bugComId, 'aberto');
+      if(cid) criouCardDados = true;
     }
   }catch(e){}
   _enviandoBugFerias = false;
@@ -2524,16 +2857,18 @@ async function feriasEnviarBug(){
   if($('#fbug-console')) $('#fbug-console').value = '';
   feriasRenderEvidPreview();
   feriasUltimoCmd = promptAntigravity;
-  if(!feriasBugsLista.some(x=>x.id===id)) feriasBugsLista.unshift(Object.assign({id}, payload));
+  if(!feriasBugsLista.some(x=>x.id===id)) feriasBugsLista.unshift(bugComId);
   feriasRenderBugsLista();
 
   const dicaArq = FERIAS_BUG_DICAS[arquivoAlvo] || 'Verificar console e fluxo principal do módulo.';
+  const cardDadosUrl = feriasUrlCardSquadDados(bugComId);
   const ghTitle = '[Bug Férias · ' + app + '] ' + descricao.slice(0, 70);
   const ghBody = '### Relato via Assistente Férias do Caio\n'
     + '- **App / Arquivo:** `' + app + '` (`' + arquivoAlvo + '`)\n'
     + '- **Impacto:** ' + impacto + '\n'
     + '- **Reportado por:** ' + nomeUsuario + (emailUsuario ? ' (' + emailUsuario + ')' : '') + '\n'
     + '- **ID no Firebase:** `kanban/feedback/' + id + '`\n'
+    + '- **Card na Squad Dados (Bugs):** `' + cardIdDados + '`\n'
     + (evidenciaLink ? '- **Link / Card:** ' + evidenciaLink + '\n' : '')
     + '\n#### Descrição\n' + descricao + '\n\n'
     + (erroConsole ? '#### Erros do Console (F12)\n```\n' + erroConsole + '\n```\n\n' : '')
@@ -2544,15 +2879,19 @@ async function feriasEnviarBug(){
   if(resEl){
     resEl.innerHTML = '<div class="ferias-bug-res">'
       + '<div style="padding:10px 12px;border-radius:10px;background:rgba(46,213,115,.12);border:1px solid rgba(46,213,115,.42);margin-bottom:10px;display:flex;flex-direction:column;gap:7px;">'
-      +   '<div style="font-size:12.5px;color:#b8f7d0;line-height:1.45;">🚀 <b>Último passo para automação total:</b> Clique abaixo e confirme em <b>"Submit new issue"</b> no GitHub para o robô Antigravity no PC do Caio detectar e rodar o <code>/monitorarbugs</code> sozinho!</div>'
-      +   '<div><a class="btn pri" href="'+esc(ghUrl)+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:800;">🐙 Enviar para a Fila Automática do Antigravity (Abrir Issue no GitHub)</a></div>'
+      +   '<div style="font-size:12.5px;color:#b8f7d0;line-height:1.45;">🚀 <b>Card criado na coluna <code>🐛 Bugs</code> da Squad Dados!</b> Clique também abaixo em <b>"Submit new issue"</b> no GitHub para o robô Antigravity no PC do Caio detectar e rodar o <code>/monitorarbugs</code> sozinho:</div>'
+      +   '<div style="display:flex;gap:8px;flex-wrap:wrap;">'
+      +     '<a class="btn pri" href="'+esc(ghUrl)+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-weight:800;">🐙 Enviar para a Fila Automática do Antigravity (Abrir Issue no GitHub)</a>'
+      +     '<a class="btn" href="'+esc(cardDadosUrl)+'" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;border-color:rgba(29,233,182,.45);color:var(--teal);">📋 Abrir Card na Squad Dados (Coluna Bugs)</a>'
+      +   '</div>'
       + '</div>'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
-      +   '<span class="chip ok">'+(gravouFb ? '✅ Gravado na fila do Firebase (kanban/feedback/'+esc(id)+')' : '⚡ Diagnóstico gerado localmente')+'</span>'
+      +   '<span class="chip ok">'+(gravouFb ? '✅ Gravado na fila (kanban/feedback/'+esc(id)+')' : '⚡ Diagnóstico gerado localmente')+'</span>'
+      +   (criouCardDados ? '<span class="chip ok">📋 Card criado em Squad Dados → 🐛 Bugs ('+esc(cardIdDados)+')</span>' : '')
       +   '<span class="ferias-st-badge st-pendente">🟡 Na fila (/monitorarbugs)</span>'
       +   '<span style="font-size:11.5px;color:var(--txt2);">Alvo: <code>'+esc(arquivoAlvo)+'</code></span>'
       + '</div>'
-      + '<div style="font-size:12px;color:var(--sky);margin-bottom:6px;">🔔 <b>Fique tranquilo(a):</b> assim que o Antigravity ou um ADM marcar seu chamado como <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido</b> (na Issue do GitHub ou no painel), você receberá um aviso automático no sininho do Oceano/Maré e no banner da Home!</div>'
+      + '<div style="font-size:12px;color:var(--sky);margin-bottom:6px;">🔔 <b>Fique tranquilo(a):</b> o Card na Squad Dados e o seu sininho do Oceano/Maré são atualizados automaticamente quando o chamado mudar para <b>🔵 Sendo tratado</b> ou <b>🟢 Resolvido</b>!</div>'
       + '<div style="font-size:12.5px;color:var(--txt2);margin-bottom:6px;"><b>🧭 Foco automático do diagnóstico:</b> '+esc(dicaArq)+'</div>'
       + '<div class="ferias-cmd">'+esc(promptAntigravity)+'</div>'
       + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
@@ -2560,7 +2899,7 @@ async function feriasEnviarBug(){
       + '</div>'
       + '</div>';
   }
-  toast(gravouFb ? '✅ Bug registrado! Clique no botão da Issue do GitHub para acionar o Antigravity.' : '✅ Comando /monitorarbugs gerado!');
+  toast(criouCardDados ? '✅ Bug registrado e Card criado na coluna Bugs da Squad Dados!' : (gravouFb ? '✅ Bug registrado! Clique no botão da Issue do GitHub para acionar o Antigravity.' : '✅ Comando /monitorarbugs gerado!'));
 }
 
 function feriasRenderModal(){
