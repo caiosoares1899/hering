@@ -24,15 +24,15 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — 2026-10-16 — Plantão: comentário no card com o resumo da correção ao validar
+### 2026-10-16 — Plantão: comentário no card com o resumo da correção ao validar (PROD · painel v5.79 · oceano v1.52 · mare-plantao.js v2)
 
 Quando o ADM clica em "Rodei o script e validei" (Painel › Monitor › Plantão), o card do bug na squad Dados ganha um comentário com o resumo da correção: PR (número e título), o que mudou (seção "## Resumo" da PR), quem validou, a nota do ADM e o resultado do teste. O servidor (`plantaoGithubWebhook`) passa a guardar `prTitulo` e `prResumo` na ficha ao receber a PR; sem eles o comentário sai só com PR, validador e nota. Dev: mare-plantao-dev.js ?v=2, painel-dev v5.79, oceano-dev v1.52. **Exige** `firebase deploy --only database` (campos novos da ficha) e `--only functions:plantaoGithubWebhook`.
 
-### SÓ DEV — 2026-10-16 — Ecossistema de gestão (ecossistema.html): documentação técnica do Oceano para a TI
+### 2026-10-16 — Ecossistema de gestão (ecossistema.html): documentação técnica do Oceano para a TI (PROD · oceano v1.52 com o botão)
 
-Nova página `ecossistema.html` (sem versão própria; entra no ar no merge), escrita para a reunião com a TI de 30/10: arquitetura, uso do Google Cloud e da conta corporativa, segurança e inventário de dados, ambientes dev × prod, Agente Ágil e consumo de tokens (mecanismos com a evidência no código), Claude × Antigravity, skills e subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, dependências, riscos e caminho de internalização. Números medidos no repositório (comandos na seção 14). `maredigital.html` passa a ser a referência detalhada do Maré Digital e aponta para ela; o botão "Ecossistema de gestão" no Oceano (oceano-dev v1.51, só dev até a próxima promoção) abre a página.
+Nova página `ecossistema.html` (sem versão própria; entra no ar no merge), escrita para a reunião com a TI de 30/10: arquitetura, uso do Google Cloud e da conta corporativa, segurança e inventário de dados, ambientes dev × prod, Agente Ágil e consumo de tokens (mecanismos com a evidência no código), Claude × Antigravity, skills e subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, dependências, riscos e caminho de internalização. Números medidos no repositório (comandos na seção 14). `maredigital.html` passa a ser a referência detalhada do Maré Digital e aponta para ela; o botão "Ecossistema de gestão" no Oceano (oceano v1.52) abre a página.
 
-### SÓ DEV — Busca nos comentários do card (Ctrl+K), Comunicados Multi-Squad e atualização de documentações (/atualizardocumentacoes) — 2026-10-16 · kanban-dev v8.30.872-dev · painel-dev v5.78-dev · oceano-dev v1.50-dev
+### 2026-10-16 — Busca nos comentários do card (Ctrl+K), Comunicados Multi-Squad e atualização de documentações (PROD · kanban v8.30.874 · painel v5.79 · oceano v1.52) · antes kanban-dev v8.30.872-dev · painel-dev v5.78-dev · oceano-dev v1.50-dev
 
 - **Busca nos comentários do card (`Ctrl+K` em `kanban-dev.html`):** com o modal de um card aberto (`#card-ov.open`), apertar `Ctrl+K` (ou clicar no botão `🔍 Buscar Ctrl+K` no cabeçalho de comentários) abre a barra `#m-comment-search-bar` (`toggleCommentSearch()`, `onCommentSearchInput()`) para filtrar comentários por conteúdo, `@autor` ou data (`dd/mm/aaaa hh:mm`), exibindo contador `X de Y` e grifando os termos encontrados (`<mark class="comment-search-hl">` via `_highlightDomTextNodes()`) sem quebrar o Markdown. O `Escape` dentro do campo usa `stopPropagation()` para fechar apenas a busca sem fechar o card. **Dica:** não, porque o próprio cabeçalho da seção de comentários já exibe o botão visível `🔍 Buscar Ctrl+K`.
 - **Seleção de múltiplas squads em Comunicados (`painel-dev.html`, `kanban-dev.html`, `oceano-dev.html`):** o modal `#comunicado-compose-ov` substituiu o `<select>` único pelo seletor de chips multi-squad `#cc-squad-chips` (`_ccSelectedSquads`, `_ccToggleSquadChip()`, `_ccRenderSquadChips()`, `_ccGetSquadPayload()`), permitindo direcionar um aviso para **Todos os squads** (`squad: "*"`), **1 squad** ou **2+ squads simultaneamente** (`squad: "multi"`, `squads: [...]`). Leitores atualizados em `painel-dev.html` (`_comunicadoSquadsAlvo()`, `_comunicadoAlvoLabel()`, `_painelResolveComunicadoAlvos()`), `kanban-dev.html` (`_refreshComunicados()`) e `oceano-dev.html` (`avPodeVer()`). **Dica:** não, pois é uma ação administrativa restrita ao composer de Comunicados do Painel.
@@ -50,7 +50,7 @@ Nova página `ecossistema.html` (sem versão própria; entra no ar no merge), es
 - Painel: ordenação de relatos tolera criadoEm numérico (Oceano grava número).
 - Dica: não — ferramenta de ADM.
 
-### SÓ DEV — Plantão de Bugs: Oceano só com a visão do usuário; controle de ADM no Painel › 🐛 Monitor (oceano v1.48 · painel v5.76)
+### 2026-10-16 — Plantão de Bugs: Oceano só com a visão do usuário; controle de ADM no Painel › 🐛 Monitor (PROD · oceano v1.48 · painel v5.76)
 
 - Oceano: o aviso do assistente abre minimizado (uma linha) e pode ser dispensado com ✕; a aba 🐛 Reportar Bug mostra só o formulário e Meus chamados — pacote, PR, script, validação e comando do agente saíram de lá.
 - Painel › 🐛 Monitor ganhou 🛟 Plantão de Bugs: fichas, PR + script de teste, validar/reprovar, 🚀 em produção, avisar quem reportou, pausa geral e batimento do Antigravity.
