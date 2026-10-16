@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### SÓ DEV — 👻 Projeção nas metas (`mare-metas-dev.js` v15 · kanban v8.30.871 · painel v5.77 · oceano v1.49)
+### 🎯 Projeção nas metas: onde a meta termina se o ritmo continuar (`mare-metas.js` v16 · `oceano.html` v1.49 · `painel.html` v5.77) — 2026-10-16 · oceano v1.48→v1.49 · painel v5.76→v5.77 · kanban v8.30.870→v8.30.871 · mare-metas.js v14→v16 (PROD)
 
 - Pedido do Rafael: além do esperado (tique branco) e do realizado (arco), as metas ganham a PROJEÇÃO — onde a meta termina se o ritmo continuar. Conta = realizado ÷ meta acumulada até ONTEM × meta total (a mesma do Data Studio e do resumo diário: 17,62M vs 15,06M = 117% → R$ 35,17 mi). Respeita a diarização.
 - Anel: 'volta fantasma' (arco translúcido até a projeção, limitado a 100%); gráfico acumulado: linha pontilhada até o fim do período com o valor projetado; KPI '👻 Projeção'.

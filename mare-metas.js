@@ -112,6 +112,17 @@
     if (h >= b) return 100;
     return (h - a + 1) / (b - a + 1) * 100;
   }
+  // 👻 PROJEÇÃO (2026-10-16, pedido do Rafael): onde a meta termina se o ritmo até agora continuar = realizado ÷ meta acumulada até ONTEM × meta total.
+  // Mesma conta do Data Studio e do resumo diário do time ("17,62M vs 15,06M = +17 %" → projeção 117 %): o dado do dia chega fechado, então compara com o dia anterior
+  // inteiro (e não com a fração de hoje). Respeita a diarização (usa `esperado`). null = sem base (1º dia, sem valor, meta batida ou período encerrado).
+  function projecao(m, hoje) {
+    const h = diaN(hoje || hojeSP()), a = diaN(m && m.inicio), b = diaN(m && m.fim), p = pct(m);
+    if (p == null || a == null || b == null || b <= a || h == null || h > b || p >= 100) return null;
+    const e = esperado(m, isoDe(h - 1)); if (!(e > 0)) return null;
+    const pj = Math.min(999, p / e * 100); if (!isFinite(pj)) return null;
+    const ini = isNum(m.inicial) ? Number(m.inicial) : 0, alvo = Number(m.alvo);
+    return { pct: pj, valor: ini + (alvo - ini) * pj / 100, esperadoOntem: e, ate: isoDe(h - 1) };
+  }
   // Data/hora digitadas no "Atualizar valor" são de BRASÍLIA (não do fuso do aparelho): converte nos dois sentidos.
   function partesSP(ms) {
     const p = new Intl.DateTimeFormat('en-CA', { timeZone: SP, hour12: false, year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date(ms)).reduce((a, x) => { a[x.type] = x.value; return a; }, {});
@@ -389,7 +400,7 @@
 .mm-chart-vazio{font-size:11.5px;color:var(--txt3);text-align:center;padding:14px 4px;}
 .mm-leg{display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--txt3);margin-top:4px;}
 .mm-leg i{display:inline-block;width:14px;height:0;border-top:2.5px solid var(--mm-c,var(--teal));vertical-align:middle;margin-right:4px;}
-.mm-leg i.id{border-top:2px dashed var(--txt3);} .mm-leg i.mt{border-top:2px dashed var(--accent);}
+.mm-leg i.id{border-top:2px dashed var(--txt3);} .mm-leg i.mt{border-top:2px dashed var(--accent);} .mm-leg i.pj{border-top:2px dotted var(--mm-c,var(--teal));}
 .mm-grid{display:grid;grid-template-columns:1fr;gap:10px;}
 .mm-card{position:relative;border-radius:12px;padding:11px 12px;background:rgba(var(--surface-rgb,16,31,48),.6);border:1px solid var(--glass-b,rgba(255,255,255,.1));border-left:4px solid var(--mm-c,var(--txt3));}
 .mm-card-h{display:flex;align-items:flex-start;gap:9px;}
@@ -520,7 +531,9 @@
   function anelHtml(m, o) {
     o = o || {}; const size = o.size || 118, th = o.th || 11, r = (size - th) / 2, C = 2 * Math.PI * r;
     const p = pct(m), pv = Math.max(0, Math.min(100, p == null ? 0 : p)), st = status(m);
-    const esp = esperado(m);
+    const esp = esperado(m), pj = projecao(m);
+    // 👻 "volta fantasma": arco translúcido até a PROJEÇÃO (limitado a 100 %); passou disso, o aviso fica no tooltip e no KPI.
+    const fantasma = pj ? `<circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${st.cor}" stroke-opacity=".3" stroke-width="${th}" stroke-linecap="round" stroke-dasharray="${(C * Math.min(100, pj.pct) / 100).toFixed(1)} ${C.toFixed(1)}"><title>Projeção: ${Math.round(pj.pct)}% da meta se o ritmo continuar</title></circle>` : '';
     let tique = '';
     if (esp != null && esp > 0 && esp < 100) {
       const ang = esp / 100 * 2 * Math.PI, cx = size / 2, cy = size / 2;
@@ -531,7 +544,7 @@
     const txt = pctTxt(p);
     const fs = Math.round(size * (txt.length > 4 ? .2 : .26));
     return `<div class="mm-ring ${st.id}" style="width:${size}px;height:${size}px;--mm-c:${st.cor}" role="img" aria-label="${esc(m.titulo)}: ${esc(txt)} da meta, ${esc(st.label)}">
-      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(var(--ink-rgb,0,0,0),.6)" stroke-width="${th}"/>
+      <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="rgba(var(--ink-rgb,0,0,0),.6)" stroke-width="${th}"/>${fantasma}
       <circle class="mm-arc" cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${st.cor}" stroke-width="${th}" stroke-linecap="round" stroke-dasharray="${(C * pv / 100).toFixed(1)} ${C.toFixed(1)}"/>${marcas}${tique}</svg>
       <div class="mm-ring-c"><b style="font-size:${fs}px">${esc(txt)}</b><small>${p != null && p >= 100 ? '🏆 batida!' : 'da meta'}</small></div></div>`;
   }
@@ -552,6 +565,8 @@
     if (isNum(m.atual) && (p == null || p < 100)) k.push(`<div class="mm-kpi"><small>Falta</small><b>${esc(fmtVal(m, falta(m)))}</b></div>`);
     if (dr != null) k.push(`<div class="mm-kpi ${dr <= 1 && (p == null || p < 100) ? 'warn' : ''}"><small>Restam</small><b>${dr === 0 ? 'hoje é o dia' : dr + (dr === 1 ? ' dia' : ' dias')}</b></div>`);
     if (rn != null && rn > 0 && (p == null || p < 100)) k.push(`<div class="mm-kpi ${st.id === 'atrasada' ? 'bad' : st.id === 'atencao' ? 'warn' : ''}"><small>Precisa/dia</small><b>${esc(fmtVal(m, rn))}</b></div>`);
+    const pj = projecao(m);
+    if (pj) k.push(`<div class="mm-kpi ${pj.pct >= 100 ? 'ok' : pj.pct >= 95 ? 'warn' : 'bad'}" title="Realizado ÷ meta acumulada até ${esc(curto(pj.ate))} × meta total — mesma conta do Data Studio"><small>Projeção</small><b>${esc(fmtVal(m, pj.valor))} · ${Math.round(pj.pct)}%</b></div>`);
     const md = metaDoDia(m); if (md != null) k.push(`<div class="mm-kpi"><small>Meta de hoje</small><b>${esc(fmtVal(m, md))}</b></div>`);
     if (esp != null && p != null) { const d = Math.round(p - esp); k.push(`<div class="mm-kpi ${d >= 0 ? 'ok' : d > -15 ? 'warn' : 'bad'}"><small>Vs. ritmo</small><b>${d >= 0 ? '+' : ''}${d} pp</b></div>`); }
     return `<div class="mm-kpis">${k.join('')}</div>`;
@@ -662,7 +677,8 @@
     let t0 = a != null ? a * 864e5 + 3 * 3600e3 : pts[0].t, t1 = b != null ? b * 864e5 + 27 * 3600e3 : pts[pts.length - 1].t;
     t0 = Math.min(t0, pts[0].t); t1 = Math.max(t1, pts[pts.length - 1].t); if (t1 === t0) t1 = t0 + 864e5;
     const ini = isNum(m.inicial) ? Number(m.inicial) : 0, alvo = Number(m.alvo);
-    const ys = pts.map(x => x.v).concat([ini, alvo]); let mn = Math.min(...ys), mx = Math.max(...ys); const g = (mx - mn) * .08 || 1; mn -= g; mx += g; if (Math.min(...ys) >= 0 && mn < 0) mn = 0;
+    const pj = projecao(m);
+    const ys = pts.map(x => x.v).concat([ini, alvo]).concat(pj ? [pj.valor] : []); let mn = Math.min(...ys), mx = Math.max(...ys); const g = (mx - mn) * .08 || 1; mn -= g; mx += g; if (Math.min(...ys) >= 0 && mn < 0) mn = 0;
     const X = t => pl + iw * (t - t0) / (t1 - t0), Y = v => pt + ih * (1 - (v - mn) / (mx - mn));
     const nGrid = grande ? 4 : 3;
     const grid = Array.from({ length: nGrid + 1 }, (_, k) => { const v = mn + (mx - mn) * k / nGrid; return `<line x1="${pl}" y1="${Y(v).toFixed(1)}" x2="${W - pr}" y2="${Y(v).toFixed(1)}" stroke="currentColor" stroke-opacity=".1"/><text x="${pl - 6}" y="${(Y(v) + 3).toFixed(1)}" text-anchor="end" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${esc(fy(v))}</text>`; }).join('');
@@ -685,10 +701,12 @@
     const dl = d => new Date(d).toLocaleDateString('pt-BR', { timeZone: SP, day: '2-digit', month: '2-digit' });
     const xl = `<text x="${pl}" y="${H - 8}" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${dl(t0)}</text><text x="${W - pr}" y="${H - 8}" text-anchor="end" font-size="${grande ? 10 : 9}" fill="currentColor" fill-opacity=".6">${dl(t1)}</text>`;
     const ult = xy[xy.length - 1];
+    // 👻 projeção: do último ponto até o fim do período, no valor projetado (tracejado na cor da situação)
+    const proj = pj ? `<line x1="${ult[0].toFixed(1)}" y1="${ult[1].toFixed(1)}" x2="${X(t1).toFixed(1)}" y2="${Y(pj.valor).toFixed(1)}" stroke="${st.cor}" stroke-width="2" stroke-dasharray="2 4" stroke-linecap="round" stroke-opacity=".85"/><circle cx="${X(t1).toFixed(1)}" cy="${Y(pj.valor).toFixed(1)}" r="3.6" fill="none" stroke="${st.cor}" stroke-width="1.6"><title>Projeção: ${esc(fyL(pj.valor))} (${Math.round(pj.pct)}% da meta)</title></circle><text x="${(W - pr - 6).toFixed(1)}" y="${(Y(pj.valor) + (pj.valor >= alvo ? -8 : 14)).toFixed(1)}" text-anchor="end" font-size="${grande ? 10.5 : 9.5}" font-weight="700" fill="${st.cor}">${esc(fy(pj.valor))}</text>` : '';
     const rot = `<text x="${Math.min(W - pr - 4, ult[0] + 7)}" y="${(ult[1] - 8).toFixed(1)}" text-anchor="${ult[0] > W - 70 ? 'end' : 'start'}" font-size="${grande ? 11 : 10}" font-weight="700" fill="${st.cor}">${esc(fy(pts[pts.length - 1].v))}</text>`;
     const hl = `<line class="mm-g-hl" x1="0" y1="${pt}" x2="0" y2="${pt + ih}" stroke="var(--txt)" stroke-opacity=".35" stroke-dasharray="2 3" style="display:none;pointer-events:none"/>`;
-    return `<div class="mm-chart" style="--mm-c:${st.cor}" data-mm-gmodo-box="acum">${barra}<div class="mm-chart-wrap" data-mm-w="${W}" data-mm-h="${H}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de ${esc(m.titulo)}">${grid}${meta}${ideal}${linha}${hl}${dots}${rot}${xl}</svg><div class="mm-tip" hidden></div></div>
-      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>' + (comCurva ? 'ritmo do time (diarização)' : 'ritmo ideal') + '</span>' : ''}<span><i class="mt"></i>meta</span></div></div>`;
+    return `<div class="mm-chart" style="--mm-c:${st.cor}" data-mm-gmodo-box="acum">${barra}<div class="mm-chart-wrap" data-mm-w="${W}" data-mm-h="${H}"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Evolução de ${esc(m.titulo)}">${grid}${meta}${ideal}${linha}${proj}${hl}${dots}${rot}${xl}</svg><div class="mm-tip" hidden></div></div>
+      <div class="mm-leg"><span><i></i>real</span>${ideal ? '<span><i class="id"></i>' + (comCurva ? 'ritmo do time (diarização)' : 'ritmo ideal') + '</span>' : ''}<span><i class="mt"></i>meta</span>${pj ? '<span><i class="pj"></i>projeção (ritmo até ontem)</span>' : ''}</div></div>`;
   }
   // "180 / 500 camisetas" · "R$ 840 mil / R$ 2 mi" · "42% / 100%" — a unidade aparece uma vez só.
   function fmtPar(m) {
@@ -1387,7 +1405,7 @@
   const api = {
     IS_DEV, PATHS, SUBMARCAS, CANAIS, MARCOS, STATUS,
     // matemática
-    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, temCurva, curvaAcum, metaDoDia, serieDiaria, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
+    hojeSP, partesSP, spParaMs, fmtVal, pctTxt, pct, esperado, projecao, temCurva, curvaAcum, metaDoDia, serieDiaria, lerColado, inferePeriodo, numPt, status, marcoDe, valorDoMarco, proximoMarco, falta, diasRestantes, ritmoNecessario, patchDeRegistro, ago, desatualizada, lembreteTxt, validar, ordenar, blackFriday, intervaloLembreteMs,
     // visual
     injetaCss, anelHtml, marcosHtml, kpisHtml, graficoHtml, heroHtml, cartaoHtml, rankingHtml, squadsRankingHtml, statusPill, painelSquadHtml, painelDigitalHtml, painelOceanoHtml, ligar, textoPopup,
     // dados
