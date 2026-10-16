@@ -98,6 +98,7 @@ letting them hit the error first.
   §10) before styling any new page or standalone piece (slide, WhatsApp art)
   that should read as "part of the family." Update it if the palette or
   conventions evolve in a new piece, same spirit as `CODE_MAP.md`.
+- `ecossistema.html` — **Oceano · Ecossistema de gestão** (2026-10-16, criado para a reunião com a TI de 30/10): documento técnico único (sem `-dev`, entra no ar no merge) sobre arquitetura, uso do Google Cloud/conta corporativa, segurança e dados, ambientes dev × prod, Agente Ágil e consumo de tokens, Claude × Antigravity, skills, subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, riscos e internalização. Todo número ali é medido no repositório (comandos na seção 14) — **mantido por `/atualizardocumentacoes`**; `maredigital.html` virou a referência detalhada do Maré e aponta para ele. Aberto pelo Oceano (botão "Ecossistema de gestão").
 - `kanban.html` — production kanban board (squad management).
 - `kanban-dev.html` — test/dev copy of the board. **Currently byte-identical
   to `kanban.html`** — historically it's meant for testing changes safely

@@ -14,7 +14,7 @@ Esta skill é compartilhada entre **Claude** e **Antigravity** para manter **tod
 1. **Conferir `docs/COORDENACAO_AGENTES.md` (seção "6. Quadro → Em andamento"):**
    - Se o outro agente declarou que está editando um arquivo HTML (ex.: `oceano-dev.html`, `kanban-dev.html`, `okr-dev.html`, `painel-dev.html`), **NÃO toque nesse arquivo agora**. Atualize apenas as documentações livres e registre no resumo final qual arquivo ficou de fora por estar em andamento no outro agente.
 2. **Conferir o estado real do repositório (`version.json`, topo do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`):**
-   - Nunca invente nomes de arquivos nem versões de cabeça (ex.: o Radar é `okr.html` / `okr-dev.html`, o portal arquitetural é `maredigital.html`, nunca `radar.html` ou `maredigital-dev.html`).
+   - Nunca invente nomes de arquivos nem versões de cabeça (ex.: o Radar é `okr.html` / `okr-dev.html`, o portal de visão do ecossistema para a TI é `ecossistema.html` e a referência detalhada do Maré é `maredigital.html`, nunca `radar.html` ou `maredigital-dev.html`).
    - Leia `version.json` ou rode `node scripts/mare-cli.js status` para ter os números exatos de versão dev/prod e `?v=N` dos módulos compartilhados.
 
 ---
@@ -28,7 +28,7 @@ Esta skill é compartilhada entre **Claude** e **Antigravity** para manter **tod
 ### Se você é o **Antigravity**:
 - **Regra Orquestrador Zero-Código (`AGENTS.md`):** Nunca leia nem edite arquivos grandes (`.html` / `CODE_MAP.md`) diretamente na conversa principal.
 - **Delegue ao subagente de documentação `agente-functions-docs`** (e, quando for atualizar ajuda in-app dentro de HTMLs que **não** estejam travados no Quadro pelo Claude, acione em paralelo os subagentes de domínio correspondentes via `invoke_subagent` com `Workspace: 'inherit'` e zero terminal):
-  - **`agente-functions-docs`**: `maredigital.html`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md`, `CODE_MAP.md`, `docs/OCEANO.md`, `version.json`.
+  - **`agente-functions-docs`**: `maredigital.html`, `ecossistema.html`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md`, `CODE_MAP.md`, `docs/OCEANO.md`, `version.json`.
   - **`agente-mare`**: `HELP_CONTENT` e textos inline de ajuda em `kanban-dev.html` (somente se `kanban-dev.html` estiver livre no Quadro).
   - **`agente-radar`**: modal de ajuda `#okr-help-ov` em `okr-dev.html` e slides de `guia-okr.html` (somente se estiverem livres no Quadro).
   - **`agente-painel-oceano`**: `const FAQ` em `oceano-dev.html` e `docs/OCEANO.md` (somente se `oceano-dev.html` estiver livre no Quadro).
@@ -57,11 +57,12 @@ Passe pelos 7 alvos abaixo. Se o usuário pediu `/atualizardocumentacoes` após 
   3. Rode `node scripts/mare-cli.js map` no passo final de terminal para recalcular automaticamente todos os números de linha (`Lxxxx`) em `CODE_MAP.md` e regenerar o `CODE_MAP_FAST.md`.
 - *(Para uma auditoria profunda de todas as âncoras do arquivo, consulte também a skill `.claude/skills/atualizarcodemap/SKILL.md`.)*
 
-### 3. `maredigital.html` (Documento Arquitetural e Executivo do Ecossistema)
-- `maredigital.html` é o portal de documentação técnica e funcional de todo o ecossistema (Maré Digital, Radar OKR, Oceano, Escala, Metas, Intake, Painel ADM e Agente Ágil).
+### 3. `maredigital.html` e `ecossistema.html` (Documentação Técnica do Ecossistema)
+- `ecossistema.html` (criado em 16/10/2026 para a conversa com a TI) é a visão **técnica e de governança** do ecossistema Oceano: arquitetura, Google Cloud/conta corporativa, segurança, ambientes dev × prod, Agente Ágil e consumo de tokens, Claude × Antigravity, skills, subagentes, GitHub (PR, CI, auditoria), personalização por squad, riscos e caminho de internalização. **Cada número ali foi medido** — ao atualizar, refaça a medição (comandos na seção 14 da própria página: `node scripts/checar.js`, `cd functions && npm test`, `grep -n "^exports\." functions/index.js`, `git tag | wc -l`) e atualize o cabeçalho "Retrato de DD/MM/AAAA", os KPIs da seção 00, as versões da seção 01 e as listas de skills/subagentes. Nunca escreva afirmação que não aponte para um arquivo do repositório.
+- `maredigital.html` é a referência **funcional detalhada** do Maré Digital, Radar, Oceano, Escala, Metas, Intake, Painel ADM e Agente Ágil.
 - Verifique e atualize:
   - **Cabeçalho/rodapé de versões e data de referência** (conferindo os valores reais em `version.json`).
-  - **Seções de funcionalidades por produto:** inclua as features recentes que já entraram no ecossistema (cards/tabelas de recursos do Maré, Radar, Oceano, Metas, Escala, Painel e Cloud Functions).
+  - **Seções de funcionalidades por produto (em `maredigital.html`):** inclua as features recentes que já entraram no ecossistema (cards/tabelas de recursos do Maré, Radar, Oceano, Metas, Escala, Painel e Cloud Functions).
 
 ### 4. Central de Ajuda do Maré Digital (`HELP_CONTENT` em `kanban-dev.html`)
 - Localização: objeto `const HELP_CONTENT` em `kanban-dev.html` (consulte a linha exata em `CODE_MAP_FAST.md`) e textos inline das abas de `⚙ Configurações`.

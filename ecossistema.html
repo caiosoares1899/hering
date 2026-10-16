@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oceano · Ecossistema de gestão — Documentação técnica</title>
+<meta name="description" content="Documentação técnica do ecossistema Oceano (Maré Digital, Painel, Radar, Oceano, Escala, Intake): arquitetura, Google Cloud, segurança, processo de engenharia e agentes de IA.">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --deep:#030d1a;--glass:rgba(10,37,64,.55);--glass-b:rgba(56,182,255,.15);
+  --blue:#2563c9;--accent:#38b6ff;--cyan:#7ec8e3;--teal:#1de9b6;
+  --warn:#ffd166;--danger:#ff6b6b;--purple:#a78bfa;--orange:#fb923c;
+  --txt:#e8f4fd;--txt2:rgba(200,230,255,.65);--txt3:rgba(150,200,240,.35);
+  --r:10px;--r2:16px;
+}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',sans-serif;background:var(--deep);color:var(--txt);min-height:100vh;overflow-x:hidden;}
+body.menu-open{overflow:hidden;}
+.ocean-bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse at 15% 85%,rgba(0,70,140,.5) 0%,transparent 55%),
+             radial-gradient(ellipse at 85% 15%,rgba(0,130,160,.22) 0%,transparent 50%),#010810;}
+.bubble{position:fixed;border-radius:50%;border:1px solid rgba(56,182,255,.15);
+  background:radial-gradient(circle at 35% 35%,rgba(56,182,255,.18),rgba(0,229,255,.03));
+  animation:rise linear infinite;bottom:-60px;}
+@keyframes rise{0%{transform:translateY(0);opacity:0}10%{opacity:.7}90%{opacity:.2}100%{transform:translateY(-110vh);opacity:0}}
+.layout{position:relative;z-index:2;display:grid;grid-template-columns:265px 1fr;min-height:100vh;}
+.sidebar{position:sticky;top:0;height:100vh;
+  border-right:1px solid var(--glass-b);background:rgba(3,13,26,.78);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);}
+.sidebar-inner{height:100%;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:1.5rem 1.1rem;
+  display:flex;flex-direction:column;gap:.25rem;}
+.sidebar-inner::-webkit-scrollbar{width:3px;}
+.sidebar-inner::-webkit-scrollbar-thumb{background:rgba(56,182,255,.2);border-radius:99px;}
+.logo{display:flex;align-items:center;gap:9px;margin-bottom:.9rem;padding-bottom:.9rem;border-bottom:1px solid var(--glass-b);}
+.logo-icon{font-size:24px;}
+.logo-text{font-family:'Syne',sans-serif;font-size:13.5px;font-weight:800;line-height:1.2;}
+.logo-sub{font-size:9px;color:var(--txt3);letter-spacing:.14em;text-transform:uppercase;}
+.ng{margin-top:.5rem;}
+.ng-lbl{font-size:9px;color:var(--txt3);text-transform:uppercase;letter-spacing:.14em;font-weight:700;
+  padding:.3rem 8px .35rem;display:flex;align-items:center;gap:5px;}
+.ng-lbl::before{content:'';display:block;width:10px;height:1px;background:var(--txt3);}
+.nl{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:8px;
+  font-size:11px;color:var(--txt2);cursor:pointer;transition:all .15s;border-left:2px solid transparent;}
+.nl:hover{background:rgba(56,182,255,.08);color:var(--accent);}
+.nl.active{background:rgba(56,182,255,.1);color:var(--accent);border-left-color:var(--accent);}
+.nd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.nb{margin-left:auto;font-size:8px;padding:1px 5px;border-radius:999px;font-weight:700;}
+.nb-t{background:rgba(29,233,182,.14);color:var(--teal);border:1px solid rgba(29,233,182,.3);}
+.nb-w{background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
+.nb-b{background:rgba(37,99,201,.2);color:#7eb3ff;border:1px solid rgba(37,99,201,.3);}
+.nb-p{background:rgba(167,139,250,.14);color:var(--purple);border:1px solid rgba(167,139,250,.3);}
+.main{padding:2.8rem 3.2rem;max-width:980px;min-width:0;}
+/* hero */
+.hero{margin-bottom:2.8rem;}
+.ey{font-size:10px;color:var(--teal);font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  margin-bottom:.5rem;display:flex;align-items:center;gap:7px;}
+.ey::before{content:'';display:block;width:18px;height:1px;background:var(--teal);}
+h1{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;line-height:1.1;margin-bottom:.7rem;}
+h1 span{color:var(--accent);}
+.hdesc{font-size:13.5px;color:var(--txt2);line-height:1.7;max-width:580px;margin-bottom:1.4rem;}
+.pills{display:flex;gap:7px;flex-wrap:wrap;}
+.pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:10px;font-weight:600;border:1px solid;}
+.pb{background:rgba(37,99,201,.18);border-color:rgba(37,99,201,.4);color:#7eb3ff;}
+.pt{background:rgba(29,233,182,.1);border-color:rgba(29,233,182,.28);color:var(--teal);}
+.pw{background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.25);color:var(--warn);}
+.pp{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.28);color:var(--purple);}
+.po{background:rgba(251,146,60,.1);border-color:rgba(251,146,60,.28);color:var(--orange);}
+/* section */
+.section{margin-bottom:3.2rem;scroll-margin-top:2rem;opacity:0;transform:translateY(14px);transition:opacity .4s,transform .4s;}
+.section.visible{opacity:1;transform:translateY(0);}
+.sh{display:flex;align-items:flex-start;gap:.8rem;margin-bottom:1.4rem;}
+.sn{font-family:'Syne',sans-serif;font-size:11px;font-weight:800;color:var(--txt3);min-width:26px;padding-top:4px;}
+.stag{font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:.3rem;display:flex;align-items:center;gap:5px;}
+.stag::before{content:'';display:block;width:12px;height:1px;}
+h2{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;margin-bottom:.35rem;}
+.slead{font-size:12.5px;color:var(--txt2);line-height:1.65;max-width:560px;}
+/* grid cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px;margin-bottom:1.1rem;}
+.g2{grid-template-columns:1fr 1fr;}.g3{grid-template-columns:repeat(3,1fr);}
+.card{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:1.1rem;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:all .2s;}
+.card:hover{border-color:var(--accent);transform:translateY(-2px);}
+.ci{font-size:20px;margin-bottom:.55rem;}
+.ct{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;margin-bottom:.3rem;}
+.cd{font-size:10.5px;color:var(--txt2);line-height:1.6;}
+/* wide card */
+.wc{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:1.1rem 1.3rem;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);margin-bottom:9px;}
+.wch{display:flex;align-items:center;gap:8px;margin-bottom:.55rem;}
+.wci{font-size:16px;}
+.wct{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;flex:1;}
+.wcb{font-size:11.5px;color:var(--txt2);line-height:1.7;}
+.wcb strong{color:var(--txt);}
+.elink{color:var(--accent);text-decoration:none;border-bottom:1px dashed rgba(56,182,255,.45);transition:border-color .15s;}
+.elink:hover{border-bottom-style:solid;border-bottom-color:var(--accent);}
+/* code */
+.code{background:rgba(1,8,20,.85);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);
+  padding:.85rem 1.1rem;font-family:'JetBrains Mono',monospace;font-size:10.5px;line-height:1.7;
+  color:#7ec8e3;overflow-x:auto;margin:.5rem 0;white-space:pre;}
+.code .cm{color:rgba(150,200,240,.36);}
+.code .k{color:#ffd166;}.code .v{color:#1de9b6;}.code .fn{color:#a78bfa;}
+.cl{font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);
+  margin-bottom:.3rem;display:flex;align-items:center;gap:5px;}
+.cl::before{content:'';width:9px;height:1px;background:var(--txt3);}
+/* table */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:.7rem 0;}
+.tbl{width:100%;border-collapse:collapse;font-size:11.5px;margin:0;table-layout:fixed;}
+.tbl td,.tbl th{word-wrap:break-word;overflow-wrap:break-word;}
+.tbl td:first-child,.tbl th:first-child{width:32%;}
+.tbl th{font-family:'Syne',sans-serif;font-size:9px;font-weight:700;color:var(--cyan);text-transform:uppercase;letter-spacing:.08em;padding:7px 11px;text-align:left;border-bottom:1px solid var(--glass-b);}
+.tbl td{padding:8px 11px;color:var(--txt2);border-bottom:1px solid rgba(56,182,255,.05);vertical-align:top;}
+.tbl tr:hover td{background:rgba(56,182,255,.03);}
+.tbl td:first-child{font-family:'JetBrains Mono',monospace;color:var(--accent);font-size:10px;}
+/* flow */
+.flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:.8rem 0;}
+.fb{background:rgba(37,99,201,.16);border:1px solid rgba(37,99,201,.32);border-radius:var(--r);padding:6px 12px;font-size:10px;font-family:'JetBrains Mono',monospace;color:#7eb3ff;white-space:nowrap;}
+.fb.t{background:rgba(29,233,182,.1);border-color:rgba(29,233,182,.3);color:var(--teal);}
+.fb.p{background:rgba(167,139,250,.1);border-color:rgba(167,139,250,.28);color:var(--purple);}
+.fa{font-size:12px;color:var(--txt3);padding:0 6px;}
+/* security */
+.sg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.si{background:var(--glass);border-radius:var(--r2);padding:1rem;border:1px solid var(--glass-b);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+.si.ok{border-color:rgba(29,233,182,.3);background:rgba(29,233,182,.05);}
+.bdg{font-size:8.5px;font-weight:700;padding:2px 7px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;}
+.ok-b{background:rgba(29,233,182,.16);color:var(--teal);border:1px solid rgba(29,233,182,.28);}
+.done-b{background:rgba(37,99,201,.18);color:#7eb3ff;border:1px solid rgba(37,99,201,.32);}
+.si-t{font-family:'Syne',sans-serif;font-size:12.5px;font-weight:700;margin:.35rem 0 .25rem;}
+.si-d{font-size:10.5px;color:var(--txt2);line-height:1.6;}
+/* roles */
+.role{display:inline-block;font-size:9px;font-weight:700;padding:1px 7px;border-radius:999px;}
+.r-po{background:rgba(29,233,182,.13);color:var(--teal);border:1px solid rgba(29,233,182,.28);}
+.r-org{background:rgba(255,209,102,.11);color:var(--warn);border:1px solid rgba(255,209,102,.25);}
+.r-mem{background:rgba(56,182,255,.11);color:var(--accent);border:1px solid rgba(56,182,255,.25);}
+/* squad chips */
+.sc{display:flex;gap:8px;flex-wrap:wrap;margin:.8rem 0;}
+.sch{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:var(--r);background:var(--glass);border:1px solid var(--glass-b);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);}
+.sci{font-size:17px;}
+.scn{font-family:'Syne',sans-serif;font-size:11.5px;font-weight:700;}
+.scu{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--txt3);}
+/* db tree */
+.dbt{font-family:'JetBrains Mono',monospace;font-size:11px;line-height:2;background:rgba(1,8,20,.8);border:1px solid rgba(56,182,255,.1);border-radius:var(--r);padding:1rem 1.2rem;color:var(--txt2);white-space:pre;overflow-x:auto;}
+.dbt .p{color:var(--accent);}.dbt .n{color:rgba(150,200,240,.36);font-size:10px;}
+.dbt .sq{color:var(--teal);}.dbt .sh2{color:var(--purple);}
+code.hl{font-family:'JetBrains Mono',monospace;font-size:10px;background:rgba(56,182,255,.1);color:var(--teal);padding:1px 5px;border-radius:4px;}
+.div{height:1px;background:linear-gradient(90deg,transparent,var(--glass-b),transparent);margin:2.5rem 0;}
+.footer{padding:1.8rem 0;border-top:1px solid var(--glass-b);margin-top:2rem;font-size:11px;color:var(--txt3);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+/* arch diagram */
+.arch-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:1.4rem;}
+/* mobile nav */
+.menu-toggle{display:none;position:fixed;top:14px;left:14px;z-index:60;width:44px;height:44px;border-radius:12px;
+  background:rgba(3,13,26,.88);border:1px solid var(--glass-b);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+  align-items:center;justify-content:center;cursor:pointer;flex-direction:column;gap:4px;}
+.menu-toggle span{display:block;width:18px;height:2px;background:var(--accent);border-radius:2px;transition:transform .2s,opacity .2s;}
+.menu-toggle.open span:nth-child(1){transform:translateY(6px) rotate(45deg);}
+.menu-toggle.open span:nth-child(2){opacity:0;}
+.menu-toggle.open span:nth-child(3){transform:translateY(-6px) rotate(-45deg);}
+.sidebar-backdrop{display:none;position:fixed;inset:0;background:rgba(1,4,10,.5);z-index:45;touch-action:none;}
+.sidebar-backdrop.show{display:block;}
+@media(max-width:900px){
+  .layout{grid-template-columns:1fr;}
+  .menu-toggle{display:flex;}
+  .sidebar{position:fixed;left:0;top:0;height:100vh;width:82%;max-width:300px;
+    background:rgba(7,22,42,.97);
+    transform:translateX(-100%);transition:transform .25s ease;z-index:50;box-shadow:8px 0 30px rgba(0,0,0,.5);}
+  .sidebar.open{transform:translateX(0);}
+  .nl{padding:10px 10px;font-size:13px;color:rgba(224,241,255,.9);}
+  .ng-lbl{color:rgba(205,228,250,.6);}
+  .logo-sub{color:rgba(205,228,250,.6);}
+  .main{padding:4.6rem 1.1rem 1.6rem;}
+  h1{font-size:24px;}
+  .sg,.g2,.g3{grid-template-columns:1fr;}
+}
+
+/* ecossistema.html — extras */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:1.1rem;}
+.kpi{background:var(--glass);border:1px solid var(--glass-b);border-radius:var(--r2);padding:.95rem 1.1rem;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);}
+.kv{font-family:'Syne',sans-serif;font-size:30px;font-weight:800;color:var(--accent);line-height:1;margin-bottom:.4rem;}
+.kl{font-size:11.5px;color:var(--txt);line-height:1.45;font-weight:500;}
+.kl span{display:block;font-size:10px;color:var(--txt3);font-weight:400;margin-top:2px;}
+.note{background:rgba(56,182,255,.06);border:1px solid rgba(56,182,255,.22);border-left:3px solid var(--accent);border-radius:var(--r);padding:.8rem 1.1rem;font-size:11.5px;color:var(--txt2);line-height:1.7;margin:.9rem 0;}
+.note b{color:var(--txt);}
+.note.warn{background:rgba(255,209,102,.06);border-color:rgba(255,209,102,.25);border-left-color:var(--warn);}
+.tbl.prose td:first-child,.tbl.prose th:first-child{font-family:'DM Sans',sans-serif;color:var(--txt);font-size:11.5px;font-weight:600;width:24%;}
+.tbl.prose td{font-size:11.5px;line-height:1.6;}
+.tbl.prose td .hl{white-space:normal;word-break:break-word;}
+.fb code{font-family:inherit;}
+.flow{row-gap:6px;}
+.grid.g2{grid-template-columns:repeat(2,minmax(0,1fr));}
+.si .bdg{display:inline-block;}
+@media(max-width:900px){.kpis{grid-template-columns:repeat(2,1fr);} .tbl.prose td:first-child,.tbl.prose th:first-child{width:auto;}
+  .tbl.prose{min-width:560px;} .grid.g2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="ocean-bg"></div>
+<div id="bubbles"></div>
+<div class="layout">
+<div class="menu-toggle" id="menu-toggle" onclick="toggleMenu()" role="button" aria-label="Abrir menu"><span></span><span></span><span></span></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" onclick="toggleMenu(false)"></div>
+
+<nav class="sidebar" id="sidebar">
+<div class="sidebar-inner">
+  <div class="logo"><div class="logo-icon">🌊</div><div><div class="logo-text">Oceano</div><div class="logo-sub">Ecossistema · 16/10/2026</div></div></div>
+  <div class="ng"><div class="ng-lbl">Visão geral</div>
+    <a class="nl" onclick="goTo('resumo')"><span class="nd" style="background:var(--teal)"></span>⚡ Resumo para a TI</a>
+    <a class="nl" onclick="goTo('produtos')"><span class="nd" style="background:var(--accent)"></span>🌊 O ecossistema</a>
+    <a class="nl" onclick="goTo('arch')"><span class="nd" style="background:var(--cyan)"></span>🏗️ Arquitetura</a>
+  </div>
+  <div class="ng"><div class="ng-lbl">Plataforma</div>
+    <a class="nl" onclick="goTo('google')"><span class="nd" style="background:var(--purple)"></span>🔷 Google e conta corporativa</a>
+    <a class="nl" onclick="goTo('seguranca')"><span class="nd" style="background:var(--danger)"></span>🔐 Segurança e dados</a>
+    <a class="nl" onclick="goTo('ambientes')"><span class="nd" style="background:var(--teal)"></span>🔀 Dev e produção</a>
+  </div>
+  <div class="ng"><div class="ng-lbl">Inteligência</div>
+    <a class="nl" onclick="goTo('agente')"><span class="nd" style="background:var(--orange)"></span>🤖 Agente Ágil e tokens</a>
+    <a class="nl" onclick="goTo('agentes-dev')"><span class="nd" style="background:var(--purple)"></span>🧑‍💻 Claude e Antigravity</a>
+    <a class="nl" onclick="goTo('skills')"><span class="nd" style="background:var(--teal)"></span>🧰 Skills</a>
+    <a class="nl" onclick="goTo('subagentes')"><span class="nd" style="background:var(--purple)"></span>🧵 Subagentes</a>
+  </div>
+  <div class="ng"><div class="ng-lbl">Processo e produto</div>
+    <a class="nl" onclick="goTo('github')"><span class="nd" style="background:var(--accent)"></span>🐙 GitHub e auditoria</a>
+    <a class="nl" onclick="goTo('squads')"><span class="nd" style="background:var(--accent)"></span>🎛️ Squads no Maré</a>
+    <a class="nl" onclick="goTo('operacao')"><span class="nd" style="background:var(--warn)"></span>📟 Operação</a>
+  </div>
+  <div class="ng"><div class="ng-lbl">Decisão</div>
+    <a class="nl" onclick="goTo('riscos')"><span class="nd" style="background:var(--danger)"></span>⚠️ Dependências e riscos</a>
+    <a class="nl" onclick="goTo('internalizacao')"><span class="nd" style="background:var(--teal)"></span>🏢 Internalização</a>
+  </div>
+  <div class="ng"><div class="ng-lbl">Mais</div>
+    <a class="nl" href="maredigital.html" style="text-decoration:none"><span class="nd" style="background:var(--cyan)"></span>🐟 Detalhe do Maré Digital ↗</a>
+    <a class="nl" href="oceano.html" style="text-decoration:none"><span class="nd" style="background:var(--accent)"></span>🌊 Abrir o Oceano ↗</a>
+  </div>
+</div>
+</nav>
+
+<main class="main">
+
+<!-- HERO -->
+<div class="hero">
+  <div class="ey">Digital Hering · Grupo Azzas 2154</div>
+  <h1>Oceano<br><span>Ecossistema de gestão</span></h1>
+  <p class="hdesc">Documentação técnica do conjunto de aplicações internas que a Digital Hering construiu e opera: arquitetura, uso do Google Cloud e da conta corporativa, segurança, processo de engenharia (GitHub, CI, ambientes) e o trabalho com agentes de IA. Escrito para a equipe de TI avaliar — cada afirmação aponta para o arquivo do repositório que a comprova.</p>
+  <div class="pills">
+    <span class="pill pb">6 aplicações em produção</span>
+    <span class="pill pt">35 Cloud Functions · Node 20</span>
+    <span class="pill pw">899 testes automatizados</span>
+    <span class="pill pp">Claude + Antigravity</span>
+    <span class="pill po">Retrato de 16/10/2026</span>
+  </div>
+</div>
+
+<div class="div"></div>
+
+<!-- 00 RESUMO -->
+<section class="section" id="resumo">
+  <div class="sh"><div class="sn">00</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Resumo para a TI</div>
+    <h2>Em uma página</h2>
+    <p class="slead">O que existe, onde estão os dados, o que sai da empresa e quem pode mudar o quê.</p>
+  </div></div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="kv">6</div><div class="kl">aplicações web em produção<br><span>Maré Digital · Painel · Radar · Oceano · Escala · Intake</span></div></div>
+    <div class="kpi"><div class="kv">35</div><div class="kl">Cloud Functions (gen2)<br><span>Node 20 · us-central1 · 117 arquivos de código</span></div></div>
+    <div class="kpi"><div class="kv">899</div><div class="kl">testes automatizados<br><span>898 passam · 1 pulado · ~4 s</span></div></div>
+    <div class="kpi"><div class="kv">468</div><div class="kl">tags de release<br><span>kanban, painel, Radar, Oceano e funções</span></div></div>
+    <div class="kpi"><div class="kv">10</div><div class="kl">skills compartilhadas<br><span>os dois agentes leem a mesma pasta</span></div></div>
+    <div class="kpi"><div class="kv">1475</div><div class="kl">numeração de PR/issue<br><span>todo PR passa por CI e merge humano</span></div></div>
+  </div>
+
+  <div class="grid g3">
+    <div class="card"><div class="ci">🗄️</div><div class="ct">Onde estão os dados</div><div class="cd">Firebase Realtime Database do projeto Google <code class="hl">hering-onboarding</code> (conta corporativa). Acesso só com login Google <code class="hl">@ciahering.com.br</code>; a regra é verificada <strong>no servidor</strong> (<code class="hl">database.rules.json</code>), não na tela. Backups completos em Cloud Storage privado.</div></div>
+    <div class="card"><div class="ci">📤</div><div class="ct">O que sai da empresa</div><div class="cd">Hoje, uma única integração de IA em produção: a <strong>API da Anthropic (Claude)</strong>, chamada só por Cloud Functions, para o Agente Ágil e o chat do Radar; no board, apenas nos squads <code class="hl">dev</code> e <code class="hl">dados</code>. A chave fica no Secret Manager. O código vive no GitHub; dados de pessoas não vão para lá (regra e teste, ver seção 04).</div></div>
+    <div class="card"><div class="ci">🧑‍⚖️</div><div class="ct">Quem muda o quê</div><div class="cd">Mudança = Pull Request com CI. Dois agentes de IA propõem, <strong>uma pessoa aprova e faz o merge</strong> (ninguém aprova o próprio PR). Deploy de backend só pelo dono, com a conta corporativa: o Claude roda sem credencial de deploy; o Antigravity só executa deploy com confirmação explícita no chat.</div></div>
+  </div>
+
+  <div class="note"><b>Como ler este documento.</b> Os números são medidos no repositório em 16/10/2026 (comandos na seção 14, para você refazer). Onde o sistema <b>não</b> está como deveria, está dito (seções 04, 05, 06, 12 e 13) — e é por isso que a conversa com a TI faz sentido: há decisões que não são nossas.</div>
+</section>
+
+<!-- 01 ECOSSISTEMA -->
+<section class="section" id="produtos">
+  <div class="sh"><div class="sn">01</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>Visão geral</div>
+    <h2>O ecossistema Oceano</h2>
+    <p class="slead">Um conjunto de ferramentas de gestão que compartilha identidade, banco, notificações e design. O que antes era tudo "Maré Digital" virou uma família.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Produto</th><th>Para quê</th><th>Arquivo (prod · dev)</th><th>Versão atual</th></tr></thead>
+    <tbody>
+      <tr><td>🐟 Maré Digital</td><td>Kanban ágil multi-squad: cards, automações, sprint, métricas de fluxo, metas, calendário, Agente Ágil</td><td><code class="hl">kanban.html</code> · <code class="hl">kanban-dev.html</code></td><td>v8.30.871 · dev v8.30.872</td></tr>
+      <tr><td>🧭 Painel</td><td>Administração: pessoas e papéis, comunicados/Mural, central de notificações, monitores de status, plantão de bugs, dados e metas globais</td><td><code class="hl">painel.html</code> · <code class="hl">painel-dev.html</code></td><td>v5.77 · dev v5.78</td></tr>
+      <tr><td>📡 Radar</td><td>OKR: objetivos, marcos, atingimento, calendário de reuniões, apresentação ao vivo, Data Studio incorporado</td><td><code class="hl">okr.html</code> · <code class="hl">okr-dev.html</code></td><td>v2.89</td></tr>
+      <tr><td>🌊 Oceano</td><td>Lobby da família: login único, Mural de avisos, meta global, atalhos, ajuda, assistente de bugs; hospeda os produtos como app instalável</td><td><code class="hl">oceano.html</code> · <code class="hl">oceano-dev.html</code></td><td>v1.49 · dev v1.50</td></tr>
+      <tr><td>📅 Escala</td><td>Quem trabalha, está de plantão ou de folga em cada dia; visão por squad, global e Gantt</td><td><code class="hl">escala.html</code> · <code class="hl">escala-dev.html</code></td><td>v1.10</td></tr>
+      <tr><td>📥 Intake</td><td>Entrada de pedidos para os squads (formulário público anônimo e versão interna com login Google)</td><td><code class="hl">intake.html</code> · <code class="hl">intake-dev.html</code></td><td>—</td></tr>
+      <tr><td>🎙️ Apresentação do Radar</td><td>Slides executivos gerados a partir dos OKRs, com sala ao vivo</td><td><code class="hl">okr-apresentacao.slide.html</code></td><td>—</td></tr>
+      <tr><td>🛟 A Bordo · 🧳 Travessia</td><td>Onboarding (existe) · ciclo de performance/gente (projeto futuro, com regras de acesso próprias desenhadas antes do código)</td><td><code class="hl">onboarding.html</code> · —</td><td>—</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cl">Módulos compartilhados (raiz do domínio, versionados por <code class="hl">?v=N</code> nas páginas)</div>
+  <div class="grid">
+    <div class="card"><div class="ct">mare-notif</div><div class="cd">Sino único: feed da torre, roteador de tipos de notificação, menu de produtos ⋮⋮⋮, rodapé de som/push/Não Perturbe. Catálogo <code class="hl">MareNotif.TIPOS</code>.</div></div>
+    <div class="card"><div class="ct">mare-metas</div><div class="cd">Metas e desafios: matemática de ritmo e projeção, gráficos SVG, formulários e camada de dados.</div></div>
+    <div class="card"><div class="ct">mare-login</div><div class="cd">Login Google direto (OAuth <code class="hl">id_token</code>) para iPhone/iPad, onde o popup do Firebase falha.</div></div>
+    <div class="card"><div class="ct">mare-dicas</div><div class="cd">Mini-popups de ajuda com limite de 1 por dia por app e liga/desliga por pessoa.</div></div>
+    <div class="card"><div class="ct">mare-plantao</div><div class="cd">Plantão de bugs: ficha, pacote anônimo, validação por ADM.</div></div>
+  </div>
+  <p class="slead" style="max-width:none;margin-top:.4rem">Detalhe funcional de cada produto: <a class="elink" href="maredigital.html">maredigital.html</a> (Maré Digital) e <a class="elink" href="https://github.com/caiosoares1899/hering/blob/main/docs/OCEANO.md">docs/OCEANO.md</a>.</p>
+</section>
+
+<!-- 02 ARQUITETURA -->
+<section class="section" id="arch">
+  <div class="sh"><div class="sn">02</div><div>
+    <div class="stag" style="color:var(--cyan)"><span style="background:var(--cyan)"></span>Plataforma</div>
+    <h2>Arquitetura</h2>
+    <p class="slead">Páginas estáticas no navegador, Firebase para dados/identidade/push, Cloud Functions para tudo que precisa de segredo ou roda sem ninguém com a página aberta.</p>
+  </div></div>
+
+  <div class="arch-wrap">
+  <svg viewBox="0 0 880 500" xmlns="http://www.w3.org/2000/svg" style="display:block;margin:0 auto;width:100%;min-width:760px;max-width:880px;" role="img" aria-label="Diagrama: agentes e GitHub publicam páginas estáticas; navegador usa Firebase; Cloud Functions falam com a API da Anthropic">
+    <defs>
+      <marker id="e1" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(56,182,255,.7)"/></marker>
+      <marker id="e2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(255,209,102,.75)"/></marker>
+      <marker id="e3" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0,8 3,0 6" fill="rgba(167,139,250,.75)"/></marker>
+    </defs>
+
+    <!-- coluna esquerda -->
+    <rect x="10" y="10" width="190" height="104" rx="10" fill="rgba(167,139,250,.1)" stroke="rgba(167,139,250,.35)"/>
+    <text x="105" y="36" text-anchor="middle" fill="#a78bfa" font-family="Syne, DM Sans, sans-serif" font-size="13" font-weight="700">Agentes de código</text>
+    <text x="105" y="56" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">Claude Code · Antigravity</text>
+    <text x="105" y="74" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">propõem mudanças em branch</text>
+    <text x="105" y="92" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">nunca faz merge nem deploy</text>
+
+    <rect x="10" y="170" width="190" height="124" rx="10" fill="rgba(37,99,201,.16)" stroke="rgba(37,99,201,.4)"/>
+    <text x="105" y="196" text-anchor="middle" fill="#7eb3ff" font-family="Syne, DM Sans, sans-serif" font-size="13" font-weight="700">GitHub</text>
+    <text x="105" y="216" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">repositório · PRs · tags</text>
+    <text x="105" y="234" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">Actions: checks (CI)</text>
+    <text x="105" y="252" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">Pages: HTML estático</text>
+    <text x="105" y="278" text-anchor="middle" fill="#ffd166" font-family="DM Sans, sans-serif" font-size="10" font-weight="700">merge: sempre uma pessoa</text>
+
+    <rect x="10" y="350" width="190" height="130" rx="10" fill="rgba(56,182,255,.08)" stroke="rgba(56,182,255,.35)"/>
+    <text x="105" y="376" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="13" font-weight="700">Navegador / PWA</text>
+    <text x="105" y="396" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">Maré · Painel · Radar</text>
+    <text x="105" y="414" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="10">Oceano · Escala · Intake</text>
+    <text x="105" y="440" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">sem build · sem servidor próprio</text>
+    <text x="105" y="458" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">Service Worker na raiz (push)</text>
+
+    <line x1="105" y1="114" x2="105" y2="170" stroke="rgba(167,139,250,.7)" stroke-width="1.6" marker-end="url(#e3)"/>
+    <text x="113" y="146" fill="rgba(167,139,250,.9)" font-family="DM Sans, sans-serif" font-size="10">branch + PR</text>
+    <line x1="105" y1="294" x2="105" y2="350" stroke="rgba(56,182,255,.7)" stroke-width="1.6" marker-end="url(#e1)"/>
+    <text x="113" y="326" fill="rgba(56,182,255,.9)" font-family="DM Sans, sans-serif" font-size="10">HTTPS · arquivos estáticos</text>
+
+    <!-- Google Cloud / Firebase -->
+    <rect x="270" y="10" width="360" height="470" rx="14" fill="rgba(29,233,182,.04)" stroke="rgba(29,233,182,.32)" stroke-dasharray="5,4"/>
+    <text x="450" y="34" text-anchor="middle" fill="#1de9b6" font-family="Syne, DM Sans, sans-serif" font-size="13" font-weight="700">Google Cloud · projeto Firebase hering-onboarding</text>
+
+    <rect x="290" y="52" width="150" height="62" rx="9" fill="rgba(167,139,250,.1)" stroke="rgba(167,139,250,.32)"/>
+    <text x="365" y="78" text-anchor="middle" fill="#a78bfa" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Firebase Auth</text>
+    <text x="365" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">@ciahering.com.br</text>
+
+    <rect x="460" y="52" width="150" height="62" rx="9" fill="rgba(29,233,182,.1)" stroke="rgba(29,233,182,.34)"/>
+    <text x="535" y="78" text-anchor="middle" fill="#1de9b6" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Realtime Database</text>
+    <text x="535" y="96" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">389 linhas de regras</text>
+
+    <rect x="290" y="130" width="150" height="62" rx="9" fill="rgba(56,182,255,.09)" stroke="rgba(56,182,255,.3)"/>
+    <text x="365" y="156" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Cloud Storage</text>
+    <text x="365" y="174" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">backups privados</text>
+
+    <rect x="460" y="130" width="150" height="62" rx="9" fill="rgba(56,182,255,.09)" stroke="rgba(56,182,255,.3)"/>
+    <text x="535" y="156" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Cloud Messaging</text>
+    <text x="535" y="174" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">push (data-only)</text>
+
+    <rect x="290" y="226" width="320" height="130" rx="10" fill="rgba(255,209,102,.08)" stroke="rgba(255,209,102,.34)"/>
+    <text x="450" y="252" text-anchor="middle" fill="#ffd166" font-family="Syne, DM Sans, sans-serif" font-size="13" font-weight="700">Cloud Functions · 35 exports</text>
+    <text x="450" y="274" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="9.5">gatilhos no banco · agendadas · HTTP</text>
+    <text x="450" y="294" text-anchor="middle" fill="rgba(200,230,255,.5)" font-family="DM Sans, sans-serif" font-size="10">push · Agente Ágil (9) · backups (5) · plantão (4)</text>
+    <text x="450" y="312" text-anchor="middle" fill="rgba(200,230,255,.5)" font-family="DM Sans, sans-serif" font-size="10">monitores de status · metas · intake · OKR</text>
+    <text x="450" y="336" text-anchor="middle" fill="rgba(200,230,255,.4)" font-family="DM Sans, sans-serif" font-size="10">deploy manual, só pelo dono, conta corporativa</text>
+
+    <rect x="290" y="382" width="320" height="62" rx="9" fill="rgba(255,107,107,.07)" stroke="rgba(255,107,107,.28)"/>
+    <text x="450" y="408" text-anchor="middle" fill="#ff8fa3" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Secret Manager</text>
+    <text x="450" y="426" text-anchor="middle" fill="rgba(200,230,255,.55)" font-family="JetBrains Mono, monospace" font-size="9.5">ANTHROPIC_API_KEY · chaves do plantão</text>
+
+    <line x1="450" y1="356" x2="450" y2="382" stroke="rgba(255,107,107,.6)" stroke-width="1.4" stroke-dasharray="3,3"/>
+
+    <!-- navegador -> firebase -->
+    <line x1="200" y1="369" x2="270" y2="369" stroke="rgba(56,182,255,.75)" stroke-width="1.6" marker-end="url(#e1)"/>
+    <text x="206" y="360" fill="rgba(56,182,255,.9)" font-family="DM Sans, sans-serif" font-size="9.5">SDK Firebase</text>
+    <text x="206" y="387" fill="rgba(56,182,255,.55)" font-family="DM Sans, sans-serif" font-size="9">Auth · RTDB · FCM</text>
+
+    <!-- externos -->
+    <rect x="690" y="40" width="180" height="92" rx="10" fill="rgba(255,107,107,.08)" stroke="rgba(255,107,107,.32)"/>
+    <text x="780" y="66" text-anchor="middle" fill="#ff8fa3" font-family="Syne, DM Sans, sans-serif" font-size="12.5" font-weight="700">API da Anthropic</text>
+    <text x="780" y="86" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="9.5">Claude · única IA em prod.</text>
+    <text x="780" y="104" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">Agente Ágil + chat do Radar</text>
+    <text x="780" y="120" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">board: só squads dev e dados</text>
+    <path d="M610 270 L650 270 L650 86 L690 86" fill="none" stroke="rgba(255,209,102,.75)" stroke-width="1.5" marker-end="url(#e2)"/>
+    <text x="668" y="180" text-anchor="middle" fill="rgba(255,209,102,.9)" font-family="DM Sans, sans-serif" font-size="9.5" transform="rotate(-90 668 180)">HTTPS · chave do Secret Manager</text>
+
+    <rect x="690" y="170" width="180" height="92" rx="10" fill="rgba(56,182,255,.07)" stroke="rgba(56,182,255,.28)"/>
+    <text x="780" y="196" text-anchor="middle" fill="#38b6ff" font-family="Syne, DM Sans, sans-serif" font-size="12.5" font-weight="700">Serviços Google</text>
+    <text x="780" y="216" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="9.5">Calendar API · Looker</text>
+    <text x="780" y="234" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="9.5">People · Meet · Drive (links)</text>
+    <text x="780" y="252" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">leitura, pelo navegador</text>
+
+    <rect x="690" y="300" width="180" height="92" rx="10" fill="rgba(251,146,60,.07)" stroke="rgba(251,146,60,.28)"/>
+    <text x="780" y="326" text-anchor="middle" fill="#fb923c" font-family="Syne, DM Sans, sans-serif" font-size="12.5" font-weight="700">Feeds de status</text>
+    <text x="780" y="346" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="JetBrains Mono, monospace" font-size="9.5">VTEX · GitHub · Firebase</text>
+    <text x="780" y="364" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">lidos a cada 5 min pelas funções</text>
+    <path d="M610 330 L690 346" fill="none" stroke="rgba(251,146,60,.6)" stroke-width="1.3" marker-end="url(#e2)"/>
+
+    <rect x="690" y="420" width="180" height="60" rx="10" fill="rgba(150,200,240,.04)" stroke="rgba(150,200,240,.2)" stroke-dasharray="4,3"/>
+    <text x="780" y="446" text-anchor="middle" fill="rgba(200,230,255,.6)" font-family="Syne, DM Sans, sans-serif" font-size="12" font-weight="700">Opcionais / legado</text>
+    <text x="780" y="464" text-anchor="middle" fill="rgba(200,230,255,.45)" font-family="DM Sans, sans-serif" font-size="10">Spotify (Rádio) · EmailJS</text>
+  </svg>
+  </div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">📄</div><div class="wct">Por que páginas estáticas sem build</div></div><div class="wcb">Cada <code class="hl">.html</code> é autocontido (CSS e JS inline, SDK do Firebase por <code class="hl">import</code>). O que está no ar é <strong>exatamente o que está no repositório</strong> — sem bundler, sem artefato intermediário, sem servidor de aplicação para patch e monitoramento. Publicar é copiar arquivos; hospedar em outro lugar também. O custo é conhecido: o Maré tem ~2,5 MB e ~39 mil linhas num arquivo; a mitigação é um índice de código (seções 06 e 10).</div></div>
+    <div class="wc"><div class="wch"><div class="wci">⚡</div><div class="wct">Tempo real e atualização das telas</div></div><div class="wcb">Listeners do Realtime Database (WebSocket) mantêm cards, presença, comentários e notificações sincronizados em menos de 1 s. Cada página confere <code class="hl">version.json</code> (sem cache) a cada 5 min e, se a versão mudou, mostra um aviso para recarregar — não recarrega sozinha para não perder o que a pessoa estava digitando.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔔</div><div class="wct">Push</div></div><div class="wcb">O app grava a notificação em <code class="hl">kanban/usuarios/{uid}/notificacoes</code>; a função <code class="hl">sendPushOnNotification</code> decide se vira push (lista de tipos permitidos, interruptor por tipo na Central de Notificações, janela de Não Perturbe da pessoa) e envia mensagens <i>data-only</i> pelo FCM, evitando duplicidade no Safari/iOS. Tokens inválidos são removidos.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧩</div><div class="wct">Backend sob demanda</div></div><div class="wcb">As 35 funções são gatilhos do banco (<code class="hl">onValueCreated/Written</code>), agendadas (<code class="hl">onSchedule</code>) ou HTTP (<code class="hl">onRequest</code>, com verificação manual do token do Firebase). Não há servidor ligado 24 h: o custo acompanha o uso, e o que roda sem navegador aberto (backups, lembretes de meta, monitores, varredura de prazos) é função agendada.</div></div>
+  </div>
+</section>
+
+<!-- 03 GOOGLE -->
+<section class="section" id="google">
+  <div class="sh"><div class="sn">03</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>Plataforma</div>
+    <h2>Google e a conta corporativa</h2>
+    <p class="slead">A identidade, os dados e o backend moram no ecossistema Google da empresa. Esta é a lista completa dos serviços Google que o código usa.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Serviço</th><th>Uso</th><th>Como está configurado</th></tr></thead>
+    <tbody>
+      <tr><td>Firebase Auth (provedor Google)</td><td>Único método de login. Substituiu, em 08/10, a alternativa Microsoft/Arezzo, desligada por interruptor (<code class="hl">MARE_SO_HERING</code>) e documentada para religar.</td><td>Conta <code class="hl">@ciahering.com.br</code>. As regras do banco exigem e-mail do domínio <b>e</b> <code class="hl">sign_in_provider == 'google.com'</code>. Externos (visualizadores) só leem, por lista de autorizados (<code class="hl">painel_viewers</code>).</td></tr>
+      <tr><td>Cliente OAuth web (Google Cloud Console)</td><td>Login direto em iPhone/iPad (<code class="hl">mare-login.js</code>), onde o popup do Firebase falha com "missing initial state".</td><td>Cada URL de página que usa o fluxo (<code class="hl">…/oceano.html</code>, <code class="hl">…/kanban.html</code> e os <code class="hl">-dev</code>) cadastrada em <i>URIs de redirecionamento autorizados</i>.</td></tr>
+      <tr><td>Realtime Database</td><td>Todos os dados: cards, usuários, comentários, notificações, OKRs, metas, escala, plantão.</td><td>Projeto <code class="hl">hering-onboarding</code>. Regras em <code class="hl">database.rules.json</code> (espelho versionado do console), cobertas por testes (<code class="hl">functions/rules/__tests__</code>).</td></tr>
+      <tr><td>Cloud Functions gen2</td><td>Push, Agente Ágil, backups, lembretes de meta, monitores, plantão, intake.</td><td>Node 20, região <code class="hl">us-central1</code>, 35 exports em <code class="hl">functions/index.js</code> — cada um com seu comando de deploy documentado (<code class="hl">--only functions:nome</code>, nunca o deploy de tudo).</td></tr>
+      <tr><td>Secret Manager</td><td>Chave da Anthropic e chaves do plantão.</td><td><code class="hl">defineSecret()</code> + <code class="hl">firebase functions:secrets:set</code>. Nunca em HTML, <code class="hl">localStorage</code> nem arquivo versionado.</td></tr>
+      <tr><td>Cloud Storage</td><td>Backups (semanal do board; completo semanal; global diário) e anexos do Painel.</td><td>Pasta privada <code class="hl">backups-completos/</code>. Um vigia diário (<code class="hl">backupVigia</code>) avisa os ADMs se um backup falhar.</td></tr>
+      <tr><td>Cloud Messaging (FCM)</td><td>Push web/mobile.</td><td>Service Worker <code class="hl">firebase-messaging-sw.js</code> na raiz do domínio.</td></tr>
+      <tr><td>Google Calendar API v3</td><td>Agendas externas (reuniões, rituais, feriados) exibidas no calendário do board.</td><td>Somente leitura. PO/Organizador pede, o ADM aprova; a exclusão de um evento é local e não altera a agenda real.</td></tr>
+      <tr><td>Looker Studio</td><td>Painéis incorporados na aba Data Studio do Radar.</td><td>Lista de hosts permitidos; só ADM/PO/Organizador/Gestor OKR configuram (regra do banco, não só tela).</td></tr>
+      <tr><td>People API · Meet · Drive · Fonts</td><td>Foto de perfil; botão "Entrar na reunião"; reconhecimento do tipo de link (Docs/Sheets/Slides/Pasta); tipografia.</td><td>Drive: só interpreta o link colado (upload direto não existe). Fonts: Syne, DM Sans, JetBrains Mono.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🔐</div><div class="wct">Conta e credenciais de deploy</div></div><div class="wcb">Mudanças em <code class="hl">functions/</code> e <code class="hl">database.rules.json</code> são implantadas pelo dono do projeto, na máquina dele, com a conta corporativa (<code class="hl">firebase deploy … --project hering-onboarding</code>). O ambiente do Claude Code <b>não tem credencial de deploy</b>. O Antigravity roda na máquina do dono e, por regra (<code class="hl">AGENTS.md</code>), só executa deploy com confirmação explícita no chat. Na prática os agentes escrevem o código, registram no quadro "Pendente de deploy" (<code class="hl">docs/COORDENACAO_AGENTES.md</code>) e esperam. É uma <b>regra</b>, não um bloqueio técnico: o ideal para a TI é separar a credencial de deploy da máquina onde o agente roda (pipeline ou conta de serviço).</div></div>
+    <div class="wc"><div class="wch"><div class="wci">❓</div><div class="wct">O que precisamos que a TI defina</div></div><div class="wcb">A <b>titularidade do projeto</b> hoje está ligada à conta de uma pessoa. Para o ecossistema ser da empresa: organização/pasta no Google Cloud, conta de faturamento, papéis IAM por função (e não por pessoa), contas de serviço para CI e um segundo responsável com acesso. É a primeira decisão da seção 14.</div></div>
+  </div>
+</section>
+
+<!-- 04 SEGURANÇA -->
+<section class="section" id="seguranca">
+  <div class="sh"><div class="sn">04</div><div>
+    <div class="stag" style="color:var(--danger)"><span style="background:var(--danger)"></span>Plataforma</div>
+    <h2>Segurança e dados</h2>
+    <p class="slead">A regra que vale é a do servidor. O que a tela esconde não conta como controle de acesso.</p>
+  </div></div>
+
+  <div class="sg">
+    <div class="si ok"><span class="bdg ok-b">no servidor</span><div class="si-t">Regras do banco como fonte da verdade</div><div class="si-d">Leitura e escrita exigem domínio <code class="hl">@ciahering.com.br</code> + provedor Google; squads validam associação da pessoa (<code class="hl">usuarios/{uid}/squads/{id}</code>); nós sensíveis (como o plantão) exigem papel <code class="hl">adm</code>. Em 16/10 uma auditoria achou comentários e configurações do Radar editáveis por qualquer conta do domínio (a restrição existia só na tela): as regras passaram a ser por filho e um teste varre o código atrás de nós novos sem regra.</div></div>
+    <div class="si ok"><span class="bdg ok-b">testado</span><div class="si-t">Regras com teste automatizado</div><div class="si-d">4 arquivos de teste cobrem as regras (<code class="hl">databaseRules</code>, <code class="hl">okrRules</code>, <code class="hl">metasEscalaRules</code>, <code class="hl">plantaoRules</code>) e rodam em todo PR. Mudar regra sem teste verde não passa na CI.</div></div>
+    <div class="si ok"><span class="bdg ok-b">segredos</span><div class="si-t">Nada de chave no repositório</div><div class="si-d">Chaves em Secret Manager; a linha vermelha nº 6 proíbe token em issue, PR, commit, log ou resposta. Única exceção documentada: a chave de leitura do plantão, que só abre o pacote anônimo de bugs, tem teto de requisições e é trocável em minutos.</div></div>
+    <div class="si ok"><span class="bdg ok-b">privacidade</span><div class="si-t">Dados de pessoas não saem do Firebase</div><div class="si-d">Quando um bug é reportado, o agente de código recebe só o <b>pacote anônimo</b> (app, arquivo, impacto, descrição e trecho de console sanitizados) — nome, e-mail, uid, link de card e print ficam no Firebase. Há teste para isso (<code class="hl">test_ferias_pacote_anonimo.js</code>). Antes, um fluxo abria Issue pública com esses dados: foi removido em 16/10.</div></div>
+    <div class="si ok"><span class="bdg ok-b">CI</span><div class="si-t">Automação que reage a texto de terceiros é proibida</div><div class="si-d">Workflow com gatilho <code class="hl">issues</code>, <code class="hl">issue_comment</code> ou <code class="hl">pull_request_target</code> reprova o PR (<code class="hl">scripts/checar.js</code>): qualquer pessoa poderia disparar um robô com permissão de escrita.</div></div>
+    <div class="si ok"><span class="bdg ok-b">controle</span><div class="si-t">Interruptores operacionais</div><div class="si-d">Kill switch do Agente Ágil no banco (desligado por padrão e em caso de erro), pausa geral do plantão, logout remoto de todas as sessões (<code class="hl">force_logout_after</code>), interruptor por tipo de notificação.</div></div>
+  </div>
+
+  <div class="cl" style="margin-top:1rem">Continuidade dos dados</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Mecanismo</th><th>Cobre</th><th>Observações</th></tr></thead>
+    <tbody>
+      <tr><td>weeklyBackup</td><td>Board dos squads (semanal)</td><td>Cloud Storage. Há ainda um envio opcional por e-mail feito pelo navegador (EmailJS, legado).</td></tr>
+      <tr><td>backupCompletoSemanal · backupGlobalDiario</td><td>Banco inteiro (nós por squad + nós globais)</td><td>Nó novo no banco precisa entrar em <code class="hl">NOS_GLOBAIS</code> (<code class="hl">functions/backup/completo.js</code>) ou fica sem backup — regra registrada nas instruções do projeto.</td></tr>
+      <tr><td>backupVigia</td><td>Falha de backup</td><td>Notifica os ADMs (sino + push).</td></tr>
+      <tr><td>Restaurar</td><td>Por script (<code class="hl">backup/restaurar.js</code>) ou pela tela Config → Backup</td><td>Compara e restaura só o que sumiu, sem sobrescrever o que existe.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cl">Inventário de dados pessoais (para o DPO)</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Categoria</th><th>Onde</th><th>Observação</th></tr></thead>
+    <tbody>
+      <tr><td>Perfil: nome, e-mail, iniciais, foto</td><td><code class="hl">kanban/usuarios/{uid}</code></td><td>Foto vem da People API do Google. Iniciais únicas por transação (<code class="hl">init_registry</code>).</td></tr>
+      <tr><td>Conteúdo de trabalho: cards, comentários, notas</td><td><code class="hl">kanban/squads/{squad}/…</code></td><td>Pode conter texto livre digitado pelas pessoas.</td></tr>
+      <tr><td>Notificações, preferências, escala</td><td><code class="hl">usuarios/{uid}/…</code>, <code class="hl">kanban/escala</code></td><td>Escala = dia de trabalho/plantão/folga.</td></tr>
+      <tr><td>Tokens de push (FCM)</td><td><code class="hl">usuarios/{uid}</code></td><td>Podados quando inválidos.</td></tr>
+      <tr><td>Token OAuth do Spotify (opcional)</td><td><code class="hl">usuarios/{uid}</code></td><td>Apagado ao desconectar.</td></tr>
+      <tr><td>Relato de bug (autor identificado)</td><td><code class="hl">kanban/feedback</code> e ficha do plantão</td><td>Só ADM lê a ficha; nunca vai ao GitHub.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note warn"><b>Honestidade sobre o que falta.</b> Existe a regra de que dados de pessoas não vão ao repositório e há testes para o fluxo do plantão, mas <b>não há varredura automática de dados pessoais</b> no repositório. O inventário acima é nosso, não validado pelo DPO. Conteúdo de cards trafega para a API da Anthropic quando alguém aciona o Agente Ágil — os termos de tratamento de dados dessa API precisam de revisão da TI/jurídico (seção 14).</div>
+</section>
+
+<!-- 05 DEV x PROD -->
+<section class="section" id="ambientes">
+  <div class="sh"><div class="sn">05</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Plataforma</div>
+    <h2>Ambientes: dev e produção</h2>
+    <p class="slead">Toda mudança nasce no arquivo <code class="hl">-dev</code>, é validada por quem pediu e só então é promovida. As regras de promoção são código, não costume.</p>
+  </div></div>
+
+  <div class="cl">Ciclo de uma mudança</div>
+  <div class="flow">
+    <span class="fb p">branch do agente</span><span class="fa">→</span>
+    <span class="fb">edita só <code>*-dev</code></span><span class="fa">→</span>
+    <span class="fb t">CI + testes</span><span class="fa">→</span>
+    <span class="fb">PR · merge humano</span><span class="fa">→</span>
+    <span class="fb">Pages publica o dev</span><span class="fa">→</span>
+    <span class="fb p">validação explícita de quem pediu</span><span class="fa">→</span>
+    <span class="fb">promover.js → PR de prod</span><span class="fa">→</span>
+    <span class="fb t">tag de release</span>
+  </div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🔀</div><div class="wct">O que muda entre dev e prod</div></div><div class="wcb">Só 4 pontos divergem de propósito, e a promoção os preserva: <b>(a)</b> string de versão e <code class="hl">VERSION_KEY</code>/<code class="hl">FB_OVERRIDE_NS</code>; <b>(b)</b> ícone da aba (<code class="hl">favicon-dev.png</code>); <b>(c)</b> chave de logout remoto (<code class="hl">force_logout_after_dev</code>); <b>(d)</b> módulos compartilhados (<code class="hl">mare-*-dev.js?v=N</code> × <code class="hl">mare-*.js?v=N</code>). A ferramenta <code class="hl">promover.js</code> faz a promoção como merge de 3 vias e <code class="hl">--status</code> lista o que está pendente.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🏷️</div><div class="wct">Rastreabilidade de versão</div></div><div class="wcb">Cada página tem versão visível (<code class="hl">v8.30.871</code>) e chave em <code class="hl">version.json</code>; <code class="hl">scripts/checar.js</code> reprova o PR se uma não bater com a outra. Cada promoção ganha tag anotada (<code class="hl">kanban-v…</code>, <code class="hl">kanban_dev-v…-dev</code>, <code class="hl">painel-v…</code>): 468 tags hoje. "O que está no ar" e "o que mudou entre dois releases" respondem-se com <code class="hl">git</code>.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🗓️</div><div class="wct">Cadência</div></div><div class="wcb"><b>Correção validada sobe na hora; funcionalidade sobe em lote, uma vez por dia.</b> Motivo medido: cada versão nova força todas as abas abertas a recarregar e a reabrir os listeners do banco; 13 promoções em ~40 h geraram os dois dias de maior tráfego do período (~210 MB e ~161 MB, contra 1–2 MB num dia calmo).</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧪</div><div class="wct">Validação por script</div></div><div class="wcb">Toda correção de bug é entregue com um <b>script de teste em português</b> para o console (chama as funções reais da página, só leitura, imprime ✅/❌). No plantão de bugs, quem valida é sempre um ADM — nunca quem reportou, nunca o agente — e o PR de produção só existe depois do "validei".</div></div>
+  </div>
+
+  <div class="note warn"><b>Limite conhecido.</b> Dev e produção usam, em grande parte, <b>o mesmo Realtime Database</b>; só seis nós têm irmão <code class="hl">_dev</code> (<code class="hl">campanhas_log_dev</code>, <code class="hl">dados_diarios_dev</code>, <code class="hl">force_logout_after_dev</code>, <code class="hl">metas_digital_dev</code>, <code class="hl">metas_log_dev</code>, <code class="hl">metas_squads_dev</code>). Por isso a regra operacional é "trate o dado do dev como real", e os testes de interface usam um Firebase falso (<code class="hl">docs/arezzo/testes/fakefb.js</code> + Playwright). O caminho natural é um segundo projeto Firebase para dev — a configuração já aceita override por página, falta decisão e custo (seção 14).</div>
+</section>
+
+<!-- 06 AGENTE ÁGIL -->
+<section class="section" id="agente">
+  <div class="sh"><div class="sn">06</div><div>
+    <div class="stag" style="color:var(--orange)"><span style="background:var(--orange)"></span>Inteligência</div>
+    <h2>Agente Ágil e o consumo de tokens</h2>
+    <p class="slead">Um orquestrador que age no board (comenta, move, edita, cria, pergunta a um humano). O desenho prioriza previsibilidade e custo baixo: o que pode ser decidido por código é decidido por código.</p>
+  </div></div>
+
+  <div class="cl">Como uma tarefa é processada</div>
+  <div class="flow">
+    <span class="fb p">gatilho</span><span class="fa">→</span>
+    <span class="fb">escopo do squad</span><span class="fa">→</span>
+    <span class="fb t">kill switch ligado?</span><span class="fa">→</span>
+    <span class="fb">escolhe o modelo</span><span class="fa">→</span>
+    <span class="fb p">loop ≤ 8 voltas com ferramentas</span><span class="fa">→</span>
+    <span class="fb">escrita pelo código de produção</span><span class="fa">→</span>
+    <span class="fb t">histórico + notificação</span>
+  </div>
+  <p class="wcb" style="margin:.2rem 0 1rem">Gatilhos: <code class="hl">@Agente Ágil</code> num comentário (detectado por <b>substring normalizada, sem LLM</b>), varredura diária de prazos, formulário de intake, botão "Resumo do Agente Ágil" em Meu Dia e o chat do Radar. As escritas usam o mesmo caminho (<code class="hl">buildWritePlan/applyWritePlan</code>) que as automações de produção, então as regras de negócio não são reimplementadas pelo modelo.</p>
+
+  <div class="cl">Mecanismos de economia — e onde conferir cada um</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Mecanismo</th><th>O que faz</th><th>Evidência</th></tr></thead>
+    <tbody>
+      <tr><td>Roteamento de modelo</td><td>Pergunta conceitual curta ("o que é…", "como funciona…", até 20 palavras) vai para o modelo pequeno (Haiku 5.5). O resto usa Sonnet 5.5. O Opus só entra por override manual do ADM, nunca sozinho. Na dúvida, escolhe o mais caro (a direção segura para a qualidade).</td><td><code class="hl">escolheClienteParaTarefa.js</code></td></tr>
+      <tr><td>Prompt caching</td><td>Prompt de sistema + ferramentas (~2,5 mil tokens, medidos) com cache de 1 h, compartilhado entre tarefas diferentes; histórico da tarefa com cache de 5 min. <b>Motivo medido no Console da Anthropic:</b> um acionamento de 6 iterações somou ~50 mil tokens de entrada, todos a preço cheio, porque o histórico inteiro era reenviado a cada volta.</td><td><code class="hl">llmClient.js</code> · <code class="hl">llmClient.test.js</code> (7 cenários) · entrada de 26/08 no arquivo de changelog</td></tr>
+      <tr><td>Teto de voltas</td><td>No máximo 8 idas ao modelo por tarefa; uma cadeia legítima (mover + checklist + comentário) usa 4.</td><td><code class="hl">limits.js</code> (<code class="hl">MAX_ITERATIONS</code>)</td></tr>
+      <tr><td>Kill switch</td><td>Lido do banco a cada acionamento; ausente, inválido ou com erro de leitura = desligado. Pausar o agente não exige deploy.</td><td><code class="hl">limits.js</code> (<code class="hl">isEnabled</code>)</td></tr>
+      <tr><td>Conhecimento sob demanda</td><td>Ajuda, FAQ e novidades (~227 KB em JSON, gerados do código) <b>não</b> entram no prompt: o agente os consulta pela ferramenta <code class="hl">biblioteca_agil</code> só quando a pergunta exige. Embutir cobraria esse custo em toda invocação, inclusive "mover card".</td><td><code class="hl">conhecimento/</code> · decisão registrada no changelog arquivado</td></tr>
+      <tr><td>Código decide, modelo interpreta</td><td>Sinais como "atrasado", "bloqueado", "sem descrição" são calculados por código antes; o modelo só prioriza. <b>Sem cards pendentes não há chamada ao modelo</b> (mensagem fixa, custo zero).</td><td><code class="hl">resumoMeuDia.js</code></td></tr>
+      <tr><td>Limite por pessoa</td><td>Um pedido a cada 2 minutos; o horário é gravado <i>antes</i> da chamada, para barrar o clique duplo enquanto a primeira ainda roda.</td><td><code class="hl">resumoMeuDia.js</code> (<code class="hl">RATE_LIMIT_MS</code>)</td></tr>
+      <tr><td>Escopo por squad</td><td>Menção, varredura de prazos, resumo e análises só funcionam nos squads <code class="hl">dev</code> e <code class="hl">dados</code>; outro squad entra por decisão explícita num único arquivo, com aviso de divergência no log.</td><td><code class="hl">squadScope.js</code></td></tr>
+      <tr><td>Payload grande fora do modelo</td><td>Relatórios HTML (o exemplo real tem ~940 KB) são hospedados por código; o modelo recebe só o link. Pedir ao modelo para "ecoar" 940 KB seria caro, lento e arriscado.</td><td>README do orquestrador (seção de 28/09)</td></tr>
+      <tr><td>Aviso ao usuário</td><td>O card de conversa com o agente avisa que cada mensagem consome tokens pagos e deve ser usada com economia.</td><td>entrada v8.30.480 do changelog arquivado</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🛡️</div><div class="wct">Segurança de comportamento</div></div><div class="wcb">Ferramentas tipadas por esquema Zod; resultado de ferramenta com <code class="hl">ok:false</code> chega ao modelo como erro de verdade (<code class="hl">is_error</code>) — antes o agente afirmava ter feito o que falhou. O agente foi ativado primeiro em <b>modo sombra</b> (plano de escrita sem aplicar), depois com escrita real, squad a squad. Se a API recusar o id de um modelo, repete uma vez com o anterior, em vez de ficar mudo.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🔎</div><div class="wct">O que ainda não medimos bem</div></div><div class="wcb">Este repositório <b>não guarda extrato de custo</b>: a conferência hoje é no Console da Anthropic (tokens de entrada, saída e cache por requisição). O cliente já devolve <code class="hl">usage</code> (inclui <code class="hl">cache_read_input_tokens</code>), mas esse total <b>não é persistido nem exibido no Painel</b>. Agregar por dia/squad no Painel é o próximo passo natural — e daria à TI o número real em vez de uma estimativa.</div></div>
+  </div>
+
+  <div class="cl">Economia também no desenvolvimento com agentes</div>
+  <div class="grid">
+    <div class="card"><div class="ci">🗺️</div><div class="ct">Índice em vez de arquivo</div><div class="cd"><code class="hl">CODE_MAP_FAST.md</code> tem ~7 KB e aponta a linha de cada função; o <code class="hl">kanban-dev.html</code> tem ~2,5 MB. O agente abre a função, não o arquivo.</div></div>
+    <div class="card"><div class="ci">🧠</div><div class="ct">Método em arquivo</div><div class="cd"><code class="hl">GUIA_DE_CODIGO.md</code> e as skills trazem armadilhas e checklists: o agente não redescobre, a cada sessão, o que já custou um bug.</div></div>
+    <div class="card"><div class="ci">🧵</div><div class="ct">Contexto limpo por subagente</div><div class="cd">No Antigravity, cada domínio roda num subagente com contexto próprio; o orquestrador nunca carrega arquivo grande (seção 10).</div></div>
+    <div class="card"><div class="ci">📦</div><div class="ct">Pacote anônimo</div><div class="cd">O plantão entrega ao agente 1 parágrafo sanitizado, não a conversa nem o card inteiro.</div></div>
+  </div>
+</section>
+
+<!-- 07 CLAUDE x ANTIGRAVITY -->
+<section class="section" id="agentes-dev">
+  <div class="sh"><div class="sn">07</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>Inteligência</div>
+    <h2>Claude e Antigravity</h2>
+    <p class="slead">Dois agentes de código com papéis diferentes no mesmo repositório, coordenados por um quadro em arquivo e supervisionados por uma pessoa. Não confundir com o Agente Ágil, que roda em produção.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th></th><th>Claude (Claude Code · Anthropic)</th><th>Antigravity (Google, instalação corporativa)</th></tr></thead>
+    <tbody>
+      <tr><td>Onde roda</td><td>Sessão em contêiner na nuvem com o repositório clonado; sem credencial de deploy.</td><td>Na máquina corporativa do dono, sob a política de aprovação da empresa (comando de terminal pede aprovação; a regra não é contornada).</td></tr>
+      <tr><td>Papel</td><td>Funcionalidades e correções grandes; <code class="hl">functions/</code>; regras do banco; módulos compartilhados (<code class="hl">mare-*.js</code>); segurança, migração, custo do Firebase; auditoria de área inteira.</td><td>Monitoramento diário; correções localizadas (1 página); textos, ajuda, dicas, documentação; promoções rotineiras via <code class="hl">promover.js</code>.</td></tr>
+      <tr><td>Quando escala</td><td>—</td><td>Achou algo grande durante tarefa pequena: para, registra no quadro com como reproduzir e segue com o resto. "Na dúvida, pergunta ou escala — nunca tenta e vê."</td></tr>
+      <tr><td>Rotina</td><td>Revisa o que o outro fez (auditoria de 16/10).</td><td>Checklist diário: testes, sintaxe das 13 páginas, <code class="hl">promover.js --status</code>, coerência de versões.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">📋</div><div class="wct">Como não pisam um no outro</div></div><div class="wcb"><b>Quadro</b> em <code class="hl">docs/COORDENACAO_AGENTES.md</code> (em andamento · escalado · pendente de deploy). <b>Regra de ouro permanente</b>: antes de qualquer tarefa, rodar <code class="hl">/seatualizar</code> — ler quadro, <code class="hl">version.json</code>, topo do changelog e dos bugs, últimos commits. <b>Autoria</b>: todo commit leva o trailer <code class="hl">Agent: claude</code> ou <code class="hl">Agent: antigravity</code> (os dois usam a mesma identidade git; hoje a <code class="hl">main</code> tem 26 commits com trailer do Claude e 15 do Antigravity). Branches <code class="hl">claude/…</code> e <code class="hl">antigravity/…</code>. Arquivo declarado no quadro não é editado pelo outro até o PR sair.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧑‍✈️</div><div class="wct">O humano no circuito</div></div><div class="wcb">O dono decide prioridade, valida em dev, <b>faz o merge de todo PR</b> e roda todo deploy de backend. Pela regra, os agentes nunca fazem merge, nunca dão <code class="hl">push --force</code> em branch alheia e têm seis "linhas vermelhas" (<code class="hl">AGENTS.md</code>): não contornar controle corporativo, não criar automação que reage a texto de terceiros, não mover dado de pessoa para fora do Firebase, não entregar bug sem script de teste, não ir a produção sem validação do ADM, não expor segredo.</div></div>
+  </div>
+
+  <div class="cl">Uma auditoria cruzada de verdade (16/10)</div>
+  <p class="wcb" style="margin-bottom:.6rem">O Claude revisou ~46 commits (20+ PRs) do Antigravity em 36 horas. Achados e o que virou controle permanente:</p>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Achado</th><th>Virou</th></tr></thead>
+    <tbody>
+      <tr><td>A <code class="hl">main</code> ficou vermelha sem ninguém ver (teste do conhecimento do Agente Ágil).</td><td>CI em todo PR e todo push (<code class="hl">.github/workflows/checks.yml</code>).</td></tr>
+      <tr><td>Documentação citava arquivos e versões que não existem (<code class="hl">radar.html</code>, <code class="hl">maredigital-dev.html</code>).</td><td>Regra "nome de arquivo e versão só depois de <code class="hl">ls</code>/<code class="hl">grep</code>" + checagem automática de referências em <code class="hl">checar.js</code>.</td></tr>
+      <tr><td>Permissão só na tela: qualquer conta do domínio editava o que a interface dizia ser "só do autor".</td><td>Regras do banco por filho + teste que falha quando um nó novo nasce sem regra; armadilha nº 9.</td></tr>
+      <tr><td>Três cópias do processo de release já divergindo.</td><td><code class="hl">CLAUDE.md</code> é a fonte única; <code class="hl">AGENTS.md</code> só guarda o específico do Antigravity.</td></tr>
+      <tr><td>Ferramenta de log inseria entradas no lugar errado e sem data.</td><td>Corrigida; formato <code class="hl">AAAA-MM-DD · arquivo (versão) — título</code> exigido.</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 08 GITHUB -->
+<section class="section" id="github">
+  <div class="sh"><div class="sn">08</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>Processo</div>
+    <h2>GitHub: promoção de PR, auditoria e regras de ouro</h2>
+    <p class="slead">O repositório é a trilha de auditoria. Quem mudou, por quê, quem aprovou e o que foi testado se reconstroem sem perguntar a ninguém.</p>
+  </div></div>
+
+  <div class="cl">Política de Pull Request</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Regra</th><th>Como é garantida</th></tr></thead>
+    <tbody>
+      <tr><td>Nada vai direto para <code class="hl">main</code>. Um PR = um assunto.</td><td>Convenção de branch por agente; a publicação (Pages) só acontece no push em <code class="hl">main</code>, ou seja, só depois do merge.</td></tr>
+      <tr><td>Ninguém aprova o próprio PR; o merge é humano.</td><td>Regra registrada em <code class="hl">CLAUDE.md</code>, <code class="hl">AGENTS.md</code> e no quadro de coordenação. Proteção de branch no GitHub (aprovação obrigatória, sem push direto) é o complemento técnico a confirmar com a TI (seção 14).</td></tr>
+      <tr><td>CI verde antes do merge.</td><td><code class="hl">checks.yml</code> em PR e push: <code class="hl">node scripts/checar.js</code> (JSON válidos, versão × HTML, sintaxe das 13 páginas, linhas vermelhas dos workflows, referências nas docs) + <code class="hl">npm test</code> em <code class="hl">functions/</code> (899 testes, incluindo as regras do banco).</td></tr>
+      <tr><td>Dev primeiro, validação explícita, só depois prod.</td><td>Seção 05; a promoção é um PR separado e rastreável.</td></tr>
+      <tr><td>Autoria legível e histórico dividido.</td><td>Trailer <code class="hl">Agent:</code> em todo commit. <code class="hl">CHANGELOG.md</code> = funcionalidades e entregas estruturais; <code class="hl">BUGS_E_CORRECOES.md</code> = bugs, correções e achados de auditoria (com data, arquivo e versão reais).</td></tr>
+      <tr><td>Backend e regras: deploy fora do GitHub.</td><td>Documentado como "pendente de deploy" no quadro; só o dono executa, com a conta corporativa.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cl">Regras de ouro (armadilhas que já custaram bug)</div>
+  <p class="wcb" style="margin-bottom:.6rem">Ficam em <code class="hl">BUGS_E_CORRECOES.md</code>, são lidas antes de mexer em código compartilhado, e cada uma nasceu de um incidente. Dez estão numeradas; estas ilustram o tipo:</p>
+  <div class="grid g2">
+    <div class="wc"><div class="wcb"><b>Comentários:</b> <code class="hl">ts</code> é sempre string ISO. Um número quebra a ordenação (<code class="hl">localeCompare</code>) e some com <i>todos</i> os comentários do card.</div></div>
+    <div class="wc"><div class="wcb"><b>Dois mundos de script:</b> o SDK vive num módulo ES; funções chamadas fora dele precisam do alias <code class="hl">window._x</code>, senão dão <code class="hl">ReferenceError</code> silencioso — foi a causa de uma leitura que baixava ~181 MB/30 dias sem filtro.</div></div>
+    <div class="wc"><div class="wcb"><b>Isolamento dev/prod no navegador:</b> chaves de override de configuração levam sufixo por página; sem isso um ajuste salvo no <code class="hl">-dev</code> vazava para produção (mesmo domínio).</div></div>
+    <div class="wc"><div class="wcb"><b>Inspeção SSL corporativa:</b> o SDK do Firebase do Maré é servido de <code class="hl">vendor/firebase-10.14.1</code> porque o firewall truncava o bundle vindo do CDN do Google.</div></div>
+    <div class="wc"><div class="wcb"><b>Iniciais de usuário</b> sempre por transação atômica — duas pessoas se cadastrando juntas não podem receber a mesma sigla.</div></div>
+    <div class="wc"><div class="wcb"><b>Permissão só na tela não é permissão</b>; <b>nó novo exige regra</b> e deploy das regras; <b>card criado fora do Maré</b> precisa respeitar o contrato de campos (<code class="hl">priority</code>, <code class="hl">created</code>, <code class="hl">history</code>, <code class="hl">flow</code>), com teste de contrato.</div></div>
+  </div>
+
+  <div class="note"><b>Prova de processo sob restrição — o Plantão de Bugs.</b> Em 16/10 a ausência planejada do responsável (até 03/11) obrigou a provar o fluxo sem ele: pessoa reporta no Oceano → ficha e card no squad Dados → o Antigravity busca o bug por URL a cada ~30 min (função <code class="hl">plantaoProximo</code>, só pacote anônimo) → abre PR de dev com script de teste → um ADM (nunca quem reportou) roda o script e valida → PR de produção. Detalhe: <code class="hl">docs/PLANTAO_BUGS.md</code>. Os bugs de teste foram plantados de propósito em dev e em prod para verificar o ciclo.</div>
+</section>
+
+<!-- 09 SKILLS -->
+<section class="section" id="skills">
+  <div class="sh"><div class="sn">09</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Inteligência</div>
+    <h2>Skills dos agentes</h2>
+    <p class="slead">Uma skill é um procedimento escrito, versionado e reutilizável. Elas guardam o método e a memória do projeto fora da cabeça de qualquer pessoa — ou agente.</p>
+  </div></div>
+
+  <p class="wcb" style="margin-bottom:.6rem">As 10 skills vivem em <code class="hl">.claude/skills/</code>. O Antigravity aponta para a <b>mesma pasta</b> (<code class="hl">.agents/skills.json</code>), então os dois agentes seguem o mesmo procedimento — uma fonte, não duas cópias que divergem.</p>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Skill</th><th>O que faz</th><th>Trava / saída</th></tr></thead>
+    <tbody>
+      <tr><td>/seatualizar</td><td>Põe o agente em dia com o que o outro e o dono mudaram antes de começar. Regra permanente.</td><td>Resumo do quadro, versões, últimos commits.</td></tr>
+      <tr><td>/subirproprod</td><td>Promove o que foi validado de dev para produção em minutos, preservando as linhas só de prod.</td><td>Checagens de sintaxe, tag, aviso ao usuário, log no card do Firebase.</td></tr>
+      <tr><td>/monitorarbugs</td><td>Auditoria de uma área de código como um engenheiro de arquitetura: compara caminhos paralelos, confronta comentário × código, caça código morto.</td><td>Sempre termina com script de teste de console em português. ~3 mil linhas, com o histórico de achados reais para não repetir análise.</td></tr>
+      <tr><td>/plantaobug</td><td>Conserta <b>um</b> bug a partir do pacote anônimo; edita só o <code class="hl">-dev</code> indicado.</td><td>Fora do escopo → responde "ESCALAR AO CLAUDE". Sem script de teste não entrega.</td></tr>
+      <tr><td>/atualizardocumentacoes</td><td>Sincroniza as 7 camadas de documentação (changelog, bugs, mapa de código, <code class="hl">maredigital.html</code>, ajuda do Maré, ajuda/guia do Radar, FAQ do Oceano, conhecimento do Agente Ágil).</td><td>Fecha com <code class="hl">checar.js</code>.</td></tr>
+      <tr><td>/atualizarcodemap</td><td>Revalida cada âncora do mapa de código e acha áreas novas sem seção.</td><td>Rodapé com o commit; histórico de 12+ rodadas.</td></tr>
+      <tr><td>/atualizarhelpcontent</td><td>Mantém a Central de Ajuda in-app igual ao comportamento real.</td><td>Checa também o texto inline da tela.</td></tr>
+      <tr><td>/otimizaçãoderotina</td><td>Bytes de página, performance mobile e — o que mais pesa — leitura do Firebase (query filtrada de verdade ou baixa a árvore?).</td><td>Nunca minifica nem quebra a arquitetura sem aprovação.</td></tr>
+      <tr><td>/resumosemanal · /gerarokr</td><td>Resumo da semana para a reunião da squad; prompt dos slides de planejamento estratégico.</td><td>Leem changelog <b>e</b> bugs.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note"><b>Por que isso interessa à TI:</b> o conhecimento de operação não depende de uma sessão nem de uma pessoa. Quem assumir o projeto — ou um terceiro agente — recebe o mesmo método, as mesmas travas e o histórico de erros já cometidos.</div>
+</section>
+
+<!-- 10 SUBAGENTES -->
+<section class="section" id="subagentes">
+  <div class="sh"><div class="sn">10</div><div>
+    <div class="stag" style="color:var(--purple)"><span style="background:var(--purple)"></span>Inteligência</div>
+    <h2>Subagentes no Antigravity</h2>
+    <p class="slead">O agente principal vira orquestrador e delega leitura e edição a especialistas por produto, em paralelo, cada um com contexto limpo.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Subagente</th><th>Domínio</th></tr></thead>
+    <tbody>
+      <tr><td>agente-mare</td><td><code class="hl">kanban(-dev).html</code>, <code class="hl">intake</code>, <code class="hl">escala</code></td></tr>
+      <tr><td>agente-radar</td><td><code class="hl">okr(-dev).html</code>, apresentação, <code class="hl">guia-okr.html</code></td></tr>
+      <tr><td>agente-painel-oceano</td><td><code class="hl">painel</code>, <code class="hl">oceano</code> e os módulos compartilhados</td></tr>
+      <tr><td>agente-functions-docs</td><td><code class="hl">functions/</code> + testes, regras do banco, versões, changelog, bugs, mapa de código, documentação técnica</td></tr>
+      <tr><td>agente-logs-testes</td><td>Gera scripts de console: log de card no Firebase e testes só de leitura para validar bugs e funcionalidades</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">⚙️</div><div class="wct">Regras do orquestrador</div></div><div class="wcb">O agente principal <b>nunca</b> lê nem edita arquivo grande na conversa principal: alinha o pedido com o usuário, dispara os subagentes necessários numa única chamada paralela e, no fim, executa <b>um único comando agrupado</b> (teste + branch + commit + push + PR). Subagentes não usam terminal — só leitura/edição de arquivo — e consultam o índice de código e o histórico de bugs antes de abrir qualquer arquivo.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🏢</div><div class="wct">Compatível com a política corporativa</div></div><div class="wcb">O comando único agrupado existe porque o Antigravity corporativo exige aprovação a cada comando de terminal: reduzir o número de aprovações é o desenho; contornar a aprovação é proibido (linha vermelha nº 1). Leitura/edição de arquivos e busca por URL rodam sem pedir aprovação — é isso que viabiliza o modo automático do plantão.</div></div>
+  </div>
+  <p class="wcb"><b>Observação de rastreabilidade:</b> os subagentes são definidos na sessão do Antigravity; o repositório guarda o <i>contrato</i> deles (escopo, regras, ferramentas) em <code class="hl">AGENTS.md</code>, não um arquivo executável por subagente.</p>
+</section>
+
+<!-- 11 SQUADS -->
+<section class="section" id="squads">
+  <div class="sh"><div class="sn">11</div><div>
+    <div class="stag" style="color:var(--accent)"><span style="background:var(--accent)"></span>Produto</div>
+    <h2>Personalização das squads no Maré Digital</h2>
+    <p class="slead">Um único deployment atende N squads (<code class="hl">?squad=id</code>), cada uma com dados isolados e configuração própria — e cada pessoa ainda ajusta o seu jeito de trabalhar. Quatro camadas, da mais ampla à mais pessoal.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Camada</th><th>O que se personaliza</th><th>Quem · onde persiste</th></tr></thead>
+    <tbody>
+      <tr><td>1 · A squad existe</td><td>Criação de squads pelo Painel (Board Setup), sem deploy. Dados isolados em <code class="hl">kanban/squads/{id}</code>; acesso por associação validada nas regras do banco. Redirecionamento de nomes antigos preserva favoritos.</td><td>ADM · banco</td></tr>
+      <tr><td>2 · Estrutura do fluxo</td><td><b>Colunas</b> editáveis e coluna de impedimento (ou impedimento por tag); <b>tags e grupos</b>; <b>subtimes</b>; <b>WIP</b> por coluna; <b>sprint</b>, objetivo e retrospectiva; <b>campos obrigatórios</b> (prazo, tamanho, demandante); <b>Ficha Técnica</b> de produção criativa e <b>Controle de Criativos</b> (liga por squad).</td><td>PO/ADM da squad · config da squad</td></tr>
+      <tr><td>3 · Regras e domínio</td><td><b>Automações</b> estilo Butler (gatilho → condição → ação, com receitas prontas); <b>modelos</b>, <b>recorrentes</b> e <b>agendamentos</b>; <b>supercards</b> com receitas de desdobramento; <b>campos de domínio</b> como Submarca (squad Site: 11 tags) e Canal de venda (squad Marketplace: 14 tags); botões exclusivos (o Cardume Criativo só na Mídia Criativa); <b>metas e desafios</b> por squad; <b>escala</b>; <b>agendas Google</b>; campos do <b>formulário de intake</b> por squad; <b>Agente Ágil</b> ligado squad a squad.</td><td>PO/Organizador/ADM · config da squad</td></tr>
+      <tr><td>4 · Pessoa</td><td>Atalhos de teclado (24 ações), ordem da barra de ferramentas, presets de filtro, raia, densidade e fonte, visão inicial, squad padrão, temas (Abrolhos, Lençóis Maranhenses, Vice City e automático), peixinhos, Não Perturbe. Sugestões baseadas em rotina (5 casos) — <b>nunca aplicadas sozinhas</b>.</td><td>A própria pessoa · <code class="hl">usuarios/{uid}/…</code>, sincronizado entre computadores</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🎭</div><div class="wct">Papéis</div></div><div class="wcb">Papel <b>por squad</b> (<code class="hl">squads_roles</code>): PO, Organizador, Membro, mais ADM global, Gestor OKR e visualizador externo (só leitura). Cada ação diz quem pode; as regras do banco repetem as que importam.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧭</div><div class="wct">Princípio das sugestões</div></div><div class="wcb">O app observa o uso (<b>só no navegador</b>, em <code class="hl">localStorage</code>; nada vai ao Firebase), e quando um padrão se repete de verdade sugere uma preferência. Sempre três respostas — aceitar, agora não, não sugerir mais —, um cartão por vez, sem mudar a interface sem clique.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🧱</div><div class="wct">Padrão de implementação</div></div><div class="wcb">Recurso por squad = interruptor na configuração + dados dedicados + filtro dedicado, reaproveitando um desenho já resolvido (Submarca → Canal de venda foi feito "na mesma pegada"). Novo squad não exige código se usar o que já existe.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">📚</div><div class="wct">Ajuda no próprio produto</div></div><div class="wcb">Central de Ajuda (Ctrl+K) com dezenas de tópicos de Configuração, dicas contextuais (1 por dia) e o Agente Ágil, que responde a partir da mesma documentação regenerada do código — a documentação não envelhece à parte.</div></div>
+  </div>
+</section>
+
+<!-- 12 OPERAÇÃO -->
+<section class="section" id="operacao">
+  <div class="sh"><div class="sn">12</div><div>
+    <div class="stag" style="color:var(--warn)"><span style="background:var(--warn)"></span>Processo</div>
+    <h2>Operação e observabilidade</h2>
+    <p class="slead">O que roda sozinho, o que avisa, e o que ainda depende de olhar.</p>
+  </div></div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Função</th><th>Frequência</th><th>O que faz</th></tr></thead>
+    <tbody>
+      <tr><td>vtexStatus · githubStatus · firebaseStatus</td><td>a cada 5 min</td><td>Leem os feeds de status da VTEX, do GitHub (com foco em Pages) e do Firebase; abrem/fecham sozinhos um Comunicado no Mural e notificam. A aba Status do Painel mostra os três.</td></tr>
+      <tr><td>backupVigia</td><td>diária</td><td>Confere se os backups rodaram; avisa os ADMs se falhou.</td></tr>
+      <tr><td>plantaoVigia</td><td>de 3 em 3 h (08–20 h)</td><td>Avisa os ADMs de bug parado ou sem busca do Antigravity.</td></tr>
+      <tr><td>metasLembretes</td><td>a cada 15 min (horário de Brasília)</td><td>Lembretes de preenchimento de meta, com presets.</td></tr>
+      <tr><td>agenteAgilDueOverdueScan</td><td>diária</td><td>Varredura de prazos que vencem/venceram; sem LLM para decidir quem avisar.</td></tr>
+      <tr><td>okrDailyScan · okrWeeklySnapshot</td><td>diária · semanal</td><td>Recalcula status dos marcos; fotografia semanal para o histórico do Radar.</td></tr>
+    </tbody>
+  </table></div>
+  <div class="grid g2">
+    <div class="wc"><div class="wch"><div class="wci">🔔</div><div class="wct">Central de Notificações</div></div><div class="wcb">Catálogo de todos os tipos (<code class="hl">MareNotif.TIPOS</code>), interruptor de sino e de push por tipo, lista de quem está em Não Perturbe. Tipo novo = uma entrada no catálogo e, se for virar push, inclusão na lista permitida da função.</div></div>
+    <div class="wc"><div class="wch"><div class="wci">🪵</div><div class="wct">Auditoria no produto</div></div><div class="wcb">Histórico por card (quem, o quê, quando), histórico das ações do agente, registro de erros no banco, log de metas, e o log de cada promoção como comentário no card do Firebase.</div></div>
+  </div>
+  <div class="note warn"><b>Lacuna de observabilidade.</b> Hoje os alertas chegam como notificações no próprio produto; não há integração com a ferramenta de monitoramento da TI, nem painel de custo de nuvem consolidado. Isso entra na pauta de internalização.</div>
+</section>
+
+<!-- 13 DEPENDÊNCIAS E RISCOS -->
+<section class="section" id="riscos">
+  <div class="sh"><div class="sn">13</div><div>
+    <div class="stag" style="color:var(--danger)"><span style="background:var(--danger)"></span>Decisão</div>
+    <h2>Dependências externas e riscos conhecidos</h2>
+    <p class="slead">Inventário do que o ecossistema usa fora do controle direto, e o que acontece se faltar.</p>
+  </div></div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Dependência</th><th>Para quê</th><th>Se faltar</th><th>Mitigação / situação</th></tr></thead>
+    <tbody>
+      <tr><td>GitHub (repositório, Actions, Pages)</td><td>Código, CI, hospedagem</td><td>As páginas saem do ar; dados e funções continuam.</td><td>Monitor de status. Pages só serve arquivos: qualquer servidor web serve o mesmo conteúdo.</td></tr>
+      <tr><td>Firebase / Google Cloud</td><td>Dados, login, push, backend</td><td>Tudo para.</td><td>Monitor de status; backups diários/semanais em Cloud Storage; regras e funções versionadas.</td></tr>
+      <tr><td>API da Anthropic</td><td>Agente Ágil</td><td>O agente fica mudo; o board continua normal.</td><td>Kill switch, fallback de modelo, uso restrito a 2 squads.</td></tr>
+      <tr><td>CDN <code class="hl">gstatic.com</code> (SDK do Firebase)</td><td>Carregar o SDK</td><td>A página não inicia.</td><td><b>Só o Maré usa cópia local</b> (<code class="hl">vendor/</code>). Painel, Radar, Oceano, Escala e Intake ainda carregam do CDN. Estender a cópia local é trabalho pequeno.</td></tr>
+      <tr><td>Calendar API · Looker Studio</td><td>Agendas e painéis</td><td>Só esses recursos.</td><td>Leitura; falha isolada.</td></tr>
+      <tr><td>Google Fonts · People API</td><td>Tipografia · foto</td><td>Fonte genérica · sem foto.</td><td>Degradação visual apenas.</td></tr>
+      <tr><td>Spotify · EmailJS</td><td>Rádio do Maré · backup por e-mail</td><td>Recurso opcional.</td><td>Spotify: sincronização agendada desligada. EmailJS: legado, configurável por squad.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cl">Riscos do desenho atual</div>
+  <div class="sg">
+    <div class="si"><span class="bdg" style="background:rgba(255,107,107,.14);color:var(--danger);border:1px solid rgba(255,107,107,.3)">alto</span><div class="si-t">Concentração em uma pessoa</div><div class="si-d">Titularidade do projeto Google, deploy de backend e merge dependem de uma conta. É o risco que a internalização resolve melhor.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Banco compartilhado entre dev e prod</div><div class="si-d">Mitigado por regra operacional e teste com Firebase falso; a correção estrutural é um projeto Firebase separado para dev.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Páginas monolíticas</div><div class="si-d">O Maré tem ~2,5 MB num arquivo. Funciona e é auditável, mas a leitura exige o índice de código. Partir em módulos é possível, e é decisão de arquitetura, não de urgência.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(255,209,102,.12);color:var(--warn);border:1px solid rgba(255,209,102,.3)">médio</span><div class="si-t">Custo de IA sem painel</div><div class="si-d">Há tetos e roteamento, mas o total consumido só se vê no console do fornecedor (seção 06).</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Regras do banco espelhadas à mão</div><div class="si-d"><code class="hl">database.rules.json</code> espelha o console; edição direta no console deixa o arquivo velho até alguém copiar de volta. Vale diff periódico, ou publicar sempre pelo repositório.</div></div>
+    <div class="si"><span class="bdg" style="background:rgba(56,182,255,.12);color:var(--accent);border:1px solid rgba(56,182,255,.3)">baixo</span><div class="si-t">Deploy de funções manual</div><div class="si-d">É também uma trava de segurança (por regra, agentes não implantam). Com um pipeline aprovado pela TI, pode virar CI com aprovação humana.</div></div>
+  </div>
+</section>
+
+<!-- 14 INTERNALIZAÇÃO -->
+<section class="section" id="internalizacao">
+  <div class="sh"><div class="sn">14</div><div>
+    <div class="stag" style="color:var(--teal)"><span style="background:var(--teal)"></span>Decisão</div>
+    <h2>Caminho de internalização e decisões em aberto</h2>
+    <p class="slead">O que já está pronto para a TI assumir, o que depende de decisão conjunta, e como conferir tudo sem confiar em nós.</p>
+  </div></div>
+
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Componente</th><th>Hoje</th><th>Para a TI assumir</th><th>Esforço (estimativa do time)</th></tr></thead>
+    <tbody>
+      <tr><td>Hospedagem das páginas</td><td>GitHub Pages</td><td>Qualquer servidor web ou CDN interno: a raiz do repositório é o site. Sem build, sem runtime.</td><td>Baixo</td></tr>
+      <tr><td>Identidade</td><td>Google Workspace da empresa</td><td>Já corporativa. Definir papéis IAM por função e revisão periódica de acessos.</td><td>Baixo</td></tr>
+      <tr><td>Projeto Google Cloud</td><td>Titularidade na conta de uma pessoa</td><td>Mover para a organização/pasta da empresa, faturamento corporativo, segundo administrador.</td><td>Baixo–médio</td></tr>
+      <tr><td>Banco e regras</td><td>Realtime Database + 389 linhas de regras testadas</td><td>Manter no Firebase sob a organização; trocar de banco exigiria reescrever as regras (lógica específica do RTDB) e o acesso em tempo real.</td><td>Baixo (manter) · alto (trocar)</td></tr>
+      <tr><td>Backend</td><td>35 funções Node 20, deploy manual</td><td>Pipeline de deploy da TI (com aprovação humana), contas de serviço, logs no padrão da casa. O código é Node padrão; só os gatilhos de banco são específicos do Firebase.</td><td>Médio</td></tr>
+      <tr><td>CI/CD</td><td>GitHub Actions</td><td>Manter, ou espelhar <code class="hl">checar.js</code> + <code class="hl">npm test</code> na ferramenta da TI — ambos rodam em qualquer shell com Node 20.</td><td>Baixo</td></tr>
+      <tr><td>IA em produção</td><td>Chave Anthropic no Secret Manager</td><td>Contrato e termos de dados sob gestão da TI; opção de passar por gateway/proxy interno; painel de consumo.</td><td>Médio</td></tr>
+      <tr><td>Agentes de código</td><td>Claude Code + Antigravity corporativo</td><td>Definir política de uso (que dados entram em prompt), escopo de permissões e retenção de logs. As linhas vermelhas já documentadas são um ponto de partida.</td><td>Médio</td></tr>
+      <tr><td>Dev separado</td><td>Mesmo banco para dev e prod</td><td>Segundo projeto Firebase para dev e cópia periódica de dados anonimizados.</td><td>Médio</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="cl">Perguntas para a reunião</div>
+  <div class="grid g2">
+    <div class="wc"><div class="wcb">1. Em qual organização/pasta do Google Cloud o projeto deve morar, e quem são os administradores?</div></div>
+    <div class="wc"><div class="wcb">2. A empresa aceita os termos de tratamento de dados da API da Anthropic para conteúdo de cards? Prefere um gateway interno?</div></div>
+    <div class="wc"><div class="wcb">3. Que política vale para agentes de código (Claude Code, Antigravity): quais dados podem entrar em prompt e como registrar o uso?</div></div>
+    <div class="wc"><div class="wcb">4. Dev em projeto separado: a TI provisiona e define a cópia de dados?</div></div>
+    <div class="wc"><div class="wcb">5. Há padrão de logs/alertas e de gestão de segredos com o qual as funções devem se integrar?</div></div>
+    <div class="wc"><div class="wcb">6. O DPO valida o inventário de dados pessoais (seção 04) e define retenção?</div></div>
+    <div class="wc"><div class="wcb">7. A TI ativa proteção de branch na <code class="hl">main</code> (aprovação obrigatória, sem push direto) e separa a credencial de deploy da máquina onde o agente roda?</div></div>
+    <div class="wc"><div class="wcb">8. Quem é o segundo responsável técnico, para o ecossistema não depender de uma pessoa?</div></div>
+  </div>
+
+  <div class="cl" id="auditar">Como conferir sozinho (15 minutos)</div>
+  <div class="code"><span class="cm"># 1 · clonar e rodar as verificações (Node 20)</span>
+git clone https://github.com/caiosoares1899/hering &amp;&amp; cd hering
+node scripts/checar.js                     <span class="cm"># JSON, versões × HTML, sintaxe das 13 páginas, workflows, referências</span>
+cd functions &amp;&amp; npm ci &amp;&amp; npm test        <span class="cm"># 899 testes, inclui as regras do banco</span>
+
+<span class="cm"># 2 · o que está pendente de promoção, e a lista de funções</span>
+node .claude/skills/subirproprod/promover.js --status
+grep -n "^exports\." functions/index.js    <span class="cm"># 35 funções exportadas</span>
+
+<span class="cm"># 3 · segurança: regras e quem não pode o quê</span>
+less database.rules.json                   <span class="cm"># 389 linhas</span>
+ls functions/rules/__tests__               <span class="cm"># testes das regras</span>
+
+<span class="cm"># 4 · processo e trilha de auditoria</span>
+git log --format='%h %an %s%n%b' | grep -E '^Agent:'   <span class="cm"># autoria por agente</span>
+git tag | wc -l                                        <span class="cm"># tags de release</span>
+less docs/COORDENACAO_AGENTES.md AGENTS.md CLAUDE.md   <span class="cm"># quadro, linhas vermelhas, release</span></div>
+
+  <div class="cl">Onde está cada documento</div>
+  <div class="tbl-wrap"><table class="tbl prose">
+    <thead><tr><th>Para saber…</th><th>Leia</th></tr></thead>
+    <tbody>
+      <tr><td>Regras do projeto e processo de release</td><td><code class="hl">CLAUDE.md</code> (fonte única) · <code class="hl">AGENTS.md</code> (o que é só do Antigravity)</td></tr>
+      <tr><td>Divisão de trabalho e quadro</td><td><code class="hl">docs/COORDENACAO_AGENTES.md</code></td></tr>
+      <tr><td>Como o código é e onde costuma quebrar</td><td><code class="hl">docs/GUIA_DE_CODIGO.md</code> · <code class="hl">BUGS_E_CORRECOES.md</code></td></tr>
+      <tr><td>Mapa de funções por área</td><td><code class="hl">CODE_MAP.md</code> · <code class="hl">CODE_MAP_FAST.md</code></td></tr>
+      <tr><td>O que foi entregue e quando</td><td><code class="hl">CHANGELOG.md</code> · <code class="hl">docs/changelog-archive-2026-07-a-09.md</code></td></tr>
+      <tr><td>Plantão de bugs</td><td><code class="hl">docs/PLANTAO_BUGS.md</code></td></tr>
+      <tr><td>Família Oceano</td><td><code class="hl">docs/OCEANO.md</code> · <code class="hl">docs/arezzo/MARE_SO_HERING.md</code></td></tr>
+      <tr><td>Agente Ágil (decisões, etapas, testes)</td><td><code class="hl">functions/agente-agil-orquestrador/README.md</code></td></tr>
+      <tr><td>Marca e design</td><td><code class="hl">MARINE_GLASS.md</code></td></tr>
+      <tr><td>Detalhe funcional do Maré Digital</td><td><a class="elink" href="maredigital.html">maredigital.html</a></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<div class="div"></div>
+<footer class="footer">
+  <span>🌊 Oceano · Ecossistema de gestão · Digital Hering · Grupo Azzas 2154</span>
+  <span>Retrato de 16/10/2026 · mantido por <code class="hl">/atualizardocumentacoes</code></span>
+</footer>
+
+</main>
+</div>
+
+<script>
+const bw=document.getElementById('bubbles');
+for(let i=0;i<14;i++){const b=document.createElement('div');b.className='bubble';const sz=3+Math.random()*16;b.style.cssText=`width:${sz}px;height:${sz}px;left:${Math.random()*100}%;animation-duration:${10+Math.random()*20}s;animation-delay:-${Math.random()*20}s;`;bw.appendChild(b);}
+
+const obs=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('visible');});},{threshold:.06});
+document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+
+function goTo(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth',block:'start'});toggleMenu(false);}
+
+const menuToggle=document.getElementById('menu-toggle');
+const sidebarEl=document.getElementById('sidebar');
+const backdrop=document.getElementById('sidebar-backdrop');
+function toggleMenu(force){
+  const open = force!==undefined ? force : !sidebarEl.classList.contains('open');
+  sidebarEl.classList.toggle('open',open);
+  backdrop.classList.toggle('show',open);
+  menuToggle.classList.toggle('open',open);
+  document.body.classList.toggle('menu-open',open);
+}
+
+const nls=document.querySelectorAll('.nl');
+document.querySelectorAll('.section').forEach(s=>{
+  new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){
+    nls.forEach(l=>l.classList.remove('active'));
+    const a=Array.from(nls).find(l=>(l.getAttribute('onclick')||'').includes("'"+e.target.id+"'"));
+    if(a){a.classList.add('active');a.scrollIntoView({block:'nearest'});}
+  }});},{threshold:.28}).observe(s);
+});
+</script>
+</body>
+</html>

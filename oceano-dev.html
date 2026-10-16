@@ -646,7 +646,8 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
     <h3 class="sub-h">No ar agora</h3>
     <div class="vidro" style="padding:6px 6px 0;margin-bottom:16px;overflow:auto;"><table class="vers" id="vers"><thead><tr><th>Produto</th><th>Produção</th><th>Em teste (dev)</th></tr></thead><tbody><tr><td colspan="3" style="color:var(--txt3);">Conferindo as versões…</td></tr></tbody></table></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn pri" type="button" data-doc="maredigital.html">Documentação técnica completa</button>
+      <button class="btn pri" type="button" data-doc="ecossistema.html">Ecossistema de gestão (visão para a TI)</button>
+      <button class="btn" type="button" data-doc="maredigital.html">Detalhe do Maré Digital</button>
       <button class="btn" type="button" data-doc="guia-okr.html">Guia do Radar</button>
     </div>
   </section>
@@ -756,7 +757,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.50 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.51 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2399,8 +2400,8 @@ document.addEventListener('click', e=>{
   const mc = e.target.closest('a.marca'); if(mc){ e.preventDefault(); if(host.atual) voltarLobby(); irAba('inicio'); return; }
   const dc = e.target.closest('[data-doc]'); if(dc){ const h = dc.dataset.doc; if(abrirAqui()){ mostrarDocumento(h); } else window.open(h,'_blank','noopener'); return; }
 });
-// documentos (maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
-const DOCS = {'maredigital.html':{id:'doc-mare', nome:'Documentação', img:'favicon.png'}, 'guia-okr.html':{id:'doc-guia', nome:'Guia do Radar', img:'favicon-radar.png?v=2'}};
+// documentos (ecossistema.html, maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
+const DOCS = {'ecossistema.html':{id:'doc-eco', nome:'Ecossistema', img:'favicon.png'}, 'maredigital.html':{id:'doc-mare', nome:'Documentação', img:'favicon.png'}, 'guia-okr.html':{id:'doc-guia', nome:'Guia do Radar', img:'favicon-radar.png?v=2'}};
 function mostrarDocumento(h){
   const d = DOCS[h]; if(!d){ window.open(h,'_blank','noopener'); return; }
   if(!APP(d.id)) EXTRA.push({id:d.id, nome:d.nome, href:h, img:d.img, sub:'', pt:''});
