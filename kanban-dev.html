@@ -6560,7 +6560,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.871-dev</div>
+<div class="version">v8.30.872-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12301,7 +12301,7 @@ function getDue(due, isDone, paused){
     if(paused) return {cls:'due-ok',lbl};
     return {cls:'due-late',lbl:`⚠ ${_diasUteisEntre(d,today)}d atrasado`};
   }
-  if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
+  if(diff===1) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
 // (2026-10-16) Math.round para alinhar com renderCL() no modal (2/3 = 67%, não 66%).
