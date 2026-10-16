@@ -24,6 +24,12 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 👻 Projeção nas metas (`mare-metas-dev.js` v15 · kanban v8.30.871 · painel v5.77 · oceano v1.49)
+
+- Pedido do Rafael: além do esperado (tique branco) e do realizado (arco), as metas ganham a PROJEÇÃO — onde a meta termina se o ritmo continuar. Conta = realizado ÷ meta acumulada até ONTEM × meta total (a mesma do Data Studio e do resumo diário: 17,62M vs 15,06M = 117% → R$ 35,17 mi). Respeita a diarização.
+- Anel: 'volta fantasma' (arco translúcido até a projeção, limitado a 100%); gráfico acumulado: linha pontilhada até o fim do período com o valor projetado; KPI '👻 Projeção'.
+- Sem base (1º dia, sem valor, meta batida, período encerrado) não projeta. Dica: não — o tooltip do anel e o KPI explicam.
+
 ### 🛟 Plantão de Bugs: Oceano só com a visão do usuário e controle de ADM no Painel › Monitor (`oceano.html` v1.48 / `painel.html` v5.76 / `mare-plantao.js`) — 2026-10-16 · oceano v1.36→v1.48 · painel v5.75→v5.76 · kanban v8.30.865→v8.30.870 · mare-plantao.js v1 (PROD)
 
 - Em produção: aviso do assistente minimizado e dispensável no Oceano; 🛟 Plantão de Bugs na aba 🐛 Monitor do Painel; módulo mare-plantao.js; correção da barra de checklist (2/3 = 67%).
