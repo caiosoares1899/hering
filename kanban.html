@@ -6560,7 +6560,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.871</div>
+<div class="version">v8.30.872</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -12305,7 +12305,7 @@ function getDue(due, isDone, paused){
   return {cls:'due-ok',lbl};
 }
 // (2026-10-16) Math.round para alinhar com renderCL() no modal (2/3 = 67%, não 66%).
-function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.ceil(d/cl.length*100)}; }
+function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.round(d/cl.length*100)}; }
 
 // 💬 Indicador de comentários na linha de ícones do card (≡ descrição, 📎 anexo). A contagem vem de
 // card_comments_count (ver o listener perto de _uaRef); sem número ainda (índice não chegou / card sem

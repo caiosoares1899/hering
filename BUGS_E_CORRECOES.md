@@ -61,6 +61,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · kanban.html / kanban-dev.html — clProg arredondava o checklist para cima (Math.ceil) e a correção da #1468 se perdeu
+
+- **Sintoma:** o progresso do checklist no card usava `Math.ceil` (ex.: 1/3 mostrava 34%) em vez de `Math.round` (33%), divergindo do modal (`renderCL()`).
+- **Causa:** a correção do Antigravity (#1468, `Math.round` em `kanban-dev.html`) foi sobrescrita no dev durante a promoção do plantão (`42146b2`); o `kanban.html` (produção) nunca a recebeu. O comentário acima da função continuava dizendo `Math.round`.
+- **Correção:** `clProg()` volta a usar `Math.round` nos dois arquivos (dev v8.30.874-dev, prod v8.30.872). Armadilha: ao promover, conferir com `promover.js --status`/diff que uma correção recente do dev não está sendo desfeita.
+
 ### 2026-10-16 · kanban-dev.html (v8.30.873-dev) — getDue mostrava selo "⚡ Hoje" para amanhã (diff===1) em vez de hoje (diff===0)
 
 - **Causa raiz:** Em `kanban-dev.html` (`getDue`), a condição do selo `⚡ Hoje` comparava `if(diff===1)` em vez de `if(diff===0)`, fazendo cards com prazo para amanhã exibirem `⚡ Hoje` (`due-warn`) e cards com prazo para hoje caírem no retorno padrão mostrando apenas a data.
