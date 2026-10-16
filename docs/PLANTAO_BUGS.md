@@ -86,7 +86,7 @@ ADM: abre a PR, roda o script no dev, ✅/❌ no painel 🛟  (❌ → o Antigra
    - Se começar com PLANTAO_BUG: siga a skill plantaobug (.claude/skills/plantaobug/SKILL.md) para ESSE bug, no modo automático, até o comando único de git; então PARE e espere a minha aprovação.
    Não use terminal antes do comando único e nunca tente aprovar nada por conta própria.
    ```
-   A chave fica **só** nessa tarefa (nunca em arquivo do repositório, issue, PR ou chat). Vazou? Troque o secret (`firebase functions:secrets:set PLANTAO_AGENTE_KEY`) e refaça o deploy de `plantaoProximo`.
+   A chave fica **só** nessa tarefa (nunca em arquivo do repositório, issue, PR, commit ou resposta; é a exceção prevista na linha vermelha nº 6 do `AGENTS.md`). Digite-a direto no Antigravity, nunca em outro chat. Vazou? Troque o secret (`firebase functions:secrets:set PLANTAO_AGENTE_KEY`) e refaça o deploy de `plantaoProximo`.
 5. O Antigravity precisa estar **aberto e o PC acordado** — o vigia avisa os ADMs quando ele para de buscar.
 
 **Limites:** a rede da empresa pode bloquear `*.run.app` (teste o passo 2 pelo Antigravity: peça `read_url_content` na URL com a chave); se bloquear, o plantão volta a ser "colar o pacote".
