@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.42 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.43 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2043,11 +2043,13 @@ async function feriasGarantirColunaBugsDados(){
 
 function feriasNormalizarPrioridadeKanban(p, imp){
   const s = String(p || '').toLowerCase().trim();
-  if(s === 'alta' || s === 'media' || s === 'baixa' || s === 'bloqueado') return s;
-  if(s === 'critical' || s === 'high') return 'alta';
-  if(s === 'medium') return 'media';
-  if(s === 'low') return 'baixa';
-  return /bloqueia|bloqueante|cr[ií]tic|atrapalha|alto|alta/i.test(String(imp || '')) ? 'alta' : 'media';
+  if(s === 'critical' || s === 'high' || s === 'medium' || s === 'low') return s;
+  if(s === 'bloqueado') return 'critical';
+  if(s === 'alta') return /bloqueia|bloqueante|cr[ií]tic/i.test(String(imp || '')) ? 'critical' : 'high';
+  if(s === 'media') return 'medium';
+  if(s === 'baixa') return 'low';
+  if(/bloqueia|bloqueante|cr[ií]tic/i.test(String(imp || ''))) return 'critical';
+  return /atrapalha|alto|alta/i.test(String(imp || '')) ? 'high' : 'medium';
 }
 
 function feriasMontarCardBugDados(bugObj, colId, cardExistente){
@@ -2144,6 +2146,7 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
   const blockerReasonFinal = blockerAtivo
     ? ((ex && ex.blockerReason) || (ehBloqueante ? autoBlockerReason : ''))
     : '';
+  const createdAntigoValido = (ex && typeof ex.created === 'string' && ex.created.trim() && !/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(ex.created.trim()) && !/^\d{4}-\d{2}-\d{2}/.test(ex.created.trim())) ? ex.created.trim() : '';
 
   return Object.assign({}, ex || {}, {
     id: cardId,
@@ -2172,8 +2175,8 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     archived: Boolean(ex && ex.archived),
     blocker: blockerAtivo,
     blockerReason: blockerReasonFinal,
-    created: (ex && ex.created) || criadoDataIso.split('-').reverse().join('/'),
-    createdAt: (ex && ex.createdAt) || criadoDataIso,
+    created: createdAntigoValido || autor,
+    createdAt: (ex && ex.createdAt && /^\d{4}-\d{2}-\d{2}$/.test(ex.createdAt)) ? ex.createdAt : criadoDataIso,
     edited: quem,
     editedAt: hojeIso,
     updatedAt: agoraIso,
@@ -2362,13 +2365,13 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
     bugObj.kanbanCardId = cardId;
     bugObj.kanbanSquad = 'dados';
     bugObj.kanbanColId = colId;
-    bugObj.kanbanSchemaV = 2;
+    bugObj.kanbanSchemaV = 3;
     try{
       await window._update(window._ref(window._db, 'kanban/feedback/' + bugId), {
         kanbanCardId: cardId,
         kanbanSquad: 'dados',
         kanbanColId: colId,
-        kanbanSchemaV: 2
+        kanbanSchemaV: 3
       });
     }catch(e){}
 
@@ -2829,7 +2832,7 @@ function feriasProcessarSnapshotBugs(val){
   if(typeof sinoRender === 'function') sinoRender();
   if(U && window._db){
     feriasBugsLista.slice(0, 10).forEach(b=>{
-      if(b && b.id && (!b.kanbanCardId || !b.kanbanColId || b.kanbanSchemaV !== 2) && !_feriasRetroSyncIds.has(b.id)){
+      if(b && b.id && (!b.kanbanCardId || !b.kanbanColId || Number(b.kanbanSchemaV || 0) < 3) && !_feriasRetroSyncIds.has(b.id)){
         _feriasRetroSyncIds.add(b.id);
         feriasSincronizarCardSquadDados(b, b.kanbanCardId ? 'sync_schema' : 'aberto');
       }
