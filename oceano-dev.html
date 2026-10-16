@@ -722,7 +722,7 @@ const db = getDatabase(fbApp);
 const auth = getAuth(fbApp);
 const provider = new GoogleAuthProvider();
 provider.setCustomParameters({ hd: 'ciahering.com.br' });
-window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast; window._equalTo=equalTo; window._runTransaction=runTransaction;
+window._db=db; window._ref=ref; window._get=get; window._update=update; window._set=set; window._onValue=onValue; window._onVal=onValue; window._query=query; window._orderByChild=orderByChild; window._limitToLast=limitToLast; window._equalTo=equalTo; window._runTransaction=runTransaction;
 // Push (FCM) deste aparelho — o rodapé do sino (mare-notif(-dev).js) usa estes ganchos pra ativar/desativar o push. Import dinâmico dentro de try: se o
 // SDK de mensagens não carregar (rede/bloqueio), só o push some — o login e o resto do Oceano seguem.
 window._fcmReady = false;
@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.41 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.42 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2006,7 +2006,8 @@ function feriasCardIdBug(bugId){
 function feriasUrlCardSquadDados(bugOrId){
   const rawId = (bugOrId && typeof bugOrId === 'object') ? (bugOrId.kanbanCardId || bugOrId.id || '') : String(bugOrId || '');
   const cardId = feriasCardIdBug(rawId);
-  return P('kanban') + '?squad=dados' + (cardId ? '&card=' + encodeURIComponent(cardId) : '');
+  const enc = cardId ? encodeURIComponent(cardId) : '';
+  return P('kanban') + '?squad=dados' + (enc ? '&card=' + enc + '&opencard=' + enc : '');
 }
 
 const FERIAS_DEFAULT_COLS_DADOS = [
@@ -2040,6 +2041,15 @@ async function feriasGarantirColunaBugsDados(){
   }
 }
 
+function feriasNormalizarPrioridadeKanban(p, imp){
+  const s = String(p || '').toLowerCase().trim();
+  if(s === 'alta' || s === 'media' || s === 'baixa' || s === 'bloqueado') return s;
+  if(s === 'critical' || s === 'high') return 'alta';
+  if(s === 'medium') return 'media';
+  if(s === 'low') return 'baixa';
+  return /bloqueia|bloqueante|cr[ií]tic|atrapalha|alto|alta/i.test(String(imp || '')) ? 'alta' : 'media';
+}
+
 function feriasMontarCardBugDados(bugObj, colId, cardExistente){
   const ex = (cardExistente && typeof cardExistente === 'object') ? cardExistente : null;
   const cardId = feriasCardIdBug(bugObj.kanbanCardId || bugObj.id);
@@ -2048,9 +2058,8 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     ? '🟢 Resolvido'
     : (st === 'em_analise' ? '🔵 Sendo tratado (Em análise)' : '🔴 Aberto (Na fila /monitorarbugs)');
   const imp = String(bugObj.impacto || '🟡 Dá pra contornar');
-  const prio = /bloqueia|bloqueante|cr[ií]tic/i.test(imp)
-    ? 'critical'
-    : (/atrapalha|alto|alta/i.test(imp) ? 'high' : 'medium');
+  const ehBloqueante = /bloqueia|bloqueante|cr[ií]tic/i.test(imp);
+  const prio = feriasNormalizarPrioridadeKanban(ex && ex.priority, imp);
   const appNome = bugObj.app || 'Oceano';
   const arqAlvo = bugObj.arquivoAlvo || 'oceano-dev.html';
   const relatoTxt = String(bugObj.texto || bugObj.msg || 'Relato de bug').trim();
@@ -2110,17 +2119,31 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     addLinkUnico('Issue #' + (bugObj.githubIssueNum || 'GitHub'), String(bugObj.githubIssueUrl).trim());
   }
 
+  const item1Txt = 'Relato registrado pelo usuário no Assistente Férias (' + autor + ')';
+  const item2Txt = 'Diagnóstico /monitorarbugs em andamento pelo Antigravity / ADM';
+  const item3Txt = 'Correção aplicada, validada e autor notificado no sino 🔔';
   const checklist = [
-    { t: 'Relato registrado pelo usuário no Assistente Férias (' + autor + ')', done: true },
-    { t: 'Diagnóstico /monitorarbugs em andamento pelo Antigravity / ADM', done: st === 'em_analise' || st === 'resolvido' },
-    { t: 'Correção aplicada, validada e autor notificado no sino 🔔', done: st === 'resolvido' }
+    { text: item1Txt, t: item1Txt, done: true },
+    { text: item2Txt, t: item2Txt, done: st === 'em_analise' || st === 'resolvido' },
+    { text: item3Txt, t: item3Txt, done: st === 'resolvido' }
   ];
 
   const colFinal = (ex && ex.col) ? ex.col : (colId || 'col_bugs');
-  const flowObj = (ex && ex.flow && typeof ex.flow === 'object') ? ex.flow : {
-    enteredAt: { [colFinal]: new Date(criadoMs).toISOString() },
-    log: [{ from: '—', to: colFinal, at: new Date(criadoMs).toISOString() }]
-  };
+  const flowBase = (ex && ex.flow && typeof ex.flow === 'object') ? Object.assign({}, ex.flow) : {};
+  if(!flowBase[colFinal]) flowBase[colFinal] = criadoMs;
+  if(!flowBase.enteredAt || typeof flowBase.enteredAt !== 'object'){
+    flowBase.enteredAt = { [colFinal]: new Date(criadoMs).toISOString() };
+  }
+  if(!Array.isArray(flowBase.log) || !flowBase.log.length){
+    flowBase.log = [{ from: '—', to: colFinal, at: new Date(criadoMs).toISOString() }];
+  }
+
+  const autoBlockerReason = '🔴 Bloqueia a operação (reportado via Assistente Férias)';
+  const tinhaBlockerManual = Boolean(ex && ex.blocker && ex.blockerReason && ex.blockerReason !== autoBlockerReason);
+  const blockerAtivo = st === 'resolvido' ? tinhaBlockerManual : (ehBloqueante || Boolean(ex && ex.blocker));
+  const blockerReasonFinal = blockerAtivo
+    ? ((ex && ex.blockerReason) || (ehBloqueante ? autoBlockerReason : ''))
+    : '';
 
   return Object.assign({}, ex || {}, {
     id: cardId,
@@ -2131,12 +2154,12 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     desc: linhasDesc.join('\n'),
     descsExtra: Array.isArray(ex && ex.descsExtra) ? ex.descsExtra : [],
     owner: (ex && ex.owner) || '',
-    demandante: (ex && ex.demandante) || '',
+    demandante: (ex && ex.demandante) || autor,
     po: (ex && ex.po) || '',
     sp: (ex && ex.sp) || '',
     due: (ex && ex.due) || '',
     noDue: (ex && ex.due) ? Boolean(ex.noDue) : true,
-    priority: (ex && ex.priority) || prio,
+    priority: prio,
     checklist: checklist,
     checklistGroups: Array.isArray(ex && ex.checklistGroups) ? ex.checklistGroups : [],
     riscos: Array.isArray(ex && ex.riscos) ? ex.riscos : [],
@@ -2147,16 +2170,16 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     executorType: (ex && ex.executorType) || 'human',
     agentStatus: st === 'resolvido' ? 'done' : (st === 'em_analise' ? 'running' : ((ex && ex.agentStatus) || '')),
     archived: Boolean(ex && ex.archived),
-    blocker: Boolean(ex && ex.blocker),
-    blockerReason: (ex && ex.blockerReason) || '',
-    created: (ex && ex.created) || autor,
+    blocker: blockerAtivo,
+    blockerReason: blockerReasonFinal,
+    created: (ex && ex.created) || criadoDataIso.split('-').reverse().join('/'),
     createdAt: (ex && ex.createdAt) || criadoDataIso,
     edited: quem,
     editedAt: hojeIso,
     updatedAt: agoraIso,
     updatedBy: quem,
     origemFeriasBugId: bugObj.id || '',
-    flow: flowObj
+    flow: flowBase
   });
 }
 
@@ -2174,8 +2197,9 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
   try{
     const colId = await feriasGarantirColunaBugsDados();
 
-    // 1) Descobre ou aloca a chave numérica em cards_index/<cardId>
+    // 1) Descobre ou aloca a chave numérica em cards_index/<cardId> + valida contra colisão em cards/<cardKey>
     let cardKey = null;
+    let cardExistente = null;
     try{
       const idxItemSnap = await window._get(window._ref(window._db, fbBase + '/cards_index/' + cardId));
       if(idxItemSnap && idxItemSnap.exists() && idxItemSnap.val() !== null && idxItemSnap.val() !== undefined){
@@ -2183,16 +2207,38 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
       }
     }catch(e){}
 
+    if(cardKey !== null){
+      try{
+        const cSnap = await window._get(window._ref(window._db, fbBase + '/cards/' + cardKey));
+        if(cSnap && cSnap.exists()){
+          const val = cSnap.val();
+          if(val && val.id && val.id !== cardId){
+            // Posição ocupada por outro card: descarta cardKey para realocar sem sobrescrever card alheio
+            cardKey = null;
+          } else {
+            cardExistente = val;
+          }
+        }
+      }catch(e){}
+    }
+
     if(cardKey === null){
       let floorMax = -1;
+      const occupiedKeys = new Set();
       try{
         const cardsSnap = await window._get(window._ref(window._db, fbBase + '/cards'));
         const cardsVal = cardsSnap && cardsSnap.exists() ? cardsSnap.val() : null;
         if(cardsVal && typeof cardsVal === 'object'){
           Object.entries(cardsVal).forEach(([k, v])=>{
             const n = Number(k);
-            if(Number.isInteger(n) && n > floorMax) floorMax = n;
-            if(v && v.id === cardId && cardKey === null) cardKey = String(k);
+            if(Number.isInteger(n) && n >= 0){
+              occupiedKeys.add(String(n));
+              if(n > floorMax) floorMax = n;
+            }
+            if(v && v.id === cardId && cardKey === null){
+              cardKey = String(k);
+              cardExistente = v;
+            }
           });
         }
       }catch(e){}
@@ -2201,10 +2247,15 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
         if(typeof window._runTransaction === 'function'){
           const txRes = await window._runTransaction(window._ref(window._db, fbBase + '/cards_index'), current=>{
             const map = (current && typeof current === 'object') ? Object.assign({}, current) : {};
-            if(map[cardId] !== undefined && map[cardId] !== null) return map;
-            const nums = Object.values(map).map(v=>Number(v)).filter(n=>Number.isInteger(n) && n>=0);
-            const maxIdx = Math.max(floorMax, nums.length ? Math.max(...nums) : -1);
-            map[cardId] = String(maxIdx + 1);
+            if(map[cardId] !== undefined && map[cardId] !== null && !occupiedKeys.has(String(map[cardId]))){
+              return map;
+            }
+            const used = new Set(Object.values(map).map(String));
+            occupiedKeys.forEach(k => used.add(String(k)));
+            const nums = [...used].map(v=>Number(v)).filter(n=>Number.isInteger(n) && n>=0);
+            let nextKey = Math.max(floorMax, nums.length ? Math.max(...nums) : -1) + 1;
+            while(used.has(String(nextKey))) nextKey++;
+            map[cardId] = String(nextKey);
             return map;
           });
           const finalMap = txRes && txRes.snapshot ? txRes.snapshot.val() : null;
@@ -2216,25 +2267,49 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
       }
     }
 
-    // 2) Lê card existente (se já criado antes) para preservar histórico e campos do board
-    let cardExistente = null;
-    try{
-      const cSnap = await window._get(window._ref(window._db, fbBase + '/cards/' + cardKey));
-      if(cSnap && cSnap.exists()) cardExistente = cSnap.val();
-    }catch(e){}
+    // 2) Se ainda não leu cardExistente para o cardKey final, confere uma última vez
+    if(!cardExistente && cardKey !== null){
+      try{
+        const cSnap = await window._get(window._ref(window._db, fbBase + '/cards/' + cardKey));
+        if(cSnap && cSnap.exists()){
+          const val = cSnap.val();
+          if(!val || !val.id || val.id === cardId) cardExistente = val;
+        }
+      }catch(e){}
+    }
 
     const cardNovo = feriasMontarCardBugDados(bugObj, colId, cardExistente);
-    const agoraIso = new Date().toISOString();
+    const agoraDate = new Date();
+    const agoraIso = agoraDate.toISOString();
+    const agoraPtBr = agoraDate.toLocaleDateString('pt-BR') + ' ' + agoraDate.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
     const quem = bugObj.atualizadoPor || bugObj.autor || 'Assistente Férias';
-    const hist = Array.isArray(cardExistente && cardExistente.history) ? cardExistente.history.filter(Boolean).slice() : [];
+    const hist = Array.isArray(cardExistente && cardExistente.history)
+      ? cardExistente.history.filter(Boolean).map(h => ({
+          action: h.action || h.what || 'Atualizado via Assistente Férias',
+          by: h.by || h.who || quem,
+          col: h.col || cardNovo.col,
+          ts: h.ts || (h.at ? new Date(h.at).toLocaleString('pt-BR') : agoraPtBr),
+          who: h.who || h.by || quem,
+          what: h.what || h.action || 'Atualizado via Assistente Férias',
+          at: h.at || agoraIso
+        }))
+      : [];
     const acaoHist = !cardExistente
-      ? 'criou o card de bug via Assistente Férias (' + (bugObj.app || 'Oceano') + ')'
+      ? 'Criado via Assistente Férias (' + (bugObj.app || 'Oceano') + ')'
       : (eventoStatus === 'resolvido'
-          ? 'marcou o bug como 🟢 Resolvido via Assistente Férias'
+          ? 'Marcou o bug como 🟢 Resolvido via Assistente Férias'
           : (eventoStatus === 'em_analise'
-              ? 'marcou o bug como 🔵 Sendo tratado via Assistente Férias'
-              : 'sincronizou dados do chamado via Assistente Férias'));
-    hist.push({ who: quem, what: acaoHist, at: agoraIso });
+              ? 'Marcou o bug como 🔵 Sendo tratado via Assistente Férias'
+              : 'Sincronizou dados do chamado via Assistente Férias'));
+    hist.push({
+      action: acaoHist,
+      by: quem,
+      col: cardNovo.col,
+      ts: agoraPtBr,
+      who: quem,
+      what: acaoHist,
+      at: agoraIso
+    });
     if(hist.length > 50) cardNovo.history = hist.slice(-50);
     else cardNovo.history = hist;
 
@@ -2287,11 +2362,13 @@ async function feriasSincronizarCardSquadDados(bugObj, eventoStatus){
     bugObj.kanbanCardId = cardId;
     bugObj.kanbanSquad = 'dados';
     bugObj.kanbanColId = colId;
+    bugObj.kanbanSchemaV = 2;
     try{
       await window._update(window._ref(window._db, 'kanban/feedback/' + bugId), {
         kanbanCardId: cardId,
         kanbanSquad: 'dados',
-        kanbanColId: colId
+        kanbanColId: colId,
+        kanbanSchemaV: 2
       });
     }catch(e){}
 
@@ -2752,24 +2829,27 @@ function feriasProcessarSnapshotBugs(val){
   if(typeof sinoRender === 'function') sinoRender();
   if(U && window._db){
     feriasBugsLista.slice(0, 10).forEach(b=>{
-      if(b && b.id && !b.kanbanCardId && !_feriasRetroSyncIds.has(b.id)){
+      if(b && b.id && (!b.kanbanCardId || !b.kanbanColId || b.kanbanSchemaV !== 2) && !_feriasRetroSyncIds.has(b.id)){
         _feriasRetroSyncIds.add(b.id);
-        feriasSincronizarCardSquadDados(b, 'aberto');
+        feriasSincronizarCardSquadDados(b, b.kanbanCardId ? 'sync_schema' : 'aberto');
       }
     });
   }
 }
 
 function feriasIniciarBugsListener(){
-  if(!window._onVal || !window._ref || !window._db) return;
+  const onValFn = window._onValue || window._onVal;
+  if(!onValFn || !window._ref || !window._db) return;
   if(feriasBugsUn){ try{ feriasBugsUn(); }catch(e){} feriasBugsUn = null; }
   try{
-    feriasBugsUn = window._onVal(window._ref(window._db, 'kanban/feedback'), sn=>{
+    feriasBugsUn = onValFn(window._ref(window._db, 'kanban/feedback'), sn=>{
       feriasProcessarSnapshotBugs(sn && sn.exists() ? sn.val() : {});
       feriasSincronizarGithubIssues(false);
     }, ()=>{});
   }catch(e){}
 }
+window.feriasSincronizarCardSquadDados = feriasSincronizarCardSquadDados;
+window.feriasIniciarBugsListener = feriasIniciarBugsListener;
 
 async function feriasCarregarBugs(){
   if(!window._get || !window._ref || !window._db) return;
@@ -2829,7 +2909,6 @@ async function feriasEnviarBug(){
     criadoEm: ts,
     status: 'pendente_monitorarbugs',
     respostaStatus: '',
-    kanbanCardId: cardIdDados,
     kanbanSquad: 'dados',
     promptAntigravity: promptAntigravity
   };
@@ -2844,7 +2923,10 @@ async function feriasEnviarBug(){
       await window._set(window._ref(window._db, 'kanban/feedback/' + id), payload);
       gravouFb = true;
       const cid = await feriasSincronizarCardSquadDados(bugComId, 'aberto');
-      if(cid) criouCardDados = true;
+      if(cid){
+        criouCardDados = true;
+        bugComId.kanbanCardId = cid;
+      }
     }
   }catch(e){}
   _enviandoBugFerias = false;
