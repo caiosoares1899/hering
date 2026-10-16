@@ -284,6 +284,8 @@ footer.rodape{max-width:1180px;margin:0 auto;padding:30px 16px 60px;text-align:c
   .inicio-grid.tem-mural:not(.tem-meta) .tiles,
   .inicio-grid.tem-meta:not(.tem-mural) .tiles{grid-template-columns:repeat(2,minmax(0,1fr));}
   .inicio-grid.tem-meta.tem-mural{grid-template-columns:minmax(0,6fr) minmax(0,5fr);}
+  /* (2026-10-16) Só Meta (sem Mural): o cartão da meta começa na MESMA altura dos quadrados dos apps (antes o cabeçalho "Meta Global · Digital" empurrava o cartão ~47px para baixo; o próprio cartão já diz "Meta Global · Digital"). Só o topo é alinhado — esticar os quadrados deformava quando há mais de uma meta. */
+  .inicio-grid.tem-meta:not(.tem-mural) .col-meta .meta-hd{display:none;}
   .inicio-grid.tem-meta.tem-mural .col-apps{grid-column:1 / -1;}
   .inicio-grid.tem-meta.tem-mural .tiles{grid-template-columns:repeat(auto-fit,minmax(175px,1fr));}
   .col-mural .mural{grid-template-columns:minmax(0,1fr);max-height:max(600px,calc(100vh - 170px));overflow-y:auto;padding:2px 6px 2px 0;scrollbar-width:thin;scrollbar-color:var(--glass-b) transparent;}
@@ -644,7 +646,8 @@ textarea.in.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12p
     <h3 class="sub-h">No ar agora</h3>
     <div class="vidro" style="padding:6px 6px 0;margin-bottom:16px;overflow:auto;"><table class="vers" id="vers"><thead><tr><th>Produto</th><th>Produção</th><th>Em teste (dev)</th></tr></thead><tbody><tr><td colspan="3" style="color:var(--txt3);">Conferindo as versões…</td></tr></tbody></table></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <button class="btn pri" type="button" data-doc="maredigital.html">Documentação técnica completa</button>
+      <button class="btn pri" type="button" data-doc="ecossistema.html">Ecossistema de gestão (visão para a TI)</button>
+      <button class="btn" type="button" data-doc="maredigital.html">Detalhe do Maré Digital</button>
       <button class="btn" type="button" data-doc="guia-okr.html">Guia do Radar</button>
     </div>
   </section>
@@ -747,14 +750,14 @@ window.dispatchEvent(new Event('fb-ready'));
 </script>
 
 <script src="mare-notif.js?v=33"></script>
-<script src="mare-plantao-dev.js?v=1"></script>
+<script src="mare-plantao.js?v=2"></script>
 <script src="mare-dicas.js?v=5"></script>
 <script src="mare-metas.js?v=16"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.49 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.52 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -958,7 +961,8 @@ function avPodeVer(c){
   const meus = perfilFb.squads||[], papeis = Object.values(squadsRoles||{});
   const poOuMais = ehAdm || perfilFb.role==='po' || perfilFb.role==='adm' || perfilFb.role==='organizador' || papeis.some(p=>p==='po'||p==='organizador');
   if(c.publico==='po' && !poOuMais) return false;
-  if(c.squad && c.squad!=='*' && !ehAdm && !meus.includes(c.squad)) return false;
+  const alvosSq = (!c.squad || c.squad==='*') ? null : (Array.isArray(c.squads) && c.squads.length ? c.squads : [c.squad]);
+  if(alvosSq && !ehAdm && !alvosSq.some(sq => meus.includes(sq))) return false;
   return true;
 }
 // HTML do aviso vem de um editor simples do Painel (negrito, itálico, link) — mesmo assim sanitiza aqui: lista curta de tags, nenhum atributo (só href http/https/mailto).
@@ -2396,8 +2400,8 @@ document.addEventListener('click', e=>{
   const mc = e.target.closest('a.marca'); if(mc){ e.preventDefault(); if(host.atual) voltarLobby(); irAba('inicio'); return; }
   const dc = e.target.closest('[data-doc]'); if(dc){ const h = dc.dataset.doc; if(abrirAqui()){ mostrarDocumento(h); } else window.open(h,'_blank','noopener'); return; }
 });
-// documentos (maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
-const DOCS = {'maredigital.html':{id:'doc-mare', nome:'Documentação', img:'favicon.png'}, 'guia-okr.html':{id:'doc-guia', nome:'Guia do Radar', img:'favicon-radar.png?v=2'}};
+// documentos (ecossistema.html, maredigital.html, guia-okr.html) também abrem dentro do Oceano quando o app está instalado
+const DOCS = {'ecossistema.html':{id:'doc-eco', nome:'Ecossistema', img:'favicon.png'}, 'maredigital.html':{id:'doc-mare', nome:'Documentação', img:'favicon.png'}, 'guia-okr.html':{id:'doc-guia', nome:'Guia do Radar', img:'favicon-radar.png?v=2'}};
 function mostrarDocumento(h){
   const d = DOCS[h]; if(!d){ window.open(h,'_blank','noopener'); return; }
   if(!APP(d.id)) EXTRA.push({id:d.id, nome:d.nome, href:h, img:d.img, sub:'', pt:''});

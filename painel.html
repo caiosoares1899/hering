@@ -2592,8 +2592,9 @@ window.MARE_LOGIN_PELO_OCEANO = true;
             </select>
           </div>
           <div class="pev-field">
-            <label class="pev-label">Para qual squad</label>
-            <select class="pev-input" id="cc-squad"></select>
+            <label class="pev-label pev-lbl">Squad(s) alvo <span style="font-weight:400;opacity:.7;font-size:10px;">(clique em 1 ou mais)</span></label>
+            <div id="cc-squad-chips" style="display:flex;flex-wrap:wrap;gap:6px;padding:7px 8px;border-radius:8px;background:var(--inp-bg,rgba(0,0,0,.2));border:1px solid var(--glass-b);min-height:38px;align-items:center;"></div>
+            <input type="hidden" id="cc-squad" value="*">
           </div>
         </div>
         <div class="pev-field">
@@ -3060,7 +3061,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.77 · painel</div>
+<div class="version">v5.79 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3165,7 +3166,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 </script>
 <script src="mare-notif.js?v=33"></script>
 <script src="mare-metas.js?v=16"></script>
-<script src="mare-plantao.js?v=1"></script>
+<script src="mare-plantao.js?v=2"></script>
 <script src="mare-dicas.js?v=5"></script>
 
 <script>
@@ -8452,6 +8453,16 @@ function _comunicadoOndeTxt(c){
   if(c.prioridade==='oceano') return '🌊 só Oceano';
   return (c.prioridade==='mural' ? '📌 só mural' : '🔔 popup') + (c.oceano===true ? ' + 🌊 Oceano' : '') + (c.oceano===true && c.fixado ? ' (fixado)' : '');
 }
+function _comunicadoSquadsAlvo(c){
+  if(!c || !c.squad || c.squad === '*') return null; // null = todas as squads
+  if(Array.isArray(c.squads) && c.squads.length) return c.squads.filter(Boolean);
+  return [c.squad];
+}
+function _comunicadoAlvoLabel(c){
+  const alvos = _comunicadoSquadsAlvo(c);
+  if(!alvos || !alvos.length) return 'Todos os squads';
+  return alvos.map(s => _sqLabel(s) || s).join(', ');
+}
 function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
@@ -8477,7 +8488,7 @@ function renderComunicadosLista(){
   el.innerHTML = ativosPub.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
     const expirado = c.expiraEm && c.expiraEm < agora;
-    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const alvo = esc(_comunicadoAlvoLabel(c));
     const status = !c.ativo ? '<span style="color:var(--txt3);">desativado</span>'
       : expirado ? '<span style="color:var(--txt3);">expirado</span>'
       : '<span style="color:var(--teal);">ativo</span>';
@@ -8517,7 +8528,7 @@ function renderArquivadosComunicado(arquivados){
   wrap.style.display='';
   el.innerHTML = arquivados.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
-    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const alvo = esc(_comunicadoAlvoLabel(c));
     const ondeAparece = _comunicadoOndeTxt(c);
     return `<div style="display:flex;align-items:center;gap:10px;padding:9px 10px;background:rgba(var(--ink-rgb),.35);border:1px dashed var(--glass-b);border-radius:8px;margin-bottom:6px;opacity:.8;">
       <div style="flex:1;min-width:0;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="openComunicadoCompose(${jsq(c.id)})">
@@ -8569,7 +8580,7 @@ function renderRascunhosComunicado(rascunhos){
   wrap.style.display='';
   el.innerHTML = rascunhos.map(c=>{
     const tipo = COMUNICADO_TIPOS_P[c.tipo] || COMUNICADO_TIPOS_P.novidade;
-    const alvo = (!c.squad || c.squad==='*') ? 'Todos os squads' : (_sqLabel(c.squad)||c.squad);
+    const alvo = esc(_comunicadoAlvoLabel(c));
     const ondeAparece = c.prioridade==='mural' ? '📌 só mural (sugerido)' : '🔔 popup (sugerido)';
     return `<div style="padding:10px 11px;background:rgba(255,209,102,.06);border:1px solid rgba(255,209,102,.25);border-radius:9px;margin-bottom:8px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;">
@@ -8603,11 +8614,55 @@ async function deleteComunicadoDireto(id, titulo){
     .catch(e=>showToast('⚠ Erro ao excluir: '+(e?.message||e)));
 }
 
-function _ccPopulaSquadSelect(){
-  const sel = document.getElementById('cc-squad');
-  if(!sel) return;
-  sel.innerHTML = '<option value="*">Todos os squads</option>' +
-    SQUADS.map(s=>`<option value="${s.id}">${s.icon} ${esc(s.label)}</option>`).join('');
+let _ccSelectedSquads = new Set(); // vazio = '*' (Todos os squads)
+function _ccPopulaSquadSelect(selectedVal){
+  _ccSelectedSquads.clear();
+  if(Array.isArray(selectedVal)){
+    selectedVal.filter(s => s && s !== '*' && s !== 'multi').forEach(s => _ccSelectedSquads.add(s));
+  } else if(typeof selectedVal === 'string' && selectedVal && selectedVal !== '*' && selectedVal !== 'multi'){
+    _ccSelectedSquads.add(selectedVal);
+  }
+  _ccRenderSquadChips();
+}
+function _ccToggleSquadChip(sqId){
+  if(sqId === '*'){
+    _ccSelectedSquads.clear();
+  } else {
+    if(_ccSelectedSquads.has(sqId)) _ccSelectedSquads.delete(sqId);
+    else _ccSelectedSquads.add(sqId);
+    if(_ccSelectedSquads.size === 0 || (SQUADS.length > 0 && SQUADS.every(s => _ccSelectedSquads.has(s.id)))){
+      _ccSelectedSquads.clear();
+    }
+  }
+  _ccRenderSquadChips();
+}
+function _ccRenderSquadChips(){
+  const wrap = document.getElementById('cc-squad-chips');
+  const inp = document.getElementById('cc-squad');
+  if(inp){
+    inp.value = _ccSelectedSquads.size === 0 ? '*' : _ccSelectedSquads.size === 1 ? Array.from(_ccSelectedSquads)[0] : 'multi';
+  }
+  if(!wrap) return;
+  const baseStyle = 'padding:4px 9px;border-radius:999px;font-size:11px;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:4px;';
+  const activeStyle = 'border:1px solid var(--accent,#38b6ff);background:rgba(56,182,255,.18);color:var(--txt);font-weight:600;';
+  const inactiveStyle = 'border:1px solid var(--glass-b);background:rgba(255,255,255,.04);color:var(--txt2);';
+  const allActive = _ccSelectedSquads.size === 0;
+  const chips = [
+    `<button type="button" onclick="_ccToggleSquadChip('*')" style="${baseStyle}${allActive ? activeStyle : inactiveStyle}">🌐 Todos os squads</button>`
+  ].concat(SQUADS.map(s => {
+    const on = _ccSelectedSquads.has(s.id);
+    return `<button type="button" onclick="_ccToggleSquadChip(${jsq(s.id)})" style="${baseStyle}${on ? activeStyle : inactiveStyle}">${s.icon||s.emoji||''} ${esc(s.label)}</button>`;
+  }));
+  wrap.innerHTML = chips.join('');
+}
+function _ccGetSquadPayload(){
+  if(_ccSelectedSquads.size === 0) return { squad: '*', squads: null };
+  if(_ccSelectedSquads.size === 1){
+    const sq = Array.from(_ccSelectedSquads)[0];
+    return { squad: sq, squads: [sq] };
+  }
+  const arr = Array.from(_ccSelectedSquads);
+  return { squad: 'multi', squads: arr };
 }
 function _ccFormat(cmd){
   const editor = document.getElementById('cc-corpo');
@@ -8622,8 +8677,9 @@ function _ccFormat(cmd){
 function openComunicadoCompose(id){
   if(_blockIfPainelViewer()) return;
   if(!_isAdmPainel()){ showToast('⚠ Só administradores podem criar comunicados.'); return; }
-  _ccPopulaSquadSelect();
   _editingComunicadoId = (typeof id==='string') ? id : null;
+  const existing = _editingComunicadoId ? _comunicadosCache[_editingComunicadoId] : null;
+  _ccPopulaSquadSelect(existing ? (Array.isArray(existing.squads) && existing.squads.length ? existing.squads : existing.squad) : '*');
   const delBtn = document.getElementById('cc-del-btn');
   if(_editingComunicadoId && _comunicadosCache[_editingComunicadoId]){
     const c = _comunicadosCache[_editingComunicadoId];
@@ -8631,7 +8687,6 @@ function openComunicadoCompose(id){
     document.getElementById('cc-titulo').value = c.titulo||'';
     document.getElementById('cc-corpo').innerHTML = c.corpo||'';
     document.getElementById('cc-tipo').value = c.tipo||'novidade';
-    document.getElementById('cc-squad').value = c.squad||'*';
     document.getElementById('cc-publico').value = c.publico||'todos';
     document.getElementById('cc-prioridade').value = c.prioridade==='mural' ? 'mural' : c.prioridade==='oceano' ? 'oceano' : 'popup';
     document.getElementById('cc-expira').value = c.expiraEm ? c.expiraEm.split('T')[0] : '';
@@ -8653,7 +8708,6 @@ function openComunicadoCompose(id){
     document.getElementById('cc-titulo').value = '';
     document.getElementById('cc-corpo').innerHTML = '';
     document.getElementById('cc-tipo').value = 'novidade';
-    document.getElementById('cc-squad').value = '*';
     document.getElementById('cc-publico').value = 'todos';
     document.getElementById('cc-prioridade').value = 'popup';
     document.getElementById('cc-expira').value = '';
@@ -8713,18 +8767,31 @@ function closeComunicadoCompose(){
 // que já estava publicado, pra não notificar de novo por corrigir um typo).
 function _painelResolveComunicadoAlvos(c){
   const alvos = new Set();
+  const alvosSq = _comunicadoSquadsAlvo(c);
   Object.entries(_globalUsersCache||{}).forEach(([uid,u])=>{
     if(!u) return;
     const squadsDoUsuario = Object.keys(u.squads||{}).filter(sq=>u.squads[sq]===true);
-    const pertenceAoSquad = !c.squad || c.squad==='*' || squadsDoUsuario.includes(c.squad);
+    const pertenceAoSquad = !alvosSq || squadsDoUsuario.some(sq => alvosSq.includes(sq));
     if(!pertenceAoSquad) return;
     if(c.publico==='po'){
       const ehAdm = isAdmUser({email:u.email}) || u.role==='adm';
-      const ehPoOuOrg = squadsDoUsuario.some(sq=>{
-        const papel = (u.squads_roles && u.squads_roles[sq]) || u.role || 'membro';
-        return papel==='po' || papel==='organizador';
-      });
-      if(!ehAdm && !ehPoOuOrg) return;
+      if(!ehAdm){
+        const rolesMap = u.squads_roles || {};
+        if(!alvosSq){
+          const ehPoEmAlgum = squadsDoUsuario.some(sq=>{
+            const papel = rolesMap[sq] || u.role || 'membro';
+            return papel==='po' || papel==='organizador';
+          });
+          if(!ehPoEmAlgum) return;
+        } else {
+          const ehPoNoAlvo = alvosSq.some(sq => {
+            if(!squadsDoUsuario.includes(sq)) return false;
+            const papel = rolesMap[sq] || u.role || 'membro';
+            return papel === 'po' || papel === 'organizador';
+          });
+          if(!ehPoNoAlvo) return;
+        }
+      }
     }
     alvos.add(uid);
   });
@@ -8788,10 +8855,12 @@ function saveComunicado(){
     if(bu) botao = {rotulo:bt, url:bu};
     fixado = !!document.getElementById('cc-fixado').checked;
   }
+  const sqPayload = _ccGetSquadPayload();
   const obj = {
     titulo, corpo,
     tipo: document.getElementById('cc-tipo').value,
-    squad: document.getElementById('cc-squad').value,
+    squad: sqPayload.squad,
+    squads: sqPayload.squads,
     publico: document.getElementById('cc-publico').value,
     prioridade,
     insistente,

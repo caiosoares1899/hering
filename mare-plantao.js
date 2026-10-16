@@ -524,6 +524,26 @@
     return true;
   }
 
+  // Comentário no card da Squad Dados com o resumo da correção (PR, o que mudou, quem validou e o que foi visto). Id fixo por bug: validar de novo atualiza o mesmo comentário.
+  async function comentarCorrecao(bugId, f, quem, nota) {
+    try {
+      const fbBase = 'kanban/squads/dados/dados';
+      const cardId = cardIdBug(f.cardId || bugId);
+      const prNum = f.prUrl ? (/\/pull\/(\d+)$/.exec(f.prUrl) || [])[1] : '';
+      const ts = new Date().toISOString();
+      const linhas = ['🛠️ **Correção validada em dev** — por **' + quem + '**'];
+      if (f.prUrl) linhas.push('• **PR:** ' + (prNum ? '#' + prNum + ' ' : '') + (f.prTitulo ? '— ' + f.prTitulo + ' ' : '') + '(' + f.prUrl + ')');
+      if (f.prResumo) linhas.push('• **O que mudou:** ' + f.prResumo);
+      if (nota) linhas.push('• **O que o ADM viu:** ' + nota);
+      linhas.push('• **Teste:** script de console rodado no dev, resultado ✅');
+      const cm = { id: 'cm_ferias_correcao_' + String(bugId).replace(/[^0-9A-Za-z_]/g, ''), uid: (cfg.user() && cfg.user().uid) || 'assistente_ferias', author: '🏖️ Assistente Férias (' + quem + ')', init: '🤖', foto: '', text: linhas.join('\n'), ts };
+      await window._set(window._ref(window._db, fbBase + '/card_comments/' + cardId + '/' + cm.id), cm);
+      const all = await window._get(window._ref(window._db, fbBase + '/card_comments/' + cardId));
+      await window._set(window._ref(window._db, fbBase + '/card_comments_count/' + cardId), (all.exists() && all.val() && typeof all.val() === 'object') ? Object.keys(all.val()).length : 1);
+      return true;
+    } catch (e) { return false; }
+  }
+
   async function acao(id, a) {
     if (!souAdm()) { cfg.toast('⚠️ Só ADM mexe no plantão.'); return; }
     const f = st.fichas[id];
@@ -548,7 +568,8 @@
         if (!f.prUrl || !PR_REGEX.test(f.prUrl) || !f.scriptTeste || f.scriptTeste.length < 20) { cfg.toast('⚠️ Sem PR e sem script de teste SALVOS não dá para validar. Cole os dois e clique em 💾 Salvar.'); return; }
         if (!['testando', 'pr_aberto'].includes(f.estado)) { cfg.toast('⚠️ Este bug não está pronto para validar (estado: ' + ((ESTADOS[f.estado] || [])[1] || f.estado) + ').'); return; }
         await gravarFicha(id, { estado: 'validado', resultadoTeste: 'ok', notaTeste: nt.slice(0, 500) || null, validadoPor: nomeQuem(), validadoPorUid: u.uid, validadoEm: Date.now() });
-        cfg.toast('✅ Validado. Agora o PR de PROD (promover.js) e, depois do merge, 🚀.'); return;
+        const noCard = await comentarCorrecao(id, f, nomeQuem(), nt.slice(0, 500));
+        cfg.toast('✅ Validado' + (noCard ? ' e resumo da correção comentado no card' : ' (não consegui comentar no card — veja o card manualmente)') + '. Agora o PR de PROD (promover.js) e, depois do merge, 🚀.'); return;
       }
       if (a === 'reprovei') {
         if (nt.length < 5) { cfg.toast('⚠️ Escreva em "O que você viu" o que falhou — o Antigravity precisa disso para tentar de novo.'); return; }
