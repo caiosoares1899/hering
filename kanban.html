@@ -6560,7 +6560,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.865</div>
+<div class="version">v8.30.870</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -6911,7 +6911,7 @@ getRedirectResult(auth).then(r=>{
 
 let _prevAuthUser=null; onAuthStateChanged(auth,user=>{ if(_prevAuthUser && !user){ try{ const _lr=safeLS.getItem('last_logout_reason'); const _lp=_lr?JSON.parse(_lr):null; if(!_lp || (Date.now()-_lp.ts)>3000){ const info={reason:'firebase_sdk_dropped_session',ts:Date.now(),tsStr:new Date().toISOString()}; console.warn('[Mare] Sessao caiu sem passar por window._signOut() -- provavel instabilidade do SDK do Firebase Auth:', info); safeLS.setItem('last_logout_reason', JSON.stringify(info)); } }catch(e){} } _prevAuthUser=user; window._currentUser=user; window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=29"></script>
+<script src="mare-notif.js?v=33"></script>
 <script src="mare-metas.js?v=14"></script>
 <script src="mare-dicas.js?v=5"></script>
 
@@ -12304,7 +12304,8 @@ function getDue(due, isDone, paused){
   if(diff===0) return {cls:'due-warn',lbl:'⚡ Hoje'};
   return {cls:'due-ok',lbl};
 }
-function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.round(d/cl.length*100)}; }
+// (2026-10-16) Math.round para alinhar com renderCL() no modal (2/3 = 67%, não 66%).
+function clProg(cl){ if(!cl||!cl.length) return null; const d=cl.filter(i=>i.done).length; return{d,t:cl.length,p:Math.ceil(d/cl.length*100)}; }
 
 // 💬 Indicador de comentários na linha de ícones do card (≡ descrição, 📎 anexo). A contagem vem de
 // card_comments_count (ver o listener perto de _uaRef); sem número ainda (índice não chegou / card sem
