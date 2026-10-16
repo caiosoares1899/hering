@@ -69,7 +69,8 @@ Os especialistas definidos no `AGENTS.md` (um por área: Maré, Radar, Painel/Oc
 - **Um dono por arquivo.** Dois subagentes nunca editam o mesmo arquivo ao mesmo tempo; áreas independentes podem rodar em paralelo.
 - **Subagente nunca usa terminal** (aprovação por comando); só o orquestrador roda o comando único no fim.
 - **Revisor independente:** depois que um especialista edita, peça a **outro** subagente (contexto limpo) para revisar o diff contra a seção 3 e o seu checklist da seção 7 — quem escreveu não é bom revisor do próprio código.
-- **Docs:** o especialista de documentação cuida de `BUGS_E_CORRECOES.md` (via `mare-cli.js log`), `CHANGELOG.md` (só feature), `CODE_MAP*.md` e ajuda in-app; ele só cita arquivos que **existem** (a CI confere).
+- **Docs (`/atualizardocumentacoes`):** o especialista de documentação (`agente-functions-docs`) cuida de `BUGS_E_CORRECOES.md` (via `mare-cli.js log`), `CHANGELOG.md` (só feature), `CODE_MAP*.md`, `maredigital.html`, `docs/OCEANO.md` e ajuda in-app; ele só cita arquivos que **existem** (a CI confere).
+- **Logs de Cards & Scripts de Teste (`agente-logs-testes`):** especialista dedicado a montar (1) o script de console de log de cards em `kanban/squads/dados/dados/card_comments/${CARD_ID}/${id}` via `window._set(window._ref(window._db, ...))` com `ts: new Date().toISOString()` e (2) os scripts de teste de console read-only (`F12 → Console`) para todos os apps, cuidando das diferenças entre `<script>` clássico (`kanban`, `painel`, `okr`) e IIFE (`oceano`, `escala`, `intake`) e da mutação de `const` via `try / finally`.
 
 ## 7. Checklist antes do comando único (se um item falha, volte)
 

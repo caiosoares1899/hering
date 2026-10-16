@@ -106,25 +106,28 @@ Entregue na resposta um snippet de console (F12 na aba do `kanban.html` logado) 
 - **`c1783541085140`** (*"Melhorias Maré Digital"*) — para todas as demais melhorias do ecossistema Oceano/Maré/Radar/Painel/Escala/Intake.
 - Se o lote tiver entregas dos dois temas, o mesmo script pode gravar em cada card a sua parte.
 
-### Regras obrigatórias do snippet de console:
-1. **`ts: new Date().toISOString()` (STRING ISO) — NUNCA `Date.now()`:** `loadComments()` ordena com `a.ts.localeCompare(b.ts)`; se `ts` for número, quebra silenciosamente todos os comentários do card.
-2. **Reutilize a instância autenticada do módulo da página** via `import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js')` + `getDatabase()`, `ref()`, `push()` e `getAuth()` — nunca use `window.firebase` (a página usa modular SDK v10).
+### Regras obrigatórias do snippet de console (ou acione o subagente `agente-logs-testes`):
+1. **Caminho REAL pós-Fase 1.1:** `kanban/squads/dados/dados/card_comments/${CARD_ID}/${id}` (a Cloud Function `contarComentarios` atualiza `card_comments_count` automaticamente). Nunca grave no legado `kanban/squads/dados/cards/${CARD_ID}/comments` nem em `kanban/comments/${CARD_ID}`.
+2. **`ts: new Date().toISOString()` (STRING ISO) — NUNCA `Date.now()`:** `loadComments()` ordena com `a.ts.localeCompare(b.ts)`; se `ts` for número, quebra silenciosamente todos os comentários do card.
+3. **Reutilize `window._db`, `window._ref` e `window._set` já autenticados na página** — nunca faça `import('https://www.gstatic.com/firebasejs/10.12.0/...')` (a página usa Firebase `10.14.1` local em `./vendor/firebase-10.14.1/` por causa do FortiGate SSL).
 
 ```js
 // Cole no console (F12) do kanban.html logado:
 (async () => {
-  const { getDatabase, ref, push } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js');
-  const { getAuth } = await import('https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js');
-  const db = getDatabase();
-  const user = getAuth().currentUser;
+  if (!window._db || !window._ref || !window._set) {
+    console.error('❌ Abra este script no console do kanban.html já logado.');
+    return;
+  }
   const CARD_ID = 'c1783541085140'; // ou 'c1785199972010_nd0' para Agente Ágil
-  await push(ref(db, `kanban/squads/dados/cards/${CARD_ID}/comments`), {
-    author: (user && (user.displayName || user.email)) || 'Caio (via Claude)',
-    authorEmail: (user && user.email) || '',
-    authorUid: (user && user.uid) || '',
+  const id = 'c' + Date.now() + '_' + Math.random().toString(36).slice(2, 5);
+  await window._set(window._ref(window._db, `kanban/squads/dados/dados/card_comments/${CARD_ID}/${id}`), {
+    id,
+    uid: (window._currentUser && window._currentUser.uid) || 'caio',
+    author: (window._currentUser && (window._currentUser.displayName || window._currentUser.email)) || 'Caio Soares',
+    init: window._currentUserInit || 'CS',
     ts: new Date().toISOString(), // SEMPRE ISO string!
     text: `🚀 Promoção pra prod — v8.30.XXX (PR #NNNN)\n\n• ...`
   });
-  console.log('✅ Log registrado no card', CARD_ID);
+  console.log('✅ Log registrado no card', CARD_ID, id);
 })();
 ```

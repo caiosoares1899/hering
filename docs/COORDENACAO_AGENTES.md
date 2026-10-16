@@ -54,6 +54,8 @@ Em 24 h (14→15/10) foram editados: `CHANGELOG.md` (42×), `version.json` (36×
   `node scripts/mare-cli.js` (`bump`, `log`, `map`), e **rebase em `origin/main` imediatamente antes do push**.
 - Conflito em `version.json`: vale o **maior** número de versão de cada chave; depois conferir
   que o `<div class="version">` da página bate.
+- **Regra permanente — Sempre se manter atualizado (`/seatualizar`):** antes de começar qualquer novo pedido (ou após um resync/merge), ambos os agentes devem seguir `.claude/skills/seatualizar/SKILL.md` (conferir este Quadro, `version.json`, topo do `CHANGELOG.md` e `BUGS_E_CORRECOES.md`, `docs/GUIA_DE_CODIGO.md` e `CODE_MAP_FAST.md`) para saber tudo o que o outro mudou e começar sem premissas velhas.
+- **Sincronização de documentações (`/atualizardocumentacoes`):** sempre que precisar atualizar o conjunto de documentações (`maredigital.html`, Help Content, `guia-okr.html`, `docs/OCEANO.md`, `CHANGELOG.md`, `BUGS_E_CORRECOES.md`, `CODE_MAP.md`/`CODE_MAP_FAST.md` e `conhecimento`), ambos usam a skill `.claude/skills/atualizardocumentacoes/SKILL.md` (no Antigravity, delegando ao `agente-functions-docs`).
 - Antes de editar uma página grande, olhar o Quadro: se o outro agente já declarou aquele
   arquivo, **espere o PR dele ser mergeado** ou combine por ali (não duas branches no mesmo arquivo).
 - Um agente não revisa/reescreve o código que o outro acabou de mergear sem um bug concreto.
