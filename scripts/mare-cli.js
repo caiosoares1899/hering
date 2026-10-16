@@ -16,10 +16,14 @@
  *   node scripts/mare-cli.js bump [alvos...]
  *   node scripts/mare-cli.js log --type <feature|bug> --title "<titulo>" [--body "<itens>"] [--body-file <caminho>]
  *   node scripts/mare-cli.js map
+ *   node scripts/mare-cli.js check-script --page <arquivo-dev.html> (--file <script.js> | --code "<js>")
+ *   node scripts/mare-cli.js ship [--manifest <caminho>]
  */
 
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
+const { execFileSync, spawnSync } = require('child_process');
 
 const ROOT = path.resolve(__dirname, '..');
 
@@ -37,6 +41,7 @@ const SHARED_MODULES = [
   'mare-metas-dev',
   'mare-dicas-dev',
   'mare-login-dev',
+  'mare-plantao-dev',
 ];
 
 const PAGE_TARGET_MAP = {
@@ -58,22 +63,26 @@ const PAGE_TARGET_MAP = {
 };
 
 const MODULE_TARGET_MAP = {
-  'mare-notif-dev':    'mare-notif-dev',
-  'mare-notif-dev.js': 'mare-notif-dev',
-  'mare-notif':        'mare-notif-dev',
-  'notif':             'mare-notif-dev',
-  'mare-metas-dev':    'mare-metas-dev',
-  'mare-metas-dev.js': 'mare-metas-dev',
-  'mare-metas':        'mare-metas-dev',
-  'metas':             'mare-metas-dev',
-  'mare-dicas-dev':    'mare-dicas-dev',
-  'mare-dicas-dev.js': 'mare-dicas-dev',
-  'mare-dicas':        'mare-dicas-dev',
-  'dicas':             'mare-dicas-dev',
-  'mare-login-dev':    'mare-login-dev',
-  'mare-login-dev.js': 'mare-login-dev',
-  'mare-login':        'mare-login-dev',
-  'login':             'mare-login-dev',
+  'mare-notif-dev':      'mare-notif-dev',
+  'mare-notif-dev.js':   'mare-notif-dev',
+  'mare-notif':          'mare-notif-dev',
+  'notif':               'mare-notif-dev',
+  'mare-metas-dev':      'mare-metas-dev',
+  'mare-metas-dev.js':   'mare-metas-dev',
+  'mare-metas':          'mare-metas-dev',
+  'metas':               'mare-metas-dev',
+  'mare-dicas-dev':      'mare-dicas-dev',
+  'mare-dicas-dev.js':   'mare-dicas-dev',
+  'mare-dicas':          'mare-dicas-dev',
+  'dicas':               'mare-dicas-dev',
+  'mare-login-dev':      'mare-login-dev',
+  'mare-login-dev.js':   'mare-login-dev',
+  'mare-login':          'mare-login-dev',
+  'login':               'mare-login-dev',
+  'mare-plantao-dev':    'mare-plantao-dev',
+  'mare-plantao-dev.js': 'mare-plantao-dev',
+  'mare-plantao':        'mare-plantao-dev',
+  'plantao':             'mare-plantao-dev',
 };
 
 // ---------------------------------------------------------------------------
@@ -412,6 +421,7 @@ const MAP_TARGET_FILES = [
   'mare-metas-dev.js',
   'mare-dicas-dev.js',
   'mare-login-dev.js',
+  'mare-plantao-dev.js',
 ];
 
 function escapeRegExp(str) {
@@ -448,6 +458,8 @@ function buildSectionFileResolver(mapLines) {
         currentFile = 'mare-dicas-dev.js';
       } else if (line.includes('mare-login.js') || line.includes('mare-login-dev.js')) {
         currentFile = 'mare-login-dev.js';
+      } else if (line.includes('mare-plantao.js') || line.includes('mare-plantao-dev.js')) {
+        currentFile = 'mare-plantao-dev.js';
       } else if (line.includes('kanban.html') || line.includes('kanban-dev.html')) {
         currentFile = 'kanban-dev.html';
       } else if (line.includes('painel.html') || line.includes('painel-dev.html')) {
@@ -775,6 +787,464 @@ function cmdArchiveChangelog() {
 }
 
 // ---------------------------------------------------------------------------
+// 6. Subcomando: check-script (Validação estática e de escopo de script de console)
+// ---------------------------------------------------------------------------
+
+const JS_KEYWORDS_AND_GLOBALS = new Set([
+  // Keywords / statements
+  'if', 'else', 'for', 'while', 'do', 'switch', 'case', 'break', 'continue',
+  'return', 'try', 'catch', 'finally', 'throw', 'new', 'delete', 'typeof',
+  'instanceof', 'void', 'in', 'of', 'function', 'async', 'await', 'class',
+  'extends', 'super', 'import', 'export', 'default', 'const', 'let', 'var',
+  'true', 'false', 'null', 'undefined', 'NaN', 'Infinity', 'this', 'arguments',
+  // Standard Browser & JS Globals
+  'window', 'document', 'console', 'location', 'history', 'navigator',
+  'localStorage', 'sessionStorage', 'performance', 'screen', 'crypto',
+  'Object', 'Array', 'String', 'Number', 'Boolean', 'Date', 'Math', 'RegExp',
+  'Map', 'Set', 'WeakMap', 'WeakSet', 'Promise', 'Symbol', 'Proxy', 'Reflect',
+  'JSON', 'Intl', 'Error', 'TypeError', 'ReferenceError', 'SyntaxError',
+  'RangeError', 'URIError', 'EvalError', 'ArrayBuffer', 'Uint8Array',
+  'Int32Array', 'Float64Array', 'DataView', 'Blob', 'File', 'FileReader',
+  'FormData', 'URL', 'URLSearchParams', 'Headers', 'Request', 'Response',
+  'AbortController', 'Event', 'CustomEvent', 'KeyboardEvent', 'MouseEvent',
+  'FocusEvent', 'InputEvent', 'MutationObserver', 'IntersectionObserver',
+  'ResizeObserver', 'Node', 'Element', 'HTMLElement', 'NodeFilter', 'DOMParser',
+  'XMLSerializer', 'CSS', ' parseInt', 'parseInt', 'parseFloat', 'isNaN',
+  'isFinite', 'encodeURI', 'decodeURI', 'encodeURIComponent',
+  'decodeURIComponent', 'setTimeout', 'clearTimeout', 'setInterval',
+  'clearInterval', 'requestAnimationFrame', 'cancelAnimationFrame',
+  'queueMicrotask', 'structuredClone', 'atob', 'btoa', 'fetch',
+  'getComputedStyle', 'matchMedia', 'alert', 'confirm', 'prompt',
+]);
+
+function stripCommentsAndStrings(code) {
+  return code
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/.*$/gm, ' ')
+    .replace(/`(?:\\[\s\S]|[^\\`])*`/g, '""')
+    .replace(/'(?:\\.|[^\\'])*'/g, '""')
+    .replace(/"(?:\\.|[^\\"])*"/g, '""');
+}
+
+function collectLocalDeclarations(cleanCode, rawCode) {
+  const locals = new Set();
+  let m;
+
+  // function foo(...) / function(a, b) / (a, b) => / a =>
+  const fnDeclRe = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)/g;
+  while ((m = fnDeclRe.exec(cleanCode)) !== null) {
+    locals.add(m[1]);
+    m[2].split(',').forEach((p) => {
+      const id = p.split('=')[0].replace(/[{}\[\]\.]/g, ' ').trim().split(/\s+/).pop();
+      if (id && /^[A-Za-z_$][\w$]*$/.test(id)) locals.add(id);
+    });
+  }
+
+  const anonFnRe = /\bfunction\s*\(([^)]*)\)/g;
+  while ((m = anonFnRe.exec(cleanCode)) !== null) {
+    m[1].split(',').forEach((p) => {
+      const id = p.split('=')[0].replace(/[{}\[\]\.]/g, ' ').trim().split(/\s+/).pop();
+      if (id && /^[A-Za-z_$][\w$]*$/.test(id)) locals.add(id);
+    });
+  }
+
+  const arrowParenRe = /\(([^()]*)\)\s*=>/g;
+  while ((m = arrowParenRe.exec(cleanCode)) !== null) {
+    m[1].split(',').forEach((p) => {
+      const id = p.split('=')[0].replace(/[{}\[\]\.]/g, ' ').trim().split(/\s+/).pop();
+      if (id && /^[A-Za-z_$][\w$]*$/.test(id)) locals.add(id);
+    });
+  }
+
+  const arrowSingleRe = /\b([A-Za-z_$][\w$]*)\s*=>/g;
+  while ((m = arrowSingleRe.exec(cleanCode)) !== null) {
+    locals.add(m[1]);
+  }
+
+  // catch (e)
+  const catchRe = /\bcatch\s*\(\s*([A-Za-z_$][\w$]*)\s*\)/g;
+  while ((m = catchRe.exec(cleanCode)) !== null) {
+    locals.add(m[1]);
+  }
+
+  // const / let / var declarations (including simple destructuring)
+  const varRe = /\b(?:const|let|var)\s+([^;=\n]+)/g;
+  while ((m = varRe.exec(cleanCode)) !== null) {
+    const chunk = m[1];
+    const idRe = /\b([A-Za-z_$][\w$]*)\b/g;
+    let im;
+    while ((im = idRe.exec(chunk)) !== null) {
+      if (!JS_KEYWORDS_AND_GLOBALS.has(im[1])) locals.add(im[1]);
+    }
+  }
+
+  // Also check rawCode for local function declarations that might be near template strings
+  const rawFnRe = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g;
+  while ((m = rawFnRe.exec(rawCode)) !== null) {
+    locals.add(m[1]);
+  }
+  const rawVarRe = /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\b/g;
+  while ((m = rawVarRe.exec(rawCode)) !== null) {
+    locals.add(m[1]);
+  }
+
+  return locals;
+}
+
+function symbolExistsInPage(sym, combinedPageSource) {
+  const esc = escapeRegExp(sym);
+  const patterns = [
+    new RegExp(`\\bfunction\\s+${esc}\\b`),
+    new RegExp(`\\b(?:const|let|var)\\s+${esc}\\b`),
+    new RegExp(`\\bwindow\\.${esc}\\s*=`),
+    new RegExp(`\\b${esc}\\s*=\\s*(?:async\\s*)?(?:function|\\()`),
+    new RegExp(`\\b${esc}\\s*:\\s*(?:async\\s*)?function\\b`),
+  ];
+  return patterns.some((re) => re.test(combinedPageSource));
+}
+
+/**
+ * Valida se um script de teste de console:
+ * 1. Tem sintaxe JS válida (`new vm.Script`)
+ * 2. É estritamente read-only (não chama _set, _update, _remove, saveCard, etc.)
+ * 3. Não reatribui variáveis `const` da página (ex.: `today = ...`)
+ * 4. Só chama funções/símbolos e IDs que realmente existem no arquivo `-dev` alvo (Linha Vermelha #4)
+ * 5. Preenche `_resultadosTeste` e chama `console.table`
+ */
+function verifyConsoleTestScript(pageFile, scriptCode) {
+  const errors = [];
+  const resolvedPage = pageFile.endsWith('.html') || pageFile.endsWith('.js')
+    ? pageFile
+    : `${pageFile.replace(/-dev$/, '')}-dev.html`;
+  const pagePath = path.join(ROOT, resolvedPage);
+
+  if (!fs.existsSync(pagePath)) {
+    return { ok: false, errors: [`Arquivo alvo não encontrado: ${resolvedPage}`] };
+  }
+
+  // 1. Sintaxe JS válida
+  try {
+    new vm.Script(scriptCode, { filename: 'console-test-script.js' });
+  } catch (err) {
+    errors.push(`Erro de sintaxe JS no script de teste: ${err.message}`);
+    return { ok: false, errors };
+  }
+
+  const pageSource = fs.readFileSync(pagePath, 'utf8');
+  let combinedSource = pageSource;
+  for (const mod of SHARED_MODULES) {
+    const modFile = `${mod}.js`;
+    const modPath = path.join(ROOT, modFile);
+    if (fs.existsSync(modPath) && pageSource.includes(modFile)) {
+      combinedSource += '\n' + fs.readFileSync(modPath, 'utf8');
+    }
+  }
+
+  const cleanScript = stripCommentsAndStrings(scriptCode);
+
+  // 2. Proibição de escrita no Firebase / mutação persistente (read-only)
+  const forbiddenCalls = ['_set', '_update', '_remove', 'saveCard', 'deleteCard', 'saveComunicado', 'excluirComunicado'];
+  for (const fn of forbiddenCalls) {
+    const re = new RegExp(`(?:^|[^\\w$])${escapeRegExp(fn)}\\s*\\(`, 'm');
+    if (re.test(cleanScript)) {
+      errors.push(`Violação Read-Only: o script de teste chama "${fn}(" (proibido gravar no Firebase ou salvar estado).`);
+    }
+  }
+
+  // 3. Proibição de reatribuir `const` global da página (ex.: `today = new Date(...)`)
+  const pageConsts = new Set();
+  const constRe = /^\s*const\s+([A-Za-z_$][\w$]*)\s*=/gm;
+  let cm;
+  while ((cm = constRe.exec(pageSource)) !== null) {
+    pageConsts.add(cm[1]);
+  }
+  const locals = collectLocalDeclarations(cleanScript, scriptCode);
+  for (const cName of pageConsts) {
+    if (locals.has(cName)) continue;
+    const assignRe = new RegExp(`(?:^|[^.\\w$])${escapeRegExp(cName)}\\s*=(?!=)`, 'm');
+    if (assignRe.test(cleanScript)) {
+      errors.push(`Reatribuição de const da página: "${cName}" é declarado como \`const\` em ${resolvedPage}. Use mutação reversível (ex.: ${cName}.setTime(...)) dentro de try/finally.`);
+    }
+  }
+
+  // 4. Verificação de existência de todas as funções livres chamadas no script (Linha Vermelha #4 — caso fmtDate)
+  const callRe = /(^|[^.\w$])([A-Za-z_$][\w$]*)\s*\(/g;
+  let fm;
+  const checkedFns = new Set();
+  while ((fm = callRe.exec(cleanScript)) !== null) {
+    const fnName = fm[2];
+    if (checkedFns.has(fnName)) continue;
+    checkedFns.add(fnName);
+    if (JS_KEYWORDS_AND_GLOBALS.has(fnName)) continue;
+    if (locals.has(fnName)) continue;
+    if (!symbolExistsInPage(fnName, combinedSource)) {
+      errors.push(`Símbolo/função inexistente (Linha Vermelha #4): "${fnName}(" foi chamado no script de teste, mas NÃO existe em ${resolvedPage} nem nos módulos compartilhados!`);
+    }
+  }
+
+  // 5. Verificação de IDs buscados via document.getElementById('...')
+  const getByIdRe = /getElementById\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  let im;
+  while ((im = getByIdRe.exec(scriptCode)) !== null) {
+    const idVal = im[1];
+    // Se o próprio script cria esse ID dinamicamente, ignora
+    const createdLocally = new RegExp(`id\\s*=\\s*['"]${escapeRegExp(idVal)}['"]`).test(scriptCode);
+    if (!createdLocally && !combinedSource.includes(idVal)) {
+      errors.push(`Elemento DOM inexistente: getElementById('${idVal}') chamado no script, mas "${idVal}" não consta em ${resolvedPage}.`);
+    }
+  }
+
+  // 6. Estrutura padrão (_resultadosTeste e console.table)
+  if (!scriptCode.includes('_resultadosTeste')) {
+    errors.push('O script de teste deve gravar os resultados em `window._resultadosTeste`.');
+  }
+  if (!scriptCode.includes('console.table')) {
+    errors.push('O script de teste deve finalizar exibindo `console.table(...)`.');
+  }
+
+  return { ok: errors.length === 0, errors, page: resolvedPage };
+}
+
+function cmdCheckScript(args) {
+  let page = '';
+  let file = '';
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--page' && args[i + 1]) page = args[++i];
+    else if (args[i] === '--file' && args[i + 1]) file = args[++i];
+  }
+  if (!page || !file) {
+    console.error('Uso: node scripts/mare-cli.js check-script --page <arquivo-dev.html> --file <script.js>');
+    process.exit(1);
+  }
+  const scriptPath = path.isAbsolute(file) ? file : path.join(ROOT, file);
+  if (!fs.existsSync(scriptPath)) {
+    console.error(`Erro: arquivo de script não encontrado: ${file}`);
+    process.exit(1);
+  }
+  const code = fs.readFileSync(scriptPath, 'utf8');
+  const res = verifyConsoleTestScript(page, code);
+  if (!res.ok) {
+    console.error(`❌ [check-script] Falha na validação contra ${res.page}:`);
+    res.errors.forEach((e) => console.error(`  - ${e}`));
+    process.exit(1);
+  }
+  console.log(`✅ [check-script] Script de console validado com sucesso contra ${res.page} (sintaxe, read-only, consts e existência de símbolos OK).`);
+}
+
+// ---------------------------------------------------------------------------
+// 7. Subcomando: ship (Pipeline Zero-Approval em 1 único clique via .mare-ship.json)
+// ---------------------------------------------------------------------------
+
+function runCmdOrThrow(bin, cmdArgs, opts = {}) {
+  const res = spawnSync(bin, cmdArgs, {
+    cwd: ROOT,
+    encoding: 'utf8',
+    stdio: opts.capture ? 'pipe' : 'inherit',
+    env: opts.env || process.env,
+    input: opts.input,
+  });
+  if (res.status !== 0) {
+    const detail = opts.capture ? `\n${res.stdout || ''}\n${res.stderr || ''}` : '';
+    throw new Error(`Comando falhou (${bin} ${cmdArgs.join(' ')}): exit ${res.status}${detail}`);
+  }
+  return res;
+}
+
+function getGitHubTokenFromGitCredential() {
+  if (process.env.GH_TOKEN && process.env.GH_TOKEN.trim()) {
+    return process.env.GH_TOKEN.trim();
+  }
+  const res = spawnSync('git', ['credential', 'fill'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+    input: 'protocol=https\nhost=github.com\n\n',
+    stdio: ['pipe', 'pipe', 'pipe'],
+  });
+  if (res.status === 0 && res.stdout) {
+    const m = res.stdout.match(/^password=(.+)$/m);
+    if (m && m[1]) return m[1].trim();
+  }
+  return '';
+}
+
+function cmdShip(args) {
+  let manifestRel = '.mare-ship.json';
+  for (let i = 0; i < args.length; i++) {
+    if (args[i] === '--manifest' && args[i + 1]) manifestRel = args[++i];
+  }
+  const manifestPath = path.isAbsolute(manifestRel) ? manifestRel : path.join(ROOT, manifestRel);
+  if (!fs.existsSync(manifestPath)) {
+    console.error(`Erro: manifesto ${manifestRel} não encontrado. Crie-o com write_to_file antes de rodar "node scripts/mare-cli.js ship".`);
+    process.exit(1);
+  }
+
+  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+
+  const branch = (manifest.branch || '').trim();
+  const commitMessage = (manifest.commitMessage || '').trim();
+  const prTitle = (manifest.prTitle || commitMessage.split('\n')[0] || '').trim();
+  const baseRef = (manifest.base || 'origin/main').trim();
+  const reuseBranch = Boolean(manifest.reuseBranch);
+
+  if (!branch || !branch.startsWith('antigravity/')) {
+    console.error('Erro [ship]: "branch" é obrigatório e deve começar com "antigravity/".');
+    process.exit(1);
+  }
+  if (!commitMessage) {
+    console.error('Erro [ship]: "commitMessage" é obrigatório.');
+    process.exit(1);
+  }
+
+  // Monta prBody automaticamente se prSummary/testScript forem passados
+  let prBody = manifest.prBody || '';
+  if (!prBody && manifest.prSummary) {
+    prBody = `## Resumo\n${manifest.prSummary.trim()}\n`;
+    if (manifest.testScript && manifest.testScript.code) {
+      prBody += `\n## Script de teste\n\`\`\`javascript\n${manifest.testScript.code.trim()}\n\`\`\`\n`;
+    }
+  }
+
+  // 1. Validação obrigatória do script de teste (explícito ou extraído de ## Script de teste no prBody)
+  let testPage = manifest.testScript && manifest.testScript.page;
+  let testCode = manifest.testScript && manifest.testScript.code;
+  if (!testCode && prBody && prBody.includes('## Script de teste')) {
+    const mBlock = prBody.match(/##\s+Script de teste[\s\S]*?```(?:javascript|js)\r?\n([\s\S]*?)```/i);
+    if (mBlock && mBlock[1]) {
+      testCode = mBlock[1].trim();
+      if (!testPage && Array.isArray(manifest.bump) && manifest.bump.length === 1) {
+        testPage = manifest.bump[0];
+      }
+    }
+  }
+  if (testCode && testPage) {
+    const check = verifyConsoleTestScript(testPage, testCode);
+    if (!check.ok) {
+      console.error(`❌ [ship] Abortado! O script de teste falhou na validação contra ${check.page}:`);
+      check.errors.forEach((e) => console.error(`  - ${e}`));
+      process.exit(1);
+    }
+    console.log(`✅ [ship] Script de teste validado contra ${check.page}.`);
+  }
+
+  // Remove o manifesto após validação do script para manter a árvore git limpa
+  if (fs.existsSync(manifestPath)) fs.unlinkSync(manifestPath);
+
+  // 2. Salva em memória os arquivos editados antes do checkout para nunca ter conflito de stash em version.json/CHANGELOG
+  const statusOut = runCmdOrThrow('git', ['status', '--porcelain'], { capture: true }).stdout;
+  const savedFiles = new Map();
+  for (const line of statusOut.split(/\r?\n/)) {
+    if (!line.trim()) continue;
+    const rel = line.slice(3).trim().replace(/^"(.*)"$/, '$1');
+    if (rel === '.mare-ship.json') continue;
+    const abs = path.join(ROOT, rel);
+    if (fs.existsSync(abs) && fs.statSync(abs).isFile()) {
+      savedFiles.set(rel, fs.readFileSync(abs));
+    }
+  }
+
+  // 3. Sincroniza origin e posiciona a branch sem conflito
+  console.log(`[ship] Sincronizando git e preparando branch ${branch}...`);
+  runCmdOrThrow('git', ['fetch', 'origin']);
+  if (reuseBranch) {
+    runCmdOrThrow('git', ['checkout', branch]);
+  } else {
+    runCmdOrThrow('git', ['checkout', '-f', '-B', branch, baseRef]);
+  }
+
+  // Restaura as edições feitas nos arquivos-alvo sobre a base atualizada
+  for (const [rel, buf] of savedFiles.entries()) {
+    const abs = path.join(ROOT, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, buf);
+  }
+
+  // 4. Executa passos declarativos (promote, bump, log, map, conhecimento, tests)
+  if (Array.isArray(manifest.promote) && manifest.promote.length > 0) {
+    console.log(`[ship] Promovendo dev -> prod: ${manifest.promote.join(', ')}...`);
+    runCmdOrThrow(process.execPath, [path.join(ROOT, '.claude/skills/subirproprod/promover.js'), ...manifest.promote]);
+  }
+
+  if (Array.isArray(manifest.bump) && manifest.bump.length > 0) {
+    cmdBump(manifest.bump);
+  }
+
+  if (Array.isArray(manifest.log)) {
+    for (const entry of manifest.log) {
+      if (entry && entry.type && entry.title && entry.body) {
+        cmdLog(['--type', entry.type, '--title', entry.title, '--body', entry.body]);
+      }
+    }
+  } else if (manifest.log && manifest.log.type && manifest.log.title && manifest.log.body) {
+    cmdLog(['--type', manifest.log.type, '--title', manifest.log.title, '--body', manifest.log.body]);
+  }
+
+  if (manifest.map) {
+    cmdMap();
+  }
+
+  if (manifest.conhecimento) {
+    console.log('[ship] Gerando functions/conhecimento.json...');
+    runCmdOrThrow(process.execPath, [path.join(ROOT, 'scripts/gerar-conhecimento.js')]);
+  }
+
+  if (Array.isArray(manifest.tests)) {
+    for (const testFile of manifest.tests) {
+      console.log(`[ship] Rodando teste: ${testFile}...`);
+      runCmdOrThrow(process.execPath, ['--test', testFile]);
+    }
+  }
+
+  // 5. Roda node scripts/checar.js obrigatoriamente antes de commitar
+  console.log('[ship] Executando node scripts/checar.js...');
+  runCmdOrThrow(process.execPath, [path.join(ROOT, 'scripts/checar.js')]);
+
+  // 6. Stage, commit com trailer Agent: antigravity e push
+  runCmdOrThrow('git', ['add', '-A']);
+  const fullCommitMsg = /Agent:\s*antigravity/i.test(commitMessage)
+    ? commitMessage
+    : `${commitMessage}\n\nAgent: antigravity`;
+  runCmdOrThrow('git', ['commit', '-m', fullCommitMsg]);
+  runCmdOrThrow('git', ['push', '-u', 'origin', branch]);
+
+  // 7. Cria ou atualiza a PR via gh com GH_TOKEN extraído do git credential fill
+  if (manifest.skipPr) {
+    console.log(`✅ [ship] Branch ${branch} enviada com sucesso (skipPr=true).`);
+    return;
+  }
+
+  const ghToken = getGitHubTokenFromGitCredential();
+  const ghEnv = { ...process.env };
+  if (ghToken) ghEnv.GH_TOKEN = ghToken;
+
+  const os = require('os');
+  const bodyTmp = path.join(os.tmpdir(), `mare-pr-body-${Date.now()}.md`);
+  fs.writeFileSync(bodyTmp, prBody || commitMessage, 'utf8');
+
+  try {
+    const viewRes = spawnSync('gh', ['pr', 'view', branch, '--json', 'number,url'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      env: ghEnv,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    if (viewRes.status === 0 && viewRes.stdout) {
+      const prInfo = JSON.parse(viewRes.stdout);
+      runCmdOrThrow('gh', ['pr', 'edit', String(prInfo.number), '--title', prTitle, '--body-file', bodyTmp], { env: ghEnv });
+      console.log(`✅ [ship] PR #${prInfo.number} atualizada com sucesso: ${prInfo.url}`);
+    } else {
+      const createRes = runCmdOrThrow(
+        'gh',
+        ['pr', 'create', '--base', 'main', '--head', branch, '--title', prTitle, '--body-file', bodyTmp],
+        { env: ghEnv, capture: true }
+      );
+      console.log(`✅ [ship] PR criada com sucesso: ${(createRes.stdout || '').trim()}`);
+    }
+  } finally {
+    if (fs.existsSync(bodyTmp)) fs.unlinkSync(bodyTmp);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Entrypoint
 // ---------------------------------------------------------------------------
 
@@ -798,13 +1268,21 @@ function main() {
     case 'archive-changelog':
       cmdArchiveChangelog();
       break;
+    case 'check-script':
+      cmdCheckScript(args.slice(1));
+      break;
+    case 'ship':
+      cmdShip(args.slice(1));
+      break;
     default:
-      console.log('Uso: node scripts/mare-cli.js <status|bump|log|map|archive-changelog> [opções]');
+      console.log('Uso: node scripts/mare-cli.js <status|bump|log|map|archive-changelog|check-script|ship> [opções]');
       console.log('  status                                  Mostra versões (version.json) e ?v=N dos módulos');
       console.log('  bump [alvos...]                         Incrementa versão de páginas -dev ou ?v=N de módulos');
       console.log('  log --type <feature|bug> --title "..."  Insere entrada em CHANGELOG.md ou BUGS_E_CORRECOES.md');
       console.log('  map                                     Revalida âncoras Lxxxx em CODE_MAP.md e gera CODE_MAP_FAST.md');
       console.log('  archive-changelog                       Arquiva entradas 2026-07..09 em docs/changelog-archive-2026-07-a-09.md');
+      console.log('  check-script --page <arq> --file <js>   Valida sintaxe, read-only, consts e símbolos do script de teste');
+      console.log('  ship [--manifest .mare-ship.json]       Executa check-script + checkout + bump/log/map + checar + commit + PR');
       process.exit(cmd ? 1 : 0);
   }
 }
@@ -821,4 +1299,7 @@ module.exports = {
   cmdLog,
   cmdMap,
   cmdArchiveChangelog,
+  verifyConsoleTestScript,
+  cmdCheckScript,
+  cmdShip,
 };

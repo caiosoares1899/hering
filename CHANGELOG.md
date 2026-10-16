@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Automação Zero-Approval (`mare-cli.js ship` & `check-script`) + Suporte a `mare-plantao.js` — 2026-10-16
+
+- **`node scripts/mare-cli.js check-script` (`verifyConsoleTestScript`):** validador estático e de escopo para scripts de teste de console (`F12 → Console`) que verifica sintaxe JS (`vm.Script`), conformidade read-only (bloqueando `_set`/`_update`/`_remove`/`saveCard`), ausência de reatribuição de `const` globais da página (como `today` em `kanban-dev.html`) e existência real de todas as funções livres e IDs DOM chamados no script contra o arquivo `-dev.html` e seus módulos compartilhados (prevenindo erros como `ReferenceError: fmtDate is not defined`, Linha Vermelha #4).
+- **`node scripts/mare-cli.js ship` (`.mare-ship.json`):** pipeline declarativo de entrega em 1 único clique que lê o manifesto `.mare-ship.json` (gerado via `write_to_file` sem prompt de terminal), valida o script de teste antes de tocar no Git, preserva arquivos editados em memória durante o `git fetch origin && git checkout -B <branch> origin/main` (eliminando conflitos de stash em `version.json`, `CHANGELOG.md` e `BUGS_E_CORRECOES.md`), executa `promote`/`bump`/`log`/`map`/`conhecimento`/`checar.js`, commita com `Agent: antigravity`, faz push e cria/atualiza a PR via `--body-file` (sem problemas de escape no PowerShell).
+- **Suporte ao módulo `mare-plantao-dev.js` / `mare-plantao.js`:** registrado em `scripts/mare-cli.js` (`SHARED_MODULES`, `MODULE_TARGET_MAP`, `MAP_TARGET_FILES`) e em `.claude/skills/subirproprod/promover.js` (`TARGETS` e preservação de pares `-dev`/prod).
+- **Inspeção Zero-Terminal (`.claude/skills/seatualizar/SKILL.md`, `.claude/skills/plantaobug/SKILL.md`, `AGENTS.md`):** leitura direta de `.git/HEAD`, `.git/logs/HEAD` (`view_file`) e comentários de revisão do Claude nas PRs (`read_url_content`) sem acionar terminal.
+
 ### 2026-10-16 — Plantão: comentário no card com o resumo da correção ao validar (PROD · painel v5.79 · oceano v1.52 · mare-plantao.js v2)
 
 Quando o ADM clica em "Rodei o script e validei" (Painel › Monitor › Plantão), o card do bug na squad Dados ganha um comentário com o resumo da correção: PR (número e título), o que mudou (seção "## Resumo" da PR), quem validou, a nota do ADM e o resultado do teste. O servidor (`plantaoGithubWebhook`) passa a guardar `prTitulo` e `prResumo` na ficha ao receber a PR; sem eles o comentário sai só com PR, validador e nota. Dev: mare-plantao-dev.js ?v=2, painel-dev v5.79, oceano-dev v1.52. **Exige** `firebase deploy --only database` (campos novos da ficha) e `--only functions:plantaoGithubWebhook`.
