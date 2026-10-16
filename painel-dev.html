@@ -2079,6 +2079,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
   <!-- ═══ ABA: MONITOR ═══ -->
   <div class="ptab-pane" id="ppane-monitor">
+    <!-- 🛟 Plantão de Bugs — todo o controle de ADM (fichas, PR, script de teste, validar, resolver, pausar). Módulo mare-plantao-dev.js; o Oceano só tem o formulário de quem reporta. Runbook: docs/PLANTAO_BUGS.md -->
+    <div id="plantao-section" style="margin-bottom:14px;"></div>
     <div id="monitor-section">
       <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span>🐛 Monitoramento de Erros</span>
@@ -3018,7 +3020,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.75 · painel-dev</div>
+<div class="version">v5.76 · painel-dev</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3123,6 +3125,7 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 </script>
 <script src="mare-notif-dev.js?v=33"></script>
 <script src="mare-metas-dev.js?v=14"></script>
+<script src="mare-plantao-dev.js?v=1"></script>
 <script src="mare-dicas-dev.js?v=4"></script>
 
 <script>
@@ -5713,6 +5716,16 @@ function togglePcalSection(){ swPtab('pessoas'); }
 
 // Página própria do OKR (mesmo ambiente: painel→okr, painel-dev→okr-dev)
 const OKR_PAGE = 'okr-dev.html';
+// 🛟 Plantão de Bugs (módulo mare-plantao-dev.js) — só ADM; o módulo liga os listeners uma vez e re-renderiza nas aberturas seguintes.
+function _iniciarPlantao(){
+  try{
+    if(!window.MarePlantao) return;
+    MarePlantao.init({ P:function(n){return /-dev\.html/.test(location.pathname)?n+'-dev.html':n+'.html';}, user:function(){return window._currentUser;}, esc:esc, toast:showToast,
+      tempoRel:function(iso){ if(!iso) return ''; var m=Math.round((Date.now()-new Date(iso).getTime())/60000); return m<1?'agora':m<60?'há '+m+' min':m<1440?'há '+Math.round(m/60)+' h':'há '+Math.round(m/1440)+' d'; },
+      souAdm:function(){return _isAdmPainel();} });
+    MarePlantao.admin.iniciar(document.getElementById('plantao-section'));
+  }catch(e){ console.warn('plantão', e); }
+}
 function swPtab(tab){
   if(tab==='okr'){ MareNotif.abrirPagina(OKR_PAGE); return; } // OKR tem página própria (okr.html / okr-dev.html) — esta aba é só um atalho; abre em aba nova
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
@@ -5733,7 +5746,7 @@ function swPtab(tab){
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); }
   if(tab==='notifs'){ loadGlobalUsers(false); renderNotifCentral(); }
-  if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
+  if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); _iniciarPlantao(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
   if(tab==='timeline'){ renderPainelTimeline(); }

@@ -63,6 +63,7 @@ test('campos do modo automático (prSha/entregaEm/entregas): só ADM grava e só
   assert.equal(pode('adm', 'kanban/plantao/b1/prSha', 'a'.repeat(40)), true);
   assert.equal(pode('adm', 'kanban/plantao/b1/prSha', 'a'.repeat(65)), false);
   assert.equal(pode('adm', 'kanban/plantao/b1/entregaEm', 1760000000000), true);
+  assert.equal(pode('adm', 'kanban/plantao/b1/autorNome', 'Eve Souza'), true); assert.equal(pode('adm', 'kanban/plantao/b1/autorNome', 'x'.repeat(121)), false); assert.equal(pode('adm', 'kanban/plantao/b1/app', 'Maré Digital'), true);
   assert.equal(pode('adm', 'kanban/plantao/b1/entregas', 3), true);
   assert.equal(pode('adm', 'kanban/plantao/b1/entregas', 10), false);
   assert.equal(pode('membro', 'kanban/plantao/b1/prSha', 'x'), false);

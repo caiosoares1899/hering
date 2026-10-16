@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — Plantão de Bugs: Oceano só com a visão do usuário; controle de ADM no Painel › 🐛 Monitor (oceano v1.48 · painel v5.76)
+
+- Oceano: o aviso do assistente abre minimizado (uma linha) e pode ser dispensado com ✕; a aba 🐛 Reportar Bug mostra só o formulário e Meus chamados — pacote, PR, script, validação e comando do agente saíram de lá.
+- Painel › 🐛 Monitor ganhou 🛟 Plantão de Bugs: fichas, PR + script de teste, validar/reprovar, 🚀 em produção, avisar quem reportou, pausa geral e batimento do Antigravity.
+- Novo módulo compartilhado mare-plantao-dev.js (card na Squad Dados, aviso ao autor, pacote anônimo, tela do ADM); fichas ganham app/autorUid/autorNome (exige firebase deploy --only database e redeploy de plantaoBugNovo).
+- Dica: não — é ferramenta de ADM e o aviso do Oceano já é o próprio lembrete.
+
 ### oceano-dev.html v1.47 (2026-10-16) — SÓ DEV, ainda não promovido para oceano.html — Plantão automático: o Antigravity busca o bug sozinho e o GitHub registra a PR (funções + regras, exige chaves, deploy e webhook)
 
 - **`plantaoProximo`** (`functions/plantao/agente.js`): GET com chave que entrega o próximo bug ao Antigravity (tarefa agendada dele; `read_url_content` não pede aprovação) como pacote anônimo + branch + instruções, com lease de 3 h, máximo de 3 entregas e teto de requisições; relato marcado como DADO.

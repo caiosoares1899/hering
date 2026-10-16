@@ -69,16 +69,16 @@
 - **L3789**: okr-apresentacao.slide.html (raiz do repo, sem `-dev` — nunca teve
 - **L3940**: functions/ (Cloud Functions — deploy manual, sempre resincronizar antes, ver `CLAUDE.md`)
   - **L3942**: index.js — registro de exports
-  - **L3999**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
-  - **L4309**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
-  - **L4371**: intake/ e backup/ — online
-  - **L4396**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
-  - **L4498**: spotify/ — PAUSADO (2026-08-04)
-  - **L4517**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
-  - **L4527**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
-  - **L4533**: 💬 Indicador de comentários na face do card (2026-10-05)
-  - **L4544**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
-  - **L4549**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
+  - **L4001**: agente-agil-orquestrador/ (orquestrador novo — este é o documentado em `maredigital.html`)
+  - **L4311**: agente-agil/ (agente v0-v3, HTTP, mais antigo — ainda deployado como `exports.agenteAgil`, mas não é o orquestrador documentado em `maredigital.html`)
+  - **L4373**: intake/ e backup/ — online
+  - **L4398**: okr/ — 2026-09-04, novo (+ `weeklySnapshot.js` e `agenteChat.js`/`agenteTools.js`/`agenteHelpers.js`/`agentePrompt.js` em 2026-09-05)
+  - **L4500**: spotify/ — PAUSADO (2026-08-04)
+  - **L4519**: painel — consumo de banda (cards incrementais, `usuarios` sob demanda) — v3.93
+  - **L4529**: Segurança — handlers inline, identidade do rate limit, redirect (2026-10-05)
+  - **L4535**: 💬 Indicador de comentários na face do card (2026-10-05)
+  - **L4546**: 🧠 Conhecimento do Agente Ágil (`functions/agente-agil-orquestrador/conhecimento/`, 2026-10-10)
+  - **L4551**: 💡 Dicas (mini popups) — `mare-dicas-dev.js` (módulo compartilhado, `?v=5`; em prod `mare-dicas.js?v=5` desde 2026-10-14: kanban v8.30.822, okr v2.78, oceano v1.34, painel v5.68)
 
 ## 2. Principais Âncoras por Arquivo (`-dev`)
 

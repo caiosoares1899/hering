@@ -19,7 +19,7 @@ O Antigravity corporativo **pede aprovação a cada comando de terminal** (`comm
 Pessoa (Oceano › Assistente Férias › 🐛 Reportar Bug)
    └► kanban/feedback/{id}  +  card na squad Dados › 🐛 Bugs          (dados da pessoa ficam SÓ aqui)
         └► plantaoBugNovo (servidor): ficha kanban/plantao/{id} · junta duplicados · avisa os ADMs 🔔 (abre o card)
-             └► ADM: Oceano › 🐛 Reportar Bug › "📋 Copiar pacote anônimo"  → cola no Antigravity com `/plantaobug` (abaixo)
+             └► ADM: Painel › 🐛 Monitor › 🛟 Plantão de Bugs › "copiar pacote (modo manual)"  → cola no Antigravity com `/plantaobug` (abaixo)
                   └► Antigravity (sem clique): diagnostica, edita só o arquivo -dev, escreve o SCRIPT DE TESTE
                        └► ADM aprova o comando único (branch + commit + push + PR de dev) — 1 clique
                             └► ADM cola PR + script na ficha (💾), RODA o script no console do dev, e valida: ✅ ou ❌ (+ nota)
@@ -30,6 +30,12 @@ Pessoa (Oceano › Assistente Férias › 🐛 Reportar Bug)
 
 Quem valida é **sempre um ADM** (papel `adm`) — nunca quem reportou (a tela recusa) e nunca o Antigravity. Sem **PR + script salvos** o botão "Rodei o script e validei" não funciona.
 
+## Onde cada pessoa mexe (layout — v1.48 do Oceano · v5.76 do Painel)
+
+- **Oceano** = só o que a pessoa comum vê: o aviso do assistente **abre minimizado** (uma linha, com ✕ para dispensar; reaparece só quando há novidade num chamado dela), a aba 🐛 Reportar Bug (formulário + **Meus chamados**), e nada de pacote, PR, script ou comando do agente.
+- **Painel › 🐛 Monitor › 🛟 Plantão de Bugs** = todo o controle de ADM: fichas, PR + script de teste, validar/reprovar, 🚀 em produção, ✉️ avisar quem reportou, pausa geral, "Antigravity buscou há X min".
+- O código mora em `mare-plantao-dev.js` (módulo compartilhado: card na Squad Dados, aviso ao autor, pacote anônimo, tela do ADM). As fichas ganharam `app`, `autorUid` e `autorNome` (para o ADM ver quem reportou sem abrir o Oceano) — **exige `firebase deploy --only database` e redeploy de `plantaoBugNovo`**.
+
 ## Estados da ficha (`kanban/plantao/{id}/estado`)
 
 `aguardando` → `em_analise` → `pr_aberto` → `testando` (PR + script salvos) → `validado` → `em_prod` · desvios: `reprovado` (volta a testando com novo PR+script), `escalado` (3 reprovações: Claude assume; o conserto do Claude também passa por validação de ADM), `duplicado` (juntado a outro bug aberto), `cancelado`.
@@ -38,7 +44,7 @@ Quem valida é **sempre um ADM** (papel `adm`) — nunca quem reportou (a tela r
 
 No Antigravity do ADM (o repositório já traz a skill em `.claude/skills/plantaobug/SKILL.md`), basta:
 
-O botão **📋 Copiar /plantaobug** do Oceano já copia o pacote com o comando na frente — é só colar no Antigravity:
+O botão **copiar pacote (modo manual)** da ficha (Painel › Monitor) já copia o pacote com o comando na frente — é só colar no Antigravity:
 
 ```
 /plantaobug em kanban-dev.html — Bug reportado no Oceano (Maré Digital · 🟡 Dá pra contornar): <descrição…>
@@ -62,7 +68,7 @@ ADM: abre a PR, roda o script no dev, ✅/❌ no painel 🛟  (❌ → o Antigra
 - `plantaoProximo` (GET, chave na URL): entrega o próximo bug (🔴 → 🟠 → resto; mais antigo primeiro) como texto puro — cabeçalho, branch, instruções e **pacote anônimo**; ou `SEM_BUG_PENDENTE`. **Lease de 3 h** por bug (não repete enquanto alguém trabalha), no máximo **3 entregas** (depois: escalado ao Claude), teto de 120 requisições/hora. O texto do relato vai marcado como DADO, nunca instrução.
 - `plantaoGithubWebhook` (POST, assinado com HMAC-SHA256): só aceita `pull_request` do nosso repositório, branch `antigravity/bug-<id>` (sem fork), aberta por Caio/André/Alisson. Lê o script do corpo da PR (`## Script de teste` + bloco de código). **Novo push depois de validada desfaz a validação.**
 - `plantaoVigia`: agora também avisa se o Antigravity **parou de buscar** (> 2 h) com bug esperando (1×/dia; só depois do modo ser usado pela 1ª vez).
-- Oceano (aba 🐛, ADM): o banner mostra "🤖 Antigravity buscou há X min".
+- Painel › 🐛 Monitor › 🛟 Plantão de Bugs (ADM): o cabeçalho mostra "🤖 Antigravity buscou há X min".
 
 ### Ligar (uma vez, só o Caio — Windows)
 
@@ -111,7 +117,7 @@ firebase deploy --only database --project hering-onboarding --account caio.soare
 firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification --project hering-onboarding --account caio.soares@ciahering.com.br
 ```
 
-A página (`oceano-dev.html`, `mare-notif-dev.js`) sai sozinha pelo GitHub Pages ao mergear. Sem o deploy, a tela do ADM funciona mas a ficha precisa ser criada à mão (botão "➕ Criar ficha") e **não há aviso nem vigia**.
+As páginas (`oceano-dev.html`, `painel-dev.html`, `mare-plantao-dev.js`, `mare-notif-dev.js`) saem sozinha pelo GitHub Pages ao mergear. Sem o deploy, a tela do ADM funciona mas a ficha precisa ser criada à mão (botão "➕ Criar ficha") e **não há aviso nem vigia**.
 **Antes do deploy das regras:** confira no Oceano (console, logado como você) se André e Alisson têm `role === 'adm'` — as regras só reconhecem esse papel (não leem a lista `adm_emails`):
 `const sn = await window._get(window._ref(window._db,'kanban/usuarios_publicos')); console.table(Object.entries(sn.val()||{}).filter(([u,v])=>v&&v.role==='adm').map(([u,v])=>({uid:u,nome:v.nome||'',email:v.email||''})))`
 
