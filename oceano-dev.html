@@ -960,7 +960,8 @@ function avPodeVer(c){
   const meus = perfilFb.squads||[], papeis = Object.values(squadsRoles||{});
   const poOuMais = ehAdm || perfilFb.role==='po' || perfilFb.role==='adm' || perfilFb.role==='organizador' || papeis.some(p=>p==='po'||p==='organizador');
   if(c.publico==='po' && !poOuMais) return false;
-  if(c.squad && c.squad!=='*' && !ehAdm && !meus.includes(c.squad)) return false;
+  const alvosSq = (!c.squad || c.squad==='*') ? null : (Array.isArray(c.squads) && c.squads.length ? c.squads : [c.squad]);
+  if(alvosSq && !ehAdm && !alvosSq.some(sq => meus.includes(sq))) return false;
   return true;
 }
 // HTML do aviso vem de um editor simples do Painel (negrito, itálico, link) — mesmo assim sanitiza aqui: lista curta de tags, nenhum atributo (só href http/https/mailto).
