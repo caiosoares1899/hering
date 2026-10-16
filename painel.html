@@ -2119,6 +2119,8 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 
   <!-- ═══ ABA: MONITOR ═══ -->
   <div class="ptab-pane" id="ppane-monitor">
+    <!-- 🛟 Plantão de Bugs — todo o controle de ADM (fichas, PR, script de teste, validar, resolver, pausar). Módulo mare-plantao.js; o Oceano só tem o formulário de quem reporta. Runbook: docs/PLANTAO_BUGS.md -->
+    <div id="plantao-section" style="margin-bottom:14px;"></div>
     <div id="monitor-section">
       <div class="sec-title" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <span>🐛 Monitoramento de Erros</span>
@@ -3058,7 +3060,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
 </div>
 
 
-<div class="version">v5.75 · painel</div>
+<div class="version">v5.76 · painel</div>
 
 <!-- FIREBASE SDK -->
 <script type="module">
@@ -3161,8 +3163,9 @@ getRedirectResult(auth).then(result=>{
 
 onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-change',{detail:user})); });
 </script>
-<script src="mare-notif.js?v=31"></script>
+<script src="mare-notif.js?v=33"></script>
 <script src="mare-metas.js?v=14"></script>
+<script src="mare-plantao.js?v=1"></script>
 <script src="mare-dicas.js?v=5"></script>
 
 <script>
@@ -5766,6 +5769,16 @@ function togglePcalSection(){ swPtab('pessoas'); }
 
 // Página própria do OKR (mesmo ambiente: painel→okr, painel-dev→okr-dev)
 const OKR_PAGE = 'okr.html';
+// 🛟 Plantão de Bugs (módulo mare-plantao.js) — só ADM; o módulo liga os listeners uma vez e re-renderiza nas aberturas seguintes.
+function _iniciarPlantao(){
+  try{
+    if(!window.MarePlantao) return;
+    MarePlantao.init({ P:function(n){return /-dev\.html/.test(location.pathname)?n+'-dev.html':n+'.html';}, user:function(){return window._currentUser;}, esc:esc, toast:showToast,
+      tempoRel:function(iso){ if(!iso) return ''; var m=Math.round((Date.now()-new Date(iso).getTime())/60000); return m<1?'agora':m<60?'há '+m+' min':m<1440?'há '+Math.round(m/60)+' h':'há '+Math.round(m/1440)+' d'; },
+      souAdm:function(){return _isAdmPainel();} });
+    MarePlantao.admin.iniciar(document.getElementById('plantao-section'));
+  }catch(e){ console.warn('plantão', e); }
+}
 function swPtab(tab){
   if(tab==='okr'){ MareNotif.abrirPagina(OKR_PAGE); return; } // OKR tem página própria (okr.html / okr-dev.html) — esta aba é só um atalho; abre em aba nova
   document.querySelectorAll('.ptab').forEach(b=>b.classList.remove('on'));
@@ -5786,7 +5799,7 @@ function swPtab(tab){
   if(tab==='fluxo'){ renderThroughputChart(doneInWindow||[]); renderCFD(); }
   if(tab==='pessoas'){ renderPcal(); renderPcalGestao(); loadComunicados(); if(typeof renderPushmUsers==='function') renderPushmUsers(); }
   if(tab==='notifs'){ loadGlobalUsers(false); renderNotifCentral(); }
-  if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); }
+  if(tab==='monitor'){ renderErrors(); renderErrChart(); loadFeedback(); _iniciarPlantao(); }
   if(tab==='status'){ loadStatusData(); loadUsoData(); }
   if(tab==='dados'){ renderDadosTab(); }
   if(tab==='timeline'){ renderPainelTimeline(); }
@@ -7976,6 +7989,15 @@ function loadComunicados(){
 // checar/limpar o rascunho que já pode ter sido gravado no Firebase real.
 const COMUNICADO_RASCUNHOS_SEED = [
   {
+    id: 'seed_ferias_plantao_2026_10_16',
+    titulo: '🏖️ Caio de férias (16/10 a 03/11) — achou um bug? Reporte no Oceano',
+    corpo: '<p>Vou ficar fora de <b>16/10 a 03/11</b>, mas bug não fica sem resposta. No <b>Oceano</b>, clique em <b>🐛 Reportar bug</b> (ou no assistente 🏖️ do topo), conte o que aconteceu — com <b>print</b> e os <b>erros vermelhos do F12</b>, se puder — e envie.</p>'
+      + '<p>O relato vira um <b>chamado</b>: os ADMs são avisados, o conserto é testado antes de ir ao ar e <b>você acompanha o andamento</b> em <b>Meus chamados</b> (e no sininho 🔔, quando ficar <b>🟢 Resolvido</b>).</p>'
+      + '<p>Dúvida rápida? O <b>Assistente</b> do Oceano responde. Se algo for urgente de verdade, fale com o <b>André</b> ou a <b>Alisson</b>.</p>',
+    tipo: 'novidade',
+    squad: '*',
+  },
+  {
     id: 'seed_oceano_porta_2026_10_14',
     titulo: '🌊 O Oceano agora é a porta de entrada (e vale instalar o app!)',
     corpo: '<p>Na <b>primeira vez do dia</b> que você abrir o <b>Maré</b> ou o <b>Painel</b> por um favorito ou link simples, você passa antes pelo <b>Oceano</b> — assim vê o <b>Mural</b> e os avisos do dia — e o atalho <b>↩ Continuar</b> no topo leva de volta ao que você queria (na mesma squad). Nas outras aberturas do dia, abre direto. Links com destino (um card, uma notificação) e o aplicativo instalado do Maré <b>não</b> passam pelo Oceano.</p>'
@@ -8434,7 +8456,7 @@ function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
   const todos = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
-    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    .sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')));
 
   // Rascunhos 🤖: criados automaticamente ao final de sessões de dev, aguardando revisão.
   // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
@@ -8848,7 +8870,7 @@ function renderFbLista(){
   const el = document.getElementById('fb-lista');
   if(!el) return;
   let items = Object.entries(_fbCache).map(([id,f])=>({...f,id}))
-    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    .sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')));
 
   const countNovo = items.filter(f=>f.status==='novo').length;
   const badge = document.getElementById('fb-open-count');

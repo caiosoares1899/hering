@@ -7975,7 +7975,7 @@ function renderComunicadosLista(){
   const el = document.getElementById('comunicados-lista');
   if(!el) return;
   const todos = Object.entries(_comunicadosCache).map(([id,c])=>({...c,id}))
-    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    .sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')));
 
   // Rascunhos 🤖: criados automaticamente ao final de sessões de dev, aguardando revisão.
   // Nunca aparecem nos boards (rascunho implica ativo:false) — ficam numa seção separada.
@@ -8389,7 +8389,7 @@ function renderFbLista(){
   const el = document.getElementById('fb-lista');
   if(!el) return;
   let items = Object.entries(_fbCache).map(([id,f])=>({...f,id}))
-    .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
+    .sort((a,b)=>String(b.criadoEm||'').localeCompare(String(a.criadoEm||'')));
 
   const countNovo = items.filter(f=>f.status==='novo').length;
   const badge = document.getElementById('fb-open-count');
