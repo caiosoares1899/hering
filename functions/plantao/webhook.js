@@ -31,6 +31,13 @@ function extrairScript(body) {
   return s.length >= 20 ? s.slice(0, 20000) : null;
 }
 
+// Seção "## Resumo" da PR (até o próximo título), sem bullets de marcação: vira o texto do comentário de correção no card.
+function extrairResumo(body) {
+  const m = /^#{1,4}\s*resumo[^\n]*\n([\s\S]*?)(?=^#{1,4}\s|(?![\s\S]))/im.exec(String(body || ''));
+  const t = m ? m[1].trim() : '';
+  return t ? t.slice(0, 500) : null;
+}
+
 // Pura (db injetado). `p` = payload do evento. Devolve { ok, motivo? , estado? }.
 async function processarPR({ db, evento, p, agora = new Date() }) {
   if (evento !== 'pull_request') return { ok: false, motivo: 'evento_ignorado' };
@@ -52,6 +59,9 @@ async function processarPR({ db, evento, p, agora = new Date() }) {
   const script = extrairScript(pr.body) || f.scriptTeste || null;       // PR editada sem o bloco não apaga o script que já estava salvo
   const patch = { prUrl: url, prSha: sha, atualizadoEm: agora.getTime() };
   if (script) patch.scriptTeste = script;
+  const titulo = String(pr.title || '').trim().slice(0, 200), resumo = extrairResumo(pr.body);
+  if (titulo) patch.prTitulo = titulo;
+  if (resumo) patch.prResumo = resumo;
   patch.estado = script ? 'testando' : 'pr_aberto';
   if (['reprovado', 'validado', 'escalado'].includes(f.estado) || f.prSha !== sha) {     // nova tentativa / push depois da validação: o veredito antigo não vale mais
     ['resultadoTeste', 'notaTeste', 'validadoPor', 'validadoPorUid', 'validadoEm'].forEach((c) => { patch[c] = null; });
@@ -76,4 +86,4 @@ exports.plantaoGithubWebhook = onRequest(
     } catch (e) { console.error('[plantaoGithubWebhook]', e); res.status(500).send('erro no servidor'); }
   }
 );
-Object.assign(exports, { processarPR, extrairScript, assinaturaOk, AUTORES, REPO });
+Object.assign(exports, { processarPR, extrairScript, extrairResumo, assinaturaOk, AUTORES, REPO });

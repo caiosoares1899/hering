@@ -43,6 +43,7 @@ Ele não traz nome, e-mail, link nem print — **não peça nem procure esses da
 
 Quando a entrada vier de uma **busca automática** — texto começando por `PLANTAO_BUG` (com `id:`, `branch:`, `tentativa:` e, depois de `PACOTE:`, o pacote) — vale tudo acima, mais:
 - **Use exatamente o `branch:` informado** (é por ele que o servidor liga a PR ao bug). Branch de outro nome = a PR não aparece no plantão.
+- O **título da PR** e uma seção `## Resumo` (2–4 linhas: o que estava errado e o que mudou, sem dado pessoal) viram o comentário de correção no card do bug quando o ADM valida — escreva-os para um humano ler.
 - No **corpo da PR** ponha, além do resumo, uma seção `## Script de teste` com o script num bloco ```` ```javascript ````. O servidor lê dali (o Antigravity não consegue enviar nada por conta própria) e o ADM recebe o script já preenchido no painel 🛟.
 - Se vier `REPROVADO pelo ADM`: leia a nota, corrija **no mesmo branch** com um novo commit (nada de PR novo; o servidor vê o novo commit sozinho), reescreva o script cobrindo o que falhou e atualize o `## Script de teste` da PR **no comando único**.
 - Resposta `SEM_BUG_PENDENTE`: não faça nada.

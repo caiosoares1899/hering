@@ -3,7 +3,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
 const { makeFakeDb } = require('../../agente-agil/__tests__/fakeDb');
-const { processarPR, extrairScript, assinaturaOk, REPO } = require('../webhook');
+const { processarPR, extrairScript, extrairResumo, assinaturaOk, REPO } = require('../webhook');
 
 const AGORA = new Date('2026-10-20T15:00:00Z');
 const ID = 'bug_ferias_1760000000001', BRANCH = 'antigravity/bug-1760000000001', URL = `https://github.com/${REPO}/pull/1500`;
@@ -21,6 +21,23 @@ test('PR aberta com script: ficha vira "testando", guarda PR, sha e script; avis
   const f = d._data().kanban.plantao[ID]; assert.equal(f.prUrl, URL); assert.equal(f.scriptTeste, SCRIPT); assert.equal(f.prSha, 'a'.repeat(40)); assert.equal(f.estado, 'testando');
   const n = d._data().kanban.usuarios.adm1.notificacoes['plantao_pr_' + ID + '_aaaaaaa']; assert.equal(n.type, 'plantao_bug'); assert.equal(n.cardId, 'c_ferias_1760000000001'); assert.match(n.title, /pronta para testar/);
   assert.equal(d._data().kanban.usuarios.mem.notificacoes, undefined);
+});
+
+test('PR guarda título e a seção "Resumo" (para o comentário de correção no card); PR editada sem resumo não apaga o que já estava', async () => {
+  const d = db(ficha()); const e = evento(); e.pull_request.title = 'fix(kanban-dev): exibir selo Hoje';
+  e.pull_request.body = '## Resumo\n- getDue comparava diff===1\n- volta para diff===0\n\n## Script de teste\n```js\n' + SCRIPT + '\n```';
+  await processarPR({ db: d, evento: 'pull_request', p: e, agora: AGORA });
+  let f = d._data().kanban.plantao[ID]; assert.equal(f.prTitulo, 'fix(kanban-dev): exibir selo Hoje'); assert.equal(f.prResumo, '- getDue comparava diff===1\n- volta para diff===0');
+  const e2 = evento(); e2.action = 'synchronize'; e2.pull_request.head.sha = 'b'.repeat(40); e2.pull_request.title = ''; e2.pull_request.body = 'sem seções';
+  await processarPR({ db: d, evento: 'pull_request', p: e2, agora: AGORA });
+  f = d._data().kanban.plantao[ID]; assert.equal(f.prTitulo, 'fix(kanban-dev): exibir selo Hoje'); assert.equal(f.prResumo, '- getDue comparava diff===1\n- volta para diff===0');
+});
+
+test('extrairResumo: pega só a seção "Resumo" (até o próximo título), limita a 500 e devolve null sem seção', () => {
+  assert.equal(extrairResumo('## Resumo\nA\nB\n\n## Script de teste\nx'), 'A\nB');
+  assert.equal(extrairResumo('# Resumo da correção\nSó isso'), 'Só isso');
+  assert.equal(extrairResumo('## Resumo\n' + 'x'.repeat(900)).length, 500);
+  assert.equal(extrairResumo('## Outra coisa\ntexto'), null); assert.equal(extrairResumo(null), null); assert.equal(extrairResumo('## Resumo\n\n## Script'), null);
 });
 
 test('PR sem bloco de script: estado "pr_aberto" e aviso diferente', async () => {

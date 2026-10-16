@@ -36,6 +36,8 @@ Quem valida é **sempre um ADM** (papel `adm`) — nunca quem reportou (a tela r
 - **Painel › 🐛 Monitor › 🛟 Plantão de Bugs** = todo o controle de ADM: fichas, PR + script de teste, validar/reprovar, 🚀 em produção, ✉️ avisar quem reportou, pausa geral, "Antigravity buscou há X min".
 - O código mora em `mare-plantao-dev.js` (módulo compartilhado: card na Squad Dados, aviso ao autor, pacote anônimo, tela do ADM). As fichas ganharam `app`, `autorUid` e `autorNome` (para o ADM ver quem reportou sem abrir o Oceano) — **exige `firebase deploy --only database` e redeploy de `plantaoBugNovo`**.
 
+**Comentário de correção no card (16/10):** ao validar (✅), o módulo comenta no card da Squad Dados: PR (número e título), "O que mudou" (seção `## Resumo` da PR — o Antigravity deve preenchê-la), quem validou, a nota do ADM e o resultado do teste. O servidor guarda `prTitulo`/`prResumo` na ficha ao receber a PR (exige deploy de `database` + `plantaoGithubWebhook`); sem eles o comentário sai com PR, validador e nota. Validar de novo atualiza o mesmo comentário.
+
 ## Estados da ficha (`kanban/plantao/{id}/estado`)
 
 `aguardando` → `em_analise` → `pr_aberto` → `testando` (PR + script salvos) → `validado` → `em_prod` · desvios: `reprovado` (volta a testando com novo PR+script), `escalado` (3 reprovações: Claude assume; o conserto do Claude também passa por validação de ADM), `duplicado` (juntado a outro bug aberto), `cancelado`.

@@ -14,7 +14,7 @@ const seed = () => ({ kanban: {
   usuarios_publicos: { ana: { role: 'adm' }, eve: { role: 'membro' } }, config: { adm_emails: ['ana@ciahering.com.br'] },
   feedback: { bug_ferias_1: bug(1, 'eve'), bug_ferias_2: bug(2, 'ana') },
   plantao: { bug_ferias_1: { estado: 'aguardando', criadoEm: 1, atualizadoEm: 1, tentativas: 0, impacto: '🟠 Atrapalha muito', arquivoAlvo: 'kanban-dev.html', resumo: 'x', cardId: 'c_ferias_1' },
-             bug_ferias_2: { estado: 'testando', criadoEm: 2, atualizadoEm: 2, tentativas: 0, prUrl: PR, scriptTeste: SCRIPT } },
+             bug_ferias_2: { estado: 'testando', criadoEm: 2, atualizadoEm: 2, tentativas: 0, prUrl: PR, scriptTeste: SCRIPT, prTitulo: 'fix(kanban-dev): exibir selo Hoje para diff===0', prResumo: 'getDue comparava diff===1; volta para diff===0.' } },
   squads: { dados: { dados: { columns: [{ id: 'backlog', name: 'Backlog' }, { id: 'done', name: 'Concluído' }] } } },
 } });
 
@@ -88,6 +88,9 @@ const seed = () => ({ kanban: {
   await p.evaluate(() => swPtab('monitor')); await p.waitForTimeout(1200);
   await preenche(p, '#mpl-nt-bug_ferias_2', 'Rodei o script: tudo ok'); await clica(p, 'bug_ferias_2', 'validei');
   f = await pl(p, 'bug_ferias_2'); t('Outro ADM valida: estado validado, resultado ok, quem validou e quando', f.estado === 'validado' && f.resultadoTeste === 'ok' && f.validadoPorUid === 'bia' && f.validadoPor === 'Bia ADM' && f.validadoEm > 0, f);
+  const cms = await p.evaluate(() => { const c = (((window.__store.kanban.squads || {}).dados || {}).dados || {}).card_comments || {}; return Object.values(c.c_ferias_2 || {}); });
+  const cor = cms.find(x => /correcao/.test(x.id));
+  t('Validar comenta no card o resumo da correção: PR (número, título), o que mudou, quem validou e a nota do ADM', !!cor && /#1500/.test(cor.text) && /exibir selo Hoje/.test(cor.text) && /diff===0/.test(cor.text) && /Bia ADM/.test(cor.text) && /tudo ok/.test(cor.text) && typeof cor.ts === 'string', cor);
   const h3 = await p.evaluate(() => document.querySelector('.mpl-card[data-id="bug_ferias_2"]').innerHTML);
   t('Validado oferece "PR de prod mergeado" (🚀) e esconde os campos de teste', /data-mpl="prod"/.test(h3) && !/mpl-sc-bug_ferias_2/.test(h3), h3.slice(0, 160));
   await clica(p, 'bug_ferias_2', 'prod'); await p.waitForTimeout(800);
