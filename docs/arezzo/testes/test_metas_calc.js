@@ -144,5 +144,26 @@ t('serieDiaria e graficoHtml: curva diária (não acumulada), pontos interativos
   const gGrande = M.graficoHtml(m, pts, { modo: 'dia', grande: true });
   assert.ok(/viewBox="0 0 780 320"/.test(gGrande) && !/data-mm-act="graf-exp"/.test(gGrande));
 });
+t('projeção 👻: realizado ÷ meta acumulada até ONTEM × meta total (caso real: 17,62M vs 15,06M = 117 %), respeita a diarização', () => {
+  const curva = {}; for (let d = 1; d <= 31; d++) curva['2026-10-' + String(d).padStart(2, '0')] = d <= 15 ? 1.004 : 0.9375;
+  const m = { fmt: 'brl', alvo: 30060000, inicial: 0, inicio: '2026-10-01', fim: '2026-10-31', atual: 17620000, curva };
+  const pj = M.projecao(m, '2026-10-16');
+  assert.ok(pj && Math.abs(pj.pct - 117) < 0.2, JSON.stringify(pj)); assert.equal(pj.ate, '2026-10-15');
+  assert.ok(Math.abs(pj.valor - 35170000) < 100000, String(pj.valor));
+  const lin = M.projecao({ ...m, curva: undefined }, '2026-10-16');                    // linear: 15/31 dias
+  assert.ok(Math.abs(lin.pct - 121.1) < 0.3, String(lin.pct));
+  const pt = [{ t: Date.UTC(2026, 9, 10, 15), v: 9000000 }, { t: Date.UTC(2026, 9, 15, 15), v: 17620000 }];
+  assert.match(M.anelHtml(m), /stroke-opacity="\.3"/); assert.match(M.kpisHtml(m), /Projeção/);
+  const g = M.graficoHtml(m, pt); assert.match(g, /stroke-dasharray="2 4"/); assert.match(g, /projeção/);
+});
+t('projeção 👻: sem base não projeta (1º dia, sem valor, meta batida, período encerrado, sem período)', () => {
+  const m = { fmt: 'brl', alvo: 1000, inicial: 0, inicio: '2026-10-01', fim: '2026-10-31', atual: 400 };
+  assert.equal(M.projecao(m, '2026-10-01'), null);
+  assert.equal(M.projecao({ ...m, atual: undefined }, '2026-10-10'), null);
+  assert.equal(M.projecao({ ...m, atual: 1000 }, '2026-10-10'), null);
+  assert.equal(M.projecao(m, '2026-11-02'), null);
+  assert.equal(M.projecao({ alvo: 1000, atual: 5 }, '2026-10-10'), null);
+  assert.doesNotMatch(M.anelHtml({ ...m, atual: undefined }), /stroke-opacity="\.3"/);
+});
 console.log(ok ? '\nTUDO OK' : '\nHÁ FALHAS'); process.exit(ok ? 0 : 1);
 
