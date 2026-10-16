@@ -46,6 +46,7 @@ Copiados da pasta de trabalho da sessão de 2026-10-08, pra existirem no repo. N
 - `test_tags.js` — apagar tag e Gerenciar tags do Radar (okr-dev): uso, histórico, duplo clique, ADM × PO, Esc.
 - `test_calendario.js` — calendário do Radar (okr-dev): legenda clicável por tipo, sem resquício de torre/agenda global no modo só Hering, PO cria evento, 3 torres, deep link.
 - `test_modal_edicao.js` — modal de edição do OKR (duplo clique, item apagado, alteração falsa, Esc…). Vale nos dois modos.
+- `test_ferias_card_contrato.js` — **teste de contrato Oceano ⇄ Maré** (Assistente Férias): o Oceano cria o card de bug na coluna 🐛 Bugs da squad Dados (`feriasSincronizarCardSquadDados`) e o Maré (kanban-dev) o abre — confere prioridade (`critical|high|medium|low`), `created` = quem criou (não data), checklist, histórico `{who,what,at}`, impedimento, `flow`, idempotência e o que a pessoa VÊ no card e no modal. **Rode antes de qualquer PR que toque o card do Assistente.** Não roda na CI (precisa de Chromium + Playwright).
 
 Rodar (precisa do servidor estático e do Chromium do ambiente):
 ```bash

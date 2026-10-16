@@ -24,7 +24,7 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
-### oceano-dev.html v1.41 (2026-10-16) — Assistente Férias: criação e atualização automática de Card na coluna Bugs da Squad Dados
+### oceano-dev.html v1.41 (2026-10-16) — SÓ DEV, ainda não promovido para oceano.html — Assistente Férias: criação e atualização automática de Card na coluna Bugs da Squad Dados
 
 - **Criação e atualização automática de Card na Squad `Dados` (coluna `Bugs`) para cada bug do Assistente Férias (`feriasGarantirColunaBugsDados`, `feriasMontarCardBugDados`, `feriasSincronizarCardSquadDados`):**
   - Ao registrar um bug no Assistente Férias (`feriasEnviarBug`) — ou ao sincronizar via GitHub Issues (`feriasSincronizarGithubIssues`) / carregar chamados existentes sem card (`feriasProcessarSnapshotBugs`) — o Oceano localiza a coluna **`Bugs`** em `kanban/squads/dados/dados/columns` (ou cria `{ id: 'col_bugs', name: '🐛 Bugs' }` caso ainda não exista) e aloca atomicamente via `runTransaction` em `cards_index` um card individual (`c_ferias_<ts>`) em `kanban/squads/dados/dados/cards`.
