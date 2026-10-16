@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.38 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.39 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1098,15 +1098,16 @@ function rotearUrl(url){   // abre a página do Maré dentro do Oceano (ou em ab
 function sinoItens(){
   const vistos = new Set(), out = [];
   MareNotif.items().forEach(i=>{
-    if(String(i.id||'').startsWith('nf_bug_') && typeof feriasBugsLista!=='undefined' && feriasBugsLista.length && U){
-      const m = /^nf_bug_(.+)_(em_analise|resolvido|pendente_monitorarbugs)$/.exec(i.id);
-      const b = m && feriasBugsLista.find(x=>String(x.id||'').replace(/^bug_ferias_/,'')===m[1]);
-      if(b && (b.uid || b.email) && !feriasEhMeuBug(b) && !ehAdm) return;
+    if(String(i.id||'').startsWith('nf_bug_') || i.tipo==='ferias_bug_status'){
+      if(!U || typeof feriasBugsLista==='undefined' || !feriasBugsLista.length) return;
+      const m = /^nf_bug_(bug_ferias_[0-9A-Za-z_]+?)_(em_analise|resolvido|pendente_monitorarbugs)(?:_\d+)?$/.exec(i.id);
+      const b = m && feriasBugsLista.find(x=>x.id===m[1] || String(x.id||'').replace(/^bug_ferias_/,'')===String(m[1]).replace(/^bug_ferias_/,''));
+      if(!b || ((b.uid || b.email) && !feriasBugEhMeu(b) && !ehAdm)) return;
     }
     vistos.add(i.id);
     out.push({k:'f', id:i.id, ts:i.ts, icon:i.icon, title:i.title, sub:i.sub, unread:i.unread, autor:i.autor, tipo:i.tipo});
   });
-  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type) && !vistos.has(n.id)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:MareNotif.ICONS[n.type]||'🔔', title:n.title, sub:n.sub, unread:!n.read, tipo:n.type}));
+  sinoPessoais.filter(n=>MareNotif.sinoLigado(n.type) && !vistos.has(n.id)).forEach(n=>out.push({k:'p', id:n.id, ts:n.ts, icon:(n.raw&&n.raw.icone)||MareNotif.ICONS[n.type]||'🔔', title:n.title||(n.raw&&(n.raw.titulo||n.raw.cardTitulo))||'', sub:n.sub||(n.raw&&(n.raw.msg||n.raw.text||n.raw.texto))||'', unread:!n.read, tipo:n.type}));
   return out.sort((a,b)=>String(b.ts).localeCompare(String(a.ts)));
 }
 function tempoRel(ts){ const t = new Date(ts).getTime(); if(isNaN(t)) return ''; const m = Math.round((Date.now()-t)/60000); if(m<1) return 'agora'; if(m<60) return 'há '+m+' min'; const h = Math.round(m/60); if(h<24) return 'há '+h+' h'; const d = Math.round(h/24); return d===1 ? 'ontem' : 'há '+d+' dias'; }
@@ -2144,12 +2145,24 @@ function feriasRenderBugsLista(){
     el.innerHTML = '<div style="font-size:12.5px;color:var(--txt3);padding:8px 0;">Nenhum bug reportado no plantão de férias até agora. 🎉</div>';
     return;
   }
-  const souAdmOuPo = (typeof ehAdm==='function' && ehAdm()) || (perfilFb && (perfilFb.papel==='po' || perfilFb.papel==='organizador' || perfilFb.papel==='adm')) || location.search.includes('adm=1');
+  const rascunhosResp = {};
+  const activeEl = document.activeElement;
+  let activeRespId = '', selStart = null, selEnd = null;
+  el.querySelectorAll('input[id^="fbug-resp-"]').forEach(inp=>{
+    rascunhosResp[inp.id] = inp.value;
+    if(inp === activeEl){
+      activeRespId = inp.id;
+      try{ selStart = inp.selectionStart; selEnd = inp.selectionEnd; }catch(e){}
+    }
+  });
+  const souAdmOuPo = Boolean(ehAdm) || (typeof ehAdm==='function' && ehAdm()) || (perfilFb && (perfilFb.papel==='po' || perfilFb.papel==='organizador' || perfilFb.papel==='adm' || perfilFb.role==='po' || perfilFb.role==='adm')) || location.search.includes('adm=1');
   el.innerHTML = feriasBugsLista.slice(0,15).map(b=>{
     const quando = b.ts ? tempoRel(b.ts) : '';
     const st = feriasStatusMeta(b.status);
     const cmd = b.promptAntigravity || ('/monitorarbugs em '+(b.arquivoAlvo||'kanban-dev.html')+' — '+(b.texto||b.msg||''));
     const admAberto = souAdmOuPo || !!feriasAdmOpenMap[b.id];
+    const respId = 'fbug-resp-' + b.id;
+    const valResp = Object.prototype.hasOwnProperty.call(rascunhosResp, respId) ? rascunhosResp[respId] : (b.respostaStatus||'');
     return '<div class="ferias-bug-item">'
       + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--txt3);">'
       +   '<span class="ferias-st-badge '+st.cls+'">'+st.label+'</span>'
@@ -2173,46 +2186,68 @@ function feriasRenderBugsLista(){
       + '</div>'
       + (admAberto ? (
           '<div class="ferias-adm-panel">'
-          + '<input type="text" class="in" id="fbug-resp-'+esc(b.id)+'" maxlength="280" value="'+esc(b.respostaStatus||'')+'" placeholder="Mensagem para o autor (ex.: Corrigido na v8.30.866 — atualize com Ctrl+F5)…">'
+          + '<input type="text" class="in" id="'+esc(respId)+'" maxlength="280" value="'+esc(valResp)+'" placeholder="Mensagem para o autor (ex.: Corrigido na v8.30.866 — atualize com Ctrl+F5)…">'
           + '<button type="button" class="btn sm" style="border-color:rgba(56,182,255,.45);color:#8ad8ff;" data-fbug-status="'+esc(b.id)+'" data-st="em_analise">🔵 Marcar "Sendo tratado"</button>'
           + '<button type="button" class="btn sm" style="border-color:rgba(46,213,115,.5);color:#6ef2a5;" data-fbug-status="'+esc(b.id)+'" data-st="resolvido">🟢 Marcar "Resolvido"</button>'
           + '</div>'
         ) : '')
       + '</div>';
   }).join('');
+  if(activeRespId){
+    const focoInp = document.getElementById(activeRespId);
+    if(focoInp){
+      try{
+        focoInp.focus({preventScroll:true});
+        if(selStart !== null && selEnd !== null) focoInp.setSelectionRange(selStart, selEnd);
+      }catch(e){}
+    }
+  }
 }
 
 async function feriasDispararNotifStatusBug(b, bugId, novoStatus, respostaStatus, quem, ts, nfIdFixo){
   if(!window._set || !window._ref || !window._db) return;
-  const nfId = nfIdFixo || ('nf_bug_' + bugId + '_' + novoStatus + '_' + ts);
+  const nfId = nfIdFixo || ('nf_bug_' + bugId + '_' + novoStatus);
+  const iconeSt = novoStatus === 'resolvido' ? '🟢' : '🔵';
   const titNotif = novoStatus === 'resolvido'
     ? '🟢 Bug Resolvido (' + (b.app||'Oceano') + ')!'
     : '🔵 Seu relato de bug (' + (b.app||'Oceano') + ') está sendo tratado!';
   const msgNotif = (b.autor ? '@' + b.autor + ': ' : '') + respostaStatus + ' — Relato: "' + String(b.texto||b.msg||'').slice(0,90) + '"';
+  const autorFmt = '🏖️ Assistente Férias (' + quem + ')';
   const notifPayload = {
     id: nfId,
-    tipo: 'feedback',
+    type: 'ferias_bug_status',
+    tipo: 'ferias_bug_status',
     subtipo: 'bug_ferias_status',
     statusBug: novoStatus,
     bugId: bugId,
     app: b.app || 'Oceano',
+    icone: iconeSt,
+    title: titNotif,
     titulo: titNotif,
+    sub: msgNotif,
+    text: msgNotif,
     msg: msgNotif,
     texto: msgNotif,
     cardTitulo: titNotif,
     detalhe: respostaStatus,
-    autorNome: '🏖️ Assistente Férias (' + quem + ')',
+    autor: autorFmt,
+    autorNome: autorFmt,
     autorUid: 'assistente_ferias',
     destUid: b.uid || '',
     destEmail: b.email || '',
     torres: ['digital', '*'],
+    read: false,
     criadoEm: ts,
     ts: new Date(ts).toISOString(),
     url: P('oceano') + '#ferias-bugs'
   };
-  await window._set(window._ref(window._db, 'kanban/notif_feed/' + nfId), notifPayload);
+  try{
+    await window._set(window._ref(window._db, 'kanban/notif_feed/' + nfId), notifPayload);
+  }catch(e){}
   if(b.uid){
-    await window._set(window._ref(window._db, 'kanban/usuarios/' + b.uid + '/notificacoes/' + nfId), notifPayload);
+    try{
+      await window._set(window._ref(window._db, 'kanban/usuarios/' + b.uid + '/notificacoes/' + nfId), notifPayload);
+    }catch(e){}
   }
 }
 
@@ -2240,7 +2275,8 @@ async function feriasAtualizarStatusBug(bugId, novoStatus){
       const updatedBug = Object.assign({}, b);
       delete updatedBug.id;
       await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
-      await feriasDispararNotifStatusBug(b, bugId, novoStatus, respostaStatus, quem, ts);
+      const nfIdDeterministico = 'nf_bug_' + bugId + '_' + novoStatus;
+      await feriasDispararNotifStatusBug(b, bugId, novoStatus, respostaStatus, quem, ts, nfIdDeterministico);
     }
     toast(novoStatus === 'resolvido' ? '🟢 Bug marcado como Resolvido e autor notificado no sino 🔔!' : '🔵 Bug marcado como Sendo tratado e autor notificado no sino 🔔!');
   }catch(e){
@@ -2346,7 +2382,9 @@ async function feriasSincronizarGithubIssues(forcar){
         if(window._set && window._ref && window._db){
           const updatedBug = Object.assign({}, bugObj);
           delete updatedBug.id;
-          await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
+          try{
+            await window._set(window._ref(window._db, 'kanban/feedback/' + bugId), updatedBug);
+          }catch(e){}
           if(mudouStatus){
             const nfIdDeterministico = 'nf_bug_' + bugId + '_' + novoStatus;
             await feriasDispararNotifStatusBug(bugObj, bugId, novoStatus, bugObj.respostaStatus, '🤖 Antigravity (Auto)', ts, nfIdDeterministico);
@@ -2357,6 +2395,7 @@ async function feriasSincronizarGithubIssues(forcar){
     if(houveMudanca){
       feriasRenderBugsLista();
       feriasRenderBanner();
+      if(typeof sinoRender === 'function') sinoRender();
     }
   }catch(e){}
   _feriasGhSyncRunning = false;
@@ -2370,6 +2409,7 @@ function feriasProcessarSnapshotBugs(val){
     .sort((a,b)=>(Number(b.criadoEm)||0)-(Number(a.criadoEm)||0) || String(b.ts||'').localeCompare(String(a.ts||'')));
   feriasRenderBugsLista();
   feriasRenderBanner();
+  if(typeof sinoRender === 'function') sinoRender();
 }
 
 function feriasIniciarBugsListener(){
@@ -2652,6 +2692,8 @@ window.addEventListener('pageshow', ()=>{ if(U) renderTudo(); });
 aplicarPrefs();
 feriasRenderBanner();
 irAba((location.hash||'').replace('#','')==='tecnica'?'tecnica':(location.hash==='#conheca'?'conheca':'inicio'), false);
+if(location.hash==='#ferias-bugs') setTimeout(()=>abrirFerias('bugs'), 120);
+window.addEventListener('hashchange', ()=>{ if(location.hash==='#ferias-bugs') abrirFerias('bugs'); });
 document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
 })();
 </script>
