@@ -1,4 +1,4 @@
-// functions/plantao/__tests__/pacote.test.js — o pacote anônimo do SERVIDOR tem que ser idêntico ao do Oceano (oceano-dev.html).
+// functions/plantao/__tests__/pacote.test.js — o pacote anônimo do SERVIDOR tem que ser idêntico ao do módulo do navegador (mare-plantao-dev.js).
 // Extrai as duas funções do HTML e roda as duas versões sobre os mesmos relatos; se alguém mudar uma e esquecer a outra, falha aqui.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const { sanitizarTexto, montarPacote } = require('../pacote');
 
-const html = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'oceano-dev.html'), 'utf8');
+const html = fs.readFileSync(path.join(__dirname, '..', '..', '..', 'mare-plantao-dev.js'), 'utf8');
 const pega = (nome) => { const i = html.indexOf('function ' + nome); let d = 0; for (let k = html.indexOf('{', i); k < html.length; k++) { if (html[k] === '{') d++; else if (html[k] === '}' && !--d) return html.slice(i, k + 1); } };
 const cliente = new Function(pega('feriasSanitizarTexto') + '\n' + pega('feriasMontarPacoteAnonimo') + '\nreturn { sanitizar: feriasSanitizarTexto, montar: feriasMontarPacoteAnonimo };')();
 
@@ -17,7 +17,7 @@ const RELATOS = [
   { texto: 'a'.repeat(2000), erroConsole: 'b'.repeat(900) }, {}, { texto: '   espaços   \n\n quebras   ' },
 ];
 
-test('servidor e Oceano geram o MESMO pacote e a MESMA sanitização (paridade)', () => {
+test('servidor e navegador geram o MESMO pacote e a MESMA sanitização (paridade)', () => {
   for (const r of RELATOS) assert.equal(montarPacote(r), cliente.montar(r), JSON.stringify(r).slice(0, 80));
   for (const t of ['a@b.com', 'http://x.y/z', '(11) 98888-7777', '123.456.789-09', 'A'.repeat(40), null, undefined, 42]) assert.equal(sanitizarTexto(t, 50), cliente.sanitizar(t, 50));
 });

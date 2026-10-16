@@ -14,7 +14,7 @@ const bug = (o) => Object.assign({ origem: 'assistente_ferias', texto: 'O botão
   impacto: '🟠 Atrapalha muito', autor: 'Eve Souza', email: 'eve@ciahering.com.br', uid: 'eve', criadoEm: AGORA.getTime() - 1000 }, o || {});
 const dados = (d) => d._data().kanban;
 
-test('bug novo: cria a ficha, avisa SÓ os ADMs (sino com cardId da squad Dados) e não vaza autor/e-mail', async () => {
+test('bug novo: cria a ficha, avisa SÓ os ADMs (sino com cardId da squad Dados) e o aviso não vaza autor/e-mail', async () => {
   const d = db(), r = await processarBugNovo({ db: d, id: 'bug_ferias_1', bug: bug(), agora: AGORA });
   assert.deepEqual([r.estado, r.avisados], ['aguardando', 2]);
   const f = dados(d).plantao.bug_ferias_1;
@@ -23,7 +23,9 @@ test('bug novo: cria a ficha, avisa SÓ os ADMs (sino com cardId da squad Dados)
   assert.equal(n.type, 'plantao_bug'); assert.equal(n.squad, 'dados'); assert.equal(n.cardId, 'c_ferias_1'); assert.equal(n.read, false);
   assert.ok(dados(d).usuarios.adm2.notificacoes.plantao_bug_ferias_1);
   assert.equal(dados(d).usuarios.po1.notificacoes, undefined); assert.equal(dados(d).usuarios.mem.notificacoes, undefined);
-  assert.doesNotMatch(JSON.stringify(f) + JSON.stringify(n), /Eve|Souza|eve@|"uid":"eve"/);
+  assert.doesNotMatch(JSON.stringify(n), /Eve|Souza|eve@|"uid":"eve"/, 'o AVISO não leva o autor');
+  assert.deepEqual([f.autorNome, f.autorUid, f.app], ['Eve Souza', 'eve', 'Maré Digital'], 'a FICHA (só ADM) guarda quem reportou, para o painel e para a trava de validação');
+  assert.doesNotMatch(JSON.stringify(f), /eve@/, 'mas nunca o e-mail');
 });
 
 test('só bug do Assistente Férias entra no plantão; feedback comum do Maré é ignorado', async () => {

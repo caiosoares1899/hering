@@ -50,11 +50,11 @@ const PII = ['Eve', 'Souza', 'eve@ciahering', 'maria.silva@ciahering.com.br', 'h
   });
   t('O bug foi gravado em kanban/feedback com autor/e-mail/uid (dados confidenciais ficam no Firebase)', !!out.id && out.reg.autor === 'Eve Souza' && out.reg.email === 'eve@ciahering.com.br' && out.reg.uid === 'eve', out.reg);
   t('O registro NÃO guarda mais o prompt com o nome de quem reportou (promptAntigravity)', !('promptAntigravity' in out.reg), Object.keys(out.reg));
-  t('O pacote mostrado na tela é anônimo (nenhum dado pessoal)', out.cmd.startsWith('/plantaobug em ') && !PII.some(x => out.cmd.includes(x)), out.cmd);
-  t('O botão "Copiar" leva o mesmo pacote anônimo', out.copia.length >= 1 && out.copia.every(x => x === out.cmd), out.copia);
+  t('Quem reporta NÃO vê o pacote nem o comando do agente (isso é do ADM, no Painel › Monitor)', !out.cmd && out.copia.length === 0 && !/plantaobug|Antigravity|monitorarbugs/i.test(out.painel), out.painel.slice(0, 300));
+  t('O pacote anônimo do módulo não leva nenhum dado pessoal', await p.evaluate(x => { const c = window.MarePlantao.montarPacote({ arquivoAlvo: 'kanban-dev.html', app: 'Maré Digital', impacto: 'x', texto: x }); return c.startsWith('/plantaobug em ') && !/maria\.silva|98888|drive\.google/.test(c); }, 'Falei com maria.silva@ciahering.com.br fone 11 98888-7777 https://drive.google.com/x'), 1);
   t('Nenhum link nem botão de GitHub na confirmação (o texto pode dizer que NÃO precisa de Issue)', !/github\.com|issues\/new|🐙/i.test(out.painel), out.painel.slice(0, 300));
   t('O card da Squad Dados recebeu o pacote anônimo (e não o prompt com o nome)', /PACOTE ANÔNIMO/.test(out.cardDesc) && !/COMANDO ANTIGRAVITY|ISSUE NO GITHUB/.test(out.cardDesc), out.cardDesc.slice(0, 300));
-  t('O card guarda o link de evidência (confidencial, fica só no card — não no pacote)', /drive\.google\.com/.test(out.cardDesc) && !/drive\.google/.test(out.cmd), 1);
+  t('O card guarda o link de evidência (confidencial, fica só no card — não no pacote)', /drive\.google\.com/.test(out.cardDesc) && !/drive\.google/.test(out.cmd || ''), 1);
   t('A página NÃO chamou o GitHub (API pública nem issue) em nenhum momento', chamadasGithub.length === 0, chamadasGithub);
   t('Oceano sem erro de JS', erros.length === 0, erros);
   await b.close(); console.log(falhas ? `\n❌ ${falhas} falha(s)` : '\n✅ Tudo certo'); process.exit(falhas ? 1 : 0);

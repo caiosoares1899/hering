@@ -79,6 +79,7 @@ async function processarBugNovo({ db, id, bug, agora = new Date() }) {
   const dados = {
     estado: 'aguardando', criadoEm: Number(bug.criadoEm) || agora.getTime(), atualizadoEm: agora.getTime(), tentativas: 0,
     arquivoAlvo: limpa(bug.arquivoAlvo, 60), impacto: limpa(bug.impacto, 60), resumo, cardId: cardIdDoBug(id),
+    app: limpa(bug.app, 40), autorUid: limpa(bug.uid, 128), autorNome: limpa(bug.autor, 120),   // só o ADM lê este nó; o painel mostra "por quem" e barra a validação pelo próprio autor
   };
   const outros = (await db.ref('kanban/plantao').get()).val() || {};
   const dup = acharDuplicado({ id, arquivoAlvo: dados.arquivoAlvo, resumo, outros, agora });
