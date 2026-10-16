@@ -11,9 +11,9 @@ Este arquivo concentra o registro técnico de **bugs reportados**, **correções
 
 Antes de alterar código compartilhado, queries do Firebase, fluxos de autenticação ou scripts de promoção, consulte sempre estas **9 armadilhas recorrentes** já enfrentadas no projeto:
 
-1. **Comentários de cards (`ts` sempre ISO string):**
-   - `loadComments()` ordena comentários usando `a.ts.localeCompare(b.ts)`.
-   - **Nunca** grave `ts: Date.now()` (número) em comentários de cards (`kanban/comments/{cardId}`), pois `Number.prototype.localeCompare` não existe e quebra a renderização/ordenação. Sempre grave `new Date().toISOString()`.
+1. **Comentários de cards (`ts` sempre ISO string e caminho `card_comments`):**
+   - `loadComments()` lê de `kanban/squads/{squadId}/dados/card_comments/{cardId}/{commentId}` e ordena comentários usando `a.ts.localeCompare(b.ts)`.
+   - **Nunca** grave `ts: Date.now()` (número) em comentários de cards (`kanban/squads/{squadId}/dados/card_comments/{cardId}`), pois `Number.prototype.localeCompare` não existe e quebra a renderização/ordenação. Sempre grave `new Date().toISOString()` usando `window._set(window._ref(window._db, ...))`.
 
 2. **Queries Firebase em `<script>` clássico vs `<script type="module">`:**
    - As páginas principais (`kanban.html`, `painel.html`, `okr.html`, `oceano.html`, `escala.html`, `intake.html`) carregam o SDK do Firebase em um `<script type="module">` e expõem as referências para o `<script>` clássico global via `window._x` (ou helpers equivalentes).
