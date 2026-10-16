@@ -16,6 +16,8 @@ Ele não traz nome, e-mail, link nem print — **não peça nem procure esses da
 
 ## O que fazer (nesta ordem)
 
+0. **Leia `docs/GUIA_DE_CODIGO.md`** (seções 2, 3 e 7) antes de abrir qualquer arquivo de código — é onde estão as armadilhas que já geraram bug neste repositório e o checklist de antes do comando único. Bug de 1 linha em 1 arquivo: faça direto, sem subagentes; área grande ou vários arquivos: use os especialistas conforme a seção 6.
+
 1. **Entenda e reproduza pelo código.** Leia só a área do bug (`CODE_MAP_FAST.md` e `BUGS_E_CORRECOES.md` primeiro; leia a função INTEIRA, não trechos). Use as ferramentas nativas de leitura/busca — **sem terminal** até o passo 6.
 2. **Confira o escopo.** Se o conserto exigir mais de uma página, mexer em `functions/`, `database.rules.json`, módulos compartilhados (`mare-*-dev.js`) ou em qualquer arquivo de **produção**: **PARE** e responda `ESCALAR AO CLAUDE` + o motivo em 2 linhas. Não tente "dar um jeito".
 3. **Corrija** só o necessário, só no arquivo `-dev` do pacote (padrão do repo: dev primeiro; nunca `kanban.html`/`oceano.html`/… direto). Sem refatorar além do bug.
