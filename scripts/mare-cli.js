@@ -345,9 +345,16 @@ function cmdLog(args) {
   }
 
   let cleanTitle = opts.title.trim().replace(/^###\s+/, '');
+  const today = new Date().toISOString().slice(0, 10);
   if (type === 'bug' && !/^\d{4}-\d{2}-\d{2}\s*·/.test(cleanTitle)) {
-    const today = new Date().toISOString().slice(0, 10);
     cleanTitle = `${today} · ${cleanTitle}`;
+  } else if (type === 'feature') {
+    if (!/\d{4}-\d{2}-\d{2}/.test(cleanTitle)) {
+      cleanTitle = `${cleanTitle} — ${today}`;
+    }
+    if (!/SÓ DEV|\(PROD\)/i.test(cleanTitle)) {
+      cleanTitle = `SÓ DEV — ${cleanTitle}`;
+    }
   }
   const cleanBody = bodyText.trim();
   const entryBlock = `### ${cleanTitle}\n\n${cleanBody}\n\n`;
