@@ -2,8 +2,14 @@
 'use strict';
 
 /**
- * mare-cli.js — CLI de Governança de Release, Cache-Buster, Logs e Code Map do Maré Digital
+ * mare-cli.js — CLI de Governança de Versão (-dev), Cache-Buster, Logs e Code Map do Maré Digital
  * Zero dependências externas (Node.js puro / CommonJS).
+ *
+ * Divisão de papéis sem sobreposição com `promover.js`:
+ * - `scripts/mare-cli.js` cuida de `status` (versões e `?v=N`), `bump` (incremento em `-dev` + `version.json` + `?v=N`),
+ *   `log` (inserção padronizada em `CHANGELOG.md` ou `BUGS_E_CORRECOES.md`) e `map` (revalidação de `CODE_MAP.md` + geração de `CODE_MAP_FAST.md`).
+ * - `.claude/skills/subirproprod/promover.js` cuida exclusivamente da promoção dev → prod (`--status` e `<alvos>`),
+ *   preservando as divergências permanentes de produção.
  *
  * Subcomandos:
  *   node scripts/mare-cli.js status
@@ -338,7 +344,11 @@ function cmdLog(args) {
     process.exit(1);
   }
 
-  const cleanTitle = opts.title.trim().replace(/^###\s+/, '');
+  let cleanTitle = opts.title.trim().replace(/^###\s+/, '');
+  if (type === 'bug' && !/^\d{4}-\d{2}-\d{2}\s*·/.test(cleanTitle)) {
+    const today = new Date().toISOString().slice(0, 10);
+    cleanTitle = `${today} · ${cleanTitle}`;
+  }
   const cleanBody = bodyText.trim();
   const entryBlock = `### ${cleanTitle}\n\n${cleanBody}\n\n`;
 
@@ -359,26 +369,24 @@ function cmdLog(args) {
     console.log(`[log] Entrada (feature) adicionada no topo de CHANGELOG.md: "### ${cleanTitle}"`);
   } else {
     const bugsPath = path.join(ROOT, 'BUGS_E_CORRECOES.md');
-    const marker = '## 🐛 Histórico de Bugs e Correções';
-    let content = '';
-    if (fs.existsSync(bugsPath)) {
-      content = fs.readFileSync(bugsPath, 'utf8');
-    } else {
-      content = `# Bugs e Correções — Maré Digital\n\nHistórico técnico de diagnósticos, causas-raízes e correções de bugs (extraído do CHANGELOG principal para manter o foco em entregas de produto e alimentar o conhecimento técnico do time).\n\n${marker}\n\n`;
+    if (!fs.existsSync(bugsPath)) {
+      console.error('Erro: arquivo BUGS_E_CORRECOES.md não encontrado na raiz do repositório.');
+      process.exit(1);
     }
-
-    const idx = content.indexOf(marker);
-    if (idx === -1) {
-      const updated = `${content.trimEnd()}\n\n${marker}\n\n${entryBlock}`;
-      fs.writeFileSync(bugsPath, updated, 'utf8');
-    } else {
-      const lineEnd = content.indexOf('\n', idx);
-      const before = content.slice(0, lineEnd + 1);
-      const after = content.slice(lineEnd + 1).replace(/^\r?\n/, '');
-      const updated = `${before}\n${entryBlock}${after}`;
-      fs.writeFileSync(bugsPath, updated, 'utf8');
+    const content = fs.readFileSync(bugsPath, 'utf8');
+    const headingMatch = content.match(/^##\s+(?:🐛\s+)?Histórico de Bugs e Correções[^\r\n]*$/m);
+    if (!headingMatch) {
+      console.error('Erro: cabeçalho "## 🐛 Histórico de Bugs e Correções" não encontrado em BUGS_E_CORRECOES.md (nunca inserir antes da seção de Armadilhas).');
+      process.exit(1);
     }
-    console.log(`[log] Entrada (bug) adicionada no topo de BUGS_E_CORRECOES.md: "### ${cleanTitle}"`);
+    const idx = headingMatch.index;
+    const lineEnd = content.indexOf('\n', idx);
+    const splitPos = lineEnd === -1 ? content.length : lineEnd + 1;
+    const before = content.slice(0, splitPos);
+    const after = content.slice(splitPos).replace(/^\r?\n/, '');
+    const updated = `${before}\n${entryBlock}${after}`;
+    fs.writeFileSync(bugsPath, updated, 'utf8');
+    console.log(`[log] Entrada (bug) adicionada abaixo de "${headingMatch[0].trim()}" em BUGS_E_CORRECOES.md: "### ${cleanTitle}"`);
   }
 }
 

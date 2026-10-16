@@ -40,9 +40,12 @@ certamente merece atualizar o outro também.
 
 ## Passo 1 — Identificar o que mudou
 
-Se a mudança já tem commits recentes, comece pelo histórico:
+Se a mudança já tem commits ou registros recentes, comece pelo histórico em
+**`CHANGELOG.md`** (features e melhorias) **e em `BUGS_E_CORRECOES.md`**
+(correções de comportamento e ajustes que podem ter mudado regras/limites
+visíveis ao usuário):
 ```bash
-git log --oneline -15 -- kanban-dev.html
+git log --oneline -15 -- kanban-dev.html okr-dev.html oceano-dev.html
 git show <hash> -- kanban-dev.html
 ```
 Se for pedido geral ("revisa toda a documentação"), em vez de uma
@@ -128,9 +131,9 @@ outra mudança na página:
 1. Edite só `kanban-dev.html` — nunca `kanban.html` diretamente.
 2. Bump da versão: `<div class="version">` no HTML + a chave `kanban_dev`
    em `version.json`.
-3. Entrada no `CHANGELOG.md`, sob `## kanban-dev.html (ambiente de
-   teste)` — pode ser só texto de ajuda ("puramente documentação, sem
-   mudança de comportamento") se for o caso.
+3. Registro da mudança: se documentar uma feature nova ou revisão ampla,
+   registre em `CHANGELOG.md`; se for correção pontual de texto/ajuda
+   desatualizada, registre em `BUGS_E_CORRECOES.md`.
 4. `git fetch origin main && git rebase origin/main` antes de empurrar —
    o `main` deste repo avança com frequência.
 5. `git push -u origin <branch-atual>`, abra PR (nunca self-merge).

@@ -1,7 +1,7 @@
 ---
 name: resumosemanal
 description: >-
-  Lê o CHANGELOG.md e monta um resumo em texto corrido (nunca lista crua de entradas) do que mudou na SEMANA PASSADA no Maré Digital e no Agente Ágil, agrupado por tema/história pra apresentar na reunião semanal da squad. Use sempre que o usuário pedir "resumo semanal", "o que fizemos essa semana/semana passada", "prepara pra reunião da squad", "recap da semana", "o que rolou na última semana", ou invocar /resumosemanal diretamente — mesmo que a frase não diga "changelog" explicitamente.
+  Lê o CHANGELOG.md e o BUGS_E_CORRECOES.md e monta um resumo em texto corrido (nunca lista crua de entradas) do que mudou na SEMANA PASSADA no Maré Digital e no Agente Ágil, agrupado por tema/história pra apresentar na reunião semanal da squad. Use sempre que o usuário pedir "resumo semanal", "o que fizemos essa semana/semana passada", "prepara pra reunião da squad", "recap da semana", "o que rolou na última semana", ou invocar /resumosemanal diretamente — mesmo que a frase não diga "changelog" explicitamente.
 ---
 
 # Resumo Semanal — reunião da squad
@@ -23,10 +23,10 @@ então virou rotina em vez de refazer o raciocínio do zero toda vez.
   conversa (fala direto na reunião ou cola no chat do squad), não uma
   ferramenta externa.
 - **Não escreve nem edita nenhum arquivo do repo.** Puramente leitura do
-  `CHANGELOG.md` + texto de resposta. Sem `kanban-dev.html`, sem PR, sem
+  `CHANGELOG.md` + `BUGS_E_CORRECOES.md` + texto de resposta. Sem `kanban-dev.html`, sem PR, sem
   "Release process" do `CLAUDE.md`.
 - **Não é uma lista crua de todo `### ` do período.** Uma semana normal
-  tem 40-60+ entradas de changelog — despejar todas em ordem cronológica
+  tem 40-60+ entradas somando `CHANGELOG.md` e `BUGS_E_CORRECOES.md` — despejar todas em ordem cronológica
   não ajuda ninguém numa reunião. O valor desta skill é AGRUPAR por
   tema/história e CURAR o que é relevante pra squad ouvir, igual um editor
   faria com um digest.
@@ -52,16 +52,18 @@ print('início:', seg_passada, '/ fim:', dom_passado)
 "
 ```
 
-## Passo 2 — Levantar TODAS as seções do CHANGELOG.md (não só kanban prod)
+## Passo 2 — Levantar TODAS as seções do CHANGELOG.md E do BUGS_E_CORRECOES.md (não só kanban prod)
+
+Desde out/2026, novas features e grandes entregas ficam no `CHANGELOG.md`, enquanto bugs corrigidos, diagnósticos de causa-raiz e rodadas de `/monitorarbugs` ficam em `BUGS_E_CORRECOES.md`. **Leia obrigatoriamente os dois arquivos**, senão as correções da semana ficam de fora do resumo!
 
 Diferente do `/gerarokr` (que prioriza só `## kanban.html (produção)`),
 aqui vale escopo AMPLO — reunião de squad cobre tudo que rolou, não só o
 que chegou em prod: `kanban.html`/`kanban-dev.html`, `painel.html`/
-`painel-dev.html`, Cloud Functions (`functions/okr/`, Agente Ágil
-Orquestrador, Spotify, etc.), `database.rules.json`. Filtra pela data:
+`painel-dev.html`, `okr.html`/`okr-dev.html`, `oceano.html`/`oceano-dev.html`, `escala.html`/`escala-dev.html`, Cloud Functions (`functions/okr/`, Agente Ágil
+Orquestrador, Spotify, etc.), `database.rules.json`. Filtra pela data nos dois arquivos:
 
 ```bash
-grep -n "^##" CHANGELOG.md | grep -E "<regex-do-período, ex: 2026-09-(2[1-7])>"
+grep -n "^##" CHANGELOG.md BUGS_E_CORRECOES.md | grep -E "<regex-do-período, ex: 2026-10-(0[5-9]|1[0-1])>"
 ```
 
 Pra cada entrada que bateu, leia o corpo completo (não só o título) — é
@@ -69,7 +71,7 @@ onde mora o "porquê"/causa raiz que faz a diferença entre "consertamos um
 bug" e uma história que vale contar na reunião.
 
 `git log --since="<início>" --oneline` ajuda a confirmar que nada saiu do
-CHANGELOG por engano, mas não tenta ler commit a commit — o changelog já é
+`CHANGELOG.md` ou `BUGS_E_CORRECOES.md` por engano, mas não tenta ler commit a commit — os dois arquivos já são
 a fonte curada.
 
 ## Passo 3 — Agrupar por tema/história, não por ordem cronológica de commit

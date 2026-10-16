@@ -1,7 +1,7 @@
 ---
 name: gerarokr
 description: >-
-  Gera o prompt humanizado (texto corrido, NUNCA JSON) pra mandar pro agente estratégico do Gemini — um gem que preenche automaticamente os slides de "Planejamento Estratégico" a partir de um prompt em linguagem natural — cobrindo os 2 objetivos ativos (Maré Digital e Agente Ágil), com base no que mudou nos últimos 15 dias segundo o CHANGELOG.md/CODE_MAP.md/log dos cards. Use sempre que o usuário pedir "atualiza o OKR", "gera o prompt do OKR", "atualiza os slides de planejamento estratégico", "prepara o resumo pro Gemini preencher os slides", "manda pro agente estratégico as novidades", ou invocar /gerarokr diretamente — mesmo que a frase não diga "OKR" explicitamente.
+  Gera o prompt humanizado (texto corrido, NUNCA JSON) pra mandar pro agente estratégico do Gemini — um gem que preenche automaticamente os slides de "Planejamento Estratégico" a partir de um prompt em linguagem natural — cobrindo os 2 objetivos ativos (Maré Digital e Agente Ágil), com base no que mudou nos últimos 15 dias segundo o CHANGELOG.md, BUGS_E_CORRECOES.md, CODE_MAP.md e log dos cards. Use sempre que o usuário pedir "atualiza o OKR", "gera o prompt do OKR", "atualiza os slides de planejamento estratégico", "prepara o resumo pro Gemini preencher os slides", "manda pro agente estratégico as novidades", ou invocar /gerarokr diretamente — mesmo que a frase não diga "OKR" explicitamente.
 ---
 
 # Gerar OKR — Planejamento Estratégico (Maré Digital)
@@ -79,16 +79,13 @@ rodada — não é uma data fixa). Se o usuário pedir um período diferente
 ("desde a última rodada", "do mês inteiro"), usa esse.
 
 Fontes, nesta ordem de prioridade:
-1. **`CHANGELOG.md`, seção `## kanban.html (produção)`** — é a fonte
-   principal: já é escrita em tom de resumo pro usuário final, cada
-   entrada de promoção já teoricamente linka o que foi validado e
-   entregue. Filtra pelas datas do período.
+1. **`CHANGELOG.md` (seção `## kanban.html (produção)`) e `BUGS_E_CORRECOES.md` (seção `## 🐛 Histórico de Bugs e Correções`)** — são as duas fontes principais (desde out/2026, features e grandes entregas ficam no `CHANGELOG.md` e correções de bugs/incidentes/rodadas de `/monitorarbugs` ficam em `BUGS_E_CORRECOES.md`). Filtra pelas datas do período em ambos os arquivos.
 2. **`CHANGELOG.md`, seção `## kanban-dev.html (ambiente de teste)`** —
    usa pra achar detalhe/contexto por trás de uma entrada de prod que
    ficou vaga, ou pra pegar trabalho que já está pronto em dev mas ainda
    não foi promovido (vale como "em andamento", nunca como "concluído").
 3. **Entradas específicas do Agente Ágil Orquestrador** dentro do
-   `CHANGELOG.md` (procure por "orquestrador", "roadmap", "item N do
+   `CHANGELOG.md` e `BUGS_E_CORRECOES.md` (procure por "orquestrador", "roadmap", "item N do
    roadmap", "canário" — mas cuidado, a maioria dos canários é de antes
    de 15/08, já refletida nos slides antigos; só usa se algo novo do tipo
    apareceu no período) — pra granularidade específica do Agente Ágil que
