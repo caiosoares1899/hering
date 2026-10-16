@@ -110,6 +110,7 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 ### Pendente de deploy (só o Caio roda)
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
+| Claude | **Plantão automático (PR4):** 2 secrets (`PLANTAO_AGENTE_KEY`, `PLANTAO_WEBHOOK_SECRET`), `--only database` (nós `plantao_status` e campos novos da ficha), `--only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia`, webhook no GitHub e a tarefa agendada do Antigravity — passo a passo em `docs/PLANTAO_BUGS.md` ("Modo automático"). | ver o runbook | 16/10 |
 | Claude | **Plantão (PR2) — functions ✅ implantadas e confirmadas em 16/10 (aviso chegou aos ADMs); confirmar também o `--only database`:** regras do nó `kanban/plantao` (só ADM) + funções `plantaoBugNovo`/`plantaoVigia` + `sendPushOnNotification` (tipo `plantao_bug`). **Antes: confirmar que André e Alisson têm `role: adm`** (ver `docs/PLANTAO_BUGS.md`). | `firebase deploy --only database ...` e `firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification ...` (depois do resync do clone) | 16/10 |
 | Claude | Regras do banco: `kanban/okr` com regra por filho (comentário do Marco só pelo autor; Data Studio só ADM/PO/Organizador/Gestor OKR). **Antes: rodar o script de checagem (só leitura) no console do Radar e conferir as listas 1 e 2.** | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync do clone) | 16/10 |
 

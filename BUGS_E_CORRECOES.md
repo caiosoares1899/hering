@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · functions: os testes do servidor do plantão nunca rodavam no npm test / CI
+
+- **O que estava errado:** o script `test` de `functions/package.json` lista as pastas de teste uma a uma e `plantao/__tests__` (criada no PR do plantão) ficou de fora — a CI nunca executou os testes de `plantaoBugNovo`/`plantaoVigia` (a contagem de `npm test` não subiu quando eles foram escritos).
+- **Correção:** `plantao/__tests__/*.test.js` entra no script; agora 897 testes passam (os do plantão incluídos). **Lição:** ao criar uma pasta nova de testes em `functions/`, conferir se a contagem do `npm test` subiu.
+
 ### 2026-10-16 · 2026-10-16 — Contagem de dias úteis de atraso descontando sábado (kanban-dev)
 
 - **Sintoma:** Card com prazo na sexta-feira passada (09/10) exibia ⚠ 6d atrasado na sexta seguinte (16/10) em vez de 5d.

@@ -46,12 +46,58 @@ O botão **📋 Copiar /plantaobug** do Oceano já copia o pacote com o comando 
 
 A skill já contém as regras: edita só o arquivo -dev do pacote; se precisar de mais de uma página, `functions/`, regras ou produção, responde **ESCALAR AO CLAUDE**; entrega o **script de teste** (português, só leitura, funções reais, `console.table` ✅/❌) e **um único comando agrupado** (branch + bump + log + checar + commit + push + PR de dev). Nunca faz merge. Se for reprovado, corrige no mesmo branch (máx. 3 tentativas).
 
+## Modo automático (PR 4) — o Antigravity busca o bug sozinho
+
+Teste de 16/10 no Antigravity corporativo: **`read_url_content`, `schedule` e `write_to_file` rodam sem pedir aprovação** (o alarme acordou sozinho); só `run_command` pede. Então ninguém *empurra* um bug para dentro dele, mas ele *busca*:
+
+```
+Oceano (bug) ─► ficha ─► [Antigravity, a cada 30 min]  GET plantaoProximo?k=CHAVE  ─► recebe o pacote anônimo
+                          ├─ lê o código, edita o arquivo -dev, escreve o script de teste   (sem clique)
+                          └─ PARA no comando único de git ─► Caio/ADM aprova (1 clique) ─► PR no GitHub
+GitHub ─► webhook assinado ─► plantaoGithubWebhook: grava link da PR + script na ficha e avisa os ADMs 🔔
+ADM: abre a PR, roda o script no dev, ✅/❌ no painel 🛟  (❌ → o Antigravity recebe de novo, com a nota, e corrige no MESMO branch)
+```
+
+**Peças (todas em `functions/plantao/`):**
+- `plantaoProximo` (GET, chave na URL): entrega o próximo bug (🔴 → 🟠 → resto; mais antigo primeiro) como texto puro — cabeçalho, branch, instruções e **pacote anônimo**; ou `SEM_BUG_PENDENTE`. **Lease de 3 h** por bug (não repete enquanto alguém trabalha), no máximo **3 entregas** (depois: escalado ao Claude), teto de 120 requisições/hora. O texto do relato vai marcado como DADO, nunca instrução.
+- `plantaoGithubWebhook` (POST, assinado com HMAC-SHA256): só aceita `pull_request` do nosso repositório, branch `antigravity/bug-<id>` (sem fork), aberta por Caio/André/Alisson. Lê o script do corpo da PR (`## Script de teste` + bloco de código). **Novo push depois de validada desfaz a validação.**
+- `plantaoVigia`: agora também avisa se o Antigravity **parou de buscar** (> 2 h) com bug esperando (1×/dia; só depois do modo ser usado pela 1ª vez).
+- Oceano (aba 🐛, ADM): o banner mostra "🤖 Antigravity buscou há X min".
+
+### Ligar (uma vez, só o Caio — Windows)
+
+1. **Duas chaves** (textos aleatórios longos; guarde só no cofre do Firebase e no passo 4):
+   ```powershell
+   -join ((48..57)+(65..90)+(97..122) | Get-Random -Count 40 | % {[char]$_})      # rode 2 vezes: uma para cada chave
+   firebase functions:secrets:set PLANTAO_AGENTE_KEY --project hering-onboarding --account caio.soares@ciahering.com.br
+   firebase functions:secrets:set PLANTAO_WEBHOOK_SECRET --project hering-onboarding --account caio.soares@ciahering.com.br
+   ```
+2. **Deploy** (depois do resync do clone):
+   ```powershell
+   firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br
+   firebase deploy --only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia --project hering-onboarding --account caio.soares@ciahering.com.br
+   ```
+   O deploy imprime a **Function URL** de cada função (algo como `https://plantaoproximo-xxxx-uc.a.run.app`). Teste no navegador: `<URL do plantaoProximo>?k=<CHAVE>` → deve mostrar `SEM_BUG_PENDENTE`; sem `?k=` ou com chave errada → "chave inválida".
+3. **Webhook do GitHub** (repositório → Settings → Webhooks → Add webhook): *Payload URL* = a URL do `plantaoGithubWebhook`; *Content type* = `application/json`; *Secret* = o `PLANTAO_WEBHOOK_SECRET`; *Events* = "Let me select" → só **Pull requests**; Active. Em *Recent Deliveries* a 1ª entrega (ping) deve dar 200 ou 401/ignorado — o que importa é abrir uma PR de teste depois.
+4. **Tarefa agendada no Antigravity** (peça para ele criar com `schedule`, a cada 30 minutos — substitua `<URL>` e `<CHAVE>`):
+   ```
+   Plantão de bugs. Use read_url_content em <URL do plantaoProximo>?k=<CHAVE>
+   - Se a resposta for SEM_BUG_PENDENTE: não faça nada.
+   - Se começar com PLANTAO_BUG: siga a skill plantaobug (.claude/skills/plantaobug/SKILL.md) para ESSE bug, no modo automático, até o comando único de git; então PARE e espere a minha aprovação.
+   Não use terminal antes do comando único e nunca tente aprovar nada por conta própria.
+   ```
+   A chave fica **só** nessa tarefa (nunca em arquivo do repositório, issue, PR ou chat). Vazou? Troque o secret (`firebase functions:secrets:set PLANTAO_AGENTE_KEY`) e refaça o deploy de `plantaoProximo`.
+5. O Antigravity precisa estar **aberto e o PC acordado** — o vigia avisa os ADMs quando ele para de buscar.
+
+**Limites:** a rede da empresa pode bloquear `*.run.app` (teste o passo 2 pelo Antigravity: peça `read_url_content` na URL com a chave); se bloquear, o plantão volta a ser "colar o pacote".
+
 ## Status
 
 | PR | Conteúdo | Situação |
 |---|---|---|
 | 1 — Contenção | Sem Issue pública, sem workflow/daemon, pacote anônimo, linhas vermelhas no `AGENTS.md`, CI reprova workflow que reage a issue/comentário | ✅ em `main` (#1454) |
 | 2 — Servidor + validação | `plantaoBugNovo` / `plantaoVigia`, regras de `kanban/plantao` (só ADM), painel de validação no Oceano (v1.45), aviso `plantao_bug`, pausa geral | ✅ em `main` (#1455) e **implantado** (database + functions) em 16/10 — teste ao vivo: aviso chegou para os 3 ADMs; trava "quem reportou não valida" confirmada |
+| 4 — Modo automático | `plantaoProximo`, `plantaoGithubWebhook`, vigia do Antigravity, batimento no Oceano (v1.47) — **exige as 2 chaves, deploy e o webhook** (seção acima) | **este PR** |
 | 3 — Comando `/plantaobug` | Skill que reduz o plantão a colar o pacote; passo de validação documentado | **este PR** |
 | Em uso | Primeiro bug real passando pelo fluxo inteiro; ajustes do que o uso mostrar | pendente (depende de aparecer bug) |
 

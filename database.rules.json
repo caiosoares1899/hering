@@ -201,6 +201,9 @@
           }
         }
       },
+      "plantao_status": {
+        ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')"
+      },
       "plantao": {
         ".read": "auth != null && ((auth.token.email.endsWith('@ciahering.com.br')&&auth.token.firebase.sign_in_provider=='google.com')) && (root.child('kanban/usuarios/' + auth.uid + '/role').val() === 'adm' || auth.token.email === 'caio.soares@ciahering.com.br')",
         "$bugId": {
@@ -250,6 +253,15 @@
           },
           "validadoPorUid": {
             ".validate": "newData.isString() && newData.val() === auth.uid"
+          },
+          "prSha": {
+            ".validate": "newData.isString() && newData.val().length <= 64"
+          },
+          "entregaEm": {
+            ".validate": "newData.isNumber()"
+          },
+          "entregas": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 9"
           },
           "validadoEm": {
             ".validate": "newData.isNumber()"

@@ -219,6 +219,15 @@ exports.backupVigia = require('./backup/vigia').backupVigia;
 exports.plantaoBugNovo = require('./plantao/plantao').plantaoBugNovo;
 exports.plantaoVigia = require('./plantao/plantao').plantaoVigia;
 
+// 🤖 Plantão automático (16/10/2026): `plantaoProximo` (GET com chave — o Antigravity BUSCA o próximo bug sozinho, tarefa agendada dele) e
+// `plantaoGithubWebhook` (o GitHub avisa quando a PR do bug abre: grava PR + script de teste na ficha e avisa os ADMs). Exigem 2 secrets (uma vez):
+//   firebase functions:secrets:set PLANTAO_AGENTE_KEY        (valor: texto aleatório longo — é a chave que vai na URL do Antigravity)
+//   firebase functions:secrets:set PLANTAO_WEBHOOK_SECRET    (o mesmo texto que você põe no webhook do GitHub)
+// Deploy isolado (+ database, por causa de plantao_status e dos campos novos da ficha) — passo a passo em docs/PLANTAO_BUGS.md:
+//   firebase deploy --only functions:plantaoProximo,functions:plantaoGithubWebhook,functions:plantaoVigia
+exports.plantaoProximo = require('./plantao/agente').plantaoProximo;
+exports.plantaoGithubWebhook = require('./plantao/webhook').plantaoGithubWebhook;
+
 // API da tela "🛟 Backup completo (nuvem)" do Maré (Config → Backup): lista/compara/restaura SÓ o que sumiu (comentários, config, intake, subtimes,
 // kudos) a partir do backup completo — HTTP + Bearer idToken, só ADM/PO/Organizador do squad (functions/backup/restaurarApi.js). Deploy isolado:
 //   firebase deploy --only functions:backupCompletoApi

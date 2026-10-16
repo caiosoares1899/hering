@@ -111,6 +111,15 @@ async function rodarVigia({ db, agora = new Date(), log = console }) {
     const rotulo = f.estado === 'escalado' ? 'escalado ao Claude' : f.estado === 'aguardando' ? 'sem ninguém pegar' : `parado em "${f.estado}"`;
     avisados += await avisarAdms(db, { id: `plantao_vigia_${id}_${hoje}`, title: '⏰ Bug parado no plantão', sub: `${f.impacto || ''} — ${rotulo} há ${horas}h: ${String(f.resumo || '').slice(0, 140)}`, cardId: f.cardId, agora });
   }
+  // 🤖 Modo automático: o Antigravity deixou de consultar (janela fechada, PC dormindo, tarefa agendada parada) com bug esperando → avisa 1x por dia.
+  // Só vale depois que o modo já foi usado (agenteVistoEm existe) — sem ele ligado, o plantão é manual e não há o que cobrar.
+  const visto = (await db.ref('kanban/plantao_status/agenteVistoEm').get()).val();
+  const esperando = Object.values(fichas).filter((f) => f && (f.estado === 'aguardando' || f.estado === 'reprovado')).length;
+  if (visto && esperando && agora.getTime() - visto > 2 * 3600000) {
+    const horas = Math.floor((agora.getTime() - visto) / 3600000);
+    avisados += await avisarAdms(db, { id: `plantao_agente_parado_${hoje}`, title: '🤖 Antigravity não está buscando bugs',
+      sub: `${esperando} bug(s) esperando e o Antigravity não consulta o plantão há ${horas}h — abra o Antigravity e veja a tarefa agendada (ou cole o pacote à mão).`, agora });
+  }
   if (parados.length) log.log(`[plantaoVigia] ${parados.length} bug(s) parado(s); ${avisados} aviso(s) novo(s).`);
   return { parados: parados.length, avisados };
 }

@@ -113,3 +113,18 @@ test('vigia: só entre 08h e 20h de Brasília', async () => {
   assert.equal((await rodarVigia({ db: d, agora: new Date('2026-10-21T02:00:00Z'), log: quieto })).pulou, 'fora_do_horario');   // 23:00
   assert.equal((await rodarVigia({ db: d, agora: new Date('2026-10-20T11:00:00Z'), log: quieto })).parados, 1);                   // 08:00
 });
+
+test('vigia: Antigravity parou de buscar (> 2h) com bug esperando → avisa os ADMs 1x por dia; sem batimento nunca registrado, não cobra', async () => {
+  const esperando = { o: ficha({ atualizadoEm: AGORA.getTime() - h(1) }) };
+  const parado = db({ plantao: esperando, plantao_status: { agenteVistoEm: AGORA.getTime() - h(3) } });
+  const r = await rodarVigia({ db: parado, agora: AGORA, log: quieto });
+  assert.equal(r.avisados, 2); const n = dados(parado).usuarios.adm1.notificacoes['plantao_agente_parado_2026-10-20'];
+  assert.equal(n.type, 'plantao_bug'); assert.match(n.title, /Antigravity não está buscando/); assert.match(n.sub, /1 bug\(s\) esperando.*há 3h/);
+  assert.equal((await rodarVigia({ db: parado, agora: new Date(AGORA.getTime() + h(1)), log: quieto })).avisados, 0, 'só 1 por dia');
+  const nunca = db({ plantao: esperando });
+  assert.equal((await rodarVigia({ db: nunca, agora: AGORA, log: quieto })).avisados, 0, 'modo automático nunca ligado: sem cobrança');
+  const vivo = db({ plantao: esperando, plantao_status: { agenteVistoEm: AGORA.getTime() - h(1) } });
+  assert.equal((await rodarVigia({ db: vivo, agora: AGORA, log: quieto })).avisados, 0, 'buscou há 1h: tudo certo');
+  const semBug = db({ plantao: { v: ficha({ estado: 'validado' }) }, plantao_status: { agenteVistoEm: AGORA.getTime() - h(9) } });
+  assert.equal((await rodarVigia({ db: semBug, agora: AGORA, log: quieto })).avisados, 0, 'sem bug esperando, não há o que buscar');
+});
