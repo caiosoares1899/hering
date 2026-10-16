@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### oceano-dev.html v1.41 (2026-10-16) — Assistente Férias: criação e atualização automática de Card na coluna Bugs da Squad Dados
+
+- **Criação e atualização automática de Card na Squad `Dados` (coluna `Bugs`) para cada bug do Assistente Férias (`feriasGarantirColunaBugsDados`, `feriasMontarCardBugDados`, `feriasSincronizarCardSquadDados`):**
+  - Ao registrar um bug no Assistente Férias (`feriasEnviarBug`) — ou ao sincronizar via GitHub Issues (`feriasSincronizarGithubIssues`) / carregar chamados existentes sem card (`feriasProcessarSnapshotBugs`) — o Oceano localiza a coluna **`Bugs`** em `kanban/squads/dados/dados/columns` (ou cria `{ id: 'col_bugs', name: '🐛 Bugs' }` caso ainda não exista) e aloca atomicamente via `runTransaction` em `cards_index` um card individual (`c_ferias_<ts>`) em `kanban/squads/dados/dados/cards`.
+  - O card é preenchido com título (`[Bug Férias · <App>] ...`), prioridade mapeada do impacto (`critical`/`high`/`medium`), tag `bug`, descrição completa (status, app/arquivo, autor/e-mail, relato, link/evidência, erros vermelhos do F12, print, link da Issue no GitHub e resposta da resolução), links clicáveis, checklist de 3 etapas e histórico de comentários em `card_comments/<cardId>` (`ts` sempre em ISO string).
+  - Sempre que o bug muda para **🔵 Sendo tratado** ou **🟢 Resolvido** (pela fila automática do Antigravity no GitHub ou pelo painel ADM), o card correspondente na Squad `Dados` tem sua descrição e checklist atualizados e recebe um novo comentário documentando o andamento/solução, além de exibir o botão/chip direto **`📋 Card Squad Dados (Bugs)`** (`kanban-dev.html?squad=dados&card=<cardId>`) no Assistente Férias.
+
 ### oceano-dev.html v1.38 (2026-10-16) — SÓ DEV, ainda não promovido para oceano.html
 
 - **🔔 Retorno Automático de Status ao Autor do Bug (`🟡 Na fila` → `🔵 Sendo tratado` → `🟢 Resolvido`) + Sincronização com GitHub Issues (`feriasSincronizarGithubIssues`)**: seção **"📬 Meus Chamados de Bug"** (`feriasHtmlMeusChamados`), alerta clicável no próprio banner da home do Oceano (`feriasBannerAlertaAutorHtml`) quando um chamado do usuário está em tratamento ou foi resolvido, disparo automático de notificação no sino global (`🔔` em `kanban/notif_feed` e `kanban/usuarios/<uid>/notificacoes`) para quem abriu o pedido (`feriasDispararNotifStatusBug`), e sincronização automática com as Issues do GitHub (`feriasSincronizarGithubIssues` lendo `<!-- FERIAS_STATUS: em_analise|resolvido -->` postado pelo Antigravity e atualizando `kanban/feedback/<bugId>` sem intervenção manual).
