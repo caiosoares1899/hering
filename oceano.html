@@ -747,14 +747,14 @@ window.dispatchEvent(new Event('fb-ready'));
 </script>
 
 <script src="mare-notif.js?v=33"></script>
-<script src="mare-plantao.js?v=1"></script>
+<script src="mare-plantao-dev.js?v=1"></script>
 <script src="mare-dicas.js?v=5"></script>
-<script src="mare-metas.js?v=14"></script>
+<script src="mare-metas.js?v=16"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.48 · oceano', VERSION_KEY = 'oceano';
+const VERSION = 'v1.49 · oceano', VERSION_KEY = 'oceano';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1992,7 +1992,7 @@ function feriasHtmlGuia(){
     + '</div>';
 }
 
-// O card do bug na squad Dados e o aviso ao autor moram em mare-plantao.js (compartilhado com o Painel › Monitor, onde ficou TODO o controle de ADM).
+// O card do bug na squad Dados e o aviso ao autor moram em mare-plantao-dev.js (compartilhado com o Painel › Monitor, onde ficou TODO o controle de ADM).
 MarePlantao.init({ P, user:()=>U, perfil:()=>perfilFb, esc, toast, tempoRel, souAdm:()=>!!ehAdm });
 const feriasCardIdBug = MarePlantao.cardIdBug, feriasUrlCardSquadDados = MarePlantao.urlCardSquadDados, feriasSincronizarCardSquadDados = MarePlantao.sincronizarCard;
 
@@ -2141,7 +2141,7 @@ function feriasPreencherDadosTecnicos(){
 }
 
 function feriasRenderBugsLista(){
-  // Só a visão do USUÁRIO: os próprios chamados. A fila de todos os bugs e o controle de ADM ficam no Painel › 🐛 Monitor (mare-plantao.js).
+  // Só a visão do USUÁRIO: os próprios chamados. A fila de todos os bugs e o controle de ADM ficam no Painel › 🐛 Monitor (mare-plantao-dev.js).
   const meusBox = $('#fbug-meus-box');
   if(meusBox) meusBox.innerHTML = feriasHtmlMeusChamados();
 }
@@ -2195,7 +2195,7 @@ async function feriasCarregarBugs(){
   }
 }
 
-// O pacote anônimo (sem autor/e-mail/uid/link/print) mora em mare-plantao.js; estes aliases ficam para os testes e para o console.
+// O pacote anônimo (sem autor/e-mail/uid/link/print) mora em mare-plantao-dev.js; estes aliases ficam para os testes e para o console.
 window.feriasSanitizarTexto = MarePlantao.sanitizar;
 window.feriasMontarPacoteAnonimo = MarePlantao.montarPacote;
 
