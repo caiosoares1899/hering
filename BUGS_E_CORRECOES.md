@@ -57,9 +57,18 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
    - **`history` no formato `{ who, what, at }` (`recordHistory` em `kanban-dev.html`):** onde `at` é ISO string (`new Date().toISOString()`).
    - **`flow` no formato de `recordMove`:** `{ enteredAt: { [colId]: isoString }, log: [{ from: '—', to: colId, at: isoString }] }` e verificar se `cards/<slot>` não pertence a outro `card.id` antes de alocar `cards_index/<cardId>`. Sempre validar com `docs/arezzo/testes/test_ferias_card_contrato.js`.
 
+11. **Nunca monte seletor CSS com o texto de um atributo `onclick`/`jsq()`:**
+   - Desde a correção de XSS (05/10) os handlers inline guardam o id via `jsq()` (aspas escapadas), então `querySelector('[onclick="f(\"id\")"]')` não casa e falha em silêncio (o foco/ação some). Marque o elemento com `data-*="${esc(id)}"` e busque por `[data-*="${CSS.escape(id)}"]`. Caso real: criar atalho de teclado no Maré (16/10).
 ---
 
 ## 🐛 Histórico de Bugs e Correções
+
+### 2026-10-16 · kanban-dev.html (v8.30.875-dev) — criar atalho de teclado não funcionava: clicar em Definir e apertar a combinação não gravava nada
+
+- **Sintoma:** em ⌨️ Atalhos, clicar em *Definir* e apertar a combinação não gravava o atalho (reportado pelo Caio em 16/10).
+- **Causa:** `renderAtalhosBody()` devolvia o foco ao botão "armado" procurando-o por `[onclick="_atalhoIniciarCaptura(${jsq(id)})"]`. Desde a correção de XSS de 05/10 (#1171) o `onclick` passou a guardar o id via `jsq()` (aspas escapadas em `&quot;`), e esse seletor, montado como texto, nunca casava. O foco ia para o `<body>` e a tecla não chegava ao `onkeydown` do botão. Existe o mesmo código em `kanban.html` (produção).
+- **Correção:** o botão ganhou `data-atalho-id` e o foco é devolvido por esse atributo (`CSS.escape`). De quebra, `ATALHO_RESERVADOS` passou a incluir combinações que o navegador pega antes da página (Ctrl+Shift+N/T/W, Ctrl+Tab/PageUp/PageDown, Alt+F4, Ctrl+Shift+I/J/C).
+- **Teste:** `docs/arezzo/testes/test_atalhos_captura.js` (teclado de verdade no boot real: grava, mostra, recusa repetido/reservado, aceita F8, remove e dispara a ação).
 
 ### 2026-10-16 · kanban.html / kanban-dev.html — clProg arredondava o checklist para cima (Math.ceil) e a correção da #1468 se perdeu
 
