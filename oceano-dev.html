@@ -747,7 +747,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.45 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.46 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -2103,7 +2103,7 @@ function feriasMontarCardBugDados(bugObj, colId, cardExistente){
     linhasDesc.push('', '💬 DIAGNÓSTICO / RESOLUÇÃO (' + (bugObj.atualizadoPor || 'Agente / ADM') + '):', String(bugObj.respostaStatus));
   }
   // pacote ANÔNIMO (sem autor/e-mail/uid): é o que o agente de código recebe — recalculado dos campos, nunca o texto salvo (registros antigos podem ter o nome do autor)
-  linhasDesc.push('', '🤖 PACOTE ANÔNIMO PARA O /monitorarbugs:', feriasMontarPacoteAnonimo(bugObj));
+  linhasDesc.push('', '🤖 PACOTE ANÔNIMO (cole no Antigravity):', feriasMontarPacoteAnonimo(bugObj));
 
   const linksArr = Array.isArray(ex && ex.links) ? ex.links.filter(Boolean).slice() : [];
   const addLinkUnico = (t, u)=>{
@@ -2571,7 +2571,7 @@ function feriasRenderBugsLista(){
       + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:3px;">'
       +   '<code style="font-size:11px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px;">'+esc(cmd)+'</code>'
       +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
-      +     '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /monitorarbugs</button>'
+      +     '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /plantaobug</button>'
       +   '</div>'
       + '</div>'
       + (souAdmOuPo ? feriasPlHtml(b, rascunhosResp) : '')
@@ -2844,7 +2844,7 @@ async function feriasCarregarBugs(){
   }
 }
 
-// 🔒 Pacote ANÔNIMO (16/10/2026): é o único texto que sai daqui para o agente de código (Antigravity / /monitorarbugs).
+// 🔒 Pacote ANÔNIMO (16/10/2026): é o único texto que sai daqui para o agente de código (Antigravity, comando /plantaobug — a skill do plantão, com as travas; o /monitorarbugs antigo é varredura ampla).
 // Só o BUG: app, arquivo, impacto, descrição e trecho do console — sem autor, e-mail, uid, link de card nem print.
 // Sempre recalculado dos campos estruturados (nunca lido de texto salvo: registros antigos guardaram o nome de quem reportou).
 function feriasSanitizarTexto(t, max){
@@ -2864,7 +2864,7 @@ function feriasMontarPacoteAnonimo(b){
   const imp = feriasSanitizarTexto(b.impacto || '', 40);
   const desc = feriasSanitizarTexto(b.texto || b.msg || '', 900);
   const cons = feriasSanitizarTexto(b.erroConsole || '', 400);
-  return '/monitorarbugs em ' + alvo + ' — Bug reportado no Oceano' + (app || imp ? ' (' + [app, imp].filter(Boolean).join(' · ') + ')' : '') + ': ' + desc
+  return '/plantaobug em ' + alvo + ' — Bug reportado no Oceano' + (app || imp ? ' (' + [app, imp].filter(Boolean).join(' · ') + ')' : '') + ': ' + desc
     + (cons ? ' [Console(F12), trecho sem dados pessoais: ' + cons + ']' : '');
 }
 window.feriasSanitizarTexto = feriasSanitizarTexto;
@@ -2880,7 +2880,7 @@ async function feriasEnviarBug(){
   const evidenciaLink = (($('#fbug-link') && $('#fbug-link').value) || '').trim();
   const erroConsole = (($('#fbug-console') && $('#fbug-console').value) || '').trim();
   if(!descricao || descricao.length < 5){
-    toast('⚠️ Descreva brevemente o que aconteceu para gerar o /monitorarbugs.');
+    toast('⚠️ Descreva brevemente o que aconteceu para gerar o pacote do plantão.');
     if($('#fbug-desc')) $('#fbug-desc').focus();
     return;
   }
@@ -2967,7 +2967,7 @@ async function feriasEnviarBug(){
       + '</div>'
       + '</div>';
   }
-  toast(criouCardDados ? '✅ Bug registrado e Card criado na coluna Bugs da Squad Dados!' : (gravouFb ? '✅ Bug registrado na fila.' : '✅ Pacote do /monitorarbugs gerado!'));
+  toast(criouCardDados ? '✅ Bug registrado e Card criado na coluna Bugs da Squad Dados!' : (gravouFb ? '✅ Bug registrado na fila.' : '✅ Pacote do plantão gerado!'));
 }
 
 function feriasRenderModal(){
@@ -3048,7 +3048,7 @@ $('#ferias-bd').addEventListener('click', e=>{
   const ur = e.target.closest('[data-ferias-url]'); if(ur){ fecharModal('ferias-ov'); if(ur.dataset.ext==='1') window.open(ur.dataset.feriasUrl,'_blank','noopener'); else rotearUrl(ur.dataset.feriasUrl); return; }
   const cp = e.target.closest('[data-fbug-copy]'); if(cp){
     const txt = cp.dataset.fbugCopy || feriasUltimoCmd || '';
-    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('📋 Comando /monitorarbugs copiado!')).catch(()=>toast('📋 '+txt));
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('📋 Comando /plantaobug copiado!')).catch(()=>toast('📋 '+txt));
     else toast('📋 '+txt);
     return;
   }

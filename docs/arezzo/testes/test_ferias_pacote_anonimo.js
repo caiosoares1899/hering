@@ -31,7 +31,7 @@ const PII = ['Eve', 'Souza', 'eve@ciahering', 'maria.silva@ciahering.com.br', 'h
     pacote: window.feriasMontarPacoteAnonimo({ arquivoAlvo: 'kanban-dev.html', app: 'Maré Digital', impacto: '🟠 Atrapalha muito', texto: 'Botão Salvar não responde', erroConsole: 'TypeError at eve@ciahering.com.br', autor: 'Eve Souza', email: 'eve@ciahering.com.br', uid: 'eve', evidenciaLink: 'https://drive.google.com/x', evidenciaImg: 'data:image/png;base64,AAAA', promptAntigravity: 'Eve Souza disse' }),
   }));
   t('Sanitizar tira e-mail, link, telefone, CPF e chave longa', !/@|https?:|98888|123\.456|AIzaSy/.test(pura.sane) && /\[e-mail\]/.test(pura.sane) && /\[link\]/.test(pura.sane), pura.sane);
-  t('Pacote tem o bug (arquivo, impacto, descrição) e começa com /monitorarbugs', /^\/monitorarbugs em kanban-dev\.html/.test(pura.pacote) && /Atrapalha muito/.test(pura.pacote) && /Botão Salvar não responde/.test(pura.pacote), pura.pacote);
+  t('Pacote tem o bug (arquivo, impacto, descrição) e começa com /plantaobug', /^\/plantaobug em kanban-dev\.html/.test(pura.pacote) && /Atrapalha muito/.test(pura.pacote) && /Botão Salvar não responde/.test(pura.pacote), pura.pacote);
   t('Pacote NÃO leva autor, e-mail, uid, link, print nem o prompt antigo — mesmo se o registro tiver tudo isso', !/Eve|Souza|@ciahering|drive\.google|data:image|AAAA/.test(pura.pacote), pura.pacote);
   t('Nome de arquivo fora do padrão é limpo (sem caminho/injeção)', await p.evaluate(() => !/[\s;&|\/]/.test(window.feriasMontarPacoteAnonimo({ arquivoAlvo: 'x.html; rm -rf /', texto: 'a' }).split(' ')[2])), 1);
 
@@ -50,7 +50,7 @@ const PII = ['Eve', 'Souza', 'eve@ciahering', 'maria.silva@ciahering.com.br', 'h
   });
   t('O bug foi gravado em kanban/feedback com autor/e-mail/uid (dados confidenciais ficam no Firebase)', !!out.id && out.reg.autor === 'Eve Souza' && out.reg.email === 'eve@ciahering.com.br' && out.reg.uid === 'eve', out.reg);
   t('O registro NÃO guarda mais o prompt com o nome de quem reportou (promptAntigravity)', !('promptAntigravity' in out.reg), Object.keys(out.reg));
-  t('O pacote mostrado na tela é anônimo (nenhum dado pessoal)', out.cmd.startsWith('/monitorarbugs em ') && !PII.some(x => out.cmd.includes(x)), out.cmd);
+  t('O pacote mostrado na tela é anônimo (nenhum dado pessoal)', out.cmd.startsWith('/plantaobug em ') && !PII.some(x => out.cmd.includes(x)), out.cmd);
   t('O botão "Copiar" leva o mesmo pacote anônimo', out.copia.length >= 1 && out.copia.every(x => x === out.cmd), out.copia);
   t('Nenhum link nem botão de GitHub na confirmação (o texto pode dizer que NÃO precisa de Issue)', !/github\.com|issues\/new|🐙/i.test(out.painel), out.painel.slice(0, 300));
   t('O card da Squad Dados recebeu o pacote anônimo (e não o prompt com o nome)', /PACOTE ANÔNIMO/.test(out.cardDesc) && !/COMANDO ANTIGRAVITY|ISSUE NO GITHUB/.test(out.cardDesc), out.cardDesc.slice(0, 300));

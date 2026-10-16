@@ -11,7 +11,7 @@ Runbook completo: `docs/PLANTAO_BUGS.md`. Regras de conduta: `AGENTS.md` ("Linha
 ## Entrada
 
 O ADM cola o **pacote anônimo** do Oceano (botão "📋 Copiar pacote anônimo"), no formato:
-`/monitorarbugs em <arquivo>-dev.html — Bug reportado no Oceano (<app> · <impacto>): <descrição> [Console(F12)…]`
+`/plantaobug em <arquivo>-dev.html — Bug reportado no Oceano (<app> · <impacto>): <descrição> [Console(F12)…]` (o botão já copia com `/plantaobug` na frente — é só colar; pacotes antigos começam com `/monitorarbugs em …`, trate igual)
 Ele não traz nome, e-mail, link nem print — **não peça nem procure esses dados** (estão no card da Squad Dados e são confidenciais).
 
 ## O que fazer (nesta ordem)
