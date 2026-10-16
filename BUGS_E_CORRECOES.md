@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · Oceano: o botão do plantão copiava /monitorarbugs (comando genérico, sem as travas) em vez de /plantaobug
+
+- **O que estava errado:** o pacote anônimo copiado no Oceano começava com `/monitorarbugs em …`, que no Antigravity dispara a varredura ampla e não a skill do plantão (`/plantaobug`: escopo só do bug, script de teste obrigatório, comando único, ESCALAR AO CLAUDE).
+- **Correção (oceano-dev v1.46):** `feriasMontarPacoteAnonimo()` passa a gerar `/plantaobug em …`; botão, descrição do card e avisos falam em /plantaobug; a skill aceita os pacotes antigos. Teste: `docs/arezzo/testes/test_ferias_pacote_anonimo.js`.
+
 ### 2026-10-16 · Oceano: qualquer pessoa abria o painel de atualizar status do bug (e ?adm=1 liberava)
 
 - **O que estava errado:** na lista do Assistente Férias o botão ⚙️ Atualizar status era exibido justamente para quem NÃO era ADM/PO (`!souAdmOuPo`), e `?adm=1` na URL liberava o painel; `feriasAtualizarStatusBug` não checava o papel. Qualquer conta podia marcar um bug como Resolvido e disparar a notificação ao autor.

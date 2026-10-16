@@ -38,8 +38,10 @@ Quem valida é **sempre um ADM** (papel `adm`) — nunca quem reportou (a tela r
 
 No Antigravity do ADM (o repositório já traz a skill em `.claude/skills/plantaobug/SKILL.md`), basta:
 
+O botão **📋 Copiar /plantaobug** do Oceano já copia o pacote com o comando na frente — é só colar no Antigravity:
+
 ```
-/plantaobug <cole aqui o pacote anônimo>
+/plantaobug em kanban-dev.html — Bug reportado no Oceano (Maré Digital · 🟡 Dá pra contornar): <descrição…>
 ```
 
 A skill já contém as regras: edita só o arquivo -dev do pacote; se precisar de mais de uma página, `functions/`, regras ou produção, responde **ESCALAR AO CLAUDE**; entrega o **script de teste** (português, só leitura, funções reais, `console.table` ✅/❌) e **um único comando agrupado** (branch + bump + log + checar + commit + push + PR de dev). Nunca faz merge. Se for reprovado, corrige no mesmo branch (máx. 3 tentativas).
