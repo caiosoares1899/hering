@@ -740,14 +740,14 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=29"></script>
+<script src="mare-notif-dev.js?v=32"></script>
 <script src="mare-dicas-dev.js?v=5"></script>
 <script src="mare-metas-dev.js?v=14"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.44 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.45 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1533,6 +1533,7 @@ let feriasBugsLista = [];
 let feriasBugsUn = null;
 let feriasEvidImgData = '';
 let feriasAdmOpenMap = {};
+let feriasPlantao = {}, feriasPlantaoUn = null, feriasPlantaoAtivo = true, feriasPlantaoCfgUn = null;   // ficha do Plantão de Bugs (kanban/plantao, só ADM) e chave geral kanban/config/plantao_ativo
 
 function feriasBugEhMeu(b){
   if(!b || !U) return false;
@@ -2526,6 +2527,7 @@ function feriasPreencherDadosTecnicos(){
 }
 
 function feriasRenderBugsLista(){
+  feriasPlIniciar();   // idempotente; só ADM (o perfil/ehAdm pode chegar depois do 1º listener de bugs)
   const meusBox = $('#fbug-meus-box');
   if(meusBox) meusBox.innerHTML = feriasHtmlMeusChamados();
   const el = $('#fbug-lista'); if(!el) return;
@@ -2536,15 +2538,15 @@ function feriasRenderBugsLista(){
   const rascunhosResp = {};
   const activeEl = document.activeElement;
   let activeRespId = '', selStart = null, selEnd = null;
-  el.querySelectorAll('input[id^="fbug-resp-"]').forEach(inp=>{
+  el.querySelectorAll('input[id^="fbug-resp-"], [id^="fpl-"]').forEach(inp=>{
     rascunhosResp[inp.id] = inp.value;
     if(inp === activeEl){
       activeRespId = inp.id;
       try{ selStart = inp.selectionStart; selEnd = inp.selectionEnd; }catch(e){}
     }
   });
-  const souAdmOuPo = Boolean(ehAdm) || (typeof ehAdm==='function' && ehAdm()) || (perfilFb && (perfilFb.papel==='po' || perfilFb.papel==='organizador' || perfilFb.papel==='adm' || perfilFb.role==='po' || perfilFb.role==='adm')) || location.search.includes('adm=1');
-  el.innerHTML = feriasBugsLista.slice(0,15).map(b=>{
+  const souAdmOuPo = feriasSouAdm();   // 🔒 só ADM atualiza status / valida (antes qualquer pessoa abria o painel e até ?adm=1 liberava)
+  el.innerHTML = feriasPlBannerHtml(souAdmOuPo) + feriasBugsLista.slice(0,15).map(b=>{
     const quando = b.ts ? tempoRel(b.ts) : '';
     const st = feriasStatusMeta(b.status);
     const cmd = feriasMontarPacoteAnonimo(b);   // 🔒 sempre recalculado dos campos: sem autor/e-mail/uid
@@ -2570,10 +2572,10 @@ function feriasRenderBugsLista(){
       +   '<code style="font-size:11px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:440px;">'+esc(cmd)+'</code>'
       +   '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
       +     '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /monitorarbugs</button>'
-      +     (!souAdmOuPo ? '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-adm-toggle="'+esc(b.id)+'">⚙️ Atualizar status</button>' : '')
       +   '</div>'
       + '</div>'
-      + (admAberto ? (
+      + (souAdmOuPo ? feriasPlHtml(b, rascunhosResp) : '')
+      + (admAberto && souAdmOuPo ? (
           '<div class="ferias-adm-panel">'
           + '<input type="text" class="in" id="'+esc(respId)+'" maxlength="280" value="'+esc(valResp)+'" placeholder="Mensagem para o autor (ex.: Corrigido na v8.30.866 — atualize com Ctrl+F5)…">'
           + '<button type="button" class="btn sm" style="border-color:rgba(56,182,255,.45);color:#8ad8ff;" data-fbug-status="'+esc(b.id)+'" data-st="em_analise">🔵 Marcar "Sendo tratado"</button>'
@@ -2640,7 +2642,125 @@ async function feriasDispararNotifStatusBug(b, bugId, novoStatus, respostaStatus
   }
 }
 
+// ── 🛟 Plantão de Bugs — ficha do bug e validação pelo ADM (kanban/plantao/{id}, só ADM; regras em database.rules.json) ──
+// Fluxo: o ADM cola o pacote anônimo no Antigravity → ele entrega o PR de dev + um SCRIPT DE TESTE → o ADM cola os dois aqui, RODA o script no
+// console da página de dev e só então valida. Sem PR e sem script salvos, o botão "Validei" não funciona. Quem reportou o bug não valida o próprio.
+// Passo a passo e estados: docs/PLANTAO_BUGS.md.
+const FERIAS_PL_ESTADOS = { aguardando:['🟡','Aguardando'], em_analise:['🔵','Em análise'], pr_aberto:['🟣','PR aberto'], testando:['🧪','Pronto p/ testar'], reprovado:['❌','Reprovado'], validado:['✅','Validado'], em_prod:['🚀','Em produção'], duplicado:['♻️','Duplicado'], escalado:['🆘','Escalado ao Claude'], cancelado:['⛔','Cancelado'] };
+const FERIAS_PL_PR = /^https:\/\/github\.com\/caiosoares1899\/hering\/pull\/[0-9]+$/;
+function feriasSouAdm(){ return !!ehAdm || (perfilFb && perfilFb.role==='adm'); }
+function feriasPlBannerHtml(souAdm){
+  if(!souAdm) return '';
+  return '<div class="ferias-adm-panel" style="margin:0 0 8px;flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px;">'
+    + '<span style="font-size:12px;color:var(--txt2);flex:1;min-width:200px;">🛟 <b>Plantão de Bugs</b> '+(feriasPlantaoAtivo ? '<span class="chip ok">ligado</span> — você (ADM) recebe aviso de bug novo e de bug parado.' : '<span class="chip">⏸ pausado</span> — sem avisos novos.')+'</span>'
+    + '<button type="button" class="btn sm" data-fpl-pausa="1">'+(feriasPlantaoAtivo ? '⏸ Pausar plantão' : '▶ Retomar plantão')+'</button>'
+    + '</div>';
+}
+function feriasPlHtml(b, rasc){
+  const pl = feriasPlantao[b.id];
+  if(!pl){
+    return '<div class="ferias-adm-panel"><div style="font-size:12px;color:var(--txt2);">🛟 Este bug ainda não tem ficha no plantão (a função do servidor cria sozinha em segundos; se ainda não foi implantada, crie a ficha aqui).</div>'
+      + '<div><button type="button" class="btn sm" data-fpl="'+esc(b.id)+'" data-acao="criar">➕ Criar ficha do plantão</button></div></div>';
+  }
+  const meta = FERIAS_PL_ESTADOS[pl.estado] || ['•', pl.estado || '?'];
+  const rv = (id, padrao)=> Object.prototype.hasOwnProperty.call(rasc, id) ? rasc[id] : (padrao||'');
+  const idPr = 'fpl-pr-'+b.id, idSc = 'fpl-sc-'+b.id, idNt = 'fpl-nt-'+b.id;
+  const fechado = ['validado','em_prod','duplicado','cancelado'].includes(pl.estado);
+  const tent = Number(pl.tentativas)||0;
+  const aviso = pl.estado==='duplicado' ? '<div style="font-size:12px;color:var(--txt2);">♻️ Parece repetido de <code>'+esc(pl.duplicadoDe||'?')+'</code> — resolva aquele.</div>'
+    : pl.estado==='escalado' ? '<div style="font-size:12px;color:#ffb3b3;">🆘 3 reprovações: não insista no Antigravity — leve para o Claude (veja o runbook).</div>' : '';
+  return '<div class="ferias-adm-panel" data-fpl-box="'+esc(b.id)+'">'
+    + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;">'
+    +   '<b>🛟 Plantão</b><span class="ferias-st-badge">'+meta[0]+' '+esc(meta[1])+'</span>'
+    +   '<span style="color:var(--txt3);">tentativas '+tent+'/3</span>'
+    +   (pl.validadoPor ? '<span style="color:var(--txt3);">· último teste por <b>'+esc(pl.validadoPor)+'</b>: '+(pl.resultadoTeste==='ok' ? '✅ ok' : '❌ falhou')+'</span>' : '')
+    + '</div>'
+    + aviso
+    + (pl.notaTeste ? '<div class="ferias-resp-box"><b>📝 Nota do teste:</b> '+esc(pl.notaTeste)+'</div>' : '')
+    + (fechado ? '' : (
+        '<input type="text" class="in" id="'+esc(idPr)+'" maxlength="120" value="'+esc(rv(idPr, pl.prUrl))+'" placeholder="Link do PR de dev (https://github.com/caiosoares1899/hering/pull/…)">'
+      + '<textarea class="in" id="'+esc(idSc)+'" rows="4" maxlength="20000" style="font-family:ui-monospace,Consolas,monospace;font-size:11.5px;" placeholder="Cole aqui o SCRIPT DE TESTE (console) que o Antigravity entregou — sem ele não dá para validar">'+esc(rv(idSc, pl.scriptTeste))+'</textarea>'
+      + '<input type="text" class="in" id="'+esc(idNt)+'" maxlength="500" value="'+esc(rv(idNt, ''))+'" placeholder="O que você viu ao rodar o script (obrigatório para reprovar)">'
+      + '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+      +   '<button type="button" class="btn sm" data-fpl="'+esc(b.id)+'" data-acao="salvar">💾 Salvar PR + script</button>'
+      +   '<button type="button" class="btn sm" data-fpl="'+esc(b.id)+'" data-acao="copiar">📋 Copiar script</button>'
+      +   '<button type="button" class="btn sm" style="border-color:rgba(46,213,115,.5);color:#6ef2a5;" data-fpl="'+esc(b.id)+'" data-acao="validei">✅ Rodei o script e validei</button>'
+      +   '<button type="button" class="btn sm" style="border-color:rgba(255,107,107,.5);color:#ffb3b3;" data-fpl="'+esc(b.id)+'" data-acao="reprovei">❌ Reprovei</button>'
+      + '</div>'))
+    + (pl.estado==='validado' ? '<div><button type="button" class="btn sm pri" data-fpl="'+esc(b.id)+'" data-acao="prod">🚀 O PR de prod foi mergeado — marcar Resolvido e avisar quem reportou</button></div>' : '')
+    + '</div>';
+}
+function feriasPlIniciar(){
+  if(!feriasSouAdm() || !window._onValue || !window._ref || !window._db) return;
+  if(!feriasPlantaoUn){
+    try{ feriasPlantaoUn = window._onValue(window._ref(window._db,'kanban/plantao'), sn=>{ feriasPlantao = sn && sn.exists() ? sn.val() : {}; feriasRenderBugsLista(); }, ()=>{}); }catch(e){}
+  }
+  if(!feriasPlantaoCfgUn){
+    try{ feriasPlantaoCfgUn = window._onValue(window._ref(window._db,'kanban/config/plantao_ativo'), sn=>{ feriasPlantaoAtivo = !(sn && sn.exists() && sn.val()===false); feriasRenderBugsLista(); }, ()=>{}); }catch(e){}
+  }
+}
+async function feriasPlGravar(bugId, patch){
+  await window._update(window._ref(window._db,'kanban/plantao/'+bugId), Object.assign({atualizadoEm: Date.now()}, patch));
+}
+const _feriasVal = id => { const e = document.getElementById(id); return e ? e.value.trim() : ''; };
+async function feriasPlAcao(bugId, acao){
+  if(!feriasSouAdm()){ toast('⚠️ Só ADM mexe no plantão.'); return; }
+  const b = feriasBugsLista.find(x=>x.id===bugId); const pl = feriasPlantao[bugId];
+  const quem = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'ADM';
+  try{
+    if(acao==='criar'){
+      if(!b) return;
+      await window._set(window._ref(window._db,'kanban/plantao/'+bugId), { estado:'aguardando', criadoEm:Number(b.criadoEm)||Date.now(), atualizadoEm:Date.now(), tentativas:0,
+        arquivoAlvo:String(b.arquivoAlvo||'').slice(0,60), impacto:String(b.impacto||'').slice(0,60), resumo:feriasSanitizarTexto(b.texto||b.msg||'', 400), cardId:feriasCardIdBug(b.kanbanCardId || bugId) });
+      toast('🛟 Ficha criada.'); return;
+    }
+    if(!pl){ toast('⚠️ Este bug ainda não tem ficha do plantão.'); return; }
+    const pr = _feriasVal('fpl-pr-'+bugId), sc = _feriasVal('fpl-sc-'+bugId), nt = _feriasVal('fpl-nt-'+bugId);
+    if(acao==='copiar'){
+      const txt = sc || pl.scriptTeste || '';
+      if(!txt){ toast('⚠️ Ainda não há script para copiar.'); return; }
+      try{ await navigator.clipboard.writeText(txt); toast('📋 Script copiado — cole no console (F12) da página de DEV.'); }catch(e){ toast('⚠️ Não consegui copiar; selecione o texto e use Ctrl+C.'); }
+      return;
+    }
+    if(acao==='salvar'){
+      if(pr && !FERIAS_PL_PR.test(pr)){ toast('⚠️ O link precisa ser de um PR deste repositório (https://github.com/caiosoares1899/hering/pull/NÚMERO).'); return; }
+      const patch = {};
+      if(pr) patch.prUrl = pr;
+      if(sc) patch.scriptTeste = sc.slice(0,20000);
+      if(!pr && !sc){ toast('⚠️ Cole o link do PR e/ou o script de teste.'); return; }
+      const temPr = pr || pl.prUrl, temSc = sc || pl.scriptTeste;
+      if(['aguardando','em_analise','reprovado','pr_aberto'].includes(pl.estado)) patch.estado = temPr && temSc ? 'testando' : temPr ? 'pr_aberto' : 'em_analise';
+      if(pl.estado==='reprovado'){ patch.resultadoTeste = null; patch.notaTeste = null; patch.validadoPor = null; patch.validadoPorUid = null; patch.validadoEm = null; }   // nova tentativa: limpa o veredito anterior
+      await feriasPlGravar(bugId, patch); toast('💾 Salvo.'); return;
+    }
+    if(acao==='validei'){
+      if(b && b.uid && U && b.uid===U.uid){ toast('⚠️ Quem reportou o bug não valida o próprio conserto — peça a outro ADM.'); return; }
+      if(!pl.prUrl || !FERIAS_PL_PR.test(pl.prUrl) || !pl.scriptTeste || pl.scriptTeste.length < 20){ toast('⚠️ Sem PR e sem script de teste SALVOS não dá para validar. Cole os dois e clique em 💾 Salvar.'); return; }
+      if(!['testando','pr_aberto'].includes(pl.estado)){ toast('⚠️ Este bug não está pronto para validar (estado: '+((FERIAS_PL_ESTADOS[pl.estado]||[])[1]||pl.estado)+').'); return; }
+      await feriasPlGravar(bugId, { estado:'validado', resultadoTeste:'ok', notaTeste:nt.slice(0,500)||null, validadoPor:quem.slice(0,120), validadoPorUid:U.uid, validadoEm:Date.now() });
+      toast('✅ Validado. Agora peça o PR de PROD (promover.js) e, depois do merge, clique em 🚀.'); return;
+    }
+    if(acao==='reprovei'){
+      if(nt.length < 5){ toast('⚠️ Escreva em "O que você viu" o que falhou — o Antigravity precisa disso para tentar de novo.'); return; }
+      const tent = (Number(pl.tentativas)||0) + 1;
+      await feriasPlGravar(bugId, { estado: tent>=3 ? 'escalado' : 'reprovado', tentativas:Math.min(tent,3), resultadoTeste:'falhou', notaTeste:nt.slice(0,500), validadoPor:quem.slice(0,120), validadoPorUid:U.uid, validadoEm:Date.now() });
+      toast(tent>=3 ? '🆘 3ª reprovação: escalado ao Claude.' : '❌ Reprovado ('+tent+'/3). Copie a nota para o Antigravity tentar de novo.'); return;
+    }
+    if(acao==='prod'){
+      if(pl.estado!=='validado'){ toast('⚠️ Só vai para produção o que está validado.'); return; }
+      await feriasPlGravar(bugId, { estado:'em_prod' });
+      await feriasAtualizarStatusBug(bugId, 'resolvido'); return;
+    }
+  }catch(e){ toast('⚠️ Não consegui gravar no Firebase (sem permissão de ADM ou sem rede).'); }
+}
+async function feriasPlPausa(){
+  if(!feriasSouAdm()) return;
+  try{ await window._set(window._ref(window._db,'kanban/config/plantao_ativo'), feriasPlantaoAtivo ? false : null); toast(feriasPlantaoAtivo ? '⏸ Plantão pausado (sem avisos novos).' : '▶ Plantão retomado.'); }catch(e){ toast('⚠️ Não consegui alterar o plantão.'); }
+}
+window.feriasPlAcao = feriasPlAcao;
+
 async function feriasAtualizarStatusBug(bugId, novoStatus){
+  if(!feriasSouAdm()){ toast('⚠️ Só ADM atualiza o status do bug.'); return; }
   const b = feriasBugsLista.find(x=>x.id===bugId);
   if(!b) return;
   const inp = document.getElementById('fbug-resp-' + bugId);
@@ -2700,6 +2820,7 @@ function feriasProcessarSnapshotBugs(val){
 }
 
 function feriasIniciarBugsListener(){
+  feriasPlIniciar();
   const onValFn = window._onValue || window._onVal;
   if(!onValFn || !window._ref || !window._db) return;
   if(feriasBugsUn){ try{ feriasBugsUn(); }catch(e){} feriasBugsUn = null; }
@@ -2943,6 +3064,8 @@ $('#ferias-bd').addEventListener('click', e=>{
     feriasRenderBugsLista();
     return;
   }
+  const plBtn = e.target.closest('[data-fpl]'); if(plBtn){ feriasPlAcao(plBtn.dataset.fpl, plBtn.dataset.acao); return; }
+  if(e.target.closest('[data-fpl-pausa]')){ feriasPlPausa(); return; }
   const stBtn = e.target.closest('[data-fbug-status]'); if(stBtn){
     feriasAtualizarStatusBug(stBtn.dataset.fbugStatus, stBtn.dataset.st);
     return;

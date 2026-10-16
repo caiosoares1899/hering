@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · Oceano: qualquer pessoa abria o painel de atualizar status do bug (e ?adm=1 liberava)
+
+- **O que estava errado:** na lista do Assistente Férias o botão ⚙️ Atualizar status era exibido justamente para quem NÃO era ADM/PO (`!souAdmOuPo`), e `?adm=1` na URL liberava o painel; `feriasAtualizarStatusBug` não checava o papel. Qualquer conta podia marcar um bug como Resolvido e disparar a notificação ao autor.
+- **Correção (oceano-dev v1.45):** o painel e a função só funcionam para ADM (`feriasSouAdm`); botão para não-ADM removido; `?adm=1` removido. Limite conhecido: `kanban/feedback` segue gravável por qualquer conta @ciahering (o Maré usa o mesmo nó) — a validação do plantão fica no nó novo `kanban/plantao` (só ADM). Teste: `docs/arezzo/testes/test_plantao_validacao.js`.
+
 ### 2026-10-16 · Plantão de Férias: contenção — Issue pública vazava nome/e-mail, workflow acionável por qualquer pessoa e daemon contornando o controle corporativo
 
 - **O que estava errado:** (1) o Assistente Férias abria uma Issue pública com nome e e-mail de quem reportou (issue #1445); (2) o workflow do plantão (ferias-bug-bot, já removido) disparava em `issues`/`issue_comment` com permissão de escrita e promovia a prod com a palavra "aprovado" — qualquer pessoa na internet podia acioná-lo; (3) um daemon em scripts/ (ferias-daemon, já removido) apertava sozinho o botão de aprovação do Antigravity, contornando o controle corporativo; (4) `oceano-dev.html` lia comentários públicos da Issue e aceitava `FERIAS_STATUS` de qualquer autor; (5) o prompt do `/monitorarbugs` levava o nome do autor.

@@ -23,7 +23,7 @@ initializeApp();
 // Tipos que INTERROMPEM (viram push). Os demais só ficam no sino, sem
 // incomodar — ajuste essa lista conforme o time for testando o que faz
 // sentido virar aviso externo (ex.: talvez "checklistDone" não precise).
-const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou']);
+const PUSH_TYPES = new Set(['assigned', 'mention', 'unblocked', 'risk', 'recorrente', 'painel_broadcast', 'intake', 'okr_editado', 'okr_prazo', 'okr_reuniao', 'okr_agente', 'okr_mencao', 'feedback', 'reuniao', 'due_today', 'due_overdue', 'meta_lembrete', 'escala', 'backup_falhou', 'vtex_incidente', 'vtex_monitor_falhou', 'github_incidente', 'github_monitor_falhou', 'firebase_incidente', 'firebase_monitor_falhou', 'plantao_bug']);
 
 exports.sendPushOnNotification = onValueCreated(
   {
@@ -211,6 +211,13 @@ exports.backupGlobalDiario = require('./backup/completo').backupGlobalDiario;
 // squad) e avisa os ADMs (sino + push, tipo `backup_falhou`) se algo faltou ou deu erro. Deploy isolado:
 //   firebase deploy --only functions:backupVigia,functions:sendPushOnNotification   (o 2º por causa do novo tipo no PUSH_TYPES)
 exports.backupVigia = require('./backup/vigia').backupVigia;
+
+// 🛟 Plantão de Bugs (férias do Caio, 16/10→03/11/2026 — docs/PLANTAO_BUGS.md): `plantaoBugNovo` cria a ficha do bug em kanban/plantao/{id}, junta
+// duplicados e avisa os ADMs (tipo `plantao_bug`, em PUSH_TYPES); `plantaoVigia` (de 3 em 3 h, 08–20h de Brasília) avisa de bug parado. Pausa geral:
+// kanban/config/plantao_ativo = false. Deploy isolado (o 3º por causa do novo tipo no PUSH_TYPES; as regras do nó plantao saem com `--only database`):
+//   firebase deploy --only functions:plantaoBugNovo,functions:plantaoVigia,functions:sendPushOnNotification
+exports.plantaoBugNovo = require('./plantao/plantao').plantaoBugNovo;
+exports.plantaoVigia = require('./plantao/plantao').plantaoVigia;
 
 // API da tela "🛟 Backup completo (nuvem)" do Maré (Config → Backup): lista/compara/restaura SÓ o que sumiu (comentários, config, intake, subtimes,
 // kudos) a partir do backup completo — HTTP + Bearer idToken, só ADM/PO/Organizador do squad (functions/backup/restaurarApi.js). Deploy isolado:
