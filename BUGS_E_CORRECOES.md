@@ -61,6 +61,11 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · oceano-dev.html (v1.50-dev) — cartão da Meta Global começava ~47 px abaixo dos quadrados dos apps
+
+- **Causa:** na grade da página inicial (só Meta, sem Mural) o cabeçalho "Meta Global · Digital" ficava acima do cartão e empurrava ele para baixo, deixando o topo desalinhado dos quadrados dos apps (o próprio cartão já traz o rótulo).
+- **Correção:** o cabeçalho da coluna some nesse layout (desktop), alinhando o topo do cartão com o topo dos quadrados. Só o topo é alinhado; esticar os quadrados deformava com mais de uma meta.
+
 ### 2026-10-16 · kanban-dev.html (v8.30.869-dev) — clProg usava Math.floor (66% em 2/3) em vez de Math.round (67%)
 
 - **Causa raiz:** Em kanban-dev.html (L12307), clProg(cl) calculava o percentual da barra de progresso do checklist na face do card com Math.floor(d/cl.length*100) (retornando 66% para 2 de 3 itens concluídos), divergindo do modal do card (renderCL, L17640), que já usava Math.round(done/total*100) (67%).
