@@ -100,10 +100,16 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 |---|---|---|---|
 | — | — | — | — |
 
+### Pendências do Antigravity (achadas pelo Claude em 16/10)
+| O que | Detalhe |
+|---|---|
+| Nomes/versões inventados no `BUGS_E_CORRECOES.md` | As entradas de 15/10 citam `radar.html`, `radar-dev.html` (v2.0.90–v2.0.95) e `maredigital-dev.html`, que **não existem**. O Radar é `okr.html`/`okr-dev.html` (v2.89) e o portal é `maredigital.html`. Corrigir as 4 ocorrências e conferir os nomes reais com `ls` antes de escrever. |
+| `mare-cli.js log --type bug` insere no lugar errado | A entrada entra no topo do arquivo, **antes** da seção "Armadilhas", e sem data no título. Deve entrar logo abaixo de "## 🐛 Histórico de Bugs e Correções", com `AAAA-MM-DD · <área> — <título>`. |
+
 ### Pendente de deploy (só o Caio roda)
 | Quem adicionou | O que mudou | Comando | Data |
 |---|---|---|---|
-| — | — | — | — |
+| Claude | Regras do banco: `kanban/okr` com regra por filho (comentário do Marco só pelo autor; Data Studio só ADM/PO/Organizador/Gestor OKR). **Antes: rodar o script de checagem (só leitura) no console do Radar e conferir as listas 1 e 2.** | `firebase deploy --only database --project hering-onboarding --account caio.soares@ciahering.com.br` (depois do resync do clone) | 16/10 |
 
 ---
 
@@ -137,6 +143,8 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 7. **Permissões só na tela:** editar/apagar comentário do Marco "só o autor" e a config do Data Studio são restrições de UI;
    as regras do banco deixam **qualquer conta @ciahering** escrever em `kanban/okr`. → endurecer regras (autor em
    `marco_comments`, papel em `datastudio`). Exige `firebase deploy --only database`. *(Claude)*
+9. **Documentação com fatos inventados:** `BUGS_E_CORRECOES.md` cita arquivos e versões que não existem (ver "Pendências do Antigravity"). Regra: nome de arquivo e versão só depois de `ls`/`grep` — nunca de memória. *(Antigravity)*
+10. **`mare-cli.js log` insere a entrada no lugar errado** (ver "Pendências do Antigravity"). *(Antigravity)*
 8. **Deploy das 5 funções do Agente Ágil:** o `conhecimento/*.json` mudou várias vezes depois do último deploy. → o Caio
    faz **um** deploy no fim, a partir da `main` atual (com resync). Entra em "Pendente de deploy".
 

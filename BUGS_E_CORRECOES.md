@@ -9,7 +9,7 @@ Este arquivo concentra o registro técnico de **bugs reportados**, **correções
 
 ## 🛡️ Armadilhas Conhecidas & Regras de Ouro (Não Repetir)
 
-Antes de alterar código compartilhado, queries do Firebase, fluxos de autenticação ou scripts de promoção, consulte sempre estas **8 armadilhas recorrentes** já enfrentadas no projeto:
+Antes de alterar código compartilhado, queries do Firebase, fluxos de autenticação ou scripts de promoção, consulte sempre estas **9 armadilhas recorrentes** já enfrentadas no projeto:
 
 1. **Comentários de cards (`ts` sempre ISO string):**
    - `loadComments()` ordena comentários usando `a.ts.localeCompare(b.ts)`.
@@ -44,9 +44,24 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 8. **Inspeção SSL corporativa (FortiGate/VPN):**
    - O SDK do Firebase (`10.14.1`) é servido localmente a partir de `vendor/firebase-10.14.1/` porque firewalls corporativos (FortiGate/VPN) com inspeção SSL truncavam ou corrompiam o bundle ESM vindo de `www.gstatic.com`. Nunca reverta os imports de produção/dev para CDN externa sem fallback local.
 
+
+9. **Nó novo em `kanban/okr` precisa de regra em `database.rules.json` (desde 16/10/2026):**
+   - O nó `okr` não tem mais um `.write` único: cada filho (`objetivos`, `marcos`, `marco_comments`, `datastudio`, `mural`…) declara o seu. Um filho NOVO sem regra **perde a escrita** para todo mundo.
+   - `functions/rules/__tests__/okrRules.test.js` varre o código atrás de `kanban/okr/<nó>` e falha se faltar a declaração. Depois de declarar: `firebase deploy --only database` (só o Caio).
+   - Permissão que só existe na tela NÃO é permissão: se a UI diz "só o autor/ADM", a regra do banco precisa dizer o mesmo. A regra só enxerga `role` global, `gestorOkr` e o e-mail do Caio — não `squads_roles` nem a lista `adm_emails`.
+
 ---
 
 ## 🐛 Histórico de Bugs e Correções
+
+### 2026-10-16 · Radar (`database.rules.json`) — qualquer conta @ciahering editava/apagava comentário alheio do Marco e configurava o Data Studio (permissão só na tela)
+
+- **Sintoma:** "só o autor edita/apaga o comentário do Marco" e "só ADM/PO/Organizador/Gestor OKR configura o Data Studio" eram restrições só de tela. Qualquer conta @ciahering, com o console aberto, podia reescrever ou apagar o comentário de outra pessoa (inclusive em nome dela) e criar/remover painéis do Data Studio.
+- **Causa-raiz:** `database.rules.json` tinha UM `.write` para o nó `kanban/okr` inteiro (qualquer conta Google @ciahering). Como `.write` cascateia para baixo, nenhum filho conseguia restringir.
+- **Correção (`database.rules.json`, `okr` agora com regras por filho):** `marco_comments` — o autor cria/edita/apaga o próprio comentário (`uid` = `auth.uid`, validado: id = chave, texto 1–4000, `ts` string); ADM (`role: adm` ou e-mail do Caio) apaga o de qualquer um; apagar a conversa inteira (cascata ao excluir um Objetivo) só ADM — ou qualquer conta se ela já está vazia (a exclusão do Objetivo não pode falhar por marco sem comentário). `datastudio` — ADM, PO, Organizador ou Gestor OKR (`gestorOkr: true`). Os outros 13 filhos (`objetivos`, `marcos`, `tags`, `gerencias`, `calendario`, `agente_chat`, `agente_chat_processed`, `reuniao_notas`, `reuniao_agenda`, `snapshots`, `obj_locks`, `mural`, `apresentacao_live`) seguem abertos como antes, agora declarados um a um.
+- **Limite conhecido:** a regra só enxerga o `role` GLOBAL. Quem é PO/Organizador só dentro de uma squad (`squads_roles`) passa na tela, mas não passa na regra do Data Studio; idem ADM que está só na lista `adm_emails` sem `role: adm`. Por isso há um script de checagem (só leitura) para rodar ANTES do deploy.
+- **Teste:** `functions/rules/__tests__/okrRules.test.js` (9 testes; 6 falham nas regras antigas). O último teste falha se alguém usar um nó novo de `kanban/okr` no código sem declarar a regra (senão ele perderia a escrita). Suíte `functions/`: 856 passam, 0 falham, 1 pulado.
+- **Deploy:** exige `firebase deploy --only database` (só o Caio, conta corporativa), depois de rodar o script de checagem.
 
 ### 2026-10-15 · Radar (`radar.html` / `radar-dev.html` v2.0.95) — Títulos de 2 linhas cortados na Apresentação ao Vivo
 - **Sintoma:** Na Apresentação ao Vivo do Radar (tela cheia e impressão PDF), títulos de capítulos ou objetivos que quebravam em 2 linhas ficavam com a segunda linha cortada ou sobreposta aos subtítulos.
