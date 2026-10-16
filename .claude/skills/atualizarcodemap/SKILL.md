@@ -70,14 +70,17 @@ sem `-a` reportar "binary file matches" e não mostrar nada.)
 git log --oneline -30 -- kanban-dev.html painel.html functions/
 ```
 
-Pra cada feature/fix notável que foi ao ar desde o commit do rodapé
-atual (`*Retrato do commit ...*`, última linha do arquivo), decide: isso
-é um ajuste dentro de uma área que o mapa JÁ indexa (não precisa de nada
-novo), ou é uma área funcional genuinamente nova o suficiente pra
-merecer seu próprio `###`? Ao adicionar, mantém o mesmo nível de curadoria
-que o resto do arquivo já tem — âncoras são os pontos de entrada que
-alguém realmente quer pra pular direto na área (função/const + linha +
-descrição de uma linha), não um dump de toda função nova que existe.
+Consulte também as entradas recentes tanto em `CHANGELOG.md` (features e
+entregas estruturais) quanto em `BUGS_E_CORRECOES.md` (correções técnicas,
+novos helpers de blindagem e armadilhas conhecidas). Pra cada feature/fix
+notável que foi ao ar desde o commit do rodapé atual (`*Retrato do commit
+...*`, última linha do arquivo), decide: isso é um ajuste dentro de uma
+área que o mapa JÁ indexa (não precisa de nada novo), ou é uma área
+funcional genuinamente nova o suficiente pra merecer seu próprio `###`? Ao
+adicionar, mantém o mesmo nível de curadoria que o resto do arquivo já tem
+— âncoras são os pontos de entrada que alguém realmente quer pra pular
+direto na área (função/const + linha + descrição de uma linha), não um
+dump de toda função nova que existe.
 
 ## Passo 4 — Confere consistência interna do próprio arquivo
 
@@ -100,16 +103,18 @@ descrição de uma linha), não um dump de toda função nova que existe.
   do `CODE_MAP.md` documenta (incluindo o que está comentado/pausado,
   tipo `spotifySync`).
 
-## Passo 5 — Atualiza o rodapé
+## Passo 5 — Atualiza o rodapé e regenera `CODE_MAP_FAST.md`
 
-Última linha do arquivo, sempre:
+Última linha do `CODE_MAP.md`, sempre:
 
 ```
 *Retrato do commit `<hash-do-commit-atual>` (<data-de-hoje>).*
 ```
 
 Usa o hash do commit em que a rodada está sendo feita (`git rev-parse
---short HEAD` antes de commitar as mudanças do mapa em si).
+--short HEAD` antes de commitar as mudanças do mapa em si) e roda `node
+scripts/mare-cli.js map` para sincronizar o índice compacto
+`CODE_MAP_FAST.md` a partir do `CODE_MAP.md` atualizado.
 
 ## Passo 6 — Checks + release
 
@@ -120,9 +125,9 @@ normal do repo:
 1. Nunca commita direto em `main` — sempre branch/PR, mesmo pra
    documentação.
 2. Não precisa de bump de versão em `version.json` nem entrada no
-   `CHANGELOG.md` a menos que a correção seja notável o suficiente pra
-   valer registro (ex.: seção inteira nova, não só linhas reajustadas)
-   — julgamento, não regra fixa.
+   `CHANGELOG.md` / `BUGS_E_CORRECOES.md` a menos que a correção seja
+   notável o suficiente pra valer registro (ex.: seção inteira nova, não
+   só linhas reajustadas) — julgamento, não regra fixa.
 3. `git fetch origin main -q && git rebase origin/main -q` antes de
    empurrar — o `main` deste repo avança com frequência.
 4. `git push -u origin <branch-atual>`, abre PR (nunca self-merge sem

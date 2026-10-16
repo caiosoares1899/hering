@@ -101,10 +101,11 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 | — | — | — | — |
 
 ### Pendências do Antigravity (achadas pelo Claude em 16/10)
-| O que | Detalhe |
-|---|---|
-| Nomes/versões inventados no `BUGS_E_CORRECOES.md` | As entradas de 15/10 citam `radar.html`, `radar-dev.html` (v2.0.90–v2.0.95) e `maredigital-dev.html`, que **não existem**. O Radar é `okr.html`/`okr-dev.html` (v2.89) e o portal é `maredigital.html`. Corrigir as 4 ocorrências e conferir os nomes reais com `ls` antes de escrever. |
-| `mare-cli.js log --type bug` insere no lugar errado | A entrada entra no topo do arquivo, **antes** da seção "Armadilhas", e sem data no título. Deve entrar logo abaixo de "## 🐛 Histórico de Bugs e Correções", com `AAAA-MM-DD · <área> — <título>`. |
+| O que | Detalhe | Status |
+|---|---|---|
+| Nomes/versões inventados no `BUGS_E_CORRECOES.md` | As entradas de 15/10 citam `radar.html`, `radar-dev.html` (v2.0.90–v2.0.95) e `maredigital-dev.html`, que **não existem**. O Radar é `okr.html`/`okr-dev.html` (v2.89) e o portal é `maredigital.html`. Corrigir as 4 ocorrências e conferir os nomes reais com `ls` antes de escrever. | ✅ Corrigido em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
+| `mare-cli.js log --type bug` insere no lugar errado | A entrada entra no topo do arquivo, **antes** da seção "Armadilhas", e sem data no título. Deve entrar logo abaixo de "## 🐛 Histórico de Bugs e Correções", com `AAAA-MM-DD · <área> — <título>`. | ✅ Corrigido em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
+| Papéis de `mare-cli.js` × `promover.js` + 5 skills lendo `BUGS_E_CORRECOES.md` | Documentar em 1 parágrafo a divisão sem sobreposição (`mare-cli.js`: status/bump/log/map; `promover.js`: promoção dev→prod) e atualizar `gerarokr`, `resumosemanal`, `atualizarcodemap`, `atualizarhelpcontent`, `otimizaçãoderotina`. | ✅ Concluído em 16/10 (`antigravity/pendencias-coordenacao-16-10`) |
 
 ### Pendente de deploy (só o Caio roda)
 | Quem adicionou | O que mudou | Comando | Data |
@@ -132,19 +133,19 @@ Achou algo: **pequeno** → corrige (branch `antigravity/…`) e registra em `BU
 
 **Achados (e o que fazer)**
 1. **Três cópias do processo de release** (`CLAUDE.md`, `AGENTS.md`, `.agents/rules/release-process.md`) já divergindo
-   (o `AGENTS.md` cita `CODE_MAP_FAST`/`BUGS_E_CORRECOES`; o `CLAUDE.md` não). → `CLAUDE.md` é a fonte; as outras viram ponteiro + o que é só do Antigravity. *(Claude)*
-2. **Duas ferramentas de versão/promoção** (`mare-cli.js` e `promover.js`) sobrepostas. → documentar quem faz o quê (`mare-cli`: bump/log/map; `promover.js`: promoção) num parágrafo só. *(Antigravity)*
+   (o `AGENTS.md` cita `CODE_MAP_FAST`/`BUGS_E_CORRECOES`; o `CLAUDE.md` não). → `CLAUDE.md` é a fonte; as outras viram ponteiro + o que é só do Antigravity. *(Claude — concluído)*
+2. **Duas ferramentas de versão/promoção** (`mare-cli.js` e `promover.js`) sobrepostas. → documentar quem faz o quê (`mare-cli`: bump/log/map; `promover.js`: promoção) num parágrafo só. *(Antigravity — ✅ concluído em 16/10)*
 3. **Skills desatualizadas pela separação CHANGELOG × BUGS:** 5 skills ainda leem só o `CHANGELOG.md`
    (`gerarokr`, `resumosemanal`, `atualizarcodemap`, `atualizarhelpcontent`, `otimizaçãoderotina`), que agora só tem
-   features — correções ficam fora do resumo semanal. → fazê-las ler também `BUGS_E_CORRECOES.md`. *(Antigravity)*
+   features — correções ficam fora do resumo semanal. → fazê-las ler também `BUGS_E_CORRECOES.md`. *(Antigravity — ✅ concluído em 16/10)*
 4. **Cadência de promoção** (seção 5): 3 promoções de feature num dia. → lote diário.
-5. **Armadilha nº 4** cita o domínio errado do Pages (`caiofsoares…`; o certo é `caiosoares1899.github.io`). *(Antigravity)*
+5. **Armadilha nº 4** cita o domínio errado do Pages (`caiofsoares…`; o certo é `caiosoares1899.github.io`). *(Antigravity — ✅ concluído em 16/10)*
 6. **Autoria ilegível:** commits dele saem como `Caio Soares` sem trailer. → trailer `Agent:` (seção 2).
 7. **Permissões só na tela:** editar/apagar comentário do Marco "só o autor" e a config do Data Studio são restrições de UI;
    as regras do banco deixam **qualquer conta @ciahering** escrever em `kanban/okr`. → endurecer regras (autor em
-   `marco_comments`, papel em `datastudio`). Exige `firebase deploy --only database`. *(Claude)*
-9. **Documentação com fatos inventados:** `BUGS_E_CORRECOES.md` cita arquivos e versões que não existem (ver "Pendências do Antigravity"). Regra: nome de arquivo e versão só depois de `ls`/`grep` — nunca de memória. *(Antigravity)*
-10. **`mare-cli.js log` insere a entrada no lugar errado** (ver "Pendências do Antigravity"). *(Antigravity)*
+   `marco_comments`, papel em `datastudio`). Exige `firebase deploy --only database`. *(Claude — concluído)*
+9. **Documentação com fatos inventados:** `BUGS_E_CORRECOES.md` cita arquivos e versões que não existem (ver "Pendências do Antigravity"). Regra: nome de arquivo e versão só depois de `ls`/`grep` — nunca de memória. *(Antigravity — ✅ concluído em 16/10)*
+10. **`mare-cli.js log` insere a entrada no lugar errado** (ver "Pendências do Antigravity"). *(Antigravity — ✅ concluído em 16/10)*
 8. **Deploy das 5 funções do Agente Ágil:** o `conhecimento/*.json` mudou várias vezes depois do último deploy. → o Caio
    faz **um** deploy no fim, a partir da `main` atual (com resync). Entra em "Pendente de deploy".
 

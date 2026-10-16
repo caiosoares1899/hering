@@ -327,11 +327,7 @@ Siga o processo já documentado no `CLAUDE.md` ("Release process"):
    `kanban.html` diretamente**.
 2. Bump da versão: `<div class="version">` dentro do HTML + a chave
    `kanban_dev` em `version.json`.
-3. Entrada nova no `CHANGELOG.md`, sob `## kanban-dev.html (ambiente de
-   teste)` — separe claramente **o que foi corrigido agora** de
-   **grandes oportunidades sinalizadas mas não implementadas** (ex.:
-   externalizar o script principal — sempre mencionar como recomendação
-   futura que precisa de aprovação, nunca implementar de bandeja).
+3. Entrada nova em **`BUGS_E_CORRECOES.md`** (sob `## 🐛 Histórico de Bugs e Correções`, via `node scripts/mare-cli.js log --type bug ...`) para correções de query/leak/bytes redundantes — ou em **`CHANGELOG.md`** se for uma entrega/otimização estrutural grande — separando claramente **o que foi corrigido agora** de **grandes oportunidades sinalizadas mas não implementadas** (ex.: externalizar o script principal — sempre mencionar como recomendação futura que precisa de aprovação, nunca implementar de bandeja). Antes de editar queries Firebase, confira também a seção `## 🛡️ Armadilhas Conhecidas` de `BUGS_E_CORRECOES.md`.
 4. `git add` dos arquivos certos (inclusive qualquer asset novo extraído,
    tipo `favicon.png`).
 5. `git fetch origin main && git rebase origin/main` — o `main` deste
