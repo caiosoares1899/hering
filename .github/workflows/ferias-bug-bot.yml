@@ -1,0 +1,123 @@
+name: "🏖️ Plantão de Férias — Triagem & Promoção Prod"
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  triagem-inicial:
+    name: "ACK imediato (🔵 Sendo tratado)"
+    if: github.event_name == 'issues' && contains(github.event.issue.title, '[Bug Férias')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Responder na Issue com FERIAS_STATUS em_analise
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          EXISTING=$(gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}/comments" --jq '[.[].body | select(contains("FERIAS_STATUS:"))] | length')
+          if [ "$EXISTING" -eq "0" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body "<!-- FERIAS_STATUS: em_analise -->
+          🏖️ **Plantão de Férias do Caio (Antigravity):** Recebi o seu relato de bug! Já atualizei o seu chamado no **Oceano** e o card na coluna **\`🐛 Bugs\` da Squad Dados** para **🔵 Sendo tratado**.
+
+          O diagnóstico automático (\`/monitorarbugs\`) já entrou na fila e em breve posto aqui a causa raiz + o link da **PR de \`-dev\`** para validação de @alioandrade99-netizen e @Andreetta94!"
+          fi
+
+  promover-para-prod:
+    name: "Promoção Automática (/subirproprod -> PR Prod)"
+    if: >
+      github.event_name == 'issue_comment' &&
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.title, '[Bug Férias') &&
+      !contains(github.event.comment.body, 'FERIAS_STATUS:') &&
+      (
+        contains(github.event.comment.body, 'aprovado') ||
+        contains(github.event.comment.body, 'subirproprod') ||
+        contains(github.event.comment.body, 'pode subir') ||
+        contains(github.event.comment.body, 'sobe pro prod')
+      )
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Executar promover.js e abrir PR de Produção
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          # Verifica se já foi resolvido
+          HAS_RESOLVIDO=$(gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}/comments" --jq '[.[].body | select(contains("FERIAS_STATUS: resolvido"))] | length')
+          if [ "$HAS_RESOLVIDO" -gt "0" ]; then
+            echo "Issue já marcada como resolvida."
+            exit 0
+          fi
+
+          # Extrai PR de -dev e alvo do comentário FERIAS_DEV_PR
+          DEV_META=$(gh api "repos/${{ github.repository }}/issues/${ISSUE_NUMBER}/comments" --jq '[.[].body | select(contains("FERIAS_DEV_PR:"))] | last // empty')
+          if [ -z "$DEV_META" ]; then
+            echo "Nenhuma PR de -dev registrada na Issue ainda."
+            exit 0
+          fi
+
+          DEV_PR=$(echo "$DEV_META" | sed -n 's/.*FERIAS_DEV_PR:[[:space:]]*\([0-9]*\).*/\1/p' | head -n 1)
+          TARGET_DEV=$(echo "$DEV_META" | sed -n 's/.*TARGET:[[:space:]]*\([^[:space:]-]*\(-dev\)\?\).*/\1/p' | head -n 1)
+          PROD_TARGET=$(echo "$TARGET_DEV" | sed 's/\.html$//; s/\.js$//; s/-dev$//')
+          if [ -z "$PROD_TARGET" ]; then PROD_TARGET="kanban"; fi
+
+          # Verifica se a PR de -dev já foi mergeada
+          IS_MERGED=$(gh api "repos/${{ github.repository }}/pulls/${DEV_PR}" --jq '.merged')
+          if [ "$IS_MERGED" != "true" ]; then
+            gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body "⚠️ Recebi o comando de aprovação para produção, mas a **PR de \`-dev\` (#${DEV_PR})** ainda está aberta! Clique primeiro em **Merge pull request** na PR #${DEV_PR} e depois comente \`APROVADO PROD\` novamente."
+            exit 0
+          fi
+
+          git config user.name "Antigravity Bot (Férias Caio)"
+          git config user.email "caio.soares@azzas2154.com.br"
+          git pull origin main
+
+          node .claude/skills/subirproprod/promover.js "$PROD_TARGET"
+
+          BRANCH="antigravity/prod-ferias-issue-${ISSUE_NUMBER}"
+          git checkout -B "$BRANCH"
+          git add -A
+          git commit -m "chore(release): promover ${PROD_TARGET} para producao (issue #${ISSUE_NUMBER})" -m "Agent: antigravity" || exit 0
+          git push -u origin "$BRANCH" --force-with-lease
+
+          PR_URL=$(gh pr create --repo "${{ github.repository }}" \
+            --title "🚀 [Produção · Férias] Promover ${PROD_TARGET}.html — Issue #${ISSUE_NUMBER}" \
+            --body "## 🚀 Promoção para Produção (\`/subirproprod\`) — Issue #${ISSUE_NUMBER}
+
+          - **Origem validada em \`-dev\`:** PR #${DEV_PR}
+          - **Alvo promovido:** \`${PROD_TARGET}.html\` (linhas exclusivas de produção preservadas via \`promover.js\`)
+
+          ### ✅ Ação final (@alioandrade99-netizen e @Andreetta94):
+          Clique em **Merge pull request** nesta PR para publicar a correção em produção!
+
+          Agent: antigravity" \
+            --base main --head "$BRANCH")
+
+          gh issue comment "$ISSUE_NUMBER" --repo "${{ github.repository }}" --body "<!-- FERIAS_STATUS: resolvido -->
+          🎉 **Promoção para Produção concluída! (${PR_URL})**
+
+          - 🚀 **PR de Produção (clique em Merge para publicar no ar):** ${PR_URL}
+          - 🌐 **Link de Produção:** https://caiosoares1899.github.io/hering/${PROD_TARGET}.html
+
+          O chamado no **Oceano** e o Card na coluna **\`🐛 Bugs\` da Squad Dados** foram atualizados automaticamente para **🟢 Resolvido** e o autor já foi notificado no sino 🔔! (@alioandrade99-netizen e @Andreetta94)"
+
+          gh issue close "$ISSUE_NUMBER" --repo "${{ github.repository }}"
