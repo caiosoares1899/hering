@@ -402,6 +402,75 @@ input.in[readonly]{opacity:.7;}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
 .versao-aviso{position:fixed;left:0;right:0;top:0;z-index:310;background:rgba(37,99,201,.95);color:#fff;padding:9px 14px;text-align:center;font-size:13px;font-weight:700;display:none;}
 .versao-aviso button{margin-left:10px;border:1px solid #fff;background:transparent;color:inherit;border-radius:8px;padding:3px 10px;font-weight:700;cursor:pointer;}
+
+/* ═══ 🏖️ ASSISTENTE FÉRIAS DO CAIO (ATÉ 03/11) ═══ */
+.ferias-banner{position:relative;margin:0 0 18px;padding:18px 20px;border-radius:var(--r2);border:1px solid rgba(29,233,182,.38);background:linear-gradient(135deg,rgba(29,233,182,.13) 0%,rgba(56,182,255,.12) 52%,var(--glass) 100%);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 10px 30px rgba(0,0,0,.24);overflow:hidden;}
+:root[data-theme="light"] .ferias-banner,:root[data-tema="claro"] .ferias-banner{background:linear-gradient(135deg,rgba(255,255,255,.88) 0%,rgba(224,247,255,.82) 100%);border-color:rgba(0,124,168,.38);box-shadow:0 8px 24px rgba(7,70,110,.15);}
+.ferias-top{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.ferias-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:4px 11px;border-radius:999px;background:rgba(29,233,182,.16);color:var(--teal);border:1px solid rgba(29,233,182,.4);}
+:root[data-theme="light"] .ferias-badge,:root[data-tema="claro"] .ferias-badge{background:rgba(10,143,134,.12);color:#066962;border-color:rgba(10,143,134,.35);}
+.ferias-min-btn{background:none;border:1px solid var(--glass-b);color:var(--txt2);font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;cursor:pointer;transition:all .15s;}
+.ferias-min-btn:hover{border-color:var(--accent);color:var(--txt);}
+.ferias-main{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;}
+.ferias-txt{flex:1;min-width:260px;}
+.ferias-txt h3{font-family:var(--ff-d);font-size:clamp(17px,2.2vw,21px);font-weight:800;line-height:1.25;color:var(--txt);margin-bottom:6px;}
+.ferias-txt p{font-size:13.5px;line-height:1.55;color:var(--txt2);max-width:780px;}
+.ferias-cta-wrap{display:flex;align-items:center;gap:10px;flex-shrink:0;align-self:center;}
+.ferias-cta{padding:11px 18px;font-size:13.5px;font-weight:700;border-radius:12px;box-shadow:0 6px 18px rgba(37,99,201,.35);white-space:nowrap;}
+.ferias-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid var(--glass-b);}
+.ferias-chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;font-size:12px;font-weight:600;border-radius:999px;border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.32);color:var(--txt);cursor:pointer;transition:all .15s;}
+:root[data-theme="light"] .ferias-chip,:root[data-tema="claro"] .ferias-chip{background:rgba(255,255,255,.75);}
+.ferias-chip:hover{border-color:var(--accent);transform:translateY(-1px);background:rgba(56,182,255,.14);}
+.ferias-pill-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 0 14px;}
+.ferias-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid rgba(29,233,182,.45);background:linear-gradient(120deg,rgba(29,233,182,.16),var(--glass));color:var(--txt);font-size:12.5px;font-weight:700;cursor:pointer;backdrop-filter:blur(8px);transition:all .15s;}
+.ferias-pill span{font-weight:500;color:var(--txt2);}
+.ferias-pill:hover{border-color:var(--accent);transform:translateY(-1px);}
+.ferias-pill-exp{background:none;border:none;color:var(--accent);font-size:11.5px;font-weight:600;cursor:pointer;padding:4px 8px;border-radius:8px;}
+.ferias-pill-exp:hover{text-decoration:underline;}
+.modal.ferias-modal{width:min(880px,100%);}
+.ferias-hd-sub{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--txt2);margin-top:2px;}
+.ferias-online-dot{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(74,222,128,.22);flex:none;}
+.ferias-tabs{display:flex;gap:4px;padding:8px 16px 0;border-bottom:1px solid var(--glass-b);overflow-x:auto;scrollbar-width:none;background:rgba(var(--ink-rgb),.25);}
+.ferias-tabs::-webkit-scrollbar{display:none;}
+.ferias-tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--txt2);padding:9px 13px;font-size:12.5px;font-weight:700;cursor:pointer;white-space:nowrap;margin-bottom:-1px;border-radius:8px 8px 0 0;transition:color .15s,background .15s;}
+.ferias-tabs button:hover{color:var(--txt);background:rgba(56,182,255,.08);}
+.ferias-tabs button[aria-selected="true"]{color:var(--accent);border-bottom-color:var(--accent);background:rgba(56,182,255,.1);}
+.ferias-lead{font-size:13.5px;line-height:1.55;color:var(--txt2);margin-bottom:14px;}
+.ferias-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;}
+.ferias-card{padding:14px 16px;border-radius:var(--r2);border:1px solid var(--glass-b);background:var(--glass);display:flex;flex-direction:column;gap:7px;}
+.ferias-card h4{font-family:var(--ff-d);font-size:14.5px;font-weight:700;color:var(--txt);display:flex;align-items:center;gap:7px;line-height:1.3;}
+.ferias-card p,.ferias-card li{font-size:12.8px;line-height:1.55;color:var(--txt2);}
+.ferias-card ul{margin:2px 0 0 16px;display:flex;flex-direction:column;gap:5px;}
+.ferias-card b{color:var(--txt);}
+.ferias-card .ferias-card-ac{margin-top:auto;padding-top:8px;display:flex;gap:8px;flex-wrap:wrap;}
+.ferias-chat-wrap{display:flex;flex-direction:column;gap:12px;}
+.ferias-chat-log{display:flex;flex-direction:column;gap:10px;max-height:340px;overflow-y:auto;padding:12px;border-radius:var(--r2);border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.32);}
+:root[data-theme="light"] .ferias-chat-log,:root[data-tema="claro"] .ferias-chat-log{background:rgba(235,246,252,.7);}
+.ferias-msg{display:flex;gap:10px;align-items:flex-start;}
+.ferias-msg.usr{flex-direction:row-reverse;}
+.ferias-av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;background:rgba(29,233,182,.18);border:1px solid rgba(29,233,182,.4);}
+.ferias-msg.usr .ferias-av{background:rgba(37,99,201,.35);border-color:var(--accent);font-size:12px;font-weight:800;color:#fff;}
+.ferias-bub{max-width:min(640px,88%);padding:10px 14px;border-radius:12px;border:1px solid var(--glass-b);background:var(--glass);font-size:13px;line-height:1.58;color:var(--txt);}
+:root[data-theme="light"] .ferias-bub,:root[data-tema="claro"] .ferias-bub{background:#fff;}
+.ferias-msg.usr .ferias-bub{background:rgba(37,99,201,.55);border-color:var(--blue);color:#fff;}
+:root[data-theme="light"] .ferias-msg.usr .ferias-bub,:root[data-tema="claro"] .ferias-msg.usr .ferias-bub{background:#0077AD;color:#fff;}
+.ferias-bub p+p{margin-top:7px;}
+.ferias-bub ul{margin:5px 0 5px 18px;display:flex;flex-direction:column;gap:4px;}
+.ferias-bub code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;padding:1px 5px;border-radius:5px;background:rgba(56,182,255,.14);color:var(--accent);}
+.ferias-bub-ac{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.ferias-sugs-lbl{font-size:11.5px;font-weight:700;color:var(--txt3);text-transform:uppercase;letter-spacing:.06em;}
+.ferias-sugs{display:flex;flex-wrap:wrap;gap:6px;}
+.ferias-sug{padding:5px 11px;font-size:12px;font-weight:600;border-radius:999px;border:1px solid var(--glass-b);background:var(--glass);color:var(--txt2);cursor:pointer;transition:all .15s;}
+.ferias-sug:hover{border-color:var(--accent);color:var(--txt);background:rgba(56,182,255,.12);}
+.ferias-form{display:flex;gap:8px;align-items:center;}
+.ferias-form input.in{flex:1;padding:10px 13px;font-size:13.5px;}
+textarea.in{font-family:inherit;font-size:13px;padding:10px 12px;border-radius:var(--r);border:1px solid var(--glass-b);background:rgba(var(--ink-rgb),.4);color:var(--txt);width:100%;resize:vertical;min-height:84px;line-height:1.5;}
+:root[data-theme="light"] textarea.in,:root[data-tema="claro"] textarea.in{background:#fff;}
+.ferias-bug-res{margin-top:14px;padding:14px 16px;border-radius:var(--r2);border:1px solid rgba(29,233,182,.45);background:linear-gradient(135deg,rgba(29,233,182,.12),var(--glass));}
+.ferias-cmd{margin:8px 0;padding:10px 12px;border-radius:var(--r);background:rgba(1,8,16,.65);border:1px solid var(--glass-b);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.5;color:var(--teal);white-space:pre-wrap;word-break:break-word;}
+:root[data-theme="light"] .ferias-cmd,:root[data-tema="claro"] .ferias-cmd{background:#0b2436;color:#4ade80;}
+.ferias-bug-item{padding:10px 13px;border-radius:var(--r);border:1px solid var(--glass-b);background:var(--glass);margin-bottom:8px;display:flex;flex-direction:column;gap:4px;font-size:12.5px;}
+@media (max-width:640px){.ferias-cta-wrap{width:100%;}.ferias-cta{width:100%;}.ferias-form{flex-direction:column;align-items:stretch;}}
 </style>
 </head>
 <body>
@@ -455,6 +524,7 @@ input.in[readonly]{opacity:.7;}
       <span class="continuar-ic" aria-hidden="true">↩</span><span class="continuar-t" id="continuar-t"></span>
       <button type="button" class="btn pri sm" id="continuar-ir">Continuar</button><button type="button" class="x" id="continuar-x" aria-label="Dispensar">✕</button>
     </div>
+    <div id="ferias-caio-host"></div>
     <div class="inicio-grid" id="inicio-grid">
       <div class="col-apps">
         <div class="abertos" id="abertos"></div>
@@ -577,6 +647,27 @@ input.in[readonly]{opacity:.7;}
   <div class="modal-hd"><h3 id="aviso-t"></h3><button class="x" type="button" data-fecha="ov-aviso" aria-label="Fechar">✕</button></div>
   <div class="modal-bd" id="aviso-bd"></div>
 </div></div>
+
+<!-- ═══ MODAL: ASSISTENTE FÉRIAS DO CAIO (ATÉ 03/11) ═══ -->
+<div class="ov" id="ferias-ov"><div class="vidro modal ferias-modal" role="dialog" aria-modal="true" aria-labelledby="ferias-t">
+  <div class="modal-hd">
+    <span style="font-size:24px;line-height:1;" aria-hidden="true">🏖️</span>
+    <div style="flex:1;min-width:0;">
+      <h3 id="ferias-t">Assistente Férias do Caio</h3>
+      <div class="ferias-hd-sub"><span class="ferias-online-dot" aria-hidden="true"></span>Cobrindo o ecossistema Oceano de 16/10 a 03/11 · Online 24h</div>
+    </div>
+    <button class="x" type="button" data-fecha="ferias-ov" aria-label="Fechar">✕</button>
+  </div>
+  <div class="ferias-tabs" id="ferias-tabs" role="tablist" aria-label="Seções do Assistente Férias do Caio">
+    <button type="button" role="tab" data-ftab="chat" aria-selected="true">💬 Perguntar (Chat)</button>
+    <button type="button" role="tab" data-ftab="socorro" aria-selected="false">🆘 Socorro Rápido</button>
+    <button type="button" role="tab" data-ftab="status" aria-selected="false">🚀 Onde Paramos (Status)</button>
+    <button type="button" role="tab" data-ftab="proximos" aria-selected="false">🗺️ Próximos Passos</button>
+    <button type="button" role="tab" data-ftab="guia" aria-selected="false">🧭 Guia dos Apps</button>
+    <button type="button" role="tab" data-ftab="bugs" aria-selected="false">🐛 Reportar Bug</button>
+  </div>
+  <div class="modal-bd" id="ferias-bd"></div>
+</div></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="sino-drop" id="sino-drop" role="dialog" aria-label="Notificações"></div>
 
@@ -626,7 +717,7 @@ window.dispatchEvent(new Event('fb-ready'));
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.36 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.37 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1090,7 +1181,7 @@ a=>{
   $('#atalhos-wrap').style.display = at.length ? 'block' : 'none';
   $('#dica-teclas').innerHTML = meus.length ? 'Dica: tecle <span class="kbd">1</span> a <span class="kbd">'+Math.min(meus.length,9)+'</span> pra abrir um produto, ou <span class="kbd">?</span> pra ajuda.' : '';
   $('#btn-contato').href = 'mailto:'+CONTATO.email+'?subject='+encodeURIComponent('Quero o Oceano no meu time')+'&body='+encodeURIComponent('Oi! Vi o Oceano e queria conversar sobre usar no meu time.');
-  renderAbertos(); renderAbas(); renderVersoes();
+  feriasRenderBanner(); renderAbertos(); renderAbas(); renderVersoes();
   $('#rodape-versao').textContent = VERSION+(standalone() ? ' · aplicativo' : '');
 }
 let prodSel = 'kanban';
@@ -1362,6 +1453,626 @@ $('#btn-ajuda').addEventListener('click', ()=>abrirAjuda());
 $('#btn-eu').addEventListener('click', ()=>abrirPerfil());
 $('#lk-add').addEventListener('click', ()=>abrirPerfil('links'));
 
+// ── 🏖️ Assistente Férias do Caio (16/10 a 03/11) + Gerador /monitorarbugs ──
+const FERIAS_FIM = '2026-11-03';
+const FERIAS_MIN_LS = 'oceano_ferias_min_dia';
+function feriasHoje(){ try{ return new Date().toLocaleDateString('sv-SE'); }catch(e){ return '2026-10-16'; } }
+function feriasAtivo(){
+  try{
+    if(location.search.includes('ferias=1')) return true;
+    return feriasHoje() <= FERIAS_FIM;
+  }catch(e){ return true; }
+}
+window.feriasAtivo = feriasAtivo;
+
+function feriasMinHoje(){ try{ return localStorage.getItem(FERIAS_MIN_LS) === feriasHoje(); }catch(e){ return false; } }
+function feriasSetMin(min){ try{ if(min) localStorage.setItem(FERIAS_MIN_LS, feriasHoje()); else localStorage.removeItem(FERIAS_MIN_LS); }catch(e){} feriasRenderBanner(); }
+
+function feriasRenderBanner(){
+  const hostEl = $('#ferias-caio-host'); if(!hostEl) return;
+  if(!feriasAtivo()){ hostEl.style.display = 'none'; hostEl.innerHTML = ''; return; }
+  hostEl.style.display = 'block';
+  if(feriasMinHoje()){
+    hostEl.innerHTML = '<div class="ferias-pill-bar">'
+      + '<button type="button" class="ferias-pill" data-ferias-open="chat" title="Abrir o Assistente Férias do Caio">🏖️ Férias do Caio (até 03/11) · <span>Perguntar ao Assistente 24h</span></button>'
+      + '<button type="button" class="ferias-pill-exp" data-ferias-expand="1">▾ Expandir plantão</button>'
+      + '</div>';
+    return;
+  }
+  hostEl.innerHTML = '<section class="ferias-banner" aria-label="Plantão de Férias do Caio">'
+    + '<div class="ferias-top">'
+    +   '<span class="ferias-badge">🏖️ PLANTÃO DE FÉRIAS · 16/10 A 03/11</span>'
+    +   '<button type="button" class="ferias-min-btn" data-ferias-min="1" title="Recolher este card hoje (fica um botão discreto no topo)">— Minimizar hoje</button>'
+    + '</div>'
+    + '<div class="ferias-main">'
+    +   '<div class="ferias-txt">'
+    +     '<h3>Saí de férias e deixei um substituto 🤖 (que não toma café!)</h3>'
+    +     '<p>Precisa saber o status de uma entrega, onde parou um projeto, como fazer algo no Maré/Radar/Escala/Metas ou quem tem permissão pra te ajudar até 03/11? Pergunte ao Assistente Férias do Caio!</p>'
+    +   '</div>'
+    +   '<div class="ferias-cta-wrap">'
+    +     '<button type="button" class="btn pri ferias-cta" data-ferias-open="chat">💬 Perguntar ao Assistente</button>'
+    +   '</div>'
+    + '</div>'
+    + '<div class="ferias-chips">'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="socorro">🆘 Socorro Rápido (Quem faz sem o Caio)</button>'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="status">🚀 Status &amp; Últimas Entregas</button>'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="guia">🧭 Como usar (Maré, Radar, Escala, Metas)</button>'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="proximos">🗺️ Próximos Passos (Pós-03/11)</button>'
+    +   '<button type="button" class="ferias-chip" data-ferias-open="bugs">🐛 Reportar Bug (/monitorarbugs)</button>'
+    + '</div>'
+    + '</section>';
+}
+
+const FERIAS_SUGS = [
+  'Quem aprova acesso ou muda papel?',
+  'Como promovo Próximo Passo pra Marco?',
+  'Como lanço ou edito Meta no Oceano?',
+  'Como assumo a Apresentação ao Vivo do Radar?',
+  'Onde configuro o Data Studio no Radar?',
+  'Card travado ("Em edição por..."), o que faço?',
+  'O que saiu de novo antes das férias?',
+  'Para que serve a nova submarca Geral?',
+  'Como usar filtros e Gantt na Escala?',
+  'Achei um bug, como gero /monitorarbugs?'
+];
+
+const FERIAS_KB = [
+  {
+    id:'acessos',
+    keys:['acesso','permissao','permissoes','papel','papeis','aprovar','aprova','usuario','usuarios','squad','equipe','entrar','convidado','externo','po','organizador','adm','liberacao','liberar'],
+    t:'🔑 Acessos e Permissões (Quem resolve sem o Caio)',
+    r:'<p>Boa notícia: <b>você não precisa esperar o Caio voltar em 03/11</b> para liberar acesso ou mudar papel de alguém!</p>'
+      + '<ul>'
+      + '<li><b>No Maré Digital:</b> qualquer <b>PO, Organizador ou ADM</b> da squad aprova pedidos pendentes e altera papéis em <code>⚙ Config → Equipe</code>.</li>'
+      + '<li><b>No Painel ADM:</b> ADMs e gestores gerenciam todas as squads, papéis e visualizadores externos na aba <code>Usuários</code>.</li>'
+      + '<li><b>Regra de entrada:</b> quem tem conta Google <code>@ciahering.com.br</code> já cria o cadastro básico sozinho ao logar no Oceano.</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Maré Digital',app:'kanban'},{label:'Abrir Painel ADM',app:'painel'},{label:'Ver Socorro Rápido',ftab:'socorro'}]
+  },
+  {
+    id:'okr_promocao',
+    keys:['proximo passo','proximos passos','progresso','marco','marcos','promover','promovo','promocao','concluir','okr','objetivo','check','vira marco','virar marco'],
+    t:'🎯 Fluxo Próximo Passo → Progresso → Marco no Radar (v2.89)',
+    r:'<p>O fluxo completo de evolução semanal dos Objetivos no <b>Radar OKR (<code>v2.89</code>)</b> está redondinho:</p>'
+      + '<ul>'
+      + '<li><b>1. Próximo Passo → Progresso (<code>✅</code>):</b> ao concluir um Próximo Passo, clique em <code>✅</code> — ele sobe automaticamente para <b>Progresso</b> e já é removido da lista de Próximos Passos.</li>'
+      + '<li><b>2. Progresso → Marco (<code>🏁</code>):</b> quando uma entrega de Progresso consolida um resultado importante, clique em <code>🏁</code> para promovê-la a <b>Marco do Objetivo</b> (com remoção automática de Progresso).</li>'
+      + '<li><b>💬 Pelo Agente Ágil do Radar:</b> você também pode pedir direto na conversa com o Agente Ágil do Radar para promover itens!</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Radar OKR',app:'okr'},{label:'Ver Status das Entregas',ftab:'status'}]
+  },
+  {
+    id:'metas',
+    keys:['meta','metas','peixe','mar ta pra peixe','realizado','curva','acumulado','por dia','expandir','popup','comemorativo','mostrar no oceano','meta global'],
+    t:'🐟 Metas ("O mar tá pra peixe") & Meta Global no Oceano',
+    r:'<p>Qualquer <b>ADM ou PO</b> consegue gerir as metas de ponta a ponta durante as férias:</p>'
+      + '<ul>'
+      + '<li><b>Onde cadastrar e lançar realizado diário:</b> em <code>⚙ Config → 🐟 Metas</code> no Maré Digital ou em <code>📊 Dados → 🐟 Metas</code> no Painel ADM (além dos responsáveis designados na própria meta).</li>'
+      + '<li><b>🌊 Mostrar no Oceano:</b> marque essa opção na meta global para exibi-la aqui na Home do Oceano em tempo real.</li>'
+      + '<li><b>Novidades da <code>v14</code>:</b> gráfico alternável entre <b>Acumulado</b> e <b>Por dia</b>, botão <b>⛶ Expandir</b> em tela cheia com tabela dia a dia (<i>Realizado, Esperado e ∆</i>) e textos personalizáveis para os popups comemorativos de <b>20% a 100%</b>!</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Maré Digital',app:'kanban'},{label:'Abrir Painel ADM',app:'painel'}]
+  },
+  {
+    id:'live_radar',
+    keys:['apresentacao','ao vivo','live','slide','slides','assumir','puxar sala','laser','caneta','apresentador','controle','reuniao okr','apresentar'],
+    t:'🎙️ Apresentação ao Vivo do Radar (Moderação ADM)',
+    r:'<p>Vai rolar ritual de OKR com a <b>Apresentação ao Vivo</b>? Qualquer <b>ADM</b> tem superpoderes permanentes na sala:</p>'
+      + '<ul>'
+      + '<li><b>👑 Assumir (sem senha):</b> qualquer ADM assume o controle da apresentação a qualquer momento, mesmo se quem abriu a sala caiu ou fechou a aba.</li>'
+      + '<li><b>📍 Puxar sala:</b> sincroniza imediatamente a tela de todo mundo para o slide atual e permite passar o controle para qualquer apresentador.</li>'
+      + '<li><b>Novidade visual:</b> títulos longos agora têm <i>auto-fit</i> inteligente e limites de caracteres calibrados para não estourar os slides.</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Radar OKR',app:'okr'},{label:'Ver Socorro Rápido',ftab:'socorro'}]
+  },
+  {
+    id:'datastudio',
+    keys:['data studio','datastudio','looker','relatorio','relatorios','dashboard','bi','painel de dados','aba dados'],
+    t:'📈 Aba Data Studio (Looker Studio) no Radar',
+    r:'<p>A nova aba <b>📈 Data Studio</b> dentro de <code>📊 Dados → 📈 Data Studio</code> no Radar OKR centraliza os painéis do Looker Studio (visão Digital e por Objetivo).</p>'
+      + '<p><b>Quem pode configurar ou atualizar os links sem o Caio?</b> Qualquer <b>ADM, PO, Organizador ou Gestor de OKR</b> pode editar os links diretamente na interface!</p>',
+    ac:[{label:'Abrir Radar OKR',app:'okr'}]
+  },
+  {
+    id:'card_travado',
+    keys:['travado','bloqueado','em edicao','pedir o card','pedir card','trava','lock','preso','alguem editando','objetivo travado'],
+    t:'🔒 Card ou Objetivo travado ("Em edição por...")',
+    r:'<p>Alguém esqueceu um card aberto e saiu pra tomar café? Resolva em segundos:</p>'
+      + '<ul>'
+      + '<li><b>🙋 Pedir o card:</b> clique no botão <b>🙋 Pedir o card</b> dentro do próprio card — isso dispara um alerta sonoro e notificação imediata pra pessoa liberar.</li>'
+      + '<li><b>⏱️ Desbloqueio automático:</b> se a pessoa ficar inativa, a trava cai sozinha automaticamente após alguns minutos.</li>'
+      + '<li><b>No Radar OKR:</b> a trava de edição de Objetivo também expira sozinha por inatividade.</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Maré Digital',app:'kanban'},{label:'Ver Socorro Rápido',ftab:'socorro'}]
+  },
+  {
+    id:'moderacao_radar',
+    keys:['comentario','comentarios','anotacao','anotacoes','calendario','excluir','apagar','editar','moderacao','moderar','ata'],
+    t:'💬 Editar/Excluir Comentários e Anotações no Radar',
+    r:'<p>Errou na digitação de uma ata ou comentário no Radar? Sem crise:</p>'
+      + '<ul>'
+      + '<li><b>O próprio autor</b> pode editar (<code>✏️</code>) ou excluir (<code>🗑️</code>) seus comentários de Marco e anotações de reunião/calendário (inclusive navegando para <b>qualquer data anterior</b>!).</li>'
+      + '<li><b>Qualquer ADM</b> também pode moderar (editar ou remover) qualquer comentário ou anotação.</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Radar · Anotações',url:P('okr')+'?okr=notas'}]
+  },
+  {
+    id:'submarca_geral',
+    keys:['submarca','geral','tag_sm_geral','intake','solicitar','formulario','pedido','transversal','11a','marcas'],
+    t:'🏷️ Nova 11ª Submarca Fixa "Geral" & Intake',
+    r:'<p>No <b>Maré Digital (<code>v8.30.865</code>)</b> e no <b>Formulário Externo de Intake</b>, agora temos a 11ª submarca fixa <b><code>Geral</code></b> (<code>tag_sm_geral</code>)!</p>'
+      + '<p>Use <b>Geral</b> para demandas transversais que atendem todas as marcas ou o Digital como um todo. Ela funciona no board, nos filtros, nos Supercards/Ficha Técnica, no formulário público (<code>solicitar.html</code>) e nas ferramentas do Agente Ágil.</p>',
+    ac:[{label:'Abrir Maré Digital',app:'kanban'},{label:'Abrir Formulário Intake',url:'solicitar.html',ext:true}]
+  },
+  {
+    id:'escala',
+    keys:['escala','gantt','pausa','pausas','cafe','jpg','exportar','filtro','subtime','plantao','folga','horarios'],
+    t:'📅 Escala (v1.10): Filtros, Visão Gantt e Pausas',
+    r:'<p>A <b>Escala (<code>v1.10</code>)</b> recebeu um pacote completo antes das férias:</p>'
+      + '<ul>'
+      + '<li><b>🔎 Filtros:</b> filtre rapidamente por squad ou subtime.</li>'
+      + '<li><b>📊 Visão Gantt diária:</b> visualize a cobertura hora a hora e exporte a escala do dia em <b>imagem JPG</b> com 1 clique.</li>'
+      + '<li><b>☕ Registro de pausas:</b> marque intervalos/almoço/café na linha do dia.</li>'
+      + '<li><b>👀 Visitantes:</b> quem visita outra squad entra automaticamente em modo somente-leitura para evitar cliques acidentais.</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Escala',url:P('escala'),ext:true}]
+  },
+  {
+    id:'status_servicos',
+    keys:['caiu','fora do ar','vtex','shopify','cloudflare','github','openai','claude','firebase','incidente','monitor','status dos servicos','instabilidade'],
+    t:'🚨 Caiu alguma coisa? Monitoramento Automático 24h',
+    r:'<p>O Oceano vigia sozinho os serviços críticos a cada 5 minutos:</p>'
+      + '<ul>'
+      + '<li><b>Selinho no topo do Oceano e Maré:</b> monitora <b>VTEX, Shopify, Cloudflare, GitHub, OpenAI e Claude</b> e avisa com alerta vermelho + comunicado automático se houver incidente oficial.</li>'
+      + '<li><b>Aba <code>🔋 Status</code> no Painel ADM (<code>v5.75</code>):</b> agora conta também com monitores dedicados do <b>GitHub Pages</b> e dos <b>6 serviços do Firebase</b> (Auth, Realtime DB, Functions, Hosting, Storage e FCM).</li>'
+      + '</ul>',
+    ac:[{label:'Abrir Painel ADM',app:'painel'}]
+  },
+  {
+    id:'entregas_outubro',
+    keys:['novo','novidade','novidades','entrega','entregas','onde paramos','outubro','versao','changelog','atualizacao','antes das ferias','resumo'],
+    t:'🚀 Resumo das Últimas Entregas (Outubro/2026)',
+    r:'<p>Antes de colocar a bermuda, deixamos tudo isto no ar:</p>'
+      + '<ul>'
+      + '<li><b>🎯 Radar OKR (<code>v2.89</code>):</b> promoção <i>Próximo Passo → Progresso → Marco</i>, aba <b>📈 Data Studio</b>, edição/exclusão de anotações e comentários, e moderação ADM na Sala ao Vivo.</li>'
+      + '<li><b>🌊 Maré Digital (<code>v8.30.865</code>):</b> 11ª submarca fixa <b>Geral</b>, Modo Insistente (<code>🫨</code>) em comunicados urgentes e Central de Dados (últimos 15 dias).</li>'
+      + '<li><b>🐟 Metas (<code>v14</code>) &amp; Oceano (<code>v1.36</code>):</b> Meta Global na home do Oceano, gráfico Acumulado/Por dia, tela cheia <code>⛶ Expandir</code> e popups personalizáveis (20%–100%).</li>'
+      + '<li><b>📅 Escala (<code>v1.10</code>):</b> filtros por subtime, visão Gantt com JPG e pausas <code>☕</code>.</li>'
+      + '<li><b>🛠️ Painel ADM (<code>v5.75</code>):</b> monitores de GitHub Pages e Firebase na aba <code>🔋 Status</code>.</li>'
+      + '</ul>',
+    ac:[{label:'Ver aba Onde Paramos completa',ftab:'status'},{label:'Ver Próximos Passos (Pós-03/11)',ftab:'proximos'}]
+  },
+  {
+    id:'ferias_volta',
+    keys:['ferias','caio','volta','quando volta','retorno','03/11','novembro','roadmap','futuro','planejado','pos ferias'],
+    t:'🏖️ Período de Férias do Caio & Volta em 03/11',
+    r:'<p>O Caio está em período de férias de <b>16/10 a 03/11/2026</b>. Durante esse período, POs, Organizadores e ADMs têm autonomia total pela interface do Maré, Radar e Painel!</p>'
+      + '<p><b>Na volta (a partir de 03/11):</b> atacaremos o relatório executivo em HTML do Agente Ágil, análises proativas de sprint para POs, métricas históricas de produção criativa e o acompanhamento de Q4 / Black Friday no Radar.</p>',
+    ac:[{label:'Ver Próximos Passos (Pós-03/11)',ftab:'proximos'},{label:'Socorro Rápido',ftab:'socorro'}]
+  },
+  {
+    id:'monitorarbugs',
+    keys:['bug','bugs','erro','erros','travou','quebrou','nao funciona','problema','falha','defeito','monitorarbugs','antigravity','reportar'],
+    t:'🐛 Achou um Bug? Gere um /monitorarbugs na hora!',
+    r:'<p>Mesmo de férias, deixei uma ponte direta com o agente <b>Antigravity</b>! Na aba <b>🐛 Reportar Bug</b> aqui deste modal você:</p>'
+      + '<ul>'
+      + '<li>Registra o problema direto na fila oficial do Firebase (<code>kanban/feedback</code>), visível no Painel ADM e para o Antigravity.</li>'
+      + '<li>Gera automaticamente o comando estruturado <code>/monitorarbugs</code> apontando para o arquivo exato para diagnóstico imediato.</li>'
+      + '</ul>',
+    ac:[{label:'🐛 Abrir aba Reportar Bug (/monitorarbugs)',ftab:'bugs'}]
+  }
+];
+
+function feriasNorm(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
+
+let feriasAbaAtual = 'chat';
+let feriasBugPrefill = '';
+let feriasUltimoCmd = '';
+let feriasBugsLista = [];
+let feriasChatHist = [
+  {
+    quem:'bot',
+    html:'<p>Alô, tripulação! 🏖️🤖 Eu sou o <b>Assistente Férias do Caio</b> — fiquei de plantão 24h no Oceano de <b>16/10 a 03/11</b> (e não tomo café!).</p>'
+      + '<p>Pode me perguntar sobre <b>acessos, permissões, Radar OKR, Maré Digital, Metas, Escala, Data Studio, Apresentação ao Vivo, cards travados</b> ou, se achar algum comportamento estranho, <b>gerar um <code>/monitorarbugs</code></b> direto pro Antigravity!</p>'
+  }
+];
+
+function feriasResponder(perguntaRaw){
+  const qn = feriasNorm(perguntaRaw);
+  const palavras = qn.split(/[^a-z0-9]+/).filter(w=>w.length>=2);
+  const pareceBug = /\b(bug|bugs|erro|erros|travou|nao funciona|quebrou|sumiu|problema|falha|defeito|monitorarbugs)\b/.test(qn);
+  // Pontua cada item da FERIAS_KB
+  const scored = FERIAS_KB.map(it=>{
+    let pts = 0;
+    it.keys.forEach(k=>{
+      const kn = feriasNorm(k);
+      if(qn.includes(kn)) pts += (kn.includes(' ') ? 5 : 3);
+      else palavras.forEach(w=>{ if(w.length>=3 && kn.includes(w)) pts += 1; });
+    });
+    return {it, pts};
+  }).filter(x=>x.pts>0).sort((a,b)=>b.pts - a.pts);
+
+  // Busca complementar no FAQ do Oceano
+  const faqMatches = FAQ.filter(f=>{
+    const fn = feriasNorm(f.q + ' ' + f.a.replace(/<[^>]+>/g,' '));
+    return palavras.some(w=>w.length>=4 && fn.includes(w));
+  }).slice(0,1);
+
+  let html = '';
+  let acoes = [];
+  if(scored.length){
+    const top = scored.slice(0,2);
+    html = top.map(x=>'<p><b>'+x.it.t+'</b></p>'+x.it.r).join('<hr style="border:0;border-top:1px solid var(--glass-b);margin:10px 0;">');
+    top.forEach(x=>(x.it.ac||[]).forEach(a=>{ if(!acoes.some(z=>z.label===a.label)) acoes.push(a); }));
+  } else if(faqMatches.length){
+    const f = faqMatches[0];
+    html = '<p><b>❓ Da Ajuda do Oceano — '+esc(f.q)+'</b></p>'+f.a;
+    acoes.push({label:'Ver Socorro Rápido',ftab:'socorro'},{label:'Ver Guia dos Apps',ftab:'guia'});
+  } else {
+    html = '<p>Hmm, não achei essa palavra exata no meu caderno de praia 🏖️, mas quase tudo no Oceano pode ser resolvido na hora sem esperar o Caio voltar em <b>03/11</b>:</p>'
+      + '<ul>'
+      + '<li><b>Acessos e papéis:</b> POs, Organizadores e ADMs aprovam em <code>⚙ Config → Equipe</code> (Maré) ou <code>Usuários</code> (Painel).</li>'
+      + '<li><b>Metas, Radar OKR, Data Studio e Sala ao Vivo:</b> POs e ADMs têm permissão completa na própria tela.</li>'
+      + '<li><b>Achou um erro/bug?</b> Envie agora para a fila do <code>/monitorarbugs</code> na aba <b>🐛 Reportar Bug</b>!</li>'
+      + '</ul>';
+    acoes.push({label:'🆘 Socorro Rápido',ftab:'socorro'},{label:'🚀 Onde Paramos',ftab:'status'},{label:'🧭 Guia dos Apps',ftab:'guia'});
+  }
+
+  let acHtml = acoes.map(a=>{
+    if(a.ftab) return '<button type="button" class="btn sm" data-ftab-go="'+esc(a.ftab)+'">'+esc(a.label)+'</button>';
+    if(a.app) return '<button type="button" class="btn sm" data-ferias-app="'+esc(a.app)+'">'+esc(a.label)+'</button>';
+    if(a.url) return '<button type="button" class="btn sm" data-ferias-url="'+esc(a.url)+'" data-ext="'+(a.ext?'1':'0')+'">'+esc(a.label)+'</button>';
+    return '';
+  }).join('');
+
+  if(pareceBug){
+    acHtml = '<button type="button" class="btn pri sm" data-ferias-bug-prefill="'+esc(perguntaRaw)+'">🐛 Enviar este relato para a fila do /monitorarbugs (Antigravity)</button>' + acHtml;
+  }
+
+  return html + (acHtml ? '<div class="ferias-bub-ac">'+acHtml+'</div>' : '');
+}
+
+function feriasHtmlChat(){
+  const msgs = feriasChatHist.map(m=>{
+    if(m.quem==='usr'){
+      return '<div class="ferias-msg usr"><span class="ferias-av" aria-hidden="true">'+esc(iniciais())+'</span><div class="ferias-bub"><p>'+esc(m.texto)+'</p></div></div>';
+    }
+    return '<div class="ferias-msg bot"><span class="ferias-av" aria-hidden="true">🤖</span><div class="ferias-bub">'+m.html+'</div></div>';
+  }).join('');
+  return '<div class="ferias-chat-wrap">'
+    + '<div class="ferias-chat-log" id="ferias-chat-log" role="log" aria-live="polite">'+msgs+'</div>'
+    + '<div class="ferias-sugs-lbl">💡 Perguntas rápidas (clique para perguntar):</div>'
+    + '<div class="ferias-sugs">'
+    + FERIAS_SUGS.map(s=>'<button type="button" class="ferias-sug" data-fask="'+esc(s)+'">'+esc(s)+'</button>').join('')
+    + '</div>'
+    + '<form class="ferias-form" id="ferias-chat-form">'
+    +   '<input type="text" class="in" id="ferias-chat-in" maxlength="320" placeholder="Digite sua dúvida ou descreva um bug (ex.: quem aprova acesso, próximo passo pra marco, meta, data studio)…" aria-label="Sua pergunta para o Assistente Férias do Caio">'
+    +   '<button type="submit" class="btn pri">Perguntar ↵</button>'
+    + '</form>'
+    + '</div>';
+}
+
+function feriasHtmlSocorro(){
+  const cards = [
+    {ic:'🔑', t:'Acessos e Permissões de Squad', p:'<b>POs, Organizadores e ADMs</b> aprovam solicitações e alteram papéis em <code>⚙ Config → Equipe</code> (no Maré) ou na aba <code>Usuários</code> (no Painel ADM).', ac:[{l:'Abrir Maré',app:'kanban'},{l:'Abrir Painel',app:'painel'}]},
+    {ic:'🐟', t:'Metas ("O mar tá pra peixe")', p:'Qualquer <b>ADM ou PO</b> cadastra metas mensais, edita textos dos popups (20%–100%), ativa <code>🌊 Mostrar no Oceano</code> e lança o realizado diário (<code>⚙ Config → 🐟 Metas</code> no Maré ou no Painel).', ac:[{l:'Abrir Maré',app:'kanban'}]},
+    {ic:'🎙️', t:'Apresentação ao Vivo do Radar', p:'Qualquer <b>ADM</b> tem controle permanente na sala ao vivo (<code>👑 Assumir</code> sem senha, <code>📍 Puxar sala</code> para sincronizar o slide de todo mundo e passar controle).', ac:[{l:'Abrir Radar OKR',app:'okr'}]},
+    {ic:'📈', t:'Aba Data Studio no Radar', p:'<b>ADM, PO, Organizador e Gestor de OKR</b> podem configurar e atualizar os links de relatórios do Looker Studio em <code>📊 Dados → 📈 Data Studio</code>.', ac:[{l:'Abrir Radar OKR',app:'okr'}]},
+    {ic:'🔒', t:'Card travado ("Em edição por...")', p:'Clique em <b>🙋 Pedir o card</b> dentro do card (manda alerta sonoro e notificação na hora pra pessoa liberar) ou aguarde o desbloqueio automático de inatividade.', ac:[{l:'Abrir Maré',app:'kanban'}]},
+    {ic:'💬', t:'Moderação de Comentários e Anotações', p:'O próprio autor edita (<code>✏️</code>) ou exclui (<code>🗑️</code>) seus comentários de Marco e anotações de reunião/calendário; <b>ADMs</b> podem moderar qualquer item.', ac:[{l:'Anotações do Radar',url:P('okr')+'?okr=notas'}]},
+    {ic:'🚨', t:'Caiu alguma coisa? (Monitor 24h)', p:'O selo no topo do Oceano e a aba <code>🔋 Status</code> do Painel ADM monitoram <b>VTEX, Shopify, Cloudflare, GitHub, OpenAI, Claude e Firebase</b> a cada 5 min e disparam comunicados sozinhos.', ac:[{l:'Abrir Painel ADM',app:'painel'}]},
+    {ic:'🐛', t:'Surgiu um Bug? (/monitorarbugs)', p:'Registre na aba <b>🐛 Reportar Bug</b> para gravar na fila do Firebase (<code>kanban/feedback</code>) e gerar o comando pronto pro agente <b>Antigravity</b>.', ac:[{l:'Reportar Bug',ftab:'bugs'}]}
+  ];
+  return '<p class="ferias-lead"><b>Não precisa esperar o Caio voltar em 03/11 para resolver!</b> Veja quem tem permissão e onde fica cada ação no dia a dia:</p>'
+    + '<div class="ferias-grid">'
+    + cards.map(c=>'<article class="ferias-card"><h4><span>'+c.ic+'</span>'+esc(c.t)+'</h4><p>'+c.p+'</p><div class="ferias-card-ac">'
+      + c.ac.map(a=>a.app ? '<button type="button" class="btn sm" data-ferias-app="'+esc(a.app)+'">'+esc(a.l)+'</button>' : a.ftab ? '<button type="button" class="btn pri sm" data-ftab-go="'+esc(a.ftab)+'">'+esc(a.l)+'</button>' : '<button type="button" class="btn sm" data-ferias-url="'+esc(a.url)+'">'+esc(a.l)+'</button>').join('')
+      + '</div></article>').join('')
+    + '</div>';
+}
+
+function feriasHtmlStatus(){
+  return '<p class="ferias-lead">Resumo executivo de tudo que foi entregue agora em <b>Outubro/2026</b> antes das férias e como está cada frente:</p>'
+    + '<div class="ferias-grid" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr));">'
+    + '<article class="ferias-card"><h4>🎯 Radar OKR (<code>v2.89</code>)</h4><ul>'
+    +   '<li>Fluxo completo de promoção <b>Próximo Passo (<code>✅</code>) → Progresso (<code>🏁</code>) → Marco</b> (com remoção automática ao concluir/promover, na interface e via conversa com o Agente Ágil do Radar).</li>'
+    +   '<li>Nova aba <b>📈 Data Studio</b> (Looker Studio por objetivo e Digital).</li>'
+    +   '<li>Edição e exclusão (<code>✏️</code>/<code>🗑️</code>) de anotações em qualquer data e no Calendário, além de comentários de Marcos.</li>'
+    +   '<li>Sala ao vivo com moderação ADM (<code>👑 Assumir</code> / <code>📍 Puxar sala</code>), <i>auto-fit</i> de títulos longos e limites de caracteres calibrados para os slides.</li>'
+    + '</ul><div class="ferias-card-ac"><button type="button" class="btn sm" data-ferias-app="okr">Abrir Radar OKR</button></div></article>'
+    + '<article class="ferias-card"><h4>🌊 Maré Digital (<code>v8.30.865</code>) &amp; Intake</h4><ul>'
+    +   '<li>Nova 11ª submarca fixa <b><code>Geral</code></b> (<code>tag_sm_geral</code>) para demandas transversais a todas as marcas (Kanban, Intake e Agente Ágil).</li>'
+    +   '<li>Comunicados urgentes com <b>Modo Insistente (<code>🫨</code>)</b> e notificações push mesmo com a aba em foco.</li>'
+    +   '<li>Central de Dados com janela dos últimos 15 dias otimizada.</li>'
+    + '</ul><div class="ferias-card-ac"><button type="button" class="btn sm" data-ferias-app="kanban">Abrir Maré Digital</button></div></article>'
+    + '<article class="ferias-card"><h4>🐟 Metas (<code>mare-metas v14</code>) &amp; Oceano (<code>v1.36</code>)</h4><ul>'
+    +   '<li>Card da <b>Meta Global do Digital</b> na home do Oceano (<code>🌊 Mostrar no Oceano</code>).</li>'
+    +   '<li>Gráfico alternável entre <b>Acumulado</b> e <b>Por dia</b>.</li>'
+    +   '<li>Modal <b>⛶ Expandir</b> em tela cheia com tabela dia a dia (<i>Realizado, Esperado e ∆</i>).</li>'
+    +   '<li>Personalização dos popups comemorativos de 20% a 100%.</li>'
+    + '</ul></article>'
+    + '<article class="ferias-card"><h4>📅 Escala (<code>v1.10</code>) &amp; 🛠️ Painel ADM (<code>v5.75</code>)</h4><ul>'
+    +   '<li><b>Escala:</b> filtro por squad/subtime (<code>🔎 Filtros</code>), <b>📊 Visão Gantt</b> diária com exportação em JPG, registro de <b>☕ pausas</b> e modo somente-leitura automático para visitantes.</li>'
+    +   '<li><b>Painel ADM &amp; Agente Ágil:</b> monitores automáticos do <b>GitHub Pages</b> e dos <b>6 serviços do Firebase</b> na aba <code>🔋 Status</code>; base de conhecimento do Agente Ágil 100% sincronizada.</li>'
+    + '</ul><div class="ferias-card-ac"><button type="button" class="btn sm" data-ferias-url="'+esc(P('escala'))+'" data-ext="1">Abrir Escala</button><button type="button" class="btn sm" data-ferias-app="painel">Abrir Painel ADM</button></div></article>'
+    + '</div>';
+}
+
+function feriasHtmlProximos(){
+  return '<p class="ferias-lead">O que está planejado no roadmap para a volta das férias (a partir de <b>03/11/2026</b>):</p>'
+    + '<div class="ferias-grid">'
+    + '<article class="ferias-card"><h4>🤖 Agente Ágil</h4><p>Geração de <b>relatório executivo automático em HTML</b>, evolução das análises proativas de sprint para POs e expansão de ferramentas no Radar e no Maré.</p></article>'
+    + '<article class="ferias-card"><h4>📊 Maré Digital &amp; Dados</h4><p>Evolução dos <b>painéis históricos de captação</b>, métricas de produção criativa (tempo médio por canal/formato) e melhorias contínuas de performance mobile.</p></article>'
+    + '<article class="ferias-card"><h4>🎯 Radar OKR</h4><p>Acompanhamento intensivo das metas de <b>Q4 / Black Friday</b>, consolidação dos painéis do Data Studio por diretoria e evolução dos rituais quinzenais.</p></article>'
+    + '</div>'
+    + '<div class="ferias-card" style="margin-top:12px;border-color:rgba(56,182,255,.35);">'
+    +   '<h4>💡 Teve uma ideia ou sugestão para a volta?</h4>'
+    +   '<p>Anote no card <b>"Melhorias Maré Digital"</b> no board da sua squad ou registre um relato na aba <b>🐛 Reportar Bug</b> aqui do Assistente para já ficar na fila priorizada do dia 03/11!</p>'
+    + '</div>';
+}
+
+function feriasHtmlGuia(){
+  const guias = [
+    {ic:'🌊', t:'Maré Digital', p:'O quadro ágil das squads: colunas, cards, Supercards/Ficha Técnica, checklist, automações Butler, métricas de fluxo e o <code>@Agente</code> nos comentários.', ac:{l:'Abrir Maré Digital',app:'kanban'}},
+    {ic:'🎯', t:'Radar OKR', p:'Objetivos e Marcos vivos, curva de atingimento, calendário de reuniões com pauta/atas, Data Studio, Agente Ágil do Radar e Apresentação ao Vivo em slides.', ac:{l:'Abrir Radar OKR',app:'okr'}},
+    {ic:'📅', t:'Escala', p:'Organização diária e semanal dos horários da squad, com visão Gantt exportável em JPG, registro de pausas (<code>☕</code>) e filtros por subtime.', ac:{l:'Abrir Escala',url:P('escala'),ext:true}},
+    {ic:'🐟', t:'Metas ("O mar tá pra peixe")', p:'Acompanhamento em tempo real das metas mensais das squads e da Meta Global do Digital aqui no Oceano, com gráfico Acumulado/Por dia e tabela completa.', ac:{l:'Abrir Maré (Metas)',app:'kanban'}},
+    {ic:'📥', t:'Intake / Formulário Externo', p:'Porta de entrada para pedidos de outras áreas virarem cards ou Supercards padronizados (com as 11 submarcas, incluindo <code>Geral</code>), aprovados pelo PO.', ac:{l:'Abrir Formulário Intake',url:'solicitar.html',ext:true}},
+    {ic:'⚓', t:'A Bordo (Onboarding)', p:'Boas-vindas interativas para quem chega no time Digital Hering, com os primeiros passos e conexão direta com o board.', ac:{l:'Abrir A Bordo',app:'onboarding'}},
+    {ic:'🛠️', t:'Painel ADM', p:'Visão consolidada multi-squad para liderança, POs e ADMs: gestão de pessoas/papéis, comunicados do Mural, Central de Notificações e Status 24h.', ac:{l:'Abrir Painel ADM',app:'painel'}}
+  ];
+  return '<p class="ferias-lead">Entenda em <b>1 minuto</b> cada produto do ecossistema Oceano e abra direto:</p>'
+    + '<div class="ferias-grid">'
+    + guias.map(g=>'<article class="ferias-card"><h4><span>'+g.ic+'</span>'+esc(g.t)+'</h4><p>'+g.p+'</p><div class="ferias-card-ac">'
+      + (g.ac.app ? '<button type="button" class="btn pri sm" data-ferias-app="'+esc(g.ac.app)+'">'+esc(g.ac.l)+'</button>' : '<button type="button" class="btn pri sm" data-ferias-url="'+esc(g.ac.url)+'" data-ext="'+(g.ac.ext?'1':'0')+'">'+esc(g.ac.l)+'</button>')
+      + '</div></article>').join('')
+    + '</div>';
+}
+
+const FERIAS_BUG_DICAS = {
+  'kanban-dev.html': 'Checar console do navegador, sincronização incremental (_applyCardsSync) e permissões de squad em squads_roles.',
+  'okr-dev.html': 'Checar trava de edição do objetivo, promoção Próximo Passo → Progresso → Marco e aba Dados / Data Studio.',
+  'okr-apresentacao.slide.html': 'Checar estado em kanban/okr/apresentacao_live e controles de moderação ADM (👑 Assumir / 📍 Puxar sala).',
+  'mare-metas-dev.js': 'Checar metas marcadas com oceano:true, cálculo da curva diária e permissão de atualização.',
+  'escala-dev.html': 'Checar filtros de subtime, modo visitante (somente-leitura) e renderização da visão Gantt.',
+  'intake-dev.html': 'Checar fila de aprovação do PO e preenchimento de submarca (incluindo tag_sm_geral).',
+  'oceano-dev.html': 'Checar preferências locais (oceano_prefs), Mural de comunicados e abertura via host iframe.',
+  'painel-dev.html': 'Checar abas Usuários, Comunicados, Notificações e Status (monitores VTEX/GitHub/Firebase).'
+};
+
+function feriasHtmlBugs(){
+  return '<p class="ferias-lead">Encontrou algum bug enquanto o Caio está de férias? Registre abaixo: o relato entra na hora na fila oficial do Firebase (<code>kanban/feedback</code>) e já gera o comando estruturado <b><code>/monitorarbugs</code></b> para diagnóstico automático no <b>Antigravity</b>!</p>'
+    + '<div class="ferias-card" style="gap:10px;">'
+    +   '<div class="campos">'
+    +     '<label class="f">App / Módulo onde ocorreu *'
+    +       '<select class="in" id="fbug-app">'
+    +         '<option value="Maré Digital|kanban-dev.html">🌊 Maré Digital (kanban-dev.html)</option>'
+    +         '<option value="Radar OKR|okr-dev.html">🎯 Radar OKR (okr-dev.html)</option>'
+    +         '<option value="Apresentação ao Vivo|okr-apresentacao.slide.html">📽️ Apresentação ao Vivo (okr-apresentacao.slide.html)</option>'
+    +         '<option value="Metas|mare-metas-dev.js">🐟 Metas (mare-metas-dev.js)</option>'
+    +         '<option value="Escala|escala-dev.html">📅 Escala (escala-dev.html)</option>'
+    +         '<option value="Intake|intake-dev.html">📥 Intake (intake-dev.html)</option>'
+    +         '<option value="Oceano|oceano-dev.html">🌊 Oceano (oceano-dev.html)</option>'
+    +         '<option value="Painel ADM|painel-dev.html">🛠️ Painel ADM (painel-dev.html)</option>'
+    +       '</select>'
+    +     '</label>'
+    +     '<label class="f">Impacto *'
+    +       '<select class="in" id="fbug-imp">'
+    +         '<option value="🟡 Dá pra contornar">🟡 Dá pra contornar</option>'
+    +         '<option value="🟠 Atrapalha a rotina">🟠 Atrapalha a rotina</option>'
+    +         '<option value="🔴 Bloqueia a operação">🔴 Bloqueia a operação</option>'
+    +       '</select>'
+    +     '</label>'
+    +   '</div>'
+    +   '<label class="f">O que aconteceu e como reproduzir? *'
+    +     '<textarea class="in" id="fbug-desc" maxlength="1000" placeholder="Conte em poucas palavras: em qual tela você estava, o que clicou e o que apareceu (se tiver mensagem de erro, cole aqui)…">'+esc(feriasBugPrefill)+'</textarea>'
+    +   '</label>'
+    +   '<div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">'
+    +     '<button type="button" class="btn pri" id="fbug-submit">🤖 Registrar no Firebase &amp; Gerar /monitorarbugs</button>'
+    +     '<span style="font-size:11.5px;color:var(--txt3);">Salva em <code>kanban/feedback</code> · Visível no Painel ADM e para o Antigravity</span>'
+    +   '</div>'
+    + '</div>'
+    + '<div id="fbug-res"></div>'
+    + '<div style="margin-top:18px;">'
+    +   '<div class="sec-title" style="margin:0 0 10px;">📋 Últimos relatos enviados na fila das férias</div>'
+    +   '<div id="fbug-lista"><div style="font-size:12px;color:var(--txt3);">Carregando fila do plantão…</div></div>'
+    + '</div>';
+}
+
+function feriasRenderBugsLista(){
+  const el = $('#fbug-lista'); if(!el) return;
+  if(!feriasBugsLista.length){
+    el.innerHTML = '<div style="font-size:12.5px;color:var(--txt3);padding:8px 0;">Nenhum bug reportado no plantão de férias até agora. 🎉</div>';
+    return;
+  }
+  el.innerHTML = feriasBugsLista.slice(0,12).map(b=>{
+    const quando = b.ts ? tempoRel(b.ts) : '';
+    const cmd = b.promptAntigravity || ('/monitorarbugs em '+(b.arquivoAlvo||'kanban-dev.html')+' — '+(b.texto||b.msg||''));
+    return '<div class="ferias-bug-item">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px;color:var(--txt3);">'
+      +   '<span class="chip" style="padding:1px 8px;font-size:10.5px;">'+esc(b.app||'Oceano')+'</span>'
+      +   '<span>'+esc(b.impacto||'🟡 Dá pra contornar')+'</span>'
+      +   (b.autor ? '<span>por <b>'+esc(b.autor)+'</b></span>' : '')
+      +   (quando ? '<span style="margin-left:auto;">'+esc(quando)+'</span>' : '')
+      + '</div>'
+      + '<div style="color:var(--txt);line-height:1.45;">'+esc(b.texto || b.msg || '')+'</div>'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:3px;">'
+      +   '<code style="font-size:11px;color:var(--teal);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:520px;">'+esc(cmd)+'</code>'
+      +   '<button type="button" class="btn sm" style="padding:3px 9px;font-size:11px;" data-fbug-copy="'+esc(cmd)+'">📋 Copiar /monitorarbugs</button>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+async function feriasCarregarBugs(){
+  if(!window._get || !window._ref || !window._db) return;
+  try{
+    const sn = await window._get(window._ref(window._db, 'kanban/feedback'));
+    const val = sn && sn.exists() ? sn.val() : {};
+    feriasBugsLista = Object.entries(val||{})
+      .map(([id,v])=>Object.assign({id}, v||{}))
+      .filter(v=>v && v.origem==='assistente_ferias')
+      .sort((a,b)=>(Number(b.criadoEm)||0)-(Number(a.criadoEm)||0) || String(b.ts||'').localeCompare(String(a.ts||'')));
+    feriasRenderBugsLista();
+  }catch(e){
+    const el = $('#fbug-lista');
+    if(el) el.innerHTML = '<div style="font-size:12px;color:var(--txt3);">Não foi possível ler a fila agora.</div>';
+  }
+}
+
+let _enviandoBugFerias = false;
+async function feriasEnviarBug(){
+  if(_enviandoBugFerias) return;
+  const appVal = ($('#fbug-app') && $('#fbug-app').value) || 'Maré Digital|kanban-dev.html';
+  const [app, arquivoAlvo] = appVal.split('|');
+  const impacto = ($('#fbug-imp') && $('#fbug-imp').value) || '🟡 Dá pra contornar';
+  const descricao = (($('#fbug-desc') && $('#fbug-desc').value) || '').trim();
+  if(!descricao || descricao.length < 5){
+    toast('⚠️ Descreva brevemente o que aconteceu para gerar o /monitorarbugs.');
+    if($('#fbug-desc')) $('#fbug-desc').focus();
+    return;
+  }
+  const ts = Date.now();
+  const id = 'bug_ferias_' + ts;
+  const nomeUsuario = (perfilFb && perfilFb.nome) || (U && U.displayName) || (U && U.email) || 'Time Hering';
+  const emailUsuario = (U && U.email) || '';
+  const uidUsuario = (U && U.uid) || '';
+  const promptAntigravity = '/monitorarbugs em ' + arquivoAlvo + ' — Bug reportado via Assistente Férias (' + nomeUsuario + ' · ' + impacto + '): ' + descricao;
+  const payload = {
+    tipo: 'bug',
+    origem: 'assistente_ferias',
+    monitorarbugs: true,
+    app: app,
+    arquivoAlvo: arquivoAlvo,
+    impacto: impacto,
+    msg: '[Férias · ' + app + '] ' + descricao,
+    texto: descricao,
+    autor: nomeUsuario,
+    email: emailUsuario,
+    uid: uidUsuario,
+    ts: new Date(ts).toISOString(),
+    criadoEm: ts,
+    status: 'pendente_monitorarbugs',
+    promptAntigravity: promptAntigravity
+  };
+
+  _enviandoBugFerias = true;
+  const bt = $('#fbug-submit'); if(bt) bt.disabled = true;
+  let gravouFb = false;
+  try{
+    if(window._set && window._ref && window._db){
+      await window._set(window._ref(window._db, 'kanban/feedback/' + id), payload);
+      gravouFb = true;
+    }
+  }catch(e){}
+  _enviandoBugFerias = false;
+  if(bt) bt.disabled = false;
+
+  feriasBugPrefill = '';
+  if($('#fbug-desc')) $('#fbug-desc').value = '';
+  feriasUltimoCmd = promptAntigravity;
+  feriasBugsLista.unshift(Object.assign({id}, payload));
+  feriasRenderBugsLista();
+
+  const dicaArq = FERIAS_BUG_DICAS[arquivoAlvo] || 'Verificar console e fluxo principal do módulo.';
+  const ghTitle = '[Bug Férias · ' + app + '] ' + descricao.slice(0, 70);
+  const ghBody = '### Relato via Assistente Férias do Caio\n'
+    + '- **App / Arquivo:** `' + app + '` (`' + arquivoAlvo + '`)\n'
+    + '- **Impacto:** ' + impacto + '\n'
+    + '- **Reportado por:** ' + nomeUsuario + (emailUsuario ? ' (' + emailUsuario + ')' : '') + '\n'
+    + '- **ID no Firebase:** `kanban/feedback/' + id + '`\n\n'
+    + '#### Descrição\n' + descricao + '\n\n'
+    + '#### Comando Antigravity\n```\n' + promptAntigravity + '\n```';
+  const ghUrl = 'https://github.com/caiosoares1899/hering/issues/new?title=' + encodeURIComponent(ghTitle) + '&body=' + encodeURIComponent(ghBody);
+
+  const resEl = $('#fbug-res');
+  if(resEl){
+    resEl.innerHTML = '<div class="ferias-bug-res">'
+      + '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+      +   '<span class="chip ok">'+(gravouFb ? '✅ Gravado na fila do Firebase (kanban/feedback/'+esc(id)+')' : '⚡ Diagnóstico gerado localmente')+'</span>'
+      +   '<span style="font-size:11.5px;color:var(--txt2);">Alvo: <code>'+esc(arquivoAlvo)+'</code></span>'
+      + '</div>'
+      + '<div style="font-size:12.5px;color:var(--txt2);margin-bottom:6px;"><b>🧭 Foco automático do diagnóstico:</b> '+esc(dicaArq)+'</div>'
+      + '<div class="ferias-cmd">'+esc(promptAntigravity)+'</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">'
+      +   '<button type="button" class="btn pri sm" data-fbug-copy="'+esc(promptAntigravity)+'">📋 Copiar comando para o Antigravity/Claude</button>'
+      +   '<a class="btn sm" href="'+esc(ghUrl)+'" target="_blank" rel="noopener noreferrer">🐙 Abrir Issue no GitHub</a>'
+      + '</div>'
+      + '</div>';
+  }
+  toast(gravouFb ? '✅ Bug registrado na fila e /monitorarbugs gerado!' : '✅ Comando /monitorarbugs gerado!');
+}
+
+function feriasRenderModal(){
+  $$('#ferias-tabs button[data-ftab]').forEach(b=>b.setAttribute('aria-selected', String(b.dataset.ftab===feriasAbaAtual)));
+  const bd = $('#ferias-bd'); if(!bd) return;
+  if(feriasAbaAtual==='socorro') bd.innerHTML = feriasHtmlSocorro();
+  else if(feriasAbaAtual==='status') bd.innerHTML = feriasHtmlStatus();
+  else if(feriasAbaAtual==='proximos') bd.innerHTML = feriasHtmlProximos();
+  else if(feriasAbaAtual==='guia') bd.innerHTML = feriasHtmlGuia();
+  else if(feriasAbaAtual==='bugs'){ bd.innerHTML = feriasHtmlBugs(); feriasCarregarBugs(); }
+  else {
+    bd.innerHTML = feriasHtmlChat();
+    const log = $('#ferias-chat-log'); if(log) log.scrollTop = log.scrollHeight;
+  }
+}
+
+function abrirFerias(aba, extra){
+  if(aba && ['chat','socorro','status','proximos','guia','bugs'].includes(aba)) feriasAbaAtual = aba;
+  if(feriasAbaAtual==='bugs' && typeof extra==='string' && extra) feriasBugPrefill = extra;
+  feriasRenderModal();
+  abrirModal('ferias-ov');
+  if(feriasAbaAtual==='chat'){
+    if(typeof extra==='string' && extra.trim()) feriasEnviarPergunta(extra.trim());
+    setTimeout(()=>{ const inp = $('#ferias-chat-in'); if(inp) inp.focus({preventScroll:true}); }, 40);
+  } else if(feriasAbaAtual==='bugs'){
+    setTimeout(()=>{ const d = $('#fbug-desc'); if(d) d.focus({preventScroll:true}); }, 40);
+  }
+}
+window.abrirFeriasCaio = abrirFerias;
+
+function feriasEnviarPergunta(q){
+  const txt = String(q||'').trim(); if(!txt) return;
+  feriasChatHist.push({quem:'usr', texto:txt});
+  feriasChatHist.push({quem:'bot', html:feriasResponder(txt)});
+  if(feriasChatHist.length > 30) feriasChatHist = [feriasChatHist[0]].concat(feriasChatHist.slice(-28));
+  if(feriasAbaAtual!=='chat') feriasAbaAtual = 'chat';
+  feriasRenderModal();
+  const inp = $('#ferias-chat-in'); if(inp){ inp.value = ''; inp.focus({preventScroll:true}); }
+}
+
+$('#ferias-caio-host').addEventListener('click', e=>{
+  const min = e.target.closest('[data-ferias-min]'); if(min){ feriasSetMin(true); return; }
+  const exp = e.target.closest('[data-ferias-expand]'); if(exp){ feriasSetMin(false); return; }
+  const op = e.target.closest('[data-ferias-open]'); if(op){ abrirFerias(op.dataset.feriasOpen); return; }
+});
+$('#ferias-tabs').addEventListener('click', e=>{
+  const bt = e.target.closest('button[data-ftab]'); if(!bt) return;
+  feriasAbaAtual = bt.dataset.ftab; feriasRenderModal();
+});
+$('#ferias-bd').addEventListener('submit', e=>{
+  if(e.target && e.target.id==='ferias-chat-form'){
+    e.preventDefault();
+    const inp = $('#ferias-chat-in'); if(inp && inp.value.trim()) feriasEnviarPergunta(inp.value);
+  }
+});
+$('#ferias-bd').addEventListener('click', e=>{
+  const ask = e.target.closest('[data-fask]'); if(ask){ feriasEnviarPergunta(ask.dataset.fask); return; }
+  const go = e.target.closest('[data-ftab-go]'); if(go){ feriasAbaAtual = go.dataset.ftabGo; feriasRenderModal(); return; }
+  const bp = e.target.closest('[data-ferias-bug-prefill]'); if(bp){ abrirFerias('bugs', bp.dataset.feriasBugPrefill); return; }
+  const ap = e.target.closest('[data-ferias-app]'); if(ap){ fecharModal('ferias-ov'); abrirApp(ap.dataset.feriasApp); return; }
+  const ur = e.target.closest('[data-ferias-url]'); if(ur){ fecharModal('ferias-ov'); if(ur.dataset.ext==='1') window.open(ur.dataset.feriasUrl,'_blank','noopener'); else rotearUrl(ur.dataset.feriasUrl); return; }
+  const cp = e.target.closest('[data-fbug-copy]'); if(cp){
+    const txt = cp.dataset.fbugCopy || feriasUltimoCmd || '';
+    if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(()=>toast('📋 Comando /monitorarbugs copiado!')).catch(()=>toast('📋 '+txt));
+    else toast('📋 '+txt);
+    return;
+  }
+  if(e.target.closest('#fbug-submit')){ feriasEnviarBug(); return; }
+});
+
 // ── Instalar (PWA) ──
 let instalarEv = null;
 window.addEventListener('beforeinstallprompt', e=>{ e.preventDefault(); instalarEv = e; if(!standalone()) $('#btn-instalar').style.display = ''; const b = $('#pf-instalar'); if(b) b.disabled = false; });
@@ -1402,6 +2113,7 @@ document.addEventListener('keydown', e=>{
 window.addEventListener('pageshow', ()=>{ if(U) renderTudo(); });
 
 aplicarPrefs();
+feriasRenderBanner();
 irAba((location.hash||'').replace('#','')==='tecnica'?'tecnica':(location.hash==='#conheca'?'conheca':'inicio'), false);
 document.title = (IS_DEV?'🧪 ':'')+'Oceano'+(IS_DEV?' · Dev':'');
 })();
