@@ -70,6 +70,11 @@ test('plantão pausado (plantao_ativo=false): não entrega nada', async () => {
   assert.equal((await entregarProximo({ db: d, agora: AGORA })).texto, 'SEM_BUG_PENDENTE'); assert.equal(d._data().kanban.plantao.b1.estado, 'aguardando');
 });
 
+test('a chave ignora espaço/quebra de linha nas pontas (do segredo e da URL), mas continua exata no meio', () => {
+  assert.equal(chaveOk('abc123', 'abc123\n'), true); assert.equal(chaveOk(' abc123 ', 'abc123'), true); assert.equal(chaveOk('abc123', '  abc123\r\n'), true);
+  assert.equal(chaveOk('abc 123', 'abc123'), false); assert.equal(chaveOk('\n', '\n'), false, 'vazio depois de limpar não vale');
+});
+
 test('a chave: só a certa passa (sem vazio, sem prefixo)', () => {
   assert.equal(chaveOk('abc123', 'abc123'), true);
   for (const k of ['', 'abc12', 'abc1234', 'ABC123', undefined]) assert.equal(chaveOk(k, 'abc123'), false, String(k));

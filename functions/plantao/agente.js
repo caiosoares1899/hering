@@ -19,8 +19,10 @@ const MAX_ENTREGAS = 3;
 const LIMITE_POR_HORA = 120;
 const ELEGIVEIS = ['aguardando', 'reprovado'];
 
+// Segredo vindo do Secret Manager pode trazer espaço/quebra de linha invisível no começo ou no fim (colado à mão, arquivo de texto) — não pode derrubar a chave.
+const limpaSegredo = (v) => String(v == null ? '' : v).trim();
 const sha = (s) => crypto.createHash('sha256').update(String(s)).digest();
-const chaveOk = (recebida, esperada) => !!recebida && !!esperada && crypto.timingSafeEqual(sha(recebida), sha(esperada));
+const chaveOk = (recebida, esperada) => { const r = limpaSegredo(recebida), e = limpaSegredo(esperada); return !!r && !!e && crypto.timingSafeEqual(sha(r), sha(e)); };
 const tsDoId = (id) => String(id).replace(/^bug_ferias_/, '').replace(/[^0-9A-Za-z_]/g, '');
 const branchDe = (id) => `antigravity/bug-${tsDoId(id)}`;
 const idDeBranch = (ref) => { const m = /^antigravity\/bug-([0-9A-Za-z_]{6,40})$/.exec(String(ref || '')); return m ? `bug_ferias_${m[1]}` : null; };
@@ -82,7 +84,7 @@ exports.plantaoProximo = onRequest(
   async (req, res) => {
     res.set('Cache-Control', 'no-store'); res.set('Content-Type', 'text/plain; charset=utf-8');
     if (req.method !== 'GET') { res.status(405).send('método não permitido'); return; }
-    if (!chaveOk(String(req.query.k || ''), PLANTAO_AGENTE_KEY.value())) { res.status(403).send('chave inválida'); return; }
+    if (!chaveOk(req.query.k, PLANTAO_AGENTE_KEY.value())) { res.status(403).send('chave inválida'); return; }
     try {
       const db = getDatabase(), agora = new Date();
       if (!(await dentroDoLimite(db, agora))) { res.status(429).send('muitas requisições nesta hora'); return; }
@@ -90,4 +92,4 @@ exports.plantaoProximo = onRequest(
     } catch (e) { console.error('[plantaoProximo]', e); res.status(500).send('erro no servidor'); }
   }
 );
-Object.assign(exports, { entregarProximo, montarTexto, chaveOk, branchDe, idDeBranch, tsDoId, dentroDoLimite, LEASE_MS, MAX_ENTREGAS, LIMITE_POR_HORA });
+Object.assign(exports, { entregarProximo, montarTexto, chaveOk, limpaSegredo, branchDe, idDeBranch, tsDoId, dentroDoLimite, LEASE_MS, MAX_ENTREGAS, LIMITE_POR_HORA });

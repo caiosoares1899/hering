@@ -89,4 +89,6 @@ test('assinatura do GitHub (HMAC-SHA256): só a válida passa', () => {
   for (const h of [undefined, '', 'sha256=' + 'a'.repeat(64), boa.replace('sha256=', 'sha1='), boa.slice(0, -1) + (boa.endsWith('0') ? '1' : '0')]) assert.equal(assinaturaOk(corpoBruto, h, seg), false, String(h));
   assert.equal(assinaturaOk(Buffer.from('{"a":2}'), boa, seg), false, 'corpo alterado');
   assert.equal(assinaturaOk(corpoBruto, boa, ''), false);
+  assert.equal(assinaturaOk(corpoBruto, boa, seg + '\n'), true, 'segredo guardado com quebra de linha no fim');
+  assert.equal(assinaturaOk(corpoBruto, boa, '  ' + seg + ' '), true);
 });
