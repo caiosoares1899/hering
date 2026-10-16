@@ -4748,8 +4748,15 @@ window.MARE_LOGIN_PELO_OCEANO = true;
     <div id="m-sec-colaboracao" style="display:flex;flex-direction:column;gap:10px;">
     <!-- Comentários e Atividade -->
     <div class="comments-wrap" id="m-comments-wrap">
-      <div class="comments-hd">
+      <div class="comments-hd" style="justify-content:space-between;">
         <span class="comments-hd-lbl">💬 Comentários e atividade</span>
+        <button type="button" id="m-comment-search-btn" onclick="toggleCommentSearch()" title="Buscar comentários neste card (Ctrl+K)" style="background:rgba(56,182,255,.08);border:1px solid rgba(56,182,255,.22);border-radius:6px;color:var(--accent);font-size:10px;font-weight:600;padding:2px 8px;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:4px;transition:all .15s;">🔍 Buscar <span style="opacity:.65;font-size:9px;font-family:'Space Mono',monospace;">Ctrl+K</span></button>
+      </div>
+      <div id="m-comment-search-bar" style="display:none;align-items:center;gap:6px;margin-bottom:8px;padding:5px 9px;background:rgba(var(--ink-rgb),.55);border:1px solid rgba(56,182,255,.32);border-radius:8px;">
+        <span style="font-size:12px;opacity:.75;">🔍</span>
+        <input class="fi" id="m-comment-search-inp" type="text" placeholder="Filtrar por texto, @autor ou data (ex.: 15/10)..." oninput="onCommentSearchInput(this.value)" onkeydown="if(event.key==='Escape'){event.preventDefault();event.stopPropagation();toggleCommentSearch(false);}" style="flex:1;border:none;background:transparent;padding:2px 4px;font-size:11.5px;outline:none;box-shadow:none;">
+        <span id="m-comment-search-count" style="font-size:10px;color:var(--txt3);font-family:'Space Mono',monospace;white-space:nowrap;"></span>
+        <button type="button" onclick="toggleCommentSearch(false)" title="Limpar e fechar busca (Esc)" style="background:none;border:none;color:var(--txt3);cursor:pointer;font-size:12px;padding:0 3px;line-height:1;">✕</button>
       </div>
       <div id="m-agente-thinking" style="display:none;align-items:center;gap:6px;font-size:11px;color:#c4b5fd;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);border-radius:8px;padding:6px 10px;margin-bottom:6px;">
         <span style="animation:pulse 1.4s ease-in-out infinite;">🤖</span>
@@ -6560,7 +6567,7 @@ window.MARE_LOGIN_PELO_OCEANO = true;
   </button>
 </nav>
 
-<div class="version">v8.30.871-dev</div>
+<div class="version">v8.30.872-dev</div>
 
 <!-- FIREBASE SDK -->
 <!-- Vendorizado em vendor/firebase-10.14.1/ (não vem mais do gstatic.com) —
@@ -16246,6 +16253,7 @@ function openCard(id){
   // Sempre abre do topo -- sem isso, o modal mantinha o scroll do card anterior (as vezes abria la embaixo, perto do menu de Modelo/Duplicar)
   const _cardPanel = document.querySelector('#card-ov .panel'); if(_cardPanel) _cardPanel.scrollTop=0;
   const _mci=document.getElementById('m-comment-inp'); if(_mci) _mci.value='';
+  if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
   _updateAgenteThinkingBanner(); // reflete na hora se este card já estava "pensando" (ver _startAgenteAgilThinking)
   _cardManualSnap = _manualFieldsNow();
   _startDirtyWatch();
@@ -16640,6 +16648,7 @@ function openNewCard(col, prefillOwner, prefillTagId){
   _detachAgenteHotlineCommentsListener();
   document.getElementById('card-ov').classList.add('open');
   const _mci2=document.getElementById('m-comment-inp'); if(_mci2) _mci2.value='';
+  if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
   _updateAgenteThinkingBanner(); // editingId já foi zerado acima — força esconder o banner do card anterior
   // BUGFIX (relato real, 2026-09-01: "criei um card do zero e trouxe um
   // comentário de um último card aleatório"): faltava aqui — openCard()
@@ -28156,7 +28165,7 @@ const HELP_CONTENT = {
     { icon:'➕', title:'Criar card', text:'Clique em + Card no topo ou no rodapé de cada coluna. Preencha título, tag, coluna, responsável e prazo. O campo Insights do PO é o espaço do Product Owner para descrever o objetivo e critério de aceite (formato SMART).' },
     { icon:'✨', title:'Criação rápida (atalhos no título)', text:'Ao criar um card NOVO, dá pra digitar tudo direto no título e sair do campo (clicar fora ou Tab) que o sistema reconhece e preenche sozinho:\n\n!alta / !média / !baixa / !crítica / !urgente → define a prioridade.\n@nome → define o responsável (mesmo reconhecimento de @menção usado em descrição/comentário).\n#tag → adiciona uma tag já existente (nome precisa bater com uma tag do quadro).\nhoje, amanhã, um dia da semana (ex.: sex) ou uma data (15/09) → define o prazo.\n\nOs tokens somem do título depois de reconhecidos, e um aviso mostra o que foi detectado — confira antes de salvar. Só funciona ao CRIAR um card; editar um card já existente nunca reescreve campos sozinho.' },
     { icon:'🧩', title:'Supercard (cards filhos)', text:'Quando um pedido único vira vários cards por causa de formato/veículo/teste diferentes (ex.: um pedido de mídia paga que sai em Feed, Stories, Reels...), dá pra agrupar isso num "supercard" em vez de espalhar solto no board.\n\nDentro do card, na seção 🔗 Vínculos & anexos, tem "🧩 Cards filhos (supercard)": clique em "+ Adicionar" pra vincular um card já existente, ou digite um título novo e aperte Enter pra criar um card filho na hora (ele nasce herdando coluna, prazo, prioridade e demandante do card pai). O card pai passa a mostrar, direto no board, uma lista compacta dos filhos com a cor da coluna de cada um e o total concluído (ex.: "3/6 concluído(s)") — sem precisar abrir nada. Vincular ou desvincular um filho (ou criar um novo direto dali) fica registrado no 📜 Histórico do card pai.\n\nOs filhos continuam sendo cards normais e independentes (cada um anda na sua própria coluna, tem seu próprio responsável e prazo) — o supercard só agrupa a visão. Diferente de "🔗 Vínculos" (referência solta, sem hierarquia) e "⛓ Dependências" (bloqueio/ordem entre cards): aqui nenhum filho bloqueia o outro.\n\n➕ Card ainda sendo criado: a seção "Cards filhos" já aparece mesmo antes de salvar o card pai pela primeira vez — os filhos são criados/vinculados na hora, e o vínculo entra junto quando você clicar em Salvar.\n\n← Voltar: ao abrir um card filho (ou o pai, a partir da nota "Este card é filho de...") de dentro de outro card já aberto, aparece um botão "← Voltar" no topo do modal pra retornar direto pro card anterior, sem precisar buscar de novo.\n\n🧾 Receitas prontas: em ⚡ Automações (atalho em ⚡ Funções de card, liberado pra qualquer papel — ou pela aba ⚡ Auto de ⚙ Configurações), crie uma "receita de fan-out" nomeada (ex.: "Campanha de mídia paga") com a lista de filhos que ela sempre gera (ex.: Feed, Stories, Reels — dá pra digitar vários nomes de uma vez em "+ Card filho", separados por vírgula). Depois, dentro de qualquer card, o botão "🧩 Aplicar receita" cria todos os filhos de uma vez, na hora, sem digitar nada — com busca por nome e filtro por tag (cada receita pode ganhar suas próprias 🏷 Tags, definidas no mesmo editor, só pra facilitar achar ela nesse botão).\n\n📋 Filhos estruturados: cada filho da receita pode ser vinculado a um Modelo de card (mesmo Modelos de ⚡ Funções de card → 📋 Modelos) — quando a receita gerar esse filho, ele já nasce com a descrição, checklist, tags e riscos do modelo escolhido, em vez de um card vazio só com título.\n\n👑 Card pai também pode ter Modelo: no editor da receita (⚡ Automações), além do modelo de cada filho, dá pra vincular um Modelo pro próprio "card pai" — ao aplicar a receita, ele mescla descrição/checklist/tags/riscos do modelo no card que você já tem aberto (ou está criando), sem apagar nada que já estiver preenchido (mesma regra do botão "📥 Usar modelo").\n\n🤖 Automático: na mesma tela, a ação "🧩 Aplicar fan-out" (em ⚡ Automações) deixa uma receita disparar sozinha quando algo acontece (ex.: card criado com a tag "mídia paga") — só dispara uma vez por card, não duplica os filhos se o gatilho repetir.\n\n🪜 Vai até 2 níveis — campanha → criativo → versão: um card filho que já tem pai pode, ele mesmo, ganhar filhos — pra quando o time de mídia pede um criativo (filho de uma campanha) e depois precisa de várias versões daquele mesmo criativo pra designers diferentes. Basta abrir o criativo e adicionar filhos nele normalmente, do mesmo jeito de sempre; ele não perde o vínculo com a campanha original. O teto é fixo em 2 níveis — uma "versão" (filha de um criativo que já é filho de outra coisa) não pode ganhar filhos próprios, pra manter o modelo simples. A Ficha Técnica acompanha o encadeamento sozinha (ver dica "Ficha Técnica").\n\n💬 Aviso de conclusão: quando TODOS os filhos ativos de um supercard chegam numa coluna de fim (Concluído, Cancelado etc.), o board posta um comentário automático no card pai marcando o Responsável, avisando que os filhos terminaram e pedindo pra ele mover o card pra Concluído — o board nunca move sozinho, a decisão final é sempre de uma pessoa. Funciona pelos 2 níveis: quando o Responsável move o criativo pra Concluído, se isso também completar a campanha, ela recebe o mesmo aviso na sequência. Exceção: se TODOS os filhos ativos foram CANCELADOS (nenhum de fato concluído), não tem aviso nenhum — cancelar tudo não é a mesma coisa que concluir tudo.' },
-    { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global. Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
+    { icon:'⌨️', title:'Atalhos de teclado', text:'Ctrl+Z (Cmd+Z no Mac): desfaz a última ação em qualquer lugar do board. Ctrl+K: abre a busca global (ou busca nos comentários se um card estiver aberto). Tab: navega entre cards. Enter ou Espaço: abre o card. Esc: fecha modais.' },
     { icon:'🎨', title:'Semáforo de prazo', text:'Cards com prazo aparecem coloridos: verde = no prazo, amarelo = vence hoje, vermelho = atrasado. Cards na coluna Concluído congelam o prazo com ✓ e nunca ficam vermelhos.' },
     { icon:'☑', title:'Checklist', text:'Adicione itens de checklist dentro do card. Clique no texto de qualquer item para editá-lo inline. Arraste pelo handle ⠿ para reordenar. Uma barra de progresso aparece no card do board. Use ↩ ou Ctrl+Z para desfazer qualquer alteração no checklist.\n\n▾ Recolher: card com mais de um checklist (grupos) ganha um botão ▾/▸ no cabeçalho de cada um, pra recolher só os itens e deixar a visão mais limpa — o progresso (X/Y) continua visível mesmo recolhido, e o estado fica salvo junto com o card.\n\n📋 Colar uma lista: cole um texto em tópicos (com -, •, *, 1., 1) ou a)) no campo "Novo item..." e cada linha vira um item do checklist, de uma vez — sem adicionar um por um. "[x]" marca o item como feito, e dá pra copiar o checklist de um card e colar em outro mantendo quem já estava marcado. Só age com 2 ou mais linhas (uma linha cola normal). Iniciais de nome no começo da linha ("J. Silva") não são confundidas com marcador e ficam no texto.' },
     { icon:'⚠', title:'Riscos', text:'Mapeie riscos diretamente no card com nível (alto, médio, baixo). Cards com riscos mostram um badge ⚠ no board. Use o filtro "Com riscos" para visualizá-los. O Agente Ágil notifica automaticamente o PO quando riscos são adicionados.' },
@@ -28169,7 +28178,7 @@ const HELP_CONTENT = {
     { icon:'🔒', title:'Card travado (duas pessoas no mesmo card)', text:'Se você abre um card que outra pessoa já está editando naquele momento, ele abre em modo leitura — um aviso "🔒 [nome] está editando este card agora" aparece no topo. Dá pra ler tudo, abrir anexos e clicar em links/menções de card normalmente; só a edição fica bloqueada até a outra pessoa salvar e sair (ou o lock expirar sozinho por inatividade).\n\n🔔 Pedir o card: se você só precisa dar uma olhada rápida ou realmente precisa editar na hora, clique em "🔔 Pedir o card" no aviso. Quem está editando recebe um alerta com 5 minutos pra salvar e sair (ou clicar em "✅ Liberar agora"); se ninguém fizer nada no prazo, o card salva e libera sozinho — e quem pediu já vê o card atualizado automaticamente, sem precisar reabrir.' },
     { icon:'🏷', title:'Múltiplas tags por card', text:'Um card pode ter mais de uma tag ao mesmo tempo. Adicione quantas precisar no campo Tags. Na raia por tag, cards com várias tags aparecem em cada linha correspondente.' },
     { icon:'🎨', title:'Capa do card (cor ou imagem)', text:'Botão 🎨 no topo do card abre o menu de capa: uma cor sólida (organização visual, tipo Trello) OU uma imagem — cole a URL de uma imagem, ou clique em "🔗 Usar 1º link" pra usar o primeiro link já salvo em 🔗 Anexos.\n\nCor e imagem são exclusivas — escolher uma limpa a outra. O app só guarda o ENDEREÇO da imagem (nunca faz upload nem guarda o arquivo) — se o link cair ou for removido, a capa some sozinha sem quebrar nada.\n\n📐 Dimensão ideal da imagem: a capa é uma faixa BEM larga e baixa (na prática, ~4:1 — algo tipo 1000×250px funciona bem), e a imagem é cortada (não espremida) pra caber nesse espaço, sempre mantendo o centro. Por isso:\n\n✅ Funciona bem: banner largo com o assunto centralizado (logo, produto, texto) e bastante fundo de cor uniforme ao redor — o corte nas bordas/topo/base não perde nada importante.\n\n❌ Não funciona bem: foto quadrada ou de retrato (celular, pessoa, produto de perto) — o corte automático mostra só uma faixinha fina do meio, perdendo a maior parte da imagem.\n\nSe a imagem original não é larga o suficiente, uma alternativa rápida é colocá-la centralizada num fundo sólido bem mais largo (ex.: numa ferramenta de edição, ou pedindo pro Criação já exportar nesse formato) antes de usar como capa.\n\n🖼️ Sem onde hospedar a imagem? Suba em <b>postimages.org</b> ou <b>imgbb.com</b> — sem precisar de conta, sem custo, e o site já entrega um link direto pronto pra colar aqui como capa.\n\n🔗 Link do Google Drive: o board tenta converter automaticamente o link normal de "Compartilhar" pro formato de imagem direta, mas na prática <b>geralmente não funciona nas contas da Hering</b> — a política da empresa bloqueia a permissão "Qualquer pessoa com o link pode ver" que a imagem precisa ter pra carregar fora do Drive. Se tentar e não carregar, é isso — use postimages.org/imgbb.com em vez disso.' },
-    { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.\n\nCada comentário tem um botão <b>↩ Responder</b>: clique nele pra abrir a caixa de comentário já com "@" + o nome de quem comentou preenchido automaticamente, prontinho pra continuar digitando — a pessoa mencionada recebe notificação no sino 🔔, igual qualquer outra menção.' },
+    { icon:'💬', title:'Comentários', text:'Adicione comentários no card para registrar discussões, decisões e atualizações. Use @ para mencionar membros. O histórico de comentários fica salvo no Firebase.\n\nCada comentário tem um botão <b>↩ Responder</b>: clique nele pra abrir a caixa de comentário já com "@" + o nome de quem comentou preenchido automaticamente, prontinho pra continuar digitando — a pessoa mencionada recebe notificação no sino 🔔, igual qualquer outra menção.\n\n🔍 <b>Buscar comentários no card (Ctrl+K)</b>: clique em "🔍 Buscar" no cabeçalho da seção de comentários (ou pressione <b>Ctrl+K</b> com o card aberto) para filtrar os comentários daquele card por texto, @autor ou data (ex.: 15/10), com destaque amarelo nos trechos encontrados.' },
     { icon:'📋', title:'Salvar como modelo', text:'Clique no ícone 📋 no rodapé de qualquer card para salvá-lo como modelo. O modelo copia tag, descrição, PO, checklist (desmarcado) e riscos.' },
     { icon:'🔁', title:'Salvar como recorrente', text:'No menu de contexto do card (clique com o botão direito), escolha "Salvar como recorrente". O card vira um item recorrente e abre direto a configuração de frequência. Abra ⚡ Funções de card → 🔁 Recorrentes e clique no ✏️ de qualquer item para editar todo o conteúdo do card (descrição, checklist, riscos, etc) a qualquer momento.' },
     { icon:'📅', title:'Agendamentos', text:'Em ⚡ Funções de card → 📅 Agendamentos você cria um card para entrar no quadro numa data específica (diferente do recorrente, que repete). Adicione o título, clique em 📅 Definir data, escolha a data e a coluna de entrada. Quando a data chegar, o card entra sozinho com notificação e lembrete. Se a pessoa não abrir o card, o sistema relembra por até 3 dias.\n\n📆 <b>Prazo do card (opcional):</b> na mesma tela, dá pra definir de já um prazo pro card — uma data fixa, diferente da data de entrada. Deixe em branco pro card nascer sem prazo, como sempre foi.' },
@@ -34704,7 +34713,11 @@ document.addEventListener('keydown', e=>{
       }
     }
   }
-  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+  if((e.ctrlKey||e.metaKey)&&(e.key==='k'||e.key==='K')){
+    e.preventDefault();
+    if(document.getElementById('card-ov')?.classList.contains('open')) toggleCommentSearch(true);
+    else openSearch();
+  }
   if((e.ctrlKey||e.metaKey)&&e.key==='d'){ e.preventDefault(); openMeuDia(); } // 🌅 Meu Dia (Fase 5.1)
   // Ctrl+S salva o card aberto na hora (mesmo botão 💾 Salvar), sem esperar
   // o debounce do autosave (800ms) — pedido direto. Bloqueia o "Salvar
@@ -35274,6 +35287,7 @@ function _finishCloseOv(id){
     _stopDirtyWatch();
     if(editingId) _releaseCardLock(editingId);
     _detachAgenteHotlineCommentsListener();
+    if(typeof toggleCommentSearch==='function') toggleCommentSearch(false, true);
     _setCardLockUI(false);
     document.getElementById('card-ov')?.classList.remove('above-camp');
     // Fecha a janela de "card novo vindo de um Modelo" mesmo se a pessoa
@@ -36482,14 +36496,100 @@ async function loadComments(cardId){
   }
 }
 
+let _commentSearchQuery = '';
+function _normCommentSearch(s){
+  return String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+}
+function _highlightDomTextNodes(rootEl, query){
+  if(!rootEl || !query) return;
+  const qNorm = _normCommentSearch(query.trim());
+  if(!qNorm) return;
+  const pattern = qNorm.split('').map(ch=>{
+    const escCh = ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    if(ch==='a') return '[aáàâãä]';
+    if(ch==='e') return '[eéèêë]';
+    if(ch==='i') return '[iíìîï]';
+    if(ch==='o') return '[oóòôõö]';
+    if(ch==='u') return '[uúùûü]';
+    if(ch==='c') return '[cç]';
+    if(ch==='n') return '[nñ]';
+    return escCh;
+  }).join('');
+  let rx;
+  try { rx = new RegExp('('+pattern+')', 'gi'); } catch(e){ return; }
+  const walker = document.createTreeWalker(rootEl, NodeFilter.SHOW_TEXT, null);
+  const nodes = [];
+  let n;
+  while((n = walker.nextNode())) nodes.push(n);
+  nodes.forEach(textNode=>{
+    const val = textNode.nodeValue;
+    if(!val || !rx.test(val)) return;
+    rx.lastIndex = 0;
+    const frag = document.createDocumentFragment();
+    let lastIdx = 0, m;
+    while((m = rx.exec(val)) !== null){
+      if(m.index > lastIdx) frag.appendChild(document.createTextNode(val.slice(lastIdx, m.index)));
+      const mark = document.createElement('mark');
+      mark.style.cssText = 'background:rgba(255,209,102,.35);color:var(--txt);border-radius:2px;padding:0 2px;';
+      mark.textContent = m[0];
+      frag.appendChild(mark);
+      lastIdx = rx.lastIndex;
+      if(m[0].length === 0) rx.lastIndex++;
+    }
+    if(lastIdx < val.length) frag.appendChild(document.createTextNode(val.slice(lastIdx)));
+    textNode.parentNode?.replaceChild(frag, textNode);
+  });
+}
+function toggleCommentSearch(forceOpen, silent){
+  const bar = document.getElementById('m-comment-search-bar');
+  const inp = document.getElementById('m-comment-search-inp');
+  const btn = document.getElementById('m-comment-search-btn');
+  if(!bar) return;
+  const willOpen = typeof forceOpen==='boolean' ? forceOpen : (bar.style.display==='none' || !bar.style.display);
+  bar.style.display = willOpen ? 'flex' : 'none';
+  if(btn) btn.style.background = willOpen ? 'rgba(56,182,255,.22)' : 'rgba(56,182,255,.08)';
+  if(willOpen){
+    if(inp && !silent) setTimeout(()=>{ inp.focus(); inp.select(); }, 20);
+  } else {
+    const hadQuery = !!_commentSearchQuery;
+    _commentSearchQuery = '';
+    if(inp) inp.value = '';
+    const cnt = document.getElementById('m-comment-search-count');
+    if(cnt) cnt.textContent = '';
+    if(hadQuery && !silent && _commentCardId && _commentsCache[_commentCardId]){
+      renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
+    }
+  }
+}
+function onCommentSearchInput(val){
+  _commentSearchQuery = String(val||'').trim();
+  if(_commentCardId && _commentsCache[_commentCardId]){
+    renderCommentList(_sortedComments(_commentsCache[_commentCardId]));
+  }
+}
+
 function renderCommentList(comments){
   const list=document.getElementById('m-comment-list'); if(!list) return;
   list.innerHTML='';
   if(!comments.length){
+    const cntEl0 = document.getElementById('m-comment-search-count');
+    if(cntEl0) cntEl0.textContent = '';
     list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:4px 0;">Nenhum comentário ainda. Seja o primeiro!</div>';
     return;
   }
-  comments.forEach(c=>{
+  const qNorm = _normCommentSearch(_commentSearchQuery);
+  const filtered = qNorm ? comments.filter(c=>{
+    const dtFmt = c.ts ? new Date(c.ts).toLocaleString('pt-BR',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}) + ' ' + new Date(c.ts).toLocaleDateString('pt-BR') : '';
+    const hay = _normCommentSearch((c.text||'') + ' ' + (c.author||'') + ' @' + (c.author||'') + ' ' + (c.init||'') + ' ' + (c.initials||'') + ' ' + dtFmt);
+    return hay.includes(qNorm);
+  }) : comments;
+  const cntEl = document.getElementById('m-comment-search-count');
+  if(cntEl) cntEl.textContent = qNorm ? `${filtered.length}/${comments.length}` : '';
+  if(!filtered.length){
+    list.innerHTML='<div style="font-size:11px;color:var(--txt3);padding:8px 0;">🔍 Nenhum comentário encontrado para "<strong>'+esc(_commentSearchQuery)+'</strong>".</div>';
+    return;
+  }
+  filtered.forEach(c=>{
     const item=document.createElement('div');
     // comment-agent/comment-human só têm efeito visual dentro do tema
     // #card-ov.agente-hotline (ver CSS) — inofensivo em cards normais.
@@ -36546,6 +36646,10 @@ function renderCommentList(comments){
       const cid=el.dataset.cid;
       if(cid) el.onclick=()=>{ closeOv('card-ov', ()=>openCard(cid)); };
     });
+    if(qNorm){
+      _highlightDomTextNodes(item.querySelector('.comment-text'), _commentSearchQuery);
+      _highlightDomTextNodes(item.querySelector('.comment-meta strong'), _commentSearchQuery);
+    }
     list.appendChild(item);
   });
 }
@@ -38632,12 +38736,13 @@ function _refreshComunicados(){
     if(_comunicadosFellBack) _dbgTrack('comunicados_fallback', snap.val());
     const val = snap.val() || {};
     const agora = new Date().toISOString();
+    const _matchSquad = c => !c.squad || c.squad==='*' || (Array.isArray(c.squads)&&c.squads.length ? c.squads.includes(ACTIVE_SQUAD) : c.squad===ACTIVE_SQUAD);
     _comunicadosAtivos = Object.entries(val)
       .map(([id,c])=>({...c, id}))
       .filter(c=>{
         if(!c.ativo) return false;
         if(c.prioridade!=='popup') return false;
-        if(c.squad && c.squad!=='*' && c.squad!==ACTIVE_SQUAD) return false;
+        if(!_matchSquad(c)) return false;
         if(c.expiraEm && c.expiraEm < agora) return false;
         if(c.publico==='po' && !_isPOOuMais()) return false;
         return true;
@@ -38656,7 +38761,7 @@ function _refreshComunicados(){
       .map(([id,c])=>({...c, id}))
       .filter(c=>c.ativo)
       .filter(c=>c.prioridade!=='oceano')   // 🌊 "Só no Oceano": vive no mural do Oceano, não aqui (nem badge)
-      .filter(c=>!c.squad || c.squad==='*' || c.squad===ACTIVE_SQUAD)
+      .filter(_matchSquad)
       .filter(c=>c.publico!=='po' || _isPOOuMais())
       .sort((a,b)=>(b.criadoEm||'').localeCompare(a.criadoEm||''));
     _updateMuralBadge();

@@ -6,9 +6,11 @@ O que antes era tudo "Maré Digital" passa a ser uma **família**, chamada **Oce
 |---|---|---|---|
 | **Maré Digital** | o kanban (gestão dos squads) | `kanban.html` | mantém o nome |
 | **Painel** | gestão/diretoria, pessoas, comunicados | `painel.html` | mantém o nome (a ideia "Passadiço" foi descartada) |
-| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.88 · dev `okr-dev.html` v2.89; `mare-metas.js` v13) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco** e Metas com **📅 Curva diária** e expansão em tela cheia (**⛶ Expandir**) |
+| **Radar** 📡 | o OKR (Objetivos e Resultados-Chave) | `okr.html` | renomeado e **em produção** (`okr.html` v2.88 · dev `okr-dev.html` v2.89; `mare-metas.js` v16) — logo: `favicon-radar.png`. Inclui aba **📊 Data Studio**, promoção **Próximo Passo → Progresso → Marco** e Metas com **📅 Curva diária**, **Projeção de Fechamento** e expansão em tela cheia (**⛶ Expandir**) |
 | **A Bordo** | onboarding | `onboarding.html` | a renomear (não mexido ainda) |
 | **Travessia** | ciclo de performance/gente (avaliação, PDI, dia a dia, usa métricas do Radar e da Maré) | — | projeto futuro |
+
+**Módulos compartilhados do ecossistema Oceano:** `mare-notif.js` v33 · `mare-metas.js` v16 · `mare-dicas.js` v6 · `mare-login.js` v3 · `mare-plantao.js` v1.
 
 ## Regras do que renomear (e do que NÃO)
 - **Renomeia** onde "OKR" é o **nome da página/produto**: título da aba do navegador, cabeçalho, "Ajuda do Radar", "Mural do Radar", "Notificações do Radar", "Online no Radar", "Guia do Radar", links/abas nas outras páginas, textos de ajuda/inscrição, notificação "te mencionou nas anotações do Radar".
@@ -30,7 +32,7 @@ Botão de 9 pontinhos no cabeçalho de cada produto (módulo `mare-notif(-dev).j
 ## Logos
 - **Maré Digital**: `favicon.png` (peixinhos sobre ondas). **Radar**: `favicon-radar.png` (radar com peixinhos, 256 px). Painel e A Bordo ainda usam SVG provisório em `mare-notif(-dev).js` (`APPS`) — quando ganharem arquivo de logo, é só trocar por `img:'arquivo.png'`.
 
-## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.34; dev: `oceano-dev.html` v1.35)
+## A página Oceano (lobby) — 2026-10-09, em produção (`oceano.html` v1.49; dev: `oceano-dev.html` v1.50-dev)
 `oceano.html` é a **sala de estar** da família: boas-vindas, "venda" interna, atalho pros produtos, parte técnica (links pra `maredigital.html`), ajuda e **cadastro/personalização** (`kanban/usuarios/{uid}/oceano`). Login **só Google @ciahering**.
 - **Host dos produtos:** com o app instalado (ou preferência "sempre aqui dentro"), os produtos abrem em **iframes de nome `oceano-frame`** dentro do Oceano. O menu de 9 pontinhos (`mare-notif(-dev).js` v12+) detecta esse nome e troca de produto via `postMessage({oceano:'abrir'|'lobby'})` em vez de abrir aba nova. Páginas não precisam mudar.
 - **PWA próprio:** `oceano(-dev).webmanifest` (id e escopo só da página). **Não mexe no aplicativo do Maré Digital**, que continua com o manifesto dele.
@@ -58,8 +60,8 @@ O Oceano é a **porta de entrada**: quem não está logado no Maré ou no Painel
 - **A testar à mão:** o app instalado (PWA) indo e voltando pelo Oceano (escopo do manifest) no iPhone/desktop. Teste automático: `docs/arezzo/testes/test_login_oceano.js`.
 
 ## Mural de avisos (2026-10-11, em produção desde 2026-10-13: oceano.html · painel.html · kanban.html)
-A página inicial do Oceano mostra um **📌 Mural** com os **Comunicados** (`kanban/comunicados`) marcados com `oceano:true`. Quem decide é o ADM no composer do Painel (aba Pessoas › Comunicados): **🌊 Mostrar no mural do Oceano** (padrão ligado) ou prioridade **🌊 Só no Oceano** (`prioridade:'oceano'` — fora do Maré e sem notificação). Campos novos do aviso: `oceano`, `capa` (https), `botao {rotulo,url}`, `fixado`, `autor`.
-- **Oceano:** `iniciarMural()` (query `ativo=true`), `avPodeVer()` (squad / "só PO" / ADM / expiração), `avLimpa()` (sanitiza o HTML), `muralRender()`, `avAbre()`; `squads_roles` do usuário vem de `kanban/usuarios/{uid}/squads_roles`. **Painel:** `_ccTogglePrioridadeUI()`, `saveComunicado()`, `_comunicadoOndeTxt()`. **Maré:** `_muralTodos` ignora `prioridade==='oceano'`.
+A página inicial do Oceano mostra um **📌 Mural** com os **Comunicados** (`kanban/comunicados`) marcados com `oceano:true`. Quem decide é o ADM no composer do Painel (aba Pessoas › Comunicados): **🌊 Mostrar no mural do Oceano** (padrão ligado) ou prioridade **🌊 Só no Oceano** (`prioridade:'oceano'` — fora do Maré e sem notificação). Campos novos do aviso: `oceano`, `capa` (https), `botao {rotulo,url}`, `fixado`, `autor`, `squads` (array opcional para comunicados multi-squad).
+- **Oceano:** `iniciarMural()` (query `ativo=true`), `avPodeVer()` (squad única ou múltiplas via `c.squads` / "só PO" / ADM / expiração), `avLimpa()` (sanitiza o HTML), `muralRender()`, `avAbre()`; `squads_roles` do usuário vem de `kanban/usuarios/{uid}/squads_roles`. Em `avPodeVer(c)`, comunicados com múltiplas squads (`c.squads` array, ou `c.squad: 'multi'`) ficam visíveis para membros de qualquer uma das squads-alvo selecionadas (`alvosSq.some(sq => meus.includes(sq))`), além de ADMs. **Painel:** seletor de chips multi-squad (`#cc-squad-chips`, `_ccPopulaSquadSelect()`, `_ccToggleSquadChip()`, `_ccGetSquadPayload()`), `_ccTogglePrioridadeUI()`, `saveComunicado()`, `_comunicadoOndeTxt()`. **Maré:** `_muralTodos` ignora `prioridade==='oceano'` e valida `c.squads` em `_comunicadoVisivelParaMim(c)`.
 - **Layout (v1.20):** no desktop (≥ 980 px) o início é um grid de 2 colunas — produtos à esquerda, Mural à direita (`#inicio-grid.tem-mural`, rolagem interna na coluna); estreito = empilhado. Sem aviso, a classe `tem-mural` sai e os produtos ocupam tudo. O padrão aberto/recolhido acompanha o layout (aberto no desktop, recolhido no estreito) até a pessoa escolher.
 - **Recolhível (v1.17):** o Mural começava recolhido (agora só no estreito, ver Layout) (`#mural-hd` é um botão; escolha em `localStorage.oceano_mural_aberto`); o selo `#mural-novos` conta o que ainda não foi visto (vermelho com 🚨 Urgente) e "visto" só é gravado com o Mural aberto (`oceano_mural_visto_<uid>`).
 - Aviso antigo (sem `oceano`) **não** vai pro Oceano até alguém abrir, marcar e salvar. Sem mudança em regras nem functions.
@@ -67,3 +69,15 @@ A página inicial do Oceano mostra um **📌 Mural** com os **Comunicados** (`ka
 ## Escala (2026-10-12; prod `escala.html` v1.10 desde 13/10 · dev: `escala-dev.html` v1.10)
 Página própria `escala-dev.html` / `escala.html` — **não é um produto novo do menu ⋮⋮⋮ nem tile do Oceano**, é uma ferramenta ligada ao Maré (visão **👥 Escala** dentro do 📅 Calendários) e ao Painel (aba **Escala ↗**): quem trabalha quando, por squad e global, com cadastro pela própria pessoa ou pelo PO/Organizador/ADM. Dados em `kanban/escala/{data}/{squadId}/{uid}`; regras em `database.rules.json` (precisam de `firebase deploy --only database`). Detalhes no `CHANGELOG.md` e no `CODE_MAP.md`. Na promoção pra prod: `escala.html` (cópia sem o sufixo/`devtag`, `VERSION_KEY='escala'`, chave `escala` em `version.json`) + `kanban.html` + `painel.html` juntos.
 **v1.8–v1.10 (em produção desde 13/10):** os filtros de squad/subtime viraram uma mini tela (botão `🔎 Filtros`, selo com o nº de filtros); o detalhe do dia ganhou a **📊 Visão Gantt** (com exportação em JPG do Gantt); o cadastro aceita até 3 **☕ pausas** por dia (campo `p`, regras novas — `firebase deploy --only database`); e usuários sem permissão de edição na squad acessam em **modo somente-leitura**.
+
+## Projeção de Fechamento (`mare-metas.js` v16)
+O módulo compartilhado de metas (`mare-metas.js` v16, consumido no Oceano, Radar, Maré e Painel) inclui a **Projeção de Fechamento** das metas com curva diária:
+- **Cálculo:** `realizado ÷ meta acumulada até ontem × meta total` (ponderado pela curva diária esperada até o dia anterior).
+- **Anel:** exibe uma **volta-fantasma translúcida** indicando visualmente onde o indicador deve fechar o período se mantiver o ritmo atual.
+- **Gráfico e KPI:** desenha uma **linha pontilhada de projeção** no gráfico acumulado e destaca o **KPI de projeção** de fechamento ao lado do realizado e da meta.
+
+## Assistente Férias do Caio & Plantão de Bugs (`mare-plantao.js` v1)
+Módulo compartilhado `mare-plantao(-dev).js` (v1) para suporte guiado, FAQ com IA e recepção estruturada de bugs:
+- **No Oceano (`oceano.html` v1.49 / `oceano-dev.html` v1.50-dev):** o banner de férias abre **minimizado em 1 linha** (dispensável pelo usuário em `localStorage`) para não ocupar espaço vertical na vitrine, e a aba `🐛 Reportar Bug` do modal exibe **apenas o formulário de reporte e "Meus chamados"** para o usuário acompanhar seus próprios tickets.
+- **Centralização ADM no Painel:** toda a gestão de ADM (fila completa de bugs, geração de pacote anônimo para diagnóstico, disparo de workflow para o GitHub Actions e validação/fechamento de chamados) fica centralizada exclusivamente em **`Painel › 🐛 Monitor › 🛟 Plantão de Bugs`**.
+
