@@ -24,6 +24,10 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### SÓ DEV — 2026-10-16 — Ecossistema de gestão (ecossistema.html): documentação técnica do Oceano para a TI
+
+Nova página `ecossistema.html` (sem versão própria; entra no ar no merge), escrita para a reunião com a TI de 30/10: arquitetura, uso do Google Cloud e da conta corporativa, segurança e inventário de dados, ambientes dev × prod, Agente Ágil e consumo de tokens (mecanismos com a evidência no código), Claude × Antigravity, skills e subagentes, política de PR/CI/auditoria no GitHub, personalização por squad, dependências, riscos e caminho de internalização. Números medidos no repositório (comandos na seção 14). `maredigital.html` passa a ser a referência detalhada do Maré Digital e aponta para ela; o botão "Ecossistema de gestão" no Oceano (oceano-dev v1.51, só dev até a próxima promoção) abre a página.
+
 ### SÓ DEV — Busca nos comentários do card (Ctrl+K), Comunicados Multi-Squad e atualização de documentações (/atualizardocumentacoes) — 2026-10-16 · kanban-dev v8.30.872-dev · painel-dev v5.78-dev · oceano-dev v1.50-dev
 
 - **Busca nos comentários do card (`Ctrl+K` em `kanban-dev.html`):** com o modal de um card aberto (`#card-ov.open`), apertar `Ctrl+K` (ou clicar no botão `🔍 Buscar Ctrl+K` no cabeçalho de comentários) abre a barra `#m-comment-search-bar` (`toggleCommentSearch()`, `onCommentSearchInput()`) para filtrar comentários por conteúdo, `@autor` ou data (`dd/mm/aaaa hh:mm`), exibindo contador `X de Y` e grifando os termos encontrados (`<mark class="comment-search-hl">` via `_highlightDomTextNodes()`) sem quebrar o Markdown. O `Escape` dentro do campo usa `stopPropagation()` para fechar apenas a busca sem fechar o card. **Dica:** não, porque o próprio cabeçalho da seção de comentários já exibe o botão visível `🔍 Buscar Ctrl+K`.
