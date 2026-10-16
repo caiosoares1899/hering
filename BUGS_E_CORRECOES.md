@@ -61,6 +61,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · 2026-10-16 — Contagem de dias úteis de atraso descontando sábado (kanban-dev)
+
+- **Sintoma:** Card com prazo na sexta-feira passada (09/10) exibia ⚠ 6d atrasado na sexta seguinte (16/10) em vez de 5d.
+- **Causa:** _diasUteisEntre(d1, d2) em kanban-dev.html filtrava apenas domingo (dow !== 0), sem excluir sábado (dow !== 6).
+- **Correção:** Incluída a condição && dow !== 6 em _diasUteisEntre() em kanban-dev.html, corrigindo o cálculo em getDue() e _timelineCardRow().
+
 ### 2026-10-16 · Oceano: o botão do plantão copiava /monitorarbugs (comando genérico, sem as travas) em vez de /plantaobug
 
 - **O que estava errado:** o pacote anônimo copiado no Oceano começava com `/monitorarbugs em …`, que no Antigravity dispara a varredura ampla e não a skill do plantão (`/plantaobug`: escopo só do bug, script de teste obrigatório, comando único, ESCALAR AO CLAUDE).
