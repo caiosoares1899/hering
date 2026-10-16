@@ -54,6 +54,12 @@ Antes de alterar código compartilhado, queries do Firebase, fluxos de autentica
 
 ## 🐛 Histórico de Bugs e Correções
 
+### 2026-10-16 · oceano-dev.html v1.40 (2026-10-16) — /monitorarbugs no Assistente Férias (sino pessoal, auto-sync no foco e validação de imagem)
+
+- **Clique e leitura de notificações pessoais (`k === 'p'`) no sino (`iniciarSino`, `sinoItens`, `sinoClique`):** `iniciarSino()` mapeava `sinoPessoais` sem preservar `icon`/`title`/`sub` de notificações `ferias_bug_status`, e `sinoClique()` só abria `abrirFerias('bugs')` quando a notificação vinha do `notif_feed` (`k === 'f'`). Agora `iniciarSino` preserva todos os campos, `sinoItens` sincroniza o estado `unread` entre `notif_feed` e `sinoPessoais`, e `sinoClique` marca como lida em `kanban/usuarios/<uid>/notificacoes/<id>/read` e abre `abrirFerias('bugs')` tanto em `k === 'f'` quanto em `k === 'p'`.
+- **Sincronização imediata ao retornar da aba do GitHub (`_feriasAoFocarJanela`):** Quando o usuário abria a Issue no GitHub em nova aba e voltava para o Oceano, o throttle de 45s de `feriasSincronizarGithubIssues` impedia a atualização imediata do chip `🐙 Issue #...`. Adicionado listener em `window.focus` e `visibilitychange` (com cooldown de 10s) que força `feriasSincronizarGithubIssues(true)` se o modal estiver aberto ou houver chamado ativo.
+- **Validação de tipo de arquivo e tratamento de erro em `feriasComprimirImagem`:** Adicionada checagem `fileOrBlob.type.startsWith('image/')` (exibindo toast caso o usuário escolha um PDF/documento no seletor de arquivos) e handlers explícitos para `reader.onerror` e `img.onerror`.
+
 ### 2026-10-16 · oceano-dev.html v1.39 (2026-10-16) — /monitorarbugs no Assistente Férias
 
 - **Regra do banco (`database.rules.json` L271–L273) e schema de notificações em `feriasDispararNotifStatusBug`:** A regra de escrita em `kanban/usuarios/$uid/notificacoes/$notifId` exige `newData.child('type').isString() && newData.child('type').val() !== 'painel_broadcast'` e `!data.exists()` quando gravada por outro usuário que não seja ADM/PO (ex.: na sincronização automática via GitHub Issues). O payload gravava apenas `tipo` (sem `type`) e não trazia os campos lidos pelo sino do Maré (`title`, `sub`, `text`, `icone`, `read: false`), além de encadear os dois `_set` no mesmo `try/catch`. Corrigido preenchendo o schema completo com `type: 'ferias_bug_status'`, chave determinística única por transição e `try/catch` independentes para `notif_feed` e `usuarios/$uid/notificacoes`.
