@@ -36,6 +36,15 @@ Ele não traz nome, e-mail, link nem print — **não peça nem procure esses da
    - **Script de teste** (o bloco do passo 5);
    - **Como validar:** "cole o link do PR e o script no painel 🛟 Plantão (Oceano › 🐛 Reportar Bug), rode o script no console do dev e clique em ✅ ou ❌".
 
+## Modo automático (tarefa agendada do Antigravity)
+
+Quando a entrada vier de uma **busca automática** — texto começando por `PLANTAO_BUG` (com `id:`, `branch:`, `tentativa:` e, depois de `PACOTE:`, o pacote) — vale tudo acima, mais:
+- **Use exatamente o `branch:` informado** (é por ele que o servidor liga a PR ao bug). Branch de outro nome = a PR não aparece no plantão.
+- No **corpo da PR** ponha, além do resumo, uma seção `## Script de teste` com o script num bloco ```` ```javascript ````. O servidor lê dali (o Antigravity não consegue enviar nada por conta própria) e o ADM recebe o script já preenchido no painel 🛟.
+- Se vier `REPROVADO pelo ADM`: leia a nota, corrija **no mesmo branch** com um novo commit (nada de PR novo; o servidor vê o novo commit sozinho), reescreva o script cobrindo o que falhou e atualize o `## Script de teste` da PR **no comando único**.
+- Resposta `SEM_BUG_PENDENTE`: não faça nada.
+- Mesmo nesse modo, **pare no comando único de git** e espere a aprovação — nunca tente aprová-lo por conta própria.
+
 ## Se o ADM reprovar
 
 Ele volta com uma **nota** ("o que viu"). Leia a nota, corrija **no mesmo branch** (um novo commit, não um PR novo) e entregue um **novo script** cobrindo o que falhou. Máximo **3 tentativas**; na 3ª reprovação o bug é escalado ao Claude — não insista.

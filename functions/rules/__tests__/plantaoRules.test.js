@@ -58,3 +58,17 @@ test('campo desconhecido é recusado; apagar a ficha é permitido ao ADM', () =>
   assert.equal(pode('adm', 'kanban/plantao/b1/qualquerCoisa', 'x'), false);
   assert.equal(pode('adm', 'kanban/plantao/b1', null), true);
 });
+
+test('campos do modo automático (prSha/entregaEm/entregas): só ADM grava e só no formato; plantao_status só ADM lê', () => {
+  assert.equal(pode('adm', 'kanban/plantao/b1/prSha', 'a'.repeat(40)), true);
+  assert.equal(pode('adm', 'kanban/plantao/b1/prSha', 'a'.repeat(65)), false);
+  assert.equal(pode('adm', 'kanban/plantao/b1/entregaEm', 1760000000000), true);
+  assert.equal(pode('adm', 'kanban/plantao/b1/entregas', 3), true);
+  assert.equal(pode('adm', 'kanban/plantao/b1/entregas', 10), false);
+  assert.equal(pode('membro', 'kanban/plantao/b1/prSha', 'x'), false);
+  const le = (a) => check(RULES, DB, 'read', 'kanban/plantao_status', A[a]);
+  assert.equal(le('adm'), true); assert.equal(le('caio'), true);
+  for (const a of ['po', 'membro', 'forasteiro', 'arezzo']) assert.equal(le(a), false, a);
+  for (const a of ['adm', 'caio', 'po', 'membro']) assert.equal(check(RULES, DB, 'write', 'kanban/plantao_status/agenteVistoEm', A[a], 1), false, `${a} não escreve o batimento (só o servidor)`);
+  for (const a of ['adm', 'membro']) assert.equal(check(RULES, DB, 'write', 'kanban/_plantao_rate/2026-10-20T15', A[a], 1), false, 'contador de requisições é só do servidor');
+});

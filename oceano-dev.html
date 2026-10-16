@@ -740,14 +740,14 @@ onAuthStateChanged(auth,user=>{ window.dispatchEvent(new CustomEvent('auth-chang
 window.dispatchEvent(new Event('fb-ready'));
 </script>
 
-<script src="mare-notif-dev.js?v=32"></script>
+<script src="mare-notif-dev.js?v=33"></script>
 <script src="mare-dicas-dev.js?v=5"></script>
 <script src="mare-metas-dev.js?v=14"></script>
 
 <script>
 (function(){
 'use strict';
-const VERSION = 'v1.46 · oceano-dev', VERSION_KEY = 'oceano_dev';
+const VERSION = 'v1.47 · oceano-dev', VERSION_KEY = 'oceano_dev';
 const IS_DEV = /-dev\.html/.test(location.pathname);
 const SO_HERING = window.MARE_SO_HERING !== false;
 const CONTATO = {email:'caio.soares@ciahering.com.br', nome:'o time Digital'};
@@ -1533,7 +1533,7 @@ let feriasBugsLista = [];
 let feriasBugsUn = null;
 let feriasEvidImgData = '';
 let feriasAdmOpenMap = {};
-let feriasPlantao = {}, feriasPlantaoUn = null, feriasPlantaoAtivo = true, feriasPlantaoCfgUn = null;   // ficha do Plantão de Bugs (kanban/plantao, só ADM) e chave geral kanban/config/plantao_ativo
+let feriasPlantao = {}, feriasPlantaoUn = null, feriasPlantaoAtivo = true, feriasPlantaoCfgUn = null, feriasAgenteVisto = 0, feriasAgenteUn = null;   // ficha do Plantão de Bugs (kanban/plantao, só ADM) e chave geral kanban/config/plantao_ativo
 
 function feriasBugEhMeu(b){
   if(!b || !U) return false;
@@ -2653,6 +2653,7 @@ function feriasPlBannerHtml(souAdm){
   if(!souAdm) return '';
   return '<div class="ferias-adm-panel" style="margin:0 0 8px;flex-direction:row;align-items:center;flex-wrap:wrap;gap:8px;">'
     + '<span style="font-size:12px;color:var(--txt2);flex:1;min-width:200px;">🛟 <b>Plantão de Bugs</b> '+(feriasPlantaoAtivo ? '<span class="chip ok">ligado</span> — você (ADM) recebe aviso de bug novo e de bug parado.' : '<span class="chip">⏸ pausado</span> — sem avisos novos.')+'</span>'
+    + '<span class="chip" title="O Antigravity busca os bugs sozinho (tarefa agendada). Se ficar parado, os ADMs são avisados.">'+(feriasAgenteVisto ? '🤖 Antigravity buscou há '+tempoRel(new Date(feriasAgenteVisto).toISOString()) : '🤖 modo automático ainda não usado')+'</span>'
     + '<button type="button" class="btn sm" data-fpl-pausa="1">'+(feriasPlantaoAtivo ? '⏸ Pausar plantão' : '▶ Retomar plantão')+'</button>'
     + '</div>';
 }
@@ -2694,6 +2695,9 @@ function feriasPlIniciar(){
   if(!feriasSouAdm() || !window._onValue || !window._ref || !window._db) return;
   if(!feriasPlantaoUn){
     try{ feriasPlantaoUn = window._onValue(window._ref(window._db,'kanban/plantao'), sn=>{ feriasPlantao = sn && sn.exists() ? sn.val() : {}; feriasRenderBugsLista(); }, ()=>{}); }catch(e){}
+  }
+  if(!feriasAgenteUn){
+    try{ feriasAgenteUn = window._onValue(window._ref(window._db,'kanban/plantao_status/agenteVistoEm'), sn=>{ feriasAgenteVisto = sn && sn.exists() ? Number(sn.val())||0 : 0; feriasRenderBugsLista(); }, ()=>{}); }catch(e){}
   }
   if(!feriasPlantaoCfgUn){
     try{ feriasPlantaoCfgUn = window._onValue(window._ref(window._db,'kanban/config/plantao_ativo'), sn=>{ feriasPlantaoAtivo = !(sn && sn.exists() && sn.val()===false); feriasRenderBugsLista(); }, ()=>{}); }catch(e){}

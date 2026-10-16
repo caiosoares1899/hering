@@ -24,6 +24,13 @@ completo, incluindo commits antigos sem PR/descrição detalhada).
 
 ## kanban.html (produção)
 
+### oceano-dev.html v1.47 (2026-10-16) — SÓ DEV, ainda não promovido para oceano.html — Plantão automático: o Antigravity busca o bug sozinho e o GitHub registra a PR (funções + regras, exige chaves, deploy e webhook)
+
+- **`plantaoProximo`** (`functions/plantao/agente.js`): GET com chave que entrega o próximo bug ao Antigravity (tarefa agendada dele; `read_url_content` não pede aprovação) como pacote anônimo + branch + instruções, com lease de 3 h, máximo de 3 entregas e teto de requisições; relato marcado como DADO.
+- **`plantaoGithubWebhook`** (`functions/plantao/webhook.js`): o GitHub avisa (HMAC-SHA256) quando a PR `antigravity/bug-<id>` abre; o servidor grava link da PR + script de teste (corpo da PR) na ficha e avisa os ADMs; push depois de validada desfaz a validação.
+- **Vigia** avisa quando o Antigravity para de buscar (> 2 h com bug esperando); **Oceano** mostra o batimento. Regras: `plantao_status` (só ADM lê) e campos `prSha`/`entregaEm`/`entregas` na ficha.
+- **Exige:** 2 secrets, `--only database`, deploy das 3 funções, webhook no GitHub e a tarefa agendada (`docs/PLANTAO_BUGS.md`, "Modo automático"). **Dica:** não — ferramenta de ADM.
+
 ### oceano-dev.html v1.45 (2026-10-16) — SÓ DEV, ainda não promovido para oceano.html — Plantão de Bugs: ficha, validação pelo ADM, aviso e vigia (funções + regras, exige deploy)
 
 - **Servidor** (`functions/plantao/plantao.js`, novo): `plantaoBugNovo` cria a ficha do bug em `kanban/plantao/{id}`, junta duplicados (mesmo arquivo-alvo + descrição parecida, sem IA) e avisa os ADMs (sino + push, tipo `plantao_bug`, sem autor/e-mail; clicar abre o card do bug na squad Dados); `plantaoVigia` (de 3 em 3 h, 08–20h de Brasília) avisa de bug parado. Pausa geral: `kanban/config/plantao_ativo = false`.
